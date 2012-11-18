@@ -38,7 +38,7 @@ var (
 	verbose = flag.Bool("verbose", false, "Print lots more stuff")
 	quiet   = flag.Bool("quiet", false, "Print as little stuff as possible")
 	// FIXME make these part of swift so we get a standard set of flags?
-	authUrl  = flag.String("auth", os.Getenv("SWIFT_AUTH_USER"), "Auth URL for server. Defaults to environment var SWIFT_AUTH_USER.")
+	authUrl  = flag.String("auth", os.Getenv("ST_AUTH"), "Auth URL for server. Defaults to environment var ST_AUTH.")
 	userName = flag.String("user", os.Getenv("ST_USER"), "User name. Defaults to environment var ST_USER.")
 	apiKey   = flag.String("key", os.Getenv("ST_KEY"), "API key (password). Defaults to environment var ST_KEY.")
 )
