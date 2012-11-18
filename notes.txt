@@ -1,0 +1,32 @@
+make 100% compatible with swift.py?
+
+Make Env vars compatible with st?
+
+Get and put the metadata in the libray (x-object-meta-mtime) when getting and putting a file?
+
+st is setting this
+'x-object-meta-mtime'
+
+    getmtime(filename)
+        Return the last modification time of a file, reported by os.stat().
+
+>>> f = os.path.getmtime("z")
+1347717491.343554
+>>> print f
+1347717491.34
+>>> str(f)
+'1347717491.34'
+>>> "%d" % f
+'1347717491'
+>>> 
+
+swift.py appears to be doing it wrong with str(float) which isn't a
+good way of stringifying floats...
+
+Make 
+
+This also puts meta-mtime
+https://github.com/gholt/swiftly
+
+As an integer, but it does parse it as a float
+subargs.append('x-object-meta-mtime:%d' % getmtime(options.input_))
