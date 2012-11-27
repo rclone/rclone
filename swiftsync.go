@@ -11,8 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/pprof"
-	"strconv"
-	"strings"
 )
 
 // Globals
@@ -99,58 +97,6 @@ func walk(root string) FsObjects {
 		log.Printf("Failed to open directory: %s: %s", root, err)
 	}
 	return files
-}
-
-// Turns a number of ns into a floating point string in seconds
-//
-// Trims trailing zeros and guaranteed to be perfectly accurate
-func nsToFloatString(ns int64) string {
-	if ns < 0 {
-		return "-" + nsToFloatString(-ns)
-	}
-	result := fmt.Sprintf("%010d", ns)
-	split := len(result) - 9
-	result, decimals := result[:split], result[split:]
-	decimals = strings.TrimRight(decimals, "0")
-	if decimals != "" {
-		result += "."
-		result += decimals
-	}
-	return result
-}
-
-// Turns a floating point string in seconds into a ns integer
-//
-// Guaranteed to be perfectly accurate
-func floatStringToNs(s string) (ns int64, err error) {
-	if s != "" && s[0] == '-' {
-		ns, err = floatStringToNs(s[1:])
-		return -ns, err
-	}
-	point := strings.IndexRune(s, '.')
-	if point >= 0 {
-		tail := s[point+1:]
-		if len(tail) > 0 {
-			if len(tail) > 9 {
-				tail = tail[:9]
-			}
-			uns, err := strconv.ParseUint(tail, 10, 64)
-			if err != nil {
-				return 0, err
-			}
-			ns = int64(uns)
-			for i := 9 - len(tail); i > 0; i-- {
-				ns *= 10
-			}
-		}
-		s = s[:point]
-	}
-	secs, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	ns += int64(1000000000) * secs
-	return ns, nil
 }
 
 // syntaxError prints the syntax
