@@ -39,6 +39,32 @@ type FsObject struct {
 
 type FsObjects map[string]FsObject
 
+// Checks to see if an object has changed or not by looking at its size and mtime
+//
+// This is the heuristic rsync uses when not using --checksum
+func (fs *FsObject) changed(c *swift.Connection, container string) bool {
+	obj, h, err := c.Object(container, fs.rel)
+	if err != nil {
+		log.Printf("Failed to read info %s: %s", fs.path, err)
+		return true
+	}
+	if obj.Bytes != fs.info.Size() {
+		log.Printf("Sizes differ %s", fs.path)
+		return true
+	}
+	m := h.ObjectMetadata()
+	t, err := m.GetModTime()
+	if err != nil {
+		log.Printf("Failed to read mtime %s: %s", fs.path, err)
+		return true
+	}
+	if !t.Equal(fs.info.ModTime()) {
+		log.Printf("mtimes differ: %s", fs.path)
+		return true
+	}
+	return false
+}
+
 // Puts the FsObject into the container
 func (fs *FsObject) put(c *swift.Connection, container string) {
 	mode := fs.info.Mode()
@@ -46,17 +72,24 @@ func (fs *FsObject) put(c *swift.Connection, container string) {
 		log.Printf("Can't transfer non file/directory %s", fs.path)
 	} else if mode&os.ModeDir != 0 {
 		// Debug?
-		log.Printf("FIXME Didn't upload %s", fs.path)
+		log.Printf("FIXME Skipping directory %s", fs.path)
 	} else {
+		// Check to see if changed or not
+		if !fs.changed(c, container) {
+			log.Printf("Unchanged skipping %s", fs.path)
+			return
+		}
 		// FIXME content type
-		// FIXME headers with mtime in
 		in, err := os.Open(fs.path)
 		if err != nil {
 			log.Printf("Failed to open %s: %s", fs.path, err)
 			return
 		}
 		defer in.Close()
-		_, err = c.ObjectPut(container, fs.rel, in, true, "", "", nil)
+		m := swift.Metadata{}
+		m.SetModTime(fs.info.ModTime())
+		log.Println(m.ObjectHeaders())
+		_, err = c.ObjectPut(container, fs.rel, in, true, "", "", m.ObjectHeaders())
 		if err != nil {
 			log.Printf("Failed to upload %s: %s", fs.path, err)
 			return
