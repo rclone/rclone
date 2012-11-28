@@ -152,7 +152,7 @@ func walk(root string) FsObjects {
 		if err != nil {
 			log.Printf("Failed to open directory: %s: %s", path, err)
 		} else {
-			info, err := os.Stat(path)
+			info, err := os.Lstat(path)
 			if err != nil {
 				log.Printf("Failed to stat %s: %s", path, err)
 				return nil
