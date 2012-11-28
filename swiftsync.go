@@ -43,7 +43,7 @@ type FsObject struct {
 type FsObjects []FsObject
 
 // Write debuging output for this FsObject
-func (fs *FsObject) Debugf(text string, args... interface{}) {
+func (fs *FsObject) Debugf(text string, args ...interface{}) {
 	out := fmt.Sprintf(text, args...)
 	log.Printf("%s: %s", fs.rel, out)
 }
@@ -100,7 +100,7 @@ func (fs *FsObject) changed(c *swift.Connection, container string) bool {
 	} else {
 		fs.Debugf("Size and modification time the same - skipping")
 		return false
-	} 
+	}
 
 	// mtime is unreadable or different but size is the same so
 	// check the MD5SUM
@@ -123,7 +123,7 @@ func (fs *FsObject) changed(c *swift.Connection, container string) bool {
 		fs.Debugf("Failed to update mtime: %s", err)
 	}
 	fs.Debugf("Updated mtime")
-	
+
 	fs.Debugf("Size and MD5SUM identical - skipping")
 	return false
 }
@@ -231,7 +231,7 @@ func upload(c *swift.Connection, root, container string) {
 
 // Lists the containers
 func listContainers(c *swift.Connection) {
-	containers, err := c.Containers(nil)
+	containers, err := c.ContainersAll(nil)
 	if err != nil {
 		log.Fatalf("Couldn't list containers: %s", err)
 	}
@@ -242,8 +242,8 @@ func listContainers(c *swift.Connection) {
 
 // Lists files in a container
 func list(c *swift.Connection, container string) {
-	//objects, err := c.Objects(container, &swift.ObjectsOpts{Prefix: "", Delimiter: '/'})
-	objects, err := c.Objects(container, nil)
+	//objects, err := c.ObjectsAll(container, &swift.ObjectsOpts{Prefix: "", Delimiter: '/'})
+	objects, err := c.ObjectsAll(container, nil)
 	if err != nil {
 		log.Fatalf("Couldn't read container %q: %s", container, err)
 	}

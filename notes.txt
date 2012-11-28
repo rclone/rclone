@@ -18,3 +18,9 @@ FIXME progress meter would be nice! Do this by wrapping the Reader with a progre
 Do bandwidth limit by wrapping the Reader too
 
 Could have an integrity check mode where we check the MD5sums of the local vs the remote
+
+Some stats would be nice!
+
+Windows paths? Do we need to translate / and \?
+
+Make swift timeouts be settable
