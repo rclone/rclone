@@ -40,7 +40,7 @@ type FsObject struct {
 	info os.FileInfo
 }
 
-type FsObjects map[string]FsObject
+type FsObjects []FsObject
 
 // md5sum calculates the md5sum of a file returning a lowercase hex string
 func md5sum(path string) (string, error) {
@@ -141,7 +141,7 @@ func (fs *FsObject) put(c *swift.Connection, container string) {
 // FIXME ignore symlinks?
 // FIXME what about hardlinks / etc
 func walk(root string) FsObjects {
-	files := make(FsObjects)
+	files := make(FsObjects, 0, 1024)
 	err := filepath.Walk(root, func(path string, f os.FileInfo, err error) error {
 		if err != nil {
 			log.Printf("Failed to open directory: %s: %s", path, err)
@@ -159,7 +159,7 @@ func walk(root string) FsObjects {
 			if rel == "." {
 				rel = ""
 			}
-			files[rel] = FsObject{rel: rel, path: path, info: info}
+			files = append(files, FsObject{rel: rel, path: path, info: info})
 		}
 		return nil
 	})

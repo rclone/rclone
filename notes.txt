@@ -13,8 +13,6 @@ subargs.append('x-object-meta-mtime:%d' % getmtime(options.input_))
 Need an iterate all objects routine... Could use a channel
 - could just be a flag to Objects()
 
-FIXME ordering not hash order
-
 FIXME progress meter would be nice! Do this by wrapping the Reader with a progress bar
 
 Do bandwidth limit by wrapping the Reader too
