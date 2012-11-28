@@ -70,34 +70,34 @@ func md5sum(path string) (string, error) {
 func (fs *FsObject) changed(c *swift.Connection, container string) bool {
 	obj, h, err := c.Object(container, fs.rel)
 	if err != nil {
-		log.Printf("Failed to read info %s: %s", fs.path, err)
+		log.Printf("Failed to read info %s: %s", fs.rel, err)
 		return true
 	}
 	if obj.Bytes != fs.info.Size() {
-		log.Printf("Sizes differ %s", fs.path)
+		log.Printf("Sizes differ %s", fs.rel)
 		return true
 	}
 	m := h.ObjectMetadata()
 	t, err := m.GetModTime()
 	if err != nil {
-		log.Printf("Failed to read mtime %s: %s", fs.path, err)
+		log.Printf("Failed to read mtime %s: %s", fs.rel, err)
 		localMd5, err := md5sum(fs.path)
 		// log.Printf("Local  MD5 %s", localMd5)
 		// log.Printf("Remote MD5 %s", obj.Hash)
 		if err != nil {
-			log.Printf("Failed to calculate md5 %s: %s", fs.path, err)
+			log.Printf("Failed to calculate md5 %s: %s", fs.rel, err)
 			return true
 		}
 		if localMd5 != strings.ToLower(obj.Hash) {
-			log.Printf("Md5sums differ %s", fs.path)
+			log.Printf("Md5sums differ %s", fs.rel)
 			return true
 		}
-		log.Printf("Md5sums identical - skipping %s", fs.path)
+		log.Printf("Md5sums identical - skipping %s", fs.rel)
 		// FIXME update the mtime of the remote object here
 		return false
 	}
 	if !t.Equal(fs.info.ModTime()) {
-		log.Printf("mtimes differ: %s", fs.path)
+		log.Printf("mtimes differ: %s", fs.rel)
 		return true
 	}
 	return false
@@ -107,20 +107,20 @@ func (fs *FsObject) changed(c *swift.Connection, container string) bool {
 func (fs *FsObject) put(c *swift.Connection, container string) {
 	mode := fs.info.Mode()
 	if mode&(os.ModeSymlink|os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
-		log.Printf("Can't transfer non file/directory %s", fs.path)
+		log.Printf("Can't transfer non file/directory %s", fs.rel)
 	} else if mode&os.ModeDir != 0 {
 		// Debug?
-		log.Printf("FIXME Skipping directory %s", fs.path)
+		log.Printf("FIXME Skipping directory %s", fs.rel)
 	} else {
 		// Check to see if changed or not
 		if !fs.changed(c, container) {
-			log.Printf("Unchanged skipping %s", fs.path)
+			log.Printf("Unchanged skipping %s", fs.rel)
 			return
 		}
 		// FIXME content type
 		in, err := os.Open(fs.path)
 		if err != nil {
-			log.Printf("Failed to open %s: %s", fs.path, err)
+			log.Printf("Failed to open %s: %s", fs.rel, err)
 			return
 		}
 		defer in.Close()
@@ -128,10 +128,10 @@ func (fs *FsObject) put(c *swift.Connection, container string) {
 		m.SetModTime(fs.info.ModTime())
 		_, err = c.ObjectPut(container, fs.rel, in, true, "", "", m.ObjectHeaders())
 		if err != nil {
-			log.Printf("Failed to upload %s: %s", fs.path, err)
+			log.Printf("Failed to upload %s: %s", fs.rel, err)
 			return
 		}
-		log.Printf("Uploaded %s", fs.path)
+		log.Printf("Uploaded %s", fs.rel)
 	}
 
 }

@@ -19,6 +19,4 @@ FIXME progress meter would be nice! Do this by wrapping the Reader with a progre
 
 Do bandwidth limit by wrapping the Reader too
 
-If length is same but remote has no mtime, then could fall back to checking the checksum and if that was OK then just update the object meta time.
-
 Could have an integrity check mode where we check the MD5sums of the local vs the remote
