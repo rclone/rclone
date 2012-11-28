@@ -4,13 +4,16 @@
 package main
 
 import (
+	"crypto/md5"
 	"flag"
 	"fmt"
 	"github.com/ncw/swift"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime/pprof"
+	"strings"
 )
 
 // Globals
@@ -39,9 +42,31 @@ type FsObject struct {
 
 type FsObjects map[string]FsObject
 
+// md5sum calculates the md5sum of a file returning a lowercase hex string
+func md5sum(path string) (string, error) {
+	in, err := os.Open(path)
+	if err != nil {
+		log.Printf("Failed to open %s: %s", path, err)
+		return "", err
+	}
+	defer in.Close() // FIXME ignoring error
+	hash := md5.New()
+	_, err = io.Copy(hash, in)
+	if err != nil {
+		log.Printf("Failed to read from %s: %s", path, err)
+		return "", err
+	}
+	return fmt.Sprintf("%x", hash.Sum(nil)), nil
+}
+
 // Checks to see if an object has changed or not by looking at its size and mtime
 //
 // This is the heuristic rsync uses when not using --checksum
+//
+// If the remote object doesn't have the mtime metadata set then the
+// checksum is checked
+//
+// FIXME should update the checksum of the remote object with the mtime
 func (fs *FsObject) changed(c *swift.Connection, container string) bool {
 	obj, h, err := c.Object(container, fs.rel)
 	if err != nil {
@@ -56,7 +81,20 @@ func (fs *FsObject) changed(c *swift.Connection, container string) bool {
 	t, err := m.GetModTime()
 	if err != nil {
 		log.Printf("Failed to read mtime %s: %s", fs.path, err)
-		return true
+		localMd5, err := md5sum(fs.path)
+		// log.Printf("Local  MD5 %s", localMd5)
+		// log.Printf("Remote MD5 %s", obj.Hash)
+		if err != nil {
+			log.Printf("Failed to calculate md5 %s: %s", fs.path, err)
+			return true
+		}
+		if localMd5 != strings.ToLower(obj.Hash) {
+			log.Printf("Md5sums differ %s", fs.path)
+			return true
+		}
+		log.Printf("Md5sums identical - skipping %s", fs.path)
+		// FIXME update the mtime of the remote object here
+		return false
 	}
 	if !t.Equal(fs.info.ModTime()) {
 		log.Printf("mtimes differ: %s", fs.path)
@@ -88,7 +126,6 @@ func (fs *FsObject) put(c *swift.Connection, container string) {
 		defer in.Close()
 		m := swift.Metadata{}
 		m.SetModTime(fs.info.ModTime())
-		log.Println(m.ObjectHeaders())
 		_, err = c.ObjectPut(container, fs.rel, in, true, "", "", m.ObjectHeaders())
 		if err != nil {
 			log.Printf("Failed to upload %s: %s", fs.path, err)
