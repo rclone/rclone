@@ -42,18 +42,24 @@ type FsObject struct {
 
 type FsObjects []FsObject
 
+// Write debuging output for this FsObject
+func (fs *FsObject) Debugf(text string, args... interface{}) {
+	out := fmt.Sprintf(text, args...)
+	log.Printf("%s: %s", fs.rel, out)
+}
+
 // md5sum calculates the md5sum of a file returning a lowercase hex string
-func md5sum(path string) (string, error) {
-	in, err := os.Open(path)
+func (fs *FsObject) md5sum() (string, error) {
+	in, err := os.Open(fs.path)
 	if err != nil {
-		log.Printf("Failed to open %s: %s", path, err)
+		fs.Debugf("Failed to open: %s", err)
 		return "", err
 	}
 	defer in.Close() // FIXME ignoring error
 	hash := md5.New()
 	_, err = io.Copy(hash, in)
 	if err != nil {
-		log.Printf("Failed to read from %s: %s", path, err)
+		fs.Debugf("Failed to read: %s", err)
 		return "", err
 	}
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
@@ -70,34 +76,34 @@ func md5sum(path string) (string, error) {
 func (fs *FsObject) changed(c *swift.Connection, container string) bool {
 	obj, h, err := c.Object(container, fs.rel)
 	if err != nil {
-		log.Printf("Failed to read info %s: %s", fs.rel, err)
+		fs.Debugf("Failed to read info: %s", err)
 		return true
 	}
 	if obj.Bytes != fs.info.Size() {
-		log.Printf("Sizes differ %s", fs.rel)
+		fs.Debugf("Sizes differ")
 		return true
 	}
 	m := h.ObjectMetadata()
 	t, err := m.GetModTime()
 	if err != nil {
-		log.Printf("Failed to read mtime %s: %s", fs.rel, err)
-		localMd5, err := md5sum(fs.path)
-		// log.Printf("Local  MD5 %s", localMd5)
-		// log.Printf("Remote MD5 %s", obj.Hash)
+		fs.Debugf("Failed to read mtime: %s", err)
+		localMd5, err := fs.md5sum()
+		// fs.Debugf("Local  MD5 %s", localMd5)
+		// fs.Debugf("Remote MD5 %s", obj.Hash)
 		if err != nil {
-			log.Printf("Failed to calculate md5 %s: %s", fs.rel, err)
+			fs.Debugf("Failed to calculate md5: %s", err)
 			return true
 		}
 		if localMd5 != strings.ToLower(obj.Hash) {
-			log.Printf("Md5sums differ %s", fs.rel)
+			fs.Debugf("Md5sums differ")
 			return true
 		}
-		log.Printf("Md5sums identical - skipping %s", fs.rel)
+		fs.Debugf("Md5sums identical - skipping")
 		// FIXME update the mtime of the remote object here
 		return false
 	}
 	if !t.Equal(fs.info.ModTime()) {
-		log.Printf("mtimes differ: %s", fs.rel)
+		fs.Debugf("Modification times differ")
 		return true
 	}
 	return false
@@ -107,20 +113,20 @@ func (fs *FsObject) changed(c *swift.Connection, container string) bool {
 func (fs *FsObject) put(c *swift.Connection, container string) {
 	mode := fs.info.Mode()
 	if mode&(os.ModeSymlink|os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
-		log.Printf("Can't transfer non file/directory %s", fs.rel)
+		fs.Debugf("Can't transfer non file/directory")
 	} else if mode&os.ModeDir != 0 {
 		// Debug?
-		log.Printf("FIXME Skipping directory %s", fs.rel)
+		fs.Debugf("FIXME Skipping directory")
 	} else {
 		// Check to see if changed or not
 		if !fs.changed(c, container) {
-			log.Printf("Unchanged skipping %s", fs.rel)
+			fs.Debugf("Unchanged skipping")
 			return
 		}
 		// FIXME content type
 		in, err := os.Open(fs.path)
 		if err != nil {
-			log.Printf("Failed to open %s: %s", fs.rel, err)
+			fs.Debugf("Failed to open: %s", err)
 			return
 		}
 		defer in.Close()
@@ -128,10 +134,10 @@ func (fs *FsObject) put(c *swift.Connection, container string) {
 		m.SetModTime(fs.info.ModTime())
 		_, err = c.ObjectPut(container, fs.rel, in, true, "", "", m.ObjectHeaders())
 		if err != nil {
-			log.Printf("Failed to upload %s: %s", fs.rel, err)
+			fs.Debugf("Failed to upload: %s", err)
 			return
 		}
-		log.Printf("Uploaded %s", fs.rel)
+		fs.Debugf("Uploaded")
 	}
 
 }
