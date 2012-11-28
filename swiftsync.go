@@ -76,11 +76,9 @@ func (fs *FsObject) md5sum() (string, error) {
 //
 // If the size is the same and and mtime is different or unreadable
 // and the MD5SUM is the same then the file is considered to be
-// unchanged.
+// unchanged.  In this case the mtime on the object is updated.
 //
 // Otherwise the file is considered to be changed.
-//
-// FIXME should update the checksum of the remote object with the mtime
 func (fs *FsObject) changed(c *swift.Connection, container string) bool {
 	obj, h, err := c.Object(container, fs.rel)
 	if err != nil {
@@ -118,7 +116,14 @@ func (fs *FsObject) changed(c *swift.Connection, container string) bool {
 		return true
 	}
 
-	// FIXME update the mtime of the remote object here
+	// Update the mtime of the remote object here
+	m.SetModTime(fs.info.ModTime())
+	err = c.ObjectUpdate(container, fs.rel, m.ObjectHeaders())
+	if err != nil {
+		fs.Debugf("Failed to update mtime: %s", err)
+	}
+	fs.Debugf("Updated mtime")
+	
 	fs.Debugf("Size and MD5SUM identical - skipping")
 	return false
 }
