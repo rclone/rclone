@@ -65,12 +65,20 @@ func (fs *FsObject) md5sum() (string, error) {
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
-// Checks to see if an object has changed or not by looking at its size and mtime
+// Checks to see if an object has changed or not by looking at its size, mtime and MD5SUM
 //
-// This is the heuristic rsync uses when not using --checksum
+// If the remote object size is different then it is considered to be
+// changed.
 //
-// If the remote object doesn't have the mtime metadata set then the
-// checksum is checked
+// If the size is the same and the mtime is the same then it is
+// considered to be unchanged.  This is the heuristic rsync uses when
+// not using --checksum.
+//
+// If the size is the same and and mtime is different or unreadable
+// and the MD5SUM is the same then the file is considered to be
+// unchanged.
+//
+// Otherwise the file is considered to be changed.
 //
 // FIXME should update the checksum of the remote object with the mtime
 func (fs *FsObject) changed(c *swift.Connection, container string) bool {
@@ -83,29 +91,35 @@ func (fs *FsObject) changed(c *swift.Connection, container string) bool {
 		fs.Debugf("Sizes differ")
 		return true
 	}
+
+	// Size the same so check the mtime
 	m := h.ObjectMetadata()
 	t, err := m.GetModTime()
 	if err != nil {
 		fs.Debugf("Failed to read mtime: %s", err)
-		localMd5, err := fs.md5sum()
-		// fs.Debugf("Local  MD5 %s", localMd5)
-		// fs.Debugf("Remote MD5 %s", obj.Hash)
-		if err != nil {
-			fs.Debugf("Failed to calculate md5: %s", err)
-			return true
-		}
-		if localMd5 != strings.ToLower(obj.Hash) {
-			fs.Debugf("Md5sums differ")
-			return true
-		}
-		fs.Debugf("Md5sums identical - skipping")
-		// FIXME update the mtime of the remote object here
-		return false
-	}
-	if !t.Equal(fs.info.ModTime()) {
+	} else if !t.Equal(fs.info.ModTime()) {
 		fs.Debugf("Modification times differ")
+	} else {
+		fs.Debugf("Size and modification time the same - skipping")
+		return false
+	} 
+
+	// mtime is unreadable or different but size is the same so
+	// check the MD5SUM
+	localMd5, err := fs.md5sum()
+	if err != nil {
+		fs.Debugf("Failed to calculate md5: %s", err)
 		return true
 	}
+	// fs.Debugf("Local  MD5 %s", localMd5)
+	// fs.Debugf("Remote MD5 %s", obj.Hash)
+	if localMd5 != strings.ToLower(obj.Hash) {
+		fs.Debugf("Md5sums differ")
+		return true
+	}
+
+	// FIXME update the mtime of the remote object here
+	fs.Debugf("Size and MD5SUM identical - skipping")
 	return false
 }
 
