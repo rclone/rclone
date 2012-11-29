@@ -11,6 +11,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"runtime/pprof"
@@ -167,6 +168,26 @@ func (fs *FsObject) put(c *swift.Connection, container string) {
 	fs.Debugf("Uploaded")
 }
 
+// Return an FsObject from a path
+//
+// May return nil if an error occurred
+func NewFsObject(root, path string) *FsObject {
+	info, err := os.Lstat(path)
+	if err != nil {
+		log.Printf("Failed to stat %s: %s", path, err)
+		return nil
+	}
+	rel, err := filepath.Rel(root, path)
+	if err != nil {
+		log.Printf("Failed to get relative path %s: %s", path, err)
+		return nil
+	}
+	if rel == "." {
+		rel = ""
+	}
+	return &FsObject{rel: rel, path: path, info: info}
+}
+
 // Walk the path returning a channel of FsObjects
 //
 // FIXME ignore symlinks?
@@ -178,20 +199,9 @@ func walk(root string) FsObjectsChan {
 			if err != nil {
 				log.Printf("Failed to open directory: %s: %s", path, err)
 			} else {
-				info, err := os.Lstat(path)
-				if err != nil {
-					log.Printf("Failed to stat %s: %s", path, err)
-					return nil
+				if fs := NewFsObject(root, path); fs != nil {
+					out <- fs
 				}
-				rel, err := filepath.Rel(root, path)
-				if err != nil {
-					log.Printf("Failed to get relative path %s: %s", path, err)
-					return nil
-				}
-				if rel == "." {
-					rel = ""
-				}
-				out <- &FsObject{rel: rel, path: path, info: info}
 			}
 			return nil
 		})
@@ -279,6 +289,78 @@ func upload(c *swift.Connection, root, container string) {
 	close(to_be_uploaded)
 	log.Printf("Waiting for uploads to finish")
 	uploaderWg.Wait()
+}
+
+// Get an object to the filepath making directories if necessary
+func get(c *swift.Connection, container, name, filepath string) {
+	log.Printf("Download %s to %s", name, filepath)
+
+	dir := path.Dir(filepath)
+	err := os.MkdirAll(dir, 0770)
+	if err != nil {
+		log.Printf("Couldn't make directory %q: %s", dir, err)
+		return
+	}
+
+	out, err := os.Create(filepath)
+	if err != nil {
+		log.Printf("Failed to open %q: %s", filepath, err)
+		return
+	}
+
+	_, geterr := c.ObjectGet(container, name, out, true, nil)
+	if geterr != nil {
+		log.Printf("Failed to download %q: %s", name, geterr)
+	}
+
+	err = out.Close()
+	if err != nil {
+		log.Printf("Error closing %q: %s", filepath, err)
+	}
+
+	if geterr != nil {
+		log.Printf("Removing failed download %q", filepath)
+		err = os.Remove(filepath)
+		if err != nil {
+			log.Printf("Failed to remove %q: %s", filepath, err)
+		}
+	}
+}
+
+// Syncs a container into a directory
+//
+// FIXME don't want to update the modification times on the
+// remote server if they are different - want to modify the local
+// file!
+//
+// FIXME need optional stat in FsObject and to be able to make FsObjects from ObjectsAll
+func download(c *swift.Connection, container, root string) {
+	// FIXME this would be nice running into a channel!
+	objects, err := c.ObjectsAll(container, nil)
+	if err != nil {
+		log.Fatalf("Couldn't read container %q: %s", container, err)
+	}
+
+	err = os.MkdirAll(root, 0770)
+	if err != nil {
+		log.Fatalf("Couldn't make directory %q: %s", root, err)
+	}
+
+	for i := range objects {
+		object := &objects[i]
+		filepath := path.Join(root, object.Name)
+		fs := NewFsObject(root, filepath)
+		if fs == nil {
+			log.Printf("%s: Download: not found", object.Name)
+		} else if !fs.storable(c, container) {
+			fs.Debugf("Skip: not storable")
+			continue
+		} else if !fs.changed(c, container) {
+			fs.Debugf("Skip: not changed")
+			continue
+		}
+		get(c, container, object.Name, filepath)
+	}
 }
 
 // Lists the containers
@@ -371,6 +453,9 @@ func main() {
 	case "up", "upload":
 		checkArgs(args, 2, "Need directory to read from and container to write to")
 		upload(c, args[0], args[1])
+	case "down", "download":
+		checkArgs(args, 2, "Need container to read from and directory to write to")
+		download(c, args[0], args[1])
 	case "list", "ls":
 		if len(args) == 0 {
 			listContainers(c)
