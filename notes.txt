@@ -16,6 +16,10 @@ Need an iterate all objects routine... Could use a channel
 FIXME progress meter would be nice! Do this by wrapping the Reader with a progress bar
 
 Do bandwidth limit by wrapping the Reader too
+  Maybe using https://jra-go.googlecode.com/hg/linkio/ which will work for multiple
+  uploads or downloads. 
+  * code.google.com/p/mxk/go1/flowcontrol - only does one flow at once
+Or maybe put into swift library.
 
 Could have an integrity check mode where we check the MD5sums of the local vs the remote
 
@@ -23,4 +27,15 @@ Some stats would be nice!
 
 Windows paths? Do we need to translate / and \?
 
-Make swift timeouts be settable
+Make swift timeouts be settable with command line parameters
+
+Add bandwidth limit?  
+
+Make a wrapper in connection which
+  * measures bandwidth and reports it
+  * limits bandwidth using Reader and Writer
+  * for a pool of all individual connectinos
+  * does timeouts by setting a limit, seeing whether io has happened
+    and resetting it if it has
+
+Check the locking in swift module!
