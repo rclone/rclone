@@ -17,6 +17,7 @@ import (
 	"runtime/pprof"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Globals
@@ -39,15 +40,12 @@ var (
 	uploaders = flag.Int("uploaders", 4, "Number of uploaders to run in parallel.")
 )
 
-// Make this an interface?
-//
-// Have an implementation for SwiftObjects and FsObjects?
-//
-// This represents an object in the filesystem
+// A filesystem like object which can either be a remote object or a
+// local file/directory or both
 type FsObject struct {
-	rel  string
-	path string
-	info os.FileInfo
+	remote string      // The remote path
+	path   string      // The local path
+	info   os.FileInfo // Interface for file info
 }
 
 type FsObjectsChan chan *FsObject
@@ -57,7 +55,7 @@ type FsObjects []FsObject
 // Write debuging output for this FsObject
 func (fs *FsObject) Debugf(text string, args ...interface{}) {
 	out := fmt.Sprintf(text, args...)
-	log.Printf("%s: %s", fs.rel, out)
+	log.Printf("%s: %s", fs.remote, out)
 }
 
 // md5sum calculates the md5sum of a file returning a lowercase hex string
@@ -77,41 +75,56 @@ func (fs *FsObject) md5sum() (string, error) {
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
-// Checks to see if an object has changed or not by looking at its size, mtime and MD5SUM
+// Sets the modification time of the local fs object
+func (fs *FsObject) SetModTime(modTime time.Time) {
+	err := os.Chtimes(fs.path, modTime, modTime)
+	if err != nil {
+		fs.Debugf("Failed to set mtime on file: %s", err)
+	}
+}
+
+// Checks to see if the remote and local objects are equal by looking
+// at size, mtime and MD5SUM
 //
-// If the remote object size is different then it is considered to be
-// changed.
+// If the remote and local size are different then it is considered to
+// be not equal.
 //
 // If the size is the same and the mtime is the same then it is
-// considered to be unchanged.  This is the heuristic rsync uses when
+// considered to be equal.  This is the heuristic rsync uses when
 // not using --checksum.
 //
 // If the size is the same and and mtime is different or unreadable
 // and the MD5SUM is the same then the file is considered to be
-// unchanged.  In this case the mtime on the object is updated.
+// equal.  In this case the mtime on the object is updated. If
+// upload is set then the remote object is changed otherwise the local
+// object.
 //
-// Otherwise the file is considered to be changed.
-func (fs *FsObject) changed(c *swift.Connection, container string) bool {
-	obj, h, err := c.Object(container, fs.rel)
+// Otherwise the file is considered to be not equal including if there
+// were errors reading info.
+func (fs *FsObject) Equal(c *swift.Connection, container string, upload bool) bool {
+	// FIXME could pass in an Object here if we have one which
+	// will mean we could do the Size and Hash checks without a
+	// remote call if we wanted
+	obj, h, err := c.Object(container, fs.remote)
 	if err != nil {
 		fs.Debugf("Failed to read info: %s", err)
-		return true
+		return false
 	}
 	if obj.Bytes != fs.info.Size() {
 		fs.Debugf("Sizes differ")
-		return true
+		return false
 	}
 
 	// Size the same so check the mtime
 	m := h.ObjectMetadata()
-	t, err := m.GetModTime()
+	remoteModTime, err := m.GetModTime()
 	if err != nil {
 		fs.Debugf("Failed to read mtime: %s", err)
-	} else if !t.Equal(fs.info.ModTime()) {
+	} else if !remoteModTime.Equal(fs.info.ModTime()) {
 		fs.Debugf("Modification times differ")
 	} else {
-		fs.Debugf("Size and modification time the same - skipping")
-		return false
+		fs.Debugf("Size and modification time the same")
+		return true
 	}
 
 	// mtime is unreadable or different but size is the same so
@@ -119,29 +132,36 @@ func (fs *FsObject) changed(c *swift.Connection, container string) bool {
 	localMd5, err := fs.md5sum()
 	if err != nil {
 		fs.Debugf("Failed to calculate md5: %s", err)
-		return true
+		return false
 	}
 	// fs.Debugf("Local  MD5 %s", localMd5)
 	// fs.Debugf("Remote MD5 %s", obj.Hash)
 	if localMd5 != strings.ToLower(obj.Hash) {
 		fs.Debugf("Md5sums differ")
-		return true
+		return false
 	}
 
-	// Update the mtime of the remote object here
-	m.SetModTime(fs.info.ModTime())
-	err = c.ObjectUpdate(container, fs.rel, m.ObjectHeaders())
-	if err != nil {
-		fs.Debugf("Failed to update mtime: %s", err)
+	// Size and MD5 the same but mtime different so update the
+	// mtime of the local or remote object here
+	if upload {
+		m.SetModTime(fs.info.ModTime())
+		err = c.ObjectUpdate(container, fs.remote, m.ObjectHeaders())
+		if err != nil {
+			fs.Debugf("Failed to update remote mtime: %s", err)
+		}
+		fs.Debugf("Updated mtime of remote object")
+	} else {
+		fmt.Printf("metadata %q, remoteModTime = %s\n", m, remoteModTime)
+		fs.SetModTime(remoteModTime)
+		fs.Debugf("Updated mtime of local object")
 	}
-	fs.Debugf("Updated mtime")
 
-	fs.Debugf("Size and MD5SUM identical - skipping")
-	return false
+	fs.Debugf("Size and MD5SUM of local and remote objects identical")
+	return true
 }
 
 // Is this object storable
-func (fs *FsObject) storable(c *swift.Connection, container string) bool {
+func (fs *FsObject) storable() bool {
 	mode := fs.info.Mode()
 	if mode&(os.ModeSymlink|os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
 		fs.Debugf("Can't transfer non file/directory")
@@ -165,7 +185,7 @@ func (fs *FsObject) put(c *swift.Connection, container string) {
 	defer in.Close()
 	m := swift.Metadata{}
 	m.SetModTime(fs.info.ModTime())
-	_, err = c.ObjectPut(container, fs.rel, in, true, "", "", m.ObjectHeaders())
+	_, err = c.ObjectPut(container, fs.remote, in, true, "", "", m.ObjectHeaders())
 	if err != nil {
 		fs.Debugf("Failed to upload: %s", err)
 		return
@@ -173,24 +193,32 @@ func (fs *FsObject) put(c *swift.Connection, container string) {
 	fs.Debugf("Uploaded")
 }
 
+// Stat a FsObject info info
+func (fs *FsObject) lstat() error {
+	info, err := os.Lstat(fs.path)
+	fs.info = info
+	return err
+}
+
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
 func NewFsObject(root, path string) *FsObject {
-	info, err := os.Lstat(path)
-	if err != nil {
-		log.Printf("Failed to stat %s: %s", path, err)
-		return nil
-	}
-	rel, err := filepath.Rel(root, path)
+	remote, err := filepath.Rel(root, path)
 	if err != nil {
 		log.Printf("Failed to get relative path %s: %s", path, err)
 		return nil
 	}
-	if rel == "." {
-		rel = ""
+	if remote == "." {
+		remote = ""
 	}
-	return &FsObject{rel: rel, path: path, info: info}
+	fs := &FsObject{remote: remote, path: path}
+	err = fs.lstat()
+	if err != nil {
+		log.Printf("Failed to stat %s: %s", path, err)
+		return nil
+	}
+	return fs
 }
 
 // Walk the path returning a channel of FsObjects
@@ -252,11 +280,11 @@ func checker(c *swift.Connection, container string, in, out FsObjectsChan, wg *s
 	defer wg.Done()
 	for fs := range in {
 		// Check to see if can store this
-		if !fs.storable(c, container) {
+		if !fs.storable() {
 			continue
 		}
 		// Check to see if changed or not
-		if !fs.changed(c, container) {
+		if fs.Equal(c, container, true) {
 			fs.Debugf("Unchanged skipping")
 			continue
 		}
@@ -296,54 +324,48 @@ func upload(c *swift.Connection, root, container string) {
 	uploaderWg.Wait()
 }
 
-// FIXME should be an FsOject method
-//
 // Get an object to the filepath making directories if necessary
-func get(c *swift.Connection, container, name, filepath string) {
-	log.Printf("Download %s to %s", name, filepath)
+func (fs *FsObject) get(c *swift.Connection, container string) {
+	log.Printf("Download %s to %s", fs.remote, fs.path)
 
-	dir := path.Dir(filepath)
+	dir := path.Dir(fs.path)
 	err := os.MkdirAll(dir, 0770)
 	if err != nil {
-		log.Printf("Couldn't make directory %q: %s", dir, err)
+		fs.Debugf("Couldn't make directory: %s", err)
 		return
 	}
 
-	out, err := os.Create(filepath)
+	out, err := os.Create(fs.path)
 	if err != nil {
-		log.Printf("Failed to open %q: %s", filepath, err)
+		fs.Debugf("Failed to open: %s", err)
 		return
 	}
 
-	h, getErr := c.ObjectGet(container, name, out, true, nil)
+	h, getErr := c.ObjectGet(container, fs.remote, out, true, nil)
 	if getErr != nil {
-		log.Printf("Failed to download %q: %s", name, getErr)
+		fs.Debugf("Failed to download: %s", getErr)
 	}
 
 	closeErr := out.Close()
 	if closeErr != nil {
-		log.Printf("Error closing %q: %s", filepath, closeErr)
+		fs.Debugf("Error closing: %s", closeErr)
 	}
 
 	if getErr != nil || closeErr != nil {
-		log.Printf("Removing failed download %q", filepath)
-		err = os.Remove(filepath)
+		fs.Debugf("Removing failed download")
+		err = os.Remove(fs.path)
 		if err != nil {
-			log.Printf("Failed to remove %q: %s", filepath, err)
+			fs.Debugf("Failed to remove failed download: %s", err)
 		}
 		return
 	}
 
 	// Set the mtime
-	// FIXME should be a FsObject method?
 	modTime, err := h.ObjectMetadata().GetModTime()
 	if err != nil {
-		log.Printf("Failed to read mtime from object: %s", err)
+		fs.Debugf("Failed to read mtime from object: %s", err)
 	} else {
-		err = os.Chtimes(filepath, modTime, modTime)
-		if err != nil {
-			log.Printf("Failed to set mtime on file: %s", err)
-		}
+		fs.SetModTime(modTime)
 	}
 }
 
@@ -369,17 +391,22 @@ func download(c *swift.Connection, container, root string) {
 	for i := range objects {
 		object := &objects[i]
 		filepath := path.Join(root, object.Name)
-		// fs := NewFsObject(root, filepath)
-		// if fs == nil {
-		// 	log.Printf("%s: Download: not found", object.Name)
-		// } else if !fs.storable(c, container) {
-		// 	fs.Debugf("Skip: not storable")
-		// 	continue
-		// } else if !fs.changed(c, container) {
-		// 	fs.Debugf("Skip: not changed")
-		// 	continue
-		// }
-		get(c, container, object.Name, filepath)
+		fs := FsObject{remote: object.Name, path: filepath}
+		_ = fs.lstat()
+		if fs.info == nil {
+			fs.Debugf("Couldn't find local file - download")
+		} else {
+			fs.Debugf("Found local file - checking")
+			if !fs.storable() {
+				fs.Debugf("Not overwriting different type local file")
+				continue
+			}
+			if fs.Equal(c, container, false) {
+				fs.Debugf("Skip: not changed")
+				continue
+			}
+		}
+		fs.get(c, container)
 	}
 }
 
