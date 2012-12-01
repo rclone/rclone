@@ -48,40 +48,8 @@ Need to make directory objects otherwise can't upload an empty directory
 
 Make a fs.Errorf and count errors and log them at a different level
 
-Seem to be able to read stats to ns precision (using struct stat
-defined in asm-generic/stat.h)
+Submit chtimes_linux.go to standard library
+  * Can also fix Futime which isn't using the syscall under linux
+  * Also for all the *bsd so likely they could be fixed too
 
-https://www.kernel.org/doc/man-pages/online/pages/man2/stat.2.html
-
- but only write them to us precision.
-This is confirmed by looking at the source for Chtimes
-
-func Chtimes(name string, atime time.Time, mtime time.Time) error {
-	var utimes [2]syscall.Timeval
-	atime_ns := atime.Unix()*1e9 + int64(atime.Nanosecond())
-	mtime_ns := mtime.Unix()*1e9 + int64(mtime.Nanosecond())
-	utimes[0] = syscall.NsecToTimeval(atime_ns)
-	utimes[1] = syscall.NsecToTimeval(mtime_ns)
-	if e := syscall.Utimes(name, utimes[0:]); e != nil {
-		return &PathError{"chtimes", name, e}
-	}
-	return nil
-}
-
-And 
-
-func NsecToTimeval(nsec int64) (tv Timeval) {
-	nsec += 999 // round up to microsecond
-	tv.Sec = nsec / 1e9
-	tv.Usec = nsec % 1e9 / 1e3
-	return
-}
-
-Seems likely Go should be using
-  utimensat()  and  futimens()
-Instead of utimes() - the syscall is defined already
-SYS_UTIMENSAT
-Also for all the *bsd so likely they could be fixed too
-
-Can also fix Futime which isn't using the syscall under linux
 

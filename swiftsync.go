@@ -77,7 +77,7 @@ func (fs *FsObject) md5sum() (string, error) {
 
 // Sets the modification time of the local fs object
 func (fs *FsObject) SetModTime(modTime time.Time) {
-	err := os.Chtimes(fs.path, modTime, modTime)
+	err := Chtimes(fs.path, modTime, modTime)
 	if err != nil {
 		fs.Debugf("Failed to set mtime on file: %s", err)
 	}
