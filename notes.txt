@@ -39,3 +39,9 @@ Make a wrapper in connection which
     and resetting it if it has
 
 Check the locking in swift module!
+
+501 not implemented for paths with a ? in them!  Probably need to do some escaping...
+ hello? sausage: Failed to read info: HTTP Error: 501: 501 Not Implemented
+
+Need to make directory objects otherwise can't upload an empty directory
+  * Or could upload empty directories only?

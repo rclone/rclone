@@ -39,6 +39,11 @@ var (
 	uploaders = flag.Int("uploaders", 4, "Number of uploaders to run in parallel.")
 )
 
+// Make this an interface?
+//
+// Have an implementation for SwiftObjects and FsObjects?
+//
+// This represents an object in the filesystem
 type FsObject struct {
 	rel  string
 	path string
@@ -291,6 +296,8 @@ func upload(c *swift.Connection, root, container string) {
 	uploaderWg.Wait()
 }
 
+// FIXME should be an FsOject method
+//
 // Get an object to the filepath making directories if necessary
 func get(c *swift.Connection, container, name, filepath string) {
 	log.Printf("Download %s to %s", name, filepath)
@@ -308,21 +315,34 @@ func get(c *swift.Connection, container, name, filepath string) {
 		return
 	}
 
-	_, geterr := c.ObjectGet(container, name, out, true, nil)
-	if geterr != nil {
-		log.Printf("Failed to download %q: %s", name, geterr)
+	h, getErr := c.ObjectGet(container, name, out, true, nil)
+	if getErr != nil {
+		log.Printf("Failed to download %q: %s", name, getErr)
 	}
 
-	err = out.Close()
-	if err != nil {
-		log.Printf("Error closing %q: %s", filepath, err)
+	closeErr := out.Close()
+	if closeErr != nil {
+		log.Printf("Error closing %q: %s", filepath, closeErr)
 	}
 
-	if geterr != nil {
+	if getErr != nil || closeErr != nil {
 		log.Printf("Removing failed download %q", filepath)
 		err = os.Remove(filepath)
 		if err != nil {
 			log.Printf("Failed to remove %q: %s", filepath, err)
+		}
+		return
+	}
+
+	// Set the mtime
+	// FIXME should be a FsObject method?
+	modTime, err := h.ObjectMetadata().GetModTime()
+	if err != nil {
+		log.Printf("Failed to read mtime from object: %s", err)
+	} else {
+		err = os.Chtimes(filepath, modTime, modTime)
+		if err != nil {
+			log.Printf("Failed to set mtime on file: %s", err)
 		}
 	}
 }
@@ -349,16 +369,16 @@ func download(c *swift.Connection, container, root string) {
 	for i := range objects {
 		object := &objects[i]
 		filepath := path.Join(root, object.Name)
-		fs := NewFsObject(root, filepath)
-		if fs == nil {
-			log.Printf("%s: Download: not found", object.Name)
-		} else if !fs.storable(c, container) {
-			fs.Debugf("Skip: not storable")
-			continue
-		} else if !fs.changed(c, container) {
-			fs.Debugf("Skip: not changed")
-			continue
-		}
+		// fs := NewFsObject(root, filepath)
+		// if fs == nil {
+		// 	log.Printf("%s: Download: not found", object.Name)
+		// } else if !fs.storable(c, container) {
+		// 	fs.Debugf("Skip: not storable")
+		// 	continue
+		// } else if !fs.changed(c, container) {
+		// 	fs.Debugf("Skip: not changed")
+		// 	continue
+		// }
 		get(c, container, object.Name, filepath)
 	}
 }
