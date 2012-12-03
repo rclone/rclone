@@ -246,33 +246,6 @@ func walk(root string) FsObjectsChan {
 	return out
 }
 
-// syntaxError prints the syntax
-func syntaxError() {
-	fmt.Fprintf(os.Stderr, `Sync files and directores to and from swift
-
-FIXME
-
-Full options:
-`)
-	flag.PrintDefaults()
-}
-
-// Exit with the message
-func fatal(message string, args ...interface{}) {
-	syntaxError()
-	fmt.Fprintf(os.Stderr, message, args...)
-	os.Exit(1)
-}
-
-// checkArgs checks there are enough arguments and prints a message if not
-func checkArgs(args []string, n int, message string) {
-	if len(args) != n {
-		syntaxError()
-		fmt.Fprintf(os.Stderr, "%d arguments required: %s\n", n, message)
-		os.Exit(1)
-	}
-}
-
 // Read FsObjects on in and write them to out if they need uploading
 //
 // FIXME potentially doing lots of MD5SUMS at once
@@ -301,7 +274,8 @@ func uploader(c *swift.Connection, container string, in FsObjectsChan, wg *sync.
 }
 
 // Syncs a directory into a container
-func upload(c *swift.Connection, root, container string) {
+func upload(c *swift.Connection, args []string) {
+	root, container := args[0], args[1]
 	to_be_checked := walk(root)
 	to_be_uploaded := make(FsObjectsChan, *uploaders)
 
@@ -376,7 +350,8 @@ func (fs *FsObject) get(c *swift.Connection, container string) {
 // file!
 //
 // FIXME need optional stat in FsObject and to be able to make FsObjects from ObjectsAll
-func download(c *swift.Connection, container, root string) {
+func download(c *swift.Connection, args []string) {
+	container, root := args[0], args[1]
 	// FIXME this would be nice running into a channel!
 	objects, err := c.ObjectsAll(container, nil)
 	if err != nil {
@@ -422,7 +397,12 @@ func listContainers(c *swift.Connection) {
 }
 
 // Lists files in a container
-func list(c *swift.Connection, container string) {
+func list(c *swift.Connection, args []string) {
+	if len(args) == 0 {
+		listContainers(c)
+		return
+	}
+	container := args[0]
 	//objects, err := c.ObjectsAll(container, &swift.ObjectsOpts{Prefix: "", Delimiter: '/'})
 	objects, err := c.ObjectsAll(container, nil)
 	if err != nil {
@@ -438,7 +418,8 @@ func list(c *swift.Connection, container string) {
 }
 
 // Makes a container
-func mkdir(c *swift.Connection, container string) {
+func mkdir(c *swift.Connection, args []string) {
+	container := args[0]
 	err := c.ContainerCreate(container, nil)
 	if err != nil {
 		log.Fatalf("Couldn't create container %q: %s", container, err)
@@ -446,11 +427,107 @@ func mkdir(c *swift.Connection, container string) {
 }
 
 // Removes a container
-func rmdir(c *swift.Connection, container string) {
+func rmdir(c *swift.Connection, args []string) {
+	container := args[0]
 	err := c.ContainerDelete(container)
 	if err != nil {
 		log.Fatalf("Couldn't delete container %q: %s", container, err)
 	}
+}
+
+type Command struct {
+	name             string
+	help             string
+	run              func(*swift.Connection, []string)
+	minArgs, maxArgs int
+}
+
+// checkArgs checks there are enough arguments and prints a message if not
+func (cmd *Command) checkArgs(args []string) {
+	if len(args) < cmd.minArgs {
+		syntaxError()
+		fmt.Fprintf(os.Stderr, "Command %s needs %d arguments mininum\n", cmd.name, cmd.minArgs)
+		os.Exit(1)
+	} else if len(args) > cmd.maxArgs {
+		syntaxError()
+		fmt.Fprintf(os.Stderr, "Command %s needs %d arguments maximum\n", cmd.name, cmd.maxArgs)
+		os.Exit(1)
+	}
+}
+
+var Commands = []Command{
+	{
+		"upload",
+		`<directory> <container>
+        Upload the local directory to the remote container.  Doesn't
+        upload unchanged files, testing first by modification time
+        then by MD5SUM
+`,
+		upload,
+		2, 2,
+	},
+	{
+		"download",
+		`<container> <directory> 
+        Download the container to the local directory.  Doesn't
+        download unchanged files
+`,
+		download,
+		2, 2,
+	},
+	{
+		"ls",
+		`[<container>]
+        List the containers if no parameter supplied or the contents
+        of <container>
+`,
+		list,
+		0, 1,
+	},
+	{
+		"mkdir",
+		`<container>
+        Make the container if it doesn't already exist
+`,
+		mkdir,
+		1, 1,
+	},
+	{
+		"rmdir",
+		`<container>
+        Remove the container.  Note that you can't remove a container with
+        objects in - use rm for that
+`,
+		rmdir,
+		1, 1,
+	},
+}
+
+// syntaxError prints the syntax
+func syntaxError() {
+	fmt.Fprintf(os.Stderr, `Sync files and directories to and from swift
+
+Syntax: [options] subcommand <parameters> <parameters...>
+
+Subcommands:
+`)
+	for i := range Commands {
+		cmd := &Commands[i]
+		fmt.Fprintf(os.Stderr, "    %s: %s\n", cmd.name, cmd.help)
+	}
+
+	fmt.Fprintf(os.Stderr, "Options:\n")
+	flag.PrintDefaults()
+	fmt.Fprintf(os.Stderr, `
+It is only necessary to use a unique prefix of the subcommand, eg 'up' for 'upload'.
+`)
+}
+
+// Exit with the message
+func fatal(message string, args ...interface{}) {
+	syntaxError()
+	fmt.Fprintf(os.Stderr, message, args...)
+	os.Exit(1)
 }
 
 func main() {
@@ -493,31 +570,27 @@ func main() {
 		log.Fatal("Failed to authenticate", err)
 	}
 
-	command := args[0]
+	cmd := strings.ToLower(args[0])
 	args = args[1:]
 
-	switch command {
-	case "up", "upload":
-		checkArgs(args, 2, "Need directory to read from and container to write to")
-		upload(c, args[0], args[1])
-	case "down", "download":
-		checkArgs(args, 2, "Need container to read from and directory to write to")
-		download(c, args[0], args[1])
-	case "list", "ls":
-		if len(args) == 0 {
-			listContainers(c)
-		} else {
-			checkArgs(args, 1, "Need container to list")
-			list(c, args[0])
+	// Find the command doing a prefix match
+	var found *Command
+	for i := range Commands {
+		command := &Commands[i]
+		// exact command name found - use that
+		if command.name == cmd {
+			found = command
+			break
+		} else if strings.HasPrefix(command.name, cmd) {
+			if found != nil {
+				log.Fatalf("Not unique - matches multiple commands %q", cmd)
+			}
+			found = command
 		}
-	case "mkdir":
-		checkArgs(args, 1, "Need container to make")
-		mkdir(c, args[0])
-	case "rmdir":
-		checkArgs(args, 1, "Need container to delte")
-		rmdir(c, args[0])
-	default:
-		log.Fatalf("Unknown command %q", command)
 	}
-
+	if found == nil {
+		log.Fatalf("Unknown command %q", cmd)
+	}
+	found.checkArgs(args)
+	found.run(c, args)
 }
