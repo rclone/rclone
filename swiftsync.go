@@ -276,6 +276,7 @@ func uploader(c *swift.Connection, container string, in FsObjectsChan, wg *sync.
 // Syncs a directory into a container
 func upload(c *swift.Connection, args []string) {
 	root, container := args[0], args[1]
+	mkdir(c, []string{container})
 	to_be_checked := walk(root)
 	to_be_uploaded := make(FsObjectsChan, *uploaders)
 
@@ -350,6 +351,8 @@ func (fs *FsObject) get(c *swift.Connection, container string) {
 // file!
 //
 // FIXME need optional stat in FsObject and to be able to make FsObjects from ObjectsAll
+//
+// FIXME should download and stat many at once
 func download(c *swift.Connection, args []string) {
 	container, root := args[0], args[1]
 	// FIXME this would be nice running into a channel!
@@ -435,6 +438,30 @@ func rmdir(c *swift.Connection, args []string) {
 	}
 }
 
+// Removes a container and all of its contents
+//
+// FIXME should delete many at once
+//
+// FIXME should make FsObjects and use debugging
+func purge(c *swift.Connection, args []string) {
+	container := args[0]
+	objects, err := c.ObjectsAll(container, nil)
+	if err != nil {
+		log.Fatalf("Couldn't read container %q: %s", container, err)
+	}
+
+	for i := range objects {
+		object := &objects[i]
+		err = c.ObjectDelete(container, object.Name)
+		if err != nil {
+			log.Printf("%s: Couldn't delete: %s\n", object.Name, err)
+		} else {
+			log.Printf("%s: Deleted\n", object.Name)
+		}
+	}
+	rmdir(c, args)
+}
+
 type Command struct {
 	name             string
 	help             string
@@ -499,6 +526,14 @@ var Commands = []Command{
         objects in - use rm for that
 `,
 		rmdir,
+		1, 1,
+	},
+	{
+		"purge",
+		`<container>
+        Remove the container and all of the contents.
+`,
+		purge,
 		1, 1,
 	},
 }
