@@ -457,8 +457,6 @@ func rmdir(c *swift.Connection, args []string) {
 
 // Removes a container and all of its contents
 //
-// FIXME should delete many at once
-//
 // FIXME should make FsObjects and use debugging
 func purge(c *swift.Connection, args []string) {
 	container := args[0]
@@ -467,15 +465,33 @@ func purge(c *swift.Connection, args []string) {
 		log.Fatalf("Couldn't read container %q: %s", container, err)
 	}
 
-	for i := range objects {
-		object := &objects[i]
-		err = c.ObjectDelete(container, object.Name)
-		if err != nil {
-			log.Printf("%s: Couldn't delete: %s\n", object.Name, err)
-		} else {
-			log.Printf("%s: Deleted\n", object.Name)
-		}
+	to_be_deleted := make(chan *swift.Object, *transfers)
+
+	var wg sync.WaitGroup
+	wg.Add(*transfers)
+	for i := 0; i < *transfers; i++ {
+		go func() {
+			defer wg.Done()
+			for object := range to_be_deleted {
+				err := c.ObjectDelete(container, object.Name)
+				if err != nil {
+					log.Printf("%s: Couldn't delete: %s\n", object.Name, err)
+				} else {
+					log.Printf("%s: Deleted\n", object.Name)
+				}
+			}
+		}()
 	}
+
+	for i := range objects {
+		to_be_deleted <- &objects[i]
+	}
+	close(to_be_deleted)
+
+	log.Printf("Waiting for deletions to finish")
+	wg.Wait()
+
+	log.Printf("Deleting container")
 	rmdir(c, args)
 }
 
