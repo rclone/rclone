@@ -23,12 +23,7 @@ import (
 // Globals
 var (
 	// Flags
-	//fileSize      = flag.Int64("s", 1E9, "Size of the check files")
 	cpuprofile = flag.String("cpuprofile", "", "Write cpu profile to file")
-	//duration      = flag.Duration("duration", time.Hour*24, "Duration to run test")
-	//statsInterval = flag.Duration("stats", time.Minute*1, "Interval to print stats")
-	//logfile       = flag.String("logfile", "stressdisk.log", "File to write log to set to empty to ignore")
-
 	snet    = flag.Bool("snet", false, "Use internal service network") // FIXME not implemented
 	verbose = flag.Bool("verbose", false, "Print lots more stuff")
 	quiet   = flag.Bool("quiet", false, "Print as little stuff as possible")
