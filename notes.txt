@@ -1,3 +1,14 @@
+Ideas
+  * remote copy container to another container
+  * check local is same as remote
+  * syncup/syncdown (like rsync with delete)
+  * use container: /path/syntax like rsync?
+  * Allow subpaths container:/sub/path
+  * allow local/local too
+  * progress reports
+  * stats
+  * Add bandwidth limit?
+
 make 100% compatible with swift.py?
 
 Make Env vars compatible with st?
@@ -21,15 +32,9 @@ Do bandwidth limit by wrapping the Reader too
   * code.google.com/p/mxk/go1/flowcontrol - only does one flow at once
 Or maybe put into swift library.
 
-Could have an integrity check mode where we check the MD5sums of the local vs the remote
-
-Some stats would be nice!
-
 Windows paths? Do we need to translate / and \?
 
 Make swift timeouts be settable with command line parameters
-
-Add bandwidth limit?  
 
 Make a wrapper in connection which
   * measures bandwidth and reports it
@@ -40,16 +45,8 @@ Make a wrapper in connection which
 
 Check the locking in swift module!
 
-501 not implemented for paths with a ? in them!  Probably need to do some escaping...
- hello? sausage: Failed to read info: HTTP Error: 501: 501 Not Implemented
-
 Need to make directory objects otherwise can't upload an empty directory
   * Or could upload empty directories only?
 
 Make a fs.Errorf and count errors and log them at a different level
-
-Submit chtimes_linux.go to standard library
-  * Can also fix Futime which isn't using the syscall under linux
-  * Also for all the *bsd so likely they could be fixed too
-
 
