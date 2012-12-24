@@ -24,9 +24,9 @@ import (
 var (
 	// Flags
 	cpuprofile = flag.String("cpuprofile", "", "Write cpu profile to file")
-	snet    = flag.Bool("snet", false, "Use internal service network") // FIXME not implemented
-	verbose = flag.Bool("verbose", false, "Print lots more stuff")
-	quiet   = flag.Bool("quiet", false, "Print as little stuff as possible")
+	snet       = flag.Bool("snet", false, "Use internal service network") // FIXME not implemented
+	verbose    = flag.Bool("verbose", false, "Print lots more stuff")
+	quiet      = flag.Bool("quiet", false, "Print as little stuff as possible")
 	// FIXME make these part of swift so we get a standard set of flags?
 	authUrl   = flag.String("auth", os.Getenv("ST_AUTH"), "Auth URL for server. Defaults to environment var ST_AUTH.")
 	userName  = flag.String("user", os.Getenv("ST_USER"), "User name. Defaults to environment var ST_USER.")
@@ -347,7 +347,6 @@ func (fs *FsObject) get(c *swift.Connection, container string) {
 		fs.SetModTime(modTime)
 	}
 }
-
 
 // Read FsObjects on in and download them
 func downloader(c *swift.Connection, container string, in FsObjectsChan, wg *sync.WaitGroup) {
