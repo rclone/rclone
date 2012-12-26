@@ -72,7 +72,7 @@ func Chtimes(name string, atime time.Time, mtime time.Time) error {
 	utimes[0] = syscall.NsecToTimespec(atime.UnixNano())
 	utimes[1] = syscall.NsecToTimespec(mtime.UnixNano())
 	if e := Utimensat(AT_FDCWD, name, utimes[0:]); e != nil {
-		return &os.PathError{"chtimes", name, e}
+		return &os.PathError{Op: "chtimes", Path: name, Err: e}
 	}
 	return nil
 }
