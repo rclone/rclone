@@ -57,23 +57,21 @@ func (f *FsSwift) NewFsObject(remote string) FsObject {
 }
 
 // Walk the path returning a channel of FsObjects
-//
-// FIXME ignore symlinks?
-// FIXME what about hardlinks / etc
-// 
-// FIXME not returning error if dir not found?
 func (f *FsSwift) List() FsObjectsChan {
 	out := make(FsObjectsChan, *checkers)
 	go func() {
 		// FIXME use a smaller limit?
-		err := f.c.ObjectsAllFn(f.container, nil, func(objects []swift.Object) bool {
-			for i := range objects {
-				object := &objects[i]
-				if fs := f.NewFsObjectWithInfo(object.Name, object); fs != nil {
-					out <- fs
+		err := f.c.ObjectsWalk(f.container, nil, func(opts *swift.ObjectsOpts) (interface{}, error) {
+			objects, err := f.c.Objects(f.container, opts)
+			if err == nil {
+				for i := range objects {
+					object := &objects[i]
+					if fs := f.NewFsObjectWithInfo(object.Name, object); fs != nil {
+						out <- fs
+					}
 				}
 			}
-			return false
+			return objects, err
 		})
 		if err != nil {
 			log.Printf("Couldn't read container %q: %s", f.container, err)

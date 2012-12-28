@@ -51,10 +51,9 @@ func (f *FsLocal) NewFsObject(remote string) FsObject {
 	return f.NewFsObjectWithInfo(remote, nil)
 }
 
-// Walk the path returning a channel of FsObjects
+// List the path returning a channel of FsObjects
 //
-// FIXME ignore symlinks?
-// FIXME what about hardlinks / etc
+// Ignores everything which isn't Storable, eg links etc
 func (f *FsLocal) List() FsObjectsChan {
 	out := make(FsObjectsChan, *checkers)
 	go func() {
