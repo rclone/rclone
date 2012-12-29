@@ -26,6 +26,13 @@ type FsObjectLocal struct {
 
 // ------------------------------------------------------------
 
+// NewFsLocal contstructs an FsLocal from the path
+func NewFsLocal(root string) (*FsLocal, error) {
+	root = path.Clean(root)
+	f := &FsLocal{root: root}
+	return f, nil
+}
+
 // Return an FsObject from a path
 //
 // May return nil if an error occurred

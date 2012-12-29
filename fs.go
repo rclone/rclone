@@ -37,6 +37,16 @@ type FsObjectsChan chan FsObject
 
 type FsObjects []FsObject
 
+// NewFs makes a new Fs object from the path
+//
+// FIXME make more generic in future
+func NewFs(path string) (Fs, error) {
+	if swiftMatch.MatchString(path) {
+		return NewFsSwift(path)
+	}
+	return NewFsLocal(path)
+}
+
 // checkClose is a utility function used to check the return from
 // Close in a defer statement.
 func checkClose(c io.Closer, err *error) {

@@ -6,7 +6,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/ncw/swift"
 	"log"
 	"os"
 	"runtime"
@@ -22,12 +21,8 @@ var (
 	snet       = flag.Bool("snet", false, "Use internal service network") // FIXME not implemented
 	verbose    = flag.Bool("verbose", false, "Print lots more stuff")
 	quiet      = flag.Bool("quiet", false, "Print as little stuff as possible")
-	// FIXME make these part of swift so we get a standard set of flags?
-	authUrl   = flag.String("auth", os.Getenv("ST_AUTH"), "Auth URL for server. Defaults to environment var ST_AUTH.")
-	userName  = flag.String("user", os.Getenv("ST_USER"), "User name. Defaults to environment var ST_USER.")
-	apiKey    = flag.String("key", os.Getenv("ST_KEY"), "API key (password). Defaults to environment var ST_KEY.")
-	checkers  = flag.Int("checkers", 8, "Number of checkers to run in parallel.")
-	transfers = flag.Int("transfers", 4, "Number of file transfers to run in parallel.")
+	checkers   = flag.Int("checkers", 8, "Number of checkers to run in parallel.")
+	transfers  = flag.Int("transfers", 4, "Number of file transfers to run in parallel.")
 )
 
 // Read FsObjects~s on in send to out if they need uploading
@@ -65,7 +60,7 @@ func Copier(in FsObjectsChan, fdst Fs, wg *sync.WaitGroup) {
 }
 
 // Copies fsrc into fdst
-func Copy(fsrc, fdst Fs) {
+func Copy(fdst, fsrc Fs) {
 	err := fdst.Mkdir()
 	if err != nil {
 		log.Fatal("Failed to make destination")
@@ -93,40 +88,9 @@ func Copy(fsrc, fdst Fs) {
 	copierWg.Wait()
 }
 
-// Syncs a directory into a container
-func upload(c *swift.Connection, args []string) {
-	root, container := args[0], args[1]
-	// FIXME
-	fsrc := &FsLocal{root: root}
-	fdst := &FsSwift{c: *c, container: container}
-
-	Copy(fsrc, fdst)
-}
-
-// Syncs a container into a directory
-//
-// FIXME need optional stat in FsObject and to be able to make FsObjects from ObjectsAll
-//
-// FIXME should download and stat many at once
-func download(c *swift.Connection, args []string) {
-	container, root := args[0], args[1]
-
-	// FIXME
-	fsrc := &FsSwift{c: *c, container: container}
-	fdst := &FsLocal{root: root}
-
-	Copy(fsrc, fdst)
-}
-
-// Lists the containers
-func listContainers(c *swift.Connection) {
-	containers, err := c.ContainersAll(nil)
-	if err != nil {
-		log.Fatalf("Couldn't list containers: %s", err)
-	}
-	for _, container := range containers {
-		fmt.Printf("%9d %12d %s\n", container.Count, container.Bytes, container.Name)
-	}
+// Copy~s from source to dest
+func copy_(fdst, fsrc Fs) {
+	Copy(fdst, fsrc)
 }
 
 // List the Fs to stdout
@@ -147,57 +111,34 @@ func List(f Fs) {
 }
 
 // Lists files in a container
-func list(c *swift.Connection, args []string) {
-	if len(args) == 0 {
-		listContainers(c)
+func list(fdst, fsrc Fs) {
+	if fdst == nil {
+		SwiftContainers()
 		return
 	}
-	container := args[0]
-	// FIXME
-	f := &FsSwift{c: *c, container: container}
-	List(f)
+	List(fdst)
 }
 
-// Local lists files
-func llist(c *swift.Connection, args []string) {
-	root := args[0]
-	// FIXME
-	f := &FsLocal{root: root}
-	List(f)
-}
-
-// Makes a container
-func mkdir(c *swift.Connection, args []string) {
-	container := args[0]
-	// FIXME
-	fdst := &FsSwift{c: *c, container: container}
-
+// Makes a destination directory or container
+func mkdir(fdst, fsrc Fs) {
 	err := fdst.Mkdir()
 	if err != nil {
-		log.Fatalf("Couldn't create container %q: %s", container, err)
+		log.Fatalf("Mkdir failed: %s", err)
 	}
 }
 
-// Removes a container
-func rmdir(c *swift.Connection, args []string) {
-	container := args[0]
-	// FIXME
-	fdst := &FsSwift{c: *c, container: container}
-
+// Removes a container but not if not empty
+func rmdir(fdst, fsrc Fs) {
 	err := fdst.Rmdir()
 	if err != nil {
-		log.Fatalf("Couldn't delete container %q: %s", container, err)
+		log.Fatalf("Rmdir failed: %s", err)
 	}
 }
 
 // Removes a container and all of its contents
 //
-// FIXME should make FsObjects and use debugging
-func purge(c *swift.Connection, args []string) {
-	container := args[0]
-	// FIXME
-	fdst := &FsSwift{c: *c, container: container}
-
+// FIXME doesn't delete local directories
+func purge(fdst, fsrc Fs) {
 	to_be_deleted := fdst.List()
 
 	var wg sync.WaitGroup
@@ -219,14 +160,14 @@ func purge(c *swift.Connection, args []string) {
 	log.Printf("Waiting for deletions to finish")
 	wg.Wait()
 
-	log.Printf("Deleting container")
-	rmdir(c, args)
+	log.Printf("Deleting path")
+	rmdir(fdst, fsrc)
 }
 
 type Command struct {
 	name             string
 	help             string
-	run              func(*swift.Connection, []string)
+	run              func(fdst, fsrc Fs)
 	minArgs, maxArgs int
 }
 
@@ -245,62 +186,55 @@ func (cmd *Command) checkArgs(args []string) {
 
 var Commands = []Command{
 	{
-		"upload",
-		`<directory> <container>
-        Upload the local directory to the remote container.  Doesn't
-        upload unchanged files, testing first by modification time
-        then by MD5SUM
+		"copy",
+		`<source> <destination>
+
+        Copy the source to the destination.  Doesn't transfer
+        unchanged files, testing first by modification time then by
+        MD5SUM.  Doesn't delete files from the destination.
+
 `,
-		upload,
-		2, 2,
-	},
-	{
-		"download",
-		`<container> <directory> 
-        Download the container to the local directory.  Doesn't
-        download unchanged files
-`,
-		download,
+		copy_,
 		2, 2,
 	},
 	{
 		"ls",
-		`[<container>]
-        List the containers if no parameter supplied or the contents
-        of <container>
+		`[<path>]
+
+        List the path. If no parameter is supplied then it lists the
+        available swift containers.
+
 `,
 		list,
 		0, 1,
 	},
 	{
-		"lls",
-		`[<directory>]
-        List the directory
-`,
-		llist,
-		1, 1,
-	},
-	{
 		"mkdir",
-		`<container>
-        Make the container if it doesn't already exist
+		`<path>
+
+        Make the path if it doesn't already exist
+
 `,
 		mkdir,
 		1, 1,
 	},
 	{
 		"rmdir",
-		`<container>
-        Remove the container.  Note that you can't remove a container with
-        objects in - use rm for that
+		`<path>
+
+        Remove the path.  Note that you can't remove a path with
+	objects in it, use purge for that
+
 `,
 		rmdir,
 		1, 1,
 	},
 	{
 		"purge",
-		`<container>
-        Remove the container and all of the contents.
+		`<path>
+
+        Remove the path and all of its contents.
+
 `,
 		purge,
 		1, 1,
@@ -314,6 +248,7 @@ func syntaxError() {
 Syntax: [options] subcommand <parameters> <parameters...>
 
 Subcommands:
+
 `)
 	for i := range Commands {
 		cmd := &Commands[i]
@@ -350,28 +285,8 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	fmt.Println(args)
 	if len(args) < 1 {
 		fatal("No command supplied\n")
-	}
-
-	if *userName == "" {
-		log.Fatal("Need -user or environmental variable ST_USER")
-	}
-	if *apiKey == "" {
-		log.Fatal("Need -key or environmental variable ST_KEY")
-	}
-	if *authUrl == "" {
-		log.Fatal("Need -auth or environmental variable ST_AUTH")
-	}
-	c := &swift.Connection{
-		UserName: *userName,
-		ApiKey:   *apiKey,
-		AuthUrl:  *authUrl,
-	}
-	err := c.Authenticate()
-	if err != nil {
-		log.Fatal("Failed to authenticate", err)
 	}
 
 	cmd := strings.ToLower(args[0])
@@ -396,5 +311,24 @@ func main() {
 		log.Fatalf("Unknown command %q", cmd)
 	}
 	found.checkArgs(args)
-	found.run(c, args)
+
+	// Make source and destination fs
+	var fdst, fsrc Fs
+	var err error
+	if len(args) >= 1 {
+		fdst, err = NewFs(args[0])
+		if err != nil {
+			log.Fatal("Failed to create file system: ", err)
+		}
+	}
+	if len(args) >= 2 {
+		fsrc, err = NewFs(args[1])
+		if err != nil {
+			log.Fatal("Failed to create destination file system: ", err)
+		}
+		fsrc, fdst = fdst, fsrc
+	}
+
+	// Run the actual command
+	found.run(fdst, fsrc)
 }

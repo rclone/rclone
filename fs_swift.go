@@ -2,10 +2,14 @@
 package main
 
 import (
+	"errors"
+	"flag"
 	"fmt"
 	"github.com/ncw/swift"
 	"io"
 	"log"
+	"os"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -27,6 +31,85 @@ type FsObjectSwift struct {
 }
 
 // ------------------------------------------------------------
+
+// Globals
+var (
+	// Flags
+	// FIXME make these part of swift so we get a standard set of flags?
+	authUrl  = flag.String("auth", os.Getenv("ST_AUTH"), "Auth URL for server. Defaults to environment var ST_AUTH.")
+	userName = flag.String("user", os.Getenv("ST_USER"), "User name. Defaults to environment var ST_USER.")
+	apiKey   = flag.String("key", os.Getenv("ST_KEY"), "API key (password). Defaults to environment var ST_KEY.")
+)
+
+// Pattern to match a swift url
+var swiftMatch = regexp.MustCompile(`^([^/:]+):(.*)$`)
+
+// parseParse parses a swift 'url'
+func parsePath(path string) (container, directory string, err error) {
+	parts := swiftMatch.FindAllStringSubmatch(path, -1)
+	if len(parts) != 1 || len(parts[0]) != 3 {
+		err = fmt.Errorf("Couldn't parse swift url %q", path)
+	} else {
+		container, directory = parts[0][1], parts[0][2]
+		directory = strings.Trim(directory, "/")
+	}
+	return
+}
+
+// swiftConnection makes a connection to swift
+func swiftConnection() (*swift.Connection, error) {
+	if *userName == "" {
+		return nil, errors.New("Need -user or environmental variable ST_USER")
+	}
+	if *apiKey == "" {
+		return nil, errors.New("Need -key or environmental variable ST_KEY")
+	}
+	if *authUrl == "" {
+		return nil, errors.New("Need -auth or environmental variable ST_AUTH")
+	}
+	c := &swift.Connection{
+		UserName: *userName,
+		ApiKey:   *apiKey,
+		AuthUrl:  *authUrl,
+	}
+	err := c.Authenticate()
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+// NewFsSwift contstructs an FsSwift from the path, container:path
+func NewFsSwift(path string) (*FsSwift, error) {
+	container, directory, err := parsePath(path)
+	if err != nil {
+		return nil, err
+	}
+	if directory != "" {
+		return nil, fmt.Errorf("Directories not supported yet in %q", path)
+	}
+	c, err := swiftConnection()
+	if err != nil {
+		return nil, err
+	}
+	f := &FsSwift{c: *c, container: container}
+	return f, nil
+}
+
+// Lists the containers
+func SwiftContainers() {
+	c, err := swiftConnection()
+	if err != nil {
+		log.Fatalf("Couldn't connect: %s", err)
+	}
+	containers, err := c.ContainersAll(nil)
+	if err != nil {
+		log.Fatalf("Couldn't list containers: %s", err)
+	}
+	for _, container := range containers {
+		fmt.Printf("%9d %12d %s\n", container.Count, container.Bytes, container.Name)
+	}
+}
 
 // Return an FsObject from a path
 //
