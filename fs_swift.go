@@ -41,6 +41,11 @@ var (
 	apiKey   = flag.String("key", os.Getenv("ST_KEY"), "API key (password). Defaults to environment var ST_KEY.")
 )
 
+// String converts this FsSwift to a string
+func (f *FsSwift) String() string {
+	return fmt.Sprintf("Swift container %s", f.container)
+}
+
 // Pattern to match a swift url
 var swiftMatch = regexp.MustCompile(`^([^/:]+):(.*)$`)
 
@@ -125,7 +130,7 @@ func (f *FsSwift) NewFsObjectWithInfo(remote string, info *swift.Object) FsObjec
 	} else {
 		err := fs.readMetaData() // reads info and meta, returning an error
 		if err != nil {
-			// logged already fs.Debugf("Failed to read info: %s", err)
+			// logged already FsDebug("Failed to read info: %s", err)
 			return nil
 		}
 	}
@@ -171,7 +176,7 @@ func (f *FsSwift) Put(src FsObject) {
 	// FIXME content type
 	in, err := src.Open()
 	if err != nil {
-		fs.Debugf("Failed to open: %s", err)
+		FsLog(fs, "Failed to open: %s", err)
 		return
 	}
 	defer in.Close()
@@ -180,17 +185,17 @@ func (f *FsSwift) Put(src FsObject) {
 	m := swift.Metadata{}
 	modTime, err := src.ModTime()
 	if err != nil {
-		fs.Debugf("Failed to read mtime from object: %s", err)
+		FsDebug(fs, "Failed to read mtime from object: %s", err)
 	} else {
 		m.SetModTime(modTime)
 	}
 
 	_, err = fs.swift.c.ObjectPut(fs.swift.container, fs.remote, in, true, "", "", m.ObjectHeaders())
 	if err != nil {
-		fs.Debugf("Failed to upload: %s", err)
+		FsLog(fs, "Failed to upload: %s", err)
 		return
 	}
-	fs.Debugf("Uploaded")
+	FsDebug(fs, "Uploaded")
 }
 
 // Mkdir creates the container if it doesn't exist
@@ -212,12 +217,6 @@ func (fs *FsObjectSwift) Remote() string {
 	return fs.remote
 }
 
-// Write debuging output for this FsObject
-func (fs *FsObjectSwift) Debugf(text string, args ...interface{}) {
-	out := fmt.Sprintf(text, args...)
-	log.Printf("%s: %s", fs.remote, out)
-}
-
 // Md5sum returns the Md5sum of an object returning a lowercase hex string
 func (fs *FsObjectSwift) Md5sum() (string, error) {
 	return strings.ToLower(fs.info.Hash), nil
@@ -237,7 +236,7 @@ func (fs *FsObjectSwift) readMetaData() (err error) {
 	}
 	info, h, err := fs.swift.c.Object(fs.swift.container, fs.remote)
 	if err != nil {
-		fs.Debugf("Failed to read info: %s", err)
+		FsLog(fs, "Failed to read info: %s", err)
 		return err
 	}
 	meta := h.ObjectMetadata()
@@ -250,12 +249,12 @@ func (fs *FsObjectSwift) readMetaData() (err error) {
 func (fs *FsObjectSwift) ModTime() (modTime time.Time, err error) {
 	err = fs.readMetaData()
 	if err != nil {
-		fs.Debugf("Failed to read metadata: %s", err)
+		FsLog(fs, "Failed to read metadata: %s", err)
 		return
 	}
 	modTime, err = fs.meta.GetModTime()
 	if err != nil {
-		fs.Debugf("Failed to read mtime from object: %s", err)
+		FsLog(fs, "Failed to read mtime from object: %s", err)
 		return
 	}
 	return
@@ -265,13 +264,13 @@ func (fs *FsObjectSwift) ModTime() (modTime time.Time, err error) {
 func (fs *FsObjectSwift) SetModTime(modTime time.Time) {
 	err := fs.readMetaData()
 	if err != nil {
-		fs.Debugf("Failed to read metadata: %s", err)
+		FsLog(fs, "Failed to read metadata: %s", err)
 		return
 	}
 	fs.meta.SetModTime(modTime)
 	err = fs.swift.c.ObjectUpdate(fs.swift.container, fs.remote, fs.meta.ObjectHeaders())
 	if err != nil {
-		fs.Debugf("Failed to update remote mtime: %s", err)
+		FsLog(fs, "Failed to update remote mtime: %s", err)
 	}
 }
 

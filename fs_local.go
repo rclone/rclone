@@ -33,6 +33,11 @@ func NewFsLocal(root string) (*FsLocal, error) {
 	return f, nil
 }
 
+// String converts this FsLocal to a string
+func (f *FsLocal) String() string {
+	return fmt.Sprintf("Local file system at %s", f.root)
+}
+
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
@@ -109,13 +114,13 @@ func (f *FsLocal) Put(src FsObject) {
 	dir := path.Dir(dstPath)
 	err := os.MkdirAll(dir, 0770)
 	if err != nil {
-		fs.Debugf("Couldn't make directory: %s", err)
+		FsLog(fs, "Couldn't make directory: %s", err)
 		return
 	}
 
 	out, err := os.Create(dstPath)
 	if err != nil {
-		fs.Debugf("Failed to open: %s", err)
+		FsLog(fs, "Failed to open: %s", err)
 		return
 	}
 
@@ -123,31 +128,31 @@ func (f *FsLocal) Put(src FsObject) {
 	defer func() {
 		checkClose(out, &err)
 		if err != nil {
-			fs.Debugf("Removing failed download")
+			FsDebug(fs, "Removing failed download")
 			removeErr := os.Remove(dstPath)
 			if removeErr != nil {
-				fs.Debugf("Failed to remove failed download: %s", err)
+				FsLog(fs, "Failed to remove failed download: %s", err)
 			}
 		}
 	}()
 
 	in, err := src.Open()
 	if err != nil {
-		fs.Debugf("Failed to open: %s", err)
+		FsLog(fs, "Failed to open: %s", err)
 		return
 	}
 	defer checkClose(in, &err)
 
 	_, err = io.Copy(out, in)
 	if err != nil {
-		fs.Debugf("Failed to download: %s", err)
+		FsLog(fs, "Failed to download: %s", err)
 		return
 	}
 
 	// Set the mtime
 	modTime, err := src.ModTime()
 	if err != nil {
-		fs.Debugf("Failed to read mtime from object: %s", err)
+		FsDebug(fs, "Failed to read mtime from object: %s", err)
 	} else {
 		fs.SetModTime(modTime)
 	}
@@ -172,24 +177,18 @@ func (fs *FsObjectLocal) Remote() string {
 	return fs.remote
 }
 
-// Write debuging output for this FsObject
-func (fs *FsObjectLocal) Debugf(text string, args ...interface{}) {
-	out := fmt.Sprintf(text, args...)
-	log.Printf("%s: %s", fs.remote, out)
-}
-
 // Md5sum calculates the Md5sum of a file returning a lowercase hex string
 func (fs *FsObjectLocal) Md5sum() (string, error) {
 	in, err := os.Open(fs.path)
 	if err != nil {
-		fs.Debugf("Failed to open: %s", err)
+		FsLog(fs, "Failed to open: %s", err)
 		return "", err
 	}
 	defer in.Close() // FIXME ignoring error
 	hash := md5.New()
 	_, err = io.Copy(hash, in)
 	if err != nil {
-		fs.Debugf("Failed to read: %s", err)
+		FsLog(fs, "Failed to read: %s", err)
 		return "", err
 	}
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
@@ -209,7 +208,7 @@ func (fs *FsObjectLocal) ModTime() (modTime time.Time, err error) {
 func (fs *FsObjectLocal) SetModTime(modTime time.Time) {
 	err := Chtimes(fs.path, modTime, modTime)
 	if err != nil {
-		fs.Debugf("Failed to set mtime on file: %s", err)
+		FsDebug(fs, "Failed to set mtime on file: %s", err)
 	}
 }
 
@@ -217,11 +216,10 @@ func (fs *FsObjectLocal) SetModTime(modTime time.Time) {
 func (fs *FsObjectLocal) Storable() bool {
 	mode := fs.info.Mode()
 	if mode&(os.ModeSymlink|os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
-		fs.Debugf("Can't transfer non file/directory")
+		FsDebug(fs, "Can't transfer non file/directory")
 		return false
 	} else if mode&os.ModeDir != 0 {
-		// Debug?
-		fs.Debugf("FIXME Skipping directory")
+		FsDebug(fs, "FIXME Skipping directory")
 		return false
 	}
 	return true

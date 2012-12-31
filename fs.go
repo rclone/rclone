@@ -3,12 +3,15 @@
 package main
 
 import (
+	"fmt"
 	"io"
+	"log"
 	"time"
 )
 
 // A Filesystem, describes the local filesystem and the remote object store
 type Fs interface {
+	String() string
 	List() FsObjectsChan
 	NewFsObject(remote string) FsObject
 	Put(src FsObject)
@@ -22,7 +25,6 @@ type Fs interface {
 // local file/directory
 type FsObject interface {
 	Remote() string
-	Debugf(string, ...interface{})
 	Md5sum() (string, error)
 	ModTime() (time.Time, error)
 	SetModTime(time.Time)
@@ -45,6 +47,22 @@ func NewFs(path string) (Fs, error) {
 		return NewFsSwift(path)
 	}
 	return NewFsLocal(path)
+}
+
+// Write debuging output for this FsObject
+func FsDebug(fs FsObject, text string, args ...interface{}) {
+	if *verbose {
+		out := fmt.Sprintf(text, args...)
+		log.Printf("%s: %s", fs.Remote(), out)
+	}
+}
+
+// Write log output for this FsObject
+func FsLog(fs FsObject, text string, args ...interface{}) {
+	if !*quiet {
+		out := fmt.Sprintf(text, args...)
+		log.Printf("%s: %s", fs.Remote(), out)
+	}
 }
 
 // checkClose is a utility function used to check the return from
@@ -74,22 +92,22 @@ func checkClose(c io.Closer, err *error) {
 // were errors reading info.
 func Equal(src, dst FsObject) bool {
 	if src.Size() != dst.Size() {
-		src.Debugf("Sizes differ")
+		FsDebug(src, "Sizes differ")
 		return false
 	}
 
 	// Size the same so check the mtime
 	srcModTime, err := src.ModTime()
 	if err != nil {
-		src.Debugf("Failed to read src mtime: %s", err)
+		FsDebug(src, "Failed to read src mtime: %s", err)
 	} else {
 		dstModTime, err := dst.ModTime()
 		if err != nil {
-			dst.Debugf("Failed to read dst mtime: %s", err)
+			FsDebug(dst, "Failed to read dst mtime: %s", err)
 		} else if !dstModTime.Equal(srcModTime) {
-			src.Debugf("Modification times differ")
+			FsDebug(src, "Modification times differ")
 		} else {
-			src.Debugf("Size and modification time the same")
+			FsDebug(src, "Size and modification time the same")
 			return true
 		}
 	}
@@ -98,18 +116,18 @@ func Equal(src, dst FsObject) bool {
 	// check the MD5SUM
 	srcMd5, err := src.Md5sum()
 	if err != nil {
-		src.Debugf("Failed to calculate src md5: %s", err)
+		FsDebug(src, "Failed to calculate src md5: %s", err)
 		return false
 	}
 	dstMd5, err := dst.Md5sum()
 	if err != nil {
-		dst.Debugf("Failed to calculate dst md5: %s", err)
+		FsDebug(dst, "Failed to calculate dst md5: %s", err)
 		return false
 	}
-	// fs.Debugf("Src MD5 %s", srcMd5)
-	// fs.Debugf("Dst MD5 %s", obj.Hash)
+	// FsDebug("Src MD5 %s", srcMd5)
+	// FsDebug("Dst MD5 %s", obj.Hash)
 	if srcMd5 != dstMd5 {
-		src.Debugf("Md5sums differ")
+		FsDebug(src, "Md5sums differ")
 		return false
 	}
 
@@ -117,6 +135,6 @@ func Equal(src, dst FsObject) bool {
 	// mtime of the dst object here
 	dst.SetModTime(srcModTime)
 
-	src.Debugf("Size and MD5SUM of src and dst objects identical")
+	FsDebug(src, "Size and MD5SUM of src and dst objects identical")
 	return true
 }

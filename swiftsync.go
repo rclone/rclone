@@ -21,6 +21,7 @@ var (
 	snet       = flag.Bool("snet", false, "Use internal service network") // FIXME not implemented
 	verbose    = flag.Bool("verbose", false, "Print lots more stuff")
 	quiet      = flag.Bool("quiet", false, "Print as little stuff as possible")
+	dry_run    = flag.Bool("dry-run", false, "Do a trial run with no permanent changes")
 	checkers   = flag.Int("checkers", 8, "Number of checkers to run in parallel.")
 	transfers  = flag.Int("transfers", 4, "Number of file transfers to run in parallel.")
 )
@@ -33,7 +34,7 @@ func Checker(in, out FsObjectsChan, fdst Fs, wg *sync.WaitGroup) {
 	for src := range in {
 		dst := fdst.NewFsObject(src.Remote())
 		if dst == nil {
-			src.Debugf("Couldn't find local file - download")
+			FsDebug(src, "Couldn't find local file - download")
 			out <- src
 			continue
 		}
@@ -44,7 +45,7 @@ func Checker(in, out FsObjectsChan, fdst Fs, wg *sync.WaitGroup) {
 		}
 		// Check to see if changed or not
 		if Equal(src, dst) {
-			src.Debugf("Unchanged skipping")
+			FsDebug(src, "Unchanged skipping")
 			continue
 		}
 		out <- src
@@ -88,9 +89,87 @@ func Copy(fdst, fsrc Fs) {
 	copierWg.Wait()
 }
 
-// Copy~s from source to dest
-func copy_(fdst, fsrc Fs) {
-	Copy(fdst, fsrc)
+// Delete all the files passed in the channel
+func DeleteFiles(to_be_deleted FsObjectsChan) {
+	var wg sync.WaitGroup
+	wg.Add(*transfers)
+	for i := 0; i < *transfers; i++ {
+		go func() {
+			defer wg.Done()
+			for dst := range to_be_deleted {
+				if *dry_run {
+					FsDebug(dst, "Not deleting as -dry-run")
+				} else {
+					err := dst.Remove()
+					if err != nil {
+						FsLog(dst, "Couldn't delete: %s", err)
+					} else {
+						FsDebug(dst, "Deleted")
+					}
+				}
+			}
+		}()
+	}
+
+	log.Printf("Waiting for deletions to finish")
+	wg.Wait()
+}
+
+// Syncs fsrc into fdst
+func Sync(fdst, fsrc Fs) {
+	err := fdst.Mkdir()
+	if err != nil {
+		log.Fatal("Failed to make destination")
+	}
+
+	// Read the destination files first
+	// FIXME could do this in parallel and make it use less memory
+	delFiles := make(map[string]FsObject)
+	for dstFile := range fdst.List() {
+		delFiles[dstFile.Remote()] = dstFile
+	}
+
+	// Read source files checking them off against dest files
+	to_be_checked := make(FsObjectsChan, *transfers)
+	go func() {
+		for srcFile := range fsrc.List() {
+			delete(delFiles, srcFile.Remote())
+			to_be_checked <- srcFile
+		}
+		close(to_be_checked)
+	}()
+
+	to_be_uploaded := make(FsObjectsChan, *transfers)
+
+	var checkerWg sync.WaitGroup
+	checkerWg.Add(*checkers)
+	for i := 0; i < *checkers; i++ {
+		go Checker(to_be_checked, to_be_uploaded, fdst, &checkerWg)
+	}
+
+	var copierWg sync.WaitGroup
+	copierWg.Add(*transfers)
+	for i := 0; i < *transfers; i++ {
+		go Copier(to_be_uploaded, fdst, &copierWg)
+	}
+
+	log.Printf("Waiting for checks to finish")
+	checkerWg.Wait()
+	close(to_be_uploaded)
+	log.Printf("Waiting for transfers to finish")
+	copierWg.Wait()
+
+	// FIXME don't delete if IO errors
+
+	// Delete the spare files
+	toDelete := make(FsObjectsChan, *transfers)
+	go func() {
+		for _, fs := range delFiles {
+			toDelete <- fs
+		}
+		close(toDelete)
+	}()
+	DeleteFiles(toDelete)
 }
 
 // List the Fs to stdout
@@ -129,9 +208,13 @@ func mkdir(fdst, fsrc Fs) {
 
 // Removes a container but not if not empty
 func rmdir(fdst, fsrc Fs) {
-	err := fdst.Rmdir()
-	if err != nil {
-		log.Fatalf("Rmdir failed: %s", err)
+	if *dry_run {
+		log.Printf("Not deleting %s as -dry-run", fdst)
+	} else {
+		err := fdst.Rmdir()
+		if err != nil {
+			log.Fatalf("Rmdir failed: %s", err)
+		}
 	}
 }
 
@@ -139,27 +222,7 @@ func rmdir(fdst, fsrc Fs) {
 //
 // FIXME doesn't delete local directories
 func purge(fdst, fsrc Fs) {
-	to_be_deleted := fdst.List()
-
-	var wg sync.WaitGroup
-	wg.Add(*transfers)
-	for i := 0; i < *transfers; i++ {
-		go func() {
-			defer wg.Done()
-			for dst := range to_be_deleted {
-				err := dst.Remove()
-				if err != nil {
-					log.Printf("%s: Couldn't delete: %s\n", dst.Remote(), err)
-				} else {
-					log.Printf("%s: Deleted\n", dst.Remote())
-				}
-			}
-		}()
-	}
-
-	log.Printf("Waiting for deletions to finish")
-	wg.Wait()
-
+	DeleteFiles(fdst.List())
 	log.Printf("Deleting path")
 	rmdir(fdst, fsrc)
 }
@@ -194,7 +257,21 @@ var Commands = []Command{
         MD5SUM.  Doesn't delete files from the destination.
 
 `,
-		copy_,
+		Copy,
+		2, 2,
+	},
+	{
+		"sync",
+		`<source> <destination>
+
+        Sync the source to the destination.  Doesn't transfer
+        unchanged files, testing first by modification time then by
+        MD5SUM.  Deletes any files that exist in source that don't
+        exist in destination. Since this can cause data loss, test
+        first with the -dry-run flag.
+
+`,
+		Sync,
 		2, 2,
 	},
 	{
