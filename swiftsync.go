@@ -125,16 +125,16 @@ func Sync(fdst, fsrc Fs) {
 	// Read the destination files first
 	// FIXME could do this in parallel and make it use less memory
 	delFiles := make(map[string]FsObject)
-	for dstFile := range fdst.List() {
-		delFiles[dstFile.Remote()] = dstFile
+	for dst := range fdst.List() {
+		delFiles[dst.Remote()] = dst
 	}
 
 	// Read source files checking them off against dest files
 	to_be_checked := make(FsObjectsChan, *transfers)
 	go func() {
-		for srcFile := range fsrc.List() {
-			delete(delFiles, srcFile.Remote())
-			to_be_checked <- srcFile
+		for src := range fsrc.List() {
+			delete(delFiles, src.Remote())
+			to_be_checked <- src
 		}
 		close(to_be_checked)
 	}()
@@ -170,6 +170,74 @@ func Sync(fdst, fsrc Fs) {
 		close(toDelete)
 	}()
 	DeleteFiles(toDelete)
+}
+
+// Checks the files in fsrc and fdst according to Size and MD5SUM
+func Check(fdst, fsrc Fs) {
+	// Read the destination files first
+	// FIXME could do this in parallel and make it use less memory
+	dstFiles := make(map[string]FsObject)
+	for dst := range fdst.List() {
+		dstFiles[dst.Remote()] = dst
+	}
+
+	// Read the source files checking them against dstFiles
+	// FIXME could do this in parallel and make it use less memory
+	srcFiles := make(map[string]FsObject)
+	commonFiles := make(map[string][]FsObject)
+	for src := range fsrc.List() {
+		remote := src.Remote()
+		if dst, ok := dstFiles[remote]; ok {
+			commonFiles[remote] = []FsObject{dst, src}
+			delete(dstFiles, remote)
+		} else {
+			srcFiles[remote] = src
+		}
+	}
+
+	log.Printf("Files in %s but not in %s", fdst, fsrc)
+	for remote := range dstFiles {
+		log.Printf(remote)
+	}
+
+	log.Printf("Files in %s but not in %s", fsrc, fdst)
+	for remote := range srcFiles {
+		log.Printf(remote)
+	}
+
+	checks := make(chan []FsObject, *transfers)
+	go func() {
+		for _, check := range commonFiles {
+			checks <- check
+		}
+		close(checks)
+	}()
+
+	var checkerWg sync.WaitGroup
+	checkerWg.Add(*checkers)
+	for i := 0; i < *checkers; i++ {
+		go func() {
+			defer checkerWg.Done()
+			for check := range checks {
+				dst, src := check[0], check[1]
+				if src.Size() != dst.Size() {
+					FsLog(src, "Sizes differ")
+					continue
+				}
+				same, err := CheckMd5sums(src, dst)
+				if err != nil {
+					continue
+				}
+				if !same {
+					FsLog(src, "Md5sums differ")
+				}
+				FsDebug(src, "OK")
+			}
+		}()
+	}
+
+	log.Printf("Waiting for checks to finish")
+	checkerWg.Wait()
 }
 
 // List the Fs to stdout
@@ -268,9 +336,8 @@ var Commands = []Command{
         unchanged files, testing first by modification time then by
         MD5SUM.  Deletes any files that exist in source that don't
         exist in destination. Since this can cause data loss, test
-        first with the -dry-run flag.
+        first with the -dry-run flag.`,
 
-`,
 		Sync,
 		2, 2,
 	},
@@ -279,9 +346,8 @@ var Commands = []Command{
 		`[<path>]
 
         List the path. If no parameter is supplied then it lists the
-        available swift containers.
+        available swift containers.`,
 
-`,
 		list,
 		0, 1,
 	},
@@ -289,9 +355,8 @@ var Commands = []Command{
 		"mkdir",
 		`<path>
 
-        Make the path if it doesn't already exist
+        Make the path if it doesn't already exist`,
 
-`,
 		mkdir,
 		1, 1,
 	},
@@ -300,9 +365,8 @@ var Commands = []Command{
 		`<path>
 
         Remove the path.  Note that you can't remove a path with
-	objects in it, use purge for that
+        objects in it, use purge for that.`,
 
-`,
 		rmdir,
 		1, 1,
 	},
@@ -310,11 +374,30 @@ var Commands = []Command{
 		"purge",
 		`<path>
 
-        Remove the path and all of its contents.
+        Remove the path and all of its contents.`,
 
-`,
 		purge,
 		1, 1,
+	},
+	{
+		"check",
+		`<source> <destination>
+
+        Checks the files in the source and destination match.  It
+        compares sizes and MD5SUMs and prints a report of files which
+        don't match.  It doesn't alter the source or destination.`,
+
+		Check,
+		2, 2,
+	},
+	{
+		"help",
+		`
+
+        This help.`,
+
+		nil,
+		0, 0,
 	},
 }
 
@@ -329,7 +412,7 @@ Subcommands:
 `)
 	for i := range Commands {
 		cmd := &Commands[i]
-		fmt.Fprintf(os.Stderr, "    %s: %s\n", cmd.name, cmd.help)
+		fmt.Fprintf(os.Stderr, "    %s: %s\n\n", cmd.name, cmd.help)
 	}
 
 	fmt.Fprintf(os.Stderr, "Options:\n")
@@ -407,5 +490,10 @@ func main() {
 	}
 
 	// Run the actual command
-	found.run(fdst, fsrc)
+	if found.run != nil {
+		found.run(fdst, fsrc)
+	} else {
+		syntaxError()
+	}
+
 }

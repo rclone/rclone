@@ -74,6 +74,27 @@ func checkClose(c io.Closer, err *error) {
 	}
 }
 
+// Check the two files to see if the MD5sums are the same
+//
+// May return an error which will already have been logged
+//
+// If an error is returned it will return false
+func CheckMd5sums(src, dst FsObject) (bool, error) {
+	srcMd5, err := src.Md5sum()
+	if err != nil {
+		FsLog(src, "Failed to calculate src md5: %s", err)
+		return false, err
+	}
+	dstMd5, err := dst.Md5sum()
+	if err != nil {
+		FsLog(dst, "Failed to calculate dst md5: %s", err)
+		return false, err
+	}
+	// FsDebug("Src MD5 %s", srcMd5)
+	// FsDebug("Dst MD5 %s", obj.Hash)
+	return srcMd5 == dstMd5, nil
+}
+
 // Checks to see if the src and dst objects are equal by looking at
 // size, mtime and MD5SUM
 //
@@ -114,19 +135,8 @@ func Equal(src, dst FsObject) bool {
 
 	// mtime is unreadable or different but size is the same so
 	// check the MD5SUM
-	srcMd5, err := src.Md5sum()
-	if err != nil {
-		FsDebug(src, "Failed to calculate src md5: %s", err)
-		return false
-	}
-	dstMd5, err := dst.Md5sum()
-	if err != nil {
-		FsDebug(dst, "Failed to calculate dst md5: %s", err)
-		return false
-	}
-	// FsDebug("Src MD5 %s", srcMd5)
-	// FsDebug("Dst MD5 %s", obj.Hash)
-	if srcMd5 != dstMd5 {
+	same, err := CheckMd5sums(src, dst)
+	if !same {
 		FsDebug(src, "Md5sums differ")
 		return false
 	}
