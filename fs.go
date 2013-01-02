@@ -26,7 +26,7 @@ type Fs interface {
 type FsObject interface {
 	Remote() string
 	Md5sum() (string, error)
-	ModTime() (time.Time, error)
+	ModTime() time.Time
 	SetModTime(time.Time)
 	Size() int64
 	Open() (io.ReadCloser, error)
@@ -118,24 +118,18 @@ func Equal(src, dst FsObject) bool {
 	}
 
 	// Size the same so check the mtime
-	srcModTime, err := src.ModTime()
-	if err != nil {
-		FsDebug(src, "Failed to read src mtime: %s", err)
+	srcModTime := src.ModTime()
+	dstModTime := dst.ModTime()
+	if !dstModTime.Equal(srcModTime) {
+		FsDebug(src, "Modification times differ")
 	} else {
-		dstModTime, err := dst.ModTime()
-		if err != nil {
-			FsDebug(dst, "Failed to read dst mtime: %s", err)
-		} else if !dstModTime.Equal(srcModTime) {
-			FsDebug(src, "Modification times differ")
-		} else {
-			FsDebug(src, "Size and modification time the same")
-			return true
-		}
+		FsDebug(src, "Size and modification time the same")
+		return true
 	}
 
 	// mtime is unreadable or different but size is the same so
 	// check the MD5SUM
-	same, err := CheckMd5sums(src, dst)
+	same, _ := CheckMd5sums(src, dst)
 	if !same {
 		FsDebug(src, "Md5sums differ")
 		return false

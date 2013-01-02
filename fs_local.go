@@ -150,12 +150,7 @@ func (f *FsLocal) Put(src FsObject) {
 	}
 
 	// Set the mtime
-	modTime, err := src.ModTime()
-	if err != nil {
-		FsDebug(fs, "Failed to read mtime from object: %s", err)
-	} else {
-		fs.SetModTime(modTime)
-	}
+	fs.SetModTime(src.ModTime())
 }
 
 // Mkdir creates the directory if it doesn't exist
@@ -200,8 +195,8 @@ func (fs *FsObjectLocal) Size() int64 {
 }
 
 // ModTime returns the modification time of the object
-func (fs *FsObjectLocal) ModTime() (modTime time.Time, err error) {
-	return fs.info.ModTime(), nil
+func (fs *FsObjectLocal) ModTime() time.Time {
+	return fs.info.ModTime()
 }
 
 // Sets the modification time of the local fs object

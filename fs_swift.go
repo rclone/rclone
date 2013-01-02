@@ -183,12 +183,7 @@ func (f *FsSwift) Put(src FsObject) {
 
 	// Set the mtime
 	m := swift.Metadata{}
-	modTime, err := src.ModTime()
-	if err != nil {
-		FsDebug(fs, "Failed to read mtime from object: %s", err)
-	} else {
-		m.SetModTime(modTime)
-	}
+	m.SetModTime(src.ModTime())
 
 	_, err = fs.swift.c.ObjectPut(fs.swift.container, fs.remote, in, true, "", "", m.ObjectHeaders())
 	if err != nil {
@@ -246,18 +241,22 @@ func (fs *FsObjectSwift) readMetaData() (err error) {
 }
 
 // ModTime returns the modification time of the object
-func (fs *FsObjectSwift) ModTime() (modTime time.Time, err error) {
-	err = fs.readMetaData()
+//
+//
+// It attempts to read the objects mtime and if that isn't present the
+// LastModified returned in the http headers
+func (fs *FsObjectSwift) ModTime() time.Time {
+	err := fs.readMetaData()
 	if err != nil {
-		FsLog(fs, "Failed to read metadata: %s", err)
-		return
+		// FsLog(fs, "Failed to read metadata: %s", err)
+		return fs.info.LastModified
 	}
-	modTime, err = fs.meta.GetModTime()
+	modTime, err := fs.meta.GetModTime()
 	if err != nil {
-		FsLog(fs, "Failed to read mtime from object: %s", err)
-		return
+		// FsLog(fs, "Failed to read mtime from object: %s", err)
+		return fs.info.LastModified
 	}
-	return
+	return modTime
 }
 
 // Sets the modification time of the local fs object

@@ -1,5 +1,6 @@
 Todo
   * FIXME: More -dry-run checks for object transfer
+  * FIXME ls is very slow also - need to run mtimes in parallel
   * Check logging in various parts
   * Make logging controllable with flags (mostly done)
   * progress meter would be nice! Do this by wrapping the Reader with a progress bar

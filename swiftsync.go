@@ -250,7 +250,7 @@ func List(f Fs) {
 		//			fmt.Printf("%9s %19s %s\n", "Directory", "-", fs.Remote())
 		//		} else {
 		// FIXME ModTime is expensive?
-		modTime, _ := fs.ModTime()
+		modTime := fs.ModTime()
 		fmt.Printf("%9d %19s %s\n", fs.Size(), modTime.Format("2006-01-02 15:04:05"), fs.Remote())
 		//			fmt.Printf("%9d %19s %s\n", fs.Size(), object.LastModified.Format("2006-01-02 15:04:05"), fs.Remote())
 		//		}
