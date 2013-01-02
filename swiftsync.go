@@ -241,20 +241,22 @@ func Check(fdst, fsrc Fs) {
 }
 
 // List the Fs to stdout
+//
+// Lists in parallel which may get them out of order
 func List(f Fs) {
-	// FIXME error?
 	in := f.List()
-	for fs := range in {
-		// FIXME
-		//		if object.PseudoDirectory {
-		//			fmt.Printf("%9s %19s %s\n", "Directory", "-", fs.Remote())
-		//		} else {
-		// FIXME ModTime is expensive?
-		modTime := fs.ModTime()
-		fmt.Printf("%9d %19s %s\n", fs.Size(), modTime.Format("2006-01-02 15:04:05"), fs.Remote())
-		//			fmt.Printf("%9d %19s %s\n", fs.Size(), object.LastModified.Format("2006-01-02 15:04:05"), fs.Remote())
-		//		}
+	var wg sync.WaitGroup
+	wg.Add(*checkers)
+	for i := 0; i < *checkers; i++ {
+		go func() {
+			defer wg.Done()
+			for fs := range in {
+				modTime := fs.ModTime()
+				fmt.Printf("%9d %19s %s\n", fs.Size(), modTime.Format("2006-01-02 15:04:05"), fs.Remote())
+			}
+		}()
 	}
+	wg.Wait()
 }
 
 // Lists files in a container
