@@ -12,18 +12,20 @@ import (
 	"runtime/pprof"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Globals
 var (
 	// Flags
-	cpuprofile = flag.String("cpuprofile", "", "Write cpu profile to file")
-	snet       = flag.Bool("snet", false, "Use internal service network") // FIXME not implemented
-	verbose    = flag.Bool("verbose", false, "Print lots more stuff")
-	quiet      = flag.Bool("quiet", false, "Print as little stuff as possible")
-	dry_run    = flag.Bool("dry-run", false, "Do a trial run with no permanent changes")
-	checkers   = flag.Int("checkers", 8, "Number of checkers to run in parallel.")
-	transfers  = flag.Int("transfers", 4, "Number of file transfers to run in parallel.")
+	cpuprofile    = flag.String("cpuprofile", "", "Write cpu profile to file")
+	snet          = flag.Bool("snet", false, "Use internal service network") // FIXME not implemented
+	verbose       = flag.Bool("verbose", false, "Print lots more stuff")
+	quiet         = flag.Bool("quiet", false, "Print as little stuff as possible")
+	dry_run       = flag.Bool("dry-run", false, "Do a trial run with no permanent changes")
+	checkers      = flag.Int("checkers", 8, "Number of checkers to run in parallel.")
+	transfers     = flag.Int("transfers", 4, "Number of file transfers to run in parallel.")
+	statsInterval = flag.Duration("stats", time.Minute*1, "Interval to print stats")
 )
 
 // Read FsObjects~s on in send to out if they need uploading
@@ -31,8 +33,11 @@ var (
 // FIXME potentially doing lots of MD5SUMS at once
 func Checker(in, out FsObjectsChan, fdst Fs, wg *sync.WaitGroup) {
 	defer wg.Done()
+
 	for src := range in {
+		stats.Checking(src)
 		dst := fdst.NewFsObject(src.Remote())
+		stats.DoneChecking(src)
 		if dst == nil {
 			FsDebug(src, "Couldn't find local file - download")
 			out <- src
@@ -56,7 +61,9 @@ func Checker(in, out FsObjectsChan, fdst Fs, wg *sync.WaitGroup) {
 func Copier(in FsObjectsChan, fdst Fs, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for src := range in {
+		stats.Transferring(src)
 		fdst.Put(src)
+		stats.DoneTransferring(src)
 	}
 }
 
@@ -64,6 +71,7 @@ func Copier(in FsObjectsChan, fdst Fs, wg *sync.WaitGroup) {
 func Copy(fdst, fsrc Fs) {
 	err := fdst.Mkdir()
 	if err != nil {
+		stats.Error()
 		log.Fatal("Failed to make destination")
 	}
 
@@ -100,8 +108,11 @@ func DeleteFiles(to_be_deleted FsObjectsChan) {
 				if *dry_run {
 					FsDebug(dst, "Not deleting as -dry-run")
 				} else {
+					stats.Checking(dst)
 					err := dst.Remove()
+					stats.DoneChecking(dst)
 					if err != nil {
+						stats.Error()
 						FsLog(dst, "Couldn't delete: %s", err)
 					} else {
 						FsDebug(dst, "Deleted")
@@ -119,8 +130,11 @@ func DeleteFiles(to_be_deleted FsObjectsChan) {
 func Sync(fdst, fsrc Fs) {
 	err := fdst.Mkdir()
 	if err != nil {
+		stats.Error()
 		log.Fatal("Failed to make destination")
 	}
+
+	log.Printf("Building file list")
 
 	// Read the destination files first
 	// FIXME could do this in parallel and make it use less memory
@@ -174,6 +188,8 @@ func Sync(fdst, fsrc Fs) {
 
 // Checks the files in fsrc and fdst according to Size and MD5SUM
 func Check(fdst, fsrc Fs) {
+	log.Printf("Building file list")
+
 	// Read the destination files first
 	// FIXME could do this in parallel and make it use less memory
 	dstFiles := make(map[string]FsObject)
@@ -220,11 +236,14 @@ func Check(fdst, fsrc Fs) {
 			defer checkerWg.Done()
 			for check := range checks {
 				dst, src := check[0], check[1]
+				stats.Checking(src)
 				if src.Size() != dst.Size() {
+					stats.DoneChecking(src)
 					FsLog(src, "Sizes differ")
 					continue
 				}
 				same, err := CheckMd5sums(src, dst)
+				stats.DoneChecking(src)
 				if err != nil {
 					continue
 				}
@@ -251,7 +270,9 @@ func List(f Fs) {
 		go func() {
 			defer wg.Done()
 			for fs := range in {
+				stats.Checking(fs)
 				modTime := fs.ModTime()
+				stats.DoneChecking(fs)
 				fmt.Printf("%9d %19s %s\n", fs.Size(), modTime.Format("2006-01-02 15:04:05"), fs.Remote())
 			}
 		}()
@@ -272,6 +293,7 @@ func list(fdst, fsrc Fs) {
 func mkdir(fdst, fsrc Fs) {
 	err := fdst.Mkdir()
 	if err != nil {
+		stats.Error()
 		log.Fatalf("Mkdir failed: %s", err)
 	}
 }
@@ -283,6 +305,7 @@ func rmdir(fdst, fsrc Fs) {
 	} else {
 		err := fdst.Rmdir()
 		if err != nil {
+			stats.Error()
 			log.Fatalf("Rmdir failed: %s", err)
 		}
 	}
@@ -441,6 +464,7 @@ func main() {
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
 		if err != nil {
+			stats.Error()
 			log.Fatal(err)
 		}
 		pprof.StartCPUProfile(f)
@@ -464,12 +488,14 @@ func main() {
 			break
 		} else if strings.HasPrefix(command.name, cmd) {
 			if found != nil {
+				stats.Error()
 				log.Fatalf("Not unique - matches multiple commands %q", cmd)
 			}
 			found = command
 		}
 	}
 	if found == nil {
+		stats.Error()
 		log.Fatalf("Unknown command %q", cmd)
 	}
 	found.checkArgs(args)
@@ -480,20 +506,36 @@ func main() {
 	if len(args) >= 1 {
 		fdst, err = NewFs(args[0])
 		if err != nil {
+			stats.Error()
 			log.Fatal("Failed to create file system: ", err)
 		}
 	}
 	if len(args) >= 2 {
 		fsrc, err = NewFs(args[1])
 		if err != nil {
+			stats.Error()
 			log.Fatal("Failed to create destination file system: ", err)
 		}
 		fsrc, fdst = fdst, fsrc
 	}
 
+	// Print the stats every statsInterval
+	go func() {
+		ch := time.Tick(*statsInterval)
+		for {
+			<-ch
+			stats.Log()
+		}
+	}()
+
 	// Run the actual command
 	if found.run != nil {
 		found.run(fdst, fsrc)
+		fmt.Println(stats)
+		if stats.errors > 0 {
+			os.Exit(1)
+		}
+		os.Exit(0)
 	} else {
 		syntaxError()
 	}

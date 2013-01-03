@@ -82,11 +82,13 @@ func checkClose(c io.Closer, err *error) {
 func CheckMd5sums(src, dst FsObject) (bool, error) {
 	srcMd5, err := src.Md5sum()
 	if err != nil {
+		stats.Error()
 		FsLog(src, "Failed to calculate src md5: %s", err)
 		return false, err
 	}
 	dstMd5, err := dst.Md5sum()
 	if err != nil {
+		stats.Error()
 		FsLog(dst, "Failed to calculate dst md5: %s", err)
 		return false, err
 	}

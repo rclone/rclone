@@ -3,14 +3,12 @@ Todo
   * Ignoring the pseudo directories
     * if object.PseudoDirectory {
       * fmt.Printf("%9s %19s %s\n", "Directory", "-", fs.Remote())
-  * Check logging in various parts
+  * Make Account wrapper
+    * limit bandwidth for a pool of all individual connectinos
+    * do timeouts by setting a limit, seeing whether io has happened
+      and resetting it if it has
+    * make Account do progress meter
   * Make logging controllable with flags (mostly done)
-  * progress meter would be nice! Do this by wrapping the Reader with a progress bar
-  * Do bandwidth limit by wrapping the Reader too
-      * Maybe using https://jra-go.googlecode.com/hg/linkio/ which will work for multiple
-        uploads or downloads. 
-      * code.google.com/p/mxk/go1/flowcontrol - only does one flow at once
-      * Or maybe put into swift library.
   * -timeout: Make all timeouts be settable with command line parameters
   * Check the locking in swift module!
   * Windows paths? Do we need to translate / and \?
@@ -21,27 +19,14 @@ Ideas
   * optimise remote copy container to another container using remote
     copy if local is same as remote
   * Allow subpaths container:/sub/path
-  * stats
   * look at auth from env in s3 module - add to swift?
-
-Make a wrapper in connection which
-  * measures bandwidth and reports it
-  * limits bandwidth using Reader and Writer
-  * for a pool of all individual connectinos
-  * does timeouts by setting a limit, seeing whether io has happened
-    and resetting it if it has
 
 Need to make directory objects otherwise can't upload an empty directory
   * Or could upload empty directories only?
   * Can't purge a local filesystem because it leaves the directories behind
 
 s3
---
-
-Can maybe set last modified?
-
-https://forums.aws.amazon.com/message.jspa?messageID=214062
-
-Otherwise can set metadata
-
-Returns etag and last modified in bucket list
+  * Can maybe set last modified?
+    * https://forums.aws.amazon.com/message.jspa?messageID=214062
+    * Otherwise can set metadata
+  * Returns etag and last modified in bucket list

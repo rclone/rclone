@@ -49,7 +49,7 @@ func (f *FsLocal) NewFsObjectWithInfo(remote string, info os.FileInfo) FsObject 
 	} else {
 		err := fs.lstat()
 		if err != nil {
-			log.Printf("Failed to stat %s: %s", path, err)
+			FsDebug(fs, "Failed to stat %s: %s", path, err)
 			return nil
 		}
 	}
@@ -71,10 +71,12 @@ func (f *FsLocal) List() FsObjectsChan {
 	go func() {
 		err := filepath.Walk(f.root, func(path string, fi os.FileInfo, err error) error {
 			if err != nil {
+				stats.Error()
 				log.Printf("Failed to open directory: %s: %s", path, err)
 			} else {
 				remote, err := filepath.Rel(f.root, path)
 				if err != nil {
+					stats.Error()
 					log.Printf("Failed to get relative path %s: %s", path, err)
 					return nil
 				}
@@ -91,6 +93,7 @@ func (f *FsLocal) List() FsObjectsChan {
 			return nil
 		})
 		if err != nil {
+			stats.Error()
 			log.Printf("Failed to open directory: %s: %s", f.root, err)
 		}
 		close(out)
@@ -107,19 +110,21 @@ func (f *FsLocal) List() FsObjectsChan {
 func (f *FsLocal) Put(src FsObject) {
 	dstRemote := src.Remote()
 	dstPath := filepath.Join(f.root, dstRemote)
-	log.Printf("Download %s to %s", dstRemote, dstPath)
 	// Temporary FsObject under construction
 	fs := &FsObjectLocal{remote: dstRemote, path: dstPath}
+	FsDebug(fs, "Download %s to %s", dstRemote, dstPath)
 
 	dir := path.Dir(dstPath)
 	err := os.MkdirAll(dir, 0770)
 	if err != nil {
+		stats.Error()
 		FsLog(fs, "Couldn't make directory: %s", err)
 		return
 	}
 
 	out, err := os.Create(dstPath)
 	if err != nil {
+		stats.Error()
 		FsLog(fs, "Failed to open: %s", err)
 		return
 	}
@@ -131,20 +136,24 @@ func (f *FsLocal) Put(src FsObject) {
 			FsDebug(fs, "Removing failed download")
 			removeErr := os.Remove(dstPath)
 			if removeErr != nil {
-				FsLog(fs, "Failed to remove failed download: %s", err)
+				stats.Error()
+				FsLog(fs, "Failed to remove failed download: %s", removeErr)
 			}
 		}
 	}()
 
-	in, err := src.Open()
+	in0, err := src.Open()
 	if err != nil {
+		stats.Error()
 		FsLog(fs, "Failed to open: %s", err)
 		return
 	}
+	in := NewAccount(in0) // account the transfer
 	defer checkClose(in, &err)
 
 	_, err = io.Copy(out, in)
 	if err != nil {
+		stats.Error()
 		FsLog(fs, "Failed to download: %s", err)
 		return
 	}
@@ -176,6 +185,7 @@ func (fs *FsObjectLocal) Remote() string {
 func (fs *FsObjectLocal) Md5sum() (string, error) {
 	in, err := os.Open(fs.path)
 	if err != nil {
+		stats.Error()
 		FsLog(fs, "Failed to open: %s", err)
 		return "", err
 	}
@@ -183,6 +193,7 @@ func (fs *FsObjectLocal) Md5sum() (string, error) {
 	hash := md5.New()
 	_, err = io.Copy(hash, in)
 	if err != nil {
+		stats.Error()
 		FsLog(fs, "Failed to read: %s", err)
 		return "", err
 	}

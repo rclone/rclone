@@ -105,10 +105,12 @@ func NewFsSwift(path string) (*FsSwift, error) {
 func SwiftContainers() {
 	c, err := swiftConnection()
 	if err != nil {
+		stats.Error()
 		log.Fatalf("Couldn't connect: %s", err)
 	}
 	containers, err := c.ContainersAll(nil)
 	if err != nil {
+		stats.Error()
 		log.Fatalf("Couldn't list containers: %s", err)
 	}
 	for _, container := range containers {
@@ -162,6 +164,7 @@ func (f *FsSwift) List() FsObjectsChan {
 			return objects, err
 		})
 		if err != nil {
+			stats.Error()
 			log.Printf("Couldn't read container %q: %s", f.container, err)
 		}
 		close(out)
@@ -174,11 +177,13 @@ func (f *FsSwift) Put(src FsObject) {
 	// Temporary FsObject under construction
 	fs := &FsObjectSwift{swift: f, remote: src.Remote()}
 	// FIXME content type
-	in, err := src.Open()
+	in0, err := src.Open()
 	if err != nil {
+		stats.Error()
 		FsLog(fs, "Failed to open: %s", err)
 		return
 	}
+	in := NewAccount(in0) // account the transfer
 	defer in.Close()
 
 	// Set the mtime
@@ -187,7 +192,14 @@ func (f *FsSwift) Put(src FsObject) {
 
 	_, err = fs.swift.c.ObjectPut(fs.swift.container, fs.remote, in, true, "", "", m.ObjectHeaders())
 	if err != nil {
+		stats.Error()
 		FsLog(fs, "Failed to upload: %s", err)
+		FsDebug(fs, "Removing failed upload")
+		removeErr := fs.Remove()
+		if removeErr != nil {
+			stats.Error()
+			FsLog(fs, "Failed to remove failed download: %s", removeErr)
+		}
 		return
 	}
 	FsDebug(fs, "Uploaded")
@@ -231,7 +243,7 @@ func (fs *FsObjectSwift) readMetaData() (err error) {
 	}
 	info, h, err := fs.swift.c.Object(fs.swift.container, fs.remote)
 	if err != nil {
-		FsLog(fs, "Failed to read info: %s", err)
+		FsDebug(fs, "Failed to read info: %s", err)
 		return err
 	}
 	meta := h.ObjectMetadata()
@@ -263,12 +275,14 @@ func (fs *FsObjectSwift) ModTime() time.Time {
 func (fs *FsObjectSwift) SetModTime(modTime time.Time) {
 	err := fs.readMetaData()
 	if err != nil {
+		stats.Error()
 		FsLog(fs, "Failed to read metadata: %s", err)
 		return
 	}
 	fs.meta.SetModTime(modTime)
 	err = fs.swift.c.ObjectUpdate(fs.swift.container, fs.remote, fs.meta.ObjectHeaders())
 	if err != nil {
+		stats.Error()
 		FsLog(fs, "Failed to update remote mtime: %s", err)
 	}
 }
