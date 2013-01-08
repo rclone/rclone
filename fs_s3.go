@@ -248,7 +248,13 @@ func (f *FsS3) Put(src FsObject) {
 
 // Mkdir creates the bucket if it doesn't exist
 func (f *FsS3) Mkdir() error {
-	return f.b.PutBucket(f.perm)
+	err := f.b.PutBucket(f.perm)
+	if err, ok := err.(*s3.Error); ok {
+		if err.Code == "BucketAlreadyOwnedByYou" {
+			return nil
+		}
+	}
+	return err
 }
 
 // Rmdir deletes the bucket
@@ -329,20 +335,18 @@ func (fs *FsObjectS3) ModTime() time.Time {
 
 // Sets the modification time of the local fs object
 func (fs *FsObjectS3) SetModTime(modTime time.Time) {
-	// FIXME goamz can't set metadata, though it is possible with a PUT and copy
-	FsLog(fs, "Can't set mod time yet: %s", modTime)
-	// err := fs.readMetaData()
-	// if err != nil {
-	// 	stats.Error()
-	// 	FsLog(fs, "Failed to read metadata: %s", err)
-	// 	return
-	// }
-	// fs.meta.SetModTime(modTime)
-	// err = fs.s3.c.ObjectUpdate(fs.s3.bucket, fs.remote, fs.meta.ObjectHeaders())
-	// if err != nil {
-	// 	stats.Error()
-	// 	FsLog(fs, "Failed to update remote mtime: %s", err)
-	// }
+	err := fs.readMetaData()
+	if err != nil {
+		stats.Error()
+		FsLog(fs, "Failed to read metadata: %s", err)
+		return
+	}
+	fs.meta[metaMtime] = swift.TimeToFloatString(modTime)
+	_, err = fs.s3.b.Update(fs.remote, fs.s3.perm, fs.meta)
+	if err != nil {
+		stats.Error()
+		FsLog(fs, "Failed to update remote mtime: %s", err)
+	}
 }
 
 // Is this object storable
