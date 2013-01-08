@@ -283,7 +283,8 @@ func List(f Fs) {
 // Lists files in a container
 func list(fdst, fsrc Fs) {
 	if fdst == nil {
-		SwiftContainers()
+		// FIXMESwiftContainers()
+		S3Buckets()
 		return
 	}
 	List(fdst)

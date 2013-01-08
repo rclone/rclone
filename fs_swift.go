@@ -47,7 +47,7 @@ func (f *FsSwift) String() string {
 }
 
 // Pattern to match a swift url
-var swiftMatch = regexp.MustCompile(`^([^/:]+):(.*)$`)
+var swiftMatch = regexp.MustCompile(`^swift://([^/]+)(.*)$`)
 
 // parseParse parses a swift 'url'
 func parsePath(path string) (container, directory string, err error) {
@@ -294,7 +294,7 @@ func (fs *FsObjectSwift) Storable() bool {
 
 // Open an object for read
 func (fs *FsObjectSwift) Open() (in io.ReadCloser, err error) {
-	in, _, err = fs.swift.c.ObjectOpen(fs.swift.container, fs.info.Name, true, nil)
+	in, _, err = fs.swift.c.ObjectOpen(fs.swift.container, fs.remote, true, nil)
 	return
 }
 

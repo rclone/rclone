@@ -1,5 +1,8 @@
 Todo
+  * Factor fses into own packages
+  * FIXME: ls without an argument for buckets/containers?
   * FIXME: More -dry-run checks for object transfer
+  * FIXME: EU Region not working
   * Ignoring the pseudo directories
     * if object.PseudoDirectory {
       * fmt.Printf("%9s %19s %s\n", "Directory", "-", fs.Remote())
@@ -14,8 +17,10 @@ Todo
   * Windows paths? Do we need to translate / and \?
   * Make a fs.Errorf and count errors and log them at a different level
   * add -modify-window flag - fs should keep knowledge of resolution
+  * Add max object size to fs metadata - 5GB for swift, infinite for local, ? for s3
 
 Ideas
+  * could do encryption - put IV into metadata?
   * optimise remote copy container to another container using remote
     copy if local is same as remote
   * Allow subpaths container:/sub/path

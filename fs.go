@@ -46,6 +46,9 @@ func NewFs(path string) (Fs, error) {
 	if swiftMatch.MatchString(path) {
 		return NewFsSwift(path)
 	}
+	if s3Match.MatchString(path) {
+		return NewFsS3(path)
+	}
 	return NewFsLocal(path)
 }
 
