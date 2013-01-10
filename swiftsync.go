@@ -173,7 +173,10 @@ func Sync(fdst, fsrc Fs) {
 	log.Printf("Waiting for transfers to finish")
 	copierWg.Wait()
 
-	// FIXME don't delete if IO errors
+	if stats.errors != 0 {
+		log.Printf("Not deleting files as there were IO errors")
+		return
+	}
 
 	// Delete the spare files
 	toDelete := make(FsObjectsChan, *transfers)
@@ -213,11 +216,13 @@ func Check(fdst, fsrc Fs) {
 
 	log.Printf("Files in %s but not in %s", fdst, fsrc)
 	for remote := range dstFiles {
+		stats.Error()
 		log.Printf(remote)
 	}
 
 	log.Printf("Files in %s but not in %s", fsrc, fdst)
 	for remote := range srcFiles {
+		stats.Error()
 		log.Printf(remote)
 	}
 
@@ -239,6 +244,7 @@ func Check(fdst, fsrc Fs) {
 				stats.Checking(src)
 				if src.Size() != dst.Size() {
 					stats.DoneChecking(src)
+					stats.Error()
 					FsLog(src, "Sizes differ")
 					continue
 				}
@@ -248,6 +254,7 @@ func Check(fdst, fsrc Fs) {
 					continue
 				}
 				if !same {
+					stats.Error()
 					FsLog(src, "Md5sums differ")
 				}
 				FsDebug(src, "OK")
@@ -257,6 +264,7 @@ func Check(fdst, fsrc Fs) {
 
 	log.Printf("Waiting for checks to finish")
 	checkerWg.Wait()
+	log.Printf("%d differences found", stats.errors)
 }
 
 // List the Fs to stdout
