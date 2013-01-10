@@ -2,6 +2,7 @@ Todo
   * Factor fses into own packages
   * FIXME: ls without an argument for buckets/containers?
   * FIXME: More -dry-run checks for object transfer
+  * FIXME: don't delete in sync if errors
   * Might be quicker to check md5sums first? for swift <-> swift certainly, and maybe for small files
   * Ignoring the pseudo directories
     * if object.PseudoDirectory {

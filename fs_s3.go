@@ -207,43 +207,23 @@ func (f *FsS3) List() FsObjectsChan {
 }
 
 // Put the FsObject into the bucket
-func (f *FsS3) Put(src FsObject) {
+func (f *FsS3) Put(in io.Reader, remote string, modTime time.Time, size int64) (FsObject, error) {
 	// Temporary FsObject under construction
-	fs := &FsObjectS3{s3: f, remote: src.Remote()}
-
-	in0, err := src.Open()
-	if err != nil {
-		stats.Error()
-		FsLog(fs, "Failed to open: %s", err)
-		return
-	}
-	in := NewAccount(in0) // account the transfer
-	defer in.Close()
+	fs := &FsObjectS3{s3: f, remote: remote}
 
 	// Set the mtime in the headers
 	headers := s3.Headers{
-		metaMtime: swift.TimeToFloatString(src.ModTime()),
+		metaMtime: swift.TimeToFloatString(modTime),
 	}
 
 	// Guess the content type
-	contentType := mime.TypeByExtension(path.Ext(fs.remote))
+	contentType := mime.TypeByExtension(path.Ext(remote))
 	if contentType == "" {
 		contentType = "application/octet-stream"
 	}
 
-	_, err = fs.s3.b.PutReaderHeaders(fs.remote, in, src.Size(), contentType, fs.s3.perm, headers)
-	if err != nil {
-		stats.Error()
-		FsLog(fs, "Failed to upload: %s", err)
-		FsDebug(fs, "Removing failed upload")
-		removeErr := fs.Remove()
-		if removeErr != nil {
-			stats.Error()
-			FsLog(fs, "Failed to remove failed download: %s", removeErr)
-		}
-		return
-	}
-	FsDebug(fs, "Uploaded")
+	_, err := fs.s3.b.PutReaderHeaders(remote, in, size, contentType, f.perm, headers)
+	return fs, err
 }
 
 // Mkdir creates the bucket if it doesn't exist

@@ -101,65 +101,35 @@ func (f *FsLocal) List() FsObjectsChan {
 	return out
 }
 
-// FIXME most of this is generic
-// could make it into Copy(dst, src FsObject)
-
 // Puts the FsObject to the local filesystem
-//
-// FIXME return the object?
-func (f *FsLocal) Put(src FsObject) {
-	dstRemote := src.Remote()
-	dstPath := filepath.Join(f.root, dstRemote)
+func (f *FsLocal) Put(in io.Reader, remote string, modTime time.Time, size int64) (FsObject, error) {
+	dstPath := filepath.Join(f.root, remote)
 	// Temporary FsObject under construction
-	fs := &FsObjectLocal{remote: dstRemote, path: dstPath}
-	FsDebug(fs, "Download %s to %s", dstRemote, dstPath)
+	fs := &FsObjectLocal{remote: remote, path: dstPath}
 
 	dir := path.Dir(dstPath)
 	err := os.MkdirAll(dir, 0770)
 	if err != nil {
-		stats.Error()
-		FsLog(fs, "Couldn't make directory: %s", err)
-		return
+		return fs, err
 	}
 
 	out, err := os.Create(dstPath)
 	if err != nil {
-		stats.Error()
-		FsLog(fs, "Failed to open: %s", err)
-		return
+		return fs, err
 	}
-
-	// Close and remove file on error at the end
-	defer func() {
-		checkClose(out, &err)
-		if err != nil {
-			FsDebug(fs, "Removing failed download")
-			removeErr := os.Remove(dstPath)
-			if removeErr != nil {
-				stats.Error()
-				FsLog(fs, "Failed to remove failed download: %s", removeErr)
-			}
-		}
-	}()
-
-	in0, err := src.Open()
-	if err != nil {
-		stats.Error()
-		FsLog(fs, "Failed to open: %s", err)
-		return
-	}
-	in := NewAccount(in0) // account the transfer
-	defer checkClose(in, &err)
 
 	_, err = io.Copy(out, in)
+	outErr := out.Close()
 	if err != nil {
-		stats.Error()
-		FsLog(fs, "Failed to download: %s", err)
-		return
+		return fs, err
+	}
+	if outErr != nil {
+		return fs, outErr
 	}
 
 	// Set the mtime
-	fs.SetModTime(src.ModTime())
+	fs.SetModTime(modTime)
+	return fs, err
 }
 
 // Mkdir creates the directory if it doesn't exist

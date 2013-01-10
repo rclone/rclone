@@ -173,36 +173,19 @@ func (f *FsSwift) List() FsObjectsChan {
 }
 
 // Put the FsObject into the container
-func (f *FsSwift) Put(src FsObject) {
+//
+// Copy the reader in to the new object which is returned
+//
+// The new object may have been created
+func (f *FsSwift) Put(in io.Reader, remote string, modTime time.Time, size int64) (FsObject, error) {
 	// Temporary FsObject under construction
-	fs := &FsObjectSwift{swift: f, remote: src.Remote()}
-	// FIXME content type
-	in0, err := src.Open()
-	if err != nil {
-		stats.Error()
-		FsLog(fs, "Failed to open: %s", err)
-		return
-	}
-	in := NewAccount(in0) // account the transfer
-	defer in.Close()
+	fs := &FsObjectSwift{swift: f, remote: remote}
 
 	// Set the mtime
 	m := swift.Metadata{}
-	m.SetModTime(src.ModTime())
-
-	_, err = fs.swift.c.ObjectPut(fs.swift.container, fs.remote, in, true, "", "", m.ObjectHeaders())
-	if err != nil {
-		stats.Error()
-		FsLog(fs, "Failed to upload: %s", err)
-		FsDebug(fs, "Removing failed upload")
-		removeErr := fs.Remove()
-		if removeErr != nil {
-			stats.Error()
-			FsLog(fs, "Failed to remove failed download: %s", removeErr)
-		}
-		return
-	}
-	FsDebug(fs, "Uploaded")
+	m.SetModTime(modTime)
+	_, err := f.c.ObjectPut(f.container, remote, in, true, "", "", m.ObjectHeaders())
+	return fs, err
 }
 
 // Mkdir creates the container if it doesn't exist

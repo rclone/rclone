@@ -62,13 +62,13 @@ func Copier(in FsObjectsChan, fdst Fs, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for src := range in {
 		stats.Transferring(src)
-		fdst.Put(src)
+		Copy(fdst, src)
 		stats.DoneTransferring(src)
 	}
 }
 
 // Copies fsrc into fdst
-func Copy(fdst, fsrc Fs) {
+func CopyFs(fdst, fsrc Fs) {
 	err := fdst.Mkdir()
 	if err != nil {
 		stats.Error()
@@ -351,7 +351,7 @@ var Commands = []Command{
         MD5SUM.  Doesn't delete files from the destination.
 
 `,
-		Copy,
+		CopyFs,
 		2, 2,
 	},
 	{

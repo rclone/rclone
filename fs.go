@@ -14,7 +14,7 @@ type Fs interface {
 	String() string
 	List() FsObjectsChan
 	NewFsObject(remote string) FsObject
-	Put(src FsObject)
+	Put(in io.Reader, remote string, modTime time.Time, size int64) (FsObject, error)
 	Mkdir() error
 	Rmdir() error
 }
@@ -146,4 +146,33 @@ func Equal(src, dst FsObject) bool {
 
 	FsDebug(src, "Size and MD5SUM of src and dst objects identical")
 	return true
+}
+
+// Copy src object to f
+func Copy(f Fs, src FsObject) {
+	in0, err := src.Open()
+	if err != nil {
+		stats.Error()
+		FsLog(src, "Failed to open: %s", err)
+		return
+	}
+	in := NewAccount(in0) // account the transfer
+
+	dst, err := f.Put(in, src.Remote(), src.ModTime(), src.Size())
+	inErr := in.Close()
+	if err == nil {
+		err = inErr
+	}
+	if err != nil {
+		stats.Error()
+		FsLog(dst, "Failed to copy: %s", err)
+		FsDebug(dst, "Removing failed copy")
+		removeErr := dst.Remove()
+		if removeErr != nil {
+			stats.Error()
+			FsLog(dst, "Failed to remove failed copy: %s", removeErr)
+		}
+		return
+	}
+	FsDebug(src, "Copied")
 }
