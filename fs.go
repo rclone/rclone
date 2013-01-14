@@ -49,6 +49,9 @@ func NewFs(path string) (Fs, error) {
 	if s3Match.MatchString(path) {
 		return NewFsS3(path)
 	}
+	if driveMatch.MatchString(path) {
+		return NewFsDrive(path)
+	}
 	return NewFsLocal(path)
 }
 
@@ -126,7 +129,7 @@ func Equal(src, dst FsObject) bool {
 	srcModTime := src.ModTime()
 	dstModTime := dst.ModTime()
 	if !dstModTime.Equal(srcModTime) {
-		FsDebug(src, "Modification times differ")
+		FsDebug(src, "Modification times differ: %v, %v", srcModTime, dstModTime)
 	} else {
 		FsDebug(src, "Size and modification time the same")
 		return true

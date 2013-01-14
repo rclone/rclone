@@ -1,4 +1,6 @@
 Todo
+  * Copy should use the sync code as it is more efficient at directory listing
+  * Drive needs a modify window of 1ms
   * Factor fses into own packages
   * FIXME: ls without an argument for buckets/containers?
   * FIXME: More -dry-run checks for object transfer
@@ -19,12 +21,33 @@ Todo
   * add -modify-window flag - fs should keep knowledge of resolution
   * Add max object size to fs metadata - 5GB for swift, infinite for local, ? for s3
 
+Drive
+  * Do we need the secrets or just the code?  If just the code then
+    can make a web service which does the request on the clients
+    behalf so don't need to expose the client secrets
+  * Apparently we don't need -drive-client-id or -drive-client-secret once we have a token
+  * Make a cgi which we send the user to
+    * It has the client secrets
+    * It gets google to authenticate
+    * It receives the token back
+    * It displays the token to the user to paste in to the code
+    * Should be https really
+   
 Ideas
   * could do encryption - put IV into metadata?
   * optimise remote copy container to another container using remote
     copy if local is same as remote
   * Allow subpaths container:/sub/path
   * look at auth from env in s3 module - add to swift?
+  * support
+      * sftp
+      * scp
+      * Google cloud storage: https://developers.google.com/storage/
+      * Google drive: https://developers.google.com/drive/
+      * rsync over ssh
+      * dropbox: https://github.com/nickoneill/go-dropbox (no MD5s)
+
+     
 
 Need to make directory objects otherwise can't upload an empty directory
   * Or could upload empty directories only?
