@@ -28,32 +28,55 @@ var (
 	statsInterval = flag.Duration("stats", time.Minute*1, "Interval to print stats")
 )
 
+// A pair of FsObjects
+type PairFsObjects struct {
+	src, dst FsObject
+}
+
+type PairFsObjectsChan chan PairFsObjects
+
+// Check to see if src needs to be copied to dst and if so puts it in out
+func checkOne(src, dst FsObject, out FsObjectsChan) {
+	if dst == nil {
+		FsDebug(src, "Couldn't find local file - download")
+		out <- src
+		return
+	}
+	// Check to see if can store this
+	if !src.Storable() {
+		return
+	}
+	// Check to see if changed or not
+	if Equal(src, dst) {
+		FsDebug(src, "Unchanged skipping")
+		return
+	}
+	out <- src
+}
+
+// Read FsObjects~s on in send to out if they need uploading
+//
+// FIXME potentially doing lots of MD5SUMS at once
+func PairChecker(in PairFsObjectsChan, out FsObjectsChan, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for pair := range in {
+		src := pair.src
+		stats.Checking(src)
+		checkOne(src, pair.dst, out)
+		stats.DoneChecking(src)
+	}
+}
+
 // Read FsObjects~s on in send to out if they need uploading
 //
 // FIXME potentially doing lots of MD5SUMS at once
 func Checker(in, out FsObjectsChan, fdst Fs, wg *sync.WaitGroup) {
 	defer wg.Done()
-
 	for src := range in {
 		stats.Checking(src)
 		dst := fdst.NewFsObject(src.Remote())
+		checkOne(src, dst, out)
 		stats.DoneChecking(src)
-		if dst == nil {
-			FsDebug(src, "Couldn't find local file - download")
-			out <- src
-			continue
-		}
-
-		// Check to see if can store this
-		if !src.Storable() {
-			continue
-		}
-		// Check to see if changed or not
-		if Equal(src, dst) {
-			FsDebug(src, "Unchanged skipping")
-			continue
-		}
-		out <- src
 	}
 }
 
@@ -144,21 +167,13 @@ func Sync(fdst, fsrc Fs) {
 	}
 
 	// Read source files checking them off against dest files
-	to_be_checked := make(FsObjectsChan, *transfers)
-	go func() {
-		for src := range fsrc.List() {
-			delete(delFiles, src.Remote())
-			to_be_checked <- src
-		}
-		close(to_be_checked)
-	}()
-
+	to_be_checked := make(PairFsObjectsChan, *transfers)
 	to_be_uploaded := make(FsObjectsChan, *transfers)
 
 	var checkerWg sync.WaitGroup
 	checkerWg.Add(*checkers)
 	for i := 0; i < *checkers; i++ {
-		go Checker(to_be_checked, to_be_uploaded, fdst, &checkerWg)
+		go PairChecker(to_be_checked, to_be_uploaded, &checkerWg)
 	}
 
 	var copierWg sync.WaitGroup
@@ -166,6 +181,21 @@ func Sync(fdst, fsrc Fs) {
 	for i := 0; i < *transfers; i++ {
 		go Copier(to_be_uploaded, fdst, &copierWg)
 	}
+
+	go func() {
+		for src := range fsrc.List() {
+			remote := src.Remote()
+			dst, found := delFiles[remote]
+			if found {
+				delete(delFiles, remote)
+				to_be_checked <- PairFsObjects{src, dst}
+			} else {
+				// No need to check doesn't exist
+				to_be_uploaded <- src
+			}
+		}
+		close(to_be_checked)
+	}()
 
 	log.Printf("Waiting for checks to finish")
 	checkerWg.Wait()
@@ -281,7 +311,7 @@ func List(f Fs) {
 				stats.Checking(fs)
 				modTime := fs.ModTime()
 				stats.DoneChecking(fs)
-				fmt.Printf("%9d %19s %s\n", fs.Size(), modTime.Format("2006-01-02 15:04:05"), fs.Remote())
+				fmt.Printf("%9d %19s %s\n", fs.Size(), modTime.Format("2006-01-02 15:04:05.00000000"), fs.Remote())
 			}
 		}()
 	}
