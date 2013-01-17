@@ -88,7 +88,7 @@ func s3Connection() (*s3.S3, error) {
 	if *awsSecretAccessKey == "" {
 		return nil, errors.New("Need -aws-secret-access-key or environmental variable AWS_SECRET_ACCESS_KEY")
 	}
-	auth := aws.Auth{*awsAccessKeyId, *awsSecretAccessKey}
+	auth := aws.Auth{AccessKey: *awsAccessKeyId, SecretKey: *awsSecretAccessKey}
 
 	// FIXME look through all the regions by name and use one of them if found
 
