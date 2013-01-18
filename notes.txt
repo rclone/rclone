@@ -1,4 +1,5 @@
 Todo
+  * Make a test suite which can run on all the given types of fs
   * Copy should use the sync code as it is more efficient at directory listing
   * Drive needs a modify window of 1ms
   * Factor fses into own packages
@@ -46,6 +47,7 @@ Ideas
       * Google drive: https://developers.google.com/drive/
       * rsync over ssh
       * dropbox: https://github.com/nickoneill/go-dropbox (no MD5s)
+  * grive seems to have its secrets in the source code which would make things easier!
 
      
 
@@ -58,3 +60,14 @@ s3
     * https://forums.aws.amazon.com/message.jspa?messageID=214062
     * Otherwise can set metadata
   * Returns etag and last modified in bucket list
+
+
+Bugs
+
+local & drive need to delete directories
+
+2013/01/18 16:31:32 Waiting for deletions to finish
+2013/01/18 16:31:32 z3: FIXME Skipping directory
+2013/01/18 16:31:32 z3/x: Deleted
+2013/01/18 16:31:32 Deleting path
+2013/01/18 16:31:32 Rmdir failed: remove z3: directory not empty

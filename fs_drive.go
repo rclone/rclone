@@ -1,9 +1,6 @@
 // Drive interface
 package main
 
-// FIXME could make a purge which deleted everything in the container
-// easily - rmdir without the checks!
-
 // FIXME list containers equivalent should list directories?
 
 // FIXME drive times only accurate to 1 ms (3 decimal places)
@@ -505,9 +502,6 @@ func (f *FsDrive) Mkdir() error {
 //
 // Returns an error if it isn't empty
 func (f *FsDrive) Rmdir() error {
-	if f.root == "" {
-		return fmt.Errorf("Can't delete root directory")
-	}
 	err := f.findRoot(false)
 	if err != nil {
 		return err
@@ -518,6 +512,27 @@ func (f *FsDrive) Rmdir() error {
 	}
 	if len(children.Items) > 0 {
 		return fmt.Errorf("Directory not empty: %#v", children.Items)
+	}
+	// Delete the directory if it isn't the root
+	if f.root != "" {
+		err = f.svc.Files.Delete(f.rootId).Do()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Purge deletes all the files and the container
+//
+// Returns an error if it isn't empty
+func (f *FsDrive) Purge() error {
+	if f.root == "" {
+		return fmt.Errorf("Can't purge root directory")
+	}
+	err := f.findRoot(false)
+	if err != nil {
+		return err
 	}
 	err = f.svc.Files.Delete(f.rootId).Do()
 	if err != nil {
@@ -635,4 +650,5 @@ func (fs *FsObjectDrive) Remove() error {
 
 // Check the interfaces are satisfied
 var _ Fs = &FsDrive{}
+var _ Purger = &FsDrive{}
 var _ FsObject = &FsObjectDrive{}

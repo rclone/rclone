@@ -31,8 +31,16 @@ type FsObject interface {
 	Size() int64
 	Open() (io.ReadCloser, error)
 	Storable() bool
-	//	Exists() bool
 	Remove() error
+}
+
+// Optional interfaces
+type Purger interface {
+	// Purge all files in the root and the root directory
+	//
+	// Implement this if you have a way of deleting all the files
+	// quicker than just running Remove() on the result of List()
+	Purge() error
 }
 
 type FsObjectsChan chan FsObject

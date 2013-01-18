@@ -354,9 +354,17 @@ func rmdir(fdst, fsrc Fs) {
 //
 // FIXME doesn't delete local directories
 func purge(fdst, fsrc Fs) {
-	DeleteFiles(fdst.List())
-	log.Printf("Deleting path")
-	rmdir(fdst, fsrc)
+	if f, ok := fdst.(Purger); ok {
+		err := f.Purge()
+		if err != nil {
+			stats.Error()
+			log.Fatalf("Purge failed: %s", err)
+		}
+	} else {
+		DeleteFiles(fdst.List())
+		log.Printf("Deleting path")
+		rmdir(fdst, fsrc)
+	}
 }
 
 type Command struct {
