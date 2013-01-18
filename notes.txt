@@ -1,7 +1,6 @@
 Todo
   * Make a test suite which can run on all the given types of fs
   * Copy should use the sync code as it is more efficient at directory listing
-  * Drive needs a modify window of 1ms
   * Factor fses into own packages
   * FIXME: ls without an argument for buckets/containers?
   * FIXME: More -dry-run checks for object transfer
@@ -19,8 +18,8 @@ Todo
   * Check the locking in swift module!
   * Windows paths? Do we need to translate / and \?
   * Make a fs.Errorf and count errors and log them at a different level
-  * add -modify-window flag - fs should keep knowledge of resolution
   * Add max object size to fs metadata - 5GB for swift, infinite for local, ? for s3
+    * tie into -max-size flag
 
 Drive
   * Do we need the secrets or just the code?  If just the code then
@@ -33,11 +32,13 @@ Drive
     * It receives the token back
     * It displays the token to the user to paste in to the code
     * Should be https really
-   
+  * Sometimes get: Failed to copy: Upload failed: googleapi: Error 403: Rate Limit Exceeded
+    * quota is 100.0 requests/second/user
+
 Ideas
   * could do encryption - put IV into metadata?
   * optimise remote copy container to another container using remote
-    copy if local is same as remote
+    copy if local is same as remote - use an optional Copier interface
   * Allow subpaths container:/sub/path
   * look at auth from env in s3 module - add to swift?
   * support

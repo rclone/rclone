@@ -244,6 +244,11 @@ func (f *FsS3) Rmdir() error {
 	return f.b.DelBucket()
 }
 
+// Return the precision
+func (fs *FsS3) Precision() time.Duration {
+	return time.Nanosecond
+}
+
 // ------------------------------------------------------------
 
 // Return the remote path

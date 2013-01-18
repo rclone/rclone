@@ -19,13 +19,13 @@ import (
 var (
 	// Flags
 	cpuprofile    = flag.String("cpuprofile", "", "Write cpu profile to file")
-	snet          = flag.Bool("snet", false, "Use internal service network") // FIXME not implemented
 	verbose       = flag.Bool("verbose", false, "Print lots more stuff")
 	quiet         = flag.Bool("quiet", false, "Print as little stuff as possible")
 	dry_run       = flag.Bool("dry-run", false, "Do a trial run with no permanent changes")
 	checkers      = flag.Int("checkers", 8, "Number of checkers to run in parallel.")
 	transfers     = flag.Int("transfers", 4, "Number of file transfers to run in parallel.")
 	statsInterval = flag.Duration("stats", time.Minute*1, "Interval to print stats")
+	modifyWindow  = flag.Duration("modify-window", time.Nanosecond, "Max time diff to be considered the same")
 )
 
 // A pair of FsObjects
@@ -566,6 +566,23 @@ func main() {
 		fsrc, fdst = fdst, fsrc
 	}
 
+	// Work out modify window
+	if fsrc != nil {
+		precision := fsrc.Precision()
+		log.Printf("Source precision %s\n", precision)
+		if precision > *modifyWindow {
+			*modifyWindow = precision
+		}
+	}
+	if fdst != nil {
+		precision := fdst.Precision()
+		log.Printf("Destination precision %s\n", precision)
+		if precision > *modifyWindow {
+			*modifyWindow = precision
+		}
+	}
+	log.Printf("Modify window is %s\n", *modifyWindow)
+
 	// Print the stats every statsInterval
 	go func() {
 		ch := time.Tick(*statsInterval)
@@ -579,6 +596,7 @@ func main() {
 	if found.run != nil {
 		found.run(fdst, fsrc)
 		fmt.Println(stats)
+		log.Printf("*** Go routines at exit %d\n", runtime.NumGoroutine())
 		if stats.errors > 0 {
 			os.Exit(1)
 		}

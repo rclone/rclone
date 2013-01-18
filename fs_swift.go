@@ -39,6 +39,7 @@ var (
 	authUrl  = flag.String("auth", os.Getenv("ST_AUTH"), "Auth URL for server. Defaults to environment var ST_AUTH.")
 	userName = flag.String("user", os.Getenv("ST_USER"), "User name. Defaults to environment var ST_USER.")
 	apiKey   = flag.String("key", os.Getenv("ST_KEY"), "API key (password). Defaults to environment var ST_KEY.")
+	snet     = flag.Bool("snet", false, "Use internal service network") // FIXME not implemented
 )
 
 // String converts this FsSwift to a string
@@ -198,6 +199,11 @@ func (f *FsSwift) Mkdir() error {
 // Returns an error if it isn't empty
 func (f *FsSwift) Rmdir() error {
 	return f.c.ContainerDelete(f.container)
+}
+
+// Return the precision
+func (fs *FsSwift) Precision() time.Duration {
+	return time.Nanosecond
 }
 
 // ------------------------------------------------------------

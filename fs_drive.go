@@ -1,7 +1,14 @@
 // Drive interface
 package main
 
+// FIXME drive code is leaking goroutines somehow
+
+// FIXME use recursive listing not bound to directory for speed?
+
 // FIXME list containers equivalent should list directories?
+
+// FIXME list directory should list to channel for concurrency not
+// append to array
 
 // FIXME drive times only accurate to 1 ms (3 decimal places)
 
@@ -24,8 +31,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime"
 	"net/http"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 	"sync"
@@ -458,12 +467,18 @@ func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64
 		return nil, fmt.Errorf("Couldn't find or make directory: %s", err)
 	}
 
+	// Guess the mime type
+	mimeType := mime.TypeByExtension(path.Ext(remote))
+	if mimeType == "" {
+		mimeType = "application/octet-stream"
+	}
+
 	// Define the metadata for the file we are going to create.
 	info := &drive.File{
 		Title:       leaf,
 		Description: leaf,
 		Parents:     []*drive.ParentReference{{Id: directoryId}},
-		// FIXME set mimeType: 
+		MimeType:    mimeType,
 	}
 
 	// FIXME can't set modified date on initial upload as no
@@ -483,12 +498,13 @@ func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64
 	if err != nil {
 		return nil, fmt.Errorf("Upload failed: %s", err)
 	}
+	fs.info = info
 
 	// Set modified date
 	info.ModifiedDate = modTime.Format(time.RFC3339Nano)
 	_, err = f.svc.Files.Update(info.Id, info).SetModifiedDate(true).Do()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to set mtime: %s", err)
+		return fs, fmt.Errorf("Failed to set mtime: %s", err)
 	}
 	return fs, nil
 }
@@ -521,6 +537,11 @@ func (f *FsDrive) Rmdir() error {
 		}
 	}
 	return nil
+}
+
+// Return the precision
+func (fs *FsDrive) Precision() time.Duration {
+	return time.Millisecond
 }
 
 // Purge deletes all the files and the container

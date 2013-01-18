@@ -5,16 +5,20 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
 // FsLocal represents a local filesystem rooted at root
 type FsLocal struct {
-	root string
+	root        string        // The root directory
+	precisionOk sync.Once     // Whether we need to read the precision
+	precision   time.Duration // precision of local filesystem
 }
 
 // FsObjectLocal represents a local filesystem object
@@ -142,6 +146,63 @@ func (f *FsLocal) Mkdir() error {
 // If it isn't empty it will return an error
 func (f *FsLocal) Rmdir() error {
 	return os.Remove(f.root)
+}
+
+// Return the precision
+func (f *FsLocal) Precision() (precision time.Duration) {
+	f.precisionOk.Do(func() {
+		f.precision = f.readPrecision()
+	})
+	return f.precision
+}
+
+// Read the precision
+func (f *FsLocal) readPrecision() (precision time.Duration) {
+	// Default precision of 1s
+	precision = time.Second
+
+	// Create temporary file and test it
+	fd, err := ioutil.TempFile("", "swiftsync")
+	if err != nil {
+		// If failed return 1s
+		// fmt.Println("Failed to create temp file", err)
+		return time.Second
+	}
+	path := fd.Name()
+	// fmt.Println("Created temp file", path)
+	fd.Close()
+
+	// Delete it on return
+	defer func() {
+		// fmt.Println("Remove temp file")
+		os.Remove(path)
+	}()
+
+	// Find the minimum duration we can detect
+	for duration := time.Duration(1); duration < time.Second; duration *= 10 {
+		// Current time with delta
+		t := time.Unix(time.Now().Unix(), int64(duration))
+		err := Chtimes(path, t, t)
+		if err != nil {
+			// fmt.Println("Failed to Chtimes", err)
+			break
+		}
+
+		// Read the actual time back
+		fi, err := os.Stat(path)
+		if err != nil {
+			// fmt.Println("Failed to Stat", err)
+			break
+		}
+
+		// If it matches - have found the precision
+		// fmt.Println("compare", fi.ModTime(), t)
+		if fi.ModTime() == t {
+			// fmt.Println("Precision detected as", duration)
+			return duration
+		}
+	}
+	return
 }
 
 // ------------------------------------------------------------

@@ -32,6 +32,9 @@ type Fs interface {
 
 	// Remove the directory (container, bucket) if empty
 	Rmdir() error
+
+	// Precision of the ModTimes in this Fs
+	Precision() time.Duration
 }
 
 // FIXME make f.Debugf...
@@ -168,10 +171,11 @@ func Equal(src, dst FsObject) bool {
 	// Size the same so check the mtime
 	srcModTime := src.ModTime()
 	dstModTime := dst.ModTime()
-	if !dstModTime.Equal(srcModTime) {
-		FsDebug(src, "Modification times differ: %v, %v", srcModTime, dstModTime)
+	dt := dstModTime.Sub(srcModTime)
+	if dt >= *modifyWindow || dt <= -*modifyWindow {
+		FsDebug(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
 	} else {
-		FsDebug(src, "Size and modification time the same")
+		FsDebug(src, "Size and modification time differ by %s (within %s)", dt, *modifyWindow)
 		return true
 	}
 
