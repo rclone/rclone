@@ -11,11 +11,26 @@ import (
 
 // A Filesystem, describes the local filesystem and the remote object store
 type Fs interface {
+	// String returns a description of the FS
 	String() string
+
+	// List the Fs into a channel
 	List() FsObjectsChan
+
+	// Find the FsObject at remote.  Returns nil if can't be found
 	NewFsObject(remote string) FsObject
+
+	// Put in to the remote path with the modTime given of the given size
+	//
+	// May create the object even if it returns an error - if so
+	// will return the object and the error, otherwise will return
+	// nil and the error
 	Put(in io.Reader, remote string, modTime time.Time, size int64) (FsObject, error)
+
+	// Make the directory (container, bucket)
 	Mkdir() error
+
+	// Remove the directory (container, bucket) if empty
 	Rmdir() error
 }
 
@@ -24,13 +39,28 @@ type Fs interface {
 // A filesystem like object which can either be a remote object or a
 // local file/directory
 type FsObject interface {
+	// Remote returns the remote path
 	Remote() string
+
+	// Md5sum returns the md5 checksum of the file
 	Md5sum() (string, error)
+
+	// ModTime returns the modification date of the file
 	ModTime() time.Time
+
+	// SetModTime sets the metadata on the object to set the modification date
 	SetModTime(time.Time)
+
+	// Size returns the size of the file
 	Size() int64
+
+	// Open opens the file for read.  Call Close() on the returned io.ReadCloser
 	Open() (io.ReadCloser, error)
+
+	// Storable says whether this object can be stored
 	Storable() bool
+
+	// Removes this object
 	Remove() error
 }
 
@@ -43,13 +73,15 @@ type Purger interface {
 	Purge() error
 }
 
+// A channel of FsObjects
 type FsObjectsChan chan FsObject
 
+// A slice of FsObjects
 type FsObjects []FsObject
 
 // NewFs makes a new Fs object from the path
 //
-// FIXME make more generic in future
+// FIXME make more generic
 func NewFs(path string) (Fs, error) {
 	if swiftMatch.MatchString(path) {
 		return NewFsSwift(path)
@@ -176,12 +208,14 @@ func Copy(f Fs, src FsObject) {
 	}
 	if err != nil {
 		stats.Error()
-		FsLog(dst, "Failed to copy: %s", err)
-		FsDebug(dst, "Removing failed copy")
-		removeErr := dst.Remove()
-		if removeErr != nil {
-			stats.Error()
-			FsLog(dst, "Failed to remove failed copy: %s", removeErr)
+		FsLog(src, "Failed to copy: %s", err)
+		if dst != nil {
+			FsDebug(dst, "Removing failed copy")
+			removeErr := dst.Remove()
+			if removeErr != nil {
+				stats.Error()
+				FsLog(dst, "Failed to remove failed copy: %s", removeErr)
+			}
 		}
 		return
 	}
