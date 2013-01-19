@@ -1,7 +1,8 @@
 // Drive interface
 package main
 
-// FIXME drive code is leaking goroutines somehow
+// FIXME drive code is leaking goroutines somehow - reported bug
+// https://code.google.com/p/google-api-go-client/issues/detail?id=23
 
 // FIXME use recursive listing not bound to directory for speed?
 
@@ -9,8 +10,6 @@ package main
 
 // FIXME list directory should list to channel for concurrency not
 // append to array
-
-// FIXME drive times only accurate to 1 ms (3 decimal places)
 
 // FIXME perhaps have a drive setup mode where we ask for all the
 // params interactively and store them all in one file
@@ -55,9 +54,13 @@ type FsDrive struct {
 
 // FsObjectDrive describes a drive object
 type FsObjectDrive struct {
-	drive  *FsDrive    // what this object is part of
-	remote string      // The remote path
-	info   *drive.File // Info from the drive object if known
+	drive        *FsDrive // what this object is part of
+	remote       string   // The remote path
+	id           string   // Drive Id of this object
+	url          string   // Download URL of this object
+	md5sum       string   // md5sum of the object
+	bytes        int64    // size of the object
+	modifiedDate string   // RFC3339 time it was last modified
 }
 
 // lockedMap is a map with a mutex
@@ -257,7 +260,7 @@ func (f *FsDrive) NewFsObjectWithInfo(remote string, info *drive.File) FsObject 
 		remote: remote,
 	}
 	if info != nil {
-		fs.info = info
+		fs.setMetaData(info)
 	} else {
 		err := fs.readMetaData() // reads info and meta, returning an error
 		if err != nil {
@@ -498,7 +501,7 @@ func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64
 	if err != nil {
 		return nil, fmt.Errorf("Upload failed: %s", err)
 	}
-	fs.info = info
+	fs.setMetaData(info)
 
 	// Set modified date
 	info.ModifiedDate = modTime.Format(time.RFC3339Nano)
@@ -571,19 +574,26 @@ func (fs *FsObjectDrive) Remote() string {
 
 // Md5sum returns the Md5sum of an object returning a lowercase hex string
 func (fs *FsObjectDrive) Md5sum() (string, error) {
-	return strings.ToLower(fs.info.Md5Checksum), nil
+	return fs.md5sum, nil
 }
 
 // Size returns the size of an object in bytes
 func (fs *FsObjectDrive) Size() int64 {
-	return fs.info.FileSize
+	return fs.bytes
+}
+
+// setMetaData sets the fs data from a drive.File
+func (fs *FsObjectDrive) setMetaData(info *drive.File) {
+	fs.id = info.Id
+	fs.url = info.DownloadUrl
+	fs.md5sum = strings.ToLower(info.Md5Checksum)
+	fs.bytes = info.FileSize
+	fs.modifiedDate = info.ModifiedDate
 }
 
 // readMetaData gets the info if it hasn't already been fetched
-//
-// it also sets the info
 func (fs *FsObjectDrive) readMetaData() (err error) {
-	if fs.info != nil {
+	if fs.id != "" {
 		return nil
 	}
 
@@ -600,7 +610,7 @@ func (fs *FsObjectDrive) readMetaData() (err error) {
 	}
 	for _, file := range items {
 		if file.Title == leaf {
-			fs.info = file
+			fs.setMetaData(file)
 			return nil
 		}
 	}
@@ -619,7 +629,7 @@ func (fs *FsObjectDrive) ModTime() time.Time {
 		FsLog(fs, "Failed to read metadata: %s", err)
 		return time.Now()
 	}
-	modTime, err := time.Parse(time.RFC3339, fs.info.ModifiedDate)
+	modTime, err := time.Parse(time.RFC3339, fs.modifiedDate)
 	if err != nil {
 		FsLog(fs, "Failed to read mtime from object: %s", err)
 		return time.Now()
@@ -635,9 +645,12 @@ func (fs *FsObjectDrive) SetModTime(modTime time.Time) {
 		FsLog(fs, "Failed to read metadata: %s", err)
 		return
 	}
+	// New metadata
+	info := &drive.File{
+		ModifiedDate: modTime.Format(time.RFC3339Nano),
+	}
 	// Set modified date
-	fs.info.ModifiedDate = modTime.Format(time.RFC3339Nano)
-	_, err = fs.drive.svc.Files.Update(fs.info.Id, fs.info).SetModifiedDate(true).Do()
+	_, err = fs.drive.svc.Files.Update(fs.id, info).SetModifiedDate(true).Do()
 	if err != nil {
 		stats.Error()
 		FsLog(fs, "Failed to update remote mtime: %s", err)
@@ -651,7 +664,7 @@ func (fs *FsObjectDrive) Storable() bool {
 
 // Open an object for read
 func (fs *FsObjectDrive) Open() (in io.ReadCloser, err error) {
-	req, _ := http.NewRequest("GET", fs.info.DownloadUrl, nil)
+	req, _ := http.NewRequest("GET", fs.url, nil)
 	req.Header.Set("User-Agent", "swiftsync/1.0")
 	res, err := fs.drive.client.Do(req)
 	if err != nil {
@@ -666,7 +679,7 @@ func (fs *FsObjectDrive) Open() (in io.ReadCloser, err error) {
 
 // Remove an object
 func (fs *FsObjectDrive) Remove() error {
-	return fs.drive.svc.Files.Delete(fs.info.Id).Do()
+	return fs.drive.svc.Files.Delete(fs.id).Do()
 }
 
 // Check the interfaces are satisfied
