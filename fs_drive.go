@@ -21,6 +21,7 @@ package main
 // * multiple files with the same name
 // * files can be in multiple directories
 // * can have directory loops
+// * files with / in name
 
 import (
 	"code.google.com/p/goauth2/oauth"
@@ -133,10 +134,17 @@ func parseDrivePath(path string) (root string, err error) {
 	return
 }
 
-// Lists the directory required
+// User function to process a File item from listAll
+//
+// Should return true to finish processing
+type listAllFn func(*drive.File) bool
+
+// Lists the directory required calling the user function on each item found
+//
+// If the user fn ever returns true then it early exits with found = true
 //
 // Search params: https://developers.google.com/drive/search-parameters
-func (f *FsDrive) listAll(dirId string, title string, directoriesOnly bool, filesOnly bool) (items []*drive.File, err error) {
+func (f *FsDrive) listAll(dirId string, title string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
 	query := fmt.Sprintf("trashed=false and '%s' in parents", dirId)
 	if title != "" {
 		// Escaping the backslash isn't documented but seems to work
@@ -151,12 +159,18 @@ func (f *FsDrive) listAll(dirId string, title string, directoriesOnly bool, file
 		query += fmt.Sprintf(" and mimeType!='%s'", driveFolderType)
 	}
 	list := f.svc.Files.List().Q(query)
+OUTER:
 	for {
 		files, err := list.Do()
 		if err != nil {
-			return nil, fmt.Errorf("Couldn't list directory: %s", err)
+			return false, fmt.Errorf("Couldn't list directory: %s", err)
 		}
-		items = append(items, files.Items...)
+		for _, item := range files.Items {
+			if fn(item) {
+				found = true
+				break OUTER
+			}
+		}
 		if files.NextPageToken == "" {
 			break
 		}
@@ -280,29 +294,32 @@ func (f *FsDrive) NewFsObject(remote string) FsObject {
 
 // Path should be directory path either "" or "path/"
 func (f *FsDrive) listDir(dirId string, path string, out FsObjectsChan) error {
+	var subError error
 	// Make the API request
-	items, err := f.listAll(dirId, "", false, false)
-	if err != nil {
-		return err
-	}
-	for _, item := range items {
+	_, err := f.listAll(dirId, "", false, false, func(item *drive.File) bool {
 		// Recurse on directories
 		// FIXME should do this in parallel
 		// use a wg to sync then collect error
 		if item.MimeType == driveFolderType {
-			err := f.listDir(item.Id, path+item.Title+"/", out)
-			if err != nil {
-				return err
+			subError = f.listDir(item.Id, path+item.Title+"/", out)
+			if subError != nil {
+				return true
 			}
 		} else {
 			// If item has no MD5 sum it isn't stored on drive, so ignore it
-			if item.Md5Checksum == "" {
-				continue
-			}
-			if fs := f.NewFsObjectWithInfo(path+item.Title, item); fs != nil {
-				out <- fs
+			if item.Md5Checksum != "" {
+				if fs := f.NewFsObjectWithInfo(path+item.Title, item); fs != nil {
+					out <- fs
+				}
 			}
 		}
+		return false
+	})
+	if err != nil {
+		return err
+	}
+	if subError != nil {
+		return subError
 	}
 	return nil
 }
@@ -380,17 +397,15 @@ func (f *FsDrive) _findDir(path string, create bool) (pathId string, err error) 
 	}
 
 	// Find the leaf in pathId
-	items, err := f.listAll(pathId, leaf, true, false)
+	found, err := f.listAll(pathId, leaf, true, false, func(item *drive.File) bool {
+		if item.Title == leaf {
+			pathId = item.Id
+			return true
+		}
+		return false
+	})
 	if err != nil {
 		return pathId, err
-	}
-	found := false
-	for _, file := range items {
-		if file.Title == leaf {
-			pathId = file.Id
-			found = true
-			break
-		}
 	}
 
 	// If not found create the directory if required or return an error
@@ -604,18 +619,21 @@ func (fs *FsObjectDrive) readMetaData() (err error) {
 		return fmt.Errorf("Couldn't find directory: %s", err)
 	}
 
-	items, err := fs.drive.listAll(directoryId, leaf, false, true)
+	found, err := fs.drive.listAll(directoryId, leaf, false, true, func(item *drive.File) bool {
+		if item.Title == leaf {
+			fs.setMetaData(item)
+			return true
+		}
+		return false
+	})
 	if err != nil {
 		return err
 	}
-	for _, file := range items {
-		if file.Title == leaf {
-			fs.setMetaData(file)
-			return nil
-		}
+	if !found {
+		FsDebug(fs, "Couldn't find object")
+		return fmt.Errorf("Couldn't find object")
 	}
-	FsDebug(fs, "Couldn't find object")
-	return fmt.Errorf("Couldn't find object")
+	return nil
 }
 
 // ModTime returns the modification time of the object
