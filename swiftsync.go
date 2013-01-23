@@ -300,7 +300,7 @@ func Check(fdst, fsrc Fs) {
 // List the Fs to stdout
 //
 // Lists in parallel which may get them out of order
-func List(f Fs) {
+func List(f, _ Fs) {
 	in := f.List()
 	var wg sync.WaitGroup
 	wg.Add(*checkers)
@@ -318,14 +318,11 @@ func List(f Fs) {
 	wg.Wait()
 }
 
-// Lists files in a container
-func list(fdst, fsrc Fs) {
-	if fdst == nil {
-		// FIXMESwiftContainers()
-		S3Buckets()
-		return
+// List the directories/buckets/containers in the Fs to stdout
+func ListDir(f, _ Fs) {
+	for dir := range f.ListDir() {
+		fmt.Printf("%12d %13s %9d %s\n", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
 	}
-	List(fdst)
 }
 
 // Makes a destination directory or container
@@ -417,11 +414,19 @@ var Commands = []Command{
 		"ls",
 		`[<path>]
 
-        List the path. If no parameter is supplied then it lists the
-        available swift containers.`,
+        List all the objects in the the path.`,
 
-		list,
-		0, 1,
+		List,
+		1, 1,
+	},
+	{
+		"lsd",
+		`[<path>]
+
+        List all directoryes/objects/buckets in the the path.`,
+
+		ListDir,
+		1, 1,
 	},
 	{
 		"mkdir",

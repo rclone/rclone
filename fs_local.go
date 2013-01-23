@@ -105,6 +105,49 @@ func (f *FsLocal) List() FsObjectsChan {
 	return out
 }
 
+// Walk the path returning a channel of FsObjects
+func (f *FsLocal) ListDir() FsDirChan {
+	out := make(FsDirChan, *checkers)
+	go func() {
+		defer close(out)
+		items, err := ioutil.ReadDir(f.root)
+		if err != nil {
+			stats.Error()
+			log.Printf("Couldn't find read directory: %s", err)
+		} else {
+			for _, item := range items {
+				if item.IsDir() {
+					dir := &FsDir{
+						Name:  item.Name(),
+						When:  item.ModTime(),
+						Bytes: 0,
+						Count: 0,
+					}
+					// Go down the tree to count the files and directories
+					dirpath := path.Join(f.root, item.Name())
+					err := filepath.Walk(dirpath, func(path string, fi os.FileInfo, err error) error {
+						if err != nil {
+							stats.Error()
+							log.Printf("Failed to open directory: %s: %s", path, err)
+						} else {
+							dir.Count += 1
+							dir.Bytes += fi.Size()
+						}
+						return nil
+					})
+					if err != nil {
+						stats.Error()
+						log.Printf("Failed to open directory: %s: %s", dirpath, err)
+					}
+					out <- dir
+				}
+			}
+		}
+		// err := f.findRoot(false)
+	}()
+	return out
+}
+
 // Puts the FsObject to the local filesystem
 func (f *FsLocal) Put(in io.Reader, remote string, modTime time.Time, size int64) (FsObject, error) {
 	dstPath := filepath.Join(f.root, remote)

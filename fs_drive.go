@@ -568,6 +568,35 @@ func (f *FsDrive) List() FsObjectsChan {
 	return out
 }
 
+// Walk the path returning a channel of FsObjects
+func (f *FsDrive) ListDir() FsDirChan {
+	out := make(FsDirChan, *checkers)
+	go func() {
+		defer close(out)
+		err := f.findRoot(false)
+		if err != nil {
+			stats.Error()
+			log.Printf("Couldn't find root: %s", err)
+		} else {
+			_, err := f.listAll(f.rootId, "", true, false, func(item *drive.File) bool {
+				dir := &FsDir{
+					Name:  item.Title,
+					Bytes: -1,
+					Count: -1,
+				}
+				dir.When, _ = time.Parse(time.RFC3339, item.ModifiedDate)
+				out <- dir
+				return false
+			})
+			if err != nil {
+				stats.Error()
+				log.Printf("ListDir failed: %s", err)
+			}
+		}
+	}()
+	return out
+}
+
 // Put the FsObject into the container
 //
 // Copy the reader in to the new object which is returned

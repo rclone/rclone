@@ -17,6 +17,9 @@ type Fs interface {
 	// List the Fs into a channel
 	List() FsObjectsChan
 
+	// List the Fs directories/buckets/containers into a channel
+	ListDir() FsDirChan
+
 	// Find the FsObject at remote.  Returns nil if can't be found
 	NewFsObject(remote string) FsObject
 
@@ -81,6 +84,17 @@ type FsObjectsChan chan FsObject
 
 // A slice of FsObjects
 type FsObjects []FsObject
+
+// A structure of directory/container/bucket lists
+type FsDir struct {
+	Name  string    // name of the directory
+	When  time.Time // modification or creation time - IsZero for unknown
+	Bytes int64     // size of directory and contents -1 for unknown
+	Count int64     // number of objects -1 for unknown
+}
+
+// A channel of FsDir objects
+type FsDirChan chan *FsDir
 
 // NewFs makes a new Fs object from the path
 //

@@ -1,6 +1,8 @@
 // Swift interface
 package main
 
+// FIXME need to prevent anything but ListDir working for swift://
+
 import (
 	"errors"
 	"flag"
@@ -48,7 +50,7 @@ func (f *FsSwift) String() string {
 }
 
 // Pattern to match a swift url
-var swiftMatch = regexp.MustCompile(`^swift://([^/]+)(.*)$`)
+var swiftMatch = regexp.MustCompile(`^swift://([^/]*)(.*)$`)
 
 // parseParse parses a swift 'url'
 func parsePath(path string) (container, directory string, err error) {
@@ -102,23 +104,6 @@ func NewFsSwift(path string) (*FsSwift, error) {
 	return f, nil
 }
 
-// Lists the containers
-func SwiftContainers() {
-	c, err := swiftConnection()
-	if err != nil {
-		stats.Error()
-		log.Fatalf("Couldn't connect: %s", err)
-	}
-	containers, err := c.ContainersAll(nil)
-	if err != nil {
-		stats.Error()
-		log.Fatalf("Couldn't list containers: %s", err)
-	}
-	for _, container := range containers {
-		fmt.Printf("%9d %12d %s\n", container.Count, container.Bytes, container.Name)
-	}
-}
-
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
@@ -169,6 +154,28 @@ func (f *FsSwift) List() FsObjectsChan {
 			log.Printf("Couldn't read container %q: %s", f.container, err)
 		}
 		close(out)
+	}()
+	return out
+}
+
+// Lists the containers
+func (f *FsSwift) ListDir() FsDirChan {
+	out := make(FsDirChan, *checkers)
+	go func() {
+		defer close(out)
+		containers, err := f.c.ContainersAll(nil)
+		if err != nil {
+			stats.Error()
+			log.Printf("Couldn't list containers: %s", err)
+		} else {
+			for _, container := range containers {
+				out <- &FsDir{
+					Name:  container.Name,
+					Bytes: container.Bytes,
+					Count: container.Count,
+				}
+			}
+		}
 	}()
 	return out
 }

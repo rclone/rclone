@@ -1,6 +1,8 @@
 // S3 interface
 package main
 
+// FIXME need to prevent anything but ListDir working for s3://
+
 import (
 	"errors"
 	"flag"
@@ -65,7 +67,7 @@ func (f *FsS3) String() string {
 }
 
 // Pattern to match a s3 url
-var s3Match = regexp.MustCompile(`^s3://([^/]+)(.*)$`)
+var s3Match = regexp.MustCompile(`^s3://([^/]*)(.*)$`)
 
 // parseParse parses a s3 'url'
 func s3ParsePath(path string) (bucket, directory string, err error) {
@@ -132,23 +134,6 @@ func NewFsS3(path string) (*FsS3, error) {
 	return f, nil
 }
 
-// Lists the buckets
-func S3Buckets() {
-	c, err := s3Connection()
-	if err != nil {
-		stats.Error()
-		log.Fatalf("Couldn't connect: %s", err)
-	}
-	buckets, err := c.List()
-	if err != nil {
-		stats.Error()
-		log.Fatalf("Couldn't list buckets: %s", err)
-	}
-	for _, bucket := range buckets.Buckets {
-		fmt.Printf("%12s %s\n", bucket.CreationDate, bucket.Name)
-	}
-}
-
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
@@ -202,6 +187,30 @@ func (f *FsS3) List() FsObjectsChan {
 			}
 		}
 		close(out)
+	}()
+	return out
+}
+
+// Lists the buckets
+func (f *FsS3) ListDir() FsDirChan {
+	out := make(FsDirChan, *checkers)
+	go func() {
+		defer close(out)
+		buckets, err := f.c.List()
+		if err != nil {
+			stats.Error()
+			log.Printf("Couldn't list buckets: %s", err)
+		} else {
+			for _, bucket := range buckets.Buckets {
+				when, _ := time.Parse(time.RFC3339, bucket.CreationDate)
+				out <- &FsDir{
+					Name:  bucket.Name,
+					When:  when,
+					Bytes: -1,
+					Count: -1,
+				}
+			}
+		}
 	}()
 	return out
 }
