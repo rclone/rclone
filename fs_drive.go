@@ -4,8 +4,6 @@ package main
 // FIXME drive code is leaking goroutines somehow - reported bug
 // https://code.google.com/p/google-api-go-client/issues/detail?id=23
 
-// FIXME use recursive listing not bound to directory for speed?
-
 // FIXME list containers equivalent should list directories?
 
 // FIXME list directory should list to channel for concurrency not
@@ -49,7 +47,7 @@ type FsDrive struct {
 	about       *drive.About   // information about the drive, including the root
 	rootId      string         // Id of the root directory
 	foundRoot   sync.Once      // Whether we need to find the root directory or not
-	dirCache    lockedMap      // Map of directory path to directory id
+	dirCache    dirCache       // Map of directory path to directory id
 	findDirLock sync.Mutex     // Protect findDir from concurrent use
 }
 
@@ -64,36 +62,49 @@ type FsObjectDrive struct {
 	modifiedDate string   // RFC3339 time it was last modified
 }
 
-// lockedMap is a map with a mutex
-type lockedMap struct {
+// dirCache caches paths to directory Ids and vice versa
+type dirCache struct {
 	sync.RWMutex
-	cache map[string]string
+	cache    map[string]string
+	invCache map[string]string
 }
 
 // Make a new locked map
-func newLockedMap() lockedMap {
-	return lockedMap{cache: make(map[string]string)}
+func newDirCache() dirCache {
+	d := dirCache{}
+	d.Flush()
+	return d
 }
 
-// Get an item from the map
-func (m *lockedMap) Get(key string) (value string, ok bool) {
+// Gets an Id given a path
+func (m *dirCache) Get(path string) (id string, ok bool) {
 	m.RLock()
-	value, ok = m.cache[key]
+	id, ok = m.cache[path]
 	m.RUnlock()
 	return
 }
 
-// Put an item to the map
-func (m *lockedMap) Put(key, value string) {
+// GetInv gets a path given an Id
+func (m *dirCache) GetInv(path string) (id string, ok bool) {
+	m.RLock()
+	id, ok = m.invCache[path]
+	m.RUnlock()
+	return
+}
+
+// Put a path, id into the map
+func (m *dirCache) Put(path, id string) {
 	m.Lock()
-	m.cache[key] = value
+	m.cache[path] = id
+	m.invCache[id] = path
 	m.Unlock()
 }
 
 // Flush the map of all data
-func (m *lockedMap) Flush() {
+func (m *dirCache) Flush() {
 	m.Lock()
 	m.cache = make(map[string]string)
+	m.invCache = make(map[string]string)
 	m.Unlock()
 }
 
@@ -112,6 +123,7 @@ var (
 	driveClientSecret = flag.String("drive-client-secret", os.Getenv("GDRIVE_CLIENT_SECRET"), "User name. Defaults to environment var GDRIVE_CLIENT_SECRET.")
 	driveTokenFile    = flag.String("drive-token-file", os.Getenv("GDRIVE_TOKEN_FILE"), "API key (password). Defaults to environment var GDRIVE_TOKEN_FILE.")
 	driveAuthCode     = flag.String("drive-auth-code", "", "Pass in when requested to make the drive token file.")
+	driveFullList     = flag.Bool("drive-full-list", true, "Use a full listing for directory list. More data but usually quicker.")
 )
 
 // String converts this FsDrive to a string
@@ -145,7 +157,10 @@ type listAllFn func(*drive.File) bool
 //
 // Search params: https://developers.google.com/drive/search-parameters
 func (f *FsDrive) listAll(dirId string, title string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
-	query := fmt.Sprintf("trashed=false and '%s' in parents", dirId)
+	query := fmt.Sprintf("trashed=false")
+	if dirId != "" {
+		query += fmt.Sprintf(" and '%s' in parents", dirId)
+	}
 	if title != "" {
 		// Escaping the backslash isn't documented but seems to work
 		title = strings.Replace(title, `\`, `\\`, -1)
@@ -158,7 +173,8 @@ func (f *FsDrive) listAll(dirId string, title string, directoriesOnly bool, file
 	if filesOnly {
 		query += fmt.Sprintf(" and mimeType!='%s'", driveFolderType)
 	}
-	list := f.svc.Files.List().Q(query)
+	// fmt.Printf("listAll Query = %q\n", query)
+	list := f.svc.Files.List().Q(query).MaxResults(1000)
 OUTER:
 	for {
 		files, err := list.Do()
@@ -226,7 +242,7 @@ func NewFsDrive(path string) (*FsDrive, error) {
 	if err != nil {
 		return nil, err
 	}
-	f := &FsDrive{root: root, dirCache: newLockedMap()}
+	f := &FsDrive{root: root, dirCache: newDirCache()}
 
 	t := &oauth.Transport{
 		Config:    driveConfig,
@@ -262,6 +278,9 @@ func NewFsDrive(path string) (*FsDrive, error) {
 
 	// Find the Id of the root directory and the Id of its parent
 	f.rootId = f.about.RootFolderId
+	// Put the root directory in
+	f.dirCache.Put("", f.rootId)
+	// fmt.Printf("Root id %s", f.rootId)
 	return f, nil
 }
 
@@ -293,7 +312,12 @@ func (f *FsDrive) NewFsObject(remote string) FsObject {
 }
 
 // Path should be directory path either "" or "path/"
-func (f *FsDrive) listDir(dirId string, path string, out FsObjectsChan) error {
+//
+// List the directory using a recursive list from the root
+//
+// This fetches the minimum amount of stuff but does more API calls
+// which makes it slow
+func (f *FsDrive) listDirRecursive(dirId string, path string, out FsObjectsChan) error {
 	var subError error
 	// Make the API request
 	_, err := f.listAll(dirId, "", false, false, func(item *drive.File) bool {
@@ -301,7 +325,7 @@ func (f *FsDrive) listDir(dirId string, path string, out FsObjectsChan) error {
 		// FIXME should do this in parallel
 		// use a wg to sync then collect error
 		if item.MimeType == driveFolderType {
-			subError = f.listDir(item.Id, path+item.Title+"/", out)
+			subError = f.listDirRecursive(item.Id, path+item.Title+"/", out)
 			if subError != nil {
 				return true
 			}
@@ -320,6 +344,74 @@ func (f *FsDrive) listDir(dirId string, path string, out FsObjectsChan) error {
 	}
 	if subError != nil {
 		return subError
+	}
+	return nil
+}
+
+// Path should be directory path either "" or "path/"
+//
+// List the directory using a full listing and filtering out unwanted
+// items
+//
+// This is fast in terms of number of API calls, but slow in terms of
+// fetching more data than it needs
+func (f *FsDrive) listDirFull(dirId string, path string, out FsObjectsChan) error {
+	// Orphans waiting for their parent
+	orphans := make(map[string][]*drive.File)
+
+	var outputItem func(*drive.File, string) // forward def for recursive fn
+
+	// Output an item or directory
+	outputItem = func(item *drive.File, directory string) {
+		// fmt.Printf("found %q %q parent %q dir %q ok %s\n", item.Title, item.Id, parentId, directory, ok)
+		path := item.Title
+		if directory != "" {
+			path = directory + "/" + path
+		}
+		if item.MimeType == driveFolderType {
+			// Put the directory into the dircache
+			f.dirCache.Put(path, item.Id)
+			// fmt.Printf("directory %s %s %s\n", path, item.Title, item.Id)
+			// Collect the orphans if any
+			for _, orphan := range orphans[item.Id] {
+				// fmt.Printf("rescuing orphan %s %s %s\n", path, orphan.Title, orphan.Id)
+				outputItem(orphan, path)
+			}
+			delete(orphans, item.Id)
+		} else {
+			// fmt.Printf("file %s %s %s\n", path, item.Title, item.Id)
+			// If item has no MD5 sum it isn't stored on drive, so ignore it
+			if item.Md5Checksum != "" {
+				if fs := f.NewFsObjectWithInfo(path, item); fs != nil {
+					out <- fs
+				}
+			}
+		}
+	}
+
+	// Make the API request
+	_, err := f.listAll("", "", false, false, func(item *drive.File) bool {
+		if len(item.Parents) == 0 {
+			// fmt.Printf("no parents %s %s: %#v\n", item.Title, item.Id, item)
+			return false
+		}
+		parentId := item.Parents[0].Id
+		directory, ok := f.dirCache.GetInv(parentId)
+		if !ok {
+			// Haven't found the parent yet so add to orphans
+			// fmt.Printf("orphan[%s] %s %s\n", parentId, item.Title, item.Id)
+			orphans[parentId] = append(orphans[parentId], item)
+		} else {
+			outputItem(item, directory)
+		}
+		return false
+	})
+	if err != nil {
+		return err
+	}
+
+	if len(orphans) > 0 {
+		// fmt.Printf("Orphans!!!! %v", orphans)
 	}
 	return nil
 }
@@ -446,6 +538,8 @@ func (f *FsDrive) findRoot(create bool) error {
 	f.foundRoot.Do(func() {
 		f.rootId, err = f.findDir(f.root, create)
 		f.dirCache.Flush()
+		// Put the root directory in
+		f.dirCache.Put("", f.rootId)
 	})
 	return err
 }
@@ -460,7 +554,11 @@ func (f *FsDrive) List() FsObjectsChan {
 			stats.Error()
 			log.Printf("Couldn't find root: %s", err)
 		} else {
-			err = f.listDir(f.rootId, "", out)
+			if *driveFullList {
+				err = f.listDirFull(f.rootId, "", out)
+			} else {
+				err = f.listDirRecursive(f.rootId, "", out)
+			}
 			if err != nil {
 				stats.Error()
 				log.Printf("List failed: %s", err)
