@@ -196,12 +196,12 @@ func (f *FsS3) ListDir() FsDirChan {
 	out := make(FsDirChan, *checkers)
 	go func() {
 		defer close(out)
-		buckets, err := f.c.List()
+		buckets, err := f.c.ListBuckets()
 		if err != nil {
 			stats.Error()
 			log.Printf("Couldn't list buckets: %s", err)
 		} else {
-			for _, bucket := range buckets.Buckets {
+			for _, bucket := range buckets {
 				when, _ := time.Parse(time.RFC3339, bucket.CreationDate)
 				out <- &FsDir{
 					Name:  bucket.Name,
