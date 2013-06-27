@@ -20,7 +20,7 @@ import (
 type FsSwift struct {
 	c         swift.Connection // the connection to the swift server
 	container string           // the container we are working on
-	root      string	   // the path we are working on if any
+	root      string           // the path we are working on if any
 }
 
 // FsObjectSwift describes a swift object

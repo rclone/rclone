@@ -1,5 +1,5 @@
 // Sync files and directories to and from swift
-// 
+//
 // Nick Craig-Wood <nick@craig-wood.com>
 package main
 
