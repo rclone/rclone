@@ -1,9 +1,10 @@
 // S3 interface
-package main
+package s3
 
 // FIXME need to prevent anything but ListDir working for s3://
 
 import (
+	"../fs"
 	"errors"
 	"flag"
 	"fmt"
@@ -21,6 +22,14 @@ import (
 	"strings"
 	"time"
 )
+
+// Pattern to match a s3 url
+var Match = regexp.MustCompile(`^s3://([^/]*)(.*)$`)
+
+// Register with Fs
+func init() {
+	fs.Register(Match, NewFs)
+}
 
 // Constants
 const (
@@ -66,12 +75,9 @@ func (f *FsS3) String() string {
 	return fmt.Sprintf("S3 bucket %s", f.bucket)
 }
 
-// Pattern to match a s3 url
-var s3Match = regexp.MustCompile(`^s3://([^/]*)(.*)$`)
-
 // parseParse parses a s3 'url'
 func s3ParsePath(path string) (bucket, directory string, err error) {
-	parts := s3Match.FindAllStringSubmatch(path, -1)
+	parts := Match.FindAllStringSubmatch(path, -1)
 	if len(parts) != 1 || len(parts[0]) != 3 {
 		err = fmt.Errorf("Couldn't parse s3 url %q", path)
 	} else {
@@ -113,7 +119,7 @@ func s3Connection() (*s3.S3, error) {
 }
 
 // NewFsS3 contstructs an FsS3 from the path, bucket:path
-func NewFsS3(path string) (*FsS3, error) {
+func NewFs(path string) (fs.Fs, error) {
 	bucket, directory, err := s3ParsePath(path)
 	if err != nil {
 		return nil, err
@@ -137,46 +143,46 @@ func NewFsS3(path string) (*FsS3, error) {
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsS3) NewFsObjectWithInfo(remote string, info *s3.Key) FsObject {
-	fs := &FsObjectS3{
+func (f *FsS3) NewFsObjectWithInfo(remote string, info *s3.Key) fs.FsObject {
+	o := &FsObjectS3{
 		s3:     f,
 		remote: remote,
 	}
 	if info != nil {
 		// Set info but not meta
 		var err error
-		fs.lastModified, err = time.Parse(time.RFC3339, info.LastModified)
+		o.lastModified, err = time.Parse(time.RFC3339, info.LastModified)
 		if err != nil {
-			FsLog(fs, "Failed to read last modified: %s", err)
-			fs.lastModified = time.Now()
+			fs.FsLog(o, "Failed to read last modified: %s", err)
+			o.lastModified = time.Now()
 		}
-		fs.etag = info.ETag
-		fs.bytes = info.Size
+		o.etag = info.ETag
+		o.bytes = info.Size
 	} else {
-		err := fs.readMetaData() // reads info and meta, returning an error
+		err := o.readMetaData() // reads info and meta, returning an error
 		if err != nil {
 			// logged already FsDebug("Failed to read info: %s", err)
 			return nil
 		}
 	}
-	return fs
+	return o
 }
 
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsS3) NewFsObject(remote string) FsObject {
+func (f *FsS3) NewFsObject(remote string) fs.FsObject {
 	return f.NewFsObjectWithInfo(remote, nil)
 }
 
 // Walk the path returning a channel of FsObjects
-func (f *FsS3) List() FsObjectsChan {
-	out := make(FsObjectsChan, *checkers)
+func (f *FsS3) List() fs.FsObjectsChan {
+	out := make(fs.FsObjectsChan, fs.Config.Checkers)
 	go func() {
 		// FIXME need to implement ALL loop
 		objects, err := f.b.List("", "", "", 10000)
 		if err != nil {
-			stats.Error()
+			fs.Stats.Error()
 			log.Printf("Couldn't read bucket %q: %s", f.bucket, err)
 		} else {
 			for i := range objects.Contents {
@@ -192,17 +198,17 @@ func (f *FsS3) List() FsObjectsChan {
 }
 
 // Lists the buckets
-func (f *FsS3) ListDir() FsDirChan {
-	out := make(FsDirChan, *checkers)
+func (f *FsS3) ListDir() fs.FsDirChan {
+	out := make(fs.FsDirChan, fs.Config.Checkers)
 	go func() {
 		defer close(out)
 		buckets, err := f.c.ListBuckets()
 		if err != nil {
-			stats.Error()
+			fs.Stats.Error()
 			log.Printf("Couldn't list buckets: %s", err)
 		} else {
 			for _, bucket := range buckets {
-				out <- &FsDir{
+				out <- &fs.FsDir{
 					Name:  bucket.Name,
 					When:  bucket.CreationDate,
 					Bytes: -1,
@@ -215,7 +221,7 @@ func (f *FsS3) ListDir() FsDirChan {
 }
 
 // Put the FsObject into the bucket
-func (f *FsS3) Put(in io.Reader, remote string, modTime time.Time, size int64) (FsObject, error) {
+func (f *FsS3) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.FsObject, error) {
 	// Temporary FsObject under construction
 	fs := &FsObjectS3{s3: f, remote: remote}
 
@@ -253,51 +259,51 @@ func (f *FsS3) Rmdir() error {
 }
 
 // Return the precision
-func (fs *FsS3) Precision() time.Duration {
+func (f *FsS3) Precision() time.Duration {
 	return time.Nanosecond
 }
 
 // ------------------------------------------------------------
 
 // Return the remote path
-func (fs *FsObjectS3) Remote() string {
-	return fs.remote
+func (o *FsObjectS3) Remote() string {
+	return o.remote
 }
 
 // Md5sum returns the Md5sum of an object returning a lowercase hex string
-func (fs *FsObjectS3) Md5sum() (string, error) {
-	return strings.Trim(strings.ToLower(fs.etag), `"`), nil
+func (o *FsObjectS3) Md5sum() (string, error) {
+	return strings.Trim(strings.ToLower(o.etag), `"`), nil
 }
 
 // Size returns the size of an object in bytes
-func (fs *FsObjectS3) Size() int64 {
-	return fs.bytes
+func (o *FsObjectS3) Size() int64 {
+	return o.bytes
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
 //
 // it also sets the info
-func (fs *FsObjectS3) readMetaData() (err error) {
-	if fs.meta != nil {
+func (o *FsObjectS3) readMetaData() (err error) {
+	if o.meta != nil {
 		return nil
 	}
 
-	headers, err := fs.s3.b.Head(fs.remote, nil)
+	headers, err := o.s3.b.Head(o.remote, nil)
 	if err != nil {
-		FsDebug(fs, "Failed to read info: %s", err)
+		fs.FsDebug(o, "Failed to read info: %s", err)
 		return err
 	}
 	size, err := strconv.ParseInt(headers["Content-Length"], 10, 64)
 	if err != nil {
-		FsDebug(fs, "Failed to read size from: %q", headers)
+		fs.FsDebug(o, "Failed to read size from: %q", headers)
 		return err
 	}
-	fs.etag = headers["Etag"]
-	fs.bytes = size
-	fs.meta = headers
-	if fs.lastModified, err = time.Parse(http.TimeFormat, headers["Last-Modified"]); err != nil {
-		FsLog(fs, "Failed to read last modified from HEAD: %s", err)
-		fs.lastModified = time.Now()
+	o.etag = headers["Etag"]
+	o.bytes = size
+	o.meta = headers
+	if o.lastModified, err = time.Parse(http.TimeFormat, headers["Last-Modified"]); err != nil {
+		fs.FsLog(o, "Failed to read last modified from HEAD: %s", err)
+		o.lastModified = time.Now()
 	}
 	return nil
 }
@@ -306,58 +312,58 @@ func (fs *FsObjectS3) readMetaData() (err error) {
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
-func (fs *FsObjectS3) ModTime() time.Time {
-	err := fs.readMetaData()
+func (o *FsObjectS3) ModTime() time.Time {
+	err := o.readMetaData()
 	if err != nil {
-		FsLog(fs, "Failed to read metadata: %s", err)
+		fs.FsLog(o, "Failed to read metadata: %s", err)
 		return time.Now()
 	}
 	// read mtime out of metadata if available
-	d, ok := fs.meta[metaMtime]
+	d, ok := o.meta[metaMtime]
 	if !ok {
-		// FsDebug(fs, "No metadata")
-		return fs.lastModified
+		// fs.FsDebug(o, "No metadata")
+		return o.lastModified
 	}
 	modTime, err := swift.FloatStringToTime(d)
 	if err != nil {
-		FsLog(fs, "Failed to read mtime from object: %s", err)
-		return fs.lastModified
+		fs.FsLog(o, "Failed to read mtime from object: %s", err)
+		return o.lastModified
 	}
 	return modTime
 }
 
 // Sets the modification time of the local fs object
-func (fs *FsObjectS3) SetModTime(modTime time.Time) {
-	err := fs.readMetaData()
+func (o *FsObjectS3) SetModTime(modTime time.Time) {
+	err := o.readMetaData()
 	if err != nil {
-		stats.Error()
-		FsLog(fs, "Failed to read metadata: %s", err)
+		fs.Stats.Error()
+		fs.FsLog(o, "Failed to read metadata: %s", err)
 		return
 	}
-	fs.meta[metaMtime] = swift.TimeToFloatString(modTime)
-	_, err = fs.s3.b.Update(fs.remote, fs.s3.perm, fs.meta)
+	o.meta[metaMtime] = swift.TimeToFloatString(modTime)
+	_, err = o.s3.b.Update(o.remote, o.s3.perm, o.meta)
 	if err != nil {
-		stats.Error()
-		FsLog(fs, "Failed to update remote mtime: %s", err)
+		fs.Stats.Error()
+		fs.FsLog(o, "Failed to update remote mtime: %s", err)
 	}
 }
 
 // Is this object storable
-func (fs *FsObjectS3) Storable() bool {
+func (o *FsObjectS3) Storable() bool {
 	return true
 }
 
 // Open an object for read
-func (fs *FsObjectS3) Open() (in io.ReadCloser, err error) {
-	in, err = fs.s3.b.GetReader(fs.remote)
+func (o *FsObjectS3) Open() (in io.ReadCloser, err error) {
+	in, err = o.s3.b.GetReader(o.remote)
 	return
 }
 
 // Remove an object
-func (fs *FsObjectS3) Remove() error {
-	return fs.s3.b.Del(fs.remote)
+func (o *FsObjectS3) Remove() error {
+	return o.s3.b.Del(o.remote)
 }
 
 // Check the interfaces are satisfied
-var _ Fs = &FsS3{}
-var _ FsObject = &FsObjectS3{}
+var _ fs.Fs = &FsS3{}
+var _ fs.FsObject = &FsObjectS3{}

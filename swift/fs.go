@@ -1,9 +1,10 @@
 // Swift interface
-package main
+package swift
 
 // FIXME need to prevent anything but ListDir working for swift://
 
 import (
+	"../fs"
 	"errors"
 	"flag"
 	"fmt"
@@ -15,6 +16,14 @@ import (
 	"strings"
 	"time"
 )
+
+// Pattern to match a swift url
+var Match = regexp.MustCompile(`^swift://([^/]*)(.*)$`)
+
+// Register with Fs
+func init() {
+	fs.Register(Match, NewFs)
+}
 
 // FsSwift represents a remote swift server
 type FsSwift struct {
@@ -50,12 +59,9 @@ func (f *FsSwift) String() string {
 	return fmt.Sprintf("Swift container %s", f.container)
 }
 
-// Pattern to match a swift url
-var swiftMatch = regexp.MustCompile(`^swift://([^/]*)(.*)$`)
-
 // parseParse parses a swift 'url'
 func parsePath(path string) (container, directory string, err error) {
-	parts := swiftMatch.FindAllStringSubmatch(path, -1)
+	parts := Match.FindAllStringSubmatch(path, -1)
 	if len(parts) != 1 || len(parts[0]) != 3 {
 		err = fmt.Errorf("Couldn't parse swift url %q", path)
 	} else {
@@ -88,8 +94,8 @@ func swiftConnection() (*swift.Connection, error) {
 	return c, nil
 }
 
-// NewFsSwift contstructs an FsSwift from the path, container:path
-func NewFsSwift(path string) (*FsSwift, error) {
+// NewFs contstructs an FsSwift from the path, container:path
+func NewFs(path string) (fs.Fs, error) {
 	container, directory, err := parsePath(path)
 	if err != nil {
 		return nil, err
@@ -108,7 +114,7 @@ func NewFsSwift(path string) (*FsSwift, error) {
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsSwift) NewFsObjectWithInfo(remote string, info *swift.Object) FsObject {
+func (f *FsSwift) NewFsObjectWithInfo(remote string, info *swift.Object) fs.FsObject {
 	fs := &FsObjectSwift{
 		swift:  f,
 		remote: remote,
@@ -129,13 +135,13 @@ func (f *FsSwift) NewFsObjectWithInfo(remote string, info *swift.Object) FsObjec
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsSwift) NewFsObject(remote string) FsObject {
+func (f *FsSwift) NewFsObject(remote string) fs.FsObject {
 	return f.NewFsObjectWithInfo(remote, nil)
 }
 
 // Walk the path returning a channel of FsObjects
-func (f *FsSwift) List() FsObjectsChan {
-	out := make(FsObjectsChan, *checkers)
+func (f *FsSwift) List() fs.FsObjectsChan {
+	out := make(fs.FsObjectsChan, fs.Config.Checkers)
 	go func() {
 		// FIXME use a smaller limit?
 		err := f.c.ObjectsWalk(f.container, nil, func(opts *swift.ObjectsOpts) (interface{}, error) {
@@ -151,7 +157,7 @@ func (f *FsSwift) List() FsObjectsChan {
 			return objects, err
 		})
 		if err != nil {
-			stats.Error()
+			fs.Stats.Error()
 			log.Printf("Couldn't read container %q: %s", f.container, err)
 		}
 		close(out)
@@ -160,17 +166,17 @@ func (f *FsSwift) List() FsObjectsChan {
 }
 
 // Lists the containers
-func (f *FsSwift) ListDir() FsDirChan {
-	out := make(FsDirChan, *checkers)
+func (f *FsSwift) ListDir() fs.FsDirChan {
+	out := make(fs.FsDirChan, fs.Config.Checkers)
 	go func() {
 		defer close(out)
 		containers, err := f.c.ContainersAll(nil)
 		if err != nil {
-			stats.Error()
+			fs.Stats.Error()
 			log.Printf("Couldn't list containers: %s", err)
 		} else {
 			for _, container := range containers {
-				out <- &FsDir{
+				out <- &fs.FsDir{
 					Name:  container.Name,
 					Bytes: container.Bytes,
 					Count: container.Count,
@@ -186,7 +192,7 @@ func (f *FsSwift) ListDir() FsDirChan {
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created
-func (f *FsSwift) Put(in io.Reader, remote string, modTime time.Time, size int64) (FsObject, error) {
+func (f *FsSwift) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.FsObject, error) {
 	// Temporary FsObject under construction
 	fs := &FsObjectSwift{swift: f, remote: remote}
 
@@ -217,35 +223,35 @@ func (fs *FsSwift) Precision() time.Duration {
 // ------------------------------------------------------------
 
 // Return the remote path
-func (fs *FsObjectSwift) Remote() string {
-	return fs.remote
+func (o *FsObjectSwift) Remote() string {
+	return o.remote
 }
 
 // Md5sum returns the Md5sum of an object returning a lowercase hex string
-func (fs *FsObjectSwift) Md5sum() (string, error) {
-	return strings.ToLower(fs.info.Hash), nil
+func (o *FsObjectSwift) Md5sum() (string, error) {
+	return strings.ToLower(o.info.Hash), nil
 }
 
 // Size returns the size of an object in bytes
-func (fs *FsObjectSwift) Size() int64 {
-	return fs.info.Bytes
+func (o *FsObjectSwift) Size() int64 {
+	return o.info.Bytes
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
 //
 // it also sets the info
-func (fs *FsObjectSwift) readMetaData() (err error) {
-	if fs.meta != nil {
+func (o *FsObjectSwift) readMetaData() (err error) {
+	if o.meta != nil {
 		return nil
 	}
-	info, h, err := fs.swift.c.Object(fs.swift.container, fs.remote)
+	info, h, err := o.swift.c.Object(o.swift.container, o.remote)
 	if err != nil {
-		FsDebug(fs, "Failed to read info: %s", err)
+		fs.FsDebug(o, "Failed to read info: %s", err)
 		return err
 	}
 	meta := h.ObjectMetadata()
-	fs.info = info
-	fs.meta = &meta
+	o.info = info
+	o.meta = &meta
 	return nil
 }
 
@@ -254,52 +260,52 @@ func (fs *FsObjectSwift) readMetaData() (err error) {
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
-func (fs *FsObjectSwift) ModTime() time.Time {
-	err := fs.readMetaData()
+func (o *FsObjectSwift) ModTime() time.Time {
+	err := o.readMetaData()
 	if err != nil {
-		// FsLog(fs, "Failed to read metadata: %s", err)
-		return fs.info.LastModified
+		// fs.FsLog(o, "Failed to read metadata: %s", err)
+		return o.info.LastModified
 	}
-	modTime, err := fs.meta.GetModTime()
+	modTime, err := o.meta.GetModTime()
 	if err != nil {
-		// FsLog(fs, "Failed to read mtime from object: %s", err)
-		return fs.info.LastModified
+		// fs.FsLog(o, "Failed to read mtime from object: %s", err)
+		return o.info.LastModified
 	}
 	return modTime
 }
 
 // Sets the modification time of the local fs object
-func (fs *FsObjectSwift) SetModTime(modTime time.Time) {
-	err := fs.readMetaData()
+func (o *FsObjectSwift) SetModTime(modTime time.Time) {
+	err := o.readMetaData()
 	if err != nil {
-		stats.Error()
-		FsLog(fs, "Failed to read metadata: %s", err)
+		fs.Stats.Error()
+		fs.FsLog(o, "Failed to read metadata: %s", err)
 		return
 	}
-	fs.meta.SetModTime(modTime)
-	err = fs.swift.c.ObjectUpdate(fs.swift.container, fs.remote, fs.meta.ObjectHeaders())
+	o.meta.SetModTime(modTime)
+	err = o.swift.c.ObjectUpdate(o.swift.container, o.remote, o.meta.ObjectHeaders())
 	if err != nil {
-		stats.Error()
-		FsLog(fs, "Failed to update remote mtime: %s", err)
+		fs.Stats.Error()
+		fs.FsLog(o, "Failed to update remote mtime: %s", err)
 	}
 }
 
 // Is this object storable
-func (fs *FsObjectSwift) Storable() bool {
+func (o *FsObjectSwift) Storable() bool {
 	return true
 }
 
 // Open an object for read
-func (fs *FsObjectSwift) Open() (in io.ReadCloser, err error) {
-	in, _, err = fs.swift.c.ObjectOpen(fs.swift.container, fs.remote, true, nil)
+func (o *FsObjectSwift) Open() (in io.ReadCloser, err error) {
+	in, _, err = o.swift.c.ObjectOpen(o.swift.container, o.remote, true, nil)
 	return
 }
 
 // Remove an object
-func (fs *FsObjectSwift) Remove() error {
-	return fs.swift.c.ObjectDelete(fs.swift.container, fs.remote)
+func (o *FsObjectSwift) Remove() error {
+	return o.swift.c.ObjectDelete(o.swift.container, o.remote)
 }
 
 // Check the interfaces are satisfied
-var _ Fs = &FsSwift{}
-var _ FsObject = &FsObjectSwift{}
+var _ fs.Fs = &FsSwift{}
+var _ fs.FsObject = &FsObjectSwift{}

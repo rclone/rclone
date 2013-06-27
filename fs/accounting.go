@@ -1,6 +1,6 @@
 // Accounting and limiting reader
 
-package main
+package fs
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ import (
 
 // Globals
 var (
-	stats = NewStats()
+	Stats = NewStats()
 )
 
 // Stringset holds some strings
@@ -35,7 +35,7 @@ func (ss StringSet) String() string {
 }
 
 // Stats limits and accounts all transfers
-type Stats struct {
+type StatsInfo struct {
 	lock         sync.RWMutex
 	bytes        int64
 	errors       int64
@@ -46,24 +46,24 @@ type Stats struct {
 	start        time.Time
 }
 
-// NewStats cretates an initialised Stats
-func NewStats() *Stats {
-	return &Stats{
-		checking:     make(StringSet, *checkers),
-		transferring: make(StringSet, *transfers),
+// NewStats cretates an initialised StatsInfo
+func NewStats() *StatsInfo {
+	return &StatsInfo{
+		checking:     make(StringSet, Config.Checkers),
+		transferring: make(StringSet, Config.Transfers),
 		start:        time.Now(),
 	}
 }
 
-// String convert the Stats to a string for printing
-func (s *Stats) String() string {
+// String convert the StatsInfo to a string for printing
+func (s *StatsInfo) String() string {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	dt := time.Now().Sub(stats.start)
+	dt := time.Now().Sub(s.start)
 	dt_seconds := dt.Seconds()
 	speed := 0.0
 	if dt > 0 {
-		speed = float64(stats.bytes) / 1024 / dt_seconds
+		speed = float64(s.bytes) / 1024 / dt_seconds
 	}
 	buf := &bytes.Buffer{}
 	fmt.Fprintf(buf, `
@@ -73,10 +73,10 @@ Checks:        %10d
 Transferred:   %10d
 Elapsed time:  %v
 `,
-		stats.bytes, speed,
-		stats.errors,
-		stats.checks,
-		stats.transfers,
+		s.bytes, speed,
+		s.errors,
+		s.checks,
+		s.transfers,
 		dt)
 	if len(s.checking) > 0 {
 		fmt.Fprintf(buf, "Checking:      %s\n", s.checking)
@@ -87,41 +87,48 @@ Elapsed time:  %v
 	return buf.String()
 }
 
-// Log outputs the Stats to the log
-func (s *Stats) Log() {
-	log.Printf("%v\n", stats)
+// Log outputs the StatsInfo to the log
+func (s *StatsInfo) Log() {
+	log.Printf("%v\n", s)
 }
 
 // Bytes updates the stats for bytes bytes
-func (s *Stats) Bytes(bytes int64) {
+func (s *StatsInfo) Bytes(bytes int64) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.bytes += bytes
 }
 
 // Errors updates the stats for errors
-func (s *Stats) Errors(errors int64) {
+func (s *StatsInfo) Errors(errors int64) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.errors += errors
 }
 
+// Errored returns whether there have been any errors
+func (s *StatsInfo) Errored() bool {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	return s.errors != 0
+}
+
 // Error adds a single error into the stats
-func (s *Stats) Error() {
+func (s *StatsInfo) Error() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.errors += 1
 }
 
 // Checking adds a check into the stats
-func (s *Stats) Checking(fs FsObject) {
+func (s *StatsInfo) Checking(fs FsObject) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.checking[fs.Remote()] = true
 }
 
 // DoneChecking removes a check from the stats
-func (s *Stats) DoneChecking(fs FsObject) {
+func (s *StatsInfo) DoneChecking(fs FsObject) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	delete(s.checking, fs.Remote())
@@ -129,14 +136,14 @@ func (s *Stats) DoneChecking(fs FsObject) {
 }
 
 // Transferring adds a transfer into the stats
-func (s *Stats) Transferring(fs FsObject) {
+func (s *StatsInfo) Transferring(fs FsObject) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.transferring[fs.Remote()] = true
 }
 
 // DoneTransferring removes a transfer from the stats
-func (s *Stats) DoneTransferring(fs FsObject) {
+func (s *StatsInfo) DoneTransferring(fs FsObject) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	delete(s.transferring, fs.Remote())
@@ -160,7 +167,7 @@ func NewAccount(in io.ReadCloser) *Account {
 func (file *Account) Read(p []byte) (n int, err error) {
 	n, err = file.in.Read(p)
 	file.bytes += int64(n)
-	stats.Bytes(int64(n))
+	Stats.Bytes(int64(n))
 	if err == io.EOF {
 		// FIXME Do something?
 	}

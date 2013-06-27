@@ -1,13 +1,48 @@
 // File system interface
 
-package main
+package fs
 
 import (
 	"fmt"
 	"io"
 	"log"
+	"regexp"
 	"time"
 )
+
+// Globals
+var (
+	// Global config
+	Config = &FsConfig{}
+	// Filesystem registry
+	fsRegistry []fsRegistryItem
+)
+
+// Filesystem config options
+type FsConfig struct {
+	Verbose bool
+	Quiet bool
+	ModifyWindow time.Duration
+	Checkers int
+	Transfers int
+}
+
+// FIXME need local to go last
+
+// Filesystem registry item
+type fsRegistryItem struct {
+	match *regexp.Regexp           // if this matches then can call newFs
+	newFs func(string) (Fs, error) // create a new file system
+}
+
+// Register a filesystem
+//
+// If a path matches with match then can call newFs on it
+//
+// Fs modules  should use this in an init() function
+func Register(match *regexp.Regexp, newFs func(string) (Fs, error)) {
+	fsRegistry = append(fsRegistry, fsRegistryItem{match: match, newFs: newFs})
+}
 
 // A Filesystem, describes the local filesystem and the remote object store
 type Fs interface {
@@ -100,21 +135,17 @@ type FsDirChan chan *FsDir
 //
 // FIXME make more generic
 func NewFs(path string) (Fs, error) {
-	if swiftMatch.MatchString(path) {
-		return NewFsSwift(path)
+	for _, item := range fsRegistry {
+		if item.match.MatchString(path) {
+			return item.newFs(path)
+		}
 	}
-	if s3Match.MatchString(path) {
-		return NewFsS3(path)
-	}
-	if driveMatch.MatchString(path) {
-		return NewFsDrive(path)
-	}
-	return NewFsLocal(path)
+	panic("Not found") // FIXME
 }
 
 // Write debuging output for this FsObject
 func FsDebug(fs FsObject, text string, args ...interface{}) {
-	if *verbose {
+	if Config.Verbose {
 		out := fmt.Sprintf(text, args...)
 		log.Printf("%s: %s", fs.Remote(), out)
 	}
@@ -122,7 +153,7 @@ func FsDebug(fs FsObject, text string, args ...interface{}) {
 
 // Write log output for this FsObject
 func FsLog(fs FsObject, text string, args ...interface{}) {
-	if !*quiet {
+	if !Config.Quiet {
 		out := fmt.Sprintf(text, args...)
 		log.Printf("%s: %s", fs.Remote(), out)
 	}
@@ -145,13 +176,13 @@ func checkClose(c io.Closer, err *error) {
 func CheckMd5sums(src, dst FsObject) (bool, error) {
 	srcMd5, err := src.Md5sum()
 	if err != nil {
-		stats.Error()
+		Stats.Error()
 		FsLog(src, "Failed to calculate src md5: %s", err)
 		return false, err
 	}
 	dstMd5, err := dst.Md5sum()
 	if err != nil {
-		stats.Error()
+		Stats.Error()
 		FsLog(dst, "Failed to calculate dst md5: %s", err)
 		return false, err
 	}
@@ -186,10 +217,11 @@ func Equal(src, dst FsObject) bool {
 	srcModTime := src.ModTime()
 	dstModTime := dst.ModTime()
 	dt := dstModTime.Sub(srcModTime)
-	if dt >= *modifyWindow || dt <= -*modifyWindow {
+	ModifyWindow := Config.ModifyWindow
+	if dt >= ModifyWindow || dt <= -ModifyWindow {
 		FsDebug(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
 	} else {
-		FsDebug(src, "Size and modification time differ by %s (within %s)", dt, *modifyWindow)
+		FsDebug(src, "Size and modification time differ by %s (within %s)", dt, ModifyWindow)
 		return true
 	}
 
@@ -213,7 +245,7 @@ func Equal(src, dst FsObject) bool {
 func Copy(f Fs, src FsObject) {
 	in0, err := src.Open()
 	if err != nil {
-		stats.Error()
+		Stats.Error()
 		FsLog(src, "Failed to open: %s", err)
 		return
 	}
@@ -225,13 +257,13 @@ func Copy(f Fs, src FsObject) {
 		err = inErr
 	}
 	if err != nil {
-		stats.Error()
+		Stats.Error()
 		FsLog(src, "Failed to copy: %s", err)
 		if dst != nil {
 			FsDebug(dst, "Removing failed copy")
 			removeErr := dst.Remove()
 			if removeErr != nil {
-				stats.Error()
+				Stats.Error()
 				FsLog(dst, "Failed to remove failed copy: %s", removeErr)
 			}
 		}

@@ -1,7 +1,8 @@
 // Local filesystem interface
-package main
+package local
 
 import (
+	"../fs"
 	"crypto/md5"
 	"fmt"
 	"io"
@@ -10,9 +11,18 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"sync"
 	"time"
 )
+
+// Pattern to match a local url (matches anything)
+var Match = regexp.MustCompile(``)
+
+// Register with Fs
+func init() {
+	fs.Register(Match, NewFs)
+}
 
 // FsLocal represents a local filesystem rooted at root
 type FsLocal struct {
@@ -30,8 +40,8 @@ type FsObjectLocal struct {
 
 // ------------------------------------------------------------
 
-// NewFsLocal contstructs an FsLocal from the path
-func NewFsLocal(root string) (*FsLocal, error) {
+// NewFs contstructs an FsLocal from the path
+func NewFs(root string) (fs.Fs, error) {
 	root = path.Clean(root)
 	f := &FsLocal{root: root}
 	return f, nil
@@ -45,42 +55,42 @@ func (f *FsLocal) String() string {
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsLocal) NewFsObjectWithInfo(remote string, info os.FileInfo) FsObject {
+func (f *FsLocal) NewFsObjectWithInfo(remote string, info os.FileInfo) fs.FsObject {
 	path := filepath.Join(f.root, remote)
-	fs := &FsObjectLocal{remote: remote, path: path}
+	o := &FsObjectLocal{remote: remote, path: path}
 	if info != nil {
-		fs.info = info
+		o.info = info
 	} else {
-		err := fs.lstat()
+		err := o.lstat()
 		if err != nil {
-			FsDebug(fs, "Failed to stat %s: %s", path, err)
+			fs.FsDebug(o, "Failed to stat %s: %s", path, err)
 			return nil
 		}
 	}
-	return fs
+	return o
 }
 
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsLocal) NewFsObject(remote string) FsObject {
+func (f *FsLocal) NewFsObject(remote string) fs.FsObject {
 	return f.NewFsObjectWithInfo(remote, nil)
 }
 
 // List the path returning a channel of FsObjects
 //
 // Ignores everything which isn't Storable, eg links etc
-func (f *FsLocal) List() FsObjectsChan {
-	out := make(FsObjectsChan, *checkers)
+func (f *FsLocal) List() fs.FsObjectsChan {
+	out := make(fs.FsObjectsChan, fs.Config.Checkers)
 	go func() {
 		err := filepath.Walk(f.root, func(path string, fi os.FileInfo, err error) error {
 			if err != nil {
-				stats.Error()
+				fs.Stats.Error()
 				log.Printf("Failed to open directory: %s: %s", path, err)
 			} else {
 				remote, err := filepath.Rel(f.root, path)
 				if err != nil {
-					stats.Error()
+					fs.Stats.Error()
 					log.Printf("Failed to get relative path %s: %s", path, err)
 					return nil
 				}
@@ -97,7 +107,7 @@ func (f *FsLocal) List() FsObjectsChan {
 			return nil
 		})
 		if err != nil {
-			stats.Error()
+			fs.Stats.Error()
 			log.Printf("Failed to open directory: %s: %s", f.root, err)
 		}
 		close(out)
@@ -106,18 +116,18 @@ func (f *FsLocal) List() FsObjectsChan {
 }
 
 // Walk the path returning a channel of FsObjects
-func (f *FsLocal) ListDir() FsDirChan {
-	out := make(FsDirChan, *checkers)
+func (f *FsLocal) ListDir() fs.FsDirChan {
+	out := make(fs.FsDirChan, fs.Config.Checkers)
 	go func() {
 		defer close(out)
 		items, err := ioutil.ReadDir(f.root)
 		if err != nil {
-			stats.Error()
+			fs.Stats.Error()
 			log.Printf("Couldn't find read directory: %s", err)
 		} else {
 			for _, item := range items {
 				if item.IsDir() {
-					dir := &FsDir{
+					dir := &fs.FsDir{
 						Name:  item.Name(),
 						When:  item.ModTime(),
 						Bytes: 0,
@@ -127,7 +137,7 @@ func (f *FsLocal) ListDir() FsDirChan {
 					dirpath := path.Join(f.root, item.Name())
 					err := filepath.Walk(dirpath, func(path string, fi os.FileInfo, err error) error {
 						if err != nil {
-							stats.Error()
+							fs.Stats.Error()
 							log.Printf("Failed to open directory: %s: %s", path, err)
 						} else {
 							dir.Count += 1
@@ -136,7 +146,7 @@ func (f *FsLocal) ListDir() FsDirChan {
 						return nil
 					})
 					if err != nil {
-						stats.Error()
+						fs.Stats.Error()
 						log.Printf("Failed to open directory: %s: %s", dirpath, err)
 					}
 					out <- dir
@@ -149,7 +159,7 @@ func (f *FsLocal) ListDir() FsDirChan {
 }
 
 // Puts the FsObject to the local filesystem
-func (f *FsLocal) Put(in io.Reader, remote string, modTime time.Time, size int64) (FsObject, error) {
+func (f *FsLocal) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.FsObject, error) {
 	dstPath := filepath.Join(f.root, remote)
 	// Temporary FsObject under construction
 	fs := &FsObjectLocal{remote: remote, path: dstPath}
@@ -225,7 +235,7 @@ func (f *FsLocal) readPrecision() (precision time.Duration) {
 	for duration := time.Duration(1); duration < time.Second; duration *= 10 {
 		// Current time with delta
 		t := time.Unix(time.Now().Unix(), int64(duration))
-		err := Chtimes(path, t, t)
+		err := os.Chtimes(path, t, t)
 		if err != nil {
 			// fmt.Println("Failed to Chtimes", err)
 			break
@@ -251,78 +261,78 @@ func (f *FsLocal) readPrecision() (precision time.Duration) {
 // ------------------------------------------------------------
 
 // Return the remote path
-func (fs *FsObjectLocal) Remote() string {
-	return fs.remote
+func (o *FsObjectLocal) Remote() string {
+	return o.remote
 }
 
 // Md5sum calculates the Md5sum of a file returning a lowercase hex string
-func (fs *FsObjectLocal) Md5sum() (string, error) {
-	in, err := os.Open(fs.path)
+func (o *FsObjectLocal) Md5sum() (string, error) {
+	in, err := os.Open(o.path)
 	if err != nil {
-		stats.Error()
-		FsLog(fs, "Failed to open: %s", err)
+		fs.Stats.Error()
+		fs.FsLog(o, "Failed to open: %s", err)
 		return "", err
 	}
 	defer in.Close() // FIXME ignoring error
 	hash := md5.New()
 	_, err = io.Copy(hash, in)
 	if err != nil {
-		stats.Error()
-		FsLog(fs, "Failed to read: %s", err)
+		fs.Stats.Error()
+		fs.FsLog(o, "Failed to read: %s", err)
 		return "", err
 	}
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
 // Size returns the size of an object in bytes
-func (fs *FsObjectLocal) Size() int64 {
-	return fs.info.Size()
+func (o *FsObjectLocal) Size() int64 {
+	return o.info.Size()
 }
 
 // ModTime returns the modification time of the object
-func (fs *FsObjectLocal) ModTime() time.Time {
-	return fs.info.ModTime()
+func (o *FsObjectLocal) ModTime() time.Time {
+	return o.info.ModTime()
 }
 
 // Sets the modification time of the local fs object
-func (fs *FsObjectLocal) SetModTime(modTime time.Time) {
-	err := Chtimes(fs.path, modTime, modTime)
+func (o *FsObjectLocal) SetModTime(modTime time.Time) {
+	err := os.Chtimes(o.path, modTime, modTime)
 	if err != nil {
-		FsDebug(fs, "Failed to set mtime on file: %s", err)
+		fs.FsDebug(o, "Failed to set mtime on file: %s", err)
 	}
 }
 
 // Is this object storable
-func (fs *FsObjectLocal) Storable() bool {
-	mode := fs.info.Mode()
+func (o *FsObjectLocal) Storable() bool {
+	mode := o.info.Mode()
 	if mode&(os.ModeSymlink|os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
-		FsDebug(fs, "Can't transfer non file/directory")
+		fs.FsDebug(o, "Can't transfer non file/directory")
 		return false
 	} else if mode&os.ModeDir != 0 {
-		FsDebug(fs, "FIXME Skipping directory")
+		fs.FsDebug(o, "FIXME Skipping directory")
 		return false
 	}
 	return true
 }
 
 // Open an object for read
-func (fs *FsObjectLocal) Open() (in io.ReadCloser, err error) {
-	in, err = os.Open(fs.path)
+func (o *FsObjectLocal) Open() (in io.ReadCloser, err error) {
+	in, err = os.Open(o.path)
 	return
 }
 
 // Stat a FsObject into info
-func (fs *FsObjectLocal) lstat() error {
-	info, err := os.Lstat(fs.path)
-	fs.info = info
+func (o *FsObjectLocal) lstat() error {
+	info, err := os.Lstat(o.path)
+	o.info = info
 	return err
 }
 
 // Remove an object
-func (fs *FsObjectLocal) Remove() error {
-	return os.Remove(fs.path)
+func (o *FsObjectLocal) Remove() error {
+	return os.Remove(o.path)
 }
 
 // Check the interfaces are satisfied
-var _ Fs = &FsLocal{}
-var _ FsObject = &FsObjectLocal{}
+var _ fs.Fs = &FsLocal{}
+var _ fs.FsObject = &FsObjectLocal{}

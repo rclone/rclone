@@ -4,6 +4,7 @@
 package main
 
 import (
+	"./fs"
 	"flag"
 	"fmt"
 	"log"
@@ -13,6 +14,11 @@ import (
 	"strings"
 	"sync"
 	"time"
+	// Active file systems
+	_ "./drive"
+	_ "./local"
+	_ "./s3"
+	_ "./swift"
 )
 
 // Globals
@@ -28,17 +34,17 @@ var (
 	modifyWindow  = flag.Duration("modify-window", time.Nanosecond, "Max time diff to be considered the same")
 )
 
-// A pair of FsObjects
+// A pair of fs.FsObjects
 type PairFsObjects struct {
-	src, dst FsObject
+	src, dst fs.FsObject
 }
 
 type PairFsObjectsChan chan PairFsObjects
 
 // Check to see if src needs to be copied to dst and if so puts it in out
-func checkOne(src, dst FsObject, out FsObjectsChan) {
+func checkOne(src, dst fs.FsObject, out fs.FsObjectsChan) {
 	if dst == nil {
-		FsDebug(src, "Couldn't find local file - download")
+		fs.FsDebug(src, "Couldn't find local file - download")
 		out <- src
 		return
 	}
@@ -47,8 +53,8 @@ func checkOne(src, dst FsObject, out FsObjectsChan) {
 		return
 	}
 	// Check to see if changed or not
-	if Equal(src, dst) {
-		FsDebug(src, "Unchanged skipping")
+	if fs.Equal(src, dst) {
+		fs.FsDebug(src, "Unchanged skipping")
 		return
 	}
 	out <- src
@@ -57,49 +63,49 @@ func checkOne(src, dst FsObject, out FsObjectsChan) {
 // Read FsObjects~s on in send to out if they need uploading
 //
 // FIXME potentially doing lots of MD5SUMS at once
-func PairChecker(in PairFsObjectsChan, out FsObjectsChan, wg *sync.WaitGroup) {
+func PairChecker(in PairFsObjectsChan, out fs.FsObjectsChan, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for pair := range in {
 		src := pair.src
-		stats.Checking(src)
+		fs.Stats.Checking(src)
 		checkOne(src, pair.dst, out)
-		stats.DoneChecking(src)
+		fs.Stats.DoneChecking(src)
 	}
 }
 
 // Read FsObjects~s on in send to out if they need uploading
 //
 // FIXME potentially doing lots of MD5SUMS at once
-func Checker(in, out FsObjectsChan, fdst Fs, wg *sync.WaitGroup) {
+func Checker(in, out fs.FsObjectsChan, fdst fs.Fs, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for src := range in {
-		stats.Checking(src)
+		fs.Stats.Checking(src)
 		dst := fdst.NewFsObject(src.Remote())
 		checkOne(src, dst, out)
-		stats.DoneChecking(src)
+		fs.Stats.DoneChecking(src)
 	}
 }
 
 // Read FsObjects on in and copy them
-func Copier(in FsObjectsChan, fdst Fs, wg *sync.WaitGroup) {
+func Copier(in fs.FsObjectsChan, fdst fs.Fs, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for src := range in {
-		stats.Transferring(src)
-		Copy(fdst, src)
-		stats.DoneTransferring(src)
+		fs.Stats.Transferring(src)
+		fs.Copy(fdst, src)
+		fs.Stats.DoneTransferring(src)
 	}
 }
 
 // Copies fsrc into fdst
-func CopyFs(fdst, fsrc Fs) {
+func CopyFs(fdst, fsrc fs.Fs) {
 	err := fdst.Mkdir()
 	if err != nil {
-		stats.Error()
+		fs.Stats.Error()
 		log.Fatal("Failed to make destination")
 	}
 
 	to_be_checked := fsrc.List()
-	to_be_uploaded := make(FsObjectsChan, *transfers)
+	to_be_uploaded := make(fs.FsObjectsChan, *transfers)
 
 	var checkerWg sync.WaitGroup
 	checkerWg.Add(*checkers)
@@ -121,7 +127,7 @@ func CopyFs(fdst, fsrc Fs) {
 }
 
 // Delete all the files passed in the channel
-func DeleteFiles(to_be_deleted FsObjectsChan) {
+func DeleteFiles(to_be_deleted fs.FsObjectsChan) {
 	var wg sync.WaitGroup
 	wg.Add(*transfers)
 	for i := 0; i < *transfers; i++ {
@@ -129,16 +135,16 @@ func DeleteFiles(to_be_deleted FsObjectsChan) {
 			defer wg.Done()
 			for dst := range to_be_deleted {
 				if *dry_run {
-					FsDebug(dst, "Not deleting as -dry-run")
+					fs.FsDebug(dst, "Not deleting as -dry-run")
 				} else {
-					stats.Checking(dst)
+					fs.Stats.Checking(dst)
 					err := dst.Remove()
-					stats.DoneChecking(dst)
+					fs.Stats.DoneChecking(dst)
 					if err != nil {
-						stats.Error()
-						FsLog(dst, "Couldn't delete: %s", err)
+						fs.Stats.Error()
+						fs.FsLog(dst, "Couldn't delete: %s", err)
 					} else {
-						FsDebug(dst, "Deleted")
+						fs.FsDebug(dst, "Deleted")
 					}
 				}
 			}
@@ -150,10 +156,10 @@ func DeleteFiles(to_be_deleted FsObjectsChan) {
 }
 
 // Syncs fsrc into fdst
-func Sync(fdst, fsrc Fs) {
+func Sync(fdst, fsrc fs.Fs) {
 	err := fdst.Mkdir()
 	if err != nil {
-		stats.Error()
+		fs.Stats.Error()
 		log.Fatal("Failed to make destination")
 	}
 
@@ -161,14 +167,14 @@ func Sync(fdst, fsrc Fs) {
 
 	// Read the destination files first
 	// FIXME could do this in parallel and make it use less memory
-	delFiles := make(map[string]FsObject)
+	delFiles := make(map[string]fs.FsObject)
 	for dst := range fdst.List() {
 		delFiles[dst.Remote()] = dst
 	}
 
 	// Read source files checking them off against dest files
 	to_be_checked := make(PairFsObjectsChan, *transfers)
-	to_be_uploaded := make(FsObjectsChan, *transfers)
+	to_be_uploaded := make(fs.FsObjectsChan, *transfers)
 
 	var checkerWg sync.WaitGroup
 	checkerWg.Add(*checkers)
@@ -203,13 +209,13 @@ func Sync(fdst, fsrc Fs) {
 	log.Printf("Waiting for transfers to finish")
 	copierWg.Wait()
 
-	if stats.errors != 0 {
+	if fs.Stats.Errored() {
 		log.Printf("Not deleting files as there were IO errors")
 		return
 	}
 
 	// Delete the spare files
-	toDelete := make(FsObjectsChan, *transfers)
+	toDelete := make(fs.FsObjectsChan, *transfers)
 	go func() {
 		for _, fs := range delFiles {
 			toDelete <- fs
@@ -220,24 +226,24 @@ func Sync(fdst, fsrc Fs) {
 }
 
 // Checks the files in fsrc and fdst according to Size and MD5SUM
-func Check(fdst, fsrc Fs) {
+func Check(fdst, fsrc fs.Fs) {
 	log.Printf("Building file list")
 
 	// Read the destination files first
 	// FIXME could do this in parallel and make it use less memory
-	dstFiles := make(map[string]FsObject)
+	dstFiles := make(map[string]fs.FsObject)
 	for dst := range fdst.List() {
 		dstFiles[dst.Remote()] = dst
 	}
 
 	// Read the source files checking them against dstFiles
 	// FIXME could do this in parallel and make it use less memory
-	srcFiles := make(map[string]FsObject)
-	commonFiles := make(map[string][]FsObject)
+	srcFiles := make(map[string]fs.FsObject)
+	commonFiles := make(map[string][]fs.FsObject)
 	for src := range fsrc.List() {
 		remote := src.Remote()
 		if dst, ok := dstFiles[remote]; ok {
-			commonFiles[remote] = []FsObject{dst, src}
+			commonFiles[remote] = []fs.FsObject{dst, src}
 			delete(dstFiles, remote)
 		} else {
 			srcFiles[remote] = src
@@ -246,17 +252,17 @@ func Check(fdst, fsrc Fs) {
 
 	log.Printf("Files in %s but not in %s", fdst, fsrc)
 	for remote := range dstFiles {
-		stats.Error()
+		fs.Stats.Error()
 		log.Printf(remote)
 	}
 
 	log.Printf("Files in %s but not in %s", fsrc, fdst)
 	for remote := range srcFiles {
-		stats.Error()
+		fs.Stats.Error()
 		log.Printf(remote)
 	}
 
-	checks := make(chan []FsObject, *transfers)
+	checks := make(chan []fs.FsObject, *transfers)
 	go func() {
 		for _, check := range commonFiles {
 			checks <- check
@@ -271,47 +277,47 @@ func Check(fdst, fsrc Fs) {
 			defer checkerWg.Done()
 			for check := range checks {
 				dst, src := check[0], check[1]
-				stats.Checking(src)
+				fs.Stats.Checking(src)
 				if src.Size() != dst.Size() {
-					stats.DoneChecking(src)
-					stats.Error()
-					FsLog(src, "Sizes differ")
+					fs.Stats.DoneChecking(src)
+					fs.Stats.Error()
+					fs.FsLog(src, "Sizes differ")
 					continue
 				}
-				same, err := CheckMd5sums(src, dst)
-				stats.DoneChecking(src)
+				same, err := fs.CheckMd5sums(src, dst)
+				fs.Stats.DoneChecking(src)
 				if err != nil {
 					continue
 				}
 				if !same {
-					stats.Error()
-					FsLog(src, "Md5sums differ")
+					fs.Stats.Error()
+					fs.FsLog(src, "Md5sums differ")
 				}
-				FsDebug(src, "OK")
+				fs.FsDebug(src, "OK")
 			}
 		}()
 	}
 
 	log.Printf("Waiting for checks to finish")
 	checkerWg.Wait()
-	log.Printf("%d differences found", stats.errors)
+	log.Printf("%d differences found", fs.Stats.Errors)
 }
 
 // List the Fs to stdout
 //
 // Lists in parallel which may get them out of order
-func List(f, _ Fs) {
+func List(f, _ fs.Fs) {
 	in := f.List()
 	var wg sync.WaitGroup
 	wg.Add(*checkers)
 	for i := 0; i < *checkers; i++ {
 		go func() {
 			defer wg.Done()
-			for fs := range in {
-				stats.Checking(fs)
-				modTime := fs.ModTime()
-				stats.DoneChecking(fs)
-				fmt.Printf("%9d %19s %s\n", fs.Size(), modTime.Format("2006-01-02 15:04:05.00000000"), fs.Remote())
+			for o := range in {
+				fs.Stats.Checking(o)
+				modTime := o.ModTime()
+				fs.Stats.DoneChecking(o)
+				fmt.Printf("%9d %19s %s\n", o.Size(), modTime.Format("2006-01-02 15:04:05.00000000"), o.Remote())
 			}
 		}()
 	}
@@ -319,29 +325,29 @@ func List(f, _ Fs) {
 }
 
 // List the directories/buckets/containers in the Fs to stdout
-func ListDir(f, _ Fs) {
+func ListDir(f, _ fs.Fs) {
 	for dir := range f.ListDir() {
 		fmt.Printf("%12d %13s %9d %s\n", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
 	}
 }
 
 // Makes a destination directory or container
-func mkdir(fdst, fsrc Fs) {
+func mkdir(fdst, fsrc fs.Fs) {
 	err := fdst.Mkdir()
 	if err != nil {
-		stats.Error()
+		fs.Stats.Error()
 		log.Fatalf("Mkdir failed: %s", err)
 	}
 }
 
 // Removes a container but not if not empty
-func rmdir(fdst, fsrc Fs) {
+func rmdir(fdst, fsrc fs.Fs) {
 	if *dry_run {
 		log.Printf("Not deleting %s as -dry-run", fdst)
 	} else {
 		err := fdst.Rmdir()
 		if err != nil {
-			stats.Error()
+			fs.Stats.Error()
 			log.Fatalf("Rmdir failed: %s", err)
 		}
 	}
@@ -350,11 +356,11 @@ func rmdir(fdst, fsrc Fs) {
 // Removes a container and all of its contents
 //
 // FIXME doesn't delete local directories
-func purge(fdst, fsrc Fs) {
-	if f, ok := fdst.(Purger); ok {
+func purge(fdst, fsrc fs.Fs) {
+	if f, ok := fdst.(fs.Purger); ok {
 		err := f.Purge()
 		if err != nil {
-			stats.Error()
+			fs.Stats.Error()
 			log.Fatalf("Purge failed: %s", err)
 		}
 	} else {
@@ -367,7 +373,7 @@ func purge(fdst, fsrc Fs) {
 type Command struct {
 	name             string
 	help             string
-	run              func(fdst, fsrc Fs)
+	run              func(fdst, fsrc fs.Fs)
 	minArgs, maxArgs int
 }
 
@@ -516,7 +522,7 @@ func main() {
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
 		if err != nil {
-			stats.Error()
+			fs.Stats.Error()
 			log.Fatal(err)
 		}
 		pprof.StartCPUProfile(f)
@@ -540,32 +546,32 @@ func main() {
 			break
 		} else if strings.HasPrefix(command.name, cmd) {
 			if found != nil {
-				stats.Error()
+				fs.Stats.Error()
 				log.Fatalf("Not unique - matches multiple commands %q", cmd)
 			}
 			found = command
 		}
 	}
 	if found == nil {
-		stats.Error()
+		fs.Stats.Error()
 		log.Fatalf("Unknown command %q", cmd)
 	}
 	found.checkArgs(args)
 
 	// Make source and destination fs
-	var fdst, fsrc Fs
+	var fdst, fsrc fs.Fs
 	var err error
 	if len(args) >= 1 {
-		fdst, err = NewFs(args[0])
+		fdst, err = fs.NewFs(args[0])
 		if err != nil {
-			stats.Error()
+			fs.Stats.Error()
 			log.Fatal("Failed to create file system: ", err)
 		}
 	}
 	if len(args) >= 2 {
-		fsrc, err = NewFs(args[1])
+		fsrc, err = fs.NewFs(args[1])
 		if err != nil {
-			stats.Error()
+			fs.Stats.Error()
 			log.Fatal("Failed to create destination file system: ", err)
 		}
 		fsrc, fdst = fdst, fsrc
@@ -575,34 +581,34 @@ func main() {
 	if fsrc != nil {
 		precision := fsrc.Precision()
 		log.Printf("Source precision %s\n", precision)
-		if precision > *modifyWindow {
-			*modifyWindow = precision
+		if precision > fs.Config.ModifyWindow {
+			fs.Config.ModifyWindow = precision
 		}
 	}
 	if fdst != nil {
 		precision := fdst.Precision()
 		log.Printf("Destination precision %s\n", precision)
-		if precision > *modifyWindow {
-			*modifyWindow = precision
+		if precision > fs.Config.ModifyWindow {
+			fs.Config.ModifyWindow = precision
 		}
 	}
-	log.Printf("Modify window is %s\n", *modifyWindow)
+	log.Printf("Modify window is %s\n", fs.Config.ModifyWindow)
 
 	// Print the stats every statsInterval
 	go func() {
 		ch := time.Tick(*statsInterval)
 		for {
 			<-ch
-			stats.Log()
+			fs.Stats.Log()
 		}
 	}()
 
 	// Run the actual command
 	if found.run != nil {
 		found.run(fdst, fsrc)
-		fmt.Println(stats)
+		fmt.Println(fs.Stats)
 		log.Printf("*** Go routines at exit %d\n", runtime.NumGoroutine())
-		if stats.errors > 0 {
+		if fs.Stats.Errored() {
 			os.Exit(1)
 		}
 		os.Exit(0)

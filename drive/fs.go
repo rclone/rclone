@@ -1,8 +1,9 @@
 // Drive interface
-package main
+package drive
 
 // FIXME drive code is leaking goroutines somehow - reported bug
 // https://code.google.com/p/google-api-go-client/issues/detail?id=23
+// Now fixed!
 
 // FIXME list containers equivalent should list directories?
 
@@ -22,6 +23,7 @@ package main
 // * files with / in name
 
 import (
+	"../fs"
 	"code.google.com/p/goauth2/oauth"
 	"code.google.com/p/google-api-go-client/drive/v2"
 	"errors"
@@ -287,7 +289,7 @@ func NewFsDrive(path string) (*FsDrive, error) {
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsDrive) NewFsObjectWithInfo(remote string, info *drive.File) FsObject {
+func (f *FsDrive) NewFsObjectWithInfo(remote string, info *drive.File) fs.FsObject {
 	fs := &FsObjectDrive{
 		drive:  f,
 		remote: remote,
@@ -297,7 +299,7 @@ func (f *FsDrive) NewFsObjectWithInfo(remote string, info *drive.File) FsObject 
 	} else {
 		err := fs.readMetaData() // reads info and meta, returning an error
 		if err != nil {
-			// logged already FsDebug("Failed to read info: %s", err)
+			// logged already fs.FsDebug("Failed to read info: %s", err)
 			return nil
 		}
 	}
@@ -307,7 +309,7 @@ func (f *FsDrive) NewFsObjectWithInfo(remote string, info *drive.File) FsObject 
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsDrive) NewFsObject(remote string) FsObject {
+func (f *FsDrive) NewFsObject(remote string) fs.FsObject {
 	return f.NewFsObjectWithInfo(remote, nil)
 }
 
@@ -317,7 +319,7 @@ func (f *FsDrive) NewFsObject(remote string) FsObject {
 //
 // This fetches the minimum amount of stuff but does more API calls
 // which makes it slow
-func (f *FsDrive) listDirRecursive(dirId string, path string, out FsObjectsChan) error {
+func (f *FsDrive) listDirRecursive(dirId string, path string, out fs.FsObjectsChan) error {
 	var subError error
 	// Make the API request
 	_, err := f.listAll(dirId, "", false, false, func(item *drive.File) bool {
@@ -355,7 +357,7 @@ func (f *FsDrive) listDirRecursive(dirId string, path string, out FsObjectsChan)
 //
 // This is fast in terms of number of API calls, but slow in terms of
 // fetching more data than it needs
-func (f *FsDrive) listDirFull(dirId string, path string, out FsObjectsChan) error {
+func (f *FsDrive) listDirFull(dirId string, path string, out fs.FsObjectsChan) error {
 	// Orphans waiting for their parent
 	orphans := make(map[string][]*drive.File)
 
@@ -545,13 +547,13 @@ func (f *FsDrive) findRoot(create bool) error {
 }
 
 // Walk the path returning a channel of FsObjects
-func (f *FsDrive) List() FsObjectsChan {
-	out := make(FsObjectsChan, *checkers)
+func (f *FsDrive) List() fs.FsObjectsChan {
+	out := make(fs.FsObjectsChan, fs.Config.Checkers)
 	go func() {
 		defer close(out)
 		err := f.findRoot(false)
 		if err != nil {
-			stats.Error()
+			fs.Stats.Error()
 			log.Printf("Couldn't find root: %s", err)
 		} else {
 			if *driveFullList {
@@ -560,7 +562,7 @@ func (f *FsDrive) List() FsObjectsChan {
 				err = f.listDirRecursive(f.rootId, "", out)
 			}
 			if err != nil {
-				stats.Error()
+				fs.Stats.Error()
 				log.Printf("List failed: %s", err)
 			}
 		}
@@ -569,17 +571,17 @@ func (f *FsDrive) List() FsObjectsChan {
 }
 
 // Walk the path returning a channel of FsObjects
-func (f *FsDrive) ListDir() FsDirChan {
-	out := make(FsDirChan, *checkers)
+func (f *FsDrive) ListDir() fs.FsDirChan {
+	out := make(fs.FsDirChan, fs.Config.Checkers)
 	go func() {
 		defer close(out)
 		err := f.findRoot(false)
 		if err != nil {
-			stats.Error()
+			fs.Stats.Error()
 			log.Printf("Couldn't find root: %s", err)
 		} else {
 			_, err := f.listAll(f.rootId, "", true, false, func(item *drive.File) bool {
-				dir := &FsDir{
+				dir := &fs.FsDir{
 					Name:  item.Title,
 					Bytes: -1,
 					Count: -1,
@@ -589,7 +591,7 @@ func (f *FsDrive) ListDir() FsDirChan {
 				return false
 			})
 			if err != nil {
-				stats.Error()
+				fs.Stats.Error()
 				log.Printf("ListDir failed: %s", err)
 			}
 		}
@@ -602,7 +604,7 @@ func (f *FsDrive) ListDir() FsDirChan {
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created
-func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64) (FsObject, error) {
+func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.FsObject, error) {
 	// Temporary FsObject under construction
 	fs := &FsObjectDrive{drive: f, remote: remote}
 
@@ -710,45 +712,45 @@ func (f *FsDrive) Purge() error {
 // ------------------------------------------------------------
 
 // Return the remote path
-func (fs *FsObjectDrive) Remote() string {
-	return fs.remote
+func (o *FsObjectDrive) Remote() string {
+	return o.remote
 }
 
 // Md5sum returns the Md5sum of an object returning a lowercase hex string
-func (fs *FsObjectDrive) Md5sum() (string, error) {
-	return fs.md5sum, nil
+func (o *FsObjectDrive) Md5sum() (string, error) {
+	return o.md5sum, nil
 }
 
 // Size returns the size of an object in bytes
-func (fs *FsObjectDrive) Size() int64 {
-	return fs.bytes
+func (o *FsObjectDrive) Size() int64 {
+	return o.bytes
 }
 
 // setMetaData sets the fs data from a drive.File
-func (fs *FsObjectDrive) setMetaData(info *drive.File) {
-	fs.id = info.Id
-	fs.url = info.DownloadUrl
-	fs.md5sum = strings.ToLower(info.Md5Checksum)
-	fs.bytes = info.FileSize
-	fs.modifiedDate = info.ModifiedDate
+func (o *FsObjectDrive) setMetaData(info *drive.File) {
+	o.id = info.Id
+	o.url = info.DownloadUrl
+	o.md5sum = strings.ToLower(info.Md5Checksum)
+	o.bytes = info.FileSize
+	o.modifiedDate = info.ModifiedDate
 }
 
 // readMetaData gets the info if it hasn't already been fetched
-func (fs *FsObjectDrive) readMetaData() (err error) {
-	if fs.id != "" {
+func (o *FsObjectDrive) readMetaData() (err error) {
+	if o.id != "" {
 		return nil
 	}
 
-	directory, leaf := splitPath(fs.remote)
-	directoryId, err := fs.drive.findDir(directory, false)
+	directory, leaf := splitPath(o.remote)
+	directoryId, err := o.drive.findDir(directory, false)
 	if err != nil {
-		FsDebug(fs, "Couldn't find directory: %s", err)
+		fs.FsDebug(o, "Couldn't find directory: %s", err)
 		return fmt.Errorf("Couldn't find directory: %s", err)
 	}
 
-	found, err := fs.drive.listAll(directoryId, leaf, false, true, func(item *drive.File) bool {
+	found, err := o.drive.listAll(directoryId, leaf, false, true, func(item *drive.File) bool {
 		if item.Title == leaf {
-			fs.setMetaData(item)
+			o.setMetaData(item)
 			return true
 		}
 		return false
@@ -757,7 +759,7 @@ func (fs *FsObjectDrive) readMetaData() (err error) {
 		return err
 	}
 	if !found {
-		FsDebug(fs, "Couldn't find object")
+		fs.FsDebug(o, "Couldn't find object")
 		return fmt.Errorf("Couldn't find object")
 	}
 	return nil
@@ -768,26 +770,26 @@ func (fs *FsObjectDrive) readMetaData() (err error) {
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
-func (fs *FsObjectDrive) ModTime() time.Time {
-	err := fs.readMetaData()
+func (o *FsObjectDrive) ModTime() time.Time {
+	err := o.readMetaData()
 	if err != nil {
-		FsLog(fs, "Failed to read metadata: %s", err)
+		fs.FsLog(o, "Failed to read metadata: %s", err)
 		return time.Now()
 	}
-	modTime, err := time.Parse(time.RFC3339, fs.modifiedDate)
+	modTime, err := time.Parse(time.RFC3339, o.modifiedDate)
 	if err != nil {
-		FsLog(fs, "Failed to read mtime from object: %s", err)
+		fs.FsLog(o, "Failed to read mtime from object: %s", err)
 		return time.Now()
 	}
 	return modTime
 }
 
 // Sets the modification time of the local fs object
-func (fs *FsObjectDrive) SetModTime(modTime time.Time) {
-	err := fs.readMetaData()
+func (o *FsObjectDrive) SetModTime(modTime time.Time) {
+	err := o.readMetaData()
 	if err != nil {
-		stats.Error()
-		FsLog(fs, "Failed to read metadata: %s", err)
+		fs.Stats.Error()
+		fs.FsLog(o, "Failed to read metadata: %s", err)
 		return
 	}
 	// New metadata
@@ -795,23 +797,23 @@ func (fs *FsObjectDrive) SetModTime(modTime time.Time) {
 		ModifiedDate: modTime.Format(time.RFC3339Nano),
 	}
 	// Set modified date
-	_, err = fs.drive.svc.Files.Update(fs.id, info).SetModifiedDate(true).Do()
+	_, err = o.drive.svc.Files.Update(o.id, info).SetModifiedDate(true).Do()
 	if err != nil {
-		stats.Error()
-		FsLog(fs, "Failed to update remote mtime: %s", err)
+		fs.Stats.Error()
+		fs.FsLog(o, "Failed to update remote mtime: %s", err)
 	}
 }
 
 // Is this object storable
-func (fs *FsObjectDrive) Storable() bool {
+func (o *FsObjectDrive) Storable() bool {
 	return true
 }
 
 // Open an object for read
-func (fs *FsObjectDrive) Open() (in io.ReadCloser, err error) {
-	req, _ := http.NewRequest("GET", fs.url, nil)
+func (o *FsObjectDrive) Open() (in io.ReadCloser, err error) {
+	req, _ := http.NewRequest("GET", o.url, nil)
 	req.Header.Set("User-Agent", "rclone/1.0")
-	res, err := fs.drive.client.Do(req)
+	res, err := o.drive.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -823,11 +825,11 @@ func (fs *FsObjectDrive) Open() (in io.ReadCloser, err error) {
 }
 
 // Remove an object
-func (fs *FsObjectDrive) Remove() error {
-	return fs.drive.svc.Files.Delete(fs.id).Do()
+func (o *FsObjectDrive) Remove() error {
+	return o.drive.svc.Files.Delete(o.id).Do()
 }
 
 // Check the interfaces are satisfied
-var _ Fs = &FsDrive{}
-var _ Purger = &FsDrive{}
-var _ FsObject = &FsObjectDrive{}
+var _ fs.Fs = &FsDrive{}
+var _ fs.Purger = &FsDrive{}
+var _ fs.FsObject = &FsObjectDrive{}
