@@ -1,8 +1,8 @@
 // An implementation of Chtimes which preserves nanosecond precision under linux
 //
-// Should go in standard library, but here for now
+// Is now in the standard library - https://codereview.appspot.com/6905057/
 
-// +build linux
+// +build linux !go1.1
 
 package main
 
