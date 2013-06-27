@@ -202,10 +202,9 @@ func (f *FsS3) ListDir() FsDirChan {
 			log.Printf("Couldn't list buckets: %s", err)
 		} else {
 			for _, bucket := range buckets {
-				when, _ := time.Parse(time.RFC3339, bucket.CreationDate)
 				out <- &FsDir{
 					Name:  bucket.Name,
-					When:  when,
+					When:  bucket.CreationDate,
 					Bytes: -1,
 					Count: -1,
 				}
