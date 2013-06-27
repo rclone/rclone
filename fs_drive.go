@@ -810,7 +810,7 @@ func (fs *FsObjectDrive) Storable() bool {
 // Open an object for read
 func (fs *FsObjectDrive) Open() (in io.ReadCloser, err error) {
 	req, _ := http.NewRequest("GET", fs.url, nil)
-	req.Header.Set("User-Agent", "swiftsync/1.0")
+	req.Header.Set("User-Agent", "rclone/1.0")
 	res, err := fs.drive.client.Do(req)
 	if err != nil {
 		return nil, err

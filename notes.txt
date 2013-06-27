@@ -1,18 +1,5 @@
 Names
-  * cakesync
-  * zzsync
-  * pqrsync
-  * gogosync
-  * pogosync
-  * oursync
-  * godupe
-  * gobsync
-  * gobcopy
-  * togosync
-  * tangosync
-  * mangosync
-  * cargosync
-  * cargocopy - domain available
+  * rclone - domain ok, apt ok
 
 Todo
   * Make a test suite which can run on all the given types of fs

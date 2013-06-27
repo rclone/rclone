@@ -2,4 +2,4 @@
 *.pyc
 test-env*
 junk/
-swiftsync
+rclone

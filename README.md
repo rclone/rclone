@@ -1,7 +1,13 @@
-Swiftsync
-==========
+Rclone
+======
 
-Sync files and directories to and from swift
+Sync files and directories to and from
+
+  * Openstack Swift
+  * Rackspace cloud files
+  * Amazon S3
+  * Google Drive
+  * The local filesystem
 
 FIXME
 
@@ -9,15 +15,15 @@ FIXME
 Install
 -------
 
-Swiftsync is a Go program and comes as a single binary file.
+Rclone is a Go program and comes as a single binary file.
 
 Download the relevant binary from
 
-- http://www.craig-wood.com/nick/pub/swiftsync/
+- http://www.craig-wood.com/nick/pub/rclone/
 
 Or alternatively if you have Go installed use
 
-    go get github.com/ncw/swiftsync
+    go get github.com/ncw/rclone
 
 and this will build the binary in `$GOPATH/bin`.  You can then modify
 the source and submit patches.
@@ -38,7 +44,7 @@ Contact and support
 
 The project website is at:
 
-- https://github.com/ncw/swiftsync
+- https://github.com/ncw/rclone
 
 There you can file bug reports, ask for help or contribute patches.
 

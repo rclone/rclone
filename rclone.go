@@ -1,4 +1,4 @@
-// Sync files and directories to and from swift
+// Sync files and directories to and from local and remote object stores
 //
 // Nick Craig-Wood <nick@craig-wood.com>
 package main
@@ -480,7 +480,7 @@ var Commands = []Command{
 
 // syntaxError prints the syntax
 func syntaxError() {
-	fmt.Fprintf(os.Stderr, `Sync files and directories to and from swift
+	fmt.Fprintf(os.Stderr, `Sync files and directories to and from local and remote object stores
 
 Syntax: [options] subcommand <parameters> <parameters...>
 

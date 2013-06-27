@@ -205,7 +205,7 @@ func (f *FsLocal) readPrecision() (precision time.Duration) {
 	precision = time.Second
 
 	// Create temporary file and test it
-	fd, err := ioutil.TempFile("", "swiftsync")
+	fd, err := ioutil.TempFile("", "rclone")
 	if err != nil {
 		// If failed return 1s
 		// fmt.Println("Failed to create temp file", err)

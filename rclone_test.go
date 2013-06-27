@@ -1,4 +1,4 @@
-// Tests for swiftsync
+// Tests for rclone
 package main
 
 import (
