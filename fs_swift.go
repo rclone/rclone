@@ -20,6 +20,7 @@ import (
 type FsSwift struct {
 	c         swift.Connection // the connection to the swift server
 	container string           // the container we are working on
+	root      string	   // the path we are working on if any
 }
 
 // FsObjectSwift describes a swift object
@@ -100,7 +101,7 @@ func NewFsSwift(path string) (*FsSwift, error) {
 	if err != nil {
 		return nil, err
 	}
-	f := &FsSwift{c: *c, container: container}
+	f := &FsSwift{c: *c, container: container, root: directory}
 	return f, nil
 }
 
