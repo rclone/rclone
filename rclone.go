@@ -34,17 +34,17 @@ var (
 	modifyWindow  = flag.Duration("modify-window", time.Nanosecond, "Max time diff to be considered the same")
 )
 
-// A pair of fs.FsObjects
+// A pair of fs.Objects
 type PairFsObjects struct {
-	src, dst fs.FsObject
+	src, dst fs.Object
 }
 
 type PairFsObjectsChan chan PairFsObjects
 
 // Check to see if src needs to be copied to dst and if so puts it in out
-func checkOne(src, dst fs.FsObject, out fs.FsObjectsChan) {
+func checkOne(src, dst fs.Object, out fs.ObjectsChan) {
 	if dst == nil {
-		fs.FsDebug(src, "Couldn't find local file - download")
+		fs.Debug(src, "Couldn't find local file - download")
 		out <- src
 		return
 	}
@@ -54,7 +54,7 @@ func checkOne(src, dst fs.FsObject, out fs.FsObjectsChan) {
 	}
 	// Check to see if changed or not
 	if fs.Equal(src, dst) {
-		fs.FsDebug(src, "Unchanged skipping")
+		fs.Debug(src, "Unchanged skipping")
 		return
 	}
 	out <- src
@@ -63,7 +63,7 @@ func checkOne(src, dst fs.FsObject, out fs.FsObjectsChan) {
 // Read FsObjects~s on in send to out if they need uploading
 //
 // FIXME potentially doing lots of MD5SUMS at once
-func PairChecker(in PairFsObjectsChan, out fs.FsObjectsChan, wg *sync.WaitGroup) {
+func PairChecker(in PairFsObjectsChan, out fs.ObjectsChan, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for pair := range in {
 		src := pair.src
@@ -76,7 +76,7 @@ func PairChecker(in PairFsObjectsChan, out fs.FsObjectsChan, wg *sync.WaitGroup)
 // Read FsObjects~s on in send to out if they need uploading
 //
 // FIXME potentially doing lots of MD5SUMS at once
-func Checker(in, out fs.FsObjectsChan, fdst fs.Fs, wg *sync.WaitGroup) {
+func Checker(in, out fs.ObjectsChan, fdst fs.Fs, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for src := range in {
 		fs.Stats.Checking(src)
@@ -87,7 +87,7 @@ func Checker(in, out fs.FsObjectsChan, fdst fs.Fs, wg *sync.WaitGroup) {
 }
 
 // Read FsObjects on in and copy them
-func Copier(in fs.FsObjectsChan, fdst fs.Fs, wg *sync.WaitGroup) {
+func Copier(in fs.ObjectsChan, fdst fs.Fs, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for src := range in {
 		fs.Stats.Transferring(src)
@@ -105,7 +105,7 @@ func CopyFs(fdst, fsrc fs.Fs) {
 	}
 
 	to_be_checked := fsrc.List()
-	to_be_uploaded := make(fs.FsObjectsChan, *transfers)
+	to_be_uploaded := make(fs.ObjectsChan, *transfers)
 
 	var checkerWg sync.WaitGroup
 	checkerWg.Add(*checkers)
@@ -127,7 +127,7 @@ func CopyFs(fdst, fsrc fs.Fs) {
 }
 
 // Delete all the files passed in the channel
-func DeleteFiles(to_be_deleted fs.FsObjectsChan) {
+func DeleteFiles(to_be_deleted fs.ObjectsChan) {
 	var wg sync.WaitGroup
 	wg.Add(*transfers)
 	for i := 0; i < *transfers; i++ {
@@ -135,16 +135,16 @@ func DeleteFiles(to_be_deleted fs.FsObjectsChan) {
 			defer wg.Done()
 			for dst := range to_be_deleted {
 				if *dry_run {
-					fs.FsDebug(dst, "Not deleting as -dry-run")
+					fs.Debug(dst, "Not deleting as -dry-run")
 				} else {
 					fs.Stats.Checking(dst)
 					err := dst.Remove()
 					fs.Stats.DoneChecking(dst)
 					if err != nil {
 						fs.Stats.Error()
-						fs.FsLog(dst, "Couldn't delete: %s", err)
+						fs.Log(dst, "Couldn't delete: %s", err)
 					} else {
-						fs.FsDebug(dst, "Deleted")
+						fs.Debug(dst, "Deleted")
 					}
 				}
 			}
@@ -167,14 +167,14 @@ func Sync(fdst, fsrc fs.Fs) {
 
 	// Read the destination files first
 	// FIXME could do this in parallel and make it use less memory
-	delFiles := make(map[string]fs.FsObject)
+	delFiles := make(map[string]fs.Object)
 	for dst := range fdst.List() {
 		delFiles[dst.Remote()] = dst
 	}
 
 	// Read source files checking them off against dest files
 	to_be_checked := make(PairFsObjectsChan, *transfers)
-	to_be_uploaded := make(fs.FsObjectsChan, *transfers)
+	to_be_uploaded := make(fs.ObjectsChan, *transfers)
 
 	var checkerWg sync.WaitGroup
 	checkerWg.Add(*checkers)
@@ -215,7 +215,7 @@ func Sync(fdst, fsrc fs.Fs) {
 	}
 
 	// Delete the spare files
-	toDelete := make(fs.FsObjectsChan, *transfers)
+	toDelete := make(fs.ObjectsChan, *transfers)
 	go func() {
 		for _, fs := range delFiles {
 			toDelete <- fs
@@ -231,19 +231,19 @@ func Check(fdst, fsrc fs.Fs) {
 
 	// Read the destination files first
 	// FIXME could do this in parallel and make it use less memory
-	dstFiles := make(map[string]fs.FsObject)
+	dstFiles := make(map[string]fs.Object)
 	for dst := range fdst.List() {
 		dstFiles[dst.Remote()] = dst
 	}
 
 	// Read the source files checking them against dstFiles
 	// FIXME could do this in parallel and make it use less memory
-	srcFiles := make(map[string]fs.FsObject)
-	commonFiles := make(map[string][]fs.FsObject)
+	srcFiles := make(map[string]fs.Object)
+	commonFiles := make(map[string][]fs.Object)
 	for src := range fsrc.List() {
 		remote := src.Remote()
 		if dst, ok := dstFiles[remote]; ok {
-			commonFiles[remote] = []fs.FsObject{dst, src}
+			commonFiles[remote] = []fs.Object{dst, src}
 			delete(dstFiles, remote)
 		} else {
 			srcFiles[remote] = src
@@ -262,7 +262,7 @@ func Check(fdst, fsrc fs.Fs) {
 		log.Printf(remote)
 	}
 
-	checks := make(chan []fs.FsObject, *transfers)
+	checks := make(chan []fs.Object, *transfers)
 	go func() {
 		for _, check := range commonFiles {
 			checks <- check
@@ -281,7 +281,7 @@ func Check(fdst, fsrc fs.Fs) {
 				if src.Size() != dst.Size() {
 					fs.Stats.DoneChecking(src)
 					fs.Stats.Error()
-					fs.FsLog(src, "Sizes differ")
+					fs.Log(src, "Sizes differ")
 					continue
 				}
 				same, err := fs.CheckMd5sums(src, dst)
@@ -291,9 +291,9 @@ func Check(fdst, fsrc fs.Fs) {
 				}
 				if !same {
 					fs.Stats.Error()
-					fs.FsLog(src, "Md5sums differ")
+					fs.Log(src, "Md5sums differ")
 				}
-				fs.FsDebug(src, "OK")
+				fs.Debug(src, "OK")
 			}
 		}()
 	}

@@ -13,24 +13,24 @@ import (
 // Globals
 var (
 	// Global config
-	Config = &FsConfig{}
+	Config = &ConfigInfo{}
 	// Filesystem registry
-	fsRegistry []fsRegistryItem
+	fsRegistry []registryItem
 )
 
 // Filesystem config options
-type FsConfig struct {
-	Verbose bool
-	Quiet bool
+type ConfigInfo struct {
+	Verbose      bool
+	Quiet        bool
 	ModifyWindow time.Duration
-	Checkers int
-	Transfers int
+	Checkers     int
+	Transfers    int
 }
 
 // FIXME need local to go last
 
 // Filesystem registry item
-type fsRegistryItem struct {
+type registryItem struct {
 	match *regexp.Regexp           // if this matches then can call newFs
 	newFs func(string) (Fs, error) // create a new file system
 }
@@ -41,7 +41,7 @@ type fsRegistryItem struct {
 //
 // Fs modules  should use this in an init() function
 func Register(match *regexp.Regexp, newFs func(string) (Fs, error)) {
-	fsRegistry = append(fsRegistry, fsRegistryItem{match: match, newFs: newFs})
+	fsRegistry = append(fsRegistry, registryItem{match: match, newFs: newFs})
 }
 
 // A Filesystem, describes the local filesystem and the remote object store
@@ -50,20 +50,20 @@ type Fs interface {
 	String() string
 
 	// List the Fs into a channel
-	List() FsObjectsChan
+	List() ObjectsChan
 
 	// List the Fs directories/buckets/containers into a channel
-	ListDir() FsDirChan
+	ListDir() DirChan
 
-	// Find the FsObject at remote.  Returns nil if can't be found
-	NewFsObject(remote string) FsObject
+	// Find the Object at remote.  Returns nil if can't be found
+	NewFsObject(remote string) Object
 
 	// Put in to the remote path with the modTime given of the given size
 	//
 	// May create the object even if it returns an error - if so
 	// will return the object and the error, otherwise will return
 	// nil and the error
-	Put(in io.Reader, remote string, modTime time.Time, size int64) (FsObject, error)
+	Put(in io.Reader, remote string, modTime time.Time, size int64) (Object, error)
 
 	// Make the directory (container, bucket)
 	Mkdir() error
@@ -79,7 +79,7 @@ type Fs interface {
 
 // A filesystem like object which can either be a remote object or a
 // local file/directory
-type FsObject interface {
+type Object interface {
 	// Remote returns the remote path
 	Remote() string
 
@@ -114,22 +114,22 @@ type Purger interface {
 	Purge() error
 }
 
-// A channel of FsObjects
-type FsObjectsChan chan FsObject
+// A channel of Objects
+type ObjectsChan chan Object
 
-// A slice of FsObjects
-type FsObjects []FsObject
+// A slice of Objects
+type Objects []Object
 
 // A structure of directory/container/bucket lists
-type FsDir struct {
+type Dir struct {
 	Name  string    // name of the directory
 	When  time.Time // modification or creation time - IsZero for unknown
 	Bytes int64     // size of directory and contents -1 for unknown
 	Count int64     // number of objects -1 for unknown
 }
 
-// A channel of FsDir objects
-type FsDirChan chan *FsDir
+// A channel of Dir objects
+type DirChan chan *Dir
 
 // NewFs makes a new Fs object from the path
 //
@@ -143,16 +143,16 @@ func NewFs(path string) (Fs, error) {
 	panic("Not found") // FIXME
 }
 
-// Write debuging output for this FsObject
-func FsDebug(fs FsObject, text string, args ...interface{}) {
+// Write debuging output for this Object
+func Debug(fs Object, text string, args ...interface{}) {
 	if Config.Verbose {
 		out := fmt.Sprintf(text, args...)
 		log.Printf("%s: %s", fs.Remote(), out)
 	}
 }
 
-// Write log output for this FsObject
-func FsLog(fs FsObject, text string, args ...interface{}) {
+// Write log output for this Object
+func Log(fs Object, text string, args ...interface{}) {
 	if !Config.Quiet {
 		out := fmt.Sprintf(text, args...)
 		log.Printf("%s: %s", fs.Remote(), out)
@@ -173,21 +173,21 @@ func checkClose(c io.Closer, err *error) {
 // May return an error which will already have been logged
 //
 // If an error is returned it will return false
-func CheckMd5sums(src, dst FsObject) (bool, error) {
+func CheckMd5sums(src, dst Object) (bool, error) {
 	srcMd5, err := src.Md5sum()
 	if err != nil {
 		Stats.Error()
-		FsLog(src, "Failed to calculate src md5: %s", err)
+		Log(src, "Failed to calculate src md5: %s", err)
 		return false, err
 	}
 	dstMd5, err := dst.Md5sum()
 	if err != nil {
 		Stats.Error()
-		FsLog(dst, "Failed to calculate dst md5: %s", err)
+		Log(dst, "Failed to calculate dst md5: %s", err)
 		return false, err
 	}
-	// FsDebug("Src MD5 %s", srcMd5)
-	// FsDebug("Dst MD5 %s", obj.Hash)
+	// Debug("Src MD5 %s", srcMd5)
+	// Debug("Dst MD5 %s", obj.Hash)
 	return srcMd5 == dstMd5, nil
 }
 
@@ -207,9 +207,9 @@ func CheckMd5sums(src, dst FsObject) (bool, error) {
 //
 // Otherwise the file is considered to be not equal including if there
 // were errors reading info.
-func Equal(src, dst FsObject) bool {
+func Equal(src, dst Object) bool {
 	if src.Size() != dst.Size() {
-		FsDebug(src, "Sizes differ")
+		Debug(src, "Sizes differ")
 		return false
 	}
 
@@ -219,9 +219,9 @@ func Equal(src, dst FsObject) bool {
 	dt := dstModTime.Sub(srcModTime)
 	ModifyWindow := Config.ModifyWindow
 	if dt >= ModifyWindow || dt <= -ModifyWindow {
-		FsDebug(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
+		Debug(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
 	} else {
-		FsDebug(src, "Size and modification time differ by %s (within %s)", dt, ModifyWindow)
+		Debug(src, "Size and modification time differ by %s (within %s)", dt, ModifyWindow)
 		return true
 	}
 
@@ -229,7 +229,7 @@ func Equal(src, dst FsObject) bool {
 	// check the MD5SUM
 	same, _ := CheckMd5sums(src, dst)
 	if !same {
-		FsDebug(src, "Md5sums differ")
+		Debug(src, "Md5sums differ")
 		return false
 	}
 
@@ -237,16 +237,16 @@ func Equal(src, dst FsObject) bool {
 	// mtime of the dst object here
 	dst.SetModTime(srcModTime)
 
-	FsDebug(src, "Size and MD5SUM of src and dst objects identical")
+	Debug(src, "Size and MD5SUM of src and dst objects identical")
 	return true
 }
 
 // Copy src object to f
-func Copy(f Fs, src FsObject) {
+func Copy(f Fs, src Object) {
 	in0, err := src.Open()
 	if err != nil {
 		Stats.Error()
-		FsLog(src, "Failed to open: %s", err)
+		Log(src, "Failed to open: %s", err)
 		return
 	}
 	in := NewAccount(in0) // account the transfer
@@ -258,16 +258,16 @@ func Copy(f Fs, src FsObject) {
 	}
 	if err != nil {
 		Stats.Error()
-		FsLog(src, "Failed to copy: %s", err)
+		Log(src, "Failed to copy: %s", err)
 		if dst != nil {
-			FsDebug(dst, "Removing failed copy")
+			Debug(dst, "Removing failed copy")
 			removeErr := dst.Remove()
 			if removeErr != nil {
 				Stats.Error()
-				FsLog(dst, "Failed to remove failed copy: %s", removeErr)
+				Log(dst, "Failed to remove failed copy: %s", removeErr)
 			}
 		}
 		return
 	}
-	FsDebug(src, "Copied")
+	Debug(src, "Copied")
 }

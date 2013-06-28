@@ -55,7 +55,7 @@ func (f *FsLocal) String() string {
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsLocal) NewFsObjectWithInfo(remote string, info os.FileInfo) fs.FsObject {
+func (f *FsLocal) NewFsObjectWithInfo(remote string, info os.FileInfo) fs.Object {
 	path := filepath.Join(f.root, remote)
 	o := &FsObjectLocal{remote: remote, path: path}
 	if info != nil {
@@ -63,7 +63,7 @@ func (f *FsLocal) NewFsObjectWithInfo(remote string, info os.FileInfo) fs.FsObje
 	} else {
 		err := o.lstat()
 		if err != nil {
-			fs.FsDebug(o, "Failed to stat %s: %s", path, err)
+			fs.Debug(o, "Failed to stat %s: %s", path, err)
 			return nil
 		}
 	}
@@ -73,15 +73,15 @@ func (f *FsLocal) NewFsObjectWithInfo(remote string, info os.FileInfo) fs.FsObje
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsLocal) NewFsObject(remote string) fs.FsObject {
+func (f *FsLocal) NewFsObject(remote string) fs.Object {
 	return f.NewFsObjectWithInfo(remote, nil)
 }
 
 // List the path returning a channel of FsObjects
 //
 // Ignores everything which isn't Storable, eg links etc
-func (f *FsLocal) List() fs.FsObjectsChan {
-	out := make(fs.FsObjectsChan, fs.Config.Checkers)
+func (f *FsLocal) List() fs.ObjectsChan {
+	out := make(fs.ObjectsChan, fs.Config.Checkers)
 	go func() {
 		err := filepath.Walk(f.root, func(path string, fi os.FileInfo, err error) error {
 			if err != nil {
@@ -116,8 +116,8 @@ func (f *FsLocal) List() fs.FsObjectsChan {
 }
 
 // Walk the path returning a channel of FsObjects
-func (f *FsLocal) ListDir() fs.FsDirChan {
-	out := make(fs.FsDirChan, fs.Config.Checkers)
+func (f *FsLocal) ListDir() fs.DirChan {
+	out := make(fs.DirChan, fs.Config.Checkers)
 	go func() {
 		defer close(out)
 		items, err := ioutil.ReadDir(f.root)
@@ -127,7 +127,7 @@ func (f *FsLocal) ListDir() fs.FsDirChan {
 		} else {
 			for _, item := range items {
 				if item.IsDir() {
-					dir := &fs.FsDir{
+					dir := &fs.Dir{
 						Name:  item.Name(),
 						When:  item.ModTime(),
 						Bytes: 0,
@@ -159,7 +159,7 @@ func (f *FsLocal) ListDir() fs.FsDirChan {
 }
 
 // Puts the FsObject to the local filesystem
-func (f *FsLocal) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.FsObject, error) {
+func (f *FsLocal) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
 	dstPath := filepath.Join(f.root, remote)
 	// Temporary FsObject under construction
 	fs := &FsObjectLocal{remote: remote, path: dstPath}
@@ -270,7 +270,7 @@ func (o *FsObjectLocal) Md5sum() (string, error) {
 	in, err := os.Open(o.path)
 	if err != nil {
 		fs.Stats.Error()
-		fs.FsLog(o, "Failed to open: %s", err)
+		fs.Log(o, "Failed to open: %s", err)
 		return "", err
 	}
 	defer in.Close() // FIXME ignoring error
@@ -278,7 +278,7 @@ func (o *FsObjectLocal) Md5sum() (string, error) {
 	_, err = io.Copy(hash, in)
 	if err != nil {
 		fs.Stats.Error()
-		fs.FsLog(o, "Failed to read: %s", err)
+		fs.Log(o, "Failed to read: %s", err)
 		return "", err
 	}
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
@@ -298,7 +298,7 @@ func (o *FsObjectLocal) ModTime() time.Time {
 func (o *FsObjectLocal) SetModTime(modTime time.Time) {
 	err := os.Chtimes(o.path, modTime, modTime)
 	if err != nil {
-		fs.FsDebug(o, "Failed to set mtime on file: %s", err)
+		fs.Debug(o, "Failed to set mtime on file: %s", err)
 	}
 }
 
@@ -306,10 +306,10 @@ func (o *FsObjectLocal) SetModTime(modTime time.Time) {
 func (o *FsObjectLocal) Storable() bool {
 	mode := o.info.Mode()
 	if mode&(os.ModeSymlink|os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
-		fs.FsDebug(o, "Can't transfer non file/directory")
+		fs.Debug(o, "Can't transfer non file/directory")
 		return false
 	} else if mode&os.ModeDir != 0 {
-		fs.FsDebug(o, "FIXME Skipping directory")
+		fs.Debug(o, "FIXME Skipping directory")
 		return false
 	}
 	return true
@@ -335,4 +335,4 @@ func (o *FsObjectLocal) Remove() error {
 
 // Check the interfaces are satisfied
 var _ fs.Fs = &FsLocal{}
-var _ fs.FsObject = &FsObjectLocal{}
+var _ fs.Object = &FsObjectLocal{}

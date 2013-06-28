@@ -114,7 +114,7 @@ func NewFs(path string) (fs.Fs, error) {
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsSwift) NewFsObjectWithInfo(remote string, info *swift.Object) fs.FsObject {
+func (f *FsSwift) NewFsObjectWithInfo(remote string, info *swift.Object) fs.Object {
 	fs := &FsObjectSwift{
 		swift:  f,
 		remote: remote,
@@ -135,13 +135,13 @@ func (f *FsSwift) NewFsObjectWithInfo(remote string, info *swift.Object) fs.FsOb
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsSwift) NewFsObject(remote string) fs.FsObject {
+func (f *FsSwift) NewFsObject(remote string) fs.Object {
 	return f.NewFsObjectWithInfo(remote, nil)
 }
 
 // Walk the path returning a channel of FsObjects
-func (f *FsSwift) List() fs.FsObjectsChan {
-	out := make(fs.FsObjectsChan, fs.Config.Checkers)
+func (f *FsSwift) List() fs.ObjectsChan {
+	out := make(fs.ObjectsChan, fs.Config.Checkers)
 	go func() {
 		// FIXME use a smaller limit?
 		err := f.c.ObjectsWalk(f.container, nil, func(opts *swift.ObjectsOpts) (interface{}, error) {
@@ -166,8 +166,8 @@ func (f *FsSwift) List() fs.FsObjectsChan {
 }
 
 // Lists the containers
-func (f *FsSwift) ListDir() fs.FsDirChan {
-	out := make(fs.FsDirChan, fs.Config.Checkers)
+func (f *FsSwift) ListDir() fs.DirChan {
+	out := make(fs.DirChan, fs.Config.Checkers)
 	go func() {
 		defer close(out)
 		containers, err := f.c.ContainersAll(nil)
@@ -176,7 +176,7 @@ func (f *FsSwift) ListDir() fs.FsDirChan {
 			log.Printf("Couldn't list containers: %s", err)
 		} else {
 			for _, container := range containers {
-				out <- &fs.FsDir{
+				out <- &fs.Dir{
 					Name:  container.Name,
 					Bytes: container.Bytes,
 					Count: container.Count,
@@ -192,7 +192,7 @@ func (f *FsSwift) ListDir() fs.FsDirChan {
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created
-func (f *FsSwift) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.FsObject, error) {
+func (f *FsSwift) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
 	// Temporary FsObject under construction
 	fs := &FsObjectSwift{swift: f, remote: remote}
 
@@ -246,7 +246,7 @@ func (o *FsObjectSwift) readMetaData() (err error) {
 	}
 	info, h, err := o.swift.c.Object(o.swift.container, o.remote)
 	if err != nil {
-		fs.FsDebug(o, "Failed to read info: %s", err)
+		fs.Debug(o, "Failed to read info: %s", err)
 		return err
 	}
 	meta := h.ObjectMetadata()
@@ -263,12 +263,12 @@ func (o *FsObjectSwift) readMetaData() (err error) {
 func (o *FsObjectSwift) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
-		// fs.FsLog(o, "Failed to read metadata: %s", err)
+		// fs.Log(o, "Failed to read metadata: %s", err)
 		return o.info.LastModified
 	}
 	modTime, err := o.meta.GetModTime()
 	if err != nil {
-		// fs.FsLog(o, "Failed to read mtime from object: %s", err)
+		// fs.Log(o, "Failed to read mtime from object: %s", err)
 		return o.info.LastModified
 	}
 	return modTime
@@ -279,14 +279,14 @@ func (o *FsObjectSwift) SetModTime(modTime time.Time) {
 	err := o.readMetaData()
 	if err != nil {
 		fs.Stats.Error()
-		fs.FsLog(o, "Failed to read metadata: %s", err)
+		fs.Log(o, "Failed to read metadata: %s", err)
 		return
 	}
 	o.meta.SetModTime(modTime)
 	err = o.swift.c.ObjectUpdate(o.swift.container, o.remote, o.meta.ObjectHeaders())
 	if err != nil {
 		fs.Stats.Error()
-		fs.FsLog(o, "Failed to update remote mtime: %s", err)
+		fs.Log(o, "Failed to update remote mtime: %s", err)
 	}
 }
 
@@ -308,4 +308,4 @@ func (o *FsObjectSwift) Remove() error {
 
 // Check the interfaces are satisfied
 var _ fs.Fs = &FsSwift{}
-var _ fs.FsObject = &FsObjectSwift{}
+var _ fs.Object = &FsObjectSwift{}

@@ -121,32 +121,32 @@ func (s *StatsInfo) Error() {
 }
 
 // Checking adds a check into the stats
-func (s *StatsInfo) Checking(fs FsObject) {
+func (s *StatsInfo) Checking(o Object) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	s.checking[fs.Remote()] = true
+	s.checking[o.Remote()] = true
 }
 
 // DoneChecking removes a check from the stats
-func (s *StatsInfo) DoneChecking(fs FsObject) {
+func (s *StatsInfo) DoneChecking(o Object) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	delete(s.checking, fs.Remote())
+	delete(s.checking, o.Remote())
 	s.checks += 1
 }
 
 // Transferring adds a transfer into the stats
-func (s *StatsInfo) Transferring(fs FsObject) {
+func (s *StatsInfo) Transferring(o Object) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	s.transferring[fs.Remote()] = true
+	s.transferring[o.Remote()] = true
 }
 
 // DoneTransferring removes a transfer from the stats
-func (s *StatsInfo) DoneTransferring(fs FsObject) {
+func (s *StatsInfo) DoneTransferring(o Object) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	delete(s.transferring, fs.Remote())
+	delete(s.transferring, o.Remote())
 	s.transfers += 1
 }
 
