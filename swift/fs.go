@@ -48,10 +48,10 @@ type FsObjectSwift struct {
 var (
 	// Flags
 	// FIXME make these part of swift so we get a standard set of flags?
-	authUrl  = flag.String("auth", os.Getenv("ST_AUTH"), "Auth URL for server. Defaults to environment var ST_AUTH.")
-	userName = flag.String("user", os.Getenv("ST_USER"), "User name. Defaults to environment var ST_USER.")
-	apiKey   = flag.String("key", os.Getenv("ST_KEY"), "API key (password). Defaults to environment var ST_KEY.")
-	snet     = flag.Bool("snet", false, "Use internal service network") // FIXME not implemented
+	authUrl  = flag.String("swift-auth", os.Getenv("ST_AUTH"), "Auth URL for server. Defaults to environment var ST_AUTH.")
+	userName = flag.String("swift-user", os.Getenv("ST_USER"), "User name. Defaults to environment var ST_USER.")
+	apiKey   = flag.String("swift-key", os.Getenv("ST_KEY"), "API key (password). Defaults to environment var ST_KEY.")
+	snet     = flag.Bool("swift-snet", false, "Use internal service network") // FIXME not implemented
 )
 
 // String converts this FsSwift to a string
