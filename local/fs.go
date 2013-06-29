@@ -11,17 +11,13 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"sync"
 	"time"
 )
 
-// Pattern to match a local url (matches anything)
-var Match = regexp.MustCompile(``)
-
 // Register with Fs
 func init() {
-	fs.Register(Match, NewFs)
+	fs.Register(nil, NewFs)
 }
 
 // FsLocal represents a local filesystem rooted at root

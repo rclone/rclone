@@ -27,8 +27,6 @@ type ConfigInfo struct {
 	Transfers    int
 }
 
-// FIXME need local to go last
-
 // Filesystem registry item
 type registryItem struct {
 	match *regexp.Regexp           // if this matches then can call newFs
@@ -39,9 +37,16 @@ type registryItem struct {
 //
 // If a path matches with match then can call newFs on it
 //
+// Pass with match nil goes last and matches everything (used by local fs)
+//
 // Fs modules  should use this in an init() function
 func Register(match *regexp.Regexp, newFs func(string) (Fs, error)) {
 	fsRegistry = append(fsRegistry, registryItem{match: match, newFs: newFs})
+	// Keep one nil match at the end
+	last := len(fsRegistry) - 1
+	if last >= 1 && fsRegistry[last-1].match == nil {
+		fsRegistry[last], fsRegistry[last-1] = fsRegistry[last-1], fsRegistry[last]
+	}
 }
 
 // A Filesystem, describes the local filesystem and the remote object store
@@ -136,7 +141,7 @@ type DirChan chan *Dir
 // FIXME make more generic
 func NewFs(path string) (Fs, error) {
 	for _, item := range fsRegistry {
-		if item.match.MatchString(path) {
+		if item.match == nil || item.match.MatchString(path) {
 			return item.newFs(path)
 		}
 	}
