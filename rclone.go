@@ -518,6 +518,13 @@ func main() {
 	args := flag.Args()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
+	// Pass on some flags to fs.Config
+	fs.Config.Verbose = *verbose
+	fs.Config.Quiet = *quiet
+	fs.Config.ModifyWindow = *modifyWindow
+	fs.Config.Checkers = *checkers
+	fs.Config.Transfers = *transfers
+
 	// Setup profiling if desired
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
