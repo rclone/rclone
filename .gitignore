@@ -1,5 +1,5 @@
 *~
 *.pyc
 test-env*
-junk/
+_junk/
 rclone
