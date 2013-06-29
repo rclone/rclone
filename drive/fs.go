@@ -41,6 +41,14 @@ import (
 	"time"
 )
 
+// Pattern to match a drive url
+var Match = regexp.MustCompile(`^drive://(.*)$`)
+
+// Register with Fs
+func init() {
+	fs.Register(Match, NewFs)
+}
+
 // FsDrive represents a remote drive server
 type FsDrive struct {
 	svc         *drive.Service // the connection to the drive server
@@ -133,12 +141,9 @@ func (f *FsDrive) String() string {
 	return fmt.Sprintf("Google drive root '%s'", f.root)
 }
 
-// Pattern to match a drive url
-var driveMatch = regexp.MustCompile(`^drive://(.*)$`)
-
 // parseParse parses a drive 'url'
 func parseDrivePath(path string) (root string, err error) {
-	parts := driveMatch.FindAllStringSubmatch(path, -1)
+	parts := Match.FindAllStringSubmatch(path, -1)
 	if len(parts) != 1 || len(parts[0]) != 2 {
 		err = fmt.Errorf("Couldn't parse drive url %q", path)
 	} else {
@@ -217,8 +222,8 @@ func MakeNewToken(t *oauth.Transport) error {
 	return err
 }
 
-// NewFsDrive contstructs an FsDrive from the path, container:path
-func NewFsDrive(path string) (*FsDrive, error) {
+// NewFs contstructs an FsDrive from the path, container:path
+func NewFs(path string) (fs.Fs, error) {
 	if *driveClientId == "" {
 		return nil, errors.New("Need -drive-client-id or environmental variable GDRIVE_CLIENT_ID")
 	}
