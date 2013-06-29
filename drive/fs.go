@@ -1,9 +1,8 @@
 // Drive interface
 package drive
 
-// FIXME drive code is leaking goroutines somehow - reported bug
-// https://code.google.com/p/google-api-go-client/issues/detail?id=23
-// Now fixed!
+// Gets this quite often
+// Failed to set mtime: googleapi: Error 403: Rate Limit Exceeded
 
 // FIXME list containers equivalent should list directories?
 
