@@ -106,10 +106,17 @@ func (s *StatsInfo) Errors(errors int64) {
 	s.errors += errors
 }
 
+// GetErrors reads the number of errors
+func (s *StatsInfo) GetErrors() int64 {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	return s.errors
+}
+
 // Errored returns whether there have been any errors
 func (s *StatsInfo) Errored() bool {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	s.lock.RLock()
+	defer s.lock.RUnlock()
 	return s.errors != 0
 }
 

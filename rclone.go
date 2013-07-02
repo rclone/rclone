@@ -300,7 +300,7 @@ func Check(fdst, fsrc fs.Fs) {
 
 	log.Printf("Waiting for checks to finish")
 	checkerWg.Wait()
-	log.Printf("%d differences found", fs.Stats.Errors)
+	log.Printf("%d differences found", fs.Stats.GetErrors())
 }
 
 // List the Fs to stdout
