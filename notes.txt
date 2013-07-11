@@ -75,3 +75,7 @@ local & drive need to delete directories
 2013/01/18 16:31:32 z3/x: Deleted
 2013/01/18 16:31:32 Deleting path
 2013/01/18 16:31:32 Rmdir failed: remove z3: directory not empty
+
+------------------------------------------------------------
+
+Non verbose - not sure number transferred got counted up? CHECK
