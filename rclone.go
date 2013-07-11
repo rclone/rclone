@@ -4,9 +4,9 @@
 package main
 
 import (
-	"./fs"
 	"flag"
 	"fmt"
+	"github.com/ncw/rclone/fs"
 	"log"
 	"os"
 	"runtime"
@@ -15,10 +15,10 @@ import (
 	"sync"
 	"time"
 	// Active file systems
-	_ "./drive"
-	_ "./local"
-	_ "./s3"
-	_ "./swift"
+	_ "github.com/ncw/rclone/drive"
+	_ "github.com/ncw/rclone/local"
+	_ "github.com/ncw/rclone/s3"
+	_ "github.com/ncw/rclone/swift"
 )
 
 // Globals

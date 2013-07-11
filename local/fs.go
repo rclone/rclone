@@ -2,9 +2,9 @@
 package local
 
 import (
-	"../fs"
 	"crypto/md5"
 	"fmt"
+	"github.com/ncw/rclone/fs"
 	"io"
 	"io/ioutil"
 	"log"

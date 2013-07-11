@@ -22,12 +22,12 @@ package drive
 // * files with / in name
 
 import (
-	"../fs"
 	"code.google.com/p/goauth2/oauth"
 	"code.google.com/p/google-api-go-client/drive/v2"
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/ncw/rclone/fs"
 	"io"
 	"log"
 	"mime"

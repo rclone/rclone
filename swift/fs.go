@@ -4,10 +4,10 @@ package swift
 // FIXME need to prevent anything but ListDir working for swift://
 
 import (
-	"../fs"
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/ncw/rclone/fs"
 	"github.com/ncw/swift"
 	"io"
 	"log"

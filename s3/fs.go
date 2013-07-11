@@ -4,14 +4,14 @@ package s3
 // FIXME need to prevent anything but ListDir working for s3://
 
 import (
-	"../fs"
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/ncw/goamz/aws"
+	"github.com/ncw/goamz/s3"
+	"github.com/ncw/rclone/fs"
 	"github.com/ncw/swift"
 	"io"
-	"launchpad.net/goamz/aws"
-	"launchpad.net/goamz/s3"
 	"log"
 	"mime"
 	"net/http"
