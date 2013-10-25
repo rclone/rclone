@@ -1,3 +1,8 @@
+Make a config setting
+  * everything can be set on command line, env vars or config file
+  * make a config mode to edit the config
+  * make it so you can make aliases memstore: home: etc
+
 Names
   * rclone - domain ok, apt ok
 
