@@ -12,41 +12,52 @@ import (
 
 // Globals
 var (
-	// Global config
-	Config = &ConfigInfo{}
 	// Filesystem registry
-	fsRegistry []registryItem
+	fsRegistry []*FsInfo
 )
 
-// Filesystem config options
-type ConfigInfo struct {
-	Verbose      bool
-	Quiet        bool
-	ModifyWindow time.Duration
-	Checkers     int
-	Transfers    int
+// Filesystem info
+type FsInfo struct {
+	Name    string                           // name of this fs
+	NewFs   func(string, string) (Fs, error) // create a new file system
+	Options []Option
 }
 
-// Filesystem registry item
-type registryItem struct {
-	match *regexp.Regexp           // if this matches then can call newFs
-	newFs func(string) (Fs, error) // create a new file system
+// An options for a Fs
+type Option struct {
+	Name     string
+	Help     string
+	Optional bool
+	Examples []OptionExample
+}
+
+// An example for an option
+type OptionExample struct {
+	Value string
+	Help  string
+}
+
+// Choose an option
+func (o *Option) Choose() string {
+	fmt.Println(o.Help)
+	if len(o.Examples) > 0 {
+		var values []string
+		var help []string
+		for _, example := range o.Examples {
+			values = append(values, example.Value)
+			help = append(help, example.Help)
+		}
+		return Choose(o.Name, values, help, true)
+	}
+	fmt.Printf("%s> ", o.Name)
+	return ReadLine()
 }
 
 // Register a filesystem
 //
-// If a path matches with match then can call newFs on it
-//
-// Pass with match nil goes last and matches everything (used by local fs)
-//
 // Fs modules  should use this in an init() function
-func Register(match *regexp.Regexp, newFs func(string) (Fs, error)) {
-	fsRegistry = append(fsRegistry, registryItem{match: match, newFs: newFs})
-	// Keep one nil match at the end
-	last := len(fsRegistry) - 1
-	if last >= 1 && fsRegistry[last-1].match == nil {
-		fsRegistry[last], fsRegistry[last-1] = fsRegistry[last-1], fsRegistry[last]
-	}
+func Register(info *FsInfo) {
+	fsRegistry = append(fsRegistry, info)
 }
 
 // A Filesystem, describes the local filesystem and the remote object store
@@ -136,16 +147,42 @@ type Dir struct {
 // A channel of Dir objects
 type DirChan chan *Dir
 
-// NewFs makes a new Fs object from the path
+// Pattern to match a url
+var matcher = regexp.MustCompile(`^([\w_-]+)://(.*)$`)
+
+// Finds a FsInfo object for the name passed in
 //
-// FIXME make more generic
-func NewFs(path string) (Fs, error) {
+// Services are looked up in the config file
+func Find(name string) (*FsInfo, error) {
 	for _, item := range fsRegistry {
-		if item.match == nil || item.match.MatchString(path) {
-			return item.newFs(path)
+		if item.Name == name {
+			return item, nil
 		}
 	}
-	panic("Not found") // FIXME
+	return nil, fmt.Errorf("Didn't find filing system for %q", name)
+}
+
+// NewFs makes a new Fs object from the path
+//
+// The path is of the form service://path
+//
+// Services are looked up in the config file
+func NewFs(path string) (Fs, error) {
+	parts := matcher.FindStringSubmatch(path)
+	fsName, configName, fsPath := "local", "local", path
+	if parts != nil {
+		configName, fsPath = parts[1], parts[2]
+		var err error
+		fsName, err = ConfigFile.GetValue(configName, "type")
+		if err != nil {
+			return nil, fmt.Errorf("Didn't find section in config file for %q", configName)
+		}
+	}
+	fs, err := Find(fsName)
+	if err != nil {
+		return nil, err
+	}
+	return fs.NewFs(configName, fsPath)
 }
 
 // Write debuging output for this Object

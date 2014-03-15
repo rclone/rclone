@@ -6,7 +6,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/ncw/rclone/fs"
 	"log"
 	"os"
 	"runtime"
@@ -14,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/ncw/rclone/fs"
 	// Active file systems
 	_ "github.com/ncw/rclone/drive"
 	_ "github.com/ncw/rclone/local"
@@ -25,13 +26,8 @@ import (
 var (
 	// Flags
 	cpuprofile    = flag.String("cpuprofile", "", "Write cpu profile to file")
-	verbose       = flag.Bool("verbose", false, "Print lots more stuff")
-	quiet         = flag.Bool("quiet", false, "Print as little stuff as possible")
 	dry_run       = flag.Bool("dry-run", false, "Do a trial run with no permanent changes")
-	checkers      = flag.Int("checkers", 8, "Number of checkers to run in parallel.")
-	transfers     = flag.Int("transfers", 4, "Number of file transfers to run in parallel.")
 	statsInterval = flag.Duration("stats", time.Minute*1, "Interval to print stats")
-	modifyWindow  = flag.Duration("modify-window", time.Nanosecond, "Max time diff to be considered the same")
 )
 
 // A pair of fs.Objects
@@ -105,17 +101,17 @@ func CopyFs(fdst, fsrc fs.Fs) {
 	}
 
 	to_be_checked := fsrc.List()
-	to_be_uploaded := make(fs.ObjectsChan, *transfers)
+	to_be_uploaded := make(fs.ObjectsChan, fs.Config.Transfers)
 
 	var checkerWg sync.WaitGroup
-	checkerWg.Add(*checkers)
-	for i := 0; i < *checkers; i++ {
+	checkerWg.Add(fs.Config.Checkers)
+	for i := 0; i < fs.Config.Checkers; i++ {
 		go Checker(to_be_checked, to_be_uploaded, fdst, &checkerWg)
 	}
 
 	var copierWg sync.WaitGroup
-	copierWg.Add(*transfers)
-	for i := 0; i < *transfers; i++ {
+	copierWg.Add(fs.Config.Transfers)
+	for i := 0; i < fs.Config.Transfers; i++ {
 		go Copier(to_be_uploaded, fdst, &copierWg)
 	}
 
@@ -129,8 +125,8 @@ func CopyFs(fdst, fsrc fs.Fs) {
 // Delete all the files passed in the channel
 func DeleteFiles(to_be_deleted fs.ObjectsChan) {
 	var wg sync.WaitGroup
-	wg.Add(*transfers)
-	for i := 0; i < *transfers; i++ {
+	wg.Add(fs.Config.Transfers)
+	for i := 0; i < fs.Config.Transfers; i++ {
 		go func() {
 			defer wg.Done()
 			for dst := range to_be_deleted {
@@ -173,18 +169,18 @@ func Sync(fdst, fsrc fs.Fs) {
 	}
 
 	// Read source files checking them off against dest files
-	to_be_checked := make(PairFsObjectsChan, *transfers)
-	to_be_uploaded := make(fs.ObjectsChan, *transfers)
+	to_be_checked := make(PairFsObjectsChan, fs.Config.Transfers)
+	to_be_uploaded := make(fs.ObjectsChan, fs.Config.Transfers)
 
 	var checkerWg sync.WaitGroup
-	checkerWg.Add(*checkers)
-	for i := 0; i < *checkers; i++ {
+	checkerWg.Add(fs.Config.Checkers)
+	for i := 0; i < fs.Config.Checkers; i++ {
 		go PairChecker(to_be_checked, to_be_uploaded, &checkerWg)
 	}
 
 	var copierWg sync.WaitGroup
-	copierWg.Add(*transfers)
-	for i := 0; i < *transfers; i++ {
+	copierWg.Add(fs.Config.Transfers)
+	for i := 0; i < fs.Config.Transfers; i++ {
 		go Copier(to_be_uploaded, fdst, &copierWg)
 	}
 
@@ -215,7 +211,7 @@ func Sync(fdst, fsrc fs.Fs) {
 	}
 
 	// Delete the spare files
-	toDelete := make(fs.ObjectsChan, *transfers)
+	toDelete := make(fs.ObjectsChan, fs.Config.Transfers)
 	go func() {
 		for _, fs := range delFiles {
 			toDelete <- fs
@@ -262,7 +258,7 @@ func Check(fdst, fsrc fs.Fs) {
 		log.Printf(remote)
 	}
 
-	checks := make(chan []fs.Object, *transfers)
+	checks := make(chan []fs.Object, fs.Config.Transfers)
 	go func() {
 		for _, check := range commonFiles {
 			checks <- check
@@ -271,8 +267,8 @@ func Check(fdst, fsrc fs.Fs) {
 	}()
 
 	var checkerWg sync.WaitGroup
-	checkerWg.Add(*checkers)
-	for i := 0; i < *checkers; i++ {
+	checkerWg.Add(fs.Config.Checkers)
+	for i := 0; i < fs.Config.Checkers; i++ {
 		go func() {
 			defer checkerWg.Done()
 			for check := range checks {
@@ -309,8 +305,8 @@ func Check(fdst, fsrc fs.Fs) {
 func List(f, _ fs.Fs) {
 	in := f.List()
 	var wg sync.WaitGroup
-	wg.Add(*checkers)
-	for i := 0; i < *checkers; i++ {
+	wg.Add(fs.Config.Checkers)
+	for i := 0; i < fs.Config.Checkers; i++ {
 		go func() {
 			defer wg.Done()
 			for o := range in {
@@ -370,117 +366,128 @@ func purge(fdst, fsrc fs.Fs) {
 	}
 }
 
+// Edits the config file
+func EditConfig(fdst, fsrc fs.Fs) {
+	fs.EditConfig()
+}
+
 type Command struct {
-	name             string
-	help             string
-	run              func(fdst, fsrc fs.Fs)
-	minArgs, maxArgs int
+	Name     string
+	Help     string
+	ArgsHelp string
+	Run      func(fdst, fsrc fs.Fs)
+	MinArgs  int
+	MaxArgs  int
+	NoStats  bool
 }
 
 // checkArgs checks there are enough arguments and prints a message if not
 func (cmd *Command) checkArgs(args []string) {
-	if len(args) < cmd.minArgs {
+	if len(args) < cmd.MinArgs {
 		syntaxError()
-		fmt.Fprintf(os.Stderr, "Command %s needs %d arguments mininum\n", cmd.name, cmd.minArgs)
+		fmt.Fprintf(os.Stderr, "Command %s needs %d arguments mininum\n", cmd.Name, cmd.MinArgs)
 		os.Exit(1)
-	} else if len(args) > cmd.maxArgs {
+	} else if len(args) > cmd.MaxArgs {
 		syntaxError()
-		fmt.Fprintf(os.Stderr, "Command %s needs %d arguments maximum\n", cmd.name, cmd.maxArgs)
+		fmt.Fprintf(os.Stderr, "Command %s needs %d arguments maximum\n", cmd.Name, cmd.MaxArgs)
 		os.Exit(1)
 	}
 }
 
 var Commands = []Command{
 	{
-		"copy",
-		`<source> <destination>
-
+		Name:     "copy",
+		ArgsHelp: "source://path dest://path",
+		Help: `
         Copy the source to the destination.  Doesn't transfer
         unchanged files, testing first by modification time then by
-        MD5SUM.  Doesn't delete files from the destination.
-
-`,
-		CopyFs,
-		2, 2,
+        MD5SUM.  Doesn't delete files from the destination.`,
+		Run:     CopyFs,
+		MinArgs: 2,
+		MaxArgs: 2,
 	},
 	{
-		"sync",
-		`<source> <destination>
-
+		Name:     "sync",
+		ArgsHelp: "source://path dest://path",
+		Help: `
         Sync the source to the destination.  Doesn't transfer
         unchanged files, testing first by modification time then by
         MD5SUM.  Deletes any files that exist in source that don't
         exist in destination. Since this can cause data loss, test
         first with the -dry-run flag.`,
-
-		Sync,
-		2, 2,
+		Run:     Sync,
+		MinArgs: 2,
+		MaxArgs: 2,
 	},
 	{
-		"ls",
-		`[<path>]
-
+		Name:     "ls",
+		ArgsHelp: "[remote://path]",
+		Help: `
         List all the objects in the the path.`,
-
-		List,
-		1, 1,
+		Run:     List,
+		MinArgs: 1,
+		MaxArgs: 1,
 	},
 	{
-		"lsd",
-		`[<path>]
-
+		Name:     "lsd",
+		ArgsHelp: "[remote://path]",
+		Help: `
         List all directoryes/objects/buckets in the the path.`,
-
-		ListDir,
-		1, 1,
+		Run:     ListDir,
+		MinArgs: 1,
+		MaxArgs: 1,
 	},
 	{
-		"mkdir",
-		`<path>
-
+		Name:     "mkdir",
+		ArgsHelp: "remote://path",
+		Help: `
         Make the path if it doesn't already exist`,
-
-		mkdir,
-		1, 1,
+		Run:     mkdir,
+		MinArgs: 1,
+		MaxArgs: 1,
 	},
 	{
-		"rmdir",
-		`<path>
-
+		Name:     "rmdir",
+		ArgsHelp: "remote://path",
+		Help: `
         Remove the path.  Note that you can't remove a path with
         objects in it, use purge for that.`,
-
-		rmdir,
-		1, 1,
+		Run:     rmdir,
+		MinArgs: 1,
+		MaxArgs: 1,
 	},
 	{
-		"purge",
-		`<path>
-
+		Name:     "purge",
+		ArgsHelp: "remote://path",
+		Help: `
         Remove the path and all of its contents.`,
-
-		purge,
-		1, 1,
+		Run:     purge,
+		MinArgs: 1,
+		MaxArgs: 1,
 	},
 	{
-		"check",
-		`<source> <destination>
-
+		Name:     "check",
+		ArgsHelp: "source://path dest://path",
+		Help: `
         Checks the files in the source and destination match.  It
         compares sizes and MD5SUMs and prints a report of files which
         don't match.  It doesn't alter the source or destination.`,
-
-		Check,
-		2, 2,
+		Run:     Check,
+		MinArgs: 2,
+		MaxArgs: 2,
 	},
 	{
-		"help",
-		`
-
+		Name: "config",
+		Help: `
+        Enter an interactive configuration session.`,
+		Run:     EditConfig,
+		NoStats: true,
+	},
+	{
+		Name: "help",
+		Help: `
         This help.`,
-
-		nil,
-		0, 0,
+		NoStats: true,
 	},
 }
 
@@ -495,7 +502,8 @@ Subcommands:
 `)
 	for i := range Commands {
 		cmd := &Commands[i]
-		fmt.Fprintf(os.Stderr, "    %s: %s\n\n", cmd.name, cmd.help)
+		fmt.Fprintf(os.Stderr, "    %s %s\n", cmd.Name, cmd.ArgsHelp)
+		fmt.Fprintf(os.Stderr, "%s\n\n", cmd.Help)
 	}
 
 	fmt.Fprintf(os.Stderr, "Options:\n")
@@ -517,13 +525,7 @@ func main() {
 	flag.Parse()
 	args := flag.Args()
 	runtime.GOMAXPROCS(runtime.NumCPU())
-
-	// Pass on some flags to fs.Config
-	fs.Config.Verbose = *verbose
-	fs.Config.Quiet = *quiet
-	fs.Config.ModifyWindow = *modifyWindow
-	fs.Config.Checkers = *checkers
-	fs.Config.Transfers = *transfers
+	fs.LoadConfig()
 
 	// Setup profiling if desired
 	if *cpuprofile != "" {
@@ -548,10 +550,10 @@ func main() {
 	for i := range Commands {
 		command := &Commands[i]
 		// exact command name found - use that
-		if command.name == cmd {
+		if command.Name == cmd {
 			found = command
 			break
-		} else if strings.HasPrefix(command.name, cmd) {
+		} else if strings.HasPrefix(command.Name, cmd) {
 			if found != nil {
 				fs.Stats.Error()
 				log.Fatalf("Not unique - matches multiple commands %q", cmd)
@@ -572,14 +574,14 @@ func main() {
 		fdst, err = fs.NewFs(args[0])
 		if err != nil {
 			fs.Stats.Error()
-			log.Fatal("Failed to create file system: ", err)
+			log.Fatalf("Failed to create file system for %q: %v", args[0], err)
 		}
 	}
 	if len(args) >= 2 {
 		fsrc, err = fs.NewFs(args[1])
 		if err != nil {
 			fs.Stats.Error()
-			log.Fatal("Failed to create destination file system: ", err)
+			log.Fatalf("Failed to create destination file system for %q: %v", args[1], err)
 		}
 		fsrc, fdst = fdst, fsrc
 	}
@@ -599,22 +601,30 @@ func main() {
 			fs.Config.ModifyWindow = precision
 		}
 	}
-	log.Printf("Modify window is %s\n", fs.Config.ModifyWindow)
+	if fs.Config.Verbose {
+		log.Printf("Modify window is %s\n", fs.Config.ModifyWindow)
+	}
 
 	// Print the stats every statsInterval
-	go func() {
-		ch := time.Tick(*statsInterval)
-		for {
-			<-ch
-			fs.Stats.Log()
-		}
-	}()
+	if !found.NoStats {
+		go func() {
+			ch := time.Tick(*statsInterval)
+			for {
+				<-ch
+				fs.Stats.Log()
+			}
+		}()
+	}
 
 	// Run the actual command
-	if found.run != nil {
-		found.run(fdst, fsrc)
-		fmt.Println(fs.Stats)
-		log.Printf("*** Go routines at exit %d\n", runtime.NumGoroutine())
+	if found.Run != nil {
+		found.Run(fdst, fsrc)
+		if !found.NoStats {
+			fmt.Println(fs.Stats)
+		}
+		if fs.Config.Verbose {
+			log.Printf("*** Go routines at exit %d\n", runtime.NumGoroutine())
+		}
 		if fs.Stats.Errored() {
 			os.Exit(1)
 		}

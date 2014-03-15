@@ -22,30 +22,52 @@ package drive
 // * files with / in name
 
 import (
-	"code.google.com/p/goauth2/oauth"
-	"code.google.com/p/google-api-go-client/drive/v2"
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/ncw/rclone/fs"
 	"io"
 	"log"
 	"mime"
 	"net/http"
 	"os"
 	"path"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
-)
 
-// Pattern to match a drive url
-var Match = regexp.MustCompile(`^drive://(.*)$`)
+	"code.google.com/p/goauth2/oauth"
+	"code.google.com/p/google-api-go-client/drive/v2"
+	"github.com/ncw/rclone/fs"
+)
 
 // Register with Fs
 func init() {
-	fs.Register(Match, NewFs)
+	fs.Register(&fs.FsInfo{
+		Name:  "drive",
+		NewFs: NewFs,
+		Options: []fs.Option{{
+			Name: "client_id",
+			Help: "Google Application Client Id.",
+			Examples: []fs.OptionExample{{
+				Value: "202264815644.apps.googleusercontent.com",
+				Help:  "rclone's client id - use this or your own if you want",
+			}},
+		}, {
+			Name: "client_secret",
+			Help: "Google Application Client Secret.",
+			Examples: []fs.OptionExample{{
+				Value: "X4Z3ca8xfWDb1Voo-F9a7ZxJ",
+				Help:  "rclone's client secret - use this or your own if you want",
+			}},
+		}, {
+			Name: "token_file",
+			Help: "Path to store token file.",
+			Examples: []fs.OptionExample{{
+				Value: path.Join(fs.HomeDir, ".gdrive-token-file"),
+				Help:  "Suggested path for token file",
+			}},
+		}},
+	})
 }
 
 // FsDrive represents a remote drive server
@@ -128,11 +150,8 @@ const (
 // Globals
 var (
 	// Flags
-	driveClientId     = flag.String("drive-client-id", os.Getenv("GDRIVE_CLIENT_ID"), "Auth URL for server. Defaults to environment var GDRIVE_CLIENT_ID.")
-	driveClientSecret = flag.String("drive-client-secret", os.Getenv("GDRIVE_CLIENT_SECRET"), "User name. Defaults to environment var GDRIVE_CLIENT_SECRET.")
-	driveTokenFile    = flag.String("drive-token-file", os.Getenv("GDRIVE_TOKEN_FILE"), "API key (password). Defaults to environment var GDRIVE_TOKEN_FILE.")
-	driveAuthCode     = flag.String("drive-auth-code", "", "Pass in when requested to make the drive token file.")
-	driveFullList     = flag.Bool("drive-full-list", true, "Use a full listing for directory list. More data but usually quicker.")
+	driveAuthCode = flag.String("drive-auth-code", "", "Pass in when requested to make the drive token file.")
+	driveFullList = flag.Bool("drive-full-list", true, "Use a full listing for directory list. More data but usually quicker.")
 )
 
 // String converts this FsDrive to a string
@@ -142,13 +161,7 @@ func (f *FsDrive) String() string {
 
 // parseParse parses a drive 'url'
 func parseDrivePath(path string) (root string, err error) {
-	parts := Match.FindAllStringSubmatch(path, -1)
-	if len(parts) != 1 || len(parts[0]) != 2 {
-		err = fmt.Errorf("Couldn't parse drive url %q", path)
-	} else {
-		root = parts[0][1]
-		root = strings.Trim(root, "/")
-	}
+	root = strings.Trim(root, "/")
 	return
 }
 
@@ -222,26 +235,29 @@ func MakeNewToken(t *oauth.Transport) error {
 }
 
 // NewFs contstructs an FsDrive from the path, container:path
-func NewFs(path string) (fs.Fs, error) {
-	if *driveClientId == "" {
-		return nil, errors.New("Need -drive-client-id or environmental variable GDRIVE_CLIENT_ID")
+func NewFs(name, path string) (fs.Fs, error) {
+	clientId := fs.ConfigFile.MustValue(name, "client_id")
+	if clientId == "" {
+		return nil, errors.New("client_id not found")
 	}
-	if *driveClientSecret == "" {
-		return nil, errors.New("Need -drive-client-secret or environmental variable GDRIVE_CLIENT_SECRET")
+	clientSecret := fs.ConfigFile.MustValue(name, "client_secret")
+	if clientSecret == "" {
+		return nil, errors.New("client_secret not found")
 	}
-	if *driveTokenFile == "" {
-		return nil, errors.New("Need -drive-token-file or environmental variable GDRIVE_TOKEN_FILE")
+	tokenFile := fs.ConfigFile.MustValue(name, "token_file")
+	if tokenFile == "" {
+		return nil, errors.New("token-file not found")
 	}
 
 	// Settings for authorization.
 	var driveConfig = &oauth.Config{
-		ClientId:     *driveClientId,
-		ClientSecret: *driveClientSecret,
+		ClientId:     clientId,
+		ClientSecret: clientSecret,
 		Scope:        "https://www.googleapis.com/auth/drive",
 		RedirectURL:  "urn:ietf:wg:oauth:2.0:oob",
 		AuthURL:      "https://accounts.google.com/o/oauth2/auth",
 		TokenURL:     "https://accounts.google.com/o/oauth2/token",
-		TokenCache:   oauth.CacheFile(*driveTokenFile),
+		TokenCache:   oauth.CacheFile(tokenFile),
 	}
 
 	root, err := parseDrivePath(path)

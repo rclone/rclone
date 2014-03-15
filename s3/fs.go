@@ -5,30 +5,99 @@ package s3
 
 import (
 	"errors"
-	"flag"
 	"fmt"
-	"github.com/ncw/goamz/aws"
-	"github.com/ncw/goamz/s3"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/swift"
 	"io"
 	"log"
 	"mime"
 	"net/http"
-	"os"
 	"path"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
-)
 
-// Pattern to match a s3 url
-var Match = regexp.MustCompile(`^s3://([^/]*)(.*)$`)
+	"github.com/ncw/goamz/aws"
+	"github.com/ncw/goamz/s3"
+	"github.com/ncw/rclone/fs"
+	"github.com/ncw/swift"
+)
 
 // Register with Fs
 func init() {
-	fs.Register(Match, NewFs)
+	fs.Register(&fs.FsInfo{
+		Name:  "s3",
+		NewFs: NewFs,
+		// AWS endpoints: http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region
+		Options: []fs.Option{{
+			Name: "access_key_id",
+			Help: "AWS Access Key ID.",
+		}, {
+			Name: "secret_access_key",
+			Help: "AWS Secret Access Key (password). ",
+		}, {
+			Name: "endpoint",
+			Help: "Endpoint for S3 API.",
+			Examples: []fs.OptionExample{{
+				Value: "https://s3.amazonaws.com/",
+				Help:  "The default endpoint - a good choice if you are unsure.\nUS Region, Northern Virginia or Pacific Northwest.\nLeave location constraint empty.",
+			}, {
+				Value: "https://s3-external-1.amazonaws.com",
+				Help:  "US Region, Northern Virginia only.\nLeave location constraint empty.",
+			}, {
+				Value: "https://s3-us-west-2.amazonaws.com",
+				Help:  "US West (Oregon) Region\nNeeds location constraint us-west-2.",
+			}, {
+				Value: "https://s3-us-west-1.amazonaws.com",
+				Help:  "US West (Northern California) Region\nNeeds location constraint us-west-1.",
+			}, {
+				Value: "https://s3-eu-west-1.amazonaws.com",
+				Help:  "EU (Ireland) Region Region\nNeeds location constraint EU or eu-west-1.",
+			}, {
+				Value: "https://s3-ap-southeast-1.amazonaws.com",
+				Help:  "Asia Pacific (Singapore) Region\nNeeds location constraint ap-southeast-1.",
+			}, {
+				Value: "https://s3-ap-southeast-2.amazonaws.com",
+				Help:  "Asia Pacific (Sydney) Region\nNeeds location constraint .",
+			}, {
+				Value: "https://s3-ap-northeast-1.amazonaws.com",
+				Help:  "Asia Pacific (Tokyo) Region\nNeeds location constraint ap-northeast-1.",
+			}, {
+				Value: "https://s3-sa-east-1.amazonaws.com",
+				Help:  "South America (Sao Paulo) Region\nNeeds location constraint sa-east-1.",
+			}},
+		}, {
+			Name: "location_constraint",
+			Help: "Location constraint - must be set to match the Endpoint.",
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "Empty for US Region, Northern Virginia or Pacific Northwest.",
+			}, {
+				Value: "us-west-2",
+				Help:  "US West (Oregon) Region.",
+			}, {
+				Value: "us-west-1",
+				Help:  "US West (Northern California) Region.",
+			}, {
+				Value: "eu-west-1",
+				Help:  "EU (Ireland) Region.",
+			}, {
+				Value: "EU",
+				Help:  "EU Region.",
+			}, {
+				Value: "ap-southeast-1",
+				Help:  "Asia Pacific (Singapore) Region.",
+			}, {
+				Value: "ap-southeast-2",
+				Help:  "Asia Pacific (Sydney) Region.",
+			}, {
+				Value: "ap-northeast-1",
+				Help:  "Asia Pacific (Tokyo) Region.",
+			}, {
+				Value: "sa-east-1",
+				Help:  "South America (Sao Paulo) Region.",
+			}},
+		}},
+	})
 }
 
 // Constants
@@ -60,57 +129,54 @@ type FsObjectS3 struct {
 
 // ------------------------------------------------------------
 
-// Globals
-var (
-	// Flags
-	awsAccessKeyId     = flag.String("aws-access-key-id", os.Getenv("AWS_ACCESS_KEY_ID"), "AWS Access Key ID. Defaults to environment var AWS_ACCESS_KEY_ID.")
-	awsSecretAccessKey = flag.String("aws-secret-access-key", os.Getenv("AWS_SECRET_ACCESS_KEY"), "AWS Secret Access Key (password). Defaults to environment var AWS_SECRET_ACCESS_KEY.")
-	// AWS endpoints: http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region
-	s3Endpoint           = flag.String("s3-endpoint", os.Getenv("S3_ENDPOINT"), "S3 Endpoint. Defaults to environment var S3_ENDPOINT then https://s3.amazonaws.com/.")
-	s3LocationConstraint = flag.String("s3-location-constraint", os.Getenv("S3_LOCATION_CONSTRAINT"), "Location constraint for creating buckets only. Defaults to environment var S3_LOCATION_CONSTRAINT.")
-)
-
 // String converts this FsS3 to a string
 func (f *FsS3) String() string {
 	return fmt.Sprintf("S3 bucket %s", f.bucket)
 }
 
+// Pattern to match a s3 path
+var matcher = regexp.MustCompile(`^([^/]*)(.*)$`)
+
 // parseParse parses a s3 'url'
 func s3ParsePath(path string) (bucket, directory string, err error) {
-	parts := Match.FindAllStringSubmatch(path, -1)
-	if len(parts) != 1 || len(parts[0]) != 3 {
-		err = fmt.Errorf("Couldn't parse s3 url %q", path)
+	parts := matcher.FindStringSubmatch(path)
+	if parts == nil {
+		err = fmt.Errorf("Couldn't parse bucket out of s3 path %q", path)
 	} else {
-		bucket, directory = parts[0][1], parts[0][2]
+		bucket, directory = parts[1], parts[2]
 		directory = strings.Trim(directory, "/")
 	}
 	return
 }
 
 // s3Connection makes a connection to s3
-func s3Connection() (*s3.S3, error) {
+func s3Connection(name string) (*s3.S3, error) {
 	// Make the auth
-	if *awsAccessKeyId == "" {
-		return nil, errors.New("Need -aws-access-key-id or environmental variable AWS_ACCESS_KEY_ID")
+	accessKeyId := fs.ConfigFile.MustValue(name, "access_key_id")
+	if accessKeyId == "" {
+		return nil, errors.New("access_key_id not found")
 	}
-	if *awsSecretAccessKey == "" {
-		return nil, errors.New("Need -aws-secret-access-key or environmental variable AWS_SECRET_ACCESS_KEY")
+	secretAccessKey := fs.ConfigFile.MustValue(name, "secret_access_key")
+	if secretAccessKey == "" {
+		return nil, errors.New("secret_access_key not found")
 	}
-	auth := aws.Auth{AccessKey: *awsAccessKeyId, SecretKey: *awsSecretAccessKey}
+	auth := aws.Auth{AccessKey: accessKeyId, SecretKey: secretAccessKey}
 
 	// FIXME look through all the regions by name and use one of them if found
 
 	// Synthesize the region
-	if *s3Endpoint == "" {
-		*s3Endpoint = "https://s3.amazonaws.com/"
+	s3Endpoint := fs.ConfigFile.MustValue(name, "endpoint")
+	if s3Endpoint == "" {
+		s3Endpoint = "https://s3.amazonaws.com/"
 	}
 	region := aws.Region{
 		Name:                 "s3",
-		S3Endpoint:           *s3Endpoint,
+		S3Endpoint:           s3Endpoint,
 		S3LocationConstraint: false,
 	}
-	if *s3LocationConstraint != "" {
-		region.Name = *s3LocationConstraint
+	s3LocationConstraint := fs.ConfigFile.MustValue(name, "location_constraint")
+	if s3LocationConstraint != "" {
+		region.Name = s3LocationConstraint
 		region.S3LocationConstraint = true
 	}
 
@@ -119,7 +185,7 @@ func s3Connection() (*s3.S3, error) {
 }
 
 // NewFsS3 contstructs an FsS3 from the path, bucket:path
-func NewFs(path string) (fs.Fs, error) {
+func NewFs(name, path string) (fs.Fs, error) {
 	bucket, directory, err := s3ParsePath(path)
 	if err != nil {
 		return nil, err
@@ -127,7 +193,7 @@ func NewFs(path string) (fs.Fs, error) {
 	if directory != "" {
 		return nil, fmt.Errorf("Directories not supported yet in %q: %q", path, directory)
 	}
-	c, err := s3Connection()
+	c, err := s3Connection(name)
 	if err != nil {
 		return nil, err
 	}

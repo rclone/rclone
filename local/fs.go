@@ -4,7 +4,6 @@ package local
 import (
 	"crypto/md5"
 	"fmt"
-	"github.com/ncw/rclone/fs"
 	"io"
 	"io/ioutil"
 	"log"
@@ -13,11 +12,16 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/ncw/rclone/fs"
 )
 
 // Register with Fs
 func init() {
-	fs.Register(nil, NewFs)
+	fs.Register(&fs.FsInfo{
+		Name:  "local",
+		NewFs: NewFs,
+	})
 }
 
 // FsLocal represents a local filesystem rooted at root
@@ -37,7 +41,7 @@ type FsObjectLocal struct {
 // ------------------------------------------------------------
 
 // NewFs contstructs an FsLocal from the path
-func NewFs(root string) (fs.Fs, error) {
+func NewFs(name, root string) (fs.Fs, error) {
 	root = path.Clean(root)
 	f := &FsLocal{root: root}
 	return f, nil

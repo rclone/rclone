@@ -5,24 +5,51 @@ package swift
 
 import (
 	"errors"
-	"flag"
 	"fmt"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/swift"
 	"io"
 	"log"
-	"os"
 	"regexp"
 	"strings"
 	"time"
-)
 
-// Pattern to match a swift url
-var Match = regexp.MustCompile(`^swift://([^/]*)(.*)$`)
+	"github.com/ncw/rclone/fs"
+	"github.com/ncw/swift"
+)
 
 // Register with Fs
 func init() {
-	fs.Register(Match, NewFs)
+	fs.Register(&fs.FsInfo{
+		Name:  "swift",
+		NewFs: NewFs,
+		Options: []fs.Option{{
+			Name: "user",
+			Help: "User name to log in.",
+		}, {
+			Name: "key",
+			Help: "API key or password.",
+		}, {
+			Name: "auth",
+			Help: "Authentication URL for server.",
+			Examples: []fs.OptionExample{{
+				Help:  "Rackspace US",
+				Value: "https://auth.api.rackspacecloud.com/v1.0",
+			}, {
+				Help:  "Rackspace UK",
+				Value: "https://lon.auth.api.rackspacecloud.com/v1.0",
+			}, {
+				Help:  "Rackspace v2",
+				Value: "https://identity.api.rackspacecloud.com/v2.0",
+			}, {
+				Help:  "Memset Memstore UK",
+				Value: "https://auth.storage.memset.com/v1.0",
+			}, {
+				Help:  "Memset Memstore UK v2",
+				Value: "https://auth.storage.memset.com/v2.0",
+			}},
+		},
+		// snet     = flag.Bool("swift-snet", false, "Use internal service network") // FIXME not implemented
+		},
+	})
 }
 
 // FsSwift represents a remote swift server
@@ -44,48 +71,44 @@ type FsObjectSwift struct {
 
 // ------------------------------------------------------------
 
-// Globals
-var (
-	// Flags
-	// FIXME make these part of swift so we get a standard set of flags?
-	authUrl  = flag.String("swift-auth", os.Getenv("ST_AUTH"), "Auth URL for server. Defaults to environment var ST_AUTH.")
-	userName = flag.String("swift-user", os.Getenv("ST_USER"), "User name. Defaults to environment var ST_USER.")
-	apiKey   = flag.String("swift-key", os.Getenv("ST_KEY"), "API key (password). Defaults to environment var ST_KEY.")
-	snet     = flag.Bool("swift-snet", false, "Use internal service network") // FIXME not implemented
-)
-
 // String converts this FsSwift to a string
 func (f *FsSwift) String() string {
 	return fmt.Sprintf("Swift container %s", f.container)
 }
 
+// Pattern to match a swift path
+var matcher = regexp.MustCompile(`^([^/]*)(.*)$`)
+
 // parseParse parses a swift 'url'
 func parsePath(path string) (container, directory string, err error) {
-	parts := Match.FindAllStringSubmatch(path, -1)
-	if len(parts) != 1 || len(parts[0]) != 3 {
-		err = fmt.Errorf("Couldn't parse swift url %q", path)
+	parts := matcher.FindStringSubmatch(path)
+	if parts == nil {
+		err = fmt.Errorf("Couldn't find container in swift path %q", path)
 	} else {
-		container, directory = parts[0][1], parts[0][2]
+		container, directory = parts[1], parts[2]
 		directory = strings.Trim(directory, "/")
 	}
 	return
 }
 
 // swiftConnection makes a connection to swift
-func swiftConnection() (*swift.Connection, error) {
-	if *userName == "" {
-		return nil, errors.New("Need -user or environmental variable ST_USER")
+func swiftConnection(name string) (*swift.Connection, error) {
+	userName := fs.ConfigFile.MustValue(name, "user")
+	if userName == "" {
+		return nil, errors.New("user not found")
 	}
-	if *apiKey == "" {
-		return nil, errors.New("Need -key or environmental variable ST_KEY")
+	apiKey := fs.ConfigFile.MustValue(name, "key")
+	if apiKey == "" {
+		return nil, errors.New("key not found")
 	}
-	if *authUrl == "" {
-		return nil, errors.New("Need -auth or environmental variable ST_AUTH")
+	authUrl := fs.ConfigFile.MustValue(name, "auth")
+	if authUrl == "" {
+		return nil, errors.New("auth not found")
 	}
 	c := &swift.Connection{
-		UserName: *userName,
-		ApiKey:   *apiKey,
-		AuthUrl:  *authUrl,
+		UserName: userName,
+		ApiKey:   apiKey,
+		AuthUrl:  authUrl,
 	}
 	err := c.Authenticate()
 	if err != nil {
@@ -95,7 +118,7 @@ func swiftConnection() (*swift.Connection, error) {
 }
 
 // NewFs contstructs an FsSwift from the path, container:path
-func NewFs(path string) (fs.Fs, error) {
+func NewFs(name, path string) (fs.Fs, error) {
 	container, directory, err := parsePath(path)
 	if err != nil {
 		return nil, err
@@ -103,7 +126,7 @@ func NewFs(path string) (fs.Fs, error) {
 	if directory != "" {
 		return nil, fmt.Errorf("Directories not supported yet in %q", path)
 	}
-	c, err := swiftConnection()
+	c, err := swiftConnection(name)
 	if err != nil {
 		return nil, err
 	}
