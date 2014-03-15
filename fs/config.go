@@ -25,18 +25,19 @@ const (
 var (
 	// Config file
 	ConfigFile *goconfig.ConfigFile
+	// Home directory
+	HomeDir = configHome()
 	// Config file path
-	ConfigPath string
+	ConfigPath = path.Join(HomeDir, configFileName)
 	// Global config
 	Config = &ConfigInfo{}
-	// Home directory
-	HomeDir string
 	// Flags
 	verbose      = flag.Bool("verbose", false, "Print lots more stuff")
 	quiet        = flag.Bool("quiet", false, "Print as little stuff as possible")
 	modifyWindow = flag.Duration("modify-window", time.Nanosecond, "Max time diff to be considered the same")
 	checkers     = flag.Int("checkers", 8, "Number of checkers to run in parallel.")
 	transfers    = flag.Int("transfers", 4, "Number of file transfers to run in parallel.")
+	configFile   = flag.String("config", ConfigPath, "Config file.")
 )
 
 // Filesystem config options
@@ -46,6 +47,17 @@ type ConfigInfo struct {
 	ModifyWindow time.Duration
 	Checkers     int
 	Transfers    int
+}
+
+// Find the config directory
+func configHome() string {
+	// Find users home directory
+	usr, err := user.Current()
+	if err != nil {
+		log.Printf("Couldn't find home directory: %v", err)
+		return ""
+	}
+	return usr.HomeDir
 }
 
 // Loads the config file
@@ -59,16 +71,10 @@ func LoadConfig() {
 	Config.Checkers = *checkers
 	Config.Transfers = *transfers
 
-	// Find users home directory
-	usr, err := user.Current()
-	if err != nil {
-		log.Printf("Couldn't find home directory: %v", err)
-		return
-	}
-	HomeDir = usr.HomeDir
-	ConfigPath = path.Join(HomeDir, configFileName)
+	ConfigPath = *configFile
 
 	// Load configuration file.
+	var err error
 	ConfigFile, err = goconfig.LoadConfigFile(ConfigPath)
 	if err != nil {
 		log.Printf("Failed to load config file %v - using defaults", ConfigPath)
