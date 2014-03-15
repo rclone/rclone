@@ -72,6 +72,10 @@ func LoadConfig() {
 	ConfigFile, err = goconfig.LoadConfigFile(ConfigPath)
 	if err != nil {
 		log.Printf("Failed to load config file %v - using defaults", ConfigPath)
+		ConfigFile, err = goconfig.LoadConfigFile(os.DevNull)
+		if err != nil {
+			log.Fatalf("Failed to read null config file: %v", err)
+		}
 	}
 }
 
@@ -84,8 +88,11 @@ func SaveConfig() {
 }
 
 // Show an overview of the config file
-func ShowConfig() {
+func ShowRemotes() {
 	remotes := ConfigFile.GetSectionList()
+	if len(remotes) == 0 {
+		return
+	}
 	sort.Strings(remotes)
 	fmt.Printf("%-20s %s\n", "Name", "Type")
 	fmt.Printf("%-20s %s\n", "====", "====")
@@ -112,7 +119,7 @@ func ReadLine() string {
 }
 
 // Command - choose one
-func Command(commands []string) int {
+func Command(commands []string) byte {
 	opts := []string{}
 	for _, text := range commands {
 		fmt.Printf("%c) %s\n", text[0], text[1:])
@@ -128,7 +135,7 @@ func Command(commands []string) int {
 		}
 		i := strings.IndexByte(optString, result[0])
 		if i >= 0 {
-			return i
+			return result[0]
 		}
 	}
 }
@@ -179,11 +186,11 @@ func ShowRemote(name string) {
 func OkRemote(name string) bool {
 	ShowRemote(name)
 	switch i := Command([]string{"yYes this is OK", "eEdit this remote", "dDelete this remote"}); i {
-	case 0:
+	case 'y':
 		return true
-	case 1:
+	case 'e':
 		return false
-	case 2:
+	case 'd':
 		ConfigFile.DeleteSection(name)
 		return true
 	default:
@@ -236,24 +243,37 @@ func EditRemote(name string) {
 	SaveConfig()
 }
 
+// Delete a remote
+func DeleteRemote(name string) {
+	ConfigFile.DeleteSection(name)
+	SaveConfig()
+}
+
 // Edit the config file interactively
 func EditConfig() {
 	for {
-		fmt.Printf("Current remotes:\n\n")
-		ShowConfig()
-		fmt.Printf("\n")
-		switch i := Command([]string{"eEdit existing remote", "nNew remote", "dDelete remote", "qQuit config"}); i {
-		case 0:
+		haveRemotes := len(ConfigFile.GetSectionList()) != 0
+		what := []string{"eEdit existing remote", "nNew remote", "dDelete remote", "qQuit config"}
+		if haveRemotes {
+			fmt.Printf("Current remotes:\n\n")
+			ShowRemotes()
+			fmt.Printf("\n")
+		} else {
+			fmt.Printf("No remotes found - make a new one\n")
+			what = append(what[1:2], what[3])
+		}
+		switch i := Command(what); i {
+		case 'e':
 			name := ChooseRemote()
 			EditRemote(name)
-		case 1:
+		case 'n':
 			fmt.Printf("name> ")
 			name := ReadLine()
 			NewRemote(name)
-		case 2:
+		case 'd':
 			name := ChooseRemote()
-			ConfigFile.DeleteSection(name)
-		case 3:
+			DeleteRemote(name)
+		case 'q':
 			return
 		}
 	}
