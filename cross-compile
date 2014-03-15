@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# This uses gox from https://github.com/mitchellh/gox
+# Make sure you've run gox -build-toolchain
+
+rm -rf build
+
+gox -output "build/{{.OS}}/{{.Arch}}/{{.Dir}}"
+
+cat <<'#EOF' > build/README.txt
+This directory contains builds of the rclone program.
+
+Rclone a program designed to stress test your disks and find
+failures in them.
+
+Use it to soak test your new disks / memory cards / USB sticks before
+trusting your valuable data to it.
+
+See the project website here: https://github.com/ncw/rclone for
+more details.
+
+The files in this directory are organised by OS and processor type
+
+#EOF
+
+mv build/darwin build/osx
+
+( cd build ; tree . >> README.txt )
