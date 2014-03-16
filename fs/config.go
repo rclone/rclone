@@ -91,6 +91,10 @@ func SaveConfig() {
 	if err != nil {
 		log.Fatalf("Failed to save config file: %v", err)
 	}
+	err = os.Chmod(ConfigPath, 0600)
+	if err != nil {
+		log.Printf("Failed to set permissions on config file: %v", err)
+	}
 }
 
 // Show an overview of the config file
