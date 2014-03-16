@@ -44,11 +44,12 @@ have quite complicated authentication these are kept in a config file
 The easiest way to make the config is to run rclone with the config
 option, Eg
 
-rclone config
+    rclone config
 
 Here is an example of making an s3 configuration
 
 ```
+$ rclone config
 No remotes found - make a new one
 n) New remote
 q) Quit config
@@ -126,6 +127,8 @@ rclone ls remote:// - list a bucket
 rclone sync /home/local/directory remote://bucket
 ```
 
+See the next section for more details.
+
 Usage
 -----
 
@@ -135,16 +138,18 @@ Its basic syntax is like this
 
     Syntax: [options] subcommand <parameters> <parameters...>
 
-Each subcommand looks like this.  See below for how to specify the
-source and destination paths.
+See below for how to specify the source and destination paths.
 
-rclone copy source://path dest://path
+Subcommands
+-----------
+
+    rclone copy source://path dest://path
 
 Copy the source to the destination.  Doesn't transfer
 unchanged files, testing first by modification time then by
 MD5SUM.  Doesn't delete files from the destination.
 
-rclone sync source://path dest://path
+    rclone sync source://path dest://path
 
 Sync the source to the destination.  Doesn't transfer
 unchanged files, testing first by modification time then by
@@ -152,45 +157,45 @@ MD5SUM.  Deletes any files that exist in source that don't
 exist in destination. Since this can cause data loss, test
 first with the -dry-run flag.
 
-rclone ls [remote://path]
+    rclone ls [remote://path]
 
 List all the objects in the the path.
 
-rclone lsd [remote://path]
+    rclone lsd [remote://path]
 
 List all directoryes/objects/buckets in the the path.
 
-rclone mkdir remote://path
+    rclone mkdir remote://path
 
 Make the path if it doesn't already exist
 
-rclone rmdir remote://path
+    rclone rmdir remote://path
 
 Remove the path.  Note that you can't remove a path with
 objects in it, use purge for that.
 
-rclone purge remote://path
+    rclone purge remote://path
 
 Remove the path and all of its contents.
 
-rclone check source://path dest://path
+    rclone check source://path dest://path
 
 Checks the files in the source and destination match.  It
 compares sizes and MD5SUMs and prints a report of files which
 don't match.  It doesn't alter the source or destination.
 
 General options:
-  -config Location of the config file
-  -transfers=4: Number of file transfers to run in parallel.
-  -checkers=8: Number of MD5SUM checkers to run in parallel.
-  -dry-run=false: Do a trial run with no permanent changes
-  -modify-window=1ns: Max time difference to be considered the same - this is automatically set usually
-  -quiet=false: Print as little stuff as possible
-  -stats=1m0s: Interval to print stats
-  -verbose=false: Print lots more stuff
+  * `-config` Location of the config file
+  * `-transfers=4`: Number of file transfers to run in parallel.
+  * `-checkers=8`: Number of MD5SUM checkers to run in parallel.
+  * `-dry-run=false`: Do a trial run with no permanent changes
+  * `-modify-window=1ns`: Max time difference to be considered the same - this is automatically set usually
+  * `-quiet=false`: Print as little stuff as possible
+  * `-stats=1m0s`: Interval to print stats
+  * `-verbose=false`: Print lots more stuff
 
 Developer options:
-  -cpuprofile="": Write cpu profile to file
+  * `-cpuprofile=""`: Write cpu profile to file
 
 Local Filesystem
 ----------------
@@ -204,15 +209,15 @@ Will sync source to destination
 Swift / Rackspace cloudfiles / Memset Memstore
 ----------------------------------------------
 
-Paths are specified as remote://container or remote:// for the lsd
-command.
+Paths are specified as remote://container (or remote:// for the `lsd`
+command.)
 
-So to copy a local directory to a swift container called backup
+So to copy a local directory to a swift container called backup:
 
-rclone sync /home/source swift://backup
+    rclone sync /home/source swift://backup
 
 The modified time is stored as metadata on the object as
-'X-Object-Meta-Mtime' as floating point since the epoch.
+`X-Object-Meta-Mtime` as floating point since the epoch.
 
 This is a defacto standard (used in the official python-swiftclient
 amongst others) for storing the modification time (as read using
@@ -225,10 +230,10 @@ Paths are specified as remote://bucket
 
 So to copy a local directory to a s3 container called backup
 
-rclone sync /home/source s3://backup
+    rclone sync /home/source s3://backup
 
 The modified time is stored as metadata on the object as
-"X-Amz-Meta-Mtime" as floating point since the epoch.
+`X-Amz-Meta-Mtime` as floating point since the epoch.
 
 Google drive
 ------------
