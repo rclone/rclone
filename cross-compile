@@ -10,14 +10,12 @@ gox -output "build/{{.OS}}/{{.Arch}}/{{.Dir}}"
 cat <<'#EOF' > build/README.txt
 This directory contains builds of the rclone program.
 
-Rclone a program designed to stress test your disks and find
-failures in them.
+Rclone is a program to transfer files to and from cloud storage
+systems such as Google Drive, Amazon S3 and Swift (Rackspace
+Cloudfiles).
 
-Use it to soak test your new disks / memory cards / USB sticks before
-trusting your valuable data to it.
-
-See the project website here: https://github.com/ncw/rclone for
-more details.
+See the project website here: https://github.com/ncw/rclone for more
+details.
 
 The files in this directory are organised by OS and processor type
 
