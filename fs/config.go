@@ -150,6 +150,11 @@ func Command(commands []string) byte {
 	}
 }
 
+// Asks the user for Yes or No and returns true or false
+func Confirm() bool {
+	return Command([]string{"yYes", "nNo"}) == 'y'
+}
+
 // Choose one of the defaults or type a new string if newOk is set
 func Choose(what string, defaults, help []string, newOk bool) string {
 	fmt.Printf("Choose a number from below")
@@ -209,6 +214,22 @@ func OkRemote(name string) bool {
 	return false
 }
 
+// Runs the config helper for the remote if needed
+func RemoteConfig(name string) {
+	fmt.Printf("Remote config\n")
+	fsName := ConfigFile.MustValue(name, "type")
+	if fsName == "" {
+		log.Fatalf("Couldn't find type of fs for %q", name)
+	}
+	f, err := Find(fsName)
+	if err != nil {
+		log.Fatalf("Didn't find filing system: %v", err)
+	}
+	if f.Config != nil {
+		f.Config(name)
+	}
+}
+
 // Make a new remote
 func NewRemote(name string) {
 	fmt.Printf("What type of source is it?\n")
@@ -225,6 +246,7 @@ func NewRemote(name string) {
 	for _, option := range fs.Options {
 		ConfigFile.SetValue(name, option.Name, option.Choose())
 	}
+	RemoteConfig(name)
 	if OkRemote(name) {
 		SaveConfig()
 		return
@@ -246,6 +268,7 @@ func EditRemote(name string) {
 				ConfigFile.SetValue(name, key, newValue)
 			}
 		}
+		RemoteConfig(name)
 		if OkRemote(name) {
 			break
 		}

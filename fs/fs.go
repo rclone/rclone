@@ -20,6 +20,7 @@ var (
 type FsInfo struct {
 	Name    string                           // name of this fs
 	NewFs   func(string, string) (Fs, error) // create a new file system
+	Config  func(string)                     // function to call to help with config
 	Options []Option
 }
 
