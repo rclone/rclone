@@ -1,11 +1,13 @@
 Rclone
 ======
 
+[![Logo](http://rclone.org/rclone-120x120.png)](http://rclone.org/)
+
 Sync files and directories to and from
 
-  * Openstack Swift / Rackspace cloud files / Memset Memstore
-  * Amazon S3
   * Google Drive
+  * Amazon S3
+  * Openstack Swift / Rackspace cloud files / Memset Memstore
   * The local filesystem
 
 Features
@@ -16,6 +18,11 @@ Features
   * Copy mode to just copy new/changed files
   * Sync mode to make a directory identical
   * Check mode to check all MD5SUMs
+  * Can sync to and from network, eg two different Drive accounts
+
+Home page
+
+  * http://rclone.org/
 
 Install
 -------
@@ -30,8 +37,9 @@ Or alternatively if you have Go installed use
 
     go get github.com/ncw/rclone
 
-and this will build the binary in `$GOPATH/bin`.  You can then modify
-the source and submit patches.
+and this will build the binary in `$GOPATH/bin`.
+
+You can then modify the source and submit patches.
 
 Configure
 ---------
@@ -75,9 +83,6 @@ Choose a number from below, or type in your own value
  * US Region, Northern Virginia only.
  * Leave location constraint empty.
  2) https://s3-external-1.amazonaws.com
- * US West (Oregon) Region
- * Needs location constraint us-west-2.
- 3) https://s3-us-west-2.amazonaws.com
 [snip]
  * South America (Sao Paulo) Region
  * Needs location constraint sa-east-1.
@@ -89,8 +94,6 @@ Choose a number from below, or type in your own value
  1) 
  * US West (Oregon) Region.
  2) us-west-2
- * US West (Northern California) Region.
- 3) us-west-1
 [snip]
  * South America (Sao Paulo) Region.
  9) sa-east-1
@@ -240,11 +243,57 @@ Google drive
 
 Paths are specified as drive://path  Drive paths may be as deep as required.
 
-FIXME describe how to set up initially
+The initial setup for drive involves getting a token from Google drive
+which you need to do in your browser.  The `rclone config` walks you
+through it.
 
-So to copy a local directory to a drive directory called backup
+Here is an example of how to make a remote called `drv`
 
-rclone sync /home/source s3://backup
+```
+$ ./rclone config
+n) New remote
+d) Delete remote
+q) Quit config
+e/n/d/q> n
+name> drv
+What type of source is it?
+Choose a number from below
+ 1) swift
+ 2) s3
+ 3) local
+ 4) drive
+type> 4
+Google Application Client Id - leave blank to use rclone's.
+client_id> 
+Google Application Client Secret - leave blank to use rclone's.
+client_secret> 
+Remote config
+Go to the following link in your browser
+https://accounts.google.com/o/oauth2/auth?access_type=&approval_prompt=&client_id=XXXXXXXXXXXX.apps.googleusercontent.com&redirect_uri=urn%3XXXXX%3Awg%3Aoauth%3XX.0%3Aoob&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive&state=state
+Log in, then type paste the token that is returned in the browser here
+Enter verification code> X/XXXXXXXXXXXXXXXXXX-XXXXXXXXX.XXXXXXXXX-XXXXX_XXXXXXX_XXXXXXX
+--------------------
+[drv]
+client_id = 
+client_secret = 
+token = {"AccessToken":"xxxx.xxxxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx","Expiry":"2014-03-16T13:57:58.955387075Z","Extra":null}
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d> y
+```
+
+You can then use it like this
+
+    rclone lsd drv://
+    rclone ls drv://
+
+To copy a local directory to a drive directory called backup
+
+    rclone copy /home/source drv://backup
+
+Google drive stores modification times accurate to 1 ms.
 
 License
 -------
@@ -255,25 +304,27 @@ COPYING file included in this package).
 Bugs
 ----
 
-Save the google drive auth in this config file too!
-
-Describe how to do the google auth.
+  * Doesn't sync individual files yet, only directories.
+  * Drive: Sometimes get: Failed to copy: Upload failed: googleapi: Error 403: Rate Limit Exceeded
+    * quota is 100.0 requests/second/user
+  * Empty directories left behind with Local and Drive
+    * eg purging a local directory with subdirectories doesn't work
 
 Contact and support
 -------------------
 
 The project website is at:
 
-- https://github.com/ncw/rclone
+  * https://github.com/ncw/rclone
 
 There you can file bug reports, ask for help or contribute patches.
 
 Authors
 -------
 
-- Nick Craig-Wood <nick@craig-wood.com>
+  * Nick Craig-Wood <nick@craig-wood.com>
 
 Contributors
 ------------
 
-- Your name goes here!
+  * Your name goes here!

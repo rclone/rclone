@@ -9,12 +9,6 @@ package drive
 // FIXME list directory should list to channel for concurrency not
 // append to array
 
-// FIXME perhaps have a drive setup mode where we ask for all the
-// params interactively and store them all in one file
-// - don't need to store client* apparently
-
-// NB permissions of token file is too open
-
 // FIXME need to deal with some corner cases
 // * multiple files with the same name
 // * files can be in multiple directories
@@ -22,14 +16,13 @@ package drive
 // * files with / in name
 
 import (
-	"errors"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"mime"
 	"net/http"
-	"os"
 	"path"
 	"strings"
 	"sync"
@@ -40,34 +33,104 @@ import (
 	"github.com/ncw/rclone/fs"
 )
 
+// Constants
+const (
+	rcloneClientId     = "202264815644.apps.googleusercontent.com"
+	rcloneClientSecret = "X4Z3ca8xfWDb1Voo-F9a7ZxJ"
+	driveFolderType    = "application/vnd.google-apps.folder"
+)
+
+// Globals
+var (
+	// Flags
+	driveFullList = flag.Bool("drive-full-list", true, "Use a full listing for directory list. More data but usually quicker.")
+)
+
 // Register with Fs
 func init() {
 	fs.Register(&fs.FsInfo{
-		Name:  "drive",
-		NewFs: NewFs,
+		Name:   "drive",
+		NewFs:  NewFs,
+		Config: Config,
 		Options: []fs.Option{{
 			Name: "client_id",
-			Help: "Google Application Client Id.",
-			Examples: []fs.OptionExample{{
-				Value: "202264815644.apps.googleusercontent.com",
-				Help:  "rclone's client id - use this or your own if you want",
-			}},
+			Help: "Google Application Client Id - leave blank to use rclone's.",
 		}, {
 			Name: "client_secret",
-			Help: "Google Application Client Secret.",
-			Examples: []fs.OptionExample{{
-				Value: "X4Z3ca8xfWDb1Voo-F9a7ZxJ",
-				Help:  "rclone's client secret - use this or your own if you want",
-			}},
-		}, {
-			Name: "token_file",
-			Help: "Path to store token file.",
-			Examples: []fs.OptionExample{{
-				Value: path.Join(fs.HomeDir, ".gdrive-token-file"),
-				Help:  "Suggested path for token file",
-			}},
+			Help: "Google Application Client Secret - leave blank to use rclone's.",
 		}},
 	})
+}
+
+// Configuration helper - called after the user has put in the defaults
+func Config(name string) {
+	// See if already have a token
+	tokenString := fs.ConfigFile.MustValue(name, "token")
+	if tokenString != "" {
+		fmt.Printf("Already have a drive token - refresh?\n")
+		if !fs.Confirm() {
+			return
+		}
+	}
+
+	// Get a drive transport
+	t, err := newDriveTransport(name)
+	if err != nil {
+		log.Fatalf("Couldn't make drive transport: %v", err)
+	}
+
+	// Generate a URL for the user to visit for authorization.
+	authUrl := t.Config.AuthCodeURL("state")
+	fmt.Printf("Go to the following link in your browser\n")
+	fmt.Printf("%s\n", authUrl)
+	fmt.Printf("Log in, then type paste the token that is returned in the browser here\n")
+
+	// Read the code, and exchange it for a token.
+	fmt.Printf("Enter verification code> ")
+	authCode := fs.ReadLine()
+	_, err = t.Exchange(authCode)
+	if err != nil {
+		log.Fatalf("Failed to get token: %v", err)
+	}
+
+}
+
+// A token cache to save the token in the config file section named
+type tokenCache string
+
+// Get the token from the config file - returns an error if it isn't present
+func (name tokenCache) Token() (*oauth.Token, error) {
+	tokenString, err := fs.ConfigFile.GetValue(string(name), "token")
+	if err != nil {
+		return nil, err
+	}
+	if tokenString == "" {
+		return nil, fmt.Errorf("Empty token found - please reconfigure")
+	}
+	token := new(oauth.Token)
+	err = json.Unmarshal([]byte(tokenString), token)
+	if err != nil {
+		return nil, err
+	}
+	return token, nil
+
+}
+
+// Save the token to the config file
+//
+// This saves the config file if it changes
+func (name tokenCache) PutToken(token *oauth.Token) error {
+	tokenBytes, err := json.Marshal(token)
+	if err != nil {
+		return err
+	}
+	tokenString := string(tokenBytes)
+	old := fs.ConfigFile.MustValue(string(name), "token")
+	if tokenString != old {
+		fs.ConfigFile.SetValue(string(name), "token", tokenString)
+		fs.SaveConfig()
+	}
+	return nil
 }
 
 // FsDrive represents a remote drive server
@@ -141,19 +204,6 @@ func (m *dirCache) Flush() {
 
 // ------------------------------------------------------------
 
-// Constants
-const (
-	//	defaultDriveTokenFile = ".google-drive-token" // FIXME root in home directory somehow
-	driveFolderType = "application/vnd.google-apps.folder"
-)
-
-// Globals
-var (
-	// Flags
-	driveAuthCode = flag.String("drive-auth-code", "", "Pass in when requested to make the drive token file.")
-	driveFullList = flag.Bool("drive-full-list", true, "Use a full listing for directory list. More data but usually quicker.")
-)
-
 // String converts this FsDrive to a string
 func (f *FsDrive) String() string {
 	return fmt.Sprintf("Google drive root '%s'", f.root)
@@ -214,39 +264,15 @@ OUTER:
 	return
 }
 
-// Ask the user for a new auth
-func MakeNewToken(t *oauth.Transport) error {
-	if *driveAuthCode == "" {
-		// Generate a URL to visit for authorization.
-		authUrl := t.Config.AuthCodeURL("state")
-		fmt.Fprintf(os.Stderr, "Go to the following link in your browser\n")
-		fmt.Fprintf(os.Stderr, "%s\n", authUrl)
-		fmt.Fprintf(os.Stderr, "Log in, then re-run this program with the -drive-auth-code parameter\n")
-		fmt.Fprintf(os.Stderr, "You only need this parameter once until the drive token file has been created\n")
-		return errors.New("Re-run with --drive-auth-code")
-	}
-
-	// Read the code, and exchange it for a token.
-	//fmt.Printf("Enter verification code: ")
-	//var code string
-	//fmt.Scanln(&code)
-	_, err := t.Exchange(*driveAuthCode)
-	return err
-}
-
-// NewFs contstructs an FsDrive from the path, container:path
-func NewFs(name, path string) (fs.Fs, error) {
+// Makes a new drive transport from the config
+func newDriveTransport(name string) (*oauth.Transport, error) {
 	clientId := fs.ConfigFile.MustValue(name, "client_id")
 	if clientId == "" {
-		return nil, errors.New("client_id not found")
+		clientId = rcloneClientId
 	}
 	clientSecret := fs.ConfigFile.MustValue(name, "client_secret")
 	if clientSecret == "" {
-		return nil, errors.New("client_secret not found")
-	}
-	tokenFile := fs.ConfigFile.MustValue(name, "token_file")
-	if tokenFile == "" {
-		return nil, errors.New("token-file not found")
+		clientSecret = rcloneClientSecret
 	}
 
 	// Settings for authorization.
@@ -257,7 +283,22 @@ func NewFs(name, path string) (fs.Fs, error) {
 		RedirectURL:  "urn:ietf:wg:oauth:2.0:oob",
 		AuthURL:      "https://accounts.google.com/o/oauth2/auth",
 		TokenURL:     "https://accounts.google.com/o/oauth2/token",
-		TokenCache:   oauth.CacheFile(tokenFile),
+		TokenCache:   tokenCache(name),
+	}
+
+	t := &oauth.Transport{
+		Config:    driveConfig,
+		Transport: http.DefaultTransport,
+	}
+
+	return t, nil
+}
+
+// NewFs contstructs an FsDrive from the path, container:path
+func NewFs(name, path string) (fs.Fs, error) {
+	t, err := newDriveTransport(name)
+	if err != nil {
+		return nil, err
 	}
 
 	root, err := parseDrivePath(path)
@@ -266,22 +307,10 @@ func NewFs(name, path string) (fs.Fs, error) {
 	}
 	f := &FsDrive{root: root, dirCache: newDirCache()}
 
-	t := &oauth.Transport{
-		Config:    driveConfig,
-		Transport: http.DefaultTransport,
-	}
-
 	// Try to pull the token from the cache; if this fails, we need to get one.
-	token, err := driveConfig.TokenCache.Token()
+	token, err := t.Config.TokenCache.Token()
 	if err != nil {
-		err := MakeNewToken(t)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to authorise: %s", err)
-		}
-	} else {
-		if *driveAuthCode != "" {
-			return nil, fmt.Errorf("Only supply -drive-auth-code once")
-		}
+		return nil, fmt.Errorf("Failed to get token: %s", err)
 	}
 	t.Token = token
 
