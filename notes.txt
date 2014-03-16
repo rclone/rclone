@@ -1,15 +1,6 @@
-Make a config setting
-  * everything can be set on command line, env vars or config file
-  * make a config mode to edit the config
-  * make it so you can make aliases memstore: home: etc
-
-Names
-  * rclone - domain ok, apt ok
-
 Todo
   * Make a test suite which can run on all the given types of fs
   * Copy should use the sync code as it is more efficient at directory listing
-  * Factor fses into own packages
   * FIXME: ls without an argument for buckets/containers?
   * FIXME: More -dry-run checks for object transfer
   * Might be quicker to check md5sums first? for swift <-> swift certainly, and maybe for small files
@@ -48,17 +39,13 @@ Ideas
   * optimise remote copy container to another container using remote
     copy if local is same as remote - use an optional Copier interface
   * Allow subpaths container:/sub/path
-  * look at auth from env in s3 module - add to swift?
   * support
       * sftp
       * scp
       * Google cloud storage: https://developers.google.com/storage/
-      * Google drive: https://developers.google.com/drive/
       * rsync over ssh
       * dropbox: https://github.com/nickoneill/go-dropbox (no MD5s)
   * grive seems to have its secrets in the source code which would make things easier!
-
-     
 
 Need to make directory objects otherwise can't upload an empty directory
   * Or could upload empty directories only?
