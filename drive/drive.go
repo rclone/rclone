@@ -211,7 +211,7 @@ func (f *FsDrive) String() string {
 
 // parseParse parses a drive 'url'
 func parseDrivePath(path string) (root string, err error) {
-	root = strings.Trim(root, "/")
+	root = strings.Trim(path, "/")
 	return
 }
 
