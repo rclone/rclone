@@ -125,9 +125,9 @@ e/n/d/q> q
 This can now be used like this
 
 ```
-rclone lsd remote:// - see all buckets/containers
-rclone ls remote:// - list a bucket
-rclone sync /home/local/directory remote://bucket
+rclone lsd remote: - see all buckets/containers
+rclone ls remote: - list a bucket
+rclone sync /home/local/directory remote:bucket
 ```
 
 See the next section for more details.
@@ -146,13 +146,13 @@ See below for how to specify the source and destination paths.
 Subcommands
 -----------
 
-    rclone copy source://path dest://path
+    rclone copy source:path dest:path
 
 Copy the source to the destination.  Doesn't transfer
 unchanged files, testing first by modification time then by
 MD5SUM.  Doesn't delete files from the destination.
 
-    rclone sync source://path dest://path
+    rclone sync source:path dest:path
 
 Sync the source to the destination.  Doesn't transfer
 unchanged files, testing first by modification time then by
@@ -160,28 +160,28 @@ MD5SUM.  Deletes any files that exist in source that don't
 exist in destination. Since this can cause data loss, test
 first with the -dry-run flag.
 
-    rclone ls [remote://path]
+    rclone ls [remote:path]
 
 List all the objects in the the path.
 
-    rclone lsd [remote://path]
+    rclone lsd [remote:path]
 
 List all directoryes/objects/buckets in the the path.
 
-    rclone mkdir remote://path
+    rclone mkdir remote:path
 
 Make the path if it doesn't already exist
 
-    rclone rmdir remote://path
+    rclone rmdir remote:path
 
 Remove the path.  Note that you can't remove a path with
 objects in it, use purge for that.
 
-    rclone purge remote://path
+    rclone purge remote:path
 
 Remove the path and all of its contents.
 
-    rclone check source://path dest://path
+    rclone check source:path dest:path
 
 Checks the files in the source and destination match.  It
 compares sizes and MD5SUMs and prints a report of files which
@@ -212,12 +212,12 @@ Will sync source to destination
 Swift / Rackspace cloudfiles / Memset Memstore
 ----------------------------------------------
 
-Paths are specified as remote://container (or remote:// for the `lsd`
+Paths are specified as remote:container (or remote: for the `lsd`
 command.)
 
 So to copy a local directory to a swift container called backup:
 
-    rclone sync /home/source swift://backup
+    rclone sync /home/source swift:backup
 
 The modified time is stored as metadata on the object as
 `X-Object-Meta-Mtime` as floating point since the epoch.
@@ -229,11 +229,11 @@ os.Stat) for an object.
 Amazon S3
 ---------
 
-Paths are specified as remote://bucket
+Paths are specified as remote:bucket
 
 So to copy a local directory to a s3 container called backup
 
-    rclone sync /home/source s3://backup
+    rclone sync /home/source s3:backup
 
 The modified time is stored as metadata on the object as
 `X-Amz-Meta-Mtime` as floating point since the epoch.
@@ -241,7 +241,7 @@ The modified time is stored as metadata on the object as
 Google drive
 ------------
 
-Paths are specified as drive://path  Drive paths may be as deep as required.
+Paths are specified as drive:path  Drive paths may be as deep as required.
 
 The initial setup for drive involves getting a token from Google drive
 which you need to do in your browser.  The `rclone config` walks you
@@ -286,12 +286,12 @@ y/e/d> y
 
 You can then use it like this
 
-    rclone lsd drv://
-    rclone ls drv://
+    rclone lsd drv:
+    rclone ls drv:
 
 To copy a local directory to a drive directory called backup
 
-    rclone copy /home/source drv://backup
+    rclone copy /home/source drv:backup
 
 Google drive stores modification times accurate to 1 ms.
 

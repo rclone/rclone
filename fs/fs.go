@@ -149,7 +149,7 @@ type Dir struct {
 type DirChan chan *Dir
 
 // Pattern to match a url
-var matcher = regexp.MustCompile(`^([\w_-]+)://(.*)$`)
+var matcher = regexp.MustCompile(`^([\w_-]+):(.*)$`)
 
 // Finds a FsInfo object for the name passed in
 //
