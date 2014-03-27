@@ -4,7 +4,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/ogier/pflag"
 
 	"github.com/ncw/rclone/fs"
 	// Active file systems
@@ -25,9 +26,9 @@ import (
 // Globals
 var (
 	// Flags
-	cpuprofile    = flag.String("cpuprofile", "", "Write cpu profile to file")
-	dry_run       = flag.Bool("dry-run", false, "Do a trial run with no permanent changes")
-	statsInterval = flag.Duration("stats", time.Minute*1, "Interval to print stats")
+	cpuprofile    = pflag.StringP("cpuprofile", "", "", "Write cpu profile to file")
+	dry_run       = pflag.BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
+	statsInterval = pflag.DurationP("stats", "", time.Minute*1, "Interval to print stats")
 )
 
 // A pair of fs.Objects
@@ -131,7 +132,7 @@ func DeleteFiles(to_be_deleted fs.ObjectsChan) {
 			defer wg.Done()
 			for dst := range to_be_deleted {
 				if *dry_run {
-					fs.Debug(dst, "Not deleting as -dry-run")
+					fs.Debug(dst, "Not deleting as --dry-run")
 				} else {
 					fs.Stats.Checking(dst)
 					err := dst.Remove()
@@ -339,7 +340,7 @@ func mkdir(fdst, fsrc fs.Fs) {
 // Removes a container but not if not empty
 func rmdir(fdst, fsrc fs.Fs) {
 	if *dry_run {
-		log.Printf("Not deleting %s as -dry-run", fdst)
+		log.Printf("Not deleting %s as --dry-run", fdst)
 	} else {
 		err := fdst.Rmdir()
 		if err != nil {
@@ -414,7 +415,7 @@ var Commands = []Command{
         unchanged files, testing first by modification time then by
         MD5SUM.  Deletes any files that exist in source that don't
         exist in destination. Since this can cause data loss, test
-        first with the -dry-run flag.`,
+        first with the --dry-run flag.`,
 		Run:     Sync,
 		MinArgs: 2,
 		MaxArgs: 2,
@@ -507,7 +508,7 @@ Subcommands:
 	}
 
 	fmt.Fprintf(os.Stderr, "Options:\n")
-	flag.PrintDefaults()
+	pflag.PrintDefaults()
 	fmt.Fprintf(os.Stderr, `
 It is only necessary to use a unique prefix of the subcommand, eg 'up' for 'upload'.
 `)
@@ -521,9 +522,9 @@ func fatal(message string, args ...interface{}) {
 }
 
 func main() {
-	flag.Usage = syntaxError
-	flag.Parse()
-	args := flag.Args()
+	pflag.Usage = syntaxError
+	pflag.Parse()
+	args := pflag.Args()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	fs.LoadConfig()
 

@@ -17,7 +17,6 @@ package drive
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -31,6 +30,7 @@ import (
 	"code.google.com/p/goauth2/oauth"
 	"code.google.com/p/google-api-go-client/drive/v2"
 	"github.com/ncw/rclone/fs"
+	"github.com/ogier/pflag"
 )
 
 // Constants
@@ -43,7 +43,7 @@ const (
 // Globals
 var (
 	// Flags
-	driveFullList = flag.Bool("drive-full-list", true, "Use a full listing for directory list. More data but usually quicker.")
+	driveFullList = pflag.BoolP("drive-full-list", "", true, "Use a full listing for directory list. More data but usually quicker.")
 )
 
 // Register with Fs

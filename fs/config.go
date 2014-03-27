@@ -3,7 +3,6 @@ package fs
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -15,6 +14,7 @@ import (
 	"time"
 
 	"github.com/Unknwon/goconfig"
+	"github.com/ogier/pflag"
 )
 
 const (
@@ -32,12 +32,12 @@ var (
 	// Global config
 	Config = &ConfigInfo{}
 	// Flags
-	verbose      = flag.Bool("verbose", false, "Print lots more stuff")
-	quiet        = flag.Bool("quiet", false, "Print as little stuff as possible")
-	modifyWindow = flag.Duration("modify-window", time.Nanosecond, "Max time diff to be considered the same")
-	checkers     = flag.Int("checkers", 8, "Number of checkers to run in parallel.")
-	transfers    = flag.Int("transfers", 4, "Number of file transfers to run in parallel.")
-	configFile   = flag.String("config", ConfigPath, "Config file.")
+	verbose      = pflag.BoolP("verbose", "v", false, "Print lots more stuff")
+	quiet        = pflag.BoolP("quiet", "q", false, "Print as little stuff as possible")
+	modifyWindow = pflag.DurationP("modify-window", "", time.Nanosecond, "Max time diff to be considered the same")
+	checkers     = pflag.IntP("checkers", "", 8, "Number of checkers to run in parallel.")
+	transfers    = pflag.IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
+	configFile   = pflag.StringP("config", "", ConfigPath, "Config file.")
 )
 
 // Filesystem config options
