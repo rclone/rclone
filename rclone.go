@@ -521,10 +521,10 @@ func fatal(message string, args ...interface{}) {
 	os.Exit(1)
 }
 
-func main() {
+// Parse the command line flags
+func ParseFlags() {
 	pflag.Usage = syntaxError
 	pflag.Parse()
-	args := pflag.Args()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	fs.LoadConfig()
 
@@ -538,7 +538,11 @@ func main() {
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
+}
 
+// Parse the command from the command line
+func ParseCommand() (*Command, []string) {
+	args := pflag.Args()
 	if len(args) < 1 {
 		fatal("No command supplied\n")
 	}
@@ -547,80 +551,77 @@ func main() {
 	args = args[1:]
 
 	// Find the command doing a prefix match
-	var found *Command
+	var command *Command
 	for i := range Commands {
-		command := &Commands[i]
+		trialCommand := &Commands[i]
 		// exact command name found - use that
-		if command.Name == cmd {
-			found = command
+		if trialCommand.Name == cmd {
+			command = trialCommand
 			break
-		} else if strings.HasPrefix(command.Name, cmd) {
-			if found != nil {
+		} else if strings.HasPrefix(trialCommand.Name, cmd) {
+			if command != nil {
 				fs.Stats.Error()
 				log.Fatalf("Not unique - matches multiple commands %q", cmd)
 			}
-			found = command
+			command = trialCommand
 		}
 	}
-	if found == nil {
+	if command == nil {
 		fs.Stats.Error()
 		log.Fatalf("Unknown command %q", cmd)
 	}
-	found.checkArgs(args)
+	if command.Run == nil {
+		syntaxError()
+	}
+	command.checkArgs(args)
+	return command, args
+}
+
+// Create a Fs from a name
+func NewFs(remote string) fs.Fs {
+	f, err := fs.NewFs(remote)
+	if err != nil {
+		fs.Stats.Error()
+		log.Fatalf("Failed to create file system for %q: %v", remote, err)
+	}
+	return f
+}
+
+// Print the stats every statsInterval
+func StartStats() {
+	go func() {
+		ch := time.Tick(*statsInterval)
+		for {
+			<-ch
+			fs.Stats.Log()
+		}
+	}()
+}
+
+func main() {
+	ParseFlags()
+	command, args := ParseCommand()
 
 	// Make source and destination fs
 	var fdst, fsrc fs.Fs
-	var err error
 	if len(args) >= 1 {
-		fdst, err = fs.NewFs(args[0])
-		if err != nil {
-			fs.Stats.Error()
-			log.Fatalf("Failed to create file system for %q: %v", args[0], err)
-		}
+		fdst = NewFs(args[0])
 	}
 	if len(args) >= 2 {
-		fsrc, err = fs.NewFs(args[1])
-		if err != nil {
-			fs.Stats.Error()
-			log.Fatalf("Failed to create destination file system for %q: %v", args[1], err)
-		}
-		fsrc, fdst = fdst, fsrc
+		fsrc = fdst
+		fdst = NewFs(args[1])
 	}
 
-	// Work out modify window
-	if fsrc != nil {
-		precision := fsrc.Precision()
-		log.Printf("Source precision %s\n", precision)
-		if precision > fs.Config.ModifyWindow {
-			fs.Config.ModifyWindow = precision
-		}
-	}
-	if fdst != nil {
-		precision := fdst.Precision()
-		log.Printf("Destination precision %s\n", precision)
-		if precision > fs.Config.ModifyWindow {
-			fs.Config.ModifyWindow = precision
-		}
-	}
-	if fs.Config.Verbose {
-		log.Printf("Modify window is %s\n", fs.Config.ModifyWindow)
-	}
+	fs.CalculateModifyWindow(fdst, fsrc)
 
-	// Print the stats every statsInterval
-	if !found.NoStats {
-		go func() {
-			ch := time.Tick(*statsInterval)
-			for {
-				<-ch
-				fs.Stats.Log()
-			}
-		}()
+	if !command.NoStats {
+		StartStats()
 	}
 
 	// Run the actual command
-	if found.Run != nil {
-		found.Run(fdst, fsrc)
-		if !found.NoStats {
+	if command.Run != nil {
+		command.Run(fdst, fsrc)
+		if !command.NoStats {
 			fmt.Println(fs.Stats)
 		}
 		if fs.Config.Verbose {
@@ -631,7 +632,6 @@ func main() {
 		}
 		os.Exit(0)
 	} else {
-		syntaxError()
 	}
 
 }

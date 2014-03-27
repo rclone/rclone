@@ -211,6 +211,24 @@ func checkClose(c io.Closer, err *error) {
 	}
 }
 
+// Work out modify window for fses passed in - sets Config.ModifyWindow
+//
+// This is the largest modify window of all the fses in use, and the
+// user configured value
+func CalculateModifyWindow(fs ...Fs) {
+	for _, f := range fs {
+		if f != nil {
+			precision := f.Precision()
+			if precision > Config.ModifyWindow {
+				Config.ModifyWindow = precision
+			}
+		}
+	}
+	if Config.Verbose {
+		log.Printf("Modify window is %s\n", Config.ModifyWindow)
+	}
+}
+
 // Check the two files to see if the MD5sums are the same
 //
 // May return an error which will already have been logged
