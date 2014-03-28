@@ -1,6 +1,5 @@
 *~
-*.pyc
-test-env*
 _junk/
 rclone
+rclonetest/rclonetest
 upload
