@@ -331,6 +331,19 @@ func (f *FsS3) Precision() time.Duration {
 
 // ------------------------------------------------------------
 
+// Return the parent Fs
+func (o *FsObjectS3) Fs() fs.Fs {
+	return o.s3
+}
+
+// Return a string version
+func (o *FsObjectS3) String() string {
+	if o == nil {
+		return "<nil>"
+	}
+	return o.remote
+}
+
 // Return the remote path
 func (o *FsObjectS3) Remote() string {
 	return o.remote

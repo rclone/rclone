@@ -760,6 +760,19 @@ func (f *FsDrive) Purge() error {
 
 // ------------------------------------------------------------
 
+// Return the parent Fs
+func (o *FsObjectDrive) Fs() fs.Fs {
+	return o.drive
+}
+
+// Return a string version
+func (o *FsObjectDrive) String() string {
+	if o == nil {
+		return "<nil>"
+	}
+	return o.remote
+}
+
 // Return the remote path
 func (o *FsObjectDrive) Remote() string {
 	return o.remote

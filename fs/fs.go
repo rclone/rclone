@@ -38,22 +38,6 @@ type OptionExample struct {
 	Help  string
 }
 
-// Choose an option
-func (o *Option) Choose() string {
-	fmt.Println(o.Help)
-	if len(o.Examples) > 0 {
-		var values []string
-		var help []string
-		for _, example := range o.Examples {
-			values = append(values, example.Value)
-			help = append(help, example.Help)
-		}
-		return Choose(o.Name, values, help, true)
-	}
-	fmt.Printf("%s> ", o.Name)
-	return ReadLine()
-}
-
 // Register a filesystem
 //
 // Fs modules  should use this in an init() function
@@ -92,11 +76,15 @@ type Fs interface {
 	Precision() time.Duration
 }
 
-// FIXME make f.Debugf...
-
 // A filesystem like object which can either be a remote object or a
 // local file/directory
 type Object interface {
+	// String returns a description of the Object
+	String() string
+
+	// Fs returns the Fs that this object is part of
+	Fs() Fs
+
 	// Remote returns the remote path
 	Remote() string
 
@@ -136,6 +124,14 @@ type ObjectsChan chan Object
 
 // A slice of Objects
 type Objects []Object
+
+// A pair of Objects
+type ObjectPair struct {
+	src, dst Object
+}
+
+// A channel of ObjectPair
+type ObjectPairChan chan ObjectPair
 
 // A structure of directory/container/bucket lists
 type Dir struct {
@@ -186,19 +182,27 @@ func NewFs(path string) (Fs, error) {
 	return fs.NewFs(configName, fsPath)
 }
 
-// Write debuging output for this Object
-func Debug(fs Object, text string, args ...interface{}) {
+// Outputs log for object
+func OutputLog(o interface{}, text string, args ...interface{}) {
+	description := ""
+	if x, ok := o.(fmt.Stringer); ok {
+		description = x.String() + ": "
+	}
+	out := fmt.Sprintf(text, args...)
+	log.Print(description + out)
+}
+
+// Write debuging output for this Object or Fs
+func Debug(o interface{}, text string, args ...interface{}) {
 	if Config.Verbose {
-		out := fmt.Sprintf(text, args...)
-		log.Printf("%s: %s", fs.Remote(), out)
+		OutputLog(o, text, args...)
 	}
 }
 
-// Write log output for this Object
-func Log(fs Object, text string, args ...interface{}) {
+// Write log output for this Object or Fs
+func Log(o interface{}, text string, args ...interface{}) {
 	if !Config.Quiet {
-		out := fmt.Sprintf(text, args...)
-		log.Printf("%s: %s", fs.Remote(), out)
+		OutputLog(o, text, args...)
 	}
 }
 
@@ -209,126 +213,4 @@ func checkClose(c io.Closer, err *error) {
 	if *err == nil {
 		*err = cerr
 	}
-}
-
-// Work out modify window for fses passed in - sets Config.ModifyWindow
-//
-// This is the largest modify window of all the fses in use, and the
-// user configured value
-func CalculateModifyWindow(fs ...Fs) {
-	for _, f := range fs {
-		if f != nil {
-			precision := f.Precision()
-			if precision > Config.ModifyWindow {
-				Config.ModifyWindow = precision
-			}
-		}
-	}
-	if Config.Verbose {
-		log.Printf("Modify window is %s\n", Config.ModifyWindow)
-	}
-}
-
-// Check the two files to see if the MD5sums are the same
-//
-// May return an error which will already have been logged
-//
-// If an error is returned it will return false
-func CheckMd5sums(src, dst Object) (bool, error) {
-	srcMd5, err := src.Md5sum()
-	if err != nil {
-		Stats.Error()
-		Log(src, "Failed to calculate src md5: %s", err)
-		return false, err
-	}
-	dstMd5, err := dst.Md5sum()
-	if err != nil {
-		Stats.Error()
-		Log(dst, "Failed to calculate dst md5: %s", err)
-		return false, err
-	}
-	// Debug("Src MD5 %s", srcMd5)
-	// Debug("Dst MD5 %s", obj.Hash)
-	return srcMd5 == dstMd5, nil
-}
-
-// Checks to see if the src and dst objects are equal by looking at
-// size, mtime and MD5SUM
-//
-// If the src and dst size are different then it is considered to be
-// not equal.
-//
-// If the size is the same and the mtime is the same then it is
-// considered to be equal.  This is the heuristic rsync uses when
-// not using --checksum.
-//
-// If the size is the same and and mtime is different or unreadable
-// and the MD5SUM is the same then the file is considered to be equal.
-// In this case the mtime on the dst is updated.
-//
-// Otherwise the file is considered to be not equal including if there
-// were errors reading info.
-func Equal(src, dst Object) bool {
-	if src.Size() != dst.Size() {
-		Debug(src, "Sizes differ")
-		return false
-	}
-
-	// Size the same so check the mtime
-	srcModTime := src.ModTime()
-	dstModTime := dst.ModTime()
-	dt := dstModTime.Sub(srcModTime)
-	ModifyWindow := Config.ModifyWindow
-	if dt >= ModifyWindow || dt <= -ModifyWindow {
-		Debug(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
-	} else {
-		Debug(src, "Size and modification time differ by %s (within %s)", dt, ModifyWindow)
-		return true
-	}
-
-	// mtime is unreadable or different but size is the same so
-	// check the MD5SUM
-	same, _ := CheckMd5sums(src, dst)
-	if !same {
-		Debug(src, "Md5sums differ")
-		return false
-	}
-
-	// Size and MD5 the same but mtime different so update the
-	// mtime of the dst object here
-	dst.SetModTime(srcModTime)
-
-	Debug(src, "Size and MD5SUM of src and dst objects identical")
-	return true
-}
-
-// Copy src object to f
-func Copy(f Fs, src Object) {
-	in0, err := src.Open()
-	if err != nil {
-		Stats.Error()
-		Log(src, "Failed to open: %s", err)
-		return
-	}
-	in := NewAccount(in0) // account the transfer
-
-	dst, err := f.Put(in, src.Remote(), src.ModTime(), src.Size())
-	inErr := in.Close()
-	if err == nil {
-		err = inErr
-	}
-	if err != nil {
-		Stats.Error()
-		Log(src, "Failed to copy: %s", err)
-		if dst != nil {
-			Debug(dst, "Removing failed copy")
-			removeErr := dst.Remove()
-			if removeErr != nil {
-				Stats.Error()
-				Log(dst, "Failed to remove failed copy: %s", removeErr)
-			}
-		}
-		return
-	}
-	Debug(src, "Copied")
 }

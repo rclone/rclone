@@ -33,6 +33,7 @@ type FsLocal struct {
 
 // FsObjectLocal represents a local filesystem object
 type FsObjectLocal struct {
+	local  fs.Fs       // The Fs this object is part of
 	remote string      // The remote path
 	path   string      // The local path
 	info   os.FileInfo // Interface for file info
@@ -57,7 +58,7 @@ func (f *FsLocal) String() string {
 // May return nil if an error occurred
 func (f *FsLocal) NewFsObjectWithInfo(remote string, info os.FileInfo) fs.Object {
 	path := filepath.Join(f.root, remote)
-	o := &FsObjectLocal{remote: remote, path: path}
+	o := &FsObjectLocal{local: f, remote: remote, path: path}
 	if info != nil {
 		o.info = info
 	} else {
@@ -162,7 +163,7 @@ func (f *FsLocal) ListDir() fs.DirChan {
 func (f *FsLocal) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
 	dstPath := filepath.Join(f.root, remote)
 	// Temporary FsObject under construction
-	fs := &FsObjectLocal{remote: remote, path: dstPath}
+	fs := &FsObjectLocal{local: f, remote: remote, path: dstPath}
 
 	dir := path.Dir(dstPath)
 	err := os.MkdirAll(dir, 0770)
@@ -259,6 +260,19 @@ func (f *FsLocal) readPrecision() (precision time.Duration) {
 }
 
 // ------------------------------------------------------------
+
+// Return the parent Fs
+func (o *FsObjectLocal) Fs() fs.Fs {
+	return o.local
+}
+
+// Return a string version
+func (o *FsObjectLocal) String() string {
+	if o == nil {
+		return "<nil>"
+	}
+	return o.remote
+}
 
 // Return the remote path
 func (o *FsObjectLocal) Remote() string {

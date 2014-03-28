@@ -1,4 +1,5 @@
-// Read and write the config file
+// Read, write and edit the config file
+
 package fs
 
 import (
@@ -38,12 +39,14 @@ var (
 	checkers     = pflag.IntP("checkers", "", 8, "Number of checkers to run in parallel.")
 	transfers    = pflag.IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
 	configFile   = pflag.StringP("config", "", ConfigPath, "Config file.")
+	dryRun       = pflag.BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
 )
 
 // Filesystem config options
 type ConfigInfo struct {
 	Verbose      bool
 	Quiet        bool
+	DryRun       bool
 	ModifyWindow time.Duration
 	Checkers     int
 	Transfers    int
@@ -67,6 +70,7 @@ func LoadConfig() {
 	// FIXME read these from the config file too
 	Config.Verbose = *verbose
 	Config.Quiet = *quiet
+	Config.Quiet = *dryRun
 	Config.ModifyWindow = *modifyWindow
 	Config.Checkers = *checkers
 	Config.Transfers = *transfers
@@ -230,6 +234,22 @@ func RemoteConfig(name string) {
 	}
 }
 
+// Choose an option
+func ChooseOption(o *Option) string {
+	fmt.Println(o.Help)
+	if len(o.Examples) > 0 {
+		var values []string
+		var help []string
+		for _, example := range o.Examples {
+			values = append(values, example.Value)
+			help = append(help, example.Help)
+		}
+		return Choose(o.Name, values, help, true)
+	}
+	fmt.Printf("%s> ", o.Name)
+	return ReadLine()
+}
+
 // Make a new remote
 func NewRemote(name string) {
 	fmt.Printf("What type of source is it?\n")
@@ -244,7 +264,7 @@ func NewRemote(name string) {
 		log.Fatalf("Failed to find fs: %v", err)
 	}
 	for _, option := range fs.Options {
-		ConfigFile.SetValue(name, option.Name, option.Choose())
+		ConfigFile.SetValue(name, option.Name, ChooseOption(&option))
 	}
 	RemoteConfig(name)
 	if OkRemote(name) {

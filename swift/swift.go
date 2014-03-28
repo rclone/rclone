@@ -245,6 +245,19 @@ func (fs *FsSwift) Precision() time.Duration {
 
 // ------------------------------------------------------------
 
+// Return the parent Fs
+func (o *FsObjectSwift) Fs() fs.Fs {
+	return o.swift
+}
+
+// Return a string version
+func (o *FsObjectSwift) String() string {
+	if o == nil {
+		return "<nil>"
+	}
+	return o.remote
+}
+
 // Return the remote path
 func (o *FsObjectSwift) Remote() string {
 	return o.remote
