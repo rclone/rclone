@@ -1,0 +1,5 @@
+{{ template "base/header.html" . }}
+{{ range $key, $value := .Site.Indexes.groups.about.Pages }}
+{{ $value.Content }}
+{{ end }}
+{{ template "base/footer.html" . }}
