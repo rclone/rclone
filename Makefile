@@ -10,7 +10,7 @@ website:
 	cd rclone.org && hugo
 
 upload_website:	website
-	./rclone sync rclone.org/public memstore://www-rclone-org
+	./rclone sync rclone.org/public memstore:www-rclone-org
 
 upload:
 	rsync -avz build/ www.craig-wood.com:public_html/pub/rclone/
