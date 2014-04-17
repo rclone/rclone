@@ -1,7 +1,7 @@
 Rclone
 ======
 
-[![Logo](http://rclone.org/rclone-120x120.png)](http://rclone.org/)
+[![Logo](http://rclone.org/img/rclone-120x120.png)](http://rclone.org/)
 
 Sync files and directories to and from
 
@@ -20,7 +20,7 @@ Features
   * Check mode to check all MD5SUMs
   * Can sync to and from network, eg two different Drive accounts
 
-Home page
+See the Home page for more documentation and configuration walkthroughs.
 
   * http://rclone.org/
 
@@ -53,84 +53,6 @@ The easiest way to make the config is to run rclone with the config
 option, Eg
 
     rclone config
-
-Here is an example of making an s3 configuration
-
-```
-$ rclone config
-No remotes found - make a new one
-n) New remote
-q) Quit config
-n/q> n
-name> remote
-What type of source is it?
-Choose a number from below
- 1) swift
- 2) s3
- 3) local
- 4) drive
-type> 2
-AWS Access Key ID.
-access_key_id> accesskey
-AWS Secret Access Key (password). 
-secret_access_key> secretaccesskey
-Endpoint for S3 API.
-Choose a number from below, or type in your own value
- * The default endpoint - a good choice if you are unsure.
- * US Region, Northern Virginia or Pacific Northwest.
- * Leave location constraint empty.
- 1) https://s3.amazonaws.com/
- * US Region, Northern Virginia only.
- * Leave location constraint empty.
- 2) https://s3-external-1.amazonaws.com
-[snip]
- * South America (Sao Paulo) Region
- * Needs location constraint sa-east-1.
- 9) https://s3-sa-east-1.amazonaws.com
-endpoint> 1
-Location constraint - must be set to match the Endpoint.
-Choose a number from below, or type in your own value
- * Empty for US Region, Northern Virginia or Pacific Northwest.
- 1) 
- * US West (Oregon) Region.
- 2) us-west-2
-[snip]
- * South America (Sao Paulo) Region.
- 9) sa-east-1
-location_constraint> 1
---------------------
-[remote]
-access_key_id = accesskey
-secret_access_key = secretaccesskey
-endpoint = https://s3.amazonaws.com/
-location_constraint = 
---------------------
-y) Yes this is OK
-e) Edit this remote
-d) Delete this remote
-y/e/d> y
-Current remotes:
-
-Name                 Type
-====                 ====
-remote               s3
-
-e) Edit existing remote
-n) New remote
-d) Delete remote
-q) Quit config
-e/n/d/q> q
-```
-
-This can now be used like this
-
-```
-rclone lsd remote: - see all buckets/containers
-rclone ls remote: - list a bucket
-rclone sync /home/local/directory remote:bucket
-```
-
-See the next section for more details.
 
 Usage
 -----
@@ -246,48 +168,6 @@ Paths are specified as drive:path  Drive paths may be as deep as required.
 The initial setup for drive involves getting a token from Google drive
 which you need to do in your browser.  The `rclone config` walks you
 through it.
-
-Here is an example of how to make a remote called `drv`
-
-```
-$ ./rclone config
-n) New remote
-d) Delete remote
-q) Quit config
-e/n/d/q> n
-name> drv
-What type of source is it?
-Choose a number from below
- 1) swift
- 2) s3
- 3) local
- 4) drive
-type> 4
-Google Application Client Id - leave blank to use rclone's.
-client_id> 
-Google Application Client Secret - leave blank to use rclone's.
-client_secret> 
-Remote config
-Go to the following link in your browser
-https://accounts.google.com/o/oauth2/auth?access_type=&approval_prompt=&client_id=XXXXXXXXXXXX.apps.googleusercontent.com&redirect_uri=urn%3XXXXX%3Awg%3Aoauth%3XX.0%3Aoob&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive&state=state
-Log in, then type paste the token that is returned in the browser here
-Enter verification code> X/XXXXXXXXXXXXXXXXXX-XXXXXXXXX.XXXXXXXXX-XXXXX_XXXXXXX_XXXXXXX
---------------------
-[drv]
-client_id = 
-client_secret = 
-token = {"AccessToken":"xxxx.xxxxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx","Expiry":"2014-03-16T13:57:58.955387075Z","Extra":null}
---------------------
-y) Yes this is OK
-e) Edit this remote
-d) Delete this remote
-y/e/d> y
-```
-
-You can then use it like this
-
-    rclone lsd drv:
-    rclone ls drv:
 
 To copy a local directory to a drive directory called backup
 
