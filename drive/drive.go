@@ -663,45 +663,47 @@ func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64
 		return nil, fmt.Errorf("Couldn't find or make directory: %s", err)
 	}
 
+	// See if the file already exists
+	var info *drive.File
+	found, err := f.listAll(directoryId, leaf, false, true, func(item *drive.File) bool {
+		info = item
+		return true
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Error finding file: %s", leaf, err)
+	}
+
 	// Guess the mime type
 	mimeType := mime.TypeByExtension(path.Ext(remote))
 	if mimeType == "" {
 		mimeType = "application/octet-stream"
 	}
+	modifiedDate := modTime.Format(time.RFC3339Nano)
 
-	// Define the metadata for the file we are going to create.
-	info := &drive.File{
-		Title:       leaf,
-		Description: leaf,
-		Parents:     []*drive.ParentReference{{Id: directoryId}},
-		MimeType:    mimeType,
+	if found {
+		// Modify metadata
+		info.ModifiedDate = modifiedDate
+		info.MimeType = mimeType
+
+		// Make the API request to upload metadata and file data.
+		info, err = f.svc.Files.Update(info.Id, info).SetModifiedDate(true).Media(in).Do()
+	} else {
+		// Define the metadata for the file we are going to create.
+		info = &drive.File{
+			Title:        leaf,
+			Description:  leaf,
+			Parents:      []*drive.ParentReference{{Id: directoryId}},
+			MimeType:     mimeType,
+			ModifiedDate: modifiedDate,
+		}
+
+		// Make the API request to upload metadata and file data.
+		info, err = f.svc.Files.Insert(info).Media(in).Do()
 	}
-
-	// FIXME can't set modified date on initial upload as no
-	// .SetModifiedDate().  This agrees with the API docs, but not
-	// with the comment on
-	// https://developers.google.com/drive/v2/reference/files/insert
-	//
-	// modifiedDate datetime Last time this file was modified by
-	// anyone (formatted RFC 3339 timestamp). This is only mutable
-	// on update when the setModifiedDate parameter is set.
-	// writable
-	//
-	// There is no setModifiedDate parameter though
-
-	// Make the API request to upload infodata and file data.
-	info, err = f.svc.Files.Insert(info).Media(in).Do()
 	if err != nil {
 		return nil, fmt.Errorf("Upload failed: %s", err)
 	}
 	fs.setMetaData(info)
-
-	// Set modified date
-	info.ModifiedDate = modTime.Format(time.RFC3339Nano)
-	_, err = f.svc.Files.Update(info.Id, info).SetModifiedDate(true).Do()
-	if err != nil {
-		return fs, fmt.Errorf("Failed to set mtime: %s", err)
-	}
 	return fs, nil
 }
 
