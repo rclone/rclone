@@ -4,13 +4,13 @@ rclone:
 clean:
 	go clean
 	find . -name \*~ | xargs -r rm -f
-	rm -rf build rclone.org/public
+	rm -rf build docs/public
 
 website:
-	cd rclone.org && hugo
+	cd docs && hugo
 
 upload_website:	website
-	./rclone sync rclone.org/public memstore:www-rclone-org
+	./rclone sync docs/public memstore:www-rclone-org
 
 upload:
 	rsync -avz build/ www.craig-wood.com:public_html/pub/rclone/
@@ -19,4 +19,4 @@ cross:
 	./cross-compile
 
 serve:
-	cd rclone.org && hugo server -v -w
+	cd docs && hugo server -v -w
