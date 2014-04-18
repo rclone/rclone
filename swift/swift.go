@@ -210,20 +210,15 @@ func (f *FsSwift) ListDir() fs.DirChan {
 	return out
 }
 
-// Put the FsObject into the container
+// Put the object into the container
 //
 // Copy the reader in to the new object which is returned
 //
-// The new object may have been created
+// The new object may have been created if an error is returned
 func (f *FsSwift) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
 	// Temporary FsObject under construction
 	fs := &FsObjectSwift{swift: f, remote: remote}
-
-	// Set the mtime
-	m := swift.Metadata{}
-	m.SetModTime(modTime)
-	_, err := f.c.ObjectPut(f.container, remote, in, true, "", "", m.ObjectHeaders())
-	return fs, err
+	return fs, fs.Update(in, modTime, size)
 }
 
 // Mkdir creates the container if it doesn't exist
@@ -335,6 +330,17 @@ func (o *FsObjectSwift) Storable() bool {
 func (o *FsObjectSwift) Open() (in io.ReadCloser, err error) {
 	in, _, err = o.swift.c.ObjectOpen(o.swift.container, o.remote, true, nil)
 	return
+}
+
+// Update the object with the contents of the io.Reader, modTime and size
+//
+// The new object may have been created if an error is returned
+func (o *FsObjectSwift) Update(in io.Reader, modTime time.Time, size int64) error {
+	// Set the mtime
+	m := swift.Metadata{}
+	m.SetModTime(modTime)
+	_, err := o.swift.c.ObjectPut(o.swift.container, o.remote, in, true, "", "", m.ObjectHeaders())
+	return err
 }
 
 // Remove an object

@@ -103,6 +103,9 @@ type Object interface {
 	// Open opens the file for read.  Call Close() on the returned io.ReadCloser
 	Open() (io.ReadCloser, error)
 
+	// Update in to the object with the modTime given of the given size
+	Update(in io.Reader, modTime time.Time, size int64) error
+
 	// Storable says whether this object can be stored
 	Storable() bool
 

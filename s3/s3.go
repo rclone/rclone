@@ -290,20 +290,7 @@ func (f *FsS3) ListDir() fs.DirChan {
 func (f *FsS3) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
 	// Temporary FsObject under construction
 	fs := &FsObjectS3{s3: f, remote: remote}
-
-	// Set the mtime in the headers
-	headers := s3.Headers{
-		metaMtime: swift.TimeToFloatString(modTime),
-	}
-
-	// Guess the content type
-	contentType := mime.TypeByExtension(path.Ext(remote))
-	if contentType == "" {
-		contentType = "application/octet-stream"
-	}
-
-	_, err := fs.s3.b.PutReaderHeaders(remote, in, size, contentType, f.perm, headers)
-	return fs, err
+	return fs, fs.Update(in, modTime, size)
 }
 
 // Mkdir creates the bucket if it doesn't exist
@@ -436,6 +423,23 @@ func (o *FsObjectS3) Storable() bool {
 func (o *FsObjectS3) Open() (in io.ReadCloser, err error) {
 	in, err = o.s3.b.GetReader(o.remote)
 	return
+}
+
+// Update the Object from in with modTime and size
+func (o *FsObjectS3) Update(in io.Reader, modTime time.Time, size int64) error {
+	// Set the mtime in the headers
+	headers := s3.Headers{
+		metaMtime: swift.TimeToFloatString(modTime),
+	}
+
+	// Guess the content type
+	contentType := mime.TypeByExtension(path.Ext(o.remote))
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	_, err := o.s3.b.PutReaderHeaders(o.remote, in, size, contentType, o.s3.perm, headers)
+	return err
 }
 
 // Remove an object

@@ -164,30 +164,7 @@ func (f *FsLocal) Put(in io.Reader, remote string, modTime time.Time, size int64
 	dstPath := filepath.Join(f.root, remote)
 	// Temporary FsObject under construction
 	fs := &FsObjectLocal{local: f, remote: remote, path: dstPath}
-
-	dir := path.Dir(dstPath)
-	err := os.MkdirAll(dir, 0770)
-	if err != nil {
-		return fs, err
-	}
-
-	out, err := os.Create(dstPath)
-	if err != nil {
-		return fs, err
-	}
-
-	_, err = io.Copy(out, in)
-	outErr := out.Close()
-	if err != nil {
-		return fs, err
-	}
-	if outErr != nil {
-		return fs, outErr
-	}
-
-	// Set the mtime
-	fs.SetModTime(modTime)
-	return fs, err
+	return fs, fs.Update(in, modTime, size)
 }
 
 // Mkdir creates the directory if it doesn't exist
@@ -333,6 +310,33 @@ func (o *FsObjectLocal) Storable() bool {
 func (o *FsObjectLocal) Open() (in io.ReadCloser, err error) {
 	in, err = os.Open(o.path)
 	return
+}
+
+// Update the object from in with modTime and size
+func (o *FsObjectLocal) Update(in io.Reader, modTime time.Time, size int64) error {
+	dir := path.Dir(o.path)
+	err := os.MkdirAll(dir, 0770)
+	if err != nil {
+		return err
+	}
+
+	out, err := os.Create(o.path)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(out, in)
+	outErr := out.Close()
+	if err != nil {
+		return err
+	}
+	if outErr != nil {
+		return outErr
+	}
+
+	// Set the mtime
+	o.SetModTime(modTime)
+	return nil
 }
 
 // Stat a FsObject into info

@@ -648,63 +648,15 @@ func (f *FsDrive) ListDir() fs.DirChan {
 	return out
 }
 
-// Put the FsObject into the container
+// Put the object
 //
 // Copy the reader in to the new object which is returned
 //
-// The new object may have been created
+// The new object may have been created if an error is returned
 func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
 	// Temporary FsObject under construction
 	fs := &FsObjectDrive{drive: f, remote: remote}
-
-	directory, leaf := splitPath(remote)
-	directoryId, err := f.findDir(directory, true)
-	if err != nil {
-		return nil, fmt.Errorf("Couldn't find or make directory: %s", err)
-	}
-
-	// See if the file already exists
-	var info *drive.File
-	found, err := f.listAll(directoryId, leaf, false, true, func(item *drive.File) bool {
-		info = item
-		return true
-	})
-	if err != nil {
-		return nil, fmt.Errorf("Error finding file: %s", leaf, err)
-	}
-
-	// Guess the mime type
-	mimeType := mime.TypeByExtension(path.Ext(remote))
-	if mimeType == "" {
-		mimeType = "application/octet-stream"
-	}
-	modifiedDate := modTime.Format(time.RFC3339Nano)
-
-	if found {
-		// Modify metadata
-		info.ModifiedDate = modifiedDate
-		info.MimeType = mimeType
-
-		// Make the API request to upload metadata and file data.
-		info, err = f.svc.Files.Update(info.Id, info).SetModifiedDate(true).Media(in).Do()
-	} else {
-		// Define the metadata for the file we are going to create.
-		info = &drive.File{
-			Title:        leaf,
-			Description:  leaf,
-			Parents:      []*drive.ParentReference{{Id: directoryId}},
-			MimeType:     mimeType,
-			ModifiedDate: modifiedDate,
-		}
-
-		// Make the API request to upload metadata and file data.
-		info, err = f.svc.Files.Insert(info).Media(in).Do()
-	}
-	if err != nil {
-		return nil, fmt.Errorf("Upload failed: %s", err)
-	}
-	fs.setMetaData(info)
-	return fs, nil
+	return fs, fs.Update(in, modTime, size)
 }
 
 // Mkdir creates the container if it doesn't exist
@@ -886,6 +838,63 @@ func (o *FsObjectDrive) Open() (in io.ReadCloser, err error) {
 		return nil, fmt.Errorf("Bad response: %d: %s", res.StatusCode, res.Status)
 	}
 	return res.Body, nil
+}
+
+// Update the object
+//
+// Copy the reader into the object updating modTime and size
+//
+// The new object may have been created if an error is returned
+func (o *FsObjectDrive) Update(in io.Reader, modTime time.Time, size int64) error {
+	f := o.drive
+	directory, leaf := splitPath(o.remote)
+	directoryId, err := f.findDir(directory, true)
+	if err != nil {
+		return fmt.Errorf("Couldn't find or make directory: %s", err)
+	}
+
+	// See if the file already exists
+	var info *drive.File
+	found, err := f.listAll(directoryId, leaf, false, true, func(item *drive.File) bool {
+		info = item
+		return true
+	})
+	if err != nil {
+		return fmt.Errorf("Error finding file: %s", leaf, err)
+	}
+
+	// Guess the mime type
+	mimeType := mime.TypeByExtension(path.Ext(o.remote))
+	if mimeType == "" {
+		mimeType = "application/octet-stream"
+	}
+	modifiedDate := modTime.Format(time.RFC3339Nano)
+
+	if found {
+		// Modify metadata
+		info.ModifiedDate = modifiedDate
+		info.MimeType = mimeType
+
+		// Make the API request to upload metadata and file data.
+		info, err = f.svc.Files.Update(info.Id, info).SetModifiedDate(true).Media(in).Do()
+	} else {
+		// Define the metadata for the file we are going to create.
+		info = &drive.File{
+			Title:        leaf,
+			Description:  leaf,
+			Parents:      []*drive.ParentReference{{Id: directoryId}},
+			MimeType:     mimeType,
+			ModifiedDate: modifiedDate,
+		}
+
+		// Make the API request to upload metadata and file data.
+		info, err = f.svc.Files.Insert(info).Media(in).Do()
+	}
+	if err != nil {
+		return fmt.Errorf("Upload failed: %s", err)
+	}
+	o.setMetaData(info)
+	return nil
 }
 
 // Remove an object

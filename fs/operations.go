@@ -97,8 +97,12 @@ func Equal(src, dst Object) bool {
 	return true
 }
 
-// Copy src object to f
-func Copy(f Fs, src Object) {
+// Copy src object to dst or f if nil
+//
+// If dst is nil then the object must not exist already.  If you do
+// call Copy() with dst nil on a pre-existing file then some filing
+// systems (eg Drive) may duplicate the file.
+func Copy(f Fs, dst, src Object) {
 	in0, err := src.Open()
 	if err != nil {
 		Stats.Error()
@@ -107,7 +111,11 @@ func Copy(f Fs, src Object) {
 	}
 	in := NewAccount(in0) // account the transfer
 
-	dst, err := f.Put(in, src.Remote(), src.ModTime(), src.Size())
+	if dst != nil {
+		err = dst.Update(in, src.ModTime(), src.Size())
+	} else {
+		dst, err = f.Put(in, src.Remote(), src.ModTime(), src.Size())
+	}
 	inErr := in.Close()
 	if err == nil {
 		err = inErr
@@ -167,7 +175,7 @@ func Copier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 	for pair := range in {
 		src := pair.src
 		Stats.Transferring(src)
-		Copy(fdst, src)
+		Copy(fdst, pair.dst, src)
 		Stats.DoneTransferring(src)
 	}
 }
