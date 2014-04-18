@@ -1,6 +1,4 @@
 Todo
-  * Make a test suite which can run on all the given types of fs
-  * Copy should use the sync code as it is more efficient at directory listing
   * FIXME: ls without an argument for buckets/containers?
   * FIXME: More -dry-run checks for object transfer
   * Might be quicker to check md5sums first? for swift <-> swift certainly, and maybe for small files
@@ -43,10 +41,5 @@ s3
     * Otherwise can set metadata
   * Returns etag and last modified in bucket list
 
-Drive
-  * Should keep a note of files we list then call a new method
-    Object.Update() which would be more efficient than haveing to look
-    the id up for each file
- 
 Bugs
   * Non verbose - not sure number transferred got counted up? CHECK

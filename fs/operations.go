@@ -111,9 +111,12 @@ func Copy(f Fs, dst, src Object) {
 	}
 	in := NewAccount(in0) // account the transfer
 
+	var actionTaken string
 	if dst != nil {
+		actionTaken = "Copied (updated existing)"
 		err = dst.Update(in, src.ModTime(), src.Size())
 	} else {
+		actionTaken = "Copied (new)"
 		dst, err = f.Put(in, src.Remote(), src.ModTime(), src.Size())
 	}
 	inErr := in.Close()
@@ -133,7 +136,7 @@ func Copy(f Fs, dst, src Object) {
 		}
 		return
 	}
-	Debug(src, "Copied")
+	Debug(src, actionTaken)
 }
 
 // Check to see if src needs to be copied to dst and if so puts it in out
