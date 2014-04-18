@@ -61,7 +61,7 @@ var Commands = []Command{
         unchanged files, testing first by modification time then by
         MD5SUM.  Doesn't delete files from the destination.`,
 		Run: func(fdst, fsrc fs.Fs) {
-			err := fs.CopyFs(fdst, fsrc)
+			err := fs.Sync(fdst, fsrc, false)
 			if err != nil {
 				log.Fatalf("Failed to copy: %v", err)
 			}
@@ -79,7 +79,7 @@ var Commands = []Command{
         exist in destination. Since this can cause data loss, test
         first with the --dry-run flag.`,
 		Run: func(fdst, fsrc fs.Fs) {
-			err := fs.Sync(fdst, fsrc)
+			err := fs.Sync(fdst, fsrc, true)
 			if err != nil {
 				log.Fatalf("Failed to sync: %v", err)
 			}

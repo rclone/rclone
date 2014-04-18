@@ -150,7 +150,7 @@ var t2 = Time("2011-12-25T12:59:59.123456789Z")
 func TestCopy(flocal, fremote fs.Fs) {
 	WriteFile("empty", "", t1)
 
-	err := fs.CopyFs(fremote, flocal)
+	err := fs.Sync(fremote, flocal, false)
 	if err != nil {
 		log.Fatalf("Copy failed: %v", err)
 	}
@@ -168,7 +168,7 @@ func TestSync(flocal, fremote fs.Fs) {
 	if err != nil {
 		log.Fatalf("Chtimes failed: %v", err)
 	}
-	err = fs.Sync(fremote, flocal)
+	err = fs.Sync(fremote, flocal, true)
 	if err != nil {
 		log.Fatalf("Sync failed: %v", err)
 	}
@@ -182,7 +182,7 @@ func TestSync(flocal, fremote fs.Fs) {
 
 	log.Printf("Sync after adding a file")
 	WriteFile("potato", "------------------------------------------------------------", t1)
-	err = fs.Sync(fremote, flocal)
+	err = fs.Sync(fremote, flocal, true)
 	if err != nil {
 		log.Fatalf("Sync failed: %v", err)
 	}
@@ -197,7 +197,7 @@ func TestSync(flocal, fremote fs.Fs) {
 
 	log.Printf("Sync after changing a file's size only")
 	WriteFile("potato", "smaller but same date", t1)
-	err = fs.Sync(fremote, flocal)
+	err = fs.Sync(fremote, flocal, true)
 	if err != nil {
 		log.Fatalf("Sync failed: %v", err)
 	}
@@ -215,7 +215,7 @@ func TestSync(flocal, fremote fs.Fs) {
 	if err != nil {
 		log.Fatalf("Remove failed: %v", err)
 	}
-	err = fs.Sync(fremote, flocal)
+	err = fs.Sync(fremote, flocal, true)
 	if err != nil {
 		log.Fatalf("Sync failed: %v", err)
 	}
