@@ -26,6 +26,7 @@ import (
 // Globals
 var (
 	localName, remoteName string
+	version               = pflag.BoolP("version", "V", false, "Print the version number")
 )
 
 // Represents an item for checking
@@ -257,7 +258,7 @@ func TestRmdir(flocal, fremote fs.Fs) {
 }
 
 func syntaxError() {
-	fmt.Fprintf(os.Stderr, `Test rclone with a remote to find bugs in either.
+	fmt.Fprintf(os.Stderr, `Test rclone with a remote to find bugs in either - %s.
 
 Syntax: [options] remote:
 
@@ -266,7 +267,7 @@ directory under it and perform tests on it, deleting it at the end.
 
 Options:
 
-`)
+`, Version)
 	pflag.PrintDefaults()
 }
 
@@ -282,6 +283,10 @@ func cleanTempDir() {
 func main() {
 	pflag.Usage = syntaxError
 	pflag.Parse()
+	if *version {
+		fmt.Printf("rclonetest %s\n", Version)
+		os.Exit(0)
+	}
 	fs.LoadConfig()
 	rand.Seed(time.Now().UnixNano())
 	args := pflag.Args()

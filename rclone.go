@@ -27,6 +27,7 @@ var (
 	// Flags
 	cpuprofile    = pflag.StringP("cpuprofile", "", "", "Write cpu profile to file")
 	statsInterval = pflag.DurationP("stats", "", time.Minute*1, "Interval to print stats")
+	version       = pflag.BoolP("version", "V", false, "Print the version number")
 )
 
 type Command struct {
@@ -193,13 +194,13 @@ var Commands = []Command{
 
 // syntaxError prints the syntax
 func syntaxError() {
-	fmt.Fprintf(os.Stderr, `Sync files and directories to and from local and remote object stores
+	fmt.Fprintf(os.Stderr, `Sync files and directories to and from local and remote object stores - %s.
 
 Syntax: [options] subcommand <parameters> <parameters...>
 
 Subcommands:
 
-`)
+`, Version)
 	for i := range Commands {
 		cmd := &Commands[i]
 		fmt.Fprintf(os.Stderr, "    %s %s\n", cmd.Name, cmd.ArgsHelp)
@@ -299,6 +300,10 @@ func StartStats() {
 
 func main() {
 	ParseFlags()
+	if *version {
+		fmt.Printf("rclone %s\n", Version)
+		os.Exit(0)
+	}
 	command, args := ParseCommand()
 
 	// Make source and destination fs
