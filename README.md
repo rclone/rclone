@@ -1,3 +1,7 @@
+% rclone(1) User Manual
+% Nick Craig-Wood
+% Apr 24, 2014
+
 Rclone
 ======
 
@@ -29,13 +33,13 @@ Install
 
 Rclone is a Go program and comes as a single binary file.
 
-Download the relevant binary from
+Download the binary for your OS from
 
-  * http://www.craig-wood.com/nick/pub/rclone/
+  * http://rclone.org/downloads/
 
 Or alternatively if you have Go installed use
 
-    go get github.com/ncw/rclone
+    go install github.com/ncw/rclone
 
 and this will build the binary in `$GOPATH/bin`.
 
@@ -189,6 +193,33 @@ Bugs
     * quota is 100.0 requests/second/user
   * Empty directories left behind with Local and Drive
     * eg purging a local directory with subdirectories doesn't work
+
+Changelog
+---------
+
+  * v0.96 - 2014-04-24
+    * drive: Fix multiple files of same name being created
+    * drive: Use o.Update and fs.Put to optimise transfers
+    * Add version number, -V and --version
+  * v0.95 - 2014-03-28
+    * rclone.org: website, docs and graphics
+    * drive: fix path parsing
+  * v0.94 - 2014-03-27
+    * Change remote format one last time
+    * GNU style flags
+  * v0.93 - 2014-03-16
+    * drive: store token in config file
+    * cross compile other versions
+    * set strict permissions on config file
+  * v0.92 - 2014-03-15
+    * Config fixes and --config option
+  * v0.91 - 2014-03-15
+    * Make config file
+  * v0.90 - 2013-06-27
+    * Project named rclone
+  * v0.00 - 2012-11-18
+    * Project started
+
 
 Contact and support
 -------------------

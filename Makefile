@@ -1,22 +1,61 @@
-rclone:
+TAG := $(shell git describe --tags)
+LAST_TAG := $(shell git describe --tags --abbrev=0)
+NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = "v" . $$_')
+
+rclone:	*.go */*.go
+	@go version
 	go build
 
+doc:	rclone.1 README.html README.txt
+
+rclone.1:	README.md
+	pandoc -s --from markdown --to man README.md -o rclone.1
+
+README.html:	README.md
+	pandoc -s --from markdown_github --to html README.md -o README.html
+
+README.txt:	README.md
+	pandoc -s --from markdown_github --to plain README.md -o README.txt
+
+install: rclone
+	install -d ${DESTDIR}/usr/bin
+	install -t ${DESTDIR}/usr/bin rclone 
+
 clean:
-	go clean
+	go clean ./...
 	find . -name \*~ | xargs -r rm -f
 	rm -rf build docs/public
+	rm -f rclone rclonetest/rclonetest rclone.1 README.html README.txt
 
 website:
 	cd docs && hugo
 
 upload_website:	website
-	./rclone sync docs/public memstore:www-rclone-org
+	./rclone -v sync docs/public memstore:www-rclone-org
 
 upload:
-	rsync -avz build/ www.craig-wood.com:public_html/pub/rclone/
+	./rclone -v copy build/ memstore:downloads-rclone-org
 
-cross:
-	./cross-compile
+cross:	doc
+	./cross-compile $(TAG)
 
 serve:
 	cd docs && hugo server -v -w
+
+tag:
+	@echo "Old tag is $(LAST_TAG)"
+	@echo "New tag is $(NEW_TAG)"
+	echo -e "package main\n const Version = \"$(NEW_TAG)\"\n" | gofmt > version.go
+	cp -av version.go rclonetest/version.go
+	perl -lpe 's/VERSION/${NEW_TAG}/g; s/DATE/'`date -I`'/g;' docs/content/downloads.md.in > docs/content/downloads.md
+	git tag $(NEW_TAG)
+	@echo "Add this to changelog in README.md"
+	@echo "  * $(NEW_TAG) - " `date -I`
+	@git log $(LAST_TAG)..$(NEW_TAG) --oneline
+	@echo "Then commit the changes"
+	@echo git commit -m "Version $(NEW_TAG)" -a -v
+	@echo "And finally run make retag before make cross etc"
+
+retag:
+	echo git tag -f $(LAST_TAG)
+

@@ -4,3 +4,6 @@ rclone
 rclonetest/rclonetest
 build
 docs/public
+README.html
+README.txt
+rclone.1

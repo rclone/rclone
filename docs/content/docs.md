@@ -9,7 +9,7 @@ Install
 
 Rclone is a Go program and comes as a single binary file.
 
-[Download the relevant binary.](http://www.craig-wood.com/nick/pub/rclone/)
+[Download the relevant binary.](/downloads/)
 
 Or alternatively if you have Go installed use
 

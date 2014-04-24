@@ -43,3 +43,22 @@ s3
 
 Bugs
   * Non verbose - not sure number transferred got counted up? CHECK
+
+Making a release
+  * go build ./...
+  * cd rclonetest
+  * go build
+  * ./rclonetest memstore:
+  * ./rclonetest s3:
+  * ./rclonetest drive2:
+  * ./rclonetest /tmp/z
+  * cd ..
+  * make tag
+  * edit README.md Changelog
+  * git commit version.go rclonetest/version.go README.md docs/content/downloads.md
+  * make retag
+  * . ~/bin/go-cross
+  * make cross
+  * make upload
+  * make upload_website
+  * git push --tags

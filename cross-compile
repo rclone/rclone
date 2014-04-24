@@ -1,26 +1,31 @@
 #!/bin/sh
 
+set -e
+
 # This uses gox from https://github.com/mitchellh/gox
 # Make sure you've run gox -build-toolchain
 
+if [ "$1" == "" ]; then
+    echo "Syntax: $0 Version"
+    exit 1
+fi
+VERSION="$1"
+
 rm -rf build
 
-gox -output "build/{{.OS}}/{{.Arch}}/{{.Dir}}"
+gox -output "build/{{.Dir}}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
 
-cat <<'#EOF' > build/README.txt
-This directory contains builds of the rclone program.
+mv build/rclone-${VERSION}-darwin-amd64 build/rclone-${VERSION}-osx-amd64
+mv build/rclone-${VERSION}-darwin-386 build/rclone-${VERSION}-osx-386
 
-Rclone is a program to transfer files to and from cloud storage
-systems such as Google Drive, Amazon S3 and Swift (Rackspace
-Cloudfiles).
+cd build
 
-See the project website here: https://github.com/ncw/rclone for more
-details.
+for d in `ls`; do
+    cp -a ../README.txt $d/
+    cp -a ../README.html $d/
+    cp -a ../rclone.1 $d/
+    zip -r9 $d.zip $d
+    rm -rf $d
+done
 
-The files in this directory are organised by OS and processor type
-
-#EOF
-
-mv build/darwin build/osx
-
-( cd build ; tree . >> README.txt )
+cd ..

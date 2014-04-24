@@ -33,6 +33,6 @@ Links
   * [Home page](http://rclone.org/)
   * [Github project page for source and more instructions](http://github.com/ncw/rclone)
   * <a href="https://plus.google.com/110609214444437761115" rel="publisher">Google+ page</a></li>
-  * [Downloads](http://www.craig-wood.com/nick/pub/rclone/)
+  * [Downloads](/downloads/)
 
 rclone is brought to you by <a href="http://www.craig-wood.com/nick/">Nick Craig-Wood</a> <img src="http://www.craig-wood.com/nick/small/njcw.jpg" />
