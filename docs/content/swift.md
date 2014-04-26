@@ -1,7 +1,7 @@
 ---
 title: "Swift"
 description: "Swift"
-date: "2014-03-19"
+date: "2014-04-26"
 ---
 
 Swift refers to [Openstack Object Storage](http://www.openstack.org/software/openstack-storage/).

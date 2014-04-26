@@ -1,7 +1,7 @@
 ---
 title: "Google drive"
 description: "Rclone docs for Google drive"
-date: "2014-03-19"
+date: "2014-04-26"
 ---
 
 Paths are specified as `drive:path`

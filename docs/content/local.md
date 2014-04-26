@@ -1,7 +1,7 @@
 ---
 title: "Local Filesystem"
 description: "Rclone docs for the local filesystem"
-date: "2014-03-19"
+date: "2014-04-26"
 ---
 
 Local Filesystem
@@ -19,7 +19,7 @@ but it is probably easier not to.
 Modified time
 -------------
 
-We read and write the modified time using an accuracy determined by
+Rclone reads and writes the modified time using an accuracy determined by
 the OS.  Typically this is 1ns on Linux, 10 ns on Windows and 1 Second
 on OS X.
 

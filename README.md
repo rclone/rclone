@@ -7,7 +7,7 @@ Rclone
 
 [![Logo](http://rclone.org/img/rclone-120x120.png)](http://rclone.org/)
 
-Sync files and directories to and from
+Rclone is a command line program to sync files and directories to and from
 
   * Google Drive
   * Amazon S3
@@ -43,15 +43,13 @@ Or alternatively if you have Go installed use
 
 and this will build the binary in `$GOPATH/bin`.
 
-You can then modify the source and submit patches.
-
 Configure
 ---------
 
 First you'll need to configure rclone.  As the object storage systems
 have quite complicated authentication these are kept in a config file
 `.rclone.conf` in your home directory by default.  (You can use the
--config option to choose a different config file.)
+`--config` option to choose a different config file.)
 
 The easiest way to make the config is to run rclone with the config
 option, Eg
@@ -63,7 +61,7 @@ Usage
 
 Rclone syncs a directory tree from local to remote.
 
-Its basic syntax is like this
+Its basic syntax is
 
     Syntax: [options] subcommand <parameters> <parameters...>
 
@@ -84,7 +82,7 @@ Sync the source to the destination.  Doesn't transfer
 unchanged files, testing first by modification time then by
 MD5SUM.  Deletes any files that exist in source that don't
 exist in destination. Since this can cause data loss, test
-first with the -dry-run flag.
+first with the `--dry-run` flag.
 
     rclone ls [remote:path]
 
@@ -92,7 +90,7 @@ List all the objects in the the path.
 
     rclone lsd [remote:path]
 
-List all directoryes/objects/buckets in the the path.
+List all directories/objects/buckets in the the path.
 
     rclone mkdir remote:path
 
@@ -114,17 +112,23 @@ compares sizes and MD5SUMs and prints a report of files which
 don't match.  It doesn't alter the source or destination.
 
 General options:
-  * `-config` Location of the config file
-  * `-transfers=4`: Number of file transfers to run in parallel.
-  * `-checkers=8`: Number of MD5SUM checkers to run in parallel.
-  * `-dry-run=false`: Do a trial run with no permanent changes
-  * `-modify-window=1ns`: Max time difference to be considered the same - this is automatically set usually
-  * `-quiet=false`: Print as little stuff as possible
-  * `-stats=1m0s`: Interval to print stats
-  * `-verbose=false`: Print lots more stuff
+
+```
+      --checkers=8: Number of checkers to run in parallel.
+      --config="~/.rclone.conf": Config file.
+  -n, --dry-run=false: Do a trial run with no permanent changes
+      --modify-window=1ns: Max time diff to be considered the same
+  -q, --quiet=false: Print as little stuff as possible
+      --stats=1m0s: Interval to print stats
+      --transfers=4: Number of file transfers to run in parallel.
+  -v, --verbose=false: Print lots more stuff
+```
 
 Developer options:
-  * `-cpuprofile=""`: Write cpu profile to file
+
+```
+      --cpuprofile="": Write cpu profile to file
+```
 
 Local Filesystem
 ----------------
@@ -133,7 +137,7 @@ Paths are specified as normal filesystem paths, so
 
     rclone sync /home/source /tmp/destination
 
-Will sync source to destination
+Will sync `/home/source` to `/tmp/destination`
 
 Swift / Rackspace cloudfiles / Memset Memstore
 ----------------------------------------------
@@ -170,7 +174,7 @@ Google drive
 Paths are specified as drive:path  Drive paths may be as deep as required.
 
 The initial setup for drive involves getting a token from Google drive
-which you need to do in your browser.  The `rclone config` walks you
+which you need to do in your browser.  `rclone config` walks you
 through it.
 
 To copy a local directory to a drive directory called backup
@@ -228,7 +232,7 @@ The project website is at:
 
   * https://github.com/ncw/rclone
 
-There you can file bug reports, ask for help or contribute patches.
+There you can file bug reports, ask for help or send pull requests.
 
 Authors
 -------

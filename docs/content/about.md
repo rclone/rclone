@@ -2,7 +2,7 @@
 title: "Rclone"
 description: "rclone syncs files to and from Google Drive, S3, Swift and Cloudfiles."
 type: page
-date: "2014-03-19"
+date: "2014-04-26"
 groups: ["about"]
 ---
 
@@ -11,7 +11,7 @@ Rclone
 
 [![Logo](/img/rclone-120x120.png)](http://rclone.org/)
 
-Sync files and directories to and from
+Rclone is a command line program to sync files and directories to and from
 
   * Google Drive
   * Amazon S3

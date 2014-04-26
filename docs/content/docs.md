@@ -1,7 +1,7 @@
 ---
 title: "Documentation"
 description: "Rclone Documentation"
-date: "2014-03-19"
+date: "2014-04-26"
 ---
 
 Install
@@ -9,7 +9,7 @@ Install
 
 Rclone is a Go program and comes as a single binary file.
 
-[Download the relevant binary.](/downloads/)
+[Download](/downloads/) the relevant binary.
 
 Or alternatively if you have Go installed use
 
@@ -17,15 +17,13 @@ Or alternatively if you have Go installed use
 
 and this will build the binary in `$GOPATH/bin`.
 
-You can then modify the source and submit patches.
-
 Configure
 ---------
 
 First you'll need to configure rclone.  As the object storage systems
 have quite complicated authentication these are kept in a config file
 `.rclone.conf` in your home directory by default.  (You can use the
-`-config` option to choose a different config file.)
+`--config` option to choose a different config file.)
 
 The easiest way to make the config is to run rclone with the config
 option:
