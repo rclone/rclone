@@ -18,9 +18,15 @@ var (
 
 // Filesystem info
 type FsInfo struct {
-	Name    string                           // name of this fs
-	NewFs   func(string, string) (Fs, error) // create a new file system
-	Config  func(string)                     // function to call to help with config
+	// Name of this fs
+	Name string
+	// Create a new file system.  If root refers to an existing
+	// object, then it should return a Fs which only returns that
+	// object.
+	NewFs func(name string, root string) (Fs, error)
+	// Function to call to help with config
+	Config func(string)
+	// Options for the Fs configuration
 	Options []Option
 }
 

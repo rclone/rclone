@@ -45,6 +45,16 @@ type FsObjectLocal struct {
 func NewFs(name, root string) (fs.Fs, error) {
 	root = path.Clean(root)
 	f := &FsLocal{root: root}
+	// Check to see if this points to a file
+	fi, err := os.Lstat(f.root)
+	if err == nil && fi.Mode().IsRegular() {
+		// It is a file, so use the parent as the root
+		remote := path.Base(root)
+		f.root = path.Dir(root)
+		obj := f.NewFsObject(remote)
+		// return a Fs Limited to this object
+		return fs.NewLimited(f, obj), nil
+	}
 	return f, nil
 }
 

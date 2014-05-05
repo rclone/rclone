@@ -188,8 +188,8 @@ func s3Connection(name string) (*s3.S3, error) {
 }
 
 // NewFsS3 contstructs an FsS3 from the path, bucket:path
-func NewFs(name, path string) (fs.Fs, error) {
-	bucket, directory, err := s3ParsePath(path)
+func NewFs(name, root string) (fs.Fs, error) {
+	bucket, directory, err := s3ParsePath(root)
 	if err != nil {
 		return nil, err
 	}
@@ -197,16 +197,29 @@ func NewFs(name, path string) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	// FIXME - check if it is a file before doing this and make a limited fs
-	if directory != "" {
-		directory += "/"
-	}
 	f := &FsS3{
 		c:      c,
 		bucket: bucket,
 		b:      c.Bucket(bucket),
 		perm:   s3.Private, // FIXME need user to specify
 		root:   directory,
+	}
+	if f.root != "" {
+		f.root += "/"
+		// Check to see if the object exists
+		_, err = f.b.Head(directory, nil)
+		if err == nil {
+			remote := path.Base(directory)
+			f.root = path.Dir(directory)
+			if f.root == "." {
+				f.root = ""
+			} else {
+				f.root += "/"
+			}
+			obj := f.NewFsObject(remote)
+			// return a Fs Limited to this object
+			return fs.NewLimited(f, obj), nil
+		}
 	}
 	return f, nil
 }
@@ -328,7 +341,7 @@ func (f *FsS3) ListDir() fs.DirChan {
 			}
 		}()
 	} else {
-		// List the directories in the path in the container
+		// List the directories in the path in the bucket
 		go func() {
 			defer close(out)
 			f.list(true, func(remote string, object *s3.Key) {

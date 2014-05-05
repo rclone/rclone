@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -118,8 +119,8 @@ func swiftConnection(name string) (*swift.Connection, error) {
 }
 
 // NewFs contstructs an FsSwift from the path, container:path
-func NewFs(name, path string) (fs.Fs, error) {
-	container, directory, err := parsePath(path)
+func NewFs(name, root string) (fs.Fs, error) {
+	container, directory, err := parsePath(root)
 	if err != nil {
 		return nil, err
 	}
@@ -127,14 +128,27 @@ func NewFs(name, path string) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	// FIXME - check if it is a file before doing this and make a limited fs
-	if directory != "" {
-		directory += "/"
-	}
 	f := &FsSwift{
 		c:         *c,
 		container: container,
 		root:      directory,
+	}
+	if f.root != "" {
+		f.root += "/"
+		// Check to see if the object exists
+		_, _, err = f.c.Object(container, directory)
+		if err == nil {
+			remote := path.Base(directory)
+			f.root = path.Dir(directory)
+			if f.root == "." {
+				f.root = ""
+			} else {
+				f.root += "/"
+			}
+			obj := f.NewFsObject(remote)
+			// return a Fs Limited to this object
+			return fs.NewLimited(f, obj), nil
+		}
 	}
 	return f, nil
 }

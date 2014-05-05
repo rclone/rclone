@@ -1,5 +1,4 @@
 Todo
-  * FIXME: ls without an argument for buckets/containers?
   * FIXME: More -dry-run checks for object transfer
   * Might be quicker to check md5sums first? for swift <-> swift certainly, and maybe for small files
   * swift: Ignoring the pseudo directories
@@ -12,7 +11,6 @@ Todo
     * make Account do progress meter
   * Make logging controllable with flags (mostly done)
   * -timeout: Make all timeouts be settable with command line parameters
-  * Check the locking in swift module!
   * Windows paths? Do we need to translate / and \?
   * Make a fs.Errorf and count errors and log them at a different level
   * Add max object size to fs metadata - 5GB for swift, infinite for local, ? for s3
@@ -22,7 +20,6 @@ Ideas
   * could do encryption - put IV into metadata?
   * optimise remote copy container to another container using remote
     copy if local is same as remote - use an optional Copier interface
-  * Allow subpaths container:/sub/path
   * support
       * sftp
       * scp
@@ -35,6 +32,8 @@ Need to make directory objects otherwise can't upload an empty directory
   * Or could upload empty directories only?
   * Can't purge a local filesystem because it leaves the directories behind
 
+Copying a single file? Or maybe with a glob pattern? Could do with LimitedFs
+
 s3
   * Can maybe set last modified?
     * https://forums.aws.amazon.com/message.jspa?messageID=214062
@@ -43,6 +42,7 @@ s3
 
 Bugs
   * Non verbose - not sure number transferred got counted up? CHECK
+  * When doing copy it recurses the whole of the destination FS which isn't necessary
 
 Making a release
   * go build ./...

@@ -143,7 +143,8 @@ Swift / Rackspace cloudfiles / Memset Memstore
 ----------------------------------------------
 
 Paths are specified as remote:container (or remote: for the `lsd`
-command.)
+command.)  You may put subdirectories in too, eg
+`remote:container/path/to/dir`.
 
 So to copy a local directory to a swift container called backup:
 
@@ -159,7 +160,8 @@ os.Stat) for an object.
 Amazon S3
 ---------
 
-Paths are specified as remote:bucket
+Paths are specified as remote:bucket.  You may put subdirectories in
+too, eg `remote:bucket/path/to/dir`.
 
 So to copy a local directory to a s3 container called backup
 
@@ -183,6 +185,19 @@ To copy a local directory to a drive directory called backup
 
 Google drive stores modification times accurate to 1 ms.
 
+Single file copies
+------------------
+
+Rclone can copy single files
+
+    rclone src:path/to/file dst:path/dir
+
+Or
+
+    rclone src:path/to/file dst:path/to/file
+
+Note that you can't rename the file if you are copying from one file to another.
+
 License
 -------
 
@@ -192,7 +207,6 @@ COPYING file included in this package).
 Bugs
 ----
 
-  * Doesn't sync individual files yet, only directories.
   * Drive: Sometimes get: Failed to copy: Upload failed: googleapi: Error 403: Rate Limit Exceeded
     * quota is 100.0 requests/second/user
   * Empty directories left behind with Local and Drive

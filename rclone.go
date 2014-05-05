@@ -106,7 +106,7 @@ var Commands = []Command{
 		Name:     "lsd",
 		ArgsHelp: "[remote://path]",
 		Help: `
-        List all directoryes/objects/buckets in the the path.`,
+        List all directories/containers/buckets in the the path.`,
 		Run: func(fdst, fsrc fs.Fs) {
 			err := fs.ListDir(fdst)
 			if err != nil {

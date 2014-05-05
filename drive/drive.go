@@ -135,14 +135,15 @@ func (name tokenCache) PutToken(token *oauth.Token) error {
 
 // FsDrive represents a remote drive server
 type FsDrive struct {
-	svc         *drive.Service // the connection to the drive server
-	root        string         // the path we are working on
-	client      *http.Client   // authorized client
-	about       *drive.About   // information about the drive, including the root
-	rootId      string         // Id of the root directory
-	foundRoot   sync.Once      // Whether we need to find the root directory or not
-	dirCache    dirCache       // Map of directory path to directory id
-	findDirLock sync.Mutex     // Protect findDir from concurrent use
+	svc          *drive.Service // the connection to the drive server
+	root         string         // the path we are working on
+	client       *http.Client   // authorized client
+	about        *drive.About   // information about the drive, including the root
+	rootId       string         // Id of the root directory
+	foundRoot    bool           // Whether we have found the root or not
+	findRootLock sync.Mutex     // Protect findRoot from concurrent use
+	dirCache     dirCache       // Map of directory path to directory id
+	findDirLock  sync.Mutex     // Protect findDir from concurrent use
 }
 
 // FsObjectDrive describes a drive object
@@ -305,7 +306,10 @@ func NewFs(name, path string) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	f := &FsDrive{root: root, dirCache: newDirCache()}
+	f := &FsDrive{
+		root:     root,
+		dirCache: newDirCache(),
+	}
 
 	// Try to pull the token from the cache; if this fails, we need to get one.
 	token, err := t.Config.TokenCache.Token()
@@ -331,14 +335,33 @@ func NewFs(name, path string) (fs.Fs, error) {
 	f.rootId = f.about.RootFolderId
 	// Put the root directory in
 	f.dirCache.Put("", f.rootId)
+	// Find the current root
+	err = f.findRoot(false)
+	if err != nil {
+		// Assume it is a file
+		newRoot, remote := splitPath(root)
+		newF := *f
+		newF.root = newRoot
+		// Make new Fs which is the parent
+		err = newF.findRoot(false)
+		if err != nil {
+			// No root so return old f
+			return f, nil
+		}
+		obj, err := newF.newFsObjectWithInfo(remote, nil)
+		if err != nil {
+			// File doesn't exist so return old f
+			return f, nil
+		}
+		// return a Fs Limited to this object
+		return fs.NewLimited(&newF, obj), nil
+	}
 	// fmt.Printf("Root id %s", f.rootId)
 	return f, nil
 }
 
 // Return an FsObject from a path
-//
-// May return nil if an error occurred
-func (f *FsDrive) NewFsObjectWithInfo(remote string, info *drive.File) fs.Object {
+func (f *FsDrive) newFsObjectWithInfo(remote string, info *drive.File) (fs.Object, error) {
 	fs := &FsObjectDrive{
 		drive:  f,
 		remote: remote,
@@ -349,9 +372,18 @@ func (f *FsDrive) NewFsObjectWithInfo(remote string, info *drive.File) fs.Object
 		err := fs.readMetaData() // reads info and meta, returning an error
 		if err != nil {
 			// logged already fs.Debug("Failed to read info: %s", err)
-			return nil
+			return nil, err
 		}
 	}
+	return fs, nil
+}
+
+// Return an FsObject from a path
+//
+// May return nil if an error occurred
+func (f *FsDrive) NewFsObjectWithInfo(remote string, info *drive.File) fs.Object {
+	fs, _ := f.newFsObjectWithInfo(remote, info)
+	// Errors have already been logged
 	return fs
 }
 
@@ -585,14 +617,21 @@ func (f *FsDrive) _findDir(path string, create bool) (pathId string, err error) 
 //
 // If create is set it will make the directory if not found
 func (f *FsDrive) findRoot(create bool) error {
-	var err error
-	f.foundRoot.Do(func() {
-		f.rootId, err = f.findDir(f.root, create)
-		f.dirCache.Flush()
-		// Put the root directory in
-		f.dirCache.Put("", f.rootId)
-	})
-	return err
+	f.findRootLock.Lock()
+	defer f.findRootLock.Unlock()
+	if f.foundRoot {
+		return nil
+	}
+	rootId, err := f.findDir(f.root, create)
+	if err != nil {
+		return err
+	}
+	f.rootId = rootId
+	f.dirCache.Flush()
+	// Put the root directory in
+	f.dirCache.Put("", f.rootId)
+	f.foundRoot = true
+	return nil
 }
 
 // Walk the path returning a channel of FsObjects
