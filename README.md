@@ -215,6 +215,9 @@ Bugs
 Changelog
 ---------
 
+  * v0.97 - 2014-05-05
+    * Implement copying of single files
+    * s3 & swift: support paths inside containers/buckets
   * v0.96 - 2014-04-24
     * drive: Fix multiple files of same name being created
     * drive: Use o.Update and fs.Put to optimise transfers
