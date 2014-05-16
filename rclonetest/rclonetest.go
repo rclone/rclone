@@ -149,7 +149,7 @@ var t1 = Time("2001-02-03T04:05:06.999999999Z")
 var t2 = Time("2011-12-25T12:59:59.123456789Z")
 
 func TestCopy(flocal, fremote fs.Fs) {
-	WriteFile("empty", "", t1)
+	WriteFile("empty space", "", t1)
 
 	err := fs.Sync(fremote, flocal, false)
 	if err != nil {
@@ -157,7 +157,7 @@ func TestCopy(flocal, fremote fs.Fs) {
 	}
 
 	items := []Item{
-		{Path: "empty", Size: 0, ModTime: t1, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+		{Path: "empty space", Size: 0, ModTime: t1, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 	}
 	CheckListing(flocal, items)
 	CheckListing(fremote, items)
@@ -165,7 +165,7 @@ func TestCopy(flocal, fremote fs.Fs) {
 
 func TestSync(flocal, fremote fs.Fs) {
 	log.Printf("Sync after changing file modtime only")
-	err := os.Chtimes(localName+"/empty", t2, t2)
+	err := os.Chtimes(localName+"/empty space", t2, t2)
 	if err != nil {
 		log.Fatalf("Chtimes failed: %v", err)
 	}
@@ -174,7 +174,7 @@ func TestSync(flocal, fremote fs.Fs) {
 		log.Fatalf("Sync failed: %v", err)
 	}
 	items := []Item{
-		{Path: "empty", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 	}
 	CheckListing(flocal, items)
 	CheckListing(fremote, items)
@@ -188,7 +188,7 @@ func TestSync(flocal, fremote fs.Fs) {
 		log.Fatalf("Sync failed: %v", err)
 	}
 	items = []Item{
-		{Path: "empty", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 		{Path: "potato", Size: 60, ModTime: t1, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
 	}
 	CheckListing(flocal, items)
@@ -203,7 +203,7 @@ func TestSync(flocal, fremote fs.Fs) {
 		log.Fatalf("Sync failed: %v", err)
 	}
 	items = []Item{
-		{Path: "empty", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 		{Path: "potato", Size: 21, ModTime: t1, Md5sum: "100defcf18c42a1e0dc42a789b107cd2"},
 	}
 	CheckListing(flocal, items)
@@ -222,7 +222,7 @@ func TestSync(flocal, fremote fs.Fs) {
 	}
 
 	items = []Item{
-		{Path: "empty", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 	}
 	CheckListing(flocal, items)
 	CheckListing(fremote, items)
