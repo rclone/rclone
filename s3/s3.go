@@ -429,10 +429,15 @@ func (o *FsObjectS3) readMetaData() (err error) {
 		fs.Debug(o, "Failed to read info: %s", err)
 		return err
 	}
-	size, err := strconv.ParseInt(headers["Content-Length"], 10, 64)
-	if err != nil {
-		fs.Debug(o, "Failed to read size from: %q", headers)
-		return err
+	var size int64
+	// Ignore missing Content-Length assuming it is 0
+	// Some versions of ceph do this due their apache proxies
+	if contentLength, ok := headers["Content-Length"]; ok {
+		size, err = strconv.ParseInt(contentLength, 10, 64)
+		if err != nil {
+			fs.Debug(o, "Failed to read size from: %q", headers)
+			return err
+		}
 	}
 	o.etag = headers["Etag"]
 	o.bytes = size
