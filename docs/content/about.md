@@ -34,5 +34,3 @@ Links
   * [Github project page for source and more instructions](http://github.com/ncw/rclone)
   * <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page</a></li>
   * [Downloads](/downloads/)
-
-rclone is brought to you by <a href="http://www.craig-wood.com/nick/">Nick Craig-Wood</a> <img src="http://www.craig-wood.com/nick/small/njcw.jpg" />

@@ -4,14 +4,16 @@
 <div class="container">
     <div class="row">
         <div class="col-md-9">
-          {{ range $key, $value := .Site.Indexes.groups.about.Pages }}
-          {{ $value.Content }}
-          {{ end }}
+            <div class="well well-sm">
+                    <h3>{{ .Title }}<br> <small>{{ .Description }}</small></h3>
+                    <hr>
+                    {{ .Content }}
+            </div>
         </div>
 
         <!-- Sidebar -->
         <div class="col-md-3">
-        {{ template "chrome/menu.html" . }}
+            {{ template "chrome/menu.html" . }}
         </div>
     </div>
 {{ template "chrome/footer.copyright.html" . }}

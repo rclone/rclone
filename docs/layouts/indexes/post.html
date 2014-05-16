@@ -4,9 +4,14 @@
 <div class="container">
     <div class="row">
         <div class="col-md-9">
-          {{ range $key, $value := .Site.Indexes.groups.about.Pages }}
-          {{ $value.Content }}
-          {{ end }}
+            <div class="well well-sm">
+                <strong>Blog Post Archive</strong>
+                <ul class="list-unstyled">
+                    {{ range .Data.Pages }}
+                        {{ .Render "li" }}
+                    {{ end}}
+                </ul>
+            </div>
         </div>
 
         <!-- Sidebar -->

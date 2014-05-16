@@ -5,8 +5,8 @@ type: page
 date: "DATE"
 ---
 
-VERSION
-=====
+Rclone Download VERSION
+=====================
 
   * Windows
     * [386 - 32 Bit](http://downloads.rclone.org/rclone-VERSION-windows-386.zip)

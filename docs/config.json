@@ -1,0 +1,11 @@
+{
+    "indexes": {
+        "tag": "tags",
+        "group": "groups",
+        "menu": "menu"
+    },
+    "baseurl": "http://rclone.org",
+    "title": "rclone - rsync for object storage",
+    "description": "rclone - rsync for object storage: google drive, s3, swift, cloudfiles, memstore...",
+    "canonifyurls": true
+}
