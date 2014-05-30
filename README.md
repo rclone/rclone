@@ -215,6 +215,9 @@ Bugs
 Changelog
 ---------
 
+  * v0.98 - 2014-05-30
+    * s3: Treat missing Content-Length as 0 for some ceph installations
+    * rclonetest: add file with a space in
   * v0.97 - 2014-05-05
     * Implement copying of single files
     * s3 & swift: support paths inside containers/buckets
