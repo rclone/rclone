@@ -31,6 +31,6 @@ Features
 Links
 
   * <i class="fa fa-home"></i> [Home page](http://rclone.org/)
-  * <i class="fa fa-github"></i> [Github project page for source and more instructions](http://github.com/ncw/rclone)
+  * <i class="fa fa-github"></i> [Github project page for source and bug tracker](http://github.com/ncw/rclone)
   * <i class="fa fa-google-plus"></i> <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page</a></li>
   * <i class="fa fa-cloud-download"></i>[Downloads](/downloads/)
