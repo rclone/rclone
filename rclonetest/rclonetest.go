@@ -151,7 +151,11 @@ var t2 = Time("2011-12-25T12:59:59.123456789Z")
 func TestCopy(flocal, fremote fs.Fs) {
 	WriteFile("empty space", "", t1)
 
+	// Check dry run is working
+	log.Printf("Copy with --dry-run")
+	fs.Config.DryRun = true
 	err := fs.Sync(fremote, flocal, false)
+	fs.Config.DryRun = false
 	if err != nil {
 		log.Fatalf("Copy failed: %v", err)
 	}
@@ -159,6 +163,18 @@ func TestCopy(flocal, fremote fs.Fs) {
 	items := []Item{
 		{Path: "empty space", Size: 0, ModTime: t1, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 	}
+
+	CheckListing(flocal, items)
+	CheckListing(fremote, []Item{})
+
+	// Now without dry run
+
+	log.Printf("Copy")
+	err = fs.Sync(fremote, flocal, false)
+	if err != nil {
+		log.Fatalf("Copy failed: %v", err)
+	}
+
 	CheckListing(flocal, items)
 	CheckListing(fremote, items)
 }
@@ -211,22 +227,37 @@ func TestSync(flocal, fremote fs.Fs) {
 
 	// ------------------------------------------------------------
 
-	log.Printf("Sync after removing a file")
+	log.Printf("Sync after removing a file and adding a file --dry-run")
+	WriteFile("potato2", "------------------------------------------------------------", t1)
 	err = os.Remove(localName + "/potato")
 	if err != nil {
 		log.Fatalf("Remove failed: %v", err)
 	}
+	fs.Config.DryRun = true
 	err = fs.Sync(fremote, flocal, true)
+	fs.Config.DryRun = false
 	if err != nil {
 		log.Fatalf("Sync failed: %v", err)
 	}
 
+	before := []Item{
+		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+		{Path: "potato", Size: 21, ModTime: t1, Md5sum: "100defcf18c42a1e0dc42a789b107cd2"},
+	}
 	items = []Item{
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+		{Path: "potato2", Size: 60, ModTime: t1, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
+	}
+	CheckListing(flocal, items)
+	CheckListing(fremote, before)
+
+	log.Printf("Sync after removing a file and adding a file")
+	err = fs.Sync(fremote, flocal, true)
+	if err != nil {
+		log.Fatalf("Sync failed: %v", err)
 	}
 	CheckListing(flocal, items)
 	CheckListing(fremote, items)
-
 }
 
 func TestLs(flocal, fremote fs.Fs) {

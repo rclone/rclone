@@ -178,7 +178,11 @@ func Copier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 	for pair := range in {
 		src := pair.src
 		Stats.Transferring(src)
-		Copy(fdst, pair.dst, src)
+		if Config.DryRun {
+			Debug(src, "Not copying as --dry-run")
+		} else {
+			Copy(fdst, pair.dst, src)
+		}
 		Stats.DoneTransferring(src)
 	}
 }

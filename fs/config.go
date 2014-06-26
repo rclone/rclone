@@ -70,10 +70,10 @@ func LoadConfig() {
 	// FIXME read these from the config file too
 	Config.Verbose = *verbose
 	Config.Quiet = *quiet
-	Config.Quiet = *dryRun
 	Config.ModifyWindow = *modifyWindow
 	Config.Checkers = *checkers
 	Config.Transfers = *transfers
+	Config.DryRun = *dryRun
 
 	ConfigPath = *configFile
 
