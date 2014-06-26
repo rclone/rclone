@@ -147,7 +147,7 @@ func Command(commands []string) byte {
 		if len(result) != 1 {
 			continue
 		}
-		i := strings.IndexByte(optString, result[0])
+		i := strings.Index(optString, string(result[0]))
 		if i >= 0 {
 			return result[0]
 		}
