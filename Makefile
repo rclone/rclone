@@ -50,12 +50,11 @@ tag:
 	perl -lpe 's/VERSION/${NEW_TAG}/g; s/DATE/'`date -I`'/g;' docs/content/downloads.md.in > docs/content/downloads.md
 	git tag $(NEW_TAG)
 	@echo "Add this to changelog in README.md"
-	@echo "  * $(NEW_TAG) - " `date -I`
+	@echo "  * $(NEW_TAG) -" `date -I`
 	@git log $(LAST_TAG)..$(NEW_TAG) --oneline
 	@echo "Then commit the changes"
 	@echo git commit -m "Version $(NEW_TAG)" -a -v
 	@echo "And finally run make retag before make cross etc"
 
 retag:
-	echo git tag -f $(LAST_TAG)
-
+	git tag -f $(LAST_TAG)
