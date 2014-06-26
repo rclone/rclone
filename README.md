@@ -214,7 +214,9 @@ Bugs
 
 Changelog
 ---------
-
+  * v0.99 - 2014-06-26
+    * Fix --dry-run not working
+    * Make compatible with go 1.1
   * v0.98 - 2014-05-30
     * s3: Treat missing Content-Length as 0 for some ceph installations
     * rclonetest: add file with a space in
