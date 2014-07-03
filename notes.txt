@@ -54,11 +54,11 @@ Making a release
   * ./rclonetest /tmp/z
   * cd ..
   * make tag
-  * edit README.md Changelog
+  * edit README.md
   * git commit version.go rclonetest/version.go README.md docs/content/downloads.md
   * make retag
   * . ~/bin/go-cross
   * make cross
   * make upload
   * make upload_website
-  * git push --tags
+  * git push --tags origin master
