@@ -38,6 +38,8 @@ const (
 	rcloneClientId     = "202264815644.apps.googleusercontent.com"
 	rcloneClientSecret = "X4Z3ca8xfWDb1Voo-F9a7ZxJ"
 	driveFolderType    = "application/vnd.google-apps.folder"
+	RFC3339In          = time.RFC3339
+	RFC3339Out         = "2006-01-02T15:04:05.000000000Z07:00"
 )
 
 // Globals
@@ -674,7 +676,7 @@ func (f *FsDrive) ListDir() fs.DirChan {
 					Bytes: -1,
 					Count: -1,
 				}
-				dir.When, _ = time.Parse(time.RFC3339, item.ModifiedDate)
+				dir.When, _ = time.Parse(RFC3339In, item.ModifiedDate)
 				out <- dir
 				return false
 			})
@@ -711,7 +713,7 @@ func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64
 	if mimeType == "" {
 		mimeType = "application/octet-stream"
 	}
-	modifiedDate := modTime.Format(time.RFC3339Nano)
+	modifiedDate := modTime.Format(RFC3339Out)
 
 	// Define the metadata for the file we are going to create.
 	info := &drive.File{
@@ -864,7 +866,7 @@ func (o *FsObjectDrive) ModTime() time.Time {
 		fs.Log(o, "Failed to read metadata: %s", err)
 		return time.Now()
 	}
-	modTime, err := time.Parse(time.RFC3339, o.modifiedDate)
+	modTime, err := time.Parse(RFC3339In, o.modifiedDate)
 	if err != nil {
 		fs.Log(o, "Failed to read mtime from object: %s", err)
 		return time.Now()
@@ -882,7 +884,7 @@ func (o *FsObjectDrive) SetModTime(modTime time.Time) {
 	}
 	// New metadata
 	info := &drive.File{
-		ModifiedDate: modTime.Format(time.RFC3339Nano),
+		ModifiedDate: modTime.Format(RFC3339Out),
 	}
 	// Set modified date
 	_, err = o.drive.svc.Files.Update(o.id, info).SetModifiedDate(true).Do()
@@ -920,7 +922,7 @@ func (o *FsObjectDrive) Open() (in io.ReadCloser, err error) {
 func (o *FsObjectDrive) Update(in io.Reader, modTime time.Time, size int64) error {
 	info := &drive.File{
 		Id:           o.id,
-		ModifiedDate: modTime.Format(time.RFC3339Nano),
+		ModifiedDate: modTime.Format(RFC3339Out),
 	}
 
 	// Make the API request to upload metadata and file data.

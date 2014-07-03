@@ -145,8 +145,9 @@ func TestMkdir(flocal, fremote fs.Fs) {
 	CheckListing(fremote, items)
 }
 
-var t1 = Time("2001-02-03T04:05:06.999999999Z")
+var t1 = Time("2001-02-03T04:05:06.499999999Z")
 var t2 = Time("2011-12-25T12:59:59.123456789Z")
+var t3 = Time("2011-12-30T12:59:59.000000000Z")
 
 func TestCopy(flocal, fremote fs.Fs) {
 	WriteFile("empty space", "", t1)
@@ -198,14 +199,14 @@ func TestSync(flocal, fremote fs.Fs) {
 	// ------------------------------------------------------------
 
 	log.Printf("Sync after adding a file")
-	WriteFile("potato", "------------------------------------------------------------", t1)
+	WriteFile("potato", "------------------------------------------------------------", t3)
 	err = fs.Sync(fremote, flocal, true)
 	if err != nil {
 		log.Fatalf("Sync failed: %v", err)
 	}
 	items = []Item{
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-		{Path: "potato", Size: 60, ModTime: t1, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
+		{Path: "potato", Size: 60, ModTime: t3, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
 	}
 	CheckListing(flocal, items)
 	CheckListing(fremote, items)
@@ -213,14 +214,14 @@ func TestSync(flocal, fremote fs.Fs) {
 	// ------------------------------------------------------------
 
 	log.Printf("Sync after changing a file's size only")
-	WriteFile("potato", "smaller but same date", t1)
+	WriteFile("potato", "smaller but same date", t3)
 	err = fs.Sync(fremote, flocal, true)
 	if err != nil {
 		log.Fatalf("Sync failed: %v", err)
 	}
 	items = []Item{
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-		{Path: "potato", Size: 21, ModTime: t1, Md5sum: "100defcf18c42a1e0dc42a789b107cd2"},
+		{Path: "potato", Size: 21, ModTime: t3, Md5sum: "100defcf18c42a1e0dc42a789b107cd2"},
 	}
 	CheckListing(flocal, items)
 	CheckListing(fremote, items)
@@ -242,7 +243,7 @@ func TestSync(flocal, fremote fs.Fs) {
 
 	before := []Item{
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-		{Path: "potato", Size: 21, ModTime: t1, Md5sum: "100defcf18c42a1e0dc42a789b107cd2"},
+		{Path: "potato", Size: 21, ModTime: t3, Md5sum: "100defcf18c42a1e0dc42a789b107cd2"},
 	}
 	items = []Item{
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
