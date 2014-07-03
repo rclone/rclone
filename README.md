@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Apr 24, 2014
+% Jul 7, 2014
 
 Rclone
 ======
@@ -214,6 +214,8 @@ Bugs
 
 Changelog
 ---------
+  * v1.00 - 2014-07-03
+    * drive: fix whole second dates - fixes #4
   * v0.99 - 2014-06-26
     * Fix --dry-run not working
     * Make compatible with go 1.1
