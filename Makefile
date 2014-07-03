@@ -1,6 +1,6 @@
 TAG := $(shell git describe --tags)
 LAST_TAG := $(shell git describe --tags --abbrev=0)
-NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = "v" . $$_')
+NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f", $$_)')
 
 rclone:	*.go */*.go
 	@go version
