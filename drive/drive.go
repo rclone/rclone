@@ -22,6 +22,7 @@ import (
 	"log"
 	"mime"
 	"net/http"
+	"os"
 	"path"
 	"strings"
 	"sync"
@@ -689,6 +690,30 @@ func (f *FsDrive) ListDir() fs.DirChan {
 	return out
 }
 
+// seekWrapper wraps an io.Reader with a basic Seek for
+// code.google.com/p/google-api-go-client/googleapi
+// to detect the length (see getReaderSize function)
+type seekWrapper struct {
+	in   io.Reader
+	size int64
+}
+
+// Read bytes from the object - see io.Reader
+func (file *seekWrapper) Read(p []byte) (n int, err error) {
+	return file.in.Read(p)
+}
+
+// Seek - minimal implementation for Google Drive's length detection
+func (file *seekWrapper) Seek(offset int64, whence int) (int64, error) {
+	switch whence {
+	case os.SEEK_CUR:
+		return 0, nil
+	case os.SEEK_END:
+		return file.size, nil
+	}
+	return 0, nil
+}
+
 // Put the object
 //
 // This assumes that the object doesn't not already exists - if you
@@ -725,6 +750,7 @@ func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64
 	}
 
 	// Make the API request to upload metadata and file data.
+	in = &seekWrapper{in: in, size: size}
 	info, err = f.svc.Files.Insert(info).Media(in).Do()
 	if err != nil {
 		return o, fmt.Errorf("Upload failed: %s", err)
@@ -926,6 +952,7 @@ func (o *FsObjectDrive) Update(in io.Reader, modTime time.Time, size int64) erro
 	}
 
 	// Make the API request to upload metadata and file data.
+	in = &seekWrapper{in: in, size: size}
 	info, err := o.drive.svc.Files.Update(info.Id, info).SetModifiedDate(true).Media(in).Do()
 	if err != nil {
 		return fmt.Errorf("Update failed: %s", err)
