@@ -214,8 +214,10 @@ Bugs
 
 Changelog
 ---------
+  * v1.01 - 2014-07-04
+    * drive: fix transfer of big files using up lots of memory
   * v1.00 - 2014-07-03
-    * drive: fix whole second dates - fixes #4
+    * drive: fix whole second dates
   * v0.99 - 2014-06-26
     * Fix --dry-run not working
     * Make compatible with go 1.1
