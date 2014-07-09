@@ -24,8 +24,13 @@ Ideas
       * sftp
       * scp
       * Google cloud storage: https://developers.google.com/storage/
+        * http://godoc.org/code.google.com/p/google-api-go-client/storage/v1
+        * Has MD5, can't set updated time so will need to use metadata
+        * metadata returned with object head and easy to update
       * rsync over ssh
-      * dropbox: https://github.com/nickoneill/go-dropbox (no MD5s)
+      * dropbox: https://github.com/stacktic/dropbox
+        * No MD5s
+        * Can't set modtime
   * control times sync (which is slow) with -a --archive flag?
 
 Need to make directory objects otherwise can't upload an empty directory
