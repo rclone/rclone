@@ -8,15 +8,19 @@ File system is case insensitive!
 
 Can only have 25,000 objects in a directory
 
-/delta might be more efficient than recursing with Metadata
-
-Setting metadata is problematic!  Might have to use a database
-
-Md5sum has to download the file
+FIXME /delta might be more efficient than recursing with Metadata
 
 FIXME do we need synchronisation for any of the dropbox calls?
+- added locking for datastore
+- fixes concurrency there
 
 FIXME need to delete metadata when we delete files!
+
+FIXME Getting this sometimes
+Failed to copy: Upload failed: invalid character '<' looking for beginning of value
+This is a JSON decode error - from Update / UploadByChunk
+- Caused by 500 error from dropbox
+- See https://github.com/stacktic/dropbox/issues/1
 */
 
 import (
@@ -26,6 +30,7 @@ import (
 	"io"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ncw/rclone/fs"
@@ -35,14 +40,15 @@ import (
 
 // Constants
 const (
-	rcloneAppKey    = "5jcck7diasz0rqy"
-	rcloneAppSecret = "1n9m04y2zx7bf26"
-	uploadChunkSize = 64 * 1024                    // chunk size for upload
-	metadataLimit   = dropbox.MetadataLimitDefault // max items to fetch at once
-	datastoreName   = "rclone"
-	tableName       = "metadata"
-	md5sumField     = "md5sum"
-	mtimeField      = "mtime"
+	rcloneAppKey     = "5jcck7diasz0rqy"
+	rcloneAppSecret  = "1n9m04y2zx7bf26"
+	uploadChunkSize  = 64 * 1024                    // chunk size for upload
+	metadataLimit    = dropbox.MetadataLimitDefault // max items to fetch at once
+	datastoreName    = "rclone"
+	tableName        = "metadata"
+	md5sumField      = "md5sum"
+	mtimeField       = "mtime"
+	maxCommitRetries = 5
 )
 
 // Register with Fs
@@ -99,6 +105,7 @@ type FsDropbox struct {
 	datastoreManager *dropbox.DatastoreManager
 	datastore        *dropbox.Datastore
 	table            *dropbox.Table
+	datastoreMutex   sync.Mutex // lock this when using the datastore
 }
 
 // FsObjectDropbox describes a dropbox object
@@ -342,6 +349,31 @@ func (f *FsDropbox) Purge() error {
 	return err
 }
 
+// Tries the transaction in fn then calls commit, repeating until retry limit
+//
+// Holds datastore mutex while in progress
+func (f *FsDropbox) transaction(fn func() error) error {
+	f.datastoreMutex.Lock()
+	defer f.datastoreMutex.Unlock()
+	var err error
+	for i := 1; i <= maxCommitRetries; i++ {
+		err = fn()
+		if err != nil {
+			return err
+		}
+
+		err = f.datastore.Commit()
+		if err == nil {
+			break
+		}
+		fs.Debug(f, "Retrying transaction %d/%d", i, maxCommitRetries)
+	}
+	if err != nil {
+		return fmt.Errorf("Failed to commit metadata changes: %s", err)
+	}
+	return nil
+}
+
 // ------------------------------------------------------------
 
 // Return the parent Fs
@@ -436,8 +468,8 @@ func (o *FsObjectDropbox) remotePath() string {
 
 // Returns the key for the metadata database
 func (o *FsObjectDropbox) metadataKey() string {
-	// FIXME lower case it?
-	key := o.dropbox.slashRoot + o.remote
+	// NB File system is case insensitive
+	key := strings.ToLower(o.dropbox.slashRoot + o.remote)
 	return fmt.Sprintf("%x", md5.Sum([]byte(key)))
 }
 
@@ -447,7 +479,9 @@ func (o *FsObjectDropbox) readMetaData() (err error) {
 		return nil
 	}
 
+	o.dropbox.datastoreMutex.Lock()
 	record, err := o.dropbox.table.Get(o.metadataKey())
+	o.dropbox.datastoreMutex.Unlock()
 	if err != nil {
 		fs.Debug(o, "Couldn't read metadata: %s", err)
 		record = nil
@@ -512,31 +546,30 @@ func (o *FsObjectDropbox) ModTime() time.Time {
 // Sets the modification time of the local fs object into the record
 // FIXME if we don't set md5sum what will that do?
 func (o *FsObjectDropbox) setModTimeAndMd5sum(modTime time.Time, md5sum string) error {
-	record, err := o.dropbox.table.GetOrInsert(o.metadataKey())
-	if err != nil {
-		return fmt.Errorf("Couldn't read record: %s", err)
-	}
-
-	if md5sum != "" {
-		err = record.Set(md5sumField, md5sum)
+	key := o.metadataKey()
+	return o.dropbox.transaction(func() error {
+		record, err := o.dropbox.table.GetOrInsert(key)
 		if err != nil {
-			return fmt.Errorf("Couldn't set md5sum record: %s", err)
+			return fmt.Errorf("Couldn't read record: %s", err)
 		}
-	}
 
-	if !modTime.IsZero() {
-		mtime := swift.TimeToFloatString(modTime)
-		err := record.Set(mtimeField, mtime)
-		if err != nil {
-			return fmt.Errorf("Couldn't set mtime record: %s", err)
+		if md5sum != "" {
+			err = record.Set(md5sumField, md5sum)
+			if err != nil {
+				return fmt.Errorf("Couldn't set md5sum record: %s", err)
+			}
 		}
-	}
 
-	err = o.dropbox.datastore.Commit()
-	if err != nil {
-		return fmt.Errorf("Failed to commit metadata changes: %s", err)
-	}
-	return nil
+		if !modTime.IsZero() {
+			mtime := swift.TimeToFloatString(modTime)
+			err := record.Set(mtimeField, mtime)
+			if err != nil {
+				return fmt.Errorf("Couldn't set mtime record: %s", err)
+			}
+		}
+
+		return nil
+	})
 }
 
 // Sets the modification time of the local fs object
