@@ -159,7 +159,7 @@ func checkOne(pair ObjectPair, out ObjectPairChan) {
 	out <- pair
 }
 
-// Read FsObjects~s on in send to out if they need uploading
+// Read Objects~s on in send to out if they need uploading
 //
 // FIXME potentially doing lots of MD5SUMS at once
 func PairChecker(in ObjectPairChan, out ObjectPairChan, wg *sync.WaitGroup) {
@@ -172,7 +172,7 @@ func PairChecker(in ObjectPairChan, out ObjectPairChan, wg *sync.WaitGroup) {
 	}
 }
 
-// Read FsObjects on in and copy them
+// Read Objects on in and copy them
 func Copier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for pair := range in {
@@ -376,10 +376,10 @@ func Check(fdst, fsrc Fs) error {
 	return nil
 }
 
-// List the Fs to stdout
+// List the Fs to the supplied function
 //
 // Lists in parallel which may get them out of order
-func List(f Fs) error {
+func ListFn(f Fs, fn func(Object)) error {
 	in := f.List()
 	var wg sync.WaitGroup
 	wg.Add(Config.Checkers)
@@ -387,15 +387,55 @@ func List(f Fs) error {
 		go func() {
 			defer wg.Done()
 			for o := range in {
-				Stats.Checking(o)
-				modTime := o.ModTime()
-				Stats.DoneChecking(o)
-				fmt.Printf("%9d %19s %s\n", o.Size(), modTime.Format("2006-01-02 15:04:05.00000000"), o.Remote())
+				fn(o)
 			}
 		}()
 	}
 	wg.Wait()
 	return nil
+}
+
+// List the Fs to stdout
+//
+// Shows size and path
+//
+// Lists in parallel which may get them out of order
+func List(f Fs) error {
+	return ListFn(f, func(o Object) {
+		fmt.Printf("%9d %s\n", o.Size(), o.Remote())
+	})
+}
+
+// List the Fs to stdout
+//
+// Shows size, mod time and path
+//
+// Lists in parallel which may get them out of order
+func ListLong(f Fs) error {
+	return ListFn(f, func(o Object) {
+		Stats.Checking(o)
+		modTime := o.ModTime()
+		Stats.DoneChecking(o)
+		fmt.Printf("%9d %19s %s\n", o.Size(), modTime.Format("2006-01-02 15:04:05.00000000"), o.Remote())
+	})
+}
+
+// List the Fs to stdout
+//
+// Produces the same output as the md5sum command
+//
+// Lists in parallel which may get them out of order
+func Md5sum(f Fs) error {
+	return ListFn(f, func(o Object) {
+		Stats.Checking(o)
+		md5sum, err := o.Md5sum()
+		Stats.DoneChecking(o)
+		if err != nil {
+			Debug(o, "Failed to read MD5: %v", err)
+			md5sum = "UNKNOWN"
+		}
+		fmt.Printf("%32s  %s\n", md5sum, o.Remote())
+	})
 }
 
 // List the directories/buckets/containers in the Fs to stdout

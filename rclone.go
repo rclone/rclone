@@ -92,7 +92,7 @@ var Commands = []Command{
 		Name:     "ls",
 		ArgsHelp: "[remote://path]",
 		Help: `
-        List all the objects in the the path.`,
+        List all the objects in the the path with size and path.`,
 		Run: func(fdst, fsrc fs.Fs) {
 			err := fs.List(fdst)
 			if err != nil {
@@ -111,6 +111,34 @@ var Commands = []Command{
 			err := fs.ListDir(fdst)
 			if err != nil {
 				log.Fatalf("Failed to listdir: %v", err)
+			}
+		},
+		MinArgs: 1,
+		MaxArgs: 1,
+	},
+	{
+		Name:     "lsl",
+		ArgsHelp: "[remote://path]",
+		Help: `
+        List all the objects in the the path with modification time, size and path.`,
+		Run: func(fdst, fsrc fs.Fs) {
+			err := fs.ListLong(fdst)
+			if err != nil {
+				log.Fatalf("Failed to list long: %v", err)
+			}
+		},
+		MinArgs: 1,
+		MaxArgs: 1,
+	},
+	{
+		Name:     "md5sum",
+		ArgsHelp: "[remote://path]",
+		Help: `
+        Produces an md5sum file for all the objects in the path.`,
+		Run: func(fdst, fsrc fs.Fs) {
+			err := fs.Md5sum(fdst)
+			if err != nil {
+				log.Fatalf("Failed to list: %v", err)
 			}
 		},
 		MinArgs: 1,
