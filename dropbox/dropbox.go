@@ -4,15 +4,7 @@ package dropbox
 /*
 Limitations of dropbox
 
-File system is case insensitive!
-
-Can only have 25,000 objects in a directory
-
-FIXME /delta might be more efficient than recursing with Metadata
-
-FIXME do we need synchronisation for any of the dropbox calls?
-- added locking for datastore
-- fixes concurrency there
+File system is case insensitive
 
 FIXME need to delete metadata when we delete files!
 
@@ -21,6 +13,7 @@ Failed to copy: Upload failed: invalid character '<' looking for beginning of va
 This is a JSON decode error - from Update / UploadByChunk
 - Caused by 500 error from dropbox
 - See https://github.com/stacktic/dropbox/issues/1
+- Possibly confusing dropbox with excess concurrency?
 */
 
 import (
@@ -101,7 +94,8 @@ func Config(name string) {
 type FsDropbox struct {
 	db               *dropbox.Dropbox // the connection to the dropbox server
 	root             string           // the path we are working on
-	slashRoot        string           // root with "/" prefix and postix
+	slashRoot        string           // root with "/" prefix
+	slashRootSlash   string           // root with "/" prefix and postix
 	datastoreManager *dropbox.DatastoreManager
 	datastore        *dropbox.Datastore
 	table            *dropbox.Table
@@ -157,13 +151,15 @@ func NewFs(name, path string) (fs.Fs, error) {
 		return nil, err
 	}
 	slashRoot := "/" + root
+	slashRootSlash := slashRoot
 	if root != "" {
-		slashRoot += "/"
+		slashRootSlash += "/"
 	}
 	f := &FsDropbox{
-		root:      root,
-		slashRoot: slashRoot,
-		db:        db,
+		root:           root,
+		slashRoot:      slashRoot,
+		slashRootSlash: slashRootSlash,
+		db:             db,
 	}
 
 	// Read the token from the config file
@@ -196,7 +192,7 @@ func (f *FsDropbox) newFsObjectWithInfo(remote string, info *dropbox.Entry) (fs.
 		dropbox: f,
 		remote:  remote,
 	}
-	if info == nil {
+	if info != nil {
 		o.setMetadataFromEntry(info)
 	} else {
 		err := o.readEntryAndSetMetadata()
@@ -227,29 +223,46 @@ func (f *FsDropbox) NewFsObject(remote string) fs.Object {
 // Strips the root off entry and returns it
 func (f *FsDropbox) stripRoot(entry *dropbox.Entry) string {
 	path := entry.Path
-	if strings.HasPrefix(path, f.slashRoot) {
-		path = path[len(f.slashRoot):]
+	if strings.HasPrefix(path, f.slashRootSlash) {
+		path = path[len(f.slashRootSlash):]
 	}
 	return path
 }
 
-// Walk the path returning a channel of FsObjects
-//
-// FIXME could do this in parallel but needs to be limited to Checkers
-func (f *FsDropbox) list(path string, out fs.ObjectsChan) {
-	entry, err := f.db.Metadata(f.slashRoot+path, true, false, "", "", metadataLimit)
-	if err != nil {
-		fs.Stats.Error()
-		fs.Log(f, "Couldn't list %q: %s", path, err)
-	} else {
-		for i := range entry.Contents {
-			entry := &entry.Contents[i]
-			path = f.stripRoot(entry)
-			if entry.IsDir {
-				f.list(path, out)
-			} else {
-				out <- f.NewFsObjectWithInfo(path, entry)
+// Walk the root returning a channel of FsObjects
+func (f *FsDropbox) list(out fs.ObjectsChan) {
+	cursor := ""
+	for {
+		deltaPage, err := f.db.Delta(cursor, f.slashRoot)
+		if err != nil {
+			fs.Stats.Error()
+			fs.Log(f, "Couldn't list: %s", err)
+			break
+		} else {
+			if deltaPage.Reset && cursor != "" {
+				fs.Log(f, "Unexpected reset during listing - try again")
+				fs.Stats.Error()
+				break
 			}
+			fs.Debug(f, "%d delta entries received", len(deltaPage.Entries))
+			for i := range deltaPage.Entries {
+				deltaEntry := &deltaPage.Entries[i]
+				entry := deltaEntry.Entry
+				if entry == nil {
+					// This notifies of a deleted object which we ignore
+					continue
+				}
+				if entry.IsDir {
+					// ignore directories
+				} else {
+					path := f.stripRoot(entry)
+					out <- f.NewFsObjectWithInfo(path, entry)
+				}
+			}
+			if !deltaPage.HasMore {
+				break
+			}
+			cursor = deltaPage.Cursor
 		}
 	}
 }
@@ -259,7 +272,7 @@ func (f *FsDropbox) List() fs.ObjectsChan {
 	out := make(fs.ObjectsChan, fs.Config.Checkers)
 	go func() {
 		defer close(out)
-		f.list("", out)
+		f.list(out)
 	}()
 	return out
 }
@@ -326,7 +339,7 @@ func (f *FsDropbox) Mkdir() error {
 //
 // Returns an error if it isn't empty
 func (f *FsDropbox) Rmdir() error {
-	entry, err := f.db.Metadata(f.slashRoot, true, false, "", "", metadataLimit)
+	entry, err := f.db.Metadata(f.slashRoot, true, false, "", "", 16)
 	if err != nil {
 		return err
 	}
@@ -463,13 +476,13 @@ func (o *FsObjectDropbox) readEntryAndSetMetadata() error {
 
 // Returns the remote path for the object
 func (o *FsObjectDropbox) remotePath() string {
-	return o.dropbox.slashRoot + o.remote
+	return o.dropbox.slashRootSlash + o.remote
 }
 
 // Returns the key for the metadata database
 func (o *FsObjectDropbox) metadataKey() string {
 	// NB File system is case insensitive
-	key := strings.ToLower(o.dropbox.slashRoot + o.remote)
+	key := strings.ToLower(o.remotePath())
 	return fmt.Sprintf("%x", md5.Sum([]byte(key)))
 }
 
@@ -479,6 +492,7 @@ func (o *FsObjectDropbox) readMetaData() (err error) {
 		return nil
 	}
 
+	// fs.Debug(o, "Reading metadata from datastore")
 	o.dropbox.datastoreMutex.Lock()
 	record, err := o.dropbox.table.Get(o.metadataKey())
 	o.dropbox.datastoreMutex.Unlock()
@@ -547,6 +561,7 @@ func (o *FsObjectDropbox) ModTime() time.Time {
 // FIXME if we don't set md5sum what will that do?
 func (o *FsObjectDropbox) setModTimeAndMd5sum(modTime time.Time, md5sum string) error {
 	key := o.metadataKey()
+	// fs.Debug(o, "Writing metadata to datastore")
 	return o.dropbox.transaction(func() error {
 		record, err := o.dropbox.table.GetOrInsert(key)
 		if err != nil {
