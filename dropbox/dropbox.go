@@ -100,6 +100,7 @@ type FsDropbox struct {
 	datastore        *dropbox.Datastore
 	table            *dropbox.Table
 	datastoreMutex   sync.Mutex // lock this when using the datastore
+	datastoreErr     error      // pending errors on the datastore
 }
 
 // FsObjectDropbox describes a dropbox object
@@ -171,17 +172,28 @@ func NewFs(name, path string) (fs.Fs, error) {
 	// Make a db to store rclone metadata in
 	f.datastoreManager = db.NewDatastoreManager()
 
-	// Open the rclone datastore
-	f.datastore, err = f.datastoreManager.OpenDatastore(datastoreName)
-	if err != nil {
-		return nil, err
-	}
+	// Open the datastore in the background
+	go func() {
+		f.datastoreMutex.Lock()
+		defer f.datastoreMutex.Unlock()
+		fs.Debug(f, "Open rclone datastore")
+		// Open the rclone datastore
+		f.datastore, err = f.datastoreManager.OpenDatastore(datastoreName)
+		if err != nil {
+			fs.Log(f, "Failed to open datastore: %v", err)
+			f.datastoreErr = err
+			return
+		}
 
-	// Get the table we are using
-	f.table, err = f.datastore.GetTable(tableName)
-	if err != nil {
-		return nil, err
-	}
+		// Get the table we are using
+		f.table, err = f.datastore.GetTable(tableName)
+		if err != nil {
+			fs.Log(f, "Failed to open datastore table: %v", err)
+			f.datastoreErr = err
+			return
+		}
+		fs.Debug(f, "Open rclone datastore finished")
+	}()
 
 	return f, nil
 }
@@ -368,6 +380,9 @@ func (f *FsDropbox) Purge() error {
 func (f *FsDropbox) transaction(fn func() error) error {
 	f.datastoreMutex.Lock()
 	defer f.datastoreMutex.Unlock()
+	if f.datastoreErr != nil {
+		return f.datastoreErr
+	}
 	var err error
 	for i := 1; i <= maxCommitRetries; i++ {
 		err = fn()
@@ -385,6 +400,18 @@ func (f *FsDropbox) transaction(fn func() error) error {
 		return fmt.Errorf("Failed to commit metadata changes: %s", err)
 	}
 	return nil
+}
+
+// Reads the record attached to key
+//
+// Holds datastore mutex while in progress
+func (f *FsDropbox) readRecord(key string) (*dropbox.Record, error) {
+	f.datastoreMutex.Lock()
+	defer f.datastoreMutex.Unlock()
+	if f.datastoreErr != nil {
+		return nil, f.datastoreErr
+	}
+	return f.table.Get(key)
 }
 
 // ------------------------------------------------------------
@@ -493,9 +520,7 @@ func (o *FsObjectDropbox) readMetaData() (err error) {
 	}
 
 	// fs.Debug(o, "Reading metadata from datastore")
-	o.dropbox.datastoreMutex.Lock()
-	record, err := o.dropbox.table.Get(o.metadataKey())
-	o.dropbox.datastoreMutex.Unlock()
+	record, err := o.dropbox.readRecord(o.metadataKey())
 	if err != nil {
 		fs.Debug(o, "Couldn't read metadata: %s", err)
 		record = nil
