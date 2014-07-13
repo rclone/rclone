@@ -343,7 +343,14 @@ func (f *FsDropbox) Put(in io.Reader, remote string, modTime time.Time, size int
 
 // Mkdir creates the container if it doesn't exist
 func (f *FsDropbox) Mkdir() error {
-	_, err := f.db.CreateFolder(f.slashRoot)
+	entry, err := f.db.Metadata(f.slashRoot, false, false, "", "", metadataLimit)
+	if err == nil {
+		if entry.IsDir {
+			return nil
+		}
+		return fmt.Errorf("%q already exists as file", f.root)
+	}
+	_, err = f.db.CreateFolder(f.slashRoot)
 	return err
 }
 
