@@ -1,3 +1,3 @@
-package main
+package fs
 
 const Version = "v1.01"

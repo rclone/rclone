@@ -299,7 +299,7 @@ directory under it and perform tests on it, deleting it at the end.
 
 Options:
 
-`, Version)
+`, fs.Version)
 	pflag.PrintDefaults()
 }
 
@@ -316,7 +316,7 @@ func main() {
 	pflag.Usage = syntaxError
 	pflag.Parse()
 	if *version {
-		fmt.Printf("rclonetest %s\n", Version)
+		fmt.Printf("rclonetest %s\n", fs.Version)
 		os.Exit(0)
 	}
 	fs.LoadConfig()

@@ -228,7 +228,7 @@ Syntax: [options] subcommand <parameters> <parameters...>
 
 Subcommands:
 
-`, Version)
+`, fs.Version)
 	for i := range Commands {
 		cmd := &Commands[i]
 		fmt.Fprintf(os.Stderr, "    %s %s\n", cmd.Name, cmd.ArgsHelp)
@@ -329,7 +329,7 @@ func StartStats() {
 func main() {
 	ParseFlags()
 	if *version {
-		fmt.Printf("rclone %s\n", Version)
+		fmt.Printf("rclone %s\n", fs.Version)
 		os.Exit(0)
 	}
 	command, args := ParseCommand()

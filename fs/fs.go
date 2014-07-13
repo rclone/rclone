@@ -10,6 +10,12 @@ import (
 	"time"
 )
 
+// Constants
+const (
+	// User agent for Fs which can set it
+	UserAgent = "rclone/" + Version
+)
+
 // Globals
 var (
 	// Filesystem registry

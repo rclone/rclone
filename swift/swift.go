@@ -107,9 +107,10 @@ func swiftConnection(name string) (*swift.Connection, error) {
 		return nil, errors.New("auth not found")
 	}
 	c := &swift.Connection{
-		UserName: userName,
-		ApiKey:   apiKey,
-		AuthUrl:  authUrl,
+		UserName:  userName,
+		ApiKey:    apiKey,
+		AuthUrl:   authUrl,
+		UserAgent: fs.UserAgent,
 	}
 	err := c.Authenticate()
 	if err != nil {

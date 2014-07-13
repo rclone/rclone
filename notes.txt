@@ -60,7 +60,7 @@ Making a release
   * cd ..
   * make tag
   * edit README.md
-  * git commit version.go rclonetest/version.go README.md docs/content/downloads.md
+  * git commit fs/version.go README.md docs/content/downloads.md
   * make retag
   * . ~/bin/go-cross
   * make cross

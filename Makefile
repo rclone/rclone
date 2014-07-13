@@ -45,8 +45,7 @@ serve:
 tag:
 	@echo "Old tag is $(LAST_TAG)"
 	@echo "New tag is $(NEW_TAG)"
-	echo -e "package main\n const Version = \"$(NEW_TAG)\"\n" | gofmt > version.go
-	cp -av version.go rclonetest/version.go
+	echo -e "package fs\n const Version = \"$(NEW_TAG)\"\n" | gofmt > fs/version.go
 	perl -lpe 's/VERSION/${NEW_TAG}/g; s/DATE/'`date -I`'/g;' docs/content/downloads.md.in > docs/content/downloads.md
 	git tag $(NEW_TAG)
 	@echo "Add this to changelog in README.md"
