@@ -796,7 +796,9 @@ func (fs *FsDrive) Precision() time.Duration {
 
 // Purge deletes all the files and the container
 //
-// Returns an error if it isn't empty
+// Optional interface: Only implement this if you have a way of
+// deleting all the files quicker than just running Remove() on the
+// result of List()
 func (f *FsDrive) Purge() error {
 	if f.root == "" {
 		return fmt.Errorf("Can't purge root directory")
