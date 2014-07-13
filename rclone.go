@@ -17,6 +17,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	// Active file systems
 	_ "github.com/ncw/rclone/drive"
+	_ "github.com/ncw/rclone/googlecloudstorage"
 	_ "github.com/ncw/rclone/local"
 	_ "github.com/ncw/rclone/s3"
 	_ "github.com/ncw/rclone/swift"
