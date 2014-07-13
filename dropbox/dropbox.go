@@ -6,7 +6,10 @@ Limitations of dropbox
 
 File system is case insensitive
 
-FIXME need to delete metadata when we delete files!
+The datastore is limited to 100,000 records which therefore is the
+limit of the number of files that rclone can use on dropbox.
+
+FIXME only open datastore if we need it?
 
 FIXME Getting this sometimes
 Failed to copy: Upload failed: invalid character '<' looking for beginning of value
@@ -261,14 +264,22 @@ func (f *FsDropbox) list(out fs.ObjectsChan) {
 				deltaEntry := &deltaPage.Entries[i]
 				entry := deltaEntry.Entry
 				if entry == nil {
-					// This notifies of a deleted object which we ignore
-					continue
-				}
-				if entry.IsDir {
-					// ignore directories
+					// This notifies of a deleted object
+					fs.Debug(f, "Deleting metadata for %q", deltaEntry.Path)
+					key := metadataKey(deltaEntry.Path) // Path is lowercased
+					err := f.deleteMetadata(key)
+					if err != nil {
+						fs.Debug(f, "Failed to delete metadata for %q", deltaEntry.Path)
+						// Don't accumulate Error here
+					}
+
 				} else {
-					path := f.stripRoot(entry)
-					out <- f.NewFsObjectWithInfo(path, entry)
+					if entry.IsDir {
+						// ignore directories
+					} else {
+						path := f.stripRoot(entry)
+						out <- f.NewFsObjectWithInfo(path, entry)
+					}
 				}
 			}
 			if !deltaPage.HasMore {
@@ -375,8 +386,26 @@ func (fs *FsDropbox) Precision() time.Duration {
 
 // Purge deletes all the files and the container
 //
-// Returns an error if it isn't empty
+// Optional interface: Only implement this if you have a way of
+// deleting all the files quicker than just running Remove() on the
+// result of List()
 func (f *FsDropbox) Purge() error {
+	// Delete metadata first
+	var wg sync.WaitGroup
+	to_be_deleted := f.List()
+	wg.Add(fs.Config.Transfers)
+	for i := 0; i < fs.Config.Transfers; i++ {
+		go func() {
+			defer wg.Done()
+			for dst := range to_be_deleted {
+				o := dst.(*FsObjectDropbox)
+				o.deleteMetadata()
+			}
+		}()
+	}
+	wg.Wait()
+
+	// Let dropbox delete the filesystem tree
 	_, err := f.db.Delete(f.slashRoot)
 	return err
 }
@@ -407,6 +436,21 @@ func (f *FsDropbox) transaction(fn func() error) error {
 		return fmt.Errorf("Failed to commit metadata changes: %s", err)
 	}
 	return nil
+}
+
+// Deletes the medadata associated with this key
+func (f *FsDropbox) deleteMetadata(key string) error {
+	return f.transaction(func() error {
+		record, err := f.table.Get(key)
+		if err != nil {
+			return fmt.Errorf("Couldn't get record: %s", err)
+		}
+		if record == nil {
+			return nil
+		}
+		record.DeleteRecord()
+		return nil
+	})
 }
 
 // Reads the record attached to key
@@ -513,11 +557,16 @@ func (o *FsObjectDropbox) remotePath() string {
 	return o.dropbox.slashRootSlash + o.remote
 }
 
+// Returns the key for the metadata database for a given path
+func metadataKey(path string) string {
+	// NB File system is case insensitive
+	path = strings.ToLower(path)
+	return fmt.Sprintf("%x", md5.Sum([]byte(path)))
+}
+
 // Returns the key for the metadata database
 func (o *FsObjectDropbox) metadataKey() string {
-	// NB File system is case insensitive
-	key := strings.ToLower(o.remotePath())
-	return fmt.Sprintf("%x", md5.Sum([]byte(key)))
+	return metadataKey(o.remotePath())
 }
 
 // readMetaData gets the info if it hasn't already been fetched
@@ -619,6 +668,18 @@ func (o *FsObjectDropbox) setModTimeAndMd5sum(modTime time.Time, md5sum string) 
 	})
 }
 
+// Deletes the medadata associated with this file
+//
+// It logs any errors
+func (o *FsObjectDropbox) deleteMetadata() {
+	fs.Debug(o, "Deleting metadata from datastore")
+	err := o.dropbox.deleteMetadata(o.metadataKey())
+	if err != nil {
+		fs.Log(o, "Error deleting metadata: %v", err)
+		fs.Stats.Error()
+	}
+}
+
 // Sets the modification time of the local fs object
 //
 // Commits the datastore
@@ -662,6 +723,7 @@ func (o *FsObjectDropbox) Update(in io.Reader, modTime time.Time, size int64) er
 
 // Remove an object
 func (o *FsObjectDropbox) Remove() error {
+	o.deleteMetadata()
 	_, err := o.dropbox.db.Delete(o.remotePath())
 	return err
 }
