@@ -2,11 +2,14 @@
 package googlecloudstorage
 
 /*
-FIXME can't set updated but can set metadata
+Notes
 
-FIXME Patch needs full_control not just read_write
+Can't set Updated but can set Metadata on object creation
 
-FIXME Patch isn't working with files with spaces in - giving 404 error
+Patch needs full_control not just read_write
+
+FIXME Patch/Delete/Get isn't working with files with spaces in - giving 404 error
+- https://code.google.com/p/google-api-go-client/issues/detail?id=64
 */
 
 import (
@@ -39,8 +42,7 @@ const (
 var (
 	// Description of how to auth for this app
 	storageAuth = &googleauth.Auth{
-		Scope: "https://www.googleapis.com/auth/devstorage.full_control",
-		// Scope:               "https://www.googleapis.com/auth/devstorage.read_write",
+		Scope:               storage.DevstorageFull_controlScope,
 		DefaultClientId:     rcloneClientId,
 		DefaultClientSecret: rcloneClientSecret,
 	}
@@ -55,14 +57,55 @@ func init() {
 			storageAuth.Config(name)
 		},
 		Options: []fs.Option{{
-			Name: "project_number",
-			Help: "Project number optional - needed only for list/create/delete buckets - see your developer console.",
-		}, {
 			Name: "client_id",
 			Help: "Google Application Client Id - leave blank to use rclone's.",
 		}, {
 			Name: "client_secret",
 			Help: "Google Application Client Secret - leave blank to use rclone's.",
+		}, {
+			Name: "project_number",
+			Help: "Project number optional - needed only for list/create/delete buckets - see your developer console.",
+		}, {
+			Name: "object_acl",
+			Help: "Access Control List for new objects.",
+			Examples: []fs.OptionExample{{
+				Value: "authenticatedRead",
+				Help:  "Object owner gets OWNER access, and all Authenticated Users get READER access.",
+			}, {
+				Value: "bucketOwnerFullControl",
+				Help:  "Object owner gets OWNER access, and project team owners get OWNER access.",
+			}, {
+				Value: "bucketOwnerRead",
+				Help:  "Object owner gets OWNER access, and project team owners get READER access.",
+			}, {
+				Value: "private",
+				Help:  "Object owner gets OWNER access [default if left blank].",
+			}, {
+				Value: "projectPrivate",
+				Help:  "Object owner gets OWNER access, and project team members get access according to their roles.",
+			}, {
+				Value: "publicRead",
+				Help:  "Object owner gets OWNER access, and all Users get READER access.",
+			}},
+		}, {
+			Name: "bucket_acl",
+			Help: "Access Control List for new buckets.",
+			Examples: []fs.OptionExample{{
+				Value: "authenticatedRead",
+				Help:  "Project team owners get OWNER access, and all Authenticated Users get READER access.",
+			}, {
+				Value: "private",
+				Help:  "Project team owners get OWNER access [default if left blank].",
+			}, {
+				Value: "projectPrivate",
+				Help:  "Project team members get access according to their roles.",
+			}, {
+				Value: "publicRead",
+				Help:  "Project team owners get OWNER access, and all Users get READER access.",
+			}, {
+				Value: "publicReadWrite",
+				Help:  "Project team owners get OWNER access, and all Users get WRITER access.",
+			}},
 		}},
 	})
 }
@@ -74,6 +117,8 @@ type FsStorage struct {
 	bucket        string           // the bucket we are working on
 	root          string           // the path we are working on if any
 	projectNumber string           // used for finding buckets
+	objectAcl     string           // used when creating new objects
+	bucketAcl     string           // used when creating new buckets
 }
 
 // FsObjectStorage describes a storage object
@@ -129,6 +174,14 @@ func NewFs(name, root string) (fs.Fs, error) {
 		bucket:        bucket,
 		root:          directory,
 		projectNumber: fs.ConfigFile.MustValue(name, "project_number"),
+		objectAcl:     fs.ConfigFile.MustValue(name, "object_acl"),
+		bucketAcl:     fs.ConfigFile.MustValue(name, "bucket_acl"),
+	}
+	if f.objectAcl == "" {
+		f.objectAcl = "private"
+	}
+	if f.bucketAcl == "" {
+		f.bucketAcl = "private"
 	}
 
 	// Create a new authorized Drive client.
@@ -314,13 +367,10 @@ func (f *FsStorage) Mkdir() error {
 		return fmt.Errorf("Can't make bucket without project number")
 	}
 
-	//return f.svc.BucketCreate(f.bucket, nil)
-	// FIXME is this public or private or what?????
 	bucket := storage.Bucket{
-		// FIXME other stuff here? ACL??
 		Name: f.bucket,
 	}
-	_, err = f.svc.Buckets.Insert(f.projectNumber, &bucket).Do()
+	_, err = f.svc.Buckets.Insert(f.projectNumber, &bucket).PredefinedAcl(f.bucketAcl).Do()
 	return err
 }
 
@@ -483,7 +533,6 @@ func (o *FsObjectStorage) Update(in io.Reader, modTime time.Time, size int64) er
 	}
 
 	object := storage.Object{
-		// FIXME other stuff here? ACL??
 		Bucket:      o.storage.bucket,
 		Name:        o.storage.root + o.remote,
 		ContentType: contentType,
@@ -491,16 +540,14 @@ func (o *FsObjectStorage) Update(in io.Reader, modTime time.Time, size int64) er
 		Updated:     modTime.Format(RFC3339Out), // Doesn't get set
 		Metadata:    metadataFromModTime(modTime),
 	}
-	// FIXME ACL????
-	_, err := o.storage.svc.Objects.Insert(o.storage.bucket, &object).Media(in).Name(object.Name).Do()
+	_, err := o.storage.svc.Objects.Insert(o.storage.bucket, &object).Media(in).Name(object.Name).PredefinedAcl(o.storage.objectAcl).Do()
 	// FIXME read back the MD5sum out of the returned object and check it?
 	return err
 }
 
 // Remove an object
 func (o *FsObjectStorage) Remove() error {
-	return fmt.Errorf("FIXME - not implemented")
-	//	return o.storage.svc.ObjectDelete(o.storage.bucket, o.storage.root+o.remote)
+	return o.storage.svc.Objects.Delete(o.storage.bucket, o.storage.root+o.remote).Do()
 }
 
 // Check the interfaces are satisfied
