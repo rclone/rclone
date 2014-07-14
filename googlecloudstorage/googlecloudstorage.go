@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -139,20 +140,19 @@ func NewFs(name, root string) (fs.Fs, error) {
 	if f.root != "" {
 		f.root += "/"
 		// Check to see if the object exists
-		// FIXME
-		// _, _, err = f.svc.Object(bucket, directory)
-		// if err == nil {
-		// 	remote := path.Base(directory)
-		// 	f.root = path.Dir(directory)
-		// 	if f.root == "." {
-		// 		f.root = ""
-		// 	} else {
-		// 		f.root += "/"
-		// 	}
-		// 	obj := f.NewFsObject(remote)
-		// 	// return a Fs Limited to this object
-		// 	return fs.NewLimited(f, obj), nil
-		// }
+		_, err = f.svc.Objects.Get(bucket, directory).Do()
+		if err == nil {
+			remote := path.Base(directory)
+			f.root = path.Dir(directory)
+			if f.root == "." {
+				f.root = ""
+			} else {
+				f.root += "/"
+			}
+			obj := f.NewFsObject(remote)
+			// return a Fs Limited to this object
+			return fs.NewLimited(f, obj), nil
+		}
 	}
 	return f, nil
 }
