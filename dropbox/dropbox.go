@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -122,12 +123,6 @@ func (f *FsDropbox) String() string {
 	return fmt.Sprintf("Dropbox root '%s'", f.root)
 }
 
-// parseParse parses a dropbox 'url'
-func parseDropboxPath(path string) (root string, err error) {
-	root = strings.Trim(path, "/")
-	return
-}
-
 // Makes a new dropbox from the config
 func newDropbox(name string) *dropbox.Dropbox {
 	db := dropbox.NewDropbox()
@@ -147,24 +142,12 @@ func newDropbox(name string) *dropbox.Dropbox {
 }
 
 // NewFs contstructs an FsDropbox from the path, container:path
-func NewFs(name, path string) (fs.Fs, error) {
+func NewFs(name, root string) (fs.Fs, error) {
 	db := newDropbox(name)
-
-	root, err := parseDropboxPath(path)
-	if err != nil {
-		return nil, err
-	}
-	slashRoot := "/" + root
-	slashRootSlash := slashRoot
-	if root != "" {
-		slashRootSlash += "/"
-	}
 	f := &FsDropbox{
-		root:           root,
-		slashRoot:      slashRoot,
-		slashRootSlash: slashRootSlash,
-		db:             db,
+		db: db,
 	}
+	f.setRoot(root)
 
 	// Read the token from the config file
 	token := fs.ConfigFile.MustValue(name, "token")
@@ -176,29 +159,57 @@ func NewFs(name, path string) (fs.Fs, error) {
 	f.datastoreManager = db.NewDatastoreManager()
 
 	// Open the datastore in the background
-	go func() {
-		f.datastoreMutex.Lock()
-		defer f.datastoreMutex.Unlock()
-		fs.Debug(f, "Open rclone datastore")
-		// Open the rclone datastore
-		f.datastore, err = f.datastoreManager.OpenDatastore(datastoreName)
-		if err != nil {
-			fs.Log(f, "Failed to open datastore: %v", err)
-			f.datastoreErr = err
-			return
-		}
+	go f.openDataStore()
 
-		// Get the table we are using
-		f.table, err = f.datastore.GetTable(tableName)
-		if err != nil {
-			fs.Log(f, "Failed to open datastore table: %v", err)
-			f.datastoreErr = err
-			return
+	// See if the root is actually an object
+	entry, err := f.db.Metadata(f.slashRoot, false, false, "", "", metadataLimit)
+	if err == nil && !entry.IsDir {
+		remote := path.Base(f.root)
+		newRoot := path.Dir(f.root)
+		if newRoot == "." {
+			newRoot = ""
 		}
-		fs.Debug(f, "Open rclone datastore finished")
-	}()
+		f.setRoot(newRoot)
+		obj := f.NewFsObject(remote)
+		// return a Fs Limited to this object
+		return fs.NewLimited(f, obj), nil
+	}
 
 	return f, nil
+}
+
+// Sets root in f
+func (f *FsDropbox) setRoot(root string) {
+	f.root = strings.Trim(root, "/")
+	f.slashRoot = "/" + f.root
+	f.slashRootSlash = f.slashRoot
+	if f.root != "" {
+		f.slashRootSlash += "/"
+	}
+}
+
+// Opens the datastore in f
+func (f *FsDropbox) openDataStore() {
+	f.datastoreMutex.Lock()
+	defer f.datastoreMutex.Unlock()
+	fs.Debug(f, "Open rclone datastore")
+	// Open the rclone datastore
+	var err error
+	f.datastore, err = f.datastoreManager.OpenDatastore(datastoreName)
+	if err != nil {
+		fs.Log(f, "Failed to open datastore: %v", err)
+		f.datastoreErr = err
+		return
+	}
+
+	// Get the table we are using
+	f.table, err = f.datastore.GetTable(tableName)
+	if err != nil {
+		fs.Log(f, "Failed to open datastore table: %v", err)
+		f.datastoreErr = err
+		return
+	}
+	fs.Debug(f, "Open rclone datastore finished")
 }
 
 // Return an FsObject from a path
