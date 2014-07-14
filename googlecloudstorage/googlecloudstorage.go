@@ -14,6 +14,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"path"
 	"regexp"
@@ -475,17 +476,20 @@ func (o *FsObjectStorage) Open() (in io.ReadCloser, err error) {
 //
 // The new object may have been created if an error is returned
 func (o *FsObjectStorage) Update(in io.Reader, modTime time.Time, size int64) error {
-	// FIXME Set the mtime
+	// Guess the content type
+	contentType := mime.TypeByExtension(path.Ext(o.remote))
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
 	object := storage.Object{
 		// FIXME other stuff here? ACL??
-		Bucket: o.storage.bucket,
-		Name:   o.storage.root + o.remote,
-		// ContentType: ???
-		// Crc32c: ??? // set this - will it get checked?
-		// Md5Hash: will this get checked?
-		Size:     uint64(size),
-		Updated:  modTime.Format(RFC3339Out), // Doesn't get set
-		Metadata: metadataFromModTime(modTime),
+		Bucket:      o.storage.bucket,
+		Name:        o.storage.root + o.remote,
+		ContentType: contentType,
+		Size:        uint64(size),
+		Updated:     modTime.Format(RFC3339Out), // Doesn't get set
+		Metadata:    metadataFromModTime(modTime),
 	}
 	// FIXME ACL????
 	_, err := o.storage.svc.Objects.Insert(o.storage.bucket, &object).Media(in).Name(object.Name).Do()
