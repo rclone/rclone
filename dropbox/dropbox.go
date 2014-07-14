@@ -31,7 +31,6 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/swift"
 	"github.com/stacktic/dropbox"
 )
 
@@ -46,6 +45,8 @@ const (
 	md5sumField      = "md5sum"
 	mtimeField       = "mtime"
 	maxCommitRetries = 5
+	RFC3339In        = time.RFC3339
+	RFC3339Out       = "2006-01-02T15:04:05.000000000Z07:00"
 )
 
 // Register with Fs
@@ -622,7 +623,7 @@ func (o *FsObjectDropbox) readMetaData() (err error) {
 			if !ok {
 				fs.Debug(o, "mtime not a string")
 			} else {
-				modTime, err := swift.FloatStringToTime(mtime)
+				modTime, err := time.Parse(RFC3339In, mtime)
 				if err != nil {
 					return err
 				}
@@ -668,7 +669,7 @@ func (o *FsObjectDropbox) setModTimeAndMd5sum(modTime time.Time, md5sum string) 
 		}
 
 		if !modTime.IsZero() {
-			mtime := swift.TimeToFloatString(modTime)
+			mtime := modTime.Format(RFC3339Out)
 			err := record.Set(mtimeField, mtime)
 			if err != nil {
 				return fmt.Errorf("Couldn't set mtime record: %s", err)
