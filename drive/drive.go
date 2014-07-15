@@ -929,7 +929,10 @@ func (o *FsObjectDrive) Storable() bool {
 
 // Open an object for read
 func (o *FsObjectDrive) Open() (in io.ReadCloser, err error) {
-	req, _ := http.NewRequest("GET", o.url, nil)
+	req, err := http.NewRequest("GET", o.url, nil)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Set("User-Agent", fs.UserAgent)
 	res, err := o.drive.client.Do(req)
 	if err != nil {
