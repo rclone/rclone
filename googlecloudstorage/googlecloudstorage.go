@@ -24,6 +24,7 @@ import (
 	"strings"
 	"time"
 
+	"code.google.com/p/google-api-go-client/googleapi"
 	"code.google.com/p/google-api-go-client/storage/v1"
 
 	"github.com/ncw/rclone/fs"
@@ -509,7 +510,20 @@ func (o *FsObjectStorage) Storable() bool {
 
 // Open an object for read
 func (o *FsObjectStorage) Open() (in io.ReadCloser, err error) {
-	req, _ := http.NewRequest("GET", o.url, nil)
+	// This is slightly complicated by Go here insisting on
+	// decoding the %2F in URLs into / which is legal in http, but
+	// unfortunately not what the storage server wants.
+	//
+	// So first encode all the % into their encoded form
+	// URL will decode them giving our original escaped string
+	url := strings.Replace(o.url, "%", "%25", -1)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	// SetOpaque sets Opaque such that HTTP requests to it don't
+	// alter any hex-escaped characters
+	googleapi.SetOpaque(req.URL)
 	req.Header.Set("User-Agent", fs.UserAgent)
 	res, err := o.storage.client.Do(req)
 	if err != nil {
