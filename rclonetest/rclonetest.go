@@ -115,7 +115,12 @@ func Time(timeString string) time.Time {
 func WriteFile(filePath, content string, t time.Time) {
 	// FIXME make directories?
 	filePath = path.Join(localName, filePath)
-	err := ioutil.WriteFile(filePath, []byte(content), 0600)
+	dirPath := path.Dir(filePath)
+	err := os.MkdirAll(dirPath, 0770)
+	if err != nil {
+		log.Fatalf("Failed to make directories %q: %v", dirPath, err)
+	}
+	err = ioutil.WriteFile(filePath, []byte(content), 0600)
 	if err != nil {
 		log.Fatalf("Failed to write file %q: %v", filePath, err)
 	}
@@ -150,7 +155,7 @@ var t2 = Time("2011-12-25T12:59:59.123456789Z")
 var t3 = Time("2011-12-30T12:59:59.000000000Z")
 
 func TestCopy(flocal, fremote fs.Fs) {
-	WriteFile("empty space", "", t1)
+	WriteFile("sub dir/hello world", "hello world", t1)
 
 	// Check dry run is working
 	log.Printf("Copy with --dry-run")
@@ -162,7 +167,7 @@ func TestCopy(flocal, fremote fs.Fs) {
 	}
 
 	items := []Item{
-		{Path: "empty space", Size: 0, ModTime: t1, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+		{Path: "sub dir/hello world", Size: 11, ModTime: t1, Md5sum: "5eb63bbbe01eeed093cb22bb8f5acdc3"},
 	}
 
 	CheckListing(flocal, items)
@@ -178,9 +183,33 @@ func TestCopy(flocal, fremote fs.Fs) {
 
 	CheckListing(flocal, items)
 	CheckListing(fremote, items)
+
+	// Now delete the local file and download it
+
+	err = os.Remove(localName + "/sub dir/hello world")
+	if err != nil {
+		log.Fatalf("Remove failed: %v", err)
+	}
+
+	CheckListing(flocal, []Item{})
+	CheckListing(fremote, items)
+
+	log.Printf("Copy - redownload")
+	err = fs.Sync(flocal, fremote, false)
+	if err != nil {
+		log.Fatalf("Copy failed: %v", err)
+	}
+
+	CheckListing(flocal, items)
+	CheckListing(fremote, items)
+
+	// Clean the directory
+	cleanTempDir()
 }
 
 func TestSync(flocal, fremote fs.Fs) {
+	WriteFile("empty space", "", t1)
+
 	log.Printf("Sync after changing file modtime only")
 	err := os.Chtimes(localName+"/empty space", t2, t2)
 	if err != nil {
