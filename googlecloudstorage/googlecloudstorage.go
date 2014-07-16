@@ -554,8 +554,9 @@ func (o *FsObjectStorage) Update(in io.Reader, modTime time.Time, size int64) er
 		Updated:     modTime.Format(RFC3339Out), // Doesn't get set
 		Metadata:    metadataFromModTime(modTime),
 	}
-	_, err := o.storage.svc.Objects.Insert(o.storage.bucket, &object).Media(in).Name(object.Name).PredefinedAcl(o.storage.objectAcl).Do()
-	// FIXME read back the MD5sum out of the returned object and check it?
+	newObject, err := o.storage.svc.Objects.Insert(o.storage.bucket, &object).Media(in).Name(object.Name).PredefinedAcl(o.storage.objectAcl).Do()
+	// Set the metadata for the new object while we have it
+	o.setMetaData(newObject)
 	return err
 }
 
