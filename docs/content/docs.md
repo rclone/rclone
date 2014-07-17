@@ -1,7 +1,7 @@
 ---
 title: "Documentation"
 description: "Rclone Documentation"
-date: "2014-04-26"
+date: "2014-07-17"
 ---
 
 Install
@@ -71,11 +71,15 @@ first with the -dry-run flag.
 
     rclone ls [remote:path]
 
-List all the objects in the the path.
+List all the objects in the the path with sizes.
+
+    rclone lsl [remote:path]
+
+List all the objects in the the path with sizes and timestamps.
 
     rclone lsd [remote:path]
 
-List all directoryes/objects/buckets in the the path.
+List all directories/objects/buckets in the the path.
 
     rclone mkdir remote:path
 
@@ -96,6 +100,10 @@ Checks the files in the source and destination match.  It
 compares sizes and MD5SUMs and prints a report of files which
 don't match.  It doesn't alter the source or destination.
 
+    rclone md5sum remote:path
+
+Produces an md5sum file for all the objects in the path.  This is in
+the same format as the standard md5sum tool produces.
 General options:
 
 ```

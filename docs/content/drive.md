@@ -4,10 +4,12 @@ description: "Rclone docs for Google drive"
 date: "2014-04-26"
 ---
 
+<i class="fa fa-google"></i> Google Drive
+-----------------------------------------
+
 Paths are specified as `drive:path`
 
-Drive paths may be as deep as required, eg
-`drive:directory/subdirectory`.
+Drive paths may be as deep as required, eg `drive:directory/subdirectory`.
 
 The initial setup for drive involves getting a token from Google drive
 which you need to do in your browser.  `rclone config` walks you

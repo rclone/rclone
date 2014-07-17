@@ -4,8 +4,8 @@ description: "Rclone docs for the local filesystem"
 date: "2014-04-26"
 ---
 
-Local Filesystem
-----------------
+<i class="fa fa-file"></i> Local Filesystem
+-------------------------------------------
 
 Local paths are specified as normal filesystem paths, eg `/path/to/wherever`, so
 

@@ -1,8 +1,8 @@
 ---
 title: "Rclone"
-description: "rclone syncs files to and from Google Drive, S3, Swift and Cloudfiles."
+description: "rclone syncs files to and from Google Drive, S3, Swift, Cloudfiles, Dropbox and Google Cloud Storage."
 type: page
-date: "2014-04-26"
+date: "2014-07-17"
 groups: ["about"]
 ---
 
@@ -16,6 +16,8 @@ Rclone is a command line program to sync files and directories to and from
   * Google Drive
   * Amazon S3
   * Openstack Swift / Rackspace cloud files / Memset Memstore
+  * Dropbox
+  * Google Cloud Storage
   * The local filesystem
 
 Features

@@ -12,6 +12,8 @@ Rclone is a command line program to sync files and directories to and from
   * Google Drive
   * Amazon S3
   * Openstack Swift / Rackspace cloud files / Memset Memstore
+  * Dropbox
+  * Google Cloud Storage
   * The local filesystem
 
 Features
@@ -86,7 +88,11 @@ first with the `--dry-run` flag.
 
     rclone ls [remote:path]
 
-List all the objects in the the path.
+List all the objects in the the path with sizes.
+
+    rclone lsl [remote:path]
+
+List all the objects in the the path with sizes and timestamps.
 
     rclone lsd [remote:path]
 
@@ -110,6 +116,11 @@ Remove the path and all of its contents.
 Checks the files in the source and destination match.  It
 compares sizes and MD5SUMs and prints a report of files which
 don't match.  It doesn't alter the source or destination.
+
+    rclone md5sum remote:path
+
+Produces an md5sum file for all the objects in the path.  This is in
+the same format as the standard md5sum tool produces.
 
 General options:
 
@@ -173,7 +184,7 @@ The modified time is stored as metadata on the object as
 Google drive
 ------------
 
-Paths are specified as drive:path  Drive paths may be as deep as required.
+Paths are specified as remote:path  Drive paths may be as deep as required.
 
 The initial setup for drive involves getting a token from Google drive
 which you need to do in your browser.  `rclone config` walks you
@@ -181,9 +192,45 @@ through it.
 
 To copy a local directory to a drive directory called backup
 
-    rclone copy /home/source drv:backup
+    rclone copy /home/source remote:backup
 
-Google drive stores modification times accurate to 1 ms.
+Google drive stores modification times accurate to 1 ms natively.
+
+Dropbox
+-------
+
+Paths are specified as remote:path  Dropbox paths may be as deep as required.
+
+The initial setup for dropbox involves getting a token from Dropbox
+which you need to do in your browser.  `rclone config` walks you
+through it.
+
+To copy a local directory to a drive directory called backup
+
+    rclone copy /home/source dropbox:backup
+
+Md5sums and timestamps in RFC3339 format accurate to 1ns are stored in
+a Dropbox datastore called "rclone".  Dropbox datastores are limited
+to 100,000 rows so this is the maximum number of files rclone can
+manage on Dropbox.
+
+Google Cloud Storage
+--------------------
+
+Paths are specified as remote:path Google Cloud Storage paths may be
+as deep as required.
+
+The initial setup for Google Cloud Storage involves getting a token
+from Google which you need to do in your browser.  `rclone config`
+walks you through it.
+
+To copy a local directory to a google cloud storage directory called backup
+
+    rclone copy /home/source remote:backup
+
+Google google cloud storage stores md5sums natively and rclone stores
+modification times as metadata on the object, under the "mtime" key in
+RFC3339 format accurate to 1ns.
 
 Single file copies
 ------------------
