@@ -142,6 +142,15 @@ func Copy(f Fs, dst, src Object) {
 		return
 	}
 
+	// Verify sizes are the same after transfer
+	if src.Size() != dst.Size() {
+		Stats.Error()
+		err = fmt.Errorf("Corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size())
+		Log(dst, "%s", err)
+		removeFailedCopy(dst)
+		return
+	}
+
 	// Verify md5sums are the same after transfer - ignoring blank md5sums
 	srcMd5sum, md5sumErr := src.Md5sum()
 	if md5sumErr != nil {
