@@ -253,6 +253,15 @@ func (f *FsLocal) readPrecision() (precision time.Duration) {
 	return
 }
 
+// Purge deletes all the files and directories
+//
+// Optional interface: Only implement this if you have a way of
+// deleting all the files quicker than just running Remove() on the
+// result of List()
+func (f *FsLocal) Purge() error {
+	return os.RemoveAll(f.root)
+}
+
 // ------------------------------------------------------------
 
 // Return the parent Fs
@@ -426,4 +435,5 @@ func (o *FsObjectLocal) Remove() error {
 
 // Check the interfaces are satisfied
 var _ fs.Fs = &FsLocal{}
+var _ fs.Purger = &FsLocal{}
 var _ fs.Object = &FsObjectLocal{}
