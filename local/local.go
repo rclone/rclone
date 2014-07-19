@@ -3,7 +3,9 @@ package local
 
 import (
 	"crypto/md5"
+	"encoding/hex"
 	"fmt"
+	"hash"
 	"io"
 	"io/ioutil"
 	"log"
@@ -37,6 +39,7 @@ type FsObjectLocal struct {
 	remote string      // The remote path
 	path   string      // The local path
 	info   os.FileInfo // Interface for file info
+	md5sum string      // the md5sum of the object or "" if not calculated
 }
 
 // ------------------------------------------------------------
@@ -268,21 +271,30 @@ func (o *FsObjectLocal) Remote() string {
 
 // Md5sum calculates the Md5sum of a file returning a lowercase hex string
 func (o *FsObjectLocal) Md5sum() (string, error) {
+	if o.md5sum != "" {
+		return o.md5sum, nil
+	}
 	in, err := os.Open(o.path)
 	if err != nil {
 		fs.Stats.Error()
 		fs.Log(o, "Failed to open: %s", err)
 		return "", err
 	}
-	defer in.Close() // FIXME ignoring error
 	hash := md5.New()
 	_, err = io.Copy(hash, in)
+	closeErr := in.Close()
 	if err != nil {
 		fs.Stats.Error()
 		fs.Log(o, "Failed to read: %s", err)
 		return "", err
 	}
-	return fmt.Sprintf("%x", hash.Sum(nil)), nil
+	if closeErr != nil {
+		fs.Stats.Error()
+		fs.Log(o, "Failed to close: %s", closeErr)
+		return "", closeErr
+	}
+	o.md5sum = hex.EncodeToString(hash.Sum(nil))
+	return o.md5sum, nil
 }
 
 // Size returns the size of an object in bytes
@@ -316,9 +328,47 @@ func (o *FsObjectLocal) Storable() bool {
 	return true
 }
 
+// localOpenFile wraps an io.ReadCloser and updates the md5sum of the
+// object that is read
+type localOpenFile struct {
+	o    *FsObjectLocal // object that is open
+	in   io.ReadCloser  // handle we are wrapping
+	hash hash.Hash      // currently accumulating MD5
+}
+
+// Read bytes from the object - see io.Reader
+func (file *localOpenFile) Read(p []byte) (n int, err error) {
+	n, err = file.in.Read(p)
+	if n > 0 {
+		// Hash routines never return an error
+		_, _ = file.hash.Write(p[:n])
+	}
+	return
+}
+
+// Close the object and update the md5sum
+func (file *localOpenFile) Close() (err error) {
+	err = file.in.Close()
+	if err == nil {
+		file.o.md5sum = hex.EncodeToString(file.hash.Sum(nil))
+	} else {
+		file.o.md5sum = ""
+	}
+	return err
+}
+
 // Open an object for read
 func (o *FsObjectLocal) Open() (in io.ReadCloser, err error) {
 	in, err = os.Open(o.path)
+	if err != nil {
+		return
+	}
+	// Update the md5sum as we go along
+	in = &localOpenFile{
+		o:    o,
+		in:   in,
+		hash: md5.New(),
+	}
 	return
 }
 
@@ -335,6 +385,10 @@ func (o *FsObjectLocal) Update(in io.Reader, modTime time.Time, size int64) erro
 		return err
 	}
 
+	// Calculate the md5sum of the object we are reading as we go along
+	hash := md5.New()
+	in = io.TeeReader(in, hash)
+
 	_, err = io.Copy(out, in)
 	outErr := out.Close()
 	if err != nil {
@@ -343,6 +397,9 @@ func (o *FsObjectLocal) Update(in io.Reader, modTime time.Time, size int64) erro
 	if outErr != nil {
 		return outErr
 	}
+
+	// All successful so update the md5sum
+	o.md5sum = hex.EncodeToString(hash.Sum(nil))
 
 	// Set the mtime
 	o.SetModTime(modTime)
