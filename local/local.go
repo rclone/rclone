@@ -38,7 +38,7 @@ type FsObjectLocal struct {
 	local  fs.Fs       // The Fs this object is part of
 	remote string      // The remote path
 	path   string      // The local path
-	info   os.FileInfo // Interface for file info
+	info   os.FileInfo // Interface for file info (always present)
 	md5sum string      // the md5sum of the object or "" if not calculated
 }
 
@@ -175,9 +175,13 @@ func (f *FsLocal) ListDir() fs.DirChan {
 // Puts the FsObject to the local filesystem
 func (f *FsLocal) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
 	dstPath := filepath.Join(f.root, remote)
-	// Temporary FsObject under construction
-	fs := &FsObjectLocal{local: f, remote: remote, path: dstPath}
-	return fs, fs.Update(in, modTime, size)
+	// Temporary FsObject under construction - info filled in by Update()
+	o := &FsObjectLocal{local: f, remote: remote, path: dstPath}
+	err := o.Update(in, modTime, size)
+	if err != nil {
+		return nil, err
+	}
+	return o, nil
 }
 
 // Mkdir creates the directory if it doesn't exist
@@ -403,7 +407,9 @@ func (o *FsObjectLocal) Update(in io.Reader, modTime time.Time, size int64) erro
 
 	// Set the mtime
 	o.SetModTime(modTime)
-	return nil
+
+	// ReRead info now that we have finished
+	return o.lstat()
 }
 
 // Stat a FsObject into info
