@@ -573,7 +573,9 @@ func (o *FsObjectDropbox) remotePath() string {
 func metadataKey(path string) string {
 	// NB File system is case insensitive
 	path = strings.ToLower(path)
-	return fmt.Sprintf("%x", md5.Sum([]byte(path)))
+	hash := md5.New()
+	hash.Write([]byte(path))
+	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
 // Returns the key for the metadata database
