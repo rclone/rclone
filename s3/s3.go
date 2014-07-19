@@ -514,6 +514,11 @@ func (o *FsObjectS3) Update(in io.Reader, modTime time.Time, size int64) error {
 	}
 
 	_, err := o.s3.b.PutReaderHeaders(o.s3.root+o.remote, in, size, contentType, o.s3.perm, headers)
+	if err != nil {
+		return err
+	}
+	// Read the metadata from the newly created object
+	err = o.readMetaData()
 	return err
 }
 
