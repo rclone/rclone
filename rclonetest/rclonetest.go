@@ -29,6 +29,7 @@ import (
 var (
 	localName, remoteName string
 	version               = pflag.BoolP("version", "V", false, "Print the version number")
+	subDir                = pflag.BoolP("subdir", "S", false, "Test with a sub directory")
 )
 
 // Represents an item for checking
@@ -306,10 +307,18 @@ func TestLsd(flocal, fremote fs.Fs) {
 func TestCheck(flocal, fremote fs.Fs) {
 }
 
-func TestPurge(flocal, fremote fs.Fs) {
+func TestPurge(fremote fs.Fs) {
 	err := fs.Purge(fremote)
 	if err != nil {
 		log.Fatalf("Purge failed: %v", err)
+	}
+	unexpected := 0
+	for obj := range fremote.List() {
+		unexpected++
+		log.Printf("Found unexpected item %s", obj.Remote())
+	}
+	if unexpected != 0 {
+		log.Fatalf("exiting as found %d unexpected items", unexpected)
 	}
 }
 
@@ -364,6 +373,15 @@ func main() {
 		remoteName += "/"
 	}
 	remoteName += RandomString(32)
+	var parentRemote fs.Fs
+	if *subDir {
+		var err error
+		parentRemote, err = fs.NewFs(remoteName)
+		if err != nil {
+			log.Fatalf("Failed to make parent %q: %v", remoteName, err)
+		}
+		remoteName += "/" + RandomString(8)
+	}
 	log.Printf("Testing with remote %q", remoteName)
 	var err error
 	localName, err = ioutil.TempDir("", "rclone")
@@ -389,8 +407,12 @@ func main() {
 	TestLs(flocal, fremote)
 	TestLsd(flocal, fremote)
 	TestCheck(flocal, fremote)
-	TestPurge(flocal, fremote)
+	TestPurge(fremote)
 	//TestRmdir(flocal, fremote)
+
+	if parentRemote != nil {
+		TestPurge(parentRemote)
+	}
 
 	cleanTempDir()
 	log.Printf("Tests OK")

@@ -15,6 +15,14 @@ Todo
   * Make a fs.Errorf and count errors and log them at a different level
   * Add max object size to fs metadata - 5GB for swift, infinite for local, ? for s3
     * tie into -max-size flag
+  * FIXME Make NewFs to return err.IsAnObject so can put the LimitedFs
+    creation in common code? Or try for as much as possible?
+  * FIXME Account all the transactons (ls etc) using a different
+    Roundtripper wrapper which wraps the transactions?
+  * FIXME write tests for local file system
+  * FIXME implement tests for single file operations in rclonetest
+  * Need to make directory objects otherwise can't upload an empty directory
+    * Or could upload empty directories only?
 
 Ideas
   * could do encryption - put IV into metadata?
@@ -23,21 +31,9 @@ Ideas
   * support
       * sftp
       * scp
-      * Google cloud storage: https://developers.google.com/storage/
-        * http://godoc.org/code.google.com/p/google-api-go-client/storage/v1
-        * Has MD5, can't set updated time so will need to use metadata
-        * metadata returned with object head and easy to update
       * rsync over ssh
-      * dropbox: https://github.com/stacktic/dropbox
-        * No MD5s
-        * Can't set modtime
-  * control times sync (which is slow) with -a --archive flag?
-
-Need to make directory objects otherwise can't upload an empty directory
-  * Or could upload empty directories only?
-  * Can't purge a local filesystem because it leaves the directories behind
-
-Copying a single file? Or maybe with a glob pattern? Could do with LimitedFs
+  * control times sync (which is slow with some remotes) with -a --archive flag?
+  * Copy a glob pattern - could do with LimitedFs
 
 s3
   * Can maybe set last modified?
@@ -50,14 +46,9 @@ Bugs
   * When doing copy it recurses the whole of the destination FS which isn't necessary
 
 Making a release
-  * go build ./...
-  * cd rclonetest
-  * go build
-  * ./rclonetest memstore:
-  * ./rclonetest s3:
-  * ./rclonetest drive2:
-  * ./rclonetest /tmp/z
-  * cd ..
+  * go install -v ./...
+  * go test ./...
+  * rclonetest/test.sh
   * make tag
   * edit README.md
   * git commit fs/version.go README.md docs/content/downloads.md
