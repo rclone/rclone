@@ -409,6 +409,11 @@ func (o *FsObjectSwift) Update(in io.Reader, modTime time.Time, size int64) erro
 	m := swift.Metadata{}
 	m.SetModTime(modTime)
 	_, err := o.swift.c.ObjectPut(o.swift.container, o.swift.root+o.remote, in, true, "", "", m.ObjectHeaders())
+	if err != nil {
+		return err
+	}
+	// Read the metadata from the newly created object
+	err = o.readMetaData()
 	return err
 }
 
