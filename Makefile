@@ -2,9 +2,13 @@ TAG := $(shell git describe --tags)
 LAST_TAG := $(shell git describe --tags --abbrev=0)
 NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f", $$_)')
 
-rclone:	*.go */*.go
+rclone:
 	@go version
-	go build
+	go install -v ./...
+
+test:	rclone
+	go test ./...
+	rclonetest/test.sh
 
 doc:	rclone.1 README.html README.txt
 
@@ -19,7 +23,7 @@ README.txt:	README.md
 
 install: rclone
 	install -d ${DESTDIR}/usr/bin
-	install -t ${DESTDIR}/usr/bin rclone 
+	install -t ${DESTDIR}/usr/bin ${GOPATH}/bin/rclone
 
 clean:
 	go clean ./...
@@ -31,10 +35,10 @@ website:
 	cd docs && hugo
 
 upload_website:	website
-	./rclone -v sync docs/public memstore:www-rclone-org
+	rclone -v sync docs/public memstore:www-rclone-org
 
 upload:
-	./rclone -v copy build/ memstore:downloads-rclone-org
+	rclone -v copy build/ memstore:downloads-rclone-org
 
 cross:	doc
 	./cross-compile $(TAG)

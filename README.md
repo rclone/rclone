@@ -261,6 +261,13 @@ Bugs
 
 Changelog
 ---------
+  * v1.02 - 2014-07-19
+    * Implement Dropbox remote
+    * Implement Google Cloud Storage remote
+    * Verify Md5sums and Sizes after copies
+    * Remove times from "ls" command - lists sizes only
+    * Add add "lsl" - lists times and sizes
+    * Add "md5sum" command
   * v1.01 - 2014-07-04
     * drive: fix transfer of big files using up lots of memory
   * v1.00 - 2014-07-03

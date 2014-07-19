@@ -46,9 +46,7 @@ Bugs
   * When doing copy it recurses the whole of the destination FS which isn't necessary
 
 Making a release
-  * go install -v ./...
-  * go test ./...
-  * rclonetest/test.sh
+  * make test
   * make tag
   * edit README.md
   * git commit fs/version.go README.md docs/content/downloads.md
