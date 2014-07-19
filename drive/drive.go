@@ -708,6 +708,7 @@ func (f *FsDrive) Purge() error {
 		return err
 	}
 	err = f.svc.Files.Delete(f.rootId).Do()
+	f.dirCache.Flush()
 	if err != nil {
 		return err
 	}
