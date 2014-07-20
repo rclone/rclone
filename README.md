@@ -261,6 +261,9 @@ Bugs
 
 Changelog
 ---------
+  * v1.03 - 2014-07-20
+   * swift, s3, dropbox: fix updated files being marked as corrupted
+   * Make compile with go 1.1 again
   * v1.02 - 2014-07-19
     * Implement Dropbox remote
     * Implement Google Cloud Storage remote
