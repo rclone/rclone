@@ -260,6 +260,21 @@ func TestSync(flocal, fremote fs.Fs) {
 
 	// ------------------------------------------------------------
 
+	log.Printf("Sync after changing a file's contents, modtime but not length")
+	WriteFile("potato", "SMALLER BUT SAME DATE", t2)
+	err = fs.Sync(fremote, flocal, true)
+	if err != nil {
+		log.Fatalf("Sync failed: %v", err)
+	}
+	items = []Item{
+		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+		{Path: "potato", Size: 21, ModTime: t2, Md5sum: "e4cb6955d9106df6263c45fcfc10f163"},
+	}
+	CheckListing(flocal, items)
+	CheckListing(fremote, items)
+
+	// ------------------------------------------------------------
+
 	log.Printf("Sync after removing a file and adding a file --dry-run")
 	WriteFile("potato2", "------------------------------------------------------------", t1)
 	err = os.Remove(localName + "/potato")
@@ -275,7 +290,7 @@ func TestSync(flocal, fremote fs.Fs) {
 
 	before := []Item{
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-		{Path: "potato", Size: 21, ModTime: t3, Md5sum: "100defcf18c42a1e0dc42a789b107cd2"},
+		{Path: "potato", Size: 21, ModTime: t2, Md5sum: "e4cb6955d9106df6263c45fcfc10f163"},
 	}
 	items = []Item{
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},

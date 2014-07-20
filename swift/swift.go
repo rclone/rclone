@@ -413,6 +413,7 @@ func (o *FsObjectSwift) Update(in io.Reader, modTime time.Time, size int64) erro
 		return err
 	}
 	// Read the metadata from the newly created object
+	o.meta = nil // wipe old metadata
 	err = o.readMetaData()
 	return err
 }

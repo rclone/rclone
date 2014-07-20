@@ -668,6 +668,7 @@ func (o *FsObjectDropbox) setModTimeAndMd5sum(modTime time.Time, md5sum string) 
 			if err != nil {
 				return fmt.Errorf("Couldn't set md5sum record: %s", err)
 			}
+			o.md5sum = md5sum
 		}
 
 		if !modTime.IsZero() {
@@ -676,6 +677,7 @@ func (o *FsObjectDropbox) setModTimeAndMd5sum(modTime time.Time, md5sum string) 
 			if err != nil {
 				return fmt.Errorf("Couldn't set mtime record: %s", err)
 			}
+			o.modTime = modTime
 		}
 
 		return nil
