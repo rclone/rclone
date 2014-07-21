@@ -555,9 +555,12 @@ func (o *FsObjectStorage) Update(in io.Reader, modTime time.Time, size int64) er
 		Metadata:    metadataFromModTime(modTime),
 	}
 	newObject, err := o.storage.svc.Objects.Insert(o.storage.bucket, &object).Media(in).Name(object.Name).PredefinedAcl(o.storage.objectAcl).Do()
+	if err != nil {
+		return err
+	}
 	// Set the metadata for the new object while we have it
 	o.setMetaData(newObject)
-	return err
+	return nil
 }
 
 // Remove an object
