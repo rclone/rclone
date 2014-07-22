@@ -3,6 +3,12 @@ Remove FIXME skipping directory
 Change lsd command so it doesn't show -1
   * Make sure all Fses show -1 for objects Zero for dates etc
 
+Make unit tests for the fses
+  * Make them try to load a TestFSName config
+  * Then do a proper unit test of each one
+  * If there is no TestFSName config it should exit quietly
+  * However the Local FS should default to a tmpdir
+
 Todo
   * FIXME: More -dry-run checks for object transfer
   * Might be quicker to check md5sums first? for swift <-> swift certainly, and maybe for small files

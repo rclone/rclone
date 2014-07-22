@@ -4,7 +4,6 @@ package fs
 
 import (
 	"fmt"
-	"log"
 	"sync"
 )
 
@@ -225,12 +224,10 @@ func Copier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 func DeleteFiles(to_be_deleted ObjectsChan) {
 	var wg sync.WaitGroup
 	wg.Add(Config.Transfers)
-	var fs Fs
 	for i := 0; i < Config.Transfers; i++ {
 		go func() {
 			defer wg.Done()
 			for dst := range to_be_deleted {
-				fs = dst.Fs()
 				if Config.DryRun {
 					Debug(dst, "Not deleting as --dry-run")
 				} else {
@@ -247,8 +244,7 @@ func DeleteFiles(to_be_deleted ObjectsChan) {
 			}
 		}()
 	}
-
-	Log(fs, "Waiting for deletions to finish")
+	Log(nil, "Waiting for deletions to finish")
 	wg.Wait()
 }
 
@@ -520,7 +516,6 @@ func Purge(f Fs) error {
 		}
 	} else {
 		DeleteFiles(f.List())
-		log.Printf("Deleting path")
 		Rmdir(f)
 	}
 	return nil
