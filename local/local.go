@@ -335,7 +335,7 @@ func (o *FsObjectLocal) Storable() bool {
 		fs.Debug(o, "Can't transfer non file/directory")
 		return false
 	} else if mode&os.ModeDir != 0 {
-		fs.Debug(o, "FIXME Skipping directory")
+		// fs.Debug(o, "Skipping directory")
 		return false
 	}
 	return true

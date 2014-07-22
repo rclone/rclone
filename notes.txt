@@ -1,5 +1,3 @@
-Remove FIXME skipping directory
-
 Change lsd command so it doesn't show -1
   * Make sure all Fses show -1 for objects Zero for dates etc
 
