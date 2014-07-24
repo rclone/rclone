@@ -8,7 +8,6 @@ import (
 	"hash"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -100,12 +99,12 @@ func (f *FsLocal) List() fs.ObjectsChan {
 		err := filepath.Walk(f.root, func(path string, fi os.FileInfo, err error) error {
 			if err != nil {
 				fs.Stats.Error()
-				log.Printf("Failed to open directory: %s: %s", path, err)
+				fs.Log(f, "Failed to open directory: %s: %s", path, err)
 			} else {
 				remote, err := filepath.Rel(f.root, path)
 				if err != nil {
 					fs.Stats.Error()
-					log.Printf("Failed to get relative path %s: %s", path, err)
+					fs.Log(f, "Failed to get relative path %s: %s", path, err)
 					return nil
 				}
 				if remote == "." {
@@ -122,7 +121,7 @@ func (f *FsLocal) List() fs.ObjectsChan {
 		})
 		if err != nil {
 			fs.Stats.Error()
-			log.Printf("Failed to open directory: %s: %s", f.root, err)
+			fs.Log(f, "Failed to open directory: %s: %s", f.root, err)
 		}
 		close(out)
 	}()
@@ -137,7 +136,7 @@ func (f *FsLocal) ListDir() fs.DirChan {
 		items, err := ioutil.ReadDir(f.root)
 		if err != nil {
 			fs.Stats.Error()
-			log.Printf("Couldn't find read directory: %s", err)
+			fs.Log(f, "Couldn't find read directory: %s", err)
 		} else {
 			for _, item := range items {
 				if item.IsDir() {
@@ -152,7 +151,7 @@ func (f *FsLocal) ListDir() fs.DirChan {
 					err := filepath.Walk(dirpath, func(path string, fi os.FileInfo, err error) error {
 						if err != nil {
 							fs.Stats.Error()
-							log.Printf("Failed to open directory: %s: %s", path, err)
+							fs.Log(f, "Failed to open directory: %s: %s", path, err)
 						} else {
 							dir.Count += 1
 							dir.Bytes += fi.Size()
@@ -161,7 +160,7 @@ func (f *FsLocal) ListDir() fs.DirChan {
 					})
 					if err != nil {
 						fs.Stats.Error()
-						log.Printf("Failed to open directory: %s: %s", dirpath, err)
+						fs.Log(f, "Failed to open directory: %s: %s", dirpath, err)
 					}
 					out <- dir
 				}
@@ -325,6 +324,13 @@ func (o *FsObjectLocal) SetModTime(modTime time.Time) {
 	err := os.Chtimes(o.path, modTime, modTime)
 	if err != nil {
 		fs.Debug(o, "Failed to set mtime on file: %s", err)
+		return
+	}
+	// Re-read metadata
+	err = o.lstat()
+	if err != nil {
+		fs.Debug(o, "Failed to stat: %s", err)
+		return
 	}
 }
 
