@@ -79,9 +79,13 @@ type Fs interface {
 	Put(in io.Reader, remote string, modTime time.Time, size int64) (Object, error)
 
 	// Make the directory (container, bucket)
+	//
+	// Shouldn't return an error if it already exists
 	Mkdir() error
 
 	// Remove the directory (container, bucket) if empty
+	//
+	// Return an error if it doesn't exists or isn't empty
 	Rmdir() error
 
 	// Precision of the ModTimes in this Fs

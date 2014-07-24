@@ -3,11 +3,11 @@
 go install
 
 REMOTES="
-memstore:
-s3:
-drive2:
-gcs:
-dropbox:
+TestSwift:
+TestS3:
+TestDrive:
+TestGoogleCloudStorage:
+TestDropbox:
 /tmp/z
 "
 

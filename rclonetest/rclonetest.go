@@ -10,10 +10,10 @@ import (
 	"math/rand"
 	"os"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fstest"
 	"github.com/ogier/pflag"
 
 	// Active file systems
@@ -31,88 +31,6 @@ var (
 	version               = pflag.BoolP("version", "V", false, "Print the version number")
 	subDir                = pflag.BoolP("subdir", "S", false, "Test with a sub directory")
 )
-
-// Represents an item for checking
-type Item struct {
-	Path    string
-	Md5sum  string
-	ModTime time.Time
-	Size    int64
-}
-
-// Represents all items for checking
-type Items struct {
-	byName map[string]*Item
-	items  []Item
-}
-
-// Make an Items
-func NewItems(items []Item) *Items {
-	is := &Items{
-		byName: make(map[string]*Item),
-		items:  items,
-	}
-	// Fill up byName
-	for i := range items {
-		is.byName[items[i].Path] = &items[i]
-	}
-	return is
-}
-
-// Check off an item
-func (is *Items) Find(obj fs.Object) {
-	i, ok := is.byName[obj.Remote()]
-	if !ok {
-		log.Fatalf("Unexpected file %q", obj.Remote())
-	}
-	delete(is.byName, obj.Remote())
-	// Check attributes
-	Md5sum, err := obj.Md5sum()
-	if err != nil {
-		log.Fatalf("Failed to read md5sum for %q: %v", obj.Remote(), err)
-	}
-	if i.Md5sum != Md5sum {
-		log.Fatalf("%s: Md5sum incorrect - expecting %q got %q", obj.Remote(), i.Md5sum, Md5sum)
-	}
-	if i.Size != obj.Size() {
-		log.Fatalf("%s: Size incorrect - expecting %d got %d", obj.Remote(), i.Size, obj.Size())
-	}
-	// check the mod time to the given precision
-	modTime := obj.ModTime()
-	dt := modTime.Sub(i.ModTime)
-	if dt >= fs.Config.ModifyWindow || dt <= -fs.Config.ModifyWindow {
-		log.Fatalf("%s: Modification time difference too big |%s| > %s (%s vs %s)", obj.Remote(), dt, fs.Config.ModifyWindow, modTime, i.ModTime)
-	}
-
-}
-
-// Check all done
-func (is *Items) Done() {
-	if len(is.byName) != 0 {
-		for name := range is.byName {
-			log.Printf("Not found %q", name)
-		}
-		log.Fatalf("%d objects not found", len(is.byName))
-	}
-}
-
-// Checks the fs to see if it has the expected contents
-func CheckListing(f fs.Fs, items []Item) {
-	is := NewItems(items)
-	for obj := range f.List() {
-		is.Find(obj)
-	}
-	is.Done()
-}
-
-// Parse a time string or explode
-func Time(timeString string) time.Time {
-	t, err := time.Parse(time.RFC3339Nano, timeString)
-	if err != nil {
-		log.Fatalf("Failed to parse time %q: %v", timeString, err)
-	}
-	return t
-}
 
 // Write a file
 func WriteFile(filePath, content string, t time.Time) {
@@ -133,29 +51,9 @@ func WriteFile(filePath, content string, t time.Time) {
 	}
 }
 
-// Create a random string
-func RandomString(n int) string {
-	source := "abcdefghijklmnopqrstuvwxyz0123456789"
-	out := make([]byte, n)
-	for i := range out {
-		out[i] = source[rand.Intn(len(source))]
-	}
-	return string(out)
-}
-
-func TestMkdir(flocal, fremote fs.Fs) {
-	err := fs.Mkdir(fremote)
-	if err != nil {
-		log.Fatalf("Mkdir failed: %v", err)
-	}
-	items := []Item{}
-	CheckListing(flocal, items)
-	CheckListing(fremote, items)
-}
-
-var t1 = Time("2001-02-03T04:05:06.499999999Z")
-var t2 = Time("2011-12-25T12:59:59.123456789Z")
-var t3 = Time("2011-12-30T12:59:59.000000000Z")
+var t1 = fstest.Time("2001-02-03T04:05:06.499999999Z")
+var t2 = fstest.Time("2011-12-25T12:59:59.123456789Z")
+var t3 = fstest.Time("2011-12-30T12:59:59.000000000Z")
 
 func TestCopy(flocal, fremote fs.Fs) {
 	WriteFile("sub dir/hello world", "hello world", t1)
@@ -169,12 +67,12 @@ func TestCopy(flocal, fremote fs.Fs) {
 		log.Fatalf("Copy failed: %v", err)
 	}
 
-	items := []Item{
+	items := []fstest.Item{
 		{Path: "sub dir/hello world", Size: 11, ModTime: t1, Md5sum: "5eb63bbbe01eeed093cb22bb8f5acdc3"},
 	}
 
-	CheckListing(flocal, items)
-	CheckListing(fremote, []Item{})
+	fstest.CheckListing(flocal, items)
+	fstest.CheckListing(fremote, []fstest.Item{})
 
 	// Now without dry run
 
@@ -184,8 +82,8 @@ func TestCopy(flocal, fremote fs.Fs) {
 		log.Fatalf("Copy failed: %v", err)
 	}
 
-	CheckListing(flocal, items)
-	CheckListing(fremote, items)
+	fstest.CheckListing(flocal, items)
+	fstest.CheckListing(fremote, items)
 
 	// Now delete the local file and download it
 
@@ -194,8 +92,8 @@ func TestCopy(flocal, fremote fs.Fs) {
 		log.Fatalf("Remove failed: %v", err)
 	}
 
-	CheckListing(flocal, []Item{})
-	CheckListing(fremote, items)
+	fstest.CheckListing(flocal, []fstest.Item{})
+	fstest.CheckListing(fremote, items)
 
 	log.Printf("Copy - redownload")
 	err = fs.Sync(flocal, fremote, false)
@@ -203,8 +101,8 @@ func TestCopy(flocal, fremote fs.Fs) {
 		log.Fatalf("Copy failed: %v", err)
 	}
 
-	CheckListing(flocal, items)
-	CheckListing(fremote, items)
+	fstest.CheckListing(flocal, items)
+	fstest.CheckListing(fremote, items)
 
 	// Clean the directory
 	cleanTempDir()
@@ -222,11 +120,11 @@ func TestSync(flocal, fremote fs.Fs) {
 	if err != nil {
 		log.Fatalf("Sync failed: %v", err)
 	}
-	items := []Item{
+	items := []fstest.Item{
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 	}
-	CheckListing(flocal, items)
-	CheckListing(fremote, items)
+	fstest.CheckListing(flocal, items)
+	fstest.CheckListing(fremote, items)
 
 	// ------------------------------------------------------------
 
@@ -236,12 +134,12 @@ func TestSync(flocal, fremote fs.Fs) {
 	if err != nil {
 		log.Fatalf("Sync failed: %v", err)
 	}
-	items = []Item{
+	items = []fstest.Item{
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 		{Path: "potato", Size: 60, ModTime: t3, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
 	}
-	CheckListing(flocal, items)
-	CheckListing(fremote, items)
+	fstest.CheckListing(flocal, items)
+	fstest.CheckListing(fremote, items)
 
 	// ------------------------------------------------------------
 
@@ -251,12 +149,12 @@ func TestSync(flocal, fremote fs.Fs) {
 	if err != nil {
 		log.Fatalf("Sync failed: %v", err)
 	}
-	items = []Item{
+	items = []fstest.Item{
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 		{Path: "potato", Size: 21, ModTime: t3, Md5sum: "100defcf18c42a1e0dc42a789b107cd2"},
 	}
-	CheckListing(flocal, items)
-	CheckListing(fremote, items)
+	fstest.CheckListing(flocal, items)
+	fstest.CheckListing(fremote, items)
 
 	// ------------------------------------------------------------
 
@@ -266,12 +164,12 @@ func TestSync(flocal, fremote fs.Fs) {
 	if err != nil {
 		log.Fatalf("Sync failed: %v", err)
 	}
-	items = []Item{
+	items = []fstest.Item{
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 		{Path: "potato", Size: 21, ModTime: t2, Md5sum: "e4cb6955d9106df6263c45fcfc10f163"},
 	}
-	CheckListing(flocal, items)
-	CheckListing(fremote, items)
+	fstest.CheckListing(flocal, items)
+	fstest.CheckListing(fremote, items)
 
 	// ------------------------------------------------------------
 
@@ -288,24 +186,24 @@ func TestSync(flocal, fremote fs.Fs) {
 		log.Fatalf("Sync failed: %v", err)
 	}
 
-	before := []Item{
+	before := []fstest.Item{
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 		{Path: "potato", Size: 21, ModTime: t2, Md5sum: "e4cb6955d9106df6263c45fcfc10f163"},
 	}
-	items = []Item{
+	items = []fstest.Item{
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 		{Path: "potato2", Size: 60, ModTime: t1, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
 	}
-	CheckListing(flocal, items)
-	CheckListing(fremote, before)
+	fstest.CheckListing(flocal, items)
+	fstest.CheckListing(fremote, before)
 
 	log.Printf("Sync after removing a file and adding a file")
 	err = fs.Sync(fremote, flocal, true)
 	if err != nil {
 		log.Fatalf("Sync failed: %v", err)
 	}
-	CheckListing(flocal, items)
-	CheckListing(fremote, items)
+	fstest.CheckListing(flocal, items)
+	fstest.CheckListing(fremote, items)
 }
 
 func TestLs(flocal, fremote fs.Fs) {
@@ -320,28 +218,6 @@ func TestLsd(flocal, fremote fs.Fs) {
 }
 
 func TestCheck(flocal, fremote fs.Fs) {
-}
-
-func TestPurge(fremote fs.Fs) {
-	err := fs.Purge(fremote)
-	if err != nil {
-		log.Fatalf("Purge failed: %v", err)
-	}
-	unexpected := 0
-	for obj := range fremote.List() {
-		unexpected++
-		log.Printf("Found unexpected item %s", obj.Remote())
-	}
-	if unexpected != 0 {
-		log.Fatalf("exiting as found %d unexpected items", unexpected)
-	}
-}
-
-func TestRmdir(flocal, fremote fs.Fs) {
-	err := fs.Rmdir(fremote)
-	if err != nil {
-		log.Fatalf("Rmdir failed: %v", err)
-	}
 }
 
 func syntaxError() {
@@ -383,32 +259,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	remoteName = args[0]
-	if !strings.HasSuffix(remoteName, ":") {
-		remoteName += "/"
-	}
-	remoteName += RandomString(32)
-	var parentRemote fs.Fs
-	if *subDir {
-		var err error
-		parentRemote, err = fs.NewFs(remoteName)
-		if err != nil {
-			log.Fatalf("Failed to make parent %q: %v", remoteName, err)
-		}
-		remoteName += "/" + RandomString(8)
-	}
-	log.Printf("Testing with remote %q", remoteName)
+	fremote, finalise := fstest.RandomRemote(args[0], *subDir)
+	log.Printf("Testing with remote %v", fremote)
+
 	var err error
 	localName, err = ioutil.TempDir("", "rclone")
 	if err != nil {
 		log.Fatalf("Failed to create temp dir: %v", err)
 	}
 	log.Printf("Testing with local %q", localName)
-
-	fremote, err := fs.NewFs(remoteName)
-	if err != nil {
-		log.Fatalf("Failed to make %q: %v", remoteName, err)
-	}
 	flocal, err := fs.NewFs(localName)
 	if err != nil {
 		log.Fatalf("Failed to make %q: %v", remoteName, err)
@@ -416,18 +275,15 @@ func main() {
 
 	fs.CalculateModifyWindow(fremote, flocal)
 
-	TestMkdir(flocal, fremote)
+	fstest.TestMkdir(fremote)
 	TestCopy(flocal, fremote)
 	TestSync(flocal, fremote)
 	TestLs(flocal, fremote)
 	TestLsd(flocal, fremote)
 	TestCheck(flocal, fremote)
-	TestPurge(fremote)
 	//TestRmdir(flocal, fremote)
 
-	if parentRemote != nil {
-		TestPurge(parentRemote)
-	}
+	finalise()
 
 	cleanTempDir()
 	log.Printf("Tests OK")
