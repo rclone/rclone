@@ -281,6 +281,9 @@ func (f *FsS3) list(directories bool, fn func(string, *s3.Key)) {
 					continue
 				}
 				remote := remote[rootLength:]
+				if strings.HasSuffix(remote, "/") {
+					remote = remote[:len(remote)-1]
+				}
 				fn(remote, &s3.Key{Key: remote})
 			}
 		} else {
