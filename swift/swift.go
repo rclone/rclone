@@ -201,8 +201,11 @@ func (f *FsSwift) list(directories bool, fn func(string, *swift.Object)) {
 			for i := range objects {
 				object := &objects[i]
 				// FIXME if there are no directories, swift gives back the files for some reason!
-				if directories && !strings.HasSuffix(object.Name, "/") {
-					continue
+				if directories {
+					if !strings.HasSuffix(object.Name, "/") {
+						continue
+					}
+					object.Name = object.Name[:len(object.Name)-1]
 				}
 				if !strings.HasPrefix(object.Name, f.root) {
 					fs.Log(f, "Odd name received %q", object.Name)
