@@ -574,7 +574,7 @@ func metadataKey(path string) string {
 	// NB File system is case insensitive
 	path = strings.ToLower(path)
 	hash := md5.New()
-	hash.Write([]byte(path))
+	_, _ = hash.Write([]byte(path))
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
@@ -635,8 +635,7 @@ func (o *FsObjectDropbox) readMetaData() (err error) {
 	}
 
 	// Last resort
-	o.readEntryAndSetMetadata()
-	return nil
+	return o.readEntryAndSetMetadata()
 }
 
 // ModTime returns the modification time of the object

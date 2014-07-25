@@ -217,12 +217,15 @@ func (f *FsLocal) readPrecision() (precision time.Duration) {
 	}
 	path := fd.Name()
 	// fmt.Println("Created temp file", path)
-	fd.Close()
+	err = fd.Close()
+	if err != nil {
+		return time.Second
+	}
 
 	// Delete it on return
 	defer func() {
 		// fmt.Println("Remove temp file")
-		os.Remove(path)
+		_ = os.Remove(path) // ignore error
 	}()
 
 	// Find the minimum duration we can detect

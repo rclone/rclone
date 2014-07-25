@@ -840,7 +840,7 @@ func (o *FsObjectDrive) Open() (in io.ReadCloser, err error) {
 		return nil, err
 	}
 	if res.StatusCode != 200 {
-		res.Body.Close()
+		_ = res.Body.Close() // ignore error
 		return nil, fmt.Errorf("Bad response: %d: %s", res.StatusCode, res.Status)
 	}
 	return res.Body, nil

@@ -265,7 +265,11 @@ func ParseFlags() {
 			fs.Stats.Error()
 			log.Fatal(err)
 		}
-		pprof.StartCPUProfile(f)
+		err = pprof.StartCPUProfile(f)
+		if err != nil {
+			fs.Stats.Error()
+			log.Fatal(err)
+		}
 		defer pprof.StopCPUProfile()
 	}
 }
