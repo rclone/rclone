@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"os"
 	"path"
 	"time"
@@ -251,7 +250,6 @@ func main() {
 		os.Exit(0)
 	}
 	fs.LoadConfig()
-	rand.Seed(time.Now().UnixNano())
 	args := pflag.Args()
 
 	if len(args) != 1 {

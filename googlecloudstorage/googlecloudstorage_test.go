@@ -1,4 +1,7 @@
-// Test Google cloud storage filesystem interface
+// Test GoogleCloudStorage filesystem interface
+//
+// Automatically generated - DO NOT EDIT
+// Regenerate with: go run gen_tests.go or make gen_tests
 package googlecloudstorage_test
 
 import (

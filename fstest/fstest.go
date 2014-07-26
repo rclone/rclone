@@ -17,12 +17,27 @@ import (
 
 var Fatalf = log.Fatalf
 
+// Seed the random number generator
+func init() {
+	rand.Seed(time.Now().UnixNano())
+
+}
+
 // Represents an item for checking
 type Item struct {
 	Path    string
 	Md5sum  string
 	ModTime time.Time
 	Size    int64
+}
+
+// check the mod time to the given precision
+func (i *Item) CheckModTime(obj fs.Object, modTime time.Time) {
+	dt := modTime.Sub(i.ModTime)
+	precision := obj.Fs().Precision()
+	if dt >= precision || dt <= -precision {
+		Fatalf("%s: Modification time difference too big |%s| > %s (%s vs %s)", obj.Remote(), dt, precision, modTime, i.ModTime)
+	}
 }
 
 func (i *Item) Check(obj fs.Object) {
@@ -40,13 +55,7 @@ func (i *Item) Check(obj fs.Object) {
 	if i.Size != obj.Size() {
 		Fatalf("%s: Size incorrect - expecting %d got %d", obj.Remote(), i.Size, obj.Size())
 	}
-	// check the mod time to the given precision
-	modTime := obj.ModTime()
-	dt := modTime.Sub(i.ModTime)
-	if dt >= fs.Config.ModifyWindow || dt <= -fs.Config.ModifyWindow {
-		Fatalf("%s: Modification time difference too big |%s| > %s (%s vs %s)", obj.Remote(), dt, fs.Config.ModifyWindow, modTime, i.ModTime)
-	}
-
+	i.CheckModTime(obj, obj.ModTime())
 }
 
 // Represents all items for checking

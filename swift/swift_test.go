@@ -1,4 +1,7 @@
 // Test Swift filesystem interface
+//
+// Automatically generated - DO NOT EDIT
+// Regenerate with: go run gen_tests.go or make gen_tests
 package swift_test
 
 import (

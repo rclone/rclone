@@ -1,4 +1,7 @@
 // Test Local filesystem interface
+//
+// Automatically generated - DO NOT EDIT
+// Regenerate with: go run gen_tests.go or make gen_tests
 package local_test
 
 import (

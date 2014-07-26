@@ -110,7 +110,7 @@ func TestFsNewFsObjectNotFound(t *testing.T) {
 func findObject(t *testing.T, Name string) fs.Object {
 	obj := remote.NewFsObject(Name)
 	if obj == nil {
-		t.Fatalf("nil object")
+		t.Fatalf("Object not found: %q", Name)
 	}
 	return obj
 }
@@ -235,9 +235,7 @@ func TestObjectMd5sum(t *testing.T) {
 func TestObjectModTime(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
-	if !obj.ModTime().Equal(file1.ModTime) {
-		t.Errorf("ModTime is wrong %v != %v", obj.ModTime(), file1.ModTime)
-	}
+	file1.CheckModTime(obj, obj.ModTime())
 }
 
 func TestObjectSetModTime(t *testing.T) {
@@ -245,11 +243,8 @@ func TestObjectSetModTime(t *testing.T) {
 	newModTime := fstest.Time("2011-12-13T14:15:16.999999999Z")
 	obj := findObject(t, file1.Path)
 	obj.SetModTime(newModTime)
-	// Check in this object
-	if !obj.ModTime().Equal(newModTime) {
-		t.Errorf("newModTime is wrong %v != %v", obj.ModTime(), newModTime)
-	}
 	file1.ModTime = newModTime
+	file1.CheckModTime(obj, newModTime)
 	// And make a new object and read it from there too
 	TestObjectModTime(t)
 }
