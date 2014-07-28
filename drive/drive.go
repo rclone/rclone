@@ -234,10 +234,8 @@ func NewFs(name, path string) (fs.Fs, error) {
 		return nil, fmt.Errorf("Couldn't read info about Drive: %s", err)
 	}
 
-	// Find the Id of the root directory and the Id of its parent
-	f.rootId = f.about.RootFolderId
-	// Put the root directory in
-	f.dirCache.Put("", f.rootId)
+	// Find the Id of the true root and clear everything
+	f.resetRoot()
 	// Find the current root
 	err = f.findRoot(false)
 	if err != nil {
@@ -499,7 +497,7 @@ func (f *FsDrive) _findDir(path string, create bool) (pathId string, err error) 
 			}
 			info, err := f.svc.Files.Insert(info).Do()
 			if err != nil {
-				return pathId, fmt.Errorf("Failed to make directory")
+				return pathId, fmt.Errorf("Failed to make directory: %v", err)
 			}
 			pathId = info.Id
 		} else {
@@ -535,6 +533,20 @@ func (f *FsDrive) findRoot(create bool) error {
 	f.dirCache.Put("", f.rootId)
 	f.foundRoot = true
 	return nil
+}
+
+// Resets the root directory to the absolute root and clears the dirCache
+func (f *FsDrive) resetRoot() {
+	f.findRootLock.Lock()
+	defer f.findRootLock.Unlock()
+	f.foundRoot = false
+	f.dirCache.Flush()
+
+	// Put the true root in
+	f.rootId = f.about.RootFolderId
+
+	// Put the root directory in
+	f.dirCache.Put("", f.rootId)
 }
 
 // Walk the path returning a channel of FsObjects
@@ -686,6 +698,7 @@ func (f *FsDrive) Rmdir() error {
 			return err
 		}
 	}
+	f.resetRoot()
 	return nil
 }
 
@@ -708,7 +721,7 @@ func (f *FsDrive) Purge() error {
 		return err
 	}
 	err = f.svc.Files.Delete(f.rootId).Do()
-	f.dirCache.Flush()
+	f.resetRoot()
 	if err != nil {
 		return err
 	}
