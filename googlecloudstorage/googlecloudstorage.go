@@ -255,16 +255,23 @@ func (f *FsStorage) list(directories bool, fn func(string, *storage.Object)) {
 			fs.Log(f, "Couldn't read bucket %q: %s", f.bucket, err)
 			return
 		}
-		for _, object := range objects.Items {
-			if directories && !strings.HasSuffix(object.Name, "/") {
-				continue
+		if !directories {
+			for _, object := range objects.Items {
+				if !strings.HasPrefix(object.Name, f.root) {
+					fs.Log(f, "Odd name received %q", object.Name)
+					continue
+				}
+				remote := object.Name[rootLength:]
+				fn(remote, object)
 			}
-			if !strings.HasPrefix(object.Name, f.root) {
-				fs.Log(f, "Odd name received %q", object.Name)
-				continue
+		} else {
+			var object storage.Object
+			for _, prefix := range objects.Prefixes {
+				if !strings.HasSuffix(prefix, "/") {
+					continue
+				}
+				fn(prefix[:len(prefix)-1], &object)
 			}
-			remote := object.Name[rootLength:]
-			fn(remote, object)
 		}
 		if objects.NextPageToken == "" {
 			break
