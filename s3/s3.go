@@ -421,13 +421,28 @@ func (o *FsObjectS3) Size() int64 {
 
 // readMetaData gets the metadata if it hasn't already been fetched
 //
+// if we get a 404 error then we retry a few times for eventual
+// consistency reasons
+//
 // it also sets the info
 func (o *FsObjectS3) readMetaData() (err error) {
 	if o.meta != nil {
 		return nil
 	}
+	var headers s3.Headers
 
-	headers, err := o.s3.b.Head(o.s3.root+o.remote, nil)
+	// Try reading the metadata a few times (with exponential
+	// backoff) to get around eventual consistency on 404 error
+	for tries := uint(0); tries < 10; tries++ {
+		headers, err = o.s3.b.Head(o.s3.root+o.remote, nil)
+		if s3Err, ok := err.(*s3.Error); ok {
+			if s3Err.StatusCode == http.StatusNotFound {
+				time.Sleep(5 * time.Millisecond << tries)
+				continue
+			}
+		}
+		break
+	}
 	if err != nil {
 		fs.Debug(o, "Failed to read info: %s", err)
 		return err
