@@ -503,11 +503,12 @@ func (o *FsObjectStorage) SetModTime(modTime time.Time) {
 		Name:     o.storage.root + o.remote,
 		Metadata: metadataFromModTime(modTime),
 	}
-	_, err := o.storage.svc.Objects.Patch(o.storage.bucket, o.storage.root+o.remote, &object).Do()
+	newObject, err := o.storage.svc.Objects.Patch(o.storage.bucket, o.storage.root+o.remote, &object).Do()
 	if err != nil {
 		fs.Stats.Error()
 		fs.Log(o, "Failed to update remote mtime: %s", err)
 	}
+	o.setMetaData(newObject)
 }
 
 // Is this object storable
