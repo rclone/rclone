@@ -85,7 +85,7 @@ type Fs interface {
 
 	// Remove the directory (container, bucket) if empty
 	//
-	// Return an error if it doesn't exists or isn't empty
+	// Return an error if it doesn't exist or isn't empty
 	Rmdir() error
 
 	// Precision of the ModTimes in this Fs
@@ -135,6 +135,8 @@ type Purger interface {
 	//
 	// Implement this if you have a way of deleting all the files
 	// quicker than just running Remove() on the result of List()
+	//
+	// Return an error if it doesn't exist
 	Purge() error
 }
 

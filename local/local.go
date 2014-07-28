@@ -261,6 +261,13 @@ func (f *FsLocal) readPrecision() (precision time.Duration) {
 // deleting all the files quicker than just running Remove() on the
 // result of List()
 func (f *FsLocal) Purge() error {
+	fi, err := os.Lstat(f.root)
+	if err != nil {
+		return err
+	}
+	if !fi.Mode().IsDir() {
+		return fmt.Errorf("Can't Purge non directory: %q", f.root)
+	}
 	return os.RemoveAll(f.root)
 }
 

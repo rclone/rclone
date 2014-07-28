@@ -161,9 +161,12 @@ func RandomRemote(remoteName string, subdir bool) (fs.Fs, func()) {
 	}
 
 	finalise := func() {
-		TestPurge(remote)
+		_ = fs.Purge(remote) // ignore error
 		if parentRemote != nil {
-			TestPurge(parentRemote)
+			err = fs.Purge(parentRemote) // ignore error
+			if err != nil {
+				log.Printf("Failed to purge %v: %v", parentRemote, err)
+			}
 		}
 		// Delete directory if we made one above
 		if rmdir != "" {

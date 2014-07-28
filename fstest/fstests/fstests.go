@@ -322,7 +322,10 @@ func TestObjectRemove(t *testing.T) {
 func TestObjectPurge(t *testing.T) {
 	skipIfNotOk(t)
 	fstest.TestPurge(remote)
-	fstest.TestPurge(remote)
+	err := fs.Purge(remote)
+	if err == nil {
+		t.Fatal("Expecting error after on second purge")
+	}
 }
 
 func TestFinalise(t *testing.T) {
