@@ -38,8 +38,8 @@ const (
 	rcloneClientId     = "202264815644.apps.googleusercontent.com"
 	rcloneClientSecret = "X4Z3ca8xfWDb1Voo-F9a7ZxJ"
 	driveFolderType    = "application/vnd.google-apps.folder"
-	RFC3339In          = time.RFC3339
-	RFC3339Out         = "2006-01-02T15:04:05.000000000Z07:00"
+	timeFormatIn       = time.RFC3339
+	timeFormatOut      = "2006-01-02T15:04:05.000000000Z07:00"
 )
 
 // Globals
@@ -249,7 +249,7 @@ func NewFs(name, path string) (fs.Fs, error) {
 			// No root so return old f
 			return f, nil
 		}
-		obj, err := newF.newFsObjectWithInfo(remote, nil)
+		obj, err := newF.newFsObjectWithInfoErr(remote, nil)
 		if err != nil {
 			// File doesn't exist so return old f
 			return f, nil
@@ -262,7 +262,7 @@ func NewFs(name, path string) (fs.Fs, error) {
 }
 
 // Return an FsObject from a path
-func (f *FsDrive) newFsObjectWithInfo(remote string, info *drive.File) (fs.Object, error) {
+func (f *FsDrive) newFsObjectWithInfoErr(remote string, info *drive.File) (fs.Object, error) {
 	fs := &FsObjectDrive{
 		drive:  f,
 		remote: remote,
@@ -282,8 +282,8 @@ func (f *FsDrive) newFsObjectWithInfo(remote string, info *drive.File) (fs.Objec
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsDrive) NewFsObjectWithInfo(remote string, info *drive.File) fs.Object {
-	fs, _ := f.newFsObjectWithInfo(remote, info)
+func (f *FsDrive) newFsObjectWithInfo(remote string, info *drive.File) fs.Object {
+	fs, _ := f.newFsObjectWithInfoErr(remote, info)
 	// Errors have already been logged
 	return fs
 }
@@ -292,7 +292,7 @@ func (f *FsDrive) NewFsObjectWithInfo(remote string, info *drive.File) fs.Object
 //
 // May return nil if an error occurred
 func (f *FsDrive) NewFsObject(remote string) fs.Object {
-	return f.NewFsObjectWithInfo(remote, nil)
+	return f.newFsObjectWithInfo(remote, nil)
 }
 
 // Path should be directory path either "" or "path/"
@@ -316,7 +316,7 @@ func (f *FsDrive) listDirRecursive(dirId string, path string, out fs.ObjectsChan
 		} else {
 			// If item has no MD5 sum it isn't stored on drive, so ignore it
 			if item.Md5Checksum != "" {
-				if fs := f.NewFsObjectWithInfo(path+item.Title, item); fs != nil {
+				if fs := f.newFsObjectWithInfo(path+item.Title, item); fs != nil {
 					out <- fs
 				}
 			}
@@ -366,7 +366,7 @@ func (f *FsDrive) listDirFull(dirId string, path string, out fs.ObjectsChan) err
 			// fmt.Printf("file %s %s %s\n", path, item.Title, item.Id)
 			// If item has no MD5 sum it isn't stored on drive, so ignore it
 			if item.Md5Checksum != "" {
-				if fs := f.NewFsObjectWithInfo(path, item); fs != nil {
+				if fs := f.newFsObjectWithInfo(path, item); fs != nil {
 					out <- fs
 				}
 			}
@@ -589,7 +589,7 @@ func (f *FsDrive) ListDir() fs.DirChan {
 					Bytes: -1,
 					Count: -1,
 				}
-				dir.When, _ = time.Parse(RFC3339In, item.ModifiedDate)
+				dir.When, _ = time.Parse(timeFormatIn, item.ModifiedDate)
 				out <- dir
 				return false
 			})
@@ -650,7 +650,7 @@ func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64
 	if mimeType == "" {
 		mimeType = "application/octet-stream"
 	}
-	modifiedDate := modTime.Format(RFC3339Out)
+	modifiedDate := modTime.Format(timeFormatOut)
 
 	// Define the metadata for the file we are going to create.
 	info := &drive.File{
@@ -808,7 +808,7 @@ func (o *FsObjectDrive) ModTime() time.Time {
 		fs.Log(o, "Failed to read metadata: %s", err)
 		return time.Now()
 	}
-	modTime, err := time.Parse(RFC3339In, o.modifiedDate)
+	modTime, err := time.Parse(timeFormatIn, o.modifiedDate)
 	if err != nil {
 		fs.Log(o, "Failed to read mtime from object: %s", err)
 		return time.Now()
@@ -826,7 +826,7 @@ func (o *FsObjectDrive) SetModTime(modTime time.Time) {
 	}
 	// New metadata
 	info := &drive.File{
-		ModifiedDate: modTime.Format(RFC3339Out),
+		ModifiedDate: modTime.Format(timeFormatOut),
 	}
 	// Set modified date
 	_, err = o.drive.svc.Files.Update(o.id, info).SetModifiedDate(true).Do()
@@ -867,7 +867,7 @@ func (o *FsObjectDrive) Open() (in io.ReadCloser, err error) {
 func (o *FsObjectDrive) Update(in io.Reader, modTime time.Time, size int64) error {
 	info := &drive.File{
 		Id:           o.id,
-		ModifiedDate: modTime.Format(RFC3339Out),
+		ModifiedDate: modTime.Format(timeFormatOut),
 	}
 
 	// Make the API request to upload metadata and file data.

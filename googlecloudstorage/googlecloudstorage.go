@@ -34,8 +34,8 @@ import (
 const (
 	rcloneClientId     = "202264815644.apps.googleusercontent.com"
 	rcloneClientSecret = "X4Z3ca8xfWDb1Voo-F9a7ZxJ"
-	RFC3339In          = time.RFC3339
-	RFC3339Out         = "2006-01-02T15:04:05.000000000Z07:00"
+	timeFormatIn       = time.RFC3339
+	timeFormatOut      = "2006-01-02T15:04:05.000000000Z07:00"
 	metaMtime          = "mtime" // key to store mtime under in metadata
 	listChunks         = 256     // chunk size to read directory listings
 )
@@ -215,7 +215,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsStorage) NewFsObjectWithInfo(remote string, info *storage.Object) fs.Object {
+func (f *FsStorage) newFsObjectWithInfo(remote string, info *storage.Object) fs.Object {
 	o := &FsObjectStorage{
 		storage: f,
 		remote:  remote,
@@ -236,7 +236,7 @@ func (f *FsStorage) NewFsObjectWithInfo(remote string, info *storage.Object) fs.
 //
 // May return nil if an error occurred
 func (f *FsStorage) NewFsObject(remote string) fs.Object {
-	return f.NewFsObjectWithInfo(remote, nil)
+	return f.newFsObjectWithInfo(remote, nil)
 }
 
 // list the objects into the function supplied
@@ -293,7 +293,7 @@ func (f *FsStorage) List() fs.ObjectsChan {
 		go func() {
 			defer close(out)
 			f.list(false, func(remote string, object *storage.Object) {
-				if fs := f.NewFsObjectWithInfo(remote, object); fs != nil {
+				if fs := f.newFsObjectWithInfo(remote, object); fs != nil {
 					out <- fs
 				}
 			})
@@ -441,7 +441,7 @@ func (o *FsObjectStorage) setMetaData(info *storage.Object) {
 	// read mtime out of metadata if available
 	mtimeString, ok := info.Metadata[metaMtime]
 	if ok {
-		modTime, err := time.Parse(RFC3339In, mtimeString)
+		modTime, err := time.Parse(timeFormatIn, mtimeString)
 		if err == nil {
 			o.modTime = modTime
 			return
@@ -451,7 +451,7 @@ func (o *FsObjectStorage) setMetaData(info *storage.Object) {
 	}
 
 	// Fallback to the Updated time
-	modTime, err := time.Parse(RFC3339In, info.Updated)
+	modTime, err := time.Parse(timeFormatIn, info.Updated)
 	if err != nil {
 		fs.Log(o, "Bad time decode: %v", err)
 	} else {
@@ -491,7 +491,7 @@ func (o *FsObjectStorage) ModTime() time.Time {
 // Returns metadata for an object
 func metadataFromModTime(modTime time.Time) map[string]string {
 	metadata := make(map[string]string, 1)
-	metadata[metaMtime] = modTime.Format(RFC3339Out)
+	metadata[metaMtime] = modTime.Format(timeFormatOut)
 	return metadata
 }
 
@@ -559,7 +559,7 @@ func (o *FsObjectStorage) Update(in io.Reader, modTime time.Time, size int64) er
 		Name:        o.storage.root + o.remote,
 		ContentType: contentType,
 		Size:        uint64(size),
-		Updated:     modTime.Format(RFC3339Out), // Doesn't get set
+		Updated:     modTime.Format(timeFormatOut), // Doesn't get set
 		Metadata:    metadataFromModTime(modTime),
 	}
 	newObject, err := o.storage.svc.Objects.Insert(o.storage.bucket, &object).Media(in).Name(object.Name).PredefinedAcl(o.storage.objectAcl).Do()

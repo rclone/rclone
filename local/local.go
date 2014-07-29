@@ -68,7 +68,7 @@ func (f *FsLocal) String() string {
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsLocal) NewFsObjectWithInfo(remote string, info os.FileInfo) fs.Object {
+func (f *FsLocal) newFsObjectWithInfo(remote string, info os.FileInfo) fs.Object {
 	path := filepath.Join(f.root, remote)
 	o := &FsObjectLocal{local: f, remote: remote, path: path}
 	if info != nil {
@@ -87,7 +87,7 @@ func (f *FsLocal) NewFsObjectWithInfo(remote string, info os.FileInfo) fs.Object
 //
 // May return nil if an error occurred
 func (f *FsLocal) NewFsObject(remote string) fs.Object {
-	return f.NewFsObjectWithInfo(remote, nil)
+	return f.newFsObjectWithInfo(remote, nil)
 }
 
 // List the path returning a channel of FsObjects
@@ -111,7 +111,7 @@ func (f *FsLocal) List() fs.ObjectsChan {
 					return nil
 					// remote = ""
 				}
-				if fs := f.NewFsObjectWithInfo(remote, fi); fs != nil {
+				if fs := f.newFsObjectWithInfo(remote, fi); fs != nil {
 					if fs.Storable() {
 						out <- fs
 					}

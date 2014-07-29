@@ -227,7 +227,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsS3) NewFsObjectWithInfo(remote string, info *s3.Key) fs.Object {
+func (f *FsS3) newFsObjectWithInfo(remote string, info *s3.Key) fs.Object {
 	o := &FsObjectS3{
 		s3:     f,
 		remote: remote,
@@ -256,7 +256,7 @@ func (f *FsS3) NewFsObjectWithInfo(remote string, info *s3.Key) fs.Object {
 //
 // May return nil if an error occurred
 func (f *FsS3) NewFsObject(remote string) fs.Object {
-	return f.NewFsObjectWithInfo(remote, nil)
+	return f.newFsObjectWithInfo(remote, nil)
 }
 
 // list the objects into the function supplied
@@ -312,7 +312,7 @@ func (f *FsS3) List() fs.ObjectsChan {
 		go func() {
 			defer close(out)
 			f.list(false, func(remote string, object *s3.Key) {
-				if fs := f.NewFsObjectWithInfo(remote, object); fs != nil {
+				if fs := f.newFsObjectWithInfo(remote, object); fs != nil {
 					out <- fs
 				}
 			})

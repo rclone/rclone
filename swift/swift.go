@@ -157,7 +157,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsSwift) NewFsObjectWithInfo(remote string, info *swift.Object) fs.Object {
+func (f *FsSwift) newFsObjectWithInfo(remote string, info *swift.Object) fs.Object {
 	fs := &FsObjectSwift{
 		swift:  f,
 		remote: remote,
@@ -179,7 +179,7 @@ func (f *FsSwift) NewFsObjectWithInfo(remote string, info *swift.Object) fs.Obje
 //
 // May return nil if an error occurred
 func (f *FsSwift) NewFsObject(remote string) fs.Object {
-	return f.NewFsObjectWithInfo(remote, nil)
+	return f.newFsObjectWithInfo(remote, nil)
 }
 
 // list the objects into the function supplied
@@ -236,7 +236,7 @@ func (f *FsSwift) List() fs.ObjectsChan {
 		go func() {
 			defer close(out)
 			f.list(false, func(remote string, object *swift.Object) {
-				if fs := f.NewFsObjectWithInfo(remote, object); fs != nil {
+				if fs := f.newFsObjectWithInfo(remote, object); fs != nil {
 					out <- fs
 				}
 			})

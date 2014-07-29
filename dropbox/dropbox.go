@@ -45,8 +45,8 @@ const (
 	md5sumField      = "md5sum"
 	mtimeField       = "mtime"
 	maxCommitRetries = 5
-	RFC3339In        = time.RFC3339
-	RFC3339Out       = "2006-01-02T15:04:05.000000000Z07:00"
+	timeFormatIn     = time.RFC3339
+	timeFormatOut    = "2006-01-02T15:04:05.000000000Z07:00"
 )
 
 // Register with Fs
@@ -54,7 +54,7 @@ func init() {
 	fs.Register(&fs.FsInfo{
 		Name:   "dropbox",
 		NewFs:  NewFs,
-		Config: Config,
+		Config: configHelper,
 		Options: []fs.Option{{
 			Name: "app_key",
 			Help: "Dropbox App Key - leave blank to use rclone's.",
@@ -66,7 +66,7 @@ func init() {
 }
 
 // Configuration helper - called after the user has put in the defaults
-func Config(name string) {
+func configHelper(name string) {
 	// See if already have a token
 	token := fs.ConfigFile.MustValue(name, "token")
 	if token != "" {
@@ -214,7 +214,9 @@ func (f *FsDropbox) openDataStore() {
 }
 
 // Return an FsObject from a path
-func (f *FsDropbox) newFsObjectWithInfo(remote string, info *dropbox.Entry) (fs.Object, error) {
+//
+// May return nil if an error occurred
+func (f *FsDropbox) newFsObjectWithInfo(remote string, info *dropbox.Entry) fs.Object {
 	o := &FsObjectDropbox{
 		dropbox: f,
 		remote:  remote,
@@ -225,26 +227,17 @@ func (f *FsDropbox) newFsObjectWithInfo(remote string, info *dropbox.Entry) (fs.
 		err := o.readEntryAndSetMetadata()
 		if err != nil {
 			// logged already fs.Debug("Failed to read info: %s", err)
-			return nil, err
+			return nil
 		}
 	}
-	return o, nil
-}
-
-// Return an FsObject from a path
-//
-// May return nil if an error occurred
-func (f *FsDropbox) NewFsObjectWithInfo(remote string, info *dropbox.Entry) fs.Object {
-	fs, _ := f.newFsObjectWithInfo(remote, info)
-	// Errors have already been logged
-	return fs
+	return o
 }
 
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
 func (f *FsDropbox) NewFsObject(remote string) fs.Object {
-	return f.NewFsObjectWithInfo(remote, nil)
+	return f.newFsObjectWithInfo(remote, nil)
 }
 
 // Strips the root off entry and returns it
@@ -290,7 +283,7 @@ func (f *FsDropbox) list(out fs.ObjectsChan) {
 						// ignore directories
 					} else {
 						path := f.stripRoot(entry)
-						out <- f.NewFsObjectWithInfo(path, entry)
+						out <- f.newFsObjectWithInfo(path, entry)
 					}
 				}
 			}
@@ -625,7 +618,7 @@ func (o *FsObjectDropbox) readMetaData() (err error) {
 			if !ok {
 				fs.Debug(o, "mtime not a string")
 			} else {
-				modTime, err := time.Parse(RFC3339In, mtime)
+				modTime, err := time.Parse(timeFormatIn, mtime)
 				if err != nil {
 					return err
 				}
@@ -671,7 +664,7 @@ func (o *FsObjectDropbox) setModTimeAndMd5sum(modTime time.Time, md5sum string) 
 		}
 
 		if !modTime.IsZero() {
-			mtime := modTime.Format(RFC3339Out)
+			mtime := modTime.Format(timeFormatOut)
 			err := record.Set(mtimeField, mtime)
 			if err != nil {
 				return fmt.Errorf("Couldn't set mtime record: %s", err)
