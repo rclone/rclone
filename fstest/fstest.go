@@ -129,14 +129,14 @@ func RandomString(n int) string {
 //
 // Call the finalise function returned to Purge the fs at the end (and
 // the parent if necessary)
-func RandomRemote(remoteName string, subdir bool) (fs.Fs, func()) {
+func RandomRemote(remoteName string, subdir bool) (fs.Fs, func(), error) {
 	// Make a directory if remote name is null
 	rmdir := ""
 	var err error
 	if remoteName == "" {
 		remoteName, err = ioutil.TempDir("", "rclone")
 		if err != nil {
-			Fatalf("Failed to create temp dir: %v", err)
+			return nil, nil, err
 		}
 		rmdir = remoteName
 	}
@@ -150,14 +150,14 @@ func RandomRemote(remoteName string, subdir bool) (fs.Fs, func()) {
 		var err error
 		parentRemote, err = fs.NewFs(remoteName)
 		if err != nil {
-			log.Fatalf("Failed to make parent %q: %v", remoteName, err)
+			return nil, nil, err
 		}
 		remoteName += "/" + RandomString(8)
 	}
 
 	remote, err := fs.NewFs(remoteName)
 	if err != nil {
-		log.Fatalf("Failed to make %q: %v", remoteName, err)
+		return nil, nil, err
 	}
 
 	finalise := func() {
@@ -177,7 +177,7 @@ func RandomRemote(remoteName string, subdir bool) (fs.Fs, func()) {
 		}
 	}
 
-	return remote, finalise
+	return remote, finalise, nil
 }
 
 func TestMkdir(remote fs.Fs) {

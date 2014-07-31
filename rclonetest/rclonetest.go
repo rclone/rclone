@@ -257,10 +257,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	fremote, finalise := fstest.RandomRemote(args[0], *subDir)
+	fremote, finalise, err := fstest.RandomRemote(args[0], *subDir)
+	if err != nil {
+		log.Fatalf("Failed to open remote %q: %v", args[0], err)
+	}
 	log.Printf("Testing with remote %v", fremote)
 
-	var err error
 	localName, err = ioutil.TempDir("", "rclone")
 	if err != nil {
 		log.Fatalf("Failed to create temp dir: %v", err)

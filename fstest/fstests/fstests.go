@@ -8,6 +8,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"io"
+	"log"
 	"testing"
 	"time"
 
@@ -34,13 +35,15 @@ func TestInit(t *testing.T) {
 	fs.LoadConfig()
 	fs.Config.Verbose = false
 	fs.Config.Quiet = true
-	remote, remoteFinalise = fstest.RandomRemote(RemoteName, false)
-	// if err != nil {
-	// 	if strings.Contains(err.Error(), "Didn't find section in config file") {
-	// 		return
-	// 	}
-	// 	t.Fatalf("Couldn't start FS: %v", err)
-	// }
+	var err error
+	remote, remoteFinalise, err = fstest.RandomRemote(RemoteName, false)
+	if err == fs.NotFoundInConfigFile {
+		log.Printf("Didn't find %q in config file - skipping tests", RemoteName)
+		return
+	}
+	if err != nil {
+		t.Fatalf("Couldn't start FS: %v", err)
+	}
 	fstest.Fatalf = t.Fatalf
 	fstest.TestMkdir(remote)
 }

@@ -20,6 +20,8 @@ const (
 var (
 	// Filesystem registry
 	fsRegistry []*FsInfo
+	// Error returned by NewFs if not found in config file
+	NotFoundInConfigFile = fmt.Errorf("Didn't find section in config file")
 )
 
 // Filesystem info
@@ -193,7 +195,7 @@ func NewFs(path string) (Fs, error) {
 		var err error
 		fsName, err = ConfigFile.GetValue(configName, "type")
 		if err != nil {
-			return nil, fmt.Errorf("Didn't find section in config file for %q", configName)
+			return nil, NotFoundInConfigFile
 		}
 	}
 	fs, err := Find(fsName)
