@@ -2,11 +2,11 @@ Change lsd command so it doesn't show -1
   * Make sure all Fses show -1 for objects Zero for dates etc
   * Make test?
 
-Make a subdir test on an existing file (file2 say) (List and ListDir)
-
 Put the TestRemote names into the Fs description
 Make rclonetest use the TestRemote name automatically
 Put rclonetest back into rclone as tests
+  * defaults to using local remote
+  * but could pass another in with a flag
 
 Run errcheck and go vet in the make file
 .. Also race detector?

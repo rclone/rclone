@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -183,7 +182,6 @@ func TestFsListDirRoot(t *testing.T) {
 	}
 	found := false
 	for obj := range rootRemote.ListDir() {
-		fmt.Printf("obj = %q\n", obj.Name)
 		if obj.Name == subRemoteLeaf {
 			found = true
 		}
@@ -191,6 +189,44 @@ func TestFsListDirRoot(t *testing.T) {
 	if !found {
 		t.Errorf("Didn't find %q", subRemoteLeaf)
 	}
+}
+
+func TestFsListRoot(t *testing.T) {
+	skipIfNotOk(t)
+	rootRemote, err := fs.NewFs(RemoteName)
+	if err != nil {
+		t.Fatal("Failed to make remote %q: %v", RemoteName, err)
+	}
+	// Should either find file1 and file2 or nothing
+	found1 := false
+	file1 := subRemoteLeaf + "/" + file1.Path
+	found2 := false
+	file2 := subRemoteLeaf + "/" + file2.Path
+	count := 0
+	errors := fs.Stats.GetErrors()
+	for obj := range rootRemote.List() {
+		count++
+		if obj.Remote() == file1 {
+			found1 = true
+		}
+		if obj.Remote() == file2 {
+			found2 = true
+		}
+	}
+	errors -= fs.Stats.GetErrors()
+	if count == 0 {
+		if errors == 0 {
+			t.Error("Expecting error if count==0")
+		}
+		return
+	}
+	if found1 && found2 {
+		if errors != 0 {
+			t.Error("Not expecting error if found")
+		}
+		return
+	}
+	t.Errorf("Didn't find %q (%v) and %q (%v) or no files (count %d)", file1, found1, file2, found2, count)
 }
 
 func TestFsListFile1(t *testing.T) {
