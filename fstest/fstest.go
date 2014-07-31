@@ -125,29 +125,53 @@ func RandomString(n int) string {
 	return string(out)
 }
 
+// Creates a temporary directory name for local remotes
+func LocalRemote() (path string, err error) {
+	path, err = ioutil.TempDir("", "rclone")
+	if err == nil {
+		// Now remove the directory
+		err = os.Remove(path)
+	}
+	return
+}
+
+// Make a random bucket or subdirectory name
+//
+// Returns a random remote name plus the leaf name
+func RandomRemoteName(remoteName string) (string, string, error) {
+	var err error
+	var leafName string
+
+	// Make a directory if remote name is null
+	if remoteName == "" {
+		remoteName, err = LocalRemote()
+		if err != nil {
+			return "", "", err
+		}
+	} else {
+		if !strings.HasSuffix(remoteName, ":") {
+			remoteName += "/"
+		}
+		leafName = RandomString(32)
+		remoteName += leafName
+	}
+	return remoteName, leafName, nil
+}
+
 // Make a random bucket or subdirectory on the remote
 //
 // Call the finalise function returned to Purge the fs at the end (and
 // the parent if necessary)
 func RandomRemote(remoteName string, subdir bool) (fs.Fs, func(), error) {
-	// Make a directory if remote name is null
-	rmdir := ""
 	var err error
-	if remoteName == "" {
-		remoteName, err = ioutil.TempDir("", "rclone")
-		if err != nil {
-			return nil, nil, err
-		}
-		rmdir = remoteName
+	var parentRemote fs.Fs
+
+	remoteName, _, err = RandomRemoteName(remoteName)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	if !strings.HasSuffix(remoteName, ":") {
-		remoteName += "/"
-	}
-	remoteName += RandomString(32)
-	var parentRemote fs.Fs
 	if subdir {
-		var err error
 		parentRemote, err = fs.NewFs(remoteName)
 		if err != nil {
 			return nil, nil, err
@@ -168,13 +192,6 @@ func RandomRemote(remoteName string, subdir bool) (fs.Fs, func(), error) {
 				log.Printf("Failed to purge %v: %v", parentRemote, err)
 			}
 		}
-		// Delete directory if we made one above
-		if rmdir != "" {
-			err := os.RemoveAll(rmdir)
-			if err != nil {
-				Fatalf("Failed to remove %q: %v", rmdir, err)
-			}
-		}
 	}
 
 	return remote, finalise, nil
@@ -191,7 +208,7 @@ func TestMkdir(remote fs.Fs) {
 func TestPurge(remote fs.Fs) {
 	err := fs.Purge(remote)
 	if err != nil {
-		log.Fatalf("Purge failed: %v", err)
+		Fatalf("Purge failed: %v", err)
 	}
 	CheckListing(remote, []Item{})
 }

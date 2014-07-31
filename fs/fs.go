@@ -184,9 +184,10 @@ func Find(name string) (*FsInfo, error) {
 
 // NewFs makes a new Fs object from the path
 //
-// The path is of the form service://path
+// The path is of the form remote:path
 //
-// Services are looked up in the config file
+// Remotes are looked up in the config file.  If the remote isn't
+// found then NotFoundInConfigFile will be returned.
 func NewFs(path string) (Fs, error) {
 	parts := matcher.FindStringSubmatch(path)
 	fsName, configName, fsPath := "local", "local", path

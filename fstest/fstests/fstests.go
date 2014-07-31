@@ -7,8 +7,11 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"log"
+	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -17,11 +20,12 @@ import (
 )
 
 var (
-	remote         fs.Fs
-	RemoteName     = ""
-	remoteFinalise func()
-	NilObject      fs.Object
-	file1          = fstest.Item{
+	remote        fs.Fs
+	RemoteName    = ""
+	subRemoteName = ""
+	subRemoteLeaf = ""
+	NilObject     fs.Object
+	file1         = fstest.Item{
 		ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
 		Path:    "file name.txt",
 	}
@@ -32,11 +36,22 @@ var (
 )
 
 func TestInit(t *testing.T) {
+	var err error
 	fs.LoadConfig()
 	fs.Config.Verbose = false
 	fs.Config.Quiet = true
-	var err error
-	remote, remoteFinalise, err = fstest.RandomRemote(RemoteName, false)
+	if RemoteName == "" {
+		RemoteName, err = fstest.LocalRemote()
+		if err != nil {
+			log.Fatalf("Failed to create tmp dir: %v", err)
+		}
+	}
+	subRemoteName, subRemoteLeaf, err = fstest.RandomRemoteName(RemoteName)
+	if err != nil {
+		t.Fatalf("Couldn't make remote name: %v", err)
+	}
+
+	remote, err = fs.NewFs(subRemoteName)
 	if err == fs.NotFoundInConfigFile {
 		log.Printf("Didn't find %q in config file - skipping tests", RemoteName)
 		return
@@ -157,6 +172,24 @@ func TestFsListDirFile2(t *testing.T) {
 	}
 	if !found {
 		t.Errorf("Didn't find %q", `hello? sausage`)
+	}
+}
+
+func TestFsListDirRoot(t *testing.T) {
+	skipIfNotOk(t)
+	rootRemote, err := fs.NewFs(RemoteName)
+	if err != nil {
+		t.Fatal("Failed to make remote %q: %v", RemoteName, err)
+	}
+	found := false
+	for obj := range rootRemote.ListDir() {
+		fmt.Printf("obj = %q\n", obj.Name)
+		if obj.Name == subRemoteLeaf {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("Didn't find %q", subRemoteLeaf)
 	}
 }
 
@@ -312,6 +345,36 @@ func TestObjectStorable(t *testing.T) {
 	}
 }
 
+func TestLimitedFs(t *testing.T) {
+	skipIfNotOk(t)
+	remoteName := subRemoteName + "/" + file2.Path
+	file2Copy := file2
+	file2Copy.Path = "z.txt"
+	fileRemote, err := fs.NewFs(remoteName)
+	if err != nil {
+		t.Fatal("Failed to make remote %q: %v", remoteName, err)
+	}
+	fstest.CheckListing(fileRemote, []fstest.Item{file2Copy})
+	_, ok := fileRemote.(*fs.Limited)
+	if !ok {
+		t.Errorf("%v is not a fs.Limited", fileRemote)
+	}
+}
+
+func TestLimitedFsNotFound(t *testing.T) {
+	skipIfNotOk(t)
+	remoteName := subRemoteName + "/not found.txt"
+	fileRemote, err := fs.NewFs(remoteName)
+	if err != nil {
+		t.Fatal("Failed to make remote %q: %v", remoteName, err)
+	}
+	fstest.CheckListing(fileRemote, []fstest.Item{})
+	_, ok := fileRemote.(*fs.Limited)
+	if ok {
+		t.Errorf("%v is is a fs.Limited", fileRemote)
+	}
+}
+
 func TestObjectRemove(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
@@ -333,7 +396,11 @@ func TestObjectPurge(t *testing.T) {
 
 func TestFinalise(t *testing.T) {
 	skipIfNotOk(t)
-	if remoteFinalise != nil {
-		remoteFinalise()
+	if strings.HasPrefix(RemoteName, "/") {
+		// Remove temp directory
+		err := os.Remove(RemoteName)
+		if err != nil {
+			log.Printf("Failed to remove %q: %v\n", RemoteName, err)
+		}
 	}
 }
