@@ -3,13 +3,12 @@ Change lsd command so it doesn't show -1
   * Make test?
 
 Put the TestRemote names into the Fs description
-Make rclonetest use the TestRemote name automatically
-Put rclonetest back into rclone as tests
-  * defaults to using local remote
-  * but could pass another in with a flag
+Make test_all.sh use the TestRemote name automatically
 
 Run errcheck and go vet in the make file
 .. Also race detector?
+
+Get rid of Storable?
 
 Write developer manual
 

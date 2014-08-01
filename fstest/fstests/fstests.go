@@ -1,8 +1,6 @@
 // Generic tests for testing the Fs and Object interfaces
 package fstests
 
-// FIXME need to check the limited file system
-
 import (
 	"bytes"
 	"crypto/md5"
@@ -58,12 +56,10 @@ func TestInit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Couldn't start FS: %v", err)
 	}
-	fstest.Fatalf = t.Fatalf
-	fstest.TestMkdir(remote)
+	fstest.TestMkdir(t, remote)
 }
 
 func skipIfNotOk(t *testing.T) {
-	fstest.Fatalf = t.Fatalf
 	if remote == nil {
 		t.Skip("FS not configured")
 	}
@@ -88,7 +84,7 @@ type TestFile struct {
 
 func TestFsRmdirEmpty(t *testing.T) {
 	skipIfNotOk(t)
-	fstest.TestRmdir(remote)
+	fstest.TestRmdir(t, remote)
 }
 
 func TestFsRmdirNotFound(t *testing.T) {
@@ -101,13 +97,13 @@ func TestFsRmdirNotFound(t *testing.T) {
 
 func TestFsMkdir(t *testing.T) {
 	skipIfNotOk(t)
-	fstest.TestMkdir(remote)
-	fstest.TestMkdir(remote)
+	fstest.TestMkdir(t, remote)
+	fstest.TestMkdir(t, remote)
 }
 
 func TestFsListEmpty(t *testing.T) {
 	skipIfNotOk(t)
-	fstest.CheckListing(remote, []fstest.Item{})
+	fstest.CheckListing(t, remote, []fstest.Item{})
 }
 
 func TestFsListDirEmpty(t *testing.T) {
@@ -143,10 +139,10 @@ func testPut(t *testing.T, file *fstest.Item) {
 		t.Fatal("Put error", err)
 	}
 	file.Md5sum = hex.EncodeToString(hash.Sum(nil))
-	file.Check(obj)
+	file.Check(t, obj, remote.Precision())
 	// Re-read the object and check again
 	obj = findObject(t, file.Path)
-	file.Check(obj)
+	file.Check(t, obj, remote.Precision())
 }
 
 func TestFsPutFile1(t *testing.T) {
@@ -231,18 +227,18 @@ func TestFsListRoot(t *testing.T) {
 
 func TestFsListFile1(t *testing.T) {
 	skipIfNotOk(t)
-	fstest.CheckListing(remote, []fstest.Item{file1, file2})
+	fstest.CheckListing(t, remote, []fstest.Item{file1, file2})
 }
 
 func TestFsNewFsObject(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
-	file1.Check(obj)
+	file1.Check(t, obj, remote.Precision())
 }
 
 func TestFsListFile1and2(t *testing.T) {
 	skipIfNotOk(t)
-	fstest.CheckListing(remote, []fstest.Item{file1, file2})
+	fstest.CheckListing(t, remote, []fstest.Item{file1, file2})
 }
 
 func TestFsRmdirFull(t *testing.T) {
@@ -307,7 +303,7 @@ func TestObjectMd5sum(t *testing.T) {
 func TestObjectModTime(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
-	file1.CheckModTime(obj, obj.ModTime())
+	file1.CheckModTime(t, obj, obj.ModTime(), remote.Precision())
 }
 
 func TestObjectSetModTime(t *testing.T) {
@@ -316,7 +312,7 @@ func TestObjectSetModTime(t *testing.T) {
 	obj := findObject(t, file1.Path)
 	obj.SetModTime(newModTime)
 	file1.ModTime = newModTime
-	file1.CheckModTime(obj, newModTime)
+	file1.CheckModTime(t, obj, newModTime, remote.Precision())
 	// And make a new object and read it from there too
 	TestObjectModTime(t)
 }
@@ -367,10 +363,10 @@ func TestObjectUpdate(t *testing.T) {
 		t.Fatal("Update error", err)
 	}
 	file1.Md5sum = hex.EncodeToString(hash.Sum(nil))
-	file1.Check(obj)
+	file1.Check(t, obj, remote.Precision())
 	// Re-read the object and check again
 	obj = findObject(t, file1.Path)
-	file1.Check(obj)
+	file1.Check(t, obj, remote.Precision())
 }
 
 func TestObjectStorable(t *testing.T) {
@@ -390,7 +386,7 @@ func TestLimitedFs(t *testing.T) {
 	if err != nil {
 		t.Fatal("Failed to make remote %q: %v", remoteName, err)
 	}
-	fstest.CheckListing(fileRemote, []fstest.Item{file2Copy})
+	fstest.CheckListing(t, fileRemote, []fstest.Item{file2Copy})
 	_, ok := fileRemote.(*fs.Limited)
 	if !ok {
 		t.Errorf("%v is not a fs.Limited", fileRemote)
@@ -404,7 +400,7 @@ func TestLimitedFsNotFound(t *testing.T) {
 	if err != nil {
 		t.Fatal("Failed to make remote %q: %v", remoteName, err)
 	}
-	fstest.CheckListing(fileRemote, []fstest.Item{})
+	fstest.CheckListing(t, fileRemote, []fstest.Item{})
 	_, ok := fileRemote.(*fs.Limited)
 	if ok {
 		t.Errorf("%v is is a fs.Limited", fileRemote)
@@ -418,12 +414,12 @@ func TestObjectRemove(t *testing.T) {
 	if err != nil {
 		t.Fatal("Remove error", err)
 	}
-	fstest.CheckListing(remote, []fstest.Item{file2})
+	fstest.CheckListing(t, remote, []fstest.Item{file2})
 }
 
 func TestObjectPurge(t *testing.T) {
 	skipIfNotOk(t)
-	fstest.TestPurge(remote)
+	fstest.TestPurge(t, remote)
 	err := fs.Purge(remote)
 	if err == nil {
 		t.Fatal("Expecting error after on second purge")

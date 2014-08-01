@@ -10,12 +10,11 @@ import (
 	"math/rand"
 	"os"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/ncw/rclone/fs"
 )
-
-var Fatalf = log.Fatalf
 
 // Seed the random number generator
 func init() {
@@ -32,30 +31,29 @@ type Item struct {
 }
 
 // check the mod time to the given precision
-func (i *Item) CheckModTime(obj fs.Object, modTime time.Time) {
+func (i *Item) CheckModTime(t *testing.T, obj fs.Object, modTime time.Time, precision time.Duration) {
 	dt := modTime.Sub(i.ModTime)
-	precision := obj.Fs().Precision()
 	if dt >= precision || dt <= -precision {
-		Fatalf("%s: Modification time difference too big |%s| > %s (%s vs %s)", obj.Remote(), dt, precision, modTime, i.ModTime)
+		t.Errorf("%s: Modification time difference too big |%s| > %s (%s vs %s) (precision %s)", obj.Remote(), dt, precision, modTime, i.ModTime, precision)
 	}
 }
 
-func (i *Item) Check(obj fs.Object) {
+func (i *Item) Check(t *testing.T, obj fs.Object, precision time.Duration) {
 	if obj == nil {
-		Fatalf("Object is nil")
+		t.Fatalf("Object is nil")
 	}
 	// Check attributes
 	Md5sum, err := obj.Md5sum()
 	if err != nil {
-		Fatalf("Failed to read md5sum for %q: %v", obj.Remote(), err)
+		t.Fatalf("Failed to read md5sum for %q: %v", obj.Remote(), err)
 	}
 	if i.Md5sum != Md5sum {
-		Fatalf("%s: Md5sum incorrect - expecting %q got %q", obj.Remote(), i.Md5sum, Md5sum)
+		t.Errorf("%s: Md5sum incorrect - expecting %q got %q", obj.Remote(), i.Md5sum, Md5sum)
 	}
 	if i.Size != obj.Size() {
-		Fatalf("%s: Size incorrect - expecting %d got %d", obj.Remote(), i.Size, obj.Size())
+		t.Errorf("%s: Size incorrect - expecting %d got %d", obj.Remote(), i.Size, obj.Size())
 	}
-	i.CheckModTime(obj, obj.ModTime())
+	i.CheckModTime(t, obj, obj.ModTime(), precision)
 }
 
 // Represents all items for checking
@@ -78,39 +76,45 @@ func NewItems(items []Item) *Items {
 }
 
 // Check off an item
-func (is *Items) Find(obj fs.Object) {
+func (is *Items) Find(t *testing.T, obj fs.Object, precision time.Duration) {
 	i, ok := is.byName[obj.Remote()]
 	if !ok {
-		Fatalf("Unexpected file %q", obj.Remote())
+		t.Errorf("Unexpected file %q", obj.Remote())
 	}
 	delete(is.byName, obj.Remote())
-	i.Check(obj)
+	i.Check(t, obj, precision)
 }
 
 // Check all done
-func (is *Items) Done() {
+func (is *Items) Done(t *testing.T) {
 	if len(is.byName) != 0 {
 		for name := range is.byName {
 			log.Printf("Not found %q", name)
 		}
-		Fatalf("%d objects not found", len(is.byName))
+		t.Errorf("%d objects not found", len(is.byName))
 	}
 }
 
 // Checks the fs to see if it has the expected contents
-func CheckListing(f fs.Fs, items []Item) {
+func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, precision time.Duration) {
 	is := NewItems(items)
 	for obj := range f.List() {
-		is.Find(obj)
+		is.Find(t, obj, precision)
 	}
-	is.Done()
+	is.Done(t)
+}
+
+// Checks the fs to see if it has the expected contents
+func CheckListing(t *testing.T, f fs.Fs, items []Item) {
+	precision := f.Precision()
+	CheckListingWithPrecision(t, f, items, precision)
 }
 
 // Parse a time string or explode
 func Time(timeString string) time.Time {
 	t, err := time.Parse(time.RFC3339Nano, timeString)
 	if err != nil {
-		Fatalf("Failed to parse time %q: %v", timeString, err)
+		log.Fatalf("Failed to parse time %q: %v", timeString, err)
 	}
 	return t
 }
@@ -197,25 +201,25 @@ func RandomRemote(remoteName string, subdir bool) (fs.Fs, func(), error) {
 	return remote, finalise, nil
 }
 
-func TestMkdir(remote fs.Fs) {
+func TestMkdir(t *testing.T, remote fs.Fs) {
 	err := fs.Mkdir(remote)
 	if err != nil {
-		Fatalf("Mkdir failed: %v", err)
+		t.Fatalf("Mkdir failed: %v", err)
 	}
-	CheckListing(remote, []Item{})
+	CheckListing(t, remote, []Item{})
 }
 
-func TestPurge(remote fs.Fs) {
+func TestPurge(t *testing.T, remote fs.Fs) {
 	err := fs.Purge(remote)
 	if err != nil {
-		Fatalf("Purge failed: %v", err)
+		t.Fatalf("Purge failed: %v", err)
 	}
-	CheckListing(remote, []Item{})
+	CheckListing(t, remote, []Item{})
 }
 
-func TestRmdir(remote fs.Fs) {
+func TestRmdir(t *testing.T, remote fs.Fs) {
 	err := fs.Rmdir(remote)
 	if err != nil {
-		Fatalf("Rmdir failed: %v", err)
+		t.Fatalf("Rmdir failed: %v", err)
 	}
 }

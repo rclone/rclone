@@ -4,6 +4,7 @@ package fs
 
 import (
 	"fmt"
+	"io"
 	"sync"
 )
 
@@ -430,9 +431,9 @@ func ListFn(f Fs, fn func(Object)) error {
 // Shows size and path
 //
 // Lists in parallel which may get them out of order
-func List(f Fs) error {
+func List(f Fs, w io.Writer) error {
 	return ListFn(f, func(o Object) {
-		fmt.Printf("%9d %s\n", o.Size(), o.Remote())
+		fmt.Fprintf(w, "%9d %s\n", o.Size(), o.Remote())
 	})
 }
 
@@ -441,12 +442,12 @@ func List(f Fs) error {
 // Shows size, mod time and path
 //
 // Lists in parallel which may get them out of order
-func ListLong(f Fs) error {
+func ListLong(f Fs, w io.Writer) error {
 	return ListFn(f, func(o Object) {
 		Stats.Checking(o)
 		modTime := o.ModTime()
 		Stats.DoneChecking(o)
-		fmt.Printf("%9d %19s %s\n", o.Size(), modTime.Format("2006-01-02 15:04:05.00000000"), o.Remote())
+		fmt.Fprintf(w, "%9d %s %s\n", o.Size(), modTime.Format("2006-01-02 15:04:05.000000000"), o.Remote())
 	})
 }
 
@@ -455,7 +456,7 @@ func ListLong(f Fs) error {
 // Produces the same output as the md5sum command
 //
 // Lists in parallel which may get them out of order
-func Md5sum(f Fs) error {
+func Md5sum(f Fs, w io.Writer) error {
 	return ListFn(f, func(o Object) {
 		Stats.Checking(o)
 		md5sum, err := o.Md5sum()
@@ -464,14 +465,14 @@ func Md5sum(f Fs) error {
 			Debug(o, "Failed to read MD5: %v", err)
 			md5sum = "UNKNOWN"
 		}
-		fmt.Printf("%32s  %s\n", md5sum, o.Remote())
+		fmt.Fprintf(w, "%32s  %s\n", md5sum, o.Remote())
 	})
 }
 
 // List the directories/buckets/containers in the Fs to stdout
-func ListDir(f Fs) error {
+func ListDir(f Fs, w io.Writer) error {
 	for dir := range f.ListDir() {
-		fmt.Printf("%12d %13s %9d %s\n", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
+		fmt.Fprintf(w, "%12d %13s %9d %s\n", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
 	}
 	return nil
 }

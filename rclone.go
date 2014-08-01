@@ -96,7 +96,7 @@ var Commands = []Command{
 		Help: `
         List all the objects in the the path with size and path.`,
 		Run: func(fdst, fsrc fs.Fs) {
-			err := fs.List(fdst)
+			err := fs.List(fdst, os.Stdout)
 			if err != nil {
 				log.Fatalf("Failed to list: %v", err)
 			}
@@ -110,7 +110,7 @@ var Commands = []Command{
 		Help: `
         List all directories/containers/buckets in the the path.`,
 		Run: func(fdst, fsrc fs.Fs) {
-			err := fs.ListDir(fdst)
+			err := fs.ListDir(fdst, os.Stdout)
 			if err != nil {
 				log.Fatalf("Failed to listdir: %v", err)
 			}
@@ -124,7 +124,7 @@ var Commands = []Command{
 		Help: `
         List all the objects in the the path with modification time, size and path.`,
 		Run: func(fdst, fsrc fs.Fs) {
-			err := fs.ListLong(fdst)
+			err := fs.ListLong(fdst, os.Stdout)
 			if err != nil {
 				log.Fatalf("Failed to list long: %v", err)
 			}
@@ -138,7 +138,7 @@ var Commands = []Command{
 		Help: `
         Produces an md5sum file for all the objects in the path.`,
 		Run: func(fdst, fsrc fs.Fs) {
-			err := fs.Md5sum(fdst)
+			err := fs.Md5sum(fdst, os.Stdout)
 			if err != nil {
 				log.Fatalf("Failed to list: %v", err)
 			}
