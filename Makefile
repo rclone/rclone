@@ -8,7 +8,7 @@ rclone:
 
 test:	rclone
 	go test ./...
-	fs/test_all.sh
+	cd fs && ./test_all.sh
 
 doc:	rclone.1 README.html README.txt
 
