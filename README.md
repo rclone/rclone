@@ -261,6 +261,17 @@ Bugs
 
 Changelog
 ---------
+  * v1.05 - 2014-08-09
+    * Improved tests and consequently lots of minor fixes
+    * core: Fix race detected by go race detector
+    * core: Fixes after running errcheck
+    * drive: reset root directory on Rmdir and Purge
+    * fs: Document that Purger returns error on empty directory, test and fix
+    * google cloud storage: fix ListDir on subdirectory
+    * google cloud storage: re-read metadata in SetModTime
+    * s3: make reading metadata more reliable to work around eventual consistency problems
+    * s3: strip trailing / from ListDir()
+    * swift: return directories without / in ListDir
   * v1.04 - 2014-07-21
     * google cloud storage: Fix crash on Update
   * v1.03 - 2014-07-20
