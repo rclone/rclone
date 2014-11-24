@@ -44,6 +44,9 @@ func init() {
 				Help:  "Memset Memstore UK v2",
 				Value: "https://auth.storage.memset.com/v2.0",
 			}},
+		}, {
+			Name: "tenant",
+			Help: "Tenant name - optional",
 		},
 		// snet     = flag.Bool("swift-snet", false, "Use internal service network") // FIXME not implemented
 		},
@@ -111,6 +114,7 @@ func swiftConnection(name string) (*swift.Connection, error) {
 		ApiKey:    apiKey,
 		AuthUrl:   authUrl,
 		UserAgent: fs.UserAgent,
+		Tenant:    fs.ConfigFile.MustValue(name, "tenant"),
 	}
 	err := c.Authenticate()
 	if err != nil {
