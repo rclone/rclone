@@ -52,12 +52,15 @@ Choose a number from below, or type in your own value
  * Memset Memstore UK v2
  5) https://auth.storage.memset.com/v2.0
 auth> 1
+Tenant name - optional
+tenant>
 Remote config
 --------------------
 [remote]
 user = user_name
 key = password_or_api_key
 auth = https://auth.api.rackspacecloud.com/v1.0
+tenant =
 --------------------
 y) Yes this is OK
 e) Edit this remote
