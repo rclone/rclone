@@ -27,7 +27,8 @@ import (
 	"sync"
 	"time"
 
-	"code.google.com/p/google-api-go-client/drive/v2"
+	"google.golang.org/api/drive/v2"
+
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/googleauth"
 	"github.com/ogier/pflag"

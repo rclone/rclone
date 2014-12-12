@@ -24,8 +24,8 @@ import (
 	"strings"
 	"time"
 
-	"code.google.com/p/google-api-go-client/googleapi"
-	"code.google.com/p/google-api-go-client/storage/v1"
+	"google.golang.org/api/googleapi"
+	"google.golang.org/api/storage/v1"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/googleauth"
