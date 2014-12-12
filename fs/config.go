@@ -56,11 +56,21 @@ type ConfigInfo struct {
 func configHome() string {
 	// Find users home directory
 	usr, err := user.Current()
-	if err != nil {
-		log.Printf("Couldn't find home directory: %v", err)
-		return ""
+	if err == nil {
+		return usr.HomeDir
 	}
-	return usr.HomeDir
+	// Fall back to reading $HOME - work around user.Current() not
+	// working for cross compiled binaries on OSX.
+	// https://github.com/golang/go/issues/6376
+	home := os.Getenv("HOME")
+	if home != "" {
+		return home
+	}
+	log.Printf("Couldn't find home directory or read HOME environment variable.")
+	log.Printf("Defaulting to storing config in current directory.")
+	log.Printf("Use -config flag to workaround.")
+	log.Printf("Error was: %v", err)
+	return ""
 }
 
 // Loads the config file
