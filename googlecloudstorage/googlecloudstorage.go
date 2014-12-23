@@ -359,8 +359,9 @@ func (f *FsStorage) ListDir() fs.DirChan {
 // The new object may have been created if an error is returned
 func (f *FsStorage) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
 	// Temporary FsObject under construction
-	fs := &FsObjectStorage{storage: f, remote: remote}
-	return fs, fs.Update(in, modTime, size)
+	o := &FsObjectStorage{storage: f, remote: remote}
+	in = &fs.SeekWrapper{In: in, Size: size}
+	return o, o.Update(in, modTime, size)
 }
 
 // Mkdir creates the bucket if it doesn't exist
@@ -562,6 +563,7 @@ func (o *FsObjectStorage) Update(in io.Reader, modTime time.Time, size int64) er
 		Updated:     modTime.Format(timeFormatOut), // Doesn't get set
 		Metadata:    metadataFromModTime(modTime),
 	}
+	in = &fs.SeekWrapper{In: in, Size: size}
 	newObject, err := o.storage.svc.Objects.Insert(o.storage.bucket, &object).Media(in).Name(object.Name).PredefinedAcl(o.storage.objectAcl).Do()
 	if err != nil {
 		return err
