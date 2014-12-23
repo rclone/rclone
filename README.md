@@ -261,9 +261,11 @@ Bugs
 
 Changelog
 ---------
+  * v1.07 - 2014-12-23
+    * google cloud storage: fix memory leak
   * v1.06 - 2014-12-12
     * Fix "Couldn't find home directory" on OSX
-    * Add tenant parameter for swift
+    * swift: Add tenant parameter
     * Use new location of Google API packages
   * v1.05 - 2014-08-09
     * Improved tests and consequently lots of minor fixes
