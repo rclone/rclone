@@ -290,7 +290,7 @@ func (f *FsDropbox) list(out fs.ObjectsChan) {
 			if !deltaPage.HasMore {
 				break
 			}
-			cursor = deltaPage.Cursor
+			cursor = deltaPage.Cursor.Cursor
 		}
 	}
 }
