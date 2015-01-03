@@ -99,6 +99,10 @@ func (is *Items) Done(t *testing.T) {
 func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, precision time.Duration) {
 	is := NewItems(items)
 	for obj := range f.List() {
+		if obj == nil {
+			t.Errorf("Unexpected nil in List()")
+			continue
+		}
 		is.Find(t, obj, precision)
 	}
 	is.Done(t)
