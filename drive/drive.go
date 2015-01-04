@@ -805,11 +805,13 @@ func (o *FsObjectDrive) SetModTime(modTime time.Time) {
 		ModifiedDate: modTime.Format(timeFormatOut),
 	}
 	// Set modified date
-	_, err = o.drive.svc.Files.Update(o.id, info).SetModifiedDate(true).Do()
+	info, err = o.drive.svc.Files.Update(o.id, info).SetModifiedDate(true).Do()
 	if err != nil {
 		fs.Stats.Error()
 		fs.Log(o, "Failed to update remote mtime: %s", err)
 	}
+	// Update info from read data
+	o.setMetaData(info)
 }
 
 // Is this object storable
