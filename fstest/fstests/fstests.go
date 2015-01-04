@@ -312,7 +312,7 @@ func TestObjectSetModTime(t *testing.T) {
 	obj := findObject(t, file1.Path)
 	obj.SetModTime(newModTime)
 	file1.ModTime = newModTime
-	file1.CheckModTime(t, obj, newModTime, remote.Precision())
+	file1.CheckModTime(t, obj, obj.ModTime(), remote.Precision())
 	// And make a new object and read it from there too
 	TestObjectModTime(t)
 }
