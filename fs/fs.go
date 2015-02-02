@@ -142,6 +142,35 @@ type Purger interface {
 	Purge() error
 }
 
+// An optional interface for error as to whether the operation should be retried
+//
+// This should be returned from Update or Put methods as required
+type Retry interface {
+	error
+	Retry() bool
+}
+
+// A type of error
+type retryError string
+
+// Error interface
+func (r retryError) Error() string {
+	return string(r)
+}
+
+// Retry interface
+func (r retryError) Retry() bool {
+	return true
+}
+
+// Check interface
+var _ Retry = retryError("")
+
+// RetryErrorf makes an error which indicates it would like to be retried
+func RetryErrorf(format string, a ...interface{}) error {
+	return retryError(fmt.Sprintf(format, a...))
+}
+
 // A channel of Objects
 type ObjectsChan chan Object
 

@@ -103,8 +103,7 @@ func removeFailedCopy(dst Object) {
 		Debug(dst, "Removing failed copy")
 		removeErr := dst.Remove()
 		if removeErr != nil {
-			Stats.Error()
-			Log(dst, "Failed to remove failed copy: %s", removeErr)
+			Debug(dst, "Failed to remove failed copy: %s", removeErr)
 		}
 	}
 }
@@ -115,6 +114,10 @@ func removeFailedCopy(dst Object) {
 // call Copy() with dst nil on a pre-existing file then some filing
 // systems (eg Drive) may duplicate the file.
 func Copy(f Fs, dst, src Object) {
+	const maxTries = 10
+	tries := 0
+	doUpdate := dst != nil
+tryAgain:
 	in0, err := src.Open()
 	if err != nil {
 		Stats.Error()
@@ -124,7 +127,7 @@ func Copy(f Fs, dst, src Object) {
 	in := NewAccount(in0) // account the transfer
 
 	var actionTaken string
-	if dst != nil {
+	if doUpdate {
 		actionTaken = "Copied (updated existing)"
 		err = dst.Update(in, src.ModTime(), src.Size())
 	} else {
@@ -132,6 +135,13 @@ func Copy(f Fs, dst, src Object) {
 		dst, err = f.Put(in, src.Remote(), src.ModTime(), src.Size())
 	}
 	inErr := in.Close()
+	// Retry if err returned a retry error
+	if r, ok := err.(Retry); ok && r.Retry() && tries < maxTries {
+		tries++
+		Log(src, "Received error: %v - retrying %d/%d", err, tries, maxTries)
+		removeFailedCopy(dst)
+		goto tryAgain
+	}
 	if err == nil {
 		err = inErr
 	}
