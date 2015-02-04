@@ -256,11 +256,16 @@ Bugs
 
   * Drive: Sometimes get: Failed to copy: Upload failed: googleapi: Error 403: Rate Limit Exceeded
     * quota is 100.0 requests/second/user
+    * just retry the command if this happens
   * Empty directories left behind with Local and Drive
     * eg purging a local directory with subdirectories doesn't work
 
 Changelog
 ---------
+  * v1.08 - 2015-02-04
+    * drive: fix subdirectory listing to not list entire drive
+    * drive: Fix SetModTime
+    * dropbox: adapt code to recent library changes
   * v1.07 - 2014-12-23
     * google cloud storage: fix memory leak
   * v1.06 - 2014-12-12
