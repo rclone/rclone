@@ -559,7 +559,7 @@ func (f *FsDrive) List() fs.ObjectsChan {
 			fs.Stats.Error()
 			log.Printf("Couldn't find root: %s", err)
 		} else {
-			if *driveFullList {
+			if f.root == "" && *driveFullList {
 				err = f.listDirFull(f.rootId, "", out)
 			} else {
 				err = f.listDirRecursive(f.rootId, "", out)
