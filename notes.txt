@@ -59,15 +59,3 @@ Bugs
   * Non verbose - not sure number transferred got counted up? CHECK
   * When doing copy it recurses the whole of the destination FS which isn't necessary
 
-Making a release
-  * go get -u -f -v ./...
-  * make test
-  * make tag
-  * edit README.md
-  * git commit fs/version.go README.md docs/content/downloads.md
-  * make retag
-  * . ~/bin/go-cross
-  * make cross
-  * make upload
-  * make upload_website
-  * git push --tags origin master
