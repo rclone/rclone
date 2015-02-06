@@ -132,7 +132,6 @@ COPYING file included in this package).
 Bugs
 ----
 
-  * Doesn't sync individual files yet, only directories.
   * Drive: Sometimes get: Failed to copy: Upload failed: googleapi: Error 403: Rate Limit Exceeded
     * quota is 100.0 requests/second/user
   * Empty directories left behind with Local and Drive

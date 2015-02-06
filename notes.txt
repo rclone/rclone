@@ -38,6 +38,12 @@ Todo
   * Need to make directory objects otherwise can't upload an empty directory
     * Or could upload empty directories only?
 
+More rsync features
+  * include
+  * exclude
+  * max size
+  * bandwidth limit
+
 Ideas
   * could do encryption - put IV into metadata?
   * optimise remote copy container to another container using remote
