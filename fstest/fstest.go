@@ -9,6 +9,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -80,6 +81,7 @@ func (is *Items) Find(t *testing.T, obj fs.Object, precision time.Duration) {
 	i, ok := is.byName[obj.Remote()]
 	if !ok {
 		t.Errorf("Unexpected file %q", obj.Remote())
+		return
 	}
 	delete(is.byName, obj.Remote())
 	i.Check(t, obj, precision)
@@ -140,6 +142,7 @@ func LocalRemote() (path string, err error) {
 		// Now remove the directory
 		err = os.Remove(path)
 	}
+	path = filepath.ToSlash(path)
 	return
 }
 

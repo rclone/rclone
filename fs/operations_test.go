@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -74,6 +75,7 @@ func TestInit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
+	localName = filepath.ToSlash(localName)
 	t.Logf("Testing with local %q", localName)
 	flocal, err = fs.NewFs(localName)
 	if err != nil {
@@ -83,6 +85,7 @@ func TestInit(t *testing.T) {
 }
 func TestCalculateModifyWindow(t *testing.T) {
 	fs.CalculateModifyWindow(fremote, flocal)
+	t.Logf("ModifyWindow is %q", fs.Config.ModifyWindow)
 }
 
 func TestMkdir(t *testing.T) {
@@ -104,8 +107,8 @@ func TestCopyWithDryRun(t *testing.T) {
 		{Path: "sub dir/hello world", Size: 11, ModTime: t1, Md5sum: "5eb63bbbe01eeed093cb22bb8f5acdc3"},
 	}
 
-	fstest.CheckListing(t, flocal, items)
-	fstest.CheckListing(t, fremote, []fstest.Item{})
+	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
+	fstest.CheckListingWithPrecision(t, fremote, []fstest.Item{}, fs.Config.ModifyWindow)
 }
 
 // Now without dry run
@@ -119,8 +122,8 @@ func TestCopy(t *testing.T) {
 		{Path: "sub dir/hello world", Size: 11, ModTime: t1, Md5sum: "5eb63bbbe01eeed093cb22bb8f5acdc3"},
 	}
 
-	fstest.CheckListing(t, flocal, items)
-	fstest.CheckListing(t, fremote, items)
+	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
+	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
 }
 
 func TestLsd(t *testing.T) {
@@ -145,8 +148,8 @@ func TestCopyAfterDelete(t *testing.T) {
 	items := []fstest.Item{
 		{Path: "sub dir/hello world", Size: 11, ModTime: t1, Md5sum: "5eb63bbbe01eeed093cb22bb8f5acdc3"},
 	}
-	fstest.CheckListing(t, flocal, []fstest.Item{})
-	fstest.CheckListing(t, fremote, items)
+	fstest.CheckListingWithPrecision(t, flocal, []fstest.Item{}, fs.Config.ModifyWindow)
+	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
 }
 
 func TestCopyRedownload(t *testing.T) {
@@ -158,8 +161,8 @@ func TestCopyRedownload(t *testing.T) {
 	items := []fstest.Item{
 		{Path: "sub dir/hello world", Size: 11, ModTime: t1, Md5sum: "5eb63bbbe01eeed093cb22bb8f5acdc3"},
 	}
-	fstest.CheckListingWithPrecision(t, flocal, items, fremote.Precision())
-	fstest.CheckListing(t, fremote, items)
+	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
+	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
 
 	// Clean the directory
 	cleanTempDir(t)
@@ -179,8 +182,8 @@ func TestSyncAfterChangingModtimeOnly(t *testing.T) {
 	items := []fstest.Item{
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 	}
-	fstest.CheckListing(t, flocal, items)
-	fstest.CheckListing(t, fremote, items)
+	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
+	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
 }
 
 func TestSyncAfterAddingAFile(t *testing.T) {
@@ -193,8 +196,8 @@ func TestSyncAfterAddingAFile(t *testing.T) {
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 		{Path: "potato", Size: 60, ModTime: t3, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
 	}
-	fstest.CheckListing(t, flocal, items)
-	fstest.CheckListing(t, fremote, items)
+	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
+	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
 }
 
 func TestSyncAfterChangingFilesSizeOnly(t *testing.T) {
@@ -207,8 +210,8 @@ func TestSyncAfterChangingFilesSizeOnly(t *testing.T) {
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 		{Path: "potato", Size: 21, ModTime: t3, Md5sum: "100defcf18c42a1e0dc42a789b107cd2"},
 	}
-	fstest.CheckListing(t, flocal, items)
-	fstest.CheckListing(t, fremote, items)
+	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
+	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
 }
 
 // Sync after changing a file's contents, modtime but not length
@@ -222,8 +225,8 @@ func TestSyncAfterChangingContentsOnly(t *testing.T) {
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 		{Path: "potato", Size: 21, ModTime: t2, Md5sum: "e4cb6955d9106df6263c45fcfc10f163"},
 	}
-	fstest.CheckListing(t, flocal, items)
-	fstest.CheckListing(t, fremote, items)
+	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
+	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
 }
 
 // Sync after removing a file and adding a file --dry-run
@@ -248,8 +251,8 @@ func TestSyncAfterRemovingAFileAndAddingAFileDryRun(t *testing.T) {
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 		{Path: "potato2", Size: 60, ModTime: t1, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
 	}
-	fstest.CheckListing(t, flocal, items)
-	fstest.CheckListing(t, fremote, before)
+	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
+	fstest.CheckListingWithPrecision(t, fremote, before, fs.Config.ModifyWindow)
 }
 
 // Sync after removing a file and adding a file
@@ -262,8 +265,8 @@ func TestSyncAfterRemovingAFileAndAddingAFile(t *testing.T) {
 		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
 		{Path: "potato2", Size: 60, ModTime: t1, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
 	}
-	fstest.CheckListing(t, flocal, items)
-	fstest.CheckListing(t, fremote, items)
+	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
+	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
 }
 
 func TestLs(t *testing.T) {
