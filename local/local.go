@@ -1,6 +1,11 @@
 // Local filesystem interface
 package local
 
+// Note that all rclone paths should be / separated.  Anything coming
+// from the filepath module will have \ separators on windows so
+// should be converted using filepath.ToSlash.  Windows is quite happy
+// with / separators so there is no need to convert them back.
+
 import (
 	"crypto/md5"
 	"encoding/hex"
@@ -45,7 +50,7 @@ type FsObjectLocal struct {
 
 // NewFs contstructs an FsLocal from the path
 func NewFs(name, root string) (fs.Fs, error) {
-	root = path.Clean(root)
+	root = filepath.ToSlash(path.Clean(root))
 	f := &FsLocal{root: root}
 	// Check to see if this points to a file
 	fi, err := os.Lstat(f.root)
@@ -69,7 +74,8 @@ func (f *FsLocal) String() string {
 //
 // May return nil if an error occurred
 func (f *FsLocal) newFsObjectWithInfo(remote string, info os.FileInfo) fs.Object {
-	path := filepath.Join(f.root, remote)
+	remote = filepath.ToSlash(remote)
+	path := path.Join(f.root, remote)
 	o := &FsObjectLocal{local: f, remote: remote, path: path}
 	if info != nil {
 		o.info = info
@@ -173,7 +179,7 @@ func (f *FsLocal) ListDir() fs.DirChan {
 
 // Puts the FsObject to the local filesystem
 func (f *FsLocal) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
-	dstPath := filepath.Join(f.root, remote)
+	dstPath := path.Join(f.root, remote)
 	// Temporary FsObject under construction - info filled in by Update()
 	o := &FsObjectLocal{local: f, remote: remote, path: dstPath}
 	err := o.Update(in, modTime, size)
