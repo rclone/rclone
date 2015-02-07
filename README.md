@@ -259,6 +259,10 @@ Bugs
 
 Changelog
 ---------
+  * v1.09 - 2015-02-07
+    * windows: Stop drive letters (eg C:) getting mixed up with remotes (eg drive:)
+    * local: Fix directory separators on Windows
+    * drive: fix rate limit exceeded errors
   * v1.08 - 2015-02-04
     * drive: fix subdirectory listing to not list entire drive
     * drive: Fix SetModTime
