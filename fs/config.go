@@ -330,9 +330,19 @@ func EditConfig() {
 			name := ChooseRemote()
 			EditRemote(name)
 		case 'n':
-			fmt.Printf("name> ")
-			name := ReadLine()
-			NewRemote(name)
+			for {
+				fmt.Printf("name> ")
+				name := ReadLine()
+				switch {
+				case name == "":
+					fmt.Printf("Can't use empty name\n")
+				case isDriveLetter(name):
+					fmt.Printf("Can't use %q as it can be confused a drive letter\n", name)
+				default:
+					NewRemote(name)
+					break
+				}
+			}
 		case 'd':
 			name := ChooseRemote()
 			DeleteRemote(name)

@@ -196,9 +196,6 @@ type Dir struct {
 // A channel of Dir objects
 type DirChan chan *Dir
 
-// Pattern to match a url
-var matcher = regexp.MustCompile(`^([\w_-]+):(.*)$`)
-
 // Finds a FsInfo object for the name passed in
 //
 // Services are looked up in the config file
@@ -211,16 +208,22 @@ func Find(name string) (*FsInfo, error) {
 	return nil, fmt.Errorf("Didn't find filing system for %q", name)
 }
 
+// Pattern to match an rclone url
+var matcher = regexp.MustCompile(`^([\w_-]+):(.*)$`)
+
 // NewFs makes a new Fs object from the path
 //
 // The path is of the form remote:path
 //
 // Remotes are looked up in the config file.  If the remote isn't
 // found then NotFoundInConfigFile will be returned.
+//
+// On Windows avoid single character remote names as they can be mixed
+// up with drive letters.
 func NewFs(path string) (Fs, error) {
 	parts := matcher.FindStringSubmatch(path)
 	fsName, configName, fsPath := "local", "local", path
-	if parts != nil {
+	if parts != nil && !isDriveLetter(parts[1]) {
 		configName, fsPath = parts[1], parts[2]
 		var err error
 		fsName, err = ConfigFile.GetValue(configName, "type")
