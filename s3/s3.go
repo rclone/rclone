@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"mime"
 	"net/http"
 	"path"
@@ -101,7 +102,8 @@ func init() {
 
 // Constants
 const (
-	metaMtime = "X-Amz-Meta-Mtime" // the meta key to store mtime in
+	metaMtime     = "X-Amz-Meta-Mtime" // the meta key to store mtime in
+	listChunkSize = 1024               // number of items to read at once
 )
 
 // FsS3 represents a remote s3 server
@@ -267,36 +269,47 @@ func (f *FsS3) list(directories bool, fn func(string, *s3.Key)) {
 	if directories {
 		delimiter = "/"
 	}
-	// FIXME need to implement ALL loop
-	objects, err := f.b.List(f.root, delimiter, "", 10000)
-	if err != nil {
-		fs.Stats.Error()
-		fs.Log(f, "Couldn't read bucket %q: %s", f.bucket, err)
-	} else {
-		rootLength := len(f.root)
-		if directories {
-			for _, remote := range objects.CommonPrefixes {
-				if !strings.HasPrefix(remote, f.root) {
-					fs.Log(f, "Odd name received %q", remote)
-					continue
-				}
-				remote := remote[rootLength:]
-				if strings.HasSuffix(remote, "/") {
-					remote = remote[:len(remote)-1]
-				}
-				fn(remote, &s3.Key{Key: remote})
-			}
+	marker := ""
+	for {
+		objects, err := f.b.List(f.root, delimiter, marker, listChunkSize)
+		if err != nil {
+			fs.Stats.Error()
+			fs.Log(f, "Couldn't read bucket %q: %s", f.bucket, err)
 		} else {
-			for i := range objects.Contents {
-				object := &objects.Contents[i]
-				if !strings.HasPrefix(object.Key, f.root) {
-					fs.Log(f, "Odd name received %q", object.Key)
-					continue
+			rootLength := len(f.root)
+			if directories {
+				for _, remote := range objects.CommonPrefixes {
+					if !strings.HasPrefix(remote, f.root) {
+						fs.Log(f, "Odd name received %q", remote)
+						continue
+					}
+					remote := remote[rootLength:]
+					if strings.HasSuffix(remote, "/") {
+						remote = remote[:len(remote)-1]
+					}
+					fn(remote, &s3.Key{Key: remote})
 				}
-				remote := object.Key[rootLength:]
-				fn(remote, object)
+			} else {
+				for i := range objects.Contents {
+					object := &objects.Contents[i]
+					if !strings.HasPrefix(object.Key, f.root) {
+						fs.Log(f, "Odd name received %q", object.Key)
+						continue
+					}
+					remote := object.Key[rootLength:]
+					fn(remote, object)
+				}
 			}
 		}
+		if !objects.IsTruncated {
+			break
+		}
+		// Use NextMarker if set, otherwise use last Key
+		marker = objects.NextMarker
+		if marker == "" {
+			marker = objects.Contents[len(objects.Contents)-1].Key
+		}
+		log.Printf("retry with marker = %q", marker)
 	}
 }
 
