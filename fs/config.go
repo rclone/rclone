@@ -330,6 +330,7 @@ func EditConfig() {
 			name := ChooseRemote()
 			EditRemote(name)
 		case 'n':
+		nameLoop:
 			for {
 				fmt.Printf("name> ")
 				name := ReadLine()
@@ -340,7 +341,7 @@ func EditConfig() {
 					fmt.Printf("Can't use %q as it can be confused a drive letter\n", name)
 				default:
 					NewRemote(name)
-					break
+					break nameLoop
 				}
 			}
 		case 'd':
