@@ -259,6 +259,9 @@ Bugs
 
 Changelog
 ---------
+  * v1.10 - 2015-02-12
+    * s3: list an unlimited number of items
+    * Fix getting stuck in the configurator
   * v1.09 - 2015-02-07
     * windows: Stop drive letters (eg C:) getting mixed up with remotes (eg drive:)
     * local: Fix directory separators on Windows
