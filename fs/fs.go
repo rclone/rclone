@@ -24,6 +24,7 @@ var (
 	fsRegistry []*FsInfo
 	// Error returned by NewFs if not found in config file
 	NotFoundInConfigFile = fmt.Errorf("Didn't find section in config file")
+	ErrorCantCopy        = fmt.Errorf("Can't copy object - incompatible remotes")
 )
 
 // Filesystem info
@@ -147,6 +148,19 @@ type Purger interface {
 	//
 	// Return an error if it doesn't exist
 	Purge() error
+}
+
+type Copier interface {
+	// Copy src to this remote using server side copy operations.
+	//
+	// This is stored with the remote path given
+	//
+	// It returns the destination Object and a possible error
+	//
+	// Will only be called if src.Fs().Name() == f.Name()
+	//
+	// If it isn't possible then return fs.ErrorCantCopy
+	Copy(src Object, remote string) (Object, error)
 }
 
 // An optional interface for error as to whether the operation should be retried

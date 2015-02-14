@@ -89,5 +89,23 @@ func (f *Limited) Precision() time.Duration {
 	return f.fs.Precision()
 }
 
+// Copy src to this remote using server side copy operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantCopy
+func (f *Limited) Copy(src Object, remote string) (Object, error) {
+	fCopy, ok := f.fs.(Copier)
+	if !ok {
+		return nil, ErrorCantCopy
+	}
+	return fCopy.Copy(src, remote)
+}
+
 // Check the interfaces are satisfied
 var _ Fs = &Limited{}
+var _ Copier = &Limited{}

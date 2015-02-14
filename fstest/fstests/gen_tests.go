@@ -92,7 +92,7 @@ func generateTestProgram(t *template.Template, fns []string, Fsname string) {
 	}
 
 	data := Data{
-		Regenerate:  "go run gen_tests.go or make gen_tests",
+		Regenerate:  "make gen_tests",
 		FsName:      fsname,
 		UpperFsName: Fsname,
 		TestName:    TestName,

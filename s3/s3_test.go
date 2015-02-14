@@ -1,7 +1,7 @@
 // Test S3 filesystem interface
 //
 // Automatically generated - DO NOT EDIT
-// Regenerate with: go run gen_tests.go or make gen_tests
+// Regenerate with: make gen_tests
 package s3_test
 
 import (
@@ -34,6 +34,7 @@ func TestFsListRoot(t *testing.T)            { fstests.TestFsListRoot(t) }
 func TestFsListFile1(t *testing.T)           { fstests.TestFsListFile1(t) }
 func TestFsNewFsObject(t *testing.T)         { fstests.TestFsNewFsObject(t) }
 func TestFsListFile1and2(t *testing.T)       { fstests.TestFsListFile1and2(t) }
+func TestFsCopy(t *testing.T)                { fstests.TestFsCopy(t) }
 func TestFsRmdirFull(t *testing.T)           { fstests.TestFsRmdirFull(t) }
 func TestFsPrecision(t *testing.T)           { fstests.TestFsPrecision(t) }
 func TestObjectString(t *testing.T)          { fstests.TestObjectString(t) }

@@ -401,6 +401,38 @@ func (fs *FsStorage) Precision() time.Duration {
 	return time.Nanosecond
 }
 
+// Copy src to this remote using server side copy operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantCopy
+func (f *FsStorage) Copy(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*FsObjectStorage)
+	if !ok {
+		fs.Debug(src, "Can't copy - not same remote type")
+		return nil, fs.ErrorCantCopy
+	}
+
+	// Temporary FsObject under construction
+	dstObj := &FsObjectStorage{storage: f, remote: remote}
+
+	srcBucket := srcObj.storage.bucket
+	srcObject := srcObj.storage.root + srcObj.remote
+	dstBucket := f.bucket
+	dstObject := f.root + remote
+	newObject, err := f.svc.Objects.Copy(srcBucket, srcObject, dstBucket, dstObject, nil).Do()
+	if err != nil {
+		return nil, err
+	}
+	// Set the metadata for the new object while we have it
+	dstObj.setMetaData(newObject)
+	return dstObj, nil
+}
+
 // ------------------------------------------------------------
 
 // Return the parent Fs
@@ -578,4 +610,5 @@ func (o *FsObjectStorage) Remove() error {
 
 // Check the interfaces are satisfied
 var _ fs.Fs = &FsStorage{}
+var _ fs.Copier = &FsStorage{}
 var _ fs.Object = &FsObjectStorage{}

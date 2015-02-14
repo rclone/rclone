@@ -1,4 +1,8 @@
 // Generic tests for testing the Fs and Object interfaces
+//
+// Run go generate to write the tests for the remotes
+
+//go:generate go run gen_tests.go
 package fstests
 
 import (
@@ -245,6 +249,41 @@ func TestFsNewFsObject(t *testing.T) {
 func TestFsListFile1and2(t *testing.T) {
 	skipIfNotOk(t)
 	fstest.CheckListing(t, remote, []fstest.Item{file1, file2})
+}
+
+func TestFsCopy(t *testing.T) {
+	skipIfNotOk(t)
+
+	// Check have Copy
+	_, ok := remote.(fs.Copier)
+	if !ok {
+		t.Skip("FS has no Copier interface")
+	}
+
+	var file1Copy = file1
+	file1Copy.Path += "-copy"
+
+	// do the copy
+	src := findObject(t, file1.Path)
+	dst, err := remote.(fs.Copier).Copy(src, file1Copy.Path)
+	if err != nil {
+		t.Errorf("Copy failed: %v", err)
+	}
+
+	// check file exists in new listing
+	fstest.CheckListing(t, remote, []fstest.Item{file1, file2, file1Copy})
+
+	// Check dst lightly - list above has checked ModTime/Md5sum
+	if dst.Remote() != file1Copy.Path {
+		t.Errorf("object path: want %q got %q", file1Copy.Path, dst.Remote())
+	}
+
+	// Delete copy
+	err = dst.Remove()
+	if err != nil {
+		t.Fatal("Remove copy error", err)
+	}
+
 }
 
 func TestFsRmdirFull(t *testing.T) {

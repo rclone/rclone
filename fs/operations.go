@@ -173,24 +173,40 @@ func Copy(f Fs, dst, src Object) {
 	const maxTries = 10
 	tries := 0
 	doUpdate := dst != nil
+	var err, inErr error
 tryAgain:
-	in0, err := src.Open()
-	if err != nil {
-		Stats.Error()
-		ErrorLog(src, "Failed to open: %s", err)
-		return
-	}
-	in := NewAccount(in0) // account the transfer
-
-	var actionTaken string
-	if doUpdate {
-		actionTaken = "Copied (updated existing)"
-		err = dst.Update(in, src.ModTime(), src.Size())
+	// Try server side copy first - if has optional interface and
+	// is same underlying remote
+	actionTaken := "Copied (server side copy)"
+	if fCopy, ok := f.(Copier); ok && src.Fs().Name() == f.Name() {
+		var newDst Object
+		newDst, err = fCopy.Copy(src, src.Remote())
+		if err == nil {
+			dst = newDst
+		}
 	} else {
-		actionTaken = "Copied (new)"
-		dst, err = f.Put(in, src.Remote(), src.ModTime(), src.Size())
+		err = ErrorCantCopy
 	}
-	inErr := in.Close()
+	// If can't server side copy, do it manually
+	if err == ErrorCantCopy {
+		var in0 io.ReadCloser
+		in0, err = src.Open()
+		if err != nil {
+			Stats.Error()
+			ErrorLog(src, "Failed to open: %s", err)
+			return
+		}
+		in := NewAccount(in0) // account the transfer
+
+		if doUpdate {
+			actionTaken = "Copied (updated existing)"
+			err = dst.Update(in, src.ModTime(), src.Size())
+		} else {
+			actionTaken = "Copied (new)"
+			dst, err = f.Put(in, src.Remote(), src.ModTime(), src.Size())
+		}
+		inErr = in.Close()
+	}
 	// Retry if err returned a retry error
 	if r, ok := err.(Retry); ok && r.Retry() && tries < maxTries {
 		tries++
@@ -279,7 +295,7 @@ func PairChecker(in ObjectPairChan, out ObjectPairChan, wg *sync.WaitGroup) {
 }
 
 // Read Objects on in and copy them
-func Copier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
+func PairCopier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for pair := range in {
 		src := pair.src
@@ -364,7 +380,7 @@ func Sync(fdst, fsrc Fs, Delete bool) error {
 	var copierWg sync.WaitGroup
 	copierWg.Add(Config.Transfers)
 	for i := 0; i < Config.Transfers; i++ {
-		go Copier(to_be_uploaded, fdst, &copierWg)
+		go PairCopier(to_be_uploaded, fdst, &copierWg)
 	}
 
 	go func() {

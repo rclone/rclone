@@ -482,6 +482,37 @@ func (f *FsS3) Precision() time.Duration {
 	return time.Nanosecond
 }
 
+// Copy src to this remote using server side copy operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantCopy
+func (f *FsS3) Copy(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*FsObjectS3)
+	if !ok {
+		fs.Debug(src, "Can't copy - not same remote type")
+		return nil, fs.ErrorCantCopy
+	}
+	srcFs := srcObj.s3
+	key := f.root + remote
+	source := srcFs.bucket + "/" + srcFs.root + srcObj.remote
+	req := s3.CopyObjectInput{
+		Bucket:            &f.bucket,
+		Key:               &key,
+		CopySource:        &source,
+		MetadataDirective: aws.String(s3.MetadataDirectiveCopy),
+	}
+	_, err := f.c.CopyObject(&req)
+	if err != nil {
+		return nil, err
+	}
+	return f.NewFsObject(remote), err
+}
+
 // ------------------------------------------------------------
 
 // Return the parent Fs
@@ -679,4 +710,5 @@ func (o *FsObjectS3) Remove() error {
 
 // Check the interfaces are satisfied
 var _ fs.Fs = &FsS3{}
+var _ fs.Copier = &FsS3{}
 var _ fs.Object = &FsObjectS3{}

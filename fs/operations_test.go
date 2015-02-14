@@ -127,6 +127,28 @@ func TestCopy(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
 }
 
+// Test a server side copy if possible, or the backup path if not
+func TestServerSideCopy(t *testing.T) {
+	fremoteCopy, finaliseCopy, err := fstest.RandomRemote(*RemoteName, *SubDir)
+	if err != nil {
+		t.Fatalf("Failed to open remote copy %q: %v", *RemoteName, err)
+	}
+	defer finaliseCopy()
+	t.Logf("Server side copy (if possible) %v -> %v", fremote, fremoteCopy)
+
+	err = fs.Sync(fremoteCopy, fremote, false)
+	if err != nil {
+		t.Fatalf("Server Side Copy failed: %v", err)
+	}
+
+	items := []fstest.Item{
+		{Path: "sub dir/hello world", Size: 11, ModTime: t1, Md5sum: "5eb63bbbe01eeed093cb22bb8f5acdc3"},
+	}
+
+	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+	fstest.CheckListingWithPrecision(t, fremoteCopy, items, fs.Config.ModifyWindow)
+}
+
 func TestLsd(t *testing.T) {
 	var buf bytes.Buffer
 	err := fs.ListDir(fremote, &buf)

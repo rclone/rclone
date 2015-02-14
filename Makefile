@@ -66,4 +66,4 @@ retag:
 	git tag -f $(LAST_TAG)
 
 gen_tests:
-	cd fstest/fstests && go run gen_tests.go
+	cd fstest/fstests && go generate

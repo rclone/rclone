@@ -328,6 +328,29 @@ func (fs *FsSwift) Precision() time.Duration {
 	return time.Nanosecond
 }
 
+// Copy src to this remote using server side copy operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantCopy
+func (f *FsSwift) Copy(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*FsObjectSwift)
+	if !ok {
+		fs.Debug(src, "Can't copy - not same remote type")
+		return nil, fs.ErrorCantCopy
+	}
+	srcFs := srcObj.swift
+	_, err := f.c.ObjectCopy(srcFs.container, srcFs.root+srcObj.remote, f.container, f.root+remote, nil)
+	if err != nil {
+		return nil, err
+	}
+	return f.NewFsObject(remote), nil
+}
+
 // ------------------------------------------------------------
 
 // Return the parent Fs
@@ -446,4 +469,5 @@ func (o *FsObjectSwift) Remove() error {
 
 // Check the interfaces are satisfied
 var _ fs.Fs = &FsSwift{}
+var _ fs.Copier = &FsSwift{}
 var _ fs.Object = &FsObjectSwift{}

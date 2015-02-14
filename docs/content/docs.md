@@ -103,6 +103,37 @@ Enter an interactive configuration session.
 
 Prints help on rclone commands and options.
 
+Server Side Copy
+----------------
+
+Drive, S3, Dropbox, Swift and Google Cloud Storage support server side
+copy.
+
+This means if you want to copy one folder to another then rclone won't
+download all the files and re-upload them; it will instruct the server
+to copy them in place.
+
+Eg
+
+    rclone copy s3:oldbucket s3:newbucket
+
+Will copy the contents of `oldbucket` to `newbucket` without
+downloading and re-uploading.
+
+Remotes which don't support server side copy (eg local) **will**
+download and re-upload in this case.
+
+Server side copies are used with `sync` and `copy` and will be
+identified in the log when using the `-v` flag.
+
+Server side copies will only be attempted if the remote names are the
+same.
+
+This can be used when scripting to make aged backups efficiently, eg
+
+    rclone sync remote:current-backup remote:previous-backup
+    rclone sync /path/to/files remote:current-backup
+
 Options
 -------
 

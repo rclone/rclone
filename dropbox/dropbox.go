@@ -414,6 +414,35 @@ func (f *FsDropbox) Precision() time.Duration {
 	return fs.ModTimeNotSupported
 }
 
+// Copy src to this remote using server side copy operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantCopy
+func (f *FsDropbox) Copy(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*FsObjectDropbox)
+	if !ok {
+		fs.Debug(src, "Can't copy - not same remote type")
+		return nil, fs.ErrorCantCopy
+	}
+
+	// Temporary FsObject under construction
+	dstObj := &FsObjectDropbox{dropbox: f, remote: remote}
+
+	srcPath := srcObj.remotePath()
+	dstPath := dstObj.remotePath()
+	entry, err := f.db.Copy(srcPath, dstPath, false)
+	if err != nil {
+		return nil, fmt.Errorf("Copy failed: %s", err)
+	}
+	dstObj.setMetadataFromEntry(entry)
+	return dstObj, nil
+}
+
 // Purge deletes all the files and the container
 //
 // Optional interface: Only implement this if you have a way of
@@ -575,5 +604,6 @@ func (o *FsObjectDropbox) Remove() error {
 
 // Check the interfaces are satisfied
 var _ fs.Fs = &FsDropbox{}
+var _ fs.Copier = &FsDropbox{}
 var _ fs.Purger = &FsDropbox{}
 var _ fs.Object = &FsObjectDropbox{}

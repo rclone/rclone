@@ -734,6 +734,35 @@ func (f *FsDrive) ListDir() fs.DirChan {
 	return out
 }
 
+// Creates a drive.File info from the parameters passed in and a half
+// finished FsObjectDrive which must have setMetaData called on it
+//
+// Used to create new objects
+func (f *FsDrive) createFileInfo(remote string, modTime time.Time, size int64) (*FsObjectDrive, *drive.File, error) {
+	// Temporary FsObject under construction
+	o := &FsObjectDrive{
+		drive:  f,
+		remote: remote,
+		bytes:  size,
+	}
+
+	directory, leaf := splitPath(remote)
+	directoryId, err := f.findDir(directory, true)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Couldn't find or make directory: %s", err)
+	}
+
+	// Define the metadata for the file we are going to create.
+	createInfo := &drive.File{
+		Title:        leaf,
+		Description:  leaf,
+		Parents:      []*drive.ParentReference{{Id: directoryId}},
+		MimeType:     fs.MimeType(o),
+		ModifiedDate: modTime.Format(timeFormatOut),
+	}
+	return o, createInfo, nil
+}
+
 // Put the object
 //
 // This assumes that the object doesn't not already exists - if you
@@ -744,22 +773,9 @@ func (f *FsDrive) ListDir() fs.DirChan {
 //
 // The new object may have been created if an error is returned
 func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
-	// Temporary FsObject under construction
-	o := &FsObjectDrive{drive: f, remote: remote}
-
-	directory, leaf := splitPath(o.remote)
-	directoryId, err := f.findDir(directory, true)
+	o, createInfo, err := f.createFileInfo(remote, modTime, size)
 	if err != nil {
-		return o, fmt.Errorf("Couldn't find or make directory: %s", err)
-	}
-
-	// Define the metadata for the file we are going to create.
-	createInfo := &drive.File{
-		Title:        leaf,
-		Description:  leaf,
-		Parents:      []*drive.ParentReference{{Id: directoryId}},
-		MimeType:     fs.MimeType(o),
-		ModifiedDate: modTime.Format(timeFormatOut),
+		return nil, err
 	}
 
 	var info *drive.File
@@ -828,6 +844,39 @@ func (f *FsDrive) Rmdir() error {
 // Return the precision
 func (fs *FsDrive) Precision() time.Duration {
 	return time.Millisecond
+}
+
+// Copy src to this remote using server side copy operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantCopy
+func (f *FsDrive) Copy(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*FsObjectDrive)
+	if !ok {
+		fs.Debug(src, "Can't copy - not same remote type")
+		return nil, fs.ErrorCantCopy
+	}
+
+	o, createInfo, err := f.createFileInfo(remote, srcObj.ModTime(), srcObj.bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	var info *drive.File
+	o.drive.call(&err, func() {
+		info, err = o.drive.svc.Files.Copy(srcObj.id, createInfo).Do()
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	o.setMetaData(info)
+	return o, nil
 }
 
 // Purge deletes all the files and the container
@@ -1051,4 +1100,5 @@ func (o *FsObjectDrive) Remove() error {
 // Check the interfaces are satisfied
 var _ fs.Fs = &FsDrive{}
 var _ fs.Purger = &FsDrive{}
+var _ fs.Copier = &FsDrive{}
 var _ fs.Object = &FsObjectDrive{}
