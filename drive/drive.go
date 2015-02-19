@@ -147,8 +147,12 @@ func (f *FsDrive) String() string {
 	return fmt.Sprintf("Google drive root '%s'", f.root)
 }
 
-// Wait for the pace
-func (f *FsDrive) paceWait() {
+// Start a call to the drive API
+//
+// This must be called as a pair with endCall
+//
+// This waits for the pacer token
+func (f *FsDrive) beginCall() {
 	// pacer starts with a token in and whenever we take one out
 	// XXX ms later we put another in.  We could do this with a
 	// Ticker more accurately, but then we'd have to work out how
@@ -163,12 +167,14 @@ func (f *FsDrive) paceWait() {
 	}(f.sleepTime)
 }
 
+// End a call to the drive API
+//
 // Refresh the pace given an error that was returned.  It returns a
 // boolean as to whether the operation should be retried.
 //
 // See https://developers.google.com/drive/web/handle-errors
 // http://stackoverflow.com/questions/18529524/403-rate-limit-after-only-1-insert-per-second
-func (f *FsDrive) paceRefresh(err error) bool {
+func (f *FsDrive) endCall(err error) bool {
 	again := false
 	oldSleepTime := f.sleepTime
 	if err == nil {
@@ -205,11 +211,11 @@ func (f *FsDrive) paceRefresh(err error) bool {
 // on 403 rate limit exceeded
 //
 // This calls fn, expecting it to place its error in perr
-func (f *FsDrive) pace(perr *error, fn func()) {
+func (f *FsDrive) call(perr *error, fn func()) {
 	for {
-		f.paceWait()
+		f.beginCall()
 		fn()
-		if !f.paceRefresh(*perr) {
+		if !f.endCall(*perr) {
 			break
 		}
 	}
@@ -253,7 +259,7 @@ func (f *FsDrive) listAll(dirId string, title string, directoriesOnly bool, file
 OUTER:
 	for {
 		var files *drive.FileList
-		f.pace(&err, func() {
+		f.call(&err, func() {
 			files, err = list.Do()
 		})
 		if err != nil {
@@ -303,7 +309,7 @@ func NewFs(name, path string) (fs.Fs, error) {
 	}
 
 	// Read About so we know the root path
-	f.pace(&err, func() {
+	f.call(&err, func() {
 		f.about, err = f.svc.About.Get().Do()
 	})
 	if err != nil {
@@ -572,7 +578,7 @@ func (f *FsDrive) _findDir(path string, create bool) (pathId string, err error) 
 				Parents:     []*drive.ParentReference{{Id: pathId}},
 			}
 			var info *drive.File
-			f.pace(&err, func() {
+			f.call(&err, func() {
 				info, err = f.svc.Files.Insert(createInfo).Do()
 			})
 			if err != nil {
@@ -720,9 +726,9 @@ func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64
 	in = &fs.SeekWrapper{In: in, Size: size}
 	var info *drive.File
 	// Don't retry, return a retry error instead
-	f.paceWait()
+	f.beginCall()
 	info, err = f.svc.Files.Insert(createInfo).Media(in).Do()
-	if f.paceRefresh(err) {
+	if f.endCall(err) {
 		return o, fs.RetryErrorf("Upload failed - retry: %s", err)
 	}
 	if err != nil {
@@ -746,7 +752,7 @@ func (f *FsDrive) Rmdir() error {
 		return err
 	}
 	var children *drive.ChildList
-	f.pace(&err, func() {
+	f.call(&err, func() {
 		children, err = f.svc.Children.List(f.rootId).MaxResults(10).Do()
 	})
 	if err != nil {
@@ -757,7 +763,7 @@ func (f *FsDrive) Rmdir() error {
 	}
 	// Delete the directory if it isn't the root
 	if f.root != "" {
-		f.pace(&err, func() {
+		f.call(&err, func() {
 			err = f.svc.Files.Delete(f.rootId).Do()
 		})
 		if err != nil {
@@ -786,7 +792,7 @@ func (f *FsDrive) Purge() error {
 	if err != nil {
 		return err
 	}
-	f.pace(&err, func() {
+	f.call(&err, func() {
 		err = f.svc.Files.Delete(f.rootId).Do()
 	})
 	f.resetRoot()
@@ -898,7 +904,7 @@ func (o *FsObjectDrive) SetModTime(modTime time.Time) {
 	}
 	// Set modified date
 	var info *drive.File
-	o.drive.pace(&err, func() {
+	o.drive.call(&err, func() {
 		info, err = o.drive.svc.Files.Update(o.id, updateInfo).SetModifiedDate(true).Do()
 	})
 	if err != nil {
@@ -922,7 +928,7 @@ func (o *FsObjectDrive) Open() (in io.ReadCloser, err error) {
 	}
 	req.Header.Set("User-Agent", fs.UserAgent)
 	var res *http.Response
-	o.drive.pace(&err, func() {
+	o.drive.call(&err, func() {
 		res, err = o.drive.client.Do(req)
 	})
 	if err != nil {
@@ -951,9 +957,9 @@ func (o *FsObjectDrive) Update(in io.Reader, modTime time.Time, size int64) erro
 	var err error
 	var info *drive.File
 	// Don't retry, return a retry error instead
-	o.drive.paceWait()
+	o.drive.beginCall()
 	info, err = o.drive.svc.Files.Update(updateInfo.Id, updateInfo).SetModifiedDate(true).Media(in).Do()
-	if o.drive.paceRefresh(err) {
+	if o.drive.endCall(err) {
 		return fs.RetryErrorf("Update failed - retry: %s", err)
 	}
 	if err != nil {
@@ -966,7 +972,7 @@ func (o *FsObjectDrive) Update(in io.Reader, modTime time.Time, size int64) erro
 // Remove an object
 func (o *FsObjectDrive) Remove() error {
 	var err error
-	o.drive.pace(&err, func() {
+	o.drive.call(&err, func() {
 		err = o.drive.svc.Files.Delete(o.id).Do()
 	})
 	return err
