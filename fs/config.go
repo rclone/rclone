@@ -22,6 +22,8 @@ const (
 	configFileName = ".rclone.conf"
 )
 
+type SizeSuffix int64
+
 // Global
 var (
 	// Config file
@@ -40,7 +42,61 @@ var (
 	transfers    = pflag.IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
 	configFile   = pflag.StringP("config", "", ConfigPath, "Config file.")
 	dryRun       = pflag.BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
+	bwLimit      SizeSuffix
 )
+
+func init() {
+	pflag.VarP(&bwLimit, "bwlimit", "", "Bandwidth limit in kBytes/s, or use suffix K|M|G")
+}
+
+// Turn SizeSuffix into a string
+func (x *SizeSuffix) String() string {
+	switch {
+	case *x == 0:
+		return "0"
+	case *x < 1024*1024:
+		return fmt.Sprintf("%.3fk", float64(*x)/1024)
+	case *x < 1024*1024*1024:
+		return fmt.Sprintf("%.3fM", float64(*x)/1024/1024)
+	default:
+		return fmt.Sprintf("%.3fG", float64(*x)/1024/1024/1024)
+	}
+	panic("shouldn't be reached")
+}
+
+// Set a SizeSuffix
+func (x *SizeSuffix) Set(s string) error {
+	if len(s) == 0 {
+		return fmt.Errorf("Empty string")
+	}
+	suffix := s[len(s)-1]
+	suffixLen := 1
+	var multiplier float64
+	switch suffix {
+	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.':
+		suffixLen = 0
+		multiplier = 1 << 10
+	case 'k', 'K':
+		multiplier = 1 << 10
+	case 'm', 'M':
+		multiplier = 1 << 20
+	case 'g', 'G':
+		multiplier = 1 << 30
+	default:
+		return fmt.Errorf("Bad suffix %q", suffix)
+	}
+	s = s[:len(s)-suffixLen]
+	value, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return err
+	}
+	value *= multiplier
+	*x = SizeSuffix(value)
+	return nil
+}
+
+// Check it satisfies the interface
+var _ pflag.Value = (*SizeSuffix)(nil)
 
 // Filesystem config options
 type ConfigInfo struct {
@@ -97,6 +153,9 @@ func LoadConfig() {
 			log.Fatalf("Failed to read null config file: %v", err)
 		}
 	}
+
+	// Start the token bucket limiter
+	startTokenBucket()
 }
 
 // Save configuration file.

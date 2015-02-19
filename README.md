@@ -125,6 +125,7 @@ the same format as the standard md5sum tool produces.
 General options:
 
 ```
+      --bwlimit=0: Bandwidth limit in kBytes/s, or use suffix k|M|G
       --checkers=8: Number of checkers to run in parallel.
       --config="~/.rclone.conf": Config file.
   -n, --dry-run=false: Do a trial run with no permanent changes

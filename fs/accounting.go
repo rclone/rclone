@@ -10,12 +10,23 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/tsenart/tb"
 )
 
 // Globals
 var (
-	Stats = NewStats()
+	Stats       = NewStats()
+	tokenBucket *tb.Bucket
 )
+
+// Start the token bucket if necessary
+func startTokenBucket() {
+	if bwLimit > 0 {
+		tokenBucket = tb.NewBucket(int64(bwLimit), 100*time.Millisecond)
+		Log(nil, "Starting bandwidth limiter at %vBytes/s", &bwLimit)
+	}
+}
 
 // Stringset holds some strings
 type StringSet map[string]bool
@@ -177,6 +188,10 @@ func (file *Account) Read(p []byte) (n int, err error) {
 	Stats.Bytes(int64(n))
 	if err == io.EOF {
 		// FIXME Do something?
+	}
+	// Limit the transfer speed if required
+	if tokenBucket != nil {
+		tokenBucket.Wait(int64(n))
 	}
 	return
 }
