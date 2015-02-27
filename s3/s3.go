@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"mime"
 	"net/http"
 	"path"
@@ -309,7 +308,6 @@ func (f *FsS3) list(directories bool, fn func(string, *s3.Key)) {
 		if marker == "" {
 			marker = objects.Contents[len(objects.Contents)-1].Key
 		}
-		log.Printf("retry with marker = %q", marker)
 	}
 }
 

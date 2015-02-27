@@ -10,7 +10,6 @@ package drive
 import (
 	"fmt"
 	"io"
-	"log"
 	"mime"
 	"net/http"
 	"path"
@@ -642,7 +641,7 @@ func (f *FsDrive) List() fs.ObjectsChan {
 		err := f.findRoot(false)
 		if err != nil {
 			fs.Stats.Error()
-			log.Printf("Couldn't find root: %s", err)
+			fs.Log(f, "Couldn't find root: %s", err)
 		} else {
 			if f.root == "" && *driveFullList {
 				err = f.listDirFull(f.rootId, "", out)
@@ -651,7 +650,7 @@ func (f *FsDrive) List() fs.ObjectsChan {
 			}
 			if err != nil {
 				fs.Stats.Error()
-				log.Printf("List failed: %s", err)
+				fs.Log(f, "List failed: %s", err)
 			}
 		}
 	}()
@@ -666,7 +665,7 @@ func (f *FsDrive) ListDir() fs.DirChan {
 		err := f.findRoot(false)
 		if err != nil {
 			fs.Stats.Error()
-			log.Printf("Couldn't find root: %s", err)
+			fs.Log(f, "Couldn't find root: %s", err)
 		} else {
 			_, err := f.listAll(f.rootId, "", true, false, func(item *drive.File) bool {
 				dir := &fs.Dir{
@@ -680,7 +679,7 @@ func (f *FsDrive) ListDir() fs.DirChan {
 			})
 			if err != nil {
 				fs.Stats.Error()
-				log.Printf("ListDir failed: %s", err)
+				fs.Log(f, "ListDir failed: %s", err)
 			}
 		}
 	}()

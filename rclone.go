@@ -363,7 +363,7 @@ func main() {
 			fmt.Println(fs.Stats)
 		}
 		if fs.Config.Verbose {
-			log.Printf("*** Go routines at exit %d\n", runtime.NumGoroutine())
+			fs.Debug(nil, "Go routines at exit %d\n", runtime.NumGoroutine())
 		}
 		if fs.Stats.Errored() {
 			os.Exit(1)
