@@ -28,7 +28,7 @@ import (
 var (
 	// Flags
 	cpuprofile    = pflag.StringP("cpuprofile", "", "", "Write cpu profile to file")
-	statsInterval = pflag.DurationP("stats", "", time.Minute*1, "Interval to print stats")
+	statsInterval = pflag.DurationP("stats", "", time.Minute*1, "Interval to print stats (0 to disable)")
 	version       = pflag.BoolP("version", "V", false, "Print the version number")
 )
 
@@ -323,6 +323,9 @@ func NewFs(remote string) fs.Fs {
 
 // Print the stats every statsInterval
 func StartStats() {
+	if *statsInterval <= 0 {
+		return
+	}
 	go func() {
 		ch := time.Tick(*statsInterval)
 		for {
