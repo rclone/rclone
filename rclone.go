@@ -30,6 +30,7 @@ var (
 	cpuprofile    = pflag.StringP("cpuprofile", "", "", "Write cpu profile to file")
 	statsInterval = pflag.DurationP("stats", "", time.Minute*1, "Interval to print stats (0 to disable)")
 	version       = pflag.BoolP("version", "V", false, "Print the version number")
+	logFile       = pflag.StringP("log-file", "", "", "Log everything to this file")
 )
 
 type Command struct {
@@ -342,6 +343,17 @@ func main() {
 		os.Exit(0)
 	}
 	command, args := ParseCommand()
+
+	// Log file output
+	if *logFile != "" {
+		f, err := os.OpenFile(*logFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
+		if err != nil {
+			log.Fatalf("Failed to open log file: %v", err)
+		}
+		f.Seek(0, os.SEEK_END)
+		log.SetOutput(f)
+		redirectStderr(f)
+	}
 
 	// Make source and destination fs
 	var fdst, fsrc fs.Fs

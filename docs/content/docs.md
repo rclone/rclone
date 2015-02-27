@@ -107,15 +107,17 @@ the same format as the standard md5sum tool produces.
 General options:
 
 ```
-      --bwlimit=0: Bandwidth limit in kBytes/s, or use suffix k|M|G
+      --bwlimit=0: Bandwidth limit in kBytes/s, or use suffix K|M|G
       --checkers=8: Number of checkers to run in parallel.
-      --transfers=4: Number of file transfers to run in parallel.
       --config="~/.rclone.conf": Config file.
   -n, --dry-run=false: Do a trial run with no permanent changes
+      --log-file="": Log everything to this file
       --modify-window=1ns: Max time diff to be considered the same
   -q, --quiet=false: Print as little stuff as possible
-      --stats=1m0s: Interval to print stats
+      --stats=1m0s: Interval to print stats (0 to disable)
+      --transfers=4: Number of file transfers to run in parallel.
   -v, --verbose=false: Print lots more stuff
+  -V, --version=false: Print the version number
 ```
 
 Developer options:
