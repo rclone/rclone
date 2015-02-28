@@ -376,7 +376,7 @@ func main() {
 	if command.Run != nil {
 		command.Run(fdst, fsrc)
 		if !command.NoStats {
-			fmt.Println(fs.Stats)
+			fmt.Fprintln(os.Stderr, fs.Stats)
 		}
 		if fs.Config.Verbose {
 			fs.Debug(nil, "Go routines at exit %d\n", runtime.NumGoroutine())
