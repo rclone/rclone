@@ -65,21 +65,26 @@ MD5SUM.  Doesn't delete files from the destination.
 
 Sync the source to the destination.  Doesn't transfer
 unchanged files, testing first by modification time then by
-MD5SUM.  Deletes any files that exist in source that don't
+size.  Deletes any files that exist in source that don't
 exist in destination. Since this can cause data loss, test
-first with the -dry-run flag.
+first with the `--dry-run` flag.
 
     rclone ls [remote:path]
 
-List all the objects in the the path with sizes.
-
-    rclone lsl [remote:path]
-
-List all the objects in the the path with sizes and timestamps.
+List all the objects in the the path with size and path.
 
     rclone lsd [remote:path]
 
-List all directories/objects/buckets in the the path.
+List all directories/containers/buckets in the the path.
+
+    rclone lsl [remote:path]
+
+List all the objects in the the path with modification time, size and path.
+
+    rclone md5sum [remote:path]
+
+Produces an md5sum file for all the objects in the path.  This
+is in the same format as the standard md5sum tool produces.
 
     rclone mkdir remote:path
 
@@ -100,11 +105,13 @@ Checks the files in the source and destination match.  It
 compares sizes and MD5SUMs and prints a report of files which
 don't match.  It doesn't alter the source or destination.
 
-    rclone md5sum remote:path
+    rclone config 
 
-Produces an md5sum file for all the objects in the path.  This is in
-the same format as the standard md5sum tool produces.
-General options:
+Enter an interactive configuration session.
+
+    rclone help 
+
+This help.
 
 ```
       --bwlimit=0: Bandwidth limit in kBytes/s, or use suffix K|M|G

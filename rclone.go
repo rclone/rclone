@@ -59,11 +59,11 @@ func (cmd *Command) checkArgs(args []string) {
 var Commands = []Command{
 	{
 		Name:     "copy",
-		ArgsHelp: "source://path dest://path",
+		ArgsHelp: "source:path dest:path",
 		Help: `
         Copy the source to the destination.  Doesn't transfer
         unchanged files, testing first by modification time then by
-        MD5SUM.  Doesn't delete files from the destination.`,
+        size.  Doesn't delete files from the destination.`,
 		Run: func(fdst, fsrc fs.Fs) {
 			err := fs.Sync(fdst, fsrc, false)
 			if err != nil {
@@ -75,11 +75,11 @@ var Commands = []Command{
 	},
 	{
 		Name:     "sync",
-		ArgsHelp: "source://path dest://path",
+		ArgsHelp: "source:path dest:path",
 		Help: `
         Sync the source to the destination.  Doesn't transfer
         unchanged files, testing first by modification time then by
-        MD5SUM.  Deletes any files that exist in source that don't
+        size.  Deletes any files that exist in source that don't
         exist in destination. Since this can cause data loss, test
         first with the --dry-run flag.`,
 		Run: func(fdst, fsrc fs.Fs) {
@@ -93,7 +93,7 @@ var Commands = []Command{
 	},
 	{
 		Name:     "ls",
-		ArgsHelp: "[remote://path]",
+		ArgsHelp: "[remote:path]",
 		Help: `
         List all the objects in the the path with size and path.`,
 		Run: func(fdst, fsrc fs.Fs) {
@@ -107,7 +107,7 @@ var Commands = []Command{
 	},
 	{
 		Name:     "lsd",
-		ArgsHelp: "[remote://path]",
+		ArgsHelp: "[remote:path]",
 		Help: `
         List all directories/containers/buckets in the the path.`,
 		Run: func(fdst, fsrc fs.Fs) {
@@ -121,7 +121,7 @@ var Commands = []Command{
 	},
 	{
 		Name:     "lsl",
-		ArgsHelp: "[remote://path]",
+		ArgsHelp: "[remote:path]",
 		Help: `
         List all the objects in the the path with modification time, size and path.`,
 		Run: func(fdst, fsrc fs.Fs) {
@@ -135,9 +135,10 @@ var Commands = []Command{
 	},
 	{
 		Name:     "md5sum",
-		ArgsHelp: "[remote://path]",
+		ArgsHelp: "[remote:path]",
 		Help: `
-        Produces an md5sum file for all the objects in the path.`,
+        Produces an md5sum file for all the objects in the path.  This
+        is in the same format as the standard md5sum tool produces.`,
 		Run: func(fdst, fsrc fs.Fs) {
 			err := fs.Md5sum(fdst, os.Stdout)
 			if err != nil {
@@ -149,7 +150,7 @@ var Commands = []Command{
 	},
 	{
 		Name:     "mkdir",
-		ArgsHelp: "remote://path",
+		ArgsHelp: "remote:path",
 		Help: `
         Make the path if it doesn't already exist`,
 		Run: func(fdst, fsrc fs.Fs) {
@@ -163,7 +164,7 @@ var Commands = []Command{
 	},
 	{
 		Name:     "rmdir",
-		ArgsHelp: "remote://path",
+		ArgsHelp: "remote:path",
 		Help: `
         Remove the path.  Note that you can't remove a path with
         objects in it, use purge for that.`,
@@ -178,7 +179,7 @@ var Commands = []Command{
 	},
 	{
 		Name:     "purge",
-		ArgsHelp: "remote://path",
+		ArgsHelp: "remote:path",
 		Help: `
         Remove the path and all of its contents.`,
 		Run: func(fdst, fsrc fs.Fs) {
@@ -192,7 +193,7 @@ var Commands = []Command{
 	},
 	{
 		Name:     "check",
-		ArgsHelp: "source://path dest://path",
+		ArgsHelp: "source:path dest:path",
 		Help: `
         Checks the files in the source and destination match.  It
         compares sizes and MD5SUMs and prints a report of files which
