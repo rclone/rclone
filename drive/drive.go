@@ -713,7 +713,6 @@ func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64
 	}
 
 	// Make the API request to upload metadata and file data.
-	in = &fs.SeekWrapper{In: in, Size: size}
 	var info *drive.File
 	// Don't retry, return a retry error instead
 	f.beginCall()
@@ -944,7 +943,6 @@ func (o *FsObjectDrive) Update(in io.Reader, modTime time.Time, size int64) erro
 	}
 
 	// Make the API request to upload metadata and file data.
-	in = &fs.SeekWrapper{In: in, Size: size}
 	var err error
 	var info *drive.File
 	// Don't retry, return a retry error instead
