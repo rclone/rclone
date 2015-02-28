@@ -436,6 +436,16 @@ func ListFn(f Fs, fn func(Object)) error {
 	return nil
 }
 
+// mutex for synchronized output
+var outMutex sync.Mutex
+
+// Synchronized fmt.Fprintf
+func syncFprintf(w io.Writer, format string, a ...interface{}) (n int, err error) {
+	outMutex.Lock()
+	defer outMutex.Unlock()
+	return fmt.Fprintf(w, format, a...)
+}
+
 // List the Fs to stdout
 //
 // Shows size and path
@@ -443,7 +453,7 @@ func ListFn(f Fs, fn func(Object)) error {
 // Lists in parallel which may get them out of order
 func List(f Fs, w io.Writer) error {
 	return ListFn(f, func(o Object) {
-		fmt.Fprintf(w, "%9d %s\n", o.Size(), o.Remote())
+		syncFprintf(w, "%9d %s\n", o.Size(), o.Remote())
 	})
 }
 
@@ -457,7 +467,7 @@ func ListLong(f Fs, w io.Writer) error {
 		Stats.Checking(o)
 		modTime := o.ModTime()
 		Stats.DoneChecking(o)
-		fmt.Fprintf(w, "%9d %s %s\n", o.Size(), modTime.Format("2006-01-02 15:04:05.000000000"), o.Remote())
+		syncFprintf(w, "%9d %s %s\n", o.Size(), modTime.Format("2006-01-02 15:04:05.000000000"), o.Remote())
 	})
 }
 
@@ -475,14 +485,14 @@ func Md5sum(f Fs, w io.Writer) error {
 			Debug(o, "Failed to read MD5: %v", err)
 			md5sum = "UNKNOWN"
 		}
-		fmt.Fprintf(w, "%32s  %s\n", md5sum, o.Remote())
+		syncFprintf(w, "%32s  %s\n", md5sum, o.Remote())
 	})
 }
 
 // List the directories/buckets/containers in the Fs to stdout
 func ListDir(f Fs, w io.Writer) error {
 	for dir := range f.ListDir() {
-		fmt.Fprintf(w, "%12d %13s %9d %s\n", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
+		syncFprintf(w, "%12d %13s %9d %s\n", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
 	}
 	return nil
 }
