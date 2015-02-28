@@ -76,7 +76,7 @@ type FsDrive struct {
 	rootId       string         // Id of the root directory
 	foundRoot    bool           // Whether we have found the root or not
 	findRootLock sync.Mutex     // Protect findRoot from concurrent use
-	dirCache     dirCache       // Map of directory path to directory id
+	dirCache     *dirCache      // Map of directory path to directory id
 	findDirLock  sync.Mutex     // Protect findDir from concurrent use
 	pacer        chan struct{}  // To pace the operations
 	sleepTime    time.Duration  // Time to sleep for each transaction
@@ -101,8 +101,8 @@ type dirCache struct {
 }
 
 // Make a new locked map
-func newDirCache() dirCache {
-	d := dirCache{}
+func newDirCache() *dirCache {
+	d := &dirCache{}
 	d.Flush()
 	return d
 }

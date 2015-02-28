@@ -109,7 +109,7 @@ func TestFsListEmpty(t *testing.T) {
 func TestFsListDirEmpty(t *testing.T) {
 	skipIfNotOk(t)
 	for obj := range remote.ListDir() {
-		t.Error("Found unexpected item %q", obj.Name)
+		t.Errorf("Found unexpected item %q", obj.Name)
 	}
 }
 
@@ -174,7 +174,7 @@ func TestFsListDirRoot(t *testing.T) {
 	skipIfNotOk(t)
 	rootRemote, err := fs.NewFs(RemoteName)
 	if err != nil {
-		t.Fatal("Failed to make remote %q: %v", RemoteName, err)
+		t.Fatalf("Failed to make remote %q: %v", RemoteName, err)
 	}
 	found := false
 	for obj := range rootRemote.ListDir() {
@@ -191,7 +191,7 @@ func TestFsListRoot(t *testing.T) {
 	skipIfNotOk(t)
 	rootRemote, err := fs.NewFs(RemoteName)
 	if err != nil {
-		t.Fatal("Failed to make remote %q: %v", RemoteName, err)
+		t.Fatalf("Failed to make remote %q: %v", RemoteName, err)
 	}
 	// Should either find file1 and file2 or nothing
 	found1 := false
@@ -384,7 +384,7 @@ func TestLimitedFs(t *testing.T) {
 	file2Copy.Path = "z.txt"
 	fileRemote, err := fs.NewFs(remoteName)
 	if err != nil {
-		t.Fatal("Failed to make remote %q: %v", remoteName, err)
+		t.Fatalf("Failed to make remote %q: %v", remoteName, err)
 	}
 	fstest.CheckListing(t, fileRemote, []fstest.Item{file2Copy})
 	_, ok := fileRemote.(*fs.Limited)
@@ -398,7 +398,7 @@ func TestLimitedFsNotFound(t *testing.T) {
 	remoteName := subRemoteName + "/not found.txt"
 	fileRemote, err := fs.NewFs(remoteName)
 	if err != nil {
-		t.Fatal("Failed to make remote %q: %v", remoteName, err)
+		t.Fatalf("Failed to make remote %q: %v", remoteName, err)
 	}
 	fstest.CheckListing(t, fileRemote, []fstest.Item{})
 	_, ok := fileRemote.(*fs.Limited)

@@ -61,7 +61,6 @@ func (x *SizeSuffix) String() string {
 	default:
 		return fmt.Sprintf("%.3fG", float64(*x)/1024/1024/1024)
 	}
-	panic("shouldn't be reached")
 }
 
 // Set a SizeSuffix
