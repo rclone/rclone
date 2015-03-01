@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"mime"
 	"net/http"
 	"path"
 	"regexp"
@@ -536,13 +535,7 @@ func (o *FsObjectS3) Update(in io.Reader, modTime time.Time, size int64) error {
 		metaMtime: swift.TimeToFloatString(modTime),
 	}
 
-	// Guess the content type
-	contentType := mime.TypeByExtension(path.Ext(o.remote))
-	if contentType == "" {
-		contentType = "application/octet-stream"
-	}
-
-	_, err := o.s3.b.PutReaderHeaders(o.s3.root+o.remote, in, size, contentType, o.s3.perm, headers)
+	_, err := o.s3.b.PutReaderHeaders(o.s3.root+o.remote, in, size, fs.MimeType(o), o.s3.perm, headers)
 	if err != nil {
 		return err
 	}

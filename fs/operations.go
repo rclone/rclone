@@ -5,6 +5,8 @@ package fs
 import (
 	"fmt"
 	"io"
+	"mime"
+	"path"
 	"sync"
 )
 
@@ -95,6 +97,15 @@ func Equal(src, dst Object) bool {
 
 	Debug(src, "Size and MD5SUM of src and dst objects identical")
 	return true
+}
+
+// Returns a guess at the mime type from the extension
+func MimeType(o Object) string {
+	mimeType := mime.TypeByExtension(path.Ext(o.Remote()))
+	if mimeType == "" {
+		mimeType = "application/octet-stream"
+	}
+	return mimeType
 }
 
 // Used to remove a failed copy

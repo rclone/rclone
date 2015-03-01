@@ -17,7 +17,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"mime"
 	"net/http"
 	"path"
 	"regexp"
@@ -549,16 +548,10 @@ func (o *FsObjectStorage) Open() (in io.ReadCloser, err error) {
 //
 // The new object may have been created if an error is returned
 func (o *FsObjectStorage) Update(in io.Reader, modTime time.Time, size int64) error {
-	// Guess the content type
-	contentType := mime.TypeByExtension(path.Ext(o.remote))
-	if contentType == "" {
-		contentType = "application/octet-stream"
-	}
-
 	object := storage.Object{
 		Bucket:      o.storage.bucket,
 		Name:        o.storage.root + o.remote,
-		ContentType: contentType,
+		ContentType: fs.MimeType(o),
 		Size:        uint64(size),
 		Updated:     modTime.Format(timeFormatOut), // Doesn't get set
 		Metadata:    metadataFromModTime(modTime),

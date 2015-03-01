@@ -10,9 +10,7 @@ package drive
 import (
 	"fmt"
 	"io"
-	"mime"
 	"net/http"
-	"path"
 	"strings"
 	"sync"
 	"time"
@@ -705,20 +703,13 @@ func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64
 		return o, fmt.Errorf("Couldn't find or make directory: %s", err)
 	}
 
-	// Guess the mime type
-	mimeType := mime.TypeByExtension(path.Ext(o.remote))
-	if mimeType == "" {
-		mimeType = "application/octet-stream"
-	}
-	modifiedDate := modTime.Format(timeFormatOut)
-
 	// Define the metadata for the file we are going to create.
 	createInfo := &drive.File{
 		Title:        leaf,
 		Description:  leaf,
 		Parents:      []*drive.ParentReference{{Id: directoryId}},
-		MimeType:     mimeType,
-		ModifiedDate: modifiedDate,
+		MimeType:     fs.MimeType(o),
+		ModifiedDate: modTime.Format(timeFormatOut),
 	}
 
 	// Make the API request to upload metadata and file data.
