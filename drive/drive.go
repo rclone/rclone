@@ -900,6 +900,7 @@ func (o *FsObjectDrive) SetModTime(modTime time.Time) {
 	if err != nil {
 		fs.Stats.Error()
 		fs.Log(o, "Failed to update remote mtime: %s", err)
+		return
 	}
 	// Update info from read data
 	o.setMetaData(info)
