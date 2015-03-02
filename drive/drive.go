@@ -183,24 +183,41 @@ func (f *FsDrive) endCall(err error) bool {
 			fs.Debug(f, "Reducing sleep to %v", f.sleepTime)
 		}
 	} else {
-		fs.Debug(f, "Error recived: %v", err)
-		if gerr, ok := err.(*googleapi.Error); ok {
-			if len(gerr.Errors) > 0 {
+		fs.Debug(f, "Error recived: %T %#v", err, err)
+		// Check for net error Timeout()
+		if x, ok := err.(interface {
+			Timeout() bool
+		}); ok && x.Timeout() {
+			again = true
+		}
+		// Check for net error Temporary()
+		if x, ok := err.(interface {
+			Temporary() bool
+		}); ok && x.Temporary() {
+			again = true
+		}
+		switch gerr := err.(type) {
+		case *googleapi.Error:
+			if gerr.Code >= 500 && gerr.Code < 600 {
+				// All 5xx errors should be retried
+				again = true
+			} else if len(gerr.Errors) > 0 {
 				reason := gerr.Errors[0].Reason
 				if reason == "rateLimitExceeded" || reason == "userRateLimitExceeded" {
-					f.sleepTime *= 2
-					if f.sleepTime > maxSleep {
-						f.sleepTime = maxSleep
-					}
-					if f.sleepTime != oldSleepTime {
-						fs.Debug(f, "Rate limited, increasing sleep to %v", f.sleepTime)
-					}
 					again = true
 				}
 			}
 		}
 	}
-
+	if again {
+		f.sleepTime *= 2
+		if f.sleepTime > maxSleep {
+			f.sleepTime = maxSleep
+		}
+		if f.sleepTime != oldSleepTime {
+			fs.Debug(f, "Rate limited, increasing sleep to %v", f.sleepTime)
+		}
+	}
 	return again
 }
 
@@ -712,16 +729,24 @@ func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64
 		ModifiedDate: modTime.Format(timeFormatOut),
 	}
 
-	// Make the API request to upload metadata and file data.
 	var info *drive.File
-	// Don't retry, return a retry error instead
-	f.beginCall()
-	info, err = f.svc.Files.Insert(createInfo).Media(in).Do()
-	if f.endCall(err) {
-		return o, fs.RetryErrorf("Upload failed - retry: %s", err)
-	}
-	if err != nil {
-		return o, fmt.Errorf("Upload failed: %s", err)
+	if false {
+		// Make the API request to upload metadata and file data.
+		// Don't retry, return a retry error instead
+		f.beginCall()
+		info, err = f.svc.Files.Insert(createInfo).Media(in).Do()
+		if f.endCall(err) {
+			return o, fs.RetryErrorf("Upload failed - retry: %s", err)
+		}
+		if err != nil {
+			return o, fmt.Errorf("Upload failed: %s", err)
+		}
+	} else {
+		// Upload the file in chunks
+		info, err = f.Upload(in, size, createInfo.MimeType, createInfo, remote)
+		if err != nil {
+			return o, err
+		}
 	}
 	o.setMetaData(info)
 	return o, nil
@@ -945,14 +970,22 @@ func (o *FsObjectDrive) Update(in io.Reader, modTime time.Time, size int64) erro
 	// Make the API request to upload metadata and file data.
 	var err error
 	var info *drive.File
-	// Don't retry, return a retry error instead
-	o.drive.beginCall()
-	info, err = o.drive.svc.Files.Update(updateInfo.Id, updateInfo).SetModifiedDate(true).Media(in).Do()
-	if o.drive.endCall(err) {
-		return fs.RetryErrorf("Update failed - retry: %s", err)
-	}
-	if err != nil {
-		return fmt.Errorf("Update failed: %s", err)
+	if false {
+		// Don't retry, return a retry error instead
+		o.drive.beginCall()
+		info, err = o.drive.svc.Files.Update(updateInfo.Id, updateInfo).SetModifiedDate(true).Media(in).Do()
+		if o.drive.endCall(err) {
+			return fs.RetryErrorf("Update failed - retry: %s", err)
+		}
+		if err != nil {
+			return fmt.Errorf("Update failed: %s", err)
+		}
+	} else {
+		// Upload the file in chunks
+		info, err = o.drive.Upload(in, size, fs.MimeType(o), updateInfo, o.remote)
+		if err != nil {
+			return err
+		}
 	}
 	o.setMetaData(info)
 	return nil
