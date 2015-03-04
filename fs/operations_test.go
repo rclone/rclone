@@ -34,6 +34,7 @@ var (
 	flocal, fremote       fs.Fs
 	RemoteName            = flag.String("remote", "", "Remote to test with, defaults to local filesystem")
 	SubDir                = flag.Bool("subdir", false, "Set to test with a sub directory")
+	Verbose               = flag.Bool("verbose", false, "Set to enable logging")
 	finalise              func()
 )
 
@@ -62,8 +63,8 @@ var t3 = fstest.Time("2011-12-30T12:59:59.000000000Z")
 
 func TestInit(t *testing.T) {
 	fs.LoadConfig()
-	fs.Config.Verbose = false
-	fs.Config.Quiet = true
+	fs.Config.Verbose = *Verbose
+	fs.Config.Quiet = !*Verbose
 	var err error
 	fremote, finalise, err = fstest.RandomRemote(*RemoteName, *SubDir)
 	if err != nil {

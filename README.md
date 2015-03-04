@@ -270,6 +270,15 @@ Bugs
 
 Changelog
 ---------
+  * v1.11 - 2015-03-04
+    * swift: add region parameter
+    * drive: fix crash on failed to update remote mtime
+    * In remote paths, change native directory separators to /
+    * Add synchronization to ls/lsl/lsd output to stop corruptions
+    * Ensure all stats/log messages to go stderr
+    * Add --log-file flag to log everything (including panics) to file
+    * Make it possible to disable stats printing with --stats=0
+    * Implement --bwlimit to limit data transfer bandwidth
   * v1.10 - 2015-02-12
     * s3: list an unlimited number of items
     * Fix getting stuck in the configurator
