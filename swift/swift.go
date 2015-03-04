@@ -47,6 +47,9 @@ func init() {
 		}, {
 			Name: "tenant",
 			Help: "Tenant name - optional",
+		}, {
+			Name: "region",
+			Help: "Region name - optional",
 		},
 		// snet     = flag.Bool("swift-snet", false, "Use internal service network") // FIXME not implemented
 		},
@@ -115,6 +118,7 @@ func swiftConnection(name string) (*swift.Connection, error) {
 		AuthUrl:   authUrl,
 		UserAgent: fs.UserAgent,
 		Tenant:    fs.ConfigFile.MustValue(name, "tenant"),
+		Region:    fs.ConfigFile.MustValue(name, "region"),
 	}
 	err := c.Authenticate()
 	if err != nil {
