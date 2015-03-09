@@ -244,8 +244,8 @@ func NewFs(path string) (Fs, error) {
 // Outputs log for object
 func OutputLog(o interface{}, text string, args ...interface{}) {
 	description := ""
-	if x, ok := o.(fmt.Stringer); ok {
-		description = x.String() + ": "
+	if o != nil {
+		description = fmt.Sprintf("%v: ", o)
 	}
 	out := fmt.Sprintf(text, args...)
 	log.Print(description + out)
