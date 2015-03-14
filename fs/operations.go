@@ -109,14 +109,19 @@ func MimeType(o Object) string {
 }
 
 // Used to remove a failed copy
-func removeFailedCopy(dst Object) {
-	if dst != nil {
-		Debug(dst, "Removing failed copy")
-		removeErr := dst.Remove()
-		if removeErr != nil {
-			Debug(dst, "Failed to remove failed copy: %s", removeErr)
-		}
+//
+// Returns whether the file was succesfully removed or not
+func removeFailedCopy(dst Object) bool {
+	if dst == nil {
+		return false
 	}
+	Debug(dst, "Removing failed copy")
+	removeErr := dst.Remove()
+	if removeErr != nil {
+		Debug(dst, "Failed to remove failed copy: %s", removeErr)
+		return false
+	}
+	return true
 }
 
 // Copy src object to dst or f if nil
@@ -150,7 +155,11 @@ tryAgain:
 	if r, ok := err.(Retry); ok && r.Retry() && tries < maxTries {
 		tries++
 		Log(src, "Received error: %v - retrying %d/%d", err, tries, maxTries)
-		removeFailedCopy(dst)
+		if removeFailedCopy(dst) {
+			// If we removed dst, then nil it out and note we are not updating
+			dst = nil
+			doUpdate = false
+		}
 		goto tryAgain
 	}
 	if err == nil {
