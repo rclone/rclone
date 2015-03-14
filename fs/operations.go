@@ -270,6 +270,20 @@ func DeleteFiles(to_be_deleted ObjectsChan) {
 	wg.Wait()
 }
 
+// Read a map of Object.Remote to Object for the given Fs
+func readFilesMap(fs Fs) map[string]Object {
+	files := make(map[string]Object)
+	for o := range fs.List() {
+		remote := o.Remote()
+		if _, ok := files[remote]; !ok {
+			files[remote] = o
+		} else {
+			Log(o, "Duplicate file detected")
+		}
+	}
+	return files
+}
+
 // Syncs fsrc into fdst
 //
 // If Delete is true then it deletes any files in fdst that aren't in fsrc
@@ -284,10 +298,7 @@ func Sync(fdst, fsrc Fs, Delete bool) error {
 
 	// Read the destination files first
 	// FIXME could do this in parallel and make it use less memory
-	delFiles := make(map[string]Object)
-	for dst := range fdst.List() {
-		delFiles[dst.Remote()] = dst
-	}
+	delFiles := readFilesMap(fdst)
 
 	// Read source files checking them off against dest files
 	to_be_checked := make(ObjectPairChan, Config.Transfers)
@@ -352,22 +363,20 @@ func Check(fdst, fsrc Fs) error {
 
 	// Read the destination files first
 	// FIXME could do this in parallel and make it use less memory
-	dstFiles := make(map[string]Object)
-	for dst := range fdst.List() {
-		dstFiles[dst.Remote()] = dst
-	}
+	dstFiles := readFilesMap(fdst)
 
 	// Read the source files checking them against dstFiles
 	// FIXME could do this in parallel and make it use less memory
-	srcFiles := make(map[string]Object)
+	srcFiles := readFilesMap(fsrc)
+
+	// Move all the common files into commonFiles and delete then
+	// from srcFiles and dstFiles
 	commonFiles := make(map[string][]Object)
-	for src := range fsrc.List() {
-		remote := src.Remote()
+	for remote, src := range srcFiles {
 		if dst, ok := dstFiles[remote]; ok {
 			commonFiles[remote] = []Object{dst, src}
+			delete(srcFiles, remote)
 			delete(dstFiles, remote)
-		} else {
-			srcFiles[remote] = src
 		}
 	}
 
