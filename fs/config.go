@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"os/user"
 	"path"
@@ -46,21 +47,30 @@ var (
 )
 
 func init() {
-	pflag.VarP(&bwLimit, "bwlimit", "", "Bandwidth limit in kBytes/s, or use suffix K|M|G")
+	pflag.VarP(&bwLimit, "bwlimit", "", "Bandwidth limit in kBytes/s, or use suffix k|M|G")
 }
 
 // Turn SizeSuffix into a string
-func (x *SizeSuffix) String() string {
+func (x SizeSuffix) String() string {
+	scaled := float64(0)
+	suffix := ""
 	switch {
-	case *x == 0:
+	case x == 0:
 		return "0"
-	case *x < 1024*1024:
-		return fmt.Sprintf("%.3fk", float64(*x)/1024)
-	case *x < 1024*1024*1024:
-		return fmt.Sprintf("%.3fM", float64(*x)/1024/1024)
+	case x < 1024*1024:
+		scaled = float64(x) / 1024
+		suffix = "k"
+	case x < 1024*1024*1024:
+		scaled = float64(x) / 1024 / 1024
+		suffix = "M"
 	default:
-		return fmt.Sprintf("%.3fG", float64(*x)/1024/1024/1024)
+		scaled = float64(x) / 1024 / 1024 / 1024
+		suffix = "G"
 	}
+	if math.Floor(scaled) == scaled {
+		return fmt.Sprintf("%.0f%s", scaled, suffix)
+	}
+	return fmt.Sprintf("%.3f%s", scaled, suffix)
 }
 
 // Set a SizeSuffix
@@ -88,6 +98,9 @@ func (x *SizeSuffix) Set(s string) error {
 	value, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		return err
+	}
+	if value < 0 {
+		return fmt.Errorf("Size can't be negative %q", s)
 	}
 	value *= multiplier
 	*x = SizeSuffix(value)

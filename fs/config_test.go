@@ -9,10 +9,11 @@ func TestSizeSuffixString(t *testing.T) {
 	}{
 		{0, "0"},
 		{102, "0.100k"},
-		{1024, "1.000k"},
-		{1024 * 1024, "1.000M"},
-		{1024 * 1024 * 1024, "1.000G"},
-		{10 * 1024 * 1024 * 1024, "10.000G"},
+		{1024, "1k"},
+		{1024 * 1024, "1M"},
+		{1024 * 1024 * 1024, "1G"},
+		{10 * 1024 * 1024 * 1024, "10G"},
+		{10.1 * 1024 * 1024 * 1024, "10.100G"},
 	} {
 		ss := SizeSuffix(test.in)
 		got := ss.String()
@@ -41,6 +42,7 @@ func TestSizeSuffixSet(t *testing.T) {
 		{"1p", 0, true},
 		{"1.p", 0, true},
 		{"1p", 0, true},
+		{"-1K", 0, true},
 	} {
 		ss := SizeSuffix(0)
 		err := ss.Set(test.in)
