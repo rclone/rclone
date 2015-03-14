@@ -39,6 +39,10 @@ const (
 var (
 	// Flags
 	driveFullList = pflag.BoolP("drive-full-list", "", true, "Use a full listing for directory list. More data but usually quicker.")
+	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
+	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
+	chunkSize         = fs.SizeSuffix(256 * 1024)
+	driveUploadCutoff = chunkSize
 	// Description of how to auth for this app
 	driveAuth = &googleauth.Auth{
 		Scope:               "https://www.googleapis.com/auth/drive",
@@ -63,6 +67,8 @@ func init() {
 			Help: "Google Application Client Secret - leave blank to use rclone's.",
 		}},
 	})
+	pflag.VarP(&driveUploadCutoff, "drive-upload-cutoff", "", "Cutoff for switching to chunked upload")
+	pflag.VarP(&chunkSize, "drive-chunk-size", "", "Upload chunk size. Must a power of 2 >= 256k.")
 }
 
 // FsDrive represents a remote drive server
@@ -293,8 +299,27 @@ OUTER:
 	return
 }
 
+// Returns true of x is a power of 2 or zero
+func isPowerOfTwo(x int64) bool {
+	switch {
+	case x == 0:
+		return true
+	case x < 0:
+		return false
+	default:
+		return (x & (x - 1)) == 0
+	}
+}
+
 // NewFs contstructs an FsDrive from the path, container:path
 func NewFs(name, path string) (fs.Fs, error) {
+	if !isPowerOfTwo(int64(chunkSize)) {
+		return nil, fmt.Errorf("drive: chunk size %v isn't a power of two", chunkSize)
+	}
+	if chunkSize < 256*1024 {
+		return nil, fmt.Errorf("drive: chunk size can't be less than 256k - was %v", chunkSize)
+	}
+
 	t, err := driveAuth.NewTransport(name)
 	if err != nil {
 		return nil, err
@@ -730,7 +755,7 @@ func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64
 	}
 
 	var info *drive.File
-	if false {
+	if size == 0 || size < int64(driveUploadCutoff) {
 		// Make the API request to upload metadata and file data.
 		// Don't retry, return a retry error instead
 		f.beginCall()
@@ -970,7 +995,7 @@ func (o *FsObjectDrive) Update(in io.Reader, modTime time.Time, size int64) erro
 	// Make the API request to upload metadata and file data.
 	var err error
 	var info *drive.File
-	if false {
+	if size == 0 || size < int64(driveUploadCutoff) {
 		// Don't retry, return a retry error instead
 		o.drive.beginCall()
 		info, err = o.drive.svc.Files.Update(updateInfo.Id, updateInfo).SetModifiedDate(true).Media(in).Do()

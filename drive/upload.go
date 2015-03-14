@@ -31,10 +31,6 @@ const (
 
 	// Number of times to try each chunk
 	maxTries = 10
-
-	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
-	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
-	chunkSize int64 = 1 << 18
 )
 
 // resumableUpload is used by the generated APIs to provide resumable uploads.
@@ -194,8 +190,8 @@ func (rx *resumableUpload) Upload() (*drive.File, error) {
 	var StatusCode int
 	for start < rx.ContentLength {
 		reqSize := rx.ContentLength - start
-		if reqSize >= chunkSize {
-			reqSize = chunkSize
+		if reqSize >= int64(chunkSize) {
+			reqSize = int64(chunkSize)
 		} else {
 			buf = buf[:reqSize]
 		}
