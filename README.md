@@ -270,6 +270,11 @@ Bugs
 
 Changelog
 ---------
+  * v1.12 - 2015-03-15
+    * drive: Use chunked upload for files above a certain size
+    * drive: add --drive-chunk-size and --drive-upload-cutoff parameters
+    * drive: switch to insert from update when a failed copy deletes the upload
+    * core: Log duplicate files if they are detected
   * v1.11 - 2015-03-04
     * swift: add region parameter
     * drive: fix crash on failed to update remote mtime
