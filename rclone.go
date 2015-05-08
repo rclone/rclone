@@ -77,11 +77,11 @@ var Commands = []Command{
 		Name:     "sync",
 		ArgsHelp: "source:path dest:path",
 		Help: `
-        Sync the source to the destination.  Doesn't transfer
-        unchanged files, testing first by modification time then by
-        size.  Deletes any files that exist in source that don't
-        exist in destination. Since this can cause data loss, test
-        first with the --dry-run flag.`,
+        Sync the source to the destination, changing the destination only.
+        Doesn't transfer unchanged files, testing first by modification time
+        then by size.  Destination is updated to match source, including
+        deleting files if necessary.  Since this can cause data loss, test first
+        with the --dry-run flag.`,
 		Run: func(fdst, fsrc fs.Fs) {
 			err := fs.Sync(fdst, fsrc, true)
 			if err != nil {
