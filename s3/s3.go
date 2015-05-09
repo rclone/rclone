@@ -419,9 +419,17 @@ func (o *FsObjectS3) Remote() string {
 	return o.remote
 }
 
+var matchMd5 = regexp.MustCompile(`^[0-9a-f]{32}$`)
+
 // Md5sum returns the Md5sum of an object returning a lowercase hex string
 func (o *FsObjectS3) Md5sum() (string, error) {
-	return strings.Trim(strings.ToLower(o.etag), `"`), nil
+	etag := strings.Trim(strings.ToLower(o.etag), `"`)
+	// Check the etag is a valid md5sum
+	if !matchMd5.MatchString(etag) {
+		fs.Debug(o, "Invalid md5sum (probably multipart uploaded) - ignoring: %q", etag)
+		return "", nil
+	}
+	return etag, nil
 }
 
 // Size returns the size of an object in bytes
