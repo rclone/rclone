@@ -262,6 +262,10 @@ Bugs
 
 Changelog
 ---------
+  * v1.13 - 2015-05-10
+    * Revise documentation (especially sync)
+    * Implement --timeout and --conntimeout
+    * s3: ignore etags from multipart uploads which aren't md5sums
   * v1.12 - 2015-03-15
     * drive: Use chunked upload for files above a certain size
     * drive: add --drive-chunk-size and --drive-upload-cutoff parameters
