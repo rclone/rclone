@@ -58,16 +58,16 @@ Subcommands
     rclone copy source:path dest:path
 
 Copy the source to the destination.  Doesn't transfer
-unchanged files, testing first by modification time then by
+unchanged files, testing by size and modification time or
 MD5SUM.  Doesn't delete files from the destination.
 
     rclone sync source:path dest:path
 
-Sync the source to the destination.  Doesn't transfer
-unchanged files, testing first by modification time then by
-size.  Deletes any files that exist in source that don't
-exist in destination. Since this can cause data loss, test
-first with the `--dry-run` flag.
+Sync the source to the destination, changing the destination
+only.  Doesn't transfer unchanged files, testing by size and
+modification time or MD5SUM.  Destination is updated to match
+source, including deleting files if necessary.  Since this can
+cause data loss, test first with the `--dry-run` flag.
 
     rclone ls [remote:path]
 
@@ -79,7 +79,8 @@ List all directories/containers/buckets in the the path.
 
     rclone lsl [remote:path]
 
-List all the objects in the the path with modification time, size and path.
+List all the objects in the the path with modification time,
+size and path.
 
     rclone md5sum [remote:path]
 

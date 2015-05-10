@@ -75,16 +75,16 @@ Subcommands
     rclone copy source:path dest:path
 
 Copy the source to the destination.  Doesn't transfer
-unchanged files, testing first by modification time then by
+unchanged files, testing by size and modification time or
 MD5SUM.  Doesn't delete files from the destination.
 
     rclone sync source:path dest:path
 
-Sync the source to the destination.  Doesn't transfer
-unchanged files, testing first by modification time then by
-size.  Deletes any files that exist in source that don't
-exist in destination. Since this can cause data loss, test
-first with the `--dry-run` flag.
+Sync the source to the destination, changing the destination
+only.  Doesn't transfer unchanged files, testing by size and
+modification time or MD5SUM.  Destination is updated to match
+source, including deleting files if necessary.  Since this can
+cause data loss, test first with the `--dry-run` flag.
 
     rclone ls [remote:path]
 
@@ -96,7 +96,8 @@ List all directories/containers/buckets in the the path.
 
     rclone lsl [remote:path]
 
-List all the objects in the the path with modification time, size and path.
+List all the objects in the the path with modification time,
+size and path.
 
     rclone md5sum [remote:path]
 
@@ -174,12 +175,7 @@ So to copy a local directory to a swift container called backup:
 
     rclone sync /home/source swift:backup
 
-The modified time is stored as metadata on the object as
-`X-Object-Meta-Mtime` as floating point since the epoch.
-
-This is a defacto standard (used in the official python-swiftclient
-amongst others) for storing the modification time (as read using
-os.Stat) for an object.
+For more help see the [online docs on Openstack Swift](http://rclone.org/swift).
 
 Amazon S3
 ---------
@@ -191,8 +187,7 @@ So to copy a local directory to a s3 container called backup
 
     rclone sync /home/source s3:backup
 
-The modified time is stored as metadata on the object as
-`X-Amz-Meta-Mtime` as floating point since the epoch.
+For more help see the [online docs on Amazon S3](http://rclone.org/s3).
 
 Google drive
 ------------
@@ -207,7 +202,7 @@ To copy a local directory to a drive directory called backup
 
     rclone copy /home/source remote:backup
 
-Google drive stores modification times accurate to 1 ms natively.
+For more help see the [online docs on Google Drive](http://rclone.org/drive).
 
 Dropbox
 -------
@@ -222,10 +217,7 @@ To copy a local directory to a drive directory called backup
 
     rclone copy /home/source dropbox:backup
 
-Md5sums and timestamps in RFC3339 format accurate to 1ns are stored in
-a Dropbox datastore called "rclone".  Dropbox datastores are limited
-to 100,000 rows so this is the maximum number of files rclone can
-manage on Dropbox.
+For more help see the [online docs on Dropbox](http://rclone.org/dropbox).
 
 Google Cloud Storage
 --------------------
@@ -241,9 +233,7 @@ To copy a local directory to a google cloud storage directory called backup
 
     rclone copy /home/source remote:backup
 
-Google google cloud storage stores md5sums natively and rclone stores
-modification times as metadata on the object, under the "mtime" key in
-RFC3339 format accurate to 1ns.
+For more help see the [online docs on Google Cloud Storage](http://rclone.org/googlecloudstorage/).
 
 Single file copies
 ------------------

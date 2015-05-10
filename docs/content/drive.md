@@ -1,7 +1,7 @@
 ---
 title: "Google drive"
 description: "Rclone docs for Google drive"
-date: "2014-04-26"
+date: "2015-05-10"
 ---
 
 <i class="fa fa-google"></i> Google Drive
@@ -73,3 +73,16 @@ Modified time
 -------------
 
 Google drive stores modification times accurate to 1 ms.
+
+Revisions
+---------
+
+Google drive stores revisions of files.  When you upload a change to
+an existing file to google drive using rclone it will create a new
+revision of that file.
+
+Revisions follow the standard google policy which at time of writing
+was
+
+  * They are deleted after 30 days or 100 revisions (whatever comes first).
+  * They do not count towards a user storage quota.
