@@ -184,6 +184,7 @@ func s3Connection(name string) (*s3.S3, error) {
 	}
 
 	c := s3.New(auth, region)
+	c.Client = fs.Config.Client()
 	return c, nil
 }
 

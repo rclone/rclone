@@ -113,12 +113,15 @@ func swiftConnection(name string) (*swift.Connection, error) {
 		return nil, errors.New("auth not found")
 	}
 	c := &swift.Connection{
-		UserName:  userName,
-		ApiKey:    apiKey,
-		AuthUrl:   authUrl,
-		UserAgent: fs.UserAgent,
-		Tenant:    fs.ConfigFile.MustValue(name, "tenant"),
-		Region:    fs.ConfigFile.MustValue(name, "region"),
+		UserName:       userName,
+		ApiKey:         apiKey,
+		AuthUrl:        authUrl,
+		UserAgent:      fs.UserAgent,
+		Tenant:         fs.ConfigFile.MustValue(name, "tenant"),
+		Region:         fs.ConfigFile.MustValue(name, "region"),
+		ConnectTimeout: 10 * fs.Config.ConnectTimeout, // Use the timeouts in the transport
+		Timeout:        10 * fs.Config.Timeout,        // Use the timeouts in the transport
+		Transport:      fs.Config.Transport(),
 	}
 	err := c.Authenticate()
 	if err != nil {

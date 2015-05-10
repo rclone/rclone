@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 
 	"code.google.com/p/goauth2/oauth"
 	"github.com/ncw/rclone/fs"
@@ -82,7 +81,7 @@ func (auth *Auth) newTransport(name string) (*oauth.Transport, error) {
 
 	t := &oauth.Transport{
 		Config:    config,
-		Transport: http.DefaultTransport,
+		Transport: fs.Config.Transport(),
 	}
 
 	return t, nil

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"net/http"
 	"os"
 	"os/user"
 	"path"
@@ -16,6 +17,7 @@ import (
 	"time"
 
 	"github.com/Unknwon/goconfig"
+	"github.com/mreiferson/go-httpclient"
 	"github.com/ogier/pflag"
 )
 
@@ -36,14 +38,16 @@ var (
 	// Global config
 	Config = &ConfigInfo{}
 	// Flags
-	verbose      = pflag.BoolP("verbose", "v", false, "Print lots more stuff")
-	quiet        = pflag.BoolP("quiet", "q", false, "Print as little stuff as possible")
-	modifyWindow = pflag.DurationP("modify-window", "", time.Nanosecond, "Max time diff to be considered the same")
-	checkers     = pflag.IntP("checkers", "", 8, "Number of checkers to run in parallel.")
-	transfers    = pflag.IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
-	configFile   = pflag.StringP("config", "", ConfigPath, "Config file.")
-	dryRun       = pflag.BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
-	bwLimit      SizeSuffix
+	verbose        = pflag.BoolP("verbose", "v", false, "Print lots more stuff")
+	quiet          = pflag.BoolP("quiet", "q", false, "Print as little stuff as possible")
+	modifyWindow   = pflag.DurationP("modify-window", "", time.Nanosecond, "Max time diff to be considered the same")
+	checkers       = pflag.IntP("checkers", "", 8, "Number of checkers to run in parallel.")
+	transfers      = pflag.IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
+	configFile     = pflag.StringP("config", "", ConfigPath, "Config file.")
+	dryRun         = pflag.BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
+	connectTimeout = pflag.DurationP("contimeout", "", 60*time.Second, "Connect timeout")
+	timeout        = pflag.DurationP("timeout", "", 5*60*time.Second, "IO idle timeout")
+	bwLimit        SizeSuffix
 )
 
 func init() {
@@ -112,12 +116,48 @@ var _ pflag.Value = (*SizeSuffix)(nil)
 
 // Filesystem config options
 type ConfigInfo struct {
-	Verbose      bool
-	Quiet        bool
-	DryRun       bool
-	ModifyWindow time.Duration
-	Checkers     int
-	Transfers    int
+	Verbose        bool
+	Quiet          bool
+	DryRun         bool
+	ModifyWindow   time.Duration
+	Checkers       int
+	Transfers      int
+	ConnectTimeout time.Duration // Connect timeout
+	Timeout        time.Duration // Data channel timeout
+}
+
+// Transport returns an http.RoundTripper with the correct timeouts
+func (ci *ConfigInfo) Transport() http.RoundTripper {
+	return &httpclient.Transport{
+		Proxy:               http.ProxyFromEnvironment,
+		MaxIdleConnsPerHost: ci.Checkers + ci.Transfers + 1,
+
+		// ConnectTimeout, if non-zero, is the maximum amount of time a dial will wait for
+		// a connect to complete.
+		ConnectTimeout: ci.ConnectTimeout,
+
+		// ResponseHeaderTimeout, if non-zero, specifies the amount of
+		// time to wait for a server's response headers after fully
+		// writing the request (including its body, if any). This
+		// time does not include the time to read the response body.
+		ResponseHeaderTimeout: ci.Timeout,
+
+		// RequestTimeout, if non-zero, specifies the amount of time for the entire
+		// request to complete (including all of the above timeouts + entire response body).
+		// This should never be less than the sum total of the above two timeouts.
+		//RequestTimeout: NOT SET,
+
+		// ReadWriteTimeout, if non-zero, will set a deadline for every Read and
+		// Write operation on the request connection.
+		ReadWriteTimeout: ci.Timeout,
+	}
+}
+
+// Transport returns an http.Client with the correct timeouts
+func (ci *ConfigInfo) Client() *http.Client {
+	return &http.Client{
+		Transport: ci.Transport(),
+	}
 }
 
 // Find the config directory
@@ -152,6 +192,8 @@ func LoadConfig() {
 	Config.Checkers = *checkers
 	Config.Transfers = *transfers
 	Config.DryRun = *dryRun
+	Config.Timeout = *timeout
+	Config.ConnectTimeout = *connectTimeout
 
 	ConfigPath = *configFile
 

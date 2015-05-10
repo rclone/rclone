@@ -17,6 +17,20 @@ This is a JSON decode error - from Update / UploadByChunk
 - Caused by 500 error from dropbox
 - See https://github.com/stacktic/dropbox/issues/1
 - Possibly confusing dropbox with excess concurrency?
+
+FIXME implement timeouts - need to get "github.com/stacktic/dropbox"
+and hence "golang.org/x/oauth2" which uses DefaultTransport unless it
+is set in the context passed into .Client()
+
+func (db *Dropbox) client() *http.Client {
+	return db.config.Client(oauth2.NoContext, db.token)
+}
+
+// HTTPClient is the context key to use with golang.org/x/net/context's
+// WithValue function to associate an *http.Client value with a context.
+var HTTPClient ContextKey
+
+So pass in a context with HTTPClient set...
 */
 
 import (
