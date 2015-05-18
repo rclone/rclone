@@ -75,6 +75,12 @@ Modified time
 -------------
 
 Md5sums and timestamps in RFC3339 format accurate to 1ns are stored in
-a Dropbox datastore called "rclone".  Dropbox datastores are limited
-to 100,000 rows so this is the maximum number of files rclone can
-manage on Dropbox.
+a Dropbox datastore called "rclone".
+
+Limitations
+-----------
+
+Dropbox datastores are limited to 100,000 rows so this is the maximum
+number of files rclone can manage on Dropbox.
+
+Dropbox is case sensitive which can sometimes cause duplicated files.
