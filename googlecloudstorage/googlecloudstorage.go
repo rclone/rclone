@@ -42,7 +42,7 @@ const (
 var (
 	// Description of how to auth for this app
 	storageAuth = &googleauth.Auth{
-		Scope:               storage.DevstorageFull_controlScope,
+		Scope:               storage.DevstorageFullControlScope,
 		DefaultClientId:     rcloneClientId,
 		DefaultClientSecret: rcloneClientSecret,
 	}
