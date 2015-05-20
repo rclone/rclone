@@ -33,6 +33,8 @@ var (
 	HomeDir = configHome()
 	// Config file path
 	ConfigPath = path.Join(HomeDir, configFileName)
+	// Bloblist file path
+	BlobListPath = path.Join(HomeDir, "blob-list.txt")
 	// Global config
 	Config = &ConfigInfo{}
 	// Flags
@@ -43,6 +45,8 @@ var (
 	transfers    = pflag.IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
 	configFile   = pflag.StringP("config", "", ConfigPath, "Config file.")
 	dryRun       = pflag.BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
+	blobList     = pflag.StringP("blob-list", "", "", "File containing blobs to care about.")
+	compareDest  = pflag.BoolP("compare-destination", "", true, "Compare with destination before copying.")
 	bwLimit      SizeSuffix
 )
 
@@ -112,9 +116,12 @@ var _ pflag.Value = (*SizeSuffix)(nil)
 
 // Filesystem config options
 type ConfigInfo struct {
-	Verbose      bool
-	Quiet        bool
-	DryRun       bool
+	Verbose     bool
+	Quiet       bool
+	DryRun      bool
+	CompareDest bool
+	BlobList    string
+
 	ModifyWindow time.Duration
 	Checkers     int
 	Transfers    int
@@ -148,12 +155,21 @@ func LoadConfig() {
 	// FIXME read these from the config file too
 	Config.Verbose = *verbose
 	Config.Quiet = *quiet
+	Config.CompareDest = *compareDest
 	Config.ModifyWindow = *modifyWindow
 	Config.Checkers = *checkers
 	Config.Transfers = *transfers
 	Config.DryRun = *dryRun
+	Config.BlobList = *blobList
 
 	ConfigPath = *configFile
+
+	// Check bloblist file exists
+	if len(Config.BlobList) > 0 {
+		if _, err := os.Stat(Config.BlobList); err != nil {
+			log.Fatalf("BlobList file not found: %v", err)
+		}
+	}
 
 	// Load configuration file.
 	var err error

@@ -2,9 +2,11 @@
 package swift
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"path"
 	"regexp"
 	"strings"
@@ -195,6 +197,19 @@ func (f *FsSwift) NewFsObject(remote string) fs.Object {
 // If directories is set it only sends directories
 func (f *FsSwift) list(directories bool, fn func(string, *swift.Object)) {
 	// Options for ObjectsWalk
+	if len(fs.Config.BlobList) > 0 {
+		file, _ := os.Open(fs.Config.BlobList)
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			remote := scanner.Text()
+			fn(remote, nil)
+
+		}
+		return
+	}
+
 	opts := swift.ObjectsOpts{
 		Prefix: f.root,
 		Limit:  256,
@@ -244,8 +259,8 @@ func (f *FsSwift) List() fs.ObjectsChan {
 		go func() {
 			defer close(out)
 			f.list(false, func(remote string, object *swift.Object) {
-				if fs := f.newFsObjectWithInfo(remote, object); fs != nil {
-					out <- fs
+				if fso := f.newFsObjectWithInfo(remote, object); fso != nil {
+					out <- fso
 				}
 			})
 		}()
@@ -330,7 +345,7 @@ func (o *FsObjectSwift) String() string {
 	if o == nil {
 		return "<nil>"
 	}
-	return o.remote
+	return o.swift.String() + ":" + o.remote
 }
 
 // Return the remote path

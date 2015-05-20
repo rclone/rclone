@@ -245,6 +245,7 @@ func Copier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 		if Config.DryRun {
 			Debug(src, "Not copying as --dry-run")
 		} else {
+
 			Copy(fdst, pair.dst, src)
 		}
 		Stats.DoneTransferring(src)
@@ -260,6 +261,7 @@ func DeleteFiles(to_be_deleted ObjectsChan) {
 			defer wg.Done()
 			for dst := range to_be_deleted {
 				if Config.DryRun {
+
 					Debug(dst, "Not deleting as --dry-run")
 				} else {
 					Stats.Checking(dst)
@@ -293,10 +295,44 @@ func readFilesMap(fs Fs) map[string]Object {
 	return files
 }
 
+func Backup(fdst, fsrc Fs) error {
+	Log(fdst, "Starting Backup")
+
+	err := fdst.Mkdir()
+	if err != nil {
+		Stats.Error()
+		return err
+	}
+
+	Log(fdst, "Building file list")
+
+	// Read source files checking them off against dest files
+	to_be_uploaded := make(ObjectPairChan, Config.Transfers)
+
+	var copierWg sync.WaitGroup
+	copierWg.Add(Config.Transfers)
+	for i := 0; i < Config.Transfers; i++ {
+		go Copier(to_be_uploaded, fdst, &copierWg)
+	}
+
+	go func() {
+		for src := range fsrc.List() {
+			to_be_uploaded <- ObjectPair{src, nil}
+		}
+		close(to_be_uploaded)
+	}()
+
+	copierWg.Wait()
+
+	return nil
+}
+
 // Syncs fsrc into fdst
 //
 // If Delete is true then it deletes any files in fdst that aren't in fsrc
 func Sync(fdst, fsrc Fs, Delete bool) error {
+	Log(fdst, "Starting Sync")
+
 	err := fdst.Mkdir()
 	if err != nil {
 		Stats.Error()
