@@ -295,38 +295,6 @@ func readFilesMap(fs Fs) map[string]Object {
 	return files
 }
 
-func Backup(fdst, fsrc Fs) error {
-	Log(fdst, "Starting Backup")
-
-	err := fdst.Mkdir()
-	if err != nil {
-		Stats.Error()
-		return err
-	}
-
-	Log(fdst, "Building file list")
-
-	// Read source files checking them off against dest files
-	to_be_uploaded := make(ObjectPairChan, Config.Transfers)
-
-	var copierWg sync.WaitGroup
-	copierWg.Add(Config.Transfers)
-	for i := 0; i < Config.Transfers; i++ {
-		go Copier(to_be_uploaded, fdst, &copierWg)
-	}
-
-	go func() {
-		for src := range fsrc.List() {
-			to_be_uploaded <- ObjectPair{src, nil}
-		}
-		close(to_be_uploaded)
-	}()
-
-	copierWg.Wait()
-
-	return nil
-}
-
 // Syncs fsrc into fdst
 //
 // If Delete is true then it deletes any files in fdst that aren't in fsrc
@@ -341,9 +309,13 @@ func Sync(fdst, fsrc Fs, Delete bool) error {
 
 	Log(fdst, "Building file list")
 
-	// Read the destination files first
-	// FIXME could do this in parallel and make it use less memory
-	delFiles := readFilesMap(fdst)
+	var delFiles map[string]Object
+
+	if Config.CompareDest {
+		// Read the destination files first
+		// FIXME could do this in parallel and make it use less memory
+		delFiles = readFilesMap(fdst)
+	}
 
 	// Read source files checking them off against dest files
 	to_be_checked := make(ObjectPairChan, Config.Transfers)
@@ -363,13 +335,19 @@ func Sync(fdst, fsrc Fs, Delete bool) error {
 
 	go func() {
 		for src := range fsrc.List() {
-			remote := src.Remote()
-			dst, found := delFiles[remote]
-			if found {
-				delete(delFiles, remote)
-				to_be_checked <- ObjectPair{src, dst}
-			} else {
-				// No need to check since doesn't exist
+			worked_on := false
+			if Config.CompareDest {
+				remote := src.Remote()
+				dst, found := delFiles[remote]
+				if found {
+					delete(delFiles, remote)
+					to_be_checked <- ObjectPair{src, dst}
+					worked_on = true
+				}
+			}
+			if !worked_on {
+				// No need to check since doesn't exist or we want to override
+				// blindly due to no CompareDest
 				to_be_uploaded <- ObjectPair{src, nil}
 			}
 		}

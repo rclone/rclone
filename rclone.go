@@ -92,20 +92,6 @@ var Commands = []Command{
 		MaxArgs: 2,
 	},
 	{
-		Name:     "backup",
-		ArgsHelp: "source:path dest:path",
-		Help: `
-        Backup files from source to dest. Useful with --blobList argument`,
-		Run: func(fdst, fsrc fs.Fs) {
-			err := fs.Backup(fdst, fsrc)
-			if err != nil {
-				log.Fatalf("Failed to backup: %v", err)
-			}
-		},
-		MinArgs: 2,
-		MaxArgs: 2,
-	},
-	{
 		Name:     "ls",
 		ArgsHelp: "[remote:path]",
 		Help: `
