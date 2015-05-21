@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/ncw/rclone/fs"
 )
@@ -32,14 +33,15 @@ func init() {
 
 // FsLocal represents a local filesystem rooted at root
 type FsLocal struct {
-	root        string        // The root directory
-	precisionOk sync.Once     // Whether we need to read the precision
-	precision   time.Duration // precision of local filesystem
+	root        string              // The root directory
+	precisionOk sync.Once           // Whether we need to read the precision
+	precision   time.Duration       // precision of local filesystem
+	warned      map[string]struct{} // whether we have warned about this string
 }
 
 // FsObjectLocal represents a local filesystem object
 type FsObjectLocal struct {
-	local  fs.Fs       // The Fs this object is part of
+	local  *FsLocal    // The Fs this object is part of
 	remote string      // The remote path
 	path   string      // The local path
 	info   os.FileInfo // Interface for file info (always present)
@@ -51,7 +53,10 @@ type FsObjectLocal struct {
 // NewFs contstructs an FsLocal from the path
 func NewFs(name, root string) (fs.Fs, error) {
 	root = filepath.ToSlash(path.Clean(root))
-	f := &FsLocal{root: root}
+	f := &FsLocal{
+		root:   root,
+		warned: make(map[string]struct{}),
+	}
 	// Check to see if this points to a file
 	fi, err := os.Lstat(f.root)
 	if err == nil && fi.Mode().IsRegular() {
@@ -134,6 +139,20 @@ func (f *FsLocal) List() fs.ObjectsChan {
 	return out
 }
 
+// CleanUtf8 makes string a valid UTF-8 string
+//
+// Any invalid UTF-8 characters will be replaced with utf8.RuneError
+func (f *FsLocal) cleanUtf8(name string) string {
+	if utf8.ValidString(name) {
+		return name
+	}
+	if _, ok := f.warned[name]; !ok {
+		fs.Debug(f, "Replacing invalid UTF-8 characters in %q", name)
+		f.warned[name] = struct{}{}
+	}
+	return string([]rune(name))
+}
+
 // Walk the path returning a channel of FsObjects
 func (f *FsLocal) ListDir() fs.DirChan {
 	out := make(fs.DirChan, fs.Config.Checkers)
@@ -147,7 +166,7 @@ func (f *FsLocal) ListDir() fs.DirChan {
 			for _, item := range items {
 				if item.IsDir() {
 					dir := &fs.Dir{
-						Name:  item.Name(),
+						Name:  f.cleanUtf8(item.Name()),
 						When:  item.ModTime(),
 						Bytes: 0,
 						Count: 0,
@@ -294,7 +313,7 @@ func (o *FsObjectLocal) String() string {
 
 // Return the remote path
 func (o *FsObjectLocal) Remote() string {
-	return o.remote
+	return o.local.cleanUtf8(o.remote)
 }
 
 // Md5sum calculates the Md5sum of a file returning a lowercase hex string
