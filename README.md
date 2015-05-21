@@ -262,6 +262,10 @@ Bugs
 
 Changelog
 ---------
+  * v1.14 - 2015-05-21
+    * local: fix encoding of non utf-8 file names - fixes a duplicate file problem
+    * drive: docs about rate limiting
+    * google cloud storage: Fix compile after API change in "google.golang.org/api/storage/v1"
   * v1.13 - 2015-05-10
     * Revise documentation (especially sync)
     * Implement --timeout and --conntimeout
