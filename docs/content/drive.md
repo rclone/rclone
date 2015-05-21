@@ -86,3 +86,11 @@ was
 
   * They are deleted after 30 days or 100 revisions (whatever comes first).
   * They do not count towards a user storage quota.
+
+Limitations
+-----------
+
+Drive has quite a lot of rate limiting.  This causes rclone to be
+limited to transferring about 2 files per second only.  Individual
+files may be transferred much faster at 100s of MBytes/s but lots of
+small files can take a long time.
