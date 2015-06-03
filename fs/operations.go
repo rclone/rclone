@@ -216,10 +216,18 @@ func checkOne(pair ObjectPair, out ObjectPairChan) {
 		return
 	}
 	// Check to see if changed or not
-	if Equal(src, dst) {
+	equal := false
+	if Config.CheckSum {
+		equal, _ = CheckMd5sums(src, dst)
+	} else {
+		equal = Equal(src, dst)
+	}
+
+	if equal {
 		Debug(src, "Unchanged skipping")
 		return
 	}
+
 	out <- pair
 }
 
