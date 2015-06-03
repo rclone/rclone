@@ -123,11 +123,11 @@ Checks the files in the source and destination match.  It
 compares sizes and MD5SUMs and prints a report of files which
 don't match.  It doesn't alter the source or destination.
 
-    rclone config 
+    rclone config
 
 Enter an interactive configuration session.
 
-    rclone help 
+    rclone help
 
 This help.
 
@@ -136,6 +136,7 @@ General options:
 ```
       --bwlimit=0: Bandwidth limit in kBytes/s, or use suffix k|M|G
       --checkers=8: Number of checkers to run in parallel.
+      -c, --checksum=false: Skip based on checksum, not mod-time & size
       --config="~/.rclone.conf": Config file.
       --contimeout=1m0s: Connect timeout
   -n, --dry-run=false: Do a trial run with no permanent changes

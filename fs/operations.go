@@ -8,6 +8,7 @@ import (
 	"mime"
 	"path"
 	"sync"
+	"time"
 )
 
 // Work out modify window for fses passed in - sets Config.ModifyWindow
@@ -71,16 +72,19 @@ func Equal(src, dst Object) bool {
 		return false
 	}
 
-	// Size the same so check the mtime
-	srcModTime := src.ModTime()
-	dstModTime := dst.ModTime()
-	dt := dstModTime.Sub(srcModTime)
-	ModifyWindow := Config.ModifyWindow
-	if dt >= ModifyWindow || dt <= -ModifyWindow {
-		Debug(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
-	} else {
-		Debug(src, "Size and modification time the same (differ by %s, within tolerance %s)", dt, ModifyWindow)
-		return true
+	var srcModTime time.Time
+	if !Config.CheckSum {
+		// Size the same so check the mtime
+		srcModTime = src.ModTime()
+		dstModTime := dst.ModTime()
+		dt := dstModTime.Sub(srcModTime)
+		ModifyWindow := Config.ModifyWindow
+		if dt >= ModifyWindow || dt <= -ModifyWindow {
+			Debug(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
+		} else {
+			Debug(src, "Size and modification time the same (differ by %s, within tolerance %s)", dt, ModifyWindow)
+			return true
+		}
 	}
 
 	// mtime is unreadable or different but size is the same so
@@ -91,9 +95,11 @@ func Equal(src, dst Object) bool {
 		return false
 	}
 
-	// Size and MD5 the same but mtime different so update the
-	// mtime of the dst object here
-	dst.SetModTime(srcModTime)
+	if !Config.CheckSum {
+		// Size and MD5 the same but mtime different so update the
+		// mtime of the dst object here
+		dst.SetModTime(srcModTime)
+	}
 
 	Debug(src, "Size and MD5SUM of src and dst objects identical")
 	return true
