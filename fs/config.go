@@ -45,6 +45,7 @@ var (
 	transfers      = pflag.IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
 	configFile     = pflag.StringP("config", "", ConfigPath, "Config file.")
 	dryRun         = pflag.BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
+	checkSum       = pflag.BoolP("checksum", "c", false, "Skip based on checksum, not mod-time & size")
 	connectTimeout = pflag.DurationP("contimeout", "", 60*time.Second, "Connect timeout")
 	timeout        = pflag.DurationP("timeout", "", 5*60*time.Second, "IO idle timeout")
 	bwLimit        SizeSuffix
@@ -119,6 +120,7 @@ type ConfigInfo struct {
 	Verbose        bool
 	Quiet          bool
 	DryRun         bool
+	CheckSum       bool
 	ModifyWindow   time.Duration
 	Checkers       int
 	Transfers      int
@@ -194,6 +196,7 @@ func LoadConfig() {
 	Config.DryRun = *dryRun
 	Config.Timeout = *timeout
 	Config.ConnectTimeout = *connectTimeout
+	Config.CheckSum = *checkSum
 
 	ConfigPath = *configFile
 
