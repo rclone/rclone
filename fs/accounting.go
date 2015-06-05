@@ -153,6 +153,13 @@ func (s *StatsInfo) DoneChecking(o Object) {
 	s.checks += 1
 }
 
+// GetTransfers reads the number of transfers
+func (s *StatsInfo) GetTransfers() int64 {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	return s.transfers
+}
+
 // Transferring adds a transfer into the stats
 func (s *StatsInfo) Transferring(o Object) {
 	s.lock.Lock()

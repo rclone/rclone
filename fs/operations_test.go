@@ -169,6 +169,56 @@ func TestCopyRedownload(t *testing.T) {
 	cleanTempDir(t)
 }
 
+// Create a file and sync it. Change the last modified date and resync.
+// If we're only doing sync by size and checksum, we expect nothing to
+// to be transferred on the second sync.
+func TestSyncBasedOnCheckSum(t *testing.T) {
+	cleanTempDir(t)
+	fs.Config.CheckSum = true
+
+	WriteFile("check sum", "", t1)
+
+	transfers_before := fs.Stats.GetTransfers()
+	err := fs.Sync(fremote, flocal, true)
+	if err != nil {
+		t.Fatalf("Initial sync failed: %v", err)
+	}
+	transfers_after := fs.Stats.GetTransfers()
+
+	//We should have transferred exactly one file.
+	if transfers_after-1 != transfers_before {
+		t.Fatalf("Initial sync didn't do what we wanted.")
+	}
+
+	err = os.Chtimes(localName+"/check sum", t2, t2)
+	if err != nil {
+		t.Fatalf("Chtimes failed: %v", err)
+	}
+
+	transfers_before = fs.Stats.GetTransfers()
+	err = fs.Sync(fremote, flocal, true)
+	if err != nil {
+		t.Fatalf("Sync failed: %v", err)
+	}
+	transfers_after = fs.Stats.GetTransfers()
+
+	//We should have transferred no files
+	if transfers_after != transfers_before {
+		t.Fatalf("We synced, though we shouldn't have.")
+	}
+
+	remote_items := []fstest.Item{
+		{Path: "check sum", Size: 0, ModTime: t1, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+	}
+	local_items := []fstest.Item{
+		{Path: "check sum", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+	}
+	fstest.CheckListingWithPrecision(t, flocal, local_items, fs.Config.ModifyWindow)
+	fstest.CheckListingWithPrecision(t, fremote, remote_items, fs.Config.ModifyWindow)
+
+	cleanTempDir(t)
+}
+
 func TestSyncAfterChangingModtimeOnly(t *testing.T) {
 	WriteFile("empty space", "", t1)
 
