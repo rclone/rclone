@@ -379,4 +379,4 @@ Authors
 Contributors
 ------------
 
-  * Your name goes here!
+  * Alex Couper <amcouper@gmail.com>
