@@ -1,3 +1,11 @@
+Perhaps make Md5sum() and Modtime() optional.  Define the zero values
+"" and 0. Make it so we can support remotes which can't do those.
+
+Fix the docs
+  * factor the README.md into the docs directory
+  * create it as part of make by assembling other parts
+  * write long docs about each flag
+
 Change lsd command so it doesn't show -1
   * Make sure all Fses show -1 for objects Zero for dates etc
   * Make test?
@@ -7,6 +15,7 @@ Make test_all.sh use the TestRemote name automatically
 
 Run errcheck and go vet in the make file
 .. Also race detector?
+.. go tool vet -shadow
 
 Get rid of Storable?
 
