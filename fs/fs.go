@@ -1,5 +1,4 @@
-// File system interface
-
+// Generic file system interface for rclone object storage systems
 package fs
 
 import (

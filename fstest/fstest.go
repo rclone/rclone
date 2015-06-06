@@ -1,5 +1,4 @@
-// Utilities for testing the fs
-
+// Utilities for testing the Fs
 package fstest
 
 // FIXME put name of test FS in Fs structure
