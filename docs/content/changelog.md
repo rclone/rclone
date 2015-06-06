@@ -7,6 +7,12 @@ date: "2015-06-06"
 Changelog
 ---------
 
+  * v1.15 - 2015-06-06
+    * Add --checksum flag to only discard transfers by MD5SUM - thanks Alex Couper
+    * Implement --size-only flag to sync on size not checksum & modtime
+    * Expand docs and remove duplicated information
+    * Document rclone's limitations with directories
+    * dropbox: update docs about case insensitivity
   * v1.14 - 2015-05-21
     * local: fix encoding of non utf-8 file names - fixes a duplicate file problem
     * drive: docs about rate limiting

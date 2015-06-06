@@ -9,8 +9,8 @@ Making a release
   * go get -u -f -v ./...
   * make test
   * make tag
-  * edit README.md
-  * git commit fs/version.go README.md docs/content/downloads.md
+  * edit docs/content/changelog.md
+  * git commit -a -v
   * make retag
   * # Set the GOPATH for a gox enabled compiler - . ~/bin/go-cross
   * make cross
