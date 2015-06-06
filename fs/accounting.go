@@ -124,6 +124,16 @@ func (s *StatsInfo) GetErrors() int64 {
 	return s.errors
 }
 
+// ResetCounters sets the counters (bytes, checks, errors, transfers) to 0
+func (s *StatsInfo) ResetCounters() {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	s.bytes = 0
+	s.errors = 0
+	s.checks = 0
+	s.transfers = 0
+}
+
 // Errored returns whether there have been any errors
 func (s *StatsInfo) Errored() bool {
 	s.lock.RLock()

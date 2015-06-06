@@ -136,13 +136,14 @@ General options:
 ```
       --bwlimit=0: Bandwidth limit in kBytes/s, or use suffix k|M|G
       --checkers=8: Number of checkers to run in parallel.
-      -c, --checksum=false: Skip based on checksum, not mod-time & size
+      -c, --checksum=false: Skip based on checksum & size, not mod-time & size
       --config="~/.rclone.conf": Config file.
       --contimeout=1m0s: Connect timeout
   -n, --dry-run=false: Do a trial run with no permanent changes
       --log-file="": Log everything to this file
       --modify-window=1ns: Max time diff to be considered the same
   -q, --quiet=false: Print as little stuff as possible
+      --size-only=false: Skip based on size only, not mod-time or checksum
       --stats=1m0s: Interval to print stats (0 to disable)
       --timeout=5m0s: IO idle timeout
       --transfers=4: Number of file transfers to run in parallel.

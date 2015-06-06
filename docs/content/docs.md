@@ -124,6 +124,7 @@ This help.
       --log-file="": Log everything to this file
       --modify-window=1ns: Max time diff to be considered the same
   -q, --quiet=false: Print as little stuff as possible
+      --size-only=false: Skip based on size only, not mod-time or checksum
       --stats=1m0s: Interval to print stats (0 to disable)
       --timeout=5m0s: IO idle timeout
       --transfers=4: Number of file transfers to run in parallel.

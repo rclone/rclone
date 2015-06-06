@@ -175,44 +175,100 @@ func TestCopyRedownload(t *testing.T) {
 func TestSyncBasedOnCheckSum(t *testing.T) {
 	cleanTempDir(t)
 	fs.Config.CheckSum = true
+	defer func() { fs.Config.CheckSum = false }()
 
 	WriteFile("check sum", "", t1)
+	local_items := []fstest.Item{
+		{Path: "check sum", Size: 0, ModTime: t1, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+	}
+	fstest.CheckListingWithPrecision(t, flocal, local_items, fs.Config.ModifyWindow)
 
-	transfers_before := fs.Stats.GetTransfers()
+	fs.Stats.ResetCounters()
 	err := fs.Sync(fremote, flocal, true)
 	if err != nil {
 		t.Fatalf("Initial sync failed: %v", err)
 	}
-	transfers_after := fs.Stats.GetTransfers()
 
-	//We should have transferred exactly one file.
-	if transfers_after-1 != transfers_before {
-		t.Fatalf("Initial sync didn't do what we wanted.")
+	// We should have transferred exactly one file.
+	if fs.Stats.GetTransfers() != 1 {
+		t.Fatalf("Sync 1: want 1 transfer, got %d", fs.Stats.GetTransfers())
 	}
+
+	remote_items := local_items
+	fstest.CheckListingWithPrecision(t, fremote, remote_items, fs.Config.ModifyWindow)
 
 	err = os.Chtimes(localName+"/check sum", t2, t2)
 	if err != nil {
 		t.Fatalf("Chtimes failed: %v", err)
 	}
+	local_items = []fstest.Item{
+		{Path: "check sum", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+	}
+	fstest.CheckListingWithPrecision(t, flocal, local_items, fs.Config.ModifyWindow)
 
-	transfers_before = fs.Stats.GetTransfers()
+	fs.Stats.ResetCounters()
 	err = fs.Sync(fremote, flocal, true)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
-	transfers_after = fs.Stats.GetTransfers()
 
-	//We should have transferred no files
-	if transfers_after != transfers_before {
-		t.Fatalf("We synced, though we shouldn't have.")
+	// We should have transferred no files
+	if fs.Stats.GetTransfers() != 0 {
+		t.Fatalf("Sync 2: want 0 transfers, got %d", fs.Stats.GetTransfers())
 	}
 
-	remote_items := []fstest.Item{
-		{Path: "check sum", Size: 0, ModTime: t1, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-	}
+	fstest.CheckListingWithPrecision(t, flocal, local_items, fs.Config.ModifyWindow)
+	fstest.CheckListingWithPrecision(t, fremote, remote_items, fs.Config.ModifyWindow)
+
+	cleanTempDir(t)
+}
+
+// Create a file and sync it. Change the last modified date and the
+// file contents but not the size.  If we're only doing sync by size
+// only, we expect nothing to to be transferred on the second sync.
+func TestSyncSizeOnly(t *testing.T) {
+	cleanTempDir(t)
+	fs.Config.SizeOnly = true
+	defer func() { fs.Config.SizeOnly = false }()
+
+	WriteFile("sizeonly", "potato", t1)
 	local_items := []fstest.Item{
-		{Path: "check sum", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+		{Path: "sizeonly", Size: 6, ModTime: t1, Md5sum: "8ee2027983915ec78acc45027d874316"},
 	}
+	fstest.CheckListingWithPrecision(t, flocal, local_items, fs.Config.ModifyWindow)
+
+	fs.Stats.ResetCounters()
+	err := fs.Sync(fremote, flocal, true)
+	if err != nil {
+		t.Fatalf("Initial sync failed: %v", err)
+	}
+
+	// We should have transferred exactly one file.
+	if fs.Stats.GetTransfers() != 1 {
+		t.Fatalf("Sync 1: want 1 transfer, got %d", fs.Stats.GetTransfers())
+	}
+
+	remote_items := local_items
+	fstest.CheckListingWithPrecision(t, fremote, remote_items, fs.Config.ModifyWindow)
+
+	// Update mtime, md5sum but not length of file
+	WriteFile("sizeonly", "POTATO", t2)
+	local_items = []fstest.Item{
+		{Path: "sizeonly", Size: 6, ModTime: t2, Md5sum: "8ac6f27a282e4938125482607ccfb55f"},
+	}
+	fstest.CheckListingWithPrecision(t, flocal, local_items, fs.Config.ModifyWindow)
+
+	fs.Stats.ResetCounters()
+	err = fs.Sync(fremote, flocal, true)
+	if err != nil {
+		t.Fatalf("Sync failed: %v", err)
+	}
+
+	// We should have transferred no files
+	if fs.Stats.GetTransfers() != 0 {
+		t.Fatalf("Sync 2: want 0 transfers, got %d", fs.Stats.GetTransfers())
+	}
+
 	fstest.CheckListingWithPrecision(t, flocal, local_items, fs.Config.ModifyWindow)
 	fstest.CheckListingWithPrecision(t, fremote, remote_items, fs.Config.ModifyWindow)
 

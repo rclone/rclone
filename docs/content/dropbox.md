@@ -84,3 +84,10 @@ Dropbox datastores are limited to 100,000 rows so this is the maximum
 number of files rclone can manage on Dropbox.
 
 Dropbox is case sensitive which can sometimes cause duplicated files.
+
+If you use the desktop sync tool and rclone on the same files then the
+md5sums and modification times may get out of sync as far as rclone is
+concerned.  This will cause `Corrupted on transfer: md5sums differ`
+error message when fetching files.  You can work around this by using
+the `--size-only` flag to ignore the md5sums and modification times
+for these files.

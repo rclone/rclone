@@ -44,7 +44,8 @@ var (
 	checkers       = pflag.IntP("checkers", "", 8, "Number of checkers to run in parallel.")
 	transfers      = pflag.IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
 	configFile     = pflag.StringP("config", "", ConfigPath, "Config file.")
-	checkSum       = pflag.BoolP("checksum", "c", false, "Skip based on checksum, not mod-time & size")
+	checkSum       = pflag.BoolP("checksum", "c", false, "Skip based on checksum & size, not mod-time & size")
+	sizeOnly       = pflag.BoolP("size-only", "", false, "Skip based on size only, not mod-time or checksum")
 	dryRun         = pflag.BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
 	connectTimeout = pflag.DurationP("contimeout", "", 60*time.Second, "Connect timeout")
 	timeout        = pflag.DurationP("timeout", "", 5*60*time.Second, "IO idle timeout")
@@ -121,6 +122,7 @@ type ConfigInfo struct {
 	Quiet          bool
 	DryRun         bool
 	CheckSum       bool
+	SizeOnly       bool
 	ModifyWindow   time.Duration
 	Checkers       int
 	Transfers      int
@@ -197,6 +199,7 @@ func LoadConfig() {
 	Config.Timeout = *timeout
 	Config.ConnectTimeout = *connectTimeout
 	Config.CheckSum = *checkSum
+	Config.SizeOnly = *sizeOnly
 
 	ConfigPath = *configFile
 

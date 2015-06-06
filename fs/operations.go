@@ -54,15 +54,16 @@ func CheckMd5sums(src, dst Object) (bool, error) {
 // size, mtime and MD5SUM
 //
 // If the src and dst size are different then it is considered to be
-// not equal.
+// not equal.  If --size-only is in effect then this is the only check
+// that is done.
 //
 // If the size is the same and the mtime is the same then it is
-// considered to be equal.  This is the heuristic rsync uses when
-// not using --checksum.
+// considered to be equal.  This check is skipped if using --checksum.
 //
-// If the size is the same and and mtime is different or unreadable
-// and the MD5SUM is the same then the file is considered to be equal.
-// In this case the mtime on the dst is updated.
+// If the size is the same and mtime is different, unreadable or
+// --checksum is set and the MD5SUM is the same then the file is
+// considered to be equal.  In this case the mtime on the dst is
+// updated if --checksum is not set.
 //
 // Otherwise the file is considered to be not equal including if there
 // were errors reading info.
@@ -70,6 +71,10 @@ func Equal(src, dst Object) bool {
 	if src.Size() != dst.Size() {
 		Debug(src, "Sizes differ")
 		return false
+	}
+	if Config.SizeOnly {
+		Debug(src, "Sizes identical")
+		return true
 	}
 
 	var srcModTime time.Time
