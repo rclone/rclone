@@ -69,13 +69,11 @@ To copy a local directory to a drive directory called backup
 
     rclone copy /home/source remote:backup
 
-Modified time
--------------
+### Modified time ###
 
 Google drive stores modification times accurate to 1 ms.
 
-Revisions
----------
+### Revisions ###
 
 Google drive stores revisions of files.  When you upload a change to
 an existing file to google drive using rclone it will create a new
@@ -87,8 +85,7 @@ was
   * They are deleted after 30 days or 100 revisions (whatever comes first).
   * They do not count towards a user storage quota.
 
-Limitations
------------
+### Limitations ###
 
 Drive has quite a lot of rate limiting.  This causes rclone to be
 limited to transferring about 2 files per second only.  Individual

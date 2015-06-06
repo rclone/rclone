@@ -1,21 +1,8 @@
 ---
 title: "Documentation"
-description: "Rclone Documentation"
-date: "2014-07-17"
+description: "Rclone Usage"
+date: "2015-06-06"
 ---
-
-Install
--------
-
-Rclone is a Go program and comes as a single binary file.
-
-[Download](/downloads/) the relevant binary.
-
-Or alternatively if you have Go installed use
-
-    go get github.com/ncw/rclone
-
-and this will build the binary in `$GOPATH/bin`.
 
 Configure
 ---------
@@ -30,11 +17,13 @@ option:
 
     rclone config
 
-See below for detailed instructions for
+See the following for detailed instructions for
 
   * [Google drive](/drive/)
   * [Amazon S3](/s3/)
   * [Swift / Rackspace Cloudfiles / Memset Memstore](/swift/)
+  * [Dropbox](/dropbox/)
+  * [Google Cloud Storage](/googlcloudstorage/)
   * [Local filesystem](/local/)
 
 Usage
@@ -55,13 +44,13 @@ You can define as many storage paths as you like in the config file.
 Subcommands
 -----------
 
-    rclone copy source:path dest:path
+### rclone copy source:path dest:path ###
 
 Copy the source to the destination.  Doesn't transfer
 unchanged files, testing by size and modification time or
 MD5SUM.  Doesn't delete files from the destination.
 
-    rclone sync source:path dest:path
+### rclone sync source:path dest:path ###
 
 Sync the source to the destination, changing the destination
 only.  Doesn't transfer unchanged files, testing by size and
@@ -69,102 +58,202 @@ modification time or MD5SUM.  Destination is updated to match
 source, including deleting files if necessary.  Since this can
 cause data loss, test first with the `--dry-run` flag.
 
-    rclone ls [remote:path]
+### rclone ls [remote:path] ###
 
 List all the objects in the the path with size and path.
 
-    rclone lsd [remote:path]
+### rclone lsd [remote:path] ###
 
 List all directories/containers/buckets in the the path.
 
-    rclone lsl [remote:path]
+### rclone lsl [remote:path] ###
 
 List all the objects in the the path with modification time,
 size and path.
 
-    rclone md5sum [remote:path]
+### rclone md5sum [remote:path] ###
 
 Produces an md5sum file for all the objects in the path.  This
 is in the same format as the standard md5sum tool produces.
 
-    rclone mkdir remote:path
+### rclone mkdir remote:path ###
 
 Make the path if it doesn't already exist
 
-    rclone rmdir remote:path
+### rclone rmdir remote:path ###
 
 Remove the path.  Note that you can't remove a path with
 objects in it, use purge for that.
 
-    rclone purge remote:path
+### rclone purge remote:path ###
 
 Remove the path and all of its contents.
 
-    rclone check source:path dest:path
+### rclone check source:path dest:path ###
 
 Checks the files in the source and destination match.  It
 compares sizes and MD5SUMs and prints a report of files which
 don't match.  It doesn't alter the source or destination.
 
-    rclone config
+### rclone config ###
 
 Enter an interactive configuration session.
 
-    rclone help
+### rclone help ###
 
-This help.
+Prints help on rclone commands and options.
 
-```
-      --bwlimit=0: Bandwidth limit in kBytes/s, or use suffix k|M|G
-      --checkers=8: Number of checkers to run in parallel.
-      -c, --checksum=false: Skip based on checksum, not mod-time & size
-      --config="~/.rclone.conf": Config file.
-      --contimeout=1m0s: Connect timeout
-  -n, --dry-run=false: Do a trial run with no permanent changes
-      --log-file="": Log everything to this file
-      --modify-window=1ns: Max time diff to be considered the same
-  -q, --quiet=false: Print as little stuff as possible
-      --size-only=false: Skip based on size only, not mod-time or checksum
-      --stats=1m0s: Interval to print stats (0 to disable)
-      --timeout=5m0s: IO idle timeout
-      --transfers=4: Number of file transfers to run in parallel.
-  -v, --verbose=false: Print lots more stuff
-  -V, --version=false: Print the version number
-```
-
-Developer options:
-
-```
-      --cpuprofile="": Write cpu profile to file
-```
-
-License
+Options
 -------
 
-This is free software under the terms of MIT the license (check the
-COPYING file included in this package).
+Rclone has a number of options to control its behaviour.
 
-Bugs
-----
+Options which use TIME use the go time parser.  A duration string is a
+possibly signed sequence of decimal numbers, each with optional
+fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid
+time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-  * Empty directories left behind with Local and Drive
-    * eg purging a local directory with subdirectories doesn't work
+Options which use SIZE use kByte by default.  However a suffix of `k`
+for kBytes, `M` for MBytes and `G` for GBytes may be used.  These are
+the binary units, eg 2**10, 2**20, 2**30 respectively.
 
-Contact and support
--------------------
+### --bwlimit=SIZE ###
 
-The project website is at:
+Bandwidth limit in kBytes/s, or use suffix k|M|G.  The default is `0`
+which means to not limit bandwidth.
 
-  * https://github.com/ncw/rclone
+For example to limit bandwidth usage to 10 MBytes/s use `--bwlimit 10M`
 
-There you can file bug reports, ask for help or contribute patches.
+This only limits the bandwidth of the data transfer, it doesn't limit
+the bandwith of the directory listings etc.
 
-Authors
--------
+### --checkers=N ###
 
-  * Nick Craig-Wood <nick@craig-wood.com>
+The number of checkers to run in parallel.  Checkers do the equality
+checking of files during a sync.  For some storage systems (eg s3,
+swift, dropbox) this can take a significant amount of time so they are
+run in parallel.
 
-Contributors
-------------
+The default is to run 8 checkers in parallel.
 
-  * Alex Couper <amcouper@gmail.com>
+### -c, --checksum ###
+
+Normally rclone will look at modification time and size of files to
+see if they are equal.  If you set this flag then rclone will check
+MD5SUM and size to determine if files are equal.
+
+This is very useful when transferring between remotes which store the
+MD5SUM on the object which include swift, s3, drive, and google cloud
+storage.
+
+Eg `rclone --checksum sync s3:/bucket swift:/bucket` would run much
+quicker than without the `--checksum` flag.
+
+When using this flag, rclone won't update mtimes of remote files if
+they are incorrect as it would normally.
+
+### --config=CONFIG_FILE ###
+
+Specify the location of the rclone config file.  Normally this is in
+your home directory as a file called `.rclone.conf`.  If you run
+`rclone -h` and look at the help for the `--config` option you will
+see where the default location is for you.  Use this flag to override
+the config location, eg `rclone --config=".myconfig" .config`.
+
+### --contimeout=TIME ###
+
+Set the connection timeout. This should be in go time format which
+looks like `5s` for 5 seconds, `10m` for 10 minutes, or `3h30m`.
+
+The connection timeout is the amount of time rclone will wait for a
+connection to go through to a remote object storage system.  It is
+`1m` by default.
+
+### -n, --dry-run ###
+
+Do a trial run with no permanent changes.  Use this in combination
+with the `-v` flag to see what rclone would do without actually doing
+it.  Useful when setting up the `sync` command.
+
+### --log-file=FILE ###
+
+Log all of rclone's output to FILE.  This is not active by default.
+This can be useful for tracking down problems with syncs in
+combination with the `-v` flag.
+
+### --modify-window=TIME ###
+
+When checking whether a file has been modified, this is the maximum
+allowed time difference that a file can have and still be considered
+equivalent.
+
+The default is `1ns` unless this is overridden by a remote.  For
+example OS X only stores modification times to the nearest second so
+if you are reading and writing to an OS X filing system this will be
+`1s` by default.
+
+This command line flag allows you to override that computed default.
+
+### -q, --quiet ###
+
+Normally rclone outputs stats and a completion message.  If you set
+this flag it will make as little output as possible.
+
+### --size-only ###
+
+Normally rclone will look at modification time and size of files to
+see if they are equal.  If you set this flag then rclone will check
+only the size.
+
+This can be useful transferring files from dropbox which have been
+modified by the desktop sync client which doesn't set checksums of
+modification times in the same way as rclone.
+
+When using this flag, rclone won't update mtimes of remote files if
+they are incorrect as it would normally.
+
+### --stats=TIME ###
+
+Rclone will print stats at regular intervals to show its progress.
+
+This sets the interval.
+
+The default is `1m`. Use 0 to disable.
+
+### --timeout=TIME ###
+
+This sets the IO idle timeout.  If a transfer has started but then
+becomes idle for this long it is considered broken and disconnected.
+
+The default is `5m`.  Set to 0 to disable.
+
+### --transfers=N ###
+
+The number of file transfers to run in parallel.  It can sometimes be
+useful to set this to a smaller number if the remote is giving a lot
+of timeouts or bigger if you have lots of bandwidth and a fast remote.
+
+The default is to run 4 file transfers in parallel.
+
+### -v, --verbose ###
+
+If you set this flag, rclone will become very verbose telling you
+about every file it considers and transfers.
+
+Very useful for debugging.
+
+### -V, --version ###
+
+Prints the version number
+
+Developer options
+-----------------
+
+These options are useful when developing or debugging rclone.  There
+are also some more remote specific options which aren't documented
+here which are used for testing.  These start with remote name eg
+`--drive-test-option`.
+
+### --cpuprofile=FILE ###
+
+Write cpu profile to file.  This can be analysed with `go tool pprof`.

@@ -10,16 +10,19 @@ test:	rclone
 	go test ./...
 	cd fs && ./test_all.sh
 
-doc:	rclone.1 README.html README.txt
+doc:	rclone.1 MANUAL.html MANUAL.txt
 
-rclone.1:	README.md
-	pandoc -s --from markdown --to man README.md -o rclone.1
+rclone.1:	MANUAL.md
+	pandoc -s --from markdown --to man MANUAL.md -o rclone.1
 
-README.html:	README.md
-	pandoc -s --from markdown_github --to html README.md -o README.html
+MANUAL.md:	make_manual.py docs/content/*.md
+	./make_manual.py
 
-README.txt:	README.md
-	pandoc -s --from markdown_github --to plain README.md -o README.txt
+MANUAL.html:	MANUAL.md
+	pandoc -s --from markdown --to html MANUAL.md -o MANUAL.html
+
+MANUAL.txt:	MANUAL.md
+	pandoc -s --from markdown --to plain MANUAL.md -o MANUAL.txt
 
 install: rclone
 	install -d ${DESTDIR}/usr/bin
@@ -29,7 +32,7 @@ clean:
 	go clean ./...
 	find . -name \*~ | xargs -r rm -f
 	rm -rf build docs/public
-	rm -f rclone rclonetest/rclonetest rclone.1 README.html README.txt
+	rm -f rclone rclonetest/rclonetest rclone.1 MANUAL.md MANUAL.html MANUAL.txt
 
 website:
 	cd docs && hugo
@@ -52,11 +55,11 @@ tag:
 	echo -e "package fs\n const Version = \"$(NEW_TAG)\"\n" | gofmt > fs/version.go
 	perl -lpe 's/VERSION/${NEW_TAG}/g; s/DATE/'`date -I`'/g;' docs/content/downloads.md.in > docs/content/downloads.md
 	git tag $(NEW_TAG)
-	@echo "Add this to changelog in README.md"
+	@echo "Add this to changelog in docs/content/changelog.md"
 	@echo "  * $(NEW_TAG) -" `date -I`
 	@git log $(LAST_TAG)..$(NEW_TAG) --oneline
 	@echo "Then commit the changes"
-	@echo git commit -m "Version $(NEW_TAG)" -a -v
+	@echo git commit -m \"Version $(NEW_TAG)\" -a -v
 	@echo "And finally run make retag before make cross etc"
 
 retag:

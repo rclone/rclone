@@ -109,8 +109,7 @@ files in the bucket.
 
     rclone sync /home/local/directory remote:bucket
 
-Modified time
--------------
+### Modified time ###
 
 Google google cloud storage stores md5sums natively and rclone stores
 modification times as metadata on the object, under the "mtime" key in

@@ -87,8 +87,7 @@ excess files in the container.
 
     rclone sync /home/local/directory remote:container
 
-Modified time
--------------
+### Modified time ###
 
 The modified time is stored as metadata on the object as
 `X-Object-Meta-Mtime` as floating point since the epoch accurate to 1

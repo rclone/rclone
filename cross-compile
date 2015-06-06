@@ -21,8 +21,8 @@ mv build/rclone-${VERSION}-darwin-386 build/rclone-${VERSION}-osx-386
 cd build
 
 for d in `ls`; do
-    cp -a ../README.txt $d/
-    cp -a ../README.html $d/
+    cp -a ../MANUAL.txt $d/README.txt
+    cp -a ../MANUAL.html $d/README.html
     cp -a ../rclone.1 $d/
     zip -r9 $d.zip $d
     rm -rf $d
