@@ -1,12 +1,15 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2015-06-06"
+date: "2015-06-09"
 ---
 
 Changelog
 ---------
 
+  * v1.16 - 2015-06-09
+    * Fix uploading big files which was causing timeouts or panics
+    * Don't check md5sum after download with --size-only
   * v1.15 - 2015-06-06
     * Add --checksum flag to only discard transfers by MD5SUM - thanks Alex Couper
     * Implement --size-only flag to sync on size not checksum & modtime
