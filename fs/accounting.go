@@ -187,6 +187,12 @@ func (s *StatsInfo) DoneTransferring(o Object) {
 
 // Account limits and accounts for one transfer
 type Account struct {
+	// The mutex is to make sure Read() and Close() aren't called
+	// concurrently.  Unfortunately the persistent connection loop
+	// in http transport calls Read() after Do() returns on
+	// CancelRequest so this race can happen when it apparently
+	// shouldn't.
+	mu    sync.Mutex
 	in    io.ReadCloser
 	bytes int64
 }
@@ -200,6 +206,8 @@ func NewAccount(in io.ReadCloser) *Account {
 
 // Read bytes from the object - see io.Reader
 func (file *Account) Read(p []byte) (n int, err error) {
+	file.mu.Lock()
+	defer file.mu.Unlock()
 	n, err = file.in.Read(p)
 	file.bytes += int64(n)
 	Stats.Bytes(int64(n))
@@ -215,6 +223,8 @@ func (file *Account) Read(p []byte) (n int, err error) {
 
 // Close the object
 func (file *Account) Close() error {
+	file.mu.Lock()
+	defer file.mu.Unlock()
 	// FIXME do something?
 	return file.in.Close()
 }
