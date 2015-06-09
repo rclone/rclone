@@ -193,21 +193,23 @@ tryAgain:
 	}
 
 	// Verify md5sums are the same after transfer - ignoring blank md5sums
-	srcMd5sum, md5sumErr := src.Md5sum()
-	if md5sumErr != nil {
-		Stats.Error()
-		Log(src, "Failed to read md5sum: %s", md5sumErr)
-	} else if srcMd5sum != "" {
-		dstMd5sum, md5sumErr := dst.Md5sum()
+	if !Config.SizeOnly {
+		srcMd5sum, md5sumErr := src.Md5sum()
 		if md5sumErr != nil {
 			Stats.Error()
-			Log(dst, "Failed to read md5sum: %s", md5sumErr)
-		} else if dstMd5sum != "" && srcMd5sum != dstMd5sum {
-			Stats.Error()
-			err = fmt.Errorf("Corrupted on transfer: md5sums differ %q vs %q", srcMd5sum, dstMd5sum)
-			Log(dst, "%s", err)
-			removeFailedCopy(dst)
-			return
+			Log(src, "Failed to read md5sum: %s", md5sumErr)
+		} else if srcMd5sum != "" {
+			dstMd5sum, md5sumErr := dst.Md5sum()
+			if md5sumErr != nil {
+				Stats.Error()
+				Log(dst, "Failed to read md5sum: %s", md5sumErr)
+			} else if dstMd5sum != "" && srcMd5sum != dstMd5sum {
+				Stats.Error()
+				err = fmt.Errorf("Corrupted on transfer: md5sums differ %q vs %q", srcMd5sum, dstMd5sum)
+				Log(dst, "%s", err)
+				removeFailedCopy(dst)
+				return
+			}
 		}
 	}
 
