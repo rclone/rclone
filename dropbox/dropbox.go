@@ -113,8 +113,8 @@ func configHelper(name string) {
 type FsDropbox struct {
 	db               *dropbox.Dropbox // the connection to the dropbox server
 	root             string           // the path we are working on
-	slashRoot        string           // root with "/" prefix
-	slashRootSlash   string           // root with "/" prefix and postix
+	slashRoot        string           // root with "/" prefix, lowercase
+	slashRootSlash   string           // root with "/" prefix and postfix, lowercase
 	datastoreManager *dropbox.DatastoreManager
 	datastore        *dropbox.Datastore
 	table            *dropbox.Table
@@ -196,9 +196,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 // Sets root in f
 func (f *FsDropbox) setRoot(root string) {
 	f.root = strings.Trim(root, "/")
-	f.slashRoot = "/" + f.root
+	lowerCaseRoot := strings.ToLower(f.root)
+
+	f.slashRoot = "/" + lowerCaseRoot
 	f.slashRootSlash = f.slashRoot
-	if f.root != "" {
+	if lowerCaseRoot != "" {
 		f.slashRootSlash += "/"
 	}
 }
@@ -254,17 +256,26 @@ func (f *FsDropbox) NewFsObject(remote string) fs.Object {
 	return f.newFsObjectWithInfo(remote, nil)
 }
 
-// Strips the root off entry and returns it
-func (f *FsDropbox) stripRoot(entry *dropbox.Entry) string {
-	path := entry.Path
-	if strings.HasPrefix(path, f.slashRootSlash) {
-		path = path[len(f.slashRootSlash):]
+// Strips the root off path and returns it
+func (f *FsDropbox) stripRoot(path string) *string {
+	lowercase := strings.ToLower(path)
+
+	if !strings.HasPrefix(lowercase, f.slashRootSlash) {
+		fs.Stats.Error()
+		fs.Log(f, "Path '%s' is not under root '%s'", path, f.slashRootSlash)
+		return nil
 	}
-	return path
+
+	stripped := path[len(f.slashRootSlash):]
+	return &stripped
 }
 
 // Walk the root returning a channel of FsObjects
 func (f *FsDropbox) list(out fs.ObjectsChan) {
+	// Track path component case, it could be different for entries coming from DropBox API
+	// See https://www.dropboxforum.com/hc/communities/public/questions/201665409-Wrong-character-case-of-folder-name-when-calling-listFolder-using-Sync-API?locale=en-us
+	// and https://github.com/ncw/rclone/issues/53
+	nameTree := NewNameTree()
 	cursor := ""
 	for {
 		deltaPage, err := f.db.Delta(cursor, f.slashRoot)
@@ -291,13 +302,38 @@ func (f *FsDropbox) list(out fs.ObjectsChan) {
 						fs.Debug(f, "Failed to delete metadata for %q", deltaEntry.Path)
 						// Don't accumulate Error here
 					}
-
 				} else {
-					if entry.IsDir {
-						// ignore directories
+					if len(entry.Path) <= 1 || entry.Path[0] != '/' {
+						fs.Stats.Error()
+						fs.Log(f, "dropbox API inconsistency: a path should always start with a slash and be at least 2 characters: %s", entry.Path)
+						continue
+					}
+
+					lastSlashIndex := strings.LastIndex(entry.Path, "/")
+
+					var parentPath string
+					if lastSlashIndex == 0 {
+						parentPath = ""
 					} else {
-						path := f.stripRoot(entry)
-						out <- f.newFsObjectWithInfo(path, entry)
+						parentPath = entry.Path[1:lastSlashIndex]
+					}
+					lastComponent := entry.Path[lastSlashIndex + 1:]
+
+					if entry.IsDir {
+						nameTree.PutCaseCorrectDirectoryName(parentPath, lastComponent)
+					} else {
+						parentPathCorrectCase := nameTree.GetPathWithCorrectCase(parentPath)
+						if parentPathCorrectCase != nil {
+							path := f.stripRoot(*parentPathCorrectCase + "/" + lastComponent)
+							if path == nil {
+								// an error occurred and logged by stripRoot
+								continue
+							}
+
+							out <- f.newFsObjectWithInfo(*path, entry)
+						} else {
+							nameTree.PutFile(parentPath, lastComponent, entry)
+						}
 					}
 				}
 			}
@@ -307,6 +343,17 @@ func (f *FsDropbox) list(out fs.ObjectsChan) {
 			cursor = deltaPage.Cursor.Cursor
 		}
 	}
+
+	walkFunc := func(caseCorrectFilePath string, entry *dropbox.Entry) {
+		path := f.stripRoot("/" + caseCorrectFilePath)
+		if path == nil {
+			// an error occurred and logged by stripRoot
+			return
+		}
+
+		out <- f.newFsObjectWithInfo(*path, entry)
+	}
+	nameTree.WalkFiles(f.root, walkFunc)
 }
 
 // Walk the path returning a channel of FsObjects
@@ -332,8 +379,14 @@ func (f *FsDropbox) ListDir() fs.DirChan {
 			for i := range entry.Contents {
 				entry := &entry.Contents[i]
 				if entry.IsDir {
+					name := f.stripRoot(entry.Path)
+					if name == nil {
+						// an error occurred and logged by stripRoot
+						continue
+					}
+
 					out <- &fs.Dir{
-						Name:  f.stripRoot(entry),
+						Name:  *name,
 						When:  time.Time(entry.ClientMtime),
 						Bytes: int64(entry.Bytes),
 						Count: -1,
