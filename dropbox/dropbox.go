@@ -302,7 +302,6 @@ func (f *FsDropbox) list(out fs.ObjectsChan) {
 						fs.Debug(f, "Failed to delete metadata for %q", deltaEntry.Path)
 						// Don't accumulate Error here
 					}
-
 				} else {
 					if len(entry.Path) <= 1 || entry.Path[0] != '/' {
 						fs.Stats.Error()
@@ -346,7 +345,7 @@ func (f *FsDropbox) list(out fs.ObjectsChan) {
 	}
 
 	walkFunc := func(caseCorrectFilePath string, entry *dropbox.Entry) {
-		path := f.stripRoot(caseCorrectFilePath)
+		path := f.stripRoot("/" + caseCorrectFilePath)
 		if path == nil {
 			// an error occurred and logged by stripRoot
 			return
@@ -354,7 +353,7 @@ func (f *FsDropbox) list(out fs.ObjectsChan) {
 
 		out <- f.newFsObjectWithInfo(*path, entry)
 	}
-	nameTree.WalkFiles(walkFunc)
+	nameTree.WalkFiles(f.root, walkFunc)
 }
 
 // Walk the path returning a channel of FsObjects

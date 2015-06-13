@@ -146,8 +146,15 @@ func (tree *NameTreeNode) GetPathWithCorrectCase(path string) *string {
 type NameTreeFileWalkFunc func(caseCorrectFilePath string, entry *dropbox.Entry)
 
 func (tree *NameTreeNode) walkFilesRec(currentPath string, walkFunc NameTreeFileWalkFunc) {
+	var prefix string
+	if (currentPath == "") {
+		prefix = ""
+	} else {
+		prefix = currentPath + "/"
+	}
+
 	for name, entry := range tree.Files {
-		walkFunc(currentPath + "/" + name, entry)
+		walkFunc(prefix + name, entry)
 	}
 
 	for lowerCaseName, directory := range tree.Directories {
@@ -158,10 +165,15 @@ func (tree *NameTreeNode) walkFilesRec(currentPath string, walkFunc NameTreeFile
 			continue
 		}
 
-		directory.walkFilesRec(currentPath + "/" + caseCorrectName, walkFunc)
+		directory.walkFilesRec(prefix + caseCorrectName, walkFunc)
 	}
 }
 
-func (tree *NameTreeNode) WalkFiles(walkFunc NameTreeFileWalkFunc) {
-	tree.walkFilesRec("", walkFunc)
+func (tree *NameTreeNode) WalkFiles(rootPath string, walkFunc NameTreeFileWalkFunc) {
+	node := tree.getTreeNode(rootPath)
+	if node == nil {
+		return
+	}
+
+	node.walkFilesRec(rootPath, walkFunc)
 }

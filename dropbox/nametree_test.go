@@ -79,11 +79,31 @@ func TestPutAndWalk(t *testing.T){
 
 	numCalled := 0
 	walkFunc := func(caseCorrectFilePath string, entry *dropboxapi.Entry) {
-		assert(t, caseCorrectFilePath == "/A/F", "caseCorrectFilePath should be /A/F")
+		assert(t, caseCorrectFilePath == "A/F", "caseCorrectFilePath should be A/F, not " + caseCorrectFilePath)
 		assert(t, entry.Path == "xxx", "entry.Path should be xxx")
 		numCalled++
 	}
-	tree.WalkFiles(walkFunc)
+	tree.WalkFiles("", walkFunc)
+
+	assert(t, numCalled == 1, "walk func should be called only once")
+
+	assert(t, fs.Stats.GetErrors() == errors, "No errors should be reported")
+}
+
+func TestPutAndWalkWithPrefix(t *testing.T){
+	errors := fs.Stats.GetErrors()
+
+	tree := dropbox.NewNameTree()
+	tree.PutFile("a", "F", &dropboxapi.Entry{Path: "xxx"})
+	tree.PutCaseCorrectDirectoryName("", "A")
+
+	numCalled := 0
+	walkFunc := func(caseCorrectFilePath string, entry *dropboxapi.Entry) {
+		assert(t, caseCorrectFilePath == "A/F", "caseCorrectFilePath should be A/F, not " + caseCorrectFilePath)
+		assert(t, entry.Path == "xxx", "entry.Path should be xxx")
+		numCalled++
+	}
+	tree.WalkFiles("A", walkFunc)
 
 	assert(t, numCalled == 1, "walk func should be called only once")
 
@@ -99,7 +119,7 @@ func TestPutAndWalkIncompleteTree(t *testing.T){
 	walkFunc := func(caseCorrectFilePath string, entry *dropboxapi.Entry) {
 		t.Fatal("Should not be called")
 	}
-	tree.WalkFiles(walkFunc)
+	tree.WalkFiles("", walkFunc)
 
 	assert(t, fs.Stats.GetErrors() == errors + 1, "One error should be reported")
 }
