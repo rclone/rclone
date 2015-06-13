@@ -398,11 +398,12 @@ func TestLsLong(t *testing.T) {
 		t.Fatalf("List failed: %v", err)
 	}
 	res := buf.String()
-	m1 := regexp.MustCompile(`(?m)^        0 2011-12-25 12:59:59\.\d{9} empty space$`)
+	timeFormat := "2006-01-02 15:04:05"
+	m1 := regexp.MustCompile(`(?m)^        0 ` + t2.Local().Format(timeFormat) + `\.\d{9} empty space$`)
 	if !m1.MatchString(res) {
 		t.Errorf("empty space missing: %q", res)
 	}
-	m2 := regexp.MustCompile(`(?m)^       60 2001-02-03 04:05:06\.\d{9} potato2$`)
+	m2 := regexp.MustCompile(`(?m)^       60 ` + t1.Local().Format(timeFormat) + `\.\d{9} potato2$`)
 	if !m2.MatchString(res) {
 		t.Errorf("potato2 missing: %q", res)
 	}
