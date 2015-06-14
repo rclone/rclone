@@ -13,3 +13,4 @@ Contributors
 ------------
 
   * Alex Couper <amcouper@gmail.com>
+  * Leonid Shalupov <shalupov@diverse.org.ru>
