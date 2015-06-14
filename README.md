@@ -2,6 +2,7 @@
 
 [Website](http://rclone.org) |
 [Documentation](http://rclone.org/docs/) |
+[Changelog](http://rclone.org/changelog/) |
 [Installation](http://rclone.org/install/) |
 [G+](https://google.com/+RcloneOrg)
 
