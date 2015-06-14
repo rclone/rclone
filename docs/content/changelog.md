@@ -1,12 +1,14 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2015-06-09"
+date: "2015-06-14"
 ---
 
 Changelog
 ---------
 
+  * v1.17 - 2015-06-14
+    * dropbox: fix case insensitivity issues - thanks Leonid Shalupov
   * v1.16 - 2015-06-09
     * Fix uploading big files which was causing timeouts or panics
     * Don't check md5sum after download with --size-only
