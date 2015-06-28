@@ -23,3 +23,17 @@ this (remove `-f` if using go < 1.4)
 
 See the [Usage section](/docs/) of the docs for how to use rclone, or
 run `rclone -h`.
+
+linux binary downloaded files install example
+-------
+
+    unzip rclone-v1.17-linux-amd64.zip
+    cd rclone-v1.17-linux-amd64
+    #copy binary file
+    sudo cp rclone /usr/sbin/
+    sudo chown root:root /usr/sbin/rclone
+    sudo chmod 755 /usr/sbin/rclone
+    #install manpage
+    sudo mkdir -p /usr/local/share/man/man1
+    sudo cp rclone.1 /usr/local/share/man/man1/
+    sudo mandb 
