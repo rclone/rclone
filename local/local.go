@@ -210,7 +210,7 @@ func (f *FsLocal) Put(in io.Reader, remote string, modTime time.Time, size int64
 
 // Mkdir creates the directory if it doesn't exist
 func (f *FsLocal) Mkdir() error {
-	return os.MkdirAll(f.root, 0770)
+	return os.MkdirAll(f.root, 0777)
 }
 
 // Rmdir removes the directory
@@ -429,7 +429,7 @@ func (o *FsObjectLocal) Open() (in io.ReadCloser, err error) {
 // Update the object from in with modTime and size
 func (o *FsObjectLocal) Update(in io.Reader, modTime time.Time, size int64) error {
 	dir := path.Dir(o.path)
-	err := os.MkdirAll(dir, 0770)
+	err := os.MkdirAll(dir, 0777)
 	if err != nil {
 		return err
 	}
