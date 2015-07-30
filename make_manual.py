@@ -24,6 +24,7 @@ docs = [
     "local.md",
     "changelog.md",
     "bugs.md",
+    "faq.md",
     "licence.md",
     "authors.md",
     "contact.md",

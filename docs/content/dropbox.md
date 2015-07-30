@@ -81,7 +81,8 @@ a Dropbox datastore called "rclone".
 Dropbox datastores are limited to 100,000 rows so this is the maximum
 number of files rclone can manage on Dropbox.
 
-Dropbox is case sensitive which can sometimes cause duplicated files.
+Note that Dropbox is case sensitive so you can't have a file called
+"Hello.doc" and one called "hello.doc".
 
 If you use the desktop sync tool and rclone on the same files then the
 md5sums and modification times may get out of sync as far as rclone is
