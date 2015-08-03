@@ -388,7 +388,7 @@ func (f *FsDropbox) ListDir() fs.DirChan {
 					out <- &fs.Dir{
 						Name:  *name,
 						When:  time.Time(entry.ClientMtime),
-						Bytes: int64(entry.Bytes),
+						Bytes: entry.Bytes,
 						Count: -1,
 					}
 				}
@@ -596,7 +596,7 @@ func (o *FsObjectDropbox) Size() int64 {
 //
 // This isn't a complete set of metadata and has an inacurate date
 func (o *FsObjectDropbox) setMetadataFromEntry(info *dropbox.Entry) {
-	o.bytes = int64(info.Bytes)
+	o.bytes = info.Bytes
 	o.modTime = time.Time(info.ClientMtime)
 }
 
