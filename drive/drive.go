@@ -681,7 +681,7 @@ func (f *FsDrive) List() fs.ObjectsChan {
 		err := f.findRoot(false)
 		if err != nil {
 			fs.Stats.Error()
-			fs.Log(f, "Couldn't find root: %s", err)
+			fs.ErrorLog(f, "Couldn't find root: %s", err)
 		} else {
 			if f.root == "" && *driveFullList {
 				err = f.listDirFull(f.rootId, "", out)
@@ -690,7 +690,7 @@ func (f *FsDrive) List() fs.ObjectsChan {
 			}
 			if err != nil {
 				fs.Stats.Error()
-				fs.Log(f, "List failed: %s", err)
+				fs.ErrorLog(f, "List failed: %s", err)
 			}
 		}
 	}()
@@ -705,7 +705,7 @@ func (f *FsDrive) ListDir() fs.DirChan {
 		err := f.findRoot(false)
 		if err != nil {
 			fs.Stats.Error()
-			fs.Log(f, "Couldn't find root: %s", err)
+			fs.ErrorLog(f, "Couldn't find root: %s", err)
 		} else {
 			_, err := f.listAll(f.rootId, "", true, false, func(item *drive.File) bool {
 				dir := &fs.Dir{
@@ -719,7 +719,7 @@ func (f *FsDrive) ListDir() fs.DirChan {
 			})
 			if err != nil {
 				fs.Stats.Error()
-				fs.Log(f, "ListDir failed: %s", err)
+				fs.ErrorLog(f, "ListDir failed: %s", err)
 			}
 		}
 	}()
@@ -934,7 +934,7 @@ func (o *FsObjectDrive) SetModTime(modTime time.Time) {
 	err := o.readMetaData()
 	if err != nil {
 		fs.Stats.Error()
-		fs.Log(o, "Failed to read metadata: %s", err)
+		fs.ErrorLog(o, "Failed to read metadata: %s", err)
 		return
 	}
 	// New metadata
@@ -948,7 +948,7 @@ func (o *FsObjectDrive) SetModTime(modTime time.Time) {
 	})
 	if err != nil {
 		fs.Stats.Error()
-		fs.Log(o, "Failed to update remote mtime: %s", err)
+		fs.ErrorLog(o, "Failed to update remote mtime: %s", err)
 		return
 	}
 	// Update info from read data

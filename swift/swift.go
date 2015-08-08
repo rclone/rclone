@@ -230,7 +230,7 @@ func (f *FsSwift) list(directories bool, fn func(string, *swift.Object)) {
 	})
 	if err != nil {
 		fs.Stats.Error()
-		fs.Log(f, "Couldn't read container %q: %s", f.container, err)
+		fs.ErrorLog(f, "Couldn't read container %q: %s", f.container, err)
 	}
 }
 
@@ -241,7 +241,7 @@ func (f *FsSwift) List() fs.ObjectsChan {
 		// Return no objects at top level list
 		close(out)
 		fs.Stats.Error()
-		fs.Log(f, "Can't list objects at root - choose a container using lsd")
+		fs.ErrorLog(f, "Can't list objects at root - choose a container using lsd")
 	} else {
 		// List the objects
 		go func() {
@@ -266,7 +266,7 @@ func (f *FsSwift) ListDir() fs.DirChan {
 			containers, err := f.c.ContainersAll(nil)
 			if err != nil {
 				fs.Stats.Error()
-				fs.Log(f, "Couldn't list containers: %v", err)
+				fs.ErrorLog(f, "Couldn't list containers: %v", err)
 			} else {
 				for _, container := range containers {
 					out <- &fs.Dir{
@@ -393,14 +393,14 @@ func (o *FsObjectSwift) SetModTime(modTime time.Time) {
 	err := o.readMetaData()
 	if err != nil {
 		fs.Stats.Error()
-		fs.Log(o, "Failed to read metadata: %s", err)
+		fs.ErrorLog(o, "Failed to read metadata: %s", err)
 		return
 	}
 	o.meta.SetModTime(modTime)
 	err = o.swift.c.ObjectUpdate(o.swift.container, o.swift.root+o.remote, o.meta.ObjectHeaders())
 	if err != nil {
 		fs.Stats.Error()
-		fs.Log(o, "Failed to update remote mtime: %s", err)
+		fs.ErrorLog(o, "Failed to update remote mtime: %s", err)
 	}
 }
 

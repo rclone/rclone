@@ -273,7 +273,7 @@ func (f *FsS3) list(directories bool, fn func(string, *s3.Key)) {
 		objects, err := f.b.List(f.root, delimiter, marker, listChunkSize)
 		if err != nil {
 			fs.Stats.Error()
-			fs.Log(f, "Couldn't read bucket %q: %s", f.bucket, err)
+			fs.ErrorLog(f, "Couldn't read bucket %q: %s", f.bucket, err)
 		} else {
 			rootLength := len(f.root)
 			if directories {
@@ -318,7 +318,7 @@ func (f *FsS3) List() fs.ObjectsChan {
 		// Return no objects at top level list
 		close(out)
 		fs.Stats.Error()
-		fs.Log(f, "Can't list objects at root - choose a bucket using lsd")
+		fs.ErrorLog(f, "Can't list objects at root - choose a bucket using lsd")
 	} else {
 		go func() {
 			defer close(out)
@@ -342,7 +342,7 @@ func (f *FsS3) ListDir() fs.DirChan {
 			buckets, err := f.c.ListBuckets()
 			if err != nil {
 				fs.Stats.Error()
-				fs.Log(f, "Couldn't list buckets: %s", err)
+				fs.ErrorLog(f, "Couldn't list buckets: %s", err)
 			} else {
 				for _, bucket := range buckets {
 					out <- &fs.Dir{
@@ -515,14 +515,14 @@ func (o *FsObjectS3) SetModTime(modTime time.Time) {
 	err := o.readMetaData()
 	if err != nil {
 		fs.Stats.Error()
-		fs.Log(o, "Failed to read metadata: %s", err)
+		fs.ErrorLog(o, "Failed to read metadata: %s", err)
 		return
 	}
 	o.meta[metaMtime] = swift.TimeToFloatString(modTime)
 	_, err = o.s3.b.Update(o.s3.root+o.remote, o.s3.perm, o.meta)
 	if err != nil {
 		fs.Stats.Error()
-		fs.Log(o, "Failed to update remote mtime: %s", err)
+		fs.ErrorLog(o, "Failed to update remote mtime: %s", err)
 	}
 }
 

@@ -36,13 +36,13 @@ func CheckMd5sums(src, dst Object) (bool, error) {
 	srcMd5, err := src.Md5sum()
 	if err != nil {
 		Stats.Error()
-		Log(src, "Failed to calculate src md5: %s", err)
+		ErrorLog(src, "Failed to calculate src md5: %s", err)
 		return false, err
 	}
 	dstMd5, err := dst.Md5sum()
 	if err != nil {
 		Stats.Error()
-		Log(dst, "Failed to calculate dst md5: %s", err)
+		ErrorLog(dst, "Failed to calculate dst md5: %s", err)
 		return false, err
 	}
 	// Debug("Src MD5 %s", srcMd5)
@@ -148,7 +148,7 @@ tryAgain:
 	in0, err := src.Open()
 	if err != nil {
 		Stats.Error()
-		Log(src, "Failed to open: %s", err)
+		ErrorLog(src, "Failed to open: %s", err)
 		return
 	}
 	in := NewAccount(in0) // account the transfer
@@ -178,7 +178,7 @@ tryAgain:
 	}
 	if err != nil {
 		Stats.Error()
-		Log(src, "Failed to copy: %s", err)
+		ErrorLog(src, "Failed to copy: %s", err)
 		removeFailedCopy(dst)
 		return
 	}
@@ -187,7 +187,7 @@ tryAgain:
 	if src.Size() != dst.Size() {
 		Stats.Error()
 		err = fmt.Errorf("Corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size())
-		Log(dst, "%s", err)
+		ErrorLog(dst, "%s", err)
 		removeFailedCopy(dst)
 		return
 	}
@@ -197,16 +197,16 @@ tryAgain:
 		srcMd5sum, md5sumErr := src.Md5sum()
 		if md5sumErr != nil {
 			Stats.Error()
-			Log(src, "Failed to read md5sum: %s", md5sumErr)
+			ErrorLog(src, "Failed to read md5sum: %s", md5sumErr)
 		} else if srcMd5sum != "" {
 			dstMd5sum, md5sumErr := dst.Md5sum()
 			if md5sumErr != nil {
 				Stats.Error()
-				Log(dst, "Failed to read md5sum: %s", md5sumErr)
+				ErrorLog(dst, "Failed to read md5sum: %s", md5sumErr)
 			} else if dstMd5sum != "" && srcMd5sum != dstMd5sum {
 				Stats.Error()
 				err = fmt.Errorf("Corrupted on transfer: md5sums differ %q vs %q", srcMd5sum, dstMd5sum)
-				Log(dst, "%s", err)
+				ErrorLog(dst, "%s", err)
 				removeFailedCopy(dst)
 				return
 			}
@@ -280,7 +280,7 @@ func DeleteFiles(to_be_deleted ObjectsChan) {
 					Stats.DoneChecking(dst)
 					if err != nil {
 						Stats.Error()
-						Log(dst, "Couldn't delete: %s", err)
+						ErrorLog(dst, "Couldn't delete: %s", err)
 					} else {
 						Debug(dst, "Deleted")
 					}
@@ -405,13 +405,13 @@ func Check(fdst, fsrc Fs) error {
 	Log(fdst, "%d files not in %v", len(dstFiles), fsrc)
 	for _, dst := range dstFiles {
 		Stats.Error()
-		Log(dst, "File not in %v", fsrc)
+		ErrorLog(dst, "File not in %v", fsrc)
 	}
 
 	Log(fsrc, "%d files not in %s", len(srcFiles), fdst)
 	for _, src := range srcFiles {
 		Stats.Error()
-		Log(src, "File not in %v", fdst)
+		ErrorLog(src, "File not in %v", fdst)
 	}
 
 	checks := make(chan []Object, Config.Transfers)
@@ -433,7 +433,7 @@ func Check(fdst, fsrc Fs) error {
 				if src.Size() != dst.Size() {
 					Stats.DoneChecking(src)
 					Stats.Error()
-					Log(src, "Sizes differ")
+					ErrorLog(src, "Sizes differ")
 					continue
 				}
 				same, err := CheckMd5sums(src, dst)
@@ -443,7 +443,7 @@ func Check(fdst, fsrc Fs) error {
 				}
 				if !same {
 					Stats.Error()
-					Log(src, "Md5sums differ")
+					ErrorLog(src, "Md5sums differ")
 				}
 				Debug(src, "OK")
 			}

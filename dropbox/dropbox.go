@@ -262,7 +262,7 @@ func (f *FsDropbox) stripRoot(path string) *string {
 
 	if !strings.HasPrefix(lowercase, f.slashRootSlash) {
 		fs.Stats.Error()
-		fs.Log(f, "Path '%s' is not under root '%s'", path, f.slashRootSlash)
+		fs.ErrorLog(f, "Path '%s' is not under root '%s'", path, f.slashRootSlash)
 		return nil
 	}
 
@@ -281,11 +281,11 @@ func (f *FsDropbox) list(out fs.ObjectsChan) {
 		deltaPage, err := f.db.Delta(cursor, f.slashRoot)
 		if err != nil {
 			fs.Stats.Error()
-			fs.Log(f, "Couldn't list: %s", err)
+			fs.ErrorLog(f, "Couldn't list: %s", err)
 			break
 		} else {
 			if deltaPage.Reset && cursor != "" {
-				fs.Log(f, "Unexpected reset during listing - try again")
+				fs.ErrorLog(f, "Unexpected reset during listing - try again")
 				fs.Stats.Error()
 				break
 			}
@@ -305,7 +305,7 @@ func (f *FsDropbox) list(out fs.ObjectsChan) {
 				} else {
 					if len(entry.Path) <= 1 || entry.Path[0] != '/' {
 						fs.Stats.Error()
-						fs.Log(f, "dropbox API inconsistency: a path should always start with a slash and be at least 2 characters: %s", entry.Path)
+						fs.ErrorLog(f, "dropbox API inconsistency: a path should always start with a slash and be at least 2 characters: %s", entry.Path)
 						continue
 					}
 
@@ -374,7 +374,7 @@ func (f *FsDropbox) ListDir() fs.DirChan {
 		entry, err := f.db.Metadata(f.root, true, false, "", "", metadataLimit)
 		if err != nil {
 			fs.Stats.Error()
-			fs.Log(f, "Couldn't list directories in root: %s", err)
+			fs.ErrorLog(f, "Couldn't list directories in root: %s", err)
 		} else {
 			for i := range entry.Contents {
 				entry := &entry.Contents[i]
@@ -750,7 +750,7 @@ func (o *FsObjectDropbox) deleteMetadata() {
 	fs.Debug(o, "Deleting metadata from datastore")
 	err := o.dropbox.deleteMetadata(o.metadataKey())
 	if err != nil {
-		fs.Log(o, "Error deleting metadata: %v", err)
+		fs.ErrorLog(o, "Error deleting metadata: %v", err)
 		fs.Stats.Error()
 	}
 }
@@ -762,7 +762,7 @@ func (o *FsObjectDropbox) SetModTime(modTime time.Time) {
 	err := o.setModTimeAndMd5sum(modTime, "")
 	if err != nil {
 		fs.Stats.Error()
-		fs.Log(o, err.Error())
+		fs.ErrorLog(o, err.Error())
 	}
 }
 

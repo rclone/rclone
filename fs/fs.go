@@ -264,6 +264,12 @@ func Log(o interface{}, text string, args ...interface{}) {
 	}
 }
 
+// Write error log output for this Object or Fs
+// Unconditionally logs a message regardless of Config.Quiet or Config.Verbose
+func ErrorLog(o interface{}, text string, args ...interface{}) {
+	OutputLog(o, text, args...)
+}
+
 // checkClose is a utility function used to check the return from
 // Close in a defer statement.
 func checkClose(c io.Closer, err *error) {
