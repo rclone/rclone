@@ -251,7 +251,7 @@ func (f *FsStorage) list(directories bool, fn func(string, *storage.Object)) {
 		objects, err := list.Do()
 		if err != nil {
 			fs.Stats.Error()
-			fs.Log(f, "Couldn't read bucket %q: %s", f.bucket, err)
+			fs.ErrorLog(f, "Couldn't read bucket %q: %s", f.bucket, err)
 			return
 		}
 		if !directories {
@@ -286,7 +286,7 @@ func (f *FsStorage) List() fs.ObjectsChan {
 		// Return no objects at top level list
 		close(out)
 		fs.Stats.Error()
-		fs.Log(f, "Can't list objects at root - choose a bucket using lsd")
+		fs.ErrorLog(f, "Can't list objects at root - choose a bucket using lsd")
 	} else {
 		// List the objects
 		go func() {
@@ -310,7 +310,7 @@ func (f *FsStorage) ListDir() fs.DirChan {
 			defer close(out)
 			if f.projectNumber == "" {
 				fs.Stats.Error()
-				fs.Log(f, "Can't list buckets without project number")
+				fs.ErrorLog(f, "Can't list buckets without project number")
 				return
 			}
 			listBuckets := f.svc.Buckets.List(f.projectNumber).MaxResults(listChunks)
@@ -318,7 +318,7 @@ func (f *FsStorage) ListDir() fs.DirChan {
 				buckets, err := listBuckets.Do()
 				if err != nil {
 					fs.Stats.Error()
-					fs.Log(f, "Couldn't list buckets: %v", err)
+					fs.ErrorLog(f, "Couldn't list buckets: %v", err)
 					break
 				} else {
 					for _, bucket := range buckets.Items {
@@ -505,7 +505,7 @@ func (o *FsObjectStorage) SetModTime(modTime time.Time) {
 	newObject, err := o.storage.svc.Objects.Patch(o.storage.bucket, o.storage.root+o.remote, &object).Do()
 	if err != nil {
 		fs.Stats.Error()
-		fs.Log(o, "Failed to update remote mtime: %s", err)
+		fs.ErrorLog(o, "Failed to update remote mtime: %s", err)
 	}
 	o.setMetaData(newObject)
 }

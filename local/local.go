@@ -110,12 +110,12 @@ func (f *FsLocal) List() fs.ObjectsChan {
 		err := filepath.Walk(f.root, func(path string, fi os.FileInfo, err error) error {
 			if err != nil {
 				fs.Stats.Error()
-				fs.Log(f, "Failed to open directory: %s: %s", path, err)
+				fs.ErrorLog(f, "Failed to open directory: %s: %s", path, err)
 			} else {
 				remote, err := filepath.Rel(f.root, path)
 				if err != nil {
 					fs.Stats.Error()
-					fs.Log(f, "Failed to get relative path %s: %s", path, err)
+					fs.ErrorLog(f, "Failed to get relative path %s: %s", path, err)
 					return nil
 				}
 				if remote == "." {
@@ -132,7 +132,7 @@ func (f *FsLocal) List() fs.ObjectsChan {
 		})
 		if err != nil {
 			fs.Stats.Error()
-			fs.Log(f, "Failed to open directory: %s: %s", f.root, err)
+			fs.ErrorLog(f, "Failed to open directory: %s: %s", f.root, err)
 		}
 		close(out)
 	}()
@@ -161,7 +161,7 @@ func (f *FsLocal) ListDir() fs.DirChan {
 		items, err := ioutil.ReadDir(f.root)
 		if err != nil {
 			fs.Stats.Error()
-			fs.Log(f, "Couldn't find read directory: %s", err)
+			fs.ErrorLog(f, "Couldn't find read directory: %s", err)
 		} else {
 			for _, item := range items {
 				if item.IsDir() {
@@ -176,7 +176,7 @@ func (f *FsLocal) ListDir() fs.DirChan {
 					err := filepath.Walk(dirpath, func(path string, fi os.FileInfo, err error) error {
 						if err != nil {
 							fs.Stats.Error()
-							fs.Log(f, "Failed to open directory: %s: %s", path, err)
+							fs.ErrorLog(f, "Failed to open directory: %s: %s", path, err)
 						} else {
 							dir.Count += 1
 							dir.Bytes += fi.Size()
@@ -185,7 +185,7 @@ func (f *FsLocal) ListDir() fs.DirChan {
 					})
 					if err != nil {
 						fs.Stats.Error()
-						fs.Log(f, "Failed to open directory: %s: %s", dirpath, err)
+						fs.ErrorLog(f, "Failed to open directory: %s: %s", dirpath, err)
 					}
 					out <- dir
 				}
@@ -324,7 +324,7 @@ func (o *FsObjectLocal) Md5sum() (string, error) {
 	in, err := os.Open(o.path)
 	if err != nil {
 		fs.Stats.Error()
-		fs.Log(o, "Failed to open: %s", err)
+		fs.ErrorLog(o, "Failed to open: %s", err)
 		return "", err
 	}
 	hash := md5.New()
@@ -332,12 +332,12 @@ func (o *FsObjectLocal) Md5sum() (string, error) {
 	closeErr := in.Close()
 	if err != nil {
 		fs.Stats.Error()
-		fs.Log(o, "Failed to read: %s", err)
+		fs.ErrorLog(o, "Failed to read: %s", err)
 		return "", err
 	}
 	if closeErr != nil {
 		fs.Stats.Error()
-		fs.Log(o, "Failed to close: %s", closeErr)
+		fs.ErrorLog(o, "Failed to close: %s", closeErr)
 		return "", closeErr
 	}
 	o.md5sum = hex.EncodeToString(hash.Sum(nil))

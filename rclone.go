@@ -377,7 +377,7 @@ func main() {
 	// Run the actual command
 	if command.Run != nil {
 		command.Run(fdst, fsrc)
-		if !command.NoStats {
+		if !command.NoStats && (!fs.Config.Quiet || fs.Stats.Errored() || *statsInterval > 0) {
 			fmt.Fprintln(os.Stderr, fs.Stats)
 		}
 		if fs.Config.Verbose {
