@@ -11,18 +11,12 @@ Progress of port to aws-sdk
 What happens if you CTRL-C a multipart upload
   * get an incomplete upload
   * disappears when you delete the bucket
-
-Doesn't support v2 signing so can't interface with Ceph
-  * http://tracker.ceph.com/issues/10333
-  * https://github.com/aws/aws-sdk-go/issues/291
-
 */
 
 import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"path"
 	"regexp"
 	"strings"
@@ -31,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/service"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/ncw/rclone/fs"
@@ -205,11 +200,27 @@ func s3Connection(name string) (*s3.S3, error) {
 		WithMaxRetries(maxRetries).
 		WithCredentials(auth).
 		WithEndpoint(endpoint).
-		WithHTTPClient(fs.Config.Client())
+		WithHTTPClient(fs.Config.Client()).
+		WithS3ForcePathStyle(true)
+	// awsConfig.WithLogLevel(aws.LogDebugWithSigning)
 	c := s3.New(awsConfig)
 	if region == "other-v2-signature" {
-		log.Fatal("Sorry v2 signatures not supported yet :-(")
+		fs.Debug(name, "Using v2 auth")
+		signer := func(req *service.Request) {
+			// Ignore AnonymousCredentials object
+			if req.Service.Config.Credentials == credentials.AnonymousCredentials {
+				return
+			}
+			sign(accessKeyId, secretAccessKey, req.HTTPRequest)
+		}
+		c.Handlers.Sign.Clear()
+		c.Handlers.Sign.PushBack(service.BuildContentLength)
+		c.Handlers.Sign.PushBack(signer)
 	}
+	// Add user agent
+	c.Handlers.Build.PushBack(func(r *service.Request) {
+		r.HTTPRequest.Header.Set("User-Agent", fs.UserAgent)
+	})
 	return c, nil
 }
 
