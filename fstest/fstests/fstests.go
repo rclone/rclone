@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
+	"flag"
 	"io"
 	"log"
 	"os"
@@ -32,11 +33,16 @@ var (
 	}
 )
 
+func init() {
+	flag.StringVar(&RemoteName, "remote", "", "Set this to override the default remote name (eg s3:)")
+}
+
 func TestInit(t *testing.T) {
 	var err error
 	fs.LoadConfig()
 	fs.Config.Verbose = false
 	fs.Config.Quiet = true
+	t.Logf("Using remote %q", RemoteName)
 	if RemoteName == "" {
 		RemoteName, err = fstest.LocalRemote()
 		if err != nil {
