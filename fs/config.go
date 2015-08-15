@@ -207,7 +207,7 @@ func LoadConfig() {
 	var err error
 	ConfigFile, err = goconfig.LoadConfigFile(ConfigPath)
 	if err != nil {
-		log.Printf("Failed to load config file %v - using defaults", ConfigPath)
+		log.Printf("Failed to load config file %v - using defaults: %v", ConfigPath, err)
 		ConfigFile, err = goconfig.LoadConfigFile(os.DevNull)
 		if err != nil {
 			log.Fatalf("Failed to read null config file: %v", err)
