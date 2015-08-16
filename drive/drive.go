@@ -962,6 +962,9 @@ func (o *FsObjectDrive) Storable() bool {
 
 // Open an object for read
 func (o *FsObjectDrive) Open() (in io.ReadCloser, err error) {
+	if o.url == "" {
+		return nil, fmt.Errorf("Forbidden to download - check sharing permission")
+	}
 	req, err := http.NewRequest("GET", o.url, nil)
 	if err != nil {
 		return nil, err
