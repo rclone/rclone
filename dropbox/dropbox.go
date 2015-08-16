@@ -6,11 +6,6 @@ Limitations of dropbox
 
 File system is case insensitive
 
-The datastore is limited to 100,000 records which therefore is the
-limit of the number of files that rclone can use on dropbox.
-
-FIXME only open datastore if we need it?
-
 FIXME Getting this sometimes
 Failed to copy: Upload failed: invalid character '<' looking for beginning of value
 This is a JSON decode error - from Update / UploadByChunk
@@ -38,10 +33,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"path"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/ncw/rclone/fs"
@@ -50,17 +45,10 @@ import (
 
 // Constants
 const (
-	rcloneAppKey     = "5jcck7diasz0rqy"
-	rcloneAppSecret  = "1n9m04y2zx7bf26"
-	uploadChunkSize  = 64 * 1024                    // chunk size for upload
-	metadataLimit    = dropbox.MetadataLimitDefault // max items to fetch at once
-	datastoreName    = "rclone"
-	tableName        = "metadata"
-	md5sumField      = "md5sum"
-	mtimeField       = "mtime"
-	maxCommitRetries = 5
-	timeFormatIn     = time.RFC3339
-	timeFormatOut    = "2006-01-02T15:04:05.000000000Z07:00"
+	rcloneAppKey    = "5jcck7diasz0rqy"
+	rcloneAppSecret = "1n9m04y2zx7bf26"
+	uploadChunkSize = 64 * 1024                    // chunk size for upload
+	metadataLimit   = dropbox.MetadataLimitDefault // max items to fetch at once
 )
 
 // Register with Fs
@@ -111,24 +99,19 @@ func configHelper(name string) {
 
 // FsDropbox represents a remote dropbox server
 type FsDropbox struct {
-	db               *dropbox.Dropbox // the connection to the dropbox server
-	root             string           // the path we are working on
-	slashRoot        string           // root with "/" prefix, lowercase
-	slashRootSlash   string           // root with "/" prefix and postfix, lowercase
-	datastoreManager *dropbox.DatastoreManager
-	datastore        *dropbox.Datastore
-	table            *dropbox.Table
-	datastoreMutex   sync.Mutex // lock this when using the datastore
-	datastoreErr     error      // pending errors on the datastore
+	db             *dropbox.Dropbox // the connection to the dropbox server
+	root           string           // the path we are working on
+	slashRoot      string           // root with "/" prefix, lowercase
+	slashRootSlash string           // root with "/" prefix and postfix, lowercase
 }
 
 // FsObjectDropbox describes a dropbox object
 type FsObjectDropbox struct {
-	dropbox *FsDropbox // what this object is part of
-	remote  string     // The remote path
-	md5sum  string     // md5sum of the object
-	bytes   int64      // size of the object
-	modTime time.Time  // time it was last modified
+	dropbox     *FsDropbox // what this object is part of
+	remote      string     // The remote path
+	bytes       int64      // size of the object
+	modTime     time.Time  // time it was last modified
+	hasMetadata bool       // metadata is valid
 }
 
 // ------------------------------------------------------------
@@ -170,12 +153,6 @@ func NewFs(name, root string) (fs.Fs, error) {
 	// Authorize the client
 	db.SetAccessToken(token)
 
-	// Make a db to store rclone metadata in
-	f.datastoreManager = db.NewDatastoreManager()
-
-	// Open the datastore in the background
-	go f.openDataStore()
-
 	// See if the root is actually an object
 	entry, err := f.db.Metadata(f.slashRoot, false, false, "", "", metadataLimit)
 	if err == nil && !entry.IsDir {
@@ -203,30 +180,6 @@ func (f *FsDropbox) setRoot(root string) {
 	if lowerCaseRoot != "" {
 		f.slashRootSlash += "/"
 	}
-}
-
-// Opens the datastore in f
-func (f *FsDropbox) openDataStore() {
-	f.datastoreMutex.Lock()
-	defer f.datastoreMutex.Unlock()
-	fs.Debug(f, "Open rclone datastore")
-	// Open the rclone datastore
-	var err error
-	f.datastore, err = f.datastoreManager.OpenDatastore(datastoreName)
-	if err != nil {
-		fs.Log(f, "Failed to open datastore: %v", err)
-		f.datastoreErr = err
-		return
-	}
-
-	// Get the table we are using
-	f.table, err = f.datastore.GetTable(tableName)
-	if err != nil {
-		fs.Log(f, "Failed to open datastore table: %v", err)
-		f.datastoreErr = err
-		return
-	}
-	fs.Debug(f, "Open rclone datastore finished")
 }
 
 // Return an FsObject from a path
@@ -295,13 +248,6 @@ func (f *FsDropbox) list(out fs.ObjectsChan) {
 				entry := deltaEntry.Entry
 				if entry == nil {
 					// This notifies of a deleted object
-					fs.Debug(f, "Deleting metadata for %q", deltaEntry.Path)
-					key := metadataKey(deltaEntry.Path) // Path is lowercased
-					err := f.deleteMetadata(key)
-					if err != nil {
-						fs.Debug(f, "Failed to delete metadata for %q", deltaEntry.Path)
-						// Don't accumulate Error here
-					}
 				} else {
 					if len(entry.Path) <= 1 || entry.Path[0] != '/' {
 						fs.Stats.Error()
@@ -452,8 +398,8 @@ func (f *FsDropbox) Rmdir() error {
 }
 
 // Return the precision
-func (fs *FsDropbox) Precision() time.Duration {
-	return time.Nanosecond
+func (f *FsDropbox) Precision() time.Duration {
+	return fs.ModTimeNotSupported
 }
 
 // Purge deletes all the files and the container
@@ -462,79 +408,9 @@ func (fs *FsDropbox) Precision() time.Duration {
 // deleting all the files quicker than just running Remove() on the
 // result of List()
 func (f *FsDropbox) Purge() error {
-	// Delete metadata first
-	var wg sync.WaitGroup
-	to_be_deleted := f.List()
-	wg.Add(fs.Config.Transfers)
-	for i := 0; i < fs.Config.Transfers; i++ {
-		go func() {
-			defer wg.Done()
-			for dst := range to_be_deleted {
-				o := dst.(*FsObjectDropbox)
-				o.deleteMetadata()
-			}
-		}()
-	}
-	wg.Wait()
-
 	// Let dropbox delete the filesystem tree
 	_, err := f.db.Delete(f.slashRoot)
 	return err
-}
-
-// Tries the transaction in fn then calls commit, repeating until retry limit
-//
-// Holds datastore mutex while in progress
-func (f *FsDropbox) transaction(fn func() error) error {
-	f.datastoreMutex.Lock()
-	defer f.datastoreMutex.Unlock()
-	if f.datastoreErr != nil {
-		return f.datastoreErr
-	}
-	var err error
-	for i := 1; i <= maxCommitRetries; i++ {
-		err = fn()
-		if err != nil {
-			return err
-		}
-
-		err = f.datastore.Commit()
-		if err == nil {
-			break
-		}
-		fs.Debug(f, "Retrying transaction %d/%d", i, maxCommitRetries)
-	}
-	if err != nil {
-		return fmt.Errorf("Failed to commit metadata changes: %s", err)
-	}
-	return nil
-}
-
-// Deletes the medadata associated with this key
-func (f *FsDropbox) deleteMetadata(key string) error {
-	return f.transaction(func() error {
-		record, err := f.table.Get(key)
-		if err != nil {
-			return fmt.Errorf("Couldn't get record: %s", err)
-		}
-		if record == nil {
-			return nil
-		}
-		record.DeleteRecord()
-		return nil
-	})
-}
-
-// Reads the record attached to key
-//
-// Holds datastore mutex while in progress
-func (f *FsDropbox) readRecord(key string) (*dropbox.Record, error) {
-	f.datastoreMutex.Lock()
-	defer f.datastoreMutex.Unlock()
-	if f.datastoreErr != nil {
-		return nil, f.datastoreErr
-	}
-	return f.table.Get(key)
 }
 
 // ------------------------------------------------------------
@@ -558,33 +434,8 @@ func (o *FsObjectDropbox) Remote() string {
 }
 
 // Md5sum returns the Md5sum of an object returning a lowercase hex string
-//
-// FIXME has to download the file!
 func (o *FsObjectDropbox) Md5sum() (string, error) {
-	if o.md5sum != "" {
-		return o.md5sum, nil
-	}
-	err := o.readMetaData()
-	if err != nil {
-		fs.Log(o, "Failed to read metadata: %s", err)
-		return "", fmt.Errorf("Failed to read metadata: %s", err)
-
-	}
-
-	// For pre-existing files which have no md5sum can read it and set it?
-
-	// in, err := o.Open()
-	// if err != nil {
-	// 	return "", err
-	// }
-	// defer in.Close()
-	// hash := md5.New()
-	// _, err = io.Copy(hash, in)
-	// if err != nil {
-	// 	return "", err
-	// }
-	// o.md5sum = fmt.Sprintf("%x", hash.Sum(nil))
-	return o.md5sum, nil
+	return "", nil
 }
 
 // Size returns the size of an object in bytes
@@ -598,6 +449,7 @@ func (o *FsObjectDropbox) Size() int64 {
 func (o *FsObjectDropbox) setMetadataFromEntry(info *dropbox.Entry) {
 	o.bytes = info.Bytes
 	o.modTime = time.Time(info.ClientMtime)
+	o.hasMetadata = true
 }
 
 // Reads the entry from dropbox
@@ -645,55 +497,9 @@ func (o *FsObjectDropbox) metadataKey() string {
 
 // readMetaData gets the info if it hasn't already been fetched
 func (o *FsObjectDropbox) readMetaData() (err error) {
-	if o.md5sum != "" {
+	if o.hasMetadata {
 		return nil
 	}
-
-	// fs.Debug(o, "Reading metadata from datastore")
-	record, err := o.dropbox.readRecord(o.metadataKey())
-	if err != nil {
-		fs.Debug(o, "Couldn't read metadata: %s", err)
-		record = nil
-	}
-
-	if record != nil {
-		// Read md5sum
-		md5sumInterface, ok, err := record.Get(md5sumField)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			fs.Debug(o, "Couldn't find md5sum in record")
-		} else {
-			md5sum, ok := md5sumInterface.(string)
-			if !ok {
-				fs.Debug(o, "md5sum not a string")
-			} else {
-				o.md5sum = md5sum
-			}
-		}
-
-		// read mtime
-		mtimeInterface, ok, err := record.Get(mtimeField)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			fs.Debug(o, "Couldn't find mtime in record")
-		} else {
-			mtime, ok := mtimeInterface.(string)
-			if !ok {
-				fs.Debug(o, "mtime not a string")
-			} else {
-				modTime, err := time.Parse(timeFormatIn, mtime)
-				if err != nil {
-					return err
-				}
-				o.modTime = modTime
-			}
-		}
-	}
-
 	// Last resort
 	return o.readEntryAndSetMetadata()
 }
@@ -711,59 +517,12 @@ func (o *FsObjectDropbox) ModTime() time.Time {
 	return o.modTime
 }
 
-// Sets the modification time of the local fs object into the record
-// FIXME if we don't set md5sum what will that do?
-func (o *FsObjectDropbox) setModTimeAndMd5sum(modTime time.Time, md5sum string) error {
-	key := o.metadataKey()
-	// fs.Debug(o, "Writing metadata to datastore")
-	return o.dropbox.transaction(func() error {
-		record, err := o.dropbox.table.GetOrInsert(key)
-		if err != nil {
-			return fmt.Errorf("Couldn't read record: %s", err)
-		}
-
-		if md5sum != "" {
-			err = record.Set(md5sumField, md5sum)
-			if err != nil {
-				return fmt.Errorf("Couldn't set md5sum record: %s", err)
-			}
-			o.md5sum = md5sum
-		}
-
-		if !modTime.IsZero() {
-			mtime := modTime.Format(timeFormatOut)
-			err := record.Set(mtimeField, mtime)
-			if err != nil {
-				return fmt.Errorf("Couldn't set mtime record: %s", err)
-			}
-			o.modTime = modTime
-		}
-
-		return nil
-	})
-}
-
-// Deletes the medadata associated with this file
-//
-// It logs any errors
-func (o *FsObjectDropbox) deleteMetadata() {
-	fs.Debug(o, "Deleting metadata from datastore")
-	err := o.dropbox.deleteMetadata(o.metadataKey())
-	if err != nil {
-		fs.ErrorLog(o, "Error deleting metadata: %v", err)
-		fs.Stats.Error()
-	}
-}
-
 // Sets the modification time of the local fs object
 //
 // Commits the datastore
 func (o *FsObjectDropbox) SetModTime(modTime time.Time) {
-	err := o.setModTimeAndMd5sum(modTime, "")
-	if err != nil {
-		fs.Stats.Error()
-		fs.ErrorLog(o, err.Error())
-	}
+	// FIXME not implemented
+	return
 }
 
 // Is this object storable
@@ -783,22 +542,16 @@ func (o *FsObjectDropbox) Open() (in io.ReadCloser, err error) {
 //
 // The new object may have been created if an error is returned
 func (o *FsObjectDropbox) Update(in io.Reader, modTime time.Time, size int64) error {
-	// Calculate md5sum as we upload it
-	hash := md5.New()
-	rc := &readCloser{in: io.TeeReader(in, hash)}
-	entry, err := o.dropbox.db.UploadByChunk(rc, uploadChunkSize, o.remotePath(), true, "")
+	entry, err := o.dropbox.db.UploadByChunk(ioutil.NopCloser(in), uploadChunkSize, o.remotePath(), true, "")
 	if err != nil {
 		return fmt.Errorf("Upload failed: %s", err)
 	}
 	o.setMetadataFromEntry(entry)
-
-	md5sum := fmt.Sprintf("%x", hash.Sum(nil))
-	return o.setModTimeAndMd5sum(modTime, md5sum)
+	return nil
 }
 
 // Remove an object
 func (o *FsObjectDropbox) Remove() error {
-	o.deleteMetadata()
 	_, err := o.dropbox.db.Delete(o.remotePath())
 	return err
 }

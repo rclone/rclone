@@ -30,10 +30,19 @@ type Item struct {
 	Size    int64
 }
 
+// Checks the times are equal within the precision, returns the delta and a flag
+func CheckTimeEqualWithPrecision(t0, t1 time.Time, precision time.Duration) (time.Duration, bool) {
+	dt := t0.Sub(t1)
+	if dt >= precision || dt <= -precision {
+		return dt, false
+	}
+	return dt, true
+}
+
 // check the mod time to the given precision
 func (i *Item) CheckModTime(t *testing.T, obj fs.Object, modTime time.Time, precision time.Duration) {
-	dt := modTime.Sub(i.ModTime)
-	if dt >= precision || dt <= -precision {
+	dt, ok := CheckTimeEqualWithPrecision(modTime, i.ModTime, precision)
+	if !ok {
 		t.Errorf("%s: Modification time difference too big |%s| > %s (%s vs %s) (precision %s)", obj.Remote(), dt, precision, modTime, i.ModTime, precision)
 	}
 }
@@ -47,7 +56,7 @@ func (i *Item) Check(t *testing.T, obj fs.Object, precision time.Duration) {
 	if err != nil {
 		t.Fatalf("Failed to read md5sum for %q: %v", obj.Remote(), err)
 	}
-	if i.Md5sum != Md5sum {
+	if !fs.Md5sumsEqual(i.Md5sum, Md5sum) {
 		t.Errorf("%s: Md5sum incorrect - expecting %q got %q", obj.Remote(), i.Md5sum, Md5sum)
 	}
 	if i.Size != obj.Size() {

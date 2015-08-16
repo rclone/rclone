@@ -14,6 +14,8 @@ import (
 const (
 	// User agent for Fs which can set it
 	UserAgent = "rclone/" + Version
+	// Very large precision value to show mod time isn't supported
+	ModTimeNotSupported = 100 * 365 * 24 * time.Hour
 )
 
 // Globals
@@ -107,9 +109,11 @@ type Object interface {
 	Remote() string
 
 	// Md5sum returns the md5 checksum of the file
+	// If no Md5sum is available it returns ""
 	Md5sum() (string, error)
 
 	// ModTime returns the modification date of the file
+	// It should return a best guess if one isn't available
 	ModTime() time.Time
 
 	// SetModTime sets the metadata on the object to set the modification date

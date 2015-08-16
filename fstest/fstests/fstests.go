@@ -258,6 +258,9 @@ func TestFsRmdirFull(t *testing.T) {
 func TestFsPrecision(t *testing.T) {
 	skipIfNotOk(t)
 	precision := remote.Precision()
+	if precision == fs.ModTimeNotSupported {
+		return
+	}
 	if precision > time.Second || precision < 0 {
 		t.Fatalf("Precision out of range %v", precision)
 	}
@@ -301,7 +304,7 @@ func TestObjectMd5sum(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error in Md5sum: %v", err)
 	}
-	if Md5sum != file1.Md5sum {
+	if !fs.Md5sumsEqual(Md5sum, file1.Md5sum) {
 		t.Errorf("Md5sum is wrong %v != %v", Md5sum, file1.Md5sum)
 	}
 }
@@ -351,7 +354,7 @@ func TestObjectOpen(t *testing.T) {
 		t.Fatalf("in.Close() return error: %v", err)
 	}
 	Md5sum := hex.EncodeToString(hash.Sum(nil))
-	if Md5sum != file1.Md5sum {
+	if !fs.Md5sumsEqual(Md5sum, file1.Md5sum) {
 		t.Errorf("Md5sum is wrong %v != %v", Md5sum, file1.Md5sum)
 	}
 }

@@ -398,14 +398,37 @@ func TestLsLong(t *testing.T) {
 		t.Fatalf("List failed: %v", err)
 	}
 	res := buf.String()
-	timeFormat := "2006-01-02 15:04:05"
-	m1 := regexp.MustCompile(`(?m)^        0 ` + t2.Local().Format(timeFormat) + `\.\d{9} empty space$`)
-	if !m1.MatchString(res) {
-		t.Errorf("empty space missing: %q", res)
+	lines := strings.Split(strings.Trim(res, "\n"), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("Wrong number of lines in list: %q", lines)
 	}
-	m2 := regexp.MustCompile(`(?m)^       60 ` + t1.Local().Format(timeFormat) + `\.\d{9} potato2$`)
-	if !m2.MatchString(res) {
+
+	timeFormat := "2006-01-02 15:04:05.000000000"
+	precision := fremote.Precision()
+	checkTime := func(m, filename string, expected time.Time) {
+		modTime, err := time.Parse(timeFormat, m)
+		if err != nil {
+			t.Errorf("Error parsing %q: %v", m, err)
+		} else {
+			dt, ok := fstest.CheckTimeEqualWithPrecision(expected, modTime, precision)
+			if !ok {
+				t.Errorf("%s: Modification time difference too big |%s| > %s (%s vs %s) (precision %s)", filename, dt, precision, modTime, expected, precision)
+			}
+		}
+	}
+
+	m1 := regexp.MustCompile(`(?m)^        0 (\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{9}) empty space$`)
+	if ms := m1.FindStringSubmatch(res); ms == nil {
+		t.Errorf("empty space missing: %q", res)
+	} else {
+		checkTime(ms[1], "empty space", t2.Local())
+	}
+
+	m2 := regexp.MustCompile(`(?m)^       60 (\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{9}) potato2$`)
+	if ms := m2.FindStringSubmatch(res); ms == nil {
 		t.Errorf("potato2 missing: %q", res)
+	} else {
+		checkTime(ms[1], "potato2", t1.Local())
 	}
 }
 
@@ -416,10 +439,12 @@ func TestMd5sum(t *testing.T) {
 		t.Fatalf("List failed: %v", err)
 	}
 	res := buf.String()
-	if !strings.Contains(res, "d41d8cd98f00b204e9800998ecf8427e  empty space\n") {
+	if !strings.Contains(res, "d41d8cd98f00b204e9800998ecf8427e  empty space\n") &&
+		!strings.Contains(res, "                                  empty space\n") {
 		t.Errorf("empty space missing: %q", res)
 	}
-	if !strings.Contains(res, "6548b156ea68a4e003e786df99eee76  potato2\n") {
+	if !strings.Contains(res, "6548b156ea68a4e003e786df99eee76  potato2\n") &&
+		!strings.Contains(res, "                                  potato2\n") {
 		t.Errorf("potato2 missing: %q", res)
 	}
 }

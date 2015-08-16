@@ -71,22 +71,12 @@ To copy a local directory to a dropbox directory called backup
 
     rclone copy /home/source remote:backup
 
-### Modified time ###
+### Modified time and MD5SUMs ###
 
-Md5sums and timestamps in RFC3339 format accurate to 1ns are stored in
-a Dropbox datastore called "rclone".
+Dropbox doesn't have the capability of storing modification times or
+MD5SUMs so syncs will effectively have the `--size-only` flag set.
 
 ### Limitations ###
 
-Dropbox datastores are limited to 100,000 rows so this is the maximum
-number of files rclone can manage on Dropbox.
-
 Note that Dropbox is case sensitive so you can't have a file called
 "Hello.doc" and one called "hello.doc".
-
-If you use the desktop sync tool and rclone on the same files then the
-md5sums and modification times may get out of sync as far as rclone is
-concerned.  This will cause `Corrupted on transfer: md5sums differ`
-error message when fetching files.  You can work around this by using
-the `--size-only` flag to ignore the md5sums and modification times
-for these files.

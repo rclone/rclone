@@ -27,6 +27,14 @@ func CalculateModifyWindow(fs ...Fs) {
 	Debug(fs[0], "Modify window is %s\n", Config.ModifyWindow)
 }
 
+// Md5sumsEqual checks to see if src == dst, but ignores empty strings
+func Md5sumsEqual(src, dst string) bool {
+	if src == "" || dst == "" {
+		return true
+	}
+	return src == dst
+}
+
 // Check the two files to see if the MD5sums are the same
 //
 // May return an error which will already have been logged
@@ -47,7 +55,7 @@ func CheckMd5sums(src, dst Object) (bool, error) {
 	}
 	// Debug("Src MD5 %s", srcMd5)
 	// Debug("Dst MD5 %s", obj.Hash)
-	return srcMd5 == dstMd5, nil
+	return Md5sumsEqual(srcMd5, dstMd5), nil
 }
 
 // Checks to see if the src and dst objects are equal by looking at
@@ -203,7 +211,7 @@ tryAgain:
 			if md5sumErr != nil {
 				Stats.Error()
 				ErrorLog(dst, "Failed to read md5sum: %s", md5sumErr)
-			} else if dstMd5sum != "" && srcMd5sum != dstMd5sum {
+			} else if !Md5sumsEqual(srcMd5sum, dstMd5sum) {
 				Stats.Error()
 				err = fmt.Errorf("Corrupted on transfer: md5sums differ %q vs %q", srcMd5sum, dstMd5sum)
 				ErrorLog(dst, "%s", err)
@@ -525,7 +533,7 @@ func Md5sum(f Fs, w io.Writer) error {
 		Stats.DoneChecking(o)
 		if err != nil {
 			Debug(o, "Failed to read MD5: %v", err)
-			md5sum = "UNKNOWN"
+			md5sum = "ERROR"
 		}
 		syncFprintf(w, "%32s  %s\n", md5sum, o.Remote())
 	})
