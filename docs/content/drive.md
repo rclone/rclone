@@ -85,6 +85,12 @@ was
   * They are deleted after 30 days or 100 revisions (whatever comes first).
   * They do not count towards a user storage quota.
 
+### Deleting files ###
+
+By default rclone will delete files permanently when requested.  If
+sending them to the trash is required instead then use the
+`--drive-use-trash` flag.
+
 ### Limitations ###
 
 Drive has quite a lot of rate limiting.  This causes rclone to be

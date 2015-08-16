@@ -39,6 +39,7 @@ const (
 var (
 	// Flags
 	driveFullList = pflag.BoolP("drive-full-list", "", true, "Use a full listing for directory list. More data but usually quicker.")
+	driveUseTrash = pflag.BoolP("drive-use-trash", "", false, "Send files to the trash instead of deleting permanently.")
 	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
 	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
 	chunkSize         = fs.SizeSuffix(256 * 1024)
@@ -803,7 +804,11 @@ func (f *FsDrive) Rmdir() error {
 	// Delete the directory if it isn't the root
 	if f.root != "" {
 		f.call(&err, func() {
-			err = f.svc.Files.Delete(f.rootId).Do()
+			if *driveUseTrash {
+				_, err = f.svc.Files.Trash(f.rootId).Do()
+			} else {
+				err = f.svc.Files.Delete(f.rootId).Do()
+			}
 		})
 		if err != nil {
 			return err
@@ -832,7 +837,11 @@ func (f *FsDrive) Purge() error {
 		return err
 	}
 	f.call(&err, func() {
-		err = f.svc.Files.Delete(f.rootId).Do()
+		if *driveUseTrash {
+			_, err = f.svc.Files.Trash(f.rootId).Do()
+		} else {
+			err = f.svc.Files.Delete(f.rootId).Do()
+		}
 	})
 	f.resetRoot()
 	if err != nil {
@@ -1023,7 +1032,11 @@ func (o *FsObjectDrive) Update(in io.Reader, modTime time.Time, size int64) erro
 func (o *FsObjectDrive) Remove() error {
 	var err error
 	o.drive.call(&err, func() {
-		err = o.drive.svc.Files.Delete(o.id).Do()
+		if *driveUseTrash {
+			_, err = o.drive.svc.Files.Trash(o.id).Do()
+		} else {
+			err = o.drive.svc.Files.Delete(o.id).Do()
+		}
 	})
 	return err
 }
