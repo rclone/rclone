@@ -502,7 +502,7 @@ func (o *FsObjectS3) Md5sum() (string, error) {
 	etag := strings.Trim(strings.ToLower(o.etag), `"`)
 	// Check the etag is a valid md5sum
 	if !matchMd5.MatchString(etag) {
-		fs.Debug(o, "Invalid md5sum (probably multipart uploaded) - ignoring: %q", etag)
+		// fs.Debug(o, "Invalid md5sum (probably multipart uploaded) - ignoring: %q", etag)
 		return "", nil
 	}
 	return etag, nil
