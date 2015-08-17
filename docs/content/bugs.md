@@ -21,6 +21,9 @@ about directories.
 You can work round this to some extent with the`purge` command which
 will delete everything under the path, **inluding** empty directories.
 
+This may be fixed at some point in
+[Issue #100](https://github.com/ncw/rclone/issues/100)
+
 ### Directory timestamps aren't preserved ##
 
 For the same reason as the above, rclone doesn't have a concept of a

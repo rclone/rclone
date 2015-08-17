@@ -24,7 +24,7 @@ The syncs would be incremental (on a file by file basis).
 
 Eg
 
-   rclone sync drive:Folder s3:bucket
+    rclone sync drive:Folder s3:bucket
 
 
 ### Using rclone from multiple locations at the same time ###
