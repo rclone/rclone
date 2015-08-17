@@ -1,12 +1,34 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2015-06-14"
+date: "2015-08-17"
 ---
 
 Changelog
 ---------
 
+  * v1.18 - 2015-08-17
+    * drive
+      * Add `--drive-use-trash` flag so rclone trashes instead of deletes
+      * Add "Forbidden to download" message for files with no downloadURL
+    * dropbox
+      * Remove datastore
+        * This was deprecated and it caused a lot of problems
+        * Modification times and MD5SUMs no longer stored
+      * Fix uploading files > 2GB
+    * s3
+      * use official AWS SDK from github.com/aws/aws-sdk-go
+      * **NB** will most likely require you to delete and recreate remote
+      * enable multipart upload which enables files > 5GB
+      * tested with Ceph / RadosGW / S3 emulation
+      * many thanks to Sam Liston and Brian Haymore at the [Utah
+        Center for High Performance Computing](https://www.chpc.utah.edu/) for a Ceph test account
+    * misc
+      * Show errors when reading the config file
+      * Do not print stats in quiet mode - thanks Leonid Shalupov
+      * Add FAQ
+      * Fix created directories not obeying umask
+      * Linux installation instructions - thanks Shimon Doodkin
   * v1.17 - 2015-06-14
     * dropbox: fix case insensitivity issues - thanks Leonid Shalupov
   * v1.16 - 2015-06-09

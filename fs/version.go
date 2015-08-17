@@ -1,3 +1,3 @@
 package fs
 
-const Version = "v1.17"
+const Version = "v1.18"
