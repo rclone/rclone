@@ -17,21 +17,24 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"path"
 	"regexp"
 	"strings"
 	"time"
 
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/storage/v1"
 
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/googleauth"
+	"github.com/ncw/rclone/oauthutil"
 )
 
 const (
-	rcloneClientId     = "202264815644.apps.googleusercontent.com"
+	rcloneClientID     = "202264815644.apps.googleusercontent.com"
 	rcloneClientSecret = "X4Z3ca8xfWDb1Voo-F9a7ZxJ"
 	timeFormatIn       = time.RFC3339
 	timeFormatOut      = "2006-01-02T15:04:05.000000000Z07:00"
@@ -41,10 +44,12 @@ const (
 
 var (
 	// Description of how to auth for this app
-	storageAuth = &googleauth.Auth{
-		Scope:               storage.DevstorageFullControlScope,
-		DefaultClientId:     rcloneClientId,
-		DefaultClientSecret: rcloneClientSecret,
+	storageConfig = &oauth2.Config{
+		Scopes:       []string{storage.DevstorageFullControlScope},
+		Endpoint:     google.Endpoint,
+		ClientID:     rcloneClientID,
+		ClientSecret: rcloneClientSecret,
+		RedirectURL:  oauthutil.TitleBarRedirectURL,
 	}
 )
 
@@ -54,7 +59,10 @@ func init() {
 		Name:  "google cloud storage",
 		NewFs: NewFs,
 		Config: func(name string) {
-			storageAuth.Config(name)
+			err := oauthutil.Config(name, storageConfig)
+			if err != nil {
+				log.Fatalf("Failed to configure token: %v", err)
+			}
 		},
 		Options: []fs.Option{{
 			Name: "client_id",
@@ -166,9 +174,9 @@ func parsePath(path string) (bucket, directory string, err error) {
 
 // NewFs contstructs an FsStorage from the path, bucket:path
 func NewFs(name, root string) (fs.Fs, error) {
-	t, err := storageAuth.NewTransport(name)
+	oAuthClient, err := oauthutil.NewClient(name, storageConfig)
 	if err != nil {
-		return nil, err
+		log.Fatalf("Failed to configure Google Cloud Storage: %v", err)
 	}
 
 	bucket, directory, err := parsePath(root)
@@ -192,7 +200,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 
 	// Create a new authorized Drive client.
-	f.client = t.Client()
+	f.client = oAuthClient
 	f.svc, err = storage.New(f.client)
 	if err != nil {
 		return nil, fmt.Errorf("Couldn't create Google Cloud Storage client: %s", err)

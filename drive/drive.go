@@ -10,22 +10,25 @@ package drive
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v2"
 	"google.golang.org/api/googleapi"
 
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/googleauth"
+	"github.com/ncw/rclone/oauthutil"
 	"github.com/ogier/pflag"
 )
 
 // Constants
 const (
-	rcloneClientId     = "202264815644.apps.googleusercontent.com"
+	rcloneClientID     = "202264815644.apps.googleusercontent.com"
 	rcloneClientSecret = "X4Z3ca8xfWDb1Voo-F9a7ZxJ"
 	driveFolderType    = "application/vnd.google-apps.folder"
 	timeFormatIn       = time.RFC3339
@@ -45,10 +48,12 @@ var (
 	chunkSize         = fs.SizeSuffix(256 * 1024)
 	driveUploadCutoff = chunkSize
 	// Description of how to auth for this app
-	driveAuth = &googleauth.Auth{
-		Scope:               "https://www.googleapis.com/auth/drive",
-		DefaultClientId:     rcloneClientId,
-		DefaultClientSecret: rcloneClientSecret,
+	driveConfig = &oauth2.Config{
+		Scopes:       []string{"https://www.googleapis.com/auth/drive"},
+		Endpoint:     google.Endpoint,
+		ClientID:     rcloneClientID,
+		ClientSecret: rcloneClientSecret,
+		RedirectURL:  oauthutil.TitleBarRedirectURL,
 	}
 )
 
@@ -58,7 +63,10 @@ func init() {
 		Name:  "drive",
 		NewFs: NewFs,
 		Config: func(name string) {
-			driveAuth.Config(name)
+			err := oauthutil.Config(name, driveConfig)
+			if err != nil {
+				log.Fatalf("Failed to configure token: %v", err)
+			}
 		},
 		Options: []fs.Option{{
 			Name: "client_id",
@@ -327,9 +335,9 @@ func NewFs(name, path string) (fs.Fs, error) {
 		return nil, fmt.Errorf("drive: chunk size can't be less than 256k - was %v", chunkSize)
 	}
 
-	t, err := driveAuth.NewTransport(name)
+	oAuthClient, err := oauthutil.NewClient(name, driveConfig)
 	if err != nil {
-		return nil, err
+		log.Fatalf("Failed to configure drive: %v", err)
 	}
 
 	root, err := parseDrivePath(path)
@@ -349,7 +357,7 @@ func NewFs(name, path string) (fs.Fs, error) {
 	f.pacer <- struct{}{}
 
 	// Create a new authorized Drive client.
-	f.client = t.Client()
+	f.client = oAuthClient
 	f.svc, err = drive.New(f.client)
 	if err != nil {
 		return nil, fmt.Errorf("Couldn't create Drive client: %s", err)
