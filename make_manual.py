@@ -33,6 +33,7 @@ docs = [
 # Docs which aren't made into outfile
 ignore_docs = [
     "downloads.md",
+    "privacy.md",
 ]
 
 def read_doc(doc):
