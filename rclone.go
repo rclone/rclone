@@ -31,16 +31,18 @@ var (
 	statsInterval = pflag.DurationP("stats", "", time.Minute*1, "Interval to print stats (0 to disable)")
 	version       = pflag.BoolP("version", "V", false, "Print the version number")
 	logFile       = pflag.StringP("log-file", "", "", "Log everything to this file")
+	retries       = pflag.IntP("retries", "", 3, "Retry operations this many times if they fail")
 )
 
 type Command struct {
 	Name     string
 	Help     string
 	ArgsHelp string
-	Run      func(fdst, fsrc fs.Fs)
+	Run      func(fdst, fsrc fs.Fs) error
 	MinArgs  int
 	MaxArgs  int
 	NoStats  bool
+	Retry    bool
 }
 
 // checkArgs checks there are enough arguments and prints a message if not
@@ -64,14 +66,12 @@ var Commands = []Command{
         Copy the source to the destination.  Doesn't transfer
         unchanged files, testing by size and modification time or
         MD5SUM.  Doesn't delete files from the destination.`,
-		Run: func(fdst, fsrc fs.Fs) {
-			err := fs.Sync(fdst, fsrc, false)
-			if err != nil {
-				log.Fatalf("Failed to copy: %v", err)
-			}
+		Run: func(fdst, fsrc fs.Fs) error {
+			return fs.Sync(fdst, fsrc, false)
 		},
 		MinArgs: 2,
 		MaxArgs: 2,
+		Retry:   true,
 	},
 	{
 		Name:     "sync",
@@ -82,25 +82,20 @@ var Commands = []Command{
         modification time or MD5SUM.  Destination is updated to match
         source, including deleting files if necessary.  Since this can
         cause data loss, test first with the --dry-run flag.`,
-		Run: func(fdst, fsrc fs.Fs) {
-			err := fs.Sync(fdst, fsrc, true)
-			if err != nil {
-				log.Fatalf("Failed to sync: %v", err)
-			}
+		Run: func(fdst, fsrc fs.Fs) error {
+			return fs.Sync(fdst, fsrc, true)
 		},
 		MinArgs: 2,
 		MaxArgs: 2,
+		Retry:   true,
 	},
 	{
 		Name:     "ls",
 		ArgsHelp: "[remote:path]",
 		Help: `
         List all the objects in the the path with size and path.`,
-		Run: func(fdst, fsrc fs.Fs) {
-			err := fs.List(fdst, os.Stdout)
-			if err != nil {
-				log.Fatalf("Failed to list: %v", err)
-			}
+		Run: func(fdst, fsrc fs.Fs) error {
+			return fs.List(fdst, os.Stdout)
 		},
 		MinArgs: 1,
 		MaxArgs: 1,
@@ -110,11 +105,8 @@ var Commands = []Command{
 		ArgsHelp: "[remote:path]",
 		Help: `
         List all directories/containers/buckets in the the path.`,
-		Run: func(fdst, fsrc fs.Fs) {
-			err := fs.ListDir(fdst, os.Stdout)
-			if err != nil {
-				log.Fatalf("Failed to listdir: %v", err)
-			}
+		Run: func(fdst, fsrc fs.Fs) error {
+			return fs.ListDir(fdst, os.Stdout)
 		},
 		MinArgs: 1,
 		MaxArgs: 1,
@@ -125,11 +117,8 @@ var Commands = []Command{
 		Help: `
         List all the objects in the the path with modification time,
         size and path.`,
-		Run: func(fdst, fsrc fs.Fs) {
-			err := fs.ListLong(fdst, os.Stdout)
-			if err != nil {
-				log.Fatalf("Failed to list long: %v", err)
-			}
+		Run: func(fdst, fsrc fs.Fs) error {
+			return fs.ListLong(fdst, os.Stdout)
 		},
 		MinArgs: 1,
 		MaxArgs: 1,
@@ -140,11 +129,8 @@ var Commands = []Command{
 		Help: `
         Produces an md5sum file for all the objects in the path.  This
         is in the same format as the standard md5sum tool produces.`,
-		Run: func(fdst, fsrc fs.Fs) {
-			err := fs.Md5sum(fdst, os.Stdout)
-			if err != nil {
-				log.Fatalf("Failed to list: %v", err)
-			}
+		Run: func(fdst, fsrc fs.Fs) error {
+			return fs.Md5sum(fdst, os.Stdout)
 		},
 		MinArgs: 1,
 		MaxArgs: 1,
@@ -154,14 +140,12 @@ var Commands = []Command{
 		ArgsHelp: "remote:path",
 		Help: `
         Make the path if it doesn't already exist`,
-		Run: func(fdst, fsrc fs.Fs) {
-			err := fs.Mkdir(fdst)
-			if err != nil {
-				log.Fatalf("Failed to mkdir: %v", err)
-			}
+		Run: func(fdst, fsrc fs.Fs) error {
+			return fs.Mkdir(fdst)
 		},
 		MinArgs: 1,
 		MaxArgs: 1,
+		Retry:   true,
 	},
 	{
 		Name:     "rmdir",
@@ -169,28 +153,24 @@ var Commands = []Command{
 		Help: `
         Remove the path.  Note that you can't remove a path with
         objects in it, use purge for that.`,
-		Run: func(fdst, fsrc fs.Fs) {
-			err := fs.Rmdir(fdst)
-			if err != nil {
-				log.Fatalf("Failed to rmdir: %v", err)
-			}
+		Run: func(fdst, fsrc fs.Fs) error {
+			return fs.Rmdir(fdst)
 		},
 		MinArgs: 1,
 		MaxArgs: 1,
+		Retry:   true,
 	},
 	{
 		Name:     "purge",
 		ArgsHelp: "remote:path",
 		Help: `
         Remove the path and all of its contents.`,
-		Run: func(fdst, fsrc fs.Fs) {
-			err := fs.Purge(fdst)
-			if err != nil {
-				log.Fatalf("Failed to purge: %v", err)
-			}
+		Run: func(fdst, fsrc fs.Fs) error {
+			return fs.Purge(fdst)
 		},
 		MinArgs: 1,
 		MaxArgs: 1,
+		Retry:   true,
 	},
 	{
 		Name:     "check",
@@ -199,11 +179,8 @@ var Commands = []Command{
         Checks the files in the source and destination match.  It
         compares sizes and MD5SUMs and prints a report of files which
         don't match.  It doesn't alter the source or destination.`,
-		Run: func(fdst, fsrc fs.Fs) {
-			err := fs.Check(fdst, fsrc)
-			if err != nil {
-				log.Fatalf("Failed to check: %v", err)
-			}
+		Run: func(fdst, fsrc fs.Fs) error {
+			return fs.Check(fdst, fsrc)
 		},
 		MinArgs: 2,
 		MaxArgs: 2,
@@ -212,8 +189,9 @@ var Commands = []Command{
 		Name: "config",
 		Help: `
         Enter an interactive configuration session.`,
-		Run: func(fdst, fsrc fs.Fs) {
+		Run: func(fdst, fsrc fs.Fs) error {
 			fs.EditConfig()
+			return nil
 		},
 		NoStats: true,
 	},
@@ -376,7 +354,24 @@ func main() {
 
 	// Run the actual command
 	if command.Run != nil {
-		command.Run(fdst, fsrc)
+		var err error
+		for try := 1; try <= *retries; try++ {
+			err = command.Run(fdst, fsrc)
+			if !command.Retry || (err == nil && !fs.Stats.Errored()) {
+				break
+			}
+			if err != nil {
+				fs.Log(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, fs.Stats.GetErrors(), err)
+			} else {
+				fs.Log(nil, "Attempt %d/%d failed with %d errors", try, *retries, fs.Stats.GetErrors())
+			}
+			if try < *retries {
+				fs.Stats.ResetErrors()
+			}
+		}
+		if err != nil {
+			log.Fatalf("Failed to %s: %v", command.Name, err)
+		}
 		if !command.NoStats && (!fs.Config.Quiet || fs.Stats.Errored() || *statsInterval > 0) {
 			fmt.Fprintln(os.Stderr, fs.Stats)
 		}

@@ -134,6 +134,13 @@ func (s *StatsInfo) ResetCounters() {
 	s.transfers = 0
 }
 
+// ResetErrors sets the errors count to 0
+func (s *StatsInfo) ResetErrors() {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	s.errors = 0
+}
+
 // Errored returns whether there have been any errors
 func (s *StatsInfo) Errored() bool {
 	s.lock.RLock()
