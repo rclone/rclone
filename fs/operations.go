@@ -22,9 +22,13 @@ func CalculateModifyWindow(fs ...Fs) {
 			if precision > Config.ModifyWindow {
 				Config.ModifyWindow = precision
 			}
+			if precision == ModTimeNotSupported {
+				Debug(f, "Modify window not supported")
+				return
+			}
 		}
 	}
-	Debug(fs[0], "Modify window is %s\n", Config.ModifyWindow)
+	Debug(fs[0], "Modify window is %s", Config.ModifyWindow)
 }
 
 // Md5sumsEqual checks to see if src == dst, but ignores empty strings
@@ -37,25 +41,34 @@ func Md5sumsEqual(src, dst string) bool {
 
 // Check the two files to see if the MD5sums are the same
 //
+// Returns two bools, the first of which is equality and the second of
+// which is true if either of the MD5SUMs were unset.
+//
 // May return an error which will already have been logged
 //
-// If an error is returned it will return false
-func CheckMd5sums(src, dst Object) (bool, error) {
+// If an error is returned it will return equal as false
+func CheckMd5sums(src, dst Object) (equal bool, unset bool, err error) {
 	srcMd5, err := src.Md5sum()
 	if err != nil {
 		Stats.Error()
 		ErrorLog(src, "Failed to calculate src md5: %s", err)
-		return false, err
+		return false, false, err
+	}
+	if srcMd5 == "" {
+		return true, true, nil
 	}
 	dstMd5, err := dst.Md5sum()
 	if err != nil {
 		Stats.Error()
 		ErrorLog(dst, "Failed to calculate dst md5: %s", err)
-		return false, err
+		return false, false, err
+	}
+	if dstMd5 == "" {
+		return true, true, nil
 	}
 	// Debug("Src MD5 %s", srcMd5)
 	// Debug("Dst MD5 %s", obj.Hash)
-	return Md5sumsEqual(srcMd5, dstMd5), nil
+	return Md5sumsEqual(srcMd5, dstMd5), false, nil
 }
 
 // Checks to see if the src and dst objects are equal by looking at
@@ -87,6 +100,10 @@ func Equal(src, dst Object) bool {
 
 	var srcModTime time.Time
 	if !Config.CheckSum {
+		if Config.ModifyWindow == ModTimeNotSupported {
+			Debug(src, "Sizes identical")
+			return true
+		}
 		// Size the same so check the mtime
 		srcModTime = src.ModTime()
 		dstModTime := dst.ModTime()
@@ -102,7 +119,7 @@ func Equal(src, dst Object) bool {
 
 	// mtime is unreadable or different but size is the same so
 	// check the MD5SUM
-	same, _ := CheckMd5sums(src, dst)
+	same, md5unset, _ := CheckMd5sums(src, dst)
 	if !same {
 		Debug(src, "Md5sums differ")
 		return false
@@ -114,7 +131,11 @@ func Equal(src, dst Object) bool {
 		dst.SetModTime(srcModTime)
 	}
 
-	Debug(src, "Size and MD5SUM of src and dst objects identical")
+	if md5unset {
+		Debug(src, "Size of src and dst objects identical")
+	} else {
+		Debug(src, "Size and MD5SUM of src and dst objects identical")
+	}
 	return true
 }
 
@@ -444,7 +465,7 @@ func Check(fdst, fsrc Fs) error {
 					ErrorLog(src, "Sizes differ")
 					continue
 				}
-				same, err := CheckMd5sums(src, dst)
+				same, _, err := CheckMd5sums(src, dst)
 				Stats.DoneChecking(src)
 				if err != nil {
 					continue
