@@ -36,6 +36,7 @@ import (
 	"io/ioutil"
 	"log"
 	"path"
+	"regexp"
 	"strings"
 	"time"
 
@@ -50,6 +51,10 @@ const (
 	uploadChunkSize = 64 * 1024                    // chunk size for upload
 	metadataLimit   = dropbox.MetadataLimitDefault // max items to fetch at once
 )
+
+// A regexp matching path names for files Dropbox ignores
+// See https://www.dropbox.com/en/help/145 - Ignored files
+var ignoredFiles = regexp.MustCompile(`(?i)(^|/)(desktop\.ini|thumbs\.db|\.ds_store|icon\r|\.dropbox|\.dropbox.attr)$`)
 
 // Register with Fs
 func init() {
@@ -542,7 +547,12 @@ func (o *FsObjectDropbox) Open() (in io.ReadCloser, err error) {
 //
 // The new object may have been created if an error is returned
 func (o *FsObjectDropbox) Update(in io.Reader, modTime time.Time, size int64) error {
-	entry, err := o.dropbox.db.UploadByChunk(ioutil.NopCloser(in), uploadChunkSize, o.remotePath(), true, "")
+	remote := o.remotePath()
+	if ignoredFiles.MatchString(remote) {
+		fs.ErrorLog(o, "File name disallowed - not uploading")
+		return nil
+	}
+	entry, err := o.dropbox.db.UploadByChunk(ioutil.NopCloser(in), uploadChunkSize, remote, true, "")
 	if err != nil {
 		return fmt.Errorf("Upload failed: %s", err)
 	}

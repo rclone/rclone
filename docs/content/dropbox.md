@@ -80,3 +80,9 @@ MD5SUMs so syncs will effectively have the `--size-only` flag set.
 
 Note that Dropbox is case sensitive so you can't have a file called
 "Hello.doc" and one called "hello.doc".
+
+There are some file names such as `thumbs.db` which Dropbox can't
+store.  There is a full list of them in the ["Ignored Files" section
+of this document](https://www.dropbox.com/en/help/145).  Rclone will
+issue an error message `File name disallowed - not uploading` if it
+attempt to upload one of those file names, but the sync won't fail.
