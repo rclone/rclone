@@ -63,6 +63,9 @@ func Register(info *FsInfo) {
 
 // A Filesystem, describes the local filesystem and the remote object store
 type Fs interface {
+	// The name of the remote (as passed into NewFs)
+	Name() string
+
 	// String returns a description of the FS
 	String() string
 

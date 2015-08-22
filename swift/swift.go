@@ -58,6 +58,7 @@ func init() {
 
 // FsSwift represents a remote swift server
 type FsSwift struct {
+	name      string           // name of this remote
 	c         swift.Connection // the connection to the swift server
 	container string           // the container we are working on
 	root      string           // the path we are working on if any
@@ -74,6 +75,11 @@ type FsObjectSwift struct {
 }
 
 // ------------------------------------------------------------
+
+// The name of the remote (as passed into NewFs)
+func (f *FsSwift) Name() string {
+	return f.name
+}
 
 // String converts this FsSwift to a string
 func (f *FsSwift) String() string {
@@ -141,6 +147,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return nil, err
 	}
 	f := &FsSwift{
+		name:      name,
 		c:         *c,
 		container: container,
 		root:      directory,

@@ -128,6 +128,7 @@ const (
 
 // FsS3 represents a remote s3 server
 type FsS3 struct {
+	name               string // the name of the remote
 	c                  *s3.S3 // the connection to the s3 server
 	bucket             string // the bucket we are working on
 	perm               string // permissions for new buckets / objects
@@ -150,6 +151,11 @@ type FsObjectS3 struct {
 }
 
 // ------------------------------------------------------------
+
+// The name of the remote (as passed into NewFs)
+func (f *FsS3) Name() string {
+	return f.name
+}
 
 // String converts this FsS3 to a string
 func (f *FsS3) String() string {
@@ -235,6 +241,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return nil, err
 	}
 	f := &FsS3{
+		name:   name,
 		c:      c,
 		bucket: bucket,
 		// FIXME perm:   s3.Private, // FIXME need user to specify

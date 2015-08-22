@@ -74,6 +74,7 @@ func init() {
 
 // FsDrive represents a remote drive server
 type FsDrive struct {
+	name         string         // name of this remote
 	svc          *drive.Service // the connection to the drive server
 	root         string         // the path we are working on
 	client       *http.Client   // authorized client
@@ -145,6 +146,11 @@ func (m *dirCache) Flush() {
 }
 
 // ------------------------------------------------------------
+
+// The name of the remote (as passed into NewFs)
+func (f *FsDrive) Name() string {
+	return f.name
+}
 
 // String converts this FsDrive to a string
 func (f *FsDrive) String() string {
@@ -332,6 +338,7 @@ func NewFs(name, path string) (fs.Fs, error) {
 	}
 
 	f := &FsDrive{
+		name:      name,
 		root:      root,
 		dirCache:  newDirCache(),
 		pacer:     make(chan struct{}, 1),

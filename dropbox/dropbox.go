@@ -104,6 +104,7 @@ func configHelper(name string) {
 
 // FsDropbox represents a remote dropbox server
 type FsDropbox struct {
+	name           string           // name of this remote
 	db             *dropbox.Dropbox // the connection to the dropbox server
 	root           string           // the path we are working on
 	slashRoot      string           // root with "/" prefix, lowercase
@@ -120,6 +121,11 @@ type FsObjectDropbox struct {
 }
 
 // ------------------------------------------------------------
+
+// The name of the remote (as passed into NewFs)
+func (f *FsDropbox) Name() string {
+	return f.name
+}
 
 // String converts this FsDropbox to a string
 func (f *FsDropbox) String() string {
@@ -148,7 +154,8 @@ func newDropbox(name string) *dropbox.Dropbox {
 func NewFs(name, root string) (fs.Fs, error) {
 	db := newDropbox(name)
 	f := &FsDropbox{
-		db: db,
+		name: name,
+		db:   db,
 	}
 	f.setRoot(root)
 

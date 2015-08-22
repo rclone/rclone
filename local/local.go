@@ -33,6 +33,7 @@ func init() {
 
 // FsLocal represents a local filesystem rooted at root
 type FsLocal struct {
+	name        string              // the name of the remote
 	root        string              // The root directory
 	precisionOk sync.Once           // Whether we need to read the precision
 	precision   time.Duration       // precision of local filesystem
@@ -54,6 +55,7 @@ type FsObjectLocal struct {
 func NewFs(name, root string) (fs.Fs, error) {
 	root = filepath.ToSlash(path.Clean(root))
 	f := &FsLocal{
+		name:   name,
 		root:   root,
 		warned: make(map[string]struct{}),
 	}
@@ -68,6 +70,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return fs.NewLimited(f, obj), nil
 	}
 	return f, nil
+}
+
+// The name of the remote (as passed into NewFs)
+func (f *FsLocal) Name() string {
+	return f.name
 }
 
 // String converts this FsLocal to a string

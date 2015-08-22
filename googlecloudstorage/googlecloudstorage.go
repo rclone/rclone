@@ -112,6 +112,7 @@ func init() {
 
 // FsStorage represents a remote storage server
 type FsStorage struct {
+	name          string           // name of this remote
 	svc           *storage.Service // the connection to the storage server
 	client        *http.Client     // authorized client
 	bucket        string           // the bucket we are working on
@@ -134,6 +135,11 @@ type FsObjectStorage struct {
 }
 
 // ------------------------------------------------------------
+
+// The name of the remote (as passed into NewFs)
+func (f *FsStorage) Name() string {
+	return f.name
+}
 
 // String converts this FsStorage to a string
 func (f *FsStorage) String() string {
@@ -171,6 +177,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 
 	f := &FsStorage{
+		name:          name,
 		bucket:        bucket,
 		root:          directory,
 		projectNumber: fs.ConfigFile.MustValue(name, "project_number"),
