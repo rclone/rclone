@@ -108,6 +108,7 @@ func (is *Items) Done(t *testing.T) {
 // Checks the fs to see if it has the expected contents
 func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, precision time.Duration) {
 	is := NewItems(items)
+	oldErrors := fs.Stats.GetErrors()
 	for obj := range f.List() {
 		if obj == nil {
 			t.Errorf("Unexpected nil in List()")
@@ -116,6 +117,10 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, precision ti
 		is.Find(t, obj, precision)
 	}
 	is.Done(t)
+	// Don't notice an error when listing an empty directory
+	if len(items) == 0 && oldErrors == 0 && fs.Stats.GetErrors() == 1 {
+		fs.Stats.ResetErrors()
+	}
 }
 
 // Checks the fs to see if it has the expected contents

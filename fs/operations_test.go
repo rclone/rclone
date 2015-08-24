@@ -98,7 +98,7 @@ func TestCopyWithDryRun(t *testing.T) {
 	WriteFile("sub dir/hello world", "hello world", t1)
 
 	fs.Config.DryRun = true
-	err := fs.Sync(fremote, flocal, false)
+	err := fs.CopyDir(fremote, flocal)
 	fs.Config.DryRun = false
 	if err != nil {
 		t.Fatalf("Copy failed: %v", err)
@@ -114,7 +114,7 @@ func TestCopyWithDryRun(t *testing.T) {
 
 // Now without dry run
 func TestCopy(t *testing.T) {
-	err := fs.Sync(fremote, flocal, false)
+	err := fs.CopyDir(fremote, flocal)
 	if err != nil {
 		t.Fatalf("Copy failed: %v", err)
 	}
@@ -136,7 +136,7 @@ func TestServerSideCopy(t *testing.T) {
 	defer finaliseCopy()
 	t.Logf("Server side copy (if possible) %v -> %v", fremote, fremoteCopy)
 
-	err = fs.Sync(fremoteCopy, fremote, false)
+	err = fs.CopyDir(fremoteCopy, fremote)
 	if err != nil {
 		t.Fatalf("Server Side Copy failed: %v", err)
 	}
@@ -176,7 +176,7 @@ func TestCopyAfterDelete(t *testing.T) {
 }
 
 func TestCopyRedownload(t *testing.T) {
-	err := fs.Sync(flocal, fremote, false)
+	err := fs.CopyDir(flocal, fremote)
 	if err != nil {
 		t.Fatalf("Copy failed: %v", err)
 	}
@@ -206,7 +206,7 @@ func TestSyncBasedOnCheckSum(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, flocal, local_items, fs.Config.ModifyWindow)
 
 	fs.Stats.ResetCounters()
-	err := fs.Sync(fremote, flocal, true)
+	err := fs.Sync(fremote, flocal)
 	if err != nil {
 		t.Fatalf("Initial sync failed: %v", err)
 	}
@@ -229,7 +229,7 @@ func TestSyncBasedOnCheckSum(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, flocal, local_items, fs.Config.ModifyWindow)
 
 	fs.Stats.ResetCounters()
-	err = fs.Sync(fremote, flocal, true)
+	err = fs.Sync(fremote, flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
@@ -260,7 +260,7 @@ func TestSyncSizeOnly(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, flocal, local_items, fs.Config.ModifyWindow)
 
 	fs.Stats.ResetCounters()
-	err := fs.Sync(fremote, flocal, true)
+	err := fs.Sync(fremote, flocal)
 	if err != nil {
 		t.Fatalf("Initial sync failed: %v", err)
 	}
@@ -281,7 +281,7 @@ func TestSyncSizeOnly(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, flocal, local_items, fs.Config.ModifyWindow)
 
 	fs.Stats.ResetCounters()
-	err = fs.Sync(fremote, flocal, true)
+	err = fs.Sync(fremote, flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
@@ -304,7 +304,7 @@ func TestSyncAfterChangingModtimeOnly(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Chtimes failed: %v", err)
 	}
-	err = fs.Sync(fremote, flocal, true)
+	err = fs.Sync(fremote, flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
@@ -317,7 +317,7 @@ func TestSyncAfterChangingModtimeOnly(t *testing.T) {
 
 func TestSyncAfterAddingAFile(t *testing.T) {
 	WriteFile("potato", "------------------------------------------------------------", t3)
-	err := fs.Sync(fremote, flocal, true)
+	err := fs.Sync(fremote, flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
@@ -331,7 +331,7 @@ func TestSyncAfterAddingAFile(t *testing.T) {
 
 func TestSyncAfterChangingFilesSizeOnly(t *testing.T) {
 	WriteFile("potato", "smaller but same date", t3)
-	err := fs.Sync(fremote, flocal, true)
+	err := fs.Sync(fremote, flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
@@ -346,7 +346,7 @@ func TestSyncAfterChangingFilesSizeOnly(t *testing.T) {
 // Sync after changing a file's contents, modtime but not length
 func TestSyncAfterChangingContentsOnly(t *testing.T) {
 	WriteFile("potato", "SMALLER BUT SAME DATE", t2)
-	err := fs.Sync(fremote, flocal, true)
+	err := fs.Sync(fremote, flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
@@ -366,7 +366,7 @@ func TestSyncAfterRemovingAFileAndAddingAFileDryRun(t *testing.T) {
 		t.Fatalf("Remove failed: %v", err)
 	}
 	fs.Config.DryRun = true
-	err = fs.Sync(fremote, flocal, true)
+	err = fs.Sync(fremote, flocal)
 	fs.Config.DryRun = false
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
@@ -386,7 +386,7 @@ func TestSyncAfterRemovingAFileAndAddingAFileDryRun(t *testing.T) {
 
 // Sync after removing a file and adding a file
 func TestSyncAfterRemovingAFileAndAddingAFile(t *testing.T) {
-	err := fs.Sync(fremote, flocal, true)
+	err := fs.Sync(fremote, flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
@@ -396,6 +396,55 @@ func TestSyncAfterRemovingAFileAndAddingAFile(t *testing.T) {
 	}
 	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
 	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+}
+
+// Test a server side move if possible, or the backup path if not
+func TestServerSideMove(t *testing.T) {
+	fremoteMove, finaliseMove, err := fstest.RandomRemote(*RemoteName, *SubDir)
+	if err != nil {
+		t.Fatalf("Failed to open remote move %q: %v", *RemoteName, err)
+	}
+	defer finaliseMove()
+	t.Logf("Server side move (if possible) %v -> %v", fremote, fremoteMove)
+
+	// Start with a copy
+	err = fs.CopyDir(fremoteMove, fremote)
+	if err != nil {
+		t.Fatalf("Server Side Copy failed: %v", err)
+	}
+
+	// Remove one file
+	obj := fremoteMove.NewFsObject("potato2")
+	if obj == nil {
+		t.Fatalf("Failed to find potato2")
+	}
+	err = obj.Remove()
+	if err != nil {
+		t.Fatalf("Failed to remove object: %v", err)
+	}
+
+	// Do server side move
+	err = fs.MoveDir(fremoteMove, fremote)
+	if err != nil {
+		t.Fatalf("Server Side Move failed: %v", err)
+	}
+
+	items := []fstest.Item{
+		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+		{Path: "potato2", Size: 60, ModTime: t1, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
+	}
+
+	fstest.CheckListingWithPrecision(t, fremote, items[:0], fs.Config.ModifyWindow)
+	fstest.CheckListingWithPrecision(t, fremoteMove, items, fs.Config.ModifyWindow)
+
+	// Move it back again, dst does not exist this time
+	err = fs.MoveDir(fremote, fremoteMove)
+	if err != nil {
+		t.Fatalf("Server Side Move 2 failed: %v", err)
+	}
+
+	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+	fstest.CheckListingWithPrecision(t, fremoteMove, items[:0], fs.Config.ModifyWindow)
 }
 
 func TestLs(t *testing.T) {

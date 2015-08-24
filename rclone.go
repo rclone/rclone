@@ -67,7 +67,7 @@ var Commands = []Command{
         unchanged files, testing by size and modification time or
         MD5SUM.  Doesn't delete files from the destination.`,
 		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.Sync(fdst, fsrc, false)
+			return fs.CopyDir(fdst, fsrc)
 		},
 		MinArgs: 2,
 		MaxArgs: 2,
@@ -83,7 +83,22 @@ var Commands = []Command{
         source, including deleting files if necessary.  Since this can
         cause data loss, test first with the --dry-run flag.`,
 		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.Sync(fdst, fsrc, true)
+			return fs.Sync(fdst, fsrc)
+		},
+		MinArgs: 2,
+		MaxArgs: 2,
+		Retry:   true,
+	},
+	{
+		Name:     "move",
+		ArgsHelp: "source:path dest:path",
+		Help: `
+        Moves the source to the destination.  This is equivalent to a
+        copy followed by a purge, but may use server side operations
+        to speed it up. Since this can cause data loss, test first
+        with the --dry-run flag.`,
+		Run: func(fdst, fsrc fs.Fs) error {
+			return fs.MoveDir(fdst, fsrc)
 		},
 		MinArgs: 2,
 		MaxArgs: 2,

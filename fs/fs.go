@@ -25,6 +25,9 @@ var (
 	// Error returned by NewFs if not found in config file
 	NotFoundInConfigFile = fmt.Errorf("Didn't find section in config file")
 	ErrorCantCopy        = fmt.Errorf("Can't copy object - incompatible remotes")
+	ErrorCantMove        = fmt.Errorf("Can't copy object - incompatible remotes")
+	ErrorCantDirMove     = fmt.Errorf("Can't copy directory - incompatible remotes")
+	ErrorDirExists       = fmt.Errorf("Can't copy directory - destination already exists")
 )
 
 // Filesystem info
@@ -161,6 +164,30 @@ type Copier interface {
 	//
 	// If it isn't possible then return fs.ErrorCantCopy
 	Copy(src Object, remote string) (Object, error)
+}
+
+type Mover interface {
+	// Move src to this remote using server side move operations.
+	//
+	// This is stored with the remote path given
+	//
+	// It returns the destination Object and a possible error
+	//
+	// Will only be called if src.Fs().Name() == f.Name()
+	//
+	// If it isn't possible then return fs.ErrorCantMove
+	Move(src Object, remote string) (Object, error)
+}
+
+type DirMover interface {
+	// Move src to this remote using server side move operations.
+	//
+	// Will only be called if src.Fs().Name() == f.Name()
+	//
+	// If it isn't possible then return fs.ErrorCantDirMove
+	//
+	// If destination exists then return fs.ErrorDirExists
+	DirMove(src Fs) error
 }
 
 // An optional interface for error as to whether the operation should be retried

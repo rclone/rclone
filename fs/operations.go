@@ -309,6 +309,35 @@ func PairCopier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 	}
 }
 
+// Read Objects on in and move them if possible, or copy them if not
+func PairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
+	defer wg.Done()
+	// See if we have Move available
+	fdstMover, haveMover := fdst.(Mover)
+	for pair := range in {
+		src := pair.src
+		dst := pair.dst
+		Stats.Transferring(src)
+		if Config.DryRun {
+			Debug(src, "Not moving as --dry-run")
+		} else if haveMover {
+			// Delete destination if it exists
+			if pair.dst != nil {
+				err := dst.Remove()
+				if err != nil {
+					Stats.Error()
+					ErrorLog(dst, "Couldn't delete: %s", err)
+				}
+			}
+			fdstMover.Move(src, src.Remote())
+			Debug(src, "Moved")
+		} else {
+			Copy(fdst, pair.dst, src)
+		}
+		Stats.DoneTransferring(src)
+	}
+}
+
 // Delete all the files passed in the channel
 func DeleteFiles(to_be_deleted ObjectsChan) {
 	var wg sync.WaitGroup
@@ -354,7 +383,9 @@ func readFilesMap(fs Fs) map[string]Object {
 // Syncs fsrc into fdst
 //
 // If Delete is true then it deletes any files in fdst that aren't in fsrc
-func Sync(fdst, fsrc Fs, Delete bool) error {
+//
+// If DoMove is true then files will be moved instead of copied
+func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 	err := fdst.Mkdir()
 	if err != nil {
 		Stats.Error()
@@ -380,7 +411,11 @@ func Sync(fdst, fsrc Fs, Delete bool) error {
 	var copierWg sync.WaitGroup
 	copierWg.Add(Config.Transfers)
 	for i := 0; i < Config.Transfers; i++ {
-		go PairCopier(to_be_uploaded, fdst, &copierWg)
+		if DoMove {
+			go PairMover(to_be_uploaded, fdst, &copierWg)
+		} else {
+			go PairCopier(to_be_uploaded, fdst, &copierWg)
+		}
 	}
 
 	go func() {
@@ -407,7 +442,7 @@ func Sync(fdst, fsrc Fs, Delete bool) error {
 	// Delete files if asked
 	if Delete {
 		if Stats.Errored() {
-			Log(fdst, "Not deleting files as there were IO errors")
+			ErrorLog(fdst, "Not deleting files as there were IO errors")
 			return nil
 		}
 
@@ -422,6 +457,44 @@ func Sync(fdst, fsrc Fs, Delete bool) error {
 		DeleteFiles(toDelete)
 	}
 	return nil
+}
+
+// Syncs fsrc into fdst
+func Sync(fdst, fsrc Fs) error {
+	return syncCopyMove(fdst, fsrc, true, false)
+}
+
+// Copies fsrc into fdst
+func CopyDir(fdst, fsrc Fs) error {
+	return syncCopyMove(fdst, fsrc, false, false)
+}
+
+// Moves fsrc into fdst
+func MoveDir(fdst, fsrc Fs) error {
+	// First attempt to use DirMover
+	if fdstDirMover, ok := fdst.(DirMover); ok && fsrc.Name() == fdst.Name() {
+		err := fdstDirMover.DirMove(fsrc)
+		Debug(fdst, "Using server side directory move")
+		switch err {
+		case ErrorCantDirMove, ErrorDirExists:
+			Debug(fdst, "Server side directory move failed - fallback to copy/delete: %v", err)
+		case nil:
+			Debug(fdst, "Server side directory move succeeded")
+			return nil
+		default:
+			Stats.Error()
+			ErrorLog(fdst, "Server side directory move failed: %v", err)
+			return err
+		}
+	}
+
+	// Now move the files
+	err := syncCopyMove(fdst, fsrc, false, true)
+	if err != nil || Stats.Errored() {
+		ErrorLog(fdst, "Not deleting files as there were IO errors")
+		return err
+	}
+	return Purge(fsrc)
 }
 
 // Checks the files in fsrc and fdst according to Size and MD5SUM
