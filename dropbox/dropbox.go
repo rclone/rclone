@@ -41,6 +41,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ogier/pflag"
 	"github.com/stacktic/dropbox"
 )
 
@@ -48,13 +49,18 @@ import (
 const (
 	rcloneAppKey    = "5jcck7diasz0rqy"
 	rcloneAppSecret = "1n9m04y2zx7bf26"
-	uploadChunkSize = 64 * 1024                    // chunk size for upload
 	metadataLimit   = dropbox.MetadataLimitDefault // max items to fetch at once
 )
 
-// A regexp matching path names for files Dropbox ignores
-// See https://www.dropbox.com/en/help/145 - Ignored files
-var ignoredFiles = regexp.MustCompile(`(?i)(^|/)(desktop\.ini|thumbs\.db|\.ds_store|icon\r|\.dropbox|\.dropbox.attr)$`)
+var (
+	// A regexp matching path names for files Dropbox ignores
+	// See https://www.dropbox.com/en/help/145 - Ignored files
+	ignoredFiles = regexp.MustCompile(`(?i)(^|/)(desktop\.ini|thumbs\.db|\.ds_store|icon\r|\.dropbox|\.dropbox.attr)$`)
+	// Upload chunk size - setting too small makes uploads slow.
+	// Chunks aren't buffered into memory though so can set large.
+	uploadChunkSize    = fs.SizeSuffix(128 * 1024 * 1024)
+	maxUploadChunkSize = fs.SizeSuffix(150 * 1024 * 1024)
+)
 
 // Register with Fs
 func init() {
@@ -70,6 +76,7 @@ func init() {
 			Help: "Dropbox App Secret - leave blank to use rclone's.",
 		}},
 	})
+	pflag.VarP(&uploadChunkSize, "dropbox-chunk-size", "", fmt.Sprintf("Upload chunk size. Max %v.", maxUploadChunkSize))
 }
 
 // Configuration helper - called after the user has put in the defaults
@@ -152,6 +159,9 @@ func newDropbox(name string) *dropbox.Dropbox {
 
 // NewFs contstructs an FsDropbox from the path, container:path
 func NewFs(name, root string) (fs.Fs, error) {
+	if uploadChunkSize > maxUploadChunkSize {
+		return nil, fmt.Errorf("Chunk size too big, must be < %v", maxUploadChunkSize)
+	}
 	db := newDropbox(name)
 	f := &FsDropbox{
 		name: name,
@@ -588,7 +598,7 @@ func (o *FsObjectDropbox) Update(in io.Reader, modTime time.Time, size int64) er
 		fs.ErrorLog(o, "File name disallowed - not uploading")
 		return nil
 	}
-	entry, err := o.dropbox.db.UploadByChunk(ioutil.NopCloser(in), uploadChunkSize, remote, true, "")
+	entry, err := o.dropbox.db.UploadByChunk(ioutil.NopCloser(in), int(uploadChunkSize), remote, true, "")
 	if err != nil {
 		return fmt.Errorf("Upload failed: %s", err)
 	}
