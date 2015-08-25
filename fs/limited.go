@@ -81,7 +81,8 @@ func (f *Limited) Mkdir() error {
 
 // Remove the directory (container, bucket) if empty
 func (f *Limited) Rmdir() error {
-	return fmt.Errorf("Can't rmdir in limited fs")
+	// Ignore this in a limited fs
+	return nil
 }
 
 // Precision of the ModTimes in this Fs
