@@ -25,6 +25,8 @@ for d in `ls`; do
     cp -a ../MANUAL.html $d/README.html
     cp -a ../rclone.1 $d/
     zip -r9 $d.zip $d
+    d_current=${d/-${VERSION}/-current}
+    ln $d.zip $d_current.zip
     rm -rf $d
 done
 
