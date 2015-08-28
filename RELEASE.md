@@ -12,7 +12,7 @@ Making a release
   * edit docs/content/changelog.md
   * git commit -a -v
   * make retag
-  * # Set the GOPATH for a gox enabled compiler - . ~/bin/go-cross
+  * # Set the GOPATH for a gox enabled compiler - . ~/bin/go-cross - not required for go >= 1.5
   * make cross
   * make upload
   * make upload_website

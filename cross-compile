@@ -3,7 +3,7 @@
 set -e
 
 # This uses gox from https://github.com/mitchellh/gox
-# Make sure you've run gox -build-toolchain
+# Make sure you've run gox -build-toolchain - not required for go >= 1.5
 
 if [ "$1" == "" ]; then
     echo "Syntax: $0 Version"
@@ -13,7 +13,9 @@ VERSION="$1"
 
 rm -rf build
 
-gox -output "build/{{.Dir}}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
+gox -output "build/{{.Dir}}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}" -os "darwin linux freebsd openbsd windows freebsd netbsd plan9 solaris"
+# Not implemented yet: nacl dragonfly android
+# gox -osarch-list for definitive list
 
 mv build/rclone-${VERSION}-darwin-amd64 build/rclone-${VERSION}-osx-amd64
 mv build/rclone-${VERSION}-darwin-386 build/rclone-${VERSION}-osx-386

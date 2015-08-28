@@ -31,6 +31,9 @@ Rclone Download VERSION
     * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-VERSION-openbsd-amd64.zip)
   * Plan 9
     * [386 - 32 Bit](http://downloads.rclone.org/rclone-VERSION-plan9-386.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-VERSION-plan9-amd64.zip)
+  * Solaris
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-VERSION-solaris-amd64.zip)
 
 Downloads for scripting
 =======================
@@ -61,6 +64,9 @@ script) from a URL which doesn't change then you can use these links.
     * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-current-openbsd-amd64.zip)
   * Plan 9
     * [386 - 32 Bit](http://downloads.rclone.org/rclone-current-plan9-386.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-current-plan9-amd64.zip)
+  * Solaris
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-current-solaris-amd64.zip)
 
 Older Downloads
 ==============
