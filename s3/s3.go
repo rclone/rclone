@@ -24,8 +24,9 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/corehandlers"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/service"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/ncw/rclone/fs"
@@ -212,7 +213,7 @@ func s3Connection(name string) (*s3.S3, error) {
 	c := s3.New(awsConfig)
 	if region == "other-v2-signature" {
 		fs.Debug(name, "Using v2 auth")
-		signer := func(req *service.Request) {
+		signer := func(req *request.Request) {
 			// Ignore AnonymousCredentials object
 			if req.Service.Config.Credentials == credentials.AnonymousCredentials {
 				return
@@ -220,11 +221,11 @@ func s3Connection(name string) (*s3.S3, error) {
 			sign(accessKeyId, secretAccessKey, req.HTTPRequest)
 		}
 		c.Handlers.Sign.Clear()
-		c.Handlers.Sign.PushBack(service.BuildContentLength)
+		c.Handlers.Sign.PushBackNamed(corehandlers.BuildContentLengthHandler)
 		c.Handlers.Sign.PushBack(signer)
 	}
 	// Add user agent
-	c.Handlers.Build.PushBack(func(r *service.Request) {
+	c.Handlers.Build.PushBack(func(r *request.Request) {
 		r.HTTPRequest.Header.Set("User-Agent", fs.UserAgent)
 	})
 	return c, nil
