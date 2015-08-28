@@ -7,6 +7,18 @@ date: "2015-08-17"
 Changelog
 ---------
 
+  * v1.19 - 2015-08-28
+    * New features
+      * Server side copies for s3/swift/drive/dropbox/gcs
+      * Move command - uses server side copies if it can
+      * Implement --retries flag - tries 3 times by default
+      * Build for plan9/amd64 and solaris/amd64 too
+    * Fixes
+      * Make a current version download with a fixed URL for scripting
+      * Ignore rmdir in limited fs rather than throwing error
+    * dropbox
+      * Increase chunk size to improve upload speeds massively
+      * Issue an error message when trying to upload bad file name
   * v1.18 - 2015-08-17
     * drive
       * Add `--drive-use-trash` flag so rclone trashes instead of deletes
