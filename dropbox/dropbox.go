@@ -5,27 +5,6 @@ package dropbox
 Limitations of dropbox
 
 File system is case insensitive
-
-FIXME Getting this sometimes
-Failed to copy: Upload failed: invalid character '<' looking for beginning of value
-This is a JSON decode error - from Update / UploadByChunk
-- Caused by 500 error from dropbox
-- See https://github.com/stacktic/dropbox/issues/1
-- Possibly confusing dropbox with excess concurrency?
-
-FIXME implement timeouts - need to get "github.com/stacktic/dropbox"
-and hence "golang.org/x/oauth2" which uses DefaultTransport unless it
-is set in the context passed into .Client()
-
-func (db *Dropbox) client() *http.Client {
-	return db.config.Client(oauth2.NoContext, db.token)
-}
-
-// HTTPClient is the context key to use with golang.org/x/net/context's
-// WithValue function to associate an *http.Client value with a context.
-var HTTPClient ContextKey
-
-So pass in a context with HTTPClient set...
 */
 
 import (
@@ -41,6 +20,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/oauthutil"
 	"github.com/ogier/pflag"
 	"github.com/stacktic/dropbox"
 )
@@ -171,6 +151,9 @@ func NewFs(name, root string) (fs.Fs, error) {
 
 	// Read the token from the config file
 	token := fs.ConfigFile.MustValue(name, "token")
+
+	// Set our custom context which enables our custom transport for timeouts etc
+	db.SetContext(oauthutil.Context())
 
 	// Authorize the client
 	db.SetAccessToken(token)
