@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ogier/pflag"
+	"github.com/spf13/pflag"
 
 	"github.com/ncw/rclone/fs"
 	// Active file systems

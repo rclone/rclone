@@ -23,7 +23,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/oauthutil"
-	"github.com/ogier/pflag"
+	"github.com/spf13/pflag"
 )
 
 // Constants

@@ -18,7 +18,7 @@ import (
 
 	"github.com/Unknwon/goconfig"
 	"github.com/mreiferson/go-httpclient"
-	"github.com/ogier/pflag"
+	"github.com/spf13/pflag"
 )
 
 const (
@@ -111,6 +111,11 @@ func (x *SizeSuffix) Set(s string) error {
 	value *= multiplier
 	*x = SizeSuffix(value)
 	return nil
+}
+
+// Type of the value
+func (x *SizeSuffix) Type() string {
+	return "int64"
 }
 
 // Check it satisfies the interface
