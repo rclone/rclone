@@ -73,3 +73,25 @@ Server B> rclone copy /tmp/whatever remote:Backup
 The file names you upload from Server A and Server B should be
 different in this case, otherwise some file systems (eg Drive) may
 make duplicates.
+
+### Why doesn't rclone support partial transfers / binary diffs like rsync? ###
+
+Rclone stores each file you transfer as a native object on the remote
+cloud storage system.  This means that you can see the files you
+upload as expected using alternative access methods (eg using the
+Google Drive web interface).  There is a 1:1 mapping between files on
+your hard disk and objects created in the cloud storage system.
+
+Cloud storage systems (at least none I've come across yet) don't
+support partially uploading an object. You can't take an existing
+object, and change some bytes in the middle of it.
+
+It would be possible to make a sync system which stored binary diffs
+instead of whole objects like rclone does, but that would break the
+1:1 mapping of files on your hard disk to objects in the remote cloud
+storage system.
+
+All the cloud storage systems support partial downloads of content, so
+it would be possible to make partial downloads work.  However to make
+this work efficiently this would require storing a significant amount
+of metadata, which breaks the desired 1:1 mapping of files to objects.
