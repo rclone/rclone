@@ -286,6 +286,94 @@ func TestFsCopy(t *testing.T) {
 
 }
 
+func TestFsMove(t *testing.T) {
+	skipIfNotOk(t)
+
+	// Check have Move
+	_, ok := remote.(fs.Mover)
+	if !ok {
+		t.Skip("FS has no Mover interface")
+	}
+
+	var file1Move = file1
+	file1Move.Path += "-move"
+
+	// do the move
+	src := findObject(t, file1.Path)
+	dst, err := remote.(fs.Mover).Move(src, file1Move.Path)
+	if err != nil {
+		t.Fatalf("Move failed: %v", err)
+	}
+
+	// check file exists in new listing
+	fstest.CheckListing(t, remote, []fstest.Item{file2, file1Move})
+
+	// Check dst lightly - list above has checked ModTime/Md5sum
+	if dst.Remote() != file1Move.Path {
+		t.Errorf("object path: want %q got %q", file1Move.Path, dst.Remote())
+	}
+
+	// move it back
+	src = findObject(t, file1Move.Path)
+	_, err = remote.(fs.Mover).Move(src, file1.Path)
+	if err != nil {
+		t.Errorf("Move failed: %v", err)
+	}
+
+	// check file exists in new listing
+	fstest.CheckListing(t, remote, []fstest.Item{file2, file1})
+}
+
+// Move src to this remote using server side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
+func TestFsDirMove(t *testing.T) {
+	skipIfNotOk(t)
+
+	// Check have DirMove
+	_, ok := remote.(fs.DirMover)
+	if !ok {
+		t.Skip("FS has no DirMover interface")
+	}
+
+	// Check it can't move onto itself
+	err := remote.(fs.DirMover).DirMove(remote)
+	if err != fs.ErrorDirExists {
+		t.Errorf("Expecting fs.ErrorDirExists got: %v", err)
+	}
+
+	// new remote
+	newRemote, removeNewRemote, err := fstest.RandomRemote(RemoteName, false)
+	if err != nil {
+		t.Fatalf("Failed to create remote: %v", err)
+	}
+	defer removeNewRemote()
+
+	// try the move
+	err = newRemote.(fs.DirMover).DirMove(remote)
+	if err != nil {
+		t.Errorf("Failed to DirMove: %v", err)
+	}
+
+	// check remotes
+	fstest.CheckListing(t, remote, []fstest.Item{})
+	fstest.CheckListing(t, newRemote, []fstest.Item{file2, file1})
+
+	// move it back
+	err = remote.(fs.DirMover).DirMove(newRemote)
+	if err != nil {
+		t.Errorf("Failed to DirMove: %v", err)
+	}
+
+	// check remotes
+	fstest.CheckListing(t, remote, []fstest.Item{file2, file1})
+	fstest.CheckListing(t, newRemote, []fstest.Item{})
+}
+
 func TestFsRmdirFull(t *testing.T) {
 	skipIfNotOk(t)
 	err := remote.Rmdir()

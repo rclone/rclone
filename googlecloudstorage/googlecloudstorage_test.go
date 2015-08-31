@@ -35,6 +35,8 @@ func TestFsListFile1(t *testing.T)           { fstests.TestFsListFile1(t) }
 func TestFsNewFsObject(t *testing.T)         { fstests.TestFsNewFsObject(t) }
 func TestFsListFile1and2(t *testing.T)       { fstests.TestFsListFile1and2(t) }
 func TestFsCopy(t *testing.T)                { fstests.TestFsCopy(t) }
+func TestFsMove(t *testing.T)                { fstests.TestFsMove(t) }
+func TestFsDirMove(t *testing.T)             { fstests.TestFsDirMove(t) }
 func TestFsRmdirFull(t *testing.T)           { fstests.TestFsRmdirFull(t) }
 func TestFsPrecision(t *testing.T)           { fstests.TestFsPrecision(t) }
 func TestObjectString(t *testing.T)          { fstests.TestObjectString(t) }

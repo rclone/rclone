@@ -87,19 +87,24 @@ func (f *FsLocal) String() string {
 	return fmt.Sprintf("Local file system at %s", f.root)
 }
 
+// newFsObject makes a half completed FsObjectLocal
+func (f *FsLocal) newFsObject(remote string) *FsObjectLocal {
+	remote = filepath.ToSlash(remote)
+	dstPath := path.Join(f.root, remote)
+	return &FsObjectLocal{local: f, remote: remote, path: dstPath}
+}
+
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
 func (f *FsLocal) newFsObjectWithInfo(remote string, info os.FileInfo) fs.Object {
-	remote = filepath.ToSlash(remote)
-	path := path.Join(f.root, remote)
-	o := &FsObjectLocal{local: f, remote: remote, path: path}
+	o := f.newFsObject(remote)
 	if info != nil {
 		o.info = info
 	} else {
 		err := o.lstat()
 		if err != nil {
-			fs.Debug(o, "Failed to stat %s: %s", path, err)
+			fs.Debug(o, "Failed to stat %s: %s", o.path, err)
 			return nil
 		}
 	}
@@ -210,9 +215,8 @@ func (f *FsLocal) ListDir() fs.DirChan {
 
 // Puts the FsObject to the local filesystem
 func (f *FsLocal) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
-	dstPath := path.Join(f.root, remote)
 	// Temporary FsObject under construction - info filled in by Update()
-	o := &FsObjectLocal{local: f, remote: remote, path: dstPath}
+	o := f.newFsObject(remote)
 	err := o.Update(in, modTime, size)
 	if err != nil {
 		return nil, err
@@ -306,6 +310,79 @@ func (f *FsLocal) Purge() error {
 		return fmt.Errorf("Can't Purge non directory: %q", f.root)
 	}
 	return os.RemoveAll(f.root)
+}
+
+// Move src to this remote using server side move operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantMove
+func (dstFs *FsLocal) Move(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*FsObjectLocal)
+	if !ok {
+		fs.Debug(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+
+	// Temporary FsObject under construction
+	dstObj := dstFs.newFsObject(remote)
+
+	// Check it is a file if it exists
+	err := dstObj.lstat()
+	if os.IsNotExist(err) {
+		// OK
+	} else if err != nil {
+		return nil, err
+	} else if !dstObj.info.Mode().IsRegular() {
+		// It isn't a file
+		return nil, fmt.Errorf("Can't move file onto non-file")
+	}
+
+	// Create destination
+	err = dstObj.mkdirAll()
+	if err != nil {
+		return nil, err
+	}
+
+	// Do the move
+	err = os.Rename(srcObj.path, dstObj.path)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update the info
+	err = dstObj.lstat()
+	if err != nil {
+		return nil, err
+	}
+
+	return dstObj, nil
+}
+
+// Move src to this remote using server side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
+func (dstFs *FsLocal) DirMove(src fs.Fs) error {
+	srcFs, ok := src.(*FsLocal)
+	if !ok {
+		fs.Debug(srcFs, "Can't move directory - not same remote type")
+		return fs.ErrorCantDirMove
+	}
+	// Check if destination exists
+	_, err := os.Lstat(dstFs.root)
+	if !os.IsNotExist(err) {
+		return fs.ErrorDirExists
+	}
+	// Do the move
+	return os.Rename(srcFs.root, dstFs.root)
 }
 
 // ------------------------------------------------------------
@@ -438,10 +515,15 @@ func (o *FsObjectLocal) Open() (in io.ReadCloser, err error) {
 	return
 }
 
+// mkdirAll makes all the directories needed to store the object
+func (o *FsObjectLocal) mkdirAll() error {
+	dir := path.Dir(o.path)
+	return os.MkdirAll(dir, 0777)
+}
+
 // Update the object from in with modTime and size
 func (o *FsObjectLocal) Update(in io.Reader, modTime time.Time, size int64) error {
-	dir := path.Dir(o.path)
-	err := os.MkdirAll(dir, 0777)
+	err := o.mkdirAll()
 	if err != nil {
 		return err
 	}
@@ -489,4 +571,6 @@ func (o *FsObjectLocal) Remove() error {
 // Check the interfaces are satisfied
 var _ fs.Fs = &FsLocal{}
 var _ fs.Purger = &FsLocal{}
+var _ fs.Mover = &FsLocal{}
+var _ fs.DirMover = &FsLocal{}
 var _ fs.Object = &FsObjectLocal{}

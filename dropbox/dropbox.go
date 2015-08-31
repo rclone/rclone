@@ -452,6 +452,63 @@ func (f *FsDropbox) Purge() error {
 	return err
 }
 
+// Move src to this remote using server side move operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantMove
+func (dstFs *FsDropbox) Move(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*FsObjectDropbox)
+	if !ok {
+		fs.Debug(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+
+	// Temporary FsObject under construction
+	dstObj := &FsObjectDropbox{dropbox: dstFs, remote: remote}
+
+	srcPath := srcObj.remotePath()
+	dstPath := dstObj.remotePath()
+	entry, err := dstFs.db.Move(srcPath, dstPath)
+	if err != nil {
+		return nil, fmt.Errorf("Move failed: %s", err)
+	}
+	dstObj.setMetadataFromEntry(entry)
+	return dstObj, nil
+}
+
+// Move src to this remote using server side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
+func (dstFs *FsDropbox) DirMove(src fs.Fs) error {
+	srcFs, ok := src.(*FsDropbox)
+	if !ok {
+		fs.Debug(srcFs, "Can't move directory - not same remote type")
+		return fs.ErrorCantDirMove
+	}
+
+	// Check if destination exists
+	entry, err := dstFs.db.Metadata(dstFs.slashRoot, false, false, "", "", metadataLimit)
+	if err == nil && !entry.IsDeleted {
+		return fs.ErrorDirExists
+	}
+
+	// Do the move
+	_, err = dstFs.db.Move(srcFs.slashRoot, dstFs.slashRoot)
+	if err != nil {
+		return fmt.Errorf("MoveDir failed: %v", err)
+	}
+	return nil
+}
+
 // ------------------------------------------------------------
 
 // Return the parent Fs
@@ -601,7 +658,11 @@ func (o *FsObjectDropbox) Remove() error {
 }
 
 // Check the interfaces are satisfied
-var _ fs.Fs = &FsDropbox{}
-var _ fs.Copier = &FsDropbox{}
-var _ fs.Purger = &FsDropbox{}
-var _ fs.Object = &FsObjectDropbox{}
+var (
+	_ fs.Fs       = (*FsDropbox)(nil)
+	_ fs.Copier   = (*FsDropbox)(nil)
+	_ fs.Purger   = (*FsDropbox)(nil)
+	_ fs.Mover    = (*FsDropbox)(nil)
+	_ fs.DirMover = (*FsDropbox)(nil)
+	_ fs.Object   = (*FsObjectDropbox)(nil)
+)

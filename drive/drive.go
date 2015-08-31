@@ -919,6 +919,79 @@ func (f *FsDrive) Purge() error {
 	return nil
 }
 
+// Move src to this remote using server side move operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantMove
+func (dstFs *FsDrive) Move(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*FsObjectDrive)
+	if !ok {
+		fs.Debug(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+
+	// Temporary FsObject under construction
+	dstObj, dstInfo, err := dstFs.createFileInfo(remote, srcObj.ModTime(), srcObj.bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	// Do the move
+	info, err := dstFs.svc.Files.Patch(srcObj.id, dstInfo).SetModifiedDate(true).Do()
+	if err != nil {
+		return nil, err
+	}
+
+	dstObj.setMetaData(info)
+	return dstObj, nil
+}
+
+// Move src to this remote using server side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
+func (dstFs *FsDrive) DirMove(src fs.Fs) error {
+	srcFs, ok := src.(*FsDrive)
+	if !ok {
+		fs.Debug(srcFs, "Can't move directory - not same remote type")
+		return fs.ErrorCantDirMove
+	}
+
+	// Check if destination exists
+	dstFs.resetRoot()
+	err := dstFs.findRoot(false)
+	if err == nil {
+		return fs.ErrorDirExists
+	}
+
+	// Find ID of parent
+	directory, leaf := splitPath(dstFs.root)
+	directoryId, err := dstFs.findDir(directory, true)
+	if err != nil {
+		return fmt.Errorf("Couldn't find or make destination directory: %v", err)
+	}
+
+	// Do the move
+	patch := drive.File{
+		Title:   leaf,
+		Parents: []*drive.ParentReference{{Id: directoryId}},
+	}
+	_, err = dstFs.svc.Files.Patch(srcFs.rootId, &patch).Do()
+	if err != nil {
+		return err
+	}
+	srcFs.resetRoot()
+	return nil
+}
+
 // ------------------------------------------------------------
 
 // Return the parent Fs
@@ -1007,7 +1080,7 @@ func (o *FsObjectDrive) ModTime() time.Time {
 	return modTime
 }
 
-// Sets the modification time of the local fs object
+// Sets the modification time of the drive fs object
 func (o *FsObjectDrive) SetModTime(modTime time.Time) {
 	err := o.readMetaData()
 	if err != nil {
@@ -1111,7 +1184,11 @@ func (o *FsObjectDrive) Remove() error {
 }
 
 // Check the interfaces are satisfied
-var _ fs.Fs = &FsDrive{}
-var _ fs.Purger = &FsDrive{}
-var _ fs.Copier = &FsDrive{}
-var _ fs.Object = &FsObjectDrive{}
+var (
+	_ fs.Fs       = (*FsDrive)(nil)
+	_ fs.Purger   = (*FsDrive)(nil)
+	_ fs.Copier   = (*FsDrive)(nil)
+	_ fs.Mover    = (*FsDrive)(nil)
+	_ fs.DirMover = (*FsDrive)(nil)
+	_ fs.Object   = (*FsObjectDrive)(nil)
+)
