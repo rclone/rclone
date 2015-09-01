@@ -380,12 +380,22 @@ func readFilesMap(fs Fs) map[string]Object {
 	return files
 }
 
+// Returns true if fdst and fsrc point to the same underlying Fs
+func FsSame(fdst, fsrc Fs) bool {
+	return fdst.Name() == fsrc.Name() && fdst.Root() == fsrc.Root()
+}
+
 // Syncs fsrc into fdst
 //
 // If Delete is true then it deletes any files in fdst that aren't in fsrc
 //
 // If DoMove is true then files will be moved instead of copied
 func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
+	if FsSame(fdst, fsrc) {
+		ErrorLog(fdst, "Nothing to do as source and destination are the same")
+		return nil
+	}
+
 	err := fdst.Mkdir()
 	if err != nil {
 		Stats.Error()
@@ -471,6 +481,11 @@ func CopyDir(fdst, fsrc Fs) error {
 
 // Moves fsrc into fdst
 func MoveDir(fdst, fsrc Fs) error {
+	if FsSame(fdst, fsrc) {
+		ErrorLog(fdst, "Nothing to do as source and destination are the same")
+		return nil
+	}
+
 	// First attempt to use DirMover
 	if fdstDirMover, ok := fdst.(DirMover); ok && fsrc.Name() == fdst.Name() {
 		err := fdstDirMover.DirMove(fsrc)
