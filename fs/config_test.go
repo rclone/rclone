@@ -55,3 +55,21 @@ func TestSizeSuffixSet(t *testing.T) {
 		}
 	}
 }
+
+func TestReveal(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want string
+	}{
+		{"", ""},
+		{"2sTcyNrA", "potato"},
+	} {
+		got := Reveal(test.in)
+		if got != test.want {
+			t.Errorf("%q: want %q got %q", test.in, test.want, got)
+		}
+		if Obscure(got) != test.in {
+			t.Errorf("%q: wasn't bidirectional", test.in)
+		}
+	}
+}

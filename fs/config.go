@@ -4,6 +4,7 @@ package fs
 
 import (
 	"bufio"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"math"
@@ -120,6 +121,27 @@ func (x *SizeSuffix) Type() string {
 
 // Check it satisfies the interface
 var _ pflag.Value = (*SizeSuffix)(nil)
+
+// Obscure a config value
+func Obscure(x string) string {
+	y := []byte(x)
+	for i := range y {
+		y[i] ^= byte(i) ^ 0xAA
+	}
+	return base64.StdEncoding.EncodeToString(y)
+}
+
+// Reveal a config value
+func Reveal(y string) string {
+	x, err := base64.StdEncoding.DecodeString(y)
+	if err != nil {
+		log.Fatalf("Failed to reveal %q: %v", y, err)
+	}
+	for i := range x {
+		x[i] ^= byte(i) ^ 0xAA
+	}
+	return string(x)
+}
 
 // Filesystem config options
 type ConfigInfo struct {
