@@ -114,6 +114,11 @@ func (f *FsDropbox) Name() string {
 	return f.name
 }
 
+// The root of the remote (as passed into NewFs)
+func (f *FsDropbox) Root() string {
+	return f.root
+}
+
 // String converts this FsDropbox to a string
 func (f *FsDropbox) String() string {
 	return fmt.Sprintf("Dropbox root '%s'", f.root)

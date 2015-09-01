@@ -160,6 +160,11 @@ func (f *FsDrive) Name() string {
 	return f.name
 }
 
+// The root of the remote (as passed into NewFs)
+func (f *FsDrive) Root() string {
+	return f.root
+}
+
 // String converts this FsDrive to a string
 func (f *FsDrive) String() string {
 	return fmt.Sprintf("Google drive root '%s'", f.root)

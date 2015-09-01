@@ -149,6 +149,14 @@ func (f *FsStorage) Name() string {
 	return f.name
 }
 
+// The root of the remote (as passed into NewFs)
+func (f *FsStorage) Root() string {
+	if f.root == "" {
+		return f.bucket
+	}
+	return f.bucket + "/" + f.root
+}
+
 // String converts this FsStorage to a string
 func (f *FsStorage) String() string {
 	if f.root == "" {

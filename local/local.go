@@ -77,6 +77,11 @@ func (f *FsLocal) Name() string {
 	return f.name
 }
 
+// The root of the remote (as passed into NewFs)
+func (f *FsLocal) Root() string {
+	return f.root
+}
+
 // String converts this FsLocal to a string
 func (f *FsLocal) String() string {
 	return fmt.Sprintf("Local file system at %s", f.root)

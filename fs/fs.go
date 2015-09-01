@@ -70,6 +70,9 @@ type Fs interface {
 	// The name of the remote (as passed into NewFs)
 	Name() string
 
+	// The root of the remote (as passed into NewFs)
+	Root() string
+
 	// String returns a description of the FS
 	String() string
 

@@ -26,6 +26,11 @@ func (f *Limited) Name() string {
 	return f.fs.Name() // return name of underlying remote
 }
 
+// The root of the remote (as passed into NewFs)
+func (f *Limited) Root() string {
+	return f.fs.Root() // return root of underlying remote
+}
+
 // String returns a description of the FS
 func (f *Limited) String() string {
 	return fmt.Sprintf("%s limited to %d objects", f.fs.String(), len(f.objects))

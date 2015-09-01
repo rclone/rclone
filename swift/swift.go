@@ -81,6 +81,14 @@ func (f *FsSwift) Name() string {
 	return f.name
 }
 
+// The root of the remote (as passed into NewFs)
+func (f *FsSwift) Root() string {
+	if f.root == "" {
+		return f.container
+	}
+	return f.container + "/" + f.root
+}
+
 // String converts this FsSwift to a string
 func (f *FsSwift) String() string {
 	if f.root == "" {

@@ -158,6 +158,14 @@ func (f *FsS3) Name() string {
 	return f.name
 }
 
+// The root of the remote (as passed into NewFs)
+func (f *FsS3) Root() string {
+	if f.root == "" {
+		return f.bucket
+	}
+	return f.bucket + "/" + f.root
+}
+
 // String converts this FsS3 to a string
 func (f *FsS3) String() string {
 	if f.root == "" {
