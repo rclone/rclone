@@ -57,6 +57,16 @@ Ideas
   * control times sync (which is slow with some remotes) with -a --archive flag?
   * Copy a glob pattern - could do with LimitedFs
 
+Make an encryption layer.
+
+This would layer over the source FS to
+    * decrypt all gets
+    * encrypt all puts
+    * encrypt file names in list
+    * decrypt them in list
+
+Would like to be able to see unencrypted file names in remote though? How?  Or is that two encryption layers..?
+
 Bugs
   * Non verbose - not sure number transferred got counted up? CHECK
   * When doing copy it recurses the whole of the destination FS which isn't necessary
