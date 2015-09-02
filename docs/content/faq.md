@@ -95,3 +95,9 @@ All the cloud storage systems support partial downloads of content, so
 it would be possible to make partial downloads work.  However to make
 this work efficiently this would require storing a significant amount
 of metadata, which breaks the desired 1:1 mapping of files to objects.
+
+### Can rclone do bi-directional sync? ###
+
+No, not at present.  rclone only does uni-directional sync from A ->
+B. It may do in the future though since it has all the primitives - it
+just requires writing the algorithm to do it.
