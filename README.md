@@ -15,6 +15,7 @@ Rclone is a command line program to sync files and directories to and from
   * Openstack Swift / Rackspace cloud files / Memset Memstore
   * Dropbox
   * Google Cloud Storage
+  * Amazon Cloud Drive
   * The local filesystem
 
 Features

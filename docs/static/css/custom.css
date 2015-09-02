@@ -5,3 +5,22 @@ body {
 footer {
     margin: 50px 0;
 }
+
+table {
+   background-color:#e0e0ff
+}
+
+tbody td, th {
+    border: 1px solid black;
+    padding: 3px 7px 2px 7px;
+}
+
+thead td, th {
+    border: 1px solid black;
+    padding: 3px 7px 2px 7px;
+    font-weight: bold;
+}
+
+tbody tr:nth-child(odd) {
+   background-color:#d0d0ff
+}

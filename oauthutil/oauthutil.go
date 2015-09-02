@@ -1,12 +1,16 @@
 package oauthutil
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net"
 	"net/http"
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 )
@@ -139,7 +143,9 @@ func NewClient(name string, config *oauth2.Config) (*http.Client, error) {
 }
 
 // Config does the initial creation of the token
-func Config(name string, config *oauth2.Config) error {
+//
+// It runs an internal webserver to receive the results
+func ConfigWithWebserver(name string, config *oauth2.Config, bindAddress string) error {
 	// See if already have a token
 	tokenString := fs.ConfigFile.MustValue(name, "token")
 	if tokenString != "" {
@@ -149,11 +155,30 @@ func Config(name string, config *oauth2.Config) error {
 		}
 	}
 
+	// Make random state
+	stateBytes := make([]byte, 16)
+	_, err := rand.Read(stateBytes)
+	if err != nil {
+		return err
+	}
+	state := fmt.Sprintf("%x", stateBytes)
+
+	// Prepare webserver
+	server := authServer{
+		state:       state,
+		bindAddress: bindAddress,
+	}
+	if bindAddress != "" {
+		go server.Start()
+		defer server.Stop()
+	}
+
 	// Generate a URL for the user to visit for authorization.
-	authUrl := config.AuthCodeURL("state")
-	fmt.Printf("Go to the following link in your browser\n")
+	authUrl := config.AuthCodeURL(state)
+	_ = open.Start(authUrl)
+	fmt.Printf("If your browser doesn't open automatically go to the following link\n")
 	fmt.Printf("%s\n", authUrl)
-	fmt.Printf("Log in, then type paste the token that is returned in the browser here\n")
+	fmt.Printf("Log in, then cut and paste the token that is returned from the browser here\n")
 
 	// Read the code, and exchange it for a token.
 	fmt.Printf("Enter verification code> ")
@@ -163,4 +188,61 @@ func Config(name string, config *oauth2.Config) error {
 		return fmt.Errorf("Failed to get token: %v", err)
 	}
 	return putToken(name, token)
+}
+
+// Config does the initial creation of the token
+func Config(name string, config *oauth2.Config) error {
+	return ConfigWithWebserver(name, config, "")
+}
+
+// Local web server for collecting auth
+type authServer struct {
+	state       string
+	listener    net.Listener
+	bindAddress string
+}
+
+// startWebServer runs an internal web server to receive config details
+func (s *authServer) Start() {
+	fs.Debug(nil, "Starting auth server on %s", s.bindAddress)
+	mux := http.NewServeMux()
+	server := &http.Server{
+		Addr:    s.bindAddress,
+		Handler: mux,
+	}
+	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, req *http.Request) {
+		http.Error(w, "", 404)
+		return
+	})
+	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+		fs.Debug(nil, "Received request on auth server")
+		code := req.FormValue("code")
+		if code != "" {
+			state := req.FormValue("state")
+			if state != s.state {
+				fs.Debug(nil, "State did not match: want %q got %q", s.state, state)
+				fmt.Fprintf(w, "<h1>Failure</h1>\n<p>Auth state doesn't match</p>")
+			} else {
+				fs.Debug(nil, "Successfully got code")
+				fmt.Fprintf(w, "<h1>Success</h1>\n<p>Cut and paste this code into rclone: <code>%s</code></p>", code)
+			}
+			return
+		}
+		fs.Debug(nil, "No code found on request")
+		fmt.Fprintf(w, "<h1>Failed!</h1>\nNo code found.")
+		http.Error(w, "", 500)
+	})
+
+	var err error
+	s.listener, err = net.Listen("tcp", s.bindAddress)
+	if err != nil {
+		log.Fatalf("Failed to start auth webserver: %v", err)
+	}
+	server.Serve(s.listener)
+	fs.Debug(nil, "Closed auth server")
+}
+
+func (s *authServer) Stop() {
+	fs.Debug(nil, "Closing auth server")
+	_ = s.listener.Close()
 }

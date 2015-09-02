@@ -75,17 +75,10 @@ func init() {
 `
 
 // Generate test file piping it through gofmt
-func generateTestProgram(t *template.Template, fns []string, Fsname string) {
+func generateTestProgram(t *template.Template, fns []string, Fsname, ObjectName string) {
 	fsname := strings.ToLower(Fsname)
 	TestName := "Test" + Fsname + ":"
 	outfile := "../../" + fsname + "/" + fsname + "_test.go"
-	// Find last capitalised group to be object name
-	matcher := regexp.MustCompile(`([A-Z][a-z0-9]+)$`)
-	matches := matcher.FindStringSubmatch(Fsname)
-	if len(matches) == 0 {
-		log.Fatalf("Couldn't find object name in %q", Fsname)
-	}
-	ObjectName := matches[1]
 
 	if fsname == "local" {
 		TestName = ""
@@ -133,11 +126,12 @@ func generateTestProgram(t *template.Template, fns []string, Fsname string) {
 func main() {
 	fns := findTestFunctions()
 	t := template.Must(template.New("main").Parse(testProgram))
-	generateTestProgram(t, fns, "Local")
-	generateTestProgram(t, fns, "Swift")
-	generateTestProgram(t, fns, "S3")
-	generateTestProgram(t, fns, "Drive")
-	generateTestProgram(t, fns, "GoogleCloudStorage")
-	generateTestProgram(t, fns, "Dropbox")
+	generateTestProgram(t, fns, "Local", "Local")
+	generateTestProgram(t, fns, "Swift", "Swift")
+	generateTestProgram(t, fns, "S3", "S3")
+	generateTestProgram(t, fns, "Drive", "Drive")
+	generateTestProgram(t, fns, "GoogleCloudStorage", "Storage")
+	generateTestProgram(t, fns, "Dropbox", "Dropbox")
+	generateTestProgram(t, fns, "AmazonCloudDrive", "Acd")
 	log.Printf("Done")
 }

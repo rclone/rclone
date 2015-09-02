@@ -8,6 +8,11 @@ TestS3:
 TestDrive:
 TestGoogleCloudStorage:
 TestDropbox:
+TestAmazonCloudDrive:
+"
+
+REMOTES="
+TestAmazonCloudDrive:
 "
 
 function test_remote {
