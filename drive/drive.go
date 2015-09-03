@@ -13,7 +13,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -21,6 +20,7 @@ import (
 	"google.golang.org/api/drive/v2"
 	"google.golang.org/api/googleapi"
 
+	"github.com/ncw/rclone/dircache"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/oauthutil"
 	"github.com/spf13/pflag"
@@ -82,18 +82,14 @@ func init() {
 
 // FsDrive represents a remote drive server
 type FsDrive struct {
-	name         string         // name of this remote
-	svc          *drive.Service // the connection to the drive server
-	root         string         // the path we are working on
-	client       *http.Client   // authorized client
-	about        *drive.About   // information about the drive, including the root
-	rootId       string         // Id of the root directory
-	foundRoot    bool           // Whether we have found the root or not
-	findRootLock sync.Mutex     // Protect findRoot from concurrent use
-	dirCache     *dirCache      // Map of directory path to directory id
-	findDirLock  sync.Mutex     // Protect findDir from concurrent use
-	pacer        chan struct{}  // To pace the operations
-	sleepTime    time.Duration  // Time to sleep for each transaction
+	name      string             // name of this remote
+	svc       *drive.Service     // the connection to the drive server
+	root      string             // the path we are working on
+	client    *http.Client       // authorized client
+	about     *drive.About       // information about the drive, including the root
+	dirCache  *dircache.DirCache // Map of directory path to directory id
+	pacer     chan struct{}      // To pace the operations
+	sleepTime time.Duration      // Time to sleep for each transaction
 }
 
 // FsObjectDrive describes a drive object
@@ -105,52 +101,6 @@ type FsObjectDrive struct {
 	md5sum       string   // md5sum of the object
 	bytes        int64    // size of the object
 	modifiedDate string   // RFC3339 time it was last modified
-}
-
-// dirCache caches paths to directory Ids and vice versa
-type dirCache struct {
-	sync.RWMutex
-	cache    map[string]string
-	invCache map[string]string
-}
-
-// Make a new locked map
-func newDirCache() *dirCache {
-	d := &dirCache{}
-	d.Flush()
-	return d
-}
-
-// Gets an Id given a path
-func (m *dirCache) Get(path string) (id string, ok bool) {
-	m.RLock()
-	id, ok = m.cache[path]
-	m.RUnlock()
-	return
-}
-
-// GetInv gets a path given an Id
-func (m *dirCache) GetInv(path string) (id string, ok bool) {
-	m.RLock()
-	id, ok = m.invCache[path]
-	m.RUnlock()
-	return
-}
-
-// Put a path, id into the map
-func (m *dirCache) Put(path, id string) {
-	m.Lock()
-	m.cache[path] = id
-	m.invCache[id] = path
-	m.Unlock()
-}
-
-// Flush the map of all data
-func (m *dirCache) Flush() {
-	m.Lock()
-	m.cache = make(map[string]string)
-	m.invCache = make(map[string]string)
-	m.Unlock()
 }
 
 // ------------------------------------------------------------
@@ -353,7 +303,6 @@ func NewFs(name, path string) (fs.Fs, error) {
 	f := &FsDrive{
 		name:      name,
 		root:      root,
-		dirCache:  newDirCache(),
 		pacer:     make(chan struct{}, 1),
 		sleepTime: minSleep,
 	}
@@ -376,17 +325,18 @@ func NewFs(name, path string) (fs.Fs, error) {
 		return nil, fmt.Errorf("Couldn't read info about Drive: %s", err)
 	}
 
-	// Find the Id of the true root and clear everything
-	f.resetRoot()
+	f.dirCache = dircache.New(root, f.about.RootFolderId, f)
+
 	// Find the current root
-	err = f.findRoot(false)
+	err = f.dirCache.FindRoot(false)
 	if err != nil {
 		// Assume it is a file
-		newRoot, remote := splitPath(root)
+		newRoot, remote := dircache.SplitPath(root)
 		newF := *f
+		newF.dirCache = dircache.New(newRoot, f.about.RootFolderId, &newF)
 		newF.root = newRoot
 		// Make new Fs which is the parent
-		err = newF.findRoot(false)
+		err = newF.dirCache.FindRoot(false)
 		if err != nil {
 			// No root so return old f
 			return f, nil
@@ -399,7 +349,7 @@ func NewFs(name, path string) (fs.Fs, error) {
 		// return a Fs Limited to this object
 		return fs.NewLimited(&newF, obj), nil
 	}
-	// fmt.Printf("Root id %s", f.rootId)
+	// fmt.Printf("Root id %s", f.dirCache.RootID())
 	return f, nil
 }
 
@@ -435,6 +385,39 @@ func (f *FsDrive) newFsObjectWithInfo(remote string, info *drive.File) fs.Object
 // May return nil if an error occurred
 func (f *FsDrive) NewFsObject(remote string) fs.Object {
 	return f.newFsObjectWithInfo(remote, nil)
+}
+
+// FindLeaf finds a directory of name leaf in the folder with ID pathId
+func (f *FsDrive) FindLeaf(pathId, leaf string) (pathIdOut string, found bool, err error) {
+	// Find the leaf in pathId
+	found, err = f.listAll(pathId, leaf, true, false, func(item *drive.File) bool {
+		if item.Title == leaf {
+			pathIdOut = item.Id
+			return true
+		}
+		return false
+	})
+	return pathIdOut, found, err
+}
+
+// CreateDir makes a directory with pathId as parent and name leaf
+func (f *FsDrive) CreateDir(pathId, leaf string) (newId string, err error) {
+	// fmt.Println("Making", path)
+	// Define the metadata for the directory we are going to create.
+	createInfo := &drive.File{
+		Title:       leaf,
+		Description: leaf,
+		MimeType:    driveFolderType,
+		Parents:     []*drive.ParentReference{{Id: pathId}},
+	}
+	var info *drive.File
+	f.call(&err, func() {
+		info, err = f.svc.Files.Insert(createInfo).Do()
+	})
+	if err != nil {
+		return "", err
+	}
+	return info.Id, nil
 }
 
 // Path should be directory path either "" or "path/"
@@ -542,172 +525,20 @@ func (f *FsDrive) listDirFull(dirId string, path string, out fs.ObjectsChan) err
 	return nil
 }
 
-// Splits a path into directory, leaf
-//
-// Path shouldn't start or end with a /
-//
-// If there are no slashes then directory will be "" and leaf = path
-func splitPath(path string) (directory, leaf string) {
-	lastSlash := strings.LastIndex(path, "/")
-	if lastSlash >= 0 {
-		directory = path[:lastSlash]
-		leaf = path[lastSlash+1:]
-	} else {
-		directory = ""
-		leaf = path
-	}
-	return
-}
-
-// Finds the directory passed in returning the directory Id starting from pathId
-//
-// Path shouldn't start or end with a /
-//
-// If create is set it will make the directory if not found
-//
-// Algorithm:
-//  Look in the cache for the path, if found return the pathId
-//  If not found strip the last path off the path and recurse
-//  Now have a parent directory id, so look in the parent for self and return it
-func (f *FsDrive) findDir(path string, create bool) (pathId string, err error) {
-	pathId = f._findDirInCache(path)
-	if pathId != "" {
-		return
-	}
-	f.findDirLock.Lock()
-	defer f.findDirLock.Unlock()
-	return f._findDir(path, create)
-}
-
-// Look for the root and in the cache - safe to call without the findDirLock
-func (f *FsDrive) _findDirInCache(path string) string {
-	// fmt.Println("Finding",path,"create",create,"cache",cache)
-	// If it is the root, then return it
-	if path == "" {
-		// fmt.Println("Root")
-		return f.rootId
-	}
-
-	// If it is in the cache then return it
-	pathId, ok := f.dirCache.Get(path)
-	if ok {
-		// fmt.Println("Cache hit on", path)
-		return pathId
-	}
-
-	return ""
-}
-
-// Unlocked findDir - must have findDirLock
-func (f *FsDrive) _findDir(path string, create bool) (pathId string, err error) {
-	pathId = f._findDirInCache(path)
-	if pathId != "" {
-		return
-	}
-
-	// Split the path into directory, leaf
-	directory, leaf := splitPath(path)
-
-	// Recurse and find pathId for directory
-	pathId, err = f._findDir(directory, create)
-	if err != nil {
-		return pathId, err
-	}
-
-	// Find the leaf in pathId
-	found, err := f.listAll(pathId, leaf, true, false, func(item *drive.File) bool {
-		if item.Title == leaf {
-			pathId = item.Id
-			return true
-		}
-		return false
-	})
-	if err != nil {
-		return pathId, err
-	}
-
-	// If not found create the directory if required or return an error
-	if !found {
-		if create {
-			// fmt.Println("Making", path)
-			// Define the metadata for the directory we are going to create.
-			createInfo := &drive.File{
-				Title:       leaf,
-				Description: leaf,
-				MimeType:    driveFolderType,
-				Parents:     []*drive.ParentReference{{Id: pathId}},
-			}
-			var info *drive.File
-			f.call(&err, func() {
-				info, err = f.svc.Files.Insert(createInfo).Do()
-			})
-			if err != nil {
-				return pathId, fmt.Errorf("Failed to make directory: %v", err)
-			}
-			pathId = info.Id
-		} else {
-			return pathId, fmt.Errorf("Couldn't find directory: %q", path)
-		}
-	}
-
-	// Store the directory in the cache
-	f.dirCache.Put(path, pathId)
-
-	// fmt.Println("Dir", path, "is", pathId)
-	return pathId, nil
-}
-
-// Finds the root directory if not already found
-//
-// Resets the root directory
-//
-// If create is set it will make the directory if not found
-func (f *FsDrive) findRoot(create bool) error {
-	f.findRootLock.Lock()
-	defer f.findRootLock.Unlock()
-	if f.foundRoot {
-		return nil
-	}
-	rootId, err := f.findDir(f.root, create)
-	if err != nil {
-		return err
-	}
-	f.rootId = rootId
-	f.dirCache.Flush()
-	// Put the root directory in
-	f.dirCache.Put("", f.rootId)
-	f.foundRoot = true
-	return nil
-}
-
-// Resets the root directory to the absolute root and clears the dirCache
-func (f *FsDrive) resetRoot() {
-	f.findRootLock.Lock()
-	defer f.findRootLock.Unlock()
-	f.foundRoot = false
-	f.dirCache.Flush()
-
-	// Put the true root in
-	f.rootId = f.about.RootFolderId
-
-	// Put the root directory in
-	f.dirCache.Put("", f.rootId)
-}
-
 // Walk the path returning a channel of FsObjects
 func (f *FsDrive) List() fs.ObjectsChan {
 	out := make(fs.ObjectsChan, fs.Config.Checkers)
 	go func() {
 		defer close(out)
-		err := f.findRoot(false)
+		err := f.dirCache.FindRoot(false)
 		if err != nil {
 			fs.Stats.Error()
 			fs.ErrorLog(f, "Couldn't find root: %s", err)
 		} else {
 			if f.root == "" && *driveFullList {
-				err = f.listDirFull(f.rootId, "", out)
+				err = f.listDirFull(f.dirCache.RootID(), "", out)
 			} else {
-				err = f.listDirRecursive(f.rootId, "", out)
+				err = f.listDirRecursive(f.dirCache.RootID(), "", out)
 			}
 			if err != nil {
 				fs.Stats.Error()
@@ -723,12 +554,12 @@ func (f *FsDrive) ListDir() fs.DirChan {
 	out := make(fs.DirChan, fs.Config.Checkers)
 	go func() {
 		defer close(out)
-		err := f.findRoot(false)
+		err := f.dirCache.FindRoot(false)
 		if err != nil {
 			fs.Stats.Error()
 			fs.ErrorLog(f, "Couldn't find root: %s", err)
 		} else {
-			_, err := f.listAll(f.rootId, "", true, false, func(item *drive.File) bool {
+			_, err := f.listAll(f.dirCache.RootID(), "", true, false, func(item *drive.File) bool {
 				dir := &fs.Dir{
 					Name:  item.Title,
 					Bytes: -1,
@@ -759,10 +590,9 @@ func (f *FsDrive) createFileInfo(remote string, modTime time.Time, size int64) (
 		bytes:  size,
 	}
 
-	directory, leaf := splitPath(remote)
-	directoryId, err := f.findDir(directory, true)
+	leaf, directoryId, err := f.dirCache.FindPath(remote, true)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Couldn't find or make directory: %s", err)
+		return nil, nil, err
 	}
 
 	// Define the metadata for the file we are going to create.
@@ -816,20 +646,20 @@ func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64
 
 // Mkdir creates the container if it doesn't exist
 func (f *FsDrive) Mkdir() error {
-	return f.findRoot(true)
+	return f.dirCache.FindRoot(true)
 }
 
 // Rmdir deletes the container
 //
 // Returns an error if it isn't empty
 func (f *FsDrive) Rmdir() error {
-	err := f.findRoot(false)
+	err := f.dirCache.FindRoot(false)
 	if err != nil {
 		return err
 	}
 	var children *drive.ChildList
 	f.call(&err, func() {
-		children, err = f.svc.Children.List(f.rootId).MaxResults(10).Do()
+		children, err = f.svc.Children.List(f.dirCache.RootID()).MaxResults(10).Do()
 	})
 	if err != nil {
 		return err
@@ -841,16 +671,16 @@ func (f *FsDrive) Rmdir() error {
 	if f.root != "" {
 		f.call(&err, func() {
 			if *driveUseTrash {
-				_, err = f.svc.Files.Trash(f.rootId).Do()
+				_, err = f.svc.Files.Trash(f.dirCache.RootID()).Do()
 			} else {
-				err = f.svc.Files.Delete(f.rootId).Do()
+				err = f.svc.Files.Delete(f.dirCache.RootID()).Do()
 			}
 		})
 		if err != nil {
 			return err
 		}
 	}
-	f.resetRoot()
+	f.dirCache.ResetRoot()
 	return nil
 }
 
@@ -901,18 +731,18 @@ func (f *FsDrive) Purge() error {
 	if f.root == "" {
 		return fmt.Errorf("Can't purge root directory")
 	}
-	err := f.findRoot(false)
+	err := f.dirCache.FindRoot(false)
 	if err != nil {
 		return err
 	}
 	f.call(&err, func() {
 		if *driveUseTrash {
-			_, err = f.svc.Files.Trash(f.rootId).Do()
+			_, err = f.svc.Files.Trash(f.dirCache.RootID()).Do()
 		} else {
-			err = f.svc.Files.Delete(f.rootId).Do()
+			err = f.svc.Files.Delete(f.dirCache.RootID()).Do()
 		}
 	})
-	f.resetRoot()
+	f.dirCache.ResetRoot()
 	if err != nil {
 		return err
 	}
@@ -966,17 +796,16 @@ func (dstFs *FsDrive) DirMove(src fs.Fs) error {
 	}
 
 	// Check if destination exists
-	dstFs.resetRoot()
-	err := dstFs.findRoot(false)
+	dstFs.dirCache.ResetRoot()
+	err := dstFs.dirCache.FindRoot(false)
 	if err == nil {
 		return fs.ErrorDirExists
 	}
 
 	// Find ID of parent
-	directory, leaf := splitPath(dstFs.root)
-	directoryId, err := dstFs.findDir(directory, true)
+	leaf, directoryId, err := dstFs.dirCache.FindPath(dstFs.root, true)
 	if err != nil {
-		return fmt.Errorf("Couldn't find or make destination directory: %v", err)
+		return err
 	}
 
 	// Do the move
@@ -984,11 +813,11 @@ func (dstFs *FsDrive) DirMove(src fs.Fs) error {
 		Title:   leaf,
 		Parents: []*drive.ParentReference{{Id: directoryId}},
 	}
-	_, err = dstFs.svc.Files.Patch(srcFs.rootId, &patch).Do()
+	_, err = dstFs.svc.Files.Patch(srcFs.dirCache.RootID(), &patch).Do()
 	if err != nil {
 		return err
 	}
-	srcFs.resetRoot()
+	srcFs.dirCache.ResetRoot()
 	return nil
 }
 
@@ -1037,11 +866,9 @@ func (o *FsObjectDrive) readMetaData() (err error) {
 		return nil
 	}
 
-	directory, leaf := splitPath(o.remote)
-	directoryId, err := o.drive.findDir(directory, false)
+	leaf, directoryId, err := o.drive.dirCache.FindPath(o.remote, false)
 	if err != nil {
-		fs.Debug(o, "Couldn't find directory: %s", err)
-		return fmt.Errorf("Couldn't find directory: %s", err)
+		return err
 	}
 
 	found, err := o.drive.listAll(directoryId, leaf, false, true, func(item *drive.File) bool {
