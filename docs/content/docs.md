@@ -23,7 +23,7 @@ See the following for detailed instructions for
   * [Amazon S3](/s3/)
   * [Swift / Rackspace Cloudfiles / Memset Memstore](/swift/)
   * [Dropbox](/dropbox/)
-  * [Google Cloud Storage](/googlcloudstorage/)
+  * [Google Cloud Storage](/googlecloudstorage/)
   * [Local filesystem](/local/)
 
 Usage
