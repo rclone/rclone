@@ -15,3 +15,4 @@ Contributors
   * Alex Couper <amcouper@gmail.com>
   * Leonid Shalupov <leonid@shalupov.com>
   * Shimon Doodkin <helpmepro1@gmail.com>
+  * Colin Nicholson <colin@colinn.com>
