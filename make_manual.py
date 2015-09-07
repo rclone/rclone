@@ -36,6 +36,7 @@ docs = [
 ignore_docs = [
     "downloads.md",
     "privacy.md",
+    "donate.md",
 ]
 
 def read_doc(doc):
