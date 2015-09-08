@@ -50,6 +50,8 @@ var (
 	dryRun         = pflag.BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
 	connectTimeout = pflag.DurationP("contimeout", "", 60*time.Second, "Connect timeout")
 	timeout        = pflag.DurationP("timeout", "", 5*60*time.Second, "IO idle timeout")
+	dumpHeaders    = pflag.BoolP("dump-headers", "", false, "Dump HTTP headers - may contain sensitive info")
+	dumpBodies     = pflag.BoolP("dump-bodies", "", false, "Dump HTTP headers and bodies - may contain sensitive info")
 	bwLimit        SizeSuffix
 )
 
@@ -155,11 +157,13 @@ type ConfigInfo struct {
 	Transfers      int
 	ConnectTimeout time.Duration // Connect timeout
 	Timeout        time.Duration // Data channel timeout
+	DumpHeaders    bool
+	DumpBodies     bool
 }
 
 // Transport returns an http.RoundTripper with the correct timeouts
 func (ci *ConfigInfo) Transport() http.RoundTripper {
-	return &httpclient.Transport{
+	t := &httpclient.Transport{
 		Proxy:               http.ProxyFromEnvironment,
 		MaxIdleConnsPerHost: ci.Checkers + ci.Transfers + 1,
 
@@ -182,6 +186,10 @@ func (ci *ConfigInfo) Transport() http.RoundTripper {
 		// Write operation on the request connection.
 		ReadWriteTimeout: ci.Timeout,
 	}
+	if ci.DumpHeaders || ci.DumpBodies {
+		return NewLoggedTransport(t, ci.DumpBodies)
+	}
+	return t
 }
 
 // Transport returns an http.Client with the correct timeouts
@@ -227,6 +235,8 @@ func LoadConfig() {
 	Config.ConnectTimeout = *connectTimeout
 	Config.CheckSum = *checkSum
 	Config.SizeOnly = *sizeOnly
+	Config.DumpHeaders = *dumpHeaders
+	Config.DumpBodies = *dumpBodies
 
 	ConfigPath = *configFile
 
