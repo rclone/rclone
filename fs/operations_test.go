@@ -346,6 +346,14 @@ func TestSyncAfterChangingFilesSizeOnly(t *testing.T) {
 
 // Sync after changing a file's contents, modtime but not length
 func TestSyncAfterChangingContentsOnly(t *testing.T) {
+	if fremote.Precision() == fs.ModTimeNotSupported {
+		t.Logf("ModTimeNotSupported so forcing file to be a different size")
+		WriteFile("potato", "different size to make sure it syncs", t2)
+		err := fs.Sync(fremote, flocal)
+		if err != nil {
+			t.Fatalf("Sync failed: %v", err)
+		}
+	}
 	WriteFile("potato", "SMALLER BUT SAME DATE", t2)
 	err := fs.Sync(fremote, flocal)
 	if err != nil {
