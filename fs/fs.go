@@ -222,6 +222,24 @@ func RetryErrorf(format string, a ...interface{}) error {
 	return retryError(fmt.Sprintf(format, a...))
 }
 
+// PlainRetryError is an error wrapped so it will retry
+type plainRetryError struct {
+	error
+}
+
+// Retry interface
+func (_ plainRetryError) Retry() bool {
+	return true
+}
+
+// Check interface
+var _ Retry = plainRetryError{(error)(nil)}
+
+// RetryError makes an error which indicates it would like to be retried
+func RetryError(err error) error {
+	return plainRetryError{err}
+}
+
 // A channel of Objects
 type ObjectsChan chan Object
 
