@@ -23,6 +23,7 @@ import (
 	"github.com/ncw/rclone/dircache"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/oauthutil"
+	"github.com/ncw/rclone/pacer"
 	"github.com/spf13/pflag"
 )
 
@@ -82,14 +83,13 @@ func init() {
 
 // FsDrive represents a remote drive server
 type FsDrive struct {
-	name      string             // name of this remote
-	svc       *drive.Service     // the connection to the drive server
-	root      string             // the path we are working on
-	client    *http.Client       // authorized client
-	about     *drive.About       // information about the drive, including the root
-	dirCache  *dircache.DirCache // Map of directory path to directory id
-	pacer     chan struct{}      // To pace the operations
-	sleepTime time.Duration      // Time to sleep for each transaction
+	name     string             // name of this remote
+	svc      *drive.Service     // the connection to the drive server
+	root     string             // the path we are working on
+	client   *http.Client       // authorized client
+	about    *drive.About       // information about the drive, including the root
+	dirCache *dircache.DirCache // Map of directory path to directory id
+	pacer    *pacer.Pacer       // To pace the API calls
 }
 
 // FsObjectDrive describes a drive object
@@ -120,46 +120,11 @@ func (f *FsDrive) String() string {
 	return fmt.Sprintf("Google drive root '%s'", f.root)
 }
 
-// Start a call to the drive API
-//
-// This must be called as a pair with endCall
-//
-// This waits for the pacer token
-func (f *FsDrive) beginCall() {
-	// pacer starts with a token in and whenever we take one out
-	// XXX ms later we put another in.  We could do this with a
-	// Ticker more accurately, but then we'd have to work out how
-	// not to run it when it wasn't needed
-	<-f.pacer
-
-	// Restart the timer
-	go func(t time.Duration) {
-		// fs.Debug(f, "New sleep for %v at %v", t, time.Now())
-		time.Sleep(t)
-		f.pacer <- struct{}{}
-	}(f.sleepTime)
-}
-
-// End a call to the drive API
-//
-// Refresh the pace given an error that was returned.  It returns a
-// boolean as to whether the operation should be retried.
-//
-// See https://developers.google.com/drive/web/handle-errors
-// http://stackoverflow.com/questions/18529524/403-rate-limit-after-only-1-insert-per-second
-func (f *FsDrive) endCall(err error) bool {
-	again := false
-	oldSleepTime := f.sleepTime
-	if err == nil {
-		f.sleepTime = (f.sleepTime<<decayConstant - f.sleepTime) >> decayConstant
-		if f.sleepTime < minSleep {
-			f.sleepTime = minSleep
-		}
-		if f.sleepTime != oldSleepTime {
-			fs.Debug(f, "Reducing sleep to %v", f.sleepTime)
-		}
-	} else {
-		fs.Debug(f, "Error recived: %T %#v", err, err)
+// shouldRetry determines whehter a given err rates being retried
+func shouldRetry(err error) (again bool, errOut error) {
+	again = false
+	errOut = err
+	if err != nil {
 		// Check for net error Timeout()
 		if x, ok := err.(interface {
 			Timeout() bool
@@ -185,30 +150,7 @@ func (f *FsDrive) endCall(err error) bool {
 			}
 		}
 	}
-	if again {
-		f.sleepTime *= 2
-		if f.sleepTime > maxSleep {
-			f.sleepTime = maxSleep
-		}
-		if f.sleepTime != oldSleepTime {
-			fs.Debug(f, "Rate limited, increasing sleep to %v", f.sleepTime)
-		}
-	}
-	return again
-}
-
-// Pace the remote operations to not exceed Google's limits and retry
-// on 403 rate limit exceeded
-//
-// This calls fn, expecting it to place its error in perr
-func (f *FsDrive) call(perr *error, fn func()) {
-	for {
-		f.beginCall()
-		fn()
-		if !f.endCall(*perr) {
-			break
-		}
-	}
+	return again, err
 }
 
 // parseParse parses a drive 'url'
@@ -249,8 +191,9 @@ func (f *FsDrive) listAll(dirId string, title string, directoriesOnly bool, file
 OUTER:
 	for {
 		var files *drive.FileList
-		f.call(&err, func() {
+		err = f.pacer.Call(func() (bool, error) {
 			files, err = list.Do()
+			return shouldRetry(err)
 		})
 		if err != nil {
 			return false, fmt.Errorf("Couldn't list directory: %s", err)
@@ -301,14 +244,10 @@ func NewFs(name, path string) (fs.Fs, error) {
 	}
 
 	f := &FsDrive{
-		name:      name,
-		root:      root,
-		pacer:     make(chan struct{}, 1),
-		sleepTime: minSleep,
+		name:  name,
+		root:  root,
+		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 	}
-
-	// Put the first pacing token in
-	f.pacer <- struct{}{}
 
 	// Create a new authorized Drive client.
 	f.client = oAuthClient
@@ -318,8 +257,9 @@ func NewFs(name, path string) (fs.Fs, error) {
 	}
 
 	// Read About so we know the root path
-	f.call(&err, func() {
+	err = f.pacer.Call(func() (bool, error) {
 		f.about, err = f.svc.About.Get().Do()
+		return shouldRetry(err)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("Couldn't read info about Drive: %s", err)
@@ -411,8 +351,9 @@ func (f *FsDrive) CreateDir(pathId, leaf string) (newId string, err error) {
 		Parents:     []*drive.ParentReference{{Id: pathId}},
 	}
 	var info *drive.File
-	f.call(&err, func() {
+	err = f.pacer.Call(func() (bool, error) {
 		info, err = f.svc.Files.Insert(createInfo).Do()
+		return shouldRetry(err)
 	})
 	if err != nil {
 		return "", err
@@ -625,13 +566,12 @@ func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64
 	if size == 0 || size < int64(driveUploadCutoff) {
 		// Make the API request to upload metadata and file data.
 		// Don't retry, return a retry error instead
-		f.beginCall()
-		info, err = f.svc.Files.Insert(createInfo).Media(in).Do()
-		if f.endCall(err) {
-			return o, fs.RetryErrorf("Upload failed - retry: %s", err)
-		}
+		err = f.pacer.CallNoRetry(func() (bool, error) {
+			info, err = f.svc.Files.Insert(createInfo).Media(in).Do()
+			return shouldRetry(err)
+		})
 		if err != nil {
-			return o, fmt.Errorf("Upload failed: %s", err)
+			return o, err
 		}
 	} else {
 		// Upload the file in chunks
@@ -658,8 +598,9 @@ func (f *FsDrive) Rmdir() error {
 		return err
 	}
 	var children *drive.ChildList
-	f.call(&err, func() {
+	err = f.pacer.Call(func() (bool, error) {
 		children, err = f.svc.Children.List(f.dirCache.RootID()).MaxResults(10).Do()
+		return shouldRetry(err)
 	})
 	if err != nil {
 		return err
@@ -669,12 +610,13 @@ func (f *FsDrive) Rmdir() error {
 	}
 	// Delete the directory if it isn't the root
 	if f.root != "" {
-		f.call(&err, func() {
+		err = f.pacer.Call(func() (bool, error) {
 			if *driveUseTrash {
 				_, err = f.svc.Files.Trash(f.dirCache.RootID()).Do()
 			} else {
 				err = f.svc.Files.Delete(f.dirCache.RootID()).Do()
 			}
+			return shouldRetry(err)
 		})
 		if err != nil {
 			return err
@@ -711,8 +653,9 @@ func (f *FsDrive) Copy(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	var info *drive.File
-	o.drive.call(&err, func() {
+	err = o.drive.pacer.Call(func() (bool, error) {
 		info, err = o.drive.svc.Files.Copy(srcObj.id, createInfo).Do()
+		return shouldRetry(err)
 	})
 	if err != nil {
 		return nil, err
@@ -735,12 +678,13 @@ func (f *FsDrive) Purge() error {
 	if err != nil {
 		return err
 	}
-	f.call(&err, func() {
+	err = f.pacer.Call(func() (bool, error) {
 		if *driveUseTrash {
 			_, err = f.svc.Files.Trash(f.dirCache.RootID()).Do()
 		} else {
 			err = f.svc.Files.Delete(f.dirCache.RootID()).Do()
 		}
+		return shouldRetry(err)
 	})
 	f.dirCache.ResetRoot()
 	if err != nil {
@@ -921,8 +865,9 @@ func (o *FsObjectDrive) SetModTime(modTime time.Time) {
 	}
 	// Set modified date
 	var info *drive.File
-	o.drive.call(&err, func() {
+	err = o.drive.pacer.Call(func() (bool, error) {
 		info, err = o.drive.svc.Files.Update(o.id, updateInfo).SetModifiedDate(true).Do()
+		return shouldRetry(err)
 	})
 	if err != nil {
 		fs.Stats.Error()
@@ -949,8 +894,9 @@ func (o *FsObjectDrive) Open() (in io.ReadCloser, err error) {
 	}
 	req.Header.Set("User-Agent", fs.UserAgent)
 	var res *http.Response
-	o.drive.call(&err, func() {
+	err = o.drive.pacer.Call(func() (bool, error) {
 		res, err = o.drive.client.Do(req)
+		return shouldRetry(err)
 	})
 	if err != nil {
 		return nil, err
@@ -978,13 +924,12 @@ func (o *FsObjectDrive) Update(in io.Reader, modTime time.Time, size int64) erro
 	var info *drive.File
 	if size == 0 || size < int64(driveUploadCutoff) {
 		// Don't retry, return a retry error instead
-		o.drive.beginCall()
-		info, err = o.drive.svc.Files.Update(updateInfo.Id, updateInfo).SetModifiedDate(true).Media(in).Do()
-		if o.drive.endCall(err) {
-			return fs.RetryErrorf("Update failed - retry: %s", err)
-		}
+		err = o.drive.pacer.CallNoRetry(func() (bool, error) {
+			info, err = o.drive.svc.Files.Update(updateInfo.Id, updateInfo).SetModifiedDate(true).Media(in).Do()
+			return shouldRetry(err)
+		})
 		if err != nil {
-			return fmt.Errorf("Update failed: %s", err)
+			return err
 		}
 	} else {
 		// Upload the file in chunks
@@ -1000,12 +945,13 @@ func (o *FsObjectDrive) Update(in io.Reader, modTime time.Time, size int64) erro
 // Remove an object
 func (o *FsObjectDrive) Remove() error {
 	var err error
-	o.drive.call(&err, func() {
+	err = o.drive.pacer.Call(func() (bool, error) {
 		if *driveUseTrash {
 			_, err = o.drive.svc.Files.Trash(o.id).Do()
 		} else {
 			err = o.drive.svc.Files.Delete(o.id).Do()
 		}
+		return shouldRetry(err)
 	})
 	return err
 }

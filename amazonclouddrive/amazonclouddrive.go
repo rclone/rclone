@@ -9,24 +9,22 @@ FIXME make searching for directory in id and file in id more efficient
 
 FIXME make the default for no files and no dirs be (FILE & FOLDER) so
 we ignore assets completely!
-
 */
 
 import (
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
 	"net/http"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/ncw/go-acd"
 	"github.com/ncw/rclone/dircache"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/oauthutil"
+	"github.com/ncw/rclone/pacer"
 	"golang.org/x/oauth2"
 )
 
@@ -40,8 +38,9 @@ const (
 	assetKind          = "ASSET"
 	statusAvailable    = "AVAILABLE"
 	timeFormat         = time.RFC3339 // 2014-03-07T22:31:12.173Z
-	minBackoff         = 1 * time.Second
-	maxBackoff         = 256 * time.Second
+	minSleep           = 100 * time.Millisecond
+	maxSleep           = 256 * time.Second
+	decayConstant      = 2 // bigger for slower decay, exponential
 )
 
 // Globals
@@ -57,7 +56,6 @@ var (
 		ClientSecret: fs.Reveal(rcloneClientSecret),
 		RedirectURL:  redirectURL,
 	}
-	FIXME = fmt.Errorf("FIXME not implemented")
 )
 
 // Register with Fs
@@ -87,9 +85,7 @@ type FsAcd struct {
 	c        *acd.Client        // the connection to the acd server
 	root     string             // the path we are working on
 	dirCache *dircache.DirCache // Map of directory path to directory id
-
-	backoffLock sync.Mutex
-	backoff     time.Duration // current backoff
+	pacer    *pacer.Pacer       // pacer for API calls
 }
 
 // FsObjectAcd describes a acd object
@@ -127,6 +123,17 @@ func parsePath(path string) (root string) {
 	return
 }
 
+// shouldRetry returns a boolean as to whether this resp and err
+// deserve to be retried.  It returns the err as a convenience
+func shouldRetry(resp *http.Response, err error) (bool, error) {
+	// FIXME retry other http codes?
+	// 409 conflict ?
+	if err != nil && resp != nil && resp.StatusCode == 429 {
+		return true, err
+	}
+	return false, err
+}
+
 // NewFs contstructs an FsAcd from the path, container:path
 func NewFs(name, root string) (fs.Fs, error) {
 	root = parsePath(root)
@@ -138,19 +145,28 @@ func NewFs(name, root string) (fs.Fs, error) {
 	c := acd.NewClient(oAuthClient)
 	c.UserAgent = fs.UserAgent
 	f := &FsAcd{
-		name: name,
-		root: root,
-		c:    c,
+		name:  name,
+		root:  root,
+		c:     c,
+		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 	}
 
 	// Update endpoints
-	_, _, err = f.c.Account.GetEndpoints()
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		_, resp, err = f.c.Account.GetEndpoints()
+		return shouldRetry(resp, err)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get endpoints: %v", err)
 	}
 
 	// Get rootID
-	rootInfo, _, err := f.c.Nodes.GetRoot()
+	var rootInfo *acd.Folder
+	err = f.pacer.Call(func() (bool, error) {
+		rootInfo, resp, err = f.c.Nodes.GetRoot()
+		return shouldRetry(resp, err)
+	})
 	if err != nil || rootInfo.Id == nil {
 		return nil, fmt.Errorf("Failed to get root: %v", err)
 	}
@@ -210,46 +226,16 @@ func (f *FsAcd) NewFsObject(remote string) fs.Object {
 	return f.newFsObjectWithInfo(remote, nil)
 }
 
-// errChk checks the response and if it is a 429 error returns a
-// RetryError, otherwise it returns just a plain error
-//
-// It also implements the backoff strategy
-func (f *FsAcd) errChk(resp *http.Response, err error) error {
-	if err != nil && resp != nil && resp.StatusCode == 429 {
-		// Update backoff
-		f.backoffLock.Lock()
-		backoff := f.backoff
-		if backoff == 0 {
-			backoff = minBackoff
-		} else {
-			backoff *= 2
-			if backoff > maxBackoff {
-				backoff = maxBackoff
-			}
-		}
-		f.backoff = backoff
-		f.backoffLock.Unlock()
-		// Sleep for the backoff time
-		sleepTime := time.Duration(rand.Int63n(int64(backoff)))
-		fs.Debug(f, "Retry error: backoff is now %v, sleeping for %v", backoff, sleepTime)
-		time.Sleep(sleepTime)
-		return fs.RetryError(err)
-	}
-	// Reset backoff on success
-	if err == nil {
-		f.backoffLock.Lock()
-		f.backoff = 0
-		f.backoffLock.Unlock()
-	}
-	return err
-}
-
 // FindLeaf finds a directory of name leaf in the folder with ID pathId
 func (f *FsAcd) FindLeaf(pathId, leaf string) (pathIdOut string, found bool, err error) {
 	//fs.Debug(f, "FindLeaf(%q, %q)", pathId, leaf)
 	folder := acd.FolderFromId(pathId, f.c.Nodes)
-	subFolder, _, err := folder.GetFolder(leaf)
-	// err = f.errChk(resp, err)
+	var resp *http.Response
+	var subFolder *acd.Folder
+	err = f.pacer.Call(func() (bool, error) {
+		subFolder, resp, err = folder.GetFolder(leaf)
+		return shouldRetry(resp, err)
+	})
 	if err != nil {
 		if err == acd.ErrorNodeNotFound {
 			//fs.Debug(f, "...Not found")
@@ -269,15 +255,19 @@ func (f *FsAcd) FindLeaf(pathId, leaf string) (pathIdOut string, found bool, err
 
 // CreateDir makes a directory with pathId as parent and name leaf
 func (f *FsAcd) CreateDir(pathId, leaf string) (newId string, err error) {
-	//fs.Debug(f, "CreateDir(%q, %q)", pathId, leaf)
+	//fmt.Printf("CreateDir(%q, %q)\n", pathId, leaf)
 	folder := acd.FolderFromId(pathId, f.c.Nodes)
-	info, _, err := folder.CreateFolder(leaf)
-	// err = f.errChk(resp, err)
+	var resp *http.Response
+	var info *acd.Folder
+	err = f.pacer.Call(func() (bool, error) {
+		info, resp, err = folder.CreateFolder(leaf)
+		return shouldRetry(resp, err)
+	})
 	if err != nil {
-		fs.Debug(f, "...Error %v", err)
+		//fmt.Printf("...Error %v\n", err)
 		return "", err
 	}
-	//fs.Debug(f, "...Id %q", *info.Id)
+	//fmt.Printf("...Id %q\n", *info.Id)
 	return *info.Id, nil
 }
 
@@ -310,8 +300,11 @@ func (f *FsAcd) listAll(dirId string, title string, directoriesOnly bool, filesO
 	//var resp *http.Response
 OUTER:
 	for {
-		nodes, _, err = f.c.Nodes.GetNodes(&opts)
-		// err = f.errChk(resp, err)
+		var resp *http.Response
+		err = f.pacer.Call(func() (bool, error) {
+			nodes, resp, err = f.c.Nodes.GetNodes(&opts)
+			return shouldRetry(resp, err)
+		})
 		if err != nil {
 			fs.Stats.Error()
 			fs.ErrorLog(f, "Couldn't list files: %v", err)
@@ -440,12 +433,14 @@ func (f *FsAcd) Put(in io.Reader, remote string, modTime time.Time, size int64) 
 	folder := acd.FolderFromId(directoryID, o.acd.c.Nodes)
 	var info *acd.File
 	var resp *http.Response
-	if size != 0 {
-		info, resp, err = folder.Put(in, leaf)
-	} else {
-		info, resp, err = folder.PutSized(in, size, leaf)
-	}
-	err = f.errChk(resp, err)
+	err = f.pacer.CallNoRetry(func() (bool, error) {
+		if size != 0 {
+			info, resp, err = folder.Put(in, leaf)
+		} else {
+			info, resp, err = folder.PutSized(in, size, leaf)
+		}
+		return shouldRetry(resp, err)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -497,8 +492,10 @@ func (f *FsAcd) purgeCheck(check bool) error {
 
 	node := acd.NodeFromId(rootID, f.c.Nodes)
 	var resp *http.Response
-	resp, err = node.Trash()
-	err = f.errChk(resp, err)
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = node.Trash()
+		return shouldRetry(resp, err)
+	})
 	if err != nil {
 		return err
 	}
@@ -599,8 +596,12 @@ func (o *FsObjectAcd) readMetaData() (err error) {
 		return err
 	}
 	folder := acd.FolderFromId(directoryID, o.acd.c.Nodes)
-	info, _, err := folder.GetFile(leaf)
-	// err = o.acd.errChk(resp, err)
+	var resp *http.Response
+	var info *acd.File
+	err = o.acd.pacer.Call(func() (bool, error) {
+		info, resp, err = folder.GetFile(leaf)
+		return shouldRetry(resp, err)
+	})
 	if err != nil {
 		fs.Debug(o, "Failed to read info: %s", err)
 		return err
@@ -643,8 +644,10 @@ func (o *FsObjectAcd) Storable() bool {
 func (o *FsObjectAcd) Open() (in io.ReadCloser, err error) {
 	file := acd.File{Node: o.info}
 	var resp *http.Response
-	in, resp, err = file.Open()
-	err = o.acd.errChk(resp, err)
+	err = o.acd.pacer.Call(func() (bool, error) {
+		in, resp, err = file.Open()
+		return shouldRetry(resp, err)
+	})
 	return in, err
 }
 
@@ -656,12 +659,14 @@ func (o *FsObjectAcd) Update(in io.Reader, modTime time.Time, size int64) error 
 	var info *acd.File
 	var resp *http.Response
 	var err error
-	if size != 0 {
-		info, resp, err = file.OverwriteSized(in, size)
-	} else {
-		info, resp, err = file.Overwrite(in)
-	}
-	err = o.acd.errChk(resp, err)
+	err = o.acd.pacer.CallNoRetry(func() (bool, error) {
+		if size != 0 {
+			info, resp, err = file.OverwriteSized(in, size)
+		} else {
+			info, resp, err = file.Overwrite(in)
+		}
+		return shouldRetry(resp, err)
+	})
 	if err != nil {
 		return err
 	}
@@ -671,8 +676,12 @@ func (o *FsObjectAcd) Update(in io.Reader, modTime time.Time, size int64) error 
 
 // Remove an object
 func (o *FsObjectAcd) Remove() error {
-	resp, err := o.info.Trash()
-	err = o.acd.errChk(resp, err)
+	var resp *http.Response
+	var err error
+	err = o.acd.pacer.Call(func() (bool, error) {
+		resp, err = o.info.Trash()
+		return shouldRetry(resp, err)
+	})
 	return err
 }
 

@@ -78,12 +78,13 @@ func (f *FsDrive) Upload(in io.Reader, size int64, contentType string, info *dri
 	req.Header.Set("X-Upload-Content-Length", fmt.Sprintf("%v", size))
 	req.Header.Set("User-Agent", fs.UserAgent)
 	var res *http.Response
-	f.call(&err, func() {
+	err = f.pacer.Call(func() (bool, error) {
 		res, err = f.client.Do(req)
 		if err == nil {
 			defer googleapi.CloseBody(res)
 			err = googleapi.CheckResponse(res)
 		}
+		return shouldRetry(err)
 	})
 	if err != nil {
 		return nil, err
@@ -203,19 +204,19 @@ func (rx *resumableUpload) Upload() (*drive.File, error) {
 		}
 
 		// Transfer the chunk
-		for try := 1; try <= maxTries; try++ {
-			fs.Debug(rx.remote, "Sending chunk %d length %d, %d/%d", start, reqSize, try, maxTries)
-			rx.f.beginCall()
+		err = rx.f.pacer.Call(func() (bool, error) {
+			fs.Debug(rx.remote, "Sending chunk %d length %d", start, reqSize)
 			StatusCode, err = rx.transferChunk(start, buf)
-			rx.f.endCall(err)
+			again, err := shouldRetry(err)
 			if StatusCode == statusResumeIncomplete || StatusCode == http.StatusCreated || StatusCode == http.StatusOK {
-				goto success
+				again = false
+				err = nil
 			}
-			fs.Debug(rx.remote, "Retrying chunk %d/%d, code=%d, err=%v", try, maxTries, StatusCode, err)
+			return again, err
+		})
+		if err != nil {
+			return nil, err
 		}
-		fs.Debug(rx.remote, "Failed to send chunk")
-		return nil, fs.RetryErrorf("Chunk upload failed - retry: code=%d, err=%v", StatusCode, err)
-	success:
 
 		start += reqSize
 	}
