@@ -237,8 +237,8 @@ Subcommands:
 	fmt.Fprintf(os.Stderr, "Options:\n")
 	pflag.PrintDefaults()
 	fmt.Fprintf(os.Stderr, `
-It is only necessary to use a unique prefix of the subcommand, eg 'up'
-for 'upload'.
+It is only necessary to use a unique prefix of the subcommand, eg 'mo'
+for 'move'.
 `)
 }
 
@@ -283,6 +283,7 @@ func ParseCommand() (*Command, []string) {
 	args = args[1:]
 
 	// Find the command doing a prefix match
+	var found = make([]*Command, 0, 1)
 	var command *Command
 	for i := range Commands {
 		trialCommand := &Commands[i]
@@ -291,16 +292,24 @@ func ParseCommand() (*Command, []string) {
 			command = trialCommand
 			break
 		} else if strings.HasPrefix(trialCommand.Name, cmd) {
-			if command != nil {
-				fs.Stats.Error()
-				log.Fatalf("Not unique - matches multiple commands %q", cmd)
-			}
-			command = trialCommand
+			found = append(found, trialCommand)
 		}
 	}
 	if command == nil {
-		fs.Stats.Error()
-		log.Fatalf("Unknown command %q", cmd)
+		switch len(found) {
+		case 0:
+			fs.Stats.Error()
+			log.Fatalf("Unknown command %q", cmd)
+		case 1:
+			command = found[0]
+		default:
+			fs.Stats.Error()
+			var names []string
+			for _, cmd := range found {
+				names = append(names, `"`+cmd.Name+`"`)
+			}
+			log.Fatalf("Not unique - matches multiple commands: %s", strings.Join(names, ", "))
+		}
 	}
 	if command.Run == nil {
 		syntaxError()
