@@ -16,3 +16,4 @@ Contributors
   * Leonid Shalupov <leonid@shalupov.com>
   * Shimon Doodkin <helpmepro1@gmail.com>
   * Colin Nicholson <colin@colinn.com>
+  * Klaus Post <klauspost@gmail.com>
