@@ -42,10 +42,10 @@ client_id>
 Amazon Application Client Secret - leave blank to use rclone's.
 client_secret> 
 Remote config
-If your browser doesn't open automatically go to the following link
-https://www.amazon.com/ap/oa?client_id=amzn1.application-oa2-client.xxxxxxxxxxxxxxx&redirect_uri=http%3A%2F%2F127.0.0.1%3A53682%2F&response_type=code&scope=clouddrive%3Aread_all+clouddrive%3Awrite&state=xxxxxxxxxxxxxxxxx
-Log in, then cut and paste the token that is returned from the browser here
-Enter verification code> xxxxxxxxxxxxxxxxxxxx
+If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
+Log in and authorize rclone for access
+Waiting for code...
+Got code
 --------------------
 [remote]
 client_id = 
@@ -59,8 +59,8 @@ y/e/d> y
 ```
 
 Note that rclone runs a webserver on your local machine to collect the
-token as returned from Amazon. This is only run from the moment it
-opens your browser to the moment you cut and paste the verification
+token as returned from Amazon. This only runs from the moment it
+opens your browser to the moment you get back the verification
 code.  This is on `http://127.0.0.1:53682/` and this it may require
 you to unblock it temporarily if you are running a host firewall.
 

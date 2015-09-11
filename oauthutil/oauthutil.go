@@ -162,27 +162,41 @@ func ConfigWithWebserver(name string, config *oauth2.Config, bindAddress string)
 		return err
 	}
 	state := fmt.Sprintf("%x", stateBytes)
+	authUrl := config.AuthCodeURL(state)
 
 	// Prepare webserver
 	server := authServer{
 		state:       state,
 		bindAddress: bindAddress,
+		authUrl:     authUrl,
 	}
 	if bindAddress != "" {
+		server.code = make(chan string, 1)
 		go server.Start()
 		defer server.Stop()
+		authUrl = "http://" + bindAddress + "/auth"
 	}
 
 	// Generate a URL for the user to visit for authorization.
-	authUrl := config.AuthCodeURL(state)
 	_ = open.Start(authUrl)
-	fmt.Printf("If your browser doesn't open automatically go to the following link\n")
-	fmt.Printf("%s\n", authUrl)
-	fmt.Printf("Log in, then cut and paste the token that is returned from the browser here\n")
+	fmt.Printf("If your browser doesn't open automatically go to the following link: %s\n")
+	fmt.Printf("Log in and authorize rclone for access\n")
 
-	// Read the code, and exchange it for a token.
-	fmt.Printf("Enter verification code> ")
-	authCode := fs.ReadLine()
+	var authCode string
+	if bindAddress != "" {
+		// Read the code, and exchange it for a token.
+		fmt.Printf("Waiting for code...\n")
+		authCode = <-server.code
+		if authCode != "" {
+			fmt.Printf("Got code\n")
+		} else {
+			return fmt.Errorf("Failed to get code")
+		}
+	} else {
+		// Read the code, and exchange it for a token.
+		fmt.Printf("Enter verification code> ")
+		authCode = fs.ReadLine()
+	}
 	token, err := config.Exchange(oauth2.NoContext, authCode)
 	if err != nil {
 		return fmt.Errorf("Failed to get token: %v", err)
@@ -200,6 +214,8 @@ type authServer struct {
 	state       string
 	listener    net.Listener
 	bindAddress string
+	code        chan string
+	authUrl     string
 }
 
 // startWebServer runs an internal web server to receive config details
@@ -214,6 +230,10 @@ func (s *authServer) Start() {
 		http.Error(w, "", 404)
 		return
 	})
+	mux.HandleFunc("/auth", func(w http.ResponseWriter, req *http.Request) {
+		http.Redirect(w, req, s.authUrl, 307)
+		return
+	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		fs.Debug(nil, "Received request on auth server")
 		code := req.FormValue("code")
@@ -224,7 +244,12 @@ func (s *authServer) Start() {
 				fmt.Fprintf(w, "<h1>Failure</h1>\n<p>Auth state doesn't match</p>")
 			} else {
 				fs.Debug(nil, "Successfully got code")
-				fmt.Fprintf(w, "<h1>Success</h1>\n<p>Cut and paste this code into rclone: <code>%s</code></p>", code)
+				if s.code != nil {
+					fmt.Fprintf(w, "<h1>Success</h1>\n<p>Go back to rclone to continue</p>")
+					s.code <- code
+				} else {
+					fmt.Fprintf(w, "<h1>Success</h1>\n<p>Cut and paste this code into rclone: <code>%s</code></p>", code)
+				}
 			}
 			return
 		}
@@ -244,5 +269,9 @@ func (s *authServer) Start() {
 
 func (s *authServer) Stop() {
 	fs.Debug(nil, "Closing auth server")
+	if s.code != nil {
+		close(s.code)
+		s.code = nil
+	}
 	_ = s.listener.Close()
 }
