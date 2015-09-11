@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"path/filepath"
 	"regexp"
 	"time"
 )
@@ -304,8 +303,6 @@ func NewFs(path string) (Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	// change native directory separators to / if there are any
-	fsPath = filepath.ToSlash(fsPath)
 	return fs.NewFs(configName, fsPath)
 }
 

@@ -51,9 +51,21 @@ type FsObjectLocal struct {
 
 // ------------------------------------------------------------
 
-// NewFs contstructs an FsLocal from the path
+// NewFs constructs an FsLocal from the path
 func NewFs(name, root string) (fs.Fs, error) {
-	root = filepath.ToSlash(path.Clean(root))
+	var err error
+	root = path.Clean(root)
+
+	// Make file path absolute (see issue #124)
+	if !filepath.IsAbs(root) {
+		root, err = filepath.Abs(root)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// change native directory separators to / if there are any
+	root = filepath.ToSlash(root)
 	f := &FsLocal{
 		name:   name,
 		root:   root,
