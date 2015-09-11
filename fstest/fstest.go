@@ -28,6 +28,7 @@ type Item struct {
 	Md5sum  string
 	ModTime time.Time
 	Size    int64
+	WinPath string
 }
 
 // Checks the times are equal within the precision, returns the delta and a flag
@@ -67,19 +68,22 @@ func (i *Item) Check(t *testing.T, obj fs.Object, precision time.Duration) {
 
 // Represents all items for checking
 type Items struct {
-	byName map[string]*Item
-	items  []Item
+	byName    map[string]*Item
+	byNameAlt map[string]*Item
+	items     []Item
 }
 
 // Make an Items
 func NewItems(items []Item) *Items {
 	is := &Items{
-		byName: make(map[string]*Item),
-		items:  items,
+		byName:    make(map[string]*Item),
+		byNameAlt: make(map[string]*Item),
+		items:     items,
 	}
 	// Fill up byName
 	for i := range items {
 		is.byName[items[i].Path] = &items[i]
+		is.byNameAlt[items[i].WinPath] = &items[i]
 	}
 	return is
 }
@@ -88,10 +92,14 @@ func NewItems(items []Item) *Items {
 func (is *Items) Find(t *testing.T, obj fs.Object, precision time.Duration) {
 	i, ok := is.byName[obj.Remote()]
 	if !ok {
-		t.Errorf("Unexpected file %q", obj.Remote())
-		return
+		i, ok = is.byNameAlt[obj.Remote()]
+		if !ok {
+			t.Errorf("Unexpected file %q", obj.Remote())
+			return
+		}
 	}
-	delete(is.byName, obj.Remote())
+	delete(is.byName, i.Path)
+	delete(is.byName, i.WinPath)
 	i.Check(t, obj, precision)
 }
 

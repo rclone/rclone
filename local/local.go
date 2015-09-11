@@ -1,11 +1,6 @@
 // Local filesystem interface
 package local
 
-// Note that all rclone paths should be / separated.  Anything coming
-// from the filepath module will have \ separators on windows so
-// should be converted using filepath.ToSlash.  Windows is quite happy
-// with / separators so there is no need to convert them back.
-
 import (
 	"crypto/md5"
 	"encoding/hex"
@@ -14,13 +9,15 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"sync"
 	"time"
 	"unicode/utf8"
 
 	"github.com/ncw/rclone/fs"
+	"regexp"
+	"runtime"
+	"strings"
 )
 
 // Register with Fs
@@ -51,20 +48,22 @@ type FsObjectLocal struct {
 
 // ------------------------------------------------------------
 
-// NewFs contstructs an FsLocal from the path
+// NewFs constructs an FsLocal from the path
 func NewFs(name, root string) (fs.Fs, error) {
-	root = filepath.ToSlash(path.Clean(root))
+	var err error
+
 	f := &FsLocal{
 		name:   name,
-		root:   root,
 		warned: make(map[string]struct{}),
 	}
+	f.root = filterPath(f.cleanUtf8(root))
+
 	// Check to see if this points to a file
 	fi, err := os.Lstat(f.root)
 	if err == nil && fi.Mode().IsRegular() {
 		// It is a file, so use the parent as the root
-		remote := path.Base(root)
-		f.root = path.Dir(root)
+		var remote string
+		f.root, remote = getDirFile(f.root)
 		obj := f.NewFsObject(remote)
 		// return a Fs Limited to this object
 		return fs.NewLimited(f, obj), nil
@@ -90,7 +89,7 @@ func (f *FsLocal) String() string {
 // newFsObject makes a half completed FsObjectLocal
 func (f *FsLocal) newFsObject(remote string) *FsObjectLocal {
 	remote = filepath.ToSlash(remote)
-	dstPath := path.Join(f.root, remote)
+	dstPath := filterPath(filepath.Join(f.root, f.cleanUtf8(remote)))
 	return &FsObjectLocal{local: f, remote: remote, path: dstPath}
 }
 
@@ -160,14 +159,40 @@ func (f *FsLocal) List() fs.ObjectsChan {
 //
 // Any invalid UTF-8 characters will be replaced with utf8.RuneError
 func (f *FsLocal) cleanUtf8(name string) string {
-	if utf8.ValidString(name) {
-		return name
+	if !utf8.ValidString(name) {
+		if _, ok := f.warned[name]; !ok {
+			fs.Debug(f, "Replacing invalid UTF-8 characters in %q", name)
+			f.warned[name] = struct{}{}
+		}
+		name = string([]rune(name))
 	}
-	if _, ok := f.warned[name]; !ok {
-		fs.Debug(f, "Replacing invalid UTF-8 characters in %q", name)
-		f.warned[name] = struct{}{}
+	if runtime.GOOS == "windows" {
+		var name2 string
+		if strings.HasPrefix(name, `\\?\`) {
+			name2 = `\\?\`
+			strings.TrimPrefix(name, `\\?\`)
+		}
+		if strings.HasPrefix(name, `//?/`) {
+			name2 = `//?/`
+			strings.TrimPrefix(name, `//?/`)
+		}
+		name2 += strings.Map(func(r rune) rune {
+			switch r {
+			case '<', '>', '"', '|', '?', '*', '&':
+				return '_'
+			}
+			return r
+		}, name)
+
+		if name2 != name {
+			if _, ok := f.warned[name]; !ok {
+				fs.Debug(f, "Replacing invalid UTF-8 characters in %q", name)
+				f.warned[name] = struct{}{}
+			}
+			name = name2
+		}
 	}
-	return string([]rune(name))
+	return name
 }
 
 // Walk the path returning a channel of FsObjects
@@ -189,7 +214,7 @@ func (f *FsLocal) ListDir() fs.DirChan {
 						Count: 0,
 					}
 					// Go down the tree to count the files and directories
-					dirpath := path.Join(f.root, item.Name())
+					dirpath := filterPath(filepath.Join(f.root, item.Name()))
 					err := filepath.Walk(dirpath, func(path string, fi os.FileInfo, err error) error {
 						if err != nil {
 							fs.Stats.Error()
@@ -226,6 +251,7 @@ func (f *FsLocal) Put(in io.Reader, remote string, modTime time.Time, size int64
 
 // Mkdir creates the directory if it doesn't exist
 func (f *FsLocal) Mkdir() error {
+	// FIXME: https://github.com/syncthing/syncthing/blob/master/lib/osutil/mkdirall_windows.go
 	return os.MkdirAll(f.root, 0777)
 }
 
@@ -376,11 +402,22 @@ func (dstFs *FsLocal) DirMove(src fs.Fs) error {
 		fs.Debug(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
+	// Check if source exists
+	sstat, err := os.Lstat(srcFs.root)
+	if err != nil {
+		return err
+	}
+	// And is a directory
+	if !sstat.IsDir() {
+		return fs.ErrorCantDirMove
+	}
+
 	// Check if destination exists
-	_, err := os.Lstat(dstFs.root)
+	_, err = os.Lstat(dstFs.root)
 	if !os.IsNotExist(err) {
 		return fs.ErrorDirExists
 	}
+
 	// Do the move
 	return os.Rename(srcFs.root, dstFs.root)
 }
@@ -517,7 +554,7 @@ func (o *FsObjectLocal) Open() (in io.ReadCloser, err error) {
 
 // mkdirAll makes all the directories needed to store the object
 func (o *FsObjectLocal) mkdirAll() error {
-	dir := path.Dir(o.path)
+	dir, _ := getDirFile(o.path)
 	return os.MkdirAll(dir, 0777)
 }
 
@@ -566,6 +603,63 @@ func (o *FsObjectLocal) lstat() error {
 // Remove an object
 func (o *FsObjectLocal) Remove() error {
 	return os.Remove(o.path)
+}
+
+// Return the current directory and file from a path
+// Assumes os.PathSeparator is used.
+func getDirFile(s string) (string, string) {
+	i := strings.LastIndex(s, string(os.PathSeparator))
+	return s[:i], s[i+1:]
+}
+
+func filterPath(s string) string {
+	s = filepath.Clean(s)
+	if runtime.GOOS == "windows" {
+		s = strings.Replace(s, `/`, `\`, -1)
+
+		if !filepath.IsAbs(s) && !strings.HasPrefix(s, "\\") {
+			s2, err := filepath.Abs(s)
+			if err == nil {
+				s = s2
+			}
+		}
+
+		// Convert to UNC
+		return uncPath(s)
+	}
+
+	if !filepath.IsAbs(s) {
+		s2, err := filepath.Abs(s)
+		if err == nil {
+			s = s2
+		}
+	}
+
+	return s
+}
+
+// Pattern to match a windows absolute path: c:\temp path.
+var isAbsWinDrive = regexp.MustCompile(`[a-zA-Z]\:\\`)
+
+// uncPath converts an absolute Windows path
+// to a UNC long path.
+func uncPath(s string) string {
+	// UNC can NOT use "/", so convert all to "\"
+	s = strings.Replace(s, `/`, `\`, -1)
+
+	// If prefix is "\\", we already have a UNC path or server.
+	if strings.HasPrefix(s, `\\`) {
+		// If already long path, just keep it
+		if strings.HasPrefix(s, `\\?\`) {
+			return s
+		}
+		// Trim "//" from path and add UNC prefix.
+		return `\\?\UNC\` + strings.TrimPrefix(s, `\\`)
+	}
+	if isAbsWinDrive.Match([]byte(s)) {
+		return `\\?\` + s
+	}
+	return s
 }
 
 // Check the interfaces are satisfied
