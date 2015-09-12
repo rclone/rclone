@@ -1,7 +1,7 @@
 ---
 title: "Google Cloud Storage"
 description: "Rclone docs for Google Cloud Storage"
-date: "2014-07-17"
+date: "2015-09-12"
 ---
 
 <i class="fa fa-google"></i> Google Cloud Storage
@@ -70,10 +70,17 @@ Choose a number from below, or type in your own value
  5) publicReadWrite
 bucket_acl> 2
 Remote config
-Go to the following link in your browser
-https://accounts.google.com/o/oauth2/auth?access_type=&approval_prompt=&client_id=XXXXXXXXXXXX.apps.googleusercontent.com&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdevstorage.full_control&state=state
-Log in, then type paste the token that is returned in the browser here
-Enter verification code> x/xxxxxxxxxxxxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxxxxxx_xxxxxxxx
+Remote config
+Use auto config?
+ * Say Y if not sure
+ * Say N if you are working on a remote or headless machine
+y) Yes
+n) No
+y/n> y
+If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
+Log in and authorize rclone for access
+Waiting for code...
+Got code
 --------------------
 [remote]
 type = google cloud storage
@@ -89,6 +96,13 @@ e) Edit this remote
 d) Delete this remote
 y/e/d> y
 ```
+
+Note that rclone runs a webserver on your local machine to collect the
+token as returned from Google if you use auto config mode. This only
+runs from the moment it opens your browser to the moment you get back
+the verification code.  This is on `http://127.0.0.1:53682/` and this
+it may require you to unblock it temporarily if you are running a host
+firewall, or use manual mode.
 
 This remote is called `remote` and can now be used like this
 

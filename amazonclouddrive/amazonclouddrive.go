@@ -31,8 +31,6 @@ import (
 const (
 	rcloneClientID     = "amzn1.application-oa2-client.6bf18d2d1f5b485c94c8988bb03ad0e7"
 	rcloneClientSecret = "k8/NyszKm5vEkZXAwsbGkd6C3NrbjIqMg4qEhIeF14Szub2wur+/teS3ubXgsLe9//+tr/qoqK+lq6mg8vWkoA=="
-	bindAddress        = "127.0.0.1:53682"
-	redirectURL        = "http://" + bindAddress + "/"
 	folderKind         = "FOLDER"
 	fileKind           = "FILE"
 	assetKind          = "ASSET"
@@ -54,7 +52,7 @@ var (
 		},
 		ClientID:     rcloneClientID,
 		ClientSecret: fs.Reveal(rcloneClientSecret),
-		RedirectURL:  redirectURL,
+		RedirectURL:  oauthutil.RedirectURL,
 	}
 )
 
@@ -64,7 +62,7 @@ func init() {
 		Name:  "amazon cloud drive",
 		NewFs: NewFs,
 		Config: func(name string) {
-			err := oauthutil.ConfigWithWebserver(name, acdConfig, bindAddress)
+			err := oauthutil.Config(name, acdConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}

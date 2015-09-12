@@ -15,13 +15,21 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// configKey is the key used to store the token under
-const configKey = "token"
+const (
+	// configKey is the key used to store the token under
+	configKey = "token"
 
-// TitleBarRedirectURL is the OAuth2 redirect URL to use when the authorization
-// code should be returned in the title bar of the browser, with the page text
-// prompting the user to copy the code and paste it in the application.
-const TitleBarRedirectURL = "urn:ietf:wg:oauth:2.0:oob"
+	// TitleBarRedirectURL is the OAuth2 redirect URL to use when the authorization
+	// code should be returned in the title bar of the browser, with the page text
+	// prompting the user to copy the code and paste it in the application.
+	TitleBarRedirectURL = "urn:ietf:wg:oauth:2.0:oob"
+
+	// BindAddress is binding for local webserver when active
+	bindAddress = "127.0.0.1:53682"
+
+	// RedirectURL is redirect to local webserver when active
+	RedirectURL = "http://" + bindAddress + "/"
+)
 
 // oldToken contains an end-user's tokens.
 // This is the data you must store to persist authentication.
@@ -144,8 +152,8 @@ func NewClient(name string, config *oauth2.Config) (*http.Client, error) {
 
 // Config does the initial creation of the token
 //
-// It runs an internal webserver to receive the results
-func ConfigWithWebserver(name string, config *oauth2.Config, bindAddress string) error {
+// It may run an internal webserver to receive the results
+func Config(name string, config *oauth2.Config) error {
 	// See if already have a token
 	tokenString := fs.ConfigFile.MustValue(name, "token")
 	if tokenString != "" {
@@ -153,6 +161,22 @@ func ConfigWithWebserver(name string, config *oauth2.Config, bindAddress string)
 		if !fs.Confirm() {
 			return nil
 		}
+	}
+
+	// Detect whether we should use internal web server
+	useWebServer := false
+	switch config.RedirectURL {
+	case RedirectURL:
+		useWebServer = true
+	case TitleBarRedirectURL:
+		fmt.Printf("Use auto config?\n")
+		fmt.Printf(" * Say Y if not sure\n")
+		fmt.Printf(" * Say N if you are working on a remote or headless machine\n")
+		useWebServer = fs.Confirm()
+		// copy the config and set to use the internal webserver
+		configCopy := *config
+		config = &configCopy
+		config.RedirectURL = RedirectURL
 	}
 
 	// Make random state
@@ -170,7 +194,7 @@ func ConfigWithWebserver(name string, config *oauth2.Config, bindAddress string)
 		bindAddress: bindAddress,
 		authUrl:     authUrl,
 	}
-	if bindAddress != "" {
+	if useWebServer {
 		server.code = make(chan string, 1)
 		go server.Start()
 		defer server.Stop()
@@ -183,7 +207,7 @@ func ConfigWithWebserver(name string, config *oauth2.Config, bindAddress string)
 	fmt.Printf("Log in and authorize rclone for access\n")
 
 	var authCode string
-	if bindAddress != "" {
+	if useWebServer {
 		// Read the code, and exchange it for a token.
 		fmt.Printf("Waiting for code...\n")
 		authCode = <-server.code
@@ -202,11 +226,6 @@ func ConfigWithWebserver(name string, config *oauth2.Config, bindAddress string)
 		return fmt.Errorf("Failed to get token: %v", err)
 	}
 	return putToken(name, token)
-}
-
-// Config does the initial creation of the token
-func Config(name string, config *oauth2.Config) error {
-	return ConfigWithWebserver(name, config, "")
 }
 
 // Local web server for collecting auth
