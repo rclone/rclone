@@ -346,7 +346,7 @@ func (f *FsAcd) listDirRecursive(dirId string, path string, out fs.ObjectsChan) 
 		case folderKind:
 			wg.Add(1)
 			folder := path + *node.Name + "/"
-			fs.Log(f, "Reading %s", folder)
+			fs.Debug(f, "Reading %s", folder)
 			go func() {
 				defer wg.Done()
 				err := f.listDirRecursive(*node.Id, folder, out)
@@ -366,7 +366,7 @@ func (f *FsAcd) listDirRecursive(dirId string, path string, out fs.ObjectsChan) 
 		return false
 	})
 	wg.Wait()
-	fs.Log(f, "Finished reading %s", path)
+	fs.Debug(f, "Finished reading %s", path)
 	if err != nil {
 		return err
 	}
