@@ -131,10 +131,14 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 	if err != nil && resp != nil && resp.StatusCode == 429 {
 		return true, err
 	}
+	// Retry on occasional 500 Internal Server Error
+	if err != nil && resp != nil && resp.StatusCode == 500 {
+		return true, err
+	}
 	return false, err
 }
 
-// NewFs contstructs an FsAcd from the path, container:path
+// NewFs constructs an FsAcd from the path, container:path
 func NewFs(name, root string) (fs.Fs, error) {
 	root = parsePath(root)
 	oAuthClient, err := oauthutil.NewClient(name, acdConfig)
