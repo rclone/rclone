@@ -179,7 +179,7 @@ func ConfigWithWebserver(name string, config *oauth2.Config, bindAddress string)
 
 	// Generate a URL for the user to visit for authorization.
 	_ = open.Start(authUrl)
-	fmt.Printf("If your browser doesn't open automatically go to the following link: %s\n")
+	fmt.Printf("If your browser doesn't open automatically go to the following link: %s\n", authUrl)
 	fmt.Printf("Log in and authorize rclone for access\n")
 
 	var authCode string
