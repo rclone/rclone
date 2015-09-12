@@ -26,6 +26,7 @@ import (
 	"github.com/ncw/rclone/oauthutil"
 	"github.com/ncw/rclone/pacer"
 	"golang.org/x/oauth2"
+	"sync"
 )
 
 const (
@@ -338,16 +339,23 @@ OUTER:
 func (f *FsAcd) listDirRecursive(dirId string, path string, out fs.ObjectsChan) error {
 	var subError error
 	// Make the API request
+	var wg sync.WaitGroup
 	_, err := f.listAll(dirId, "", false, false, func(node *acd.Node) bool {
 		// Recurse on directories
-		// FIXME should do this in parallel
-		// use a wg to sync then collect error
 		switch *node.Kind {
 		case folderKind:
-			subError = f.listDirRecursive(*node.Id, path+*node.Name+"/", out)
-			if subError != nil {
-				return true
-			}
+			wg.Add(1)
+			folder := path + *node.Name + "/"
+			fs.Log(f, "Reading %s", folder)
+			go func() {
+				defer wg.Done()
+				err := f.listDirRecursive(*node.Id, folder, out)
+				if err != nil {
+					subError = err
+					fs.ErrorLog(f, "Error reading %s:%s", folder, err)
+				}
+			}()
+			return false
 		case fileKind:
 			if fs := f.newFsObjectWithInfo(path+*node.Name, node); fs != nil {
 				out <- fs
@@ -357,6 +365,8 @@ func (f *FsAcd) listDirRecursive(dirId string, path string, out fs.ObjectsChan) 
 		}
 		return false
 	})
+	wg.Wait()
+	fs.Log(f, "Finished reading %s", path)
 	if err != nil {
 		return err
 	}
