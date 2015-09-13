@@ -82,11 +82,12 @@ func init() {
 
 // FsAcd represents a remote acd server
 type FsAcd struct {
-	name     string             // name of this remote
-	c        *acd.Client        // the connection to the acd server
-	root     string             // the path we are working on
-	dirCache *dircache.DirCache // Map of directory path to directory id
-	pacer    *pacer.Pacer       // pacer for API calls
+	name       string             // name of this remote
+	c          *acd.Client        // the connection to the acd server
+	root       string             // the path we are working on
+	dirCache   *dircache.DirCache // Map of directory path to directory id
+	pacer      *pacer.Pacer       // pacer for API calls
+	connTokens chan struct{}      // Connection tokens for directory listings
 }
 
 // FsObjectAcd describes a acd object
@@ -146,10 +147,16 @@ func NewFs(name, root string) (fs.Fs, error) {
 	c := acd.NewClient(oAuthClient)
 	c.UserAgent = fs.UserAgent
 	f := &FsAcd{
-		name:  name,
-		root:  root,
-		c:     c,
-		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		name:       name,
+		root:       root,
+		c:          c,
+		pacer:      pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		connTokens: make(chan struct{}, fs.Config.Checkers),
+	}
+
+	// Insert connection tokens.
+	for i := 0; i < fs.Config.Checkers; i++ {
+		f.connTokens <- struct{}{}
 	}
 
 	// Update endpoints
@@ -302,10 +309,14 @@ func (f *FsAcd) listAll(dirId string, title string, directoriesOnly bool, filesO
 OUTER:
 	for {
 		var resp *http.Response
+		// Get a token
+		_ = <-f.connTokens
 		err = f.pacer.Call(func() (bool, error) {
 			nodes, resp, err = f.c.Nodes.GetNodes(&opts)
 			return shouldRetry(resp, err)
 		})
+		// Reinsert token
+		f.connTokens <- struct{}{}
 		if err != nil {
 			fs.Stats.Error()
 			fs.ErrorLog(f, "Couldn't list files: %v", err)
