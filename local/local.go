@@ -21,6 +21,9 @@ import (
 	"unicode/utf8"
 
 	"github.com/ncw/rclone/fs"
+	"strings"
+	"regexp"
+	"runtime"
 )
 
 // Register with Fs
@@ -54,18 +57,9 @@ type FsObjectLocal struct {
 // NewFs constructs an FsLocal from the path
 func NewFs(name, root string) (fs.Fs, error) {
 	var err error
-	root = path.Clean(root)
 
-	// Make file path absolute (see issue #124)
-	if !filepath.IsAbs(root) {
-		root, err = filepath.Abs(root)
-		if err != nil {
-			return nil, err
-		}
-	}
+	root = filterPath(root)
 
-	// change native directory separators to / if there are any
-	root = filepath.ToSlash(root)
 	f := &FsLocal{
 		name:   name,
 		root:   root,
@@ -102,7 +96,7 @@ func (f *FsLocal) String() string {
 // newFsObject makes a half completed FsObjectLocal
 func (f *FsLocal) newFsObject(remote string) *FsObjectLocal {
 	remote = filepath.ToSlash(remote)
-	dstPath := path.Join(f.root, remote)
+	dstPath := filterPath(path.Join(f.root, f.cleanUtf8(remote)))
 	return &FsObjectLocal{local: f, remote: remote, path: dstPath}
 }
 
@@ -172,14 +166,31 @@ func (f *FsLocal) List() fs.ObjectsChan {
 //
 // Any invalid UTF-8 characters will be replaced with utf8.RuneError
 func (f *FsLocal) cleanUtf8(name string) string {
-	if utf8.ValidString(name) {
-		return name
+	if !utf8.ValidString(name) {
+		if _, ok := f.warned[name]; !ok {
+			fs.Debug(f, "Replacing invalid UTF-8 characters in %q", name)
+			f.warned[name] = struct{}{}
+		}
+		name = string([]rune(name))
 	}
-	if _, ok := f.warned[name]; !ok {
-		fs.Debug(f, "Replacing invalid UTF-8 characters in %q", name)
-		f.warned[name] = struct{}{}
+	if runtime.GOOS == "windows" {
+		name2 := strings.Map(func(r rune) rune {
+			switch r {
+			case '<', '>', ':', '"', '|', '?', '*', '&':
+				return '_'
+			}
+			return r
+		}, name)
+
+		if name2 != name {
+			if _, ok := f.warned[name]; !ok {
+				fs.Debug(f, "Replacing invalid UTF-8 characters in %q", name)
+				f.warned[name] = struct {}{}
+			}
+			name = name2
+		}
 	}
-	return string([]rune(name))
+	return name
 }
 
 // Walk the path returning a channel of FsObjects
@@ -238,6 +249,7 @@ func (f *FsLocal) Put(in io.Reader, remote string, modTime time.Time, size int64
 
 // Mkdir creates the directory if it doesn't exist
 func (f *FsLocal) Mkdir() error {
+	// FIXME: https://github.com/syncthing/syncthing/blob/master/lib/osutil/mkdirall_windows.go
 	return os.MkdirAll(f.root, 0777)
 }
 
@@ -417,6 +429,7 @@ func (o *FsObjectLocal) Remote() string {
 	return o.local.cleanUtf8(o.remote)
 }
 
+
 // Md5sum calculates the Md5sum of a file returning a lowercase hex string
 func (o *FsObjectLocal) Md5sum() (string, error) {
 	if o.md5sum != "" {
@@ -530,6 +543,7 @@ func (o *FsObjectLocal) Open() (in io.ReadCloser, err error) {
 // mkdirAll makes all the directories needed to store the object
 func (o *FsObjectLocal) mkdirAll() error {
 	dir := path.Dir(o.path)
+	fmt.Printf("Create %q from %q\n", dir, o.path)
 	return os.MkdirAll(dir, 0777)
 }
 
@@ -537,11 +551,13 @@ func (o *FsObjectLocal) mkdirAll() error {
 func (o *FsObjectLocal) Update(in io.Reader, modTime time.Time, size int64) error {
 	err := o.mkdirAll()
 	if err != nil {
-		return err
+		return fmt.Errorf("mkdirall:%s",err)
 	}
 
 	out, err := os.Create(o.path)
 	if err != nil {
+		time.Sleep(5*time.Minute)
+		return fmt.Errorf("oscreate:%s",err)
 		return err
 	}
 
@@ -578,6 +594,49 @@ func (o *FsObjectLocal) lstat() error {
 // Remove an object
 func (o *FsObjectLocal) Remove() error {
 	return os.Remove(o.path)
+}
+
+
+func filterPath(s string) string {
+	s = path.Clean(s)
+
+	if !filepath.IsAbs(s) {
+		s2, err := filepath.Abs(s)
+		if err == nil {
+			s = s2
+		}
+	}
+
+	if runtime.GOOS == "windows" {
+		// Convert to UNC
+		s = uncPath(s)
+	}
+	return s
+}
+
+// Pattern to match a windows absolute path: c:\temp path.
+var isAbsWinDrive = regexp.MustCompile(`[a-zA-Z]\:\\`)
+
+// uncPath converts an absolute Windows path
+// to a UNC long path.
+func uncPath(s string) string {
+	// Make path use `\`
+	// UNC can NOT use "/"
+	s = strings.Replace(s, `/`, `\`, -1)
+
+	// If prefix is "\\", we already have a UNC path or server.
+	if strings.HasPrefix(s, `\\`) {
+		// If already long path, just keep it
+		if strings.HasPrefix(s,`\\?\`) {
+			return s
+		}
+		// Trim "//" from path and add UNC prefix.
+		return `\\?\UNC\`+strings.TrimPrefix(s, `\\`)
+	}
+	if isAbsWinDrive.Match([]byte(s)) {
+		return `\\?\` + s
+	}
+	return s
 }
 
 // Check the interfaces are satisfied
