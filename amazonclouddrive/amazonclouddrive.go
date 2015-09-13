@@ -39,8 +39,8 @@ const (
 	assetKind          = "ASSET"
 	statusAvailable    = "AVAILABLE"
 	timeFormat         = time.RFC3339 // 2014-03-07T22:31:12.173Z
-	minSleep           = 100 * time.Millisecond
-	maxSleep           = 256 * time.Second
+	minSleep           = 20 * time.Millisecond
+	maxSleep           = 15 * time.Second
 	decayConstant      = 2 // bigger for slower decay, exponential
 )
 
