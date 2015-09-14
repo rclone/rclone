@@ -6,8 +6,10 @@ import (
 
 var uncTestPaths = []string{
 	"C:\\Ba*d\\P|a?t<h>\\Windows\\Folder",
+	"C:/Ba*d/P|a?t<h>/Windows\\Folder",
 	"C:\\Windows\\Folder",
 	"\\\\?\\C:\\Windows\\Folder",
+	"//?/C:/Windows/Folder",
 	"\\\\?\\UNC\\server\\share\\Desktop",
 	"\\\\?\\unC\\server\\share\\Desktop\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path",
 	"\\\\server\\share\\Desktop\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path\\Very Long path",
@@ -20,6 +22,8 @@ var uncTestPaths = []string{
 
 var uncTestPathsResults = []string{
 	`\\?\C:\Ba*d\P|a?t<h>\Windows\Folder`,
+	`\\?\C:\Ba*d\P|a?t<h>\Windows\Folder`,
+	`\\?\C:\Windows\Folder`,
 	`\\?\C:\Windows\Folder`,
 	`\\?\C:\Windows\Folder`,
 	`\\?\UNC\server\share\Desktop`,
@@ -36,6 +40,11 @@ var uncTestPathsResults = []string{
 func TestUncPaths(t *testing.T) {
 	for i, p := range uncTestPaths {
 		unc := uncPath(p)
+		if unc != uncTestPathsResults[i] {
+			t.Fatalf("UNC test path\nInput:%s\nOutput:%s\nExpected:%s", p, unc, uncTestPathsResults[i])
+		}
+		// Test we don't add more.
+		unc = uncPath(unc)
 		if unc != uncTestPathsResults[i] {
 			t.Fatalf("UNC test path\nInput:%s\nOutput:%s\nExpected:%s", p, unc, uncTestPathsResults[i])
 		}

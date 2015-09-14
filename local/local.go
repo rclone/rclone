@@ -21,9 +21,9 @@ import (
 	"unicode/utf8"
 
 	"github.com/ncw/rclone/fs"
-	"strings"
 	"regexp"
 	"runtime"
+	"strings"
 )
 
 // Register with Fs
@@ -58,19 +58,18 @@ type FsObjectLocal struct {
 func NewFs(name, root string) (fs.Fs, error) {
 	var err error
 
-	root = filterPath(root)
-
 	f := &FsLocal{
 		name:   name,
-		root:   root,
 		warned: make(map[string]struct{}),
 	}
+	f.root = filterPath(f.cleanUtf8(root))
+
 	// Check to see if this points to a file
 	fi, err := os.Lstat(f.root)
 	if err == nil && fi.Mode().IsRegular() {
 		// It is a file, so use the parent as the root
-		remote := path.Base(root)
-		f.root = path.Dir(root)
+		var remote string
+		f.root, remote = getDirFile(f.root)
 		obj := f.NewFsObject(remote)
 		// return a Fs Limited to this object
 		return fs.NewLimited(f, obj), nil
@@ -174,9 +173,18 @@ func (f *FsLocal) cleanUtf8(name string) string {
 		name = string([]rune(name))
 	}
 	if runtime.GOOS == "windows" {
-		name2 := strings.Map(func(r rune) rune {
+		var name2 string
+		if strings.HasPrefix(name, `\\?\`) {
+			name2 = `\\?\`
+			strings.TrimPrefix(name, `\\?\`)
+		}
+		if strings.HasPrefix(name, `//?/`) {
+			name2 = `//?/`
+			strings.TrimPrefix(name, `//?/`)
+		}
+		name2 += strings.Map(func(r rune) rune {
 			switch r {
-			case '<', '>', ':', '"', '|', '?', '*', '&':
+			case '<', '>', '"', '|', '?', '*', '&':
 				return '_'
 			}
 			return r
@@ -185,7 +193,7 @@ func (f *FsLocal) cleanUtf8(name string) string {
 		if name2 != name {
 			if _, ok := f.warned[name]; !ok {
 				fs.Debug(f, "Replacing invalid UTF-8 characters in %q", name)
-				f.warned[name] = struct {}{}
+				f.warned[name] = struct{}{}
 			}
 			name = name2
 		}
@@ -212,7 +220,7 @@ func (f *FsLocal) ListDir() fs.DirChan {
 						Count: 0,
 					}
 					// Go down the tree to count the files and directories
-					dirpath := path.Join(f.root, item.Name())
+					dirpath := filterPath(path.Join(f.root, item.Name()))
 					err := filepath.Walk(dirpath, func(path string, fi os.FileInfo, err error) error {
 						if err != nil {
 							fs.Stats.Error()
@@ -400,11 +408,22 @@ func (dstFs *FsLocal) DirMove(src fs.Fs) error {
 		fs.Debug(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
+	// Check if source exists
+	sstat, err := os.Lstat(srcFs.root)
+	if err != nil {
+		return err
+	}
+	// And is a directory
+	if !sstat.IsDir() {
+		return fs.ErrorCantDirMove
+	}
+
 	// Check if destination exists
-	_, err := os.Lstat(dstFs.root)
+	_, err = os.Lstat(dstFs.root)
 	if !os.IsNotExist(err) {
 		return fs.ErrorDirExists
 	}
+
 	// Do the move
 	return os.Rename(srcFs.root, dstFs.root)
 }
@@ -542,8 +561,7 @@ func (o *FsObjectLocal) Open() (in io.ReadCloser, err error) {
 
 // mkdirAll makes all the directories needed to store the object
 func (o *FsObjectLocal) mkdirAll() error {
-	dir := path.Dir(o.path)
-	fmt.Printf("Create %q from %q\n", dir, o.path)
+	dir, _ := getDirFile(o.path)
 	return os.MkdirAll(dir, 0777)
 }
 
@@ -551,13 +569,11 @@ func (o *FsObjectLocal) mkdirAll() error {
 func (o *FsObjectLocal) Update(in io.Reader, modTime time.Time, size int64) error {
 	err := o.mkdirAll()
 	if err != nil {
-		return fmt.Errorf("mkdirall:%s",err)
+		return err
 	}
 
 	out, err := os.Create(o.path)
 	if err != nil {
-		time.Sleep(5*time.Minute)
-		return fmt.Errorf("oscreate:%s",err)
 		return err
 	}
 
@@ -596,8 +612,28 @@ func (o *FsObjectLocal) Remove() error {
 	return os.Remove(o.path)
 }
 
+// Return the current directory and file from a path
+// Assumes os.PathSeparator is used.
+func getDirFile(s string) (string, string) {
+	i := strings.LastIndex(s, string(os.PathSeparator))
+	return s[:i], s[i+1:]
+}
 
 func filterPath(s string) string {
+	if runtime.GOOS == "windows" {
+		s = strings.Replace(s, `/`, `\`, -1)
+
+		if !filepath.IsAbs(s) && !strings.HasPrefix(s, "\\") {
+			s2, err := filepath.Abs(s)
+			if err == nil {
+				s = s2
+			}
+		}
+
+		// Convert to UNC
+		return uncPath(s)
+	}
+
 	s = path.Clean(s)
 
 	if !filepath.IsAbs(s) {
@@ -607,10 +643,6 @@ func filterPath(s string) string {
 		}
 	}
 
-	if runtime.GOOS == "windows" {
-		// Convert to UNC
-		s = uncPath(s)
-	}
 	return s
 }
 
@@ -620,18 +652,17 @@ var isAbsWinDrive = regexp.MustCompile(`[a-zA-Z]\:\\`)
 // uncPath converts an absolute Windows path
 // to a UNC long path.
 func uncPath(s string) string {
-	// Make path use `\`
-	// UNC can NOT use "/"
+	// UNC can NOT use "/", so convert all to "\"
 	s = strings.Replace(s, `/`, `\`, -1)
 
 	// If prefix is "\\", we already have a UNC path or server.
 	if strings.HasPrefix(s, `\\`) {
 		// If already long path, just keep it
-		if strings.HasPrefix(s,`\\?\`) {
+		if strings.HasPrefix(s, `\\?\`) {
 			return s
 		}
 		// Trim "//" from path and add UNC prefix.
-		return `\\?\UNC\`+strings.TrimPrefix(s, `\\`)
+		return `\\?\UNC\` + strings.TrimPrefix(s, `\\`)
 	}
 	if isAbsWinDrive.Match([]byte(s)) {
 		return `\\?\` + s
