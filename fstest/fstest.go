@@ -117,7 +117,19 @@ func (is *Items) Done(t *testing.T) {
 func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, precision time.Duration) {
 	is := NewItems(items)
 	oldErrors := fs.Stats.GetErrors()
-	for obj := range f.List() {
+	var objs []fs.Object
+	for i := 1; i <= 5; i++ {
+		objs = nil
+		for obj := range f.List() {
+			objs = append(objs, obj)
+		}
+		if len(objs) == len(items) {
+			break
+		}
+		t.Logf("Sleeping for 1 second for list eventual consistency: %d/5", i)
+		time.Sleep(1 * time.Second)
+	}
+	for _, obj := range objs {
 		if obj == nil {
 			t.Errorf("Unexpected nil in List()")
 			continue
