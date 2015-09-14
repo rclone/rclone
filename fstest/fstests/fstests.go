@@ -34,6 +34,7 @@ var (
 	file2 = fstest.Item{
 		ModTime: fstest.Time("2001-02-03T04:05:10.123123123Z"),
 		Path:    `hello? sausage/êé/Hello, 世界/ " ' @ < > & ?/z.txt`,
+		WinPath: `hello_ sausage/êé/Hello, 世界/ _ ' @ _ _ _ _/z.txt`,
 	}
 )
 
@@ -169,7 +170,7 @@ func TestFsListDirFile2(t *testing.T) {
 	skipIfNotOk(t)
 	found := false
 	for obj := range remote.ListDir() {
-		if obj.Name != `hello? sausage` {
+		if obj.Name != `hello? sausage` && obj.Name != `hello_ sausage` {
 			t.Errorf("Found unexpected item %q", obj.Name)
 		} else {
 			found = true
@@ -205,17 +206,18 @@ func TestFsListRoot(t *testing.T) {
 	}
 	// Should either find file1 and file2 or nothing
 	found1 := false
-	file1 := subRemoteLeaf + "/" + file1.Path
+	f1 := subRemoteLeaf + "/" + file1.Path
 	found2 := false
-	file2 := subRemoteLeaf + "/" + file2.Path
+	f2 := subRemoteLeaf + "/" + file2.Path
+	f2Alt := subRemoteLeaf + "/" + file2.WinPath
 	count := 0
 	errors := fs.Stats.GetErrors()
 	for obj := range rootRemote.List() {
 		count++
-		if obj.Remote() == file1 {
+		if obj.Remote() == f1 {
 			found1 = true
 		}
-		if obj.Remote() == file2 {
+		if obj.Remote() == f2 || obj.Remote() == f2Alt {
 			found2 = true
 		}
 	}
@@ -232,7 +234,7 @@ func TestFsListRoot(t *testing.T) {
 		}
 		return
 	}
-	t.Errorf("Didn't find %q (%v) and %q (%v) or no files (count %d)", file1, found1, file2, found2, count)
+	t.Errorf("Didn't find %q (%v) and %q (%v) or no files (count %d)", f1, found1, f2, found2, count)
 }
 
 func TestFsListFile1(t *testing.T) {
@@ -360,6 +362,7 @@ func TestFsDirMove(t *testing.T) {
 	}
 
 	// check remotes
+	// FIXME: Prints errors.
 	fstest.CheckListing(t, remote, []fstest.Item{})
 	fstest.CheckListing(t, newRemote, []fstest.Item{file2, file1})
 
