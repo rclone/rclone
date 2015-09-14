@@ -1,11 +1,6 @@
 // Local filesystem interface
 package local
 
-// Note that all rclone paths should be / separated.  Anything coming
-// from the filepath module will have \ separators on windows so
-// should be converted using filepath.ToSlash.  Windows is quite happy
-// with / separators so there is no need to convert them back.
-
 import (
 	"crypto/md5"
 	"encoding/hex"
