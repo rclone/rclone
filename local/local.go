@@ -620,6 +620,9 @@ func getDirFile(s string) (string, string) {
 }
 
 func filterPath(s string) string {
+	if strings.HasSuffix(s, "/") {
+		s = strings.TrimSuffix(s, "/")
+	}
 	if runtime.GOOS == "windows" {
 		s = strings.Replace(s, `/`, `\`, -1)
 
