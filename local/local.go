@@ -442,6 +442,7 @@ func (o *FsObjectLocal) Remote() string {
 	return o.local.cleanUtf8(o.remote)
 }
 
+
 // Md5sum calculates the Md5sum of a file returning a lowercase hex string
 func (o *FsObjectLocal) Md5sum() (string, error) {
 	if o.md5sum != "" {
