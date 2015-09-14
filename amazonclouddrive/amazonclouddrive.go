@@ -20,6 +20,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ncw/go-acd"
@@ -28,7 +29,6 @@ import (
 	"github.com/ncw/rclone/oauthutil"
 	"github.com/ncw/rclone/pacer"
 	"golang.org/x/oauth2"
-	"sync"
 )
 
 const (
@@ -125,17 +125,25 @@ func parsePath(path string) (root string) {
 	return
 }
 
+// retryErrorCodes is a slice of error codes that we will retry
+var retryErrorCodes = []int{
+	429, // Rate exceeded.
+	500, // Get occasional 500 Internal Server Error
+	409, // Conflict - happens in the unit tests a lot
+}
+
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
 func shouldRetry(resp *http.Response, err error) (bool, error) {
-	// Retry on 429 Rate exceeded.
-	if err != nil && resp != nil && resp.StatusCode == 429 {
-		return true, err
+	// See if HTTP error code is to be retried
+	if err != nil && resp != nil {
+		for _, e := range retryErrorCodes {
+			if resp.StatusCode == e {
+				return true, err
+			}
+		}
 	}
-	// Retry on occasional 500 Internal Server Error
-	if err != nil && resp != nil && resp.StatusCode == 500 {
-		return true, err
-	}
+
 	// Allow retry if request times out. Adapted from
 	// http://stackoverflow.com/questions/23494950/specifically-check-for-timeout-error
 	switch err := err.(type) {
