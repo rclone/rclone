@@ -14,7 +14,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"sync"
 	"time"
@@ -95,7 +94,7 @@ func (f *FsLocal) String() string {
 // newFsObject makes a half completed FsObjectLocal
 func (f *FsLocal) newFsObject(remote string) *FsObjectLocal {
 	remote = filepath.ToSlash(remote)
-	dstPath := filterPath(path.Join(f.root, f.cleanUtf8(remote)))
+	dstPath := filterPath(filepath.Join(f.root, f.cleanUtf8(remote)))
 	return &FsObjectLocal{local: f, remote: remote, path: dstPath}
 }
 
@@ -220,7 +219,7 @@ func (f *FsLocal) ListDir() fs.DirChan {
 						Count: 0,
 					}
 					// Go down the tree to count the files and directories
-					dirpath := filterPath(path.Join(f.root, item.Name()))
+					dirpath := filterPath(filepath.Join(f.root, item.Name()))
 					err := filepath.Walk(dirpath, func(path string, fi os.FileInfo, err error) error {
 						if err != nil {
 							fs.Stats.Error()
@@ -620,9 +619,7 @@ func getDirFile(s string) (string, string) {
 }
 
 func filterPath(s string) string {
-	if strings.HasSuffix(s, "/") {
-		s = strings.TrimSuffix(s, "/")
-	}
+	s = filepath.Clean(s)
 	if runtime.GOOS == "windows" {
 		s = strings.Replace(s, `/`, `\`, -1)
 
@@ -636,8 +633,6 @@ func filterPath(s string) string {
 		// Convert to UNC
 		return uncPath(s)
 	}
-
-	s = path.Clean(s)
 
 	if !filepath.IsAbs(s) {
 		s2, err := filepath.Abs(s)
