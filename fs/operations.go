@@ -169,7 +169,7 @@ func removeFailedCopy(dst Object) bool {
 // If dst is nil then the object must not exist already.  If you do
 // call Copy() with dst nil on a pre-existing file then some filing
 // systems (eg Drive) may duplicate the file.
-func Copy(f Fs, dst, src Object) {
+func Copy(f Fs, dst Object, src Tracker) {
 	const maxTries = 10
 	tries := 0
 	doUpdate := dst != nil
@@ -196,7 +196,8 @@ tryAgain:
 			ErrorLog(src, "Failed to open: %s", err)
 			return
 		}
-		in := NewAccount(in0) // account the transfer
+		in := NewAccountSize(in0, src.Size()) // account the transfer
+		src.SetAccount(in)
 
 		if doUpdate {
 			actionTaken = "Copied (updated existing)"
@@ -287,10 +288,10 @@ func checkOne(pair ObjectPair, out ObjectPairChan) {
 func PairChecker(in ObjectPairChan, out ObjectPairChan, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for pair := range in {
-		src := pair.src
-		Stats.Checking(src)
+		p := NewTracker(pair.src)
+		Stats.Checking(p)
 		checkOne(pair, out)
-		Stats.DoneChecking(src)
+		Stats.DoneChecking(p)
 	}
 }
 
@@ -299,13 +300,14 @@ func PairCopier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for pair := range in {
 		src := pair.src
-		Stats.Transferring(src)
+		p := NewTracker(src)
+		Stats.Transferring(p)
 		if Config.DryRun {
 			Debug(src, "Not copying as --dry-run")
 		} else {
-			Copy(fdst, pair.dst, src)
+			Copy(fdst, pair.dst, p)
 		}
-		Stats.DoneTransferring(src)
+		Stats.DoneTransferring(p)
 	}
 }
 
@@ -317,7 +319,8 @@ func PairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 	for pair := range in {
 		src := pair.src
 		dst := pair.dst
-		Stats.Transferring(src)
+		p := NewTracker(src)
+		Stats.Transferring(p)
 		if Config.DryRun {
 			Debug(src, "Not moving as --dry-run")
 		} else if haveMover {
@@ -332,9 +335,9 @@ func PairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 			fdstMover.Move(src, src.Remote())
 			Debug(src, "Moved")
 		} else {
-			Copy(fdst, pair.dst, src)
+			Copy(fdst, pair.dst, p)
 		}
-		Stats.DoneTransferring(src)
+		Stats.DoneTransferring(p)
 	}
 }
 
@@ -349,9 +352,10 @@ func DeleteFiles(to_be_deleted ObjectsChan) {
 				if Config.DryRun {
 					Debug(dst, "Not deleting as --dry-run")
 				} else {
-					Stats.Checking(dst)
+					p := NewTracker(dst)
+					Stats.Checking(p)
 					err := dst.Remove()
-					Stats.DoneChecking(dst)
+					Stats.DoneChecking(p)
 					if err != nil {
 						Stats.Error()
 						ErrorLog(dst, "Couldn't delete: %s", err)
@@ -562,15 +566,16 @@ func Check(fdst, fsrc Fs) error {
 			defer checkerWg.Done()
 			for check := range checks {
 				dst, src := check[0], check[1]
-				Stats.Checking(src)
+				p := NewTracker(src)
+				Stats.Checking(p)
 				if src.Size() != dst.Size() {
-					Stats.DoneChecking(src)
+					Stats.DoneChecking(p)
 					Stats.Error()
 					ErrorLog(src, "Sizes differ")
 					continue
 				}
 				same, _, err := CheckMd5sums(src, dst)
-				Stats.DoneChecking(src)
+				Stats.DoneChecking(p)
 				if err != nil {
 					continue
 				}
@@ -632,30 +637,32 @@ func List(f Fs, w io.Writer) error {
 	})
 }
 
-// List the Fs to stdout
+// List the Fs to the supplied writer
 //
 // Shows size, mod time and path
 //
 // Lists in parallel which may get them out of order
 func ListLong(f Fs, w io.Writer) error {
 	return ListFn(f, func(o Object) {
-		Stats.Checking(o)
+		p := NewTracker(o)
+		Stats.Checking(p)
 		modTime := o.ModTime()
-		Stats.DoneChecking(o)
+		Stats.DoneChecking(p)
 		syncFprintf(w, "%9d %s %s\n", o.Size(), modTime.Format("2006-01-02 15:04:05.000000000"), o.Remote())
 	})
 }
 
-// List the Fs to stdout
+// List the Fs to the supplied writer
 //
 // Produces the same output as the md5sum command
 //
 // Lists in parallel which may get them out of order
 func Md5sum(f Fs, w io.Writer) error {
 	return ListFn(f, func(o Object) {
-		Stats.Checking(o)
+		p := NewTracker(o)
+		Stats.Checking(p)
 		md5sum, err := o.Md5sum()
-		Stats.DoneChecking(o)
+		Stats.DoneChecking(p)
 		if err != nil {
 			Debug(o, "Failed to read MD5: %v", err)
 			md5sum = "ERROR"
