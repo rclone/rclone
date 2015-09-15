@@ -196,7 +196,7 @@ tryAgain:
 			ErrorLog(src, "Failed to open: %s", err)
 			return
 		}
-		in := NewAccount(in0) // account the transfer
+		in := NewAccount(in0, src) // account the transfer
 
 		if doUpdate {
 			actionTaken = "Copied (updated existing)"
@@ -621,7 +621,7 @@ func syncFprintf(w io.Writer, format string, a ...interface{}) (n int, err error
 	return fmt.Fprintf(w, format, a...)
 }
 
-// List the Fs to stdout
+// List the Fs to the supplied writer
 //
 // Shows size and path
 //
@@ -632,7 +632,7 @@ func List(f Fs, w io.Writer) error {
 	})
 }
 
-// List the Fs to stdout
+// List the Fs to the supplied writer
 //
 // Shows size, mod time and path
 //
@@ -646,7 +646,7 @@ func ListLong(f Fs, w io.Writer) error {
 	})
 }
 
-// List the Fs to stdout
+// List the Fs to the supplied writer
 //
 // Produces the same output as the md5sum command
 //
@@ -664,7 +664,7 @@ func Md5sum(f Fs, w io.Writer) error {
 	})
 }
 
-// List the directories/buckets/containers in the Fs to stdout
+// List the directories/buckets/containers in the Fs to the supplied writer
 func ListDir(f Fs, w io.Writer) error {
 	for dir := range f.ListDir() {
 		syncFprintf(w, "%12d %13s %9d %s\n", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
