@@ -1,12 +1,27 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2015-08-17"
+date: "2015-09-15"
 ---
 
 Changelog
 ---------
 
+  * v1.20 - 2015-09-15
+    * New features
+      * Amazon Cloud Drive support
+      * Oauth support redone - fix many bugs and improve usability
+        * Use "golang.org/x/oauth2" as oauth libary of choice
+        * Improve oauth usability for smoother initial signup
+        * drive, googlecloudstorage: optionally use auto config for the oauth token
+      * Implement --dump-headers and --dump-bodies debug flags
+      * Show multiple matched commands if abbreviation too short
+      * Implement server side move where possible
+    * local
+      * Always use UNC paths internally on Windows - fixes a lot of bugs
+    * dropbox
+      * force use of our custom transport which makes timeouts work
+    * Thanks to Klaus Post for lots of help with this release
   * v1.19 - 2015-08-28
     * New features
       * Server side copies for s3/swift/drive/dropbox/gcs
