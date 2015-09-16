@@ -169,7 +169,7 @@ func removeFailedCopy(dst Object) bool {
 // If dst is nil then the object must not exist already.  If you do
 // call Copy() with dst nil on a pre-existing file then some filing
 // systems (eg Drive) may duplicate the file.
-func Copy(f Fs, dst Object, src Tracker) {
+func Copy(f Fs, dst, src Object) {
 	const maxTries = 10
 	tries := 0
 	doUpdate := dst != nil
@@ -196,8 +196,7 @@ tryAgain:
 			ErrorLog(src, "Failed to open: %s", err)
 			return
 		}
-		in := NewAccountSize(in0, src.Size()) // account the transfer
-		src.SetAccount(in)
+		in := NewAccount(in0, src) // account the transfer
 
 		if doUpdate {
 			actionTaken = "Copied (updated existing)"
@@ -288,10 +287,10 @@ func checkOne(pair ObjectPair, out ObjectPairChan) {
 func PairChecker(in ObjectPairChan, out ObjectPairChan, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for pair := range in {
-		p := NewTracker(pair.src)
-		Stats.Checking(p)
+		src := pair.src
+		Stats.Checking(src)
 		checkOne(pair, out)
-		Stats.DoneChecking(p)
+		Stats.DoneChecking(src)
 	}
 }
 
@@ -300,14 +299,13 @@ func PairCopier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for pair := range in {
 		src := pair.src
-		p := NewTracker(src)
-		Stats.Transferring(p)
+		Stats.Transferring(src)
 		if Config.DryRun {
 			Debug(src, "Not copying as --dry-run")
 		} else {
-			Copy(fdst, pair.dst, p)
+			Copy(fdst, pair.dst, src)
 		}
-		Stats.DoneTransferring(p)
+		Stats.DoneTransferring(src)
 	}
 }
 
@@ -319,8 +317,7 @@ func PairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 	for pair := range in {
 		src := pair.src
 		dst := pair.dst
-		p := NewTracker(src)
-		Stats.Transferring(p)
+		Stats.Transferring(src)
 		if Config.DryRun {
 			Debug(src, "Not moving as --dry-run")
 		} else if haveMover {
@@ -335,9 +332,9 @@ func PairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 			fdstMover.Move(src, src.Remote())
 			Debug(src, "Moved")
 		} else {
-			Copy(fdst, pair.dst, p)
+			Copy(fdst, pair.dst, src)
 		}
-		Stats.DoneTransferring(p)
+		Stats.DoneTransferring(src)
 	}
 }
 
@@ -352,10 +349,9 @@ func DeleteFiles(to_be_deleted ObjectsChan) {
 				if Config.DryRun {
 					Debug(dst, "Not deleting as --dry-run")
 				} else {
-					p := NewTracker(dst)
-					Stats.Checking(p)
+					Stats.Checking(dst)
 					err := dst.Remove()
-					Stats.DoneChecking(p)
+					Stats.DoneChecking(dst)
 					if err != nil {
 						Stats.Error()
 						ErrorLog(dst, "Couldn't delete: %s", err)
@@ -566,16 +562,15 @@ func Check(fdst, fsrc Fs) error {
 			defer checkerWg.Done()
 			for check := range checks {
 				dst, src := check[0], check[1]
-				p := NewTracker(src)
-				Stats.Checking(p)
+				Stats.Checking(src)
 				if src.Size() != dst.Size() {
-					Stats.DoneChecking(p)
+					Stats.DoneChecking(src)
 					Stats.Error()
 					ErrorLog(src, "Sizes differ")
 					continue
 				}
 				same, _, err := CheckMd5sums(src, dst)
-				Stats.DoneChecking(p)
+				Stats.DoneChecking(src)
 				if err != nil {
 					continue
 				}
@@ -626,7 +621,7 @@ func syncFprintf(w io.Writer, format string, a ...interface{}) (n int, err error
 	return fmt.Fprintf(w, format, a...)
 }
 
-// List the Fs to stdout
+// List the Fs to the supplied writer
 //
 // Shows size and path
 //
@@ -644,10 +639,9 @@ func List(f Fs, w io.Writer) error {
 // Lists in parallel which may get them out of order
 func ListLong(f Fs, w io.Writer) error {
 	return ListFn(f, func(o Object) {
-		p := NewTracker(o)
-		Stats.Checking(p)
+		Stats.Checking(o)
 		modTime := o.ModTime()
-		Stats.DoneChecking(p)
+		Stats.DoneChecking(o)
 		syncFprintf(w, "%9d %s %s\n", o.Size(), modTime.Format("2006-01-02 15:04:05.000000000"), o.Remote())
 	})
 }
@@ -659,10 +653,9 @@ func ListLong(f Fs, w io.Writer) error {
 // Lists in parallel which may get them out of order
 func Md5sum(f Fs, w io.Writer) error {
 	return ListFn(f, func(o Object) {
-		p := NewTracker(o)
-		Stats.Checking(p)
+		Stats.Checking(o)
 		md5sum, err := o.Md5sum()
-		Stats.DoneChecking(p)
+		Stats.DoneChecking(o)
 		if err != nil {
 			Debug(o, "Failed to read MD5: %v", err)
 			md5sum = "ERROR"
@@ -671,7 +664,7 @@ func Md5sum(f Fs, w io.Writer) error {
 	})
 }
 
-// List the directories/buckets/containers in the Fs to stdout
+// List the directories/buckets/containers in the Fs to the supplied writer
 func ListDir(f Fs, w io.Writer) error {
 	for dir := range f.ListDir() {
 		syncFprintf(w, "%12d %13s %9d %s\n", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
