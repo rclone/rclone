@@ -71,10 +71,10 @@ func init() {
 			}
 		},
 		Options: []fs.Option{{
-			Name: "client_id",
+			Name: oauthutil.ConfigClientID,
 			Help: "Amazon Application Client Id - leave blank to use rclone's.",
 		}, {
-			Name: "client_secret",
+			Name: oauthutil.ConfigClientSecret,
 			Help: "Amazon Application Client Secret - leave blank to use rclone's.",
 		}},
 	})

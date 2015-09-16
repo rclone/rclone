@@ -70,10 +70,10 @@ func init() {
 			}
 		},
 		Options: []fs.Option{{
-			Name: "client_id",
+			Name: oauthutil.ConfigClientID,
 			Help: "Google Application Client Id - leave blank to use rclone's.",
 		}, {
-			Name: "client_secret",
+			Name: oauthutil.ConfigClientSecret,
 			Help: "Google Application Client Secret - leave blank to use rclone's.",
 		}},
 	})

@@ -16,8 +16,14 @@ import (
 )
 
 const (
-	// configKey is the key used to store the token under
-	configKey = "token"
+	// ConfigToken is the key used to store the token under
+	ConfigToken = "token"
+
+	// ConfigClientID is the config key used to store the client id
+	ConfigClientID = "client_id"
+
+	// ConfigClientSecret is the config key used to store the client secret
+	ConfigClientSecret = "client_secret"
 
 	// TitleBarRedirectURL is the OAuth2 redirect URL to use when the authorization
 	// code should be returned in the title bar of the browser, with the page text
@@ -45,7 +51,7 @@ type oldToken struct {
 // getToken returns the token saved in the config file under
 // section name.
 func getToken(name string) (*oauth2.Token, error) {
-	tokenString, err := fs.ConfigFile.GetValue(string(name), configKey)
+	tokenString, err := fs.ConfigFile.GetValue(string(name), ConfigToken)
 	if err != nil {
 		return nil, err
 	}
@@ -88,9 +94,9 @@ func putToken(name string, token *oauth2.Token) error {
 		return err
 	}
 	tokenString := string(tokenBytes)
-	old := fs.ConfigFile.MustValue(name, configKey)
+	old := fs.ConfigFile.MustValue(name, ConfigToken)
 	if tokenString != old {
-		fs.ConfigFile.SetValue(name, configKey, tokenString)
+		fs.ConfigFile.SetValue(name, ConfigToken, tokenString)
 		fs.SaveConfig()
 		fs.Debug(name, "Saving new token in config file")
 	}
@@ -128,9 +134,23 @@ func Context() context.Context {
 	return context.WithValue(nil, oauth2.HTTPClient, fs.Config.Client())
 }
 
+// overrideCredentials sets the ClientID and ClientSecret from the
+// config file if they are not blank
+func overrideCredentials(name string, config *oauth2.Config) {
+	ClientID := fs.ConfigFile.MustValue(name, ConfigClientID)
+	if ClientID != "" {
+		config.ClientID = ClientID
+	}
+	ClientSecret := fs.ConfigFile.MustValue(name, ConfigClientSecret)
+	if ClientSecret != "" {
+		config.ClientSecret = ClientSecret
+	}
+}
+
 // NewClient gets a token from the config file and configures a Client
 // with it
 func NewClient(name string, config *oauth2.Config) (*http.Client, error) {
+	overrideCredentials(name, config)
 	token, err := getToken(name)
 	if err != nil {
 		return nil, err
@@ -154,6 +174,7 @@ func NewClient(name string, config *oauth2.Config) (*http.Client, error) {
 //
 // It may run an internal webserver to receive the results
 func Config(name string, config *oauth2.Config) error {
+	overrideCredentials(name, config)
 	// See if already have a token
 	tokenString := fs.ConfigFile.MustValue(name, "token")
 	if tokenString != "" {
