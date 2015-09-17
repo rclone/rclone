@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -370,15 +371,24 @@ func (f *FsDrive) CreateDir(pathId, leaf string) (newId string, err error) {
 func (f *FsDrive) listDirRecursive(dirId string, path string, out fs.ObjectsChan) error {
 	var subError error
 	// Make the API request
+	var wg sync.WaitGroup
 	_, err := f.listAll(dirId, "", false, false, func(item *drive.File) bool {
 		// Recurse on directories
-		// FIXME should do this in parallel
-		// use a wg to sync then collect error
 		if item.MimeType == driveFolderType {
-			subError = f.listDirRecursive(item.Id, path+item.Title+"/", out)
-			if subError != nil {
-				return true
-			}
+			wg.Add(1)
+			folder := path + item.Title + "/"
+			fs.Debug(f, "Reading %s", folder)
+
+			go func() {
+				defer wg.Done()
+				err := f.listDirRecursive(item.Id, folder, out)
+				if err != nil {
+					subError = err
+					fs.ErrorLog(f, "Error reading %s:%s", folder, err)
+				}
+
+			}()
+			return false
 		} else {
 			// If item has no MD5 sum it isn't stored on drive, so ignore it
 			if item.Md5Checksum != "" {
@@ -389,6 +399,8 @@ func (f *FsDrive) listDirRecursive(dirId string, path string, out fs.ObjectsChan
 		}
 		return false
 	})
+	wg.Wait()
+	fs.Debug(f, "Finished reading %s", path)
 	if err != nil {
 		return err
 	}
