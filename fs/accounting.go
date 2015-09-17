@@ -396,13 +396,14 @@ func (file *Account) String() string {
 		}
 	}
 	name := []rune(file.name)
-	if len(name) > 25 {
-		name = name[:25]
+	if len(name) > 45 {
+		where := len(name) - 42
+		name = append([]rune{'.','.','.'}, name[where:]...)
 	}
 	if b <= 0 {
-		return fmt.Sprintf("%s: avg:%7.1f, cur: %6.1f kByte/s. ETA: %s", string(name), avg/1024, cur/1024, etas)
+		return fmt.Sprintf("%45s: avg:%7.1f, cur: %6.1f kByte/s. ETA: %s", string(name), avg/1024, cur/1024, etas)
 	}
-	return fmt.Sprintf("%s: %2d%% done. avg: %6.1f, cur: %6.1f kByte/s. ETA: %s", string(name), int(100*float64(a)/float64(b)), avg/1024, cur/1024, etas)
+	return fmt.Sprintf("%45s: %2d%% done. avg: %6.1f, cur: %6.1f kByte/s. ETA: %s", string(name), int(100*float64(a)/float64(b)), avg/1024, cur/1024, etas)
 }
 
 // Close the object
