@@ -398,7 +398,7 @@ func (file *Account) String() string {
 	name := []rune(file.name)
 	if len(name) > 45 {
 		where := len(name) - 42
-		name = append([]rune{'.','.','.'}, name[where:]...)
+		name = append([]rune{'.', '.', '.'}, name[where:]...)
 	}
 	if b <= 0 {
 		return fmt.Sprintf("%45s: avg:%7.1f, cur: %6.1f kByte/s. ETA: %s", string(name), avg/1024, cur/1024, etas)
