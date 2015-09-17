@@ -9,13 +9,15 @@ import (
 )
 
 type Pacer struct {
-	minSleep      time.Duration // minimum sleep time
-	maxSleep      time.Duration // maximum sleep time
-	decayConstant uint          // decay constant
-	pacer         chan struct{} // To pace the operations
-	sleepTime     time.Duration // Time to sleep for each transaction
-	retries       int           // Max number of retries
-	mu            sync.Mutex    // Protecting read/writes
+	minSleep       time.Duration // minimum sleep time
+	maxSleep       time.Duration // maximum sleep time
+	decayConstant  uint          // decay constant
+	pacer          chan struct{} // To pace the operations
+	sleepTime      time.Duration // Time to sleep for each transaction
+	retries        int           // Max number of retries
+	mu             sync.Mutex    // Protecting read/writes
+	maxConnections int           // Maximum number of concurrent connections
+	connTokens     chan struct{} // Connection tokens
 }
 
 // Paced is a function which is called by the Call and CallNoRetry
@@ -34,7 +36,7 @@ func New() *Pacer {
 		pacer:         make(chan struct{}, 1),
 	}
 	p.sleepTime = p.minSleep
-
+	p.SetMaxConnections(fs.Config.Checkers)
 	// Put the first pacing token in
 	p.pacer <- struct{}{}
 
@@ -56,6 +58,25 @@ func (p *Pacer) SetMaxSleep(t time.Duration) *Pacer {
 	defer p.mu.Unlock()
 	p.maxSleep = t
 	p.sleepTime = p.minSleep
+	return p
+}
+
+// SetMaxConnections sets the maximum number of concurrent connections.
+// Setting the value to 0 will allow unlimited number of connections.
+// Should not be changed once you have started calling the pacer.
+// By default this will be set to fs.Config.Checkers.
+func (p *Pacer) SetMaxConnections(n int) *Pacer {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.maxConnections = n
+	if n <= 0 {
+		p.connTokens = nil
+	} else {
+		p.connTokens = make(chan struct{}, n)
+		for i := 0; i < n; i++ {
+			p.connTokens <- struct{}{}
+		}
+	}
 	return p
 }
 
@@ -91,6 +112,9 @@ func (p *Pacer) beginCall() {
 	// Ticker more accurately, but then we'd have to work out how
 	// not to run it when it wasn't needed
 	<-p.pacer
+	if p.maxConnections > 0 {
+		<-p.connTokens
+	}
 
 	p.mu.Lock()
 	// Restart the timer
@@ -107,6 +131,9 @@ func (p *Pacer) beginCall() {
 // Refresh the pace given an error that was returned.  It returns a
 // boolean as to whether the operation should be retried.
 func (p *Pacer) endCall(again bool) {
+	if p.maxConnections > 0 {
+		p.connTokens <- struct{}{}
+	}
 	p.mu.Lock()
 	oldSleepTime := p.sleepTime
 	if again {
