@@ -1,24 +1,53 @@
-// pacer is a utility package to make pacing and retrying API calls easy
+// Package pacer makes pacing and retrying API calls easy
 package pacer
 
 import (
+	"math/rand"
 	"sync"
 	"time"
 
 	"github.com/ncw/rclone/fs"
 )
 
+// Pacer state
 type Pacer struct {
-	minSleep       time.Duration // minimum sleep time
-	maxSleep       time.Duration // maximum sleep time
-	decayConstant  uint          // decay constant
-	pacer          chan struct{} // To pace the operations
-	sleepTime      time.Duration // Time to sleep for each transaction
-	retries        int           // Max number of retries
-	mu             sync.Mutex    // Protecting read/writes
-	maxConnections int           // Maximum number of concurrent connections
-	connTokens     chan struct{} // Connection tokens
+	mu                 sync.Mutex    // Protecting read/writes
+	minSleep           time.Duration // minimum sleep time
+	maxSleep           time.Duration // maximum sleep time
+	decayConstant      uint          // decay constant
+	pacer              chan struct{} // To pace the operations
+	sleepTime          time.Duration // Time to sleep for each transaction
+	retries            int           // Max number of retries
+	maxConnections     int           // Maximum number of concurrent connections
+	connTokens         chan struct{} // Connection tokens
+	calculatePace      func(bool)    // switchable pacing algorithm - call with mu held
+	consecutiveRetries int           // number of consecutive retries
 }
+
+// Type is for selecting different pacing algorithms
+type Type int
+
+const (
+	// DefaultPacer is a truncated exponential attack and decay.
+	//
+	// On retries the sleep time is doubled, on non errors then
+	// sleeptime decays according to the decay constant as set
+	// with SetDecayConstant.
+	//
+	// The sleep never goes below that set with SetMinSleep or
+	// above that set with SetMaxSleep.
+	DefaultPacer = Type(iota)
+
+	// AmazonCloudDrivePacer is a specialised pacer for Amazon Cloud Drive
+	//
+	// It implements a truncated exponential backoff strategy with
+	// randomization.  Normally operations are paced at the
+	// interval set with SetMinSleep.  On errors the sleep timer
+	// is set to 0..2**retries seconds.
+	//
+	// See https://developer.amazon.com/public/apis/experience/cloud-drive/content/restful-api-best-practices
+	AmazonCloudDrivePacer
+)
 
 // Paced is a function which is called by the Call and CallNoRetry
 // methods.  It should return a boolean, true if it would like to be
@@ -36,7 +65,9 @@ func New() *Pacer {
 		pacer:         make(chan struct{}, 1),
 	}
 	p.sleepTime = p.minSleep
-	p.SetMaxConnections(fs.Config.Checkers)
+	p.SetPacer(DefaultPacer)
+	p.SetMaxConnections(fs.Config.Checkers + fs.Config.Transfers)
+
 	// Put the first pacing token in
 	p.pacer <- struct{}{}
 
@@ -101,6 +132,22 @@ func (p *Pacer) SetRetries(retries int) *Pacer {
 	return p
 }
 
+// SetPacer sets the pacing algorithm
+//
+// It will choose the default algorithm if an incorrect value is
+// passed in.
+func (p *Pacer) SetPacer(t Type) *Pacer {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	switch t {
+	case AmazonCloudDrivePacer:
+		p.calculatePace = p.acdPacer
+	default:
+		p.calculatePace = p.defaultPacer
+	}
+	return p
+}
+
 // Start a call to the API
 //
 // This must be called as a pair with endCall
@@ -126,17 +173,18 @@ func (p *Pacer) beginCall() {
 	p.mu.Unlock()
 }
 
-// End a call to the API
+// exponentialImplementation implements a exponentialImplementation up
+// and down pacing algorithm
 //
-// Refresh the pace given an error that was returned.  It returns a
-// boolean as to whether the operation should be retried.
-func (p *Pacer) endCall(again bool) {
-	if p.maxConnections > 0 {
-		p.connTokens <- struct{}{}
-	}
-	p.mu.Lock()
+// See the description for DefaultPacer
+//
+// This should calculate a new sleepTime.  It takes a boolean as to
+// whether the operation should be retried or not.
+//
+// Call with p.mu held
+func (p *Pacer) defaultPacer(retry bool) {
 	oldSleepTime := p.sleepTime
-	if again {
+	if retry {
 		p.sleepTime *= 2
 		if p.sleepTime > p.maxSleep {
 			p.sleepTime = p.maxSleep
@@ -153,21 +201,70 @@ func (p *Pacer) endCall(again bool) {
 			fs.Debug("pacer", "Reducing sleep to %v", p.sleepTime)
 		}
 	}
+}
+
+// acdPacer implements a truncated exponential backoff
+// strategy with randomization for Amazon Cloud Drive
+//
+// See the description for AmazonCloudDrivePacer
+//
+// This should calculate a new sleepTime.  It takes a boolean as to
+// whether the operation should be retried or not.
+//
+// Call with p.mu held
+func (p *Pacer) acdPacer(retry bool) {
+	consecutiveRetries := p.consecutiveRetries
+	if consecutiveRetries == 0 {
+		if p.sleepTime != p.minSleep {
+			p.sleepTime = p.minSleep
+			fs.Debug("pacer", "Resetting sleep to minimum %v on success", p.sleepTime)
+		}
+	} else {
+		if consecutiveRetries > 9 {
+			consecutiveRetries = 9
+		}
+		// consecutiveRetries starts at 1 so
+		// maxSleep is 2**(consecutiveRetries-1) seconds
+		maxSleep := time.Second << uint(consecutiveRetries-1)
+		// actual sleep is random from 0..maxSleep
+		p.sleepTime = time.Duration(rand.Int63n(int64(maxSleep)))
+		if p.sleepTime < p.minSleep {
+			p.sleepTime = p.minSleep
+		}
+		fs.Debug("pacer", "Rate limited, sleeping for %v (%d retries)", p.sleepTime, consecutiveRetries)
+	}
+}
+
+// endCall implements the pacing algorithm
+//
+// This should calculate a new sleepTime.  It takes a boolean as to
+// whether the operation should be retried or not.
+func (p *Pacer) endCall(retry bool) {
+	if p.maxConnections > 0 {
+		p.connTokens <- struct{}{}
+	}
+	p.mu.Lock()
+	if retry {
+		p.consecutiveRetries++
+	} else {
+		p.consecutiveRetries = 0
+	}
+	p.calculatePace(retry)
 	p.mu.Unlock()
 }
 
 // call implements Call but with settable retries
 func (p *Pacer) call(fn Paced, retries int) (err error) {
-	var again bool
+	var retry bool
 	for i := 0; i < retries; i++ {
 		p.beginCall()
-		again, err = fn()
-		p.endCall(again)
-		if !again {
+		retry, err = fn()
+		p.endCall(retry)
+		if !retry {
 			break
 		}
 	}
-	if again {
+	if retry {
 		err = fs.RetryError(err)
 	}
 	return err
@@ -186,8 +283,8 @@ func (p *Pacer) Call(fn Paced) (err error) {
 	return p.call(fn, retries)
 }
 
-// Pace the remote operations to not exceed Amazon's limits and return
-// a retry error on rate limit exceeded
+// CallNoRetry paces the remote operations to not exceed the limits
+// and return a retry error on rate limit exceeded
 //
 // This calls fn and wraps the output in a RetryError if it would like
 // it to be retried
