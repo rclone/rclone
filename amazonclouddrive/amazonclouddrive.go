@@ -129,6 +129,7 @@ var retryErrorCodes = []int{
 	429, // Rate exceeded.
 	500, // Get occasional 500 Internal Server Error
 	409, // Conflict - happens in the unit tests a lot
+	503, // Service Unavailable
 }
 
 // shouldRetry returns a boolean as to whether this resp and err
@@ -172,7 +173,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		name:  name,
 		root:  root,
 		c:     c,
-		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		pacer: pacer.New().SetMinSleep(minSleep).SetPacer(pacer.AmazonCloudDrivePacer),
 	}
 
 	// Update endpoints
