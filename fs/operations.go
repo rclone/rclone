@@ -651,7 +651,7 @@ func ListLong(f Fs, w io.Writer) error {
 		Stats.Checking(o)
 		modTime := o.ModTime()
 		Stats.DoneChecking(o)
-		syncFprintf(w, "%9d %s %s\n", o.Size(), modTime.Format("2006-01-02 15:04:05.000000000"), o.Remote())
+		syncFprintf(w, "%9d %s %s\n", o.Size(), modTime.Local().Format("2006-01-02 15:04:05.000000000"), o.Remote())
 	})
 }
 

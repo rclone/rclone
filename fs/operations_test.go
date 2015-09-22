@@ -485,8 +485,9 @@ func TestLsLong(t *testing.T) {
 
 	timeFormat := "2006-01-02 15:04:05.000000000"
 	precision := fremote.Precision()
+	location := time.Now().Location()
 	checkTime := func(m, filename string, expected time.Time) {
-		modTime, err := time.Parse(timeFormat, m)
+		modTime, err := time.ParseInLocation(timeFormat, m, location) // parse as localtime
 		if err != nil {
 			t.Errorf("Error parsing %q: %v", m, err)
 		} else {
