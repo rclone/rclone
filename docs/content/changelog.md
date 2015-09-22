@@ -1,12 +1,22 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2015-09-15"
+date: "2015-09-22"
 ---
 
 Changelog
 ---------
 
+  * v1.21 - 2015-09-22
+    * New features
+      * Display individual transfer progress
+      * Make lsl output times in localtime
+    * Fixes
+      * Fix allowing user to override credentials again in Drive, GCS and ACD
+    * Amazon Cloud Drive
+      * Implement compliant pacing scheme
+    * Google Drive
+      * Make directory reads concurrent for increased speed.
   * v1.20 - 2015-09-15
     * New features
       * Amazon Cloud Drive support
