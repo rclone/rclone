@@ -6,7 +6,8 @@ import (
 	"time"
 )
 
-// This defines a Limited Fs which can only return the Objects passed in from the Fs passed in
+// Limited defines a Fs which can only return the Objects passed in
+// from the Fs passed in
 type Limited struct {
 	objects []Object
 	fs      Fs
@@ -21,12 +22,12 @@ func NewLimited(fs Fs, objects ...Object) Fs {
 	return f
 }
 
-// The name of the remote (as passed into NewFs)
+// Name is name of the remote (as passed into NewFs)
 func (f *Limited) Name() string {
 	return f.fs.Name() // return name of underlying remote
 }
 
-// The root of the remote (as passed into NewFs)
+// Root is the root of the remote (as passed into NewFs)
 func (f *Limited) Root() string {
 	return f.fs.Root() // return root of underlying remote
 }
@@ -48,14 +49,14 @@ func (f *Limited) List() ObjectsChan {
 	return out
 }
 
-// List the Fs directories/buckets/containers into a channel
+// ListDir lists the Fs directories/buckets/containers into a channel
 func (f *Limited) ListDir() DirChan {
 	out := make(DirChan, Config.Checkers)
 	close(out)
 	return out
 }
 
-// Find the Object at remote.  Returns nil if can't be found
+// NewFsObject finds the Object at remote.  Returns nil if can't be found
 func (f *Limited) NewFsObject(remote string) Object {
 	for _, obj := range f.objects {
 		if obj.Remote() == remote {
@@ -78,13 +79,13 @@ func (f *Limited) Put(in io.Reader, remote string, modTime time.Time, size int64
 	return obj, obj.Update(in, modTime, size)
 }
 
-// Make the directory (container, bucket)
+// Mkdir make the directory (container, bucket)
 func (f *Limited) Mkdir() error {
 	// All directories are already made - just ignore
 	return nil
 }
 
-// Remove the directory (container, bucket) if empty
+// Rmdir removes the directory (container, bucket) if empty
 func (f *Limited) Rmdir() error {
 	// Ignore this in a limited fs
 	return nil

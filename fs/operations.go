@@ -11,7 +11,8 @@ import (
 	"time"
 )
 
-// Work out modify window for fses passed in - sets Config.ModifyWindow
+// CalculateModifyWindow works out modify window for Fses passed in -
+// sets Config.ModifyWindow
 //
 // This is the largest modify window of all the fses in use, and the
 // user configured value
@@ -39,7 +40,7 @@ func Md5sumsEqual(src, dst string) bool {
 	return src == dst
 }
 
-// Check the two files to see if the MD5sums are the same
+// CheckMd5sums checks the two files to see if the MD5sums are the same
 //
 // Returns two bools, the first of which is equality and the second of
 // which is true if either of the MD5SUMs were unset.
@@ -71,7 +72,7 @@ func CheckMd5sums(src, dst Object) (equal bool, unset bool, err error) {
 	return Md5sumsEqual(srcMd5, dstMd5), false, nil
 }
 
-// Checks to see if the src and dst objects are equal by looking at
+// Equal checks to see if the src and dst objects are equal by looking at
 // size, mtime and MD5SUM
 //
 // If the src and dst size are different then it is considered to be
@@ -139,7 +140,7 @@ func Equal(src, dst Object) bool {
 	return true
 }
 
-// Returns a guess at the mime type from the extension
+// MimeType returns a guess at the mime type from the extension
 func MimeType(o Object) string {
 	mimeType := mime.TypeByExtension(path.Ext(o.Remote()))
 	if mimeType == "" {
@@ -281,7 +282,7 @@ func checkOne(pair ObjectPair, out ObjectPairChan) {
 	out <- pair
 }
 
-// Read Objects~s on in send to out if they need uploading
+// PairChecker reads Objects~s on in send to out if they need transferring.
 //
 // FIXME potentially doing lots of MD5SUMS at once
 func PairChecker(in ObjectPairChan, out ObjectPairChan, wg *sync.WaitGroup) {
@@ -294,7 +295,7 @@ func PairChecker(in ObjectPairChan, out ObjectPairChan, wg *sync.WaitGroup) {
 	}
 }
 
-// Read Objects on in and copy them
+// PairCopier reads Objects on in and copies them.
 func PairCopier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for pair := range in {
@@ -309,7 +310,8 @@ func PairCopier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 	}
 }
 
-// Read Objects on in and move them if possible, or copy them if not
+// PairMover reads Objects on in and moves them if possible, or copies
+// them if not
 func PairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 	defer wg.Done()
 	// See if we have Move available
@@ -343,14 +345,14 @@ func PairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 	}
 }
 
-// Delete all the files passed in the channel
-func DeleteFiles(to_be_deleted ObjectsChan) {
+// DeleteFiles removes all the files passed in the channel
+func DeleteFiles(toBeDeleted ObjectsChan) {
 	var wg sync.WaitGroup
 	wg.Add(Config.Transfers)
 	for i := 0; i < Config.Transfers; i++ {
 		go func() {
 			defer wg.Done()
-			for dst := range to_be_deleted {
+			for dst := range toBeDeleted {
 				if Config.DryRun {
 					Debug(dst, "Not deleting as --dry-run")
 				} else {
@@ -385,8 +387,8 @@ func readFilesMap(fs Fs) map[string]Object {
 	return files
 }
 
-// Returns true if fdst and fsrc point to the same underlying Fs
-func FsSame(fdst, fsrc Fs) bool {
+// Same returns true if fdst and fsrc point to the same underlying Fs
+func Same(fdst, fsrc Fs) bool {
 	return fdst.Name() == fsrc.Name() && fdst.Root() == fsrc.Root()
 }
 
@@ -396,7 +398,7 @@ func FsSame(fdst, fsrc Fs) bool {
 //
 // If DoMove is true then files will be moved instead of copied
 func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
-	if FsSame(fdst, fsrc) {
+	if Same(fdst, fsrc) {
 		ErrorLog(fdst, "Nothing to do as source and destination are the same")
 		return nil
 	}
@@ -414,22 +416,22 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 	delFiles := readFilesMap(fdst)
 
 	// Read source files checking them off against dest files
-	to_be_checked := make(ObjectPairChan, Config.Transfers)
-	to_be_uploaded := make(ObjectPairChan, Config.Transfers)
+	toBeChecked := make(ObjectPairChan, Config.Transfers)
+	toBeUploaded := make(ObjectPairChan, Config.Transfers)
 
 	var checkerWg sync.WaitGroup
 	checkerWg.Add(Config.Checkers)
 	for i := 0; i < Config.Checkers; i++ {
-		go PairChecker(to_be_checked, to_be_uploaded, &checkerWg)
+		go PairChecker(toBeChecked, toBeUploaded, &checkerWg)
 	}
 
 	var copierWg sync.WaitGroup
 	copierWg.Add(Config.Transfers)
 	for i := 0; i < Config.Transfers; i++ {
 		if DoMove {
-			go PairMover(to_be_uploaded, fdst, &copierWg)
+			go PairMover(toBeUploaded, fdst, &copierWg)
 		} else {
-			go PairCopier(to_be_uploaded, fdst, &copierWg)
+			go PairCopier(toBeUploaded, fdst, &copierWg)
 		}
 	}
 
@@ -439,18 +441,18 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 			dst, found := delFiles[remote]
 			if found {
 				delete(delFiles, remote)
-				to_be_checked <- ObjectPair{src, dst}
+				toBeChecked <- ObjectPair{src, dst}
 			} else {
 				// No need to check since doesn't exist
-				to_be_uploaded <- ObjectPair{src, nil}
+				toBeUploaded <- ObjectPair{src, nil}
 			}
 		}
-		close(to_be_checked)
+		close(toBeChecked)
 	}()
 
 	Log(fdst, "Waiting for checks to finish")
 	checkerWg.Wait()
-	close(to_be_uploaded)
+	close(toBeUploaded)
 	Log(fdst, "Waiting for transfers to finish")
 	copierWg.Wait()
 
@@ -474,19 +476,19 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 	return nil
 }
 
-// Syncs fsrc into fdst
+// Sync fsrc into fdst
 func Sync(fdst, fsrc Fs) error {
 	return syncCopyMove(fdst, fsrc, true, false)
 }
 
-// Copies fsrc into fdst
+// CopyDir copies fsrc into fdst
 func CopyDir(fdst, fsrc Fs) error {
 	return syncCopyMove(fdst, fsrc, false, false)
 }
 
-// Moves fsrc into fdst
+// MoveDir moves fsrc into fdst
 func MoveDir(fdst, fsrc Fs) error {
-	if FsSame(fdst, fsrc) {
+	if Same(fdst, fsrc) {
 		ErrorLog(fdst, "Nothing to do as source and destination are the same")
 		return nil
 	}
@@ -517,7 +519,7 @@ func MoveDir(fdst, fsrc Fs) error {
 	return Purge(fsrc)
 }
 
-// Checks the files in fsrc and fdst according to Size and MD5SUM
+// Check the files in fsrc and fdst according to Size and MD5SUM
 func Check(fdst, fsrc Fs) error {
 	Log(fdst, "Building file list")
 
@@ -597,7 +599,7 @@ func Check(fdst, fsrc Fs) error {
 	return nil
 }
 
-// List the Fs to the supplied function
+// ListFn lists the Fs to the supplied function
 //
 // Lists in parallel which may get them out of order
 func ListFn(f Fs, fn func(Object)) error {
@@ -639,7 +641,7 @@ func List(f Fs, w io.Writer) error {
 	})
 }
 
-// List the Fs to the supplied writer
+// ListLong lists the Fs to the supplied writer
 //
 // Shows size, mod time and path
 //
@@ -653,7 +655,7 @@ func ListLong(f Fs, w io.Writer) error {
 	})
 }
 
-// List the Fs to the supplied writer
+// Md5sum list the Fs to the supplied writer
 //
 // Produces the same output as the md5sum command
 //
@@ -671,7 +673,7 @@ func Md5sum(f Fs, w io.Writer) error {
 	})
 }
 
-// List the directories/buckets/containers in the Fs to the supplied writer
+// ListDir lists the directories/buckets/containers in the Fs to the supplied writer
 func ListDir(f Fs, w io.Writer) error {
 	for dir := range f.ListDir() {
 		syncFprintf(w, "%12d %13s %9d %s\n", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
@@ -679,7 +681,7 @@ func ListDir(f Fs, w io.Writer) error {
 	return nil
 }
 
-// Makes a destination directory or container
+// Mkdir makes a destination directory or container
 func Mkdir(f Fs) error {
 	err := f.Mkdir()
 	if err != nil {
@@ -689,7 +691,7 @@ func Mkdir(f Fs) error {
 	return nil
 }
 
-// Removes a container but not if not empty
+// Rmdir removes a container but not if not empty
 func Rmdir(f Fs) error {
 	if Config.DryRun {
 		Log(f, "Not deleting as dry run is set")
@@ -703,7 +705,7 @@ func Rmdir(f Fs) error {
 	return nil
 }
 
-// Removes a container and all of its contents
+// Purge removes a container and all of its contents
 //
 // FIXME doesn't delete local directories
 func Purge(f Fs) error {

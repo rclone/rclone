@@ -10,16 +10,16 @@ import (
 
 const separator = "------------------------------------------------------------"
 
-// An http transport which logs the traffic
-type loggedTransport struct {
+// LoggedTransport is an http transport which logs the traffic
+type LoggedTransport struct {
 	wrapped http.RoundTripper
 	logBody bool
 }
 
 // NewLoggedTransport wraps the transport passed in and logs all roundtrips
 // including the body if logBody is set.
-func NewLoggedTransport(transport http.RoundTripper, logBody bool) *loggedTransport {
-	return &loggedTransport{
+func NewLoggedTransport(transport http.RoundTripper, logBody bool) *LoggedTransport {
+	return &LoggedTransport{
 		wrapped: transport,
 		logBody: logBody,
 	}
@@ -28,7 +28,7 @@ func NewLoggedTransport(transport http.RoundTripper, logBody bool) *loggedTransp
 // CancelRequest cancels an in-flight request by closing its
 // connection. CancelRequest should only be called after RoundTrip has
 // returned.
-func (t *loggedTransport) CancelRequest(req *http.Request) {
+func (t *LoggedTransport) CancelRequest(req *http.Request) {
 	if wrapped, ok := t.wrapped.(interface {
 		CancelRequest(*http.Request)
 	}); ok {
@@ -38,7 +38,7 @@ func (t *loggedTransport) CancelRequest(req *http.Request) {
 }
 
 // RoundTrip implements the RoundTripper interface.
-func (t *loggedTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
+func (t *LoggedTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	buf, _ := httputil.DumpRequest(req, t.logBody)
 	log.Println(separator)
 	log.Println("HTTP REQUEST")

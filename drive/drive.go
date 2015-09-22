@@ -1,4 +1,4 @@
-// Drive interface
+// Package drive interfaces with the Google Drive object storage system
 package drive
 
 // FIXME need to deal with some corner cases
@@ -61,7 +61,7 @@ var (
 
 // Register with Fs
 func init() {
-	fs.Register(&fs.FsInfo{
+	fs.Register(&fs.Info{
 		Name:  "drive",
 		NewFs: NewFs,
 		Config: func(name string) {
@@ -106,12 +106,12 @@ type FsObjectDrive struct {
 
 // ------------------------------------------------------------
 
-// The name of the remote (as passed into NewFs)
+// Name of the remote (as passed into NewFs)
 func (f *FsDrive) Name() string {
 	return f.name
 }
 
-// The root of the remote (as passed into NewFs)
+// Root of the remote (as passed into NewFs)
 func (f *FsDrive) Root() string {
 	return f.root
 }
@@ -170,10 +170,10 @@ type listAllFn func(*drive.File) bool
 // If the user fn ever returns true then it early exits with found = true
 //
 // Search params: https://developers.google.com/drive/search-parameters
-func (f *FsDrive) listAll(dirId string, title string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+func (f *FsDrive) listAll(dirID string, title string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
 	query := fmt.Sprintf("trashed=false")
-	if dirId != "" {
-		query += fmt.Sprintf(" and '%s' in parents", dirId)
+	if dirID != "" {
+		query += fmt.Sprintf(" and '%s' in parents", dirID)
 	}
 	if title != "" {
 		// Escaping the backslash isn't documented but seems to work
@@ -321,35 +321,35 @@ func (f *FsDrive) newFsObjectWithInfo(remote string, info *drive.File) fs.Object
 	return fs
 }
 
-// Return an FsObject from a path
+// NewFsObject returns an FsObject from a path
 //
 // May return nil if an error occurred
 func (f *FsDrive) NewFsObject(remote string) fs.Object {
 	return f.newFsObjectWithInfo(remote, nil)
 }
 
-// FindLeaf finds a directory of name leaf in the folder with ID pathId
-func (f *FsDrive) FindLeaf(pathId, leaf string) (pathIdOut string, found bool, err error) {
-	// Find the leaf in pathId
-	found, err = f.listAll(pathId, leaf, true, false, func(item *drive.File) bool {
+// FindLeaf finds a directory of name leaf in the folder with ID pathID
+func (f *FsDrive) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err error) {
+	// Find the leaf in pathID
+	found, err = f.listAll(pathID, leaf, true, false, func(item *drive.File) bool {
 		if item.Title == leaf {
-			pathIdOut = item.Id
+			pathIDOut = item.Id
 			return true
 		}
 		return false
 	})
-	return pathIdOut, found, err
+	return pathIDOut, found, err
 }
 
-// CreateDir makes a directory with pathId as parent and name leaf
-func (f *FsDrive) CreateDir(pathId, leaf string) (newId string, err error) {
+// CreateDir makes a directory with pathID as parent and name leaf
+func (f *FsDrive) CreateDir(pathID, leaf string) (newID string, err error) {
 	// fmt.Println("Making", path)
 	// Define the metadata for the directory we are going to create.
 	createInfo := &drive.File{
 		Title:       leaf,
 		Description: leaf,
 		MimeType:    driveFolderType,
-		Parents:     []*drive.ParentReference{{Id: pathId}},
+		Parents:     []*drive.ParentReference{{Id: pathID}},
 	}
 	var info *drive.File
 	err = f.pacer.Call(func() (bool, error) {
@@ -368,11 +368,11 @@ func (f *FsDrive) CreateDir(pathId, leaf string) (newId string, err error) {
 //
 // This fetches the minimum amount of stuff but does more API calls
 // which makes it slow
-func (f *FsDrive) listDirRecursive(dirId string, path string, out fs.ObjectsChan) error {
+func (f *FsDrive) listDirRecursive(dirID string, path string, out fs.ObjectsChan) error {
 	var subError error
 	// Make the API request
 	var wg sync.WaitGroup
-	_, err := f.listAll(dirId, "", false, false, func(item *drive.File) bool {
+	_, err := f.listAll(dirID, "", false, false, func(item *drive.File) bool {
 		// Recurse on directories
 		if item.MimeType == driveFolderType {
 			wg.Add(1)
@@ -388,7 +388,6 @@ func (f *FsDrive) listDirRecursive(dirId string, path string, out fs.ObjectsChan
 				}
 
 			}()
-			return false
 		} else {
 			// If item has no MD5 sum it isn't stored on drive, so ignore it
 			if item.Md5Checksum != "" {
@@ -417,7 +416,7 @@ func (f *FsDrive) listDirRecursive(dirId string, path string, out fs.ObjectsChan
 //
 // This is fast in terms of number of API calls, but slow in terms of
 // fetching more data than it needs
-func (f *FsDrive) listDirFull(dirId string, path string, out fs.ObjectsChan) error {
+func (f *FsDrive) listDirFull(dirID string, path string, out fs.ObjectsChan) error {
 	// Orphans waiting for their parent
 	orphans := make(map[string][]*drive.File)
 
@@ -457,12 +456,12 @@ func (f *FsDrive) listDirFull(dirId string, path string, out fs.ObjectsChan) err
 			// fmt.Printf("no parents %s %s: %#v\n", item.Title, item.Id, item)
 			return false
 		}
-		parentId := item.Parents[0].Id
-		directory, ok := f.dirCache.GetInv(parentId)
+		parentID := item.Parents[0].Id
+		directory, ok := f.dirCache.GetInv(parentID)
 		if !ok {
 			// Haven't found the parent yet so add to orphans
-			// fmt.Printf("orphan[%s] %s %s\n", parentId, item.Title, item.Id)
-			orphans[parentId] = append(orphans[parentId], item)
+			// fmt.Printf("orphan[%s] %s %s\n", parentID, item.Title, item.Id)
+			orphans[parentID] = append(orphans[parentID], item)
 		} else {
 			outputItem(item, directory)
 		}
@@ -478,7 +477,7 @@ func (f *FsDrive) listDirFull(dirId string, path string, out fs.ObjectsChan) err
 	return nil
 }
 
-// Walk the path returning a channel of FsObjects
+// List walks the path returning a channel of FsObjects
 func (f *FsDrive) List() fs.ObjectsChan {
 	out := make(fs.ObjectsChan, fs.Config.Checkers)
 	go func() {
@@ -502,7 +501,7 @@ func (f *FsDrive) List() fs.ObjectsChan {
 	return out
 }
 
-// Walk the path returning a channel of FsObjects
+// ListDir walks the path returning a channel of directories
 func (f *FsDrive) ListDir() fs.DirChan {
 	out := make(fs.DirChan, fs.Config.Checkers)
 	go func() {
@@ -543,7 +542,7 @@ func (f *FsDrive) createFileInfo(remote string, modTime time.Time, size int64) (
 		bytes:  size,
 	}
 
-	leaf, directoryId, err := f.dirCache.FindPath(remote, true)
+	leaf, directoryID, err := f.dirCache.FindPath(remote, true)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -552,7 +551,7 @@ func (f *FsDrive) createFileInfo(remote string, modTime time.Time, size int64) (
 	createInfo := &drive.File{
 		Title:        leaf,
 		Description:  leaf,
-		Parents:      []*drive.ParentReference{{Id: directoryId}},
+		Parents:      []*drive.ParentReference{{Id: directoryID}},
 		MimeType:     fs.MimeType(o),
 		ModifiedDate: modTime.Format(timeFormatOut),
 	}
@@ -638,8 +637,8 @@ func (f *FsDrive) Rmdir() error {
 	return nil
 }
 
-// Return the precision
-func (fs *FsDrive) Precision() time.Duration {
+// Precision of the object storage system
+func (f *FsDrive) Precision() time.Duration {
 	return time.Millisecond
 }
 
@@ -714,7 +713,7 @@ func (f *FsDrive) Purge() error {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantMove
-func (dstFs *FsDrive) Move(src fs.Object, remote string) (fs.Object, error) {
+func (f *FsDrive) Move(src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*FsObjectDrive)
 	if !ok {
 		fs.Debug(src, "Can't move - not same remote type")
@@ -722,13 +721,13 @@ func (dstFs *FsDrive) Move(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	// Temporary FsObject under construction
-	dstObj, dstInfo, err := dstFs.createFileInfo(remote, srcObj.ModTime(), srcObj.bytes)
+	dstObj, dstInfo, err := f.createFileInfo(remote, srcObj.ModTime(), srcObj.bytes)
 	if err != nil {
 		return nil, err
 	}
 
 	// Do the move
-	info, err := dstFs.svc.Files.Patch(srcObj.id, dstInfo).SetModifiedDate(true).Do()
+	info, err := f.svc.Files.Patch(srcObj.id, dstInfo).SetModifiedDate(true).Do()
 	if err != nil {
 		return nil, err
 	}
@@ -737,14 +736,15 @@ func (dstFs *FsDrive) Move(src fs.Object, remote string) (fs.Object, error) {
 	return dstObj, nil
 }
 
-// Move src to this remote using server side move operations.
+// DirMove moves src directory to this remote using server side move
+// operations.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (dstFs *FsDrive) DirMove(src fs.Fs) error {
+func (f *FsDrive) DirMove(src fs.Fs) error {
 	srcFs, ok := src.(*FsDrive)
 	if !ok {
 		fs.Debug(srcFs, "Can't move directory - not same remote type")
@@ -752,14 +752,14 @@ func (dstFs *FsDrive) DirMove(src fs.Fs) error {
 	}
 
 	// Check if destination exists
-	dstFs.dirCache.ResetRoot()
-	err := dstFs.dirCache.FindRoot(false)
+	f.dirCache.ResetRoot()
+	err := f.dirCache.FindRoot(false)
 	if err == nil {
 		return fs.ErrorDirExists
 	}
 
 	// Find ID of parent
-	leaf, directoryId, err := dstFs.dirCache.FindPath(dstFs.root, true)
+	leaf, directoryID, err := f.dirCache.FindPath(f.root, true)
 	if err != nil {
 		return err
 	}
@@ -767,9 +767,9 @@ func (dstFs *FsDrive) DirMove(src fs.Fs) error {
 	// Do the move
 	patch := drive.File{
 		Title:   leaf,
-		Parents: []*drive.ParentReference{{Id: directoryId}},
+		Parents: []*drive.ParentReference{{Id: directoryID}},
 	}
-	_, err = dstFs.svc.Files.Patch(srcFs.dirCache.RootID(), &patch).Do()
+	_, err = f.svc.Files.Patch(srcFs.dirCache.RootID(), &patch).Do()
 	if err != nil {
 		return err
 	}
@@ -779,7 +779,7 @@ func (dstFs *FsDrive) DirMove(src fs.Fs) error {
 
 // ------------------------------------------------------------
 
-// Return the parent Fs
+// Fs returns the parent Fs
 func (o *FsObjectDrive) Fs() fs.Fs {
 	return o.drive
 }
@@ -792,7 +792,7 @@ func (o *FsObjectDrive) String() string {
 	return o.remote
 }
 
-// Return the remote path
+// Remote returns the remote path
 func (o *FsObjectDrive) Remote() string {
 	return o.remote
 }
@@ -822,12 +822,12 @@ func (o *FsObjectDrive) readMetaData() (err error) {
 		return nil
 	}
 
-	leaf, directoryId, err := o.drive.dirCache.FindPath(o.remote, false)
+	leaf, directoryID, err := o.drive.dirCache.FindPath(o.remote, false)
 	if err != nil {
 		return err
 	}
 
-	found, err := o.drive.listAll(directoryId, leaf, false, true, func(item *drive.File) bool {
+	found, err := o.drive.listAll(directoryID, leaf, false, true, func(item *drive.File) bool {
 		if item.Title == leaf {
 			o.setMetaData(item)
 			return true
@@ -863,7 +863,7 @@ func (o *FsObjectDrive) ModTime() time.Time {
 	return modTime
 }
 
-// Sets the modification time of the drive fs object
+// SetModTime sets the modification time of the drive fs object
 func (o *FsObjectDrive) SetModTime(modTime time.Time) {
 	err := o.readMetaData()
 	if err != nil {
@@ -890,7 +890,7 @@ func (o *FsObjectDrive) SetModTime(modTime time.Time) {
 	o.setMetaData(info)
 }
 
-// Is this object storable
+// Storable returns a boolean as to whether this object is storable
 func (o *FsObjectDrive) Storable() bool {
 	return true
 }

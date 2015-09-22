@@ -10,6 +10,11 @@ test:	rclone
 	go test ./...
 	cd fs && ./test_all.sh
 
+check:	rclone
+	go vet ./...
+	errcheck ./...
+	golint ./...
+
 doc:	rclone.1 MANUAL.html MANUAL.txt
 
 rclone.1:	MANUAL.md
@@ -52,7 +57,7 @@ serve:
 tag:
 	@echo "Old tag is $(LAST_TAG)"
 	@echo "New tag is $(NEW_TAG)"
-	echo -e "package fs\n const Version = \"$(NEW_TAG)\"\n" | gofmt > fs/version.go
+	echo -e "package fs\n\n// Version of rclone\nconst Version = \"$(NEW_TAG)\"\n" | gofmt > fs/version.go
 	perl -lpe 's/VERSION/${NEW_TAG}/g; s/DATE/'`date -I`'/g;' docs/content/downloads.md.in > docs/content/downloads.md
 	git tag $(NEW_TAG)
 	@echo "Add this to changelog in docs/content/changelog.md"

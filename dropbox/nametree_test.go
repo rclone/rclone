@@ -1,10 +1,10 @@
-package dropbox_test
+package dropbox
 
 import (
-	"github.com/ncw/rclone/dropbox"
+	"testing"
+
 	"github.com/ncw/rclone/fs"
 	dropboxapi "github.com/stacktic/dropbox"
-	"testing"
 )
 
 func assert(t *testing.T, shouldBeTrue bool, failMessage string) {
@@ -16,7 +16,7 @@ func assert(t *testing.T, shouldBeTrue bool, failMessage string) {
 func TestPutCaseCorrectDirectoryName(t *testing.T) {
 	errors := fs.Stats.GetErrors()
 
-	tree := dropbox.NewNameTree()
+	tree := newNameTree()
 	tree.PutCaseCorrectDirectoryName("a/b", "C")
 
 	assert(t, tree.CaseCorrectName == "", "Root CaseCorrectName should be empty")
@@ -36,7 +36,7 @@ func TestPutCaseCorrectDirectoryName(t *testing.T) {
 func TestPutCaseCorrectDirectoryNameEmptyComponent(t *testing.T) {
 	errors := fs.Stats.GetErrors()
 
-	tree := dropbox.NewNameTree()
+	tree := newNameTree()
 	tree.PutCaseCorrectDirectoryName("/a", "C")
 	tree.PutCaseCorrectDirectoryName("b/", "C")
 	tree.PutCaseCorrectDirectoryName("a//b", "C")
@@ -47,7 +47,7 @@ func TestPutCaseCorrectDirectoryNameEmptyComponent(t *testing.T) {
 func TestPutCaseCorrectDirectoryNameEmptyParent(t *testing.T) {
 	errors := fs.Stats.GetErrors()
 
-	tree := dropbox.NewNameTree()
+	tree := newNameTree()
 	tree.PutCaseCorrectDirectoryName("", "C")
 
 	c := tree.Directories["c"]
@@ -59,7 +59,7 @@ func TestPutCaseCorrectDirectoryNameEmptyParent(t *testing.T) {
 func TestGetPathWithCorrectCase(t *testing.T) {
 	errors := fs.Stats.GetErrors()
 
-	tree := dropbox.NewNameTree()
+	tree := newNameTree()
 	tree.PutCaseCorrectDirectoryName("a", "C")
 	assert(t, tree.GetPathWithCorrectCase("a/c") == nil, "Path for 'a' should not be available")
 
@@ -72,7 +72,7 @@ func TestGetPathWithCorrectCase(t *testing.T) {
 func TestPutAndWalk(t *testing.T) {
 	errors := fs.Stats.GetErrors()
 
-	tree := dropbox.NewNameTree()
+	tree := newNameTree()
 	tree.PutFile("a", "F", &dropboxapi.Entry{Path: "xxx"})
 	tree.PutCaseCorrectDirectoryName("", "A")
 
@@ -92,7 +92,7 @@ func TestPutAndWalk(t *testing.T) {
 func TestPutAndWalkWithPrefix(t *testing.T) {
 	errors := fs.Stats.GetErrors()
 
-	tree := dropbox.NewNameTree()
+	tree := newNameTree()
 	tree.PutFile("a", "F", &dropboxapi.Entry{Path: "xxx"})
 	tree.PutCaseCorrectDirectoryName("", "A")
 
@@ -112,7 +112,7 @@ func TestPutAndWalkWithPrefix(t *testing.T) {
 func TestPutAndWalkIncompleteTree(t *testing.T) {
 	errors := fs.Stats.GetErrors()
 
-	tree := dropbox.NewNameTree()
+	tree := newNameTree()
 	tree.PutFile("a", "F", &dropboxapi.Entry{Path: "xxx"})
 
 	walkFunc := func(caseCorrectFilePath string, entry *dropboxapi.Entry) {

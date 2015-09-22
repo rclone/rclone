@@ -26,17 +26,18 @@ const (
 	configFileName = ".rclone.conf"
 )
 
+// SizeSuffix is parsed by flag with k/M/G suffixes
 type SizeSuffix int64
 
 // Global
 var (
-	// Config file
+	// ConfigFile is the config file data structure
 	ConfigFile *goconfig.ConfigFile
-	// Home directory
+	// HomeDir is the home directory of the user
 	HomeDir = configHome()
-	// Config file path
+	// ConfigPath points to the config file
 	ConfigPath = path.Join(HomeDir, configFileName)
-	// Global config
+	// Config is the global config
 	Config = &ConfigInfo{}
 	// Flags
 	verbose        = pflag.BoolP("verbose", "v", false, "Print lots more stuff")
@@ -145,7 +146,7 @@ func Reveal(y string) string {
 	return string(x)
 }
 
-// Filesystem config options
+// ConfigInfo is filesystem config options
 type ConfigInfo struct {
 	Verbose        bool
 	Quiet          bool
@@ -192,7 +193,7 @@ func (ci *ConfigInfo) Transport() http.RoundTripper {
 	return t
 }
 
-// Transport returns an http.Client with the correct timeouts
+// Client returns an http.Client with the correct timeouts
 func (ci *ConfigInfo) Client() *http.Client {
 	return &http.Client{
 		Transport: ci.Transport(),
@@ -220,7 +221,7 @@ func configHome() string {
 	return ""
 }
 
-// Loads the config file
+// LoadConfig loads the config file
 func LoadConfig() {
 	// Read some flags if set
 	//
@@ -255,7 +256,7 @@ func LoadConfig() {
 	startTokenBucket()
 }
 
-// Save configuration file.
+// SaveConfig saves configuration file.
 func SaveConfig() {
 	err := goconfig.SaveConfigFile(ConfigFile, ConfigPath)
 	if err != nil {
@@ -267,7 +268,7 @@ func SaveConfig() {
 	}
 }
 
-// Show an overview of the config file
+// ShowRemotes shows an overview of the config file
 func ShowRemotes() {
 	remotes := ConfigFile.GetSectionList()
 	if len(remotes) == 0 {
@@ -288,7 +289,7 @@ func ChooseRemote() string {
 	return Choose("remote", remotes, nil, false)
 }
 
-// Read some input
+// ReadLine reads some input
 func ReadLine() string {
 	buf := bufio.NewReader(os.Stdin)
 	line, err := buf.ReadString('\n')
@@ -320,7 +321,7 @@ func Command(commands []string) byte {
 	}
 }
 
-// Asks the user for Yes or No and returns true or false
+// Confirm asks the user for Yes or No and returns true or false
 func Confirm() bool {
 	return Command([]string{"yYes", "nNo"}) == 'y'
 }
@@ -357,7 +358,7 @@ func Choose(what string, defaults, help []string, newOk bool) string {
 	}
 }
 
-// Show the contents of the remote
+// ShowRemote shows the contents of the remote
 func ShowRemote(name string) {
 	fmt.Printf("--------------------\n")
 	fmt.Printf("[%s]\n", name)
@@ -367,7 +368,7 @@ func ShowRemote(name string) {
 	fmt.Printf("--------------------\n")
 }
 
-// Print the contents of the remote and ask if it is OK
+// OkRemote prints the contents of the remote and ask if it is OK
 func OkRemote(name string) bool {
 	ShowRemote(name)
 	switch i := Command([]string{"yYes this is OK", "eEdit this remote", "dDelete this remote"}); i {
@@ -384,7 +385,7 @@ func OkRemote(name string) bool {
 	return false
 }
 
-// Runs the config helper for the remote if needed
+// RemoteConfig runs the config helper for the remote if needed
 func RemoteConfig(name string) {
 	fmt.Printf("Remote config\n")
 	fsName := ConfigFile.MustValue(name, "type")
@@ -400,7 +401,7 @@ func RemoteConfig(name string) {
 	}
 }
 
-// Choose an option
+// ChooseOption asks the user to choose an option
 func ChooseOption(o *Option) string {
 	fmt.Println(o.Help)
 	if len(o.Examples) > 0 {
@@ -416,7 +417,7 @@ func ChooseOption(o *Option) string {
 	return ReadLine()
 }
 
-// Make a new remote
+// NewRemote make a new remote from its name
 func NewRemote(name string) {
 	fmt.Printf("What type of source is it?\n")
 	types := []string{}
@@ -440,7 +441,7 @@ func NewRemote(name string) {
 	EditRemote(name)
 }
 
-// Edit a remote
+// EditRemote gets the user to edit a remote
 func EditRemote(name string) {
 	ShowRemote(name)
 	fmt.Printf("Edit remote\n")
@@ -462,13 +463,13 @@ func EditRemote(name string) {
 	SaveConfig()
 }
 
-// Delete a remote
+// DeleteRemote gets the user to delete a remote
 func DeleteRemote(name string) {
 	ConfigFile.DeleteSection(name)
 	SaveConfig()
 }
 
-// Edit the config file interactively
+// EditConfig edits the config file interactively
 func EditConfig() {
 	for {
 		haveRemotes := len(ConfigFile.GetSectionList()) != 0

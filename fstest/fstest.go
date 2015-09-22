@@ -1,4 +1,4 @@
-// Utilities for testing the Fs
+// Package fstest provides utilities for testing the Fs
 package fstest
 
 // FIXME put name of test FS in Fs structure
@@ -22,7 +22,7 @@ func init() {
 
 }
 
-// Represents an item for checking
+// Item represents an item for checking
 type Item struct {
 	Path    string
 	Md5sum  string
@@ -31,7 +31,8 @@ type Item struct {
 	WinPath string
 }
 
-// Checks the times are equal within the precision, returns the delta and a flag
+// CheckTimeEqualWithPrecision checks the times are equal within the
+// precision, returns the delta and a flag
 func CheckTimeEqualWithPrecision(t0, t1 time.Time, precision time.Duration) (time.Duration, bool) {
 	dt := t0.Sub(t1)
 	if dt >= precision || dt <= -precision {
@@ -40,7 +41,7 @@ func CheckTimeEqualWithPrecision(t0, t1 time.Time, precision time.Duration) (tim
 	return dt, true
 }
 
-// check the mod time to the given precision
+// CheckModTime checks the mod time to the given precision
 func (i *Item) CheckModTime(t *testing.T, obj fs.Object, modTime time.Time, precision time.Duration) {
 	dt, ok := CheckTimeEqualWithPrecision(modTime, i.ModTime, precision)
 	if !ok {
@@ -48,6 +49,7 @@ func (i *Item) CheckModTime(t *testing.T, obj fs.Object, modTime time.Time, prec
 	}
 }
 
+// Check checks all the attributes of the object are correct
 func (i *Item) Check(t *testing.T, obj fs.Object, precision time.Duration) {
 	if obj == nil {
 		t.Fatalf("Object is nil")
@@ -66,14 +68,14 @@ func (i *Item) Check(t *testing.T, obj fs.Object, precision time.Duration) {
 	i.CheckModTime(t, obj, obj.ModTime(), precision)
 }
 
-// Represents all items for checking
+// Items represents all items for checking
 type Items struct {
 	byName    map[string]*Item
 	byNameAlt map[string]*Item
 	items     []Item
 }
 
-// Make an Items
+// NewItems makes an Items
 func NewItems(items []Item) *Items {
 	is := &Items{
 		byName:    make(map[string]*Item),
@@ -88,7 +90,7 @@ func NewItems(items []Item) *Items {
 	return is
 }
 
-// Check off an item
+// Find checks off an item
 func (is *Items) Find(t *testing.T, obj fs.Object, precision time.Duration) {
 	i, ok := is.byName[obj.Remote()]
 	if !ok {
@@ -103,7 +105,7 @@ func (is *Items) Find(t *testing.T, obj fs.Object, precision time.Duration) {
 	i.Check(t, obj, precision)
 }
 
-// Check all done
+// Done checks all finished
 func (is *Items) Done(t *testing.T) {
 	if len(is.byName) != 0 {
 		for name := range is.byName {
@@ -113,7 +115,8 @@ func (is *Items) Done(t *testing.T) {
 	}
 }
 
-// Checks the fs to see if it has the expected contents
+// CheckListingWithPrecision checks the fs to see if it has the
+// expected contents with the given precision.
 func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, precision time.Duration) {
 	is := NewItems(items)
 	oldErrors := fs.Stats.GetErrors()
@@ -143,13 +146,13 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, precision ti
 	}
 }
 
-// Checks the fs to see if it has the expected contents
+// CheckListing checks the fs to see if it has the expected contents
 func CheckListing(t *testing.T, f fs.Fs, items []Item) {
 	precision := f.Precision()
 	CheckListingWithPrecision(t, f, items, precision)
 }
 
-// Parse a time string or explode
+// Time parses a time string or logs a fatal error
 func Time(timeString string) time.Time {
 	t, err := time.Parse(time.RFC3339Nano, timeString)
 	if err != nil {
@@ -158,7 +161,7 @@ func Time(timeString string) time.Time {
 	return t
 }
 
-// Create a random string
+// RandomString create a random string for test purposes
 func RandomString(n int) string {
 	source := "abcdefghijklmnopqrstuvwxyz0123456789"
 	out := make([]byte, n)
@@ -168,7 +171,7 @@ func RandomString(n int) string {
 	return string(out)
 }
 
-// Creates a temporary directory name for local remotes
+// LocalRemote creates a temporary directory name for local remotes
 func LocalRemote() (path string, err error) {
 	path, err = ioutil.TempDir("", "rclone")
 	if err == nil {
@@ -179,7 +182,7 @@ func LocalRemote() (path string, err error) {
 	return
 }
 
-// Make a random bucket or subdirectory name
+// RandomRemoteName makes a random bucket or subdirectory name
 //
 // Returns a random remote name plus the leaf name
 func RandomRemoteName(remoteName string) (string, string, error) {
@@ -202,7 +205,7 @@ func RandomRemoteName(remoteName string) (string, string, error) {
 	return remoteName, leafName, nil
 }
 
-// Make a random bucket or subdirectory on the remote
+// RandomRemote makes a random bucket or subdirectory on the remote
 //
 // Call the finalise function returned to Purge the fs at the end (and
 // the parent if necessary)
@@ -241,6 +244,7 @@ func RandomRemote(remoteName string, subdir bool) (fs.Fs, func(), error) {
 	return remote, finalise, nil
 }
 
+// TestMkdir tests Mkdir works
 func TestMkdir(t *testing.T, remote fs.Fs) {
 	err := fs.Mkdir(remote)
 	if err != nil {
@@ -249,6 +253,7 @@ func TestMkdir(t *testing.T, remote fs.Fs) {
 	CheckListing(t, remote, []Item{})
 }
 
+// TestPurge tests Purge works
 func TestPurge(t *testing.T, remote fs.Fs) {
 	err := fs.Purge(remote)
 	if err != nil {
@@ -257,6 +262,7 @@ func TestPurge(t *testing.T, remote fs.Fs) {
 	CheckListing(t, remote, []Item{})
 }
 
+// TestRmdir tests Rmdir works
 func TestRmdir(t *testing.T, remote fs.Fs) {
 	err := fs.Rmdir(remote)
 	if err != nil {

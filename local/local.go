@@ -1,4 +1,4 @@
-// Local filesystem interface
+// Package local provides a filesystem interface
 package local
 
 import (
@@ -10,19 +10,19 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
+	"runtime"
+	"strings"
 	"sync"
 	"time"
 	"unicode/utf8"
 
 	"github.com/ncw/rclone/fs"
-	"regexp"
-	"runtime"
-	"strings"
 )
 
 // Register with Fs
 func init() {
-	fs.Register(&fs.FsInfo{
+	fs.Register(&fs.Info{
 		Name:  "local",
 		NewFs: NewFs,
 	})
@@ -71,12 +71,12 @@ func NewFs(name, root string) (fs.Fs, error) {
 	return f, nil
 }
 
-// The name of the remote (as passed into NewFs)
+// Name of the remote (as passed into NewFs)
 func (f *FsLocal) Name() string {
 	return f.name
 }
 
-// The root of the remote (as passed into NewFs)
+// Root of the remote (as passed into NewFs)
 func (f *FsLocal) Root() string {
 	return f.root
 }
@@ -110,7 +110,7 @@ func (f *FsLocal) newFsObjectWithInfo(remote string, info os.FileInfo) fs.Object
 	return o
 }
 
-// Return an FsObject from a path
+// NewFsObject returns an FsObject from a path
 //
 // May return nil if an error occurred
 func (f *FsLocal) NewFsObject(remote string) fs.Object {
@@ -195,7 +195,7 @@ func (f *FsLocal) cleanUtf8(name string) string {
 	return name
 }
 
-// Walk the path returning a channel of FsObjects
+// ListDir walks the path returning a channel of FsObjects
 func (f *FsLocal) ListDir() fs.DirChan {
 	out := make(fs.DirChan, fs.Config.Checkers)
 	go func() {
@@ -220,7 +220,7 @@ func (f *FsLocal) ListDir() fs.DirChan {
 							fs.Stats.Error()
 							fs.ErrorLog(f, "Failed to open directory: %s: %s", path, err)
 						} else {
-							dir.Count += 1
+							dir.Count++
 							dir.Bytes += fi.Size()
 						}
 						return nil
@@ -238,7 +238,7 @@ func (f *FsLocal) ListDir() fs.DirChan {
 	return out
 }
 
-// Puts the FsObject to the local filesystem
+// Put the FsObject to the local filesystem
 func (f *FsLocal) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
 	// Temporary FsObject under construction - info filled in by Update()
 	o := f.newFsObject(remote)
@@ -262,7 +262,7 @@ func (f *FsLocal) Rmdir() error {
 	return os.Remove(f.root)
 }
 
-// Return the precision
+// Precision of the file system
 func (f *FsLocal) Precision() (precision time.Duration) {
 	f.precisionOk.Do(func() {
 		f.precision = f.readPrecision()
@@ -347,7 +347,7 @@ func (f *FsLocal) Purge() error {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantMove
-func (dstFs *FsLocal) Move(src fs.Object, remote string) (fs.Object, error) {
+func (f *FsLocal) Move(src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*FsObjectLocal)
 	if !ok {
 		fs.Debug(src, "Can't move - not same remote type")
@@ -355,7 +355,7 @@ func (dstFs *FsLocal) Move(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	// Temporary FsObject under construction
-	dstObj := dstFs.newFsObject(remote)
+	dstObj := f.newFsObject(remote)
 
 	// Check it is a file if it exists
 	err := dstObj.lstat()
@@ -389,14 +389,15 @@ func (dstFs *FsLocal) Move(src fs.Object, remote string) (fs.Object, error) {
 	return dstObj, nil
 }
 
-// Move src to this remote using server side move operations.
+// DirMove moves src directory to this remote using server side move
+// operations.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (dstFs *FsLocal) DirMove(src fs.Fs) error {
+func (f *FsLocal) DirMove(src fs.Fs) error {
 	srcFs, ok := src.(*FsLocal)
 	if !ok {
 		fs.Debug(srcFs, "Can't move directory - not same remote type")
@@ -413,18 +414,18 @@ func (dstFs *FsLocal) DirMove(src fs.Fs) error {
 	}
 
 	// Check if destination exists
-	_, err = os.Lstat(dstFs.root)
+	_, err = os.Lstat(f.root)
 	if !os.IsNotExist(err) {
 		return fs.ErrorDirExists
 	}
 
 	// Do the move
-	return os.Rename(srcFs.root, dstFs.root)
+	return os.Rename(srcFs.root, f.root)
 }
 
 // ------------------------------------------------------------
 
-// Return the parent Fs
+// Fs returns the parent Fs
 func (o *FsObjectLocal) Fs() fs.Fs {
 	return o.local
 }
@@ -437,7 +438,7 @@ func (o *FsObjectLocal) String() string {
 	return o.remote
 }
 
-// Return the remote path
+// Remote returns the remote path
 func (o *FsObjectLocal) Remote() string {
 	return o.local.cleanUtf8(o.remote)
 }
@@ -480,7 +481,7 @@ func (o *FsObjectLocal) ModTime() time.Time {
 	return o.info.ModTime()
 }
 
-// Sets the modification time of the local fs object
+// SetModTime sets the modification time of the local fs object
 func (o *FsObjectLocal) SetModTime(modTime time.Time) {
 	err := os.Chtimes(o.path, modTime, modTime)
 	if err != nil {
@@ -495,7 +496,7 @@ func (o *FsObjectLocal) SetModTime(modTime time.Time) {
 	}
 }
 
-// Is this object storable
+// Storable returns a boolean showing if this object is storable
 func (o *FsObjectLocal) Storable() bool {
 	mode := o.info.Mode()
 	if mode&(os.ModeSymlink|os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {

@@ -4,9 +4,12 @@ Required software for making a release
     * Run `gox -build-toolchain`
     * This assumes you have your own source checkout
   * pandoc for making the html and man pages
+  * errcheck - go get github.com/kisielk/errcheck
+  * golint - go get github.com/golang/lint
 
 Making a release
   * go get -u -f -v ./...
+  * make check
   * make test
   * make tag
   * edit docs/content/changelog.md

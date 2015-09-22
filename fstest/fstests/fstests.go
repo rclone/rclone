@@ -1,9 +1,9 @@
-// Generic tests for testing the Fs and Object interfaces
+// Package fstests provides generic tests for testing the Fs and Object interfaces
 //
 // Run go generate to write the tests for the remotes
+package fstests
 
 //go:generate go run gen_tests.go
-package fstests
 
 import (
 	"bytes"
@@ -22,12 +22,14 @@ import (
 )
 
 var (
-	remote        fs.Fs
+	remote fs.Fs
+	// RemoteName should be set to the name of the remote for testing
 	RemoteName    = ""
 	subRemoteName = ""
 	subRemoteLeaf = ""
-	NilObject     fs.Object
-	file1         = fstest.Item{
+	// NilObject should be set to a nil Object from the Fs under test
+	NilObject fs.Object
+	file1     = fstest.Item{
 		ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
 		Path:    "file name.txt",
 	}
@@ -42,6 +44,7 @@ func init() {
 	flag.StringVar(&RemoteName, "remote", "", "Set this to override the default remote name (eg s3:)")
 }
 
+// TestInit tests basic intitialisation
 func TestInit(t *testing.T) {
 	var err error
 	fs.LoadConfig()
@@ -60,7 +63,7 @@ func TestInit(t *testing.T) {
 	}
 
 	remote, err = fs.NewFs(subRemoteName)
-	if err == fs.NotFoundInConfigFile {
+	if err == fs.ErrorNotFoundInConfigFile {
 		log.Printf("Didn't find %q in config file - skipping tests", RemoteName)
 		return
 	}
@@ -76,8 +79,7 @@ func skipIfNotOk(t *testing.T) {
 	}
 }
 
-// String returns a description of the FS
-
+// TestFsString tests the String method
 func TestFsString(t *testing.T) {
 	skipIfNotOk(t)
 	str := remote.String()
@@ -86,18 +88,13 @@ func TestFsString(t *testing.T) {
 	}
 }
 
-type TestFile struct {
-	ModTime time.Time
-	Path    string
-	Size    int64
-	Md5sum  string
-}
-
+// TestFsRmdirEmpty tests deleting an empty directory
 func TestFsRmdirEmpty(t *testing.T) {
 	skipIfNotOk(t)
 	fstest.TestRmdir(t, remote)
 }
 
+// TestFsRmdirNotFound tests deleting a non existent directory
 func TestFsRmdirNotFound(t *testing.T) {
 	skipIfNotOk(t)
 	err := remote.Rmdir()
@@ -106,17 +103,20 @@ func TestFsRmdirNotFound(t *testing.T) {
 	}
 }
 
+// TestFsMkdir tests tests making a directory
 func TestFsMkdir(t *testing.T) {
 	skipIfNotOk(t)
 	fstest.TestMkdir(t, remote)
 	fstest.TestMkdir(t, remote)
 }
 
+// TestFsListEmpty tests listing an empty directory
 func TestFsListEmpty(t *testing.T) {
 	skipIfNotOk(t)
 	fstest.CheckListing(t, remote, []fstest.Item{})
 }
 
+// TestFsListDirEmpty tests listing the directories from an empty directory
 func TestFsListDirEmpty(t *testing.T) {
 	skipIfNotOk(t)
 	for obj := range remote.ListDir() {
@@ -124,6 +124,7 @@ func TestFsListDirEmpty(t *testing.T) {
 	}
 }
 
+// TestFsNewFsObjectNotFound tests not finding a object
 func TestFsNewFsObjectNotFound(t *testing.T) {
 	skipIfNotOk(t)
 	if remote.NewFsObject("potato") != nil {
@@ -156,16 +157,19 @@ func testPut(t *testing.T, file *fstest.Item) {
 	file.Check(t, obj, remote.Precision())
 }
 
+// TestFsPutFile1 tests putting a file
 func TestFsPutFile1(t *testing.T) {
 	skipIfNotOk(t)
 	testPut(t, &file1)
 }
 
+// TestFsPutFile2 tests putting a file into a subdirectory
 func TestFsPutFile2(t *testing.T) {
 	skipIfNotOk(t)
 	testPut(t, &file2)
 }
 
+// TestFsListDirFile2 tests the files are correctly uploaded
 func TestFsListDirFile2(t *testing.T) {
 	skipIfNotOk(t)
 	found := false
@@ -181,6 +185,7 @@ func TestFsListDirFile2(t *testing.T) {
 	}
 }
 
+// TestFsListDirRoot tests that DirList works in the root
 func TestFsListDirRoot(t *testing.T) {
 	skipIfNotOk(t)
 	rootRemote, err := fs.NewFs(RemoteName)
@@ -198,6 +203,7 @@ func TestFsListDirRoot(t *testing.T) {
 	}
 }
 
+// TestFsListRoot tests List works in the root
 func TestFsListRoot(t *testing.T) {
 	skipIfNotOk(t)
 	rootRemote, err := fs.NewFs(RemoteName)
@@ -237,22 +243,26 @@ func TestFsListRoot(t *testing.T) {
 	t.Errorf("Didn't find %q (%v) and %q (%v) or no files (count %d)", f1, found1, f2, found2, count)
 }
 
+// TestFsListFile1 tests file present
 func TestFsListFile1(t *testing.T) {
 	skipIfNotOk(t)
 	fstest.CheckListing(t, remote, []fstest.Item{file1, file2})
 }
 
+// TestFsNewFsObject tests NewFsObject
 func TestFsNewFsObject(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
 	file1.Check(t, obj, remote.Precision())
 }
 
+// TestFsListFile1and2 tests two files present
 func TestFsListFile1and2(t *testing.T) {
 	skipIfNotOk(t)
 	fstest.CheckListing(t, remote, []fstest.Item{file1, file2})
 }
 
+// TestFsCopy tests Copy
 func TestFsCopy(t *testing.T) {
 	skipIfNotOk(t)
 
@@ -288,6 +298,7 @@ func TestFsCopy(t *testing.T) {
 
 }
 
+// TestFsMove tests Move
 func TestFsMove(t *testing.T) {
 	skipIfNotOk(t)
 
@@ -333,6 +344,8 @@ func TestFsMove(t *testing.T) {
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
+
+// TestFsDirMove tests DirMove
 func TestFsDirMove(t *testing.T) {
 	skipIfNotOk(t)
 
@@ -377,6 +390,7 @@ func TestFsDirMove(t *testing.T) {
 	fstest.CheckListing(t, newRemote, []fstest.Item{})
 }
 
+// TestFsRmdirFull tests removing a non empty directory
 func TestFsRmdirFull(t *testing.T) {
 	skipIfNotOk(t)
 	err := remote.Rmdir()
@@ -385,6 +399,7 @@ func TestFsRmdirFull(t *testing.T) {
 	}
 }
 
+// TestFsPrecision tests the Precision of the Fs
 func TestFsPrecision(t *testing.T) {
 	skipIfNotOk(t)
 	precision := remote.Precision()
@@ -397,6 +412,7 @@ func TestFsPrecision(t *testing.T) {
 	// FIXME check expected precision
 }
 
+// TestObjectString tests the Object String method
 func TestObjectString(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
@@ -411,6 +427,7 @@ func TestObjectString(t *testing.T) {
 	}
 }
 
+// TestObjectFs tests the object can be found
 func TestObjectFs(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
@@ -419,6 +436,7 @@ func TestObjectFs(t *testing.T) {
 	}
 }
 
+// TestObjectRemote tests the Remote is correct
 func TestObjectRemote(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
@@ -427,6 +445,7 @@ func TestObjectRemote(t *testing.T) {
 	}
 }
 
+// TestObjectMd5sum tests the MD5SUM of the object is correct
 func TestObjectMd5sum(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
@@ -439,12 +458,14 @@ func TestObjectMd5sum(t *testing.T) {
 	}
 }
 
+// TestObjectModTime tests the ModTime of the object is correct
 func TestObjectModTime(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
 	file1.CheckModTime(t, obj, obj.ModTime(), remote.Precision())
 }
 
+// TestObjectSetModTime tests that SetModTime works
 func TestObjectSetModTime(t *testing.T) {
 	skipIfNotOk(t)
 	newModTime := fstest.Time("2011-12-13T14:15:16.999999999Z")
@@ -456,6 +477,7 @@ func TestObjectSetModTime(t *testing.T) {
 	TestObjectModTime(t)
 }
 
+// TestObjectSize tests that Size works
 func TestObjectSize(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
@@ -464,6 +486,7 @@ func TestObjectSize(t *testing.T) {
 	}
 }
 
+// TestObjectOpen tests that Open works
 func TestObjectOpen(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
@@ -489,6 +512,7 @@ func TestObjectOpen(t *testing.T) {
 	}
 }
 
+// TestObjectUpdate tests that Update works
 func TestObjectUpdate(t *testing.T) {
 	skipIfNotOk(t)
 	buf := bytes.NewBufferString(fstest.RandomString(200))
@@ -508,6 +532,7 @@ func TestObjectUpdate(t *testing.T) {
 	file1.Check(t, obj, remote.Precision())
 }
 
+// TestObjectStorable tests that Storable works
 func TestObjectStorable(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
@@ -516,6 +541,7 @@ func TestObjectStorable(t *testing.T) {
 	}
 }
 
+// TestLimitedFs tests that a LimitedFs is created
 func TestLimitedFs(t *testing.T) {
 	skipIfNotOk(t)
 	remoteName := subRemoteName + "/" + file2.Path
@@ -532,6 +558,7 @@ func TestLimitedFs(t *testing.T) {
 	}
 }
 
+// TestLimitedFsNotFound tests that a LimitedFs is not created if no object
 func TestLimitedFsNotFound(t *testing.T) {
 	skipIfNotOk(t)
 	remoteName := subRemoteName + "/not found.txt"
@@ -546,6 +573,7 @@ func TestLimitedFsNotFound(t *testing.T) {
 	}
 }
 
+// TestObjectRemove tests Remove
 func TestObjectRemove(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
@@ -556,6 +584,7 @@ func TestObjectRemove(t *testing.T) {
 	fstest.CheckListing(t, remote, []fstest.Item{file2})
 }
 
+// TestObjectPurge tests Purge
 func TestObjectPurge(t *testing.T) {
 	skipIfNotOk(t)
 	fstest.TestPurge(t, remote)
@@ -565,6 +594,7 @@ func TestObjectPurge(t *testing.T) {
 	}
 }
 
+// TestFinalise tidies up after the previous tests
 func TestFinalise(t *testing.T) {
 	skipIfNotOk(t)
 	if strings.HasPrefix(RemoteName, "/") {

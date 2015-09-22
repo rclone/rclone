@@ -1,4 +1,4 @@
-// Swift interface
+// Package swift provides an interface to the Swift object storage system
 package swift
 
 import (
@@ -16,7 +16,7 @@ import (
 
 // Register with Fs
 func init() {
-	fs.Register(&fs.FsInfo{
+	fs.Register(&fs.Info{
 		Name:  "swift",
 		NewFs: NewFs,
 		Options: []fs.Option{{
@@ -76,12 +76,12 @@ type FsObjectSwift struct {
 
 // ------------------------------------------------------------
 
-// The name of the remote (as passed into NewFs)
+// Name of the remote (as passed into NewFs)
 func (f *FsSwift) Name() string {
 	return f.name
 }
 
-// The root of the remote (as passed into NewFs)
+// Root of the remote (as passed into NewFs)
 func (f *FsSwift) Root() string {
 	if f.root == "" {
 		return f.container
@@ -122,14 +122,14 @@ func swiftConnection(name string) (*swift.Connection, error) {
 	if apiKey == "" {
 		return nil, errors.New("key not found")
 	}
-	authUrl := fs.ConfigFile.MustValue(name, "auth")
-	if authUrl == "" {
+	authURL := fs.ConfigFile.MustValue(name, "auth")
+	if authURL == "" {
 		return nil, errors.New("auth not found")
 	}
 	c := &swift.Connection{
 		UserName:       userName,
 		ApiKey:         apiKey,
-		AuthUrl:        authUrl,
+		AuthUrl:        authURL,
 		UserAgent:      fs.UserAgent,
 		Tenant:         fs.ConfigFile.MustValue(name, "tenant"),
 		Region:         fs.ConfigFile.MustValue(name, "region"),
@@ -201,7 +201,7 @@ func (f *FsSwift) newFsObjectWithInfo(remote string, info *swift.Object) fs.Obje
 	return fs
 }
 
-// Return an FsObject from a path
+// NewFsObject returns an FsObject from a path
 //
 // May return nil if an error occurred
 func (f *FsSwift) NewFsObject(remote string) fs.Object {
@@ -249,7 +249,7 @@ func (f *FsSwift) list(directories bool, fn func(string, *swift.Object)) {
 	}
 }
 
-// Walk the path returning a channel of FsObjects
+// List walks the path returning a channel of FsObjects
 func (f *FsSwift) List() fs.ObjectsChan {
 	out := make(fs.ObjectsChan, fs.Config.Checkers)
 	if f.container == "" {
@@ -271,7 +271,7 @@ func (f *FsSwift) List() fs.ObjectsChan {
 	return out
 }
 
-// Lists the containers
+// ListDir lists the containers
 func (f *FsSwift) ListDir() fs.DirChan {
 	out := make(fs.DirChan, fs.Config.Checkers)
 	if f.container == "" {
@@ -331,8 +331,8 @@ func (f *FsSwift) Rmdir() error {
 	return f.c.ContainerDelete(f.container)
 }
 
-// Return the precision
-func (fs *FsSwift) Precision() time.Duration {
+// Precision of the remote
+func (f *FsSwift) Precision() time.Duration {
 	return time.Nanosecond
 }
 
@@ -361,7 +361,7 @@ func (f *FsSwift) Copy(src fs.Object, remote string) (fs.Object, error) {
 
 // ------------------------------------------------------------
 
-// Return the parent Fs
+// Fs returns the parent Fs
 func (o *FsObjectSwift) Fs() fs.Fs {
 	return o.swift
 }
@@ -374,7 +374,7 @@ func (o *FsObjectSwift) String() string {
 	return o.remote
 }
 
-// Return the remote path
+// Remote returns the remote path
 func (o *FsObjectSwift) Remote() string {
 	return o.remote
 }
@@ -426,7 +426,7 @@ func (o *FsObjectSwift) ModTime() time.Time {
 	return modTime
 }
 
-// Sets the modification time of the local fs object
+// SetModTime sets the modification time of the local fs object
 func (o *FsObjectSwift) SetModTime(modTime time.Time) {
 	err := o.readMetaData()
 	if err != nil {
@@ -442,7 +442,7 @@ func (o *FsObjectSwift) SetModTime(modTime time.Time) {
 	}
 }
 
-// Is this object storable
+// Storable returns if this object is storable
 func (o *FsObjectSwift) Storable() bool {
 	return true
 }

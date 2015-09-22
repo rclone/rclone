@@ -52,8 +52,8 @@ type resumableUpload struct {
 
 // Upload the io.Reader in of size bytes with contentType and info
 func (f *FsDrive) Upload(in io.Reader, size int64, contentType string, info *drive.File, remote string) (*drive.File, error) {
-	fileId := info.Id
-	var body io.Reader = nil
+	fileID := info.Id
+	var body io.Reader
 	body, err := googleapi.WithoutDataWrapper.JSONReader(info)
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func (f *FsDrive) Upload(in io.Reader, size int64, contentType string, info *dri
 	params.Set("uploadType", "resumable")
 	urls := "https://www.googleapis.com/upload/drive/v2/files"
 	method := "POST"
-	if fileId != "" {
+	if fileID != "" {
 		params.Set("setModifiedDate", "true")
 		urls += "/{fileId}"
 		method = "PUT"
@@ -71,7 +71,7 @@ func (f *FsDrive) Upload(in io.Reader, size int64, contentType string, info *dri
 	urls += "?" + params.Encode()
 	req, _ := http.NewRequest(method, urls, body)
 	googleapi.Expand(req.URL, map[string]string{
-		"fileId": fileId,
+		"fileId": fileID,
 	})
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 	req.Header.Set("X-Upload-Content-Type", contentType)

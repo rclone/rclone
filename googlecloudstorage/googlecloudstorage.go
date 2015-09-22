@@ -1,4 +1,4 @@
-// Google Cloud Storage interface
+// Package googlecloudstorage provides an interface to Google Cloud Storage
 package googlecloudstorage
 
 /*
@@ -55,7 +55,7 @@ var (
 
 // Register with Fs
 func init() {
-	fs.Register(&fs.FsInfo{
+	fs.Register(&fs.Info{
 		Name:  "google cloud storage",
 		NewFs: NewFs,
 		Config: func(name string) {
@@ -144,12 +144,12 @@ type FsObjectStorage struct {
 
 // ------------------------------------------------------------
 
-// The name of the remote (as passed into NewFs)
+// Name of the remote (as passed into NewFs)
 func (f *FsStorage) Name() string {
 	return f.name
 }
 
-// The root of the remote (as passed into NewFs)
+// Root of the remote (as passed into NewFs)
 func (f *FsStorage) Root() string {
 	if f.root == "" {
 		return f.bucket
@@ -254,7 +254,7 @@ func (f *FsStorage) newFsObjectWithInfo(remote string, info *storage.Object) fs.
 	return o
 }
 
-// Return an FsObject from a path
+// NewFsObject returns an FsObject from a path
 //
 // May return nil if an error occurred
 func (f *FsStorage) NewFsObject(remote string) fs.Object {
@@ -302,7 +302,7 @@ func (f *FsStorage) list(directories bool, fn func(string, *storage.Object)) {
 	}
 }
 
-// Walk the path returning a channel of FsObjects
+// List walks the path returning a channel of FsObjects
 func (f *FsStorage) List() fs.ObjectsChan {
 	out := make(fs.ObjectsChan, fs.Config.Checkers)
 	if f.bucket == "" {
@@ -324,7 +324,7 @@ func (f *FsStorage) List() fs.ObjectsChan {
 	return out
 }
 
-// Lists the buckets
+// ListDir lists the buckets
 func (f *FsStorage) ListDir() fs.DirChan {
 	out := make(fs.DirChan, fs.Config.Checkers)
 	if f.bucket == "" {
@@ -412,8 +412,8 @@ func (f *FsStorage) Rmdir() error {
 	return f.svc.Buckets.Delete(f.bucket).Do()
 }
 
-// Return the precision
-func (fs *FsStorage) Precision() time.Duration {
+// Precision returns the precision
+func (f *FsStorage) Precision() time.Duration {
 	return time.Nanosecond
 }
 
@@ -451,7 +451,7 @@ func (f *FsStorage) Copy(src fs.Object, remote string) (fs.Object, error) {
 
 // ------------------------------------------------------------
 
-// Return the parent Fs
+// Fs returns the parent Fs
 func (o *FsObjectStorage) Fs() fs.Fs {
 	return o.storage
 }
@@ -464,7 +464,7 @@ func (o *FsObjectStorage) String() string {
 	return o.remote
 }
 
-// Return the remote path
+// Remote returns the remote path
 func (o *FsObjectStorage) Remote() string {
 	return o.remote
 }
@@ -499,9 +499,8 @@ func (o *FsObjectStorage) setMetaData(info *storage.Object) {
 		if err == nil {
 			o.modTime = modTime
 			return
-		} else {
-			fs.Debug(o, "Failed to read mtime from metadata: %s", err)
 		}
+		fs.Debug(o, "Failed to read mtime from metadata: %s", err)
 	}
 
 	// Fallback to the Updated time
@@ -549,7 +548,7 @@ func metadataFromModTime(modTime time.Time) map[string]string {
 	return metadata
 }
 
-// Sets the modification time of the local fs object
+// SetModTime sets the modification time of the local fs object
 func (o *FsObjectStorage) SetModTime(modTime time.Time) {
 	// This only adds metadata so will perserve other metadata
 	object := storage.Object{
@@ -565,7 +564,7 @@ func (o *FsObjectStorage) SetModTime(modTime time.Time) {
 	o.setMetaData(newObject)
 }
 
-// Is this object storable
+// Storable returns a boolean as to whether this object is storable
 func (o *FsObjectStorage) Storable() bool {
 	return true
 }

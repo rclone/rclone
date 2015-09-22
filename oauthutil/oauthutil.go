@@ -210,24 +210,24 @@ func Config(name string, config *oauth2.Config) error {
 		return err
 	}
 	state := fmt.Sprintf("%x", stateBytes)
-	authUrl := config.AuthCodeURL(state)
+	authURL := config.AuthCodeURL(state)
 
 	// Prepare webserver
 	server := authServer{
 		state:       state,
 		bindAddress: bindAddress,
-		authUrl:     authUrl,
+		authURL:     authURL,
 	}
 	if useWebServer {
 		server.code = make(chan string, 1)
 		go server.Start()
 		defer server.Stop()
-		authUrl = "http://" + bindAddress + "/auth"
+		authURL = "http://" + bindAddress + "/auth"
 	}
 
 	// Generate a URL for the user to visit for authorization.
-	_ = open.Start(authUrl)
-	fmt.Printf("If your browser doesn't open automatically go to the following link: %s\n", authUrl)
+	_ = open.Start(authURL)
+	fmt.Printf("If your browser doesn't open automatically go to the following link: %s\n", authURL)
 	fmt.Printf("Log in and authorize rclone for access\n")
 
 	var authCode string
@@ -258,7 +258,7 @@ type authServer struct {
 	listener    net.Listener
 	bindAddress string
 	code        chan string
-	authUrl     string
+	authURL     string
 }
 
 // startWebServer runs an internal web server to receive config details
@@ -274,7 +274,7 @@ func (s *authServer) Start() {
 		return
 	})
 	mux.HandleFunc("/auth", func(w http.ResponseWriter, req *http.Request) {
-		http.Redirect(w, req, s.authUrl, 307)
+		http.Redirect(w, req, s.authURL, 307)
 		return
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {

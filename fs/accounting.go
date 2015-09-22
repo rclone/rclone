@@ -70,7 +70,7 @@ func (ip *inProgress) get(name string) *Account {
 // Strings returns all the strings in the stringSet
 func (ss stringSet) Strings() []string {
 	strings := make([]string, 0, len(ss))
-	for name, _ := range ss {
+	for name := range ss {
 		var out string
 		if acc := Stats.inProgress.get(name); acc != nil {
 			out = acc.String()
@@ -89,7 +89,7 @@ func (ss stringSet) String() string {
 	return strings.Join(ss.Strings(), "\n")
 }
 
-// Stats limits and accounts all transfers
+// StatsInfo limits and accounts all transfers
 type StatsInfo struct {
 	lock         sync.RWMutex
 	bytes        int64
@@ -117,12 +117,12 @@ func (s *StatsInfo) String() string {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	dt := time.Now().Sub(s.start)
-	dt_seconds := dt.Seconds()
+	dtSeconds := dt.Seconds()
 	speed := 0.0
 	if dt > 0 {
-		speed = float64(s.bytes) / 1024 / dt_seconds
+		speed = float64(s.bytes) / 1024 / dtSeconds
 	}
-	dt_rounded := dt - (dt % (time.Second / 10))
+	dtRounded := dt - (dt % (time.Second / 10))
 	buf := &bytes.Buffer{}
 	fmt.Fprintf(buf, `
 Transferred:   %10d Bytes (%7.2f kByte/s)
@@ -135,7 +135,7 @@ Elapsed time:  %10v
 		s.errors,
 		s.checks,
 		s.transfers,
-		dt_rounded)
+		dtRounded)
 	if len(s.checking) > 0 {
 		fmt.Fprintf(buf, "Checking:\n%s\n", s.checking)
 	}
@@ -199,7 +199,7 @@ func (s *StatsInfo) Errored() bool {
 func (s *StatsInfo) Error() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	s.errors += 1
+	s.errors++
 }
 
 // Checking adds a check into the stats
@@ -214,7 +214,7 @@ func (s *StatsInfo) DoneChecking(o Object) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	delete(s.checking, o.Remote())
-	s.checks += 1
+	s.checks++
 }
 
 // GetTransfers reads the number of transfers
@@ -236,7 +236,7 @@ func (s *StatsInfo) DoneTransferring(o Object) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	delete(s.transferring, o.Remote())
-	s.transfers += 1
+	s.transfers++
 }
 
 // Account limits and accounts for one transfer
@@ -324,7 +324,7 @@ func (file *Account) Read(p []byte) (n int, err error) {
 	return
 }
 
-// Returns bytes read as well as the size.
+// Progress returns bytes read as well as the size.
 // Size can be <= 0 if the size is unknown.
 func (file *Account) Progress() (bytes, size int64) {
 	if file == nil {

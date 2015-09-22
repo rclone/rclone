@@ -35,6 +35,7 @@ var (
 	retries       = pflag.IntP("retries", "", 3, "Retry operations this many times if they fail")
 )
 
+// Command holds info about the current running command
 type Command struct {
 	Name     string
 	Help     string
@@ -59,6 +60,7 @@ func (cmd *Command) checkArgs(args []string) {
 	}
 }
 
+// Commands is a slice of possible Command~s
 var Commands = []Command{
 	{
 		Name:     "copy",
@@ -249,7 +251,7 @@ func fatal(message string, args ...interface{}) {
 	os.Exit(1)
 }
 
-// Parse the command line flags
+// ParseFlags parses the command line flags
 func ParseFlags() {
 	pflag.Usage = syntaxError
 	pflag.Parse()
@@ -272,7 +274,7 @@ func ParseFlags() {
 	}
 }
 
-// Parse the command from the command line
+// ParseCommand parses the command from the command line
 func ParseCommand() (*Command, []string) {
 	args := pflag.Args()
 	if len(args) < 1 {
@@ -318,7 +320,7 @@ func ParseCommand() (*Command, []string) {
 	return command, args
 }
 
-// Create a Fs from a name
+// NewFs creates a Fs from a name
 func NewFs(remote string) fs.Fs {
 	f, err := fs.NewFs(remote)
 	if err != nil {
@@ -328,7 +330,7 @@ func NewFs(remote string) fs.Fs {
 	return f
 }
 
-// Print the stats every statsInterval
+// StartStats prints the stats every statsInterval
 func StartStats() {
 	if *statsInterval <= 0 {
 		return

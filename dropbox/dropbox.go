@@ -1,4 +1,4 @@
-// Dropbox interface
+// Package dropbox provides an interface to Dropbox object storage
 package dropbox
 
 /*
@@ -44,7 +44,7 @@ var (
 
 // Register with Fs
 func init() {
-	fs.Register(&fs.FsInfo{
+	fs.Register(&fs.Info{
 		Name:   "dropbox",
 		NewFs:  NewFs,
 		Config: configHelper,
@@ -112,12 +112,12 @@ type FsObjectDropbox struct {
 
 // ------------------------------------------------------------
 
-// The name of the remote (as passed into NewFs)
+// Name of the remote (as passed into NewFs)
 func (f *FsDropbox) Name() string {
 	return f.name
 }
 
-// The root of the remote (as passed into NewFs)
+// Root of the remote (as passed into NewFs)
 func (f *FsDropbox) Root() string {
 	return f.root
 }
@@ -217,7 +217,7 @@ func (f *FsDropbox) newFsObjectWithInfo(remote string, info *dropbox.Entry) fs.O
 	return o
 }
 
-// Return an FsObject from a path
+// NewFsObject returns an FsObject from a path
 //
 // May return nil if an error occurred
 func (f *FsDropbox) NewFsObject(remote string) fs.Object {
@@ -243,7 +243,7 @@ func (f *FsDropbox) list(out fs.ObjectsChan) {
 	// Track path component case, it could be different for entries coming from DropBox API
 	// See https://www.dropboxforum.com/hc/communities/public/questions/201665409-Wrong-character-case-of-folder-name-when-calling-listFolder-using-Sync-API?locale=en-us
 	// and https://github.com/ncw/rclone/issues/53
-	nameTree := NewNameTree()
+	nameTree := newNameTree()
 	cursor := ""
 	for {
 		deltaPage, err := f.db.Delta(cursor, f.slashRoot)
@@ -317,7 +317,7 @@ func (f *FsDropbox) list(out fs.ObjectsChan) {
 	nameTree.WalkFiles(f.root, walkFunc)
 }
 
-// Walk the path returning a channel of FsObjects
+// List walks the path returning a channel of FsObjects
 func (f *FsDropbox) List() fs.ObjectsChan {
 	out := make(fs.ObjectsChan, fs.Config.Checkers)
 	go func() {
@@ -327,7 +327,7 @@ func (f *FsDropbox) List() fs.ObjectsChan {
 	return out
 }
 
-// Walk the path returning a channel of FsObjects
+// ListDir walks the path returning a channel of FsObjects
 func (f *FsDropbox) ListDir() fs.DirChan {
 	out := make(fs.DirChan, fs.Config.Checkers)
 	go func() {
@@ -412,7 +412,7 @@ func (f *FsDropbox) Rmdir() error {
 	return f.Purge()
 }
 
-// Return the precision
+// Precision returns the precision
 func (f *FsDropbox) Precision() time.Duration {
 	return fs.ModTimeNotSupported
 }
@@ -466,7 +466,7 @@ func (f *FsDropbox) Purge() error {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantMove
-func (dstFs *FsDropbox) Move(src fs.Object, remote string) (fs.Object, error) {
+func (f *FsDropbox) Move(src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*FsObjectDropbox)
 	if !ok {
 		fs.Debug(src, "Can't move - not same remote type")
@@ -474,11 +474,11 @@ func (dstFs *FsDropbox) Move(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	// Temporary FsObject under construction
-	dstObj := &FsObjectDropbox{dropbox: dstFs, remote: remote}
+	dstObj := &FsObjectDropbox{dropbox: f, remote: remote}
 
 	srcPath := srcObj.remotePath()
 	dstPath := dstObj.remotePath()
-	entry, err := dstFs.db.Move(srcPath, dstPath)
+	entry, err := f.db.Move(srcPath, dstPath)
 	if err != nil {
 		return nil, fmt.Errorf("Move failed: %s", err)
 	}
@@ -486,14 +486,14 @@ func (dstFs *FsDropbox) Move(src fs.Object, remote string) (fs.Object, error) {
 	return dstObj, nil
 }
 
-// Move src to this remote using server side move operations.
+// DirMove moves src to this remote using server side move operations.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (dstFs *FsDropbox) DirMove(src fs.Fs) error {
+func (f *FsDropbox) DirMove(src fs.Fs) error {
 	srcFs, ok := src.(*FsDropbox)
 	if !ok {
 		fs.Debug(srcFs, "Can't move directory - not same remote type")
@@ -501,13 +501,13 @@ func (dstFs *FsDropbox) DirMove(src fs.Fs) error {
 	}
 
 	// Check if destination exists
-	entry, err := dstFs.db.Metadata(dstFs.slashRoot, false, false, "", "", metadataLimit)
+	entry, err := f.db.Metadata(f.slashRoot, false, false, "", "", metadataLimit)
 	if err == nil && !entry.IsDeleted {
 		return fs.ErrorDirExists
 	}
 
 	// Do the move
-	_, err = dstFs.db.Move(srcFs.slashRoot, dstFs.slashRoot)
+	_, err = f.db.Move(srcFs.slashRoot, f.slashRoot)
 	if err != nil {
 		return fmt.Errorf("MoveDir failed: %v", err)
 	}
@@ -516,7 +516,7 @@ func (dstFs *FsDropbox) DirMove(src fs.Fs) error {
 
 // ------------------------------------------------------------
 
-// Return the parent Fs
+// Fs returns the parent Fs
 func (o *FsObjectDropbox) Fs() fs.Fs {
 	return o.dropbox
 }
@@ -529,7 +529,7 @@ func (o *FsObjectDropbox) String() string {
 	return o.remote
 }
 
-// Return the remote path
+// Remote returns the remote path
 func (o *FsObjectDropbox) Remote() string {
 	return o.remote
 }
@@ -618,7 +618,7 @@ func (o *FsObjectDropbox) ModTime() time.Time {
 	return o.modTime
 }
 
-// Sets the modification time of the local fs object
+// SetModTime sets the modification time of the local fs object
 //
 // Commits the datastore
 func (o *FsObjectDropbox) SetModTime(modTime time.Time) {
@@ -626,7 +626,7 @@ func (o *FsObjectDropbox) SetModTime(modTime time.Time) {
 	return
 }
 
-// Is this object storable
+// Storable returns whether this object is storable
 func (o *FsObjectDropbox) Storable() bool {
 	return true
 }

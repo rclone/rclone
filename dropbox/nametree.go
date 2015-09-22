@@ -9,9 +9,9 @@ import (
 	"github.com/stacktic/dropbox"
 )
 
-type NameTreeNode struct {
+type nameTreeNode struct {
 	// Map from lowercase directory name to tree node
-	Directories map[string]*NameTreeNode
+	Directories map[string]*nameTreeNode
 
 	// Map from file name (case sensitive) to dropbox entry
 	Files map[string]*dropbox.Entry
@@ -22,27 +22,26 @@ type NameTreeNode struct {
 
 // ------------------------------------------------------------
 
-func newNameTreeNode(caseCorrectName string) *NameTreeNode {
-	return &NameTreeNode{
+func newNameTreeNode(caseCorrectName string) *nameTreeNode {
+	return &nameTreeNode{
 		CaseCorrectName: caseCorrectName,
-		Directories:     make(map[string]*NameTreeNode),
+		Directories:     make(map[string]*nameTreeNode),
 		Files:           make(map[string]*dropbox.Entry),
 	}
 }
 
-func NewNameTree() *NameTreeNode {
+func newNameTree() *nameTreeNode {
 	return newNameTreeNode("")
 }
 
-func (tree *NameTreeNode) String() string {
+func (tree *nameTreeNode) String() string {
 	if len(tree.CaseCorrectName) == 0 {
-		return "NameTreeNode/<root>"
-	} else {
-		return fmt.Sprintf("NameTreeNode/%q", tree.CaseCorrectName)
+		return "nameTreeNode/<root>"
 	}
+	return fmt.Sprintf("nameTreeNode/%q", tree.CaseCorrectName)
 }
 
-func (tree *NameTreeNode) getTreeNode(path string) *NameTreeNode {
+func (tree *nameTreeNode) getTreeNode(path string) *nameTreeNode {
 	if len(path) == 0 {
 		// no lookup required, just return root
 		return tree
@@ -70,7 +69,7 @@ func (tree *NameTreeNode) getTreeNode(path string) *NameTreeNode {
 	return current
 }
 
-func (tree *NameTreeNode) PutCaseCorrectDirectoryName(parentPath string, caseCorrectDirectoryName string) {
+func (tree *nameTreeNode) PutCaseCorrectDirectoryName(parentPath string, caseCorrectDirectoryName string) {
 	if len(caseCorrectDirectoryName) == 0 {
 		fs.Stats.Error()
 		fs.ErrorLog(tree, "PutCaseCorrectDirectoryName: empty caseCorrectDirectoryName is not allowed (parentPath: %q)", parentPath)
@@ -98,7 +97,7 @@ func (tree *NameTreeNode) PutCaseCorrectDirectoryName(parentPath string, caseCor
 	}
 }
 
-func (tree *NameTreeNode) PutFile(parentPath string, caseCorrectFileName string, dropboxEntry *dropbox.Entry) {
+func (tree *nameTreeNode) PutFile(parentPath string, caseCorrectFileName string, dropboxEntry *dropbox.Entry) {
 	node := tree.getTreeNode(parentPath)
 	if node == nil {
 		return
@@ -113,7 +112,7 @@ func (tree *NameTreeNode) PutFile(parentPath string, caseCorrectFileName string,
 	node.Files[caseCorrectFileName] = dropboxEntry
 }
 
-func (tree *NameTreeNode) GetPathWithCorrectCase(path string) *string {
+func (tree *nameTreeNode) GetPathWithCorrectCase(path string) *string {
 	if path == "" {
 		empty := ""
 		return &empty
@@ -144,9 +143,9 @@ func (tree *NameTreeNode) GetPathWithCorrectCase(path string) *string {
 	return &resultString
 }
 
-type NameTreeFileWalkFunc func(caseCorrectFilePath string, entry *dropbox.Entry)
+type nameTreeFileWalkFunc func(caseCorrectFilePath string, entry *dropbox.Entry)
 
-func (tree *NameTreeNode) walkFilesRec(currentPath string, walkFunc NameTreeFileWalkFunc) {
+func (tree *nameTreeNode) walkFilesRec(currentPath string, walkFunc nameTreeFileWalkFunc) {
 	var prefix string
 	if currentPath == "" {
 		prefix = ""
@@ -170,7 +169,7 @@ func (tree *NameTreeNode) walkFilesRec(currentPath string, walkFunc NameTreeFile
 	}
 }
 
-func (tree *NameTreeNode) WalkFiles(rootPath string, walkFunc NameTreeFileWalkFunc) {
+func (tree *nameTreeNode) WalkFiles(rootPath string, walkFunc nameTreeFileWalkFunc) {
 	node := tree.getTreeNode(rootPath)
 	if node == nil {
 		return

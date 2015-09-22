@@ -1,4 +1,5 @@
-// Amazon Cloud Drive interface
+// Package amazonclouddrive provides an interface to the Amazon Cloud
+// Drive object storage system.
 package amazonclouddrive
 
 /*
@@ -59,7 +60,7 @@ var (
 
 // Register with Fs
 func init() {
-	fs.Register(&fs.FsInfo{
+	fs.Register(&fs.Info{
 		Name:  "amazon cloud drive",
 		NewFs: NewFs,
 		Config: func(name string) {
@@ -98,12 +99,12 @@ type FsObjectAcd struct {
 
 // ------------------------------------------------------------
 
-// The name of the remote (as passed into NewFs)
+// Name of the remote (as passed into NewFs)
 func (f *FsAcd) Name() string {
 	return f.name
 }
 
-// The root of the remote (as passed into NewFs)
+// Root of the remote (as passed into NewFs)
 func (f *FsAcd) Root() string {
 	return f.root
 }
@@ -242,17 +243,17 @@ func (f *FsAcd) newFsObjectWithInfo(remote string, info *acd.Node) fs.Object {
 	return o
 }
 
-// Return an FsObject from a path
+// NewFsObject returns an FsObject from a path
 //
 // May return nil if an error occurred
 func (f *FsAcd) NewFsObject(remote string) fs.Object {
 	return f.newFsObjectWithInfo(remote, nil)
 }
 
-// FindLeaf finds a directory of name leaf in the folder with ID pathId
-func (f *FsAcd) FindLeaf(pathId, leaf string) (pathIdOut string, found bool, err error) {
-	//fs.Debug(f, "FindLeaf(%q, %q)", pathId, leaf)
-	folder := acd.FolderFromId(pathId, f.c.Nodes)
+// FindLeaf finds a directory of name leaf in the folder with ID pathID
+func (f *FsAcd) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err error) {
+	//fs.Debug(f, "FindLeaf(%q, %q)", pathID, leaf)
+	folder := acd.FolderFromId(pathID, f.c.Nodes)
 	var resp *http.Response
 	var subFolder *acd.Folder
 	err = f.pacer.Call(func() (bool, error) {
@@ -276,10 +277,10 @@ func (f *FsAcd) FindLeaf(pathId, leaf string) (pathIdOut string, found bool, err
 	return *subFolder.Id, true, nil
 }
 
-// CreateDir makes a directory with pathId as parent and name leaf
-func (f *FsAcd) CreateDir(pathId, leaf string) (newId string, err error) {
-	//fmt.Printf("CreateDir(%q, %q)\n", pathId, leaf)
-	folder := acd.FolderFromId(pathId, f.c.Nodes)
+// CreateDir makes a directory with pathID as parent and name leaf
+func (f *FsAcd) CreateDir(pathID, leaf string) (newID string, err error) {
+	//fmt.Printf("CreateDir(%q, %q)\n", pathID, leaf)
+	folder := acd.FolderFromId(pathID, f.c.Nodes)
 	var resp *http.Response
 	var info *acd.Folder
 	err = f.pacer.Call(func() (bool, error) {
@@ -305,8 +306,8 @@ type listAllFn func(*acd.Node) bool
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *FsAcd) listAll(dirId string, title string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
-	query := "parents:" + dirId
+func (f *FsAcd) listAll(dirID string, title string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+	query := "parents:" + dirID
 	if directoriesOnly {
 		query += " AND kind:" + folderKind
 	} else if filesOnly {
@@ -358,11 +359,11 @@ OUTER:
 //
 // This fetches the minimum amount of stuff but does more API calls
 // which makes it slow
-func (f *FsAcd) listDirRecursive(dirId string, path string, out fs.ObjectsChan) error {
+func (f *FsAcd) listDirRecursive(dirID string, path string, out fs.ObjectsChan) error {
 	var subError error
 	// Make the API request
 	var wg sync.WaitGroup
-	_, err := f.listAll(dirId, "", false, false, func(node *acd.Node) bool {
+	_, err := f.listAll(dirID, "", false, false, func(node *acd.Node) bool {
 		// Recurse on directories
 		switch *node.Kind {
 		case folderKind:
@@ -398,7 +399,7 @@ func (f *FsAcd) listDirRecursive(dirId string, path string, out fs.ObjectsChan) 
 	return nil
 }
 
-// Walk the path returning a channel of FsObjects
+// List walks the path returning a channel of FsObjects
 func (f *FsAcd) List() fs.ObjectsChan {
 	out := make(fs.ObjectsChan, fs.Config.Checkers)
 	go func() {
@@ -418,7 +419,7 @@ func (f *FsAcd) List() fs.ObjectsChan {
 	return out
 }
 
-// Lists the containers
+// ListDir lists the directories
 func (f *FsAcd) ListDir() fs.DirChan {
 	out := make(fs.DirChan, fs.Config.Checkers)
 	go func() {
@@ -546,7 +547,7 @@ func (f *FsAcd) Rmdir() error {
 	return f.purgeCheck(true)
 }
 
-// Return the precision
+// Precision return the precision of this Fs
 func (f *FsAcd) Precision() time.Duration {
 	return fs.ModTimeNotSupported
 }
@@ -585,7 +586,7 @@ func (f *FsAcd) Purge() error {
 
 // ------------------------------------------------------------
 
-// Return the parent Fs
+// Fs returns the parent Fs
 func (o *FsObjectAcd) Fs() fs.Fs {
 	return o.acd
 }
@@ -598,7 +599,7 @@ func (o *FsObjectAcd) String() string {
 	return o.remote
 }
 
-// Return the remote path
+// Remote returns the remote path
 func (o *FsObjectAcd) Remote() string {
 	return o.remote
 }
@@ -661,13 +662,13 @@ func (o *FsObjectAcd) ModTime() time.Time {
 	return modTime
 }
 
-// Sets the modification time of the local fs object
+// SetModTime sets the modification time of the local fs object
 func (o *FsObjectAcd) SetModTime(modTime time.Time) {
 	// FIXME not implemented
 	return
 }
 
-// Is this object storable
+// Storable returns a boolean showing whether this object storable
 func (o *FsObjectAcd) Storable() bool {
 	return true
 }

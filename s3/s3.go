@@ -1,4 +1,4 @@
-// S3 interface
+// Package s3 provides an interface to Amazon S3 oject storage
 package s3
 
 // FIXME need to prevent anything but ListDir working for s3://
@@ -35,7 +35,7 @@ import (
 
 // Register with Fs
 func init() {
-	fs.Register(&fs.FsInfo{
+	fs.Register(&fs.Info{
 		Name:  "s3",
 		NewFs: NewFs,
 		// AWS endpoints: http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region
@@ -153,12 +153,12 @@ type FsObjectS3 struct {
 
 // ------------------------------------------------------------
 
-// The name of the remote (as passed into NewFs)
+// Name of the remote (as passed into NewFs)
 func (f *FsS3) Name() string {
 	return f.name
 }
 
-// The root of the remote (as passed into NewFs)
+// Root of the remote (as passed into NewFs)
 func (f *FsS3) Root() string {
 	if f.root == "" {
 		return f.bucket
@@ -192,15 +192,15 @@ func s3ParsePath(path string) (bucket, directory string, err error) {
 // s3Connection makes a connection to s3
 func s3Connection(name string) (*s3.S3, error) {
 	// Make the auth
-	accessKeyId := fs.ConfigFile.MustValue(name, "access_key_id")
-	if accessKeyId == "" {
+	accessKeyID := fs.ConfigFile.MustValue(name, "access_key_id")
+	if accessKeyID == "" {
 		return nil, errors.New("access_key_id not found")
 	}
 	secretAccessKey := fs.ConfigFile.MustValue(name, "secret_access_key")
 	if secretAccessKey == "" {
 		return nil, errors.New("secret_access_key not found")
 	}
-	auth := credentials.NewStaticCredentials(accessKeyId, secretAccessKey, "")
+	auth := credentials.NewStaticCredentials(accessKeyID, secretAccessKey, "")
 
 	endpoint := fs.ConfigFile.MustValue(name, "endpoint")
 	region := fs.ConfigFile.MustValue(name, "region")
@@ -226,7 +226,7 @@ func s3Connection(name string) (*s3.S3, error) {
 			if req.Service.Config.Credentials == credentials.AnonymousCredentials {
 				return
 			}
-			sign(accessKeyId, secretAccessKey, req.HTTPRequest)
+			sign(accessKeyID, secretAccessKey, req.HTTPRequest)
 		}
 		c.Handlers.Sign.Clear()
 		c.Handlers.Sign.PushBackNamed(corehandlers.BuildContentLengthHandler)
@@ -239,7 +239,7 @@ func s3Connection(name string) (*s3.S3, error) {
 	return c, nil
 }
 
-// NewFsS3 contstructs an FsS3 from the path, bucket:path
+// NewFs contstructs an FsS3 from the path, bucket:path
 func NewFs(name, root string) (fs.Fs, error) {
 	bucket, directory, err := s3ParsePath(root)
 	if err != nil {
@@ -310,7 +310,7 @@ func (f *FsS3) newFsObjectWithInfo(remote string, info *s3.Object) fs.Object {
 	return o
 }
 
-// Return an FsObject from a path
+// NewFsObject returns an FsObject from a path
 //
 // May return nil if an error occurred
 func (f *FsS3) NewFsObject(remote string) fs.Object {
@@ -384,7 +384,7 @@ func (f *FsS3) list(directories bool, fn func(string, *s3.Object)) {
 	}
 }
 
-// Walk the path returning a channel of FsObjects
+// List walks the path returning a channel of FsObjects
 func (f *FsS3) List() fs.ObjectsChan {
 	out := make(fs.ObjectsChan, fs.Config.Checkers)
 	if f.bucket == "" {
@@ -405,7 +405,7 @@ func (f *FsS3) List() fs.ObjectsChan {
 	return out
 }
 
-// Lists the buckets
+// ListDir lists the buckets
 func (f *FsS3) ListDir() fs.DirChan {
 	out := make(fs.DirChan, fs.Config.Checkers)
 	if f.bucket == "" {
@@ -486,7 +486,7 @@ func (f *FsS3) Rmdir() error {
 	return err
 }
 
-// Return the precision
+// Precision of the remote
 func (f *FsS3) Precision() time.Duration {
 	return time.Nanosecond
 }
@@ -524,7 +524,7 @@ func (f *FsS3) Copy(src fs.Object, remote string) (fs.Object, error) {
 
 // ------------------------------------------------------------
 
-// Return the parent Fs
+// Fs returns the parent Fs
 func (o *FsObjectS3) Fs() fs.Fs {
 	return o.s3
 }
@@ -537,7 +537,7 @@ func (o *FsObjectS3) String() string {
 	return o.remote
 }
 
-// Return the remote path
+// Remote returns the remote path
 func (o *FsObjectS3) Remote() string {
 	return o.remote
 }
@@ -619,7 +619,7 @@ func (o *FsObjectS3) ModTime() time.Time {
 	return modTime
 }
 
-// Sets the modification time of the local fs object
+// SetModTime sets the modification time of the local fs object
 func (o *FsObjectS3) SetModTime(modTime time.Time) {
 	err := o.readMetaData()
 	if err != nil {
@@ -648,7 +648,7 @@ func (o *FsObjectS3) SetModTime(modTime time.Time) {
 	}
 }
 
-// Is this object storable
+// Storable raturns a boolean indicating if this object is storable
 func (o *FsObjectS3) Storable() bool {
 	return true
 }

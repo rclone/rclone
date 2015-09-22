@@ -1,4 +1,4 @@
-// Generic file system interface for rclone object storage systems
+// Package fs is a generic file system interface for rclone object storage systems
 package fs
 
 import (
@@ -12,26 +12,27 @@ import (
 
 // Constants
 const (
-	// User agent for Fs which can set it
+	// UserAgent for Fs which can set it
 	UserAgent = "rclone/" + Version
-	// Very large precision value to show mod time isn't supported
+	// ModTimeNotSupported is a very large precision value to show
+	// mod time isn't supported on this Fs
 	ModTimeNotSupported = 100 * 365 * 24 * time.Hour
 )
 
 // Globals
 var (
 	// Filesystem registry
-	fsRegistry []*FsInfo
-	// Error returned by NewFs if not found in config file
-	NotFoundInConfigFile = fmt.Errorf("Didn't find section in config file")
-	ErrorCantCopy        = fmt.Errorf("Can't copy object - incompatible remotes")
-	ErrorCantMove        = fmt.Errorf("Can't copy object - incompatible remotes")
-	ErrorCantDirMove     = fmt.Errorf("Can't copy directory - incompatible remotes")
-	ErrorDirExists       = fmt.Errorf("Can't copy directory - destination already exists")
+	fsRegistry []*Info
+	// ErrorNotFoundInConfigFile is returned by NewFs if not found in config file
+	ErrorNotFoundInConfigFile = fmt.Errorf("Didn't find section in config file")
+	ErrorCantCopy             = fmt.Errorf("Can't copy object - incompatible remotes")
+	ErrorCantMove             = fmt.Errorf("Can't copy object - incompatible remotes")
+	ErrorCantDirMove          = fmt.Errorf("Can't copy directory - incompatible remotes")
+	ErrorDirExists            = fmt.Errorf("Can't copy directory - destination already exists")
 )
 
-// Filesystem info
-type FsInfo struct {
+// Info information about a filesystem
+type Info struct {
 	// Name of this fs
 	Name string
 	// Create a new file system.  If root refers to an existing
@@ -44,7 +45,7 @@ type FsInfo struct {
 	Options []Option
 }
 
-// An options for a Fs
+// Option is describes an option for the config wizard
 type Option struct {
 	Name     string
 	Help     string
@@ -52,7 +53,7 @@ type Option struct {
 	Examples []OptionExample
 }
 
-// An example for an option
+// OptionExample describes an example for an Option
 type OptionExample struct {
 	Value string
 	Help  string
@@ -61,16 +62,16 @@ type OptionExample struct {
 // Register a filesystem
 //
 // Fs modules  should use this in an init() function
-func Register(info *FsInfo) {
+func Register(info *Info) {
 	fsRegistry = append(fsRegistry, info)
 }
 
-// A Filesystem, describes the local filesystem and the remote object store
+// Fs is the interface a cloud storage system must provide
 type Fs interface {
-	// The name of the remote (as passed into NewFs)
+	// Name of the remote (as passed into NewFs)
 	Name() string
 
-	// The root of the remote (as passed into NewFs)
+	// Root of the remote (as passed into NewFs)
 	Root() string
 
 	// String returns a description of the FS
@@ -79,10 +80,10 @@ type Fs interface {
 	// List the Fs into a channel
 	List() ObjectsChan
 
-	// List the Fs directories/buckets/containers into a channel
+	// ListDir lists the Fs directories/buckets/containers into a channel
 	ListDir() DirChan
 
-	// Find the Object at remote.  Returns nil if can't be found
+	// NewFsObject finds the Object at remote.  Returns nil if can't be found
 	NewFsObject(remote string) Object
 
 	// Put in to the remote path with the modTime given of the given size
@@ -92,12 +93,12 @@ type Fs interface {
 	// nil and the error
 	Put(in io.Reader, remote string, modTime time.Time, size int64) (Object, error)
 
-	// Make the directory (container, bucket)
+	// Mkdir makes the directory (container, bucket)
 	//
 	// Shouldn't return an error if it already exists
 	Mkdir() error
 
-	// Remove the directory (container, bucket) if empty
+	// Rmdir removes the directory (container, bucket) if empty
 	//
 	// Return an error if it doesn't exist or isn't empty
 	Rmdir() error
@@ -106,8 +107,7 @@ type Fs interface {
 	Precision() time.Duration
 }
 
-// A filesystem like object which can either be a remote object or a
-// local file/directory
+// Object is a filesystem like object provided by an Fs
 type Object interface {
 	// String returns a description of the Object
 	String() string
@@ -145,7 +145,7 @@ type Object interface {
 	Remove() error
 }
 
-// Optional interfaces
+// Purger is an optional interfaces for Fs
 type Purger interface {
 	// Purge all files in the root and the root directory
 	//
@@ -156,6 +156,7 @@ type Purger interface {
 	Purge() error
 }
 
+// Copier is an optional interface for Fs
 type Copier interface {
 	// Copy src to this remote using server side copy operations.
 	//
@@ -169,6 +170,7 @@ type Copier interface {
 	Copy(src Object, remote string) (Object, error)
 }
 
+// Mover is an optional interface for Fs
 type Mover interface {
 	// Move src to this remote using server side move operations.
 	//
@@ -182,8 +184,10 @@ type Mover interface {
 	Move(src Object, remote string) (Object, error)
 }
 
+// DirMover is an optional interface for Fs
 type DirMover interface {
-	// Move src to this remote using server side move operations.
+	// DirMove moves src to this remote using server side move
+	// operations.
 	//
 	// Will only be called if src.Fs().Name() == f.Name()
 	//
@@ -193,7 +197,8 @@ type DirMover interface {
 	DirMove(src Fs) error
 }
 
-// An optional interface for error as to whether the operation should be retried
+// Retry is optional interface for error as to whether the operation
+// should be retried at a high level.
 //
 // This should be returned from Update or Put methods as required
 type Retry interface {
@@ -201,7 +206,7 @@ type Retry interface {
 	Retry() bool
 }
 
-// A type of error
+// retryError is a type of error
 type retryError string
 
 // Error interface
@@ -228,7 +233,7 @@ type plainRetryError struct {
 }
 
 // Retry interface
-func (_ plainRetryError) Retry() bool {
+func (err plainRetryError) Retry() bool {
 	return true
 }
 
@@ -240,21 +245,22 @@ func RetryError(err error) error {
 	return plainRetryError{err}
 }
 
-// A channel of Objects
+// ObjectsChan is a channel of Objects
 type ObjectsChan chan Object
 
-// A slice of Objects
+// Objects is a slice of Object~s
 type Objects []Object
 
-// A pair of Objects
+// ObjectPair is a pair of Objects used to describe a potential copy
+// operation.
 type ObjectPair struct {
 	src, dst Object
 }
 
-// A channel of ObjectPair
+// ObjectPairChan is a channel of ObjectPair
 type ObjectPairChan chan ObjectPair
 
-// A structure of directory/container/bucket lists
+// Dir describes a directory for directory/container/bucket lists
 type Dir struct {
 	Name  string    // name of the directory
 	When  time.Time // modification or creation time - IsZero for unknown
@@ -262,13 +268,13 @@ type Dir struct {
 	Count int64     // number of objects -1 for unknown
 }
 
-// A channel of Dir objects
+// DirChan is a channel of Dir objects
 type DirChan chan *Dir
 
-// Finds a FsInfo object for the name passed in
+// Find looks for an Info object for the name passed in
 //
 // Services are looked up in the config file
-func Find(name string) (*FsInfo, error) {
+func Find(name string) (*Info, error) {
 	for _, item := range fsRegistry {
 		if item.Name == name {
 			return item, nil
@@ -297,7 +303,7 @@ func NewFs(path string) (Fs, error) {
 		var err error
 		fsName, err = ConfigFile.GetValue(configName, "type")
 		if err != nil {
-			return nil, NotFoundInConfigFile
+			return nil, ErrorNotFoundInConfigFile
 		}
 	}
 	fs, err := Find(fsName)
@@ -309,7 +315,7 @@ func NewFs(path string) (Fs, error) {
 	return fs.NewFs(configName, fsPath)
 }
 
-// Outputs log for object
+// OutputLog logs for an object
 func OutputLog(o interface{}, text string, args ...interface{}) {
 	description := ""
 	if o != nil {
@@ -319,22 +325,23 @@ func OutputLog(o interface{}, text string, args ...interface{}) {
 	log.Print(description + out)
 }
 
-// Write debuging output for this Object or Fs
+// Debug writes debuging output for this Object or Fs
 func Debug(o interface{}, text string, args ...interface{}) {
 	if Config.Verbose {
 		OutputLog(o, text, args...)
 	}
 }
 
-// Write log output for this Object or Fs
+// Log writes log output for this Object or Fs
 func Log(o interface{}, text string, args ...interface{}) {
 	if !Config.Quiet {
 		OutputLog(o, text, args...)
 	}
 }
 
-// Write error log output for this Object or Fs
-// Unconditionally logs a message regardless of Config.Quiet or Config.Verbose
+// ErrorLog writes error log output for this Object or Fs.  It
+// unconditionally logs a message regardless of Config.Quiet or
+// Config.Verbose.
 func ErrorLog(o interface{}, text string, args ...interface{}) {
 	OutputLog(o, text, args...)
 }

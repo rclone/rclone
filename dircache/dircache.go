@@ -1,4 +1,4 @@
-// dircache provides a simple cache for caching directory to path lookups
+// Package dircache provides a simple cache for caching directory to path lookups
 package dircache
 
 // _methods are called without the lock
@@ -23,13 +23,13 @@ type DirCache struct {
 	foundRoot    bool      // Whether we have found the root or not
 }
 
-// DirCache describes an interface for doing the low level directory work
+// DirCacher describes an interface for doing the low level directory work
 type DirCacher interface {
 	FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err error)
 	CreateDir(pathID, leaf string) (newID string, err error)
 }
 
-// Make a new DirCache
+// New makes a DirCache
 //
 // The cache is safe for concurrent use
 func New(root string, trueRootID string, fs DirCacher) *DirCache {
@@ -49,7 +49,7 @@ func (dc *DirCache) _get(path string) (id string, ok bool) {
 	return
 }
 
-// Gets an ID given a path
+// Get an ID given a path
 func (dc *DirCache) Get(path string) (id string, ok bool) {
 	dc.mu.RLock()
 	id, ok = dc._get(path)
@@ -91,7 +91,7 @@ func (dc *DirCache) Flush() {
 	dc.mu.Unlock()
 }
 
-// Splits a path into directory, leaf
+// SplitPath splits a path into directory, leaf
 //
 // Path shouldn't start or end with a /
 //
@@ -108,7 +108,8 @@ func SplitPath(path string) (directory, leaf string) {
 	return
 }
 
-// Finds the directory passed in returning the directory ID starting from pathID
+// FindDir finds the directory passed in returning the directory ID
+// starting from pathID
 //
 // Path shouldn't start or end with a /
 //
@@ -207,7 +208,7 @@ func (dc *DirCache) FindPath(path string, create bool) (leaf, directoryID string
 	return
 }
 
-// Finds the root directory if not already found
+// FindRoot finds the root directory if not already found
 //
 // Resets the root directory
 //
@@ -268,7 +269,8 @@ func (dc *DirCache) RootParentID() (string, error) {
 	return dc.rootParentID, nil
 }
 
-// Resets the root directory to the absolute root and clears the DirCache
+// ResetRoot resets the root directory to the absolute root and clears
+// the DirCache
 func (dc *DirCache) ResetRoot() {
 	dc.mu.Lock()
 	defer dc.mu.Unlock()
