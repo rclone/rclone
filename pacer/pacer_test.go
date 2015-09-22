@@ -205,7 +205,7 @@ func TestAmazonCloudDrivePacer(t *testing.T) {
 		got := sum / n
 		//t.Logf("%+v: got = %v", test, got)
 		if got < (test.want*9)/10 || got > (test.want*11)/10 {
-			t.Fatalf("%+v: bad sleep want %v+/-10% got %v", test, test.want, got)
+			t.Fatalf("%+v: bad sleep want %v+/-10%% got %v", test, test.want, got)
 		}
 	}
 }

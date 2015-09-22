@@ -326,11 +326,16 @@ func PairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 				err := dst.Remove()
 				if err != nil {
 					Stats.Error()
-					ErrorLog(dst, "Couldn't delete: %s", err)
+					ErrorLog(dst, "Couldn't delete: %v", err)
 				}
 			}
-			fdstMover.Move(src, src.Remote())
-			Debug(src, "Moved")
+			_, err := fdstMover.Move(src, src.Remote())
+			if err != nil {
+				Stats.Error()
+				ErrorLog(dst, "Couldn't move: %v", err)
+			} else {
+				Debug(src, "Moved")
+			}
 		} else {
 			Copy(fdst, pair.dst, src)
 		}
@@ -615,10 +620,12 @@ func ListFn(f Fs, fn func(Object)) error {
 var outMutex sync.Mutex
 
 // Synchronized fmt.Fprintf
-func syncFprintf(w io.Writer, format string, a ...interface{}) (n int, err error) {
+//
+// Ignores errors from Fprintf
+func syncFprintf(w io.Writer, format string, a ...interface{}) {
 	outMutex.Lock()
 	defer outMutex.Unlock()
-	return fmt.Fprintf(w, format, a...)
+	_, _ = fmt.Fprintf(w, format, a...)
 }
 
 // List the Fs to the supplied writer

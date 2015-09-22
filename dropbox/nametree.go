@@ -3,9 +3,10 @@ package dropbox
 import (
 	"bytes"
 	"fmt"
+	"strings"
+
 	"github.com/ncw/rclone/fs"
 	"github.com/stacktic/dropbox"
-	"strings"
 )
 
 type NameTreeNode struct {
@@ -135,8 +136,8 @@ func (tree *NameTreeNode) GetPathWithCorrectCase(path string) *string {
 			return nil
 		}
 
-		result.WriteString("/")
-		result.WriteString(current.CaseCorrectName)
+		_, _ = result.WriteString("/")
+		_, _ = result.WriteString(current.CaseCorrectName)
 	}
 
 	resultString := result.String()

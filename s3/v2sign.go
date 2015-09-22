@@ -106,7 +106,7 @@ func sign(AccessKey, SecretKey string, req *http.Request) {
 	// Make signature
 	payload := req.Method + "\n" + md5 + "\n" + contentType + "\n" + date + "\n" + joinedHeadersToSign + uri
 	hash := hmac.New(sha1.New, []byte(SecretKey))
-	hash.Write([]byte(payload))
+	_, _ = hash.Write([]byte(payload))
 	signature := make([]byte, base64.StdEncoding.EncodedLen(hash.Size()))
 	base64.StdEncoding.Encode(signature, hash.Sum(nil))
 

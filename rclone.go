@@ -356,7 +356,10 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to open log file: %v", err)
 		}
-		f.Seek(0, os.SEEK_END)
+		_, err = f.Seek(0, os.SEEK_END)
+		if err != nil {
+			log.Printf("Failed to seek log file to end: %v", err)
+		}
 		log.SetOutput(f)
 		redirectStderr(f)
 	}

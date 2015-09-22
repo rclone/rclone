@@ -121,7 +121,10 @@ func (ts *tokenSource) Token() (*oauth2.Token, error) {
 		return nil, err
 	}
 	if *token != ts.OldToken {
-		putToken(ts.Name, token)
+		err = putToken(ts.Name, token)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return token, nil
 }
@@ -303,8 +306,8 @@ func (s *authServer) Start() {
 	if err != nil {
 		log.Fatalf("Failed to start auth webserver: %v", err)
 	}
-	server.Serve(s.listener)
-	fs.Debug(nil, "Closed auth server")
+	err = server.Serve(s.listener)
+	fs.Debug(nil, "Closed auth server with error: %v", err)
 }
 
 func (s *authServer) Stop() {

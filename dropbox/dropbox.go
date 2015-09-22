@@ -71,7 +71,10 @@ func configHelper(name string) {
 	}
 
 	// Get a dropbox
-	db := newDropbox(name)
+	db, err := newDropbox(name)
+	if err != nil {
+		log.Fatalf("Failed to create dropbox client: %v", err)
+	}
 
 	// This method will ask the user to visit an URL and paste the generated code.
 	if err := db.Auth(); err != nil {
@@ -125,7 +128,7 @@ func (f *FsDropbox) String() string {
 }
 
 // Makes a new dropbox from the config
-func newDropbox(name string) *dropbox.Dropbox {
+func newDropbox(name string) (*dropbox.Dropbox, error) {
 	db := dropbox.NewDropbox()
 
 	appKey := fs.ConfigFile.MustValue(name, "app_key")
@@ -137,9 +140,8 @@ func newDropbox(name string) *dropbox.Dropbox {
 		appSecret = fs.Reveal(rcloneAppSecret)
 	}
 
-	db.SetAppInfo(appKey, appSecret)
-
-	return db
+	err := db.SetAppInfo(appKey, appSecret)
+	return db, err
 }
 
 // NewFs contstructs an FsDropbox from the path, container:path
@@ -147,7 +149,10 @@ func NewFs(name, root string) (fs.Fs, error) {
 	if uploadChunkSize > maxUploadChunkSize {
 		return nil, fmt.Errorf("Chunk size too big, must be < %v", maxUploadChunkSize)
 	}
-	db := newDropbox(name)
+	db, err := newDropbox(name)
+	if err != nil {
+		return nil, err
+	}
 	f := &FsDropbox{
 		name: name,
 		db:   db,
