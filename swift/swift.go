@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"bytes"
+	"strconv"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/swift"
@@ -453,16 +455,54 @@ func (o *FsObjectSwift) Open() (in io.ReadCloser, err error) {
 	return
 }
 
+func Min(x, y int64) int64 {
+    if x < y {
+        return x
+    }
+    return y
+}
+
 // Update the object with the contents of the io.Reader, modTime and size
 //
 // The new object may have been created if an error is returned
 func (o *FsObjectSwift) Update(in io.Reader, modTime time.Time, size int64) error {
+	segmentSize, err := strconv.ParseInt(fs.ConfigFile.MustValue(o.swift.Name(), "segment-size"), 10, 64)
+	if err != nil {
+		return err
+	}
 	// Set the mtime
 	m := swift.Metadata{}
 	m.SetModTime(modTime)
-	_, err := o.swift.c.ObjectPut(o.swift.container, o.swift.root+o.remote, in, true, "", "", m.ObjectHeaders())
-	if err != nil {
-		return err
+	if size > segmentSize {
+		left := size
+		i := 0
+		for left > 0 {
+			n := Min(left, segmentSize)
+			segmentReader := io.LimitReader(in, n)
+			segmentPath := fmt.Sprintf("/%09d", i)
+			segmentName := o.swift.root+o.remote+segmentPath
+			_, err := o.swift.c.ObjectPut(o.swift.container, segmentName, segmentReader, true, "", "", m.ObjectHeaders())
+			if err != nil {
+				return err
+			}
+			left -= n
+			i += 1
+		}
+		manifestHeaders := swift.Headers{"X-Object-Manifest": o.swift.container + "/" + o.remote + "/"}
+		for k, v := range m.ObjectHeaders() {
+		    manifestHeaders[k] = v
+		}
+		emptyReader := bytes.NewReader([]byte{})
+		manifestName := o.swift.root+o.remote
+		_, err := o.swift.c.ObjectPut(o.swift.container, manifestName, emptyReader, true, "", "", manifestHeaders)
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err := o.swift.c.ObjectPut(o.swift.container, o.swift.root+o.remote, in, true, "", "", m.ObjectHeaders())
+		if err != nil {
+			return err
+		}
 	}
 	// Read the metadata from the newly created object
 	o.headers = nil // wipe old metadata
