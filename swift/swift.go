@@ -8,12 +8,17 @@ import (
 	"io"
 	"path"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/swift"
+	"github.com/spf13/pflag"
+)
+
+// Globals
+var (
+	chunkSize = fs.SizeSuffix(1024 * 1024 * 1024)
 )
 
 // Register with Fs
@@ -53,9 +58,10 @@ func init() {
 			Name: "region",
 			Help: "Region name - optional",
 		},
-		// snet     = flag.Bool("swift-snet", false, "Use internal service network") // FIXME not implemented
 		},
 	})
+	// snet     = flag.Bool("swift-snet", false, "Use internal service network") // FIXME not implemented
+	pflag.VarP(&chunkSize, "swift-chunk-size", "", "Above this size files will be chunked into a _segments container.")
 }
 
 // FsSwift represents a remote swift server
@@ -485,19 +491,15 @@ func min(x, y int64) int64 {
 //
 // The new object may have been created if an error is returned
 func (o *FsObjectSwift) Update(in io.Reader, modTime time.Time, size int64) error {
-	segmentSize, err := strconv.ParseInt(fs.ConfigFile.MustValue(o.swift.Name(), "segment-size"), 10, 64)
-	if err != nil {
-		return err
-	}
 	// Set the mtime
 	m := swift.Metadata{}
 	m.SetModTime(modTime)
-	if size > segmentSize {
+	if size > int64(chunkSize) {
 		left := size
 		i := 0
 		nowFloat := swift.TimeToFloatString(time.Now())
 		for left > 0 {
-			n := min(left, segmentSize)
+			n := min(left, int64(chunkSize))
 			segmentReader := io.LimitReader(in, n)
 			segmentPath := fmt.Sprintf("%s%s/%s/%d/%09d", o.swift.root, o.remote, nowFloat, size, i)
 			fs.Log(o, "segmentPath '%s'", segmentPath)
@@ -527,8 +529,7 @@ func (o *FsObjectSwift) Update(in io.Reader, modTime time.Time, size int64) erro
 	}
 	// Read the metadata from the newly created object
 	o.headers = nil // wipe old metadata
-	err = o.readMetaData()
-	return err
+	return o.readMetaData()
 }
 
 // Remove an object
