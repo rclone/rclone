@@ -68,10 +68,10 @@ type FsSwift struct {
 //
 // Will definitely have info but maybe not meta
 type FsObjectSwift struct {
-	swift  *FsSwift        // what this object is part of
-	remote string          // The remote path
-	info   swift.Object    // Info from the swift object if known
-	meta   *swift.Metadata // The object metadata if known
+	swift   *FsSwift       // what this object is part of
+	remote  string         // The remote path
+	info    swift.Object   // Info from the swift object if known
+	headers *swift.Headers // The object headers if known
 }
 
 // ------------------------------------------------------------
@@ -189,10 +189,10 @@ func (f *FsSwift) newFsObjectWithInfo(remote string, info *swift.Object) fs.Obje
 		remote: remote,
 	}
 	if info != nil {
-		// Set info but not meta
+		// Set info but not headers
 		fs.info = *info
 	} else {
-		err := fs.readMetaData() // reads info and meta, returning an error
+		err := fs.readMetaData() // reads info and headers, returning an error
 		if err != nil {
 			// logged already FsDebug("Failed to read info: %s", err)
 			return nil
@@ -393,7 +393,7 @@ func (o *FsObjectSwift) Size() int64 {
 //
 // it also sets the info
 func (o *FsObjectSwift) readMetaData() (err error) {
-	if o.meta != nil {
+	if o.headers != nil {
 		return nil
 	}
 	info, h, err := o.swift.c.Object(o.swift.container, o.swift.root+o.remote)
@@ -401,9 +401,8 @@ func (o *FsObjectSwift) readMetaData() (err error) {
 		fs.Debug(o, "Failed to read info: %s", err)
 		return err
 	}
-	meta := h.ObjectMetadata()
 	o.info = info
-	o.meta = &meta
+	o.headers = &h
 	return nil
 }
 
@@ -418,7 +417,7 @@ func (o *FsObjectSwift) ModTime() time.Time {
 		// fs.Log(o, "Failed to read metadata: %s", err)
 		return o.info.LastModified
 	}
-	modTime, err := o.meta.GetModTime()
+	modTime, err := o.headers.ObjectMetadata().GetModTime()
 	if err != nil {
 		// fs.Log(o, "Failed to read mtime from object: %s", err)
 		return o.info.LastModified
@@ -434,8 +433,13 @@ func (o *FsObjectSwift) SetModTime(modTime time.Time) {
 		fs.ErrorLog(o, "Failed to read metadata: %s", err)
 		return
 	}
-	o.meta.SetModTime(modTime)
-	err = o.swift.c.ObjectUpdate(o.swift.container, o.swift.root+o.remote, o.meta.ObjectHeaders())
+	meta := o.headers.ObjectMetadata()
+	meta.SetModTime(modTime)
+	newHeaders := meta.ObjectHeaders()
+	for k, v := range newHeaders {
+		(*o.headers)[k] = v
+	}
+	err = o.swift.c.ObjectUpdate(o.swift.container, o.swift.root+o.remote, newHeaders)
 	if err != nil {
 		fs.Stats.Error()
 		fs.ErrorLog(o, "Failed to update remote mtime: %s", err)
@@ -465,7 +469,7 @@ func (o *FsObjectSwift) Update(in io.Reader, modTime time.Time, size int64) erro
 		return err
 	}
 	// Read the metadata from the newly created object
-	o.meta = nil // wipe old metadata
+	o.headers = nil // wipe old metadata
 	err = o.readMetaData()
 	return err
 }
