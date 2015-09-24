@@ -2,15 +2,15 @@
 package swift
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
-	"bytes"
-	"strconv"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/swift"
@@ -383,7 +383,26 @@ func (o *FsObjectSwift) Remote() string {
 
 // Md5sum returns the Md5sum of an object returning a lowercase hex string
 func (o *FsObjectSwift) Md5sum() (string, error) {
-	return strings.ToLower(o.info.Hash), nil
+	isManifest, err := o.IsManifestFile()
+	if err != nil {
+		return "", err
+	}
+	if isManifest {
+		fs.Debug(o, "Return empty md5 for swift manifest file. Md5 of manifest file calculate as md5 of md5 of it's parts, so it's not original md5")
+		return "", nil
+	} else {
+		return strings.ToLower(o.info.Hash), nil
+	}
+}
+
+// Check manifest header
+func (o *FsObjectSwift) IsManifestFile() (bool, error) {
+	err := o.readMetaData()
+	if err != nil {
+		return false, err
+	}
+	_, isManifestFile := (*o.headers)["X-Object-Manifest"]
+	return isManifestFile, nil
 }
 
 // Size returns the size of an object in bytes
@@ -455,11 +474,11 @@ func (o *FsObjectSwift) Open() (in io.ReadCloser, err error) {
 	return
 }
 
-func Min(x, y int64) int64 {
-    if x < y {
-        return x
-    }
-    return y
+func min(x, y int64) int64 {
+	if x < y {
+		return x
+	}
+	return y
 }
 
 // Update the object with the contents of the io.Reader, modTime and size
@@ -476,28 +495,30 @@ func (o *FsObjectSwift) Update(in io.Reader, modTime time.Time, size int64) erro
 	if size > segmentSize {
 		left := size
 		i := 0
+		nowFloat := swift.TimeToFloatString(time.Now())
 		for left > 0 {
-			n := Min(left, segmentSize)
+			n := min(left, segmentSize)
 			segmentReader := io.LimitReader(in, n)
-			segmentPath := fmt.Sprintf("/%09d", i)
-			segmentName := o.swift.root+o.remote+segmentPath
-			_, err := o.swift.c.ObjectPut(o.swift.container, segmentName, segmentReader, true, "", "", m.ObjectHeaders())
+			segmentPath := fmt.Sprintf("%s%s/%s/%d/%09d", o.swift.root, o.remote, nowFloat, size, i)
+			fs.Log(o, "segmentPath '%s'", segmentPath)
+			_, err := o.swift.c.ObjectPut(o.swift.container+"_segments", segmentPath, segmentReader, true, "", "", m.ObjectHeaders())
 			if err != nil {
 				return err
 			}
 			left -= n
 			i += 1
 		}
-		manifestHeaders := swift.Headers{"X-Object-Manifest": o.swift.container + "/" + o.remote + "/"}
+		manifestHeaders := swift.Headers{"X-Object-Manifest": fmt.Sprintf("%s_segments/%s%s/%s/%d", o.swift.container, o.swift.root, o.remote, nowFloat, size)}
 		for k, v := range m.ObjectHeaders() {
-		    manifestHeaders[k] = v
+			manifestHeaders[k] = v
 		}
-		emptyReader := bytes.NewReader([]byte{})
-		manifestName := o.swift.root+o.remote
+		emptyReader := bytes.NewReader(nil)
+		manifestName := o.swift.root + o.remote
 		_, err := o.swift.c.ObjectPut(o.swift.container, manifestName, emptyReader, true, "", "", manifestHeaders)
 		if err != nil {
 			return err
 		}
+		// FIXME remove old segments
 	} else {
 		_, err := o.swift.c.ObjectPut(o.swift.container, o.swift.root+o.remote, in, true, "", "", m.ObjectHeaders())
 		if err != nil {
@@ -511,6 +532,7 @@ func (o *FsObjectSwift) Update(in io.Reader, modTime time.Time, size int64) erro
 }
 
 // Remove an object
+// FIXME remove segments on remove manifest
 func (o *FsObjectSwift) Remove() error {
 	return o.swift.c.ObjectDelete(o.swift.container, o.swift.root+o.remote)
 }
