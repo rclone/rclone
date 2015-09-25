@@ -18,7 +18,7 @@ import (
 
 // Globals
 var (
-	chunkSize = fs.SizeSuffix(1024 * 1024 * 1024)
+	chunkSize = fs.SizeSuffix(5 * 1024 * 1024 * 1024)
 )
 
 // Register with Fs
@@ -495,6 +495,7 @@ func (o *FsObjectSwift) Update(in io.Reader, modTime time.Time, size int64) erro
 	m := swift.Metadata{}
 	m.SetModTime(modTime)
 	if size > int64(chunkSize) {
+		segmentsContainerName := o.swift.container + "_segments"
 		left := size
 		i := 0
 		nowFloat := swift.TimeToFloatString(time.Now())
@@ -502,15 +503,14 @@ func (o *FsObjectSwift) Update(in io.Reader, modTime time.Time, size int64) erro
 			n := min(left, int64(chunkSize))
 			segmentReader := io.LimitReader(in, n)
 			segmentPath := fmt.Sprintf("%s%s/%s/%d/%09d", o.swift.root, o.remote, nowFloat, size, i)
-			fs.Log(o, "segmentPath '%s'", segmentPath)
-			_, err := o.swift.c.ObjectPut(o.swift.container+"_segments", segmentPath, segmentReader, true, "", "", m.ObjectHeaders())
+			_, err := o.swift.c.ObjectPut(segmentsContainerName, segmentPath, segmentReader, true, "", "", m.ObjectHeaders())
 			if err != nil {
 				return err
 			}
 			left -= n
 			i += 1
 		}
-		manifestHeaders := swift.Headers{"X-Object-Manifest": fmt.Sprintf("%s_segments/%s%s/%s/%d", o.swift.container, o.swift.root, o.remote, nowFloat, size)}
+		manifestHeaders := swift.Headers{"X-Object-Manifest": fmt.Sprintf("%s/%s%s/%s/%d", segmentsContainerName, o.swift.root, o.remote, nowFloat, size)}
 		for k, v := range m.ObjectHeaders() {
 			manifestHeaders[k] = v
 		}
@@ -520,7 +520,18 @@ func (o *FsObjectSwift) Update(in io.Reader, modTime time.Time, size int64) erro
 		if err != nil {
 			return err
 		}
-		// FIXME remove old segments
+		// remove old segments
+		segmentsPath := fmt.Sprintf("%s/%s%s/", segmentsContainerName, o.swift.root, o.remote)
+		segmentsFs, err := NewFs(o.swift.name, segmentsPath)
+		if err != nil {
+			return err
+		}
+		for o := range segmentsFs.List() {
+			if !strings.HasPrefix(o.Remote(), nowFloat) {
+				fs.Log(o, "Remove old file segment '%s'", o.Remote())
+				o.Remove()
+			}
+		}
 	} else {
 		_, err := o.swift.c.ObjectPut(o.swift.container, o.swift.root+o.remote, in, true, "", "", m.ObjectHeaders())
 		if err != nil {
@@ -533,8 +544,14 @@ func (o *FsObjectSwift) Update(in io.Reader, modTime time.Time, size int64) erro
 }
 
 // Remove an object
-// FIXME remove segments on remove manifest
 func (o *FsObjectSwift) Remove() error {
+	isManifestFile, err := o.IsManifestFile()
+	if err != nil {
+		return err
+	}
+	if isManifestFile {
+		o.swift.c.ObjectDelete(o.swift.container + "_segments", o.swift.root+o.remote)
+	}
 	return o.swift.c.ObjectDelete(o.swift.container, o.swift.root+o.remote)
 }
 
@@ -542,3 +559,4 @@ func (o *FsObjectSwift) Remove() error {
 var _ fs.Fs = &FsSwift{}
 var _ fs.Copier = &FsSwift{}
 var _ fs.Object = &FsObjectSwift{}
+
