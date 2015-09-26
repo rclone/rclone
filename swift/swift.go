@@ -518,7 +518,7 @@ func (o *FsObjectSwift) Update(in io.Reader, modTime time.Time, size int64) erro
 		for left > 0 {
 			n := min(left, int64(chunkSize))
 			segmentReader := io.LimitReader(in, n)
-			segmentPath := fmt.Sprintf("%s%s/%s/%d/%09d", o.swift.root, o.remote, nowFloat, size, i)
+			segmentPath := fmt.Sprintf("%s%s/%s/%d/%08d", o.swift.root, o.remote, nowFloat, size, i)
 			_, err := o.swift.c.ObjectPut(segmentsContainerName, segmentPath, segmentReader, true, "", "", m.ObjectHeaders())
 			if err != nil {
 				return err
