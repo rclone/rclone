@@ -529,7 +529,10 @@ func (o *FsObjectSwift) Update(in io.Reader, modTime time.Time, size int64) erro
 		for o := range segmentsFs.List() {
 			if !strings.HasPrefix(o.Remote(), nowFloat) {
 				fs.Log(o, "Remove old file segment '%s'", o.Remote())
-				o.Remove()
+				err := o.Remove()
+				if err != nil {
+                 		       return err
+                		}
 			}
 		}
 	} else {
@@ -550,7 +553,19 @@ func (o *FsObjectSwift) Remove() error {
 		return err
 	}
 	if isManifestFile {
-		o.swift.c.ObjectDelete(o.swift.container + "_segments", o.swift.root+o.remote)
+		// remove segments
+		segmentsContainerName := o.swift.container + "_segments"
+		segmentsPath := fmt.Sprintf("%s/%s%s/", segmentsContainerName, o.swift.root, o.remote)
+		segmentsFs, err := NewFs(o.swift.name, segmentsPath)
+		if err != nil {
+			return err
+		}
+		for o := range segmentsFs.List() {
+			err := o.Remove()
+			if err != nil {
+				return err
+			}
+		}
 	}
 	return o.swift.c.ObjectDelete(o.swift.container, o.swift.root+o.remote)
 }
