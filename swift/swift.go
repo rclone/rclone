@@ -487,6 +487,22 @@ func min(x, y int64) int64 {
 	return y
 }
 
+
+// Turns a number of ns into a floating point string in seconds like the "swift" tool
+func nsToSwiftFloatString(ns int64) string {
+	if ns < 0 {
+		return "-" + nsToSwiftFloatString(-ns)
+	}
+	result := fmt.Sprintf("%010d", ns)
+	split := len(result) - 9
+	result, decimals := result[:split], result[split:split+2]
+	if decimals != "" {
+		result += "."
+		result += decimals
+	}
+	return result
+}
+
 // Update the object with the contents of the io.Reader, modTime and size
 //
 // The new object may have been created if an error is returned
@@ -498,7 +514,7 @@ func (o *FsObjectSwift) Update(in io.Reader, modTime time.Time, size int64) erro
 		segmentsContainerName := o.swift.container + "_segments"
 		left := size
 		i := 0
-		nowFloat := swift.TimeToFloatString(time.Now())
+		nowFloat := nsToSwiftFloatString(time.Now().UnixNano())
 		for left > 0 {
 			n := min(left, int64(chunkSize))
 			segmentReader := io.LimitReader(in, n)
