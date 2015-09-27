@@ -438,13 +438,20 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 	go func() {
 		for src := range fsrc.List() {
 			remote := src.Remote()
-			dst, found := delFiles[remote]
-			if found {
-				delete(delFiles, remote)
-				toBeChecked <- ObjectPair{src, dst}
+			dst, dstFound := delFiles[remote]
+			if !Config.Filter.Include(remote, src.Size()) {
+				Debug(src, "Excluding from sync")
+				if dstFound && !Config.Filter.DeleteExcluded {
+					delete(delFiles, remote)
+				}
 			} else {
-				// No need to check since doesn't exist
-				toBeUploaded <- ObjectPair{src, nil}
+				if dstFound {
+					delete(delFiles, remote)
+					toBeChecked <- ObjectPair{src, dst}
+				} else {
+					// No need to check since doesn't exist
+					toBeUploaded <- ObjectPair{src, nil}
+				}
 			}
 		}
 		close(toBeChecked)

@@ -160,6 +160,7 @@ type ConfigInfo struct {
 	Timeout        time.Duration // Data channel timeout
 	DumpHeaders    bool
 	DumpBodies     bool
+	Filter         *Filter
 }
 
 // Transport returns an http.RoundTripper with the correct timeouts
@@ -250,6 +251,12 @@ func LoadConfig() {
 		if err != nil {
 			log.Fatalf("Failed to read null config file: %v", err)
 		}
+	}
+
+	// Load filters
+	Config.Filter, err = NewFilter()
+	if err != nil {
+		log.Fatalf("Failed to load filters: %v", err)
 	}
 
 	// Start the token bucket limiter

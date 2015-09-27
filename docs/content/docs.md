@@ -288,3 +288,22 @@ here which are used for testing.  These start with remote name eg
 ### --cpuprofile=FILE ###
 
 Write cpu profile to file.  This can be analysed with `go tool pprof`.
+
+Filtering
+---------
+
+For the filtering options
+
+  * `--delete-excluded`
+  * `--filter`
+  * `--filter-from`
+  * `--exclude`
+  * `--exclude-from`
+  * `--include`
+  * `--include-from`
+  * `--files-from`
+  * `--min-size`
+  * `--max-size`
+  * `--dump-filters`
+
+See the [filtering section](/filtering/).

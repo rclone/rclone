@@ -16,6 +16,7 @@ docs = [
     "about.md",
     "install.md",
     "docs.md",
+    "filtering.md",
     "overview.md",
     "drive.md",
     "s3.md",

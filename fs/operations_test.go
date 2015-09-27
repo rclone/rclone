@@ -407,6 +407,59 @@ func TestSyncAfterRemovingAFileAndAddingAFile(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
 }
 
+// Test with exclude
+func TestSyncWithExclude(t *testing.T) {
+	WriteFile("enormous", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
+	fs.Config.Filter.MaxSize = 80
+	defer func() {
+		fs.Config.Filter.MaxSize = 0
+	}()
+	err := fs.Sync(fremote, flocal)
+	if err != nil {
+		t.Fatalf("Sync failed: %v", err)
+	}
+	items := []fstest.Item{
+		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+		{Path: "potato2", Size: 60, ModTime: t1, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
+	}
+	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+}
+
+// Test with exclude and delete excluded
+func TestSyncWithExcludeAndDeleleteExcluded(t *testing.T) {
+	fs.Config.Filter.MaxSize = 40
+	fs.Config.Filter.DeleteExcluded = true
+	reset := func() {
+		fs.Config.Filter.MaxSize = 0
+		fs.Config.Filter.DeleteExcluded = false
+	}
+	defer reset()
+	err := fs.Sync(fremote, flocal)
+	if err != nil {
+		t.Fatalf("Sync failed: %v", err)
+	}
+	items := []fstest.Item{
+		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+	}
+	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+
+	// Tidy up
+	reset()
+	err = os.Remove(localName + "/enormous")
+	if err != nil {
+		t.Fatalf("Remove failed: %v", err)
+	}
+	err = fs.Sync(fremote, flocal)
+	if err != nil {
+		t.Fatalf("Sync failed: %v", err)
+	}
+	items = []fstest.Item{
+		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
+		{Path: "potato2", Size: 60, ModTime: t1, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
+	}
+	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+}
+
 // Test a server side move if possible, or the backup path if not
 func TestServerSideMove(t *testing.T) {
 	fremoteMove, finaliseMove, err := fstest.RandomRemote(*RemoteName, *SubDir)
