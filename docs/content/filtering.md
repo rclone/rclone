@@ -80,7 +80,7 @@ Special characters can be escaped with a `\` before them.
   
 ### Differences between rsync and rclone patterns ###
 
-Rclone implements bash style `{a,b,c}` glob matching which rclone doesn't.
+Rclone implements bash style `{a,b,c}` glob matching which rsync doesn't.
 
 Rclone ignores `/` at the end of a pattern.
 
