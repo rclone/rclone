@@ -1,12 +1,16 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2015-09-22"
+date: "2015-09-28"
 ---
 
 Changelog
 ---------
 
+  * v1.22 - 2015-09-28
+    * Implement rsync like include and exclude flags
+    * swift
+      * Support files > 5GB - thanks Sergey Tolmachev
   * v1.21 - 2015-09-22
     * New features
       * Display individual transfer progress
