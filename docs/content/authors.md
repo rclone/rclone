@@ -1,7 +1,7 @@
 ---
 title: "Authors"
 description: "Rclone Authors and Contributors"
-date: "2014-06-16"
+date: "2015-09-28"
 ---
 
 Authors
@@ -17,3 +17,4 @@ Contributors
   * Shimon Doodkin <helpmepro1@gmail.com>
   * Colin Nicholson <colin@colinn.com>
   * Klaus Post <klauspost@gmail.com>
+  * Sergey Tolmachev <tolsi.ru@gmail.com>
