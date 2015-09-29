@@ -41,10 +41,10 @@ func init() {
 		// AWS endpoints: http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region
 		Options: []fs.Option{{
 			Name: "access_key_id",
-			Help: "AWS Access Key ID.",
+			Help: "AWS Access Key ID - leave blank for anonymous access.",
 		}, {
 			Name: "secret_access_key",
-			Help: "AWS Secret Access Key (password). ",
+			Help: "AWS Secret Access Key (password) - leave blank for anonymous access.",
 		}, {
 			Name: "region",
 			Help: "Region to connect to.",
@@ -193,14 +193,19 @@ func s3ParsePath(path string) (bucket, directory string, err error) {
 func s3Connection(name string) (*s3.S3, error) {
 	// Make the auth
 	accessKeyID := fs.ConfigFile.MustValue(name, "access_key_id")
-	if accessKeyID == "" {
-		return nil, errors.New("access_key_id not found")
-	}
 	secretAccessKey := fs.ConfigFile.MustValue(name, "secret_access_key")
-	if secretAccessKey == "" {
+	var auth *credentials.Credentials
+	switch {
+	case accessKeyID == "" && secretAccessKey == "":
+		fs.Debug(name, "Using anonymous access for S3")
+		auth = credentials.AnonymousCredentials
+	case accessKeyID == "":
+		return nil, errors.New("access_key_id not found")
+	case secretAccessKey == "":
 		return nil, errors.New("secret_access_key not found")
+	default:
+		auth = credentials.NewStaticCredentials(accessKeyID, secretAccessKey, "")
 	}
-	auth := credentials.NewStaticCredentials(accessKeyID, secretAccessKey, "")
 
 	endpoint := fs.ConfigFile.MustValue(name, "endpoint")
 	region := fs.ConfigFile.MustValue(name, "region")
