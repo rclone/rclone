@@ -195,7 +195,7 @@ func Config(name string, config *oauth2.Config) error {
 	case TitleBarRedirectURL:
 		fmt.Printf("Use auto config?\n")
 		fmt.Printf(" * Say Y if not sure\n")
-		fmt.Printf(" * Say N if you are working on a remote or headless machine\n")
+		fmt.Printf(" * Say N if you are working on a remote or headless machine or Y didn't work\n")
 		useWebServer = fs.Confirm()
 		// copy the config and set to use the internal webserver
 		configCopy := *config

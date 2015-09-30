@@ -41,7 +41,7 @@ client_secret>
 Remote config
 Use auto config?
  * Say Y if not sure
- * Say N if you are working on a remote or headless machine
+ * Say N if you are working on a remote or headless machine or Y didn't work
 y) Yes
 n) No
 y/n> y
