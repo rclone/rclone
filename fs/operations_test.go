@@ -583,7 +583,21 @@ func TestMd5sum(t *testing.T) {
 	}
 }
 
+func TestCount(t *testing.T) {
+	objects, size, err := fs.Count(fremote)
+	if err != nil {
+		t.Fatalf("Count failed: %v", err)
+	}
+	if objects != 2 {
+		t.Errorf("want 2 objects got %d", objects)
+	}
+	if size != 60 {
+		t.Errorf("want size 60 got %d", size)
+	}
+}
+
 func TestCheck(t *testing.T) {
+	// FIXME
 }
 
 // Clean the temporary directory

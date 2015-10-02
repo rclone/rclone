@@ -58,23 +58,28 @@ modification time or MD5SUM.  Destination is updated to match
 source, including deleting files if necessary.  Since this can
 cause data loss, test first with the `--dry-run` flag.
 
-### rclone ls [remote:path] ###
+### rclone ls remote:path ###
 
 List all the objects in the the path with size and path.
 
-### rclone lsd [remote:path] ###
+### rclone lsd remote:path ###
 
 List all directories/containers/buckets in the the path.
 
-### rclone lsl [remote:path] ###
+### rclone lsl remote:path ###
 
 List all the objects in the the path with modification time,
 size and path.
 
-### rclone md5sum [remote:path] ###
+### rclone md5sum remote:path ###
 
 Produces an md5sum file for all the objects in the path.  This
 is in the same format as the standard md5sum tool produces.
+
+### rclone size remote:path ###
+
+Prints the total size of objects in remote:path and the number of
+objects.
 
 ### rclone mkdir remote:path ###
 

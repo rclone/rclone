@@ -8,6 +8,7 @@ import (
 	"mime"
 	"path"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -678,6 +679,15 @@ func Md5sum(f Fs, w io.Writer) error {
 		}
 		syncFprintf(w, "%32s  %s\n", md5sum, o.Remote())
 	})
+}
+
+// Count counts the objects and their sizes in the Fs
+func Count(f Fs) (objects int64, size int64, err error) {
+	err = ListFn(f, func(o Object) {
+		atomic.AddInt64(&objects, 1)
+		atomic.AddInt64(&size, o.Size())
+	})
+	return
 }
 
 // ListDir lists the directories/buckets/containers in the Fs to the supplied writer

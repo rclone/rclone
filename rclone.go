@@ -109,7 +109,7 @@ var Commands = []Command{
 	},
 	{
 		Name:     "ls",
-		ArgsHelp: "[remote:path]",
+		ArgsHelp: "remote:path",
 		Help: `
         List all the objects in the the path with size and path.`,
 		Run: func(fdst, fsrc fs.Fs) error {
@@ -120,7 +120,7 @@ var Commands = []Command{
 	},
 	{
 		Name:     "lsd",
-		ArgsHelp: "[remote:path]",
+		ArgsHelp: "remote:path",
 		Help: `
         List all directories/containers/buckets in the the path.`,
 		Run: func(fdst, fsrc fs.Fs) error {
@@ -131,7 +131,7 @@ var Commands = []Command{
 	},
 	{
 		Name:     "lsl",
-		ArgsHelp: "[remote:path]",
+		ArgsHelp: "remote:path",
 		Help: `
         List all the objects in the the path with modification time,
         size and path.`,
@@ -143,12 +143,30 @@ var Commands = []Command{
 	},
 	{
 		Name:     "md5sum",
-		ArgsHelp: "[remote:path]",
+		ArgsHelp: "remote:path",
 		Help: `
         Produces an md5sum file for all the objects in the path.  This
         is in the same format as the standard md5sum tool produces.`,
 		Run: func(fdst, fsrc fs.Fs) error {
 			return fs.Md5sum(fdst, os.Stdout)
+		},
+		MinArgs: 1,
+		MaxArgs: 1,
+	},
+	{
+		Name:     "size",
+		ArgsHelp: "remote:path",
+		Help: `
+        Returns the total size of objects in remote:path and the number
+        of objects.`,
+		Run: func(fdst, fsrc fs.Fs) error {
+			objects, size, err := fs.Count(fdst)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Total objects: %d\n", objects)
+			fmt.Printf("Total size: %v (%d bytes)\n", fs.SizeSuffix(size), size)
+			return nil
 		},
 		MinArgs: 1,
 		MaxArgs: 1,
