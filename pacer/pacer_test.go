@@ -111,23 +111,37 @@ func emptyTokens(p *Pacer) {
 	}
 }
 
+// waitForPace waits for duration for the pace to arrive
+// returns the time that it arrived or a zero time
+func waitForPace(p *Pacer, duration time.Duration) (when time.Time) {
+	select {
+	case <-time.After(duration):
+		return
+	case <-p.pacer:
+		return time.Now()
+	}
+}
+
 func TestBeginCall(t *testing.T) {
 	p := New().SetMaxConnections(10).SetMinSleep(1 * time.Millisecond)
 	emptyTokens(p)
 	go p.beginCall()
-	time.Sleep(2 * p.minSleep)
-	if len(p.pacer) != 0 {
+	if !waitForPace(p, 10*time.Millisecond).IsZero() {
 		t.Errorf("beginSleep fired too early #1")
 	}
+	startTime := time.Now()
 	p.pacer <- struct{}{}
-	time.Sleep(2 * p.minSleep)
-	if len(p.pacer) != 0 {
-		t.Errorf("beginSleep fired too early #2")
-	}
+	time.Sleep(1 * time.Millisecond)
+	connTime := time.Now()
 	p.connTokens <- struct{}{}
-	time.Sleep(2 * p.minSleep)
-	if len(p.pacer) == 0 {
+	time.Sleep(1 * time.Millisecond)
+	paceTime := waitForPace(p, 10*time.Millisecond)
+	if paceTime.IsZero() {
 		t.Errorf("beginSleep didn't fire")
+	} else if paceTime.Sub(startTime) < 0 {
+		t.Errorf("pace arrived before returning pace token")
+	} else if paceTime.Sub(connTime) < 0 {
+		t.Errorf("pace arrived before sending conn token")
 	}
 }
 
@@ -135,14 +149,17 @@ func TestBeginCallZeroConnections(t *testing.T) {
 	p := New().SetMaxConnections(0).SetMinSleep(1 * time.Millisecond)
 	emptyTokens(p)
 	go p.beginCall()
-	time.Sleep(2 * p.minSleep)
-	if len(p.pacer) != 0 {
+	if !waitForPace(p, 10*time.Millisecond).IsZero() {
 		t.Errorf("beginSleep fired too early #1")
 	}
+	startTime := time.Now()
 	p.pacer <- struct{}{}
-	time.Sleep(2 * p.minSleep)
-	if len(p.pacer) == 0 {
+	time.Sleep(1 * time.Millisecond)
+	paceTime := waitForPace(p, 10*time.Millisecond)
+	if paceTime.IsZero() {
 		t.Errorf("beginSleep didn't fire")
+	} else if paceTime.Sub(startTime) < 0 {
+		t.Errorf("pace arrived before returning pace token")
 	}
 }
 
