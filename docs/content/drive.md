@@ -34,9 +34,9 @@ Choose a number from below
  3) local
  4) drive
 type> 4
-Google Application Client Id - leave blank to use rclone's.
+Google Application Client Id - leave blank normally.
 client_id> 
-Google Application Client Secret - leave blank to use rclone's.
+Google Application Client Secret - leave blank normally.
 client_secret> 
 Remote config
 Use auto config?

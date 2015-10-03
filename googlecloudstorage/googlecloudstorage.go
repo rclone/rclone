@@ -66,10 +66,10 @@ func init() {
 		},
 		Options: []fs.Option{{
 			Name: oauthutil.ConfigClientID,
-			Help: "Google Application Client Id - leave blank to use rclone's.",
+			Help: "Google Application Client Id - leave blank normally.",
 		}, {
 			Name: oauthutil.ConfigClientSecret,
-			Help: "Google Application Client Secret - leave blank to use rclone's.",
+			Help: "Google Application Client Secret - leave blank normally.",
 		}, {
 			Name: "project_number",
 			Help: "Project number optional - needed only for list/create/delete buckets - see your developer console.",

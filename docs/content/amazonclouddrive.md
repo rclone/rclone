@@ -37,9 +37,9 @@ Choose a number from below
  6) s3
  7) swift
 type> 1
-Amazon Application Client Id - leave blank to use rclone's.
+Amazon Application Client Id - leave blank normally.
 client_id> 
-Amazon Application Client Secret - leave blank to use rclone's.
+Amazon Application Client Secret - leave blank normally.
 client_secret> 
 Remote config
 If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth

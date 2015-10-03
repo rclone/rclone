@@ -50,10 +50,10 @@ func init() {
 		Config: configHelper,
 		Options: []fs.Option{{
 			Name: "app_key",
-			Help: "Dropbox App Key - leave blank to use rclone's.",
+			Help: "Dropbox App Key - leave blank normally.",
 		}, {
 			Name: "app_secret",
-			Help: "Dropbox App Secret - leave blank to use rclone's.",
+			Help: "Dropbox App Secret - leave blank normally.",
 		}},
 	})
 	pflag.VarP(&uploadChunkSize, "dropbox-chunk-size", "", fmt.Sprintf("Upload chunk size. Max %v.", maxUploadChunkSize))

@@ -72,10 +72,10 @@ func init() {
 		},
 		Options: []fs.Option{{
 			Name: oauthutil.ConfigClientID,
-			Help: "Google Application Client Id - leave blank to use rclone's.",
+			Help: "Google Application Client Id - leave blank normally.",
 		}, {
 			Name: oauthutil.ConfigClientSecret,
-			Help: "Google Application Client Secret - leave blank to use rclone's.",
+			Help: "Google Application Client Secret - leave blank normally.",
 		}},
 	})
 	pflag.VarP(&driveUploadCutoff, "drive-upload-cutoff", "", "Cutoff for switching to chunked upload")

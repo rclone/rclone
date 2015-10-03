@@ -37,9 +37,9 @@ Choose a number from below
  5) dropbox
  6) drive
 type> 5
-Dropbox App Key - leave blank to use rclone's.
+Dropbox App Key - leave blank normally.
 app_key> 
-Dropbox App Secret - leave blank to use rclone's.
+Dropbox App Secret - leave blank normally.
 app_secret> 
 Remote config
 Please visit:
