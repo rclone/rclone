@@ -8,6 +8,7 @@ import (
 	"io"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -558,6 +559,7 @@ func (o *FsObjectSwift) updateChunks(in io.Reader, headers swift.Headers, size i
 	segmentsPath := fmt.Sprintf("%s%s/%s", o.swift.root, o.remote, uniquePrefix)
 	for left > 0 {
 		n := min(left, int64(chunkSize))
+		headers["Content-Length"] = strconv.FormatInt(n, 10) // set Content-Length as we know it
 		segmentReader := io.LimitReader(in, n)
 		segmentPath := fmt.Sprintf("%s/%08d", segmentsPath, i)
 		fs.Debug(o, "Uploading segment file %q into %q", segmentPath, o.swift.segmentsContainer)
@@ -570,6 +572,7 @@ func (o *FsObjectSwift) updateChunks(in io.Reader, headers swift.Headers, size i
 	}
 	// Upload the manifest
 	headers["X-Object-Manifest"] = fmt.Sprintf("%s/%s", o.swift.segmentsContainer, segmentsPath)
+	headers["Content-Length"] = "0" // set Content-Length as we know it
 	emptyReader := bytes.NewReader(nil)
 	manifestName := o.swift.root + o.remote
 	_, err = o.swift.c.ObjectPut(o.swift.container, manifestName, emptyReader, true, "", "", headers)
@@ -597,8 +600,8 @@ func (o *FsObjectSwift) Update(in io.Reader, modTime time.Time, size int64) erro
 			return err
 		}
 	} else {
-		headers["X-Object-Manifest"] = "" // remove manifest
-		_, err := o.swift.c.ObjectPut(o.swift.container, o.swift.root+o.remote, in, true, "", "", m.ObjectHeaders())
+		headers["Content-Length"] = strconv.FormatInt(size, 10) // set Content-Length as we know it
+		_, err := o.swift.c.ObjectPut(o.swift.container, o.swift.root+o.remote, in, true, "", "", headers)
 		if err != nil {
 			return err
 		}
