@@ -8,7 +8,10 @@ import (
 	"net/http/httputil"
 )
 
-const separator = "------------------------------------------------------------"
+const (
+	separatorReq  = ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+	separatorResp = "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+)
 
 // LoggedTransport is an http transport which logs the traffic
 type LoggedTransport struct {
@@ -39,16 +42,16 @@ func (t *LoggedTransport) CancelRequest(req *http.Request) {
 
 // RoundTrip implements the RoundTripper interface.
 func (t *LoggedTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	buf, _ := httputil.DumpRequest(req, t.logBody)
-	log.Println(separator)
+	buf, _ := httputil.DumpRequestOut(req, t.logBody)
+	log.Println(separatorReq)
 	log.Println("HTTP REQUEST")
 	log.Println(string(buf))
-	log.Println(separator)
+	log.Println(separatorReq)
 	resp, err = t.wrapped.RoundTrip(req)
 	buf, _ = httputil.DumpResponse(resp, t.logBody)
-	log.Println(separator)
+	log.Println(separatorResp)
 	log.Println("HTTP RESPONSE")
 	log.Println(string(buf))
-	log.Println(separator)
+	log.Println(separatorResp)
 	return resp, err
 }
