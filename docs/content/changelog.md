@@ -1,12 +1,24 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2015-09-28"
+date: "2015-10-03"
 ---
 
 Changelog
 ---------
 
+  * v1.23 - 2015-10-03
+    * New features
+      * Implement `rclone size` for measuring remotes
+    * Fixes
+      * Fix headless config for drive and gcs
+      * Tell the user they should try again if the webserver method failed
+      * Improve output of `--dump-headers`
+    * S3
+      * Allow anonymous access to public buckets
+    * Swift
+      * Stop chunked operations logging "Failed to read info: Object Not Found"
+      * Use Content-Length on uploads for extra reliability
   * v1.22 - 2015-09-28
     * Implement rsync like include and exclude flags
     * swift
