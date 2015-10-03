@@ -194,21 +194,21 @@ func NewFs(name, root string) (fs.Fs, error) {
 //
 // May return nil if an error occurred
 func (f *FsSwift) newFsObjectWithInfo(remote string, info *swift.Object) fs.Object {
-	fs := &FsObjectSwift{
+	o := &FsObjectSwift{
 		swift:  f,
 		remote: remote,
 	}
 	if info != nil {
 		// Set info but not headers
-		fs.info = *info
+		o.info = *info
 	} else {
-		err := fs.readMetaData() // reads info and headers, returning an error
+		err := o.readMetaData() // reads info and headers, returning an error
 		if err != nil {
-			// logged already FsDebug("Failed to read info: %s", err)
+			fs.Debug(o, "Failed to read metadata: %s", err)
 			return nil
 		}
 	}
-	return fs
+	return o
 }
 
 // NewFsObject returns an FsObject from a path
@@ -452,7 +452,6 @@ func (o *FsObjectSwift) readMetaData() (err error) {
 	}
 	info, h, err := o.swift.c.Object(o.swift.container, o.swift.root+o.remote)
 	if err != nil {
-		fs.Debug(o, "Failed to read info: %s", err)
 		return err
 	}
 	o.info = info
@@ -468,7 +467,7 @@ func (o *FsObjectSwift) readMetaData() (err error) {
 func (o *FsObjectSwift) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
-		// fs.Log(o, "Failed to read metadata: %s", err)
+		fs.Debug(o, "Failed to read metadata: %s", err)
 		return o.info.LastModified
 	}
 	modTime, err := o.headers.ObjectMetadata().GetModTime()
