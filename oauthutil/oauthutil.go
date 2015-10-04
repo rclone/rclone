@@ -30,11 +30,17 @@ const (
 	// prompting the user to copy the code and paste it in the application.
 	TitleBarRedirectURL = "urn:ietf:wg:oauth:2.0:oob"
 
-	// BindAddress is binding for local webserver when active
-	bindAddress = "127.0.0.1:53682"
+	// bindPort is the port that we bind the local webserver to
+	bindPort = "53682"
+
+	// bindAddress is binding for local webserver when active
+	bindAddress = "127.0.0.1:" + bindPort
 
 	// RedirectURL is redirect to local webserver when active
 	RedirectURL = "http://" + bindAddress + "/"
+
+	// RedirectPublicURL is redirect to local webserver when active with public name
+	RedirectPublicURL = "http://localhost.rclone.org:" + bindPort + "/"
 )
 
 // oldToken contains an end-user's tokens.
@@ -190,7 +196,7 @@ func Config(name string, config *oauth2.Config) error {
 	// Detect whether we should use internal web server
 	useWebServer := false
 	switch config.RedirectURL {
-	case RedirectURL:
+	case RedirectURL, RedirectPublicURL:
 		useWebServer = true
 	case TitleBarRedirectURL:
 		fmt.Printf("Use auto config?\n")
