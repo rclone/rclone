@@ -479,7 +479,7 @@ func (f *FsAcd) purgeCheck(check bool) error {
 	if check {
 		// check directory is empty
 		empty := true
-		_, err := f.listAll(rootID, "", false, false, func(node *acd.Node) bool {
+		_, err = f.listAll(rootID, "", false, false, func(node *acd.Node) bool {
 			switch *node.Kind {
 			case folderKind:
 				empty = false

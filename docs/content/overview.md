@@ -23,6 +23,7 @@ Here is an overview of the major features of each cloud storage system.
 | Dropbox                | No      | No      | Yes            | No              |
 | Google Cloud Storage   | Yes     | Yes     | No             | No              |
 | Amazon Cloud Drive     | Yes     | No      | Yes            | No              |
+| Microsoft One Drive    | No      | Yes     | Yes            | No              |
 | The local filesystem   | Yes     | Yes     | Depends        | No              |
 
 ### MD5SUM ###

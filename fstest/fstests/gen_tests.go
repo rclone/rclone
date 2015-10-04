@@ -65,7 +65,7 @@ import (
 )
 
 func init() {
-	fstests.NilObject = fs.Object((*{{ .FsName }}.FsObject{{ .ObjectName }})(nil))
+	fstests.NilObject = fs.Object((*{{ .FsName }}.{{ .ObjectName }})(nil))
 	fstests.RemoteName = "{{ .TestName }}"
 }
 
@@ -126,12 +126,13 @@ func generateTestProgram(t *template.Template, fns []string, Fsname, ObjectName 
 func main() {
 	fns := findTestFunctions()
 	t := template.Must(template.New("main").Parse(testProgram))
-	generateTestProgram(t, fns, "Local", "Local")
-	generateTestProgram(t, fns, "Swift", "Swift")
-	generateTestProgram(t, fns, "S3", "S3")
-	generateTestProgram(t, fns, "Drive", "Drive")
-	generateTestProgram(t, fns, "GoogleCloudStorage", "Storage")
-	generateTestProgram(t, fns, "Dropbox", "Dropbox")
-	generateTestProgram(t, fns, "AmazonCloudDrive", "Acd")
+	generateTestProgram(t, fns, "Local", "FsObjectLocal")
+	generateTestProgram(t, fns, "Swift", "FsObjectSwift")
+	generateTestProgram(t, fns, "S3", "FsObjectS3")
+	generateTestProgram(t, fns, "Drive", "FsObjectDrive")
+	generateTestProgram(t, fns, "GoogleCloudStorage", "FsObjectStorage")
+	generateTestProgram(t, fns, "Dropbox", "FsObjectDropbox")
+	generateTestProgram(t, fns, "AmazonCloudDrive", "FsObjectAcd")
+	generateTestProgram(t, fns, "OneDrive", "Object")
 	log.Printf("Done")
 }
