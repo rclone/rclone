@@ -12,9 +12,10 @@ import (
 
 // DirCache caches paths to directory IDs and vice versa
 type DirCache struct {
-	mu           sync.RWMutex
+	cacheMu      sync.RWMutex
 	cache        map[string]string
 	invCache     map[string]string
+	mu           sync.Mutex
 	fs           DirCacher // Interface to find and make stuff
 	trueRootID   string    // ID of the absolute root
 	root         string    // the path we are working on
@@ -43,52 +44,36 @@ func New(root string, trueRootID string, fs DirCacher) *DirCache {
 	return d
 }
 
-// _get an ID given a path - without lock
-func (dc *DirCache) _get(path string) (id string, ok bool) {
-	id, ok = dc.cache[path]
-	return
-}
-
 // Get an ID given a path
 func (dc *DirCache) Get(path string) (id string, ok bool) {
-	dc.mu.RLock()
-	id, ok = dc._get(path)
-	dc.mu.RUnlock()
+	dc.cacheMu.RLock()
+	id, ok = dc.cache[path]
+	dc.cacheMu.RUnlock()
 	return
 }
 
 // GetInv gets a path given an ID
-func (dc *DirCache) GetInv(path string) (id string, ok bool) {
-	dc.mu.RLock()
-	id, ok = dc.invCache[path]
-	dc.mu.RUnlock()
+func (dc *DirCache) GetInv(id string) (path string, ok bool) {
+	dc.cacheMu.RLock()
+	path, ok = dc.invCache[id]
+	dc.cacheMu.RUnlock()
 	return
-}
-
-// _put a path, id into the map without lock
-func (dc *DirCache) _put(path, id string) {
-	dc.cache[path] = id
-	dc.invCache[id] = path
 }
 
 // Put a path, id into the map
 func (dc *DirCache) Put(path, id string) {
-	dc.mu.Lock()
-	dc._put(path, id)
-	dc.mu.Unlock()
-}
-
-// _flush the map of all data without lock
-func (dc *DirCache) _flush() {
-	dc.cache = make(map[string]string)
-	dc.invCache = make(map[string]string)
+	dc.cacheMu.Lock()
+	dc.cache[path] = id
+	dc.invCache[id] = path
+	dc.cacheMu.Unlock()
 }
 
 // Flush the map of all data
 func (dc *DirCache) Flush() {
-	dc.mu.Lock()
-	dc._flush()
-	dc.mu.Unlock()
+	dc.cacheMu.Lock()
+	dc.cache = make(map[string]string)
+	dc.invCache = make(map[string]string)
+	dc.cacheMu.Unlock()
 }
 
 // SplitPath splits a path into directory, leaf
@@ -120,8 +105,8 @@ func SplitPath(path string) (directory, leaf string) {
 //  If not found strip the last path off the path and recurse
 //  Now have a parent directory id, so look in the parent for self and return it
 func (dc *DirCache) FindDir(path string, create bool) (pathID string, err error) {
-	dc.mu.RLock()
-	defer dc.mu.RUnlock()
+	dc.mu.Lock()
+	defer dc.mu.Unlock()
 	return dc._findDir(path, create)
 }
 
@@ -135,7 +120,7 @@ func (dc *DirCache) _findDirInCache(path string) string {
 	}
 
 	// If it is in the cache then return it
-	pathID, ok := dc._get(path)
+	pathID, ok := dc.Get(path)
 	if ok {
 		// fmt.Println("Cache hit on", path)
 		return pathID
@@ -184,7 +169,7 @@ func (dc *DirCache) _findDir(path string, create bool) (pathID string, err error
 	}
 
 	// Store the leaf directory in the cache
-	dc._put(path, pathID)
+	dc.Put(path, pathID)
 
 	// fmt.Println("Dir", path, "is", pathID)
 	return pathID, nil
@@ -230,12 +215,12 @@ func (dc *DirCache) FindRoot(create bool) error {
 	// Find the parent of the root while we still have the root
 	// directory tree cached
 	rootParentPath, _ := SplitPath(dc.root)
-	dc.rootParentID, _ = dc._get(rootParentPath)
+	dc.rootParentID, _ = dc.Get(rootParentPath)
 
 	// Reset the tree based on dc.root
-	dc._flush()
+	dc.Flush()
 	// Put the root directory in
-	dc._put("", dc.rootID)
+	dc.Put("", dc.rootID)
 	return nil
 }
 
@@ -275,11 +260,11 @@ func (dc *DirCache) ResetRoot() {
 	dc.mu.Lock()
 	defer dc.mu.Unlock()
 	dc.foundRoot = false
-	dc._flush()
+	dc.Flush()
 
 	// Put the true root in
 	dc.rootID = dc.trueRootID
 
 	// Put the root directory in
-	dc._put("", dc.rootID)
+	dc.Put("", dc.rootID)
 }
