@@ -178,7 +178,7 @@ func (f *FsLocal) cleanUtf8(name string) string {
 		}
 		name2 += strings.Map(func(r rune) rune {
 			switch r {
-			case '<', '>', '"', '|', '?', '*', '&':
+			case '<', '>', '"', '|', '?', '*', ':':
 				return '_'
 			}
 			return r
