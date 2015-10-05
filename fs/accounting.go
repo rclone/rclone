@@ -256,6 +256,7 @@ type Account struct {
 	lpTime  time.Time          // Time of last average measurement
 	lpBytes int                // Number of bytes read since last measurement
 	avg     ewma.MovingAverage // Moving average of last few measurements
+	closed  bool               // set if the file is closed
 	exit    chan struct{}      // channel that will be closed when transfer is finished
 }
 
@@ -408,9 +409,13 @@ func (file *Account) String() string {
 
 // Close the object
 func (file *Account) Close() error {
-	close(file.exit)
 	file.mu.Lock()
 	defer file.mu.Unlock()
+	if file.closed {
+		return nil
+	}
+	file.closed = true
+	close(file.exit)
 	Stats.inProgress.clear(file.name)
 	return file.in.Close()
 }
