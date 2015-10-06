@@ -198,6 +198,12 @@ tryAgain:
 			ErrorLog(src, "Failed to open: %s", err)
 			return
 		}
+
+		// On big files add a buffer
+		if src.Size() > 10<<20 {
+			in0, _ = newAsyncReader(in0, 4, 4<<20)
+		}
+
 		in := NewAccount(in0, src) // account the transfer
 
 		if doUpdate {
