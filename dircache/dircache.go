@@ -131,10 +131,6 @@ func (dc *DirCache) _findDirInCache(path string) string {
 
 // Unlocked findDir - must have mu
 func (dc *DirCache) _findDir(path string, create bool) (pathID string, err error) {
-	// if !dc.foundRoot {
-	// 	return "", fmt.Errorf("FindDir called before FindRoot")
-	// }
-
 	pathID = dc._findDirInCache(path)
 	if pathID != "" {
 		return pathID, nil
@@ -204,12 +200,11 @@ func (dc *DirCache) FindRoot(create bool) error {
 	if dc.foundRoot {
 		return nil
 	}
-	dc.foundRoot = true
 	rootID, err := dc._findDir(dc.root, create)
 	if err != nil {
-		dc.foundRoot = false
 		return err
 	}
+	dc.foundRoot = true
 	dc.rootID = rootID
 
 	// Find the parent of the root while we still have the root
@@ -222,6 +217,13 @@ func (dc *DirCache) FindRoot(create bool) error {
 	// Put the root directory in
 	dc.Put("", dc.rootID)
 	return nil
+}
+
+// FoundRoot returns whether the root directory has been found yet
+//
+// Call this from FindLeaf or CreateDir only
+func (dc *DirCache) FoundRoot() bool {
+	return dc.foundRoot
 }
 
 // RootID returns the ID of the root directory
