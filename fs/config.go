@@ -498,11 +498,14 @@ func EditConfig() {
 			for {
 				fmt.Printf("name> ")
 				name := ReadLine()
+				parts := matcher.FindStringSubmatch(name + ":")
 				switch {
 				case name == "":
 					fmt.Printf("Can't use empty name\n")
 				case isDriveLetter(name):
 					fmt.Printf("Can't use %q as it can be confused a drive letter\n", name)
+				case len(parts) != 3 || parts[2] != "":
+					fmt.Printf("Can't use %q as it has invalid characters in it %v\n", name, parts)
 				default:
 					NewRemote(name)
 					break nameLoop

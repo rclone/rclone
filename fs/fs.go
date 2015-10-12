@@ -284,7 +284,7 @@ func Find(name string) (*Info, error) {
 }
 
 // Pattern to match an rclone url
-var matcher = regexp.MustCompile(`^([\w_-]+):(.*)$`)
+var matcher = regexp.MustCompile(`^([\w_ -]+):(.*)$`)
 
 // NewFs makes a new Fs object from the path
 //
