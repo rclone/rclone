@@ -124,29 +124,20 @@ func (f *FsDrive) String() string {
 // shouldRetry determines whehter a given err rates being retried
 func shouldRetry(err error) (again bool, errOut error) {
 	again = false
-	errOut = err
 	if err != nil {
-		// Check for net error Timeout()
-		if x, ok := err.(interface {
-			Timeout() bool
-		}); ok && x.Timeout() {
+		if fs.ShouldRetry(err) {
 			again = true
-		}
-		// Check for net error Temporary()
-		if x, ok := err.(interface {
-			Temporary() bool
-		}); ok && x.Temporary() {
-			again = true
-		}
-		switch gerr := err.(type) {
-		case *googleapi.Error:
-			if gerr.Code >= 500 && gerr.Code < 600 {
-				// All 5xx errors should be retried
-				again = true
-			} else if len(gerr.Errors) > 0 {
-				reason := gerr.Errors[0].Reason
-				if reason == "rateLimitExceeded" || reason == "userRateLimitExceeded" {
+		} else {
+			switch gerr := err.(type) {
+			case *googleapi.Error:
+				if gerr.Code >= 500 && gerr.Code < 600 {
+					// All 5xx errors should be retried
 					again = true
+				} else if len(gerr.Errors) > 0 {
+					reason := gerr.Errors[0].Reason
+					if reason == "rateLimitExceeded" || reason == "userRateLimitExceeded" {
+						again = true
+					}
 				}
 			}
 		}

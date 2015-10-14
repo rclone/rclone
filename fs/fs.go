@@ -197,54 +197,6 @@ type DirMover interface {
 	DirMove(src Fs) error
 }
 
-// Retry is optional interface for error as to whether the operation
-// should be retried at a high level.
-//
-// This should be returned from Update or Put methods as required
-type Retry interface {
-	error
-	Retry() bool
-}
-
-// retryError is a type of error
-type retryError string
-
-// Error interface
-func (r retryError) Error() string {
-	return string(r)
-}
-
-// Retry interface
-func (r retryError) Retry() bool {
-	return true
-}
-
-// Check interface
-var _ Retry = retryError("")
-
-// RetryErrorf makes an error which indicates it would like to be retried
-func RetryErrorf(format string, a ...interface{}) error {
-	return retryError(fmt.Sprintf(format, a...))
-}
-
-// PlainRetryError is an error wrapped so it will retry
-type plainRetryError struct {
-	error
-}
-
-// Retry interface
-func (err plainRetryError) Retry() bool {
-	return true
-}
-
-// Check interface
-var _ Retry = plainRetryError{(error)(nil)}
-
-// RetryError makes an error which indicates it would like to be retried
-func RetryError(err error) error {
-	return plainRetryError{err}
-}
-
 // ObjectsChan is a channel of Objects
 type ObjectsChan chan Object
 

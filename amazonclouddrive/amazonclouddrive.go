@@ -16,9 +16,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strings"
 	"sync"
@@ -134,28 +132,7 @@ var retryErrorCodes = []int{
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
 func shouldRetry(resp *http.Response, err error) (bool, error) {
-	// See if HTTP error code is to be retried
-	if err != nil && resp != nil {
-		for _, e := range retryErrorCodes {
-			if resp.StatusCode == e {
-				return true, err
-			}
-		}
-	}
-
-	// Allow retry if request times out. Adapted from
-	// http://stackoverflow.com/questions/23494950/specifically-check-for-timeout-error
-	switch err := err.(type) {
-	case *url.Error:
-		if err, ok := err.Err.(net.Error); ok && err.Timeout() {
-			return true, err
-		}
-	case net.Error:
-		if err.Timeout() {
-			return true, err
-		}
-	}
-	return false, err
+	return fs.ShouldRetry(err) || fs.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
 // NewFs constructs an FsAcd from the path, container:path
