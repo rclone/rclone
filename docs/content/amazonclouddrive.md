@@ -4,7 +4,7 @@ description: "Rclone docs for Amazon Cloud Drive"
 date: "2015-09-06"
 ---
 
-<i class="fa fa-google"></i> Amazon Cloud Drive
+<i class="fa fa-amazon"></i> Amazon Cloud Drive
 -----------------------------------------
 
 Paths are specified as `remote:path`
