@@ -167,30 +167,7 @@ func (f *FsLocal) cleanUtf8(name string) string {
 		name = string([]rune(name))
 	}
 	if runtime.GOOS == "windows" {
-		var name2 string
-		if strings.HasPrefix(name, `\\?\`) {
-			name2 = `\\?\`
-			strings.TrimPrefix(name, `\\?\`)
-		}
-		if strings.HasPrefix(name, `//?/`) {
-			name2 = `//?/`
-			strings.TrimPrefix(name, `//?/`)
-		}
-		name2 += strings.Map(func(r rune) rune {
-			switch r {
-			case '<', '>', '"', '|', '?', '*', ':':
-				return '_'
-			}
-			return r
-		}, name)
-
-		if name2 != name {
-			if _, ok := f.warned[name]; !ok {
-				fs.Debug(f, "Replacing invalid UTF-8 characters in %q", name)
-				f.warned[name] = struct{}{}
-			}
-			name = name2
-		}
+		name = cleanWindowsName(f, name)
 	}
 	return name
 }
@@ -662,6 +639,44 @@ func uncPath(s string) string {
 		return `\\?\` + s
 	}
 	return s
+}
+
+// cleanWindowsName will clean invalid Windows characters
+func cleanWindowsName(f *FsLocal, name string) string {
+	original := name
+	var name2 string
+	if strings.HasPrefix(name, `\\?\`) {
+		name2 = `\\?\`
+		name = strings.TrimPrefix(name, `\\?\`)
+	}
+	if strings.HasPrefix(name, `//?/`) {
+		name2 = `//?/`
+		name = strings.TrimPrefix(name, `//?/`)
+	}
+	// Colon is allowed as part of a drive name X:\
+	colonAt := strings.Index(name, ":")
+	if colonAt > 0 && colonAt < 3 && len(name) > colonAt+1 {
+		// Copy to name2, which is unfiltered
+		name2 += name[0:colonAt+1]
+		name = name[colonAt+1:]
+	}
+
+	// `&` is added to the list, since it will fail if not exchanged
+	name2 += strings.Map(func(r rune) rune {
+		switch r {
+		case '<', '>', '"', '|', '?', '*', ':', '&':
+			return '_'
+		}
+		return r
+	}, name)
+
+	if name2 != original && f != nil{
+		if _, ok := f.warned[name]; !ok {
+			fs.Debug(f, "Replacing invalid characters in %q to %q", name, name2)
+			f.warned[name] = struct{}{}
+		}
+	}
+	return name2
 }
 
 // Check the interfaces are satisfied

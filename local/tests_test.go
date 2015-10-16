@@ -50,3 +50,42 @@ func TestUncPaths(t *testing.T) {
 		}
 	}
 }
+
+var utf8Tests = [][2]string{
+	[2]string{"ABC","ABC"},
+	[2]string{string([]byte{0x80}),"�"},
+	[2]string{string([]byte{'a',0x80,'b'}),"a�b"},
+}
+
+func TestCleanUtf8(t *testing.T) {
+	f := &FsLocal{}
+	f.warned = make(map[string]struct{})
+	for _, test := range utf8Tests {
+		got := f.cleanUtf8(test[0])
+		expect := test[1]
+		if got != expect {
+			t.Fatalf("got %q, expected %q", got, expect)
+		}
+	}
+}
+
+// Test Windows character replacements
+var testsWindows = [][2]string{
+	[2]string{`c:\temp`,`c:\temp`},
+	[2]string{`\\?\UNC\theserver\dir\file.txt`, `\\?\UNC\theserver\dir\file.txt`},
+	[2]string{`//?/UNC/theserver/dir\file.txt`, `//?/UNC/theserver/dir\file.txt`},
+	[2]string{"c:/temp","c:/temp"},
+	[2]string{"/temp/file.txt","/temp/file.txt"},
+	[2]string{`!\"#¤%&/()=;:*^?+-`,"!\\_#¤%_/()=;__^_+-"},
+	[2]string{`<>"|?*:&\<>"|?*:&\<>"|?*:&`, "________\\________\\________"},
+}
+
+func TestCleanWindows(t *testing.T) {
+	for _, test := range testsWindows {
+		got := cleanWindowsName(nil, test[0])
+		expect := test[1]
+		if got != expect {
+			t.Fatalf("got %q, expected %q", got, expect)
+		}
+	}
+}
