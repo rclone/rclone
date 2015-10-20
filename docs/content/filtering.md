@@ -40,7 +40,7 @@ A `*` matches anything but not a `/`.
 
     *.jpg  - matches "file.jpg"
            - matches "directory/file.jpg"
-           - doesn't match "file.jpg/anotherfile.jpg"
+           - doesn't match "file.jpg/anotherfile.png"
 
 Use `**` to match anything, including slashes.
 
@@ -76,7 +76,7 @@ Special characters can be escaped with a `\` before them.
 
     \*.jpg       - matches "*.jpg"
     \\.jpg       - matches "\.jpg"
-    \[one\].jpeg - matches "[one].jpg"
+    \[one\].jpg  - matches "[one].jpg"
   
 ### Differences between rsync and rclone patterns ###
 

@@ -250,3 +250,56 @@ five
 		t.Errorf("want %q got %q", want, got)
 	}
 }
+
+func TestFilterMatchesFromDocs(t *testing.T) {
+	for _, test := range []struct {
+		glob     string
+		included bool
+		file     string
+	}{
+		{"file.jpg", true, "file.jpg"},
+		{"file.jpg", true, "directory/file.jpg"},
+		{"file.jpg", false, "afile.jpg"},
+		{"file.jpg", false, "directory/afile.jpg"},
+		{"/file.jpg", true, "file.jpg"},
+		{"/file.jpg", false, "afile.jpg"},
+		{"/file.jpg", false, "directory/file.jpg"},
+		{"*.jpg", true, "file.jpg"},
+		{"*.jpg", true, "directory/file.jpg"},
+		{"*.jpg", false, "file.jpg/anotherfile.png"},
+		{"dir/**", true, "dir/file.jpg"},
+		{"dir/**", true, "dir/dir1/dir2/file.jpg"},
+		{"dir/**", false, "directory/file.jpg"},
+		{"dir/**", false, "adir/file.jpg"},
+		{"l?ss", true, "less"},
+		{"l?ss", true, "lass"},
+		{"l?ss", false, "floss"},
+		{"h[ae]llo", true, "hello"},
+		{"h[ae]llo", true, "hallo"},
+		{"h[ae]llo", false, "hullo"},
+		{"{one,two}_potato", true, "one_potato"},
+		{"{one,two}_potato", true, "two_potato"},
+		{"{one,two}_potato", false, "three_potato"},
+		{"{one,two}_potato", false, "_potato"},
+		{"\\*.jpg", true, "*.jpg"},
+		{"\\\\.jpg", true, "\\.jpg"},
+		{"\\[one\\].jpg", true, "[one].jpg"},
+	} {
+		f, err := NewFilter()
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = f.Add(true, test.glob)
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = f.Add(false, "*")
+		if err != nil {
+			t.Fatal(err)
+		}
+		included := f.Include(test.file, 0)
+		if included != test.included {
+			t.Logf("%q match %q: want %v got %v", test.glob, test.file, test.included, included)
+		}
+	}
+}
