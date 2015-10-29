@@ -294,6 +294,18 @@ here which are used for testing.  These start with remote name eg
 
 Write cpu profile to file.  This can be analysed with `go tool pprof`.
 
+### --no-check-certificate=true/false ###
+
+`--no-check-certificate` controls whether a client verifies the
+server's certificate chain and host name.
+If `--no-check-certificate` is true, TLS accepts any certificate
+presented by the server and any host name in that certificate.
+In this mode, TLS is susceptible to man-in-the-middle attacks.
+
+This option defaults to `false`.
+
+**This should be used only for testing.**
+
 Filtering
 ---------
 

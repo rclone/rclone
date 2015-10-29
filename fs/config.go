@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"crypto/tls"
 	"github.com/Unknwon/goconfig"
 	"github.com/mreiferson/go-httpclient"
 	"github.com/spf13/pflag"
@@ -53,6 +54,7 @@ var (
 	timeout        = pflag.DurationP("timeout", "", 5*60*time.Second, "IO idle timeout")
 	dumpHeaders    = pflag.BoolP("dump-headers", "", false, "Dump HTTP headers - may contain sensitive info")
 	dumpBodies     = pflag.BoolP("dump-bodies", "", false, "Dump HTTP headers and bodies - may contain sensitive info")
+	skipVerify     = pflag.BoolP("no-check-certificate", "", false, "Do not verify the server SSL certificate. Insecure.")
 	bwLimit        SizeSuffix
 )
 
@@ -148,19 +150,20 @@ func Reveal(y string) string {
 
 // ConfigInfo is filesystem config options
 type ConfigInfo struct {
-	Verbose        bool
-	Quiet          bool
-	DryRun         bool
-	CheckSum       bool
-	SizeOnly       bool
-	ModifyWindow   time.Duration
-	Checkers       int
-	Transfers      int
-	ConnectTimeout time.Duration // Connect timeout
-	Timeout        time.Duration // Data channel timeout
-	DumpHeaders    bool
-	DumpBodies     bool
-	Filter         *Filter
+	Verbose            bool
+	Quiet              bool
+	DryRun             bool
+	CheckSum           bool
+	SizeOnly           bool
+	ModifyWindow       time.Duration
+	Checkers           int
+	Transfers          int
+	ConnectTimeout     time.Duration // Connect timeout
+	Timeout            time.Duration // Data channel timeout
+	DumpHeaders        bool
+	DumpBodies         bool
+	Filter             *Filter
+	InsecureSkipVerify bool // Skip server certificate verification
 }
 
 // Transport returns an http.RoundTripper with the correct timeouts
@@ -187,6 +190,14 @@ func (ci *ConfigInfo) Transport() http.RoundTripper {
 		// ReadWriteTimeout, if non-zero, will set a deadline for every Read and
 		// Write operation on the request connection.
 		ReadWriteTimeout: ci.Timeout,
+
+		// InsecureSkipVerify controls whether a client verifies the
+		// server's certificate chain and host name.
+		// If InsecureSkipVerify is true, TLS accepts any certificate
+		// presented by the server and any host name in that certificate.
+		// In this mode, TLS is susceptible to man-in-the-middle attacks.
+		// This should be used only for testing.
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: ci.InsecureSkipVerify},
 	}
 	if ci.DumpHeaders || ci.DumpBodies {
 		return NewLoggedTransport(t, ci.DumpBodies)
@@ -239,6 +250,7 @@ func LoadConfig() {
 	Config.SizeOnly = *sizeOnly
 	Config.DumpHeaders = *dumpHeaders
 	Config.DumpBodies = *dumpBodies
+	Config.InsecureSkipVerify = *skipVerify
 
 	ConfigPath = *configFile
 
