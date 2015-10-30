@@ -27,6 +27,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/corehandlers"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/ncw/rclone/fs"
@@ -129,12 +130,13 @@ const (
 
 // FsS3 represents a remote s3 server
 type FsS3 struct {
-	name               string // the name of the remote
-	c                  *s3.S3 // the connection to the s3 server
-	bucket             string // the bucket we are working on
-	perm               string // permissions for new buckets / objects
-	root               string // root of the bucket - ignore all objects above this
-	locationConstraint string // location constraint of new buckets
+	name               string           // the name of the remote
+	c                  *s3.S3           // the connection to the s3 server
+	ses                *session.Session // the s3 session
+	bucket             string           // the bucket we are working on
+	perm               string           // permissions for new buckets / objects
+	root               string           // root of the bucket - ignore all objects above this
+	locationConstraint string           // location constraint of new buckets
 }
 
 // FsObjectS3 describes a s3 object
@@ -190,7 +192,7 @@ func s3ParsePath(path string) (bucket, directory string, err error) {
 }
 
 // s3Connection makes a connection to s3
-func s3Connection(name string) (*s3.S3, error) {
+func s3Connection(name string) (*s3.S3, *session.Session, error) {
 	// Make the auth
 	accessKeyID := fs.ConfigFile.MustValue(name, "access_key_id")
 	secretAccessKey := fs.ConfigFile.MustValue(name, "secret_access_key")
@@ -200,9 +202,9 @@ func s3Connection(name string) (*s3.S3, error) {
 		fs.Debug(name, "Using anonymous access for S3")
 		auth = credentials.AnonymousCredentials
 	case accessKeyID == "":
-		return nil, errors.New("access_key_id not found")
+		return nil, nil, errors.New("access_key_id not found")
 	case secretAccessKey == "":
-		return nil, errors.New("secret_access_key not found")
+		return nil, nil, errors.New("secret_access_key not found")
 	default:
 		auth = credentials.NewStaticCredentials(accessKeyID, secretAccessKey, "")
 	}
@@ -223,12 +225,13 @@ func s3Connection(name string) (*s3.S3, error) {
 		WithHTTPClient(fs.Config.Client()).
 		WithS3ForcePathStyle(true)
 	// awsConfig.WithLogLevel(aws.LogDebugWithSigning)
-	c := s3.New(awsConfig)
+	ses := session.New()
+	c := s3.New(ses, awsConfig)
 	if region == "other-v2-signature" {
 		fs.Debug(name, "Using v2 auth")
 		signer := func(req *request.Request) {
 			// Ignore AnonymousCredentials object
-			if req.Service.Config.Credentials == credentials.AnonymousCredentials {
+			if req.Config.Credentials == credentials.AnonymousCredentials {
 				return
 			}
 			sign(accessKeyID, secretAccessKey, req.HTTPRequest)
@@ -241,7 +244,7 @@ func s3Connection(name string) (*s3.S3, error) {
 	c.Handlers.Build.PushBack(func(r *request.Request) {
 		r.HTTPRequest.Header.Set("User-Agent", fs.UserAgent)
 	})
-	return c, nil
+	return c, ses, nil
 }
 
 // NewFs contstructs an FsS3 from the path, bucket:path
@@ -250,7 +253,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	c, err := s3Connection(name)
+	c, ses, err := s3Connection(name)
 	if err != nil {
 		return nil, err
 	}
@@ -258,6 +261,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		name:   name,
 		c:      c,
 		bucket: bucket,
+		ses:    ses,
 		// FIXME perm:   s3.Private, // FIXME need user to specify
 		root:               directory,
 		locationConstraint: fs.ConfigFile.MustValue(name, "location_constraint"),
@@ -674,13 +678,11 @@ func (o *FsObjectS3) Open() (in io.ReadCloser, err error) {
 
 // Update the Object from in with modTime and size
 func (o *FsObjectS3) Update(in io.Reader, modTime time.Time, size int64) error {
-	opts := s3manager.UploadOptions{
-		// PartSize:          64 * 1024 * 1024, use default
-		Concurrency:       2, // limit concurrency
-		LeavePartsOnError: false,
-		S3:                o.s3.c,
-	}
-	uploader := s3manager.NewUploader(&opts)
+	uploader := s3manager.NewUploader(o.s3.ses, func(u *s3manager.Uploader) {
+		u.Concurrency = 2
+		u.LeavePartsOnError = false
+		u.S3 = o.s3.c
+	})
 
 	// Set the mtime in the meta data
 	metadata := map[string]*string{
