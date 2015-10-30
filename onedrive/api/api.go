@@ -37,6 +37,7 @@ type Opts struct {
 	ContentType   string
 	ContentLength *int64
 	ContentRange  string
+	ExtraHeaders  map[string]string
 }
 
 // checkClose is a utility function used to check the return from
@@ -48,8 +49,8 @@ func checkClose(c io.Closer, err *error) {
 	}
 }
 
-// decodeJSON decodes resp.Body into json
-func (api *Client) decodeJSON(resp *http.Response, result interface{}) (err error) {
+// DecodeJSON decodes resp.Body into result
+func DecodeJSON(resp *http.Response, result interface{}) (err error) {
 	defer checkClose(resp.Body, &err)
 	decoder := json.NewDecoder(resp.Body)
 	return decoder.Decode(result)
@@ -83,6 +84,11 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 	if opts.ContentRange != "" {
 		req.Header.Add("Content-Range", opts.ContentRange)
 	}
+	if opts.ExtraHeaders != nil {
+		for k, v := range opts.ExtraHeaders {
+			req.Header.Add(k, v)
+		}
+	}
 	req.Header.Add("User-Agent", fs.UserAgent)
 	resp, err = api.c.Do(req)
 	if err != nil {
@@ -91,9 +97,12 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		// Decode error response
 		errResponse := new(Error)
-		err = api.decodeJSON(resp, &errResponse)
+		err = DecodeJSON(resp, &errResponse)
 		if err != nil {
 			return resp, err
+		}
+		if errResponse.ErrorInfo.Code == "" {
+			errResponse.ErrorInfo.Code = resp.Status
 		}
 		return resp, errResponse
 	}
@@ -103,7 +112,7 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 	return resp, nil
 }
 
-// CallJSON runs Call and decodes the body as a JSON object into result
+// CallJSON runs Call and decodes the body as a JSON object into response (if not nil)
 //
 // If request is not nil then it will be JSON encoded as the body of the request
 //
@@ -124,6 +133,9 @@ func (api *Client) CallJSON(opts *Opts, request interface{}, response interface{
 	if err != nil {
 		return resp, err
 	}
-	err = api.decodeJSON(resp, response)
+	if opts.NoResponse {
+		return resp, nil
+	}
+	err = DecodeJSON(resp, response)
 	return resp, err
 }

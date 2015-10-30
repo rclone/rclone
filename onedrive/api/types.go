@@ -189,3 +189,25 @@ type UploadFragmentResponse struct {
 	ExpirationDateTime Timestamp `json:"expirationDateTime"` // "2015-01-29T09:21:55.523Z",
 	NextExpectedRanges []string  `json:"nextExpectedRanges"` // ["0-"]
 }
+
+// CopyItemRequest is the request to copy an item object
+//
+// Note: The parentReference should include either an id or path but
+// not both. If both are included, they need to reference the same
+// item or an error will occur.
+type CopyItemRequest struct {
+	ParentReference ItemReference `json:"parentReference"` // Reference to the parent item the copy will be created in.
+	Name            *string       `json:"name"`            // Optional The new name for the copy. If this isn't provided, the same name will be used as the original.
+}
+
+// AsyncOperationStatus provides information on the status of a asynchronous job progress.
+//
+// The following API calls return AsyncOperationStatus resources:
+//
+// Copy Item
+// Upload From URL
+type AsyncOperationStatus struct {
+	Operation          string  `json:"operation"`          // The type of job being run.
+	PercentageComplete float64 `json:"percentageComplete"` // An float value between 0 and 100 that indicates the percentage complete.
+	Status             string  `json:"status"`             // A string value that maps to an enumeration of possible values about the status of the job. "notStarted | inProgress | completed | updating | failed | deletePending | deleteFailed | waiting"
+}

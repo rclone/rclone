@@ -271,7 +271,7 @@ func (f *Fs) CreateDir(pathID, leaf string) (newID string, err error) {
 		Path:   "/drive/items/" + pathID + "/children",
 	}
 	mkdir := api.CreateItemRequest{
-		Name:             leaf,
+		Name:             replaceReservedChars(leaf),
 		ConflictBehavior: "fail",
 	}
 	err = f.pacer.Call(func() (bool, error) {
@@ -444,21 +444,35 @@ func (f *Fs) ListDir() fs.DirChan {
 	return out
 }
 
+// Creates from the parameters passed in a half finished Object which
+// must have setMetaData called on it
+//
+// Returns the object, leaf, directoryID and error
+//
+// Used to create new objects
+func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Object, leaf string, directoryID string, err error) {
+	// Create the directory for the object if it doesn't exist
+	leaf, directoryID, err = f.dirCache.FindPath(remote, true)
+	if err != nil {
+		return nil, leaf, directoryID, err
+	}
+	// Temporary Object under construction
+	o = &Object{
+		fs:     f,
+		remote: remote,
+	}
+	return o, leaf, directoryID, nil
+}
+
 // Put the object into the container
 //
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
-	// Create the directory for the object if it doesn't exist
-	_, _, err := f.dirCache.FindPath(remote, true)
+	o, _, _, err := f.createObject(remote, modTime, size)
 	if err != nil {
 		return nil, err
-	}
-	// Temporary Object under construction
-	o := &Object{
-		fs:     f,
-		remote: remote,
 	}
 	return o, o.Update(in, modTime, size)
 }
@@ -526,6 +540,47 @@ func (f *Fs) Precision() time.Duration {
 	return time.Second
 }
 
+// waitForJob waits for the job with status in url to complete
+func (f *Fs) waitForJob(location string, o *Object) error {
+	deadline := time.Now().Add(fs.Config.Timeout)
+	for time.Now().Before(deadline) {
+		opts := api.Opts{
+			Method:   "GET",
+			Path:     location,
+			Absolute: true,
+		}
+		var resp *http.Response
+		var err error
+		err = f.pacer.Call(func() (bool, error) {
+			resp, err = f.srv.Call(&opts)
+			return shouldRetry(resp, err)
+		})
+		if err != nil {
+			return err
+		}
+		if resp.StatusCode == 202 {
+			var status api.AsyncOperationStatus
+			err = api.DecodeJSON(resp, &status)
+			if err != nil {
+				return err
+			}
+			if status.Status == "failed" || status.Status == "deleteFailed" {
+				return fmt.Errorf("Async operation %q returned %q", status.Operation, status.Status)
+			}
+		} else {
+			var info api.Item
+			err = api.DecodeJSON(resp, &info)
+			if err != nil {
+				return err
+			}
+			o.setMetaData(&info)
+			return nil
+		}
+		time.Sleep(1 * time.Second)
+	}
+	return fmt.Errorf("Async operation didn't complete after %v", fs.Config.Timeout)
+}
+
 // Copy src to this remote using server side copy operations.
 //
 // This is stored with the remote path given
@@ -535,19 +590,59 @@ func (f *Fs) Precision() time.Duration {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-//func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
-// srcObj, ok := src.(*Object)
-// if !ok {
-// 	fs.Debug(src, "Can't copy - not same remote type")
-// 	return nil, fs.ErrorCantCopy
-// }
-// srcFs := srcObj.acd
-// _, err := f.c.ObjectCopy(srcFs.container, srcFs.root+srcObj.remote, f.container, f.root+remote, nil)
-// if err != nil {
-// 	return nil, err
-// }
-// return f.NewFsObject(remote), nil
-//}
+func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debug(src, "Can't copy - not same remote type")
+		return nil, fs.ErrorCantCopy
+	}
+	err := srcObj.readMetaData()
+	if err != nil {
+		return nil, err
+	}
+
+	// Create temporary object
+	dstObj, leaf, directoryID, err := f.createObject(remote, srcObj.modTime, srcObj.size)
+	if err != nil {
+		return nil, err
+	}
+
+	// Copy the object
+	opts := api.Opts{
+		Method:       "POST",
+		Path:         "/drive/items/" + srcObj.id + "/action.copy",
+		ExtraHeaders: map[string]string{"Prefer": "respond-async"},
+		NoResponse:   true,
+	}
+	replacedLeaf := replaceReservedChars(leaf)
+	copy := api.CopyItemRequest{
+		Name: &replacedLeaf,
+		ParentReference: api.ItemReference{
+			ID: directoryID,
+		},
+	}
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(&opts, &copy, nil)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// read location header
+	location := resp.Header.Get("Location")
+	if location == "" {
+		return nil, fmt.Errorf("Didn't receive location header in copy response")
+	}
+
+	// Wait for job to finish
+	err = f.waitForJob(location, dstObj)
+	if err != nil {
+		return nil, err
+	}
+	return dstObj, nil
+}
 
 // Purge deletes all the files and the container
 //
