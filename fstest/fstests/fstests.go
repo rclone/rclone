@@ -279,7 +279,7 @@ func TestFsCopy(t *testing.T) {
 	src := findObject(t, file1.Path)
 	dst, err := remote.(fs.Copier).Copy(src, file1Copy.Path)
 	if err != nil {
-		t.Errorf("Copy failed: %v", err)
+		t.Fatalf("Copy failed: %v (%#v)", err, err)
 	}
 
 	// check file exists in new listing
