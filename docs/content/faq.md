@@ -101,3 +101,17 @@ of metadata, which breaks the desired 1:1 mapping of files to objects.
 No, not at present.  rclone only does uni-directional sync from A ->
 B. It may do in the future though since it has all the primitives - it
 just requires writing the algorithm to do it.
+
+### Can I use rclone with an HTTP proxy? ###
+
+Yes. rclone will use the environment variables `HTTP_PROXY`,
+`HTTPS_PROXY` and `NO_PROXY`, similar to cURL and other programs.
+
+`HTTPS_PROXY` takes precedence over `HTTP_PROXY` for https requests.
+
+The environment values may be either a complete URL or a "host[:port]",
+in which case the "http" scheme is assumed.
+
+The `NO_PROXY` allows you to disable the proxy for specific hosts.
+Hosts must be comma separated, and can contain domains or parts.
+For instance "foo.com" also matches "bar.foo.com".
