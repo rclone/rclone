@@ -168,7 +168,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		name:              name,
 		c:                 *c,
 		container:         container,
-		segmentsContainer: container + "_segments",
+		segmentsContainer: ".segments_" + container,
 		root:              directory,
 	}
 	if f.root != "" {
