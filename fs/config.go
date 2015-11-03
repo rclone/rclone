@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"crypto/tls"
+
 	"github.com/Unknwon/goconfig"
 	"github.com/mreiferson/go-httpclient"
 	"github.com/spf13/pflag"
