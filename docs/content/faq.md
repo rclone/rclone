@@ -115,3 +115,25 @@ in which case the "http" scheme is assumed.
 The `NO_PROXY` allows you to disable the proxy for specific hosts.
 Hosts must be comma separated, and can contain domains or parts.
 For instance "foo.com" also matches "bar.foo.com".
+
+### Rclone gives x509: failed to load system roots and no roots provided error ###
+
+This means that `rclone` can't file the SSL root certificates.  Likely
+you are running `rclone` on a NAS with a cut-down Linux OS.
+
+Rclone (via the Go runtime) tries to load the root certificates from
+these places on Linux.
+
+    "/etc/ssl/certs/ca-certificates.crt", // Debian/Ubuntu/Gentoo etc.
+    "/etc/pki/tls/certs/ca-bundle.crt",   // Fedora/RHEL
+    "/etc/ssl/ca-bundle.pem",             // OpenSUSE
+    "/etc/pki/tls/cacert.pem",            // OpenELEC
+
+So doing something like this should fix the problem.  It also sets the
+time which is important for SSL to work properly.
+
+```
+mkdir -p /etc/ssl/certs/
+curl -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt
+ntpclient -s -h pool.ntp.org
+```
