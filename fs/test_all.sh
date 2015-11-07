@@ -9,10 +9,7 @@ TestDrive:
 TestGoogleCloudStorage:
 TestDropbox:
 TestAmazonCloudDrive:
-"
-
-REMOTES="
-TestAmazonCloudDrive:
+TestOneDrive:
 "
 
 function test_remote {
