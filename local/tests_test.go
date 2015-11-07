@@ -58,7 +58,7 @@ var utf8Tests = [][2]string{
 }
 
 func TestCleanUtf8(t *testing.T) {
-	f := &FsLocal{}
+	f := &Fs{}
 	f.warned = make(map[string]struct{})
 	for _, test := range utf8Tests {
 		got := f.cleanUtf8(test[0])

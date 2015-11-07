@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	fstests.NilObject = fs.Object((*drive.FsObjectDrive)(nil))
+	fstests.NilObject = fs.Object((*drive.Object)(nil))
 	fstests.RemoteName = "TestDrive:"
 }
 

@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	fstests.NilObject = fs.Object((*swift.FsObjectSwift)(nil))
+	fstests.NilObject = fs.Object((*swift.Object)(nil))
 	fstests.RemoteName = "TestSwift:"
 }
 

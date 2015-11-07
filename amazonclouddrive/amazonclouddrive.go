@@ -77,8 +77,8 @@ func init() {
 	})
 }
 
-// FsAcd represents a remote acd server
-type FsAcd struct {
+// Fs represents a remote acd server
+type Fs struct {
 	name     string             // name of this remote
 	c        *acd.Client        // the connection to the acd server
 	root     string             // the path we are working on
@@ -86,11 +86,11 @@ type FsAcd struct {
 	pacer    *pacer.Pacer       // pacer for API calls
 }
 
-// FsObjectAcd describes a acd object
+// Object describes a acd object
 //
 // Will definitely have info but maybe not meta
-type FsObjectAcd struct {
-	acd    *FsAcd    // what this object is part of
+type Object struct {
+	fs     *Fs       // what this object is part of
 	remote string    // The remote path
 	info   *acd.Node // Info from the acd object if known
 }
@@ -98,17 +98,17 @@ type FsObjectAcd struct {
 // ------------------------------------------------------------
 
 // Name of the remote (as passed into NewFs)
-func (f *FsAcd) Name() string {
+func (f *Fs) Name() string {
 	return f.name
 }
 
 // Root of the remote (as passed into NewFs)
-func (f *FsAcd) Root() string {
+func (f *Fs) Root() string {
 	return f.root
 }
 
-// String converts this FsAcd to a string
-func (f *FsAcd) String() string {
+// String converts this Fs to a string
+func (f *Fs) String() string {
 	return fmt.Sprintf("Amazon cloud drive root '%s'", f.root)
 }
 
@@ -135,7 +135,7 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 	return fs.ShouldRetry(err) || fs.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
-// NewFs constructs an FsAcd from the path, container:path
+// NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string) (fs.Fs, error) {
 	root = parsePath(root)
 	oAuthClient, err := oauthutil.NewClient(name, acdConfig)
@@ -145,7 +145,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 
 	c := acd.NewClient(oAuthClient)
 	c.UserAgent = fs.UserAgent
-	f := &FsAcd{
+	f := &Fs{
 		name:  name,
 		root:  root,
 		c:     c,
@@ -202,9 +202,9 @@ func NewFs(name, root string) (fs.Fs, error) {
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsAcd) newFsObjectWithInfo(remote string, info *acd.Node) fs.Object {
-	o := &FsObjectAcd{
-		acd:    f,
+func (f *Fs) newFsObjectWithInfo(remote string, info *acd.Node) fs.Object {
+	o := &Object{
+		fs:     f,
 		remote: remote,
 	}
 	if info != nil {
@@ -223,12 +223,12 @@ func (f *FsAcd) newFsObjectWithInfo(remote string, info *acd.Node) fs.Object {
 // NewFsObject returns an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsAcd) NewFsObject(remote string) fs.Object {
+func (f *Fs) NewFsObject(remote string) fs.Object {
 	return f.newFsObjectWithInfo(remote, nil)
 }
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
-func (f *FsAcd) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err error) {
+func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err error) {
 	//fs.Debug(f, "FindLeaf(%q, %q)", pathID, leaf)
 	folder := acd.FolderFromId(pathID, f.c.Nodes)
 	var resp *http.Response
@@ -255,7 +255,7 @@ func (f *FsAcd) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err
 }
 
 // CreateDir makes a directory with pathID as parent and name leaf
-func (f *FsAcd) CreateDir(pathID, leaf string) (newID string, err error) {
+func (f *Fs) CreateDir(pathID, leaf string) (newID string, err error) {
 	//fmt.Printf("CreateDir(%q, %q)\n", pathID, leaf)
 	folder := acd.FolderFromId(pathID, f.c.Nodes)
 	var resp *http.Response
@@ -283,7 +283,7 @@ type listAllFn func(*acd.Node) bool
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *FsAcd) listAll(dirID string, title string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
 	query := "parents:" + dirID
 	if directoriesOnly {
 		query += " AND kind:" + folderKind
@@ -336,7 +336,7 @@ OUTER:
 //
 // This fetches the minimum amount of stuff but does more API calls
 // which makes it slow
-func (f *FsAcd) listDirRecursive(dirID string, path string, out fs.ObjectsChan) error {
+func (f *Fs) listDirRecursive(dirID string, path string, out fs.ObjectsChan) error {
 	var subError error
 	// Make the API request
 	var wg sync.WaitGroup
@@ -377,7 +377,7 @@ func (f *FsAcd) listDirRecursive(dirID string, path string, out fs.ObjectsChan) 
 }
 
 // List walks the path returning a channel of FsObjects
-func (f *FsAcd) List() fs.ObjectsChan {
+func (f *Fs) List() fs.ObjectsChan {
 	out := make(fs.ObjectsChan, fs.Config.Checkers)
 	go func() {
 		defer close(out)
@@ -397,7 +397,7 @@ func (f *FsAcd) List() fs.ObjectsChan {
 }
 
 // ListDir lists the directories
-func (f *FsAcd) ListDir() fs.DirChan {
+func (f *Fs) ListDir() fs.DirChan {
 	out := make(fs.DirChan, fs.Config.Checkers)
 	go func() {
 		defer close(out)
@@ -430,17 +430,17 @@ func (f *FsAcd) ListDir() fs.DirChan {
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *FsAcd) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
-	// Temporary FsObject under construction
-	o := &FsObjectAcd{
-		acd:    f,
+func (f *Fs) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
+	// Temporary Object under construction
+	o := &Object{
+		fs:     f,
 		remote: remote,
 	}
 	leaf, directoryID, err := f.dirCache.FindPath(remote, true)
 	if err != nil {
 		return nil, err
 	}
-	folder := acd.FolderFromId(directoryID, o.acd.c.Nodes)
+	folder := acd.FolderFromId(directoryID, o.fs.c.Nodes)
 	var info *acd.File
 	var resp *http.Response
 	err = f.pacer.CallNoRetry(func() (bool, error) {
@@ -459,13 +459,13 @@ func (f *FsAcd) Put(in io.Reader, remote string, modTime time.Time, size int64) 
 }
 
 // Mkdir creates the container if it doesn't exist
-func (f *FsAcd) Mkdir() error {
+func (f *Fs) Mkdir() error {
 	return f.dirCache.FindRoot(true)
 }
 
 // purgeCheck remotes the root directory, if check is set then it
 // refuses to do so if it has anything in
-func (f *FsAcd) purgeCheck(check bool) error {
+func (f *Fs) purgeCheck(check bool) error {
 	if f.root == "" {
 		return fmt.Errorf("Can't purge root directory")
 	}
@@ -520,12 +520,12 @@ func (f *FsAcd) purgeCheck(check bool) error {
 // Rmdir deletes the root folder
 //
 // Returns an error if it isn't empty
-func (f *FsAcd) Rmdir() error {
+func (f *Fs) Rmdir() error {
 	return f.purgeCheck(true)
 }
 
 // Precision return the precision of this Fs
-func (f *FsAcd) Precision() time.Duration {
+func (f *Fs) Precision() time.Duration {
 	return fs.ModTimeNotSupported
 }
 
@@ -538,13 +538,13 @@ func (f *FsAcd) Precision() time.Duration {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-//func (f *FsAcd) Copy(src fs.Object, remote string) (fs.Object, error) {
-// srcObj, ok := src.(*FsObjectAcd)
+//func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
+// srcObj, ok := src.(*Object)
 // if !ok {
 // 	fs.Debug(src, "Can't copy - not same remote type")
 // 	return nil, fs.ErrorCantCopy
 // }
-// srcFs := srcObj.acd
+// srcFs := srcObj.fs
 // _, err := f.c.ObjectCopy(srcFs.container, srcFs.root+srcObj.remote, f.container, f.root+remote, nil)
 // if err != nil {
 // 	return nil, err
@@ -557,19 +557,19 @@ func (f *FsAcd) Precision() time.Duration {
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *FsAcd) Purge() error {
+func (f *Fs) Purge() error {
 	return f.purgeCheck(false)
 }
 
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
-func (o *FsObjectAcd) Fs() fs.Fs {
-	return o.acd
+func (o *Object) Fs() fs.Fs {
+	return o.fs
 }
 
 // Return a string version
-func (o *FsObjectAcd) String() string {
+func (o *Object) String() string {
 	if o == nil {
 		return "<nil>"
 	}
@@ -577,12 +577,12 @@ func (o *FsObjectAcd) String() string {
 }
 
 // Remote returns the remote path
-func (o *FsObjectAcd) Remote() string {
+func (o *Object) Remote() string {
 	return o.remote
 }
 
 // Md5sum returns the Md5sum of an object returning a lowercase hex string
-func (o *FsObjectAcd) Md5sum() (string, error) {
+func (o *Object) Md5sum() (string, error) {
 	if o.info.ContentProperties.Md5 != nil {
 		return *o.info.ContentProperties.Md5, nil
 	}
@@ -590,25 +590,25 @@ func (o *FsObjectAcd) Md5sum() (string, error) {
 }
 
 // Size returns the size of an object in bytes
-func (o *FsObjectAcd) Size() int64 {
+func (o *Object) Size() int64 {
 	return int64(*o.info.ContentProperties.Size)
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
 //
 // it also sets the info
-func (o *FsObjectAcd) readMetaData() (err error) {
+func (o *Object) readMetaData() (err error) {
 	if o.info != nil {
 		return nil
 	}
-	leaf, directoryID, err := o.acd.dirCache.FindPath(o.remote, false)
+	leaf, directoryID, err := o.fs.dirCache.FindPath(o.remote, false)
 	if err != nil {
 		return err
 	}
-	folder := acd.FolderFromId(directoryID, o.acd.c.Nodes)
+	folder := acd.FolderFromId(directoryID, o.fs.c.Nodes)
 	var resp *http.Response
 	var info *acd.File
-	err = o.acd.pacer.Call(func() (bool, error) {
+	err = o.fs.pacer.Call(func() (bool, error) {
 		info, resp, err = folder.GetFile(leaf)
 		return shouldRetry(resp, err)
 	})
@@ -625,7 +625,7 @@ func (o *FsObjectAcd) readMetaData() (err error) {
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
-func (o *FsObjectAcd) ModTime() time.Time {
+func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
 		fs.Log(o, "Failed to read metadata: %s", err)
@@ -640,21 +640,21 @@ func (o *FsObjectAcd) ModTime() time.Time {
 }
 
 // SetModTime sets the modification time of the local fs object
-func (o *FsObjectAcd) SetModTime(modTime time.Time) {
+func (o *Object) SetModTime(modTime time.Time) {
 	// FIXME not implemented
 	return
 }
 
 // Storable returns a boolean showing whether this object storable
-func (o *FsObjectAcd) Storable() bool {
+func (o *Object) Storable() bool {
 	return true
 }
 
 // Open an object for read
-func (o *FsObjectAcd) Open() (in io.ReadCloser, err error) {
+func (o *Object) Open() (in io.ReadCloser, err error) {
 	file := acd.File{Node: o.info}
 	var resp *http.Response
-	err = o.acd.pacer.Call(func() (bool, error) {
+	err = o.fs.pacer.Call(func() (bool, error) {
 		in, resp, err = file.Open()
 		return shouldRetry(resp, err)
 	})
@@ -664,12 +664,12 @@ func (o *FsObjectAcd) Open() (in io.ReadCloser, err error) {
 // Update the object with the contents of the io.Reader, modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *FsObjectAcd) Update(in io.Reader, modTime time.Time, size int64) error {
+func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
 	file := acd.File{Node: o.info}
 	var info *acd.File
 	var resp *http.Response
 	var err error
-	err = o.acd.pacer.CallNoRetry(func() (bool, error) {
+	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		if size != 0 {
 			info, resp, err = file.OverwriteSized(in, size)
 		} else {
@@ -685,10 +685,10 @@ func (o *FsObjectAcd) Update(in io.Reader, modTime time.Time, size int64) error 
 }
 
 // Remove an object
-func (o *FsObjectAcd) Remove() error {
+func (o *Object) Remove() error {
 	var resp *http.Response
 	var err error
-	err = o.acd.pacer.Call(func() (bool, error) {
+	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.info.Trash()
 		return shouldRetry(resp, err)
 	})
@@ -697,10 +697,10 @@ func (o *FsObjectAcd) Remove() error {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs     = (*FsAcd)(nil)
-	_ fs.Purger = (*FsAcd)(nil)
-	//	_ fs.Copier   = (*FsAcd)(nil)
-	//	_ fs.Mover    = (*FsAcd)(nil)
-	//	_ fs.DirMover = (*FsAcd)(nil)
-	_ fs.Object = (*FsObjectAcd)(nil)
+	_ fs.Fs     = (*Fs)(nil)
+	_ fs.Purger = (*Fs)(nil)
+	//	_ fs.Copier   = (*Fs)(nil)
+	//	_ fs.Mover    = (*Fs)(nil)
+	//	_ fs.DirMover = (*Fs)(nil)
+	_ fs.Object = (*Object)(nil)
 )

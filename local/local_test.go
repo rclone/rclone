@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	fstests.NilObject = fs.Object((*local.FsObjectLocal)(nil))
+	fstests.NilObject = fs.Object((*local.Object)(nil))
 	fstests.RemoteName = ""
 }
 

@@ -82,8 +82,8 @@ func init() {
 	pflag.VarP(&chunkSize, "drive-chunk-size", "", "Upload chunk size. Must a power of 2 >= 256k.")
 }
 
-// FsDrive represents a remote drive server
-type FsDrive struct {
+// Fs represents a remote drive server
+type Fs struct {
 	name     string             // name of this remote
 	svc      *drive.Service     // the connection to the drive server
 	root     string             // the path we are working on
@@ -93,31 +93,31 @@ type FsDrive struct {
 	pacer    *pacer.Pacer       // To pace the API calls
 }
 
-// FsObjectDrive describes a drive object
-type FsObjectDrive struct {
-	drive        *FsDrive // what this object is part of
-	remote       string   // The remote path
-	id           string   // Drive Id of this object
-	url          string   // Download URL of this object
-	md5sum       string   // md5sum of the object
-	bytes        int64    // size of the object
-	modifiedDate string   // RFC3339 time it was last modified
+// Object describes a drive object
+type Object struct {
+	fs           *Fs    // what this object is part of
+	remote       string // The remote path
+	id           string // Drive Id of this object
+	url          string // Download URL of this object
+	md5sum       string // md5sum of the object
+	bytes        int64  // size of the object
+	modifiedDate string // RFC3339 time it was last modified
 }
 
 // ------------------------------------------------------------
 
 // Name of the remote (as passed into NewFs)
-func (f *FsDrive) Name() string {
+func (f *Fs) Name() string {
 	return f.name
 }
 
 // Root of the remote (as passed into NewFs)
-func (f *FsDrive) Root() string {
+func (f *Fs) Root() string {
 	return f.root
 }
 
-// String converts this FsDrive to a string
-func (f *FsDrive) String() string {
+// String converts this Fs to a string
+func (f *Fs) String() string {
 	return fmt.Sprintf("Google drive root '%s'", f.root)
 }
 
@@ -161,7 +161,7 @@ type listAllFn func(*drive.File) bool
 // If the user fn ever returns true then it early exits with found = true
 //
 // Search params: https://developers.google.com/drive/search-parameters
-func (f *FsDrive) listAll(dirID string, title string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
 	query := fmt.Sprintf("trashed=false")
 	if dirID != "" {
 		query += fmt.Sprintf(" and '%s' in parents", dirID)
@@ -216,7 +216,7 @@ func isPowerOfTwo(x int64) bool {
 	}
 }
 
-// NewFs contstructs an FsDrive from the path, container:path
+// NewFs contstructs an Fs from the path, container:path
 func NewFs(name, path string) (fs.Fs, error) {
 	if !isPowerOfTwo(int64(chunkSize)) {
 		return nil, fmt.Errorf("drive: chunk size %v isn't a power of two", chunkSize)
@@ -235,7 +235,7 @@ func NewFs(name, path string) (fs.Fs, error) {
 		return nil, err
 	}
 
-	f := &FsDrive{
+	f := &Fs{
 		name:  name,
 		root:  root,
 		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
@@ -286,9 +286,9 @@ func NewFs(name, path string) (fs.Fs, error) {
 }
 
 // Return an FsObject from a path
-func (f *FsDrive) newFsObjectWithInfoErr(remote string, info *drive.File) (fs.Object, error) {
-	fs := &FsObjectDrive{
-		drive:  f,
+func (f *Fs) newFsObjectWithInfoErr(remote string, info *drive.File) (fs.Object, error) {
+	fs := &Object{
+		fs:     f,
 		remote: remote,
 	}
 	if info != nil {
@@ -306,7 +306,7 @@ func (f *FsDrive) newFsObjectWithInfoErr(remote string, info *drive.File) (fs.Ob
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsDrive) newFsObjectWithInfo(remote string, info *drive.File) fs.Object {
+func (f *Fs) newFsObjectWithInfo(remote string, info *drive.File) fs.Object {
 	fs, _ := f.newFsObjectWithInfoErr(remote, info)
 	// Errors have already been logged
 	return fs
@@ -315,12 +315,12 @@ func (f *FsDrive) newFsObjectWithInfo(remote string, info *drive.File) fs.Object
 // NewFsObject returns an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsDrive) NewFsObject(remote string) fs.Object {
+func (f *Fs) NewFsObject(remote string) fs.Object {
 	return f.newFsObjectWithInfo(remote, nil)
 }
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
-func (f *FsDrive) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err error) {
+func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
 	found, err = f.listAll(pathID, leaf, true, false, func(item *drive.File) bool {
 		if item.Title == leaf {
@@ -333,7 +333,7 @@ func (f *FsDrive) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, e
 }
 
 // CreateDir makes a directory with pathID as parent and name leaf
-func (f *FsDrive) CreateDir(pathID, leaf string) (newID string, err error) {
+func (f *Fs) CreateDir(pathID, leaf string) (newID string, err error) {
 	// fmt.Println("Making", path)
 	// Define the metadata for the directory we are going to create.
 	createInfo := &drive.File{
@@ -359,7 +359,7 @@ func (f *FsDrive) CreateDir(pathID, leaf string) (newID string, err error) {
 //
 // This fetches the minimum amount of stuff but does more API calls
 // which makes it slow
-func (f *FsDrive) listDirRecursive(dirID string, path string, out fs.ObjectsChan) error {
+func (f *Fs) listDirRecursive(dirID string, path string, out fs.ObjectsChan) error {
 	var subError error
 	// Make the API request
 	var wg sync.WaitGroup
@@ -407,7 +407,7 @@ func (f *FsDrive) listDirRecursive(dirID string, path string, out fs.ObjectsChan
 //
 // This is fast in terms of number of API calls, but slow in terms of
 // fetching more data than it needs
-func (f *FsDrive) listDirFull(dirID string, path string, out fs.ObjectsChan) error {
+func (f *Fs) listDirFull(dirID string, path string, out fs.ObjectsChan) error {
 	// Orphans waiting for their parent
 	orphans := make(map[string][]*drive.File)
 
@@ -469,7 +469,7 @@ func (f *FsDrive) listDirFull(dirID string, path string, out fs.ObjectsChan) err
 }
 
 // List walks the path returning a channel of FsObjects
-func (f *FsDrive) List() fs.ObjectsChan {
+func (f *Fs) List() fs.ObjectsChan {
 	out := make(fs.ObjectsChan, fs.Config.Checkers)
 	go func() {
 		defer close(out)
@@ -493,7 +493,7 @@ func (f *FsDrive) List() fs.ObjectsChan {
 }
 
 // ListDir walks the path returning a channel of directories
-func (f *FsDrive) ListDir() fs.DirChan {
+func (f *Fs) ListDir() fs.DirChan {
 	out := make(fs.DirChan, fs.Config.Checkers)
 	go func() {
 		defer close(out)
@@ -522,13 +522,13 @@ func (f *FsDrive) ListDir() fs.DirChan {
 }
 
 // Creates a drive.File info from the parameters passed in and a half
-// finished FsObjectDrive which must have setMetaData called on it
+// finished Object which must have setMetaData called on it
 //
 // Used to create new objects
-func (f *FsDrive) createFileInfo(remote string, modTime time.Time, size int64) (*FsObjectDrive, *drive.File, error) {
-	// Temporary FsObject under construction
-	o := &FsObjectDrive{
-		drive:  f,
+func (f *Fs) createFileInfo(remote string, modTime time.Time, size int64) (*Object, *drive.File, error) {
+	// Temporary Object under construction
+	o := &Object{
+		fs:     f,
 		remote: remote,
 		bytes:  size,
 	}
@@ -558,7 +558,7 @@ func (f *FsDrive) createFileInfo(remote string, modTime time.Time, size int64) (
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
+func (f *Fs) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
 	o, createInfo, err := f.createFileInfo(remote, modTime, size)
 	if err != nil {
 		return nil, err
@@ -587,14 +587,14 @@ func (f *FsDrive) Put(in io.Reader, remote string, modTime time.Time, size int64
 }
 
 // Mkdir creates the container if it doesn't exist
-func (f *FsDrive) Mkdir() error {
+func (f *Fs) Mkdir() error {
 	return f.dirCache.FindRoot(true)
 }
 
 // Rmdir deletes the container
 //
 // Returns an error if it isn't empty
-func (f *FsDrive) Rmdir() error {
+func (f *Fs) Rmdir() error {
 	err := f.dirCache.FindRoot(false)
 	if err != nil {
 		return err
@@ -629,7 +629,7 @@ func (f *FsDrive) Rmdir() error {
 }
 
 // Precision of the object storage system
-func (f *FsDrive) Precision() time.Duration {
+func (f *Fs) Precision() time.Duration {
 	return time.Millisecond
 }
 
@@ -642,8 +642,8 @@ func (f *FsDrive) Precision() time.Duration {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *FsDrive) Copy(src fs.Object, remote string) (fs.Object, error) {
-	srcObj, ok := src.(*FsObjectDrive)
+func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debug(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
@@ -655,8 +655,8 @@ func (f *FsDrive) Copy(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	var info *drive.File
-	err = o.drive.pacer.Call(func() (bool, error) {
-		info, err = o.drive.svc.Files.Copy(srcObj.id, createInfo).Do()
+	err = o.fs.pacer.Call(func() (bool, error) {
+		info, err = o.fs.svc.Files.Copy(srcObj.id, createInfo).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -672,7 +672,7 @@ func (f *FsDrive) Copy(src fs.Object, remote string) (fs.Object, error) {
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *FsDrive) Purge() error {
+func (f *Fs) Purge() error {
 	if f.root == "" {
 		return fmt.Errorf("Can't purge root directory")
 	}
@@ -704,8 +704,8 @@ func (f *FsDrive) Purge() error {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantMove
-func (f *FsDrive) Move(src fs.Object, remote string) (fs.Object, error) {
-	srcObj, ok := src.(*FsObjectDrive)
+func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debug(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
@@ -735,8 +735,8 @@ func (f *FsDrive) Move(src fs.Object, remote string) (fs.Object, error) {
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (f *FsDrive) DirMove(src fs.Fs) error {
-	srcFs, ok := src.(*FsDrive)
+func (f *Fs) DirMove(src fs.Fs) error {
+	srcFs, ok := src.(*Fs)
 	if !ok {
 		fs.Debug(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
@@ -771,12 +771,12 @@ func (f *FsDrive) DirMove(src fs.Fs) error {
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
-func (o *FsObjectDrive) Fs() fs.Fs {
-	return o.drive
+func (o *Object) Fs() fs.Fs {
+	return o.fs
 }
 
 // Return a string version
-func (o *FsObjectDrive) String() string {
+func (o *Object) String() string {
 	if o == nil {
 		return "<nil>"
 	}
@@ -784,22 +784,22 @@ func (o *FsObjectDrive) String() string {
 }
 
 // Remote returns the remote path
-func (o *FsObjectDrive) Remote() string {
+func (o *Object) Remote() string {
 	return o.remote
 }
 
 // Md5sum returns the Md5sum of an object returning a lowercase hex string
-func (o *FsObjectDrive) Md5sum() (string, error) {
+func (o *Object) Md5sum() (string, error) {
 	return o.md5sum, nil
 }
 
 // Size returns the size of an object in bytes
-func (o *FsObjectDrive) Size() int64 {
+func (o *Object) Size() int64 {
 	return o.bytes
 }
 
 // setMetaData sets the fs data from a drive.File
-func (o *FsObjectDrive) setMetaData(info *drive.File) {
+func (o *Object) setMetaData(info *drive.File) {
 	o.id = info.Id
 	o.url = info.DownloadUrl
 	o.md5sum = strings.ToLower(info.Md5Checksum)
@@ -808,17 +808,17 @@ func (o *FsObjectDrive) setMetaData(info *drive.File) {
 }
 
 // readMetaData gets the info if it hasn't already been fetched
-func (o *FsObjectDrive) readMetaData() (err error) {
+func (o *Object) readMetaData() (err error) {
 	if o.id != "" {
 		return nil
 	}
 
-	leaf, directoryID, err := o.drive.dirCache.FindPath(o.remote, false)
+	leaf, directoryID, err := o.fs.dirCache.FindPath(o.remote, false)
 	if err != nil {
 		return err
 	}
 
-	found, err := o.drive.listAll(directoryID, leaf, false, true, func(item *drive.File) bool {
+	found, err := o.fs.listAll(directoryID, leaf, false, true, func(item *drive.File) bool {
 		if item.Title == leaf {
 			o.setMetaData(item)
 			return true
@@ -840,7 +840,7 @@ func (o *FsObjectDrive) readMetaData() (err error) {
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
-func (o *FsObjectDrive) ModTime() time.Time {
+func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
 		fs.Log(o, "Failed to read metadata: %s", err)
@@ -855,7 +855,7 @@ func (o *FsObjectDrive) ModTime() time.Time {
 }
 
 // SetModTime sets the modification time of the drive fs object
-func (o *FsObjectDrive) SetModTime(modTime time.Time) {
+func (o *Object) SetModTime(modTime time.Time) {
 	err := o.readMetaData()
 	if err != nil {
 		fs.Stats.Error()
@@ -868,8 +868,8 @@ func (o *FsObjectDrive) SetModTime(modTime time.Time) {
 	}
 	// Set modified date
 	var info *drive.File
-	err = o.drive.pacer.Call(func() (bool, error) {
-		info, err = o.drive.svc.Files.Update(o.id, updateInfo).SetModifiedDate(true).Do()
+	err = o.fs.pacer.Call(func() (bool, error) {
+		info, err = o.fs.svc.Files.Update(o.id, updateInfo).SetModifiedDate(true).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -882,12 +882,12 @@ func (o *FsObjectDrive) SetModTime(modTime time.Time) {
 }
 
 // Storable returns a boolean as to whether this object is storable
-func (o *FsObjectDrive) Storable() bool {
+func (o *Object) Storable() bool {
 	return true
 }
 
 // Open an object for read
-func (o *FsObjectDrive) Open() (in io.ReadCloser, err error) {
+func (o *Object) Open() (in io.ReadCloser, err error) {
 	if o.url == "" {
 		return nil, fmt.Errorf("Forbidden to download - check sharing permission")
 	}
@@ -897,8 +897,8 @@ func (o *FsObjectDrive) Open() (in io.ReadCloser, err error) {
 	}
 	req.Header.Set("User-Agent", fs.UserAgent)
 	var res *http.Response
-	err = o.drive.pacer.Call(func() (bool, error) {
-		res, err = o.drive.client.Do(req)
+	err = o.fs.pacer.Call(func() (bool, error) {
+		res, err = o.fs.client.Do(req)
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -916,7 +916,7 @@ func (o *FsObjectDrive) Open() (in io.ReadCloser, err error) {
 // Copy the reader into the object updating modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *FsObjectDrive) Update(in io.Reader, modTime time.Time, size int64) error {
+func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
 	updateInfo := &drive.File{
 		Id:           o.id,
 		ModifiedDate: modTime.Format(timeFormatOut),
@@ -927,8 +927,8 @@ func (o *FsObjectDrive) Update(in io.Reader, modTime time.Time, size int64) erro
 	var info *drive.File
 	if size == 0 || size < int64(driveUploadCutoff) {
 		// Don't retry, return a retry error instead
-		err = o.drive.pacer.CallNoRetry(func() (bool, error) {
-			info, err = o.drive.svc.Files.Update(updateInfo.Id, updateInfo).SetModifiedDate(true).Media(in).Do()
+		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
+			info, err = o.fs.svc.Files.Update(updateInfo.Id, updateInfo).SetModifiedDate(true).Media(in).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
@@ -936,7 +936,7 @@ func (o *FsObjectDrive) Update(in io.Reader, modTime time.Time, size int64) erro
 		}
 	} else {
 		// Upload the file in chunks
-		info, err = o.drive.Upload(in, size, fs.MimeType(o), updateInfo, o.remote)
+		info, err = o.fs.Upload(in, size, fs.MimeType(o), updateInfo, o.remote)
 		if err != nil {
 			return err
 		}
@@ -946,13 +946,13 @@ func (o *FsObjectDrive) Update(in io.Reader, modTime time.Time, size int64) erro
 }
 
 // Remove an object
-func (o *FsObjectDrive) Remove() error {
+func (o *Object) Remove() error {
 	var err error
-	err = o.drive.pacer.Call(func() (bool, error) {
+	err = o.fs.pacer.Call(func() (bool, error) {
 		if *driveUseTrash {
-			_, err = o.drive.svc.Files.Trash(o.id).Do()
+			_, err = o.fs.svc.Files.Trash(o.id).Do()
 		} else {
-			err = o.drive.svc.Files.Delete(o.id).Do()
+			err = o.fs.svc.Files.Delete(o.id).Do()
 		}
 		return shouldRetry(err)
 	})
@@ -961,10 +961,10 @@ func (o *FsObjectDrive) Remove() error {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs       = (*FsDrive)(nil)
-	_ fs.Purger   = (*FsDrive)(nil)
-	_ fs.Copier   = (*FsDrive)(nil)
-	_ fs.Mover    = (*FsDrive)(nil)
-	_ fs.DirMover = (*FsDrive)(nil)
-	_ fs.Object   = (*FsObjectDrive)(nil)
+	_ fs.Fs       = (*Fs)(nil)
+	_ fs.Purger   = (*Fs)(nil)
+	_ fs.Copier   = (*Fs)(nil)
+	_ fs.Mover    = (*Fs)(nil)
+	_ fs.DirMover = (*Fs)(nil)
+	_ fs.Object   = (*Object)(nil)
 )

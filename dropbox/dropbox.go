@@ -92,8 +92,8 @@ func configHelper(name string) {
 	}
 }
 
-// FsDropbox represents a remote dropbox server
-type FsDropbox struct {
+// Fs represents a remote dropbox server
+type Fs struct {
 	name           string           // name of this remote
 	db             *dropbox.Dropbox // the connection to the dropbox server
 	root           string           // the path we are working on
@@ -101,29 +101,29 @@ type FsDropbox struct {
 	slashRootSlash string           // root with "/" prefix and postfix, lowercase
 }
 
-// FsObjectDropbox describes a dropbox object
-type FsObjectDropbox struct {
-	dropbox     *FsDropbox // what this object is part of
-	remote      string     // The remote path
-	bytes       int64      // size of the object
-	modTime     time.Time  // time it was last modified
-	hasMetadata bool       // metadata is valid
+// Object describes a dropbox object
+type Object struct {
+	fs          *Fs       // what this object is part of
+	remote      string    // The remote path
+	bytes       int64     // size of the object
+	modTime     time.Time // time it was last modified
+	hasMetadata bool      // metadata is valid
 }
 
 // ------------------------------------------------------------
 
 // Name of the remote (as passed into NewFs)
-func (f *FsDropbox) Name() string {
+func (f *Fs) Name() string {
 	return f.name
 }
 
 // Root of the remote (as passed into NewFs)
-func (f *FsDropbox) Root() string {
+func (f *Fs) Root() string {
 	return f.root
 }
 
-// String converts this FsDropbox to a string
-func (f *FsDropbox) String() string {
+// String converts this Fs to a string
+func (f *Fs) String() string {
 	return fmt.Sprintf("Dropbox root '%s'", f.root)
 }
 
@@ -144,7 +144,7 @@ func newDropbox(name string) (*dropbox.Dropbox, error) {
 	return db, err
 }
 
-// NewFs contstructs an FsDropbox from the path, container:path
+// NewFs contstructs an Fs from the path, container:path
 func NewFs(name, root string) (fs.Fs, error) {
 	if uploadChunkSize > maxUploadChunkSize {
 		return nil, fmt.Errorf("Chunk size too big, must be < %v", maxUploadChunkSize)
@@ -153,7 +153,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	f := &FsDropbox{
+	f := &Fs{
 		name: name,
 		db:   db,
 	}
@@ -186,7 +186,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 }
 
 // Sets root in f
-func (f *FsDropbox) setRoot(root string) {
+func (f *Fs) setRoot(root string) {
 	f.root = strings.Trim(root, "/")
 	lowerCaseRoot := strings.ToLower(f.root)
 
@@ -200,10 +200,10 @@ func (f *FsDropbox) setRoot(root string) {
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsDropbox) newFsObjectWithInfo(remote string, info *dropbox.Entry) fs.Object {
-	o := &FsObjectDropbox{
-		dropbox: f,
-		remote:  remote,
+func (f *Fs) newFsObjectWithInfo(remote string, info *dropbox.Entry) fs.Object {
+	o := &Object{
+		fs:     f,
+		remote: remote,
 	}
 	if info != nil {
 		o.setMetadataFromEntry(info)
@@ -220,12 +220,12 @@ func (f *FsDropbox) newFsObjectWithInfo(remote string, info *dropbox.Entry) fs.O
 // NewFsObject returns an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsDropbox) NewFsObject(remote string) fs.Object {
+func (f *Fs) NewFsObject(remote string) fs.Object {
 	return f.newFsObjectWithInfo(remote, nil)
 }
 
 // Strips the root off path and returns it
-func (f *FsDropbox) stripRoot(path string) *string {
+func (f *Fs) stripRoot(path string) *string {
 	lowercase := strings.ToLower(path)
 
 	if !strings.HasPrefix(lowercase, f.slashRootSlash) {
@@ -239,7 +239,7 @@ func (f *FsDropbox) stripRoot(path string) *string {
 }
 
 // Walk the root returning a channel of FsObjects
-func (f *FsDropbox) list(out fs.ObjectsChan) {
+func (f *Fs) list(out fs.ObjectsChan) {
 	// Track path component case, it could be different for entries coming from DropBox API
 	// See https://www.dropboxforum.com/hc/communities/public/questions/201665409-Wrong-character-case-of-folder-name-when-calling-listFolder-using-Sync-API?locale=en-us
 	// and https://github.com/ncw/rclone/issues/53
@@ -318,7 +318,7 @@ func (f *FsDropbox) list(out fs.ObjectsChan) {
 }
 
 // List walks the path returning a channel of FsObjects
-func (f *FsDropbox) List() fs.ObjectsChan {
+func (f *Fs) List() fs.ObjectsChan {
 	out := make(fs.ObjectsChan, fs.Config.Checkers)
 	go func() {
 		defer close(out)
@@ -328,7 +328,7 @@ func (f *FsDropbox) List() fs.ObjectsChan {
 }
 
 // ListDir walks the path returning a channel of FsObjects
-func (f *FsDropbox) ListDir() fs.DirChan {
+func (f *Fs) ListDir() fs.DirChan {
 	out := make(fs.DirChan, fs.Config.Checkers)
 	go func() {
 		defer close(out)
@@ -379,14 +379,17 @@ func (rc *readCloser) Close() error {
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *FsDropbox) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
-	// Temporary FsObject under construction
-	o := &FsObjectDropbox{dropbox: f, remote: remote}
+func (f *Fs) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
+	// Temporary Object under construction
+	o := &Object{
+		fs:     f,
+		remote: remote,
+	}
 	return o, o.Update(in, modTime, size)
 }
 
 // Mkdir creates the container if it doesn't exist
-func (f *FsDropbox) Mkdir() error {
+func (f *Fs) Mkdir() error {
 	entry, err := f.db.Metadata(f.slashRoot, false, false, "", "", metadataLimit)
 	if err == nil {
 		if entry.IsDir {
@@ -401,7 +404,7 @@ func (f *FsDropbox) Mkdir() error {
 // Rmdir deletes the container
 //
 // Returns an error if it isn't empty
-func (f *FsDropbox) Rmdir() error {
+func (f *Fs) Rmdir() error {
 	entry, err := f.db.Metadata(f.slashRoot, true, false, "", "", 16)
 	if err != nil {
 		return err
@@ -413,7 +416,7 @@ func (f *FsDropbox) Rmdir() error {
 }
 
 // Precision returns the precision
-func (f *FsDropbox) Precision() time.Duration {
+func (f *Fs) Precision() time.Duration {
 	return fs.ModTimeNotSupported
 }
 
@@ -426,15 +429,18 @@ func (f *FsDropbox) Precision() time.Duration {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *FsDropbox) Copy(src fs.Object, remote string) (fs.Object, error) {
-	srcObj, ok := src.(*FsObjectDropbox)
+func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debug(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 
-	// Temporary FsObject under construction
-	dstObj := &FsObjectDropbox{dropbox: f, remote: remote}
+	// Temporary Object under construction
+	dstObj := &Object{
+		fs:     f,
+		remote: remote,
+	}
 
 	srcPath := srcObj.remotePath()
 	dstPath := dstObj.remotePath()
@@ -451,7 +457,7 @@ func (f *FsDropbox) Copy(src fs.Object, remote string) (fs.Object, error) {
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *FsDropbox) Purge() error {
+func (f *Fs) Purge() error {
 	// Let dropbox delete the filesystem tree
 	_, err := f.db.Delete(f.slashRoot)
 	return err
@@ -466,15 +472,18 @@ func (f *FsDropbox) Purge() error {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantMove
-func (f *FsDropbox) Move(src fs.Object, remote string) (fs.Object, error) {
-	srcObj, ok := src.(*FsObjectDropbox)
+func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debug(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
-	// Temporary FsObject under construction
-	dstObj := &FsObjectDropbox{dropbox: f, remote: remote}
+	// Temporary Object under construction
+	dstObj := &Object{
+		fs:     f,
+		remote: remote,
+	}
 
 	srcPath := srcObj.remotePath()
 	dstPath := dstObj.remotePath()
@@ -493,8 +502,8 @@ func (f *FsDropbox) Move(src fs.Object, remote string) (fs.Object, error) {
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (f *FsDropbox) DirMove(src fs.Fs) error {
-	srcFs, ok := src.(*FsDropbox)
+func (f *Fs) DirMove(src fs.Fs) error {
+	srcFs, ok := src.(*Fs)
 	if !ok {
 		fs.Debug(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
@@ -517,12 +526,12 @@ func (f *FsDropbox) DirMove(src fs.Fs) error {
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
-func (o *FsObjectDropbox) Fs() fs.Fs {
-	return o.dropbox
+func (o *Object) Fs() fs.Fs {
+	return o.fs
 }
 
 // Return a string version
-func (o *FsObjectDropbox) String() string {
+func (o *Object) String() string {
 	if o == nil {
 		return "<nil>"
 	}
@@ -530,32 +539,32 @@ func (o *FsObjectDropbox) String() string {
 }
 
 // Remote returns the remote path
-func (o *FsObjectDropbox) Remote() string {
+func (o *Object) Remote() string {
 	return o.remote
 }
 
 // Md5sum returns the Md5sum of an object returning a lowercase hex string
-func (o *FsObjectDropbox) Md5sum() (string, error) {
+func (o *Object) Md5sum() (string, error) {
 	return "", nil
 }
 
 // Size returns the size of an object in bytes
-func (o *FsObjectDropbox) Size() int64 {
+func (o *Object) Size() int64 {
 	return o.bytes
 }
 
 // setMetadataFromEntry sets the fs data from a dropbox.Entry
 //
 // This isn't a complete set of metadata and has an inacurate date
-func (o *FsObjectDropbox) setMetadataFromEntry(info *dropbox.Entry) {
+func (o *Object) setMetadataFromEntry(info *dropbox.Entry) {
 	o.bytes = info.Bytes
 	o.modTime = time.Time(info.ClientMtime)
 	o.hasMetadata = true
 }
 
 // Reads the entry from dropbox
-func (o *FsObjectDropbox) readEntry() (*dropbox.Entry, error) {
-	entry, err := o.dropbox.db.Metadata(o.remotePath(), false, false, "", "", metadataLimit)
+func (o *Object) readEntry() (*dropbox.Entry, error) {
+	entry, err := o.fs.db.Metadata(o.remotePath(), false, false, "", "", metadataLimit)
 	if err != nil {
 		fs.Debug(o, "Error reading file: %s", err)
 		return nil, fmt.Errorf("Error reading file: %s", err)
@@ -564,7 +573,7 @@ func (o *FsObjectDropbox) readEntry() (*dropbox.Entry, error) {
 }
 
 // Read entry if not set and set metadata from it
-func (o *FsObjectDropbox) readEntryAndSetMetadata() error {
+func (o *Object) readEntryAndSetMetadata() error {
 	// Last resort set time from client
 	if !o.modTime.IsZero() {
 		return nil
@@ -578,8 +587,8 @@ func (o *FsObjectDropbox) readEntryAndSetMetadata() error {
 }
 
 // Returns the remote path for the object
-func (o *FsObjectDropbox) remotePath() string {
-	return o.dropbox.slashRootSlash + o.remote
+func (o *Object) remotePath() string {
+	return o.fs.slashRootSlash + o.remote
 }
 
 // Returns the key for the metadata database for a given path
@@ -592,12 +601,12 @@ func metadataKey(path string) string {
 }
 
 // Returns the key for the metadata database
-func (o *FsObjectDropbox) metadataKey() string {
+func (o *Object) metadataKey() string {
 	return metadataKey(o.remotePath())
 }
 
 // readMetaData gets the info if it hasn't already been fetched
-func (o *FsObjectDropbox) readMetaData() (err error) {
+func (o *Object) readMetaData() (err error) {
 	if o.hasMetadata {
 		return nil
 	}
@@ -609,7 +618,7 @@ func (o *FsObjectDropbox) readMetaData() (err error) {
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
-func (o *FsObjectDropbox) ModTime() time.Time {
+func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
 		fs.Log(o, "Failed to read metadata: %s", err)
@@ -621,19 +630,19 @@ func (o *FsObjectDropbox) ModTime() time.Time {
 // SetModTime sets the modification time of the local fs object
 //
 // Commits the datastore
-func (o *FsObjectDropbox) SetModTime(modTime time.Time) {
+func (o *Object) SetModTime(modTime time.Time) {
 	// FIXME not implemented
 	return
 }
 
 // Storable returns whether this object is storable
-func (o *FsObjectDropbox) Storable() bool {
+func (o *Object) Storable() bool {
 	return true
 }
 
 // Open an object for read
-func (o *FsObjectDropbox) Open() (in io.ReadCloser, err error) {
-	in, _, err = o.dropbox.db.Download(o.remotePath(), "", 0)
+func (o *Object) Open() (in io.ReadCloser, err error) {
+	in, _, err = o.fs.db.Download(o.remotePath(), "", 0)
 	return
 }
 
@@ -642,13 +651,13 @@ func (o *FsObjectDropbox) Open() (in io.ReadCloser, err error) {
 // Copy the reader into the object updating modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *FsObjectDropbox) Update(in io.Reader, modTime time.Time, size int64) error {
+func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
 	remote := o.remotePath()
 	if ignoredFiles.MatchString(remote) {
 		fs.ErrorLog(o, "File name disallowed - not uploading")
 		return nil
 	}
-	entry, err := o.dropbox.db.UploadByChunk(ioutil.NopCloser(in), int(uploadChunkSize), remote, true, "")
+	entry, err := o.fs.db.UploadByChunk(ioutil.NopCloser(in), int(uploadChunkSize), remote, true, "")
 	if err != nil {
 		return fmt.Errorf("Upload failed: %s", err)
 	}
@@ -657,17 +666,17 @@ func (o *FsObjectDropbox) Update(in io.Reader, modTime time.Time, size int64) er
 }
 
 // Remove an object
-func (o *FsObjectDropbox) Remove() error {
-	_, err := o.dropbox.db.Delete(o.remotePath())
+func (o *Object) Remove() error {
+	_, err := o.fs.db.Delete(o.remotePath())
 	return err
 }
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs       = (*FsDropbox)(nil)
-	_ fs.Copier   = (*FsDropbox)(nil)
-	_ fs.Purger   = (*FsDropbox)(nil)
-	_ fs.Mover    = (*FsDropbox)(nil)
-	_ fs.DirMover = (*FsDropbox)(nil)
-	_ fs.Object   = (*FsObjectDropbox)(nil)
+	_ fs.Fs       = (*Fs)(nil)
+	_ fs.Copier   = (*Fs)(nil)
+	_ fs.Purger   = (*Fs)(nil)
+	_ fs.Mover    = (*Fs)(nil)
+	_ fs.DirMover = (*Fs)(nil)
+	_ fs.Object   = (*Object)(nil)
 )

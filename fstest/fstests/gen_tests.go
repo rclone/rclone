@@ -45,7 +45,6 @@ type Data struct {
 	FsName      string
 	UpperFsName string
 	TestName    string
-	ObjectName  string
 	Fns         []string
 }
 
@@ -65,7 +64,7 @@ import (
 )
 
 func init() {
-	fstests.NilObject = fs.Object((*{{ .FsName }}.{{ .ObjectName }})(nil))
+	fstests.NilObject = fs.Object((*{{ .FsName }}.Object)(nil))
 	fstests.RemoteName = "{{ .TestName }}"
 }
 
@@ -75,7 +74,7 @@ func init() {
 `
 
 // Generate test file piping it through gofmt
-func generateTestProgram(t *template.Template, fns []string, Fsname, ObjectName string) {
+func generateTestProgram(t *template.Template, fns []string, Fsname string) {
 	fsname := strings.ToLower(Fsname)
 	TestName := "Test" + Fsname + ":"
 	outfile := "../../" + fsname + "/" + fsname + "_test.go"
@@ -89,7 +88,6 @@ func generateTestProgram(t *template.Template, fns []string, Fsname, ObjectName 
 		FsName:      fsname,
 		UpperFsName: Fsname,
 		TestName:    TestName,
-		ObjectName:  ObjectName,
 		Fns:         fns,
 	}
 
@@ -126,13 +124,13 @@ func generateTestProgram(t *template.Template, fns []string, Fsname, ObjectName 
 func main() {
 	fns := findTestFunctions()
 	t := template.Must(template.New("main").Parse(testProgram))
-	generateTestProgram(t, fns, "Local", "FsObjectLocal")
-	generateTestProgram(t, fns, "Swift", "FsObjectSwift")
-	generateTestProgram(t, fns, "S3", "FsObjectS3")
-	generateTestProgram(t, fns, "Drive", "FsObjectDrive")
-	generateTestProgram(t, fns, "GoogleCloudStorage", "FsObjectStorage")
-	generateTestProgram(t, fns, "Dropbox", "FsObjectDropbox")
-	generateTestProgram(t, fns, "AmazonCloudDrive", "FsObjectAcd")
-	generateTestProgram(t, fns, "OneDrive", "Object")
+	generateTestProgram(t, fns, "Local")
+	generateTestProgram(t, fns, "Swift")
+	generateTestProgram(t, fns, "S3")
+	generateTestProgram(t, fns, "Drive")
+	generateTestProgram(t, fns, "GoogleCloudStorage")
+	generateTestProgram(t, fns, "Dropbox")
+	generateTestProgram(t, fns, "AmazonCloudDrive")
+	generateTestProgram(t, fns, "OneDrive")
 	log.Printf("Done")
 }

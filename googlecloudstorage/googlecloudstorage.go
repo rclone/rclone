@@ -118,8 +118,8 @@ func init() {
 	})
 }
 
-// FsStorage represents a remote storage server
-type FsStorage struct {
+// Fs represents a remote storage server
+type Fs struct {
 	name          string           // name of this remote
 	svc           *storage.Service // the connection to the storage server
 	client        *http.Client     // authorized client
@@ -130,35 +130,35 @@ type FsStorage struct {
 	bucketAcl     string           // used when creating new buckets
 }
 
-// FsObjectStorage describes a storage object
+// Object describes a storage object
 //
 // Will definitely have info but maybe not meta
-type FsObjectStorage struct {
-	storage *FsStorage // what this object is part of
-	remote  string     // The remote path
-	url     string     // download path
-	md5sum  string     // The MD5Sum of the object
-	bytes   int64      // Bytes in the object
-	modTime time.Time  // Modified time of the object
+type Object struct {
+	fs      *Fs       // what this object is part of
+	remote  string    // The remote path
+	url     string    // download path
+	md5sum  string    // The MD5Sum of the object
+	bytes   int64     // Bytes in the object
+	modTime time.Time // Modified time of the object
 }
 
 // ------------------------------------------------------------
 
 // Name of the remote (as passed into NewFs)
-func (f *FsStorage) Name() string {
+func (f *Fs) Name() string {
 	return f.name
 }
 
 // Root of the remote (as passed into NewFs)
-func (f *FsStorage) Root() string {
+func (f *Fs) Root() string {
 	if f.root == "" {
 		return f.bucket
 	}
 	return f.bucket + "/" + f.root
 }
 
-// String converts this FsStorage to a string
-func (f *FsStorage) String() string {
+// String converts this Fs to a string
+func (f *Fs) String() string {
 	if f.root == "" {
 		return fmt.Sprintf("Storage bucket %s", f.bucket)
 	}
@@ -180,7 +180,7 @@ func parsePath(path string) (bucket, directory string, err error) {
 	return
 }
 
-// NewFs contstructs an FsStorage from the path, bucket:path
+// NewFs contstructs an Fs from the path, bucket:path
 func NewFs(name, root string) (fs.Fs, error) {
 	oAuthClient, err := oauthutil.NewClient(name, storageConfig)
 	if err != nil {
@@ -192,7 +192,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return nil, err
 	}
 
-	f := &FsStorage{
+	f := &Fs{
 		name:          name,
 		bucket:        bucket,
 		root:          directory,
@@ -237,10 +237,10 @@ func NewFs(name, root string) (fs.Fs, error) {
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsStorage) newFsObjectWithInfo(remote string, info *storage.Object) fs.Object {
-	o := &FsObjectStorage{
-		storage: f,
-		remote:  remote,
+func (f *Fs) newFsObjectWithInfo(remote string, info *storage.Object) fs.Object {
+	o := &Object{
+		fs:     f,
+		remote: remote,
 	}
 	if info != nil {
 		o.setMetaData(info)
@@ -257,14 +257,14 @@ func (f *FsStorage) newFsObjectWithInfo(remote string, info *storage.Object) fs.
 // NewFsObject returns an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsStorage) NewFsObject(remote string) fs.Object {
+func (f *Fs) NewFsObject(remote string) fs.Object {
 	return f.newFsObjectWithInfo(remote, nil)
 }
 
 // list the objects into the function supplied
 //
 // If directories is set it only sends directories
-func (f *FsStorage) list(directories bool, fn func(string, *storage.Object)) {
+func (f *Fs) list(directories bool, fn func(string, *storage.Object)) {
 	list := f.svc.Objects.List(f.bucket).Prefix(f.root).MaxResults(listChunks)
 	if directories {
 		list = list.Delimiter("/")
@@ -303,7 +303,7 @@ func (f *FsStorage) list(directories bool, fn func(string, *storage.Object)) {
 }
 
 // List walks the path returning a channel of FsObjects
-func (f *FsStorage) List() fs.ObjectsChan {
+func (f *Fs) List() fs.ObjectsChan {
 	out := make(fs.ObjectsChan, fs.Config.Checkers)
 	if f.bucket == "" {
 		// Return no objects at top level list
@@ -325,7 +325,7 @@ func (f *FsStorage) List() fs.ObjectsChan {
 }
 
 // ListDir lists the buckets
-func (f *FsStorage) ListDir() fs.DirChan {
+func (f *Fs) ListDir() fs.DirChan {
 	out := make(fs.DirChan, fs.Config.Checkers)
 	if f.bucket == "" {
 		// List the buckets
@@ -379,14 +379,17 @@ func (f *FsStorage) ListDir() fs.DirChan {
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *FsStorage) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
-	// Temporary FsObject under construction
-	o := &FsObjectStorage{storage: f, remote: remote}
+func (f *Fs) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
+	// Temporary Object under construction
+	o := &Object{
+		fs:     f,
+		remote: remote,
+	}
 	return o, o.Update(in, modTime, size)
 }
 
 // Mkdir creates the bucket if it doesn't exist
-func (f *FsStorage) Mkdir() error {
+func (f *Fs) Mkdir() error {
 	_, err := f.svc.Buckets.Get(f.bucket).Do()
 	if err == nil {
 		// Bucket already exists
@@ -408,12 +411,12 @@ func (f *FsStorage) Mkdir() error {
 //
 // Returns an error if it isn't empty: Error 409: The bucket you tried
 // to delete was not empty.
-func (f *FsStorage) Rmdir() error {
+func (f *Fs) Rmdir() error {
 	return f.svc.Buckets.Delete(f.bucket).Do()
 }
 
 // Precision returns the precision
-func (f *FsStorage) Precision() time.Duration {
+func (f *Fs) Precision() time.Duration {
 	return time.Nanosecond
 }
 
@@ -426,18 +429,21 @@ func (f *FsStorage) Precision() time.Duration {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *FsStorage) Copy(src fs.Object, remote string) (fs.Object, error) {
-	srcObj, ok := src.(*FsObjectStorage)
+func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debug(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 
-	// Temporary FsObject under construction
-	dstObj := &FsObjectStorage{storage: f, remote: remote}
+	// Temporary Object under construction
+	dstObj := &Object{
+		fs:     f,
+		remote: remote,
+	}
 
-	srcBucket := srcObj.storage.bucket
-	srcObject := srcObj.storage.root + srcObj.remote
+	srcBucket := srcObj.fs.bucket
+	srcObject := srcObj.fs.root + srcObj.remote
 	dstBucket := f.bucket
 	dstObject := f.root + remote
 	newObject, err := f.svc.Objects.Copy(srcBucket, srcObject, dstBucket, dstObject, nil).Do()
@@ -452,12 +458,12 @@ func (f *FsStorage) Copy(src fs.Object, remote string) (fs.Object, error) {
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
-func (o *FsObjectStorage) Fs() fs.Fs {
-	return o.storage
+func (o *Object) Fs() fs.Fs {
+	return o.fs
 }
 
 // Return a string version
-func (o *FsObjectStorage) String() string {
+func (o *Object) String() string {
 	if o == nil {
 		return "<nil>"
 	}
@@ -465,22 +471,22 @@ func (o *FsObjectStorage) String() string {
 }
 
 // Remote returns the remote path
-func (o *FsObjectStorage) Remote() string {
+func (o *Object) Remote() string {
 	return o.remote
 }
 
 // Md5sum returns the Md5sum of an object returning a lowercase hex string
-func (o *FsObjectStorage) Md5sum() (string, error) {
+func (o *Object) Md5sum() (string, error) {
 	return o.md5sum, nil
 }
 
 // Size returns the size of an object in bytes
-func (o *FsObjectStorage) Size() int64 {
+func (o *Object) Size() int64 {
 	return o.bytes
 }
 
 // setMetaData sets the fs data from a storage.Object
-func (o *FsObjectStorage) setMetaData(info *storage.Object) {
+func (o *Object) setMetaData(info *storage.Object) {
 	o.url = info.MediaLink
 	o.bytes = int64(info.Size)
 
@@ -515,11 +521,11 @@ func (o *FsObjectStorage) setMetaData(info *storage.Object) {
 // readMetaData gets the metadata if it hasn't already been fetched
 //
 // it also sets the info
-func (o *FsObjectStorage) readMetaData() (err error) {
+func (o *Object) readMetaData() (err error) {
 	if !o.modTime.IsZero() {
 		return nil
 	}
-	object, err := o.storage.svc.Objects.Get(o.storage.bucket, o.storage.root+o.remote).Do()
+	object, err := o.fs.svc.Objects.Get(o.fs.bucket, o.fs.root+o.remote).Do()
 	if err != nil {
 		fs.Debug(o, "Failed to read info: %s", err)
 		return err
@@ -532,7 +538,7 @@ func (o *FsObjectStorage) readMetaData() (err error) {
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
-func (o *FsObjectStorage) ModTime() time.Time {
+func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
 		// fs.Log(o, "Failed to read metadata: %s", err)
@@ -549,14 +555,14 @@ func metadataFromModTime(modTime time.Time) map[string]string {
 }
 
 // SetModTime sets the modification time of the local fs object
-func (o *FsObjectStorage) SetModTime(modTime time.Time) {
+func (o *Object) SetModTime(modTime time.Time) {
 	// This only adds metadata so will perserve other metadata
 	object := storage.Object{
-		Bucket:   o.storage.bucket,
-		Name:     o.storage.root + o.remote,
+		Bucket:   o.fs.bucket,
+		Name:     o.fs.root + o.remote,
 		Metadata: metadataFromModTime(modTime),
 	}
-	newObject, err := o.storage.svc.Objects.Patch(o.storage.bucket, o.storage.root+o.remote, &object).Do()
+	newObject, err := o.fs.svc.Objects.Patch(o.fs.bucket, o.fs.root+o.remote, &object).Do()
 	if err != nil {
 		fs.Stats.Error()
 		fs.ErrorLog(o, "Failed to update remote mtime: %s", err)
@@ -565,12 +571,12 @@ func (o *FsObjectStorage) SetModTime(modTime time.Time) {
 }
 
 // Storable returns a boolean as to whether this object is storable
-func (o *FsObjectStorage) Storable() bool {
+func (o *Object) Storable() bool {
 	return true
 }
 
 // Open an object for read
-func (o *FsObjectStorage) Open() (in io.ReadCloser, err error) {
+func (o *Object) Open() (in io.ReadCloser, err error) {
 	// This is slightly complicated by Go here insisting on
 	// decoding the %2F in URLs into / which is legal in http, but
 	// unfortunately not what the storage server wants.
@@ -586,7 +592,7 @@ func (o *FsObjectStorage) Open() (in io.ReadCloser, err error) {
 	// alter any hex-escaped characters
 	googleapi.SetOpaque(req.URL)
 	req.Header.Set("User-Agent", fs.UserAgent)
-	res, err := o.storage.client.Do(req)
+	res, err := o.fs.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -600,16 +606,16 @@ func (o *FsObjectStorage) Open() (in io.ReadCloser, err error) {
 // Update the object with the contents of the io.Reader, modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *FsObjectStorage) Update(in io.Reader, modTime time.Time, size int64) error {
+func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
 	object := storage.Object{
-		Bucket:      o.storage.bucket,
-		Name:        o.storage.root + o.remote,
+		Bucket:      o.fs.bucket,
+		Name:        o.fs.root + o.remote,
 		ContentType: fs.MimeType(o),
 		Size:        uint64(size),
 		Updated:     modTime.Format(timeFormatOut), // Doesn't get set
 		Metadata:    metadataFromModTime(modTime),
 	}
-	newObject, err := o.storage.svc.Objects.Insert(o.storage.bucket, &object).Media(in).Name(object.Name).PredefinedAcl(o.storage.objectAcl).Do()
+	newObject, err := o.fs.svc.Objects.Insert(o.fs.bucket, &object).Media(in).Name(object.Name).PredefinedAcl(o.fs.objectAcl).Do()
 	if err != nil {
 		return err
 	}
@@ -619,11 +625,13 @@ func (o *FsObjectStorage) Update(in io.Reader, modTime time.Time, size int64) er
 }
 
 // Remove an object
-func (o *FsObjectStorage) Remove() error {
-	return o.storage.svc.Objects.Delete(o.storage.bucket, o.storage.root+o.remote).Do()
+func (o *Object) Remove() error {
+	return o.fs.svc.Objects.Delete(o.fs.bucket, o.fs.root+o.remote).Do()
 }
 
 // Check the interfaces are satisfied
-var _ fs.Fs = &FsStorage{}
-var _ fs.Copier = &FsStorage{}
-var _ fs.Object = &FsObjectStorage{}
+var (
+	_ fs.Fs     = &Fs{}
+	_ fs.Copier = &Fs{}
+	_ fs.Object = &Object{}
+)

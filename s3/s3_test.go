@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	fstests.NilObject = fs.Object((*s3.FsObjectS3)(nil))
+	fstests.NilObject = fs.Object((*s3.Object)(nil))
 	fstests.RemoteName = "TestS3:"
 }
 

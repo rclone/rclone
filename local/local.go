@@ -28,8 +28,8 @@ func init() {
 	})
 }
 
-// FsLocal represents a local filesystem rooted at root
-type FsLocal struct {
+// Fs represents a local filesystem rooted at root
+type Fs struct {
 	name        string              // the name of the remote
 	root        string              // The root directory
 	precisionOk sync.Once           // Whether we need to read the precision
@@ -37,9 +37,9 @@ type FsLocal struct {
 	warned      map[string]struct{} // whether we have warned about this string
 }
 
-// FsObjectLocal represents a local filesystem object
-type FsObjectLocal struct {
-	local  *FsLocal    // The Fs this object is part of
+// Object represents a local filesystem object
+type Object struct {
+	fs     *Fs         // The Fs this object is part of
 	remote string      // The remote path
 	path   string      // The local path
 	info   os.FileInfo // Interface for file info (always present)
@@ -48,11 +48,11 @@ type FsObjectLocal struct {
 
 // ------------------------------------------------------------
 
-// NewFs constructs an FsLocal from the path
+// NewFs constructs an Fs from the path
 func NewFs(name, root string) (fs.Fs, error) {
 	var err error
 
-	f := &FsLocal{
+	f := &Fs{
 		name:   name,
 		warned: make(map[string]struct{}),
 	}
@@ -72,31 +72,35 @@ func NewFs(name, root string) (fs.Fs, error) {
 }
 
 // Name of the remote (as passed into NewFs)
-func (f *FsLocal) Name() string {
+func (f *Fs) Name() string {
 	return f.name
 }
 
 // Root of the remote (as passed into NewFs)
-func (f *FsLocal) Root() string {
+func (f *Fs) Root() string {
 	return f.root
 }
 
-// String converts this FsLocal to a string
-func (f *FsLocal) String() string {
+// String converts this Fs to a string
+func (f *Fs) String() string {
 	return fmt.Sprintf("Local file system at %s", f.root)
 }
 
-// newFsObject makes a half completed FsObjectLocal
-func (f *FsLocal) newFsObject(remote string) *FsObjectLocal {
+// newFsObject makes a half completed Object
+func (f *Fs) newFsObject(remote string) *Object {
 	remote = filepath.ToSlash(remote)
 	dstPath := filterPath(filepath.Join(f.root, f.cleanUtf8(remote)))
-	return &FsObjectLocal{local: f, remote: remote, path: dstPath}
+	return &Object{
+		fs:     f,
+		remote: remote,
+		path:   dstPath,
+	}
 }
 
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsLocal) newFsObjectWithInfo(remote string, info os.FileInfo) fs.Object {
+func (f *Fs) newFsObjectWithInfo(remote string, info os.FileInfo) fs.Object {
 	o := f.newFsObject(remote)
 	if info != nil {
 		o.info = info
@@ -113,14 +117,14 @@ func (f *FsLocal) newFsObjectWithInfo(remote string, info os.FileInfo) fs.Object
 // NewFsObject returns an FsObject from a path
 //
 // May return nil if an error occurred
-func (f *FsLocal) NewFsObject(remote string) fs.Object {
+func (f *Fs) NewFsObject(remote string) fs.Object {
 	return f.newFsObjectWithInfo(remote, nil)
 }
 
 // List the path returning a channel of FsObjects
 //
 // Ignores everything which isn't Storable, eg links etc
-func (f *FsLocal) List() fs.ObjectsChan {
+func (f *Fs) List() fs.ObjectsChan {
 	out := make(fs.ObjectsChan, fs.Config.Checkers)
 	go func() {
 		err := filepath.Walk(f.root, func(path string, fi os.FileInfo, err error) error {
@@ -158,7 +162,7 @@ func (f *FsLocal) List() fs.ObjectsChan {
 // CleanUtf8 makes string a valid UTF-8 string
 //
 // Any invalid UTF-8 characters will be replaced with utf8.RuneError
-func (f *FsLocal) cleanUtf8(name string) string {
+func (f *Fs) cleanUtf8(name string) string {
 	if !utf8.ValidString(name) {
 		if _, ok := f.warned[name]; !ok {
 			fs.Debug(f, "Replacing invalid UTF-8 characters in %q", name)
@@ -173,7 +177,7 @@ func (f *FsLocal) cleanUtf8(name string) string {
 }
 
 // ListDir walks the path returning a channel of FsObjects
-func (f *FsLocal) ListDir() fs.DirChan {
+func (f *Fs) ListDir() fs.DirChan {
 	out := make(fs.DirChan, fs.Config.Checkers)
 	go func() {
 		defer close(out)
@@ -216,7 +220,7 @@ func (f *FsLocal) ListDir() fs.DirChan {
 }
 
 // Put the FsObject to the local filesystem
-func (f *FsLocal) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
+func (f *Fs) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
 	// Temporary FsObject under construction - info filled in by Update()
 	o := f.newFsObject(remote)
 	err := o.Update(in, modTime, size)
@@ -227,7 +231,7 @@ func (f *FsLocal) Put(in io.Reader, remote string, modTime time.Time, size int64
 }
 
 // Mkdir creates the directory if it doesn't exist
-func (f *FsLocal) Mkdir() error {
+func (f *Fs) Mkdir() error {
 	// FIXME: https://github.com/syncthing/syncthing/blob/master/lib/osutil/mkdirall_windows.go
 	return os.MkdirAll(f.root, 0777)
 }
@@ -235,12 +239,12 @@ func (f *FsLocal) Mkdir() error {
 // Rmdir removes the directory
 //
 // If it isn't empty it will return an error
-func (f *FsLocal) Rmdir() error {
+func (f *Fs) Rmdir() error {
 	return os.Remove(f.root)
 }
 
 // Precision of the file system
-func (f *FsLocal) Precision() (precision time.Duration) {
+func (f *Fs) Precision() (precision time.Duration) {
 	f.precisionOk.Do(func() {
 		f.precision = f.readPrecision()
 	})
@@ -248,7 +252,7 @@ func (f *FsLocal) Precision() (precision time.Duration) {
 }
 
 // Read the precision
-func (f *FsLocal) readPrecision() (precision time.Duration) {
+func (f *Fs) readPrecision() (precision time.Duration) {
 	// Default precision of 1s
 	precision = time.Second
 
@@ -304,7 +308,7 @@ func (f *FsLocal) readPrecision() (precision time.Duration) {
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *FsLocal) Purge() error {
+func (f *Fs) Purge() error {
 	fi, err := os.Lstat(f.root)
 	if err != nil {
 		return err
@@ -324,8 +328,8 @@ func (f *FsLocal) Purge() error {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantMove
-func (f *FsLocal) Move(src fs.Object, remote string) (fs.Object, error) {
-	srcObj, ok := src.(*FsObjectLocal)
+func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debug(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
@@ -374,8 +378,8 @@ func (f *FsLocal) Move(src fs.Object, remote string) (fs.Object, error) {
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (f *FsLocal) DirMove(src fs.Fs) error {
-	srcFs, ok := src.(*FsLocal)
+func (f *Fs) DirMove(src fs.Fs) error {
+	srcFs, ok := src.(*Fs)
 	if !ok {
 		fs.Debug(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
@@ -403,12 +407,12 @@ func (f *FsLocal) DirMove(src fs.Fs) error {
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
-func (o *FsObjectLocal) Fs() fs.Fs {
-	return o.local
+func (o *Object) Fs() fs.Fs {
+	return o.fs
 }
 
 // Return a string version
-func (o *FsObjectLocal) String() string {
+func (o *Object) String() string {
 	if o == nil {
 		return "<nil>"
 	}
@@ -416,12 +420,12 @@ func (o *FsObjectLocal) String() string {
 }
 
 // Remote returns the remote path
-func (o *FsObjectLocal) Remote() string {
-	return o.local.cleanUtf8(o.remote)
+func (o *Object) Remote() string {
+	return o.fs.cleanUtf8(o.remote)
 }
 
 // Md5sum calculates the Md5sum of a file returning a lowercase hex string
-func (o *FsObjectLocal) Md5sum() (string, error) {
+func (o *Object) Md5sum() (string, error) {
 	if o.md5sum != "" {
 		return o.md5sum, nil
 	}
@@ -449,17 +453,17 @@ func (o *FsObjectLocal) Md5sum() (string, error) {
 }
 
 // Size returns the size of an object in bytes
-func (o *FsObjectLocal) Size() int64 {
+func (o *Object) Size() int64 {
 	return o.info.Size()
 }
 
 // ModTime returns the modification time of the object
-func (o *FsObjectLocal) ModTime() time.Time {
+func (o *Object) ModTime() time.Time {
 	return o.info.ModTime()
 }
 
 // SetModTime sets the modification time of the local fs object
-func (o *FsObjectLocal) SetModTime(modTime time.Time) {
+func (o *Object) SetModTime(modTime time.Time) {
 	err := os.Chtimes(o.path, modTime, modTime)
 	if err != nil {
 		fs.Debug(o, "Failed to set mtime on file: %s", err)
@@ -474,7 +478,7 @@ func (o *FsObjectLocal) SetModTime(modTime time.Time) {
 }
 
 // Storable returns a boolean showing if this object is storable
-func (o *FsObjectLocal) Storable() bool {
+func (o *Object) Storable() bool {
 	mode := o.info.Mode()
 	if mode&(os.ModeSymlink|os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
 		fs.Debug(o, "Can't transfer non file/directory")
@@ -489,9 +493,9 @@ func (o *FsObjectLocal) Storable() bool {
 // localOpenFile wraps an io.ReadCloser and updates the md5sum of the
 // object that is read
 type localOpenFile struct {
-	o    *FsObjectLocal // object that is open
-	in   io.ReadCloser  // handle we are wrapping
-	hash hash.Hash      // currently accumulating MD5
+	o    *Object       // object that is open
+	in   io.ReadCloser // handle we are wrapping
+	hash hash.Hash     // currently accumulating MD5
 }
 
 // Read bytes from the object - see io.Reader
@@ -516,7 +520,7 @@ func (file *localOpenFile) Close() (err error) {
 }
 
 // Open an object for read
-func (o *FsObjectLocal) Open() (in io.ReadCloser, err error) {
+func (o *Object) Open() (in io.ReadCloser, err error) {
 	in, err = os.Open(o.path)
 	if err != nil {
 		return
@@ -531,13 +535,13 @@ func (o *FsObjectLocal) Open() (in io.ReadCloser, err error) {
 }
 
 // mkdirAll makes all the directories needed to store the object
-func (o *FsObjectLocal) mkdirAll() error {
+func (o *Object) mkdirAll() error {
 	dir, _ := getDirFile(o.path)
 	return os.MkdirAll(dir, 0777)
 }
 
 // Update the object from in with modTime and size
-func (o *FsObjectLocal) Update(in io.Reader, modTime time.Time, size int64) error {
+func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
 	err := o.mkdirAll()
 	if err != nil {
 		return err
@@ -572,14 +576,14 @@ func (o *FsObjectLocal) Update(in io.Reader, modTime time.Time, size int64) erro
 }
 
 // Stat a FsObject into info
-func (o *FsObjectLocal) lstat() error {
+func (o *Object) lstat() error {
 	info, err := os.Lstat(o.path)
 	o.info = info
 	return err
 }
 
 // Remove an object
-func (o *FsObjectLocal) Remove() error {
+func (o *Object) Remove() error {
 	return os.Remove(o.path)
 }
 
@@ -642,7 +646,7 @@ func uncPath(s string) string {
 }
 
 // cleanWindowsName will clean invalid Windows characters
-func cleanWindowsName(f *FsLocal, name string) string {
+func cleanWindowsName(f *Fs, name string) string {
 	original := name
 	var name2 string
 	if strings.HasPrefix(name, `\\?\`) {
@@ -679,8 +683,10 @@ func cleanWindowsName(f *FsLocal, name string) string {
 }
 
 // Check the interfaces are satisfied
-var _ fs.Fs = &FsLocal{}
-var _ fs.Purger = &FsLocal{}
-var _ fs.Mover = &FsLocal{}
-var _ fs.DirMover = &FsLocal{}
-var _ fs.Object = &FsObjectLocal{}
+var (
+	_ fs.Fs       = &Fs{}
+	_ fs.Purger   = &Fs{}
+	_ fs.Mover    = &Fs{}
+	_ fs.DirMover = &Fs{}
+	_ fs.Object   = &Object{}
+)

@@ -36,7 +36,7 @@ const (
 // resumableUpload is used by the generated APIs to provide resumable uploads.
 // It is not used by developers directly.
 type resumableUpload struct {
-	f      *FsDrive
+	f      *Fs
 	remote string
 	// URI is the resumable resource destination provided by the server after specifying "&uploadType=resumable".
 	URI string
@@ -51,7 +51,7 @@ type resumableUpload struct {
 }
 
 // Upload the io.Reader in of size bytes with contentType and info
-func (f *FsDrive) Upload(in io.Reader, size int64, contentType string, info *drive.File, remote string) (*drive.File, error) {
+func (f *Fs) Upload(in io.Reader, size int64, contentType string, info *drive.File, remote string) (*drive.File, error) {
 	fileID := info.Id
 	var body io.Reader
 	body, err := googleapi.WithoutDataWrapper.JSONReader(info)

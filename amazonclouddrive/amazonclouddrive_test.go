@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	fstests.NilObject = fs.Object((*amazonclouddrive.FsObjectAcd)(nil))
+	fstests.NilObject = fs.Object((*amazonclouddrive.Object)(nil))
 	fstests.RemoteName = "TestAmazonCloudDrive:"
 }
 

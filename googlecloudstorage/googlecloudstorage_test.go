@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	fstests.NilObject = fs.Object((*googlecloudstorage.FsObjectStorage)(nil))
+	fstests.NilObject = fs.Object((*googlecloudstorage.Object)(nil))
 	fstests.RemoteName = "TestGoogleCloudStorage:"
 }
 
