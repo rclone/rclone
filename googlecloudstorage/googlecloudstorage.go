@@ -407,11 +407,14 @@ func (f *Fs) Mkdir() error {
 	return err
 }
 
-// Rmdir deletes the bucket
+// Rmdir deletes the bucket if the fs is at the root
 //
 // Returns an error if it isn't empty: Error 409: The bucket you tried
 // to delete was not empty.
 func (f *Fs) Rmdir() error {
+	if f.root != "" {
+		return nil
+	}
 	return f.svc.Buckets.Delete(f.bucket).Do()
 }
 

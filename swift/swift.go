@@ -371,10 +371,13 @@ func (f *Fs) Mkdir() error {
 	return f.c.ContainerCreate(f.container, nil)
 }
 
-// Rmdir deletes the container
+// Rmdir deletes the container if the fs is at the root
 //
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir() error {
+	if f.root != "" {
+		return nil
+	}
 	return f.c.ContainerDelete(f.container)
 }
 
