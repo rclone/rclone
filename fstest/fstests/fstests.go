@@ -38,6 +38,8 @@ var (
 		Path:    `hello? sausage/êé/Hello, 世界/ " ' @ < > & ?/z.txt`,
 		WinPath: `hello_ sausage/êé/Hello, 世界/ _ ' @ _ _ & _/z.txt`,
 	}
+	dumpHeaders = flag.Bool("dump-headers", false, "Dump HTTP headers - may contain sensitive info")
+	dumpBodies  = flag.Bool("dump-bodies", false, "Dump HTTP headers and bodies - may contain sensitive info")
 )
 
 func init() {
@@ -50,6 +52,8 @@ func TestInit(t *testing.T) {
 	fs.LoadConfig()
 	fs.Config.Verbose = false
 	fs.Config.Quiet = true
+	fs.Config.DumpHeaders = *dumpHeaders
+	fs.Config.DumpBodies = *dumpBodies
 	t.Logf("Using remote %q", RemoteName)
 	if RemoteName == "" {
 		RemoteName, err = fstest.LocalRemote()
