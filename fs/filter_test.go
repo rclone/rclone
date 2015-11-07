@@ -40,7 +40,12 @@ func testFile(t *testing.T, contents string) *string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer out.Close()
+	defer func() {
+		err := out.Close()
+		if err != nil {
+			t.Error(err)
+		}
+	}()
 	_, err = out.Write([]byte(contents))
 	if err != nil {
 		t.Fatal(err)
@@ -151,8 +156,14 @@ func TestNewFilterIncludeFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.AddFile("file1.jpg")
-	f.AddFile("/file2.jpg")
+	err = f.AddFile("file1.jpg")
+	if err != nil {
+		t.Error(err)
+	}
+	err = f.AddFile("/file2.jpg")
+	if err != nil {
+		t.Error(err)
+	}
 	testInclude(t, f, []includeTest{
 		{"file1.jpg", 0, true},
 		{"file2.jpg", 1, true},
@@ -238,12 +249,20 @@ three
 four    
 five
   six  `)
-	defer os.Remove(*file)
+	defer func() {
+		err := os.Remove(*file)
+		if err != nil {
+			t.Error(err)
+		}
+	}()
 	lines := []string{}
-	forEachLine(*file, func(s string) error {
+	err := forEachLine(*file, func(s string) error {
 		lines = append(lines, s)
 		return nil
 	})
+	if err != nil {
+		t.Error(err)
+	}
 	got := strings.Join(lines, ",")
 	want := "one,two,three,four,five,six"
 	if want != got {
