@@ -1,12 +1,27 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2015-10-03"
+date: "2015-11-07"
 ---
 
 Changelog
 ---------
 
+  * v1.24 - 2015-11-07
+    * New features
+      * Add support for Microsoft One Drive
+      * Add `--no-check-certificate` option to disable server certificate verification
+      * Add async readahead buffer for faster transfer of big files
+    * Fixes
+      * Allow spaces in remotes and check remote names for validity at creation time
+      * Allow '&' and disallow ':' in Windows filenames.
+    * Swift
+      * Ignore directory marker objects where appropriate - allows working with Hubic
+      * Don't delete the container if fs wasn't at root
+    * S3
+      * Don't delete the bucket if fs wasn't at root
+    * Google Cloud Storage
+      * Don't delete the bucket if fs wasn't at root
   * v1.23 - 2015-10-03
     * New features
       * Implement `rclone size` for measuring remotes

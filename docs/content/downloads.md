@@ -2,38 +2,38 @@
 title: "Rclone downloads"
 description: "Download rclone binaries for your OS."
 type: page
-date: "2015-10-03"
+date: "2015-11-07"
 ---
 
-Rclone Download v1.23
+Rclone Download v1.24
 =====================
 
   * Windows
-    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.23-windows-386.zip)
-    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.23-windows-amd64.zip)
+    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.24-windows-386.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.24-windows-amd64.zip)
   * OSX
-    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.23-osx-386.zip)
-    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.23-osx-amd64.zip)
+    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.24-osx-386.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.24-osx-amd64.zip)
   * Linux
-    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.23-linux-386.zip)
-    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.23-linux-amd64.zip)
-    * [ARM - 32 Bit](http://downloads.rclone.org/rclone-v1.23-linux-arm.zip)
+    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.24-linux-386.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.24-linux-amd64.zip)
+    * [ARM - 32 Bit](http://downloads.rclone.org/rclone-v1.24-linux-arm.zip)
   * FreeBSD
-    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.23-freebsd-386.zip)
-    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.23-freebsd-amd64.zip)
-    * [ARM - 32 Bit](http://downloads.rclone.org/rclone-v1.23-freebsd-arm.zip)
+    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.24-freebsd-386.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.24-freebsd-amd64.zip)
+    * [ARM - 32 Bit](http://downloads.rclone.org/rclone-v1.24-freebsd-arm.zip)
   * NetBSD
-    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.23-netbsd-386.zip)
-    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.23-netbsd-amd64.zip)
-    * [ARM - 32 Bit](http://downloads.rclone.org/rclone-v1.23-netbsd-arm.zip)
+    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.24-netbsd-386.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.24-netbsd-amd64.zip)
+    * [ARM - 32 Bit](http://downloads.rclone.org/rclone-v1.24-netbsd-arm.zip)
   * OpenBSD
-    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.23-openbsd-386.zip)
-    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.23-openbsd-amd64.zip)
+    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.24-openbsd-386.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.24-openbsd-amd64.zip)
   * Plan 9
-    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.23-plan9-386.zip)
-    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.23-plan9-amd64.zip)
+    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.24-plan9-386.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.24-plan9-amd64.zip)
   * Solaris
-    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.23-solaris-amd64.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.24-solaris-amd64.zip)
 
 Downloads for scripting
 =======================

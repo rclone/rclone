@@ -24,6 +24,7 @@ docs = [
     "dropbox.md",
     "googlecloudstorage.md",
     "amazonclouddrive.md",
+    "onedrive.md",
     "local.md",
     "changelog.md",
     "bugs.md",
