@@ -17,6 +17,12 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// Constants
+const (
+	directoryMarkerContentType = "application/directory" // content type of directory marker objects
+	directoryMarkerMaxSize     = 1                       // max size that directory marker objects can be
+)
+
 // Globals
 var (
 	chunkSize = fs.SizeSuffix(5 * 1024 * 1024 * 1024)
@@ -173,9 +179,9 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 	if f.root != "" {
 		f.root += "/"
-		// Check to see if the object exists
-		_, _, err = f.c.Object(container, directory)
-		if err == nil {
+		// Check to see if the object exists - ignore directory markers
+		_, headers, err := f.c.Object(container, directory)
+		if err == nil && headers["Content-Type"] != directoryMarkerContentType {
 			remote := path.Base(directory)
 			f.root = path.Dir(directory)
 			if f.root == "." {
@@ -274,8 +280,10 @@ func (f *Fs) list(directories bool, fn listFn) {
 	}
 }
 
-// List walks the path returning a channel of FsObjects
-func (f *Fs) List() fs.ObjectsChan {
+// listFiles walks the path returning a channel of FsObjects
+//
+// if ignoreStorable is set then it outputs the file even if Storable() is false
+func (f *Fs) listFiles(ignoreStorable bool) fs.ObjectsChan {
 	out := make(fs.ObjectsChan, fs.Config.Checkers)
 	if f.container == "" {
 		// Return no objects at top level list
@@ -288,20 +296,22 @@ func (f *Fs) List() fs.ObjectsChan {
 			defer close(out)
 			f.list(false, func(remote string, object *swift.Object) error {
 				if o := f.newFsObjectWithInfo(remote, object); o != nil {
-					// Do full metadata read on 0 size objects which might be manifest files
-					if o.Size() == 0 {
-						err := o.(*Object).readMetaData()
-						if err != nil {
-							fs.Debug(o, "Failed to read metadata: %v", err)
-						}
+					// Storable does a full metadata read on 0 size objects which might be manifest files
+					storable := o.Storable()
+					if storable || ignoreStorable {
+						out <- o
 					}
-					out <- o
 				}
 				return nil
 			})
 		}()
 	}
 	return out
+}
+
+// List walks the path returning a channel of FsObjects
+func (f *Fs) List() fs.ObjectsChan {
+	return f.listFiles(false)
 }
 
 // ListDir lists the containers
@@ -371,6 +381,14 @@ func (f *Fs) Rmdir() error {
 // Precision of the remote
 func (f *Fs) Precision() time.Duration {
 	return time.Nanosecond
+}
+
+// Purge deletes all the files and directories
+//
+// Implemented here so we can make sure we delete directory markers
+func (f *Fs) Purge() error {
+	fs.DeleteFiles(f.listFiles(true))
+	return f.Rmdir()
 }
 
 // Copy src to this remote using server side copy operations.
@@ -504,8 +522,21 @@ func (o *Object) SetModTime(modTime time.Time) {
 }
 
 // Storable returns if this object is storable
+//
+// It reads the metadata for <= directoryMarkerMaxSize byte objects then compares the
+// Content-Type to directoryMarkerContentType - that makes it a
+// directory marker which is not storable.
 func (o *Object) Storable() bool {
-	return true
+	if o.info.Bytes > directoryMarkerMaxSize {
+		return true
+	}
+	err := o.readMetaData()
+	if err != nil {
+		fs.Debug(o, "Failed to read metadata: %s", err)
+		return true
+	}
+	contentType := (*o.headers)["Content-Type"]
+	return contentType != directoryMarkerContentType
 }
 
 // Open an object for read
@@ -647,6 +678,7 @@ func (o *Object) Remove() error {
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs     = &Fs{}
+	_ fs.Purger = &Fs{}
 	_ fs.Copier = &Fs{}
 	_ fs.Object = &Object{}
 )
