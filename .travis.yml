@@ -3,12 +3,13 @@ sudo: false
 
 os:
   - linux
-  - osx
+
+# - osx
 
 go:
   - 1.3.3
-  - 1.4.2
-  - 1.5
+  - 1.4.3
+  - 1.5.1
   - tip
 
 install:
