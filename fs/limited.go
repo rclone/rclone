@@ -130,9 +130,15 @@ func (f *Limited) Move(src Object, remote string) (Object, error) {
 	return fMove.Move(src, remote)
 }
 
+// UnWrap returns the Fs that this Fs is wrapping
+func (f *Limited) UnWrap() Fs {
+	return f.fs
+}
+
 // Check the interfaces are satisfied
 var (
-	_ Fs     = (*Limited)(nil)
-	_ Copier = (*Limited)(nil)
-	_ Mover  = (*Limited)(nil)
+	_ Fs        = (*Limited)(nil)
+	_ Copier    = (*Limited)(nil)
+	_ Mover     = (*Limited)(nil)
+	_ UnWrapper = (*Limited)(nil)
 )

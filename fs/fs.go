@@ -198,6 +198,12 @@ type DirMover interface {
 	DirMove(src Fs) error
 }
 
+// UnWrapper is an optional interfaces for Fs
+type UnWrapper interface {
+	// UnWrap returns the Fs that this Fs is wrapping
+	UnWrap() Fs
+}
+
 // ObjectsChan is a channel of Objects
 type ObjectsChan chan Object
 
