@@ -25,6 +25,7 @@ var (
 	fsRegistry []*Info
 	// ErrorNotFoundInConfigFile is returned by NewFs if not found in config file
 	ErrorNotFoundInConfigFile = fmt.Errorf("Didn't find section in config file")
+	ErrorCantPurge            = fmt.Errorf("Can't purge directory")
 	ErrorCantCopy             = fmt.Errorf("Can't copy object - incompatible remotes")
 	ErrorCantMove             = fmt.Errorf("Can't copy object - incompatible remotes")
 	ErrorCantDirMove          = fmt.Errorf("Can't copy directory - incompatible remotes")

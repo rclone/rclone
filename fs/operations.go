@@ -734,14 +734,20 @@ func Rmdir(f Fs) error {
 //
 // FIXME doesn't delete local directories
 func Purge(f Fs) error {
+	doFallbackPurge := true
 	var err error
 	if purger, ok := f.(Purger); ok {
+		doFallbackPurge = false
 		if Config.DryRun {
 			Debug(f, "Not purging as --dry-run set")
 		} else {
 			err = purger.Purge()
+			if err == ErrorCantPurge {
+				doFallbackPurge = true
+			}
 		}
-	} else {
+	}
+	if doFallbackPurge {
 		// DeleteFiles and Rmdir observe --dry-run
 		DeleteFiles(f.List())
 		err = Rmdir(f)
