@@ -113,6 +113,26 @@ func (f *Limited) Copy(src Object, remote string) (Object, error) {
 	return fCopy.Copy(src, remote)
 }
 
+// Move src to this remote using server side move operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantMove
+func (f *Limited) Move(src Object, remote string) (Object, error) {
+	fMove, ok := f.fs.(Mover)
+	if !ok {
+		return nil, ErrorCantMove
+	}
+	return fMove.Move(src, remote)
+}
+
 // Check the interfaces are satisfied
-var _ Fs = &Limited{}
-var _ Copier = &Limited{}
+var (
+	_ Fs     = (*Limited)(nil)
+	_ Copier = (*Limited)(nil)
+	_ Mover  = (*Limited)(nil)
+)
