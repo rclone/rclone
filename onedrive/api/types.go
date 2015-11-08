@@ -71,8 +71,8 @@ type Timestamp time.Time
 
 // MarshalJSON turns a Timestamp into JSON (in UTC)
 func (t *Timestamp) MarshalJSON() (out []byte, err error) {
-	out = (*time.Time)(t).UTC().AppendFormat(out, timeFormat)
-	return out, nil
+	timeString := (*time.Time)(t).UTC().Format(timeFormat)
+	return []byte(timeString), nil
 }
 
 // UnmarshalJSON turns JSON into a Timestamp
