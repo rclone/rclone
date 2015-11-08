@@ -41,6 +41,9 @@ const (
 
 	// RedirectPublicURL is redirect to local webserver when active with public name
 	RedirectPublicURL = "http://localhost.rclone.org:" + bindPort + "/"
+
+	// RedirectLocalhostURL is redirect to local webserver when active with localhost
+	RedirectLocalhostURL = "http://localhost:" + bindPort + "/"
 )
 
 // oldToken contains an end-user's tokens.
@@ -196,7 +199,7 @@ func Config(name string, config *oauth2.Config) error {
 	// Detect whether we should use internal web server
 	useWebServer := false
 	switch config.RedirectURL {
-	case RedirectURL, RedirectPublicURL:
+	case RedirectURL, RedirectPublicURL, RedirectLocalhostURL:
 		useWebServer = true
 	case TitleBarRedirectURL:
 		fmt.Printf("Use auto config?\n")
