@@ -517,6 +517,12 @@ func (o *Object) SetModTime(modTime time.Time) {
 	for k, v := range newHeaders {
 		(*o.headers)[k] = v
 	}
+	// Include any other metadata from request
+	for k, v := range *o.headers {
+		if strings.HasPrefix(k, "X-Object-") {
+			newHeaders[k] = v
+		}
+	}
 	err = o.fs.c.ObjectUpdate(o.fs.container, o.fs.root+o.remote, newHeaders)
 	if err != nil {
 		fs.Stats.Error()
