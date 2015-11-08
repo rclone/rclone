@@ -159,13 +159,10 @@ func swiftConnection(name string) (*swift.Connection, error) {
 	return c, nil
 }
 
-// NewFs contstructs an Fs from the path, container:path
-func NewFs(name, root string) (fs.Fs, error) {
+// NewFsWithConnection contstructs an Fs from the path, container:path
+// and authenticated connection
+func NewFsWithConnection(name, root string, c *swift.Connection) (fs.Fs, error) {
 	container, directory, err := parsePath(root)
-	if err != nil {
-		return nil, err
-	}
-	c, err := swiftConnection(name)
 	if err != nil {
 		return nil, err
 	}
@@ -194,6 +191,15 @@ func NewFs(name, root string) (fs.Fs, error) {
 		}
 	}
 	return f, nil
+}
+
+// NewFs contstructs an Fs from the path, container:path
+func NewFs(name, root string) (fs.Fs, error) {
+	c, err := swiftConnection(name)
+	if err != nil {
+		return nil, err
+	}
+	return NewFsWithConnection(name, root, c)
 }
 
 // Return an FsObject from a path

@@ -435,7 +435,14 @@ func TestObjectString(t *testing.T) {
 func TestObjectFs(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
-	if obj.Fs() != remote {
+	equal := obj.Fs() == remote
+	if !equal {
+		// Check to see if this wraps something else
+		if unwrap, ok := remote.(fs.UnWrapper); ok {
+			equal = obj.Fs() == unwrap.UnWrap()
+		}
+	}
+	if !equal {
 		t.Errorf("Fs is wrong %v != %v", obj.Fs(), remote)
 	}
 }
@@ -558,7 +565,13 @@ func TestLimitedFs(t *testing.T) {
 	fstest.CheckListing(t, fileRemote, []fstest.Item{file2Copy})
 	_, ok := fileRemote.(*fs.Limited)
 	if !ok {
-		t.Errorf("%v is not a fs.Limited", fileRemote)
+		// Check to see if this wraps a Limited FS
+		if unwrap, hasUnWrap := fileRemote.(fs.UnWrapper); hasUnWrap {
+			_, ok = unwrap.UnWrap().(*fs.Limited)
+		}
+		if !ok {
+			t.Errorf("%v is not a fs.Limited", fileRemote)
+		}
 	}
 }
 

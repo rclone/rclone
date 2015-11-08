@@ -24,6 +24,7 @@ Here is an overview of the major features of each cloud storage system.
 | Google Cloud Storage   | Yes     | Yes     | No             | No              |
 | Amazon Cloud Drive     | Yes     | No      | Yes            | No              |
 | Microsoft One Drive    | No      | Yes     | Yes            | No              |
+| Hubic                  | Yes     | Yes     | No             | No              |
 | The local filesystem   | Yes     | Yes     | Depends        | No              |
 
 ### MD5SUM ###

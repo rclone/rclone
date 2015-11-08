@@ -10,6 +10,7 @@ TestGoogleCloudStorage:
 TestDropbox:
 TestAmazonCloudDrive:
 TestOneDrive:
+TestHubic:
 "
 
 function test_remote {
