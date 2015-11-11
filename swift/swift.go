@@ -20,7 +20,6 @@ import (
 // Constants
 const (
 	directoryMarkerContentType = "application/directory" // content type of directory marker objects
-	directoryMarkerMaxSize     = 1                       // max size that directory marker objects can be
 )
 
 // Globals
@@ -179,9 +178,9 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 	if f.root != "" {
 		f.root += "/"
-		// Check to see if the object exists - ignore directory markers
-		_, headers, err := f.c.Object(container, directory)
-		if err == nil && headers["Content-Type"] != directoryMarkerContentType {
+		// Check to see if the object exists - ignoring directory markers
+		info, _, err := f.c.Object(container, directory)
+		if err == nil && info.ContentType != directoryMarkerContentType {
 			remote := path.Base(directory)
 			f.root = path.Dir(directory)
 			if f.root == "." {
@@ -536,16 +535,7 @@ func (o *Object) SetModTime(modTime time.Time) {
 // Content-Type to directoryMarkerContentType - that makes it a
 // directory marker which is not storable.
 func (o *Object) Storable() bool {
-	if o.info.Bytes > directoryMarkerMaxSize {
-		return true
-	}
-	err := o.readMetaData()
-	if err != nil {
-		fs.Debug(o, "Failed to read metadata: %s", err)
-		return true
-	}
-	contentType := (*o.headers)["Content-Type"]
-	return contentType != directoryMarkerContentType
+	return o.info.ContentType != directoryMarkerContentType
 }
 
 // Open an object for read
