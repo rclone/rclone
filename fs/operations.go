@@ -381,12 +381,18 @@ func DeleteFiles(toBeDeleted ObjectsChan) {
 }
 
 // Read a map of Object.Remote to Object for the given Fs
-func readFilesMap(fs Fs) map[string]Object {
+func readFilesMap(fs Fs, obeyInclude bool) map[string]Object {
 	files := make(map[string]Object)
 	for o := range fs.List() {
 		remote := o.Remote()
 		if _, ok := files[remote]; !ok {
-			files[remote] = o
+			// Make sure we don't delete excluded files if not required
+			if !obeyInclude || Config.Filter.DeleteExcluded || Config.Filter.Include(remote, o.Size()) {
+				files[remote] = o
+			} else {
+				Debug(o, "Excluded from sync (and deletion)")
+			}
+
 		} else {
 			Log(o, "Duplicate file detected")
 		}
@@ -420,7 +426,7 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 
 	// Read the destination files first
 	// FIXME could do this in parallel and make it use less memory
-	delFiles := readFilesMap(fdst)
+	delFiles := readFilesMap(fdst, true)
 
 	// Read source files checking them off against dest files
 	toBeChecked := make(ObjectPairChan, Config.Transfers)
@@ -445,14 +451,10 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 	go func() {
 		for src := range fsrc.List() {
 			remote := src.Remote()
-			dst, dstFound := delFiles[remote]
 			if !Config.Filter.Include(remote, src.Size()) {
 				Debug(src, "Excluding from sync")
-				if dstFound && !Config.Filter.DeleteExcluded {
-					delete(delFiles, remote)
-				}
 			} else {
-				if dstFound {
+				if dst, dstFound := delFiles[remote]; dstFound {
 					delete(delFiles, remote)
 					toBeChecked <- ObjectPair{src, dst}
 				} else {
@@ -539,11 +541,11 @@ func Check(fdst, fsrc Fs) error {
 
 	// Read the destination files first
 	// FIXME could do this in parallel and make it use less memory
-	dstFiles := readFilesMap(fdst)
+	dstFiles := readFilesMap(fdst, false)
 
 	// Read the source files checking them against dstFiles
 	// FIXME could do this in parallel and make it use less memory
-	srcFiles := readFilesMap(fsrc)
+	srcFiles := readFilesMap(fsrc, false)
 
 	// Move all the common files into commonFiles and delete then
 	// from srcFiles and dstFiles

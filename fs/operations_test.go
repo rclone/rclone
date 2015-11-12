@@ -411,7 +411,7 @@ func TestSyncAfterRemovingAFileAndAddingAFile(t *testing.T) {
 // Test with exclude
 func TestSyncWithExclude(t *testing.T) {
 	WriteFile("enormous", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
-	fs.Config.Filter.MaxSize = 80
+	fs.Config.Filter.MaxSize = 40
 	defer func() {
 		fs.Config.Filter.MaxSize = 0
 	}()
@@ -424,6 +424,17 @@ func TestSyncWithExclude(t *testing.T) {
 		{Path: "potato2", Size: 60, ModTime: t1, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
 	}
 	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+
+	// Now sync the other way round and check enormous doesn't get
+	// deleted as it is excluded from the sync
+	items = append(items, fstest.Item{
+		Path: "enormous", Size: 100, ModTime: t1, Md5sum: "8adc5937e635f6c9af646f0b23560fae",
+	})
+	err = fs.Sync(flocal, fremote)
+	if err != nil {
+		t.Fatalf("Sync failed: %v", err)
+	}
+	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
 }
 
 // Test with exclude and delete excluded
@@ -444,12 +455,17 @@ func TestSyncWithExcludeAndDeleleteExcluded(t *testing.T) {
 	}
 	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
 
-	// Tidy up
-	reset()
-	err = os.Remove(localName + "/enormous")
+	// Check sync the other way round to make sure enormous gets
+	// deleted even though it is excluded
+	err = fs.Sync(flocal, fremote)
 	if err != nil {
-		t.Fatalf("Remove failed: %v", err)
+		t.Fatalf("Sync failed: %v", err)
 	}
+	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
+
+	// Tidy up - put potato2 back!
+	reset()
+	WriteFile("potato2", "------------------------------------------------------------", t1)
 	err = fs.Sync(fremote, flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
