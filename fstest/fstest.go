@@ -121,7 +121,8 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, precision ti
 	is := NewItems(items)
 	oldErrors := fs.Stats.GetErrors()
 	var objs []fs.Object
-	for i := 1; i <= 5; i++ {
+	const retries = 10
+	for i := 1; i <= retries; i++ {
 		objs = nil
 		for obj := range f.List() {
 			objs = append(objs, obj)
@@ -129,7 +130,7 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, precision ti
 		if len(objs) == len(items) {
 			break
 		}
-		t.Logf("Sleeping for 1 second for list eventual consistency: %d/5", i)
+		t.Logf("Sleeping for 1 second for list eventual consistency: %d/%d", i, retries)
 		time.Sleep(1 * time.Second)
 	}
 	for _, obj := range objs {
