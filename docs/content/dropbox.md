@@ -76,6 +76,16 @@ To copy a local directory to a dropbox directory called backup
 Dropbox doesn't have the capability of storing modification times or
 MD5SUMs so syncs will effectively have the `--size-only` flag set.
 
+### Specific options ###
+
+Here are the command line options specific to this cloud storage
+system.
+
+#### --dropbox-chunk-size=SIZE ####
+
+Upload chunk size. Max 150M. The default is 128MB.  Note that this
+isn't buffered into memory.
+
 ### Limitations ###
 
 Note that Dropbox is case insensitive so you can't have a file called

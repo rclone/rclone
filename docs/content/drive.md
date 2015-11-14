@@ -104,6 +104,29 @@ By default rclone will delete files permanently when requested.  If
 sending them to the trash is required instead then use the
 `--drive-use-trash` flag.
 
+### Specific options ###
+
+Here are the command line options specific to this cloud storage
+system.
+
+#### --drive-chunk-size=SIZE ####
+
+Upload chunk size. Must a power of 2 >= 256k. Default value is 256kB.
+
+#### --drive-full-list ####
+
+Use a full listing for directory list. More data but usually
+quicker. On by default, disable with `--full-drive-list=false`.
+
+#### --drive-upload-cutoff=SIZE ####
+
+File size cutoff for switching to chunked upload.  Default is 256kB.
+
+#### --drive-use-trash ####
+
+Send files to the trash instead of deleting permanently. Defaults to
+off, namely deleting files permanently.
+
 ### Limitations ###
 
 Drive has quite a lot of rate limiting.  This causes rclone to be

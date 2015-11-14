@@ -87,6 +87,16 @@ excess files in the container.
 
     rclone sync /home/local/directory remote:container
 
+### Specific options ###
+
+Here are the command line options specific to this cloud storage
+system.
+
+#### --swift-chunk-size=SIZE ####
+
+Above this size files will be chunked into a _segments container.  The
+default for this is 5GB which is its maximum value.
+      
 ### Modified time ###
 
 The modified time is stored as metadata on the object as

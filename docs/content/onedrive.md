@@ -95,6 +95,21 @@ doesn't provide an API to permanently delete files, nor to empty the
 trash, so you will have to do that with one of Microsoft's apps or via
 the One Drive website.
 
+### Specific options ###
+
+Here are the command line options specific to this cloud storage
+system.
+
+#### --onedrive-chunk-size=SIZE ####
+
+Above this size files will be chunked - must be multiple of 320k. The
+default is 10MB.  Note that the chunks will be buffered into memory.
+
+#### --onedrive-upload-cutoff=SIZE ####
+
+Cutoff for switching to chunked upload - must be <= 100MB. The default
+is 10MB.
+
 ### Limitations ###
 
 Note that One Drive is case insensitive so you can't have a
