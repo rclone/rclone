@@ -14,8 +14,8 @@ test:	rclone
 check:	rclone
 	go vet ./...
 	errcheck ./...
-	golint ./...
-	diff <(goimports -d .) <(printf "")
+	goimports -d . | grep . ; test $$? -eq 1
+	golint ./... | grep -E -v '(StorageUrl|CdnUrl)' ; test $$? -eq 1
 
 doc:	rclone.1 MANUAL.html MANUAL.txt
 

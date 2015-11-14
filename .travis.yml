@@ -15,12 +15,11 @@ go:
 
 install:
  - go get ./...
- - go get -u github.com/golang/lint/golint
+ - go get -u github.com/kisielk/errcheck
  - go get -u golang.org/x/tools/cmd/goimports
+ - go get -u github.com/golang/lint/golint
 
 script:
-  - go vet ./...
-  - diff <(goimports -d .) <(printf "")
-  - diff <(golint ./...) <(printf "")
+  - make check
   - go test -v ./...
   - go test -cpu=2 -race -v ./...
