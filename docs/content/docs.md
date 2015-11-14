@@ -151,7 +151,7 @@ time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
 Options which use SIZE use kByte by default.  However a suffix of `k`
 for kBytes, `M` for MBytes and `G` for GBytes may be used.  These are
-the binary units, eg 2**10, 2**20, 2**30 respectively.
+the binary units, eg 2\*\*10, 2\*\*20, 2\*\*30 respectively.
 
 ### --bwlimit=SIZE ###
 

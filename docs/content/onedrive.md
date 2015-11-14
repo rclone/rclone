@@ -97,7 +97,7 @@ the One Drive website.
 
 ### Limitations ###
 
-Note that One Drive is case sensitive so you can't have a
+Note that One Drive is case insensitive so you can't have a
 file called "Hello.doc" and one called "hello.doc".
 
 Rclone only supports your default One Drive, and doesn't work with One

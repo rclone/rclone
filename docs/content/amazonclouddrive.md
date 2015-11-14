@@ -95,7 +95,7 @@ the Amazon cloud drive website.
 
 ### Limitations ###
 
-Note that Amazon cloud drive is case sensitive so you can't have a
+Note that Amazon cloud drive is case insensitive so you can't have a
 file called "Hello.doc" and one called "hello.doc".
 
 Amazon cloud drive has rate limiting so you may notice errors in the

@@ -78,7 +78,7 @@ MD5SUMs so syncs will effectively have the `--size-only` flag set.
 
 ### Limitations ###
 
-Note that Dropbox is case sensitive so you can't have a file called
+Note that Dropbox is case insensitive so you can't have a file called
 "Hello.doc" and one called "hello.doc".
 
 There are some file names such as `thumbs.db` which Dropbox can't

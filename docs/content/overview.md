@@ -15,17 +15,17 @@ show through.
 
 Here is an overview of the major features of each cloud storage system.
 
-| Name                   | MD5SUM  | ModTime | Case Sensitive | Duplicate Files |
-| ---------------------- |:-------:|:-------:|:--------------:|:---------------:|
-| Google Drive           | Yes     | Yes     | No             | Yes             |
-| Amazon S3              | Yes     | Yes     | No             | No              |
-| Openstack Swift        | Yes     | Yes     | No             | No              |
-| Dropbox                | No      | No      | Yes            | No              |
-| Google Cloud Storage   | Yes     | Yes     | No             | No              |
-| Amazon Cloud Drive     | Yes     | No      | Yes            | No              |
-| Microsoft One Drive    | No      | Yes     | Yes            | No              |
-| Hubic                  | Yes     | Yes     | No             | No              |
-| The local filesystem   | Yes     | Yes     | Depends        | No              |
+| Name                   | MD5SUM  | ModTime | Case Insensitive | Duplicate Files |
+| ---------------------- |:-------:|:-------:|:----------------:|:---------------:|
+| Google Drive           | Yes     | Yes     | No               | Yes             |
+| Amazon S3              | Yes     | Yes     | No               | No              |
+| Openstack Swift        | Yes     | Yes     | No               | No              |
+| Dropbox                | No      | No      | Yes              | No              |
+| Google Cloud Storage   | Yes     | Yes     | No               | No              |
+| Amazon Cloud Drive     | Yes     | No      | Yes              | No              |
+| Microsoft One Drive    | No      | Yes     | Yes              | No              |
+| Hubic                  | Yes     | Yes     | No               | No              |
+| The local filesystem   | Yes     | Yes     | Depends          | No              |
 
 ### MD5SUM ###
 
@@ -44,7 +44,7 @@ default, though the MD5SUM can be checked with the `--checksum` flag.
 All cloud storage systems support some kind of date on the object and
 these will be set when transferring from the cloud storage system.
 
-### Case Sensitive ###
+### Case Insensitive ###
 
 If a cloud storage systems is case sensitive then it is possible to
 have two files which differ only in case, eg `file.txt` and
@@ -57,7 +57,7 @@ matter how many times you run the sync it never completes fully.
 
 The local filesystem may or may not be case sensitive depending on OS.
 
-  * Windows - usuall case insensitive
+  * Windows - usually case insensitive
   * OSX - usually case insensitive, though it is possible to format case sensitive
   * Linux - usually case sensitive, but there are case insensitive file systems (eg FAT formatted USB keys)
 
