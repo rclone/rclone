@@ -7,6 +7,19 @@ date: "2015-11-07"
 Changelog
 ---------
 
+  * v1.25 - 2015-11-14
+    * New features
+      * Implement Hubic storage system
+    * Fixes
+      * Fix deletion of some excluded files without --delete-excluded
+        * This could have deleted files unexpectedly on sync
+        * Always check first with `--dry-run`!
+    * Swift
+      * Stop SetModTime losing metadata (eg X-Object-Manifest)
+        * This could have caused data loss for files > 5GB in size
+      * Use ContentType from Object to avoid lookups in listings
+    * One Drive
+      * disable server side copy as it seems to be broken at Microsoft
   * v1.24 - 2015-11-07
     * New features
       * Add support for Microsoft One Drive
