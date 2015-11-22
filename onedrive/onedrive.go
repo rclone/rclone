@@ -590,7 +590,7 @@ func (f *Fs) waitForJob(location string, o *Object) error {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) FIXMEDisabledCopy(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debug(src, "Can't copy - not same remote type")
@@ -940,7 +940,7 @@ func (o *Object) Remove() error {
 var (
 	_ fs.Fs     = (*Fs)(nil)
 	_ fs.Purger = (*Fs)(nil)
-	// FIXME _ fs.Copier   = (*Fs)(nil)
+	_ fs.Copier = (*Fs)(nil)
 	// _ fs.Mover    = (*Fs)(nil)
 	// _ fs.DirMover = (*Fs)(nil)
 	_ fs.Object = (*Object)(nil)
