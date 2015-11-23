@@ -29,7 +29,7 @@ github-release release \
     --name "rclone" \
     --description "Rclone - rsync for cloud storage. Sync files to and from many cloud storage providers."
 
-for build in `ls build`; do
+for build in `ls build | grep -v current`; do
     echo "Uploading ${build}"
     base="${build%.*}"
     parts=(${base//-/ })
