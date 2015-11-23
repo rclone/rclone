@@ -1,0 +1,50 @@
+#!/bin/bash
+#
+# Upload a release
+#
+# Needs github-release from https://github.com/aktau/github-release
+
+set -e
+
+REPO="rclone"
+
+if [ "$1" == "" ]; then
+    echo "Syntax: $0 Version"
+    exit 1
+fi
+VERSION="$1"
+if [ "$GITHUB_USER" == "" ]; then
+   echo 1>&2 "Need GITHUB_USER environment variable"
+   exit 1
+fi
+if [ "$GITHUB_TOKEN" == "" ]; then
+   echo 1>&2 "Need GITHUB_TOKEN environment variable"
+   exit 1
+fi
+
+echo "Making release ${VERSION}"
+github-release release \
+    --repo ${REPO} \
+    --tag ${VERSION} \
+    --name "rclone" \
+    --description "Rclone - rsync for cloud storage. Sync files to and from many cloud storage providers."
+
+for build in `ls build`; do
+    echo "Uploading ${build}"
+    base="${build%.*}"
+    parts=(${base//-/ })
+    os=${parts[3]}
+    arch=${parts[4]}
+
+    github-release upload \
+        --repo ${REPO} \
+        --tag ${VERSION} \
+        --name "${build}" \
+        --file build/${build}
+done
+
+github-release info \
+    --repo ${REPO} \
+    --tag ${VERSION}
+
+echo "Done"

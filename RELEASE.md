@@ -20,3 +20,4 @@ Making a release
   * make upload
   * make upload_website
   * git push --tags origin master
+  * make upload_github

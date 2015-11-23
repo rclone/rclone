@@ -35,6 +35,8 @@ Rclone Download v1.25
   * Solaris
     * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.25-solaris-amd64.zip)
 
+You can also find a [mirror of the downloads on github](https://github.com/ncw/rclone/releases/tag/v1.25).
+
 Downloads for scripting
 =======================
 
