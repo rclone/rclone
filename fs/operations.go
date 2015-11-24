@@ -381,13 +381,13 @@ func DeleteFiles(toBeDeleted ObjectsChan) {
 }
 
 // Read a map of Object.Remote to Object for the given Fs
-func readFilesMap(fs Fs, obeyInclude bool) map[string]Object {
+func readFilesMap(fs Fs) map[string]Object {
 	files := make(map[string]Object)
 	for o := range fs.List() {
 		remote := o.Remote()
 		if _, ok := files[remote]; !ok {
 			// Make sure we don't delete excluded files if not required
-			if !obeyInclude || Config.Filter.DeleteExcluded || Config.Filter.IncludeObject(o) {
+			if Config.Filter.DeleteExcluded || Config.Filter.IncludeObject(o) {
 				files[remote] = o
 			} else {
 				Debug(o, "Excluded from sync (and deletion)")
@@ -426,7 +426,7 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 
 	// Read the destination files first
 	// FIXME could do this in parallel and make it use less memory
-	delFiles := readFilesMap(fdst, true)
+	delFiles := readFilesMap(fdst)
 
 	// Read source files checking them off against dest files
 	toBeChecked := make(ObjectPairChan, Config.Transfers)
@@ -537,15 +537,32 @@ func MoveDir(fdst, fsrc Fs) error {
 
 // Check the files in fsrc and fdst according to Size and MD5SUM
 func Check(fdst, fsrc Fs) error {
-	Log(fdst, "Building file list")
+	var (
+		wg                 sync.WaitGroup
+		dstFiles, srcFiles map[string]Object
+	)
 
-	// Read the destination files first
-	// FIXME could do this in parallel and make it use less memory
-	dstFiles := readFilesMap(fdst, false)
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		// Read the destination files
+		Log(fdst, "Building file list")
+		dstFiles = readFilesMap(fdst)
+		Debug(fdst, "Done building file list")
+	}()
 
-	// Read the source files checking them against dstFiles
-	// FIXME could do this in parallel and make it use less memory
-	srcFiles := readFilesMap(fsrc, false)
+	go func() {
+		defer wg.Done()
+		// Read the source files
+		Log(fsrc, "Building file list")
+		srcFiles = readFilesMap(fsrc)
+		Debug(fdst, "Done building file list")
+	}()
+
+	wg.Wait()
+
+	// FIXME could do this as it goes along and make it use less
+	// memory.
 
 	// Move all the common files into commonFiles and delete then
 	// from srcFiles and dstFiles
@@ -626,7 +643,9 @@ func ListFn(f Fs, fn func(Object)) error {
 		go func() {
 			defer wg.Done()
 			for o := range in {
-				fn(o)
+				if Config.Filter.IncludeObject(o) {
+					fn(o)
+				}
 			}
 		}()
 	}
@@ -648,7 +667,7 @@ func syncFprintf(w io.Writer, format string, a ...interface{}) {
 
 // List the Fs to the supplied writer
 //
-// Shows size and path
+// Shows size and path - obeys includes and excludes
 //
 // Lists in parallel which may get them out of order
 func List(f Fs, w io.Writer) error {
@@ -659,7 +678,7 @@ func List(f Fs, w io.Writer) error {
 
 // ListLong lists the Fs to the supplied writer
 //
-// Shows size, mod time and path
+// Shows size, mod time and path - obeys includes and excludes
 //
 // Lists in parallel which may get them out of order
 func ListLong(f Fs, w io.Writer) error {
@@ -673,7 +692,8 @@ func ListLong(f Fs, w io.Writer) error {
 
 // Md5sum list the Fs to the supplied writer
 //
-// Produces the same output as the md5sum command
+// Produces the same output as the md5sum command - obeys includes and
+// excludes
 //
 // Lists in parallel which may get them out of order
 func Md5sum(f Fs, w io.Writer) error {
@@ -690,6 +710,8 @@ func Md5sum(f Fs, w io.Writer) error {
 }
 
 // Count counts the objects and their sizes in the Fs
+//
+// Obeys includes and excludes
 func Count(f Fs) (objects int64, size int64, err error) {
 	err = ListFn(f, func(o Object) {
 		atomic.AddInt64(&objects, 1)

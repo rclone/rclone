@@ -9,6 +9,10 @@ date: "2015-09-27"
 Rclone has a sophisticated set of include and exclude rules. Some of
 these are based on patterns and some on other things like file size.
 
+The filters are applied for the `copy`, `sync`, `move`, `ls`, `lsl`,
+`md5sum`, `size` and `check` operations.  Note that `purge` does not
+obey the filters.
+
 Each path as it passes through rclone is matched against the include
 and exclude rules.  The paths are matched without a leading `/`.
 
