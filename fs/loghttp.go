@@ -48,10 +48,14 @@ func (t *LoggedTransport) RoundTrip(req *http.Request) (resp *http.Response, err
 	log.Println(string(buf))
 	log.Println(separatorReq)
 	resp, err = t.wrapped.RoundTrip(req)
-	buf, _ = httputil.DumpResponse(resp, t.logBody)
 	log.Println(separatorResp)
 	log.Println("HTTP RESPONSE")
-	log.Println(string(buf))
+	if err != nil {
+		log.Printf("Error: %v\n", err)
+	} else {
+		buf, _ = httputil.DumpResponse(resp, t.logBody)
+		log.Println(string(buf))
+	}
 	log.Println(separatorResp)
 	return resp, err
 }
