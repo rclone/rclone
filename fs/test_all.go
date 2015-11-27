@@ -25,6 +25,7 @@ var (
 		"TestAmazonCloudDrive:",
 		"TestOneDrive:",
 		"TestHubic:",
+		"TestB2:",
 	}
 	binary = "fs.test"
 	// Flags

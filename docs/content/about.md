@@ -21,6 +21,7 @@ Rclone is a command line program to sync files and directories to and from
   * Amazon Cloud Drive
   * Microsoft One Drive
   * Hubic
+  * Backblaze B2
   * The local filesystem
 
 Features

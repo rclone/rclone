@@ -133,5 +133,6 @@ func main() {
 	generateTestProgram(t, fns, "AmazonCloudDrive")
 	generateTestProgram(t, fns, "OneDrive")
 	generateTestProgram(t, fns, "Hubic")
+	generateTestProgram(t, fns, "B2")
 	log.Printf("Done")
 }

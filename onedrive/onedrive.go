@@ -177,7 +177,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	f := &Fs{
 		name:  name,
 		root:  root,
-		srv:   rest.NewClient(oAuthClient, rootURL),
+		srv:   rest.NewClient(oAuthClient).SetRoot(rootURL),
 		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 	}
 	f.srv.SetErrorHandler(errorHandler)

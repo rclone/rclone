@@ -26,6 +26,7 @@ docs = [
     "amazonclouddrive.md",
     "onedrive.md",
     "hubic.md",
+    "b2.md",
     "local.md",
     "changelog.md",
     "bugs.md",

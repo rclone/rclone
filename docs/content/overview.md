@@ -25,6 +25,7 @@ Here is an overview of the major features of each cloud storage system.
 | Amazon Cloud Drive     | Yes     | No      | Yes              | No              |
 | Microsoft One Drive    | No      | Yes     | Yes              | No              |
 | Hubic                  | Yes     | Yes     | No               | No              |
+| Backblaze B2           | No      | Partial | No               | No              |
 | The local filesystem   | Yes     | Yes     | Depends          | No              |
 
 ### MD5SUM ###
@@ -43,6 +44,9 @@ default, though the MD5SUM can be checked with the `--checksum` flag.
 
 All cloud storage systems support some kind of date on the object and
 these will be set when transferring from the cloud storage system.
+
+Backblaze B2 preserves file modification times on files uploaded and
+downloaded, but doesn't use them to decide which objects to sync.
 
 ### Case Insensitive ###
 
