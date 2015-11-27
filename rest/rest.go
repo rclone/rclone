@@ -1,5 +1,5 @@
-// Package api implements the API for one drive
-package api
+// Package rest implements a simple REST wrapper
+package rest
 
 import (
 	"bytes"
@@ -11,20 +11,32 @@ import (
 	"github.com/ncw/rclone/fs"
 )
 
-const (
-	rootURL = "https://api.onedrive.com/v1.0" // root URL for requests
-)
-
 // Client contains the info to sustain the API
 type Client struct {
-	c *http.Client
+	c            *http.Client
+	rootURL      string
+	errorHandler func(resp *http.Response) error
 }
 
 // NewClient takes an oauth http.Client and makes a new api instance
-func NewClient(c *http.Client) *Client {
+func NewClient(c *http.Client, rootURL string) *Client {
 	return &Client{
-		c: c,
+		c:            c,
+		rootURL:      rootURL,
+		errorHandler: defaultErrorHandler,
 	}
+}
+
+// defaultErrorHandler doesn't attempt to parse the http body
+func defaultErrorHandler(resp *http.Response) (err error) {
+	defer checkClose(resp.Body, &err)
+	return fmt.Errorf("HTTP error %v (%v) returned", resp.StatusCode, resp.Status)
+}
+
+// SetErrorHandler sets the handler to decode an error response when
+// the HTTP status code is not 2xx.  The handler should close resp.Body.
+func (api *Client) SetErrorHandler(fn func(resp *http.Response) error) {
+	api.errorHandler = fn
 }
 
 // Opts contains parameters for Call, CallJSON etc
@@ -69,7 +81,7 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 	if opts.Absolute {
 		url = opts.Path
 	} else {
-		url = rootURL + opts.Path
+		url = api.rootURL + opts.Path
 	}
 	req, err := http.NewRequest(opts.Method, url, opts.Body)
 	if err != nil {
@@ -95,16 +107,7 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 		return nil, err
 	}
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		// Decode error response
-		errResponse := new(Error)
-		err = DecodeJSON(resp, &errResponse)
-		if err != nil {
-			return resp, err
-		}
-		if errResponse.ErrorInfo.Code == "" {
-			errResponse.ErrorInfo.Code = resp.Status
-		}
-		return resp, errResponse
+		return resp, api.errorHandler(resp)
 	}
 	if opts.NoResponse {
 		return resp, resp.Body.Close()

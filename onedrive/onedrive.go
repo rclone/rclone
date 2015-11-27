@@ -18,6 +18,7 @@ import (
 	"github.com/ncw/rclone/oauthutil"
 	"github.com/ncw/rclone/onedrive/api"
 	"github.com/ncw/rclone/pacer"
+	"github.com/ncw/rclone/rest"
 	"github.com/spf13/pflag"
 	"golang.org/x/oauth2"
 )
@@ -27,7 +28,8 @@ const (
 	rcloneClientSecret = "0+be4+jYw+7018HY6P3t/Izo+pTc+Yvt8+fy8NHU094="
 	minSleep           = 10 * time.Millisecond
 	maxSleep           = 2 * time.Second
-	decayConstant      = 2 // bigger for slower decay, exponential
+	decayConstant      = 2                               // bigger for slower decay, exponential
+	rootURL            = "https://api.onedrive.com/v1.0" // root URL for requests
 )
 
 // Globals
@@ -77,7 +79,7 @@ func init() {
 // Fs represents a remote one drive
 type Fs struct {
 	name     string             // name of this remote
-	srv      *api.Client        // the connection to the one drive server
+	srv      *rest.Client       // the connection to the one drive server
 	root     string             // the path we are working on
 	dirCache *dircache.DirCache // Map of directory path to directory id
 	pacer    *pacer.Pacer       // pacer for API calls
@@ -139,7 +141,7 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 
 // readMetaDataForPath reads the metadata from the path
 func (f *Fs) readMetaDataForPath(path string) (info *api.Item, resp *http.Response, err error) {
-	opts := api.Opts{
+	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/drive/root:/" + replaceReservedChars(path),
 	}
@@ -148,6 +150,20 @@ func (f *Fs) readMetaDataForPath(path string) (info *api.Item, resp *http.Respon
 		return shouldRetry(resp, err)
 	})
 	return info, resp, err
+}
+
+// errorHandler parses a non 2xx error response into an error
+func errorHandler(resp *http.Response) error {
+	// Decode error response
+	errResponse := new(api.Error)
+	err := rest.DecodeJSON(resp, &errResponse)
+	if err != nil {
+		return err
+	}
+	if errResponse.ErrorInfo.Code == "" {
+		errResponse.ErrorInfo.Code = resp.Status
+	}
+	return errResponse
 }
 
 // NewFs constructs an Fs from the path, container:path
@@ -161,9 +177,10 @@ func NewFs(name, root string) (fs.Fs, error) {
 	f := &Fs{
 		name:  name,
 		root:  root,
-		srv:   api.NewClient(oAuthClient),
+		srv:   rest.NewClient(oAuthClient, rootURL),
 		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 	}
+	f.srv.SetErrorHandler(errorHandler)
 
 	// Get rootID
 	rootInfo, _, err := f.readMetaDataForPath("")
@@ -266,7 +283,7 @@ func (f *Fs) CreateDir(pathID, leaf string) (newID string, err error) {
 	// fs.Debug(f, "CreateDir(%q, %q)\n", pathID, leaf)
 	var resp *http.Response
 	var info *api.Item
-	opts := api.Opts{
+	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/drive/items/" + pathID + "/children",
 	}
@@ -300,7 +317,7 @@ type listAllFn func(*api.Item) bool
 func (f *Fs) listAll(dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
 	// Top parameter asks for bigger pages of data
 	// https://dev.onedrive.com/odata/optional-query-parameters.htm
-	opts := api.Opts{
+	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/drive/items/" + dirID + "/children?top=1000",
 	}
@@ -484,7 +501,7 @@ func (f *Fs) Mkdir() error {
 
 // deleteObject removes an object by ID
 func (f *Fs) deleteObject(id string) error {
-	opts := api.Opts{
+	opts := rest.Opts{
 		Method:     "DELETE",
 		Path:       "/drive/items/" + id,
 		NoResponse: true,
@@ -544,7 +561,7 @@ func (f *Fs) Precision() time.Duration {
 func (f *Fs) waitForJob(location string, o *Object) error {
 	deadline := time.Now().Add(fs.Config.Timeout)
 	for time.Now().Before(deadline) {
-		opts := api.Opts{
+		opts := rest.Opts{
 			Method:   "GET",
 			Path:     location,
 			Absolute: true,
@@ -560,7 +577,7 @@ func (f *Fs) waitForJob(location string, o *Object) error {
 		}
 		if resp.StatusCode == 202 {
 			var status api.AsyncOperationStatus
-			err = api.DecodeJSON(resp, &status)
+			err = rest.DecodeJSON(resp, &status)
 			if err != nil {
 				return err
 			}
@@ -569,7 +586,7 @@ func (f *Fs) waitForJob(location string, o *Object) error {
 			}
 		} else {
 			var info api.Item
-			err = api.DecodeJSON(resp, &info)
+			err = rest.DecodeJSON(resp, &info)
 			if err != nil {
 				return err
 			}
@@ -608,7 +625,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	// Copy the object
-	opts := api.Opts{
+	opts := rest.Opts{
 		Method:       "POST",
 		Path:         "/drive/items/" + srcObj.id + "/action.copy",
 		ExtraHeaders: map[string]string{"Prefer": "respond-async"},
@@ -741,7 +758,7 @@ func (o *Object) ModTime() time.Time {
 
 // setModTime sets the modification time of the local fs object
 func (o *Object) setModTime(modTime time.Time) (*api.Item, error) {
-	opts := api.Opts{
+	opts := rest.Opts{
 		Method: "PATCH",
 		Path:   "/drive/root:/" + o.srvPath(),
 	}
@@ -780,7 +797,7 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 		return nil, fmt.Errorf("Can't download no id")
 	}
 	var resp *http.Response
-	opts := api.Opts{
+	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/drive/items/" + o.id + "/content",
 	}
@@ -796,7 +813,7 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 
 // createUploadSession creates an upload session for the object
 func (o *Object) createUploadSession() (response *api.CreateUploadResponse, err error) {
-	opts := api.Opts{
+	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/drive/root:/" + o.srvPath() + ":/upload.createSession",
 	}
@@ -811,7 +828,7 @@ func (o *Object) createUploadSession() (response *api.CreateUploadResponse, err 
 // uploadFragment uploads a part
 func (o *Object) uploadFragment(url string, start int64, totalSize int64, buf []byte) (err error) {
 	bufSize := int64(len(buf))
-	opts := api.Opts{
+	opts := rest.Opts{
 		Method:        "PUT",
 		Path:          url,
 		Absolute:      true,
@@ -830,7 +847,7 @@ func (o *Object) uploadFragment(url string, start int64, totalSize int64, buf []
 
 // cancelUploadSession cancels an upload session
 func (o *Object) cancelUploadSession(url string) (err error) {
-	opts := api.Opts{
+	opts := rest.Opts{
 		Method:     "DELETE",
 		Path:       url,
 		Absolute:   true,
@@ -903,7 +920,7 @@ func (o *Object) Update(in io.Reader, modTime time.Time, size int64) (err error)
 	if size <= int64(uploadCutoff) {
 		// This is for less than 100 MB of content
 		var resp *http.Response
-		opts := api.Opts{
+		opts := rest.Opts{
 			Method: "PUT",
 			Path:   "/drive/root:/" + o.srvPath() + ":/content",
 			Body:   in,
