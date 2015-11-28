@@ -29,7 +29,7 @@ func NewClient(c *http.Client, rootURL string) *Client {
 
 // defaultErrorHandler doesn't attempt to parse the http body
 func defaultErrorHandler(resp *http.Response) (err error) {
-	defer checkClose(resp.Body, &err)
+	defer fs.CheckClose(resp.Body, &err)
 	return fmt.Errorf("HTTP error %v (%v) returned", resp.StatusCode, resp.Status)
 }
 
@@ -52,18 +52,9 @@ type Opts struct {
 	ExtraHeaders  map[string]string
 }
 
-// checkClose is a utility function used to check the return from
-// Close in a defer statement.
-func checkClose(c io.Closer, err *error) {
-	cerr := c.Close()
-	if *err == nil {
-		*err = cerr
-	}
-}
-
 // DecodeJSON decodes resp.Body into result
 func DecodeJSON(resp *http.Response, result interface{}) (err error) {
-	defer checkClose(resp.Body, &err)
+	defer fs.CheckClose(resp.Body, &err)
 	decoder := json.NewDecoder(resp.Body)
 	return decoder.Decode(result)
 }

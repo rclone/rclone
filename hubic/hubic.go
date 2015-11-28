@@ -9,7 +9,6 @@ package hubic
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"time"
@@ -103,15 +102,6 @@ func (f *Fs) String() string {
 	return fmt.Sprintf("Hubic %s", f.Fs.String())
 }
 
-// checkClose is a utility function used to check the return from
-// Close in a defer statement.
-func checkClose(c io.Closer, err *error) {
-	cerr := c.Close()
-	if *err == nil {
-		*err = cerr
-	}
-}
-
 // getCredentials reads the OpenStack Credentials using the Hubic API
 //
 // The credentials are read into the Fs
@@ -125,7 +115,7 @@ func (f *Fs) getCredentials() (err error) {
 	if err != nil {
 		return err
 	}
-	defer checkClose(resp.Body, &err)
+	defer fs.CheckClose(resp.Body, &err)
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return fmt.Errorf("Failed to get credentials: %s", resp.Status)
 	}

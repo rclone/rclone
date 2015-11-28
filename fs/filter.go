@@ -305,7 +305,7 @@ func forEachLine(path string, fn func(string) error) (err error) {
 	if err != nil {
 		return err
 	}
-	defer checkClose(in, &err)
+	defer CheckClose(in, &err)
 	scanner := bufio.NewScanner(in)
 	for scanner.Scan() {
 		line := scanner.Text()

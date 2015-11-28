@@ -305,9 +305,9 @@ func ErrorLog(o interface{}, text string, args ...interface{}) {
 	OutputLog(o, text, args...)
 }
 
-// checkClose is a utility function used to check the return from
+// CheckClose is a utility function used to check the return from
 // Close in a defer statement.
-func checkClose(c io.Closer, err *error) {
+func CheckClose(c io.Closer, err *error) {
 	cerr := c.Close()
 	if *err == nil {
 		*err = cerr
