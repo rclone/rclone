@@ -60,6 +60,7 @@ beta:	doc
 	./cross-compile $(TAG)β
 	rm build/*-current-*
 	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)β
+	@echo Beta release ready at http://pub.rclone.org/$(TAG)%CE%B2/
 
 serve:
 	cd docs && hugo server -v -w
