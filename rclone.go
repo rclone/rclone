@@ -206,9 +206,22 @@ var Commands = []Command{
 		Name:     "purge",
 		ArgsHelp: "remote:path",
 		Help: `
-        Remove the path and all of its contents.`,
+        Remove the path and all of its contents.  Does not obey
+        filters - use remove for that.`,
 		Run: func(fdst, fsrc fs.Fs) error {
 			return fs.Purge(fdst)
+		},
+		MinArgs: 1,
+		MaxArgs: 1,
+		Retry:   true,
+	},
+	{
+		Name:     "delete",
+		ArgsHelp: "remote:path",
+		Help: `
+        Remove the contents of path.  Obeys include/exclude filters.`,
+		Run: func(fdst, fsrc fs.Fs) error {
+			return fs.Delete(fdst)
 		},
 		MinArgs: 1,
 		MaxArgs: 1,

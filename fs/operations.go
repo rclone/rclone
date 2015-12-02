@@ -891,3 +891,20 @@ func Purge(f Fs) error {
 	}
 	return nil
 }
+
+// Delete removes all the contents of a container.  Unlike Purge, it
+// obeys includes and excludes.
+func Delete(f Fs) error {
+	wg := new(sync.WaitGroup)
+	delete := make(ObjectsChan, Config.Transfers)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		DeleteFiles(delete)
+	}()
+	err := ListFn(f, func(o Object) {
+		delete <- o
+	})
+	close(delete)
+	return err
+}

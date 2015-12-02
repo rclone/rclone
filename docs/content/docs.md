@@ -107,7 +107,28 @@ objects in it, use purge for that.
 
 ### rclone purge remote:path ###
 
-Remove the path and all of its contents.
+Remove the path and all of its contents.  Note that this does not obey
+include/exclude filters - everything will be removed.  Use `delete` if
+you want to selectively delete files.
+
+### rclone delete remote:path ###
+
+Remove the contents of path.  Unlike `purge` it obeys include/exclude
+filters so can be used to selectively delete files.
+
+Eg delete all files bigger than 100MBytes
+
+Check what would be deleted first (use either)
+
+    rclone --min-size 100M lsl remote:path
+    rclone --dry-run --min-size 100M delete remote:path
+
+Then delete
+
+    rclone --min-size 100M delete remote:path
+
+That reads "delete everything with a minimum size of 100 MB", hence
+delete all files bigger than 100MBytes.
 
 ### rclone check source:path dest:path ###
 

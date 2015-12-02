@@ -868,6 +868,26 @@ func TestCount(t *testing.T) {
 	}
 }
 
+func TestDelete(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteObject("small", "1234567890", t2)                                                                                           // 10 bytes
+	file2 := r.WriteObject("medium", "------------------------------------------------------------", t1)                                        // 60 bytes
+	file3 := r.WriteObject("large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
+	fstest.CheckItems(t, r.fremote, file1, file2, file3)
+
+	fs.Config.Filter.MaxSize = 60
+	defer func() {
+		fs.Config.Filter.MaxSize = 0
+	}()
+
+	err := fs.Delete(r.fremote)
+	if err != nil {
+		t.Fatalf("Sync failed: %v", err)
+	}
+	fstest.CheckItems(t, r.fremote, file3)
+}
+
 func TestCheck(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
