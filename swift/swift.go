@@ -210,6 +210,12 @@ func (f *Fs) newFsObjectWithInfo(remote string, info *swift.Object) fs.Object {
 		fs:     f,
 		remote: remote,
 	}
+	// Note that due to a quirk of swift, manifest files are
+	// returned as 0 bytes in the listing.  Correct this here by
+	// making sure we read the full metadata for all 0 byte files.
+	if info != nil && info.Bytes == 0 {
+		info = nil
+	}
 	if info != nil {
 		// Set info but not headers
 		o.info = *info
@@ -537,9 +543,8 @@ func (o *Object) SetModTime(modTime time.Time) {
 
 // Storable returns if this object is storable
 //
-// It reads the metadata for <= directoryMarkerMaxSize byte objects then compares the
-// Content-Type to directoryMarkerContentType - that makes it a
-// directory marker which is not storable.
+// It compares the Content-Type to directoryMarkerContentType - that
+// makes it a directory marker which is not storable.
 func (o *Object) Storable() bool {
 	return o.info.ContentType != directoryMarkerContentType
 }
