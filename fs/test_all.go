@@ -26,6 +26,7 @@ var (
 		"TestOneDrive:",
 		"TestHubic:",
 		"TestB2:",
+		"TestYandex:",
 	}
 	binary = "fs.test"
 	// Flags

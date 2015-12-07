@@ -30,6 +30,7 @@ import (
 	_ "github.com/ncw/rclone/onedrive"
 	_ "github.com/ncw/rclone/s3"
 	_ "github.com/ncw/rclone/swift"
+	_ "github.com/ncw/rclone/yandex"
 )
 
 // Globals

@@ -134,5 +134,6 @@ func main() {
 	generateTestProgram(t, fns, "OneDrive")
 	generateTestProgram(t, fns, "Hubic")
 	generateTestProgram(t, fns, "B2")
+	generateTestProgram(t, fns, "Yandex")
 	log.Printf("Done")
 }
