@@ -5,7 +5,42 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
+
+func TestAgeSuffix(t *testing.T) {
+	for i, test := range []struct {
+		in   string
+		want float64
+		err  bool
+	}{
+		{"0", 0, false},
+		{"", 0, true},
+		{"1ms", float64(time.Millisecond), false},
+		{"1s", float64(time.Second), false},
+		{"1m", float64(time.Minute), false},
+		{"1h", float64(time.Hour), false},
+		{"1d", float64(time.Hour) * 24, false},
+		{"1w", float64(time.Hour) * 24 * 7, false},
+		{"1M", float64(time.Hour) * 24 * 30, false},
+		{"1y", float64(time.Hour) * 24 * 365, false},
+		{"1.5y", float64(time.Hour) * 24 * 365 * 1.5, false},
+		{"-1s", -float64(time.Second), false},
+		{"1.s", float64(time.Second), false},
+		{"1x", 0, true},
+	} {
+		duration, err := ParseDuration(test.in)
+		if (err != nil) != test.err {
+			t.Errorf("%d: Expecting error %v but got error %v", i, test.err, err)
+			continue
+		}
+
+		got := float64(duration)
+		if test.want != got {
+			t.Errorf("%d: Want %v got %v", i, test.want, got)
+		}
+	}
+}
 
 func TestNewFilterDefault(t *testing.T) {
 	f, err := NewFilter()
@@ -137,16 +172,17 @@ func TestNewFilterFull(t *testing.T) {
 }
 
 type includeTest struct {
-	in   string
-	size int64
-	want bool
+	in      string
+	size    int64
+	modTime int64
+	want    bool
 }
 
 func testInclude(t *testing.T, f *Filter, tests []includeTest) {
 	for _, test := range tests {
-		got := f.Include(test.in, test.size)
+		got := f.Include(test.in, test.size, time.Unix(test.modTime, 0))
 		if test.want != got {
-			t.Errorf("%q,%d: want %v got %v", test.in, test.size, test.want, got)
+			t.Errorf("%q,%d,%d: want %v got %v", test.in, test.size, test.modTime, test.want, got)
 		}
 	}
 }
@@ -165,10 +201,10 @@ func TestNewFilterIncludeFiles(t *testing.T) {
 		t.Error(err)
 	}
 	testInclude(t, f, []includeTest{
-		{"file1.jpg", 0, true},
-		{"file2.jpg", 1, true},
-		{"potato/file2.jpg", 2, false},
-		{"file3.jpg", 3, false},
+		{"file1.jpg", 0, 0, true},
+		{"file2.jpg", 1, 0, true},
+		{"potato/file2.jpg", 2, 0, false},
+		{"file3.jpg", 3, 0, false},
 	})
 }
 
@@ -179,9 +215,9 @@ func TestNewFilterMinSize(t *testing.T) {
 	}
 	f.MinSize = 100
 	testInclude(t, f, []includeTest{
-		{"file1.jpg", 100, true},
-		{"file2.jpg", 101, true},
-		{"potato/file2.jpg", 99, false},
+		{"file1.jpg", 100, 0, true},
+		{"file2.jpg", 101, 0, true},
+		{"potato/file2.jpg", 99, 0, false},
 	})
 }
 
@@ -192,9 +228,25 @@ func TestNewFilterMaxSize(t *testing.T) {
 	}
 	f.MaxSize = 100
 	testInclude(t, f, []includeTest{
-		{"file1.jpg", 100, true},
-		{"file2.jpg", 101, false},
-		{"potato/file2.jpg", 99, true},
+		{"file1.jpg", 100, 0, true},
+		{"file2.jpg", 101, 0, false},
+		{"potato/file2.jpg", 99, 0, true},
+	})
+}
+
+func TestNewFilterModFile(t *testing.T) {
+	f, err := NewFilter()
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.ModTimeFrom = time.Unix(1447346230, 0)
+	f.ModTimeTo = time.Unix(1447432630, 0)
+	testInclude(t, f, []includeTest{
+		{"file1.jpg", 100, 1447346230, true},
+		{"file2.jpg", 101, 1447389430, true},
+		{"file3.jpg", 102, 1447432630, true},
+		{"potato/file1.jpg", 98, 1447346229, false},
+		{"potato/file2.jpg", 99, 1447432631, false},
 	})
 }
 
@@ -221,19 +273,19 @@ func TestNewFilterMatches(t *testing.T) {
 	add("+ /sausage3**")
 	add("- *")
 	testInclude(t, f, []includeTest{
-		{"cleared", 100, false},
-		{"file1.jpg", 100, false},
-		{"file2.png", 100, true},
-		{"afile2.png", 100, false},
-		{"file3.jpg", 101, true},
-		{"file4.png", 101, false},
-		{"potato", 101, false},
-		{"sausage1", 101, true},
-		{"sausage1/potato", 101, false},
-		{"sausage2potato", 101, true},
-		{"sausage2/potato", 101, false},
-		{"sausage3/potato", 101, true},
-		{"unicorn", 99, false},
+		{"cleared", 100, 0, false},
+		{"file1.jpg", 100, 0, false},
+		{"file2.png", 100, 0, true},
+		{"afile2.png", 100, 0, false},
+		{"file3.jpg", 101, 0, true},
+		{"file4.png", 101, 0, false},
+		{"potato", 101, 0, false},
+		{"sausage1", 101, 0, true},
+		{"sausage1/potato", 101, 0, false},
+		{"sausage2potato", 101, 0, true},
+		{"sausage2/potato", 101, 0, false},
+		{"sausage3/potato", 101, 0, true},
+		{"unicorn", 99, 0, false},
 	})
 }
 
@@ -316,7 +368,7 @@ func TestFilterMatchesFromDocs(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		included := f.Include(test.file, 0)
+		included := f.Include(test.file, 0, time.Unix(0, 0))
 		if included != test.included {
 			t.Logf("%q match %q: want %v got %v", test.glob, test.file, test.included, included)
 		}

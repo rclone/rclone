@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/pflag"
 )
@@ -23,6 +25,8 @@ var (
 	includeRule    = pflag.StringP("include", "", "", "Include files matching pattern")
 	includeFrom    = pflag.StringP("include-from", "", "", "Read include patterns from file")
 	filesFrom      = pflag.StringP("files-from", "", "", "Read list of source-file names from file")
+	minAge         = pflag.StringP("min-age", "", "", "Don't transfer any file younger than this in s or suffix ms|s|m|h|d|w|M|y")
+	maxAge         = pflag.StringP("max-age", "", "", "Don't transfer any file older than this in s or suffix ms|s|m|h|d|w|M|y")
 	minSize        SizeSuffix
 	maxSize        SizeSuffix
 	dumpFilters    = pflag.BoolP("dump-filters", "", false, "Dump the filters to the output")
@@ -62,8 +66,48 @@ type Filter struct {
 	DeleteExcluded bool
 	MinSize        int64
 	MaxSize        int64
+	ModTimeFrom    time.Time
+	ModTimeTo      time.Time
 	rules          []rule
 	files          filesMap
+}
+
+// We use time conventions
+var ageSuffixes = []struct {
+	Suffix     string
+	Multiplier time.Duration
+}{
+	{Suffix: "ms", Multiplier: time.Millisecond},
+	{Suffix: "s", Multiplier: time.Second},
+	{Suffix: "m", Multiplier: time.Minute},
+	{Suffix: "h", Multiplier: time.Hour},
+	{Suffix: "d", Multiplier: time.Hour * 24},
+	{Suffix: "w", Multiplier: time.Hour * 24 * 7},
+	{Suffix: "M", Multiplier: time.Hour * 24 * 30},
+	{Suffix: "y", Multiplier: time.Hour * 24 * 365},
+
+	// Default to second
+	{Suffix: "", Multiplier: time.Second},
+}
+
+// ParseDuration parses a duration string. Accept ms|s|m|h|d|w|M|y suffixes. Defaults to second if not provided
+func ParseDuration(age string) (time.Duration, error) {
+	var period float64
+
+	for _, ageSuffix := range ageSuffixes {
+		if strings.HasSuffix(age, ageSuffix.Suffix) {
+			numberString := age[:len(age)-len(ageSuffix.Suffix)]
+			var err error
+			period, err = strconv.ParseFloat(numberString, 64)
+			if err != nil {
+				return time.Duration(0), err
+			}
+			period *= float64(ageSuffix.Multiplier)
+			break
+		}
+	}
+
+	return time.Duration(period), nil
 }
 
 // NewFilter parses the command line options and creates a Filter object
@@ -73,6 +117,7 @@ func NewFilter() (f *Filter, err error) {
 		MinSize:        int64(minSize),
 		MaxSize:        int64(maxSize),
 	}
+
 	if *includeRule != "" {
 		err = f.Add(true, *includeRule)
 		if err != nil {
@@ -129,6 +174,23 @@ func NewFilter() (f *Filter, err error) {
 		})
 		if err != nil {
 			return nil, err
+		}
+	}
+	if *minAge != "" {
+		duration, err := ParseDuration(*minAge)
+		if err != nil {
+			return nil, err
+		}
+		f.ModTimeTo = time.Now().Add(-duration)
+	}
+	if *maxAge != "" {
+		duration, err := ParseDuration(*maxAge)
+		if err != nil {
+			return nil, err
+		}
+		f.ModTimeFrom = time.Now().Add(-duration)
+		if !f.ModTimeTo.IsZero() && f.ModTimeTo.Before(f.ModTimeFrom) {
+			return nil, fmt.Errorf("Argument --min-age can't be larger than --max-age")
 		}
 	}
 	if *dumpFilters {
@@ -194,11 +256,17 @@ func (f *Filter) Clear() {
 
 // Include returns whether this object should be included into the
 // sync or not
-func (f *Filter) Include(remote string, size int64) bool {
+func (f *Filter) Include(remote string, size int64, modTime time.Time) bool {
 	// filesFrom takes precedence
 	if f.files != nil {
 		_, include := f.files[remote]
 		return include
+	}
+	if !f.ModTimeFrom.IsZero() && modTime.Before(f.ModTimeFrom) {
+		return false
+	}
+	if !f.ModTimeFrom.IsZero() && modTime.After(f.ModTimeTo) {
+		return false
 	}
 	if f.MinSize != 0 && size < f.MinSize {
 		return false
@@ -212,6 +280,21 @@ func (f *Filter) Include(remote string, size int64) bool {
 		}
 	}
 	return true
+}
+
+// IncludeObject returns whether this object should be included into
+// the sync or not. This is a convenience function to avoid calling
+// o.ModTime(), which is an expensive operation.
+func (f *Filter) IncludeObject(o Object) bool {
+	var modTime time.Time
+
+	if !f.ModTimeFrom.IsZero() || !f.ModTimeFrom.IsZero() {
+		modTime = o.ModTime()
+	} else {
+		modTime = time.Unix(0, 0)
+	}
+
+	return f.Include(o.Remote(), o.Size(), modTime)
 }
 
 // forEachLine calls fn on every line in the file pointed to by path
@@ -241,6 +324,12 @@ func forEachLine(path string, fn func(string) error) (err error) {
 // DumpFilters dumps the filters in textual form, 1 per line
 func (f *Filter) DumpFilters() string {
 	rules := []string{}
+	if !f.ModTimeFrom.IsZero() {
+		rules = append(rules, fmt.Sprintf("Last-modified date must be equal or greater than: %s", f.ModTimeFrom.String()))
+	}
+	if !f.ModTimeTo.IsZero() {
+		rules = append(rules, fmt.Sprintf("Last-modified date must be equal or less than: %s", f.ModTimeTo.String()))
+	}
 	for _, rule := range f.rules {
 		rules = append(rules, rule.String())
 	}

@@ -387,7 +387,7 @@ func readFilesMap(fs Fs, obeyInclude bool) map[string]Object {
 		remote := o.Remote()
 		if _, ok := files[remote]; !ok {
 			// Make sure we don't delete excluded files if not required
-			if !obeyInclude || Config.Filter.DeleteExcluded || Config.Filter.Include(remote, o.Size()) {
+			if !obeyInclude || Config.Filter.DeleteExcluded || Config.Filter.IncludeObject(o) {
 				files[remote] = o
 			} else {
 				Debug(o, "Excluded from sync (and deletion)")
@@ -450,10 +450,10 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 
 	go func() {
 		for src := range fsrc.List() {
-			remote := src.Remote()
-			if !Config.Filter.Include(remote, src.Size()) {
+			if !Config.Filter.IncludeObject(src) {
 				Debug(src, "Excluding from sync")
 			} else {
+				remote := src.Remote()
 				if dst, dstFound := delFiles[remote]; dstFound {
 					delete(delFiles, remote)
 					toBeChecked <- ObjectPair{src, dst}
