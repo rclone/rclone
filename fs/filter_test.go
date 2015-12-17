@@ -234,19 +234,49 @@ func TestNewFilterMaxSize(t *testing.T) {
 	})
 }
 
-func TestNewFilterModFile(t *testing.T) {
+func TestNewFilterMinAndMaxAge(t *testing.T) {
 	f, err := NewFilter()
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.ModTimeFrom = time.Unix(1447346230, 0)
-	f.ModTimeTo = time.Unix(1447432630, 0)
+	f.ModTimeFrom = time.Unix(1440000002, 0)
+	f.ModTimeTo = time.Unix(1440000003, 0)
 	testInclude(t, f, []includeTest{
-		{"file1.jpg", 100, 1447346230, true},
-		{"file2.jpg", 101, 1447389430, true},
-		{"file3.jpg", 102, 1447432630, true},
-		{"potato/file1.jpg", 98, 1447346229, false},
-		{"potato/file2.jpg", 99, 1447432631, false},
+		{"file1.jpg", 100, 1440000000, false},
+		{"file2.jpg", 101, 1440000001, false},
+		{"file3.jpg", 102, 1440000002, true},
+		{"potato/file1.jpg", 98, 1440000003, true},
+		{"potato/file2.jpg", 99, 1440000004, false},
+	})
+}
+
+func TestNewFilterMinAge(t *testing.T) {
+	f, err := NewFilter()
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.ModTimeTo = time.Unix(1440000002, 0)
+	testInclude(t, f, []includeTest{
+		{"file1.jpg", 100, 1440000000, true},
+		{"file2.jpg", 101, 1440000001, true},
+		{"file3.jpg", 102, 1440000002, true},
+		{"potato/file1.jpg", 98, 1440000003, false},
+		{"potato/file2.jpg", 99, 1440000004, false},
+	})
+}
+
+func TestNewFilterMaxAge(t *testing.T) {
+	f, err := NewFilter()
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.ModTimeFrom = time.Unix(1440000002, 0)
+	testInclude(t, f, []includeTest{
+		{"file1.jpg", 100, 1440000000, false},
+		{"file2.jpg", 101, 1440000001, false},
+		{"file3.jpg", 102, 1440000002, true},
+		{"potato/file1.jpg", 98, 1440000003, true},
+		{"potato/file2.jpg", 99, 1440000004, true},
 	})
 }
 

@@ -182,6 +182,7 @@ func NewFilter() (f *Filter, err error) {
 			return nil, err
 		}
 		f.ModTimeTo = time.Now().Add(-duration)
+		Debug(nil, "--min-age %v to %v", duration, f.ModTimeTo)
 	}
 	if *maxAge != "" {
 		duration, err := ParseDuration(*maxAge)
@@ -192,6 +193,7 @@ func NewFilter() (f *Filter, err error) {
 		if !f.ModTimeTo.IsZero() && f.ModTimeTo.Before(f.ModTimeFrom) {
 			return nil, fmt.Errorf("Argument --min-age can't be larger than --max-age")
 		}
+		Debug(nil, "--max-age %v to %v", duration, f.ModTimeFrom)
 	}
 	if *dumpFilters {
 		fmt.Println("--- start filters ---")
@@ -265,7 +267,7 @@ func (f *Filter) Include(remote string, size int64, modTime time.Time) bool {
 	if !f.ModTimeFrom.IsZero() && modTime.Before(f.ModTimeFrom) {
 		return false
 	}
-	if !f.ModTimeFrom.IsZero() && modTime.After(f.ModTimeTo) {
+	if !f.ModTimeTo.IsZero() && modTime.After(f.ModTimeTo) {
 		return false
 	}
 	if f.MinSize != 0 && size < f.MinSize {
@@ -288,7 +290,7 @@ func (f *Filter) Include(remote string, size int64, modTime time.Time) bool {
 func (f *Filter) IncludeObject(o Object) bool {
 	var modTime time.Time
 
-	if !f.ModTimeFrom.IsZero() || !f.ModTimeFrom.IsZero() {
+	if !f.ModTimeFrom.IsZero() || !f.ModTimeTo.IsZero() {
 		modTime = o.ModTime()
 	} else {
 		modTime = time.Unix(0, 0)
