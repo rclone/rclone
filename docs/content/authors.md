@@ -18,3 +18,4 @@ Contributors
   * Colin Nicholson <colin@colinn.com>
   * Klaus Post <klauspost@gmail.com>
   * Sergey Tolmachev <tolsi.ru@gmail.com>
+  * Adriano Aurélio Meirelles <adriano@atinge.com>
