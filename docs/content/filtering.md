@@ -234,6 +234,31 @@ used.
 For example `--max-size 1G` means no files larger than 1GByte will be
 transferred.
 
+### `--max-age` - Don't transfer any file older than this ###
+
+This option controls the maximum age of files to transfer.  Give in
+seconds or with a suffix of:
+
+  * `ms` - Milliseconds
+  * `s` - Seconds
+  * `m` - Minutes
+  * `h` - Hours
+  * `d` - Days
+  * `w` - Weeks
+  * `M` - Months
+  * `y` - Years
+
+For example `--max-age 2d` means no files older than 2 days will be
+transferred.
+
+### `--min-age` - Don't transfer any file younger than this ###
+
+This option controls the minimum age of files to transfer.  Give in
+seconds or with a suffix (see `--max-age` for list of suffixes)
+
+For example `--min-age 2d` means no files younger than 2 days will be
+transferred.
+
 ### `--delete-excluded` - Delete files on dest excluded from sync ###
 
 **Important** this flag is dangerous - use with `--dry-run` and `-v` first.

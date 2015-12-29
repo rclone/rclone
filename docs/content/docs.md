@@ -321,6 +321,8 @@ For the filtering options
   * `--files-from`
   * `--min-size`
   * `--max-size`
+  * `--min-age`
+  * `--max-age`
   * `--dump-filters`
 
 See the [filtering section](/filtering/).
