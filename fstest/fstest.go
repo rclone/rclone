@@ -109,7 +109,7 @@ func (is *Items) Find(t *testing.T, obj fs.Object, precision time.Duration) {
 func (is *Items) Done(t *testing.T) {
 	if len(is.byName) != 0 {
 		for name := range is.byName {
-			log.Printf("Not found %q", name)
+			t.Logf("Not found %q", name)
 		}
 		t.Errorf("%d objects not found", len(is.byName))
 	}
