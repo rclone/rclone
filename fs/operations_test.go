@@ -38,6 +38,8 @@ var (
 	RemoteName            = flag.String("remote", "", "Remote to test with, defaults to local filesystem")
 	SubDir                = flag.Bool("subdir", false, "Set to test with a sub directory")
 	Verbose               = flag.Bool("verbose", false, "Set to enable logging")
+	DumpHeaders           = flag.Bool("dump-headers", false, "Set to dump headers (needs -verbose)")
+	DumpBodies            = flag.Bool("dump-bodies", false, "Set to dump bodies (needs -verbose)")
 	finalise              func()
 )
 
@@ -68,6 +70,8 @@ func TestInit(t *testing.T) {
 	fs.LoadConfig()
 	fs.Config.Verbose = *Verbose
 	fs.Config.Quiet = !*Verbose
+	fs.Config.DumpHeaders = *DumpHeaders
+	fs.Config.DumpBodies = *DumpBodies
 	var err error
 	fremote, finalise, err = fstest.RandomRemote(*RemoteName, *SubDir)
 	if err != nil {
