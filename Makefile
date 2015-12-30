@@ -9,7 +9,7 @@ rclone:
 
 test:	rclone
 	go test ./...
-	cd fs && ./test_all.sh
+	cd fs && go run test_all.go
 
 check:	rclone
 	go vet ./...

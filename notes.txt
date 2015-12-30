@@ -1,50 +1,19 @@
-Perhaps make Md5sum() and Modtime() optional.  Define the zero values
-"" and 0. Make it so we can support remotes which can't do those.
-
-Fix the docs
-  * factor the README.md into the docs directory
-  * create it as part of make by assembling other parts
-  * write long docs about each flag
-
 Change lsd command so it doesn't show -1
   * Make sure all Fses show -1 for objects Zero for dates etc
   * Make test?
 
 Put the TestRemote names into the Fs description
-Make test_all.sh use the TestRemote name automatically
-
-Run errcheck and go vet in the make file
-.. Also race detector?
-.. go tool vet -shadow
+Make fs/test_all.go use the TestRemote name automatically
 
 Get rid of Storable?
-
-Write developer manual
 
 Todo
   * FIXME: More -dry-run checks for object transfer
   * Might be quicker to check md5sums first? for swift <-> swift certainly, and maybe for small files
-  * swift: Ignoring the pseudo directories
-    * if object.PseudoDirectory {
-      * fmt.Printf("%9s %19s %s\n", "Directory", "-", fs.Remote())
-  * Make Account wrapper
-    * make Account do progress meter
-  * -timeout: Make all timeouts be settable with command line parameters
-  * Add max object size to fs metadata - 5GB for swift, infinite for local, ? for s3
-    * tie into -max-size flag
   * FIXME Make NewFs to return err.IsAnObject so can put the LimitedFs
     creation in common code? Or try for as much as possible?
   * FIXME Account all the transactons (ls etc) using a different
     Roundtripper wrapper which wraps the transactions?
-
-More rsync features
-  * include
-  * exclude
-  * max size
-  * -c, --checksum              skip based on checksum, not mod-time & size
-
-Ideas for flags
-  * --retries N flag which would make rclone retry a sync until successful or it tried N times.
 
 Ideas
   * could do encryption - put IV into metadata?

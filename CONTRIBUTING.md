@@ -105,7 +105,7 @@ but they can be run against any of the remotes.
 If you want to run all the integration tests against all the remotes,
 then run in that directory
 
-    ./test_all.sh
+    go run test_all.go
 
 ## Making a release ##
 
