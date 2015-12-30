@@ -370,7 +370,7 @@ func (f *Fs) purgeCheck(check bool) error {
 
 // Precision return the precision of this Fs
 func (f *Fs) Precision() time.Duration {
-	return time.Second
+	return time.Nanosecond
 }
 
 // Purge deletes all the files and the container
