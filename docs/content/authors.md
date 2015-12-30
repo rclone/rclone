@@ -19,3 +19,4 @@ Contributors
   * Klaus Post <klauspost@gmail.com>
   * Sergey Tolmachev <tolsi.ru@gmail.com>
   * Adriano Aurélio Meirelles <adriano@atinge.com>
+  * C. Bess <cbess@users.noreply.github.com>
