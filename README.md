@@ -1,7 +1,8 @@
 [![Logo](http://rclone.org/img/rclone-120x120.png)](http://rclone.org/)
 
 [Website](http://rclone.org) |
-[Documentation](http://rclone.org/docs/) |
+[Documentation](http://rclone.org/docs/) | 
+[Contributing](CONTRIBUTING.md) |
 [Changelog](http://rclone.org/changelog/) |
 [Installation](http://rclone.org/install/) |
 [G+](https://google.com/+RcloneOrg)
