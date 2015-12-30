@@ -31,6 +31,7 @@ var (
 	// Flags
 	maxTries = flag.Int("maxtries", 3, "Number of times to try each test")
 	runTests = flag.String("run", "", "Comma separated list of remotes to test, eg 'TestSwift:,TestS3'")
+	verbose  = flag.Bool("verbose", false, "Run the tests with -v")
 )
 
 // test holds info about a running test
@@ -49,8 +50,11 @@ func newTest(remote string, subdir bool) *test {
 	t := &test{
 		remote:  remote,
 		subdir:  subdir,
-		cmdLine: []string{"./" + binary, "-test.v", "-remote", remote},
+		cmdLine: []string{"./" + binary, "-remote", remote},
 		try:     1,
+	}
+	if *verbose {
+		t.cmdLine = append(t.cmdLine, "-test.v")
 	}
 	if subdir {
 		t.cmdLine = append(t.cmdLine, "-subdir")
@@ -80,7 +84,7 @@ func (t *test) passed() bool {
 
 // run runs all the trials for this test
 func (t *test) run(result chan<- *test) {
-	for try := 1; try <= *maxTries; try++ {
+	for t.try = 1; t.try <= *maxTries; t.try++ {
 		t.trial()
 		if t.passed() {
 			break
