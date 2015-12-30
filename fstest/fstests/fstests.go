@@ -137,7 +137,16 @@ func TestFsNewFsObjectNotFound(t *testing.T) {
 }
 
 func findObject(t *testing.T, Name string) fs.Object {
-	obj := remote.NewFsObject(Name)
+	var obj fs.Object
+	const retries = 10
+	for i := 1; i <= retries; i++ {
+		obj = remote.NewFsObject(Name)
+		if obj != nil {
+			break
+		}
+		t.Logf("Sleeping for 1 second for findObject eventual consistency: %d/%d", i, retries)
+		time.Sleep(1 * time.Second)
+	}
 	if obj == nil {
 		t.Fatalf("Object not found: %q", Name)
 	}
