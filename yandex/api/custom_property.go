@@ -28,7 +28,7 @@ func (c *Client) SetCustomProperty(remotePath string, property string, value str
 }
 
 //SetCustomPropertyRequest will make an CustomProperty request and return a URL to CustomProperty data to.
-func (c *Client) SetCustomPropertyRequest(remotePath string, body io.Reader) error {
+func (c *Client) SetCustomPropertyRequest(remotePath string, body io.Reader) (err error) {
 	values := url.Values{}
 	values.Add("path", remotePath)
 	req, err := c.scopedRequest("PATCH", "/v1/disk/resources?"+values.Encode(), body)
@@ -43,6 +43,7 @@ func (c *Client) SetCustomPropertyRequest(remotePath string, body io.Reader) err
 	if err := CheckAPIError(resp); err != nil {
 		return err
 	}
+	defer CheckClose(resp.Body, &err)
 
 	//If needed we can read response and check if custom_property is set.
 

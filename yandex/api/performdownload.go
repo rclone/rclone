@@ -8,7 +8,7 @@ import (
 )
 
 // PerformDownload does the actual download via unscoped PUT request.
-func (c *Client) PerformDownload(url string) (io.ReadCloser, error) {
+func (c *Client) PerformDownload(url string) (out io.ReadCloser, err error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -22,11 +22,11 @@ func (c *Client) PerformDownload(url string) (io.ReadCloser, error) {
 	}
 
 	if resp.StatusCode != 200 {
+		defer CheckClose(resp.Body, &err)
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return nil, err
 		}
-		defer CheckClose(resp.Body, &err)
 		return nil, fmt.Errorf("download error [%d]: %s", resp.StatusCode, string(body[:]))
 	}
 	return resp.Body, err

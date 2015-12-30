@@ -107,7 +107,7 @@ func runRequest(client *Client, req *http.Request) ([]byte, error) {
 	return runRequestWithErrorHandler(client, req, defaultErrorHandler)
 }
 
-func runRequestWithErrorHandler(client *Client, req *http.Request, errorHandler ErrorHandler) ([]byte, error) {
+func runRequestWithErrorHandler(client *Client, req *http.Request, errorHandler ErrorHandler) (out []byte, err error) {
 	resp, err := client.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err

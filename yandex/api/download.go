@@ -23,7 +23,7 @@ func (c *Client) Download(remotePath string) (io.ReadCloser, error) { //io.Write
 }
 
 // DownloadRequest will make an download request and return a URL to download data to.
-func (c *Client) DownloadRequest(remotePath string) (*DownloadResponse, error) {
+func (c *Client) DownloadRequest(remotePath string) (ur *DownloadResponse, err error) {
 	values := url.Values{}
 	values.Add("path", remotePath)
 
@@ -41,7 +41,7 @@ func (c *Client) DownloadRequest(remotePath string) (*DownloadResponse, error) {
 	}
 	defer CheckClose(resp.Body, &err)
 
-	ur, err := ParseDownloadResponse(resp.Body)
+	ur, err = ParseDownloadResponse(resp.Body)
 	if err != nil {
 		return nil, err
 	}

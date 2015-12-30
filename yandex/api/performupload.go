@@ -10,7 +10,7 @@ import (
 )
 
 // PerformUpload does the actual upload via unscoped PUT request.
-func (c *Client) PerformUpload(url string, data io.Reader) error {
+func (c *Client) PerformUpload(url string, data io.Reader) (err error) {
 	req, err := http.NewRequest("PUT", url, data)
 	if err != nil {
 		return err

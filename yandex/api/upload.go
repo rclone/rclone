@@ -31,7 +31,7 @@ func (c *Client) Upload(data io.Reader, remotePath string, overwrite bool) error
 }
 
 // UploadRequest will make an upload request and return a URL to upload data to.
-func (c *Client) UploadRequest(remotePath string, overwrite bool) (*UploadResponse, error) {
+func (c *Client) UploadRequest(remotePath string, overwrite bool) (ur *UploadResponse, err error) {
 	values := url.Values{}
 	values.Add("path", remotePath)
 	values.Add("overwrite", strconv.FormatBool(overwrite))
@@ -50,7 +50,7 @@ func (c *Client) UploadRequest(remotePath string, overwrite bool) (*UploadRespon
 	}
 	defer CheckClose(resp.Body, &err)
 
-	ur, err := ParseUploadResponse(resp.Body)
+	ur, err = ParseUploadResponse(resp.Body)
 	if err != nil {
 		return nil, err
 	}

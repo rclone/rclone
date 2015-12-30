@@ -41,19 +41,19 @@ func ProccessErrorResponse(data io.Reader) (*ErrorResponse, error) {
 }
 
 // CheckAPIError is a convenient function to turn erroneous
-// API response into go error.
-func CheckAPIError(resp *http.Response) error {
+// API response into go error.  It closes the Body on error.
+func CheckAPIError(resp *http.Response) (err error) {
 	if resp.StatusCode >= 200 && resp.StatusCode < 400 {
 		return nil
 	}
+
+	defer CheckClose(resp.Body, &err)
 
 	errorResponse, err := ProccessErrorResponse(resp.Body)
 	if err != nil {
 		return err
 	}
 	errorResponse.StatusCode = resp.StatusCode
-
-	defer CheckClose(resp.Body, &err)
 
 	return errorResponse
 }
