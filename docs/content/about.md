@@ -22,6 +22,7 @@ Rclone is a command line program to sync files and directories to and from
   * Microsoft One Drive
   * Hubic
   * Backblaze B2
+  * Yandex Disk
   * The local filesystem
 
 Features

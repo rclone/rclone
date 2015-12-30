@@ -26,6 +26,7 @@ Here is an overview of the major features of each cloud storage system.
 | Microsoft One Drive    | No      | Yes     | Yes              | No              |
 | Hubic                  | Yes     | Yes     | No               | No              |
 | Backblaze B2           | No      | Partial | No               | No              |
+| Yandex Disk            | Yes     | Yes     | No               | No              |
 | The local filesystem   | Yes     | Yes     | Depends          | No              |
 
 ### MD5SUM ###

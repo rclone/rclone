@@ -27,6 +27,7 @@ docs = [
     "onedrive.md",
     "hubic.md",
     "b2.md",
+    "yandex.md",
     "local.md",
     "changelog.md",
     "bugs.md",
