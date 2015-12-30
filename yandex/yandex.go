@@ -118,7 +118,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 
 	//create new client
-	yandexDisk := yandex.NewClient(token.AccessToken)
+	yandexDisk := yandex.NewClient(token.AccessToken, fs.Config.Client())
 
 	f := &Fs{
 		yd: yandexDisk,
