@@ -498,7 +498,7 @@ func mkDirExecute(client *yandex.Client, path string) (int, string, error) {
 	}
 	if err != nil {
 		// error creating directory
-		log.Fatalf("Failed to create folder: %v", err)
+		log.Printf("Failed to create folder: %v", err)
 		return statusCode, jsonErrorString, err
 	}
 	return 0, "", nil
