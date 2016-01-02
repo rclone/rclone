@@ -644,6 +644,9 @@ func (o *Object) SetModTime(modTime time.Time) {
 	}
 	o.meta[metaMtime] = aws.String(swift.TimeToFloatString(modTime))
 
+	// Guess the content type
+	contentType := fs.MimeType(o)
+
 	// Copy the object to itself to update the metadata
 	key := o.fs.root + o.remote
 	sourceKey := o.fs.bucket + "/" + key
@@ -652,6 +655,7 @@ func (o *Object) SetModTime(modTime time.Time) {
 		Bucket:            &o.fs.bucket,
 		ACL:               &o.fs.perm,
 		Key:               &key,
+		ContentType:       &contentType,
 		CopySource:        &sourceKey,
 		Metadata:          o.meta,
 		MetadataDirective: &directive,
