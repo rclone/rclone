@@ -43,8 +43,9 @@ const (
 // Globals
 var (
 	// Flags
-	driveFullList = pflag.BoolP("drive-full-list", "", true, "Use a full listing for directory list. More data but usually quicker.")
-	driveUseTrash = pflag.BoolP("drive-use-trash", "", false, "Send files to the trash instead of deleting permanently.")
+	driveFullList      = pflag.BoolP("drive-full-list", "", true, "Use a full listing for directory list. More data but usually quicker.")
+	driveAuthOwnerOnly = pflag.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user. Requires drive-full-list.")
+	driveUseTrash      = pflag.BoolP("drive-use-trash", "", false, "Send files to the trash instead of deleting permanently.")
 	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
 	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
 	chunkSize         = fs.SizeSuffix(256 * 1024)
@@ -400,6 +401,16 @@ func (f *Fs) listDirRecursive(dirID string, path string, out fs.ObjectsChan) err
 	return nil
 }
 
+// isAuthOwned checks if any of the item owners is the authenticated owner
+func isAuthOwned(item *drive.File) bool {
+	for _, owner := range item.Owners {
+		if owner.IsAuthenticatedUser {
+			return true
+		}
+	}
+	return false
+}
+
 // Path should be directory path either "" or "path/"
 //
 // List the directory using a full listing and filtering out unwanted
@@ -419,6 +430,9 @@ func (f *Fs) listDirFull(dirID string, path string, out fs.ObjectsChan) error {
 		path := item.Title
 		if directory != "" {
 			path = directory + "/" + path
+		}
+		if *driveAuthOwnerOnly && !isAuthOwned(item) {
+			return
 		}
 		if item.MimeType == driveFolderType {
 			// Put the directory into the dircache
