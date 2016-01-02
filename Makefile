@@ -51,7 +51,7 @@ upload:
 	rclone -v copy build/ memstore:downloads-rclone-org
 
 upload_github:
-	./upload_github $(TAG)
+	./upload-github $(TAG)
 
 cross:	doc
 	./cross-compile $(TAG)
