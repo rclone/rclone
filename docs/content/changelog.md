@@ -1,12 +1,28 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2015-11-07"
+date: "2015-01-02"
 ---
 
 Changelog
 ---------
 
+  * v1.26 - 2016-01-02
+    * New Features
+      * Yandex storage backend - thank you Dmitry Burdeev ("dibu")
+      * Implement Backblaze B2 storage backend
+      * Add --min-age and --max-age flags - thank you Adriano Aurélio Meirelles
+      * Make ls/lsl/md5sum/size/check obey includes and excludes
+    * Fixes
+      * Fix crash in http logging
+      * Upload releases to github too
+    * Swift
+      * Fix sync for chunked files
+    * One Drive
+      * Re-enable server side copy
+      * Don't mask HTTP error codes with JSON decode error
+    * S3
+      * Fix corrupting Content-Type on mod time update (thanks Joseph Spurrier)
   * v1.25 - 2015-11-14
     * New features
       * Implement Hubic storage system
