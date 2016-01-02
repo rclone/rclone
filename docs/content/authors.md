@@ -21,3 +21,4 @@ Contributors
   * Adriano Aurélio Meirelles <adriano@atinge.com>
   * C. Bess <cbess@users.noreply.github.com>
   * Dmitry Burdeev <dibu28@gmail.com>
+  * Joseph Spurrier <github@josephspurrier.com>
