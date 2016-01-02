@@ -35,9 +35,9 @@ Choose a number from below
  4) drive
 type> 4
 Google Application Client Id - leave blank normally.
-client_id> 
+client_id>
 Google Application Client Secret - leave blank normally.
-client_secret> 
+client_secret>
 Remote config
 Use auto config?
  * Say Y if not sure
@@ -51,8 +51,8 @@ Waiting for code...
 Got code
 --------------------
 [remote]
-client_id = 
-client_secret = 
+client_id =
+client_secret =
 token = {"AccessToken":"xxxx.x.xxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx","Expiry":"2014-03-16T13:57:58.955387075Z","Extra":null}
 --------------------
 y) Yes this is OK
@@ -126,6 +126,11 @@ File size cutoff for switching to chunked upload.  Default is 256kB.
 
 Send files to the trash instead of deleting permanently. Defaults to
 off, namely deleting files permanently.
+
+#### --drive-auth-owner-only ####
+
+Only consider files owned by the authenticated user. Requires
+that --drive-full-list=true (default).
 
 ### Limitations ###
 
