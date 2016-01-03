@@ -133,7 +133,7 @@ Research
 Getting going
 
   * Create `remote/remote.go` (copy this from a similar fs)
-  * Add your fs to the imports in `rclone.go`
+  * Add your fs to the imports in `fs/all/all.go`
 
 Unit tests
 
@@ -144,7 +144,6 @@ Unit tests
 
 Integration tests
 
-  * Add your fs to the imports in `fs/operations_test.go`
   * Add your fs to `fs/test_all.go`
   * Make sure integration tests pass with
       * `cd fs`
