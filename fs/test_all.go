@@ -10,9 +10,13 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/ncw/rclone/fs"
+	_ "github.com/ncw/rclone/fs/all" // import all fs
 )
 
 var (
@@ -33,6 +37,7 @@ var (
 	maxTries = flag.Int("maxtries", 3, "Number of times to try each test")
 	runTests = flag.String("run", "", "Comma separated list of remotes to test, eg 'TestSwift:,TestS3'")
 	verbose  = flag.Bool("verbose", false, "Run the tests with -v")
+	clean    = flag.Bool("clean", false, "Instead of testing, clean all left over test directories")
 )
 
 // test holds info about a running test
@@ -78,6 +83,52 @@ func (t *test) trial() {
 	}
 }
 
+var (
+	// matchTestRemote matches the remote names used for testing
+	matchTestRemote = regexp.MustCompile(`^[abcdefghijklmnopqrstuvwxyz0123456789]{32}$`)
+	// findInteriorDigits makes sure there are digits inside the string
+	findInteriorDigits = regexp.MustCompile(`[a-z][0-9]+[a-z]`)
+)
+
+// cleanFs runs a single clean fs for left over directories
+func (t *test) cleanFs() error {
+	f, err := fs.NewFs(t.remote)
+	if err != nil {
+		return err
+	}
+	for dir := range f.ListDir() {
+		insideDigits := len(findInteriorDigits.FindAllString(dir.Name, -1))
+		if matchTestRemote.MatchString(dir.Name) && insideDigits >= 2 {
+			log.Printf("Purging %s%s", t.remote, dir.Name)
+			dir, err := fs.NewFs(t.remote + dir.Name)
+			if err != nil {
+				return err
+			}
+			err = fs.Purge(dir)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// clean runs a single clean on a fs for left over directories
+func (t *test) clean() {
+	log.Printf("%q - Starting clean (try %d/%d)", t.remote, t.try, *maxTries)
+	start := time.Now()
+	t.err = t.cleanFs()
+	if t.err != nil {
+		log.Printf("%q - Failed to purge %v", t.remote, t.err)
+	}
+	duration := time.Since(start)
+	if t.passed() {
+		log.Printf("%q - Finished OK in %v (try %d/%d)", t.cmdString, duration, t.try, *maxTries)
+	} else {
+		log.Printf("%q - Finished ERROR in %v (try %d/%d): %v", t.cmdString, duration, t.try, *maxTries, t.err)
+	}
+}
+
 // passed returns true if the test passed
 func (t *test) passed() bool {
 	return t.err == nil
@@ -86,7 +137,13 @@ func (t *test) passed() bool {
 // run runs all the trials for this test
 func (t *test) run(result chan<- *test) {
 	for t.try = 1; t.try <= *maxTries; t.try++ {
-		t.trial()
+		if *clean {
+			if !t.subdir {
+				t.clean()
+			}
+		} else {
+			t.trial()
+		}
 		if t.passed() {
 			break
 		}
@@ -130,8 +187,12 @@ func main() {
 	log.Printf("Testing remotes: %s", strings.Join(remotes, ", "))
 
 	start := time.Now()
-	makeTestBinary()
-	defer removeTestBinary()
+	if *clean {
+		fs.LoadConfig()
+	} else {
+		makeTestBinary()
+		defer removeTestBinary()
+	}
 
 	// start the tests
 	results := make(chan *test, 8)
