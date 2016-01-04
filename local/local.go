@@ -22,10 +22,20 @@ import (
 
 // Register with Fs
 func init() {
-	fs.Register(&fs.Info{
+	fsi := &fs.Info{
 		Name:  "local",
 		NewFs: NewFs,
-	})
+		Options: []fs.Option{fs.Option{
+			Name:     "nounc",
+			Help:     "Disable UNC (long path names) conversion on Windows",
+			Optional: true,
+			Examples: []fs.OptionExample{{
+				Value: "true",
+				Help:  "Disables long file names",
+			}},
+		}},
+	}
+	fs.Register(fsi)
 }
 
 // Fs represents a local filesystem rooted at root
@@ -35,6 +45,7 @@ type Fs struct {
 	precisionOk sync.Once           // Whether we need to read the precision
 	precision   time.Duration       // precision of local filesystem
 	warned      map[string]struct{} // whether we have warned about this string
+	nounc       bool                // Skip UNC conversion on Windows
 }
 
 // Object represents a local filesystem object
@@ -52,11 +63,13 @@ type Object struct {
 func NewFs(name, root string) (fs.Fs, error) {
 	var err error
 
+	nounc, _ := fs.ConfigFile.GetValue(name, "nounc")
 	f := &Fs{
 		name:   name,
 		warned: make(map[string]struct{}),
+		nounc:  nounc == "true",
 	}
-	f.root = filterPath(f.cleanUtf8(root))
+	f.root = f.filterPath(f.cleanUtf8(root))
 
 	// Check to see if this points to a file
 	fi, err := os.Lstat(f.root)
@@ -89,7 +102,7 @@ func (f *Fs) String() string {
 // newFsObject makes a half completed Object
 func (f *Fs) newFsObject(remote string) *Object {
 	remote = filepath.ToSlash(remote)
-	dstPath := filterPath(filepath.Join(f.root, f.cleanUtf8(remote)))
+	dstPath := f.filterPath(filepath.Join(f.root, f.cleanUtf8(remote)))
 	return &Object{
 		fs:     f,
 		remote: remote,
@@ -195,7 +208,7 @@ func (f *Fs) ListDir() fs.DirChan {
 						Count: 0,
 					}
 					// Go down the tree to count the files and directories
-					dirpath := filterPath(filepath.Join(f.root, item.Name()))
+					dirpath := f.filterPath(filepath.Join(f.root, item.Name()))
 					err := filepath.Walk(dirpath, func(path string, fi os.FileInfo, err error) error {
 						if err != nil {
 							fs.Stats.Error()
@@ -594,7 +607,7 @@ func getDirFile(s string) (string, string) {
 	return s[:i], s[i+1:]
 }
 
-func filterPath(s string) string {
+func (f *Fs) filterPath(s string) string {
 	s = filepath.Clean(s)
 	if runtime.GOOS == "windows" {
 		s = strings.Replace(s, `/`, `\`, -1)
@@ -606,6 +619,9 @@ func filterPath(s string) string {
 			}
 		}
 
+		if f.nounc {
+			return s
+		}
 		// Convert to UNC
 		return uncPath(s)
 	}
