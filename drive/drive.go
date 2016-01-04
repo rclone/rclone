@@ -65,7 +65,7 @@ func init() {
 		Name:  "drive",
 		NewFs: NewFs,
 		Config: func(name string) {
-			err := oauthutil.Config(name, driveConfig)
+			err := oauthutil.Config("drive", name, driveConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}

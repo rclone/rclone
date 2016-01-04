@@ -45,7 +45,7 @@ func init() {
 		Name:  "yandex",
 		NewFs: NewFs,
 		Config: func(name string) {
-			err := oauthutil.Config(name, oauthConfig)
+			err := oauthutil.Config("yandex", name, oauthConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
