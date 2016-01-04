@@ -59,7 +59,7 @@ func init() {
 		Name:  "google cloud storage",
 		NewFs: NewFs,
 		Config: func(name string) {
-			err := oauthutil.Config(name, storageConfig)
+			err := oauthutil.Config("google cloud storage", name, storageConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}

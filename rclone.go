@@ -225,6 +225,18 @@ var Commands = []Command{
 		NoStats: true,
 	},
 	{
+		Name: "authorize",
+		Help: `
+        Remote authorization.`,
+		Run: func(fdst, fsrc fs.Fs) error {
+			fs.Authorize()
+			return nil
+		},
+		NoStats: true,
+		MinArgs: 1,
+		MaxArgs: 3,
+	},
+	{
 		Name: "help",
 		Help: `
         This help.`,

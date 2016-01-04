@@ -63,7 +63,7 @@ func init() {
 		Name:  "amazon cloud drive",
 		NewFs: NewFs,
 		Config: func(name string) {
-			err := oauthutil.Config(name, acdConfig)
+			err := oauthutil.Config("amazon cloud drive", name, acdConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
