@@ -102,3 +102,15 @@ Amazon cloud drive has rate limiting so you may notice errors in the
 sync (429 errors).  rclone will automatically retry the sync up to 3
 times by default (see `--retries` flag) which should hopefully work
 around this problem.
+
+Amazon cloud drive has an internal limit of file sizes that can be
+uploaded to the service. This limit is not officially published,
+but all files larger than this will fail.
+
+At the time of writing (Jan 2016) is in the area of 50GB per file.
+This means that larger files are likely to fail.
+
+Unfortunatly there is no way for rclone to see that this failure is 
+because of file size, so it will retry the operation, as any other
+failure. To avoid this problem, use `--max-size=50GB` option to limit
+the maximum size of uploaded files.
