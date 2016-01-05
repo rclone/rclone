@@ -281,6 +281,11 @@ func checkOne(pair ObjectPair, out ObjectPairChan) {
 	if !src.Storable() {
 		return
 	}
+	// If we should ignore existing files, don't transfer
+	if Config.IgnoreExisting {
+		Debug(src, "Destination exists, skipping")
+		return
+	}
 	// Check to see if changed or not
 	if Equal(src, dst) {
 		Debug(src, "Unchanged skipping")

@@ -248,6 +248,15 @@ modification times in the same way as rclone.
 When using this flag, rclone won't update mtimes of remote files if
 they are incorrect as it would normally.
 
+### --ignore-existing ###
+
+Using this option will make rclone unconditionally skip all files
+that exist on the destination, no matter the content of these files.
+
+While this isn't a generally recommendable option, it can be useful
+in cases where your files change due to encryption. However, it cannot
+correct partial transfers in case a transfer was interrupted.
+
 ### --stats=TIME ###
 
 Rclone will print stats at regular intervals to show its progress.
