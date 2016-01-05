@@ -62,6 +62,7 @@ var (
 	configFile     = pflag.StringP("config", "", ConfigPath, "Config file.")
 	checkSum       = pflag.BoolP("checksum", "c", false, "Skip based on checksum & size, not mod-time & size")
 	sizeOnly       = pflag.BoolP("size-only", "", false, "Skip based on size only, not mod-time or checksum")
+	ignoreExisting = pflag.BoolP("ignore-existing", "", false, "Skip all files that exist on destination")
 	dryRun         = pflag.BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
 	connectTimeout = pflag.DurationP("contimeout", "", 60*time.Second, "Connect timeout")
 	timeout        = pflag.DurationP("timeout", "", 5*60*time.Second, "IO idle timeout")
@@ -168,6 +169,7 @@ type ConfigInfo struct {
 	DryRun             bool
 	CheckSum           bool
 	SizeOnly           bool
+	IgnoreExisting     bool
 	ModifyWindow       time.Duration
 	Checkers           int
 	Transfers          int
@@ -261,6 +263,7 @@ func LoadConfig() {
 	Config.ConnectTimeout = *connectTimeout
 	Config.CheckSum = *checkSum
 	Config.SizeOnly = *sizeOnly
+	Config.IgnoreExisting = *ignoreExisting
 	Config.DumpHeaders = *dumpHeaders
 	Config.DumpBodies = *dumpBodies
 	Config.InsecureSkipVerify = *skipVerify

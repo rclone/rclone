@@ -294,6 +294,31 @@ func TestSyncSizeOnly(t *testing.T) {
 	cleanTempDir(t)
 }
 
+func TestSyncIgnoreExisting(t *testing.T) {
+	WriteFile("existing", "potato", t1)
+	fs.Config.IgnoreExisting = true
+	defer func() { fs.Config.IgnoreExisting = false }()
+	err := fs.Sync(fremote, flocal)
+	if err != nil {
+		t.Fatalf("Sync failed: %v", err)
+	}
+	items := []fstest.Item{
+		{Path: "existing", Size: 6, ModTime: t1, Md5sum: "8ee2027983915ec78acc45027d874316"},
+	}
+	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
+	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+
+	// Change everything
+	WriteFile("existing", "newpotatoes", t2)
+	err = fs.Sync(fremote, flocal)
+	if err != nil {
+		t.Fatalf("Sync failed: %v", err)
+	}
+	// Items should not change
+	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+	cleanTempDir(t)
+}
+
 func TestSyncAfterChangingModtimeOnly(t *testing.T) {
 	WriteFile("empty space", "", t1)
 
