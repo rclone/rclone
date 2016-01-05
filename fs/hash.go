@@ -8,25 +8,28 @@ import (
 	"io"
 )
 
-// Hash types
+// HashType indicates a standard hashing algorithm
 type HashType int
 
 const (
+	// HashMD5 indicates MD5 support
 	HashMD5 HashType = 1 << iota
+
+	// HashSHA1 indicates SHA-1 support
 	HashSHA1
 )
 
-// Returns a set of all the supported hashes by HashStream and
-// MultiHasher.
+// SupportedHashes returns a set of all the supported hashes by
+// HashStream and MultiHasher.
 var SupportedHashes = NewHashSet(HashMD5, HashSHA1)
 
-// Supporting the HashedFs interface indicates that the filesystem
+// The HashedFs interface indicates that the filesystem
 // supports one or more file hashes.
 type HashedFs interface {
 	Hashes() HashSet
 }
 
-// MultiHasher will calculate hashes of all supported hash types.
+// HashStream will calculate hashes of all supported hash types.
 func HashStream(r io.Reader) (map[HashType]string, error) {
 	md5w := md5.New()
 	sha1w := sha1.New()
@@ -97,18 +100,17 @@ func (h HashSet) Overlap(t HashSet) HashSet {
 }
 
 // Array returns an array of all hash types in the set
-func (h HashSet) Array() []HashType {
+func (h HashSet) Array() (ht []HashType) {
 	v := int(h)
-	ret := make([]HashType, 0)
 	i := uint(0)
 	for v != 0 {
 		if v&1 != 0 {
-			ret = append(ret, HashType(1<<i))
+			ht = append(ht, HashType(1<<i))
 		}
 		i++
 		v >>= 1
 	}
-	return ret
+	return ht
 }
 
 // Count returns the number of hash types in the set
