@@ -74,6 +74,7 @@ type Object struct {
 	remote  string    // The remote path
 	info    api.File  // Info from the b2 object if known
 	modTime time.Time // The modified time of the object if known
+	sha1    string    // SHA-1 hash if known
 }
 
 // ------------------------------------------------------------
@@ -580,6 +581,11 @@ func (f *Fs) Purge() error {
 	return errReturn
 }
 
+// Hashes returns the supported hash sets.
+func (f *Fs) Hashes() fs.HashSet {
+	return fs.HashSet(fs.HashSHA1)
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -600,9 +606,16 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-// Md5sum returns the Md5sum of an object returning a lowercase hex string
-func (o *Object) Md5sum() (string, error) {
-	return "", nil
+// Hash returns the Sha-1 of an object returning a lowercase hex string
+// Hash returns the Md5sum of an object returning a lowercase hex string
+func (o *Object) Hash(t fs.HashType) (string, error) {
+	if t != fs.HashSHA1 {
+		return "", fs.ErrHashUnsupported
+	}
+	if o.sha1 == "" {
+		_ = o.ModTime()
+	}
+	return o.sha1, nil
 }
 
 // Size returns the size of an object in bytes
@@ -652,6 +665,8 @@ func parseTimeString(timeString string) (result time.Time, err error) {
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
+//
+// SHA-1 will also be updated once the request has completed.
 func (o *Object) ModTime() (result time.Time) {
 	if !o.modTime.IsZero() {
 		return o.modTime
@@ -685,6 +700,8 @@ func (o *Object) ModTime() (result time.Time) {
 		return result
 	}
 
+	o.sha1 = response.SHA1
+
 	// Parse the result
 	timeString := response.Info[timeKey]
 	parsed, err := parseTimeString(timeString)
@@ -692,6 +709,8 @@ func (o *Object) ModTime() (result time.Time) {
 		fs.Debug(o, "Failed to parse mod time string %q: %v", timeString, err)
 		return result
 	}
+	o.modTime = parsed
+
 	return parsed
 }
 
@@ -784,6 +803,9 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 		fs.Debug(o, "Failed to parse mod time string %q: %v", timeString, err)
 	} else {
 		o.modTime = parsed
+	}
+	if o.sha1 == "" {
+		o.sha1 = resp.Header.Get(sha1Header)
 	}
 	return newOpenFile(o, resp), nil
 }
@@ -939,6 +961,7 @@ func (o *Object) Update(in io.Reader, modTime time.Time, size int64) (err error)
 	o.info.Action = "upload"
 	o.info.Size = response.Size
 	o.info.UploadTimestamp = api.Timestamp(time.Now()) // FIXME not quite right
+	o.sha1 = response.SHA1
 	return nil
 }
 

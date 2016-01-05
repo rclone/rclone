@@ -33,44 +33,48 @@ func CalculateModifyWindow(fs ...Fs) {
 	Debug(fs[0], "Modify window is %s", Config.ModifyWindow)
 }
 
-// Md5sumsEqual checks to see if src == dst, but ignores empty strings
-func Md5sumsEqual(src, dst string) bool {
+// HashEquals checks to see if src == dst, but ignores empty strings
+func HashEquals(src, dst string) bool {
 	if src == "" || dst == "" {
 		return true
 	}
 	return src == dst
 }
 
-// CheckMd5sums checks the two files to see if the MD5sums are the same
+// CheckHashes checks the two files to see if they have common
+// knwon hash types and compares them
 //
 // Returns two bools, the first of which is equality and the second of
-// which is true if either of the MD5SUMs were unset.
+// which is true if either of the hashes were unset.
 //
 // May return an error which will already have been logged
 //
 // If an error is returned it will return equal as false
-func CheckMd5sums(src, dst Object) (equal bool, unset bool, err error) {
-	srcMd5, err := src.Md5sum()
-	if err != nil {
-		Stats.Error()
-		ErrorLog(src, "Failed to calculate src md5: %s", err)
-		return false, false, err
-	}
-	if srcMd5 == "" {
+func CheckHashes(src, dst Object) (equal bool, unset bool, err error) {
+	common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
+	if common.Count() == 0 {
 		return true, true, nil
 	}
-	dstMd5, err := dst.Md5sum()
+	usehash := common.GetOne()
+	srcHash, err := src.Hash(usehash)
 	if err != nil {
 		Stats.Error()
-		ErrorLog(dst, "Failed to calculate dst md5: %s", err)
+		ErrorLog(src, "Failed to calculate src hash: %s", err)
 		return false, false, err
 	}
-	if dstMd5 == "" {
+	if srcHash == "" {
 		return true, true, nil
 	}
-	// Debug("Src MD5 %s", srcMd5)
-	// Debug("Dst MD5 %s", obj.Hash)
-	return Md5sumsEqual(srcMd5, dstMd5), false, nil
+	dstHash, err := dst.Hash(usehash)
+	if err != nil {
+		Stats.Error()
+		ErrorLog(dst, "Failed to calculate dst hash: %s", err)
+		return false, false, err
+	}
+	if dstHash == "" {
+		return true, true, nil
+	}
+	return srcHash == dstHash, false, nil
 }
 
 // Equal checks to see if the src and dst objects are equal by looking at
@@ -121,7 +125,7 @@ func Equal(src, dst Object) bool {
 
 	// mtime is unreadable or different but size is the same so
 	// check the MD5SUM
-	same, md5unset, _ := CheckMd5sums(src, dst)
+	same, md5unset, _ := CheckHashes(src, dst)
 	if !same {
 		Debug(src, "Md5sums differ")
 		return false
@@ -245,20 +249,26 @@ tryAgain:
 		return
 	}
 
-	// Verify md5sums are the same after transfer - ignoring blank md5sums
-	if !Config.SizeOnly {
-		srcMd5sum, md5sumErr := src.Md5sum()
-		if md5sumErr != nil {
+	// Verify hashes are the same after transfer - ignoring blank hashes
+	// TODO(klauspost): This could be extended, so we always create a hash type matching
+	// the destination, and calculate it while sending.
+	common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
+	if !Config.SizeOnly && common.Count() > 0 {
+		// Get common hash type
+		hashType := common.GetOne()
+
+		srcSum, err := src.Hash(hashType)
+		if err != nil {
 			Stats.Error()
-			ErrorLog(src, "Failed to read md5sum: %s", md5sumErr)
-		} else if srcMd5sum != "" {
-			dstMd5sum, md5sumErr := dst.Md5sum()
-			if md5sumErr != nil {
+			ErrorLog(src, "Failed to read src hash: %s", err)
+		} else if srcSum != "" {
+			dstSum, err := dst.Hash(hashType)
+			if err != nil {
 				Stats.Error()
-				ErrorLog(dst, "Failed to read md5sum: %s", md5sumErr)
-			} else if !Md5sumsEqual(srcMd5sum, dstMd5sum) {
+				ErrorLog(dst, "Failed to read hash: %s", err)
+			} else if !HashEquals(srcSum, dstSum) {
 				Stats.Error()
-				err = fmt.Errorf("Corrupted on transfer: md5sums differ %q vs %q", srcMd5sum, dstMd5sum)
+				err = fmt.Errorf("Corrupted on transfer: hash differ %q vs %q", srcSum, dstSum)
 				ErrorLog(dst, "%s", err)
 				removeFailedCopy(dst)
 				return
@@ -609,7 +619,7 @@ func Check(fdst, fsrc Fs) error {
 					ErrorLog(src, "Sizes differ")
 					continue
 				}
-				same, _, err := CheckMd5sums(src, dst)
+				same, _, err := CheckHashes(src, dst)
 				Stats.DoneChecking(src)
 				if err != nil {
 					continue
@@ -696,12 +706,15 @@ func ListLong(f Fs, w io.Writer) error {
 // excludes
 //
 // Lists in parallel which may get them out of order
+// FIXME(klauspost): Handle non-MD5 types
 func Md5sum(f Fs, w io.Writer) error {
 	return ListFn(f, func(o Object) {
 		Stats.Checking(o)
-		md5sum, err := o.Md5sum()
+		md5sum, err := o.Hash(HashMD5)
 		Stats.DoneChecking(o)
-		if err != nil {
+		if err == ErrHashUnsupported {
+			md5sum = "UNSUPPORTED"
+		} else if err != nil {
 			Debug(o, "Failed to read MD5: %v", err)
 			md5sum = "ERROR"
 		}

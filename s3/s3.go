@@ -537,6 +537,11 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	return f.NewFsObject(remote), err
 }
 
+// Hashes returns the supported hash sets.
+func (f *Fs) Hashes() fs.HashSet {
+	return fs.HashSet(fs.HashMD5)
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -559,8 +564,11 @@ func (o *Object) Remote() string {
 
 var matchMd5 = regexp.MustCompile(`^[0-9a-f]{32}$`)
 
-// Md5sum returns the Md5sum of an object returning a lowercase hex string
-func (o *Object) Md5sum() (string, error) {
+// Hash returns the Md5sum of an object returning a lowercase hex string
+func (o *Object) Hash(t fs.HashType) (string, error) {
+	if t != fs.HashMD5 {
+		return "", fs.ErrHashUnsupported
+	}
 	etag := strings.Trim(strings.ToLower(o.etag), `"`)
 	// Check the etag is a valid md5sum
 	if !matchMd5.MatchString(etag) {

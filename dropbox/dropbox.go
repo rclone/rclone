@@ -523,6 +523,11 @@ func (f *Fs) DirMove(src fs.Fs) error {
 	return nil
 }
 
+// Hashes returns the supported hash sets.
+func (f *Fs) Hashes() fs.HashSet {
+	return fs.HashSet(fs.HashNone)
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -543,9 +548,9 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-// Md5sum returns the Md5sum of an object returning a lowercase hex string
-func (o *Object) Md5sum() (string, error) {
-	return "", nil
+// Hash is unsupported on Dropbox
+func (o *Object) Hash(t fs.HashType) (string, error) {
+	return "", fs.ErrHashUnsupported
 }
 
 // Size returns the size of an object in bytes

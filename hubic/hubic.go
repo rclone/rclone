@@ -207,6 +207,12 @@ func (f *Fs) UnWrap() fs.Fs {
 	return f.Fs
 }
 
+// Hashes returns the supported hash sets.
+// Inherited from swift
+func (f *Fs) Hashes() fs.HashSet {
+	return fs.HashSet(fs.HashMD5)
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs        = (*Fs)(nil)

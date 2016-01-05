@@ -469,11 +469,11 @@ func TestObjectRemote(t *testing.T) {
 func TestObjectMd5sum(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
-	Md5sum, err := obj.Md5sum()
-	if err != nil {
+	Md5sum, err := obj.Hash(fs.HashMD5)
+	if err != nil && err != fs.ErrHashUnsupported {
 		t.Errorf("Error in Md5sum: %v", err)
 	}
-	if !fs.Md5sumsEqual(Md5sum, file1.Md5sum) {
+	if !fs.HashEquals(Md5sum, file1.Md5sum) {
 		t.Errorf("Md5sum is wrong %v != %v", Md5sum, file1.Md5sum)
 	}
 }
@@ -527,7 +527,7 @@ func TestObjectOpen(t *testing.T) {
 		t.Fatalf("in.Close() return error: %v", err)
 	}
 	Md5sum := hex.EncodeToString(hash.Sum(nil))
-	if !fs.Md5sumsEqual(Md5sum, file1.Md5sum) {
+	if !fs.HashEquals(Md5sum, file1.Md5sum) {
 		t.Errorf("Md5sum is wrong %v != %v", Md5sum, file1.Md5sum)
 	}
 }

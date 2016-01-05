@@ -54,13 +54,18 @@ func (i *Item) Check(t *testing.T, obj fs.Object, precision time.Duration) {
 	if obj == nil {
 		t.Fatalf("Object is nil")
 	}
-	// Check attributes
-	Md5sum, err := obj.Md5sum()
-	if err != nil {
-		t.Fatalf("Failed to read md5sum for %q: %v", obj.Remote(), err)
-	}
-	if !fs.Md5sumsEqual(i.Md5sum, Md5sum) {
-		t.Errorf("%s: Md5sum incorrect - expecting %q got %q", obj.Remote(), i.Md5sum, Md5sum)
+	types := obj.Fs().Hashes().Array()
+	for _, hash := range types {
+		// Check attributes
+		sum, err := obj.Hash(hash)
+		if err != nil {
+			t.Fatalf("Failed to read hash %d for %q: %v", hash, obj.Remote(), err)
+		}
+		if hash == fs.HashMD5 {
+			if !fs.HashEquals(i.Md5sum, sum) {
+				t.Errorf("%s: md5 hash incorrect - expecting %q got %q", obj.Remote(), i.Md5sum, sum)
+			}
+		}
 	}
 	if i.Size != obj.Size() {
 		t.Errorf("%s: Size incorrect - expecting %d got %d", obj.Remote(), i.Size, obj.Size())

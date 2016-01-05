@@ -428,6 +428,11 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	return f.NewFsObject(remote), nil
 }
 
+// Hashes returns the supported hash sets.
+func (f *Fs) Hashes() fs.HashSet {
+	return fs.HashSet(fs.HashMD5)
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -448,8 +453,11 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-// Md5sum returns the Md5sum of an object returning a lowercase hex string
-func (o *Object) Md5sum() (string, error) {
+// Hash returns the Md5sum of an object returning a lowercase hex string
+func (o *Object) Hash(t fs.HashType) (string, error) {
+	if t != fs.HashMD5 {
+		return "", fs.ErrHashUnsupported
+	}
 	isManifest, err := o.isManifestFile()
 	if err != nil {
 		return "", err

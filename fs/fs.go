@@ -106,6 +106,9 @@ type Fs interface {
 
 	// Precision of the ModTimes in this Fs
 	Precision() time.Duration
+
+	// Returns the supported hash types of the filesystem
+	Hashes() HashSet
 }
 
 // Object is a filesystem like object provided by an Fs
@@ -121,7 +124,7 @@ type Object interface {
 
 	// Md5sum returns the md5 checksum of the file
 	// If no Md5sum is available it returns ""
-	Md5sum() (string, error)
+	Hash(HashType) (string, error)
 
 	// ModTime returns the modification date of the file
 	// It should return a best guess if one isn't available
