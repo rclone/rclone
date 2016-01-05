@@ -2,10 +2,7 @@
 package local
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
-	"hash"
 	"io"
 	"io/ioutil"
 	"os"
@@ -39,11 +36,11 @@ type Fs struct {
 
 // Object represents a local filesystem object
 type Object struct {
-	fs     *Fs         // The Fs this object is part of
-	remote string      // The remote path
-	path   string      // The local path
-	info   os.FileInfo // Interface for file info (always present)
-	md5sum string      // the md5sum of the object or "" if not calculated
+	fs     *Fs                    // The Fs this object is part of
+	remote string                 // The remote path
+	path   string                 // The local path
+	info   os.FileInfo            // Interface for file info (always present)
+	hashes map[fs.HashType]string // Hashes
 }
 
 // ------------------------------------------------------------
@@ -94,6 +91,7 @@ func (f *Fs) newFsObject(remote string) *Object {
 		fs:     f,
 		remote: remote,
 		path:   dstPath,
+		hashes: make(map[fs.HashType]string),
 	}
 }
 
@@ -404,6 +402,11 @@ func (f *Fs) DirMove(src fs.Fs) error {
 	return os.Rename(srcFs.root, f.root)
 }
 
+// Hashes returns the supported hash sets.
+func Hashes() fs.HashSet {
+	return fs.SupportedHashes
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -426,30 +429,32 @@ func (o *Object) Remote() string {
 
 // Md5sum calculates the Md5sum of a file returning a lowercase hex string
 func (o *Object) Md5sum() (string, error) {
-	if o.md5sum != "" {
-		return o.md5sum, nil
+	return o.Hash(fs.HashMD5)
+}
+
+// Hash returns the requested hash of a file as a lowercase hex string
+func (o *Object) Hash(r fs.HashType) (string, error) {
+	if o.hashes == nil {
+		in, err := os.Open(o.path)
+		if err != nil {
+			fs.Stats.Error()
+			fs.ErrorLog(o, "Failed to open: %s", err)
+			return "", err
+		}
+		o.hashes, err = fs.HashStream(in)
+		closeErr := in.Close()
+		if err != nil {
+			fs.Stats.Error()
+			fs.ErrorLog(o, "Failed to read: %s", err)
+			return "", err
+		}
+		if closeErr != nil {
+			fs.Stats.Error()
+			fs.ErrorLog(o, "Failed to close: %s", closeErr)
+			return "", closeErr
+		}
 	}
-	in, err := os.Open(o.path)
-	if err != nil {
-		fs.Stats.Error()
-		fs.ErrorLog(o, "Failed to open: %s", err)
-		return "", err
-	}
-	hash := md5.New()
-	_, err = io.Copy(hash, in)
-	closeErr := in.Close()
-	if err != nil {
-		fs.Stats.Error()
-		fs.ErrorLog(o, "Failed to read: %s", err)
-		return "", err
-	}
-	if closeErr != nil {
-		fs.Stats.Error()
-		fs.ErrorLog(o, "Failed to close: %s", closeErr)
-		return "", closeErr
-	}
-	o.md5sum = hex.EncodeToString(hash.Sum(nil))
-	return o.md5sum, nil
+	return o.hashes[r], nil
 }
 
 // Size returns the size of an object in bytes
@@ -493,9 +498,9 @@ func (o *Object) Storable() bool {
 // localOpenFile wraps an io.ReadCloser and updates the md5sum of the
 // object that is read
 type localOpenFile struct {
-	o    *Object       // object that is open
-	in   io.ReadCloser // handle we are wrapping
-	hash hash.Hash     // currently accumulating MD5
+	o    *Object         // object that is open
+	in   io.ReadCloser   // handle we are wrapping
+	hash *fs.MultiHasher // currently accumulating MD5
 }
 
 // Read bytes from the object - see io.Reader
@@ -512,9 +517,9 @@ func (file *localOpenFile) Read(p []byte) (n int, err error) {
 func (file *localOpenFile) Close() (err error) {
 	err = file.in.Close()
 	if err == nil {
-		file.o.md5sum = hex.EncodeToString(file.hash.Sum(nil))
+		file.o.hashes = file.hash.Sums()
 	} else {
-		file.o.md5sum = ""
+		file.o.hashes = nil
 	}
 	return err
 }
@@ -529,7 +534,7 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 	in = &localOpenFile{
 		o:    o,
 		in:   in,
-		hash: md5.New(),
+		hash: fs.NewMultiHasher(),
 	}
 	return
 }
@@ -553,7 +558,7 @@ func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
 	}
 
 	// Calculate the md5sum of the object we are reading as we go along
-	hash := md5.New()
+	hash := fs.NewMultiHasher()
 	in = io.TeeReader(in, hash)
 
 	_, err = io.Copy(out, in)
@@ -565,8 +570,8 @@ func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
 		return outErr
 	}
 
-	// All successful so update the md5sum
-	o.md5sum = hex.EncodeToString(hash.Sum(nil))
+	// All successful so update the hashes
+	o.hashes = hash.Sums()
 
 	// Set the mtime
 	o.SetModTime(modTime)
