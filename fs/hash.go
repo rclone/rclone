@@ -12,7 +12,14 @@ import (
 // HashType indicates a standard hashing algorithm
 type HashType int
 
+// ErrHashUnsupported should be returned by filesystem,
+// if it is requested to deliver an unsupported hash type.
+var ErrHashUnsupported = fmt.Errorf("hash type not supported")
+
 const (
+	// HashNone indicates no hashes are supported
+	HashNone HashType = 0
+
 	// HashMD5 indicates MD5 support
 	HashMD5 HashType = 1 << iota
 
@@ -23,12 +30,6 @@ const (
 // SupportedHashes returns a set of all the supported hashes by
 // HashStream and MultiHasher.
 var SupportedHashes = NewHashSet(HashMD5, HashSHA1)
-
-// The HashedFs interface indicates that the filesystem
-// supports one or more file hashes.
-type HashedFs interface {
-	Hashes() HashSet
-}
 
 // HashStream will calculate hashes of all supported hash types.
 func HashStream(r io.Reader) (map[HashType]string, error) {
@@ -130,7 +131,7 @@ type HashSet int
 
 // NewHashSet will create a new hash set with the hash types supplied
 func NewHashSet(t ...HashType) HashSet {
-	h := HashSet(0)
+	h := HashSet(HashNone)
 	return h.Add(t...)
 }
 
@@ -157,6 +158,22 @@ func (h HashSet) Overlap(t HashSet) HashSet {
 // is present in the set c
 func (h HashSet) SubsetOf(c HashSet) bool {
 	return int(h)|int(c) == int(c)
+}
+
+// GetOne will return a hash type.
+// Currently the first is returned, but it could be
+// improved to return the strongest.
+func (h HashSet) GetOne() HashType {
+	v := int(h)
+	i := uint(0)
+	for v != 0 {
+		if v&1 != 0 {
+			return HashType(1 << i)
+		}
+		i++
+		v >>= 1
+	}
+	return HashType(HashNone)
 }
 
 // Array returns an array of all hash types in the set

@@ -529,6 +529,11 @@ func (f *Fs) Precision() time.Duration {
 	return fs.ModTimeNotSupported
 }
 
+// Hashes returns the supported hash sets.
+func (f *Fs) Hashes() fs.HashSet {
+	return fs.HashSet(fs.HashMD5)
+}
+
 // Copy src to this remote using server side copy operations.
 //
 // This is stored with the remote path given
@@ -581,8 +586,11 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-// Md5sum returns the Md5sum of an object returning a lowercase hex string
-func (o *Object) Md5sum() (string, error) {
+// Hash returns the Md5sum of an object returning a lowercase hex string
+func (o *Object) Hash(t fs.HashType) (string, error) {
+	if t != fs.HashMD5 {
+		return "", fs.ErrHashUnsupported
+	}
 	if o.info.ContentProperties.Md5 != nil {
 		return *o.info.ContentProperties.Md5, nil
 	}

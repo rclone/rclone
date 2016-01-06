@@ -427,11 +427,6 @@ func (o *Object) Remote() string {
 	return o.fs.cleanUtf8(o.remote)
 }
 
-// Md5sum calculates the Md5sum of a file returning a lowercase hex string
-func (o *Object) Md5sum() (string, error) {
-	return o.Hash(fs.HashMD5)
-}
-
 // Hash returns the requested hash of a file as a lowercase hex string
 func (o *Object) Hash(r fs.HashType) (string, error) {
 	if o.hashes == nil {
@@ -694,5 +689,4 @@ var (
 	_ fs.Mover    = &Fs{}
 	_ fs.DirMover = &Fs{}
 	_ fs.Object   = &Object{}
-	_ fs.HashedFs = &Fs{}
 )
