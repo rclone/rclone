@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"hash"
 	"io"
 )
@@ -31,17 +32,59 @@ type HashedFs interface {
 
 // HashStream will calculate hashes of all supported hash types.
 func HashStream(r io.Reader) (map[HashType]string, error) {
-	md5w := md5.New()
-	sha1w := sha1.New()
-	w := io.MultiWriter(md5w, sha1w)
-	_, err := io.Copy(w, r)
+	return HashStreamTypes(r, SupportedHashes)
+}
+
+// HashStreamTypes will calculate hashes of the requested hash types.
+func HashStreamTypes(r io.Reader, set HashSet) (map[HashType]string, error) {
+	hashers, err := hashFromTypes(set)
 	if err != nil {
 		return nil, err
 	}
-	return map[HashType]string{
-		HashMD5:  hex.EncodeToString(md5w.Sum(nil)),
-		HashSHA1: hex.EncodeToString(sha1w.Sum(nil)),
-	}, nil
+
+	_, err = io.Copy(hashToMultiWriter(hashers), r)
+	if err != nil {
+		return nil, err
+	}
+	var ret = make(map[HashType]string)
+	for k, v := range hashers {
+		ret[k] = hex.EncodeToString(v.Sum(nil))
+	}
+	return ret, nil
+}
+
+// hashFromTypes will return hashers for all the requested types.
+// The types must be a subset of SupportedHashes,
+// and this function must support all types.
+func hashFromTypes(set HashSet) (map[HashType]hash.Hash, error) {
+	if !set.SubsetOf(SupportedHashes) {
+		return nil, fmt.Errorf("Requested set %08x contains unknown hash types", int(set))
+	}
+	var hashers = make(map[HashType]hash.Hash)
+	types := set.Array()
+	for _, t := range types {
+		switch t {
+		case HashMD5:
+			hashers[t] = md5.New()
+		case HashSHA1:
+			hashers[t] = sha1.New()
+		default:
+			panic("internal error: Unsupported hash type")
+		}
+	}
+	return hashers, nil
+}
+
+// hashToMultiWriter will return a set of hashers into a
+// single multiwriter, where one write will update all
+// the hashers.
+func hashToMultiWriter(h map[HashType]hash.Hash) io.Writer {
+	// Convert to to slice
+	var w = make([]io.Writer, 0, len(h))
+	for _, v := range h {
+		w = append(w, v)
+	}
+	return io.MultiWriter(w...)
 }
 
 // A MultiHasher will construct various hashes on
@@ -54,11 +97,22 @@ type MultiHasher struct {
 // NewMultiHasher will return a hash writer that will write all
 // supported hash types.
 func NewMultiHasher() *MultiHasher {
-	m := &MultiHasher{h: make(map[HashType]hash.Hash)}
-	m.h[HashMD5] = md5.New()
-	m.h[HashSHA1] = sha1.New()
-	m.Writer = io.MultiWriter(m.h[HashMD5], m.h[HashSHA1])
-	return m
+	h, err := NewMultiHasherTypes(SupportedHashes)
+	if err != nil {
+		panic("internal error: could not create multihasher")
+	}
+	return h
+}
+
+// NewMultiHasherTypes will return a hash writer that will write
+// the requested hash types.
+func NewMultiHasherTypes(set HashSet) (*MultiHasher, error) {
+	hashers, err := hashFromTypes(set)
+	if err != nil {
+		return nil, err
+	}
+	m := MultiHasher{h: hashers, Writer: hashToMultiWriter(hashers)}
+	return &m, nil
 }
 
 // Sums returns the sums of all accumulated hashes as hex encoded
@@ -99,6 +153,12 @@ func (h HashSet) Overlap(t HashSet) HashSet {
 	return HashSet(int(h) & int(t))
 }
 
+// SubsetOf will return true if all types of h
+// is present in the set c
+func (h HashSet) SubsetOf(c HashSet) bool {
+	return int(h)|int(c) == int(c)
+}
+
 // Array returns an array of all hash types in the set
 func (h HashSet) Array() (ht []HashType) {
 	v := int(h)
@@ -115,6 +175,9 @@ func (h HashSet) Array() (ht []HashType) {
 
 // Count returns the number of hash types in the set
 func (h HashSet) Count() int {
+	if int(h) == 0 {
+		return 0
+	}
 	// credit: https://code.google.com/u/arnehormann/
 	x := uint64(h)
 	x -= (x >> 1) & 0x5555555555555555

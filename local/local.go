@@ -403,7 +403,7 @@ func (f *Fs) DirMove(src fs.Fs) error {
 }
 
 // Hashes returns the supported hash sets.
-func Hashes() fs.HashSet {
+func (f *Fs) Hashes() fs.HashSet {
 	return fs.SupportedHashes
 }
 
@@ -694,4 +694,5 @@ var (
 	_ fs.Mover    = &Fs{}
 	_ fs.DirMover = &Fs{}
 	_ fs.Object   = &Object{}
+	_ fs.HashedFs = &Fs{}
 )
