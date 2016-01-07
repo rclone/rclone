@@ -13,7 +13,6 @@ test:	rclone
 
 check:	rclone
 	go vet ./...
-	errcheck ./...
 	goimports -d . | grep . ; test $$? -eq 1
 	golint ./... | grep -E -v '(StorageUrl|CdnUrl)' ; test $$? -eq 1
 
