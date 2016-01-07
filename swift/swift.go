@@ -56,6 +56,9 @@ func init() {
 			}, {
 				Help:  "Memset Memstore UK v2",
 				Value: "https://auth.storage.memset.com/v2.0",
+			}, {
+				Help:  "OVH",
+				Value: "https://auth.cloud.ovh.net/v2.0",
 			}},
 		}, {
 			Name: "tenant",
