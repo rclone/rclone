@@ -16,6 +16,7 @@ docs = [
     "about.md",
     "install.md",
     "docs.md",
+    "remote_setup.md",
     "filtering.md",
     "overview.md",
     "drive.md",

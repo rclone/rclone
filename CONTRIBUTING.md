@@ -155,6 +155,7 @@ Add your fs to the docs
   * `README.md` - main Github page
   * `docs/content/remote.md` - main docs page
   * `docs/content/overview.md` - overview docs
+  * `docs/content/docs.md` - list of remotes in config section
   * `docs/content/about.md` - front page of rclone.org
   * `docs/layouts/chrome/navbar.html` - add it to the website navigation
   * `make_manual.py` - add the page to the `docs` constant

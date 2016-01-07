@@ -227,9 +227,11 @@ var Commands = []Command{
 	{
 		Name: "authorize",
 		Help: `
-        Remote authorization.`,
+        Remote authorization. Used to authorize a remote or headless
+        rclone from a machine with a browser - use as instructed by
+        rclone config.`,
 		Run: func(fdst, fsrc fs.Fs) error {
-			fs.Authorize()
+			fs.Authorize(pflag.Args()[1:])
 			return nil
 		},
 		NoStats: true,

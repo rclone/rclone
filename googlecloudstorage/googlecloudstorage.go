@@ -65,10 +65,10 @@ func init() {
 			}
 		},
 		Options: []fs.Option{{
-			Name: oauthutil.ConfigClientID,
+			Name: fs.ConfigClientID,
 			Help: "Google Application Client Id - leave blank normally.",
 		}, {
-			Name: oauthutil.ConfigClientSecret,
+			Name: fs.ConfigClientSecret,
 			Help: "Google Application Client Secret - leave blank normally.",
 		}, {
 			Name: "project_number",

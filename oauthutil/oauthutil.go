@@ -17,18 +17,6 @@ import (
 )
 
 const (
-	// ConfigToken is the key used to store the token under
-	ConfigToken = "token"
-
-	// ConfigClientID is the config key used to store the client id
-	ConfigClientID = "client_id"
-
-	// ConfigClientSecret is the config key used to store the client secret
-	ConfigClientSecret = "client_secret"
-
-	// ConfigAutomatic indicates that we want non-interactive configuration
-	ConfigAutomatic = "config_automatic"
-
 	// TitleBarRedirectURL is the OAuth2 redirect URL to use when the authorization
 	// code should be returned in the title bar of the browser, with the page text
 	// prompting the user to copy the code and paste it in the application.
@@ -64,7 +52,7 @@ type oldToken struct {
 // getToken returns the token saved in the config file under
 // section name.
 func getToken(name string) (*oauth2.Token, error) {
-	tokenString, err := fs.ConfigFile.GetValue(string(name), ConfigToken)
+	tokenString, err := fs.ConfigFile.GetValue(string(name), fs.ConfigToken)
 	if err != nil {
 		return nil, err
 	}
@@ -107,9 +95,9 @@ func putToken(name string, token *oauth2.Token) error {
 		return err
 	}
 	tokenString := string(tokenBytes)
-	old := fs.ConfigFile.MustValue(name, ConfigToken)
+	old := fs.ConfigFile.MustValue(name, fs.ConfigToken)
 	if tokenString != old {
-		fs.ConfigFile.SetValue(name, ConfigToken, tokenString)
+		fs.ConfigFile.SetValue(name, fs.ConfigToken, tokenString)
 		fs.SaveConfig()
 		fs.Debug(name, "Saving new token in config file")
 	}
@@ -155,12 +143,12 @@ func Context() context.Context {
 // If any value is overridden, true is returned.
 func overrideCredentials(name string, config *oauth2.Config) bool {
 	changed := false
-	ClientID := fs.ConfigFile.MustValue(name, ConfigClientID)
+	ClientID := fs.ConfigFile.MustValue(name, fs.ConfigClientID)
 	if ClientID != "" {
 		config.ClientID = ClientID
 		changed = true
 	}
-	ClientSecret := fs.ConfigFile.MustValue(name, ConfigClientSecret)
+	ClientSecret := fs.ConfigFile.MustValue(name, fs.ConfigClientSecret)
 	if ClientSecret != "" {
 		config.ClientSecret = ClientSecret
 		changed = true
@@ -196,7 +184,7 @@ func NewClient(name string, config *oauth2.Config) (*http.Client, error) {
 // It may run an internal webserver to receive the results
 func Config(id, name string, config *oauth2.Config) error {
 	changed := overrideCredentials(name, config)
-	automatic := fs.ConfigFile.MustValue(name, ConfigAutomatic) != ""
+	automatic := fs.ConfigFile.MustValue(name, fs.ConfigAutomatic) != ""
 
 	// See if already have a token
 	tokenString := fs.ConfigFile.MustValue(name, "token")

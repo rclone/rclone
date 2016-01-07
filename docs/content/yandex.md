@@ -58,7 +58,16 @@ d) Delete this remote
 y/e/d> y
 ```
 
-This remote is called `remote` and can now be used like this
+See the [remote setup docs](/remote_setup/) for how to set it up on a
+machine with no Internet browser available.
+
+Note that rclone runs a webserver on your local machine to collect the
+token as returned from Yandex Disk. This only runs from the moment it
+opens your browser to the moment you get back the verification code.
+This is on `http://127.0.0.1:53682/` and this it may require you to
+unblock it temporarily if you are running a host firewall.
+
+Once configured you can then use `rclone` like this,
 
 See top level directories
 
