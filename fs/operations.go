@@ -249,28 +249,32 @@ tryAgain:
 		return
 	}
 
-	// Verify md5sums are the same after transfer - ignoring blank md5sums
-	/*
-		if !Config.SizeOnly {
-			srcMd5sum, md5sumErr := src.Md5sum()
-			if md5sumErr != nil {
+	// Verify hashes are the same after transfer - ignoring blank hashes
+	// TODO(klauspost): This could be extended, so we always create a hash type matching
+	// the destination, and calculate it while sending.
+	common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
+	if !Config.SizeOnly && common.Count() > 0 {
+		// Get common hash type
+		hashType := common.GetOne()
+
+		srcSum, err := src.Hash(hashType)
+		if err != nil {
+			Stats.Error()
+			ErrorLog(src, "Failed to read src hash: %s", err)
+		} else if srcSum != "" {
+			dstSum, err := dst.Hash(hashType)
+			if err != nil {
 				Stats.Error()
-				ErrorLog(src, "Failed to read md5sum: %s", md5sumErr)
-			} else if srcMd5sum != "" {
-				dstMd5sum, md5sumErr := dst.Md5sum()
-				if md5sumErr != nil {
-					Stats.Error()
-					ErrorLog(dst, "Failed to read md5sum: %s", md5sumErr)
-				} else if !HashEquals(srcMd5sum, dstMd5sum) {
-					Stats.Error()
-					err = fmt.Errorf("Corrupted on transfer: md5sums differ %q vs %q", srcMd5sum, dstMd5sum)
-					ErrorLog(dst, "%s", err)
-					removeFailedCopy(dst)
-					return
-				}
+				ErrorLog(dst, "Failed to read hash: %s", err)
+			} else if !HashEquals(srcSum, dstSum) {
+				Stats.Error()
+				err = fmt.Errorf("Corrupted on transfer: hash differ %q vs %q", srcSum, dstSum)
+				ErrorLog(dst, "%s", err)
+				removeFailedCopy(dst)
+				return
 			}
 		}
-	*/
+	}
 
 	Debug(src, actionTaken)
 }
