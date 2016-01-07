@@ -51,6 +51,8 @@ Choose a number from below, or type in your own value
  4) https://auth.storage.memset.com/v1.0
  * Memset Memstore UK v2
  5) https://auth.storage.memset.com/v2.0
+ * OVH
+ 6) https://auth.cloud.ovh.net/v2.0
 auth> 1
 Tenant name - optional
 tenant>
