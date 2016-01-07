@@ -15,7 +15,7 @@ go:
 
 install:
  - go get ./...
- - go get -u github.com/kisielk/errcheck
+ - '[[ `go version` =~ go1.[0-4][^0-9] ]] || go get -u github.com/kisielk/errcheck'
  - go get -u golang.org/x/tools/cmd/goimports
  - go get -u github.com/golang/lint/golint
 
