@@ -23,3 +23,4 @@ Contributors
   * Dmitry Burdeev <dibu28@gmail.com>
   * Joseph Spurrier <github@josephspurrier.com>
   * Björn Harrtell <bjorn@wololo.org>
+  * Xavier Lucas <xavier.lucas@corp.ovh.com>
