@@ -21,7 +21,8 @@ import (
 // Globals
 var (
 	// Flags
-	cpuprofile    = pflag.StringP("cpuprofile", "", "", "Write cpu profile to file")
+	cpuProfile    = pflag.StringP("cpuprofile", "", "", "Write cpu profile to file")
+	memProfile    = pflag.String("memprofile", "", "Write memory profile to file")
 	statsInterval = pflag.DurationP("stats", "", time.Minute*1, "Interval to print stats (0 to disable)")
 	version       = pflag.BoolP("version", "V", false, "Print the version number")
 	logFile       = pflag.StringP("log-file", "", "", "Log everything to this file")
@@ -282,21 +283,6 @@ func ParseFlags() {
 	pflag.Parse()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	fs.LoadConfig()
-
-	// Setup profiling if desired
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
-		if err != nil {
-			fs.Stats.Error()
-			log.Fatal(err)
-		}
-		err = pprof.StartCPUProfile(f)
-		if err != nil {
-			fs.Stats.Error()
-			log.Fatal(err)
-		}
-		defer pprof.StopCPUProfile()
-	}
 }
 
 // ParseCommand parses the command from the command line
@@ -391,6 +377,44 @@ func main() {
 		redirectStderr(f)
 	}
 
+	// Setup CPU profiling if desired
+	if *cpuProfile != "" {
+		log.Printf("Creating CPU profile %q\n", *cpuProfile)
+		f, err := os.Create(*cpuProfile)
+		if err != nil {
+			fs.Stats.Error()
+			log.Fatal(err)
+		}
+		err = pprof.StartCPUProfile(f)
+		if err != nil {
+			fs.Stats.Error()
+			log.Fatal(err)
+		}
+		defer pprof.StopCPUProfile()
+	}
+
+	// Setup memory profiling if desired
+	if *memProfile != "" {
+		defer func() {
+			log.Printf("Saving Memory profile %q\n", *memProfile)
+			f, err := os.Create(*memProfile)
+			if err != nil {
+				fs.Stats.Error()
+				log.Fatal(err)
+			}
+			err = pprof.WriteHeapProfile(f)
+			if err != nil {
+				fs.Stats.Error()
+				log.Fatal(err)
+			}
+			err = f.Close()
+			if err != nil {
+				fs.Stats.Error()
+				log.Fatal(err)
+			}
+		}()
+	}
+
 	// Make source and destination fs
 	var fdst, fsrc fs.Fs
 	if len(args) >= 1 {
@@ -407,37 +431,37 @@ func main() {
 		StartStats()
 	}
 
-	// Run the actual command
-	if command.Run != nil {
-		var err error
-		for try := 1; try <= *retries; try++ {
-			err = command.Run(fdst, fsrc)
-			if !command.Retry || (err == nil && !fs.Stats.Errored()) {
-				break
-			}
-			if err != nil {
-				fs.Log(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, fs.Stats.GetErrors(), err)
-			} else {
-				fs.Log(nil, "Attempt %d/%d failed with %d errors", try, *retries, fs.Stats.GetErrors())
-			}
-			if try < *retries {
-				fs.Stats.ResetErrors()
-			}
-		}
-		if err != nil {
-			log.Fatalf("Failed to %s: %v", command.Name, err)
-		}
-		if !command.NoStats && (!fs.Config.Quiet || fs.Stats.Errored() || *statsInterval > 0) {
-			fmt.Fprintln(os.Stderr, fs.Stats)
-		}
-		if fs.Config.Verbose {
-			fs.Debug(nil, "Go routines at exit %d\n", runtime.NumGoroutine())
-		}
-		if fs.Stats.Errored() {
-			os.Exit(1)
-		}
-		os.Exit(0)
-	} else {
+	// Exit if no command to run
+	if command.Run == nil {
+		return
 	}
 
+	// Run the actual command
+	var err error
+	for try := 1; try <= *retries; try++ {
+		err = command.Run(fdst, fsrc)
+		if !command.Retry || (err == nil && !fs.Stats.Errored()) {
+			break
+		}
+		if err != nil {
+			fs.Log(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, fs.Stats.GetErrors(), err)
+		} else {
+			fs.Log(nil, "Attempt %d/%d failed with %d errors", try, *retries, fs.Stats.GetErrors())
+		}
+		if try < *retries {
+			fs.Stats.ResetErrors()
+		}
+	}
+	if err != nil {
+		log.Fatalf("Failed to %s: %v", command.Name, err)
+	}
+	if !command.NoStats && (!fs.Config.Quiet || fs.Stats.Errored() || *statsInterval > 0) {
+		fmt.Fprintln(os.Stderr, fs.Stats)
+	}
+	if fs.Config.Verbose {
+		fs.Debug(nil, "Go routines at exit %d\n", runtime.NumGoroutine())
+	}
+	if fs.Stats.Errored() {
+		os.Exit(1)
+	}
 }
