@@ -117,17 +117,14 @@ func NewFilter() (f *Filter, err error) {
 		MinSize:        int64(minSize),
 		MaxSize:        int64(maxSize),
 	}
+	addImplicitExclude := false
 
 	if *includeRule != "" {
 		err = f.Add(true, *includeRule)
 		if err != nil {
 			return nil, err
 		}
-		// Add implicit exclude
-		err = f.Add(false, "*")
-		if err != nil {
-			return nil, err
-		}
+		addImplicitExclude = true
 	}
 	if *includeFrom != "" {
 		err := forEachLine(*includeFrom, func(line string) error {
@@ -136,11 +133,7 @@ func NewFilter() (f *Filter, err error) {
 		if err != nil {
 			return nil, err
 		}
-		// Add implicit exclude
-		err = f.Add(false, "*")
-		if err != nil {
-			return nil, err
-		}
+		addImplicitExclude = true
 	}
 	if *excludeRule != "" {
 		err = f.Add(false, *excludeRule)
@@ -172,6 +165,12 @@ func NewFilter() (f *Filter, err error) {
 		err := forEachLine(*filesFrom, func(line string) error {
 			return f.AddFile(line)
 		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	if addImplicitExclude {
+		err = f.Add(false, "*")
 		if err != nil {
 			return nil, err
 		}

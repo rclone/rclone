@@ -147,16 +147,15 @@ func TestNewFilterFull(t *testing.T) {
 	}
 	got := f.DumpFilters()
 	want := `+ (^|/)include1$
-- (^|/)[^/]*$
 + (^|/)include2$
 + (^|/)include3$
-- (^|/)[^/]*$
 - (^|/)exclude1$
 - (^|/)exclude2$
 - (^|/)exclude3$
 - (^|/)filter1$
 + (^|/)filter2$
-- (^|/)filter3$`
+- (^|/)filter3$
+- (^|/)[^/]*$`
 	if got != want {
 		t.Errorf("rules want %s got %s", want, got)
 	}

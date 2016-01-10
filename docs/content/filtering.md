@@ -152,7 +152,11 @@ Add a single include rule with `--include`.
 Eg `--include *.{png,jpg}` to include all `png` and `jpg` files in the
 backup and no others.
 
-This adds an implicit `--exclude *` at the end of the filter list.
+This adds an implicit `--exclude *` at the very end of the filter
+list. This means you can mix `--include` and `--include-from` with the
+other filters (eg `--exclude`) but you must include all the files you
+want in the include statement.  If this doesn't provide enough
+flexibility then you must use `--filter-from`.
 
 ### `--include-from` - Read include patterns from file ###
 
@@ -170,7 +174,11 @@ Then use as `--include-from include-file.txt`.  This will sync all
 
 This is useful if you have a lot of rules.
 
-This adds an implicit `--exclude *` at the end of the filter list.
+This adds an implicit `--exclude *` at the very end of the filter
+list. This means you can mix `--include` and `--include-from` with the
+other filters (eg `--exclude`) but you must include all the files you
+want in the include statement.  If this doesn't provide enough
+flexibility then you must use `--filter-from`.
 
 ### `--filter` - Add a file-filtering rule ###
 
