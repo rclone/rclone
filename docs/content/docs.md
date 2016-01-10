@@ -63,6 +63,9 @@ modification time or MD5SUM.  Destination is updated to match
 source, including deleting files if necessary.  Since this can
 cause data loss, test first with the `--dry-run` flag.
 
+Note that files in the destination won't be deleted if there were any
+errors at any point.
+
 ### rclone ls remote:path ###
 
 List all the objects in the the path with size and path.
