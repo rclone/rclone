@@ -219,6 +219,15 @@ Do a trial run with no permanent changes.  Use this in combination
 with the `-v` flag to see what rclone would do without actually doing
 it.  Useful when setting up the `sync` command.
 
+### --ignore-existing ###
+
+Using this option will make rclone unconditionally skip all files
+that exist on the destination, no matter the content of these files.
+
+While this isn't a generally recommended option, it can be useful
+in cases where your files change due to encryption. However, it cannot
+correct partial transfers in case a transfer was interrupted.
+
 ### --log-file=FILE ###
 
 Log all of rclone's output to FILE.  This is not active by default.
@@ -243,6 +252,15 @@ This command line flag allows you to override that computed default.
 Normally rclone outputs stats and a completion message.  If you set
 this flag it will make as little output as possible.
 
+### --retries int ###
+
+Retry the entire sync if it fails this many times it fails (default 3).
+
+Some remotes can be unreliable and a few retries helps pick up the
+files which didn't get transferred because of errors.
+
+Disable retries with `--retries 1`.
+
 ### --size-only ###
 
 Normally rclone will look at modification time and size of files to
@@ -255,15 +273,6 @@ modification times in the same way as rclone.
 
 When using this flag, rclone won't update mtimes of remote files if
 they are incorrect as it would normally.
-
-### --ignore-existing ###
-
-Using this option will make rclone unconditionally skip all files
-that exist on the destination, no matter the content of these files.
-
-While this isn't a generally recommended option, it can be useful
-in cases where your files change due to encryption. However, it cannot
-correct partial transfers in case a transfer was interrupted.
 
 ### --stats=TIME ###
 
@@ -305,11 +314,30 @@ Developer options
 These options are useful when developing or debugging rclone.  There
 are also some more remote specific options which aren't documented
 here which are used for testing.  These start with remote name eg
-`--drive-test-option`.
+`--drive-test-option` - see the docs for the remote in question.
 
 ### --cpuprofile=FILE ###
 
-Write cpu profile to file.  This can be analysed with `go tool pprof`.
+Write CPU profile to file.  This can be analysed with `go tool pprof`.
+
+### --dump-bodies ###
+
+Dump HTTP headers and bodies - may contain sensitive info.  Can be
+very verbose.  Useful for debugging only.
+
+### --dump-filters ###
+
+Dump the filters to the output.  Useful to see exactly what include
+and exclude options are filtering on.
+
+### --dump-headers ###
+
+Dump HTTP headers - may contain sensitive info.  Can be very verbose.
+Useful for debugging only.
+
+### --memprofile=FILE ###
+
+Write memory profile to file. This can be analysed with `go tool pprof`.
 
 ### --no-check-certificate=true/false ###
 
