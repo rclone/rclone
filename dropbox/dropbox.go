@@ -654,7 +654,7 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
 	remote := o.remotePath()
 	if ignoredFiles.MatchString(remote) {
-		fs.ErrorLog(o, "File name disallowed - not uploading")
+		fs.Log(o, "File name disallowed - not uploading")
 		return nil
 	}
 	entry, err := o.fs.db.UploadByChunk(ioutil.NopCloser(in), int(uploadChunkSize), remote, true, "")
