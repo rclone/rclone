@@ -22,3 +22,4 @@ Contributors
   * C. Bess <cbess@users.noreply.github.com>
   * Dmitry Burdeev <dibu28@gmail.com>
   * Joseph Spurrier <github@josephspurrier.com>
+  * Björn Harrtell <bjorn@wololo.org>

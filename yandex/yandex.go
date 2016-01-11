@@ -45,16 +45,16 @@ func init() {
 		Name:  "yandex",
 		NewFs: NewFs,
 		Config: func(name string) {
-			err := oauthutil.Config(name, oauthConfig)
+			err := oauthutil.Config("yandex", name, oauthConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
 		},
 		Options: []fs.Option{{
-			Name: oauthutil.ConfigClientID,
+			Name: fs.ConfigClientID,
 			Help: "Yandex Client Id - leave blank normally.",
 		}, {
-			Name: oauthutil.ConfigClientSecret,
+			Name: fs.ConfigClientSecret,
 			Help: "Yandex Client Secret - leave blank normally.",
 		}},
 	})

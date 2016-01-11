@@ -59,16 +59,16 @@ func (i *Item) Check(t *testing.T, obj fs.Object, precision time.Duration) {
 		// Check attributes
 		sum, err := obj.Hash(hash)
 		if err != nil {
-			t.Fatalf("Failed to read hash %d for %q: %v", hash, obj.Remote(), err)
+			t.Fatalf("%s: Failed to read hash %v for %q: %v", obj.Fs().String(), hash, obj.Remote(), err)
 		}
 		if hash == fs.HashMD5 {
 			if !fs.HashEquals(i.Md5sum, sum) {
-				t.Errorf("%s: md5 hash incorrect - expecting %q got %q", obj.Remote(), i.Md5sum, sum)
+				t.Errorf("%s/%s: md5 hash incorrect - expecting %q got %q", obj.Fs().String(), obj.Remote(), i.Md5sum, sum)
 			}
 		}
 	}
 	if i.Size != obj.Size() {
-		t.Errorf("%s: Size incorrect - expecting %d got %d", obj.Remote(), i.Size, obj.Size())
+		t.Errorf("%s/%s: Size incorrect - expecting %d got %d", obj.Fs().String(), obj.Remote(), i.Size, obj.Size())
 	}
 	i.CheckModTime(t, obj, obj.ModTime(), precision)
 }

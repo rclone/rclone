@@ -62,16 +62,16 @@ func init() {
 		Name:  "onedrive",
 		NewFs: NewFs,
 		Config: func(name string) {
-			err := oauthutil.Config(name, oauthConfig)
+			err := oauthutil.Config("onedrive", name, oauthConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
 		},
 		Options: []fs.Option{{
-			Name: oauthutil.ConfigClientID,
+			Name: fs.ConfigClientID,
 			Help: "Microsoft App Client Id - leave blank normally.",
 		}, {
-			Name: oauthutil.ConfigClientSecret,
+			Name: fs.ConfigClientSecret,
 			Help: "Microsoft App Client Secret - leave blank normally.",
 		}},
 	})
@@ -709,7 +709,6 @@ func (o *Object) Hash(t fs.HashType) (string, error) {
 	if t != fs.HashSHA1 {
 		return "", fs.ErrHashUnsupported
 	}
-	// TODO(klauspost): CRC32 is also returned
 	return o.sha1, nil
 }
 

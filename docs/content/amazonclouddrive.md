@@ -58,6 +58,9 @@ d) Delete this remote
 y/e/d> y
 ```
 
+See the [remote setup docs](/remote_setup/) for how to set it up on a
+machine with no Internet browser available.
+
 Note that rclone runs a webserver on your local machine to collect the
 token as returned from Amazon. This only runs from the moment it
 opens your browser to the moment you get back the verification
@@ -102,3 +105,15 @@ Amazon cloud drive has rate limiting so you may notice errors in the
 sync (429 errors).  rclone will automatically retry the sync up to 3
 times by default (see `--retries` flag) which should hopefully work
 around this problem.
+
+Amazon cloud drive has an internal limit of file sizes that can be
+uploaded to the service. This limit is not officially published,
+but all files larger than this will fail.
+
+At the time of writing (Jan 2016) is in the area of 50GB per file.
+This means that larger files are likely to fail.
+
+Unfortunatly there is no way for rclone to see that this failure is 
+because of file size, so it will retry the operation, as any other
+failure. To avoid this problem, use `--max-size=50GB` option to limit
+the maximum size of uploaded files.

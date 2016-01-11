@@ -25,6 +25,11 @@ See the following for detailed instructions for
   * [Dropbox](/dropbox/)
   * [Google Cloud Storage](/googlecloudstorage/)
   * [Local filesystem](/local/)
+  * [Amazon Cloud Drive](/amazonclouddrive/)
+  * [Backblaze B2](/b2/)
+  * [Hubic](/hubic/)
+  * [Microsoft One Drive](/onedrive/)
+  * [Yandex Disk](/yandex/)
 
 Usage
 -----
@@ -75,6 +80,11 @@ size and path.
 
 Produces an md5sum file for all the objects in the path.  This
 is in the same format as the standard md5sum tool produces.
+
+### rclone sha1sum remote:path ###
+
+Produces an sha1sum file for all the objects in the path.  This
+is in the same format as the standard sha1sum tool produces.
 
 ### rclone size remote:path ###
 

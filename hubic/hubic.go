@@ -48,16 +48,16 @@ func init() {
 		Name:  "hubic",
 		NewFs: NewFs,
 		Config: func(name string) {
-			err := oauthutil.Config(name, oauthConfig)
+			err := oauthutil.Config("hubic", name, oauthConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
 		},
 		Options: []fs.Option{{
-			Name: oauthutil.ConfigClientID,
+			Name: fs.ConfigClientID,
 			Help: "Hubic Client Id - leave blank normally.",
 		}, {
-			Name: oauthutil.ConfigClientSecret,
+			Name: fs.ConfigClientSecret,
 			Help: "Hubic Client Secret - leave blank normally.",
 		}},
 	})

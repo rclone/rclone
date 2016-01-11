@@ -13,7 +13,7 @@ test:	rclone
 
 check:	rclone
 	go vet ./...
-	errcheck ./...
+	[[ `go version` =~ go1.[0-4][^0-9] ]] || errcheck -verbose ./...
 	goimports -d . | grep . ; test $$? -eq 1
 	golint ./... | grep -E -v '(StorageUrl|CdnUrl)' ; test $$? -eq 1
 
@@ -51,7 +51,7 @@ upload:
 	rclone -v copy build/ memstore:downloads-rclone-org
 
 upload_github:
-	./upload_github $(TAG)
+	./upload-github $(TAG)
 
 cross:	doc
 	./cross-compile $(TAG)

@@ -17,20 +17,8 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	_ "github.com/ncw/rclone/fs/all" // import all fs
 	"github.com/ncw/rclone/fstest"
-
-	// Active file systems
-	_ "github.com/ncw/rclone/amazonclouddrive"
-	_ "github.com/ncw/rclone/b2"
-	_ "github.com/ncw/rclone/drive"
-	_ "github.com/ncw/rclone/dropbox"
-	_ "github.com/ncw/rclone/googlecloudstorage"
-	_ "github.com/ncw/rclone/hubic"
-	_ "github.com/ncw/rclone/local"
-	_ "github.com/ncw/rclone/onedrive"
-	_ "github.com/ncw/rclone/s3"
-	_ "github.com/ncw/rclone/swift"
-	_ "github.com/ncw/rclone/yandex"
 )
 
 // Globals
@@ -352,7 +340,7 @@ func TestSyncAfterChangingFilesSizeOnly(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
 }
 
-// Sync after changing a file's contents, modtime but not length
+// Sync after changing a file's contents, maintaining modtime and length
 func TestSyncAfterChangingContentsOnly(t *testing.T) {
 	if fremote.Precision() == fs.ModTimeNotSupported {
 		t.Logf("ModTimeNotSupported so forcing file to be a different size")

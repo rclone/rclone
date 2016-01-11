@@ -12,31 +12,17 @@ Frequently Asked Questions
 Yes they do.  All the rclone commands (eg `sync`, `copy` etc) will
 work on all the remote storage systems.
 
-
 ### Can I copy the config from one machine to another ###
 
 Sure!  Rclone stores all of its config in a single file.  If you want
 to find this file, the simplest way is to run `rclone -h` and look at
-the help for the `--config` flag which will tell you where it is. Eg,
+the help for the `--config` flag which will tell you where it is.
 
-```
-$ rclone -h
-Sync files and directories to and from local and remote object stores - v1.18.
-[snip]
-Options:
-      --bwlimit=0: Bandwidth limit in kBytes/s, or use suffix k|M|G
-      --checkers=8: Number of checkers to run in parallel.
-  -c, --checksum=false: Skip based on checksum & size, not mod-time & size
-      --config="/home/user/.rclone.conf": Config file.
-[snip]
-```
+See the [remote setup docs](/remote_setup/) for more info.
 
-So in this config the config file can be found in
-`/home/user/.rclone.conf`.
+### How do I configure rclone on a remote / headless box with no browser? ###
 
-Just copy that to the equivalent place in the destination (run `rclone
--h` above again on the destination machine if not sure).
-
+This has now been documented in its own [remote setup page](/remote_setup/).
 
 ### Can rclone sync directly from drive to s3 ###
 

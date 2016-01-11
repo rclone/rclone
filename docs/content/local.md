@@ -36,3 +36,37 @@ will emit a debug message in this case (use `-v` to see), eg
 ```
 Local file system at .: Replacing invalid UTF-8 characters in "gro\xdf"
 ```
+
+### Long paths on Windows ###
+
+Rclone handles long paths automatically, by converting all paths to long
+[UNC paths](https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#maxpath)
+which allows paths up to 32,767 characters.
+
+This is why you will see that your paths, for instance `c:\files` is
+converted to the UNC path `\\?\c:\files` in the output,
+and `\\server\share` is converted to `\\?\UNC\server\share`.
+
+However, in rare cases this may cause problems with buggy file
+system drivers like [EncFS](https://github.com/ncw/rclone/issues/261).
+To disable UNC conversion globally, add this to your `.rclone.conf` file:
+
+```
+[local]
+nounc = true
+```
+
+If you want to selectively disable UNC, you can add it to a separate entry like this:
+
+```
+[nounc]
+type = local
+nounc = true
+```
+And use rclone like this:
+
+`rclone copy c:\src nounc:z:\dst`
+
+This will use UNC paths on `c:\src` but not on `z:\dst`.
+Of course this will cause problems if the absolute path length of a
+file exceeds 258 characters on z, so only use this option if you have to.

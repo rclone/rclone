@@ -15,18 +15,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/ncw/rclone/fs"
-	// Active file systems
-	_ "github.com/ncw/rclone/amazonclouddrive"
-	_ "github.com/ncw/rclone/b2"
-	_ "github.com/ncw/rclone/drive"
-	_ "github.com/ncw/rclone/dropbox"
-	_ "github.com/ncw/rclone/googlecloudstorage"
-	_ "github.com/ncw/rclone/hubic"
-	_ "github.com/ncw/rclone/local"
-	_ "github.com/ncw/rclone/onedrive"
-	_ "github.com/ncw/rclone/s3"
-	_ "github.com/ncw/rclone/swift"
-	_ "github.com/ncw/rclone/yandex"
+	_ "github.com/ncw/rclone/fs/all" // import all fs
 )
 
 // Globals
@@ -158,6 +147,18 @@ var Commands = []Command{
 		MaxArgs: 1,
 	},
 	{
+		Name:     "sha1sum",
+		ArgsHelp: "remote:path",
+		Help: `
+        Produces an sha1sum file for all the objects in the path.  This
+        is in the same format as the standard sha1sum tool produces.`,
+		Run: func(fdst, fsrc fs.Fs) error {
+			return fs.Sha1sum(fdst, os.Stdout)
+		},
+		MinArgs: 1,
+		MaxArgs: 1,
+	},
+	{
 		Name:     "size",
 		ArgsHelp: "remote:path",
 		Help: `
@@ -234,6 +235,20 @@ var Commands = []Command{
 			return nil
 		},
 		NoStats: true,
+	},
+	{
+		Name: "authorize",
+		Help: `
+        Remote authorization. Used to authorize a remote or headless
+        rclone from a machine with a browser - use as instructed by
+        rclone config.`,
+		Run: func(fdst, fsrc fs.Fs) error {
+			fs.Authorize(pflag.Args()[1:])
+			return nil
+		},
+		NoStats: true,
+		MinArgs: 1,
+		MaxArgs: 3,
 	},
 	{
 		Name: "help",

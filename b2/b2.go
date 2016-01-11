@@ -612,9 +612,9 @@ func (o *Object) Hash(t fs.HashType) (string, error) {
 	if t != fs.HashSHA1 {
 		return "", fs.ErrHashUnsupported
 	}
-	if o.sha1 == "" {
-		_ = o.ModTime()
-	}
+
+	// Error is logged in readFileMetadata
+	_ = o.readFileMetadata()
 	return o.sha1, nil
 }
 
@@ -668,22 +668,37 @@ func parseTimeString(timeString string) (result time.Time, err error) {
 //
 // SHA-1 will also be updated once the request has completed.
 func (o *Object) ModTime() (result time.Time) {
-	if !o.modTime.IsZero() {
-		return o.modTime
+	// The error is logged in readFileMetadata
+	_ = o.readFileMetadata()
+	return o.modTime
+}
+
+// readFileMetadata attempts to read the modified time and
+// SHA-1 hash of the remote object.
+//
+// If the objects mtime and if that isn't present the
+// LastModified returned in the http headers.
+//
+// It is safe to call this function multiple times, and the
+// result is cached between calls.
+func (o *Object) readFileMetadata() error {
+	// Return if already know it
+	if !o.modTime.IsZero() && o.sha1 != "" {
+		return nil
 	}
 
-	// Return the current time if can't read metadata
-	result = time.Now()
+	// Set modtime to now, as default value.
+	o.modTime = time.Now()
 
-	// Read metadata (need ID)
+	// Read metadata (we need the ID)
 	err := o.readMetaData()
 	if err != nil {
-		fs.Debug(o, "Failed to read metadata: %v", err)
-		return result
+		fs.Debug(o, "Failed to get file metadata: %v", err)
+		return err
 	}
 
-	// Return the UploadTimestamp if can't get file info
-	result = time.Time(o.info.UploadTimestamp)
+	// Use the UploadTimestamp if can't get file info
+	o.modTime = time.Time(o.info.UploadTimestamp)
 
 	// Now read the metadata for the modified time
 	opts := rest.Opts{
@@ -697,9 +712,8 @@ func (o *Object) ModTime() (result time.Time) {
 	_, err = o.fs.srv.CallJSON(&opts, &request, &response)
 	if err != nil {
 		fs.Debug(o, "Failed to get file info: %v", err)
-		return result
+		return err
 	}
-
 	o.sha1 = response.SHA1
 
 	// Parse the result
@@ -707,11 +721,11 @@ func (o *Object) ModTime() (result time.Time) {
 	parsed, err := parseTimeString(timeString)
 	if err != nil {
 		fs.Debug(o, "Failed to parse mod time string %q: %v", timeString, err)
-		return result
+		return err
 	}
 	o.modTime = parsed
 
-	return parsed
+	return nil
 }
 
 // SetModTime sets the modification time of the local fs object

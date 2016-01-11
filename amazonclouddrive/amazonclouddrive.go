@@ -39,6 +39,7 @@ const (
 	statusAvailable    = "AVAILABLE"
 	timeFormat         = time.RFC3339 // 2014-03-07T22:31:12.173Z
 	minSleep           = 20 * time.Millisecond
+	warnFileSize       = 50 << 30 // Display warning for files larger than this size
 )
 
 // Globals
@@ -62,16 +63,16 @@ func init() {
 		Name:  "amazon cloud drive",
 		NewFs: NewFs,
 		Config: func(name string) {
-			err := oauthutil.Config(name, acdConfig)
+			err := oauthutil.Config("amazon cloud drive", name, acdConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
 		},
 		Options: []fs.Option{{
-			Name: oauthutil.ConfigClientID,
+			Name: fs.ConfigClientID,
 			Help: "Amazon Application Client Id - leave blank normally.",
 		}, {
-			Name: oauthutil.ConfigClientSecret,
+			Name: fs.ConfigClientSecret,
 			Help: "Amazon Application Client Secret - leave blank normally.",
 		}},
 	})
@@ -439,6 +440,9 @@ func (f *Fs) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs
 	leaf, directoryID, err := f.dirCache.FindPath(remote, true)
 	if err != nil {
 		return nil, err
+	}
+	if size > warnFileSize {
+		fs.Debug(f, "Warning: file %q may fail because it is too big. Use --max-size=%dGB to skip large files.", remote, warnFileSize>>30)
 	}
 	folder := acd.FolderFromId(directoryID, o.fs.c.Nodes)
 	var info *acd.File

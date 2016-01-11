@@ -24,14 +24,14 @@ func TestHashSet(t *testing.T) {
 		t.Fatalf("expected 1 element, got %d", h.Count())
 	}
 	if h.GetOne() != fs.HashMD5 {
-		t.Fatalf("expected HashMD5, got %x", h.GetOne())
+		t.Fatalf("expected HashMD5, got %v", h.GetOne())
 	}
 	a = h.Array()
 	if len(a) != 1 {
 		t.Fatalf("expected 1 element, got %d", len(a))
 	}
 	if a[0] != fs.HashMD5 {
-		t.Fatalf("expected HashMD5, got %x", a[0])
+		t.Fatalf("expected HashMD5, got %v", a[0])
 	}
 
 	// Test overlap, with all hashes
@@ -40,7 +40,7 @@ func TestHashSet(t *testing.T) {
 		t.Fatalf("expected 1 element, got %d", h.Count())
 	}
 	if h.GetOne() != fs.HashMD5 {
-		t.Fatalf("expected HashMD5, got %x", h.GetOne())
+		t.Fatalf("expected HashMD5, got %v", h.GetOne())
 	}
 	if !h.SubsetOf(fs.SupportedHashes) {
 		t.Fatalf("expected to be subset of all hashes")
@@ -55,7 +55,7 @@ func TestHashSet(t *testing.T) {
 	}
 	one := h.GetOne()
 	if !(one == fs.HashMD5 || one == fs.HashSHA1) {
-		t.Fatalf("expected to be either MD5 or SHA1, got %x", one)
+		t.Fatalf("expected to be either MD5 or SHA1, got %v", one)
 	}
 	if !h.SubsetOf(fs.SupportedHashes) {
 		t.Fatalf("expected to be subset of all hashes")
@@ -79,10 +79,10 @@ func TestHashSet(t *testing.T) {
 		t.Fatalf("expected 1 element overlap, got %d", ol.Count())
 	}
 	if !ol.Contains(fs.HashMD5) {
-		t.Fatalf("expected overlap to be MD5, got %x", ol)
+		t.Fatalf("expected overlap to be MD5, got %v", ol)
 	}
 	if ol.Contains(fs.HashSHA1) {
-		t.Fatalf("expected overlap NOT to contain SHA1, got %x", ol)
+		t.Fatalf("expected overlap NOT to contain SHA1, got %v", ol)
 	}
 
 	ol = h.Overlap(fs.NewHashSet(fs.HashMD5, fs.HashSHA1))
@@ -90,10 +90,10 @@ func TestHashSet(t *testing.T) {
 		t.Fatalf("expected 2 element overlap, got %d", ol.Count())
 	}
 	if !ol.Contains(fs.HashMD5) {
-		t.Fatalf("expected overlap to contain MD5, got %x", ol)
+		t.Fatalf("expected overlap to contain MD5, got %v", ol)
 	}
 	if !ol.Contains(fs.HashSHA1) {
-		t.Fatalf("expected overlap to contain SHA1, got %x", ol)
+		t.Fatalf("expected overlap to contain SHA1, got %v", ol)
 	}
 }
 
@@ -134,17 +134,17 @@ func TestMultiHasher(t *testing.T) {
 		for k, v := range sums {
 			expect, ok := test.output[k]
 			if !ok {
-				t.Errorf("Unknown hash type %d, sum: %q", k, v)
+				t.Errorf("Unknown hash type %v, sum: %q", k, v)
 			}
 			if expect != v {
-				t.Errorf("hash %d mismatch %q != %q", k, v, expect)
+				t.Errorf("hash %v mismatch %q != %q", k, v, expect)
 			}
 		}
 		// Test that all are present
 		for k, v := range test.output {
 			expect, ok := sums[k]
 			if !ok {
-				t.Errorf("did not calculate hash type %d, sum: %q", k, v)
+				t.Errorf("did not calculate hash type %v, sum: %q", k, v)
 			}
 			if expect != v {
 				t.Errorf("hash %d mismatch %q != %q", k, v, expect)
@@ -173,7 +173,7 @@ func TestMultiHasherTypes(t *testing.T) {
 		}
 		expect := test.output[h]
 		if expect != sums[h] {
-			t.Errorf("hash %d mismatch %q != %q", h, sums[h], expect)
+			t.Errorf("hash %v mismatch %q != %q", h, sums[h], expect)
 		}
 	}
 }
@@ -187,20 +187,20 @@ func TestHashStream(t *testing.T) {
 		for k, v := range sums {
 			expect, ok := test.output[k]
 			if !ok {
-				t.Errorf("Unknown hash type %d, sum: %q", k, v)
+				t.Errorf("Unknown hash type %v, sum: %q", k, v)
 			}
 			if expect != v {
-				t.Errorf("hash %d mismatch %q != %q", k, v, expect)
+				t.Errorf("hash %v mismatch %q != %q", k, v, expect)
 			}
 		}
 		// Test that all are present
 		for k, v := range test.output {
 			expect, ok := sums[k]
 			if !ok {
-				t.Errorf("did not calculate hash type %d, sum: %q", k, v)
+				t.Errorf("did not calculate hash type %v, sum: %q", k, v)
 			}
 			if expect != v {
-				t.Errorf("hash %d mismatch %q != %q", k, v, expect)
+				t.Errorf("hash %v mismatch %q != %q", k, v, expect)
 			}
 		}
 	}
@@ -220,5 +220,41 @@ func TestHashStreamTypes(t *testing.T) {
 		if expect != sums[h] {
 			t.Errorf("hash %d mismatch %q != %q", h, sums[h], expect)
 		}
+	}
+}
+
+func TestHashSetStringer(t *testing.T) {
+	h := fs.NewHashSet(fs.HashSHA1, fs.HashMD5)
+	s := h.String()
+	expect := "[MD5, SHA-1]"
+	if s != expect {
+		t.Errorf("unexpected stringer: was %q, expected %q", s, expect)
+	}
+	h = fs.NewHashSet(fs.HashSHA1)
+	s = h.String()
+	expect = "[SHA-1]"
+	if s != expect {
+		t.Errorf("unexpected stringer: was %q, expected %q", s, expect)
+	}
+	h = fs.NewHashSet()
+	s = h.String()
+	expect = "[]"
+	if s != expect {
+		t.Errorf("unexpected stringer: was %q, expected %q", s, expect)
+	}
+}
+
+func TestHashStringer(t *testing.T) {
+	h := fs.HashMD5
+	s := h.String()
+	expect := "MD5"
+	if s != expect {
+		t.Errorf("unexpected stringer: was %q, expected %q", s, expect)
+	}
+	h = fs.HashNone
+	s = h.String()
+	expect = "None"
+	if s != expect {
+		t.Errorf("unexpected stringer: was %q, expected %q", s, expect)
 	}
 }

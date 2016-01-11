@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash"
 	"io"
+	"strings"
 )
 
 // HashType indicates a standard hashing algorithm
@@ -54,6 +55,22 @@ func HashStreamTypes(r io.Reader, set HashSet) (map[HashType]string, error) {
 	return ret, nil
 }
 
+// String returns a string representation of the hash type.
+// The function will panic if the hash type is unknown.
+func (h HashType) String() string {
+	switch h {
+	case HashNone:
+		return "None"
+	case HashMD5:
+		return "MD5"
+	case HashSHA1:
+		return "SHA-1"
+	default:
+		err := fmt.Sprintf("internal error: unknown hash type: 0x%x", int(h))
+		panic(err)
+	}
+}
+
 // hashFromTypes will return hashers for all the requested types.
 // The types must be a subset of SupportedHashes,
 // and this function must support all types.
@@ -70,7 +87,8 @@ func hashFromTypes(set HashSet) (map[HashType]hash.Hash, error) {
 		case HashSHA1:
 			hashers[t] = sha1.New()
 		default:
-			panic("internal error: Unsupported hash type")
+			err := fmt.Sprintf("internal error: Unsupported hash type %v", t)
+			panic(err)
 		}
 	}
 	return hashers, nil
@@ -203,4 +221,15 @@ func (h HashSet) Count() int {
 	x &= 0x0f0f0f0f0f0f0f0f
 	x *= 0x0101010101010101
 	return int(x >> 56)
+}
+
+// String returns a string representation of the hash set.
+// The function will panic if it contains an unknown type.
+func (h HashSet) String() string {
+	a := h.Array()
+	var r []string
+	for _, v := range a {
+		r = append(r, v.String())
+	}
+	return "[" + strings.Join(r, ", ") + "]"
 }

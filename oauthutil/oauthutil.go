@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ncw/rclone/fs"
@@ -16,15 +17,6 @@ import (
 )
 
 const (
-	// ConfigToken is the key used to store the token under
-	ConfigToken = "token"
-
-	// ConfigClientID is the config key used to store the client id
-	ConfigClientID = "client_id"
-
-	// ConfigClientSecret is the config key used to store the client secret
-	ConfigClientSecret = "client_secret"
-
 	// TitleBarRedirectURL is the OAuth2 redirect URL to use when the authorization
 	// code should be returned in the title bar of the browser, with the page text
 	// prompting the user to copy the code and paste it in the application.
@@ -60,7 +52,7 @@ type oldToken struct {
 // getToken returns the token saved in the config file under
 // section name.
 func getToken(name string) (*oauth2.Token, error) {
-	tokenString, err := fs.ConfigFile.GetValue(string(name), ConfigToken)
+	tokenString, err := fs.ConfigFile.GetValue(string(name), fs.ConfigToken)
 	if err != nil {
 		return nil, err
 	}
@@ -103,9 +95,9 @@ func putToken(name string, token *oauth2.Token) error {
 		return err
 	}
 	tokenString := string(tokenBytes)
-	old := fs.ConfigFile.MustValue(name, ConfigToken)
+	old := fs.ConfigFile.MustValue(name, fs.ConfigToken)
 	if tokenString != old {
-		fs.ConfigFile.SetValue(name, ConfigToken, tokenString)
+		fs.ConfigFile.SetValue(name, fs.ConfigToken, tokenString)
 		fs.SaveConfig()
 		fs.Debug(name, "Saving new token in config file")
 	}
@@ -147,16 +139,21 @@ func Context() context.Context {
 }
 
 // overrideCredentials sets the ClientID and ClientSecret from the
-// config file if they are not blank
-func overrideCredentials(name string, config *oauth2.Config) {
-	ClientID := fs.ConfigFile.MustValue(name, ConfigClientID)
+// config file if they are not blank.
+// If any value is overridden, true is returned.
+func overrideCredentials(name string, config *oauth2.Config) bool {
+	changed := false
+	ClientID := fs.ConfigFile.MustValue(name, fs.ConfigClientID)
 	if ClientID != "" {
 		config.ClientID = ClientID
+		changed = true
 	}
-	ClientSecret := fs.ConfigFile.MustValue(name, ConfigClientSecret)
+	ClientSecret := fs.ConfigFile.MustValue(name, fs.ConfigClientSecret)
 	if ClientSecret != "" {
 		config.ClientSecret = ClientSecret
+		changed = true
 	}
+	return changed
 }
 
 // NewClient gets a token from the config file and configures a Client
@@ -185,8 +182,10 @@ func NewClient(name string, config *oauth2.Config) (*http.Client, error) {
 // Config does the initial creation of the token
 //
 // It may run an internal webserver to receive the results
-func Config(name string, config *oauth2.Config) error {
-	overrideCredentials(name, config)
+func Config(id, name string, config *oauth2.Config) error {
+	changed := overrideCredentials(name, config)
+	automatic := fs.ConfigFile.MustValue(name, fs.ConfigAutomatic) != ""
+
 	// See if already have a token
 	tokenString := fs.ConfigFile.MustValue(name, "token")
 	if tokenString != "" {
@@ -201,11 +200,42 @@ func Config(name string, config *oauth2.Config) error {
 	switch config.RedirectURL {
 	case RedirectURL, RedirectPublicURL, RedirectLocalhostURL:
 		useWebServer = true
-	case TitleBarRedirectURL:
+		if automatic {
+			break
+		}
 		fmt.Printf("Use auto config?\n")
 		fmt.Printf(" * Say Y if not sure\n")
-		fmt.Printf(" * Say N if you are working on a remote or headless machine or Y didn't work\n")
-		useWebServer = fs.Confirm()
+		fmt.Printf(" * Say N if you are working on a remote or headless machine\n")
+		auto := fs.Confirm()
+		if !auto {
+			fmt.Printf("For this to work, you will need rclone available on a machine that has a web browser available.\n")
+			fmt.Printf("Execute the following on your machine:\n")
+			if changed {
+				fmt.Printf("\trclone authorize %q %q %q\n", id, config.ClientID, config.ClientSecret)
+			} else {
+				fmt.Printf("\trclone authorize %q\n", id)
+			}
+			fmt.Println("Then paste the result below:")
+			code := ""
+			for code == "" {
+				fmt.Printf("result> ")
+				code = strings.TrimSpace(fs.ReadLine())
+			}
+			token := &oauth2.Token{}
+			err := json.Unmarshal([]byte(code), token)
+			if err != nil {
+				return err
+			}
+			return putToken(name, token)
+		}
+	case TitleBarRedirectURL:
+		useWebServer = automatic
+		if !automatic {
+			fmt.Printf("Use auto config?\n")
+			fmt.Printf(" * Say Y if not sure\n")
+			fmt.Printf(" * Say N if you are working on a remote or headless machine or Y didn't work\n")
+			useWebServer = fs.Confirm()
+		}
 		if useWebServer {
 			// copy the config and set to use the internal webserver
 			configCopy := *config
@@ -259,6 +289,15 @@ func Config(name string, config *oauth2.Config) error {
 	token, err := config.Exchange(oauth2.NoContext, authCode)
 	if err != nil {
 		return fmt.Errorf("Failed to get token: %v", err)
+	}
+
+	// Print code if we do automatic retrieval
+	if automatic {
+		result, err := json.Marshal(token)
+		if err != nil {
+			return fmt.Errorf("Failed to marshal token: %v", err)
+		}
+		fmt.Printf("Paste the following into your remote machine --->\n%s\n<---End paste", result)
 	}
 	return putToken(name, token)
 }

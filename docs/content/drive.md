@@ -127,6 +127,11 @@ File size cutoff for switching to chunked upload.  Default is 256kB.
 Send files to the trash instead of deleting permanently. Defaults to
 off, namely deleting files permanently.
 
+#### --drive-auth-owner-only ####
+
+Only consider files owned by the authenticated user. Requires
+that --drive-full-list=true (default).
+
 ### Limitations ###
 
 Drive has quite a lot of rate limiting.  This causes rclone to be

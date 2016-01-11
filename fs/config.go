@@ -26,6 +26,18 @@ import (
 
 const (
 	configFileName = ".rclone.conf"
+
+	// ConfigToken is the key used to store the token under
+	ConfigToken = "token"
+
+	// ConfigClientID is the config key used to store the client id
+	ConfigClientID = "client_id"
+
+	// ConfigClientSecret is the config key used to store the client secret
+	ConfigClientSecret = "client_secret"
+
+	// ConfigAutomatic indicates that we want non-interactive configuration
+	ConfigAutomatic = "config_automatic"
 )
 
 // SizeSuffix is parsed by flag with k/M/G suffixes
@@ -531,4 +543,40 @@ func EditConfig() {
 			return
 		}
 	}
+}
+
+// Authorize is for remote authorization of headless machines.
+//
+// It expects 1 or 3 arguments
+//
+//   rclone authorize "fs name"
+//   rclone authorize "fs name" "client id" "client secret"
+func Authorize(args []string) {
+	switch len(args) {
+	case 1, 3:
+	default:
+		log.Fatalf("Invalid number of arguments: %d", len(args))
+	}
+	newType := args[0]
+	fs, err := Find(newType)
+	if err != nil {
+		log.Fatalf("Failed to find fs: %v", err)
+	}
+
+	if fs.Config == nil {
+		log.Fatalf("Can't authorize fs %q", newType)
+	}
+	// Name used for temporary fs
+	name := "**temp-fs**"
+
+	// Make sure we delete it
+	defer DeleteRemote(name)
+
+	// Indicate that we want fully automatic configuration.
+	ConfigFile.SetValue(name, ConfigAutomatic, "yes")
+	if len(args) == 3 {
+		ConfigFile.SetValue(name, ConfigClientID, args[1])
+		ConfigFile.SetValue(name, ConfigClientSecret, args[2])
+	}
+	fs.Config(name)
 }

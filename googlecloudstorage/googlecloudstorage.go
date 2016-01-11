@@ -59,16 +59,16 @@ func init() {
 		Name:  "google cloud storage",
 		NewFs: NewFs,
 		Config: func(name string) {
-			err := oauthutil.Config(name, storageConfig)
+			err := oauthutil.Config("google cloud storage", name, storageConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
 		},
 		Options: []fs.Option{{
-			Name: oauthutil.ConfigClientID,
+			Name: fs.ConfigClientID,
 			Help: "Google Application Client Id - leave blank normally.",
 		}, {
-			Name: oauthutil.ConfigClientSecret,
+			Name: fs.ConfigClientSecret,
 			Help: "Google Application Client Secret - leave blank normally.",
 		}, {
 			Name: "project_number",
@@ -488,7 +488,6 @@ func (o *Object) Hash(t fs.HashType) (string, error) {
 	if t != fs.HashMD5 {
 		return "", fs.ErrHashUnsupported
 	}
-	// TODO(klauspost): CRC32c is also returned AFAICT.
 	return o.md5sum, nil
 }
 

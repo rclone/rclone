@@ -133,7 +133,7 @@ Research
 Getting going
 
   * Create `remote/remote.go` (copy this from a similar fs)
-  * Add your fs to the imports in `rclone.go`
+  * Add your fs to the imports in `fs/all/all.go`
 
 Unit tests
 
@@ -144,7 +144,6 @@ Unit tests
 
 Integration tests
 
-  * Add your fs to the imports in `fs/operations_test.go`
   * Add your fs to `fs/test_all.go`
   * Make sure integration tests pass with
       * `cd fs`
@@ -156,6 +155,7 @@ Add your fs to the docs
   * `README.md` - main Github page
   * `docs/content/remote.md` - main docs page
   * `docs/content/overview.md` - overview docs
+  * `docs/content/docs.md` - list of remotes in config section
   * `docs/content/about.md` - front page of rclone.org
   * `docs/layouts/chrome/navbar.html` - add it to the website navigation
   * `make_manual.py` - add the page to the `docs` constant
