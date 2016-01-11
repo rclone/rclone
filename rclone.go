@@ -148,6 +148,18 @@ var Commands = []Command{
 		MaxArgs: 1,
 	},
 	{
+		Name:     "sha1sum",
+		ArgsHelp: "remote:path",
+		Help: `
+        Produces an sha1sum file for all the objects in the path.  This
+        is in the same format as the standard sha1sum tool produces.`,
+		Run: func(fdst, fsrc fs.Fs) error {
+			return fs.Sha1sum(fdst, os.Stdout)
+		},
+		MinArgs: 1,
+		MaxArgs: 1,
+	},
+	{
 		Name:     "size",
 		ArgsHelp: "remote:path",
 		Help: `

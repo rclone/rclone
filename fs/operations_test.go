@@ -365,7 +365,7 @@ func TestSyncAfterChangingFilesSizeOnly(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
 }
 
-// Sync after changing a file's contents, modtime but not length
+// Sync after changing a file's contents, maintaining modtime and length
 func TestSyncAfterChangingContentsOnly(t *testing.T) {
 	if fremote.Precision() == fs.ModTimeNotSupported {
 		t.Logf("ModTimeNotSupported so forcing file to be a different size")

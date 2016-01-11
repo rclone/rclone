@@ -84,6 +84,11 @@ size and path.
 Produces an md5sum file for all the objects in the path.  This
 is in the same format as the standard md5sum tool produces.
 
+### rclone sha1sum remote:path ###
+
+Produces an sha1sum file for all the objects in the path.  This
+is in the same format as the standard sha1sum tool produces.
+
 ### rclone size remote:path ###
 
 Prints the total size of objects in remote:path and the number of

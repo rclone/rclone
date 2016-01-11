@@ -4,6 +4,7 @@ package onedrive
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"log"
@@ -12,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"encoding/hex"
 
 	"github.com/ncw/rclone/dircache"
 	"github.com/ncw/rclone/fs"
@@ -95,6 +98,7 @@ type Object struct {
 	size        int64     // size of the object
 	modTime     time.Time // modification time of the object
 	id          string    // ID of the object
+	sha1        string    // SHA-1 of the object content
 }
 
 // ------------------------------------------------------------
@@ -670,6 +674,11 @@ func (f *Fs) Purge() error {
 	return f.purgeCheck(false)
 }
 
+// Hashes returns the supported hash sets.
+func (f *Fs) Hashes() fs.HashSet {
+	return fs.HashSet(fs.HashSHA1)
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -695,9 +704,12 @@ func (o *Object) srvPath() string {
 	return replaceReservedChars(o.fs.rootSlash() + o.remote)
 }
 
-// Md5sum returns the Md5sum of an object returning a lowercase hex string
-func (o *Object) Md5sum() (string, error) {
-	return "", nil // not supported by one drive
+// Hash returns the SHA-1 of an object returning a lowercase hex string
+func (o *Object) Hash(t fs.HashType) (string, error) {
+	if t != fs.HashSHA1 {
+		return "", fs.ErrHashUnsupported
+	}
+	return o.sha1, nil
 }
 
 // Size returns the size of an object in bytes
@@ -714,6 +726,16 @@ func (o *Object) Size() int64 {
 func (o *Object) setMetaData(info *api.Item) {
 	o.hasMetaData = true
 	o.size = info.Size
+
+	// In OneDrive for Business, SHA1 and CRC32 hash values are not returned for files.
+	if info.File != nil && info.File.Hashes.Sha1Hash != "" {
+		sha1sumData, err := base64.StdEncoding.DecodeString(info.File.Hashes.Sha1Hash)
+		if err != nil {
+			fs.Log(o, "Bad SHA1 decode: %v", err)
+		} else {
+			o.sha1 = hex.EncodeToString(sha1sumData)
+		}
+	}
 	if info.FileSystemInfo != nil {
 		o.modTime = time.Time(info.FileSystemInfo.LastModifiedDateTime)
 	} else {

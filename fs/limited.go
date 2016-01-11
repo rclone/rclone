@@ -96,6 +96,11 @@ func (f *Limited) Precision() time.Duration {
 	return f.fs.Precision()
 }
 
+// Hashes returns the supported hash sets.
+func (f *Limited) Hashes() HashSet {
+	return f.fs.Hashes()
+}
+
 // Copy src to this remote using server side copy operations.
 //
 // This is stored with the remote path given
