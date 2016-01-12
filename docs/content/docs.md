@@ -291,6 +291,21 @@ This sets the interval.
 
 The default is `1m`. Use 0 to disable.
 
+### --delete-(before,during,after) ###
+
+This option allows you to specify when files on your destination are
+deleted when you sync folders.
+
+Specifying the value `--delete-before` will delete all files present on the
+destination, but not on the source *before* starting the transfer
+of any new or updated files.
+
+Specifying `--delete-during` (default value) will delete files while checking
+and uploading files. This is usually the fastest option.
+
+Specifying `--delete-after` will delay deletion of files until all new/updated
+files have been successfully transfered.
+
 ### --timeout=TIME ###
 
 This sets the IO idle timeout.  If a transfer has started but then
