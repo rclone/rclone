@@ -385,14 +385,16 @@ func DeleteFiles(toBeDeleted ObjectsChan) {
 	wg.Wait()
 }
 
-// Read a map of Object.Remote to Object for the given Fs
-func readFilesMap(fs Fs) map[string]Object {
+// Read a map of Object.Remote to Object for the given Fs.
+// If includeAll is specified all files will be added,
+// otherwise only files passing the filter will be added.
+func readFilesMap(fs Fs, includeAll bool) map[string]Object {
 	files := make(map[string]Object)
 	for o := range fs.List() {
 		remote := o.Remote()
 		if _, ok := files[remote]; !ok {
 			// Make sure we don't delete excluded files if not required
-			if Config.Filter.DeleteExcluded || Config.Filter.IncludeObject(o) {
+			if includeAll || Config.Filter.IncludeObject(o) {
 				files[remote] = o
 			} else {
 				Debug(o, "Excluded from sync (and deletion)")
@@ -429,9 +431,78 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 
 	Log(fdst, "Building file list")
 
-	// Read the destination files first
-	// FIXME could do this in parallel and make it use less memory
-	delFiles := readFilesMap(fdst)
+	// Read the files of both source and destination
+	var listWg sync.WaitGroup
+	listWg.Add(2)
+
+	var dstFiles map[string]Object
+	var srcFiles map[string]Object
+	var srcObjects = make(ObjectsChan, Config.Transfers)
+
+	go func() {
+		dstFiles = readFilesMap(fdst, Config.Filter.DeleteExcluded)
+		listWg.Done()
+	}()
+
+	go func() {
+		srcFiles = readFilesMap(fsrc, false)
+		listWg.Done()
+		for _, v := range srcFiles {
+			srcObjects <- v
+		}
+		close(srcObjects)
+	}()
+
+	startDeletion := make(chan struct{}, 0)
+
+	// Delete files if asked
+	var delWg sync.WaitGroup
+	delWg.Add(1)
+	go func() {
+		if !Delete {
+			return
+		}
+		defer func() {
+			Debug(fdst, "Deletion finished")
+			delWg.Done()
+		}()
+
+		_ = <-startDeletion
+		Debug(fdst, "Starting deletion")
+
+		if Stats.Errored() {
+			ErrorLog(fdst, "Not deleting files as there were IO errors")
+			return
+		}
+
+		// Delete the spare files
+		toDelete := make(ObjectsChan, Config.Transfers)
+
+		go func() {
+			for key, fs := range dstFiles {
+				_, exists := srcFiles[key]
+				if !exists {
+					toDelete <- fs
+				}
+			}
+			close(toDelete)
+		}()
+		DeleteFiles(toDelete)
+	}()
+
+	// Wait for all files to be read
+	listWg.Wait()
+
+	// Start deleting, unless we must delete after transfer
+	if Delete && !Config.DeleteAfter {
+		close(startDeletion)
+	}
+
+	// If deletes must finish before starting transfers, we must wait now.
+	if Delete && Config.DeleteBefore {
+		Log(fdst, "Waiting for deletes to finish (before)")
+		delWg.Wait()
+	}
 
 	// Read source files checking them off against dest files
 	toBeChecked := make(ObjectPairChan, Config.Transfers)
@@ -454,13 +525,12 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 	}
 
 	go func() {
-		for src := range fsrc.List() {
+		for src := range srcObjects {
 			if !Config.Filter.IncludeObject(src) {
 				Debug(src, "Excluding from sync")
 			} else {
 				remote := src.Remote()
-				if dst, dstFound := delFiles[remote]; dstFound {
-					delete(delFiles, remote)
+				if dst, dstFound := dstFiles[remote]; dstFound {
 					toBeChecked <- ObjectPair{src, dst}
 				} else {
 					// No need to check since doesn't exist
@@ -477,23 +547,16 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 	Log(fdst, "Waiting for transfers to finish")
 	copierWg.Wait()
 
-	// Delete files if asked
-	if Delete {
-		if Stats.Errored() {
-			ErrorLog(fdst, "Not deleting files as there were IO errors")
-			return nil
-		}
-
-		// Delete the spare files
-		toDelete := make(ObjectsChan, Config.Transfers)
-		go func() {
-			for _, fs := range delFiles {
-				toDelete <- fs
-			}
-			close(toDelete)
-		}()
-		DeleteFiles(toDelete)
+	// If deleting after, start deletion now
+	if Delete && Config.DeleteAfter {
+		close(startDeletion)
 	}
+	// Unless we have already waited, wait for deletion to finish.
+	if Delete && !Config.DeleteBefore {
+		Log(fdst, "Waiting for deletes to finish (during+after)")
+		delWg.Wait()
+	}
+
 	return nil
 }
 
@@ -552,7 +615,7 @@ func Check(fdst, fsrc Fs) error {
 		defer wg.Done()
 		// Read the destination files
 		Log(fdst, "Building file list")
-		dstFiles = readFilesMap(fdst)
+		dstFiles = readFilesMap(fdst, false)
 		Debug(fdst, "Done building file list")
 	}()
 
@@ -560,7 +623,7 @@ func Check(fdst, fsrc Fs) error {
 		defer wg.Done()
 		// Read the source files
 		Log(fsrc, "Building file list")
-		srcFiles = readFilesMap(fsrc)
+		srcFiles = readFilesMap(fsrc, false)
 		Debug(fdst, "Done building file list")
 	}()
 
