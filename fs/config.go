@@ -61,26 +61,27 @@ var (
 	// Config is the global config
 	Config = &ConfigInfo{}
 	// Flags
-	verbose        = pflag.BoolP("verbose", "v", false, "Print lots more stuff")
-	quiet          = pflag.BoolP("quiet", "q", false, "Print as little stuff as possible")
-	modifyWindow   = pflag.DurationP("modify-window", "", time.Nanosecond, "Max time diff to be considered the same")
-	checkers       = pflag.IntP("checkers", "", 8, "Number of checkers to run in parallel.")
-	transfers      = pflag.IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
-	configFile     = pflag.StringP("config", "", ConfigPath, "Config file.")
-	checkSum       = pflag.BoolP("checksum", "c", false, "Skip based on checksum & size, not mod-time & size")
-	sizeOnly       = pflag.BoolP("size-only", "", false, "Skip based on size only, not mod-time or checksum")
-	ignoreExisting = pflag.BoolP("ignore-existing", "", false, "Skip all files that exist on destination")
-	dryRun         = pflag.BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
-	connectTimeout = pflag.DurationP("contimeout", "", 60*time.Second, "Connect timeout")
-	timeout        = pflag.DurationP("timeout", "", 5*60*time.Second, "IO idle timeout")
-	dumpHeaders    = pflag.BoolP("dump-headers", "", false, "Dump HTTP headers - may contain sensitive info")
-	dumpBodies     = pflag.BoolP("dump-bodies", "", false, "Dump HTTP headers and bodies - may contain sensitive info")
-	skipVerify     = pflag.BoolP("no-check-certificate", "", false, "Do not verify the server SSL certificate. Insecure.")
-	AskPassword    = pflag.BoolP("ask-password", "", true, "Allow prompt for password for encrypted configuration.")
-	deleteBefore   = pflag.BoolP("delete-before", "", false, "When synchronizing, delete files on destination before transfering")
-	deleteDuring   = pflag.BoolP("delete-during", "", false, "When synchronizing, delete files during transfer (default)")
-	deleteAfter    = pflag.BoolP("delete-after", "", false, "When synchronizing, delete files on destination after transfering")
-	bwLimit        SizeSuffix
+	verbose         = pflag.BoolP("verbose", "v", false, "Print lots more stuff")
+	quiet           = pflag.BoolP("quiet", "q", false, "Print as little stuff as possible")
+	modifyWindow    = pflag.DurationP("modify-window", "", time.Nanosecond, "Max time diff to be considered the same")
+	checkers        = pflag.IntP("checkers", "", 8, "Number of checkers to run in parallel.")
+	transfers       = pflag.IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
+	configFile      = pflag.StringP("config", "", ConfigPath, "Config file.")
+	checkSum        = pflag.BoolP("checksum", "c", false, "Skip based on checksum & size, not mod-time & size")
+	sizeOnly        = pflag.BoolP("size-only", "", false, "Skip based on size only, not mod-time or checksum")
+	ignoreExisting  = pflag.BoolP("ignore-existing", "", false, "Skip all files that exist on destination")
+	dryRun          = pflag.BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
+	connectTimeout  = pflag.DurationP("contimeout", "", 60*time.Second, "Connect timeout")
+	timeout         = pflag.DurationP("timeout", "", 5*60*time.Second, "IO idle timeout")
+	dumpHeaders     = pflag.BoolP("dump-headers", "", false, "Dump HTTP headers - may contain sensitive info")
+	dumpBodies      = pflag.BoolP("dump-bodies", "", false, "Dump HTTP headers and bodies - may contain sensitive info")
+	skipVerify      = pflag.BoolP("no-check-certificate", "", false, "Do not verify the server SSL certificate. Insecure.")
+	AskPassword     = pflag.BoolP("ask-password", "", true, "Allow prompt for password for encrypted configuration.")
+	deleteBefore    = pflag.BoolP("delete-before", "", false, "When synchronizing, delete files on destination before transfering")
+	deleteDuring    = pflag.BoolP("delete-during", "", false, "When synchronizing, delete files during transfer (default)")
+	deleteAfter     = pflag.BoolP("delete-after", "", false, "When synchronizing, delete files on destination after transfering")
+	lowLevelRetries = pflag.IntP("low-level-retries", "", 10, "Number of low level retries to do.")
+	bwLimit         SizeSuffix
 
 	// Key to use for password en/decryption.
 	// When nil, no encryption will be used for saving.
@@ -197,6 +198,7 @@ type ConfigInfo struct {
 	DeleteBefore       bool // Delete before checking
 	DeleteDuring       bool // Delete during checking/transfer
 	DeleteAfter        bool // Delete after successful transfer.
+	LowLevelRetries    int
 }
 
 // Transport returns an http.RoundTripper with the correct timeouts
@@ -285,6 +287,7 @@ func LoadConfig() {
 	Config.DumpHeaders = *dumpHeaders
 	Config.DumpBodies = *dumpBodies
 	Config.InsecureSkipVerify = *skipVerify
+	Config.LowLevelRetries = *lowLevelRetries
 
 	ConfigPath = *configFile
 

@@ -185,7 +185,7 @@ func removeFailedCopy(dst Object) bool {
 // call Copy() with dst nil on a pre-existing file then some filing
 // systems (eg Drive) may duplicate the file.
 func Copy(f Fs, dst, src Object) {
-	const maxTries = 10
+	maxTries := Config.LowLevelRetries
 	tries := 0
 	doUpdate := dst != nil
 	var err, inErr error
@@ -231,7 +231,7 @@ tryAgain:
 	// Retry if err returned a retry error
 	if r, ok := err.(Retry); ok && r.Retry() && tries < maxTries {
 		tries++
-		Log(src, "Received error: %v - retrying %d/%d", err, tries, maxTries)
+		Log(src, "Received error: %v - low level retry %d/%d", err, tries, maxTries)
 		if removeFailedCopy(dst) {
 			// If we removed dst, then nil it out and note we are not updating
 			dst = nil

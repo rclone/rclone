@@ -39,12 +39,13 @@ import (
 
 // Globals
 var (
-	RemoteName  = flag.String("remote", "", "Remote to test with, defaults to local filesystem")
-	SubDir      = flag.Bool("subdir", false, "Set to test with a sub directory")
-	Verbose     = flag.Bool("verbose", false, "Set to enable logging")
-	DumpHeaders = flag.Bool("dump-headers", false, "Set to dump headers (needs -verbose)")
-	DumpBodies  = flag.Bool("dump-bodies", false, "Set to dump bodies (needs -verbose)")
-	Individual  = flag.Bool("individual", false, "Make individual bucket/container/directory for each test - much slower")
+	RemoteName      = flag.String("remote", "", "Remote to test with, defaults to local filesystem")
+	SubDir          = flag.Bool("subdir", false, "Set to test with a sub directory")
+	Verbose         = flag.Bool("verbose", false, "Set to enable logging")
+	DumpHeaders     = flag.Bool("dump-headers", false, "Set to dump headers (needs -verbose)")
+	DumpBodies      = flag.Bool("dump-bodies", false, "Set to dump bodies (needs -verbose)")
+	Individual      = flag.Bool("individual", false, "Make individual bucket/container/directory for each test - much slower")
+	LowLevelRetries = flag.Int("low-level-retries", 10, "Number of low level retries")
 )
 
 // Some times used in the tests
@@ -103,7 +104,7 @@ func newRun() *Run {
 	fs.Config.Quiet = !*Verbose
 	fs.Config.DumpHeaders = *DumpHeaders
 	fs.Config.DumpBodies = *DumpBodies
-
+	fs.Config.LowLevelRetries = *LowLevelRetries
 	var err error
 	r.fremote, r.cleanRemote, err = fstest.RandomRemote(*RemoteName, *SubDir)
 	if err != nil {

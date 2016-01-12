@@ -61,7 +61,7 @@ func New() *Pacer {
 		minSleep:      10 * time.Millisecond,
 		maxSleep:      2 * time.Second,
 		decayConstant: 2,
-		retries:       10,
+		retries:       fs.Config.LowLevelRetries,
 		pacer:         make(chan struct{}, 1),
 	}
 	p.sleepTime = p.minSleep
@@ -231,7 +231,7 @@ func (p *Pacer) acdPacer(retry bool) {
 		if p.sleepTime < p.minSleep {
 			p.sleepTime = p.minSleep
 		}
-		fs.Debug("pacer", "Rate limited, sleeping for %v (%d retries)", p.sleepTime, consecutiveRetries)
+		fs.Debug("pacer", "Rate limited, sleeping for %v (%d consecutive low level retries)", p.sleepTime, consecutiveRetries)
 	}
 }
 
@@ -256,13 +256,14 @@ func (p *Pacer) endCall(retry bool) {
 // call implements Call but with settable retries
 func (p *Pacer) call(fn Paced, retries int) (err error) {
 	var retry bool
-	for i := 0; i < retries; i++ {
+	for i := 1; i <= retries; i++ {
 		p.beginCall()
 		retry, err = fn()
 		p.endCall(retry)
 		if !retry {
 			break
 		}
+		fs.Debug("pacer", "low level retry %d/%d", i, retries)
 	}
 	if retry {
 		err = fs.RetryError(err)

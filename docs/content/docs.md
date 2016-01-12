@@ -363,6 +363,22 @@ Log all of rclone's output to FILE.  This is not active by default.
 This can be useful for tracking down problems with syncs in
 combination with the `-v` flag.
 
+### --low-level-retries NUMBER ###
+
+This controls the number of low level retries rclone does.
+
+A low level retry is used to retry a failing operation - typically one
+HTTP request.  This might be uploading a chunk of a big file for
+example.  You will see low level retries in the log with the `-v`
+flag.
+
+This shouldn't need to be changed from the default in normal
+operations, however if you get a lot of low level retries you may wish
+to reduce the value so rclone moves on to a high level retry (see the
+`--retries` flag) quicker.
+
+Disable low level retries with `--low-level-retries 1`.
+
 ### --modify-window=TIME ###
 
 When checking whether a file has been modified, this is the maximum
