@@ -82,14 +82,14 @@ To copy a local directory to an One Drive directory called backup
 
     rclone copy /home/source remote:backup
 
-### Modified time and MD5SUMs ###
+### Modified time and hashes ###
 
 One Drive allows modification times to be set on objects accurate to 1
 second.  These will be used to detect whether objects need syncing or
 not.
 
-One drive does not support MD5SUMs. This means the `--checksum` flag
-will be equivalent to the `--size-only` flag.
+One drive supports SHA1 type hashes, so you can use `--checksum` flag.
+
 
 ### Deleting files ###
 
