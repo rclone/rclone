@@ -4,7 +4,7 @@
 <div class="container">
     <div class="row">
         <div class="col-md-9">
-          {{ range $key, $value := .Site.Indexes.groups.about.Pages }}
+          {{ range $key, $value := .Site.Taxonomies.groups.about.Pages }}
           {{ $value.Content }}
           {{ end }}
         </div>
