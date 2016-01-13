@@ -15,26 +15,29 @@ show through.
 
 Here is an overview of the major features of each cloud storage system.
 
-| Name                   | MD5SUM  | ModTime | Case Insensitive | Duplicate Files |
+| Name                   | Hash    | ModTime | Case Insensitive | Duplicate Files |
 | ---------------------- |:-------:|:-------:|:----------------:|:---------------:|
-| Google Drive           | Yes     | Yes     | No               | Yes             |
-| Amazon S3              | Yes     | Yes     | No               | No              |
-| Openstack Swift        | Yes     | Yes     | No               | No              |
-| Dropbox                | No      | No      | Yes              | No              |
-| Google Cloud Storage   | Yes     | Yes     | No               | No              |
-| Amazon Cloud Drive     | Yes     | No      | Yes              | No              |
-| Microsoft One Drive    | No      | Yes     | Yes              | No              |
-| Hubic                  | Yes     | Yes     | No               | No              |
-| Backblaze B2           | No      | Partial | No               | No              |
-| Yandex Disk            | Yes     | Yes     | No               | No              |
-| The local filesystem   | Yes     | Yes     | Depends          | No              |
+| Google Drive           | MD5     | Yes     | No               | Yes             |
+| Amazon S3              | MD5     | Yes     | No               | No              |
+| Openstack Swift        | MD5     | Yes     | No               | No              |
+| Dropbox                | -       | No      | Yes              | No              |
+| Google Cloud Storage   | MD5     | Yes     | No               | No              |
+| Amazon Cloud Drive     | MD5     | No      | Yes              | No              |
+| Microsoft One Drive    | SHA1    | Yes     | Yes              | No              |
+| Hubic                  | MD5     | Yes     | No               | No              |
+| Backblaze B2           | SHA1    | Partial | No               | No              |
+| Yandex Disk            | MD5     | Yes     | No               | No              |
+| The local filesystem   | All     | Yes     | Depends          | No              |
 
-### MD5SUM ###
+### Hash ###
 
-The cloud storage system supports MD5SUMs of the objects.  This
-is used if available when transferring data as an integrity check and
+The cloud storage system supports various hash types of the objects.  
+The hashes are used when transferring data as an integrity check and
 can be specifically used with the `--checksum` flag in syncs and in
 the `check` command.
+
+To use the checksum checks between filesystems they must support a 
+common hash type.
 
 ### ModTime ###
 
@@ -62,7 +65,7 @@ matter how many times you run the sync it never completes fully.
 
 The local filesystem may or may not be case sensitive depending on OS.
 
-  * Windows - usually case insensitive
+  * Windows - usually case insensitive, though case is preserved
   * OSX - usually case insensitive, though it is possible to format case sensitive
   * Linux - usually case sensitive, but there are case insensitive file systems (eg FAT formatted USB keys)
 

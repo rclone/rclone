@@ -27,13 +27,13 @@ Rclone is a command line program to sync files and directories to and from
 
 Features
 
-  * MD5SUMs checked at all times for file integrity
+  * MD5/SHA1 hashes checked at all times for file integrity
   * Timestamps preserved on files
   * Partial syncs supported on a whole file basis
   * Copy mode to just copy new/changed files
-  * Sync mode to make a directory identical
-  * Check mode to check all MD5SUMs
-  * Can sync to and from network, eg two different Drive accounts
+  * Sync (one way) mode to make a directory identical
+  * Check mode to check for file hash equality
+  * Can sync to and from network, eg two different cloud accounts
 
 Links
 

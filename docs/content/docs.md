@@ -189,11 +189,15 @@ The default is to run 8 checkers in parallel.
 
 Normally rclone will look at modification time and size of files to
 see if they are equal.  If you set this flag then rclone will check
-MD5SUM and size to determine if files are equal.
+the file hash and size to determine if files are equal.
+
+This is useful when the remote doesn't support setting modified time
+and a more accurate sync is desired than just checking the file size.
 
 This is very useful when transferring between remotes which store the
-MD5SUM on the object which include swift, s3, drive, and google cloud
-storage.
+same hash type on the object, eg Drive and Swift. For details of which
+remotes support which hash type see the table in the [overview
+section](/overview/).
 
 Eg `rclone --checksum sync s3:/bucket swift:/bucket` would run much
 quicker than without the `--checksum` flag.
