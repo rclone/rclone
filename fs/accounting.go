@@ -427,7 +427,7 @@ var _ io.ReadCloser = &Account{}
 // logCaseDupes will print out all duplicates encountered
 // in the object stream.
 func logCaseDupes(in ObjectsChan) (out ObjectsChan) {
-	out = make(ObjectsChan, len(in))
+	out = make(ObjectsChan, cap(in))
 	go func() {
 		// We could trade a little speed for a little memory and store SHA1 for instance.
 		var found = make(map[string]struct{})
@@ -436,7 +436,7 @@ func logCaseDupes(in ObjectsChan) (out ObjectsChan) {
 			lname := strings.ToLower(norm.NFC.String(name))
 			_, ok := found[lname]
 			if ok {
-				Log(o.Fs(), "Warning: Found file with same name, but different case at %q", name)
+				Debug(o.Fs(), "Warning: Found file with same name, but different case at %q", name)
 			}
 			out <- o
 			found[lname] = struct{}{}
