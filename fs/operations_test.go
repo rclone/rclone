@@ -611,10 +611,12 @@ func TestMd5sum(t *testing.T) {
 	}
 	res := buf.String()
 	if !strings.Contains(res, "d41d8cd98f00b204e9800998ecf8427e  empty space\n") &&
+		!strings.Contains(res, "                     UNSUPPORTED  empty space\n") &&
 		!strings.Contains(res, "                                  empty space\n") {
 		t.Errorf("empty space missing: %q", res)
 	}
 	if !strings.Contains(res, "6548b156ea68a4e003e786df99eee76  potato2\n") &&
+		!strings.Contains(res, "                     UNSUPPORTED  potato2\n") &&
 		!strings.Contains(res, "                                  potato2\n") {
 		t.Errorf("potato2 missing: %q", res)
 	}
