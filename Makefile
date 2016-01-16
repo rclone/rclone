@@ -62,7 +62,7 @@ beta:	doc
 	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)β
 	@echo Beta release ready at http://pub.rclone.org/$(TAG)%CE%B2/
 
-serve:
+serve:	website
 	cd docs && hugo server -v -w
 
 tag:
