@@ -444,7 +444,12 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 	// Check that the underlying file hasn't changed
 	oldtime := o.info.ModTime()
 	oldsize := o.info.Size()
-	_ = o.lstat()
+	err := o.lstat()
+	if err != nil {
+		fs.Stats.Error()
+		fs.ErrorLog(o, "Failed to stat: %s", err)
+		return "", err
+	}
 
 	if !o.info.ModTime().Equal(oldtime) || oldsize != o.info.Size() {
 		o.hashes = nil
