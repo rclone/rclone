@@ -18,14 +18,14 @@ type HashType int
 var ErrHashUnsupported = fmt.Errorf("hash type not supported")
 
 const (
-	// HashNone indicates no hashes are supported
-	HashNone HashType = 0
-
 	// HashMD5 indicates MD5 support
 	HashMD5 HashType = 1 << iota
 
 	// HashSHA1 indicates SHA-1 support
 	HashSHA1
+
+	// HashNone indicates no hashes are supported
+	HashNone HashType = 0
 )
 
 // SupportedHashes returns a set of all the supported hashes by
