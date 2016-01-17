@@ -4,7 +4,6 @@ package onedrive
 
 import (
 	"bytes"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"log"
@@ -13,8 +12,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"encoding/hex"
 
 	"github.com/ncw/rclone/dircache"
 	"github.com/ncw/rclone/fs"
@@ -727,14 +724,15 @@ func (o *Object) setMetaData(info *api.Item) {
 	o.hasMetaData = true
 	o.size = info.Size
 
+	// Docs: https://dev.onedrive.com/facets/hashes_facet.htm
+	//
+	// The docs state both that the hashes are returned as hex
+	// strings, and as base64 strings. Testing reveals they are in
+	// fact uppercase hex strings.
+	//
 	// In OneDrive for Business, SHA1 and CRC32 hash values are not returned for files.
 	if info.File != nil && info.File.Hashes.Sha1Hash != "" {
-		sha1sumData, err := base64.StdEncoding.DecodeString(info.File.Hashes.Sha1Hash)
-		if err != nil {
-			fs.Log(o, "Bad SHA1 decode: %v", err)
-		} else {
-			o.sha1 = hex.EncodeToString(sha1sumData)
-		}
+		o.sha1 = strings.ToLower(info.File.Hashes.Sha1Hash)
 	}
 	if info.FileSystemInfo != nil {
 		o.modTime = time.Time(info.FileSystemInfo.LastModifiedDateTime)
