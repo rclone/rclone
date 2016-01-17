@@ -4,6 +4,8 @@ package fstest
 // FIXME put name of test FS in Fs structure
 
 import (
+	"bytes"
+	"io"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -29,6 +31,23 @@ type Item struct {
 	ModTime time.Time
 	Size    int64
 	WinPath string
+}
+
+// NewItem creates an item from a string content
+func NewItem(Path, Content string, modTime time.Time) Item {
+	i := Item{
+		Path:    Path,
+		ModTime: modTime,
+		Size:    int64(len(Content)),
+	}
+	hash := fs.NewMultiHasher()
+	buf := bytes.NewBufferString(Content)
+	_, err := io.Copy(hash, buf)
+	if err != nil {
+		log.Fatalf("Failed to create item: %v", err)
+	}
+	i.Hashes = hash.Sums()
+	return i
 }
 
 // CheckTimeEqualWithPrecision checks the times are equal within the
@@ -129,17 +148,26 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, precision ti
 	is := NewItems(items)
 	oldErrors := fs.Stats.GetErrors()
 	var objs []fs.Object
-	const retries = 10
+	const retries = 6
+	sleep := time.Second / 2
 	for i := 1; i <= retries; i++ {
 		objs = nil
 		for obj := range f.List() {
 			objs = append(objs, obj)
 		}
 		if len(objs) == len(items) {
+			// Put an extra sleep in if we did any retries just to make sure it really
+			// is consistent (here is looking at you Amazon Cloud Drive!)
+			if i != 1 {
+				extraSleep := 5*time.Second + sleep
+				t.Logf("Sleeping for %v just to make sure", extraSleep)
+				time.Sleep(extraSleep)
+			}
 			break
 		}
-		t.Logf("Sleeping for 1 second for list eventual consistency: %d/%d", i, retries)
-		time.Sleep(1 * time.Second)
+		sleep *= 2
+		t.Logf("Sleeping for %v for list eventual consistency: %d/%d", sleep, i, retries)
+		time.Sleep(sleep)
 	}
 	for _, obj := range objs {
 		if obj == nil {
@@ -159,6 +187,12 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, precision ti
 func CheckListing(t *testing.T, f fs.Fs, items []Item) {
 	precision := f.Precision()
 	CheckListingWithPrecision(t, f, items, precision)
+}
+
+// CheckItems checks the fs to see if it has only the items passed in
+// using a precision of fs.Config.ModifyWindow
+func CheckItems(t *testing.T, f fs.Fs, items ...Item) {
+	CheckListingWithPrecision(t, f, items, fs.Config.ModifyWindow)
 }
 
 // Time parses a time string or logs a fatal error

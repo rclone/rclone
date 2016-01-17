@@ -1,5 +1,21 @@
-// Test rclone by doing real transactions to a storage provider to and
-// from the local disk
+// Integration tests - test rclone by doing real transactions to a
+// storage provider to and from the local disk.
+//
+// By default it will use a local fs, however you can provide a
+// -remote option to use a different remote.  The test_all.go script
+// is a wrapper to call this for all the test remotes.
+//
+// FIXME not safe for concurrent running of tests until fs.Config is
+// no longer a global
+//
+// NB When writing tests
+//
+// Make sure every series of writes to the remote has a
+// fstest.CheckItems() before use.  This make sure the directory
+// listing is now consistent and stops cascading errors.
+//
+// Call fs.Stats.ResetCounters() before every fs.Sync() as it uses the
+// error count internally.
 
 package fs_test
 
@@ -23,132 +39,261 @@ import (
 
 // Globals
 var (
-	localName, remoteName string
-	flocal, fremote       fs.Fs
-	RemoteName            = flag.String("remote", "", "Remote to test with, defaults to local filesystem")
-	SubDir                = flag.Bool("subdir", false, "Set to test with a sub directory")
-	Verbose               = flag.Bool("verbose", false, "Set to enable logging")
-	DumpHeaders           = flag.Bool("dump-headers", false, "Set to dump headers (needs -verbose)")
-	DumpBodies            = flag.Bool("dump-bodies", false, "Set to dump bodies (needs -verbose)")
-	finalise              func()
+	RemoteName  = flag.String("remote", "", "Remote to test with, defaults to local filesystem")
+	SubDir      = flag.Bool("subdir", false, "Set to test with a sub directory")
+	Verbose     = flag.Bool("verbose", false, "Set to enable logging")
+	DumpHeaders = flag.Bool("dump-headers", false, "Set to dump headers (needs -verbose)")
+	DumpBodies  = flag.Bool("dump-bodies", false, "Set to dump bodies (needs -verbose)")
+	Individual  = flag.Bool("individual", false, "Make individual bucket/container/directory for each test - much slower")
 )
 
-// Write a file
-func WriteFile(filePath, content string, t time.Time) {
-	// FIXME make directories?
-	filePath = path.Join(localName, filePath)
-	dirPath := path.Dir(filePath)
-	err := os.MkdirAll(dirPath, 0770)
-	if err != nil {
-		log.Fatalf("Failed to make directories %q: %v", dirPath, err)
+// Some times used in the tests
+var (
+	t1 = fstest.Time("2001-02-03T04:05:06.499999999Z")
+	t2 = fstest.Time("2011-12-25T12:59:59.123456789Z")
+	t3 = fstest.Time("2011-12-30T12:59:59.000000000Z")
+)
+
+// TestMain drives the tests
+func TestMain(m *testing.M) {
+	flag.Parse()
+	if !*Individual {
+		oneRun = newRun()
 	}
-	err = ioutil.WriteFile(filePath, []byte(content), 0600)
-	if err != nil {
-		log.Fatalf("Failed to write file %q: %v", filePath, err)
+	rc := m.Run()
+	if !*Individual {
+		oneRun.Finalise()
 	}
-	err = os.Chtimes(filePath, t, t)
-	if err != nil {
-		log.Fatalf("Failed to chtimes file %q: %v", filePath, err)
-	}
+	os.Exit(rc)
 }
 
-var t1 = fstest.Time("2001-02-03T04:05:06.499999999Z")
-var t2 = fstest.Time("2011-12-25T12:59:59.123456789Z")
-var t3 = fstest.Time("2011-12-30T12:59:59.000000000Z")
+// Run holds the remotes for a test run
+type Run struct {
+	localName    string
+	flocal       fs.Fs
+	fremote      fs.Fs
+	cleanRemote  func()
+	mkdir        map[string]bool // whether the remote has been made yet for the fs name
+	Logf, Fatalf func(text string, args ...interface{})
+}
 
-func TestInit(t *testing.T) {
+// oneRun holds the master run data if individual is not set
+var oneRun *Run
+
+// newRun initialise the remote and local for testing and returns a
+// run object.
+//
+// r.flocal is an empty local Fs
+// r.fremote is an empty remote Fs
+//
+// Finalise() will tidy them away when done.
+func newRun() *Run {
+	r := &Run{
+		Logf:   log.Printf,
+		Fatalf: log.Fatalf,
+		mkdir:  make(map[string]bool),
+	}
+
 	fs.LoadConfig()
 	fs.Config.Verbose = *Verbose
 	fs.Config.Quiet = !*Verbose
 	fs.Config.DumpHeaders = *DumpHeaders
 	fs.Config.DumpBodies = *DumpBodies
+
 	var err error
-	fremote, finalise, err = fstest.RandomRemote(*RemoteName, *SubDir)
+	r.fremote, r.cleanRemote, err = fstest.RandomRemote(*RemoteName, *SubDir)
 	if err != nil {
-		t.Fatalf("Failed to open remote %q: %v", *RemoteName, err)
-	}
-	t.Logf("Testing with remote %v", fremote)
-
-	localName, err = ioutil.TempDir("", "rclone")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	localName = filepath.ToSlash(localName)
-	t.Logf("Testing with local %q", localName)
-	flocal, err = fs.NewFs(localName)
-	if err != nil {
-		t.Fatalf("Failed to make %q: %v", remoteName, err)
+		r.Fatalf("Failed to open remote %q: %v", *RemoteName, err)
 	}
 
+	r.localName, err = ioutil.TempDir("", "rclone")
+	if err != nil {
+		r.Fatalf("Failed to create temp dir: %v", err)
+	}
+	r.localName = filepath.ToSlash(r.localName)
+	r.flocal, err = fs.NewFs(r.localName)
+	if err != nil {
+		r.Fatalf("Failed to make %q: %v", r.localName, err)
+	}
+	fs.CalculateModifyWindow(r.fremote, r.flocal)
+	return r
 }
-func TestCalculateModifyWindow(t *testing.T) {
-	fs.CalculateModifyWindow(fremote, flocal)
-	t.Logf("ModifyWindow is %q", fs.Config.ModifyWindow)
+
+// NewRun initialise the remote and local for testing and returns a
+// run object.  Call this from the tests.
+//
+// r.flocal is an empty local Fs
+// r.fremote is an empty remote Fs
+//
+// Finalise() will tidy them away when done.
+func NewRun(t *testing.T) *Run {
+	var r *Run
+	if *Individual {
+		r = newRun()
+	} else {
+		// If not individual, use the global one with the clean method overridden
+		r = new(Run)
+		*r = *oneRun
+		r.cleanRemote = func() {
+			oldErrors := fs.Stats.GetErrors()
+			fs.DeleteFiles(r.fremote.List())
+			errors := fs.Stats.GetErrors() - oldErrors
+			if errors != 0 {
+				t.Fatalf("%d errors while cleaning remote %v", errors, r.fremote)
+			}
+		}
+	}
+	r.Logf = t.Logf
+	r.Fatalf = t.Fatalf
+	r.Logf("Remote %q, Local %q, Modify Window %q", r.fremote, r.flocal, fs.Config.ModifyWindow)
+	return r
 }
+
+// Write a file to local
+func (r *Run) WriteFile(filePath, content string, t time.Time) fstest.Item {
+	item := fstest.NewItem(filePath, content, t)
+	// FIXME make directories?
+	filePath = path.Join(r.localName, filePath)
+	dirPath := path.Dir(filePath)
+	err := os.MkdirAll(dirPath, 0770)
+	if err != nil {
+		r.Fatalf("Failed to make directories %q: %v", dirPath, err)
+	}
+	err = ioutil.WriteFile(filePath, []byte(content), 0600)
+	if err != nil {
+		r.Fatalf("Failed to write file %q: %v", filePath, err)
+	}
+	err = os.Chtimes(filePath, t, t)
+	if err != nil {
+		r.Fatalf("Failed to chtimes file %q: %v", filePath, err)
+	}
+	return item
+}
+
+// WriteObjectTo writes an object to the fs, remote passed in
+func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time) fstest.Item {
+	const maxTries = 5
+	if !r.mkdir[f.String()] {
+		err := f.Mkdir()
+		if err != nil {
+			r.Fatalf("Failed to mkdir %q: %v", f, err)
+		}
+		r.mkdir[f.String()] = true
+	}
+	for tries := 1; ; tries++ {
+		in := bytes.NewBufferString(content)
+		_, err := f.Put(in, remote, modTime, int64(len(content)))
+		if err == nil {
+			break
+		}
+		// Retry if err returned a retry error
+		if retry, ok := err.(fs.Retry); ok && retry.Retry() && tries < maxTries {
+			r.Logf("Retry Put of %q to %v: %d/%d (%v)", remote, f, tries, maxTries, err)
+			continue
+		}
+		r.Fatalf("Failed to put %q to %q: %v", remote, f, err)
+	}
+	return fstest.NewItem(remote, content, modTime)
+}
+
+// WriteObject writes an object to the remote
+func (r *Run) WriteObject(remote, content string, modTime time.Time) fstest.Item {
+	return r.WriteObjectTo(r.fremote, remote, content, modTime)
+}
+
+// WriteBoth calls WriteObject and WriteFile with the same arguments
+func (r *Run) WriteBoth(remote, content string, modTime time.Time) fstest.Item {
+	r.WriteFile(remote, content, modTime)
+	return r.WriteObject(remote, content, modTime)
+}
+
+// Clean the temporary directory
+func (r *Run) cleanTempDir() {
+	err := os.RemoveAll(r.localName)
+	if err != nil {
+		r.Logf("Failed to clean temporary directory %q: %v", r.localName, err)
+	}
+}
+
+// finalise cleans the remote and local
+func (r *Run) Finalise() {
+	// r.Logf("Cleaning remote %q", r.fremote)
+	r.cleanRemote()
+	// r.Logf("Cleaning local %q", r.localName)
+	r.cleanTempDir()
+}
+
+// ------------------------------------------------------------
 
 func TestMkdir(t *testing.T) {
-	fstest.TestMkdir(t, fremote)
+	r := NewRun(t)
+	defer r.Finalise()
+	fstest.TestMkdir(t, r.fremote)
 }
 
 // Check dry run is working
 func TestCopyWithDryRun(t *testing.T) {
-	WriteFile("sub dir/hello world", "hello world", t1)
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
 
 	fs.Config.DryRun = true
-	err := fs.CopyDir(fremote, flocal)
+	err := fs.CopyDir(r.fremote, r.flocal)
 	fs.Config.DryRun = false
 	if err != nil {
 		t.Fatalf("Copy failed: %v", err)
 	}
 
-	items := []fstest.Item{
-		{Path: "sub dir/hello world", Size: 11, ModTime: t1, Md5sum: "5eb63bbbe01eeed093cb22bb8f5acdc3"},
-	}
-
-	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
-	fstest.CheckListingWithPrecision(t, fremote, []fstest.Item{}, fs.Config.ModifyWindow)
+	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.fremote)
 }
 
 // Now without dry run
 func TestCopy(t *testing.T) {
-	err := fs.CopyDir(fremote, flocal)
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+
+	err := fs.CopyDir(r.fremote, r.flocal)
 	if err != nil {
 		t.Fatalf("Copy failed: %v", err)
 	}
 
-	items := []fstest.Item{
-		{Path: "sub dir/hello world", Size: 11, ModTime: t1, Md5sum: "5eb63bbbe01eeed093cb22bb8f5acdc3"},
-	}
-
-	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
-	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.fremote, file1)
 }
 
 // Test a server side copy if possible, or the backup path if not
 func TestServerSideCopy(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteObject("sub dir/hello world", "hello world", t1)
+	fstest.CheckItems(t, r.fremote, file1)
+
 	fremoteCopy, finaliseCopy, err := fstest.RandomRemote(*RemoteName, *SubDir)
 	if err != nil {
 		t.Fatalf("Failed to open remote copy %q: %v", *RemoteName, err)
 	}
 	defer finaliseCopy()
-	t.Logf("Server side copy (if possible) %v -> %v", fremote, fremoteCopy)
+	t.Logf("Server side copy (if possible) %v -> %v", r.fremote, fremoteCopy)
 
-	err = fs.CopyDir(fremoteCopy, fremote)
+	err = fs.CopyDir(fremoteCopy, r.fremote)
 	if err != nil {
 		t.Fatalf("Server Side Copy failed: %v", err)
 	}
 
-	items := []fstest.Item{
-		{Path: "sub dir/hello world", Size: 11, ModTime: t1, Md5sum: "5eb63bbbe01eeed093cb22bb8f5acdc3"},
-	}
-
-	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
-	fstest.CheckListingWithPrecision(t, fremoteCopy, items, fs.Config.ModifyWindow)
+	fstest.CheckItems(t, fremoteCopy, file1)
 }
 
 func TestLsd(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteObject("sub dir/hello world", "hello world", t1)
+
+	fstest.CheckItems(t, r.fremote, file1)
+
 	var buf bytes.Buffer
-	err := fs.ListDir(fremote, &buf)
+	err := fs.ListDir(r.fremote, &buf)
 	if err != nil {
 		t.Fatalf("ListDir failed: %v", err)
 	}
@@ -158,52 +303,53 @@ func TestLsd(t *testing.T) {
 	}
 }
 
-// Now delete the local file and download it
+// Check that if the local file doesn't exist when we copy it up,
+// nothing happens to the remote file
 func TestCopyAfterDelete(t *testing.T) {
-	err := os.Remove(localName + "/sub dir/hello world")
-	if err != nil {
-		t.Fatalf("Remove failed: %v", err)
-	}
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteObject("sub dir/hello world", "hello world", t1)
+	fstest.CheckItems(t, r.flocal)
+	fstest.CheckItems(t, r.fremote, file1)
 
-	items := []fstest.Item{
-		{Path: "sub dir/hello world", Size: 11, ModTime: t1, Md5sum: "5eb63bbbe01eeed093cb22bb8f5acdc3"},
-	}
-	fstest.CheckListingWithPrecision(t, flocal, []fstest.Item{}, fs.Config.ModifyWindow)
-	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
-}
-
-func TestCopyRedownload(t *testing.T) {
-	err := fs.CopyDir(flocal, fremote)
+	err := fs.CopyDir(r.fremote, r.flocal)
 	if err != nil {
 		t.Fatalf("Copy failed: %v", err)
 	}
 
-	items := []fstest.Item{
-		{Path: "sub dir/hello world", Size: 11, ModTime: t1, Md5sum: "5eb63bbbe01eeed093cb22bb8f5acdc3"},
-	}
-	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
-	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+	fstest.CheckItems(t, r.flocal)
+	fstest.CheckItems(t, r.fremote, file1)
+}
 
-	// Clean the directory
-	cleanTempDir(t)
+// Check the copy downloading a file
+func TestCopyRedownload(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteObject("sub dir/hello world", "hello world", t1)
+	fstest.CheckItems(t, r.fremote, file1)
+
+	err := fs.CopyDir(r.flocal, r.fremote)
+	if err != nil {
+		t.Fatalf("Copy failed: %v", err)
+	}
+
+	fstest.CheckItems(t, r.flocal, file1)
 }
 
 // Create a file and sync it. Change the last modified date and resync.
 // If we're only doing sync by size and checksum, we expect nothing to
 // to be transferred on the second sync.
 func TestSyncBasedOnCheckSum(t *testing.T) {
-	cleanTempDir(t)
+	r := NewRun(t)
+	defer r.Finalise()
 	fs.Config.CheckSum = true
 	defer func() { fs.Config.CheckSum = false }()
 
-	WriteFile("check sum", "", t1)
-	local_items := []fstest.Item{
-		{Path: "check sum", Size: 0, ModTime: t1, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-	}
-	fstest.CheckListingWithPrecision(t, flocal, local_items, fs.Config.ModifyWindow)
+	file1 := r.WriteFile("check sum", "", t1)
+	fstest.CheckItems(t, r.flocal, file1)
 
 	fs.Stats.ResetCounters()
-	err := fs.Sync(fremote, flocal)
+	err := fs.Sync(r.fremote, r.flocal)
 	if err != nil {
 		t.Fatalf("Initial sync failed: %v", err)
 	}
@@ -213,20 +359,14 @@ func TestSyncBasedOnCheckSum(t *testing.T) {
 		t.Fatalf("Sync 1: want 1 transfer, got %d", fs.Stats.GetTransfers())
 	}
 
-	remote_items := local_items
-	fstest.CheckListingWithPrecision(t, fremote, remote_items, fs.Config.ModifyWindow)
+	fstest.CheckItems(t, r.fremote, file1)
 
-	err = os.Chtimes(localName+"/check sum", t2, t2)
-	if err != nil {
-		t.Fatalf("Chtimes failed: %v", err)
-	}
-	local_items = []fstest.Item{
-		{Path: "check sum", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-	}
-	fstest.CheckListingWithPrecision(t, flocal, local_items, fs.Config.ModifyWindow)
+	// Change last modified date only
+	file2 := r.WriteFile("check sum", "", t2)
+	fstest.CheckItems(t, r.flocal, file2)
 
 	fs.Stats.ResetCounters()
-	err = fs.Sync(fremote, flocal)
+	err = fs.Sync(r.fremote, r.flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
@@ -236,28 +376,24 @@ func TestSyncBasedOnCheckSum(t *testing.T) {
 		t.Fatalf("Sync 2: want 0 transfers, got %d", fs.Stats.GetTransfers())
 	}
 
-	fstest.CheckListingWithPrecision(t, flocal, local_items, fs.Config.ModifyWindow)
-	fstest.CheckListingWithPrecision(t, fremote, remote_items, fs.Config.ModifyWindow)
-
-	cleanTempDir(t)
+	fstest.CheckItems(t, r.flocal, file2)
+	fstest.CheckItems(t, r.fremote, file1)
 }
 
 // Create a file and sync it. Change the last modified date and the
 // file contents but not the size.  If we're only doing sync by size
 // only, we expect nothing to to be transferred on the second sync.
 func TestSyncSizeOnly(t *testing.T) {
-	cleanTempDir(t)
+	r := NewRun(t)
+	defer r.Finalise()
 	fs.Config.SizeOnly = true
 	defer func() { fs.Config.SizeOnly = false }()
 
-	WriteFile("sizeonly", "potato", t1)
-	local_items := []fstest.Item{
-		{Path: "sizeonly", Size: 6, ModTime: t1, Md5sum: "8ee2027983915ec78acc45027d874316"},
-	}
-	fstest.CheckListingWithPrecision(t, flocal, local_items, fs.Config.ModifyWindow)
+	file1 := r.WriteFile("sizeonly", "potato", t1)
+	fstest.CheckItems(t, r.flocal, file1)
 
 	fs.Stats.ResetCounters()
-	err := fs.Sync(fremote, flocal)
+	err := fs.Sync(r.fremote, r.flocal)
 	if err != nil {
 		t.Fatalf("Initial sync failed: %v", err)
 	}
@@ -267,18 +403,14 @@ func TestSyncSizeOnly(t *testing.T) {
 		t.Fatalf("Sync 1: want 1 transfer, got %d", fs.Stats.GetTransfers())
 	}
 
-	remote_items := local_items
-	fstest.CheckListingWithPrecision(t, fremote, remote_items, fs.Config.ModifyWindow)
+	fstest.CheckItems(t, r.fremote, file1)
 
 	// Update mtime, md5sum but not length of file
-	WriteFile("sizeonly", "POTATO", t2)
-	local_items = []fstest.Item{
-		{Path: "sizeonly", Size: 6, ModTime: t2, Md5sum: "8ac6f27a282e4938125482607ccfb55f"},
-	}
-	fstest.CheckListingWithPrecision(t, flocal, local_items, fs.Config.ModifyWindow)
+	file2 := r.WriteFile("sizeonly", "POTATO", t2)
+	fstest.CheckItems(t, r.flocal, file2)
 
 	fs.Stats.ResetCounters()
-	err = fs.Sync(fremote, flocal)
+	err = fs.Sync(r.fremote, r.flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
@@ -288,267 +420,262 @@ func TestSyncSizeOnly(t *testing.T) {
 		t.Fatalf("Sync 2: want 0 transfers, got %d", fs.Stats.GetTransfers())
 	}
 
-	fstest.CheckListingWithPrecision(t, flocal, local_items, fs.Config.ModifyWindow)
-	fstest.CheckListingWithPrecision(t, fremote, remote_items, fs.Config.ModifyWindow)
-
-	cleanTempDir(t)
+	fstest.CheckItems(t, r.flocal, file2)
+	fstest.CheckItems(t, r.fremote, file1)
 }
 
 func TestSyncIgnoreExisting(t *testing.T) {
-	WriteFile("existing", "potato", t1)
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteFile("existing", "potato", t1)
+
 	fs.Config.IgnoreExisting = true
 	defer func() { fs.Config.IgnoreExisting = false }()
-	err := fs.Sync(fremote, flocal)
+
+	fs.Stats.ResetCounters()
+	err := fs.Sync(r.fremote, r.flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
-	items := []fstest.Item{
-		{Path: "existing", Size: 6, ModTime: t1, Md5sum: "8ee2027983915ec78acc45027d874316"},
-	}
-	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
-	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.fremote, file1)
 
 	// Change everything
-	WriteFile("existing", "newpotatoes", t2)
-	err = fs.Sync(fremote, flocal)
+	r.WriteFile("existing", "newpotatoes", t2)
+	fs.Stats.ResetCounters()
+	err = fs.Sync(r.fremote, r.flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
 	// Items should not change
-	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
-	cleanTempDir(t)
+	fstest.CheckItems(t, r.fremote, file1)
 }
 
 func TestSyncAfterChangingModtimeOnly(t *testing.T) {
-	WriteFile("empty space", "", t1)
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteFile("empty space", "", t2)
+	r.WriteObject("empty space", "", t1)
 
-	err := os.Chtimes(localName+"/empty space", t2, t2)
-	if err != nil {
-		t.Fatalf("Chtimes failed: %v", err)
-	}
-	err = fs.Sync(fremote, flocal)
+	fs.Stats.ResetCounters()
+	err := fs.Sync(r.fremote, r.flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
-	items := []fstest.Item{
-		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-	}
-	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
-	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+
+	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.fremote, file1)
 }
 
 func TestSyncAfterAddingAFile(t *testing.T) {
-	WriteFile("potato", "------------------------------------------------------------", t3)
-	err := fs.Sync(fremote, flocal)
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteBoth("empty space", "", t2)
+	file2 := r.WriteFile("potato", "------------------------------------------------------------", t3)
+
+	fs.Stats.ResetCounters()
+	err := fs.Sync(r.fremote, r.flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
-	items := []fstest.Item{
-		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-		{Path: "potato", Size: 60, ModTime: t3, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
-	}
-	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
-	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+	fstest.CheckItems(t, r.flocal, file1, file2)
+	fstest.CheckItems(t, r.fremote, file1, file2)
 }
 
 func TestSyncAfterChangingFilesSizeOnly(t *testing.T) {
-	WriteFile("potato", "smaller but same date", t3)
-	err := fs.Sync(fremote, flocal)
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteObject("potato", "------------------------------------------------------------", t3)
+	file2 := r.WriteFile("potato", "smaller but same date", t3)
+	fstest.CheckItems(t, r.fremote, file1)
+	fstest.CheckItems(t, r.flocal, file2)
+
+	fs.Stats.ResetCounters()
+	err := fs.Sync(r.fremote, r.flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
-	items := []fstest.Item{
-		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-		{Path: "potato", Size: 21, ModTime: t3, Md5sum: "100defcf18c42a1e0dc42a789b107cd2"},
-	}
-	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
-	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+	fstest.CheckItems(t, r.flocal, file2)
+	fstest.CheckItems(t, r.fremote, file2)
 }
 
-// Sync after changing a file's contents, maintaining modtime and length
+// Sync after changing a file's contents, changing modtime but length
+// remaining the same
 func TestSyncAfterChangingContentsOnly(t *testing.T) {
-	if fremote.Precision() == fs.ModTimeNotSupported {
+	r := NewRun(t)
+	defer r.Finalise()
+	var file1 fstest.Item
+	if r.fremote.Precision() == fs.ModTimeNotSupported {
 		t.Logf("ModTimeNotSupported so forcing file to be a different size")
-		WriteFile("potato", "different size to make sure it syncs", t2)
-		err := fs.Sync(fremote, flocal)
-		if err != nil {
-			t.Fatalf("Sync failed: %v", err)
-		}
+		file1 = r.WriteObject("potato", "different size to make sure it syncs", t3)
+	} else {
+		file1 = r.WriteObject("potato", "smaller but same date", t3)
 	}
-	WriteFile("potato", "SMALLER BUT SAME DATE", t2)
-	err := fs.Sync(fremote, flocal)
+	file2 := r.WriteFile("potato", "SMALLER BUT SAME DATE", t2)
+	fstest.CheckItems(t, r.fremote, file1)
+	fstest.CheckItems(t, r.flocal, file2)
+
+	fs.Stats.ResetCounters()
+	err := fs.Sync(r.fremote, r.flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
-	items := []fstest.Item{
-		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-		{Path: "potato", Size: 21, ModTime: t2, Md5sum: "e4cb6955d9106df6263c45fcfc10f163"},
-	}
-	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
-	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+	fstest.CheckItems(t, r.flocal, file2)
+	fstest.CheckItems(t, r.fremote, file2)
 }
 
 // Sync after removing a file and adding a file --dry-run
 func TestSyncAfterRemovingAFileAndAddingAFileDryRun(t *testing.T) {
-	WriteFile("potato2", "------------------------------------------------------------", t1)
-	err := os.Remove(localName + "/potato")
-	if err != nil {
-		t.Fatalf("Remove failed: %v", err)
-	}
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteFile("potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteObject("potato", "SMALLER BUT SAME DATE", t2)
+	file3 := r.WriteBoth("empty space", "", t2)
+
 	fs.Config.DryRun = true
-	err = fs.Sync(fremote, flocal)
+	fs.Stats.ResetCounters()
+	err := fs.Sync(r.fremote, r.flocal)
 	fs.Config.DryRun = false
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
 
-	before := []fstest.Item{
-		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-		{Path: "potato", Size: 21, ModTime: t2, Md5sum: "e4cb6955d9106df6263c45fcfc10f163"},
-	}
-	items := []fstest.Item{
-		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-		{Path: "potato2", Size: 60, ModTime: t1, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
-	}
-	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
-	fstest.CheckListingWithPrecision(t, fremote, before, fs.Config.ModifyWindow)
+	fstest.CheckItems(t, r.flocal, file3, file1)
+	fstest.CheckItems(t, r.fremote, file3, file2)
 }
 
 // Sync after removing a file and adding a file
 func TestSyncAfterRemovingAFileAndAddingAFile(t *testing.T) {
-	err := fs.Sync(fremote, flocal)
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteFile("potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteObject("potato", "SMALLER BUT SAME DATE", t2)
+	file3 := r.WriteBoth("empty space", "", t2)
+	fstest.CheckItems(t, r.fremote, file2, file3)
+	fstest.CheckItems(t, r.flocal, file1, file3)
+
+	fs.Stats.ResetCounters()
+	err := fs.Sync(r.fremote, r.flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
-	items := []fstest.Item{
-		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-		{Path: "potato2", Size: 60, ModTime: t1, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
-	}
-	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
-	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+	fstest.CheckItems(t, r.flocal, file1, file3)
+	fstest.CheckItems(t, r.fremote, file1, file3)
 }
 
 // Test with exclude
 func TestSyncWithExclude(t *testing.T) {
-	WriteFile("enormous", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteBoth("empty space", "", t2)
+	file3 := r.WriteFile("enormous", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
+
 	fs.Config.Filter.MaxSize = 40
 	defer func() {
 		fs.Config.Filter.MaxSize = 0
 	}()
-	err := fs.Sync(fremote, flocal)
+
+	fs.Stats.ResetCounters()
+	err := fs.Sync(r.fremote, r.flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
-	items := []fstest.Item{
-		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-		{Path: "potato2", Size: 60, ModTime: t1, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
-	}
-	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+	fstest.CheckItems(t, r.fremote, file2, file1)
 
 	// Now sync the other way round and check enormous doesn't get
 	// deleted as it is excluded from the sync
-	items = append(items, fstest.Item{
-		Path: "enormous", Size: 100, ModTime: t1, Md5sum: "8adc5937e635f6c9af646f0b23560fae",
-	})
-	err = fs.Sync(flocal, fremote)
+	fs.Stats.ResetCounters()
+	err = fs.Sync(r.flocal, r.fremote)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
-	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
+	fstest.CheckItems(t, r.flocal, file2, file1, file3)
 }
 
 // Test with exclude and delete excluded
-func TestSyncWithExcludeAndDeleleteExcluded(t *testing.T) {
+func TestSyncWithExcludeAndDeleteExcluded(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1) // 60 bytes
+	file2 := r.WriteBoth("empty space", "", t2)
+	file3 := r.WriteBoth("enormous", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
+	fstest.CheckItems(t, r.fremote, file1, file2, file3)
+	fstest.CheckItems(t, r.flocal, file1, file2, file3)
+
 	fs.Config.Filter.MaxSize = 40
 	fs.Config.Filter.DeleteExcluded = true
-	reset := func() {
+	defer func() {
 		fs.Config.Filter.MaxSize = 0
 		fs.Config.Filter.DeleteExcluded = false
-	}
-	defer reset()
-	err := fs.Sync(fremote, flocal)
+	}()
+
+	fs.Stats.ResetCounters()
+	err := fs.Sync(r.fremote, r.flocal)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
-	items := []fstest.Item{
-		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-	}
-	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+	fstest.CheckItems(t, r.fremote, file2)
 
 	// Check sync the other way round to make sure enormous gets
 	// deleted even though it is excluded
-	err = fs.Sync(flocal, fremote)
+	fs.Stats.ResetCounters()
+	err = fs.Sync(r.flocal, r.fremote)
 	if err != nil {
 		t.Fatalf("Sync failed: %v", err)
 	}
-	fstest.CheckListingWithPrecision(t, flocal, items, fs.Config.ModifyWindow)
-
-	// Tidy up - put potato2 back!
-	reset()
-	WriteFile("potato2", "------------------------------------------------------------", t1)
-	err = fs.Sync(fremote, flocal)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
-	items = []fstest.Item{
-		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-		{Path: "potato2", Size: 60, ModTime: t1, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
-	}
-	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
+	fstest.CheckItems(t, r.flocal, file2)
 }
 
 // Test a server side move if possible, or the backup path if not
 func TestServerSideMove(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteBoth("empty space", "", t2)
+
+	fstest.CheckItems(t, r.fremote, file2, file1)
+
 	fremoteMove, finaliseMove, err := fstest.RandomRemote(*RemoteName, *SubDir)
 	if err != nil {
 		t.Fatalf("Failed to open remote move %q: %v", *RemoteName, err)
 	}
 	defer finaliseMove()
-	t.Logf("Server side move (if possible) %v -> %v", fremote, fremoteMove)
+	t.Logf("Server side move (if possible) %v -> %v", r.fremote, fremoteMove)
 
-	// Start with a copy
-	err = fs.CopyDir(fremoteMove, fremote)
-	if err != nil {
-		t.Fatalf("Server Side Copy failed: %v", err)
-	}
-
-	// Remove one file
-	obj := fremoteMove.NewFsObject("potato2")
-	if obj == nil {
-		t.Fatalf("Failed to find potato2")
-	}
-	err = obj.Remove()
-	if err != nil {
-		t.Fatalf("Failed to remove object: %v", err)
-	}
+	// Write just one file in the new remote
+	r.WriteObjectTo(fremoteMove, "empty space", "", t2)
+	fstest.CheckItems(t, fremoteMove, file2)
 
 	// Do server side move
-	err = fs.MoveDir(fremoteMove, fremote)
+	err = fs.MoveDir(fremoteMove, r.fremote)
 	if err != nil {
 		t.Fatalf("Server Side Move failed: %v", err)
 	}
 
-	items := []fstest.Item{
-		{Path: "empty space", Size: 0, ModTime: t2, Md5sum: "d41d8cd98f00b204e9800998ecf8427e"},
-		{Path: "potato2", Size: 60, ModTime: t1, Md5sum: "d6548b156ea68a4e003e786df99eee76"},
-	}
-
-	fstest.CheckListingWithPrecision(t, fremote, items[:0], fs.Config.ModifyWindow)
-	fstest.CheckListingWithPrecision(t, fremoteMove, items, fs.Config.ModifyWindow)
+	fstest.CheckItems(t, r.fremote)
+	fstest.CheckItems(t, fremoteMove, file2, file1)
 
 	// Move it back again, dst does not exist this time
-	err = fs.MoveDir(fremote, fremoteMove)
+	err = fs.MoveDir(r.fremote, fremoteMove)
 	if err != nil {
 		t.Fatalf("Server Side Move 2 failed: %v", err)
 	}
 
-	fstest.CheckListingWithPrecision(t, fremote, items, fs.Config.ModifyWindow)
-	fstest.CheckListingWithPrecision(t, fremoteMove, items[:0], fs.Config.ModifyWindow)
+	fstest.CheckItems(t, r.fremote, file2, file1)
+	fstest.CheckItems(t, fremoteMove)
 }
 
 func TestLs(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteBoth("empty space", "", t2)
+
+	fstest.CheckItems(t, r.fremote, file1, file2)
+
 	var buf bytes.Buffer
-	err := fs.List(fremote, &buf)
+	err := fs.List(r.fremote, &buf)
 	if err != nil {
 		t.Fatalf("List failed: %v", err)
 	}
@@ -562,8 +689,15 @@ func TestLs(t *testing.T) {
 }
 
 func TestLsLong(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteBoth("empty space", "", t2)
+
+	fstest.CheckItems(t, r.fremote, file1, file2)
+
 	var buf bytes.Buffer
-	err := fs.ListLong(fremote, &buf)
+	err := fs.ListLong(r.fremote, &buf)
 	if err != nil {
 		t.Fatalf("List failed: %v", err)
 	}
@@ -574,7 +708,7 @@ func TestLsLong(t *testing.T) {
 	}
 
 	timeFormat := "2006-01-02 15:04:05.000000000"
-	precision := fremote.Precision()
+	precision := r.fremote.Precision()
 	location := time.Now().Location()
 	checkTime := func(m, filename string, expected time.Time) {
 		modTime, err := time.ParseInLocation(timeFormat, m, location) // parse as localtime
@@ -604,8 +738,15 @@ func TestLsLong(t *testing.T) {
 }
 
 func TestMd5sum(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteBoth("empty space", "", t2)
+
+	fstest.CheckItems(t, r.fremote, file1, file2)
+
 	var buf bytes.Buffer
-	err := fs.Md5sum(fremote, &buf)
+	err := fs.Md5sum(r.fremote, &buf)
 	if err != nil {
 		t.Fatalf("List failed: %v", err)
 	}
@@ -622,8 +763,41 @@ func TestMd5sum(t *testing.T) {
 	}
 }
 
+func TestSha1sum(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteBoth("empty space", "", t2)
+
+	fstest.CheckItems(t, r.fremote, file1, file2)
+
+	var buf bytes.Buffer
+	err := fs.Sha1sum(r.fremote, &buf)
+	if err != nil {
+		t.Fatalf("List failed: %v", err)
+	}
+	res := buf.String()
+	if !strings.Contains(res, "da39a3ee5e6b4b0d3255bfef95601890afd80709  empty space\n") &&
+		!strings.Contains(res, "                             UNSUPPORTED  empty space\n") &&
+		!strings.Contains(res, "                                          empty space\n") {
+		t.Errorf("empty space missing: %q", res)
+	}
+	if !strings.Contains(res, "9dc7f7d3279715991a22853f5981df582b7f9f6d  potato2\n") &&
+		!strings.Contains(res, "                             UNSUPPORTED  potato2\n") &&
+		!strings.Contains(res, "                                          potato2\n") {
+		t.Errorf("potato2 missing: %q", res)
+	}
+}
+
 func TestCount(t *testing.T) {
-	objects, size, err := fs.Count(fremote)
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteBoth("empty space", "", t2)
+
+	fstest.CheckItems(t, r.fremote, file1, file2)
+
+	objects, size, err := fs.Count(r.fremote)
 	if err != nil {
 		t.Fatalf("Count failed: %v", err)
 	}
@@ -636,20 +810,44 @@ func TestCount(t *testing.T) {
 }
 
 func TestCheck(t *testing.T) {
-	// FIXME
-}
+	r := NewRun(t)
+	defer r.Finalise()
 
-// Clean the temporary directory
-func cleanTempDir(t *testing.T) {
-	t.Logf("Cleaning temporary directory: %q", localName)
-	err := os.RemoveAll(localName)
-	if err != nil {
-		t.Logf("Failed to remove %q: %v", localName, err)
+	check := func(i int, wantErrors int64) {
+		fs.Debug(r.fremote, "%d: Starting check test", i)
+		oldErrors := fs.Stats.GetErrors()
+		err := fs.Check(r.flocal, r.fremote)
+		gotErrors := fs.Stats.GetErrors() - oldErrors
+		if wantErrors == 0 && err != nil {
+			t.Errorf("%d: Got error when not expecting one: %v", i, err)
+		}
+		if wantErrors != 0 && err == nil {
+			t.Errorf("%d: No error when expecting one", i)
+		}
+		if wantErrors != gotErrors {
+			t.Errorf("%d: Expecting %d errors but got %d", i, wantErrors, gotErrors)
+		}
+		fs.Debug(r.fremote, "%d: Ending check test", i)
 	}
-}
 
-func TestFinalise(t *testing.T) {
-	finalise()
+	file1 := r.WriteBoth("rutabaga", "is tasty", t3)
+	fstest.CheckItems(t, r.fremote, file1)
+	fstest.CheckItems(t, r.flocal, file1)
+	check(1, 0)
 
-	cleanTempDir(t)
+	file2 := r.WriteFile("potato2", "------------------------------------------------------------", t1)
+	fstest.CheckItems(t, r.flocal, file1, file2)
+	check(2, 1)
+
+	file3 := r.WriteObject("empty space", "", t2)
+	fstest.CheckItems(t, r.fremote, file1, file3)
+	check(3, 2)
+
+	r.WriteObject("potato2", "------------------------------------------------------------", t1)
+	fstest.CheckItems(t, r.fremote, file1, file2, file3)
+	check(4, 1)
+
+	r.WriteFile("empty space", "", t2)
+	fstest.CheckItems(t, r.flocal, file1, file2, file3)
+	check(5, 0)
 }

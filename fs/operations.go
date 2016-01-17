@@ -555,6 +555,7 @@ func MoveDir(fdst, fsrc Fs) error {
 
 // Check the files in fsrc and fdst according to Size and hash
 func Check(fdst, fsrc Fs) error {
+	differences := int32(0)
 	var (
 		wg                 sync.WaitGroup
 		dstFiles, srcFiles map[string]Object
@@ -597,12 +598,14 @@ func Check(fdst, fsrc Fs) error {
 	for _, dst := range dstFiles {
 		Stats.Error()
 		ErrorLog(dst, "File not in %v", fsrc)
+		atomic.AddInt32(&differences, 1)
 	}
 
 	Log(fsrc, "%d files not in %s", len(srcFiles), fdst)
 	for _, src := range srcFiles {
 		Stats.Error()
 		ErrorLog(src, "File not in %v", fdst)
+		atomic.AddInt32(&differences, 1)
 	}
 
 	checks := make(chan []Object, Config.Transfers)
@@ -625,6 +628,7 @@ func Check(fdst, fsrc Fs) error {
 					Stats.DoneChecking(src)
 					Stats.Error()
 					ErrorLog(src, "Sizes differ")
+					atomic.AddInt32(&differences, 1)
 					continue
 				}
 				same, _, err := CheckHashes(src, dst)
@@ -634,6 +638,7 @@ func Check(fdst, fsrc Fs) error {
 				}
 				if !same {
 					Stats.Error()
+					atomic.AddInt32(&differences, 1)
 					ErrorLog(src, "Md5sums differ")
 				}
 				Debug(src, "OK")
@@ -644,8 +649,8 @@ func Check(fdst, fsrc Fs) error {
 	Log(fdst, "Waiting for checks to finish")
 	checkerWg.Wait()
 	Log(fdst, "%d differences found", Stats.GetErrors())
-	if Stats.GetErrors() > 0 {
-		return fmt.Errorf("%d differences found", Stats.GetErrors())
+	if differences > 0 {
+		return fmt.Errorf("%d differences found", differences)
 	}
 	return nil
 }
