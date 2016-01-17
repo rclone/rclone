@@ -738,7 +738,7 @@ func hashLister(ht HashType, f Fs, w io.Writer) error {
 			Debug(o, "Failed to read %v: %v", ht, err)
 			sum = "ERROR"
 		}
-		syncFprintf(w, "%32s  %s\n", sum, o.Remote())
+		syncFprintf(w, "%*s  %s\n", HashWidth[ht], sum, o.Remote())
 	})
 }
 

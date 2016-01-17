@@ -32,6 +32,12 @@ const (
 // HashStream and MultiHasher.
 var SupportedHashes = NewHashSet(HashMD5, HashSHA1)
 
+// HashWidth returns the width in characters for any HashType
+var HashWidth = map[HashType]int{
+	HashMD5:  32,
+	HashSHA1: 40,
+}
+
 // HashStream will calculate hashes of all supported hash types.
 func HashStream(r io.Reader) (map[HashType]string, error) {
 	return HashStreamTypes(r, SupportedHashes)
