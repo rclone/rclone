@@ -42,7 +42,7 @@ func TestFsPrecision(t *testing.T)           { fstests.TestFsPrecision(t) }
 func TestObjectString(t *testing.T)          { fstests.TestObjectString(t) }
 func TestObjectFs(t *testing.T)              { fstests.TestObjectFs(t) }
 func TestObjectRemote(t *testing.T)          { fstests.TestObjectRemote(t) }
-func TestObjectMd5sum(t *testing.T)          { fstests.TestObjectMd5sum(t) }
+func TestObjectHashes(t *testing.T)          { fstests.TestObjectHashes(t) }
 func TestObjectModTime(t *testing.T)         { fstests.TestObjectModTime(t) }
 func TestObjectSetModTime(t *testing.T)      { fstests.TestObjectSetModTime(t) }
 func TestObjectSize(t *testing.T)            { fstests.TestObjectSize(t) }

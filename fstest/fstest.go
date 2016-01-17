@@ -25,7 +25,7 @@ func init() {
 // Item represents an item for checking
 type Item struct {
 	Path    string
-	Md5sum  string
+	Hashes  map[fs.HashType]string
 	ModTime time.Time
 	Size    int64
 	WinPath string
@@ -49,8 +49,8 @@ func (i *Item) CheckModTime(t *testing.T, obj fs.Object, modTime time.Time, prec
 	}
 }
 
-// Check checks all the attributes of the object are correct
-func (i *Item) Check(t *testing.T, obj fs.Object, precision time.Duration) {
+// CheckHashes checks all the hashes the object supports are correct
+func (i *Item) CheckHashes(t *testing.T, obj fs.Object) {
 	if obj == nil {
 		t.Fatalf("Object is nil")
 	}
@@ -61,12 +61,15 @@ func (i *Item) Check(t *testing.T, obj fs.Object, precision time.Duration) {
 		if err != nil {
 			t.Fatalf("%s: Failed to read hash %v for %q: %v", obj.Fs().String(), hash, obj.Remote(), err)
 		}
-		if hash == fs.HashMD5 {
-			if !fs.HashEquals(i.Md5sum, sum) {
-				t.Errorf("%s/%s: md5 hash incorrect - expecting %q got %q", obj.Fs().String(), obj.Remote(), i.Md5sum, sum)
-			}
+		if !fs.HashEquals(i.Hashes[hash], sum) {
+			t.Errorf("%s/%s: %v hash incorrect - expecting %q got %q", obj.Fs().String(), obj.Remote(), hash, i.Hashes[hash], sum)
 		}
 	}
+}
+
+// Check checks all the attributes of the object are correct
+func (i *Item) Check(t *testing.T, obj fs.Object, precision time.Duration) {
+	i.CheckHashes(t, obj)
 	if i.Size != obj.Size() {
 		t.Errorf("%s/%s: Size incorrect - expecting %d got %d", obj.Fs().String(), obj.Remote(), i.Size, obj.Size())
 	}

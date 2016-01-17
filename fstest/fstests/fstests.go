@@ -7,8 +7,6 @@ package fstests
 
 import (
 	"bytes"
-	"crypto/md5"
-	"encoding/hex"
 	"flag"
 	"io"
 	"log"
@@ -157,7 +155,7 @@ func findObject(t *testing.T, Name string) fs.Object {
 
 func testPut(t *testing.T, file *fstest.Item) {
 	buf := bytes.NewBufferString(fstest.RandomString(100))
-	hash := md5.New()
+	hash := fs.NewMultiHasher()
 	in := io.TeeReader(buf, hash)
 
 	file.Size = int64(buf.Len())
@@ -165,7 +163,7 @@ func testPut(t *testing.T, file *fstest.Item) {
 	if err != nil {
 		t.Fatal("Put error", err)
 	}
-	file.Md5sum = hex.EncodeToString(hash.Sum(nil))
+	file.Hashes = hash.Sums()
 	file.Check(t, obj, remote.Precision())
 	// Re-read the object and check again
 	obj = findObject(t, file.Path)
@@ -307,7 +305,7 @@ func TestFsCopy(t *testing.T) {
 	// check file exists in new listing
 	fstest.CheckListing(t, remote, []fstest.Item{file1, file2, file1Copy})
 
-	// Check dst lightly - list above has checked ModTime/Md5sum
+	// Check dst lightly - list above has checked ModTime/Hashes
 	if dst.Remote() != file1Copy.Path {
 		t.Errorf("object path: want %q got %q", file1Copy.Path, dst.Remote())
 	}
@@ -343,7 +341,7 @@ func TestFsMove(t *testing.T) {
 	// check file exists in new listing
 	fstest.CheckListing(t, remote, []fstest.Item{file2, file1Move})
 
-	// Check dst lightly - list above has checked ModTime/Md5sum
+	// Check dst lightly - list above has checked ModTime/Hashes
 	if dst.Remote() != file1Move.Path {
 		t.Errorf("object path: want %q got %q", file1Move.Path, dst.Remote())
 	}
@@ -474,17 +472,11 @@ func TestObjectRemote(t *testing.T) {
 	}
 }
 
-// TestObjectMd5sum tests the MD5SUM of the object is correct
-func TestObjectMd5sum(t *testing.T) {
+// TestObjectHashes checks all the hashes the object supports
+func TestObjectHashes(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
-	Md5sum, err := obj.Hash(fs.HashMD5)
-	if err != nil && err != fs.ErrHashUnsupported {
-		t.Errorf("Error in Md5sum: %v", err)
-	}
-	if !fs.HashEquals(Md5sum, file1.Md5sum) {
-		t.Errorf("Md5sum is wrong %v != %v", Md5sum, file1.Md5sum)
-	}
+	file1.CheckHashes(t, obj)
 }
 
 // TestObjectModTime tests the ModTime of the object is correct
@@ -523,8 +515,8 @@ func TestObjectOpen(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open() return error: %v", err)
 	}
-	hash := md5.New()
-	n, err := io.Copy(hash, in)
+	hasher := fs.NewMultiHasher()
+	n, err := io.Copy(hasher, in)
 	if err != nil {
 		t.Fatalf("io.Copy() return error: %v", err)
 	}
@@ -535,17 +527,21 @@ func TestObjectOpen(t *testing.T) {
 	if err != nil {
 		t.Fatalf("in.Close() return error: %v", err)
 	}
-	Md5sum := hex.EncodeToString(hash.Sum(nil))
-	if !fs.HashEquals(Md5sum, file1.Md5sum) {
-		t.Errorf("Md5sum is wrong %v != %v", Md5sum, file1.Md5sum)
+	// Check content of file by comparing the calculated hashes
+	for hashType, got := range hasher.Sums() {
+		want := file1.Hashes[hashType]
+		if want != got {
+			t.Errorf("%v is wrong %v != %v", hashType, want, got)
+		}
 	}
+
 }
 
 // TestObjectUpdate tests that Update works
 func TestObjectUpdate(t *testing.T) {
 	skipIfNotOk(t)
 	buf := bytes.NewBufferString(fstest.RandomString(200))
-	hash := md5.New()
+	hash := fs.NewMultiHasher()
 	in := io.TeeReader(buf, hash)
 
 	file1.Size = int64(buf.Len())
@@ -554,7 +550,7 @@ func TestObjectUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal("Update error", err)
 	}
-	file1.Md5sum = hex.EncodeToString(hash.Sum(nil))
+	file1.Hashes = hash.Sums()
 	file1.Check(t, obj, remote.Precision())
 	// Re-read the object and check again
 	obj = findObject(t, file1.Path)
