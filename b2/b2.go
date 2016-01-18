@@ -4,6 +4,9 @@ package b2
 // FIXME if b2 could set the mod time then it has everything else to
 // implement mod times.  It is just missing that bit of API.
 
+// FIXME should we remove sha1 checks from here as rclone now supports
+// checking SHA1s?
+
 import (
 	"bytes"
 	"crypto/sha1"
@@ -607,14 +610,16 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the Sha-1 of an object returning a lowercase hex string
-// Hash returns the Md5sum of an object returning a lowercase hex string
 func (o *Object) Hash(t fs.HashType) (string, error) {
 	if t != fs.HashSHA1 {
 		return "", fs.ErrHashUnsupported
 	}
 
 	// Error is logged in readFileMetadata
-	_ = o.readFileMetadata()
+	err := o.readFileMetadata()
+	if err != nil {
+		return "", err
+	}
 	return o.sha1, nil
 }
 
