@@ -614,11 +614,12 @@ func (o *Object) Hash(t fs.HashType) (string, error) {
 	if t != fs.HashSHA1 {
 		return "", fs.ErrHashUnsupported
 	}
-
-	// Error is logged in readFileMetadata
-	err := o.readFileMetadata()
-	if err != nil {
-		return "", err
+	if o.sha1 == "" {
+		// Error is logged in readFileMetadata
+		err := o.readFileMetadata()
+		if err != nil {
+			return "", err
+		}
 	}
 	return o.sha1, nil
 }
