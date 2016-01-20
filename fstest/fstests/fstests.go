@@ -38,9 +38,12 @@ var (
 		Path:    `hello? sausage/êé/Hello, 世界/ " ' @ < > & ?/z.txt`,
 		WinPath: `hello_ sausage/êé/Hello, 世界/ _ ' @ _ _ & _/z.txt`,
 	}
+	verbose     = flag.Bool("verbose", false, "Set to enable logging")
 	dumpHeaders = flag.Bool("dump-headers", false, "Dump HTTP headers - may contain sensitive info")
 	dumpBodies  = flag.Bool("dump-bodies", false, "Dump HTTP headers and bodies - may contain sensitive info")
 )
+
+const eventualConsistencyRetries = 10
 
 func init() {
 	flag.StringVar(&RemoteName, "remote", "", "Set this to override the default remote name (eg s3:)")
@@ -50,8 +53,8 @@ func init() {
 func TestInit(t *testing.T) {
 	var err error
 	fs.LoadConfig()
-	fs.Config.Verbose = false
-	fs.Config.Quiet = true
+	fs.Config.Verbose = *verbose
+	fs.Config.Quiet = !*verbose
 	fs.Config.DumpHeaders = *dumpHeaders
 	fs.Config.DumpBodies = *dumpBodies
 	t.Logf("Using remote %q", RemoteName)
@@ -138,13 +141,12 @@ func TestFsNewFsObjectNotFound(t *testing.T) {
 
 func findObject(t *testing.T, Name string) fs.Object {
 	var obj fs.Object
-	const retries = 10
-	for i := 1; i <= retries; i++ {
+	for i := 1; i <= eventualConsistencyRetries; i++ {
 		obj = remote.NewFsObject(Name)
 		if obj != nil {
 			break
 		}
-		t.Logf("Sleeping for 1 second for findObject eventual consistency: %d/%d", i, retries)
+		t.Logf("Sleeping for 1 second for findObject eventual consistency: %d/%d", i, eventualConsistencyRetries)
 		time.Sleep(1 * time.Second)
 	}
 	if obj == nil {
@@ -186,12 +188,19 @@ func TestFsPutFile2(t *testing.T) {
 func TestFsListDirFile2(t *testing.T) {
 	skipIfNotOk(t)
 	found := false
-	for obj := range remote.ListDir() {
-		if obj.Name != `hello? sausage` && obj.Name != `hello_ sausage` {
-			t.Errorf("Found unexpected item %q", obj.Name)
-		} else {
-			found = true
+	for i := 1; i <= eventualConsistencyRetries; i++ {
+		for obj := range remote.ListDir() {
+			if obj.Name != `hello? sausage` && obj.Name != `hello_ sausage` {
+				t.Errorf("Found unexpected item %q", obj.Name)
+			} else {
+				found = true
+			}
 		}
+		if found {
+			break
+		}
+		t.Logf("Sleeping for 1 second for TestFsListDirFile2 eventual consistency: %d/%d", i, eventualConsistencyRetries)
+		time.Sleep(1 * time.Second)
 	}
 	if !found {
 		t.Errorf("Didn't find %q", `hello? sausage`)
