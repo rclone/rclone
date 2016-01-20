@@ -247,7 +247,7 @@ func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err er
 		return "", false, err
 	}
 	if subFolder.Status != nil && *subFolder.Status != statusAvailable {
-		fs.Debug(f, "Ignoring folder %q in state %q", *subFolder.Status)
+		fs.Debug(f, "Ignoring folder %q in state %q", leaf, *subFolder.Status)
 		time.Sleep(1 * time.Second) // FIXME wait for problem to go away!
 		return "", false, nil
 	}
@@ -377,6 +377,81 @@ func (f *Fs) listDirRecursive(dirID string, path string, out fs.ObjectsChan) err
 	return nil
 }
 
+// Path should be directory path either "" or "path/"
+//
+// List the directory using a recursive list from the root
+//
+// This fetches the minimum amount of stuff but does more API calls
+// which makes it slow
+func (f *Fs) listDirNonRecursive(dirID string, path string, out fs.ObjectsChan) error {
+	// Start some directory listing go routines
+	var wg sync.WaitGroup         // sync closing of go routines
+	var traversing sync.WaitGroup // running directory traversals
+	type dirListJob struct {
+		dirID string
+		path  string
+	}
+	in := make(chan dirListJob, fs.Config.Checkers)
+	errs := make(chan error, fs.Config.Checkers)
+	for i := 0; i < fs.Config.Checkers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for job := range in {
+				var jobs []dirListJob
+				fs.Debug(f, "Reading %q", job.path)
+				// Make the API request
+				_, err := f.listAll(job.dirID, "", false, false, func(node *acd.Node) bool {
+					// Recurse on directories
+					switch *node.Kind {
+					case folderKind:
+						jobs = append(jobs, dirListJob{dirID: *node.Id, path: job.path + *node.Name + "/"})
+					case fileKind:
+						if fs := f.newFsObjectWithInfo(job.path+*node.Name, node); fs != nil {
+							out <- fs
+						}
+					default:
+						// ignore ASSET etc
+					}
+					return false
+				})
+				fs.Debug(f, "Finished reading %q", job.path)
+				if err != nil {
+					fs.ErrorLog(f, "Error reading %s: %s", path, err)
+					errs <- err
+				}
+				// FIXME stop traversal on error?
+				// Now we have traversed this directory, send these jobs off for traversal
+				for _, job := range jobs {
+					traversing.Add(1)
+					in <- job
+				}
+				traversing.Done()
+			}
+		}()
+	}
+
+	// Collect the errors
+	wg.Add(1)
+	var errResult error
+	go func() {
+		defer wg.Done()
+		for err := range errs {
+			errResult = err
+		}
+	}()
+
+	// Start the process
+	traversing.Add(1)
+	in <- dirListJob{dirID: dirID, path: path}
+	traversing.Wait()
+	close(in)
+	close(errs)
+	wg.Wait()
+
+	return errResult
+}
+
 // List walks the path returning a channel of FsObjects
 func (f *Fs) List() fs.ObjectsChan {
 	out := make(fs.ObjectsChan, fs.Config.Checkers)
@@ -387,7 +462,7 @@ func (f *Fs) List() fs.ObjectsChan {
 			fs.Stats.Error()
 			fs.ErrorLog(f, "Couldn't find root: %s", err)
 		} else {
-			err = f.listDirRecursive(f.dirCache.RootID(), "", out)
+			err = f.listDirNonRecursive(f.dirCache.RootID(), "", out)
 			if err != nil {
 				fs.Stats.Error()
 				fs.ErrorLog(f, "List failed: %s", err)
