@@ -44,9 +44,9 @@ A `*` matches anything but not a `/`.
 
     *.jpg  - matches "file.jpg"
            - matches "directory/file.jpg"
-           - doesn't match "file.jpg/anotherfile.png"
+           - doesn't match "file.jpg/something"
 
-Use `**` to match anything, including slashes.
+Use `**` to match anything, including slashes (`/`).
 
     dir/** - matches "dir/file.jpg"
            - matches "dir/dir1/dir2/file.jpg"
