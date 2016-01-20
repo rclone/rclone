@@ -24,3 +24,4 @@ Contributors
   * Joseph Spurrier <github@josephspurrier.com>
   * Björn Harrtell <bjorn@wololo.org>
   * Xavier Lucas <xavier.lucas@corp.ovh.com>
+  * Werner Beroux <werner@beroux.com>
