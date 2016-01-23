@@ -126,7 +126,6 @@ func parsePath(path string) (root string) {
 var retryErrorCodes = []int{
 	429, // Rate exceeded.
 	500, // Get occasional 500 Internal Server Error
-	409, // Conflict - happens in the unit tests a lot
 	503, // Service Unavailable
 }
 
