@@ -565,6 +565,63 @@ func TestSyncAfterRemovingAFileAndAddingAFile(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, file1, file3)
 }
 
+// Sync after removing a file and adding a file with IO Errors
+func TestSyncAfterRemovingAFileAndAddingAFileWithErrors(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteFile("potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteObject("potato", "SMALLER BUT SAME DATE", t2)
+	file3 := r.WriteBoth("empty space", "", t2)
+	fstest.CheckItems(t, r.fremote, file2, file3)
+	fstest.CheckItems(t, r.flocal, file1, file3)
+
+	fs.Stats.ResetCounters()
+	fs.Stats.Error()
+	err := fs.Sync(r.fremote, r.flocal)
+	if err != nil {
+		t.Fatalf("Sync failed: %v", err)
+	}
+	fstest.CheckItems(t, r.flocal, file1, file3)
+	fstest.CheckItems(t, r.fremote, file1, file2, file3)
+}
+
+// Sync test delete during
+func TestSyncDeleteDuring(t *testing.T) {
+	// This is the default so we've checked this already
+	// check it is the default
+	if !(!fs.Config.DeleteBefore && fs.Config.DeleteDuring && !fs.Config.DeleteAfter) {
+		t.Fatalf("Didn't default to --delete-during")
+	}
+}
+
+// Sync test delete before
+func TestSyncDeleteBefore(t *testing.T) {
+	fs.Config.DeleteBefore = true
+	fs.Config.DeleteDuring = false
+	fs.Config.DeleteAfter = false
+	defer func() {
+		fs.Config.DeleteBefore = false
+		fs.Config.DeleteDuring = true
+		fs.Config.DeleteAfter = false
+	}()
+
+	TestSyncAfterRemovingAFileAndAddingAFile(t)
+}
+
+// Sync test delete after
+func TestSyncDeleteAfter(t *testing.T) {
+	fs.Config.DeleteBefore = false
+	fs.Config.DeleteDuring = false
+	fs.Config.DeleteAfter = true
+	defer func() {
+		fs.Config.DeleteBefore = false
+		fs.Config.DeleteDuring = true
+		fs.Config.DeleteAfter = false
+	}()
+
+	TestSyncAfterRemovingAFileAndAddingAFile(t)
+}
+
 // Test with exclude
 func TestSyncWithExclude(t *testing.T) {
 	r := NewRun(t)
