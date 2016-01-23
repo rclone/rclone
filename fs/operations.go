@@ -7,9 +7,12 @@ import (
 	"io"
 	"mime"
 	"path"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"golang.org/x/text/unicode/norm"
 )
 
 // CalculateModifyWindow works out modify window for Fses passed in -
@@ -407,19 +410,24 @@ func DeleteFiles(toBeDeleted ObjectsChan) {
 // otherwise only files passing the filter will be added.
 func readFilesMap(fs Fs, includeAll bool) map[string]Object {
 	files := make(map[string]Object)
+	normalised := make(map[string]struct{})
 	for o := range fs.List() {
 		remote := o.Remote()
+		normalisedRemote := strings.ToLower(norm.NFC.String(remote))
 		if _, ok := files[remote]; !ok {
 			// Make sure we don't delete excluded files if not required
 			if includeAll || Config.Filter.IncludeObject(o) {
 				files[remote] = o
+				if _, ok := normalised[normalisedRemote]; ok {
+					Log(o, "Warning: File found with same name but different case on %v", o.Fs())
+				}
 			} else {
 				Debug(o, "Excluded from sync (and deletion)")
 			}
-
 		} else {
 			Log(o, "Duplicate file detected")
 		}
+		normalised[normalisedRemote] = struct{}{}
 	}
 	return files
 }
