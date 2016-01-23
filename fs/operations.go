@@ -467,7 +467,8 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 	}
 
 	go func() {
-		for src := range fsrc.List() {
+		osrc := logCaseDupes(fsrc.List())
+		for src := range osrc {
 			if !Config.Filter.IncludeObject(src) {
 				Debug(src, "Excluding from sync")
 			} else {
