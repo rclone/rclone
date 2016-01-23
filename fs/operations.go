@@ -456,11 +456,13 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 	var srcFiles map[string]Object
 	var srcObjects = make(ObjectsChan, Config.Transfers)
 
+	// Read dst files including excluded files if DeleteExcluded is set
 	go func() {
 		dstFiles = readFilesMap(fdst, Config.Filter.DeleteExcluded)
 		listWg.Done()
 	}()
 
+	// Read src file not including excluded files
 	go func() {
 		srcFiles = readFilesMap(fsrc, false)
 		listWg.Done()
@@ -543,16 +545,12 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 
 	go func() {
 		for src := range srcObjects {
-			if !Config.Filter.IncludeObject(src) {
-				Debug(src, "Excluding from sync")
+			remote := src.Remote()
+			if dst, dstFound := dstFiles[remote]; dstFound {
+				toBeChecked <- ObjectPair{src, dst}
 			} else {
-				remote := src.Remote()
-				if dst, dstFound := dstFiles[remote]; dstFound {
-					toBeChecked <- ObjectPair{src, dst}
-				} else {
-					// No need to check since doesn't exist
-					toBeUploaded <- ObjectPair{src, nil}
-				}
+				// No need to check since doesn't exist
+				toBeUploaded <- ObjectPair{src, nil}
 			}
 		}
 		close(toBeChecked)
