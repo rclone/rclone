@@ -382,7 +382,16 @@ func (f *Fs) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs
 
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir() error {
-	return f.c.ContainerCreate(f.container, nil)
+	// Check to see if container exists first
+	_, _, err := f.c.Container(f.container)
+	if err == nil {
+		return nil
+	}
+	if err == swift.ContainerNotFound {
+		return f.c.ContainerCreate(f.container, nil)
+	}
+	return err
+
 }
 
 // Rmdir deletes the container if the fs is at the root
