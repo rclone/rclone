@@ -420,11 +420,14 @@ func (f *Fs) listDirNonRecursive(dirID string, path string, out fs.ObjectsChan) 
 					errs <- err
 				}
 				// FIXME stop traversal on error?
-				// Now we have traversed this directory, send these jobs off for traversal
-				for _, job := range jobs {
-					traversing.Add(1)
-					in <- job
-				}
+				traversing.Add(len(jobs))
+				go func() {
+					// Now we have traversed this directory, send these jobs off for traversal in
+					// the background
+					for _, job := range jobs {
+						in <- job
+					}
+				}()
 				traversing.Done()
 			}
 		}()
