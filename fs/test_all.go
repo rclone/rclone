@@ -10,13 +10,13 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"regexp"
 	"runtime"
 	"strings"
 	"time"
 
 	"github.com/ncw/rclone/fs"
 	_ "github.com/ncw/rclone/fs/all" // import all fs
+	"github.com/ncw/rclone/fstest"
 )
 
 var (
@@ -83,13 +83,6 @@ func (t *test) trial() {
 	}
 }
 
-var (
-	// matchTestRemote matches the remote names used for testing
-	matchTestRemote = regexp.MustCompile(`^[abcdefghijklmnopqrstuvwxyz0123456789]{32}$`)
-	// findInteriorDigits makes sure there are digits inside the string
-	findInteriorDigits = regexp.MustCompile(`[a-z][0-9]+[a-z]`)
-)
-
 // cleanFs runs a single clean fs for left over directories
 func (t *test) cleanFs() error {
 	f, err := fs.NewFs(t.remote)
@@ -97,8 +90,7 @@ func (t *test) cleanFs() error {
 		return err
 	}
 	for dir := range f.ListDir() {
-		insideDigits := len(findInteriorDigits.FindAllString(dir.Name, -1))
-		if matchTestRemote.MatchString(dir.Name) && insideDigits >= 2 {
+		if fstest.MatchTestRemote.MatchString(dir.Name) {
 			log.Printf("Purging %s%s", t.remote, dir.Name)
 			dir, err := fs.NewFs(t.remote + dir.Name)
 			if err != nil {

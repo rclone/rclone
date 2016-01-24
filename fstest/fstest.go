@@ -11,11 +11,17 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/ncw/rclone/fs"
+)
+
+var (
+	// MatchTestRemote matches the remote names used for testing
+	MatchTestRemote = regexp.MustCompile(`^rclone-test-[abcdefghijklmnopqrstuvwxyz0123456789]{24}$`)
 )
 
 // Seed the random number generator
@@ -206,9 +212,17 @@ func Time(timeString string) time.Time {
 
 // RandomString create a random string for test purposes
 func RandomString(n int) string {
-	source := "abcdefghijklmnopqrstuvwxyz0123456789"
+	const (
+		vowel     = "aeiou"
+		consonant = "bcdfghjklmnpqrstvwxyz"
+		digit     = "0123456789"
+	)
+	pattern := []string{consonant, vowel, consonant, vowel, consonant, vowel, consonant, digit}
 	out := make([]byte, n)
+	p := 0
 	for i := range out {
+		source := pattern[p]
+		p = (p + 1) % len(pattern)
 		out[i] = source[rand.Intn(len(source))]
 	}
 	return string(out)
@@ -242,7 +256,10 @@ func RandomRemoteName(remoteName string) (string, string, error) {
 		if !strings.HasSuffix(remoteName, ":") {
 			remoteName += "/"
 		}
-		leafName = RandomString(32)
+		leafName = "rclone-test-" + RandomString(24)
+		if !MatchTestRemote.MatchString(leafName) {
+			log.Fatalf("%q didn't match the test remote name regexp", leafName)
+		}
 		remoteName += leafName
 	}
 	return remoteName, leafName, nil
@@ -266,7 +283,7 @@ func RandomRemote(remoteName string, subdir bool) (fs.Fs, func(), error) {
 		if err != nil {
 			return nil, nil, err
 		}
-		remoteName += "/" + RandomString(8)
+		remoteName += "/rclone-test-subdir-" + RandomString(8)
 	}
 
 	remote, err := fs.NewFs(remoteName)
