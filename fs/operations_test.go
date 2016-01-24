@@ -141,6 +141,8 @@ func NewRun(t *testing.T) *Run {
 			if errors != 0 {
 				t.Fatalf("%d errors while cleaning remote %v", errors, r.fremote)
 			}
+			// Check remote is empty
+			fstest.CheckItems(t, r.fremote)
 		}
 	}
 	r.Logf = t.Logf
