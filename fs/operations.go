@@ -45,38 +45,42 @@ func HashEquals(src, dst string) bool {
 // CheckHashes checks the two files to see if they have common
 // known hash types and compares them
 //
-// Returns two bools, the first of which is equality and the second of
-// which is true if either of the hashes were unset.
+// Returns
 //
-// May return an error which will already have been logged
+// equal - which is equality of the hashes
+//
+// hash - the HashType. This is HashNone if either of the hashes were
+// unset or a compatible hash couldn't be found.
+//
+// err - may return an error which will already have been logged
 //
 // If an error is returned it will return equal as false
-func CheckHashes(src, dst Object) (equal bool, unset bool, err error) {
+func CheckHashes(src, dst Object) (equal bool, hash HashType, err error) {
 	common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
-	Debug(nil, "Shared hashes: %v", common)
+	// Debug(nil, "Shared hashes: %v", common)
 	if common.Count() == 0 {
-		return true, true, nil
+		return true, HashNone, nil
 	}
-	usehash := common.GetOne()
-	srcHash, err := src.Hash(usehash)
+	hash = common.GetOne()
+	srcHash, err := src.Hash(hash)
 	if err != nil {
 		Stats.Error()
 		ErrorLog(src, "Failed to calculate src hash: %s", err)
-		return false, false, err
+		return false, hash, err
 	}
 	if srcHash == "" {
-		return true, true, nil
+		return true, HashNone, nil
 	}
-	dstHash, err := dst.Hash(usehash)
+	dstHash, err := dst.Hash(hash)
 	if err != nil {
 		Stats.Error()
 		ErrorLog(dst, "Failed to calculate dst hash: %s", err)
-		return false, false, err
+		return false, hash, err
 	}
 	if dstHash == "" {
-		return true, true, nil
+		return true, HashNone, nil
 	}
-	return srcHash == dstHash, false, nil
+	return srcHash == dstHash, hash, nil
 }
 
 // Equal checks to see if the src and dst objects are equal by looking at
@@ -127,7 +131,7 @@ func Equal(src, dst Object) bool {
 
 	// mtime is unreadable or different but size is the same so
 	// check the hash
-	same, hashunset, _ := CheckHashes(src, dst)
+	same, hash, _ := CheckHashes(src, dst)
 	if !same {
 		Debug(src, "Hash differ")
 		return false
@@ -139,10 +143,10 @@ func Equal(src, dst Object) bool {
 		dst.SetModTime(srcModTime)
 	}
 
-	if hashunset {
+	if hash == HashNone {
 		Debug(src, "Size of src and dst objects identical")
 	} else {
-		Debug(src, "Size and hash of src and dst objects identical")
+		Debug(src, "Size and %v of src and dst objects identical", hash)
 	}
 	return true
 }
@@ -255,7 +259,7 @@ tryAgain:
 	// TODO(klauspost): This could be extended, so we always create a hash type matching
 	// the destination, and calculate it while sending.
 	common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
-	Debug(src, "common hashes: %v", common)
+	// Debug(src, "common hashes: %v", common)
 	if !Config.SizeOnly && common.Count() > 0 {
 		// Get common hash type
 		hashType := common.GetOne()
