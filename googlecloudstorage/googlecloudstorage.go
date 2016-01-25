@@ -303,8 +303,8 @@ func (f *Fs) list(directories bool, fn func(string, *storage.Object)) {
 }
 
 // List walks the path returning a channel of FsObjects
-func (f *Fs) List() fs.ObjectsChan {
-	out := make(fs.ObjectsChan, fs.Config.Checkers)
+func (f *Fs) List() fs.ListOpts {
+	out := make(fs.ListOpts, fs.Config.Checkers)
 	if f.bucket == "" {
 		// Return no objects at top level list
 		close(out)

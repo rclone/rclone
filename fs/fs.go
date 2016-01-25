@@ -7,6 +7,7 @@ import (
 	"log"
 	"path/filepath"
 	"regexp"
+	"sync"
 	"time"
 )
 
@@ -79,10 +80,10 @@ type Fs interface {
 	String() string
 
 	// List the Fs into a channel
-	List() ObjectsChan
+	List(ListOpts)
 
 	// ListDir lists the Fs directories/buckets/containers into a channel
-	ListDir() DirChan
+	ListDir(ListDirOpts)
 
 	// NewFsObject finds the Object at remote.  Returns nil if can't be found
 	NewFsObject(remote string) Object
@@ -206,6 +207,190 @@ type UnWrapper interface {
 
 // ObjectsChan is a channel of Objects
 type ObjectsChan chan Object
+
+type ListDirOpts interface {
+	// Add an object to the output.
+	// If the function returns true, the operation has been aborted.
+	// Multiple goroutines can safely add objects concurrently.
+	Add(dir *Dir) (abort bool)
+
+	// SetError will set an error state, and will cause the listing to
+	// be aborted.
+	// Multiple goroutines can set the error state concurrently,
+	// but only the first will be returned to the caller.
+	SetError(err error)
+
+	// Finished should be called when listing is finished
+	Finished()
+}
+
+type ListOpts interface {
+	// Add an object to the output.
+	// If the function returns true, the operation has been aborted.
+	// Multiple goroutines can safely add objects concurrently.
+	Add(obj Object) (abort bool)
+
+	// SetError will set an error state, and will cause the listing to
+	// be aborted.
+	// Multiple goroutines can set the error state concurrently,
+	// but only the first will be returned to the caller.
+	SetError(err error)
+
+	// Finished should be called when listing is finished
+	Finished()
+}
+
+var ErrListAborted = fmt.Errorf("List aborted")
+
+// listOpts provides list options and channels
+// results back to the caller.
+type listOpts struct {
+	objects  chan Object
+	errors   chan error
+	abort    chan struct{}
+	finished sync.Once
+}
+
+func newListOpts(buffer int) *listOpts {
+	return &listOpts{
+		objects: make(chan Object, buffer),
+		errors:  make(chan error, 0),
+		abort:   make(chan struct{}, 0),
+	}
+}
+
+// Add an object to the output.
+// If the function returns true, the operation has been aborted.
+// Multiple goroutines can safely add objects concurrently.
+func (o *listOpts) Add(obj Object) (abort bool) {
+	select {
+	case <-o.abort:
+		return true
+	case o.objects <- obj:
+		return false
+	}
+}
+
+// SetError will set an error state, and will cause the listing to
+// be aborted.
+// Multiple goroutines can set the error state concurrently,
+// but only the first will be returned to the caller.
+func (o *listOpts) SetError(err error) {
+	// Be sure we don't set a nil error by accident
+	if err == nil {
+		return
+	}
+	select {
+	case <-o.abort:
+	case o.errors <- err:
+	}
+}
+
+// Finished should be called when listing is finished
+func (o *listOpts) Finished() {
+	o.finished.Do(func() {
+		close(o.objects)
+	})
+}
+
+// get an object from the listing.
+// Will return (nil, nil) when all objects have been returned.
+func (o *listOpts) Get() (Object, error) {
+	select {
+	case <-o.abort:
+		return nil, ErrListAborted
+	case err := <-o.errors:
+		close(o.abort)
+		return nil, err
+	default:
+	}
+
+	// No error, or aborted, attempt to fetch an object.
+	select {
+	case obj := <-o.objects:
+		return obj, nil
+	case err := <-o.errors:
+		close(o.abort)
+		return nil, err
+	case <-o.abort:
+		return nil, ErrListAborted
+	}
+}
+
+// dirListOpts provides list options and channels
+// results back to the caller.
+type listDirOpts struct {
+	objects  chan *Dir
+	errors   chan error
+	abort    chan struct{}
+	finished sync.Once
+}
+
+func newListDirOpts(buffer int) *listDirOpts {
+	return &listDirOpts{
+		objects: make(chan *Dir, buffer),
+		errors:  make(chan error, 0),
+		abort:   make(chan struct{}, 0),
+	}
+}
+
+// Add an object to the output.
+// If the function returns true, the operation has been aborted.
+// Multiple goroutines can safely add objects concurrently.
+func (o *listDirOpts) Add(obj *Dir) (abort bool) {
+	select {
+	case <-o.abort:
+		return true
+	case o.objects <- obj:
+		return false
+	}
+}
+
+// SetError will set an error state, and will cause the listing to
+// be aborted.
+// Multiple goroutines can set the error state concurrently,
+// but only the first will be returned to the caller.
+func (o *listDirOpts) SetError(err error) {
+	// Be sure we don't set a nil error by accident
+	if err == nil {
+		return
+	}
+	select {
+	case <-o.abort:
+	case o.errors <- err:
+	}
+}
+
+// Finished should be called when listing is finished
+func (o *listDirOpts) Finished() {
+	o.finished.Do(func() {
+		close(o.objects)
+	})
+}
+
+// get an object from the listing.
+// Will return (nil, nil) when all objects have been returned.
+func (o *listDirOpts) Get() (*Dir, error) {
+	select {
+	case <-o.abort:
+		return nil, ErrListAborted
+	case err := <-o.errors:
+		close(o.abort)
+		return nil, err
+	default:
+	}
+
+	// No error, or aborted, attempt to fetch an object.
+	select {
+	case obj := <-o.objects:
+		return obj, nil
+	case err := <-o.errors:
+		close(o.abort)
+		return nil, err
+	case <-o.abort:
+		return nil, ErrListAborted
+	}
+}
 
 // Objects is a slice of Object~s
 type Objects []Object

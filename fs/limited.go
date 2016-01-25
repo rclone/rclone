@@ -38,22 +38,18 @@ func (f *Limited) String() string {
 }
 
 // List the Fs into a channel
-func (f *Limited) List() ObjectsChan {
-	out := make(ObjectsChan, Config.Checkers)
-	go func() {
-		for _, obj := range f.objects {
-			out <- obj
+func (f *Limited) List(opts ListOpts) {
+	defer opts.Finished()
+	for _, obj := range f.objects {
+		if opts.Add(obj) {
+			return
 		}
-		close(out)
-	}()
-	return out
+	}
 }
 
 // ListDir lists the Fs directories/buckets/containers into a channel
-func (f *Limited) ListDir() DirChan {
-	out := make(DirChan, Config.Checkers)
-	close(out)
-	return out
+func (f *Limited) ListDir(opts ListDirOpts) {
+	opts.Finished()
 }
 
 // NewFsObject finds the Object at remote.  Returns nil if can't be found

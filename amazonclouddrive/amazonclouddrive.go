@@ -337,7 +337,7 @@ OUTER:
 //
 // This fetches the minimum amount of stuff but does more API calls
 // which makes it slow
-func (f *Fs) listDirRecursive(dirID string, path string, out fs.ObjectsChan) error {
+func (f *Fs) listDirRecursive(dirID string, path string, out fs.ListOpts) error {
 	var subError error
 	// Make the API request
 	var wg sync.WaitGroup
@@ -352,6 +352,7 @@ func (f *Fs) listDirRecursive(dirID string, path string, out fs.ObjectsChan) err
 				defer wg.Done()
 				err := f.listDirRecursive(*node.Id, folder, out)
 				if err != nil {
+					out.SetError(err)
 					subError = err
 					fs.ErrorLog(f, "Error reading %s:%s", folder, err)
 				}
@@ -359,7 +360,9 @@ func (f *Fs) listDirRecursive(dirID string, path string, out fs.ObjectsChan) err
 			return false
 		case fileKind:
 			if fs := f.newFsObjectWithInfo(path+*node.Name, node); fs != nil {
-				out <- fs
+				if out.Add(fs) {
+					return true
+				}
 			}
 		default:
 			// ignore ASSET etc
@@ -369,6 +372,7 @@ func (f *Fs) listDirRecursive(dirID string, path string, out fs.ObjectsChan) err
 	wg.Wait()
 	fs.Debug(f, "Finished reading %s", path)
 	if err != nil {
+		out.SetError(err)
 		return err
 	}
 	if subError != nil {
@@ -378,52 +382,50 @@ func (f *Fs) listDirRecursive(dirID string, path string, out fs.ObjectsChan) err
 }
 
 // List walks the path returning a channel of FsObjects
-func (f *Fs) List() fs.ObjectsChan {
-	out := make(fs.ObjectsChan, fs.Config.Checkers)
-	go func() {
-		defer close(out)
-		err := f.dirCache.FindRoot(false)
+func (f *Fs) List(out fs.ListOpts) {
+	defer out.Finished()
+	err := f.dirCache.FindRoot(false)
+	if err != nil {
+		out.SetError(err)
+		fs.Stats.Error()
+		fs.ErrorLog(f, "Couldn't find root: %s", err)
+	} else {
+		err = f.listDirRecursive(f.dirCache.RootID(), "", out)
 		if err != nil {
+			out.SetError(err)
 			fs.Stats.Error()
-			fs.ErrorLog(f, "Couldn't find root: %s", err)
-		} else {
-			err = f.listDirRecursive(f.dirCache.RootID(), "", out)
-			if err != nil {
-				fs.Stats.Error()
-				fs.ErrorLog(f, "List failed: %s", err)
-			}
+			fs.ErrorLog(f, "List failed: %s", err)
 		}
-	}()
-	return out
+	}
 }
 
 // ListDir lists the directories
-func (f *Fs) ListDir() fs.DirChan {
-	out := make(fs.DirChan, fs.Config.Checkers)
-	go func() {
-		defer close(out)
-		err := f.dirCache.FindRoot(false)
-		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Couldn't find root: %s", err)
-		} else {
-			_, err := f.listAll(f.dirCache.RootID(), "", true, false, func(item *acd.Node) bool {
-				dir := &fs.Dir{
-					Name:  *item.Name,
-					Bytes: -1,
-					Count: -1,
-				}
-				dir.When, _ = time.Parse(timeFormat, *item.ModifiedDate)
-				out <- dir
-				return false
-			})
-			if err != nil {
-				fs.Stats.Error()
-				fs.ErrorLog(f, "ListDir failed: %s", err)
+func (f *Fs) ListDir(out fs.ListDirOpts) {
+	defer out.Finished()
+	err := f.dirCache.FindRoot(false)
+	if err != nil {
+		out.SetError(err)
+		fs.Stats.Error()
+		fs.ErrorLog(f, "Couldn't find root: %s", err)
+	} else {
+		_, err := f.listAll(f.dirCache.RootID(), "", true, false, func(item *acd.Node) bool {
+			dir := &fs.Dir{
+				Name:  *item.Name,
+				Bytes: -1,
+				Count: -1,
 			}
+			dir.When, _ = time.Parse(timeFormat, *item.ModifiedDate)
+			if out.Add(dir) {
+				return true
+			}
+			return false
+		})
+		if err != nil {
+			out.SetError(err)
+			fs.Stats.Error()
+			fs.ErrorLog(f, "ListDir failed: %s", err)
 		}
-	}()
-	return out
+	}
 }
 
 // Put the object into the container

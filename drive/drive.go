@@ -360,7 +360,7 @@ func (f *Fs) CreateDir(pathID, leaf string) (newID string, err error) {
 //
 // This fetches the minimum amount of stuff but does more API calls
 // which makes it slow
-func (f *Fs) listDirRecursive(dirID string, path string, out fs.ObjectsChan) error {
+func (f *Fs) listDirRecursive(dirID string, path string, out fs.ListOpts) error {
 	var subError error
 	// Make the API request
 	var wg sync.WaitGroup
@@ -418,7 +418,7 @@ func isAuthOwned(item *drive.File) bool {
 //
 // This is fast in terms of number of API calls, but slow in terms of
 // fetching more data than it needs
-func (f *Fs) listDirFull(dirID string, path string, out fs.ObjectsChan) error {
+func (f *Fs) listDirFull(dirID string, path string, out fs.ListOpts) error {
 	// Orphans waiting for their parent
 	orphans := make(map[string][]*drive.File)
 
@@ -483,8 +483,8 @@ func (f *Fs) listDirFull(dirID string, path string, out fs.ObjectsChan) error {
 }
 
 // List walks the path returning a channel of FsObjects
-func (f *Fs) List() fs.ObjectsChan {
-	out := make(fs.ObjectsChan, fs.Config.Checkers)
+func (f *Fs) List() fs.ListOpts {
+	out := make(fs.ListOpts, fs.Config.Checkers)
 	go func() {
 		defer close(out)
 		err := f.dirCache.FindRoot(false)

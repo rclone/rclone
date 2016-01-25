@@ -207,8 +207,8 @@ func (f *Fs) list(directories bool, fn func(string, yandex.ResourceInfoResponse)
 }
 
 // List walks the path returning a channel of FsObjects
-func (f *Fs) List() fs.ObjectsChan {
-	out := make(fs.ObjectsChan, fs.Config.Checkers)
+func (f *Fs) List() fs.ListOpts {
+	out := make(fs.ListOpts, fs.Config.Checkers)
 	// List the objects
 	go func() {
 		defer close(out)

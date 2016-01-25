@@ -239,7 +239,7 @@ func (f *Fs) stripRoot(path string) *string {
 }
 
 // Walk the root returning a channel of FsObjects
-func (f *Fs) list(out fs.ObjectsChan) {
+func (f *Fs) list(out fs.ListOpts) {
 	// Track path component case, it could be different for entries coming from DropBox API
 	// See https://www.dropboxforum.com/hc/communities/public/questions/201665409-Wrong-character-case-of-folder-name-when-calling-listFolder-using-Sync-API?locale=en-us
 	// and https://github.com/ncw/rclone/issues/53
@@ -318,8 +318,8 @@ func (f *Fs) list(out fs.ObjectsChan) {
 }
 
 // List walks the path returning a channel of FsObjects
-func (f *Fs) List() fs.ObjectsChan {
-	out := make(fs.ObjectsChan, fs.Config.Checkers)
+func (f *Fs) List() fs.ListOpts {
+	out := make(fs.ListOpts, fs.Config.Checkers)
 	go func() {
 		defer close(out)
 		f.list(out)

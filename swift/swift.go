@@ -297,8 +297,8 @@ func (f *Fs) list(directories bool, fn listFn) {
 // listFiles walks the path returning a channel of FsObjects
 //
 // if ignoreStorable is set then it outputs the file even if Storable() is false
-func (f *Fs) listFiles(ignoreStorable bool) fs.ObjectsChan {
-	out := make(fs.ObjectsChan, fs.Config.Checkers)
+func (f *Fs) listFiles(ignoreStorable bool) fs.ListOpts {
+	out := make(fs.ListOpts, fs.Config.Checkers)
 	if f.container == "" {
 		// Return no objects at top level list
 		close(out)
@@ -324,7 +324,7 @@ func (f *Fs) listFiles(ignoreStorable bool) fs.ObjectsChan {
 }
 
 // List walks the path returning a channel of FsObjects
-func (f *Fs) List() fs.ObjectsChan {
+func (f *Fs) List() fs.ListOpts {
 	return f.listFiles(false)
 }
 

@@ -137,39 +137,40 @@ func (f *Fs) NewFsObject(remote string) fs.Object {
 // List the path returning a channel of FsObjects
 //
 // Ignores everything which isn't Storable, eg links etc
-func (f *Fs) List() fs.ObjectsChan {
-	out := make(fs.ObjectsChan, fs.Config.Checkers)
-	go func() {
-		err := filepath.Walk(f.root, func(path string, fi os.FileInfo, err error) error {
+func (f *Fs) List(out fs.ListOpts) {
+	defer out.Finished()
+	err := filepath.Walk(f.root, func(path string, fi os.FileInfo, err error) error {
+		if err != nil {
+			out.SetError(err)
+			fs.Stats.Error()
+			fs.ErrorLog(f, "Failed to open directory: %s: %s", path, err)
+		} else {
+			remote, err := filepath.Rel(f.root, path)
 			if err != nil {
+				out.SetError(err)
 				fs.Stats.Error()
-				fs.ErrorLog(f, "Failed to open directory: %s: %s", path, err)
-			} else {
-				remote, err := filepath.Rel(f.root, path)
-				if err != nil {
-					fs.Stats.Error()
-					fs.ErrorLog(f, "Failed to get relative path %s: %s", path, err)
-					return nil
-				}
-				if remote == "." {
-					return nil
-					// remote = ""
-				}
-				if fs := f.newFsObjectWithInfo(remote, fi); fs != nil {
-					if fs.Storable() {
-						out <- fs
+				fs.ErrorLog(f, "Failed to get relative path %s: %s", path, err)
+				return nil
+			}
+			if remote == "." {
+				return nil
+				// remote = ""
+			}
+			if fso := f.newFsObjectWithInfo(remote, fi); fso != nil {
+				if fso.Storable() {
+					if out.Add(fso) {
+						return fs.ErrListAborted
 					}
 				}
 			}
-			return nil
-		})
-		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Failed to open directory: %s: %s", f.root, err)
 		}
-		close(out)
-	}()
-	return out
+		return nil
+	})
+	if err != nil {
+		out.SetError(err)
+		fs.Stats.Error()
+		fs.ErrorLog(f, "Failed to open directory: %s: %s", f.root, err)
+	}
 }
 
 // CleanUtf8 makes string a valid UTF-8 string
@@ -190,46 +191,46 @@ func (f *Fs) cleanUtf8(name string) string {
 }
 
 // ListDir walks the path returning a channel of FsObjects
-func (f *Fs) ListDir() fs.DirChan {
-	out := make(fs.DirChan, fs.Config.Checkers)
-	go func() {
-		defer close(out)
-		items, err := ioutil.ReadDir(f.root)
-		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Couldn't find read directory: %s", err)
-		} else {
-			for _, item := range items {
-				if item.IsDir() {
-					dir := &fs.Dir{
-						Name:  f.cleanUtf8(item.Name()),
-						When:  item.ModTime(),
-						Bytes: 0,
-						Count: 0,
-					}
-					// Go down the tree to count the files and directories
-					dirpath := f.filterPath(filepath.Join(f.root, item.Name()))
-					err := filepath.Walk(dirpath, func(path string, fi os.FileInfo, err error) error {
-						if err != nil {
-							fs.Stats.Error()
-							fs.ErrorLog(f, "Failed to open directory: %s: %s", path, err)
-						} else {
-							dir.Count++
-							dir.Bytes += fi.Size()
-						}
-						return nil
-					})
-					if err != nil {
-						fs.Stats.Error()
-						fs.ErrorLog(f, "Failed to open directory: %s: %s", dirpath, err)
-					}
-					out <- dir
+func (f *Fs) ListDir(out fs.ListDirOpts) {
+	defer out.Finished()
+	items, err := ioutil.ReadDir(f.root)
+	if err != nil {
+		fs.Stats.Error()
+		fs.ErrorLog(f, "Couldn't find read directory: %s", err)
+		out.SetError(err)
+		return
+	}
+	for _, item := range items {
+		if item.IsDir() {
+			dir := &fs.Dir{
+				Name:  f.cleanUtf8(item.Name()),
+				When:  item.ModTime(),
+				Bytes: 0,
+				Count: 0,
+			}
+			// Go down the tree to count the files and directories
+			dirpath := f.filterPath(filepath.Join(f.root, item.Name()))
+			err := filepath.Walk(dirpath, func(path string, fi os.FileInfo, err error) error {
+				if err != nil {
+					fs.Stats.Error()
+					fs.ErrorLog(f, "Failed to open directory: %s: %s", path, err)
+					out.SetError(err)
+				} else {
+					dir.Count++
+					dir.Bytes += fi.Size()
 				}
+				return nil
+			})
+			if err != nil {
+				out.SetError(err)
+				fs.Stats.Error()
+				fs.ErrorLog(f, "Failed to open directory: %s: %s", dirpath, err)
+			}
+			if out.Add(dir) {
+				return
 			}
 		}
-		// err := f.findRoot(false)
-	}()
-	return out
+	}
 }
 
 // Put the FsObject to the local filesystem
