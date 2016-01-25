@@ -69,6 +69,9 @@ var (
 	dumpHeaders    = pflag.BoolP("dump-headers", "", false, "Dump HTTP headers - may contain sensitive info")
 	dumpBodies     = pflag.BoolP("dump-bodies", "", false, "Dump HTTP headers and bodies - may contain sensitive info")
 	skipVerify     = pflag.BoolP("no-check-certificate", "", false, "Do not verify the server SSL certificate. Insecure.")
+	deleteBefore   = pflag.BoolP("delete-before", "", false, "When synchronizing, delete files on destination before transfering")
+	deleteDuring   = pflag.BoolP("delete-during", "", false, "When synchronizing, delete files during transfer (default)")
+	deleteAfter    = pflag.BoolP("delete-after", "", false, "When synchronizing, delete files on destination after transfering")
 	bwLimit        SizeSuffix
 )
 
@@ -179,6 +182,9 @@ type ConfigInfo struct {
 	DumpBodies         bool
 	Filter             *Filter
 	InsecureSkipVerify bool // Skip server certificate verification
+	DeleteBefore       bool // Delete before checking
+	DeleteDuring       bool // Delete during checking/transfer
+	DeleteAfter        bool // Delete after successful transfer.
 }
 
 // Transport returns an http.RoundTripper with the correct timeouts
@@ -269,6 +275,20 @@ func LoadConfig() {
 	Config.InsecureSkipVerify = *skipVerify
 
 	ConfigPath = *configFile
+
+	Config.DeleteBefore = *deleteBefore
+	Config.DeleteDuring = *deleteDuring
+	Config.DeleteAfter = *deleteAfter
+
+	switch {
+	case *deleteBefore && (*deleteDuring || *deleteAfter),
+		*deleteDuring && *deleteAfter:
+		log.Fatalf(`Only one of --delete-before, --delete-during or --delete-after can be used.`)
+
+	// If none are specified, use "during".
+	case !*deleteBefore && !*deleteDuring && !*deleteAfter:
+		Config.DeleteDuring = true
+	}
 
 	// Load configuration file.
 	var err error
