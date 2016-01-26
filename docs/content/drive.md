@@ -132,6 +132,50 @@ off, namely deleting files permanently.
 Only consider files owned by the authenticated user. Requires
 that --drive-full-list=true (default).
 
+#### --drive-formats ####
+
+Google documents can only be exported from Google drive.  When rclone
+downloads a Google doc it chooses a format to download depending upon
+this setting.
+
+By default the formats are `docx,xlsx,pptx,svg` which are a sensible
+default for an editable document.
+
+When choosing a format, rclone runs down the list provided in order
+and chooses the first file format the doc can be exported as from the
+list. If the file can't be exported to a format on the formats list,
+then rclone will choose a format from the default list.
+
+If you prefer an archive copy then you might use `--drive-formats
+pdf`, or if you prefer openoffice/libreoffice formats you might use
+`--drive-formats ods,odt`.
+
+Note that rclone adds the extension to the google doc, so if it is
+calles `My Spreadsheet` on google docs, it will be exported as `My
+Spreadsheet.xlsx` or `My Spreadsheet.pdf` etc.
+
+Here are the possible extensions with their corresponding mime types.
+
+| Extension | Mime Type | Description |
+| --------- |-----------| ------------|
+| csv  | text/csv | Standard CSV format for Spreadsheets |
+| doc  | application/msword | Micosoft Office Document |
+| docx | application/vnd.openxmlformats-officedocument.wordprocessingml.document | Microsoft Office Document |
+| html | text/html | An HTML Document |
+| jpg  | image/jpeg | A JPEG Image File |
+| ods  | application/vnd.oasis.opendocument.spreadsheet | Openoffice Spreadsheet |
+| ods  | application/x-vnd.oasis.opendocument.spreadsheet | Openoffice Spreadsheet |
+| odt  | application/vnd.oasis.opendocument.text | Openoffice Document |
+| pdf  | application/pdf | Adobe PDF Format |
+| png  | image/png | PNG Image Format|
+| pptx | application/vnd.openxmlformats-officedocument.presentationml.presentation | Microsoft Office Powerpoint |
+| rtf  | application/rtf | Rich Text Format |
+| svg  | image/svg+xml | Scalable Vector Graphics Format |
+| txt  | text/plain | Plain Text |
+| xls  | application/vnd.ms-excel | Microsoft Office Spreadsheet |
+| xlsx | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | Microsoft Office Spreadsheet |
+| zip  | application/zip | A ZIP file of HTML, Images CSS |
+
 ### Limitations ###
 
 Drive has quite a lot of rate limiting.  This causes rclone to be

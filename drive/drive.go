@@ -38,6 +38,7 @@ const (
 	minSleep           = 10 * time.Millisecond
 	maxSleep           = 2 * time.Second
 	decayConstant      = 2 // bigger for slower decay, exponential
+	defaultExtensions  = "docx,xlsx,pptx,svg"
 )
 
 // Globals
@@ -46,6 +47,7 @@ var (
 	driveFullList      = pflag.BoolP("drive-full-list", "", true, "Use a full listing for directory list. More data but usually quicker.")
 	driveAuthOwnerOnly = pflag.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user. Requires drive-full-list.")
 	driveUseTrash      = pflag.BoolP("drive-use-trash", "", false, "Send files to the trash instead of deleting permanently.")
+	driveExtensions    = pflag.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
 	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
 	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
 	chunkSize         = fs.SizeSuffix(256 * 1024)
@@ -57,6 +59,25 @@ var (
 		ClientID:     rcloneClientID,
 		ClientSecret: fs.Reveal(rcloneClientSecret),
 		RedirectURL:  oauthutil.TitleBarRedirectURL,
+	}
+	mimeTypeToExtension = map[string]string{
+		"application/msword":                                                        "doc",
+		"application/pdf":                                                           "pdf",
+		"application/rtf":                                                           "rtf",
+		"application/vnd.ms-excel":                                                  "xls",
+		"application/vnd.oasis.opendocument.spreadsheet":                            "ods",
+		"application/vnd.oasis.opendocument.text":                                   "odt",
+		"application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
+		"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":         "xlsx",
+		"application/vnd.openxmlformats-officedocument.wordprocessingml.document":   "docx",
+		"application/x-vnd.oasis.opendocument.spreadsheet":                          "ods",
+		"application/zip":                                                           "zip",
+		"image/jpeg":                                                                "jpg",
+		"image/png":                                                                 "png",
+		"image/svg+xml":                                                             "svg",
+		"text/csv":                                                                  "csv",
+		"text/html":                                                                 "html",
+		"text/plain":                                                                "txt",
 	}
 )
 
@@ -85,13 +106,14 @@ func init() {
 
 // Fs represents a remote drive server
 type Fs struct {
-	name     string             // name of this remote
-	svc      *drive.Service     // the connection to the drive server
-	root     string             // the path we are working on
-	client   *http.Client       // authorized client
-	about    *drive.About       // information about the drive, including the root
-	dirCache *dircache.DirCache // Map of directory path to directory id
-	pacer    *pacer.Pacer       // To pace the API calls
+	name       string             // name of this remote
+	svc        *drive.Service     // the connection to the drive server
+	root       string             // the path we are working on
+	client     *http.Client       // authorized client
+	about      *drive.About       // information about the drive, including the root
+	dirCache   *dircache.DirCache // Map of directory path to directory id
+	pacer      *pacer.Pacer       // To pace the API calls
+	extensions []string           // preferred extensions to download docs
 }
 
 // Object describes a drive object
@@ -103,6 +125,7 @@ type Object struct {
 	md5sum       string // md5sum of the object
 	bytes        int64  // size of the object
 	modifiedDate string // RFC3339 time it was last modified
+	isDocument   bool   // if set this is a Google doc
 }
 
 // ------------------------------------------------------------
@@ -217,6 +240,31 @@ func isPowerOfTwo(x int64) bool {
 	}
 }
 
+// parseExtensions parses drive export extensions from a string
+func (f *Fs) parseExtensions(extensions string) {
+	// Invert mimeTypeToExtension
+	var extensionToMimeType = make(map[string]string, len(mimeTypeToExtension))
+	for mimeType, extension := range mimeTypeToExtension {
+		extensionToMimeType[extension] = mimeType
+	}
+	for _, extension := range strings.Split(extensions, ",") {
+		extension = strings.ToLower(strings.TrimSpace(extension))
+		if _, found := extensionToMimeType[extension]; !found {
+			log.Fatalf("Couldn't find mime type for extension %q", extension)
+		}
+		found := false
+		for _, existingExtension := range f.extensions {
+			if extension == existingExtension {
+				found = true
+				break
+			}
+		}
+		if !found {
+			f.extensions = append(f.extensions, extension)
+		}
+	}
+}
+
 // NewFs contstructs an Fs from the path, container:path
 func NewFs(name, path string) (fs.Fs, error) {
 	if !isPowerOfTwo(int64(chunkSize)) {
@@ -259,6 +307,10 @@ func NewFs(name, path string) (fs.Fs, error) {
 	}
 
 	f.dirCache = dircache.New(root, f.about.RootFolderId, f)
+
+	// Parse extensions
+	f.parseExtensions(*driveExtensions)
+	f.parseExtensions(defaultExtensions) // make sure there are some sensible ones on there
 
 	// Find the current root
 	err = f.dirCache.FindRoot(false)
@@ -381,11 +433,52 @@ func (f *Fs) listDirRecursive(dirID string, path string, out fs.ObjectsChan) err
 
 			}()
 		} else {
-			// If item has no MD5 sum it isn't stored on drive, so ignore it
+			filepath := path + item.Title
 			if item.Md5Checksum != "" {
-				if fs := f.newFsObjectWithInfo(path+item.Title, item); fs != nil {
-					out <- fs
+				// If item has MD5 sum it is a file stored on drive
+				if o := f.newFsObjectWithInfo(filepath, item); o != nil {
+					out <- o
 				}
+			} else if len(item.ExportLinks) != 0 {
+				// If item has export links then it is a google doc
+				var firstExtension, firstLink string
+				var extension, link string
+			outer:
+				for exportMimeType, exportLink := range item.ExportLinks {
+					exportExtension, ok := mimeTypeToExtension[exportMimeType]
+					if !ok {
+						fs.Debug(filepath, "Unknown export type %q - ignoring", exportMimeType)
+						continue
+					}
+					if firstExtension == "" {
+						firstExtension = exportExtension
+						firstLink = exportLink
+					}
+					for _, preferredExtension := range f.extensions {
+						if exportExtension == preferredExtension {
+							extension = exportExtension
+							link = exportLink
+							break outer
+						}
+					}
+				}
+				if extension == "" {
+					extension = firstExtension
+					link = firstLink
+				}
+				if extension == "" {
+					fs.Debug(filepath, "No export formats found")
+				} else {
+					if o := f.newFsObjectWithInfo(filepath+"."+extension, item); o != nil {
+						obj := o.(*Object)
+						obj.isDocument = true
+						obj.url = link
+						obj.bytes = -1
+						out <- o
+					}
+				}
+			} else {
+				fs.Debug(filepath, "Ignoring unknown object")
 			}
 		}
 		return false
@@ -817,6 +910,18 @@ func (o *Object) Hash(t fs.HashType) (string, error) {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
+	if o.isDocument && o.bytes < 0 {
+		// If it is a google doc then we must HEAD it to see
+		// how big it is
+		res, err := o.httpResponse("HEAD")
+		if err != nil {
+			fs.ErrorLog(o, "Error reading size: %v", err)
+			return 0
+		}
+		_ = res.Body.Close()
+		o.bytes = res.ContentLength
+		// fs.Debug(o, "Read size of document: %v", o.bytes)
+	}
 	return o.bytes
 }
 
@@ -908,17 +1013,17 @@ func (o *Object) Storable() bool {
 	return true
 }
 
-// Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
+// httpResponse gets an http.Response object for the object o.url
+// using the method passed in
+func (o *Object) httpResponse(method string) (res *http.Response, err error) {
 	if o.url == "" {
 		return nil, fmt.Errorf("Forbidden to download - check sharing permission")
 	}
-	req, err := http.NewRequest("GET", o.url, nil)
+	req, err := http.NewRequest(method, o.url, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("User-Agent", fs.UserAgent)
-	var res *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
 		res, err = o.fs.client.Do(req)
 		return shouldRetry(err)
@@ -926,9 +1031,56 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 	if err != nil {
 		return nil, err
 	}
+	return res, nil
+}
+
+// openFile represents an Object open for reading
+type openFile struct {
+	o     *Object       // Object we are reading for
+	in    io.ReadCloser // reading from here
+	bytes int64         // number of bytes read on this connection
+	eof   bool          // whether we have read end of file
+}
+
+// Read bytes from the object - see io.Reader
+func (file *openFile) Read(p []byte) (n int, err error) {
+	n, err = file.in.Read(p)
+	file.bytes += int64(n)
+	if err == io.EOF {
+		file.eof = true
+	}
+	return
+}
+
+// Close the object and update bytes read
+func (file *openFile) Close() (err error) {
+	// If end of file, update bytes read
+	if file.eof {
+		// fs.Debug(file.o, "Updating size of doc after download to %v", file.bytes)
+		file.o.bytes = file.bytes
+	}
+	return file.in.Close()
+}
+
+// Check it satisfies the interfaces
+var _ io.ReadCloser = &openFile{}
+
+// Open an object for read
+func (o *Object) Open() (in io.ReadCloser, err error) {
+	res, err := o.httpResponse("GET")
+	if err != nil {
+		return nil, err
+	}
 	if res.StatusCode != 200 {
 		_ = res.Body.Close() // ignore error
 		return nil, fmt.Errorf("Bad response: %d: %s", res.StatusCode, res.Status)
+	}
+	// If it is a document, update the size with what we are
+	// reading as it can change from the HEAD in the listing to
+	// this GET.  This stops rclone marking the transfer as
+	// corrupted.
+	if o.isDocument {
+		return &openFile{o: o, in: res.Body}, nil
 	}
 	return res.Body, nil
 }
@@ -939,6 +1091,9 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
+	if o.isDocument {
+		return fmt.Errorf("Can't update a google document")
+	}
 	updateInfo := &drive.File{
 		Id:           o.id,
 		ModifiedDate: modTime.Format(timeFormatOut),
@@ -969,6 +1124,9 @@ func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
 
 // Remove an object
 func (o *Object) Remove() error {
+	if o.isDocument {
+		return fmt.Errorf("Can't delete a google document")
+	}
 	var err error
 	err = o.fs.pacer.Call(func() (bool, error) {
 		if *driveUseTrash {
