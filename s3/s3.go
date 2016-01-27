@@ -17,6 +17,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"path"
 	"regexp"
 	"strings"
@@ -523,7 +524,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	}
 	srcFs := srcObj.fs
 	key := f.root + remote
-	source := srcFs.bucket + "/" + srcFs.root + srcObj.remote
+	source := url.QueryEscape(srcFs.bucket + "/" + srcFs.root + srcObj.remote)
 	req := s3.CopyObjectInput{
 		Bucket:            &f.bucket,
 		Key:               &key,
@@ -664,7 +665,7 @@ func (o *Object) SetModTime(modTime time.Time) {
 		ACL:               &o.fs.perm,
 		Key:               &key,
 		ContentType:       &contentType,
-		CopySource:        &sourceKey,
+		CopySource:        aws.String(url.QueryEscape(sourceKey)),
 		Metadata:          o.meta,
 		MetadataDirective: &directive,
 	}
