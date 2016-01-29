@@ -60,8 +60,11 @@ MD5SUM.  Doesn't delete files from the destination.
 Sync the source to the destination, changing the destination
 only.  Doesn't transfer unchanged files, testing by size and
 modification time or MD5SUM.  Destination is updated to match
-source, including deleting files if necessary.  Since this can
-cause data loss, test first with the `--dry-run` flag.
+source, including deleting files if necessary.
+
+**Important**: Since this can cause data loss, test first with the
+`--dry-run` and `-v` flags to see exactly what would be copied and
+deleted.
 
 Note that files in the destination won't be deleted if there were any
 errors at any point.
