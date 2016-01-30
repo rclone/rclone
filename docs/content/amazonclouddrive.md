@@ -96,6 +96,22 @@ don't provide an API to permanently delete files, nor to empty the
 trash, so you will have to do that with one of Amazon's apps or via
 the Amazon cloud drive website.
 
+### Specific options ###
+
+Here are the command line options specific to this cloud storage
+system.
+
+#### --acd-templink-threshold=SIZE ####
+
+Files this size or more will be downloaded via their `tempLink`. This
+is to work around a problem with Amazon Cloud Drive which blocks
+downloads of files bigger than about 10GB.  The default for this is
+9GB which shouldn't need to be changed.
+
+To download files above this threshold, rclone requests a `tempLink`
+which downloads the file through a temporary URL directly from the
+underlying S3 storage.
+
 ### Limitations ###
 
 Note that Amazon cloud drive is case insensitive so you can't have a

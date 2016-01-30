@@ -27,6 +27,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/oauthutil"
 	"github.com/ncw/rclone/pacer"
+	"github.com/spf13/pflag"
 	"golang.org/x/oauth2"
 )
 
@@ -44,6 +45,8 @@ const (
 
 // Globals
 var (
+	// Flags
+	tempLinkThreshold = fs.SizeSuffix(9 << 30) // Download files bigger than this via the tempLink
 	// Description of how to auth for this app
 	acdConfig = &oauth2.Config{
 		Scopes: []string{"clouddrive:read_all", "clouddrive:write"},
@@ -76,15 +79,17 @@ func init() {
 			Help: "Amazon Application Client Secret - leave blank normally.",
 		}},
 	})
+	pflag.VarP(&tempLinkThreshold, "acd-templink-threshold", "", "Files >= this size will be downloaded via their tempLink.")
 }
 
 // Fs represents a remote acd server
 type Fs struct {
-	name     string             // name of this remote
-	c        *acd.Client        // the connection to the acd server
-	root     string             // the path we are working on
-	dirCache *dircache.DirCache // Map of directory path to directory id
-	pacer    *pacer.Pacer       // pacer for API calls
+	name         string             // name of this remote
+	c            *acd.Client        // the connection to the acd server
+	noAuthClient *http.Client       // unauthenticated http client
+	root         string             // the path we are working on
+	dirCache     *dircache.DirCache // Map of directory path to directory id
+	pacer        *pacer.Pacer       // pacer for API calls
 }
 
 // Object describes a acd object
@@ -146,10 +151,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 	c := acd.NewClient(oAuthClient)
 	c.UserAgent = fs.UserAgent
 	f := &Fs{
-		name:  name,
-		root:  root,
-		c:     c,
-		pacer: pacer.New().SetMinSleep(minSleep).SetPacer(pacer.AmazonCloudDrivePacer),
+		name:         name,
+		root:         root,
+		c:            c,
+		pacer:        pacer.New().SetMinSleep(minSleep).SetPacer(pacer.AmazonCloudDrivePacer),
+		noAuthClient: fs.Config.Client(),
 	}
 
 	// Update endpoints
@@ -741,10 +747,18 @@ func (o *Object) Storable() bool {
 
 // Open an object for read
 func (o *Object) Open() (in io.ReadCloser, err error) {
+	bigObject := o.Size() >= int64(tempLinkThreshold)
+	if bigObject {
+		fs.Debug(o, "Dowloading large object via tempLink")
+	}
 	file := acd.File{Node: o.info}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
-		in, resp, err = file.Open()
+		if !bigObject {
+			in, resp, err = file.Open()
+		} else {
+			in, resp, err = file.OpenTempURL(o.fs.noAuthClient)
+		}
 		return shouldRetry(resp, err)
 	})
 	return in, err
