@@ -39,7 +39,7 @@ clean:
 	go clean ./...
 	find . -name \*~ | xargs -r rm -f
 	rm -rf build docs/public
-	rm -f rclone rclonetest/rclonetest rclone.1 MANUAL.md MANUAL.html MANUAL.txt
+	rm -f rclone rclonetest/rclonetest
 
 website:
 	cd docs && hugo
