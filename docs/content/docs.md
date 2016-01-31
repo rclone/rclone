@@ -55,6 +55,38 @@ Copy the source to the destination.  Doesn't transfer
 unchanged files, testing by size and modification time or
 MD5SUM.  Doesn't delete files from the destination.
 
+Note that it is always the contents of the directory that is synced,
+not the directory so when source:path is a directory, it's the
+contents of source:path that are copied, not the directory name and
+contents.
+
+If dest:path doesn't exist, it is created and the source:path contents
+go there.
+
+For example
+
+    rclone copy source:sourcepath dest:destpath
+
+Let's say there are two files in sourcepath
+
+    sourcepath/one.txt
+    sourcepath/two.txt
+
+This copies them to
+
+    destpath/one.txt
+    destpath/two.txt
+
+Not to
+
+    destpath/sourcepath/one.txt
+    destpath/sourcepath/two.txt
+
+If you are familiar with `rsync`, rclone always works as if you had
+written a trailing / - meaning "copy the contents of this directory".
+This applies to all commands and whether you are talking about the
+source or destination.
+
 ### rclone sync source:path dest:path ###
 
 Sync the source to the destination, changing the destination
@@ -67,6 +99,14 @@ source, including deleting files if necessary.
 
 Note that files in the destination won't be deleted if there were any
 errors at any point.
+
+It is always the contents of the directory that is synced, not the
+directory so when source:path is a directory, it's the contents of
+source:path that are copied, not the directory name and contents.  See
+extended explanation in the `copy` command above if unsure.
+
+If dest:path doesn't exist, it is created and the source:path contents
+go there.
 
 ### rclone ls remote:path ###
 
