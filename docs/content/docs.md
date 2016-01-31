@@ -459,3 +459,11 @@ For the filtering options
   * `--dump-filters`
 
 See the [filtering section](/filtering/).
+
+Exit Code
+---------
+
+If any errors occurred during the command, rclone will set a non zero
+exit code.  This allows scripts to detect when rclone operations have
+failed.
+
