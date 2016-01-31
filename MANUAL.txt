@@ -2337,6 +2337,42 @@ characters on z, so only use this option if you have to.
 
 Changelog
 
+-   v1.27 - 2016-01-31
+    -   New Features
+    -   Easier headless configuration with rclone authorize
+    -   Add support for multiple hash types - we now check SHA1 as well
+        as MD5 hashes.
+    -   delete command which does obey the filters (unlike purge)
+    -   dedupe command to deduplicate a remote. Useful with Google
+        Drive.
+    -   Add --ignore-existing flag to skip all files that exist on
+        destination.
+    -   Add --delete-before, --delete-during, --delete-after flags.
+    -   Add --memprofile flag to debug memory use.
+    -   Warn the user about files with same name but different case
+    -   Make --include rules add their implict exclude * at the end of
+        the filter list
+    -   Deprecate compiling with go1.3
+    -   Amazon Cloud Drive
+    -   Fix download of files > 10 GB
+    -   Fix directory traversal ("Next token is expired") for large
+        directory listings
+    -   Remove 409 conflict from error codes we will retry - stops very
+        long pauses
+    -   Backblaze B2
+    -   SHA1 hashes now checked by rclone core
+    -   Drive
+    -   Add --drive-auth-owner-only to only consider files owned by the
+        user - thanks Björn Harrtell
+    -   Export Google documents
+    -   Dropbox
+    -   Make file exclusion error controllable with -q
+    -   Swift
+    -   Fix upload from unprivileged user.
+    -   S3
+    -   Fix updating of mod times of files with + in.
+    -   Local
+    -   Add local file system option to disable UNC on Windows.
 -   v1.26 - 2016-01-02
     -   New Features
     -   Yandex storage backend - thank you Dmitry Burdeev ("dibu")

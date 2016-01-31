@@ -65,7 +65,7 @@ beta:	doc
 serve:	website
 	cd docs && hugo server -v -w
 
-tag:
+tag:	doc
 	@echo "Old tag is $(LAST_TAG)"
 	@echo "New tag is $(NEW_TAG)"
 	echo -e "package fs\n\n// Version of rclone\nconst Version = \"$(NEW_TAG)\"\n" | gofmt > fs/version.go

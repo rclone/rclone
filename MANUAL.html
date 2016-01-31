@@ -1500,6 +1500,37 @@ nounc = true</code></pre>
 <p>This will use UNC paths on <code>c:\src</code> but not on <code>z:\dst</code>. Of course this will cause problems if the absolute path length of a file exceeds 258 characters on z, so only use this option if you have to.</p>
 <h2 id="changelog">Changelog</h2>
 <ul>
+<li>v1.27 - 2016-01-31
+<ul>
+<li>New Features</li>
+<li>Easier headless configuration with <code>rclone authorize</code></li>
+<li>Add support for multiple hash types - we now check SHA1 as well as MD5 hashes.</li>
+<li><code>delete</code> command which does obey the filters (unlike <code>purge</code>)</li>
+<li><code>dedupe</code> command to deduplicate a remote. Useful with Google Drive.</li>
+<li>Add <code>--ignore-existing</code> flag to skip all files that exist on destination.</li>
+<li>Add <code>--delete-before</code>, <code>--delete-during</code>, <code>--delete-after</code> flags.</li>
+<li>Add <code>--memprofile</code> flag to debug memory use.</li>
+<li>Warn the user about files with same name but different case</li>
+<li>Make <code>--include</code> rules add their implict exclude * at the end of the filter list</li>
+<li>Deprecate compiling with go1.3</li>
+<li>Amazon Cloud Drive</li>
+<li>Fix download of files &gt; 10 GB</li>
+<li>Fix directory traversal (&quot;Next token is expired&quot;) for large directory listings</li>
+<li>Remove 409 conflict from error codes we will retry - stops very long pauses</li>
+<li>Backblaze B2</li>
+<li>SHA1 hashes now checked by rclone core</li>
+<li>Drive</li>
+<li>Add <code>--drive-auth-owner-only</code> to only consider files owned by the user - thanks Björn Harrtell</li>
+<li>Export Google documents</li>
+<li>Dropbox</li>
+<li>Make file exclusion error controllable with -q</li>
+<li>Swift</li>
+<li>Fix upload from unprivileged user.</li>
+<li>S3</li>
+<li>Fix updating of mod times of files with <code>+</code> in.</li>
+<li>Local</li>
+<li>Add local file system option to disable UNC on Windows.</li>
+</ul></li>
 <li>v1.26 - 2016-01-02
 <ul>
 <li>New Features</li>
