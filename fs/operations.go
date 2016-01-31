@@ -334,7 +334,7 @@ func PairCopier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 		src := pair.src
 		Stats.Transferring(src)
 		if Config.DryRun {
-			Debug(src, "Not copying as --dry-run")
+			Log(src, "Not copying as --dry-run")
 		} else {
 			Copy(fdst, pair.dst, src)
 		}
@@ -353,7 +353,7 @@ func PairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 		dst := pair.dst
 		Stats.Transferring(src)
 		if Config.DryRun {
-			Debug(src, "Not moving as --dry-run")
+			Log(src, "Not moving as --dry-run")
 		} else if haveMover {
 			// Delete destination if it exists
 			if pair.dst != nil {
@@ -386,7 +386,7 @@ func DeleteFiles(toBeDeleted ObjectsChan) {
 			defer wg.Done()
 			for dst := range toBeDeleted {
 				if Config.DryRun {
-					Debug(dst, "Not deleting as --dry-run")
+					Log(dst, "Not deleting as --dry-run")
 				} else {
 					Stats.Checking(dst)
 					err := dst.Remove()
@@ -872,7 +872,7 @@ func Purge(f Fs) error {
 	if purger, ok := f.(Purger); ok {
 		doFallbackPurge = false
 		if Config.DryRun {
-			Debug(f, "Not purging as --dry-run set")
+			Log(f, "Not purging as --dry-run set")
 		} else {
 			err = purger.Purge()
 			if err == ErrorCantPurge {

@@ -63,8 +63,7 @@ modification time or MD5SUM.  Destination is updated to match
 source, including deleting files if necessary.
 
 **Important**: Since this can cause data loss, test first with the
-`--dry-run` and `-v` flags to see exactly what would be copied and
-deleted.
+`--dry-run` flag to see exactly what would be copied and deleted.
 
 Note that files in the destination won't be deleted if there were any
 errors at any point.
@@ -227,9 +226,9 @@ connection to go through to a remote object storage system.  It is
 
 ### -n, --dry-run ###
 
-Do a trial run with no permanent changes.  Use this in combination
-with the `-v` flag to see what rclone would do without actually doing
-it.  Useful when setting up the `sync` command.
+Do a trial run with no permanent changes.  Use this to see what rclone
+would do without actually doing it.  Useful when setting up the `sync`
+command which deletes files in the destination.
 
 ### --ignore-existing ###
 
