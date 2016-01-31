@@ -413,6 +413,25 @@ func Choose(what string, defaults, help []string, newOk bool) string {
 	}
 }
 
+// ChooseNumber asks the user to enter a number between min and max
+// inclusive prompting them with what.
+func ChooseNumber(what string, min, max int) int {
+	for {
+		fmt.Printf("%s> ", what)
+		result := ReadLine()
+		i, err := strconv.Atoi(result)
+		if err != nil {
+			fmt.Printf("Bad number: %v\n", err)
+			continue
+		}
+		if i < min || i > max {
+			fmt.Printf("Out of range - %d to %d inclusive\n", min, max)
+			continue
+		}
+		return i
+	}
+}
+
 // ShowRemote shows the contents of the remote
 func ShowRemote(name string) {
 	fmt.Printf("--------------------\n")

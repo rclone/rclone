@@ -908,3 +908,62 @@ func Delete(f Fs) error {
 	close(delete)
 	return err
 }
+
+// Deduplicate interactively finds duplicate files and offers to
+// delete all but one or rename them to be different. Only useful with
+// Google Drive which can have duplicate file names.
+func Deduplicate(f Fs) error {
+	mover, ok := f.(Mover)
+	if !ok {
+		return fmt.Errorf("%v can't Move files", f)
+	}
+	Log(f, "Looking for duplicates")
+	files := map[string][]Object{}
+	for o := range f.List() {
+		remote := o.Remote()
+		files[remote] = append(files[remote], o)
+	}
+	for remote, objs := range files {
+		if len(objs) > 1 {
+			fmt.Printf("%s: Found %d duplicates\n", remote, len(objs))
+			for i, o := range objs {
+				md5sum, err := o.Hash(HashMD5)
+				if err != nil {
+					md5sum = err.Error()
+				}
+				fmt.Printf("  %d: %12d bytes, %s, md5sum %32s\n", i+1, o.Size(), o.ModTime().Format("2006-01-02 15:04:05.000000000"), md5sum)
+			}
+			switch Command([]string{"sSkip and do nothing", "kKeep just one (choose which in next step)", "rRename all to be different (by changing file.jpg to file-1.jpg)"}) {
+			case 's':
+			case 'k':
+				keep := ChooseNumber("Enter the number of the file to keep", 1, len(objs))
+				deleted := 0
+				for i, o := range objs {
+					if i+1 == keep {
+						continue
+					}
+					err := o.Remove()
+					if err != nil {
+						ErrorLog(o, "Failed to delete: %v", err)
+						continue
+					}
+					deleted++
+				}
+				fmt.Printf("%s: Deleted %d extra copies\n", remote, deleted)
+			case 'r':
+				ext := path.Ext(remote)
+				base := remote[:len(remote)-len(ext)]
+				for i, o := range objs {
+					newName := fmt.Sprintf("%s-%d%s", base, i+1, ext)
+					newObj, err := mover.Move(o, newName)
+					if err != nil {
+						ErrorLog(o, "Failed to rename: %v", err)
+						continue
+					}
+					fmt.Printf("%v: renamed from: %v\n", newObj, o)
+				}
+			}
+		}
+	}
+	return nil
+}

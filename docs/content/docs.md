@@ -136,6 +136,47 @@ Checks the files in the source and destination match.  It
 compares sizes and MD5SUMs and prints a report of files which
 don't match.  It doesn't alter the source or destination.
 
+### rclone dedupe remote:path ###
+
+Interactively find duplicate files and offer to delete all but one or
+rename them to be different. Only useful with Google Drive which can
+have duplicate file names.
+
+```
+$ rclone dedupe drive:dupes
+2016/01/31 14:13:11 Google drive root 'dupes': Looking for duplicates
+two.txt: Found 3 duplicates
+  1:       564374 bytes, 2016-01-31 14:07:22.159000000, md5sum 7594e7dc9fc28f727c42ee3e0749de81
+  2:      1744073 bytes, 2016-01-31 14:07:12.490000000, md5sum 851957f7fb6f0bc4ce76be966d336802
+  3:      6048320 bytes, 2016-01-31 14:07:02.111000000, md5sum 1eedaa9fe86fd4b8632e2ac549403b36
+s) Skip and do nothing
+k) Keep just one (choose which in next step)
+r) Rename all to be different (by changing file.jpg to file-1.jpg)
+s/k/r> r
+two-1.txt: renamed from: two.txt
+two-2.txt: renamed from: two.txt
+two-3.txt: renamed from: two.txt
+one.txt: Found 2 duplicates
+  1:         6579 bytes, 2016-01-31 14:05:01.235000000, md5sum 2b76c776249409d925ae7ccd49aea59b
+  2:         6579 bytes, 2016-01-31 12:50:30.318000000, md5sum 2b76c776249409d925ae7ccd49aea59b
+s) Skip and do nothing
+k) Keep just one (choose which in next step)
+r) Rename all to be different (by changing file.jpg to file-1.jpg)
+s/k/r> k
+Enter the number of the file to keep> 2
+one.txt: Deleted 1 extra copies
+```
+
+The result being
+
+```
+$ rclone lsl drive:dupes
+   564374 2016-01-31 14:07:22.159000000 two-1.txt
+  1744073 2016-01-31 14:07:12.490000000 two-2.txt
+  6048320 2016-01-31 14:07:02.111000000 two-3.txt
+     6579 2016-01-31 12:50:30.318000000 one.txt
+```
+
 ### rclone config ###
 
 Enter an interactive configuration session.

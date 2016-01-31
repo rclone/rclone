@@ -241,6 +241,19 @@ var Commands = []Command{
 		MaxArgs: 2,
 	},
 	{
+		Name:     "dedupe",
+		ArgsHelp: "remote:path",
+		Help: `
+        Interactively find duplicate files and offer to delete all
+        but one or rename them to be different. Only useful with
+        Google Drive which can have duplicate file names.`,
+		Run: func(fdst, fsrc fs.Fs) error {
+			return fs.Deduplicate(fdst)
+		},
+		MinArgs: 1,
+		MaxArgs: 1,
+	},
+	{
 		Name: "config",
 		Help: `
         Enter an interactive configuration session.`,
