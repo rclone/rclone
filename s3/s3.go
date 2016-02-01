@@ -17,6 +17,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"path"
 	"regexp"
@@ -27,6 +28,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/corehandlers"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -42,11 +45,23 @@ func init() {
 		NewFs: NewFs,
 		// AWS endpoints: http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region
 		Options: []fs.Option{{
+			Name: "env_auth",
+			Help: "Get AWS credentials from runtime (environment variables or EC2 meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.",
+			Examples: []fs.OptionExample{
+				{
+					Value: "false",
+					Help:  "Enter AWS credentials in the next step",
+				}, {
+					Value: "true",
+					Help:  "Get AWS credentials from the environment (env vars or IAM)",
+				},
+			},
+		}, {
 			Name: "access_key_id",
-			Help: "AWS Access Key ID - leave blank for anonymous access.",
+			Help: "AWS Access Key ID - leave blank for anonymous access or runtime credentials.",
 		}, {
 			Name: "secret_access_key",
-			Help: "AWS Secret Access Key (password) - leave blank for anonymous access.",
+			Help: "AWS Secret Access Key (password) - leave blank for anonymous access or runtime credentials.",
 		}, {
 			Name: "region",
 			Help: "Region to connect to.",
@@ -195,19 +210,38 @@ func s3ParsePath(path string) (bucket, directory string, err error) {
 // s3Connection makes a connection to s3
 func s3Connection(name string) (*s3.S3, *session.Session, error) {
 	// Make the auth
-	accessKeyID := fs.ConfigFile.MustValue(name, "access_key_id")
-	secretAccessKey := fs.ConfigFile.MustValue(name, "secret_access_key")
-	var auth *credentials.Credentials
+	v := credentials.Value{
+		AccessKeyID:     fs.ConfigFile.MustValue(name, "access_key_id"),
+		SecretAccessKey: fs.ConfigFile.MustValue(name, "secret_access_key"),
+	}
+
+	// first provider to supply a credential set "wins"
+	providers := []credentials.Provider{
+		// use static credentials if they're present (checked by provider)
+		&credentials.StaticProvider{Value: v},
+
+		// * Access Key ID:     AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY
+		// * Secret Access Key: AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY
+		&credentials.EnvProvider{},
+
+		// Pick up IAM role in case we're on EC2
+		&ec2rolecreds.EC2RoleProvider{
+			Client: ec2metadata.New(session.New(), &aws.Config{
+				HTTPClient: &http.Client{Timeout: 1 * time.Second}, // low timeout to ec2 metadata service
+			}),
+			ExpiryWindow: 3,
+		},
+	}
+	cred := credentials.NewChainCredentials(providers)
+
 	switch {
-	case accessKeyID == "" && secretAccessKey == "":
-		fs.Debug(name, "Using anonymous access for S3")
-		auth = credentials.AnonymousCredentials
-	case accessKeyID == "":
+	case fs.ConfigFile.MustBool(name, "env_auth", false) && v.AccessKeyID == "" && v.SecretAccessKey == "":
+		// if no access key/secret and iam is explicitly disabled then fall back to anon interaction
+		cred = credentials.AnonymousCredentials
+	case v.AccessKeyID == "":
 		return nil, nil, errors.New("access_key_id not found")
-	case secretAccessKey == "":
+	case v.SecretAccessKey == "":
 		return nil, nil, errors.New("secret_access_key not found")
-	default:
-		auth = credentials.NewStaticCredentials(accessKeyID, secretAccessKey, "")
 	}
 
 	endpoint := fs.ConfigFile.MustValue(name, "endpoint")
@@ -221,7 +255,7 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 	awsConfig := aws.NewConfig().
 		WithRegion(region).
 		WithMaxRetries(maxRetries).
-		WithCredentials(auth).
+		WithCredentials(cred).
 		WithEndpoint(endpoint).
 		WithHTTPClient(fs.Config.Client()).
 		WithS3ForcePathStyle(true)
@@ -235,7 +269,7 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 			if req.Config.Credentials == credentials.AnonymousCredentials {
 				return
 			}
-			sign(accessKeyID, secretAccessKey, req.HTTPRequest)
+			sign(v.AccessKeyID, v.SecretAccessKey, req.HTTPRequest)
 		}
 		c.Handlers.Sign.Clear()
 		c.Handlers.Sign.PushBackNamed(corehandlers.BuildContentLengthHandler)
