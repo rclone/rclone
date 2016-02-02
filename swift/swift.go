@@ -66,6 +66,9 @@ func init() {
 		}, {
 			Name: "region",
 			Help: "Region name - optional",
+		}, {
+			Name: "storage_url",
+			Help: "Storage URL - optional",
 		},
 		},
 	})
@@ -175,6 +178,12 @@ func NewFsWithConnection(name, root string, c *swift.Connection) (fs.Fs, error) 
 		container:         container,
 		segmentsContainer: container + "_segments",
 		root:              directory,
+	}
+	// StorageURL overloading
+	storageURL := fs.ConfigFile.MustValue(name, "storage_url")
+	if storageURL != "" {
+		f.c.StorageUrl = storageURL
+		f.c.Auth = newAuth(f.c.Auth, storageURL)
 	}
 	if f.root != "" {
 		f.root += "/"
