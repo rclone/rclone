@@ -44,7 +44,7 @@ const (
 // Globals
 var (
 	// Flags
-	driveFullList      = pflag.BoolP("drive-full-list", "", true, "Use a full listing for directory list. More data but usually quicker.")
+	driveFullList      = pflag.BoolP("drive-full-list", "", false, "Use a full listing for directory list. More data but usually quicker. (obsolete)")
 	driveAuthOwnerOnly = pflag.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user. Requires drive-full-list.")
 	driveUseTrash      = pflag.BoolP("drive-use-trash", "", false, "Send files to the trash instead of deleting permanently.")
 	driveExtensions    = pflag.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
@@ -79,6 +79,7 @@ var (
 		"text/html":                                                                 "html",
 		"text/plain":                                                                "txt",
 	}
+	extensionToMimeType map[string]string
 )
 
 // Register with Fs
@@ -102,6 +103,12 @@ func init() {
 	})
 	pflag.VarP(&driveUploadCutoff, "drive-upload-cutoff", "", "Cutoff for switching to chunked upload")
 	pflag.VarP(&chunkSize, "drive-chunk-size", "", "Upload chunk size. Must a power of 2 >= 256k.")
+
+	// Invert mimeTypeToExtension
+	extensionToMimeType = make(map[string]string, len(mimeTypeToExtension))
+	for mimeType, extension := range mimeTypeToExtension {
+		extensionToMimeType[extension] = mimeType
+	}
 }
 
 // Fs represents a remote drive server
@@ -241,16 +248,11 @@ func isPowerOfTwo(x int64) bool {
 }
 
 // parseExtensions parses drive export extensions from a string
-func (f *Fs) parseExtensions(extensions string) {
-	// Invert mimeTypeToExtension
-	var extensionToMimeType = make(map[string]string, len(mimeTypeToExtension))
-	for mimeType, extension := range mimeTypeToExtension {
-		extensionToMimeType[extension] = mimeType
-	}
+func (f *Fs) parseExtensions(extensions string) error {
 	for _, extension := range strings.Split(extensions, ",") {
 		extension = strings.ToLower(strings.TrimSpace(extension))
 		if _, found := extensionToMimeType[extension]; !found {
-			log.Fatalf("Couldn't find mime type for extension %q", extension)
+			return fmt.Errorf("Couldn't find mime type for extension %q", extension)
 		}
 		found := false
 		for _, existingExtension := range f.extensions {
@@ -263,6 +265,7 @@ func (f *Fs) parseExtensions(extensions string) {
 			f.extensions = append(f.extensions, extension)
 		}
 	}
+	return nil
 }
 
 // NewFs contstructs an Fs from the path, container:path
@@ -309,8 +312,14 @@ func NewFs(name, path string) (fs.Fs, error) {
 	f.dirCache = dircache.New(root, f.about.RootFolderId, f)
 
 	// Parse extensions
-	f.parseExtensions(*driveExtensions)
-	f.parseExtensions(defaultExtensions) // make sure there are some sensible ones on there
+	err = f.parseExtensions(*driveExtensions)
+	if err != nil {
+		return nil, err
+	}
+	err = f.parseExtensions(defaultExtensions) // make sure there are some sensible ones on there
+	if err != nil {
+		return nil, err
+	}
 
 	// Find the current root
 	err = f.dirCache.FindRoot(false)
@@ -406,6 +415,41 @@ func (f *Fs) CreateDir(pathID, leaf string) (newID string, err error) {
 	return info.Id, nil
 }
 
+// isAuthOwned checks if any of the item owners is the authenticated owner
+func isAuthOwned(item *drive.File) bool {
+	for _, owner := range item.Owners {
+		if owner.IsAuthenticatedUser {
+			return true
+		}
+	}
+	return false
+}
+
+// findExportFormat works out the optimum extension and download URL
+// for this item.
+//
+// Look through the extensions and find the first format that can be
+// converted.  If none found then return "", ""
+func (f *Fs) findExportFormat(filepath string, item *drive.File) (extension, link string) {
+	// Warn about unknown export formats
+	for mimeType := range item.ExportLinks {
+		if _, ok := mimeTypeToExtension[mimeType]; !ok {
+			fs.Debug(filepath, "Unknown export type %q - ignoring", mimeType)
+		}
+	}
+
+	// Find the first export format we can
+	for _, extension := range f.extensions {
+		mimeType := extensionToMimeType[extension]
+		if link, ok := item.ExportLinks[mimeType]; ok {
+			return extension, link
+		}
+	}
+
+	// else return empty
+	return "", ""
+}
+
 // Path should be directory path either "" or "path/"
 //
 // List the directory using a recursive list from the root
@@ -417,12 +461,15 @@ func (f *Fs) listDirRecursive(dirID string, path string, out fs.ObjectsChan) err
 	// Make the API request
 	var wg sync.WaitGroup
 	_, err := f.listAll(dirID, "", false, false, func(item *drive.File) bool {
-		// Recurse on directories
-		if item.MimeType == driveFolderType {
+		filepath := path + item.Title
+		switch {
+		case *driveAuthOwnerOnly && !isAuthOwned(item):
+			// ignore object or directory
+		case item.MimeType == driveFolderType:
+			// Recurse on directories
 			wg.Add(1)
-			folder := path + item.Title + "/"
+			folder := filepath + "/"
 			fs.Debug(f, "Reading %s", folder)
-
 			go func() {
 				defer wg.Done()
 				err := f.listDirRecursive(item.Id, folder, out)
@@ -432,54 +479,27 @@ func (f *Fs) listDirRecursive(dirID string, path string, out fs.ObjectsChan) err
 				}
 
 			}()
-		} else {
-			filepath := path + item.Title
-			if item.Md5Checksum != "" {
-				// If item has MD5 sum it is a file stored on drive
-				if o := f.newFsObjectWithInfo(filepath, item); o != nil {
+		case item.Md5Checksum != "":
+			// If item has MD5 sum it is a file stored on drive
+			if o := f.newFsObjectWithInfo(filepath, item); o != nil {
+				out <- o
+			}
+		case len(item.ExportLinks) != 0:
+			// If item has export links then it is a google doc
+			extension, link := f.findExportFormat(filepath, item)
+			if extension == "" {
+				fs.Debug(filepath, "No export formats found")
+			} else {
+				if o := f.newFsObjectWithInfo(filepath+"."+extension, item); o != nil {
+					obj := o.(*Object)
+					obj.isDocument = true
+					obj.url = link
+					obj.bytes = -1
 					out <- o
 				}
-			} else if len(item.ExportLinks) != 0 {
-				// If item has export links then it is a google doc
-				var firstExtension, firstLink string
-				var extension, link string
-			outer:
-				for exportMimeType, exportLink := range item.ExportLinks {
-					exportExtension, ok := mimeTypeToExtension[exportMimeType]
-					if !ok {
-						fs.Debug(filepath, "Unknown export type %q - ignoring", exportMimeType)
-						continue
-					}
-					if firstExtension == "" {
-						firstExtension = exportExtension
-						firstLink = exportLink
-					}
-					for _, preferredExtension := range f.extensions {
-						if exportExtension == preferredExtension {
-							extension = exportExtension
-							link = exportLink
-							break outer
-						}
-					}
-				}
-				if extension == "" {
-					extension = firstExtension
-					link = firstLink
-				}
-				if extension == "" {
-					fs.Debug(filepath, "No export formats found")
-				} else {
-					if o := f.newFsObjectWithInfo(filepath+"."+extension, item); o != nil {
-						obj := o.(*Object)
-						obj.isDocument = true
-						obj.url = link
-						obj.bytes = -1
-						out <- o
-					}
-				}
-			} else {
-				fs.Debug(filepath, "Ignoring unknown object")
 			}
+		default:
+			fs.Debug(filepath, "Ignoring unknown object")
 		}
 		return false
 	})
@@ -494,87 +514,6 @@ func (f *Fs) listDirRecursive(dirID string, path string, out fs.ObjectsChan) err
 	return nil
 }
 
-// isAuthOwned checks if any of the item owners is the authenticated owner
-func isAuthOwned(item *drive.File) bool {
-	for _, owner := range item.Owners {
-		if owner.IsAuthenticatedUser {
-			return true
-		}
-	}
-	return false
-}
-
-// Path should be directory path either "" or "path/"
-//
-// List the directory using a full listing and filtering out unwanted
-// items
-//
-// This is fast in terms of number of API calls, but slow in terms of
-// fetching more data than it needs
-func (f *Fs) listDirFull(dirID string, path string, out fs.ObjectsChan) error {
-	// Orphans waiting for their parent
-	orphans := make(map[string][]*drive.File)
-
-	var outputItem func(*drive.File, string) // forward def for recursive fn
-
-	// Output an item or directory
-	outputItem = func(item *drive.File, directory string) {
-		// fmt.Printf("found %q %q parent %q dir %q ok %s\n", item.Title, item.Id, parentId, directory, ok)
-		path := item.Title
-		if directory != "" {
-			path = directory + "/" + path
-		}
-		if *driveAuthOwnerOnly && !isAuthOwned(item) {
-			return
-		}
-		if item.MimeType == driveFolderType {
-			// Put the directory into the dircache
-			f.dirCache.Put(path, item.Id)
-			// fmt.Printf("directory %s %s %s\n", path, item.Title, item.Id)
-			// Collect the orphans if any
-			for _, orphan := range orphans[item.Id] {
-				// fmt.Printf("rescuing orphan %s %s %s\n", path, orphan.Title, orphan.Id)
-				outputItem(orphan, path)
-			}
-			delete(orphans, item.Id)
-		} else {
-			// fmt.Printf("file %s %s %s\n", path, item.Title, item.Id)
-			// If item has no MD5 sum it isn't stored on drive, so ignore it
-			if item.Md5Checksum != "" {
-				if fs := f.newFsObjectWithInfo(path, item); fs != nil {
-					out <- fs
-				}
-			}
-		}
-	}
-
-	// Make the API request
-	_, err := f.listAll("", "", false, false, func(item *drive.File) bool {
-		if len(item.Parents) == 0 {
-			// fmt.Printf("no parents %s %s: %#v\n", item.Title, item.Id, item)
-			return false
-		}
-		parentID := item.Parents[0].Id
-		directory, ok := f.dirCache.GetInv(parentID)
-		if !ok {
-			// Haven't found the parent yet so add to orphans
-			// fmt.Printf("orphan[%s] %s %s\n", parentID, item.Title, item.Id)
-			orphans[parentID] = append(orphans[parentID], item)
-		} else {
-			outputItem(item, directory)
-		}
-		return false
-	})
-	if err != nil {
-		return err
-	}
-
-	if len(orphans) > 0 {
-		// fmt.Printf("Orphans!!!! %v", orphans)
-	}
-	return nil
-}
-
 // List walks the path returning a channel of FsObjects
 func (f *Fs) List() fs.ObjectsChan {
 	out := make(fs.ObjectsChan, fs.Config.Checkers)
@@ -585,11 +524,7 @@ func (f *Fs) List() fs.ObjectsChan {
 			fs.Stats.Error()
 			fs.ErrorLog(f, "Couldn't find root: %s", err)
 		} else {
-			if f.root == "" && *driveFullList {
-				err = f.listDirFull(f.dirCache.RootID(), "", out)
-			} else {
-				err = f.listDirRecursive(f.dirCache.RootID(), "", out)
-			}
+			err = f.listDirRecursive(f.dirCache.RootID(), "", out)
 			if err != nil {
 				fs.Stats.Error()
 				fs.ErrorLog(f, "List failed: %s", err)
