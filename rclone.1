@@ -1,0 +1,3841 @@
+.\"t
+.TH "rclone" "1" "Feb 06, 2016" "User Manual" ""
+.SH Rclone
+.PP
+[IMAGE: Logo (http://rclone.org/img/rclone-120x120.png)] (http://rclone.org/)
+.PP
+Rclone is a command line program to sync files and directories to and
+from
+.IP \[bu] 2
+Google Drive
+.IP \[bu] 2
+Amazon S3
+.IP \[bu] 2
+Openstack Swift / Rackspace cloud files / Memset Memstore
+.IP \[bu] 2
+Dropbox
+.IP \[bu] 2
+Google Cloud Storage
+.IP \[bu] 2
+Amazon Cloud Drive
+.IP \[bu] 2
+Microsoft One Drive
+.IP \[bu] 2
+Hubic
+.IP \[bu] 2
+Backblaze B2
+.IP \[bu] 2
+Yandex Disk
+.IP \[bu] 2
+The local filesystem
+.PP
+Features
+.IP \[bu] 2
+MD5/SHA1 hashes checked at all times for file integrity
+.IP \[bu] 2
+Timestamps preserved on files
+.IP \[bu] 2
+Partial syncs supported on a whole file basis
+.IP \[bu] 2
+Copy mode to just copy new/changed files
+.IP \[bu] 2
+Sync (one way) mode to make a directory identical
+.IP \[bu] 2
+Check mode to check for file hash equality
+.IP \[bu] 2
+Can sync to and from network, eg two different cloud accounts
+.PP
+Links
+.IP \[bu] 2
+Home page (http://rclone.org/)
+.IP \[bu] 2
+Github project page for source and bug
+tracker (http://github.com/ncw/rclone)
+.IP \[bu] 2
+Google+ page
+.RS 2
+.RE
+.IP \[bu] 2
+Downloads (http://rclone.org/downloads/)
+.SS Install
+.PP
+Rclone is a Go program and comes as a single binary file.
+.PP
+Download (http://rclone.org/downloads/) the relevant binary.
+.PP
+Or alternatively if you have Go installed use
+.IP
+.nf
+\f[C]
+go\ get\ github.com/ncw/rclone
+\f[]
+.fi
+.PP
+and this will build the binary in \f[C]$GOPATH/bin\f[].
+If you have built rclone before then you will want to update its
+dependencies first with this (remove \f[C]\-f\f[] if using go < 1.4)
+.IP
+.nf
+\f[C]
+go\ get\ \-u\ \-v\ \-f\ github.com/ncw/rclone/...
+\f[]
+.fi
+.PP
+See the Usage section (http://rclone.org/docs/) of the docs for how to
+use rclone, or run \f[C]rclone\ \-h\f[].
+.SS linux binary downloaded files install example
+.IP
+.nf
+\f[C]
+unzip\ rclone\-v1.17\-linux\-amd64.zip
+cd\ rclone\-v1.17\-linux\-amd64
+#copy\ binary\ file
+sudo\ cp\ rclone\ /usr/sbin/
+sudo\ chown\ root:root\ /usr/sbin/rclone
+sudo\ chmod\ 755\ /usr/sbin/rclone
+#install\ manpage
+sudo\ mkdir\ \-p\ /usr/local/share/man/man1
+sudo\ cp\ rclone.1\ /usr/local/share/man/man1/
+sudo\ mandb
+\f[]
+.fi
+.SS Configure
+.PP
+First you\[aq]ll need to configure rclone.
+As the object storage systems have quite complicated authentication
+these are kept in a config file \f[C]\&.rclone.conf\f[] in your home
+directory by default.
+(You can use the \f[C]\-\-config\f[] option to choose a different config
+file.)
+.PP
+The easiest way to make the config is to run rclone with the config
+option:
+.IP
+.nf
+\f[C]
+rclone\ config
+\f[]
+.fi
+.PP
+See the following for detailed instructions for
+.IP \[bu] 2
+Google drive (http://rclone.org/drive/)
+.IP \[bu] 2
+Amazon S3 (http://rclone.org/s3/)
+.IP \[bu] 2
+Swift / Rackspace Cloudfiles / Memset
+Memstore (http://rclone.org/swift/)
+.IP \[bu] 2
+Dropbox (http://rclone.org/dropbox/)
+.IP \[bu] 2
+Google Cloud Storage (http://rclone.org/googlecloudstorage/)
+.IP \[bu] 2
+Local filesystem (http://rclone.org/local/)
+.IP \[bu] 2
+Amazon Cloud Drive (http://rclone.org/amazonclouddrive/)
+.IP \[bu] 2
+Backblaze B2 (http://rclone.org/b2/)
+.IP \[bu] 2
+Hubic (http://rclone.org/hubic/)
+.IP \[bu] 2
+Microsoft One Drive (http://rclone.org/onedrive/)
+.IP \[bu] 2
+Yandex Disk (http://rclone.org/yandex/)
+.SS Usage
+.PP
+Rclone syncs a directory tree from one storage system to another.
+.PP
+Its syntax is like this
+.IP
+.nf
+\f[C]
+Syntax:\ [options]\ subcommand\ <parameters>\ <parameters...>
+\f[]
+.fi
+.PP
+Source and destination paths are specified by the name you gave the
+storage system in the config file then the sub path, eg "drive:myfolder"
+to look at "myfolder" in Google drive.
+.PP
+You can define as many storage paths as you like in the config file.
+.SS Subcommands
+.SS rclone copy source:path dest:path
+.PP
+Copy the source to the destination.
+Doesn\[aq]t transfer unchanged files, testing by size and modification
+time or MD5SUM.
+Doesn\[aq]t delete files from the destination.
+.PP
+Note that it is always the contents of the directory that is synced, not
+the directory so when source:path is a directory, it\[aq]s the contents
+of source:path that are copied, not the directory name and contents.
+.PP
+If dest:path doesn\[aq]t exist, it is created and the source:path
+contents go there.
+.PP
+For example
+.IP
+.nf
+\f[C]
+rclone\ copy\ source:sourcepath\ dest:destpath
+\f[]
+.fi
+.PP
+Let\[aq]s say there are two files in sourcepath
+.IP
+.nf
+\f[C]
+sourcepath/one.txt
+sourcepath/two.txt
+\f[]
+.fi
+.PP
+This copies them to
+.IP
+.nf
+\f[C]
+destpath/one.txt
+destpath/two.txt
+\f[]
+.fi
+.PP
+Not to
+.IP
+.nf
+\f[C]
+destpath/sourcepath/one.txt
+destpath/sourcepath/two.txt
+\f[]
+.fi
+.PP
+If you are familiar with \f[C]rsync\f[], rclone always works as if you
+had written a trailing / \- meaning "copy the contents of this
+directory".
+This applies to all commands and whether you are talking about the
+source or destination.
+.SS rclone sync source:path dest:path
+.PP
+Sync the source to the destination, changing the destination only.
+Doesn\[aq]t transfer unchanged files, testing by size and modification
+time or MD5SUM.
+Destination is updated to match source, including deleting files if
+necessary.
+.PP
+\f[B]Important\f[]: Since this can cause data loss, test first with the
+\f[C]\-\-dry\-run\f[] flag to see exactly what would be copied and
+deleted.
+.PP
+Note that files in the destination won\[aq]t be deleted if there were
+any errors at any point.
+.PP
+It is always the contents of the directory that is synced, not the
+directory so when source:path is a directory, it\[aq]s the contents of
+source:path that are copied, not the directory name and contents.
+See extended explanation in the \f[C]copy\f[] command above if unsure.
+.PP
+If dest:path doesn\[aq]t exist, it is created and the source:path
+contents go there.
+.SS rclone ls remote:path
+.PP
+List all the objects in the the path with size and path.
+.SS rclone lsd remote:path
+.PP
+List all directories/containers/buckets in the the path.
+.SS rclone lsl remote:path
+.PP
+List all the objects in the the path with modification time, size and
+path.
+.SS rclone md5sum remote:path
+.PP
+Produces an md5sum file for all the objects in the path.
+This is in the same format as the standard md5sum tool produces.
+.SS rclone sha1sum remote:path
+.PP
+Produces an sha1sum file for all the objects in the path.
+This is in the same format as the standard sha1sum tool produces.
+.SS rclone size remote:path
+.PP
+Prints the total size of objects in remote:path and the number of
+objects.
+.SS rclone mkdir remote:path
+.PP
+Make the path if it doesn\[aq]t already exist
+.SS rclone rmdir remote:path
+.PP
+Remove the path.
+Note that you can\[aq]t remove a path with objects in it, use purge for
+that.
+.SS rclone purge remote:path
+.PP
+Remove the path and all of its contents.
+Note that this does not obey include/exclude filters \- everything will
+be removed.
+Use \f[C]delete\f[] if you want to selectively delete files.
+.SS rclone delete remote:path
+.PP
+Remove the contents of path.
+Unlike \f[C]purge\f[] it obeys include/exclude filters so can be used to
+selectively delete files.
+.PP
+Eg delete all files bigger than 100MBytes
+.PP
+Check what would be deleted first (use either)
+.IP
+.nf
+\f[C]
+rclone\ \-\-min\-size\ 100M\ lsl\ remote:path
+rclone\ \-\-dry\-run\ \-\-min\-size\ 100M\ delete\ remote:path
+\f[]
+.fi
+.PP
+Then delete
+.IP
+.nf
+\f[C]
+rclone\ \-\-min\-size\ 100M\ delete\ remote:path
+\f[]
+.fi
+.PP
+That reads "delete everything with a minimum size of 100 MB", hence
+delete all files bigger than 100MBytes.
+.SS rclone check source:path dest:path
+.PP
+Checks the files in the source and destination match.
+It compares sizes and MD5SUMs and prints a report of files which
+don\[aq]t match.
+It doesn\[aq]t alter the source or destination.
+.SS rclone dedupe remote:path
+.PP
+Interactively find duplicate files and offer to delete all but one or
+rename them to be different.
+Only useful with Google Drive which can have duplicate file names.
+.IP
+.nf
+\f[C]
+$\ rclone\ dedupe\ drive:dupes
+2016/01/31\ 14:13:11\ Google\ drive\ root\ \[aq]dupes\[aq]:\ Looking\ for\ duplicates
+two.txt:\ Found\ 3\ duplicates
+\ \ 1:\ \ \ \ \ \ \ 564374\ bytes,\ 2016\-01\-31\ 14:07:22.159000000,\ md5sum\ 7594e7dc9fc28f727c42ee3e0749de81
+\ \ 2:\ \ \ \ \ \ 1744073\ bytes,\ 2016\-01\-31\ 14:07:12.490000000,\ md5sum\ 851957f7fb6f0bc4ce76be966d336802
+\ \ 3:\ \ \ \ \ \ 6048320\ bytes,\ 2016\-01\-31\ 14:07:02.111000000,\ md5sum\ 1eedaa9fe86fd4b8632e2ac549403b36
+s)\ Skip\ and\ do\ nothing
+k)\ Keep\ just\ one\ (choose\ which\ in\ next\ step)
+r)\ Rename\ all\ to\ be\ different\ (by\ changing\ file.jpg\ to\ file\-1.jpg)
+s/k/r>\ r
+two\-1.txt:\ renamed\ from:\ two.txt
+two\-2.txt:\ renamed\ from:\ two.txt
+two\-3.txt:\ renamed\ from:\ two.txt
+one.txt:\ Found\ 2\ duplicates
+\ \ 1:\ \ \ \ \ \ \ \ \ 6579\ bytes,\ 2016\-01\-31\ 14:05:01.235000000,\ md5sum\ 2b76c776249409d925ae7ccd49aea59b
+\ \ 2:\ \ \ \ \ \ \ \ \ 6579\ bytes,\ 2016\-01\-31\ 12:50:30.318000000,\ md5sum\ 2b76c776249409d925ae7ccd49aea59b
+s)\ Skip\ and\ do\ nothing
+k)\ Keep\ just\ one\ (choose\ which\ in\ next\ step)
+r)\ Rename\ all\ to\ be\ different\ (by\ changing\ file.jpg\ to\ file\-1.jpg)
+s/k/r>\ k
+Enter\ the\ number\ of\ the\ file\ to\ keep>\ 2
+one.txt:\ Deleted\ 1\ extra\ copies
+\f[]
+.fi
+.PP
+The result being
+.IP
+.nf
+\f[C]
+$\ rclone\ lsl\ drive:dupes
+\ \ \ 564374\ 2016\-01\-31\ 14:07:22.159000000\ two\-1.txt
+\ \ 1744073\ 2016\-01\-31\ 14:07:12.490000000\ two\-2.txt
+\ \ 6048320\ 2016\-01\-31\ 14:07:02.111000000\ two\-3.txt
+\ \ \ \ \ 6579\ 2016\-01\-31\ 12:50:30.318000000\ one.txt
+\f[]
+.fi
+.SS rclone config
+.PP
+Enter an interactive configuration session.
+.SS rclone help
+.PP
+Prints help on rclone commands and options.
+.SS Server Side Copy
+.PP
+Drive, S3, Dropbox, Swift and Google Cloud Storage support server side
+copy.
+.PP
+This means if you want to copy one folder to another then rclone
+won\[aq]t download all the files and re\-upload them; it will instruct
+the server to copy them in place.
+.PP
+Eg
+.IP
+.nf
+\f[C]
+rclone\ copy\ s3:oldbucket\ s3:newbucket
+\f[]
+.fi
+.PP
+Will copy the contents of \f[C]oldbucket\f[] to \f[C]newbucket\f[]
+without downloading and re\-uploading.
+.PP
+Remotes which don\[aq]t support server side copy (eg local)
+\f[B]will\f[] download and re\-upload in this case.
+.PP
+Server side copies are used with \f[C]sync\f[] and \f[C]copy\f[] and
+will be identified in the log when using the \f[C]\-v\f[] flag.
+.PP
+Server side copies will only be attempted if the remote names are the
+same.
+.PP
+This can be used when scripting to make aged backups efficiently, eg
+.IP
+.nf
+\f[C]
+rclone\ sync\ remote:current\-backup\ remote:previous\-backup
+rclone\ sync\ /path/to/files\ remote:current\-backup
+\f[]
+.fi
+.SS Options
+.PP
+Rclone has a number of options to control its behaviour.
+.PP
+Options which use TIME use the go time parser.
+A duration string is a possibly signed sequence of decimal numbers, each
+with optional fraction and a unit suffix, such as "300ms", "\-1.5h" or
+"2h45m".
+Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+.PP
+Options which use SIZE use kByte by default.
+However a suffix of \f[C]k\f[] for kBytes, \f[C]M\f[] for MBytes and
+\f[C]G\f[] for GBytes may be used.
+These are the binary units, eg 2**10, 2**20, 2**30 respectively.
+.SS \-\-bwlimit=SIZE
+.PP
+Bandwidth limit in kBytes/s, or use suffix k|M|G.
+The default is \f[C]0\f[] which means to not limit bandwidth.
+.PP
+For example to limit bandwidth usage to 10 MBytes/s use
+\f[C]\-\-bwlimit\ 10M\f[]
+.PP
+This only limits the bandwidth of the data transfer, it doesn\[aq]t
+limit the bandwith of the directory listings etc.
+.SS \-\-checkers=N
+.PP
+The number of checkers to run in parallel.
+Checkers do the equality checking of files during a sync.
+For some storage systems (eg s3, swift, dropbox) this can take a
+significant amount of time so they are run in parallel.
+.PP
+The default is to run 8 checkers in parallel.
+.SS \-c, \-\-checksum
+.PP
+Normally rclone will look at modification time and size of files to see
+if they are equal.
+If you set this flag then rclone will check the file hash and size to
+determine if files are equal.
+.PP
+This is useful when the remote doesn\[aq]t support setting modified time
+and a more accurate sync is desired than just checking the file size.
+.PP
+This is very useful when transferring between remotes which store the
+same hash type on the object, eg Drive and Swift.
+For details of which remotes support which hash type see the table in
+the overview section (http://rclone.org/overview/).
+.PP
+Eg \f[C]rclone\ \-\-checksum\ sync\ s3:/bucket\ swift:/bucket\f[] would
+run much quicker than without the \f[C]\-\-checksum\f[] flag.
+.PP
+When using this flag, rclone won\[aq]t update mtimes of remote files if
+they are incorrect as it would normally.
+.SS \-\-config=CONFIG_FILE
+.PP
+Specify the location of the rclone config file.
+Normally this is in your home directory as a file called
+\f[C]\&.rclone.conf\f[].
+If you run \f[C]rclone\ \-h\f[] and look at the help for the
+\f[C]\-\-config\f[] option you will see where the default location is
+for you.
+Use this flag to override the config location, eg
+\f[C]rclone\ \-\-config=".myconfig"\ .config\f[].
+.SS \-\-contimeout=TIME
+.PP
+Set the connection timeout.
+This should be in go time format which looks like \f[C]5s\f[] for 5
+seconds, \f[C]10m\f[] for 10 minutes, or \f[C]3h30m\f[].
+.PP
+The connection timeout is the amount of time rclone will wait for a
+connection to go through to a remote object storage system.
+It is \f[C]1m\f[] by default.
+.SS \-n, \-\-dry\-run
+.PP
+Do a trial run with no permanent changes.
+Use this to see what rclone would do without actually doing it.
+Useful when setting up the \f[C]sync\f[] command which deletes files in
+the destination.
+.SS \-\-ignore\-existing
+.PP
+Using this option will make rclone unconditionally skip all files that
+exist on the destination, no matter the content of these files.
+.PP
+While this isn\[aq]t a generally recommended option, it can be useful in
+cases where your files change due to encryption.
+However, it cannot correct partial transfers in case a transfer was
+interrupted.
+.SS \-\-log\-file=FILE
+.PP
+Log all of rclone\[aq]s output to FILE.
+This is not active by default.
+This can be useful for tracking down problems with syncs in combination
+with the \f[C]\-v\f[] flag.
+.SS \-\-modify\-window=TIME
+.PP
+When checking whether a file has been modified, this is the maximum
+allowed time difference that a file can have and still be considered
+equivalent.
+.PP
+The default is \f[C]1ns\f[] unless this is overridden by a remote.
+For example OS X only stores modification times to the nearest second so
+if you are reading and writing to an OS X filing system this will be
+\f[C]1s\f[] by default.
+.PP
+This command line flag allows you to override that computed default.
+.SS \-q, \-\-quiet
+.PP
+Normally rclone outputs stats and a completion message.
+If you set this flag it will make as little output as possible.
+.SS \-\-retries int
+.PP
+Retry the entire sync if it fails this many times it fails (default 3).
+.PP
+Some remotes can be unreliable and a few retries helps pick up the files
+which didn\[aq]t get transferred because of errors.
+.PP
+Disable retries with \f[C]\-\-retries\ 1\f[].
+.SS \-\-size\-only
+.PP
+Normally rclone will look at modification time and size of files to see
+if they are equal.
+If you set this flag then rclone will check only the size.
+.PP
+This can be useful transferring files from dropbox which have been
+modified by the desktop sync client which doesn\[aq]t set checksums of
+modification times in the same way as rclone.
+.PP
+When using this flag, rclone won\[aq]t update mtimes of remote files if
+they are incorrect as it would normally.
+.SS \-\-stats=TIME
+.PP
+Rclone will print stats at regular intervals to show its progress.
+.PP
+This sets the interval.
+.PP
+The default is \f[C]1m\f[].
+Use 0 to disable.
+.SS \-\-delete\-(before,during,after)
+.PP
+This option allows you to specify when files on your destination are
+deleted when you sync folders.
+.PP
+Specifying the value \f[C]\-\-delete\-before\f[] will delete all files
+present on the destination, but not on the source \f[I]before\f[]
+starting the transfer of any new or updated files.
+.PP
+Specifying \f[C]\-\-delete\-during\f[] (default value) will delete files
+while checking and uploading files.
+This is usually the fastest option.
+.PP
+Specifying \f[C]\-\-delete\-after\f[] will delay deletion of files until
+all new/updated files have been successfully transfered.
+.SS \-\-timeout=TIME
+.PP
+This sets the IO idle timeout.
+If a transfer has started but then becomes idle for this long it is
+considered broken and disconnected.
+.PP
+The default is \f[C]5m\f[].
+Set to 0 to disable.
+.SS \-\-transfers=N
+.PP
+The number of file transfers to run in parallel.
+It can sometimes be useful to set this to a smaller number if the remote
+is giving a lot of timeouts or bigger if you have lots of bandwidth and
+a fast remote.
+.PP
+The default is to run 4 file transfers in parallel.
+.SS \-v, \-\-verbose
+.PP
+If you set this flag, rclone will become very verbose telling you about
+every file it considers and transfers.
+.PP
+Very useful for debugging.
+.SS \-V, \-\-version
+.PP
+Prints the version number
+.SS Developer options
+.PP
+These options are useful when developing or debugging rclone.
+There are also some more remote specific options which aren\[aq]t
+documented here which are used for testing.
+These start with remote name eg \f[C]\-\-drive\-test\-option\f[] \- see
+the docs for the remote in question.
+.SS \-\-cpuprofile=FILE
+.PP
+Write CPU profile to file.
+This can be analysed with \f[C]go\ tool\ pprof\f[].
+.SS \-\-dump\-bodies
+.PP
+Dump HTTP headers and bodies \- may contain sensitive info.
+Can be very verbose.
+Useful for debugging only.
+.SS \-\-dump\-filters
+.PP
+Dump the filters to the output.
+Useful to see exactly what include and exclude options are filtering on.
+.SS \-\-dump\-headers
+.PP
+Dump HTTP headers \- may contain sensitive info.
+Can be very verbose.
+Useful for debugging only.
+.SS \-\-memprofile=FILE
+.PP
+Write memory profile to file.
+This can be analysed with \f[C]go\ tool\ pprof\f[].
+.SS \-\-no\-check\-certificate=true/false
+.PP
+\f[C]\-\-no\-check\-certificate\f[] controls whether a client verifies
+the server\[aq]s certificate chain and host name.
+If \f[C]\-\-no\-check\-certificate\f[] is true, TLS accepts any
+certificate presented by the server and any host name in that
+certificate.
+In this mode, TLS is susceptible to man\-in\-the\-middle attacks.
+.PP
+This option defaults to \f[C]false\f[].
+.PP
+\f[B]This should be used only for testing.\f[]
+.SS Filtering
+.PP
+For the filtering options
+.IP \[bu] 2
+\f[C]\-\-delete\-excluded\f[]
+.IP \[bu] 2
+\f[C]\-\-filter\f[]
+.IP \[bu] 2
+\f[C]\-\-filter\-from\f[]
+.IP \[bu] 2
+\f[C]\-\-exclude\f[]
+.IP \[bu] 2
+\f[C]\-\-exclude\-from\f[]
+.IP \[bu] 2
+\f[C]\-\-include\f[]
+.IP \[bu] 2
+\f[C]\-\-include\-from\f[]
+.IP \[bu] 2
+\f[C]\-\-files\-from\f[]
+.IP \[bu] 2
+\f[C]\-\-min\-size\f[]
+.IP \[bu] 2
+\f[C]\-\-max\-size\f[]
+.IP \[bu] 2
+\f[C]\-\-min\-age\f[]
+.IP \[bu] 2
+\f[C]\-\-max\-age\f[]
+.IP \[bu] 2
+\f[C]\-\-dump\-filters\f[]
+.PP
+See the filtering section (http://rclone.org/filtering/).
+.SS Exit Code
+.PP
+If any errors occurred during the command, rclone will set a non zero
+exit code.
+This allows scripts to detect when rclone operations have failed.
+.SH Configuring rclone on a remote / headless machine
+.PP
+Some of the configurations (those involving oauth2) require an Internet
+connected web browser.
+.PP
+If you are trying to set rclone up on a remote or headless box with no
+browser available on it (eg a NAS or a server in a datacenter) then you
+will need to use an alternative means of configuration.
+There are two ways of doing it, described below.
+.SS Configuring using rclone authorize
+.PP
+On the headless box
+.IP
+.nf
+\f[C]
+\&...
+Remote\ config
+Use\ auto\ config?
+\ *\ Say\ Y\ if\ not\ sure
+\ *\ Say\ N\ if\ you\ are\ working\ on\ a\ remote\ or\ headless\ machine
+y)\ Yes
+n)\ No
+y/n>\ n
+For\ this\ to\ work,\ you\ will\ need\ rclone\ available\ on\ a\ machine\ that\ has\ a\ web\ browser\ available.
+Execute\ the\ following\ on\ your\ machine:
+\ \ \ \ rclone\ authorize\ "amazon\ cloud\ drive"
+Then\ paste\ the\ result\ below:
+result>
+\f[]
+.fi
+.PP
+Then on your main desktop machine
+.IP
+.nf
+\f[C]
+rclone\ authorize\ "amazon\ cloud\ drive"
+If\ your\ browser\ doesn\[aq]t\ open\ automatically\ go\ to\ the\ following\ link:\ http://127.0.0.1:53682/auth
+Log\ in\ and\ authorize\ rclone\ for\ access
+Waiting\ for\ code...
+Got\ code
+Paste\ the\ following\ into\ your\ remote\ machine\ \-\-\->
+SECRET_TOKEN
+<\-\-\-End\ paste
+\f[]
+.fi
+.PP
+Then back to the headless box, paste in the code
+.IP
+.nf
+\f[C]
+result>\ SECRET_TOKEN
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+[acd12]
+client_id\ =\ 
+client_secret\ =\ 
+token\ =\ SECRET_TOKEN
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+y)\ Yes\ this\ is\ OK
+e)\ Edit\ this\ remote
+d)\ Delete\ this\ remote
+y/e/d>
+\f[]
+.fi
+.SS Configuring by copying the config file
+.PP
+Rclone stores all of its config in a single configuration file.
+This can easily be copied to configure a remote rclone.
+.PP
+So first configure rclone on your desktop machine
+.IP
+.nf
+\f[C]
+rclone\ config
+\f[]
+.fi
+.PP
+to set up the config file.
+.PP
+Find the config file by running \f[C]rclone\ \-h\f[] and looking for the
+help for the \f[C]\-\-config\f[] option
+.IP
+.nf
+\f[C]
+$\ rclone\ \-h
+[snip]
+\ \ \ \ \ \ \-\-config="/home/user/.rclone.conf":\ Config\ file.
+[snip]
+\f[]
+.fi
+.PP
+Now transfer it to the remote box (scp, cut paste, ftp, sftp etc) and
+place it in the correct place (use \f[C]rclone\ \-h\f[] on the remote
+box to find out where).
+.SH Filtering, includes and excludes
+.PP
+Rclone has a sophisticated set of include and exclude rules.
+Some of these are based on patterns and some on other things like file
+size.
+.PP
+The filters are applied for the \f[C]copy\f[], \f[C]sync\f[],
+\f[C]move\f[], \f[C]ls\f[], \f[C]lsl\f[], \f[C]md5sum\f[],
+\f[C]sha1sum\f[], \f[C]size\f[], \f[C]delete\f[] and \f[C]check\f[]
+operations.
+Note that \f[C]purge\f[] does not obey the filters.
+.PP
+Each path as it passes through rclone is matched against the include and
+exclude rules.
+The paths are matched without a leading \f[C]/\f[].
+.PP
+For example the files might be passed to the matching engine like this
+.IP \[bu] 2
+\f[C]file1.jpg\f[]
+.IP \[bu] 2
+\f[C]file2.jpg\f[]
+.IP \[bu] 2
+\f[C]directory/file3.jpg\f[]
+.SS Patterns
+.PP
+The patterns used to match files for inclusion or exclusion are based on
+"file globs" as used by the unix shell.
+.PP
+If the pattern starts with a \f[C]/\f[] then it only matches at the top
+level of the directory tree.
+If it doesn\[aq]t start with \f[C]/\f[] then it is matched starting at
+the end of the path, but it will only match a complete path element.
+.IP
+.nf
+\f[C]
+file.jpg\ \ \-\ matches\ "file.jpg"
+\ \ \ \ \ \ \ \ \ \ \-\ matches\ "directory/file.jpg"
+\ \ \ \ \ \ \ \ \ \ \-\ doesn\[aq]t\ match\ "afile.jpg"
+\ \ \ \ \ \ \ \ \ \ \-\ doesn\[aq]t\ match\ "directory/afile.jpg"
+/file.jpg\ \-\ matches\ "file.jpg"
+\ \ \ \ \ \ \ \ \ \ \-\ doesn\[aq]t\ match\ "afile.jpg"
+\ \ \ \ \ \ \ \ \ \ \-\ doesn\[aq]t\ match\ "directory/file.jpg"
+\f[]
+.fi
+.PP
+A \f[C]*\f[] matches anything but not a \f[C]/\f[].
+.IP
+.nf
+\f[C]
+*.jpg\ \ \-\ matches\ "file.jpg"
+\ \ \ \ \ \ \ \-\ matches\ "directory/file.jpg"
+\ \ \ \ \ \ \ \-\ doesn\[aq]t\ match\ "file.jpg/something"
+\f[]
+.fi
+.PP
+Use \f[C]**\f[] to match anything, including slashes (\f[C]/\f[]).
+.IP
+.nf
+\f[C]
+dir/**\ \-\ matches\ "dir/file.jpg"
+\ \ \ \ \ \ \ \-\ matches\ "dir/dir1/dir2/file.jpg"
+\ \ \ \ \ \ \ \-\ doesn\[aq]t\ match\ "directory/file.jpg"
+\ \ \ \ \ \ \ \-\ doesn\[aq]t\ match\ "adir/file.jpg"
+\f[]
+.fi
+.PP
+A \f[C]?\f[] matches any character except a slash \f[C]/\f[].
+.IP
+.nf
+\f[C]
+l?ss\ \ \-\ matches\ "less"
+\ \ \ \ \ \ \-\ matches\ "lass"
+\ \ \ \ \ \ \-\ doesn\[aq]t\ match\ "floss"
+\f[]
+.fi
+.PP
+A \f[C][\f[] and \f[C]]\f[] together make a a character class, such as
+\f[C][a\-z]\f[] or \f[C][aeiou]\f[] or \f[C][[:alpha:]]\f[].
+See the go regexp docs (https://golang.org/pkg/regexp/syntax/) for more
+info on these.
+.IP
+.nf
+\f[C]
+h[ae]llo\ \-\ matches\ "hello"
+\ \ \ \ \ \ \ \ \ \-\ matches\ "hallo"
+\ \ \ \ \ \ \ \ \ \-\ doesn\[aq]t\ match\ "hullo"
+\f[]
+.fi
+.PP
+A \f[C]{\f[] and \f[C]}\f[] define a choice between elements.
+It should contain a comma seperated list of patterns, any of which might
+match.
+These patterns can contain wildcards.
+.IP
+.nf
+\f[C]
+{one,two}_potato\ \-\ matches\ "one_potato"
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \-\ matches\ "two_potato"
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \-\ doesn\[aq]t\ match\ "three_potato"
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \-\ doesn\[aq]t\ match\ "_potato"
+\f[]
+.fi
+.PP
+Special characters can be escaped with a \f[C]\\\f[] before them.
+.IP
+.nf
+\f[C]
+\\*.jpg\ \ \ \ \ \ \ \-\ matches\ "*.jpg"
+\\\\.jpg\ \ \ \ \ \ \ \-\ matches\ "\\.jpg"
+\\[one\\].jpg\ \ \-\ matches\ "[one].jpg"
+\f[]
+.fi
+.SS Differences between rsync and rclone patterns
+.PP
+Rclone implements bash style \f[C]{a,b,c}\f[] glob matching which rsync
+doesn\[aq]t.
+.PP
+Rclone ignores \f[C]/\f[] at the end of a pattern.
+.PP
+Rclone always does a wildcard match so \f[C]\\\f[] must always escape a
+\f[C]\\\f[].
+.SS How the rules are used
+.PP
+Rclone maintains a list of include rules and exclude rules.
+.PP
+Each file is matched in order against the list until it finds a match.
+The file is then included or excluded according to the rule type.
+.PP
+If the matcher falls off the bottom of the list then the path is
+included.
+.PP
+For example given the following rules, \f[C]+\f[] being include,
+\f[C]\-\f[] being exclude,
+.IP
+.nf
+\f[C]
+\-\ secret*.jpg
++\ *.jpg
++\ *.png
++\ file2.avi
+\-\ *
+\f[]
+.fi
+.PP
+This would include
+.IP \[bu] 2
+\f[C]file1.jpg\f[]
+.IP \[bu] 2
+\f[C]file3.png\f[]
+.IP \[bu] 2
+\f[C]file2.avi\f[]
+.PP
+This would exclude
+.IP \[bu] 2
+\f[C]secret17.jpg\f[]
+.IP \[bu] 2
+non \f[C]*.jpg\f[] and \f[C]*.png\f[]
+.SS Adding filtering rules
+.PP
+Filtering rules are added with the following command line flags.
+.SS \f[C]\-\-exclude\f[] \- Exclude files matching pattern
+.PP
+Add a single exclude rule with \f[C]\-\-exclude\f[].
+.PP
+Eg \f[C]\-\-exclude\ *.bak\f[] to exclude all bak files from the sync.
+.SS \f[C]\-\-exclude\-from\f[] \- Read exclude patterns from file
+.PP
+Add exclude rules from a file.
+.PP
+Prepare a file like this \f[C]exclude\-file.txt\f[]
+.IP
+.nf
+\f[C]
+#\ a\ sample\ exclude\ rule\ file
+*.bak
+file2.jpg
+\f[]
+.fi
+.PP
+Then use as \f[C]\-\-exclude\-from\ exclude\-file.txt\f[].
+This will sync all files except those ending in \f[C]bak\f[] and
+\f[C]file2.jpg\f[].
+.PP
+This is useful if you have a lot of rules.
+.SS \f[C]\-\-include\f[] \- Include files matching pattern
+.PP
+Add a single include rule with \f[C]\-\-include\f[].
+.PP
+Eg \f[C]\-\-include\ *.{png,jpg}\f[] to include all \f[C]png\f[] and
+\f[C]jpg\f[] files in the backup and no others.
+.PP
+This adds an implicit \f[C]\-\-exclude\ *\f[] at the very end of the
+filter list.
+This means you can mix \f[C]\-\-include\f[] and
+\f[C]\-\-include\-from\f[] with the other filters (eg
+\f[C]\-\-exclude\f[]) but you must include all the files you want in the
+include statement.
+If this doesn\[aq]t provide enough flexibility then you must use
+\f[C]\-\-filter\-from\f[].
+.SS \f[C]\-\-include\-from\f[] \- Read include patterns from file
+.PP
+Add include rules from a file.
+.PP
+Prepare a file like this \f[C]include\-file.txt\f[]
+.IP
+.nf
+\f[C]
+#\ a\ sample\ include\ rule\ file
+*.jpg
+*.png
+file2.avi
+\f[]
+.fi
+.PP
+Then use as \f[C]\-\-include\-from\ include\-file.txt\f[].
+This will sync all \f[C]jpg\f[], \f[C]png\f[] files and
+\f[C]file2.avi\f[].
+.PP
+This is useful if you have a lot of rules.
+.PP
+This adds an implicit \f[C]\-\-exclude\ *\f[] at the very end of the
+filter list.
+This means you can mix \f[C]\-\-include\f[] and
+\f[C]\-\-include\-from\f[] with the other filters (eg
+\f[C]\-\-exclude\f[]) but you must include all the files you want in the
+include statement.
+If this doesn\[aq]t provide enough flexibility then you must use
+\f[C]\-\-filter\-from\f[].
+.SS \f[C]\-\-filter\f[] \- Add a file\-filtering rule
+.PP
+This can be used to add a single include or exclude rule.
+Include rules start with \f[C]+\f[] and exclude rules start with
+\f[C]\-\f[].
+A special rule called \f[C]!\f[] can be used to clear the existing
+rules.
+.PP
+Eg \f[C]\-\-filter\ "\-\ *.bak"\f[] to exclude all bak files from the
+sync.
+.SS \f[C]\-\-filter\-from\f[] \- Read filtering patterns from a file
+.PP
+Add include/exclude rules from a file.
+.PP
+Prepare a file like this \f[C]filter\-file.txt\f[]
+.IP
+.nf
+\f[C]
+#\ a\ sample\ exclude\ rule\ file
+\-\ secret*.jpg
++\ *.jpg
++\ *.png
++\ file2.avi
+#\ exclude\ everything\ else
+\-\ *
+\f[]
+.fi
+.PP
+Then use as \f[C]\-\-filter\-from\ filter\-file.txt\f[].
+The rules are processed in the order that they are defined.
+.PP
+This example will include all \f[C]jpg\f[] and \f[C]png\f[] files,
+exclude any files matching \f[C]secret*.jpg\f[] and include
+\f[C]file2.avi\f[].
+Everything else will be excluded from the sync.
+.SS \f[C]\-\-files\-from\f[] \- Read list of source\-file names
+.PP
+This reads a list of file names from the file passed in and
+\f[B]only\f[] these files are transferred.
+The filtering rules are ignored completely if you use this option.
+.PP
+Prepare a file like this \f[C]files\-from.txt\f[]
+.IP
+.nf
+\f[C]
+#\ comment
+file1.jpg
+file2.jpg
+\f[]
+.fi
+.PP
+Then use as \f[C]\-\-files\-from\ files\-from.txt\f[].
+This will only transfer \f[C]file1.jpg\f[] and \f[C]file2.jpg\f[]
+providing they exist.
+.SS \f[C]\-\-min\-size\f[] \- Don\[aq]t transfer any file smaller than
+this
+.PP
+This option controls the minimum size file which will be transferred.
+This defaults to \f[C]kBytes\f[] but a suffix of \f[C]k\f[], \f[C]M\f[],
+or \f[C]G\f[] can be used.
+.PP
+For example \f[C]\-\-min\-size\ 50k\f[] means no files smaller than
+50kByte will be transferred.
+.SS \f[C]\-\-max\-size\f[] \- Don\[aq]t transfer any file larger than
+this
+.PP
+This option controls the maximum size file which will be transferred.
+This defaults to \f[C]kBytes\f[] but a suffix of \f[C]k\f[], \f[C]M\f[],
+or \f[C]G\f[] can be used.
+.PP
+For example \f[C]\-\-max\-size\ 1G\f[] means no files larger than 1GByte
+will be transferred.
+.SS \f[C]\-\-max\-age\f[] \- Don\[aq]t transfer any file older than this
+.PP
+This option controls the maximum age of files to transfer.
+Give in seconds or with a suffix of:
+.IP \[bu] 2
+\f[C]ms\f[] \- Milliseconds
+.IP \[bu] 2
+\f[C]s\f[] \- Seconds
+.IP \[bu] 2
+\f[C]m\f[] \- Minutes
+.IP \[bu] 2
+\f[C]h\f[] \- Hours
+.IP \[bu] 2
+\f[C]d\f[] \- Days
+.IP \[bu] 2
+\f[C]w\f[] \- Weeks
+.IP \[bu] 2
+\f[C]M\f[] \- Months
+.IP \[bu] 2
+\f[C]y\f[] \- Years
+.PP
+For example \f[C]\-\-max\-age\ 2d\f[] means no files older than 2 days
+will be transferred.
+.SS \f[C]\-\-min\-age\f[] \- Don\[aq]t transfer any file younger than
+this
+.PP
+This option controls the minimum age of files to transfer.
+Give in seconds or with a suffix (see \f[C]\-\-max\-age\f[] for list of
+suffixes)
+.PP
+For example \f[C]\-\-min\-age\ 2d\f[] means no files younger than 2 days
+will be transferred.
+.SS \f[C]\-\-delete\-excluded\f[] \- Delete files on dest excluded from
+sync
+.PP
+\f[B]Important\f[] this flag is dangerous \- use with
+\f[C]\-\-dry\-run\f[] and \f[C]\-v\f[] first.
+.PP
+When doing \f[C]rclone\ sync\f[] this will delete any files which are
+excluded from the sync on the destination.
+.PP
+If for example you did a sync from \f[C]A\f[] to \f[C]B\f[] without the
+\f[C]\-\-min\-size\ 50k\f[] flag
+.IP
+.nf
+\f[C]
+rclone\ sync\ A:\ B:
+\f[]
+.fi
+.PP
+Then you repeated it like this with the \f[C]\-\-delete\-excluded\f[]
+.IP
+.nf
+\f[C]
+rclone\ \-\-min\-size\ 50k\ \-\-delete\-excluded\ sync\ A:\ B:
+\f[]
+.fi
+.PP
+This would delete all files on \f[C]B\f[] which are less than 50 kBytes
+as these are now excluded from the sync.
+.PP
+Always test first with \f[C]\-\-dry\-run\f[] and \f[C]\-v\f[] before
+using this flag.
+.SS \f[C]\-\-dump\-filters\f[] \- dump the filters to the output
+.PP
+This dumps the defined filters to the output as regular expressions.
+.PP
+Useful for debugging.
+.SS Quoting shell metacharacters
+.PP
+The examples above may not work verbatim in your shell as they have
+shell metacharacters in them (eg \f[C]*\f[]), and may require quoting.
+.PP
+Eg linux, OSX
+.IP \[bu] 2
+\f[C]\-\-include\ \\*.jpg\f[]
+.IP \[bu] 2
+\f[C]\-\-include\ \[aq]*.jpg\[aq]\f[]
+.IP \[bu] 2
+\f[C]\-\-include=\[aq]*.jpg\[aq]\f[]
+.PP
+In Windows the expansion is done by the command not the shell so this
+should work fine
+.IP \[bu] 2
+\f[C]\-\-include\ *.jpg\f[]
+.SH Overview of cloud storage systems
+.PP
+Each cloud storage system is slighly different.
+Rclone attempts to provide a unified interface to them, but some
+underlying differences show through.
+.SS Features
+.PP
+Here is an overview of the major features of each cloud storage system.
+.PP
+.TS
+tab(@);
+l c c c c.
+T{
+Name
+T}@T{
+Hash
+T}@T{
+ModTime
+T}@T{
+Case Insensitive
+T}@T{
+Duplicate Files
+T}
+_
+T{
+Google Drive
+T}@T{
+MD5
+T}@T{
+Yes
+T}@T{
+No
+T}@T{
+Yes
+T}
+T{
+Amazon S3
+T}@T{
+MD5
+T}@T{
+Yes
+T}@T{
+No
+T}@T{
+No
+T}
+T{
+Openstack Swift
+T}@T{
+MD5
+T}@T{
+Yes
+T}@T{
+No
+T}@T{
+No
+T}
+T{
+Dropbox
+T}@T{
+\-
+T}@T{
+No
+T}@T{
+Yes
+T}@T{
+No
+T}
+T{
+Google Cloud Storage
+T}@T{
+MD5
+T}@T{
+Yes
+T}@T{
+No
+T}@T{
+No
+T}
+T{
+Amazon Cloud Drive
+T}@T{
+MD5
+T}@T{
+No
+T}@T{
+Yes
+T}@T{
+No
+T}
+T{
+Microsoft One Drive
+T}@T{
+SHA1
+T}@T{
+Yes
+T}@T{
+Yes
+T}@T{
+No
+T}
+T{
+Hubic
+T}@T{
+MD5
+T}@T{
+Yes
+T}@T{
+No
+T}@T{
+No
+T}
+T{
+Backblaze B2
+T}@T{
+SHA1
+T}@T{
+Partial
+T}@T{
+No
+T}@T{
+No
+T}
+T{
+Yandex Disk
+T}@T{
+MD5
+T}@T{
+Yes
+T}@T{
+No
+T}@T{
+No
+T}
+T{
+The local filesystem
+T}@T{
+All
+T}@T{
+Yes
+T}@T{
+Depends
+T}@T{
+No
+T}
+.TE
+.SS Hash
+.PP
+The cloud storage system supports various hash types of the objects.
+.PD 0
+.P
+.PD
+The hashes are used when transferring data as an integrity check and can
+be specifically used with the \f[C]\-\-checksum\f[] flag in syncs and in
+the \f[C]check\f[] command.
+.PP
+To use the checksum checks between filesystems they must support a
+common hash type.
+.SS ModTime
+.PP
+The cloud storage system supports setting modification times on objects.
+If it does then this enables a using the modification times as part of
+the sync.
+If not then only the size will be checked by default, though the MD5SUM
+can be checked with the \f[C]\-\-checksum\f[] flag.
+.PP
+All cloud storage systems support some kind of date on the object and
+these will be set when transferring from the cloud storage system.
+.PP
+Backblaze B2 preserves file modification times on files uploaded and
+downloaded, but doesn\[aq]t use them to decide which objects to sync.
+.SS Case Insensitive
+.PP
+If a cloud storage systems is case sensitive then it is possible to have
+two files which differ only in case, eg \f[C]file.txt\f[] and
+\f[C]FILE.txt\f[].
+If a cloud storage system is case insensitive then that isn\[aq]t
+possible.
+.PP
+This can cause problems when syncing between a case insensitive system
+and a case sensitive system.
+The symptom of this is that no matter how many times you run the sync it
+never completes fully.
+.PP
+The local filesystem may or may not be case sensitive depending on OS.
+.IP \[bu] 2
+Windows \- usually case insensitive, though case is preserved
+.IP \[bu] 2
+OSX \- usually case insensitive, though it is possible to format case
+sensitive
+.IP \[bu] 2
+Linux \- usually case sensitive, but there are case insensitive file
+systems (eg FAT formatted USB keys)
+.PP
+Most of the time this doesn\[aq]t cause any problems as people tend to
+avoid files whose name differs only by case even on case sensitive
+systems.
+.SS Duplicate files
+.PP
+If a cloud storage system allows duplicate files then it can have two
+objects with the same name.
+.PP
+This confuses rclone greatly when syncing.
+.SS Google Drive
+.PP
+Paths are specified as \f[C]drive:path\f[]
+.PP
+Drive paths may be as deep as required, eg
+\f[C]drive:directory/subdirectory\f[].
+.PP
+The initial setup for drive involves getting a token from Google drive
+which you need to do in your browser.
+\f[C]rclone\ config\f[] walks you through it.
+.PP
+Here is an example of how to make a remote called \f[C]remote\f[].
+First run:
+.IP
+.nf
+\f[C]
+\ rclone\ config
+\f[]
+.fi
+.PP
+This will guide you through an interactive setup process:
+.IP
+.nf
+\f[C]
+n)\ New\ remote
+d)\ Delete\ remote
+q)\ Quit\ config
+e/n/d/q>\ n
+name>\ remote
+What\ type\ of\ source\ is\ it?
+Choose\ a\ number\ from\ below
+\ 1)\ swift
+\ 2)\ s3
+\ 3)\ local
+\ 4)\ drive
+type>\ 4
+Google\ Application\ Client\ Id\ \-\ leave\ blank\ normally.
+client_id>\ 
+Google\ Application\ Client\ Secret\ \-\ leave\ blank\ normally.
+client_secret>\ 
+Remote\ config
+Use\ auto\ config?
+\ *\ Say\ Y\ if\ not\ sure
+\ *\ Say\ N\ if\ you\ are\ working\ on\ a\ remote\ or\ headless\ machine\ or\ Y\ didn\[aq]t\ work
+y)\ Yes
+n)\ No
+y/n>\ y
+If\ your\ browser\ doesn\[aq]t\ open\ automatically\ go\ to\ the\ following\ link:\ http://127.0.0.1:53682/auth
+Log\ in\ and\ authorize\ rclone\ for\ access
+Waiting\ for\ code...
+Got\ code
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+[remote]
+client_id\ =\ 
+client_secret\ =\ 
+token\ =\ {"AccessToken":"xxxx.x.xxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx","Expiry":"2014\-03\-16T13:57:58.955387075Z","Extra":null}
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+y)\ Yes\ this\ is\ OK
+e)\ Edit\ this\ remote
+d)\ Delete\ this\ remote
+y/e/d>\ y
+\f[]
+.fi
+.PP
+Note that rclone runs a webserver on your local machine to collect the
+token as returned from Google if you use auto config mode.
+This only runs from the moment it opens your browser to the moment you
+get back the verification code.
+This is on \f[C]http://127.0.0.1:53682/\f[] and this it may require you
+to unblock it temporarily if you are running a host firewall, or use
+manual mode.
+.PP
+You can then use it like this,
+.PP
+List directories in top level of your drive
+.IP
+.nf
+\f[C]
+rclone\ lsd\ remote:
+\f[]
+.fi
+.PP
+List all the files in your drive
+.IP
+.nf
+\f[C]
+rclone\ ls\ remote:
+\f[]
+.fi
+.PP
+To copy a local directory to a drive directory called backup
+.IP
+.nf
+\f[C]
+rclone\ copy\ /home/source\ remote:backup
+\f[]
+.fi
+.SS Modified time
+.PP
+Google drive stores modification times accurate to 1 ms.
+.SS Revisions
+.PP
+Google drive stores revisions of files.
+When you upload a change to an existing file to google drive using
+rclone it will create a new revision of that file.
+.PP
+Revisions follow the standard google policy which at time of writing was
+.IP \[bu] 2
+They are deleted after 30 days or 100 revisions (whatever comes first).
+.IP \[bu] 2
+They do not count towards a user storage quota.
+.SS Deleting files
+.PP
+By default rclone will delete files permanently when requested.
+If sending them to the trash is required instead then use the
+\f[C]\-\-drive\-use\-trash\f[] flag.
+.SS Specific options
+.PP
+Here are the command line options specific to this cloud storage system.
+.SS \-\-drive\-chunk\-size=SIZE
+.PP
+Upload chunk size.
+Must a power of 2 >= 256k.
+Default value is 256kB.
+.SS \-\-drive\-full\-list
+.PP
+Use a full listing for directory list.
+More data but usually quicker.
+On by default, disable with \f[C]\-\-full\-drive\-list=false\f[].
+.SS \-\-drive\-upload\-cutoff=SIZE
+.PP
+File size cutoff for switching to chunked upload.
+Default is 256kB.
+.SS \-\-drive\-use\-trash
+.PP
+Send files to the trash instead of deleting permanently.
+Defaults to off, namely deleting files permanently.
+.SS \-\-drive\-auth\-owner\-only
+.PP
+Only consider files owned by the authenticated user.
+Requires that \-\-drive\-full\-list=true (default).
+.SS \-\-drive\-formats
+.PP
+Google documents can only be exported from Google drive.
+When rclone downloads a Google doc it chooses a format to download
+depending upon this setting.
+.PP
+By default the formats are \f[C]docx,xlsx,pptx,svg\f[] which are a
+sensible default for an editable document.
+.PP
+When choosing a format, rclone runs down the list provided in order and
+chooses the first file format the doc can be exported as from the list.
+If the file can\[aq]t be exported to a format on the formats list, then
+rclone will choose a format from the default list.
+.PP
+If you prefer an archive copy then you might use
+\f[C]\-\-drive\-formats\ pdf\f[], or if you prefer
+openoffice/libreoffice formats you might use
+\f[C]\-\-drive\-formats\ ods,odt\f[].
+.PP
+Note that rclone adds the extension to the google doc, so if it is
+calles \f[C]My\ Spreadsheet\f[] on google docs, it will be exported as
+\f[C]My\ Spreadsheet.xlsx\f[] or \f[C]My\ Spreadsheet.pdf\f[] etc.
+.PP
+Here are the possible extensions with their corresponding mime types.
+.PP
+.TS
+tab(@);
+l l l.
+T{
+Extension
+T}@T{
+Mime Type
+T}@T{
+Description
+T}
+_
+T{
+csv
+T}@T{
+text/csv
+T}@T{
+Standard CSV format for Spreadsheets
+T}
+T{
+doc
+T}@T{
+application/msword
+T}@T{
+Micosoft Office Document
+T}
+T{
+docx
+T}@T{
+application/vnd.openxmlformats\-officedocument.wordprocessingml.document
+T}@T{
+Microsoft Office Document
+T}
+T{
+html
+T}@T{
+text/html
+T}@T{
+An HTML Document
+T}
+T{
+jpg
+T}@T{
+image/jpeg
+T}@T{
+A JPEG Image File
+T}
+T{
+ods
+T}@T{
+application/vnd.oasis.opendocument.spreadsheet
+T}@T{
+Openoffice Spreadsheet
+T}
+T{
+ods
+T}@T{
+application/x\-vnd.oasis.opendocument.spreadsheet
+T}@T{
+Openoffice Spreadsheet
+T}
+T{
+odt
+T}@T{
+application/vnd.oasis.opendocument.text
+T}@T{
+Openoffice Document
+T}
+T{
+pdf
+T}@T{
+application/pdf
+T}@T{
+Adobe PDF Format
+T}
+T{
+png
+T}@T{
+image/png
+T}@T{
+PNG Image Format
+T}
+T{
+pptx
+T}@T{
+application/vnd.openxmlformats\-officedocument.presentationml.presentation
+T}@T{
+Microsoft Office Powerpoint
+T}
+T{
+rtf
+T}@T{
+application/rtf
+T}@T{
+Rich Text Format
+T}
+T{
+svg
+T}@T{
+image/svg+xml
+T}@T{
+Scalable Vector Graphics Format
+T}
+T{
+txt
+T}@T{
+text/plain
+T}@T{
+Plain Text
+T}
+T{
+xls
+T}@T{
+application/vnd.ms\-excel
+T}@T{
+Microsoft Office Spreadsheet
+T}
+T{
+xlsx
+T}@T{
+application/vnd.openxmlformats\-officedocument.spreadsheetml.sheet
+T}@T{
+Microsoft Office Spreadsheet
+T}
+T{
+zip
+T}@T{
+application/zip
+T}@T{
+A ZIP file of HTML, Images CSS
+T}
+.TE
+.SS Limitations
+.PP
+Drive has quite a lot of rate limiting.
+This causes rclone to be limited to transferring about 2 files per
+second only.
+Individual files may be transferred much faster at 100s of MBytes/s but
+lots of small files can take a long time.
+.SS Amazon S3
+.PP
+Paths are specified as \f[C]remote:bucket\f[] (or \f[C]remote:\f[] for
+the \f[C]lsd\f[] command.) You may put subdirectories in too, eg
+\f[C]remote:bucket/path/to/dir\f[].
+.PP
+Here is an example of making an s3 configuration.
+First run
+.IP
+.nf
+\f[C]
+rclone\ config
+\f[]
+.fi
+.PP
+This will guide you through an interactive setup process.
+.IP
+.nf
+\f[C]
+No\ remotes\ found\ \-\ make\ a\ new\ one
+n)\ New\ remote
+q)\ Quit\ config
+n/q>\ n
+name>\ remote
+What\ type\ of\ source\ is\ it?
+Choose\ a\ number\ from\ below
+\ 1)\ swift
+\ 2)\ s3
+\ 3)\ local
+\ 4)\ google\ cloud\ storage
+\ 5)\ dropbox
+\ 6)\ drive
+type>\ 2
+AWS\ Access\ Key\ ID.
+access_key_id>\ accesskey
+AWS\ Secret\ Access\ Key\ (password).\ 
+secret_access_key>\ secretaccesskey
+Region\ to\ connect\ to.
+Choose\ a\ number\ from\ below,\ or\ type\ in\ your\ own\ value
+\ *\ The\ default\ endpoint\ \-\ a\ good\ choice\ if\ you\ are\ unsure.
+\ *\ US\ Region,\ Northern\ Virginia\ or\ Pacific\ Northwest.
+\ *\ Leave\ location\ constraint\ empty.
+\ 1)\ us\-east\-1
+\ *\ US\ West\ (Oregon)\ Region
+\ *\ Needs\ location\ constraint\ us\-west\-2.
+\ 2)\ us\-west\-2
+[snip]
+\ *\ South\ America\ (Sao\ Paulo)\ Region
+\ *\ Needs\ location\ constraint\ sa\-east\-1.
+\ 9)\ sa\-east\-1
+\ *\ If\ using\ an\ S3\ clone\ that\ only\ understands\ v2\ signatures\ \-\ eg\ Ceph\ \-\ set\ this\ and\ make\ sure\ you\ set\ the\ endpoint.
+10)\ other\-v2\-signature
+\ *\ If\ using\ an\ S3\ clone\ that\ understands\ v4\ signatures\ set\ this\ and\ make\ sure\ you\ set\ the\ endpoint.
+11)\ other\-v4\-signature
+region>\ 1
+Endpoint\ for\ S3\ API.
+Leave\ blank\ if\ using\ AWS\ to\ use\ the\ default\ endpoint\ for\ the\ region.
+Specify\ if\ using\ an\ S3\ clone\ such\ as\ Ceph.
+endpoint>\ 
+Location\ constraint\ \-\ must\ be\ set\ to\ match\ the\ Region.\ Used\ when\ creating\ buckets\ only.
+Choose\ a\ number\ from\ below,\ or\ type\ in\ your\ own\ value
+\ *\ Empty\ for\ US\ Region,\ Northern\ Virginia\ or\ Pacific\ Northwest.
+\ 1)\ 
+\ *\ US\ West\ (Oregon)\ Region.
+\ 2)\ us\-west\-2
+\ *\ US\ West\ (Northern\ California)\ Region.
+\ 3)\ us\-west\-1
+\ *\ EU\ (Ireland)\ Region.
+\ 4)\ eu\-west\-1
+[snip]
+location_constraint>\ 1
+Remote\ config
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+[remote]
+access_key_id\ =\ accesskey
+secret_access_key\ =\ secretaccesskey
+region\ =\ us\-east\-1
+endpoint\ =\ 
+location_constraint\ =\ 
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+y)\ Yes\ this\ is\ OK
+e)\ Edit\ this\ remote
+d)\ Delete\ this\ remote
+y/e/d>\ y
+Current\ remotes:
+
+Name\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Type
+====\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ====
+remote\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ s3
+
+e)\ Edit\ existing\ remote
+n)\ New\ remote
+d)\ Delete\ remote
+q)\ Quit\ config
+e/n/d/q>\ q
+\f[]
+.fi
+.PP
+This remote is called \f[C]remote\f[] and can now be used like this
+.PP
+See all buckets
+.IP
+.nf
+\f[C]
+rclone\ lsd\ remote:
+\f[]
+.fi
+.PP
+Make a new bucket
+.IP
+.nf
+\f[C]
+rclone\ mkdir\ remote:bucket
+\f[]
+.fi
+.PP
+List the contents of a bucket
+.IP
+.nf
+\f[C]
+rclone\ ls\ remote:bucket
+\f[]
+.fi
+.PP
+Sync \f[C]/home/local/directory\f[] to the remote bucket, deleting any
+excess files in the bucket.
+.IP
+.nf
+\f[C]
+rclone\ sync\ /home/local/directory\ remote:bucket
+\f[]
+.fi
+.SS Modified time
+.PP
+The modified time is stored as metadata on the object as
+\f[C]X\-Amz\-Meta\-Mtime\f[] as floating point since the epoch accurate
+to 1 ns.
+.SS Multipart uploads
+.PP
+rclone supports multipart uploads with S3 which means that it can upload
+files bigger than 5GB.
+Note that files uploaded with multipart upload don\[aq]t have an MD5SUM.
+.SS Buckets and Regions
+.PP
+With Amazon S3 you can list buckets (\f[C]rclone\ lsd\f[]) using any
+region, but you can only access the content of a bucket from the region
+it was created in.
+If you attempt to access a bucket from the wrong region, you will get an
+error,
+\f[C]incorrect\ region,\ the\ bucket\ is\ not\ in\ \[aq]XXX\[aq]\ region\f[].
+.SS Anonymous access to public buckets
+.PP
+If you want to use rclone to access a public bucket, configure with a
+blank \f[C]access_key_id\f[] and \f[C]secret_access_key\f[].
+Eg
+.IP
+.nf
+\f[C]
+e)\ Edit\ existing\ remote
+n)\ New\ remote
+d)\ Delete\ remote
+q)\ Quit\ config
+e/n/d/q>\ n
+name>\ anons3
+What\ type\ of\ source\ is\ it?
+Choose\ a\ number\ from\ below
+\ 1)\ amazon\ cloud\ drive
+\ 2)\ drive
+\ 3)\ dropbox
+\ 4)\ google\ cloud\ storage
+\ 5)\ local
+\ 6)\ s3
+\ 7)\ swift
+type>\ 6
+AWS\ Access\ Key\ ID\ \-\ leave\ blank\ for\ anonymous\ access.
+access_key_id>\ 
+AWS\ Secret\ Access\ Key\ (password)\ \-\ leave\ blank\ for\ anonymous\ access.
+secret_access_key>\ 
+Region\ to\ connect\ to.
+region>\ 1
+endpoint>\ 
+location_constraint>\ 
+\f[]
+.fi
+.PP
+Then use it as normal with the name of the public bucket, eg
+.IP
+.nf
+\f[C]
+rclone\ lsd\ anons3:1000genomes
+\f[]
+.fi
+.PP
+You will be able to list and copy data but not upload it.
+.SS Ceph
+.PP
+Ceph is an object storage system which presents an Amazon S3 interface.
+.PP
+To use rclone with ceph, you need to set the following parameters in the
+config.
+.IP
+.nf
+\f[C]
+access_key_id\ =\ Whatever
+secret_access_key\ =\ Whatever
+endpoint\ =\ https://ceph.endpoint.goes.here/
+region\ =\ other\-v2\-signature
+\f[]
+.fi
+.PP
+Note also that Ceph sometimes puts \f[C]/\f[] in the passwords it gives
+users.
+If you read the secret access key using the command line tools you will
+get a JSON blob with the \f[C]/\f[] escaped as \f[C]\\/\f[].
+Make sure you only write \f[C]/\f[] in the secret access key.
+.PP
+Eg the dump from Ceph looks something like this (irrelevant keys
+removed).
+.IP
+.nf
+\f[C]
+{
+\ \ \ \ "user_id":\ "xxx",
+\ \ \ \ "display_name":\ "xxxx",
+\ \ \ \ "keys":\ [
+\ \ \ \ \ \ \ \ {
+\ \ \ \ \ \ \ \ \ \ \ \ "user":\ "xxx",
+\ \ \ \ \ \ \ \ \ \ \ \ "access_key":\ "xxxxxx",
+\ \ \ \ \ \ \ \ \ \ \ \ "secret_key":\ "xxxxxx\\/xxxx"
+\ \ \ \ \ \ \ \ }
+\ \ \ \ ],
+}
+\f[]
+.fi
+.PP
+Because this is a json dump, it is encoding the \f[C]/\f[] as
+\f[C]\\/\f[], so if you use the secret key as \f[C]xxxxxx/xxxx\f[] it
+will work fine.
+.SS Swift
+.PP
+Swift refers to Openstack Object
+Storage (http://www.openstack.org/software/openstack-storage/).
+Commercial implementations of that being:
+.IP \[bu] 2
+Rackspace Cloud Files (http://www.rackspace.com/cloud/files/)
+.IP \[bu] 2
+Memset Memstore (http://www.memset.com/cloud/storage/)
+.PP
+Paths are specified as \f[C]remote:container\f[] (or \f[C]remote:\f[]
+for the \f[C]lsd\f[] command.) You may put subdirectories in too, eg
+\f[C]remote:container/path/to/dir\f[].
+.PP
+Here is an example of making a swift configuration.
+First run
+.IP
+.nf
+\f[C]
+rclone\ config
+\f[]
+.fi
+.PP
+This will guide you through an interactive setup process.
+.IP
+.nf
+\f[C]
+No\ remotes\ found\ \-\ make\ a\ new\ one
+n)\ New\ remote
+q)\ Quit\ config
+n/q>\ n
+name>\ remote
+What\ type\ of\ source\ is\ it?
+Choose\ a\ number\ from\ below
+\ 1)\ swift
+\ 2)\ s3
+\ 3)\ local
+\ 4)\ drive
+type>\ 1
+User\ name\ to\ log\ in.
+user>\ user_name
+API\ key\ or\ password.
+key>\ password_or_api_key
+Authentication\ URL\ for\ server.
+Choose\ a\ number\ from\ below,\ or\ type\ in\ your\ own\ value
+\ *\ Rackspace\ US
+\ 1)\ https://auth.api.rackspacecloud.com/v1.0
+\ *\ Rackspace\ UK
+\ 2)\ https://lon.auth.api.rackspacecloud.com/v1.0
+\ *\ Rackspace\ v2
+\ 3)\ https://identity.api.rackspacecloud.com/v2.0
+\ *\ Memset\ Memstore\ UK
+\ 4)\ https://auth.storage.memset.com/v1.0
+\ *\ Memset\ Memstore\ UK\ v2
+\ 5)\ https://auth.storage.memset.com/v2.0
+\ *\ OVH
+\ 6)\ https://auth.cloud.ovh.net/v2.0
+auth>\ 1
+Tenant\ name\ \-\ optional
+tenant>
+Remote\ config
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+[remote]
+user\ =\ user_name
+key\ =\ password_or_api_key
+auth\ =\ https://auth.api.rackspacecloud.com/v1.0
+tenant\ =
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+y)\ Yes\ this\ is\ OK
+e)\ Edit\ this\ remote
+d)\ Delete\ this\ remote
+y/e/d>\ y
+\f[]
+.fi
+.PP
+This remote is called \f[C]remote\f[] and can now be used like this
+.PP
+See all containers
+.IP
+.nf
+\f[C]
+rclone\ lsd\ remote:
+\f[]
+.fi
+.PP
+Make a new container
+.IP
+.nf
+\f[C]
+rclone\ mkdir\ remote:container
+\f[]
+.fi
+.PP
+List the contents of a container
+.IP
+.nf
+\f[C]
+rclone\ ls\ remote:container
+\f[]
+.fi
+.PP
+Sync \f[C]/home/local/directory\f[] to the remote container, deleting
+any excess files in the container.
+.IP
+.nf
+\f[C]
+rclone\ sync\ /home/local/directory\ remote:container
+\f[]
+.fi
+.SS Specific options
+.PP
+Here are the command line options specific to this cloud storage system.
+.SS \-\-swift\-chunk\-size=SIZE
+.PP
+Above this size files will be chunked into a _segments container.
+The default for this is 5GB which is its maximum value.
+.SS Modified time
+.PP
+The modified time is stored as metadata on the object as
+\f[C]X\-Object\-Meta\-Mtime\f[] as floating point since the epoch
+accurate to 1 ns.
+.PP
+This is a defacto standard (used in the official python\-swiftclient
+amongst others) for storing the modification time for an object.
+.SS Dropbox
+.PP
+Paths are specified as \f[C]remote:path\f[]
+.PP
+Dropbox paths may be as deep as required, eg
+\f[C]remote:directory/subdirectory\f[].
+.PP
+The initial setup for dropbox involves getting a token from Dropbox
+which you need to do in your browser.
+\f[C]rclone\ config\f[] walks you through it.
+.PP
+Here is an example of how to make a remote called \f[C]remote\f[].
+First run:
+.IP
+.nf
+\f[C]
+\ rclone\ config
+\f[]
+.fi
+.PP
+This will guide you through an interactive setup process:
+.IP
+.nf
+\f[C]
+n)\ New\ remote
+d)\ Delete\ remote
+q)\ Quit\ config
+e/n/d/q>\ n
+name>\ remote
+What\ type\ of\ source\ is\ it?
+Choose\ a\ number\ from\ below
+\ 1)\ swift
+\ 2)\ s3
+\ 3)\ local
+\ 4)\ google\ cloud\ storage
+\ 5)\ dropbox
+\ 6)\ drive
+type>\ 5
+Dropbox\ App\ Key\ \-\ leave\ blank\ normally.
+app_key>\ 
+Dropbox\ App\ Secret\ \-\ leave\ blank\ normally.
+app_secret>\ 
+Remote\ config
+Please\ visit:
+https://www.dropbox.com/1/oauth2/authorize?client_id=XXXXXXXXXXXXXXX&response_type=code
+Enter\ the\ code:\ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX_XXXXXXXXXX
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+[remote]
+app_key\ =\ 
+app_secret\ =\ 
+token\ =\ XXXXXXXXXXXXXXXXXXXXXXXXXXXXX_XXXX_XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+y)\ Yes\ this\ is\ OK
+e)\ Edit\ this\ remote
+d)\ Delete\ this\ remote
+y/e/d>\ y
+\f[]
+.fi
+.PP
+You can then use it like this,
+.PP
+List directories in top level of your dropbox
+.IP
+.nf
+\f[C]
+rclone\ lsd\ remote:
+\f[]
+.fi
+.PP
+List all the files in your dropbox
+.IP
+.nf
+\f[C]
+rclone\ ls\ remote:
+\f[]
+.fi
+.PP
+To copy a local directory to a dropbox directory called backup
+.IP
+.nf
+\f[C]
+rclone\ copy\ /home/source\ remote:backup
+\f[]
+.fi
+.SS Modified time and MD5SUMs
+.PP
+Dropbox doesn\[aq]t have the capability of storing modification times or
+MD5SUMs so syncs will effectively have the \f[C]\-\-size\-only\f[] flag
+set.
+.SS Specific options
+.PP
+Here are the command line options specific to this cloud storage system.
+.SS \-\-dropbox\-chunk\-size=SIZE
+.PP
+Upload chunk size.
+Max 150M.
+The default is 128MB.
+Note that this isn\[aq]t buffered into memory.
+.SS Limitations
+.PP
+Note that Dropbox is case insensitive so you can\[aq]t have a file
+called "Hello.doc" and one called "hello.doc".
+.PP
+There are some file names such as \f[C]thumbs.db\f[] which Dropbox
+can\[aq]t store.
+There is a full list of them in the "Ignored Files" section of this
+document (https://www.dropbox.com/en/help/145).
+Rclone will issue an error message
+\f[C]File\ name\ disallowed\ \-\ not\ uploading\f[] if it attempt to
+upload one of those file names, but the sync won\[aq]t fail.
+.SS Google Cloud Storage
+.PP
+Paths are specified as \f[C]remote:bucket\f[] (or \f[C]remote:\f[] for
+the \f[C]lsd\f[] command.) You may put subdirectories in too, eg
+\f[C]remote:bucket/path/to/dir\f[].
+.PP
+The initial setup for google cloud storage involves getting a token from
+Google Cloud Storage which you need to do in your browser.
+\f[C]rclone\ config\f[] walks you through it.
+.PP
+Here is an example of how to make a remote called \f[C]remote\f[].
+First run:
+.IP
+.nf
+\f[C]
+\ rclone\ config
+\f[]
+.fi
+.PP
+This will guide you through an interactive setup process:
+.IP
+.nf
+\f[C]
+n)\ New\ remote
+d)\ Delete\ remote
+q)\ Quit\ config
+e/n/d/q>\ n
+name>\ remote
+What\ type\ of\ source\ is\ it?
+Choose\ a\ number\ from\ below
+\ 1)\ swift
+\ 2)\ s3
+\ 3)\ local
+\ 4)\ google\ cloud\ storage
+\ 5)\ dropbox
+\ 6)\ drive
+type>\ 4
+Google\ Application\ Client\ Id\ \-\ leave\ blank\ normally.
+client_id>\ 
+Google\ Application\ Client\ Secret\ \-\ leave\ blank\ normally.
+client_secret>\ 
+Project\ number\ optional\ \-\ needed\ only\ for\ list/create/delete\ buckets\ \-\ see\ your\ developer\ console.
+project_number>\ 12345678
+Access\ Control\ List\ for\ new\ objects.
+Choose\ a\ number\ from\ below,\ or\ type\ in\ your\ own\ value
+\ *\ Object\ owner\ gets\ OWNER\ access,\ and\ all\ Authenticated\ Users\ get\ READER\ access.
+\ 1)\ authenticatedRead
+\ *\ Object\ owner\ gets\ OWNER\ access,\ and\ project\ team\ owners\ get\ OWNER\ access.
+\ 2)\ bucketOwnerFullControl
+\ *\ Object\ owner\ gets\ OWNER\ access,\ and\ project\ team\ owners\ get\ READER\ access.
+\ 3)\ bucketOwnerRead
+\ *\ Object\ owner\ gets\ OWNER\ access\ [default\ if\ left\ blank].
+\ 4)\ private
+\ *\ Object\ owner\ gets\ OWNER\ access,\ and\ project\ team\ members\ get\ access\ according\ to\ their\ roles.
+\ 5)\ projectPrivate
+\ *\ Object\ owner\ gets\ OWNER\ access,\ and\ all\ Users\ get\ READER\ access.
+\ 6)\ publicRead
+object_acl>\ 4
+Access\ Control\ List\ for\ new\ buckets.
+Choose\ a\ number\ from\ below,\ or\ type\ in\ your\ own\ value
+\ *\ Project\ team\ owners\ get\ OWNER\ access,\ and\ all\ Authenticated\ Users\ get\ READER\ access.
+\ 1)\ authenticatedRead
+\ *\ Project\ team\ owners\ get\ OWNER\ access\ [default\ if\ left\ blank].
+\ 2)\ private
+\ *\ Project\ team\ members\ get\ access\ according\ to\ their\ roles.
+\ 3)\ projectPrivate
+\ *\ Project\ team\ owners\ get\ OWNER\ access,\ and\ all\ Users\ get\ READER\ access.
+\ 4)\ publicRead
+\ *\ Project\ team\ owners\ get\ OWNER\ access,\ and\ all\ Users\ get\ WRITER\ access.
+\ 5)\ publicReadWrite
+bucket_acl>\ 2
+Remote\ config
+Remote\ config
+Use\ auto\ config?
+\ *\ Say\ Y\ if\ not\ sure
+\ *\ Say\ N\ if\ you\ are\ working\ on\ a\ remote\ or\ headless\ machine\ or\ Y\ didn\[aq]t\ work
+y)\ Yes
+n)\ No
+y/n>\ y
+If\ your\ browser\ doesn\[aq]t\ open\ automatically\ go\ to\ the\ following\ link:\ http://127.0.0.1:53682/auth
+Log\ in\ and\ authorize\ rclone\ for\ access
+Waiting\ for\ code...
+Got\ code
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+[remote]
+type\ =\ google\ cloud\ storage
+client_id\ =\ 
+client_secret\ =\ 
+token\ =\ {"AccessToken":"xxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"x/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_xxxxxxxxx","Expiry":"2014\-07\-17T20:49:14.929208288+01:00","Extra":null}
+project_number\ =\ 12345678
+object_acl\ =\ private
+bucket_acl\ =\ private
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+y)\ Yes\ this\ is\ OK
+e)\ Edit\ this\ remote
+d)\ Delete\ this\ remote
+y/e/d>\ y
+\f[]
+.fi
+.PP
+Note that rclone runs a webserver on your local machine to collect the
+token as returned from Google if you use auto config mode.
+This only runs from the moment it opens your browser to the moment you
+get back the verification code.
+This is on \f[C]http://127.0.0.1:53682/\f[] and this it may require you
+to unblock it temporarily if you are running a host firewall, or use
+manual mode.
+.PP
+This remote is called \f[C]remote\f[] and can now be used like this
+.PP
+See all the buckets in your project
+.IP
+.nf
+\f[C]
+rclone\ lsd\ remote:
+\f[]
+.fi
+.PP
+Make a new bucket
+.IP
+.nf
+\f[C]
+rclone\ mkdir\ remote:bucket
+\f[]
+.fi
+.PP
+List the contents of a bucket
+.IP
+.nf
+\f[C]
+rclone\ ls\ remote:bucket
+\f[]
+.fi
+.PP
+Sync \f[C]/home/local/directory\f[] to the remote bucket, deleting any
+excess files in the bucket.
+.IP
+.nf
+\f[C]
+rclone\ sync\ /home/local/directory\ remote:bucket
+\f[]
+.fi
+.SS Modified time
+.PP
+Google google cloud storage stores md5sums natively and rclone stores
+modification times as metadata on the object, under the "mtime" key in
+RFC3339 format accurate to 1ns.
+.SS Amazon Cloud Drive
+.PP
+Paths are specified as \f[C]remote:path\f[]
+.PP
+Paths may be as deep as required, eg
+\f[C]remote:directory/subdirectory\f[].
+.PP
+The initial setup for Amazon cloud drive involves getting a token from
+Amazon which you need to do in your browser.
+\f[C]rclone\ config\f[] walks you through it.
+.PP
+Here is an example of how to make a remote called \f[C]remote\f[].
+First run:
+.IP
+.nf
+\f[C]
+\ rclone\ config
+\f[]
+.fi
+.PP
+This will guide you through an interactive setup process:
+.IP
+.nf
+\f[C]
+n)\ New\ remote
+d)\ Delete\ remote
+q)\ Quit\ config
+e/n/d/q>\ n
+name>\ remote
+What\ type\ of\ source\ is\ it?
+Choose\ a\ number\ from\ below
+\ 1)\ amazon\ cloud\ drive
+\ 2)\ drive
+\ 3)\ dropbox
+\ 4)\ google\ cloud\ storage
+\ 5)\ local
+\ 6)\ s3
+\ 7)\ swift
+type>\ 1
+Amazon\ Application\ Client\ Id\ \-\ leave\ blank\ normally.
+client_id>\ 
+Amazon\ Application\ Client\ Secret\ \-\ leave\ blank\ normally.
+client_secret>\ 
+Remote\ config
+If\ your\ browser\ doesn\[aq]t\ open\ automatically\ go\ to\ the\ following\ link:\ http://127.0.0.1:53682/auth
+Log\ in\ and\ authorize\ rclone\ for\ access
+Waiting\ for\ code...
+Got\ code
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+[remote]
+client_id\ =\ 
+client_secret\ =\ 
+token\ =\ {"access_token":"xxxxxxxxxxxxxxxxxxxxxxx","token_type":"bearer","refresh_token":"xxxxxxxxxxxxxxxxxx","expiry":"2015\-09\-06T16:07:39.658438471+01:00"}
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+y)\ Yes\ this\ is\ OK
+e)\ Edit\ this\ remote
+d)\ Delete\ this\ remote
+y/e/d>\ y
+\f[]
+.fi
+.PP
+See the remote setup docs (http://rclone.org/remote_setup/) for how to
+set it up on a machine with no Internet browser available.
+.PP
+Note that rclone runs a webserver on your local machine to collect the
+token as returned from Amazon.
+This only runs from the moment it opens your browser to the moment you
+get back the verification code.
+This is on \f[C]http://127.0.0.1:53682/\f[] and this it may require you
+to unblock it temporarily if you are running a host firewall.
+.PP
+Once configured you can then use \f[C]rclone\f[] like this,
+.PP
+List directories in top level of your Amazon cloud drive
+.IP
+.nf
+\f[C]
+rclone\ lsd\ remote:
+\f[]
+.fi
+.PP
+List all the files in your Amazon cloud drive
+.IP
+.nf
+\f[C]
+rclone\ ls\ remote:
+\f[]
+.fi
+.PP
+To copy a local directory to an Amazon cloud drive directory called
+backup
+.IP
+.nf
+\f[C]
+rclone\ copy\ /home/source\ remote:backup
+\f[]
+.fi
+.SS Modified time and MD5SUMs
+.PP
+Amazon cloud drive doesn\[aq]t allow modification times to be changed
+via the API so these won\[aq]t be accurate or used for syncing.
+.PP
+It does store MD5SUMs so for a more accurate sync, you can use the
+\f[C]\-\-checksum\f[] flag.
+.SS Deleting files
+.PP
+Any files you delete with rclone will end up in the trash.
+Amazon don\[aq]t provide an API to permanently delete files, nor to
+empty the trash, so you will have to do that with one of Amazon\[aq]s
+apps or via the Amazon cloud drive website.
+.SS Specific options
+.PP
+Here are the command line options specific to this cloud storage system.
+.SS \-\-acd\-templink\-threshold=SIZE
+.PP
+Files this size or more will be downloaded via their \f[C]tempLink\f[].
+This is to work around a problem with Amazon Cloud Drive which blocks
+downloads of files bigger than about 10GB.
+The default for this is 9GB which shouldn\[aq]t need to be changed.
+.PP
+To download files above this threshold, rclone requests a
+\f[C]tempLink\f[] which downloads the file through a temporary URL
+directly from the underlying S3 storage.
+.SS Limitations
+.PP
+Note that Amazon cloud drive is case insensitive so you can\[aq]t have a
+file called "Hello.doc" and one called "hello.doc".
+.PP
+Amazon cloud drive has rate limiting so you may notice errors in the
+sync (429 errors).
+rclone will automatically retry the sync up to 3 times by default (see
+\f[C]\-\-retries\f[] flag) which should hopefully work around this
+problem.
+.PP
+Amazon cloud drive has an internal limit of file sizes that can be
+uploaded to the service.
+This limit is not officially published, but all files larger than this
+will fail.
+.PP
+At the time of writing (Jan 2016) is in the area of 50GB per file.
+This means that larger files are likely to fail.
+.PP
+Unfortunatly there is no way for rclone to see that this failure is
+because of file size, so it will retry the operation, as any other
+failure.
+To avoid this problem, use \f[C]\-\-max\-size=50GB\f[] option to limit
+the maximum size of uploaded files.
+.SS Microsoft One Drive
+.PP
+Paths are specified as \f[C]remote:path\f[]
+.PP
+Paths may be as deep as required, eg
+\f[C]remote:directory/subdirectory\f[].
+.PP
+The initial setup for One Drive involves getting a token from Microsoft
+which you need to do in your browser.
+\f[C]rclone\ config\f[] walks you through it.
+.PP
+Here is an example of how to make a remote called \f[C]remote\f[].
+First run:
+.IP
+.nf
+\f[C]
+\ rclone\ config
+\f[]
+.fi
+.PP
+This will guide you through an interactive setup process:
+.IP
+.nf
+\f[C]
+n)\ New\ remote
+d)\ Delete\ remote
+q)\ Quit\ config
+e/n/d/q>\ n
+name>\ remote
+What\ type\ of\ source\ is\ it?
+Choose\ a\ number\ from\ below
+\ 1)\ amazon\ cloud\ drive
+\ 2)\ drive
+\ 3)\ dropbox
+\ 4)\ google\ cloud\ storage
+\ 5)\ local
+\ 6)\ onedrive
+\ 7)\ s3
+\ 8)\ swift
+type>\ 6
+Microsoft\ App\ Client\ Id\ \-\ leave\ blank\ normally.
+client_id>\ 
+Microsoft\ App\ Client\ Secret\ \-\ leave\ blank\ normally.
+client_secret>\ 
+Remote\ config
+If\ your\ browser\ doesn\[aq]t\ open\ automatically\ go\ to\ the\ following\ link:\ http://127.0.0.1:53682/auth
+Log\ in\ and\ authorize\ rclone\ for\ access
+Waiting\ for\ code...
+Got\ code
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+[remote]
+client_id\ =\ 
+client_secret\ =\ 
+token\ =\ {"access_token":"XXXXXX"}
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+y)\ Yes\ this\ is\ OK
+e)\ Edit\ this\ remote
+d)\ Delete\ this\ remote
+y/e/d>\ y
+\f[]
+.fi
+.PP
+See the remote setup docs (http://rclone.org/remote_setup/) for how to
+set it up on a machine with no Internet browser available.
+.PP
+Note that rclone runs a webserver on your local machine to collect the
+token as returned from Microsoft.
+This only runs from the moment it opens your browser to the moment you
+get back the verification code.
+This is on \f[C]http://127.0.0.1:53682/\f[] and this it may require you
+to unblock it temporarily if you are running a host firewall.
+.PP
+Once configured you can then use \f[C]rclone\f[] like this,
+.PP
+List directories in top level of your One Drive
+.IP
+.nf
+\f[C]
+rclone\ lsd\ remote:
+\f[]
+.fi
+.PP
+List all the files in your One Drive
+.IP
+.nf
+\f[C]
+rclone\ ls\ remote:
+\f[]
+.fi
+.PP
+To copy a local directory to an One Drive directory called backup
+.IP
+.nf
+\f[C]
+rclone\ copy\ /home/source\ remote:backup
+\f[]
+.fi
+.SS Modified time and hashes
+.PP
+One Drive allows modification times to be set on objects accurate to 1
+second.
+These will be used to detect whether objects need syncing or not.
+.PP
+One drive supports SHA1 type hashes, so you can use
+\f[C]\-\-checksum\f[] flag.
+.SS Deleting files
+.PP
+Any files you delete with rclone will end up in the trash.
+Microsoft doesn\[aq]t provide an API to permanently delete files, nor to
+empty the trash, so you will have to do that with one of Microsoft\[aq]s
+apps or via the One Drive website.
+.SS Specific options
+.PP
+Here are the command line options specific to this cloud storage system.
+.SS \-\-onedrive\-chunk\-size=SIZE
+.PP
+Above this size files will be chunked \- must be multiple of 320k.
+The default is 10MB.
+Note that the chunks will be buffered into memory.
+.SS \-\-onedrive\-upload\-cutoff=SIZE
+.PP
+Cutoff for switching to chunked upload \- must be <= 100MB.
+The default is 10MB.
+.SS Limitations
+.PP
+Note that One Drive is case insensitive so you can\[aq]t have a file
+called "Hello.doc" and one called "hello.doc".
+.PP
+Rclone only supports your default One Drive, and doesn\[aq]t work with
+One Drive for business.
+Both these issues may be fixed at some point depending on user demand!
+.PP
+There are quite a few characters that can\[aq]t be in One Drive file
+names.
+These can\[aq]t occur on Windows platforms, but on non\-Windows
+platforms they are common.
+Rclone will map these names to and from an identical looking unicode
+equivalent.
+For example if a file has a \f[C]?\f[] in it will be mapped to
+\f[C]？\f[] instead.
+.SS Hubic
+.PP
+Paths are specified as \f[C]remote:path\f[]
+.PP
+Paths are specified as \f[C]remote:container\f[] (or \f[C]remote:\f[]
+for the \f[C]lsd\f[] command.) You may put subdirectories in too, eg
+\f[C]remote:container/path/to/dir\f[].
+.PP
+The initial setup for Hubic involves getting a token from Hubic which
+you need to do in your browser.
+\f[C]rclone\ config\f[] walks you through it.
+.PP
+Here is an example of how to make a remote called \f[C]remote\f[].
+First run:
+.IP
+.nf
+\f[C]
+\ rclone\ config
+\f[]
+.fi
+.PP
+This will guide you through an interactive setup process:
+.IP
+.nf
+\f[C]
+n)\ New\ remote
+d)\ Delete\ remote
+q)\ Quit\ config
+e/n/d/q>\ n
+name>\ remote
+What\ type\ of\ source\ is\ it?
+Choose\ a\ number\ from\ below
+\ 1)\ amazon\ cloud\ drive
+\ 2)\ drive
+\ 3)\ dropbox
+\ 4)\ google\ cloud\ storage
+\ 5)\ local
+\ 6)\ onedrive
+\ 7)\ hubic
+\ 8)\ s3
+\ 9)\ swift
+type>\ 7
+Hubic\ App\ Client\ Id\ \-\ leave\ blank\ normally.
+client_id>\ 
+Hubic\ App\ Client\ Secret\ \-\ leave\ blank\ normally.
+client_secret>\ 
+Remote\ config
+If\ your\ browser\ doesn\[aq]t\ open\ automatically\ go\ to\ the\ following\ link:\ http://localhost:53682/auth
+Log\ in\ and\ authorize\ rclone\ for\ access
+Waiting\ for\ code...
+Got\ code
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+[remote]
+client_id\ =\ 
+client_secret\ =\ 
+token\ =\ {"access_token":"XXXXXX"}
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+y)\ Yes\ this\ is\ OK
+e)\ Edit\ this\ remote
+d)\ Delete\ this\ remote
+y/e/d>\ y
+\f[]
+.fi
+.PP
+See the remote setup docs (http://rclone.org/remote_setup/) for how to
+set it up on a machine with no Internet browser available.
+.PP
+Note that rclone runs a webserver on your local machine to collect the
+token as returned from Hubic.
+This only runs from the moment it opens your browser to the moment you
+get back the verification code.
+This is on \f[C]http://127.0.0.1:53682/\f[] and this it may require you
+to unblock it temporarily if you are running a host firewall.
+.PP
+Once configured you can then use \f[C]rclone\f[] like this,
+.PP
+List containers in the top level of your Hubic
+.IP
+.nf
+\f[C]
+rclone\ lsd\ remote:
+\f[]
+.fi
+.PP
+List all the files in your Hubic
+.IP
+.nf
+\f[C]
+rclone\ ls\ remote:
+\f[]
+.fi
+.PP
+To copy a local directory to an Hubic directory called backup
+.IP
+.nf
+\f[C]
+rclone\ copy\ /home/source\ remote:backup
+\f[]
+.fi
+.SS Modified time
+.PP
+The modified time is stored as metadata on the object as
+\f[C]X\-Object\-Meta\-Mtime\f[] as floating point since the epoch
+accurate to 1 ns.
+.PP
+This is a defacto standard (used in the official python\-swiftclient
+amongst others) for storing the modification time for an object.
+.PP
+Note that Hubic wraps the Swift backend, so most of the properties of
+are the same.
+.SS Limitations
+.PP
+Code to refresh the OpenStack token isn\[aq]t done yet which may cause
+problems with very long transfers.
+.SS Backblaze B2
+.PP
+B2 is Backblaze\[aq]s cloud storage
+system (https://www.backblaze.com/b2/).
+.PP
+Paths are specified as \f[C]remote:bucket\f[] (or \f[C]remote:\f[] for
+the \f[C]lsd\f[] command.) You may put subdirectories in too, eg
+\f[C]remote:bucket/path/to/dir\f[].
+.PP
+Here is an example of making a b2 configuration.
+First run
+.IP
+.nf
+\f[C]
+rclone\ config
+\f[]
+.fi
+.PP
+This will guide you through an interactive setup process.
+You will need your account number (a short hex number) and key (a long
+hex number) which you can get from the b2 control panel.
+.IP
+.nf
+\f[C]
+No\ remotes\ found\ \-\ make\ a\ new\ one
+n)\ New\ remote
+q)\ Quit\ config
+n/q>\ n
+name>\ remote
+What\ type\ of\ source\ is\ it?
+Choose\ a\ number\ from\ below
+\ 1)\ amazon\ cloud\ drive
+\ 2)\ b2
+\ 3)\ drive
+\ 4)\ dropbox
+\ 5)\ google\ cloud\ storage
+\ 6)\ swift
+\ 7)\ hubic
+\ 8)\ local
+\ 9)\ onedrive
+10)\ s3
+type>\ 2
+Account\ ID
+account>\ 123456789abc
+Application\ Key
+key>\ 0123456789abcdef0123456789abcdef0123456789
+Endpoint\ for\ the\ service\ \-\ leave\ blank\ normally.
+endpoint>\ 
+Remote\ config
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+[remote]
+account\ =\ 123456789abc
+key\ =\ 0123456789abcdef0123456789abcdef0123456789
+endpoint\ =\ 
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+y)\ Yes\ this\ is\ OK
+e)\ Edit\ this\ remote
+d)\ Delete\ this\ remote
+y/e/d>\ y
+\f[]
+.fi
+.PP
+This remote is called \f[C]remote\f[] and can now be used like this
+.PP
+See all buckets
+.IP
+.nf
+\f[C]
+rclone\ lsd\ remote:
+\f[]
+.fi
+.PP
+Make a new bucket
+.IP
+.nf
+\f[C]
+rclone\ mkdir\ remote:bucket
+\f[]
+.fi
+.PP
+List the contents of a bucket
+.IP
+.nf
+\f[C]
+rclone\ ls\ remote:bucket
+\f[]
+.fi
+.PP
+Sync \f[C]/home/local/directory\f[] to the remote bucket, deleting any
+excess files in the bucket.
+.IP
+.nf
+\f[C]
+rclone\ sync\ /home/local/directory\ remote:bucket
+\f[]
+.fi
+.SS Modified time
+.PP
+The modified time is stored as metadata on the object as
+\f[C]X\-Bz\-Info\-src_last_modified_millis\f[] as milliseconds since
+1970\-01\-01 in the Backblaze standard.
+Other tools should be able to use this as a modified time.
+.PP
+Modified times are set on upload, read on download and shown in
+listings.
+They are not used in syncing as unfortunately B2 doesn\[aq]t have an API
+method to set them independently of doing an upload.
+.SS SHA1 checksums
+.PP
+The SHA1 checksums of the files are checked on upload and download and
+will be used in the syncing process.
+You can use the \f[C]\-\-checksum\f[] flag.
+.SS Versions
+.PP
+When rclone uploads a new version of a file it creates a new version of
+it (https://www.backblaze.com/b2/docs/file_versions.html).
+Likewise when you delete a file, the old version will still be
+available.
+.PP
+The old versions of files are visible in the B2 web interface, but not
+via rclone yet.
+.PP
+Rclone doesn\[aq]t provide any way of managing old versions (downloading
+them or deleting them) at the moment.
+When you \f[C]purge\f[] a bucket, all the old versions will be deleted.
+.SS Bugs
+.PP
+Note that when uploading a file, rclone has to make a temporary copy of
+it in your temp filing system.
+This is due to a weakness in the B2 API which I\[aq]m hoping will be
+addressed soon.
+.SS API
+.PP
+Here are some notes I made on the backblaze
+API (https://gist.github.com/ncw/166dabf352b399f1cc1c) while integrating
+it with rclone which detail the changes I\[aq]d like to see.
+With a couple of small tweaks Backblaze could enable rclone to not make
+a temporary copy of all files and fully support modification times.
+.SS Yandex Disk
+.PP
+Yandex Disk (https://disk.yandex.com) is a cloud storage solution
+created by Yandex (http://yandex.com).
+.PP
+Yandex paths may be as deep as required, eg
+\f[C]remote:directory/subdirectory\f[].
+.PP
+Here is an example of making a yandex configuration.
+First run
+.IP
+.nf
+\f[C]
+rclone\ config
+\f[]
+.fi
+.PP
+This will guide you through an interactive setup process:
+.IP
+.nf
+\f[C]
+No\ remotes\ found\ \-\ make\ a\ new\ one
+n)\ New\ remote
+q)\ Quit\ config
+n/q>\ n
+name>\ remote
+What\ type\ of\ source\ is\ it?
+Choose\ a\ number\ from\ below
+\ 1)\ amazon\ cloud\ drive
+\ 2)\ b2
+\ 3)\ drive
+\ 4)\ dropbox
+\ 5)\ google\ cloud\ storage
+\ 6)\ swift
+\ 7)\ hubic
+\ 8)\ local
+\ 9)\ onedrive
+10)\ s3
+11)\ yandex
+type>\ 11
+Yandex\ Client\ Id\ \-\ leave\ blank\ normally.
+client_id>\ 
+Yandex\ Client\ Secret\ \-\ leave\ blank\ normally.
+client_secret>\ 
+Remote\ config
+If\ your\ browser\ doesn\[aq]t\ open\ automatically\ go\ to\ the\ following\ link:\ http://127.0.0.1:53682/auth
+Log\ in\ and\ authorize\ rclone\ for\ access
+Waiting\ for\ code...
+Got\ code
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+[remote]
+client_id\ =\ 
+client_secret\ =\ 
+token\ =\ {"access_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","token_type":"bearer","expiry":"2016\-12\-29T12:27:11.362788025Z"}
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+y)\ Yes\ this\ is\ OK
+e)\ Edit\ this\ remote
+d)\ Delete\ this\ remote
+y/e/d>\ y
+\f[]
+.fi
+.PP
+See the remote setup docs (http://rclone.org/remote_setup/) for how to
+set it up on a machine with no Internet browser available.
+.PP
+Note that rclone runs a webserver on your local machine to collect the
+token as returned from Yandex Disk.
+This only runs from the moment it opens your browser to the moment you
+get back the verification code.
+This is on \f[C]http://127.0.0.1:53682/\f[] and this it may require you
+to unblock it temporarily if you are running a host firewall.
+.PP
+Once configured you can then use \f[C]rclone\f[] like this,
+.PP
+See top level directories
+.IP
+.nf
+\f[C]
+rclone\ lsd\ remote:
+\f[]
+.fi
+.PP
+Make a new directory
+.IP
+.nf
+\f[C]
+rclone\ mkdir\ remote:directory
+\f[]
+.fi
+.PP
+List the contents of a directory
+.IP
+.nf
+\f[C]
+rclone\ ls\ remote:directory
+\f[]
+.fi
+.PP
+Sync \f[C]/home/local/directory\f[] to the remote path, deleting any
+excess files in the path.
+.IP
+.nf
+\f[C]
+rclone\ sync\ /home/local/directory\ remote:directory
+\f[]
+.fi
+.SS Modified time
+.PP
+Modified times are supported and are stored accurate to 1 ns in custom
+metadata called \f[C]rclone_modified\f[] in RFC3339 with nanoseconds
+format.
+.SS MD5 checksums
+.PP
+MD5 checksums are natively supported by Yandex Disk.
+.SS Local Filesystem
+.PP
+Local paths are specified as normal filesystem paths, eg
+\f[C]/path/to/wherever\f[], so
+.IP
+.nf
+\f[C]
+rclone\ sync\ /home/source\ /tmp/destination
+\f[]
+.fi
+.PP
+Will sync \f[C]/home/source\f[] to \f[C]/tmp/destination\f[]
+.PP
+These can be configured into the config file for consistencies sake, but
+it is probably easier not to.
+.SS Modified time
+.PP
+Rclone reads and writes the modified time using an accuracy determined
+by the OS.
+Typically this is 1ns on Linux, 10 ns on Windows and 1 Second on OS X.
+.SS Filenames
+.PP
+Filenames are expected to be encoded in UTF\-8 on disk.
+This is the normal case for Windows and OS X.
+There is a bit more uncertainty in the Linux world, but new
+distributions will have UTF\-8 encoded files names.
+.PP
+If an invalid (non\-UTF8) filename is read, the invalid caracters will
+be replaced with the unicode replacement character, \[aq]�\[aq].
+\f[C]rclone\f[] will emit a debug message in this case (use \f[C]\-v\f[]
+to see), eg
+.IP
+.nf
+\f[C]
+Local\ file\ system\ at\ .:\ Replacing\ invalid\ UTF\-8\ characters\ in\ "gro\\xdf"
+\f[]
+.fi
+.SS Long paths on Windows
+.PP
+Rclone handles long paths automatically, by converting all paths to long
+UNC
+paths (https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#maxpath)
+which allows paths up to 32,767 characters.
+.PP
+This is why you will see that your paths, for instance
+\f[C]c:\\files\f[] is converted to the UNC path
+\f[C]\\\\?\\c:\\files\f[] in the output, and \f[C]\\\\server\\share\f[]
+is converted to \f[C]\\\\?\\UNC\\server\\share\f[].
+.PP
+However, in rare cases this may cause problems with buggy file system
+drivers like EncFS (https://github.com/ncw/rclone/issues/261).
+To disable UNC conversion globally, add this to your
+\f[C]\&.rclone.conf\f[] file:
+.IP
+.nf
+\f[C]
+[local]
+nounc\ =\ true
+\f[]
+.fi
+.PP
+If you want to selectively disable UNC, you can add it to a separate
+entry like this:
+.IP
+.nf
+\f[C]
+[nounc]
+type\ =\ local
+nounc\ =\ true
+\f[]
+.fi
+.PP
+And use rclone like this:
+.PP
+\f[C]rclone\ copy\ c:\\src\ nounc:z:\\dst\f[]
+.PP
+This will use UNC paths on \f[C]c:\\src\f[] but not on \f[C]z:\\dst\f[].
+Of course this will cause problems if the absolute path length of a file
+exceeds 258 characters on z, so only use this option if you have to.
+.SS Changelog
+.IP \[bu] 2
+v1.27 \- 2016\-01\-31
+.RS 2
+.IP \[bu] 2
+New Features
+.IP \[bu] 2
+Easier headless configuration with \f[C]rclone\ authorize\f[]
+.IP \[bu] 2
+Add support for multiple hash types \- we now check SHA1 as well as MD5
+hashes.
+.IP \[bu] 2
+\f[C]delete\f[] command which does obey the filters (unlike
+\f[C]purge\f[])
+.IP \[bu] 2
+\f[C]dedupe\f[] command to deduplicate a remote.
+Useful with Google Drive.
+.IP \[bu] 2
+Add \f[C]\-\-ignore\-existing\f[] flag to skip all files that exist on
+destination.
+.IP \[bu] 2
+Add \f[C]\-\-delete\-before\f[], \f[C]\-\-delete\-during\f[],
+\f[C]\-\-delete\-after\f[] flags.
+.IP \[bu] 2
+Add \f[C]\-\-memprofile\f[] flag to debug memory use.
+.IP \[bu] 2
+Warn the user about files with same name but different case
+.IP \[bu] 2
+Make \f[C]\-\-include\f[] rules add their implict exclude * at the end
+of the filter list
+.IP \[bu] 2
+Deprecate compiling with go1.3
+.IP \[bu] 2
+Amazon Cloud Drive
+.IP \[bu] 2
+Fix download of files > 10 GB
+.IP \[bu] 2
+Fix directory traversal ("Next token is expired") for large directory
+listings
+.IP \[bu] 2
+Remove 409 conflict from error codes we will retry \- stops very long
+pauses
+.IP \[bu] 2
+Backblaze B2
+.IP \[bu] 2
+SHA1 hashes now checked by rclone core
+.IP \[bu] 2
+Drive
+.IP \[bu] 2
+Add \f[C]\-\-drive\-auth\-owner\-only\f[] to only consider files owned
+by the user \- thanks Björn Harrtell
+.IP \[bu] 2
+Export Google documents
+.IP \[bu] 2
+Dropbox
+.IP \[bu] 2
+Make file exclusion error controllable with \-q
+.IP \[bu] 2
+Swift
+.IP \[bu] 2
+Fix upload from unprivileged user.
+.IP \[bu] 2
+S3
+.IP \[bu] 2
+Fix updating of mod times of files with \f[C]+\f[] in.
+.IP \[bu] 2
+Local
+.IP \[bu] 2
+Add local file system option to disable UNC on Windows.
+.RE
+.IP \[bu] 2
+v1.26 \- 2016\-01\-02
+.RS 2
+.IP \[bu] 2
+New Features
+.IP \[bu] 2
+Yandex storage backend \- thank you Dmitry Burdeev ("dibu")
+.IP \[bu] 2
+Implement Backblaze B2 storage backend
+.IP \[bu] 2
+Add \-\-min\-age and \-\-max\-age flags \- thank you Adriano Aurélio
+Meirelles
+.IP \[bu] 2
+Make ls/lsl/md5sum/size/check obey includes and excludes
+.IP \[bu] 2
+Fixes
+.IP \[bu] 2
+Fix crash in http logging
+.IP \[bu] 2
+Upload releases to github too
+.IP \[bu] 2
+Swift
+.IP \[bu] 2
+Fix sync for chunked files
+.IP \[bu] 2
+One Drive
+.IP \[bu] 2
+Re\-enable server side copy
+.IP \[bu] 2
+Don\[aq]t mask HTTP error codes with JSON decode error
+.IP \[bu] 2
+S3
+.IP \[bu] 2
+Fix corrupting Content\-Type on mod time update (thanks Joseph Spurrier)
+.RE
+.IP \[bu] 2
+v1.25 \- 2015\-11\-14
+.RS 2
+.IP \[bu] 2
+New features
+.IP \[bu] 2
+Implement Hubic storage system
+.IP \[bu] 2
+Fixes
+.IP \[bu] 2
+Fix deletion of some excluded files without \-\-delete\-excluded
+.RS 2
+.IP \[bu] 2
+This could have deleted files unexpectedly on sync
+.IP \[bu] 2
+Always check first with \f[C]\-\-dry\-run\f[]!
+.RE
+.IP \[bu] 2
+Swift
+.IP \[bu] 2
+Stop SetModTime losing metadata (eg X\-Object\-Manifest)
+.RS 2
+.IP \[bu] 2
+This could have caused data loss for files > 5GB in size
+.RE
+.IP \[bu] 2
+Use ContentType from Object to avoid lookups in listings
+.IP \[bu] 2
+One Drive
+.IP \[bu] 2
+disable server side copy as it seems to be broken at Microsoft
+.RE
+.IP \[bu] 2
+v1.24 \- 2015\-11\-07
+.RS 2
+.IP \[bu] 2
+New features
+.IP \[bu] 2
+Add support for Microsoft One Drive
+.IP \[bu] 2
+Add \f[C]\-\-no\-check\-certificate\f[] option to disable server
+certificate verification
+.IP \[bu] 2
+Add async readahead buffer for faster transfer of big files
+.IP \[bu] 2
+Fixes
+.IP \[bu] 2
+Allow spaces in remotes and check remote names for validity at creation
+time
+.IP \[bu] 2
+Allow \[aq]&\[aq] and disallow \[aq]:\[aq] in Windows filenames.
+.IP \[bu] 2
+Swift
+.IP \[bu] 2
+Ignore directory marker objects where appropriate \- allows working with
+Hubic
+.IP \[bu] 2
+Don\[aq]t delete the container if fs wasn\[aq]t at root
+.IP \[bu] 2
+S3
+.IP \[bu] 2
+Don\[aq]t delete the bucket if fs wasn\[aq]t at root
+.IP \[bu] 2
+Google Cloud Storage
+.IP \[bu] 2
+Don\[aq]t delete the bucket if fs wasn\[aq]t at root
+.RE
+.IP \[bu] 2
+v1.23 \- 2015\-10\-03
+.RS 2
+.IP \[bu] 2
+New features
+.IP \[bu] 2
+Implement \f[C]rclone\ size\f[] for measuring remotes
+.IP \[bu] 2
+Fixes
+.IP \[bu] 2
+Fix headless config for drive and gcs
+.IP \[bu] 2
+Tell the user they should try again if the webserver method failed
+.IP \[bu] 2
+Improve output of \f[C]\-\-dump\-headers\f[]
+.IP \[bu] 2
+S3
+.IP \[bu] 2
+Allow anonymous access to public buckets
+.IP \[bu] 2
+Swift
+.IP \[bu] 2
+Stop chunked operations logging "Failed to read info: Object Not Found"
+.IP \[bu] 2
+Use Content\-Length on uploads for extra reliability
+.RE
+.IP \[bu] 2
+v1.22 \- 2015\-09\-28
+.RS 2
+.IP \[bu] 2
+Implement rsync like include and exclude flags
+.IP \[bu] 2
+swift
+.IP \[bu] 2
+Support files > 5GB \- thanks Sergey Tolmachev
+.RE
+.IP \[bu] 2
+v1.21 \- 2015\-09\-22
+.RS 2
+.IP \[bu] 2
+New features
+.IP \[bu] 2
+Display individual transfer progress
+.IP \[bu] 2
+Make lsl output times in localtime
+.IP \[bu] 2
+Fixes
+.IP \[bu] 2
+Fix allowing user to override credentials again in Drive, GCS and ACD
+.IP \[bu] 2
+Amazon Cloud Drive
+.IP \[bu] 2
+Implement compliant pacing scheme
+.IP \[bu] 2
+Google Drive
+.IP \[bu] 2
+Make directory reads concurrent for increased speed.
+.RE
+.IP \[bu] 2
+v1.20 \- 2015\-09\-15
+.RS 2
+.IP \[bu] 2
+New features
+.IP \[bu] 2
+Amazon Cloud Drive support
+.IP \[bu] 2
+Oauth support redone \- fix many bugs and improve usability
+.RS 2
+.IP \[bu] 2
+Use "golang.org/x/oauth2" as oauth libary of choice
+.IP \[bu] 2
+Improve oauth usability for smoother initial signup
+.IP \[bu] 2
+drive, googlecloudstorage: optionally use auto config for the oauth
+token
+.RE
+.IP \[bu] 2
+Implement \-\-dump\-headers and \-\-dump\-bodies debug flags
+.IP \[bu] 2
+Show multiple matched commands if abbreviation too short
+.IP \[bu] 2
+Implement server side move where possible
+.IP \[bu] 2
+local
+.IP \[bu] 2
+Always use UNC paths internally on Windows \- fixes a lot of bugs
+.IP \[bu] 2
+dropbox
+.IP \[bu] 2
+force use of our custom transport which makes timeouts work
+.IP \[bu] 2
+Thanks to Klaus Post for lots of help with this release
+.RE
+.IP \[bu] 2
+v1.19 \- 2015\-08\-28
+.RS 2
+.IP \[bu] 2
+New features
+.IP \[bu] 2
+Server side copies for s3/swift/drive/dropbox/gcs
+.IP \[bu] 2
+Move command \- uses server side copies if it can
+.IP \[bu] 2
+Implement \-\-retries flag \- tries 3 times by default
+.IP \[bu] 2
+Build for plan9/amd64 and solaris/amd64 too
+.IP \[bu] 2
+Fixes
+.IP \[bu] 2
+Make a current version download with a fixed URL for scripting
+.IP \[bu] 2
+Ignore rmdir in limited fs rather than throwing error
+.IP \[bu] 2
+dropbox
+.IP \[bu] 2
+Increase chunk size to improve upload speeds massively
+.IP \[bu] 2
+Issue an error message when trying to upload bad file name
+.RE
+.IP \[bu] 2
+v1.18 \- 2015\-08\-17
+.RS 2
+.IP \[bu] 2
+drive
+.IP \[bu] 2
+Add \f[C]\-\-drive\-use\-trash\f[] flag so rclone trashes instead of
+deletes
+.IP \[bu] 2
+Add "Forbidden to download" message for files with no downloadURL
+.IP \[bu] 2
+dropbox
+.IP \[bu] 2
+Remove datastore
+.RS 2
+.IP \[bu] 2
+This was deprecated and it caused a lot of problems
+.IP \[bu] 2
+Modification times and MD5SUMs no longer stored
+.RE
+.IP \[bu] 2
+Fix uploading files > 2GB
+.IP \[bu] 2
+s3
+.IP \[bu] 2
+use official AWS SDK from github.com/aws/aws\-sdk\-go
+.IP \[bu] 2
+\f[B]NB\f[] will most likely require you to delete and recreate remote
+.IP \[bu] 2
+enable multipart upload which enables files > 5GB
+.IP \[bu] 2
+tested with Ceph / RadosGW / S3 emulation
+.IP \[bu] 2
+many thanks to Sam Liston and Brian Haymore at the Utah Center for High
+Performance Computing (https://www.chpc.utah.edu/) for a Ceph test
+account
+.IP \[bu] 2
+misc
+.IP \[bu] 2
+Show errors when reading the config file
+.IP \[bu] 2
+Do not print stats in quiet mode \- thanks Leonid Shalupov
+.IP \[bu] 2
+Add FAQ
+.IP \[bu] 2
+Fix created directories not obeying umask
+.IP \[bu] 2
+Linux installation instructions \- thanks Shimon Doodkin
+.RE
+.IP \[bu] 2
+v1.17 \- 2015\-06\-14
+.RS 2
+.IP \[bu] 2
+dropbox: fix case insensitivity issues \- thanks Leonid Shalupov
+.RE
+.IP \[bu] 2
+v1.16 \- 2015\-06\-09
+.RS 2
+.IP \[bu] 2
+Fix uploading big files which was causing timeouts or panics
+.IP \[bu] 2
+Don\[aq]t check md5sum after download with \-\-size\-only
+.RE
+.IP \[bu] 2
+v1.15 \- 2015\-06\-06
+.RS 2
+.IP \[bu] 2
+Add \-\-checksum flag to only discard transfers by MD5SUM \- thanks Alex
+Couper
+.IP \[bu] 2
+Implement \-\-size\-only flag to sync on size not checksum & modtime
+.IP \[bu] 2
+Expand docs and remove duplicated information
+.IP \[bu] 2
+Document rclone\[aq]s limitations with directories
+.IP \[bu] 2
+dropbox: update docs about case insensitivity
+.RE
+.IP \[bu] 2
+v1.14 \- 2015\-05\-21
+.RS 2
+.IP \[bu] 2
+local: fix encoding of non utf\-8 file names \- fixes a duplicate file
+problem
+.IP \[bu] 2
+drive: docs about rate limiting
+.IP \[bu] 2
+google cloud storage: Fix compile after API change in
+"google.golang.org/api/storage/v1"
+.RE
+.IP \[bu] 2
+v1.13 \- 2015\-05\-10
+.RS 2
+.IP \[bu] 2
+Revise documentation (especially sync)
+.IP \[bu] 2
+Implement \-\-timeout and \-\-conntimeout
+.IP \[bu] 2
+s3: ignore etags from multipart uploads which aren\[aq]t md5sums
+.RE
+.IP \[bu] 2
+v1.12 \- 2015\-03\-15
+.RS 2
+.IP \[bu] 2
+drive: Use chunked upload for files above a certain size
+.IP \[bu] 2
+drive: add \-\-drive\-chunk\-size and \-\-drive\-upload\-cutoff
+parameters
+.IP \[bu] 2
+drive: switch to insert from update when a failed copy deletes the
+upload
+.IP \[bu] 2
+core: Log duplicate files if they are detected
+.RE
+.IP \[bu] 2
+v1.11 \- 2015\-03\-04
+.RS 2
+.IP \[bu] 2
+swift: add region parameter
+.IP \[bu] 2
+drive: fix crash on failed to update remote mtime
+.IP \[bu] 2
+In remote paths, change native directory separators to /
+.IP \[bu] 2
+Add synchronization to ls/lsl/lsd output to stop corruptions
+.IP \[bu] 2
+Ensure all stats/log messages to go stderr
+.IP \[bu] 2
+Add \-\-log\-file flag to log everything (including panics) to file
+.IP \[bu] 2
+Make it possible to disable stats printing with \-\-stats=0
+.IP \[bu] 2
+Implement \-\-bwlimit to limit data transfer bandwidth
+.RE
+.IP \[bu] 2
+v1.10 \- 2015\-02\-12
+.RS 2
+.IP \[bu] 2
+s3: list an unlimited number of items
+.IP \[bu] 2
+Fix getting stuck in the configurator
+.RE
+.IP \[bu] 2
+v1.09 \- 2015\-02\-07
+.RS 2
+.IP \[bu] 2
+windows: Stop drive letters (eg C:) getting mixed up with remotes (eg
+drive:)
+.IP \[bu] 2
+local: Fix directory separators on Windows
+.IP \[bu] 2
+drive: fix rate limit exceeded errors
+.RE
+.IP \[bu] 2
+v1.08 \- 2015\-02\-04
+.RS 2
+.IP \[bu] 2
+drive: fix subdirectory listing to not list entire drive
+.IP \[bu] 2
+drive: Fix SetModTime
+.IP \[bu] 2
+dropbox: adapt code to recent library changes
+.RE
+.IP \[bu] 2
+v1.07 \- 2014\-12\-23
+.RS 2
+.IP \[bu] 2
+google cloud storage: fix memory leak
+.RE
+.IP \[bu] 2
+v1.06 \- 2014\-12\-12
+.RS 2
+.IP \[bu] 2
+Fix "Couldn\[aq]t find home directory" on OSX
+.IP \[bu] 2
+swift: Add tenant parameter
+.IP \[bu] 2
+Use new location of Google API packages
+.RE
+.IP \[bu] 2
+v1.05 \- 2014\-08\-09
+.RS 2
+.IP \[bu] 2
+Improved tests and consequently lots of minor fixes
+.IP \[bu] 2
+core: Fix race detected by go race detector
+.IP \[bu] 2
+core: Fixes after running errcheck
+.IP \[bu] 2
+drive: reset root directory on Rmdir and Purge
+.IP \[bu] 2
+fs: Document that Purger returns error on empty directory, test and fix
+.IP \[bu] 2
+google cloud storage: fix ListDir on subdirectory
+.IP \[bu] 2
+google cloud storage: re\-read metadata in SetModTime
+.IP \[bu] 2
+s3: make reading metadata more reliable to work around eventual
+consistency problems
+.IP \[bu] 2
+s3: strip trailing / from ListDir()
+.IP \[bu] 2
+swift: return directories without / in ListDir
+.RE
+.IP \[bu] 2
+v1.04 \- 2014\-07\-21
+.RS 2
+.IP \[bu] 2
+google cloud storage: Fix crash on Update
+.RE
+.IP \[bu] 2
+v1.03 \- 2014\-07\-20
+.RS 2
+.IP \[bu] 2
+swift, s3, dropbox: fix updated files being marked as corrupted
+.IP \[bu] 2
+Make compile with go 1.1 again
+.RE
+.IP \[bu] 2
+v1.02 \- 2014\-07\-19
+.RS 2
+.IP \[bu] 2
+Implement Dropbox remote
+.IP \[bu] 2
+Implement Google Cloud Storage remote
+.IP \[bu] 2
+Verify Md5sums and Sizes after copies
+.IP \[bu] 2
+Remove times from "ls" command \- lists sizes only
+.IP \[bu] 2
+Add add "lsl" \- lists times and sizes
+.IP \[bu] 2
+Add "md5sum" command
+.RE
+.IP \[bu] 2
+v1.01 \- 2014\-07\-04
+.RS 2
+.IP \[bu] 2
+drive: fix transfer of big files using up lots of memory
+.RE
+.IP \[bu] 2
+v1.00 \- 2014\-07\-03
+.RS 2
+.IP \[bu] 2
+drive: fix whole second dates
+.RE
+.IP \[bu] 2
+v0.99 \- 2014\-06\-26
+.RS 2
+.IP \[bu] 2
+Fix \-\-dry\-run not working
+.IP \[bu] 2
+Make compatible with go 1.1
+.RE
+.IP \[bu] 2
+v0.98 \- 2014\-05\-30
+.RS 2
+.IP \[bu] 2
+s3: Treat missing Content\-Length as 0 for some ceph installations
+.IP \[bu] 2
+rclonetest: add file with a space in
+.RE
+.IP \[bu] 2
+v0.97 \- 2014\-05\-05
+.RS 2
+.IP \[bu] 2
+Implement copying of single files
+.IP \[bu] 2
+s3 & swift: support paths inside containers/buckets
+.RE
+.IP \[bu] 2
+v0.96 \- 2014\-04\-24
+.RS 2
+.IP \[bu] 2
+drive: Fix multiple files of same name being created
+.IP \[bu] 2
+drive: Use o.Update and fs.Put to optimise transfers
+.IP \[bu] 2
+Add version number, \-V and \-\-version
+.RE
+.IP \[bu] 2
+v0.95 \- 2014\-03\-28
+.RS 2
+.IP \[bu] 2
+rclone.org: website, docs and graphics
+.IP \[bu] 2
+drive: fix path parsing
+.RE
+.IP \[bu] 2
+v0.94 \- 2014\-03\-27
+.RS 2
+.IP \[bu] 2
+Change remote format one last time
+.IP \[bu] 2
+GNU style flags
+.RE
+.IP \[bu] 2
+v0.93 \- 2014\-03\-16
+.RS 2
+.IP \[bu] 2
+drive: store token in config file
+.IP \[bu] 2
+cross compile other versions
+.IP \[bu] 2
+set strict permissions on config file
+.RE
+.IP \[bu] 2
+v0.92 \- 2014\-03\-15
+.RS 2
+.IP \[bu] 2
+Config fixes and \-\-config option
+.RE
+.IP \[bu] 2
+v0.91 \- 2014\-03\-15
+.RS 2
+.IP \[bu] 2
+Make config file
+.RE
+.IP \[bu] 2
+v0.90 \- 2013\-06\-27
+.RS 2
+.IP \[bu] 2
+Project named rclone
+.RE
+.IP \[bu] 2
+v0.00 \- 2012\-11\-18
+.RS 2
+.IP \[bu] 2
+Project started
+.RE
+.SS Bugs and Limitations
+.SS Empty directories are left behind / not created
+.PP
+With remotes that have a concept of directory, eg Local and Drive, empty
+directories may be left behind, or not created when one was expected.
+.PP
+This is because rclone doesn\[aq]t have a concept of a directory \- it
+only works on objects.
+Most of the object storage systems can\[aq]t actually store a directory
+so there is nowhere for rclone to store anything about directories.
+.PP
+You can work round this to some extent with the\f[C]purge\f[] command
+which will delete everything under the path, \f[B]inluding\f[] empty
+directories.
+.PP
+This may be fixed at some point in Issue
+#100 (https://github.com/ncw/rclone/issues/100)
+.SS Directory timestamps aren\[aq]t preserved
+.PP
+For the same reason as the above, rclone doesn\[aq]t have a concept of a
+directory \- it only works on objects, therefore it can\[aq]t preserve
+the timestamps of directories.
+.SS Frequently Asked Questions
+.SS Do all cloud storage systems support all rclone commands
+.PP
+Yes they do.
+All the rclone commands (eg \f[C]sync\f[], \f[C]copy\f[] etc) will work
+on all the remote storage systems.
+.SS Can I copy the config from one machine to another
+.PP
+Sure! Rclone stores all of its config in a single file.
+If you want to find this file, the simplest way is to run
+\f[C]rclone\ \-h\f[] and look at the help for the \f[C]\-\-config\f[]
+flag which will tell you where it is.
+.PP
+See the remote setup docs (http://rclone.org/remote_setup/) for more
+info.
+.SS How do I configure rclone on a remote / headless box with no
+browser?
+.PP
+This has now been documented in its own remote setup
+page (http://rclone.org/remote_setup/).
+.SS Can rclone sync directly from drive to s3
+.PP
+Rclone can sync between two remote cloud storage systems just fine.
+.PP
+Note that it effectively downloads the file and uploads it again, so the
+node running rclone would need to have lots of bandwidth.
+.PP
+The syncs would be incremental (on a file by file basis).
+.PP
+Eg
+.IP
+.nf
+\f[C]
+rclone\ sync\ drive:Folder\ s3:bucket
+\f[]
+.fi
+.SS Using rclone from multiple locations at the same time
+.PP
+You can use rclone from multiple places at the same time if you choose
+different subdirectory for the output, eg
+.IP
+.nf
+\f[C]
+Server\ A>\ rclone\ sync\ /tmp/whatever\ remote:ServerA
+Server\ B>\ rclone\ sync\ /tmp/whatever\ remote:ServerB
+\f[]
+.fi
+.PP
+If you sync to the same directory then you should use rclone copy
+otherwise the two rclones may delete each others files, eg
+.IP
+.nf
+\f[C]
+Server\ A>\ rclone\ copy\ /tmp/whatever\ remote:Backup
+Server\ B>\ rclone\ copy\ /tmp/whatever\ remote:Backup
+\f[]
+.fi
+.PP
+The file names you upload from Server A and Server B should be different
+in this case, otherwise some file systems (eg Drive) may make
+duplicates.
+.SS Why doesn\[aq]t rclone support partial transfers / binary diffs like
+rsync?
+.PP
+Rclone stores each file you transfer as a native object on the remote
+cloud storage system.
+This means that you can see the files you upload as expected using
+alternative access methods (eg using the Google Drive web interface).
+There is a 1:1 mapping between files on your hard disk and objects
+created in the cloud storage system.
+.PP
+Cloud storage systems (at least none I\[aq]ve come across yet) don\[aq]t
+support partially uploading an object.
+You can\[aq]t take an existing object, and change some bytes in the
+middle of it.
+.PP
+It would be possible to make a sync system which stored binary diffs
+instead of whole objects like rclone does, but that would break the 1:1
+mapping of files on your hard disk to objects in the remote cloud
+storage system.
+.PP
+All the cloud storage systems support partial downloads of content, so
+it would be possible to make partial downloads work.
+However to make this work efficiently this would require storing a
+significant amount of metadata, which breaks the desired 1:1 mapping of
+files to objects.
+.SS Can rclone do bi\-directional sync?
+.PP
+No, not at present.
+rclone only does uni\-directional sync from A \-> B.
+It may do in the future though since it has all the primitives \- it
+just requires writing the algorithm to do it.
+.SS Can I use rclone with an HTTP proxy?
+.PP
+Yes.
+rclone will use the environment variables \f[C]HTTP_PROXY\f[],
+\f[C]HTTPS_PROXY\f[] and \f[C]NO_PROXY\f[], similar to cURL and other
+programs.
+.PP
+\f[C]HTTPS_PROXY\f[] takes precedence over \f[C]HTTP_PROXY\f[] for https
+requests.
+.PP
+The environment values may be either a complete URL or a "host[:port]",
+in which case the "http" scheme is assumed.
+.PP
+The \f[C]NO_PROXY\f[] allows you to disable the proxy for specific
+hosts.
+Hosts must be comma separated, and can contain domains or parts.
+For instance "foo.com" also matches "bar.foo.com".
+.SS Rclone gives x509: failed to load system roots and no roots provided
+error
+.PP
+This means that \f[C]rclone\f[] can\[aq]t file the SSL root
+certificates.
+Likely you are running \f[C]rclone\f[] on a NAS with a cut\-down Linux
+OS.
+.PP
+Rclone (via the Go runtime) tries to load the root certificates from
+these places on Linux.
+.IP
+.nf
+\f[C]
+"/etc/ssl/certs/ca\-certificates.crt",\ //\ Debian/Ubuntu/Gentoo\ etc.
+"/etc/pki/tls/certs/ca\-bundle.crt",\ \ \ //\ Fedora/RHEL
+"/etc/ssl/ca\-bundle.pem",\ \ \ \ \ \ \ \ \ \ \ \ \ //\ OpenSUSE
+"/etc/pki/tls/cacert.pem",\ \ \ \ \ \ \ \ \ \ \ \ //\ OpenELEC
+\f[]
+.fi
+.PP
+So doing something like this should fix the problem.
+It also sets the time which is important for SSL to work properly.
+.IP
+.nf
+\f[C]
+mkdir\ \-p\ /etc/ssl/certs/
+curl\ \-o\ /etc/ssl/certs/ca\-certificates.crt\ https://raw.githubusercontent.com/bagder/ca\-bundle/master/ca\-bundle.crt
+ntpclient\ \-s\ \-h\ pool.ntp.org
+\f[]
+.fi
+.SS License
+.PP
+This is free software under the terms of MIT the license (check the
+COPYING file included with the source code).
+.IP
+.nf
+\f[C]
+Copyright\ (C)\ 2012\ by\ Nick\ Craig\-Wood\ http://www.craig\-wood.com/nick/
+
+Permission\ is\ hereby\ granted,\ free\ of\ charge,\ to\ any\ person\ obtaining\ a\ copy
+of\ this\ software\ and\ associated\ documentation\ files\ (the\ "Software"),\ to\ deal
+in\ the\ Software\ without\ restriction,\ including\ without\ limitation\ the\ rights
+to\ use,\ copy,\ modify,\ merge,\ publish,\ distribute,\ sublicense,\ and/or\ sell
+copies\ of\ the\ Software,\ and\ to\ permit\ persons\ to\ whom\ the\ Software\ is
+furnished\ to\ do\ so,\ subject\ to\ the\ following\ conditions:
+
+The\ above\ copyright\ notice\ and\ this\ permission\ notice\ shall\ be\ included\ in
+all\ copies\ or\ substantial\ portions\ of\ the\ Software.
+
+THE\ SOFTWARE\ IS\ PROVIDED\ "AS\ IS",\ WITHOUT\ WARRANTY\ OF\ ANY\ KIND,\ EXPRESS\ OR
+IMPLIED,\ INCLUDING\ BUT\ NOT\ LIMITED\ TO\ THE\ WARRANTIES\ OF\ MERCHANTABILITY,
+FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE\ AND\ NONINFRINGEMENT.\ IN\ NO\ EVENT\ SHALL\ THE
+AUTHORS\ OR\ COPYRIGHT\ HOLDERS\ BE\ LIABLE\ FOR\ ANY\ CLAIM,\ DAMAGES\ OR\ OTHER
+LIABILITY,\ WHETHER\ IN\ AN\ ACTION\ OF\ CONTRACT,\ TORT\ OR\ OTHERWISE,\ ARISING\ FROM,
+OUT\ OF\ OR\ IN\ CONNECTION\ WITH\ THE\ SOFTWARE\ OR\ THE\ USE\ OR\ OTHER\ DEALINGS\ IN
+THE\ SOFTWARE.
+\f[]
+.fi
+.SS Authors
+.IP \[bu] 2
+Nick Craig\-Wood <nick@craig-wood.com>
+.SS Contributors
+.IP \[bu] 2
+Alex Couper <amcouper@gmail.com>
+.IP \[bu] 2
+Leonid Shalupov <leonid@shalupov.com>
+.IP \[bu] 2
+Shimon Doodkin <helpmepro1@gmail.com>
+.IP \[bu] 2
+Colin Nicholson <colin@colinn.com>
+.IP \[bu] 2
+Klaus Post <klauspost@gmail.com>
+.IP \[bu] 2
+Sergey Tolmachev <tolsi.ru@gmail.com>
+.IP \[bu] 2
+Adriano Aurélio Meirelles <adriano@atinge.com>
+.IP \[bu] 2
+C.
+Bess <cbess@users.noreply.github.com>
+.IP \[bu] 2
+Dmitry Burdeev <dibu28@gmail.com>
+.IP \[bu] 2
+Joseph Spurrier <github@josephspurrier.com>
+.IP \[bu] 2
+Björn Harrtell <bjorn@wololo.org>
+.IP \[bu] 2
+Xavier Lucas <xavier.lucas@corp.ovh.com>
+.IP \[bu] 2
+Werner Beroux <werner@beroux.com>
+.SS Contact the rclone project
+.PP
+The project website is at:
+.IP \[bu] 2
+https://github.com/ncw/rclone
+.PP
+There you can file bug reports, ask for help or contribute pull
+requests.
+.PP
+See also
+.IP \[bu] 2
+Google+ page for general comments
+.RS 2
+.RE
+.PP
+Or email Nick Craig\-Wood (mailto:nick@craig-wood.com)
+.SH AUTHORS
+Nick Craig\-Wood.
