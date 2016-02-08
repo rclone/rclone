@@ -14,13 +14,10 @@ The filters are applied for the `copy`, `sync`, `move`, `ls`, `lsl`,
 Note that `purge` does not obey the filters.
 
 Each path as it passes through rclone is matched against the include
-and exclude rules.  The paths are matched without a leading `/`.
+and exclude rules like `--include`, `--exclude`, `--include-from`,
+`--exclude-from`, `--filter`, or `--filter-from`. The simplest to try
+them out is using `ls` command, or `--dry-run` together with `-v`.
 
-For example the files might be passed to the matching engine like this
-
-  * `file1.jpg`
-  * `file2.jpg`
-  * `directory/file3.jpg`
 
 ## Patterns ##
 
@@ -28,15 +25,15 @@ The patterns used to match files for inclusion or exclusion are based
 on "file globs" as used by the unix shell.
 
 If the pattern starts with a `/` then it only matches at the top level
-of the directory tree.  If it doesn't start with `/` then it is
-matched starting at the end of the path, but it will only match a
-complete path element.
+of the directory tree, relative to the root of the remote.
+If it doesn't start with `/` then it is matched starting at the
+*end of the path*, but it will only match a complete path element:
 
     file.jpg  - matches "file.jpg"
               - matches "directory/file.jpg"
               - doesn't match "afile.jpg"
               - doesn't match "directory/afile.jpg"
-    /file.jpg - matches "file.jpg"
+    /file.jpg - matches "file.jpg" in the root directory of the remote
               - doesn't match "afile.jpg"
               - doesn't match "directory/file.jpg"
 
