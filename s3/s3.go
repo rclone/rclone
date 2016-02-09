@@ -235,7 +235,9 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 	cred := credentials.NewChainCredentials(providers)
 
 	switch {
-	case fs.ConfigFile.MustBool(name, "env_auth", false) && v.AccessKeyID == "" && v.SecretAccessKey == "":
+	case fs.ConfigFile.MustBool(name, "env_auth", false):
+		// No need for empty checks if "env_auth" is true
+	case v.AccessKeyID == "" && v.SecretAccessKey == "":
 		// if no access key/secret and iam is explicitly disabled then fall back to anon interaction
 		cred = credentials.AnonymousCredentials
 	case v.AccessKeyID == "":
