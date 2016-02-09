@@ -27,8 +27,8 @@ var (
 	ErrorNotFoundInConfigFile = fmt.Errorf("Didn't find section in config file")
 	ErrorCantPurge            = fmt.Errorf("Can't purge directory")
 	ErrorCantCopy             = fmt.Errorf("Can't copy object - incompatible remotes")
-	ErrorCantMove             = fmt.Errorf("Can't copy object - incompatible remotes")
-	ErrorCantDirMove          = fmt.Errorf("Can't copy directory - incompatible remotes")
+	ErrorCantMove             = fmt.Errorf("Can't move object - incompatible remotes")
+	ErrorCantDirMove          = fmt.Errorf("Can't move directory - incompatible remotes")
 	ErrorDirExists            = fmt.Errorf("Can't copy directory - destination already exists")
 )
 
