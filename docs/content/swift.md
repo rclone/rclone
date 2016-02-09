@@ -56,6 +56,8 @@ Choose a number from below, or type in your own value
 auth> 1
 Tenant name - optional
 tenant>
+Storage URL - optional
+storage_url>
 Remote config
 --------------------
 [remote]
@@ -63,6 +65,7 @@ user = user_name
 key = password_or_api_key
 auth = https://auth.api.rackspacecloud.com/v1.0
 tenant =
+storage_url =
 --------------------
 y) Yes this is OK
 e) Edit this remote
