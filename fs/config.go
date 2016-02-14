@@ -82,6 +82,7 @@ var (
 	deleteAfter     = pflag.BoolP("delete-after", "", false, "When synchronizing, delete files on destination after transfering")
 	lowLevelRetries = pflag.IntP("low-level-retries", "", 10, "Number of low level retries to do.")
 	updateOlder     = pflag.BoolP("update", "u", false, "Skip files that are newer on the destination.")
+	noGzip          = pflag.BoolP("no-gzip-encoding", "", false, "Don't set Accept-Encoding: gzip.")
 	bwLimit         SizeSuffix
 
 	// Key to use for password en/decryption.
@@ -201,6 +202,7 @@ type ConfigInfo struct {
 	DeleteAfter        bool // Delete after successful transfer.
 	LowLevelRetries    int
 	UpdateOlder        bool // Skip files that are newer on the destination
+	NoGzip             bool // Disable compression
 }
 
 // Transport returns an http.RoundTripper with the correct timeouts
@@ -235,6 +237,16 @@ func (ci *ConfigInfo) Transport() http.RoundTripper {
 		// In this mode, TLS is susceptible to man-in-the-middle attacks.
 		// This should be used only for testing.
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: ci.InsecureSkipVerify},
+
+		// DisableCompression, if true, prevents the Transport from
+		// requesting compression with an "Accept-Encoding: gzip"
+		// request header when the Request contains no existing
+		// Accept-Encoding value. If the Transport requests gzip on
+		// its own and gets a gzipped response, it's transparently
+		// decoded in the Response.Body. However, if the user
+		// explicitly requested gzip it is not automatically
+		// uncompressed.
+		DisableCompression: *noGzip,
 	}
 	if ci.DumpHeaders || ci.DumpBodies {
 		return NewLoggedTransport(t, ci.DumpBodies)
@@ -291,6 +303,7 @@ func LoadConfig() {
 	Config.InsecureSkipVerify = *skipVerify
 	Config.LowLevelRetries = *lowLevelRetries
 	Config.UpdateOlder = *updateOlder
+	Config.NoGzip = *noGzip
 
 	ConfigPath = *configFile
 

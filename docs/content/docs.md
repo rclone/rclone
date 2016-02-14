@@ -392,6 +392,16 @@ if you are reading and writing to an OS X filing system this will be
 
 This command line flag allows you to override that computed default.
 
+### --no-gzip-encoding ###
+
+Don't set `Accept-Encoding: gzip`.  This means that rclone won't ask
+the server for compressed files automatically. Useful if you've set
+the server to return files with `Content-Encoding: gzip` but you
+uploaded compressed files.
+
+There is no need to set this in normal operation, and doing so will
+decrease the network transfer efficiency of rclone.
+
 ### -q, --quiet ###
 
 Normally rclone outputs stats and a completion message.  If you set
