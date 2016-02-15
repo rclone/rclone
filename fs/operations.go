@@ -906,6 +906,7 @@ func Delete(f Fs) error {
 		delete <- o
 	})
 	close(delete)
+	wg.Wait()
 	return err
 }
 
