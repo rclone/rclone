@@ -30,8 +30,9 @@ var (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:  "swift",
-		NewFs: NewFs,
+		Name:        "swift",
+		Description: "Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)",
+		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: "user",
 			Help: "User name to log in.",

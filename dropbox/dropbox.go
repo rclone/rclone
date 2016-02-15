@@ -45,9 +45,10 @@ var (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:   "dropbox",
-		NewFs:  NewFs,
-		Config: configHelper,
+		Name:        "dropbox",
+		Description: "Dropbox",
+		NewFs:       NewFs,
+		Config:      configHelper,
 		Options: []fs.Option{{
 			Name: "app_key",
 			Help: "Dropbox App Key - leave blank normally.",

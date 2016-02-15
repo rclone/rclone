@@ -56,8 +56,9 @@ var (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:  "onedrive",
-		NewFs: NewFs,
+		Name:        "onedrive",
+		Description: "Microsoft OneDrive",
+		NewFs:       NewFs,
 		Config: func(name string) {
 			err := oauthutil.Config("onedrive", name, oauthConfig)
 			if err != nil {

@@ -20,8 +20,9 @@ import (
 // Register with Fs
 func init() {
 	fsi := &fs.RegInfo{
-		Name:  "local",
-		NewFs: NewFs,
+		Name:        "local",
+		Description: "Local Disk",
+		NewFs:       NewFs,
 		Options: []fs.Option{fs.Option{
 			Name:     "nounc",
 			Help:     "Disable UNC (long path names) conversion on Windows",

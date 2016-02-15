@@ -41,8 +41,9 @@ import (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:  "s3",
-		NewFs: NewFs,
+		Name:        "s3",
+		Description: "Amazon S3 (also Dreamhost, Ceph)",
+		NewFs:       NewFs,
 		// AWS endpoints: http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region
 		Options: []fs.Option{{
 			Name: "env_auth",
@@ -94,10 +95,10 @@ func init() {
 				Help:  "South America (Sao Paulo) Region\nNeeds location constraint sa-east-1.",
 			}, {
 				Value: "other-v2-signature",
-				Help:  "If using an S3 clone that only understands v2 signatures - eg Ceph - set this and make sure you set the endpoint.",
+				Help:  "If using an S3 clone that only understands v2 signatures\neg Ceph/Dreamhost\nset this and make sure you set the endpoint.",
 			}, {
 				Value: "other-v4-signature",
-				Help:  "If using an S3 clone that understands v4 signatures set this and make sure you set the endpoint.",
+				Help:  "If using an S3 clone that understands v4 signatures set this\nand make sure you set the endpoint.",
 			}},
 		}, {
 			Name: "endpoint",

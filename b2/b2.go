@@ -40,8 +40,9 @@ const (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:  "b2",
-		NewFs: NewFs,
+		Name:        "b2",
+		Description: "Backblaze B2",
+		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: "account",
 			Help: "Account ID",

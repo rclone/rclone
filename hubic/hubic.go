@@ -45,8 +45,9 @@ var (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:  "hubic",
-		NewFs: NewFs,
+		Name:        "hubic",
+		Description: "Hubic",
+		NewFs:       NewFs,
 		Config: func(name string) {
 			err := oauthutil.Config("hubic", name, oauthConfig)
 			if err != nil {

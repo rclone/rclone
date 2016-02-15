@@ -673,14 +673,26 @@ func ChooseOption(o *Option) string {
 	return ReadLine()
 }
 
+// fsOption returns an Option describing the possible remotes
+func fsOption() *Option {
+	o := &Option{
+		Name: "Storage",
+		Help: "Type of storage to configure.",
+	}
+	for _, item := range fsRegistry {
+		example := OptionExample{
+			Value: item.Name,
+			Help:  item.Description,
+		}
+		o.Examples = append(o.Examples, example)
+	}
+	o.Examples.Sort()
+	return o
+}
+
 // NewRemote make a new remote from its name
 func NewRemote(name string) {
-	fmt.Printf("What type of source is it?\n")
-	types := []string{}
-	for _, item := range fsRegistry {
-		types = append(types, item.Name)
-	}
-	newType := Choose("type", types, nil, false)
+	newType := ChooseOption(fsOption())
 	ConfigFile.SetValue(name, "type", newType)
 	fs, err := Find(newType)
 	if err != nil {

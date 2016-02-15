@@ -42,8 +42,9 @@ var (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:  "yandex",
-		NewFs: NewFs,
+		Name:        "yandex",
+		Description: "Yandex Disk",
+		NewFs:       NewFs,
 		Config: func(name string) {
 			err := oauthutil.Config("yandex", name, oauthConfig)
 			if err != nil {

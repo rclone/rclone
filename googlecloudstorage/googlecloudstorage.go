@@ -56,8 +56,9 @@ var (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:  "google cloud storage",
-		NewFs: NewFs,
+		Name:        "google cloud storage",
+		Description: "Google Cloud Storage (this is not Google Drive)",
+		NewFs:       NewFs,
 		Config: func(name string) {
 			err := oauthutil.Config("google cloud storage", name, storageConfig)
 			if err != nil {

@@ -85,8 +85,9 @@ var (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:  "drive",
-		NewFs: NewFs,
+		Name:        "drive",
+		Description: "Google Drive",
+		NewFs:       NewFs,
 		Config: func(name string) {
 			err := oauthutil.Config("drive", name, driveConfig)
 			if err != nil {

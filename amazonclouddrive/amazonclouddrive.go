@@ -63,8 +63,9 @@ var (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:  "amazon cloud drive",
-		NewFs: NewFs,
+		Name:        "amazon cloud drive",
+		Description: "Amazon Cloud Drive",
+		NewFs:       NewFs,
 		Config: func(name string) {
 			err := oauthutil.Config("amazon cloud drive", name, acdConfig)
 			if err != nil {

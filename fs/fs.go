@@ -7,6 +7,7 @@ import (
 	"log"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"time"
 )
 
@@ -36,6 +37,8 @@ var (
 type RegInfo struct {
 	// Name of this fs
 	Name string
+	// Description of this fs - defaults to Name
+	Description string
 	// Create a new file system.  If root refers to an existing
 	// object, then it should return a Fs which only returns that
 	// object.
@@ -51,8 +54,23 @@ type Option struct {
 	Name     string
 	Help     string
 	Optional bool
-	Examples []OptionExample
+	Examples OptionExamples
 }
+
+// OptionExamples is a slice of examples
+type OptionExamples []OptionExample
+
+// Len is part of sort.Interface.
+func (os OptionExamples) Len() int { return len(os) }
+
+// Swap is part of sort.Interface.
+func (os OptionExamples) Swap(i, j int) { os[i], os[j] = os[j], os[i] }
+
+// Less is part of sort.Interface.
+func (os OptionExamples) Less(i, j int) bool { return os[i].Help < os[j].Help }
+
+// Sort sorts an OptionExamples
+func (os OptionExamples) Sort() { sort.Sort(os) }
 
 // OptionExample describes an example for an Option
 type OptionExample struct {
