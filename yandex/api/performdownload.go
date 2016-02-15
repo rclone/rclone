@@ -16,7 +16,7 @@ func (c *Client) PerformDownload(url string) (out io.ReadCloser, err error) {
 
 	//c.setRequestScope(req)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

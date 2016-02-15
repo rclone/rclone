@@ -16,7 +16,7 @@ func (c *Client) PerformMkdir(url string) (int, string, error) {
 	//set access token and headers
 	c.setRequestScope(req)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return 0, "", err
 	}
