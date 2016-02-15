@@ -8,7 +8,7 @@ Required software for making a release
   * golint - go get github.com/golang/lint
 
 Making a release
-  * go get -u -f -v ./...
+  * go get -t -u -f -v ./...
   * make check
   * make test
   * make tag
