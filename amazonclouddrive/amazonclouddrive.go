@@ -129,14 +129,21 @@ func parsePath(path string) (root string) {
 
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
+	400, // Bad request (seen in "Next token is expired")
+	401, // Unauthorized (seen in "Token has expired")
+	408, // Request Timeout
 	429, // Rate exceeded.
 	500, // Get occasional 500 Internal Server Error
 	503, // Service Unavailable
+	504, // Gateway Time-out
 }
 
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
 func shouldRetry(resp *http.Response, err error) (bool, error) {
+	if err == io.EOF {
+		return true, err
+	}
 	return fs.ShouldRetry(err) || fs.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
