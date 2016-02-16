@@ -94,6 +94,10 @@ func newRun() *Run {
 		mkdir:  make(map[string]bool),
 	}
 
+	// Never ask for passwords, fail instead.
+	// If your local config is encrypted set environment variable
+	// "RCLONE_CONFIG_PASS=hunter2" (or your password)
+	*fs.AskPassword = false
 	fs.LoadConfig()
 	fs.Config.Verbose = *Verbose
 	fs.Config.Quiet = !*Verbose

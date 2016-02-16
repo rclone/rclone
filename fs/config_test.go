@@ -1,6 +1,10 @@
 package fs
 
-import "testing"
+import (
+	"bytes"
+	"reflect"
+	"testing"
+)
 
 func TestSizeSuffixString(t *testing.T) {
 	for _, test := range []struct {
@@ -71,5 +75,138 @@ func TestReveal(t *testing.T) {
 		if Obscure(got) != test.in {
 			t.Errorf("%q: wasn't bidirectional", test.in)
 		}
+	}
+}
+
+func TestConfigLoad(t *testing.T) {
+	ConfigPath = "./testdata/plain.conf"
+	configKey = nil
+	c, err := loadConfigFile()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sections := c.GetSectionList()
+	var expect = []string{"RCLONE_ENCRYPT_V0", "nounc", "unc"}
+	if !reflect.DeepEqual(sections, expect) {
+		t.Fatalf("%v != %v", sections, expect)
+	}
+
+	keys := c.GetKeyList("nounc")
+	expect = []string{"type", "nounc"}
+	if !reflect.DeepEqual(keys, expect) {
+		t.Fatalf("%v != %v", keys, expect)
+	}
+}
+
+func TestConfigLoadEncrypted(t *testing.T) {
+	var err error
+	ConfigPath = "./testdata/encrypted.conf"
+
+	// Set correct password
+	err = setPassword("asdf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := loadConfigFile()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sections := c.GetSectionList()
+	var expect = []string{"nounc", "unc"}
+	if !reflect.DeepEqual(sections, expect) {
+		t.Fatalf("%v != %v", sections, expect)
+	}
+
+	keys := c.GetKeyList("nounc")
+	expect = []string{"type", "nounc"}
+	if !reflect.DeepEqual(keys, expect) {
+		t.Fatalf("%v != %v", keys, expect)
+	}
+}
+
+func TestConfigLoadEncryptedFailures(t *testing.T) {
+	var err error
+
+	// This file should be too short to be decoded.
+	ConfigPath = "./testdata/enc-short.conf"
+	_, err = loadConfigFile()
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	t.Log("Correctly got:", err)
+
+	// This file contains invalid base64 characters.
+	ConfigPath = "./testdata/enc-invalid.conf"
+	_, err = loadConfigFile()
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	t.Log("Correctly got:", err)
+
+	// This file contains invalid base64 characters.
+	ConfigPath = "./testdata/enc-too-new.conf"
+	_, err = loadConfigFile()
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	t.Log("Correctly got:", err)
+
+	// This file contains invalid base64 characters.
+	ConfigPath = "./testdata/filenotfound.conf"
+	c, err := loadConfigFile()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(c.GetSectionList()) != 0 {
+		t.Fatalf("Expected 0-length section, got %d entries", len(c.GetSectionList()))
+	}
+}
+
+func TestPassword(t *testing.T) {
+	var err error
+	// Empty password should give error
+	err = setPassword("  \t  ")
+	if err == nil {
+		t.Fatal("expected error")
+	}
+
+	// Test invalid utf8 sequence
+	err = setPassword(string([]byte{0xff, 0xfe, 0xfd}) + "abc")
+	if err == nil {
+		t.Fatal("expected error")
+	}
+
+	// Simple check of wrong passwords
+	hashedKeyCompare(t, "mis", "match", false)
+
+	// Check that passwords match with trimmed whitespace
+	hashedKeyCompare(t, "   abcdef   \t", "abcdef", true)
+
+	// Check that passwords match after unicode normalization
+	hashedKeyCompare(t, "ﬀ\u0041\u030A", "ffÅ", true)
+
+	// Check that passwords preserves case
+	hashedKeyCompare(t, "abcdef", "ABCDEF", false)
+
+}
+
+func hashedKeyCompare(t *testing.T, a, b string, shouldMatch bool) {
+	err := setPassword(a)
+	if err != nil {
+		t.Fatal(err)
+	}
+	k1 := configKey
+
+	err = setPassword(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	k2 := configKey
+	matches := bytes.Equal(k1, k2)
+	if shouldMatch && !matches {
+		t.Fatalf("%v != %v", k1, k2)
+	}
+	if !shouldMatch && matches {
+		t.Fatalf("%v == %v", k1, k2)
 	}
 }

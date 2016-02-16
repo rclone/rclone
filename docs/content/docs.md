@@ -436,6 +436,72 @@ Very useful for debugging.
 
 Prints the version number
 
+Configuration Encryption
+------------------------
+Your configuration file contains information for logging in to 
+your cloud services. This means that you should keep your 
+`.rclone.conf` file in a secure location.
+
+If you are in an environment where that isn't possible, you can
+add a password to your configuration. This means that you will
+have to enter the password every time you start rclone.
+
+To add a password to your rclone configuration, execute `rclone config`.
+
+```
+>rclone config
+Current remotes:
+
+e) Edit existing remote
+n) New remote
+d) Delete remote
+s) Set configuration password
+q) Quit config
+e/n/d/s/q>
+```
+
+Go into `s`, Set configuration password:
+```
+e/n/d/s/q> s
+Your configuration is not encrypted.
+If you add a password, you will protect your login information to cloud services.
+a) Add Password
+q) Quit to main menu
+a/q> a
+Enter NEW configuration password:
+password>
+Confirm NEW password:
+password>
+Password set
+Your configuration is encrypted.
+c) Change Password
+u) Unencrypt configuration
+q) Quit to main menu
+c/u/q>
+```
+
+Your configuration is now encrypted, and every time you start rclone
+you will now be asked for the password. In the same menu you can 
+change the password or completely remove encryption from your
+configuration.
+
+There is no way to recover the configuration if you lose your password.
+
+rclone uses [nacl secretbox](https://godoc.org/golang.org/x/crypto/nacl/secretbox) 
+which in term uses XSalsa20 and Poly1305 to encrypt and authenticate 
+your configuration with secret-key cryptography.
+The password is SHA-256 hashed, which produces the key for secretbox.
+The hashed password is not stored.
+
+While this provides very good security, we do not recommend storing
+your encrypted rclone configuration in public, if it contains sensitive
+information, maybe except if you use a very strong password.
+
+If it is safe in your environment, you can set the `RCLONE_CONFIG_PASS`
+environment variable to contain your password, in which case it will be
+used for decrypting the configuration.
+
+
 Developer options
 -----------------
 

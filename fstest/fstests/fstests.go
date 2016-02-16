@@ -50,6 +50,11 @@ func init() {
 // TestInit tests basic intitialisation
 func TestInit(t *testing.T) {
 	var err error
+
+	// Never ask for passwords, fail instead.
+	// If your local config is encrypted set environment variable
+	// "RCLONE_CONFIG_PASS=hunter2" (or your password)
+	*fs.AskPassword = false
 	fs.LoadConfig()
 	fs.Config.Verbose = *verbose
 	fs.Config.Quiet = !*verbose

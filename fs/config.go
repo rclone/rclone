@@ -4,8 +4,14 @@ package fs
 
 import (
 	"bufio"
+	"bytes"
+	"crypto/rand"
+	"crypto/sha256"
+	"crypto/tls"
 	"encoding/base64"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"math"
 	"net/http"
@@ -16,12 +22,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
-	"crypto/tls"
-
-	"github.com/Unknwon/goconfig"
+	"github.com/klauspost/goconfig"
 	"github.com/mreiferson/go-httpclient"
 	"github.com/spf13/pflag"
+	"golang.org/x/crypto/nacl/secretbox"
+	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/text/unicode/norm"
 )
 
 const (
@@ -69,10 +77,15 @@ var (
 	dumpHeaders    = pflag.BoolP("dump-headers", "", false, "Dump HTTP headers - may contain sensitive info")
 	dumpBodies     = pflag.BoolP("dump-bodies", "", false, "Dump HTTP headers and bodies - may contain sensitive info")
 	skipVerify     = pflag.BoolP("no-check-certificate", "", false, "Do not verify the server SSL certificate. Insecure.")
+	AskPassword    = pflag.BoolP("ask-password", "", true, "Allow prompt for password for encrypted configuration.")
 	deleteBefore   = pflag.BoolP("delete-before", "", false, "When synchronizing, delete files on destination before transfering")
 	deleteDuring   = pflag.BoolP("delete-during", "", false, "When synchronizing, delete files during transfer (default)")
 	deleteAfter    = pflag.BoolP("delete-after", "", false, "When synchronizing, delete files on destination after transfering")
 	bwLimit        SizeSuffix
+
+	// Key to use for password en/decryption.
+	// When nil, no encryption will be used for saving.
+	configKey []byte
 )
 
 func init() {
@@ -292,13 +305,9 @@ func LoadConfig() {
 
 	// Load configuration file.
 	var err error
-	ConfigFile, err = goconfig.LoadConfigFile(ConfigPath)
+	ConfigFile, err = loadConfigFile()
 	if err != nil {
-		log.Printf("Failed to load config file %v - using defaults: %v", ConfigPath, err)
-		ConfigFile, err = goconfig.LoadConfigFile(os.DevNull)
-		if err != nil {
-			log.Fatalf("Failed to read null config file: %v", err)
-		}
+		log.Fatalf("Failed to config file \"%s\": %v", ConfigPath, err)
 	}
 
 	// Load filters
@@ -311,12 +320,186 @@ func LoadConfig() {
 	startTokenBucket()
 }
 
+// loadConfigFile will load a config file, and
+// automatically decrypt it.
+func loadConfigFile() (*goconfig.ConfigFile, error) {
+	b, err := ioutil.ReadFile(ConfigPath)
+	if err != nil {
+		log.Printf("Failed to load config file %v - using defaults: %v", ConfigPath, err)
+		return goconfig.LoadFromData(nil)
+	}
+
+	// Find first non-empty line
+	r := bufio.NewReader(bytes.NewBuffer(b))
+	for {
+		line, _, err := r.ReadLine()
+		if err != nil {
+			if err == io.EOF {
+				return goconfig.LoadFromData(b)
+			}
+			return nil, err
+		}
+		l := strings.TrimSpace(string(line))
+		if len(l) == 0 || strings.HasPrefix(l, ";") || strings.HasPrefix(l, "#") {
+			continue
+		}
+		// First non-empty or non-comment must be ENCRYPT_V0
+		if l == "RCLONE_ENCRYPT_V0:" {
+			break
+		}
+		if strings.HasPrefix(l, "RCLONE_ENCRYPT_V") {
+			return nil, fmt.Errorf("Unsupported configuration encryption. Update rclone for support.")
+		}
+		return goconfig.LoadFromData(b)
+	}
+
+	// Encrypted content is base64 encoded.
+	dec := base64.NewDecoder(base64.StdEncoding, r)
+	box, err := ioutil.ReadAll(dec)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to load base64 encoded data: %v", err)
+	}
+	if len(box) < 24+secretbox.Overhead {
+		return nil, fmt.Errorf("Configuration data too short")
+	}
+	envpw := os.Getenv("RCLONE_CONFIG_PASS")
+
+	var out []byte
+	for {
+		if len(configKey) == 0 && envpw != "" {
+			err := setPassword(envpw)
+			if err != nil {
+				fmt.Println("Using RCLONE_CONFIG_PASS returned:", err)
+				envpw = ""
+			} else {
+				Debug(nil, "Using RCLONE_CONFIG_PASS password.")
+			}
+		}
+		if len(configKey) == 0 {
+			if !*AskPassword {
+				return nil, fmt.Errorf("Unable to decrypt configuration and not allowed to ask for password. Set RCLONE_CONFIG_PASS to your configuration password.")
+			}
+			getPassword("Enter configuration password:")
+		}
+
+		// Nonce is first 24 bytes of the ciphertext
+		var nonce [24]byte
+		copy(nonce[:], box[:24])
+		var key [32]byte
+		copy(key[:], configKey[:32])
+
+		// Attempt to decrypt
+		var ok bool
+		out, ok = secretbox.Open(nil, box[24:], &nonce, &key)
+		if ok {
+			break
+		}
+
+		// Retry
+		log.Println("Couldn't decrypt configuration, most likely wrong password.")
+		configKey = nil
+		envpw = ""
+	}
+	return goconfig.LoadFromData(out)
+}
+
+// getPassword will query the user for a password the
+// first time it is required.
+func getPassword(q string) {
+	if len(configKey) != 0 {
+		return
+	}
+	for {
+		fmt.Println(q)
+		fmt.Print("password>")
+		err := setPassword(ReadPassword())
+		if err == nil {
+			return
+		}
+		fmt.Println("Error:", err)
+	}
+}
+
+// setPassword will set the configKey to the hash of
+// the password. If the length of the password is
+// zero after trimming+normalization, an error is returned.
+func setPassword(password string) error {
+	if !utf8.ValidString(password) {
+		return fmt.Errorf("Password contains invalid utf8 characters")
+	}
+	// Remove leading+trailing whitespace
+	password = strings.TrimSpace(password)
+
+	// Normalize to reduce weird variations.
+	password = norm.NFKC.String(password)
+	if len(password) == 0 {
+		return fmt.Errorf("No characters in password")
+	}
+	// Create SHA256 has of the password
+	sha := sha256.New()
+	_, err := sha.Write([]byte("[" + password + "][rclone-config]"))
+	if err != nil {
+		return err
+	}
+	configKey = sha.Sum(nil)
+	return nil
+}
+
 // SaveConfig saves configuration file.
+// if configKey has been set, the file will be encrypted.
 func SaveConfig() {
-	err := goconfig.SaveConfigFile(ConfigFile, ConfigPath)
+	if len(configKey) == 0 {
+		err := goconfig.SaveConfigFile(ConfigFile, ConfigPath)
+		if err != nil {
+			log.Fatalf("Failed to save config file: %v", err)
+		}
+		err = os.Chmod(ConfigPath, 0600)
+		if err != nil {
+			log.Printf("Failed to set permissions on config file: %v", err)
+		}
+		return
+	}
+	var buf bytes.Buffer
+	err := goconfig.SaveConfigData(ConfigFile, &buf)
 	if err != nil {
 		log.Fatalf("Failed to save config file: %v", err)
 	}
+
+	f, err := os.Create(ConfigPath)
+	if err != nil {
+		log.Fatalf("Failed to save config file: %v", err)
+	}
+
+	fmt.Fprintln(f, "# Encrypted rclone configuration File")
+	fmt.Fprintln(f, "")
+	fmt.Fprintln(f, "RCLONE_ENCRYPT_V0:")
+
+	// Generate new nonce and write it to the start of the ciphertext
+	var nonce [24]byte
+	n, _ := rand.Read(nonce[:])
+	if n != 24 {
+		log.Fatalf("nonce short read: %d", n)
+	}
+	enc := base64.NewEncoder(base64.StdEncoding, f)
+	_, err = enc.Write(nonce[:])
+	if err != nil {
+		log.Fatalf("Failed to write config file: %v", err)
+	}
+
+	var key [32]byte
+	copy(key[:], configKey[:32])
+
+	b := secretbox.Seal(nil, buf.Bytes(), &nonce, &key)
+	_, err = enc.Write(b)
+	if err != nil {
+		log.Fatalf("Failed to write config file: %v", err)
+	}
+	_ = enc.Close()
+	err = f.Close()
+	if err != nil {
+		log.Fatalf("Failed to close config file: %v", err)
+	}
+
 	err = os.Chmod(ConfigPath, 0600)
 	if err != nil {
 		log.Printf("Failed to set permissions on config file: %v", err)
@@ -352,6 +535,17 @@ func ReadLine() string {
 		log.Fatalf("Failed to read line: %v", err)
 	}
 	return strings.TrimSpace(line)
+}
+
+// ReadPassword reads a password
+// without echoing it to the terminal.
+func ReadPassword() string {
+	line, err := terminal.ReadPassword(int(os.Stdin.Fd()))
+	fmt.Println("")
+	if err != nil {
+		log.Fatalf("Failed to read password: %v", err)
+	}
+	return strings.TrimSpace(string(line))
 }
 
 // Command - choose one
@@ -547,7 +741,7 @@ func DeleteRemote(name string) {
 func EditConfig() {
 	for {
 		haveRemotes := len(ConfigFile.GetSectionList()) != 0
-		what := []string{"eEdit existing remote", "nNew remote", "dDelete remote", "qQuit config"}
+		what := []string{"eEdit existing remote", "nNew remote", "dDelete remote", "sSet configuration password", "qQuit config"}
 		if haveRemotes {
 			fmt.Printf("Current remotes:\n\n")
 			ShowRemotes()
@@ -581,9 +775,69 @@ func EditConfig() {
 		case 'd':
 			name := ChooseRemote()
 			DeleteRemote(name)
+		case 's':
+			SetPassword()
 		case 'q':
 			return
+
 		}
+	}
+}
+
+// SetPassword will allow the user to modify the current
+// configuration encryption settings.
+func SetPassword() {
+	for {
+		if len(configKey) > 0 {
+			fmt.Println("Your configuration is encrypted.")
+			what := []string{"cChange Password", "uUnencrypt configuration", "qQuit to main menu"}
+			switch i := Command(what); i {
+			case 'c':
+				changePassword()
+				SaveConfig()
+				fmt.Println("Password changed")
+				continue
+			case 'u':
+				configKey = nil
+				SaveConfig()
+				continue
+			case 'q':
+				return
+			}
+
+		} else {
+			fmt.Println("Your configuration is not encrypted.")
+			fmt.Println("If you add a password, you will protect your login information to cloud services.")
+			what := []string{"aAdd Password", "qQuit to main menu"}
+			switch i := Command(what); i {
+			case 'a':
+				changePassword()
+				SaveConfig()
+				fmt.Println("Password set")
+				continue
+			case 'q':
+				return
+			}
+		}
+	}
+}
+
+// changePassword will query the user twice
+// for a password. If the same password is entered
+// twice the key is updated.
+func changePassword() {
+	for {
+		configKey = nil
+		getPassword("Enter NEW configuration password:")
+		a := configKey
+		// re-enter password
+		configKey = nil
+		getPassword("Confirm NEW password:")
+		b := configKey
+		if bytes.Equal(a, b) {
+			return
+		}
+		fmt.Println("Passwords does not match!")
 	}
 }
 
