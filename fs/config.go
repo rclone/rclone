@@ -24,7 +24,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/klauspost/goconfig"
+	"github.com/Unknwon/goconfig"
 	"github.com/mreiferson/go-httpclient"
 	"github.com/spf13/pflag"
 	"golang.org/x/crypto/nacl/secretbox"
@@ -325,8 +325,8 @@ func LoadConfig() {
 func loadConfigFile() (*goconfig.ConfigFile, error) {
 	b, err := ioutil.ReadFile(ConfigPath)
 	if err != nil {
-		log.Printf("Failed to load config file %v - using defaults: %v", ConfigPath, err)
-		return goconfig.LoadFromData(nil)
+		log.Printf("Failed to load config file \"%v\" - using defaults: %v", ConfigPath, err)
+		return goconfig.LoadFromReader(&bytes.Buffer{})
 	}
 
 	// Find first non-empty line
@@ -335,7 +335,7 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 		line, _, err := r.ReadLine()
 		if err != nil {
 			if err == io.EOF {
-				return goconfig.LoadFromData(b)
+				return goconfig.LoadFromReader(bytes.NewBuffer(b))
 			}
 			return nil, err
 		}
@@ -350,7 +350,7 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 		if strings.HasPrefix(l, "RCLONE_ENCRYPT_V") {
 			return nil, fmt.Errorf("Unsupported configuration encryption. Update rclone for support.")
 		}
-		return goconfig.LoadFromData(b)
+		return goconfig.LoadFromReader(bytes.NewBuffer(b))
 	}
 
 	// Encrypted content is base64 encoded.
@@ -400,7 +400,7 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 		configKey = nil
 		envpw = ""
 	}
-	return goconfig.LoadFromData(out)
+	return goconfig.LoadFromReader(bytes.NewBuffer(out))
 }
 
 // getPassword will query the user for a password the

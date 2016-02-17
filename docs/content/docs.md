@@ -501,6 +501,12 @@ If it is safe in your environment, you can set the `RCLONE_CONFIG_PASS`
 environment variable to contain your password, in which case it will be
 used for decrypting the configuration.
 
+If you are running rclone inside a script, you might want to disable 
+password prompts. To do that, pass the parameter 
+`--ask-password=false` to rclone. This will make rclone fail instead
+of asking for a password, if if `RCLONE_CONFIG_PASS` doesn't contain
+a valid password.
+
 
 Developer options
 -----------------
