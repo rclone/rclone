@@ -345,9 +345,18 @@ func (f *Fs) listDirRecursive(dirID string, path string, out fs.ListOpts) error 
 		// Recurse on directories
 		switch *node.Kind {
 		case folderKind:
-			wg.Add(1)
 			folder := path + *node.Name + "/"
 			fs.Debug(f, "Reading %s", folder)
+			dir := &fs.Dir{
+				Name:  *node.Name,
+				Bytes: -1,
+				Count: -1,
+			}
+			dir.When, _ = time.Parse(timeFormat, *node.ModifiedDate)
+			if out.AddDir(dir) {
+				return true
+			}
+			wg.Add(1)
 			go func() {
 				defer wg.Done()
 				err := f.listDirRecursive(*node.Id, folder, out)
@@ -399,6 +408,7 @@ func (f *Fs) List(out fs.ListOpts) {
 	}
 }
 
+/*
 // ListDir lists the directories
 func (f *Fs) ListDir(out fs.ListDirOpts) {
 	defer out.Finished()
@@ -427,7 +437,7 @@ func (f *Fs) ListDir(out fs.ListDirOpts) {
 		}
 	}
 }
-
+*/
 // Put the object into the container
 //
 // Copy the reader in to the new object which is returned

@@ -144,23 +144,36 @@ func (f *Fs) List(out fs.ListOpts) {
 			out.SetError(err)
 			fs.Stats.Error()
 			fs.ErrorLog(f, "Failed to open directory: %s: %s", path, err)
-		} else {
-			remote, err := filepath.Rel(f.root, path)
-			if err != nil {
-				out.SetError(err)
-				fs.Stats.Error()
-				fs.ErrorLog(f, "Failed to get relative path %s: %s", path, err)
-				return nil
+			return err
+		}
+		remote, err := filepath.Rel(f.root, path)
+		if err != nil {
+			out.SetError(err)
+			fs.Stats.Error()
+			fs.ErrorLog(f, "Failed to get relative path %s: %s", path, err)
+			return err
+		}
+		if remote == "." {
+			return nil
+			// remote = ""
+		}
+		if fi.IsDir() {
+			dir := &fs.Dir{
+				Name:  f.cleanUtf8(fi.Name()),
+				When:  fi.ModTime(),
+				Bytes: 0,
+				Count: 0,
 			}
-			if remote == "." {
-				return nil
-				// remote = ""
+			// TODO: Count files and bytes somehow without traversing again?
+			if out.AddDir(dir) {
+				return fs.ErrListAborted
 			}
-			if fso := f.newFsObjectWithInfo(remote, fi); fso != nil {
-				if fso.Storable() {
-					if out.Add(fso) {
-						return fs.ErrListAborted
-					}
+			return nil
+		}
+		if fso := f.newFsObjectWithInfo(remote, fi); fso != nil {
+			if fso.Storable() {
+				if out.Add(fso) {
+					return fs.ErrListAborted
 				}
 			}
 		}
@@ -190,6 +203,7 @@ func (f *Fs) cleanUtf8(name string) string {
 	return name
 }
 
+/*
 // ListDir walks the path returning a channel of FsObjects
 func (f *Fs) ListDir(out fs.ListDirOpts) {
 	defer out.Finished()
@@ -232,6 +246,7 @@ func (f *Fs) ListDir(out fs.ListDirOpts) {
 		}
 	}
 }
+*/
 
 // Put the FsObject to the local filesystem
 func (f *Fs) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {

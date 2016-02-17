@@ -47,11 +47,6 @@ func (f *Limited) List(opts ListOpts) {
 	}
 }
 
-// ListDir lists the Fs directories/buckets/containers into a channel
-func (f *Limited) ListDir(opts ListDirOpts) {
-	opts.Finished()
-}
-
 // NewFsObject finds the Object at remote.  Returns nil if can't be found
 func (f *Limited) NewFsObject(remote string) Object {
 	for _, obj := range f.objects {

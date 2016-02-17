@@ -392,10 +392,18 @@ func readFilesMap(fs Fs) map[string]Object {
 	opts := newListOpts(Config.Checkers)
 	go fs.List(opts)
 	for {
-		o, err := opts.Get()
+		o, dir, err := opts.Get()
 		if err != nil {
 			log.Fatal(err)
 			return files
+		}
+		// Check if we are finished
+		if dir == nil && o == nil {
+			break
+		}
+		// Ignore directories
+		if dir != nil {
+			continue
 		}
 		remote := o.Remote()
 		if _, ok := files[remote]; !ok {
@@ -465,9 +473,16 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 		opts := newListOpts(Config.Checkers)
 		go fsrc.List(opts)
 		for {
-			src, err := opts.Get()
+			src, dir, err := opts.Get()
 			if err != nil {
 				log.Fatal(fsrc, err)
+			}
+			if src == nil && dir == nil {
+				break
+			}
+			// Ignore directories
+			if dir != nil {
+				continue
 			}
 
 			if !Config.Filter.IncludeObject(src) {
@@ -664,12 +679,17 @@ func ListFn(f Fs, fn func(Object)) error {
 		go func() {
 			defer wg.Done()
 			for {
-				o, err := opts.Get()
+				o, d, err := opts.Get()
 				if err != nil {
 					log.Fatal(err)
 				}
-				if o == nil {
+				// check if we are finished
+				if o == nil && d == nil {
 					return
+				}
+				// Ignore directories
+				if d != nil {
+					continue
 				}
 				if Config.Filter.IncludeObject(o) {
 					fn(o)
@@ -750,15 +770,19 @@ func Count(f Fs) (objects int64, size int64, err error) {
 
 // ListDir lists the directories/buckets/containers in the Fs to the supplied writer
 func ListDir(f Fs, w io.Writer) error {
-	opts := newListDirOpts(10)
-	go f.ListDir(opts)
+	opts := newListOpts(Config.Checkers)
+	go f.List(opts)
 	for {
-		dir, err := opts.Get()
+		o, dir, err := opts.Get()
 		if err != nil {
 			log.Fatal(err)
 		}
-		if dir == nil {
+		if dir == nil && o == nil {
 			break
+		}
+		// Ignore files
+		if o != nil {
+			continue
 		}
 		syncFprintf(w, "%12d %13s %9d %s\n", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
 	}
@@ -829,12 +853,15 @@ func listToChan(opts *listOpts) ObjectsChan {
 	go func() {
 		defer close(o)
 		for {
-			obj, err := opts.Get()
+			obj, dir, err := opts.Get()
 			if err != nil {
 				log.Fatal(err)
 			}
-			if obj == nil {
+			if dir == nil && obj == nil {
 				return
+			}
+			if o == nil {
+				continue
 			}
 			o <- obj
 		}
