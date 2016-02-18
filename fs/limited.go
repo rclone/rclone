@@ -71,12 +71,13 @@ func (f *Limited) NewFsObject(remote string) Object {
 // May create the object even if it returns an error - if so
 // will return the object and the error, otherwise will return
 // nil and the error
-func (f *Limited) Put(in io.Reader, remote string, modTime time.Time, size int64) (Object, error) {
+func (f *Limited) Put(in io.Reader, src ObjectInfo) (Object, error) {
+	remote := src.Remote()
 	obj := f.NewFsObject(remote)
 	if obj == nil {
 		return nil, fmt.Errorf("Can't create %q in limited fs", remote)
 	}
-	return obj, obj.Update(in, modTime, size)
+	return obj, obj.Update(in, src)
 }
 
 // Mkdir make the directory (container, bucket)

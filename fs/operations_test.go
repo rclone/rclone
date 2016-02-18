@@ -188,7 +188,8 @@ func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time) 
 	}
 	for tries := 1; ; tries++ {
 		in := bytes.NewBufferString(content)
-		_, err := f.Put(in, remote, modTime, int64(len(content)))
+		objinfo := fs.NewStaticObjectInfo(remote, modTime, int64(len(content)), true, nil, nil)
+		_, err := f.Put(in, objinfo)
 		if err == nil {
 			break
 		}

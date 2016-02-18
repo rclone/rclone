@@ -22,7 +22,7 @@ const (
 // Globals
 var (
 	// Filesystem registry
-	fsRegistry []*Info
+	fsRegistry []*RegInfo
 	// ErrorNotFoundInConfigFile is returned by NewFs if not found in config file
 	ErrorNotFoundInConfigFile = fmt.Errorf("Didn't find section in config file")
 	ErrorCantPurge            = fmt.Errorf("Can't purge directory")
@@ -32,8 +32,8 @@ var (
 	ErrorDirExists            = fmt.Errorf("Can't copy directory - destination already exists")
 )
 
-// Info information about a filesystem
-type Info struct {
+// RegInfo provides information about a filesystem
+type RegInfo struct {
 	// Name of this fs
 	Name string
 	// Create a new file system.  If root refers to an existing
@@ -63,20 +63,13 @@ type OptionExample struct {
 // Register a filesystem
 //
 // Fs modules  should use this in an init() function
-func Register(info *Info) {
+func Register(info *RegInfo) {
 	fsRegistry = append(fsRegistry, info)
 }
 
 // Fs is the interface a cloud storage system must provide
 type Fs interface {
-	// Name of the remote (as passed into NewFs)
-	Name() string
-
-	// Root of the remote (as passed into NewFs)
-	Root() string
-
-	// String returns a description of the FS
-	String() string
+	Info
 
 	// List the Fs into a channel
 	List() ObjectsChan
@@ -92,7 +85,7 @@ type Fs interface {
 	// May create the object even if it returns an error - if so
 	// will return the object and the error, otherwise will return
 	// nil and the error
-	Put(in io.Reader, remote string, modTime time.Time, size int64) (Object, error)
+	Put(in io.Reader, src ObjectInfo) (Object, error)
 
 	// Mkdir makes the directory (container, bucket)
 	//
@@ -103,6 +96,18 @@ type Fs interface {
 	//
 	// Return an error if it doesn't exist or isn't empty
 	Rmdir() error
+}
+
+// Info provides an interface to reading information about a filesystem.
+type Info interface {
+	// Name of the remote (as passed into NewFs)
+	Name() string
+
+	// Root of the remote (as passed into NewFs)
+	Root() string
+
+	// String returns a description of the FS
+	String() string
 
 	// Precision of the ModTimes in this Fs
 	Precision() time.Duration
@@ -113,40 +118,45 @@ type Fs interface {
 
 // Object is a filesystem like object provided by an Fs
 type Object interface {
+	ObjectInfo
+
 	// String returns a description of the Object
 	String() string
 
-	// Fs returns the Fs that this object is part of
-	Fs() Fs
+	// SetModTime sets the metadata on the object to set the modification date
+	SetModTime(time.Time)
+
+	// Open opens the file for read.  Call Close() on the returned io.ReadCloser
+	Open() (io.ReadCloser, error)
+
+	// Update in to the object with the modTime given of the given size
+	Update(in io.Reader, src ObjectInfo) error
+
+	// Removes this object
+	Remove() error
+}
+
+// ObjectInfo contains information about an object.
+type ObjectInfo interface {
+	// Fs returns read only access to the Fs that this object is part of
+	Fs() Info
 
 	// Remote returns the remote path
 	Remote() string
 
-	// Md5sum returns the md5 checksum of the file
-	// If no Md5sum is available it returns ""
+	// Hash returns the selected checksum of the file
+	// If no checksum is available it returns ""
 	Hash(HashType) (string, error)
 
 	// ModTime returns the modification date of the file
 	// It should return a best guess if one isn't available
 	ModTime() time.Time
 
-	// SetModTime sets the metadata on the object to set the modification date
-	SetModTime(time.Time)
-
 	// Size returns the size of the file
 	Size() int64
 
-	// Open opens the file for read.  Call Close() on the returned io.ReadCloser
-	Open() (io.ReadCloser, error)
-
-	// Update in to the object with the modTime given of the given size
-	Update(in io.Reader, modTime time.Time, size int64) error
-
 	// Storable says whether this object can be stored
 	Storable() bool
-
-	// Removes this object
-	Remove() error
 }
 
 // Purger is an optional interfaces for Fs
@@ -236,7 +246,7 @@ type DirChan chan *Dir
 // Find looks for an Info object for the name passed in
 //
 // Services are looked up in the config file
-func Find(name string) (*Info, error) {
+func Find(name string) (*RegInfo, error) {
 	for _, item := range fsRegistry {
 		if item.Name == name {
 			return item, nil
@@ -315,4 +325,50 @@ func CheckClose(c io.Closer, err *error) {
 	if *err == nil {
 		*err = cerr
 	}
+}
+
+// NewStaticObjectInfo returns a static ObjectInfo
+// If hashes is nil and fs is not nil, the hash map will be replaced with
+// empty hashes of the types supported by the fs.
+func NewStaticObjectInfo(remote string, modTime time.Time, size int64, storable bool, hashes map[HashType]string, fs Info) ObjectInfo {
+	info := &staticObjectInfo{
+		remote:   remote,
+		modTime:  modTime,
+		size:     size,
+		storable: storable,
+		hashes:   hashes,
+		fs:       fs,
+	}
+	if fs != nil && hashes == nil {
+		set := fs.Hashes().Array()
+		info.hashes = make(map[HashType]string)
+		for _, ht := range set {
+			info.hashes[ht] = ""
+		}
+	}
+	return info
+}
+
+type staticObjectInfo struct {
+	remote   string
+	modTime  time.Time
+	size     int64
+	storable bool
+	hashes   map[HashType]string
+	fs       Info
+}
+
+func (i *staticObjectInfo) Fs() Info           { return i.fs }
+func (i *staticObjectInfo) Remote() string     { return i.remote }
+func (i *staticObjectInfo) ModTime() time.Time { return i.modTime }
+func (i *staticObjectInfo) Size() int64        { return i.size }
+func (i *staticObjectInfo) Storable() bool     { return i.storable }
+func (i *staticObjectInfo) Hash(h HashType) (string, error) {
+	if len(i.hashes) == 0 {
+		return "", ErrHashUnsupported
+	}
+	if hash, ok := i.hashes[h]; ok {
+		return hash, nil
+	}
+	return "", ErrHashUnsupported
 }

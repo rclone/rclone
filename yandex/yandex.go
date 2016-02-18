@@ -41,7 +41,7 @@ var (
 
 // Register with Fs
 func init() {
-	fs.Register(&fs.Info{
+	fs.Register(&fs.RegInfo{
 		Name:  "yandex",
 		NewFs: NewFs,
 		Config: func(name string) {
@@ -326,7 +326,11 @@ func (f *Fs) ListDir() fs.DirChan {
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *Fs) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
+func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
+	remote := src.Remote()
+	size := src.Size()
+	modTime := src.ModTime()
+
 	o := &Object{
 		fs:      f,
 		remote:  remote,
@@ -334,7 +338,7 @@ func (f *Fs) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs
 		modTime: modTime,
 	}
 	//TODO maybe read metadata after upload to check if file uploaded successfully
-	return o, o.Update(in, modTime, size)
+	return o, o.Update(in, src)
 }
 
 // Mkdir creates the container if it doesn't exist
@@ -390,7 +394,7 @@ func (f *Fs) Hashes() fs.HashSet {
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
-func (o *Object) Fs() fs.Fs {
+func (o *Object) Fs() fs.Info {
 	return o.fs
 }
 
@@ -472,7 +476,10 @@ func (o *Object) remotePath() string {
 // Copy the reader into the object updating modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
+func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
+	size := src.Size()
+	modTime := src.ModTime()
+
 	remote := o.remotePath()
 	//create full path to file before upload.
 	err1 := mkDirFullPath(o.fs.yd, remote)
@@ -483,7 +490,7 @@ func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
 	overwrite := true //overwrite existing file
 	err := o.fs.yd.Upload(in, remote, overwrite)
 	if err == nil {
-		//if file uploaded sucessfuly then return metadata
+		//if file uploaded sucessfully then return metadata
 		o.bytes = uint64(size)
 		o.modTime = modTime
 		o.md5sum = "" // according to unit tests after put the md5 is empty.

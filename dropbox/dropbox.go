@@ -44,7 +44,7 @@ var (
 
 // Register with Fs
 func init() {
-	fs.Register(&fs.Info{
+	fs.Register(&fs.RegInfo{
 		Name:   "dropbox",
 		NewFs:  NewFs,
 		Config: configHelper,
@@ -379,13 +379,13 @@ func (rc *readCloser) Close() error {
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *Fs) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
+func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 	// Temporary Object under construction
 	o := &Object{
 		fs:     f,
-		remote: remote,
+		remote: src.Remote(),
 	}
-	return o, o.Update(in, modTime, size)
+	return o, o.Update(in, src)
 }
 
 // Mkdir creates the container if it doesn't exist
@@ -531,7 +531,7 @@ func (f *Fs) Hashes() fs.HashSet {
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
-func (o *Object) Fs() fs.Fs {
+func (o *Object) Fs() fs.Info {
 	return o.fs
 }
 
@@ -656,7 +656,7 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 // Copy the reader into the object updating modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
+func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	remote := o.remotePath()
 	if ignoredFiles.MatchString(remote) {
 		fs.Log(o, "File name disallowed - not uploading")

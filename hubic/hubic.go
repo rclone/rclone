@@ -44,7 +44,7 @@ var (
 
 // Register with Fs
 func init() {
-	fs.Register(&fs.Info{
+	fs.Register(&fs.RegInfo{
 		Name:  "hubic",
 		NewFs: NewFs,
 		Config: func(name string) {
