@@ -221,10 +221,10 @@ tryAgain:
 
 		if doUpdate {
 			actionTaken = "Copied (updated existing)"
-			err = dst.Update(in, src.ModTime(), src.Size())
+			err = dst.Update(in, src)
 		} else {
 			actionTaken = "Copied (new)"
-			dst, err = f.Put(in, src.Remote(), src.ModTime(), src.Size())
+			dst, err = f.Put(in, src)
 		}
 		inErr = in.Close()
 	}

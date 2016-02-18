@@ -55,7 +55,7 @@ var (
 
 // Register with Fs
 func init() {
-	fs.Register(&fs.Info{
+	fs.Register(&fs.RegInfo{
 		Name:  "onedrive",
 		NewFs: NewFs,
 		Config: func(name string) {
@@ -487,12 +487,16 @@ func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Obje
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *Fs) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
+func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
+	remote := src.Remote()
+	size := src.Size()
+	modTime := src.ModTime()
+
 	o, _, _, err := f.createObject(remote, modTime, size)
 	if err != nil {
 		return nil, err
 	}
-	return o, o.Update(in, modTime, size)
+	return o, o.Update(in, src)
 }
 
 // Mkdir creates the container if it doesn't exist
@@ -679,7 +683,7 @@ func (f *Fs) Hashes() fs.HashSet {
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
-func (o *Object) Fs() fs.Fs {
+func (o *Object) Fs() fs.Info {
 	return o.fs
 }
 
@@ -935,7 +939,10 @@ func (o *Object) uploadMultipart(in io.Reader, size int64) (err error) {
 // Update the object with the contents of the io.Reader, modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, modTime time.Time, size int64) (err error) {
+func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
+	size := src.Size()
+	modTime := src.ModTime()
+
 	var info *api.Item
 	if size <= int64(uploadCutoff) {
 		// This is for less than 100 MB of content

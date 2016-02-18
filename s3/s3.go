@@ -40,7 +40,7 @@ import (
 
 // Register with Fs
 func init() {
-	fs.Register(&fs.Info{
+	fs.Register(&fs.RegInfo{
 		Name:  "s3",
 		NewFs: NewFs,
 		// AWS endpoints: http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region
@@ -495,13 +495,13 @@ func (f *Fs) ListDir() fs.DirChan {
 }
 
 // Put the FsObject into the bucket
-func (f *Fs) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
+func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 	// Temporary Object under construction
 	fs := &Object{
 		fs:     f,
-		remote: remote,
+		remote: src.Remote(),
 	}
-	return fs, fs.Update(in, modTime, size)
+	return fs, fs.Update(in, src)
 }
 
 // Mkdir creates the bucket if it doesn't exist
@@ -582,7 +582,7 @@ func (f *Fs) Hashes() fs.HashSet {
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
-func (o *Object) Fs() fs.Fs {
+func (o *Object) Fs() fs.Info {
 	return o.fs
 }
 
@@ -732,7 +732,9 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 }
 
 // Update the Object from in with modTime and size
-func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
+func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
+	modTime := src.ModTime()
+
 	uploader := s3manager.NewUploader(o.fs.ses, func(u *s3manager.Uploader) {
 		u.Concurrency = 2
 		u.LeavePartsOnError = false

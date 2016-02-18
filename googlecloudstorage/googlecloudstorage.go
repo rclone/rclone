@@ -55,7 +55,7 @@ var (
 
 // Register with Fs
 func init() {
-	fs.Register(&fs.Info{
+	fs.Register(&fs.RegInfo{
 		Name:  "google cloud storage",
 		NewFs: NewFs,
 		Config: func(name string) {
@@ -379,13 +379,13 @@ func (f *Fs) ListDir() fs.DirChan {
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *Fs) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
+func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 	// Temporary Object under construction
 	o := &Object{
 		fs:     f,
-		remote: remote,
+		remote: src.Remote(),
 	}
-	return o, o.Update(in, modTime, size)
+	return o, o.Update(in, src)
 }
 
 // Mkdir creates the bucket if it doesn't exist
@@ -466,7 +466,7 @@ func (f *Fs) Hashes() fs.HashSet {
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
-func (o *Object) Fs() fs.Fs {
+func (o *Object) Fs() fs.Info {
 	return o.fs
 }
 
@@ -617,7 +617,10 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 // Update the object with the contents of the io.Reader, modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
+func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
+	size := src.Size()
+	modTime := src.ModTime()
+
 	object := storage.Object{
 		Bucket:      o.fs.bucket,
 		Name:        o.fs.root + o.remote,

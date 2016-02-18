@@ -19,7 +19,7 @@ import (
 
 // Register with Fs
 func init() {
-	fsi := &fs.Info{
+	fsi := &fs.RegInfo{
 		Name:  "local",
 		NewFs: NewFs,
 		Options: []fs.Option{fs.Option{
@@ -230,10 +230,11 @@ func (f *Fs) ListDir() fs.DirChan {
 }
 
 // Put the FsObject to the local filesystem
-func (f *Fs) Put(in io.Reader, remote string, modTime time.Time, size int64) (fs.Object, error) {
+func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
+	remote := src.Remote()
 	// Temporary FsObject under construction - info filled in by Update()
 	o := f.newFsObject(remote)
-	err := o.Update(in, modTime, size)
+	err := o.Update(in, src)
 	if err != nil {
 		return nil, err
 	}
@@ -422,7 +423,7 @@ func (f *Fs) Hashes() fs.HashSet {
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
-func (o *Object) Fs() fs.Fs {
+func (o *Object) Fs() fs.Info {
 	return o.fs
 }
 
@@ -568,7 +569,7 @@ func (o *Object) mkdirAll() error {
 }
 
 // Update the object from in with modTime and size
-func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
+func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	err := o.mkdirAll()
 	if err != nil {
 		return err
@@ -579,7 +580,7 @@ func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
 		return err
 	}
 
-	// Calculate the md5sum of the object we are reading as we go along
+	// Calculate the hash of the object we are reading as we go along
 	hash := fs.NewMultiHasher()
 	in = io.TeeReader(in, hash)
 
@@ -596,7 +597,7 @@ func (o *Object) Update(in io.Reader, modTime time.Time, size int64) error {
 	o.hashes = hash.Sums()
 
 	// Set the mtime
-	o.SetModTime(modTime)
+	o.SetModTime(src.ModTime())
 
 	// ReRead info now that we have finished
 	return o.lstat()

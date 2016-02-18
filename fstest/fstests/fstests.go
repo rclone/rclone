@@ -164,7 +164,8 @@ func testPut(t *testing.T, file *fstest.Item) {
 	in := io.TeeReader(buf, hash)
 
 	file.Size = int64(buf.Len())
-	obj, err := remote.Put(in, file.Path, file.ModTime, file.Size)
+	obji := fs.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
+	obj, err := remote.Put(in, obji)
 	if err != nil {
 		t.Fatal("Put error", err)
 	}
@@ -551,7 +552,8 @@ func TestObjectUpdate(t *testing.T) {
 
 	file1.Size = int64(buf.Len())
 	obj := findObject(t, file1.Path)
-	err := obj.Update(in, file1.ModTime, file1.Size)
+	obji := fs.NewStaticObjectInfo("", file1.ModTime, file1.Size, true, nil, obj.Fs())
+	err := obj.Update(in, obji)
 	if err != nil {
 		t.Fatal("Update error", err)
 	}
