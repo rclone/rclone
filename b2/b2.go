@@ -878,34 +878,42 @@ func urlEncode(in string) string {
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 	size := src.Size()
 	modTime := src.ModTime()
+	calculatedSha1, _ := src.Hash(fs.HashSHA1)
 
-	// Open a temp file to copy the input
-	fd, err := ioutil.TempFile("", "rclone-b2-")
-	if err != nil {
-		return err
-	}
-	_ = os.Remove(fd.Name()) // Delete the file - may not work on Windows
-	defer func() {
-		_ = fd.Close()           // Ignore error may have been closed already
-		_ = os.Remove(fd.Name()) // Delete the file - may have been deleted already
-	}()
+	// If source cannot provide the hash, copy to a temporary file
+	// and calculate the hash while doing so.
+	// Then we serve the temporary file.
+	if calculatedSha1 == "" {
+		// Open a temp file to copy the input
+		fd, err := ioutil.TempFile("", "rclone-b2-")
+		if err != nil {
+			return err
+		}
+		_ = os.Remove(fd.Name()) // Delete the file - may not work on Windows
+		defer func() {
+			_ = fd.Close()           // Ignore error may have been closed already
+			_ = os.Remove(fd.Name()) // Delete the file - may have been deleted already
+		}()
 
-	// Copy the input while calculating the sha1
-	hash := sha1.New()
-	teed := io.TeeReader(in, hash)
-	n, err := io.Copy(fd, teed)
-	if err != nil {
-		return err
-	}
-	if n != size {
-		return fmt.Errorf("Read %d bytes expecting %d", n, size)
-	}
-	calculatedSha1 := fmt.Sprintf("%x", hash.Sum(nil))
+		// Copy the input while calculating the sha1
+		hash := sha1.New()
+		teed := io.TeeReader(in, hash)
+		n, err := io.Copy(fd, teed)
+		if err != nil {
+			return err
+		}
+		if n != size {
+			return fmt.Errorf("Read %d bytes expecting %d", n, size)
+		}
+		calculatedSha1 = fmt.Sprintf("%x", hash.Sum(nil))
 
-	// Rewind the temporary file
-	_, err = fd.Seek(0, 0)
-	if err != nil {
-		return err
+		// Rewind the temporary file
+		_, err = fd.Seek(0, 0)
+		if err != nil {
+			return err
+		}
+		// Set input to temporary file
+		in = fd
 	}
 
 	// Get upload URL
@@ -971,7 +979,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 		Method:   "POST",
 		Absolute: true,
 		Path:     UploadURL,
-		Body:     fd,
+		Body:     in,
 		ExtraHeaders: map[string]string{
 			"Authorization":  AuthorizationToken,
 			"X-Bz-File-Name": urlEncode(o.fs.root + o.remote),
