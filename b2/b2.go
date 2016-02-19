@@ -256,6 +256,10 @@ func (f *Fs) NewFsObject(remote string) fs.Object {
 // listFn is called from list to handle an object
 type listFn func(string, *api.File) error
 
+// errEndList is a sentinel used to end the list iteration now.
+// listFn should return it to end the iteration with no errors.
+var errEndList = errors.New("end list")
+
 // list lists the objects into the function supplied from
 // the bucket and root supplied
 //
@@ -294,6 +298,9 @@ func (f *Fs) list(prefix string, limit int, hidden bool, fn listFn) error {
 	for {
 		_, err = f.srv.CallJSON(&opts, &request, &response)
 		if err != nil {
+			if err == errEndList {
+				return nil
+			}
 			return err
 		}
 		for i := range response.Files {
@@ -302,7 +309,7 @@ func (f *Fs) list(prefix string, limit int, hidden bool, fn listFn) error {
 			if !strings.HasPrefix(file.Name, prefix) {
 				return nil
 			}
-			err = fn(file.Name[len(prefix):], file)
+			err = fn(file.Name[len(f.root):], file)
 			if err != nil {
 				return err
 			}
@@ -637,10 +644,10 @@ func (o *Object) readMetaData() (err error) {
 		return nil
 	}
 	err = o.fs.list(o.remote, 1, false, func(remote string, object *api.File) error {
-		if remote == "" {
+		if remote == o.remote {
 			o.info = *object
 		}
-		return nil
+		return errEndList // read only 1 item
 	})
 	if o.info.ID != "" {
 		return nil
