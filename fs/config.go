@@ -28,7 +28,6 @@ import (
 	"github.com/mreiferson/go-httpclient"
 	"github.com/spf13/pflag"
 	"golang.org/x/crypto/nacl/secretbox"
-	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -535,17 +534,6 @@ func ReadLine() string {
 		log.Fatalf("Failed to read line: %v", err)
 	}
 	return strings.TrimSpace(line)
-}
-
-// ReadPassword reads a password
-// without echoing it to the terminal.
-func ReadPassword() string {
-	line, err := terminal.ReadPassword(int(os.Stdin.Fd()))
-	fmt.Println("")
-	if err != nil {
-		log.Fatalf("Failed to read password: %v", err)
-	}
-	return strings.TrimSpace(string(line))
 }
 
 // Command - choose one
