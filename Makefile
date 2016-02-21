@@ -56,7 +56,7 @@ upload_github:
 cross:	doc
 	./cross-compile $(TAG)
 
-beta:	doc
+beta:
 	./cross-compile $(TAG)β
 	rm build/*-current-*
 	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)β
