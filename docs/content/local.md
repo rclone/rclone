@@ -25,9 +25,13 @@ on OS X.
 ### Filenames ###
 
 Filenames are expected to be encoded in UTF-8 on disk.  This is the
-normal case for Windows and OS X.  There is a bit more uncertainty in
-the Linux world, but new distributions will have UTF-8 encoded files
-names.
+normal case for Windows and OS X.
+
+There is a bit more uncertainty in the Linux world, but new
+distributions will have UTF-8 encoded files names. If you are using an
+old Linux filesystem with non UTF-8 file names (eg latin1) then you
+can use the `convmv` tool to convert the filesystem to UTF-8. This
+tool is available in most distributions' package managers.
 
 If an invalid (non-UTF8) filename is read, the invalid caracters will
 be replaced with the unicode replacement character, '�'.  `rclone`
