@@ -129,3 +129,11 @@ Note that you may need to add the `--insecure` option to the `curl` command line
 ```
 curl --insecure -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt
 ```
+
+### Rclone gives Failed to load config file: function not implemented error ###
+
+Likely this means that you are running rclone on Linux version not
+supported by the go runtime, ie earlier than version 2.6.23.
+
+See the [system requirements section in the go install
+docs](https://golang.org/doc/install) for full details.
