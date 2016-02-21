@@ -25,47 +25,68 @@ This will guide you through an interactive setup process.
 ```
 No remotes found - make a new one
 n) New remote
-q) Quit config
-n/q> n
+s) Set configuration password
+n/s> n
 name> remote
-What type of source is it?
-Choose a number from below
- 1) swift
- 2) s3
- 3) local
- 4) drive
-type> 1
+Type of storage to configure.
+Choose a number from below, or type in your own value
+ 1 / Amazon Cloud Drive
+   \ "amazon cloud drive"
+ 2 / Amazon S3 (also Dreamhost, Ceph)
+   \ "s3"
+ 3 / Backblaze B2
+   \ "b2"
+ 4 / Dropbox
+   \ "dropbox"
+ 5 / Google Cloud Storage (this is not Google Drive)
+   \ "google cloud storage"
+ 6 / Google Drive
+   \ "drive"
+ 7 / Hubic
+   \ "hubic"
+ 8 / Local Disk
+   \ "local"
+ 9 / Microsoft OneDrive
+   \ "onedrive"
+10 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+   \ "swift"
+11 / Yandex Disk
+   \ "yandex"
+Storage> 10
 User name to log in.
 user> user_name
 API key or password.
 key> password_or_api_key
 Authentication URL for server.
 Choose a number from below, or type in your own value
- * Rackspace US
- 1) https://auth.api.rackspacecloud.com/v1.0
- * Rackspace UK
- 2) https://lon.auth.api.rackspacecloud.com/v1.0
- * Rackspace v2
- 3) https://identity.api.rackspacecloud.com/v2.0
- * Memset Memstore UK
- 4) https://auth.storage.memset.com/v1.0
- * Memset Memstore UK v2
- 5) https://auth.storage.memset.com/v2.0
- * OVH
- 6) https://auth.cloud.ovh.net/v2.0
+ 1 / Rackspace US
+   \ "https://auth.api.rackspacecloud.com/v1.0"
+ 2 / Rackspace UK
+   \ "https://lon.auth.api.rackspacecloud.com/v1.0"
+ 3 / Rackspace v2
+   \ "https://identity.api.rackspacecloud.com/v2.0"
+ 4 / Memset Memstore UK
+   \ "https://auth.storage.memset.com/v1.0"
+ 5 / Memset Memstore UK v2
+   \ "https://auth.storage.memset.com/v2.0"
+ 6 / OVH
+   \ "https://auth.cloud.ovh.net/v2.0"
 auth> 1
 Tenant name - optional
-tenant>
+tenant> 
+Region name - optional
+region> 
 Storage URL - optional
-storage_url>
+storage_url> 
 Remote config
 --------------------
 [remote]
 user = user_name
 key = password_or_api_key
 auth = https://auth.api.rackspacecloud.com/v1.0
-tenant =
-storage_url =
+tenant = 
+region = 
+storage_url = 
 --------------------
 y) Yes this is OK
 e) Edit this remote

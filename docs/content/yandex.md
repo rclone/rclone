@@ -20,28 +20,45 @@ This will guide you through an interactive setup process:
 ```
 No remotes found - make a new one
 n) New remote
-q) Quit config
-n/q> n
+s) Set configuration password
+n/s> n
 name> remote
-What type of source is it?
-Choose a number from below
- 1) amazon cloud drive
- 2) b2
- 3) drive
- 4) dropbox
- 5) google cloud storage
- 6) swift
- 7) hubic
- 8) local
- 9) onedrive
-10) s3
-11) yandex
-type> 11
+Type of storage to configure.
+Choose a number from below, or type in your own value
+ 1 / Amazon Cloud Drive
+   \ "amazon cloud drive"
+ 2 / Amazon S3 (also Dreamhost, Ceph)
+   \ "s3"
+ 3 / Backblaze B2
+   \ "b2"
+ 4 / Dropbox
+   \ "dropbox"
+ 5 / Google Cloud Storage (this is not Google Drive)
+   \ "google cloud storage"
+ 6 / Google Drive
+   \ "drive"
+ 7 / Hubic
+   \ "hubic"
+ 8 / Local Disk
+   \ "local"
+ 9 / Microsoft OneDrive
+   \ "onedrive"
+10 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+   \ "swift"
+11 / Yandex Disk
+   \ "yandex"
+Storage> 11
 Yandex Client Id - leave blank normally.
 client_id> 
 Yandex Client Secret - leave blank normally.
 client_secret> 
 Remote config
+Use auto config?
+ * Say Y if not sure
+ * Say N if you are working on a remote or headless machine
+y) Yes
+n) No
+y/n> y
 If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
 Log in and authorize rclone for access
 Waiting for code...
