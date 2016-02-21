@@ -1,7 +1,7 @@
 ---
 title: "Dropbox"
 description: "Rclone docs for Dropbox"
-date: "2014-07-17"
+date: "2016-02-21"
 ---
 
 <i class="fa fa-dropbox"></i> Dropbox
@@ -89,8 +89,18 @@ To copy a local directory to a dropbox directory called backup
 
 ### Modified time and MD5SUMs ###
 
-Dropbox doesn't have the capability of storing modification times or
-MD5SUMs so syncs will effectively have the `--size-only` flag set.
+Dropbox doesn't provide the ability to set modification times in the
+V1 public API, so rclone can't support modified time with Dropbox.
+
+This may change in the future - see these issues for details:
+
+  * [Dropbox V2 API](https://github.com/ncw/rclone/issues/349)
+  * [Allow syncs for remotes that can't set modtime on existing objects](https://github.com/ncw/rclone/issues/348)
+
+Dropbox doesn't return any sort of checksum (MD5 or SHA1).
+
+Together that means that syncs to dropbox will effectively have the
+`--size-only` flag set.
 
 ### Specific options ###
 
