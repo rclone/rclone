@@ -571,13 +571,34 @@ func Choose(what string, defaults, help []string, newOk bool) string {
 	}
 	fmt.Println()
 	for i, text := range defaults {
+		var lines []string
 		if help != nil {
 			parts := strings.Split(help[i], "\n")
-			for _, part := range parts {
-				fmt.Printf(" * %s\n", part)
+			lines = append(lines, parts...)
+		}
+		lines = append(lines, fmt.Sprintf("%q", text))
+		pos := i + 1
+		if len(lines) == 1 {
+			fmt.Printf("%2d > %s\n", pos, text)
+		} else {
+			mid := (len(lines) - 1) / 2
+			for i, line := range lines {
+				var sep rune
+				switch i {
+				case 0:
+					sep = '/'
+				case len(lines) - 1:
+					sep = '\\'
+				default:
+					sep = '|'
+				}
+				number := "  "
+				if i == mid {
+					number = fmt.Sprintf("%2d", pos)
+				}
+				fmt.Printf("%s %c %s\n", number, sep, line)
 			}
 		}
-		fmt.Printf("%2d) %s\n", i+1, text)
 	}
 	for {
 		fmt.Printf("%s> ", what)
