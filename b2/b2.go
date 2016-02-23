@@ -60,6 +60,9 @@ func init() {
 // Fs represents a remote b2 server
 type Fs struct {
 	name          string                       // name of this remote
+	account       string                       // account name
+	key           string                       // auth key
+	endpoint      string                       // name of the starting api endpoint
 	srv           *rest.Client                 // the connection to the b2 server
 	bucket        string                       // the bucket we are working on
 	bucketIDMutex sync.Mutex                   // mutex to protect _bucketID
@@ -68,6 +71,7 @@ type Fs struct {
 	info          api.AuthorizeAccountResponse // result of authorize call
 	uploadMu      sync.Mutex                   // lock for upload variable
 	upload        api.GetUploadURLResponse     // result of get upload URL call
+	authMu        sync.Mutex                   // lock for authorizing the account
 }
 
 // Object describes a b2 object
@@ -145,12 +149,6 @@ func NewFs(name, root string) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	f := &Fs{
-		name:   name,
-		bucket: bucket,
-		root:   directory,
-	}
-
 	account := fs.ConfigFile.MustValue(name, "account")
 	if account == "" {
 		return nil, errors.New("account not found")
@@ -160,21 +158,16 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return nil, errors.New("key not found")
 	}
 	endpoint := fs.ConfigFile.MustValue(name, "endpoint", defaultEndpoint)
-
-	f.srv = rest.NewClient(fs.Config.Client()).SetRoot(endpoint + "/b2api/v1").SetErrorHandler(errorHandler)
-
-	opts := rest.Opts{
-		Method:   "GET",
-		Path:     "/b2_authorize_account",
-		UserName: account,
-		Password: key,
+	f := &Fs{
+		name:     name,
+		bucket:   bucket,
+		root:     directory,
+		account:  account,
+		key:      key,
+		endpoint: endpoint,
+		srv:      rest.NewClient(fs.Config.Client()).SetErrorHandler(errorHandler),
 	}
-	_, err = f.srv.CallJSON(&opts, nil, &f.info)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to authenticate: %v", err)
-	}
-	f.srv.SetRoot(f.info.APIURL+"/b2api/v1").SetHeader("Authorization", f.info.AuthorizationToken)
-
+	f.authorizeAccount()
 	if f.root != "" {
 		f.root += "/"
 		// Check to see if the (bucket,directory) is actually an existing file
@@ -193,6 +186,27 @@ func NewFs(name, root string) (fs.Fs, error) {
 		f.root = oldRoot
 	}
 	return f, nil
+}
+
+// authorizeAccount gets the API endpoint and auth token.  Can be used
+// for reauthentication too.
+func (f *Fs) authorizeAccount() error {
+	f.authMu.Lock()
+	defer f.authMu.Unlock()
+	opts := rest.Opts{
+		Absolute:     true,
+		Method:       "GET",
+		Path:         f.endpoint + "/b2api/v1/b2_authorize_account",
+		UserName:     f.account,
+		Password:     f.key,
+		ExtraHeaders: map[string]string{"Authorization": ""}, // unset the Authorization for this request
+	}
+	_, err := f.srv.CallJSON(&opts, nil, &f.info)
+	if err != nil {
+		return fmt.Errorf("Failed to authenticate: %v", err)
+	}
+	f.srv.SetRoot(f.info.APIURL+"/b2api/v1").SetHeader("Authorization", f.info.AuthorizationToken)
+	return nil
 }
 
 // getUploadURL returns the UploadURL and the AuthorizationToken
