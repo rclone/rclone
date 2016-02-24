@@ -505,6 +505,15 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 	return fs, fs.Update(in, src)
 }
 
+// Check if the bucket exists
+func (f *Fs) dirExists() bool {
+	req := s3.HeadBucketInput{
+		Bucket: &f.bucket,
+	}
+	_, err := f.c.HeadBucket(&req)
+	return err == nil
+}
+
 // Mkdir creates the bucket if it doesn't exist
 func (f *Fs) Mkdir() error {
 	req := s3.CreateBucketInput{
@@ -519,6 +528,9 @@ func (f *Fs) Mkdir() error {
 	_, err := f.c.CreateBucket(&req)
 	if err, ok := err.(awserr.Error); ok {
 		if err.Code() == "BucketAlreadyOwnedByYou" {
+			return nil
+		}
+		if err.Code() == "AccessDenied" && f.dirExists() {
 			return nil
 		}
 	}
