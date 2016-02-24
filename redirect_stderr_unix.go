@@ -1,6 +1,6 @@
 // Log the panic under unix to the log file
 
-//+build unix
+// +build darwin dragonfly freebsd linux nacl netbsd openbsd
 
 package main
 
