@@ -505,8 +505,29 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 	return fs, fs.Update(in, src)
 }
 
+// Check if the bucket exists
+func (f *Fs) dirExists() (bool, error) {
+	req := s3.HeadBucketInput{
+		Bucket: &f.bucket,
+	}
+	_, err := f.c.HeadBucket(&req)
+	if err == nil {
+		return true, nil
+	}
+	if err, ok := err.(awserr.RequestFailure); ok {
+		if err.StatusCode() == http.StatusNotFound {
+			return false, nil
+		}
+	}
+	return false, err
+}
+
 // Mkdir creates the bucket if it doesn't exist
 func (f *Fs) Mkdir() error {
+	exists, err := f.dirExists()
+	if err != nil || exists {
+		return err
+	}
 	req := s3.CreateBucketInput{
 		Bucket: &f.bucket,
 		ACL:    &f.perm,
@@ -516,7 +537,7 @@ func (f *Fs) Mkdir() error {
 			LocationConstraint: &f.locationConstraint,
 		}
 	}
-	_, err := f.c.CreateBucket(&req)
+	_, err = f.c.CreateBucket(&req)
 	if err, ok := err.(awserr.Error); ok {
 		if err.Code() == "BucketAlreadyOwnedByYou" {
 			return nil
