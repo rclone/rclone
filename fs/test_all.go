@@ -38,6 +38,7 @@ var (
 	runTests = flag.String("run", "", "Comma separated list of remotes to test, eg 'TestSwift:,TestS3'")
 	verbose  = flag.Bool("verbose", false, "Run the tests with -v")
 	clean    = flag.Bool("clean", false, "Instead of testing, clean all left over test directories")
+	runOnly  = flag.String("run-only", "", "Run only those tests matching the regexp supplied")
 )
 
 // test holds info about a running test
@@ -61,6 +62,9 @@ func newTest(remote string, subdir bool) *test {
 	}
 	if *verbose {
 		t.cmdLine = append(t.cmdLine, "-test.v")
+	}
+	if *runOnly != "" {
+		t.cmdLine = append(t.cmdLine, "-test.run", *runOnly)
 	}
 	if subdir {
 		t.cmdLine = append(t.cmdLine, "-subdir")
