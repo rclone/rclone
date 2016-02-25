@@ -108,6 +108,22 @@ extended explanation in the `copy` command above if unsure.
 If dest:path doesn't exist, it is created and the source:path contents
 go there.
 
+### move source:path dest:path ###
+
+Moves the source to the destination.
+
+If there are no filters in use this is equivalent to a copy followed
+by a purge, but may using server side operations to speed it up if
+possible.
+
+If filters are in use then it is equivalent to a copy followed by
+delete, followed by an rmdir (which only removes the directory if
+empty).  The individual file moves will be moved with srver side
+operations if possible.
+
+**Important**: Since this can cause data loss, test first with the
+--dry-run flag.
+
 ### rclone ls remote:path ###
 
 List all the objects in the the path with size and path.

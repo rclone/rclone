@@ -712,6 +712,7 @@ func TestServerSideMove(t *testing.T) {
 	fstest.CheckItems(t, fremoteMove, file2)
 
 	// Do server side move
+	fs.Stats.ResetCounters()
 	err = fs.MoveDir(fremoteMove, r.fremote)
 	if err != nil {
 		t.Fatalf("Server Side Move failed: %v", err)
@@ -721,6 +722,7 @@ func TestServerSideMove(t *testing.T) {
 	fstest.CheckItems(t, fremoteMove, file2, file1)
 
 	// Move it back again, dst does not exist this time
+	fs.Stats.ResetCounters()
 	err = fs.MoveDir(r.fremote, fremoteMove)
 	if err != nil {
 		t.Fatalf("Server Side Move 2 failed: %v", err)

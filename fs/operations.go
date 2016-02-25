@@ -354,7 +354,7 @@ func PairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 		Stats.Transferring(src)
 		if Config.DryRun {
 			Log(src, "Not moving as --dry-run")
-		} else if haveMover {
+		} else if haveMover && src.Fs().Name() == fdst.Name() {
 			// Delete destination if it exists
 			if pair.dst != nil {
 				err := dst.Remove()
@@ -600,8 +600,8 @@ func MoveDir(fdst, fsrc Fs) error {
 		return nil
 	}
 
-	// First attempt to use DirMover
-	if fdstDirMover, ok := fdst.(DirMover); ok && fsrc.Name() == fdst.Name() {
+	// First attempt to use DirMover if exists, same Fs and no filters are active
+	if fdstDirMover, ok := fdst.(DirMover); ok && fsrc.Name() == fdst.Name() && Config.Filter.InActive() {
 		err := fdstDirMover.DirMove(fsrc)
 		Debug(fdst, "Using server side directory move")
 		switch err {
@@ -623,7 +623,18 @@ func MoveDir(fdst, fsrc Fs) error {
 		ErrorLog(fdst, "Not deleting files as there were IO errors")
 		return err
 	}
-	return Purge(fsrc)
+	// If no filters then purge
+	if Config.Filter.InActive() {
+		return Purge(fsrc)
+	}
+	// Otherwise remove any remaining files obeying filters
+	err = Delete(fsrc)
+	if err != nil {
+		return err
+	}
+	// and try to remove the directory if empty - ignoring error
+	_ = TryRmdir(fsrc)
+	return nil
 }
 
 // Check the files in fsrc and fdst according to Size and hash
@@ -849,18 +860,24 @@ func Mkdir(f Fs) error {
 	return nil
 }
 
-// Rmdir removes a container but not if not empty
-func Rmdir(f Fs) error {
+// TryRmdir removes a container but not if not empty.  It doesn't
+// count errors but may return one.
+func TryRmdir(f Fs) error {
 	if Config.DryRun {
 		Log(f, "Not deleting as dry run is set")
-	} else {
-		err := f.Rmdir()
-		if err != nil {
-			Stats.Error()
-			return err
-		}
+		return nil
 	}
-	return nil
+	return f.Rmdir()
+}
+
+// Rmdir removes a container but not if not empty
+func Rmdir(f Fs) error {
+	err := TryRmdir(f)
+	if err != nil {
+		Stats.Error()
+		return err
+	}
+	return err
 }
 
 // Purge removes a container and all of its contents
