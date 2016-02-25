@@ -255,6 +255,16 @@ func (f *Filter) Clear() {
 	f.rules = nil
 }
 
+// InActive returns false if any filters are active
+func (f *Filter) InActive() bool {
+	return (f.files == nil &&
+		f.ModTimeFrom.IsZero() &&
+		f.ModTimeTo.IsZero() &&
+		f.MinSize == 0 &&
+		f.MaxSize == 0 &&
+		len(f.rules) == 0)
+}
+
 // Include returns whether this object should be included into the
 // sync or not
 func (f *Filter) Include(remote string, size int64, modTime time.Time) bool {

@@ -62,6 +62,9 @@ func TestNewFilterDefault(t *testing.T) {
 	if f.files != nil {
 		t.Errorf("files want none got %v", f.files)
 	}
+	if !f.InActive() {
+		t.Errorf("want InActive")
+	}
 }
 
 // return a pointer to the string
@@ -168,6 +171,9 @@ func TestNewFilterFull(t *testing.T) {
 			t.Errorf("Didn't find file %q in f.files", name)
 		}
 	}
+	if f.InActive() {
+		t.Errorf("want !InActive")
+	}
 }
 
 type includeTest struct {
@@ -205,6 +211,9 @@ func TestNewFilterIncludeFiles(t *testing.T) {
 		{"potato/file2.jpg", 2, 0, false},
 		{"file3.jpg", 3, 0, false},
 	})
+	if f.InActive() {
+		t.Errorf("want !InActive")
+	}
 }
 
 func TestNewFilterMinSize(t *testing.T) {
@@ -218,6 +227,9 @@ func TestNewFilterMinSize(t *testing.T) {
 		{"file2.jpg", 101, 0, true},
 		{"potato/file2.jpg", 99, 0, false},
 	})
+	if f.InActive() {
+		t.Errorf("want !InActive")
+	}
 }
 
 func TestNewFilterMaxSize(t *testing.T) {
@@ -231,6 +243,9 @@ func TestNewFilterMaxSize(t *testing.T) {
 		{"file2.jpg", 101, 0, false},
 		{"potato/file2.jpg", 99, 0, true},
 	})
+	if f.InActive() {
+		t.Errorf("want !InActive")
+	}
 }
 
 func TestNewFilterMinAndMaxAge(t *testing.T) {
@@ -247,6 +262,9 @@ func TestNewFilterMinAndMaxAge(t *testing.T) {
 		{"potato/file1.jpg", 98, 1440000003, true},
 		{"potato/file2.jpg", 99, 1440000004, false},
 	})
+	if f.InActive() {
+		t.Errorf("want !InActive")
+	}
 }
 
 func TestNewFilterMinAge(t *testing.T) {
@@ -262,6 +280,9 @@ func TestNewFilterMinAge(t *testing.T) {
 		{"potato/file1.jpg", 98, 1440000003, false},
 		{"potato/file2.jpg", 99, 1440000004, false},
 	})
+	if f.InActive() {
+		t.Errorf("want !InActive")
+	}
 }
 
 func TestNewFilterMaxAge(t *testing.T) {
@@ -277,6 +298,9 @@ func TestNewFilterMaxAge(t *testing.T) {
 		{"potato/file1.jpg", 98, 1440000003, true},
 		{"potato/file2.jpg", 99, 1440000004, true},
 	})
+	if f.InActive() {
+		t.Errorf("want !InActive")
+	}
 }
 
 func TestNewFilterMatches(t *testing.T) {
@@ -316,6 +340,9 @@ func TestNewFilterMatches(t *testing.T) {
 		{"sausage3/potato", 101, 0, true},
 		{"unicorn", 99, 0, false},
 	})
+	if f.InActive() {
+		t.Errorf("want !InActive")
+	}
 }
 
 func TestFilterForEachLine(t *testing.T) {
