@@ -9,6 +9,8 @@ import (
 )
 
 func TestNew(t *testing.T) {
+	const expectedRetries = 7
+	fs.Config.LowLevelRetries = expectedRetries
 	p := New()
 	if p.minSleep != 10*time.Millisecond {
 		t.Errorf("minSleep")
@@ -19,8 +21,8 @@ func TestNew(t *testing.T) {
 	if p.sleepTime != p.minSleep {
 		t.Errorf("sleepTime")
 	}
-	if p.retries != 10 {
-		t.Errorf("retries")
+	if p.retries != expectedRetries {
+		t.Errorf("retries want %v got %v", expectedRetries, p.retries)
 	}
 	if p.decayConstant != 2 {
 		t.Errorf("decayConstant")
