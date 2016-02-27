@@ -74,7 +74,7 @@ type Fs struct {
 	root          string                       // the path we are working on if any
 	info          api.AuthorizeAccountResponse // result of authorize call
 	uploadMu      sync.Mutex                   // lock for upload variable
-	upload        api.GetUploadURLResponse     // result of get upload URL call
+	uploads       []*api.GetUploadURLResponse  // result of get upload URL calls
 	authMu        sync.Mutex                   // lock for authorizing the account
 	pacer         *pacer.Pacer                 // To pace and retry the API calls
 }
@@ -254,15 +254,17 @@ func (f *Fs) authorizeAccount() error {
 	return nil
 }
 
-// getUploadURL returns the UploadURL and the AuthorizationToken
-func (f *Fs) getUploadURL() (string, string, error) {
+// getUploadURL returns the upload info with the UploadURL and the AuthorizationToken
+//
+// This should be returned with returnUploadURL when finished
+func (f *Fs) getUploadURL() (upload *api.GetUploadURLResponse, err error) {
 	f.uploadMu.Lock()
 	defer f.uploadMu.Unlock()
 	bucketID, err := f.getBucketID()
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
-	if f.upload.UploadURL == "" || f.upload.AuthorizationToken == "" {
+	if len(f.uploads) == 0 {
 		opts := rest.Opts{
 			Method: "POST",
 			Path:   "/b2_get_upload_url",
@@ -271,21 +273,30 @@ func (f *Fs) getUploadURL() (string, string, error) {
 			BucketID: bucketID,
 		}
 		err := f.pacer.Call(func() (bool, error) {
-			resp, err := f.srv.CallJSON(&opts, &request, &f.upload)
+			resp, err := f.srv.CallJSON(&opts, &request, &upload)
 			return f.shouldRetryNoReauth(resp, err)
 		})
 		if err != nil {
-			return "", "", fmt.Errorf("Failed to get upload URL: %v", err)
+			return nil, fmt.Errorf("Failed to get upload URL: %v", err)
 		}
+	} else {
+		upload, f.uploads = f.uploads[0], f.uploads[1:]
 	}
-	return f.upload.UploadURL, f.upload.AuthorizationToken, nil
+	return upload, nil
+}
+
+// returnUploadURL returns the UploadURL to the cache
+func (f *Fs) returnUploadURL(upload *api.GetUploadURLResponse) {
+	f.uploadMu.Lock()
+	f.uploads = append(f.uploads, upload)
+	f.uploadMu.Unlock()
 }
 
 // clearUploadURL clears the current UploadURL and the AuthorizationToken
 func (f *Fs) clearUploadURL() {
 	f.uploadMu.Lock()
-	f.upload = api.GetUploadURLResponse{}
-	defer f.uploadMu.Unlock()
+	f.uploads = nil
+	f.uploadMu.Unlock()
 }
 
 // Return an FsObject from a path
@@ -1002,10 +1013,11 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 	}
 
 	// Get upload URL
-	UploadURL, AuthorizationToken, err := o.fs.getUploadURL()
+	upload, err := o.fs.getUploadURL()
 	if err != nil {
 		return err
 	}
+	defer o.fs.returnUploadURL(upload)
 
 	// Headers for upload file
 	//
@@ -1063,10 +1075,10 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 	opts := rest.Opts{
 		Method:   "POST",
 		Absolute: true,
-		Path:     UploadURL,
+		Path:     upload.UploadURL,
 		Body:     in,
 		ExtraHeaders: map[string]string{
-			"Authorization":  AuthorizationToken,
+			"Authorization":  upload.AuthorizationToken,
 			"X-Bz-File-Name": urlEncode(o.fs.root + o.remote),
 			"Content-Type":   fs.MimeType(o),
 			sha1Header:       calculatedSha1,
