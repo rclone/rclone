@@ -26,3 +26,4 @@ Contributors
   * Xavier Lucas <xavier.lucas@corp.ovh.com>
   * Werner Beroux <werner@beroux.com>
   * Brian Stengaard <brian@stengaard.eu>
+  * Jakub Gedeon <jgedeon@sofi.com>
