@@ -618,6 +618,23 @@ func (o *Object) removeSegments(except string) error {
 	return nil
 }
 
+// urlEncode encodes a string so that it is a valid URL
+//
+// We don't use any of Go's standard methods as we need `/` not
+// encoded but we need '&' encoded.
+func urlEncode(str string) string {
+	var buf bytes.Buffer
+	for i := 0; i < len(str); i++ {
+		c := str[i]
+		if (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '/' || c == '.' {
+			_ = buf.WriteByte(c)
+		} else {
+			_, _ = buf.WriteString(fmt.Sprintf("%%%02X", c))
+		}
+	}
+	return buf.String()
+}
+
 // updateChunks updates the existing object using chunks to a separate
 // container.  It returns a string which prefixes current segments.
 func (o *Object) updateChunks(in io.Reader, headers swift.Headers, size int64) (string, error) {
@@ -645,7 +662,7 @@ func (o *Object) updateChunks(in io.Reader, headers swift.Headers, size int64) (
 		i++
 	}
 	// Upload the manifest
-	headers["X-Object-Manifest"] = fmt.Sprintf("%s/%s", o.fs.segmentsContainer, segmentsPath)
+	headers["X-Object-Manifest"] = urlEncode(fmt.Sprintf("%s/%s", o.fs.segmentsContainer, segmentsPath))
 	headers["Content-Length"] = "0" // set Content-Length as we know it
 	emptyReader := bytes.NewReader(nil)
 	manifestName := o.fs.root + o.remote
