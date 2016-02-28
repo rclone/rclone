@@ -32,15 +32,15 @@ import (
 )
 
 const (
-	rcloneClientID     = "amzn1.application-oa2-client.6bf18d2d1f5b485c94c8988bb03ad0e7"
-	rcloneClientSecret = "k8/NyszKm5vEkZXAwsbGkd6C3NrbjIqMg4qEhIeF14Szub2wur+/teS3ubXgsLe9//+tr/qoqK+lq6mg8vWkoA=="
-	folderKind         = "FOLDER"
-	fileKind           = "FILE"
-	assetKind          = "ASSET"
-	statusAvailable    = "AVAILABLE"
-	timeFormat         = time.RFC3339 // 2014-03-07T22:31:12.173Z
-	minSleep           = 20 * time.Millisecond
-	warnFileSize       = 50 << 30 // Display warning for files larger than this size
+	rcloneClientID              = "amzn1.application-oa2-client.6bf18d2d1f5b485c94c8988bb03ad0e7"
+	rcloneEncryptedClientSecret = "k8/NyszKm5vEkZXAwsbGkd6C3NrbjIqMg4qEhIeF14Szub2wur+/teS3ubXgsLe9//+tr/qoqK+lq6mg8vWkoA=="
+	folderKind                  = "FOLDER"
+	fileKind                    = "FILE"
+	assetKind                   = "ASSET"
+	statusAvailable             = "AVAILABLE"
+	timeFormat                  = time.RFC3339 // 2014-03-07T22:31:12.173Z
+	minSleep                    = 20 * time.Millisecond
+	warnFileSize                = 50 << 30 // Display warning for files larger than this size
 )
 
 // Globals
@@ -55,7 +55,7 @@ var (
 			TokenURL: "https://api.amazon.com/auth/o2/token",
 		},
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.Reveal(rcloneClientSecret),
+		ClientSecret: fs.Reveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
 	}
 )

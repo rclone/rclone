@@ -24,12 +24,12 @@ import (
 )
 
 const (
-	rcloneClientID     = "0000000044165769"
-	rcloneClientSecret = "0+be4+jYw+7018HY6P3t/Izo+pTc+Yvt8+fy8NHU094="
-	minSleep           = 10 * time.Millisecond
-	maxSleep           = 2 * time.Second
-	decayConstant      = 2                               // bigger for slower decay, exponential
-	rootURL            = "https://api.onedrive.com/v1.0" // root URL for requests
+	rcloneClientID              = "0000000044165769"
+	rcloneEncryptedClientSecret = "0+be4+jYw+7018HY6P3t/Izo+pTc+Yvt8+fy8NHU094="
+	minSleep                    = 10 * time.Millisecond
+	maxSleep                    = 2 * time.Second
+	decayConstant               = 2                               // bigger for slower decay, exponential
+	rootURL                     = "https://api.onedrive.com/v1.0" // root URL for requests
 )
 
 // Globals
@@ -46,7 +46,7 @@ var (
 			TokenURL: "https://login.live.com/oauth20_token.srf",
 		},
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.Reveal(rcloneClientSecret),
+		ClientSecret: fs.Reveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectPublicURL,
 	}
 	chunkSize    = fs.SizeSuffix(10 * 1024 * 1024)

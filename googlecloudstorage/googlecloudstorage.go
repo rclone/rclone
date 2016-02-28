@@ -34,12 +34,12 @@ import (
 )
 
 const (
-	rcloneClientID     = "202264815644.apps.googleusercontent.com"
-	rcloneClientSecret = "8p/yms3OlNXE9OTDl/HLypf9gdiJ5cT3"
-	timeFormatIn       = time.RFC3339
-	timeFormatOut      = "2006-01-02T15:04:05.000000000Z07:00"
-	metaMtime          = "mtime" // key to store mtime under in metadata
-	listChunks         = 256     // chunk size to read directory listings
+	rcloneClientID              = "202264815644.apps.googleusercontent.com"
+	rcloneEncryptedClientSecret = "8p/yms3OlNXE9OTDl/HLypf9gdiJ5cT3"
+	timeFormatIn                = time.RFC3339
+	timeFormatOut               = "2006-01-02T15:04:05.000000000Z07:00"
+	metaMtime                   = "mtime" // key to store mtime under in metadata
+	listChunks                  = 256     // chunk size to read directory listings
 )
 
 var (
@@ -48,7 +48,7 @@ var (
 		Scopes:       []string{storage.DevstorageFullControlScope},
 		Endpoint:     google.Endpoint,
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.Reveal(rcloneClientSecret),
+		ClientSecret: fs.Reveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.TitleBarRedirectURL,
 	}
 )

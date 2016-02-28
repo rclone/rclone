@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	rcloneClientID     = "api_hubic_svWP970PvSWbw5G3PzrAqZ6X2uHeZBPI"
-	rcloneClientSecret = "8MrG3pjWyJya4OnO9ZTS4emI+9fa1ouPgvfD2MbTzfDYvO/H5czFxsTXtcji4/Hz3snz8/CrzMzlxvP9//Ty/Q=="
+	rcloneClientID              = "api_hubic_svWP970PvSWbw5G3PzrAqZ6X2uHeZBPI"
+	rcloneEncryptedClientSecret = "8MrG3pjWyJya4OnO9ZTS4emI+9fa1ouPgvfD2MbTzfDYvO/H5czFxsTXtcji4/Hz3snz8/CrzMzlxvP9//Ty/Q=="
 )
 
 // Globals
@@ -37,7 +37,7 @@ var (
 			TokenURL: "https://api.hubic.com/oauth/token/",
 		},
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.Reveal(rcloneClientSecret),
+		ClientSecret: fs.Reveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
 )

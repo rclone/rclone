@@ -30,15 +30,15 @@ import (
 
 // Constants
 const (
-	rcloneClientID     = "202264815644.apps.googleusercontent.com"
-	rcloneClientSecret = "8p/yms3OlNXE9OTDl/HLypf9gdiJ5cT3"
-	driveFolderType    = "application/vnd.google-apps.folder"
-	timeFormatIn       = time.RFC3339
-	timeFormatOut      = "2006-01-02T15:04:05.000000000Z07:00"
-	minSleep           = 10 * time.Millisecond
-	maxSleep           = 2 * time.Second
-	decayConstant      = 2 // bigger for slower decay, exponential
-	defaultExtensions  = "docx,xlsx,pptx,svg"
+	rcloneClientID              = "202264815644.apps.googleusercontent.com"
+	rcloneEncryptedClientSecret = "8p/yms3OlNXE9OTDl/HLypf9gdiJ5cT3"
+	driveFolderType             = "application/vnd.google-apps.folder"
+	timeFormatIn                = time.RFC3339
+	timeFormatOut               = "2006-01-02T15:04:05.000000000Z07:00"
+	minSleep                    = 10 * time.Millisecond
+	maxSleep                    = 2 * time.Second
+	decayConstant               = 2 // bigger for slower decay, exponential
+	defaultExtensions           = "docx,xlsx,pptx,svg"
 )
 
 // Globals
@@ -57,7 +57,7 @@ var (
 		Scopes:       []string{"https://www.googleapis.com/auth/drive"},
 		Endpoint:     google.Endpoint,
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.Reveal(rcloneClientSecret),
+		ClientSecret: fs.Reveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.TitleBarRedirectURL,
 	}
 	mimeTypeToExtension = map[string]string{
