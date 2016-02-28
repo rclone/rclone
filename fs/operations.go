@@ -448,9 +448,8 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 		return nil
 	}
 
-	err := fdst.Mkdir()
+	err := Mkdir(fdst)
 	if err != nil {
-		Stats.Error()
 		return err
 	}
 
@@ -852,6 +851,10 @@ func ListDir(f Fs, w io.Writer) error {
 
 // Mkdir makes a destination directory or container
 func Mkdir(f Fs) error {
+	if Config.DryRun {
+		Log(f, "Not making directory as dry run is set")
+		return nil
+	}
 	err := f.Mkdir()
 	if err != nil {
 		Stats.Error()
