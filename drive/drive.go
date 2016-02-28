@@ -695,6 +695,9 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		fs.Debug(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
+	if srcObj.isDocument {
+		return nil, fmt.Errorf("Can't copy a Google document")
+	}
 
 	o, createInfo, err := f.createFileInfo(remote, srcObj.ModTime(), srcObj.bytes)
 	if err != nil {
@@ -756,6 +759,9 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	if !ok {
 		fs.Debug(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
+	}
+	if srcObj.isDocument {
+		return nil, fmt.Errorf("Can't move a Google document")
 	}
 
 	// Temporary FsObject under construction
