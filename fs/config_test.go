@@ -79,8 +79,12 @@ func TestReveal(t *testing.T) {
 }
 
 func TestConfigLoad(t *testing.T) {
+	oldConfigPath := ConfigPath
 	ConfigPath = "./testdata/plain.conf"
-	configKey = nil
+	defer func() {
+		ConfigPath = oldConfigPath
+	}()
+	configKey = nil // reset password
 	c, err := loadConfigFile()
 	if err != nil {
 		t.Fatal(err)
@@ -100,7 +104,12 @@ func TestConfigLoad(t *testing.T) {
 
 func TestConfigLoadEncrypted(t *testing.T) {
 	var err error
+	oldConfigPath := ConfigPath
 	ConfigPath = "./testdata/encrypted.conf"
+	defer func() {
+		ConfigPath = oldConfigPath
+		configKey = nil // reset password
+	}()
 
 	// Set correct password
 	err = setPassword("asdf")
@@ -128,7 +137,9 @@ func TestConfigLoadEncryptedFailures(t *testing.T) {
 	var err error
 
 	// This file should be too short to be decoded.
+	oldConfigPath := ConfigPath
 	ConfigPath = "./testdata/enc-short.conf"
+	defer func() { ConfigPath = oldConfigPath }()
 	_, err = loadConfigFile()
 	if err == nil {
 		t.Fatal("expected error")
@@ -163,6 +174,9 @@ func TestConfigLoadEncryptedFailures(t *testing.T) {
 }
 
 func TestPassword(t *testing.T) {
+	defer func() {
+		configKey = nil // reset password
+	}()
 	var err error
 	// Empty password should give error
 	err = setPassword("  \t  ")
