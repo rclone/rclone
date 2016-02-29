@@ -103,7 +103,7 @@ type hashTest struct {
 }
 
 var hashTestSet = []hashTest{
-	hashTest{
+	{
 		input: []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
 		output: map[fs.HashType]string{
 			fs.HashMD5:  "bf13fc19e5151ac57d4252e0e0f87abe",
@@ -111,7 +111,7 @@ var hashTestSet = []hashTest{
 		},
 	},
 	// Empty data set
-	hashTest{
+	{
 		input: []byte{},
 		output: map[fs.HashType]string{
 			fs.HashMD5:  "d41d8cd98f00b204e9800998ecf8427e",

@@ -23,7 +23,7 @@ func init() {
 		Name:        "local",
 		Description: "Local Disk",
 		NewFs:       NewFs,
-		Options: []fs.Option{fs.Option{
+		Options: []fs.Option{{
 			Name:     "nounc",
 			Help:     "Disable UNC (long path names) conversion on Windows",
 			Optional: true,

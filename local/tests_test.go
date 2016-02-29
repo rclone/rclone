@@ -52,9 +52,9 @@ func TestUncPaths(t *testing.T) {
 }
 
 var utf8Tests = [][2]string{
-	[2]string{"ABC", "ABC"},
-	[2]string{string([]byte{0x80}), "�"},
-	[2]string{string([]byte{'a', 0x80, 'b'}), "a�b"},
+	{"ABC", "ABC"},
+	{string([]byte{0x80}), "�"},
+	{string([]byte{'a', 0x80, 'b'}), "a�b"},
 }
 
 func TestCleanUtf8(t *testing.T) {
@@ -71,13 +71,13 @@ func TestCleanUtf8(t *testing.T) {
 
 // Test Windows character replacements
 var testsWindows = [][2]string{
-	[2]string{`c:\temp`, `c:\temp`},
-	[2]string{`\\?\UNC\theserver\dir\file.txt`, `\\?\UNC\theserver\dir\file.txt`},
-	[2]string{`//?/UNC/theserver/dir\file.txt`, `//?/UNC/theserver/dir\file.txt`},
-	[2]string{"c:/temp", "c:/temp"},
-	[2]string{"/temp/file.txt", "/temp/file.txt"},
-	[2]string{`!\"#¤%&/()=;:*^?+-`, "!\\_#¤%&/()=;__^_+-"},
-	[2]string{`<>"|?*:&\<>"|?*:&\<>"|?*:&`, "_______&\\_______&\\_______&"},
+	{`c:\temp`, `c:\temp`},
+	{`\\?\UNC\theserver\dir\file.txt`, `\\?\UNC\theserver\dir\file.txt`},
+	{`//?/UNC/theserver/dir\file.txt`, `//?/UNC/theserver/dir\file.txt`},
+	{"c:/temp", "c:/temp"},
+	{"/temp/file.txt", "/temp/file.txt"},
+	{`!\"#¤%&/()=;:*^?+-`, "!\\_#¤%&/()=;__^_+-"},
+	{`<>"|?*:&\<>"|?*:&\<>"|?*:&`, "_______&\\_______&\\_______&"},
 }
 
 func TestCleanWindows(t *testing.T) {
