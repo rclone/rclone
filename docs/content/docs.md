@@ -457,6 +457,25 @@ of timeouts or bigger if you have lots of bandwidth and a fast remote.
 
 The default is to run 4 file transfers in parallel.
 
+### -u, --update ###
+
+This forces rclone to skip any files which exist on the destination
+and have a modified time that is newer than the source file.
+
+If an existing destination file has a modification time equal (within
+the computed modify window precision) to the source file's, it will be
+updated if the sizes are different.
+
+On remotes which don't support mod time directly the time checked will
+be the uploaded time.  This means that if uploading to one of these
+remoes, rclone will skip any files which exist on the destination and
+have an uploaded time that is newer than the modification time of the
+source file.
+
+This can be useful when transferring to a remote which doesn't support
+mod times directly as it is more accurate than a `--size-only` check
+and faster than using `--checksum`.
+
 ### -v, --verbose ###
 
 If you set this flag, rclone will become very verbose telling you

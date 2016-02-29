@@ -81,6 +81,7 @@ var (
 	deleteDuring    = pflag.BoolP("delete-during", "", false, "When synchronizing, delete files during transfer (default)")
 	deleteAfter     = pflag.BoolP("delete-after", "", false, "When synchronizing, delete files on destination after transfering")
 	lowLevelRetries = pflag.IntP("low-level-retries", "", 10, "Number of low level retries to do.")
+	updateOlder     = pflag.BoolP("update", "u", false, "Skip files that are newer on the destination.")
 	bwLimit         SizeSuffix
 
 	// Key to use for password en/decryption.
@@ -199,6 +200,7 @@ type ConfigInfo struct {
 	DeleteDuring       bool // Delete during checking/transfer
 	DeleteAfter        bool // Delete after successful transfer.
 	LowLevelRetries    int
+	UpdateOlder        bool // Skip files that are newer on the destination
 }
 
 // Transport returns an http.RoundTripper with the correct timeouts
@@ -288,6 +290,7 @@ func LoadConfig() {
 	Config.DumpBodies = *dumpBodies
 	Config.InsecureSkipVerify = *skipVerify
 	Config.LowLevelRetries = *lowLevelRetries
+	Config.UpdateOlder = *updateOlder
 
 	ConfigPath = *configFile
 

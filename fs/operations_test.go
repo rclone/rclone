@@ -692,6 +692,40 @@ func TestSyncWithExcludeAndDeleteExcluded(t *testing.T) {
 	fstest.CheckItems(t, r.flocal, file2)
 }
 
+// Test with UpdateOlder set
+func TestSyncWithUpdateOlder(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	t2plus := t2.Add(time.Second / 2)
+	t2minus := t2.Add(time.Second / 2)
+	oneF := r.WriteFile("one", "one", t1)
+	twoF := r.WriteFile("two", "two", t3)
+	threeF := r.WriteFile("three", "three", t2)
+	fourF := r.WriteFile("four", "four", t2)
+	fiveF := r.WriteFile("five", "five", t2)
+	fstest.CheckItems(t, r.flocal, oneF, twoF, threeF, fourF, fiveF)
+	oneO := r.WriteObject("one", "ONE", t2)
+	twoO := r.WriteObject("two", "TWO", t2)
+	threeO := r.WriteObject("three", "THREE", t2plus)
+	fourO := r.WriteObject("four", "FOURFOUR", t2minus)
+	fstest.CheckItems(t, r.fremote, oneO, twoO, threeO, fourO)
+
+	fs.Config.UpdateOlder = true
+	oldModifyWindow := fs.Config.ModifyWindow
+	fs.Config.ModifyWindow = fs.ModTimeNotSupported
+	defer func() {
+		fs.Config.UpdateOlder = false
+		fs.Config.ModifyWindow = oldModifyWindow
+	}()
+
+	fs.Stats.ResetCounters()
+	err := fs.Sync(r.fremote, r.flocal)
+	if err != nil {
+		t.Fatalf("Sync failed: %v", err)
+	}
+	fstest.CheckItems(t, r.fremote, oneO, twoF, threeO, fourF, fiveF)
+}
+
 // Test a server side move if possible, or the backup path if not
 func TestServerSideMove(t *testing.T) {
 	r := NewRun(t)

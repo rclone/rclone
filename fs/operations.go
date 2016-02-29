@@ -306,10 +306,38 @@ func checkOne(pair ObjectPair, out ObjectPairChan) {
 		Debug(src, "Destination exists, skipping")
 		return
 	}
-	// Check to see if changed or not
-	if Equal(src, dst) {
-		Debug(src, "Unchanged skipping")
-		return
+	// If UpdateOlder is in effect, skip if dst is newer than src
+	if Config.UpdateOlder {
+		srcModTime := src.ModTime()
+		dstModTime := dst.ModTime()
+		dt := dstModTime.Sub(srcModTime)
+		// If have a mutually agreed precision then use that
+		modifyWindow := Config.ModifyWindow
+		if modifyWindow == ModTimeNotSupported {
+			// Otherwise use 1 second as a safe default as
+			// the resolution of the time a file was
+			// uploaded.
+			modifyWindow = time.Second
+		}
+		switch {
+		case dt >= modifyWindow:
+			Debug(src, "Destination is newer than source, skipping")
+			return
+		case dt <= -modifyWindow:
+			Debug(src, "Destination is older than source, transferring")
+		default:
+			if src.Size() == dst.Size() {
+				Debug(src, "Destination mod time is within %v of source and sizes identical, skipping", modifyWindow)
+				return
+			}
+			Debug(src, "Destination mod time is within %v of source but sizes differ, transferring", modifyWindow)
+		}
+	} else {
+		// Check to see if changed or not
+		if Equal(src, dst) {
+			Debug(src, "Unchanged skipping")
+			return
+		}
 	}
 	out <- pair
 }
