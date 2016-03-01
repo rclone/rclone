@@ -1,12 +1,40 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2015-01-31"
+date: "2016-03-01"
 ---
 
 Changelog
 ---------
 
+  * v1.28 - 2016-03-01
+    * New Features
+      * Configuration file encryption - thanks Klaus Post
+      * Improve `rclone config` adding more help and making it easier to understand
+      * Implement `-u`/`--update` so creation times can be used on all remotes
+      * Implement `--low-level-retries` flag
+      * Optionally disable gzip compression on downloads with `--no-gzip-encoding`
+    * Bug fixes
+      * Don't make directories if `--dry-run` set
+      * Fix and document the `move` command
+      * Fix redirecting stderr on unix-like OSes when using `--log-file`
+      * Fix `delete` command to wait until all finished - fixes missing deletes.
+    * Backblaze B2
+      * Use one upload URL per go routine fixes `more than one upload using auth token`
+      * Add pacing, retries and reauthentication - fixes token expiry problems
+      * Upload without using a temporary file from local (and remotes which support SHA1)
+      * Fix reading metadata for all files when it shouldn't have been
+    * Drive
+      * Fix listing drive documents at root
+      * Disable copy and move for Google docs
+    * Swift
+      * Fix uploading of chunked files with non ASCII characters
+      * Allow setting of `storage_url` in the config - thanks Xavier Lucas
+    * S3
+      * Allow IAM role and credentials from environment variables - thanks Brian Stengaard
+      * Allow low privilege users to use S3 (check if directory exists during Mkdir) - thanks Jakub Gedeon
+    * Amazon Cloud Drive
+      * Retry on more things to make directory listings more reliable
   * v1.27 - 2016-01-31
     * New Features
       * Easier headless configuration with `rclone authorize`

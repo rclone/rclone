@@ -1,6 +1,6 @@
 rclone(1) User Manual
 Nick Craig-Wood
-Jan 31, 2016
+Mar 01, 2016
 
 
 
@@ -177,6 +177,22 @@ extended explanation in the copy command above if unsure.
 
 If dest:path doesn't exist, it is created and the source:path contents
 go there.
+
+move source:path dest:path
+
+Moves the source to the destination.
+
+If there are no filters in use this is equivalent to a copy followed by
+a purge, but may using server side operations to speed it up if
+possible.
+
+If filters are in use then it is equivalent to a copy followed by
+delete, followed by an rmdir (which only removes the directory if
+empty). The individual file moves will be moved with srver side
+operations if possible.
+
+IMPORTANT: Since this can cause data loss, test first with the --dry-run
+flag.
 
 rclone ls remote:path
 
@@ -412,6 +428,21 @@ Log all of rclone's output to FILE. This is not active by default. This
 can be useful for tracking down problems with syncs in combination with
 the -v flag.
 
+--low-level-retries NUMBER
+
+This controls the number of low level retries rclone does.
+
+A low level retry is used to retry a failing operation - typically one
+HTTP request. This might be uploading a chunk of a big file for example.
+You will see low level retries in the log with the -v flag.
+
+This shouldn't need to be changed from the default in normal operations,
+however if you get a lot of low level retries you may wish to reduce the
+value so rclone moves on to a high level retry (see the --retries flag)
+quicker.
+
+Disable low level retries with --low-level-retries 1.
+
 --modify-window=TIME
 
 When checking whether a file has been modified, this is the maximum
@@ -423,6 +454,16 @@ X only stores modification times to the nearest second so if you are
 reading and writing to an OS X filing system this will be 1s by default.
 
 This command line flag allows you to override that computed default.
+
+--no-gzip-encoding
+
+Don't set Accept-Encoding: gzip. This means that rclone won't ask the
+server for compressed files automatically. Useful if you've set the
+server to return files with Content-Encoding: gzip but you uploaded
+compressed files.
+
+There is no need to set this in normal operation, and doing so will
+decrease the network transfer efficiency of rclone.
 
 -q, --quiet
 
@@ -489,6 +530,25 @@ timeouts or bigger if you have lots of bandwidth and a fast remote.
 
 The default is to run 4 file transfers in parallel.
 
+-u, --update
+
+This forces rclone to skip any files which exist on the destination and
+have a modified time that is newer than the source file.
+
+If an existing destination file has a modification time equal (within
+the computed modify window precision) to the source file's, it will be
+updated if the sizes are different.
+
+On remotes which don't support mod time directly the time checked will
+be the uploaded time. This means that if uploading to one of these
+remoes, rclone will skip any files which exist on the destination and
+have an uploaded time that is newer than the modification time of the
+source file.
+
+This can be useful when transferring to a remote which doesn't support
+mod times directly as it is more accurate than a --size-only check and
+faster than using --checksum.
+
 -v, --verbose
 
 If you set this flag, rclone will become very verbose telling you about
@@ -499,6 +559,72 @@ Very useful for debugging.
 -V, --version
 
 Prints the version number
+
+
+Configuration Encryption
+
+Your configuration file contains information for logging in to your
+cloud services. This means that you should keep your .rclone.conf file
+in a secure location.
+
+If you are in an environment where that isn't possible, you can add a
+password to your configuration. This means that you will have to enter
+the password every time you start rclone.
+
+To add a password to your rclone configuration, execute rclone config.
+
+    >rclone config
+    Current remotes:
+
+    e) Edit existing remote
+    n) New remote
+    d) Delete remote
+    s) Set configuration password
+    q) Quit config
+    e/n/d/s/q>
+
+Go into s, Set configuration password:
+
+    e/n/d/s/q> s
+    Your configuration is not encrypted.
+    If you add a password, you will protect your login information to cloud services.
+    a) Add Password
+    q) Quit to main menu
+    a/q> a
+    Enter NEW configuration password:
+    password>
+    Confirm NEW password:
+    password>
+    Password set
+    Your configuration is encrypted.
+    c) Change Password
+    u) Unencrypt configuration
+    q) Quit to main menu
+    c/u/q>
+
+Your configuration is now encrypted, and every time you start rclone you
+will now be asked for the password. In the same menu you can change the
+password or completely remove encryption from your configuration.
+
+There is no way to recover the configuration if you lose your password.
+
+rclone uses nacl secretbox which in term uses XSalsa20 and Poly1305 to
+encrypt and authenticate your configuration with secret-key
+cryptography. The password is SHA-256 hashed, which produces the key for
+secretbox. The hashed password is not stored.
+
+While this provides very good security, we do not recommend storing your
+encrypted rclone configuration in public, if it contains sensitive
+information, maybe except if you use a very strong password.
+
+If it is safe in your environment, you can set the RCLONE_CONFIG_PASS
+environment variable to contain your password, in which case it will be
+used for decrypting the configuration.
+
+If you are running rclone inside a script, you might want to disable
+password prompts. To do that, pass the parameter --ask-password=false to
+rclone. This will make rclone fail instead of asking for a password, if
+if RCLONE_CONFIG_PASS doesn't contain a valid password.
 
 
 Developer options
@@ -665,13 +791,9 @@ sha1sum, size, delete and check operations. Note that purge does not
 obey the filters.
 
 Each path as it passes through rclone is matched against the include and
-exclude rules. The paths are matched without a leading /.
-
-For example the files might be passed to the matching engine like this
-
--   file1.jpg
--   file2.jpg
--   directory/file3.jpg
+exclude rules like --include, --exclude, --include-from, --exclude-from,
+--filter, or --filter-from. The simplest way to try them out is using
+the ls command, or --dry-run together with -v.
 
 
 Patterns
@@ -680,15 +802,15 @@ The patterns used to match files for inclusion or exclusion are based on
 "file globs" as used by the unix shell.
 
 If the pattern starts with a / then it only matches at the top level of
-the directory tree. If it doesn't start with / then it is matched
-starting at the end of the path, but it will only match a complete path
-element.
+the directory tree, relative to the root of the remote. If it doesn't
+start with / then it is matched starting at the END OF THE PATH, but it
+will only match a complete path element:
 
     file.jpg  - matches "file.jpg"
               - matches "directory/file.jpg"
               - doesn't match "afile.jpg"
               - doesn't match "directory/afile.jpg"
-    /file.jpg - matches "file.jpg"
+    /file.jpg - matches "file.jpg" in the root directory of the remote
               - doesn't match "afile.jpg"
               - doesn't match "directory/file.jpg"
 
@@ -1062,13 +1184,31 @@ This will guide you through an interactive setup process:
     q) Quit config
     e/n/d/q> n
     name> remote
-    What type of source is it?
-    Choose a number from below
-     1) swift
-     2) s3
-     3) local
-     4) drive
-    type> 4
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Cloud Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     6 / Google Drive
+       \ "drive"
+     7 / Hubic
+       \ "hubic"
+     8 / Local Disk
+       \ "local"
+     9 / Microsoft OneDrive
+       \ "onedrive"
+    10 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    11 / Yandex Disk
+       \ "yandex"
+    Storage> 6
     Google Application Client Id - leave blank normally.
     client_id> 
     Google Application Client Secret - leave blank normally.
@@ -1230,39 +1370,82 @@ This will guide you through an interactive setup process.
 
     No remotes found - make a new one
     n) New remote
-    q) Quit config
-    n/q> n
+    s) Set configuration password
+    n/s> n
     name> remote
-    What type of source is it?
-    Choose a number from below
-     1) swift
-     2) s3
-     3) local
-     4) google cloud storage
-     5) dropbox
-     6) drive
-    type> 2
-    AWS Access Key ID.
-    access_key_id> accesskey
-    AWS Secret Access Key (password). 
-    secret_access_key> secretaccesskey
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Cloud Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     6 / Google Drive
+       \ "drive"
+     7 / Hubic
+       \ "hubic"
+     8 / Local Disk
+       \ "local"
+     9 / Microsoft OneDrive
+       \ "onedrive"
+    10 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    11 / Yandex Disk
+       \ "yandex"
+    Storage> 2
+    Get AWS credentials from runtime (environment variables or EC2 meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.
+    Choose a number from below, or type in your own value
+     1 / Enter AWS credentials in the next step
+       \ "false"
+     2 / Get AWS credentials from the environment (env vars or IAM)
+       \ "true"
+    env_auth> 1
+    AWS Access Key ID - leave blank for anonymous access or runtime credentials.
+    access_key_id> access_key
+    AWS Secret Access Key (password) - leave blank for anonymous access or runtime credentials.
+    secret_access_key> secret_key
     Region to connect to.
     Choose a number from below, or type in your own value
-     * The default endpoint - a good choice if you are unsure.
-     * US Region, Northern Virginia or Pacific Northwest.
-     * Leave location constraint empty.
-     1) us-east-1
-     * US West (Oregon) Region
-     * Needs location constraint us-west-2.
-     2) us-west-2
-    [snip]
-     * South America (Sao Paulo) Region
-     * Needs location constraint sa-east-1.
-     9) sa-east-1
-     * If using an S3 clone that only understands v2 signatures - eg Ceph - set this and make sure you set the endpoint.
-    10) other-v2-signature
-     * If using an S3 clone that understands v4 signatures set this and make sure you set the endpoint.
-    11) other-v4-signature
+       / The default endpoint - a good choice if you are unsure.
+     1 | US Region, Northern Virginia or Pacific Northwest.
+       | Leave location constraint empty.
+       \ "us-east-1"
+       / US West (Oregon) Region
+     2 | Needs location constraint us-west-2.
+       \ "us-west-2"
+       / US West (Northern California) Region
+     3 | Needs location constraint us-west-1.
+       \ "us-west-1"
+       / EU (Ireland) Region Region
+     4 | Needs location constraint EU or eu-west-1.
+       \ "eu-west-1"
+       / EU (Frankfurt) Region
+     5 | Needs location constraint eu-central-1.
+       \ "eu-central-1"
+       / Asia Pacific (Singapore) Region
+     6 | Needs location constraint ap-southeast-1.
+       \ "ap-southeast-1"
+       / Asia Pacific (Sydney) Region
+     7 | Needs location constraint ap-southeast-2.
+       \ "ap-southeast-2"
+       / Asia Pacific (Tokyo) Region
+     8 | Needs location constraint ap-northeast-1.
+       \ "ap-northeast-1"
+       / South America (Sao Paulo) Region
+     9 | Needs location constraint sa-east-1.
+       \ "sa-east-1"
+       / If using an S3 clone that only understands v2 signatures
+    10 | eg Ceph/Dreamhost
+       | set this and make sure you set the endpoint.
+       \ "other-v2-signature"
+       / If using an S3 clone that understands v4 signatures set this
+    11 | and make sure you set the endpoint.
+       \ "other-v4-signature"
     region> 1
     Endpoint for S3 API.
     Leave blank if using AWS to use the default endpoint for the region.
@@ -1270,21 +1453,31 @@ This will guide you through an interactive setup process.
     endpoint> 
     Location constraint - must be set to match the Region. Used when creating buckets only.
     Choose a number from below, or type in your own value
-     * Empty for US Region, Northern Virginia or Pacific Northwest.
-     1) 
-     * US West (Oregon) Region.
-     2) us-west-2
-     * US West (Northern California) Region.
-     3) us-west-1
-     * EU (Ireland) Region.
-     4) eu-west-1
-    [snip]
+     1 / Empty for US Region, Northern Virginia or Pacific Northwest.
+       \ ""
+     2 / US West (Oregon) Region.
+       \ "us-west-2"
+     3 / US West (Northern California) Region.
+       \ "us-west-1"
+     4 / EU (Ireland) Region.
+       \ "eu-west-1"
+     5 / EU Region.
+       \ "EU"
+     6 / Asia Pacific (Singapore) Region.
+       \ "ap-southeast-1"
+     7 / Asia Pacific (Sydney) Region.
+       \ "ap-southeast-2"
+     8 / Asia Pacific (Tokyo) Region.
+       \ "ap-northeast-1"
+     9 / South America (Sao Paulo) Region.
+       \ "sa-east-1"
     location_constraint> 1
     Remote config
     --------------------
     [remote]
-    access_key_id = accesskey
-    secret_access_key = secretaccesskey
+    env_auth = false
+    access_key_id = access_key
+    secret_access_key = secret_key
     region = us-east-1
     endpoint = 
     location_constraint = 
@@ -1293,17 +1486,6 @@ This will guide you through an interactive setup process.
     e) Edit this remote
     d) Delete this remote
     y/e/d> y
-    Current remotes:
-
-    Name                 Type
-    ====                 ====
-    remote               s3
-
-    e) Edit existing remote
-    n) New remote
-    d) Delete remote
-    q) Quit config
-    e/n/d/q> q
 
 This remote is called remote and can now be used like this
 
@@ -1342,35 +1524,60 @@ you can only access the content of a bucket from the region it was
 created in. If you attempt to access a bucket from the wrong region, you
 will get an error, incorrect region, the bucket is not in 'XXX' region.
 
+Authentication
+
+There are two ways to supply rclone with a set of AWS credentials. In
+order of precedence:
+
+-   Directly in the rclone configuration file (as configured by
+    rclone config)
+-   set access_key_id and secret_access_key
+-   Runtime configuration:
+-   set env_auth to true in the config file
+-   Exporting the following environment variables before running rclone
+    -   Access Key ID: AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY
+    -   Secret Access Key: AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY
+-   Running rclone on an EC2 instance with an IAM role
+
+If none of these option actually end up providing rclone with AWS
+credentials then S3 interaction will be non-authenticated (see below).
+
 Anonymous access to public buckets
 
 If you want to use rclone to access a public bucket, configure with a
 blank access_key_id and secret_access_key. Eg
 
-    e) Edit existing remote
+    No remotes found - make a new one
     n) New remote
-    d) Delete remote
     q) Quit config
-    e/n/d/q> n
+    n/q> n
     name> anons3
     What type of source is it?
     Choose a number from below
      1) amazon cloud drive
-     2) drive
-     3) dropbox
-     4) google cloud storage
-     5) local
-     6) s3
-     7) swift
-    type> 6
-    AWS Access Key ID - leave blank for anonymous access.
-    access_key_id> 
-    AWS Secret Access Key (password) - leave blank for anonymous access.
-    secret_access_key> 
-    Region to connect to.
-    region> 1
-    endpoint> 
-    location_constraint> 
+     2) b2
+     3) drive
+     4) dropbox
+     5) google cloud storage
+     6) swift
+     7) hubic
+     8) local
+     9) onedrive
+    10) s3
+    11) yandex
+    type> 10
+    Get AWS credentials from runtime (environment variables or EC2 meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.
+    Choose a number from below, or type in your own value
+     * Enter AWS credentials in the next step
+     1) false
+     * Get AWS credentials from the environment (env vars or IAM)
+     2) true
+    env_auth> 1
+    AWS Access Key ID - leave blank for anonymous access or runtime credentials.
+    access_key_id>
+    AWS Secret Access Key (password) - leave blank for anonymous access or runtime credentials.
+    secret_access_key>
+    ...
 
 Then use it as normal with the name of the public bucket, eg
 
@@ -1434,44 +1641,68 @@ This will guide you through an interactive setup process.
 
     No remotes found - make a new one
     n) New remote
-    q) Quit config
-    n/q> n
+    s) Set configuration password
+    n/s> n
     name> remote
-    What type of source is it?
-    Choose a number from below
-     1) swift
-     2) s3
-     3) local
-     4) drive
-    type> 1
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Cloud Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     6 / Google Drive
+       \ "drive"
+     7 / Hubic
+       \ "hubic"
+     8 / Local Disk
+       \ "local"
+     9 / Microsoft OneDrive
+       \ "onedrive"
+    10 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    11 / Yandex Disk
+       \ "yandex"
+    Storage> 10
     User name to log in.
     user> user_name
     API key or password.
     key> password_or_api_key
     Authentication URL for server.
     Choose a number from below, or type in your own value
-     * Rackspace US
-     1) https://auth.api.rackspacecloud.com/v1.0
-     * Rackspace UK
-     2) https://lon.auth.api.rackspacecloud.com/v1.0
-     * Rackspace v2
-     3) https://identity.api.rackspacecloud.com/v2.0
-     * Memset Memstore UK
-     4) https://auth.storage.memset.com/v1.0
-     * Memset Memstore UK v2
-     5) https://auth.storage.memset.com/v2.0
-     * OVH
-     6) https://auth.cloud.ovh.net/v2.0
+     1 / Rackspace US
+       \ "https://auth.api.rackspacecloud.com/v1.0"
+     2 / Rackspace UK
+       \ "https://lon.auth.api.rackspacecloud.com/v1.0"
+     3 / Rackspace v2
+       \ "https://identity.api.rackspacecloud.com/v2.0"
+     4 / Memset Memstore UK
+       \ "https://auth.storage.memset.com/v1.0"
+     5 / Memset Memstore UK v2
+       \ "https://auth.storage.memset.com/v2.0"
+     6 / OVH
+       \ "https://auth.cloud.ovh.net/v2.0"
     auth> 1
     Tenant name - optional
-    tenant>
+    tenant> 
+    Region name - optional
+    region> 
+    Storage URL - optional
+    storage_url> 
     Remote config
     --------------------
     [remote]
     user = user_name
     key = password_or_api_key
     auth = https://auth.api.rackspacecloud.com/v1.0
-    tenant =
+    tenant = 
+    region = 
+    storage_url = 
     --------------------
     y) Yes this is OK
     e) Edit this remote
@@ -1537,15 +1768,31 @@ This will guide you through an interactive setup process:
     q) Quit config
     e/n/d/q> n
     name> remote
-    What type of source is it?
-    Choose a number from below
-     1) swift
-     2) s3
-     3) local
-     4) google cloud storage
-     5) dropbox
-     6) drive
-    type> 5
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Cloud Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     6 / Google Drive
+       \ "drive"
+     7 / Hubic
+       \ "hubic"
+     8 / Local Disk
+       \ "local"
+     9 / Microsoft OneDrive
+       \ "onedrive"
+    10 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    11 / Yandex Disk
+       \ "yandex"
+    Storage> 4
     Dropbox App Key - leave blank normally.
     app_key> 
     Dropbox App Secret - leave blank normally.
@@ -1581,8 +1828,18 @@ To copy a local directory to a dropbox directory called backup
 
 Modified time and MD5SUMs
 
-Dropbox doesn't have the capability of storing modification times or
-MD5SUMs so syncs will effectively have the --size-only flag set.
+Dropbox doesn't provide the ability to set modification times in the V1
+public API, so rclone can't support modified time with Dropbox.
+
+This may change in the future - see these issues for details:
+
+-   Dropbox V2 API
+-   Allow syncs for remotes that can't set modtime on existing objects
+
+Dropbox doesn't return any sort of checksum (MD5 or SHA1).
+
+Together that means that syncs to dropbox will effectively have the
+--size-only flag set.
 
 Specific options
 
@@ -1625,15 +1882,31 @@ This will guide you through an interactive setup process:
     q) Quit config
     e/n/d/q> n
     name> remote
-    What type of source is it?
-    Choose a number from below
-     1) swift
-     2) s3
-     3) local
-     4) google cloud storage
-     5) dropbox
-     6) drive
-    type> 4
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Cloud Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     6 / Google Drive
+       \ "drive"
+     7 / Hubic
+       \ "hubic"
+     8 / Local Disk
+       \ "local"
+     9 / Microsoft OneDrive
+       \ "onedrive"
+    10 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    11 / Yandex Disk
+       \ "yandex"
+    Storage> 5
     Google Application Client Id - leave blank normally.
     client_id> 
     Google Application Client Secret - leave blank normally.
@@ -1749,16 +2022,31 @@ This will guide you through an interactive setup process:
     q) Quit config
     e/n/d/q> n
     name> remote
-    What type of source is it?
-    Choose a number from below
-     1) amazon cloud drive
-     2) drive
-     3) dropbox
-     4) google cloud storage
-     5) local
-     6) s3
-     7) swift
-    type> 1
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Cloud Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     6 / Google Drive
+       \ "drive"
+     7 / Hubic
+       \ "hubic"
+     8 / Local Disk
+       \ "local"
+     9 / Microsoft OneDrive
+       \ "onedrive"
+    10 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    11 / Yandex Disk
+       \ "yandex"
+    Storage> 1
     Amazon Application Client Id - leave blank normally.
     client_id> 
     Amazon Application Client Secret - leave blank normally.
@@ -1872,27 +2160,47 @@ Here is an example of how to make a remote called remote. First run:
 
 This will guide you through an interactive setup process:
 
+    No remotes found - make a new one
     n) New remote
-    d) Delete remote
-    q) Quit config
-    e/n/d/q> n
+    s) Set configuration password
+    n/s> n
     name> remote
-    What type of source is it?
-    Choose a number from below
-     1) amazon cloud drive
-     2) drive
-     3) dropbox
-     4) google cloud storage
-     5) local
-     6) onedrive
-     7) s3
-     8) swift
-    type> 6
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Cloud Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     6 / Google Drive
+       \ "drive"
+     7 / Hubic
+       \ "hubic"
+     8 / Local Disk
+       \ "local"
+     9 / Microsoft OneDrive
+       \ "onedrive"
+    10 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    11 / Yandex Disk
+       \ "yandex"
+    Storage> 9
     Microsoft App Client Id - leave blank normally.
     client_id> 
     Microsoft App Client Secret - leave blank normally.
     client_secret> 
     Remote config
+    Use auto config?
+     * Say Y if not sure
+     * Say N if you are working on a remote or headless machine
+    y) Yes
+    n) No
+    y/n> y
     If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
     Log in and authorize rclone for access
     Waiting for code...
@@ -1994,28 +2302,46 @@ Here is an example of how to make a remote called remote. First run:
 This will guide you through an interactive setup process:
 
     n) New remote
-    d) Delete remote
-    q) Quit config
-    e/n/d/q> n
+    s) Set configuration password
+    n/s> n
     name> remote
-    What type of source is it?
-    Choose a number from below
-     1) amazon cloud drive
-     2) drive
-     3) dropbox
-     4) google cloud storage
-     5) local
-     6) onedrive
-     7) hubic
-     8) s3
-     9) swift
-    type> 7
-    Hubic App Client Id - leave blank normally.
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Cloud Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     6 / Google Drive
+       \ "drive"
+     7 / Hubic
+       \ "hubic"
+     8 / Local Disk
+       \ "local"
+     9 / Microsoft OneDrive
+       \ "onedrive"
+    10 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    11 / Yandex Disk
+       \ "yandex"
+    Storage> 7
+    Hubic Client Id - leave blank normally.
     client_id> 
-    Hubic App Client Secret - leave blank normally.
+    Hubic Client Secret - leave blank normally.
     client_secret> 
     Remote config
-    If your browser doesn't open automatically go to the following link: http://localhost:53682/auth
+    Use auto config?
+     * Say Y if not sure
+     * Say N if you are working on a remote or headless machine
+    y) Yes
+    n) No
+    y/n> y
+    If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
     Log in and authorize rclone for access
     Waiting for code...
     Got code
@@ -2090,19 +2416,31 @@ which you can get from the b2 control panel.
     q) Quit config
     n/q> n
     name> remote
-    What type of source is it?
-    Choose a number from below
-     1) amazon cloud drive
-     2) b2
-     3) drive
-     4) dropbox
-     5) google cloud storage
-     6) swift
-     7) hubic
-     8) local
-     9) onedrive
-    10) s3
-    type> 2
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Cloud Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     6 / Google Drive
+       \ "drive"
+     7 / Hubic
+       \ "hubic"
+     8 / Local Disk
+       \ "local"
+     9 / Microsoft OneDrive
+       \ "onedrive"
+    10 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    11 / Yandex Disk
+       \ "yandex"
+    Storage> 3
     Account ID
     account> 123456789abc
     Application Key
@@ -2169,18 +2507,13 @@ Rclone doesn't provide any way of managing old versions (downloading
 them or deleting them) at the moment. When you purge a bucket, all the
 old versions will be deleted.
 
-Bugs
-
-Note that when uploading a file, rclone has to make a temporary copy of
-it in your temp filing system. This is due to a weakness in the B2 API
-which I'm hoping will be addressed soon.
-
 API
 
 Here are some notes I made on the backblaze API while integrating it
 with rclone which detail the changes I'd like to see. With a couple of
 small tweaks Backblaze could enable rclone to not make a temporary copy
-of all files and fully support modification times.
+of files when doing cloud to cloud copies and fully support modification
+times.
 
 
 Yandex Disk
@@ -2198,28 +2531,45 @@ This will guide you through an interactive setup process:
 
     No remotes found - make a new one
     n) New remote
-    q) Quit config
-    n/q> n
+    s) Set configuration password
+    n/s> n
     name> remote
-    What type of source is it?
-    Choose a number from below
-     1) amazon cloud drive
-     2) b2
-     3) drive
-     4) dropbox
-     5) google cloud storage
-     6) swift
-     7) hubic
-     8) local
-     9) onedrive
-    10) s3
-    11) yandex
-    type> 11
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Cloud Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     6 / Google Drive
+       \ "drive"
+     7 / Hubic
+       \ "hubic"
+     8 / Local Disk
+       \ "local"
+     9 / Microsoft OneDrive
+       \ "onedrive"
+    10 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    11 / Yandex Disk
+       \ "yandex"
+    Storage> 11
     Yandex Client Id - leave blank normally.
     client_id> 
     Yandex Client Secret - leave blank normally.
     client_secret> 
     Remote config
+    Use auto config?
+     * Say Y if not sure
+     * Say N if you are working on a remote or headless machine
+    y) Yes
+    n) No
+    y/n> y
     If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
     Log in and authorize rclone for access
     Waiting for code...
@@ -2294,8 +2644,13 @@ on OS X.
 Filenames
 
 Filenames are expected to be encoded in UTF-8 on disk. This is the
-normal case for Windows and OS X. There is a bit more uncertainty in the
-Linux world, but new distributions will have UTF-8 encoded files names.
+normal case for Windows and OS X.
+
+There is a bit more uncertainty in the Linux world, but new
+distributions will have UTF-8 encoded files names. If you are using an
+old Linux filesystem with non UTF-8 file names (eg latin1) then you can
+use the convmv tool to convert the filesystem to UTF-8. This tool is
+available in most distributions' package managers.
 
 If an invalid (non-UTF8) filename is read, the invalid caracters will be
 replaced with the unicode replacement character, '�'. rclone will emit a
@@ -2758,6 +3113,19 @@ time which is important for SSL to work properly.
     curl -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt
     ntpclient -s -h pool.ntp.org
 
+Note that you may need to add the --insecure option to the curl command
+line if it doesn't work without.
+
+    curl --insecure -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt
+
+Rclone gives Failed to load config file: function not implemented error
+
+Likely this means that you are running rclone on Linux version not
+supported by the go runtime, ie earlier than version 2.6.23.
+
+See the system requirements section in the go install docs for full
+details.
+
 
 License
 
@@ -2805,6 +3173,8 @@ Contributors
 -   Björn Harrtell bjorn@wololo.org
 -   Xavier Lucas xavier.lucas@corp.ovh.com
 -   Werner Beroux werner@beroux.com
+-   Brian Stengaard brian@stengaard.eu
+-   Jakub Gedeon jgedeon@sofi.com
 
 
 Contact the rclone project
