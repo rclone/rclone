@@ -3365,6 +3365,74 @@ Of course this will cause problems if the absolute path length of a file
 exceeds 258 characters on z, so only use this option if you have to.
 .SS Changelog
 .IP \[bu] 2
+v1.28 \- 2016\-03\-01
+.RS 2
+.IP \[bu] 2
+New Features
+.IP \[bu] 2
+Configuration file encryption \- thanks Klaus Post
+.IP \[bu] 2
+Improve \f[C]rclone\ config\f[] adding more help and making it easier to
+understand
+.IP \[bu] 2
+Implement \f[C]\-u\f[]/\f[C]\-\-update\f[] so creation times can be used
+on all remotes
+.IP \[bu] 2
+Implement \f[C]\-\-low\-level\-retries\f[] flag
+.IP \[bu] 2
+Optionally disable gzip compression on downloads with
+\f[C]\-\-no\-gzip\-encoding\f[]
+.IP \[bu] 2
+Bug fixes
+.IP \[bu] 2
+Don\[aq]t make directories if \f[C]\-\-dry\-run\f[] set
+.IP \[bu] 2
+Fix and document the \f[C]move\f[] command
+.IP \[bu] 2
+Fix redirecting stderr on unix\-like OSes when using
+\f[C]\-\-log\-file\f[]
+.IP \[bu] 2
+Fix \f[C]delete\f[] command to wait until all finished \- fixes missing
+deletes.
+.IP \[bu] 2
+Backblaze B2
+.IP \[bu] 2
+Use one upload URL per go routine fixes
+\f[C]more\ than\ one\ upload\ using\ auth\ token\f[]
+.IP \[bu] 2
+Add pacing, retries and reauthentication \- fixes token expiry problems
+.IP \[bu] 2
+Upload without using a temporary file from local (and remotes which
+support SHA1)
+.IP \[bu] 2
+Fix reading metadata for all files when it shouldn\[aq]t have been
+.IP \[bu] 2
+Drive
+.IP \[bu] 2
+Fix listing drive documents at root
+.IP \[bu] 2
+Disable copy and move for Google docs
+.IP \[bu] 2
+Swift
+.IP \[bu] 2
+Fix uploading of chunked files with non ASCII characters
+.IP \[bu] 2
+Allow setting of \f[C]storage_url\f[] in the config \- thanks Xavier
+Lucas
+.IP \[bu] 2
+S3
+.IP \[bu] 2
+Allow IAM role and credentials from environment variables \- thanks
+Brian Stengaard
+.IP \[bu] 2
+Allow low privilege users to use S3 (check if directory exists during
+Mkdir) \- thanks Jakub Gedeon
+.IP \[bu] 2
+Amazon Cloud Drive
+.IP \[bu] 2
+Retry on more things to make directory listings more reliable
+.RE
+.IP \[bu] 2
 v1.27 \- 2016\-01\-31
 .RS 2
 .IP \[bu] 2

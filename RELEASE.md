@@ -13,6 +13,7 @@ Making a release
   * make test
   * make tag
   * edit docs/content/changelog.md
+  * make doc
   * git commit -a -v
   * make retag
   * # Set the GOPATH for a gox enabled compiler - . ~/bin/go-cross - not required for go >= 1.5

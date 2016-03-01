@@ -1774,6 +1774,36 @@ nounc = true</code></pre>
 <p>This will use UNC paths on <code>c:\src</code> but not on <code>z:\dst</code>. Of course this will cause problems if the absolute path length of a file exceeds 258 characters on z, so only use this option if you have to.</p>
 <h2 id="changelog">Changelog</h2>
 <ul>
+<li>v1.28 - 2016-03-01
+<ul>
+<li>New Features</li>
+<li>Configuration file encryption - thanks Klaus Post</li>
+<li>Improve <code>rclone config</code> adding more help and making it easier to understand</li>
+<li>Implement <code>-u</code>/<code>--update</code> so creation times can be used on all remotes</li>
+<li>Implement <code>--low-level-retries</code> flag</li>
+<li>Optionally disable gzip compression on downloads with <code>--no-gzip-encoding</code></li>
+<li>Bug fixes</li>
+<li>Don't make directories if <code>--dry-run</code> set</li>
+<li>Fix and document the <code>move</code> command</li>
+<li>Fix redirecting stderr on unix-like OSes when using <code>--log-file</code></li>
+<li>Fix <code>delete</code> command to wait until all finished - fixes missing deletes.</li>
+<li>Backblaze B2</li>
+<li>Use one upload URL per go routine fixes <code>more than one upload using auth token</code></li>
+<li>Add pacing, retries and reauthentication - fixes token expiry problems</li>
+<li>Upload without using a temporary file from local (and remotes which support SHA1)</li>
+<li>Fix reading metadata for all files when it shouldn't have been</li>
+<li>Drive</li>
+<li>Fix listing drive documents at root</li>
+<li>Disable copy and move for Google docs</li>
+<li>Swift</li>
+<li>Fix uploading of chunked files with non ASCII characters</li>
+<li>Allow setting of <code>storage_url</code> in the config - thanks Xavier Lucas</li>
+<li>S3</li>
+<li>Allow IAM role and credentials from environment variables - thanks Brian Stengaard</li>
+<li>Allow low privilege users to use S3 (check if directory exists during Mkdir) - thanks Jakub Gedeon</li>
+<li>Amazon Cloud Drive</li>
+<li>Retry on more things to make directory listings more reliable</li>
+</ul></li>
 <li>v1.27 - 2016-01-31
 <ul>
 <li>New Features</li>
