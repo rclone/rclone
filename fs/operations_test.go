@@ -694,6 +694,9 @@ func TestSyncWithExcludeAndDeleteExcluded(t *testing.T) {
 
 // Test with UpdateOlder set
 func TestSyncWithUpdateOlder(t *testing.T) {
+	if fs.Config.ModifyWindow == fs.ModTimeNotSupported {
+		t.Skip("Can't run this test on fs which doesn't support mod time")
+	}
 	r := NewRun(t)
 	defer r.Finalise()
 	t2plus := t2.Add(time.Second / 2)
