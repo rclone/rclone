@@ -36,8 +36,9 @@ const (
 	timeFormatIn                = time.RFC3339
 	timeFormatOut               = "2006-01-02T15:04:05.000000000Z07:00"
 	minSleep                    = 10 * time.Millisecond
-	maxSleep                    = 2 * time.Second
-	decayConstant               = 2 // bigger for slower decay, exponential
+	maxSleep                    = 2000 * time.Millisecond
+	decayConstant               = 0 // bigger for slower decay, exponential
+	attackConstant              = 0 // bigger for slower attack, exponential
 	defaultExtensions           = "docx,xlsx,pptx,svg"
 )
 
@@ -291,7 +292,7 @@ func NewFs(name, path string) (fs.Fs, error) {
 	f := &Fs{
 		name:  name,
 		root:  root,
-		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant).SetAttackConstant(attackConstant),
 	}
 
 	// Create a new authorized Drive client.
