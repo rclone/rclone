@@ -27,6 +27,9 @@ func TestNew(t *testing.T) {
 	if p.decayConstant != 2 {
 		t.Errorf("decayConstant")
 	}
+	if p.attackConstant != 1 {
+		t.Errorf("attackConstant")
+	}
 	if cap(p.pacer) != 1 {
 		t.Errorf("pacer 1")
 	}
@@ -83,6 +86,58 @@ func TestSetDecayConstant(t *testing.T) {
 	if p.decayConstant != 17 {
 		t.Errorf("didn't set")
 	}
+}
+
+func TestDecay(t *testing.T) {
+	p := New().SetMinSleep(time.Microsecond).SetPacer(DefaultPacer).SetMaxSleep(time.Second)
+	for _, test := range []struct {
+		in             time.Duration
+		attackConstant uint
+		want           time.Duration
+	}{
+		{8 * time.Millisecond, 1, 4 * time.Millisecond},
+		{1 * time.Millisecond, 0, time.Microsecond},
+		{1 * time.Millisecond, 2, (3 * time.Millisecond) / 4},
+		{1 * time.Millisecond, 3, (7 * time.Millisecond) / 8},
+	} {
+		p.sleepTime = test.in
+		p.SetDecayConstant(test.attackConstant)
+		p.defaultPacer(false)
+		got := p.sleepTime
+		if got != test.want {
+			t.Errorf("bad sleep want %v got %v", test.want, got)
+		}
+	}
+}
+
+func TestSetAttackConstant(t *testing.T) {
+	p := New().SetAttackConstant(19)
+	if p.attackConstant != 19 {
+		t.Errorf("didn't set")
+	}
+}
+
+func TestAttack(t *testing.T) {
+	p := New().SetMinSleep(time.Microsecond).SetPacer(DefaultPacer).SetMaxSleep(time.Second)
+	for _, test := range []struct {
+		in             time.Duration
+		attackConstant uint
+		want           time.Duration
+	}{
+		{1 * time.Millisecond, 1, 2 * time.Millisecond},
+		{1 * time.Millisecond, 0, time.Second},
+		{1 * time.Millisecond, 2, (4 * time.Millisecond) / 3},
+		{1 * time.Millisecond, 3, (8 * time.Millisecond) / 7},
+	} {
+		p.sleepTime = test.in
+		p.SetAttackConstant(test.attackConstant)
+		p.defaultPacer(true)
+		got := p.sleepTime
+		if got != test.want {
+			t.Errorf("bad sleep want %v got %v", test.want, got)
+		}
+	}
+
 }
 
 func TestSetRetries(t *testing.T) {

@@ -15,6 +15,7 @@ type Pacer struct {
 	minSleep           time.Duration // minimum sleep time
 	maxSleep           time.Duration // maximum sleep time
 	decayConstant      uint          // decay constant
+	attackConstant     uint          // attack constant
 	pacer              chan struct{} // To pace the operations
 	sleepTime          time.Duration // Time to sleep for each transaction
 	retries            int           // Max number of retries
@@ -58,11 +59,12 @@ type Paced func() (bool, error)
 // New returns a Pacer with sensible defaults
 func New() *Pacer {
 	p := &Pacer{
-		minSleep:      10 * time.Millisecond,
-		maxSleep:      2 * time.Second,
-		decayConstant: 2,
-		retries:       fs.Config.LowLevelRetries,
-		pacer:         make(chan struct{}, 1),
+		minSleep:       10 * time.Millisecond,
+		maxSleep:       2 * time.Second,
+		decayConstant:  2,
+		attackConstant: 1,
+		retries:        fs.Config.LowLevelRetries,
+		pacer:          make(chan struct{}, 1),
 	}
 	p.sleepTime = p.minSleep
 	p.SetPacer(DefaultPacer)
@@ -116,11 +118,24 @@ func (p *Pacer) SetMaxConnections(n int) *Pacer {
 // This is the speed the time falls back to the minimum after errors
 // have occurred.
 //
-// bigger for slower decay, exponential
+// bigger for slower decay, exponential. 1 is halve, 0 is go straight to minimum
 func (p *Pacer) SetDecayConstant(decay uint) *Pacer {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.decayConstant = decay
+	return p
+}
+
+// SetAttackConstant sets the attack constant for the pacer
+//
+// This is the speed the time grows from the minimum after errors have
+// occurred.
+//
+// bigger for slower attack, 1 is double, 0 is go straight to maximum
+func (p *Pacer) SetAttackConstant(attack uint) *Pacer {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.attackConstant = attack
 	return p
 }
 
@@ -185,7 +200,11 @@ func (p *Pacer) beginCall() {
 func (p *Pacer) defaultPacer(retry bool) {
 	oldSleepTime := p.sleepTime
 	if retry {
-		p.sleepTime *= 2
+		if p.attackConstant == 0 {
+			p.sleepTime = p.maxSleep
+		} else {
+			p.sleepTime = (p.sleepTime << p.attackConstant) / ((1 << p.attackConstant) - 1)
+		}
 		if p.sleepTime > p.maxSleep {
 			p.sleepTime = p.maxSleep
 		}
