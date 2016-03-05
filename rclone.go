@@ -248,7 +248,7 @@ var Commands = []Command{
         but one or rename them to be different. Only useful with
         Google Drive which can have duplicate file names.`,
 		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.Deduplicate(fdst)
+			return fs.Deduplicate(fdst, fs.Config.DedupeMode)
 		},
 		MinArgs: 1,
 		MaxArgs: 1,

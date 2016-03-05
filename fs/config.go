@@ -83,6 +83,7 @@ var (
 	lowLevelRetries = pflag.IntP("low-level-retries", "", 10, "Number of low level retries to do.")
 	updateOlder     = pflag.BoolP("update", "u", false, "Skip files that are newer on the destination.")
 	noGzip          = pflag.BoolP("no-gzip-encoding", "", false, "Don't set Accept-Encoding: gzip.")
+	dedupeMode      = pflag.StringP("dedupe-mode", "", "interactive", "Dedupe mode interactive|skip|first|newest|oldest|rename.")
 	bwLimit         SizeSuffix
 
 	// Key to use for password en/decryption.
@@ -203,6 +204,7 @@ type ConfigInfo struct {
 	LowLevelRetries    int
 	UpdateOlder        bool // Skip files that are newer on the destination
 	NoGzip             bool // Disable compression
+	DedupeMode         DeduplicateMode
 }
 
 // Transport returns an http.RoundTripper with the correct timeouts
@@ -310,6 +312,23 @@ func LoadConfig() {
 	Config.DeleteBefore = *deleteBefore
 	Config.DeleteDuring = *deleteDuring
 	Config.DeleteAfter = *deleteAfter
+
+	switch strings.ToLower(*dedupeMode) {
+	case "interactive":
+		Config.DedupeMode = DeduplicateInteractive
+	case "skip":
+		Config.DedupeMode = DeduplicateSkip
+	case "first":
+		Config.DedupeMode = DeduplicateFirst
+	case "newest":
+		Config.DedupeMode = DeduplicateNewest
+	case "oldest":
+		Config.DedupeMode = DeduplicateOldest
+	case "rename":
+		Config.DedupeMode = DeduplicateRename
+	default:
+		log.Fatalf(`Unknown mode for --dedupe-mode %q.`, *dedupeMode)
+	}
 
 	switch {
 	case *deleteBefore && (*deleteDuring || *deleteAfter),

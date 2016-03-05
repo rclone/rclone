@@ -194,17 +194,51 @@ don't match.  It doesn't alter the source or destination.
 
 ### rclone dedupe remote:path ###
 
-Interactively find duplicate files and offer to delete all but one or
-rename them to be different. Only useful with Google Drive which can
-have duplicate file names.
+By default `dedup` interactively finds duplicate files and offers to
+delete all but one or rename them to be different. Only useful with
+Google Drive which can have duplicate file names.
+
+The `dedupe` command will delete all but one of any identical (same
+md5sum) files it finds without confirmation.  This means that for most
+duplicated files the `dedupe` command will not be interactive.  You
+can use `--dry-run` to see what would happen without doing anything.
+
+Here is an example run.
+
+Before - with duplicates
+
+```
+$ rclone lsl drive:dupes
+  6048320 2016-03-05 16:23:16.798000000 one.txt
+  6048320 2016-03-05 16:23:11.775000000 one.txt
+   564374 2016-03-05 16:23:06.731000000 one.txt
+  6048320 2016-03-05 16:18:26.092000000 one.txt
+  6048320 2016-03-05 16:22:46.185000000 two.txt
+  1744073 2016-03-05 16:22:38.104000000 two.txt
+   564374 2016-03-05 16:22:52.118000000 two.txt
+```
+
+Now the `dedupe` session
 
 ```
 $ rclone dedupe drive:dupes
-2016/01/31 14:13:11 Google drive root 'dupes': Looking for duplicates
-two.txt: Found 3 duplicates
-  1:       564374 bytes, 2016-01-31 14:07:22.159000000, md5sum 7594e7dc9fc28f727c42ee3e0749de81
-  2:      1744073 bytes, 2016-01-31 14:07:12.490000000, md5sum 851957f7fb6f0bc4ce76be966d336802
-  3:      6048320 bytes, 2016-01-31 14:07:02.111000000, md5sum 1eedaa9fe86fd4b8632e2ac549403b36
+2016/03/05 16:24:37 Google drive root 'dupes': Looking for duplicates using interactive mode.
+one.txt: Found 4 duplicates - deleting identical copies
+one.txt: Deleting 2/3 identical duplicates (md5sum "1eedaa9fe86fd4b8632e2ac549403b36")
+one.txt: 2 duplicates remain
+  1:      6048320 bytes, 2016-03-05 16:23:16.798000000, md5sum 1eedaa9fe86fd4b8632e2ac549403b36
+  2:       564374 bytes, 2016-03-05 16:23:06.731000000, md5sum 7594e7dc9fc28f727c42ee3e0749de81
+s) Skip and do nothing
+k) Keep just one (choose which in next step)
+r) Rename all to be different (by changing file.jpg to file-1.jpg)
+s/k/r> k
+Enter the number of the file to keep> 1
+one.txt: Deleted 1 extra copies
+two.txt: Found 3 duplicates - deleting identical copies
+two.txt: 3 duplicates remain
+  1:       564374 bytes, 2016-03-05 16:22:52.118000000, md5sum 7594e7dc9fc28f727c42ee3e0749de81
+  2:      6048320 bytes, 2016-03-05 16:22:46.185000000, md5sum 1eedaa9fe86fd4b8632e2ac549403b36
+  3:      1744073 bytes, 2016-03-05 16:22:38.104000000, md5sum 851957f7fb6f0bc4ce76be966d336802
 s) Skip and do nothing
 k) Keep just one (choose which in next step)
 r) Rename all to be different (by changing file.jpg to file-1.jpg)
@@ -212,26 +246,30 @@ s/k/r> r
 two-1.txt: renamed from: two.txt
 two-2.txt: renamed from: two.txt
 two-3.txt: renamed from: two.txt
-one.txt: Found 2 duplicates
-  1:         6579 bytes, 2016-01-31 14:05:01.235000000, md5sum 2b76c776249409d925ae7ccd49aea59b
-  2:         6579 bytes, 2016-01-31 12:50:30.318000000, md5sum 2b76c776249409d925ae7ccd49aea59b
-s) Skip and do nothing
-k) Keep just one (choose which in next step)
-r) Rename all to be different (by changing file.jpg to file-1.jpg)
-s/k/r> k
-Enter the number of the file to keep> 2
-one.txt: Deleted 1 extra copies
 ```
 
 The result being
 
 ```
 $ rclone lsl drive:dupes
-   564374 2016-01-31 14:07:22.159000000 two-1.txt
-  1744073 2016-01-31 14:07:12.490000000 two-2.txt
-  6048320 2016-01-31 14:07:02.111000000 two-3.txt
-     6579 2016-01-31 12:50:30.318000000 one.txt
+  6048320 2016-03-05 16:23:16.798000000 one.txt
+   564374 2016-03-05 16:22:52.118000000 two-1.txt
+  6048320 2016-03-05 16:22:46.185000000 two-2.txt
+  1744073 2016-03-05 16:22:38.104000000 two-3.txt
 ```
+
+Dedupe can be run non interactively using the `--dedupe-mode` flag.
+
+  * `--dedupe-mode interactive` - interactive as above.
+  * `--dedupe-mode skip` - removes identical files then skips anything left.
+  * `--dedupe-mode first` - removes identical files then keeps the first one.
+  * `--dedupe-mode newest` - removes identical files then keeps the newest one.
+  * `--dedupe-mode oldest` - removes identical files then keeps the oldest one.
+  * `--dedupe-mode rename` - removes identical files then renames the rest to be different.
+
+For example to rename all the identically named photos in your Google Photos directory, do
+
+    rclone dedupe --dedupe-mode rename "drive:Google Photos"
 
 ### rclone config ###
 
@@ -341,6 +379,10 @@ looks like `5s` for 5 seconds, `10m` for 10 minutes, or `3h30m`.
 The connection timeout is the amount of time rclone will wait for a
 connection to go through to a remote object storage system.  It is
 `1m` by default.
+
+### --dedupe-mode MODE ###
+
+Mode to run dedupe command in.  One of `interactive`, `skip`, `first`, `newest`, `oldest`, `rename`.  The default is `interactive`.  See the dedupe command for more information as to what these options mean.
 
 ### -n, --dry-run ###
 

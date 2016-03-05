@@ -5,8 +5,10 @@ package fs
 import (
 	"fmt"
 	"io"
+	"log"
 	"mime"
 	"path"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -405,6 +407,23 @@ func PairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 	}
 }
 
+// DeleteFile deletes a single file respecting --dry-run and accumulating stats and errors.
+func DeleteFile(dst Object) {
+	if Config.DryRun {
+		Log(dst, "Not deleting as --dry-run")
+	} else {
+		Stats.Checking(dst)
+		err := dst.Remove()
+		Stats.DoneChecking(dst)
+		if err != nil {
+			Stats.Error()
+			ErrorLog(dst, "Couldn't delete: %s", err)
+		} else {
+			Debug(dst, "Deleted")
+		}
+	}
+}
+
 // DeleteFiles removes all the files passed in the channel
 func DeleteFiles(toBeDeleted ObjectsChan) {
 	var wg sync.WaitGroup
@@ -413,19 +432,7 @@ func DeleteFiles(toBeDeleted ObjectsChan) {
 		go func() {
 			defer wg.Done()
 			for dst := range toBeDeleted {
-				if Config.DryRun {
-					Log(dst, "Not deleting as --dry-run")
-				} else {
-					Stats.Checking(dst)
-					err := dst.Remove()
-					Stats.DoneChecking(dst)
-					if err != nil {
-						Stats.Error()
-						ErrorLog(dst, "Couldn't delete: %s", err)
-					} else {
-						Debug(dst, "Deleted")
-					}
-				}
+				DeleteFile(dst)
 			}
 		}()
 	}
@@ -958,15 +965,132 @@ func Delete(f Fs) error {
 	return err
 }
 
+// dedupeRename renames the objs slice to different names
+func dedupeRename(remote string, objs []Object) {
+	f := objs[0].Fs()
+	mover, ok := f.(Mover)
+	if !ok {
+		log.Fatalf("Fs %v doesn't support Move", f)
+	}
+	ext := path.Ext(remote)
+	base := remote[:len(remote)-len(ext)]
+	for i, o := range objs {
+		newName := fmt.Sprintf("%s-%d%s", base, i+1, ext)
+		if !Config.DryRun {
+			newObj, err := mover.Move(o, newName)
+			if err != nil {
+				Stats.Error()
+				ErrorLog(o, "Failed to rename: %v", err)
+				continue
+			}
+			Log(newObj, "renamed from: %v", o)
+		} else {
+			Log(remote, "Not renaming to %q as --dry-run", newName)
+		}
+	}
+}
+
+// dedupeDeleteAllButOne deletes all but the one in keep
+func dedupeDeleteAllButOne(keep int, remote string, objs []Object) {
+	for i, o := range objs {
+		if i == keep {
+			continue
+		}
+		DeleteFile(o)
+	}
+	Log(remote, "Deleted %d extra copies", len(objs)-1)
+}
+
+// dedupeDeleteIdentical deletes all but one of identical (by hash) copies
+func dedupeDeleteIdentical(remote string, objs []Object) []Object {
+	// See how many of these duplicates are identical
+	byHash := make(map[string][]Object, len(objs))
+	for _, o := range objs {
+		md5sum, err := o.Hash(HashMD5)
+		if err == nil {
+			byHash[md5sum] = append(byHash[md5sum], o)
+		}
+	}
+
+	// Delete identical duplicates, refilling obj with the ones remaining
+	objs = nil
+	for md5sum, hashObjs := range byHash {
+		if len(hashObjs) > 1 {
+			Log(remote, "Deleting %d/%d identical duplicates (md5sum %q)", len(hashObjs)-1, len(hashObjs), md5sum)
+			for _, o := range hashObjs[1:] {
+				DeleteFile(o)
+			}
+		}
+		objs = append(objs, hashObjs[0])
+	}
+
+	return objs
+}
+
+// dedupeInteractive interactively dedupes the slice of objects
+func dedupeInteractive(remote string, objs []Object) {
+	fmt.Printf("%s: %d duplicates remain\n", remote, len(objs))
+	for i, o := range objs {
+		md5sum, err := o.Hash(HashMD5)
+		if err != nil {
+			md5sum = err.Error()
+		}
+		fmt.Printf("  %d: %12d bytes, %s, md5sum %32s\n", i+1, o.Size(), o.ModTime().Format("2006-01-02 15:04:05.000000000"), md5sum)
+	}
+	switch Command([]string{"sSkip and do nothing", "kKeep just one (choose which in next step)", "rRename all to be different (by changing file.jpg to file-1.jpg)"}) {
+	case 's':
+	case 'k':
+		keep := ChooseNumber("Enter the number of the file to keep", 1, len(objs))
+		dedupeDeleteAllButOne(keep-1, remote, objs)
+	case 'r':
+		dedupeRename(remote, objs)
+	}
+}
+
+type objectsSortedByModTime []Object
+
+func (objs objectsSortedByModTime) Len() int      { return len(objs) }
+func (objs objectsSortedByModTime) Swap(i, j int) { objs[i], objs[j] = objs[j], objs[i] }
+func (objs objectsSortedByModTime) Less(i, j int) bool {
+	return objs[i].ModTime().Before(objs[j].ModTime())
+}
+
+// DeduplicateMode is how the dedupe command chooses what to do
+type DeduplicateMode int
+
+// Deduplicate modes
+const (
+	DeduplicateInteractive DeduplicateMode = iota // interactively ask the user
+	DeduplicateSkip                               // skip all conflicts
+	DeduplicateFirst                              // choose the first object
+	DeduplicateNewest                             // choose the newest object
+	DeduplicateOldest                             // choose the oldest object
+	DeduplicateRename                             // rename the objects
+)
+
+func (mode DeduplicateMode) String() string {
+	switch mode {
+	case DeduplicateInteractive:
+		return "interactive"
+	case DeduplicateSkip:
+		return "skip"
+	case DeduplicateFirst:
+		return "first"
+	case DeduplicateNewest:
+		return "newest"
+	case DeduplicateOldest:
+		return "oldest"
+	case DeduplicateRename:
+		return "rename"
+	}
+	return "unknown"
+}
+
 // Deduplicate interactively finds duplicate files and offers to
 // delete all but one or rename them to be different. Only useful with
 // Google Drive which can have duplicate file names.
-func Deduplicate(f Fs) error {
-	mover, ok := f.(Mover)
-	if !ok {
-		return fmt.Errorf("%v can't Move files", f)
-	}
-	Log(f, "Looking for duplicates")
+func Deduplicate(f Fs, mode DeduplicateMode) error {
+	Log(f, "Looking for duplicates using %v mode.", mode)
 	files := map[string][]Object{}
 	for o := range f.List() {
 		remote := o.Remote()
@@ -974,43 +1098,29 @@ func Deduplicate(f Fs) error {
 	}
 	for remote, objs := range files {
 		if len(objs) > 1 {
-			fmt.Printf("%s: Found %d duplicates\n", remote, len(objs))
-			for i, o := range objs {
-				md5sum, err := o.Hash(HashMD5)
-				if err != nil {
-					md5sum = err.Error()
-				}
-				fmt.Printf("  %d: %12d bytes, %s, md5sum %32s\n", i+1, o.Size(), o.ModTime().Format("2006-01-02 15:04:05.000000000"), md5sum)
+			Log(remote, "Found %d duplicates - deleting identical copies", len(objs))
+			objs = dedupeDeleteIdentical(remote, objs)
+			if len(objs) <= 1 {
+				Log(remote, "All duplicates removed")
+				continue
 			}
-			switch Command([]string{"sSkip and do nothing", "kKeep just one (choose which in next step)", "rRename all to be different (by changing file.jpg to file-1.jpg)"}) {
-			case 's':
-			case 'k':
-				keep := ChooseNumber("Enter the number of the file to keep", 1, len(objs))
-				deleted := 0
-				for i, o := range objs {
-					if i+1 == keep {
-						continue
-					}
-					err := o.Remove()
-					if err != nil {
-						ErrorLog(o, "Failed to delete: %v", err)
-						continue
-					}
-					deleted++
-				}
-				fmt.Printf("%s: Deleted %d extra copies\n", remote, deleted)
-			case 'r':
-				ext := path.Ext(remote)
-				base := remote[:len(remote)-len(ext)]
-				for i, o := range objs {
-					newName := fmt.Sprintf("%s-%d%s", base, i+1, ext)
-					newObj, err := mover.Move(o, newName)
-					if err != nil {
-						ErrorLog(o, "Failed to rename: %v", err)
-						continue
-					}
-					fmt.Printf("%v: renamed from: %v\n", newObj, o)
-				}
+			switch mode {
+			case DeduplicateInteractive:
+				dedupeInteractive(remote, objs)
+			case DeduplicateFirst:
+				dedupeDeleteAllButOne(0, remote, objs)
+			case DeduplicateNewest:
+				sort.Sort(objectsSortedByModTime(objs)) // sort oldest first
+				dedupeDeleteAllButOne(len(objs)-1, remote, objs)
+			case DeduplicateOldest:
+				sort.Sort(objectsSortedByModTime(objs)) // sort oldest first
+				dedupeDeleteAllButOne(0, remote, objs)
+			case DeduplicateRename:
+				dedupeRename(remote, objs)
+			case DeduplicateSkip:
+				// skip
+			default:
+				//skip
 			}
 		}
 	}

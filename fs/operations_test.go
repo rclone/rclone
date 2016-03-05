@@ -975,3 +975,160 @@ func TestCheck(t *testing.T) {
 	fstest.CheckItems(t, r.flocal, file1, file2, file3)
 	check(5, 0)
 }
+
+func (r *Run) checkWithDuplicates(t *testing.T, items ...fstest.Item) {
+	objects, size, err := fs.Count(r.fremote)
+	if err != nil {
+		t.Fatalf("Error listing: %v", err)
+	}
+	if objects != int64(len(items)) {
+		t.Fatalf("Error listing want %d objects, got %d", len(items), objects)
+	}
+	wantSize := int64(0)
+	for _, item := range items {
+		wantSize += item.Size
+	}
+	if wantSize != size {
+		t.Fatalf("Error listing want %d size, got %d", wantSize, size)
+	}
+}
+
+func TestDeduplicateInteractive(t *testing.T) {
+	if *RemoteName != "TestDrive:" {
+		t.Skip("Can only test deduplicate on google drive")
+	}
+	r := NewRun(t)
+	defer r.Finalise()
+
+	file1 := r.WriteObject("one", "This is one", t1)
+	file2 := r.WriteObject("one", "This is one", t1)
+	file3 := r.WriteObject("one", "This is one", t1)
+	r.checkWithDuplicates(t, file1, file2, file3)
+
+	err := fs.Deduplicate(r.fremote, fs.DeduplicateInteractive)
+	if err != nil {
+		t.Fatalf("fs.Deduplicate returned error: %v", err)
+	}
+
+	fstest.CheckItems(t, r.fremote, file1)
+}
+
+func TestDeduplicateSkip(t *testing.T) {
+	if *RemoteName != "TestDrive:" {
+		t.Skip("Can only test deduplicate on google drive")
+	}
+	r := NewRun(t)
+	defer r.Finalise()
+
+	file1 := r.WriteObject("one", "This is one", t1)
+	file2 := r.WriteObject("one", "This is one", t1)
+	file3 := r.WriteObject("one", "This is another one", t1)
+	r.checkWithDuplicates(t, file1, file2, file3)
+
+	err := fs.Deduplicate(r.fremote, fs.DeduplicateSkip)
+	if err != nil {
+		t.Fatalf("fs.Deduplicate returned error: %v", err)
+	}
+
+	r.checkWithDuplicates(t, file1, file3)
+}
+
+func TestDeduplicateFirst(t *testing.T) {
+	if *RemoteName != "TestDrive:" {
+		t.Skip("Can only test deduplicate on google drive")
+	}
+	r := NewRun(t)
+	defer r.Finalise()
+
+	file1 := r.WriteObject("one", "This is one", t1)
+	file2 := r.WriteObject("one", "This is one A", t1)
+	file3 := r.WriteObject("one", "This is one BB", t1)
+	r.checkWithDuplicates(t, file1, file2, file3)
+
+	err := fs.Deduplicate(r.fremote, fs.DeduplicateFirst)
+	if err != nil {
+		t.Fatalf("fs.Deduplicate returned error: %v", err)
+	}
+
+	objects, size, err := fs.Count(r.fremote)
+	if err != nil {
+		t.Fatalf("Error listing: %v", err)
+	}
+	if objects != 1 {
+		t.Errorf("Expecting 1 object got %v", objects)
+	}
+	if size != file1.Size && size != file2.Size && size != file3.Size {
+		t.Errorf("Size not one of the object sizes %d", size)
+	}
+}
+
+func TestDeduplicateNewest(t *testing.T) {
+	if *RemoteName != "TestDrive:" {
+		t.Skip("Can only test deduplicate on google drive")
+	}
+	r := NewRun(t)
+	defer r.Finalise()
+
+	file1 := r.WriteObject("one", "This is one", t1)
+	file2 := r.WriteObject("one", "This is one too", t2)
+	file3 := r.WriteObject("one", "This is another one", t3)
+	r.checkWithDuplicates(t, file1, file2, file3)
+
+	err := fs.Deduplicate(r.fremote, fs.DeduplicateNewest)
+	if err != nil {
+		t.Fatalf("fs.Deduplicate returned error: %v", err)
+	}
+
+	fstest.CheckItems(t, r.fremote, file3)
+}
+
+func TestDeduplicateOldest(t *testing.T) {
+	if *RemoteName != "TestDrive:" {
+		t.Skip("Can only test deduplicate on google drive")
+	}
+	r := NewRun(t)
+	defer r.Finalise()
+
+	file1 := r.WriteObject("one", "This is one", t1)
+	file2 := r.WriteObject("one", "This is one too", t2)
+	file3 := r.WriteObject("one", "This is another one", t3)
+	r.checkWithDuplicates(t, file1, file2, file3)
+
+	err := fs.Deduplicate(r.fremote, fs.DeduplicateOldest)
+	if err != nil {
+		t.Fatalf("fs.Deduplicate returned error: %v", err)
+	}
+
+	fstest.CheckItems(t, r.fremote, file1)
+}
+
+func TestDeduplicateRename(t *testing.T) {
+	if *RemoteName != "TestDrive:" {
+		t.Skip("Can only test deduplicate on google drive")
+	}
+	r := NewRun(t)
+	defer r.Finalise()
+
+	file1 := r.WriteObject("one.txt", "This is one", t1)
+	file2 := r.WriteObject("one.txt", "This is one too", t2)
+	file3 := r.WriteObject("one.txt", "This is another one", t3)
+	r.checkWithDuplicates(t, file1, file2, file3)
+
+	err := fs.Deduplicate(r.fremote, fs.DeduplicateRename)
+	if err != nil {
+		t.Fatalf("fs.Deduplicate returned error: %v", err)
+	}
+
+	for o := range r.fremote.List() {
+		remote := o.Remote()
+		if remote != "one-1.txt" &&
+			remote != "one-2.txt" &&
+			remote != "one-3.txt" {
+			t.Errorf("Bad file name after rename %q", remote)
+		}
+		size := o.Size()
+		if size != file1.Size && size != file2.Size && size != file3.Size {
+			t.Errorf("Size not one of the object sizes %d", size)
+		}
+	}
+}
