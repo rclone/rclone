@@ -772,7 +772,11 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	// Do the move
-	info, err := f.svc.Files.Patch(srcObj.id, dstInfo).SetModifiedDate(true).Do()
+	var info *drive.File
+	err = f.pacer.Call(func() (bool, error) {
+		info, err = f.svc.Files.Patch(srcObj.id, dstInfo).SetModifiedDate(true).Do()
+		return shouldRetry(err)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -814,7 +818,10 @@ func (f *Fs) DirMove(src fs.Fs) error {
 		Title:   leaf,
 		Parents: []*drive.ParentReference{{Id: directoryID}},
 	}
-	_, err = f.svc.Files.Patch(srcFs.dirCache.RootID(), &patch).Do()
+	err = f.pacer.Call(func() (bool, error) {
+		_, err = f.svc.Files.Patch(srcFs.dirCache.RootID(), &patch).Do()
+		return shouldRetry(err)
+	})
 	if err != nil {
 		return err
 	}
