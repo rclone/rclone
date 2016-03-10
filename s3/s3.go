@@ -761,6 +761,14 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		u.Concurrency = 2
 		u.LeavePartsOnError = false
 		u.S3 = o.fs.c
+		u.PartSize = s3manager.MinUploadPartSize
+		size := src.Size()
+
+		// Adjust PartSize until the number of parts is small enough.
+		if size/u.PartSize >= s3manager.MaxUploadParts {
+			// Calculate partition size rounded up to the nearest MB
+			u.PartSize = (((size / s3manager.MaxUploadParts) >> 20) + 1) << 20
+		}
 	})
 
 	// Set the mtime in the meta data
