@@ -42,6 +42,7 @@ type Fs struct {
 	root        string              // The root directory
 	precisionOk sync.Once           // Whether we need to read the precision
 	precision   time.Duration       // precision of local filesystem
+	wmu         sync.Mutex          // used for locking access to 'warned'.
 	warned      map[string]struct{} // whether we have warned about this string
 	nounc       bool                // Skip UNC conversion on Windows
 }
@@ -175,10 +176,12 @@ func (f *Fs) List() fs.ObjectsChan {
 // Any invalid UTF-8 characters will be replaced with utf8.RuneError
 func (f *Fs) cleanUtf8(name string) string {
 	if !utf8.ValidString(name) {
+		f.wmu.Lock()
 		if _, ok := f.warned[name]; !ok {
 			fs.Debug(f, "Replacing invalid UTF-8 characters in %q", name)
 			f.warned[name] = struct{}{}
 		}
+		f.wmu.Unlock()
 		name = string([]rune(name))
 	}
 	if runtime.GOOS == "windows" {
@@ -706,10 +709,12 @@ func cleanWindowsName(f *Fs, name string) string {
 	}, name)
 
 	if name2 != original && f != nil {
+		f.wmu.Lock()
 		if _, ok := f.warned[name]; !ok {
 			fs.Debug(f, "Replacing invalid characters in %q to %q", name, name2)
 			f.warned[name] = struct{}{}
 		}
+		f.wmu.Unlock()
 	}
 	return name2
 }
