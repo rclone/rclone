@@ -294,8 +294,10 @@ tryAgain:
 // Check to see if src needs to be copied to dst and if so puts it in out
 func checkOne(pair ObjectPair, out ObjectPairChan) {
 	src, dst := pair.src, pair.dst
+	defer Stats.Checked(src.Size())
 	if dst == nil {
 		Debug(src, "Couldn't find file - need to transfer")
+		Stats.ToTransfer(src.Size(), 1)
 		out <- pair
 		return
 	}
@@ -341,6 +343,7 @@ func checkOne(pair ObjectPair, out ObjectPairChan) {
 			return
 		}
 	}
+	Stats.ToTransfer(src.Size(), 1)
 	out <- pair
 }
 
@@ -509,6 +512,9 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 		srcFiles = readFilesMap(fsrc, false)
 		listWg.Done()
 		for _, v := range srcFiles {
+			Stats.ToCheck(v.Size(), 1)
+		}
+		for _, v := range srcFiles {
 			srcObjects <- v
 		}
 		close(srcObjects)
@@ -592,6 +598,9 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 				toBeChecked <- ObjectPair{src, dst}
 			} else {
 				// No need to check since doesn't exist
+				size := src.Size()
+				Stats.Checked(size)
+				Stats.ToTransfer(size, 1)
 				toBeUploaded <- ObjectPair{src, nil}
 			}
 		}

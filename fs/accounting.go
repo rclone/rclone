@@ -91,15 +91,20 @@ func (ss stringSet) String() string {
 
 // StatsInfo limits and accounts all transfers
 type StatsInfo struct {
-	lock         sync.RWMutex
-	bytes        int64
-	errors       int64
-	checks       int64
-	checking     stringSet
-	transfers    int64
-	transferring stringSet
-	start        time.Time
-	inProgress   *inProgress
+	lock            sync.RWMutex
+	toTransfer      int64
+	transferred     int64
+	toTransferFiles int
+	toCheck         int64
+	checked         int64
+	toCheckFiles    int
+	errors          int64
+	checks          int64
+	checking        stringSet
+	transfers       int64
+	transferring    stringSet
+	start           time.Time
+	inProgress      *inProgress
 }
 
 // NewStats cretates an initialised StatsInfo
@@ -120,26 +125,32 @@ func (s *StatsInfo) String() string {
 	dtSeconds := dt.Seconds()
 	speed := 0.0
 	if dt > 0 {
-		speed = float64(s.bytes) / 1024 / dtSeconds
+		speed = float64(s.transferred) / 1024 / dtSeconds
 	}
 	dtRounded := dt - (dt % (time.Second / 10))
 	buf := &bytes.Buffer{}
-	fmt.Fprintf(buf, `
-Transferred:   %10d Bytes (%7.2f kByte/s)
-Errors:        %10d
-Checks:        %10d
-Transferred:   %10d
-Elapsed time:  %10v
-`,
-		s.bytes, speed,
-		s.errors,
-		s.checks,
-		s.transfers,
-		dtRounded)
-	if len(s.checking) > 0 {
+	fmt.Fprintf(buf, "\n")
+	if s.toCheck > 0 || s.toCheckFiles > 0 {
+		fmt.Fprintf(buf, "Checked:       %10d of %d bytes (%.2f%%) in %d of %d files\n",
+			s.checked, s.toCheck, 100*float64(s.checked)/float64(s.toCheck), s.checks, s.toCheckFiles,
+		)
+	}
+	if s.toTransferFiles > 0 || s.transferred > 0 {
+		fmt.Fprintf(buf, "Transferred:   %10d of %d bytes (%.2f kB/s) in %d of %d queued files\n",
+			s.transferred, s.toTransfer, speed, s.transfers, s.toTransferFiles,
+		)
+
+	}
+	if s.errors > 0 {
+		fmt.Fprintf(buf, "Errors:        %10d\n", s.errors)
+	}
+
+	fmt.Fprintf(buf, "Elapsed time:  %10v\n", dtRounded)
+
+	if len(s.checking) > 0 && Config.Verbose {
 		fmt.Fprintf(buf, "Checking:\n%s\n", s.checking)
 	}
-	if len(s.transferring) > 0 {
+	if len(s.transferring) > 0 && Config.Verbose {
 		fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring)
 	}
 	return buf.String()
@@ -150,11 +161,34 @@ func (s *StatsInfo) Log() {
 	log.Printf("%v\n", s)
 }
 
-// Bytes updates the stats for bytes bytes
-func (s *StatsInfo) Bytes(bytes int64) {
+// Bytes updates the stats for bytes by adding bytes
+func (s *StatsInfo) Transferred(bytes int64) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	s.bytes += bytes
+	s.transferred += bytes
+}
+
+// ToTransfer add the number of bytes and files to the transfer size
+func (s *StatsInfo) ToTransfer(bytes int64, files int) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.toTransfer += bytes
+	s.toTransferFiles += files
+}
+
+// ToCheck add the number of bytes to number of bytes that will be checked
+func (s *StatsInfo) ToCheck(bytes int64, files int) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.toCheckFiles += files
+	s.toCheck += bytes
+}
+
+// ToCheck add the number of bytes to number of bytes that has been checked
+func (s *StatsInfo) Checked(bytes int64) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.checked += bytes
 }
 
 // Errors updates the stats for errors
@@ -175,7 +209,7 @@ func (s *StatsInfo) GetErrors() int64 {
 func (s *StatsInfo) ResetCounters() {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	s.bytes = 0
+	s.transferred = 0
 	s.errors = 0
 	s.checks = 0
 	s.transfers = 0
@@ -316,7 +350,7 @@ func (file *Account) Read(p []byte) (n int, err error) {
 	file.bytes += int64(n)
 	file.statmu.Unlock()
 
-	Stats.Bytes(int64(n))
+	Stats.Transferred(int64(n))
 
 	// Limit the transfer speed if required
 	if tokenBucket != nil {
@@ -397,14 +431,14 @@ func (file *Account) String() string {
 		}
 	}
 	name := []rune(file.name)
-	if len(name) > 45 {
-		where := len(name) - 42
+	if len(name) > 35 {
+		where := len(name) - 32
 		name = append([]rune{'.', '.', '.'}, name[where:]...)
 	}
 	if b <= 0 {
-		return fmt.Sprintf("%45s: avg:%7.1f, cur: %6.1f kByte/s. ETA: %s", string(name), avg/1024, cur/1024, etas)
+		return fmt.Sprintf("%35s: avg:%7.1f, cur: %6.1f kByte/s. ETA: %s", string(name), avg/1024, cur/1024, etas)
 	}
-	return fmt.Sprintf("%45s: %2d%% done. avg: %6.1f, cur: %6.1f kByte/s. ETA: %s", string(name), int(100*float64(a)/float64(b)), avg/1024, cur/1024, etas)
+	return fmt.Sprintf("%35s: %2d%% done. avg: %6.1f, cur: %6.1f kByte/s. ETA: %s", string(name), int(100*float64(a)/float64(b)), avg/1024, cur/1024, etas)
 }
 
 // Close the object
