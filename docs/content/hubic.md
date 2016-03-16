@@ -1,7 +1,7 @@
 ---
 title: "Hubic"
 description: "Rclone docs for Hubic"
-date: "2015-11-08"
+date: "2016-03-16"
 ---
 
 <i class="fa fa-space-shuttle"></i> Hubic
@@ -115,5 +115,10 @@ are the same.
 
 ### Limitations ###
 
-Code to refresh the OpenStack token isn't done yet which may cause
-problems with very long transfers.
+This uses the normal OpenStack Swift mechanism to refresh the Swift
+API credentials and ignores the expires field returned by the Hubic
+API.
+
+The Swift API doesn't return a correct MD5SUM for segmented files
+(Dynamic or Static Large Objects) so rclone won't check or use the
+MD5SUM for these.

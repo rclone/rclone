@@ -131,3 +131,9 @@ ns.
 
 This is a defacto standard (used in the official python-swiftclient
 amongst others) for storing the modification time for an object.
+
+### Limitations ###
+
+The Swift API doesn't return a correct MD5SUM for segmented files
+(Dynamic or Static Large Objects) so rclone won't check or use the
+MD5SUM for these.
