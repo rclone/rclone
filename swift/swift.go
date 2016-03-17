@@ -223,7 +223,7 @@ func (f *Fs) newFsObjectWithInfo(remote string, info *swift.Object) fs.Object {
 		fs:     f,
 		remote: remote,
 	}
-	// Note that due to a quirk of swift, manifest files are
+	// Note that due to a quirk of swift, dynamic large objects are
 	// returned as 0 bytes in the listing.  Correct this here by
 	// making sure we read the full metadata for all 0 byte files.
 	if info != nil && info.Bytes == 0 {
@@ -320,7 +320,7 @@ func (f *Fs) listFiles(ignoreStorable bool) fs.ObjectsChan {
 			defer close(out)
 			f.list(false, func(remote string, object *swift.Object) error {
 				if o := f.newFsObjectWithInfo(remote, object); o != nil {
-					// Storable does a full metadata read on 0 size objects which might be manifest files
+					// Storable does a full metadata read on 0 size objects which might be dynamic large objects
 					storable := o.Storable()
 					if storable || ignoreStorable {
 						out <- o
@@ -480,19 +480,24 @@ func (o *Object) Hash(t fs.HashType) (string, error) {
 	if t != fs.HashMD5 {
 		return "", fs.ErrHashUnsupported
 	}
-	isManifest, err := o.isManifestFile()
+	isDynamicLargeObject, err := o.isDynamicLargeObject()
 	if err != nil {
 		return "", err
 	}
-	if isManifest {
-		fs.Debug(o, "Returning empty Md5sum for swift manifest file")
+	isStaticLargeObject, err := o.isStaticLargeObject()
+	if err != nil {
+		return "", err
+	}
+	if isDynamicLargeObject || isStaticLargeObject {
+		fs.Debug(o, "Returning empty Md5sum for swift large object")
 		return "", nil
 	}
 	return strings.ToLower(o.info.Hash), nil
 }
 
-// isManifestFile checks for manifest header
-func (o *Object) isManifestFile() (bool, error) {
+// hasHeader checks for the header passed in returning false if the
+// object isn't found.
+func (o *Object) hasHeader(header string) (bool, error) {
 	err := o.readMetaData()
 	if err != nil {
 		if err == swift.ObjectNotFound {
@@ -500,8 +505,18 @@ func (o *Object) isManifestFile() (bool, error) {
 		}
 		return false, err
 	}
-	_, isManifestFile := (*o.headers)["X-Object-Manifest"]
-	return isManifestFile, nil
+	_, isDynamicLargeObject := (*o.headers)[header]
+	return isDynamicLargeObject, nil
+}
+
+// isDynamicLargeObject checks for X-Object-Manifest header
+func (o *Object) isDynamicLargeObject() (bool, error) {
+	return o.hasHeader("X-Object-Manifest")
+}
+
+// isStaticLargeObjectFile checks for the X-Static-Large-Object header
+func (o *Object) isStaticLargeObject() (bool, error) {
+	return o.hasHeader("X-Static-Large-Object")
 }
 
 // Size returns the size of an object in bytes
@@ -677,8 +692,8 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	size := src.Size()
 	modTime := src.ModTime()
 
-	// Note whether this has a manifest before starting
-	isManifest, err := o.isManifestFile()
+	// Note whether this is a dynamic large object before starting
+	isDynamicLargeObject, err := o.isDynamicLargeObject()
 	if err != nil {
 		return err
 	}
@@ -701,8 +716,8 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		}
 	}
 
-	// If file was a manifest then remove old/all segments
-	if isManifest {
+	// If file was a dynamic large object then remove old/all segments
+	if isDynamicLargeObject {
 		err = o.removeSegments(uniquePrefix)
 		if err != nil {
 			fs.Log(o, "Failed to remove old segments - carrying on with upload: %v", err)
@@ -716,7 +731,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 
 // Remove an object
 func (o *Object) Remove() error {
-	isManifestFile, err := o.isManifestFile()
+	isDynamicLargeObject, err := o.isDynamicLargeObject()
 	if err != nil {
 		return err
 	}
@@ -726,7 +741,7 @@ func (o *Object) Remove() error {
 		return err
 	}
 	// ...then segments if required
-	if isManifestFile {
+	if isDynamicLargeObject {
 		err = o.removeSegments("")
 		if err != nil {
 			return err
