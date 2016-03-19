@@ -37,6 +37,9 @@ If it doesn't start with `/` then it is matched starting at the
               - doesn't match "afile.jpg"
               - doesn't match "directory/file.jpg"
 
+**Important** Note that you must use `/` in patterns and not `\` even
+if running on Windows.
+
 A `*` matches anything but not a `/`.
 
     *.jpg  - matches "file.jpg"
