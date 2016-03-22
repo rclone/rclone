@@ -432,6 +432,42 @@ func TestSyncSizeOnly(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, file1)
 }
 
+func TestSyncIgnoreTimes(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteBoth("existing", "potato", t1)
+
+	fs.Stats.ResetCounters()
+	err := fs.Sync(r.fremote, r.flocal)
+	if err != nil {
+		t.Fatalf("Sync failed: %v", err)
+	}
+
+	// We should have transferred exactly 0 files because the
+	// files were identical.
+	if fs.Stats.GetTransfers() != 0 {
+		t.Fatalf("Sync 1: want 0 transfer, got %d", fs.Stats.GetTransfers())
+	}
+
+	fs.Config.IgnoreTimes = true
+	defer func() { fs.Config.IgnoreTimes = false }()
+
+	fs.Stats.ResetCounters()
+	err = fs.Sync(r.fremote, r.flocal)
+	if err != nil {
+		t.Fatalf("Sync failed: %v", err)
+	}
+
+	// We should have transferred exactly one file even though the
+	// files were identical.
+	if fs.Stats.GetTransfers() != 1 {
+		t.Fatalf("Sync 2: want 1 transfer, got %d", fs.Stats.GetTransfers())
+	}
+
+	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.fremote, file1)
+}
+
 func TestSyncIgnoreExisting(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()

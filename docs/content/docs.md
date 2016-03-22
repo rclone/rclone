@@ -399,6 +399,15 @@ While this isn't a generally recommended option, it can be useful
 in cases where your files change due to encryption. However, it cannot
 correct partial transfers in case a transfer was interrupted.
 
+### -I, --ignore-times ###
+
+Using this option will cause rclone to unconditionally upload all
+files regardless of the state of files on the destination.
+
+Normally rclone would skip any files that have the same
+modification time and are the same size (or have the same checksum if
+using `--checksum`).
+
 ### --log-file=FILE ###
 
 Log all of rclone's output to FILE.  This is not active by default.

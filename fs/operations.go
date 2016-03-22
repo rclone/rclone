@@ -315,6 +315,12 @@ func checkOne(pair ObjectPair, out ObjectPairChan) {
 		Debug(src, "Destination exists, skipping")
 		return
 	}
+	// If we should upload unconditionally
+	if Config.IgnoreTimes {
+		Debug(src, "Uploading unconditionally as --ignore-times is in use")
+		out <- pair
+		return
+	}
 	// If UpdateOlder is in effect, skip if dst is newer than src
 	if Config.UpdateOlder {
 		srcModTime := src.ModTime()
