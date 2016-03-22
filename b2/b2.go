@@ -615,7 +615,7 @@ func (f *Fs) Rmdir() error {
 
 // Precision of the remote
 func (f *Fs) Precision() time.Duration {
-	return fs.ModTimeNotSupported
+	return time.Second
 }
 
 // deleteByID deletes a file version given Name and ID

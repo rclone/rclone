@@ -146,7 +146,10 @@ func Equal(src, dst Object) bool {
 		// Size and hash the same but mtime different so update the
 		// mtime of the dst object here
 		err := dst.SetModTime(srcModTime)
-		if err != nil {
+		if err == ErrorCantSetModTime {
+			Debug(src, "src and dst identical but can't set mod time without re-uploading")
+			return false
+		} else if err != nil {
 			Stats.Error()
 			ErrorLog(dst, "Failed to read set modification time: %s", err)
 		}

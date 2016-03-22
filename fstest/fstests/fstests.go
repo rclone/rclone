@@ -497,7 +497,13 @@ func TestObjectSetModTime(t *testing.T) {
 	skipIfNotOk(t)
 	newModTime := fstest.Time("2011-12-13T14:15:16.999999999Z")
 	obj := findObject(t, file1.Path)
-	obj.SetModTime(newModTime)
+	err := obj.SetModTime(newModTime)
+	if err == fs.ErrorCantSetModTime {
+		t.Log(err)
+		return
+	} else if err != nil {
+		t.Fatal(err)
+	}
 	file1.ModTime = newModTime
 	file1.CheckModTime(t, obj, obj.ModTime(), remote.Precision())
 	// And make a new object and read it from there too

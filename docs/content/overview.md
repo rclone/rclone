@@ -25,7 +25,7 @@ Here is an overview of the major features of each cloud storage system.
 | Amazon Cloud Drive     | MD5     | No      | Yes              | No              |
 | Microsoft One Drive    | SHA1    | Yes     | Yes              | No              |
 | Hubic                  | MD5     | Yes     | No               | No              |
-| Backblaze B2           | SHA1    | Partial | No               | No              |
+| Backblaze B2           | SHA1    | Yes     | No               | No              |
 | Yandex Disk            | MD5     | Yes     | No               | No              |
 | The local filesystem   | All     | Yes     | Depends          | No              |
 
@@ -48,9 +48,6 @@ default, though the MD5SUM can be checked with the `--checksum` flag.
 
 All cloud storage systems support some kind of date on the object and
 these will be set when transferring from the cloud storage system.
-
-Backblaze B2 preserves file modification times on files uploaded and
-downloaded, but doesn't use them to decide which objects to sync.
 
 ### Case Insensitive ###
 
@@ -78,4 +75,5 @@ systems.
 If a cloud storage system allows duplicate files then it can have two
 objects with the same name.
 
-This confuses rclone greatly when syncing.
+This confuses rclone greatly when syncing - use the `rclone dedupe`
+command to rename or remove duplicates.
