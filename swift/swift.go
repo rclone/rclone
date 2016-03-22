@@ -560,12 +560,10 @@ func (o *Object) ModTime() time.Time {
 }
 
 // SetModTime sets the modification time of the local fs object
-func (o *Object) SetModTime(modTime time.Time) {
+func (o *Object) SetModTime(modTime time.Time) error {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Stats.Error()
-		fs.ErrorLog(o, "Failed to read metadata: %s", err)
-		return
+		return err
 	}
 	meta := o.headers.ObjectMetadata()
 	meta.SetModTime(modTime)
@@ -579,11 +577,7 @@ func (o *Object) SetModTime(modTime time.Time) {
 			newHeaders[k] = v
 		}
 	}
-	err = o.fs.c.ObjectUpdate(o.fs.container, o.fs.root+o.remote, newHeaders)
-	if err != nil {
-		fs.Stats.Error()
-		fs.ErrorLog(o, "Failed to update remote mtime: %s", err)
-	}
+	return o.fs.c.ObjectUpdate(o.fs.container, o.fs.root+o.remote, newHeaders)
 }
 
 // Storable returns if this object is storable

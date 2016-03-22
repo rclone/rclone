@@ -495,18 +495,13 @@ func (o *Object) ModTime() time.Time {
 }
 
 // SetModTime sets the modification time of the local fs object
-func (o *Object) SetModTime(modTime time.Time) {
+func (o *Object) SetModTime(modTime time.Time) error {
 	err := os.Chtimes(o.path, modTime, modTime)
 	if err != nil {
-		fs.Debug(o, "Failed to set mtime on file: %s", err)
-		return
+		return err
 	}
 	// Re-read metadata
-	err = o.lstat()
-	if err != nil {
-		fs.Debug(o, "Failed to stat: %s", err)
-		return
-	}
+	return o.lstat()
 }
 
 // Storable returns a boolean showing if this object is storable
@@ -601,7 +596,10 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	o.hashes = hash.Sums()
 
 	// Set the mtime
-	o.SetModTime(src.ModTime())
+	err = o.SetModTime(src.ModTime())
+	if err != nil {
+		return err
+	}
 
 	// ReRead info now that we have finished
 	return o.lstat()

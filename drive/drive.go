@@ -936,12 +936,10 @@ func (o *Object) ModTime() time.Time {
 }
 
 // SetModTime sets the modification time of the drive fs object
-func (o *Object) SetModTime(modTime time.Time) {
+func (o *Object) SetModTime(modTime time.Time) error {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Stats.Error()
-		fs.ErrorLog(o, "Failed to read metadata: %s", err)
-		return
+		return err
 	}
 	// New metadata
 	updateInfo := &drive.File{
@@ -954,12 +952,11 @@ func (o *Object) SetModTime(modTime time.Time) {
 		return shouldRetry(err)
 	})
 	if err != nil {
-		fs.Stats.Error()
-		fs.ErrorLog(o, "Failed to update remote mtime: %s", err)
-		return
+		return err
 	}
 	// Update info from read data
 	o.setMetaData(info)
+	return nil
 }
 
 // Storable returns a boolean as to whether this object is storable

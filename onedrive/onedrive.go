@@ -802,13 +802,13 @@ func (o *Object) setModTime(modTime time.Time) (*api.Item, error) {
 }
 
 // SetModTime sets the modification time of the local fs object
-func (o *Object) SetModTime(modTime time.Time) {
+func (o *Object) SetModTime(modTime time.Time) error {
 	info, err := o.setModTime(modTime)
 	if err != nil {
-		fs.Stats.Error()
-		fs.ErrorLog(o, "Failed to update remote mtime: %v", err)
+		return err
 	}
 	o.setMetaData(info)
+	return nil
 }
 
 // Storable returns a boolean showing whether this object storable

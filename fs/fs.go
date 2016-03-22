@@ -31,6 +31,7 @@ var (
 	ErrorCantMove             = fmt.Errorf("Can't move object - incompatible remotes")
 	ErrorCantDirMove          = fmt.Errorf("Can't move directory - incompatible remotes")
 	ErrorDirExists            = fmt.Errorf("Can't copy directory - destination already exists")
+	ErrorCantSetModTime       = fmt.Errorf("Can't set modified time")
 )
 
 // RegInfo provides information about a filesystem
@@ -142,7 +143,7 @@ type Object interface {
 	String() string
 
 	// SetModTime sets the metadata on the object to set the modification date
-	SetModTime(time.Time)
+	SetModTime(time.Time) error
 
 	// Open opens the file for read.  Call Close() on the returned io.ReadCloser
 	Open() (io.ReadCloser, error)

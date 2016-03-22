@@ -805,8 +805,9 @@ func (o *Object) ModTime() (result time.Time) {
 }
 
 // SetModTime sets the modification time of the local fs object
-func (o *Object) SetModTime(modTime time.Time) {
+func (o *Object) SetModTime(modTime time.Time) error {
 	// Not possible with B2
+	return fs.ErrorCantSetModTime
 }
 
 // Storable returns if this object is storable

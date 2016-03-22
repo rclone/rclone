@@ -567,7 +567,7 @@ func metadataFromModTime(modTime time.Time) map[string]string {
 }
 
 // SetModTime sets the modification time of the local fs object
-func (o *Object) SetModTime(modTime time.Time) {
+func (o *Object) SetModTime(modTime time.Time) error {
 	// This only adds metadata so will perserve other metadata
 	object := storage.Object{
 		Bucket:   o.fs.bucket,
@@ -576,10 +576,10 @@ func (o *Object) SetModTime(modTime time.Time) {
 	}
 	newObject, err := o.fs.svc.Objects.Patch(o.fs.bucket, o.fs.root+o.remote, &object).Do()
 	if err != nil {
-		fs.Stats.Error()
-		fs.ErrorLog(o, "Failed to update remote mtime: %s", err)
+		return err
 	}
 	o.setMetaData(newObject)
+	return nil
 }
 
 // Storable returns a boolean as to whether this object is storable

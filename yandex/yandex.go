@@ -452,14 +452,10 @@ func (o *Object) Remove() error {
 // SetModTime sets the modification time of the local fs object
 //
 // Commits the datastore
-func (o *Object) SetModTime(modTime time.Time) {
+func (o *Object) SetModTime(modTime time.Time) error {
 	remote := o.remotePath()
 	//set custom_property 'rclone_modified' of object to modTime
-	err := o.fs.yd.SetCustomProperty(remote, "rclone_modified", modTime.Format(time.RFC3339Nano))
-	if err != nil {
-		return
-	}
-	return
+	return o.fs.yd.SetCustomProperty(remote, "rclone_modified", modTime.Format(time.RFC3339Nano))
 }
 
 // Storable returns whether this object is storable
@@ -496,7 +492,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		o.modTime = modTime
 		o.md5sum = "" // according to unit tests after put the md5 is empty.
 		//and set modTime of uploaded file
-		o.SetModTime(modTime)
+		err = o.SetModTime(modTime)
 	}
 	return err
 }

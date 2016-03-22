@@ -145,7 +145,11 @@ func Equal(src, dst Object) bool {
 	if !Config.CheckSum {
 		// Size and hash the same but mtime different so update the
 		// mtime of the dst object here
-		dst.SetModTime(srcModTime)
+		err := dst.SetModTime(srcModTime)
+		if err != nil {
+			Stats.Error()
+			ErrorLog(dst, "Failed to read set modification time: %s", err)
+		}
 	}
 
 	if hash == HashNone {

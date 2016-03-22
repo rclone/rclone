@@ -636,9 +636,9 @@ func (o *Object) ModTime() time.Time {
 // SetModTime sets the modification time of the local fs object
 //
 // Commits the datastore
-func (o *Object) SetModTime(modTime time.Time) {
+func (o *Object) SetModTime(modTime time.Time) error {
 	// FIXME not implemented
-	return
+	return fs.ErrorCantSetModTime
 }
 
 // Storable returns whether this object is storable

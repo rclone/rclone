@@ -702,12 +702,10 @@ func (o *Object) ModTime() time.Time {
 }
 
 // SetModTime sets the modification time of the local fs object
-func (o *Object) SetModTime(modTime time.Time) {
+func (o *Object) SetModTime(modTime time.Time) error {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Stats.Error()
-		fs.ErrorLog(o, "Failed to read metadata: %s", err)
-		return
+		return err
 	}
 	o.meta[metaMtime] = aws.String(swift.TimeToFloatString(modTime))
 
@@ -728,10 +726,7 @@ func (o *Object) SetModTime(modTime time.Time) {
 		MetadataDirective: &directive,
 	}
 	_, err = o.fs.c.CopyObject(&req)
-	if err != nil {
-		fs.Stats.Error()
-		fs.ErrorLog(o, "Failed to update remote mtime: %s", err)
-	}
+	return err
 }
 
 // Storable raturns a boolean indicating if this object is storable
