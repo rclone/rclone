@@ -751,28 +751,19 @@ func timeString(modTime time.Time) string {
 }
 
 // parseTimeString converts a decimal string number of milliseconds
-// elapsed since January 1, 1970 UTC into a time.Time
-func parseTimeString(timeString string) (result time.Time, err error) {
+// elapsed since January 1, 1970 UTC into a time.Time and stores it in
+// the modTime variable.
+func (o *Object) parseTimeString(timeString string) (err error) {
 	if timeString == "" {
-		return result, fmt.Errorf("%q not found in metadata", timeKey)
+		return nil
 	}
 	unixMilliseconds, err := strconv.ParseInt(timeString, 10, 64)
 	if err != nil {
-		return result, err
+		fs.Debug(o, "Failed to parse mod time string %q: %v", timeString, err)
+		return err
 	}
-	return time.Unix(unixMilliseconds/1E3, (unixMilliseconds%1E3)*1E6).UTC(), nil
-}
-
-// ModTime returns the modification time of the object
-//
-// It attempts to read the objects mtime and if that isn't present the
-// LastModified returned in the http headers
-//
-// SHA-1 will also be updated once the request has completed.
-func (o *Object) ModTime() (result time.Time) {
-	// The error is logged in readFileMetadata
-	_ = o.readFileMetadata()
-	return o.modTime
+	o.modTime = time.Unix(unixMilliseconds/1E3, (unixMilliseconds%1E3)*1E6).UTC()
+	return nil
 }
 
 // readFileMetadata attempts to read the modified time and
@@ -822,15 +813,24 @@ func (o *Object) readFileMetadata() error {
 	o.sha1 = response.SHA1
 
 	// Parse the result
-	timeString := response.Info[timeKey]
-	parsed, err := parseTimeString(timeString)
+	err = o.parseTimeString(response.Info[timeKey])
 	if err != nil {
-		fs.Debug(o, "Failed to parse mod time string %q: %v", timeString, err)
 		return err
 	}
-	o.modTime = parsed
 
 	return nil
+}
+
+// ModTime returns the modification time of the object
+//
+// It attempts to read the objects mtime and if that isn't present the
+// LastModified returned in the http headers
+//
+// SHA-1 will also be updated once the request has completed.
+func (o *Object) ModTime() (result time.Time) {
+	// The error is logged in readFileMetadata
+	_ = o.readFileMetadata()
+	return o.modTime
 }
 
 // SetModTime sets the modification time of the local fs object
@@ -920,12 +920,10 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 	}
 
 	// Parse the time out of the headers if possible
-	timeString := resp.Header.Get(timeHeader)
-	parsed, err := parseTimeString(timeString)
+	err = o.parseTimeString(resp.Header.Get(timeHeader))
 	if err != nil {
-		fs.Debug(o, "Failed to parse mod time string %q: %v", timeString, err)
-	} else {
-		o.modTime = parsed
+		_ = resp.Body.Close()
+		return nil, err
 	}
 	if o.sha1 == "" {
 		o.sha1 = resp.Header.Get(sha1Header)

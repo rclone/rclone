@@ -149,10 +149,12 @@ func TestParseTimeString(t *testing.T) {
 	}{
 		{"0", fstest.Time("1970-01-01T00:00:00.000000000Z"), ""},
 		{"981173110123", fstest.Time("2001-02-03T04:05:10.123000000Z"), ""},
-		{"", time.Time{}, `"src_last_modified_millis" not found in metadata`},
+		{"", time.Time{}, ""},
 		{"potato", time.Time{}, `strconv.ParseInt: parsing "potato": invalid syntax`},
 	} {
-		got, err := parseTimeString(test.in)
+		o := Object{}
+		err := o.parseTimeString(test.in)
+		got := o.modTime
 		var gotError string
 		if err != nil {
 			gotError = err.Error()
