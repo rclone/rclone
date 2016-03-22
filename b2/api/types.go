@@ -57,11 +57,14 @@ func (t *Timestamp) UnmarshalJSON(data []byte) error {
 
 // File is info about a file
 type File struct {
-	ID              string    `json:"fileId"`          // The unique identifier for this version of this file. Used with b2_get_file_info, b2_download_file_by_id, and b2_delete_file_version.
-	Name            string    `json:"fileName"`        // The name of this file, which can be used with b2_download_file_by_name.
-	Action          string    `json:"action"`          // Either "upload" or "hide". "upload" means a file that was uploaded to B2 Cloud Storage. "hide" means a file version marking the file as hidden, so that it will not show up in b2_list_file_names. The result of b2_list_file_names will contain only "upload". The result of b2_list_file_versions may have both.
-	Size            int64     `json:"size"`            // The number of bytes in the file.
-	UploadTimestamp Timestamp `json:"uploadTimestamp"` // This is a UTC time when this file was uploaded.
+	ID              string            `json:"fileId"`          // The unique identifier for this version of this file. Used with b2_get_file_info, b2_download_file_by_id, and b2_delete_file_version.
+	Name            string            `json:"fileName"`        // The name of this file, which can be used with b2_download_file_by_name.
+	Action          string            `json:"action"`          // Either "upload" or "hide". "upload" means a file that was uploaded to B2 Cloud Storage. "hide" means a file version marking the file as hidden, so that it will not show up in b2_list_file_names. The result of b2_list_file_names will contain only "upload". The result of b2_list_file_versions may have both.
+	Size            int64             `json:"size"`            // The number of bytes in the file.
+	UploadTimestamp Timestamp         `json:"uploadTimestamp"` // This is a UTC time when this file was uploaded.
+	SHA1            string            `json:"contentSha1"`     // The SHA1 of the bytes stored in the file.
+	ContentType     string            `json:"contentType"`     // The MIME type of the file.
+	Info            map[string]string `json:"fileInfo"`        // The custom information that was uploaded with the file. This is a JSON object, holding the name/value pairs that were uploaded with the file.
 }
 
 // AuthorizeAccountResponse is as returned from the b2_authorize_account call
@@ -108,6 +111,7 @@ type GetUploadURLResponse struct {
 type FileInfo struct {
 	ID          string            `json:"fileId"`        // The unique identifier for this version of this file. Used with b2_get_file_info, b2_download_file_by_id, and b2_delete_file_version.
 	Name        string            `json:"fileName"`      // The name of this file, which can be used with b2_download_file_by_name.
+	Action      string            `json:"action"`        // Either "upload" or "hide". "upload" means a file that was uploaded to B2 Cloud Storage. "hide" means a file version marking the file as hidden, so that it will not show up in b2_list_file_names. The result of b2_list_file_names will contain only "upload". The result of b2_list_file_versions may have both.
 	AccountID   string            `json:"accountId"`     // Your account ID.
 	BucketID    string            `json:"bucketId"`      // The bucket that the file is in.
 	Size        int64             `json:"contentLength"` // The number of bytes stored in the file.

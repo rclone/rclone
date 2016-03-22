@@ -80,14 +80,13 @@ type Fs struct {
 }
 
 // Object describes a b2 object
-//
-// Will definitely have info
 type Object struct {
 	fs      *Fs       // what this object is part of
 	remote  string    // The remote path
-	info    api.File  // Info from the b2 object if known
+	id      string    // b2 id of the file
 	modTime time.Time // The modified time of the object if known
 	sha1    string    // SHA-1 hash if known
+	size    int64     // Size of the object
 }
 
 // ------------------------------------------------------------
@@ -308,8 +307,11 @@ func (f *Fs) newFsObjectWithInfo(remote string, info *api.File) fs.Object {
 		remote: remote,
 	}
 	if info != nil {
-		// Set info but not headers
-		o.info = *info
+		err := o.decodeMetaData(info)
+		if err != nil {
+			fs.Debug(o, "Failed to decode metadata: %s", err)
+			return nil
+		}
 	} else {
 		err := o.readMetaData() // reads info and headers, returning an error
 		if err != nil {
@@ -375,9 +377,6 @@ func (f *Fs) list(prefix string, limit int, hidden bool, fn listFn) error {
 			return f.shouldRetry(resp, err)
 		})
 		if err != nil {
-			if err == errEndList {
-				return nil
-			}
 			return err
 		}
 		for i := range response.Files {
@@ -388,6 +387,9 @@ func (f *Fs) list(prefix string, limit int, hidden bool, fn listFn) error {
 			}
 			err = fn(file.Name[len(f.root):], file)
 			if err != nil {
+				if err == errEndList {
+					return nil
+				}
 				return err
 			}
 		}
@@ -711,8 +713,8 @@ func (o *Object) Hash(t fs.HashType) (string, error) {
 		return "", fs.ErrHashUnsupported
 	}
 	if o.sha1 == "" {
-		// Error is logged in readFileMetadata
-		err := o.readFileMetadata()
+		// Error is logged in readMetaData
+		err := o.readMetaData()
 		if err != nil {
 			return "", err
 		}
@@ -722,26 +724,50 @@ func (o *Object) Hash(t fs.HashType) (string, error) {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
-	return o.info.Size
+	return o.size
+}
+
+// decodeMetaData sets the metadata in the object from info
+//
+// Sets
+//  o.id
+//  o.modTime
+//  o.size
+//  o.sha1
+func (o *Object) decodeMetaData(info *api.File) (err error) {
+	o.id = info.ID
+	o.sha1 = info.SHA1
+	o.size = info.Size
+	// Use the UploadTimestamp if can't get file info
+	o.modTime = time.Time(info.UploadTimestamp)
+	return o.parseTimeString(info.Info[timeKey])
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
 //
-// it also sets the info
+// Sets
+//  o.id
+//  o.modTime
+//  o.size
+//  o.sha1
 func (o *Object) readMetaData() (err error) {
-	if o.info.ID != "" {
+	if o.id != "" {
 		return nil
 	}
+	var info *api.File
 	err = o.fs.list(o.remote, 1, false, func(remote string, object *api.File) error {
 		if remote == o.remote {
-			o.info = *object
+			info = object
 		}
 		return errEndList // read only 1 item
 	})
-	if o.info.ID != "" {
-		return nil
+	if err != nil {
+		return err
 	}
-	return fmt.Errorf("Object %q not found", o.remote)
+	if info == nil {
+		return fmt.Errorf("Object %q not found", o.remote)
+	}
+	return o.decodeMetaData(info)
 }
 
 // timeString returns modTime as the number of milliseconds
@@ -766,61 +792,6 @@ func (o *Object) parseTimeString(timeString string) (err error) {
 	return nil
 }
 
-// readFileMetadata attempts to read the modified time and
-// SHA-1 hash of the remote object.
-//
-// If the objects mtime and if that isn't present the
-// LastModified returned in the http headers.
-//
-// It is safe to call this function multiple times, and the
-// result is cached between calls.
-func (o *Object) readFileMetadata() error {
-	// Return if already know it
-	if !o.modTime.IsZero() && o.sha1 != "" {
-		return nil
-	}
-
-	// Set modtime to now, as default value.
-	o.modTime = time.Now()
-
-	// Read metadata (we need the ID)
-	err := o.readMetaData()
-	if err != nil {
-		fs.Debug(o, "Failed to get file metadata: %v", err)
-		return err
-	}
-
-	// Use the UploadTimestamp if can't get file info
-	o.modTime = time.Time(o.info.UploadTimestamp)
-
-	// Now read the metadata for the modified time
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/b2_get_file_info",
-	}
-	var request = api.GetFileInfoRequest{
-		ID: o.info.ID,
-	}
-	var response api.FileInfo
-	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.fs.srv.CallJSON(&opts, &request, &response)
-		return o.fs.shouldRetry(resp, err)
-	})
-	if err != nil {
-		fs.Debug(o, "Failed to get file info: %v", err)
-		return err
-	}
-	o.sha1 = response.SHA1
-
-	// Parse the result
-	err = o.parseTimeString(response.Info[timeKey])
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // ModTime returns the modification time of the object
 //
 // It attempts to read the objects mtime and if that isn't present the
@@ -828,8 +799,8 @@ func (o *Object) readFileMetadata() error {
 //
 // SHA-1 will also be updated once the request has completed.
 func (o *Object) ModTime() (result time.Time) {
-	// The error is logged in readFileMetadata
-	_ = o.readFileMetadata()
+	// The error is logged in readMetaData
+	_ = o.readMetaData()
 	return o.modTime
 }
 
@@ -1093,12 +1064,11 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 	if err != nil {
 		return err
 	}
-	o.info.ID = response.ID
-	o.info.Name = response.Name
-	o.info.Action = "upload"
-	o.info.Size = response.Size
-	o.info.UploadTimestamp = api.Timestamp(time.Now()) // FIXME not quite right
+	o.id = response.ID
 	o.sha1 = response.SHA1
+	o.size = response.Size
+	o.modTime = modTime
+	_ = o.parseTimeString(response.Info[timeKey])
 	return nil
 }
 
