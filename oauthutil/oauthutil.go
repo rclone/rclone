@@ -319,15 +319,17 @@ func (s *authServer) Start() {
 		Addr:    s.bindAddress,
 		Handler: mux,
 	}
+	server.SetKeepAlivesEnabled(false)
 	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "", 404)
 		return
 	})
 	mux.HandleFunc("/auth", func(w http.ResponseWriter, req *http.Request) {
-		http.Redirect(w, req, s.authURL, 307)
+		http.Redirect(w, req, s.authURL, http.StatusTemporaryRedirect)
 		return
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
 		fs.Debug(nil, "Received request on auth server")
 		code := req.FormValue("code")
 		if code != "" {
@@ -347,8 +349,9 @@ func (s *authServer) Start() {
 			return
 		}
 		fs.Debug(nil, "No code found on request")
-		fmt.Fprintf(w, "<h1>Failed!</h1>\nNo code found.")
-		http.Error(w, "", 500)
+		w.WriteHeader(500)
+		fmt.Fprintf(w, "<h1>Failed!</h1>\nNo code found returned by remote server.")
+
 	})
 
 	var err error
