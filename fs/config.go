@@ -807,7 +807,7 @@ func EditConfig() {
 			fmt.Printf("\n")
 		} else {
 			fmt.Printf("No remotes found - make a new one\n")
-			what = append(what[1:2], what[3])
+			what = append(what[1:2], what[3:]...)
 		}
 		switch i := Command(what); i {
 		case 'e':
