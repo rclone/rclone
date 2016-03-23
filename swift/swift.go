@@ -79,11 +79,11 @@ func init() {
 
 // Fs represents a remote swift server
 type Fs struct {
-	name              string           // name of this remote
-	c                 swift.Connection // the connection to the swift server
-	container         string           // the container we are working on
-	segmentsContainer string           // container to store the segments (if any) in
-	root              string           // the path we are working on if any
+	name              string            // name of this remote
+	c                 *swift.Connection // the connection to the swift server
+	container         string            // the container we are working on
+	segmentsContainer string            // container to store the segments (if any) in
+	root              string            // the path we are working on if any
 }
 
 // Object describes a swift object
@@ -175,7 +175,7 @@ func NewFsWithConnection(name, root string, c *swift.Connection) (fs.Fs, error) 
 	}
 	f := &Fs{
 		name:              name,
-		c:                 *c,
+		c:                 c,
 		container:         container,
 		segmentsContainer: container + "_segments",
 		root:              directory,
