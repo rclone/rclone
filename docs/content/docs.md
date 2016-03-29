@@ -583,9 +583,9 @@ a) Add Password
 q) Quit to main menu
 a/q> a
 Enter NEW configuration password:
-password>
+password:
 Confirm NEW password:
-password>
+password:
 Password set
 Your configuration is encrypted.
 c) Change Password
