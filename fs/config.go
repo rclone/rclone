@@ -451,7 +451,7 @@ func getPassword(q string) {
 	}
 	for {
 		fmt.Println(q)
-		fmt.Print("password>")
+		fmt.Print("password:")
 		err := setPassword(ReadPassword())
 		if err == nil {
 			return
