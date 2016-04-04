@@ -1049,6 +1049,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	}
 	updateInfo := &drive.File{
 		Id:           o.id,
+		MimeType:     fs.MimeType(o),
 		ModifiedDate: modTime.Format(timeFormatOut),
 	}
 
