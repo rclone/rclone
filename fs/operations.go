@@ -684,6 +684,33 @@ func MoveDir(fdst, fsrc Fs) error {
 	return nil
 }
 
+// checkIdentical checks to see if dst and src are identical
+//
+// it returns true if differences were found
+func checkIdentical(dst, src Object) bool {
+	Stats.Checking(src)
+	defer Stats.DoneChecking(src)
+	if src.Size() != dst.Size() {
+		Stats.Error()
+		ErrorLog(src, "Sizes differ")
+		return true
+	}
+	if !Config.SizeOnly {
+		same, _, err := CheckHashes(src, dst)
+		if err != nil {
+			// CheckHashes will log and count errors
+			return true
+		}
+		if !same {
+			Stats.Error()
+			ErrorLog(src, "Md5sums differ")
+			return true
+		}
+	}
+	Debug(src, "OK")
+	return false
+}
+
 // Check the files in fsrc and fdst according to Size and hash
 func Check(fdst, fsrc Fs) error {
 	differences := int32(0)
@@ -753,26 +780,9 @@ func Check(fdst, fsrc Fs) error {
 		go func() {
 			defer checkerWg.Done()
 			for check := range checks {
-				dst, src := check[0], check[1]
-				Stats.Checking(src)
-				if src.Size() != dst.Size() {
-					Stats.DoneChecking(src)
-					Stats.Error()
-					ErrorLog(src, "Sizes differ")
+				if checkIdentical(check[0], check[1]) {
 					atomic.AddInt32(&differences, 1)
-					continue
 				}
-				same, _, err := CheckHashes(src, dst)
-				Stats.DoneChecking(src)
-				if err != nil {
-					continue
-				}
-				if !same {
-					Stats.Error()
-					atomic.AddInt32(&differences, 1)
-					ErrorLog(src, "Md5sums differ")
-				}
-				Debug(src, "OK")
 			}
 		}()
 	}

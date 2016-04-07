@@ -192,6 +192,8 @@ Checks the files in the source and destination match.  It
 compares sizes and MD5SUMs and prints a report of files which
 don't match.  It doesn't alter the source or destination.
 
+`--size-only` may be used to only compare the sizes, not the MD5SUMs.
+
 ### rclone dedupe remote:path ###
 
 By default `dedup` interactively finds duplicate files and offers to
