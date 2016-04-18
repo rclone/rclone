@@ -1,5 +1,5 @@
 .\"t
-.TH "rclone" "1" "Mar 01, 2016" "User Manual" ""
+.TH "rclone" "1" "Apr 18, 2016" "User Manual" ""
 .SH Rclone
 .PP
 [IMAGE: Logo (http://rclone.org/img/rclone-120x120.png)] (http://rclone.org/)
@@ -63,7 +63,7 @@ Rclone is a Go program and comes as a single binary file.
 .PP
 Download (http://rclone.org/downloads/) the relevant binary.
 .PP
-Or alternatively if you have Go installed use
+Or alternatively if you have Go 1.5+ installed use
 .IP
 .nf
 \f[C]
@@ -73,11 +73,11 @@ go\ get\ github.com/ncw/rclone
 .PP
 and this will build the binary in \f[C]$GOPATH/bin\f[].
 If you have built rclone before then you will want to update its
-dependencies first with this (remove \f[C]\-f\f[] if using go < 1.4)
+dependencies first with this
 .IP
 .nf
 \f[C]
-go\ get\ \-u\ \-v\ \-f\ github.com/ncw/rclone/...
+go\ get\ \-u\ \-v\ github.com/ncw/rclone/...
 \f[]
 .fi
 .PP
@@ -320,20 +320,61 @@ Checks the files in the source and destination match.
 It compares sizes and MD5SUMs and prints a report of files which
 don\[aq]t match.
 It doesn\[aq]t alter the source or destination.
+.PP
+\f[C]\-\-size\-only\f[] may be used to only compare the sizes, not the
+MD5SUMs.
 .SS rclone dedupe remote:path
 .PP
-Interactively find duplicate files and offer to delete all but one or
-rename them to be different.
+By default \f[C]dedup\f[] interactively finds duplicate files and offers
+to delete all but one or rename them to be different.
 Only useful with Google Drive which can have duplicate file names.
+.PP
+The \f[C]dedupe\f[] command will delete all but one of any identical
+(same md5sum) files it finds without confirmation.
+This means that for most duplicated files the \f[C]dedupe\f[] command
+will not be interactive.
+You can use \f[C]\-\-dry\-run\f[] to see what would happen without doing
+anything.
+.PP
+Here is an example run.
+.PP
+Before \- with duplicates
+.IP
+.nf
+\f[C]
+$\ rclone\ lsl\ drive:dupes
+\ \ 6048320\ 2016\-03\-05\ 16:23:16.798000000\ one.txt
+\ \ 6048320\ 2016\-03\-05\ 16:23:11.775000000\ one.txt
+\ \ \ 564374\ 2016\-03\-05\ 16:23:06.731000000\ one.txt
+\ \ 6048320\ 2016\-03\-05\ 16:18:26.092000000\ one.txt
+\ \ 6048320\ 2016\-03\-05\ 16:22:46.185000000\ two.txt
+\ \ 1744073\ 2016\-03\-05\ 16:22:38.104000000\ two.txt
+\ \ \ 564374\ 2016\-03\-05\ 16:22:52.118000000\ two.txt
+\f[]
+.fi
+.PP
+Now the \f[C]dedupe\f[] session
 .IP
 .nf
 \f[C]
 $\ rclone\ dedupe\ drive:dupes
-2016/01/31\ 14:13:11\ Google\ drive\ root\ \[aq]dupes\[aq]:\ Looking\ for\ duplicates
-two.txt:\ Found\ 3\ duplicates
-\ \ 1:\ \ \ \ \ \ \ 564374\ bytes,\ 2016\-01\-31\ 14:07:22.159000000,\ md5sum\ 7594e7dc9fc28f727c42ee3e0749de81
-\ \ 2:\ \ \ \ \ \ 1744073\ bytes,\ 2016\-01\-31\ 14:07:12.490000000,\ md5sum\ 851957f7fb6f0bc4ce76be966d336802
-\ \ 3:\ \ \ \ \ \ 6048320\ bytes,\ 2016\-01\-31\ 14:07:02.111000000,\ md5sum\ 1eedaa9fe86fd4b8632e2ac549403b36
+2016/03/05\ 16:24:37\ Google\ drive\ root\ \[aq]dupes\[aq]:\ Looking\ for\ duplicates\ using\ interactive\ mode.
+one.txt:\ Found\ 4\ duplicates\ \-\ deleting\ identical\ copies
+one.txt:\ Deleting\ 2/3\ identical\ duplicates\ (md5sum\ "1eedaa9fe86fd4b8632e2ac549403b36")
+one.txt:\ 2\ duplicates\ remain
+\ \ 1:\ \ \ \ \ \ 6048320\ bytes,\ 2016\-03\-05\ 16:23:16.798000000,\ md5sum\ 1eedaa9fe86fd4b8632e2ac549403b36
+\ \ 2:\ \ \ \ \ \ \ 564374\ bytes,\ 2016\-03\-05\ 16:23:06.731000000,\ md5sum\ 7594e7dc9fc28f727c42ee3e0749de81
+s)\ Skip\ and\ do\ nothing
+k)\ Keep\ just\ one\ (choose\ which\ in\ next\ step)
+r)\ Rename\ all\ to\ be\ different\ (by\ changing\ file.jpg\ to\ file\-1.jpg)
+s/k/r>\ k
+Enter\ the\ number\ of\ the\ file\ to\ keep>\ 1
+one.txt:\ Deleted\ 1\ extra\ copies
+two.txt:\ Found\ 3\ duplicates\ \-\ deleting\ identical\ copies
+two.txt:\ 3\ duplicates\ remain
+\ \ 1:\ \ \ \ \ \ \ 564374\ bytes,\ 2016\-03\-05\ 16:22:52.118000000,\ md5sum\ 7594e7dc9fc28f727c42ee3e0749de81
+\ \ 2:\ \ \ \ \ \ 6048320\ bytes,\ 2016\-03\-05\ 16:22:46.185000000,\ md5sum\ 1eedaa9fe86fd4b8632e2ac549403b36
+\ \ 3:\ \ \ \ \ \ 1744073\ bytes,\ 2016\-03\-05\ 16:22:38.104000000,\ md5sum\ 851957f7fb6f0bc4ce76be966d336802
 s)\ Skip\ and\ do\ nothing
 k)\ Keep\ just\ one\ (choose\ which\ in\ next\ step)
 r)\ Rename\ all\ to\ be\ different\ (by\ changing\ file.jpg\ to\ file\-1.jpg)
@@ -341,15 +382,6 @@ s/k/r>\ r
 two\-1.txt:\ renamed\ from:\ two.txt
 two\-2.txt:\ renamed\ from:\ two.txt
 two\-3.txt:\ renamed\ from:\ two.txt
-one.txt:\ Found\ 2\ duplicates
-\ \ 1:\ \ \ \ \ \ \ \ \ 6579\ bytes,\ 2016\-01\-31\ 14:05:01.235000000,\ md5sum\ 2b76c776249409d925ae7ccd49aea59b
-\ \ 2:\ \ \ \ \ \ \ \ \ 6579\ bytes,\ 2016\-01\-31\ 12:50:30.318000000,\ md5sum\ 2b76c776249409d925ae7ccd49aea59b
-s)\ Skip\ and\ do\ nothing
-k)\ Keep\ just\ one\ (choose\ which\ in\ next\ step)
-r)\ Rename\ all\ to\ be\ different\ (by\ changing\ file.jpg\ to\ file\-1.jpg)
-s/k/r>\ k
-Enter\ the\ number\ of\ the\ file\ to\ keep>\ 2
-one.txt:\ Deleted\ 1\ extra\ copies
 \f[]
 .fi
 .PP
@@ -358,10 +390,39 @@ The result being
 .nf
 \f[C]
 $\ rclone\ lsl\ drive:dupes
-\ \ \ 564374\ 2016\-01\-31\ 14:07:22.159000000\ two\-1.txt
-\ \ 1744073\ 2016\-01\-31\ 14:07:12.490000000\ two\-2.txt
-\ \ 6048320\ 2016\-01\-31\ 14:07:02.111000000\ two\-3.txt
-\ \ \ \ \ 6579\ 2016\-01\-31\ 12:50:30.318000000\ one.txt
+\ \ 6048320\ 2016\-03\-05\ 16:23:16.798000000\ one.txt
+\ \ \ 564374\ 2016\-03\-05\ 16:22:52.118000000\ two\-1.txt
+\ \ 6048320\ 2016\-03\-05\ 16:22:46.185000000\ two\-2.txt
+\ \ 1744073\ 2016\-03\-05\ 16:22:38.104000000\ two\-3.txt
+\f[]
+.fi
+.PP
+Dedupe can be run non interactively using the \f[C]\-\-dedupe\-mode\f[]
+flag.
+.IP \[bu] 2
+\f[C]\-\-dedupe\-mode\ interactive\f[] \- interactive as above.
+.IP \[bu] 2
+\f[C]\-\-dedupe\-mode\ skip\f[] \- removes identical files then skips
+anything left.
+.IP \[bu] 2
+\f[C]\-\-dedupe\-mode\ first\f[] \- removes identical files then keeps
+the first one.
+.IP \[bu] 2
+\f[C]\-\-dedupe\-mode\ newest\f[] \- removes identical files then keeps
+the newest one.
+.IP \[bu] 2
+\f[C]\-\-dedupe\-mode\ oldest\f[] \- removes identical files then keeps
+the oldest one.
+.IP \[bu] 2
+\f[C]\-\-dedupe\-mode\ rename\f[] \- removes identical files then
+renames the rest to be different.
+.PP
+For example to rename all the identically named photos in your Google
+Photos directory, do
+.IP
+.nf
+\f[C]
+rclone\ dedupe\ \-\-dedupe\-mode\ rename\ "drive:Google\ Photos"
 \f[]
 .fi
 .SS rclone config
@@ -478,6 +539,14 @@ seconds, \f[C]10m\f[] for 10 minutes, or \f[C]3h30m\f[].
 The connection timeout is the amount of time rclone will wait for a
 connection to go through to a remote object storage system.
 It is \f[C]1m\f[] by default.
+.SS \-\-dedupe\-mode MODE
+.PP
+Mode to run dedupe command in.
+One of \f[C]interactive\f[], \f[C]skip\f[], \f[C]first\f[],
+\f[C]newest\f[], \f[C]oldest\f[], \f[C]rename\f[].
+The default is \f[C]interactive\f[].
+See the dedupe command for more information as to what these options
+mean.
 .SS \-n, \-\-dry\-run
 .PP
 Do a trial run with no permanent changes.
@@ -493,6 +562,14 @@ While this isn\[aq]t a generally recommended option, it can be useful in
 cases where your files change due to encryption.
 However, it cannot correct partial transfers in case a transfer was
 interrupted.
+.SS \-I, \-\-ignore\-times
+.PP
+Using this option will cause rclone to unconditionally upload all files
+regardless of the state of files on the destination.
+.PP
+Normally rclone would skip any files that have the same modification
+time and are the same size (or have the same checksum if using
+\f[C]\-\-checksum\f[]).
 .SS \-\-log\-file=FILE
 .PP
 Log all of rclone\[aq]s output to FILE.
@@ -918,6 +995,9 @@ file.jpg\ \ \-\ matches\ "file.jpg"
 \ \ \ \ \ \ \ \ \ \ \-\ doesn\[aq]t\ match\ "directory/file.jpg"
 \f[]
 .fi
+.PP
+\f[B]Important\f[] Note that you must use \f[C]/\f[] in patterns and not
+\f[C]\\\f[] even if running on Windows.
 .PP
 A \f[C]*\f[] matches anything but not a \f[C]/\f[].
 .IP
@@ -1376,7 +1456,7 @@ Backblaze B2
 T}@T{
 SHA1
 T}@T{
-Partial
+Yes
 T}@T{
 No
 T}@T{
@@ -1427,9 +1507,6 @@ can be checked with the \f[C]\-\-checksum\f[] flag.
 .PP
 All cloud storage systems support some kind of date on the object and
 these will be set when transferring from the cloud storage system.
-.PP
-Backblaze B2 preserves file modification times on files uploaded and
-downloaded, but doesn\[aq]t use them to decide which objects to sync.
 .SS Case Insensitive
 .PP
 If a cloud storage systems is case sensitive then it is possible to have
@@ -1461,7 +1538,8 @@ systems.
 If a cloud storage system allows duplicate files then it can have two
 objects with the same name.
 .PP
-This confuses rclone greatly when syncing.
+This confuses rclone greatly when syncing \- use the
+\f[C]rclone\ dedupe\f[] command to rename or remove duplicates.
 .SS Google Drive
 .PP
 Paths are specified as \f[C]drive:path\f[]
@@ -1603,16 +1681,19 @@ Here are the command line options specific to this cloud storage system.
 .PP
 Upload chunk size.
 Must a power of 2 >= 256k.
-Default value is 256kB.
+Default value is 8 MB.
+.PP
+Making this larger will improve performance, but note that each chunk is
+buffered in memory one per transfer.
+.PP
+Reducing this will reduce memory usage but decrease performance.
 .SS \-\-drive\-full\-list
 .PP
-Use a full listing for directory list.
-More data but usually quicker.
-On by default, disable with \f[C]\-\-full\-drive\-list=false\f[].
+No longer does anything \- kept for backwards compatibility.
 .SS \-\-drive\-upload\-cutoff=SIZE
 .PP
 File size cutoff for switching to chunked upload.
-Default is 256kB.
+Default is 8 MB.
 .SS \-\-drive\-use\-trash
 .PP
 Send files to the trash instead of deleting permanently.
@@ -2249,6 +2330,11 @@ accurate to 1 ns.
 .PP
 This is a defacto standard (used in the official python\-swiftclient
 amongst others) for storing the modification time for an object.
+.SS Limitations
+.PP
+The Swift API doesn\[aq]t return a correct MD5SUM for segmented files
+(Dynamic or Static Large Objects) so rclone won\[aq]t check or use the
+MD5SUM for these.
 .SS Dropbox
 .PP
 Paths are specified as \f[C]remote:path\f[]
@@ -2386,6 +2472,12 @@ document (https://www.dropbox.com/en/help/145).
 Rclone will issue an error message
 \f[C]File\ name\ disallowed\ \-\ not\ uploading\f[] if it attempt to
 upload one of those file names, but the sync won\[aq]t fail.
+.PP
+If you have more than 10,000 files in a directory then
+\f[C]rclone\ purge\ dropbox:dir\f[] will return the error
+\f[C]Failed\ to\ purge:\ There\ are\ too\ many\ files\ involved\ in\ this\ operation\f[].
+As a work\-around do an \f[C]rclone\ delete\ dropbix:dir\f[] followed by
+an \f[C]rclone\ rmdir\ dropbox:dir\f[].
 .SS Google Cloud Storage
 .PP
 Paths are specified as \f[C]remote:bucket\f[] (or \f[C]remote:\f[] for
@@ -3001,8 +3093,12 @@ Note that Hubic wraps the Swift backend, so most of the properties of
 are the same.
 .SS Limitations
 .PP
-Code to refresh the OpenStack token isn\[aq]t done yet which may cause
-problems with very long transfers.
+This uses the normal OpenStack Swift mechanism to refresh the Swift API
+credentials and ignores the expires field returned by the Hubic API.
+.PP
+The Swift API doesn\[aq]t return a correct MD5SUM for segmented files
+(Dynamic or Static Large Objects) so rclone won\[aq]t check or use the
+MD5SUM for these.
 .SS Backblaze B2
 .PP
 B2 is Backblaze\[aq]s cloud storage
@@ -3118,10 +3214,10 @@ The modified time is stored as metadata on the object as
 1970\-01\-01 in the Backblaze standard.
 Other tools should be able to use this as a modified time.
 .PP
-Modified times are set on upload, read on download and shown in
-listings.
-They are not used in syncing as unfortunately B2 doesn\[aq]t have an API
-method to set them independently of doing an upload.
+Modified times are used in syncing and are fully supported except in the
+case of updating a modification time on an existing object.
+In this case the object will be uploaded again as B2 doesn\[aq]t have an
+API method to set the modification time independent of doing an upload.
 .SS SHA1 checksums
 .PP
 The SHA1 checksums of the files are checked on upload and download and
@@ -3140,14 +3236,22 @@ via rclone yet.
 Rclone doesn\[aq]t provide any way of managing old versions (downloading
 them or deleting them) at the moment.
 When you \f[C]purge\f[] a bucket, all the old versions will be deleted.
+.SS Transfers
+.PP
+Backblaze recommends that you do lots of transfers simultaneously for
+maximum speed.
+In tests from my SSD equiped laptop the optimum setting is about
+\f[C]\-\-transfers\ 32\f[] though higher numbers may be used for a
+slight speed improvement.
+The optimum number for you may vary depending on your hardware, how big
+the files are, how much you want to load your computer, etc.
+The default of \f[C]\-\-transfers\ 4\f[] is definitely too low for
+Backblaze B2 though.
 .SS API
 .PP
 Here are some notes I made on the backblaze
 API (https://gist.github.com/ncw/166dabf352b399f1cc1c) while integrating
 it with rclone which detail the changes I\[aq]d like to see.
-With a couple of small tweaks Backblaze could enable rclone to not make
-a temporary copy of files when doing cloud to cloud copies and fully
-support modification times.
 .SS Yandex Disk
 .PP
 Yandex Disk (https://disk.yandex.com) is a cloud storage solution
@@ -3364,6 +3468,86 @@ This will use UNC paths on \f[C]c:\\src\f[] but not on \f[C]z:\\dst\f[].
 Of course this will cause problems if the absolute path length of a file
 exceeds 258 characters on z, so only use this option if you have to.
 .SS Changelog
+.IP \[bu] 2
+v1.29 \- 2016\-04\-18
+.RS 2
+.IP \[bu] 2
+New Features
+.IP \[bu] 2
+Implement \f[C]\-I,\ \-\-ignore\-times\f[] for unconditional upload
+.IP \[bu] 2
+Improve \f[C]dedupe\f[]command
+.RS 2
+.IP \[bu] 2
+Now removes identical copies without asking
+.IP \[bu] 2
+Now obeys \f[C]\-\-dry\-run\f[]
+.IP \[bu] 2
+Implement \f[C]\-\-dedupe\-mode\f[] for non interactive running
+.IP \[bu] 2
+\f[C]\-\-dedupe\-mode\ interactive\f[] \- interactive the default.
+.IP \[bu] 2
+\f[C]\-\-dedupe\-mode\ skip\f[] \- removes identical files then skips
+anything left.
+.IP \[bu] 2
+\f[C]\-\-dedupe\-mode\ first\f[] \- removes identical files then keeps
+the first one.
+.IP \[bu] 2
+\f[C]\-\-dedupe\-mode\ newest\f[] \- removes identical files then keeps
+the newest one.
+.IP \[bu] 2
+\f[C]\-\-dedupe\-mode\ oldest\f[] \- removes identical files then keeps
+the oldest one.
+.IP \[bu] 2
+\f[C]\-\-dedupe\-mode\ rename\f[] \- removes identical files then
+renames the rest to be different.
+.RE
+.IP \[bu] 2
+Bug fixes
+.IP \[bu] 2
+Make rclone check obey the \f[C]\-\-size\-only\f[] flag.
+.IP \[bu] 2
+Use "application/octet\-stream" if discovered mime type is invalid.
+.IP \[bu] 2
+Fix missing "quit" option when there are no remotes.
+.IP \[bu] 2
+Google Drive
+.IP \[bu] 2
+Increase default chunk size to 8 MB \- increases upload speed of big
+files
+.IP \[bu] 2
+Speed up directory listings and make more reliable
+.IP \[bu] 2
+Add missing retries for Move and DirMove \- increases reliability
+.IP \[bu] 2
+Preserve mime type on file update
+.IP \[bu] 2
+Backblaze B2
+.IP \[bu] 2
+Enable mod time syncing
+.RS 2
+.IP \[bu] 2
+This means that B2 will now check modification times
+.IP \[bu] 2
+It will upload new files to update the modification times
+.IP \[bu] 2
+(there isn\[aq]t an API to just set the mod time.)
+.IP \[bu] 2
+If you want the old behaviour use \f[C]\-\-size\-only\f[].
+.RE
+.IP \[bu] 2
+Update API to new version
+.IP \[bu] 2
+Fix parsing of mod time when not in metadata
+.IP \[bu] 2
+Swift/Hubic
+.IP \[bu] 2
+Don\[aq]t return an MD5SUM for static large objects
+.IP \[bu] 2
+S3
+.IP \[bu] 2
+Fix uploading files bigger than 50GB
+.RE
 .IP \[bu] 2
 v1.28 \- 2016\-03\-01
 .RS 2
@@ -4230,6 +4414,13 @@ supported by the go runtime, ie earlier than version 2.6.23.
 .PP
 See the system requirements section in the go install
 docs (https://golang.org/doc/install) for full details.
+.SS All my uploaded docx/xlsx/pptx files appear as archive/zip
+.PP
+This is caused by uploading these files from a Windows computer which
+hasn\[aq]t got the Microsoft Office suite installed.
+The easiest way to fix is to install the Word viewer and the Microsoft
+Office Compatibility Pack for Word, Excel, and PowerPoint 2007 and later
+versions\[aq] file formats
 .SS License
 .PP
 This is free software under the terms of MIT the license (check the
