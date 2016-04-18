@@ -436,6 +436,7 @@ func TestSyncIgnoreTimes(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteBoth("existing", "potato", t1)
+	fstest.CheckItems(t, r.fremote, file1)
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
