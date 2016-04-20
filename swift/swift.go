@@ -62,6 +62,9 @@ func init() {
 				Value: "https://auth.cloud.ovh.net/v2.0",
 			}},
 		}, {
+			Name: "domain",
+			Help: "User domain - optional (v3 auth)",
+		}, {
 			Name: "tenant",
 			Help: "Tenant name - optional",
 		}, {
@@ -155,6 +158,7 @@ func swiftConnection(name string) (*swift.Connection, error) {
 		UserAgent:      fs.UserAgent,
 		Tenant:         fs.ConfigFile.MustValue(name, "tenant"),
 		Region:         fs.ConfigFile.MustValue(name, "region"),
+		Domain:         fs.ConfigFile.MustValue(name, "domain"),
 		ConnectTimeout: 10 * fs.Config.ConnectTimeout, // Use the timeouts in the transport
 		Timeout:        10 * fs.Config.Timeout,        // Use the timeouts in the transport
 		Transport:      fs.Config.Transport(),
