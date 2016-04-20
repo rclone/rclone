@@ -113,12 +113,12 @@ go there.
 Moves the source to the destination.
 
 If there are no filters in use this is equivalent to a copy followed
-by a purge, but may using server side operations to speed it up if
+by a purge, but may use server side operations to speed it up if
 possible.
 
 If filters are in use then it is equivalent to a copy followed by
 delete, followed by an rmdir (which only removes the directory if
-empty).  The individual file moves will be moved with srver side
+empty).  The individual file moves will be moved with server side
 operations if possible.
 
 **Important**: Since this can cause data loss, test first with the
@@ -126,7 +126,7 @@ operations if possible.
 
 ### rclone ls remote:path ###
 
-List all the objects in the the path with size and path.
+List all the objects in the path with size and path.
 
 ### rclone lsd remote:path ###
 
@@ -602,13 +602,13 @@ configuration.
 There is no way to recover the configuration if you lose your password.
 
 rclone uses [nacl secretbox](https://godoc.org/golang.org/x/crypto/nacl/secretbox) 
-which in term uses XSalsa20 and Poly1305 to encrypt and authenticate 
+which in turn uses XSalsa20 and Poly1305 to encrypt and authenticate 
 your configuration with secret-key cryptography.
 The password is SHA-256 hashed, which produces the key for secretbox.
 The hashed password is not stored.
 
 While this provides very good security, we do not recommend storing
-your encrypted rclone configuration in public, if it contains sensitive
+your encrypted rclone configuration in public if it contains sensitive
 information, maybe except if you use a very strong password.
 
 If it is safe in your environment, you can set the `RCLONE_CONFIG_PASS`
@@ -618,7 +618,7 @@ used for decrypting the configuration.
 If you are running rclone inside a script, you might want to disable 
 password prompts. To do that, pass the parameter 
 `--ask-password=false` to rclone. This will make rclone fail instead
-of asking for a password, if if `RCLONE_CONFIG_PASS` doesn't contain
+of asking for a password if `RCLONE_CONFIG_PASS` doesn't contain
 a valid password.
 
 
