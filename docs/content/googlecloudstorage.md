@@ -57,6 +57,8 @@ Google Application Client Secret - leave blank normally.
 client_secret> 
 Project number optional - needed only for list/create/delete buckets - see your developer console.
 project_number> 12345678
+Service Account Credentials JSON file path - needed only if you want use SA instead of interactive login.
+service_account_file> 
 Access Control List for new objects.
 Choose a number from below, or type in your own value
  * Object owner gets OWNER access, and all Authenticated Users get READER access.
@@ -138,6 +140,41 @@ Sync `/home/local/directory` to the remote bucket, deleting any excess
 files in the bucket.
 
     rclone sync /home/local/directory remote:bucket
+
+### Service Account support ###
+
+You can set up rclone with Google Cloud Storage in an unattended mode,
+i.e. not tied to a specific end-user Google account. This is useful
+when you want to synchronise files onto machines that don't have
+actively logged-in users, for example build machines.
+
+To get credentials for Google Cloud Platform
+[IAM Service Accounts](https://cloud.google.com/iam/docs/service-accounts),
+please head to the
+[Service Account](https://console.cloud.google.com/permissions/serviceaccounts)
+section of the Google Developer Console. Service Accounts behave just
+like normal `User` permissions in
+[Google Cloud Storage ACLs](https://cloud.google.com/storage/docs/access-control),
+so you can limit their access (e.g. make them read only). After
+creating an account, a JSON file containing the Service Account's
+credentials will be downloaded onto your machines. These credentials
+are what rclone will use for authentication.
+
+To use a Service Account instead of OAuth2 token flow, replace the
+`token` section of your `.rclone.conf` with a `service_account_file`
+pointing to the JSON credentials.
+
+For example, here's an example `.rclone.conf` that sets up read only
+access using a service account:
+
+```
+[readonly-sync]
+type = google cloud storage
+project_number = 123456789
+service_account_file = $HOME/.rclone-service_account.json
+object_acl = authenticatedRead
+bucket_acl = authenticatedRead
+```
 
 ### Modified time ###
 

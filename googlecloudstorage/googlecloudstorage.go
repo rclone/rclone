@@ -17,8 +17,10 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path"
 	"regexp"
 	"strings"
@@ -74,6 +76,9 @@ func init() {
 		}, {
 			Name: "project_number",
 			Help: "Project number optional - needed only for list/create/delete buckets - see your developer console.",
+		}, {
+			Name: "service_account_file",
+			Help: "Service Account Credentials JSON file path - needed only if you want use SA instead of interactive login.",
 		}, {
 			Name: "object_acl",
 			Help: "Access Control List for new objects.",
@@ -181,11 +186,35 @@ func parsePath(path string) (bucket, directory string, err error) {
 	return
 }
 
+func getServiceAccountClient(keyJsonfilePath string) (*http.Client, error) {
+	data, err := ioutil.ReadFile(os.ExpandEnv(keyJsonfilePath))
+	if err != nil {
+		return nil, fmt.Errorf("error opening credentials file: %v", err)
+	}
+	conf, err := google.JWTConfigFromJSON(data, storageConfig.Scopes...)
+	if err != nil {
+		return nil, fmt.Errorf("error processing credentials: %v", err)
+	}
+	ctxWithSpecialClient := oauthutil.Context()
+	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
+}
+
 // NewFs contstructs an Fs from the path, bucket:path
 func NewFs(name, root string) (fs.Fs, error) {
-	oAuthClient, err := oauthutil.NewClient(name, storageConfig)
-	if err != nil {
-		log.Fatalf("Failed to configure Google Cloud Storage: %v", err)
+	var oAuthClient *http.Client
+	var err error
+
+	serviceAccountPath := fs.ConfigFile.MustValue(name, "service_account_file")
+	if serviceAccountPath != "" {
+		oAuthClient, err = getServiceAccountClient(serviceAccountPath)
+		if err != nil {
+			log.Fatalf("Failed configuring Google Cloud Storage Service Account: %v", err)
+		}
+	} else {
+		oAuthClient, err = oauthutil.NewClient(name, storageConfig)
+		if err != nil {
+			log.Fatalf("Failed to configure Google Cloud Storage: %v", err)
+		}
 	}
 
 	bucket, directory, err := parsePath(root)
