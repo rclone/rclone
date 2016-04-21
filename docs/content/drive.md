@@ -1,7 +1,7 @@
 ---
 title: "Google drive"
 description: "Rclone docs for Google drive"
-date: "2015-09-12"
+date: "2016-04-12"
 ---
 
 <i class="fa fa-google"></i> Google Drive
@@ -129,16 +129,20 @@ system.
 
 #### --drive-chunk-size=SIZE ####
 
-Upload chunk size. Must a power of 2 >= 256k. Default value is 256kB.
+Upload chunk size. Must a power of 2 >= 256k. Default value is 8 MB.
+
+Making this larger will improve performance, but note that each chunk
+is buffered in memory one per transfer.
+
+Reducing this will reduce memory usage but decrease performance.
 
 #### --drive-full-list ####
 
-Use a full listing for directory list. More data but usually
-quicker. On by default, disable with `--full-drive-list=false`.
+No longer does anything - kept for backwards compatibility.
 
 #### --drive-upload-cutoff=SIZE ####
 
-File size cutoff for switching to chunked upload.  Default is 256kB.
+File size cutoff for switching to chunked upload.  Default is 8 MB.
 
 #### --drive-use-trash ####
 

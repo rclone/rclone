@@ -1,12 +1,46 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2016-03-01"
+date: "2016-04-18"
 ---
 
 Changelog
 ---------
 
+  * v1.29 - 2016-04-18
+    * New Features
+      * Implement `-I, --ignore-times` for unconditional upload
+      * Improve `dedupe`command
+        * Now removes identical copies without asking
+        * Now obeys `--dry-run`
+        * Implement `--dedupe-mode` for non interactive running
+          * `--dedupe-mode interactive` - interactive the default.
+          * `--dedupe-mode skip` - removes identical files then skips anything left.
+          * `--dedupe-mode first` - removes identical files then keeps the first one.
+          * `--dedupe-mode newest` - removes identical files then keeps the newest one.
+          * `--dedupe-mode oldest` - removes identical files then keeps the oldest one.
+          * `--dedupe-mode rename` - removes identical files then renames the rest to be different.
+    * Bug fixes
+      * Make rclone check obey the `--size-only` flag.
+      * Use "application/octet-stream" if discovered mime type is invalid.
+      * Fix missing "quit" option when there are no remotes.
+    * Google Drive
+      * Increase default chunk size to 8 MB - increases upload speed of big files
+      * Speed up directory listings and make more reliable
+      * Add missing retries for Move and DirMove - increases reliability
+      * Preserve mime type on file update
+    * Backblaze B2
+      * Enable mod time syncing
+        * This means that B2 will now check modification times
+        * It will upload new files to update the modification times
+        * (there isn't an API to just set the mod time.)
+        * If you want the old behaviour use `--size-only`.
+      * Update API to new version
+      * Fix parsing of mod time when not in metadata
+    * Swift/Hubic
+      * Don't return an MD5SUM for static large objects
+    * S3
+      * Fix uploading files bigger than 50GB
   * v1.28 - 2016-03-01
     * New Features
       * Configuration file encryption - thanks Klaus Post

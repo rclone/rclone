@@ -8,7 +8,6 @@ environment:
   GOPATH: c:\gopath
 
 install:
-  - go get golang.org/x/tools/cmd/vet
   - echo %PATH%
   - echo %GOPATH%
   - go version

@@ -436,6 +436,7 @@ func TestSyncIgnoreTimes(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteBoth("existing", "potato", t1)
+	fstest.CheckItems(t, r.fremote, file1)
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
@@ -1003,13 +1004,24 @@ func TestCheck(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, file1, file3)
 	check(3, 2)
 
-	r.WriteObject("potato2", "------------------------------------------------------------", t1)
-	fstest.CheckItems(t, r.fremote, file1, file2, file3)
+	file2r := file2
+	if fs.Config.SizeOnly {
+		file2r = r.WriteObject("potato2", "--Some-Differences-But-Size-Only-Is-Enabled-----------------", t1)
+	} else {
+		r.WriteObject("potato2", "------------------------------------------------------------", t1)
+	}
+	fstest.CheckItems(t, r.fremote, file1, file2r, file3)
 	check(4, 1)
 
 	r.WriteFile("empty space", "", t2)
 	fstest.CheckItems(t, r.flocal, file1, file2, file3)
 	check(5, 0)
+}
+
+func TestCheckSizeOnly(t *testing.T) {
+	fs.Config.SizeOnly = true
+	defer func() { fs.Config.SizeOnly = false }()
+	TestCheck(t)
 }
 
 func (r *Run) checkWithDuplicates(t *testing.T, items ...fstest.Item) {

@@ -13,9 +13,9 @@ test:	rclone
 
 check:	rclone
 	go vet ./...
-	[[ `go version` =~ go1.[0-4][^0-9] ]] || errcheck ./...
+	errcheck ./...
 	goimports -d . | grep . ; test $$? -eq 1
-	[[ `go version` =~ go1.[0-4][^0-9] ]] || { golint ./... | grep -E -v '(StorageUrl|CdnUrl)' ; test $$? -eq 1;}
+	golint ./... | grep -E -v '(StorageUrl|CdnUrl)' ; test $$? -eq 1
 
 doc:	rclone.1 MANUAL.html MANUAL.txt
 

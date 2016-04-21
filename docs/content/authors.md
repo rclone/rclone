@@ -27,3 +27,4 @@ Contributors
   * Werner Beroux <werner@beroux.com>
   * Brian Stengaard <brian@stengaard.eu>
   * Jakub Gedeon <jgedeon@sofi.com>
+  * Jim Tittsler <jwt@onjapan.net>

@@ -137,3 +137,11 @@ supported by the go runtime, ie earlier than version 2.6.23.
 
 See the [system requirements section in the go install
 docs](https://golang.org/doc/install) for full details.
+
+### All my uploaded docx/xlsx/pptx files appear as archive/zip ###
+
+This is caused by uploading these files from a Windows computer which
+hasn't got the Microsoft Office suite installed.  The easiest way to
+fix is to install the Word viewer and the Microsoft Office
+Compatibility Pack for Word, Excel, and PowerPoint 2007 and later
+versions' file formats

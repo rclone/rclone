@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Mar 01, 2016
+% Apr 18, 2016
 
 Rclone
 ======
@@ -45,15 +45,15 @@ Rclone is a Go program and comes as a single binary file.
 
 [Download](http://rclone.org/downloads/) the relevant binary.
 
-Or alternatively if you have Go installed use
+Or alternatively if you have Go 1.5+ installed use
 
     go get github.com/ncw/rclone
 
 and this will build the binary in `$GOPATH/bin`.  If you have built
 rclone before then you will want to update its dependencies first with
-this (remove `-f` if using go < 1.4)
+this
 
-    go get -u -v -f github.com/ncw/rclone/...
+    go get -u -v github.com/ncw/rclone/...
 
 See the [Usage section](http://rclone.org/docs/) of the docs for how to use rclone, or
 run `rclone -h`.
@@ -260,19 +260,55 @@ Checks the files in the source and destination match.  It
 compares sizes and MD5SUMs and prints a report of files which
 don't match.  It doesn't alter the source or destination.
 
+`--size-only` may be used to only compare the sizes, not the MD5SUMs.
+
 ### rclone dedupe remote:path ###
 
-Interactively find duplicate files and offer to delete all but one or
-rename them to be different. Only useful with Google Drive which can
-have duplicate file names.
+By default `dedup` interactively finds duplicate files and offers to
+delete all but one or rename them to be different. Only useful with
+Google Drive which can have duplicate file names.
+
+The `dedupe` command will delete all but one of any identical (same
+md5sum) files it finds without confirmation.  This means that for most
+duplicated files the `dedupe` command will not be interactive.  You
+can use `--dry-run` to see what would happen without doing anything.
+
+Here is an example run.
+
+Before - with duplicates
+
+```
+$ rclone lsl drive:dupes
+  6048320 2016-03-05 16:23:16.798000000 one.txt
+  6048320 2016-03-05 16:23:11.775000000 one.txt
+   564374 2016-03-05 16:23:06.731000000 one.txt
+  6048320 2016-03-05 16:18:26.092000000 one.txt
+  6048320 2016-03-05 16:22:46.185000000 two.txt
+  1744073 2016-03-05 16:22:38.104000000 two.txt
+   564374 2016-03-05 16:22:52.118000000 two.txt
+```
+
+Now the `dedupe` session
 
 ```
 $ rclone dedupe drive:dupes
-2016/01/31 14:13:11 Google drive root 'dupes': Looking for duplicates
-two.txt: Found 3 duplicates
-  1:       564374 bytes, 2016-01-31 14:07:22.159000000, md5sum 7594e7dc9fc28f727c42ee3e0749de81
-  2:      1744073 bytes, 2016-01-31 14:07:12.490000000, md5sum 851957f7fb6f0bc4ce76be966d336802
-  3:      6048320 bytes, 2016-01-31 14:07:02.111000000, md5sum 1eedaa9fe86fd4b8632e2ac549403b36
+2016/03/05 16:24:37 Google drive root 'dupes': Looking for duplicates using interactive mode.
+one.txt: Found 4 duplicates - deleting identical copies
+one.txt: Deleting 2/3 identical duplicates (md5sum "1eedaa9fe86fd4b8632e2ac549403b36")
+one.txt: 2 duplicates remain
+  1:      6048320 bytes, 2016-03-05 16:23:16.798000000, md5sum 1eedaa9fe86fd4b8632e2ac549403b36
+  2:       564374 bytes, 2016-03-05 16:23:06.731000000, md5sum 7594e7dc9fc28f727c42ee3e0749de81
+s) Skip and do nothing
+k) Keep just one (choose which in next step)
+r) Rename all to be different (by changing file.jpg to file-1.jpg)
+s/k/r> k
+Enter the number of the file to keep> 1
+one.txt: Deleted 1 extra copies
+two.txt: Found 3 duplicates - deleting identical copies
+two.txt: 3 duplicates remain
+  1:       564374 bytes, 2016-03-05 16:22:52.118000000, md5sum 7594e7dc9fc28f727c42ee3e0749de81
+  2:      6048320 bytes, 2016-03-05 16:22:46.185000000, md5sum 1eedaa9fe86fd4b8632e2ac549403b36
+  3:      1744073 bytes, 2016-03-05 16:22:38.104000000, md5sum 851957f7fb6f0bc4ce76be966d336802
 s) Skip and do nothing
 k) Keep just one (choose which in next step)
 r) Rename all to be different (by changing file.jpg to file-1.jpg)
@@ -280,26 +316,30 @@ s/k/r> r
 two-1.txt: renamed from: two.txt
 two-2.txt: renamed from: two.txt
 two-3.txt: renamed from: two.txt
-one.txt: Found 2 duplicates
-  1:         6579 bytes, 2016-01-31 14:05:01.235000000, md5sum 2b76c776249409d925ae7ccd49aea59b
-  2:         6579 bytes, 2016-01-31 12:50:30.318000000, md5sum 2b76c776249409d925ae7ccd49aea59b
-s) Skip and do nothing
-k) Keep just one (choose which in next step)
-r) Rename all to be different (by changing file.jpg to file-1.jpg)
-s/k/r> k
-Enter the number of the file to keep> 2
-one.txt: Deleted 1 extra copies
 ```
 
 The result being
 
 ```
 $ rclone lsl drive:dupes
-   564374 2016-01-31 14:07:22.159000000 two-1.txt
-  1744073 2016-01-31 14:07:12.490000000 two-2.txt
-  6048320 2016-01-31 14:07:02.111000000 two-3.txt
-     6579 2016-01-31 12:50:30.318000000 one.txt
+  6048320 2016-03-05 16:23:16.798000000 one.txt
+   564374 2016-03-05 16:22:52.118000000 two-1.txt
+  6048320 2016-03-05 16:22:46.185000000 two-2.txt
+  1744073 2016-03-05 16:22:38.104000000 two-3.txt
 ```
+
+Dedupe can be run non interactively using the `--dedupe-mode` flag.
+
+  * `--dedupe-mode interactive` - interactive as above.
+  * `--dedupe-mode skip` - removes identical files then skips anything left.
+  * `--dedupe-mode first` - removes identical files then keeps the first one.
+  * `--dedupe-mode newest` - removes identical files then keeps the newest one.
+  * `--dedupe-mode oldest` - removes identical files then keeps the oldest one.
+  * `--dedupe-mode rename` - removes identical files then renames the rest to be different.
+
+For example to rename all the identically named photos in your Google Photos directory, do
+
+    rclone dedupe --dedupe-mode rename "drive:Google Photos"
 
 ### rclone config ###
 
@@ -410,6 +450,10 @@ The connection timeout is the amount of time rclone will wait for a
 connection to go through to a remote object storage system.  It is
 `1m` by default.
 
+### --dedupe-mode MODE ###
+
+Mode to run dedupe command in.  One of `interactive`, `skip`, `first`, `newest`, `oldest`, `rename`.  The default is `interactive`.  See the dedupe command for more information as to what these options mean.
+
 ### -n, --dry-run ###
 
 Do a trial run with no permanent changes.  Use this to see what rclone
@@ -424,6 +468,15 @@ that exist on the destination, no matter the content of these files.
 While this isn't a generally recommended option, it can be useful
 in cases where your files change due to encryption. However, it cannot
 correct partial transfers in case a transfer was interrupted.
+
+### -I, --ignore-times ###
+
+Using this option will cause rclone to unconditionally upload all
+files regardless of the state of files on the destination.
+
+Normally rclone would skip any files that have the same
+modification time and are the same size (or have the same checksum if
+using `--checksum`).
 
 ### --log-file=FILE ###
 
@@ -824,6 +877,9 @@ If it doesn't start with `/` then it is matched starting at the
               - doesn't match "afile.jpg"
               - doesn't match "directory/file.jpg"
 
+**Important** Note that you must use `/` in patterns and not `\` even
+if running on Windows.
+
 A `*` matches anything but not a `/`.
 
     *.jpg  - matches "file.jpg"
@@ -1113,7 +1169,7 @@ Here is an overview of the major features of each cloud storage system.
 | Amazon Cloud Drive     | MD5     | No      | Yes              | No              |
 | Microsoft One Drive    | SHA1    | Yes     | Yes              | No              |
 | Hubic                  | MD5     | Yes     | No               | No              |
-| Backblaze B2           | SHA1    | Partial | No               | No              |
+| Backblaze B2           | SHA1    | Yes     | No               | No              |
 | Yandex Disk            | MD5     | Yes     | No               | No              |
 | The local filesystem   | All     | Yes     | Depends          | No              |
 
@@ -1136,9 +1192,6 @@ default, though the MD5SUM can be checked with the `--checksum` flag.
 
 All cloud storage systems support some kind of date on the object and
 these will be set when transferring from the cloud storage system.
-
-Backblaze B2 preserves file modification times on files uploaded and
-downloaded, but doesn't use them to decide which objects to sync.
 
 ### Case Insensitive ###
 
@@ -1166,7 +1219,8 @@ systems.
 If a cloud storage system allows duplicate files then it can have two
 objects with the same name.
 
-This confuses rclone greatly when syncing.
+This confuses rclone greatly when syncing - use the `rclone dedupe`
+command to rename or remove duplicates.
 
 Google Drive
 -----------------------------------------
@@ -1293,16 +1347,20 @@ system.
 
 #### --drive-chunk-size=SIZE ####
 
-Upload chunk size. Must a power of 2 >= 256k. Default value is 256kB.
+Upload chunk size. Must a power of 2 >= 256k. Default value is 8 MB.
+
+Making this larger will improve performance, but note that each chunk
+is buffered in memory one per transfer.
+
+Reducing this will reduce memory usage but decrease performance.
 
 #### --drive-full-list ####
 
-Use a full listing for directory list. More data but usually
-quicker. On by default, disable with `--full-drive-list=false`.
+No longer does anything - kept for backwards compatibility.
 
 #### --drive-upload-cutoff=SIZE ####
 
-File size cutoff for switching to chunked upload.  Default is 256kB.
+File size cutoff for switching to chunked upload.  Default is 8 MB.
 
 #### --drive-use-trash ####
 
@@ -1764,6 +1822,12 @@ ns.
 This is a defacto standard (used in the official python-swiftclient
 amongst others) for storing the modification time for an object.
 
+### Limitations ###
+
+The Swift API doesn't return a correct MD5SUM for segmented files
+(Dynamic or Static Large Objects) so rclone won't check or use the
+MD5SUM for these.
+
 Dropbox
 ---------------------------------
 
@@ -1882,6 +1946,11 @@ store.  There is a full list of them in the ["Ignored Files" section
 of this document](https://www.dropbox.com/en/help/145).  Rclone will
 issue an error message `File name disallowed - not uploading` if it
 attempt to upload one of those file names, but the sync won't fail.
+
+If you have more than 10,000 files in a directory then `rclone purge
+dropbox:dir` will return the error `Failed to purge: There are too
+many files involved in this operation`.  As a work-around do an
+`rclone delete dropbix:dir` followed by an `rclone rmdir dropbox:dir`.
 
 Google Cloud Storage
 -------------------------------------------------
@@ -2424,8 +2493,13 @@ are the same.
 
 ### Limitations ###
 
-Code to refresh the OpenStack token isn't done yet which may cause
-problems with very long transfers.
+This uses the normal OpenStack Swift mechanism to refresh the Swift
+API credentials and ignores the expires field returned by the Hubic
+API.
+
+The Swift API doesn't return a correct MD5SUM for segmented files
+(Dynamic or Static Large Objects) so rclone won't check or use the
+MD5SUM for these.
 
 Backblaze B2
 ----------------------------------------
@@ -2519,9 +2593,10 @@ The modified time is stored as metadata on the object as
 in the Backblaze standard.  Other tools should be able to use this as
 a modified time.
 
-Modified times are set on upload, read on download and shown in
-listings.  They are not used in syncing as unfortunately B2 doesn't
-have an API method to set them independently of doing an upload.
+Modified times are used in syncing and are fully supported except in
+the case of updating a modification time on an existing object.  In
+this case the object will be uploaded again as B2 doesn't have an API
+method to set the modification time independent of doing an upload.
 
 ### SHA1 checksums ###
 
@@ -2542,14 +2617,21 @@ Rclone doesn't provide any way of managing old versions (downloading
 them or deleting them) at the moment.  When you `purge` a bucket, all
 the old versions will be deleted.
 
+### Transfers ###
+
+Backblaze recommends that you do lots of transfers simultaneously for
+maximum speed.  In tests from my SSD equiped laptop the optimum
+setting is about `--transfers 32` though higher numbers may be used
+for a slight speed improvement. The optimum number for you may vary
+depending on your hardware, how big the files are, how much you want
+to load your computer, etc.  The default of `--transfers 4` is
+definitely too low for Backblaze B2 though.
+
 ### API ###
 
 Here are [some notes I made on the backblaze
 API](https://gist.github.com/ncw/166dabf352b399f1cc1c) while
 integrating it with rclone which detail the changes I'd like to see.
-With a couple of small tweaks Backblaze could enable rclone to not
-make a temporary copy of files when doing cloud to cloud copies and
-fully support modification times.
 
 Yandex Disk
 ----------------------------------------
@@ -2733,6 +2815,40 @@ file exceeds 258 characters on z, so only use this option if you have to.
 Changelog
 ---------
 
+  * v1.29 - 2016-04-18
+    * New Features
+      * Implement `-I, --ignore-times` for unconditional upload
+      * Improve `dedupe`command
+        * Now removes identical copies without asking
+        * Now obeys `--dry-run`
+        * Implement `--dedupe-mode` for non interactive running
+          * `--dedupe-mode interactive` - interactive the default.
+          * `--dedupe-mode skip` - removes identical files then skips anything left.
+          * `--dedupe-mode first` - removes identical files then keeps the first one.
+          * `--dedupe-mode newest` - removes identical files then keeps the newest one.
+          * `--dedupe-mode oldest` - removes identical files then keeps the oldest one.
+          * `--dedupe-mode rename` - removes identical files then renames the rest to be different.
+    * Bug fixes
+      * Make rclone check obey the `--size-only` flag.
+      * Use "application/octet-stream" if discovered mime type is invalid.
+      * Fix missing "quit" option when there are no remotes.
+    * Google Drive
+      * Increase default chunk size to 8 MB - increases upload speed of big files
+      * Speed up directory listings and make more reliable
+      * Add missing retries for Move and DirMove - increases reliability
+      * Preserve mime type on file update
+    * Backblaze B2
+      * Enable mod time syncing
+        * This means that B2 will now check modification times
+        * It will upload new files to update the modification times
+        * (there isn't an API to just set the mod time.)
+        * If you want the old behaviour use `--size-only`.
+      * Update API to new version
+      * Fix parsing of mod time when not in metadata
+    * Swift/Hubic
+      * Don't return an MD5SUM for static large objects
+    * S3
+      * Fix uploading files bigger than 50GB
   * v1.28 - 2016-03-01
     * New Features
       * Configuration file encryption - thanks Klaus Post
@@ -3177,6 +3293,14 @@ supported by the go runtime, ie earlier than version 2.6.23.
 
 See the [system requirements section in the go install
 docs](https://golang.org/doc/install) for full details.
+
+### All my uploaded docx/xlsx/pptx files appear as archive/zip ###
+
+This is caused by uploading these files from a Windows computer which
+hasn't got the Microsoft Office suite installed.  The easiest way to
+fix is to install the Word viewer and the Microsoft Office
+Compatibility Pack for Word, Excel, and PowerPoint 2007 and later
+versions' file formats
 
 License
 -------
