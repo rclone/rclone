@@ -140,11 +140,20 @@ func NewRun(t *testing.T) *Run {
 		r = new(Run)
 		*r = *oneRun
 		r.cleanRemote = func() {
-			oldErrors := fs.Stats.GetErrors()
-			fs.DeleteFiles(r.fremote.List())
-			errors := fs.Stats.GetErrors() - oldErrors
-			if errors != 0 {
-				t.Fatalf("%d errors while cleaning remote %v", errors, r.fremote)
+			list := fs.NewLister().Start(r.fremote)
+			for {
+				o, err := list.GetObject()
+				if err != nil {
+					t.Fatalf("Error listing: %v", err)
+				}
+				// Check if we are finished
+				if o == nil {
+					break
+				}
+				err = o.Remove()
+				if err != nil {
+					t.Errorf("Error removing file: %v", err)
+				}
 			}
 			// Check remote is empty
 			fstest.CheckItems(t, r.fremote)
@@ -320,7 +329,12 @@ func TestCopyAfterDelete(t *testing.T) {
 	fstest.CheckItems(t, r.flocal)
 	fstest.CheckItems(t, r.fremote, file1)
 
-	err := fs.CopyDir(r.fremote, r.flocal)
+	err := fs.Mkdir(r.flocal)
+	if err != nil {
+		t.Fatalf("Mkdir failed: %v", err)
+	}
+
+	err = fs.CopyDir(r.fremote, r.flocal)
 	if err != nil {
 		t.Fatalf("Copy failed: %v", err)
 	}
@@ -1167,7 +1181,16 @@ func TestDeduplicateRename(t *testing.T) {
 		t.Fatalf("fs.Deduplicate returned error: %v", err)
 	}
 
-	for o := range r.fremote.List() {
+	list := fs.NewLister().Start(r.fremote)
+	for {
+		o, err := list.GetObject()
+		if err != nil {
+			t.Fatalf("Listing failed: %v", err)
+		}
+		// Check if we are finished
+		if o == nil {
+			break
+		}
 		remote := o.Remote()
 		if remote != "one-1.txt" &&
 			remote != "one-2.txt" &&

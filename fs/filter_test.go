@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAgeSuffix(t *testing.T) {
@@ -192,6 +194,20 @@ func testInclude(t *testing.T, f *Filter, tests []includeTest) {
 	}
 }
 
+type includeDirTest struct {
+	in   string
+	want bool
+}
+
+func testDirInclude(t *testing.T, f *Filter, tests []includeDirTest) {
+	for _, test := range tests {
+		got := f.IncludeDirectory(test.in)
+		if test.want != got {
+			t.Errorf("%q: want %v got %v", test.in, test.want, got)
+		}
+	}
+}
+
 func TestNewFilterIncludeFiles(t *testing.T) {
 	f, err := NewFilter()
 	if err != nil {
@@ -205,6 +221,11 @@ func TestNewFilterIncludeFiles(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	assert.Equal(t, filesMap{
+		"file1.jpg": {},
+		"file2.jpg": {},
+	}, f.files)
+	assert.Equal(t, filesMap{}, f.dirs)
 	testInclude(t, f, []includeTest{
 		{"file1.jpg", 0, 0, true},
 		{"file2.jpg", 1, 0, true},
@@ -214,6 +235,42 @@ func TestNewFilterIncludeFiles(t *testing.T) {
 	if f.InActive() {
 		t.Errorf("want !InActive")
 	}
+}
+
+func TestNewFilterIncludeFilesDirs(t *testing.T) {
+	f, err := NewFilter()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{
+		"path/to/dir/file1.png",
+		"/path/to/dir/file2.png",
+		"/path/to/file3.png",
+		"/path/to/dir2/file4.png",
+	} {
+		err = f.AddFile(path)
+		if err != nil {
+			t.Error(err)
+		}
+	}
+	assert.Equal(t, filesMap{
+		"path":         {},
+		"path/to":      {},
+		"path/to/dir":  {},
+		"path/to/dir2": {},
+	}, f.dirs)
+	testDirInclude(t, f, []includeDirTest{
+		{"path", true},
+		{"path/to", true},
+		{"path/to/", true},
+		{"/path/to", true},
+		{"/path/to/", true},
+		{"path/to/dir", true},
+		{"path/to/dir2", true},
+		{"path/too", false},
+		{"path/three", false},
+		{"four", false},
+	})
 }
 
 func TestNewFilterMinSize(t *testing.T) {
@@ -339,6 +396,16 @@ func TestNewFilterMatches(t *testing.T) {
 		{"sausage2/potato", 101, 0, false},
 		{"sausage3/potato", 101, 0, true},
 		{"unicorn", 99, 0, false},
+	})
+	testDirInclude(t, f, []includeDirTest{
+		{"sausage1", true},
+		{"sausage2", true},
+		{"sausage2/sub", false},
+		{"sausage2/sub/dir", false},
+		{"sausage3", true},
+		{"sausage3/sub", true},
+		{"sausage3/sub/dir", true},
+		{"sausage4", false},
 	})
 	if f.InActive() {
 		t.Errorf("want !InActive")

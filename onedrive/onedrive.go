@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/ncw/rclone/dircache"
@@ -369,98 +368,45 @@ OUTER:
 	return
 }
 
-// Path should be directory path either "" or "path/"
-//
-// List the directory using a recursive list from the root
-//
-// This fetches the minimum amount of stuff but does more API calls
-// which makes it slow
-func (f *Fs) listDirRecursive(dirID string, path string, out fs.ObjectsChan) error {
-	var subError error
-	// Make the API request
-	var wg sync.WaitGroup
-	_, err := f.listAll(dirID, false, false, func(info *api.Item) bool {
-		// Recurse on directories
+// ListDir reads the directory specified by the job into out, returning any more jobs
+func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.ListDirJob, err error) {
+	fs.Debug(f, "Reading %q", job.Path)
+	_, err = f.listAll(job.DirID, false, false, func(info *api.Item) bool {
+		remote := job.Path + info.Name
 		if info.Folder != nil {
-			wg.Add(1)
-			folder := path + info.Name + "/"
-			fs.Debug(f, "Reading %s", folder)
-			go func() {
-				defer wg.Done()
-				err := f.listDirRecursive(info.ID, folder, out)
-				if err != nil {
-					subError = err
-					fs.ErrorLog(f, "Error reading %s:%s", folder, err)
+			if out.IncludeDirectory(remote) {
+				dir := &fs.Dir{
+					Name:  remote,
+					Bytes: -1,
+					Count: -1,
+					When:  time.Time(info.LastModifiedDateTime),
 				}
-			}()
+				if info.Folder != nil {
+					dir.Count = info.Folder.ChildCount
+				}
+				if out.AddDir(dir) {
+					return true
+				}
+				if job.Depth > 0 {
+					jobs = append(jobs, dircache.ListDirJob{DirID: info.ID, Path: remote + "/", Depth: job.Depth - 1})
+				}
+			}
 		} else {
-			if fs := f.newObjectWithInfo(path+info.Name, info); fs != nil {
-				out <- fs
+			if o := f.newObjectWithInfo(remote, info); o != nil {
+				if out.Add(o) {
+					return true
+				}
 			}
 		}
 		return false
 	})
-	wg.Wait()
-	fs.Debug(f, "Finished reading %s", path)
-	if err != nil {
-		return err
-	}
-	if subError != nil {
-		return subError
-	}
-	return nil
+	fs.Debug(f, "Finished reading %q", job.Path)
+	return jobs, err
 }
 
-// List walks the path returning a channel of Objects
-func (f *Fs) List() fs.ObjectsChan {
-	out := make(fs.ObjectsChan, fs.Config.Checkers)
-	go func() {
-		defer close(out)
-		err := f.dirCache.FindRoot(false)
-		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Couldn't find root: %s", err)
-		} else {
-			err = f.listDirRecursive(f.dirCache.RootID(), "", out)
-			if err != nil {
-				fs.Stats.Error()
-				fs.ErrorLog(f, "List failed: %s", err)
-			}
-		}
-	}()
-	return out
-}
-
-// ListDir lists the directories
-func (f *Fs) ListDir() fs.DirChan {
-	out := make(fs.DirChan, fs.Config.Checkers)
-	go func() {
-		defer close(out)
-		err := f.dirCache.FindRoot(false)
-		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Couldn't find root: %s", err)
-		} else {
-			_, err := f.listAll(f.dirCache.RootID(), true, false, func(item *api.Item) bool {
-				dir := &fs.Dir{
-					Name:  item.Name,
-					Bytes: -1,
-					Count: -1,
-					When:  time.Time(item.LastModifiedDateTime),
-				}
-				if item.Folder != nil {
-					dir.Count = item.Folder.ChildCount
-				}
-				out <- dir
-				return false
-			})
-			if err != nil {
-				fs.Stats.Error()
-				fs.ErrorLog(f, "ListDir failed: %s", err)
-			}
-		}
-	}()
-	return out
+// List walks the path returning files and directories into out
+func (f *Fs) List(out fs.ListOpts) {
+	f.dirCache.List(f, out)
 }
 
 // Creates from the parameters passed in a half finished Object which

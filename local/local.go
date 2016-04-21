@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -133,42 +134,123 @@ func (f *Fs) NewFsObject(remote string) fs.Object {
 	return f.newFsObjectWithInfo(remote, nil)
 }
 
-// List the path returning a channel of FsObjects
-//
-// Ignores everything which isn't Storable, eg links etc
-func (f *Fs) List() fs.ObjectsChan {
-	out := make(fs.ObjectsChan, fs.Config.Checkers)
-	go func() {
-		err := filepath.Walk(f.root, func(path string, fi os.FileInfo, err error) error {
-			if err != nil {
-				fs.Stats.Error()
-				fs.ErrorLog(f, "Failed to open directory: %s: %s", path, err)
+// listArgs is the arguments that a new list takes
+type listArgs struct {
+	remote  string
+	dirpath string
+	level   int
+}
+
+// list traverses the directory passed in, listing to out.
+// it returns a boolean whether it is finished or not.
+func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (subdirs []listArgs) {
+	fd, err := os.Open(dirpath)
+	if err != nil {
+		out.SetError(err)
+		fs.Stats.Error()
+		fs.ErrorLog(f, "Failed to open directory: %s: %s", dirpath, err)
+		return nil
+	}
+	defer func() {
+		err := fd.Close()
+		if err != nil {
+			out.SetError(err)
+			fs.Stats.Error()
+			fs.ErrorLog(f, "Failed to close directory: %s: %s", dirpath, err)
+		}
+	}()
+
+	for {
+		fis, err := fd.Readdir(1024)
+		if err == io.EOF && len(fis) == 0 {
+			break
+		}
+		if err != nil {
+			out.SetError(err)
+			fs.Stats.Error()
+			fs.ErrorLog(f, "Failed to read directory: %s: %s", dirpath, err)
+			return nil
+		}
+
+		for _, fi := range fis {
+			name := fi.Name()
+			newRemote := path.Join(remote, name)
+			newPath := filepath.Join(dirpath, name)
+			if fi.IsDir() {
+				if out.IncludeDirectory(newRemote) {
+					dir := &fs.Dir{
+						Name:  f.cleanUtf8(newRemote),
+						When:  fi.ModTime(),
+						Bytes: 0,
+						Count: 0,
+					}
+					if out.AddDir(dir) {
+						return nil
+					}
+					if level > 0 {
+						subdirs = append(subdirs, listArgs{remote: newRemote, dirpath: newPath, level: level - 1})
+					}
+				}
 			} else {
-				remote, err := filepath.Rel(f.root, path)
-				if err != nil {
-					fs.Stats.Error()
-					fs.ErrorLog(f, "Failed to get relative path %s: %s", path, err)
-					return nil
-				}
-				if remote == "." {
-					return nil
-					// remote = ""
-				}
-				if fs := f.newFsObjectWithInfo(remote, fi); fs != nil {
-					if fs.Storable() {
-						out <- fs
+				if fso := f.newFsObjectWithInfo(newRemote, fi); fso != nil {
+					if fso.Storable() && out.Add(fso) {
+						return nil
 					}
 				}
 			}
-			return nil
-		})
-		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Failed to open directory: %s: %s", f.root, err)
 		}
-		close(out)
-	}()
-	return out
+	}
+	return subdirs
+}
+
+// List the path into out
+//
+// Ignores everything which isn't Storable, eg links etc
+func (f *Fs) List(out fs.ListOpts) {
+	defer out.Finished()
+	_, err := os.Stat(f.root)
+	if err != nil {
+		out.SetError(fs.ErrorDirNotFound)
+		fs.Stats.Error()
+		fs.ErrorLog(f, "Directory not found: %s: %s", f.root, err)
+		return
+	}
+
+	in := make(chan listArgs, out.Buffer())
+	var wg sync.WaitGroup         // sync closing of go routines
+	var traversing sync.WaitGroup // running directory traversals
+
+	// Start the process
+	traversing.Add(1)
+	in <- listArgs{remote: "", dirpath: f.root, level: out.Level() - 1}
+	for i := 0; i < fs.Config.Checkers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for job := range in {
+				if out.IsFinished() {
+					continue
+				}
+				newJobs := f.list(out, job.remote, job.dirpath, job.level)
+				// Now we have traversed this directory, send
+				// these ones off for traversal
+				if len(newJobs) != 0 {
+					traversing.Add(len(newJobs))
+					go func() {
+						for _, newJob := range newJobs {
+							in <- newJob
+						}
+					}()
+				}
+				traversing.Done()
+			}
+		}()
+	}
+
+	// Wait for traversal to finish
+	traversing.Wait()
+	close(in)
+	wg.Wait()
 }
 
 // CleanUtf8 makes string a valid UTF-8 string
@@ -190,48 +272,50 @@ func (f *Fs) cleanUtf8(name string) string {
 	return name
 }
 
+/*
 // ListDir walks the path returning a channel of FsObjects
-func (f *Fs) ListDir() fs.DirChan {
-	out := make(fs.DirChan, fs.Config.Checkers)
-	go func() {
-		defer close(out)
-		items, err := ioutil.ReadDir(f.root)
-		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Couldn't find read directory: %s", err)
-		} else {
-			for _, item := range items {
-				if item.IsDir() {
-					dir := &fs.Dir{
-						Name:  f.cleanUtf8(item.Name()),
-						When:  item.ModTime(),
-						Bytes: 0,
-						Count: 0,
-					}
-					// Go down the tree to count the files and directories
-					dirpath := f.filterPath(filepath.Join(f.root, item.Name()))
-					err := filepath.Walk(dirpath, func(path string, fi os.FileInfo, err error) error {
-						if err != nil {
-							fs.Stats.Error()
-							fs.ErrorLog(f, "Failed to open directory: %s: %s", path, err)
-						} else {
-							dir.Count++
-							dir.Bytes += fi.Size()
-						}
-						return nil
-					})
-					if err != nil {
-						fs.Stats.Error()
-						fs.ErrorLog(f, "Failed to open directory: %s: %s", dirpath, err)
-					}
-					out <- dir
+func (f *Fs) ListDir(out fs.ListDirOpts) {
+	defer out.Finished()
+	items, err := ioutil.ReadDir(f.root)
+	if err != nil {
+		fs.Stats.Error()
+		fs.ErrorLog(f, "Couldn't find read directory: %s", err)
+		out.SetError(err)
+		return
+	}
+	for _, item := range items {
+		if item.IsDir() {
+			dir := &fs.Dir{
+				Name:  f.cleanUtf8(item.Name()),
+				When:  item.ModTime(),
+				Bytes: 0,
+				Count: 0,
+			}
+			// Go down the tree to count the files and directories
+			dirpath := f.filterPath(filepath.Join(f.root, item.Name()))
+			err := filepath.Walk(dirpath, func(path string, fi os.FileInfo, err error) error {
+				if err != nil {
+					fs.Stats.Error()
+					fs.ErrorLog(f, "Failed to open directory: %s: %s", path, err)
+					out.SetError(err)
+				} else {
+					dir.Count++
+					dir.Bytes += fi.Size()
 				}
+				return nil
+			})
+			if err != nil {
+				out.SetError(err)
+				fs.Stats.Error()
+				fs.ErrorLog(f, "Failed to open directory: %s: %s", dirpath, err)
+			}
+			if out.Add(dir) {
+				return
 			}
 		}
-		// err := f.findRoot(false)
-	}()
-	return out
+	}
 }
+*/
 
 // Put the FsObject to the local filesystem
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {

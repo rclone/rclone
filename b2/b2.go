@@ -330,7 +330,7 @@ func (f *Fs) NewFsObject(remote string) fs.Object {
 }
 
 // listFn is called from list to handle an object
-type listFn func(string, *api.File) error
+type listFn func(remote string, object *api.File, isDirectory bool) error
 
 // errEndList is a sentinel used to end the list iteration now.
 // listFn should return it to end the iteration with no errors.
@@ -339,6 +339,8 @@ var errEndList = errors.New("end list")
 // list lists the objects into the function supplied from
 // the bucket and root supplied
 //
+// level is the depth to search to
+//
 // If prefix is set then startFileName is used as a prefix which all
 // files must have
 //
@@ -346,7 +348,7 @@ var errEndList = errors.New("end list")
 // than 1000)
 //
 // If hidden is set then it will list the hidden (deleted) files too.
-func (f *Fs) list(prefix string, limit int, hidden bool, fn listFn) error {
+func (f *Fs) list(level int, prefix string, limit int, hidden bool, fn listFn) error {
 	bucketID, err := f.getBucketID()
 	if err != nil {
 		return err
@@ -371,6 +373,7 @@ func (f *Fs) list(prefix string, limit int, hidden bool, fn listFn) error {
 	if hidden {
 		opts.Path = "/b2_list_file_versions"
 	}
+	lastDir := ""
 	for {
 		err := f.pacer.Call(func() (bool, error) {
 			resp, err := f.srv.CallJSON(&opts, &request, &response)
@@ -385,12 +388,34 @@ func (f *Fs) list(prefix string, limit int, hidden bool, fn listFn) error {
 			if !strings.HasPrefix(file.Name, prefix) {
 				return nil
 			}
-			err = fn(file.Name[len(f.root):], file)
-			if err != nil {
-				if err == errEndList {
-					return nil
+			remote := file.Name[len(f.root):]
+			slashes := strings.Count(remote, "/")
+
+			// Check if this file makes a new directory
+			if slash := strings.IndexRune(remote, '/'); slash >= 0 {
+				if dir := remote[:slash]; dir != lastDir {
+					if slashes-1 < fs.MaxLevel {
+						err = fn(dir, nil, true)
+						if err != nil {
+							if err == errEndList {
+								return nil
+							}
+							return err
+						}
+					}
+					lastDir = dir
 				}
-				return err
+			}
+
+			// Send the file
+			if slashes < fs.MaxLevel {
+				err = fn(remote, file, false)
+				if err != nil {
+					if err == errEndList {
+						return nil
+					}
+					return err
+				}
 			}
 		}
 		// end if no NextFileName
@@ -405,38 +430,68 @@ func (f *Fs) list(prefix string, limit int, hidden bool, fn listFn) error {
 	return nil
 }
 
-// List walks the path returning a channel of FsObjects
-func (f *Fs) List() fs.ObjectsChan {
-	out := make(fs.ObjectsChan, fs.Config.Checkers)
-	if f.bucket == "" {
-		// Return no objects at top level list
-		close(out)
-		fs.Stats.Error()
-		fs.ErrorLog(f, "Can't list objects at root - choose a bucket using lsd")
-	} else {
-		// List the objects
-		go func() {
-			defer close(out)
-			err := f.list("", 0, false, func(remote string, object *api.File) error {
-				if o := f.newFsObjectWithInfo(remote, object); o != nil {
-					out <- o
-				}
-				return nil
-			})
-			if err != nil {
-				fs.Stats.Error()
-				fs.ErrorLog(f, "Couldn't list bucket %q: %s", f.bucket, err)
+// listFiles walks the path returning files and directories to out
+func (f *Fs) listFiles(out fs.ListOpts) {
+	defer out.Finished()
+	// List the objects
+	err := f.list(out.Level(), "", 0, false, func(remote string, object *api.File, isDirectory bool) error {
+		if isDirectory {
+			dir := &fs.Dir{
+				Name:  remote,
+				Bytes: -1,
+				Count: -1,
 			}
-		}()
+			if out.AddDir(dir) {
+				return fs.ErrorListAborted
+			}
+		} else {
+			if o := f.newFsObjectWithInfo(remote, object); o != nil {
+				if out.Add(o) {
+					return fs.ErrorListAborted
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		out.SetError(err)
 	}
-	return out
 }
 
-// listBucketFn is called from listBuckets to handle a bucket
-type listBucketFn func(*api.Bucket)
+// listBuckets returns all the buckets to out
+func (f *Fs) listBuckets(out fs.ListOpts) {
+	defer out.Finished()
+	err := f.listBucketsToFn(func(bucket *api.Bucket) error {
+		dir := &fs.Dir{
+			Name:  bucket.Name,
+			Bytes: -1,
+			Count: -1,
+		}
+		if out.AddDir(dir) {
+			return fs.ErrorListAborted
+		}
+		return nil
+	})
+	if err != nil {
+		out.SetError(err)
+	}
+}
 
-// listBuckets lists the buckets to the function supplied
-func (f *Fs) listBuckets(fn listBucketFn) error {
+// List walks the path returning files and directories to out
+func (f *Fs) List(out fs.ListOpts) {
+	if f.bucket == "" {
+		f.listBuckets(out)
+	} else {
+		f.listFiles(out)
+	}
+	return
+}
+
+// listBucketFn is called from listBucketsToFn to handle a bucket
+type listBucketFn func(*api.Bucket) error
+
+// listBucketsToFn lists the buckets to the function supplied
+func (f *Fs) listBucketsToFn(fn listBucketFn) error {
 	var account = api.Account{ID: f.info.AccountID}
 	var response api.ListBucketsResponse
 	opts := rest.Opts{
@@ -451,7 +506,10 @@ func (f *Fs) listBuckets(fn listBucketFn) error {
 		return err
 	}
 	for i := range response.Buckets {
-		fn(&response.Buckets[i])
+		err = fn(&response.Buckets[i])
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -463,13 +521,15 @@ func (f *Fs) getBucketID() (bucketID string, err error) {
 	if f._bucketID != "" {
 		return f._bucketID, nil
 	}
-	err = f.listBuckets(func(bucket *api.Bucket) {
+	err = f.listBucketsToFn(func(bucket *api.Bucket) error {
 		if bucket.Name == f.bucket {
 			bucketID = bucket.ID
 		}
+		return nil
+
 	})
 	if bucketID == "" {
-		err = fmt.Errorf("Couldn't find bucket %q", f.bucket)
+		err = fs.ErrorDirNotFound //fmt.Errorf("Couldn't find bucket %q", f.bucket)
 	}
 	f._bucketID = bucketID
 	return bucketID, err
@@ -487,56 +547,6 @@ func (f *Fs) clearBucketID() {
 	f.bucketIDMutex.Lock()
 	f._bucketID = ""
 	f.bucketIDMutex.Unlock()
-}
-
-// ListDir lists the buckets
-func (f *Fs) ListDir() fs.DirChan {
-	out := make(fs.DirChan, fs.Config.Checkers)
-	if f.bucket == "" {
-		// List the buckets
-		go func() {
-			defer close(out)
-			err := f.listBuckets(func(bucket *api.Bucket) {
-				out <- &fs.Dir{
-					Name:  bucket.Name,
-					Bytes: -1,
-					Count: -1,
-				}
-			})
-			if err != nil {
-				fs.Stats.Error()
-				fs.ErrorLog(f, "Error listing buckets: %v", err)
-			}
-		}()
-	} else {
-		// List the directories in the path in the bucket
-		go func() {
-			defer close(out)
-			lastDir := ""
-			err := f.list("", 0, false, func(remote string, object *api.File) error {
-				slash := strings.IndexRune(remote, '/')
-				if slash < 0 {
-					return nil
-				}
-				dir := remote[:slash]
-				if dir == lastDir {
-					return nil
-				}
-				out <- &fs.Dir{
-					Name:  dir,
-					Bytes: -1,
-					Count: -1,
-				}
-				lastDir = dir
-				return nil
-			})
-			if err != nil {
-				fs.Stats.Error()
-				fs.ErrorLog(f, "Couldn't list bucket %q: %s", f.bucket, err)
-			}
-		}()
-	}
-	return out
 }
 
 // Put the object into the bucket
@@ -651,8 +661,6 @@ func (f *Fs) Purge() error {
 		}
 		checkErrMutex.Lock()
 		defer checkErrMutex.Unlock()
-		fs.Stats.Error()
-		fs.ErrorLog(f, "Purge error: %v", err)
 		if errReturn == nil {
 			errReturn = err
 		}
@@ -670,9 +678,11 @@ func (f *Fs) Purge() error {
 			}
 		}()
 	}
-	checkErr(f.list("", 0, true, func(remote string, object *api.File) error {
-		fs.Debug(remote, "Deleting (id %q)", object.ID)
-		toBeDeleted <- object
+	checkErr(f.list(fs.MaxLevel, "", 0, true, func(remote string, object *api.File, isDirectory bool) error {
+		if !isDirectory {
+			fs.Debug(remote, "Deleting (id %q)", object.ID)
+			toBeDeleted <- object
+		}
 		return nil
 	}))
 	close(toBeDeleted)
@@ -755,7 +765,10 @@ func (o *Object) readMetaData() (err error) {
 		return nil
 	}
 	var info *api.File
-	err = o.fs.list(o.remote, 1, false, func(remote string, object *api.File) error {
+	err = o.fs.list(fs.MaxLevel, o.remote, 1, false, func(remote string, object *api.File, isDirectory bool) error {
+		if isDirectory {
+			return nil
+		}
 		if remote == o.remote {
 			info = object
 		}

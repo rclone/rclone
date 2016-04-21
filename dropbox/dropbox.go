@@ -226,21 +226,16 @@ func (f *Fs) NewFsObject(remote string) fs.Object {
 }
 
 // Strips the root off path and returns it
-func (f *Fs) stripRoot(path string) *string {
+func (f *Fs) stripRoot(path string) (string, error) {
 	lowercase := strings.ToLower(path)
-
 	if !strings.HasPrefix(lowercase, f.slashRootSlash) {
-		fs.Stats.Error()
-		fs.ErrorLog(f, "Path '%s' is not under root '%s'", path, f.slashRootSlash)
-		return nil
+		return "", fmt.Errorf("Path %q is not under root %q", path, f.slashRootSlash)
 	}
-
-	stripped := path[len(f.slashRootSlash):]
-	return &stripped
+	return path[len(f.slashRootSlash):], nil
 }
 
 // Walk the root returning a channel of FsObjects
-func (f *Fs) list(out fs.ObjectsChan) {
+func (f *Fs) list(out fs.ListOpts) {
 	// Track path component case, it could be different for entries coming from DropBox API
 	// See https://www.dropboxforum.com/hc/communities/public/questions/201665409-Wrong-character-case-of-folder-name-when-calling-listFolder-using-Sync-API?locale=en-us
 	// and https://github.com/ncw/rclone/issues/53
@@ -283,16 +278,36 @@ func (f *Fs) list(out fs.ObjectsChan) {
 
 					if entry.IsDir {
 						nameTree.PutCaseCorrectDirectoryName(parentPath, lastComponent)
+						name, err := f.stripRoot(entry.Path + "/")
+						if err != nil {
+							out.SetError(err)
+							return
+						}
+						name = strings.Trim(name, "/")
+						if name != "" {
+							dir := &fs.Dir{
+								Name:  name,
+								When:  time.Time(entry.ClientMtime),
+								Bytes: entry.Bytes,
+								Count: -1,
+							}
+							if out.AddDir(dir) {
+								return
+							}
+						}
 					} else {
 						parentPathCorrectCase := nameTree.GetPathWithCorrectCase(parentPath)
 						if parentPathCorrectCase != nil {
-							path := f.stripRoot(*parentPathCorrectCase + "/" + lastComponent)
-							if path == nil {
-								// an error occurred and logged by stripRoot
-								continue
+							path, err := f.stripRoot(*parentPathCorrectCase + "/" + lastComponent)
+							if err != nil {
+								out.SetError(err)
+								return
 							}
-
-							out <- f.newFsObjectWithInfo(*path, entry)
+							if o := f.newFsObjectWithInfo(path, entry); o != nil {
+								if out.Add(o) {
+									return
+								}
+							}
 						} else {
 							nameTree.PutFile(parentPath, lastComponent, entry)
 						}
@@ -306,26 +321,28 @@ func (f *Fs) list(out fs.ObjectsChan) {
 		}
 	}
 
-	walkFunc := func(caseCorrectFilePath string, entry *dropbox.Entry) {
-		path := f.stripRoot("/" + caseCorrectFilePath)
-		if path == nil {
-			// an error occurred and logged by stripRoot
-			return
+	walkFunc := func(caseCorrectFilePath string, entry *dropbox.Entry) error {
+		path, err := f.stripRoot("/" + caseCorrectFilePath)
+		if err != nil {
+			return err
 		}
-
-		out <- f.newFsObjectWithInfo(*path, entry)
+		if o := f.newFsObjectWithInfo(path, entry); o != nil {
+			if out.Add(o) {
+				return fs.ErrorListAborted
+			}
+		}
+		return nil
 	}
-	nameTree.WalkFiles(f.root, walkFunc)
+	err := nameTree.WalkFiles(f.root, walkFunc)
+	if err != nil {
+		out.SetError(err)
+	}
 }
 
 // List walks the path returning a channel of FsObjects
-func (f *Fs) List() fs.ObjectsChan {
-	out := make(fs.ObjectsChan, fs.Config.Checkers)
-	go func() {
-		defer close(out)
-		f.list(out)
-	}()
-	return out
+func (f *Fs) List(out fs.ListOpts) {
+	defer out.Finished()
+	f.list(out)
 }
 
 // ListDir walks the path returning a channel of FsObjects
@@ -341,14 +358,13 @@ func (f *Fs) ListDir() fs.DirChan {
 			for i := range entry.Contents {
 				entry := &entry.Contents[i]
 				if entry.IsDir {
-					name := f.stripRoot(entry.Path)
-					if name == nil {
-						// an error occurred and logged by stripRoot
+					name, err := f.stripRoot(entry.Path)
+					if err != nil {
 						continue
 					}
 
 					out <- &fs.Dir{
-						Name:  *name,
+						Name:  name,
 						When:  time.Time(entry.ClientMtime),
 						Bytes: entry.Bytes,
 						Count: -1,

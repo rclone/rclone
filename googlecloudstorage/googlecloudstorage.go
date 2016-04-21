@@ -15,6 +15,7 @@ FIXME Patch/Delete/Get isn't working with files with spaces in - giving 404 erro
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -262,38 +263,48 @@ func (f *Fs) NewFsObject(remote string) fs.Object {
 	return f.newFsObjectWithInfo(remote, nil)
 }
 
+// listFn is called from list to handle an object.
+type listFn func(remote string, object *storage.Object, isDirectory bool) error
+
 // list the objects into the function supplied
 //
 // If directories is set it only sends directories
-func (f *Fs) list(directories bool, fn func(string, *storage.Object)) {
+func (f *Fs) list(level int, fn listFn) error {
 	list := f.svc.Objects.List(f.bucket).Prefix(f.root).MaxResults(listChunks)
-	if directories {
+	switch level {
+	case 1:
 		list = list.Delimiter("/")
+	case fs.MaxLevel:
+	default:
+		return fs.ErrorLevelNotSupported
 	}
 	rootLength := len(f.root)
 	for {
 		objects, err := list.Do()
 		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Couldn't read bucket %q: %s", f.bucket, err)
-			return
+			return err
 		}
-		if !directories {
-			for _, object := range objects.Items {
-				if !strings.HasPrefix(object.Name, f.root) {
-					fs.Log(f, "Odd name received %q", object.Name)
-					continue
-				}
-				remote := object.Name[rootLength:]
-				fn(remote, object)
-			}
-		} else {
+		if level == 1 {
 			var object storage.Object
 			for _, prefix := range objects.Prefixes {
 				if !strings.HasSuffix(prefix, "/") {
 					continue
 				}
-				fn(prefix[:len(prefix)-1], &object)
+				err = fn(prefix[:len(prefix)-1], &object, true)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		for _, object := range objects.Items {
+			if !strings.HasPrefix(object.Name, f.root) {
+				fs.Log(f, "Odd name received %q", object.Name)
+				continue
+			}
+			remote := object.Name[rootLength:]
+			err = fn(remote, object, false)
+			if err != nil {
+				return err
 			}
 		}
 		if objects.NextPageToken == "" {
@@ -301,78 +312,85 @@ func (f *Fs) list(directories bool, fn func(string, *storage.Object)) {
 		}
 		list.PageToken(objects.NextPageToken)
 	}
+	return nil
 }
 
-// List walks the path returning a channel of FsObjects
-func (f *Fs) List() fs.ObjectsChan {
-	out := make(fs.ObjectsChan, fs.Config.Checkers)
+// listFiles lists files and directories to out
+func (f *Fs) listFiles(out fs.ListOpts) {
+	defer out.Finished()
 	if f.bucket == "" {
-		// Return no objects at top level list
-		close(out)
-		fs.Stats.Error()
-		fs.ErrorLog(f, "Can't list objects at root - choose a bucket using lsd")
-	} else {
-		// List the objects
-		go func() {
-			defer close(out)
-			f.list(false, func(remote string, object *storage.Object) {
-				if fs := f.newFsObjectWithInfo(remote, object); fs != nil {
-					out <- fs
-				}
-			})
-		}()
+		out.SetError(fmt.Errorf("Can't list objects at root - choose a bucket using lsd"))
+		return
 	}
-	return out
+	// List the objects
+	err := f.list(out.Level(), func(remote string, object *storage.Object, isDirectory bool) error {
+		if isDirectory {
+			dir := &fs.Dir{
+				Name:  remote,
+				Bytes: int64(object.Size),
+				Count: 0,
+			}
+			if out.AddDir(dir) {
+				return fs.ErrorListAborted
+			}
+		} else {
+			if o := f.newFsObjectWithInfo(remote, object); o != nil {
+				if out.Add(o) {
+					return fs.ErrorListAborted
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		if gErr, ok := err.(*googleapi.Error); ok {
+			if gErr.Code == http.StatusNotFound {
+				err = fs.ErrorDirNotFound
+			}
+		}
+		out.SetError(err)
+	}
 }
 
-// ListDir lists the buckets
-func (f *Fs) ListDir() fs.DirChan {
-	out := make(fs.DirChan, fs.Config.Checkers)
-	if f.bucket == "" {
-		// List the buckets
-		go func() {
-			defer close(out)
-			if f.projectNumber == "" {
-				fs.Stats.Error()
-				fs.ErrorLog(f, "Can't list buckets without project number")
+// listBuckets lists the buckets to out
+func (f *Fs) listBuckets(out fs.ListOpts) {
+	defer out.Finished()
+	if f.projectNumber == "" {
+		out.SetError(errors.New("Can't list buckets without project number"))
+		return
+	}
+	listBuckets := f.svc.Buckets.List(f.projectNumber).MaxResults(listChunks)
+	for {
+		buckets, err := listBuckets.Do()
+		if err != nil {
+			out.SetError(err)
+			return
+		}
+		for _, bucket := range buckets.Items {
+			dir := &fs.Dir{
+				Name:  bucket.Name,
+				Bytes: 0,
+				Count: 0,
+			}
+			if out.AddDir(dir) {
 				return
 			}
-			listBuckets := f.svc.Buckets.List(f.projectNumber).MaxResults(listChunks)
-			for {
-				buckets, err := listBuckets.Do()
-				if err != nil {
-					fs.Stats.Error()
-					fs.ErrorLog(f, "Couldn't list buckets: %v", err)
-					break
-				} else {
-					for _, bucket := range buckets.Items {
-						out <- &fs.Dir{
-							Name:  bucket.Name,
-							Bytes: 0,
-							Count: 0,
-						}
-					}
-				}
-				if buckets.NextPageToken == "" {
-					break
-				}
-				listBuckets.PageToken(buckets.NextPageToken)
-			}
-		}()
-	} else {
-		// List the directories in the path in the bucket
-		go func() {
-			defer close(out)
-			f.list(true, func(remote string, object *storage.Object) {
-				out <- &fs.Dir{
-					Name:  remote,
-					Bytes: int64(object.Size),
-					Count: 0,
-				}
-			})
-		}()
+		}
+		if buckets.NextPageToken == "" {
+			break
+		}
+		listBuckets.PageToken(buckets.NextPageToken)
 	}
-	return out
+}
+
+// List lists the path to out
+func (f *Fs) List(out fs.ListOpts) {
+	if f.bucket == "" {
+		f.listBuckets(out)
+	} else {
+		f.listFiles(out)
+	}
+	return
 }
 
 // Put the object into the bucket
