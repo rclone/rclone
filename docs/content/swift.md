@@ -72,6 +72,8 @@ Choose a number from below, or type in your own value
  6 / OVH
    \ "https://auth.cloud.ovh.net/v2.0"
 auth> 1
+User domain - optional (v3 auth)
+domain> Default
 Tenant name - optional
 tenant> 
 Region name - optional

@@ -63,7 +63,7 @@ func init() {
 			}},
 		}, {
 			Name: "domain",
-			Help: "User domain - optional (v3)",
+			Help: "User domain - optional (v3 auth)",
 		}, {
 			Name: "tenant",
 			Help: "Tenant name - optional",
