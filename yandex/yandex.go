@@ -163,10 +163,44 @@ func (f *Fs) setRoot(root string) {
 	f.diskRoot = diskRoot
 }
 
+// listFn is called from list and listContainerRoot to handle an object.
+type listFn func(remote string, item *yandex.ResourceInfoResponse, isDirectory bool) error
+
+// listDir lists this directory only returning objects and directories
+func (f *Fs) listDir(fn listFn) (err error) {
+	//request object meta info
+	var opt yandex.ResourceInfoRequestOptions
+	ResourceInfoResponse, err := f.yd.NewResourceInfoRequest(f.diskRoot, opt).Exec()
+	if err != nil {
+		return err
+	}
+	if ResourceInfoResponse.ResourceType == "dir" {
+		//list all subdirs
+		for _, element := range ResourceInfoResponse.Embedded.Items {
+			remote := element.Name
+			switch element.ResourceType {
+			case "dir":
+				err = fn(remote, &element, true)
+				if err != nil {
+					return err
+				}
+			case "file":
+				err = fn(remote, &element, false)
+				if err != nil {
+					return err
+				}
+			default:
+				fs.Debug(f, "Unknown resource type %q", element.ResourceType)
+			}
+		}
+	}
+	return nil
+}
+
 // list the objects into the function supplied
 //
-// If directories is set it only sends directories
-func (f *Fs) list(directories bool, fn func(string, yandex.ResourceInfoResponse)) {
+// This does a flat listing of all the files in the drive
+func (f *Fs) list(fn listFn) error {
 	//request files list. list is divided into pages. We send request for each page
 	//items per page is limited by limit
 	//TODO may be add config parameter for the items per page limit
@@ -182,9 +216,7 @@ func (f *Fs) list(directories bool, fn func(string, yandex.ResourceInfoResponse)
 		//send request
 		info, err := f.yd.NewFlatFileListRequest(opt).Exec()
 		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Couldn't list: %s", err)
-			return
+			return err
 		}
 		itemsCount = uint32(len(info.Items))
 
@@ -194,7 +226,10 @@ func (f *Fs) list(directories bool, fn func(string, yandex.ResourceInfoResponse)
 			if strings.HasPrefix(item.Path, f.diskRoot) {
 				//trim root folder from filename
 				var name = strings.TrimPrefix(item.Path, f.diskRoot)
-				fn(name, item)
+				err = fn(name, &item, false)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
@@ -205,21 +240,55 @@ func (f *Fs) list(directories bool, fn func(string, yandex.ResourceInfoResponse)
 			break
 		}
 	}
+	return nil
 }
 
 // List walks the path returning a channel of FsObjects
-func (f *Fs) List() fs.ObjectsChan {
-	out := make(fs.ObjectsChan, fs.Config.Checkers)
-	// List the objects
-	go func() {
-		defer close(out)
-		f.list(false, func(remote string, object yandex.ResourceInfoResponse) {
-			if fs := f.newFsObjectWithInfo(remote, &object); fs != nil {
-				out <- fs
+func (f *Fs) List(out fs.ListOpts) {
+	defer out.Finished()
+
+	listItem := func(remote string, object *yandex.ResourceInfoResponse, isDirectory bool) error {
+		if isDirectory {
+			t, err := time.Parse(time.RFC3339Nano, object.Modified)
+			if err != nil {
+				return err
 			}
-		})
-	}()
-	return out
+			dir := &fs.Dir{
+				Name:  remote,
+				When:  t,
+				Bytes: int64(object.Size),
+				Count: -1,
+			}
+			if out.AddDir(dir) {
+				return fs.ErrorListAborted
+			}
+		} else {
+			if o := f.newFsObjectWithInfo(remote, object); o != nil {
+				if out.Add(o) {
+					return fs.ErrorListAborted
+				}
+			}
+		}
+		return nil
+	}
+
+	var err error
+	switch out.Level() {
+	case 1:
+		err = f.listDir(listItem)
+	case fs.MaxLevel:
+		err = f.list(listItem)
+	default:
+		out.SetError(fs.ErrorLevelNotSupported)
+	}
+
+	if err != nil {
+		// FIXME
+		// if err == swift.ContainerNotFound {
+		// 	err = fs.ErrorDirNotFound
+		// }
+		out.SetError(err)
+	}
 }
 
 // NewFsObject returns an Object from a path
@@ -242,7 +311,7 @@ func (f *Fs) newFsObjectWithInfo(remote string, info *yandex.ResourceInfoRespons
 	} else {
 		err := o.readMetaData()
 		if err != nil {
-			fs.ErrorLog(f, "Couldn't get object '%s' metadata: %s", o.remotePath(), err)
+			fs.Debug(f, "Couldn't get object '%s' metadata: %s", o.remotePath(), err)
 			return nil
 		}
 	}
@@ -286,40 +355,6 @@ func (o *Object) readMetaData() (err error) {
 	}
 	o.setMetaData(ResourceInfoResponse)
 	return nil
-}
-
-// ListDir walks the path returning a channel of FsObjects
-func (f *Fs) ListDir() fs.DirChan {
-	out := make(fs.DirChan, fs.Config.Checkers)
-	go func() {
-		defer close(out)
-
-		//request object meta info
-		var opt yandex.ResourceInfoRequestOptions
-		ResourceInfoResponse, err := f.yd.NewResourceInfoRequest(f.diskRoot, opt).Exec()
-		if err != nil {
-			return
-		}
-		if ResourceInfoResponse.ResourceType == "dir" {
-			//list all subdirs
-			for _, element := range ResourceInfoResponse.Embedded.Items {
-				if element.ResourceType == "dir" {
-					t, err := time.Parse(time.RFC3339Nano, element.Modified)
-					if err != nil {
-						return
-					}
-					out <- &fs.Dir{
-						Name:  element.Name,
-						When:  t,
-						Bytes: int64(element.Size),
-						Count: -1,
-					}
-				}
-			}
-		}
-
-	}()
-	return out
 }
 
 // Put the object

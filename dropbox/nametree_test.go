@@ -77,15 +77,15 @@ func TestPutAndWalk(t *testing.T) {
 	tree.PutCaseCorrectDirectoryName("", "A")
 
 	numCalled := 0
-	walkFunc := func(caseCorrectFilePath string, entry *dropboxapi.Entry) {
+	walkFunc := func(caseCorrectFilePath string, entry *dropboxapi.Entry) error {
 		assert(t, caseCorrectFilePath == "A/F", "caseCorrectFilePath should be A/F, not "+caseCorrectFilePath)
 		assert(t, entry.Path == "xxx", "entry.Path should be xxx")
 		numCalled++
+		return nil
 	}
-	tree.WalkFiles("", walkFunc)
-
+	err := tree.WalkFiles("", walkFunc)
+	assert(t, err == nil, "No error should be returned")
 	assert(t, numCalled == 1, "walk func should be called only once")
-
 	assert(t, fs.Stats.GetErrors() == errors, "No errors should be reported")
 }
 
@@ -97,15 +97,15 @@ func TestPutAndWalkWithPrefix(t *testing.T) {
 	tree.PutCaseCorrectDirectoryName("", "A")
 
 	numCalled := 0
-	walkFunc := func(caseCorrectFilePath string, entry *dropboxapi.Entry) {
+	walkFunc := func(caseCorrectFilePath string, entry *dropboxapi.Entry) error {
 		assert(t, caseCorrectFilePath == "A/F", "caseCorrectFilePath should be A/F, not "+caseCorrectFilePath)
 		assert(t, entry.Path == "xxx", "entry.Path should be xxx")
 		numCalled++
+		return nil
 	}
-	tree.WalkFiles("A", walkFunc)
-
+	err := tree.WalkFiles("A", walkFunc)
+	assert(t, err == nil, "No error should be returned")
 	assert(t, numCalled == 1, "walk func should be called only once")
-
 	assert(t, fs.Stats.GetErrors() == errors, "No errors should be reported")
 }
 
@@ -115,10 +115,11 @@ func TestPutAndWalkIncompleteTree(t *testing.T) {
 	tree := newNameTree()
 	tree.PutFile("a", "F", &dropboxapi.Entry{Path: "xxx"})
 
-	walkFunc := func(caseCorrectFilePath string, entry *dropboxapi.Entry) {
+	walkFunc := func(caseCorrectFilePath string, entry *dropboxapi.Entry) error {
 		t.Fatal("Should not be called")
+		return nil
 	}
-	tree.WalkFiles("", walkFunc)
-
+	err := tree.WalkFiles("", walkFunc)
+	assert(t, err == nil, "No error should be returned")
 	assert(t, fs.Stats.GetErrors() == errors+1, "One error should be reported")
 }
