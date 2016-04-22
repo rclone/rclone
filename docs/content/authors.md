@@ -30,3 +30,4 @@ Contributors
   * Jim Tittsler <jwt@onjapan.net>
   * Michal Witkowski <michal@improbable.io>
   * Fabian Ruff <fabian.ruff@sap.com>
+  * Leigh Klotz <klotz@quixey.com>
