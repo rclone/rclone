@@ -62,6 +62,9 @@ func init() {
 		Description: "Google Cloud Storage (this is not Google Drive)",
 		NewFs:       NewFs,
 		Config: func(name string) {
+			if fs.ConfigFile.MustValue(name, "service_account_file") != "" {
+				return
+			}
 			err := oauthutil.Config("google cloud storage", name, storageConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)

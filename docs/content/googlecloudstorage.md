@@ -160,21 +160,10 @@ creating an account, a JSON file containing the Service Account's
 credentials will be downloaded onto your machines. These credentials
 are what rclone will use for authentication.
 
-To use a Service Account instead of OAuth2 token flow, replace the
-`token` section of your `.rclone.conf` with a `service_account_file`
-pointing to the JSON credentials.
-
-For example, here's an example `.rclone.conf` that sets up read only
-access using a service account:
-
-```
-[readonly-sync]
-type = google cloud storage
-project_number = 123456789
-service_account_file = $HOME/.rclone-service_account.json
-object_acl = authenticatedRead
-bucket_acl = authenticatedRead
-```
+To use a Service Account instead of OAuth2 token flow, enter the path
+to your Service Account credentials at the `service_account_file`
+prompt and rclone won't use the browser based authentication
+flow.
 
 ### Modified time ###
 
