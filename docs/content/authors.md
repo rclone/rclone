@@ -1,7 +1,7 @@
 ---
 title: "Authors"
 description: "Rclone Authors and Contributors"
-date: "2015-09-28"
+date: "2016-04-22"
 ---
 
 Authors
@@ -28,3 +28,4 @@ Contributors
   * Brian Stengaard <brian@stengaard.eu>
   * Jakub Gedeon <jgedeon@sofi.com>
   * Jim Tittsler <jwt@onjapan.net>
+  * Michal Witkowski <michal@improbable.io>
