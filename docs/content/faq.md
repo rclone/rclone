@@ -105,7 +105,8 @@ For instance "foo.com" also matches "bar.foo.com".
 ### Rclone gives x509: failed to load system roots and no roots provided error ###
 
 This means that `rclone` can't file the SSL root certificates.  Likely
-you are running `rclone` on a NAS with a cut-down Linux OS.
+you are running `rclone` on a NAS with a cut-down Linux OS, or
+possibly on Solaris.
 
 Rclone (via the Go runtime) tries to load the root certificates from
 these places on Linux.
