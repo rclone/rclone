@@ -29,3 +29,4 @@ Contributors
   * Jakub Gedeon <jgedeon@sofi.com>
   * Jim Tittsler <jwt@onjapan.net>
   * Michal Witkowski <michal@improbable.io>
+  * Fabian Ruff <fabian.ruff@sap.com>
