@@ -46,7 +46,6 @@ func (tree *nameTreeNode) getTreeNode(path string) *nameTreeNode {
 		// no lookup required, just return root
 		return tree
 	}
-
 	current := tree
 	for _, component := range strings.Split(path, "/") {
 		if len(component) == 0 {
@@ -67,6 +66,29 @@ func (tree *nameTreeNode) getTreeNode(path string) *nameTreeNode {
 	}
 
 	return current
+}
+
+// PutCaseCorrectPath puts a known good path into the nameTree
+func (tree *nameTreeNode) PutCaseCorrectPath(caseCorrectPath string) {
+	if len(caseCorrectPath) == 0 {
+		return
+	}
+	current := tree
+	for _, component := range strings.Split(caseCorrectPath, "/") {
+		if len(component) == 0 {
+			fs.Stats.Error()
+			fs.ErrorLog(tree, "PutCaseCorrectPath: path component is empty (full path %q)", caseCorrectPath)
+			return
+		}
+		lowercase := strings.ToLower(component)
+		lookup := current.Directories[lowercase]
+		if lookup == nil {
+			lookup = newNameTreeNode(component)
+			current.Directories[lowercase] = lookup
+		}
+		current = lookup
+	}
+	return
 }
 
 func (tree *nameTreeNode) PutCaseCorrectDirectoryName(parentPath string, caseCorrectDirectoryName string) {

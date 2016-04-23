@@ -210,13 +210,12 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 // List the path into out
 //
 // Ignores everything which isn't Storable, eg links etc
-func (f *Fs) List(out fs.ListOpts) {
+func (f *Fs) List(out fs.ListOpts, dir string) {
 	defer out.Finished()
-	_, err := os.Stat(f.root)
+	root := path.Join(f.root, dir)
+	_, err := os.Stat(root)
 	if err != nil {
 		out.SetError(fs.ErrorDirNotFound)
-		fs.Stats.Error()
-		fs.ErrorLog(f, "Directory not found: %s: %s", f.root, err)
 		return
 	}
 
@@ -226,7 +225,7 @@ func (f *Fs) List(out fs.ListOpts) {
 
 	// Start the process
 	traversing.Add(1)
-	in <- listArgs{remote: "", dirpath: f.root, level: out.Level() - 1}
+	in <- listArgs{remote: "", dirpath: root, level: out.Level() - 1}
 	for i := 0; i < fs.Config.Checkers; i++ {
 		wg.Add(1)
 		go func() {
@@ -275,51 +274,6 @@ func (f *Fs) cleanUtf8(name string) string {
 	}
 	return name
 }
-
-/*
-// ListDir walks the path returning a channel of FsObjects
-func (f *Fs) ListDir(out fs.ListDirOpts) {
-	defer out.Finished()
-	items, err := ioutil.ReadDir(f.root)
-	if err != nil {
-		fs.Stats.Error()
-		fs.ErrorLog(f, "Couldn't find read directory: %s", err)
-		out.SetError(err)
-		return
-	}
-	for _, item := range items {
-		if item.IsDir() {
-			dir := &fs.Dir{
-				Name:  f.cleanUtf8(item.Name()),
-				When:  item.ModTime(),
-				Bytes: 0,
-				Count: 0,
-			}
-			// Go down the tree to count the files and directories
-			dirpath := f.filterPath(filepath.Join(f.root, item.Name()))
-			err := filepath.Walk(dirpath, func(path string, fi os.FileInfo, err error) error {
-				if err != nil {
-					fs.Stats.Error()
-					fs.ErrorLog(f, "Failed to open directory: %s: %s", path, err)
-					out.SetError(err)
-				} else {
-					dir.Count++
-					dir.Bytes += fi.Size()
-				}
-				return nil
-			})
-			if err != nil {
-				out.SetError(err)
-				fs.Stats.Error()
-				fs.ErrorLog(f, "Failed to open directory: %s: %s", dirpath, err)
-			}
-			if out.Add(dir) {
-				return
-			}
-		}
-	}
-}
-*/
 
 // Put the FsObject to the local filesystem
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {

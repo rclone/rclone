@@ -8,6 +8,8 @@ import (
 	"log"
 	"strings"
 	"sync"
+
+	"github.com/ncw/rclone/fs"
 )
 
 // DirCache caches paths to directory IDs and vice versa
@@ -160,7 +162,7 @@ func (dc *DirCache) _findDir(path string, create bool) (pathID string, err error
 				return "", fmt.Errorf("Failed to make directory: %v", err)
 			}
 		} else {
-			return "", fmt.Errorf("Couldn't find directory: %q", path)
+			return "", fs.ErrorDirNotFound
 		}
 	}
 
@@ -179,13 +181,6 @@ func (dc *DirCache) FindPath(path string, create bool) (leaf, directoryID string
 	defer dc.mu.Unlock()
 	directory, leaf := SplitPath(path)
 	directoryID, err = dc._findDir(directory, create)
-	if err != nil {
-		if create {
-			err = fmt.Errorf("Couldn't find or make directory %q: %s", directory, err)
-		} else {
-			err = fmt.Errorf("Couldn't find directory %q: %s", directory, err)
-		}
-	}
 	return
 }
 

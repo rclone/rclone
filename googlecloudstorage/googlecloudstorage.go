@@ -300,9 +300,15 @@ type listFn func(remote string, object *storage.Object, isDirectory bool) error
 
 // list the objects into the function supplied
 //
+// dir is the starting directory, "" for root
+//
 // If directories is set it only sends directories
-func (f *Fs) list(level int, fn listFn) error {
-	list := f.svc.Objects.List(f.bucket).Prefix(f.root).MaxResults(listChunks)
+func (f *Fs) list(dir string, level int, fn listFn) error {
+	root := f.root
+	if dir != "" {
+		root += dir + "/"
+	}
+	list := f.svc.Objects.List(f.bucket).Prefix(root).MaxResults(listChunks)
 	switch level {
 	case 1:
 		list = list.Delimiter("/")
@@ -310,7 +316,7 @@ func (f *Fs) list(level int, fn listFn) error {
 	default:
 		return fs.ErrorLevelNotSupported
 	}
-	rootLength := len(f.root)
+	rootLength := len(root)
 	for {
 		objects, err := list.Do()
 		if err != nil {
@@ -329,7 +335,7 @@ func (f *Fs) list(level int, fn listFn) error {
 			}
 		}
 		for _, object := range objects.Items {
-			if !strings.HasPrefix(object.Name, f.root) {
+			if !strings.HasPrefix(object.Name, root) {
 				fs.Log(f, "Odd name received %q", object.Name)
 				continue
 			}
@@ -348,14 +354,14 @@ func (f *Fs) list(level int, fn listFn) error {
 }
 
 // listFiles lists files and directories to out
-func (f *Fs) listFiles(out fs.ListOpts) {
+func (f *Fs) listFiles(out fs.ListOpts, dir string) {
 	defer out.Finished()
 	if f.bucket == "" {
 		out.SetError(fmt.Errorf("Can't list objects at root - choose a bucket using lsd"))
 		return
 	}
 	// List the objects
-	err := f.list(out.Level(), func(remote string, object *storage.Object, isDirectory bool) error {
+	err := f.list(dir, out.Level(), func(remote string, object *storage.Object, isDirectory bool) error {
 		if isDirectory {
 			dir := &fs.Dir{
 				Name:  remote,
@@ -385,8 +391,12 @@ func (f *Fs) listFiles(out fs.ListOpts) {
 }
 
 // listBuckets lists the buckets to out
-func (f *Fs) listBuckets(out fs.ListOpts) {
+func (f *Fs) listBuckets(out fs.ListOpts, dir string) {
 	defer out.Finished()
+	if dir != "" {
+		out.SetError(fs.ErrorListOnlyRoot)
+		return
+	}
 	if f.projectNumber == "" {
 		out.SetError(errors.New("Can't list buckets without project number"))
 		return
@@ -416,11 +426,11 @@ func (f *Fs) listBuckets(out fs.ListOpts) {
 }
 
 // List lists the path to out
-func (f *Fs) List(out fs.ListOpts) {
+func (f *Fs) List(out fs.ListOpts, dir string) {
 	if f.bucket == "" {
-		f.listBuckets(out)
+		f.listBuckets(out, dir)
 	} else {
-		f.listFiles(out)
+		f.listFiles(out, dir)
 	}
 	return
 }

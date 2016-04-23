@@ -200,7 +200,7 @@ func (f *Fs) listDir(fn listFn) (err error) {
 // list the objects into the function supplied
 //
 // This does a flat listing of all the files in the drive
-func (f *Fs) list(fn listFn) error {
+func (f *Fs) list(dir string, fn listFn) error {
 	//request files list. list is divided into pages. We send request for each page
 	//items per page is limited by limit
 	//TODO may be add config parameter for the items per page limit
@@ -211,6 +211,10 @@ func (f *Fs) list(fn listFn) error {
 	var opt yandex.FlatFileListRequestOptions
 	opt.Limit = &limit
 	opt.Offset = &offset
+	prefix := f.diskRoot
+	if dir != "" {
+		prefix += dir + "/"
+	}
 	//query each page of list until itemCount is less then limit
 	for {
 		//send request
@@ -223,7 +227,7 @@ func (f *Fs) list(fn listFn) error {
 		//list files
 		for _, item := range info.Items {
 			// filter file list and get only files we need
-			if strings.HasPrefix(item.Path, f.diskRoot) {
+			if strings.HasPrefix(item.Path, prefix) {
 				//trim root folder from filename
 				var name = strings.TrimPrefix(item.Path, f.diskRoot)
 				err = fn(name, &item, false)
@@ -244,7 +248,7 @@ func (f *Fs) list(fn listFn) error {
 }
 
 // List walks the path returning a channel of FsObjects
-func (f *Fs) List(out fs.ListOpts) {
+func (f *Fs) List(out fs.ListOpts, dir string) {
 	defer out.Finished()
 
 	listItem := func(remote string, object *yandex.ResourceInfoResponse, isDirectory bool) error {
@@ -275,9 +279,13 @@ func (f *Fs) List(out fs.ListOpts) {
 	var err error
 	switch out.Level() {
 	case 1:
-		err = f.listDir(listItem)
+		if dir == "" {
+			err = f.listDir(listItem)
+		} else {
+			err = f.list(dir, listItem)
+		}
 	case fs.MaxLevel:
-		err = f.list(listItem)
+		err = f.list(dir, listItem)
 	default:
 		out.SetError(fs.ErrorLevelNotSupported)
 	}

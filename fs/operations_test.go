@@ -140,7 +140,7 @@ func NewRun(t *testing.T) *Run {
 		r = new(Run)
 		*r = *oneRun
 		r.cleanRemote = func() {
-			list := fs.NewLister().Start(r.fremote)
+			list := fs.NewLister().Start(r.fremote, "")
 			for {
 				o, err := list.GetObject()
 				if err != nil {
@@ -1181,7 +1181,7 @@ func TestDeduplicateRename(t *testing.T) {
 		t.Fatalf("fs.Deduplicate returned error: %v", err)
 	}
 
-	list := fs.NewLister().Start(r.fremote)
+	list := fs.NewLister().Start(r.fremote, "")
 	for {
 		o, err := list.GetObject()
 		if err != nil {

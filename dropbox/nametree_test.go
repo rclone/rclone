@@ -5,13 +5,8 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	dropboxapi "github.com/stacktic/dropbox"
+	"github.com/stretchr/testify/assert"
 )
-
-func assert(t *testing.T, shouldBeTrue bool, failMessage string) {
-	if !shouldBeTrue {
-		t.Fatal(failMessage)
-	}
-}
 
 func TestPutCaseCorrectDirectoryName(t *testing.T) {
 	errors := fs.Stats.GetErrors()
@@ -19,18 +14,38 @@ func TestPutCaseCorrectDirectoryName(t *testing.T) {
 	tree := newNameTree()
 	tree.PutCaseCorrectDirectoryName("a/b", "C")
 
-	assert(t, tree.CaseCorrectName == "", "Root CaseCorrectName should be empty")
+	assert.Equal(t, "", tree.CaseCorrectName, "Root CaseCorrectName should be empty")
 
 	a := tree.Directories["a"]
-	assert(t, a.CaseCorrectName == "", "CaseCorrectName at 'a' should be empty")
+	assert.Equal(t, "", a.CaseCorrectName, "CaseCorrectName at 'a' should be empty")
 
 	b := a.Directories["b"]
-	assert(t, b.CaseCorrectName == "", "CaseCorrectName at 'a/b' should be empty")
+	assert.Equal(t, "", b.CaseCorrectName, "CaseCorrectName at 'a/b' should be empty")
 
 	c := b.Directories["c"]
-	assert(t, c.CaseCorrectName == "C", "CaseCorrectName at 'a/b/c' should be 'C'")
+	assert.Equal(t, "C", c.CaseCorrectName, "CaseCorrectName at 'a/b/c' should be 'C'")
 
-	assert(t, fs.Stats.GetErrors() == errors, "No errors should be reported")
+	assert.Equal(t, errors, fs.Stats.GetErrors(), "No errors should be reported")
+}
+
+func TestPutCaseCorrectPath(t *testing.T) {
+	errors := fs.Stats.GetErrors()
+
+	tree := newNameTree()
+	tree.PutCaseCorrectPath("A/b/C")
+
+	assert.Equal(t, "", tree.CaseCorrectName, "Root CaseCorrectName should be empty")
+
+	a := tree.Directories["a"]
+	assert.Equal(t, "A", a.CaseCorrectName, "CaseCorrectName at 'a' should be 'A'")
+
+	b := a.Directories["b"]
+	assert.Equal(t, "b", b.CaseCorrectName, "CaseCorrectName at 'a/b' should be 'b'")
+
+	c := b.Directories["c"]
+	assert.Equal(t, "C", c.CaseCorrectName, "CaseCorrectName at 'a/b/c' should be 'C'")
+
+	assert.Equal(t, errors, fs.Stats.GetErrors(), "No errors should be reported")
 }
 
 func TestPutCaseCorrectDirectoryNameEmptyComponent(t *testing.T) {
@@ -41,7 +56,7 @@ func TestPutCaseCorrectDirectoryNameEmptyComponent(t *testing.T) {
 	tree.PutCaseCorrectDirectoryName("b/", "C")
 	tree.PutCaseCorrectDirectoryName("a//b", "C")
 
-	assert(t, fs.Stats.GetErrors() == errors+3, "3 errors should be reported")
+	assert.True(t, fs.Stats.GetErrors() == errors+3, "3 errors should be reported")
 }
 
 func TestPutCaseCorrectDirectoryNameEmptyParent(t *testing.T) {
@@ -51,9 +66,9 @@ func TestPutCaseCorrectDirectoryNameEmptyParent(t *testing.T) {
 	tree.PutCaseCorrectDirectoryName("", "C")
 
 	c := tree.Directories["c"]
-	assert(t, c.CaseCorrectName == "C", "CaseCorrectName at 'c' should be 'C'")
+	assert.True(t, c.CaseCorrectName == "C", "CaseCorrectName at 'c' should be 'C'")
 
-	assert(t, fs.Stats.GetErrors() == errors, "No errors should be reported")
+	assert.True(t, fs.Stats.GetErrors() == errors, "No errors should be reported")
 }
 
 func TestGetPathWithCorrectCase(t *testing.T) {
@@ -61,12 +76,12 @@ func TestGetPathWithCorrectCase(t *testing.T) {
 
 	tree := newNameTree()
 	tree.PutCaseCorrectDirectoryName("a", "C")
-	assert(t, tree.GetPathWithCorrectCase("a/c") == nil, "Path for 'a' should not be available")
+	assert.True(t, tree.GetPathWithCorrectCase("a/c") == nil, "Path for 'a' should not be available")
 
 	tree.PutCaseCorrectDirectoryName("", "A")
-	assert(t, *tree.GetPathWithCorrectCase("a/c") == "/A/C", "Path for 'a/c' should be '/A/C'")
+	assert.True(t, *tree.GetPathWithCorrectCase("a/c") == "/A/C", "Path for 'a/c' should be '/A/C'")
 
-	assert(t, fs.Stats.GetErrors() == errors, "No errors should be reported")
+	assert.True(t, fs.Stats.GetErrors() == errors, "No errors should be reported")
 }
 
 func TestPutAndWalk(t *testing.T) {
@@ -78,15 +93,15 @@ func TestPutAndWalk(t *testing.T) {
 
 	numCalled := 0
 	walkFunc := func(caseCorrectFilePath string, entry *dropboxapi.Entry) error {
-		assert(t, caseCorrectFilePath == "A/F", "caseCorrectFilePath should be A/F, not "+caseCorrectFilePath)
-		assert(t, entry.Path == "xxx", "entry.Path should be xxx")
+		assert.True(t, caseCorrectFilePath == "A/F", "caseCorrectFilePath should be A/F, not "+caseCorrectFilePath)
+		assert.True(t, entry.Path == "xxx", "entry.Path should be xxx")
 		numCalled++
 		return nil
 	}
 	err := tree.WalkFiles("", walkFunc)
-	assert(t, err == nil, "No error should be returned")
-	assert(t, numCalled == 1, "walk func should be called only once")
-	assert(t, fs.Stats.GetErrors() == errors, "No errors should be reported")
+	assert.True(t, err == nil, "No error should be returned")
+	assert.True(t, numCalled == 1, "walk func should be called only once")
+	assert.True(t, fs.Stats.GetErrors() == errors, "No errors should be reported")
 }
 
 func TestPutAndWalkWithPrefix(t *testing.T) {
@@ -98,15 +113,15 @@ func TestPutAndWalkWithPrefix(t *testing.T) {
 
 	numCalled := 0
 	walkFunc := func(caseCorrectFilePath string, entry *dropboxapi.Entry) error {
-		assert(t, caseCorrectFilePath == "A/F", "caseCorrectFilePath should be A/F, not "+caseCorrectFilePath)
-		assert(t, entry.Path == "xxx", "entry.Path should be xxx")
+		assert.True(t, caseCorrectFilePath == "A/F", "caseCorrectFilePath should be A/F, not "+caseCorrectFilePath)
+		assert.True(t, entry.Path == "xxx", "entry.Path should be xxx")
 		numCalled++
 		return nil
 	}
 	err := tree.WalkFiles("A", walkFunc)
-	assert(t, err == nil, "No error should be returned")
-	assert(t, numCalled == 1, "walk func should be called only once")
-	assert(t, fs.Stats.GetErrors() == errors, "No errors should be reported")
+	assert.True(t, err == nil, "No error should be returned")
+	assert.True(t, numCalled == 1, "walk func should be called only once")
+	assert.True(t, fs.Stats.GetErrors() == errors, "No errors should be reported")
 }
 
 func TestPutAndWalkIncompleteTree(t *testing.T) {
@@ -120,6 +135,6 @@ func TestPutAndWalkIncompleteTree(t *testing.T) {
 		return nil
 	}
 	err := tree.WalkFiles("", walkFunc)
-	assert(t, err == nil, "No error should be returned")
-	assert(t, fs.Stats.GetErrors() == errors+1, "One error should be reported")
+	assert.True(t, err == nil, "No error should be returned")
+	assert.True(t, fs.Stats.GetErrors() == errors+1, "One error should be reported")
 }

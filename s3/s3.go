@@ -369,8 +369,14 @@ type listFn func(remote string, object *s3.Object, isDirectory bool) error
 
 // list the objects into the function supplied
 //
+// dir is the starting directory, "" for root
+//
 // Level is the level of the recursion
-func (f *Fs) list(level int, fn listFn) error {
+func (f *Fs) list(dir string, level int, fn listFn) error {
+	root := f.root
+	if dir != "" {
+		root += dir + "/"
+	}
 	maxKeys := int64(listChunkSize)
 	delimiter := ""
 	switch level {
@@ -386,7 +392,7 @@ func (f *Fs) list(level int, fn listFn) error {
 		req := s3.ListObjectsInput{
 			Bucket:    &f.bucket,
 			Delimiter: &delimiter,
-			Prefix:    &f.root,
+			Prefix:    &root,
 			MaxKeys:   &maxKeys,
 			Marker:    marker,
 		}
@@ -442,7 +448,7 @@ func (f *Fs) list(level int, fn listFn) error {
 }
 
 // listFiles lists files and directories to out
-func (f *Fs) listFiles(out fs.ListOpts) {
+func (f *Fs) listFiles(out fs.ListOpts, dir string) {
 	defer out.Finished()
 	if f.bucket == "" {
 		// Return no objects at top level list
@@ -450,7 +456,7 @@ func (f *Fs) listFiles(out fs.ListOpts) {
 		return
 	}
 	// List the objects and directories
-	err := f.list(out.Level(), func(remote string, object *s3.Object, isDirectory bool) error {
+	err := f.list(dir, out.Level(), func(remote string, object *s3.Object, isDirectory bool) error {
 		if isDirectory {
 			size := int64(0)
 			if object.Size != nil {
@@ -484,8 +490,12 @@ func (f *Fs) listFiles(out fs.ListOpts) {
 }
 
 // listBuckets lists the buckets to out
-func (f *Fs) listBuckets(out fs.ListOpts) {
+func (f *Fs) listBuckets(out fs.ListOpts, dir string) {
 	defer out.Finished()
+	if dir != "" {
+		out.SetError(fs.ErrorListOnlyRoot)
+		return
+	}
 	req := s3.ListBucketsInput{}
 	resp, err := f.c.ListBuckets(&req)
 	if err != nil {
@@ -506,11 +516,11 @@ func (f *Fs) listBuckets(out fs.ListOpts) {
 }
 
 // List lists files and directories to out
-func (f *Fs) List(out fs.ListOpts) {
+func (f *Fs) List(out fs.ListOpts, dir string) {
 	if f.bucket == "" {
-		f.listBuckets(out)
+		f.listBuckets(out, dir)
 	} else {
-		f.listFiles(out)
+		f.listFiles(out, dir)
 	}
 	return
 }

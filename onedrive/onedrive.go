@@ -405,8 +405,8 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 }
 
 // List walks the path returning files and directories into out
-func (f *Fs) List(out fs.ListOpts) {
-	f.dirCache.List(f, out)
+func (f *Fs) List(out fs.ListOpts, dir string) {
+	f.dirCache.List(f, out, dir)
 }
 
 // Creates from the parameters passed in a half finished Object which

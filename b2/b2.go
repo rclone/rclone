@@ -348,7 +348,11 @@ var errEndList = errors.New("end list")
 // than 1000)
 //
 // If hidden is set then it will list the hidden (deleted) files too.
-func (f *Fs) list(level int, prefix string, limit int, hidden bool, fn listFn) error {
+func (f *Fs) list(dir string, level int, prefix string, limit int, hidden bool, fn listFn) error {
+	root := f.root
+	if dir != "" {
+		root += dir + "/"
+	}
 	bucketID, err := f.getBucketID()
 	if err != nil {
 		return err
@@ -361,7 +365,7 @@ func (f *Fs) list(level int, prefix string, limit int, hidden bool, fn listFn) e
 		BucketID:     bucketID,
 		MaxFileCount: chunkSize,
 	}
-	prefix = f.root + prefix
+	prefix = root + prefix
 	if prefix != "" {
 		request.StartFileName = prefix
 	}
@@ -431,10 +435,10 @@ func (f *Fs) list(level int, prefix string, limit int, hidden bool, fn listFn) e
 }
 
 // listFiles walks the path returning files and directories to out
-func (f *Fs) listFiles(out fs.ListOpts) {
+func (f *Fs) listFiles(out fs.ListOpts, dir string) {
 	defer out.Finished()
 	// List the objects
-	err := f.list(out.Level(), "", 0, false, func(remote string, object *api.File, isDirectory bool) error {
+	err := f.list(dir, out.Level(), "", 0, false, func(remote string, object *api.File, isDirectory bool) error {
 		if isDirectory {
 			dir := &fs.Dir{
 				Name:  remote,
@@ -459,8 +463,12 @@ func (f *Fs) listFiles(out fs.ListOpts) {
 }
 
 // listBuckets returns all the buckets to out
-func (f *Fs) listBuckets(out fs.ListOpts) {
+func (f *Fs) listBuckets(out fs.ListOpts, dir string) {
 	defer out.Finished()
+	if dir != "" {
+		out.SetError(fs.ErrorListOnlyRoot)
+		return
+	}
 	err := f.listBucketsToFn(func(bucket *api.Bucket) error {
 		dir := &fs.Dir{
 			Name:  bucket.Name,
@@ -478,11 +486,11 @@ func (f *Fs) listBuckets(out fs.ListOpts) {
 }
 
 // List walks the path returning files and directories to out
-func (f *Fs) List(out fs.ListOpts) {
+func (f *Fs) List(out fs.ListOpts, dir string) {
 	if f.bucket == "" {
-		f.listBuckets(out)
+		f.listBuckets(out, dir)
 	} else {
-		f.listFiles(out)
+		f.listFiles(out, dir)
 	}
 	return
 }
@@ -678,7 +686,7 @@ func (f *Fs) Purge() error {
 			}
 		}()
 	}
-	checkErr(f.list(fs.MaxLevel, "", 0, true, func(remote string, object *api.File, isDirectory bool) error {
+	checkErr(f.list("", fs.MaxLevel, "", 0, true, func(remote string, object *api.File, isDirectory bool) error {
 		if !isDirectory {
 			fs.Debug(remote, "Deleting (id %q)", object.ID)
 			toBeDeleted <- object
@@ -765,7 +773,7 @@ func (o *Object) readMetaData() (err error) {
 		return nil
 	}
 	var info *api.File
-	err = o.fs.list(fs.MaxLevel, o.remote, 1, false, func(remote string, object *api.File, isDirectory bool) error {
+	err = o.fs.list("", fs.MaxLevel, o.remote, 1, false, func(remote string, object *api.File, isDirectory bool) error {
 		if isDirectory {
 			return nil
 		}

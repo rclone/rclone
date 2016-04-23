@@ -11,12 +11,15 @@ import (
 	"io"
 	"log"
 	"os"
+	"path"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fstest"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -129,10 +132,8 @@ func TestFsListEmpty(t *testing.T) {
 // TestFsListDirEmpty tests listing the directories from an empty directory
 func TestFsListDirEmpty(t *testing.T) {
 	skipIfNotOk(t)
-	dirs, err := fs.NewLister().SetLevel(1).Start(remote).GetDirs()
-	if err != nil {
-		t.Fatal(err)
-	}
+	dirs, err := fs.NewLister().SetLevel(1).Start(remote, "").GetDirs()
+	require.NoError(t, err)
 	for _, dir := range dirs {
 		t.Errorf("Found unexpected item %q", dir.Name)
 	}
@@ -197,10 +198,8 @@ func TestFsListDirFile2(t *testing.T) {
 	skipIfNotOk(t)
 	found := false
 	for i := 1; i <= eventualConsistencyRetries; i++ {
-		dirs, err := fs.NewLister().SetLevel(1).Start(remote).GetDirs()
-		if err != nil {
-			t.Fatal(err)
-		}
+		dirs, err := fs.NewLister().SetLevel(1).Start(remote, "").GetDirs()
+		require.NoError(t, err)
 		for _, dir := range dirs {
 			if dir.Name != `hello? sausage` && dir.Name != `hello_ sausage` {
 				t.Errorf("Found unexpected item %q", dir.Name)
@@ -227,10 +226,8 @@ func TestFsListDirRoot(t *testing.T) {
 		t.Fatalf("Failed to make remote %q: %v", RemoteName, err)
 	}
 	found := false
-	dirs, err := fs.NewLister().SetLevel(1).Start(rootRemote).GetDirs()
-	if err != nil {
-		t.Fatal(err)
-	}
+	dirs, err := fs.NewLister().SetLevel(1).Start(rootRemote, "").GetDirs()
+	require.NoError(t, err)
 	for _, dir := range dirs {
 		if dir.Name == subRemoteLeaf {
 			found = true
@@ -241,42 +238,22 @@ func TestFsListDirRoot(t *testing.T) {
 	}
 }
 
-// TestFsListRoot tests List works in the root
-func TestFsListRoot(t *testing.T) {
+// TestFsListSubdir tests List works for a subdirectory
+func TestFsListSubdir(t *testing.T) {
 	skipIfNotOk(t)
-	rootRemote, err := fs.NewFs(RemoteName)
-	if err != nil {
-		t.Fatalf("Failed to make remote %q: %v", RemoteName, err)
-	}
-	// Should either find file1 and file2 or nothing
-	found1 := false
-	f1 := subRemoteLeaf + "/" + file1.Path
-	found2 := false
-	f2 := subRemoteLeaf + "/" + file2.Path
-	f2Alt := subRemoteLeaf + "/" + file2.WinPath
-	count := 0
-	objs, err := fs.NewLister().Start(rootRemote).GetObjects()
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, obj := range objs {
-		count++
-		if obj.Remote() == f1 {
-			found1 = true
+	test := func(fileName string) bool {
+		dir, _ := path.Split(fileName)
+		dir = dir[:len(dir)-1]
+		objs, err := fs.NewLister().Start(remote, dir).GetObjects()
+		if err == fs.ErrorDirNotFound {
+			return false
 		}
-		if obj.Remote() == f2 || obj.Remote() == f2Alt {
-			found2 = true
-		}
+		require.NoError(t, err)
+		require.Len(t, objs, 1)
+		assert.Equal(t, fileName, objs[0].Remote())
+		return true
 	}
-	if count == 0 {
-		// Nothing found is OK
-		return
-	}
-	if found1 && found2 {
-		// Both found is OK
-		return
-	}
-	t.Errorf("Didn't find %q (%v) and %q (%v) or no files (count %d)", f1, found1, f2, found2, count)
+	assert.True(t, test(file2.Path) || test(file2.WinPath), "normal and alternative lists failed")
 }
 
 // TestFsListFile1 tests file present

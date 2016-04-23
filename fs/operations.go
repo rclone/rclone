@@ -454,16 +454,17 @@ func DeleteFiles(toBeDeleted ObjectsChan) {
 }
 
 // Read a map of Object.Remote to Object for the given Fs.
+// dir is the start directory, "" for root
 // If includeAll is specified all files will be added,
 // otherwise only files passing the filter will be added.
-func readFilesMap(fs Fs, includeAll bool) (files map[string]Object, err error) {
+func readFilesMap(fs Fs, includeAll bool, dir string) (files map[string]Object, err error) {
 	files = make(map[string]Object)
 	normalised := make(map[string]struct{})
 	list := NewLister()
 	if !includeAll {
 		list.SetFilter(Config.Filter)
 	}
-	list.Start(fs)
+	list.Start(fs, dir)
 	for {
 		o, err := list.GetObject()
 		if err != nil {
@@ -494,14 +495,15 @@ func readFilesMap(fs Fs, includeAll bool) (files map[string]Object, err error) {
 }
 
 // readFilesMaps runs readFilesMap on fdst and fsrc at the same time
-func readFilesMaps(fdst Fs, fdstIncludeAll bool, fsrc Fs, fsrcIncludeAll bool) (dstFiles, srcFiles map[string]Object, err error) {
+// dir is the start directory, "" for root
+func readFilesMaps(fdst Fs, fdstIncludeAll bool, fsrc Fs, fsrcIncludeAll bool, dir string) (dstFiles, srcFiles map[string]Object, err error) {
 	var wg sync.WaitGroup
 	var srcErr, dstErr error
 
 	list := func(fs Fs, includeAll bool, pMap *map[string]Object, pErr *error) {
 		defer wg.Done()
 		Log(fs, "Building file list")
-		dstFiles, listErr := readFilesMap(fs, includeAll)
+		dstFiles, listErr := readFilesMap(fs, includeAll, dir)
 		if listErr != nil {
 			ErrorLog(fs, "Error building file list: %v", listErr)
 			*pErr = listErr
@@ -535,7 +537,9 @@ func Same(fdst, fsrc Fs) bool {
 // If Delete is true then it deletes any files in fdst that aren't in fsrc
 //
 // If DoMove is true then files will be moved instead of copied
-func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
+//
+// dir is the start directory, "" for root
+func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool, dir string) error {
 	if Same(fdst, fsrc) {
 		ErrorLog(fdst, "Nothing to do as source and destination are the same")
 		return nil
@@ -547,7 +551,7 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 	}
 
 	// Read the files of both source and destination in parallel
-	dstFiles, srcFiles, err := readFilesMaps(fdst, Config.Filter.DeleteExcluded, fsrc, false)
+	dstFiles, srcFiles, err := readFilesMaps(fdst, Config.Filter.DeleteExcluded, fsrc, false, dir)
 	if err != nil {
 		return err
 	}
@@ -651,12 +655,12 @@ func syncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) error {
 
 // Sync fsrc into fdst
 func Sync(fdst, fsrc Fs) error {
-	return syncCopyMove(fdst, fsrc, true, false)
+	return syncCopyMove(fdst, fsrc, true, false, "")
 }
 
 // CopyDir copies fsrc into fdst
 func CopyDir(fdst, fsrc Fs) error {
-	return syncCopyMove(fdst, fsrc, false, false)
+	return syncCopyMove(fdst, fsrc, false, false, "")
 }
 
 // MoveDir moves fsrc into fdst
@@ -684,7 +688,7 @@ func MoveDir(fdst, fsrc Fs) error {
 	}
 
 	// Now move the files
-	err := syncCopyMove(fdst, fsrc, false, true)
+	err := syncCopyMove(fdst, fsrc, false, true, "")
 	if err != nil || Stats.Errored() {
 		ErrorLog(fdst, "Not deleting files as there were IO errors")
 		return err
@@ -732,7 +736,7 @@ func checkIdentical(dst, src Object) bool {
 
 // Check the files in fsrc and fdst according to Size and hash
 func Check(fdst, fsrc Fs) error {
-	dstFiles, srcFiles, err := readFilesMaps(fdst, false, fsrc, false)
+	dstFiles, srcFiles, err := readFilesMaps(fdst, false, fsrc, false, "")
 	if err != nil {
 		return err
 	}
@@ -800,7 +804,7 @@ func Check(fdst, fsrc Fs) error {
 //
 // Lists in parallel which may get them out of order
 func ListFn(f Fs, fn func(Object)) error {
-	list := NewLister().SetFilter(Config.Filter).Start(f)
+	list := NewLister().SetFilter(Config.Filter).Start(f, "")
 	var wg sync.WaitGroup
 	wg.Add(Config.Checkers)
 	for i := 0; i < Config.Checkers; i++ {
@@ -909,7 +913,7 @@ func Count(f Fs) (objects int64, size int64, err error) {
 
 // ListDir lists the directories/buckets/containers in the Fs to the supplied writer
 func ListDir(f Fs, w io.Writer) error {
-	list := NewLister().SetLevel(1).Start(f)
+	list := NewLister().SetLevel(1).Start(f, "")
 	for {
 		dir, err := list.GetDir()
 		if err != nil {
@@ -976,7 +980,7 @@ func Purge(f Fs) error {
 	}
 	if doFallbackPurge {
 		// DeleteFiles and Rmdir observe --dry-run
-		list := NewLister().Start(f)
+		list := NewLister().Start(f, "")
 		DeleteFiles(listToChan(list))
 		err = Rmdir(f)
 	}
@@ -1132,7 +1136,7 @@ func (mode DeduplicateMode) String() string {
 func Deduplicate(f Fs, mode DeduplicateMode) error {
 	Log(f, "Looking for duplicates using %v mode.", mode)
 	files := map[string][]Object{}
-	list := NewLister().Start(f)
+	list := NewLister().Start(f, "")
 	for {
 		o, err := list.GetObject()
 		if err != nil {

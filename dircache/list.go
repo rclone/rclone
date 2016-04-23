@@ -63,12 +63,20 @@ func listDir(f ListDirer, out fs.ListOpts, dirID string, path string) {
 }
 
 // List walks the path returning iles and directories into out
-func (dc *DirCache) List(f ListDirer, out fs.ListOpts) {
+func (dc *DirCache) List(f ListDirer, out fs.ListOpts, dir string) {
 	defer out.Finished()
 	err := dc.FindRoot(false)
 	if err != nil {
-		out.SetError(fs.ErrorDirNotFound)
-	} else {
-		listDir(f, out, dc.RootID(), "")
+		out.SetError(err)
+		return
 	}
+	id, err := dc.FindDir(dir, false)
+	if err != nil {
+		out.SetError(err)
+		return
+	}
+	if dir != "" {
+		dir += "/"
+	}
+	listDir(f, out, id, dir)
 }

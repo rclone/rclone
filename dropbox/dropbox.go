@@ -235,14 +235,22 @@ func (f *Fs) stripRoot(path string) (string, error) {
 }
 
 // Walk the root returning a channel of FsObjects
-func (f *Fs) list(out fs.ListOpts) {
+func (f *Fs) list(out fs.ListOpts, dir string) {
 	// Track path component case, it could be different for entries coming from DropBox API
 	// See https://www.dropboxforum.com/hc/communities/public/questions/201665409-Wrong-character-case-of-folder-name-when-calling-listFolder-using-Sync-API?locale=en-us
 	// and https://github.com/ncw/rclone/issues/53
 	nameTree := newNameTree()
 	cursor := ""
+	root := f.slashRoot
+	if dir != "" {
+		root += "/" + dir
+		// We assume that dir is entered in the correct case
+		// here which is likely since it probably came from a
+		// directory listing
+		nameTree.PutCaseCorrectPath(strings.Trim(root, "/"))
+	}
 	for {
-		deltaPage, err := f.db.Delta(cursor, f.slashRoot)
+		deltaPage, err := f.db.Delta(cursor, root)
 		if err != nil {
 			fs.Stats.Error()
 			fs.ErrorLog(f, "Couldn't list: %s", err)
@@ -340,9 +348,9 @@ func (f *Fs) list(out fs.ListOpts) {
 }
 
 // List walks the path returning a channel of FsObjects
-func (f *Fs) List(out fs.ListOpts) {
+func (f *Fs) List(out fs.ListOpts, dir string) {
 	defer out.Finished()
-	f.list(out)
+	f.list(out, dir)
 }
 
 // ListDir walks the path returning a channel of FsObjects

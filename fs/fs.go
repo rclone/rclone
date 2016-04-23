@@ -40,6 +40,7 @@ var (
 	ErrorDirNotFound          = fmt.Errorf("Directory not found")
 	ErrorLevelNotSupported    = fmt.Errorf("Level value not supported")
 	ErrorListAborted          = fmt.Errorf("List aborted")
+	ErrorListOnlyRoot         = fmt.Errorf("Can only list from root")
 )
 
 // RegInfo provides information about a filesystem
@@ -98,10 +99,14 @@ func Register(info *RegInfo) {
 type Fs interface {
 	Info
 
-	// List the objects and directories of the Fs
+	// List the objects and directories of the Fs starting from dir
 	//
-	// This should return ErrDirNotFound if the directory isn't found.
-	List(ListOpts)
+	// dir should be "" to start from the root, and should not
+	// have trailing slashes.
+	//
+	// This should return ErrDirNotFound (using out.SetError())
+	// if the directory isn't found.
+	List(out ListOpts, dir string)
 
 	// NewFsObject finds the Object at remote.  Returns nil if can't be found
 	NewFsObject(remote string) Object
@@ -312,10 +317,10 @@ func NewLister() *Lister {
 
 // Start starts a go routine listing the Fs passed in.  It returns the
 // same Lister that was passed in for convenience.
-func (o *Lister) Start(f Fs) *Lister {
+func (o *Lister) Start(f Fs, dir string) *Lister {
 	o.results = make(chan listerResult, o.buffer)
 	go func() {
-		f.List(o)
+		f.List(o, dir)
 	}()
 	return o
 }

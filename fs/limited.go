@@ -38,8 +38,12 @@ func (f *Limited) String() string {
 }
 
 // List the Fs into a channel
-func (f *Limited) List(opts ListOpts) {
+func (f *Limited) List(opts ListOpts, dir string) {
 	defer opts.Finished()
+	if dir != "" {
+		opts.SetError(ErrorListOnlyRoot)
+		return
+	}
 	for _, obj := range f.objects {
 		if opts.Add(obj) {
 			return

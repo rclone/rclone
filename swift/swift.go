@@ -260,10 +260,14 @@ type listFn func(remote string, object *swift.Object, isDirectory bool) error
 // the container and root supplied
 //
 // Level is the level of the recursion
-func (f *Fs) listContainerRoot(container, root string, level int, fn listFn) error {
+func (f *Fs) listContainerRoot(container, root string, dir string, level int, fn listFn) error {
+	prefix := root
+	if dir != "" {
+		prefix += dir + "/"
+	}
 	// Options for ObjectsWalk
 	opts := swift.ObjectsOpts{
-		Prefix: root,
+		Prefix: prefix,
 		Limit:  256,
 	}
 	switch level {
@@ -302,21 +306,19 @@ func (f *Fs) listContainerRoot(container, root string, level int, fn listFn) err
 }
 
 // list the objects into the function supplied
-func (f *Fs) list(level int, fn listFn) error {
-	return f.listContainerRoot(f.container, f.root, level, fn)
+func (f *Fs) list(dir string, level int, fn listFn) error {
+	return f.listContainerRoot(f.container, f.root, dir, level, fn)
 }
 
 // listFiles walks the path returning a channel of FsObjects
-//
-// if ignoreStorable is set then it outputs the file even if Storable() is false
-func (f *Fs) listFiles(out fs.ListOpts, ignoreStorable bool) {
+func (f *Fs) listFiles(out fs.ListOpts, dir string) {
 	defer out.Finished()
 	if f.container == "" {
 		out.SetError(errors.New("Can't list objects at root - choose a container using lsd"))
 		return
 	}
 	// List the objects
-	err := f.list(out.Level(), func(remote string, object *swift.Object, isDirectory bool) error {
+	err := f.list(dir, out.Level(), func(remote string, object *swift.Object, isDirectory bool) error {
 		if isDirectory {
 			dir := &fs.Dir{
 				Name:  remote,
@@ -329,8 +331,7 @@ func (f *Fs) listFiles(out fs.ListOpts, ignoreStorable bool) {
 		} else {
 			if o := f.newFsObjectWithInfo(remote, object); o != nil {
 				// Storable does a full metadata read on 0 size objects which might be dynamic large objects
-				storable := o.Storable()
-				if storable || ignoreStorable {
+				if o.Storable() {
 					if out.Add(o) {
 						return fs.ErrorListAborted
 					}
@@ -348,8 +349,12 @@ func (f *Fs) listFiles(out fs.ListOpts, ignoreStorable bool) {
 }
 
 // listContainers lists the containers
-func (f *Fs) listContainers(out fs.ListOpts) {
+func (f *Fs) listContainers(out fs.ListOpts, dir string) {
 	defer out.Finished()
+	if dir != "" {
+		out.SetError(fs.ErrorListOnlyRoot)
+		return
+	}
 	containers, err := f.c.ContainersAll(nil)
 	if err != nil {
 		out.SetError(err)
@@ -368,11 +373,11 @@ func (f *Fs) listContainers(out fs.ListOpts) {
 }
 
 // List walks the path returning files and directories to out
-func (f *Fs) List(out fs.ListOpts) {
+func (f *Fs) List(out fs.ListOpts, dir string) {
 	if f.container == "" {
-		f.listContainers(out)
+		f.listContainers(out, dir)
 	} else {
-		f.listFiles(out, false)
+		f.listFiles(out, dir)
 	}
 	return
 }
@@ -428,7 +433,7 @@ func (f *Fs) Purge() error {
 	toBeDeleted := make(chan fs.Object, fs.Config.Transfers)
 	var err error
 	go func() {
-		err = f.list(fs.MaxLevel, func(remote string, object *swift.Object, isDirectory bool) error {
+		err = f.list("", fs.MaxLevel, func(remote string, object *swift.Object, isDirectory bool) error {
 			if !isDirectory {
 				if o := f.newFsObjectWithInfo(remote, object); o != nil {
 					toBeDeleted <- o
@@ -625,7 +630,7 @@ func min(x, y int64) int64 {
 // if except is passed in then segments with that prefix won't be deleted
 func (o *Object) removeSegments(except string) error {
 	segmentsRoot := o.fs.root + o.remote + "/"
-	err := o.fs.listContainerRoot(o.fs.segmentsContainer, segmentsRoot, fs.MaxLevel, func(remote string, object *swift.Object, isDirectory bool) error {
+	err := o.fs.listContainerRoot(o.fs.segmentsContainer, segmentsRoot, "", fs.MaxLevel, func(remote string, object *swift.Object, isDirectory bool) error {
 		if isDirectory {
 			return nil
 		}
