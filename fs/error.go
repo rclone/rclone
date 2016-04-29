@@ -4,8 +4,10 @@ package fs
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 // Retry is an optional interface for error as to whether the
@@ -56,12 +58,37 @@ func RetryError(err error) error {
 	return plainRetryError{err}
 }
 
+// isClosedConnError reports whether err is an error from use of a closed
+// network connection.
+//
+// Code adapted from net/http
+func isClosedConnError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	// Note that this error isn't exported so we have to do a
+	// string comparison :-(
+	str := err.Error()
+	if strings.Contains(str, "use of closed network connection") {
+		return true
+	}
+
+	return isClosedConnErrorPlatform(err)
+}
+
 // ShouldRetry looks at an error and tries to work out if retrying the
 // operation that caused it would be a good idea. It returns true if
-// the error implements Timeout() or Temporary() and it returns true.
+// the error implements Timeout() or Temporary() or if the error
+// indicates a premature closing of the connection.
 func ShouldRetry(err error) bool {
 	if err == nil {
 		return false
+	}
+
+	// Look for premature closing of connection
+	if err == io.EOF || err == io.ErrUnexpectedEOF || isClosedConnError(err) {
+		return true
 	}
 
 	// Unwrap url.Error
