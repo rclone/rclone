@@ -3,8 +3,7 @@ sudo: false
 
 os:
   - linux
-
-# - osx
+  - osx
 
 go:
   - 1.5.3
