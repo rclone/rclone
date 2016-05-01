@@ -100,6 +100,7 @@ func (f *Fs) String() string {
 
 // newFsObject makes a half completed Object
 func (f *Fs) newFsObject(remote string) *Object {
+	remote = normString(remote)
 	remote = filepath.ToSlash(remote)
 	dstPath := f.filterPath(filepath.Join(f.root, f.cleanUtf8(remote)))
 	return &Object{
