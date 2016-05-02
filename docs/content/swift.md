@@ -139,3 +139,19 @@ amongst others) for storing the modification time for an object.
 The Swift API doesn't return a correct MD5SUM for segmented files
 (Dynamic or Static Large Objects) so rclone won't check or use the
 MD5SUM for these.
+
+### Troublshooting ###
+
+#### Rclone gives Failed to create file system for "remote:": Bad Request ####
+
+Due to an oddity of the underlying swift library, it gives a "Bad
+Request" error rather than a more sensible error when the
+authentication fails for Swift.
+
+So this most likely means your username / password is wrong.  You can
+investigate further with the `--dump-bodies` flag.
+
+#### Rclone gives Failed to create file system: Response didn't have storage storage url and auth token ####
+
+This is most likely caused by forgetting to specify your tenant when
+setting up a swift remote.
