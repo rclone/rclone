@@ -42,8 +42,8 @@ var (
 			"onedrive.readwrite", // r/w perms to all of a user's OneDrive files
 		},
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://login.live.com/oauth20_authorize.srf",
-			TokenURL: "https://login.live.com/oauth20_token.srf",
+			AuthURL:  "https://login.windows.net/oauth2/authorize",
+			TokenURL: "https://login.windows.net/oauth2/token",
 		},
 		ClientID:     rcloneClientID,
 		ClientSecret: fs.Reveal(rcloneEncryptedClientSecret),
