@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -69,7 +70,8 @@ type Filter struct {
 	ModTimeFrom    time.Time
 	ModTimeTo      time.Time
 	rules          []rule
-	files          filesMap
+	files          filesMap // files if filesFrom
+	dirs           filesMap // dirs from filesFrom
 }
 
 // We use time conventions
@@ -244,9 +246,21 @@ func (f *Filter) AddRule(rule string) error {
 func (f *Filter) AddFile(file string) error {
 	if f.files == nil {
 		f.files = make(filesMap)
+		f.dirs = make(filesMap)
 	}
 	file = strings.Trim(file, "/")
 	f.files[file] = struct{}{}
+	// Put all the parent directories into f.dirs
+	for {
+		file = path.Dir(file)
+		if file == "." {
+			break
+		}
+		if _, found := f.dirs[file]; found {
+			break
+		}
+		f.dirs[file] = struct{}{}
+	}
 	return nil
 }
 
@@ -263,6 +277,28 @@ func (f *Filter) InActive() bool {
 		f.MinSize == 0 &&
 		f.MaxSize == 0 &&
 		len(f.rules) == 0)
+}
+
+// includeRemote returns whether this remote passes the filter rules.
+func (f *Filter) includeRemote(remote string) bool {
+	for _, rule := range f.rules {
+		if rule.Match(remote) {
+			return rule.Include
+		}
+	}
+	return true
+}
+
+// IncludeDirectory returns whether this directory should be included
+// in the sync or not.
+func (f *Filter) IncludeDirectory(remote string) bool {
+	remote = strings.Trim(remote, "/")
+	// filesFrom takes precedence
+	if f.files != nil {
+		_, include := f.dirs[remote]
+		return include
+	}
+	return f.includeRemote(remote + "/")
 }
 
 // Include returns whether this object should be included into the
@@ -285,12 +321,7 @@ func (f *Filter) Include(remote string, size int64, modTime time.Time) bool {
 	if f.MaxSize != 0 && size > f.MaxSize {
 		return false
 	}
-	for _, rule := range f.rules {
-		if rule.Match(remote) {
-			return rule.Include
-		}
-	}
-	return true
+	return f.includeRemote(remote)
 }
 
 // IncludeObject returns whether this object should be included into

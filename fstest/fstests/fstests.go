@@ -129,8 +129,12 @@ func TestFsListEmpty(t *testing.T) {
 // TestFsListDirEmpty tests listing the directories from an empty directory
 func TestFsListDirEmpty(t *testing.T) {
 	skipIfNotOk(t)
-	for obj := range remote.ListDir() {
-		t.Errorf("Found unexpected item %q", obj.Name)
+	dirs, err := fs.NewLister().SetLevel(1).Start(remote).GetDirs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, dir := range dirs {
+		t.Errorf("Found unexpected item %q", dir.Name)
 	}
 }
 
@@ -193,9 +197,13 @@ func TestFsListDirFile2(t *testing.T) {
 	skipIfNotOk(t)
 	found := false
 	for i := 1; i <= eventualConsistencyRetries; i++ {
-		for obj := range remote.ListDir() {
-			if obj.Name != `hello? sausage` && obj.Name != `hello_ sausage` {
-				t.Errorf("Found unexpected item %q", obj.Name)
+		dirs, err := fs.NewLister().SetLevel(1).Start(remote).GetDirs()
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, dir := range dirs {
+			if dir.Name != `hello? sausage` && dir.Name != `hello_ sausage` {
+				t.Errorf("Found unexpected item %q", dir.Name)
 			} else {
 				found = true
 			}
@@ -219,8 +227,12 @@ func TestFsListDirRoot(t *testing.T) {
 		t.Fatalf("Failed to make remote %q: %v", RemoteName, err)
 	}
 	found := false
-	for obj := range rootRemote.ListDir() {
-		if obj.Name == subRemoteLeaf {
+	dirs, err := fs.NewLister().SetLevel(1).Start(rootRemote).GetDirs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, dir := range dirs {
+		if dir.Name == subRemoteLeaf {
 			found = true
 		}
 	}
@@ -243,8 +255,11 @@ func TestFsListRoot(t *testing.T) {
 	f2 := subRemoteLeaf + "/" + file2.Path
 	f2Alt := subRemoteLeaf + "/" + file2.WinPath
 	count := 0
-	errors := fs.Stats.GetErrors()
-	for obj := range rootRemote.List() {
+	objs, err := fs.NewLister().Start(rootRemote).GetObjects()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, obj := range objs {
 		count++
 		if obj.Remote() == f1 {
 			found1 = true
@@ -253,17 +268,12 @@ func TestFsListRoot(t *testing.T) {
 			found2 = true
 		}
 	}
-	errors -= fs.Stats.GetErrors()
 	if count == 0 {
-		if errors == 0 {
-			t.Error("Expecting error if count==0")
-		}
+		// Nothing found is OK
 		return
 	}
 	if found1 && found2 {
-		if errors != 0 {
-			t.Error("Not expecting error if found")
-		}
+		// Both found is OK
 		return
 	}
 	t.Errorf("Didn't find %q (%v) and %q (%v) or no files (count %d)", f1, found1, f2, found2, count)

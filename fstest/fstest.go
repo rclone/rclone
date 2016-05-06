@@ -154,12 +154,13 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, precision ti
 	is := NewItems(items)
 	oldErrors := fs.Stats.GetErrors()
 	var objs []fs.Object
+	var err error
 	const retries = 6
 	sleep := time.Second / 2
 	for i := 1; i <= retries; i++ {
-		objs = nil
-		for obj := range f.List() {
-			objs = append(objs, obj)
+		objs, err = fs.NewLister().Start(f).GetObjects()
+		if err != nil && err != fs.ErrorDirNotFound {
+			t.Fatalf("Error listing: %v", err)
 		}
 		if len(objs) == len(items) {
 			// Put an extra sleep in if we did any retries just to make sure it really

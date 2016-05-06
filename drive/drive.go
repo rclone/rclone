@@ -13,7 +13,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -452,117 +451,64 @@ func (f *Fs) findExportFormat(filepath string, item *drive.File) (extension, lin
 	return "", ""
 }
 
-// Path should be directory path either "" or "path/"
-//
-// List the directory using a recursive list from the root
-//
-// This fetches the minimum amount of stuff but does more API calls
-// which makes it slow
-func (f *Fs) listDirRecursive(dirID string, path string, out fs.ObjectsChan) error {
-	var subError error
-	// Make the API request
-	var wg sync.WaitGroup
-	_, err := f.listAll(dirID, "", false, false, func(item *drive.File) bool {
-		filepath := path + item.Title
+// ListDir reads the directory specified by the job into out, returning any more jobs
+func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.ListDirJob, err error) {
+	fs.Debug(f, "Reading %q", job.Path)
+	_, err = f.listAll(job.DirID, "", false, false, func(item *drive.File) bool {
+		remote := job.Path + item.Title
 		switch {
 		case *driveAuthOwnerOnly && !isAuthOwned(item):
 			// ignore object or directory
 		case item.MimeType == driveFolderType:
-			// Recurse on directories
-			wg.Add(1)
-			folder := filepath + "/"
-			fs.Debug(f, "Reading %s", folder)
-			go func() {
-				defer wg.Done()
-				err := f.listDirRecursive(item.Id, folder, out)
-				if err != nil {
-					subError = err
-					fs.ErrorLog(f, "Error reading %s:%s", folder, err)
-				}
-
-			}()
-		case item.Md5Checksum != "":
-			// If item has MD5 sum it is a file stored on drive
-			if o := f.newFsObjectWithInfo(filepath, item); o != nil {
-				out <- o
-			}
-		case len(item.ExportLinks) != 0:
-			// If item has export links then it is a google doc
-			extension, link := f.findExportFormat(filepath, item)
-			if extension == "" {
-				fs.Debug(filepath, "No export formats found")
-			} else {
-				if o := f.newFsObjectWithInfo(filepath+"."+extension, item); o != nil {
-					obj := o.(*Object)
-					obj.isDocument = true
-					obj.url = link
-					obj.bytes = -1
-					out <- o
-				}
-			}
-		default:
-			fs.Debug(filepath, "Ignoring unknown object")
-		}
-		return false
-	})
-	wg.Wait()
-	fs.Debug(f, "Finished reading %s", path)
-	if err != nil {
-		return err
-	}
-	if subError != nil {
-		return subError
-	}
-	return nil
-}
-
-// List walks the path returning a channel of FsObjects
-func (f *Fs) List() fs.ObjectsChan {
-	out := make(fs.ObjectsChan, fs.Config.Checkers)
-	go func() {
-		defer close(out)
-		err := f.dirCache.FindRoot(false)
-		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Couldn't find root: %s", err)
-		} else {
-			err = f.listDirRecursive(f.dirCache.RootID(), "", out)
-			if err != nil {
-				fs.Stats.Error()
-				fs.ErrorLog(f, "List failed: %s", err)
-			}
-		}
-	}()
-	return out
-}
-
-// ListDir walks the path returning a channel of directories
-func (f *Fs) ListDir() fs.DirChan {
-	out := make(fs.DirChan, fs.Config.Checkers)
-	go func() {
-		defer close(out)
-		err := f.dirCache.FindRoot(false)
-		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Couldn't find root: %s", err)
-		} else {
-			_, err := f.listAll(f.dirCache.RootID(), "", true, false, func(item *drive.File) bool {
+			if out.IncludeDirectory(remote) {
 				dir := &fs.Dir{
 					Name:  item.Title,
 					Bytes: -1,
 					Count: -1,
 				}
 				dir.When, _ = time.Parse(timeFormatIn, item.ModifiedDate)
-				out <- dir
-				return false
-			})
-			if err != nil {
-				fs.Stats.Error()
-				fs.ErrorLog(f, "ListDir failed: %s", err)
+				if out.AddDir(dir) {
+					return true
+				}
+				if job.Depth > 0 {
+					jobs = append(jobs, dircache.ListDirJob{DirID: item.Id, Path: remote + "/", Depth: job.Depth - 1})
+				}
 			}
+		case item.Md5Checksum != "":
+			// If item has MD5 sum it is a file stored on drive
+			if o := f.newFsObjectWithInfo(remote, item); o != nil {
+				if out.Add(o) {
+					return true
+				}
+			}
+		case len(item.ExportLinks) != 0:
+			// If item has export links then it is a google doc
+			extension, link := f.findExportFormat(remote, item)
+			if extension == "" {
+				fs.Debug(remote, "No export formats found")
+			} else {
+				if o := f.newFsObjectWithInfo(remote+"."+extension, item); o != nil {
+					obj := o.(*Object)
+					obj.isDocument = true
+					obj.url = link
+					obj.bytes = -1
+					if out.Add(o) {
+						return true
+					}
+				}
+			}
+		default:
+			fs.Debug(remote, "Ignoring unknown object")
 		}
-	}()
-	return out
+		return false
+	})
+	fs.Debug(f, "Finished reading %q", job.Path)
+	return jobs, err
+}
+
+// List walks the path returning files and directories to out
+func (f *Fs) List(out fs.ListOpts) {
+	f.dirCache.List(f, out)
 }
 
 // Creates a drive.File info from the parameters passed in and a half

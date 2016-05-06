@@ -364,14 +364,21 @@ func (f *Fs) NewFsObject(remote string) fs.Object {
 	return f.newFsObjectWithInfo(remote, nil)
 }
 
+// listFn is called from list to handle an object.
+type listFn func(remote string, object *s3.Object, isDirectory bool) error
+
 // list the objects into the function supplied
 //
-// If directories is set it only sends directories
-func (f *Fs) list(directories bool, fn func(string, *s3.Object)) {
+// Level is the level of the recursion
+func (f *Fs) list(level int, fn listFn) error {
 	maxKeys := int64(listChunkSize)
 	delimiter := ""
-	if directories {
+	switch level {
+	case 1:
 		delimiter = "/"
+	case fs.MaxLevel:
+	default:
+		return fs.ErrorLevelNotSupported
 	}
 	var marker *string
 	for {
@@ -385,114 +392,127 @@ func (f *Fs) list(directories bool, fn func(string, *s3.Object)) {
 		}
 		resp, err := f.c.ListObjects(&req)
 		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Couldn't read bucket %q: %s", f.bucket, err)
+			return err
+		}
+		rootLength := len(f.root)
+		if level == 1 {
+			for _, commonPrefix := range resp.CommonPrefixes {
+				if commonPrefix.Prefix == nil {
+					fs.Log(f, "Nil common prefix received")
+					continue
+				}
+				remote := *commonPrefix.Prefix
+				if !strings.HasPrefix(remote, f.root) {
+					fs.Log(f, "Odd name received %q", remote)
+					continue
+				}
+				remote = remote[rootLength:]
+				if strings.HasSuffix(remote, "/") {
+					remote = remote[:len(remote)-1]
+				}
+				err = fn(remote, &s3.Object{Key: &remote}, true)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		for _, object := range resp.Contents {
+			key := aws.StringValue(object.Key)
+			if !strings.HasPrefix(key, f.root) {
+				fs.Log(f, "Odd name received %q", key)
+				continue
+			}
+			remote := key[rootLength:]
+			err = fn(remote, object, false)
+			if err != nil {
+				return err
+			}
+		}
+		if !aws.BoolValue(resp.IsTruncated) {
 			break
+		}
+		// Use NextMarker if set, otherwise use last Key
+		if resp.NextMarker == nil || *resp.NextMarker == "" {
+			marker = resp.Contents[len(resp.Contents)-1].Key
 		} else {
-			rootLength := len(f.root)
-			if directories {
-				for _, commonPrefix := range resp.CommonPrefixes {
-					if commonPrefix.Prefix == nil {
-						fs.Log(f, "Nil common prefix received")
-						continue
-					}
-					remote := *commonPrefix.Prefix
-					if !strings.HasPrefix(remote, f.root) {
-						fs.Log(f, "Odd name received %q", remote)
-						continue
-					}
-					remote = remote[rootLength:]
-					if strings.HasSuffix(remote, "/") {
-						remote = remote[:len(remote)-1]
-					}
-					fn(remote, &s3.Object{Key: &remote})
+			marker = resp.NextMarker
+		}
+	}
+	return nil
+}
+
+// listFiles lists files and directories to out
+func (f *Fs) listFiles(out fs.ListOpts) {
+	defer out.Finished()
+	if f.bucket == "" {
+		// Return no objects at top level list
+		out.SetError(errors.New("Can't list objects at root - choose a bucket using lsd"))
+		return
+	}
+	// List the objects and directories
+	err := f.list(out.Level(), func(remote string, object *s3.Object, isDirectory bool) error {
+		if isDirectory {
+			size := int64(0)
+			if object.Size != nil {
+				size = *object.Size
+			}
+			dir := &fs.Dir{
+				Name:  remote,
+				Bytes: size,
+				Count: 0,
+			}
+			if out.AddDir(dir) {
+				return fs.ErrorListAborted
+			}
+		} else {
+			if o := f.newFsObjectWithInfo(remote, object); o != nil {
+				if out.Add(o) {
+					return fs.ErrorListAborted
 				}
-			} else {
-				for _, object := range resp.Contents {
-					key := aws.StringValue(object.Key)
-					if !strings.HasPrefix(key, f.root) {
-						fs.Log(f, "Odd name received %q", key)
-						continue
-					}
-					remote := key[rootLength:]
-					fn(remote, object)
-				}
 			}
-			if !aws.BoolValue(resp.IsTruncated) {
-				break
+		}
+		return nil
+	})
+	if err != nil {
+		if awsErr, ok := err.(awserr.RequestFailure); ok {
+			if awsErr.StatusCode() == http.StatusNotFound {
+				err = fs.ErrorDirNotFound
 			}
-			// Use NextMarker if set, otherwise use last Key
-			if resp.NextMarker == nil || *resp.NextMarker == "" {
-				marker = resp.Contents[len(resp.Contents)-1].Key
-			} else {
-				marker = resp.NextMarker
-			}
+		}
+		out.SetError(err)
+	}
+}
+
+// listBuckets lists the buckets to out
+func (f *Fs) listBuckets(out fs.ListOpts) {
+	defer out.Finished()
+	req := s3.ListBucketsInput{}
+	resp, err := f.c.ListBuckets(&req)
+	if err != nil {
+		out.SetError(err)
+		return
+	}
+	for _, bucket := range resp.Buckets {
+		dir := &fs.Dir{
+			Name:  aws.StringValue(bucket.Name),
+			When:  aws.TimeValue(bucket.CreationDate),
+			Bytes: -1,
+			Count: -1,
+		}
+		if out.AddDir(dir) {
+			break
 		}
 	}
 }
 
-// List walks the path returning a channel of FsObjects
-func (f *Fs) List() fs.ObjectsChan {
-	out := make(fs.ObjectsChan, fs.Config.Checkers)
+// List lists files and directories to out
+func (f *Fs) List(out fs.ListOpts) {
 	if f.bucket == "" {
-		// Return no objects at top level list
-		close(out)
-		fs.Stats.Error()
-		fs.ErrorLog(f, "Can't list objects at root - choose a bucket using lsd")
+		f.listBuckets(out)
 	} else {
-		go func() {
-			defer close(out)
-			f.list(false, func(remote string, object *s3.Object) {
-				if fs := f.newFsObjectWithInfo(remote, object); fs != nil {
-					out <- fs
-				}
-			})
-		}()
+		f.listFiles(out)
 	}
-	return out
-}
-
-// ListDir lists the buckets
-func (f *Fs) ListDir() fs.DirChan {
-	out := make(fs.DirChan, fs.Config.Checkers)
-	if f.bucket == "" {
-		// List the buckets
-		go func() {
-			defer close(out)
-			req := s3.ListBucketsInput{}
-			resp, err := f.c.ListBuckets(&req)
-			if err != nil {
-				fs.Stats.Error()
-				fs.ErrorLog(f, "Couldn't list buckets: %s", err)
-			} else {
-				for _, bucket := range resp.Buckets {
-					out <- &fs.Dir{
-						Name:  aws.StringValue(bucket.Name),
-						When:  aws.TimeValue(bucket.CreationDate),
-						Bytes: -1,
-						Count: -1,
-					}
-				}
-			}
-		}()
-	} else {
-		// List the directories in the path in the bucket
-		go func() {
-			defer close(out)
-			f.list(true, func(remote string, object *s3.Object) {
-				size := int64(0)
-				if object.Size != nil {
-					size = *object.Size
-				}
-				out <- &fs.Dir{
-					Name:  remote,
-					Bytes: size,
-					Count: 0,
-				}
-			})
-		}()
-	}
-	return out
+	return
 }
 
 // Put the FsObject into the bucket

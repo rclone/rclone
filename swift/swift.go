@@ -253,21 +253,25 @@ func (f *Fs) NewFsObject(remote string) fs.Object {
 	return f.newFsObjectWithInfo(remote, nil)
 }
 
-// listFn is called from list and listContainerRoot to handle an object
-type listFn func(string, *swift.Object) error
+// listFn is called from list and listContainerRoot to handle an object.
+type listFn func(remote string, object *swift.Object, isDirectory bool) error
 
 // listContainerRoot lists the objects into the function supplied from
 // the container and root supplied
 //
-// If directories is set it only sends directories
-func (f *Fs) listContainerRoot(container, root string, directories bool, fn listFn) error {
+// Level is the level of the recursion
+func (f *Fs) listContainerRoot(container, root string, level int, fn listFn) error {
 	// Options for ObjectsWalk
 	opts := swift.ObjectsOpts{
 		Prefix: root,
 		Limit:  256,
 	}
-	if directories {
+	switch level {
+	case 1:
 		opts.Delimiter = '/'
+	case fs.MaxLevel:
+	default:
+		return fs.ErrorLevelNotSupported
 	}
 	rootLength := len(root)
 	return f.c.ObjectsWalk(container, &opts, func(opts *swift.ObjectsOpts) (interface{}, error) {
@@ -275,19 +279,19 @@ func (f *Fs) listContainerRoot(container, root string, directories bool, fn list
 		if err == nil {
 			for i := range objects {
 				object := &objects[i]
-				// FIXME if there are no directories, swift gives back the files for some reason!
-				if directories {
-					if !strings.HasSuffix(object.Name, "/") {
-						continue
+				isDirectory := false
+				if level == 1 {
+					if strings.HasSuffix(object.Name, "/") {
+						isDirectory = true
+						object.Name = object.Name[:len(object.Name)-1]
 					}
-					object.Name = object.Name[:len(object.Name)-1]
 				}
 				if !strings.HasPrefix(object.Name, root) {
 					fs.Log(f, "Odd name received %q", object.Name)
 					continue
 				}
 				remote := object.Name[rootLength:]
-				err = fn(remote, object)
+				err = fn(remote, object, isDirectory)
 				if err != nil {
 					break
 				}
@@ -298,86 +302,79 @@ func (f *Fs) listContainerRoot(container, root string, directories bool, fn list
 }
 
 // list the objects into the function supplied
-//
-// If directories is set it only sends directories
-func (f *Fs) list(directories bool, fn listFn) {
-	err := f.listContainerRoot(f.container, f.root, directories, fn)
-	if err != nil {
-		fs.Stats.Error()
-		fs.ErrorLog(f, "Couldn't read container %q: %s", f.container, err)
-	}
+func (f *Fs) list(level int, fn listFn) error {
+	return f.listContainerRoot(f.container, f.root, level, fn)
 }
 
 // listFiles walks the path returning a channel of FsObjects
 //
 // if ignoreStorable is set then it outputs the file even if Storable() is false
-func (f *Fs) listFiles(ignoreStorable bool) fs.ObjectsChan {
-	out := make(fs.ObjectsChan, fs.Config.Checkers)
+func (f *Fs) listFiles(out fs.ListOpts, ignoreStorable bool) {
+	defer out.Finished()
 	if f.container == "" {
-		// Return no objects at top level list
-		close(out)
-		fs.Stats.Error()
-		fs.ErrorLog(f, "Can't list objects at root - choose a container using lsd")
-	} else {
-		// List the objects
-		go func() {
-			defer close(out)
-			f.list(false, func(remote string, object *swift.Object) error {
-				if o := f.newFsObjectWithInfo(remote, object); o != nil {
-					// Storable does a full metadata read on 0 size objects which might be dynamic large objects
-					storable := o.Storable()
-					if storable || ignoreStorable {
-						out <- o
-					}
-				}
-				return nil
-			})
-		}()
+		out.SetError(errors.New("Can't list objects at root - choose a container using lsd"))
+		return
 	}
-	return out
-}
-
-// List walks the path returning a channel of FsObjects
-func (f *Fs) List() fs.ObjectsChan {
-	return f.listFiles(false)
-}
-
-// ListDir lists the containers
-func (f *Fs) ListDir() fs.DirChan {
-	out := make(fs.DirChan, fs.Config.Checkers)
-	if f.container == "" {
-		// List the containers
-		go func() {
-			defer close(out)
-			containers, err := f.c.ContainersAll(nil)
-			if err != nil {
-				fs.Stats.Error()
-				fs.ErrorLog(f, "Couldn't list containers: %v", err)
-			} else {
-				for _, container := range containers {
-					out <- &fs.Dir{
-						Name:  container.Name,
-						Bytes: container.Bytes,
-						Count: container.Count,
+	// List the objects
+	err := f.list(out.Level(), func(remote string, object *swift.Object, isDirectory bool) error {
+		if isDirectory {
+			dir := &fs.Dir{
+				Name:  remote,
+				Bytes: object.Bytes,
+				Count: 0,
+			}
+			if out.AddDir(dir) {
+				return fs.ErrorListAborted
+			}
+		} else {
+			if o := f.newFsObjectWithInfo(remote, object); o != nil {
+				// Storable does a full metadata read on 0 size objects which might be dynamic large objects
+				storable := o.Storable()
+				if storable || ignoreStorable {
+					if out.Add(o) {
+						return fs.ErrorListAborted
 					}
 				}
 			}
-		}()
-	} else {
-		// List the directories in the path in the container
-		go func() {
-			defer close(out)
-			f.list(true, func(remote string, object *swift.Object) error {
-				out <- &fs.Dir{
-					Name:  remote,
-					Bytes: object.Bytes,
-					Count: 0,
-				}
-				return nil
-			})
-		}()
+		}
+		return nil
+	})
+	if err != nil {
+		if err == swift.ContainerNotFound {
+			err = fs.ErrorDirNotFound
+		}
+		out.SetError(err)
 	}
-	return out
+}
+
+// listContainers lists the containers
+func (f *Fs) listContainers(out fs.ListOpts) {
+	defer out.Finished()
+	containers, err := f.c.ContainersAll(nil)
+	if err != nil {
+		out.SetError(err)
+		return
+	}
+	for _, container := range containers {
+		dir := &fs.Dir{
+			Name:  container.Name,
+			Bytes: container.Bytes,
+			Count: container.Count,
+		}
+		if out.AddDir(dir) {
+			break
+		}
+	}
+}
+
+// List walks the path returning files and directories to out
+func (f *Fs) List(out fs.ListOpts) {
+	if f.container == "" {
+		f.listContainers(out)
+	} else {
+		f.listFiles(out, false)
+	}
+	return
 }
 
 // Put the object into the container
@@ -427,7 +424,24 @@ func (f *Fs) Precision() time.Duration {
 //
 // Implemented here so we can make sure we delete directory markers
 func (f *Fs) Purge() error {
-	fs.DeleteFiles(f.listFiles(true))
+	// Delete all the files including the directory markers
+	toBeDeleted := make(chan fs.Object, fs.Config.Transfers)
+	var err error
+	go func() {
+		err = f.list(fs.MaxLevel, func(remote string, object *swift.Object, isDirectory bool) error {
+			if !isDirectory {
+				if o := f.newFsObjectWithInfo(remote, object); o != nil {
+					toBeDeleted <- o
+				}
+			}
+			return nil
+		})
+		close(toBeDeleted)
+	}()
+	fs.DeleteFiles(toBeDeleted)
+	if err != nil {
+		return err
+	}
 	return f.Rmdir()
 }
 
@@ -611,7 +625,10 @@ func min(x, y int64) int64 {
 // if except is passed in then segments with that prefix won't be deleted
 func (o *Object) removeSegments(except string) error {
 	segmentsRoot := o.fs.root + o.remote + "/"
-	err := o.fs.listContainerRoot(o.fs.segmentsContainer, segmentsRoot, false, func(remote string, object *swift.Object) error {
+	err := o.fs.listContainerRoot(o.fs.segmentsContainer, segmentsRoot, fs.MaxLevel, func(remote string, object *swift.Object, isDirectory bool) error {
+		if isDirectory {
+			return nil
+		}
 		if except != "" && strings.HasPrefix(remote, except) {
 			// fs.Debug(o, "Ignoring current segment file %q in container %q", segmentsRoot+remote, o.fs.segmentsContainer)
 			return nil

@@ -19,7 +19,6 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/ncw/go-acd"
@@ -318,9 +317,7 @@ OUTER:
 			return shouldRetry(resp, err)
 		})
 		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Couldn't list files: %v", err)
-			break
+			return false, err
 		}
 		if nodes == nil {
 			break
@@ -341,177 +338,45 @@ OUTER:
 	return
 }
 
-// Path should be directory path either "" or "path/"
-//
-// List the directory using a recursive list from the root
-//
-// This fetches the minimum amount of stuff but does more API calls
-// which makes it slow
-func (f *Fs) listDirRecursive(dirID string, path string, out fs.ObjectsChan) error {
-	var subError error
-	// Make the API request
-	var wg sync.WaitGroup
-	_, err := f.listAll(dirID, "", false, false, func(node *acd.Node) bool {
-		// Recurse on directories
+// ListDir reads the directory specified by the job into out, returning any more jobs
+func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.ListDirJob, err error) {
+	fs.Debug(f, "Reading %q", job.Path)
+	_, err = f.listAll(job.DirID, "", false, false, func(node *acd.Node) bool {
+		remote := job.Path + *node.Name
 		switch *node.Kind {
 		case folderKind:
-			wg.Add(1)
-			folder := path + *node.Name + "/"
-			fs.Debug(f, "Reading %s", folder)
-			go func() {
-				defer wg.Done()
-				err := f.listDirRecursive(*node.Id, folder, out)
-				if err != nil {
-					subError = err
-					fs.ErrorLog(f, "Error reading %s:%s", folder, err)
+			if out.IncludeDirectory(remote) {
+				dir := &fs.Dir{
+					Name:  remote,
+					Bytes: -1,
+					Count: -1,
 				}
-			}()
-			return false
+				dir.When, _ = time.Parse(timeFormat, *node.ModifiedDate) // FIXME
+				if out.AddDir(dir) {
+					return true
+				}
+				if job.Depth > 0 {
+					jobs = append(jobs, dircache.ListDirJob{DirID: *node.Id, Path: remote + "/", Depth: job.Depth - 1})
+				}
+			}
 		case fileKind:
-			if fs := f.newFsObjectWithInfo(path+*node.Name, node); fs != nil {
-				out <- fs
+			if o := f.newFsObjectWithInfo(remote, node); o != nil {
+				if out.Add(o) {
+					return true
+				}
 			}
 		default:
 			// ignore ASSET etc
 		}
 		return false
 	})
-	wg.Wait()
-	fs.Debug(f, "Finished reading %s", path)
-	if err != nil {
-		return err
-	}
-	if subError != nil {
-		return subError
-	}
-	return nil
+	fs.Debug(f, "Finished reading %q", job.Path)
+	return jobs, err
 }
 
-// Path should be directory path either "" or "path/"
-//
-// List the directory using a recursive list from the root
-//
-// This fetches the minimum amount of stuff but does more API calls
-// which makes it slow
-func (f *Fs) listDirNonRecursive(dirID string, path string, out fs.ObjectsChan) error {
-	// Start some directory listing go routines
-	var wg sync.WaitGroup         // sync closing of go routines
-	var traversing sync.WaitGroup // running directory traversals
-	type dirListJob struct {
-		dirID string
-		path  string
-	}
-	in := make(chan dirListJob, fs.Config.Checkers)
-	errs := make(chan error, fs.Config.Checkers)
-	for i := 0; i < fs.Config.Checkers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for job := range in {
-				var jobs []dirListJob
-				fs.Debug(f, "Reading %q", job.path)
-				// Make the API request
-				_, err := f.listAll(job.dirID, "", false, false, func(node *acd.Node) bool {
-					// Recurse on directories
-					switch *node.Kind {
-					case folderKind:
-						jobs = append(jobs, dirListJob{dirID: *node.Id, path: job.path + *node.Name + "/"})
-					case fileKind:
-						if fs := f.newFsObjectWithInfo(job.path+*node.Name, node); fs != nil {
-							out <- fs
-						}
-					default:
-						// ignore ASSET etc
-					}
-					return false
-				})
-				fs.Debug(f, "Finished reading %q", job.path)
-				if err != nil {
-					fs.ErrorLog(f, "Error reading %s: %s", path, err)
-					errs <- err
-				}
-				// FIXME stop traversal on error?
-				traversing.Add(len(jobs))
-				go func() {
-					// Now we have traversed this directory, send these jobs off for traversal in
-					// the background
-					for _, job := range jobs {
-						in <- job
-					}
-				}()
-				traversing.Done()
-			}
-		}()
-	}
-
-	// Collect the errors
-	wg.Add(1)
-	var errResult error
-	go func() {
-		defer wg.Done()
-		for err := range errs {
-			errResult = err
-		}
-	}()
-
-	// Start the process
-	traversing.Add(1)
-	in <- dirListJob{dirID: dirID, path: path}
-	traversing.Wait()
-	close(in)
-	close(errs)
-	wg.Wait()
-
-	return errResult
-}
-
-// List walks the path returning a channel of FsObjects
-func (f *Fs) List() fs.ObjectsChan {
-	out := make(fs.ObjectsChan, fs.Config.Checkers)
-	go func() {
-		defer close(out)
-		err := f.dirCache.FindRoot(false)
-		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Couldn't find root: %s", err)
-		} else {
-			err = f.listDirNonRecursive(f.dirCache.RootID(), "", out)
-			if err != nil {
-				fs.Stats.Error()
-				fs.ErrorLog(f, "List failed: %s", err)
-			}
-		}
-	}()
-	return out
-}
-
-// ListDir lists the directories
-func (f *Fs) ListDir() fs.DirChan {
-	out := make(fs.DirChan, fs.Config.Checkers)
-	go func() {
-		defer close(out)
-		err := f.dirCache.FindRoot(false)
-		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Couldn't find root: %s", err)
-		} else {
-			_, err := f.listAll(f.dirCache.RootID(), "", true, false, func(item *acd.Node) bool {
-				dir := &fs.Dir{
-					Name:  *item.Name,
-					Bytes: -1,
-					Count: -1,
-				}
-				dir.When, _ = time.Parse(timeFormat, *item.ModifiedDate)
-				out <- dir
-				return false
-			})
-			if err != nil {
-				fs.Stats.Error()
-				fs.ErrorLog(f, "ListDir failed: %s", err)
-			}
-		}
-	}()
-	return out
+// List walks the path returning iles and directories into out
+func (f *Fs) List(out fs.ListOpts) {
+	f.dirCache.List(f, out)
 }
 
 // Put the object into the container
