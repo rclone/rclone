@@ -77,6 +77,9 @@ func NewFs(name, root string) (fs.Fs, error) {
 		var remote string
 		f.root, remote = getDirFile(f.root)
 		obj := f.NewFsObject(remote)
+		if obj == nil {
+			return nil, fmt.Errorf("Failed to make object for %q in %q", remote, f.root)
+		}
 		// return a Fs Limited to this object
 		return fs.NewLimited(f, obj), nil
 	}
@@ -622,7 +625,11 @@ func (o *Object) Remove() error {
 // Assumes os.PathSeparator is used.
 func getDirFile(s string) (string, string) {
 	i := strings.LastIndex(s, string(os.PathSeparator))
-	return s[:i], s[i+1:]
+	dir, file := s[:i], s[i+1:]
+	if dir == "" {
+		dir = string(os.PathSeparator)
+	}
+	return dir, file
 }
 
 func (f *Fs) filterPath(s string) string {
