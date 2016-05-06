@@ -140,7 +140,7 @@ The Swift API doesn't return a correct MD5SUM for segmented files
 (Dynamic or Static Large Objects) so rclone won't check or use the
 MD5SUM for these.
 
-### Troublshooting ###
+### Troubleshooting ###
 
 #### Rclone gives Failed to create file system for "remote:": Bad Request ####
 
