@@ -305,6 +305,7 @@ type listFn func(remote string, object *storage.Object, isDirectory bool) error
 // If directories is set it only sends directories
 func (f *Fs) list(dir string, level int, fn listFn) error {
 	root := f.root
+	rootLength := len(root)
 	if dir != "" {
 		root += dir + "/"
 	}
@@ -316,7 +317,6 @@ func (f *Fs) list(dir string, level int, fn listFn) error {
 	default:
 		return fs.ErrorLevelNotSupported
 	}
-	rootLength := len(root)
 	for {
 		objects, err := list.Do()
 		if err != nil {

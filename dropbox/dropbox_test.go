@@ -31,6 +31,7 @@ func TestFsPutFile2(t *testing.T)            { fstests.TestFsPutFile2(t) }
 func TestFsListDirFile2(t *testing.T)        { fstests.TestFsListDirFile2(t) }
 func TestFsListDirRoot(t *testing.T)         { fstests.TestFsListDirRoot(t) }
 func TestFsListSubdir(t *testing.T)          { fstests.TestFsListSubdir(t) }
+func TestFsListLevel2(t *testing.T)          { fstests.TestFsListLevel2(t) }
 func TestFsListFile1(t *testing.T)           { fstests.TestFsListFile1(t) }
 func TestFsNewFsObject(t *testing.T)         { fstests.TestFsNewFsObject(t) }
 func TestFsListFile1and2(t *testing.T)       { fstests.TestFsListFile1and2(t) }

@@ -225,7 +225,7 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 
 	// Start the process
 	traversing.Add(1)
-	in <- listArgs{remote: "", dirpath: root, level: out.Level() - 1}
+	in <- listArgs{remote: dir, dirpath: root, level: out.Level() - 1}
 	for i := 0; i < fs.Config.Checkers; i++ {
 		wg.Add(1)
 		go func() {

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fstest"
+	"github.com/stretchr/testify/assert"
 )
 
 // Test b2 string encoding
@@ -167,4 +168,117 @@ func TestParseTimeString(t *testing.T) {
 		}
 	}
 
+}
+
+func TestSendDir(t *testing.T) {
+	for _, test := range []struct {
+		lastDir    string
+		remote     string
+		level      int
+		dirNames   []string
+		newLastDir string
+	}{
+		{
+			lastDir:    "",
+			remote:     "test.txt",
+			level:      100,
+			dirNames:   nil,
+			newLastDir: "",
+		},
+		{
+			lastDir:    "",
+			remote:     "potato/test.txt",
+			level:      100,
+			dirNames:   []string{"potato"},
+			newLastDir: "potato",
+		},
+		{
+			lastDir:    "potato",
+			remote:     "potato/test.txt",
+			level:      100,
+			dirNames:   nil,
+			newLastDir: "potato",
+		},
+		{
+			lastDir:    "",
+			remote:     "potato/sausage/test.txt",
+			level:      100,
+			dirNames:   []string{"potato", "potato/sausage"},
+			newLastDir: "potato/sausage",
+		},
+		{
+			lastDir:    "potato",
+			remote:     "potato/sausage/test.txt",
+			level:      100,
+			dirNames:   []string{"potato/sausage"},
+			newLastDir: "potato/sausage",
+		},
+		{
+			lastDir:    "potato/sausage",
+			remote:     "potato/sausage/test.txt",
+			level:      100,
+			dirNames:   nil,
+			newLastDir: "potato/sausage",
+		},
+		{
+			lastDir:    "",
+			remote:     "a/b/c/d/e/f.txt",
+			level:      100,
+			dirNames:   []string{"a", "a/b", "a/b/c", "a/b/c/d", "a/b/c/d/e"},
+			newLastDir: "a/b/c/d/e",
+		},
+		{
+			lastDir:    "a/b/c/d/e",
+			remote:     "a/b/c/d/E/f.txt",
+			level:      100,
+			dirNames:   []string{"a/b/c/d/E"},
+			newLastDir: "a/b/c/d/E",
+		},
+		{
+			lastDir:    "a/b/c/d/e",
+			remote:     "a/b/C/D/E/f.txt",
+			level:      100,
+			dirNames:   []string{"a/b/C", "a/b/C/D", "a/b/C/D/E"},
+			newLastDir: "a/b/C/D/E",
+		},
+		{
+			lastDir:    "a/b/c",
+			remote:     "a/b/c/d/e/f.txt",
+			level:      100,
+			dirNames:   []string{"a/b/c/d", "a/b/c/d/e"},
+			newLastDir: "a/b/c/d/e",
+		},
+		{
+			lastDir:    "",
+			remote:     "a/b/c/d/e/f.txt",
+			level:      1,
+			dirNames:   []string{"a"},
+			newLastDir: "a/b/c/d/e",
+		},
+		{
+			lastDir:    "a/b/c",
+			remote:     "a/b/c/d/e/f.txt",
+			level:      1,
+			dirNames:   nil,
+			newLastDir: "a/b/c/d/e",
+		},
+		{
+			lastDir:    "",
+			remote:     "a/b/c/d/e/f.txt",
+			level:      3,
+			dirNames:   []string{"a", "a/b", "a/b/c"},
+			newLastDir: "a/b/c/d/e",
+		},
+		{
+			lastDir:    "a/b/C/D/E",
+			remote:     "a/b/c/d/e/f.txt",
+			level:      3,
+			dirNames:   []string{"a/b/c"},
+			newLastDir: "a/b/c/d/e",
+		},
+	} {
+		dirNames, newLastDir := sendDir(test.lastDir, test.remote, test.level)
+		assert.Equal(t, test.dirNames, dirNames, "dirNames fail for sendDir(%q,%q,%v)", test.lastDir, test.remote, test.level)
+		assert.Equal(t, test.newLastDir, newLastDir, "newLastDir fail for sendDir(%q,%q,%v)", test.lastDir, test.remote, test.level)
+	}
 }

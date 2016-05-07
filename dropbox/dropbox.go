@@ -226,12 +226,25 @@ func (f *Fs) NewFsObject(remote string) fs.Object {
 }
 
 // Strips the root off path and returns it
-func (f *Fs) stripRoot(path string) (string, error) {
-	lowercase := strings.ToLower(path)
-	if !strings.HasPrefix(lowercase, f.slashRootSlash) {
-		return "", fmt.Errorf("Path %q is not under root %q", path, f.slashRootSlash)
+func strip(path, root string) (string, error) {
+	if len(root) > 0 {
+		if root[0] != '/' {
+			root = "/" + root
+		}
+		if root[len(root)-1] != '/' {
+			root += "/"
+		}
 	}
-	return path[len(f.slashRootSlash):], nil
+	lowercase := strings.ToLower(path)
+	if !strings.HasPrefix(lowercase, root) {
+		return "", fmt.Errorf("Path %q is not under root %q", path, root)
+	}
+	return path[len(root):], nil
+}
+
+// Strips the root off path and returns it
+func (f *Fs) stripRoot(path string) (string, error) {
+	return strip(path, f.slashRootSlash)
 }
 
 // Walk the root returning a channel of FsObjects
@@ -252,81 +265,80 @@ func (f *Fs) list(out fs.ListOpts, dir string) {
 	for {
 		deltaPage, err := f.db.Delta(cursor, root)
 		if err != nil {
+			out.SetError(fmt.Errorf("Couldn't list: %s", err))
+			return
+		}
+		if deltaPage.Reset && cursor != "" {
+			fs.ErrorLog(f, "Unexpected reset during listing - try again")
 			fs.Stats.Error()
-			fs.ErrorLog(f, "Couldn't list: %s", err)
 			break
-		} else {
-			if deltaPage.Reset && cursor != "" {
-				fs.ErrorLog(f, "Unexpected reset during listing - try again")
-				fs.Stats.Error()
-				break
-			}
-			fs.Debug(f, "%d delta entries received", len(deltaPage.Entries))
-			for i := range deltaPage.Entries {
-				deltaEntry := &deltaPage.Entries[i]
-				entry := deltaEntry.Entry
-				if entry == nil {
-					// This notifies of a deleted object
+		}
+		fs.Debug(f, "%d delta entries received", len(deltaPage.Entries))
+		for i := range deltaPage.Entries {
+			deltaEntry := &deltaPage.Entries[i]
+			entry := deltaEntry.Entry
+			if entry == nil {
+				// This notifies of a deleted object
+			} else {
+				if len(entry.Path) <= 1 || entry.Path[0] != '/' {
+					fs.Stats.Error()
+					fs.ErrorLog(f, "dropbox API inconsistency: a path should always start with a slash and be at least 2 characters: %s", entry.Path)
+					continue
+				}
+
+				lastSlashIndex := strings.LastIndex(entry.Path, "/")
+
+				var parentPath string
+				if lastSlashIndex == 0 {
+					parentPath = ""
 				} else {
-					if len(entry.Path) <= 1 || entry.Path[0] != '/' {
-						fs.Stats.Error()
-						fs.ErrorLog(f, "dropbox API inconsistency: a path should always start with a slash and be at least 2 characters: %s", entry.Path)
-						continue
+					parentPath = entry.Path[1:lastSlashIndex]
+				}
+				lastComponent := entry.Path[lastSlashIndex+1:]
+
+				if entry.IsDir {
+					nameTree.PutCaseCorrectDirectoryName(parentPath, lastComponent)
+					name, err := f.stripRoot(entry.Path + "/")
+					if err != nil {
+						out.SetError(err)
+						return
 					}
-
-					lastSlashIndex := strings.LastIndex(entry.Path, "/")
-
-					var parentPath string
-					if lastSlashIndex == 0 {
-						parentPath = ""
-					} else {
-						parentPath = entry.Path[1:lastSlashIndex]
+					name = strings.Trim(name, "/")
+					if name != "" && name != dir {
+						dir := &fs.Dir{
+							Name:  name,
+							When:  time.Time(entry.ClientMtime),
+							Bytes: entry.Bytes,
+							Count: -1,
+						}
+						if out.AddDir(dir) {
+							return
+						}
 					}
-					lastComponent := entry.Path[lastSlashIndex+1:]
-
-					if entry.IsDir {
-						nameTree.PutCaseCorrectDirectoryName(parentPath, lastComponent)
-						name, err := f.stripRoot(entry.Path + "/")
+				} else {
+					parentPathCorrectCase := nameTree.GetPathWithCorrectCase(parentPath)
+					if parentPathCorrectCase != nil {
+						path, err := f.stripRoot(*parentPathCorrectCase + "/" + lastComponent)
 						if err != nil {
 							out.SetError(err)
 							return
 						}
-						name = strings.Trim(name, "/")
-						if name != "" {
-							dir := &fs.Dir{
-								Name:  name,
-								When:  time.Time(entry.ClientMtime),
-								Bytes: entry.Bytes,
-								Count: -1,
-							}
-							if out.AddDir(dir) {
+						if o := f.newFsObjectWithInfo(path, entry); o != nil {
+							if out.Add(o) {
 								return
 							}
 						}
 					} else {
-						parentPathCorrectCase := nameTree.GetPathWithCorrectCase(parentPath)
-						if parentPathCorrectCase != nil {
-							path, err := f.stripRoot(*parentPathCorrectCase + "/" + lastComponent)
-							if err != nil {
-								out.SetError(err)
-								return
-							}
-							if o := f.newFsObjectWithInfo(path, entry); o != nil {
-								if out.Add(o) {
-									return
-								}
-							}
-						} else {
-							nameTree.PutFile(parentPath, lastComponent, entry)
-						}
+						nameTree.PutFile(parentPath, lastComponent, entry)
 					}
 				}
 			}
-			if !deltaPage.HasMore {
-				break
-			}
-			cursor = deltaPage.Cursor.Cursor
 		}
+		if !deltaPage.HasMore {
+			break
+		}
+		cursor = deltaPage.Cursor.Cursor
+
 	}
 
 	walkFunc := func(caseCorrectFilePath string, entry *dropbox.Entry) error {
@@ -347,41 +359,56 @@ func (f *Fs) list(out fs.ListOpts, dir string) {
 	}
 }
 
-// List walks the path returning a channel of FsObjects
-func (f *Fs) List(out fs.ListOpts, dir string) {
-	defer out.Finished()
-	f.list(out, dir)
-}
-
-// ListDir walks the path returning a channel of FsObjects
-func (f *Fs) ListDir() fs.DirChan {
-	out := make(fs.DirChan, fs.Config.Checkers)
-	go func() {
-		defer close(out)
-		entry, err := f.db.Metadata(f.root, true, false, "", "", metadataLimit)
+// listOneLevel walks the path one level deep
+func (f *Fs) listOneLevel(out fs.ListOpts, dir string) {
+	root := f.root
+	if dir != "" {
+		root += "/" + dir
+	}
+	entry, err := f.db.Metadata(root, true, false, "", "", metadataLimit)
+	if err != nil {
+		out.SetError(fmt.Errorf("Couldn't list single level: %s", err))
+		return
+	}
+	for i := range entry.Contents {
+		entry := &entry.Contents[i]
+		remote, err := strip(entry.Path, root)
 		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Couldn't list directories in root: %s", err)
+			out.SetError(err)
+			return
+		}
+		if entry.IsDir {
+			dir := &fs.Dir{
+				Name:  remote,
+				When:  time.Time(entry.ClientMtime),
+				Bytes: entry.Bytes,
+				Count: -1,
+			}
+			if out.AddDir(dir) {
+				return
+			}
 		} else {
-			for i := range entry.Contents {
-				entry := &entry.Contents[i]
-				if entry.IsDir {
-					name, err := f.stripRoot(entry.Path)
-					if err != nil {
-						continue
-					}
-
-					out <- &fs.Dir{
-						Name:  name,
-						When:  time.Time(entry.ClientMtime),
-						Bytes: entry.Bytes,
-						Count: -1,
-					}
+			if o := f.newFsObjectWithInfo(remote, entry); o != nil {
+				if out.Add(o) {
+					return
 				}
 			}
 		}
-	}()
-	return out
+	}
+}
+
+// List walks the path returning a channel of FsObjects
+func (f *Fs) List(out fs.ListOpts, dir string) {
+	defer out.Finished()
+	level := out.Level()
+	switch level {
+	case 1:
+		f.listOneLevel(out, dir)
+	case fs.MaxLevel:
+		f.list(out, dir)
+	default:
+		out.SetError(fs.ErrorLevelNotSupported)
+	}
 }
 
 // A read closer which doesn't close the input

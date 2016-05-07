@@ -457,6 +457,23 @@ func (o *Lister) Get() (Object, *Dir, error) {
 	}
 }
 
+// Get all the objects and dirs from the listing.
+func (o *Lister) GetAll() (objs []Object, dirs []*Dir, err error) {
+	for {
+		obj, dir, err := o.Get()
+		switch {
+		case err != nil:
+			return nil, nil, err
+		case obj != nil:
+			objs = append(objs, obj)
+		case dir != nil:
+			dirs = append(dirs, dir)
+		default:
+			return objs, dirs, nil
+		}
+	}
+}
+
 // GetObject will return an object from the listing.
 // It will skip over any directories.
 // Will return (nil, nil) when all objects have been returned.

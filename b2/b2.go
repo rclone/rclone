@@ -329,6 +329,34 @@ func (f *Fs) NewFsObject(remote string) fs.Object {
 	return f.newFsObjectWithInfo(remote, nil)
 }
 
+// sendDir works out given a lastDir and a remote which directories should be sent
+func sendDir(lastDir string, remote string, level int) (dirNames []string, newLastDir string) {
+	dir := path.Dir(remote)
+	if dir == "." {
+		// No slashes - nothing to do!
+		return nil, lastDir
+	}
+	if dir == lastDir {
+		// Still in same directory
+		return nil, lastDir
+	}
+	newLastDir = lastDir
+	for {
+		slashes := strings.Count(dir, "/")
+		if !strings.HasPrefix(lastDir, dir) && slashes < level {
+			dirNames = append([]string{dir}, dirNames...)
+		}
+		if newLastDir == lastDir {
+			newLastDir = dir
+		}
+		dir = path.Dir(dir)
+		if dir == "." {
+			break
+		}
+	}
+	return dirNames, newLastDir
+}
+
 // listFn is called from list to handle an object
 type listFn func(remote string, object *api.File, isDirectory bool) error
 
@@ -377,7 +405,7 @@ func (f *Fs) list(dir string, level int, prefix string, limit int, hidden bool, 
 	if hidden {
 		opts.Path = "/b2_list_file_versions"
 	}
-	lastDir := ""
+	lastDir := dir
 	for {
 		err := f.pacer.Call(func() (bool, error) {
 			resp, err := f.srv.CallJSON(&opts, &request, &response)
@@ -395,24 +423,21 @@ func (f *Fs) list(dir string, level int, prefix string, limit int, hidden bool, 
 			remote := file.Name[len(f.root):]
 			slashes := strings.Count(remote, "/")
 
-			// Check if this file makes a new directory
-			if slash := strings.IndexRune(remote, '/'); slash >= 0 {
-				if dir := remote[:slash]; dir != lastDir {
-					if slashes-1 < fs.MaxLevel {
-						err = fn(dir, nil, true)
-						if err != nil {
-							if err == errEndList {
-								return nil
-							}
-							return err
-						}
+			// Check if this file makes a new directories
+			var dirNames []string
+			dirNames, lastDir = sendDir(lastDir, remote, level)
+			for _, dirName := range dirNames {
+				err = fn(dirName, nil, true)
+				if err != nil {
+					if err == errEndList {
+						return nil
 					}
-					lastDir = dir
+					return err
 				}
 			}
 
 			// Send the file
-			if slashes < fs.MaxLevel {
+			if slashes < level {
 				err = fn(remote, file, false)
 				if err != nil {
 					if err == errEndList {

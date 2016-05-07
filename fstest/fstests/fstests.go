@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -129,14 +130,42 @@ func TestFsListEmpty(t *testing.T) {
 	fstest.CheckListing(t, remote, []fstest.Item{})
 }
 
+// winPath converts a path into a windows safe path
+func winPath(s string) string {
+	s = strings.Replace(s, "?", "_", -1)
+	s = strings.Replace(s, `"`, "_", -1)
+	s = strings.Replace(s, "<", "_", -1)
+	s = strings.Replace(s, ">", "_", -1)
+	return s
+}
+
+// dirsToNames returns a sorted list of names
+func dirsToNames(dirs []*fs.Dir) []string {
+	names := []string{}
+	for _, dir := range dirs {
+		names = append(names, winPath(dir.Name))
+	}
+	sort.Strings(names)
+	return names
+}
+
+// objsToNames returns a sorted list of object names
+func objsToNames(objs []fs.Object) []string {
+	names := []string{}
+	for _, obj := range objs {
+		names = append(names, winPath(obj.Remote()))
+	}
+	sort.Strings(names)
+	return names
+}
+
 // TestFsListDirEmpty tests listing the directories from an empty directory
 func TestFsListDirEmpty(t *testing.T) {
 	skipIfNotOk(t)
-	dirs, err := fs.NewLister().SetLevel(1).Start(remote, "").GetDirs()
+	objs, dirs, err := fs.NewLister().SetLevel(1).Start(remote, "").GetAll()
 	require.NoError(t, err)
-	for _, dir := range dirs {
-		t.Errorf("Found unexpected item %q", dir.Name)
-	}
+	assert.Equal(t, []string{}, objsToNames(objs))
+	assert.Equal(t, []string{}, dirsToNames(dirs))
 }
 
 // TestFsNewFsObjectNotFound tests not finding a object
@@ -164,14 +193,24 @@ func findObject(t *testing.T, Name string) fs.Object {
 }
 
 func testPut(t *testing.T, file *fstest.Item) {
+again:
 	buf := bytes.NewBufferString(fstest.RandomString(100))
 	hash := fs.NewMultiHasher()
 	in := io.TeeReader(buf, hash)
 
+	tries := 1
+	const maxTries = 10
 	file.Size = int64(buf.Len())
 	obji := fs.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
 	obj, err := remote.Put(in, obji)
 	if err != nil {
+		// Retry if err returned a retry error
+		if r, ok := err.(fs.Retry); ok && r.Retry() && tries < maxTries {
+			t.Logf("Put error: %v - low level retry %d/%d", err, tries, maxTries)
+
+			tries++
+			goto again
+		}
 		t.Fatal("Put error", err)
 	}
 	file.Hashes = hash.Sums()
@@ -196,26 +235,20 @@ func TestFsPutFile2(t *testing.T) {
 // TestFsListDirFile2 tests the files are correctly uploaded
 func TestFsListDirFile2(t *testing.T) {
 	skipIfNotOk(t)
-	found := false
+	var objNames, dirNames []string
 	for i := 1; i <= eventualConsistencyRetries; i++ {
-		dirs, err := fs.NewLister().SetLevel(1).Start(remote, "").GetDirs()
+		objs, dirs, err := fs.NewLister().SetLevel(1).Start(remote, "").GetAll()
 		require.NoError(t, err)
-		for _, dir := range dirs {
-			if dir.Name != `hello? sausage` && dir.Name != `hello_ sausage` {
-				t.Errorf("Found unexpected item %q", dir.Name)
-			} else {
-				found = true
-			}
-		}
-		if found {
+		objNames = objsToNames(objs)
+		dirNames = dirsToNames(dirs)
+		if len(objNames) >= 1 && len(dirNames) >= 1 {
 			break
 		}
 		t.Logf("Sleeping for 1 second for TestFsListDirFile2 eventual consistency: %d/%d", i, eventualConsistencyRetries)
 		time.Sleep(1 * time.Second)
 	}
-	if !found {
-		t.Errorf("Didn't find %q", `hello? sausage`)
-	}
+	assert.Equal(t, []string{`hello_ sausage`}, dirNames)
+	assert.Equal(t, []string{file1.Path}, objNames)
 }
 
 // TestFsListDirRoot tests that DirList works in the root
@@ -225,17 +258,9 @@ func TestFsListDirRoot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to make remote %q: %v", RemoteName, err)
 	}
-	found := false
 	dirs, err := fs.NewLister().SetLevel(1).Start(rootRemote, "").GetDirs()
 	require.NoError(t, err)
-	for _, dir := range dirs {
-		if dir.Name == subRemoteLeaf {
-			found = true
-		}
-	}
-	if !found {
-		t.Errorf("Didn't find %q", subRemoteLeaf)
-	}
+	assert.Contains(t, dirsToNames(dirs), subRemoteLeaf, "Remote leaf not found")
 }
 
 // TestFsListSubdir tests List works for a subdirectory
@@ -244,16 +269,29 @@ func TestFsListSubdir(t *testing.T) {
 	test := func(fileName string) bool {
 		dir, _ := path.Split(fileName)
 		dir = dir[:len(dir)-1]
-		objs, err := fs.NewLister().Start(remote, dir).GetObjects()
+		objs, dirs, err := fs.NewLister().Start(remote, dir).GetAll()
 		if err == fs.ErrorDirNotFound {
 			return false
 		}
 		require.NoError(t, err)
 		require.Len(t, objs, 1)
 		assert.Equal(t, fileName, objs[0].Remote())
+		require.Len(t, dirs, 0)
 		return true
 	}
 	assert.True(t, test(file2.Path) || test(file2.WinPath), "normal and alternative lists failed")
+}
+
+// TestFsListLevel2 tests List works for 2 levels
+func TestFsListLevel2(t *testing.T) {
+	skipIfNotOk(t)
+	objs, dirs, err := fs.NewLister().SetLevel(2).Start(remote, "").GetAll()
+	if err == fs.ErrorLevelNotSupported {
+		return
+	}
+	require.NoError(t, err)
+	assert.Equal(t, []string{file1.Path}, objsToNames(objs))
+	assert.Equal(t, []string{`hello_ sausage`, `hello_ sausage/êé`}, dirsToNames(dirs))
 }
 
 // TestFsListFile1 tests file present

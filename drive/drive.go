@@ -462,7 +462,7 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 		case item.MimeType == driveFolderType:
 			if out.IncludeDirectory(remote) {
 				dir := &fs.Dir{
-					Name:  item.Title,
+					Name:  remote,
 					Bytes: -1,
 					Count: -1,
 				}
