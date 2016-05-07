@@ -76,10 +76,19 @@ func newTest(remote string, subdir bool) *test {
 	return t
 }
 
+// dumpOutput prints the error output
+func (t *test) dumpOutput() {
+	log.Println("------------------------------------------------------------")
+	log.Printf("---- %q ----", t.cmdString)
+	log.Println(string(t.output))
+	log.Println("------------------------------------------------------------")
+}
+
 var failRe = regexp.MustCompile(`(?m)^--- FAIL: (Test\w*) \(`)
 
 // findFailures looks for all the tests which failed
 func (t *test) findFailures() {
+	oldFailedTests := t.failedTests
 	t.failedTests = nil
 	for _, matches := range failRe.FindAllSubmatch(t.output, -1) {
 		t.failedTests = append(t.failedTests, string(matches[1]))
@@ -91,8 +100,11 @@ func (t *test) findFailures() {
 	}
 	if t.passed() && len(t.failedTests) != 0 {
 		log.Printf("%q - Expecting no errors but got: %v", t.cmdString, t.failedTests)
+		t.dumpOutput()
 	} else if !t.passed() && len(t.failedTests) == 0 {
 		log.Printf("%q - Expecting errors but got none: %v", t.cmdString, t.failedTests)
+		t.dumpOutput()
+		t.failedTests = oldFailedTests
 	}
 }
 
@@ -175,9 +187,7 @@ func (t *test) run(result chan<- *test) {
 		}
 	}
 	if !t.passed() {
-		log.Println("------------------------------------------------------------")
-		log.Println(string(t.output))
-		log.Println("------------------------------------------------------------")
+		t.dumpOutput()
 	}
 	result <- t
 }
