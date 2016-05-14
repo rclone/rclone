@@ -308,11 +308,11 @@ func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly
 		Filters: query,
 	}
 	var nodes []*acd.Node
+	var out []*acd.Node
 	//var resp *http.Response
-OUTER:
 	for {
 		var resp *http.Response
-		err = f.pacer.Call(func() (bool, error) {
+		err = f.pacer.CallNoRetry(func() (bool, error) {
 			nodes, resp, err = f.c.Nodes.GetNodes(&opts)
 			return shouldRetry(resp, err)
 		})
@@ -328,11 +328,16 @@ OUTER:
 				if *node.Status != statusAvailable {
 					continue
 				}
-				if fn(node) {
-					found = true
-					break OUTER
-				}
+				// Store the nodes up in case we have to retry the listing
+				out = append(out, node)
 			}
+		}
+	}
+	// Send the nodes now
+	for _, node := range out {
+		if fn(node) {
+			found = true
+			break
 		}
 	}
 	return
@@ -341,35 +346,46 @@ OUTER:
 // ListDir reads the directory specified by the job into out, returning any more jobs
 func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.ListDirJob, err error) {
 	fs.Debug(f, "Reading %q", job.Path)
-	_, err = f.listAll(job.DirID, "", false, false, func(node *acd.Node) bool {
-		remote := job.Path + *node.Name
-		switch *node.Kind {
-		case folderKind:
-			if out.IncludeDirectory(remote) {
-				dir := &fs.Dir{
-					Name:  remote,
-					Bytes: -1,
-					Count: -1,
+	maxTries := fs.Config.LowLevelRetries
+	for tries := 1; tries <= maxTries; tries++ {
+		_, err = f.listAll(job.DirID, "", false, false, func(node *acd.Node) bool {
+			remote := job.Path + *node.Name
+			switch *node.Kind {
+			case folderKind:
+				if out.IncludeDirectory(remote) {
+					dir := &fs.Dir{
+						Name:  remote,
+						Bytes: -1,
+						Count: -1,
+					}
+					dir.When, _ = time.Parse(timeFormat, *node.ModifiedDate) // FIXME
+					if out.AddDir(dir) {
+						return true
+					}
+					if job.Depth > 0 {
+						jobs = append(jobs, dircache.ListDirJob{DirID: *node.Id, Path: remote + "/", Depth: job.Depth - 1})
+					}
 				}
-				dir.When, _ = time.Parse(timeFormat, *node.ModifiedDate) // FIXME
-				if out.AddDir(dir) {
-					return true
+			case fileKind:
+				if o := f.newFsObjectWithInfo(remote, node); o != nil {
+					if out.Add(o) {
+						return true
+					}
 				}
-				if job.Depth > 0 {
-					jobs = append(jobs, dircache.ListDirJob{DirID: *node.Id, Path: remote + "/", Depth: job.Depth - 1})
-				}
+			default:
+				// ignore ASSET etc
 			}
-		case fileKind:
-			if o := f.newFsObjectWithInfo(remote, node); o != nil {
-				if out.Add(o) {
-					return true
-				}
-			}
-		default:
-			// ignore ASSET etc
+			return false
+		})
+		if fs.IsRetryError(err) {
+			fs.Debug(f, "Directory listing error for %q: %v - low level retry %d/%d", job.Path, err, tries, maxTries)
+			continue
 		}
-		return false
-	})
+		if err != nil {
+			return nil, err
+		}
+		break
+	}
 	fs.Debug(f, "Finished reading %q", job.Path)
 	return jobs, err
 }
