@@ -238,7 +238,7 @@ tryAgain:
 		inErr = in.Close()
 	}
 	// Retry if err returned a retry error
-	if r, ok := err.(Retry); ok && r.Retry() && tries < maxTries {
+	if IsRetryError(err) && tries < maxTries {
 		tries++
 		Log(src, "Received error: %v - low level retry %d/%d", err, tries, maxTries)
 		if removeFailedCopy(dst) {

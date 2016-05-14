@@ -58,6 +58,15 @@ func RetryError(err error) error {
 	return plainRetryError{err}
 }
 
+// IsRetryError returns true if err conforms to the Retry interface
+// and calling the Retry method returns true.
+func IsRetryError(err error) bool {
+	if r, ok := err.(Retry); ok {
+		return r.Retry()
+	}
+	return false
+}
+
 // isClosedConnError reports whether err is an error from use of a closed
 // network connection.
 //
