@@ -234,6 +234,8 @@ func strip(path, root string) (string, error) {
 		if root[len(root)-1] != '/' {
 			root += "/"
 		}
+	} else if len(root) == 0 {
+		root = "/"
 	}
 	lowercase := strings.ToLower(path)
 	if !strings.HasPrefix(lowercase, root) {
