@@ -1,8 +1,10 @@
 package fs
 
 import (
-	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGlobToRegexp(t *testing.T) {
@@ -41,24 +43,62 @@ func TestGlobToRegexp(t *testing.T) {
 	} {
 		gotRe, err := globToRegexp(test.in)
 		if test.error == "" {
-			if err != nil {
-				t.Errorf("%q: not expecting error: %v", test.in, err)
-			} else {
-				got := gotRe.String()
-				if test.want != got {
-					t.Errorf("%q: want %q got %q", test.in, test.want, got)
-				}
-			}
+			got := gotRe.String()
+			require.NoError(t, err, test.in)
+			assert.Equal(t, test.want, got, test.in)
 		} else {
-			if err == nil {
-				t.Errorf("%q: expecting error but didn't get one", test.in)
-			} else {
-				got := err.Error()
-				if !strings.Contains(got, test.error) {
-					t.Errorf("%q: want error %q got %q", test.in, test.error, got)
-				}
-			}
+			require.Error(t, err, test.in)
+			assert.Contains(t, err.Error(), test.error, test.in)
+			assert.Nil(t, gotRe)
 		}
 	}
+}
 
+func TestGlobToDirGlobs(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want []string
+	}{
+		{`*`, []string{"/**"}},
+		{`/*`, []string{"/"}},
+		{`*.jpg`, []string{"/**"}},
+		{`/*.jpg`, []string{"/"}},
+		{`//*.jpg`, []string{"/"}},
+		{`///*.jpg`, []string{"/"}},
+		{`/a/*.jpg`, []string{"/a/", "/"}},
+		{`/a//*.jpg`, []string{"/a/", "/"}},
+		{`/a///*.jpg`, []string{"/a/", "/"}},
+		{`/a/b/*.jpg`, []string{"/a/b/", "/a/", "/"}},
+		{`a/*.jpg`, []string{"a/"}},
+		{`a/b/*.jpg`, []string{"a/b/", "a/"}},
+		{`*/*/*.jpg`, []string{"*/*/", "*/"}},
+		{`a/b/`, []string{"a/b/", "a/"}},
+		{`a/b`, []string{"a/"}},
+		{`a/b/*.{jpg,png,gif}`, []string{"a/b/", "a/"}},
+		{`/a/{jpg,png,gif}/*.{jpg,png,gif}`, []string{"/a/{jpg,png,gif}/", "/a/", "/"}},
+		{`a/{a,a*b,a**c}/d/`, []string{"/**"}},
+		{`/a/{a,a*b,a/c,d}/d/`, []string{"/**"}},
+		{`**`, []string{"**/"}},
+		{`a**`, []string{"a**/"}},
+		{`a**b`, []string{"a**/"}},
+		{`a**b**c**d`, []string{"a**b**c**/", "a**b**/", "a**/"}},
+		{`a**b/c**d`, []string{"a**b/c**/", "a**b/", "a**/"}},
+		{`/A/a**b/B/c**d/C/`, []string{"/A/a**b/B/c**d/C/", "/A/a**b/B/c**d/", "/A/a**b/B/c**/", "/A/a**b/B/", "/A/a**b/", "/A/a**/", "/A/", "/"}},
+		{`/var/spool/**/ncw`, []string{"/var/spool/**/", "/var/spool/", "/var/", "/"}},
+		{`var/spool/**/ncw/`, []string{"var/spool/**/ncw/", "var/spool/**/", "var/spool/", "var/"}},
+		{"/file1.jpg", []string{`/`}},
+		{"/file2.png", []string{`/`}},
+		{"/*.jpg", []string{`/`}},
+		{"/*.png", []string{`/`}},
+		{"/potato", []string{`/`}},
+		{"/sausage1", []string{`/`}},
+		{"/sausage2*", []string{`/`}},
+		{"/sausage3**", []string{`/sausage3**/`, "/"}},
+		{"/a/*.jpg", []string{`/a/`, "/"}},
+	} {
+		_, err := globToRegexp(test.in)
+		assert.NoError(t, err)
+		got := globToDirGlobs(test.in)
+		assert.Equal(t, test.want, got, test.in)
+	}
 }

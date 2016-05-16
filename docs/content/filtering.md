@@ -81,12 +81,31 @@ Special characters can be escaped with a `\` before them.
     \*.jpg       - matches "*.jpg"
     \\.jpg       - matches "\.jpg"
     \[one\].jpg  - matches "[one].jpg"
-  
+
+### Directories ###
+
+Rclone keeps track of directories that could match any file patterns.
+
+Eg if you add the include rule
+
+    \a\*.jpg
+
+Rclone will synthesize the directory include rule
+
+    \a\
+
+If you put any rules which end in `\` then it will only match
+directories.
+
+Directory matches are **only** used to optimise directory access
+patterns - you must still match the files that you want to match.
+Directory matches won't optimise anything on bucket based remotes (eg
+s3, swift, google compute storage, b2) which don't have a concept of
+directory.
+
 ### Differences between rsync and rclone patterns ###
 
 Rclone implements bash style `{a,b,c}` glob matching which rsync doesn't.
-
-Rclone ignores `/` at the end of a pattern.
 
 Rclone always does a wildcard match so `\` must always escape a `\`.
 
@@ -119,6 +138,11 @@ This would exclude
 
   * `secret17.jpg`
   * non `*.jpg` and `*.png`
+
+A similar process is done on directory entries before recursing into
+them.  This only works on remotes which have a concept of directory
+(Eg local, drive, onedrive, amazon cloud drive) and not on bucket
+based remotes (eg s3, swift, google compute storage, b2).
 
 ## Adding filtering rules ##
 
