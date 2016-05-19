@@ -82,6 +82,11 @@ Special characters can be escaped with a `\` before them.
     \\.jpg       - matches "\.jpg"
     \[one\].jpg  - matches "[one].jpg"
 
+Note also that rclone filter globs can only be used in one of the
+filter command line flags, not in the specification of the remote, so
+`rclone copy "remote:dir*.jpg" /path/to/dir` won't work - what is
+required is `rclone --include "*.jpg" copy remote:dir /path/to/dir`
+
 ### Directories ###
 
 Rclone keeps track of directories that could match any file patterns.
