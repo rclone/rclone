@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ncw/rclone/fs"
@@ -104,11 +105,14 @@ func putToken(name string, token *oauth2.Token) error {
 	return nil
 }
 
-// tokenSource stores updated tokens in the config file
-type tokenSource struct {
-	Name        string
-	TokenSource oauth2.TokenSource
-	OldToken    oauth2.Token
+// TokenSource stores updated tokens in the config file
+type TokenSource struct {
+	mu          sync.Mutex
+	name        string
+	tokenSource oauth2.TokenSource
+	token       *oauth2.Token
+	config      *oauth2.Config
+	ctx         context.Context
 }
 
 // Token returns a token or an error.
@@ -116,13 +120,23 @@ type tokenSource struct {
 // The returned Token must not be modified.
 //
 // This saves the token in the config file if it has changed
-func (ts *tokenSource) Token() (*oauth2.Token, error) {
-	token, err := ts.TokenSource.Token()
+func (ts *TokenSource) Token() (*oauth2.Token, error) {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
+
+	// Make a new token source if required
+	if ts.tokenSource == nil {
+		ts.tokenSource = ts.config.TokenSource(ts.ctx, ts.token)
+	}
+
+	token, err := ts.tokenSource.Token()
 	if err != nil {
 		return nil, err
 	}
-	if *token != ts.OldToken {
-		err = putToken(ts.Name, token)
+	changed := *token != *ts.token
+	ts.token = token
+	if changed {
+		err = putToken(ts.name, token)
 		if err != nil {
 			return nil, err
 		}
@@ -130,8 +144,15 @@ func (ts *tokenSource) Token() (*oauth2.Token, error) {
 	return token, nil
 }
 
+// Invalidate invalidates the token
+func (ts *TokenSource) Invalidate() {
+	ts.mu.Lock()
+	ts.token.AccessToken = ""
+	ts.mu.Unlock()
+}
+
 // Check interface satisfied
-var _ oauth2.TokenSource = (*tokenSource)(nil)
+var _ oauth2.TokenSource = (*TokenSource)(nil)
 
 // Context returns a context with our HTTP Client baked in for oauth2
 func Context() context.Context {
@@ -157,12 +178,12 @@ func overrideCredentials(name string, config *oauth2.Config) bool {
 }
 
 // NewClient gets a token from the config file and configures a Client
-// with it
-func NewClient(name string, config *oauth2.Config) (*http.Client, error) {
+// with it.  It returns the client and a TokenSource which Invalidate may need to be called on
+func NewClient(name string, config *oauth2.Config) (*http.Client, *TokenSource, error) {
 	overrideCredentials(name, config)
 	token, err := getToken(name)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Set our own http client in the context
@@ -170,12 +191,13 @@ func NewClient(name string, config *oauth2.Config) (*http.Client, error) {
 
 	// Wrap the TokenSource in our TokenSource which saves changed
 	// tokens in the config file
-	ts := &tokenSource{
-		Name:        name,
-		OldToken:    *token,
-		TokenSource: config.TokenSource(ctx, token),
+	ts := &TokenSource{
+		name:   name,
+		token:  token,
+		config: config,
+		ctx:    ctx,
 	}
-	return oauth2.NewClient(ctx, ts), nil
+	return oauth2.NewClient(ctx, ts), ts, nil
 
 }
 

@@ -84,12 +84,13 @@ func init() {
 
 // Fs represents a remote acd server
 type Fs struct {
-	name         string             // name of this remote
-	c            *acd.Client        // the connection to the acd server
-	noAuthClient *http.Client       // unauthenticated http client
-	root         string             // the path we are working on
-	dirCache     *dircache.DirCache // Map of directory path to directory id
-	pacer        *pacer.Pacer       // pacer for API calls
+	name         string                 // name of this remote
+	c            *acd.Client            // the connection to the acd server
+	noAuthClient *http.Client           // unauthenticated http client
+	root         string                 // the path we are working on
+	dirCache     *dircache.DirCache     // Map of directory path to directory id
+	pacer        *pacer.Pacer           // pacer for API calls
+	ts           *oauthutil.TokenSource // token source for oauth
 }
 
 // Object describes a acd object
@@ -140,14 +141,19 @@ var retryErrorCodes = []int{
 
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
-func shouldRetry(resp *http.Response, err error) (bool, error) {
+func (f *Fs) shouldRetry(resp *http.Response, err error) (bool, error) {
+	if resp != nil && resp.StatusCode == 401 {
+		f.ts.Invalidate()
+		fs.Log(f, "401 error received - invalidating token")
+		return true, err
+	}
 	return fs.ShouldRetry(err) || fs.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string) (fs.Fs, error) {
 	root = parsePath(root)
-	oAuthClient, err := oauthutil.NewClient(name, acdConfig)
+	oAuthClient, ts, err := oauthutil.NewClient(name, acdConfig)
 	if err != nil {
 		log.Fatalf("Failed to configure amazon cloud drive: %v", err)
 	}
@@ -160,13 +166,14 @@ func NewFs(name, root string) (fs.Fs, error) {
 		c:            c,
 		pacer:        pacer.New().SetMinSleep(minSleep).SetPacer(pacer.AmazonCloudDrivePacer),
 		noAuthClient: fs.Config.Client(),
+		ts:           ts,
 	}
 
 	// Update endpoints
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		_, resp, err = f.c.Account.GetEndpoints()
-		return shouldRetry(resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get endpoints: %v", err)
@@ -176,7 +183,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	var rootInfo *acd.Folder
 	err = f.pacer.Call(func() (bool, error) {
 		rootInfo, resp, err = f.c.Nodes.GetRoot()
-		return shouldRetry(resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil || rootInfo.Id == nil {
 		return nil, fmt.Errorf("Failed to get root: %v", err)
@@ -245,7 +252,7 @@ func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err er
 	var subFolder *acd.Folder
 	err = f.pacer.Call(func() (bool, error) {
 		subFolder, resp, err = folder.GetFolder(leaf)
-		return shouldRetry(resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if err == acd.ErrorNodeNotFound {
@@ -272,7 +279,7 @@ func (f *Fs) CreateDir(pathID, leaf string) (newID string, err error) {
 	var info *acd.Folder
 	err = f.pacer.Call(func() (bool, error) {
 		info, resp, err = folder.CreateFolder(leaf)
-		return shouldRetry(resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		//fmt.Printf("...Error %v\n", err)
@@ -314,7 +321,7 @@ func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly
 		var resp *http.Response
 		err = f.pacer.CallNoRetry(func() (bool, error) {
 			nodes, resp, err = f.c.Nodes.GetNodes(&opts)
-			return shouldRetry(resp, err)
+			return f.shouldRetry(resp, err)
 		})
 		if err != nil {
 			return false, err
@@ -424,7 +431,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 		} else {
 			info, resp, err = folder.PutSized(in, size, leaf)
 		}
-		return shouldRetry(resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		return nil, err
@@ -479,7 +486,7 @@ func (f *Fs) purgeCheck(check bool) error {
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = node.Trash()
-		return shouldRetry(resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		return err
@@ -593,7 +600,7 @@ func (o *Object) readMetaData() (err error) {
 	var info *acd.File
 	err = o.fs.pacer.Call(func() (bool, error) {
 		info, resp, err = folder.GetFile(leaf)
-		return shouldRetry(resp, err)
+		return o.fs.shouldRetry(resp, err)
 	})
 	if err != nil {
 		fs.Debug(o, "Failed to read info: %s", err)
@@ -647,7 +654,7 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 		} else {
 			in, resp, err = file.OpenTempURL(o.fs.noAuthClient)
 		}
-		return shouldRetry(resp, err)
+		return o.fs.shouldRetry(resp, err)
 	})
 	return in, err
 }
@@ -667,7 +674,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		} else {
 			info, resp, err = file.Overwrite(in)
 		}
-		return shouldRetry(resp, err)
+		return o.fs.shouldRetry(resp, err)
 	})
 	if err != nil {
 		return err
@@ -682,7 +689,7 @@ func (o *Object) Remove() error {
 	var err error
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.info.Trash()
-		return shouldRetry(resp, err)
+		return o.fs.shouldRetry(resp, err)
 	})
 	return err
 }

@@ -142,7 +142,7 @@ func (f *Fs) getCredentials() (err error) {
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string) (fs.Fs, error) {
-	client, err := oauthutil.NewClient(name, oauthConfig)
+	client, _, err := oauthutil.NewClient(name, oauthConfig)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to configure Hubic: %v", err)
 	}

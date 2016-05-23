@@ -278,7 +278,7 @@ func NewFs(name, path string) (fs.Fs, error) {
 		return nil, fmt.Errorf("drive: chunk size can't be less than 256k - was %v", chunkSize)
 	}
 
-	oAuthClient, err := oauthutil.NewClient(name, driveConfig)
+	oAuthClient, _, err := oauthutil.NewClient(name, driveConfig)
 	if err != nil {
 		log.Fatalf("Failed to configure drive: %v", err)
 	}

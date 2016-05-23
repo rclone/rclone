@@ -170,7 +170,7 @@ func errorHandler(resp *http.Response) error {
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string) (fs.Fs, error) {
 	root = parsePath(root)
-	oAuthClient, err := oauthutil.NewClient(name, oauthConfig)
+	oAuthClient, _, err := oauthutil.NewClient(name, oauthConfig)
 	if err != nil {
 		log.Fatalf("Failed to configure One Drive: %v", err)
 	}
