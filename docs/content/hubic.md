@@ -1,7 +1,7 @@
 ---
 title: "Hubic"
 description: "Rclone docs for Hubic"
-date: "2016-03-16"
+date: "2016-05-27"
 ---
 
 <i class="fa fa-space-shuttle"></i> Hubic
@@ -100,6 +100,11 @@ List all the files in your Hubic
 To copy a local directory to an Hubic directory called backup
 
     rclone copy /home/source remote:backup
+
+If you want the directory to be visible in the official *Hubic
+browser*, you need to copy your files to the `default` directory
+
+    rclone copy /home/source remote:default/backup
 
 ### Modified time ###
 
