@@ -183,7 +183,7 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 			if fi.IsDir() {
 				if out.IncludeDirectory(newRemote) {
 					dir := &fs.Dir{
-						Name:  f.cleanUtf8(newRemote),
+						Name:  normString(f.cleanUtf8(newRemote)),
 						When:  fi.ModTime(),
 						Bytes: 0,
 						Count: 0,
