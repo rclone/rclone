@@ -142,10 +142,19 @@ var retryErrorCodes = []int{
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
 func (f *Fs) shouldRetry(resp *http.Response, err error) (bool, error) {
-	if resp != nil && resp.StatusCode == 401 {
-		f.ts.Invalidate()
-		fs.Log(f, "401 error received - invalidating token")
-		return true, err
+	if resp != nil {
+		if resp.StatusCode == 401 {
+			f.ts.Invalidate()
+			fs.Log(f, "401 error received - invalidating token")
+			return true, err
+		}
+		// Work around receiving this error sporadically on authentication
+		//
+		// HTTP code 403: "403 Forbidden", reponse body: {"message":"Authorization header requires 'Credential' parameter. Authorization header requires 'Signature' parameter. Authorization header requires 'SignedHeaders' parameter. Authorization header requires existence of either a 'X-Amz-Date' or a 'Date' header. Authorization=Bearer"}
+		if resp.StatusCode == 403 && strings.Contains(err.Error(), "Authorization header requires") {
+			fs.Log(f, "403 \"Authorization header requires...\" error received - retry")
+			return true, err
+		}
 	}
 	return fs.ShouldRetry(err) || fs.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
