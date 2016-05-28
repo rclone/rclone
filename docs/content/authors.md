@@ -31,3 +31,4 @@ Contributors
   * Michal Witkowski <michal@improbable.io>
   * Fabian Ruff <fabian.ruff@sap.com>
   * Leigh Klotz <klotz@quixey.com>
+  * Romain Lapray <lapray.romain@gmail.com>
