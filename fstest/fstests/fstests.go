@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -266,20 +267,17 @@ func TestFsListDirRoot(t *testing.T) {
 // TestFsListSubdir tests List works for a subdirectory
 func TestFsListSubdir(t *testing.T) {
 	skipIfNotOk(t)
-	test := func(fileName string) bool {
-		dir, _ := path.Split(fileName)
-		dir = dir[:len(dir)-1]
-		objs, dirs, err := fs.NewLister().Start(remote, dir).GetAll()
-		if err == fs.ErrorDirNotFound {
-			return false
-		}
-		require.NoError(t, err)
-		require.Len(t, objs, 1)
-		assert.Equal(t, fileName, objs[0].Remote())
-		require.Len(t, dirs, 0)
-		return true
+	fileName := file2.Path
+	if runtime.GOOS == "windows" {
+		fileName = file2.WinPath
 	}
-	assert.True(t, test(file2.Path) || test(file2.WinPath), "normal and alternative lists failed")
+	dir, _ := path.Split(fileName)
+	dir = dir[:len(dir)-1]
+	objs, dirs, err := fs.NewLister().Start(remote, dir).GetAll()
+	require.NoError(t, err)
+	require.Len(t, objs, 1)
+	assert.Equal(t, fileName, objs[0].Remote())
+	require.Len(t, dirs, 0)
 }
 
 // TestFsListLevel2 tests List works for 2 levels

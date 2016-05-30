@@ -212,7 +212,8 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 // Ignores everything which isn't Storable, eg links etc
 func (f *Fs) List(out fs.ListOpts, dir string) {
 	defer out.Finished()
-	root := path.Join(f.root, dir)
+	dir = filterFragment(f.cleanUtf8(dir))
+	root := filepath.Join(f.root, dir)
 	_, err := os.Stat(root)
 	if err != nil {
 		out.SetError(fs.ErrorDirNotFound)
@@ -670,11 +671,25 @@ func getDirFile(s string) (string, string) {
 	return dir, file
 }
 
-func (f *Fs) filterPath(s string) string {
+// filterFragment cleans a path fragment which is part of a bigger
+// path and not necessarily absolute
+func filterFragment(s string) string {
+	if s == "" {
+		return s
+	}
 	s = filepath.Clean(s)
 	if runtime.GOOS == "windows" {
 		s = strings.Replace(s, `/`, `\`, -1)
+	}
+	return s
+}
 
+// filterPath cleans and makes absolute the path passed in.
+//
+// On windows it makes the path UNC also.
+func (f *Fs) filterPath(s string) string {
+	s = filterFragment(s)
+	if runtime.GOOS == "windows" {
 		if !filepath.IsAbs(s) && !strings.HasPrefix(s, "\\") {
 			s2, err := filepath.Abs(s)
 			if err == nil {
