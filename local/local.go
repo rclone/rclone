@@ -16,6 +16,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/pkg/errors"
 )
 
 // Register with Fs
@@ -150,17 +151,13 @@ type listArgs struct {
 func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (subdirs []listArgs) {
 	fd, err := os.Open(dirpath)
 	if err != nil {
-		out.SetError(err)
-		fs.Stats.Error()
-		fs.ErrorLog(f, "Failed to open directory: %s: %s", dirpath, err)
+		out.SetError(errors.Wrapf(err, "failed to open directory %q", dirpath))
 		return nil
 	}
 	defer func() {
 		err := fd.Close()
 		if err != nil {
-			out.SetError(err)
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Failed to close directory: %s: %s", dirpath, err)
+			out.SetError(errors.Wrapf(err, "failed to close directory %q:", dirpath))
 		}
 	}()
 
@@ -170,9 +167,8 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 			break
 		}
 		if err != nil {
-			out.SetError(err)
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Failed to read directory: %s: %s", dirpath, err)
+			out.SetError(errors.Wrapf(err, "failed to read directory %q", dirpath))
+
 			return nil
 		}
 
@@ -494,9 +490,7 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 	oldsize := o.info.Size()
 	err := o.lstat()
 	if err != nil {
-		fs.Stats.Error()
-		fs.ErrorLog(o, "Failed to stat: %s", err)
-		return "", err
+		return "", errors.Wrap(err, "Hash failed to stat")
 	}
 
 	if !o.info.ModTime().Equal(oldtime) || oldsize != o.info.Size() {
@@ -507,21 +501,15 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 		o.hashes = make(map[fs.HashType]string)
 		in, err := os.Open(o.path)
 		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(o, "Failed to open: %s", err)
-			return "", err
+			return "", errors.Wrap(err, "Hash failed to open")
 		}
 		o.hashes, err = fs.HashStream(in)
 		closeErr := in.Close()
 		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(o, "Failed to read: %s", err)
-			return "", err
+			return "", errors.Wrap(err, "Hash failed to read")
 		}
 		if closeErr != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(o, "Failed to close: %s", closeErr)
-			return "", closeErr
+			return "", errors.Wrap(closeErr, "Hash failed to close")
 		}
 	}
 	return o.hashes[r], nil

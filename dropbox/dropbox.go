@@ -271,8 +271,8 @@ func (f *Fs) list(out fs.ListOpts, dir string) {
 			return
 		}
 		if deltaPage.Reset && cursor != "" {
-			fs.ErrorLog(f, "Unexpected reset during listing - try again")
-			fs.Stats.Error()
+			err = errors.New("Unexpected reset during listing")
+			out.SetError(err)
 			break
 		}
 		fs.Debug(f, "%d delta entries received", len(deltaPage.Entries))
@@ -283,8 +283,7 @@ func (f *Fs) list(out fs.ListOpts, dir string) {
 				// This notifies of a deleted object
 			} else {
 				if len(entry.Path) <= 1 || entry.Path[0] != '/' {
-					fs.Stats.Error()
-					fs.ErrorLog(f, "dropbox API inconsistency: a path should always start with a slash and be at least 2 characters: %s", entry.Path)
+					fs.Log(f, "dropbox API inconsistency: a path should always start with a slash and be at least 2 characters: %s", entry.Path)
 					continue
 				}
 

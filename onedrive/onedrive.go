@@ -18,6 +18,7 @@ import (
 	"github.com/ncw/rclone/onedrive/api"
 	"github.com/ncw/rclone/pacer"
 	"github.com/ncw/rclone/rest"
+	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"golang.org/x/oauth2"
 )
@@ -331,9 +332,7 @@ OUTER:
 			return shouldRetry(resp, err)
 		})
 		if err != nil {
-			fs.Stats.Error()
-			fs.ErrorLog(f, "Couldn't list files: %v", err)
-			break
+			return found, errors.Wrap(err, "couldn't list files")
 		}
 		if len(result.Value) == 0 {
 			break

@@ -9,6 +9,8 @@ import (
 	"github.com/stacktic/dropbox"
 )
 
+// FIXME Get rid of Stats.Error() counting and return errors
+
 type nameTreeNode struct {
 	// Map from lowercase directory name to tree node
 	Directories map[string]*nameTreeNode
