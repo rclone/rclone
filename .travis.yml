@@ -1,5 +1,6 @@
 language: go
 sudo: false
+osx_image: xcode7.3
 
 os:
   - linux
