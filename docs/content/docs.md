@@ -432,6 +432,24 @@ to reduce the value so rclone moves on to a high level retry (see the
 
 Disable low level retries with `--low-level-retries 1`.
 
+### --max-depth=N ###
+
+This modifies the recursion depth for all the commands except purge.
+
+So if you do `rclone --max-depth 1 ls remote:path` you will see only
+the files in the top level directory.  Using `--max-depth 2` means you
+will see all the files in first two directory levels and so on.
+
+For historical reasons the `lsd` command defaults to using a
+`--max-depth` of 1 - you can override this with the command line flag.
+
+You can use this command to disable recursion (with `--max-depth 1`).
+
+Note that if you use this with `sync` and `--delete-excluded` the
+files not recursed through are considered excluded and will be deleted
+on the destination.  Test first with `--dry-run` if you are not sure
+what will happen.
+
 ### --modify-window=TIME ###
 
 When checking whether a file has been modified, this is the maximum

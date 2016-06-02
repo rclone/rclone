@@ -463,6 +463,7 @@ func readFilesMap(fs Fs, includeAll bool, dir string) (files map[string]Object, 
 	list := NewLister()
 	if !includeAll {
 		list.SetFilter(Config.Filter)
+		list.SetLevel(Config.MaxDepth)
 	}
 	list.Start(fs, dir)
 	for {
@@ -804,7 +805,7 @@ func Check(fdst, fsrc Fs) error {
 //
 // Lists in parallel which may get them out of order
 func ListFn(f Fs, fn func(Object)) error {
-	list := NewLister().SetFilter(Config.Filter).Start(f, "")
+	list := NewLister().SetFilter(Config.Filter).SetLevel(Config.MaxDepth).Start(f, "")
 	var wg sync.WaitGroup
 	wg.Add(Config.Checkers)
 	for i := 0; i < Config.Checkers; i++ {
@@ -913,7 +914,11 @@ func Count(f Fs) (objects int64, size int64, err error) {
 
 // ListDir lists the directories/buckets/containers in the Fs to the supplied writer
 func ListDir(f Fs, w io.Writer) error {
-	list := NewLister().SetLevel(1).Start(f, "")
+	level := 1
+	if Config.MaxDepth > 0 {
+		level = Config.MaxDepth
+	}
+	list := NewLister().SetLevel(level).Start(f, "")
 	for {
 		dir, err := list.GetDir()
 		if err != nil {

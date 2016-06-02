@@ -280,6 +280,26 @@ func TestCopy(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, file1)
 }
 
+// Test copy with depth
+func TestCopyWithDepth(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+	file2 := r.WriteFile("hello world2", "hello world2", t2)
+
+	// Check the MaxDepth too
+	fs.Config.MaxDepth = 1
+	defer func() { fs.Config.MaxDepth = -1 }()
+
+	err := fs.CopyDir(r.fremote, r.flocal)
+	if err != nil {
+		t.Fatalf("Copy failed: %v", err)
+	}
+
+	fstest.CheckItems(t, r.flocal, file1, file2)
+	fstest.CheckItems(t, r.fremote, file2)
+}
+
 // Test a server side copy if possible, or the backup path if not
 func TestServerSideCopy(t *testing.T) {
 	r := NewRun(t)
@@ -949,8 +969,13 @@ func TestCount(t *testing.T) {
 	defer r.Finalise()
 	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth("empty space", "", t2)
+	file3 := r.WriteBoth("sub dir/potato3", "hello", t2)
 
-	fstest.CheckItems(t, r.fremote, file1, file2)
+	fstest.CheckItems(t, r.fremote, file1, file2, file3)
+
+	// Check the MaxDepth too
+	fs.Config.MaxDepth = 1
+	defer func() { fs.Config.MaxDepth = -1 }()
 
 	objects, size, err := fs.Count(r.fremote)
 	if err != nil {

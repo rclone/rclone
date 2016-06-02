@@ -85,6 +85,7 @@ var (
 	updateOlder     = pflag.BoolP("update", "u", false, "Skip files that are newer on the destination.")
 	noGzip          = pflag.BoolP("no-gzip-encoding", "", false, "Don't set Accept-Encoding: gzip.")
 	dedupeMode      = pflag.StringP("dedupe-mode", "", "interactive", "Dedupe mode interactive|skip|first|newest|oldest|rename.")
+	maxDepth        = pflag.IntP("max-depth", "", -1, "If set limits the recursion depth to this.")
 	bwLimit         SizeSuffix
 
 	// Key to use for password en/decryption.
@@ -207,6 +208,7 @@ type ConfigInfo struct {
 	UpdateOlder        bool // Skip files that are newer on the destination
 	NoGzip             bool // Disable compression
 	DedupeMode         DeduplicateMode
+	MaxDepth           int
 }
 
 // Transport returns an http.RoundTripper with the correct timeouts
@@ -309,6 +311,7 @@ func LoadConfig() {
 	Config.LowLevelRetries = *lowLevelRetries
 	Config.UpdateOlder = *updateOlder
 	Config.NoGzip = *noGzip
+	Config.MaxDepth = *maxDepth
 
 	ConfigPath = *configFile
 
