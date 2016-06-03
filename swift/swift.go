@@ -73,6 +73,9 @@ func init() {
 		}, {
 			Name: "storage_url",
 			Help: "Storage URL - optional",
+		}, {
+			Name: "auth_version",
+			Help: "AuthVersion - optional - set to (1,2,3) if your auth URL has no version",
 		},
 		},
 	})
@@ -155,6 +158,7 @@ func swiftConnection(name string) (*swift.Connection, error) {
 		UserName:       userName,
 		ApiKey:         apiKey,
 		AuthUrl:        authURL,
+		AuthVersion:    fs.ConfigFile.MustInt(name, "auth_version", 0),
 		UserAgent:      fs.UserAgent,
 		Tenant:         fs.ConfigFile.MustValue(name, "tenant"),
 		Region:         fs.ConfigFile.MustValue(name, "region"),

@@ -81,6 +81,8 @@ region>
 Storage URL - optional
 storage_url> 
 Remote config
+AuthVersion - optional - set to (1,2,3) if your auth URL has no version
+auth_version> 
 --------------------
 [remote]
 user = user_name
