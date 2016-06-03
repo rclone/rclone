@@ -322,13 +322,14 @@ possibly signed sequence of decimal numbers, each with optional
 fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid
 time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-Options which use SIZE use kByte by default.  However a suffix of `k`
-for kBytes, `M` for MBytes and `G` for GBytes may be used.  These are
-the binary units, eg 2\*\*10, 2\*\*20, 2\*\*30 respectively.
+Options which use SIZE use kByte by default.  However a suffix of `b`
+for bytes, `k` for kBytes, `M` for MBytes and `G` for GBytes may be
+used.  These are the binary units, eg 1, 2\*\*10, 2\*\*20, 2\*\*30
+respectively.
 
 ### --bwlimit=SIZE ###
 
-Bandwidth limit in kBytes/s, or use suffix k|M|G.  The default is `0`
+Bandwidth limit in kBytes/s, or use suffix b|k|M|G.  The default is `0`
 which means to not limit bandwidth.
 
 For example to limit bandwidth usage to 10 MBytes/s use `--bwlimit 10M`

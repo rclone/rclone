@@ -35,8 +35,8 @@ var (
 )
 
 func init() {
-	pflag.VarP(&minSize, "min-size", "", "Don't transfer any file smaller than this in k or suffix k|M|G")
-	pflag.VarP(&maxSize, "max-size", "", "Don't transfer any file larger than this in k or suffix k|M|G")
+	pflag.VarP(&minSize, "min-size", "", "Don't transfer any file smaller than this in k or suffix b|k|M|G")
+	pflag.VarP(&maxSize, "max-size", "", "Don't transfer any file larger than this in k or suffix b|k|M|G")
 }
 
 // rule is one filter rule

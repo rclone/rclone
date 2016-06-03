@@ -12,7 +12,7 @@ func TestSizeSuffixString(t *testing.T) {
 		want string
 	}{
 		{0, "0"},
-		{102, "0.100k"},
+		{102, "102b"},
 		{1024, "1k"},
 		{1024 * 1024, "1M"},
 		{1024 * 1024 * 1024, "1G"},
@@ -34,6 +34,8 @@ func TestSizeSuffixSet(t *testing.T) {
 		err  bool
 	}{
 		{"0", 0, false},
+		{"1b", 1, false},
+		{"102B", 102, false},
 		{"0.1k", 102, false},
 		{"0.1", 102, false},
 		{"1K", 1024, false},

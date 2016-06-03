@@ -94,7 +94,7 @@ var (
 )
 
 func init() {
-	pflag.VarP(&bwLimit, "bwlimit", "", "Bandwidth limit in kBytes/s, or use suffix k|M|G")
+	pflag.VarP(&bwLimit, "bwlimit", "", "Bandwidth limit in kBytes/s, or use suffix b|k|M|G")
 }
 
 // Turn SizeSuffix into a string
@@ -104,6 +104,9 @@ func (x SizeSuffix) String() string {
 	switch {
 	case x == 0:
 		return "0"
+	case x < 1024:
+		scaled = float64(x)
+		suffix = "b"
 	case x < 1024*1024:
 		scaled = float64(x) / 1024
 		suffix = "k"
@@ -132,6 +135,8 @@ func (x *SizeSuffix) Set(s string) error {
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.':
 		suffixLen = 0
 		multiplier = 1 << 10
+	case 'b', 'B':
+		multiplier = 1
 	case 'k', 'K':
 		multiplier = 1 << 10
 	case 'm', 'M':
