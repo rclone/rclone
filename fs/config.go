@@ -102,6 +102,8 @@ func (x SizeSuffix) String() string {
 	scaled := float64(0)
 	suffix := ""
 	switch {
+	case x < 0:
+		return "off"
 	case x == 0:
 		return "0"
 	case x < 1024:
@@ -127,6 +129,10 @@ func (x SizeSuffix) String() string {
 func (x *SizeSuffix) Set(s string) error {
 	if len(s) == 0 {
 		return fmt.Errorf("Empty string")
+	}
+	if strings.ToLower(s) == "off" {
+		*x = -1
+		return nil
 	}
 	suffix := s[len(s)-1]
 	suffixLen := 1
