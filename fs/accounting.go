@@ -125,13 +125,13 @@ func (s *StatsInfo) String() string {
 	dtRounded := dt - (dt % (time.Second / 10))
 	buf := &bytes.Buffer{}
 	fmt.Fprintf(buf, `
-Transferred:   %10d Bytes (%7.2f kByte/s)
+Transferred:   %10vBytes (%vByte/s)
 Errors:        %10d
 Checks:        %10d
 Transferred:   %10d
 Elapsed time:  %10v
 `,
-		s.bytes, speed,
+		SizeSuffix(s.bytes), SizeSuffix(speed),
 		s.errors,
 		s.checks,
 		s.transfers,
