@@ -13,7 +13,10 @@ VERSION="$1"
 
 rm -rf build
 
-gox -output "build/{{.Dir}}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}" -os "darwin linux freebsd openbsd windows freebsd netbsd plan9 solaris"
+# Disable CGO and dynamic builds on all platforms (including build patform)
+export CGO_ENABLED=0
+
+gox --ldflags "-s -X github.com/ncw/rclone/fs.Version=${VERSION}" -output "build/{{.Dir}}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}" -os "darwin linux freebsd openbsd windows freebsd netbsd plan9 solaris"
 # Not implemented yet: nacl dragonfly android
 # gox -osarch-list for definitive list
 

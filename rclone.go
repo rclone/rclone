@@ -414,6 +414,7 @@ func main() {
 		log.SetOutput(f)
 		redirectStderr(f)
 	}
+	fs.Debug("rclone", "Starting with parameters %+v", os.Args)
 
 	// Setup CPU profiling if desired
 	if *cpuProfile != "" {

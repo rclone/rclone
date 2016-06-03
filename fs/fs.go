@@ -14,8 +14,6 @@ import (
 
 // Constants
 const (
-	// UserAgent for Fs which can set it
-	UserAgent = "rclone/" + Version
 	// ModTimeNotSupported is a very large precision value to show
 	// mod time isn't supported on this Fs
 	ModTimeNotSupported = 100 * 365 * 24 * time.Hour
@@ -25,6 +23,8 @@ const (
 
 // Globals
 var (
+	// UserAgent for Fs which can set it
+	UserAgent = "rclone/" + Version
 	// Filesystem registry
 	fsRegistry []*RegInfo
 	// ErrorNotFoundInConfigFile is returned by NewFs if not found in config file
