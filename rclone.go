@@ -418,7 +418,7 @@ func main() {
 	fs.LoadConfig()
 
 	// Write the args for debug purposes
-	fs.Debug("rclone", "Starting with parameters %q", os.Args)
+	fs.Debug("rclone", "Version %q starting with parameters %q", fs.Version, os.Args)
 
 	// Setup CPU profiling if desired
 	if *cpuProfile != "" {
