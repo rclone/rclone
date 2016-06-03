@@ -108,7 +108,7 @@ func (x SizeSuffix) String() string {
 		return "0"
 	case x < 1024:
 		scaled = float64(x)
-		suffix = "b"
+		suffix = ""
 	case x < 1024*1024:
 		scaled = float64(x) / 1024
 		suffix = "k"
