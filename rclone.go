@@ -320,7 +320,6 @@ func ParseFlags() {
 	pflag.Usage = syntaxError
 	pflag.Parse()
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	fs.LoadConfig()
 }
 
 // ParseCommand parses the command from the command line
@@ -414,7 +413,12 @@ func main() {
 		log.SetOutput(f)
 		redirectStderr(f)
 	}
-	fs.Debug("rclone", "Starting with parameters %+v", os.Args)
+
+	// Load the rest of the config now we have started the logger
+	fs.LoadConfig()
+
+	// Write the args for debug purposes
+	fs.Debug("rclone", "Starting with parameters %q", os.Args)
 
 	// Setup CPU profiling if desired
 	if *cpuProfile != "" {
