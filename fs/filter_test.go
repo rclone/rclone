@@ -49,8 +49,8 @@ func TestNewFilterDefault(t *testing.T) {
 	f, err := NewFilter()
 	require.NoError(t, err)
 	assert.False(t, f.DeleteExcluded)
-	assert.Equal(t, int64(0), f.MinSize)
-	assert.Equal(t, int64(0), f.MaxSize)
+	assert.Equal(t, int64(-1), f.MinSize)
+	assert.Equal(t, int64(-1), f.MaxSize)
 	assert.Len(t, f.fileRules.rules, 0)
 	assert.Len(t, f.dirRules.rules, 0)
 	assert.Nil(t, f.files)
@@ -109,8 +109,8 @@ func TestNewFilterFull(t *testing.T) {
 		rm(*excludeFrom)
 		rm(*includeFrom)
 		rm(*filesFrom)
-		minSize = 0
-		maxSize = 0
+		minSize = -1
+		maxSize = -1
 		deleteExcluded = &isFalse
 		filterRule = &emptyString
 		filterFrom = &emptyString
@@ -352,7 +352,6 @@ func TestNewFilterMatches(t *testing.T) {
 		{"a/one.png", 101, 0, false},
 		{"unicorn", 99, 0, false},
 	})
-	t.Log(f.DumpFilters())
 	testDirInclude(t, f, []includeDirTest{
 		{"sausage1", false},
 		{"sausage2", false},

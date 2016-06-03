@@ -709,7 +709,7 @@ func TestSyncWithExclude(t *testing.T) {
 
 	fs.Config.Filter.MaxSize = 40
 	defer func() {
-		fs.Config.Filter.MaxSize = 0
+		fs.Config.Filter.MaxSize = -1
 	}()
 
 	fs.Stats.ResetCounters()
@@ -742,7 +742,7 @@ func TestSyncWithExcludeAndDeleteExcluded(t *testing.T) {
 	fs.Config.Filter.MaxSize = 40
 	fs.Config.Filter.DeleteExcluded = true
 	defer func() {
-		fs.Config.Filter.MaxSize = 0
+		fs.Config.Filter.MaxSize = -1
 		fs.Config.Filter.DeleteExcluded = false
 	}()
 
@@ -999,7 +999,7 @@ func TestDelete(t *testing.T) {
 
 	fs.Config.Filter.MaxSize = 60
 	defer func() {
-		fs.Config.Filter.MaxSize = 0
+		fs.Config.Filter.MaxSize = -1
 	}()
 
 	err := fs.Delete(r.fremote)

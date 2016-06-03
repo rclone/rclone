@@ -28,8 +28,8 @@ var (
 	filesFrom      = pflag.StringP("files-from", "", "", "Read list of source-file names from file")
 	minAge         = pflag.StringP("min-age", "", "", "Don't transfer any file younger than this in s or suffix ms|s|m|h|d|w|M|y")
 	maxAge         = pflag.StringP("max-age", "", "", "Don't transfer any file older than this in s or suffix ms|s|m|h|d|w|M|y")
-	minSize        SizeSuffix
-	maxSize        SizeSuffix
+	minSize        = SizeSuffix(-1)
+	maxSize        = SizeSuffix(-1)
 	dumpFilters    = pflag.BoolP("dump-filters", "", false, "Dump the filters to the output")
 	//cvsExclude     = pflag.BoolP("cvs-exclude", "C", false, "Exclude files in the same way CVS does")
 )
@@ -342,8 +342,8 @@ func (f *Filter) InActive() bool {
 	return (f.files == nil &&
 		f.ModTimeFrom.IsZero() &&
 		f.ModTimeTo.IsZero() &&
-		f.MinSize == 0 &&
-		f.MaxSize == 0 &&
+		f.MinSize < 0 &&
+		f.MaxSize < 0 &&
 		f.fileRules.len() == 0 &&
 		f.dirRules.len() == 0)
 }
@@ -390,10 +390,10 @@ func (f *Filter) Include(remote string, size int64, modTime time.Time) bool {
 	if !f.ModTimeTo.IsZero() && modTime.After(f.ModTimeTo) {
 		return false
 	}
-	if f.MinSize != 0 && size < f.MinSize {
+	if f.MinSize >= 0 && size < f.MinSize {
 		return false
 	}
-	if f.MaxSize != 0 && size > f.MaxSize {
+	if f.MaxSize >= 0 && size > f.MaxSize {
 		return false
 	}
 	return f.includeRemote(remote)
