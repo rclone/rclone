@@ -415,7 +415,8 @@ using `--checksum`).
 
 Log all of rclone's output to FILE.  This is not active by default.
 This can be useful for tracking down problems with syncs in
-combination with the `-v` flag.
+combination with the `-v` flag.  See the Logging section for more
+info.
 
 ### --low-level-retries NUMBER ###
 
@@ -704,6 +705,25 @@ For the filtering options
   * `--dump-filters`
 
 See the [filtering section](/filtering/).
+
+Logging
+-------
+
+rclone has 3 levels of logging, `Error`, `Info` and `Debug`.
+
+By default rclone logs `Error` and `Info` to standard error and `Debug`
+to standard output.  This means you can redirect standard output and
+standard error to different places.
+
+By default rclone will produce `Error` and `Info` level messages.
+
+If you use the `-q` flag, rclone will only produce `Error` messages.
+
+If you use the `-v` flag, rclone will produce `Error`, `Info` and
+`Debug` messages.
+
+If you use the `--log-file=FILE` option, rclone will redirect `Error`,
+`Info` and `Debug` messages along with standard error to FILE.
 
 Exit Code
 ---------

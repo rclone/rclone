@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"math"
+	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -357,27 +358,30 @@ func NewFs(path string) (Fs, error) {
 	return fs.NewFs(configName, fsPath)
 }
 
-// OutputLog logs for an object
-func OutputLog(o interface{}, text string, args ...interface{}) {
-	description := ""
-	if o != nil {
-		description = fmt.Sprintf("%v: ", o)
-	}
+// DebugLogger - logs to Stdout
+var DebugLogger = log.New(os.Stdout, "", log.LstdFlags)
+
+// makeLog produces a log string from the arguments passed in
+func makeLog(o interface{}, text string, args ...interface{}) string {
 	out := fmt.Sprintf(text, args...)
-	log.Print(description + out)
+	if o == nil {
+		return out
+	}
+	return fmt.Sprintf("%v: %s", o, out)
 }
 
-// Debug writes debuging output for this Object or Fs
+// Debug writes debugging output for this Object or Fs
 func Debug(o interface{}, text string, args ...interface{}) {
 	if Config.Verbose {
-		OutputLog(o, text, args...)
+		DebugLogger.Print(makeLog(o, text, args...))
 	}
 }
 
-// Log writes log output for this Object or Fs
+// Log writes log output for this Object or Fs.  This should be
+// considered to be Info level logging.
 func Log(o interface{}, text string, args ...interface{}) {
 	if !Config.Quiet {
-		OutputLog(o, text, args...)
+		log.Print(makeLog(o, text, args...))
 	}
 }
 
@@ -385,7 +389,7 @@ func Log(o interface{}, text string, args ...interface{}) {
 // unconditionally logs a message regardless of Config.Quiet or
 // Config.Verbose.
 func ErrorLog(o interface{}, text string, args ...interface{}) {
-	OutputLog(o, text, args...)
+	log.Print(makeLog(o, text, args...))
 }
 
 // CheckClose is a utility function used to check the return from

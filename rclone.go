@@ -411,6 +411,7 @@ func main() {
 			log.Printf("Failed to seek log file to end: %v", err)
 		}
 		log.SetOutput(f)
+		fs.DebugLogger.SetOutput(f)
 		redirectStderr(f)
 	}
 
