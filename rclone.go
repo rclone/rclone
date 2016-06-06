@@ -408,7 +408,7 @@ func main() {
 		}
 		_, err = f.Seek(0, os.SEEK_END)
 		if err != nil {
-			log.Printf("Failed to seek log file to end: %v", err)
+			fs.ErrorLog(nil, "Failed to seek log file to end: %v", err)
 		}
 		log.SetOutput(f)
 		fs.DebugLogger.SetOutput(f)
@@ -423,7 +423,7 @@ func main() {
 
 	// Setup CPU profiling if desired
 	if *cpuProfile != "" {
-		log.Printf("Creating CPU profile %q\n", *cpuProfile)
+		fs.Log(nil, "Creating CPU profile %q\n", *cpuProfile)
 		f, err := os.Create(*cpuProfile)
 		if err != nil {
 			fs.Stats.Error()
@@ -440,7 +440,7 @@ func main() {
 	// Setup memory profiling if desired
 	if *memProfile != "" {
 		defer func() {
-			log.Printf("Saving Memory profile %q\n", *memProfile)
+			fs.Log(nil, "Saving Memory profile %q\n", *memProfile)
 			f, err := os.Create(*memProfile)
 			if err != nil {
 				fs.Stats.Error()
@@ -500,7 +500,7 @@ func main() {
 		log.Fatalf("Failed to %s: %v", command.Name, err)
 	}
 	if !command.NoStats && (!fs.Config.Quiet || fs.Stats.Errored() || *statsInterval > 0) {
-		fmt.Fprintln(os.Stderr, fs.Stats)
+		fs.Log(nil, "%s", fs.Stats)
 	}
 	if fs.Config.Verbose {
 		fs.Debug(nil, "Go routines at exit %d\n", runtime.NumGoroutine())

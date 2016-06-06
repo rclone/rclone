@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"sort"
 	"strings"
 	"sync"
@@ -147,7 +146,7 @@ Elapsed time:  %10v
 
 // Log outputs the StatsInfo to the log
 func (s *StatsInfo) Log() {
-	log.Printf("%v\n", s)
+	Log(nil, "%v\n", s)
 }
 
 // Bytes updates the stats for bytes bytes

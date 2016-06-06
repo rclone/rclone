@@ -292,10 +292,10 @@ func configHome() string {
 	if home != "" {
 		return home
 	}
-	log.Printf("Couldn't find home directory or read HOME environment variable.")
-	log.Printf("Defaulting to storing config in current directory.")
-	log.Printf("Use -config flag to workaround.")
-	log.Printf("Error was: %v", err)
+	ErrorLog(nil, "Couldn't find home directory or read HOME environment variable.")
+	ErrorLog(nil, "Defaulting to storing config in current directory.")
+	ErrorLog(nil, "Use -config flag to workaround.")
+	ErrorLog(nil, "Error was: %v", err)
 	return ""
 }
 
@@ -379,7 +379,7 @@ func LoadConfig() {
 func loadConfigFile() (*goconfig.ConfigFile, error) {
 	b, err := ioutil.ReadFile(ConfigPath)
 	if err != nil {
-		log.Printf("Failed to load config file \"%v\" - using defaults: %v", ConfigPath, err)
+		Log(nil, "Failed to load config file \"%v\" - using defaults: %v", ConfigPath, err)
 		return goconfig.LoadFromReader(&bytes.Buffer{})
 	}
 
@@ -450,7 +450,7 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 		}
 
 		// Retry
-		log.Println("Couldn't decrypt configuration, most likely wrong password.")
+		ErrorLog(nil, "Couldn't decrypt configuration, most likely wrong password.")
 		configKey = nil
 		envpw = ""
 	}
@@ -509,7 +509,7 @@ func SaveConfig() {
 		}
 		err = os.Chmod(ConfigPath, 0600)
 		if err != nil {
-			log.Printf("Failed to set permissions on config file: %v", err)
+			ErrorLog(nil, "Failed to set permissions on config file: %v", err)
 		}
 		return
 	}
@@ -556,7 +556,7 @@ func SaveConfig() {
 
 	err = os.Chmod(ConfigPath, 0600)
 	if err != nil {
-		log.Printf("Failed to set permissions on config file: %v", err)
+		ErrorLog(nil, "Failed to set permissions on config file: %v", err)
 	}
 }
 
@@ -712,7 +712,7 @@ func OkRemote(name string) bool {
 		ConfigFile.DeleteSection(name)
 		return true
 	default:
-		log.Printf("Bad choice %d", i)
+		ErrorLog(nil, "Bad choice %d", i)
 	}
 	return false
 }

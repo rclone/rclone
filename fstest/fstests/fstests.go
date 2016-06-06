@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"flag"
 	"io"
-	"log"
 	"os"
 	"path"
 	"runtime"
@@ -69,7 +68,7 @@ func TestInit(t *testing.T) {
 	if RemoteName == "" {
 		RemoteName, err = fstest.LocalRemote()
 		if err != nil {
-			log.Fatalf("Failed to create tmp dir: %v", err)
+			t.Fatalf("Failed to create tmp dir: %v", err)
 		}
 	}
 	subRemoteName, subRemoteLeaf, err = fstest.RandomRemoteName(RemoteName)
@@ -79,7 +78,7 @@ func TestInit(t *testing.T) {
 
 	remote, err = fs.NewFs(subRemoteName)
 	if err == fs.ErrorNotFoundInConfigFile {
-		log.Printf("Didn't find %q in config file - skipping tests", RemoteName)
+		t.Logf("Didn't find %q in config file - skipping tests", RemoteName)
 		return
 	}
 	if err != nil {
@@ -668,7 +667,7 @@ func TestFinalise(t *testing.T) {
 		// Remove temp directory
 		err := os.Remove(RemoteName)
 		if err != nil {
-			log.Printf("Failed to remove %q: %v\n", RemoteName, err)
+			t.Logf("Failed to remove %q: %v\n", RemoteName, err)
 		}
 	}
 }

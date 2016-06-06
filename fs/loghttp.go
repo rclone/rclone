@@ -3,7 +3,6 @@
 package fs
 
 import (
-	"log"
 	"net/http"
 	"net/http/httputil"
 )
@@ -35,7 +34,7 @@ func (t *LoggedTransport) CancelRequest(req *http.Request) {
 	if wrapped, ok := t.wrapped.(interface {
 		CancelRequest(*http.Request)
 	}); ok {
-		log.Printf("CANCEL REQUEST %v", req)
+		Debug(nil, "CANCEL REQUEST %v", req)
 		wrapped.CancelRequest(req)
 	}
 }
@@ -43,19 +42,19 @@ func (t *LoggedTransport) CancelRequest(req *http.Request) {
 // RoundTrip implements the RoundTripper interface.
 func (t *LoggedTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	buf, _ := httputil.DumpRequestOut(req, t.logBody)
-	log.Println(separatorReq)
-	log.Println("HTTP REQUEST")
-	log.Println(string(buf))
-	log.Println(separatorReq)
+	Debug(nil, "%s", separatorReq)
+	Debug(nil, "%s", "HTTP REQUEST")
+	Debug(nil, "%s", string(buf))
+	Debug(nil, "%s", separatorReq)
 	resp, err = t.wrapped.RoundTrip(req)
-	log.Println(separatorResp)
-	log.Println("HTTP RESPONSE")
+	Debug(nil, "%s", separatorResp)
+	Debug(nil, "%s", "HTTP RESPONSE")
 	if err != nil {
-		log.Printf("Error: %v\n", err)
+		Debug(nil, "Error: %v", err)
 	} else {
 		buf, _ = httputil.DumpResponse(resp, t.logBody)
-		log.Println(string(buf))
+		Debug(nil, "%s", string(buf))
 	}
-	log.Println(separatorResp)
+	Debug(nil, "%s", separatorResp)
 	return resp, err
 }

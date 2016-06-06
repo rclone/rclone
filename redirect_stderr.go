@@ -5,11 +5,12 @@
 package main
 
 import (
-	"log"
 	"os"
+
+	"github.com/ncw/rclone/fs"
 )
 
 // redirectStderr to the file passed in
 func redirectStderr(f *os.File) {
-	log.Printf("Can't redirect stderr to file")
+	fs.ErrorLog(nil, "Can't redirect stderr to file")
 }

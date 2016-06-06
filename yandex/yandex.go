@@ -16,6 +16,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/oauthutil"
 	yandex "github.com/ncw/rclone/yandex/api"
+	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )
 
@@ -553,8 +554,7 @@ func mkDirExecute(client *yandex.Client, path string) (int, string, error) {
 	}
 	if err != nil {
 		// error creating directory
-		log.Printf("Failed to create folder: %v", err)
-		return statusCode, jsonErrorString, err
+		return statusCode, jsonErrorString, errors.Wrap(err, "failed to create folder")
 	}
 	return 0, "", nil
 }
