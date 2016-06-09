@@ -690,7 +690,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		Updated:     modTime.Format(timeFormatOut), // Doesn't get set
 		Metadata:    metadataFromModTime(modTime),
 	}
-	newObject, err := o.fs.svc.Objects.Insert(o.fs.bucket, &object).Media(in).Name(object.Name).PredefinedAcl(o.fs.objectAcl).Do()
+	newObject, err := o.fs.svc.Objects.Insert(o.fs.bucket, &object).Media(in, googleapi.ContentType("")).Name(object.Name).PredefinedAcl(o.fs.objectAcl).Do()
 	if err != nil {
 		return err
 	}

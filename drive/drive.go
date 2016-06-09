@@ -563,7 +563,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 		// Make the API request to upload metadata and file data.
 		// Don't retry, return a retry error instead
 		err = f.pacer.CallNoRetry(func() (bool, error) {
-			info, err = f.svc.Files.Insert(createInfo).Media(in).Do()
+			info, err = f.svc.Files.Insert(createInfo).Media(in, googleapi.ContentType("")).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
@@ -1005,7 +1005,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	if size == 0 || size < int64(driveUploadCutoff) {
 		// Don't retry, return a retry error instead
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-			info, err = o.fs.svc.Files.Update(updateInfo.Id, updateInfo).SetModifiedDate(true).Media(in).Do()
+			info, err = o.fs.svc.Files.Update(updateInfo.Id, updateInfo).SetModifiedDate(true).Media(in, googleapi.ContentType("")).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
