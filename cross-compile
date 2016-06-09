@@ -16,9 +16,33 @@ rm -rf build
 # Disable CGO and dynamic builds on all platforms (including build patform)
 export CGO_ENABLED=0
 
-gox --ldflags "-s -X github.com/ncw/rclone/fs.Version=${VERSION}" -output "build/{{.Dir}}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}" -os "darwin linux freebsd openbsd windows freebsd netbsd plan9 solaris"
-# Not implemented yet: nacl dragonfly android
+# Arch pairs we build for
 # gox -osarch-list for definitive list
+
+OSARCH="\
+windows/386
+windows/amd64
+darwin/386
+darwin/amd64
+linux/386
+linux/amd64
+linux/arm
+freebsd/386
+freebsd/amd64
+freebsd/arm
+netbsd/386
+netbsd/amd64
+netbsd/arm
+openbsd/386
+openbsd/amd64
+plan9/386
+plan9/amd64
+solaris/amd64"
+
+# Make space separated
+OSARCH=${OSARCH//$'\n'/ }
+
+gox --ldflags "-s -X github.com/ncw/rclone/fs.Version=${VERSION}" -output "build/{{.Dir}}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}" -osarch "${OSARCH}"
 
 mv build/rclone-${VERSION}-darwin-amd64 build/rclone-${VERSION}-osx-amd64
 mv build/rclone-${VERSION}-darwin-386 build/rclone-${VERSION}-osx-386
