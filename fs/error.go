@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // Retry is an optional interface for error as to whether the
@@ -95,14 +97,17 @@ func ShouldRetry(err error) bool {
 		return false
 	}
 
-	// Look for premature closing of connection
-	if err == io.EOF || err == io.ErrUnexpectedEOF || isClosedConnError(err) {
-		return true
-	}
+	// Find root cause if available
+	err = errors.Cause(err)
 
 	// Unwrap url.Error
 	if urlErr, ok := err.(*url.Error); ok {
 		err = urlErr.Err
+	}
+
+	// Look for premature closing of connection
+	if err == io.EOF || err == io.ErrUnexpectedEOF || isClosedConnError(err) {
+		return true
 	}
 
 	// Check for net error Timeout()

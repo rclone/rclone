@@ -16,8 +16,15 @@ func isClosedConnErrorPlatform(err error) bool {
 	if oe, ok := err.(*net.OpError); ok {
 		if se, ok := oe.Err.(*os.SyscallError); ok {
 			if errno, ok := se.Err.(syscall.Errno); ok {
-				const WSAECONNABORTED syscall.Errno = 10053
-				if errno == syscall.WSAECONNRESET || errno == WSAECONNABORTED {
+				const (
+					WSAECONNABORTED   syscall.Errno = 10053
+					WSAHOST_NOT_FOUND syscall.Errno = 11001
+					WSATRY_AGAIN      syscall.Errno = 11002
+					WSAENETRESET      syscall.Errno = 10052
+					WSAETIMEDOUT      syscall.Errno = 10060
+				)
+				switch errno {
+				case syscall.WSAECONNRESET, WSAECONNABORTED, WSAHOST_NOT_FOUND, WSATRY_AGAIN, WSAENETRESET, WSAETIMEDOUT:
 					return true
 				}
 			}
