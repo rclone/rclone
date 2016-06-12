@@ -253,6 +253,19 @@ type UnWrapper interface {
 	UnWrap() Fs
 }
 
+// PutUncheckeder is an optional interface for Fs
+type PutUncheckeder interface {
+	// Put in to the remote path with the modTime given of the given size
+	//
+	// May create the object even if it returns an error - if so
+	// will return the object and the error, otherwise will return
+	// nil and the error
+	//
+	// May create duplicates or return errors if src already
+	// exists.
+	PutUnchecked(in io.Reader, src ObjectInfo) (Object, error)
+}
+
 // ObjectsChan is a channel of Objects
 type ObjectsChan chan Object
 

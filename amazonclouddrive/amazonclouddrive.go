@@ -425,6 +425,17 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 		fs:     f,
 		remote: remote,
 	}
+	// Check if object already exists
+	err := o.readMetaData()
+	switch err {
+	case nil:
+		return o, o.Update(in, src)
+	case fs.ErrorDirNotFound, acd.ErrorNodeNotFound:
+		// Not found so create it
+	default:
+		return nil, err
+	}
+	// If not create it
 	leaf, directoryID, err := f.dirCache.FindPath(remote, true)
 	if err != nil {
 		return nil, err

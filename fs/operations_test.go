@@ -187,7 +187,15 @@ func (r *Run) WriteFile(filePath, content string, t time.Time) fstest.Item {
 }
 
 // WriteObjectTo writes an object to the fs, remote passed in
-func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time) fstest.Item {
+func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time, useUnchecked bool) fstest.Item {
+	put := f.Put
+	if useUnchecked {
+		if fPutUnchecked, ok := f.(fs.PutUncheckeder); ok {
+			put = fPutUnchecked.PutUnchecked
+		} else {
+			r.Fatalf("Fs doesn't support PutUnchecked")
+		}
+	}
 	const maxTries = 5
 	if !r.mkdir[f.String()] {
 		err := f.Mkdir()
@@ -199,7 +207,7 @@ func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time) 
 	for tries := 1; ; tries++ {
 		in := bytes.NewBufferString(content)
 		objinfo := fs.NewStaticObjectInfo(remote, modTime, int64(len(content)), true, nil, nil)
-		_, err := f.Put(in, objinfo)
+		_, err := put(in, objinfo)
 		if err == nil {
 			break
 		}
@@ -215,7 +223,12 @@ func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time) 
 
 // WriteObject writes an object to the remote
 func (r *Run) WriteObject(remote, content string, modTime time.Time) fstest.Item {
-	return r.WriteObjectTo(r.fremote, remote, content, modTime)
+	return r.WriteObjectTo(r.fremote, remote, content, modTime, false)
+}
+
+// WriteUncheckedObject writes an object to the remote not checking for duplicates
+func (r *Run) WriteUncheckedObject(remote, content string, modTime time.Time) fstest.Item {
+	return r.WriteObjectTo(r.fremote, remote, content, modTime, true)
 }
 
 // WriteBoth calls WriteObject and WriteFile with the same arguments
@@ -817,7 +830,7 @@ func TestServerSideMove(t *testing.T) {
 	t.Logf("Server side move (if possible) %v -> %v", r.fremote, fremoteMove)
 
 	// Write just one file in the new remote
-	r.WriteObjectTo(fremoteMove, "empty space", "", t2)
+	r.WriteObjectTo(fremoteMove, "empty space", "", t2, false)
 	fstest.CheckItems(t, fremoteMove, file2)
 
 	// Do server side move
@@ -1087,9 +1100,9 @@ func TestDeduplicateInteractive(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
 
-	file1 := r.WriteObject("one", "This is one", t1)
-	file2 := r.WriteObject("one", "This is one", t1)
-	file3 := r.WriteObject("one", "This is one", t1)
+	file1 := r.WriteUncheckedObject("one", "This is one", t1)
+	file2 := r.WriteUncheckedObject("one", "This is one", t1)
+	file3 := r.WriteUncheckedObject("one", "This is one", t1)
 	r.checkWithDuplicates(t, file1, file2, file3)
 
 	err := fs.Deduplicate(r.fremote, fs.DeduplicateInteractive)
@@ -1107,9 +1120,9 @@ func TestDeduplicateSkip(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
 
-	file1 := r.WriteObject("one", "This is one", t1)
-	file2 := r.WriteObject("one", "This is one", t1)
-	file3 := r.WriteObject("one", "This is another one", t1)
+	file1 := r.WriteUncheckedObject("one", "This is one", t1)
+	file2 := r.WriteUncheckedObject("one", "This is one", t1)
+	file3 := r.WriteUncheckedObject("one", "This is another one", t1)
 	r.checkWithDuplicates(t, file1, file2, file3)
 
 	err := fs.Deduplicate(r.fremote, fs.DeduplicateSkip)
@@ -1127,9 +1140,9 @@ func TestDeduplicateFirst(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
 
-	file1 := r.WriteObject("one", "This is one", t1)
-	file2 := r.WriteObject("one", "This is one A", t1)
-	file3 := r.WriteObject("one", "This is one BB", t1)
+	file1 := r.WriteUncheckedObject("one", "This is one", t1)
+	file2 := r.WriteUncheckedObject("one", "This is one A", t1)
+	file3 := r.WriteUncheckedObject("one", "This is one BB", t1)
 	r.checkWithDuplicates(t, file1, file2, file3)
 
 	err := fs.Deduplicate(r.fremote, fs.DeduplicateFirst)
@@ -1156,9 +1169,9 @@ func TestDeduplicateNewest(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
 
-	file1 := r.WriteObject("one", "This is one", t1)
-	file2 := r.WriteObject("one", "This is one too", t2)
-	file3 := r.WriteObject("one", "This is another one", t3)
+	file1 := r.WriteUncheckedObject("one", "This is one", t1)
+	file2 := r.WriteUncheckedObject("one", "This is one too", t2)
+	file3 := r.WriteUncheckedObject("one", "This is another one", t3)
 	r.checkWithDuplicates(t, file1, file2, file3)
 
 	err := fs.Deduplicate(r.fremote, fs.DeduplicateNewest)
@@ -1176,9 +1189,9 @@ func TestDeduplicateOldest(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
 
-	file1 := r.WriteObject("one", "This is one", t1)
-	file2 := r.WriteObject("one", "This is one too", t2)
-	file3 := r.WriteObject("one", "This is another one", t3)
+	file1 := r.WriteUncheckedObject("one", "This is one", t1)
+	file2 := r.WriteUncheckedObject("one", "This is one too", t2)
+	file3 := r.WriteUncheckedObject("one", "This is another one", t3)
 	r.checkWithDuplicates(t, file1, file2, file3)
 
 	err := fs.Deduplicate(r.fremote, fs.DeduplicateOldest)
@@ -1196,9 +1209,9 @@ func TestDeduplicateRename(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
 
-	file1 := r.WriteObject("one.txt", "This is one", t1)
-	file2 := r.WriteObject("one.txt", "This is one too", t2)
-	file3 := r.WriteObject("one.txt", "This is another one", t3)
+	file1 := r.WriteUncheckedObject("one.txt", "This is one", t1)
+	file2 := r.WriteUncheckedObject("one.txt", "This is one too", t2)
+	file3 := r.WriteUncheckedObject("one.txt", "This is another one", t3)
 	r.checkWithDuplicates(t, file1, file2, file3)
 
 	err := fs.Deduplicate(r.fremote, fs.DeduplicateRename)

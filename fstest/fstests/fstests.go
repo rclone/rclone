@@ -232,6 +232,13 @@ func TestFsPutFile2(t *testing.T) {
 	testPut(t, &file2)
 }
 
+// TestFsUpdateFile1 tests updating file1 with new contents
+func TestFsUpdateFile1(t *testing.T) {
+	skipIfNotOk(t)
+	testPut(t, &file1)
+	// Note that the next test will check there are no duplicated file names
+}
+
 // TestFsListDirFile2 tests the files are correctly uploaded
 func TestFsListDirFile2(t *testing.T) {
 	skipIfNotOk(t)

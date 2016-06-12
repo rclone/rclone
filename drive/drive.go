@@ -15,17 +15,16 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/drive/v2"
-	"google.golang.org/api/googleapi"
-
 	"github.com/ncw/rclone/dircache"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/oauthutil"
 	"github.com/ncw/rclone/pacer"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/drive/v2"
+	"google.golang.org/api/googleapi"
 )
 
 // Constants
@@ -81,6 +80,7 @@ var (
 		"text/plain":                                                                "txt",
 	}
 	extensionToMimeType map[string]string
+	errorObjectNotFound = errors.New("Object not found")
 )
 
 // Register with Fs
@@ -351,29 +351,29 @@ func NewFs(name, path string) (fs.Fs, error) {
 
 // Return an FsObject from a path
 func (f *Fs) newFsObjectWithInfoErr(remote string, info *drive.File) (fs.Object, error) {
-	fs := &Object{
+	o := &Object{
 		fs:     f,
 		remote: remote,
 	}
 	if info != nil {
-		fs.setMetaData(info)
+		o.setMetaData(info)
 	} else {
-		err := fs.readMetaData() // reads info and meta, returning an error
+		err := o.readMetaData() // reads info and meta, returning an error
 		if err != nil {
 			// logged already fs.Debug("Failed to read info: %s", err)
 			return nil, err
 		}
 	}
-	return fs, nil
+	return o, nil
 }
 
 // Return an FsObject from a path
 //
 // May return nil if an error occurred
 func (f *Fs) newFsObjectWithInfo(remote string, info *drive.File) fs.Object {
-	fs, _ := f.newFsObjectWithInfoErr(remote, info)
+	o, _ := f.newFsObjectWithInfoErr(remote, info)
 	// Errors have already been logged
-	return fs
+	return o
 }
 
 // NewFsObject returns an FsObject from a path
@@ -542,14 +542,27 @@ func (f *Fs) createFileInfo(remote string, modTime time.Time, size int64) (*Obje
 
 // Put the object
 //
-// This assumes that the object doesn't not already exists - if you
-// call it when it does exist then it will create a duplicate.  Call
-// object.Update() in this case.
-//
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
+	exisitingObj, err := f.newFsObjectWithInfoErr(src.Remote(), nil)
+	switch err {
+	case nil:
+		return exisitingObj, exisitingObj.Update(in, src)
+	case fs.ErrorDirNotFound, errorObjectNotFound:
+		// Not found so create it
+		return f.PutUnchecked(in, src)
+	default:
+		return nil, err
+	}
+}
+
+// PutUnchecked uploads the object
+//
+// This will create a duplicate if we upload a new file without
+// checking to see if there is one already - use Put() for that.
+func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 	remote := src.Remote()
 	size := src.Size()
 	modTime := src.ModTime()
@@ -857,8 +870,8 @@ func (o *Object) readMetaData() (err error) {
 		return err
 	}
 	if !found {
-		fs.Debug(o, "Couldn't find object")
-		return errors.New("couldn't find object")
+		fs.Debug(o, "%v", errorObjectNotFound)
+		return errorObjectNotFound
 	}
 	return nil
 }
@@ -1042,10 +1055,11 @@ func (o *Object) Remove() error {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs       = (*Fs)(nil)
-	_ fs.Purger   = (*Fs)(nil)
-	_ fs.Copier   = (*Fs)(nil)
-	_ fs.Mover    = (*Fs)(nil)
-	_ fs.DirMover = (*Fs)(nil)
-	_ fs.Object   = (*Object)(nil)
+	_ fs.Fs             = (*Fs)(nil)
+	_ fs.Purger         = (*Fs)(nil)
+	_ fs.Copier         = (*Fs)(nil)
+	_ fs.Mover          = (*Fs)(nil)
+	_ fs.DirMover       = (*Fs)(nil)
+	_ fs.PutUncheckeder = (*Fs)(nil)
+	_ fs.Object         = (*Object)(nil)
 )
