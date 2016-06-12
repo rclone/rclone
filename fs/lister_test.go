@@ -1,11 +1,11 @@
 package fs
 
 import (
-	"errors"
 	"io"
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ func TestListerNew(t *testing.T) {
 	assert.Equal(t, MaxLevel, o.level)
 }
 
-var errNotImpl = errors.New("Not implemented")
+var errNotImpl = errors.New("not implemented")
 
 type mockObject string
 

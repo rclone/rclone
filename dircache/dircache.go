@@ -4,12 +4,12 @@ package dircache
 // _methods are called without the lock
 
 import (
-	"fmt"
 	"log"
 	"strings"
 	"sync"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/pkg/errors"
 )
 
 // DirCache caches paths to directory IDs and vice versa
@@ -159,7 +159,7 @@ func (dc *DirCache) _findDir(path string, create bool) (pathID string, err error
 		if create {
 			pathID, err = dc.fs.CreateDir(parentPathID, leaf)
 			if err != nil {
-				return "", fmt.Errorf("Failed to make directory: %v", err)
+				return "", errors.Wrap(err, "failed to make directory")
 			}
 		} else {
 			return "", fs.ErrorDirNotFound
@@ -240,13 +240,13 @@ func (dc *DirCache) RootParentID() (string, error) {
 	dc.mu.Lock()
 	defer dc.mu.Unlock()
 	if !dc.foundRoot {
-		return "", fmt.Errorf("Internal Error: RootID() called before FindRoot")
+		return "", errors.New("internal error: RootID() called before FindRoot")
 	}
 	if dc.rootParentID == "" {
-		return "", fmt.Errorf("Internal Error: Didn't find rootParentID")
+		return "", errors.New("internal error: didn't find rootParentID")
 	}
 	if dc.rootID == dc.trueRootID {
-		return "", fmt.Errorf("Is root directory")
+		return "", errors.New("is root directory")
 	}
 	return dc.rootParentID, nil
 }

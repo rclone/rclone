@@ -1,10 +1,11 @@
 package src
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 // PerformDownload does the actual download via unscoped PUT request.
@@ -27,7 +28,7 @@ func (c *Client) PerformDownload(url string) (out io.ReadCloser, err error) {
 		if err != nil {
 			return nil, err
 		}
-		return nil, fmt.Errorf("download error [%d]: %s", resp.StatusCode, string(body[:]))
+		return nil, errors.Errorf("download error [%d]: %s", resp.StatusCode, string(body[:]))
 	}
 	return resp.Body, err
 }

@@ -3,10 +3,11 @@ package src
 //from yadisk
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 // PerformUpload does the actual upload via unscoped PUT request.
@@ -30,7 +31,7 @@ func (c *Client) PerformUpload(url string, data io.Reader) (err error) {
 			return err
 		}
 
-		return fmt.Errorf("upload error [%d]: %s", resp.StatusCode, string(body[:]))
+		return errors.Errorf("upload error [%d]: %s", resp.StatusCode, string(body[:]))
 	}
 	return nil
 }

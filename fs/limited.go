@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // Limited defines a Fs which can only return the Objects passed in
@@ -70,7 +72,7 @@ func (f *Limited) Put(in io.Reader, src ObjectInfo) (Object, error) {
 	remote := src.Remote()
 	obj := f.NewFsObject(remote)
 	if obj == nil {
-		return nil, fmt.Errorf("Can't create %q in limited fs", remote)
+		return nil, errors.Errorf("can't create %q in limited fs", remote)
 	}
 	return obj, obj.Update(in, src)
 }

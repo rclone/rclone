@@ -37,7 +37,7 @@ func TestGlobToRegexp(t *testing.T) {
 		{`ab}c`, `(^|/)`, `mismatched '{' and '}'`},
 		{`ab{c`, `(^|/)`, `mismatched '{' and '}'`},
 		{`*.{jpg,png,gif}`, `(^|/)[^/]*\.(jpg|png|gif)$`, ``},
-		{`[a--b]`, `(^|/)`, `Bad glob pattern`},
+		{`[a--b]`, `(^|/)`, `bad glob pattern`},
 		{`a\*b`, `(^|/)a\*b$`, ``},
 		{`a\\b`, `(^|/)a\\b$`, ``},
 	} {

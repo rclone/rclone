@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 )
 
@@ -227,7 +228,7 @@ func NewFilter() (f *Filter, err error) {
 		}
 		f.ModTimeFrom = time.Now().Add(-duration)
 		if !f.ModTimeTo.IsZero() && f.ModTimeTo.Before(f.ModTimeFrom) {
-			return nil, fmt.Errorf("Argument --min-age can't be larger than --max-age")
+			return nil, errors.New("argument --min-age can't be larger than --max-age")
 		}
 		Debug(nil, "--max-age %v to %v", duration, f.ModTimeFrom)
 	}
@@ -306,7 +307,7 @@ func (f *Filter) AddRule(rule string) error {
 	case strings.HasPrefix(rule, "+ "):
 		return f.Add(true, rule[2:])
 	}
-	return fmt.Errorf("Malformed rule %q", rule)
+	return errors.Errorf("malformed rule %q", rule)
 }
 
 // AddFile adds a single file to the files from list

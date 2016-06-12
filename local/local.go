@@ -80,7 +80,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		f.root, remote = getDirFile(f.root)
 		obj := f.NewFsObject(remote)
 		if obj == nil {
-			return nil, fmt.Errorf("Failed to make object for %q in %q", remote, f.root)
+			return nil, errors.Errorf("failed to make object for %q in %q", remote, f.root)
 		}
 		// return a Fs Limited to this object
 		return fs.NewLimited(f, obj), nil
@@ -368,7 +368,7 @@ func (f *Fs) Purge() error {
 		return err
 	}
 	if !fi.Mode().IsDir() {
-		return fmt.Errorf("Can't Purge non directory: %q", f.root)
+		return errors.Errorf("can't purge non directory: %q", f.root)
 	}
 	return os.RemoveAll(f.root)
 }
@@ -400,7 +400,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		return nil, err
 	} else if !dstObj.info.Mode().IsRegular() {
 		// It isn't a file
-		return nil, fmt.Errorf("Can't move file onto non-file")
+		return nil, errors.New("can't move file onto non-file")
 	}
 
 	// Create destination
@@ -490,7 +490,7 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 	oldsize := o.info.Size()
 	err := o.lstat()
 	if err != nil {
-		return "", errors.Wrap(err, "Hash failed to stat")
+		return "", errors.Wrap(err, "hash: failed to stat")
 	}
 
 	if !o.info.ModTime().Equal(oldtime) || oldsize != o.info.Size() {
@@ -501,15 +501,15 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 		o.hashes = make(map[fs.HashType]string)
 		in, err := os.Open(o.path)
 		if err != nil {
-			return "", errors.Wrap(err, "Hash failed to open")
+			return "", errors.Wrap(err, "hash: failed to open")
 		}
 		o.hashes, err = fs.HashStream(in)
 		closeErr := in.Close()
 		if err != nil {
-			return "", errors.Wrap(err, "Hash failed to read")
+			return "", errors.Wrap(err, "hash: failed to read")
 		}
 		if closeErr != nil {
-			return "", errors.Wrap(closeErr, "Hash failed to close")
+			return "", errors.Wrap(closeErr, "hash: failed to close")
 		}
 	}
 	return o.hashes[r], nil

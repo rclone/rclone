@@ -1,9 +1,9 @@
 package drive
 
 import (
-	"fmt"
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/api/drive/v2"
 )
@@ -17,11 +17,15 @@ func TestInternalParseExtensions(t *testing.T) {
 		{"doc", []string{"doc"}, nil},
 		{" docx ,XLSX, 	pptx,svg", []string{"docx", "xlsx", "pptx", "svg"}, nil},
 		{"docx,svg,Docx", []string{"docx", "svg"}, nil},
-		{"docx,potato,docx", []string{"docx"}, fmt.Errorf(`Couldn't find mime type for extension "potato"`)},
+		{"docx,potato,docx", []string{"docx"}, errors.New(`couldn't find mime type for extension "potato"`)},
 	} {
 		f := new(Fs)
 		gotErr := f.parseExtensions(test.in)
-		assert.Equal(t, test.wantErr, gotErr)
+		if test.wantErr == nil {
+			assert.NoError(t, gotErr)
+		} else {
+			assert.EqualError(t, gotErr, test.wantErr.Error())
+		}
 		assert.Equal(t, test.want, f.extensions)
 	}
 

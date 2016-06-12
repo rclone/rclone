@@ -26,6 +26,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/oauthutil"
 	"github.com/ncw/rclone/pacer"
+	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"golang.org/x/oauth2"
 )
@@ -185,7 +186,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get endpoints: %v", err)
+		return nil, errors.Wrap(err, "failed to get endpoints")
 	}
 
 	// Get rootID
@@ -195,7 +196,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil || rootInfo.Id == nil {
-		return nil, fmt.Errorf("Failed to get root: %v", err)
+		return nil, errors.Wrap(err, "failed to get root")
 	}
 
 	f.dirCache = dircache.New(root, *rootInfo.Id, f)
@@ -458,7 +459,7 @@ func (f *Fs) Mkdir() error {
 // refuses to do so if it has anything in
 func (f *Fs) purgeCheck(check bool) error {
 	if f.root == "" {
-		return fmt.Errorf("Can't purge root directory")
+		return errors.New("can't purge root directory")
 	}
 	dc := f.dirCache
 	err := dc.FindRoot(false)
@@ -487,7 +488,7 @@ func (f *Fs) purgeCheck(check bool) error {
 			return err
 		}
 		if !empty {
-			return fmt.Errorf("Directory not empty")
+			return errors.New("directory not empty")
 		}
 	}
 

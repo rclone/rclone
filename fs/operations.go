@@ -14,6 +14,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -261,7 +263,7 @@ tryAgain:
 	// Verify sizes are the same after transfer
 	if src.Size() != dst.Size() {
 		Stats.Error()
-		err = fmt.Errorf("Corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size())
+		err = errors.Errorf("corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size())
 		ErrorLog(dst, "%s", err)
 		removeFailedCopy(dst)
 		return
@@ -287,7 +289,7 @@ tryAgain:
 				ErrorLog(dst, "Failed to read hash: %s", err)
 			} else if !HashEquals(srcSum, dstSum) {
 				Stats.Error()
-				err = fmt.Errorf("Corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
+				err = errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
 				ErrorLog(dst, "%s", err)
 				removeFailedCopy(dst)
 				return
@@ -796,7 +798,7 @@ func Check(fdst, fsrc Fs) error {
 	checkerWg.Wait()
 	Log(fdst, "%d differences found", Stats.GetErrors())
 	if differences > 0 {
-		return fmt.Errorf("%d differences found", differences)
+		return errors.Errorf("%d differences found", differences)
 	}
 	return nil
 }

@@ -1,8 +1,9 @@
 package fs
 
 import (
-	"fmt"
 	"io"
+
+	"github.com/pkg/errors"
 )
 
 // asyncReader will do async read-ahead from the input reader
@@ -29,13 +30,13 @@ type asyncReader struct {
 // When done use Close to release the buffers and close the supplied input.
 func newAsyncReader(rd io.ReadCloser, buffers, size int) (io.ReadCloser, error) {
 	if size <= 0 {
-		return nil, fmt.Errorf("buffer size too small")
+		return nil, errors.New("buffer size too small")
 	}
 	if buffers <= 0 {
-		return nil, fmt.Errorf("number of buffers too small")
+		return nil, errors.New("number of buffers too small")
 	}
 	if rd == nil {
-		return nil, fmt.Errorf("nil reader supplied")
+		return nil, errors.New("nil reader supplied")
 	}
 	a := &asyncReader{}
 	a.init(rd, buffers, size)

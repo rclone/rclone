@@ -10,7 +10,6 @@ package b2
 import (
 	"bytes"
 	"crypto/sha1"
-	"errors"
 	"fmt"
 	"hash"
 	"io"
@@ -28,6 +27,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/pacer"
 	"github.com/ncw/rclone/rest"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -119,7 +119,7 @@ var matcher = regexp.MustCompile(`^([^/]*)(.*)$`)
 func parsePath(path string) (bucket, directory string, err error) {
 	parts := matcher.FindStringSubmatch(path)
 	if parts == nil {
-		err = fmt.Errorf("Couldn't find bucket in b2 path %q", path)
+		err = errors.Errorf("couldn't find bucket in b2 path %q", path)
 	} else {
 		bucket, directory = parts[1], parts[2]
 		directory = strings.Trim(directory, "/")
@@ -207,7 +207,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 	err = f.authorizeAccount()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to authorize account: %v", err)
+		return nil, errors.Wrap(err, "failed to authorize account")
 	}
 	if f.root != "" {
 		f.root += "/"
@@ -247,7 +247,7 @@ func (f *Fs) authorizeAccount() error {
 		return f.shouldRetryNoReauth(resp, err)
 	})
 	if err != nil {
-		return fmt.Errorf("Failed to authenticate: %v", err)
+		return errors.Wrap(err, "failed to authenticate")
 	}
 	f.srv.SetRoot(f.info.APIURL+"/b2api/v1").SetHeader("Authorization", f.info.AuthorizationToken)
 	return nil
@@ -276,7 +276,7 @@ func (f *Fs) getUploadURL() (upload *api.GetUploadURLResponse, err error) {
 			return f.shouldRetryNoReauth(resp, err)
 		})
 		if err != nil {
-			return nil, fmt.Errorf("Failed to get upload URL: %v", err)
+			return nil, errors.Wrap(err, "failed to get upload URL")
 		}
 	} else {
 		upload, f.uploads = f.uploads[0], f.uploads[1:]
@@ -562,7 +562,7 @@ func (f *Fs) getBucketID() (bucketID string, err error) {
 
 	})
 	if bucketID == "" {
-		err = fs.ErrorDirNotFound //fmt.Errorf("Couldn't find bucket %q", f.bucket)
+		err = fs.ErrorDirNotFound
 	}
 	f._bucketID = bucketID
 	return bucketID, err
@@ -618,7 +618,7 @@ func (f *Fs) Mkdir() error {
 				return nil
 			}
 		}
-		return fmt.Errorf("Failed to create bucket: %v", err)
+		return errors.Wrap(err, "failed to create bucket")
 	}
 	f.setBucketID(response.ID)
 	return nil
@@ -649,7 +649,7 @@ func (f *Fs) Rmdir() error {
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
-		return fmt.Errorf("Failed to delete bucket: %v", err)
+		return errors.Wrap(err, "failed to delete bucket")
 	}
 	f.clearBucketID()
 	f.clearUploadURL()
@@ -677,7 +677,7 @@ func (f *Fs) deleteByID(ID, Name string) error {
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
-		return fmt.Errorf("Failed to delete %q: %v", Name, err)
+		return errors.Wrapf(err, "failed to delete %q", Name)
 	}
 	return nil
 }
@@ -811,7 +811,7 @@ func (o *Object) readMetaData() (err error) {
 		return err
 	}
 	if info == nil {
-		return fmt.Errorf("Object %q not found", o.remote)
+		return errors.Errorf("object %q not found", o.remote)
 	}
 	return o.decodeMetaData(info)
 }
@@ -905,14 +905,14 @@ func (file *openFile) Close() (err error) {
 
 	// Check to see we read the correct number of bytes
 	if file.o.Size() != file.bytes {
-		return fmt.Errorf("Object corrupted on transfer - length mismatch (want %d got %d)", file.o.Size(), file.bytes)
+		return errors.Errorf("object corrupted on transfer - length mismatch (want %d got %d)", file.o.Size(), file.bytes)
 	}
 
 	// Check the SHA1
 	receivedSHA1 := file.resp.Header.Get(sha1Header)
 	calculatedSHA1 := fmt.Sprintf("%x", file.hash.Sum(nil))
 	if receivedSHA1 != calculatedSHA1 {
-		return fmt.Errorf("Object corrupted on transfer - SHA1 mismatch (want %q got %q)", receivedSHA1, calculatedSHA1)
+		return errors.Errorf("object corrupted on transfer - SHA1 mismatch (want %q got %q)", receivedSHA1, calculatedSHA1)
 	}
 
 	return nil
@@ -934,7 +934,7 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 		return o.fs.shouldRetry(resp, err)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to open for download: %v", err)
+		return nil, errors.Wrap(err, "failed to open for download")
 	}
 
 	// Parse the time out of the headers if possible
@@ -1015,7 +1015,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 			return err
 		}
 		if n != size {
-			return fmt.Errorf("Read %d bytes expecting %d", n, size)
+			return errors.Errorf("read %d bytes expecting %d", n, size)
 		}
 		calculatedSha1 = fmt.Sprintf("%x", hash.Sum(nil))
 
@@ -1139,7 +1139,7 @@ func (o *Object) Remove() error {
 		return o.fs.shouldRetry(resp, err)
 	})
 	if err != nil {
-		return fmt.Errorf("Failed to delete file: %v", err)
+		return errors.Wrap(err, "failed to delete file")
 	}
 	return nil
 }

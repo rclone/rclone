@@ -26,6 +26,7 @@ import (
 
 	"github.com/Unknwon/goconfig"
 	"github.com/mreiferson/go-httpclient"
+	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/text/unicode/norm"
@@ -128,7 +129,7 @@ func (x SizeSuffix) String() string {
 // Set a SizeSuffix
 func (x *SizeSuffix) Set(s string) error {
 	if len(s) == 0 {
-		return fmt.Errorf("Empty string")
+		return errors.New("empty string")
 	}
 	if strings.ToLower(s) == "off" {
 		*x = -1
@@ -150,7 +151,7 @@ func (x *SizeSuffix) Set(s string) error {
 	case 'g', 'G':
 		multiplier = 1 << 30
 	default:
-		return fmt.Errorf("Bad suffix %q", suffix)
+		return errors.Errorf("bad suffix %q", suffix)
 	}
 	s = s[:len(s)-suffixLen]
 	value, err := strconv.ParseFloat(s, 64)
@@ -158,7 +159,7 @@ func (x *SizeSuffix) Set(s string) error {
 		return err
 	}
 	if value < 0 {
-		return fmt.Errorf("Size can't be negative %q", s)
+		return errors.Errorf("size can't be negative %q", s)
 	}
 	value *= multiplier
 	*x = SizeSuffix(value)
@@ -402,7 +403,7 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 			break
 		}
 		if strings.HasPrefix(l, "RCLONE_ENCRYPT_V") {
-			return nil, fmt.Errorf("Unsupported configuration encryption. Update rclone for support.")
+			return nil, errors.New("unsupported configuration encryption - update rclone for support")
 		}
 		return goconfig.LoadFromReader(bytes.NewBuffer(b))
 	}
@@ -411,10 +412,10 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 	dec := base64.NewDecoder(base64.StdEncoding, r)
 	box, err := ioutil.ReadAll(dec)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to load base64 encoded data: %v", err)
+		return nil, errors.Wrap(err, "failed to load base64 encoded data")
 	}
 	if len(box) < 24+secretbox.Overhead {
-		return nil, fmt.Errorf("Configuration data too short")
+		return nil, errors.New("Configuration data too short")
 	}
 	envpw := os.Getenv("RCLONE_CONFIG_PASS")
 
@@ -431,7 +432,7 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 		}
 		if len(configKey) == 0 {
 			if !*AskPassword {
-				return nil, fmt.Errorf("Unable to decrypt configuration and not allowed to ask for password. Set RCLONE_CONFIG_PASS to your configuration password.")
+				return nil, errors.New("unable to decrypt configuration and not allowed to ask for password - set RCLONE_CONFIG_PASS to your configuration password")
 			}
 			getPassword("Enter configuration password:")
 		}
@@ -479,7 +480,7 @@ func getPassword(q string) {
 // zero after trimming+normalization, an error is returned.
 func setPassword(password string) error {
 	if !utf8.ValidString(password) {
-		return fmt.Errorf("Password contains invalid utf8 characters")
+		return errors.New("password contains invalid utf8 characters")
 	}
 	// Remove leading+trailing whitespace
 	password = strings.TrimSpace(password)
@@ -487,7 +488,7 @@ func setPassword(password string) error {
 	// Normalize to reduce weird variations.
 	password = norm.NFKC.String(password)
 	if len(password) == 0 {
-		return fmt.Errorf("No characters in password")
+		return errors.New("no characters in password")
 	}
 	// Create SHA256 has of the password
 	sha := sha256.New()

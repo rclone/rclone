@@ -4,9 +4,10 @@ package fs
 
 import (
 	"bytes"
-	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // globToRegexp converts an rsync style glob to a regexp
@@ -29,7 +30,7 @@ func globToRegexp(glob string) (*regexp.Regexp, error) {
 			case 2:
 				_, _ = re.WriteString(`.*`)
 			default:
-				return fmt.Errorf("too many stars in %q", glob)
+				return errors.Errorf("too many stars in %q", glob)
 			}
 		}
 		consecutiveStars = 0
@@ -72,16 +73,16 @@ func globToRegexp(glob string) (*regexp.Regexp, error) {
 			_, _ = re.WriteRune(c)
 			inBrackets++
 		case ']':
-			return nil, fmt.Errorf("mismatched ']' in glob %q", glob)
+			return nil, errors.Errorf("mismatched ']' in glob %q", glob)
 		case '{':
 			if inBraces {
-				return nil, fmt.Errorf("can't nest '{' '}' in glob %q", glob)
+				return nil, errors.Errorf("can't nest '{' '}' in glob %q", glob)
 			}
 			inBraces = true
 			_, _ = re.WriteRune('(')
 		case '}':
 			if !inBraces {
-				return nil, fmt.Errorf("mismatched '{' and '}' in glob %q", glob)
+				return nil, errors.Errorf("mismatched '{' and '}' in glob %q", glob)
 			}
 			_, _ = re.WriteRune(')')
 			inBraces = false
@@ -103,15 +104,15 @@ func globToRegexp(glob string) (*regexp.Regexp, error) {
 		return nil, err
 	}
 	if inBrackets > 0 {
-		return nil, fmt.Errorf("mismatched '[' and ']' in glob %q", glob)
+		return nil, errors.Errorf("mismatched '[' and ']' in glob %q", glob)
 	}
 	if inBraces {
-		return nil, fmt.Errorf("mismatched '{' and '}' in glob %q", glob)
+		return nil, errors.Errorf("mismatched '{' and '}' in glob %q", glob)
 	}
 	_, _ = re.WriteRune('$')
 	result, err := regexp.Compile(re.String())
 	if err != nil {
-		return nil, fmt.Errorf("Bad glob pattern %q: %v (%q)", glob, err, re.String())
+		return nil, errors.Wrapf(err, "bad glob pattern %q (regexp %q)", glob, re.String())
 	}
 	return result, nil
 }

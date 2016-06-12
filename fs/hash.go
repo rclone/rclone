@@ -8,6 +8,8 @@ import (
 	"hash"
 	"io"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // HashType indicates a standard hashing algorithm
@@ -15,7 +17,7 @@ type HashType int
 
 // ErrHashUnsupported should be returned by filesystem,
 // if it is requested to deliver an unsupported hash type.
-var ErrHashUnsupported = fmt.Errorf("hash type not supported")
+var ErrHashUnsupported = errors.New("hash type not supported")
 
 const (
 	// HashMD5 indicates MD5 support
@@ -82,7 +84,7 @@ func (h HashType) String() string {
 // and this function must support all types.
 func hashFromTypes(set HashSet) (map[HashType]hash.Hash, error) {
 	if !set.SubsetOf(SupportedHashes) {
-		return nil, fmt.Errorf("Requested set %08x contains unknown hash types", int(set))
+		return nil, errors.Errorf("requested set %08x contains unknown hash types", int(set))
 	}
 	var hashers = make(map[HashType]hash.Hash)
 	types := set.Array()

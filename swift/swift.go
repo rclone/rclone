@@ -3,7 +3,6 @@ package swift
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/swift"
+	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 )
 
@@ -132,7 +132,7 @@ var matcher = regexp.MustCompile(`^([^/]*)(.*)$`)
 func parsePath(path string) (container, directory string, err error) {
 	parts := matcher.FindStringSubmatch(path)
 	if parts == nil {
-		err = fmt.Errorf("Couldn't find container in swift path %q", path)
+		err = errors.Errorf("couldn't find container in swift path %q", path)
 	} else {
 		container, directory = parts[1], parts[2]
 		directory = strings.Trim(directory, "/")
@@ -318,7 +318,7 @@ func (f *Fs) list(dir string, level int, fn listFn) error {
 func (f *Fs) listFiles(out fs.ListOpts, dir string) {
 	defer out.Finished()
 	if f.container == "" {
-		out.SetError(errors.New("Can't list objects at root - choose a container using lsd"))
+		out.SetError(errors.New("can't list objects at root - choose a container using lsd"))
 		return
 	}
 	// List the objects

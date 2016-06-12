@@ -9,7 +9,6 @@ File system is case insensitive
 
 import (
 	"crypto/md5"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -21,6 +20,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/oauthutil"
+	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"github.com/stacktic/dropbox"
 )
@@ -148,7 +148,7 @@ func newDropbox(name string) (*dropbox.Dropbox, error) {
 // NewFs contstructs an Fs from the path, container:path
 func NewFs(name, root string) (fs.Fs, error) {
 	if uploadChunkSize > maxUploadChunkSize {
-		return nil, fmt.Errorf("Chunk size too big, must be < %v", maxUploadChunkSize)
+		return nil, errors.Errorf("chunk size too big, must be < %v", maxUploadChunkSize)
 	}
 	db, err := newDropbox(name)
 	if err != nil {
@@ -239,7 +239,7 @@ func strip(path, root string) (string, error) {
 	}
 	lowercase := strings.ToLower(path)
 	if !strings.HasPrefix(lowercase, root) {
-		return "", fmt.Errorf("Path %q is not under root %q", path, root)
+		return "", errors.Errorf("path %q is not under root %q", path, root)
 	}
 	return path[len(root):], nil
 }
@@ -267,11 +267,11 @@ func (f *Fs) list(out fs.ListOpts, dir string) {
 	for {
 		deltaPage, err := f.db.Delta(cursor, root)
 		if err != nil {
-			out.SetError(fmt.Errorf("Couldn't list: %s", err))
+			out.SetError(errors.Wrap(err, "couldn't list"))
 			return
 		}
 		if deltaPage.Reset && cursor != "" {
-			err = errors.New("Unexpected reset during listing")
+			err = errors.New("unexpected reset during listing")
 			out.SetError(err)
 			break
 		}
@@ -368,7 +368,7 @@ func (f *Fs) listOneLevel(out fs.ListOpts, dir string) {
 	}
 	entry, err := f.db.Metadata(root, true, false, "", "", metadataLimit)
 	if err != nil {
-		out.SetError(fmt.Errorf("Couldn't list single level: %s", err))
+		out.SetError(errors.Wrap(err, "couldn't list single level"))
 		return
 	}
 	for i := range entry.Contents {
@@ -448,7 +448,7 @@ func (f *Fs) Mkdir() error {
 		if entry.IsDir {
 			return nil
 		}
-		return fmt.Errorf("%q already exists as file", f.root)
+		return errors.Errorf("%q already exists as file", f.root)
 	}
 	_, err = f.db.CreateFolder(f.slashRoot)
 	return err
@@ -463,7 +463,7 @@ func (f *Fs) Rmdir() error {
 		return err
 	}
 	if len(entry.Contents) != 0 {
-		return errors.New("Directory not empty")
+		return errors.New("directory not empty")
 	}
 	return f.Purge()
 }
@@ -499,7 +499,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	dstPath := dstObj.remotePath()
 	entry, err := f.db.Copy(srcPath, dstPath, false)
 	if err != nil {
-		return nil, fmt.Errorf("Copy failed: %s", err)
+		return nil, errors.Wrap(err, "copy failed")
 	}
 	dstObj.setMetadataFromEntry(entry)
 	return dstObj, nil
@@ -542,7 +542,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	dstPath := dstObj.remotePath()
 	entry, err := f.db.Move(srcPath, dstPath)
 	if err != nil {
-		return nil, fmt.Errorf("Move failed: %s", err)
+		return nil, errors.Wrap(err, "move failed")
 	}
 	dstObj.setMetadataFromEntry(entry)
 	return dstObj, nil
@@ -571,7 +571,7 @@ func (f *Fs) DirMove(src fs.Fs) error {
 	// Do the move
 	_, err = f.db.Move(srcFs.slashRoot, f.slashRoot)
 	if err != nil {
-		return fmt.Errorf("MoveDir failed: %v", err)
+		return errors.Wrap(err, "MoveDir failed")
 	}
 	return nil
 }
@@ -625,7 +625,7 @@ func (o *Object) readEntry() (*dropbox.Entry, error) {
 	entry, err := o.fs.db.Metadata(o.remotePath(), false, false, "", "", metadataLimit)
 	if err != nil {
 		fs.Debug(o, "Error reading file: %s", err)
-		return nil, fmt.Errorf("Error reading file: %s", err)
+		return nil, errors.Wrap(err, "error reading file")
 	}
 	return entry, nil
 }
@@ -717,7 +717,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	}
 	entry, err := o.fs.db.UploadByChunk(ioutil.NopCloser(in), int(uploadChunkSize), remote, true, "")
 	if err != nil {
-		return fmt.Errorf("Upload failed: %s", err)
+		return errors.Wrap(err, "upload failed")
 	}
 	o.setMetadataFromEntry(entry)
 	return nil

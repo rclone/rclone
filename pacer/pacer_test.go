@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/pkg/errors"
 )
 
 func TestNew(t *testing.T) {
@@ -310,7 +311,7 @@ func TestEndCallZeroConnections(t *testing.T) {
 	}
 }
 
-var errFoo = fmt.Errorf("Foo")
+var errFoo = errors.New("foo")
 
 type dummyPaced struct {
 	retry  bool

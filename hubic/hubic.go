@@ -17,6 +17,7 @@ import (
 	"github.com/ncw/rclone/oauthutil"
 	"github.com/ncw/rclone/swift"
 	swiftLib "github.com/ncw/swift"
+	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )
 
@@ -118,7 +119,7 @@ func (f *Fs) getCredentials() (err error) {
 	}
 	defer fs.CheckClose(resp.Body, &err)
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return fmt.Errorf("Failed to get credentials: %s", resp.Status)
+		return errors.Errorf("failed to get credentials: %s", resp.Status)
 	}
 	decoder := json.NewDecoder(resp.Body)
 	var result credentials
@@ -128,7 +129,7 @@ func (f *Fs) getCredentials() (err error) {
 	}
 	// fs.Debug(f, "Got credentials %+v", result)
 	if result.Token == "" || result.Endpoint == "" || result.Expires == "" {
-		return fmt.Errorf("Couldn't read token, result and expired from credentials")
+		return errors.New("couldn't read token, result and expired from credentials")
 	}
 	f.credentials = result
 	expires, err := time.Parse(time.RFC3339, result.Expires)
@@ -144,7 +145,7 @@ func (f *Fs) getCredentials() (err error) {
 func NewFs(name, root string) (fs.Fs, error) {
 	client, _, err := oauthutil.NewClient(name, oauthConfig)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to configure Hubic: %v", err)
+		return nil, errors.Wrap(err, "failed to configure Hubic")
 	}
 
 	f := &Fs{
@@ -161,7 +162,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 	err = c.Authenticate()
 	if err != nil {
-		return nil, fmt.Errorf("Error authenticating swift connection: %v", err)
+		return nil, errors.Wrap(err, "error authenticating swift connection")
 	}
 
 	// Make inner swift Fs from the connection

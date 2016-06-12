@@ -15,7 +15,6 @@ FIXME Patch/Delete/Get isn't working with files with spaces in - giving 404 erro
 import (
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -27,13 +26,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/oauthutil"
+	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/storage/v1"
-
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/oauthutil"
 )
 
 const (
@@ -182,7 +181,7 @@ var matcher = regexp.MustCompile(`^([^/]*)(.*)$`)
 func parsePath(path string) (bucket, directory string, err error) {
 	parts := matcher.FindStringSubmatch(path)
 	if parts == nil {
-		err = fmt.Errorf("Couldn't find bucket in storage path %q", path)
+		err = errors.Errorf("couldn't find bucket in storage path %q", path)
 	} else {
 		bucket, directory = parts[1], parts[2]
 		directory = strings.Trim(directory, "/")
@@ -193,11 +192,11 @@ func parsePath(path string) (bucket, directory string, err error) {
 func getServiceAccountClient(keyJsonfilePath string) (*http.Client, error) {
 	data, err := ioutil.ReadFile(os.ExpandEnv(keyJsonfilePath))
 	if err != nil {
-		return nil, fmt.Errorf("error opening credentials file: %v", err)
+		return nil, errors.Wrap(err, "error opening credentials file")
 	}
 	conf, err := google.JWTConfigFromJSON(data, storageConfig.Scopes...)
 	if err != nil {
-		return nil, fmt.Errorf("error processing credentials: %v", err)
+		return nil, errors.Wrap(err, "error processing credentials")
 	}
 	ctxWithSpecialClient := oauthutil.Context()
 	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
@@ -245,7 +244,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	f.client = oAuthClient
 	f.svc, err = storage.New(f.client)
 	if err != nil {
-		return nil, fmt.Errorf("Couldn't create Google Cloud Storage client: %s", err)
+		return nil, errors.Wrap(err, "couldn't create Google Cloud Storage client")
 	}
 
 	if f.root != "" {
@@ -357,7 +356,7 @@ func (f *Fs) list(dir string, level int, fn listFn) error {
 func (f *Fs) listFiles(out fs.ListOpts, dir string) {
 	defer out.Finished()
 	if f.bucket == "" {
-		out.SetError(fmt.Errorf("Can't list objects at root - choose a bucket using lsd"))
+		out.SetError(errors.New("can't list objects at root - choose a bucket using lsd"))
 		return
 	}
 	// List the objects
@@ -398,7 +397,7 @@ func (f *Fs) listBuckets(out fs.ListOpts, dir string) {
 		return
 	}
 	if f.projectNumber == "" {
-		out.SetError(errors.New("Can't list buckets without project number"))
+		out.SetError(errors.New("can't list buckets without project number"))
 		return
 	}
 	listBuckets := f.svc.Buckets.List(f.projectNumber).MaxResults(listChunks)
@@ -458,7 +457,7 @@ func (f *Fs) Mkdir() error {
 	}
 
 	if f.projectNumber == "" {
-		return fmt.Errorf("Can't make bucket without project number")
+		return errors.New("can't make bucket without project number")
 	}
 
 	bucket := storage.Bucket{
@@ -670,7 +669,7 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 	}
 	if res.StatusCode != 200 {
 		_ = res.Body.Close() // ignore error
-		return nil, fmt.Errorf("Bad response: %d: %s", res.StatusCode, res.Status)
+		return nil, errors.Errorf("bad response: %d: %s", res.StatusCode, res.Status)
 	}
 	return res.Body, nil
 }

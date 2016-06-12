@@ -21,6 +21,7 @@ import (
 	"strconv"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/pkg/errors"
 	"google.golang.org/api/drive/v2"
 	"google.golang.org/api/googleapi"
 )
@@ -138,7 +139,7 @@ func (rx *resumableUpload) transferStatus() (start int64, err error) {
 		if err != nil {
 			return 0, err
 		}
-		return 0, fmt.Errorf("unexpected http return code %v", res.StatusCode)
+		return 0, errors.Errorf("unexpected http return code %v", res.StatusCode)
 	}
 	Range := res.Header.Get("Range")
 	if m := rangeRE.FindStringSubmatch(Range); len(m) == 2 {
@@ -147,7 +148,7 @@ func (rx *resumableUpload) transferStatus() (start int64, err error) {
 			return start, nil
 		}
 	}
-	return 0, fmt.Errorf("unable to parse range %q", Range)
+	return 0, errors.Errorf("unable to parse range %q", Range)
 }
 
 // Transfer a chunk - caller must call googleapi.CloseBody(res) if err == nil || res != nil

@@ -14,7 +14,6 @@ What happens if you CTRL-C a multipart upload
 */
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -36,6 +35,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/swift"
+	"github.com/pkg/errors"
 )
 
 // Register with Fs
@@ -200,7 +200,7 @@ var matcher = regexp.MustCompile(`^([^/]*)(.*)$`)
 func s3ParsePath(path string) (bucket, directory string, err error) {
 	parts := matcher.FindStringSubmatch(path)
 	if parts == nil {
-		err = fmt.Errorf("Couldn't parse bucket out of s3 path %q", path)
+		err = errors.Errorf("couldn't parse bucket out of s3 path %q", path)
 	} else {
 		bucket, directory = parts[1], parts[2]
 		directory = strings.Trim(directory, "/")
@@ -452,7 +452,7 @@ func (f *Fs) listFiles(out fs.ListOpts, dir string) {
 	defer out.Finished()
 	if f.bucket == "" {
 		// Return no objects at top level list
-		out.SetError(errors.New("Can't list objects at root - choose a bucket using lsd"))
+		out.SetError(errors.New("can't list objects at root - choose a bucket using lsd"))
 		return
 	}
 	// List the objects and directories

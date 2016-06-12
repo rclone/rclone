@@ -11,6 +11,8 @@ import (
 	"regexp"
 	"sort"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // Constants
@@ -29,17 +31,17 @@ var (
 	// Filesystem registry
 	fsRegistry []*RegInfo
 	// ErrorNotFoundInConfigFile is returned by NewFs if not found in config file
-	ErrorNotFoundInConfigFile = fmt.Errorf("Didn't find section in config file")
-	ErrorCantPurge            = fmt.Errorf("Can't purge directory")
-	ErrorCantCopy             = fmt.Errorf("Can't copy object - incompatible remotes")
-	ErrorCantMove             = fmt.Errorf("Can't move object - incompatible remotes")
-	ErrorCantDirMove          = fmt.Errorf("Can't move directory - incompatible remotes")
-	ErrorDirExists            = fmt.Errorf("Can't copy directory - destination already exists")
-	ErrorCantSetModTime       = fmt.Errorf("Can't set modified time")
-	ErrorDirNotFound          = fmt.Errorf("Directory not found")
-	ErrorLevelNotSupported    = fmt.Errorf("Level value not supported")
-	ErrorListAborted          = fmt.Errorf("List aborted")
-	ErrorListOnlyRoot         = fmt.Errorf("Can only list from root")
+	ErrorNotFoundInConfigFile = errors.New("didn't find section in config file")
+	ErrorCantPurge            = errors.New("can't purge directory")
+	ErrorCantCopy             = errors.New("can't copy object - incompatible remotes")
+	ErrorCantMove             = errors.New("can't move object - incompatible remotes")
+	ErrorCantDirMove          = errors.New("can't move directory - incompatible remotes")
+	ErrorDirExists            = errors.New("can't copy directory - destination already exists")
+	ErrorCantSetModTime       = errors.New("can't set modified time")
+	ErrorDirNotFound          = errors.New("directory not found")
+	ErrorLevelNotSupported    = errors.New("level value not supported")
+	ErrorListAborted          = errors.New("list aborted")
+	ErrorListOnlyRoot         = errors.New("can only list from root")
 )
 
 // RegInfo provides information about a filesystem
@@ -323,7 +325,7 @@ func Find(name string) (*RegInfo, error) {
 			return item, nil
 		}
 	}
-	return nil, fmt.Errorf("Didn't find filing system for %q", name)
+	return nil, errors.Errorf("didn't find filing system for %q", name)
 }
 
 // Pattern to match an rclone url

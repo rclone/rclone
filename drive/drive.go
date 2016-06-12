@@ -24,6 +24,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/oauthutil"
 	"github.com/ncw/rclone/pacer"
+	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 )
 
@@ -220,7 +221,7 @@ OUTER:
 			return shouldRetry(err)
 		})
 		if err != nil {
-			return false, fmt.Errorf("Couldn't list directory: %s", err)
+			return false, errors.Wrap(err, "couldn't list directory")
 		}
 		for _, item := range files.Items {
 			if fn(item) {
@@ -253,7 +254,7 @@ func (f *Fs) parseExtensions(extensions string) error {
 	for _, extension := range strings.Split(extensions, ",") {
 		extension = strings.ToLower(strings.TrimSpace(extension))
 		if _, found := extensionToMimeType[extension]; !found {
-			return fmt.Errorf("Couldn't find mime type for extension %q", extension)
+			return errors.Errorf("couldn't find mime type for extension %q", extension)
 		}
 		found := false
 		for _, existingExtension := range f.extensions {
@@ -272,10 +273,10 @@ func (f *Fs) parseExtensions(extensions string) error {
 // NewFs contstructs an Fs from the path, container:path
 func NewFs(name, path string) (fs.Fs, error) {
 	if !isPowerOfTwo(int64(chunkSize)) {
-		return nil, fmt.Errorf("drive: chunk size %v isn't a power of two", chunkSize)
+		return nil, errors.Errorf("drive: chunk size %v isn't a power of two", chunkSize)
 	}
 	if chunkSize < 256*1024 {
-		return nil, fmt.Errorf("drive: chunk size can't be less than 256k - was %v", chunkSize)
+		return nil, errors.Errorf("drive: chunk size can't be less than 256k - was %v", chunkSize)
 	}
 
 	oAuthClient, _, err := oauthutil.NewClient(name, driveConfig)
@@ -298,7 +299,7 @@ func NewFs(name, path string) (fs.Fs, error) {
 	f.client = oAuthClient
 	f.svc, err = drive.New(f.client)
 	if err != nil {
-		return nil, fmt.Errorf("Couldn't create Drive client: %s", err)
+		return nil, errors.Wrap(err, "couldn't create Drive client")
 	}
 
 	// Read About so we know the root path
@@ -307,7 +308,7 @@ func NewFs(name, path string) (fs.Fs, error) {
 		return shouldRetry(err)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Couldn't read info about Drive: %s", err)
+		return nil, errors.Wrap(err, "couldn't read info about Drive")
 	}
 
 	f.dirCache = dircache.New(root, f.about.RootFolderId, f)
@@ -602,7 +603,7 @@ func (f *Fs) Rmdir() error {
 		return err
 	}
 	if len(children.Items) > 0 {
-		return fmt.Errorf("Directory not empty: %#v", children.Items)
+		return errors.Errorf("directory not empty: %#v", children.Items)
 	}
 	// Delete the directory if it isn't the root
 	if f.root != "" {
@@ -643,7 +644,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		return nil, fs.ErrorCantCopy
 	}
 	if srcObj.isDocument {
-		return nil, fmt.Errorf("Can't copy a Google document")
+		return nil, errors.New("can't copy a Google document")
 	}
 
 	o, createInfo, err := f.createFileInfo(remote, srcObj.ModTime(), srcObj.bytes)
@@ -671,7 +672,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 // result of List()
 func (f *Fs) Purge() error {
 	if f.root == "" {
-		return fmt.Errorf("Can't purge root directory")
+		return errors.New("can't purge root directory")
 	}
 	err := f.dirCache.FindRoot(false)
 	if err != nil {
@@ -708,7 +709,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		return nil, fs.ErrorCantMove
 	}
 	if srcObj.isDocument {
-		return nil, fmt.Errorf("Can't move a Google document")
+		return nil, errors.New("can't move a Google document")
 	}
 
 	// Temporary FsObject under construction
@@ -857,7 +858,7 @@ func (o *Object) readMetaData() (err error) {
 	}
 	if !found {
 		fs.Debug(o, "Couldn't find object")
-		return fmt.Errorf("Couldn't find object")
+		return errors.New("couldn't find object")
 	}
 	return nil
 }
@@ -914,7 +915,7 @@ func (o *Object) Storable() bool {
 // using the method passed in
 func (o *Object) httpResponse(method string) (res *http.Response, err error) {
 	if o.url == "" {
-		return nil, fmt.Errorf("Forbidden to download - check sharing permission")
+		return nil, errors.New("forbidden to download - check sharing permission")
 	}
 	req, err := http.NewRequest(method, o.url, nil)
 	if err != nil {
@@ -970,7 +971,7 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 	}
 	if res.StatusCode != 200 {
 		_ = res.Body.Close() // ignore error
-		return nil, fmt.Errorf("Bad response: %d: %s", res.StatusCode, res.Status)
+		return nil, errors.Errorf("bad response: %d: %s", res.StatusCode, res.Status)
 	}
 	// If it is a document, update the size with what we are
 	// reading as it can change from the HEAD in the listing to
@@ -991,7 +992,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	size := src.Size()
 	modTime := src.ModTime()
 	if o.isDocument {
-		return fmt.Errorf("Can't update a google document")
+		return errors.New("can't update a google document")
 	}
 	updateInfo := &drive.File{
 		Id:           o.id,
@@ -1025,7 +1026,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 // Remove an object
 func (o *Object) Remove() error {
 	if o.isDocument {
-		return fmt.Errorf("Can't delete a google document")
+		return errors.New("can't delete a google document")
 	}
 	var err error
 	err = o.fs.pacer.Call(func() (bool, error) {

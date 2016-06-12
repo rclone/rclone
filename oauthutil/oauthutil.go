@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/pkg/errors"
 	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
@@ -58,7 +59,7 @@ func getToken(name string) (*oauth2.Token, error) {
 		return nil, err
 	}
 	if tokenString == "" {
-		return nil, fmt.Errorf("Empty token found - please run rclone config again")
+		return nil, errors.New("empty token found - please run rclone config again")
 	}
 	token := new(oauth2.Token)
 	err = json.Unmarshal([]byte(tokenString), token)
@@ -301,7 +302,7 @@ func Config(id, name string, config *oauth2.Config) error {
 		if authCode != "" {
 			fmt.Printf("Got code\n")
 		} else {
-			return fmt.Errorf("Failed to get code")
+			return errors.New("failed to get code")
 		}
 	} else {
 		// Read the code, and exchange it for a token.
@@ -310,14 +311,14 @@ func Config(id, name string, config *oauth2.Config) error {
 	}
 	token, err := config.Exchange(oauth2.NoContext, authCode)
 	if err != nil {
-		return fmt.Errorf("Failed to get token: %v", err)
+		return errors.Wrap(err, "failed to get token")
 	}
 
 	// Print code if we do automatic retrieval
 	if automatic {
 		result, err := json.Marshal(token)
 		if err != nil {
-			return fmt.Errorf("Failed to marshal token: %v", err)
+			return errors.Wrap(err, "failed to marshal token")
 		}
 		fmt.Printf("Paste the following into your remote machine --->\n%s\n<---End paste", result)
 	}

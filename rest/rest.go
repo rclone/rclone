@@ -6,13 +6,13 @@ package rest
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"sync"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/pkg/errors"
 )
 
 // Client contains the info to sustain the API
@@ -43,7 +43,7 @@ func defaultErrorHandler(resp *http.Response) (err error) {
 	if err != nil {
 		return err
 	}
-	return fmt.Errorf("HTTP error %v (%v) returned body: %q", resp.StatusCode, resp.Status, body)
+	return errors.Errorf("HTTP error %v (%v) returned body: %q", resp.StatusCode, resp.Status, body)
 }
 
 // SetErrorHandler sets the handler to decode an error response when
@@ -102,14 +102,14 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 	api.mu.RLock()
 	defer api.mu.RUnlock()
 	if opts == nil {
-		return nil, fmt.Errorf("call() called with nil opts")
+		return nil, errors.New("call() called with nil opts")
 	}
 	var url string
 	if opts.Absolute {
 		url = opts.Path
 	} else {
 		if api.rootURL == "" {
-			return nil, fmt.Errorf("RootURL not set")
+			return nil, errors.New("RootURL not set")
 		}
 		url = api.rootURL + opts.Path
 	}

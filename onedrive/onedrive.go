@@ -187,7 +187,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	// Get rootID
 	rootInfo, _, err := f.readMetaDataForPath("")
 	if err != nil || rootInfo.ID == "" {
-		return nil, fmt.Errorf("Failed to get root: %v", err)
+		return nil, errors.Wrap(err, "failed to get root")
 	}
 
 	f.dirCache = dircache.New(root, rootInfo.ID, f)
@@ -258,7 +258,7 @@ func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err er
 	// fs.Debug(f, "FindLeaf(%q, %q)", pathID, leaf)
 	parent, ok := f.dirCache.GetInv(pathID)
 	if !ok {
-		return "", false, fmt.Errorf("Couldn't find parent ID")
+		return "", false, errors.New("couldn't find parent ID")
 	}
 	path := leaf
 	if parent != "" {
@@ -275,7 +275,7 @@ func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err er
 		return "", false, err
 	}
 	if info.Folder == nil {
-		return "", false, fmt.Errorf("Found file when looking for folder")
+		return "", false, errors.New("found file when looking for folder")
 	}
 	return info.ID, true, nil
 }
@@ -467,7 +467,7 @@ func (f *Fs) deleteObject(id string) error {
 // refuses to do so if it has anything in
 func (f *Fs) purgeCheck(check bool) error {
 	if f.root == "" {
-		return fmt.Errorf("Can't purge root directory")
+		return errors.New("can't purge root directory")
 	}
 	dc := f.dirCache
 	err := dc.FindRoot(false)
@@ -480,10 +480,10 @@ func (f *Fs) purgeCheck(check bool) error {
 		return err
 	}
 	if item.Folder == nil {
-		return fmt.Errorf("Not a folder")
+		return errors.New("not a folder")
 	}
 	if check && item.Folder.ChildCount != 0 {
-		return fmt.Errorf("Folder not empty")
+		return errors.New("folder not empty")
 	}
 	err = f.deleteObject(rootID)
 	if err != nil {
@@ -533,7 +533,7 @@ func (f *Fs) waitForJob(location string, o *Object) error {
 				return err
 			}
 			if status.Status == "failed" || status.Status == "deleteFailed" {
-				return fmt.Errorf("Async operation %q returned %q", status.Operation, status.Status)
+				return errors.Errorf("async operation %q returned %q", status.Operation, status.Status)
 			}
 		} else {
 			var info api.Item
@@ -546,7 +546,7 @@ func (f *Fs) waitForJob(location string, o *Object) error {
 		}
 		time.Sleep(1 * time.Second)
 	}
-	return fmt.Errorf("Async operation didn't complete after %v", fs.Config.Timeout)
+	return errors.Errorf("async operation didn't complete after %v", fs.Config.Timeout)
 }
 
 // Copy src to this remote using server side copy operations.
@@ -601,7 +601,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	// read location header
 	location := resp.Header.Get("Location")
 	if location == "" {
-		return nil, fmt.Errorf("Didn't receive location header in copy response")
+		return nil, errors.New("didn't receive location header in copy response")
 	}
 
 	// Wait for job to finish
@@ -764,7 +764,7 @@ func (o *Object) Storable() bool {
 // Open an object for read
 func (o *Object) Open() (in io.ReadCloser, err error) {
 	if o.id == "" {
-		return nil, fmt.Errorf("Can't download no id")
+		return nil, errors.New("can't download - no id")
 	}
 	var resp *http.Response
 	opts := rest.Opts{
@@ -834,7 +834,7 @@ func (o *Object) cancelUploadSession(url string) (err error) {
 // uploadMultipart uploads a file using multipart upload
 func (o *Object) uploadMultipart(in io.Reader, size int64) (err error) {
 	if chunkSize%(320*1024) != 0 {
-		return fmt.Errorf("Chunk size %d is not a multiple of 320k", chunkSize)
+		return errors.Errorf("chunk size %d is not a multiple of 320k", chunkSize)
 	}
 
 	// Create upload session

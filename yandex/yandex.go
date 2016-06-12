@@ -407,10 +407,10 @@ func (f *Fs) purgeCheck(check bool) error {
 		var opt yandex.ResourceInfoRequestOptions
 		ResourceInfoResponse, err := f.yd.NewResourceInfoRequest(f.diskRoot, opt).Exec()
 		if err != nil {
-			return fmt.Errorf("Rmdir failed: %s", err)
+			return errors.Wrap(err, "rmdir failed")
 		}
 		if len(ResourceInfoResponse.Embedded.Items) != 0 {
-			return fmt.Errorf("Rmdir failed: Directory not empty")
+			return errors.New("rmdir failed: directory not empty")
 		}
 	}
 	//delete directory
