@@ -134,6 +134,16 @@ func init() {
 				Value: "sa-east-1",
 				Help:  "South America (Sao Paulo) Region.",
 			}},
+		}, {
+			Name: "server_side_encryption",
+			Help: "The server-side encryption algorithm used when storing this object in S3.",
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "None",
+			}, {
+				Value: "AES256",
+				Help:  "AES256",
+			}},
 		}},
 	})
 }
@@ -154,6 +164,7 @@ type Fs struct {
 	perm               string           // permissions for new buckets / objects
 	root               string           // root of the bucket - ignore all objects above this
 	locationConstraint string           // location constraint of new buckets
+	sse                string           // the type of server-side encryption
 }
 
 // Object describes a s3 object
@@ -303,6 +314,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		// FIXME perm:   s3.Private, // FIXME need user to specify
 		root:               directory,
 		locationConstraint: fs.ConfigFile.MustValue(name, "location_constraint"),
+		sse:                fs.ConfigFile.MustValue(name, "server_side_encryption"),
 	}
 	if f.root != "" {
 		f.root += "/"
@@ -813,6 +825,9 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		ContentType: &contentType,
 		Metadata:    metadata,
 		//ContentLength: &size,
+	}
+	if o.fs.sse != "" {
+		req.ServerSideEncryption = &o.fs.sse
 	}
 	_, err := uploader.Upload(&req)
 	if err != nil {
