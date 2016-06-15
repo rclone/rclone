@@ -54,11 +54,6 @@ type resumableUpload struct {
 // Upload the io.Reader in of size bytes with contentType and info
 func (f *Fs) Upload(in io.Reader, size int64, contentType string, info *drive.File, remote string) (*drive.File, error) {
 	fileID := info.Id
-	var body io.Reader
-	body, err := googleapi.WithoutDataWrapper.JSONReader(info)
-	if err != nil {
-		return nil, err
-	}
 	params := make(url.Values)
 	params.Set("alt", "json")
 	params.Set("uploadType", "resumable")
@@ -70,16 +65,26 @@ func (f *Fs) Upload(in io.Reader, size int64, contentType string, info *drive.Fi
 		method = "PUT"
 	}
 	urls += "?" + params.Encode()
-	req, _ := http.NewRequest(method, urls, body)
-	googleapi.Expand(req.URL, map[string]string{
-		"fileId": fileID,
-	})
-	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
-	req.Header.Set("X-Upload-Content-Type", contentType)
-	req.Header.Set("X-Upload-Content-Length", fmt.Sprintf("%v", size))
-	req.Header.Set("User-Agent", fs.UserAgent)
 	var res *http.Response
+	var err error
 	err = f.pacer.Call(func() (bool, error) {
+		var body io.Reader
+		body, err = googleapi.WithoutDataWrapper.JSONReader(info)
+		if err != nil {
+			return false, err
+		}
+		var req *http.Request
+		req, err = http.NewRequest(method, urls, body)
+		if err != nil {
+			return false, err
+		}
+		googleapi.Expand(req.URL, map[string]string{
+			"fileId": fileID,
+		})
+		req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+		req.Header.Set("X-Upload-Content-Type", contentType)
+		req.Header.Set("X-Upload-Content-Length", fmt.Sprintf("%v", size))
+		req.Header.Set("User-Agent", fs.UserAgent)
 		res, err = f.client.Do(req)
 		if err == nil {
 			defer googleapi.CloseBody(res)
