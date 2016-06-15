@@ -169,7 +169,7 @@ func Equal(src, dst Object) bool {
 }
 
 // MimeType returns a guess at the mime type from the extension
-func MimeType(o Object) string {
+func MimeType(o ObjectInfo) string {
 	mimeType := mime.TypeByExtension(path.Ext(o.Remote()))
 	if !strings.ContainsRune(mimeType, '/') {
 		mimeType = "application/octet-stream"

@@ -1,9 +1,6 @@
 // Package b2 provides an interface to the Backblaze B2 object storage system
 package b2
 
-// FIXME if b2 could set the mod time then it has everything else to
-// implement mod times.  It is just missing that bit of API.
-
 // FIXME should we remove sha1 checks from here as rclone now supports
 // checking SHA1s?
 
@@ -28,6 +25,7 @@ import (
 	"github.com/ncw/rclone/pacer"
 	"github.com/ncw/rclone/rest"
 	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
 )
 
 const (
@@ -35,10 +33,22 @@ const (
 	headerPrefix    = "x-bz-info-" // lower case as that is what the server returns
 	timeKey         = "src_last_modified_millis"
 	timeHeader      = headerPrefix + timeKey
+	sha1Key         = "large_file_sha1"
 	sha1Header      = "X-Bz-Content-Sha1"
 	minSleep        = 10 * time.Millisecond
 	maxSleep        = 2 * time.Second
 	decayConstant   = 2 // bigger for slower decay, exponential
+	maxParts        = 10000
+)
+
+// Globals
+var (
+	minChunkSize                = fs.SizeSuffix(100E6)
+	chunkSize                   = fs.SizeSuffix(96 * 1024 * 1024)
+	uploadCutoff                = fs.SizeSuffix(5E9)
+	errorAuthTokenExpired       = errors.New("b2 auth token expired")
+	errorUploadTokenExpired     = errors.New("b2 upload token expired")
+	errorUploadPartTokenExpired = errors.New("b2 upload part token expired")
 )
 
 // Register with Fs
@@ -59,6 +69,8 @@ func init() {
 		},
 		},
 	})
+	pflag.VarP(&uploadCutoff, "b2-upload-cutoff", "", "Cutoff for switching to chunked upload")
+	pflag.VarP(&chunkSize, "b2-chunk-size", "", "Upload chunk size. Must fit in memory.")
 }
 
 // Fs represents a remote b2 server
@@ -146,15 +158,14 @@ func (f *Fs) shouldRetryNoReauth(resp *http.Response, err error) (bool, error) {
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
 func (f *Fs) shouldRetry(resp *http.Response, err error) (bool, error) {
-	if resp != nil && resp.StatusCode == 401 {
-		fs.Debug(f, "b2 auth token expired refetching")
+	if err == nil && resp != nil && resp.StatusCode == 401 {
+		err = errorAuthTokenExpired
+		fs.Debug(f, "%v", err)
 		// Reauth
 		authErr := f.authorizeAccount()
 		if authErr != nil {
 			err = authErr
 		}
-		// Refetch upload URL
-		f.clearUploadURL()
 		return true, err
 	}
 	return f.shouldRetryNoReauth(resp, err)
@@ -182,6 +193,12 @@ func errorHandler(resp *http.Response) error {
 
 // NewFs contstructs an Fs from the path, bucket:path
 func NewFs(name, root string) (fs.Fs, error) {
+	if uploadCutoff < chunkSize {
+		return nil, errors.Errorf("b2: upload cutoff must be less than chunk size %v - was %v", chunkSize, uploadCutoff)
+	}
+	if chunkSize < minChunkSize {
+		return nil, errors.Errorf("b2: chunk size can't be less than %v - was %v", minChunkSize, chunkSize)
+	}
 	bucket, directory, err := parsePath(root)
 	if err != nil {
 		return nil, err
@@ -273,7 +290,7 @@ func (f *Fs) getUploadURL() (upload *api.GetUploadURLResponse, err error) {
 		}
 		err := f.pacer.Call(func() (bool, error) {
 			resp, err := f.srv.CallJSON(&opts, &request, &upload)
-			return f.shouldRetryNoReauth(resp, err)
+			return f.shouldRetry(resp, err)
 		})
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to get upload URL")
@@ -286,6 +303,9 @@ func (f *Fs) getUploadURL() (upload *api.GetUploadURLResponse, err error) {
 
 // returnUploadURL returns the UploadURL to the cache
 func (f *Fs) returnUploadURL(upload *api.GetUploadURLResponse) {
+	if upload == nil {
+		return
+	}
 	f.uploadMu.Lock()
 	f.uploads = append(f.uploads, upload)
 	f.uploadMu.Unlock()
@@ -770,7 +790,27 @@ func (o *Object) Size() int64 {
 	return o.size
 }
 
-// decodeMetaData sets the metadata in the object from info
+// decodeMetaDataRaw sets the metadata from the data passed in
+//
+// Sets
+//  o.id
+//  o.modTime
+//  o.size
+//  o.sha1
+func (o *Object) decodeMetaDataRaw(ID, SHA1 string, Size int64, UploadTimestamp api.Timestamp, Info map[string]string) (err error) {
+	o.id = ID
+	o.sha1 = SHA1
+	// Read SHA1 from metadata if it exists and isn't set
+	if o.sha1 == "" || o.sha1 == "none" {
+		o.sha1 = Info[sha1Key]
+	}
+	o.size = Size
+	// Use the UploadTimestamp if can't get file info
+	o.modTime = time.Time(UploadTimestamp)
+	return o.parseTimeString(Info[timeKey])
+}
+
+// decodeMetaData sets the metadata in the object from an api.File
 //
 // Sets
 //  o.id
@@ -778,12 +818,18 @@ func (o *Object) Size() int64 {
 //  o.size
 //  o.sha1
 func (o *Object) decodeMetaData(info *api.File) (err error) {
-	o.id = info.ID
-	o.sha1 = info.SHA1
-	o.size = info.Size
-	// Use the UploadTimestamp if can't get file info
-	o.modTime = time.Time(info.UploadTimestamp)
-	return o.parseTimeString(info.Info[timeKey])
+	return o.decodeMetaDataRaw(info.ID, info.SHA1, info.Size, info.UploadTimestamp, info.Info)
+}
+
+// decodeMetaDataFileInfo sets the metadata in the object from an api.FileInfo
+//
+// Sets
+//  o.id
+//  o.modTime
+//  o.size
+//  o.sha1
+func (o *Object) decodeMetaDataFileInfo(info *api.FileInfo) (err error) {
+	return o.decodeMetaDataRaw(info.ID, info.SHA1, info.Size, info.UploadTimestamp, info.Info)
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
@@ -989,6 +1035,16 @@ func urlEncode(in string) string {
 // The new object may have been created if an error is returned
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 	size := src.Size()
+
+	// If a large file upload in chunks - see upload.go
+	if size >= int64(uploadCutoff) {
+		up, err := o.fs.newLargeUpload(o, in, src)
+		if err != nil {
+			return err
+		}
+		return up.Upload()
+	}
+
 	modTime := src.ModTime()
 	calculatedSha1, _ := src.Hash(fs.HashSHA1)
 
@@ -1106,17 +1162,21 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 	// Don't retry, return a retry error instead
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err := o.fs.srv.CallJSON(&opts, nil, &response)
-		return o.fs.shouldRetry(resp, err)
+		if err == nil && resp != nil && resp.StatusCode == 401 {
+			err = errorUploadTokenExpired
+			fs.Debug(o, "%v", err)
+			// Invalidate this Upload URL
+			upload = nil
+			// Refetch upload URLs
+			o.fs.clearUploadURL()
+			return true, err
+		}
+		return o.fs.shouldRetryNoReauth(resp, err)
 	})
 	if err != nil {
 		return err
 	}
-	o.id = response.ID
-	o.sha1 = response.SHA1
-	o.size = response.Size
-	o.modTime = modTime
-	_ = o.parseTimeString(response.Info[timeKey])
-	return nil
+	return o.decodeMetaDataFileInfo(&response)
 }
 
 // Remove an object
