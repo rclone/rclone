@@ -281,6 +281,41 @@ Enter an interactive configuration session.
 
 Prints help on rclone commands and options.
 
+Quoting and the shell
+---------------------
+
+When you are typing commands to your computer you are using something
+called the command line shell.  This interprets various characters in
+an OS specific way.
+
+Here are some gotchas which may help users unfamiliar with the shell rules
+
+### Linux / OSX ###
+
+If your names have spaces or shell metacharacters (eg `*`, `?`, `$`,
+`'`, `"` etc) then you must quote them.  Use single quotes `'` by default.
+
+    rclone copy 'Important files?' remote:backup
+
+If you want to send a `'` you will need to use `"`, eg
+
+    rclone copy "O'Reilly Reviews" remote:backup
+
+The rules for quoting metacharacters are complicated and if you want
+the full details you'll have to consult the manual page for your
+shell.
+
+### Windows ###
+
+If your names have spaces in you need to put them in `"`, eg
+
+    rclone copy "E:\folder name\folder name\folder name" remote:backup
+
+If you are using the root directory on its own then don't quote it
+(see [#464](https://github.com/ncw/rclone/issues/464) for why), eg
+
+    rclone copy E:\ remote:backup
+
 Server Side Copy
 ----------------
 
