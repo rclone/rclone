@@ -19,6 +19,10 @@ and exclude rules like `--include`, `--exclude`, `--include-from`,
 try them out is using the `ls` command, or `--dry-run` together with
 `-v`.
 
+**Important** Due to limitations of the command line parser you can
+only use any of these options once - if you duplicate them then rclone
+will use the last one only.
+
 ## Patterns ##
 
 The patterns used to match files for inclusion or exclusion are based
