@@ -437,6 +437,20 @@ While this isn't a generally recommended option, it can be useful
 in cases where your files change due to encryption. However, it cannot
 correct partial transfers in case a transfer was interrupted.
 
+### --ignore-size ###
+
+Normally rclone will look at modification time and size of files to
+see if they are equal.  If you set this flag then rclone will check
+only the modification time.  If `--checksum` is set then it only
+checks the checksum.
+
+It will also cause rclone to skip verifying the sizes are the same
+after transfer.
+
+This can be useful for transferring files to and from onedrive which
+occasionally misreports the size of image files (see
+[#399](https://github.com/ncw/rclone/issues/399) for more info).
+
 ### -I, --ignore-times ###
 
 Using this option will cause rclone to unconditionally upload all
@@ -533,9 +547,6 @@ only the size.
 This can be useful transferring files from dropbox which have been
 modified by the desktop sync client which doesn't set checksums of
 modification times in the same way as rclone.
-
-When using this flag, rclone won't update mtimes of remote files if
-they are incorrect as it would normally.
 
 ### --stats=TIME ###
 

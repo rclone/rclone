@@ -479,6 +479,50 @@ func TestSyncSizeOnly(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, file1)
 }
 
+// Create a file and sync it. Keep the last modified date but change
+// the size.  With --ignore-size we expect nothing to to be
+// transferred on the second sync.
+func TestSyncIgnoreSize(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	fs.Config.IgnoreSize = true
+	defer func() { fs.Config.IgnoreSize = false }()
+
+	file1 := r.WriteFile("ignore-size", "contents", t1)
+	fstest.CheckItems(t, r.flocal, file1)
+
+	fs.Stats.ResetCounters()
+	err := fs.Sync(r.fremote, r.flocal)
+	if err != nil {
+		t.Fatalf("Initial sync failed: %v", err)
+	}
+
+	// We should have transferred exactly one file.
+	if fs.Stats.GetTransfers() != 1 {
+		t.Fatalf("Sync 1: want 1 transfer, got %d", fs.Stats.GetTransfers())
+	}
+
+	fstest.CheckItems(t, r.fremote, file1)
+
+	// Update size but not date of file
+	file2 := r.WriteFile("ignore-size", "longer contents but same date", t1)
+	fstest.CheckItems(t, r.flocal, file2)
+
+	fs.Stats.ResetCounters()
+	err = fs.Sync(r.fremote, r.flocal)
+	if err != nil {
+		t.Fatalf("Sync failed: %v", err)
+	}
+
+	// We should have transferred no files
+	if fs.Stats.GetTransfers() != 0 {
+		t.Fatalf("Sync 2: want 0 transfers, got %d", fs.Stats.GetTransfers())
+	}
+
+	fstest.CheckItems(t, r.flocal, file2)
+	fstest.CheckItems(t, r.fremote, file1)
+}
+
 func TestSyncIgnoreTimes(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()

@@ -87,6 +87,7 @@ var (
 	noGzip          = pflag.BoolP("no-gzip-encoding", "", false, "Don't set Accept-Encoding: gzip.")
 	dedupeMode      = pflag.StringP("dedupe-mode", "", "interactive", "Dedupe mode interactive|skip|first|newest|oldest|rename.")
 	maxDepth        = pflag.IntP("max-depth", "", -1, "If set limits the recursion depth to this.")
+	ignoreSize      = pflag.BoolP("ignore-size", "", false, "Ignore size when skipping use mod-time or checksum.")
 	bwLimit         SizeSuffix
 
 	// Key to use for password en/decryption.
@@ -221,6 +222,7 @@ type ConfigInfo struct {
 	NoGzip             bool // Disable compression
 	DedupeMode         DeduplicateMode
 	MaxDepth           int
+	IgnoreSize         bool
 }
 
 // Transport returns an http.RoundTripper with the correct timeouts
@@ -324,6 +326,7 @@ func LoadConfig() {
 	Config.UpdateOlder = *updateOlder
 	Config.NoGzip = *noGzip
 	Config.MaxDepth = *maxDepth
+	Config.IgnoreSize = *ignoreSize
 
 	ConfigPath = *configFile
 
@@ -356,6 +359,10 @@ func LoadConfig() {
 	// If none are specified, use "during".
 	case !*deleteBefore && !*deleteDuring && !*deleteAfter:
 		Config.DeleteDuring = true
+	}
+
+	if Config.IgnoreSize && Config.SizeOnly {
+		log.Fatalf(`Can't use --size-only and --ignore-size together.`)
 	}
 
 	// Load configuration file.

@@ -95,7 +95,8 @@ func CheckHashes(src, dst Object) (equal bool, hash HashType, err error) {
 //
 // If the src and dst size are different then it is considered to be
 // not equal.  If --size-only is in effect then this is the only check
-// that is done.
+// that is done.  If --ignore-size is in effect then this check is
+// skipped and the files are considered the same size.
 //
 // If the size is the same and the mtime is the same then it is
 // considered to be equal.  This check is skipped if using --checksum.
@@ -108,9 +109,11 @@ func CheckHashes(src, dst Object) (equal bool, hash HashType, err error) {
 // Otherwise the file is considered to be not equal including if there
 // were errors reading info.
 func Equal(src, dst Object) bool {
-	if src.Size() != dst.Size() {
-		Debug(src, "Sizes differ")
-		return false
+	if !Config.IgnoreSize {
+		if src.Size() != dst.Size() {
+			Debug(src, "Sizes differ")
+			return false
+		}
 	}
 	if Config.SizeOnly {
 		Debug(src, "Sizes identical")
@@ -261,7 +264,7 @@ tryAgain:
 	}
 
 	// Verify sizes are the same after transfer
-	if src.Size() != dst.Size() {
+	if !Config.IgnoreSize && src.Size() != dst.Size() {
 		Stats.Error()
 		err = errors.Errorf("corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size())
 		ErrorLog(dst, "%s", err)
