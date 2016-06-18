@@ -105,6 +105,9 @@ type ListFser interface {
 	//
 	// This should return ErrDirNotFound (using out.SetError())
 	// if the directory isn't found.
+	//
+	// Fses must support recursion levels of fs.MaxLevel and 1.
+	// They may return ErrorLevelNotSupported otherwise.
 	List(out ListOpts, dir string)
 }
 
