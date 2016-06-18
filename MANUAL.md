@@ -3012,7 +3012,7 @@ file exceeds 258 characters on z, so only use this option if you have to.
 Changelog
 ---------
 
-  * v1.29 - 2016-06-18
+  * v1.30 - 2016-06-18
     * New Features
       * Directory listing code reworked for more features and better error reporting (thanks to Klaus Post for help).  This enables
         * Directory include filtering for efficiency
