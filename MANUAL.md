@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Apr 18, 2016
+% Jun 18, 2016
 
 Rclone
 ======
@@ -181,12 +181,12 @@ go there.
 Moves the source to the destination.
 
 If there are no filters in use this is equivalent to a copy followed
-by a purge, but may using server side operations to speed it up if
+by a purge, but may use server side operations to speed it up if
 possible.
 
 If filters are in use then it is equivalent to a copy followed by
 delete, followed by an rmdir (which only removes the directory if
-empty).  The individual file moves will be moved with srver side
+empty).  The individual file moves will be moved with server side
 operations if possible.
 
 **Important**: Since this can cause data loss, test first with the
@@ -194,7 +194,7 @@ operations if possible.
 
 ### rclone ls remote:path ###
 
-List all the objects in the the path with size and path.
+List all the objects in the path with size and path.
 
 ### rclone lsd remote:path ###
 
@@ -349,6 +349,41 @@ Enter an interactive configuration session.
 
 Prints help on rclone commands and options.
 
+Quoting and the shell
+---------------------
+
+When you are typing commands to your computer you are using something
+called the command line shell.  This interprets various characters in
+an OS specific way.
+
+Here are some gotchas which may help users unfamiliar with the shell rules
+
+### Linux / OSX ###
+
+If your names have spaces or shell metacharacters (eg `*`, `?`, `$`,
+`'`, `"` etc) then you must quote them.  Use single quotes `'` by default.
+
+    rclone copy 'Important files?' remote:backup
+
+If you want to send a `'` you will need to use `"`, eg
+
+    rclone copy "O'Reilly Reviews" remote:backup
+
+The rules for quoting metacharacters are complicated and if you want
+the full details you'll have to consult the manual page for your
+shell.
+
+### Windows ###
+
+If your names have spaces in you need to put them in `"`, eg
+
+    rclone copy "E:\folder name\folder name\folder name" remote:backup
+
+If you are using the root directory on its own then don't quote it
+(see [#464](https://github.com/ncw/rclone/issues/464) for why), eg
+
+    rclone copy E:\ remote:backup
+
 Server Side Copy
 ----------------
 
@@ -390,13 +425,14 @@ possibly signed sequence of decimal numbers, each with optional
 fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid
 time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-Options which use SIZE use kByte by default.  However a suffix of `k`
-for kBytes, `M` for MBytes and `G` for GBytes may be used.  These are
-the binary units, eg 2\*\*10, 2\*\*20, 2\*\*30 respectively.
+Options which use SIZE use kByte by default.  However a suffix of `b`
+for bytes, `k` for kBytes, `M` for MBytes and `G` for GBytes may be
+used.  These are the binary units, eg 1, 2\*\*10, 2\*\*20, 2\*\*30
+respectively.
 
 ### --bwlimit=SIZE ###
 
-Bandwidth limit in kBytes/s, or use suffix k|M|G.  The default is `0`
+Bandwidth limit in kBytes/s, or use suffix b|k|M|G.  The default is `0`
 which means to not limit bandwidth.
 
 For example to limit bandwidth usage to 10 MBytes/s use `--bwlimit 10M`
@@ -469,6 +505,20 @@ While this isn't a generally recommended option, it can be useful
 in cases where your files change due to encryption. However, it cannot
 correct partial transfers in case a transfer was interrupted.
 
+### --ignore-size ###
+
+Normally rclone will look at modification time and size of files to
+see if they are equal.  If you set this flag then rclone will check
+only the modification time.  If `--checksum` is set then it only
+checks the checksum.
+
+It will also cause rclone to skip verifying the sizes are the same
+after transfer.
+
+This can be useful for transferring files to and from onedrive which
+occasionally misreports the size of image files (see
+[#399](https://github.com/ncw/rclone/issues/399) for more info).
+
 ### -I, --ignore-times ###
 
 Using this option will cause rclone to unconditionally upload all
@@ -482,7 +532,8 @@ using `--checksum`).
 
 Log all of rclone's output to FILE.  This is not active by default.
 This can be useful for tracking down problems with syncs in
-combination with the `-v` flag.
+combination with the `-v` flag.  See the Logging section for more
+info.
 
 ### --low-level-retries NUMBER ###
 
@@ -499,6 +550,24 @@ to reduce the value so rclone moves on to a high level retry (see the
 `--retries` flag) quicker.
 
 Disable low level retries with `--low-level-retries 1`.
+
+### --max-depth=N ###
+
+This modifies the recursion depth for all the commands except purge.
+
+So if you do `rclone --max-depth 1 ls remote:path` you will see only
+the files in the top level directory.  Using `--max-depth 2` means you
+will see all the files in first two directory levels and so on.
+
+For historical reasons the `lsd` command defaults to using a
+`--max-depth` of 1 - you can override this with the command line flag.
+
+You can use this command to disable recursion (with `--max-depth 1`).
+
+Note that if you use this with `sync` and `--delete-excluded` the
+files not recursed through are considered excluded and will be deleted
+on the destination.  Test first with `--dry-run` if you are not sure
+what will happen.
 
 ### --modify-window=TIME ###
 
@@ -546,9 +615,6 @@ only the size.
 This can be useful transferring files from dropbox which have been
 modified by the desktop sync client which doesn't set checksums of
 modification times in the same way as rclone.
-
-When using this flag, rclone won't update mtimes of remote files if
-they are incorrect as it would normally.
 
 ### --stats=TIME ###
 
@@ -651,9 +717,9 @@ a) Add Password
 q) Quit to main menu
 a/q> a
 Enter NEW configuration password:
-password>
+password:
 Confirm NEW password:
-password>
+password:
 Password set
 Your configuration is encrypted.
 c) Change Password
@@ -670,13 +736,13 @@ configuration.
 There is no way to recover the configuration if you lose your password.
 
 rclone uses [nacl secretbox](https://godoc.org/golang.org/x/crypto/nacl/secretbox) 
-which in term uses XSalsa20 and Poly1305 to encrypt and authenticate 
+which in turn uses XSalsa20 and Poly1305 to encrypt and authenticate 
 your configuration with secret-key cryptography.
 The password is SHA-256 hashed, which produces the key for secretbox.
 The hashed password is not stored.
 
 While this provides very good security, we do not recommend storing
-your encrypted rclone configuration in public, if it contains sensitive
+your encrypted rclone configuration in public if it contains sensitive
 information, maybe except if you use a very strong password.
 
 If it is safe in your environment, you can set the `RCLONE_CONFIG_PASS`
@@ -686,7 +752,7 @@ used for decrypting the configuration.
 If you are running rclone inside a script, you might want to disable 
 password prompts. To do that, pass the parameter 
 `--ask-password=false` to rclone. This will make rclone fail instead
-of asking for a password, if if `RCLONE_CONFIG_PASS` doesn't contain
+of asking for a password if `RCLONE_CONFIG_PASS` doesn't contain
 a valid password.
 
 
@@ -753,6 +819,25 @@ For the filtering options
   * `--dump-filters`
 
 See the [filtering section](http://rclone.org/filtering/).
+
+Logging
+-------
+
+rclone has 3 levels of logging, `Error`, `Info` and `Debug`.
+
+By default rclone logs `Error` and `Info` to standard error and `Debug`
+to standard output.  This means you can redirect standard output and
+standard error to different places.
+
+By default rclone will produce `Error` and `Info` level messages.
+
+If you use the `-q` flag, rclone will only produce `Error` messages.
+
+If you use the `-v` flag, rclone will produce `Error`, `Info` and
+`Debug` messages.
+
+If you use the `--log-file=FILE` option, rclone will redirect `Error`,
+`Info` and `Debug` messages along with standard error to FILE.
 
 Exit Code
 ---------
@@ -859,6 +944,10 @@ and exclude rules like `--include`, `--exclude`, `--include-from`,
 try them out is using the `ls` command, or `--dry-run` together with
 `-v`.
 
+**Important** Due to limitations of the command line parser you can
+only use any of these options once - if you duplicate them then rclone
+will use the last one only.
+
 ## Patterns ##
 
 The patterns used to match files for inclusion or exclusion are based
@@ -921,12 +1010,36 @@ Special characters can be escaped with a `\` before them.
     \*.jpg       - matches "*.jpg"
     \\.jpg       - matches "\.jpg"
     \[one\].jpg  - matches "[one].jpg"
-  
+
+Note also that rclone filter globs can only be used in one of the
+filter command line flags, not in the specification of the remote, so
+`rclone copy "remote:dir*.jpg" /path/to/dir` won't work - what is
+required is `rclone --include "*.jpg" copy remote:dir /path/to/dir`
+
+### Directories ###
+
+Rclone keeps track of directories that could match any file patterns.
+
+Eg if you add the include rule
+
+    \a\*.jpg
+
+Rclone will synthesize the directory include rule
+
+    \a\
+
+If you put any rules which end in `\` then it will only match
+directories.
+
+Directory matches are **only** used to optimise directory access
+patterns - you must still match the files that you want to match.
+Directory matches won't optimise anything on bucket based remotes (eg
+s3, swift, google compute storage, b2) which don't have a concept of
+directory.
+
 ### Differences between rsync and rclone patterns ###
 
 Rclone implements bash style `{a,b,c}` glob matching which rsync doesn't.
-
-Rclone ignores `/` at the end of a pattern.
 
 Rclone always does a wildcard match so `\` must always escape a `\`.
 
@@ -959,6 +1072,11 @@ This would exclude
 
   * `secret17.jpg`
   * non `*.jpg` and `*.png`
+
+A similar process is done on directory entries before recursing into
+them.  This only works on remotes which have a concept of directory
+(Eg local, drive, onedrive, amazon cloud drive) and not on bucket
+based remotes (eg s3, swift, google compute storage, b2).
 
 ## Adding filtering rules ##
 
@@ -1540,6 +1658,13 @@ Choose a number from below, or type in your own value
  9 / South America (Sao Paulo) Region.
    \ "sa-east-1"
 location_constraint> 1
+The server-side encryption algorithm used when storing this object in S3.
+Choose a number from below, or type in your own value
+ 1 / None
+   \ ""
+ 2 / AES256
+   \ "AES256"
+server_side_encryption>
 Remote config
 --------------------
 [remote]
@@ -1762,6 +1887,8 @@ Choose a number from below, or type in your own value
  6 / OVH
    \ "https://auth.cloud.ovh.net/v2.0"
 auth> 1
+User domain - optional (v3 auth)
+domain> Default
 Tenant name - optional
 tenant> 
 Region name - optional
@@ -1769,6 +1896,8 @@ region>
 Storage URL - optional
 storage_url> 
 Remote config
+AuthVersion - optional - set to (1,2,3) if your auth URL has no version
+auth_version> 
 --------------------
 [remote]
 user = user_name
@@ -1827,6 +1956,22 @@ amongst others) for storing the modification time for an object.
 The Swift API doesn't return a correct MD5SUM for segmented files
 (Dynamic or Static Large Objects) so rclone won't check or use the
 MD5SUM for these.
+
+### Troubleshooting ###
+
+#### Rclone gives Failed to create file system for "remote:": Bad Request ####
+
+Due to an oddity of the underlying swift library, it gives a "Bad
+Request" error rather than a more sensible error when the
+authentication fails for Swift.
+
+So this most likely means your username / password is wrong.  You can
+investigate further with the `--dump-bodies` flag.
+
+#### Rclone gives Failed to create file system: Response didn't have storage storage url and auth token ####
+
+This is most likely caused by forgetting to specify your tenant when
+setting up a swift remote.
 
 Dropbox
 ---------------------------------
@@ -2005,6 +2150,8 @@ Google Application Client Secret - leave blank normally.
 client_secret> 
 Project number optional - needed only for list/create/delete buckets - see your developer console.
 project_number> 12345678
+Service Account Credentials JSON file path - needed only if you want use SA instead of interactive login.
+service_account_file> 
 Access Control List for new objects.
 Choose a number from below, or type in your own value
  * Object owner gets OWNER access, and all Authenticated Users get READER access.
@@ -2086,6 +2233,30 @@ Sync `/home/local/directory` to the remote bucket, deleting any excess
 files in the bucket.
 
     rclone sync /home/local/directory remote:bucket
+
+### Service Account support ###
+
+You can set up rclone with Google Cloud Storage in an unattended mode,
+i.e. not tied to a specific end-user Google account. This is useful
+when you want to synchronise files onto machines that don't have
+actively logged-in users, for example build machines.
+
+To get credentials for Google Cloud Platform
+[IAM Service Accounts](https://cloud.google.com/iam/docs/service-accounts),
+please head to the
+[Service Account](https://console.cloud.google.com/permissions/serviceaccounts)
+section of the Google Developer Console. Service Accounts behave just
+like normal `User` permissions in
+[Google Cloud Storage ACLs](https://cloud.google.com/storage/docs/access-control),
+so you can limit their access (e.g. make them read only). After
+creating an account, a JSON file containing the Service Account's
+credentials will be downloaded onto your machines. These credentials
+are what rclone will use for authentication.
+
+To use a Service Account instead of OAuth2 token flow, enter the path
+to your Service Account credentials at the `service_account_file`
+prompt and rclone won't use the browser based authentication
+flow.
 
 ### Modified time ###
 
@@ -2479,6 +2650,11 @@ To copy a local directory to an Hubic directory called backup
 
     rclone copy /home/source remote:backup
 
+If you want the directory to be visible in the official *Hubic
+browser*, you need to copy your files to the `default` directory
+
+    rclone copy /home/source remote:default/backup
+
 ### Modified time ###
 
 The modified time is stored as metadata on the object as
@@ -2603,6 +2779,9 @@ method to set the modification time independent of doing an upload.
 The SHA1 checksums of the files are checked on upload and download and
 will be used in the syncing process. You can use the `--checksum` flag.
 
+Large files which are uploaded in chunks will store their SHA1 on the
+object as `X-Bz-Info-large_file_sha1` as recommended by Backblaze.
+
 ### Versions ###
 
 When rclone uploads a new version of a file it creates a [new version
@@ -2627,11 +2806,29 @@ depending on your hardware, how big the files are, how much you want
 to load your computer, etc.  The default of `--transfers 4` is
 definitely too low for Backblaze B2 though.
 
+### Specific options ###
+
+Here are the command line options specific to this cloud storage
+system.
+
+#### --b2-chunk-size valuee=SIZE ####
+
+When uploading large files chunk the file into this size.  Note that
+these chunks are buffered in memory.  100,000,000 Bytes is the minimim
+size (default 96M).
+
+#### --b2-upload-cutoff=SIZE ####
+
+Cutoff for switching to chunked upload (default 4.657GiB ==
+5GB). Files above this size will be uploaded in chunks of
+`--b2-chunk-size`. The default value is the largest file which can be
+uploaded without chunks.
+
 ### API ###
 
 Here are [some notes I made on the backblaze
 API](https://gist.github.com/ncw/166dabf352b399f1cc1c) while
-integrating it with rclone which detail the changes I'd like to see.
+integrating it with rclone.
 
 Yandex Disk
 ----------------------------------------
@@ -2815,6 +3012,42 @@ file exceeds 258 characters on z, so only use this option if you have to.
 Changelog
 ---------
 
+  * v1.29 - 2016-06-18
+    * New Features
+      * Directory listing code reworked for more features and better error reporting (thanks to Klaus Post for help).  This enables
+        * Directory include filtering for efficiency
+        * --max-depth parameter
+        * Better error reporting
+        * More to come
+      * Retry more errors
+      * Add --ignore-size flag - for uploading images to onedrive
+      * Log -v output to stdout by default
+      * Display the transfer stats in more human readable form
+      * Make 0 size files specifiable with `--max-size 0b`
+      * Add `b` suffix so we can specify bytes in --bwlimit, --min-size etc
+      * Use "password:" instead of "password>" prompt - thanks Klaus Post and Leigh Klotz
+    * Bug Fixes
+      * Fix retry doing one too many retries
+    * Local
+      * Fix problems with OS X and UTF-8 characters
+    * Amazon Cloud Drive
+      * Check a file exists before uploading to help with 408 Conflict errors
+      * Reauth on 401 errors - this has been causing a lot of problems
+      * Work around spurious 403 errors
+      * Restart directory listings on error
+    * Google Drive
+      * Check a file exists before uploading to help with duplicates
+      * Fix retry of multipart uploads
+    * Backblaze B2
+      * Implement large file uploading
+    * S3
+      * Add AES256 server-side encryption for - thanks Justin R. Wilson
+    * Google Cloud Storage
+      * Make sure we don't use conflicting content types on upload
+      * Add service account support - thanks Michal Witkowski
+    * Swift
+      * Add auth version parameter
+      * Add domain option for openstack (v3 auth) - thanks Fabian Ruff
   * v1.29 - 2016-04-18
     * New Features
       * Implement `-I, --ignore-times` for unconditional upload
@@ -3261,7 +3494,8 @@ For instance "foo.com" also matches "bar.foo.com".
 ### Rclone gives x509: failed to load system roots and no roots provided error ###
 
 This means that `rclone` can't file the SSL root certificates.  Likely
-you are running `rclone` on a NAS with a cut-down Linux OS.
+you are running `rclone` on a NAS with a cut-down Linux OS, or
+possibly on Solaris.
 
 Rclone (via the Go runtime) tries to load the root certificates from
 these places on Linux.
@@ -3353,6 +3587,12 @@ Contributors
   * Werner Beroux <werner@beroux.com>
   * Brian Stengaard <brian@stengaard.eu>
   * Jakub Gedeon <jgedeon@sofi.com>
+  * Jim Tittsler <jwt@onjapan.net>
+  * Michal Witkowski <michal@improbable.io>
+  * Fabian Ruff <fabian.ruff@sap.com>
+  * Leigh Klotz <klotz@quixey.com>
+  * Romain Lapray <lapray.romain@gmail.com>
+  * Justin R. Wilson <jrw972@gmail.com>
 
 Contact the rclone project
 --------------------------

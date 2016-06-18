@@ -1,12 +1,48 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2016-04-18"
+date: "2016-06-18"
 ---
 
 Changelog
 ---------
 
+  * v1.29 - 2016-06-18
+    * New Features
+      * Directory listing code reworked for more features and better error reporting (thanks to Klaus Post for help).  This enables
+        * Directory include filtering for efficiency
+        * --max-depth parameter
+        * Better error reporting
+        * More to come
+      * Retry more errors
+      * Add --ignore-size flag - for uploading images to onedrive
+      * Log -v output to stdout by default
+      * Display the transfer stats in more human readable form
+      * Make 0 size files specifiable with `--max-size 0b`
+      * Add `b` suffix so we can specify bytes in --bwlimit, --min-size etc
+      * Use "password:" instead of "password>" prompt - thanks Klaus Post and Leigh Klotz
+    * Bug Fixes
+      * Fix retry doing one too many retries
+    * Local
+      * Fix problems with OS X and UTF-8 characters
+    * Amazon Cloud Drive
+      * Check a file exists before uploading to help with 408 Conflict errors
+      * Reauth on 401 errors - this has been causing a lot of problems
+      * Work around spurious 403 errors
+      * Restart directory listings on error
+    * Google Drive
+      * Check a file exists before uploading to help with duplicates
+      * Fix retry of multipart uploads
+    * Backblaze B2
+      * Implement large file uploading
+    * S3
+      * Add AES256 server-side encryption for - thanks Justin R. Wilson
+    * Google Cloud Storage
+      * Make sure we don't use conflicting content types on upload
+      * Add service account support - thanks Michal Witkowski
+    * Swift
+      * Add auth version parameter
+      * Add domain option for openstack (v3 auth) - thanks Fabian Ruff
   * v1.29 - 2016-04-18
     * New Features
       * Implement `-I, --ignore-times` for unconditional upload
