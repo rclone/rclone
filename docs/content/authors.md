@@ -32,3 +32,4 @@ Contributors
   * Fabian Ruff <fabian.ruff@sap.com>
   * Leigh Klotz <klotz@quixey.com>
   * Romain Lapray <lapray.romain@gmail.com>
+  * Justin R. Wilson <jrw972@gmail.com>
