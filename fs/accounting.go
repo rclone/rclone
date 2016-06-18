@@ -119,7 +119,7 @@ func (s *StatsInfo) String() string {
 	dtSeconds := dt.Seconds()
 	speed := 0.0
 	if dt > 0 {
-		speed = float64(s.bytes) / 1024 / dtSeconds
+		speed = float64(s.bytes) / dtSeconds
 	}
 	dtRounded := dt - (dt % (time.Second / 10))
 	buf := &bytes.Buffer{}
