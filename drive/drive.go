@@ -884,12 +884,12 @@ func (o *Object) readMetaData() (err error) {
 func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Log(o, "Failed to read metadata: %s", err)
+		fs.Log(o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	modTime, err := time.Parse(timeFormatIn, o.modifiedDate)
 	if err != nil {
-		fs.Log(o, "Failed to read mtime from object: %s", err)
+		fs.Log(o, "Failed to read mtime from object: %v", err)
 		return time.Now()
 	}
 	return modTime

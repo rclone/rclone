@@ -72,7 +72,7 @@ func CheckHashes(src, dst Object) (equal bool, hash HashType, err error) {
 	srcHash, err := src.Hash(hash)
 	if err != nil {
 		Stats.Error()
-		ErrorLog(src, "Failed to calculate src hash: %s", err)
+		ErrorLog(src, "Failed to calculate src hash: %v", err)
 		return false, hash, err
 	}
 	if srcHash == "" {
@@ -81,7 +81,7 @@ func CheckHashes(src, dst Object) (equal bool, hash HashType, err error) {
 	dstHash, err := dst.Hash(hash)
 	if err != nil {
 		Stats.Error()
-		ErrorLog(dst, "Failed to calculate dst hash: %s", err)
+		ErrorLog(dst, "Failed to calculate dst hash: %v", err)
 		return false, hash, err
 	}
 	if dstHash == "" {
@@ -156,7 +156,7 @@ func Equal(src, dst Object) bool {
 			return false
 		} else if err != nil {
 			Stats.Error()
-			ErrorLog(dst, "Failed to read set modification time: %s", err)
+			ErrorLog(dst, "Failed to read set modification time: %v", err)
 		}
 	}
 
@@ -222,7 +222,7 @@ tryAgain:
 		in0, err = src.Open()
 		if err != nil {
 			Stats.Error()
-			ErrorLog(src, "Failed to open: %s", err)
+			ErrorLog(src, "Failed to open: %v", err)
 			return
 		}
 
@@ -258,7 +258,7 @@ tryAgain:
 	}
 	if err != nil {
 		Stats.Error()
-		ErrorLog(src, "Failed to copy: %s", err)
+		ErrorLog(src, "Failed to copy: %v", err)
 		removeFailedCopy(dst)
 		return
 	}
@@ -267,7 +267,7 @@ tryAgain:
 	if !Config.IgnoreSize && src.Size() != dst.Size() {
 		Stats.Error()
 		err = errors.Errorf("corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size())
-		ErrorLog(dst, "%s", err)
+		ErrorLog(dst, "%v", err)
 		removeFailedCopy(dst)
 		return
 	}
@@ -284,16 +284,16 @@ tryAgain:
 		srcSum, err := src.Hash(hashType)
 		if err != nil {
 			Stats.Error()
-			ErrorLog(src, "Failed to read src hash: %s", err)
+			ErrorLog(src, "Failed to read src hash: %v", err)
 		} else if srcSum != "" {
 			dstSum, err := dst.Hash(hashType)
 			if err != nil {
 				Stats.Error()
-				ErrorLog(dst, "Failed to read hash: %s", err)
+				ErrorLog(dst, "Failed to read hash: %v", err)
 			} else if !HashEquals(srcSum, dstSum) {
 				Stats.Error()
 				err = errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
-				ErrorLog(dst, "%s", err)
+				ErrorLog(dst, "%v", err)
 				removeFailedCopy(dst)
 				return
 			}
@@ -435,7 +435,7 @@ func DeleteFile(dst Object) {
 		Stats.DoneChecking(dst)
 		if err != nil {
 			Stats.Error()
-			ErrorLog(dst, "Couldn't delete: %s", err)
+			ErrorLog(dst, "Couldn't delete: %v", err)
 		} else {
 			Debug(dst, "Deleted")
 		}

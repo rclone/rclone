@@ -663,7 +663,7 @@ func (o *Object) Hash(t fs.HashType) (string, error) {
 func (o *Object) Size() int64 {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Log(o, "Failed to read metadata: %s", err)
+		fs.Log(o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size
@@ -720,7 +720,7 @@ func (o *Object) readMetaData() (err error) {
 func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Log(o, "Failed to read metadata: %s", err)
+		fs.Log(o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime

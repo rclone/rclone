@@ -580,7 +580,7 @@ func (o *Object) ModTime() time.Time {
 	}
 	modTime, err := o.headers.ObjectMetadata().GetModTime()
 	if err != nil {
-		// fs.Log(o, "Failed to read mtime from object: %s", err)
+		// fs.Log(o, "Failed to read mtime from object: %v", err)
 		return o.info.LastModified
 	}
 	return modTime

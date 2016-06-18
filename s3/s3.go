@@ -699,7 +699,7 @@ func (o *Object) readMetaData() (err error) {
 	o.bytes = size
 	o.meta = resp.Metadata
 	if resp.LastModified == nil {
-		fs.Log(o, "Failed to read last modified from HEAD: %s", err)
+		fs.Log(o, "Failed to read last modified from HEAD: %v", err)
 		o.lastModified = time.Now()
 	} else {
 		o.lastModified = *resp.LastModified
@@ -714,7 +714,7 @@ func (o *Object) readMetaData() (err error) {
 func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Log(o, "Failed to read metadata: %s", err)
+		fs.Log(o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	// read mtime out of metadata if available
@@ -725,7 +725,7 @@ func (o *Object) ModTime() time.Time {
 	}
 	modTime, err := swift.FloatStringToTime(*d)
 	if err != nil {
-		fs.Log(o, "Failed to read mtime from object: %s", err)
+		fs.Log(o, "Failed to read mtime from object: %v", err)
 		return o.lastModified
 	}
 	return modTime
