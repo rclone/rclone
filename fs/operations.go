@@ -202,59 +202,64 @@ func Copy(f Fs, dst, src Object) {
 	maxTries := Config.LowLevelRetries
 	tries := 0
 	doUpdate := dst != nil
-	var err, inErr error
-tryAgain:
-	// Try server side copy first - if has optional interface and
-	// is same underlying remote
-	actionTaken := "Copied (server side copy)"
-	if fCopy, ok := f.(Copier); ok && src.Fs().Name() == f.Name() {
-		var newDst Object
-		newDst, err = fCopy.Copy(src, src.Remote())
-		if err == nil {
-			dst = newDst
-		}
-	} else {
-		err = ErrorCantCopy
-	}
-	// If can't server side copy, do it manually
-	if err == ErrorCantCopy {
-		var in0 io.ReadCloser
-		in0, err = src.Open()
-		if err != nil {
-			Stats.Error()
-			ErrorLog(src, "Failed to open: %v", err)
-			return
-		}
-
-		// On big files add a buffer
-		if src.Size() > 10<<20 {
-			in0, _ = newAsyncReader(in0, 4, 4<<20)
-		}
-
-		in := NewAccount(in0, src) // account the transfer
-
-		if doUpdate {
-			actionTaken = "Copied (updated existing)"
-			err = dst.Update(in, src)
+	var err error
+	var actionTaken string
+	for {
+		// Try server side copy first - if has optional interface and
+		// is same underlying remote
+		actionTaken = "Copied (server side copy)"
+		if fCopy, ok := f.(Copier); ok && src.Fs().Name() == f.Name() {
+			var newDst Object
+			newDst, err = fCopy.Copy(src, src.Remote())
+			if err == nil {
+				dst = newDst
+			}
 		} else {
-			actionTaken = "Copied (new)"
-			dst, err = f.Put(in, src)
+			err = ErrorCantCopy
 		}
-		inErr = in.Close()
-	}
-	// Retry if err returned a retry error
-	if IsRetryError(err) && tries < maxTries {
+		// If can't server side copy, do it manually
+		if err == ErrorCantCopy {
+			var in0 io.ReadCloser
+			in0, err = src.Open()
+			if err != nil {
+				err = errors.Wrap(err, "failed to open source object")
+			} else {
+				// On big files add a buffer
+				if src.Size() > 10<<20 {
+					in0, _ = newAsyncReader(in0, 4, 4<<20)
+				}
+
+				in := NewAccount(in0, src) // account the transfer
+
+				if doUpdate {
+					actionTaken = "Copied (updated existing)"
+					err = dst.Update(in, src)
+				} else {
+					actionTaken = "Copied (new)"
+					dst, err = f.Put(in, src)
+				}
+				closeErr := in.Close()
+				if err == nil {
+					err = closeErr
+				}
+			}
+		}
 		tries++
-		Log(src, "Received error: %v - low level retry %d/%d", err, tries, maxTries)
-		if removeFailedCopy(dst) {
-			// If we removed dst, then nil it out and note we are not updating
-			dst = nil
-			doUpdate = false
+		if tries >= maxTries {
+			break
 		}
-		goto tryAgain
-	}
-	if err == nil {
-		err = inErr
+		// Retry if err returned a retry error
+		if IsRetryError(err) || ShouldRetry(err) {
+			Log(src, "Received error: %v - low level retry %d/%d", err, tries, maxTries)
+			if removeFailedCopy(dst) {
+				// If we removed dst, then nil it out and note we are not updating
+				dst = nil
+				doUpdate = false
+			}
+			continue
+		}
+		// otherwise finish
+		break
 	}
 	if err != nil {
 		Stats.Error()
