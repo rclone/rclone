@@ -240,7 +240,7 @@ func (f *Fs) newFsObjectWithInfo(remote string, info *acd.Node) fs.Object {
 	} else {
 		err := o.readMetaData() // reads info and meta, returning an error
 		if err != nil {
-			// logged already FsDebug("Failed to read info: %s", err)
+			fs.Log(o, "Failed to read metadata: %s", err)
 			return nil
 		}
 	}
@@ -624,7 +624,6 @@ func (o *Object) readMetaData() (err error) {
 		return o.fs.shouldRetry(resp, err)
 	})
 	if err != nil {
-		fs.Debug(o, "Failed to read info: %s", err)
 		return err
 	}
 	o.info = info.Node

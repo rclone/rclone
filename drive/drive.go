@@ -360,7 +360,6 @@ func (f *Fs) newFsObjectWithInfoErr(remote string, info *drive.File) (fs.Object,
 	} else {
 		err := o.readMetaData() // reads info and meta, returning an error
 		if err != nil {
-			// logged already fs.Debug("Failed to read info: %s", err)
 			return nil, err
 		}
 	}
@@ -371,8 +370,10 @@ func (f *Fs) newFsObjectWithInfoErr(remote string, info *drive.File) (fs.Object,
 //
 // May return nil if an error occurred
 func (f *Fs) newFsObjectWithInfo(remote string, info *drive.File) fs.Object {
-	o, _ := f.newFsObjectWithInfoErr(remote, info)
-	// Errors have already been logged
+	o, err := f.newFsObjectWithInfoErr(remote, info)
+	if err != nil {
+		fs.Log(o, "Failed to read metadata: %v", err)
+	}
 	return o
 }
 
@@ -870,7 +871,6 @@ func (o *Object) readMetaData() (err error) {
 		return err
 	}
 	if !found {
-		fs.Debug(o, "%v", errorObjectNotFound)
 		return errorObjectNotFound
 	}
 	return nil
