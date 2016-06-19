@@ -566,13 +566,13 @@ func (file *localOpenFile) Read(p []byte) (n int, err error) {
 	return
 }
 
-// Close the object and update the md5sum
+// Close the object and update the hashes
 func (file *localOpenFile) Close() (err error) {
 	err = file.in.Close()
 	if err == nil {
-		file.o.hashes = file.hash.Sums()
-	} else {
-		file.o.hashes = nil
+		if file.hash.Size() == file.o.Size() {
+			file.o.hashes = file.hash.Sums()
+		}
 	}
 	return err
 }
