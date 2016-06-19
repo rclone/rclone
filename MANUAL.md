@@ -61,6 +61,7 @@ run `rclone -h`.
 linux binary downloaded files install example
 -------
 
+    wget http://downloads.rclone.org/rclone-v1.17-linux-amd64.zip
     unzip rclone-v1.17-linux-amd64.zip
     cd rclone-v1.17-linux-amd64
     #copy binary file
