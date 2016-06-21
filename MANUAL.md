@@ -63,7 +63,7 @@ linux binary downloaded files install example
 
     wget http://downloads.rclone.org/rclone-current-linux-amd64.zip
     unzip rclone-current-linux-amd64.zip
-    cd rclone-current-linux-amd64
+    cd rclone-*-linux-amd64
     #copy binary file
     sudo cp rclone /usr/sbin/
     sudo chown root:root /usr/sbin/rclone
