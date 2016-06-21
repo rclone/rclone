@@ -42,6 +42,7 @@ var (
 	ErrorLevelNotSupported    = errors.New("level value not supported")
 	ErrorListAborted          = errors.New("list aborted")
 	ErrorListOnlyRoot         = errors.New("can only list from root")
+	ErrorIsFile               = errors.New("is a file not a directory")
 )
 
 // RegInfo provides information about a filesystem
@@ -51,8 +52,8 @@ type RegInfo struct {
 	// Description of this fs - defaults to Name
 	Description string
 	// Create a new file system.  If root refers to an existing
-	// object, then it should return a Fs which only returns that
-	// object.
+	// object, then it should return a Fs which which points to
+	// the parent of that object and ErrorIsFile.
 	NewFs func(name string, root string) (Fs, error)
 	// Function to call to help with config
 	Config func(string)
@@ -347,6 +348,26 @@ func Find(name string) (*RegInfo, error) {
 // Pattern to match an rclone url
 var matcher = regexp.MustCompile(`^([\w_ -]+):(.*)$`)
 
+// ParseRemote deconstructs a path into configName, fsPath, looking up
+// the fsName in the config file (returning NotFoundInConfigFile if not found)
+func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, err error) {
+	parts := matcher.FindStringSubmatch(path)
+	var fsName string
+	fsName, configName, fsPath = "local", "local", path
+	if parts != nil && !isDriveLetter(parts[1]) {
+		configName, fsPath = parts[1], parts[2]
+		var err error
+		fsName, err = ConfigFile.GetValue(configName, "type")
+		if err != nil {
+			return nil, "", "", ErrorNotFoundInConfigFile
+		}
+	}
+	// change native directory separators to / if there are any
+	fsPath = filepath.ToSlash(fsPath)
+	fsInfo, err = Find(fsName)
+	return fsInfo, configName, fsPath, err
+}
+
 // NewFs makes a new Fs object from the path
 //
 // The path is of the form remote:path
@@ -357,23 +378,11 @@ var matcher = regexp.MustCompile(`^([\w_ -]+):(.*)$`)
 // On Windows avoid single character remote names as they can be mixed
 // up with drive letters.
 func NewFs(path string) (Fs, error) {
-	parts := matcher.FindStringSubmatch(path)
-	fsName, configName, fsPath := "local", "local", path
-	if parts != nil && !isDriveLetter(parts[1]) {
-		configName, fsPath = parts[1], parts[2]
-		var err error
-		fsName, err = ConfigFile.GetValue(configName, "type")
-		if err != nil {
-			return nil, ErrorNotFoundInConfigFile
-		}
-	}
-	fs, err := Find(fsName)
+	fsInfo, configName, fsPath, err := ParseRemote(path)
 	if err != nil {
 		return nil, err
 	}
-	// change native directory separators to / if there are any
-	fsPath = filepath.ToSlash(fsPath)
-	return fs.NewFs(configName, fsPath)
+	return fsInfo.NewFs(configName, fsPath)
 }
 
 // DebugLogger - logs to Stdout

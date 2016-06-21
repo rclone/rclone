@@ -337,13 +337,13 @@ func NewFs(name, path string) (fs.Fs, error) {
 			// No root so return old f
 			return f, nil
 		}
-		obj, err := newF.newFsObjectWithInfoErr(remote, nil)
+		_, err := newF.newFsObjectWithInfoErr(remote, nil)
 		if err != nil {
 			// File doesn't exist so return old f
 			return f, nil
 		}
-		// return a Fs Limited to this object
-		return fs.NewLimited(&newF, obj), nil
+		// return an error with an fs which points to the parent
+		return &newF, fs.ErrorIsFile
 	}
 	// fmt.Printf("Root id %s", f.dirCache.RootID())
 	return f, nil

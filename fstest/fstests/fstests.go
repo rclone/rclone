@@ -608,31 +608,20 @@ func TestObjectStorable(t *testing.T) {
 	}
 }
 
-// TestLimitedFs tests that a LimitedFs is created
-func TestLimitedFs(t *testing.T) {
+// TestFsIsFile tests that an error is returned along with a valid fs
+// which points to the parent directory.
+func TestFsIsFile(t *testing.T) {
 	skipIfNotOk(t)
 	remoteName := subRemoteName + "/" + file2.Path
 	file2Copy := file2
 	file2Copy.Path = "z.txt"
 	fileRemote, err := fs.NewFs(remoteName)
-	if err != nil {
-		t.Fatalf("Failed to make remote %q: %v", remoteName, err)
-	}
+	assert.Equal(t, fs.ErrorIsFile, err)
 	fstest.CheckListing(t, fileRemote, []fstest.Item{file2Copy})
-	_, ok := fileRemote.(*fs.Limited)
-	if !ok {
-		// Check to see if this wraps a Limited FS
-		if unwrap, hasUnWrap := fileRemote.(fs.UnWrapper); hasUnWrap {
-			_, ok = unwrap.UnWrap().(*fs.Limited)
-		}
-		if !ok {
-			t.Errorf("%v is not a fs.Limited", fileRemote)
-		}
-	}
 }
 
-// TestLimitedFsNotFound tests that a LimitedFs is not created if no object
-func TestLimitedFsNotFound(t *testing.T) {
+// TestFsIsFileNotFound tests that an error is not returned if no object is found
+func TestFsIsFileNotFound(t *testing.T) {
 	skipIfNotOk(t)
 	remoteName := subRemoteName + "/not found.txt"
 	fileRemote, err := fs.NewFs(remoteName)

@@ -172,15 +172,13 @@ func NewFs(name, root string) (fs.Fs, error) {
 	// See if the root is actually an object
 	entry, err := f.db.Metadata(f.slashRoot, false, false, "", "", metadataLimit)
 	if err == nil && !entry.IsDir {
-		remote := path.Base(f.root)
 		newRoot := path.Dir(f.root)
 		if newRoot == "." {
 			newRoot = ""
 		}
 		f.setRoot(newRoot)
-		obj := f.NewFsObject(remote)
-		// return a Fs Limited to this object
-		return fs.NewLimited(f, obj), nil
+		// return an error with an fs which points to the parent
+		return f, fs.ErrorIsFile
 	}
 
 	return f, nil

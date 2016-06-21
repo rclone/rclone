@@ -239,7 +239,8 @@ func NewFs(name, root string) (fs.Fs, error) {
 		}
 		obj := f.NewFsObject(remote)
 		if obj != nil {
-			return fs.NewLimited(f, obj), nil
+			// return an error with an fs which points to the parent
+			return f, fs.ErrorIsFile
 		}
 		f.root = oldRoot
 	}

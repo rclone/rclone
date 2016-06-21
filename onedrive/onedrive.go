@@ -211,8 +211,8 @@ func NewFs(name, root string) (fs.Fs, error) {
 			// File doesn't exist so return old f
 			return f, nil
 		}
-		// return a Fs Limited to this object
-		return fs.NewLimited(&newF, obj), nil
+		// return an error with an fs which points to the parent
+		return &newF, fs.ErrorIsFile
 	}
 	return f, nil
 }

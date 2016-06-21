@@ -167,11 +167,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 
 	// Make inner swift Fs from the connection
 	swiftFs, err := swift.NewFsWithConnection(name, root, c)
-	if err != nil {
+	if err != nil && err != fs.ErrorIsFile {
 		return nil, err
 	}
 	f.Fs = swiftFs
-	return f, nil
+	return f, err
 }
 
 // Purge deletes all the files and the container

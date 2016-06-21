@@ -82,8 +82,8 @@ func NewFs(name, root string) (fs.Fs, error) {
 		if obj == nil {
 			return nil, errors.Errorf("failed to make object for %q in %q", remote, f.root)
 		}
-		// return a Fs Limited to this object
-		return fs.NewLimited(f, obj), nil
+		// return an error with an fs which points to the parent
+		return f, fs.ErrorIsFile
 	}
 	return f, nil
 }

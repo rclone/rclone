@@ -199,16 +199,14 @@ func NewFsWithConnection(name, root string, c *swift.Connection) (fs.Fs, error) 
 		// Check to see if the object exists - ignoring directory markers
 		info, _, err := f.c.Object(container, directory)
 		if err == nil && info.ContentType != directoryMarkerContentType {
-			remote := path.Base(directory)
 			f.root = path.Dir(directory)
 			if f.root == "." {
 				f.root = ""
 			} else {
 				f.root += "/"
 			}
-			obj := f.NewFsObject(remote)
-			// return a Fs Limited to this object
-			return fs.NewLimited(f, obj), nil
+			// return an error with an fs which points to the parent
+			return f, fs.ErrorIsFile
 		}
 	}
 	return f, nil

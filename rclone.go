@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"runtime"
 	"runtime/pprof"
 	"strings"
@@ -368,7 +369,29 @@ func ParseCommand() (*Command, []string) {
 	return command, args
 }
 
-// NewFs creates a Fs from a name
+// NewFsSrc creates a src Fs from a name
+func NewFsSrc(remote string) fs.Fs {
+	fsInfo, configName, fsPath, err := fs.ParseRemote(remote)
+	if err != nil {
+		fs.Stats.Error()
+		log.Fatalf("Failed to create file system for %q: %v", remote, err)
+	}
+	f, err := fsInfo.NewFs(configName, fsPath)
+	if err == fs.ErrorIsFile {
+		if !fs.Config.Filter.InActive() {
+			fs.Stats.Error()
+			log.Fatalf("Can't limit to single files when using filters: %v", remote)
+		}
+		// Limit transfers to this file
+		fs.Config.Filter.AddFile(path.Base(fsPath))
+	} else if err != nil {
+		fs.Stats.Error()
+		log.Fatalf("Failed to create file system for %q: %v", remote, err)
+	}
+	return f
+}
+
+// NewFs creates a dst Fs from a name
 func NewFs(remote string) fs.Fs {
 	f, err := fs.NewFs(remote)
 	if err != nil {
@@ -462,7 +485,7 @@ func main() {
 	// Make source and destination fs
 	var fdst, fsrc fs.Fs
 	if len(args) >= 1 {
-		fdst = NewFs(args[0])
+		fdst = NewFsSrc(args[0])
 	}
 	if len(args) >= 2 {
 		fsrc = fdst

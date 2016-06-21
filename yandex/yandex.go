@@ -128,7 +128,6 @@ func NewFs(name, root string) (fs.Fs, error) {
 
 	f.setRoot(root)
 
-	//limited fs
 	// Check to see if the object exists and is a file
 	//request object meta info
 	var opt2 yandex.ResourceInfoRequestOptions
@@ -136,13 +135,9 @@ func NewFs(name, root string) (fs.Fs, error) {
 		//return err
 	} else {
 		if ResourceInfoResponse.ResourceType == "file" {
-			//limited fs
-			remote := path.Base(root)
 			f.setRoot(path.Dir(root))
-
-			obj := f.newFsObjectWithInfo(remote, ResourceInfoResponse)
-			// return a Fs Limited to this object
-			return fs.NewLimited(f, obj), nil
+			// return an error with an fs which points to the parent
+			return f, fs.ErrorIsFile
 		}
 	}
 

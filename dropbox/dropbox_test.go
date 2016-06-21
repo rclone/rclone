@@ -51,8 +51,8 @@ func TestObjectSize(t *testing.T)            { fstests.TestObjectSize(t) }
 func TestObjectOpen(t *testing.T)            { fstests.TestObjectOpen(t) }
 func TestObjectUpdate(t *testing.T)          { fstests.TestObjectUpdate(t) }
 func TestObjectStorable(t *testing.T)        { fstests.TestObjectStorable(t) }
-func TestLimitedFs(t *testing.T)             { fstests.TestLimitedFs(t) }
-func TestLimitedFsNotFound(t *testing.T)     { fstests.TestLimitedFsNotFound(t) }
+func TestFsIsFile(t *testing.T)              { fstests.TestFsIsFile(t) }
+func TestFsIsFileNotFound(t *testing.T)      { fstests.TestFsIsFileNotFound(t) }
 func TestObjectRemove(t *testing.T)          { fstests.TestObjectRemove(t) }
 func TestObjectPurge(t *testing.T)           { fstests.TestObjectPurge(t) }
 func TestFinalise(t *testing.T)              { fstests.TestFinalise(t) }

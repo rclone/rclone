@@ -252,16 +252,14 @@ func NewFs(name, root string) (fs.Fs, error) {
 		// Check to see if the object exists
 		_, err = f.svc.Objects.Get(bucket, directory).Do()
 		if err == nil {
-			remote := path.Base(directory)
 			f.root = path.Dir(directory)
 			if f.root == "." {
 				f.root = ""
 			} else {
 				f.root += "/"
 			}
-			obj := f.NewFsObject(remote)
-			// return a Fs Limited to this object
-			return fs.NewLimited(f, obj), nil
+			// return an error with an fs which points to the parent
+			return f, fs.ErrorIsFile
 		}
 	}
 	return f, nil
