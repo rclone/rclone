@@ -366,13 +366,13 @@ func (f *Fs) listOneLevel(out fs.ListOpts, dir string) {
 	if dir != "" {
 		root += "/" + dir
 	}
-	entry, err := f.db.Metadata(root, true, false, "", "", metadataLimit)
+	dirEntry, err := f.db.Metadata(root, true, false, "", "", metadataLimit)
 	if err != nil {
 		out.SetError(errors.Wrap(err, "couldn't list single level"))
 		return
 	}
-	for i := range entry.Contents {
-		entry := &entry.Contents[i]
+	for i := range dirEntry.Contents {
+		entry := &dirEntry.Contents[i]
 		remote, err := strip(entry.Path, root)
 		if err != nil {
 			out.SetError(err)

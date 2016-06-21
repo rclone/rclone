@@ -514,13 +514,13 @@ func readFilesMaps(fdst Fs, fdstIncludeAll bool, fsrc Fs, fsrcIncludeAll bool, d
 	list := func(fs Fs, includeAll bool, pMap *map[string]Object, pErr *error) {
 		defer wg.Done()
 		Log(fs, "Building file list")
-		dstFiles, listErr := readFilesMap(fs, includeAll, dir)
+		files, listErr := readFilesMap(fs, includeAll, dir)
 		if listErr != nil {
 			ErrorLog(fs, "Error building file list: %v", listErr)
 			*pErr = listErr
 		} else {
 			Debug(fs, "Done building file list")
-			*pMap = dstFiles
+			*pMap = files
 		}
 	}
 
