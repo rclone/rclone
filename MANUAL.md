@@ -61,8 +61,9 @@ run `rclone -h`.
 linux binary downloaded files install example
 -------
 
-    unzip rclone-v1.17-linux-amd64.zip
-    cd rclone-v1.17-linux-amd64
+    wget http://downloads.rclone.org/rclone-current-linux-amd64.zip
+    unzip rclone-current-linux-amd64.zip
+    cd rclone-*-linux-amd64
     #copy binary file
     sudo cp rclone /usr/sbin/
     sudo chown root:root /usr/sbin/rclone
