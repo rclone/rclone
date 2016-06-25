@@ -80,7 +80,6 @@ var (
 		"text/plain":                                                                "txt",
 	}
 	extensionToMimeType map[string]string
-	errorObjectNotFound = errors.New("Object not found")
 )
 
 // Register with Fs
@@ -337,7 +336,7 @@ func NewFs(name, path string) (fs.Fs, error) {
 			// No root so return old f
 			return f, nil
 		}
-		_, err := newF.newObjectWithInfoErr(remote, nil)
+		_, err := newF.newObjectWithInfo(remote, nil)
 		if err != nil {
 			// File doesn't exist so return old f
 			return f, nil
@@ -350,7 +349,9 @@ func NewFs(name, path string) (fs.Fs, error) {
 }
 
 // Return an Object from a path
-func (f *Fs) newObjectWithInfoErr(remote string, info *drive.File) (fs.Object, error) {
+//
+// If it can't be found it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) newObjectWithInfo(remote string, info *drive.File) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -366,21 +367,9 @@ func (f *Fs) newObjectWithInfoErr(remote string, info *drive.File) (fs.Object, e
 	return o, nil
 }
 
-// Return an Object from a path
-//
-// May return nil if an error occurred
-func (f *Fs) newObjectWithInfo(remote string, info *drive.File) fs.Object {
-	o, err := f.newObjectWithInfoErr(remote, info)
-	if err != nil {
-		fs.Log(o, "Failed to read metadata: %v", err)
-	}
-	return o
-}
-
-// NewObject returns an Object from a path
-//
-// May return nil if an error occurred
-func (f *Fs) NewObject(remote string) fs.Object {
+// NewObject finds the Object at remote.  If it can't be found
+// it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
@@ -478,10 +467,13 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 			}
 		case item.Md5Checksum != "":
 			// If item has MD5 sum it is a file stored on drive
-			if o := f.newObjectWithInfo(remote, item); o != nil {
-				if out.Add(o) {
-					return true
-				}
+			o, err := f.newObjectWithInfo(remote, item)
+			if err != nil {
+				out.SetError(err)
+				return true
+			}
+			if out.Add(o) {
+				return true
 			}
 		case len(item.ExportLinks) != 0:
 			// If item has export links then it is a google doc
@@ -489,14 +481,17 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 			if extension == "" {
 				fs.Debug(remote, "No export formats found")
 			} else {
-				if o := f.newObjectWithInfo(remote+"."+extension, item); o != nil {
-					obj := o.(*Object)
-					obj.isDocument = true
-					obj.url = link
-					obj.bytes = -1
-					if out.Add(o) {
-						return true
-					}
+				o, err := f.newObjectWithInfo(remote+"."+extension, item)
+				if err != nil {
+					out.SetError(err)
+					return true
+				}
+				obj := o.(*Object)
+				obj.isDocument = true
+				obj.url = link
+				obj.bytes = -1
+				if out.Add(o) {
+					return true
 				}
 			}
 		default:
@@ -547,11 +542,11 @@ func (f *Fs) createFileInfo(remote string, modTime time.Time, size int64) (*Obje
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
-	exisitingObj, err := f.newObjectWithInfoErr(src.Remote(), nil)
+	exisitingObj, err := f.newObjectWithInfo(src.Remote(), nil)
 	switch err {
 	case nil:
 		return exisitingObj, exisitingObj.Update(in, src)
-	case fs.ErrorDirNotFound, errorObjectNotFound:
+	case fs.ErrorObjectNotFound:
 		// Not found so create it
 		return f.PutUnchecked(in, src)
 	default:
@@ -857,6 +852,9 @@ func (o *Object) readMetaData() (err error) {
 
 	leaf, directoryID, err := o.fs.dirCache.FindPath(o.remote, false)
 	if err != nil {
+		if err == fs.ErrorDirNotFound {
+			return fs.ErrorObjectNotFound
+		}
 		return err
 	}
 
@@ -871,7 +869,7 @@ func (o *Object) readMetaData() (err error) {
 		return err
 	}
 	if !found {
-		return errorObjectNotFound
+		return fs.ErrorObjectNotFound
 	}
 	return nil
 }

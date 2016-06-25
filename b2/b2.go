@@ -237,12 +237,17 @@ func NewFs(name, root string) (fs.Fs, error) {
 		} else {
 			f.root += "/"
 		}
-		obj := f.NewObject(remote)
-		if obj != nil {
-			// return an error with an fs which points to the parent
-			return f, fs.ErrorIsFile
+		_, err := f.NewObject(remote)
+		if err != nil {
+			if err == fs.ErrorObjectNotFound {
+				// File doesn't exist so return old f
+				f.root = oldRoot
+				return f, nil
+			}
+			return nil, err
 		}
-		f.root = oldRoot
+		// return an error with an fs which points to the parent
+		return f, fs.ErrorIsFile
 	}
 	return f, nil
 }
@@ -321,8 +326,8 @@ func (f *Fs) clearUploadURL() {
 
 // Return an Object from a path
 //
-// May return nil if an error occurred
-func (f *Fs) newObjectWithInfo(remote string, info *api.File) fs.Object {
+// If it can't be found it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) newObjectWithInfo(remote string, info *api.File) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -330,23 +335,20 @@ func (f *Fs) newObjectWithInfo(remote string, info *api.File) fs.Object {
 	if info != nil {
 		err := o.decodeMetaData(info)
 		if err != nil {
-			fs.Debug(o, "Failed to decode metadata: %s", err)
-			return nil
+			return nil, err
 		}
 	} else {
 		err := o.readMetaData() // reads info and headers, returning an error
 		if err != nil {
-			fs.Debug(o, "Failed to read metadata: %s", err)
-			return nil
+			return nil, err
 		}
 	}
-	return o
+	return o, nil
 }
 
-// NewObject returns an Object from a path
-//
-// May return nil if an error occurred
-func (f *Fs) NewObject(remote string) fs.Object {
+// NewObject finds the Object at remote.  If it can't be found
+// it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
@@ -495,10 +497,12 @@ func (f *Fs) listFiles(out fs.ListOpts, dir string) {
 				return fs.ErrorListAborted
 			}
 		} else {
-			if o := f.newObjectWithInfo(remote, object); o != nil {
-				if out.Add(o) {
-					return fs.ErrorListAborted
-				}
+			o, err := f.newObjectWithInfo(remote, object)
+			if err != nil {
+				return err
+			}
+			if out.Add(o) {
+				return fs.ErrorListAborted
 			}
 		}
 		return nil
@@ -855,10 +859,13 @@ func (o *Object) readMetaData() (err error) {
 		return errEndList // read only 1 item
 	})
 	if err != nil {
+		if err == fs.ErrorDirNotFound {
+			return fs.ErrorObjectNotFound
+		}
 		return err
 	}
 	if info == nil {
-		return errors.Errorf("object %q not found", o.remote)
+		return fs.ErrorObjectNotFound
 	}
 	return o.decodeMetaData(info)
 }

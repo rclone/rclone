@@ -215,10 +215,13 @@ func NewFs(name, root string) (fs.Fs, error) {
 			// No root so return old f
 			return f, nil
 		}
-		obj := newF.newObjectWithInfo(remote, nil)
-		if obj == nil {
-			// File doesn't exist so return old f
-			return f, nil
+		_, err := newF.newObjectWithInfo(remote, nil)
+		if err != nil {
+			if err == fs.ErrorObjectNotFound {
+				// File doesn't exist so return old f
+				return f, nil
+			}
+			return nil, err
 		}
 		// return an error with an fs which points to the parent
 		return &newF, fs.ErrorIsFile
@@ -228,8 +231,8 @@ func NewFs(name, root string) (fs.Fs, error) {
 
 // Return an Object from a path
 //
-// May return nil if an error occurred
-func (f *Fs) newObjectWithInfo(remote string, info *acd.Node) fs.Object {
+// If it can't be found it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) newObjectWithInfo(remote string, info *acd.Node) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -240,17 +243,15 @@ func (f *Fs) newObjectWithInfo(remote string, info *acd.Node) fs.Object {
 	} else {
 		err := o.readMetaData() // reads info and meta, returning an error
 		if err != nil {
-			fs.Log(o, "Failed to read metadata: %s", err)
-			return nil
+			return nil, err
 		}
 	}
-	return o
+	return o, nil
 }
 
-// NewObject returns an Object from a path
-//
-// May return nil if an error occurred
-func (f *Fs) NewObject(remote string) fs.Object {
+// NewObject finds the Object at remote.  If it can't be found
+// it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
@@ -384,10 +385,13 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 					}
 				}
 			case fileKind:
-				if o := f.newObjectWithInfo(remote, node); o != nil {
-					if out.Add(o) {
-						return true
-					}
+				o, err := f.newObjectWithInfo(remote, node)
+				if err != nil {
+					out.SetError(err)
+					return true
+				}
+				if out.Add(o) {
+					return true
 				}
 			default:
 				// ignore ASSET etc
@@ -430,7 +434,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 	switch err {
 	case nil:
 		return o, o.Update(in, src)
-	case fs.ErrorDirNotFound, acd.ErrorNodeNotFound:
+	case fs.ErrorObjectNotFound:
 		// Not found so create it
 	default:
 		return nil, err
@@ -608,12 +612,17 @@ func (o *Object) Size() int64 {
 // readMetaData gets the metadata if it hasn't already been fetched
 //
 // it also sets the info
+//
+// If it can't be found it returns the error fs.ErrorObjectNotFound.
 func (o *Object) readMetaData() (err error) {
 	if o.info != nil {
 		return nil
 	}
 	leaf, directoryID, err := o.fs.dirCache.FindPath(o.remote, false)
 	if err != nil {
+		if err == fs.ErrorDirNotFound {
+			return fs.ErrorObjectNotFound
+		}
 		return err
 	}
 	folder := acd.FolderFromId(directoryID, o.fs.c.Nodes)
@@ -624,6 +633,9 @@ func (o *Object) readMetaData() (err error) {
 		return o.fs.shouldRetry(resp, err)
 	})
 	if err != nil {
+		if err == acd.ErrorNodeNotFound {
+			return fs.ErrorObjectNotFound
+		}
 		return err
 	}
 	o.info = info.Node

@@ -342,8 +342,8 @@ func NewFs(name, root string) (fs.Fs, error) {
 
 // Return an Object from a path
 //
-// May return nil if an error occurred
-func (f *Fs) newObjectWithInfo(remote string, info *s3.Object) fs.Object {
+//If it can't be found it returns the error ErrorObjectNotFound.
+func (f *Fs) newObjectWithInfo(remote string, info *s3.Object) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -361,17 +361,15 @@ func (f *Fs) newObjectWithInfo(remote string, info *s3.Object) fs.Object {
 	} else {
 		err := o.readMetaData() // reads info and meta, returning an error
 		if err != nil {
-			// logged already FsDebug("Failed to read info: %s", err)
-			return nil
+			return nil, err
 		}
 	}
-	return o
+	return o, nil
 }
 
-// NewObject returns an Object from a path
-//
-// May return nil if an error occurred
-func (f *Fs) NewObject(remote string) fs.Object {
+// NewObject finds the Object at remote.  If it can't be found
+// it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
@@ -482,10 +480,12 @@ func (f *Fs) listFiles(out fs.ListOpts, dir string) {
 				return fs.ErrorListAborted
 			}
 		} else {
-			if o := f.newObjectWithInfo(remote, object); o != nil {
-				if out.Add(o) {
-					return fs.ErrorListAborted
-				}
+			o, err := f.newObjectWithInfo(remote, object)
+			if err != nil {
+				return err
+			}
+			if out.Add(o) {
+				return fs.ErrorListAborted
 			}
 		}
 		return nil
@@ -634,7 +634,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	return f.NewObject(remote), err
+	return f.NewObject(remote)
 }
 
 // Hashes returns the supported hash sets.
@@ -697,7 +697,11 @@ func (o *Object) readMetaData() (err error) {
 	}
 	resp, err := o.fs.c.HeadObject(&req)
 	if err != nil {
-		fs.Debug(o, "Failed to read info: %s", err)
+		if awsErr, ok := err.(awserr.RequestFailure); ok {
+			if awsErr.StatusCode() == http.StatusNotFound {
+				return fs.ErrorObjectNotFound
+			}
+		}
 		return err
 	}
 	var size int64

@@ -171,23 +171,29 @@ func TestFsListDirEmpty(t *testing.T) {
 // TestFsNewObjectNotFound tests not finding a object
 func TestFsNewObjectNotFound(t *testing.T) {
 	skipIfNotOk(t)
-	if remote.NewObject("potato") != nil {
-		t.Fatal("Didn't expect to find object")
-	}
+	// Object in an existing directory
+	o, err := remote.NewObject("potato")
+	assert.Nil(t, o)
+	assert.Equal(t, fs.ErrorObjectNotFound, err)
+	// Now try an object in a non existing directory
+	o, err = remote.NewObject("directory/not/found/potato")
+	assert.Nil(t, o)
+	assert.Equal(t, fs.ErrorObjectNotFound, err)
 }
 
 func findObject(t *testing.T, Name string) fs.Object {
 	var obj fs.Object
+	var err error
 	for i := 1; i <= eventualConsistencyRetries; i++ {
-		obj = remote.NewObject(Name)
-		if obj != nil {
+		obj, err = remote.NewObject(Name)
+		if err == nil {
 			break
 		}
-		t.Logf("Sleeping for 1 second for findObject eventual consistency: %d/%d", i, eventualConsistencyRetries)
+		t.Logf("Sleeping for 1 second for findObject eventual consistency: %d/%d (%v)", i, eventualConsistencyRetries, err)
 		time.Sleep(1 * time.Second)
 	}
-	if obj == nil {
-		t.Fatalf("Object not found: %q", Name)
+	if err != nil {
+		t.Fatalf("Object %q not found: %v", Name, err)
 	}
 	return obj
 }
@@ -629,10 +635,6 @@ func TestFsIsFileNotFound(t *testing.T) {
 		t.Fatalf("Failed to make remote %q: %v", remoteName, err)
 	}
 	fstest.CheckListing(t, fileRemote, []fstest.Item{})
-	_, ok := fileRemote.(*fs.Limited)
-	if ok {
-		t.Errorf("%v is is a fs.Limited", fileRemote)
-	}
 }
 
 // TestObjectRemove tests Remove

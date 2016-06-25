@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"path"
 	"regexp"
 	"strings"
@@ -198,8 +199,8 @@ func (f *Fs) setRoot(root string) {
 
 // Return an Object from a path
 //
-// May return nil if an error occurred
-func (f *Fs) newObjectWithInfo(remote string, info *dropbox.Entry) fs.Object {
+// If it can't be found it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) newObjectWithInfo(remote string, info *dropbox.Entry) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -209,17 +210,15 @@ func (f *Fs) newObjectWithInfo(remote string, info *dropbox.Entry) fs.Object {
 	} else {
 		err := o.readEntryAndSetMetadata()
 		if err != nil {
-			// logged already fs.Debug("Failed to read info: %s", err)
-			return nil
+			return nil, err
 		}
 	}
-	return o
+	return o, nil
 }
 
-// NewObject returns an Object from a path
-//
-// May return nil if an error occurred
-func (f *Fs) NewObject(remote string) fs.Object {
+// NewObject finds the Object at remote.  If it can't be found
+// it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
@@ -322,10 +321,13 @@ func (f *Fs) list(out fs.ListOpts, dir string) {
 							out.SetError(err)
 							return
 						}
-						if o := f.newObjectWithInfo(path, entry); o != nil {
-							if out.Add(o) {
-								return
-							}
+						o, err := f.newObjectWithInfo(path, entry)
+						if err != nil {
+							out.SetError(err)
+							return
+						}
+						if out.Add(o) {
+							return
 						}
 					} else {
 						nameTree.PutFile(parentPath, lastComponent, entry)
@@ -345,10 +347,12 @@ func (f *Fs) list(out fs.ListOpts, dir string) {
 		if err != nil {
 			return err
 		}
-		if o := f.newObjectWithInfo(path, entry); o != nil {
-			if out.Add(o) {
-				return fs.ErrorListAborted
-			}
+		o, err := f.newObjectWithInfo(path, entry)
+		if err != nil {
+			return err
+		}
+		if out.Add(o) {
+			return fs.ErrorListAborted
 		}
 		return nil
 	}
@@ -387,10 +391,13 @@ func (f *Fs) listOneLevel(out fs.ListOpts, dir string) {
 				return
 			}
 		} else {
-			if o := f.newObjectWithInfo(remote, entry); o != nil {
-				if out.Add(o) {
-					return
-				}
+			o, err := f.newObjectWithInfo(remote, entry)
+			if err != nil {
+				out.SetError(err)
+				return
+			}
+			if out.Add(o) {
+				return
 			}
 		}
 	}
@@ -622,8 +629,12 @@ func (o *Object) setMetadataFromEntry(info *dropbox.Entry) {
 func (o *Object) readEntry() (*dropbox.Entry, error) {
 	entry, err := o.fs.db.Metadata(o.remotePath(), false, false, "", "", metadataLimit)
 	if err != nil {
-		fs.Debug(o, "Error reading file: %s", err)
-		return nil, errors.Wrap(err, "error reading file")
+		if dropboxErr, ok := err.(*dropbox.Error); ok {
+			if dropboxErr.StatusCode == http.StatusNotFound {
+				return nil, fs.ErrorObjectNotFound
+			}
+		}
+		return nil, err
 	}
 	return entry, nil
 }

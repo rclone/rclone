@@ -263,10 +263,12 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 				return fs.ErrorListAborted
 			}
 		} else {
-			if o := f.newObjectWithInfo(remote, object); o != nil {
-				if out.Add(o) {
-					return fs.ErrorListAborted
-				}
+			o, err := f.newObjectWithInfo(remote, object)
+			if err != nil {
+				return err
+			}
+			if out.Add(o) {
+				return fs.ErrorListAborted
 			}
 		}
 		return nil
@@ -295,17 +297,16 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 	}
 }
 
-// NewObject returns an Object from a path
-//
-// May return nil if an error occurred
-func (f *Fs) NewObject(remote string) fs.Object {
+// NewObject finds the Object at remote.  If it can't be found it
+// returns the error fs.ErrorObjectNotFound.
+func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
 // Return an Object from a path
 //
-// May return nil if an error occurred
-func (f *Fs) newObjectWithInfo(remote string, info *yandex.ResourceInfoResponse) fs.Object {
+// If it can't be found it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) newObjectWithInfo(remote string, info *yandex.ResourceInfoResponse) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -315,11 +316,10 @@ func (f *Fs) newObjectWithInfo(remote string, info *yandex.ResourceInfoResponse)
 	} else {
 		err := o.readMetaData()
 		if err != nil {
-			fs.Debug(f, "Couldn't get object '%s' metadata: %s", o.remotePath(), err)
-			return nil
+			return nil, err
 		}
 	}
-	return o
+	return o, nil
 }
 
 // setMetaData sets the fs data from a storage.Object
@@ -355,6 +355,11 @@ func (o *Object) readMetaData() (err error) {
 	var opt2 yandex.ResourceInfoRequestOptions
 	ResourceInfoResponse, err := o.fs.yd.NewResourceInfoRequest(o.remotePath(), opt2).Exec()
 	if err != nil {
+		if dcErr, ok := err.(yandex.DiskClientError); ok {
+			if dcErr.Code == "DiskNotFoundError" {
+				return fs.ErrorObjectNotFound
+			}
+		}
 		return err
 	}
 	o.setMetaData(ResourceInfoResponse)

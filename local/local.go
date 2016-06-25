@@ -76,12 +76,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	fi, err := os.Lstat(f.root)
 	if err == nil && fi.Mode().IsRegular() {
 		// It is a file, so use the parent as the root
-		var remote string
-		f.root, remote = getDirFile(f.root)
-		obj := f.NewObject(remote)
-		if obj == nil {
-			return nil, errors.Errorf("failed to make object for %q in %q", remote, f.root)
-		}
+		f.root, _ = getDirFile(f.root)
 		// return an error with an fs which points to the parent
 		return f, fs.ErrorIsFile
 	}
@@ -118,24 +113,25 @@ func (f *Fs) newObject(remote string) *Object {
 // Return an Object from a path
 //
 // May return nil if an error occurred
-func (f *Fs) newObjectWithInfo(remote string, info os.FileInfo) fs.Object {
+func (f *Fs) newObjectWithInfo(remote string, info os.FileInfo) (fs.Object, error) {
 	o := f.newObject(remote)
 	if info != nil {
 		o.info = info
 	} else {
 		err := o.lstat()
 		if err != nil {
-			fs.Debug(o, "Failed to stat %s: %s", o.path, err)
-			return nil
+			if os.IsNotExist(err) {
+				return nil, fs.ErrorObjectNotFound
+			}
+			return nil, err
 		}
 	}
-	return o
+	return o, nil
 }
 
-// NewObject returns an Object from a path
-//
-// May return nil if an error occurred
-func (f *Fs) NewObject(remote string) fs.Object {
+// NewObject finds the Object at remote.  If it can't be found
+// it returns the error ErrorObjectNotFound.
+func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
@@ -192,10 +188,13 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 					}
 				}
 			} else {
-				if fso := f.newObjectWithInfo(newRemote, fi); fso != nil {
-					if fso.Storable() && out.Add(fso) {
-						return nil
-					}
+				fso, err := f.newObjectWithInfo(newRemote, fi)
+				if err != nil {
+					out.SetError(err)
+					return nil
+				}
+				if fso.Storable() && out.Add(fso) {
+					return nil
 				}
 			}
 		}

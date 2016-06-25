@@ -383,8 +383,9 @@ func NewFsSrc(remote string) fs.Fs {
 			log.Fatalf("Can't limit to single files when using filters: %v", remote)
 		}
 		// Limit transfers to this file
-		fs.Config.Filter.AddFile(path.Base(fsPath))
-	} else if err != nil {
+		err = fs.Config.Filter.AddFile(path.Base(fsPath))
+	}
+	if err != nil {
 		fs.Stats.Error()
 		log.Fatalf("Failed to create file system for %q: %v", remote, err)
 	}

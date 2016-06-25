@@ -206,10 +206,13 @@ func NewFs(name, root string) (fs.Fs, error) {
 			// No root so return old f
 			return f, nil
 		}
-		obj := newF.newObjectWithInfo(remote, nil)
-		if obj == nil {
-			// File doesn't exist so return old f
-			return f, nil
+		_, err := newF.newObjectWithInfo(remote, nil)
+		if err != nil {
+			if err == fs.ErrorObjectNotFound {
+				// File doesn't exist so return old f
+				return f, nil
+			}
+			return nil, err
 		}
 		// return an error with an fs which points to the parent
 		return &newF, fs.ErrorIsFile
@@ -227,8 +230,8 @@ func (f *Fs) rootSlash() string {
 
 // Return an Object from a path
 //
-// May return nil if an error occurred
-func (f *Fs) newObjectWithInfo(remote string, info *api.Item) fs.Object {
+// If it can't be found it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) newObjectWithInfo(remote string, info *api.Item) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -239,17 +242,15 @@ func (f *Fs) newObjectWithInfo(remote string, info *api.Item) fs.Object {
 	} else {
 		err := o.readMetaData() // reads info and meta, returning an error
 		if err != nil {
-			// logged already FsDebug("Failed to read info: %s", err)
-			return nil
+			return nil, err
 		}
 	}
-	return o
+	return o, nil
 }
 
-// NewObject returns an Object from a path
-//
-// May return nil if an error occurred
-func (f *Fs) NewObject(remote string) fs.Object {
+// NewObject finds the Object at remote.  If it can't be found
+// it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
@@ -391,10 +392,13 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 				}
 			}
 		} else {
-			if o := f.newObjectWithInfo(remote, info); o != nil {
-				if out.Add(o) {
-					return true
-				}
+			o, err := f.newObjectWithInfo(remote, info)
+			if err != nil {
+				out.SetError(err)
+				return true
+			}
+			if out.Add(o) {
+				return true
 			}
 		}
 		return false
@@ -705,7 +709,11 @@ func (o *Object) readMetaData() (err error) {
 	// }
 	info, _, err := o.fs.readMetaDataForPath(o.srvPath())
 	if err != nil {
-		fs.Debug(o, "Failed to read info: %s", err)
+		if apiErr, ok := err.(*api.Error); ok {
+			if apiErr.ErrorInfo.Code == "itemNotFound" {
+				return fs.ErrorObjectNotFound
+			}
+		}
 		return err
 	}
 	o.setMetaData(info)
