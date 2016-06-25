@@ -265,10 +265,10 @@ func NewFs(name, root string) (fs.Fs, error) {
 	return f, nil
 }
 
-// Return an FsObject from a path
+// Return an Object from a path
 //
 // May return nil if an error occurred
-func (f *Fs) newFsObjectWithInfo(remote string, info *storage.Object) fs.Object {
+func (f *Fs) newObjectWithInfo(remote string, info *storage.Object) fs.Object {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -285,11 +285,11 @@ func (f *Fs) newFsObjectWithInfo(remote string, info *storage.Object) fs.Object 
 	return o
 }
 
-// NewFsObject returns an FsObject from a path
+// NewObject returns an Object from a path
 //
 // May return nil if an error occurred
-func (f *Fs) NewFsObject(remote string) fs.Object {
-	return f.newFsObjectWithInfo(remote, nil)
+func (f *Fs) NewObject(remote string) fs.Object {
+	return f.newObjectWithInfo(remote, nil)
 }
 
 // listFn is called from list to handle an object.
@@ -369,7 +369,7 @@ func (f *Fs) listFiles(out fs.ListOpts, dir string) {
 				return fs.ErrorListAborted
 			}
 		} else {
-			if o := f.newFsObjectWithInfo(remote, object); o != nil {
+			if o := f.newObjectWithInfo(remote, object); o != nil {
 				if out.Add(o) {
 					return fs.ErrorListAborted
 				}

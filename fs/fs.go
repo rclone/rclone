@@ -117,8 +117,8 @@ type Fs interface {
 	Info
 	ListFser
 
-	// NewFsObject finds the Object at remote.  Returns nil if can't be found
-	NewFsObject(remote string) Object
+	// NewObject finds the Object at remote.  Returns nil if can't be found
+	NewObject(remote string) Object
 
 	// Put in to the remote path with the modTime given of the given size
 	//

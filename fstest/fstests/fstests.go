@@ -168,10 +168,10 @@ func TestFsListDirEmpty(t *testing.T) {
 	assert.Equal(t, []string{}, dirsToNames(dirs))
 }
 
-// TestFsNewFsObjectNotFound tests not finding a object
-func TestFsNewFsObjectNotFound(t *testing.T) {
+// TestFsNewObjectNotFound tests not finding a object
+func TestFsNewObjectNotFound(t *testing.T) {
 	skipIfNotOk(t)
-	if remote.NewFsObject("potato") != nil {
+	if remote.NewObject("potato") != nil {
 		t.Fatal("Didn't expect to find object")
 	}
 }
@@ -179,7 +179,7 @@ func TestFsNewFsObjectNotFound(t *testing.T) {
 func findObject(t *testing.T, Name string) fs.Object {
 	var obj fs.Object
 	for i := 1; i <= eventualConsistencyRetries; i++ {
-		obj = remote.NewFsObject(Name)
+		obj = remote.NewObject(Name)
 		if obj != nil {
 			break
 		}
@@ -304,8 +304,8 @@ func TestFsListFile1(t *testing.T) {
 	fstest.CheckListing(t, remote, []fstest.Item{file1, file2})
 }
 
-// TestFsNewFsObject tests NewFsObject
-func TestFsNewFsObject(t *testing.T) {
+// TestFsNewObject tests NewObject
+func TestFsNewObject(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
 	file1.Check(t, obj, remote.Precision())

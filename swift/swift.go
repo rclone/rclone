@@ -221,10 +221,10 @@ func NewFs(name, root string) (fs.Fs, error) {
 	return NewFsWithConnection(name, root, c)
 }
 
-// Return an FsObject from a path
+// Return an Object from a path
 //
 // May return nil if an error occurred
-func (f *Fs) newFsObjectWithInfo(remote string, info *swift.Object) fs.Object {
+func (f *Fs) newObjectWithInfo(remote string, info *swift.Object) fs.Object {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -248,11 +248,11 @@ func (f *Fs) newFsObjectWithInfo(remote string, info *swift.Object) fs.Object {
 	return o
 }
 
-// NewFsObject returns an FsObject from a path
+// NewObject returns an Object from a path
 //
 // May return nil if an error occurred
-func (f *Fs) NewFsObject(remote string) fs.Object {
-	return f.newFsObjectWithInfo(remote, nil)
+func (f *Fs) NewObject(remote string) fs.Object {
+	return f.newObjectWithInfo(remote, nil)
 }
 
 // listFn is called from list and listContainerRoot to handle an object.
@@ -312,7 +312,7 @@ func (f *Fs) list(dir string, level int, fn listFn) error {
 	return f.listContainerRoot(f.container, f.root, dir, level, fn)
 }
 
-// listFiles walks the path returning a channel of FsObjects
+// listFiles walks the path returning a channel of Objects
 func (f *Fs) listFiles(out fs.ListOpts, dir string) {
 	defer out.Finished()
 	if f.container == "" {
@@ -331,7 +331,7 @@ func (f *Fs) listFiles(out fs.ListOpts, dir string) {
 				return fs.ErrorListAborted
 			}
 		} else {
-			if o := f.newFsObjectWithInfo(remote, object); o != nil {
+			if o := f.newObjectWithInfo(remote, object); o != nil {
 				// Storable does a full metadata read on 0 size objects which might be dynamic large objects
 				if o.Storable() {
 					if out.Add(o) {
@@ -437,7 +437,7 @@ func (f *Fs) Purge() error {
 	go func() {
 		err = f.list("", fs.MaxLevel, func(remote string, object *swift.Object, isDirectory bool) error {
 			if !isDirectory {
-				if o := f.newFsObjectWithInfo(remote, object); o != nil {
+				if o := f.newObjectWithInfo(remote, object); o != nil {
 					toBeDeleted <- o
 				}
 			}
@@ -472,7 +472,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	return f.NewFsObject(remote), nil
+	return f.NewObject(remote), nil
 }
 
 // Hashes returns the supported hash sets.

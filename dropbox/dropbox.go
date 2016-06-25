@@ -196,10 +196,10 @@ func (f *Fs) setRoot(root string) {
 	}
 }
 
-// Return an FsObject from a path
+// Return an Object from a path
 //
 // May return nil if an error occurred
-func (f *Fs) newFsObjectWithInfo(remote string, info *dropbox.Entry) fs.Object {
+func (f *Fs) newObjectWithInfo(remote string, info *dropbox.Entry) fs.Object {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -216,11 +216,11 @@ func (f *Fs) newFsObjectWithInfo(remote string, info *dropbox.Entry) fs.Object {
 	return o
 }
 
-// NewFsObject returns an FsObject from a path
+// NewObject returns an Object from a path
 //
 // May return nil if an error occurred
-func (f *Fs) NewFsObject(remote string) fs.Object {
-	return f.newFsObjectWithInfo(remote, nil)
+func (f *Fs) NewObject(remote string) fs.Object {
+	return f.newObjectWithInfo(remote, nil)
 }
 
 // Strips the root off path and returns it
@@ -247,7 +247,7 @@ func (f *Fs) stripRoot(path string) (string, error) {
 	return strip(path, f.slashRootSlash)
 }
 
-// Walk the root returning a channel of FsObjects
+// Walk the root returning a channel of Objects
 func (f *Fs) list(out fs.ListOpts, dir string) {
 	// Track path component case, it could be different for entries coming from DropBox API
 	// See https://www.dropboxforum.com/hc/communities/public/questions/201665409-Wrong-character-case-of-folder-name-when-calling-listFolder-using-Sync-API?locale=en-us
@@ -322,7 +322,7 @@ func (f *Fs) list(out fs.ListOpts, dir string) {
 							out.SetError(err)
 							return
 						}
-						if o := f.newFsObjectWithInfo(path, entry); o != nil {
+						if o := f.newObjectWithInfo(path, entry); o != nil {
 							if out.Add(o) {
 								return
 							}
@@ -345,7 +345,7 @@ func (f *Fs) list(out fs.ListOpts, dir string) {
 		if err != nil {
 			return err
 		}
-		if o := f.newFsObjectWithInfo(path, entry); o != nil {
+		if o := f.newObjectWithInfo(path, entry); o != nil {
 			if out.Add(o) {
 				return fs.ErrorListAborted
 			}
@@ -387,7 +387,7 @@ func (f *Fs) listOneLevel(out fs.ListOpts, dir string) {
 				return
 			}
 		} else {
-			if o := f.newFsObjectWithInfo(remote, entry); o != nil {
+			if o := f.newObjectWithInfo(remote, entry); o != nil {
 				if out.Add(o) {
 					return
 				}
@@ -396,7 +396,7 @@ func (f *Fs) listOneLevel(out fs.ListOpts, dir string) {
 	}
 }
 
-// List walks the path returning a channel of FsObjects
+// List walks the path returning a channel of Objects
 func (f *Fs) List(out fs.ListOpts, dir string) {
 	defer out.Finished()
 	level := out.Level()

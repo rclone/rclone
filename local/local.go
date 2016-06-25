@@ -78,7 +78,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		// It is a file, so use the parent as the root
 		var remote string
 		f.root, remote = getDirFile(f.root)
-		obj := f.NewFsObject(remote)
+		obj := f.NewObject(remote)
 		if obj == nil {
 			return nil, errors.Errorf("failed to make object for %q in %q", remote, f.root)
 		}
@@ -103,8 +103,8 @@ func (f *Fs) String() string {
 	return fmt.Sprintf("Local file system at %s", f.root)
 }
 
-// newFsObject makes a half completed Object
-func (f *Fs) newFsObject(remote string) *Object {
+// newObject makes a half completed Object
+func (f *Fs) newObject(remote string) *Object {
 	remote = normString(remote)
 	remote = filepath.ToSlash(remote)
 	dstPath := f.filterPath(filepath.Join(f.root, f.cleanUtf8(remote)))
@@ -115,11 +115,11 @@ func (f *Fs) newFsObject(remote string) *Object {
 	}
 }
 
-// Return an FsObject from a path
+// Return an Object from a path
 //
 // May return nil if an error occurred
-func (f *Fs) newFsObjectWithInfo(remote string, info os.FileInfo) fs.Object {
-	o := f.newFsObject(remote)
+func (f *Fs) newObjectWithInfo(remote string, info os.FileInfo) fs.Object {
+	o := f.newObject(remote)
 	if info != nil {
 		o.info = info
 	} else {
@@ -132,11 +132,11 @@ func (f *Fs) newFsObjectWithInfo(remote string, info os.FileInfo) fs.Object {
 	return o
 }
 
-// NewFsObject returns an FsObject from a path
+// NewObject returns an Object from a path
 //
 // May return nil if an error occurred
-func (f *Fs) NewFsObject(remote string) fs.Object {
-	return f.newFsObjectWithInfo(remote, nil)
+func (f *Fs) NewObject(remote string) fs.Object {
+	return f.newObjectWithInfo(remote, nil)
 }
 
 // listArgs is the arguments that a new list takes
@@ -192,7 +192,7 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 					}
 				}
 			} else {
-				if fso := f.newFsObjectWithInfo(newRemote, fi); fso != nil {
+				if fso := f.newObjectWithInfo(newRemote, fi); fso != nil {
 					if fso.Storable() && out.Add(fso) {
 						return nil
 					}
@@ -272,11 +272,11 @@ func (f *Fs) cleanUtf8(name string) string {
 	return name
 }
 
-// Put the FsObject to the local filesystem
+// Put the Object to the local filesystem
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 	remote := src.Remote()
-	// Temporary FsObject under construction - info filled in by Update()
-	o := f.newFsObject(remote)
+	// Temporary Object under construction - info filled in by Update()
+	o := f.newObject(remote)
 	err := o.Update(in, src)
 	if err != nil {
 		return nil, err
@@ -389,8 +389,8 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		return nil, fs.ErrorCantMove
 	}
 
-	// Temporary FsObject under construction
-	dstObj := f.newFsObject(remote)
+	// Temporary Object under construction
+	dstObj := f.newObject(remote)
 
 	// Check it is a file if it exists
 	err := dstObj.lstat()
@@ -636,7 +636,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	return o.lstat()
 }
 
-// Stat a FsObject into info
+// Stat a Object into info
 func (o *Object) lstat() error {
 	info, err := os.Lstat(o.path)
 	o.info = info

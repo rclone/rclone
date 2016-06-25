@@ -215,7 +215,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 			// No root so return old f
 			return f, nil
 		}
-		obj := newF.newFsObjectWithInfo(remote, nil)
+		obj := newF.newObjectWithInfo(remote, nil)
 		if obj == nil {
 			// File doesn't exist so return old f
 			return f, nil
@@ -226,10 +226,10 @@ func NewFs(name, root string) (fs.Fs, error) {
 	return f, nil
 }
 
-// Return an FsObject from a path
+// Return an Object from a path
 //
 // May return nil if an error occurred
-func (f *Fs) newFsObjectWithInfo(remote string, info *acd.Node) fs.Object {
+func (f *Fs) newObjectWithInfo(remote string, info *acd.Node) fs.Object {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -247,11 +247,11 @@ func (f *Fs) newFsObjectWithInfo(remote string, info *acd.Node) fs.Object {
 	return o
 }
 
-// NewFsObject returns an FsObject from a path
+// NewObject returns an Object from a path
 //
 // May return nil if an error occurred
-func (f *Fs) NewFsObject(remote string) fs.Object {
-	return f.newFsObjectWithInfo(remote, nil)
+func (f *Fs) NewObject(remote string) fs.Object {
+	return f.newObjectWithInfo(remote, nil)
 }
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
@@ -384,7 +384,7 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 					}
 				}
 			case fileKind:
-				if o := f.newFsObjectWithInfo(remote, node); o != nil {
+				if o := f.newObjectWithInfo(remote, node); o != nil {
 					if out.Add(o) {
 						return true
 					}
@@ -557,7 +557,7 @@ func (f *Fs) Hashes() fs.HashSet {
 // if err != nil {
 // 	return nil, err
 // }
-// return f.NewFsObject(remote), nil
+// return f.NewObject(remote), nil
 //}
 
 // Purge deletes all the files and the container

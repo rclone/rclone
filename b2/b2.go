@@ -237,7 +237,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		} else {
 			f.root += "/"
 		}
-		obj := f.NewFsObject(remote)
+		obj := f.NewObject(remote)
 		if obj != nil {
 			// return an error with an fs which points to the parent
 			return f, fs.ErrorIsFile
@@ -319,10 +319,10 @@ func (f *Fs) clearUploadURL() {
 	f.uploadMu.Unlock()
 }
 
-// Return an FsObject from a path
+// Return an Object from a path
 //
 // May return nil if an error occurred
-func (f *Fs) newFsObjectWithInfo(remote string, info *api.File) fs.Object {
+func (f *Fs) newObjectWithInfo(remote string, info *api.File) fs.Object {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -343,11 +343,11 @@ func (f *Fs) newFsObjectWithInfo(remote string, info *api.File) fs.Object {
 	return o
 }
 
-// NewFsObject returns an FsObject from a path
+// NewObject returns an Object from a path
 //
 // May return nil if an error occurred
-func (f *Fs) NewFsObject(remote string) fs.Object {
-	return f.newFsObjectWithInfo(remote, nil)
+func (f *Fs) NewObject(remote string) fs.Object {
+	return f.newObjectWithInfo(remote, nil)
 }
 
 // sendDir works out given a lastDir and a remote which directories should be sent
@@ -495,7 +495,7 @@ func (f *Fs) listFiles(out fs.ListOpts, dir string) {
 				return fs.ErrorListAborted
 			}
 		} else {
-			if o := f.newFsObjectWithInfo(remote, object); o != nil {
+			if o := f.newObjectWithInfo(remote, object); o != nil {
 				if out.Add(o) {
 					return fs.ErrorListAborted
 				}

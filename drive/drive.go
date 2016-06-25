@@ -337,7 +337,7 @@ func NewFs(name, path string) (fs.Fs, error) {
 			// No root so return old f
 			return f, nil
 		}
-		_, err := newF.newFsObjectWithInfoErr(remote, nil)
+		_, err := newF.newObjectWithInfoErr(remote, nil)
 		if err != nil {
 			// File doesn't exist so return old f
 			return f, nil
@@ -349,8 +349,8 @@ func NewFs(name, path string) (fs.Fs, error) {
 	return f, nil
 }
 
-// Return an FsObject from a path
-func (f *Fs) newFsObjectWithInfoErr(remote string, info *drive.File) (fs.Object, error) {
+// Return an Object from a path
+func (f *Fs) newObjectWithInfoErr(remote string, info *drive.File) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -366,22 +366,22 @@ func (f *Fs) newFsObjectWithInfoErr(remote string, info *drive.File) (fs.Object,
 	return o, nil
 }
 
-// Return an FsObject from a path
+// Return an Object from a path
 //
 // May return nil if an error occurred
-func (f *Fs) newFsObjectWithInfo(remote string, info *drive.File) fs.Object {
-	o, err := f.newFsObjectWithInfoErr(remote, info)
+func (f *Fs) newObjectWithInfo(remote string, info *drive.File) fs.Object {
+	o, err := f.newObjectWithInfoErr(remote, info)
 	if err != nil {
 		fs.Log(o, "Failed to read metadata: %v", err)
 	}
 	return o
 }
 
-// NewFsObject returns an FsObject from a path
+// NewObject returns an Object from a path
 //
 // May return nil if an error occurred
-func (f *Fs) NewFsObject(remote string) fs.Object {
-	return f.newFsObjectWithInfo(remote, nil)
+func (f *Fs) NewObject(remote string) fs.Object {
+	return f.newObjectWithInfo(remote, nil)
 }
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
@@ -478,7 +478,7 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 			}
 		case item.Md5Checksum != "":
 			// If item has MD5 sum it is a file stored on drive
-			if o := f.newFsObjectWithInfo(remote, item); o != nil {
+			if o := f.newObjectWithInfo(remote, item); o != nil {
 				if out.Add(o) {
 					return true
 				}
@@ -489,7 +489,7 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 			if extension == "" {
 				fs.Debug(remote, "No export formats found")
 			} else {
-				if o := f.newFsObjectWithInfo(remote+"."+extension, item); o != nil {
+				if o := f.newObjectWithInfo(remote+"."+extension, item); o != nil {
 					obj := o.(*Object)
 					obj.isDocument = true
 					obj.url = link
@@ -547,7 +547,7 @@ func (f *Fs) createFileInfo(remote string, modTime time.Time, size int64) (*Obje
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
-	exisitingObj, err := f.newFsObjectWithInfoErr(src.Remote(), nil)
+	exisitingObj, err := f.newObjectWithInfoErr(src.Remote(), nil)
 	switch err {
 	case nil:
 		return exisitingObj, exisitingObj.Update(in, src)
@@ -726,7 +726,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		return nil, errors.New("can't move a Google document")
 	}
 
-	// Temporary FsObject under construction
+	// Temporary Object under construction
 	dstObj, dstInfo, err := f.createFileInfo(remote, srcObj.ModTime(), srcObj.bytes)
 	if err != nil {
 		return nil, err

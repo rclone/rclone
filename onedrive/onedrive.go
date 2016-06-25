@@ -246,10 +246,10 @@ func (f *Fs) newObjectWithInfo(remote string, info *api.Item) fs.Object {
 	return o
 }
 
-// NewFsObject returns an Object from a path
+// NewObject returns an Object from a path
 //
 // May return nil if an error occurred
-func (f *Fs) NewFsObject(remote string) fs.Object {
+func (f *Fs) NewObject(remote string) fs.Object {
 	return f.newObjectWithInfo(remote, nil)
 }
 
