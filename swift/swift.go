@@ -433,21 +433,25 @@ func (f *Fs) Precision() time.Duration {
 func (f *Fs) Purge() error {
 	// Delete all the files including the directory markers
 	toBeDeleted := make(chan fs.Object, fs.Config.Transfers)
-	var err error
+	delErr := make(chan error, 1)
 	go func() {
-		err = f.list("", fs.MaxLevel, func(remote string, object *swift.Object, isDirectory bool) error {
-			if !isDirectory {
-				o, err := f.newObjectWithInfo(remote, object)
-				if err != nil {
-					return err
-				}
-				toBeDeleted <- o
-			}
-			return nil
-		})
-		close(toBeDeleted)
+		delErr <- fs.DeleteFiles(toBeDeleted)
 	}()
-	fs.DeleteFiles(toBeDeleted)
+	err := f.list("", fs.MaxLevel, func(remote string, object *swift.Object, isDirectory bool) error {
+		if !isDirectory {
+			o, err := f.newObjectWithInfo(remote, object)
+			if err != nil {
+				return err
+			}
+			toBeDeleted <- o
+		}
+		return nil
+	})
+	close(toBeDeleted)
+	delError := <-delErr
+	if err == nil {
+		err = delError
+	}
 	if err != nil {
 		return err
 	}

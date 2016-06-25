@@ -431,12 +431,12 @@ func PairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 }
 
 // DeleteFile deletes a single file respecting --dry-run and accumulating stats and errors.
-func DeleteFile(dst Object) {
+func DeleteFile(dst Object) (err error) {
 	if Config.DryRun {
 		Log(dst, "Not deleting as --dry-run")
 	} else {
 		Stats.Checking(dst)
-		err := dst.Remove()
+		err = dst.Remove()
 		Stats.DoneChecking(dst)
 		if err != nil {
 			Stats.Error()
@@ -445,22 +445,31 @@ func DeleteFile(dst Object) {
 			Debug(dst, "Deleted")
 		}
 	}
+	return err
 }
 
 // DeleteFiles removes all the files passed in the channel
-func DeleteFiles(toBeDeleted ObjectsChan) {
+func DeleteFiles(toBeDeleted ObjectsChan) error {
 	var wg sync.WaitGroup
 	wg.Add(Config.Transfers)
+	var errorCount int32
 	for i := 0; i < Config.Transfers; i++ {
 		go func() {
 			defer wg.Done()
 			for dst := range toBeDeleted {
-				DeleteFile(dst)
+				err := DeleteFile(dst)
+				if err != nil {
+					atomic.AddInt32(&errorCount, 1)
+				}
 			}
 		}()
 	}
 	Log(nil, "Waiting for deletions to finish")
 	wg.Wait()
+	if errorCount > 0 {
+		return errors.Errorf("failed to delete %d files", errorCount)
+	}
+	return nil
 }
 
 // Read a map of Object.Remote to Object for the given Fs.
@@ -541,6 +550,145 @@ func readFilesMaps(fdst Fs, fdstIncludeAll bool, fsrc Fs, fsrcIncludeAll bool, d
 // Same returns true if fdst and fsrc point to the same underlying Fs
 func Same(fdst, fsrc Fs) bool {
 	return fdst.Name() == fsrc.Name() && fdst.Root() == fsrc.Root()
+}
+
+type syncCopyMove struct {
+	// parameters
+	fdst   Fs
+	fsrc   Fs
+	Delete bool
+	DoMove bool
+	dir    string
+	// internal state
+	noTraverse     bool              // if set don't trafevers the dst
+	deleteBefore   bool              // set if we must delete objects before copying
+	dstFiles       map[string]Object // dst files, only used if Delete
+	srcFiles       map[string]Object // src files, only used if deleteBefore
+	srcFilesChan   chan Object       // passes src objects
+	srcFilesResult chan error        // error result of src listing
+	dstFilesResult chan error        // error result of dst listing
+	checkerWg      sync.WaitGroup    // wait for checkers
+	toBeChecked    ObjectPairChan    // checkers channel
+	copierWg       sync.WaitGroup    // wait for copiers
+	toBeUploaded   ObjectPairChan    // copiers channel
+}
+
+func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) *syncCopyMove {
+	s := &syncCopyMove{
+		fdst:           fdst,
+		fsrc:           fsrc,
+		Delete:         Delete,
+		DoMove:         DoMove,
+		dir:            "",
+		srcFilesChan:   make(chan Object, Config.Checkers+Config.Transfers),
+		srcFilesResult: make(chan error, 1),
+		dstFilesResult: make(chan error, 1),
+		noTraverse:     Config.NoTraverse,
+		toBeChecked:    make(ObjectPairChan, Config.Transfers),
+		toBeUploaded:   make(ObjectPairChan, Config.Transfers),
+		deleteBefore:   Delete && Config.DeleteBefore,
+	}
+	if s.noTraverse && s.Delete {
+		Debug(s.fdst, "Ignoring --no-traverse with sync")
+		s.noTraverse = false
+	}
+	return s
+
+}
+
+// This reads the source files from s.srcFiles into srcFilesChan then
+// closes it
+//
+// It returns the final result of the read into s.srcFilesResult
+func (s *syncCopyMove) readSrcUsingMap() {
+	for _, o := range s.srcFiles {
+		s.srcFilesChan <- o
+	}
+	close(s.srcFilesChan)
+	s.srcFilesResult <- nil
+}
+
+// This reads the source files into srcFilesChan then closes it
+//
+// It returns the final result of the read into s.srcFilesResult
+func (s *syncCopyMove) readSrcUsingChan() {
+	err := readFilesFn(s.fsrc, false, s.dir, func(o Object) {
+		s.srcFilesChan <- o
+	})
+	close(s.srcFilesChan)
+	s.srcFilesResult <- err
+}
+
+// This reads the destination files in into dstFiles
+//
+// It returns the final result of the read into s.dstFilesResult
+func (s *syncCopyMove) readDstFiles() {
+	var err error
+	s.dstFiles, err = readFilesMap(s.fdst, Config.Filter.DeleteExcluded, s.dir)
+	s.dstFilesResult <- err
+}
+
+// This deletes the files in the dstFiles map.  If checkSrcMap is set
+// then it checks to see if they exist first in srcFiles the source
+// file map, otherwise it unconditionally deletes them.  If
+// checkSrcMap is clear then it assumes that the any source files that
+// have been found have been removed from dstFiles already.
+func (s *syncCopyMove) deleteFiles(checkSrcMap bool) error {
+	if Stats.Errored() {
+		ErrorLog(s.fdst, "%v", ErrorNotDeleting)
+		return ErrorNotDeleting
+	}
+
+	// Delete the spare files
+	toDelete := make(ObjectsChan, Config.Transfers)
+	go func() {
+		for remote, o := range s.dstFiles {
+			if checkSrcMap {
+				_, exists := s.srcFiles[remote]
+				if !exists {
+					toDelete <- o
+				}
+			} else {
+				toDelete <- o
+			}
+		}
+		close(toDelete)
+	}()
+	return DeleteFiles(toDelete)
+}
+
+// This starts the background checkers.
+func (s *syncCopyMove) startCheckers() {
+	s.checkerWg.Add(Config.Checkers)
+	for i := 0; i < Config.Checkers; i++ {
+		go PairChecker(s.toBeChecked, s.toBeUploaded, &s.checkerWg)
+	}
+}
+
+// This stops the background checkers
+func (s *syncCopyMove) stopCheckers() {
+	close(s.toBeChecked)
+	Log(s.fdst, "Waiting for checks to finish")
+	s.checkerWg.Wait()
+}
+
+// This starts the background transfers
+func (s *syncCopyMove) startTransfers() {
+	s.copierWg.Add(Config.Transfers)
+	for i := 0; i < Config.Transfers; i++ {
+		if s.DoMove {
+			go PairMover(s.toBeUploaded, s.fdst, &s.copierWg)
+		} else {
+			go PairCopier(s.toBeUploaded, s.fdst, &s.copierWg)
+		}
+	}
+}
+
+// This stops the background transfers
+func (s *syncCopyMove) stopTransfers() {
+	close(s.toBeUploaded)
+	Log(s.fdst, "Waiting for transfers to finish")
+	s.copierWg.Wait()
 }
 
 // Syncs fsrc into fdst
@@ -996,7 +1144,10 @@ func Purge(f Fs) error {
 	if doFallbackPurge {
 		// DeleteFiles and Rmdir observe --dry-run
 		list := NewLister().Start(f, "")
-		DeleteFiles(listToChan(list))
+		err = DeleteFiles(listToChan(list))
+		if err != nil {
+			return err
+		}
 		err = Rmdir(f)
 	}
 	if err != nil {
@@ -1009,18 +1160,19 @@ func Purge(f Fs) error {
 // Delete removes all the contents of a container.  Unlike Purge, it
 // obeys includes and excludes.
 func Delete(f Fs) error {
-	wg := new(sync.WaitGroup)
 	delete := make(ObjectsChan, Config.Transfers)
-	wg.Add(1)
+	delErr := make(chan error, 1)
 	go func() {
-		defer wg.Done()
-		DeleteFiles(delete)
+		delErr <- DeleteFiles(delete)
 	}()
 	err := ListFn(f, func(o Object) {
 		delete <- o
 	})
 	close(delete)
-	wg.Wait()
+	delError := <-delErr
+	if err == nil {
+		err = delError
+	}
 	return err
 }
 
@@ -1055,7 +1207,7 @@ func dedupeDeleteAllButOne(keep int, remote string, objs []Object) {
 		if i == keep {
 			continue
 		}
-		DeleteFile(o)
+		_ = DeleteFile(o)
 	}
 	Log(remote, "Deleted %d extra copies", len(objs)-1)
 }
@@ -1077,7 +1229,7 @@ func dedupeDeleteIdentical(remote string, objs []Object) []Object {
 		if len(hashObjs) > 1 {
 			Log(remote, "Deleting %d/%d identical duplicates (md5sum %q)", len(hashObjs)-1, len(hashObjs), md5sum)
 			for _, o := range hashObjs[1:] {
-				DeleteFile(o)
+				_ = DeleteFile(o)
 			}
 		}
 		objs = append(objs, hashObjs[0])
