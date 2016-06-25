@@ -44,6 +44,7 @@ var (
 	ErrorListAborted          = errors.New("list aborted")
 	ErrorListOnlyRoot         = errors.New("can only list from root")
 	ErrorIsFile               = errors.New("is a file not a directory")
+	ErrorNotDeleting          = errors.New("not deleting files as there were IO errors")
 )
 
 // RegInfo provides information about a filesystem

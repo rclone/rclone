@@ -87,6 +87,9 @@ written a trailing / - meaning "copy the contents of this directory".
 This applies to all commands and whether you are talking about the
 source or destination.
 
+See the `--no-traverse` option for controlling whether rclone lists
+the destination directory or not.
+
 ### rclone sync source:path dest:path ###
 
 Sync the source to the destination, changing the destination
@@ -561,12 +564,15 @@ The default is `1m`. Use 0 to disable.
 This option allows you to specify when files on your destination are
 deleted when you sync folders.
 
-Specifying the value `--delete-before` will delete all files present on the
-destination, but not on the source *before* starting the transfer
-of any new or updated files.
+Specifying the value `--delete-before` will delete all files present
+on the destination, but not on the source *before* starting the
+transfer of any new or updated files.  This uses extra memory as it
+has to store the source listing before proceeding.
 
-Specifying `--delete-during` (default value) will delete files while checking
-and uploading files. This is usually the fastest option.
+Specifying `--delete-during` (default value) will delete files while
+checking and uploading files. This is usually the fastest option.
+Currently this works the same as `--delete-after` but it may change in
+the future.
 
 Specifying `--delete-after` will delay deletion of files until all new/updated
 files have been successfully transfered.
@@ -730,6 +736,24 @@ In this mode, TLS is susceptible to man-in-the-middle attacks.
 This option defaults to `false`.
 
 **This should be used only for testing.**
+
+### --no-traverse ###
+
+The `--no-traverse` flag controls whether the destination file system
+is traversed when using the `copy` or `move` commands.
+
+If you are only copying a small number of files and/or have a large
+number of files on the destination then `--no-traverse` will stop
+rclone listing the destination and save time.
+
+However if you are copying a large number of files, escpecially if you
+are doing a copy where lots of the files haven't changed and won't
+need copying then you shouldn't use `--no-traverse`.
+
+It can also be used to reduce the memory usage of rclone when copying
+- `rclone --no-traverse copy src dst` won't load either the source or
+destination listings into memory so will use the minimum amount of
+memory.
 
 Filtering
 ---------

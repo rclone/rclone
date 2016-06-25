@@ -35,6 +35,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	_ "github.com/ncw/rclone/fs/all" // import all fs
 	"github.com/ncw/rclone/fstest"
+	"github.com/stretchr/testify/assert"
 )
 
 // Globals
@@ -288,6 +289,40 @@ func TestCopy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Copy failed: %v", err)
 	}
+
+	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.fremote, file1)
+}
+
+// Now with --no-traverse
+func TestCopyNoTraverse(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+
+	fs.Config.NoTraverse = true
+	defer func() { fs.Config.NoTraverse = false }()
+
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+
+	err := fs.CopyDir(r.fremote, r.flocal)
+	assert.NoError(t, err)
+
+	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.fremote, file1)
+}
+
+// Now with --no-traverse
+func TestSyncNoTraverse(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+
+	fs.Config.NoTraverse = true
+	defer func() { fs.Config.NoTraverse = false }()
+
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+
+	err := fs.Sync(r.fremote, r.flocal)
+	assert.NoError(t, err)
 
 	fstest.CheckItems(t, r.flocal, file1)
 	fstest.CheckItems(t, r.fremote, file1)
@@ -712,8 +747,8 @@ func TestSyncAfterRemovingAFileAndAddingAFileWithErrors(t *testing.T) {
 	fs.Stats.ResetCounters()
 	fs.Stats.Error()
 	err := fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
+	if err != fs.ErrorNotDeleting {
+		t.Fatalf("Unexpected error: %v", err)
 	}
 	fstest.CheckItems(t, r.flocal, file1, file3)
 	fstest.CheckItems(t, r.fremote, file1, file2, file3)
