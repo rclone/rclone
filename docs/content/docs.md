@@ -284,6 +284,34 @@ Enter an interactive configuration session.
 
 Prints help on rclone commands and options.
 
+Copying single files
+--------------------
+
+rclone normally syncs or copies directories.  However if the source
+remote points to a file, rclone will just copy that file.  The
+destination remote must point to a directory - rclone will give the
+error `Failed to create file system for "remote:file": is a file not a
+directory` if it isn't.
+
+For example, suppose you have a remote with a file in called
+`test.jpg`, then you could copy just that file like this
+
+    rclone copy remote:test.jpg /tmp/download
+
+The file `test.jpg` will be placed inside `/tmp/download`.
+
+This is equivalent to specifying
+
+    rclone copy --no-traverse --files-from /tmp/files remote: /tmp/download
+
+Where `/tmp/files` contains the single line
+
+    test.jpg
+
+It is recommended to use `copy` when copying single files not `sync`.
+They have pretty much the same effect but `copy` will use a lot less
+memory.
+
 Quoting and the shell
 ---------------------
 

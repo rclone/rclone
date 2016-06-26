@@ -384,6 +384,8 @@ func NewFsSrc(remote string) fs.Fs {
 		}
 		// Limit transfers to this file
 		err = fs.Config.Filter.AddFile(path.Base(fsPath))
+		// Set --no-traverse as only one file
+		fs.Config.NoTraverse = true
 	}
 	if err != nil {
 		fs.Stats.Error()
