@@ -5,6 +5,7 @@ package fstest
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -17,6 +18,8 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -69,35 +72,25 @@ func CheckTimeEqualWithPrecision(t0, t1 time.Time, precision time.Duration) (tim
 // CheckModTime checks the mod time to the given precision
 func (i *Item) CheckModTime(t *testing.T, obj fs.Object, modTime time.Time, precision time.Duration) {
 	dt, ok := CheckTimeEqualWithPrecision(modTime, i.ModTime, precision)
-	if !ok {
-		t.Errorf("%s: Modification time difference too big |%s| > %s (%s vs %s) (precision %s)", obj.Remote(), dt, precision, modTime, i.ModTime, precision)
-	}
+	assert.True(t, ok, fmt.Sprintf("%s: Modification time difference too big |%s| > %s (%s vs %s) (precision %s)", obj.Remote(), dt, precision, modTime, i.ModTime, precision))
 }
 
 // CheckHashes checks all the hashes the object supports are correct
 func (i *Item) CheckHashes(t *testing.T, obj fs.Object) {
-	if obj == nil {
-		t.Fatalf("Object is nil")
-	}
+	require.NotNil(t, obj)
 	types := obj.Fs().Hashes().Array()
 	for _, hash := range types {
 		// Check attributes
 		sum, err := obj.Hash(hash)
-		if err != nil {
-			t.Fatalf("%s: Failed to read hash %v for %q: %v", obj.Fs().String(), hash, obj.Remote(), err)
-		}
-		if !fs.HashEquals(i.Hashes[hash], sum) {
-			t.Errorf("%s/%s: %v hash incorrect - expecting %q got %q", obj.Fs().String(), obj.Remote(), hash, i.Hashes[hash], sum)
-		}
+		require.NoError(t, err)
+		assert.True(t, fs.HashEquals(i.Hashes[hash], sum), fmt.Sprintf("%s/%s: %v hash incorrect - expecting %q got %q", obj.Fs().String(), obj.Remote(), hash, i.Hashes[hash], sum))
 	}
 }
 
 // Check checks all the attributes of the object are correct
 func (i *Item) Check(t *testing.T, obj fs.Object, precision time.Duration) {
 	i.CheckHashes(t, obj)
-	if i.Size != obj.Size() {
-		t.Errorf("%s/%s: Size incorrect - expecting %d got %d", obj.Fs().String(), obj.Remote(), i.Size, obj.Size())
-	}
+	assert.Equal(t, i.Size, obj.Size())
 	i.CheckModTime(t, obj, obj.ModTime(), precision)
 }
 
@@ -128,10 +121,7 @@ func (is *Items) Find(t *testing.T, obj fs.Object, precision time.Duration) {
 	i, ok := is.byName[obj.Remote()]
 	if !ok {
 		i, ok = is.byNameAlt[obj.Remote()]
-		if !ok {
-			t.Errorf("Unexpected file %q", obj.Remote())
-			return
-		}
+		assert.True(t, ok, fmt.Sprintf("Unexpected file %q", obj.Remote()))
 	}
 	delete(is.byName, i.Path)
 	delete(is.byName, i.WinPath)
@@ -177,10 +167,7 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, precision ti
 		time.Sleep(sleep)
 	}
 	for _, obj := range objs {
-		if obj == nil {
-			t.Errorf("Unexpected nil in List()")
-			continue
-		}
+		require.NotNil(t, obj)
 		is.Find(t, obj, precision)
 	}
 	is.Done(t)
@@ -308,25 +295,19 @@ func RandomRemote(remoteName string, subdir bool) (fs.Fs, func(), error) {
 // TestMkdir tests Mkdir works
 func TestMkdir(t *testing.T, remote fs.Fs) {
 	err := fs.Mkdir(remote)
-	if err != nil {
-		t.Fatalf("Mkdir failed: %v", err)
-	}
+	require.NoError(t, err)
 	CheckListing(t, remote, []Item{})
 }
 
 // TestPurge tests Purge works
 func TestPurge(t *testing.T, remote fs.Fs) {
 	err := fs.Purge(remote)
-	if err != nil {
-		t.Fatalf("Purge failed: %v", err)
-	}
+	require.NoError(t, err)
 	CheckListing(t, remote, []Item{})
 }
 
 // TestRmdir tests Rmdir works
 func TestRmdir(t *testing.T, remote fs.Fs) {
 	err := fs.Rmdir(remote)
-	if err != nil {
-		t.Fatalf("Rmdir failed: %v", err)
-	}
+	require.NoError(t, err)
 }

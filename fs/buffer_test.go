@@ -8,122 +8,81 @@ import (
 	"strings"
 	"testing"
 	"testing/iotest"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAsyncReader(t *testing.T) {
 	buf := ioutil.NopCloser(bytes.NewBufferString("Testbuffer"))
 	ar, err := newAsyncReader(buf, 4, 10000)
-	if err != nil {
-		t.Fatal("error when creating:", err)
-	}
+	require.NoError(t, err)
 
 	var dst = make([]byte, 100)
 	n, err := ar.Read(dst)
-	if err != nil {
-		t.Fatal("error when reading:", err)
-	}
-	if n != 10 {
-		t.Fatal("unexpected length, expected 10, got ", n)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, 10, n)
 
 	n, err = ar.Read(dst)
-	if err != io.EOF {
-		t.Fatal("expected io.EOF, got", err)
-	}
-	if n != 0 {
-		t.Fatal("unexpected length, expected 0, got ", n)
-	}
+	assert.Equal(t, io.EOF, err)
+	assert.Equal(t, 0, n)
 
 	// Test read after error
 	n, err = ar.Read(dst)
-	if err != io.EOF {
-		t.Fatal("expected io.EOF, got", err)
-	}
-	if n != 0 {
-		t.Fatal("unexpected length, expected 0, got ", n)
-	}
+	assert.Equal(t, io.EOF, err)
+	assert.Equal(t, 0, n)
 
 	err = ar.Close()
-	if err != nil {
-		t.Fatal("error when closing:", err)
-	}
+	require.NoError(t, err)
 	// Test double close
 	err = ar.Close()
-	if err != nil {
-		t.Fatal("error when closing:", err)
-	}
+	require.NoError(t, err)
 
 	// Test Close without reading everything
 	buf = ioutil.NopCloser(bytes.NewBuffer(make([]byte, 50000)))
 	ar, err = newAsyncReader(buf, 4, 100)
-	if err != nil {
-		t.Fatal("error when creating:", err)
-	}
+	require.NoError(t, err)
 	err = ar.Close()
-	if err != nil {
-		t.Fatal("error when closing, noread:", err)
-	}
+	require.NoError(t, err)
 
 }
 
 func TestAsyncWriteTo(t *testing.T) {
 	buf := ioutil.NopCloser(bytes.NewBufferString("Testbuffer"))
 	ar, err := newAsyncReader(buf, 4, 10000)
-	if err != nil {
-		t.Fatal("error when creating:", err)
-	}
+	require.NoError(t, err)
 
 	var dst = &bytes.Buffer{}
 	n, err := io.Copy(dst, ar)
-	if err != io.EOF {
-		t.Fatal("error when reading:", err)
-	}
-	if n != 10 {
-		t.Fatal("unexpected length, expected 10, got ", n)
-	}
+	assert.Equal(t, io.EOF, err)
+	assert.Equal(t, int64(10), n)
 
 	// Should still return EOF
 	n, err = io.Copy(dst, ar)
-	if err != io.EOF {
-		t.Fatal("expected io.EOF, got", err)
-	}
-	if n != 0 {
-		t.Fatal("unexpected length, expected 0, got ", n)
-	}
+	assert.Equal(t, io.EOF, err)
+	assert.Equal(t, int64(0), n)
 
 	err = ar.Close()
-	if err != nil {
-		t.Fatal("error when closing:", err)
-	}
+	require.NoError(t, err)
 }
 
 func TestAsyncReaderErrors(t *testing.T) {
 	// test nil reader
 	_, err := newAsyncReader(nil, 4, 10000)
-	if err == nil {
-		t.Fatal("expected error when creating, but got nil")
-	}
+	require.Error(t, err)
 
 	// invalid buffer number
 	buf := ioutil.NopCloser(bytes.NewBufferString("Testbuffer"))
 	_, err = newAsyncReader(buf, 0, 10000)
-	if err == nil {
-		t.Fatal("expected error when creating, but got nil")
-	}
+	require.Error(t, err)
 	_, err = newAsyncReader(buf, -1, 10000)
-	if err == nil {
-		t.Fatal("expected error when creating, but got nil")
-	}
+	require.Error(t, err)
 
 	// invalid buffer size
 	_, err = newAsyncReader(buf, 4, 0)
-	if err == nil {
-		t.Fatal("expected error when creating, but got nil")
-	}
+	require.Error(t, err)
 	_, err = newAsyncReader(buf, 4, -1)
-	if err == nil {
-		t.Fatal("expected error when creating, but got nil")
-	}
+	require.Error(t, err)
 }
 
 // Complex read tests, leveraged from "bufio".
@@ -210,9 +169,7 @@ func TestAsyncReaderSizes(t *testing.T) {
 								readmaker.name, bufreader.name, bufsize, text, s)
 						}
 						err := ar.Close()
-						if err != nil {
-							t.Fatal("Unexpected close error:", err)
-						}
+						require.NoError(t, err)
 					}
 				}
 			}
@@ -257,9 +214,7 @@ func TestAsyncReaderWriteTo(t *testing.T) {
 								readmaker.name, bufreader.name, bufsize, text, s)
 						}
 						err = ar.Close()
-						if err != nil {
-							t.Fatal("Unexpected close error:", err)
-						}
+						require.NoError(t, err)
 					}
 				}
 			}

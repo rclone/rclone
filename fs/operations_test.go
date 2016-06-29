@@ -36,6 +36,7 @@ import (
 	_ "github.com/ncw/rclone/fs/all" // import all fs
 	"github.com/ncw/rclone/fstest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Globals
@@ -271,9 +272,7 @@ func TestCopyWithDryRun(t *testing.T) {
 	fs.Config.DryRun = true
 	err := fs.CopyDir(r.fremote, r.flocal)
 	fs.Config.DryRun = false
-	if err != nil {
-		t.Fatalf("Copy failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.flocal, file1)
 	fstest.CheckItems(t, r.fremote)
@@ -286,9 +285,7 @@ func TestCopy(t *testing.T) {
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
 
 	err := fs.CopyDir(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Copy failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.flocal, file1)
 	fstest.CheckItems(t, r.fremote, file1)
@@ -305,7 +302,7 @@ func TestCopyNoTraverse(t *testing.T) {
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
 
 	err := fs.CopyDir(r.fremote, r.flocal)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.flocal, file1)
 	fstest.CheckItems(t, r.fremote, file1)
@@ -322,7 +319,7 @@ func TestSyncNoTraverse(t *testing.T) {
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
 
 	err := fs.Sync(r.fremote, r.flocal)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.flocal, file1)
 	fstest.CheckItems(t, r.fremote, file1)
@@ -340,9 +337,7 @@ func TestCopyWithDepth(t *testing.T) {
 	defer func() { fs.Config.MaxDepth = -1 }()
 
 	err := fs.CopyDir(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Copy failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.flocal, file1, file2)
 	fstest.CheckItems(t, r.fremote, file2)
@@ -356,16 +351,12 @@ func TestServerSideCopy(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, file1)
 
 	fremoteCopy, finaliseCopy, err := fstest.RandomRemote(*RemoteName, *SubDir)
-	if err != nil {
-		t.Fatalf("Failed to open remote copy %q: %v", *RemoteName, err)
-	}
+	require.NoError(t, err)
 	defer finaliseCopy()
 	t.Logf("Server side copy (if possible) %v -> %v", r.fremote, fremoteCopy)
 
 	err = fs.CopyDir(fremoteCopy, r.fremote)
-	if err != nil {
-		t.Fatalf("Server Side Copy failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	fstest.CheckItems(t, fremoteCopy, file1)
 }
@@ -379,13 +370,9 @@ func TestLsd(t *testing.T) {
 
 	var buf bytes.Buffer
 	err := fs.ListDir(r.fremote, &buf)
-	if err != nil {
-		t.Fatalf("ListDir failed: %v", err)
-	}
+	require.NoError(t, err)
 	res := buf.String()
-	if !strings.Contains(res, "sub dir\n") {
-		t.Fatalf("Result wrong %q", res)
-	}
+	assert.Contains(t, res, "sub dir\n")
 }
 
 // Check that if the local file doesn't exist when we copy it up,
@@ -398,14 +385,10 @@ func TestCopyAfterDelete(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, file1)
 
 	err := fs.Mkdir(r.flocal)
-	if err != nil {
-		t.Fatalf("Mkdir failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	err = fs.CopyDir(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Copy failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.flocal)
 	fstest.CheckItems(t, r.fremote, file1)
@@ -419,9 +402,7 @@ func TestCopyRedownload(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, file1)
 
 	err := fs.CopyDir(r.flocal, r.fremote)
-	if err != nil {
-		t.Fatalf("Copy failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.flocal, file1)
 }
@@ -440,15 +421,10 @@ func TestSyncBasedOnCheckSum(t *testing.T) {
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Initial sync failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	// We should have transferred exactly one file.
-	if fs.Stats.GetTransfers() != 1 {
-		t.Fatalf("Sync 1: want 1 transfer, got %d", fs.Stats.GetTransfers())
-	}
-
+	assert.Equal(t, int64(1), fs.Stats.GetTransfers())
 	fstest.CheckItems(t, r.fremote, file1)
 
 	// Change last modified date only
@@ -457,15 +433,10 @@ func TestSyncBasedOnCheckSum(t *testing.T) {
 
 	fs.Stats.ResetCounters()
 	err = fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	// We should have transferred no files
-	if fs.Stats.GetTransfers() != 0 {
-		t.Fatalf("Sync 2: want 0 transfers, got %d", fs.Stats.GetTransfers())
-	}
-
+	assert.Equal(t, int64(0), fs.Stats.GetTransfers())
 	fstest.CheckItems(t, r.flocal, file2)
 	fstest.CheckItems(t, r.fremote, file1)
 }
@@ -484,15 +455,10 @@ func TestSyncSizeOnly(t *testing.T) {
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Initial sync failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	// We should have transferred exactly one file.
-	if fs.Stats.GetTransfers() != 1 {
-		t.Fatalf("Sync 1: want 1 transfer, got %d", fs.Stats.GetTransfers())
-	}
-
+	assert.Equal(t, int64(1), fs.Stats.GetTransfers())
 	fstest.CheckItems(t, r.fremote, file1)
 
 	// Update mtime, md5sum but not length of file
@@ -501,15 +467,10 @@ func TestSyncSizeOnly(t *testing.T) {
 
 	fs.Stats.ResetCounters()
 	err = fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	// We should have transferred no files
-	if fs.Stats.GetTransfers() != 0 {
-		t.Fatalf("Sync 2: want 0 transfers, got %d", fs.Stats.GetTransfers())
-	}
-
+	assert.Equal(t, int64(0), fs.Stats.GetTransfers())
 	fstest.CheckItems(t, r.flocal, file2)
 	fstest.CheckItems(t, r.fremote, file1)
 }
@@ -528,15 +489,10 @@ func TestSyncIgnoreSize(t *testing.T) {
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Initial sync failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	// We should have transferred exactly one file.
-	if fs.Stats.GetTransfers() != 1 {
-		t.Fatalf("Sync 1: want 1 transfer, got %d", fs.Stats.GetTransfers())
-	}
-
+	assert.Equal(t, int64(1), fs.Stats.GetTransfers())
 	fstest.CheckItems(t, r.fremote, file1)
 
 	// Update size but not date of file
@@ -545,15 +501,10 @@ func TestSyncIgnoreSize(t *testing.T) {
 
 	fs.Stats.ResetCounters()
 	err = fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	// We should have transferred no files
-	if fs.Stats.GetTransfers() != 0 {
-		t.Fatalf("Sync 2: want 0 transfers, got %d", fs.Stats.GetTransfers())
-	}
-
+	assert.Equal(t, int64(0), fs.Stats.GetTransfers())
 	fstest.CheckItems(t, r.flocal, file2)
 	fstest.CheckItems(t, r.fremote, file1)
 }
@@ -566,30 +517,22 @@ func TestSyncIgnoreTimes(t *testing.T) {
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	// We should have transferred exactly 0 files because the
 	// files were identical.
-	if fs.Stats.GetTransfers() != 0 {
-		t.Fatalf("Sync 1: want 0 transfer, got %d", fs.Stats.GetTransfers())
-	}
+	assert.Equal(t, int64(0), fs.Stats.GetTransfers())
 
 	fs.Config.IgnoreTimes = true
 	defer func() { fs.Config.IgnoreTimes = false }()
 
 	fs.Stats.ResetCounters()
 	err = fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	// We should have transferred exactly one file even though the
 	// files were identical.
-	if fs.Stats.GetTransfers() != 1 {
-		t.Fatalf("Sync 2: want 1 transfer, got %d", fs.Stats.GetTransfers())
-	}
+	assert.Equal(t, int64(1), fs.Stats.GetTransfers())
 
 	fstest.CheckItems(t, r.flocal, file1)
 	fstest.CheckItems(t, r.fremote, file1)
@@ -605,9 +548,7 @@ func TestSyncIgnoreExisting(t *testing.T) {
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 	fstest.CheckItems(t, r.flocal, file1)
 	fstest.CheckItems(t, r.fremote, file1)
 
@@ -615,9 +556,7 @@ func TestSyncIgnoreExisting(t *testing.T) {
 	r.WriteFile("existing", "newpotatoes", t2)
 	fs.Stats.ResetCounters()
 	err = fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 	// Items should not change
 	fstest.CheckItems(t, r.fremote, file1)
 }
@@ -630,9 +569,7 @@ func TestSyncAfterChangingModtimeOnly(t *testing.T) {
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.flocal, file1)
 	fstest.CheckItems(t, r.fremote, file1)
@@ -646,9 +583,7 @@ func TestSyncAfterAddingAFile(t *testing.T) {
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 	fstest.CheckItems(t, r.flocal, file1, file2)
 	fstest.CheckItems(t, r.fremote, file1, file2)
 }
@@ -663,9 +598,7 @@ func TestSyncAfterChangingFilesSizeOnly(t *testing.T) {
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 	fstest.CheckItems(t, r.flocal, file2)
 	fstest.CheckItems(t, r.fremote, file2)
 }
@@ -688,9 +621,7 @@ func TestSyncAfterChangingContentsOnly(t *testing.T) {
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 	fstest.CheckItems(t, r.flocal, file2)
 	fstest.CheckItems(t, r.fremote, file2)
 }
@@ -707,9 +638,7 @@ func TestSyncAfterRemovingAFileAndAddingAFileDryRun(t *testing.T) {
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
 	fs.Config.DryRun = false
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.flocal, file3, file1)
 	fstest.CheckItems(t, r.fremote, file3, file2)
@@ -727,9 +656,7 @@ func TestSyncAfterRemovingAFileAndAddingAFile(t *testing.T) {
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 	fstest.CheckItems(t, r.flocal, file1, file3)
 	fstest.CheckItems(t, r.fremote, file1, file3)
 }
@@ -747,9 +674,7 @@ func TestSyncAfterRemovingAFileAndAddingAFileWithErrors(t *testing.T) {
 	fs.Stats.ResetCounters()
 	fs.Stats.Error()
 	err := fs.Sync(r.fremote, r.flocal)
-	if err != fs.ErrorNotDeleting {
-		t.Fatalf("Unexpected error: %v", err)
-	}
+	assert.Equal(t, fs.ErrorNotDeleting, err)
 	fstest.CheckItems(t, r.flocal, file1, file3)
 	fstest.CheckItems(t, r.fremote, file1, file2, file3)
 }
@@ -806,18 +731,14 @@ func TestSyncWithExclude(t *testing.T) {
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 	fstest.CheckItems(t, r.fremote, file2, file1)
 
 	// Now sync the other way round and check enormous doesn't get
 	// deleted as it is excluded from the sync
 	fs.Stats.ResetCounters()
 	err = fs.Sync(r.flocal, r.fremote)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 	fstest.CheckItems(t, r.flocal, file2, file1, file3)
 }
 
@@ -840,18 +761,14 @@ func TestSyncWithExcludeAndDeleteExcluded(t *testing.T) {
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 	fstest.CheckItems(t, r.fremote, file2)
 
 	// Check sync the other way round to make sure enormous gets
 	// deleted even though it is excluded
 	fs.Stats.ResetCounters()
 	err = fs.Sync(r.flocal, r.fremote)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 	fstest.CheckItems(t, r.flocal, file2)
 }
 
@@ -886,9 +803,7 @@ func TestSyncWithUpdateOlder(t *testing.T) {
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 	fstest.CheckItems(t, r.fremote, oneO, twoF, threeO, fourF, fiveF)
 }
 
@@ -902,9 +817,7 @@ func TestServerSideMove(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, file2, file1)
 
 	fremoteMove, finaliseMove, err := fstest.RandomRemote(*RemoteName, *SubDir)
-	if err != nil {
-		t.Fatalf("Failed to open remote move %q: %v", *RemoteName, err)
-	}
+	require.NoError(t, err)
 	defer finaliseMove()
 	t.Logf("Server side move (if possible) %v -> %v", r.fremote, fremoteMove)
 
@@ -915,9 +828,7 @@ func TestServerSideMove(t *testing.T) {
 	// Do server side move
 	fs.Stats.ResetCounters()
 	err = fs.MoveDir(fremoteMove, r.fremote)
-	if err != nil {
-		t.Fatalf("Server Side Move failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.fremote)
 	fstest.CheckItems(t, fremoteMove, file2, file1)
@@ -925,9 +836,7 @@ func TestServerSideMove(t *testing.T) {
 	// Move it back again, dst does not exist this time
 	fs.Stats.ResetCounters()
 	err = fs.MoveDir(r.fremote, fremoteMove)
-	if err != nil {
-		t.Fatalf("Server Side Move 2 failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.fremote, file2, file1)
 	fstest.CheckItems(t, fremoteMove)
@@ -943,16 +852,10 @@ func TestLs(t *testing.T) {
 
 	var buf bytes.Buffer
 	err := fs.List(r.fremote, &buf)
-	if err != nil {
-		t.Fatalf("List failed: %v", err)
-	}
+	require.NoError(t, err)
 	res := buf.String()
-	if !strings.Contains(res, "        0 empty space\n") {
-		t.Errorf("empty space missing: %q", res)
-	}
-	if !strings.Contains(res, "       60 potato2\n") {
-		t.Errorf("potato2 missing: %q", res)
-	}
+	assert.Contains(t, res, "        0 empty space\n")
+	assert.Contains(t, res, "       60 potato2\n")
 }
 
 func TestLsLong(t *testing.T) {
@@ -965,14 +868,10 @@ func TestLsLong(t *testing.T) {
 
 	var buf bytes.Buffer
 	err := fs.ListLong(r.fremote, &buf)
-	if err != nil {
-		t.Fatalf("List failed: %v", err)
-	}
+	require.NoError(t, err)
 	res := buf.String()
 	lines := strings.Split(strings.Trim(res, "\n"), "\n")
-	if len(lines) != 2 {
-		t.Fatalf("Wrong number of lines in list: %q", lines)
-	}
+	assert.Equal(t, 2, len(lines))
 
 	timeFormat := "2006-01-02 15:04:05.000000000"
 	precision := r.fremote.Precision()
@@ -1014,9 +913,7 @@ func TestMd5sum(t *testing.T) {
 
 	var buf bytes.Buffer
 	err := fs.Md5sum(r.fremote, &buf)
-	if err != nil {
-		t.Fatalf("List failed: %v", err)
-	}
+	require.NoError(t, err)
 	res := buf.String()
 	if !strings.Contains(res, "d41d8cd98f00b204e9800998ecf8427e  empty space\n") &&
 		!strings.Contains(res, "                     UNSUPPORTED  empty space\n") &&
@@ -1040,9 +937,7 @@ func TestSha1sum(t *testing.T) {
 
 	var buf bytes.Buffer
 	err := fs.Sha1sum(r.fremote, &buf)
-	if err != nil {
-		t.Fatalf("List failed: %v", err)
-	}
+	require.NoError(t, err)
 	res := buf.String()
 	if !strings.Contains(res, "da39a3ee5e6b4b0d3255bfef95601890afd80709  empty space\n") &&
 		!strings.Contains(res, "                             UNSUPPORTED  empty space\n") &&
@@ -1070,15 +965,9 @@ func TestCount(t *testing.T) {
 	defer func() { fs.Config.MaxDepth = -1 }()
 
 	objects, size, err := fs.Count(r.fremote)
-	if err != nil {
-		t.Fatalf("Count failed: %v", err)
-	}
-	if objects != 2 {
-		t.Errorf("want 2 objects got %d", objects)
-	}
-	if size != 60 {
-		t.Errorf("want size 60 got %d", size)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), objects)
+	assert.Equal(t, int64(60), size)
 }
 
 func TestDelete(t *testing.T) {
@@ -1095,9 +984,7 @@ func TestDelete(t *testing.T) {
 	}()
 
 	err := fs.Delete(r.fremote)
-	if err != nil {
-		t.Fatalf("Sync failed: %v", err)
-	}
+	require.NoError(t, err)
 	fstest.CheckItems(t, r.fremote, file3)
 }
 
@@ -1157,19 +1044,13 @@ func TestCheckSizeOnly(t *testing.T) {
 
 func (r *Run) checkWithDuplicates(t *testing.T, items ...fstest.Item) {
 	objects, size, err := fs.Count(r.fremote)
-	if err != nil {
-		t.Fatalf("Error listing: %v", err)
-	}
-	if objects != int64(len(items)) {
-		t.Fatalf("Error listing want %d objects, got %d", len(items), objects)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(items)), objects)
 	wantSize := int64(0)
 	for _, item := range items {
 		wantSize += item.Size
 	}
-	if wantSize != size {
-		t.Fatalf("Error listing want %d size, got %d", wantSize, size)
-	}
+	assert.Equal(t, wantSize, size)
 }
 
 func TestDeduplicateInteractive(t *testing.T) {
@@ -1185,9 +1066,7 @@ func TestDeduplicateInteractive(t *testing.T) {
 	r.checkWithDuplicates(t, file1, file2, file3)
 
 	err := fs.Deduplicate(r.fremote, fs.DeduplicateInteractive)
-	if err != nil {
-		t.Fatalf("fs.Deduplicate returned error: %v", err)
-	}
+	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.fremote, file1)
 }
@@ -1205,9 +1084,7 @@ func TestDeduplicateSkip(t *testing.T) {
 	r.checkWithDuplicates(t, file1, file2, file3)
 
 	err := fs.Deduplicate(r.fremote, fs.DeduplicateSkip)
-	if err != nil {
-		t.Fatalf("fs.Deduplicate returned error: %v", err)
-	}
+	require.NoError(t, err)
 
 	r.checkWithDuplicates(t, file1, file3)
 }
@@ -1225,17 +1102,11 @@ func TestDeduplicateFirst(t *testing.T) {
 	r.checkWithDuplicates(t, file1, file2, file3)
 
 	err := fs.Deduplicate(r.fremote, fs.DeduplicateFirst)
-	if err != nil {
-		t.Fatalf("fs.Deduplicate returned error: %v", err)
-	}
+	require.NoError(t, err)
 
 	objects, size, err := fs.Count(r.fremote)
-	if err != nil {
-		t.Fatalf("Error listing: %v", err)
-	}
-	if objects != 1 {
-		t.Errorf("Expecting 1 object got %v", objects)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, 1, objects)
 	if size != file1.Size && size != file2.Size && size != file3.Size {
 		t.Errorf("Size not one of the object sizes %d", size)
 	}
@@ -1254,9 +1125,7 @@ func TestDeduplicateNewest(t *testing.T) {
 	r.checkWithDuplicates(t, file1, file2, file3)
 
 	err := fs.Deduplicate(r.fremote, fs.DeduplicateNewest)
-	if err != nil {
-		t.Fatalf("fs.Deduplicate returned error: %v", err)
-	}
+	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.fremote, file3)
 }
@@ -1274,9 +1143,7 @@ func TestDeduplicateOldest(t *testing.T) {
 	r.checkWithDuplicates(t, file1, file2, file3)
 
 	err := fs.Deduplicate(r.fremote, fs.DeduplicateOldest)
-	if err != nil {
-		t.Fatalf("fs.Deduplicate returned error: %v", err)
-	}
+	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.fremote, file1)
 }
@@ -1294,16 +1161,12 @@ func TestDeduplicateRename(t *testing.T) {
 	r.checkWithDuplicates(t, file1, file2, file3)
 
 	err := fs.Deduplicate(r.fremote, fs.DeduplicateRename)
-	if err != nil {
-		t.Fatalf("fs.Deduplicate returned error: %v", err)
-	}
+	require.NoError(t, err)
 
 	list := fs.NewLister().Start(r.fremote, "")
 	for {
 		o, err := list.GetObject()
-		if err != nil {
-			t.Fatalf("Listing failed: %v", err)
-		}
+		require.NoError(t, err)
 		// Check if we are finished
 		if o == nil {
 			break

@@ -67,23 +67,17 @@ func TestInit(t *testing.T) {
 	t.Logf("Using remote %q", RemoteName)
 	if RemoteName == "" {
 		RemoteName, err = fstest.LocalRemote()
-		if err != nil {
-			t.Fatalf("Failed to create tmp dir: %v", err)
-		}
+		require.NoError(t, err)
 	}
 	subRemoteName, subRemoteLeaf, err = fstest.RandomRemoteName(RemoteName)
-	if err != nil {
-		t.Fatalf("Couldn't make remote name: %v", err)
-	}
+	require.NoError(t, err)
 
 	remote, err = fs.NewFs(subRemoteName)
 	if err == fs.ErrorNotFoundInConfigFile {
 		t.Logf("Didn't find %q in config file - skipping tests", RemoteName)
 		return
 	}
-	if err != nil {
-		t.Fatalf("Couldn't start FS: %v", err)
-	}
+	require.NoError(t, err)
 	fstest.TestMkdir(t, remote)
 }
 
@@ -97,9 +91,7 @@ func skipIfNotOk(t *testing.T) {
 func TestFsString(t *testing.T) {
 	skipIfNotOk(t)
 	str := remote.String()
-	if str == "" {
-		t.Fatal("Bad fs.String()")
-	}
+	require.NotEqual(t, str, "")
 }
 
 // TestFsRmdirEmpty tests deleting an empty directory
@@ -112,9 +104,7 @@ func TestFsRmdirEmpty(t *testing.T) {
 func TestFsRmdirNotFound(t *testing.T) {
 	skipIfNotOk(t)
 	err := remote.Rmdir()
-	if err == nil {
-		t.Fatalf("Expecting error on Rmdir non existent")
-	}
+	assert.Error(t, err, "Expecting error on Rmdir non existent")
 }
 
 // TestFsMkdir tests tests making a directory
@@ -192,9 +182,7 @@ func findObject(t *testing.T, Name string) fs.Object {
 		t.Logf("Sleeping for 1 second for findObject eventual consistency: %d/%d (%v)", i, eventualConsistencyRetries, err)
 		time.Sleep(1 * time.Second)
 	}
-	if err != nil {
-		t.Fatalf("Object %q not found: %v", Name, err)
-	}
+	require.NoError(t, err)
 	return obj
 }
 
@@ -217,7 +205,7 @@ again:
 			tries++
 			goto again
 		}
-		t.Fatal("Put error", err)
+		require.NoError(t, err, "Put error")
 	}
 	file.Hashes = hash.Sums()
 	file.Check(t, obj, remote.Precision())
@@ -268,9 +256,7 @@ func TestFsListDirFile2(t *testing.T) {
 func TestFsListDirRoot(t *testing.T) {
 	skipIfNotOk(t)
 	rootRemote, err := fs.NewFs(RemoteName)
-	if err != nil {
-		t.Fatalf("Failed to make remote %q: %v", RemoteName, err)
-	}
+	require.NoError(t, err)
 	dirs, err := fs.NewLister().SetLevel(1).Start(rootRemote, "").GetDirs()
 	require.NoError(t, err)
 	assert.Contains(t, dirsToNames(dirs), subRemoteLeaf, "Remote leaf not found")
@@ -339,23 +325,17 @@ func TestFsCopy(t *testing.T) {
 	// do the copy
 	src := findObject(t, file1.Path)
 	dst, err := remote.(fs.Copier).Copy(src, file1Copy.Path)
-	if err != nil {
-		t.Fatalf("Copy failed: %v (%#v)", err, err)
-	}
+	require.NoError(t, err)
 
 	// check file exists in new listing
 	fstest.CheckListing(t, remote, []fstest.Item{file1, file2, file1Copy})
 
 	// Check dst lightly - list above has checked ModTime/Hashes
-	if dst.Remote() != file1Copy.Path {
-		t.Errorf("object path: want %q got %q", file1Copy.Path, dst.Remote())
-	}
+	assert.Equal(t, file1Copy.Path, dst.Remote())
 
 	// Delete copy
 	err = dst.Remove()
-	if err != nil {
-		t.Fatal("Remove copy error", err)
-	}
+	require.NoError(t, err)
 
 }
 
@@ -375,24 +355,18 @@ func TestFsMove(t *testing.T) {
 	// do the move
 	src := findObject(t, file1.Path)
 	dst, err := remote.(fs.Mover).Move(src, file1Move.Path)
-	if err != nil {
-		t.Fatalf("Move failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	// check file exists in new listing
 	fstest.CheckListing(t, remote, []fstest.Item{file2, file1Move})
 
 	// Check dst lightly - list above has checked ModTime/Hashes
-	if dst.Remote() != file1Move.Path {
-		t.Errorf("object path: want %q got %q", file1Move.Path, dst.Remote())
-	}
+	assert.Equal(t, file1Move.Path, dst.Remote())
 
 	// move it back
 	src = findObject(t, file1Move.Path)
 	_, err = remote.(fs.Mover).Move(src, file1.Path)
-	if err != nil {
-		t.Errorf("Move failed: %v", err)
-	}
+	require.NoError(t, err)
 
 	// check file exists in new listing
 	fstest.CheckListing(t, remote, []fstest.Item{file2, file1})
@@ -418,22 +392,16 @@ func TestFsDirMove(t *testing.T) {
 
 	// Check it can't move onto itself
 	err := remote.(fs.DirMover).DirMove(remote)
-	if err != fs.ErrorDirExists {
-		t.Errorf("Expecting fs.ErrorDirExists got: %v", err)
-	}
+	require.Equal(t, fs.ErrorDirExists, err)
 
 	// new remote
 	newRemote, removeNewRemote, err := fstest.RandomRemote(RemoteName, false)
-	if err != nil {
-		t.Fatalf("Failed to create remote: %v", err)
-	}
+	require.NoError(t, err)
 	defer removeNewRemote()
 
 	// try the move
 	err = newRemote.(fs.DirMover).DirMove(remote)
-	if err != nil {
-		t.Errorf("Failed to DirMove: %v", err)
-	}
+	require.NoError(t, err)
 
 	// check remotes
 	// FIXME: Prints errors.
@@ -442,9 +410,7 @@ func TestFsDirMove(t *testing.T) {
 
 	// move it back
 	err = remote.(fs.DirMover).DirMove(newRemote)
-	if err != nil {
-		t.Errorf("Failed to DirMove: %v", err)
-	}
+	require.NoError(t, err)
 
 	// check remotes
 	fstest.CheckListing(t, remote, []fstest.Item{file2, file1})
@@ -455,9 +421,7 @@ func TestFsDirMove(t *testing.T) {
 func TestFsRmdirFull(t *testing.T) {
 	skipIfNotOk(t)
 	err := remote.Rmdir()
-	if err == nil {
-		t.Fatalf("Expecting error on RMdir on non empty remote")
-	}
+	require.Error(t, err, "Expecting error on RMdir on non empty remote")
 }
 
 // TestFsPrecision tests the Precision of the Fs
@@ -477,40 +441,28 @@ func TestFsPrecision(t *testing.T) {
 func TestObjectString(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
-	s := obj.String()
-	if s != file1.Path {
-		t.Errorf("String() wrong %v != %v", s, file1.Path)
-	}
-	obj = NilObject
-	s = obj.String()
-	if s != "<nil>" {
-		t.Errorf("String() wrong %v != %v", s, "<nil>")
-	}
+	assert.Equal(t, file1.Path, obj.String())
+	assert.Equal(t, "<nil>", NilObject.String())
 }
 
 // TestObjectFs tests the object can be found
 func TestObjectFs(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
-	equal := obj.Fs() == remote
-	if !equal {
+	if obj.Fs() != remote {
 		// Check to see if this wraps something else
 		if unwrap, ok := remote.(fs.UnWrapper); ok {
-			equal = obj.Fs() == unwrap.UnWrap()
+			remote = unwrap.UnWrap()
 		}
 	}
-	if !equal {
-		t.Errorf("Fs is wrong %v != %v", obj.Fs(), remote)
-	}
+	assert.Equal(t, obj.Fs(), remote)
 }
 
 // TestObjectRemote tests the Remote is correct
 func TestObjectRemote(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
-	if obj.Remote() != file1.Path {
-		t.Errorf("Remote is wrong %v != %v", obj.Remote(), file1.Path)
-	}
+	assert.Equal(t, file1.Path, obj.Remote())
 }
 
 // TestObjectHashes checks all the hashes the object supports
@@ -536,9 +488,8 @@ func TestObjectSetModTime(t *testing.T) {
 	if err == fs.ErrorCantSetModTime {
 		t.Log(err)
 		return
-	} else if err != nil {
-		t.Fatal(err)
 	}
+	require.NoError(t, err)
 	file1.ModTime = newModTime
 	file1.CheckModTime(t, obj, obj.ModTime(), remote.Precision())
 	// And make a new object and read it from there too
@@ -549,9 +500,7 @@ func TestObjectSetModTime(t *testing.T) {
 func TestObjectSize(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
-	if obj.Size() != file1.Size {
-		t.Errorf("Size is wrong %v != %v", obj.Size(), file1.Size)
-	}
+	assert.Equal(t, file1.Size, obj.Size())
 }
 
 // TestObjectOpen tests that Open works
@@ -559,27 +508,16 @@ func TestObjectOpen(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
 	in, err := obj.Open()
-	if err != nil {
-		t.Fatalf("Open() return error: %v", err)
-	}
+	require.NoError(t, err)
 	hasher := fs.NewMultiHasher()
 	n, err := io.Copy(hasher, in)
-	if err != nil {
-		t.Fatalf("io.Copy() return error: %v", err)
-	}
-	if n != file1.Size {
-		t.Fatalf("Read wrong number of bytes %d != %d", n, file1.Size)
-	}
+	require.NoError(t, err)
+	require.Equal(t, file1.Size, n, "Read wrong number of bytes")
 	err = in.Close()
-	if err != nil {
-		t.Fatalf("in.Close() return error: %v", err)
-	}
+	require.NoError(t, err)
 	// Check content of file by comparing the calculated hashes
 	for hashType, got := range hasher.Sums() {
-		want := file1.Hashes[hashType]
-		if want != got {
-			t.Errorf("%v is wrong %v != %v", hashType, want, got)
-		}
+		assert.Equal(t, file1.Hashes[hashType], got)
 	}
 
 }
@@ -595,9 +533,7 @@ func TestObjectUpdate(t *testing.T) {
 	obj := findObject(t, file1.Path)
 	obji := fs.NewStaticObjectInfo("", file1.ModTime, file1.Size, true, nil, obj.Fs())
 	err := obj.Update(in, obji)
-	if err != nil {
-		t.Fatal("Update error", err)
-	}
+	require.NoError(t, err)
 	file1.Hashes = hash.Sums()
 	file1.Check(t, obj, remote.Precision())
 	// Re-read the object and check again
@@ -609,9 +545,7 @@ func TestObjectUpdate(t *testing.T) {
 func TestObjectStorable(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
-	if !obj.Storable() {
-		t.Fatalf("Expecting %v to be storable", obj)
-	}
+	require.NotNil(t, !obj.Storable(), "Expecting object to be storable")
 }
 
 // TestFsIsFile tests that an error is returned along with a valid fs
@@ -631,9 +565,7 @@ func TestFsIsFileNotFound(t *testing.T) {
 	skipIfNotOk(t)
 	remoteName := subRemoteName + "/not found.txt"
 	fileRemote, err := fs.NewFs(remoteName)
-	if err != nil {
-		t.Fatalf("Failed to make remote %q: %v", remoteName, err)
-	}
+	require.NoError(t, err)
 	fstest.CheckListing(t, fileRemote, []fstest.Item{})
 }
 
@@ -642,9 +574,7 @@ func TestObjectRemove(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
 	err := obj.Remove()
-	if err != nil {
-		t.Fatal("Remove error", err)
-	}
+	require.NoError(t, err)
 	fstest.CheckListing(t, remote, []fstest.Item{file2})
 }
 
@@ -653,9 +583,7 @@ func TestObjectPurge(t *testing.T) {
 	skipIfNotOk(t)
 	fstest.TestPurge(t, remote)
 	err := fs.Purge(remote)
-	if err == nil {
-		t.Fatal("Expecting error after on second purge")
-	}
+	assert.Error(t, err, "Expecting error after on second purge")
 }
 
 // TestFinalise tidies up after the previous tests
@@ -664,8 +592,6 @@ func TestFinalise(t *testing.T) {
 	if strings.HasPrefix(RemoteName, "/") {
 		// Remove temp directory
 		err := os.Remove(RemoteName)
-		if err != nil {
-			t.Logf("Failed to remove %q: %v\n", RemoteName, err)
-		}
+		require.NoError(t, err)
 	}
 }

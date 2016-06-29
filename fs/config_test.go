@@ -1,9 +1,10 @@
 package fs
 
 import (
-	"bytes"
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSizeSuffixString(t *testing.T) {
@@ -23,14 +24,12 @@ func TestSizeSuffixString(t *testing.T) {
 	} {
 		ss := SizeSuffix(test.in)
 		got := ss.String()
-		if test.want != got {
-			t.Errorf("Want %v got %v", test.want, got)
-		}
+		assert.Equal(t, test.want, got)
 	}
 }
 
 func TestSizeSuffixSet(t *testing.T) {
-	for i, test := range []struct {
+	for _, test := range []struct {
 		in   string
 		want int64
 		err  bool
@@ -56,13 +55,12 @@ func TestSizeSuffixSet(t *testing.T) {
 	} {
 		ss := SizeSuffix(0)
 		err := ss.Set(test.in)
-		if (err != nil) != test.err {
-			t.Errorf("%d: Expecting error %v but got error %v", i, test.err, err)
+		if test.err {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
 		}
-		got := int64(ss)
-		if test.want != got {
-			t.Errorf("%d: Want %v got %v", i, test.want, got)
-		}
+		assert.Equal(t, test.want, int64(ss))
 	}
 }
 
@@ -75,12 +73,8 @@ func TestReveal(t *testing.T) {
 		{"2sTcyNrA", "potato"},
 	} {
 		got := Reveal(test.in)
-		if got != test.want {
-			t.Errorf("%q: want %q got %q", test.in, test.want, got)
-		}
-		if Obscure(got) != test.in {
-			t.Errorf("%q: wasn't bidirectional", test.in)
-		}
+		assert.Equal(t, test.want, got)
+		assert.Equal(t, test.in, Obscure(got), "not bidirectional")
 	}
 }
 
@@ -97,15 +91,11 @@ func TestConfigLoad(t *testing.T) {
 	}
 	sections := c.GetSectionList()
 	var expect = []string{"RCLONE_ENCRYPT_V0", "nounc", "unc"}
-	if !reflect.DeepEqual(sections, expect) {
-		t.Fatalf("%v != %v", sections, expect)
-	}
+	assert.Equal(t, expect, sections)
 
 	keys := c.GetKeyList("nounc")
 	expect = []string{"type", "nounc"}
-	if !reflect.DeepEqual(keys, expect) {
-		t.Fatalf("%v != %v", keys, expect)
-	}
+	assert.Equal(t, expect, keys)
 }
 
 func TestConfigLoadEncrypted(t *testing.T) {
@@ -119,24 +109,16 @@ func TestConfigLoadEncrypted(t *testing.T) {
 
 	// Set correct password
 	err = setPassword("asdf")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	c, err := loadConfigFile()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	sections := c.GetSectionList()
 	var expect = []string{"nounc", "unc"}
-	if !reflect.DeepEqual(sections, expect) {
-		t.Fatalf("%v != %v", sections, expect)
-	}
+	assert.Equal(t, expect, sections)
 
 	keys := c.GetKeyList("nounc")
 	expect = []string{"type", "nounc"}
-	if !reflect.DeepEqual(keys, expect) {
-		t.Fatalf("%v != %v", keys, expect)
-	}
+	assert.Equal(t, expect, keys)
 }
 
 func TestConfigLoadEncryptedFailures(t *testing.T) {
@@ -147,36 +129,23 @@ func TestConfigLoadEncryptedFailures(t *testing.T) {
 	ConfigPath = "./testdata/enc-short.conf"
 	defer func() { ConfigPath = oldConfigPath }()
 	_, err = loadConfigFile()
-	if err == nil {
-		t.Fatal("expected error")
-	}
-	t.Log("Correctly got:", err)
+	require.Error(t, err)
 
 	// This file contains invalid base64 characters.
 	ConfigPath = "./testdata/enc-invalid.conf"
 	_, err = loadConfigFile()
-	if err == nil {
-		t.Fatal("expected error")
-	}
-	t.Log("Correctly got:", err)
+	require.Error(t, err)
 
 	// This file contains invalid base64 characters.
 	ConfigPath = "./testdata/enc-too-new.conf"
 	_, err = loadConfigFile()
-	if err == nil {
-		t.Fatal("expected error")
-	}
-	t.Log("Correctly got:", err)
+	require.Error(t, err)
 
 	// This file contains invalid base64 characters.
 	ConfigPath = "./testdata/filenotfound.conf"
 	c, err := loadConfigFile()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(c.GetSectionList()) != 0 {
-		t.Fatalf("Expected 0-length section, got %d entries", len(c.GetSectionList()))
-	}
+	require.NoError(t, err)
+	require.Len(t, c.GetSectionList(), 0, "Expected 0-length section")
 }
 
 func TestPassword(t *testing.T) {
@@ -186,15 +155,11 @@ func TestPassword(t *testing.T) {
 	var err error
 	// Empty password should give error
 	err = setPassword("  \t  ")
-	if err == nil {
-		t.Fatal("expected error")
-	}
+	require.Error(t, err)
 
 	// Test invalid utf8 sequence
 	err = setPassword(string([]byte{0xff, 0xfe, 0xfd}) + "abc")
-	if err == nil {
-		t.Fatal("expected error")
-	}
+	require.Error(t, err)
 
 	// Simple check of wrong passwords
 	hashedKeyCompare(t, "mis", "match", false)
@@ -212,21 +177,16 @@ func TestPassword(t *testing.T) {
 
 func hashedKeyCompare(t *testing.T, a, b string, shouldMatch bool) {
 	err := setPassword(a)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	k1 := configKey
 
 	err = setPassword(b)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	k2 := configKey
-	matches := bytes.Equal(k1, k2)
-	if shouldMatch && !matches {
-		t.Fatalf("%v != %v", k1, k2)
-	}
-	if !shouldMatch && matches {
-		t.Fatalf("%v == %v", k1, k2)
+
+	if shouldMatch {
+		assert.Equal(t, k1, k2)
+	} else {
+		assert.NotEqual(t, k1, k2)
 	}
 }

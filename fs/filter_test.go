@@ -12,7 +12,7 @@ import (
 )
 
 func TestAgeSuffix(t *testing.T) {
-	for i, test := range []struct {
+	for _, test := range []struct {
 		in   string
 		want float64
 		err  bool
@@ -33,15 +33,12 @@ func TestAgeSuffix(t *testing.T) {
 		{"1x", 0, true},
 	} {
 		duration, err := ParseDuration(test.in)
-		if (err != nil) != test.err {
-			t.Errorf("%d: Expecting error %v but got error %v", i, test.err, err)
-			continue
+		if test.err {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
 		}
-
-		got := float64(duration)
-		if test.want != got {
-			t.Errorf("%d: Want %v got %v", i, test.want, got)
-		}
+		assert.Equal(t, test.want, float64(duration))
 	}
 }
 
@@ -68,9 +65,7 @@ func testFile(t *testing.T, contents string) *string {
 	require.NoError(t, err)
 	defer func() {
 		err := out.Close()
-		if err != nil {
-			t.Error(err)
-		}
+		require.NoError(t, err)
 	}()
 	_, err = out.Write([]byte(contents))
 	require.NoError(t, err)
@@ -182,13 +177,9 @@ func TestNewFilterIncludeFiles(t *testing.T) {
 	f, err := NewFilter()
 	require.NoError(t, err)
 	err = f.AddFile("file1.jpg")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 	err = f.AddFile("/file2.jpg")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 	assert.Equal(t, filesMap{
 		"file1.jpg": {},
 		"file2.jpg": {},
@@ -200,9 +191,7 @@ func TestNewFilterIncludeFiles(t *testing.T) {
 		{"potato/file2.jpg", 2, 0, false},
 		{"file3.jpg", 3, 0, false},
 	})
-	if f.InActive() {
-		t.Errorf("want !InActive")
-	}
+	assert.False(t, f.InActive())
 }
 
 func TestNewFilterIncludeFilesDirs(t *testing.T) {
@@ -215,9 +204,7 @@ func TestNewFilterIncludeFilesDirs(t *testing.T) {
 		"/path/to/dir2/file4.png",
 	} {
 		err = f.AddFile(path)
-		if err != nil {
-			t.Error(err)
-		}
+		require.NoError(t, err)
 	}
 	assert.Equal(t, filesMap{
 		"path":         {},
@@ -248,9 +235,7 @@ func TestNewFilterMinSize(t *testing.T) {
 		{"file2.jpg", 101, 0, true},
 		{"potato/file2.jpg", 99, 0, false},
 	})
-	if f.InActive() {
-		t.Errorf("want !InActive")
-	}
+	assert.False(t, f.InActive())
 }
 
 func TestNewFilterMaxSize(t *testing.T) {
@@ -262,9 +247,7 @@ func TestNewFilterMaxSize(t *testing.T) {
 		{"file2.jpg", 101, 0, false},
 		{"potato/file2.jpg", 99, 0, true},
 	})
-	if f.InActive() {
-		t.Errorf("want !InActive")
-	}
+	assert.False(t, f.InActive())
 }
 
 func TestNewFilterMinAndMaxAge(t *testing.T) {
@@ -279,9 +262,7 @@ func TestNewFilterMinAndMaxAge(t *testing.T) {
 		{"potato/file1.jpg", 98, 1440000003, true},
 		{"potato/file2.jpg", 99, 1440000004, false},
 	})
-	if f.InActive() {
-		t.Errorf("want !InActive")
-	}
+	assert.False(t, f.InActive())
 }
 
 func TestNewFilterMinAge(t *testing.T) {
@@ -295,9 +276,7 @@ func TestNewFilterMinAge(t *testing.T) {
 		{"potato/file1.jpg", 98, 1440000003, false},
 		{"potato/file2.jpg", 99, 1440000004, false},
 	})
-	if f.InActive() {
-		t.Errorf("want !InActive")
-	}
+	assert.False(t, f.InActive())
 }
 
 func TestNewFilterMaxAge(t *testing.T) {
@@ -311,9 +290,7 @@ func TestNewFilterMaxAge(t *testing.T) {
 		{"potato/file1.jpg", 98, 1440000003, true},
 		{"potato/file2.jpg", 99, 1440000004, true},
 	})
-	if f.InActive() {
-		t.Errorf("want !InActive")
-	}
+	assert.False(t, f.InActive())
 }
 
 func TestNewFilterMatches(t *testing.T) {
@@ -363,9 +340,7 @@ func TestNewFilterMatches(t *testing.T) {
 		{"sausage4", false},
 		{"a", true},
 	})
-	if f.InActive() {
-		t.Errorf("want !InActive")
-	}
+	assert.False(t, f.InActive())
 }
 
 func TestFilterForEachLine(t *testing.T) {
@@ -382,23 +357,15 @@ five
   six  `)
 	defer func() {
 		err := os.Remove(*file)
-		if err != nil {
-			t.Error(err)
-		}
+		require.NoError(t, err)
 	}()
 	lines := []string{}
 	err := forEachLine(*file, func(s string) error {
 		lines = append(lines, s)
 		return nil
 	})
-	if err != nil {
-		t.Error(err)
-	}
-	got := strings.Join(lines, ",")
-	want := "one,two,three,four,five,six"
-	if want != got {
-		t.Errorf("want %q got %q", want, got)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, "one,two,three,four,five,six", strings.Join(lines, ","))
 }
 
 func TestFilterMatchesFromDocs(t *testing.T) {
@@ -443,7 +410,7 @@ func TestFilterMatchesFromDocs(t *testing.T) {
 		require.NoError(t, err)
 		included := f.Include(test.file, 0, time.Unix(0, 0))
 		if included != test.included {
-			t.Logf("%q match %q: want %v got %v", test.glob, test.file, test.included, included)
+			t.Errorf("%q match %q: want %v got %v", test.glob, test.file, test.included, included)
 		}
 	}
 }
