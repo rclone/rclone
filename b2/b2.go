@@ -39,6 +39,7 @@ const (
 	maxSleep        = 2 * time.Second
 	decayConstant   = 2 // bigger for slower decay, exponential
 	maxParts        = 10000
+	testModeHeader  = "X-Bz-Test-Mode"
 )
 
 // Globals
@@ -49,6 +50,7 @@ var (
 	errorAuthTokenExpired       = errors.New("b2 auth token expired")
 	errorUploadTokenExpired     = errors.New("b2 upload token expired")
 	errorUploadPartTokenExpired = errors.New("b2 upload part token expired")
+	b2TestMode                  = pflag.StringP("b2-test-mode", "", "", "A flag string for X-Bz-Test-Mode header.")
 )
 
 // Register with Fs
@@ -223,6 +225,12 @@ func NewFs(name, root string) (fs.Fs, error) {
 		srv:          rest.NewClient(fs.Config.Client()).SetErrorHandler(errorHandler),
 		pacer:        pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 		uploadTokens: make(chan struct{}, fs.Config.Transfers),
+	}
+	// Set the test flag if required
+	if *b2TestMode != "" {
+		testMode := strings.TrimSpace(*b2TestMode)
+		f.srv.SetHeader(testModeHeader, testMode)
+		fs.Debug(f, "Setting test header \"%s: %s\"", testModeHeader, testMode)
 	}
 	// Fill up the upload tokens
 	for i := 0; i < fs.Config.Transfers; i++ {
