@@ -89,6 +89,7 @@ type Fs struct {
 	uploads       []*api.GetUploadURLResponse  // result of get upload URL calls
 	authMu        sync.Mutex                   // lock for authorizing the account
 	pacer         *pacer.Pacer                 // To pace and retry the API calls
+	uploadTokens  chan struct{}                // control concurrency of uploads
 }
 
 // Object describes a b2 object
@@ -213,14 +214,19 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 	endpoint := fs.ConfigFile.MustValue(name, "endpoint", defaultEndpoint)
 	f := &Fs{
-		name:     name,
-		bucket:   bucket,
-		root:     directory,
-		account:  account,
-		key:      key,
-		endpoint: endpoint,
-		srv:      rest.NewClient(fs.Config.Client()).SetErrorHandler(errorHandler),
-		pacer:    pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		name:         name,
+		bucket:       bucket,
+		root:         directory,
+		account:      account,
+		key:          key,
+		endpoint:     endpoint,
+		srv:          rest.NewClient(fs.Config.Client()).SetErrorHandler(errorHandler),
+		pacer:        pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		uploadTokens: make(chan struct{}, fs.Config.Transfers),
+	}
+	// Fill up the upload tokens
+	for i := 0; i < fs.Config.Transfers; i++ {
+		f.returnUploadToken()
 	}
 	err = f.authorizeAccount()
 	if err != nil {
@@ -322,6 +328,16 @@ func (f *Fs) clearUploadURL() {
 	f.uploadMu.Lock()
 	f.uploads = nil
 	f.uploadMu.Unlock()
+}
+
+// Gets an upload token to control the concurrency
+func (f *Fs) getUploadToken() {
+	<-f.uploadTokens
+}
+
+// Return an upload token
+func (f *Fs) returnUploadToken() {
+	f.uploadTokens <- struct{}{}
 }
 
 // Return an Object from a path
@@ -1091,6 +1107,10 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 		// Set input to temporary file
 		in = fd
 	}
+
+	// Get upload Token
+	o.fs.getUploadToken()
+	defer o.fs.returnUploadToken()
 
 	// Get upload URL
 	upload, err := o.fs.getUploadURL()

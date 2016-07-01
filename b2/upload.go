@@ -188,6 +188,11 @@ func (up *largeUpload) transferChunk(part int64, body []byte) error {
 		up.returnUploadURL(upload)
 		return up.f.shouldRetryNoReauth(resp, err)
 	})
+	if err != nil {
+		fs.Debug(up.o, "Error sending chunk %d: %v", part, err)
+	} else {
+		fs.Debug(up.o, "Done sending chunk %d", part)
+	}
 	return err
 }
 
@@ -212,34 +217,85 @@ func (up *largeUpload) finish() error {
 	return up.o.decodeMetaDataFileInfo(&response)
 }
 
+// cancel aborts the large upload
+func (up *largeUpload) cancel() error {
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/b2_cancel_large_file",
+	}
+	var request = api.CancelLargeFileRequest{
+		ID: up.id,
+	}
+	var response api.CancelLargeFileResponse
+	err := up.f.pacer.Call(func() (bool, error) {
+		resp, err := up.f.srv.CallJSON(&opts, &request, &response)
+		return up.f.shouldRetry(resp, err)
+	})
+	return err
+}
+
 // Upload uploads the chunks from the input
 func (up *largeUpload) Upload() error {
 	fs.Debug(up.o, "Starting upload of large file in %d chunks (id %q)", up.parts, up.id)
-	buf := make([]byte, chunkSize)
 	remaining := up.size
+	errs := make(chan error, 1)
+	var wg sync.WaitGroup
+	var err error
+outer:
 	for part := int64(1); part <= up.parts; part++ {
+		// Check any errors
+		select {
+		case err = <-errs:
+			break outer
+		default:
+		}
+
 		reqSize := remaining
 		if reqSize >= int64(chunkSize) {
 			reqSize = int64(chunkSize)
-		} else {
-			buf = buf[:reqSize]
 		}
 
-		// FIXME could parallelise this
-
 		// Read the chunk
-		_, err := io.ReadFull(up.in, buf)
+		buf := make([]byte, reqSize)
+		_, err = io.ReadFull(up.in, buf)
 		if err != nil {
-			return err
+			break outer
 		}
 
 		// Transfer the chunk
-		err = up.transferChunk(part, buf)
-		if err != nil {
-			return err
-		}
+		// Get upload Token
+		up.f.getUploadToken()
+		wg.Add(1)
+		go func(part int64, buf []byte) {
+			defer up.f.returnUploadToken()
+			defer wg.Done()
+			err := up.transferChunk(part, buf)
+			if err != nil {
+				select {
+				case errs <- err:
+				default:
+				}
+			}
+		}(part, buf)
 
 		remaining -= reqSize
 	}
+	wg.Wait()
+	if err == nil {
+		select {
+		case err = <-errs:
+		default:
+		}
+	}
+	if err != nil {
+		fs.Debug(up.o, "Cancelling large file upload due to error: %v", err)
+		cancelErr := up.cancel()
+		if cancelErr != nil {
+			fs.ErrorLog(up.o, "Failed to cancel large file upload: %v", cancelErr)
+		}
+		return err
+	}
+	// Check any errors
+	fs.Debug(up.o, "Finishing large file upload")
 	return up.finish()
 }

@@ -214,3 +214,18 @@ type FinishLargeFileRequest struct {
 	ID    string   `json:"fileId"`        // The unique identifier of the file being uploaded.
 	SHA1s []string `json:"partSha1Array"` // A JSON array of hex SHA1 checksums of the parts of the large file. This is a double-check that the right parts were uploaded in the right order, and that none were missed. Note that the part numbers start at 1, and the SHA1 of the part 1 is the first string in the array, at index 0.
 }
+
+// CancelLargeFileRequest is passed to b2_finish_large_file
+//
+// The response is a CancelLargeFileResponse
+type CancelLargeFileRequest struct {
+	ID string `json:"fileId"` // The unique identifier of the file being uploaded.
+}
+
+// CancelLargeFileResponse is the response to CancelLargeFileRequest
+type CancelLargeFileResponse struct {
+	ID        string `json:"fileId"`    // The unique identifier of the file being uploaded.
+	Name      string `json:"fileName"`  // The name of this file.
+	AccountID string `json:"accountId"` // The identifier for the account.
+	BucketID  string `json:"bucketId"`  // The unique ID of the bucket.
+}
