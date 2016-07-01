@@ -45,7 +45,7 @@ const (
 var (
 	minChunkSize                = fs.SizeSuffix(100E6)
 	chunkSize                   = fs.SizeSuffix(96 * 1024 * 1024)
-	uploadCutoff                = fs.SizeSuffix(5E9)
+	uploadCutoff                = fs.SizeSuffix(200E6)
 	errorAuthTokenExpired       = errors.New("b2 auth token expired")
 	errorUploadTokenExpired     = errors.New("b2 upload token expired")
 	errorUploadPartTokenExpired = errors.New("b2 upload part token expired")
