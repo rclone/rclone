@@ -197,6 +197,11 @@ don't match.  It doesn't alter the source or destination.
 
 `--size-only` may be used to only compare the sizes, not the MD5SUMs.
 
+### rclone cleanup remote:path ###
+
+Clean up the remote if possible.  Empty the trash or delete old file
+versions. Not supported by all remotes.
+
 ### rclone dedupe remote:path ###
 
 By default `dedup` interactively finds duplicate files and offers to

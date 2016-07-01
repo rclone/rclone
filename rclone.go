@@ -279,6 +279,19 @@ var Commands = []Command{
 		MaxArgs: 3,
 	},
 	{
+		Name:     "cleanup",
+		ArgsHelp: "remote:path",
+		Help: `
+        Clean up the remote if possible.  Empty the trash or delete
+        old file versions. Not supported by all remotes.`,
+		Run: func(fdst, fsrc fs.Fs) error {
+			return fs.CleanUp(fdst)
+		},
+		MinArgs: 1,
+		MaxArgs: 1,
+		Retry:   true,
+	},
+	{
 		Name: "help",
 		Help: `
         This help.`,

@@ -273,6 +273,15 @@ type PutUncheckeder interface {
 	PutUnchecked(in io.Reader, src ObjectInfo) (Object, error)
 }
 
+// CleanUpper is an optional interfaces for Fs
+type CleanUpper interface {
+	// CleanUp the trash in the Fs
+	//
+	// Implement this if you have a way of emptying the trash or
+	// otherwise cleaning up old versions of files.
+	CleanUp() error
+}
+
 // ObjectsChan is a channel of Objects
 type ObjectsChan chan Object
 

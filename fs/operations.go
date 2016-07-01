@@ -1379,3 +1379,12 @@ func listToChan(list *Lister) ObjectsChan {
 	}()
 	return o
 }
+
+// CleanUp removes the trash for the Fs
+func CleanUp(f Fs) error {
+	fc, ok := f.(CleanUpper)
+	if !ok {
+		return errors.Errorf("%v doesn't support cleanup", f)
+	}
+	return fc.CleanUp()
+}
