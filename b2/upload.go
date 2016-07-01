@@ -178,9 +178,8 @@ func (up *largeUpload) transferChunk(part int64, body []byte) error {
 		var response api.UploadPartResponse
 
 		resp, err := up.f.srv.CallJSON(&opts, nil, &response)
-		if err == nil && resp != nil && resp.StatusCode == 401 {
-			err = errorUploadPartTokenExpired
-			fs.Debug(up.o, "%v", err)
+		if resp != nil && resp.StatusCode == 401 {
+			fs.Debug(up.o, "Unauthorized: %v", err)
 			// Refetch upload part URLs and ditch this current one
 			up.clearUploadURL()
 			return true, err

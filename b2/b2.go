@@ -44,13 +44,10 @@ const (
 
 // Globals
 var (
-	minChunkSize                = fs.SizeSuffix(100E6)
-	chunkSize                   = fs.SizeSuffix(96 * 1024 * 1024)
-	uploadCutoff                = fs.SizeSuffix(200E6)
-	errorAuthTokenExpired       = errors.New("b2 auth token expired")
-	errorUploadTokenExpired     = errors.New("b2 upload token expired")
-	errorUploadPartTokenExpired = errors.New("b2 upload part token expired")
-	b2TestMode                  = pflag.StringP("b2-test-mode", "", "", "A flag string for X-Bz-Test-Mode header.")
+	minChunkSize = fs.SizeSuffix(100E6)
+	chunkSize    = fs.SizeSuffix(96 * 1024 * 1024)
+	uploadCutoff = fs.SizeSuffix(200E6)
+	b2TestMode   = pflag.StringP("b2-test-mode", "", "", "A flag string for X-Bz-Test-Mode header.")
 )
 
 // Register with Fs
@@ -161,9 +158,8 @@ func (f *Fs) shouldRetryNoReauth(resp *http.Response, err error) (bool, error) {
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
 func (f *Fs) shouldRetry(resp *http.Response, err error) (bool, error) {
-	if err == nil && resp != nil && resp.StatusCode == 401 {
-		err = errorAuthTokenExpired
-		fs.Debug(f, "%v", err)
+	if resp != nil && resp.StatusCode == 401 {
+		fs.Debug(f, "Unauthorized: %v", err)
 		// Reauth
 		authErr := f.authorizeAccount()
 		if authErr != nil {
@@ -1198,9 +1194,8 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 	// Don't retry, return a retry error instead
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err := o.fs.srv.CallJSON(&opts, nil, &response)
-		if err == nil && resp != nil && resp.StatusCode == 401 {
-			err = errorUploadTokenExpired
-			fs.Debug(o, "%v", err)
+		if resp != nil && resp.StatusCode == 401 {
+			fs.Debug(o, "Unauthorized: %v", err)
 			// Invalidate this Upload URL
 			upload = nil
 			// Refetch upload URLs
