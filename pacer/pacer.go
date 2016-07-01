@@ -76,6 +76,21 @@ func New() *Pacer {
 	return p
 }
 
+// SetSleep sets the current sleep time
+func (p *Pacer) SetSleep(t time.Duration) *Pacer {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.sleepTime = t
+	return p
+}
+
+// GetSleep gets the current sleep time
+func (p *Pacer) GetSleep() time.Duration {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.sleepTime
+}
+
 // SetMinSleep sets the minimum sleep time for the pacer
 func (p *Pacer) SetMinSleep(t time.Duration) *Pacer {
 	p.mu.Lock()

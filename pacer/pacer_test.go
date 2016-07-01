@@ -51,6 +51,20 @@ func TestNew(t *testing.T) {
 	}
 }
 
+func TestSetSleep(t *testing.T) {
+	p := New().SetSleep(2 * time.Millisecond)
+	if p.sleepTime != 2*time.Millisecond {
+		t.Errorf("didn't set")
+	}
+}
+
+func TestGetSleep(t *testing.T) {
+	p := New().SetSleep(2 * time.Millisecond)
+	if p.GetSleep() != 2*time.Millisecond {
+		t.Errorf("didn't get")
+	}
+}
+
 func TestSetMinSleep(t *testing.T) {
 	p := New().SetMinSleep(1 * time.Millisecond)
 	if p.minSleep != 1*time.Millisecond {
