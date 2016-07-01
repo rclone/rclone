@@ -178,14 +178,14 @@ func (up *largeUpload) transferChunk(part int64, body []byte) error {
 		var response api.UploadPartResponse
 
 		resp, err := up.f.srv.CallJSON(&opts, nil, &response)
-		if resp != nil && resp.StatusCode == 401 {
-			fs.Debug(up.o, "Unauthorized: %v", err)
-			// Refetch upload part URLs and ditch this current one
-			up.clearUploadURL()
-			return true, err
+		retry, err := up.f.shouldRetryNoReauth(resp, err)
+		// On retryable error clear PartUploadURL
+		if retry {
+			fs.Debug(up.o, "Clearing part upload URL because of error: %v", err)
+			upload = nil
 		}
 		up.returnUploadURL(upload)
-		return up.f.shouldRetryNoReauth(resp, err)
+		return retry, err
 	})
 	if err != nil {
 		fs.Debug(up.o, "Error sending chunk %d: %v", part, err)

@@ -29,17 +29,18 @@ import (
 )
 
 const (
-	defaultEndpoint = "https://api.backblaze.com"
-	headerPrefix    = "x-bz-info-" // lower case as that is what the server returns
-	timeKey         = "src_last_modified_millis"
-	timeHeader      = headerPrefix + timeKey
-	sha1Key         = "large_file_sha1"
-	sha1Header      = "X-Bz-Content-Sha1"
-	minSleep        = 10 * time.Millisecond
-	maxSleep        = 2 * time.Second
-	decayConstant   = 2 // bigger for slower decay, exponential
-	maxParts        = 10000
-	testModeHeader  = "X-Bz-Test-Mode"
+	defaultEndpoint  = "https://api.backblaze.com"
+	headerPrefix     = "x-bz-info-" // lower case as that is what the server returns
+	timeKey          = "src_last_modified_millis"
+	timeHeader       = headerPrefix + timeKey
+	sha1Key          = "large_file_sha1"
+	sha1Header       = "X-Bz-Content-Sha1"
+	testModeHeader   = "X-Bz-Test-Mode"
+	retryAfterHeader = "Retry-After"
+	minSleep         = 10 * time.Millisecond
+	maxSleep         = 2 * time.Second
+	decayConstant    = 1 // bigger for slower decay, exponential
+	maxParts         = 10000
 )
 
 // Globals
@@ -152,6 +153,27 @@ var retryErrorCodes = []int{
 // shouldRetryNoAuth returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
 func (f *Fs) shouldRetryNoReauth(resp *http.Response, err error) (bool, error) {
+	// For 429 or 503 errors look at the Retry-After: header and
+	// set the retry appropriately, starting with a minimum of 1
+	// second if it isn't set.
+	if resp != nil && (resp.StatusCode == 429 || resp.StatusCode == 503) {
+		var retryAfter = 1
+		retryAfterString := resp.Header.Get(retryAfterHeader)
+		if retryAfterString != "" {
+			var err error
+			retryAfter, err = strconv.Atoi(retryAfterString)
+			if err != nil {
+				fs.ErrorLog(f, "Malformed %s header %q: %v", retryAfterHeader, retryAfterString, err)
+			}
+		}
+		retryAfterDuration := time.Duration(retryAfter) * time.Second
+		if f.pacer.GetSleep() < retryAfterDuration {
+			fs.Debug(f, "Setting sleep to %v after error: %v", retryAfterDuration, err)
+			// We set 1/2 the value here because the pacer will double it immediately
+			f.pacer.SetSleep(retryAfterDuration / 2)
+		}
+		return true, err
+	}
 	return fs.ShouldRetry(err) || fs.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
@@ -1194,15 +1216,13 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 	// Don't retry, return a retry error instead
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err := o.fs.srv.CallJSON(&opts, nil, &response)
-		if resp != nil && resp.StatusCode == 401 {
-			fs.Debug(o, "Unauthorized: %v", err)
-			// Invalidate this Upload URL
+		retry, err := o.fs.shouldRetryNoReauth(resp, err)
+		// On retryable error clear UploadURL
+		if retry {
+			fs.Debug(o, "Clearing upload URL because of error: %v", err)
 			upload = nil
-			// Refetch upload URLs
-			o.fs.clearUploadURL()
-			return true, err
 		}
-		return o.fs.shouldRetryNoReauth(resp, err)
+		return retry, err
 	})
 	if err != nil {
 		return err
