@@ -749,10 +749,12 @@ func (f *Fs) deleteByID(ID, Name string) error {
 	return nil
 }
 
-// Purge deletes all the files and directories
+// purge deletes all the files and directories
+//
+// if oldOnly is true then it deletes only non current files.
 //
 // Implemented here so we can make sure we delete old versions.
-func (f *Fs) Purge() error {
+func (f *Fs) purge(oldOnly bool) error {
 	var errReturn error
 	var checkErrMutex sync.Mutex
 	var checkErr = func(err error) {
@@ -774,22 +776,44 @@ func (f *Fs) Purge() error {
 		go func() {
 			defer wg.Done()
 			for object := range toBeDeleted {
+				fs.Stats.Transferring(object.Name)
 				checkErr(f.deleteByID(object.ID, object.Name))
+				fs.Stats.DoneTransferring(object.Name)
 			}
 		}()
 	}
+	last := ""
 	checkErr(f.list("", fs.MaxLevel, "", 0, true, func(remote string, object *api.File, isDirectory bool) error {
 		if !isDirectory {
-			fs.Debug(remote, "Deleting (id %q)", object.ID)
-			toBeDeleted <- object
+			fs.Stats.Checking(remote)
+			if oldOnly && last != remote {
+				fs.Debug(remote, "Not deleting current version (id %q) %q", object.ID, object.Action)
+			} else {
+				fs.Debug(remote, "Deleting (id %q)", object.ID)
+				toBeDeleted <- object
+			}
+			last = remote
+			fs.Stats.DoneChecking(remote)
 		}
 		return nil
 	}))
 	close(toBeDeleted)
 	wg.Wait()
 
-	checkErr(f.Rmdir())
+	if !oldOnly {
+		checkErr(f.Rmdir())
+	}
 	return errReturn
+}
+
+// Purge deletes all the files and directories including the old versions.
+func (f *Fs) Purge() error {
+	return f.purge(false)
+}
+
+// CleanUp deletes all the hidden files.
+func (f *Fs) CleanUp() error {
+	return f.purge(true)
 }
 
 // Hashes returns the supported hash sets.
@@ -1257,7 +1281,8 @@ func (o *Object) Remove() error {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs     = &Fs{}
-	_ fs.Purger = &Fs{}
-	_ fs.Object = &Object{}
+	_ fs.Fs         = &Fs{}
+	_ fs.Purger     = &Fs{}
+	_ fs.CleanUpper = &Fs{}
+	_ fs.Object     = &Object{}
 )
