@@ -202,17 +202,17 @@ func (s *StatsInfo) Error() {
 }
 
 // Checking adds a check into the stats
-func (s *StatsInfo) Checking(o Object) {
+func (s *StatsInfo) Checking(remote string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	s.checking[o.Remote()] = struct{}{}
+	s.checking[remote] = struct{}{}
 }
 
 // DoneChecking removes a check from the stats
-func (s *StatsInfo) DoneChecking(o Object) {
+func (s *StatsInfo) DoneChecking(remote string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	delete(s.checking, o.Remote())
+	delete(s.checking, remote)
 	s.checks++
 }
 
@@ -224,17 +224,17 @@ func (s *StatsInfo) GetTransfers() int64 {
 }
 
 // Transferring adds a transfer into the stats
-func (s *StatsInfo) Transferring(o Object) {
+func (s *StatsInfo) Transferring(remote string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	s.transferring[o.Remote()] = struct{}{}
+	s.transferring[remote] = struct{}{}
 }
 
 // DoneTransferring removes a transfer from the stats
-func (s *StatsInfo) DoneTransferring(o Object) {
+func (s *StatsInfo) DoneTransferring(remote string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	delete(s.transferring, o.Remote())
+	delete(s.transferring, remote)
 	s.transfers++
 }
 

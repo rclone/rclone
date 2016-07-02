@@ -374,9 +374,9 @@ func PairChecker(in ObjectPairChan, out ObjectPairChan, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for pair := range in {
 		src := pair.src
-		Stats.Checking(src)
+		Stats.Checking(src.Remote())
 		checkOne(pair, out)
-		Stats.DoneChecking(src)
+		Stats.DoneChecking(src.Remote())
 	}
 }
 
@@ -385,13 +385,13 @@ func PairCopier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for pair := range in {
 		src := pair.src
-		Stats.Transferring(src)
+		Stats.Transferring(src.Remote())
 		if Config.DryRun {
 			Log(src, "Not copying as --dry-run")
 		} else {
 			Copy(fdst, pair.dst, src)
 		}
-		Stats.DoneTransferring(src)
+		Stats.DoneTransferring(src.Remote())
 	}
 }
 
@@ -404,7 +404,7 @@ func PairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 	for pair := range in {
 		src := pair.src
 		dst := pair.dst
-		Stats.Transferring(src)
+		Stats.Transferring(src.Remote())
 		if Config.DryRun {
 			Log(src, "Not moving as --dry-run")
 		} else if haveMover && src.Fs().Name() == fdst.Name() {
@@ -426,7 +426,7 @@ func PairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 		} else {
 			Copy(fdst, pair.dst, src)
 		}
-		Stats.DoneTransferring(src)
+		Stats.DoneTransferring(src.Remote())
 	}
 }
 
@@ -435,9 +435,9 @@ func DeleteFile(dst Object) (err error) {
 	if Config.DryRun {
 		Log(dst, "Not deleting as --dry-run")
 	} else {
-		Stats.Checking(dst)
+		Stats.Checking(dst.Remote())
 		err = dst.Remove()
-		Stats.DoneChecking(dst)
+		Stats.DoneChecking(dst.Remote())
 		if err != nil {
 			Stats.Error()
 			ErrorLog(dst, "Couldn't delete: %v", err)
@@ -872,8 +872,8 @@ func MoveDir(fdst, fsrc Fs) error {
 //
 // it returns true if differences were found
 func checkIdentical(dst, src Object) bool {
-	Stats.Checking(src)
-	defer Stats.DoneChecking(src)
+	Stats.Checking(src.Remote())
+	defer Stats.DoneChecking(src.Remote())
 	if src.Size() != dst.Size() {
 		Stats.Error()
 		ErrorLog(src, "Sizes differ")
@@ -1020,9 +1020,9 @@ func List(f Fs, w io.Writer) error {
 // Lists in parallel which may get them out of order
 func ListLong(f Fs, w io.Writer) error {
 	return ListFn(f, func(o Object) {
-		Stats.Checking(o)
+		Stats.Checking(o.Remote())
 		modTime := o.ModTime()
-		Stats.DoneChecking(o)
+		Stats.DoneChecking(o.Remote())
 		syncFprintf(w, "%9d %s %s\n", o.Size(), modTime.Local().Format("2006-01-02 15:04:05.000000000"), o.Remote())
 	})
 }
@@ -1048,9 +1048,9 @@ func Sha1sum(f Fs, w io.Writer) error {
 
 func hashLister(ht HashType, f Fs, w io.Writer) error {
 	return ListFn(f, func(o Object) {
-		Stats.Checking(o)
+		Stats.Checking(o.Remote())
 		sum, err := o.Hash(ht)
-		Stats.DoneChecking(o)
+		Stats.DoneChecking(o.Remote())
 		if err == ErrHashUnsupported {
 			sum = "UNSUPPORTED"
 		} else if err != nil {
@@ -1385,6 +1385,10 @@ func CleanUp(f Fs) error {
 	fc, ok := f.(CleanUpper)
 	if !ok {
 		return errors.Errorf("%v doesn't support cleanup", f)
+	}
+	if Config.DryRun {
+		Log(f, "Not running cleanup as --dry-run set")
+		return nil
 	}
 	return fc.CleanUp()
 }
