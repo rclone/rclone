@@ -199,7 +199,7 @@ again:
 	obj, err := remote.Put(in, obji)
 	if err != nil {
 		// Retry if err returned a retry error
-		if r, ok := err.(fs.Retry); ok && r.Retry() && tries < maxTries {
+		if fs.IsRetryError(err) && tries < maxTries {
 			t.Logf("Put error: %v - low level retry %d/%d", err, tries, maxTries)
 
 			tries++

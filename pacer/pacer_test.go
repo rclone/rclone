@@ -361,7 +361,7 @@ func Test_callRetry(t *testing.T) {
 	if err == errFoo {
 		t.Errorf("err didn't want %v got %v", errFoo, err)
 	}
-	_, ok := err.(fs.Retry)
+	_, ok := err.(fs.Retrier)
 	if !ok {
 		t.Errorf("didn't return a retry error")
 	}
@@ -375,7 +375,7 @@ func TestCall(t *testing.T) {
 	if dp.called != 20 {
 		t.Errorf("called want %d got %d", 20, dp.called)
 	}
-	_, ok := err.(fs.Retry)
+	_, ok := err.(fs.Retrier)
 	if !ok {
 		t.Errorf("didn't return a retry error")
 	}
@@ -389,7 +389,7 @@ func TestCallNoRetry(t *testing.T) {
 	if dp.called != 1 {
 		t.Errorf("called want %d got %d", 1, dp.called)
 	}
-	_, ok := err.(fs.Retry)
+	_, ok := err.(fs.Retrier)
 	if !ok {
 		t.Errorf("didn't return a retry error")
 	}

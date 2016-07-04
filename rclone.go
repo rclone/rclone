@@ -526,6 +526,14 @@ func main() {
 		if !command.Retry || (err == nil && !fs.Stats.Errored()) {
 			break
 		}
+		if fs.IsFatalError(err) {
+			fs.Log(nil, "Fatal error received - not attempting retries")
+			break
+		}
+		if fs.IsNoRetryError(err) {
+			fs.Log(nil, "Can't retry this error - not attempting retries")
+			break
+		}
 		if err != nil {
 			fs.Log(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, fs.Stats.GetErrors(), err)
 		} else {

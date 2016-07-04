@@ -12,11 +12,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Retry is an optional interface for error as to whether the
+// Retrier is an optional interface for error as to whether the
 // operation should be retried at a high level.
 //
 // This should be returned from Update or Put methods as required
-type Retry interface {
+type Retrier interface {
 	error
 	Retry() bool
 }
@@ -35,36 +35,128 @@ func (r retryError) Retry() bool {
 }
 
 // Check interface
-var _ Retry = retryError("")
+var _ Retrier = retryError("")
 
 // RetryErrorf makes an error which indicates it would like to be retried
 func RetryErrorf(format string, a ...interface{}) error {
 	return retryError(fmt.Sprintf(format, a...))
 }
 
-// PlainRetryError is an error wrapped so it will retry
-type plainRetryError struct {
+// wrappedRetryError is an error wrapped so it will satisfy the
+// Retrier interface and return true
+type wrappedRetryError struct {
 	error
 }
 
 // Retry interface
-func (err plainRetryError) Retry() bool {
+func (err wrappedRetryError) Retry() bool {
 	return true
 }
 
 // Check interface
-var _ Retry = plainRetryError{(error)(nil)}
+var _ Retrier = wrappedRetryError{(error)(nil)}
 
 // RetryError makes an error which indicates it would like to be retried
 func RetryError(err error) error {
-	return plainRetryError{err}
+	return wrappedRetryError{err}
 }
 
 // IsRetryError returns true if err conforms to the Retry interface
 // and calling the Retry method returns true.
 func IsRetryError(err error) bool {
-	if r, ok := err.(Retry); ok {
+	if err == nil {
+		return false
+	}
+	err = errors.Cause(err)
+	if r, ok := err.(Retrier); ok {
 		return r.Retry()
+	}
+	return false
+}
+
+// Fataler is an optional interface for error as to whether the
+// operation should cause the entire operation to finish immediately.
+//
+// This should be returned from Update or Put methods as required
+type Fataler interface {
+	error
+	Fatal() bool
+}
+
+// wrappedFatalError is an error wrapped so it will satisfy the
+// Retrier interface and return true
+type wrappedFatalError struct {
+	error
+}
+
+// Fatal interface
+func (err wrappedFatalError) Fatal() bool {
+	return true
+}
+
+// Check interface
+var _ Fataler = wrappedFatalError{(error)(nil)}
+
+// FatalError makes an error which indicates it is a fatal error and
+// the sync should stop.
+func FatalError(err error) error {
+	return wrappedFatalError{err}
+}
+
+// IsFatalError returns true if err conforms to the Fatal interface
+// and calling the Fatal method returns true.
+func IsFatalError(err error) bool {
+	if err == nil {
+		return false
+	}
+	err = errors.Cause(err)
+	if r, ok := err.(Fataler); ok {
+		return r.Fatal()
+	}
+	return false
+}
+
+// NoRetrier is an optional interface for error as to whether the
+// operation should not be retried at a high level.
+//
+// If only NoRetry errors are returned in a sync then the sync won't
+// be retried.
+//
+// This should be returned from Update or Put methods as required
+type NoRetrier interface {
+	error
+	NoRetry() bool
+}
+
+// wrappedNoRetryError is an error wrapped so it will satisfy the
+// Retrier interface and return true
+type wrappedNoRetryError struct {
+	error
+}
+
+// NoRetry interface
+func (err wrappedNoRetryError) NoRetry() bool {
+	return true
+}
+
+// Check interface
+var _ NoRetrier = wrappedNoRetryError{(error)(nil)}
+
+// NoRetryError makes an error which indicates the sync shouldn't be
+// retried.
+func NoRetryError(err error) error {
+	return wrappedNoRetryError{err}
+}
+
+// IsNoRetryError returns true if err conforms to the NoRetry
+// interface and calling the NoRetry method returns true.
+func IsNoRetryError(err error) bool {
+	if err == nil {
+		return false
+	}
+	err = errors.Cause(err)
+	if r, ok := err.(NoRetrier); ok {
+		return r.NoRetry()
 	}
 	return false
 }
