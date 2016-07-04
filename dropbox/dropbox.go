@@ -710,6 +710,13 @@ func (o *Object) Storable() bool {
 // Open an object for read
 func (o *Object) Open() (in io.ReadCloser, err error) {
 	in, _, err = o.fs.db.Download(o.remotePath(), "", 0)
+	if dropboxErr, ok := err.(*dropbox.Error); ok {
+		// Dropbox return 461 for copyright violation so don't
+		// attempt to retry this error
+		if dropboxErr.StatusCode == 461 {
+			return nil, fs.NoRetryError(err)
+		}
+	}
 	return
 }
 
