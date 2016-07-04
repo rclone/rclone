@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/ncw/rclone/fs"
 )
 
 // Error describes a B2 error response
@@ -17,6 +19,15 @@ type Error struct {
 func (e *Error) Error() string {
 	return fmt.Sprintf("%s (%d %s)", e.Message, e.Status, e.Code)
 }
+
+// Fatal statisfies the Fatal interface
+//
+// It indicates which errors should be treated as fatal
+func (e *Error) Fatal() bool {
+	return e.Status == 403 // 403 errors shouldn't be retried
+}
+
+var _ fs.Fataler = (*Error)(nil)
 
 // Account describes a B2 account
 type Account struct {
