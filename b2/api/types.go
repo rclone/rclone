@@ -2,7 +2,9 @@ package api
 
 import (
 	"fmt"
+	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ncw/rclone/fs"
@@ -62,8 +64,63 @@ func (t *Timestamp) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	*t = Timestamp(time.Unix(timestamp/1E3, (timestamp%1E3)*1E6))
+	*t = Timestamp(time.Unix(timestamp/1E3, (timestamp%1E3)*1E6).UTC())
 	return nil
+}
+
+const versionFormat = "-v2006-01-02-150405.000"
+
+// AddVersion adds the timestamp as a version string into the filename passed in.
+func (t Timestamp) AddVersion(remote string) string {
+	ext := path.Ext(remote)
+	base := remote[:len(remote)-len(ext)]
+	s := (time.Time)(t).Format(versionFormat)
+	// Replace the '.' with a '-'
+	s = strings.Replace(s, ".", "-", -1)
+	return base + s + ext
+}
+
+// RemoveVersion removes the timestamp from a filename as a version string.
+//
+// It returns the new file name and a timestamp, or the old filename
+// and a zero timestamp.
+func RemoveVersion(remote string) (t Timestamp, newRemote string) {
+	newRemote = remote
+	ext := path.Ext(remote)
+	base := remote[:len(remote)-len(ext)]
+	if len(base) < len(versionFormat) {
+		return
+	}
+	versionStart := len(base) - len(versionFormat)
+	// Check it ends in -xxx
+	if base[len(base)-4] != '-' {
+		return
+	}
+	// Replace with .xxx for parsing
+	base = base[:len(base)-4] + "." + base[len(base)-3:]
+	newT, err := time.Parse(versionFormat, base[versionStart:])
+	if err != nil {
+		return
+	}
+	return Timestamp(newT), base[:versionStart] + ext
+}
+
+// IsZero returns true if the timestamp is unitialised
+func (t Timestamp) IsZero() bool {
+	return (time.Time)(t).IsZero()
+}
+
+// Equal compares two timestamps
+//
+// If either are !IsZero then it returns false
+func (t Timestamp) Equal(s Timestamp) bool {
+	if (time.Time)(t).IsZero() {
+		return false
+	}
+	if (time.Time)(s).IsZero() {
+		return false
+	}
+	return (time.Time)(t).Equal((time.Time)(s))
 }
 
 // File is info about a file

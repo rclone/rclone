@@ -41,14 +41,17 @@ const (
 	maxSleep         = 2 * time.Second
 	decayConstant    = 1 // bigger for slower decay, exponential
 	maxParts         = 10000
+	maxVersions      = 100 // maximum number of versions we search in --b2-versions mode
 )
 
 // Globals
 var (
-	minChunkSize = fs.SizeSuffix(100E6)
-	chunkSize    = fs.SizeSuffix(96 * 1024 * 1024)
-	uploadCutoff = fs.SizeSuffix(200E6)
-	b2TestMode   = pflag.StringP("b2-test-mode", "", "", "A flag string for X-Bz-Test-Mode header.")
+	minChunkSize       = fs.SizeSuffix(100E6)
+	chunkSize          = fs.SizeSuffix(96 * 1024 * 1024)
+	uploadCutoff       = fs.SizeSuffix(200E6)
+	b2TestMode         = pflag.StringP("b2-test-mode", "", "", "A flag string for X-Bz-Test-Mode header.")
+	b2Versions         = pflag.BoolP("b2-versions", "", false, "Include old versions in directory listings.")
+	errNotWithVersions = errors.New("can't modify or delete files in --b2-versions mode")
 )
 
 // Register with Fs
@@ -528,7 +531,8 @@ func (f *Fs) list(dir string, level int, prefix string, limit int, hidden bool, 
 func (f *Fs) listFiles(out fs.ListOpts, dir string) {
 	defer out.Finished()
 	// List the objects
-	err := f.list(dir, out.Level(), "", 0, false, func(remote string, object *api.File, isDirectory bool) error {
+	last := ""
+	err := f.list(dir, out.Level(), "", 0, *b2Versions, func(remote string, object *api.File, isDirectory bool) error {
 		if isDirectory {
 			dir := &fs.Dir{
 				Name:  remote,
@@ -539,6 +543,15 @@ func (f *Fs) listFiles(out fs.ListOpts, dir string) {
 				return fs.ErrorListAborted
 			}
 		} else {
+			if remote == last {
+				remote = object.UploadTimestamp.AddVersion(remote)
+			} else {
+				last = remote
+			}
+			// hide objects represent deleted files which we don't list
+			if object.Action == "hide" {
+				return nil
+			}
 			o, err := f.newObjectWithInfo(remote, object)
 			if err != nil {
 				return err
@@ -914,12 +927,22 @@ func (o *Object) readMetaData() (err error) {
 	if o.id != "" {
 		return nil
 	}
+	maxSearched := 1
+	var timestamp api.Timestamp
+	baseRemote := o.remote
+	if *b2Versions {
+		timestamp, baseRemote = api.RemoveVersion(baseRemote)
+		maxSearched = maxVersions
+	}
 	var info *api.File
-	err = o.fs.list("", fs.MaxLevel, o.remote, 1, false, func(remote string, object *api.File, isDirectory bool) error {
+	err = o.fs.list("", fs.MaxLevel, baseRemote, maxSearched, *b2Versions, func(remote string, object *api.File, isDirectory bool) error {
 		if isDirectory {
 			return nil
 		}
-		if remote == o.remote {
+		if remote == baseRemote {
+			if !timestamp.IsZero() && !timestamp.Equal(object.UploadTimestamp) {
+				return nil
+			}
 			info = object
 		}
 		return errEndList // read only 1 item
@@ -1046,7 +1069,13 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 	opts := rest.Opts{
 		Method:   "GET",
 		Absolute: true,
-		Path:     o.fs.info.DownloadURL + "/file/" + urlEncode(o.fs.bucket) + "/" + urlEncode(o.fs.root+o.remote),
+		Path:     o.fs.info.DownloadURL,
+	}
+	// Download by id if set otherwise by name
+	if o.id != "" {
+		opts.Path += "/b2api/v1/b2_download_file_by_id?fileId=" + urlEncode(o.id)
+	} else {
+		opts.Path += "/file/" + urlEncode(o.fs.bucket) + "/" + urlEncode(o.fs.root+o.remote)
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1108,6 +1137,9 @@ func urlEncode(in string) string {
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
+	if *b2Versions {
+		return errNotWithVersions
+	}
 	size := src.Size()
 
 	// If a large file upload in chunks - see upload.go
@@ -1256,6 +1288,9 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 
 // Remove an object
 func (o *Object) Remove() error {
+	if *b2Versions {
+		return errNotWithVersions
+	}
 	bucketID, err := o.fs.getBucketID()
 	if err != nil {
 		return err
