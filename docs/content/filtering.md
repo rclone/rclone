@@ -257,6 +257,41 @@ Prepare a file like this `files-from.txt`
 Then use as `--files-from files-from.txt`.  This will only transfer
 `file1.jpg` and `file2.jpg` providing they exist.
 
+For example, let's say you had a few files you want to back up
+regularly with these absolute paths:
+
+    /home/user1/important
+    /home/user1/dir/file
+    /home/user2/stuff
+
+To copy these you'd find a common subdirectory - in this case `/home`
+and put the remaining files in `files-from.txt` with or without
+leading `/`, eg
+
+    user1/important
+    user1/dir/file
+    user2/stuff
+
+You could then copy these to a remote like this
+
+    rclone copy --files-from files-from.txt /home remote:backup
+
+The 3 files will arrive in `remote:backup` with the paths as in the
+`files-from.txt`.
+
+You could of course choose `/` as the root too in which case your
+`files-from.txt` might look like this.
+
+    /home/user1/important
+    /home/user1/dir/file
+    /home/user2/stuff
+
+And you would transfer it like this
+
+    rclone copy --files-from files-from.txt / remote:backup
+
+In this case there will be an extra `home` directory on the remote.
+
 ### `--min-size` - Don't transfer any file smaller than this ###
 
 This option controls the minimum size file which will be transferred.
