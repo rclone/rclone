@@ -68,6 +68,9 @@ func init() {
 			Name: "tenant",
 			Help: "Tenant name - optional",
 		}, {
+			Name: "tenant_domain",
+			Help: "Tenant domain - optional (v3 auth)",
+		}, {
 			Name: "region",
 			Help: "Region name - optional",
 		}, {
@@ -163,6 +166,7 @@ func swiftConnection(name string) (*swift.Connection, error) {
 		Tenant:         fs.ConfigFile.MustValue(name, "tenant"),
 		Region:         fs.ConfigFile.MustValue(name, "region"),
 		Domain:         fs.ConfigFile.MustValue(name, "domain"),
+		TenantDomain:   fs.ConfigFile.MustValue(name, "tenant_domain"),
 		ConnectTimeout: 10 * fs.Config.ConnectTimeout, // Use the timeouts in the transport
 		Timeout:        10 * fs.Config.Timeout,        // Use the timeouts in the transport
 		Transport:      fs.Config.Transport(),
