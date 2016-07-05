@@ -76,6 +76,8 @@ User domain - optional (v3 auth)
 domain> Default
 Tenant name - optional
 tenant> 
+Tenant domain - optional (v3 auth)
+tenant_domain>
 Region name - optional
 region> 
 Storage URL - optional

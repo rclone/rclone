@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Jun 18, 2016
+% Jul 05, 2016
 
 Rclone
 ======
@@ -155,6 +155,9 @@ written a trailing / - meaning "copy the contents of this directory".
 This applies to all commands and whether you are talking about the
 source or destination.
 
+See the `--no-traverse` option for controlling whether rclone lists
+the destination directory or not.
+
 ### rclone sync source:path dest:path ###
 
 Sync the source to the destination, changing the destination
@@ -262,6 +265,11 @@ don't match.  It doesn't alter the source or destination.
 
 `--size-only` may be used to only compare the sizes, not the MD5SUMs.
 
+### rclone cleanup remote:path ###
+
+Clean up the remote if possible.  Empty the trash or delete old file
+versions. Not supported by all remotes.
+
 ### rclone dedupe remote:path ###
 
 By default `dedup` interactively finds duplicate files and offers to
@@ -348,6 +356,34 @@ Enter an interactive configuration session.
 ### rclone help ###
 
 Prints help on rclone commands and options.
+
+Copying single files
+--------------------
+
+rclone normally syncs or copies directories.  However if the source
+remote points to a file, rclone will just copy that file.  The
+destination remote must point to a directory - rclone will give the
+error `Failed to create file system for "remote:file": is a file not a
+directory` if it isn't.
+
+For example, suppose you have a remote with a file in called
+`test.jpg`, then you could copy just that file like this
+
+    rclone copy remote:test.jpg /tmp/download
+
+The file `test.jpg` will be placed inside `/tmp/download`.
+
+This is equivalent to specifying
+
+    rclone copy --no-traverse --files-from /tmp/files remote: /tmp/download
+
+Where `/tmp/files` contains the single line
+
+    test.jpg
+
+It is recommended to use `copy` when copying single files not `sync`.
+They have pretty much the same effect but `copy` will use a lot less
+memory.
 
 Quoting and the shell
 ---------------------
@@ -629,12 +665,15 @@ The default is `1m`. Use 0 to disable.
 This option allows you to specify when files on your destination are
 deleted when you sync folders.
 
-Specifying the value `--delete-before` will delete all files present on the
-destination, but not on the source *before* starting the transfer
-of any new or updated files.
+Specifying the value `--delete-before` will delete all files present
+on the destination, but not on the source *before* starting the
+transfer of any new or updated files.  This uses extra memory as it
+has to store the source listing before proceeding.
 
-Specifying `--delete-during` (default value) will delete files while checking
-and uploading files. This is usually the fastest option.
+Specifying `--delete-during` (default value) will delete files while
+checking and uploading files. This is usually the fastest option.
+Currently this works the same as `--delete-after` but it may change in
+the future.
 
 Specifying `--delete-after` will delay deletion of files until all new/updated
 files have been successfully transfered.
@@ -798,6 +837,24 @@ In this mode, TLS is susceptible to man-in-the-middle attacks.
 This option defaults to `false`.
 
 **This should be used only for testing.**
+
+### --no-traverse ###
+
+The `--no-traverse` flag controls whether the destination file system
+is traversed when using the `copy` or `move` commands.
+
+If you are only copying a small number of files and/or have a large
+number of files on the destination then `--no-traverse` will stop
+rclone listing the destination and save time.
+
+However if you are copying a large number of files, escpecially if you
+are doing a copy where lots of the files haven't changed and won't
+need copying then you shouldn't use `--no-traverse`.
+
+It can also be used to reduce the memory usage of rclone when copying
+- `rclone --no-traverse copy src dst` won't load either the source or
+destination listings into memory so will use the minimum amount of
+memory.
 
 Filtering
 ---------
@@ -1181,6 +1238,41 @@ Prepare a file like this `files-from.txt`
 
 Then use as `--files-from files-from.txt`.  This will only transfer
 `file1.jpg` and `file2.jpg` providing they exist.
+
+For example, let's say you had a few files you want to back up
+regularly with these absolute paths:
+
+    /home/user1/important
+    /home/user1/dir/file
+    /home/user2/stuff
+
+To copy these you'd find a common subdirectory - in this case `/home`
+and put the remaining files in `files-from.txt` with or without
+leading `/`, eg
+
+    user1/important
+    user1/dir/file
+    user2/stuff
+
+You could then copy these to a remote like this
+
+    rclone copy --files-from files-from.txt /home remote:backup
+
+The 3 files will arrive in `remote:backup` with the paths as in the
+`files-from.txt`.
+
+You could of course choose `/` as the root too in which case your
+`files-from.txt` might look like this.
+
+    /home/user1/important
+    /home/user1/dir/file
+    /home/user2/stuff
+
+And you would transfer it like this
+
+    rclone copy --files-from files-from.txt / remote:backup
+
+In this case there will be an extra `home` directory on the remote.
 
 ### `--min-size` - Don't transfer any file smaller than this ###
 
@@ -1891,6 +1983,8 @@ User domain - optional (v3 auth)
 domain> Default
 Tenant name - optional
 tenant> 
+Tenant domain - optional (v3 auth)
+tenant_domain>
 Region name - optional
 region> 
 Storage URL - optional
@@ -2782,20 +2876,6 @@ will be used in the syncing process. You can use the `--checksum` flag.
 Large files which are uploaded in chunks will store their SHA1 on the
 object as `X-Bz-Info-large_file_sha1` as recommended by Backblaze.
 
-### Versions ###
-
-When rclone uploads a new version of a file it creates a [new version
-of it](https://www.backblaze.com/b2/docs/file_versions.html).
-Likewise when you delete a file, the old version will still be
-available.
-
-The old versions of files are visible in the B2 web interface, but not
-via rclone yet.
-
-Rclone doesn't provide any way of managing old versions (downloading
-them or deleting them) at the moment.  When you `purge` a bucket, all
-the old versions will be deleted.
-
 ### Transfers ###
 
 Backblaze recommends that you do lots of transfers simultaneously for
@@ -2805,6 +2885,64 @@ for a slight speed improvement. The optimum number for you may vary
 depending on your hardware, how big the files are, how much you want
 to load your computer, etc.  The default of `--transfers 4` is
 definitely too low for Backblaze B2 though.
+
+### Versions ###
+
+When rclone uploads a new version of a file it creates a [new version
+of it](https://www.backblaze.com/b2/docs/file_versions.html).
+Likewise when you delete a file, the old version will still be
+available.
+
+Old versions of files are visible using the `--b2-versions` flag.
+
+If you wish to remove all the old versions then you can use the
+`rclone cleanup remote:bucket` command which will delete all the old
+versions of files, leaving the current ones intact.  You can also
+supply a path and only old versions under that path will be deleted,
+eg `rclone cleanup remote:bucket/path/to/stuff`.
+
+When you `purge` a bucket, the current and the old versions will be
+deleted then the bucket will be deleted.
+
+However `delete` will cause the current versions of the files to
+become hidden old versions.
+
+Here is a session showing the listing and and retreival of an old
+version followed by a `cleanup` of the old versions.
+
+Show current version and all the versions with `--b2-versions` flag.
+
+```
+$ rclone -q ls b2:cleanup-test
+        9 one.txt
+
+$ rclone -q --b2-versions ls b2:cleanup-test
+        9 one.txt
+        8 one-v2016-07-04-141032-000.txt
+       16 one-v2016-07-04-141003-000.txt
+       15 one-v2016-07-02-155621-000.txt
+```
+
+Retreive an old verson
+
+```
+$ rclone -q --b2-versions copy b2:cleanup-test/one-v2016-07-04-141003-000.txt /tmp
+
+$ ls -l /tmp/one-v2016-07-04-141003-000.txt
+-rw-rw-r-- 1 ncw ncw 16 Jul  2 17:46 /tmp/one-v2016-07-04-141003-000.txt
+```
+
+Clean up all the old versions and show that they've gone.
+
+```
+$ rclone -q cleanup b2:cleanup-test
+
+$ rclone -q ls b2:cleanup-test
+        9 one.txt
+
+$ rclone -q --b2-versions ls b2:cleanup-test
+        9 one.txt
+```
 
 ### Specific options ###
 
@@ -2824,11 +2962,48 @@ Cutoff for switching to chunked upload (default 4.657GiB ==
 `--b2-chunk-size`. The default value is the largest file which can be
 uploaded without chunks.
 
-### API ###
+#### --b2-test-mode=FLAG ####
 
-Here are [some notes I made on the backblaze
-API](https://gist.github.com/ncw/166dabf352b399f1cc1c) while
-integrating it with rclone.
+This is for debugging purposes only.
+
+Setting FLAG to one of the strings below will cause b2 to return
+specific errors for debugging purposes.
+
+  * `fail_some_uploads`
+  * `expire_some_account_authorization_tokens`
+  * `force_cap_exceeded`
+
+These will be set in the `X-Bz-Test-Mode` header which is documented
+in the [b2 integrations
+checklist](https://www.backblaze.com/b2/docs/integration_checklist.html).
+
+#### --b2-versions ####
+
+When set rclone will show and act on older versions of files.  For example
+
+Listing without `--b2-versions`
+
+```
+$ rclone -q ls b2:cleanup-test
+        9 one.txt
+```
+
+And with
+
+```
+$ rclone -q --b2-versions ls b2:cleanup-test
+        9 one.txt
+        8 one-v2016-07-04-141032-000.txt
+       16 one-v2016-07-04-141003-000.txt
+       15 one-v2016-07-02-155621-000.txt
+```
+
+Showing that the current version is unchanged but older versions can
+be seen.  These have the UTC date that they were uploaded to the
+server to the nearest millisecond appended to them.
+
+Note that when using `--b2-versions` no file write operations are
+permitted, so you can't upload files or delete them.
 
 Yandex Disk
 ----------------------------------------
