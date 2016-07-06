@@ -91,6 +91,12 @@ func init() {
 				Value: "ap-northeast-1",
 				Help:  "Asia Pacific (Tokyo) Region\nNeeds location constraint ap-northeast-1.",
 			}, {
+				Value: "ap-northeast-2",
+				Help:  "Asia Pacific (Seoul)\nNeeds location constraint ap-northeast-2.",
+			}, {
+				Value: "ap-south-1",
+				Help:  "Asia Pacific (Mumbai)\nNeeds location constraint ap-south-1.",
+			}, {
 				Value: "sa-east-1",
 				Help:  "South America (Sao Paulo) Region\nNeeds location constraint sa-east-1.",
 			}, {
@@ -130,6 +136,12 @@ func init() {
 			}, {
 				Value: "ap-northeast-1",
 				Help:  "Asia Pacific (Tokyo) Region.",
+			}, {
+				Value: "ap-northeast-2",
+				Help:  "Asia Pacific (Seoul)",
+			}, {
+				Value: "ap-south-1",
+				Help:  "Asia Pacific (Mumbai)",
 			}, {
 				Value: "sa-east-1",
 				Help:  "South America (Sao Paulo) Region.",
