@@ -231,7 +231,7 @@ func Copy(f Fs, dst, src Object) (err error) {
 				in := NewAccount(in0, src) // account the transfer
 
 				if doUpdate {
-					actionTaken = "Copied (updated existing)"
+					actionTaken = "Copied (replaced existing)"
 					err = dst.Update(in, src)
 				} else {
 					actionTaken = "Copied (new)"
