@@ -37,3 +37,20 @@ linux binary downloaded files install example
     sudo mkdir -p /usr/local/share/man/man1
     sudo cp rclone.1 /usr/local/share/man/man1/
     sudo mandb 
+
+Installation with Ansible
+-------
+
+This can be done with [Stefan Weichinger's ansible
+role](https://github.com/stefangweichinger/ansible-rclone).
+
+Instructions
+
+  1. `git clone https://github.com/stefangweichinger/ansible-rclone.git` into your local roles-directory
+  2. add the role to the hosts you want rclone installed to:
+    
+```
+    - hosts: rclone-hosts
+      roles:
+          - rclone
+```
