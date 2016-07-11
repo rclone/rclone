@@ -42,7 +42,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 (also Dreamhost, Ceph)",
+		Description: "Amazon S3 (also Dreamhost, Ceph, Minio)",
 		NewFs:       NewFs,
 		// AWS endpoints: http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region
 		Options: []fs.Option{{
