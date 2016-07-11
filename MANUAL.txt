@@ -1934,6 +1934,8 @@ This will guide you through an interactive setup process.
     domain> Default
     Tenant name - optional
     tenant> 
+    Tenant domain - optional (v3 auth)
+    tenant_domain>
     Region name - optional
     region> 
     Storage URL - optional
