@@ -100,15 +100,15 @@ func init() {
 	pflag.VarP(&bwLimit, "bwlimit", "", "Bandwidth limit in kBytes/s, or use suffix b|k|M|G")
 }
 
-// Turn SizeSuffix into a string
-func (x SizeSuffix) String() string {
+// Turn SizeSuffix into a string and a suffix
+func (x SizeSuffix) string() (string, string) {
 	scaled := float64(0)
 	suffix := ""
 	switch {
 	case x < 0:
-		return "off"
+		return "off", ""
 	case x == 0:
-		return "0"
+		return "0", ""
 	case x < 1024:
 		scaled = float64(x)
 		suffix = ""
@@ -123,9 +123,24 @@ func (x SizeSuffix) String() string {
 		suffix = "G"
 	}
 	if math.Floor(scaled) == scaled {
-		return fmt.Sprintf("%.0f%s", scaled, suffix)
+		return fmt.Sprintf("%.0f", scaled), suffix
 	}
-	return fmt.Sprintf("%.3f%s", scaled, suffix)
+	return fmt.Sprintf("%.3f", scaled), suffix
+}
+
+// String turns SizeSuffix into a string
+func (x SizeSuffix) String() string {
+	val, suffix := x.string()
+	return val + suffix
+}
+
+// Unit turns SizeSuffix into a string with a unit
+func (x SizeSuffix) Unit(unit string) string {
+	val, suffix := x.string()
+	if val == "off" {
+		return val
+	}
+	return val + " " + suffix + unit
 }
 
 // Set a SizeSuffix

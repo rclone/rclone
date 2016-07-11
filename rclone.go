@@ -172,7 +172,7 @@ var Commands = []Command{
 				return err
 			}
 			fmt.Printf("Total objects: %d\n", objects)
-			fmt.Printf("Total size: %v (%d bytes)\n", fs.SizeSuffix(size), size)
+			fmt.Printf("Total size: %s (%d Bytes)\n", fs.SizeSuffix(size).Unit("Bytes"), size)
 			return nil
 		},
 		MinArgs: 1,

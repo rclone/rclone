@@ -28,6 +28,27 @@ func TestSizeSuffixString(t *testing.T) {
 	}
 }
 
+func TestSizeSuffixUnit(t *testing.T) {
+	for _, test := range []struct {
+		in   float64
+		want string
+	}{
+		{0, "0 Bytes"},
+		{102, "102 Bytes"},
+		{1024, "1 kBytes"},
+		{1024 * 1024, "1 MBytes"},
+		{1024 * 1024 * 1024, "1 GBytes"},
+		{10 * 1024 * 1024 * 1024, "10 GBytes"},
+		{10.1 * 1024 * 1024 * 1024, "10.100 GBytes"},
+		{-1, "off"},
+		{-100, "off"},
+	} {
+		ss := SizeSuffix(test.in)
+		got := ss.Unit("Bytes")
+		assert.Equal(t, test.want, got)
+	}
+}
+
 func TestSizeSuffixSet(t *testing.T) {
 	for _, test := range []struct {
 		in   string
