@@ -34,3 +34,4 @@ Contributors
   * Romain Lapray <lapray.romain@gmail.com>
   * Justin R. Wilson <jrw972@gmail.com>
   * Antonio Messina <antonio.s.messina@gmail.com>
+  * Stefan G. Weichinger <office@oops.co.at>
