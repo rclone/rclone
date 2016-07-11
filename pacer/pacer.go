@@ -39,7 +39,7 @@ const (
 	// above that set with SetMaxSleep.
 	DefaultPacer = Type(iota)
 
-	// AmazonCloudDrivePacer is a specialised pacer for Amazon Cloud Drive
+	// AmazonCloudDrivePacer is a specialised pacer for Amazon Drive
 	//
 	// It implements a truncated exponential backoff strategy with
 	// randomization.  Normally operations are paced at the
@@ -238,7 +238,7 @@ func (p *Pacer) defaultPacer(retry bool) {
 }
 
 // acdPacer implements a truncated exponential backoff
-// strategy with randomization for Amazon Cloud Drive
+// strategy with randomization for Amazon Drive
 //
 // See the description for AmazonCloudDrivePacer
 //

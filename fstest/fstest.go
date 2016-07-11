@@ -154,7 +154,7 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, precision ti
 		}
 		if len(objs) == len(items) {
 			// Put an extra sleep in if we did any retries just to make sure it really
-			// is consistent (here is looking at you Amazon Cloud Drive!)
+			// is consistent (here is looking at you Amazon Drive!)
 			if i != 1 {
 				extraSleep := 5*time.Second + sleep
 				t.Logf("Sleeping for %v just to make sure", extraSleep)

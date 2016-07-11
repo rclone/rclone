@@ -64,7 +64,7 @@ var (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "amazon cloud drive",
-		Description: "Amazon Cloud Drive",
+		Description: "Amazon Drive",
 		NewFs:       NewFs,
 		Config: func(name string) {
 			err := oauthutil.Config("amazon cloud drive", name, acdConfig)
@@ -117,7 +117,7 @@ func (f *Fs) Root() string {
 
 // String converts this Fs to a string
 func (f *Fs) String() string {
-	return fmt.Sprintf("Amazon cloud drive root '%s'", f.root)
+	return fmt.Sprintf("amazon drive root '%s'", f.root)
 }
 
 // Pattern to match a acd path
@@ -165,7 +165,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	root = parsePath(root)
 	oAuthClient, ts, err := oauthutil.NewClient(name, acdConfig)
 	if err != nil {
-		log.Fatalf("Failed to configure amazon cloud drive: %v", err)
+		log.Fatalf("Failed to configure Amazon Drive: %v", err)
 	}
 
 	c := acd.NewClient(oAuthClient)

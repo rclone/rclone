@@ -25,7 +25,7 @@ Changelog
       * Fix retry doing one too many retries
     * Local
       * Fix problems with OS X and UTF-8 characters
-    * Amazon Cloud Drive
+    * Amazon Drive
       * Check a file exists before uploading to help with 408 Conflict errors
       * Reauth on 401 errors - this has been causing a lot of problems
       * Work around spurious 403 errors
@@ -103,7 +103,7 @@ Changelog
     * S3
       * Allow IAM role and credentials from environment variables - thanks Brian Stengaard
       * Allow low privilege users to use S3 (check if directory exists during Mkdir) - thanks Jakub Gedeon
-    * Amazon Cloud Drive
+    * Amazon Drive
       * Retry on more things to make directory listings more reliable
   * v1.27 - 2016-01-31
     * New Features
@@ -117,7 +117,7 @@ Changelog
       * Warn the user about files with same name but different case
       * Make `--include` rules add their implict exclude * at the end of the filter list
       * Deprecate compiling with go1.3
-    * Amazon Cloud Drive
+    * Amazon Drive
       * Fix download of files > 10 GB
       * Fix directory traversal ("Next token is expired") for large directory listings
       * Remove 409 conflict from error codes we will retry - stops very long pauses
@@ -200,13 +200,13 @@ Changelog
       * Make lsl output times in localtime
     * Fixes
       * Fix allowing user to override credentials again in Drive, GCS and ACD
-    * Amazon Cloud Drive
+    * Amazon Drive
       * Implement compliant pacing scheme
     * Google Drive
       * Make directory reads concurrent for increased speed.
   * v1.20 - 2015-09-15
     * New features
-      * Amazon Cloud Drive support
+      * Amazon Drive support
       * Oauth support redone - fix many bugs and improve usability
         * Use "golang.org/x/oauth2" as oauth libary of choice
         * Improve oauth usability for smoother initial signup

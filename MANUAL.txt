@@ -17,7 +17,7 @@ from
 -   Openstack Swift / Rackspace cloud files / Memset Memstore
 -   Dropbox
 -   Google Cloud Storage
--   Amazon Cloud Drive
+-   Amazon Drive
 -   Microsoft One Drive
 -   Hubic
 -   Backblaze B2
@@ -95,7 +95,7 @@ See the following for detailed instructions for
 -   Dropbox
 -   Google Cloud Storage
 -   Local filesystem
--   Amazon Cloud Drive
+-   Amazon Drive
 -   Backblaze B2
 -   Hubic
 -   Microsoft One Drive
@@ -1278,7 +1278,7 @@ Here is an overview of the major features of each cloud storage system.
   Openstack Swift         MD5      Yes            No                No
   Dropbox                  -       No            Yes                No
   Google Cloud Storage    MD5      Yes            No                No
-  Amazon Cloud Drive      MD5      No            Yes                No
+  Amazon Drive      MD5      No            Yes                No
   Microsoft One Drive     SHA1     Yes           Yes                No
   Hubic                   MD5      Yes            No                No
   Backblaze B2            SHA1     Yes            No                No
@@ -1358,7 +1358,7 @@ This will guide you through an interactive setup process:
     name> remote
     Type of storage to configure.
     Choose a number from below, or type in your own value
-     1 / Amazon Cloud Drive
+     1 / Amazon Drive
        \ "amazon cloud drive"
      2 / Amazon S3 (also Dreamhost, Ceph)
        \ "s3"
@@ -1610,7 +1610,7 @@ This will guide you through an interactive setup process.
     name> remote
     Type of storage to configure.
     Choose a number from below, or type in your own value
-     1 / Amazon Cloud Drive
+     1 / Amazon Drive
        \ "amazon cloud drive"
      2 / Amazon S3 (also Dreamhost, Ceph)
        \ "s3"
@@ -1888,7 +1888,7 @@ This will guide you through an interactive setup process.
     name> remote
     Type of storage to configure.
     Choose a number from below, or type in your own value
-     1 / Amazon Cloud Drive
+     1 / Amazon Drive
        \ "amazon cloud drive"
      2 / Amazon S3 (also Dreamhost, Ceph)
        \ "s3"
@@ -2038,7 +2038,7 @@ This will guide you through an interactive setup process:
     name> remote
     Type of storage to configure.
     Choose a number from below, or type in your own value
-     1 / Amazon Cloud Drive
+     1 / Amazon Drive
        \ "amazon cloud drive"
      2 / Amazon S3 (also Dreamhost, Ceph)
        \ "s3"
@@ -2158,7 +2158,7 @@ This will guide you through an interactive setup process:
     name> remote
     Type of storage to configure.
     Choose a number from below, or type in your own value
-     1 / Amazon Cloud Drive
+     1 / Amazon Drive
        \ "amazon cloud drive"
      2 / Amazon S3 (also Dreamhost, Ceph)
        \ "s3"
@@ -2296,7 +2296,7 @@ modification times as metadata on the object, under the "mtime" key in
 RFC3339 format accurate to 1ns.
 
 
-Amazon Cloud Drive
+Amazon Drive
 
 Paths are specified as remote:path
 
@@ -2319,7 +2319,7 @@ This will guide you through an interactive setup process:
     name> remote
     Type of storage to configure.
     Choose a number from below, or type in your own value
-     1 / Amazon Cloud Drive
+     1 / Amazon Drive
        \ "amazon cloud drive"
      2 / Amazon S3 (also Dreamhost, Ceph)
        \ "s3"
@@ -2408,7 +2408,7 @@ Here are the command line options specific to this cloud storage system.
 --acd-templink-threshold=SIZE
 
 Files this size or more will be downloaded via their tempLink. This is
-to work around a problem with Amazon Cloud Drive which blocks downloads
+to work around a problem with Amazon Drive which blocks downloads
 of files bigger than about 10GB. The default for this is 9GB which
 shouldn't need to be changed.
 
@@ -2462,7 +2462,7 @@ This will guide you through an interactive setup process:
     name> remote
     Type of storage to configure.
     Choose a number from below, or type in your own value
-     1 / Amazon Cloud Drive
+     1 / Amazon Drive
        \ "amazon cloud drive"
      2 / Amazon S3 (also Dreamhost, Ceph)
        \ "s3"
@@ -2602,7 +2602,7 @@ This will guide you through an interactive setup process:
     name> remote
     Type of storage to configure.
     Choose a number from below, or type in your own value
-     1 / Amazon Cloud Drive
+     1 / Amazon Drive
        \ "amazon cloud drive"
      2 / Amazon S3 (also Dreamhost, Ceph)
        \ "s3"
@@ -2722,7 +2722,7 @@ which you can get from the b2 control panel.
     name> remote
     Type of storage to configure.
     Choose a number from below, or type in your own value
-     1 / Amazon Cloud Drive
+     1 / Amazon Drive
        \ "amazon cloud drive"
      2 / Amazon S3 (also Dreamhost, Ceph)
        \ "s3"
@@ -2867,7 +2867,7 @@ This will guide you through an interactive setup process:
     name> remote
     Type of storage to configure.
     Choose a number from below, or type in your own value
-     1 / Amazon Cloud Drive
+     1 / Amazon Drive
        \ "amazon cloud drive"
      2 / Amazon S3 (also Dreamhost, Ceph)
        \ "s3"
@@ -3044,7 +3044,7 @@ Changelog
     -   Fix retry doing one too many retries
     -   Local
     -   Fix problems with OS X and UTF-8 characters
-    -   Amazon Cloud Drive
+    -   Amazon Drive
     -   Check a file exists before uploading to help with 408 Conflict
         errors
     -   Reauth on 401 errors - this has been causing a lot of problems
@@ -3139,7 +3139,7 @@ Changelog
         thanks Brian Stengaard
     -   Allow low privilege users to use S3 (check if directory exists
         during Mkdir) - thanks Jakub Gedeon
-    -   Amazon Cloud Drive
+    -   Amazon Drive
     -   Retry on more things to make directory listings more reliable
 -   v1.27 - 2016-01-31
     -   New Features
@@ -3157,7 +3157,7 @@ Changelog
     -   Make --include rules add their implict exclude * at the end of
         the filter list
     -   Deprecate compiling with go1.3
-    -   Amazon Cloud Drive
+    -   Amazon Drive
     -   Fix download of files > 10 GB
     -   Fix directory traversal ("Next token is expired") for large
         directory listings
@@ -3251,13 +3251,13 @@ Changelog
     -   Fixes
     -   Fix allowing user to override credentials again in Drive, GCS
         and ACD
-    -   Amazon Cloud Drive
+    -   Amazon Drive
     -   Implement compliant pacing scheme
     -   Google Drive
     -   Make directory reads concurrent for increased speed.
 -   v1.20 - 2015-09-15
     -   New features
-    -   Amazon Cloud Drive support
+    -   Amazon Drive support
     -   Oauth support redone - fix many bugs and improve usability
         -   Use "golang.org/x/oauth2" as oauth libary of choice
         -   Improve oauth usability for smoother initial signup

@@ -14,7 +14,7 @@ Rclone is a command line program to sync files and directories to and from
   * Openstack Swift / Rackspace cloud files / Memset Memstore
   * Dropbox
   * Google Cloud Storage
-  * Amazon Cloud Drive
+  * Amazon Drive
   * Microsoft One Drive
   * Hubic
   * Backblaze B2
@@ -93,7 +93,7 @@ See the following for detailed instructions for
   * [Dropbox](http://rclone.org/dropbox/)
   * [Google Cloud Storage](http://rclone.org/googlecloudstorage/)
   * [Local filesystem](http://rclone.org/local/)
-  * [Amazon Cloud Drive](http://rclone.org/amazonclouddrive/)
+  * [Amazon Drive](http://rclone.org/amazonclouddrive/)
   * [Backblaze B2](http://rclone.org/b2/)
   * [Hubic](http://rclone.org/hubic/)
   * [Microsoft One Drive](http://rclone.org/onedrive/)
@@ -1284,7 +1284,7 @@ Here is an overview of the major features of each cloud storage system.
 | Openstack Swift        | MD5     | Yes     | No               | No              |
 | Dropbox                | -       | No      | Yes              | No              |
 | Google Cloud Storage   | MD5     | Yes     | No               | No              |
-| Amazon Cloud Drive     | MD5     | No      | Yes              | No              |
+| Amazon Drive     | MD5     | No      | Yes              | No              |
 | Microsoft One Drive    | SHA1    | Yes     | Yes              | No              |
 | Hubic                  | MD5     | Yes     | No               | No              |
 | Backblaze B2           | SHA1    | Yes     | No               | No              |
@@ -1365,7 +1365,7 @@ e/n/d/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ "amazon cloud drive"
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ "s3"
@@ -1561,7 +1561,7 @@ n/s> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ "amazon cloud drive"
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ "s3"
@@ -1845,7 +1845,7 @@ n/s> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ "amazon cloud drive"
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ "s3"
@@ -1999,7 +1999,7 @@ e/n/d/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ "amazon cloud drive"
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ "s3"
@@ -2121,7 +2121,7 @@ e/n/d/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ "amazon cloud drive"
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ "s3"
@@ -2264,7 +2264,7 @@ Google google cloud storage stores md5sums natively and rclone stores
 modification times as metadata on the object, under the "mtime" key in
 RFC3339 format accurate to 1ns.
 
-Amazon Cloud Drive
+Amazon Drive
 -----------------------------------------
 
 Paths are specified as `remote:path`
@@ -2289,7 +2289,7 @@ e/n/d/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ "amazon cloud drive"
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ "s3"
@@ -2379,7 +2379,7 @@ system.
 #### --acd-templink-threshold=SIZE ####
 
 Files this size or more will be downloaded via their `tempLink`. This
-is to work around a problem with Amazon Cloud Drive which blocks
+is to work around a problem with Amazon Drive which blocks
 downloads of files bigger than about 10GB.  The default for this is
 9GB which shouldn't need to be changed.
 
@@ -2434,7 +2434,7 @@ n/s> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ "amazon cloud drive"
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ "s3"
@@ -2577,7 +2577,7 @@ n/s> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ "amazon cloud drive"
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ "s3"
@@ -2701,7 +2701,7 @@ n/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ "amazon cloud drive"
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ "s3"
@@ -2851,7 +2851,7 @@ n/s> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ "amazon cloud drive"
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ "s3"
@@ -3030,7 +3030,7 @@ Changelog
       * Fix retry doing one too many retries
     * Local
       * Fix problems with OS X and UTF-8 characters
-    * Amazon Cloud Drive
+    * Amazon Drive
       * Check a file exists before uploading to help with 408 Conflict errors
       * Reauth on 401 errors - this has been causing a lot of problems
       * Work around spurious 403 errors
@@ -3108,7 +3108,7 @@ Changelog
     * S3
       * Allow IAM role and credentials from environment variables - thanks Brian Stengaard
       * Allow low privilege users to use S3 (check if directory exists during Mkdir) - thanks Jakub Gedeon
-    * Amazon Cloud Drive
+    * Amazon Drive
       * Retry on more things to make directory listings more reliable
   * v1.27 - 2016-01-31
     * New Features
@@ -3122,7 +3122,7 @@ Changelog
       * Warn the user about files with same name but different case
       * Make `--include` rules add their implict exclude * at the end of the filter list
       * Deprecate compiling with go1.3
-    * Amazon Cloud Drive
+    * Amazon Drive
       * Fix download of files > 10 GB
       * Fix directory traversal ("Next token is expired") for large directory listings
       * Remove 409 conflict from error codes we will retry - stops very long pauses
@@ -3205,13 +3205,13 @@ Changelog
       * Make lsl output times in localtime
     * Fixes
       * Fix allowing user to override credentials again in Drive, GCS and ACD
-    * Amazon Cloud Drive
+    * Amazon Drive
       * Implement compliant pacing scheme
     * Google Drive
       * Make directory reads concurrent for increased speed.
   * v1.20 - 2015-09-15
     * New features
-      * Amazon Cloud Drive support
+      * Amazon Drive support
       * Oauth support redone - fix many bugs and improve usability
         * Use "golang.org/x/oauth2" as oauth libary of choice
         * Improve oauth usability for smoother initial signup

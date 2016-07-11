@@ -20,7 +20,7 @@ Dropbox
 .IP \[bu] 2
 Google Cloud Storage
 .IP \[bu] 2
-Amazon Cloud Drive
+Amazon Drive
 .IP \[bu] 2
 Microsoft One Drive
 .IP \[bu] 2
@@ -135,7 +135,7 @@ Google Cloud Storage (http://rclone.org/googlecloudstorage/)
 .IP \[bu] 2
 Local filesystem (http://rclone.org/local/)
 .IP \[bu] 2
-Amazon Cloud Drive (http://rclone.org/amazonclouddrive/)
+Amazon Drive (http://rclone.org/amazonclouddrive/)
 .IP \[bu] 2
 Backblaze B2 (http://rclone.org/b2/)
 .IP \[bu] 2
@@ -1566,7 +1566,7 @@ T}@T{
 No
 T}
 T{
-Amazon Cloud Drive
+Amazon Drive
 T}@T{
 MD5
 T}@T{
@@ -2840,7 +2840,7 @@ prompt and rclone won\[aq]t use the browser based authentication flow.
 Google google cloud storage stores md5sums natively and rclone stores
 modification times as metadata on the object, under the "mtime" key in
 RFC3339 format accurate to 1ns.
-.SS Amazon Cloud Drive
+.SS Amazon Drive
 .PP
 Paths are specified as \f[C]remote:path\f[]
 .PP
@@ -2971,7 +2971,7 @@ Here are the command line options specific to this cloud storage system.
 .SS \-\-acd\-templink\-threshold=SIZE
 .PP
 Files this size or more will be downloaded via their \f[C]tempLink\f[].
-This is to work around a problem with Amazon Cloud Drive which blocks
+This is to work around a problem with Amazon Drive which blocks
 downloads of files bigger than about 10GB.
 The default for this is 9GB which shouldn\[aq]t need to be changed.
 .PP
@@ -3740,7 +3740,7 @@ Local
 .IP \[bu] 2
 Fix problems with OS X and UTF\-8 characters
 .IP \[bu] 2
-Amazon Cloud Drive
+Amazon Drive
 .IP \[bu] 2
 Check a file exists before uploading to help with 408 Conflict errors
 .IP \[bu] 2
@@ -3921,7 +3921,7 @@ Brian Stengaard
 Allow low privilege users to use S3 (check if directory exists during
 Mkdir) \- thanks Jakub Gedeon
 .IP \[bu] 2
-Amazon Cloud Drive
+Amazon Drive
 .IP \[bu] 2
 Retry on more things to make directory listings more reliable
 .RE
@@ -3957,7 +3957,7 @@ of the filter list
 .IP \[bu] 2
 Deprecate compiling with go1.3
 .IP \[bu] 2
-Amazon Cloud Drive
+Amazon Drive
 .IP \[bu] 2
 Fix download of files > 10 GB
 .IP \[bu] 2
@@ -4146,7 +4146,7 @@ Fixes
 .IP \[bu] 2
 Fix allowing user to override credentials again in Drive, GCS and ACD
 .IP \[bu] 2
-Amazon Cloud Drive
+Amazon Drive
 .IP \[bu] 2
 Implement compliant pacing scheme
 .IP \[bu] 2
@@ -4160,7 +4160,7 @@ v1.20 \- 2015\-09\-15
 .IP \[bu] 2
 New features
 .IP \[bu] 2
-Amazon Cloud Drive support
+Amazon Drive support
 .IP \[bu] 2
 Oauth support redone \- fix many bugs and improve usability
 .RS 2

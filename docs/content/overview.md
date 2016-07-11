@@ -22,7 +22,7 @@ Here is an overview of the major features of each cloud storage system.
 | Openstack Swift        | MD5     | Yes     | No               | No              |
 | Dropbox                | -       | No      | Yes              | No              |
 | Google Cloud Storage   | MD5     | Yes     | No               | No              |
-| Amazon Cloud Drive     | MD5     | No      | Yes              | No              |
+| Amazon Drive           | MD5     | No      | Yes              | No              |
 | Microsoft One Drive    | SHA1    | Yes     | Yes              | No              |
 | Hubic                  | MD5     | Yes     | No               | No              |
 | Backblaze B2           | SHA1    | Yes     | No               | No              |

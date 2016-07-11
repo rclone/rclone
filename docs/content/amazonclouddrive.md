@@ -1,17 +1,17 @@
 ---
-title: "Amazon Cloud Drive"
-description: "Rclone docs for Amazon Cloud Drive"
-date: "2015-09-06"
+title: "Amazon Drive"
+description: "Rclone docs for Amazon Drive"
+date: "2016-07-11"
 ---
 
-<i class="fa fa-amazon"></i> Amazon Cloud Drive
+<i class="fa fa-amazon"></i> Amazon Drive
 -----------------------------------------
 
 Paths are specified as `remote:path`
 
 Paths may be as deep as required, eg `remote:directory/subdirectory`.
 
-The initial setup for Amazon cloud drive involves getting a token from
+The initial setup for Amazon Drive involves getting a token from
 Amazon which you need to do in your browser.  `rclone config` walks
 you through it.
 
@@ -29,7 +29,7 @@ e/n/d/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ "amazon cloud drive"
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ "s3"
@@ -84,21 +84,21 @@ you to unblock it temporarily if you are running a host firewall.
 
 Once configured you can then use `rclone` like this,
 
-List directories in top level of your Amazon cloud drive
+List directories in top level of your Amazon Drive
 
     rclone lsd remote:
 
-List all the files in your Amazon cloud drive
+List all the files in your Amazon Drive
 
     rclone ls remote:
 
-To copy a local directory to an Amazon cloud drive directory called backup
+To copy a local directory to an Amazon Drive directory called backup
 
     rclone copy /home/source remote:backup
 
 ### Modified time and MD5SUMs ###
 
-Amazon cloud drive doesn't allow modification times to be changed via
+Amazon Drive doesn't allow modification times to be changed via
 the API so these won't be accurate or used for syncing.
 
 It does store MD5SUMs so for a more accurate sync, you can use the
@@ -109,7 +109,7 @@ It does store MD5SUMs so for a more accurate sync, you can use the
 Any files you delete with rclone will end up in the trash.  Amazon
 don't provide an API to permanently delete files, nor to empty the
 trash, so you will have to do that with one of Amazon's apps or via
-the Amazon cloud drive website.
+the Amazon Drive website.
 
 ### Specific options ###
 
@@ -119,9 +119,9 @@ system.
 #### --acd-templink-threshold=SIZE ####
 
 Files this size or more will be downloaded via their `tempLink`. This
-is to work around a problem with Amazon Cloud Drive which blocks
-downloads of files bigger than about 10GB.  The default for this is
-9GB which shouldn't need to be changed.
+is to work around a problem with Amazon Drive which blocks downloads
+of files bigger than about 10GB.  The default for this is 9GB which
+shouldn't need to be changed.
 
 To download files above this threshold, rclone requests a `tempLink`
 which downloads the file through a temporary URL directly from the
@@ -129,17 +129,17 @@ underlying S3 storage.
 
 ### Limitations ###
 
-Note that Amazon cloud drive is case insensitive so you can't have a
+Note that Amazon Drive is case insensitive so you can't have a
 file called "Hello.doc" and one called "hello.doc".
 
-Amazon cloud drive has rate limiting so you may notice errors in the
+Amazon Drive has rate limiting so you may notice errors in the
 sync (429 errors).  rclone will automatically retry the sync up to 3
 times by default (see `--retries` flag) which should hopefully work
 around this problem.
 
-Amazon cloud drive has an internal limit of file sizes that can be
-uploaded to the service. This limit is not officially published,
-but all files larger than this will fail.
+Amazon Drive has an internal limit of file sizes that can be uploaded
+to the service. This limit is not officially published, but all files
+larger than this will fail.
 
 At the time of writing (Jan 2016) is in the area of 50GB per file.
 This means that larger files are likely to fail.

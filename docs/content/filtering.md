@@ -150,7 +150,7 @@ This would exclude
 
 A similar process is done on directory entries before recursing into
 them.  This only works on remotes which have a concept of directory
-(Eg local, drive, onedrive, amazon cloud drive) and not on bucket
+(Eg local, google drive, onedrive, amazon drive) and not on bucket
 based remotes (eg s3, swift, google compute storage, b2).
 
 ## Adding filtering rules ##

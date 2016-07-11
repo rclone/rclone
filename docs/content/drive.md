@@ -29,7 +29,7 @@ e/n/d/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ "amazon cloud drive"
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ "s3"

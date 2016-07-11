@@ -25,7 +25,7 @@ See the following for detailed instructions for
   * [Dropbox](/dropbox/)
   * [Google Cloud Storage](/googlecloudstorage/)
   * [Local filesystem](/local/)
-  * [Amazon Cloud Drive](/amazonclouddrive/)
+  * [Amazon Drive](/amazonclouddrive/)
   * [Backblaze B2](/b2/)
   * [Hubic](/hubic/)
   * [Microsoft One Drive](/onedrive/)

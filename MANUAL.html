@@ -23,7 +23,7 @@
 <li>Openstack Swift / Rackspace cloud files / Memset Memstore</li>
 <li>Dropbox</li>
 <li>Google Cloud Storage</li>
-<li>Amazon Cloud Drive</li>
+<li>Amazon Drive</li>
 <li>Microsoft One Drive</li>
 <li>Hubic</li>
 <li>Backblaze B2</li>
@@ -79,7 +79,7 @@ sudo mandb</code></pre>
 <li><a href="http://rclone.org/dropbox/">Dropbox</a></li>
 <li><a href="http://rclone.org/googlecloudstorage/">Google Cloud Storage</a></li>
 <li><a href="http://rclone.org/local/">Local filesystem</a></li>
-<li><a href="http://rclone.org/amazonclouddrive/">Amazon Cloud Drive</a></li>
+<li><a href="http://rclone.org/amazonclouddrive/">Amazon Drive</a></li>
 <li><a href="http://rclone.org/b2/">Backblaze B2</a></li>
 <li><a href="http://rclone.org/hubic/">Hubic</a></li>
 <li><a href="http://rclone.org/onedrive/">Microsoft One Drive</a></li>
@@ -676,7 +676,7 @@ file2.jpg</code></pre>
 <td align="center">No</td>
 </tr>
 <tr class="even">
-<td align="left">Amazon Cloud Drive</td>
+<td align="left">Amazon Drive</td>
 <td align="center">MD5</td>
 <td align="center">No</td>
 <td align="center">Yes</td>
@@ -753,7 +753,7 @@ e/n/d/q&gt; n
 name&gt; remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ &quot;amazon cloud drive&quot;
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ &quot;s3&quot;
@@ -956,7 +956,7 @@ n/s&gt; n
 name&gt; remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ &quot;amazon cloud drive&quot;
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ &quot;s3&quot;
@@ -1178,7 +1178,7 @@ n/s&gt; n
 name&gt; remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ &quot;amazon cloud drive&quot;
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ &quot;s3&quot;
@@ -1282,7 +1282,7 @@ e/n/d/q&gt; n
 name&gt; remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ &quot;amazon cloud drive&quot;
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ &quot;s3&quot;
@@ -1360,7 +1360,7 @@ e/n/d/q&gt; n
 name&gt; remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ &quot;amazon cloud drive&quot;
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ &quot;s3&quot;
@@ -1461,7 +1461,7 @@ y/e/d&gt; y</code></pre>
 <p>To use a Service Account instead of OAuth2 token flow, enter the path to your Service Account credentials at the <code>service_account_file</code> prompt and rclone won't use the browser based authentication flow.</p>
 <h3 id="modified-time-3">Modified time</h3>
 <p>Google google cloud storage stores md5sums natively and rclone stores modification times as metadata on the object, under the &quot;mtime&quot; key in RFC3339 format accurate to 1ns.</p>
-<h2 id="amazon-cloud-drive">Amazon Cloud Drive</h2>
+<h2 id="amazon-cloud-drive">Amazon Drive</h2>
 <p>Paths are specified as <code>remote:path</code></p>
 <p>Paths may be as deep as required, eg <code>remote:directory/subdirectory</code>.</p>
 <p>The initial setup for Amazon cloud drive involves getting a token from Amazon which you need to do in your browser. <code>rclone config</code> walks you through it.</p>
@@ -1475,7 +1475,7 @@ e/n/d/q&gt; n
 name&gt; remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ &quot;amazon cloud drive&quot;
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ &quot;s3&quot;
@@ -1534,7 +1534,7 @@ y/e/d&gt; y</code></pre>
 <h3 id="specific-options-3">Specific options</h3>
 <p>Here are the command line options specific to this cloud storage system.</p>
 <h4 id="acd-templink-thresholdsize">--acd-templink-threshold=SIZE</h4>
-<p>Files this size or more will be downloaded via their <code>tempLink</code>. This is to work around a problem with Amazon Cloud Drive which blocks downloads of files bigger than about 10GB. The default for this is 9GB which shouldn't need to be changed.</p>
+<p>Files this size or more will be downloaded via their <code>tempLink</code>. This is to work around a problem with Amazon Drive which blocks downloads of files bigger than about 10GB. The default for this is 9GB which shouldn't need to be changed.</p>
 <p>To download files above this threshold, rclone requests a <code>tempLink</code> which downloads the file through a temporary URL directly from the underlying S3 storage.</p>
 <h3 id="limitations-3">Limitations</h3>
 <p>Note that Amazon cloud drive is case insensitive so you can't have a file called &quot;Hello.doc&quot; and one called &quot;hello.doc&quot;.</p>
@@ -1556,7 +1556,7 @@ n/s&gt; n
 name&gt; remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ &quot;amazon cloud drive&quot;
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ &quot;s3&quot;
@@ -1641,7 +1641,7 @@ n/s&gt; n
 name&gt; remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ &quot;amazon cloud drive&quot;
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ &quot;s3&quot;
@@ -1720,7 +1720,7 @@ n/q&gt; n
 name&gt; remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ &quot;amazon cloud drive&quot;
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ &quot;s3&quot;
@@ -1802,7 +1802,7 @@ n/s&gt; n
 name&gt; remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Cloud Drive
+ 1 / Amazon Drive
    \ &quot;amazon cloud drive&quot;
  2 / Amazon S3 (also Dreamhost, Ceph)
    \ &quot;s3&quot;
@@ -1913,7 +1913,7 @@ nounc = true</code></pre>
 <li>Fix retry doing one too many retries</li>
 <li>Local</li>
 <li>Fix problems with OS X and UTF-8 characters</li>
-<li>Amazon Cloud Drive</li>
+<li>Amazon Drive</li>
 <li>Check a file exists before uploading to help with 408 Conflict errors</li>
 <li>Reauth on 401 errors - this has been causing a lot of problems</li>
 <li>Work around spurious 403 errors</li>
@@ -1999,7 +1999,7 @@ nounc = true</code></pre>
 <li>S3</li>
 <li>Allow IAM role and credentials from environment variables - thanks Brian Stengaard</li>
 <li>Allow low privilege users to use S3 (check if directory exists during Mkdir) - thanks Jakub Gedeon</li>
-<li>Amazon Cloud Drive</li>
+<li>Amazon Drive</li>
 <li>Retry on more things to make directory listings more reliable</li>
 </ul></li>
 <li>v1.27 - 2016-01-31
@@ -2015,7 +2015,7 @@ nounc = true</code></pre>
 <li>Warn the user about files with same name but different case</li>
 <li>Make <code>--include</code> rules add their implict exclude * at the end of the filter list</li>
 <li>Deprecate compiling with go1.3</li>
-<li>Amazon Cloud Drive</li>
+<li>Amazon Drive</li>
 <li>Fix download of files &gt; 10 GB</li>
 <li>Fix directory traversal (&quot;Next token is expired&quot;) for large directory listings</li>
 <li>Remove 409 conflict from error codes we will retry - stops very long pauses</li>
@@ -2114,7 +2114,7 @@ nounc = true</code></pre>
 <li>Make lsl output times in localtime</li>
 <li>Fixes</li>
 <li>Fix allowing user to override credentials again in Drive, GCS and ACD</li>
-<li>Amazon Cloud Drive</li>
+<li>Amazon Drive</li>
 <li>Implement compliant pacing scheme</li>
 <li>Google Drive</li>
 <li>Make directory reads concurrent for increased speed.</li>
@@ -2122,7 +2122,7 @@ nounc = true</code></pre>
 <li>v1.20 - 2015-09-15
 <ul>
 <li>New features</li>
-<li>Amazon Cloud Drive support</li>
+<li>Amazon Drive support</li>
 <li>Oauth support redone - fix many bugs and improve usability
 <ul>
 <li>Use &quot;golang.org/x/oauth2&quot; as oauth libary of choice</li>
