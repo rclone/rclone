@@ -395,7 +395,7 @@ func TestFsDirMove(t *testing.T) {
 	require.Equal(t, fs.ErrorDirExists, err)
 
 	// new remote
-	newRemote, removeNewRemote, err := fstest.RandomRemote(RemoteName, false)
+	newRemote, _, removeNewRemote, err := fstest.RandomRemote(RemoteName, false)
 	require.NoError(t, err)
 	defer removeNewRemote()
 

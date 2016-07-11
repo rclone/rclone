@@ -75,6 +75,7 @@ type Run struct {
 	localName    string
 	flocal       fs.Fs
 	fremote      fs.Fs
+	fremoteName  string
 	cleanRemote  func()
 	mkdir        map[string]bool // whether the remote has been made yet for the fs name
 	Logf, Fatalf func(text string, args ...interface{})
@@ -108,7 +109,7 @@ func newRun() *Run {
 	fs.Config.DumpBodies = *DumpBodies
 	fs.Config.LowLevelRetries = *LowLevelRetries
 	var err error
-	r.fremote, r.cleanRemote, err = fstest.RandomRemote(*RemoteName, *SubDir)
+	r.fremote, r.fremoteName, r.cleanRemote, err = fstest.RandomRemote(*RemoteName, *SubDir)
 	if err != nil {
 		r.Fatalf("Failed to open remote %q: %v", *RemoteName, err)
 	}

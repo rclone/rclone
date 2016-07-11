@@ -113,16 +113,18 @@ go there.
 
 ### move source:path dest:path ###
 
-Moves the source to the destination.
+Moves the contents of the source directory to the destination
+directory. Rclone will error if the source and destination overlap.
 
-If there are no filters in use this is equivalent to a copy followed
-by a purge, but may use server side operations to speed it up if
-possible.
+If no filters are in use and if possible this will server side move
+`source:path` into `dest:path`. After this `source:path` will no
+longer longer exist.
 
-If filters are in use then it is equivalent to a copy followed by
-delete, followed by an rmdir (which only removes the directory if
-empty).  The individual file moves will be moved with server side
-operations if possible.
+Otherwise for each file in `source:path` selected by the filters (if
+any) this will move it into `dest:path`.  If possible a server side
+move will be used, otherwise it will copy it (server side if possible)
+into `dest:path` then delete the original (if no errors on copy) in
+`source:path`.
 
 **Important**: Since this can cause data loss, test first with the
 --dry-run flag.

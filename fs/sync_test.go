@@ -100,7 +100,7 @@ func TestServerSideCopy(t *testing.T) {
 	file1 := r.WriteObject("sub dir/hello world", "hello world", t1)
 	fstest.CheckItems(t, r.fremote, file1)
 
-	fremoteCopy, finaliseCopy, err := fstest.RandomRemote(*RemoteName, *SubDir)
+	fremoteCopy, _, finaliseCopy, err := fstest.RandomRemote(*RemoteName, *SubDir)
 	require.NoError(t, err)
 	defer finaliseCopy()
 	t.Logf("Server side copy (if possible) %v -> %v", r.fremote, fremoteCopy)
@@ -563,17 +563,12 @@ func TestSyncWithUpdateOlder(t *testing.T) {
 }
 
 // Test a server side move if possible, or the backup path if not
-func TestServerSideMove(t *testing.T) {
-	r := NewRun(t)
-	defer r.Finalise()
+func testServerSideMove(t *testing.T, r *Run, fremoteMove fs.Fs, withFilter bool) {
 	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth("empty space", "", t2)
 
 	fstest.CheckItems(t, r.fremote, file2, file1)
 
-	fremoteMove, finaliseMove, err := fstest.RandomRemote(*RemoteName, *SubDir)
-	require.NoError(t, err)
-	defer finaliseMove()
 	t.Logf("Server side move (if possible) %v -> %v", r.fremote, fremoteMove)
 
 	// Write just one file in the new remote
@@ -582,17 +577,75 @@ func TestServerSideMove(t *testing.T) {
 
 	// Do server side move
 	fs.Stats.ResetCounters()
-	err = fs.MoveDir(fremoteMove, r.fremote)
+	err := fs.MoveDir(fremoteMove, r.fremote)
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.fremote)
+	fstest.CheckItems(t, r.fremote, file2)
 	fstest.CheckItems(t, fremoteMove, file2, file1)
+
+	// Purge the original before moving
+	require.NoError(t, fs.Purge(r.fremote))
 
 	// Move it back again, dst does not exist this time
 	fs.Stats.ResetCounters()
 	err = fs.MoveDir(r.fremote, fremoteMove)
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.fremote, file2, file1)
-	fstest.CheckItems(t, fremoteMove)
+	if withFilter {
+		fstest.CheckItems(t, r.fremote, file1)
+		fstest.CheckItems(t, fremoteMove, file2)
+	} else {
+		fstest.CheckItems(t, r.fremote, file2, file1)
+		fstest.CheckItems(t, fremoteMove)
+	}
+}
+
+// Test a server side move if possible, or the backup path if not
+func TestServerSideMove(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	fremoteMove, _, finaliseMove, err := fstest.RandomRemote(*RemoteName, *SubDir)
+	require.NoError(t, err)
+	defer finaliseMove()
+	testServerSideMove(t, r, fremoteMove, false)
+}
+
+// Test a server side move if possible, or the backup path if not
+func TestServerSideMoveWithFilter(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+
+	fs.Config.Filter.MinSize = 40
+	defer func() {
+		fs.Config.Filter.MinSize = -1
+	}()
+
+	fremoteMove, _, finaliseMove, err := fstest.RandomRemote(*RemoteName, *SubDir)
+	require.NoError(t, err)
+	defer finaliseMove()
+	testServerSideMove(t, r, fremoteMove, true)
+}
+
+// Test a server side move with overlap
+func TestServerSideMoveOverlap(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	subRemoteName := r.fremoteName + "/rclone-move-test"
+	fremoteMove, err := fs.NewFs(subRemoteName)
+	require.NoError(t, err)
+
+	file1 := r.WriteObject("potato2", "------------------------------------------------------------", t1)
+	fstest.CheckItems(t, r.fremote, file1)
+
+	// Subdir move with no filters should return ErrorCantMoveOverlapping
+	err = fs.MoveDir(fremoteMove, r.fremote)
+	assert.EqualError(t, err, fs.ErrorCantMoveOverlapping.Error())
+
+	// Now try with a filter which should also fail with ErrorCantMoveOverlapping
+	fs.Config.Filter.MinSize = 40
+	defer func() {
+		fs.Config.Filter.MinSize = -1
+	}()
+	err = fs.MoveDir(fremoteMove, r.fremote)
+	assert.EqualError(t, err, fs.ErrorCantMoveOverlapping.Error())
 }

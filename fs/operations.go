@@ -452,6 +452,12 @@ func Same(fdst, fsrc Fs) bool {
 	return fdst.Name() == fsrc.Name() && fdst.Root() == fsrc.Root()
 }
 
+// Overlapping returns true if fdst and fsrc point to the same
+// underlying Fs or they overlap.
+func Overlapping(fdst, fsrc Fs) bool {
+	return fdst.Name() == fsrc.Name() && (strings.HasPrefix(fdst.Root(), fsrc.Root()) || strings.HasPrefix(fsrc.Root(), fdst.Root()))
+}
+
 // checkIdentical checks to see if dst and src are identical
 //
 // it returns true if differences were found

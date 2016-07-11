@@ -45,6 +45,7 @@ var (
 	ErrorListOnlyRoot         = errors.New("can only list from root")
 	ErrorIsFile               = errors.New("is a file not a directory")
 	ErrorNotDeleting          = errors.New("not deleting files as there were IO errors")
+	ErrorCantMoveOverlapping  = errors.New("can't move files on overlapping remotes")
 )
 
 // RegInfo provides information about a filesystem

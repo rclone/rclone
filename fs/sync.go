@@ -264,14 +264,10 @@ func (s *syncCopyMove) pairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup)
 				Log(src, "Not moving as --dry-run")
 			} else if haveMover && src.Fs().Name() == fdst.Name() {
 				// Delete destination if it exists
-				if pair.dst != nil {
-					err := dst.Remove()
-					if err != nil {
-						Stats.Error()
-						ErrorLog(dst, "Couldn't delete: %v", err)
-						s.processError(err)
-					}
+				if dst != nil {
+					s.processError(DeleteFile(src))
 				}
+				// Move dst <- src
 				_, err := fdstMover.Move(src, src.Remote())
 				if err != nil {
 					Stats.Error()
@@ -281,7 +277,15 @@ func (s *syncCopyMove) pairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup)
 					Debug(src, "Moved")
 				}
 			} else {
-				s.processError(Copy(fdst, pair.dst, src))
+				// Copy dst <- src
+				err := Copy(fdst, dst, src)
+				s.processError(err)
+				if err != nil {
+					ErrorLog(src, "Not deleting as copy failed: %v", err)
+				} else {
+					// Delete src if no error on copy
+					s.processError(DeleteFile(src))
+				}
 			}
 			Stats.DoneTransferring(src.Remote())
 		case <-s.abort:
@@ -491,14 +495,24 @@ func MoveDir(fdst, fsrc Fs) error {
 		ErrorLog(fdst, "Nothing to do as source and destination are the same")
 		return nil
 	}
+	// The two remotes mustn't overlap
+	if Overlapping(fdst, fsrc) {
+		err := ErrorCantMoveOverlapping
+		ErrorLog(fdst, "%v", err)
+		return err
+	}
 
 	// First attempt to use DirMover if exists, same Fs and no filters are active
 	if fdstDirMover, ok := fdst.(DirMover); ok && fsrc.Name() == fdst.Name() && Config.Filter.InActive() {
-		err := fdstDirMover.DirMove(fsrc)
+		if Config.DryRun {
+			Log(fdst, "Not doing server side directory move as --dry-run")
+			return nil
+		}
 		Debug(fdst, "Using server side directory move")
+		err := fdstDirMover.DirMove(fsrc)
 		switch err {
 		case ErrorCantDirMove, ErrorDirExists:
-			Debug(fdst, "Server side directory move failed - fallback to copy/delete: %v", err)
+			Debug(fdst, "Server side directory move failed - fallback to file moves: %v", err)
 		case nil:
 			Debug(fdst, "Server side directory move succeeded")
 			return nil
@@ -509,22 +523,6 @@ func MoveDir(fdst, fsrc Fs) error {
 		}
 	}
 
-	// Now move the files
-	err := moveDir(fdst, fsrc)
-	if err != nil || Stats.Errored() {
-		ErrorLog(fdst, "Not deleting files as there were IO errors")
-		return err
-	}
-	// If no filters then purge
-	if Config.Filter.InActive() {
-		return Purge(fsrc)
-	}
-	// Otherwise remove any remaining files obeying filters
-	err = Delete(fsrc)
-	if err != nil {
-		return err
-	}
-	// and try to remove the directory if empty - ignoring error
-	_ = TryRmdir(fsrc)
-	return nil
+	// Otherwise move the files one by one
+	return moveDir(fdst, fsrc)
 }

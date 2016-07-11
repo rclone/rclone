@@ -5,6 +5,7 @@ package fstest
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -25,6 +26,7 @@ import (
 var (
 	// MatchTestRemote matches the remote names used for testing
 	MatchTestRemote = regexp.MustCompile(`^rclone-test-[abcdefghijklmnopqrstuvwxyz0123456789]{24}$`)
+	listRetries     = flag.Int("list-retries", 6, "Number or times to retry listing")
 )
 
 // Seed the random number generator
@@ -123,9 +125,11 @@ func (is *Items) Find(t *testing.T, obj fs.Object, precision time.Duration) {
 		i, ok = is.byNameAlt[obj.Remote()]
 		assert.True(t, ok, fmt.Sprintf("Unexpected file %q", obj.Remote()))
 	}
-	delete(is.byName, i.Path)
-	delete(is.byName, i.WinPath)
-	i.Check(t, obj, precision)
+	if i != nil {
+		delete(is.byName, i.Path)
+		delete(is.byName, i.WinPath)
+		i.Check(t, obj, precision)
+	}
 }
 
 // Done checks all finished
@@ -134,8 +138,8 @@ func (is *Items) Done(t *testing.T) {
 		for name := range is.byName {
 			t.Logf("Not found %q", name)
 		}
-		t.Errorf("%d objects not found", len(is.byName))
 	}
+	assert.Equal(t, 0, len(is.byName), fmt.Sprintf("%d objects not found", len(is.byName)))
 }
 
 // CheckListingWithPrecision checks the fs to see if it has the
@@ -145,7 +149,7 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, precision ti
 	oldErrors := fs.Stats.GetErrors()
 	var objs []fs.Object
 	var err error
-	const retries = 6
+	var retries = *listRetries
 	sleep := time.Second / 2
 	for i := 1; i <= retries; i++ {
 		objs, err = fs.NewLister().Start(f, "").GetObjects()
@@ -257,26 +261,28 @@ func RandomRemoteName(remoteName string) (string, string, error) {
 //
 // Call the finalise function returned to Purge the fs at the end (and
 // the parent if necessary)
-func RandomRemote(remoteName string, subdir bool) (fs.Fs, func(), error) {
+//
+// Returns the remote, its url, a finaliser and an error
+func RandomRemote(remoteName string, subdir bool) (fs.Fs, string, func(), error) {
 	var err error
 	var parentRemote fs.Fs
 
 	remoteName, _, err = RandomRemoteName(remoteName)
 	if err != nil {
-		return nil, nil, err
+		return nil, "", nil, err
 	}
 
 	if subdir {
 		parentRemote, err = fs.NewFs(remoteName)
 		if err != nil {
-			return nil, nil, err
+			return nil, "", nil, err
 		}
 		remoteName += "/rclone-test-subdir-" + RandomString(8)
 	}
 
 	remote, err := fs.NewFs(remoteName)
 	if err != nil {
-		return nil, nil, err
+		return nil, "", nil, err
 	}
 
 	finalise := func() {
@@ -289,7 +295,7 @@ func RandomRemote(remoteName string, subdir bool) (fs.Fs, func(), error) {
 		}
 	}
 
-	return remote, finalise, nil
+	return remote, remoteName, finalise, nil
 }
 
 // TestMkdir tests Mkdir works
