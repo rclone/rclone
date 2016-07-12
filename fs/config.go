@@ -89,6 +89,7 @@ var (
 	maxDepth        = pflag.IntP("max-depth", "", -1, "If set limits the recursion depth to this.")
 	ignoreSize      = pflag.BoolP("ignore-size", "", false, "Ignore size when skipping use mod-time or checksum.")
 	noTraverse      = pflag.BoolP("no-traverse", "", false, "Don't traverse destination file system on copy.")
+	noUpdateModTime = pflag.BoolP("no-update-modtime", "", false, "Don't update destination mod-time if files identical.")
 	bwLimit         SizeSuffix
 
 	// Key to use for password en/decryption.
@@ -240,6 +241,7 @@ type ConfigInfo struct {
 	MaxDepth           int
 	IgnoreSize         bool
 	NoTraverse         bool
+	NoUpdateModTime    bool
 }
 
 // Transport returns an http.RoundTripper with the correct timeouts
@@ -345,6 +347,7 @@ func LoadConfig() {
 	Config.MaxDepth = *maxDepth
 	Config.IgnoreSize = *ignoreSize
 	Config.NoTraverse = *noTraverse
+	Config.NoUpdateModTime = *noUpdateModTime
 
 	ConfigPath = *configFile
 

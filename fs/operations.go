@@ -147,7 +147,7 @@ func Equal(src, dst Object) bool {
 		return false
 	}
 
-	if !Config.CheckSum {
+	if !(Config.CheckSum || Config.NoUpdateModTime) {
 		// Size and hash the same but mtime different so update the
 		// mtime of the dst object here
 		err := dst.SetModTime(srcModTime)

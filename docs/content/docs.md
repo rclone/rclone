@@ -560,6 +560,14 @@ uploaded compressed files.
 There is no need to set this in normal operation, and doing so will
 decrease the network transfer efficiency of rclone.
 
+### --no-update-modtime ###
+
+When using this flag, rclone won't update modification times of remote
+files if they are incorrect as it would normally.
+
+This can be used if the remote is being synced with another tool also
+(eg the Google Drive client).
+
 ### -q, --quiet ###
 
 Normally rclone outputs stats and a completion message.  If you set

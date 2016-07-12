@@ -311,6 +311,25 @@ func TestSyncAfterChangingModtimeOnly(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, file1)
 }
 
+func TestSyncAfterChangingModtimeOnlyWithNoUpdateModTime(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	fs.Config.NoUpdateModTime = true
+	defer func() {
+		fs.Config.NoUpdateModTime = false
+	}()
+
+	file1 := r.WriteFile("empty space", "", t2)
+	file2 := r.WriteObject("empty space", "", t1)
+
+	fs.Stats.ResetCounters()
+	err := fs.Sync(r.fremote, r.flocal)
+	require.NoError(t, err)
+
+	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.fremote, file2)
+}
+
 func TestSyncAfterAddingAFile(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
