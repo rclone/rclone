@@ -201,6 +201,7 @@ again:
 		// Retry if err returned a retry error
 		if fs.IsRetryError(err) && tries < maxTries {
 			t.Logf("Put error: %v - low level retry %d/%d", err, tries, maxTries)
+			time.Sleep(2 * time.Second)
 
 			tries++
 			goto again

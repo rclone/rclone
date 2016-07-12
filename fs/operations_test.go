@@ -199,7 +199,7 @@ func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time, 
 			r.Fatalf("Fs doesn't support PutUnchecked")
 		}
 	}
-	const maxTries = 5
+	const maxTries = 10
 	if !r.mkdir[f.String()] {
 		err := f.Mkdir()
 		if err != nil {
@@ -217,6 +217,7 @@ func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time, 
 		// Retry if err returned a retry error
 		if fs.IsRetryError(err) && tries < maxTries {
 			r.Logf("Retry Put of %q to %v: %d/%d (%v)", remote, f, tries, maxTries, err)
+			time.Sleep(2 * time.Second)
 			continue
 		}
 		r.Fatalf("Failed to put %q to %q: %v", remote, f, err)
@@ -542,7 +543,7 @@ func TestDeduplicateFirst(t *testing.T) {
 
 	objects, size, err := fs.Count(r.fremote)
 	require.NoError(t, err)
-	assert.Equal(t, 1, objects)
+	assert.Equal(t, int64(1), objects)
 	if size != file1.Size && size != file2.Size && size != file3.Size {
 		t.Errorf("Size not one of the object sizes %d", size)
 	}
