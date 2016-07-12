@@ -301,7 +301,10 @@ func TestSyncAfterChangingModtimeOnly(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteFile("empty space", "", t2)
-	r.WriteObject("empty space", "", t1)
+	file2 := r.WriteObject("empty space", "", t1)
+
+	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.fremote, file2)
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
@@ -322,6 +325,9 @@ func TestSyncAfterChangingModtimeOnlyWithNoUpdateModTime(t *testing.T) {
 	file1 := r.WriteFile("empty space", "", t2)
 	file2 := r.WriteObject("empty space", "", t1)
 
+	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.fremote, file2)
+
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
 	require.NoError(t, err)
@@ -335,6 +341,9 @@ func TestSyncAfterAddingAFile(t *testing.T) {
 	defer r.Finalise()
 	file1 := r.WriteBoth("empty space", "", t2)
 	file2 := r.WriteFile("potato", "------------------------------------------------------------", t3)
+
+	fstest.CheckItems(t, r.flocal, file1, file2)
+	fstest.CheckItems(t, r.fremote, file1)
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
@@ -478,6 +487,8 @@ func TestSyncWithExclude(t *testing.T) {
 	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth("empty space", "", t2)
 	file3 := r.WriteFile("enormous", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
+	fstest.CheckItems(t, r.fremote, file1, file2)
+	fstest.CheckItems(t, r.flocal, file1, file2, file3)
 
 	fs.Config.Filter.MaxSize = 40
 	defer func() {
