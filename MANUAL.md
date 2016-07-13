@@ -2955,7 +2955,7 @@ method to set the modification time independent of doing an upload.
 ### SHA1 checksums ###
 
 The SHA1 checksums of the files are checked on upload and download and
-will be used in the syncing process. You can use the `--checksum` flag.
+will be used in the syncing process.
 
 Large files which are uploaded in chunks will store their SHA1 on the
 object as `X-Bz-Info-large_file_sha1` as recommended by Backblaze.
@@ -2969,6 +2969,11 @@ for a slight speed improvement. The optimum number for you may vary
 depending on your hardware, how big the files are, how much you want
 to load your computer, etc.  The default of `--transfers 4` is
 definitely too low for Backblaze B2 though.
+
+Note that uploading big files (bigger than 200 MB by default) will use
+a 96 MB RAM buffer by default.  There can be at most `--transfers` of
+these in use at any moment, so this sets the upper limit on the memory
+used.
 
 ### Versions ###
 
@@ -3036,15 +3041,19 @@ system.
 #### --b2-chunk-size valuee=SIZE ####
 
 When uploading large files chunk the file into this size.  Note that
-these chunks are buffered in memory.  100,000,000 Bytes is the minimim
-size (default 96M).
+these chunks are buffered in memory and there might a maximum of
+`--transfers` chunks in progress at once.  100,000,000 Bytes is the
+minimim size (default 96M).
 
 #### --b2-upload-cutoff=SIZE ####
 
-Cutoff for switching to chunked upload (default 4.657GiB ==
-5GB). Files above this size will be uploaded in chunks of
-`--b2-chunk-size`. The default value is the largest file which can be
-uploaded without chunks.
+Cutoff for switching to chunked upload (default 190.735 MiB == 200
+MB). Files above this size will be uploaded in chunks of
+`--b2-chunk-size`.
+
+This value should be set no larger than 4.657GiB (== 5GB) as this is
+the largest file size that can be uploaded.
+
 
 #### --b2-test-mode=FLAG ####
 
@@ -3271,6 +3280,9 @@ file exceeds 258 characters on z, so only use this option if you have to.
 Changelog
 ---------
 
+  * v1.32 - 2016-07-13
+    * Backblaze B2
+      * Fix upload of files large files not in root
   * v1.31 - 2016-07-13
     * New Features
       * Reduce memory on sync by about 50%

@@ -7,6 +7,9 @@ date: "2016-07-13"
 Changelog
 ---------
 
+  * v1.32 - 2016-07-13
+    * Backblaze B2
+      * Fix upload of files large files not in root
   * v1.31 - 2016-07-13
     * New Features
       * Reduce memory on sync by about 50%

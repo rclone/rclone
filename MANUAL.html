@@ -1858,10 +1858,11 @@ y/e/d&gt; y</code></pre>
 <p>The modified time is stored as metadata on the object as <code>X-Bz-Info-src_last_modified_millis</code> as milliseconds since 1970-01-01 in the Backblaze standard. Other tools should be able to use this as a modified time.</p>
 <p>Modified times are used in syncing and are fully supported except in the case of updating a modification time on an existing object. In this case the object will be uploaded again as B2 doesn't have an API method to set the modification time independent of doing an upload.</p>
 <h3 id="sha1-checksums">SHA1 checksums</h3>
-<p>The SHA1 checksums of the files are checked on upload and download and will be used in the syncing process. You can use the <code>--checksum</code> flag.</p>
+<p>The SHA1 checksums of the files are checked on upload and download and will be used in the syncing process.</p>
 <p>Large files which are uploaded in chunks will store their SHA1 on the object as <code>X-Bz-Info-large_file_sha1</code> as recommended by Backblaze.</p>
 <h3 id="transfers">Transfers</h3>
 <p>Backblaze recommends that you do lots of transfers simultaneously for maximum speed. In tests from my SSD equiped laptop the optimum setting is about <code>--transfers 32</code> though higher numbers may be used for a slight speed improvement. The optimum number for you may vary depending on your hardware, how big the files are, how much you want to load your computer, etc. The default of <code>--transfers 4</code> is definitely too low for Backblaze B2 though.</p>
+<p>Note that uploading big files (bigger than 200 MB by default) will use a 96 MB RAM buffer by default. There can be at most <code>--transfers</code> of these in use at any moment, so this sets the upper limit on the memory used.</p>
 <h3 id="versions">Versions</h3>
 <p>When rclone uploads a new version of a file it creates a <a href="https://www.backblaze.com/b2/docs/file_versions.html">new version of it</a>. Likewise when you delete a file, the old version will still be available.</p>
 <p>Old versions of files are visible using the <code>--b2-versions</code> flag.</p>
@@ -1894,9 +1895,10 @@ $ rclone -q --b2-versions ls b2:cleanup-test
 <h3 id="specific-options-5">Specific options</h3>
 <p>Here are the command line options specific to this cloud storage system.</p>
 <h4 id="b2-chunk-size-valueesize">--b2-chunk-size valuee=SIZE</h4>
-<p>When uploading large files chunk the file into this size. Note that these chunks are buffered in memory. 100,000,000 Bytes is the minimim size (default 96M).</p>
+<p>When uploading large files chunk the file into this size. Note that these chunks are buffered in memory and there might a maximum of <code>--transfers</code> chunks in progress at once. 100,000,000 Bytes is the minimim size (default 96M).</p>
 <h4 id="b2-upload-cutoffsize">--b2-upload-cutoff=SIZE</h4>
-<p>Cutoff for switching to chunked upload (default 4.657GiB == 5GB). Files above this size will be uploaded in chunks of <code>--b2-chunk-size</code>. The default value is the largest file which can be uploaded without chunks.</p>
+<p>Cutoff for switching to chunked upload (default 190.735 MiB == 200 MB). Files above this size will be uploaded in chunks of <code>--b2-chunk-size</code>.</p>
+<p>This value should be set no larger than 4.657GiB (== 5GB) as this is the largest file size that can be uploaded.</p>
 <h4 id="b2-test-modeflag">--b2-test-mode=FLAG</h4>
 <p>This is for debugging purposes only.</p>
 <p>Setting FLAG to one of the strings below will cause b2 to return specific errors for debugging purposes.</p>
@@ -2022,6 +2024,11 @@ nounc = true</code></pre>
 <p>This will use UNC paths on <code>c:\src</code> but not on <code>z:\dst</code>. Of course this will cause problems if the absolute path length of a file exceeds 258 characters on z, so only use this option if you have to.</p>
 <h2 id="changelog">Changelog</h2>
 <ul>
+<li>v1.32 - 2016-07-13
+<ul>
+<li>Backblaze B2</li>
+<li>Fix upload of files large files not in root</li>
+</ul></li>
 <li>v1.31 - 2016-07-13
 <ul>
 <li>New Features</li>

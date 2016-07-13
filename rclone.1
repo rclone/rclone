@@ -3657,7 +3657,6 @@ API method to set the modification time independent of doing an upload.
 .PP
 The SHA1 checksums of the files are checked on upload and download and
 will be used in the syncing process.
-You can use the \f[C]\-\-checksum\f[] flag.
 .PP
 Large files which are uploaded in chunks will store their SHA1 on the
 object as \f[C]X\-Bz\-Info\-large_file_sha1\f[] as recommended by
@@ -3673,6 +3672,11 @@ The optimum number for you may vary depending on your hardware, how big
 the files are, how much you want to load your computer, etc.
 The default of \f[C]\-\-transfers\ 4\f[] is definitely too low for
 Backblaze B2 though.
+.PP
+Note that uploading big files (bigger than 200 MB by default) will use a
+96 MB RAM buffer by default.
+There can be at most \f[C]\-\-transfers\f[] of these in use at any
+moment, so this sets the upper limit on the memory used.
 .SS Versions
 .PP
 When rclone uploads a new version of a file it creates a new version of
@@ -3744,15 +3748,17 @@ Here are the command line options specific to this cloud storage system.
 .SS \-\-b2\-chunk\-size valuee=SIZE
 .PP
 When uploading large files chunk the file into this size.
-Note that these chunks are buffered in memory.
+Note that these chunks are buffered in memory and there might a maximum
+of \f[C]\-\-transfers\f[] chunks in progress at once.
 100,000,000 Bytes is the minimim size (default 96M).
 .SS \-\-b2\-upload\-cutoff=SIZE
 .PP
-Cutoff for switching to chunked upload (default 4.657GiB == 5GB).
+Cutoff for switching to chunked upload (default 190.735 MiB == 200 MB).
 Files above this size will be uploaded in chunks of
 \f[C]\-\-b2\-chunk\-size\f[].
-The default value is the largest file which can be uploaded without
-chunks.
+.PP
+This value should be set no larger than 4.657GiB (== 5GB) as this is the
+largest file size that can be uploaded.
 .SS \-\-b2\-test\-mode=FLAG
 .PP
 This is for debugging purposes only.
@@ -4018,6 +4024,14 @@ This will use UNC paths on \f[C]c:\\src\f[] but not on \f[C]z:\\dst\f[].
 Of course this will cause problems if the absolute path length of a file
 exceeds 258 characters on z, so only use this option if you have to.
 .SS Changelog
+.IP \[bu] 2
+v1.32 \- 2016\-07\-13
+.RS 2
+.IP \[bu] 2
+Backblaze B2
+.IP \[bu] 2
+Fix upload of files large files not in root
+.RE
 .IP \[bu] 2
 v1.31 \- 2016\-07\-13
 .RS 2
