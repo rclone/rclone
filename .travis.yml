@@ -12,12 +12,8 @@ go:
   - tip
 
 install:
- - go get -t ./...
- - go get -u github.com/kisielk/errcheck
- - go get -u golang.org/x/tools/cmd/goimports
- - go get -u github.com/golang/lint/golint
+  - make build_dep
 
 script:
   - make check
-  - go test ./...
-  - go test -cpu=2 -race ./...
+  - make quicktest

@@ -7,15 +7,33 @@ rclone:
 	@go version
 	go install -v ./...
 
+# Full suite of integration tests
 test:	rclone
 	go test ./...
 	cd fs && go run test_all.go
 
+# Quick test
+quicktest:
+	go test ./...
+	go test -cpu=2 -race ./...
+
+# Do source code quality checks
 check:	rclone
 	go vet ./...
 	errcheck ./...
 	goimports -d . | grep . ; test $$? -eq 1
 	golint ./... | grep -E -v '(StorageUrl|CdnUrl)' ; test $$? -eq 1
+
+# Get the build dependencies
+build_dep:
+	go get -t ./...
+	go get -u github.com/kisielk/errcheck
+	go get -u golang.org/x/tools/cmd/goimports
+	go get -u github.com/golang/lint/golint
+
+# Update dependencies
+update:
+	go get -t -u -f -v ./...
 
 doc:	rclone.1 MANUAL.html MANUAL.txt
 
