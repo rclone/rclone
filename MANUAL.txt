@@ -1,6 +1,6 @@
 rclone(1) User Manual
 Nick Craig-Wood
-Jun 18, 2016
+Jul 13, 2016
 
 
 
@@ -72,7 +72,22 @@ linux binary downloaded files install example
     #install manpage
     sudo mkdir -p /usr/local/share/man/man1
     sudo cp rclone.1 /usr/local/share/man/man1/
-    sudo mandb
+    sudo mandb 
+
+
+Installation with Ansible
+
+This can be done with Stefan Weichinger's ansible role.
+
+Instructions
+
+1.  git clone https://github.com/stefangweichinger/ansible-rclone.git
+    into your local roles-directory
+2.  add the role to the hosts you want rclone installed to:
+
+        - hosts: rclone-hosts
+          roles:
+              - rclone
 
 
 Configure
@@ -156,6 +171,9 @@ written a trailing / - meaning "copy the contents of this directory".
 This applies to all commands and whether you are talking about the
 source or destination.
 
+See the --no-traverse option for controlling whether rclone lists the
+destination directory or not.
+
 rclone sync source:path dest:path
 
 Sync the source to the destination, changing the destination only.
@@ -179,15 +197,17 @@ go there.
 
 move source:path dest:path
 
-Moves the source to the destination.
+Moves the contents of the source directory to the destination directory.
+Rclone will error if the source and destination overlap.
 
-If there are no filters in use this is equivalent to a copy followed by
-a purge, but may use server side operations to speed it up if possible.
+If no filters are in use and if possible this will server side move
+source:path into dest:path. After this source:path will no longer longer
+exist.
 
-If filters are in use then it is equivalent to a copy followed by
-delete, followed by an rmdir (which only removes the directory if
-empty). The individual file moves will be moved with server side
-operations if possible.
+Otherwise for each file in source:path selected by the filters (if any)
+this will move it into dest:path. If possible a server side move will be
+used, otherwise it will copy it (server side if possible) into dest:path
+then delete the original (if no errors on copy) in source:path.
 
 IMPORTANT: Since this can cause data loss, test first with the --dry-run
 flag.
@@ -261,6 +281,11 @@ and MD5SUMs and prints a report of files which don't match. It doesn't
 alter the source or destination.
 
 --size-only may be used to only compare the sizes, not the MD5SUMs.
+
+rclone cleanup remote:path
+
+Clean up the remote if possible. Empty the trash or delete old file
+versions. Not supported by all remotes.
 
 rclone dedupe remote:path
 
@@ -348,6 +373,34 @@ Enter an interactive configuration session.
 rclone help
 
 Prints help on rclone commands and options.
+
+
+Copying single files
+
+rclone normally syncs or copies directories. However if the source
+remote points to a file, rclone will just copy that file. The
+destination remote must point to a directory - rclone will give the
+error
+Failed to create file system for "remote:file": is a file not a directory
+if it isn't.
+
+For example, suppose you have a remote with a file in called test.jpg,
+then you could copy just that file like this
+
+    rclone copy remote:test.jpg /tmp/download
+
+The file test.jpg will be placed inside /tmp/download.
+
+This is equivalent to specifying
+
+    rclone copy --no-traverse --files-from /tmp/files remote: /tmp/download
+
+Where /tmp/files contains the single line
+
+    test.jpg
+
+It is recommended to use copy when copying single files not sync. They
+have pretty much the same effect but copy will use a lot less memory.
 
 
 Quoting and the shell
@@ -589,6 +642,14 @@ compressed files.
 There is no need to set this in normal operation, and doing so will
 decrease the network transfer efficiency of rclone.
 
+--no-update-modtime
+
+When using this flag, rclone won't update modification times of remote
+files if they are incorrect as it would normally.
+
+This can be used if the remote is being synced with another tool also
+(eg the Google Drive client).
+
 -q, --quiet
 
 Normally rclone outputs stats and a completion message. If you set this
@@ -628,10 +689,13 @@ deleted when you sync folders.
 
 Specifying the value --delete-before will delete all files present on
 the destination, but not on the source _before_ starting the transfer of
-any new or updated files.
+any new or updated files. This uses extra memory as it has to store the
+source listing before proceeding.
 
 Specifying --delete-during (default value) will delete files while
 checking and uploading files. This is usually the fastest option.
+Currently this works the same as --delete-after but it may change in the
+future.
 
 Specifying --delete-after will delay deletion of files until all
 new/updated files have been successfully transfered.
@@ -789,6 +853,24 @@ attacks.
 This option defaults to false.
 
 THIS SHOULD BE USED ONLY FOR TESTING.
+
+--no-traverse
+
+The --no-traverse flag controls whether the destination file system is
+traversed when using the copy or move commands.
+
+If you are only copying a small number of files and/or have a large
+number of files on the destination then --no-traverse will stop rclone
+listing the destination and save time.
+
+However if you are copying a large number of files, escpecially if you
+are doing a copy where lots of the files haven't changed and won't need
+copying then you shouldn't use --no-traverse.
+
+It can also be used to reduce the memory usage of rclone when copying -
+rclone --no-traverse copy src dst won't load either the source or
+destination listings into memory so will use the minimum amount of
+memory.
 
 
 Filtering
@@ -1064,7 +1146,7 @@ This would exclude
 
 A similar process is done on directory entries before recursing into
 them. This only works on remotes which have a concept of directory (Eg
-local, drive, onedrive, amazon cloud drive) and not on bucket based
+local, google drive, onedrive, amazon drive) and not on bucket based
 remotes (eg s3, swift, google compute storage, b2).
 
 
@@ -1172,6 +1254,40 @@ Prepare a file like this files-from.txt
 Then use as --files-from files-from.txt. This will only transfer
 file1.jpg and file2.jpg providing they exist.
 
+For example, let's say you had a few files you want to back up regularly
+with these absolute paths:
+
+    /home/user1/important
+    /home/user1/dir/file
+    /home/user2/stuff
+
+To copy these you'd find a common subdirectory - in this case /home and
+put the remaining files in files-from.txt with or without leading /, eg
+
+    user1/important
+    user1/dir/file
+    user2/stuff
+
+You could then copy these to a remote like this
+
+    rclone copy --files-from files-from.txt /home remote:backup
+
+The 3 files will arrive in remote:backup with the paths as in the
+files-from.txt.
+
+You could of course choose / as the root too in which case your
+files-from.txt might look like this.
+
+    /home/user1/important
+    /home/user1/dir/file
+    /home/user2/stuff
+
+And you would transfer it like this
+
+    rclone copy --files-from files-from.txt / remote:backup
+
+In this case there will be an extra home directory on the remote.
+
 --min-size - Don't transfer any file smaller than this
 
 This option controls the minimum size file which will be transferred.
@@ -1278,7 +1394,7 @@ Here is an overview of the major features of each cloud storage system.
   Openstack Swift         MD5      Yes            No                No
   Dropbox                  -       No            Yes                No
   Google Cloud Storage    MD5      Yes            No                No
-  Amazon Drive      MD5      No            Yes                No
+  Amazon Drive            MD5      No            Yes                No
   Microsoft One Drive     SHA1     Yes           Yes                No
   Hubic                   MD5      Yes            No                No
   Backblaze B2            SHA1     Yes            No                No
@@ -1862,6 +1978,59 @@ removed).
 Because this is a json dump, it is encoding the / as \/, so if you use
 the secret key as xxxxxx/xxxx it will work fine.
 
+Minio
+
+Minio is an object storage server built for cloud application developers
+and devops.
+
+It is very easy to install and provides an S3 compatible server which
+can be used by rclone.
+
+To use it, install Minio following the instructions from the web site.
+
+When it configures itself Minio will print something like this
+
+    AccessKey: WLGDGYAQYIGI833EV05A  SecretKey: BYvgJM101sHngl2uzjXS/OBF/aMxAN06JrJ3qJlF Region: us-east-1
+
+    Minio Object Storage:
+         http://127.0.0.1:9000
+         http://10.0.0.3:9000
+
+    Minio Browser:
+         http://127.0.0.1:9000
+         http://10.0.0.3:9000
+
+These details need to go into rclone config like this. Note that it is
+important to put the region in as stated above.
+
+    env_auth> 1
+    access_key_id> WLGDGYAQYIGI833EV05A
+    secret_access_key> BYvgJM101sHngl2uzjXS/OBF/aMxAN06JrJ3qJlF   
+    region> us-east-1
+    endpoint> http://10.0.0.3:9000
+    location_constraint> 
+    server_side_encryption>
+
+Which makes the config file look like this
+
+    [minio]
+    env_auth = false
+    access_key_id = WLGDGYAQYIGI833EV05A
+    secret_access_key = BYvgJM101sHngl2uzjXS/OBF/aMxAN06JrJ3qJlF
+    region = us-east-1
+    endpoint = http://10.0.0.3:9000
+    location_constraint = 
+    server_side_encryption = 
+
+Minio doesn't support all the features of S3 yet. In particular it
+doesn't support MD5 checksums (ETags) or metadata. This means rclone
+can't check MD5SUMs or store the modified date. However you can work
+around this with the --size-only flag of rclone.
+
+So once set up, for example to copy files into a bucket
+
+    rclone --size-only copy /path/to/files minio:bucket
+
 
 Swift
 
@@ -1934,6 +2103,8 @@ This will guide you through an interactive setup process.
     domain> Default
     Tenant name - optional
     tenant> 
+    Tenant domain - optional (v3 auth)
+    tenant_domain>
     Region name - optional
     region> 
     Storage URL - optional
@@ -2302,9 +2473,9 @@ Paths are specified as remote:path
 
 Paths may be as deep as required, eg remote:directory/subdirectory.
 
-The initial setup for Amazon cloud drive involves getting a token from
-Amazon which you need to do in your browser. rclone config walks you
-through it.
+The initial setup for Amazon Drive involves getting a token from Amazon
+which you need to do in your browser. rclone config walks you through
+it.
 
 Here is an example of how to make a remote called remote. First run:
 
@@ -2373,23 +2544,22 @@ temporarily if you are running a host firewall.
 
 Once configured you can then use rclone like this,
 
-List directories in top level of your Amazon cloud drive
+List directories in top level of your Amazon Drive
 
     rclone lsd remote:
 
-List all the files in your Amazon cloud drive
+List all the files in your Amazon Drive
 
     rclone ls remote:
 
-To copy a local directory to an Amazon cloud drive directory called
-backup
+To copy a local directory to an Amazon Drive directory called backup
 
     rclone copy /home/source remote:backup
 
 Modified time and MD5SUMs
 
-Amazon cloud drive doesn't allow modification times to be changed via
-the API so these won't be accurate or used for syncing.
+Amazon Drive doesn't allow modification times to be changed via the API
+so these won't be accurate or used for syncing.
 
 It does store MD5SUMs so for a more accurate sync, you can use the
 --checksum flag.
@@ -2399,7 +2569,7 @@ Deleting files
 Any files you delete with rclone will end up in the trash. Amazon don't
 provide an API to permanently delete files, nor to empty the trash, so
 you will have to do that with one of Amazon's apps or via the Amazon
-cloud drive website.
+Drive website.
 
 Specific options
 
@@ -2408,8 +2578,8 @@ Here are the command line options specific to this cloud storage system.
 --acd-templink-threshold=SIZE
 
 Files this size or more will be downloaded via their tempLink. This is
-to work around a problem with Amazon Drive which blocks downloads
-of files bigger than about 10GB. The default for this is 9GB which
+to work around a problem with Amazon Drive which blocks downloads of
+files bigger than about 10GB. The default for this is 9GB which
 shouldn't need to be changed.
 
 To download files above this threshold, rclone requests a tempLink which
@@ -2418,17 +2588,17 @@ S3 storage.
 
 Limitations
 
-Note that Amazon cloud drive is case insensitive so you can't have a
-file called "Hello.doc" and one called "hello.doc".
+Note that Amazon Drive is case insensitive so you can't have a file
+called "Hello.doc" and one called "hello.doc".
 
-Amazon cloud drive has rate limiting so you may notice errors in the
-sync (429 errors). rclone will automatically retry the sync up to 3
-times by default (see --retries flag) which should hopefully work around
-this problem.
+Amazon Drive has rate limiting so you may notice errors in the sync (429
+errors). rclone will automatically retry the sync up to 3 times by
+default (see --retries flag) which should hopefully work around this
+problem.
 
-Amazon cloud drive has an internal limit of file sizes that can be
-uploaded to the service. This limit is not officially published, but all
-files larger than this will fail.
+Amazon Drive has an internal limit of file sizes that can be uploaded to
+the service. This limit is not officially published, but all files
+larger than this will fail.
 
 At the time of writing (Jan 2016) is in the area of 50GB per file. This
 means that larger files are likely to fail.
@@ -2802,19 +2972,6 @@ will be used in the syncing process. You can use the --checksum flag.
 Large files which are uploaded in chunks will store their SHA1 on the
 object as X-Bz-Info-large_file_sha1 as recommended by Backblaze.
 
-Versions
-
-When rclone uploads a new version of a file it creates a new version of
-it. Likewise when you delete a file, the old version will still be
-available.
-
-The old versions of files are visible in the B2 web interface, but not
-via rclone yet.
-
-Rclone doesn't provide any way of managing old versions (downloading
-them or deleting them) at the moment. When you purge a bucket, all the
-old versions will be deleted.
-
 Transfers
 
 Backblaze recommends that you do lots of transfers simultaneously for
@@ -2824,6 +2981,57 @@ speed improvement. The optimum number for you may vary depending on your
 hardware, how big the files are, how much you want to load your
 computer, etc. The default of --transfers 4 is definitely too low for
 Backblaze B2 though.
+
+Versions
+
+When rclone uploads a new version of a file it creates a new version of
+it. Likewise when you delete a file, the old version will still be
+available.
+
+Old versions of files are visible using the --b2-versions flag.
+
+If you wish to remove all the old versions then you can use the
+rclone cleanup remote:bucket command which will delete all the old
+versions of files, leaving the current ones intact. You can also supply
+a path and only old versions under that path will be deleted, eg
+rclone cleanup remote:bucket/path/to/stuff.
+
+When you purge a bucket, the current and the old versions will be
+deleted then the bucket will be deleted.
+
+However delete will cause the current versions of the files to become
+hidden old versions.
+
+Here is a session showing the listing and and retreival of an old
+version followed by a cleanup of the old versions.
+
+Show current version and all the versions with --b2-versions flag.
+
+    $ rclone -q ls b2:cleanup-test
+            9 one.txt
+
+    $ rclone -q --b2-versions ls b2:cleanup-test
+            9 one.txt
+            8 one-v2016-07-04-141032-000.txt
+           16 one-v2016-07-04-141003-000.txt
+           15 one-v2016-07-02-155621-000.txt
+
+Retreive an old verson
+
+    $ rclone -q --b2-versions copy b2:cleanup-test/one-v2016-07-04-141003-000.txt /tmp
+
+    $ ls -l /tmp/one-v2016-07-04-141003-000.txt
+    -rw-rw-r-- 1 ncw ncw 16 Jul  2 17:46 /tmp/one-v2016-07-04-141003-000.txt
+
+Clean up all the old versions and show that they've gone.
+
+    $ rclone -q cleanup b2:cleanup-test
+
+    $ rclone -q ls b2:cleanup-test
+            9 one.txt
+
+    $ rclone -q --b2-versions ls b2:cleanup-test
+            9 one.txt
 
 Specific options
 
@@ -2841,10 +3049,44 @@ Cutoff for switching to chunked upload (default 4.657GiB == 5GB). Files
 above this size will be uploaded in chunks of --b2-chunk-size. The
 default value is the largest file which can be uploaded without chunks.
 
-API
+--b2-test-mode=FLAG
 
-Here are some notes I made on the backblaze API while integrating it
-with rclone.
+This is for debugging purposes only.
+
+Setting FLAG to one of the strings below will cause b2 to return
+specific errors for debugging purposes.
+
+-   fail_some_uploads
+-   expire_some_account_authorization_tokens
+-   force_cap_exceeded
+
+These will be set in the X-Bz-Test-Mode header which is documented in
+the b2 integrations checklist.
+
+--b2-versions
+
+When set rclone will show and act on older versions of files. For
+example
+
+Listing without --b2-versions
+
+    $ rclone -q ls b2:cleanup-test
+            9 one.txt
+
+And with
+
+    $ rclone -q --b2-versions ls b2:cleanup-test
+            9 one.txt
+            8 one-v2016-07-04-141032-000.txt
+           16 one-v2016-07-04-141003-000.txt
+           15 one-v2016-07-02-155621-000.txt
+
+Showing that the current version is unchanged but older versions can be
+seen. These have the UTC date that they were uploaded to the server to
+the nearest millisecond appended to them.
+
+Note that when using --b2-versions no file write operations are
+permitted, so you can't upload files or delete them.
 
 
 Yandex Disk
@@ -3023,6 +3265,52 @@ characters on z, so only use this option if you have to.
 
 Changelog
 
+-   v1.31 - 2016-07-13
+    -   New Features
+    -   Reduce memory on sync by about 50%
+    -   Implement --no-traverse flag to stop copy traversing the
+        destination remote.
+        -   This can be used to reduce memory usage down to the
+            smallest possible.
+        -   Useful to copy a small number of files into a large
+            destination folder.
+    -   Implement cleanup command for emptying trash / removing old
+        versions of files
+        -   Currently B2 only
+    -   Single file handling improved
+        -   Now copied with --files-from
+        -   Automatically sets --no-traverse when copying a single file
+    -   Info on using installing with ansible - thanks Stefan Weichinger
+    -   Implement --no-update-modtime flag to stop rclone fixing the
+        remote modified times.
+    -   Bug Fixes
+    -   Fix move command - stop it running for overlapping Fses - this
+        was causing data loss.
+    -   Local
+    -   Fix incomplete hashes - this was causing problems for B2.
+    -   Amazon Drive
+    -   Rename Amazon Cloud Drive to Amazon Drive - no changes to config
+        file needed.
+    -   Swift
+    -   Add support for non-default project domain - thanks
+        Antonio Messina.
+    -   S3
+    -   Add instructions on how to use rclone with minio.
+    -   Add ap-northeast-2 (Seoul) and ap-south-1 (Mumbai) regions.
+    -   Skip setting the modified time for objects > 5GB as it
+        isn't possible.
+    -   Backblaze B2
+    -   Add --b2-versions flag so old versions can be listed
+        and retreived.
+    -   Treat 403 errors (eg cap exceeded) as fatal.
+    -   Implement cleanup command for deleting old file versions.
+    -   Make error handling compliant with B2 integrations notes.
+    -   Fix handling of token expiry.
+    -   Implement --b2-test-mode to set X-Bz-Test-Mode header.
+    -   Set cutoff for chunked upload to 200MB as per B2 guidelines.
+    -   Make upload multi-threaded.
+    -   Dropbox
+    -   Don't retry 461 errors.
 -   v1.30 - 2016-06-18
     -   New Features
     -   Directory listing code reworked for more features and better
@@ -3639,6 +3927,8 @@ Contributors
 -   Leigh Klotz klotz@quixey.com
 -   Romain Lapray lapray.romain@gmail.com
 -   Justin R. Wilson jrw972@gmail.com
+-   Antonio Messina antonio.s.messina@gmail.com
+-   Stefan G. Weichinger office@oops.co.at
 
 
 Contact the rclone project

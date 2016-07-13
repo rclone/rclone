@@ -1,12 +1,48 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2016-06-18"
+date: "2016-07-13"
 ---
 
 Changelog
 ---------
 
+  * v1.31 - 2016-07-13
+    * New Features
+      * Reduce memory on sync by about 50%
+      * Implement --no-traverse flag to stop copy traversing the destination remote.
+        * This can be used to reduce memory usage down to the smallest possible.
+        * Useful to copy a small number of files into a large destination folder.
+      * Implement cleanup command for emptying trash / removing old versions of files
+        * Currently B2 only
+      * Single file handling improved
+        * Now copied with --files-from
+        * Automatically sets --no-traverse when copying a single file
+      * Info on using installing with ansible - thanks Stefan Weichinger
+      * Implement --no-update-modtime flag to stop rclone fixing the remote modified times.
+    * Bug Fixes
+      * Fix move command - stop it running for overlapping Fses - this was causing data loss.
+    * Local
+      * Fix incomplete hashes - this was causing problems for B2.
+    * Amazon Drive
+      * Rename Amazon Cloud Drive to Amazon Drive - no changes to config file needed.
+    * Swift
+      * Add support for non-default project domain - thanks Antonio Messina.
+    * S3
+      * Add instructions on how to use rclone with minio.
+      * Add ap-northeast-2 (Seoul) and ap-south-1 (Mumbai) regions.
+      * Skip setting the modified time for objects > 5GB as it isn't possible.
+    * Backblaze B2
+      * Add --b2-versions flag so old versions can be listed and retreived.
+      * Treat 403 errors (eg cap exceeded) as fatal.
+      * Implement cleanup command for deleting old file versions.
+      * Make error handling compliant with B2 integrations notes.
+      * Fix handling of token expiry.
+      * Implement --b2-test-mode to set `X-Bz-Test-Mode` header.
+      * Set cutoff for chunked upload to 200MB as per B2 guidelines.
+      * Make upload multi-threaded.
+    * Dropbox
+      * Don't retry 461 errors.
   * v1.30 - 2016-06-18
     * New Features
       * Directory listing code reworked for more features and better error reporting (thanks to Klaus Post for help).  This enables
