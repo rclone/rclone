@@ -32,7 +32,7 @@ type largeUpload struct {
 
 // newLargeUpload starts an upload of object o from in with metadata in src
 func (f *Fs) newLargeUpload(o *Object, in io.Reader, src fs.ObjectInfo) (up *largeUpload, err error) {
-	remote := src.Remote()
+	remote := o.remote
 	size := src.Size()
 	parts := size / int64(chunkSize)
 	if size%int64(chunkSize) != 0 {
@@ -52,7 +52,7 @@ func (f *Fs) newLargeUpload(o *Object, in io.Reader, src fs.ObjectInfo) (up *lar
 	}
 	var request = api.StartLargeFileRequest{
 		BucketID:    bucketID,
-		Name:        remote,
+		Name:        o.fs.root + remote,
 		ContentType: fs.MimeType(src),
 		Info: map[string]string{
 			timeKey: timeString(modTime),
