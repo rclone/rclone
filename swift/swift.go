@@ -66,7 +66,7 @@ func init() {
 			Help: "User domain - optional (v3 auth)",
 		}, {
 			Name: "tenant",
-			Help: "Tenant name - optional",
+			Help: "Tenant name - optional for v1 auth, required otherwise",
 		}, {
 			Name: "tenant_domain",
 			Help: "Tenant domain - optional (v3 auth)",
