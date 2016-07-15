@@ -52,8 +52,8 @@ type Fs struct {
 // Object represents a local filesystem object
 type Object struct {
 	fs     *Fs                    // The Fs this object is part of
-	remote string                 // The remote path
-	path   string                 // The local path
+	remote string                 // The remote path - properly UTF-8 encoded - for rclone
+	path   string                 // The local path - may not be properly UTF-8 encoded - for OS
 	info   os.FileInfo            // Interface for file info (always present)
 	hashes map[fs.HashType]string // Hashes
 }
@@ -70,7 +70,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		warned: make(map[string]struct{}),
 		nounc:  nounc == "true",
 	}
-	f.root = f.filterPath(f.cleanUtf8(root))
+	f.root = f.filterPath(root)
 
 	// Check to see if this points to a file
 	fi, err := os.Lstat(f.root)
@@ -101,8 +101,8 @@ func (f *Fs) String() string {
 // newObject makes a half completed Object
 func (f *Fs) newObject(remote string) *Object {
 	remote = normString(remote)
-	remote = filepath.ToSlash(remote)
-	dstPath := f.filterPath(filepath.Join(f.root, f.cleanUtf8(remote)))
+	dstPath := f.filterPath(filepath.Join(f.root, remote))
+	remote = filepath.ToSlash(f.cleanUtf8(remote))
 	return &Object{
 		fs:     f,
 		remote: remote,
@@ -479,7 +479,7 @@ func (o *Object) String() string {
 
 // Remote returns the remote path
 func (o *Object) Remote() string {
-	return o.fs.cleanUtf8(o.remote)
+	return o.remote
 }
 
 // Hash returns the requested hash of a file as a lowercase hex string
