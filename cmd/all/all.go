@@ -19,6 +19,7 @@ import (
 	_ "github.com/ncw/rclone/cmd/md5sum"
 	_ "github.com/ncw/rclone/cmd/memtest"
 	_ "github.com/ncw/rclone/cmd/mkdir"
+	_ "github.com/ncw/rclone/cmd/mount"
 	_ "github.com/ncw/rclone/cmd/move"
 	_ "github.com/ncw/rclone/cmd/purge"
 	_ "github.com/ncw/rclone/cmd/rmdir"
