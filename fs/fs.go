@@ -182,15 +182,24 @@ type Object interface {
 
 // ObjectInfo contains information about an object.
 type ObjectInfo interface {
+	BasicInfo
+
 	// Fs returns read only access to the Fs that this object is part of
 	Fs() Info
-
-	// Remote returns the remote path
-	Remote() string
 
 	// Hash returns the selected checksum of the file
 	// If no checksum is available it returns ""
 	Hash(HashType) (string, error)
+
+	// Storable says whether this object can be stored
+	Storable() bool
+}
+
+// BasicInfo common interface for Dir and Object providing the very
+// basic attributes of an object.
+type BasicInfo interface {
+	// Remote returns the remote path
+	Remote() string
 
 	// ModTime returns the modification date of the file
 	// It should return a best guess if one isn't available
@@ -198,9 +207,6 @@ type ObjectInfo interface {
 
 	// Size returns the size of the file
 	Size() int64
-
-	// Storable says whether this object can be stored
-	Storable() bool
 }
 
 // Purger is an optional interfaces for Fs
@@ -342,6 +348,28 @@ type Dir struct {
 	Bytes int64     // size of directory and contents -1 for unknown
 	Count int64     // number of objects -1 for unknown
 }
+
+// Remote returns the remote path
+func (d *Dir) Remote() string {
+	return d.Name
+}
+
+// ModTime returns the modification date of the file
+// It should return a best guess if one isn't available
+func (d *Dir) ModTime() time.Time {
+	if !d.When.IsZero() {
+		return d.When
+	}
+	return time.Now()
+}
+
+// Size returns the size of the file
+func (d *Dir) Size() int64 {
+	return d.Bytes
+}
+
+// Check interface
+var _ BasicInfo = (*Dir)(nil)
 
 // DirChan is a channel of Dir objects
 type DirChan chan *Dir
