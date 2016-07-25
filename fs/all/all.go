@@ -4,6 +4,7 @@ import (
 	// Active file systems
 	_ "github.com/ncw/rclone/amazonclouddrive"
 	_ "github.com/ncw/rclone/b2"
+	_ "github.com/ncw/rclone/crypt"
 	_ "github.com/ncw/rclone/drive"
 	_ "github.com/ncw/rclone/dropbox"
 	_ "github.com/ncw/rclone/googlecloudstorage"

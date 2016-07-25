@@ -8,6 +8,7 @@ package fstests
 import (
 	"bytes"
 	"flag"
+	"fmt"
 	"io"
 	"os"
 	"path"
@@ -86,7 +87,7 @@ func TestInit(t *testing.T) {
 		t.Logf("Didn't find %q in config file - skipping tests", RemoteName)
 		return
 	}
-	require.NoError(t, err)
+	require.NoError(t, err, fmt.Sprintf("unexpected error: %v", err))
 	fstest.TestMkdir(t, remote)
 }
 
@@ -215,7 +216,7 @@ again:
 			tries++
 			goto again
 		}
-		require.NoError(t, err, "Put error")
+		require.NoError(t, err, fmt.Sprintf("Put error: %v", err))
 	}
 	file.Hashes = hash.Sums()
 	file.Check(t, obj, remote.Precision())
@@ -335,7 +336,10 @@ func TestFsCopy(t *testing.T) {
 	// do the copy
 	src := findObject(t, file1.Path)
 	dst, err := remote.(fs.Copier).Copy(src, file1Copy.Path)
-	require.NoError(t, err)
+	if err == fs.ErrorCantCopy {
+		t.Skip("FS can't copy")
+	}
+	require.NoError(t, err, fmt.Sprintf("Error: %#v", err))
 
 	// check file exists in new listing
 	fstest.CheckListing(t, remote, []fstest.Item{file1, file2, file1Copy})
@@ -365,6 +369,9 @@ func TestFsMove(t *testing.T) {
 	// do the move
 	src := findObject(t, file1.Path)
 	dst, err := remote.(fs.Mover).Move(src, file1Move.Path)
+	if err == fs.ErrorCantMove {
+		t.Skip("FS can't move")
+	}
 	require.NoError(t, err)
 
 	// check file exists in new listing
@@ -521,7 +528,7 @@ func TestObjectOpen(t *testing.T) {
 	require.NoError(t, err)
 	hasher := fs.NewMultiHasher()
 	n, err := io.Copy(hasher, in)
-	require.NoError(t, err)
+	require.NoError(t, err, fmt.Sprintf("hasher copy error: %v", err))
 	require.Equal(t, file1.Size, n, "Read wrong number of bytes")
 	err = in.Close()
 	require.NoError(t, err)

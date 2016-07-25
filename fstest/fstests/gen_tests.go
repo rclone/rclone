@@ -61,7 +61,8 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fstest/fstests"
 	"github.com/ncw/rclone/{{ .FsName }}"
-)
+{{ if eq .FsName "crypt" }}	_ "github.com/ncw/rclone/local"
+{{end}})
 
 func init() {
 	fstests.NilObject = fs.Object((*{{ .FsName }}.Object)(nil))
@@ -135,5 +136,6 @@ func main() {
 	generateTestProgram(t, fns, "Hubic")
 	generateTestProgram(t, fns, "B2")
 	generateTestProgram(t, fns, "Yandex")
+	generateTestProgram(t, fns, "Crypt")
 	log.Printf("Done")
 }
