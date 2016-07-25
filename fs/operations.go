@@ -991,7 +991,7 @@ func listToChan(list *Lister) ObjectsChan {
 			if dir == nil && obj == nil {
 				return
 			}
-			if o == nil {
+			if obj == nil {
 				continue
 			}
 			o <- obj
