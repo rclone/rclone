@@ -4,7 +4,8 @@ This is a short guide on how to contribute things to rclone.
 
 ## Reporting a bug ##
 
-Bug reports are welcome.  Please when submitting add:
+Bug reports are welcome.  Check your issue exists with the latest
+version first. Please add when submitting:
 
   * Rclone version (eg output from `rclone -V`)
   * Which OS you are using and how many bits (eg Windows 7, 64 bit)

@@ -1,5 +1,6 @@
 When filing an issue, please include the following information if
-possible as well as a description of the problem.
+possible as well as a description of the problem.  Make sure you are
+using the [latest version of rclone](http://rclone.org/downloads/).
 
 > What is your rclone version (eg output from `rclone -V`)
 
