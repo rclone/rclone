@@ -203,10 +203,10 @@ type ObjectInfo interface {
 	Storable() bool
 }
 
-// ObjectInfoWithMetada contains an object with its associated metadata
+// ObjectInfoWithMetadata contains an object with its associated metadata
 type ObjectInfoWithMetadata interface {
 	ObjectInfo
-	
+
 	// User defined metadata on this object
 	UserMetadata() map[string]string
 }

@@ -15,9 +15,9 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/davecheney/xattr"
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
-	"github.com/davecheney/xattr"
 )
 
 // Register with Fs
@@ -52,12 +52,12 @@ type Fs struct {
 
 // Object represents a local filesystem object
 type Object struct {
-	fs     *Fs                    // The Fs this object is part of
-	remote string                 // The remote path - properly UTF-8 encoded - for rclone
-	path   string                 // The local path - may not be properly UTF-8 encoded - for OS
-	info   os.FileInfo            // Interface for file info (always present)
-	hashes map[fs.HashType]string // Hashes
-	metadata map[string] string
+	fs       *Fs                    // The Fs this object is part of
+	remote   string                 // The remote path - properly UTF-8 encoded - for rclone
+	path     string                 // The local path - may not be properly UTF-8 encoded - for OS
+	info     os.FileInfo            // Interface for file info (always present)
+	hashes   map[fs.HashType]string // Hashes
+	metadata map[string]string
 }
 
 // ------------------------------------------------------------
@@ -550,8 +550,8 @@ func (o *Object) Storable() bool {
 	return true
 }
 
-// Return the map of metadata
-func (o* Object) UserMetadata() map[string]string {
+// UserMetadata Return the map of metadata
+func (o *Object) UserMetadata() map[string]string {
 	return o.metadata
 }
 
@@ -638,19 +638,18 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	if err != nil {
 		return err
 	}
-	
+
 	// Set the metadata
 	switch src.(type) {
-		case fs.ObjectInfoWithMetadata:
-		    srcm := src.(fs.ObjectInfoWithMetadata)
-			for attr, value := range srcm.UserMetadata() {
-				err := xattr.Setxattr(o.path, "user.user-metadata." + attr, []byte(value))
-				if err != nil {
-					fs.Debug(o, "Could not set attribute", err);
-				}
+	case fs.ObjectInfoWithMetadata:
+		srcm := src.(fs.ObjectInfoWithMetadata)
+		for attr, value := range srcm.UserMetadata() {
+			err := xattr.Setxattr(o.path, "user.user-metadata."+attr, []byte(value))
+			if err != nil {
+				fs.Debug(o, "Could not set attribute", err)
 			}
+		}
 	}
-	
 
 	// ReRead info now that we have finished
 	return o.lstat()
@@ -682,7 +681,6 @@ func (o *Object) lattr() error {
 	}
 	return err
 }
-
 
 // Remove an object
 func (o *Object) Remove() error {
