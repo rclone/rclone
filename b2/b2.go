@@ -38,7 +38,7 @@ const (
 	testModeHeader   = "X-Bz-Test-Mode"
 	retryAfterHeader = "Retry-After"
 	minSleep         = 10 * time.Millisecond
-	maxSleep         = 2 * time.Second
+	maxSleep         = 5 * time.Minute
 	decayConstant    = 1 // bigger for slower decay, exponential
 	maxParts         = 10000
 	maxVersions      = 100 // maximum number of versions we search in --b2-versions mode
