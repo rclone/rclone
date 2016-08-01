@@ -644,7 +644,10 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		case fs.ObjectInfoWithMetadata:
 		    srcm := src.(fs.ObjectInfoWithMetadata)
 			for attr, value := range srcm.UserMetadata() {
-				xattr.Setxattr(o.path, "user.user-metadata." + attr, []byte(value))
+				err := xattr.Setxattr(o.path, "user.user-metadata." + attr, []byte(value))
+				if err != nil {
+					fs.Debug(o, "Could not set attribute", err);
+				}
 			}
 	}
 	
