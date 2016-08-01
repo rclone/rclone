@@ -1,4 +1,4 @@
-// Package local provides a filesystem interface
+q// Package local provides a filesystem interface
 package local
 
 import (
@@ -17,6 +17,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
+	"github.com/davecheney/xattr"
 )
 
 // Register with Fs
@@ -56,6 +57,7 @@ type Object struct {
 	path   string                 // The local path - may not be properly UTF-8 encoded - for OS
 	info   os.FileInfo            // Interface for file info (always present)
 	hashes map[fs.HashType]string // Hashes
+	metadata map[string] string
 }
 
 // ------------------------------------------------------------
@@ -126,7 +128,8 @@ func (f *Fs) newObjectWithInfo(remote string, info os.FileInfo) (fs.Object, erro
 			return nil, err
 		}
 	}
-	return o, nil
+	err := o.lattr()
+	return o, err
 }
 
 // NewObject finds the Object at remote.  If it can't be found
@@ -547,6 +550,11 @@ func (o *Object) Storable() bool {
 	return true
 }
 
+// Return the map of metadata
+func (o* Object) UserMetadata() map[string]string {
+	return o.metadata
+}
+
 // localOpenFile wraps an io.ReadCloser and updates the md5sum of the
 // object that is read
 type localOpenFile struct {
@@ -630,6 +638,16 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	if err != nil {
 		return err
 	}
+	
+	// Set the metadata
+	switch src.(type) {
+		case fs.ObjectInfoWithMetadata:
+		    srcm := src.(fs.ObjectInfoWithMetadata)
+			for attr, value := range srcm.UserMetadata() {
+				xattr.Setxattr(o.path, "user.user-metadata." + attr, []byte(value))
+			}
+	}
+	
 
 	// ReRead info now that we have finished
 	return o.lstat()
@@ -641,6 +659,27 @@ func (o *Object) lstat() error {
 	o.info = info
 	return err
 }
+
+// Pattern to match a user metadata stored as an extended attribute on the file system
+var userMetadata = regexp.MustCompile(`^user\.user-metadata\.(.*)`)
+
+// Stat a Object into info
+func (o *Object) lattr() error {
+	listAttr, err := xattr.Listxattr(o.path)
+	for _, attr := range listAttr {
+		parts := userMetadata.FindStringSubmatch(attr)
+		if parts != nil {
+			fs.Debug(o, "Adding attribute", parts[1])
+			if o.metadata == nil {
+				o.metadata = make(map[string]string)
+			}
+			bytes, _ := xattr.Getxattr(o.path, attr)
+			o.metadata[parts[1]] = string(bytes)
+		}
+	}
+	return err
+}
+
 
 // Remove an object
 func (o *Object) Remove() error {
