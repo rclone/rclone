@@ -1,4 +1,4 @@
-q// Package local provides a filesystem interface
+// Package local provides a filesystem interface
 package local
 
 import (
