@@ -550,7 +550,7 @@ func (o *Object) Storable() bool {
 	return true
 }
 
-// UserMetadata Return the map of metadata
+// UserMetadata Return the map of metadata or nil if no metadata could be found
 func (o *Object) UserMetadata() map[string]string {
 	return o.metadata
 }
@@ -640,9 +640,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	}
 
 	// Set the metadata
-	switch src.(type) {
-	case fs.ObjectInfoWithMetadata:
-		srcm := src.(fs.ObjectInfoWithMetadata)
+	if srcm, ok := src.(fs.ObjectInfoWithMetadata); ok {
 		for attr, value := range srcm.UserMetadata() {
 			err := xattr.Setxattr(o.path, "user.user-metadata."+attr, []byte(value))
 			if err != nil {
@@ -675,8 +673,12 @@ func (o *Object) lattr() error {
 			if o.metadata == nil {
 				o.metadata = make(map[string]string)
 			}
-			bytes, _ := xattr.Getxattr(o.path, attr)
-			o.metadata[parts[1]] = string(bytes)
+			bytes, xerr := xattr.Getxattr(o.path, attr)
+			if xerr != nil {
+				fs.Debug(o, "Could not get attribute", xerr)
+			} else {
+				o.metadata[parts[1]] = string(bytes)
+			}
 		}
 	}
 	return err
