@@ -15,7 +15,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/davecheney/xattr"
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
 )
@@ -642,7 +641,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	// Set the metadata
 	if srcm, ok := src.(fs.ObjectInfoWithMetadata); ok {
 		for attr, value := range srcm.UserMetadata() {
-			xerr := xattr.Setxattr(o.path, "user.user-metadata."+attr, []byte(value))
+			xerr := setxattr(o.path, "user.user-metadata."+attr, []byte(value))
 			if xerr != nil {
 				fs.Debug(o, "Could not set attribute", xerr)
 			}
@@ -665,7 +664,7 @@ var userMetadata = regexp.MustCompile(`^user\.user-metadata\.(.*)`)
 
 // Stat a Object into info
 func (o *Object) lattr() error {
-	listAttr, xerr := xattr.Listxattr(o.path)
+	listAttr, xerr := listxattr(o.path)
 	fs.Debug(o, "Listing attrs returned", listAttr, xerr)
 	for _, attr := range listAttr {
 		parts := userMetadata.FindStringSubmatch(attr)
@@ -674,7 +673,7 @@ func (o *Object) lattr() error {
 			if o.metadata == nil {
 				o.metadata = make(map[string]string)
 			}
-			bytes, xerr := xattr.Getxattr(o.path, attr)
+			bytes, xerr := getxattr(o.path, attr)
 			if xerr != nil {
 				fs.Debug(o, "Could not get attribute", xerr)
 			} else {
