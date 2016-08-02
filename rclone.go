@@ -3,6 +3,10 @@
 // Nick Craig-Wood <nick@craig-wood.com>
 package main
 
+// FIXME only attach the remote flags when using a remote???
+// FIXME could do the same for dedupe
+// would probably mean bringing all the flags in to here? Or define some flagsets in fs...
+
 import (
 	"fmt"
 	"log"
@@ -10,9 +14,9 @@ import (
 	"path"
 	"runtime"
 	"runtime/pprof"
-	"strings"
 	"time"
 
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
 	"github.com/ncw/rclone/fs"
@@ -25,364 +29,69 @@ var (
 	cpuProfile    = pflag.StringP("cpuprofile", "", "", "Write cpu profile to file")
 	memProfile    = pflag.String("memprofile", "", "Write memory profile to file")
 	statsInterval = pflag.DurationP("stats", "", time.Minute*1, "Interval to print stats (0 to disable)")
-	version       = pflag.BoolP("version", "V", false, "Print the version number")
+	version       bool
 	logFile       = pflag.StringP("log-file", "", "", "Log everything to this file")
 	retries       = pflag.IntP("retries", "", 3, "Retry operations this many times if they fail")
 )
 
-// Command holds info about the current running command
-type Command struct {
-	Name     string
-	Help     string
-	ArgsHelp string
-	Run      func(fdst, fsrc fs.Fs) error
-	MinArgs  int
-	MaxArgs  int
-	NoStats  bool
-	Retry    bool
-}
+var rootCmd = &cobra.Command{
+	Use:   "rclone",
+	Short: "Sync files and directories to and from local and remote object stores - " + fs.Version,
+	Long: `
+Rclone is a command line program to sync files and directories to and
+from various cloud storage systems, such as:
 
-// checkArgs checks there are enough arguments and prints a message if not
-func (cmd *Command) checkArgs(args []string) {
-	if len(args) < cmd.MinArgs {
-		syntaxError()
-		fmt.Fprintf(os.Stderr, "Command %s needs %d arguments mininum\n", cmd.Name, cmd.MinArgs)
-		os.Exit(1)
-	} else if len(args) > cmd.MaxArgs {
-		syntaxError()
-		fmt.Fprintf(os.Stderr, "Command %s needs %d arguments maximum\n", cmd.Name, cmd.MaxArgs)
-		os.Exit(1)
-	}
-}
+  * Google Drive
+  * Amazon S3
+  * Openstack Swift / Rackspace cloud files / Memset Memstore
+  * Dropbox
+  * Google Cloud Storage
+  * Amazon Drive
+  * Microsoft One Drive
+  * Hubic
+  * Backblaze B2
+  * Yandex Disk
+  * The local filesystem
 
-// Commands is a slice of possible Command~s
-var Commands = []Command{
-	{
-		Name:     "copy",
-		ArgsHelp: "source:path dest:path",
-		Help: `
-        Copy the source to the destination.  Doesn't transfer
-        unchanged files, testing by size and modification time or
-        MD5SUM.  Doesn't delete files from the destination.`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.CopyDir(fdst, fsrc)
-		},
-		MinArgs: 2,
-		MaxArgs: 2,
-		Retry:   true,
-	},
-	{
-		Name:     "sync",
-		ArgsHelp: "source:path dest:path",
-		Help: `
-        Sync the source to the destination, changing the destination
-        only.  Doesn't transfer unchanged files, testing by size and
-        modification time or MD5SUM.  Destination is updated to match
-        source, including deleting files if necessary.  Since this can
-        cause data loss, test first with the --dry-run flag.`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.Sync(fdst, fsrc)
-		},
-		MinArgs: 2,
-		MaxArgs: 2,
-		Retry:   true,
-	},
-	{
-		Name:     "move",
-		ArgsHelp: "source:path dest:path",
-		Help: `
-        Moves the source to the destination.  This is equivalent to a
-        copy followed by a purge, but may use server side operations
-        to speed it up. Since this can cause data loss, test first
-        with the --dry-run flag.`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.MoveDir(fdst, fsrc)
-		},
-		MinArgs: 2,
-		MaxArgs: 2,
-		Retry:   true,
-	},
-	{
-		Name:     "ls",
-		ArgsHelp: "remote:path",
-		Help: `
-        List all the objects in the the path with size and path.`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.List(fdst, os.Stdout)
-		},
-		MinArgs: 1,
-		MaxArgs: 1,
-	},
-	{
-		Name:     "lsd",
-		ArgsHelp: "remote:path",
-		Help: `
-        List all directories/containers/buckets in the the path.`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.ListDir(fdst, os.Stdout)
-		},
-		MinArgs: 1,
-		MaxArgs: 1,
-	},
-	{
-		Name:     "lsl",
-		ArgsHelp: "remote:path",
-		Help: `
-        List all the objects in the the path with modification time,
-        size and path.`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.ListLong(fdst, os.Stdout)
-		},
-		MinArgs: 1,
-		MaxArgs: 1,
-	},
-	{
-		Name:     "md5sum",
-		ArgsHelp: "remote:path",
-		Help: `
-        Produces an md5sum file for all the objects in the path.  This
-        is in the same format as the standard md5sum tool produces.`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.Md5sum(fdst, os.Stdout)
-		},
-		MinArgs: 1,
-		MaxArgs: 1,
-	},
-	{
-		Name:     "sha1sum",
-		ArgsHelp: "remote:path",
-		Help: `
-        Produces an sha1sum file for all the objects in the path.  This
-        is in the same format as the standard sha1sum tool produces.`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.Sha1sum(fdst, os.Stdout)
-		},
-		MinArgs: 1,
-		MaxArgs: 1,
-	},
-	{
-		Name:     "size",
-		ArgsHelp: "remote:path",
-		Help: `
-        Returns the total size of objects in remote:path and the number
-        of objects.`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			objects, size, err := fs.Count(fdst)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("Total objects: %d\n", objects)
-			fmt.Printf("Total size: %s (%d Bytes)\n", fs.SizeSuffix(size).Unit("Bytes"), size)
-			return nil
-		},
-		MinArgs: 1,
-		MaxArgs: 1,
-	},
-	{
-		Name:     "mkdir",
-		ArgsHelp: "remote:path",
-		Help: `
-        Make the path if it doesn't already exist`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.Mkdir(fdst)
-		},
-		MinArgs: 1,
-		MaxArgs: 1,
-		Retry:   true,
-	},
-	{
-		Name:     "rmdir",
-		ArgsHelp: "remote:path",
-		Help: `
-        Remove the path.  Note that you can't remove a path with
-        objects in it, use purge for that.`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.Rmdir(fdst)
-		},
-		MinArgs: 1,
-		MaxArgs: 1,
-		Retry:   true,
-	},
-	{
-		Name:     "purge",
-		ArgsHelp: "remote:path",
-		Help: `
-        Remove the path and all of its contents.  Does not obey
-        filters - use remove for that.`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.Purge(fdst)
-		},
-		MinArgs: 1,
-		MaxArgs: 1,
-		Retry:   true,
-	},
-	{
-		Name:     "delete",
-		ArgsHelp: "remote:path",
-		Help: `
-        Remove the contents of path.  Obeys include/exclude filters.`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.Delete(fdst)
-		},
-		MinArgs: 1,
-		MaxArgs: 1,
-		Retry:   true,
-	},
-	{
-		Name:     "check",
-		ArgsHelp: "source:path dest:path",
-		Help: `
-        Checks the files in the source and destination match.  It
-        compares sizes and MD5SUMs and prints a report of files which
-        don't match.  It doesn't alter the source or destination.`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.Check(fdst, fsrc)
-		},
-		MinArgs: 2,
-		MaxArgs: 2,
-	},
-	{
-		Name:     "dedupe",
-		ArgsHelp: "remote:path",
-		Help: `
-        Interactively find duplicate files and offer to delete all
-        but one or rename them to be different. Only useful with
-        Google Drive which can have duplicate file names.`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.Deduplicate(fdst, fs.Config.DedupeMode)
-		},
-		MinArgs: 1,
-		MaxArgs: 1,
-	},
-	{
-		Name: "config",
-		Help: `
-        Enter an interactive configuration session.`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			fs.EditConfig()
-			return nil
-		},
-		NoStats: true,
-	},
-	{
-		Name: "authorize",
-		Help: `
-        Remote authorization. Used to authorize a remote or headless
-        rclone from a machine with a browser - use as instructed by
-        rclone config.`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			fs.Authorize(pflag.Args()[1:])
-			return nil
-		},
-		NoStats: true,
-		MinArgs: 1,
-		MaxArgs: 3,
-	},
-	{
-		Name:     "cleanup",
-		ArgsHelp: "remote:path",
-		Help: `
-        Clean up the remote if possible.  Empty the trash or delete
-        old file versions. Not supported by all remotes.`,
-		Run: func(fdst, fsrc fs.Fs) error {
-			return fs.CleanUp(fdst)
-		},
-		MinArgs: 1,
-		MaxArgs: 1,
-		Retry:   true,
-	},
-	{
-		Name: "help",
-		Help: `
-        This help.`,
-		NoStats: true,
-	},
-}
+Features
 
-// syntaxError prints the syntax
-func syntaxError() {
-	fmt.Fprintf(os.Stderr, `Sync files and directories to and from local and remote object stores - %s.
+  * MD5/SHA1 hashes checked at all times for file integrity
+  * Timestamps preserved on files
+  * Partial syncs supported on a whole file basis
+  * Copy mode to just copy new/changed files
+  * Sync (one way) mode to make a directory identical
+  * Check mode to check for file hash equality
+  * Can sync to and from network, eg two different cloud accounts
 
-Syntax: [options] subcommand <parameters> <parameters...>
+See the home page for installation, usage, documentation, changelog
+and configuration walkthroughs.
 
-Subcommands:
-
-`, fs.Version)
-	for i := range Commands {
-		cmd := &Commands[i]
-		fmt.Fprintf(os.Stderr, "    %s %s\n", cmd.Name, cmd.ArgsHelp)
-		fmt.Fprintf(os.Stderr, "%s\n\n", cmd.Help)
-	}
-
-	fmt.Fprintf(os.Stderr, "Options:\n")
-	pflag.PrintDefaults()
-	fmt.Fprintf(os.Stderr, `
-It is only necessary to use a unique prefix of the subcommand, eg 'mo'
-for 'move'.
-`)
-}
-
-// Exit with the message
-func fatal(message string, args ...interface{}) {
-	syntaxError()
-	fmt.Fprintf(os.Stderr, message, args...)
-	os.Exit(1)
-}
-
-// ParseFlags parses the command line flags
-func ParseFlags() {
-	pflag.Usage = syntaxError
-	pflag.Parse()
-	runtime.GOMAXPROCS(runtime.NumCPU())
-}
-
-// ParseCommand parses the command from the command line
-func ParseCommand() (*Command, []string) {
-	args := pflag.Args()
-	if len(args) < 1 {
-		fatal("No command supplied\n")
-	}
-
-	cmd := strings.ToLower(args[0])
-	args = args[1:]
-
-	// Find the command doing a prefix match
-	var found = make([]*Command, 0, 1)
-	var command *Command
-	for i := range Commands {
-		trialCommand := &Commands[i]
-		// exact command name found - use that
-		if trialCommand.Name == cmd {
-			command = trialCommand
-			break
-		} else if strings.HasPrefix(trialCommand.Name, cmd) {
-			found = append(found, trialCommand)
+  * http://rclone.org/
+`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if version {
+			showVersion()
+			os.Exit(0)
 		}
-	}
-	if command == nil {
-		switch len(found) {
-		case 0:
-			fs.Stats.Error()
-			log.Fatalf("Unknown command %q", cmd)
-		case 1:
-			command = found[0]
-		default:
-			fs.Stats.Error()
-			var names []string
-			for _, cmd := range found {
-				names = append(names, `"`+cmd.Name+`"`)
-			}
-			log.Fatalf("Not unique - matches multiple commands: %s", strings.Join(names, ", "))
-		}
-	}
-	if command.Run == nil {
-		syntaxError()
-	}
-	command.checkArgs(args)
-	return command, args
+	},
+}
+
+func init() {
+	rootCmd.Flags().BoolVarP(&version, "version", "V", false, "Print the version number")
+	rootCmd.AddCommand(copyCmd, syncCmd, moveCmd, lsCmd, lsdCmd,
+		lslCmd, md5sumCmd, sha1sumCmd, sizeCmd, mkdirCmd,
+		rmdirCmd, purgeCmd, deleteCmd, checkCmd, dedupeCmd,
+		configCmd, authorizeCmd, cleanupCmd, versionCmd)
+	cobra.OnInitialize(initConfig)
+}
+
+func showVersion() {
+	fmt.Printf("rclone %s\n", fs.Version)
 }
 
 // NewFsSrc creates a src Fs from a name
+//
+// This can point to a file
 func NewFsSrc(remote string) fs.Fs {
 	fsInfo, configName, fsPath, err := fs.ParseRemote(remote)
 	if err != nil {
@@ -407,8 +116,10 @@ func NewFsSrc(remote string) fs.Fs {
 	return f
 }
 
-// NewFs creates a dst Fs from a name
-func NewFs(remote string) fs.Fs {
+// NewFsDst creates a dst Fs from a name
+//
+// This must point to a directory
+func NewFsDst(remote string) fs.Fs {
 	f, err := fs.NewFs(remote)
 	if err != nil {
 		fs.Stats.Error()
@@ -417,28 +128,377 @@ func NewFs(remote string) fs.Fs {
 	return f
 }
 
-// StartStats prints the stats every statsInterval
-func StartStats() {
-	if *statsInterval <= 0 {
-		return
-	}
-	go func() {
-		ch := time.Tick(*statsInterval)
-		for {
-			<-ch
-			fs.Stats.Log()
-		}
-	}()
+// Create a new src and dst fs from the arguments
+func newFsSrcDst(args []string) (fs.Fs, fs.Fs) {
+	fsrc, fdst := NewFsSrc(args[0]), NewFsDst(args[1])
+	fs.CalculateModifyWindow(fdst, fsrc)
+	return fdst, fsrc
 }
 
-func main() {
-	ParseFlags()
-	if *version {
-		fmt.Printf("rclone %s\n", fs.Version)
-		os.Exit(0)
-	}
-	command, args := ParseCommand()
+// Create a new src fs from the arguments
+func newFsSrc(args []string) fs.Fs {
+	fsrc := NewFsSrc(args[0])
+	fs.CalculateModifyWindow(fsrc)
+	return fsrc
+}
 
+// Create a new dst fs from the arguments
+//
+// Dst fs-es can't point to single files
+func newFsDst(args []string) fs.Fs {
+	fdst := NewFsDst(args[0])
+	fs.CalculateModifyWindow(fdst)
+	return fdst
+}
+
+// run the function with stats and retries if required
+func run(Retry bool, cmd *cobra.Command, f func() error) {
+	var err error
+	stopStats := startStats()
+	for try := 1; try <= *retries; try++ {
+		err = f()
+		if !Retry || (err == nil && !fs.Stats.Errored()) {
+			break
+		}
+		if fs.IsFatalError(err) {
+			fs.Log(nil, "Fatal error received - not attempting retries")
+			break
+		}
+		if fs.IsNoRetryError(err) {
+			fs.Log(nil, "Can't retry this error - not attempting retries")
+			break
+		}
+		if err != nil {
+			fs.Log(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, fs.Stats.GetErrors(), err)
+		} else {
+			fs.Log(nil, "Attempt %d/%d failed with %d errors", try, *retries, fs.Stats.GetErrors())
+		}
+		if try < *retries {
+			fs.Stats.ResetErrors()
+		}
+	}
+	close(stopStats)
+	if err != nil {
+		log.Fatalf("Failed to %s: %v", cmd.Name(), err)
+	}
+	if !fs.Config.Quiet || fs.Stats.Errored() || *statsInterval > 0 {
+		fs.Log(nil, "%s", fs.Stats)
+	}
+	if fs.Config.Verbose {
+		fs.Debug(nil, "Go routines at exit %d\n", runtime.NumGoroutine())
+	}
+	if fs.Stats.Errored() {
+		os.Exit(1)
+	}
+}
+
+// checkArgs checks there are enough arguments and prints a message if not
+func checkArgs(MinArgs, MaxArgs int, cmd *cobra.Command, args []string) {
+	if len(args) < MinArgs {
+		_ = cmd.Usage()
+		fmt.Fprintf(os.Stderr, "Command %s needs %d arguments mininum\n", cmd.Name(), MinArgs)
+		os.Exit(1)
+	} else if len(args) > MaxArgs {
+		_ = cmd.Usage()
+		fmt.Fprintf(os.Stderr, "Command %s needs %d arguments maximum\n", cmd.Name(), MaxArgs)
+		os.Exit(1)
+	}
+}
+
+// startStats prints the stats every statsInterval
+//
+// It returns a channel which should be closed to stop the stats.
+func startStats() chan struct{} {
+	stopStats := make(chan struct{})
+	if *statsInterval > 0 {
+		go func() {
+			ticker := time.NewTicker(*statsInterval)
+			for {
+				select {
+				case <-ticker.C:
+					fs.Stats.Log()
+				case <-stopStats:
+					ticker.Stop()
+					return
+				}
+			}
+		}()
+	}
+	return stopStats
+}
+
+// The commands
+var copyCmd = &cobra.Command{
+	Use:   "copy source:path dest:path",
+	Short: `Copy files from source to dest, skipping already copied`,
+	Long: `
+Copy the source to the destination.  Doesn't transfer
+unchanged files, testing by size and modification time or
+MD5SUM.  Doesn't delete files from the destination.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(2, 2, cmd, args)
+		fsrc, fdst := newFsSrcDst(args)
+		run(true, cmd, func() error {
+			return fs.CopyDir(fdst, fsrc)
+		})
+	},
+}
+
+var syncCmd = &cobra.Command{
+	Use:   "sync source:path dest:path",
+	Short: `Make source and dest identical, modifying destination only.`,
+	Long: `
+Sync the source to the destination, changing the destination
+only.  Doesn't transfer unchanged files, testing by size and
+modification time or MD5SUM.  Destination is updated to match
+source, including deleting files if necessary.  Since this can
+cause data loss, test first with the --dry-run flag.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(2, 2, cmd, args)
+		fsrc, fdst := newFsSrcDst(args)
+		run(true, cmd, func() error {
+			return fs.Sync(fdst, fsrc)
+		})
+	},
+}
+
+var moveCmd = &cobra.Command{
+	Use:   "move source:path dest:path",
+	Short: `Move files from source to dest.`,
+	Long: `
+Moves the source to the destination.  This is equivalent to a
+copy followed by a purge, but may use server side operations
+to speed it up. Since this can cause data loss, test first
+with the --dry-run flag.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(2, 2, cmd, args)
+		fsrc, fdst := newFsSrcDst(args)
+		run(true, cmd, func() error {
+			return fs.MoveDir(fdst, fsrc)
+		})
+	},
+}
+
+var lsCmd = &cobra.Command{
+	Use:   "ls remote:path",
+	Short: `List all the objects in the the path with size and path.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(1, 1, cmd, args)
+		fsrc := newFsSrc(args)
+		run(false, cmd, func() error {
+			return fs.List(fsrc, os.Stdout)
+		})
+	},
+}
+
+var lsdCmd = &cobra.Command{
+	Use:   "lsd remote:path",
+	Short: `List all directories/containers/buckets in the the path.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(1, 1, cmd, args)
+		fsrc := newFsSrc(args)
+		run(false, cmd, func() error {
+			return fs.ListDir(fsrc, os.Stdout)
+		})
+	},
+}
+
+var lslCmd = &cobra.Command{
+	Use:   "lsl remote:path",
+	Short: `List all the objects path with modification time, size and path.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(1, 1, cmd, args)
+		fsrc := newFsSrc(args)
+		run(false, cmd, func() error {
+			return fs.ListLong(fsrc, os.Stdout)
+		})
+	},
+}
+
+var md5sumCmd = &cobra.Command{
+	Use:   "md5sum remote:path",
+	Short: `Produces an md5sum file for all the objects in the path.`,
+	Long: `
+Produces an md5sum file for all the objects in the path.  This
+is in the same format as the standard md5sum tool produces.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(1, 1, cmd, args)
+		fsrc := newFsSrc(args)
+		run(false, cmd, func() error {
+			return fs.Md5sum(fsrc, os.Stdout)
+		})
+	},
+}
+
+var sha1sumCmd = &cobra.Command{
+	Use:   "sha1sum remote:path",
+	Short: `Produces an sha1sum file for all the objects in the path.`,
+	Long: `
+Produces an sha1sum file for all the objects in the path.  This
+is in the same format as the standard sha1sum tool produces.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(1, 1, cmd, args)
+		fsrc := newFsSrc(args)
+		run(false, cmd, func() error {
+			return fs.Sha1sum(fsrc, os.Stdout)
+		})
+	},
+}
+
+var sizeCmd = &cobra.Command{
+	Use:   "size remote:path",
+	Short: `Returns the total size and number of objects in remote:path.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(1, 1, cmd, args)
+		fsrc := newFsSrc(args)
+		run(false, cmd, func() error {
+			objects, size, err := fs.Count(fsrc)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Total objects: %d\n", objects)
+			fmt.Printf("Total size: %s (%d Bytes)\n", fs.SizeSuffix(size).Unit("Bytes"), size)
+			return nil
+		})
+	},
+}
+
+var mkdirCmd = &cobra.Command{
+	Use:   "mkdir remote:path",
+	Short: `Make the path if it doesn't already exist.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(1, 1, cmd, args)
+		fdst := newFsDst(args)
+		run(true, cmd, func() error {
+			return fs.Mkdir(fdst)
+		})
+	},
+}
+
+var rmdirCmd = &cobra.Command{
+	Use:   "rmdir remote:path",
+	Short: `Remove the path.`,
+	Long: `
+Remove the path.  Note that you can't remove a path with
+objects in it, use purge for that.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(1, 1, cmd, args)
+		fdst := newFsDst(args)
+		run(true, cmd, func() error {
+			return fs.Rmdir(fdst)
+		})
+	},
+}
+
+var purgeCmd = &cobra.Command{
+	Use:   "purge remote:path",
+	Short: `Remove the path and all of its contents.`,
+	Long: `
+Remove the path and all of its contents.  Does not obey
+filters - use remove for that.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(1, 1, cmd, args)
+		fdst := newFsDst(args)
+		run(true, cmd, func() error {
+			return fs.Purge(fdst)
+		})
+	},
+}
+
+var deleteCmd = &cobra.Command{
+	Use:   "delete remote:path",
+	Short: `Remove the contents of path.`,
+	Long: `
+Remove the contents of path.  Obeys include/exclude filters.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(1, 1, cmd, args)
+		fsrc := newFsSrc(args)
+		run(true, cmd, func() error {
+			return fs.Delete(fsrc)
+		})
+	},
+}
+
+var checkCmd = &cobra.Command{
+	Use:   "check source:path dest:path",
+	Short: `Checks the files in the source and destination match.`,
+	Long: `
+Checks the files in the source and destination match.  It
+compares sizes and MD5SUMs and prints a report of files which
+don't match.  It doesn't alter the source or destination.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(2, 2, cmd, args)
+		fsrc, fdst := newFsSrcDst(args)
+		run(false, cmd, func() error {
+			return fs.Check(fdst, fsrc)
+		})
+	},
+}
+
+var dedupeCmd = &cobra.Command{
+	Use:   "dedupe remote:path",
+	Short: `Interactively find duplicate files delete/rename them.`,
+	Long: `
+Interactively find duplicate files and offer to delete all
+but one or rename them to be different. Only useful with
+Google Drive which can have duplicate file names.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(1, 1, cmd, args)
+		fdst := NewFsSrc(args[1])
+		run(false, cmd, func() error {
+			return fs.Deduplicate(fdst, fs.Config.DedupeMode)
+		})
+	},
+}
+
+var configCmd = &cobra.Command{
+	Use:   "config",
+	Short: `Enter an interactive configuration session.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(0, 0, cmd, args)
+		fs.EditConfig()
+	},
+}
+
+var authorizeCmd = &cobra.Command{
+	Use:   "authorize",
+	Short: `Remote authorization.`,
+	Long: `
+Remote authorization. Used to authorize a remote or headless
+rclone from a machine with a browser - use as instructed by
+rclone config.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(1, 3, cmd, args)
+		fs.Authorize(args)
+	},
+}
+
+var cleanupCmd = &cobra.Command{
+	Use:   "cleanup remote:path",
+	Short: `Clean up the remote if possible`,
+	Long: `
+Clean up the remote if possible.  Empty the trash or delete
+old file versions. Not supported by all remotes.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(1, 1, cmd, args)
+		fsrc := newFsSrc(args)
+		run(true, cmd, func() error {
+			return fs.CleanUp(fsrc)
+		})
+	},
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: `Show the version number.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(0, 0, cmd, args)
+		showVersion()
+	},
+}
+
+// initConfig is run by cobra after initialising the flags
+func initConfig() {
 	// Log file output
 	if *logFile != "" {
 		f, err := os.OpenFile(*logFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
@@ -497,62 +557,12 @@ func main() {
 			}
 		}()
 	}
+}
 
-	// Make source and destination fs
-	var fdst, fsrc fs.Fs
-	if len(args) >= 1 {
-		fdst = NewFsSrc(args[0])
+func main() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
 	}
-	if len(args) >= 2 {
-		fsrc = fdst
-		fdst = NewFs(args[1])
-	}
-
-	fs.CalculateModifyWindow(fdst, fsrc)
-
-	if !command.NoStats {
-		StartStats()
-	}
-
-	// Exit if no command to run
-	if command.Run == nil {
-		return
-	}
-
-	// Run the actual command
-	var err error
-	for try := 1; try <= *retries; try++ {
-		err = command.Run(fdst, fsrc)
-		if !command.Retry || (err == nil && !fs.Stats.Errored()) {
-			break
-		}
-		if fs.IsFatalError(err) {
-			fs.Log(nil, "Fatal error received - not attempting retries")
-			break
-		}
-		if fs.IsNoRetryError(err) {
-			fs.Log(nil, "Can't retry this error - not attempting retries")
-			break
-		}
-		if err != nil {
-			fs.Log(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, fs.Stats.GetErrors(), err)
-		} else {
-			fs.Log(nil, "Attempt %d/%d failed with %d errors", try, *retries, fs.Stats.GetErrors())
-		}
-		if try < *retries {
-			fs.Stats.ResetErrors()
-		}
-	}
-	if err != nil {
-		log.Fatalf("Failed to %s: %v", command.Name, err)
-	}
-	if !command.NoStats && (!fs.Config.Quiet || fs.Stats.Errored() || *statsInterval > 0) {
-		fs.Log(nil, "%s", fs.Stats)
-	}
-	if fs.Config.Verbose {
-		fs.Debug(nil, "Go routines at exit %d\n", runtime.NumGoroutine())
-	}
-	if fs.Stats.Errored() {
-		os.Exit(1)
-	}
+	os.Exit(0)
 }
