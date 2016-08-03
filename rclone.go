@@ -82,7 +82,8 @@ func init() {
 	rootCmd.AddCommand(copyCmd, syncCmd, moveCmd, lsCmd, lsdCmd,
 		lslCmd, md5sumCmd, sha1sumCmd, sizeCmd, mkdirCmd,
 		rmdirCmd, purgeCmd, deleteCmd, checkCmd, dedupeCmd,
-		configCmd, authorizeCmd, cleanupCmd, memtestCmd, versionCmd)
+		genautocompleteCmd, configCmd, authorizeCmd,
+		cleanupCmd, memtestCmd, versionCmd)
 	dedupeCmd.Flags().VarP(&dedupeMode, "dedupe-mode", "", "Dedupe mode interactive|skip|first|newest|oldest|rename.")
 	cobra.OnInitialize(initConfig)
 }
@@ -476,6 +477,38 @@ var configCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		checkArgs(0, 0, cmd, args)
 		fs.EditConfig()
+	},
+}
+
+var genautocompleteCmd = &cobra.Command{
+	Use:   "genautocomplete [output_file]",
+	Short: `Output bash completion script for rclone.`,
+	Long: `
+Generates a bash shell autocompletion script for rclone.
+
+This writes to /etc/bash_completion.d/rclone by default so will
+probably need to be run with sudo or as root, eg
+
+    sudo rclone genautocomplete
+
+Logout and login again to use the autocompletion scripts, or source
+them directly
+
+    . /etc/bash_completion
+
+If you supply a command line argument the script will be written
+there.
+`,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(0, 1, cmd, args)
+		out := "/etc/bash_completion.d/rclone"
+		if len(args) > 0 {
+			out = args[0]
+		}
+		err := rootCmd.GenBashCompletionFile(out)
+		if err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 
