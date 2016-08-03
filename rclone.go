@@ -13,6 +13,7 @@ import (
 	"path"
 	"runtime"
 	"runtime/pprof"
+	"sync"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -81,7 +82,7 @@ func init() {
 	rootCmd.AddCommand(copyCmd, syncCmd, moveCmd, lsCmd, lsdCmd,
 		lslCmd, md5sumCmd, sha1sumCmd, sizeCmd, mkdirCmd,
 		rmdirCmd, purgeCmd, deleteCmd, checkCmd, dedupeCmd,
-		configCmd, authorizeCmd, cleanupCmd, versionCmd)
+		configCmd, authorizeCmd, cleanupCmd, memtestCmd, versionCmd)
 	dedupeCmd.Flags().VarP(&dedupeMode, "dedupe-mode", "", "Dedupe mode interactive|skip|first|newest|oldest|rename.")
 	cobra.OnInitialize(initConfig)
 }
@@ -485,6 +486,41 @@ old file versions. Not supported by all remotes.`,
 		fsrc := newFsSrc(args)
 		run(true, cmd, func() error {
 			return fs.CleanUp(fsrc)
+		})
+	},
+}
+
+var memtestCmd = &cobra.Command{
+	Use:    "memtest remote:path",
+	Short:  `Load all the objects at remote:path and report memory stats.`,
+	Hidden: true,
+	Run: func(cmd *cobra.Command, args []string) {
+		checkArgs(1, 1, cmd, args)
+		fsrc := newFsSrc(args)
+		run(false, cmd, func() error {
+			objects, _, err := fs.Count(fsrc)
+			if err != nil {
+				return err
+			}
+			objs := make([]fs.Object, 0, objects)
+			var before, after runtime.MemStats
+			runtime.GC()
+			runtime.ReadMemStats(&before)
+			var mu sync.Mutex
+			err = fs.ListFn(fsrc, func(o fs.Object) {
+				mu.Lock()
+				objs = append(objs, o)
+				mu.Unlock()
+			})
+			if err != nil {
+				return err
+			}
+			runtime.GC()
+			runtime.ReadMemStats(&after)
+			usedMemory := after.Alloc - before.Alloc
+			fs.Log(nil, "%d objects took %d bytes, %.1f bytes/object", len(objs), usedMemory, float64(usedMemory)/float64(len(objs)))
+			fs.Log(nil, "System memory changed from %d to %d bytes a change of %d bytes", before.Sys, after.Sys, after.Sys-before.Sys)
+			return nil
 		})
 	},
 }
