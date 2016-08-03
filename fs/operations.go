@@ -14,6 +14,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/ogier/pflag"
 	"github.com/pkg/errors"
 
 	"golang.org/x/text/unicode/norm"
@@ -871,8 +872,8 @@ const (
 	DeduplicateRename                             // rename the objects
 )
 
-func (mode DeduplicateMode) String() string {
-	switch mode {
+func (x DeduplicateMode) String() string {
+	switch x {
 	case DeduplicateInteractive:
 		return "interactive"
 	case DeduplicateSkip:
@@ -888,6 +889,35 @@ func (mode DeduplicateMode) String() string {
 	}
 	return "unknown"
 }
+
+// Set a DeduplicateMode from a string
+func (x *DeduplicateMode) Set(s string) error {
+	switch strings.ToLower(s) {
+	case "interactive":
+		*x = DeduplicateInteractive
+	case "skip":
+		*x = DeduplicateSkip
+	case "first":
+		*x = DeduplicateFirst
+	case "newest":
+		*x = DeduplicateNewest
+	case "oldest":
+		*x = DeduplicateOldest
+	case "rename":
+		*x = DeduplicateRename
+	default:
+		return errors.Errorf("Unknown mode for dedupe %q.", s)
+	}
+	return nil
+}
+
+// Type of the value
+func (x *DeduplicateMode) Type() string {
+	return "string"
+}
+
+// Check it satisfies the interface
+var _ pflag.Value = (*DeduplicateMode)(nil)
 
 // Deduplicate interactively finds duplicate files and offers to
 // delete all but one or rename them to be different. Only useful with

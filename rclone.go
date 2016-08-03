@@ -4,7 +4,6 @@
 package main
 
 // FIXME only attach the remote flags when using a remote???
-// FIXME could do the same for dedupe
 // would probably mean bringing all the flags in to here? Or define some flagsets in fs...
 
 import (
@@ -32,6 +31,7 @@ var (
 	version       bool
 	logFile       = pflag.StringP("log-file", "", "", "Log everything to this file")
 	retries       = pflag.IntP("retries", "", 3, "Retry operations this many times if they fail")
+	dedupeMode    = fs.DeduplicateInteractive
 )
 
 var rootCmd = &cobra.Command{
@@ -82,6 +82,7 @@ func init() {
 		lslCmd, md5sumCmd, sha1sumCmd, sizeCmd, mkdirCmd,
 		rmdirCmd, purgeCmd, deleteCmd, checkCmd, dedupeCmd,
 		configCmd, authorizeCmd, cleanupCmd, versionCmd)
+	dedupeCmd.Flags().VarP(&dedupeMode, "dedupe-mode", "", "Dedupe mode interactive|skip|first|newest|oldest|rename.")
 	cobra.OnInitialize(initConfig)
 }
 
@@ -446,7 +447,7 @@ Google Drive which can have duplicate file names.`,
 		checkArgs(1, 1, cmd, args)
 		fdst := NewFsSrc(args[1])
 		run(false, cmd, func() error {
-			return fs.Deduplicate(fdst, fs.Config.DedupeMode)
+			return fs.Deduplicate(fdst, dedupeMode)
 		})
 	},
 }

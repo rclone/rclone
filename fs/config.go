@@ -85,7 +85,6 @@ var (
 	lowLevelRetries = pflag.IntP("low-level-retries", "", 10, "Number of low level retries to do.")
 	updateOlder     = pflag.BoolP("update", "u", false, "Skip files that are newer on the destination.")
 	noGzip          = pflag.BoolP("no-gzip-encoding", "", false, "Don't set Accept-Encoding: gzip.")
-	dedupeMode      = pflag.StringP("dedupe-mode", "", "interactive", "Dedupe mode interactive|skip|first|newest|oldest|rename.")
 	maxDepth        = pflag.IntP("max-depth", "", -1, "If set limits the recursion depth to this.")
 	ignoreSize      = pflag.BoolP("ignore-size", "", false, "Ignore size when skipping use mod-time or checksum.")
 	noTraverse      = pflag.BoolP("no-traverse", "", false, "Don't traverse destination file system on copy.")
@@ -237,7 +236,6 @@ type ConfigInfo struct {
 	LowLevelRetries    int
 	UpdateOlder        bool // Skip files that are newer on the destination
 	NoGzip             bool // Disable compression
-	DedupeMode         DeduplicateMode
 	MaxDepth           int
 	IgnoreSize         bool
 	NoTraverse         bool
@@ -354,23 +352,6 @@ func LoadConfig() {
 	Config.DeleteBefore = *deleteBefore
 	Config.DeleteDuring = *deleteDuring
 	Config.DeleteAfter = *deleteAfter
-
-	switch strings.ToLower(*dedupeMode) {
-	case "interactive":
-		Config.DedupeMode = DeduplicateInteractive
-	case "skip":
-		Config.DedupeMode = DeduplicateSkip
-	case "first":
-		Config.DedupeMode = DeduplicateFirst
-	case "newest":
-		Config.DedupeMode = DeduplicateNewest
-	case "oldest":
-		Config.DedupeMode = DeduplicateOldest
-	case "rename":
-		Config.DedupeMode = DeduplicateRename
-	default:
-		log.Fatalf(`Unknown mode for --dedupe-mode %q.`, *dedupeMode)
-	}
 
 	switch {
 	case *deleteBefore && (*deleteDuring || *deleteAfter),
