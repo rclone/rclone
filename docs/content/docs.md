@@ -283,6 +283,10 @@ For example to rename all the identically named photos in your Google Photos dir
 
     rclone dedupe --dedupe-mode rename "drive:Google Photos"
 
+The modes can also be passed as an extra parameter, eg
+
+    rclone dedupe rename "drive:Google Photos"
+
 ### rclone config ###
 
 Enter an interactive configuration session.

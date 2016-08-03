@@ -438,15 +438,32 @@ don't match.  It doesn't alter the source or destination.`,
 }
 
 var dedupeCmd = &cobra.Command{
-	Use:   "dedupe remote:path",
+	Use:   "dedupe [mode] remote:path",
 	Short: `Interactively find duplicate files delete/rename them.`,
 	Long: `
 Interactively find duplicate files and offer to delete all
 but one or rename them to be different. Only useful with
-Google Drive which can have duplicate file names.`,
+Google Drive which can have duplicate file names.
+
+Pass in an extra parameter to make the dedupe noninteractive
+
+  interactive - interactive as above.
+  skip        - removes identical files then skips anything left.
+  first       - removes identical files then keeps the first one.
+  newest      - removes identical files then keeps the newest one.
+  oldest      - removes identical files then keeps the oldest one.
+  rename      - removes identical files then renames the rest to be different.
+`,
 	Run: func(cmd *cobra.Command, args []string) {
-		checkArgs(1, 1, cmd, args)
-		fdst := NewFsSrc(args[1])
+		checkArgs(1, 2, cmd, args)
+		if len(args) > 1 {
+			err := dedupeMode.Set(args[0])
+			if err != nil {
+				log.Fatal(err)
+			}
+			args = args[1:]
+		}
+		fdst := newFsSrc(args)
 		run(false, cmd, func() error {
 			return fs.Deduplicate(fdst, dedupeMode)
 		})
