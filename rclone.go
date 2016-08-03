@@ -11,12 +11,15 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"runtime/pprof"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 	"github.com/spf13/pflag"
 
 	"github.com/ncw/rclone/fs"
@@ -82,7 +85,7 @@ func init() {
 	rootCmd.AddCommand(copyCmd, syncCmd, moveCmd, lsCmd, lsdCmd,
 		lslCmd, md5sumCmd, sha1sumCmd, sizeCmd, mkdirCmd,
 		rmdirCmd, purgeCmd, deleteCmd, checkCmd, dedupeCmd,
-		genautocompleteCmd, configCmd, authorizeCmd,
+		genautocompleteCmd, gendocsCmd, configCmd, authorizeCmd,
 		cleanupCmd, memtestCmd, versionCmd)
 	dedupeCmd.Flags().VarP(&dedupeMode, "dedupe-mode", "", "Dedupe mode interactive|skip|first|newest|oldest|rename.")
 	cobra.OnInitialize(initConfig)
@@ -509,6 +512,43 @@ there.
 		if err != nil {
 			log.Fatal(err)
 		}
+	},
+}
+
+const gendocFrontmatterTemplate = `---
+date: %s
+title: "%s"
+slug: %s
+url: %s
+---
+`
+
+var gendocsCmd = &cobra.Command{
+	Use:   "gendocs output_directory",
+	Short: `Output markdown docs for rclone to the directory supplied.`,
+	Long: `
+This produces markdown docs for the rclone commands to the directory
+supplied.  These are in a format suitable for hugo to render into the
+rclone.org website.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		checkArgs(1, 1, cmd, args)
+		out := args[0]
+		err := os.MkdirAll(out, 0777)
+		if err != nil {
+			return err
+		}
+		now := time.Now().Format(time.RFC3339)
+		prepender := func(filename string) string {
+			name := filepath.Base(filename)
+			base := strings.TrimSuffix(name, path.Ext(name))
+			url := "/commands/" + strings.ToLower(base) + "/"
+			return fmt.Sprintf(gendocFrontmatterTemplate, now, strings.Replace(base, "_", " ", -1), base, url)
+		}
+		linkHandler := func(name string) string {
+			base := strings.TrimSuffix(name, path.Ext(name))
+			return "/commands/" + strings.ToLower(base) + "/"
+		}
+		return doc.GenMarkdownTreeCustom(rootCmd, out, prepender, linkHandler)
 	},
 }
 
