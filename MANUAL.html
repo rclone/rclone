@@ -12,7 +12,7 @@
 <div id="header">
 <h1 class="title">rclone(1) User Manual</h1>
 <h2 class="author">Nick Craig-Wood</h2>
-<h3 class="date">Jul 13, 2016</h3>
+<h3 class="date">Aug 04, 2016</h3>
 </div>
 <h1 id="rclone">Rclone</h1>
 <p><a href="http://rclone.org/"><img src="http://rclone.org/img/rclone-120x120.png" alt="Logo" /></a></p>
@@ -102,7 +102,18 @@ sudo mandb </code></pre>
 <p>Source and destination paths are specified by the name you gave the storage system in the config file then the sub path, eg &quot;drive:myfolder&quot; to look at &quot;myfolder&quot; in Google drive.</p>
 <p>You can define as many storage paths as you like in the config file.</p>
 <h2 id="subcommands">Subcommands</h2>
-<h3 id="rclone-copy-sourcepath-destpath">rclone copy source:path dest:path</h3>
+<p>rclone uses a system of subcommands. For example</p>
+<pre><code>rclone ls remote:path # lists a re
+rclone copy /local/path remote:path # copies /local/path to the remote
+rclone sync /local/path remote:path # syncs /local/path to the remote</code></pre>
+<h2 id="rclone-config">rclone config</h2>
+<p>Enter an interactive configuration session.</p>
+<h3 id="synopsis">Synopsis</h3>
+<p>Enter an interactive configuration session.</p>
+<pre><code>rclone config</code></pre>
+<h2 id="rclone-copy">rclone copy</h2>
+<p>Copy files from source to dest, skipping already copied</p>
+<h3 id="synopsis-1">Synopsis</h3>
 <p>Copy the source to the destination. Doesn't transfer unchanged files, testing by size and modification time or MD5SUM. Doesn't delete files from the destination.</p>
 <p>Note that it is always the contents of the directory that is synced, not the directory so when source:path is a directory, it's the contents of source:path that are copied, not the directory name and contents.</p>
 <p>If dest:path doesn't exist, it is created and the source:path contents go there.</p>
@@ -119,36 +130,27 @@ destpath/two.txt</code></pre>
 destpath/sourcepath/two.txt</code></pre>
 <p>If you are familiar with <code>rsync</code>, rclone always works as if you had written a trailing / - meaning &quot;copy the contents of this directory&quot;. This applies to all commands and whether you are talking about the source or destination.</p>
 <p>See the <code>--no-traverse</code> option for controlling whether rclone lists the destination directory or not.</p>
-<h3 id="rclone-sync-sourcepath-destpath">rclone sync source:path dest:path</h3>
+<pre><code>rclone copy source:path dest:path</code></pre>
+<h2 id="rclone-sync">rclone sync</h2>
+<p>Make source and dest identical, modifying destination only.</p>
+<h3 id="synopsis-2">Synopsis</h3>
 <p>Sync the source to the destination, changing the destination only. Doesn't transfer unchanged files, testing by size and modification time or MD5SUM. Destination is updated to match source, including deleting files if necessary.</p>
 <p><strong>Important</strong>: Since this can cause data loss, test first with the <code>--dry-run</code> flag to see exactly what would be copied and deleted.</p>
 <p>Note that files in the destination won't be deleted if there were any errors at any point.</p>
 <p>It is always the contents of the directory that is synced, not the directory so when source:path is a directory, it's the contents of source:path that are copied, not the directory name and contents. See extended explanation in the <code>copy</code> command above if unsure.</p>
 <p>If dest:path doesn't exist, it is created and the source:path contents go there.</p>
-<h3 id="move-sourcepath-destpath">move source:path dest:path</h3>
+<pre><code>rclone sync source:path dest:path</code></pre>
+<h2 id="rclone-move">rclone move</h2>
+<p>Move files from source to dest.</p>
+<h3 id="synopsis-3">Synopsis</h3>
 <p>Moves the contents of the source directory to the destination directory. Rclone will error if the source and destination overlap.</p>
 <p>If no filters are in use and if possible this will server side move <code>source:path</code> into <code>dest:path</code>. After this <code>source:path</code> will no longer longer exist.</p>
 <p>Otherwise for each file in <code>source:path</code> selected by the filters (if any) this will move it into <code>dest:path</code>. If possible a server side move will be used, otherwise it will copy it (server side if possible) into <code>dest:path</code> then delete the original (if no errors on copy) in <code>source:path</code>.</p>
 <p><strong>Important</strong>: Since this can cause data loss, test first with the --dry-run flag.</p>
-<h3 id="rclone-ls-remotepath">rclone ls remote:path</h3>
-<p>List all the objects in the path with size and path.</p>
-<h3 id="rclone-lsd-remotepath">rclone lsd remote:path</h3>
-<p>List all directories/containers/buckets in the the path.</p>
-<h3 id="rclone-lsl-remotepath">rclone lsl remote:path</h3>
-<p>List all the objects in the the path with modification time, size and path.</p>
-<h3 id="rclone-md5sum-remotepath">rclone md5sum remote:path</h3>
-<p>Produces an md5sum file for all the objects in the path. This is in the same format as the standard md5sum tool produces.</p>
-<h3 id="rclone-sha1sum-remotepath">rclone sha1sum remote:path</h3>
-<p>Produces an sha1sum file for all the objects in the path. This is in the same format as the standard sha1sum tool produces.</p>
-<h3 id="rclone-size-remotepath">rclone size remote:path</h3>
-<p>Prints the total size of objects in remote:path and the number of objects.</p>
-<h3 id="rclone-mkdir-remotepath">rclone mkdir remote:path</h3>
-<p>Make the path if it doesn't already exist</p>
-<h3 id="rclone-rmdir-remotepath">rclone rmdir remote:path</h3>
-<p>Remove the path. Note that you can't remove a path with objects in it, use purge for that.</p>
-<h3 id="rclone-purge-remotepath">rclone purge remote:path</h3>
-<p>Remove the path and all of its contents. Note that this does not obey include/exclude filters - everything will be removed. Use <code>delete</code> if you want to selectively delete files.</p>
-<h3 id="rclone-delete-remotepath">rclone delete remote:path</h3>
+<pre><code>rclone move source:path dest:path</code></pre>
+<h2 id="rclone-delete">rclone delete</h2>
+<p>Remove the contents of path.</p>
+<h3 id="synopsis-4">Synopsis</h3>
 <p>Remove the contents of path. Unlike <code>purge</code> it obeys include/exclude filters so can be used to selectively delete files.</p>
 <p>Eg delete all files bigger than 100MBytes</p>
 <p>Check what would be deleted first (use either)</p>
@@ -157,12 +159,71 @@ rclone --dry-run --min-size 100M delete remote:path</code></pre>
 <p>Then delete</p>
 <pre><code>rclone --min-size 100M delete remote:path</code></pre>
 <p>That reads &quot;delete everything with a minimum size of 100 MB&quot;, hence delete all files bigger than 100MBytes.</p>
-<h3 id="rclone-check-sourcepath-destpath">rclone check source:path dest:path</h3>
+<pre><code>rclone delete remote:path</code></pre>
+<h2 id="rclone-purge">rclone purge</h2>
+<p>Remove the path and all of its contents.</p>
+<h3 id="synopsis-5">Synopsis</h3>
+<p>Remove the path and all of its contents. Note that this does not obey include/exclude filters - everything will be removed. Use <code>delete</code> if you want to selectively delete files.</p>
+<pre><code>rclone purge remote:path</code></pre>
+<h2 id="rclone-mkdir">rclone mkdir</h2>
+<p>Make the path if it doesn't already exist.</p>
+<h3 id="synopsis-6">Synopsis</h3>
+<p>Make the path if it doesn't already exist.</p>
+<pre><code>rclone mkdir remote:path</code></pre>
+<h2 id="rclone-rmdir">rclone rmdir</h2>
+<p>Remove the path if empty.</p>
+<h3 id="synopsis-7">Synopsis</h3>
+<p>Remove the path. Note that you can't remove a path with objects in it, use purge for that.</p>
+<pre><code>rclone rmdir remote:path</code></pre>
+<h2 id="rclone-check">rclone check</h2>
+<p>Checks the files in the source and destination match.</p>
+<h3 id="synopsis-8">Synopsis</h3>
 <p>Checks the files in the source and destination match. It compares sizes and MD5SUMs and prints a report of files which don't match. It doesn't alter the source or destination.</p>
 <p><code>--size-only</code> may be used to only compare the sizes, not the MD5SUMs.</p>
-<h3 id="rclone-cleanup-remotepath">rclone cleanup remote:path</h3>
+<pre><code>rclone check source:path dest:path</code></pre>
+<h2 id="rclone-ls">rclone ls</h2>
+<p>List all the objects in the the path with size and path.</p>
+<h3 id="synopsis-9">Synopsis</h3>
+<p>List all the objects in the the path with size and path.</p>
+<pre><code>rclone ls remote:path</code></pre>
+<h2 id="rclone-lsd">rclone lsd</h2>
+<p>List all directories/containers/buckets in the the path.</p>
+<h3 id="synopsis-10">Synopsis</h3>
+<p>List all directories/containers/buckets in the the path.</p>
+<pre><code>rclone lsd remote:path</code></pre>
+<h2 id="rclone-lsl">rclone lsl</h2>
+<p>List all the objects path with modification time, size and path.</p>
+<h3 id="synopsis-11">Synopsis</h3>
+<p>List all the objects path with modification time, size and path.</p>
+<pre><code>rclone lsl remote:path</code></pre>
+<h2 id="rclone-md5sum">rclone md5sum</h2>
+<p>Produces an md5sum file for all the objects in the path.</p>
+<h3 id="synopsis-12">Synopsis</h3>
+<p>Produces an md5sum file for all the objects in the path. This is in the same format as the standard md5sum tool produces.</p>
+<pre><code>rclone md5sum remote:path</code></pre>
+<h2 id="rclone-sha1sum">rclone sha1sum</h2>
+<p>Produces an sha1sum file for all the objects in the path.</p>
+<h3 id="synopsis-13">Synopsis</h3>
+<p>Produces an sha1sum file for all the objects in the path. This is in the same format as the standard sha1sum tool produces.</p>
+<pre><code>rclone sha1sum remote:path</code></pre>
+<h2 id="rclone-size">rclone size</h2>
+<p>Prints the total size and number of objects in remote:path.</p>
+<h3 id="synopsis-14">Synopsis</h3>
+<p>Prints the total size and number of objects in remote:path.</p>
+<pre><code>rclone size remote:path</code></pre>
+<h2 id="rclone-version">rclone version</h2>
+<p>Show the version number.</p>
+<h3 id="synopsis-15">Synopsis</h3>
+<p>Show the version number.</p>
+<pre><code>rclone version</code></pre>
+<h2 id="rclone-cleanup">rclone cleanup</h2>
+<p>Clean up the remote if possible</p>
+<h3 id="synopsis-16">Synopsis</h3>
 <p>Clean up the remote if possible. Empty the trash or delete old file versions. Not supported by all remotes.</p>
-<h3 id="rclone-dedupe-remotepath">rclone dedupe remote:path</h3>
+<pre><code>rclone cleanup remote:path</code></pre>
+<h2 id="rclone-dedupe">rclone dedupe</h2>
+<p>Interactively find duplicate files delete/rename them.</p>
+<h3 id="synopsis-17">Synopsis</h3>
 <p>By default <code>dedup</code> interactively finds duplicate files and offers to delete all but one or rename them to be different. Only useful with Google Drive which can have duplicate file names.</p>
 <p>The <code>dedupe</code> command will delete all but one of any identical (same md5sum) files it finds without confirmation. This means that for most duplicated files the <code>dedupe</code> command will not be interactive. You can use <code>--dry-run</code> to see what would happen without doing anything.</p>
 <p>Here is an example run.</p>
@@ -207,7 +268,7 @@ two-3.txt: renamed from: two.txt</code></pre>
    564374 2016-03-05 16:22:52.118000000 two-1.txt
   6048320 2016-03-05 16:22:46.185000000 two-2.txt
   1744073 2016-03-05 16:22:38.104000000 two-3.txt</code></pre>
-<p>Dedupe can be run non interactively using the <code>--dedupe-mode</code> flag.</p>
+<p>Dedupe can be run non interactively using the <code>--dedupe-mode</code> flag or by using an extra parameter with the same value</p>
 <ul>
 <li><code>--dedupe-mode interactive</code> - interactive as above.</li>
 <li><code>--dedupe-mode skip</code> - removes identical files then skips anything left.</li>
@@ -218,10 +279,31 @@ two-3.txt: renamed from: two.txt</code></pre>
 </ul>
 <p>For example to rename all the identically named photos in your Google Photos directory, do</p>
 <pre><code>rclone dedupe --dedupe-mode rename &quot;drive:Google Photos&quot;</code></pre>
-<h3 id="rclone-config">rclone config</h3>
-<p>Enter an interactive configuration session.</p>
-<h3 id="rclone-help">rclone help</h3>
-<p>Prints help on rclone commands and options.</p>
+<p>Or</p>
+<pre><code>rclone dedupe rename &quot;drive:Google Photos&quot;</code></pre>
+<pre><code>rclone dedupe [mode] remote:path</code></pre>
+<h3 id="options">Options</h3>
+<pre><code>      --dedupe-mode value   Dedupe mode interactive|skip|first|newest|oldest|rename. (default &quot;interactive&quot;)</code></pre>
+<h2 id="rclone-authorize">rclone authorize</h2>
+<p>Remote authorization.</p>
+<h3 id="synopsis-18">Synopsis</h3>
+<p>Remote authorization. Used to authorize a remote or headless rclone from a machine with a browser - use as instructed by rclone config.</p>
+<pre><code>rclone authorize</code></pre>
+<h2 id="rclone-genautocomplete">rclone genautocomplete</h2>
+<p>Output bash completion script for rclone.</p>
+<h3 id="synopsis-19">Synopsis</h3>
+<p>Generates a bash shell autocompletion script for rclone.</p>
+<p>This writes to /etc/bash_completion.d/rclone by default so will probably need to be run with sudo or as root, eg</p>
+<pre><code>sudo rclone genautocomplete</code></pre>
+<p>Logout and login again to use the autocompletion scripts, or source them directly</p>
+<pre><code>. /etc/bash_completion</code></pre>
+<p>If you supply a command line argument the script will be written there.</p>
+<pre><code>rclone genautocomplete [output_file]</code></pre>
+<h2 id="rclone-gendocs">rclone gendocs</h2>
+<p>Output markdown docs for rclone to the directory supplied.</p>
+<h3 id="synopsis-20">Synopsis</h3>
+<p>This produces markdown docs for the rclone commands to the directory supplied. These are in a format suitable for hugo to render into the rclone.org website.</p>
+<pre><code>rclone gendocs output_directory</code></pre>
 <h2 id="copying-single-files">Copying single files</h2>
 <p>rclone normally syncs or copies directories. However if the source remote points to a file, rclone will just copy that file. The destination remote must point to a directory - rclone will give the error <code>Failed to create file system for &quot;remote:file&quot;: is a file not a directory</code> if it isn't.</p>
 <p>For example, suppose you have a remote with a file in called <code>test.jpg</code>, then you could copy just that file like this</p>
@@ -258,7 +340,7 @@ two-3.txt: renamed from: two.txt</code></pre>
 <p>This can be used when scripting to make aged backups efficiently, eg</p>
 <pre><code>rclone sync remote:current-backup remote:previous-backup
 rclone sync /path/to/files remote:current-backup</code></pre>
-<h2 id="options">Options</h2>
+<h2 id="options-1">Options</h2>
 <p>Rclone has a number of options to control its behaviour.</p>
 <p>Options which use TIME use the go time parser. A duration string is a possibly signed sequence of decimal numbers, each with optional fraction and a unit suffix, such as &quot;300ms&quot;, &quot;-1.5h&quot; or &quot;2h45m&quot;. Valid time units are &quot;ns&quot;, &quot;us&quot; (or &quot;µs&quot;), &quot;ms&quot;, &quot;s&quot;, &quot;m&quot;, &quot;h&quot;.</p>
 <p>Options which use SIZE use kByte by default. However a suffix of <code>b</code> for bytes, <code>k</code> for kBytes, <code>M</code> for MBytes and <code>G</code> for GBytes may be used. These are the binary units, eg 1, 2**10, 2**20, 2**30 respectively.</p>

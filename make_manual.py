@@ -38,6 +38,28 @@ docs = [
     "contact.md",
 ]
 
+# Order to put the commands in - any not on here will be in sorted order
+commands_order = [
+    "rclone_config.md",
+    "rclone_copy.md",
+    "rclone_sync.md",
+    "rclone_move.md",
+    "rclone_delete.md",
+    "rclone_purge.md",
+    "rclone_mkdir.md",
+    "rclone_rmdir.md",
+    "rclone_check.md",
+    "rclone_ls.md",
+    "rclone_lsd.md",
+    "rclone_lsl.md",
+    "rclone_md5sum.md",
+    "rclone_sha1sum.md",
+    "rclone_size.md",
+    "rclone_version.md",
+    "rclone_cleanup.md",
+    "rclone_dedupe.md",
+]    
+
 # Docs which aren't made into outfile
 ignore_docs = [
     "downloads.md",
@@ -71,8 +93,27 @@ def check_docs(docpath):
     print "Files in docs variable but not on disk: %s" % ", ".join(docs_set - files)
     raise ValueError("Missing files")
 
+def read_command(command):
+    doc = read_doc("commands/"+command)
+    doc = re.sub(r"### Options inherited from parent commands.*$", "", doc, 0, re.S)
+    doc = doc.strip()+"\n"
+    return doc
+
+def read_commands(docpath):
+    """Reads the commands an makes them into a single page"""
+    files = set(f for f in os.listdir(docpath + "/commands") if f.endswith(".md"))
+    docs = []
+    for command in commands_order:
+        docs.append(read_command(command))
+        files.remove(command)
+    for command in sorted(files):
+        if command != "rclone.md":
+            docs.append(read_command(command))
+    return "\n".join(docs)
+    
 def main():
     check_docs(docpath)
+    command_docs = read_commands(docpath)
     with open(outfile, "w") as out:
         out.write("""\
 %% rclone(1) User Manual
@@ -81,7 +122,11 @@ def main():
 
 """ % datetime.now().strftime("%b %d, %Y"))
         for doc in docs:
-            out.write(read_doc(doc))
+            contents = read_doc(doc)
+            # Substitute the commands into doc.md
+            if doc == "docs.md":
+                contents = re.sub(r"The main rclone commands.*?for the full list.", command_docs, contents, 0, re.S)
+            out.write(contents)
     print "Written '%s'" % outfile
 
 if __name__ == "__main__":

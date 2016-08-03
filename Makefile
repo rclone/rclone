@@ -40,7 +40,7 @@ doc:	rclone.1 MANUAL.html MANUAL.txt
 rclone.1:	MANUAL.md
 	pandoc -s --from markdown --to man MANUAL.md -o rclone.1
 
-MANUAL.md:	make_manual.py docs/content/*.md
+MANUAL.md:	make_manual.py docs/content/*.md commanddocs
 	./make_manual.py
 
 MANUAL.html:	MANUAL.md
@@ -48,6 +48,9 @@ MANUAL.html:	MANUAL.md
 
 MANUAL.txt:	MANUAL.md
 	pandoc -s --from markdown --to plain MANUAL.md -o MANUAL.txt
+
+commanddocs: rclone
+	rclone gendocs docs/content/commands/
 
 install: rclone
 	install -d ${DESTDIR}/usr/bin

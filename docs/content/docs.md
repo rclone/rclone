@@ -49,251 +49,34 @@ You can define as many storage paths as you like in the config file.
 Subcommands
 -----------
 
-### rclone copy source:path dest:path ###
-
-Copy the source to the destination.  Doesn't transfer
-unchanged files, testing by size and modification time or
-MD5SUM.  Doesn't delete files from the destination.
-
-Note that it is always the contents of the directory that is synced,
-not the directory so when source:path is a directory, it's the
-contents of source:path that are copied, not the directory name and
-contents.
-
-If dest:path doesn't exist, it is created and the source:path contents
-go there.
-
-For example
-
-    rclone copy source:sourcepath dest:destpath
-
-Let's say there are two files in sourcepath
-
-    sourcepath/one.txt
-    sourcepath/two.txt
-
-This copies them to
-
-    destpath/one.txt
-    destpath/two.txt
-
-Not to
-
-    destpath/sourcepath/one.txt
-    destpath/sourcepath/two.txt
-
-If you are familiar with `rsync`, rclone always works as if you had
-written a trailing / - meaning "copy the contents of this directory".
-This applies to all commands and whether you are talking about the
-source or destination.
-
-See the `--no-traverse` option for controlling whether rclone lists
-the destination directory or not.
-
-### rclone sync source:path dest:path ###
-
-Sync the source to the destination, changing the destination
-only.  Doesn't transfer unchanged files, testing by size and
-modification time or MD5SUM.  Destination is updated to match
-source, including deleting files if necessary.
-
-**Important**: Since this can cause data loss, test first with the
-`--dry-run` flag to see exactly what would be copied and deleted.
-
-Note that files in the destination won't be deleted if there were any
-errors at any point.
-
-It is always the contents of the directory that is synced, not the
-directory so when source:path is a directory, it's the contents of
-source:path that are copied, not the directory name and contents.  See
-extended explanation in the `copy` command above if unsure.
-
-If dest:path doesn't exist, it is created and the source:path contents
-go there.
-
-### move source:path dest:path ###
-
-Moves the contents of the source directory to the destination
-directory. Rclone will error if the source and destination overlap.
-
-If no filters are in use and if possible this will server side move
-`source:path` into `dest:path`. After this `source:path` will no
-longer longer exist.
-
-Otherwise for each file in `source:path` selected by the filters (if
-any) this will move it into `dest:path`.  If possible a server side
-move will be used, otherwise it will copy it (server side if possible)
-into `dest:path` then delete the original (if no errors on copy) in
-`source:path`.
-
-**Important**: Since this can cause data loss, test first with the
---dry-run flag.
-
-### rclone ls remote:path ###
-
-List all the objects in the path with size and path.
-
-### rclone lsd remote:path ###
-
-List all directories/containers/buckets in the the path.
-
-### rclone lsl remote:path ###
-
-List all the objects in the the path with modification time,
-size and path.
-
-### rclone md5sum remote:path ###
-
-Produces an md5sum file for all the objects in the path.  This
-is in the same format as the standard md5sum tool produces.
-
-### rclone sha1sum remote:path ###
-
-Produces an sha1sum file for all the objects in the path.  This
-is in the same format as the standard sha1sum tool produces.
-
-### rclone size remote:path ###
-
-Prints the total size of objects in remote:path and the number of
-objects.
-
-### rclone mkdir remote:path ###
-
-Make the path if it doesn't already exist
-
-### rclone rmdir remote:path ###
-
-Remove the path.  Note that you can't remove a path with
-objects in it, use purge for that.
-
-### rclone purge remote:path ###
-
-Remove the path and all of its contents.  Note that this does not obey
-include/exclude filters - everything will be removed.  Use `delete` if
-you want to selectively delete files.
-
-### rclone delete remote:path ###
-
-Remove the contents of path.  Unlike `purge` it obeys include/exclude
-filters so can be used to selectively delete files.
-
-Eg delete all files bigger than 100MBytes
-
-Check what would be deleted first (use either)
-
-    rclone --min-size 100M lsl remote:path
-    rclone --dry-run --min-size 100M delete remote:path
-
-Then delete
-
-    rclone --min-size 100M delete remote:path
-
-That reads "delete everything with a minimum size of 100 MB", hence
-delete all files bigger than 100MBytes.
-
-### rclone check source:path dest:path ###
-
-Checks the files in the source and destination match.  It
-compares sizes and MD5SUMs and prints a report of files which
-don't match.  It doesn't alter the source or destination.
-
-`--size-only` may be used to only compare the sizes, not the MD5SUMs.
-
-### rclone cleanup remote:path ###
-
-Clean up the remote if possible.  Empty the trash or delete old file
-versions. Not supported by all remotes.
-
-### rclone dedupe remote:path ###
-
-By default `dedup` interactively finds duplicate files and offers to
-delete all but one or rename them to be different. Only useful with
-Google Drive which can have duplicate file names.
-
-The `dedupe` command will delete all but one of any identical (same
-md5sum) files it finds without confirmation.  This means that for most
-duplicated files the `dedupe` command will not be interactive.  You
-can use `--dry-run` to see what would happen without doing anything.
-
-Here is an example run.
-
-Before - with duplicates
-
-```
-$ rclone lsl drive:dupes
-  6048320 2016-03-05 16:23:16.798000000 one.txt
-  6048320 2016-03-05 16:23:11.775000000 one.txt
-   564374 2016-03-05 16:23:06.731000000 one.txt
-  6048320 2016-03-05 16:18:26.092000000 one.txt
-  6048320 2016-03-05 16:22:46.185000000 two.txt
-  1744073 2016-03-05 16:22:38.104000000 two.txt
-   564374 2016-03-05 16:22:52.118000000 two.txt
-```
-
-Now the `dedupe` session
-
-```
-$ rclone dedupe drive:dupes
-2016/03/05 16:24:37 Google drive root 'dupes': Looking for duplicates using interactive mode.
-one.txt: Found 4 duplicates - deleting identical copies
-one.txt: Deleting 2/3 identical duplicates (md5sum "1eedaa9fe86fd4b8632e2ac549403b36")
-one.txt: 2 duplicates remain
-  1:      6048320 bytes, 2016-03-05 16:23:16.798000000, md5sum 1eedaa9fe86fd4b8632e2ac549403b36
-  2:       564374 bytes, 2016-03-05 16:23:06.731000000, md5sum 7594e7dc9fc28f727c42ee3e0749de81
-s) Skip and do nothing
-k) Keep just one (choose which in next step)
-r) Rename all to be different (by changing file.jpg to file-1.jpg)
-s/k/r> k
-Enter the number of the file to keep> 1
-one.txt: Deleted 1 extra copies
-two.txt: Found 3 duplicates - deleting identical copies
-two.txt: 3 duplicates remain
-  1:       564374 bytes, 2016-03-05 16:22:52.118000000, md5sum 7594e7dc9fc28f727c42ee3e0749de81
-  2:      6048320 bytes, 2016-03-05 16:22:46.185000000, md5sum 1eedaa9fe86fd4b8632e2ac549403b36
-  3:      1744073 bytes, 2016-03-05 16:22:38.104000000, md5sum 851957f7fb6f0bc4ce76be966d336802
-s) Skip and do nothing
-k) Keep just one (choose which in next step)
-r) Rename all to be different (by changing file.jpg to file-1.jpg)
-s/k/r> r
-two-1.txt: renamed from: two.txt
-two-2.txt: renamed from: two.txt
-two-3.txt: renamed from: two.txt
-```
-
-The result being
-
-```
-$ rclone lsl drive:dupes
-  6048320 2016-03-05 16:23:16.798000000 one.txt
-   564374 2016-03-05 16:22:52.118000000 two-1.txt
-  6048320 2016-03-05 16:22:46.185000000 two-2.txt
-  1744073 2016-03-05 16:22:38.104000000 two-3.txt
-```
-
-Dedupe can be run non interactively using the `--dedupe-mode` flag.
-
-  * `--dedupe-mode interactive` - interactive as above.
-  * `--dedupe-mode skip` - removes identical files then skips anything left.
-  * `--dedupe-mode first` - removes identical files then keeps the first one.
-  * `--dedupe-mode newest` - removes identical files then keeps the newest one.
-  * `--dedupe-mode oldest` - removes identical files then keeps the oldest one.
-  * `--dedupe-mode rename` - removes identical files then renames the rest to be different.
-
-For example to rename all the identically named photos in your Google Photos directory, do
-
-    rclone dedupe --dedupe-mode rename "drive:Google Photos"
-
-The modes can also be passed as an extra parameter, eg
-
-    rclone dedupe rename "drive:Google Photos"
-
-### rclone config ###
-
-Enter an interactive configuration session.
-
-### rclone help ###
-
-Prints help on rclone commands and options.
+rclone uses a system of subcommands.  For example
+
+    rclone ls remote:path # lists a re
+    rclone copy /local/path remote:path # copies /local/path to the remote
+    rclone sync /local/path remote:path # syncs /local/path to the remote
+
+The main rclone commands with most used first
+
+* [rclone config](/commands/rclone_config/)	 - Enter an interactive configuration session.
+* [rclone copy](/commands/rclone_copy/)	 - Copy files from source to dest, skipping already copied
+* [rclone sync](/commands/rclone_sync/)	 - Make source and dest identical, modifying destination only.
+* [rclone move](/commands/rclone_move/)	 - Move files from source to dest.
+* [rclone delete](/commands/rclone_delete/)	 - Remove the contents of path.
+* [rclone purge](/commands/rclone_purge/)	 - Remove the path and all of its contents.
+* [rclone mkdir](/commands/rclone_mkdir/)	 - Make the path if it doesn't already exist.
+* [rclone rmdir](/commands/rclone_rmdir/)	 - Remove the path.
+* [rclone check](/commands/rclone_check/)	 - Checks the files in the source and destination match.
+* [rclone ls](/commands/rclone_ls/)	 - List all the objects in the the path with size and path.
+* [rclone lsd](/commands/rclone_lsd/)	 - List all directories/containers/buckets in the the path.
+* [rclone lsl](/commands/rclone_lsl/)	 - List all the objects path with modification time, size and path.
+* [rclone md5sum](/commands/rclone_md5sum/)	 - Produces an md5sum file for all the objects in the path.
+* [rclone sha1sum](/commands/rclone_sha1sum/)	 - Produces an sha1sum file for all the objects in the path.
+* [rclone size](/commands/rclone_size/)	 - Returns the total size and number of objects in remote:path.
+* [rclone version](/commands/rclone_version/)	 - Show the version number.
+* [rclone cleanup](/commands/rclone_cleanup/)	 - Clean up the remote if possible
+* [rclone dedupe](/commands/rclone_dedupe/)	 - Interactively find duplicate files delete/rename them.
+
+See the [commands index](/commands/) for the full list.
 
 Copying single files
 --------------------
