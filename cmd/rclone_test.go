@@ -1,5 +1,5 @@
 // Tests for rclone
-package main
+package cmd
 
 import (
 	"testing"

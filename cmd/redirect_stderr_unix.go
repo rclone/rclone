@@ -2,7 +2,7 @@
 
 // +build darwin dragonfly freebsd linux nacl netbsd openbsd
 
-package main
+package cmd
 
 import (
 	"log"
