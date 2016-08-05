@@ -47,6 +47,7 @@ const (
 var (
 	// Flags
 	tempLinkThreshold = fs.SizeSuffix(9 << 30) // Download files bigger than this via the tempLink
+	uploadWaitTime    = pflag.DurationP("acd-upload-wait-time", "", 2*60*time.Second, "Time to wait after a failed complete upload to see if it appears.")
 	// Description of how to auth for this app
 	acdConfig = &oauth2.Config{
 		Scopes: []string{"clouddrive:read_all", "clouddrive:write"},
@@ -416,6 +417,64 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 	f.dirCache.List(f, out, dir)
 }
 
+// checkUpload checks to see if an error occurred after the file was
+// completely uploaded.
+//
+// If it was then it waits for a while to see if the file really
+// exists and is the right size and returns an updated info.
+//
+// If the file wasn't found or was the wrong size then it returns the
+// original error.
+//
+// This is a workaround for Amazon sometimes returning
+//
+//  * 408 REQUEST_TIMEOUT
+//  * 504 GATEWAY_TIMEOUT
+//  * 500 Internal server error
+//
+// At the end of large uploads.  The speculation is that the timeout
+// is waiting for the sha1 hashing to complete and the file may well
+// be properly uploaded.
+func (f *Fs) checkUpload(in io.Reader, src fs.ObjectInfo, inInfo *acd.File, inErr error) (fixedError bool, info *acd.File, err error) {
+	// Return if no error - all is well
+	if inErr == nil {
+		return false, inInfo, inErr
+	}
+	const sleepTime = 5 * time.Second           // sleep between tries
+	retries := int(*uploadWaitTime / sleepTime) // number of retries
+	if retries <= 0 {
+		retries = 1
+	}
+	buf := make([]byte, 1)
+	n, err := in.Read(buf)
+	if !(n == 0 && err == io.EOF) {
+		fs.Debug(src, "Upload error detected but didn't finish upload (n=%d, err=%v): %v", n, err, inErr)
+		return false, inInfo, inErr
+	}
+	fs.Debug(src, "Error detected after finished upload - waiting to see if object was uploaded correctly: %v", inErr)
+	remote := src.Remote()
+	for i := 1; i <= retries; i++ {
+		o, err := f.NewObject(remote)
+		if err == fs.ErrorObjectNotFound {
+			fs.Debug(src, "Object not found - waiting (%d/%d)", i, retries)
+		} else if err != nil {
+			fs.Debug(src, "Object returned error - waiting (%d/%d): %v", i, retries, err)
+		} else {
+			if src.Size() == o.Size() {
+				fs.Debug(src, "Object found with correct size - returning with no error")
+				info = &acd.File{
+					Node: o.(*Object).info,
+				}
+				return true, info, nil
+			}
+			fs.Debug(src, "Object found but wrong size %d vs %d - waiting (%d/%d)", src.Size(), o.Size(), i, retries)
+		}
+		time.Sleep(sleepTime)
+	}
+	fs.Debug(src, "Finished waiting for object - returning original error: %v", inErr)
+	return false, inInfo, inErr
+}
+
 // Put the object into the container
 //
 // Copy the reader in to the new object which is returned
@@ -455,6 +514,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 			info, resp, err = folder.Put(in, leaf)
 		} else {
 			info, resp, err = folder.PutSized(in, size, leaf)
+		}
+		var ok bool
+		ok, info, err = f.checkUpload(in, src, info, err)
+		if ok {
+			return false, nil
 		}
 		return f.shouldRetry(resp, err)
 	})
@@ -705,6 +769,11 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 			info, resp, err = file.OverwriteSized(in, size)
 		} else {
 			info, resp, err = file.Overwrite(in)
+		}
+		var ok bool
+		ok, info, err = o.fs.checkUpload(in, src, info, err)
+		if ok {
+			return false, nil
 		}
 		return o.fs.shouldRetry(resp, err)
 	})

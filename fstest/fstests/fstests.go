@@ -532,7 +532,7 @@ func TestObjectUpdate(t *testing.T) {
 
 	file1.Size = int64(buf.Len())
 	obj := findObject(t, file1.Path)
-	obji := fs.NewStaticObjectInfo("", file1.ModTime, file1.Size, true, nil, obj.Fs())
+	obji := fs.NewStaticObjectInfo(file1.Path, file1.ModTime, file1.Size, true, nil, obj.Fs())
 	err := obj.Update(in, obji)
 	require.NoError(t, err)
 	file1.Hashes = hash.Sums()
