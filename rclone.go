@@ -8,7 +8,8 @@ import (
 	"os"
 
 	"github.com/ncw/rclone/cmd"
-	_ "github.com/ncw/rclone/fs/all" // import all fs
+	_ "github.com/ncw/rclone/cmd/all" // import all commands
+	_ "github.com/ncw/rclone/fs/all"  // import all fs
 )
 
 func main() {
