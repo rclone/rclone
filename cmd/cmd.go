@@ -135,7 +135,7 @@ func newFsDst(remote string) fs.Fs {
 func NewFsSrcDst(args []string) (fs.Fs, fs.Fs) {
 	fsrc, fdst := newFsSrc(args[0]), newFsDst(args[1])
 	fs.CalculateModifyWindow(fdst, fsrc)
-	return fdst, fsrc
+	return fsrc, fdst
 }
 
 // NewFsSrc creates a new src fs from the arguments
