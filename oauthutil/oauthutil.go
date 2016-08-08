@@ -114,6 +114,7 @@ type TokenSource struct {
 	token       *oauth2.Token
 	config      *oauth2.Config
 	ctx         context.Context
+	expiryTimer *time.Timer // signals whenever the token expires
 }
 
 // Token returns a token or an error.
@@ -137,6 +138,10 @@ func (ts *TokenSource) Token() (*oauth2.Token, error) {
 	changed := *token != *ts.token
 	ts.token = token
 	if changed {
+		// Bump on the expiry timer if it is set
+		if ts.expiryTimer != nil {
+			ts.expiryTimer.Reset(ts.timeToExpiry())
+		}
 		err = putToken(ts.name, token)
 		if err != nil {
 			return nil, err
@@ -150,6 +155,32 @@ func (ts *TokenSource) Invalidate() {
 	ts.mu.Lock()
 	ts.token.AccessToken = ""
 	ts.mu.Unlock()
+}
+
+// timeToExpiry returns how long until the token expires
+//
+// Call with the lock held
+func (ts *TokenSource) timeToExpiry() time.Duration {
+	t := ts.token
+	if t == nil {
+		return 0
+	}
+	if t.Expiry.IsZero() {
+		return 3E9 * time.Second // ~95 years
+	}
+	return t.Expiry.Sub(time.Now())
+}
+
+// OnExpiry returns a channel which has the time written to it when
+// the token expires.  Note that there is only one channel so if
+// attaching multiple go routines it will only signal to one of them.
+func (ts *TokenSource) OnExpiry() <-chan time.Time {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
+	if ts.expiryTimer == nil {
+		ts.expiryTimer = time.NewTimer(ts.timeToExpiry())
+	}
+	return ts.expiryTimer.C
 }
 
 // Check interface satisfied
