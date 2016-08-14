@@ -162,7 +162,7 @@ func TestConfigLoadEncrypted(t *testing.T) {
 	}()
 
 	// Set correct password
-	err = setPassword("asdf")
+	err = setConfigPassword("asdf")
 	require.NoError(t, err)
 	c, err := loadConfigFile()
 	require.NoError(t, err)
@@ -208,11 +208,11 @@ func TestPassword(t *testing.T) {
 	}()
 	var err error
 	// Empty password should give error
-	err = setPassword("  \t  ")
+	err = setConfigPassword("  \t  ")
 	require.Error(t, err)
 
 	// Test invalid utf8 sequence
-	err = setPassword(string([]byte{0xff, 0xfe, 0xfd}) + "abc")
+	err = setConfigPassword(string([]byte{0xff, 0xfe, 0xfd}) + "abc")
 	require.Error(t, err)
 
 	// Simple check of wrong passwords
@@ -230,11 +230,11 @@ func TestPassword(t *testing.T) {
 }
 
 func hashedKeyCompare(t *testing.T, a, b string, shouldMatch bool) {
-	err := setPassword(a)
+	err := setConfigPassword(a)
 	require.NoError(t, err)
 	k1 := configKey
 
-	err = setPassword(b)
+	err = setConfigPassword(b)
 	require.NoError(t, err)
 	k2 := configKey
 

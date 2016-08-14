@@ -66,10 +66,11 @@ type RegInfo struct {
 
 // Option is describes an option for the config wizard
 type Option struct {
-	Name     string
-	Help     string
-	Optional bool
-	Examples OptionExamples
+	Name       string
+	Help       string
+	Optional   bool
+	IsPassword bool
+	Examples   OptionExamples
 }
 
 // OptionExamples is a slice of examples

@@ -493,7 +493,7 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 	var out []byte
 	for {
 		if len(configKey) == 0 && envpw != "" {
-			err := setPassword(envpw)
+			err := setConfigPassword(envpw)
 			if err != nil {
 				fmt.Println("Using RCLONE_CONFIG_PASS returned:", err)
 				envpw = ""
@@ -505,7 +505,7 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 			if !*AskPassword {
 				return nil, errors.New("unable to decrypt configuration and not allowed to ask for password - set RCLONE_CONFIG_PASS to your configuration password")
 			}
-			getPassword("Enter configuration password:")
+			getConfigPassword("Enter configuration password:")
 		}
 
 		// Nonce is first 24 bytes of the ciphertext
@@ -529,16 +529,57 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 	return goconfig.LoadFromReader(bytes.NewBuffer(out))
 }
 
-// getPassword will query the user for a password the
+// checkPassword normalises and validates the password
+func checkPassword(password string) (string, error) {
+	if !utf8.ValidString(password) {
+		return "", errors.New("password contains invalid utf8 characters")
+	}
+	// Remove leading+trailing whitespace
+	password = strings.TrimSpace(password)
+	// Normalize to reduce weird variations.
+	password = norm.NFKC.String(password)
+	if len(password) == 0 {
+		return "", errors.New("no characters in password")
+	}
+	return password, nil
+}
+
+// GetPassword asks the user for a password with the prompt given.
+func GetPassword(prompt string) string {
+	fmt.Println(prompt)
+	for {
+		fmt.Print("password:")
+		password := ReadPassword()
+		password, err := checkPassword(password)
+		if err == nil {
+			return password
+		}
+		fmt.Printf("Bad password: %v", err)
+	}
+}
+
+// ChangePassword will query the user twice for the named password. If
+// the same password is entered it is returned.
+func ChangePassword(name string) string {
+	for {
+		a := GetPassword(fmt.Sprintf("Enter %s password:", name))
+		b := GetPassword(fmt.Sprintf("Confirm %s password:", name))
+		if a == b {
+			return a
+		}
+		fmt.Println("Passwords do not match!")
+	}
+}
+
+// getConfigPassword will query the user for a password the
 // first time it is required.
-func getPassword(q string) {
+func getConfigPassword(q string) {
 	if len(configKey) != 0 {
 		return
 	}
 	for {
-		fmt.Println(q)
-		fmt.Print("password:")
-		err := setPassword(ReadPassword())
+		password := GetPassword(q)
+		err := setConfigPassword(password)
 		if err == nil {
 			return
 		}
@@ -546,29 +587,33 @@ func getPassword(q string) {
 	}
 }
 
-// setPassword will set the configKey to the hash of
+// setConfigPassword will set the configKey to the hash of
 // the password. If the length of the password is
 // zero after trimming+normalization, an error is returned.
-func setPassword(password string) error {
-	if !utf8.ValidString(password) {
-		return errors.New("password contains invalid utf8 characters")
-	}
-	// Remove leading+trailing whitespace
-	password = strings.TrimSpace(password)
-
-	// Normalize to reduce weird variations.
-	password = norm.NFKC.String(password)
-	if len(password) == 0 {
-		return errors.New("no characters in password")
+func setConfigPassword(password string) error {
+	password, err := checkPassword(password)
+	if err != nil {
+		return err
 	}
 	// Create SHA256 has of the password
 	sha := sha256.New()
-	_, err := sha.Write([]byte("[" + password + "][rclone-config]"))
+	_, err = sha.Write([]byte("[" + password + "][rclone-config]"))
 	if err != nil {
 		return err
 	}
 	configKey = sha.Sum(nil)
 	return nil
+}
+
+// changeConfigPassword will query the user twice
+// for a password. If the same password is entered
+// twice the key is updated.
+func changeConfigPassword() {
+	err := setConfigPassword(ChangePassword("NEW configuration"))
+	if err != nil {
+		fmt.Printf("Failed to set config password: %v\n", err)
+		return
+	}
 }
 
 // SaveConfig saves configuration file.
@@ -808,6 +853,9 @@ func RemoteConfig(name string) {
 // ChooseOption asks the user to choose an option
 func ChooseOption(o *Option) string {
 	fmt.Println(o.Help)
+	if o.IsPassword {
+		return MustObscure(ChangePassword("the"))
+	}
 	if len(o.Examples) > 0 {
 		var values []string
 		var help []string
@@ -854,20 +902,21 @@ func NewRemote(name string) {
 		SaveConfig()
 		return
 	}
-	EditRemote(name)
+	EditRemote(fs, name)
 }
 
 // EditRemote gets the user to edit a remote
-func EditRemote(name string) {
+func EditRemote(fs *RegInfo, name string) {
 	ShowRemote(name)
 	fmt.Printf("Edit remote\n")
 	for {
-		for _, key := range ConfigFile.GetKeyList(name) {
+		for _, option := range fs.Options {
+			key := option.Name
 			value := ConfigFile.MustValue(name, key)
-			fmt.Printf("Press enter to accept current value, or type in a new one\n")
-			fmt.Printf("%s = %s>", key, value)
-			newValue := ReadLine()
-			if newValue != "" {
+			fmt.Printf("Value %q = %q\n", key, value)
+			fmt.Printf("Edit? (y/n)>\n")
+			if Confirm() {
+				newValue := ChooseOption(&option)
 				ConfigFile.SetValue(name, key, newValue)
 			}
 		}
@@ -901,7 +950,11 @@ func EditConfig() {
 		switch i := Command(what); i {
 		case 'e':
 			name := ChooseRemote()
-			EditRemote(name)
+			fs, err := Find(ConfigFile.MustValue(name, "type"))
+			if err != nil {
+				log.Fatalf("Failed to find fs: %v", err)
+			}
+			EditRemote(fs, name)
 		case 'n':
 		nameLoop:
 			for {
@@ -941,7 +994,7 @@ func SetPassword() {
 			what := []string{"cChange Password", "uUnencrypt configuration", "qQuit to main menu"}
 			switch i := Command(what); i {
 			case 'c':
-				changePassword()
+				changeConfigPassword()
 				SaveConfig()
 				fmt.Println("Password changed")
 				continue
@@ -959,7 +1012,7 @@ func SetPassword() {
 			what := []string{"aAdd Password", "qQuit to main menu"}
 			switch i := Command(what); i {
 			case 'a':
-				changePassword()
+				changeConfigPassword()
 				SaveConfig()
 				fmt.Println("Password set")
 				continue
@@ -967,25 +1020,6 @@ func SetPassword() {
 				return
 			}
 		}
-	}
-}
-
-// changePassword will query the user twice
-// for a password. If the same password is entered
-// twice the key is updated.
-func changePassword() {
-	for {
-		configKey = nil
-		getPassword("Enter NEW configuration password:")
-		a := configKey
-		// re-enter password
-		configKey = nil
-		getPassword("Confirm NEW password:")
-		b := configKey
-		if bytes.Equal(a, b) {
-			return
-		}
-		fmt.Println("Passwords does not match!")
 	}
 }
 
