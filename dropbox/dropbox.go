@@ -29,7 +29,7 @@ import (
 // Constants
 const (
 	rcloneAppKey             = "5jcck7diasz0rqy"
-	rcloneEncryptedAppSecret = "m8WRxJ6b1Z/Y25fDwJWS"
+	rcloneEncryptedAppSecret = "fRS5vVLr2v6FbyXYnIgjwBuUAt0osq_QZTXAEcmZ7g"
 	metadataLimit            = dropbox.MetadataLimitDefault // max items to fetch at once
 )
 
@@ -139,7 +139,7 @@ func newDropbox(name string) (*dropbox.Dropbox, error) {
 	}
 	appSecret := fs.ConfigFile.MustValue(name, "app_secret")
 	if appSecret == "" {
-		appSecret = fs.Reveal(rcloneEncryptedAppSecret)
+		appSecret = fs.MustReveal(rcloneEncryptedAppSecret)
 	}
 
 	err := db.SetAppInfo(appKey, appSecret)

@@ -23,7 +23,7 @@ import (
 //oAuth
 const (
 	rcloneClientID              = "ac39b43b9eba4cae8ffb788c06d816a8"
-	rcloneEncryptedClientSecret = "k8jKzZnMmM+Wx5jAksPAwYKPgImOiN+FhNKD09KBg9A="
+	rcloneEncryptedClientSecret = "EfyyNZ3YUEwXM5yAhi72G9YwKn2mkFrYwJNS7cY0TJAhFlX9K-uJFbGlpO-RYjrJ"
 )
 
 // Globals
@@ -35,7 +35,7 @@ var (
 			TokenURL: "https://oauth.yandex.com/token",     //same as https://oauth.yandex.ru/token
 		},
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.Reveal(rcloneEncryptedClientSecret),
+		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
 	}
 )

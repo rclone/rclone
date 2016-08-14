@@ -26,7 +26,7 @@ import (
 
 const (
 	rcloneClientID              = "0000000044165769"
-	rcloneEncryptedClientSecret = "0+be4+jYw+7018HY6P3t/Izo+pTc+Yvt8+fy8NHU094="
+	rcloneEncryptedClientSecret = "ugVWLNhKkVT1-cbTRO-6z1MlzwdW6aMwpKgNaFG-qXjEn_WfDnG9TVyRA5yuoliU"
 	minSleep                    = 10 * time.Millisecond
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2                               // bigger for slower decay, exponential
@@ -47,7 +47,7 @@ var (
 			TokenURL: "https://login.live.com/oauth20_token.srf",
 		},
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.Reveal(rcloneEncryptedClientSecret),
+		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectPublicURL,
 	}
 	chunkSize    = fs.SizeSuffix(10 * 1024 * 1024)
