@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	defaultEndpoint  = "https://api.backblaze.com"
+	defaultEndpoint  = "https://api.backblazeb2.com"
 	headerPrefix     = "x-bz-info-" // lower case as that is what the server returns
 	timeKey          = "src_last_modified_millis"
 	timeHeader       = headerPrefix + timeKey
