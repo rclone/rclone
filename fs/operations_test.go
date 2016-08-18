@@ -620,3 +620,21 @@ func TestDeduplicateRename(t *testing.T) {
 		}
 	}
 }
+
+func TestCat(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteBoth("file1", "aaa", t1)
+	file2 := r.WriteBoth("file2", "bbb", t2)
+
+	fstest.CheckItems(t, r.fremote, file1, file2)
+
+	var buf bytes.Buffer
+	err := fs.Cat(r.fremote, &buf)
+	require.NoError(t, err)
+	res := buf.String()
+
+	if res != "aaabbb" && res != "bbbaaa" {
+		t.Errorf("Incorrect output from Cat: %q", res)
+	}
+}

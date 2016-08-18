@@ -1012,3 +1012,34 @@ func CleanUp(f Fs) error {
 	}
 	return fc.CleanUp()
 }
+
+// Cat any files to the io.Writer
+func Cat(f Fs, w io.Writer) error {
+	var mu sync.Mutex
+	return ListFn(f, func(o Object) {
+		Stats.Transferring(o.Remote())
+		defer Stats.DoneTransferring(o.Remote())
+		mu.Lock()
+		defer mu.Unlock()
+		in, err := o.Open()
+		if err != nil {
+			Stats.Error()
+			ErrorLog(o, "Failed to open: %v", err)
+			return
+		}
+		defer func() {
+			err = in.Close()
+			if err != nil {
+				Stats.Error()
+				ErrorLog(o, "Failed to close: %v", err)
+			}
+		}()
+		inAccounted := NewAccount(in, o) // account the transfer
+		_, err = io.Copy(w, inAccounted)
+		if err != nil {
+			Stats.Error()
+			ErrorLog(o, "Failed to send to output: %v", err)
+		}
+	})
+
+}
