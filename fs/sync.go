@@ -183,7 +183,9 @@ func (s *syncCopyMove) processError(err error) {
 	defer s.errorMu.Unlock()
 	switch {
 	case IsFatalError(err):
-		close(s.abort)
+		if !s.aborting() {
+			close(s.abort)
+		}
 		s.fatalErr = err
 	case IsNoRetryError(err):
 		s.noRetryErr = err
