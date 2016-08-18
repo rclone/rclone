@@ -800,7 +800,12 @@ func (f *Fs) purge(oldOnly bool) error {
 		if !isDirectory {
 			fs.Stats.Checking(remote)
 			if oldOnly && last != remote {
-				fs.Debug(remote, "Not deleting current version (id %q) %q", object.ID, object.Action)
+				if object.Action == "hide" {
+					fs.Debug(remote, "Deleting current version (id %q) as it is a hide marker", object.ID)
+					toBeDeleted <- object
+				} else {
+					fs.Debug(remote, "Not deleting current version (id %q) %q", object.ID, object.Action)
+				}
 			} else {
 				fs.Debug(remote, "Deleting (id %q)", object.ID)
 				toBeDeleted <- object
