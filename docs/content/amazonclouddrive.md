@@ -127,6 +127,14 @@ To download files above this threshold, rclone requests a `tempLink`
 which downloads the file through a temporary URL directly from the
 underlying S3 storage.
 
+#### --acd-upload-wait-time=TIME ####
+
+Sometimes Amazon Drive gives an error when a file has been fully
+uploaded but the file appears anyway after a little while.  This
+controls the time rclone waits - 2 minutes by default.  You might want
+to increase the time if you are having problems with very big files.
+Upload with the `-v` flag for more info.
+
 ### Limitations ###
 
 Note that Amazon Drive is case insensitive so you can't have a
