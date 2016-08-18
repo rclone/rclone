@@ -15,6 +15,8 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"golang.org/x/text/unicode/norm"
+
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
 )
@@ -41,7 +43,7 @@ func init() {
 // Fs represents a local filesystem rooted at root
 type Fs struct {
 	name        string              // the name of the remote
-	root        string              // The root directory
+	root        string              // The root directory (OS path)
 	precisionOk sync.Once           // Whether we need to read the precision
 	precision   time.Duration       // precision of local filesystem
 	wmu         sync.Mutex          // used for locking access to 'warned'.
@@ -70,7 +72,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		warned: make(map[string]struct{}),
 		nounc:  nounc == "true",
 	}
-	f.root = f.filterPath(root)
+	f.root = f.cleanPath(root)
 
 	// Check to see if this points to a file
 	fi, err := os.Lstat(f.root)
@@ -100,9 +102,8 @@ func (f *Fs) String() string {
 
 // newObject makes a half completed Object
 func (f *Fs) newObject(remote string) *Object {
-	remote = normString(remote)
-	dstPath := f.filterPath(filepath.Join(f.root, remote))
-	remote = filepath.ToSlash(f.cleanUtf8(remote))
+	dstPath := f.cleanPath(filepath.Join(f.root, remote))
+	remote = f.cleanRemote(remote)
 	return &Object{
 		fs:     f,
 		remote: remote,
@@ -175,7 +176,7 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 			if fi.IsDir() {
 				if out.IncludeDirectory(newRemote) {
 					dir := &fs.Dir{
-						Name:  normString(f.cleanUtf8(newRemote)),
+						Name:  f.cleanRemote(newRemote),
 						When:  fi.ModTime(),
 						Bytes: 0,
 						Count: 0,
@@ -207,8 +208,8 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 // Ignores everything which isn't Storable, eg links etc
 func (f *Fs) List(out fs.ListOpts, dir string) {
 	defer out.Finished()
-	dir = filterFragment(f.cleanUtf8(dir))
-	root := filepath.Join(f.root, dir)
+	root := f.cleanPath(filepath.Join(f.root, dir))
+	dir = f.cleanRemote(dir)
 	_, err := os.Stat(root)
 	if err != nil {
 		out.SetError(fs.ErrorDirNotFound)
@@ -252,10 +253,11 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 	wg.Wait()
 }
 
-// CleanUtf8 makes string a valid UTF-8 string
+// cleanRemote makes string a valid UTF-8 string for remote strings.
 //
 // Any invalid UTF-8 characters will be replaced with utf8.RuneError
-func (f *Fs) cleanUtf8(name string) string {
+// It also normalises the UTF-8 and converts the slashes if necessary.
+func (f *Fs) cleanRemote(name string) string {
 	if !utf8.ValidString(name) {
 		f.wmu.Lock()
 		if _, ok := f.warned[name]; !ok {
@@ -265,9 +267,8 @@ func (f *Fs) cleanUtf8(name string) string {
 		f.wmu.Unlock()
 		name = string([]rune(name))
 	}
-	if runtime.GOOS == "windows" {
-		name = cleanWindowsName(f, name)
-	}
+	name = norm.NFC.String(name)
+	name = filepath.ToSlash(name)
 	return name
 }
 
@@ -647,8 +648,8 @@ func (o *Object) Remove() error {
 	return os.Remove(o.path)
 }
 
-// Return the current directory and file from a path
-// Assumes os.PathSeparator is used.
+// Return the directory and file from an OS path. Assumes
+// os.PathSeparator is used.
 func getDirFile(s string) (string, string) {
 	i := strings.LastIndex(s, string(os.PathSeparator))
 	dir, file := s[:i], s[i+1:]
@@ -658,9 +659,9 @@ func getDirFile(s string) (string, string) {
 	return dir, file
 }
 
-// filterFragment cleans a path fragment which is part of a bigger
-// path and not necessarily absolute
-func filterFragment(s string) string {
+// cleanPathFragment cleans an OS path fragment which is part of a
+// bigger path and not necessarily absolute
+func cleanPathFragment(s string) string {
 	if s == "" {
 		return s
 	}
@@ -671,11 +672,16 @@ func filterFragment(s string) string {
 	return s
 }
 
-// filterPath cleans and makes absolute the path passed in.
+// cleanPath cleans and makes absolute the path passed in and returns
+// an OS path.
 //
-// On windows it makes the path UNC also.
-func (f *Fs) filterPath(s string) string {
-	s = filterFragment(s)
+// The input might be in OS form or rclone form or a mixture, but the
+// output is in OS form.
+//
+// On windows it makes the path UNC also and replaces any characters
+// Windows can't deal with with their replacements.
+func (f *Fs) cleanPath(s string) string {
+	s = cleanPathFragment(s)
 	if runtime.GOOS == "windows" {
 		if !filepath.IsAbs(s) && !strings.HasPrefix(s, "\\") {
 			s2, err := filepath.Abs(s)
@@ -683,21 +689,19 @@ func (f *Fs) filterPath(s string) string {
 				s = s2
 			}
 		}
-
-		if f.nounc {
-			return s
+		if !f.nounc {
+			// Convert to UNC
+			s = uncPath(s)
 		}
-		// Convert to UNC
-		return uncPath(s)
-	}
-
-	if !filepath.IsAbs(s) {
-		s2, err := filepath.Abs(s)
-		if err == nil {
-			s = s2
+		s = cleanWindowsName(f, s)
+	} else {
+		if !filepath.IsAbs(s) {
+			s2, err := filepath.Abs(s)
+			if err == nil {
+				s = s2
+			}
 		}
 	}
-
 	return s
 }
 
@@ -726,7 +730,7 @@ func uncPath(s string) string {
 	return s
 }
 
-// cleanWindowsName will clean invalid Windows characters
+// cleanWindowsName will clean invalid Windows characters replacing them with _
 func cleanWindowsName(f *Fs, name string) string {
 	original := name
 	var name2 string

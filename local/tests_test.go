@@ -57,11 +57,11 @@ var utf8Tests = [][2]string{
 	{string([]byte{'a', 0x80, 'b'}), "a�b"},
 }
 
-func TestCleanUtf8(t *testing.T) {
+func TestCleanRemote(t *testing.T) {
 	f := &Fs{}
 	f.warned = make(map[string]struct{})
 	for _, test := range utf8Tests {
-		got := f.cleanUtf8(test[0])
+		got := f.cleanRemote(test[0])
 		expect := test[1]
 		if got != expect {
 			t.Fatalf("got %q, expected %q", got, expect)
