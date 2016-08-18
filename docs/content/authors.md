@@ -35,3 +35,4 @@ Contributors
   * Justin R. Wilson <jrw972@gmail.com>
   * Antonio Messina <antonio.s.messina@gmail.com>
   * Stefan G. Weichinger <office@oops.co.at>
+  * Per Cederberg <cederberg@gmail.com>
