@@ -554,7 +554,7 @@ func GetPassword(prompt string) string {
 		if err == nil {
 			return password
 		}
-		fmt.Printf("Bad password: %v", err)
+		fmt.Printf("Bad password: %v\n", err)
 	}
 }
 
@@ -829,7 +829,7 @@ func OkRemote(name string) bool {
 		ConfigFile.DeleteSection(name)
 		return true
 	default:
-		ErrorLog(nil, "Bad choice %d", i)
+		ErrorLog(nil, "Bad choice %c", i)
 	}
 	return false
 }
@@ -854,7 +854,40 @@ func RemoteConfig(name string) {
 func ChooseOption(o *Option) string {
 	fmt.Println(o.Help)
 	if o.IsPassword {
-		return MustObscure(ChangePassword("the"))
+		actions := []string{"yYes type in my own password", "gGenerate random password"}
+		if o.Optional {
+			actions = append(actions, "nNo leave this optional password blank")
+		}
+		var password string
+		switch i := Command(actions); i {
+		case 'y':
+			password = ChangePassword("the")
+		case 'g':
+			for {
+				fmt.Printf("Password strength in bits.\n64 is just about memorable\n128 is secure\n1024 is the maximum\n")
+				bits := ChooseNumber("Bits", 64, 1024)
+				bytes := bits / 8
+				if bits%8 != 0 {
+					bytes++
+				}
+				var pw = make([]byte, bytes)
+				n, _ := rand.Read(pw)
+				if n != bytes {
+					log.Fatalf("password short read: %d", n)
+				}
+				password = base64.RawURLEncoding.EncodeToString(pw)
+				fmt.Printf("Your password is: %s\n", password)
+				fmt.Printf("Use this password?\n")
+				if Confirm() {
+					break
+				}
+			}
+		case 'n':
+			return ""
+		default:
+			ErrorLog(nil, "Bad choice %c", i)
+		}
+		return MustObscure(password)
 	}
 	if len(o.Examples) > 0 {
 		var values []string
