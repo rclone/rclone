@@ -129,7 +129,7 @@ func TestDecodeFileName(t *testing.T) {
 }
 
 func TestEncryptSegment(t *testing.T) {
-	c, _ := newCipher(0, "")
+	c, _ := newCipher(0, "", "")
 	for _, test := range []struct {
 		in       string
 		expected string
@@ -166,7 +166,7 @@ func TestEncryptSegment(t *testing.T) {
 
 func TestDecryptSegment(t *testing.T) {
 	// We've tested the forwards above, now concentrate on the errors
-	c, _ := newCipher(0, "")
+	c, _ := newCipher(0, "", "")
 	for _, test := range []struct {
 		in          string
 		expectedErr error
@@ -229,12 +229,12 @@ func TestUnspreadName(t *testing.T) {
 
 func TestEncryptName(t *testing.T) {
 	// First no flatten
-	c, _ := newCipher(0, "")
+	c, _ := newCipher(0, "", "")
 	assert.Equal(t, "p0e52nreeaj0a5ea7s64m4j72s", c.EncryptName("1"))
 	assert.Equal(t, "p0e52nreeaj0a5ea7s64m4j72s/l42g6771hnv3an9cgc8cr2n1ng", c.EncryptName("1/12"))
 	assert.Equal(t, "p0e52nreeaj0a5ea7s64m4j72s/l42g6771hnv3an9cgc8cr2n1ng/qgm4avr35m5loi1th53ato71v0", c.EncryptName("1/12/123"))
 	// Now with flatten
-	c, _ = newCipher(3, "")
+	c, _ = newCipher(3, "", "")
 	assert.Equal(t, "k/g/t/kgtickdcigo7600huebjl3ubu4", c.EncryptName("1/12/123"))
 }
 
@@ -255,7 +255,7 @@ func TestDecryptName(t *testing.T) {
 		{1, "k/g/t/i/kgtickdcigo7600huebjl3ubu4", "1/12/123", nil},
 		{1, "k/x/t/i/kgtickdcigo7600huebjl3ubu4", "", ErrorBadSpreadDidntMatch},
 	} {
-		c, _ := newCipher(test.flatten, "")
+		c, _ := newCipher(test.flatten, "", "")
 		actual, actualErr := c.DecryptName(test.in)
 		what := fmt.Sprintf("Testing %q (flatten=%d)", test.in, test.flatten)
 		assert.Equal(t, test.expected, actual, what)
@@ -264,7 +264,7 @@ func TestDecryptName(t *testing.T) {
 }
 
 func TestEncryptedSize(t *testing.T) {
-	c, _ := newCipher(0, "")
+	c, _ := newCipher(0, "", "")
 	for _, test := range []struct {
 		in       int64
 		expected int64
@@ -288,7 +288,7 @@ func TestEncryptedSize(t *testing.T) {
 
 func TestDecryptedSize(t *testing.T) {
 	// Test the errors since we tested the reverse above
-	c, _ := newCipher(0, "")
+	c, _ := newCipher(0, "", "")
 	for _, test := range []struct {
 		in          int64
 		expectedErr error
@@ -521,7 +521,7 @@ func (z *zeroes) Read(p []byte) (n int, err error) {
 
 // Test encrypt decrypt with different buffer sizes
 func testEncryptDecrypt(t *testing.T, bufSize int, copySize int64) {
-	c, err := newCipher(0, "")
+	c, err := newCipher(0, "", "")
 	assert.NoError(t, err)
 	c.cryptoRand = &zeroes{} // zero out the nonce
 	buf := make([]byte, bufSize)
@@ -591,7 +591,7 @@ func TestEncryptData(t *testing.T) {
 		{[]byte{1}, file1},
 		{[]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}, file16},
 	} {
-		c, err := newCipher(0, "")
+		c, err := newCipher(0, "", "")
 		assert.NoError(t, err)
 		c.cryptoRand = newRandomSource(1E8) // nodge the crypto rand generator
 
@@ -614,7 +614,7 @@ func TestEncryptData(t *testing.T) {
 }
 
 func TestNewEncrypter(t *testing.T) {
-	c, err := newCipher(0, "")
+	c, err := newCipher(0, "", "")
 	assert.NoError(t, err)
 	c.cryptoRand = newRandomSource(1E8) // nodge the crypto rand generator
 
@@ -658,7 +658,7 @@ func (c *closeDetector) Close() error {
 }
 
 func TestNewDecrypter(t *testing.T) {
-	c, err := newCipher(0, "")
+	c, err := newCipher(0, "", "")
 	assert.NoError(t, err)
 	c.cryptoRand = newRandomSource(1E8) // nodge the crypto rand generator
 
@@ -700,7 +700,7 @@ func TestNewDecrypter(t *testing.T) {
 }
 
 func TestDecrypterRead(t *testing.T) {
-	c, err := newCipher(0, "")
+	c, err := newCipher(0, "", "")
 	assert.NoError(t, err)
 
 	// Test truncating the header
@@ -744,7 +744,7 @@ func TestDecrypterRead(t *testing.T) {
 }
 
 func TestDecrypterClose(t *testing.T) {
-	c, err := newCipher(0, "")
+	c, err := newCipher(0, "", "")
 	assert.NoError(t, err)
 
 	cd := newCloseDetector(bytes.NewBuffer(file16))
@@ -780,7 +780,7 @@ func TestDecrypterClose(t *testing.T) {
 }
 
 func TestPutGetBlock(t *testing.T) {
-	c, err := newCipher(0, "")
+	c, err := newCipher(0, "", "")
 	assert.NoError(t, err)
 
 	block := c.getBlock()
@@ -791,7 +791,7 @@ func TestPutGetBlock(t *testing.T) {
 }
 
 func TestKey(t *testing.T) {
-	c, err := newCipher(0, "")
+	c, err := newCipher(0, "", "")
 	assert.NoError(t, err)
 
 	// Check zero keys OK
@@ -799,17 +799,27 @@ func TestKey(t *testing.T) {
 	assert.Equal(t, [32]byte{}, c.nameKey)
 	assert.Equal(t, [16]byte{}, c.nameTweak)
 
-	require.NoError(t, c.Key("potato"))
+	require.NoError(t, c.Key("potato", ""))
 	assert.Equal(t, [32]byte{0x74, 0x55, 0xC7, 0x1A, 0xB1, 0x7C, 0x86, 0x5B, 0x84, 0x71, 0xF4, 0x7B, 0x79, 0xAC, 0xB0, 0x7E, 0xB3, 0x1D, 0x56, 0x78, 0xB8, 0x0C, 0x7E, 0x2E, 0xAF, 0x4F, 0xC8, 0x06, 0x6A, 0x9E, 0xE4, 0x68}, c.dataKey)
 	assert.Equal(t, [32]byte{0x76, 0x5D, 0xA2, 0x7A, 0xB1, 0x5D, 0x77, 0xF9, 0x57, 0x96, 0x71, 0x1F, 0x7B, 0x93, 0xAD, 0x63, 0xBB, 0xB4, 0x84, 0x07, 0x2E, 0x71, 0x80, 0xA8, 0xD1, 0x7A, 0x9B, 0xBE, 0xC1, 0x42, 0x70, 0xD0}, c.nameKey)
 	assert.Equal(t, [16]byte{0xC1, 0x8D, 0x59, 0x32, 0xF5, 0x5B, 0x28, 0x28, 0xC5, 0xE1, 0xE8, 0x72, 0x15, 0x52, 0x03, 0x10}, c.nameTweak)
 
-	require.NoError(t, c.Key("Potato"))
+	require.NoError(t, c.Key("Potato", ""))
 	assert.Equal(t, [32]byte{0xAE, 0xEA, 0x6A, 0xD3, 0x47, 0xDF, 0x75, 0xB9, 0x63, 0xCE, 0x12, 0xF5, 0x76, 0x23, 0xE9, 0x46, 0xD4, 0x2E, 0xD8, 0xBF, 0x3E, 0x92, 0x8B, 0x39, 0x24, 0x37, 0x94, 0x13, 0x3E, 0x5E, 0xF7, 0x5E}, c.dataKey)
 	assert.Equal(t, [32]byte{0x54, 0xF7, 0x02, 0x6E, 0x8A, 0xFC, 0x56, 0x0A, 0x86, 0x63, 0x6A, 0xAB, 0x2C, 0x9C, 0x51, 0x62, 0xE5, 0x1A, 0x12, 0x23, 0x51, 0x83, 0x6E, 0xAF, 0x50, 0x42, 0x0F, 0x98, 0x1C, 0x86, 0x0A, 0x19}, c.nameKey)
 	assert.Equal(t, [16]byte{0xF8, 0xC1, 0xB6, 0x27, 0x2D, 0x52, 0x9B, 0x4A, 0x8F, 0xDA, 0xEB, 0x42, 0x4A, 0x28, 0xDD, 0xF3}, c.nameTweak)
 
-	require.NoError(t, c.Key(""))
+	require.NoError(t, c.Key("potato", "sausage"))
+	assert.Equal(t, [32]uint8{0x8e, 0x9b, 0x6b, 0x99, 0xf8, 0x69, 0x4, 0x67, 0xa0, 0x71, 0xf9, 0xcb, 0x92, 0xd0, 0xaa, 0x78, 0x7f, 0x8f, 0xf1, 0x78, 0xbe, 0xc9, 0x6f, 0x99, 0x9f, 0xd5, 0x20, 0x6e, 0x64, 0x4a, 0x1b, 0x50}, c.dataKey)
+	assert.Equal(t, [32]uint8{0x3e, 0xa9, 0x5e, 0xf6, 0x81, 0x78, 0x2d, 0xc9, 0xd9, 0x95, 0x5d, 0x22, 0x5b, 0xfd, 0x44, 0x2c, 0x6f, 0x5d, 0x68, 0x97, 0xb0, 0x29, 0x1, 0x5c, 0x6f, 0x46, 0x2e, 0x2a, 0x9d, 0xae, 0x2c, 0xe3}, c.nameKey)
+	assert.Equal(t, [16]uint8{0xf1, 0x7f, 0xd7, 0x14, 0x1d, 0x65, 0x27, 0x4f, 0x36, 0x3f, 0xc2, 0xa0, 0x4d, 0xd2, 0x14, 0x8a}, c.nameTweak)
+
+	require.NoError(t, c.Key("potato", "Sausage"))
+	assert.Equal(t, [32]uint8{0xda, 0x81, 0x8c, 0x67, 0xef, 0x11, 0xf, 0xc8, 0xd5, 0xc8, 0x62, 0x4b, 0x7f, 0xe2, 0x9e, 0x35, 0x35, 0xb0, 0x8d, 0x79, 0x84, 0x89, 0xac, 0xcb, 0xa0, 0xff, 0x2, 0x72, 0x3, 0x1a, 0x5e, 0x64}, c.dataKey)
+	assert.Equal(t, [32]uint8{0x2, 0x81, 0x7e, 0x7b, 0xea, 0x99, 0x81, 0x5a, 0xd0, 0x2d, 0xb9, 0x64, 0x48, 0xb0, 0x28, 0x27, 0x7c, 0x20, 0xb4, 0xd4, 0xa4, 0x68, 0xad, 0x4e, 0x5c, 0x29, 0xf, 0x79, 0xef, 0xee, 0xdb, 0x3b}, c.nameKey)
+	assert.Equal(t, [16]uint8{0x9a, 0xb5, 0xb, 0x3d, 0xcb, 0x60, 0x59, 0x55, 0xa5, 0x4d, 0xe6, 0xb6, 0x47, 0x3, 0x23, 0xe2}, c.nameTweak)
+
+	require.NoError(t, c.Key("", ""))
 	assert.Equal(t, [32]byte{}, c.dataKey)
 	assert.Equal(t, [32]byte{}, c.nameKey)
 	assert.Equal(t, [16]byte{}, c.nameTweak)

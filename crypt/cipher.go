@@ -47,7 +47,7 @@ var (
 	ErrorBadSpreadResultTooShort = errors.New("bad unspread - result too short")
 	ErrorBadSpreadDidntMatch     = errors.New("bad unspread - directory prefix didn't match")
 	ErrorFileClosed              = errors.New("file already closed")
-	scryptSalt                   = []byte{0xA8, 0x0D, 0xF4, 0x3A, 0x8F, 0xBD, 0x03, 0x08, 0xA7, 0xCA, 0xB8, 0x3E, 0x58, 0x1F, 0x86, 0xB1}
+	defaultSalt                  = []byte{0xA8, 0x0D, 0xF4, 0x3A, 0x8F, 0xBD, 0x03, 0x08, 0xA7, 0xCA, 0xB8, 0x3E, 0x58, 0x1F, 0x86, 0xB1}
 )
 
 // Global variables
@@ -81,7 +81,8 @@ type cipher struct {
 	cryptoRand io.Reader // read crypto random numbers from here
 }
 
-func newCipher(flatten int, password string) (*cipher, error) {
+// newCipher initialises the cipher.  If salt is "" then it uses a built in salt val
+func newCipher(flatten int, password, salt string) (*cipher, error) {
 	c := &cipher{
 		flatten:    flatten,
 		cryptoRand: rand.Reader,
@@ -89,7 +90,7 @@ func newCipher(flatten int, password string) (*cipher, error) {
 	c.buffers.New = func() interface{} {
 		return make([]byte, blockSize)
 	}
-	err := c.Key(password)
+	err := c.Key(password, salt)
 	if err != nil {
 		return nil, err
 	}
@@ -97,18 +98,24 @@ func newCipher(flatten int, password string) (*cipher, error) {
 }
 
 // Key creates all the internal keys from the password passed in using
-// scrypt.  We use a fixed salt just to make attackers lives slighty
-// harder than using no salt.
+// scrypt.
+//
+// If salt is "" we use a fixed salt just to make attackers lives
+// slighty harder than using no salt.
 //
 // Note that empty passsword makes all 0x00 keys which is used in the
 // tests.
-func (c *cipher) Key(password string) (err error) {
+func (c *cipher) Key(password, salt string) (err error) {
 	const keySize = len(c.dataKey) + len(c.nameKey) + len(c.nameTweak)
+	var saltBytes = defaultSalt
+	if salt != "" {
+		saltBytes = []byte(salt)
+	}
 	var key []byte
 	if password == "" {
 		key = make([]byte, keySize)
 	} else {
-		key, err = scrypt.Key([]byte(password), scryptSalt, 16384, 8, 1, keySize)
+		key, err = scrypt.Key([]byte(password), saltBytes, 16384, 8, 1, keySize)
 		if err != nil {
 			return err
 		}

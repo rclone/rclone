@@ -49,6 +49,11 @@ func init() {
 			Name:       "password",
 			Help:       "Password or pass phrase for encryption.",
 			IsPassword: true,
+		}, {
+			Name:       "password2",
+			Help:       "Password or pass phrase for salt. Optional but recommended.\nShould be different to the previous password.",
+			IsPassword: true,
+			Optional:   true,
 		}},
 	})
 }
@@ -64,7 +69,14 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decrypt password")
 	}
-	cipher, err := newCipher(flatten, password)
+	salt := fs.ConfigFile.MustValue(name, "password2", "")
+	if salt != "" {
+		salt, err = fs.Reveal(salt)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to decrypt password2")
+		}
+	}
+	cipher, err := newCipher(flatten, password, salt)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make cipher")
 	}
