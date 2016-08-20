@@ -19,8 +19,8 @@ First check your chosen remote is working - we'll call it
 will be encrypted and anything outside won't.  This means that if you
 are using a bucket based remote (eg S3, B2, swift) then you should
 probably put the bucket in the remote `s3:bucket`. If you just use
-`s3:` then rclone will make encrypted bucket names too which may or
-may not be what you want.
+`s3:` then rclone will make encrypted bucket names too (if using file
+name encryption) which may or may not be what you want.
 
 Now configure `crypt` using `rclone config`. We will call this one
 `secret` to differentiate it from the `remote`.
@@ -30,7 +30,7 @@ No remotes found - make a new one
 n) New remote
 s) Set configuration password
 q) Quit config
-n/s/q> n
+n/s/q> n   
 name> secret
 Type of storage to configure.
 Choose a number from below, or type in your own value
@@ -61,32 +61,44 @@ Choose a number from below, or type in your own value
 Storage> 5
 Remote to encrypt/decrypt.
 remote> remote:path
-Flatten the directory structure - more secure, less useful - see docs for tradeoffs.
+How to encrypt the filenames.
 Choose a number from below, or type in your own value
- 1 / Don't flatten files (default) - good for unlimited files, but doesn't hide directory structure.
-   \ "0"
- 2 / Spread files over 1 directory good for <10,000 files.
-   \ "1"
- 3 / Spread files over 32 directories good for <320,000 files.
-   \ "2"
- 4 / Spread files over 1024 directories good for <10,000,000 files.
-   \ "3"
- 5 / Spread files over 32,768 directories good for <320,000,000 files.
-   \ "4"
- 6 / Spread files over 1,048,576 levels good for <10,000,000,000 files.
-   \ "5"
-flatten> 1
+ 1 / Don't encrypt the file names.  Adds a ".bin" extension only.
+   \ "off"
+ 2 / Encrypt the filenames see the docs for the details.
+   \ "standard"
+filename_encryption> 2
 Password or pass phrase for encryption.
+y) Yes type in my own password
+g) Generate random password
+y/g> y
 Enter the password:
 password:
 Confirm the password:
 password:
+Password or pass phrase for salt. Optional but recommended.
+Should be different to the previous password.
+y) Yes type in my own password
+g) Generate random password
+n) No leave this optional password blank
+y/g/n> g
+Password strength in bits.
+64 is just about memorable
+128 is secure
+1024 is the maximum
+Bits> 128
+Your password is: JAsJvRcgR-_veXNfy_sGmQ
+Use this password?
+y) Yes
+n) No
+y/n> y
 Remote config
 --------------------
 [secret]
 remote = remote:path
-flatten = 0
-password = 0_gtCJ422bzwAWP0UN2lggrjhA-sSg
+filename_encryption = standard
+password = CfDxopZIXFG0Oo-ac7dPLWWOHkNJbw
+password2 = HYUpfuzHJL8qnX9fOaIYijq0xnVLwyVzp3y4SF3TwYqAU6HLysk
 --------------------
 y) Yes this is OK
 e) Edit this remote
@@ -99,9 +111,9 @@ obscured so it isn't immediately obvious what it is.  It is in no way
 secure unless you use config file encryption.
 
 A long passphrase is recommended, or you can use a random one.  Note
-that if you reconfigure rclone with the same password/passphrase
+that if you reconfigure rclone with the same passwords/passphrases
 elsewhere it will be compatible - all the secrets used are derived
-from that one password/passphrase.
+from those two passwords/passphrases.
 
 Note that rclone does not encrypt
   * file length - this can be calcuated within 16 bytes
@@ -109,7 +121,8 @@ Note that rclone does not encrypt
 
 ## Example ##
 
-To test I made a little directory of files
+To test I made a little directory of files using "standard" file name
+encryption.
 
 ```
 plaintext/
@@ -154,39 +167,43 @@ $ rclone -q ls secret:subdir
        10 subsubdir/file4.txt
 ```
 
-If you use the flattened flag then the listing will look and that last command will not work.
+If don't use file name encryption then the remote will look like this
+- note the `.bin` extensions added to prevent the cloud provider
+attempting to interpret the data.
 
 ```
 $ rclone -q ls remote:path
-       56 t/tsdtcpdu6g9dpamn6poqc248tll9dj5ok78a363etmq8ushr821g
-       57 g/gsrp2g0u85pgsi6kso74bjsrsafe11odpfln8qqpj6n9p20of0a0
-       55 h/hagjclgavj2mbiqm6u6cnjjqcg
-       58 4/4jsbao3dhi0jfoubt2oo493pbqmsshn92q01ddu7dg6428rlluhg
-       54 v/v05749mltvv1tf4onltun46gls
+       54 file0.txt.bin
+       57 subdir/file3.txt.bin
+       56 subdir/file2.txt.bin
+       58 subdir/subsubdir/file4.txt.bin
+       55 file1.txt.bin
 ```
 
-### Flattened vs non-Flattened ###
+### File name encryption modes ###
 
-Pros and cons of each
+Here are some of the features of the file name encryption modes
 
-Flattened
-  * hides directory structures
-  * identical file names won't have identical encrypted names
-  * can't use a sub path
-    * doesn't work: `rclone copy crypt:sub/dir /tmp/recovered`
-    * use: `rclone copy --include "/sub/dir/**" crypt: /tmp/recovered`
-  * will always have to recurse through the entire directory structure
-  * can't copy a single file directly
-    * doesn't work: `rclone copy crypt:path/to/file /tmp/recovered`
-    * use: `rclone copy --include "/path/to/file" crypt: /tmp/recovered`
+Off
+  * doesn't hide file names or directory structure
+  * allows for longer file names (~246 characters)
+  * can use sub paths and copy single files
 
-Normal
+Standard
+  * file names encrypted
+  * file names can't be as long (~156 characters)
   * can use sub paths and copy single files
   * directory structure visibile
   * identical files names will have identical uploaded names
   * can use shortcuts to shorten the directory recursion
 
-You can swap between flattened levels without re-uploading your files.
+Cloud storage systems have various limits on file name length and
+total path length which you are more likely to hit using "Standard"
+file name encryption.  If you keep your file names to below 156
+characters in length then you should be OK on all providers.
+
+There may be an even more secure file name encryption mode in the
+future which will address the long file name problem.
 
 ## File formats ##
 
@@ -245,25 +262,23 @@ files.
 
 ### Name encryption ###
 
-File names are encrypted by crypt.  These are either encrypted segment
-by segment - the path is broken up into `/` separated strings and
-these are encrypted individually, or if working in flattened mode the
-whole path is encrypted `/`s and all.
+File names are encrypted segment by segment - the path is broken up
+into `/` separated strings and these are encrypted individually.
 
-First file names are padded using using PKCS#7 to a multiple of 16
-bytes before encryption.
+File segments are padded using using PKCS#7 to a multiple of 16 bytes
+before encryption.
 
 They are then encrypted with EME using AES with 256 bit key. EME
 (ECB-Mix-ECB) is a wide-block encryption mode presented in the 2003
 paper "A Parallelizable Enciphering Mode" by Halevi and Rogaway.
 
 This makes for determinstic encryption which is what we want - the
-same filename must encrypt to the same thing.
+same filename must encrypt to the same thing otherwise we can't find
+it on the cloud storage system.
 
 This means that
 
   * filenames with the same name will encrypt the same
-    * (though we can use directory flattening to avoid this if required)
   * filenames which start the same won't have a common prefix
 
 This uses a 32 byte key (256 bits) and a 16 byte (128 bits) IV both of
@@ -281,8 +296,11 @@ used on case insensitive remotes (eg Windows, Amazon Drive).
 
 ### Key derivation ###
 
-Rclone uses `scrypt` with parameters `N=16384, r=8, p=1` with a fixed
-salt to derive the 32+32+16 = 80 bytes of key material required.
+Rclone uses `scrypt` with parameters `N=16384, r=8, p=1` with a an
+optional user supplied salt (password2) to derive the 32+32+16 = 80
+bytes of key material required.  If the user doesn't supply a salt
+then rclone uses an internal one.
 
 `scrypt` makes it impractical to mount a dictionary attack on rclone
-encrypted data.
+encrypted data.  For full protection agains this you should always use
+a salt.

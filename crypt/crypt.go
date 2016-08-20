@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"path"
-	"strings"
 	"sync"
 
 	"github.com/ncw/rclone/fs"
@@ -22,27 +21,15 @@ func init() {
 			Name: "remote",
 			Help: "Remote to encrypt/decrypt.",
 		}, {
-			Name: "flatten",
-			Help: "Flatten the directory structure - more secure, less useful - see docs for tradeoffs.",
+			Name: "filename_encryption",
+			Help: "How to encrypt the filenames.",
 			Examples: []fs.OptionExample{
 				{
-					Value: "0",
-					Help:  "Don't flatten files (default) - good for unlimited files, but doesn't hide directory structure.",
+					Value: "off",
+					Help:  "Don't encrypt the file names.  Adds a \".bin\" extension only.",
 				}, {
-					Value: "1",
-					Help:  "Spread files over 1 directory good for <10,000 files.",
-				}, {
-					Value: "2",
-					Help:  "Spread files over 32 directories good for <320,000 files.",
-				}, {
-					Value: "3",
-					Help:  "Spread files over 1024 directories good for <10,000,000 files.",
-				}, {
-					Value: "4",
-					Help:  "Spread files over 32,768 directories good for <320,000,000 files.",
-				}, {
-					Value: "5",
-					Help:  "Spread files over 1,048,576 levels good for <10,000,000,000 files.",
+					Value: "standard",
+					Help:  "Encrypt the filenames see the docs for the details.",
 				},
 			},
 		}, {
@@ -60,12 +47,15 @@ func init() {
 
 // NewFs contstructs an Fs from the path, container:path
 func NewFs(name, rpath string) (fs.Fs, error) {
-	flatten := fs.ConfigFile.MustInt(name, "flatten", 0)
+	mode, err := NewNameEncryptionMode(fs.ConfigFile.MustValue(name, "filename_encryption", "standard"))
+	if err != nil {
+		return nil, err
+	}
 	password := fs.ConfigFile.MustValue(name, "password", "")
 	if password == "" {
 		return nil, errors.New("password not set in config file")
 	}
-	password, err := fs.Reveal(password)
+	password, err = fs.Reveal(password)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decrypt password")
 	}
@@ -76,20 +66,26 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 			return nil, errors.Wrap(err, "failed to decrypt password2")
 		}
 	}
-	cipher, err := newCipher(flatten, password, salt)
+	cipher, err := newCipher(mode, password, salt)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make cipher")
 	}
 	remote := fs.ConfigFile.MustValue(name, "remote")
-	remotePath := path.Join(remote, cipher.EncryptName(rpath))
+	// Look for a file first
+	remotePath := path.Join(remote, cipher.EncryptFileName(rpath))
 	wrappedFs, err := fs.NewFs(remotePath)
+	// if that didn't produce a file, look for a directory
+	if err != fs.ErrorIsFile {
+		remotePath = path.Join(remote, cipher.EncryptDirName(rpath))
+		wrappedFs, err = fs.NewFs(remotePath)
+	}
 	if err != fs.ErrorIsFile && err != nil {
 		return nil, errors.Wrapf(err, "failed to make remote %q to wrap", remotePath)
 	}
 	f := &Fs{
-		Fs:      wrappedFs,
-		cipher:  cipher,
-		flatten: flatten,
+		Fs:     wrappedFs,
+		cipher: cipher,
+		mode:   mode,
 	}
 	return f, err
 }
@@ -97,8 +93,8 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 // Fs represents a wrapped fs.Fs
 type Fs struct {
 	fs.Fs
-	cipher  Cipher
-	flatten int
+	cipher Cipher
+	mode   NameEncryptionMode
 }
 
 // String returns a description of the FS
@@ -108,12 +104,12 @@ func (f *Fs) String() string {
 
 // List the Fs into a channel
 func (f *Fs) List(opts fs.ListOpts, dir string) {
-	f.Fs.List(f.newListOpts(opts, dir), f.cipher.EncryptName(dir))
+	f.Fs.List(f.newListOpts(opts, dir), f.cipher.EncryptDirName(dir))
 }
 
 // NewObject finds the Object at remote.
 func (f *Fs) NewObject(remote string) (fs.Object, error) {
-	o, err := f.Fs.NewObject(f.cipher.EncryptName(remote))
+	o, err := f.Fs.NewObject(f.cipher.EncryptFileName(remote))
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +170,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	if !ok {
 		return nil, fs.ErrorCantCopy
 	}
-	oResult, err := do.Copy(o.Object, f.cipher.EncryptName(remote))
+	oResult, err := do.Copy(o.Object, f.cipher.EncryptFileName(remote))
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +195,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	if !ok {
 		return nil, fs.ErrorCantCopy
 	}
-	oResult, err := do.Move(o.Object, f.cipher.EncryptName(remote))
+	oResult, err := do.Move(o.Object, f.cipher.EncryptFileName(remote))
 	if err != nil {
 		return nil, err
 	}
@@ -242,7 +238,7 @@ func (o *Object) String() string {
 // Remote returns the remote path
 func (o *Object) Remote() string {
 	remote := o.Object.Remote()
-	decryptedName, err := o.f.cipher.DecryptName(remote)
+	decryptedName, err := o.f.cipher.DecryptFileName(remote)
 	if err != nil {
 		fs.Debug(remote, "Undecryptable file name: %v", err)
 		return remote
@@ -287,7 +283,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 func (f *Fs) newDir(dir *fs.Dir) *fs.Dir {
 	new := *dir
 	remote := dir.Name
-	decryptedRemote, err := f.cipher.DecryptName(remote)
+	decryptedRemote, err := f.cipher.DecryptDirName(remote)
 	if err != nil {
 		fs.Debug(remote, "Undecryptable dir name: %v", err)
 	} else {
@@ -318,7 +314,7 @@ func (o *ObjectInfo) Fs() fs.Info {
 
 // Remote returns the remote path
 func (o *ObjectInfo) Remote() string {
-	return o.f.cipher.EncryptName(o.ObjectInfo.Remote())
+	return o.f.cipher.EncryptFileName(o.ObjectInfo.Remote())
 }
 
 // Size returns the size of the file
@@ -358,35 +354,7 @@ func (f *Fs) newListOpts(lo fs.ListOpts, dir string) *ListOpts {
 //
 // Each returned item must have less than level `/`s in.
 func (lo *ListOpts) Level() int {
-	// If flattened recurse fully
-	if lo.f.flatten > 0 {
-		return fs.MaxLevel
-	}
 	return lo.ListOpts.Level()
-}
-
-// addSyntheticDirs makes up directory objects for the path passed in
-func (lo *ListOpts) addSyntheticDirs(path string) {
-	lo.mu.Lock()
-	defer lo.mu.Unlock()
-	for {
-		i := strings.LastIndexByte(path, '/')
-		if i < 0 {
-			break
-		}
-		path = path[:i]
-		if path == "" {
-			break
-		}
-		if _, found := lo.dirs[path]; found {
-			break
-		}
-		slashes := strings.Count(path, "/")
-		if slashes < lo.ListOpts.Level() {
-			lo.ListOpts.AddDir(&fs.Dir{Name: path})
-		}
-		lo.dirs[path] = struct{}{}
-	}
 }
 
 // Add an object to the output.
@@ -394,18 +362,10 @@ func (lo *ListOpts) addSyntheticDirs(path string) {
 // Multiple goroutines can safely add objects concurrently.
 func (lo *ListOpts) Add(obj fs.Object) (abort bool) {
 	remote := obj.Remote()
-	decryptedRemote, err := lo.f.cipher.DecryptName(remote)
+	_, err := lo.f.cipher.DecryptFileName(remote)
 	if err != nil {
 		fs.Debug(remote, "Skipping undecryptable file name: %v", err)
 		return lo.ListOpts.IsFinished()
-	}
-	// If flattened add synthetic directories
-	if lo.f.flatten > 0 {
-		lo.addSyntheticDirs(decryptedRemote)
-		slashes := strings.Count(decryptedRemote, "/")
-		if slashes >= lo.ListOpts.Level() {
-			return lo.ListOpts.IsFinished()
-		}
 	}
 	return lo.ListOpts.Add(lo.f.newObject(obj))
 }
@@ -414,12 +374,8 @@ func (lo *ListOpts) Add(obj fs.Object) (abort bool) {
 // If the function returns true, the operation has been aborted.
 // Multiple goroutines can safely add objects concurrently.
 func (lo *ListOpts) AddDir(dir *fs.Dir) (abort bool) {
-	// If flattened we don't add any directories from the underlying remote
-	if lo.f.flatten > 0 {
-		return lo.ListOpts.IsFinished()
-	}
 	remote := dir.Name
-	_, err := lo.f.cipher.DecryptName(remote)
+	_, err := lo.f.cipher.DecryptDirName(remote)
 	if err != nil {
 		fs.Debug(remote, "Skipping undecryptable dir name: %v", err)
 		return lo.ListOpts.IsFinished()
@@ -430,11 +386,7 @@ func (lo *ListOpts) AddDir(dir *fs.Dir) (abort bool) {
 // IncludeDirectory returns whether this directory should be
 // included in the listing (and recursed into or not).
 func (lo *ListOpts) IncludeDirectory(remote string) bool {
-	// If flattened we look in all directories
-	if lo.f.flatten > 0 {
-		return true
-	}
-	decryptedRemote, err := lo.f.cipher.DecryptName(remote)
+	decryptedRemote, err := lo.f.cipher.DecryptDirName(remote)
 	if err != nil {
 		fs.Debug(remote, "Not including undecryptable directory name: %v", err)
 		return false

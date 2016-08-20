@@ -6,6 +6,7 @@ import (
 	gocipher "crypto/cipher"
 	"crypto/rand"
 	"encoding/base32"
+	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -30,6 +31,7 @@ const (
 	blockHeaderSize     = secretbox.Overhead
 	blockDataSize       = 64 * 1024
 	blockSize           = blockHeaderSize + blockDataSize
+	encryptedSuffix     = ".bin" // when file name encryption is off we add this suffix to make sure the cloud provider doesn't process the file
 )
 
 // Errors returned by cipher
@@ -43,10 +45,8 @@ var (
 	ErrorEncryptedBadMagic       = errors.New("not an encrypted file - bad magic string")
 	ErrorEncryptedBadBlock       = errors.New("failed to authenticate decrypted block - bad password?")
 	ErrorBadBase32Encoding       = errors.New("bad base32 filename encoding")
-	ErrorBadSpreadNotSingleChar  = errors.New("bad unspread - not single character")
-	ErrorBadSpreadResultTooShort = errors.New("bad unspread - result too short")
-	ErrorBadSpreadDidntMatch     = errors.New("bad unspread - directory prefix didn't match")
 	ErrorFileClosed              = errors.New("file already closed")
+	ErrorNotAnEncryptedFile      = errors.New("not an encrypted file - no \"" + encryptedSuffix + "\" suffix")
 	defaultSalt                  = []byte{0xA8, 0x0D, 0xF4, 0x3A, 0x8F, 0xBD, 0x03, 0x08, 0xA7, 0xCA, 0xB8, 0x3E, 0x58, 0x1F, 0x86, 0xB1}
 )
 
@@ -57,10 +57,14 @@ var (
 
 // Cipher is used to swap out the encryption implementations
 type Cipher interface {
-	// EncryptName encrypts a file path
-	EncryptName(string) string
-	// DecryptName decrypts a file path, returns error if decrypt was invalid
-	DecryptName(string) (string, error)
+	// EncryptFileName encrypts a file path
+	EncryptFileName(string) string
+	// DecryptFileName decrypts a file path, returns error if decrypt was invalid
+	DecryptFileName(string) (string, error)
+	// EncryptDirName encrypts a directory path
+	EncryptDirName(string) string
+	// DecryptDirName decrypts a directory path, returns error if decrypt was invalid
+	DecryptDirName(string) (string, error)
 	// EncryptData
 	EncryptData(io.Reader) (io.Reader, error)
 	// DecryptData
@@ -71,20 +75,56 @@ type Cipher interface {
 	DecryptedSize(int64) (int64, error)
 }
 
+// NameEncryptionMode is the type of file name encryption in use
+type NameEncryptionMode int
+
+// NameEncryptionMode levels
+const (
+	NameEncryptionOff NameEncryptionMode = iota
+	NameEncryptionStandard
+)
+
+// NewNameEncryptionMode turns a string into a NameEncryptionMode
+func NewNameEncryptionMode(s string) (mode NameEncryptionMode, err error) {
+	s = strings.ToLower(s)
+	switch s {
+	case "off":
+		mode = NameEncryptionOff
+	case "standard":
+		mode = NameEncryptionStandard
+	default:
+		err = errors.Errorf("Unknown file name encryption mode %q", s)
+	}
+	return mode, err
+}
+
+// String turns mode into a human readable string
+func (mode NameEncryptionMode) String() (out string) {
+	switch mode {
+	case NameEncryptionOff:
+		out = "off"
+	case NameEncryptionStandard:
+		out = "standard"
+	default:
+		out = fmt.Sprintf("Unknown mode #%d", mode)
+	}
+	return out
+}
+
 type cipher struct {
 	dataKey    [32]byte                  // Key for secretbox
 	nameKey    [32]byte                  // 16,24 or 32 bytes
 	nameTweak  [nameCipherBlockSize]byte // used to tweak the name crypto
 	block      gocipher.Block
-	flatten    int       // set flattening level - 0 is off
+	mode       NameEncryptionMode
 	buffers    sync.Pool // encrypt/decrypt buffers
 	cryptoRand io.Reader // read crypto random numbers from here
 }
 
 // newCipher initialises the cipher.  If salt is "" then it uses a built in salt val
-func newCipher(flatten int, password, salt string) (*cipher, error) {
+func newCipher(mode NameEncryptionMode, password, salt string) (*cipher, error) {
 	c := &cipher{
-		flatten:    flatten,
+		mode:       mode,
 		cryptoRand: rand.Reader,
 	}
 	c.buffers.New = func() interface{} {
@@ -231,50 +271,8 @@ func (c *cipher) decryptSegment(ciphertext string) (string, error) {
 	return string(plaintext), err
 }
 
-// spread a name over the given number of directory levels
-//
-// if in isn't long enough dirs will be reduces
-func spreadName(dirs int, in string) string {
-	if dirs > len(in) {
-		dirs = len(in)
-	}
-	prefix := ""
-	for i := 0; i < dirs; i++ {
-		prefix += string(in[i]) + "/"
-	}
-	return prefix + in
-}
-
-// reverse spreadName, returning an error if not in spread format
-//
-// This decodes any level of spreading
-func unspreadName(in string) (string, error) {
-	in = strings.ToLower(in)
-	segments := strings.Split(in, "/")
-	if len(segments) == 0 {
-		return in, nil
-	}
-	out := segments[len(segments)-1]
-	segments = segments[:len(segments)-1]
-	for i, s := range segments {
-		if len(s) != 1 {
-			return "", ErrorBadSpreadNotSingleChar
-		}
-		if i >= len(out) {
-			return "", ErrorBadSpreadResultTooShort
-		}
-		if s[0] != out[i] {
-			return "", ErrorBadSpreadDidntMatch
-		}
-	}
-	return out, nil
-}
-
-// EncryptName encrypts a file path
-func (c *cipher) EncryptName(in string) string {
-	if c.flatten > 0 {
-		return spreadName(c.flatten, c.encryptSegment(in))
-	}
+// encryptFileName encrypts a file path
+func (c *cipher) encryptFileName(in string) string {
 	segments := strings.Split(in, "/")
 	for i := range segments {
 		segments[i] = c.encryptSegment(segments[i])
@@ -282,15 +280,24 @@ func (c *cipher) EncryptName(in string) string {
 	return strings.Join(segments, "/")
 }
 
-// DecryptName decrypts a file path
-func (c *cipher) DecryptName(in string) (string, error) {
-	if c.flatten > 0 {
-		unspread, err := unspreadName(in)
-		if err != nil {
-			return "", err
-		}
-		return c.decryptSegment(unspread)
+// EncryptFileName encrypts a file path
+func (c *cipher) EncryptFileName(in string) string {
+	if c.mode == NameEncryptionOff {
+		return in + encryptedSuffix
 	}
+	return c.encryptFileName(in)
+}
+
+// EncryptDirName encrypts a directory path
+func (c *cipher) EncryptDirName(in string) string {
+	if c.mode == NameEncryptionOff {
+		return in
+	}
+	return c.encryptFileName(in)
+}
+
+// decryptFileName decrypts a file path
+func (c *cipher) decryptFileName(in string) (string, error) {
 	segments := strings.Split(in, "/")
 	for i := range segments {
 		var err error
@@ -300,6 +307,26 @@ func (c *cipher) DecryptName(in string) (string, error) {
 		}
 	}
 	return strings.Join(segments, "/"), nil
+}
+
+// DecryptFileName decrypts a file path
+func (c *cipher) DecryptFileName(in string) (string, error) {
+	if c.mode == NameEncryptionOff {
+		remainingLength := len(in) - len(encryptedSuffix)
+		if remainingLength > 0 && strings.HasSuffix(in, encryptedSuffix) {
+			return in[:remainingLength], nil
+		}
+		return "", ErrorNotAnEncryptedFile
+	}
+	return c.decryptFileName(in)
+}
+
+// DecryptDirName decrypts a directory path
+func (c *cipher) DecryptDirName(in string) (string, error) {
+	if c.mode == NameEncryptionOff {
+		return in, nil
+	}
+	return c.decryptFileName(in)
 }
 
 // nonce is an NACL secretbox nonce
