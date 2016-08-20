@@ -12,7 +12,7 @@ import (
 	"github.com/ncw/rclone/yandex"
 )
 
-func init() {
+func TestSetup(t *testing.T) {
 	fstests.NilObject = fs.Object((*yandex.Object)(nil))
 	fstests.RemoteName = "TestYandex:"
 }

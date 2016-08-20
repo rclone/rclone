@@ -12,7 +12,7 @@ import (
 	"github.com/ncw/rclone/swift"
 )
 
-func init() {
+func TestSetup(t *testing.T) {
 	fstests.NilObject = fs.Object((*swift.Object)(nil))
 	fstests.RemoteName = "TestSwift:"
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/ncw/rclone/fstest/fstests"
 )
 
-func init() {
+func TestSetup(t *testing.T) {
 	fstests.NilObject = fs.Object((*b2.Object)(nil))
 	fstests.RemoteName = "TestB2:"
 }

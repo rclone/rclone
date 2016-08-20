@@ -12,7 +12,7 @@ import (
 	"github.com/ncw/rclone/googlecloudstorage"
 )
 
-func init() {
+func TestSetup(t *testing.T) {
 	fstests.NilObject = fs.Object((*googlecloudstorage.Object)(nil))
 	fstests.RemoteName = "TestGoogleCloudStorage:"
 }

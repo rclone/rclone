@@ -12,7 +12,7 @@ import (
 	"github.com/ncw/rclone/local"
 )
 
-func init() {
+func TestSetup(t *testing.T) {
 	fstests.NilObject = fs.Object((*local.Object)(nil))
 	fstests.RemoteName = ""
 }

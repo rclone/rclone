@@ -46,6 +46,7 @@ type Data struct {
 	UpperFsName string
 	TestName    string
 	Fns         []string
+	Suffix      string
 }
 
 var testProgram = `
@@ -64,21 +65,21 @@ import (
 {{ if eq .FsName "crypt" }}	_ "github.com/ncw/rclone/local"
 {{end}})
 
-func init() {
+func TestSetup{{ .Suffix }}(t *testing.T)() {
 	fstests.NilObject = fs.Object((*{{ .FsName }}.Object)(nil))
 	fstests.RemoteName = "{{ .TestName }}"
 }
 
 // Generic tests for the Fs
-{{ range $fn := .Fns }}func {{ $fn }}(t *testing.T){ fstests.{{ $fn }}(t) }
+{{ range $fn := .Fns }}func {{ $fn }}{{ $.Suffix }}(t *testing.T){ fstests.{{ $fn }}(t) }
 {{ end }}
 `
 
 // Generate test file piping it through gofmt
-func generateTestProgram(t *template.Template, fns []string, Fsname string) {
+func generateTestProgram(t *template.Template, fns []string, Fsname string, suffix string) {
 	fsname := strings.ToLower(Fsname)
-	TestName := "Test" + Fsname + ":"
-	outfile := "../../" + fsname + "/" + fsname + "_test.go"
+	TestName := "Test" + Fsname + suffix + ":"
+	outfile := "../../" + fsname + "/" + fsname + suffix + "_test.go"
 
 	if fsname == "local" {
 		TestName = ""
@@ -90,6 +91,7 @@ func generateTestProgram(t *template.Template, fns []string, Fsname string) {
 		UpperFsName: Fsname,
 		TestName:    TestName,
 		Fns:         fns,
+		Suffix:      suffix,
 	}
 
 	cmd := exec.Command("gofmt")
@@ -125,17 +127,18 @@ func generateTestProgram(t *template.Template, fns []string, Fsname string) {
 func main() {
 	fns := findTestFunctions()
 	t := template.Must(template.New("main").Parse(testProgram))
-	generateTestProgram(t, fns, "Local")
-	generateTestProgram(t, fns, "Swift")
-	generateTestProgram(t, fns, "S3")
-	generateTestProgram(t, fns, "Drive")
-	generateTestProgram(t, fns, "GoogleCloudStorage")
-	generateTestProgram(t, fns, "Dropbox")
-	generateTestProgram(t, fns, "AmazonCloudDrive")
-	generateTestProgram(t, fns, "OneDrive")
-	generateTestProgram(t, fns, "Hubic")
-	generateTestProgram(t, fns, "B2")
-	generateTestProgram(t, fns, "Yandex")
-	generateTestProgram(t, fns, "Crypt")
+	generateTestProgram(t, fns, "Local", "")
+	generateTestProgram(t, fns, "Swift", "")
+	generateTestProgram(t, fns, "S3", "")
+	generateTestProgram(t, fns, "Drive", "")
+	generateTestProgram(t, fns, "GoogleCloudStorage", "")
+	generateTestProgram(t, fns, "Dropbox", "")
+	generateTestProgram(t, fns, "AmazonCloudDrive", "")
+	generateTestProgram(t, fns, "OneDrive", "")
+	generateTestProgram(t, fns, "Hubic", "")
+	generateTestProgram(t, fns, "B2", "")
+	generateTestProgram(t, fns, "Yandex", "")
+	generateTestProgram(t, fns, "Crypt", "")
+	generateTestProgram(t, fns, "Crypt", "2")
 	log.Printf("Done")
 }

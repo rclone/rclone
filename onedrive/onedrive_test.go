@@ -12,7 +12,7 @@ import (
 	"github.com/ncw/rclone/onedrive"
 )
 
-func init() {
+func TestSetup(t *testing.T) {
 	fstests.NilObject = fs.Object((*onedrive.Object)(nil))
 	fstests.RemoteName = "TestOneDrive:"
 }

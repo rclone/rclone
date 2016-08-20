@@ -12,7 +12,7 @@ import (
 	"github.com/ncw/rclone/hubic"
 )
 
-func init() {
+func TestSetup(t *testing.T) {
 	fstests.NilObject = fs.Object((*hubic.Object)(nil))
 	fstests.RemoteName = "TestHubic:"
 }

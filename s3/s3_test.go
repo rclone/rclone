@@ -12,7 +12,7 @@ import (
 	"github.com/ncw/rclone/s3"
 )
 
-func init() {
+func TestSetup(t *testing.T) {
 	fstests.NilObject = fs.Object((*s3.Object)(nil))
 	fstests.RemoteName = "TestS3:"
 }
