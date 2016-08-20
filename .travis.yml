@@ -8,8 +8,10 @@ os:
 
 go:
   - 1.5.4
-  - 1.6.2
-  - tip
+  - 1.6.3
+  - 1.7
+
+# - tip
 
 install:
   - make build_dep
