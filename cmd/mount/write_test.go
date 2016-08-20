@@ -12,6 +12,8 @@ import (
 
 // Test writing a file with no write()'s to it
 func TestWriteFileNoWrite(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
 	fd, err := os.Create(run.path("testnowrite"))
 	assert.NoError(t, err)
 
@@ -25,6 +27,8 @@ func TestWriteFileNoWrite(t *testing.T) {
 
 // Test open file in directory listing
 func FIXMETestWriteOpenFileInDirListing(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
 	fd, err := os.Create(run.path("testnowrite"))
 	assert.NoError(t, err)
 
@@ -38,6 +42,8 @@ func FIXMETestWriteOpenFileInDirListing(t *testing.T) {
 
 // Test writing a file and reading it back
 func TestWriteFileWrite(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
 	run.createFile(t, "testwrite", "data")
 	run.checkDir(t, "testwrite 4")
 	contents := run.readFile(t, "testwrite")
@@ -47,6 +53,8 @@ func TestWriteFileWrite(t *testing.T) {
 
 // Test overwriting a file
 func TestWriteFileOverwrite(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
 	run.createFile(t, "testwrite", "data")
 	run.checkDir(t, "testwrite 4")
 	run.createFile(t, "testwrite", "potato")
@@ -57,6 +65,8 @@ func TestWriteFileOverwrite(t *testing.T) {
 
 // Test double close
 func TestWriteFileDoubleClose(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
 	out, err := os.Create(run.path("testdoubleclose"))
 	assert.NoError(t, err)
 	fd := out.Fd()

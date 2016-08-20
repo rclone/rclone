@@ -13,6 +13,8 @@ import (
 
 // Read by byte including don't read any bytes
 func TestReadByByte(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
 	var data = []byte("hellohello")
 	run.createFile(t, "testfile", string(data))
 	run.checkDir(t, "testfile 10")
@@ -36,6 +38,8 @@ func TestReadByByte(t *testing.T) {
 
 // Test double close
 func TestReadFileDoubleClose(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
 	run.createFile(t, "testdoubleclose", "hello")
 
 	in, err := os.Open(run.path("testdoubleclose"))

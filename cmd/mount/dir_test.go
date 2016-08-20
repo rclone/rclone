@@ -11,6 +11,8 @@ import (
 )
 
 func TestDirLs(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
 	run.checkDir(t, "")
 
 	run.mkdir(t, "a directory")
@@ -25,6 +27,8 @@ func TestDirLs(t *testing.T) {
 }
 
 func TestDirCreateAndRemoveDir(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
 	run.mkdir(t, "dir")
 	run.mkdir(t, "dir/subdir")
 	run.checkDir(t, "dir/|dir/subdir/")
@@ -41,6 +45,8 @@ func TestDirCreateAndRemoveDir(t *testing.T) {
 }
 
 func TestDirCreateAndRemoveFile(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
 	run.mkdir(t, "dir")
 	run.createFile(t, "dir/file", "potato")
 	run.checkDir(t, "dir/|dir/file 6")
@@ -58,6 +64,8 @@ func TestDirCreateAndRemoveFile(t *testing.T) {
 }
 
 func TestDirRenameFile(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
 	run.mkdir(t, "dir")
 	run.createFile(t, "file", "potato")
 	run.checkDir(t, "dir/|file 6")
@@ -76,6 +84,8 @@ func TestDirRenameFile(t *testing.T) {
 }
 
 func TestDirRenameEmptyDir(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
 	run.mkdir(t, "dir")
 	run.mkdir(t, "dir1")
 	run.checkDir(t, "dir/|dir1/")
@@ -94,6 +104,8 @@ func TestDirRenameEmptyDir(t *testing.T) {
 }
 
 func TestDirRenameFullDir(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
 	run.mkdir(t, "dir")
 	run.mkdir(t, "dir1")
 	run.createFile(t, "dir1/potato.txt", "maris piper")

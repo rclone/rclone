@@ -49,6 +49,7 @@ type Run struct {
 	fremoteName  string
 	cleanRemote  func()
 	umountResult <-chan error
+	skip         bool
 }
 
 // run holds the master Run data
@@ -97,12 +98,17 @@ func (r *Run) mount() {
 	var err error
 	r.umountResult, err = mount(r.fremote, r.mountPath)
 	if err != nil {
-		log.Fatalf("umount failed: %v", err)
+		log.Printf("mount failed: %v", err)
+		r.skip = true
 	}
 	log.Printf("mount OK")
 }
 
 func (r *Run) umount() {
+	if r.skip {
+		log.Printf("FUSE not found so skipping umount")
+		return
+	}
 	log.Printf("Calling fusermount -u %q", r.mountPath)
 	err := exec.Command("fusermount", "-u", r.mountPath).Run()
 	if err != nil {
@@ -112,6 +118,12 @@ func (r *Run) umount() {
 	err = <-r.umountResult
 	if err != nil {
 		log.Fatalf("umount failed: %v", err)
+	}
+}
+
+func (r *Run) skipIfNoFUSE(t *testing.T) {
+	if r.skip {
+		t.Skip("FUSE not found so skipping test")
 	}
 }
 
@@ -234,6 +246,8 @@ func (r *Run) rmdir(t *testing.T, filepath string) {
 // Check that the Fs is mounted by seeing if the mountpoint is
 // in the mount output
 func TestMount(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
 	out, err := exec.Command("mount").Output()
 	require.NoError(t, err)
 	assert.Contains(t, string(out), run.mountPath)
@@ -241,6 +255,8 @@ func TestMount(t *testing.T) {
 
 // Check root directory is present and correct
 func TestRoot(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
 	fi, err := os.Lstat(run.mountPath)
 	require.NoError(t, err)
 	assert.True(t, fi.IsDir())
