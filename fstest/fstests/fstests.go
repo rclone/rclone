@@ -31,7 +31,9 @@ var (
 	subRemoteLeaf = ""
 	// NilObject should be set to a nil Object from the Fs under test
 	NilObject fs.Object
-	file1     = fstest.Item{
+	// ExtraConfig is for adding config to a remote
+	ExtraConfig = []ExtraConfigItem{}
+	file1       = fstest.Item{
 		ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
 		Path:    "file name.txt",
 	}
@@ -44,6 +46,9 @@ var (
 	dumpHeaders = flag.Bool("dump-headers", false, "Dump HTTP headers - may contain sensitive info")
 	dumpBodies  = flag.Bool("dump-bodies", false, "Dump HTTP headers and bodies - may contain sensitive info")
 )
+
+// ExtraConfigItem describes a config item added on the fly while testing
+type ExtraConfigItem struct{ Name, Key, Value string }
 
 const eventualConsistencyRetries = 10
 
@@ -60,6 +65,10 @@ func TestInit(t *testing.T) {
 	// "RCLONE_CONFIG_PASS=hunter2" (or your password)
 	*fs.AskPassword = false
 	fs.LoadConfig()
+	// Set extra config if supplied
+	for _, item := range ExtraConfig {
+		fs.ConfigFile.SetValue(item.Name, item.Key, item.Value)
+	}
 	fs.Config.Verbose = *verbose
 	fs.Config.Quiet = !*verbose
 	fs.Config.DumpHeaders = *dumpHeaders
