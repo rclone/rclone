@@ -28,8 +28,8 @@ var mountCmd = &cobra.Command{
 	Use:   "mount remote:path /path/to/mountpoint",
 	Short: `Mount the remote as a mountpoint. **EXPERIMENTAL**`,
 	Long: `
-rclone mount allows Linux and macOS to mount any of Rclone's cloud storage
-systems as a file system with FUSE.
+rclone mount allows Linux, FreeBSD and macOS to mount any of Rclone's
+cloud storage systems as a file system with FUSE.
 
 This is **EXPERIMENTAL** - use with care.
 
@@ -62,6 +62,8 @@ work from the root - you will need to specify a bucket, or a path
 within the bucket.  So ` + "`swift:`" + ` won't work whereas ` + "`swift:bucket`" + ` will
 as will ` + "`swift:bucket/path`" + `.
 
+Only supported on Linux, FreeBSD and OS X at the moment.
+
 ### rclone mount vs rclone sync/copy ##
 
 File systems expect things to be 100% reliable, whereas cloud storage
@@ -79,7 +81,6 @@ mount won't do that, so will be less reliable than the rclone command.
 
 ### TODO ###
 
-  * Tests
   * Check hashes on upload/download
   * Preserve timestamps
   * Move directories
