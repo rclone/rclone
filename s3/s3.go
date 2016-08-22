@@ -147,6 +147,28 @@ func init() {
 				Help:  "South America (Sao Paulo) Region.",
 			}},
 		}, {
+			Name: "acl",
+			Help: "Canned ACL used when creating buckets and/or storing objects in S3.\nFor more info visit http://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl",
+			Examples: []fs.OptionExample{{
+				Value: "private",
+				Help:  "Owner gets FULL_CONTROL. No one else has access rights (default).",
+			}, {
+				Value: "public-read",
+				Help:  "Owner gets FULL_CONTROL. The AllUsers group gets READ access.",
+			}, {
+				Value: "public-read-write",
+				Help:  "Owner gets FULL_CONTROL. The AllUsers group gets READ and WRITE access.\nGranting this on a bucket is generally not recommended.",
+			}, {
+				Value: "authenticated-read",
+				Help:  "Owner gets FULL_CONTROL. The AuthenticatedUsers group gets READ access.",
+			}, {
+				Value: "bucket-owner-read",
+				Help:  "Object owner gets FULL_CONTROL. Bucket owner gets READ access.\nIf you specify this canned ACL when creating a bucket, Amazon S3 ignores it.",
+			}, {
+				Value: "bucket-owner-full-control",
+				Help:  "Both the object owner and the bucket owner get FULL_CONTROL over the object.\nIf you specify this canned ACL when creating a bucket, Amazon S3 ignores it.",
+			}},
+		}, {
 			Name: "server_side_encryption",
 			Help: "The server-side encryption algorithm used when storing this object in S3.",
 			Examples: []fs.OptionExample{{
@@ -174,7 +196,7 @@ type Fs struct {
 	c                  *s3.S3           // the connection to the s3 server
 	ses                *session.Session // the s3 session
 	bucket             string           // the bucket we are working on
-	perm               string           // permissions for new buckets / objects
+	acl                string           // ACL for new buckets / objects
 	root               string           // root of the bucket - ignore all objects above this
 	locationConstraint string           // location constraint of new buckets
 	sse                string           // the type of server-side encryption
@@ -320,11 +342,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return nil, err
 	}
 	f := &Fs{
-		name:   name,
-		c:      c,
-		bucket: bucket,
-		ses:    ses,
-		// FIXME perm:   s3.Private, // FIXME need user to specify
+		name:               name,
+		c:                  c,
+		bucket:             bucket,
+		ses:                ses,
+		acl:                fs.ConfigFile.MustValue(name, "acl"),
 		root:               directory,
 		locationConstraint: fs.ConfigFile.MustValue(name, "location_constraint"),
 		sse:                fs.ConfigFile.MustValue(name, "server_side_encryption"),
@@ -583,7 +605,7 @@ func (f *Fs) Mkdir() error {
 	}
 	req := s3.CreateBucketInput{
 		Bucket: &f.bucket,
-		ACL:    &f.perm,
+		ACL:    &f.acl,
 	}
 	if f.locationConstraint != "" {
 		req.CreateBucketConfiguration = &s3.CreateBucketConfiguration{
@@ -780,7 +802,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 	directive := s3.MetadataDirectiveReplace // replace metadata with that passed in
 	req := s3.CopyObjectInput{
 		Bucket:            &o.fs.bucket,
-		ACL:               &o.fs.perm,
+		ACL:               &o.fs.acl,
 		Key:               &key,
 		ContentType:       &contentType,
 		CopySource:        aws.String(url.QueryEscape(sourceKey)),
@@ -839,7 +861,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	key := o.fs.root + o.remote
 	req := s3manager.UploadInput{
 		Bucket:      &o.fs.bucket,
-		ACL:         &o.fs.perm,
+		ACL:         &o.fs.acl,
 		Key:         &key,
 		Body:        in,
 		ContentType: &contentType,
