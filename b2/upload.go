@@ -166,7 +166,7 @@ func (up *largeUpload) transferChunk(part int64, body []byte) error {
 			Method:   "POST",
 			Absolute: true,
 			Path:     upload.UploadURL,
-			Body:     bytes.NewBuffer(body),
+			Body:     fs.AccountPart(up.o, bytes.NewBuffer(body)),
 			ExtraHeaders: map[string]string{
 				"Authorization":    upload.AuthorizationToken,
 				"X-Bz-Part-Number": fmt.Sprintf("%d", part),
@@ -240,6 +240,7 @@ func (up *largeUpload) Upload() error {
 	errs := make(chan error, 1)
 	var wg sync.WaitGroup
 	var err error
+	fs.AccountByPart(up.o) // Cancel whole file accounting before reading
 outer:
 	for part := int64(1); part <= up.parts; part++ {
 		// Check any errors
