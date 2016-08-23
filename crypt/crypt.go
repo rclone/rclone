@@ -99,7 +99,7 @@ type Fs struct {
 
 // String returns a description of the FS
 func (f *Fs) String() string {
-	return fmt.Sprintf("%s with cipher", f.Fs.String())
+	return fmt.Sprintf("Encrypted %s", f.Fs.String())
 }
 
 // List the Fs into a channel
@@ -193,13 +193,34 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	}
 	o, ok := src.(*Object)
 	if !ok {
-		return nil, fs.ErrorCantCopy
+		return nil, fs.ErrorCantMove
 	}
 	oResult, err := do.Move(o.Object, f.cipher.EncryptFileName(remote))
 	if err != nil {
 		return nil, err
 	}
 	return f.newObject(oResult), nil
+}
+
+// DirMove moves src to this remote using server side move
+// operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
+func (f *Fs) DirMove(src fs.Fs) error {
+	do, ok := f.Fs.(fs.DirMover)
+	if !ok {
+		return fs.ErrorCantDirMove
+	}
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		fs.Debug(srcFs, "Can't move directory - not same remote type")
+		return fs.ErrorCantDirMove
+	}
+	return do.DirMove(srcFs.Fs)
 }
 
 // UnWrap returns the Fs that this Fs is wrapping
@@ -396,11 +417,11 @@ func (lo *ListOpts) IncludeDirectory(remote string) bool {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs     = (*Fs)(nil)
-	_ fs.Purger = (*Fs)(nil)
-	_ fs.Copier = (*Fs)(nil)
-	_ fs.Mover  = (*Fs)(nil)
-	// _ fs.DirMover       = (*Fs)(nil)
+	_ fs.Fs       = (*Fs)(nil)
+	_ fs.Purger   = (*Fs)(nil)
+	_ fs.Copier   = (*Fs)(nil)
+	_ fs.Mover    = (*Fs)(nil)
+	_ fs.DirMover = (*Fs)(nil)
 	// _ fs.PutUncheckeder = (*Fs)(nil)
 	_ fs.UnWrapper  = (*Fs)(nil)
 	_ fs.ObjectInfo = (*ObjectInfo)(nil)
