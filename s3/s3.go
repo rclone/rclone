@@ -36,6 +36,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/swift"
 	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
 )
 
 // Register with Fs
@@ -188,6 +189,12 @@ const (
 	listChunkSize  = 1024                   // number of items to read at once
 	maxRetries     = 10                     // number of retries to make of operations
 	maxSizeForCopy = 5 * 1024 * 1024 * 1024 // The maximum size of object we can COPY
+)
+
+// Globals
+var (
+	// Flags
+	ACL = pflag.StringP("s3-acl", "", "", "Canned ACL used when creating buckets and/or storing objects in S3")
 )
 
 // Fs represents a remote s3 server
@@ -346,7 +353,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		c:                  c,
 		bucket:             bucket,
 		ses:                ses,
-		acl:                fs.ConfigFile.MustValue(name, "acl"),
+		acl:                fs.ConfigFile.MustValue(name, "acl", *ACL),
 		root:               directory,
 		locationConstraint: fs.ConfigFile.MustValue(name, "location_constraint"),
 		sse:                fs.ConfigFile.MustValue(name, "server_side_encryption"),
