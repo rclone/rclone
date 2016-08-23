@@ -22,15 +22,17 @@ import (
 
 var (
 	remotes = []string{
-		"TestSwift:",
-		"TestS3:",
-		"TestDrive:",
-		"TestGoogleCloudStorage:",
-		"TestDropbox:",
 		"TestAmazonCloudDrive:",
-		"TestOneDrive:",
-		"TestHubic:",
 		"TestB2:",
+		"TestCryptDrive:",
+		"TestCryptSwift:",
+		"TestDrive:",
+		"TestDropbox:",
+		"TestGoogleCloudStorage:",
+		"TestHubic:",
+		"TestOneDrive:",
+		"TestS3:",
+		"TestSwift:",
 		"TestYandex:",
 	}
 	binary = "fs.test"
