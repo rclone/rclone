@@ -37,8 +37,8 @@ var (
 	}
 	file2 = fstest.Item{
 		ModTime: fstest.Time("2001-02-03T04:05:10.123123123Z"),
-		Path:    `hello? sausage/êé/Hello, 世界/ " ' @ < > & ?/z.txt`,
-		WinPath: `hello_ sausage/êé/Hello, 世界/ _ ' @ _ _ & _/z.txt`,
+		Path:    `hello? sausage/êé/Hello, 世界/ " ' @ < > & ? + ≠/z.txt`,
+		WinPath: `hello_ sausage/êé/Hello, 世界/ _ ' @ _ _ & _ + ≠/z.txt`,
 	}
 	verbose     = flag.Bool("verbose", false, "Set to enable logging")
 	dumpHeaders = flag.Bool("dump-headers", false, "Dump HTTP headers - may contain sensitive info")
