@@ -36,3 +36,4 @@ Contributors
   * Antonio Messina <antonio.s.messina@gmail.com>
   * Stefan G. Weichinger <office@oops.co.at>
   * Per Cederberg <cederberg@gmail.com>
+  * Radek Šenfeld <rush@logic.cz>
