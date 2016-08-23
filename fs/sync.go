@@ -262,6 +262,17 @@ func (s *syncCopyMove) pairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup)
 			src := pair.src
 			dst := pair.dst
 			Stats.Transferring(src.Remote())
+			doCopy := func() {
+				// Copy dst <- src
+				err := Copy(fdst, dst, src)
+				s.processError(err)
+				if err != nil {
+					ErrorLog(src, "Not deleting as copy failed: %v", err)
+				} else {
+					// Delete src if no error on copy
+					s.processError(DeleteFile(src))
+				}
+			}
 			if Config.DryRun {
 				Log(src, "Not moving as --dry-run")
 			} else if haveMover && src.Fs().Name() == fdst.Name() {
@@ -272,22 +283,22 @@ func (s *syncCopyMove) pairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup)
 				// Move dst <- src
 				_, err := fdstMover.Move(src, src.Remote())
 				if err != nil {
-					Stats.Error()
-					ErrorLog(dst, "Couldn't move: %v", err)
-					s.processError(err)
+					// If this remote can't do moves,
+					// then set the flag and copy
+					if err == ErrorCantMove {
+						Debug(src, "Can't move, switching to copy")
+						haveMover = false
+						doCopy()
+					} else {
+						Stats.Error()
+						ErrorLog(dst, "Couldn't move: %v", err)
+						s.processError(err)
+					}
 				} else {
 					Debug(src, "Moved")
 				}
 			} else {
-				// Copy dst <- src
-				err := Copy(fdst, dst, src)
-				s.processError(err)
-				if err != nil {
-					ErrorLog(src, "Not deleting as copy failed: %v", err)
-				} else {
-					// Delete src if no error on copy
-					s.processError(DeleteFile(src))
-				}
+				doCopy()
 			}
 			Stats.DoneTransferring(src.Remote())
 		case <-s.abort:
