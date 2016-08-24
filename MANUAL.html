@@ -12,7 +12,7 @@
 <div id="header">
 <h1 class="title">rclone(1) User Manual</h1>
 <h2 class="author">Nick Craig-Wood</h2>
-<h3 class="date">Aug 04, 2016</h3>
+<h3 class="date">Aug 24, 2016</h3>
 </div>
 <h1 id="rclone">Rclone</h1>
 <p><a href="http://rclone.org/"><img src="http://rclone.org/img/rclone-120x120.png" alt="Logo" /></a></p>
@@ -283,15 +283,26 @@ two-3.txt: renamed from: two.txt</code></pre>
 <pre><code>rclone dedupe rename &quot;drive:Google Photos&quot;</code></pre>
 <pre><code>rclone dedupe [mode] remote:path</code></pre>
 <h3 id="options">Options</h3>
-<pre><code>      --dedupe-mode value   Dedupe mode interactive|skip|first|newest|oldest|rename. (default &quot;interactive&quot;)</code></pre>
+<pre><code>      --dedupe-mode string   Dedupe mode interactive|skip|first|newest|oldest|rename.</code></pre>
 <h2 id="rclone-authorize">rclone authorize</h2>
 <p>Remote authorization.</p>
 <h3 id="synopsis-18">Synopsis</h3>
 <p>Remote authorization. Used to authorize a remote or headless rclone from a machine with a browser - use as instructed by rclone config.</p>
 <pre><code>rclone authorize</code></pre>
+<h2 id="rclone-cat">rclone cat</h2>
+<p>Concatenates any files and sends them to stdout.</p>
+<h3 id="synopsis-19">Synopsis</h3>
+<p>rclone cat sends any files to standard output.</p>
+<p>You can use it like this to output a single file</p>
+<pre><code>rclone cat remote:path/to/file</code></pre>
+<p>Or like this to output any file in dir or subdirectories.</p>
+<pre><code>rclone cat remote:path/to/dir</code></pre>
+<p>Or like this to output any .txt files in dir or subdirectories.</p>
+<pre><code>rclone --include &quot;*.txt&quot; cat remote:path/to/dir</code></pre>
+<pre><code>rclone cat remote:path</code></pre>
 <h2 id="rclone-genautocomplete">rclone genautocomplete</h2>
 <p>Output bash completion script for rclone.</p>
-<h3 id="synopsis-19">Synopsis</h3>
+<h3 id="synopsis-20">Synopsis</h3>
 <p>Generates a bash shell autocompletion script for rclone.</p>
 <p>This writes to /etc/bash_completion.d/rclone by default so will probably need to be run with sudo or as root, eg</p>
 <pre><code>sudo rclone genautocomplete</code></pre>
@@ -301,9 +312,46 @@ two-3.txt: renamed from: two.txt</code></pre>
 <pre><code>rclone genautocomplete [output_file]</code></pre>
 <h2 id="rclone-gendocs">rclone gendocs</h2>
 <p>Output markdown docs for rclone to the directory supplied.</p>
-<h3 id="synopsis-20">Synopsis</h3>
+<h3 id="synopsis-21">Synopsis</h3>
 <p>This produces markdown docs for the rclone commands to the directory supplied. These are in a format suitable for hugo to render into the rclone.org website.</p>
 <pre><code>rclone gendocs output_directory</code></pre>
+<h2 id="rclone-mount">rclone mount</h2>
+<p>Mount the remote as a mountpoint. <strong>EXPERIMENTAL</strong></p>
+<h3 id="synopsis-22">Synopsis</h3>
+<p>rclone mount allows Linux, FreeBSD and macOS to mount any of Rclone's cloud storage systems as a file system with FUSE.</p>
+<p>This is <strong>EXPERIMENTAL</strong> - use with care.</p>
+<p>First set up your remote using <code>rclone config</code>. Check it works with <code>rclone ls</code> etc.</p>
+<p>Start the mount like this</p>
+<pre><code>rclone mount remote:path/to/files /path/to/local/mount &amp;</code></pre>
+<p>Stop the mount with</p>
+<pre><code>fusermount -u /path/to/local/mount</code></pre>
+<p>Or with OS X</p>
+<pre><code>umount -u /path/to/local/mount</code></pre>
+<h3 id="limitations">Limitations</h3>
+<p>This can only read files seqentially, or write files sequentially. It can't read and write or seek in files.</p>
+<p>rclonefs inherits rclone's directory handling. In rclone's world directories don't really exist. This means that empty directories will have a tendency to disappear once they fall out of the directory cache.</p>
+<p>The bucket based FSes (eg swift, s3, google compute storage, b2) won't work from the root - you will need to specify a bucket, or a path within the bucket. So <code>swift:</code> won't work whereas <code>swift:bucket</code> will as will <code>swift:bucket/path</code>.</p>
+<p>Only supported on Linux, FreeBSD and OS X at the moment.</p>
+<h3 id="rclone-mount-vs-rclone-synccopy">rclone mount vs rclone sync/copy</h3>
+<p>File systems expect things to be 100% reliable, whereas cloud storage systems are a long way from 100% reliable. The rclone sync/copy commands cope with this with lots of retries. However rclone mount can't use retries in the same way without making local copies of the uploads. This might happen in the future, but for the moment rclone mount won't do that, so will be less reliable than the rclone command.</p>
+<h3 id="bugs">Bugs</h3>
+<ul>
+<li>All the remotes should work for read, but some may not for write
+<ul>
+<li>those which need to know the size in advance won't - eg B2</li>
+<li>maybe should pass in size as -1 to mean work it out</li>
+</ul></li>
+</ul>
+<h3 id="todo">TODO</h3>
+<ul>
+<li>Check hashes on upload/download</li>
+<li>Preserve timestamps</li>
+<li>Move directories</li>
+</ul>
+<pre><code>rclone mount remote:path /path/to/mountpoint</code></pre>
+<h3 id="options-1">Options</h3>
+<pre><code>      --debug-fuse   Debug the FUSE internals - needs -v.
+      --no-modtime   Don&#39;t read the modification time (can speed things up).</code></pre>
 <h2 id="copying-single-files">Copying single files</h2>
 <p>rclone normally syncs or copies directories. However if the source remote points to a file, rclone will just copy that file. The destination remote must point to a directory - rclone will give the error <code>Failed to create file system for &quot;remote:file&quot;: is a file not a directory</code> if it isn't.</p>
 <p>For example, suppose you have a remote with a file in called <code>test.jpg</code>, then you could copy just that file like this</p>
@@ -340,7 +388,7 @@ two-3.txt: renamed from: two.txt</code></pre>
 <p>This can be used when scripting to make aged backups efficiently, eg</p>
 <pre><code>rclone sync remote:current-backup remote:previous-backup
 rclone sync /path/to/files remote:current-backup</code></pre>
-<h2 id="options-1">Options</h2>
+<h2 id="options-2">Options</h2>
 <p>Rclone has a number of options to control its behaviour.</p>
 <p>Options which use TIME use the go time parser. A duration string is a possibly signed sequence of decimal numbers, each with optional fraction and a unit suffix, such as &quot;300ms&quot;, &quot;-1.5h&quot; or &quot;2h45m&quot;. Valid time units are &quot;ns&quot;, &quot;us&quot; (or &quot;µs&quot;), &quot;ms&quot;, &quot;s&quot;, &quot;m&quot;, &quot;h&quot;.</p>
 <p>Options which use SIZE use kByte by default. However a suffix of <code>b</code> for bytes, <code>k</code> for kBytes, <code>M</code> for MBytes and <code>G</code> for GBytes may be used. These are the binary units, eg 1, 2**10, 2**20, 2**30 respectively.</p>
@@ -1073,8 +1121,21 @@ y/e/d&gt; y</code></pre>
 </tr>
 </tbody>
 </table>
-<h3 id="limitations">Limitations</h3>
+<h3 id="limitations-1">Limitations</h3>
 <p>Drive has quite a lot of rate limiting. This causes rclone to be limited to transferring about 2 files per second only. Individual files may be transferred much faster at 100s of MBytes/s but lots of small files can take a long time.</p>
+<h3 id="making-your-own-client_id">Making your own client_id</h3>
+<p>When you use rclone with Google drive in its default configuration you are using rclone's client_id. This is shared between all the rclone users. There is a global rate limit on the number of queries per second that each client_id can do set by Google. rclone already has a high quota and I will continue to make sure it is high enough by contacting Google.</p>
+<p>However you might find you get better performance making your own client_id if you are a heavy user. Or you may not depending on exactly how Google have been raising rclone's rate limit.</p>
+<p>Here is how to create your own Google Drive client ID for rclone:</p>
+<ol style="list-style-type: decimal">
+<li><p>Log into the <a href="https://console.developers.google.com/">Google API Console</a> with your Google account. It doesn't matter what Google account you use. (It need not be the same account as the Google Drive you want to access)</p></li>
+<li><p>Select a project or create a new project.</p></li>
+<li><p>Under Overview, Google APIs, Google Apps APIs, click &quot;Drive API&quot;, then &quot;Enable&quot;.</p></li>
+<li><p>Click &quot;Credentials&quot; in the left-side panel (not &quot;Go to credentials&quot;, which opens the wizard), then &quot;Create credentials&quot;, then &quot;OAuth client ID&quot;. It will prompt you to set the OAuth consent screen product name, if you haven't set one already.</p></li>
+<li><p>Choose an application type of &quot;other&quot;, and click &quot;Create&quot;. (the default name is fine)</p></li>
+<li><p>It will show you a client ID and client secret. Use these values in rclone config to add a new remote or edit an existing remote.</p></li>
+</ol>
+<p>(Thanks to <span class="citation">@balazer</span> on github for these instructions.)</p>
 <h2 id="amazon-s3">Amazon S3</h2>
 <p>Paths are specified as <code>remote:bucket</code> (or <code>remote:</code> for the <code>lsd</code> command.) You may put subdirectories in too, eg <code>remote:bucket/path/to/dir</code>.</p>
 <p>Here is an example of making an s3 configuration. First run</p>
@@ -1184,6 +1245,25 @@ Choose a number from below, or type in your own value
  9 / South America (Sao Paulo) Region.
    \ &quot;sa-east-1&quot;
 location_constraint&gt; 1
+Canned ACL used when creating buckets and/or storing objects in S3.
+For more info visit http://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
+Choose a number from below, or type in your own value
+ 1 / Owner gets FULL_CONTROL. No one else has access rights (default).
+   \ &quot;private&quot;
+ 2 / Owner gets FULL_CONTROL. The AllUsers group gets READ access.
+   \ &quot;public-read&quot;
+   / Owner gets FULL_CONTROL. The AllUsers group gets READ and WRITE access.
+ 3 | Granting this on a bucket is generally not recommended.
+   \ &quot;public-read-write&quot;
+ 4 / Owner gets FULL_CONTROL. The AuthenticatedUsers group gets READ access.
+   \ &quot;authenticated-read&quot;
+   / Object owner gets FULL_CONTROL. Bucket owner gets READ access.
+ 5 | If you specify this canned ACL when creating a bucket, Amazon S3 ignores it.
+   \ &quot;bucket-owner-read&quot;
+   / Both the object owner and the bucket owner get FULL_CONTROL over the object.
+ 6 | If you specify this canned ACL when creating a bucket, Amazon S3 ignores it.
+   \ &quot;bucket-owner-full-control&quot;
+acl&gt; private
 The server-side encryption algorithm used when storing this object in S3.
 Choose a number from below, or type in your own value
  1 / None
@@ -1427,7 +1507,7 @@ y/e/d&gt; y</code></pre>
 <h3 id="modified-time-2">Modified time</h3>
 <p>The modified time is stored as metadata on the object as <code>X-Object-Meta-Mtime</code> as floating point since the epoch accurate to 1 ns.</p>
 <p>This is a defacto standard (used in the official python-swiftclient amongst others) for storing the modification time for an object.</p>
-<h3 id="limitations-1">Limitations</h3>
+<h3 id="limitations-2">Limitations</h3>
 <p>The Swift API doesn't return a correct MD5SUM for segmented files (Dynamic or Static Large Objects) so rclone won't check or use the MD5SUM for these.</p>
 <h3 id="troubleshooting">Troubleshooting</h3>
 <h4 id="rclone-gives-failed-to-create-file-system-for-remote-bad-request">Rclone gives Failed to create file system for &quot;remote:&quot;: Bad Request</h4>
@@ -1510,7 +1590,7 @@ y/e/d&gt; y</code></pre>
 <p>Here are the command line options specific to this cloud storage system.</p>
 <h4 id="dropbox-chunk-sizesize">--dropbox-chunk-size=SIZE</h4>
 <p>Upload chunk size. Max 150M. The default is 128MB. Note that this isn't buffered into memory.</p>
-<h3 id="limitations-2">Limitations</h3>
+<h3 id="limitations-3">Limitations</h3>
 <p>Note that Dropbox is case insensitive so you can't have a file called &quot;Hello.doc&quot; and one called &quot;hello.doc&quot;.</p>
 <p>There are some file names such as <code>thumbs.db</code> which Dropbox can't store. There is a full list of them in the <a href="https://www.dropbox.com/en/help/145">&quot;Ignored Files&quot; section of this document</a>. Rclone will issue an error message <code>File name disallowed - not uploading</code> if it attempt to upload one of those file names, but the sync won't fail.</p>
 <p>If you have more than 10,000 files in a directory then <code>rclone purge dropbox:dir</code> will return the error <code>Failed to purge: There are too many files involved in this operation</code>. As a work-around do an <code>rclone delete dropbix:dir</code> followed by an <code>rclone rmdir dropbox:dir</code>.</p>
@@ -1703,7 +1783,9 @@ y/e/d&gt; y</code></pre>
 <h4 id="acd-templink-thresholdsize">--acd-templink-threshold=SIZE</h4>
 <p>Files this size or more will be downloaded via their <code>tempLink</code>. This is to work around a problem with Amazon Drive which blocks downloads of files bigger than about 10GB. The default for this is 9GB which shouldn't need to be changed.</p>
 <p>To download files above this threshold, rclone requests a <code>tempLink</code> which downloads the file through a temporary URL directly from the underlying S3 storage.</p>
-<h3 id="limitations-3">Limitations</h3>
+<h4 id="acd-upload-wait-timetime">--acd-upload-wait-time=TIME</h4>
+<p>Sometimes Amazon Drive gives an error when a file has been fully uploaded but the file appears anyway after a little while. This controls the time rclone waits - 2 minutes by default. You might want to increase the time if you are having problems with very big files. Upload with the <code>-v</code> flag for more info.</p>
+<h3 id="limitations-4">Limitations</h3>
 <p>Note that Amazon Drive is case insensitive so you can't have a file called &quot;Hello.doc&quot; and one called &quot;hello.doc&quot;.</p>
 <p>Amazon Drive has rate limiting so you may notice errors in the sync (429 errors). rclone will automatically retry the sync up to 3 times by default (see <code>--retries</code> flag) which should hopefully work around this problem.</p>
 <p>Amazon Drive has an internal limit of file sizes that can be uploaded to the service. This limit is not officially published, but all files larger than this will fail.</p>
@@ -1791,7 +1873,7 @@ y/e/d&gt; y</code></pre>
 <p>Above this size files will be chunked - must be multiple of 320k. The default is 10MB. Note that the chunks will be buffered into memory.</p>
 <h4 id="onedrive-upload-cutoffsize">--onedrive-upload-cutoff=SIZE</h4>
 <p>Cutoff for switching to chunked upload - must be &lt;= 100MB. The default is 10MB.</p>
-<h3 id="limitations-4">Limitations</h3>
+<h3 id="limitations-5">Limitations</h3>
 <p>Note that One Drive is case insensitive so you can't have a file called &quot;Hello.doc&quot; and one called &quot;hello.doc&quot;.</p>
 <p>Rclone only supports your default One Drive, and doesn't work with One Drive for business. Both these issues may be fixed at some point depending on user demand!</p>
 <p>There are quite a few characters that can't be in One Drive file names. These can't occur on Windows platforms, but on non-Windows platforms they are common. Rclone will map these names to and from an identical looking unicode equivalent. For example if a file has a <code>?</code> in it will be mapped to <code>？</code> instead.</p>
@@ -1871,7 +1953,7 @@ y/e/d&gt; y</code></pre>
 <p>The modified time is stored as metadata on the object as <code>X-Object-Meta-Mtime</code> as floating point since the epoch accurate to 1 ns.</p>
 <p>This is a defacto standard (used in the official python-swiftclient amongst others) for storing the modification time for an object.</p>
 <p>Note that Hubic wraps the Swift backend, so most of the properties of are the same.</p>
-<h3 id="limitations-5">Limitations</h3>
+<h3 id="limitations-6">Limitations</h3>
 <p>This uses the normal OpenStack Swift mechanism to refresh the Swift API credentials and ignores the expires field returned by the Hubic API.</p>
 <p>The Swift API doesn't return a correct MD5SUM for segmented files (Dynamic or Static Large Objects) so rclone won't check or use the MD5SUM for these.</p>
 <h2 id="backblaze-b2">Backblaze B2</h2>
@@ -2079,6 +2161,186 @@ y/e/d&gt; y</code></pre>
 <p>Modified times are supported and are stored accurate to 1 ns in custom metadata called <code>rclone_modified</code> in RFC3339 with nanoseconds format.</p>
 <h3 id="md5-checksums">MD5 checksums</h3>
 <p>MD5 checksums are natively supported by Yandex Disk.</p>
+<h2 id="crypt">Crypt</h2>
+<p>The <code>crypt</code> remote encrypts and decrypts another remote.</p>
+<p>To use it first set up the underlying remote following the config instructions for that remote. You can also use a local pathname instead of a remote which will encrypt and decrypt from that directory which might be useful for encrypting onto a USB stick for example.</p>
+<p>First check your chosen remote is working - we'll call it <code>remote:path</code> in these docs. Note that anything inside <code>remote:path</code> will be encrypted and anything outside won't. This means that if you are using a bucket based remote (eg S3, B2, swift) then you should probably put the bucket in the remote <code>s3:bucket</code>. If you just use <code>s3:</code> then rclone will make encrypted bucket names too (if using file name encryption) which may or may not be what you want.</p>
+<p>Now configure <code>crypt</code> using <code>rclone config</code>. We will call this one <code>secret</code> to differentiate it from the <code>remote</code>.</p>
+<pre><code>No remotes found - make a new one
+n) New remote
+s) Set configuration password
+q) Quit config
+n/s/q&gt; n   
+name&gt; secret
+Type of storage to configure.
+Choose a number from below, or type in your own value
+ 1 / Amazon Drive
+   \ &quot;amazon cloud drive&quot;
+ 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+   \ &quot;s3&quot;
+ 3 / Backblaze B2
+   \ &quot;b2&quot;
+ 4 / Dropbox
+   \ &quot;dropbox&quot;
+ 5 / Encrypt/Decrypt a remote
+   \ &quot;crypt&quot;
+ 6 / Google Cloud Storage (this is not Google Drive)
+   \ &quot;google cloud storage&quot;
+ 7 / Google Drive
+   \ &quot;drive&quot;
+ 8 / Hubic
+   \ &quot;hubic&quot;
+ 9 / Local Disk
+   \ &quot;local&quot;
+10 / Microsoft OneDrive
+   \ &quot;onedrive&quot;
+11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+   \ &quot;swift&quot;
+12 / Yandex Disk
+   \ &quot;yandex&quot;
+Storage&gt; 5
+Remote to encrypt/decrypt.
+remote&gt; remote:path
+How to encrypt the filenames.
+Choose a number from below, or type in your own value
+ 1 / Don&#39;t encrypt the file names.  Adds a &quot;.bin&quot; extension only.
+   \ &quot;off&quot;
+ 2 / Encrypt the filenames see the docs for the details.
+   \ &quot;standard&quot;
+filename_encryption&gt; 2
+Password or pass phrase for encryption.
+y) Yes type in my own password
+g) Generate random password
+y/g&gt; y
+Enter the password:
+password:
+Confirm the password:
+password:
+Password or pass phrase for salt. Optional but recommended.
+Should be different to the previous password.
+y) Yes type in my own password
+g) Generate random password
+n) No leave this optional password blank
+y/g/n&gt; g
+Password strength in bits.
+64 is just about memorable
+128 is secure
+1024 is the maximum
+Bits&gt; 128
+Your password is: JAsJvRcgR-_veXNfy_sGmQ
+Use this password?
+y) Yes
+n) No
+y/n&gt; y
+Remote config
+--------------------
+[secret]
+remote = remote:path
+filename_encryption = standard
+password = CfDxopZIXFG0Oo-ac7dPLWWOHkNJbw
+password2 = HYUpfuzHJL8qnX9fOaIYijq0xnVLwyVzp3y4SF3TwYqAU6HLysk
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d&gt; y</code></pre>
+<p><strong>Important</strong> The password is stored in the config file is lightly obscured so it isn't immediately obvious what it is. It is in no way secure unless you use config file encryption.</p>
+<p>A long passphrase is recommended, or you can use a random one. Note that if you reconfigure rclone with the same passwords/passphrases elsewhere it will be compatible - all the secrets used are derived from those two passwords/passphrases.</p>
+<p>Note that rclone does not encrypt * file length - this can be calcuated within 16 bytes * modification time - used for syncing</p>
+<h2 id="example">Example</h2>
+<p>To test I made a little directory of files using &quot;standard&quot; file name encryption.</p>
+<pre><code>plaintext/
+├── file0.txt
+├── file1.txt
+└── subdir
+    ├── file2.txt
+    ├── file3.txt
+    └── subsubdir
+        └── file4.txt</code></pre>
+<p>Copy these to the remote and list them back</p>
+<pre><code>$ rclone -q copy plaintext secret:
+$ rclone -q ls secret:
+        7 file1.txt
+        6 file0.txt
+        8 subdir/file2.txt
+       10 subdir/subsubdir/file4.txt
+        9 subdir/file3.txt</code></pre>
+<p>Now see what that looked like when encrypted</p>
+<pre><code>$ rclone -q ls remote:path
+       55 hagjclgavj2mbiqm6u6cnjjqcg
+       54 v05749mltvv1tf4onltun46gls
+       57 86vhrsv86mpbtd3a0akjuqslj8/dlj7fkq4kdq72emafg7a7s41uo
+       58 86vhrsv86mpbtd3a0akjuqslj8/7uu829995du6o42n32otfhjqp4/b9pausrfansjth5ob3jkdqd4lc
+       56 86vhrsv86mpbtd3a0akjuqslj8/8njh1sk437gttmep3p70g81aps</code></pre>
+<p>Note that this retains the directory structure which means you can do this</p>
+<pre><code>$ rclone -q ls secret:subdir
+        8 file2.txt
+        9 file3.txt
+       10 subsubdir/file4.txt</code></pre>
+<p>If don't use file name encryption then the remote will look like this - note the <code>.bin</code> extensions added to prevent the cloud provider attempting to interpret the data.</p>
+<pre><code>$ rclone -q ls remote:path
+       54 file0.txt.bin
+       57 subdir/file3.txt.bin
+       56 subdir/file2.txt.bin
+       58 subdir/subsubdir/file4.txt.bin
+       55 file1.txt.bin</code></pre>
+<h3 id="file-name-encryption-modes">File name encryption modes</h3>
+<p>Here are some of the features of the file name encryption modes</p>
+<p>Off * doesn't hide file names or directory structure * allows for longer file names (~246 characters) * can use sub paths and copy single files</p>
+<p>Standard * file names encrypted * file names can't be as long (~156 characters) * can use sub paths and copy single files * directory structure visibile * identical files names will have identical uploaded names * can use shortcuts to shorten the directory recursion</p>
+<p>Cloud storage systems have various limits on file name length and total path length which you are more likely to hit using &quot;Standard&quot; file name encryption. If you keep your file names to below 156 characters in length then you should be OK on all providers.</p>
+<p>There may be an even more secure file name encryption mode in the future which will address the long file name problem.</p>
+<h2 id="file-formats">File formats</h2>
+<h3 id="file-encryption">File encryption</h3>
+<p>Files are encrypted 1:1 source file to destination object. The file has a header and is divided into chunks.</p>
+<h4 id="header">Header</h4>
+<ul>
+<li>8 bytes magic string <code>RCLONE\x00\x00</code></li>
+<li>24 bytes Nonce (IV)</li>
+</ul>
+<p>The initial nonce is generated from the operating systems crypto strong random number genrator. The nonce is incremented for each chunk read making sure each nonce is unique for each block written. The chance of a nonce being re-used is miniscule. If you wrote an exabyte of data (10¹⁸ bytes) you would have a probability of approximately 2×10⁻³² of re-using a nonce.</p>
+<h4 id="chunk">Chunk</h4>
+<p>Each chunk will contain 64kB of data, except for the last one which may have less data. The data chunk is in standard NACL secretbox format. Secretbox uses XSalsa20 and Poly1305 to encrypt and authenticate messages.</p>
+<p>Each chunk contains:</p>
+<ul>
+<li>16 Bytes of Poly1305 authenticator</li>
+<li>1 - 65536 bytes XSalsa20 encrypted data</li>
+</ul>
+<p>64k chunk size was chosen as the best performing chunk size (the authenticator takes too much time below this and the performance drops off due to cache effects above this). Note that these chunks are buffered in memory so they can't be too big.</p>
+<p>This uses a 32 byte (256 bit key) key derived from the user password.</p>
+<h4 id="examples">Examples</h4>
+<p>1 byte file will encrypt to</p>
+<ul>
+<li>32 bytes header</li>
+<li>17 bytes data chunk</li>
+</ul>
+<p>49 bytes total</p>
+<p>1MB (1048576 bytes) file will encrypt to</p>
+<ul>
+<li>32 bytes header</li>
+<li>16 chunks of 65568 bytes</li>
+</ul>
+<p>1049120 bytes total (a 0.05% overhead). This is the overhead for big files.</p>
+<h3 id="name-encryption">Name encryption</h3>
+<p>File names are encrypted segment by segment - the path is broken up into <code>/</code> separated strings and these are encrypted individually.</p>
+<p>File segments are padded using using PKCS#7 to a multiple of 16 bytes before encryption.</p>
+<p>They are then encrypted with EME using AES with 256 bit key. EME (ECB-Mix-ECB) is a wide-block encryption mode presented in the 2003 paper &quot;A Parallelizable Enciphering Mode&quot; by Halevi and Rogaway.</p>
+<p>This makes for determinstic encryption which is what we want - the same filename must encrypt to the same thing otherwise we can't find it on the cloud storage system.</p>
+<p>This means that</p>
+<ul>
+<li>filenames with the same name will encrypt the same</li>
+<li>filenames which start the same won't have a common prefix</li>
+</ul>
+<p>This uses a 32 byte key (256 bits) and a 16 byte (128 bits) IV both of which are derived from the user password.</p>
+<p>After encryption they are written out using a modified version of standard <code>base32</code> encoding as described in RFC4648. The standard encoding is modified in two ways:</p>
+<ul>
+<li>it becomes lower case (no-one likes upper case filenames!)</li>
+<li>we strip the padding character <code>=</code></li>
+</ul>
+<p><code>base32</code> is used rather than the more efficient <code>base64</code> so rclone can be used on case insensitive remotes (eg Windows, Amazon Drive).</p>
+<h3 id="key-derivation">Key derivation</h3>
+<p>Rclone uses <code>scrypt</code> with parameters <code>N=16384, r=8, p=1</code> with a an optional user supplied salt (password2) to derive the 32+32+16 = 80 bytes of key material required. If the user doesn't supply a salt then rclone uses an internal one.</p>
+<p><code>scrypt</code> makes it impractical to mount a dictionary attack on rclone encrypted data. For full protection agains this you should always use a salt.</p>
 <h2 id="local-filesystem">Local Filesystem</h2>
 <p>Local paths are specified as normal filesystem paths, eg <code>/path/to/wherever</code>, so</p>
 <pre><code>rclone sync /home/source /tmp/destination</code></pre>
@@ -2106,6 +2368,42 @@ nounc = true</code></pre>
 <p>This will use UNC paths on <code>c:\src</code> but not on <code>z:\dst</code>. Of course this will cause problems if the absolute path length of a file exceeds 258 characters on z, so only use this option if you have to.</p>
 <h2 id="changelog">Changelog</h2>
 <ul>
+<li>v1.33 - 2016-08-24
+<ul>
+<li>New Features</li>
+<li>Implement encryption
+<ul>
+<li>data encrypted in NACL secretbox format</li>
+<li>with optional file name encryption</li>
+</ul></li>
+<li>New commands
+<ul>
+<li>rclone mount - implements FUSE mounting of remotes (EXPERIMENTAL)</li>
+<li>works on Linux, FreeBSD and OS X (need testers for the last 2!)</li>
+<li>rclone cat - outputs remote file or files to the terminal</li>
+<li>rclone genautocomplete - command to make a bash completion script for rclone</li>
+</ul></li>
+<li>Editing a remote using <code>rclone config</code> now goes through the wizard</li>
+<li>Compile with go 1.7 - this fixes rclone on macOS Sierra and on 386 processors</li>
+<li>Use cobra for sub commands and docs generation</li>
+<li>drive</li>
+<li>Document how to make your own client_id</li>
+<li>s3</li>
+<li>User-configurable Amazon S3 ACL (thanks Radek Šenfeld)</li>
+<li>b2</li>
+<li>Fix stats accounting for upload - no more jumping to 100% done</li>
+<li>On cleanup delete hide marker if it is the current file</li>
+<li>New B2 API endpoint (thanks Per Cederberg)</li>
+<li>Set maximum backoff to 5 Minutes</li>
+<li>onedrive</li>
+<li>Fix URL escaping in file names - eg uploading files with <code>+</code> in them.</li>
+<li>amazon cloud drive</li>
+<li>Fix token expiry during large uploads</li>
+<li>Work around 408 REQUEST_TIMEOUT and 504 GATEWAY_TIMEOUT errors</li>
+<li>local</li>
+<li>Fix filenames with invalid UTF-8 not being uploaded</li>
+<li>Fix problem with some UTF-8 characters on OS X</li>
+</ul></li>
 <li>v1.32 - 2016-07-13
 <ul>
 <li>Backblaze B2</li>
@@ -2837,6 +3135,18 @@ h='&#x6f;&#x6f;&#112;&#x73;&#46;&#x63;&#x6f;&#46;&#x61;&#116;';a='&#64;';n='&#x6
 document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
 // -->
 </script><noscript>&#x6f;&#102;&#102;&#x69;&#x63;&#x65;&#32;&#x61;&#116;&#32;&#x6f;&#x6f;&#112;&#x73;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#32;&#100;&#x6f;&#116;&#32;&#x61;&#116;</noscript></li>
+<li>Per Cederberg <script type="text/javascript">
+<!--
+h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x63;&#x65;&#100;&#x65;&#114;&#98;&#x65;&#114;&#x67;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#x63;&#x65;&#100;&#x65;&#114;&#98;&#x65;&#114;&#x67;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
+<li>Radek Šenfeld <script type="text/javascript">
+<!--
+h='&#108;&#x6f;&#x67;&#x69;&#x63;&#46;&#x63;&#122;';a='&#64;';n='&#114;&#x75;&#x73;&#104;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#114;&#x75;&#x73;&#104;&#32;&#x61;&#116;&#32;&#108;&#x6f;&#x67;&#x69;&#x63;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#122;</noscript></li>
 </ul>
 <h2 id="contact-the-rclone-project">Contact the rclone project</h2>
 <p>The project website is at:</p>
