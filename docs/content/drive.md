@@ -204,3 +204,41 @@ Drive has quite a lot of rate limiting.  This causes rclone to be
 limited to transferring about 2 files per second only.  Individual
 files may be transferred much faster at 100s of MBytes/s but lots of
 small files can take a long time.
+
+### Making your own client_id ###
+
+When you use rclone with Google drive in its default configuration you
+are using rclone's client_id.  This is shared between all the rclone
+users.  There is a global rate limit on the number of queries per
+second that each client_id can do set by Google.  rclone already has a
+high quota and I will continue to make sure it is high enough by
+contacting Google.
+
+However you might find you get better performance making your own
+client_id if you are a heavy user. Or you may not depending on exactly
+how Google have been raising rclone's rate limit.
+
+Here is how to create your own Google Drive client ID for rclone:
+
+1. Log into the [Google API
+Console](https://console.developers.google.com/) with your Google
+account. It doesn't matter what Google account you use. (It need not
+be the same account as the Google Drive you want to access)
+
+2. Select a project or create a new project.
+
+3. Under Overview, Google APIs, Google Apps APIs, click "Drive API",
+then "Enable".
+
+4. Click "Credentials" in the left-side panel (not "Go to
+credentials", which opens the wizard), then "Create credentials", then
+"OAuth client ID".  It will prompt you to set the OAuth consent screen
+product name, if you haven't set one already.
+
+5. Choose an application type of "other", and click "Create". (the
+default name is fine)
+
+6. It will show you a client ID and client secret.  Use these values
+in rclone config to add a new remote or edit an existing remote.
+
+(Thanks to @balazer on github for these instructions.)
