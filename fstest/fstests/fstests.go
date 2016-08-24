@@ -12,7 +12,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -277,12 +276,18 @@ func TestFsListDirRoot(t *testing.T) {
 func TestFsListSubdir(t *testing.T) {
 	skipIfNotOk(t)
 	fileName := file2.Path
-	if runtime.GOOS == "windows" {
+	var err error
+	var objs []fs.Object
+	var dirs []*fs.Dir
+	for i := 0; i < 2; i++ {
+		dir, _ := path.Split(fileName)
+		dir = dir[:len(dir)-1]
+		objs, dirs, err = fs.NewLister().Start(remote, dir).GetAll()
+		if err != fs.ErrorDirNotFound {
+			break
+		}
 		fileName = file2.WinPath
 	}
-	dir, _ := path.Split(fileName)
-	dir = dir[:len(dir)-1]
-	objs, dirs, err := fs.NewLister().Start(remote, dir).GetAll()
 	require.NoError(t, err)
 	require.Len(t, objs, 1)
 	assert.Equal(t, fileName, objs[0].Remote())
