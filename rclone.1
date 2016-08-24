@@ -40,13 +40,21 @@ Timestamps preserved on files
 .IP \[bu] 2
 Partial syncs supported on a whole file basis
 .IP \[bu] 2
-Copy mode to just copy new/changed files
+Copy (http://rclone.org/commands/rclone_copy/) mode to just copy
+new/changed files
 .IP \[bu] 2
-Sync (one way) mode to make a directory identical
+Sync (http://rclone.org/commands/rclone_sync/) (one way) mode to make a
+directory identical
 .IP \[bu] 2
-Check mode to check for file hash equality
+Check (http://rclone.org/commands/rclone_check/) mode to check for file
+hash equality
 .IP \[bu] 2
 Can sync to and from network, eg two different cloud accounts
+.IP \[bu] 2
+Optional encryption (Crypt (http://rclone.org/crypt/))
+.IP \[bu] 2
+Optional FUSE mount (rclone
+mount (http://rclone.org/commands/rclone_mount/))
 .PP
 Links
 .IP \[bu] 2
@@ -163,6 +171,8 @@ Hubic (http://rclone.org/hubic/)
 Microsoft One Drive (http://rclone.org/onedrive/)
 .IP \[bu] 2
 Yandex Disk (http://rclone.org/yandex/)
+.IP \[bu] 2
+Crypt (http://rclone.org/crypt/) \- to encrypt other remotes
 .SS Usage
 .PP
 Rclone syncs a directory tree from one storage system to another.

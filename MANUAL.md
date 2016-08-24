@@ -26,10 +26,12 @@ Features
   * MD5/SHA1 hashes checked at all times for file integrity
   * Timestamps preserved on files
   * Partial syncs supported on a whole file basis
-  * Copy mode to just copy new/changed files
-  * Sync (one way) mode to make a directory identical
-  * Check mode to check for file hash equality
+  * [Copy](http://rclone.org/commands/rclone_copy/) mode to just copy new/changed files
+  * [Sync](http://rclone.org/commands/rclone_sync/) (one way) mode to make a directory identical
+  * [Check](http://rclone.org/commands/rclone_check/) mode to check for file hash equality
   * Can sync to and from network, eg two different cloud accounts
+  * Optional encryption ([Crypt](http://rclone.org/crypt/))
+  * Optional FUSE mount ([rclone mount](http://rclone.org/commands/rclone_mount/))
 
 Links
 
@@ -115,6 +117,7 @@ See the following for detailed instructions for
   * [Hubic](http://rclone.org/hubic/)
   * [Microsoft One Drive](http://rclone.org/onedrive/)
   * [Yandex Disk](http://rclone.org/yandex/)
+  * [Crypt](http://rclone.org/crypt/) - to encrypt other remotes
 
 Usage
 -----
