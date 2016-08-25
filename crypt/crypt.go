@@ -343,6 +343,12 @@ func (o *ObjectInfo) Size() int64 {
 	return o.f.cipher.EncryptedSize(o.ObjectInfo.Size())
 }
 
+// Hash returns the selected checksum of the file
+// If no checksum is available it returns ""
+func (o *ObjectInfo) Hash(hash fs.HashType) (string, error) {
+	return "", nil
+}
+
 // ListOpts wraps a listopts decrypting the directory listing and
 // replacing the Objects
 type ListOpts struct {
