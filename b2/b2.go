@@ -695,7 +695,16 @@ func (f *Fs) Mkdir() error {
 	if err != nil {
 		if apiErr, ok := err.(*api.Error); ok {
 			if apiErr.Code == "duplicate_bucket_name" {
-				return nil
+				// Check this is our bucket - buckets are globally unique and this
+				// might be someone elses.
+				_, getBucketErr := f.getBucketID()
+				if getBucketErr == nil {
+					// found so it is our bucket
+					return nil
+				}
+				if getBucketErr != fs.ErrorDirNotFound {
+					fs.Debug(f, "Error checking bucket exists: %v", getBucketErr)
+				}
 			}
 		}
 		return errors.Wrap(err, "failed to create bucket")
