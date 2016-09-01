@@ -661,9 +661,8 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 	if err != nil {
 		return nil, err
 	}
-	// SetOpaque sets Opaque such that HTTP requests to it don't
-	// alter any hex-escaped characters
-	googleapi.SetOpaque(req.URL)
+	// Deprecated googleapi call commented out
+	// googleapi.SetOpaque(req.URL)
 	req.Header.Set("User-Agent", fs.UserAgent)
 	res, err := o.fs.client.Do(req)
 	if err != nil {
