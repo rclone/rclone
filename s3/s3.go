@@ -36,6 +36,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/swift"
 	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
 )
 
 // Register with Fs
@@ -178,6 +179,22 @@ func init() {
 				Value: "AES256",
 				Help:  "AES256",
 			}},
+		}, {
+			Name: "storage_class",
+			Help: "The storage class to use when storing objects in S3.",
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "Default",
+			}, {
+				Value: "STANDARD",
+				Help:  "Standard storage class",
+			}, {
+				Value: "REDUCED_REDUNDANCY",
+				Help:  "Reduced redundancy storage class",
+			}, {
+				Value: "STANDARD_IA",
+				Help:  "Standard Infrequent Access storage class",
+			}},
 		}},
 	})
 }
@@ -190,6 +207,12 @@ const (
 	maxSizeForCopy = 5 * 1024 * 1024 * 1024 // The maximum size of object we can COPY
 )
 
+// Globals
+var (
+	// Flags
+	s3StorageClass = pflag.StringP("s3-storage-class", "", "", "Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA)")
+)
+
 // Fs represents a remote s3 server
 type Fs struct {
 	name               string           // the name of the remote
@@ -200,6 +223,7 @@ type Fs struct {
 	root               string           // root of the bucket - ignore all objects above this
 	locationConstraint string           // location constraint of new buckets
 	sse                string           // the type of server-side encryption
+	storageClass       string           // storage class
 }
 
 // Object describes a s3 object
@@ -327,7 +351,7 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 	return c, ses, nil
 }
 
-// NewFs contstructs an Fs from the path, bucket:path
+// NewFs constructs an Fs from the path, bucket:path
 func NewFs(name, root string) (fs.Fs, error) {
 	bucket, directory, err := s3ParsePath(root)
 	if err != nil {
@@ -346,6 +370,10 @@ func NewFs(name, root string) (fs.Fs, error) {
 		root:               directory,
 		locationConstraint: fs.ConfigFile.MustValue(name, "location_constraint"),
 		sse:                fs.ConfigFile.MustValue(name, "server_side_encryption"),
+		storageClass:       fs.ConfigFile.MustValue(name, "storage_class"),
+	}
+	if *s3StorageClass != "" {
+		f.storageClass = *s3StorageClass
 	}
 	if f.root != "" {
 		f.root += "/"
@@ -866,6 +894,9 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	}
 	if o.fs.sse != "" {
 		req.ServerSideEncryption = &o.fs.sse
+	}
+	if o.fs.storageClass != "" {
+		req.StorageClass = &o.fs.storageClass
 	}
 	_, err := uploader.Upload(&req)
 	if err != nil {
