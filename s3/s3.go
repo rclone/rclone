@@ -223,7 +223,7 @@ type Fs struct {
 	root               string           // root of the bucket - ignore all objects above this
 	locationConstraint string           // location constraint of new buckets
 	sse                string           // the type of server-side encryption
-	storageClass	   string           // storage class
+	storageClass       string           // storage class
 }
 
 // Object describes a s3 object
@@ -376,7 +376,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		sse:                fs.ConfigFile.MustValue(name, "server_side_encryption"),
 		storageClass:       fs.ConfigFile.MustValue(name, "storage_class"),
 	}
-	if (*s3StorageClass != "") {
+	if *s3StorageClass != "" {
 		f.storageClass = *s3StorageClass
 	}
 	if f.root != "" {
