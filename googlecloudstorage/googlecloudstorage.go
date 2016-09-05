@@ -650,20 +650,10 @@ func (o *Object) Storable() bool {
 
 // Open an object for read
 func (o *Object) Open() (in io.ReadCloser, err error) {
-	// This is slightly complicated by Go here insisting on
-	// decoding the %2F in URLs into / which is legal in http, but
-	// unfortunately not what the storage server wants.
-	//
-	// So first encode all the % into their encoded form
-	// URL will decode them giving our original escaped string
-	url := strings.Replace(o.url, "%", "%25", -1)
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", o.url, nil)
 	if err != nil {
 		return nil, err
 	}
-	// SetOpaque sets Opaque such that HTTP requests to it don't
-	// alter any hex-escaped characters
-	googleapi.SetOpaque(req.URL)
 	req.Header.Set("User-Agent", fs.UserAgent)
 	res, err := o.fs.client.Do(req)
 	if err != nil {
