@@ -35,6 +35,7 @@ const (
 	timeHeader       = headerPrefix + timeKey
 	sha1Key          = "large_file_sha1"
 	sha1Header       = "X-Bz-Content-Sha1"
+	sha1InfoHeader   = headerPrefix + sha1Key
 	testModeHeader   = "X-Bz-Test-Mode"
 	retryAfterHeader = "Retry-After"
 	minSleep         = 10 * time.Millisecond
@@ -1066,7 +1067,7 @@ func (file *openFile) Close() (err error) {
 	}
 
 	// Check the SHA1
-	receivedSHA1 := file.resp.Header.Get(sha1Header)
+	receivedSHA1 := file.o.sha1
 	calculatedSHA1 := fmt.Sprintf("%x", file.hash.Sum(nil))
 	if receivedSHA1 != calculatedSHA1 {
 		return errors.Errorf("object corrupted on transfer - SHA1 mismatch (want %q got %q)", receivedSHA1, calculatedSHA1)
@@ -1106,8 +1107,16 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 		_ = resp.Body.Close()
 		return nil, err
 	}
+	// Read sha1 from header if it isn't set
 	if o.sha1 == "" {
 		o.sha1 = resp.Header.Get(sha1Header)
+		fs.Debug(o, "Reading sha1 from header - %q", o.sha1)
+		// if sha1 header is "none" (in big files), then need
+		// to read it from the metadata
+		if o.sha1 == "none" {
+			o.sha1 = resp.Header.Get(sha1InfoHeader)
+			fs.Debug(o, "Reading sha1 from info - %q", o.sha1)
+		}
 	}
 	return newOpenFile(o, resp), nil
 }
