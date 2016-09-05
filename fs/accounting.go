@@ -468,6 +468,7 @@ func AccountByPart(obj Object) *Account {
 	acc := Stats.inProgress.get(obj.Remote())
 	if acc == nil {
 		Debug(obj, "Didn't find object to account part transfer")
+		return nil
 	}
 	acc.disableWholeFileAccounting()
 	return acc
