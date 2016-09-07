@@ -540,6 +540,11 @@ func (o *Object) SetModTime(modTime time.Time) error {
 // Storable returns a boolean showing if this object is storable
 func (o *Object) Storable() bool {
 	mode := o.info.Mode()
+	// On windows a file with os.ModeSymlink represents a file with reparse points
+	if runtime.GOOS == "windows" && (mode&os.ModeSymlink) != 0 {
+		fs.Debug(o, "Clearing symlink bit to allow a file with reparse points to be copied")
+		mode &^= os.ModeSymlink
+	}
 	if mode&(os.ModeSymlink|os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
 		fs.Debug(o, "Can't transfer non file/directory")
 		return false
