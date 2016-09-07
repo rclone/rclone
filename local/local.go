@@ -174,7 +174,9 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 			newRemote := path.Join(remote, name)
 			newPath := filepath.Join(dirpath, name)
 			if fi.IsDir() {
-				if out.IncludeDirectory(newRemote) {
+				// Ignore directories which are symlinks.  These are junction points under windows which
+				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
+				if (fi.Mode()&os.ModeSymlink) == 0 && out.IncludeDirectory(newRemote) {
 					dir := &fs.Dir{
 						Name:  f.cleanRemote(newRemote),
 						When:  fi.ModTime(),
