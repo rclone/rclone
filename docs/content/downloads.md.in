@@ -18,6 +18,7 @@ Rclone Download VERSION
     * [386 - 32 Bit](http://downloads.rclone.org/rclone-VERSION-linux-386.zip)
     * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-VERSION-linux-amd64.zip)
     * [ARM - 32 Bit](http://downloads.rclone.org/rclone-VERSION-linux-arm.zip)
+    * [ARM - 64 Bit](http://downloads.rclone.org/rclone-VERSION-linux-arm64.zip)
   * FreeBSD
     * [386 - 32 Bit](http://downloads.rclone.org/rclone-VERSION-freebsd-386.zip)
     * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-VERSION-freebsd-amd64.zip)
