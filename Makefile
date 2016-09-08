@@ -1,11 +1,17 @@
 SHELL = /bin/bash
-TAG := $(shell git describe --tags)
+TAG := $(shell echo `git describe --tags`-`git rev-parse --abbrev-ref HEAD` | sed 's/-master$$//')
 LAST_TAG := $(shell git describe --tags --abbrev=0)
 NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f", $$_)')
 
 rclone:
 	@go version
 	go install -v ./...
+
+vars:
+	@echo SHELL="'$(SHELL)'"
+	@echo TAG="'$(TAG)'"
+	@echo LAST_TAG="'$(LAST_TAG)'"
+	@echo NEW_TAG="'$(NEW_TAG)'"
 
 # Full suite of integration tests
 test:	rclone
