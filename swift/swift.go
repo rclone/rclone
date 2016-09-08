@@ -236,7 +236,8 @@ func (f *Fs) newObjectWithInfo(remote string, info *swift.Object) (fs.Object, er
 	// Note that due to a quirk of swift, dynamic large objects are
 	// returned as 0 bytes in the listing.  Correct this here by
 	// making sure we read the full metadata for all 0 byte files.
-	if info != nil && info.Bytes == 0 {
+	// We don't read the metadata for directory marker objects.
+	if info != nil && info.Bytes == 0 && info.ContentType != "application/directory" {
 		info = nil
 	}
 	if info != nil {
