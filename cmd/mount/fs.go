@@ -10,12 +10,6 @@ import (
 	"github.com/ncw/rclone/fs"
 )
 
-// Default permissions
-const (
-	dirPerms  = 0755
-	filePerms = 0644
-)
-
 // FS represents the top level filing system
 type FS struct {
 	f fs.Fs
@@ -30,6 +24,36 @@ func (f *FS) Root() (fusefs.Node, error) {
 	return newDir(f.f, ""), nil
 }
 
+// mountOptions configures the options from the command line flags
+func mountOptions(device string) (options []fuse.MountOption) {
+	options = []fuse.MountOption{
+		fuse.MaxReadahead(uint32(maxReadAhead)),
+		fuse.Subtype("rclone"),
+		fuse.FSName(device), fuse.VolumeName(device),
+		fuse.NoAppleDouble(),
+		fuse.NoAppleXattr(),
+	}
+	if allowNonEmpty {
+		options = append(options, fuse.AllowNonEmptyMount())
+	}
+	if allowOther {
+		options = append(options, fuse.AllowOther())
+	}
+	if allowRoot {
+		options = append(options, fuse.AllowRoot())
+	}
+	if defaultPermissions {
+		options = append(options, fuse.DefaultPermissions())
+	}
+	if readOnly {
+		options = append(options, fuse.ReadOnly())
+	}
+	if writebackCache {
+		options = append(options, fuse.WritebackCache())
+	}
+	return options
+}
+
 // mount the file system
 //
 // The mount point will be ready when this returns.
@@ -37,7 +61,7 @@ func (f *FS) Root() (fusefs.Node, error) {
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
 func mount(f fs.Fs, mountpoint string) (<-chan error, error) {
-	c, err := fuse.Mount(mountpoint)
+	c, err := fuse.Mount(mountpoint, mountOptions(f.Name()+":"+f.Root())...)
 	if err != nil {
 		return nil, err
 	}

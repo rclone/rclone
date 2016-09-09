@@ -46,6 +46,8 @@ func (f *File) Attr(ctx context.Context, a *fuse.Attr) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	fs.Debug(f.o, "File.Attr")
+	a.Gid = gid
+	a.Uid = uid
 	a.Mode = filePerms
 	// if o is nil it isn't valid yet, so return the size so far
 	if f.o == nil {
