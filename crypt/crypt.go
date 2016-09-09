@@ -86,6 +86,8 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 		Fs:     wrappedFs,
 		cipher: cipher,
 		mode:   mode,
+		name:   name,
+		root:   rpath,
 	}
 	return f, err
 }
@@ -95,6 +97,18 @@ type Fs struct {
 	fs.Fs
 	cipher Cipher
 	mode   NameEncryptionMode
+	name   string
+	root   string
+}
+
+// Name of the remote (as passed into NewFs)
+func (f *Fs) Name() string {
+	return f.name
+}
+
+// Root of the remote (as passed into NewFs)
+func (f *Fs) Root() string {
+	return f.root
 }
 
 // String returns a description of the FS
