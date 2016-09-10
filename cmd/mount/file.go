@@ -112,13 +112,11 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 
 	fs.Debug(o, "File.Open")
 
-	// Files aren't seekable
-	resp.Flags |= fuse.OpenNonSeekable
-
 	switch {
 	case req.Flags.IsReadOnly():
 		return newReadFileHandle(o)
 	case req.Flags.IsWriteOnly():
+		resp.Flags |= fuse.OpenNonSeekable
 		src := newCreateInfo(f.d.f, o.Remote())
 		fh, err := newWriteFileHandle(f.d, f, src)
 		if err != nil {

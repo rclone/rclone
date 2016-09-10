@@ -82,10 +82,9 @@ Or with OS X
 
 ### Limitations ###
 
-This can only read files seqentially, or write files sequentially.  It
-can't read and write or seek in files.
+This can only write files seqentially, it can only seek when reading.
 
-rclonefs inherits rclone's directory handling.  In rclone's world
+Rclone mount inherits rclone's directory handling.  In rclone's world
 directories don't really exist.  This means that empty directories
 will have a tendency to disappear once they fall out of the directory
 cache.

@@ -19,6 +19,7 @@ type ReadFileHandle struct {
 	r          io.ReadCloser
 	o          fs.Object
 	readCalled bool // set if read has been called
+	offset     int64
 }
 
 func newReadFileHandle(o fs.Object) (*ReadFileHandle, error) {
@@ -38,14 +39,38 @@ var _ fusefs.Handle = (*ReadFileHandle)(nil)
 // Check interface satisfied
 var _ fusefs.HandleReader = (*ReadFileHandle)(nil)
 
+// seek to a new offset
+func (fh *ReadFileHandle) seek(offset int64) error {
+	fs.Debug(fh.o, "ReadFileHandle.seek from %d to %d", fh.offset, offset)
+	r, err := fh.o.Open(&fs.SeekOption{Offset: offset})
+	if err != nil {
+		fs.Debug(fh.o, "ReadFileHandle.Read seek failed: %v", err)
+		return err
+	}
+	err = fh.r.Close()
+	if err != nil {
+		fs.Debug(fh.o, "ReadFileHandle.Read seek close old failed: %v", err)
+	}
+	fh.r = r
+	return nil
+}
+
 // Read from the file handle
 func (fh *ReadFileHandle) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.ReadResponse) error {
-	fs.Debug(fh.o, "ReadFileHandle.Open")
+	fs.Debug(fh.o, "ReadFileHandle.Read size %d offset %d", req.Size, req.Offset)
 	if fh.closed {
 		fs.ErrorLog(fh.o, "ReadFileHandle.Read error: %v", errClosedFileHandle)
 		return errClosedFileHandle
 	}
-	fh.readCalled = true
+	if req.Offset != fh.offset {
+		err := fh.seek(req.Offset)
+		if err != nil {
+			return err
+		}
+	}
+	if req.Size > 0 {
+		fh.readCalled = true
+	}
 	// We don't actually enforce Offset to match where previous read
 	// ended. Maybe we should, but that would mean'd we need to track
 	// it. The kernel *should* do it for us, based on the
@@ -60,10 +85,11 @@ func (fh *ReadFileHandle) Read(ctx context.Context, req *fuse.ReadRequest, resp 
 		err = nil
 	}
 	resp.Data = buf[:n]
+	fh.offset += int64(n)
 	if err != nil {
-		fs.ErrorLog(fh.o, "ReadFileHandle.Open error: %v", err)
+		fs.ErrorLog(fh.o, "ReadFileHandle.Read error: %v", err)
 	} else {
-		fs.Debug(fh.o, "ReadFileHandle.Open OK")
+		fs.Debug(fh.o, "ReadFileHandle.Read OK")
 	}
 	return err
 }
