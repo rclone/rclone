@@ -9,14 +9,12 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"math"
-	"net/http"
 	"os"
 	"os/user"
 	"path"
@@ -27,7 +25,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/Unknwon/goconfig"
-	"github.com/mreiferson/go-httpclient"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"golang.org/x/crypto/nacl/secretbox"
@@ -302,62 +299,6 @@ type ConfigInfo struct {
 	IgnoreSize         bool
 	NoTraverse         bool
 	NoUpdateModTime    bool
-}
-
-// Transport returns an http.RoundTripper with the correct timeouts
-func (ci *ConfigInfo) Transport() http.RoundTripper {
-	t := &httpclient.Transport{
-		Proxy:               http.ProxyFromEnvironment,
-		MaxIdleConnsPerHost: ci.Checkers + ci.Transfers + 1,
-
-		// ConnectTimeout, if non-zero, is the maximum amount of time a dial will wait for
-		// a connect to complete.
-		ConnectTimeout: ci.ConnectTimeout,
-
-		// ResponseHeaderTimeout, if non-zero, specifies the amount of
-		// time to wait for a server's response headers after fully
-		// writing the request (including its body, if any). This
-		// time does not include the time to read the response body.
-		ResponseHeaderTimeout: ci.Timeout,
-
-		// RequestTimeout, if non-zero, specifies the amount of time for the entire
-		// request to complete (including all of the above timeouts + entire response body).
-		// This should never be less than the sum total of the above two timeouts.
-		//RequestTimeout: NOT SET,
-
-		// ReadWriteTimeout, if non-zero, will set a deadline for every Read and
-		// Write operation on the request connection.
-		ReadWriteTimeout: ci.Timeout,
-
-		// InsecureSkipVerify controls whether a client verifies the
-		// server's certificate chain and host name.
-		// If InsecureSkipVerify is true, TLS accepts any certificate
-		// presented by the server and any host name in that certificate.
-		// In this mode, TLS is susceptible to man-in-the-middle attacks.
-		// This should be used only for testing.
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: ci.InsecureSkipVerify},
-
-		// DisableCompression, if true, prevents the Transport from
-		// requesting compression with an "Accept-Encoding: gzip"
-		// request header when the Request contains no existing
-		// Accept-Encoding value. If the Transport requests gzip on
-		// its own and gets a gzipped response, it's transparently
-		// decoded in the Response.Body. However, if the user
-		// explicitly requested gzip it is not automatically
-		// uncompressed.
-		DisableCompression: *noGzip,
-	}
-	if ci.DumpHeaders || ci.DumpBodies {
-		return NewLoggedTransport(t, ci.DumpBodies)
-	}
-	return t
-}
-
-// Client returns an http.Client with the correct timeouts
-func (ci *ConfigInfo) Client() *http.Client {
-	return &http.Client{
-		Transport: ci.Transport(),
-	}
 }
 
 // Find the config directory

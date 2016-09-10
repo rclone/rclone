@@ -932,7 +932,6 @@ func (o *Object) httpResponse(method string) (res *http.Response, err error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", fs.UserAgent)
 	err = o.fs.pacer.Call(func() (bool, error) {
 		res, err = o.fs.client.Do(req)
 		return shouldRetry(err)

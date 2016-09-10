@@ -162,7 +162,6 @@ func swiftConnection(name string) (*swift.Connection, error) {
 		ApiKey:         apiKey,
 		AuthUrl:        authURL,
 		AuthVersion:    fs.ConfigFile.MustInt(name, "auth_version", 0),
-		UserAgent:      fs.UserAgent,
 		Tenant:         fs.ConfigFile.MustValue(name, "tenant"),
 		Region:         fs.ConfigFile.MustValue(name, "region"),
 		Domain:         fs.ConfigFile.MustValue(name, "domain"),

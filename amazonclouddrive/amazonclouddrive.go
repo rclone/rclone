@@ -172,7 +172,6 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 
 	c := acd.NewClient(oAuthClient)
-	c.UserAgent = fs.UserAgent
 	f := &Fs{
 		name:         name,
 		root:         root,

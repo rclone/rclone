@@ -26,7 +26,7 @@ const (
 
 // Globals
 var (
-	// UserAgent for Fs which can set it
+	// UserAgent set in the default Transport
 	UserAgent = "rclone/" + Version
 	// Filesystem registry
 	fsRegistry []*RegInfo

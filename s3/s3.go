@@ -324,10 +324,6 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 		c.Handlers.Sign.PushBackNamed(corehandlers.BuildContentLengthHandler)
 		c.Handlers.Sign.PushBack(signer)
 	}
-	// Add user agent
-	c.Handlers.Build.PushBack(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fs.UserAgent)
-	})
 	return c, ses, nil
 }
 

@@ -31,7 +31,6 @@ func NewClient(c *http.Client) *Client {
 		errorHandler: defaultErrorHandler,
 		headers:      make(map[string]string),
 	}
-	api.SetHeader("User-Agent", fs.UserAgent)
 	return api
 }
 

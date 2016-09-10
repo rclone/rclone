@@ -654,7 +654,6 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", fs.UserAgent)
 	res, err := o.fs.client.Do(req)
 	if err != nil {
 		return nil, err

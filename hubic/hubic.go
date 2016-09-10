@@ -112,7 +112,6 @@ func (f *Fs) getCredentials() (err error) {
 	if err != nil {
 		return err
 	}
-	req.Header.Add("User-Agent", fs.UserAgent)
 	resp, err := f.client.Do(req)
 	if err != nil {
 		return err
@@ -155,7 +154,6 @@ func NewFs(name, root string) (fs.Fs, error) {
 	// Make the swift Connection
 	c := &swiftLib.Connection{
 		Auth:           newAuth(f),
-		UserAgent:      fs.UserAgent,
 		ConnectTimeout: 10 * fs.Config.ConnectTimeout, // Use the timeouts in the transport
 		Timeout:        10 * fs.Config.Timeout,        // Use the timeouts in the transport
 		Transport:      fs.Config.Transport(),
