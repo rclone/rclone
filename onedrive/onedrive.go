@@ -775,14 +775,15 @@ func (o *Object) Storable() bool {
 }
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if o.id == "" {
 		return nil, errors.New("can't download - no id")
 	}
 	var resp *http.Response
 	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/drive/items/" + o.id + "/content",
+		Method:  "GET",
+		Path:    "/drive/items/" + o.id + "/content",
+		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(&opts)

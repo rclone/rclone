@@ -651,16 +651,18 @@ func (o *Object) Storable() bool {
 }
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	req, err := http.NewRequest("GET", o.url, nil)
 	if err != nil {
 		return nil, err
 	}
+	fs.OpenOptionAddHTTPHeaders(req.Header, options)
 	res, err := o.fs.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	if res.StatusCode != 200 {
+	_, isRanging := req.Header["Range"]
+	if !(res.StatusCode == http.StatusOK || (isRanging && res.StatusCode == http.StatusPartialContent)) {
 		_ = res.Body.Close() // ignore error
 		return nil, errors.Errorf("bad response: %d: %s", res.StatusCode, res.Status)
 	}

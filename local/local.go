@@ -585,18 +585,36 @@ func (file *localOpenFile) Close() (err error) {
 }
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
-	in, err = os.Open(o.path)
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	var offset int64
+	for _, option := range options {
+		switch x := option.(type) {
+		case *fs.SeekOption:
+			offset = x.Offset
+		default:
+			if option.Mandatory() {
+				fs.Log(o, "Unsupported mandatory option: %v", option)
+			}
+		}
+	}
+
+	fd, err := os.Open(o.path)
 	if err != nil {
 		return
+	}
+	if offset != 0 {
+		// seek the object
+		_, err = fd.Seek(offset, 0)
+		// don't attempt to make checksums
+		return fd, err
 	}
 	// Update the md5sum as we go along
 	in = &localOpenFile{
 		o:    o,
-		in:   in,
+		in:   fd,
 		hash: fs.NewMultiHasher(),
 	}
-	return
+	return in, nil
 }
 
 // mkdirAll makes all the directories needed to store the object

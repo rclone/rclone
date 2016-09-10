@@ -355,9 +355,9 @@ func (n *nonce) fromBuf(buf []byte) {
 	}
 }
 
-// increment to add 1 to the nonce
-func (n *nonce) increment() {
-	for i := 0; i < len(*n); i++ {
+// carry 1 up the nonce from position i
+func (n *nonce) carry(i int) {
+	for ; i < len(*n); i++ {
 		digit := (*n)[i]
 		newDigit := digit + 1
 		(*n)[i] = newDigit
@@ -365,6 +365,27 @@ func (n *nonce) increment() {
 			// exit if no carry
 			break
 		}
+	}
+}
+
+// increment to add 1 to the nonce
+func (n *nonce) increment() {
+	n.carry(0)
+}
+
+// add an uint64 to the nonce
+func (n *nonce) add(x uint64) {
+	carry := uint16(0)
+	for i := 0; i < 8; i++ {
+		digit := (*n)[i]
+		xDigit := byte(x)
+		x >>= 8
+		carry += uint16(digit) + uint16(xDigit)
+		(*n)[i] = byte(carry)
+		carry >>= 8
+	}
+	if carry != 0 {
+		n.carry(8)
 	}
 }
 
@@ -526,6 +547,17 @@ func (fh *decrypter) Read(p []byte) (n int, err error) {
 	n = copy(p, fh.buf[fh.bufIndex:fh.bufSize])
 	fh.bufIndex += n
 	return n, nil
+}
+
+// seek the decryption forwards the amount given
+//
+// returns an offset for the underlying rc to be seeked and the number
+// of bytes to be discarded
+func (fh *decrypter) seek(offset int64) (underlyingOffset int64, discard int64) {
+	blocks, discard := offset/blockDataSize, offset%blockDataSize
+	underlyingOffset = int64(fileHeaderSize) + blocks*(blockHeaderSize+blockDataSize)
+	fh.nonce.add(uint64(blocks))
+	return
 }
 
 // finish sets the final error and tidies up

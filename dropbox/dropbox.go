@@ -710,8 +710,21 @@ func (o *Object) Storable() bool {
 }
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
-	in, _, err = o.fs.db.Download(o.remotePath(), "", 0)
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	// FIXME should send a patch for dropbox module which allow setting headers
+	var offset int64
+	for _, option := range options {
+		switch x := option.(type) {
+		case *fs.SeekOption:
+			offset = x.Offset
+		default:
+			if option.Mandatory() {
+				fs.Log(o, "Unsupported mandatory option: %v", option)
+			}
+		}
+	}
+
+	in, _, err = o.fs.db.Download(o.remotePath(), "", offset)
 	if dropboxErr, ok := err.(*dropbox.Error); ok {
 		// Dropbox return 461 for copyright violation so don't
 		// attempt to retry this error

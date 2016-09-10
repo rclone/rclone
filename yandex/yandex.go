@@ -487,8 +487,8 @@ func (o *Object) ModTime() time.Time {
 }
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
-	return o.fs.yd.Download(o.remotePath())
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	return o.fs.yd.Download(o.remotePath(), fs.OpenOptionHeaders(options))
 }
 
 // Remove an object

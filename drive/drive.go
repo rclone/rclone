@@ -827,7 +827,7 @@ func (o *Object) Size() int64 {
 	if o.isDocument && o.bytes < 0 {
 		// If it is a google doc then we must HEAD it to see
 		// how big it is
-		res, err := o.httpResponse("HEAD")
+		_, res, err := o.httpResponse("HEAD", nil)
 		if err != nil {
 			fs.ErrorLog(o, "Error reading size: %v", err)
 			return 0
@@ -929,22 +929,23 @@ func (o *Object) Storable() bool {
 
 // httpResponse gets an http.Response object for the object o.url
 // using the method passed in
-func (o *Object) httpResponse(method string) (res *http.Response, err error) {
+func (o *Object) httpResponse(method string, options []fs.OpenOption) (req *http.Request, res *http.Response, err error) {
 	if o.url == "" {
-		return nil, errors.New("forbidden to download - check sharing permission")
+		return nil, nil, errors.New("forbidden to download - check sharing permission")
 	}
-	req, err := http.NewRequest(method, o.url, nil)
+	req, err = http.NewRequest(method, o.url, nil)
 	if err != nil {
-		return nil, err
+		return req, nil, err
 	}
+	fs.OpenOptionAddHTTPHeaders(req.Header, options)
 	err = o.fs.pacer.Call(func() (bool, error) {
 		res, err = o.fs.client.Do(req)
 		return shouldRetry(err)
 	})
 	if err != nil {
-		return nil, err
+		return req, nil, err
 	}
-	return res, nil
+	return req, res, nil
 }
 
 // openFile represents an Object open for reading
@@ -979,12 +980,13 @@ func (file *openFile) Close() (err error) {
 var _ io.ReadCloser = &openFile{}
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
-	res, err := o.httpResponse("GET")
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	req, res, err := o.httpResponse("GET", options)
 	if err != nil {
 		return nil, err
 	}
-	if res.StatusCode != 200 {
+	_, isRanging := req.Header["Range"]
+	if !(res.StatusCode == http.StatusOK || (isRanging && res.StatusCode == http.StatusPartialContent)) {
 		_ = res.Body.Close() // ignore error
 		return nil, errors.Errorf("bad response: %d: %s", res.StatusCode, res.Status)
 	}

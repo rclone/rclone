@@ -845,11 +845,22 @@ func (o *Object) Storable() bool {
 }
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	key := o.fs.root + o.remote
 	req := s3.GetObjectInput{
 		Bucket: &o.fs.bucket,
 		Key:    &key,
+	}
+	for _, option := range options {
+		switch option.(type) {
+		case *fs.RangeOption, *fs.SeekOption:
+			_, value := option.Header()
+			req.Range = &value
+		default:
+			if option.Mandatory() {
+				fs.Log(o, "Unsupported mandatory option: %v", option)
+			}
+		}
 	}
 	resp, err := o.fs.c.GetObject(&req)
 	if err != nil {

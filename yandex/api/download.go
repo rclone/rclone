@@ -13,13 +13,13 @@ type DownloadResponse struct {
 	Templated bool   `json:"templated"`
 }
 
-// Download will get specified data from Yandex.Disk.
-func (c *Client) Download(remotePath string) (io.ReadCloser, error) { //io.Writer
+// Download will get specified data from Yandex.Disk supplying the extra headers
+func (c *Client) Download(remotePath string, headers map[string]string) (io.ReadCloser, error) { //io.Writer
 	ur, err := c.DownloadRequest(remotePath)
 	if err != nil {
 		return nil, err
 	}
-	return c.PerformDownload(ur.HRef)
+	return c.PerformDownload(ur.HRef, headers)
 }
 
 // DownloadRequest will make an download request and return a URL to download data to.

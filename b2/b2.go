@@ -1082,11 +1082,12 @@ func (file *openFile) Close() (err error) {
 var _ io.ReadCloser = &openFile{}
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	opts := rest.Opts{
 		Method:   "GET",
 		Absolute: true,
 		Path:     o.fs.info.DownloadURL,
+		Options:  options,
 	}
 	// Download by id if set otherwise by name
 	if o.id != "" {

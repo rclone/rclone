@@ -786,18 +786,19 @@ func (o *Object) Storable() bool {
 }
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	bigObject := o.Size() >= int64(tempLinkThreshold)
 	if bigObject {
 		fs.Debug(o, "Dowloading large object via tempLink")
 	}
 	file := acd.File{Node: o.info}
 	var resp *http.Response
+	headers := fs.OpenOptionHeaders(options)
 	err = o.fs.pacer.Call(func() (bool, error) {
 		if !bigObject {
-			in, resp, err = file.Open()
+			in, resp, err = file.OpenHeaders(headers)
 		} else {
-			in, resp, err = file.OpenTempURL(o.fs.noAuthClient)
+			in, resp, err = file.OpenTempURLHeaders(o.fs.noAuthClient, headers)
 		}
 		return o.fs.shouldRetry(resp, err)
 	})

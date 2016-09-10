@@ -629,8 +629,10 @@ func (o *Object) Storable() bool {
 }
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
-	in, _, err = o.fs.c.ObjectOpen(o.fs.container, o.fs.root+o.remote, true, nil)
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	headers := fs.OpenOptionHeaders(options)
+	_, isRanging := headers["Range"]
+	in, _, err = o.fs.c.ObjectOpen(o.fs.container, o.fs.root+o.remote, !isRanging, headers)
 	return
 }
 
