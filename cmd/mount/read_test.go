@@ -72,9 +72,9 @@ func TestReadFileDoubleClose(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, n)
 
-	// close the dup - should produce an error
+	// close the dup - should not produce an error
 	err = syscall.Close(fd2)
-	assert.Error(t, err, "input/output error")
+	assert.NoError(t, err, "input/output error")
 
 	run.rm(t, "testdoubleclose")
 }

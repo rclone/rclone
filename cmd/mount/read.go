@@ -116,17 +116,23 @@ func (fh *ReadFileHandle) Flush(ctx context.Context, req *fuse.FlushRequest) err
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
 	fs.Debug(fh.o, "ReadFileHandle.Flush")
-	// If Read hasn't been called then ignore the Flush - Release
-	// will pick it up
-	if !fh.readCalled {
-		fs.Debug(fh.o, "ReadFileHandle.Flush ignoring flush on unread handle")
-		return nil
 
-	}
-	err := fh.close()
-	if err != nil {
-		fs.ErrorLog(fh.o, "ReadFileHandle.Flush error: %v", err)
-		return err
+	// Ignore the Flush as there is nothing we can sensibly do and
+	// it seems quite common for Flush to be called from
+	// different threads each of which have read some data.
+	if false {
+		// If Read hasn't been called then ignore the Flush - Release
+		// will pick it up
+		if !fh.readCalled {
+			fs.Debug(fh.o, "ReadFileHandle.Flush ignoring flush on unread handle")
+			return nil
+
+		}
+		err := fh.close()
+		if err != nil {
+			fs.ErrorLog(fh.o, "ReadFileHandle.Flush error: %v", err)
+			return err
+		}
 	}
 	fs.Debug(fh.o, "ReadFileHandle.Flush OK")
 	return nil
