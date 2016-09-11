@@ -1,93 +1,15 @@
----
-title: "Install"
-description: "Rclone Installation"
-date: "2016-03-28"
----
+Rclone Package Building
+============
 
-Install
--------
+An FPM recipe for RClone.
 
-Rclone is a Go program and comes as a single binary file.
-
-[Download](/downloads/) the relevant binary.
-
-Or alternatively if you have Go 1.5+ installed use
-
-    go get github.com/ncw/rclone
-
-and this will build the binary in `$GOPATH/bin`.  If you have built
-rclone before then you will want to update its dependencies first with
-this
-
-    go get -u -v github.com/ncw/rclone/...
-
-See the [Usage section](/docs/) of the docs for how to use rclone, or
-run `rclone -h`.
-
-
-linux binary downloaded files install example
--------
-
-    unzip rclone-v1.17-linux-amd64.zip
-    cd rclone-v1.17-linux-amd64
-    #copy binary file
-    sudo cp rclone /usr/sbin/
-    sudo chown root:root /usr/sbin/rclone
-    sudo chmod 755 /usr/sbin/rclone
-    #install manpage
-    sudo mkdir -p /usr/local/share/man/man1
-    sudo cp rclone.1 /usr/local/share/man/man1/
-    sudo mandb
-
-Installation with Ansible
--------
-
-This can be done with [Stefan Weichinger's ansible
-role](https://github.com/stefangweichinger/ansible-rclone).
-
-Instructions
-
-  1. `git clone https://github.com/stefangweichinger/ansible-rclone.git` into your local roles-directory
-  2. add the role to the hosts you want rclone installed to:
-
-```
-    - hosts: rclone-hosts
-      roles:
-          - rclone
-```
-Installation with Package Managers
--------
-
-Currently there are no official upstream packages, help in this areas by people from upstream would be appreciated.
-
-A request for an upstream Debian package has been made: [https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=822793
-](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=822793)
-
-#### PackageCloud.io
-
-Un-official packages are avaliable from PackageCloud.io, built from the fpm-recipe in the Git repository.
-
-#### deb package (Debian, Ubuntu)
-
-Currently they can be built from the fpm-recipe in the rclone git repostiory:
+Note: FPM must be run on the output system to create the package, eg. must be run on RHEL/Fedora/CentOS to create and RPM.
 
 ```
 $ git clone https://github.com/ncw/rclone/
-$ cd rclone/package
-$ sudo fpm-cook
-[
-Deb stuff here
-]
-```
-
-#### rpm package (RHEL, CentOS, Fedora)
-
-Currently they can be built from the fpm-recipe in the rclone git repostiory:
-
-```
-$ git clone https://github.com/ncw/rclone/
-$ cd rclone/package
-$ sudo fpm-cook
+$ cd package/
+$ bundle install
+$ sudo bundle exec fpm-cook
 ===> Verifying build_depends and depends with Puppet
 ===> Verifying package: rpm-build
 ===> Verifying package: unzip
@@ -130,17 +52,4 @@ Archive:  /pipeline/source/fpm-recipes/rclone/cache/rclone-v1.33-linux-amd64.zip
 ===> [FPM] Wrote: /tmp/package-rpm-build20160902-2618-1nu0u0d/RPMS/x86_64/rclone-1.33-2.x86_64.rpm {}
 ===> [FPM] Executing(%clean): /bin/sh -e /var/tmp/rpm-tmp.prcLsW {}
 ===> Created package: /pipeline/source/fpm-recipes/rclone/pkg/rclone-1.33-2.x86_64.rpm
-```
-
-
-#### OSX
-
-rclone is avaliable as a brew formula: [http://brewformulas.org/Rclone](http://brewformulas.org/Rclone)
-
-```
-$ brew install rclone
-==> Downloading https://homebrew.bintray.com/bottles/rclone-1.33.el_capitan.bottle.tar.gz
-######################################################################## 100.0%
-==> Pouring rclone-1.33.el_capitan.bottle.tar.gz
-🍺  /opt/boxen/homebrew/Cellar/rclone/1.33: 5 files, 16.0M
 ```
