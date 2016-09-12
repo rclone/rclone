@@ -478,9 +478,13 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 // At the end of large uploads.  The speculation is that the timeout
 // is waiting for the sha1 hashing to complete and the file may well
 // be properly uploaded.
-func (f *Fs) checkUpload(in io.Reader, src fs.ObjectInfo, inInfo *acd.File, inErr error) (fixedError bool, info *acd.File, err error) {
+func (f *Fs) checkUpload(resp *http.Response, in io.Reader, src fs.ObjectInfo, inInfo *acd.File, inErr error) (fixedError bool, info *acd.File, err error) {
 	// Return if no error - all is well
 	if inErr == nil {
+		return false, inInfo, inErr
+	}
+	// If not one of the errors we can fix return
+	if resp == nil || resp.StatusCode != 408 && resp.StatusCode != 500 && resp.StatusCode != 504 {
 		return false, inInfo, inErr
 	}
 	const sleepTime = 5 * time.Second           // sleep between tries
@@ -561,7 +565,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 		}
 		f.stopUpload()
 		var ok bool
-		ok, info, err = f.checkUpload(in, src, info, err)
+		ok, info, err = f.checkUpload(resp, in, src, info, err)
 		if ok {
 			return false, nil
 		}
@@ -818,7 +822,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		}
 		o.fs.stopUpload()
 		var ok bool
-		ok, info, err = o.fs.checkUpload(in, src, info, err)
+		ok, info, err = o.fs.checkUpload(resp, in, src, info, err)
 		if ok {
 			return false, nil
 		}
