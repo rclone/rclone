@@ -799,9 +799,9 @@ func (f *Fs) purge(oldOnly bool) error {
 		go func() {
 			defer wg.Done()
 			for object := range toBeDeleted {
-				fs.Stats.Transferring(object.Name)
+				fs.Stats.Checking(object.Name)
 				checkErr(f.deleteByID(object.ID, object.Name))
-				fs.Stats.DoneTransferring(object.Name)
+				fs.Stats.DoneChecking(object.Name)
 			}
 		}()
 	}

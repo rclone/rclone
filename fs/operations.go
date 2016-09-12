@@ -1017,8 +1017,11 @@ func CleanUp(f Fs) error {
 func Cat(f Fs, w io.Writer) error {
 	var mu sync.Mutex
 	return ListFn(f, func(o Object) {
+		var err error
 		Stats.Transferring(o.Remote())
-		defer Stats.DoneTransferring(o.Remote())
+		defer func() {
+			Stats.DoneTransferring(o.Remote(), err == nil)
+		}()
 		mu.Lock()
 		defer mu.Unlock()
 		in, err := o.Open()
@@ -1041,5 +1044,4 @@ func Cat(f Fs, w io.Writer) error {
 			ErrorLog(o, "Failed to send to output: %v", err)
 		}
 	})
-
 }

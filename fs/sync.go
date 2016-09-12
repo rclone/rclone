@@ -232,12 +232,14 @@ func (s *syncCopyMove) pairCopier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup
 			}
 			src := pair.src
 			Stats.Transferring(src.Remote())
+			var err error
 			if Config.DryRun {
 				Log(src, "Not copying as --dry-run")
 			} else {
-				s.processError(Copy(fdst, pair.dst, src))
+				err = Copy(fdst, pair.dst, src)
+				s.processError(err)
 			}
-			Stats.DoneTransferring(src.Remote())
+			Stats.DoneTransferring(src.Remote(), err == nil)
 		case <-s.abort:
 			return
 		}
@@ -259,6 +261,7 @@ func (s *syncCopyMove) pairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup)
 			if !ok {
 				return
 			}
+			transferredOK := true
 			src := pair.src
 			dst := pair.dst
 			Stats.Transferring(src.Remote())
@@ -267,6 +270,7 @@ func (s *syncCopyMove) pairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup)
 				err := Copy(fdst, dst, src)
 				s.processError(err)
 				if err != nil {
+					transferredOK = false
 					ErrorLog(src, "Not deleting as copy failed: %v", err)
 				} else {
 					// Delete src if no error on copy
@@ -293,6 +297,7 @@ func (s *syncCopyMove) pairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup)
 						Stats.Error()
 						ErrorLog(dst, "Couldn't move: %v", err)
 						s.processError(err)
+						transferredOK = false
 					}
 				} else {
 					Debug(src, "Moved")
@@ -300,7 +305,7 @@ func (s *syncCopyMove) pairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup)
 			} else {
 				doCopy()
 			}
-			Stats.DoneTransferring(src.Remote())
+			Stats.DoneTransferring(src.Remote(), transferredOK)
 		case <-s.abort:
 			return
 		}
