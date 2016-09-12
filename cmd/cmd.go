@@ -161,20 +161,23 @@ func Run(Retry bool, cmd *cobra.Command, f func() error) {
 	for try := 1; try <= *retries; try++ {
 		err = f()
 		if !Retry || (err == nil && !fs.Stats.Errored()) {
+			if try > 1 {
+				fs.ErrorLog(nil, "Attempt %d/%d succeeded", try, *retries)
+			}
 			break
 		}
 		if fs.IsFatalError(err) {
-			fs.Log(nil, "Fatal error received - not attempting retries")
+			fs.ErrorLog(nil, "Fatal error received - not attempting retries")
 			break
 		}
 		if fs.IsNoRetryError(err) {
-			fs.Log(nil, "Can't retry this error - not attempting retries")
+			fs.ErrorLog(nil, "Can't retry this error - not attempting retries")
 			break
 		}
 		if err != nil {
-			fs.Log(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, fs.Stats.GetErrors(), err)
+			fs.ErrorLog(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, fs.Stats.GetErrors(), err)
 		} else {
-			fs.Log(nil, "Attempt %d/%d failed with %d errors", try, *retries, fs.Stats.GetErrors())
+			fs.ErrorLog(nil, "Attempt %d/%d failed with %d errors", try, *retries, fs.Stats.GetErrors())
 		}
 		if try < *retries {
 			fs.Stats.ResetErrors()
