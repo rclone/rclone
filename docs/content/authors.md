@@ -38,3 +38,4 @@ Contributors
   * Per Cederberg <cederberg@gmail.com>
   * Radek Šenfeld <rush@logic.cz>
   * Fredrik Fornwall <fredrik@fornwall.net>
+  * Asko Tamm <asko@deekit.net>
