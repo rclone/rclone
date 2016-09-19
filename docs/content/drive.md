@@ -183,8 +183,10 @@ Here are the possible extensions with their corresponding mime types.
 | csv  | text/csv | Standard CSV format for Spreadsheets |
 | doc  | application/msword | Micosoft Office Document |
 | docx | application/vnd.openxmlformats-officedocument.wordprocessingml.document | Microsoft Office Document |
+| epub | application/epub+zip | E-book format |
 | html | text/html | An HTML Document |
 | jpg  | image/jpeg | A JPEG Image File |
+| odp  | application/vnd.oasis.opendocument.presentation | Openoffice Presentation | 
 | ods  | application/vnd.oasis.opendocument.spreadsheet | Openoffice Spreadsheet |
 | ods  | application/x-vnd.oasis.opendocument.spreadsheet | Openoffice Spreadsheet |
 | odt  | application/vnd.oasis.opendocument.text | Openoffice Document |
@@ -193,6 +195,7 @@ Here are the possible extensions with their corresponding mime types.
 | pptx | application/vnd.openxmlformats-officedocument.presentationml.presentation | Microsoft Office Powerpoint |
 | rtf  | application/rtf | Rich Text Format |
 | svg  | image/svg+xml | Scalable Vector Graphics Format |
+| tsv  | text/tab-separated-values | Standard TSV format for spreadsheets |
 | txt  | text/plain | Plain Text |
 | xls  | application/vnd.ms-excel | Microsoft Office Spreadsheet |
 | xlsx | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | Microsoft Office Spreadsheet |

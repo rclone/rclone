@@ -61,10 +61,12 @@ var (
 		RedirectURL:  oauthutil.TitleBarRedirectURL,
 	}
 	mimeTypeToExtension = map[string]string{
+		"application/epub+zip":                                                      "epub",
 		"application/msword":                                                        "doc",
 		"application/pdf":                                                           "pdf",
 		"application/rtf":                                                           "rtf",
 		"application/vnd.ms-excel":                                                  "xls",
+		"application/vnd.oasis.opendocument.presentation":                           "odp",
 		"application/vnd.oasis.opendocument.spreadsheet":                            "ods",
 		"application/vnd.oasis.opendocument.text":                                   "odt",
 		"application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
@@ -78,6 +80,7 @@ var (
 		"text/csv":                                                                  "csv",
 		"text/html":                                                                 "html",
 		"text/plain":                                                                "txt",
+		"text/tab-separated-values":                                                 "tsv",
 	}
 	extensionToMimeType map[string]string
 )
