@@ -17,7 +17,8 @@ rm -rf build
 export CGO_ENABLED=0
 
 # Arch pairs we build for
-# gox -osarch-list for definitive list
+# gox -osarch-list - for definitive list
+# go tool dist list - or this
 
 OSARCH="\
 windows/386
