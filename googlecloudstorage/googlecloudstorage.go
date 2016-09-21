@@ -143,12 +143,13 @@ type Fs struct {
 //
 // Will definitely have info but maybe not meta
 type Object struct {
-	fs      *Fs       // what this object is part of
-	remote  string    // The remote path
-	url     string    // download path
-	md5sum  string    // The MD5Sum of the object
-	bytes   int64     // Bytes in the object
-	modTime time.Time // Modified time of the object
+	fs       *Fs       // what this object is part of
+	remote   string    // The remote path
+	url      string    // download path
+	md5sum   string    // The MD5Sum of the object
+	bytes    int64     // Bytes in the object
+	modTime  time.Time // Modified time of the object
+	mimeType string
 }
 
 // ------------------------------------------------------------
@@ -558,6 +559,7 @@ func (o *Object) Size() int64 {
 func (o *Object) setMetaData(info *storage.Object) {
 	o.url = info.MediaLink
 	o.bytes = int64(info.Size)
+	o.mimeType = info.ContentType
 
 	// Read md5sum
 	md5sumData, err := base64.StdEncoding.DecodeString(info.Md5Hash)
@@ -675,7 +677,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	object := storage.Object{
 		Bucket:      o.fs.bucket,
 		Name:        o.fs.root + o.remote,
-		ContentType: fs.MimeType(o),
+		ContentType: fs.MimeType(src),
 		Size:        uint64(size),
 		Updated:     modTime.Format(timeFormatOut), // Doesn't get set
 		Metadata:    metadataFromModTime(modTime),
@@ -694,9 +696,15 @@ func (o *Object) Remove() error {
 	return o.fs.svc.Objects.Delete(o.fs.bucket, o.fs.root+o.remote).Do()
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	return o.mimeType
+}
+
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs     = &Fs{}
-	_ fs.Copier = &Fs{}
-	_ fs.Object = &Object{}
+	_ fs.Fs        = &Fs{}
+	_ fs.Copier    = &Fs{}
+	_ fs.Object    = &Object{}
+	_ fs.MimeTyper = &Object{}
 )

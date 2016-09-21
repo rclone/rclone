@@ -98,12 +98,13 @@ type Fs struct {
 
 // Object describes a b2 object
 type Object struct {
-	fs      *Fs       // what this object is part of
-	remote  string    // The remote path
-	id      string    // b2 id of the file
-	modTime time.Time // The modified time of the object if known
-	sha1    string    // SHA-1 hash if known
-	size    int64     // Size of the object
+	fs       *Fs       // what this object is part of
+	remote   string    // The remote path
+	id       string    // b2 id of the file
+	modTime  time.Time // The modified time of the object if known
+	sha1     string    // SHA-1 hash if known
+	size     int64     // Size of the object
+	mimeType string    // Content-Type of the object
 }
 
 // ------------------------------------------------------------
@@ -896,9 +897,10 @@ func (o *Object) Size() int64 {
 //  o.modTime
 //  o.size
 //  o.sha1
-func (o *Object) decodeMetaDataRaw(ID, SHA1 string, Size int64, UploadTimestamp api.Timestamp, Info map[string]string) (err error) {
+func (o *Object) decodeMetaDataRaw(ID, SHA1 string, Size int64, UploadTimestamp api.Timestamp, Info map[string]string, mimeType string) (err error) {
 	o.id = ID
 	o.sha1 = SHA1
+	o.mimeType = mimeType
 	// Read SHA1 from metadata if it exists and isn't set
 	if o.sha1 == "" || o.sha1 == "none" {
 		o.sha1 = Info[sha1Key]
@@ -917,7 +919,7 @@ func (o *Object) decodeMetaDataRaw(ID, SHA1 string, Size int64, UploadTimestamp 
 //  o.size
 //  o.sha1
 func (o *Object) decodeMetaData(info *api.File) (err error) {
-	return o.decodeMetaDataRaw(info.ID, info.SHA1, info.Size, info.UploadTimestamp, info.Info)
+	return o.decodeMetaDataRaw(info.ID, info.SHA1, info.Size, info.UploadTimestamp, info.Info, info.ContentType)
 }
 
 // decodeMetaDataFileInfo sets the metadata in the object from an api.FileInfo
@@ -928,7 +930,7 @@ func (o *Object) decodeMetaData(info *api.File) (err error) {
 //  o.size
 //  o.sha1
 func (o *Object) decodeMetaDataFileInfo(info *api.FileInfo) (err error) {
-	return o.decodeMetaDataRaw(info.ID, info.SHA1, info.Size, info.UploadTimestamp, info.Info)
+	return o.decodeMetaDataRaw(info.ID, info.SHA1, info.Size, info.UploadTimestamp, info.Info, info.ContentType)
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
@@ -1285,7 +1287,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 		ExtraHeaders: map[string]string{
 			"Authorization":  upload.AuthorizationToken,
 			"X-Bz-File-Name": urlEncode(o.fs.root + o.remote),
-			"Content-Type":   fs.MimeType(o),
+			"Content-Type":   fs.MimeType(src),
 			sha1Header:       calculatedSha1,
 			timeHeader:       timeString(modTime),
 		},
@@ -1337,10 +1339,16 @@ func (o *Object) Remove() error {
 	return nil
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	return o.mimeType
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs         = &Fs{}
 	_ fs.Purger     = &Fs{}
 	_ fs.CleanUpper = &Fs{}
 	_ fs.Object     = &Object{}
+	_ fs.MimeTyper  = &Object{}
 )

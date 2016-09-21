@@ -846,6 +846,14 @@ func (o *Object) Remove() error {
 	return err
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	if o.info.ContentProperties.ContentType != nil {
+		return *o.info.ContentProperties.ContentType
+	}
+	return ""
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs     = (*Fs)(nil)
@@ -853,5 +861,6 @@ var (
 	//	_ fs.Copier   = (*Fs)(nil)
 	//	_ fs.Mover    = (*Fs)(nil)
 	//	_ fs.DirMover = (*Fs)(nil)
-	_ fs.Object = (*Object)(nil)
+	_ fs.Object    = (*Object)(nil)
+	_ fs.MimeTyper = &Object{}
 )

@@ -47,6 +47,7 @@ func TestObjectFs2(t *testing.T)            { fstests.TestObjectFs(t) }
 func TestObjectRemote2(t *testing.T)        { fstests.TestObjectRemote(t) }
 func TestObjectHashes2(t *testing.T)        { fstests.TestObjectHashes(t) }
 func TestObjectModTime2(t *testing.T)       { fstests.TestObjectModTime(t) }
+func TestObjectMimeType2(t *testing.T)      { fstests.TestObjectMimeType(t) }
 func TestObjectSetModTime2(t *testing.T)    { fstests.TestObjectSetModTime(t) }
 func TestObjectSize2(t *testing.T)          { fstests.TestObjectSize(t) }
 func TestObjectOpen2(t *testing.T)          { fstests.TestObjectOpen(t) }

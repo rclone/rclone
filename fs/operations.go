@@ -169,13 +169,27 @@ func Equal(src, dst Object) bool {
 	return true
 }
 
-// MimeType returns a guess at the mime type from the extension
-func MimeType(o ObjectInfo) string {
-	mimeType := mime.TypeByExtension(path.Ext(o.Remote()))
+// MimeTypeFromName returns a guess at the mime type from the name
+func MimeTypeFromName(remote string) (mimeType string) {
+	mimeType = mime.TypeByExtension(path.Ext(remote))
 	if !strings.ContainsRune(mimeType, '/') {
 		mimeType = "application/octet-stream"
 	}
 	return mimeType
+}
+
+// MimeType returns the MimeType from the object, either by calling
+// the MimeTyper interface or using MimeTypeFromName
+func MimeType(o ObjectInfo) (mimeType string) {
+	// Read the MimeType from the optional interface if available
+	if do, ok := o.(MimeTyper); ok {
+		mimeType = do.MimeType()
+		Debug(o, "Read MimeType as %q", mimeType)
+		if mimeType != "" {
+			return mimeType
+		}
+	}
+	return MimeTypeFromName(o.Remote())
 }
 
 // Used to remove a failed copy

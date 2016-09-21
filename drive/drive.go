@@ -137,6 +137,7 @@ type Object struct {
 	bytes        int64  // size of the object
 	modifiedDate string // RFC3339 time it was last modified
 	isDocument   bool   // if set this is a Google doc
+	mimeType     string
 }
 
 // ------------------------------------------------------------
@@ -533,7 +534,7 @@ func (f *Fs) createFileInfo(remote string, modTime time.Time, size int64) (*Obje
 		Title:        leaf,
 		Description:  leaf,
 		Parents:      []*drive.ParentReference{{Id: directoryID}},
-		MimeType:     fs.MimeType(o),
+		MimeType:     fs.MimeTypeFromName(remote),
 		ModifiedDate: modTime.Format(timeFormatOut),
 	}
 	return o, createInfo, nil
@@ -845,6 +846,7 @@ func (o *Object) setMetaData(info *drive.File) {
 	o.md5sum = strings.ToLower(info.Md5Checksum)
 	o.bytes = info.FileSize
 	o.modifiedDate = info.ModifiedDate
+	o.mimeType = info.MimeType
 }
 
 // readMetaData gets the info if it hasn't already been fetched
@@ -1009,7 +1011,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	}
 	updateInfo := &drive.File{
 		Id:           o.id,
-		MimeType:     fs.MimeType(o),
+		MimeType:     fs.MimeType(src),
 		ModifiedDate: modTime.Format(timeFormatOut),
 	}
 
@@ -1027,7 +1029,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		}
 	} else {
 		// Upload the file in chunks
-		info, err = o.fs.Upload(in, size, fs.MimeType(o), updateInfo, o.remote)
+		info, err = o.fs.Upload(in, size, updateInfo.MimeType, updateInfo, o.remote)
 		if err != nil {
 			return err
 		}
@@ -1053,6 +1055,16 @@ func (o *Object) Remove() error {
 	return err
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	err := o.readMetaData()
+	if err != nil {
+		fs.Log(o, "Failed to read metadata: %v", err)
+		return ""
+	}
+	return o.mimeType
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs             = (*Fs)(nil)
@@ -1062,4 +1074,5 @@ var (
 	_ fs.DirMover       = (*Fs)(nil)
 	_ fs.PutUncheckeder = (*Fs)(nil)
 	_ fs.Object         = (*Object)(nil)
+	_ fs.MimeTyper      = &Object{}
 )

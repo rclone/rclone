@@ -210,6 +210,13 @@ type BasicInfo interface {
 	Size() int64
 }
 
+// MimeTyper is an optional interface for Object
+type MimeTyper interface {
+	// MimeType returns the content type of the Object if
+	// known, or "" if not
+	MimeType() string
+}
+
 // Purger is an optional interfaces for Fs
 type Purger interface {
 	// Purge all files in the root and the root directory

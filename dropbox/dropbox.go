@@ -110,6 +110,7 @@ type Object struct {
 	bytes       int64     // size of the object
 	modTime     time.Time // time it was last modified
 	hasMetadata bool      // metadata is valid
+	mimeType    string    // content type according to the server
 }
 
 // ------------------------------------------------------------
@@ -622,6 +623,7 @@ func (o *Object) Size() int64 {
 func (o *Object) setMetadataFromEntry(info *dropbox.Entry) {
 	o.bytes = info.Bytes
 	o.modTime = time.Time(info.ClientMtime)
+	o.mimeType = info.MimeType
 	o.hasMetadata = true
 }
 
@@ -745,12 +747,23 @@ func (o *Object) Remove() error {
 	return err
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	err := o.readMetaData()
+	if err != nil {
+		fs.Log(o, "Failed to read metadata: %v", err)
+		return ""
+	}
+	return o.mimeType
+}
+
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs       = (*Fs)(nil)
-	_ fs.Copier   = (*Fs)(nil)
-	_ fs.Purger   = (*Fs)(nil)
-	_ fs.Mover    = (*Fs)(nil)
-	_ fs.DirMover = (*Fs)(nil)
-	_ fs.Object   = (*Object)(nil)
+	_ fs.Fs        = (*Fs)(nil)
+	_ fs.Copier    = (*Fs)(nil)
+	_ fs.Purger    = (*Fs)(nil)
+	_ fs.Mover     = (*Fs)(nil)
+	_ fs.DirMover  = (*Fs)(nil)
+	_ fs.Object    = (*Object)(nil)
+	_ fs.MimeTyper = (*Object)(nil)
 )

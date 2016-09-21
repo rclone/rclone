@@ -230,14 +230,15 @@ type Fs struct {
 type Object struct {
 	// Will definitely have everything but meta which may be nil
 	//
-	// List will read everything but meta - to fill that in need to call
-	// readMetaData
+	// List will read everything but meta & mimeType - to fill
+	// that in you need to call readMetaData
 	fs           *Fs                // what this object is part of
 	remote       string             // The remote path
 	etag         string             // md5sum of the object
 	bytes        int64              // size of the object
 	lastModified time.Time          // Last modified
 	meta         map[string]*string // The object metadata if known - may be nil
+	mimeType     string             // MimeType of object - may be ""
 }
 
 // ------------------------------------------------------------
@@ -777,6 +778,7 @@ func (o *Object) readMetaData() (err error) {
 	} else {
 		o.lastModified = *resp.LastModified
 	}
+	o.mimeType = aws.StringValue(resp.ContentType)
 	return nil
 }
 
@@ -818,7 +820,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 	}
 
 	// Guess the content type
-	contentType := fs.MimeType(o)
+	mimeType := fs.MimeType(o)
 
 	// Copy the object to itself to update the metadata
 	key := o.fs.root + o.remote
@@ -828,7 +830,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 		Bucket:            &o.fs.bucket,
 		ACL:               &o.fs.acl,
 		Key:               &key,
-		ContentType:       &contentType,
+		ContentType:       &mimeType,
 		CopySource:        aws.String(url.QueryEscape(sourceKey)),
 		Metadata:          o.meta,
 		MetadataDirective: &directive,
@@ -880,7 +882,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	}
 
 	// Guess the content type
-	contentType := fs.MimeType(o)
+	mimeType := fs.MimeType(src)
 
 	key := o.fs.root + o.remote
 	req := s3manager.UploadInput{
@@ -888,7 +890,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		ACL:         &o.fs.acl,
 		Key:         &key,
 		Body:        in,
-		ContentType: &contentType,
+		ContentType: &mimeType,
 		Metadata:    metadata,
 		//ContentLength: &size,
 	}
@@ -920,9 +922,20 @@ func (o *Object) Remove() error {
 	return err
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	err := o.readMetaData()
+	if err != nil {
+		fs.Log(o, "Failed to read metadata: %v", err)
+		return ""
+	}
+	return o.mimeType
+}
+
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs     = &Fs{}
-	_ fs.Copier = &Fs{}
-	_ fs.Object = &Object{}
+	_ fs.Fs        = &Fs{}
+	_ fs.Copier    = &Fs{}
+	_ fs.Object    = &Object{}
+	_ fs.MimeTyper = &Object{}
 )

@@ -689,7 +689,7 @@ func urlEncode(str string) string {
 
 // updateChunks updates the existing object using chunks to a separate
 // container.  It returns a string which prefixes current segments.
-func (o *Object) updateChunks(in io.Reader, headers swift.Headers, size int64) (string, error) {
+func (o *Object) updateChunks(in io.Reader, headers swift.Headers, size int64, contentType string) (string, error) {
 	// Create the segmentsContainer if it doesn't exist
 	err := o.fs.c.ContainerCreate(o.fs.segmentsContainer, nil)
 	if err != nil {
@@ -718,7 +718,7 @@ func (o *Object) updateChunks(in io.Reader, headers swift.Headers, size int64) (
 	headers["Content-Length"] = "0" // set Content-Length as we know it
 	emptyReader := bytes.NewReader(nil)
 	manifestName := o.fs.root + o.remote
-	_, err = o.fs.c.ObjectPut(o.fs.container, manifestName, emptyReader, true, "", "", headers)
+	_, err = o.fs.c.ObjectPut(o.fs.container, manifestName, emptyReader, true, "", contentType, headers)
 	return uniquePrefix + "/", err
 }
 
@@ -738,16 +738,17 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	// Set the mtime
 	m := swift.Metadata{}
 	m.SetModTime(modTime)
+	contentType := fs.MimeType(src)
 	headers := m.ObjectHeaders()
 	uniquePrefix := ""
 	if size > int64(chunkSize) {
-		uniquePrefix, err = o.updateChunks(in, headers, size)
+		uniquePrefix, err = o.updateChunks(in, headers, size, contentType)
 		if err != nil {
 			return err
 		}
 	} else {
 		headers["Content-Length"] = strconv.FormatInt(size, 10) // set Content-Length as we know it
-		_, err := o.fs.c.ObjectPut(o.fs.container, o.fs.root+o.remote, in, true, "", "", headers)
+		_, err := o.fs.c.ObjectPut(o.fs.container, o.fs.root+o.remote, in, true, "", contentType, headers)
 		if err != nil {
 			return err
 		}
@@ -787,10 +788,16 @@ func (o *Object) Remove() error {
 	return nil
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	return o.info.ContentType
+}
+
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs     = &Fs{}
-	_ fs.Purger = &Fs{}
-	_ fs.Copier = &Fs{}
-	_ fs.Object = &Object{}
+	_ fs.Fs        = &Fs{}
+	_ fs.Purger    = &Fs{}
+	_ fs.Copier    = &Fs{}
+	_ fs.Object    = &Object{}
+	_ fs.MimeTyper = &Object{}
 )

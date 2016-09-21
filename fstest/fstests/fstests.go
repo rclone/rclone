@@ -501,6 +501,22 @@ func TestObjectModTime(t *testing.T) {
 	file1.CheckModTime(t, obj, obj.ModTime(), remote.Precision())
 }
 
+// TestObjectMimeType tests the MimeType of the object is correct
+func TestObjectMimeType(t *testing.T) {
+	skipIfNotOk(t)
+	obj := findObject(t, file1.Path)
+	do, ok := obj.(fs.MimeTyper)
+	if !ok {
+		t.Skip("MimeType method not supported")
+	}
+	mimeType := do.MimeType()
+	if strings.ContainsRune(mimeType, ';') {
+		assert.Equal(t, "text/plain; charset=utf-8", mimeType)
+	} else {
+		assert.Equal(t, "text/plain", mimeType)
+	}
+}
+
 // TestObjectSetModTime tests that SetModTime works
 func TestObjectSetModTime(t *testing.T) {
 	skipIfNotOk(t)

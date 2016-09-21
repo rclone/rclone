@@ -98,6 +98,7 @@ type Object struct {
 	modTime     time.Time // modification time of the object
 	id          string    // ID of the object
 	sha1        string    // SHA-1 of the object content
+	mimeType    string    // Content-Type of object from server (may not be as uploaded)
 }
 
 // ------------------------------------------------------------
@@ -686,8 +687,11 @@ func (o *Object) setMetaData(info *api.Item) {
 	// fact uppercase hex strings.
 	//
 	// In OneDrive for Business, SHA1 and CRC32 hash values are not returned for files.
-	if info.File != nil && info.File.Hashes.Sha1Hash != "" {
-		o.sha1 = strings.ToLower(info.File.Hashes.Sha1Hash)
+	if info.File != nil {
+		o.mimeType = info.File.MimeType
+		if info.File.Hashes.Sha1Hash != "" {
+			o.sha1 = strings.ToLower(info.File.Hashes.Sha1Hash)
+		}
 	}
 	if info.FileSystemInfo != nil {
 		o.modTime = time.Time(info.FileSystemInfo.LastModifiedDateTime)
@@ -935,6 +939,11 @@ func (o *Object) Remove() error {
 	return o.fs.deleteObject(o.id)
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	return o.mimeType
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs     = (*Fs)(nil)
@@ -942,5 +951,6 @@ var (
 	_ fs.Copier = (*Fs)(nil)
 	// _ fs.Mover    = (*Fs)(nil)
 	// _ fs.DirMover = (*Fs)(nil)
-	_ fs.Object = (*Object)(nil)
+	_ fs.Object    = (*Object)(nil)
+	_ fs.MimeTyper = &Object{}
 )

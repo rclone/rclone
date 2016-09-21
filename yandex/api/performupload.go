@@ -11,11 +11,12 @@ import (
 )
 
 // PerformUpload does the actual upload via unscoped PUT request.
-func (c *Client) PerformUpload(url string, data io.Reader) (err error) {
+func (c *Client) PerformUpload(url string, data io.Reader, contentType string) (err error) {
 	req, err := http.NewRequest("PUT", url, data)
 	if err != nil {
 		return err
 	}
+	req.Header.Set("Content-Type", contentType)
 
 	//c.setRequestScope(req)
 

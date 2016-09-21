@@ -17,13 +17,13 @@ type UploadResponse struct {
 }
 
 // Upload will put specified data to Yandex.Disk.
-func (c *Client) Upload(data io.Reader, remotePath string, overwrite bool) error {
+func (c *Client) Upload(data io.Reader, remotePath string, overwrite bool, contentType string) error {
 	ur, err := c.UploadRequest(remotePath, overwrite)
 	if err != nil {
 		return err
 	}
 
-	if err := c.PerformUpload(ur.HRef, data); err != nil {
+	if err := c.PerformUpload(ur.HRef, data, contentType); err != nil {
 		return err
 	}
 

@@ -15,19 +15,19 @@ show through.
 
 Here is an overview of the major features of each cloud storage system.
 
-| Name                   | Hash    | ModTime | Case Insensitive | Duplicate Files |
-| ---------------------- |:-------:|:-------:|:----------------:|:---------------:|
-| Google Drive           | MD5     | Yes     | No               | Yes             |
-| Amazon S3              | MD5     | Yes     | No               | No              |
-| Openstack Swift        | MD5     | Yes     | No               | No              |
-| Dropbox                | -       | No      | Yes              | No              |
-| Google Cloud Storage   | MD5     | Yes     | No               | No              |
-| Amazon Drive           | MD5     | No      | Yes              | No              |
-| Microsoft One Drive    | SHA1    | Yes     | Yes              | No              |
-| Hubic                  | MD5     | Yes     | No               | No              |
-| Backblaze B2           | SHA1    | Yes     | No               | No              |
-| Yandex Disk            | MD5     | Yes     | No               | No              |
-| The local filesystem   | All     | Yes     | Depends          | No              |
+| Name                   | Hash    | ModTime | Case Insensitive | Duplicate Files | MIME Type |
+| ---------------------- |:-------:|:-------:|:----------------:|:---------------:|:---------:|
+| Google Drive           | MD5     | Yes     | No               | Yes             | R/W       |
+| Amazon S3              | MD5     | Yes     | No               | No              | R/W       |
+| Openstack Swift        | MD5     | Yes     | No               | No              | R/W       |
+| Dropbox                | -       | No      | Yes              | No              | R         |
+| Google Cloud Storage   | MD5     | Yes     | No               | No              | R/W       |
+| Amazon Drive           | MD5     | No      | Yes              | No              | R         |
+| Microsoft One Drive    | SHA1    | Yes     | Yes              | No              | R         |
+| Hubic                  | MD5     | Yes     | No               | No              | R/W       |
+| Backblaze B2           | SHA1    | Yes     | No               | No              | R/W       |
+| Yandex Disk            | MD5     | Yes     | No               | No              | R/W       |
+| The local filesystem   | All     | Yes     | Depends          | No              | -         |
 
 ### Hash ###
 
@@ -77,6 +77,23 @@ objects with the same name.
 
 This confuses rclone greatly when syncing - use the `rclone dedupe`
 command to rename or remove duplicates.
+
+### MIME Type ###
+
+MIME types (also known as media types) classify types of documents
+using a simple text classification, eg `text/html` or
+`application/pdf`.
+
+Some cloud storage systems support reading (`R`) the MIME type of
+objects and some support writing (`W`) the MIME type of objects.
+
+The MIME type can be important if you are serving files directly to
+HTTP from the storage system.
+
+If you are copying from a remote which supports reading (`R`) to a
+remote which supports writing (`W`) then rclone will preserve the MIME
+types.  Otherwise they will be guessed from the extension, or the
+remote itself may assign the MIME type.
 
 ## Optional Features ##
 
