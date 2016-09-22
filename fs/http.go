@@ -144,7 +144,7 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	// Force user agent
 	req.Header.Set("User-Agent", UserAgent)
 	// Log request
-	if t.logHeader {
+	if t.logHeader || t.logBody {
 		buf, _ := httputil.DumpRequestOut(req, t.logBody)
 		Debug(nil, "%s", separatorReq)
 		Debug(nil, "%s", "HTTP REQUEST")
@@ -154,7 +154,7 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	// Do round trip
 	resp, err = t.Transport.RoundTrip(req)
 	// Log response
-	if t.logHeader {
+	if t.logHeader || t.logBody {
 		Debug(nil, "%s", separatorResp)
 		Debug(nil, "%s", "HTTP RESPONSE")
 		if err != nil {
