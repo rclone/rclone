@@ -39,3 +39,5 @@ Contributors
   * Radek Šenfeld <rush@logic.cz>
   * Fredrik Fornwall <fredrik@fornwall.net>
   * Asko Tamm <asko@deekit.net>
+  * xor-zz <xor@gstocco.com>
+
