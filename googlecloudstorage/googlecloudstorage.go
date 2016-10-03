@@ -135,8 +135,8 @@ type Fs struct {
 	bucket        string           // the bucket we are working on
 	root          string           // the path we are working on if any
 	projectNumber string           // used for finding buckets
-	objectAcl     string           // used when creating new objects
-	bucketAcl     string           // used when creating new buckets
+	objectACL     string           // used when creating new objects
+	bucketACL     string           // used when creating new buckets
 }
 
 // Object describes a storage object
@@ -231,14 +231,14 @@ func NewFs(name, root string) (fs.Fs, error) {
 		bucket:        bucket,
 		root:          directory,
 		projectNumber: fs.ConfigFile.MustValue(name, "project_number"),
-		objectAcl:     fs.ConfigFile.MustValue(name, "object_acl"),
-		bucketAcl:     fs.ConfigFile.MustValue(name, "bucket_acl"),
+		objectACL:     fs.ConfigFile.MustValue(name, "object_acl"),
+		bucketACL:     fs.ConfigFile.MustValue(name, "bucket_acl"),
 	}
-	if f.objectAcl == "" {
-		f.objectAcl = "private"
+	if f.objectACL == "" {
+		f.objectACL = "private"
 	}
-	if f.bucketAcl == "" {
-		f.bucketAcl = "private"
+	if f.bucketACL == "" {
+		f.bucketACL = "private"
 	}
 
 	// Create a new authorized Drive client.
@@ -462,7 +462,7 @@ func (f *Fs) Mkdir() error {
 	bucket := storage.Bucket{
 		Name: f.bucket,
 	}
-	_, err = f.svc.Buckets.Insert(f.projectNumber, &bucket).PredefinedAcl(f.bucketAcl).Do()
+	_, err = f.svc.Buckets.Insert(f.projectNumber, &bucket).PredefinedAcl(f.bucketACL).Do()
 	return err
 }
 
@@ -682,7 +682,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		Updated:     modTime.Format(timeFormatOut), // Doesn't get set
 		Metadata:    metadataFromModTime(modTime),
 	}
-	newObject, err := o.fs.svc.Objects.Insert(o.fs.bucket, &object).Media(in, googleapi.ContentType("")).Name(object.Name).PredefinedAcl(o.fs.objectAcl).Do()
+	newObject, err := o.fs.svc.Objects.Insert(o.fs.bucket, &object).Media(in, googleapi.ContentType("")).Name(object.Name).PredefinedAcl(o.fs.objectACL).Do()
 	if err != nil {
 		return err
 	}
