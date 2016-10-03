@@ -214,7 +214,7 @@ func (s *syncCopyMove) pairChecker(in ObjectPairChan, out ObjectPairChan, wg *sy
 					// If moving need to delete the files we don't need to copy
 					if s.DoMove {
 						// Delete src if no error on copy
-						//s.processError(DeleteFile(src))
+						s.processError(DeleteFile(src))
 					}
 				}
 			}
