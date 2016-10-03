@@ -23,7 +23,8 @@ Otherwise for each file in `source:path` selected by the filters (if
 any) this will move it into `dest:path`.  If possible a server side
 move will be used, otherwise it will copy it (server side if possible)
 into `dest:path` then delete the original (if no errors on copy) in
-`source:path`.
+`source:path`. If a file is not copied because it already existed at 
+'dest:path' it will not be deleted.
 
 **Important**: Since this can cause data loss, test first with the
 --dry-run flag.
