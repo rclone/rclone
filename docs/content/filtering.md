@@ -97,13 +97,13 @@ Rclone keeps track of directories that could match any file patterns.
 
 Eg if you add the include rule
 
-    \a\*.jpg
+    /a/*.jpg
 
 Rclone will synthesize the directory include rule
 
-    \a\
+    /a/
 
-If you put any rules which end in `\` then it will only match
+If you put any rules which end in `/` then it will only match
 directories.
 
 Directory matches are **only** used to optimise directory access
