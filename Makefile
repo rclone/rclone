@@ -46,8 +46,8 @@ doc:	rclone.1 MANUAL.html MANUAL.txt
 rclone.1:	MANUAL.md
 	pandoc -s --from markdown --to man MANUAL.md -o rclone.1
 
-MANUAL.md:	make_manual.py docs/content/*.md commanddocs
-	./make_manual.py
+MANUAL.md:	bin/make_manual.py docs/content/*.md commanddocs
+	./bin/make_manual.py
 
 MANUAL.html:	MANUAL.md
 	pandoc -s --from markdown --to html MANUAL.md -o MANUAL.html
@@ -78,13 +78,13 @@ upload:
 	rclone -v copy build/ memstore:downloads-rclone-org
 
 upload_github:
-	./upload-github $(TAG)
+	./bin/upload-github $(TAG)
 
 cross:	doc
-	./cross-compile $(TAG)
+	./bin/cross-compile $(TAG)
 
 beta:
-	./cross-compile $(TAG)β
+	./bin/cross-compile $(TAG)β
 	rm build/*-current-*
 	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)β
 	@echo Beta release ready at http://pub.rclone.org/$(TAG)%CE%B2/

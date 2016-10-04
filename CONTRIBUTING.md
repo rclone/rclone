@@ -159,4 +159,4 @@ Add your fs to the docs
   * `docs/content/docs.md` - list of remotes in config section
   * `docs/content/about.md` - front page of rclone.org
   * `docs/layouts/chrome/navbar.html` - add it to the website navigation
-  * `make_manual.py` - add the page to the `docs` constant
+  * `bin/make_manual.py` - add the page to the `docs` constant
