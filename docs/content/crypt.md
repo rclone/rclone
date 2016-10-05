@@ -205,6 +205,14 @@ characters in length then you should be OK on all providers.
 There may be an even more secure file name encryption mode in the
 future which will address the long file name problem.
 
+### Modified time and hashes ###
+
+Crypt stores modification times using the underlying remote so support
+depends on that.
+
+Hashes are not stored for crypt.  However the data integrity is
+protected by an extremely strong crypto authenticator.
+
 ## File formats ##
 
 ### File encryption ###
