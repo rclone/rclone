@@ -4,8 +4,15 @@ description: "Contact the rclone project"
 date: "2014-04-26"
 ---
 
-Contact the rclone project
---------------------------
+# Contact the rclone project #
+
+## Forum ##
+
+Forum for general discussions and questions:
+
+  * https://forum.rclone.org
+
+## Gitub project ##
 
 The project website is at:
 
@@ -14,8 +21,19 @@ The project website is at:
 There you can file bug reports, ask for help or contribute pull
 requests.
 
-See also
+## Google+ ##
 
-  * <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page for general comments</a></li>
+Rclone has a Google+ page which announcements are posted to
 
-Or email [Nick Craig-Wood](mailto:nick@craig-wood.com)
+  * <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page for general comments</a>
+
+## Twitter ##
+
+You can also follow me on twitter for rclone announcments
+
+  * [@njcw](https://twitter.com/njcw)
+
+## Email ##
+
+Or if all else fails or you want to ask something private or
+confidential email [Nick Craig-Wood](mailto:nick@craig-wood.com)
