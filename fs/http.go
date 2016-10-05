@@ -28,7 +28,6 @@ type timeoutConn struct {
 	readTimer  *time.Timer
 	writeTimer *time.Timer
 	timeout    time.Duration
-	_cancel    func()
 	off        time.Time
 }
 
@@ -40,32 +39,37 @@ func newTimeoutConn(conn net.Conn, timeout time.Duration) *timeoutConn {
 	}
 }
 
-// Read bytes doing timeouts
-func (c *timeoutConn) Read(b []byte) (n int, err error) {
-	err = c.Conn.SetReadDeadline(time.Now().Add(c.timeout))
+// Nudge the deadline for an idle timeout on by c.timeout if non-zero
+func (c *timeoutConn) nudgeDeadline() (err error) {
+	if c.timeout == 0 {
+		return nil
+	}
+	when := time.Now().Add(c.timeout)
+	return c.Conn.SetDeadline(when)
+}
+
+// readOrWrite bytes doing idle timeouts
+func (c *timeoutConn) readOrWrite(f func([]byte) (int, error), b []byte) (n int, err error) {
+	err = c.nudgeDeadline()
 	if err != nil {
 		return n, err
 	}
-	n, err = c.Conn.Read(b)
-	cerr := c.Conn.SetReadDeadline(c.off)
-	if cerr != nil {
+	n, err = f(b)
+	cerr := c.nudgeDeadline()
+	if err == nil && cerr != nil {
 		err = cerr
 	}
 	return n, err
 }
 
-// Write bytes doing timeouts
+// Read bytes doing idle timeouts
+func (c *timeoutConn) Read(b []byte) (n int, err error) {
+	return c.readOrWrite(c.Conn.Read, b)
+}
+
+// Write bytes doing idle timeouts
 func (c *timeoutConn) Write(b []byte) (n int, err error) {
-	err = c.Conn.SetWriteDeadline(time.Now().Add(c.timeout))
-	if err != nil {
-		return n, err
-	}
-	n, err = c.Conn.Write(b)
-	cerr := c.Conn.SetWriteDeadline(c.off)
-	if cerr != nil {
-		err = cerr
-	}
-	return n, err
+	return c.readOrWrite(c.Conn.Write, b)
 }
 
 // setDefaults for a from b
