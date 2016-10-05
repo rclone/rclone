@@ -23,4 +23,4 @@ deploy:
   on:
     branch: master
     go: 1.7.1
-    os: linux
+    condition: "`uname` == 'Linux'"
