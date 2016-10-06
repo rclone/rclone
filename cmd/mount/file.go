@@ -114,6 +114,9 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 
 	switch {
 	case req.Flags.IsReadOnly():
+		if noSeek {
+			resp.Flags |= fuse.OpenNonSeekable
+		}
 		return newReadFileHandle(o)
 	case req.Flags.IsWriteOnly():
 		resp.Flags |= fuse.OpenNonSeekable

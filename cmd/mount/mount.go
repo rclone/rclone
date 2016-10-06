@@ -20,6 +20,7 @@ import (
 var (
 	noModTime = false
 	debugFUSE = false
+	noSeek    = false
 	// mount options
 	readOnly                         = false
 	allowNonEmpty                    = false
@@ -43,6 +44,7 @@ func init() {
 	cmd.Root.AddCommand(mountCmd)
 	mountCmd.Flags().BoolVarP(&noModTime, "no-modtime", "", noModTime, "Don't read the modification time (can speed things up).")
 	mountCmd.Flags().BoolVarP(&debugFUSE, "debug-fuse", "", debugFUSE, "Debug the FUSE internals - needs -v.")
+	mountCmd.Flags().BoolVarP(&noSeek, "no-seek", "", noSeek, "Don't allow seeking in files.")
 	// mount options
 	mountCmd.Flags().BoolVarP(&readOnly, "read-only", "", readOnly, "Mount read-only.")
 	mountCmd.Flags().BoolVarP(&allowNonEmpty, "allow-non-empty", "", allowNonEmpty, "Allow mounting over a non-empty directory.")
