@@ -9,6 +9,7 @@ go:
 - 1.6.3
 - 1.7.1
 install:
+- git fetch --unshallow --tags
 - make vars
 - make build_dep
 script:
