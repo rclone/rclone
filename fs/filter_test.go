@@ -180,11 +180,11 @@ func TestNewFilterIncludeFiles(t *testing.T) {
 	require.NoError(t, err)
 	err = f.AddFile("/file2.jpg")
 	require.NoError(t, err)
-	assert.Equal(t, filesMap{
+	assert.Equal(t, FilesMap{
 		"file1.jpg": {},
 		"file2.jpg": {},
 	}, f.files)
-	assert.Equal(t, filesMap{}, f.dirs)
+	assert.Equal(t, FilesMap{}, f.dirs)
 	testInclude(t, f, []includeTest{
 		{"file1.jpg", 0, 0, true},
 		{"file2.jpg", 1, 0, true},
@@ -206,7 +206,7 @@ func TestNewFilterIncludeFilesDirs(t *testing.T) {
 		err = f.AddFile(path)
 		require.NoError(t, err)
 	}
-	assert.Equal(t, filesMap{
+	assert.Equal(t, FilesMap{
 		"path":         {},
 		"path/to":      {},
 		"path/to/dir":  {},

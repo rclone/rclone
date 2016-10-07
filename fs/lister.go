@@ -31,13 +31,55 @@ func NewLister() *Lister {
 	return o.SetLevel(-1).SetBuffer(Config.Checkers)
 }
 
+// Finds and lists the files passed in
+//
+// Note we ignore the dir and just return all the files in the list
+func (o *Lister) listFiles(f ListFser, dir string, files FilesMap) {
+	buffer := o.Buffer()
+	jobs := make(chan string, buffer)
+	var wg sync.WaitGroup
+
+	// Start some listing go routines so we find those name in parallel
+	wg.Add(buffer)
+	for i := 0; i < buffer; i++ {
+		go func() {
+			defer wg.Done()
+			for remote := range jobs {
+				obj, err := f.NewObject(remote)
+				if err == ErrorObjectNotFound {
+					// silently ignore files that aren't found in the files list
+				} else if err != nil {
+					o.SetError(err)
+				} else {
+					o.Add(obj)
+				}
+			}
+		}()
+	}
+
+	// Pump the names in
+	for name := range files {
+		jobs <- name
+		if o.IsFinished() {
+			break
+		}
+	}
+	close(jobs)
+	wg.Wait()
+
+	// Signal that this listing is over
+	o.Finished()
+}
+
 // Start starts a go routine listing the Fs passed in.  It returns the
 // same Lister that was passed in for convenience.
 func (o *Lister) Start(f ListFser, dir string) *Lister {
 	o.results = make(chan listerResult, o.buffer)
-	go func() {
-		f.List(o, dir)
-	}()
+	if o.filter != nil && o.filter.Files() != nil {
+		go o.listFiles(f, dir, o.filter.Files())
+	} else {
+		go f.List(o, dir)
+	}
 	return o
 }
 

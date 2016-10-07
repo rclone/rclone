@@ -94,8 +94,8 @@ func (rs *rules) len() int {
 	return len(rs.rules)
 }
 
-// filesMap describes the map of files to transfer
-type filesMap map[string]struct{}
+// FilesMap describes the map of files to transfer
+type FilesMap map[string]struct{}
 
 // Filter describes any filtering in operation
 type Filter struct {
@@ -106,8 +106,8 @@ type Filter struct {
 	ModTimeTo      time.Time
 	fileRules      rules
 	dirRules       rules
-	files          filesMap // files if filesFrom
-	dirs           filesMap // dirs from filesFrom
+	files          FilesMap // files if filesFrom
+	dirs           FilesMap // dirs from filesFrom
 }
 
 // We use time conventions
@@ -313,8 +313,8 @@ func (f *Filter) AddRule(rule string) error {
 // AddFile adds a single file to the files from list
 func (f *Filter) AddFile(file string) error {
 	if f.files == nil {
-		f.files = make(filesMap)
-		f.dirs = make(filesMap)
+		f.files = make(FilesMap)
+		f.dirs = make(FilesMap)
 	}
 	file = strings.Trim(file, "/")
 	f.files[file] = struct{}{}
@@ -330,6 +330,13 @@ func (f *Filter) AddFile(file string) error {
 		f.dirs[file] = struct{}{}
 	}
 	return nil
+}
+
+// Files returns all the files from the `--files-from` list
+//
+// It may be nil if the list is empty
+func (f *Filter) Files() FilesMap {
+	return f.files
 }
 
 // Clear clears all the filter rules

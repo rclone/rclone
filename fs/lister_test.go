@@ -2,6 +2,7 @@ package fs
 
 import (
 	"io"
+	"sort"
 	"testing"
 	"time"
 
@@ -42,6 +43,10 @@ func (f *mockFs) List(o ListOpts, dir string) {
 	f.listFn(o, dir)
 }
 
+func (f *mockFs) NewObject(remote string) (Object, error) {
+	return mockObject(remote), nil
+}
+
 func TestListerStart(t *testing.T) {
 	f := &mockFs{}
 	ranList := false
@@ -54,6 +59,33 @@ func TestListerStart(t *testing.T) {
 	assert.Len(t, objs, 0)
 	assert.Len(t, dirs, 0)
 	assert.Equal(t, true, ranList)
+}
+
+func TestListerStartWithFiles(t *testing.T) {
+	f := &mockFs{}
+	ranList := false
+	f.listFn = func(o ListOpts, dir string) {
+		ranList = true
+	}
+	filter, err := NewFilter()
+	require.NoError(t, err)
+	wantNames := []string{"potato", "sausage", "rutabaga", "carrot", "lettuce"}
+	sort.Strings(wantNames)
+	for _, name := range wantNames {
+		err = filter.AddFile(name)
+		require.NoError(t, err)
+	}
+	o := NewLister().SetFilter(filter).Start(f, "")
+	objs, dirs, err := o.GetAll()
+	require.Nil(t, err)
+	assert.Len(t, dirs, 0)
+	assert.Equal(t, false, ranList)
+	var gotNames []string
+	for _, obj := range objs {
+		gotNames = append(gotNames, obj.Remote())
+	}
+	sort.Strings(gotNames)
+	assert.Equal(t, wantNames, gotNames)
 }
 
 func TestListerSetLevel(t *testing.T) {

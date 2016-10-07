@@ -114,16 +114,16 @@ type ListFser interface {
 	// Fses must support recursion levels of fs.MaxLevel and 1.
 	// They may return ErrorLevelNotSupported otherwise.
 	List(out ListOpts, dir string)
+
+	// NewObject finds the Object at remote.  If it can't be found
+	// it returns the error ErrorObjectNotFound.
+	NewObject(remote string) (Object, error)
 }
 
 // Fs is the interface a cloud storage system must provide
 type Fs interface {
 	Info
 	ListFser
-
-	// NewObject finds the Object at remote.  If it can't be found
-	// it returns the error ErrorObjectNotFound.
-	NewObject(remote string) (Object, error)
 
 	// Put in to the remote path with the modTime given of the given size
 	//
