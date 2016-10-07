@@ -210,7 +210,7 @@ const (
 // Globals
 var (
 	// Flags
-	s3ACL = pflag.StringP("s3-acl", "", "", "Canned ACL used when creating buckets and/or storing objects in S3")
+	s3ACL          = pflag.StringP("s3-acl", "", "", "Canned ACL used when creating buckets and/or storing objects in S3")
 	s3StorageClass = pflag.StringP("s3-storage-class", "", "", "Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA)")
 )
 
