@@ -1121,6 +1121,10 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 			fs.Debug(o, "Reading sha1 from info - %q", o.sha1)
 		}
 	}
+	// Don't check length or hash on partial content
+	if resp.StatusCode == http.StatusPartialContent {
+		return resp.Body, nil
+	}
 	return newOpenFile(o, resp), nil
 }
 
