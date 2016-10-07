@@ -26,7 +26,7 @@ const (
 
 // Globals
 var (
-	// UserAgent for Fs which can set it
+	// UserAgent set in the default Transport
 	UserAgent = "rclone/" + Version
 	// Filesystem registry
 	fsRegistry []*RegInfo
@@ -66,10 +66,11 @@ type RegInfo struct {
 
 // Option is describes an option for the config wizard
 type Option struct {
-	Name     string
-	Help     string
-	Optional bool
-	Examples OptionExamples
+	Name       string
+	Help       string
+	Optional   bool
+	IsPassword bool
+	Examples   OptionExamples
 }
 
 // OptionExamples is a slice of examples
@@ -171,7 +172,7 @@ type Object interface {
 	SetModTime(time.Time) error
 
 	// Open opens the file for read.  Call Close() on the returned io.ReadCloser
-	Open() (io.ReadCloser, error)
+	Open(options ...OpenOption) (io.ReadCloser, error)
 
 	// Update in to the object with the modTime given of the given size
 	Update(in io.Reader, src ObjectInfo) error
@@ -207,6 +208,13 @@ type BasicInfo interface {
 
 	// Size returns the size of the file
 	Size() int64
+}
+
+// MimeTyper is an optional interface for Object
+type MimeTyper interface {
+	// MimeType returns the content type of the Object if
+	// known, or "" if not
+	MimeType() string
 }
 
 // Purger is an optional interfaces for Fs

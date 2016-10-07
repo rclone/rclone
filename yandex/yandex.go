@@ -23,7 +23,7 @@ import (
 //oAuth
 const (
 	rcloneClientID              = "ac39b43b9eba4cae8ffb788c06d816a8"
-	rcloneEncryptedClientSecret = "k8jKzZnMmM+Wx5jAksPAwYKPgImOiN+FhNKD09KBg9A="
+	rcloneEncryptedClientSecret = "EfyyNZ3YUEwXM5yAhi72G9YwKn2mkFrYwJNS7cY0TJAhFlX9K-uJFbGlpO-RYjrJ"
 )
 
 // Globals
@@ -35,7 +35,7 @@ var (
 			TokenURL: "https://oauth.yandex.com/token",     //same as https://oauth.yandex.ru/token
 		},
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.Reveal(rcloneEncryptedClientSecret),
+		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
 	}
 )
@@ -73,11 +73,12 @@ type Fs struct {
 
 // Object describes a swift object
 type Object struct {
-	fs      *Fs       // what this object is part of
-	remote  string    // The remote path
-	md5sum  string    // The MD5Sum of the object
-	bytes   uint64    // Bytes in the object
-	modTime time.Time // Modified time of the object
+	fs       *Fs       // what this object is part of
+	remote   string    // The remote path
+	md5sum   string    // The MD5Sum of the object
+	bytes    uint64    // Bytes in the object
+	modTime  time.Time // Modified time of the object
+	mimeType string    // Content type according to the server
 }
 
 // ------------------------------------------------------------
@@ -326,31 +327,33 @@ func (f *Fs) newObjectWithInfo(remote string, info *yandex.ResourceInfoResponse)
 func (o *Object) setMetaData(info *yandex.ResourceInfoResponse) {
 	o.bytes = info.Size
 	o.md5sum = info.Md5
+	o.mimeType = info.MimeType
 
-	if info.CustomProperties["rclone_modified"] == nil {
-		//read modTime from Modified property of object
-		t, err := time.Parse(time.RFC3339Nano, info.Modified)
-		if err != nil {
-			return
-		}
-		o.modTime = t
+	var modTimeString string
+	modTimeObj, ok := info.CustomProperties["rclone_modified"]
+	if ok {
+		// read modTime from rclone_modified custom_property of object
+		modTimeString, ok = modTimeObj.(string)
+	}
+	if !ok {
+		// read modTime from Modified property of object as a fallback
+		modTimeString = info.Modified
+	}
+	t, err := time.Parse(time.RFC3339Nano, modTimeString)
+	if err != nil {
+		fs.Log("Failed to parse modtime from %q: %v", modTimeString, err)
 	} else {
-		// interface{} to string type assertion
-		if modtimestr, ok := info.CustomProperties["rclone_modified"].(string); ok {
-			//read modTime from rclone_modified custom_property of object
-			t, err := time.Parse(time.RFC3339Nano, modtimestr)
-			if err != nil {
-				return
-			}
-			o.modTime = t
-		} else {
-			return //if it is not a string
-		}
+		o.modTime = t
 	}
 }
 
 // readMetaData gets the info if it hasn't already been fetched
 func (o *Object) readMetaData() (err error) {
+	// exit if already fetched
+	if !o.modTime.IsZero() {
+		return nil
+	}
+
 	//request meta info
 	var opt2 yandex.ResourceInfoRequestOptions
 	ResourceInfoResponse, err := o.fs.yd.NewResourceInfoRequest(o.remotePath(), opt2).Exec()
@@ -484,8 +487,8 @@ func (o *Object) ModTime() time.Time {
 }
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
-	return o.fs.yd.Download(o.remotePath())
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	return o.fs.yd.Download(o.remotePath(), fs.OpenOptionHeaders(options))
 }
 
 // Remove an object
@@ -498,8 +501,13 @@ func (o *Object) Remove() error {
 // Commits the datastore
 func (o *Object) SetModTime(modTime time.Time) error {
 	remote := o.remotePath()
-	//set custom_property 'rclone_modified' of object to modTime
-	return o.fs.yd.SetCustomProperty(remote, "rclone_modified", modTime.Format(time.RFC3339Nano))
+	// set custom_property 'rclone_modified' of object to modTime
+	err := o.fs.yd.SetCustomProperty(remote, "rclone_modified", modTime.Format(time.RFC3339Nano))
+	if err != nil {
+		return err
+	}
+	o.modTime = modTime
+	return nil
 }
 
 // Storable returns whether this object is storable
@@ -529,7 +537,8 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	}
 	//upload file
 	overwrite := true //overwrite existing file
-	err := o.fs.yd.Upload(in, remote, overwrite)
+	mimeType := fs.MimeType(src)
+	err := o.fs.yd.Upload(in, remote, overwrite, mimeType)
 	if err == nil {
 		//if file uploaded sucessfully then return metadata
 		o.bytes = uint64(size)
@@ -587,10 +596,21 @@ func mkDirFullPath(client *yandex.Client, path string) error {
 	return nil
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	err := o.readMetaData()
+	if err != nil {
+		fs.Log(o, "Failed to read metadata: %v", err)
+		return ""
+	}
+	return o.mimeType
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs     = (*Fs)(nil)
 	_ fs.Purger = (*Fs)(nil)
 	//_ fs.Copier = (*Fs)(nil)
-	_ fs.Object = (*Object)(nil)
+	_ fs.Object    = (*Object)(nil)
+	_ fs.MimeTyper = &Object{}
 )

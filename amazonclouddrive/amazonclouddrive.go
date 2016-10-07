@@ -34,7 +34,7 @@ import (
 
 const (
 	rcloneClientID              = "amzn1.application-oa2-client.6bf18d2d1f5b485c94c8988bb03ad0e7"
-	rcloneEncryptedClientSecret = "k8/NyszKm5vEkZXAwsbGkd6C3NrbjIqMg4qEhIeF14Szub2wur+/teS3ubXgsLe9//+tr/qoqK+lq6mg8vWkoA=="
+	rcloneEncryptedClientSecret = "ZP12wYlGw198FtmqfOxyNAGXU3fwVcQdmt--ba1d00wJnUs0LOzvVyXVDbqhbcUqnr5Vd1QejwWmiv1Ep7UJG1kUQeuBP5n9goXWd5MrAf0"
 	folderKind                  = "FOLDER"
 	fileKind                    = "FILE"
 	assetKind                   = "ASSET"
@@ -57,7 +57,7 @@ var (
 			TokenURL: "https://api.amazon.com/auth/o2/token",
 		},
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.Reveal(rcloneEncryptedClientSecret),
+		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
 	}
 )
@@ -172,7 +172,6 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 
 	c := acd.NewClient(oAuthClient)
-	c.UserAgent = fs.UserAgent
 	f := &Fs{
 		name:         name,
 		root:         root,
@@ -479,9 +478,13 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 // At the end of large uploads.  The speculation is that the timeout
 // is waiting for the sha1 hashing to complete and the file may well
 // be properly uploaded.
-func (f *Fs) checkUpload(in io.Reader, src fs.ObjectInfo, inInfo *acd.File, inErr error) (fixedError bool, info *acd.File, err error) {
+func (f *Fs) checkUpload(resp *http.Response, in io.Reader, src fs.ObjectInfo, inInfo *acd.File, inErr error) (fixedError bool, info *acd.File, err error) {
 	// Return if no error - all is well
 	if inErr == nil {
+		return false, inInfo, inErr
+	}
+	// If not one of the errors we can fix return
+	if resp == nil || resp.StatusCode != 408 && resp.StatusCode != 500 && resp.StatusCode != 504 {
 		return false, inInfo, inErr
 	}
 	const sleepTime = 5 * time.Second           // sleep between tries
@@ -562,7 +565,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 		}
 		f.stopUpload()
 		var ok bool
-		ok, info, err = f.checkUpload(in, src, info, err)
+		ok, info, err = f.checkUpload(resp, in, src, info, err)
 		if ok {
 			return false, nil
 		}
@@ -783,18 +786,19 @@ func (o *Object) Storable() bool {
 }
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	bigObject := o.Size() >= int64(tempLinkThreshold)
 	if bigObject {
 		fs.Debug(o, "Dowloading large object via tempLink")
 	}
 	file := acd.File{Node: o.info}
 	var resp *http.Response
+	headers := fs.OpenOptionHeaders(options)
 	err = o.fs.pacer.Call(func() (bool, error) {
 		if !bigObject {
-			in, resp, err = file.Open()
+			in, resp, err = file.OpenHeaders(headers)
 		} else {
-			in, resp, err = file.OpenTempURL(o.fs.noAuthClient)
+			in, resp, err = file.OpenTempURLHeaders(o.fs.noAuthClient, headers)
 		}
 		return o.fs.shouldRetry(resp, err)
 	})
@@ -819,7 +823,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		}
 		o.fs.stopUpload()
 		var ok bool
-		ok, info, err = o.fs.checkUpload(in, src, info, err)
+		ok, info, err = o.fs.checkUpload(resp, in, src, info, err)
 		if ok {
 			return false, nil
 		}
@@ -843,6 +847,14 @@ func (o *Object) Remove() error {
 	return err
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	if o.info.ContentProperties.ContentType != nil {
+		return *o.info.ContentProperties.ContentType
+	}
+	return ""
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs     = (*Fs)(nil)
@@ -850,5 +862,6 @@ var (
 	//	_ fs.Copier   = (*Fs)(nil)
 	//	_ fs.Mover    = (*Fs)(nil)
 	//	_ fs.DirMover = (*Fs)(nil)
-	_ fs.Object = (*Object)(nil)
+	_ fs.Object    = (*Object)(nil)
+	_ fs.MimeTyper = &Object{}
 )

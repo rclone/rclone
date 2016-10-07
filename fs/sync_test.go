@@ -577,22 +577,28 @@ func TestSyncWithUpdateOlder(t *testing.T) {
 func testServerSideMove(t *testing.T, r *Run, fremoteMove fs.Fs, withFilter bool) {
 	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth("empty space", "", t2)
+	file3u := r.WriteBoth("potato3", "------------------------------------------------------------ UPDATED", t2)
 
-	fstest.CheckItems(t, r.fremote, file2, file1)
+	fstest.CheckItems(t, r.fremote, file2, file1, file3u)
 
 	t.Logf("Server side move (if possible) %v -> %v", r.fremote, fremoteMove)
 
 	// Write just one file in the new remote
 	r.WriteObjectTo(fremoteMove, "empty space", "", t2, false)
-	fstest.CheckItems(t, fremoteMove, file2)
+	file3 := r.WriteObjectTo(fremoteMove, "potato3", "------------------------------------------------------------", t1, false)
+	fstest.CheckItems(t, fremoteMove, file2, file3)
 
 	// Do server side move
 	fs.Stats.ResetCounters()
 	err := fs.MoveDir(fremoteMove, r.fremote)
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.fremote, file2)
-	fstest.CheckItems(t, fremoteMove, file2, file1)
+	if withFilter {
+		fstest.CheckItems(t, r.fremote, file2)
+	} else {
+		fstest.CheckItems(t, r.fremote)
+	}
+	fstest.CheckItems(t, fremoteMove, file2, file1, file3u)
 
 	// Purge the original before moving
 	require.NoError(t, fs.Purge(r.fremote))
@@ -603,10 +609,10 @@ func testServerSideMove(t *testing.T, r *Run, fremoteMove fs.Fs, withFilter bool
 	require.NoError(t, err)
 
 	if withFilter {
-		fstest.CheckItems(t, r.fremote, file1)
+		fstest.CheckItems(t, r.fremote, file1, file3u)
 		fstest.CheckItems(t, fremoteMove, file2)
 	} else {
-		fstest.CheckItems(t, r.fremote, file2, file1)
+		fstest.CheckItems(t, r.fremote, file2, file1, file3u)
 		fstest.CheckItems(t, fremoteMove)
 	}
 }

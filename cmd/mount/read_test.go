@@ -4,6 +4,7 @@ package mount
 
 import (
 	"io"
+	"io/ioutil"
 	"os"
 	"syscall"
 	"testing"
@@ -71,9 +72,40 @@ func TestReadFileDoubleClose(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, n)
 
-	// close the dup - should produce an error
+	// close the dup - should not produce an error
 	err = syscall.Close(fd2)
-	assert.Error(t, err, "input/output error")
+	assert.NoError(t, err, "input/output error")
 
 	run.rm(t, "testdoubleclose")
+}
+
+// Test seeking
+func TestReadSeek(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
+	var data = []byte("helloHELLO")
+	run.createFile(t, "testfile", string(data))
+	run.checkDir(t, "testfile 10")
+
+	fd, err := os.Open(run.path("testfile"))
+	assert.NoError(t, err)
+
+	_, err = fd.Seek(5, 0)
+	assert.NoError(t, err)
+
+	buf, err := ioutil.ReadAll(fd)
+	assert.NoError(t, err)
+	assert.Equal(t, buf, []byte("HELLO"))
+
+	_, err = fd.Seek(0, 0)
+	assert.NoError(t, err)
+
+	buf, err = ioutil.ReadAll(fd)
+	assert.NoError(t, err)
+	assert.Equal(t, buf, []byte("helloHELLO"))
+
+	err = fd.Close()
+	assert.NoError(t, err)
+
+	run.rm(t, "testfile")
 }

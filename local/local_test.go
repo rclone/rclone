@@ -12,7 +12,7 @@ import (
 	"github.com/ncw/rclone/local"
 )
 
-func init() {
+func TestSetup(t *testing.T) {
 	fstests.NilObject = fs.Object((*local.Object)(nil))
 	fstests.RemoteName = ""
 }
@@ -46,9 +46,11 @@ func TestObjectFs(t *testing.T)            { fstests.TestObjectFs(t) }
 func TestObjectRemote(t *testing.T)        { fstests.TestObjectRemote(t) }
 func TestObjectHashes(t *testing.T)        { fstests.TestObjectHashes(t) }
 func TestObjectModTime(t *testing.T)       { fstests.TestObjectModTime(t) }
+func TestObjectMimeType(t *testing.T)      { fstests.TestObjectMimeType(t) }
 func TestObjectSetModTime(t *testing.T)    { fstests.TestObjectSetModTime(t) }
 func TestObjectSize(t *testing.T)          { fstests.TestObjectSize(t) }
 func TestObjectOpen(t *testing.T)          { fstests.TestObjectOpen(t) }
+func TestObjectOpenSeek(t *testing.T)      { fstests.TestObjectOpenSeek(t) }
 func TestObjectUpdate(t *testing.T)        { fstests.TestObjectUpdate(t) }
 func TestObjectStorable(t *testing.T)      { fstests.TestObjectStorable(t) }
 func TestFsIsFile(t *testing.T)            { fstests.TestFsIsFile(t) }

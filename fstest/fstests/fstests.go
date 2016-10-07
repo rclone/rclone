@@ -8,10 +8,11 @@ package fstests
 import (
 	"bytes"
 	"flag"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
-	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -31,19 +32,26 @@ var (
 	subRemoteLeaf = ""
 	// NilObject should be set to a nil Object from the Fs under test
 	NilObject fs.Object
-	file1     = fstest.Item{
+	// ExtraConfig is for adding config to a remote
+	ExtraConfig = []ExtraConfigItem{}
+	file1       = fstest.Item{
 		ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
 		Path:    "file name.txt",
 	}
-	file2 = fstest.Item{
+	file1Contents = ""
+	file2         = fstest.Item{
 		ModTime: fstest.Time("2001-02-03T04:05:10.123123123Z"),
-		Path:    `hello? sausage/êé/Hello, 世界/ " ' @ < > & ?/z.txt`,
-		WinPath: `hello_ sausage/êé/Hello, 世界/ _ ' @ _ _ & _/z.txt`,
+		Path:    `hello? sausage/êé/Hello, 世界/ " ' @ < > & ? + ≠/z.txt`,
+		WinPath: `hello_ sausage/êé/Hello, 世界/ _ ' @ _ _ & _ + ≠/z.txt`,
 	}
-	verbose     = flag.Bool("verbose", false, "Set to enable logging")
-	dumpHeaders = flag.Bool("dump-headers", false, "Dump HTTP headers - may contain sensitive info")
-	dumpBodies  = flag.Bool("dump-bodies", false, "Dump HTTP headers and bodies - may contain sensitive info")
+	file2Contents = ""
+	verbose       = flag.Bool("verbose", false, "Set to enable logging")
+	dumpHeaders   = flag.Bool("dump-headers", false, "Dump HTTP headers - may contain sensitive info")
+	dumpBodies    = flag.Bool("dump-bodies", false, "Dump HTTP headers and bodies - may contain sensitive info")
 )
+
+// ExtraConfigItem describes a config item added on the fly while testing
+type ExtraConfigItem struct{ Name, Key, Value string }
 
 const eventualConsistencyRetries = 10
 
@@ -60,6 +68,10 @@ func TestInit(t *testing.T) {
 	// "RCLONE_CONFIG_PASS=hunter2" (or your password)
 	*fs.AskPassword = false
 	fs.LoadConfig()
+	// Set extra config if supplied
+	for _, item := range ExtraConfig {
+		fs.ConfigFile.SetValue(item.Name, item.Key, item.Value)
+	}
 	fs.Config.Verbose = *verbose
 	fs.Config.Quiet = !*verbose
 	fs.Config.DumpHeaders = *dumpHeaders
@@ -77,7 +89,7 @@ func TestInit(t *testing.T) {
 		t.Logf("Didn't find %q in config file - skipping tests", RemoteName)
 		return
 	}
-	require.NoError(t, err)
+	require.NoError(t, err, fmt.Sprintf("unexpected error: %v", err))
 	fstest.TestMkdir(t, remote)
 }
 
@@ -186,9 +198,10 @@ func findObject(t *testing.T, Name string) fs.Object {
 	return obj
 }
 
-func testPut(t *testing.T, file *fstest.Item) {
+func testPut(t *testing.T, file *fstest.Item) string {
 again:
-	buf := bytes.NewBufferString(fstest.RandomString(100))
+	contents := fstest.RandomString(100)
+	buf := bytes.NewBufferString(contents)
 	hash := fs.NewMultiHasher()
 	in := io.TeeReader(buf, hash)
 
@@ -206,31 +219,32 @@ again:
 			tries++
 			goto again
 		}
-		require.NoError(t, err, "Put error")
+		require.NoError(t, err, fmt.Sprintf("Put error: %v", err))
 	}
 	file.Hashes = hash.Sums()
 	file.Check(t, obj, remote.Precision())
 	// Re-read the object and check again
 	obj = findObject(t, file.Path)
 	file.Check(t, obj, remote.Precision())
+	return contents
 }
 
 // TestFsPutFile1 tests putting a file
 func TestFsPutFile1(t *testing.T) {
 	skipIfNotOk(t)
-	testPut(t, &file1)
+	file1Contents = testPut(t, &file1)
 }
 
 // TestFsPutFile2 tests putting a file into a subdirectory
 func TestFsPutFile2(t *testing.T) {
 	skipIfNotOk(t)
-	testPut(t, &file2)
+	file2Contents = testPut(t, &file2)
 }
 
 // TestFsUpdateFile1 tests updating file1 with new contents
 func TestFsUpdateFile1(t *testing.T) {
 	skipIfNotOk(t)
-	testPut(t, &file1)
+	file1Contents = testPut(t, &file1)
 	// Note that the next test will check there are no duplicated file names
 }
 
@@ -267,12 +281,18 @@ func TestFsListDirRoot(t *testing.T) {
 func TestFsListSubdir(t *testing.T) {
 	skipIfNotOk(t)
 	fileName := file2.Path
-	if runtime.GOOS == "windows" {
+	var err error
+	var objs []fs.Object
+	var dirs []*fs.Dir
+	for i := 0; i < 2; i++ {
+		dir, _ := path.Split(fileName)
+		dir = dir[:len(dir)-1]
+		objs, dirs, err = fs.NewLister().Start(remote, dir).GetAll()
+		if err != fs.ErrorDirNotFound {
+			break
+		}
 		fileName = file2.WinPath
 	}
-	dir, _ := path.Split(fileName)
-	dir = dir[:len(dir)-1]
-	objs, dirs, err := fs.NewLister().Start(remote, dir).GetAll()
 	require.NoError(t, err)
 	require.Len(t, objs, 1)
 	assert.Equal(t, fileName, objs[0].Remote())
@@ -326,7 +346,10 @@ func TestFsCopy(t *testing.T) {
 	// do the copy
 	src := findObject(t, file1.Path)
 	dst, err := remote.(fs.Copier).Copy(src, file1Copy.Path)
-	require.NoError(t, err)
+	if err == fs.ErrorCantCopy {
+		t.Skip("FS can't copy")
+	}
+	require.NoError(t, err, fmt.Sprintf("Error: %#v", err))
 
 	// check file exists in new listing
 	fstest.CheckListing(t, remote, []fstest.Item{file1, file2, file1Copy})
@@ -356,6 +379,9 @@ func TestFsMove(t *testing.T) {
 	// do the move
 	src := findObject(t, file1.Path)
 	dst, err := remote.(fs.Mover).Move(src, file1Move.Path)
+	if err == fs.ErrorCantMove {
+		t.Skip("FS can't move")
+	}
 	require.NoError(t, err)
 
 	// check file exists in new listing
@@ -480,6 +506,22 @@ func TestObjectModTime(t *testing.T) {
 	file1.CheckModTime(t, obj, obj.ModTime(), remote.Precision())
 }
 
+// TestObjectMimeType tests the MimeType of the object is correct
+func TestObjectMimeType(t *testing.T) {
+	skipIfNotOk(t)
+	obj := findObject(t, file1.Path)
+	do, ok := obj.(fs.MimeTyper)
+	if !ok {
+		t.Skip("MimeType method not supported")
+	}
+	mimeType := do.MimeType()
+	if strings.ContainsRune(mimeType, ';') {
+		assert.Equal(t, "text/plain; charset=utf-8", mimeType)
+	} else {
+		assert.Equal(t, "text/plain", mimeType)
+	}
+}
+
 // TestObjectSetModTime tests that SetModTime works
 func TestObjectSetModTime(t *testing.T) {
 	skipIfNotOk(t)
@@ -504,42 +546,56 @@ func TestObjectSize(t *testing.T) {
 	assert.Equal(t, file1.Size, obj.Size())
 }
 
+// read the contents of an object as a string
+func readObject(t *testing.T, obj fs.Object, options ...fs.OpenOption) string {
+	in, err := obj.Open(options...)
+	require.NoError(t, err)
+	contents, err := ioutil.ReadAll(in)
+	require.NoError(t, err)
+	err = in.Close()
+	require.NoError(t, err)
+	return string(contents)
+}
+
 // TestObjectOpen tests that Open works
 func TestObjectOpen(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
-	in, err := obj.Open()
-	require.NoError(t, err)
-	hasher := fs.NewMultiHasher()
-	n, err := io.Copy(hasher, in)
-	require.NoError(t, err)
-	require.Equal(t, file1.Size, n, "Read wrong number of bytes")
-	err = in.Close()
-	require.NoError(t, err)
-	// Check content of file by comparing the calculated hashes
-	for hashType, got := range hasher.Sums() {
-		assert.Equal(t, file1.Hashes[hashType], got)
-	}
+	assert.Equal(t, file1Contents, readObject(t, obj), "contents of file1 differ")
+}
 
+// TestObjectOpenSeek tests that Open works with Seek
+func TestObjectOpenSeek(t *testing.T) {
+	skipIfNotOk(t)
+	obj := findObject(t, file1.Path)
+	assert.Equal(t, file1Contents[50:], readObject(t, obj, &fs.SeekOption{Offset: 50}), "contents of file1 differ after seek")
 }
 
 // TestObjectUpdate tests that Update works
 func TestObjectUpdate(t *testing.T) {
 	skipIfNotOk(t)
-	buf := bytes.NewBufferString(fstest.RandomString(200))
+	contents := fstest.RandomString(200)
+	buf := bytes.NewBufferString(contents)
 	hash := fs.NewMultiHasher()
 	in := io.TeeReader(buf, hash)
 
 	file1.Size = int64(buf.Len())
 	obj := findObject(t, file1.Path)
-	obji := fs.NewStaticObjectInfo(file1.Path, file1.ModTime, file1.Size, true, nil, obj.Fs())
+	obji := fs.NewStaticObjectInfo(file1.Path, file1.ModTime, int64(len(contents)), true, nil, obj.Fs())
 	err := obj.Update(in, obji)
 	require.NoError(t, err)
 	file1.Hashes = hash.Sums()
+
+	// check the object has been updated
 	file1.Check(t, obj, remote.Precision())
+
 	// Re-read the object and check again
 	obj = findObject(t, file1.Path)
 	file1.Check(t, obj, remote.Precision())
+
+	// check contents correct
+	assert.Equal(t, contents, readObject(t, obj), "contents of updated file1 differ")
+	file1Contents = contents
 }
 
 // TestObjectStorable tests that Storable works

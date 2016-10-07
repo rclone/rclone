@@ -119,6 +119,38 @@ excess files in the container.
 
     rclone sync /home/local/directory remote:container
 
+### Configuration from an Openstack credentials file ###
+
+An Opentstack credentials file typically looks something something
+like this (without the comments)
+
+```
+export OS_AUTH_URL=https://a.provider.net/v2.0
+export OS_TENANT_ID=ffffffffffffffffffffffffffffffff
+export OS_TENANT_NAME="1234567890123456"
+export OS_USERNAME="123abc567xy"
+echo "Please enter your OpenStack Password: "
+read -sr OS_PASSWORD_INPUT
+export OS_PASSWORD=$OS_PASSWORD_INPUT
+export OS_REGION_NAME="SBG1"
+if [ -z "$OS_REGION_NAME" ]; then unset OS_REGION_NAME; fi
+```
+
+The config file needs to look something like this where `$OS_USERNAME`
+represents the value of the `OS_USERNAME` variable - `123abc567xy` in
+the example above.
+
+```
+[remote]
+type = swift
+user = $OS_USERNAME
+key = $OS_PASSWORD
+auth = $OS_AUTH_URL
+tenant = $OS_TENANT_NAME
+```
+
+Note that you may (or may not) need to set `region` too - try without first.
+
 ### Specific options ###
 
 Here are the command line options specific to this cloud storage
@@ -154,6 +186,9 @@ authentication fails for Swift.
 
 So this most likely means your username / password is wrong.  You can
 investigate further with the `--dump-bodies` flag.
+
+This may also be caused by specifying the region when you shouldn't
+have (eg OVH).
 
 #### Rclone gives Failed to create file system: Response didn't have storage storage url and auth token ####
 

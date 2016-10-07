@@ -179,6 +179,22 @@ func init() {
 				Value: "AES256",
 				Help:  "AES256",
 			}},
+		}, {
+			Name: "storage_class",
+			Help: "The storage class to use when storing objects in S3.",
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "Default",
+			}, {
+				Value: "STANDARD",
+				Help:  "Standard storage class",
+			}, {
+				Value: "REDUCED_REDUNDANCY",
+				Help:  "Reduced redundancy storage class",
+			}, {
+				Value: "STANDARD_IA",
+				Help:  "Standard Infrequent Access storage class",
+			}},
 		}},
 	})
 }
@@ -194,7 +210,8 @@ const (
 // Globals
 var (
 	// Flags
-	ACL = pflag.StringP("s3-acl", "", "", "Canned ACL used when creating buckets and/or storing objects in S3")
+	s3ACL = pflag.StringP("s3-acl", "", "", "Canned ACL used when creating buckets and/or storing objects in S3")
+	s3StorageClass = pflag.StringP("s3-storage-class", "", "", "Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA)")
 )
 
 // Fs represents a remote s3 server
@@ -207,20 +224,22 @@ type Fs struct {
 	root               string           // root of the bucket - ignore all objects above this
 	locationConstraint string           // location constraint of new buckets
 	sse                string           // the type of server-side encryption
+	storageClass       string           // storage class
 }
 
 // Object describes a s3 object
 type Object struct {
 	// Will definitely have everything but meta which may be nil
 	//
-	// List will read everything but meta - to fill that in need to call
-	// readMetaData
+	// List will read everything but meta & mimeType - to fill
+	// that in you need to call readMetaData
 	fs           *Fs                // what this object is part of
 	remote       string             // The remote path
 	etag         string             // md5sum of the object
 	bytes        int64              // size of the object
 	lastModified time.Time          // Last modified
 	meta         map[string]*string // The object metadata if known - may be nil
+	mimeType     string             // MimeType of object - may be ""
 }
 
 // ------------------------------------------------------------
@@ -331,14 +350,10 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 		c.Handlers.Sign.PushBackNamed(corehandlers.BuildContentLengthHandler)
 		c.Handlers.Sign.PushBack(signer)
 	}
-	// Add user agent
-	c.Handlers.Build.PushBack(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fs.UserAgent)
-	})
 	return c, ses, nil
 }
 
-// NewFs contstructs an Fs from the path, bucket:path
+// NewFs constructs an Fs from the path, bucket:path
 func NewFs(name, root string) (fs.Fs, error) {
 	bucket, directory, err := s3ParsePath(root)
 	if err != nil {
@@ -353,10 +368,17 @@ func NewFs(name, root string) (fs.Fs, error) {
 		c:                  c,
 		bucket:             bucket,
 		ses:                ses,
-		acl:                fs.ConfigFile.MustValue(name, "acl", *ACL),
+		acl:                fs.ConfigFile.MustValue(name, "acl"),
 		root:               directory,
 		locationConstraint: fs.ConfigFile.MustValue(name, "location_constraint"),
 		sse:                fs.ConfigFile.MustValue(name, "server_side_encryption"),
+		storageClass:       fs.ConfigFile.MustValue(name, "storage_class"),
+	}
+	if *s3ACL != "" {
+		f.acl = *s3ACL
+	}
+	if *s3StorageClass != "" {
+		f.storageClass = *s3StorageClass
 	}
 	if f.root != "" {
 		f.root += "/"
@@ -760,6 +782,7 @@ func (o *Object) readMetaData() (err error) {
 	} else {
 		o.lastModified = *resp.LastModified
 	}
+	o.mimeType = aws.StringValue(resp.ContentType)
 	return nil
 }
 
@@ -801,7 +824,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 	}
 
 	// Guess the content type
-	contentType := fs.MimeType(o)
+	mimeType := fs.MimeType(o)
 
 	// Copy the object to itself to update the metadata
 	key := o.fs.root + o.remote
@@ -811,7 +834,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 		Bucket:            &o.fs.bucket,
 		ACL:               &o.fs.acl,
 		Key:               &key,
-		ContentType:       &contentType,
+		ContentType:       &mimeType,
 		CopySource:        aws.String(url.QueryEscape(sourceKey)),
 		Metadata:          o.meta,
 		MetadataDirective: &directive,
@@ -826,11 +849,22 @@ func (o *Object) Storable() bool {
 }
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	key := o.fs.root + o.remote
 	req := s3.GetObjectInput{
 		Bucket: &o.fs.bucket,
 		Key:    &key,
+	}
+	for _, option := range options {
+		switch option.(type) {
+		case *fs.RangeOption, *fs.SeekOption:
+			_, value := option.Header()
+			req.Range = &value
+		default:
+			if option.Mandatory() {
+				fs.Log(o, "Unsupported mandatory option: %v", option)
+			}
+		}
 	}
 	resp, err := o.fs.c.GetObject(&req)
 	if err != nil {
@@ -863,7 +897,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	}
 
 	// Guess the content type
-	contentType := fs.MimeType(o)
+	mimeType := fs.MimeType(src)
 
 	key := o.fs.root + o.remote
 	req := s3manager.UploadInput{
@@ -871,12 +905,15 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		ACL:         &o.fs.acl,
 		Key:         &key,
 		Body:        in,
-		ContentType: &contentType,
+		ContentType: &mimeType,
 		Metadata:    metadata,
 		//ContentLength: &size,
 	}
 	if o.fs.sse != "" {
 		req.ServerSideEncryption = &o.fs.sse
+	}
+	if o.fs.storageClass != "" {
+		req.StorageClass = &o.fs.storageClass
 	}
 	_, err := uploader.Upload(&req)
 	if err != nil {
@@ -900,9 +937,20 @@ func (o *Object) Remove() error {
 	return err
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	err := o.readMetaData()
+	if err != nil {
+		fs.Log(o, "Failed to read metadata: %v", err)
+		return ""
+	}
+	return o.mimeType
+}
+
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs     = &Fs{}
-	_ fs.Copier = &Fs{}
-	_ fs.Object = &Object{}
+	_ fs.Fs        = &Fs{}
+	_ fs.Copier    = &Fs{}
+	_ fs.Object    = &Object{}
+	_ fs.MimeTyper = &Object{}
 )

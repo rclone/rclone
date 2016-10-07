@@ -2,40 +2,57 @@
 title: "Rclone downloads"
 description: "Download rclone binaries for your OS."
 type: page
-date: "2016-07-13"
+date: "2016-08-24"
 ---
 
-Rclone Download v1.32
+Rclone Download v1.33
 =====================
 
   * Windows
-    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.32-windows-386.zip)
-    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.32-windows-amd64.zip)
+    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.33-windows-386.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.33-windows-amd64.zip)
   * OSX
-    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.32-osx-386.zip)
-    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.32-osx-amd64.zip)
+    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.33-osx-386.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.33-osx-amd64.zip)
   * Linux
-    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.32-linux-386.zip)
-    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.32-linux-amd64.zip)
-    * [ARM - 32 Bit](http://downloads.rclone.org/rclone-v1.32-linux-arm.zip)
+    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.33-linux-386.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.33-linux-amd64.zip)
+    * [ARM - 32 Bit](http://downloads.rclone.org/rclone-v1.33-linux-arm.zip)
   * FreeBSD
-    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.32-freebsd-386.zip)
-    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.32-freebsd-amd64.zip)
-    * [ARM - 32 Bit](http://downloads.rclone.org/rclone-v1.32-freebsd-arm.zip)
+    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.33-freebsd-386.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.33-freebsd-amd64.zip)
+    * [ARM - 32 Bit](http://downloads.rclone.org/rclone-v1.33-freebsd-arm.zip)
   * NetBSD
-    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.32-netbsd-386.zip)
-    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.32-netbsd-amd64.zip)
-    * [ARM - 32 Bit](http://downloads.rclone.org/rclone-v1.32-netbsd-arm.zip)
+    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.33-netbsd-386.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.33-netbsd-amd64.zip)
+    * [ARM - 32 Bit](http://downloads.rclone.org/rclone-v1.33-netbsd-arm.zip)
   * OpenBSD
-    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.32-openbsd-386.zip)
-    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.32-openbsd-amd64.zip)
+    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.33-openbsd-386.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.33-openbsd-amd64.zip)
   * Plan 9
-    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.32-plan9-386.zip)
-    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.32-plan9-amd64.zip)
+    * [386 - 32 Bit](http://downloads.rclone.org/rclone-v1.33-plan9-386.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.33-plan9-amd64.zip)
   * Solaris
-    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.32-solaris-amd64.zip)
+    * [AMD64 - 64 Bit](http://downloads.rclone.org/rclone-v1.33-solaris-amd64.zip)
 
-You can also find a [mirror of the downloads on github](https://github.com/ncw/rclone/releases/tag/v1.32).
+You can also find a [mirror of the downloads on github](https://github.com/ncw/rclone/releases/tag/v1.33).
+
+Beta releases
+=============
+
+[Beta releases](http://beta.rclone.org) are generated from each commit
+to master.  Note these are named like
+
+    {Version Tag}-{Commit Number}-g{Git Commit Hash}
+
+You can match the `Git Commit Hash` up with the [git
+log](https://github.com/ncw/rclone/commits/master).  The most recent
+release will have the largest `Version Tag` and `Commit Number` and
+will normally be at the end of the list.
+
+The beta releases haven't been through the full integration test suite
+like the releases.  However it is useful to try the latest beta before
+reporting an issue.
 
 Downloads for scripting
 =======================

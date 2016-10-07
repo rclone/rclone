@@ -31,7 +31,6 @@ func NewClient(c *http.Client) *Client {
 		errorHandler: defaultErrorHandler,
 		headers:      make(map[string]string),
 	}
-	api.SetHeader("User-Agent", fs.UserAgent)
 	return api
 }
 
@@ -84,6 +83,7 @@ type Opts struct {
 	ExtraHeaders  map[string]string
 	UserName      string // username for Basic Auth
 	Password      string // password for Basic Auth
+	Options       []fs.OpenOption
 }
 
 // DecodeJSON decodes resp.Body into result
@@ -91,6 +91,27 @@ func DecodeJSON(resp *http.Response, result interface{}) (err error) {
 	defer fs.CheckClose(resp.Body, &err)
 	decoder := json.NewDecoder(resp.Body)
 	return decoder.Decode(result)
+}
+
+// Make a new http client which resets the headers passed in on redirect
+func clientWithHeaderReset(c *http.Client, headers map[string]string) *http.Client {
+	if len(headers) == 0 {
+		return c
+	}
+	clientCopy := *c
+	clientCopy.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		if len(via) >= 10 {
+			return errors.New("stopped after 10 redirects")
+		}
+		// Reset the headers in the new request
+		for k, v := range headers {
+			if v != "" {
+				req.Header.Add(k, v)
+			}
+		}
+		return nil
+	}
+	return &clientCopy
 }
 
 // Call makes the call and returns the http.Response
@@ -137,6 +158,8 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 			headers[k] = v
 		}
 	}
+	// add any options to the headers
+	fs.OpenOptionAddHeaders(opts.Options, headers)
 	// Now set the headers
 	for k, v := range headers {
 		if v != "" {
@@ -146,8 +169,9 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 	if opts.UserName != "" || opts.Password != "" {
 		req.SetBasicAuth(opts.UserName, opts.Password)
 	}
+	c := clientWithHeaderReset(api.c, headers)
 	api.mu.RUnlock()
-	resp, err = api.c.Do(req)
+	resp, err = c.Do(req)
 	api.mu.RLock()
 	if err != nil {
 		return nil, err

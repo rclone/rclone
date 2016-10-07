@@ -30,7 +30,7 @@ import (
 // Constants
 const (
 	rcloneClientID              = "202264815644.apps.googleusercontent.com"
-	rcloneEncryptedClientSecret = "8p/yms3OlNXE9OTDl/HLypf9gdiJ5cT3"
+	rcloneEncryptedClientSecret = "eX8GpZTVx3vxMWVkuuBdDWmAUE6rGhTwVrvG9GhllYccSdj2-mvHVg"
 	driveFolderType             = "application/vnd.google-apps.folder"
 	timeFormatIn                = time.RFC3339
 	timeFormatOut               = "2006-01-02T15:04:05.000000000Z07:00"
@@ -57,14 +57,16 @@ var (
 		Scopes:       []string{"https://www.googleapis.com/auth/drive"},
 		Endpoint:     google.Endpoint,
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.Reveal(rcloneEncryptedClientSecret),
+		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.TitleBarRedirectURL,
 	}
 	mimeTypeToExtension = map[string]string{
+		"application/epub+zip":                                                      "epub",
 		"application/msword":                                                        "doc",
 		"application/pdf":                                                           "pdf",
 		"application/rtf":                                                           "rtf",
 		"application/vnd.ms-excel":                                                  "xls",
+		"application/vnd.oasis.opendocument.presentation":                           "odp",
 		"application/vnd.oasis.opendocument.spreadsheet":                            "ods",
 		"application/vnd.oasis.opendocument.text":                                   "odt",
 		"application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
@@ -78,6 +80,7 @@ var (
 		"text/csv":                                                                  "csv",
 		"text/html":                                                                 "html",
 		"text/plain":                                                                "txt",
+		"text/tab-separated-values":                                                 "tsv",
 	}
 	extensionToMimeType map[string]string
 )
@@ -134,6 +137,7 @@ type Object struct {
 	bytes        int64  // size of the object
 	modifiedDate string // RFC3339 time it was last modified
 	isDocument   bool   // if set this is a Google doc
+	mimeType     string
 }
 
 // ------------------------------------------------------------
@@ -530,7 +534,7 @@ func (f *Fs) createFileInfo(remote string, modTime time.Time, size int64) (*Obje
 		Title:        leaf,
 		Description:  leaf,
 		Parents:      []*drive.ParentReference{{Id: directoryID}},
-		MimeType:     fs.MimeType(o),
+		MimeType:     fs.MimeTypeFromName(remote),
 		ModifiedDate: modTime.Format(timeFormatOut),
 	}
 	return o, createInfo, nil
@@ -823,7 +827,7 @@ func (o *Object) Size() int64 {
 	if o.isDocument && o.bytes < 0 {
 		// If it is a google doc then we must HEAD it to see
 		// how big it is
-		res, err := o.httpResponse("HEAD")
+		_, res, err := o.httpResponse("HEAD", nil)
 		if err != nil {
 			fs.ErrorLog(o, "Error reading size: %v", err)
 			return 0
@@ -842,6 +846,7 @@ func (o *Object) setMetaData(info *drive.File) {
 	o.md5sum = strings.ToLower(info.Md5Checksum)
 	o.bytes = info.FileSize
 	o.modifiedDate = info.ModifiedDate
+	o.mimeType = info.MimeType
 }
 
 // readMetaData gets the info if it hasn't already been fetched
@@ -924,23 +929,23 @@ func (o *Object) Storable() bool {
 
 // httpResponse gets an http.Response object for the object o.url
 // using the method passed in
-func (o *Object) httpResponse(method string) (res *http.Response, err error) {
+func (o *Object) httpResponse(method string, options []fs.OpenOption) (req *http.Request, res *http.Response, err error) {
 	if o.url == "" {
-		return nil, errors.New("forbidden to download - check sharing permission")
+		return nil, nil, errors.New("forbidden to download - check sharing permission")
 	}
-	req, err := http.NewRequest(method, o.url, nil)
+	req, err = http.NewRequest(method, o.url, nil)
 	if err != nil {
-		return nil, err
+		return req, nil, err
 	}
-	req.Header.Set("User-Agent", fs.UserAgent)
+	fs.OpenOptionAddHTTPHeaders(req.Header, options)
 	err = o.fs.pacer.Call(func() (bool, error) {
 		res, err = o.fs.client.Do(req)
 		return shouldRetry(err)
 	})
 	if err != nil {
-		return nil, err
+		return req, nil, err
 	}
-	return res, nil
+	return req, res, nil
 }
 
 // openFile represents an Object open for reading
@@ -975,12 +980,13 @@ func (file *openFile) Close() (err error) {
 var _ io.ReadCloser = &openFile{}
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
-	res, err := o.httpResponse("GET")
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	req, res, err := o.httpResponse("GET", options)
 	if err != nil {
 		return nil, err
 	}
-	if res.StatusCode != 200 {
+	_, isRanging := req.Header["Range"]
+	if !(res.StatusCode == http.StatusOK || (isRanging && res.StatusCode == http.StatusPartialContent)) {
 		_ = res.Body.Close() // ignore error
 		return nil, errors.Errorf("bad response: %d: %s", res.StatusCode, res.Status)
 	}
@@ -1007,7 +1013,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	}
 	updateInfo := &drive.File{
 		Id:           o.id,
-		MimeType:     fs.MimeType(o),
+		MimeType:     fs.MimeType(src),
 		ModifiedDate: modTime.Format(timeFormatOut),
 	}
 
@@ -1025,7 +1031,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		}
 	} else {
 		// Upload the file in chunks
-		info, err = o.fs.Upload(in, size, fs.MimeType(o), updateInfo, o.remote)
+		info, err = o.fs.Upload(in, size, updateInfo.MimeType, updateInfo, o.remote)
 		if err != nil {
 			return err
 		}
@@ -1051,6 +1057,16 @@ func (o *Object) Remove() error {
 	return err
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	err := o.readMetaData()
+	if err != nil {
+		fs.Log(o, "Failed to read metadata: %v", err)
+		return ""
+	}
+	return o.mimeType
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs             = (*Fs)(nil)
@@ -1060,4 +1076,5 @@ var (
 	_ fs.DirMover       = (*Fs)(nil)
 	_ fs.PutUncheckeder = (*Fs)(nil)
 	_ fs.Object         = (*Object)(nil)
+	_ fs.MimeTyper      = &Object{}
 )

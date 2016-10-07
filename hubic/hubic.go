@@ -23,7 +23,7 @@ import (
 
 const (
 	rcloneClientID              = "api_hubic_svWP970PvSWbw5G3PzrAqZ6X2uHeZBPI"
-	rcloneEncryptedClientSecret = "8MrG3pjWyJya4OnO9ZTS4emI+9fa1ouPgvfD2MbTzfDYvO/H5czFxsTXtcji4/Hz3snz8/CrzMzlxvP9//Ty/Q=="
+	rcloneEncryptedClientSecret = "leZKCcqy9movLhDWLVXX8cSLp_FzoiAPeEJOIOMRw1A5RuC4iLEPDYPWVF46adC_MVonnLdVEOTHVstfBOZ_lY4WNp8CK_YWlpRZ9diT5YI"
 )
 
 // Globals
@@ -38,7 +38,7 @@ var (
 			TokenURL: "https://api.hubic.com/oauth/token/",
 		},
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.Reveal(rcloneEncryptedClientSecret),
+		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
 )
@@ -112,7 +112,6 @@ func (f *Fs) getCredentials() (err error) {
 	if err != nil {
 		return err
 	}
-	req.Header.Add("User-Agent", fs.UserAgent)
 	resp, err := f.client.Do(req)
 	if err != nil {
 		return err
@@ -155,7 +154,6 @@ func NewFs(name, root string) (fs.Fs, error) {
 	// Make the swift Connection
 	c := &swiftLib.Connection{
 		Auth:           newAuth(f),
-		UserAgent:      fs.UserAgent,
 		ConnectTimeout: 10 * fs.Config.ConnectTimeout, // Use the timeouts in the transport
 		Timeout:        10 * fs.Config.Timeout,        // Use the timeouts in the transport
 		Transport:      fs.Config.Transport(),

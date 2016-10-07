@@ -37,7 +37,7 @@ import (
 
 const (
 	rcloneClientID              = "202264815644.apps.googleusercontent.com"
-	rcloneEncryptedClientSecret = "8p/yms3OlNXE9OTDl/HLypf9gdiJ5cT3"
+	rcloneEncryptedClientSecret = "Uj7C9jGfb9gmeaV70Lh058cNkWvepr-Es9sBm0zdgil7JaOWF1VySw"
 	timeFormatIn                = time.RFC3339
 	timeFormatOut               = "2006-01-02T15:04:05.000000000Z07:00"
 	metaMtime                   = "mtime" // key to store mtime under in metadata
@@ -50,7 +50,7 @@ var (
 		Scopes:       []string{storage.DevstorageFullControlScope},
 		Endpoint:     google.Endpoint,
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.Reveal(rcloneEncryptedClientSecret),
+		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.TitleBarRedirectURL,
 	}
 )
@@ -135,20 +135,21 @@ type Fs struct {
 	bucket        string           // the bucket we are working on
 	root          string           // the path we are working on if any
 	projectNumber string           // used for finding buckets
-	objectAcl     string           // used when creating new objects
-	bucketAcl     string           // used when creating new buckets
+	objectACL     string           // used when creating new objects
+	bucketACL     string           // used when creating new buckets
 }
 
 // Object describes a storage object
 //
 // Will definitely have info but maybe not meta
 type Object struct {
-	fs      *Fs       // what this object is part of
-	remote  string    // The remote path
-	url     string    // download path
-	md5sum  string    // The MD5Sum of the object
-	bytes   int64     // Bytes in the object
-	modTime time.Time // Modified time of the object
+	fs       *Fs       // what this object is part of
+	remote   string    // The remote path
+	url      string    // download path
+	md5sum   string    // The MD5Sum of the object
+	bytes    int64     // Bytes in the object
+	modTime  time.Time // Modified time of the object
+	mimeType string
 }
 
 // ------------------------------------------------------------
@@ -230,14 +231,14 @@ func NewFs(name, root string) (fs.Fs, error) {
 		bucket:        bucket,
 		root:          directory,
 		projectNumber: fs.ConfigFile.MustValue(name, "project_number"),
-		objectAcl:     fs.ConfigFile.MustValue(name, "object_acl"),
-		bucketAcl:     fs.ConfigFile.MustValue(name, "bucket_acl"),
+		objectACL:     fs.ConfigFile.MustValue(name, "object_acl"),
+		bucketACL:     fs.ConfigFile.MustValue(name, "bucket_acl"),
 	}
-	if f.objectAcl == "" {
-		f.objectAcl = "private"
+	if f.objectACL == "" {
+		f.objectACL = "private"
 	}
-	if f.bucketAcl == "" {
-		f.bucketAcl = "private"
+	if f.bucketACL == "" {
+		f.bucketACL = "private"
 	}
 
 	// Create a new authorized Drive client.
@@ -461,7 +462,7 @@ func (f *Fs) Mkdir() error {
 	bucket := storage.Bucket{
 		Name: f.bucket,
 	}
-	_, err = f.svc.Buckets.Insert(f.projectNumber, &bucket).PredefinedAcl(f.bucketAcl).Do()
+	_, err = f.svc.Buckets.Insert(f.projectNumber, &bucket).PredefinedAcl(f.bucketACL).Do()
 	return err
 }
 
@@ -558,6 +559,7 @@ func (o *Object) Size() int64 {
 func (o *Object) setMetaData(info *storage.Object) {
 	o.url = info.MediaLink
 	o.bytes = int64(info.Size)
+	o.mimeType = info.ContentType
 
 	// Read md5sum
 	md5sumData, err := base64.StdEncoding.DecodeString(info.Md5Hash)
@@ -649,27 +651,18 @@ func (o *Object) Storable() bool {
 }
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
-	// This is slightly complicated by Go here insisting on
-	// decoding the %2F in URLs into / which is legal in http, but
-	// unfortunately not what the storage server wants.
-	//
-	// So first encode all the % into their encoded form
-	// URL will decode them giving our original escaped string
-	url := strings.Replace(o.url, "%", "%25", -1)
-	req, err := http.NewRequest("GET", url, nil)
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	req, err := http.NewRequest("GET", o.url, nil)
 	if err != nil {
 		return nil, err
 	}
-	// SetOpaque sets Opaque such that HTTP requests to it don't
-	// alter any hex-escaped characters
-	googleapi.SetOpaque(req.URL)
-	req.Header.Set("User-Agent", fs.UserAgent)
+	fs.OpenOptionAddHTTPHeaders(req.Header, options)
 	res, err := o.fs.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	if res.StatusCode != 200 {
+	_, isRanging := req.Header["Range"]
+	if !(res.StatusCode == http.StatusOK || (isRanging && res.StatusCode == http.StatusPartialContent)) {
 		_ = res.Body.Close() // ignore error
 		return nil, errors.Errorf("bad response: %d: %s", res.StatusCode, res.Status)
 	}
@@ -686,12 +679,12 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	object := storage.Object{
 		Bucket:      o.fs.bucket,
 		Name:        o.fs.root + o.remote,
-		ContentType: fs.MimeType(o),
+		ContentType: fs.MimeType(src),
 		Size:        uint64(size),
 		Updated:     modTime.Format(timeFormatOut), // Doesn't get set
 		Metadata:    metadataFromModTime(modTime),
 	}
-	newObject, err := o.fs.svc.Objects.Insert(o.fs.bucket, &object).Media(in, googleapi.ContentType("")).Name(object.Name).PredefinedAcl(o.fs.objectAcl).Do()
+	newObject, err := o.fs.svc.Objects.Insert(o.fs.bucket, &object).Media(in, googleapi.ContentType("")).Name(object.Name).PredefinedAcl(o.fs.objectACL).Do()
 	if err != nil {
 		return err
 	}
@@ -705,9 +698,15 @@ func (o *Object) Remove() error {
 	return o.fs.svc.Objects.Delete(o.fs.bucket, o.fs.root+o.remote).Do()
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	return o.mimeType
+}
+
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs     = &Fs{}
-	_ fs.Copier = &Fs{}
-	_ fs.Object = &Object{}
+	_ fs.Fs        = &Fs{}
+	_ fs.Copier    = &Fs{}
+	_ fs.Object    = &Object{}
+	_ fs.MimeTyper = &Object{}
 )

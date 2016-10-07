@@ -1,12 +1,42 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2016-07-13"
+date: "2016-08-24"
 ---
 
 Changelog
 ---------
 
+  * v1.33 - 2016-08-24
+    * New Features
+      * Implement encryption
+        * data encrypted in NACL secretbox format
+        * with optional file name encryption
+      * New commands
+        * rclone mount - implements FUSE mounting of remotes (EXPERIMENTAL)
+          * works on Linux, FreeBSD and OS X (need testers for the last 2!)
+        * rclone cat - outputs remote file or files to the terminal
+        * rclone genautocomplete - command to make a bash completion script for rclone
+      * Editing a remote using `rclone config` now goes through the wizard
+      * Compile with go 1.7 - this fixes rclone on macOS Sierra and on 386 processors
+      * Use cobra for sub commands and docs generation
+    * drive
+      * Document how to make your own client_id
+    * s3
+      * User-configurable Amazon S3 ACL (thanks Radek Šenfeld)
+    * b2
+      * Fix stats accounting for upload - no more jumping to 100% done
+      * On cleanup delete hide marker if it is the current file
+      * New B2 API endpoint (thanks Per Cederberg)
+      * Set maximum backoff to 5 Minutes
+    * onedrive
+      * Fix URL escaping in file names - eg uploading files with `+` in them.
+    * amazon cloud drive
+      * Fix token expiry during large uploads
+      * Work around 408 REQUEST_TIMEOUT and 504 GATEWAY_TIMEOUT errors
+    * local
+      * Fix filenames with invalid UTF-8 not being uploaded
+      * Fix problem with some UTF-8 characters on OS X
   * v1.32 - 2016-07-13
     * Backblaze B2
       * Fix upload of files large files not in root

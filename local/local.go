@@ -174,7 +174,9 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 			newRemote := path.Join(remote, name)
 			newPath := filepath.Join(dirpath, name)
 			if fi.IsDir() {
-				if out.IncludeDirectory(newRemote) {
+				// Ignore directories which are symlinks.  These are junction points under windows which
+				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
+				if (fi.Mode()&os.ModeSymlink) == 0 && out.IncludeDirectory(newRemote) {
 					dir := &fs.Dir{
 						Name:  f.cleanRemote(newRemote),
 						When:  fi.ModTime(),
@@ -538,6 +540,11 @@ func (o *Object) SetModTime(modTime time.Time) error {
 // Storable returns a boolean showing if this object is storable
 func (o *Object) Storable() bool {
 	mode := o.info.Mode()
+	// On windows a file with os.ModeSymlink represents a file with reparse points
+	if runtime.GOOS == "windows" && (mode&os.ModeSymlink) != 0 {
+		fs.Debug(o, "Clearing symlink bit to allow a file with reparse points to be copied")
+		mode &^= os.ModeSymlink
+	}
 	if mode&(os.ModeSymlink|os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
 		fs.Debug(o, "Can't transfer non file/directory")
 		return false
@@ -578,18 +585,36 @@ func (file *localOpenFile) Close() (err error) {
 }
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
-	in, err = os.Open(o.path)
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	var offset int64
+	for _, option := range options {
+		switch x := option.(type) {
+		case *fs.SeekOption:
+			offset = x.Offset
+		default:
+			if option.Mandatory() {
+				fs.Log(o, "Unsupported mandatory option: %v", option)
+			}
+		}
+	}
+
+	fd, err := os.Open(o.path)
 	if err != nil {
 		return
+	}
+	if offset != 0 {
+		// seek the object
+		_, err = fd.Seek(offset, 0)
+		// don't attempt to make checksums
+		return fd, err
 	}
 	// Update the md5sum as we go along
 	in = &localOpenFile{
 		o:    o,
-		in:   in,
+		in:   fd,
 		hash: fs.NewMultiHasher(),
 	}
-	return
+	return in, nil
 }
 
 // mkdirAll makes all the directories needed to store the object

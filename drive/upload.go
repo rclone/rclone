@@ -84,7 +84,6 @@ func (f *Fs) Upload(in io.Reader, size int64, contentType string, info *drive.Fi
 		req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 		req.Header.Set("X-Upload-Content-Type", contentType)
 		req.Header.Set("X-Upload-Content-Length", fmt.Sprintf("%v", size))
-		req.Header.Set("User-Agent", fs.UserAgent)
 		res, err = f.client.Do(req)
 		if err == nil {
 			defer googleapi.CloseBody(res)
@@ -118,7 +117,6 @@ func (rx *resumableUpload) makeRequest(start int64, body []byte) *http.Request {
 		req.Header.Set("Content-Range", fmt.Sprintf("bytes */%v", rx.ContentLength))
 	}
 	req.Header.Set("Content-Type", rx.MediaType)
-	req.Header.Set("User-Agent", fs.UserAgent)
 	return req
 }
 

@@ -29,7 +29,7 @@ import (
 // Constants
 const (
 	rcloneAppKey             = "5jcck7diasz0rqy"
-	rcloneEncryptedAppSecret = "m8WRxJ6b1Z/Y25fDwJWS"
+	rcloneEncryptedAppSecret = "fRS5vVLr2v6FbyXYnIgjwBuUAt0osq_QZTXAEcmZ7g"
 	metadataLimit            = dropbox.MetadataLimitDefault // max items to fetch at once
 )
 
@@ -110,6 +110,7 @@ type Object struct {
 	bytes       int64     // size of the object
 	modTime     time.Time // time it was last modified
 	hasMetadata bool      // metadata is valid
+	mimeType    string    // content type according to the server
 }
 
 // ------------------------------------------------------------
@@ -139,7 +140,7 @@ func newDropbox(name string) (*dropbox.Dropbox, error) {
 	}
 	appSecret := fs.ConfigFile.MustValue(name, "app_secret")
 	if appSecret == "" {
-		appSecret = fs.Reveal(rcloneEncryptedAppSecret)
+		appSecret = fs.MustReveal(rcloneEncryptedAppSecret)
 	}
 
 	err := db.SetAppInfo(appKey, appSecret)
@@ -622,6 +623,7 @@ func (o *Object) Size() int64 {
 func (o *Object) setMetadataFromEntry(info *dropbox.Entry) {
 	o.bytes = info.Bytes
 	o.modTime = time.Time(info.ClientMtime)
+	o.mimeType = info.MimeType
 	o.hasMetadata = true
 }
 
@@ -708,8 +710,21 @@ func (o *Object) Storable() bool {
 }
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
-	in, _, err = o.fs.db.Download(o.remotePath(), "", 0)
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	// FIXME should send a patch for dropbox module which allow setting headers
+	var offset int64
+	for _, option := range options {
+		switch x := option.(type) {
+		case *fs.SeekOption:
+			offset = x.Offset
+		default:
+			if option.Mandatory() {
+				fs.Log(o, "Unsupported mandatory option: %v", option)
+			}
+		}
+	}
+
+	in, _, err = o.fs.db.Download(o.remotePath(), "", offset)
 	if dropboxErr, ok := err.(*dropbox.Error); ok {
 		// Dropbox return 461 for copyright violation so don't
 		// attempt to retry this error
@@ -745,12 +760,23 @@ func (o *Object) Remove() error {
 	return err
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	err := o.readMetaData()
+	if err != nil {
+		fs.Log(o, "Failed to read metadata: %v", err)
+		return ""
+	}
+	return o.mimeType
+}
+
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs       = (*Fs)(nil)
-	_ fs.Copier   = (*Fs)(nil)
-	_ fs.Purger   = (*Fs)(nil)
-	_ fs.Mover    = (*Fs)(nil)
-	_ fs.DirMover = (*Fs)(nil)
-	_ fs.Object   = (*Object)(nil)
+	_ fs.Fs        = (*Fs)(nil)
+	_ fs.Copier    = (*Fs)(nil)
+	_ fs.Purger    = (*Fs)(nil)
+	_ fs.Mover     = (*Fs)(nil)
+	_ fs.DirMover  = (*Fs)(nil)
+	_ fs.Object    = (*Object)(nil)
+	_ fs.MimeTyper = (*Object)(nil)
 )

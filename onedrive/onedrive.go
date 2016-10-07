@@ -26,7 +26,7 @@ import (
 
 const (
 	rcloneClientID              = "0000000044165769"
-	rcloneEncryptedClientSecret = "0+be4+jYw+7018HY6P3t/Izo+pTc+Yvt8+fy8NHU094="
+	rcloneEncryptedClientSecret = "ugVWLNhKkVT1-cbTRO-6z1MlzwdW6aMwpKgNaFG-qXjEn_WfDnG9TVyRA5yuoliU"
 	minSleep                    = 10 * time.Millisecond
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2                               // bigger for slower decay, exponential
@@ -47,7 +47,7 @@ var (
 			TokenURL: "https://login.live.com/oauth20_token.srf",
 		},
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.Reveal(rcloneEncryptedClientSecret),
+		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectPublicURL,
 	}
 	chunkSize    = fs.SizeSuffix(10 * 1024 * 1024)
@@ -98,6 +98,7 @@ type Object struct {
 	modTime     time.Time // modification time of the object
 	id          string    // ID of the object
 	sha1        string    // SHA-1 of the object content
+	mimeType    string    // Content-Type of object from server (may not be as uploaded)
 }
 
 // ------------------------------------------------------------
@@ -686,8 +687,11 @@ func (o *Object) setMetaData(info *api.Item) {
 	// fact uppercase hex strings.
 	//
 	// In OneDrive for Business, SHA1 and CRC32 hash values are not returned for files.
-	if info.File != nil && info.File.Hashes.Sha1Hash != "" {
-		o.sha1 = strings.ToLower(info.File.Hashes.Sha1Hash)
+	if info.File != nil {
+		o.mimeType = info.File.MimeType
+		if info.File.Hashes.Sha1Hash != "" {
+			o.sha1 = strings.ToLower(info.File.Hashes.Sha1Hash)
+		}
 	}
 	if info.FileSystemInfo != nil {
 		o.modTime = time.Time(info.FileSystemInfo.LastModifiedDateTime)
@@ -771,14 +775,15 @@ func (o *Object) Storable() bool {
 }
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if o.id == "" {
 		return nil, errors.New("can't download - no id")
 	}
 	var resp *http.Response
 	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/drive/items/" + o.id + "/content",
+		Method:  "GET",
+		Path:    "/drive/items/" + o.id + "/content",
+		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(&opts)
@@ -935,6 +940,11 @@ func (o *Object) Remove() error {
 	return o.fs.deleteObject(o.id)
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	return o.mimeType
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs     = (*Fs)(nil)
@@ -942,5 +952,6 @@ var (
 	_ fs.Copier = (*Fs)(nil)
 	// _ fs.Mover    = (*Fs)(nil)
 	// _ fs.DirMover = (*Fs)(nil)
-	_ fs.Object = (*Object)(nil)
+	_ fs.Object    = (*Object)(nil)
+	_ fs.MimeTyper = &Object{}
 )

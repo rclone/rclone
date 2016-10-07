@@ -231,11 +231,15 @@ func (s *StatsInfo) Transferring(remote string) {
 }
 
 // DoneTransferring removes a transfer from the stats
-func (s *StatsInfo) DoneTransferring(remote string) {
+//
+// if ok is true then it increments the transfers count
+func (s *StatsInfo) DoneTransferring(remote string, ok bool) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	delete(s.transferring, remote)
-	s.transfers++
+	if ok {
+		s.transfers++
+	}
 }
 
 // Account limits and accounts for one transfer
@@ -468,6 +472,7 @@ func AccountByPart(obj Object) *Account {
 	acc := Stats.inProgress.get(obj.Remote())
 	if acc == nil {
 		Debug(obj, "Didn't find object to account part transfer")
+		return nil
 	}
 	acc.disableWholeFileAccounting()
 	return acc

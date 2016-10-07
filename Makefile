@@ -1,11 +1,20 @@
 SHELL = /bin/bash
-TAG := $(shell git describe --tags)
+TAG := $(shell echo `git describe --tags`-`git rev-parse --abbrev-ref HEAD` | sed 's/-\([0-9]\)-/-0\1-/; s/-\(HEAD\|master\)$$//')
 LAST_TAG := $(shell git describe --tags --abbrev=0)
 NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f", $$_)')
+GO_VERSION := $(shell go version)
+GO_LATEST := $(findstring go1.7,$(GO_VERSION))
 
 rclone:
-	@go version
 	go install -v ./...
+
+vars:
+	@echo SHELL="'$(SHELL)'"
+	@echo TAG="'$(TAG)'"
+	@echo LAST_TAG="'$(LAST_TAG)'"
+	@echo NEW_TAG="'$(NEW_TAG)'"
+	@echo GO_VERSION="'$(GO_VERSION)'"
+	@echo GO_LATEST="'$(GO_LATEST)'"
 
 # Full suite of integration tests
 test:	rclone
@@ -19,17 +28,25 @@ quicktest:
 
 # Do source code quality checks
 check:	rclone
+ifdef GO_LATEST
 	go vet ./...
 	errcheck ./...
 	goimports -d . | grep . ; test $$? -eq 1
 	golint ./... | grep -E -v '(StorageUrl|CdnUrl)' ; test $$? -eq 1
+else
+	@echo Skipping tests as not on Go stable
+endif
 
 # Get the build dependencies
 build_dep:
 	go get -t ./...
+ifdef GO_LATEST
 	go get -u github.com/kisielk/errcheck
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u github.com/golang/lint/golint
+	go get -u github.com/mitchellh/gox
+	go get -u github.com/inconshreveable/mousetrap
+endif
 
 # Update dependencies
 update:
@@ -40,8 +57,8 @@ doc:	rclone.1 MANUAL.html MANUAL.txt
 rclone.1:	MANUAL.md
 	pandoc -s --from markdown --to man MANUAL.md -o rclone.1
 
-MANUAL.md:	make_manual.py docs/content/*.md commanddocs
-	./make_manual.py
+MANUAL.md:	bin/make_manual.py docs/content/*.md commanddocs
+	./bin/make_manual.py
 
 MANUAL.html:	MANUAL.md
 	pandoc -s --from markdown --to html MANUAL.md -o MANUAL.html
@@ -72,16 +89,22 @@ upload:
 	rclone -v copy build/ memstore:downloads-rclone-org
 
 upload_github:
-	./upload-github $(TAG)
+	./bin/upload-github $(TAG)
 
 cross:	doc
-	./cross-compile $(TAG)
+	./bin/cross-compile $(TAG)
 
 beta:
-	./cross-compile $(TAG)β
+	./bin/cross-compile $(TAG)β
 	rm build/*-current-*
 	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)β
 	@echo Beta release ready at http://pub.rclone.org/$(TAG)%CE%B2/
+
+travis_beta:
+	./bin/cross-compile $(TAG)β
+	rm build/*-current-*
+	rclone --config bin/travis.rclone.conf -v copy build/ memstore:beta-rclone-org/$(TAG)
+	@echo Beta release ready at http://beta.rclone.org/$(TAG)/
 
 serve:	website
 	cd docs && hugo server -v -w

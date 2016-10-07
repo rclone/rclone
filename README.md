@@ -33,6 +33,8 @@ Features
   * Sync (one way) mode to make a directory identical
   * Check mode to check for file hash equality
   * Can sync to and from network, eg two different cloud accounts
+  * Optional encryption (Crypt)
+  * Optional FUSE mount
 
 See the home page for installation, usage, documentation, changelog
 and configuration walkthroughs.

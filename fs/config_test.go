@@ -1,6 +1,8 @@
 package fs
 
 import (
+	"bytes"
+	"crypto/rand"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -85,17 +87,48 @@ func TestSizeSuffixSet(t *testing.T) {
 	}
 }
 
-func TestReveal(t *testing.T) {
+func TestObscure(t *testing.T) {
 	for _, test := range []struct {
 		in   string
 		want string
+		iv   string
 	}{
-		{"", ""},
-		{"2sTcyNrA", "potato"},
+		{"", "YWFhYWFhYWFhYWFhYWFhYQ", "aaaaaaaaaaaaaaaa"},
+		{"potato", "YWFhYWFhYWFhYWFhYWFhYXMaGgIlEQ", "aaaaaaaaaaaaaaaa"},
+		{"potato", "YmJiYmJiYmJiYmJiYmJiYp3gcEWbAw", "bbbbbbbbbbbbbbbb"},
 	} {
-		got := Reveal(test.in)
+		cryptRand = bytes.NewBufferString(test.iv)
+		got, err := Obscure(test.in)
+		cryptRand = rand.Reader
+		assert.NoError(t, err)
 		assert.Equal(t, test.want, got)
-		assert.Equal(t, test.in, Obscure(got), "not bidirectional")
+		recoveredIn, err := Reveal(got)
+		assert.NoError(t, err)
+		assert.Equal(t, test.in, recoveredIn, "not bidirectional")
+		// Now the Must variants
+		cryptRand = bytes.NewBufferString(test.iv)
+		got = MustObscure(test.in)
+		cryptRand = rand.Reader
+		assert.Equal(t, test.want, got)
+		recoveredIn = MustReveal(got)
+		assert.Equal(t, test.in, recoveredIn, "not bidirectional")
+
+	}
+}
+
+// Test some error cases
+func TestReveal(t *testing.T) {
+	for _, test := range []struct {
+		in      string
+		wantErr string
+	}{
+		{"YmJiYmJiYmJiYmJiYmJiYp*gcEWbAw", "base64 decode failed: illegal base64 data at input byte 22"},
+		{"aGVsbG8", "input too short"},
+		{"", "input too short"},
+	} {
+		gotString, gotErr := Reveal(test.in)
+		assert.Equal(t, "", gotString)
+		assert.Equal(t, test.wantErr, gotErr.Error())
 	}
 }
 
@@ -129,7 +162,7 @@ func TestConfigLoadEncrypted(t *testing.T) {
 	}()
 
 	// Set correct password
-	err = setPassword("asdf")
+	err = setConfigPassword("asdf")
 	require.NoError(t, err)
 	c, err := loadConfigFile()
 	require.NoError(t, err)
@@ -175,11 +208,11 @@ func TestPassword(t *testing.T) {
 	}()
 	var err error
 	// Empty password should give error
-	err = setPassword("  \t  ")
+	err = setConfigPassword("  \t  ")
 	require.Error(t, err)
 
 	// Test invalid utf8 sequence
-	err = setPassword(string([]byte{0xff, 0xfe, 0xfd}) + "abc")
+	err = setConfigPassword(string([]byte{0xff, 0xfe, 0xfd}) + "abc")
 	require.Error(t, err)
 
 	// Simple check of wrong passwords
@@ -197,11 +230,11 @@ func TestPassword(t *testing.T) {
 }
 
 func hashedKeyCompare(t *testing.T, a, b string, shouldMatch bool) {
-	err := setPassword(a)
+	err := setConfigPassword(a)
 	require.NoError(t, err)
 	k1 := configKey
 
-	err = setPassword(b)
+	err = setConfigPassword(b)
 	require.NoError(t, err)
 	k2 := configKey
 

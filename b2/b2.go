@@ -35,6 +35,7 @@ const (
 	timeHeader       = headerPrefix + timeKey
 	sha1Key          = "large_file_sha1"
 	sha1Header       = "X-Bz-Content-Sha1"
+	sha1InfoHeader   = headerPrefix + sha1Key
 	testModeHeader   = "X-Bz-Test-Mode"
 	retryAfterHeader = "Retry-After"
 	minSleep         = 10 * time.Millisecond
@@ -97,12 +98,13 @@ type Fs struct {
 
 // Object describes a b2 object
 type Object struct {
-	fs      *Fs       // what this object is part of
-	remote  string    // The remote path
-	id      string    // b2 id of the file
-	modTime time.Time // The modified time of the object if known
-	sha1    string    // SHA-1 hash if known
-	size    int64     // Size of the object
+	fs       *Fs       // what this object is part of
+	remote   string    // The remote path
+	id       string    // b2 id of the file
+	modTime  time.Time // The modified time of the object if known
+	sha1     string    // SHA-1 hash if known
+	size     int64     // Size of the object
+	mimeType string    // Content-Type of the object
 }
 
 // ------------------------------------------------------------
@@ -695,7 +697,16 @@ func (f *Fs) Mkdir() error {
 	if err != nil {
 		if apiErr, ok := err.(*api.Error); ok {
 			if apiErr.Code == "duplicate_bucket_name" {
-				return nil
+				// Check this is our bucket - buckets are globally unique and this
+				// might be someone elses.
+				_, getBucketErr := f.getBucketID()
+				if getBucketErr == nil {
+					// found so it is our bucket
+					return nil
+				}
+				if getBucketErr != fs.ErrorDirNotFound {
+					fs.Debug(f, "Error checking bucket exists: %v", getBucketErr)
+				}
 			}
 		}
 		return errors.Wrap(err, "failed to create bucket")
@@ -789,9 +800,9 @@ func (f *Fs) purge(oldOnly bool) error {
 		go func() {
 			defer wg.Done()
 			for object := range toBeDeleted {
-				fs.Stats.Transferring(object.Name)
+				fs.Stats.Checking(object.Name)
 				checkErr(f.deleteByID(object.ID, object.Name))
-				fs.Stats.DoneTransferring(object.Name)
+				fs.Stats.DoneChecking(object.Name)
 			}
 		}()
 	}
@@ -886,9 +897,10 @@ func (o *Object) Size() int64 {
 //  o.modTime
 //  o.size
 //  o.sha1
-func (o *Object) decodeMetaDataRaw(ID, SHA1 string, Size int64, UploadTimestamp api.Timestamp, Info map[string]string) (err error) {
+func (o *Object) decodeMetaDataRaw(ID, SHA1 string, Size int64, UploadTimestamp api.Timestamp, Info map[string]string, mimeType string) (err error) {
 	o.id = ID
 	o.sha1 = SHA1
+	o.mimeType = mimeType
 	// Read SHA1 from metadata if it exists and isn't set
 	if o.sha1 == "" || o.sha1 == "none" {
 		o.sha1 = Info[sha1Key]
@@ -907,7 +919,7 @@ func (o *Object) decodeMetaDataRaw(ID, SHA1 string, Size int64, UploadTimestamp 
 //  o.size
 //  o.sha1
 func (o *Object) decodeMetaData(info *api.File) (err error) {
-	return o.decodeMetaDataRaw(info.ID, info.SHA1, info.Size, info.UploadTimestamp, info.Info)
+	return o.decodeMetaDataRaw(info.ID, info.SHA1, info.Size, info.UploadTimestamp, info.Info, info.ContentType)
 }
 
 // decodeMetaDataFileInfo sets the metadata in the object from an api.FileInfo
@@ -918,7 +930,7 @@ func (o *Object) decodeMetaData(info *api.File) (err error) {
 //  o.size
 //  o.sha1
 func (o *Object) decodeMetaDataFileInfo(info *api.FileInfo) (err error) {
-	return o.decodeMetaDataRaw(info.ID, info.SHA1, info.Size, info.UploadTimestamp, info.Info)
+	return o.decodeMetaDataRaw(info.ID, info.SHA1, info.Size, info.UploadTimestamp, info.Info, info.ContentType)
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
@@ -1057,7 +1069,7 @@ func (file *openFile) Close() (err error) {
 	}
 
 	// Check the SHA1
-	receivedSHA1 := file.resp.Header.Get(sha1Header)
+	receivedSHA1 := file.o.sha1
 	calculatedSHA1 := fmt.Sprintf("%x", file.hash.Sum(nil))
 	if receivedSHA1 != calculatedSHA1 {
 		return errors.Errorf("object corrupted on transfer - SHA1 mismatch (want %q got %q)", receivedSHA1, calculatedSHA1)
@@ -1070,11 +1082,12 @@ func (file *openFile) Close() (err error) {
 var _ io.ReadCloser = &openFile{}
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	opts := rest.Opts{
 		Method:   "GET",
 		Absolute: true,
 		Path:     o.fs.info.DownloadURL,
+		Options:  options,
 	}
 	// Download by id if set otherwise by name
 	if o.id != "" {
@@ -1097,8 +1110,16 @@ func (o *Object) Open() (in io.ReadCloser, err error) {
 		_ = resp.Body.Close()
 		return nil, err
 	}
+	// Read sha1 from header if it isn't set
 	if o.sha1 == "" {
 		o.sha1 = resp.Header.Get(sha1Header)
+		fs.Debug(o, "Reading sha1 from header - %q", o.sha1)
+		// if sha1 header is "none" (in big files), then need
+		// to read it from the metadata
+		if o.sha1 == "none" {
+			o.sha1 = resp.Header.Get(sha1InfoHeader)
+			fs.Debug(o, "Reading sha1 from info - %q", o.sha1)
+		}
 	}
 	return newOpenFile(o, resp), nil
 }
@@ -1267,7 +1288,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 		ExtraHeaders: map[string]string{
 			"Authorization":  upload.AuthorizationToken,
 			"X-Bz-File-Name": urlEncode(o.fs.root + o.remote),
-			"Content-Type":   fs.MimeType(o),
+			"Content-Type":   fs.MimeType(src),
 			sha1Header:       calculatedSha1,
 			timeHeader:       timeString(modTime),
 		},
@@ -1319,10 +1340,16 @@ func (o *Object) Remove() error {
 	return nil
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	return o.mimeType
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs         = &Fs{}
 	_ fs.Purger     = &Fs{}
 	_ fs.CleanUpper = &Fs{}
 	_ fs.Object     = &Object{}
+	_ fs.MimeTyper  = &Object{}
 )

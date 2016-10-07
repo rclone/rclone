@@ -116,27 +116,23 @@ func (s *syncCopyMove) readDstFiles() {
 }
 
 // Check to see if src needs to be copied to dst and if so puts it in out
-func (s *syncCopyMove) checkOne(pair ObjectPair, out ObjectPairChan) {
+//
+// Returns a flag which indicates whether the file needs to be transferred or not.
+func (s *syncCopyMove) checkOne(pair ObjectPair) bool {
 	src, dst := pair.src, pair.dst
 	if dst == nil {
 		Debug(src, "Couldn't find file - need to transfer")
-		out <- pair
-		return
-	}
-	// Check to see if can store this
-	if !src.Storable() {
-		return
+		return true
 	}
 	// If we should ignore existing files, don't transfer
 	if Config.IgnoreExisting {
 		Debug(src, "Destination exists, skipping")
-		return
+		return false
 	}
 	// If we should upload unconditionally
 	if Config.IgnoreTimes {
-		Debug(src, "Uploading unconditionally as --ignore-times is in use")
-		out <- pair
-		return
+		Debug(src, "Transferring unconditionally as --ignore-times is in use")
+		return true
 	}
 	// If UpdateOlder is in effect, skip if dst is newer than src
 	if Config.UpdateOlder {
@@ -154,13 +150,13 @@ func (s *syncCopyMove) checkOne(pair ObjectPair, out ObjectPairChan) {
 		switch {
 		case dt >= modifyWindow:
 			Debug(src, "Destination is newer than source, skipping")
-			return
+			return false
 		case dt <= -modifyWindow:
 			Debug(src, "Destination is older than source, transferring")
 		default:
 			if src.Size() == dst.Size() {
 				Debug(src, "Destination mod time is within %v of source and sizes identical, skipping", modifyWindow)
-				return
+				return false
 			}
 			Debug(src, "Destination mod time is within %v of source but sizes differ, transferring", modifyWindow)
 		}
@@ -168,10 +164,10 @@ func (s *syncCopyMove) checkOne(pair ObjectPair, out ObjectPairChan) {
 		// Check to see if changed or not
 		if Equal(src, dst) {
 			Debug(src, "Unchanged skipping")
-			return
+			return false
 		}
 	}
-	out <- pair
+	return true
 }
 
 // This checks the types of errors returned while copying files
@@ -210,7 +206,18 @@ func (s *syncCopyMove) pairChecker(in ObjectPairChan, out ObjectPairChan, wg *sy
 			}
 			src := pair.src
 			Stats.Checking(src.Remote())
-			s.checkOne(pair, out)
+			// Check to see if can store this
+			if src.Storable() {
+				if s.checkOne(pair) {
+					out <- pair
+				} else {
+					// If moving need to delete the files we don't need to copy
+					if s.DoMove {
+						// Delete src if no error on copy
+						s.processError(DeleteFile(src))
+					}
+				}
+			}
 			Stats.DoneChecking(src.Remote())
 		case <-s.abort:
 			return
@@ -232,12 +239,14 @@ func (s *syncCopyMove) pairCopier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup
 			}
 			src := pair.src
 			Stats.Transferring(src.Remote())
+			var err error
 			if Config.DryRun {
 				Log(src, "Not copying as --dry-run")
 			} else {
-				s.processError(Copy(fdst, pair.dst, src))
+				err = Copy(fdst, pair.dst, src)
+				s.processError(err)
 			}
-			Stats.DoneTransferring(src.Remote())
+			Stats.DoneTransferring(src.Remote(), err == nil)
 		case <-s.abort:
 			return
 		}
@@ -259,37 +268,51 @@ func (s *syncCopyMove) pairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup)
 			if !ok {
 				return
 			}
+			transferredOK := true
 			src := pair.src
 			dst := pair.dst
 			Stats.Transferring(src.Remote())
-			if Config.DryRun {
-				Log(src, "Not moving as --dry-run")
-			} else if haveMover && src.Fs().Name() == fdst.Name() {
-				// Delete destination if it exists
-				if dst != nil {
-					s.processError(DeleteFile(src))
-				}
-				// Move dst <- src
-				_, err := fdstMover.Move(src, src.Remote())
-				if err != nil {
-					Stats.Error()
-					ErrorLog(dst, "Couldn't move: %v", err)
-					s.processError(err)
-				} else {
-					Debug(src, "Moved")
-				}
-			} else {
+			doCopy := func() {
 				// Copy dst <- src
 				err := Copy(fdst, dst, src)
 				s.processError(err)
 				if err != nil {
+					transferredOK = false
 					ErrorLog(src, "Not deleting as copy failed: %v", err)
 				} else {
 					// Delete src if no error on copy
 					s.processError(DeleteFile(src))
 				}
 			}
-			Stats.DoneTransferring(src.Remote())
+			if Config.DryRun {
+				Log(src, "Not moving as --dry-run")
+			} else if haveMover && src.Fs().Name() == fdst.Name() {
+				// Delete destination if it exists
+				if dst != nil {
+					s.processError(DeleteFile(dst))
+				}
+				// Move dst <- src
+				_, err := fdstMover.Move(src, src.Remote())
+				if err != nil {
+					// If this remote can't do moves,
+					// then set the flag and copy
+					if err == ErrorCantMove {
+						Debug(src, "Can't move, switching to copy")
+						haveMover = false
+						doCopy()
+					} else {
+						Stats.Error()
+						ErrorLog(dst, "Couldn't move: %v", err)
+						s.processError(err)
+						transferredOK = false
+					}
+				} else {
+					Debug(src, "Moved")
+				}
+			} else {
+				doCopy()
+			}
+			Stats.DoneTransferring(src.Remote(), transferredOK)
 		case <-s.abort:
 			return
 		}

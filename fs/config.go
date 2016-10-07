@@ -5,16 +5,16 @@ package fs
 import (
 	"bufio"
 	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"math"
-	"net/http"
 	"os"
 	"os/user"
 	"path"
@@ -25,7 +25,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/Unknwon/goconfig"
-	"github.com/mreiferson/go-httpclient"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"golang.org/x/crypto/nacl/secretbox"
@@ -191,25 +190,85 @@ func (x *SizeSuffix) Type() string {
 // Check it satisfies the interface
 var _ pflag.Value = (*SizeSuffix)(nil)
 
-// Obscure a config value
-func Obscure(x string) string {
-	y := []byte(x)
-	for i := range y {
-		y[i] ^= byte(i) ^ 0xAA
+// crypt internals
+var (
+	cryptKey = []byte{
+		0x9c, 0x93, 0x5b, 0x48, 0x73, 0x0a, 0x55, 0x4d,
+		0x6b, 0xfd, 0x7c, 0x63, 0xc8, 0x86, 0xa9, 0x2b,
+		0xd3, 0x90, 0x19, 0x8e, 0xb8, 0x12, 0x8a, 0xfb,
+		0xf4, 0xde, 0x16, 0x2b, 0x8b, 0x95, 0xf6, 0x38,
 	}
-	return base64.StdEncoding.EncodeToString(y)
+	cryptBlock cipher.Block
+	cryptRand  = rand.Reader
+)
+
+// crypt transforms in to out using iv under AES-CTR.
+//
+// in and out may be the same buffer.
+//
+// Note encryption and decryption are the same operation
+func crypt(out, in, iv []byte) error {
+	if cryptBlock == nil {
+		var err error
+		cryptBlock, err = aes.NewCipher(cryptKey)
+		if err != nil {
+			return err
+		}
+	}
+	stream := cipher.NewCTR(cryptBlock, iv)
+	stream.XORKeyStream(out, in)
+	return nil
 }
 
-// Reveal a config value
-func Reveal(y string) string {
-	x, err := base64.StdEncoding.DecodeString(y)
+// Obscure a value
+//
+// This is done by encrypting with AES-CTR
+func Obscure(x string) (string, error) {
+	plaintext := []byte(x)
+	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
+	iv := ciphertext[:aes.BlockSize]
+	if _, err := io.ReadFull(cryptRand, iv); err != nil {
+		return "", errors.Wrap(err, "failed to read iv")
+	}
+	if err := crypt(ciphertext[aes.BlockSize:], plaintext, iv); err != nil {
+		return "", errors.Wrap(err, "encrypt failed")
+	}
+	return base64.RawURLEncoding.EncodeToString(ciphertext), nil
+}
+
+// MustObscure obscures a value, exiting with a fatal error if it failed
+func MustObscure(x string) string {
+	out, err := Obscure(x)
 	if err != nil {
-		log.Fatalf("Failed to reveal %q: %v", y, err)
+		log.Fatalf("Obscure failed: %v", err)
 	}
-	for i := range x {
-		x[i] ^= byte(i) ^ 0xAA
+	return out
+}
+
+// Reveal an obscured value
+func Reveal(x string) (string, error) {
+	ciphertext, err := base64.RawURLEncoding.DecodeString(x)
+	if err != nil {
+		return "", errors.Wrap(err, "base64 decode failed")
 	}
-	return string(x)
+	if len(ciphertext) < aes.BlockSize {
+		return "", errors.New("input too short")
+	}
+	buf := ciphertext[aes.BlockSize:]
+	iv := ciphertext[:aes.BlockSize]
+	if err := crypt(buf, buf, iv); err != nil {
+		return "", errors.Wrap(err, "decrypt failed")
+	}
+	return string(buf), nil
+}
+
+// MustReveal reveals an obscured value, exiting with a fatal error if it failed
+func MustReveal(x string) string {
+	out, err := Reveal(x)
+	if err != nil {
+		log.Fatalf("Reveal failed: %v", err)
+	}
+	return out
 }
 
 // ConfigInfo is filesystem config options
@@ -240,62 +299,6 @@ type ConfigInfo struct {
 	IgnoreSize         bool
 	NoTraverse         bool
 	NoUpdateModTime    bool
-}
-
-// Transport returns an http.RoundTripper with the correct timeouts
-func (ci *ConfigInfo) Transport() http.RoundTripper {
-	t := &httpclient.Transport{
-		Proxy:               http.ProxyFromEnvironment,
-		MaxIdleConnsPerHost: ci.Checkers + ci.Transfers + 1,
-
-		// ConnectTimeout, if non-zero, is the maximum amount of time a dial will wait for
-		// a connect to complete.
-		ConnectTimeout: ci.ConnectTimeout,
-
-		// ResponseHeaderTimeout, if non-zero, specifies the amount of
-		// time to wait for a server's response headers after fully
-		// writing the request (including its body, if any). This
-		// time does not include the time to read the response body.
-		ResponseHeaderTimeout: ci.Timeout,
-
-		// RequestTimeout, if non-zero, specifies the amount of time for the entire
-		// request to complete (including all of the above timeouts + entire response body).
-		// This should never be less than the sum total of the above two timeouts.
-		//RequestTimeout: NOT SET,
-
-		// ReadWriteTimeout, if non-zero, will set a deadline for every Read and
-		// Write operation on the request connection.
-		ReadWriteTimeout: ci.Timeout,
-
-		// InsecureSkipVerify controls whether a client verifies the
-		// server's certificate chain and host name.
-		// If InsecureSkipVerify is true, TLS accepts any certificate
-		// presented by the server and any host name in that certificate.
-		// In this mode, TLS is susceptible to man-in-the-middle attacks.
-		// This should be used only for testing.
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: ci.InsecureSkipVerify},
-
-		// DisableCompression, if true, prevents the Transport from
-		// requesting compression with an "Accept-Encoding: gzip"
-		// request header when the Request contains no existing
-		// Accept-Encoding value. If the Transport requests gzip on
-		// its own and gets a gzipped response, it's transparently
-		// decoded in the Response.Body. However, if the user
-		// explicitly requested gzip it is not automatically
-		// uncompressed.
-		DisableCompression: *noGzip,
-	}
-	if ci.DumpHeaders || ci.DumpBodies {
-		return NewLoggedTransport(t, ci.DumpBodies)
-	}
-	return t
-}
-
-// Client returns an http.Client with the correct timeouts
-func (ci *ConfigInfo) Client() *http.Client {
-	return &http.Client{
-		Transport: ci.Transport(),
-	}
 }
 
 // Find the config directory
@@ -431,7 +434,7 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 	var out []byte
 	for {
 		if len(configKey) == 0 && envpw != "" {
-			err := setPassword(envpw)
+			err := setConfigPassword(envpw)
 			if err != nil {
 				fmt.Println("Using RCLONE_CONFIG_PASS returned:", err)
 				envpw = ""
@@ -443,7 +446,7 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 			if !*AskPassword {
 				return nil, errors.New("unable to decrypt configuration and not allowed to ask for password - set RCLONE_CONFIG_PASS to your configuration password")
 			}
-			getPassword("Enter configuration password:")
+			getConfigPassword("Enter configuration password:")
 		}
 
 		// Nonce is first 24 bytes of the ciphertext
@@ -467,16 +470,57 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 	return goconfig.LoadFromReader(bytes.NewBuffer(out))
 }
 
-// getPassword will query the user for a password the
+// checkPassword normalises and validates the password
+func checkPassword(password string) (string, error) {
+	if !utf8.ValidString(password) {
+		return "", errors.New("password contains invalid utf8 characters")
+	}
+	// Remove leading+trailing whitespace
+	password = strings.TrimSpace(password)
+	// Normalize to reduce weird variations.
+	password = norm.NFKC.String(password)
+	if len(password) == 0 {
+		return "", errors.New("no characters in password")
+	}
+	return password, nil
+}
+
+// GetPassword asks the user for a password with the prompt given.
+func GetPassword(prompt string) string {
+	fmt.Println(prompt)
+	for {
+		fmt.Print("password:")
+		password := ReadPassword()
+		password, err := checkPassword(password)
+		if err == nil {
+			return password
+		}
+		fmt.Printf("Bad password: %v\n", err)
+	}
+}
+
+// ChangePassword will query the user twice for the named password. If
+// the same password is entered it is returned.
+func ChangePassword(name string) string {
+	for {
+		a := GetPassword(fmt.Sprintf("Enter %s password:", name))
+		b := GetPassword(fmt.Sprintf("Confirm %s password:", name))
+		if a == b {
+			return a
+		}
+		fmt.Println("Passwords do not match!")
+	}
+}
+
+// getConfigPassword will query the user for a password the
 // first time it is required.
-func getPassword(q string) {
+func getConfigPassword(q string) {
 	if len(configKey) != 0 {
 		return
 	}
 	for {
-		fmt.Println(q)
-		fmt.Print("password:")
-		err := setPassword(ReadPassword())
+		password := GetPassword(q)
+		err := setConfigPassword(password)
 		if err == nil {
 			return
 		}
@@ -484,29 +528,33 @@ func getPassword(q string) {
 	}
 }
 
-// setPassword will set the configKey to the hash of
+// setConfigPassword will set the configKey to the hash of
 // the password. If the length of the password is
 // zero after trimming+normalization, an error is returned.
-func setPassword(password string) error {
-	if !utf8.ValidString(password) {
-		return errors.New("password contains invalid utf8 characters")
-	}
-	// Remove leading+trailing whitespace
-	password = strings.TrimSpace(password)
-
-	// Normalize to reduce weird variations.
-	password = norm.NFKC.String(password)
-	if len(password) == 0 {
-		return errors.New("no characters in password")
+func setConfigPassword(password string) error {
+	password, err := checkPassword(password)
+	if err != nil {
+		return err
 	}
 	// Create SHA256 has of the password
 	sha := sha256.New()
-	_, err := sha.Write([]byte("[" + password + "][rclone-config]"))
+	_, err = sha.Write([]byte("[" + password + "][rclone-config]"))
 	if err != nil {
 		return err
 	}
 	configKey = sha.Sum(nil)
 	return nil
+}
+
+// changeConfigPassword will query the user twice
+// for a password. If the same password is entered
+// twice the key is updated.
+func changeConfigPassword() {
+	err := setConfigPassword(ChangePassword("NEW configuration"))
+	if err != nil {
+		fmt.Printf("Failed to set config password: %v\n", err)
+		return
+	}
 }
 
 // SaveConfig saves configuration file.
@@ -722,7 +770,7 @@ func OkRemote(name string) bool {
 		ConfigFile.DeleteSection(name)
 		return true
 	default:
-		ErrorLog(nil, "Bad choice %d", i)
+		ErrorLog(nil, "Bad choice %c", i)
 	}
 	return false
 }
@@ -746,6 +794,42 @@ func RemoteConfig(name string) {
 // ChooseOption asks the user to choose an option
 func ChooseOption(o *Option) string {
 	fmt.Println(o.Help)
+	if o.IsPassword {
+		actions := []string{"yYes type in my own password", "gGenerate random password"}
+		if o.Optional {
+			actions = append(actions, "nNo leave this optional password blank")
+		}
+		var password string
+		switch i := Command(actions); i {
+		case 'y':
+			password = ChangePassword("the")
+		case 'g':
+			for {
+				fmt.Printf("Password strength in bits.\n64 is just about memorable\n128 is secure\n1024 is the maximum\n")
+				bits := ChooseNumber("Bits", 64, 1024)
+				bytes := bits / 8
+				if bits%8 != 0 {
+					bytes++
+				}
+				var pw = make([]byte, bytes)
+				n, _ := rand.Read(pw)
+				if n != bytes {
+					log.Fatalf("password short read: %d", n)
+				}
+				password = base64.RawURLEncoding.EncodeToString(pw)
+				fmt.Printf("Your password is: %s\n", password)
+				fmt.Printf("Use this password?\n")
+				if Confirm() {
+					break
+				}
+			}
+		case 'n':
+			return ""
+		default:
+			ErrorLog(nil, "Bad choice %c", i)
+		}
+		return MustObscure(password)
+	}
 	if len(o.Examples) > 0 {
 		var values []string
 		var help []string
@@ -792,20 +876,21 @@ func NewRemote(name string) {
 		SaveConfig()
 		return
 	}
-	EditRemote(name)
+	EditRemote(fs, name)
 }
 
 // EditRemote gets the user to edit a remote
-func EditRemote(name string) {
+func EditRemote(fs *RegInfo, name string) {
 	ShowRemote(name)
 	fmt.Printf("Edit remote\n")
 	for {
-		for _, key := range ConfigFile.GetKeyList(name) {
+		for _, option := range fs.Options {
+			key := option.Name
 			value := ConfigFile.MustValue(name, key)
-			fmt.Printf("Press enter to accept current value, or type in a new one\n")
-			fmt.Printf("%s = %s>", key, value)
-			newValue := ReadLine()
-			if newValue != "" {
+			fmt.Printf("Value %q = %q\n", key, value)
+			fmt.Printf("Edit? (y/n)>\n")
+			if Confirm() {
+				newValue := ChooseOption(&option)
 				ConfigFile.SetValue(name, key, newValue)
 			}
 		}
@@ -839,7 +924,11 @@ func EditConfig() {
 		switch i := Command(what); i {
 		case 'e':
 			name := ChooseRemote()
-			EditRemote(name)
+			fs, err := Find(ConfigFile.MustValue(name, "type"))
+			if err != nil {
+				log.Fatalf("Failed to find fs: %v", err)
+			}
+			EditRemote(fs, name)
 		case 'n':
 		nameLoop:
 			for {
@@ -879,7 +968,7 @@ func SetPassword() {
 			what := []string{"cChange Password", "uUnencrypt configuration", "qQuit to main menu"}
 			switch i := Command(what); i {
 			case 'c':
-				changePassword()
+				changeConfigPassword()
 				SaveConfig()
 				fmt.Println("Password changed")
 				continue
@@ -897,7 +986,7 @@ func SetPassword() {
 			what := []string{"aAdd Password", "qQuit to main menu"}
 			switch i := Command(what); i {
 			case 'a':
-				changePassword()
+				changeConfigPassword()
 				SaveConfig()
 				fmt.Println("Password set")
 				continue
@@ -905,25 +994,6 @@ func SetPassword() {
 				return
 			}
 		}
-	}
-}
-
-// changePassword will query the user twice
-// for a password. If the same password is entered
-// twice the key is updated.
-func changePassword() {
-	for {
-		configKey = nil
-		getPassword("Enter NEW configuration password:")
-		a := configKey
-		// re-enter password
-		configKey = nil
-		getPassword("Confirm NEW password:")
-		b := configKey
-		if bytes.Equal(a, b) {
-			return
-		}
-		fmt.Println("Passwords does not match!")
 	}
 }
 

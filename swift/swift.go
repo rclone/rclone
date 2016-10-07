@@ -162,7 +162,6 @@ func swiftConnection(name string) (*swift.Connection, error) {
 		ApiKey:         apiKey,
 		AuthUrl:        authURL,
 		AuthVersion:    fs.ConfigFile.MustInt(name, "auth_version", 0),
-		UserAgent:      fs.UserAgent,
 		Tenant:         fs.ConfigFile.MustValue(name, "tenant"),
 		Region:         fs.ConfigFile.MustValue(name, "region"),
 		Domain:         fs.ConfigFile.MustValue(name, "domain"),
@@ -236,7 +235,8 @@ func (f *Fs) newObjectWithInfo(remote string, info *swift.Object) (fs.Object, er
 	// Note that due to a quirk of swift, dynamic large objects are
 	// returned as 0 bytes in the listing.  Correct this here by
 	// making sure we read the full metadata for all 0 byte files.
-	if info != nil && info.Bytes == 0 {
+	// We don't read the metadata for directory marker objects.
+	if info != nil && info.Bytes == 0 && info.ContentType != "application/directory" {
 		info = nil
 	}
 	if info != nil {
@@ -629,8 +629,10 @@ func (o *Object) Storable() bool {
 }
 
 // Open an object for read
-func (o *Object) Open() (in io.ReadCloser, err error) {
-	in, _, err = o.fs.c.ObjectOpen(o.fs.container, o.fs.root+o.remote, true, nil)
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	headers := fs.OpenOptionHeaders(options)
+	_, isRanging := headers["Range"]
+	in, _, err = o.fs.c.ObjectOpen(o.fs.container, o.fs.root+o.remote, !isRanging, headers)
 	return
 }
 
@@ -689,7 +691,7 @@ func urlEncode(str string) string {
 
 // updateChunks updates the existing object using chunks to a separate
 // container.  It returns a string which prefixes current segments.
-func (o *Object) updateChunks(in io.Reader, headers swift.Headers, size int64) (string, error) {
+func (o *Object) updateChunks(in io.Reader, headers swift.Headers, size int64, contentType string) (string, error) {
 	// Create the segmentsContainer if it doesn't exist
 	err := o.fs.c.ContainerCreate(o.fs.segmentsContainer, nil)
 	if err != nil {
@@ -718,7 +720,7 @@ func (o *Object) updateChunks(in io.Reader, headers swift.Headers, size int64) (
 	headers["Content-Length"] = "0" // set Content-Length as we know it
 	emptyReader := bytes.NewReader(nil)
 	manifestName := o.fs.root + o.remote
-	_, err = o.fs.c.ObjectPut(o.fs.container, manifestName, emptyReader, true, "", "", headers)
+	_, err = o.fs.c.ObjectPut(o.fs.container, manifestName, emptyReader, true, "", contentType, headers)
 	return uniquePrefix + "/", err
 }
 
@@ -738,16 +740,17 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	// Set the mtime
 	m := swift.Metadata{}
 	m.SetModTime(modTime)
+	contentType := fs.MimeType(src)
 	headers := m.ObjectHeaders()
 	uniquePrefix := ""
 	if size > int64(chunkSize) {
-		uniquePrefix, err = o.updateChunks(in, headers, size)
+		uniquePrefix, err = o.updateChunks(in, headers, size, contentType)
 		if err != nil {
 			return err
 		}
 	} else {
 		headers["Content-Length"] = strconv.FormatInt(size, 10) // set Content-Length as we know it
-		_, err := o.fs.c.ObjectPut(o.fs.container, o.fs.root+o.remote, in, true, "", "", headers)
+		_, err := o.fs.c.ObjectPut(o.fs.container, o.fs.root+o.remote, in, true, "", contentType, headers)
 		if err != nil {
 			return err
 		}
@@ -787,10 +790,16 @@ func (o *Object) Remove() error {
 	return nil
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	return o.info.ContentType
+}
+
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs     = &Fs{}
-	_ fs.Purger = &Fs{}
-	_ fs.Copier = &Fs{}
-	_ fs.Object = &Object{}
+	_ fs.Fs        = &Fs{}
+	_ fs.Purger    = &Fs{}
+	_ fs.Copier    = &Fs{}
+	_ fs.Object    = &Object{}
+	_ fs.MimeTyper = &Object{}
 )

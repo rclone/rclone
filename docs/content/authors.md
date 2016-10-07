@@ -37,3 +37,7 @@ Contributors
   * Stefan G. Weichinger <office@oops.co.at>
   * Per Cederberg <cederberg@gmail.com>
   * Radek Šenfeld <rush@logic.cz>
+  * Fredrik Fornwall <fredrik@fornwall.net>
+  * Asko Tamm <asko@deekit.net>
+  * xor-zz <xor@gstocco.com>
+

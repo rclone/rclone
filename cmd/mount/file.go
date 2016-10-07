@@ -46,6 +46,8 @@ func (f *File) Attr(ctx context.Context, a *fuse.Attr) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	fs.Debug(f.o, "File.Attr")
+	a.Gid = gid
+	a.Uid = uid
 	a.Mode = filePerms
 	// if o is nil it isn't valid yet, so return the size so far
 	if f.o == nil {
@@ -110,13 +112,14 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 
 	fs.Debug(o, "File.Open")
 
-	// Files aren't seekable
-	resp.Flags |= fuse.OpenNonSeekable
-
 	switch {
 	case req.Flags.IsReadOnly():
+		if noSeek {
+			resp.Flags |= fuse.OpenNonSeekable
+		}
 		return newReadFileHandle(o)
 	case req.Flags.IsWriteOnly():
+		resp.Flags |= fuse.OpenNonSeekable
 		src := newCreateInfo(f.d.f, o.Remote())
 		fh, err := newWriteFileHandle(f.d, f, src)
 		if err != nil {

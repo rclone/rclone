@@ -5,23 +5,58 @@
 package mount
 
 import (
+	"log"
+	"os"
+
 	"bazil.org/fuse"
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"golang.org/x/sys/unix"
 )
 
 // Globals
 var (
 	noModTime = false
 	debugFUSE = false
+	noSeek    = false
+	// mount options
+	readOnly                         = false
+	allowNonEmpty                    = false
+	allowRoot                        = false
+	allowOther                       = false
+	defaultPermissions               = false
+	writebackCache                   = false
+	maxReadAhead       fs.SizeSuffix = 128 * 1024
+	umask                            = 0
+	uid                              = uint32(unix.Geteuid())
+	gid                              = uint32(unix.Getegid())
+	// foreground                 = false
+	// default permissions for directories - modified by umask in Mount
+	dirPerms  = os.FileMode(0777)
+	filePerms = os.FileMode(0666)
 )
 
 func init() {
+	umask = unix.Umask(0) // read the umask
+	unix.Umask(umask)     // set it back to what it was
 	cmd.Root.AddCommand(mountCmd)
-	mountCmd.Flags().BoolVarP(&noModTime, "no-modtime", "", false, "Don't read the modification time (can speed things up).")
-	mountCmd.Flags().BoolVarP(&debugFUSE, "debug-fuse", "", false, "Debug the FUSE internals - needs -v.")
+	mountCmd.Flags().BoolVarP(&noModTime, "no-modtime", "", noModTime, "Don't read the modification time (can speed things up).")
+	mountCmd.Flags().BoolVarP(&debugFUSE, "debug-fuse", "", debugFUSE, "Debug the FUSE internals - needs -v.")
+	mountCmd.Flags().BoolVarP(&noSeek, "no-seek", "", noSeek, "Don't allow seeking in files.")
+	// mount options
+	mountCmd.Flags().BoolVarP(&readOnly, "read-only", "", readOnly, "Mount read-only.")
+	mountCmd.Flags().BoolVarP(&allowNonEmpty, "allow-non-empty", "", allowNonEmpty, "Allow mounting over a non-empty directory.")
+	mountCmd.Flags().BoolVarP(&allowRoot, "allow-root", "", allowRoot, "Allow access to root user.")
+	mountCmd.Flags().BoolVarP(&allowOther, "allow-other", "", allowOther, "Allow access to other users.")
+	mountCmd.Flags().BoolVarP(&defaultPermissions, "default-permissions", "", defaultPermissions, "Makes kernel enforce access control based on the file mode.")
+	mountCmd.Flags().BoolVarP(&writebackCache, "write-back-cache", "", writebackCache, "Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used.")
+	mountCmd.Flags().VarP(&maxReadAhead, "max-read-ahead", "", "The number of bytes that can be prefetched for sequential reads.")
+	mountCmd.Flags().IntVarP(&umask, "umask", "", umask, "Override the permission bits set by the filesystem.")
+	mountCmd.Flags().Uint32VarP(&uid, "uid", "", uid, "Override the uid field set by the filesystem.")
+	mountCmd.Flags().Uint32VarP(&gid, "gid", "", gid, "Override the gid field set by the filesystem.")
+	//mountCmd.Flags().BoolVarP(&foreground, "foreground", "", foreground, "Do not detach.")
 }
 
 var mountCmd = &cobra.Command{
@@ -49,10 +84,9 @@ Or with OS X
 
 ### Limitations ###
 
-This can only read files seqentially, or write files sequentially.  It
-can't read and write or seek in files.
+This can only write files seqentially, it can only seek when reading.
 
-rclonefs inherits rclone's directory handling.  In rclone's world
+Rclone mount inherits rclone's directory handling.  In rclone's world
 directories don't really exist.  This means that empty directories
 will have a tendency to disappear once they fall out of the directory
 cache.
@@ -85,10 +119,13 @@ mount won't do that, so will be less reliable than the rclone command.
   * Preserve timestamps
   * Move directories
 `,
-	RunE: func(command *cobra.Command, args []string) error {
+	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
 		fdst := cmd.NewFsDst(args)
-		return Mount(fdst, args[1])
+		err := Mount(fdst, args[1])
+		if err != nil {
+			log.Fatalf("Fatal error: %v", err)
+		}
 	},
 }
 
@@ -101,6 +138,10 @@ func Mount(f fs.Fs, mountpoint string) error {
 			fs.Debug("fuse", "%v", msg)
 		}
 	}
+
+	// Set permissions
+	dirPerms = 0777 &^ os.FileMode(umask)
+	filePerms = 0666 &^ os.FileMode(umask)
 
 	// Mount it
 	errChan, err := mount(f, mountpoint)
