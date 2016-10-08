@@ -394,6 +394,19 @@ func Find(name string) (*RegInfo, error) {
 	return nil, errors.Errorf("didn't find filing system for %q", name)
 }
 
+// MustFind looks for an Info object for the type name passed in
+//
+// Services are looked up in the config file
+//
+// Exits with a fatal error if not found
+func MustFind(name string) *RegInfo {
+	fs, err := Find(name)
+	if err != nil {
+		log.Fatalf("Failed to find remote: %v", err)
+	}
+	return fs
+}
+
 // Pattern to match an rclone url
 var matcher = regexp.MustCompile(`^([\w_ -]+):(.*)$`)
 

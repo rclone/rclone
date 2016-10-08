@@ -99,8 +99,8 @@ Remote config
 [secret]
 remote = remote:path
 filename_encryption = standard
-password = CfDxopZIXFG0Oo-ac7dPLWWOHkNJbw
-password2 = HYUpfuzHJL8qnX9fOaIYijq0xnVLwyVzp3y4SF3TwYqAU6HLysk
+password = *** ENCRYPTED ***
+password2 = *** ENCRYPTED ***
 --------------------
 y) Yes this is OK
 e) Edit this remote

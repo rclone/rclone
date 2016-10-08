@@ -752,8 +752,21 @@ func ChooseNumber(what string, min, max int) int {
 func ShowRemote(name string) {
 	fmt.Printf("--------------------\n")
 	fmt.Printf("[%s]\n", name)
+	fs := MustFindByName(name)
 	for _, key := range ConfigFile.GetKeyList(name) {
-		fmt.Printf("%s = %s\n", key, ConfigFile.MustValue(name, key))
+		isPassword := false
+		for _, option := range fs.Options {
+			if option.Name == key && option.IsPassword {
+				isPassword = true
+				break
+			}
+		}
+		value := ConfigFile.MustValue(name, key)
+		if isPassword && value != "" {
+			fmt.Printf("%s = *** ENCRYPTED ***\n", key)
+		} else {
+			fmt.Printf("%s = %s\n", key, value)
+		}
 	}
 	fmt.Printf("--------------------\n")
 }
@@ -775,17 +788,20 @@ func OkRemote(name string) bool {
 	return false
 }
 
+// MustFindByName finds the RegInfo for the remote name passed in or
+// exits with a fatal error.
+func MustFindByName(name string) *RegInfo {
+	fsType := ConfigFile.MustValue(name, "type")
+	if fsType == "" {
+		log.Fatalf("Couldn't find type of fs for %q", name)
+	}
+	return MustFind(fsType)
+}
+
 // RemoteConfig runs the config helper for the remote if needed
 func RemoteConfig(name string) {
 	fmt.Printf("Remote config\n")
-	fsName := ConfigFile.MustValue(name, "type")
-	if fsName == "" {
-		log.Fatalf("Couldn't find type of fs for %q", name)
-	}
-	f, err := Find(fsName)
-	if err != nil {
-		log.Fatalf("Didn't find filing system: %v", err)
-	}
+	f := MustFindByName(name)
 	if f.Config != nil {
 		f.Config(name)
 	}
@@ -864,10 +880,7 @@ func fsOption() *Option {
 func NewRemote(name string) {
 	newType := ChooseOption(fsOption())
 	ConfigFile.SetValue(name, "type", newType)
-	fs, err := Find(newType)
-	if err != nil {
-		log.Fatalf("Failed to find fs: %v", err)
-	}
+	fs := MustFind(newType)
 	for _, option := range fs.Options {
 		ConfigFile.SetValue(name, option.Name, ChooseOption(&option))
 	}
@@ -924,10 +937,7 @@ func EditConfig() {
 		switch i := Command(what); i {
 		case 'e':
 			name := ChooseRemote()
-			fs, err := Find(ConfigFile.MustValue(name, "type"))
-			if err != nil {
-				log.Fatalf("Failed to find fs: %v", err)
-			}
+			fs := MustFindByName(name)
 			EditRemote(fs, name)
 		case 'n':
 		nameLoop:
@@ -1010,11 +1020,7 @@ func Authorize(args []string) {
 		log.Fatalf("Invalid number of arguments: %d", len(args))
 	}
 	newType := args[0]
-	fs, err := Find(newType)
-	if err != nil {
-		log.Fatalf("Failed to find fs: %v", err)
-	}
-
+	fs := MustFind(newType)
 	if fs.Config == nil {
 		log.Fatalf("Can't authorize fs %q", newType)
 	}
