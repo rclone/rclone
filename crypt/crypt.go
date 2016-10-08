@@ -20,7 +20,7 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: "remote",
-			Help: "Remote to encrypt/decrypt.",
+			Help: "Remote to encrypt/decrypt.\nNormally should contain a ':' and a path, eg \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
 		}, {
 			Name: "filename_encryption",
 			Help: "How to encrypt the filenames.",
