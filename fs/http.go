@@ -143,6 +143,35 @@ func NewTransport(transport *http.Transport, logHeader, logBody bool) *Transport
 	}
 }
 
+// A map of servers we have checked for time
+var checkedHost = make(map[string]struct{}, 1)
+
+// Check the server time is the same as ours, once for each server
+func checkServerTime(req *http.Request, resp *http.Response) {
+	host := req.URL.Host
+	if req.Host != "" {
+		host = req.Host
+	}
+	if _, ok := checkedHost[host]; ok {
+		return
+	}
+	dateString := resp.Header.Get("Date")
+	if dateString == "" {
+		return
+	}
+	date, err := http.ParseTime(dateString)
+	if err != nil {
+		Debug(nil, "Couldn't parse Date: from server %s: %q: %v", host, dateString, err)
+		return
+	}
+	dt := time.Since(date)
+	const window = 5 * 60 * time.Second
+	if dt > window || dt < -window {
+		Log(nil, "Time may be set wrong - time from %q is %v different from this computer", host, dt)
+	}
+	checkedHost[host] = struct{}{}
+}
+
 // RoundTrip implements the RoundTripper interface.
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	// Force user agent
@@ -168,6 +197,9 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 			Debug(nil, "%s", string(buf))
 		}
 		Debug(nil, "%s", separatorResp)
+	}
+	if err == nil {
+		checkServerTime(req, resp)
 	}
 	return resp, err
 }
