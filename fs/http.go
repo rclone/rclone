@@ -101,7 +101,7 @@ func (ci *ConfigInfo) Transport() http.RoundTripper {
 		t.Proxy = http.ProxyFromEnvironment
 		t.MaxIdleConnsPerHost = 4 * (ci.Checkers + ci.Transfers + 1)
 		t.TLSHandshakeTimeout = ci.ConnectTimeout
-		t.ResponseHeaderTimeout = ci.ConnectTimeout
+		t.ResponseHeaderTimeout = ci.Timeout
 		t.TLSClientConfig = &tls.Config{InsecureSkipVerify: ci.InsecureSkipVerify}
 		t.DisableCompression = *noGzip
 		// Set in http_old.go initTransport
