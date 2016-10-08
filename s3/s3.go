@@ -210,6 +210,7 @@ const (
 // Globals
 var (
 	// Flags
+	s3ACL          = pflag.StringP("s3-acl", "", "", "Canned ACL used when creating buckets and/or storing objects in S3")
 	s3StorageClass = pflag.StringP("s3-storage-class", "", "", "Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA)")
 )
 
@@ -372,6 +373,9 @@ func NewFs(name, root string) (fs.Fs, error) {
 		locationConstraint: fs.ConfigFile.MustValue(name, "location_constraint"),
 		sse:                fs.ConfigFile.MustValue(name, "server_side_encryption"),
 		storageClass:       fs.ConfigFile.MustValue(name, "storage_class"),
+	}
+	if *s3ACL != "" {
+		f.acl = *s3ACL
 	}
 	if *s3StorageClass != "" {
 		f.storageClass = *s3StorageClass
