@@ -60,6 +60,8 @@ Choose a number from below, or type in your own value
    \ "yandex"
 Storage> 5
 Remote to encrypt/decrypt.
+Normally should contain a ':' and a path, eg "myremote:path/to/dir",
+"myremote:bucket" or "myremote:"
 remote> remote:path
 How to encrypt the filenames.
 Choose a number from below, or type in your own value
@@ -118,6 +120,27 @@ from those two passwords/passphrases.
 Note that rclone does not encrypt
   * file length - this can be calcuated within 16 bytes
   * modification time - used for syncing
+
+## Specifying the remote ##
+
+In normal use, make sure the remote has a `:` in. If you specify the
+remote without a `:` then rclone will use a local directory of that
+name.  So if you use a remote of `/path/to/secret/files` then rclone
+will encrypt stuff to that directory.  If you use a remote of `name`
+then rclone will put files in a directory called `name` in the current
+directory.
+
+If you specify the remote as `remote:path/to/dir` then rclone will
+store encrypted files in `path/to/dir` on the remote. If you are using
+file name encryption, then when you save files to
+`secret:subdir/subfile` this will store them in the unencrypted path
+`path/to/dir` but the `subdir/subpath` bit will be encrypted.
+
+Note that unless you want encrypted bucket names (which are difficult
+to manage because you won't know what directory they represent in web
+interfaces etc), you should probably specify a bucket, eg
+`remote:secretbucket` when using bucket based remotes such as S3,
+Swift, Hubic, B2, GCS.
 
 ## Example ##
 
