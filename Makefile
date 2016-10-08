@@ -4,6 +4,7 @@ LAST_TAG := $(shell git describe --tags --abbrev=0)
 NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f", $$_)')
 GO_VERSION := $(shell go version)
 GO_LATEST := $(findstring go1.7,$(GO_VERSION))
+BETA_URL := http://beta.rclone.org/$(TAG)/
 
 rclone:
 	go install -v ./...
@@ -15,6 +16,7 @@ vars:
 	@echo NEW_TAG="'$(NEW_TAG)'"
 	@echo GO_VERSION="'$(GO_VERSION)'"
 	@echo GO_LATEST="'$(GO_LATEST)'"
+	@echo BETA_URL="'$(BETA_URL)'"
 
 # Full suite of integration tests
 test:	rclone
@@ -104,7 +106,7 @@ travis_beta:
 	./bin/cross-compile $(TAG)β
 	rm build/*-current-*
 	rclone --config bin/travis.rclone.conf -v copy build/ memstore:beta-rclone-org/$(TAG)
-	@echo Beta release ready at http://beta.rclone.org/$(TAG)/
+	@echo Beta release ready at $(BETA_URL)
 
 serve:	website
 	cd docs && hugo server -v -w
