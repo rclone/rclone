@@ -240,6 +240,8 @@ func (up *largeUpload) Upload() error {
 	errs := make(chan error, 1)
 	var wg sync.WaitGroup
 	var err error
+	uploadCounter := up.f.newMultipartUploadCounter()
+	defer uploadCounter.finished()
 	fs.AccountByPart(up.o) // Cancel whole file accounting before reading
 outer:
 	for part := int64(1); part <= up.parts; part++ {
@@ -264,10 +266,10 @@ outer:
 
 		// Transfer the chunk
 		// Get upload Token
-		up.f.getUploadToken()
+		token := uploadCounter.getMultipartUploadToken()
 		wg.Add(1)
-		go func(part int64, buf []byte) {
-			defer up.f.returnUploadToken()
+		go func(part int64, buf []byte, token bool) {
+			defer uploadCounter.returnMultipartUploadToken(token)
 			defer wg.Done()
 			err := up.transferChunk(part, buf)
 			if err != nil {
@@ -276,7 +278,7 @@ outer:
 				default:
 				}
 			}
-		}(part, buf)
+		}(part, buf, token)
 
 		remaining -= reqSize
 	}
