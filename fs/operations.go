@@ -476,28 +476,32 @@ func Overlapping(fdst, fsrc Fs) bool {
 // checkIdentical checks to see if dst and src are identical
 //
 // it returns true if differences were found
-func checkIdentical(dst, src Object) bool {
+// it also returns whether it couldn't be hashed
+func checkIdentical(dst, src Object) (bool, bool) {
 	Stats.Checking(src.Remote())
 	defer Stats.DoneChecking(src.Remote())
 	if src.Size() != dst.Size() {
 		Stats.Error()
 		ErrorLog(src, "Sizes differ")
-		return true
+		return true, false
 	}
 	if !Config.SizeOnly {
-		same, _, err := CheckHashes(src, dst)
+		same, hash, err := CheckHashes(src, dst)
 		if err != nil {
 			// CheckHashes will log and count errors
-			return true
+			return true, false
+		}
+		if hash == HashNone {
+			return true, true
 		}
 		if !same {
 			Stats.Error()
-			ErrorLog(src, "Md5sums differ")
-			return true
+			ErrorLog(src, "%v differ", hash)
+			return true, false
 		}
 	}
 	Debug(src, "OK")
-	return false
+	return false, false
 }
 
 // Check the files in fsrc and fdst according to Size and hash
@@ -507,6 +511,7 @@ func Check(fdst, fsrc Fs) error {
 		return err
 	}
 	differences := int32(0)
+	noHashes := int32(0)
 
 	// FIXME could do this as it goes along and make it use less
 	// memory.
@@ -550,8 +555,12 @@ func Check(fdst, fsrc Fs) error {
 		go func() {
 			defer checkerWg.Done()
 			for check := range checks {
-				if checkIdentical(check[0], check[1]) {
+				differ, noHash := checkIdentical(check[0], check[1])
+				if differ {
 					atomic.AddInt32(&differences, 1)
+				}
+				if noHash {
+					atomic.AddInt32(&noHashes, 1)
 				}
 			}
 		}()
@@ -560,6 +569,9 @@ func Check(fdst, fsrc Fs) error {
 	Log(fdst, "Waiting for checks to finish")
 	checkerWg.Wait()
 	Log(fdst, "%d differences found", Stats.GetErrors())
+	if noHashes > 0 {
+		Log(fdst, "%d hashes could not be checked", noHashes)
+	}
 	if differences > 0 {
 		return errors.Errorf("%d differences found", differences)
 	}
