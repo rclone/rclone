@@ -198,6 +198,12 @@ For example to limit bandwidth usage to 10 MBytes/s use `--bwlimit 10M`
 This only limits the bandwidth of the data transfer, it doesn't limit
 the bandwith of the directory listings etc.
 
+Note that the units are Bytes/s not Bits/s.  Typically connections are
+measured in Bits/s - to convert divide by 8.  For example let's say
+you have a 10 Mbit/s connection and you wish rclone to use half of it
+- 5 Mbit/s.  This is 5/8 = 0.625MByte/s so you would use a `--bwlimit
+0.625M` parameter for rclone.
+
 ### --checkers=N ###
 
 The number of checkers to run in parallel.  Checkers do the equality
