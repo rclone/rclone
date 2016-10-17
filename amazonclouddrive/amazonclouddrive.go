@@ -48,7 +48,9 @@ const (
 var (
 	// Flags
 	tempLinkThreshold = fs.SizeSuffix(9 << 30) // Download files bigger than this via the tempLink
+	uploadWaitLimit   = pflag.DurationP("acd-upload-wait-limit", "", 60*time.Second, "Don't wait for completed uploads to appear if they took less than this time.")
 	uploadWaitTime    = pflag.DurationP("acd-upload-wait-time", "", 2*60*time.Second, "Time to wait after a failed complete upload to see if it appears.")
+	uploadWaitPerGB   = pflag.DurationP("acd-upload-wait-per-gb", "", 30*time.Second, "Additional time per GB to wait after a failed complete upload to see if it appears.")
 	// Description of how to auth for this app
 	acdConfig = &oauth2.Config{
 		Scopes: []string{"clouddrive:read_all", "clouddrive:write"},
@@ -478,26 +480,36 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 // At the end of large uploads.  The speculation is that the timeout
 // is waiting for the sha1 hashing to complete and the file may well
 // be properly uploaded.
-func (f *Fs) checkUpload(resp *http.Response, in io.Reader, src fs.ObjectInfo, inInfo *acd.File, inErr error) (fixedError bool, info *acd.File, err error) {
+func (f *Fs) checkUpload(resp *http.Response, in io.Reader, src fs.ObjectInfo, inInfo *acd.File, inErr error, uploadTime time.Duration) (fixedError bool, info *acd.File, err error) {
 	// Return if no error - all is well
 	if inErr == nil {
 		return false, inInfo, inErr
 	}
 	// If not one of the errors we can fix return
-	if resp == nil || resp.StatusCode != 408 && resp.StatusCode != 500 && resp.StatusCode != 504 {
-		return false, inInfo, inErr
-	}
-	const sleepTime = 5 * time.Second           // sleep between tries
-	retries := int(*uploadWaitTime / sleepTime) // number of retries
-	if retries <= 0 {
-		retries = 1
-	}
+	// if resp == nil || resp.StatusCode != 408 && resp.StatusCode != 500 && resp.StatusCode != 504 {
+	// 	return false, inInfo, inErr
+	// }
+	// check to see if we read to the end
 	buf := make([]byte, 1)
 	n, err := in.Read(buf)
 	if !(n == 0 && err == io.EOF) {
-		fs.Debug(src, "Upload error detected but didn't finish upload (n=%d, err=%v): %v", n, err, inErr)
+		fs.Debug(src, "Upload error detected but didn't finish upload: %v", inErr)
 		return false, inInfo, inErr
 	}
+
+	// Only wait for items which have been in transit for > uploadWaitLimit
+	if uploadTime < *uploadWaitLimit {
+		fs.Debug(src, "Upload error detected but not waiting since it only took %v to upload: %v", uploadTime, inErr)
+		return false, inInfo, inErr
+	}
+
+	// Time we should wait for the upload
+	uploadWaitPerByte := float64(*uploadWaitPerGB) / 1024 / 1024 / 1024
+	timeToWait := time.Duration(uploadWaitPerByte*float64(src.Size())) + *uploadWaitTime
+
+	const sleepTime = 5 * time.Second                        // sleep between tries
+	retries := int((timeToWait + sleepTime - 1) / sleepTime) // number of retries, rounded up
+
 	fs.Debug(src, "Error detected after finished upload - waiting to see if object was uploaded correctly: %v", inErr)
 	remote := src.Remote()
 	for i := 1; i <= retries; i++ {
@@ -508,7 +520,7 @@ func (f *Fs) checkUpload(resp *http.Response, in io.Reader, src fs.ObjectInfo, i
 			fs.Debug(src, "Object returned error - waiting (%d/%d): %v", i, retries, err)
 		} else {
 			if src.Size() == o.Size() {
-				fs.Debug(src, "Object found with correct size - returning with no error")
+				fs.Debug(src, "Object found with correct size %d after waiting (%d/%d) - %v - returning with no error", src.Size(), i, retries, sleepTime*time.Duration(i-1))
 				info = &acd.File{
 					Node: o.(*Object).info,
 				}
@@ -518,7 +530,7 @@ func (f *Fs) checkUpload(resp *http.Response, in io.Reader, src fs.ObjectInfo, i
 		}
 		time.Sleep(sleepTime)
 	}
-	fs.Debug(src, "Finished waiting for object - returning original error: %v", inErr)
+	fs.Debug(src, "Giving up waiting for object - returning original error: %v", inErr)
 	return false, inInfo, inErr
 }
 
@@ -557,6 +569,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 	var info *acd.File
 	var resp *http.Response
 	err = f.pacer.CallNoRetry(func() (bool, error) {
+		start := time.Now()
 		f.startUpload()
 		if src.Size() != 0 {
 			info, resp, err = folder.Put(in, leaf)
@@ -565,7 +578,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 		}
 		f.stopUpload()
 		var ok bool
-		ok, info, err = f.checkUpload(resp, in, src, info, err)
+		ok, info, err = f.checkUpload(resp, in, src, info, err, time.Since(start))
 		if ok {
 			return false, nil
 		}
@@ -815,6 +828,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	var resp *http.Response
 	var err error
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
+		start := time.Now()
 		o.fs.startUpload()
 		if size != 0 {
 			info, resp, err = file.OverwriteSized(in, size)
@@ -823,7 +837,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		}
 		o.fs.stopUpload()
 		var ok bool
-		ok, info, err = o.fs.checkUpload(resp, in, src, info, err)
+		ok, info, err = o.fs.checkUpload(resp, in, src, info, err, time.Since(start))
 		if ok {
 			return false, nil
 		}

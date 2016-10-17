@@ -133,13 +133,26 @@ To download files above this threshold, rclone requests a `tempLink`
 which downloads the file through a temporary URL directly from the
 underlying S3 storage.
 
-#### --acd-upload-wait-time=TIME ####
+#### --acd-upload-wait-time=TIME, --acd-upload-wait-per-gb=TIME, --acd-upload-wait-limit=TIME ####
 
 Sometimes Amazon Drive gives an error when a file has been fully
 uploaded but the file appears anyway after a little while.  This
-controls the time rclone waits - 2 minutes by default.  You might want
-to increase the time if you are having problems with very big files.
-Upload with the `-v` flag for more info.
+happens sometimes for files over 1GB in size and nearly every time for
+files bigger than 10GB. These parameters control the time rclone waits
+for the file to appear.
+
+If the upload took less than `--acd-upload-wait-limit` (default 60s),
+then we go ahead an upload it again as that will be quicker.
+
+We wait `--acd-upload-wait-time` (default 2m) for the file to appear,
+with an additional `--acd-upload-wait-per-gb` (default 30s) per GB of
+the uploaded file.
+
+These values were determined empirically by observing lots of uploads
+of big files for a range of file sizes.
+
+Upload with the `-v` flag to see more info about what rclone is doing
+in this situation.
 
 ### Limitations ###
 
