@@ -48,6 +48,16 @@ const (
 	//
 	// See https://developer.amazon.com/public/apis/experience/cloud-drive/content/restful-api-best-practices
 	AmazonCloudDrivePacer
+
+	// GoogleDrivePacer is a specialised pacer for Google Drive
+	//
+	// It implements a truncated exponential backoff strategy with
+	// randomization.  Normally operations are paced at the
+	// interval set with SetMinSleep.  On errors the sleep timer
+	// is set to (2 ^ n) + random_number_milliseconds seconds
+	//
+	// See https://developers.google.com/drive/v2/web/handle-errors#exponential-backoff
+	GoogleDrivePacer
 )
 
 // Paced is a function which is called by the Call and CallNoRetry
@@ -172,6 +182,8 @@ func (p *Pacer) SetPacer(t Type) *Pacer {
 	switch t {
 	case AmazonCloudDrivePacer:
 		p.calculatePace = p.acdPacer
+	case GoogleDrivePacer:
+		p.calculatePace = p.drivePacer
 	default:
 		p.calculatePace = p.defaultPacer
 	}
@@ -265,7 +277,34 @@ func (p *Pacer) acdPacer(retry bool) {
 		if p.sleepTime < p.minSleep {
 			p.sleepTime = p.minSleep
 		}
-		fs.Debug("pacer", "Rate limited, sleeping for %v (%d consecutive low level retries)", p.sleepTime, consecutiveRetries)
+		fs.Debug("pacer", "Rate limited, sleeping for %v (%d consecutive low level retries)", p.sleepTime, p.consecutiveRetries)
+	}
+}
+
+// drivePacer implements a truncated exponential backoff strategy with
+// randomization for Google Drive
+//
+// See the description for GoogleDrivePacer
+//
+// This should calculate a new sleepTime.  It takes a boolean as to
+// whether the operation should be retried or not.
+//
+// Call with p.mu held
+func (p *Pacer) drivePacer(retry bool) {
+	consecutiveRetries := p.consecutiveRetries
+	if consecutiveRetries == 0 {
+		if p.sleepTime != p.minSleep {
+			p.sleepTime = p.minSleep
+			fs.Debug("pacer", "Resetting sleep to minimum %v on success", p.sleepTime)
+		}
+	} else {
+		if consecutiveRetries > 5 {
+			consecutiveRetries = 5
+		}
+		// consecutiveRetries starts at 1 so go from 1,2,3,4,5,5 => 1,2,4,8,16,16
+		// maxSleep is 2**(consecutiveRetries-1) seconds + random milliseconds
+		p.sleepTime = time.Second<<uint(consecutiveRetries-1) + time.Duration(rand.Int63n(int64(time.Second)))
+		fs.Debug("pacer", "Rate limited, sleeping for %v (%d consecutive low level retries)", p.sleepTime, p.consecutiveRetries)
 	}
 }
 

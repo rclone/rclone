@@ -167,6 +167,10 @@ func TestSetPacer(t *testing.T) {
 	if fmt.Sprintf("%p", p.calculatePace) != fmt.Sprintf("%p", p.acdPacer) {
 		t.Errorf("calculatePace is not acdPacer")
 	}
+	p.SetPacer(GoogleDrivePacer)
+	if fmt.Sprintf("%p", p.calculatePace) != fmt.Sprintf("%p", p.drivePacer) {
+		t.Errorf("calculatePace is not drivePacer")
+	}
 	p.SetPacer(DefaultPacer)
 	if fmt.Sprintf("%p", p.calculatePace) != fmt.Sprintf("%p", p.defaultPacer) {
 		t.Errorf("calculatePace is not defaultPacer")
@@ -289,6 +293,42 @@ func TestAmazonCloudDrivePacer(t *testing.T) {
 			p.sleepTime = test.in
 			p.consecutiveRetries = test.consecutiveRetries
 			p.acdPacer(test.retry)
+			sum += p.sleepTime
+		}
+		got := sum / n
+		//t.Logf("%+v: got = %v", test, got)
+		if got < (test.want*9)/10 || got > (test.want*11)/10 {
+			t.Fatalf("%+v: bad sleep want %v+/-10%% got %v", test, test.want, got)
+		}
+	}
+}
+
+func TestGoogleDrivePacer(t *testing.T) {
+	p := New().SetMinSleep(time.Millisecond).SetPacer(GoogleDrivePacer).SetMaxSleep(time.Second).SetDecayConstant(2)
+	// Do lots of times because of the random number!
+	for _, test := range []struct {
+		in                 time.Duration
+		consecutiveRetries int
+		retry              bool
+		want               time.Duration
+	}{
+		{time.Millisecond, 0, true, time.Millisecond},
+		{10 * time.Millisecond, 0, true, time.Millisecond},
+		{1 * time.Second, 1, true, 1*time.Second + 500*time.Millisecond},
+		{1 * time.Second, 2, true, 2*time.Second + 500*time.Millisecond},
+		{1 * time.Second, 3, true, 4*time.Second + 500*time.Millisecond},
+		{1 * time.Second, 4, true, 8*time.Second + 500*time.Millisecond},
+		{1 * time.Second, 5, true, 16*time.Second + 500*time.Millisecond},
+		{1 * time.Second, 6, true, 16*time.Second + 500*time.Millisecond},
+		{1 * time.Second, 7, true, 16*time.Second + 500*time.Millisecond},
+	} {
+		const n = 1000
+		var sum time.Duration
+		// measure average time over n cycles
+		for i := 0; i < n; i++ {
+			p.sleepTime = test.in
+			p.consecutiveRetries = test.consecutiveRetries
+			p.drivePacer(test.retry)
 			sum += p.sleepTime
 		}
 		got := sum / n
