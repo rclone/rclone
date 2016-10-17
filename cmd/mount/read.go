@@ -52,6 +52,7 @@ func (fh *ReadFileHandle) seek(offset int64) error {
 		fs.Debug(fh.o, "ReadFileHandle.Read seek close old failed: %v", err)
 	}
 	fh.r = r
+	fh.offset = offset
 	return nil
 }
 
