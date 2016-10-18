@@ -30,7 +30,7 @@ type Dir struct {
 	f     fs.Fs
 	path  string
 	mu    sync.RWMutex // protects the following
-	read  bool
+	read  time.Time    // time directory entry last read
 	items map[string]*DirEntry
 }
 
@@ -66,8 +66,15 @@ func (d *Dir) delObject(leaf string) {
 func (d *Dir) readDir() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	if d.read {
-		return nil
+	when := time.Now()
+	if d.read.IsZero() {
+		fs.Debug(d.path, "Reading directory")
+	} else {
+		age := when.Sub(d.read)
+		if age < dirCacheTime {
+			return nil
+		}
+		fs.Debug(d.path, "Re-reading directory (%v old)", age)
 	}
 	objs, dirs, err := fs.NewLister().SetLevel(1).Start(d.f, d.path).GetAll()
 	if err == fs.ErrorDirNotFound {
@@ -76,6 +83,13 @@ func (d *Dir) readDir() error {
 	} else if err != nil {
 		return err
 	}
+	// NB when we re-read a directory after its cache has expired
+	// we drop the old files which should lead to correct
+	// behaviour but may not be very efficient.
+
+	// Keep a note of the previous contents of the directory
+	oldItems := d.items
+
 	// Cache the items by name
 	d.items = make(map[string]*DirEntry, len(objs)+len(dirs))
 	for _, obj := range objs {
@@ -87,12 +101,19 @@ func (d *Dir) readDir() error {
 	}
 	for _, dir := range dirs {
 		name := path.Base(dir.Remote())
+		// Use old dir value if it exists
+		if oldItem, ok := oldItems[name]; ok {
+			if _, ok := oldItem.o.(*fs.Dir); ok {
+				d.items[name] = oldItem
+				continue
+			}
+		}
 		d.items[name] = &DirEntry{
 			o:    dir,
 			node: nil,
 		}
 	}
-	d.read = true
+	d.read = when
 	return nil
 }
 

@@ -7,6 +7,7 @@ package mount
 import (
 	"log"
 	"os"
+	"time"
 
 	"bazil.org/fuse"
 	"github.com/ncw/rclone/cmd"
@@ -18,9 +19,10 @@ import (
 
 // Globals
 var (
-	noModTime = false
-	debugFUSE = false
-	noSeek    = false
+	noModTime    = false
+	debugFUSE    = false
+	noSeek       = false
+	dirCacheTime = 5 * 60 * time.Second
 	// mount options
 	readOnly                         = false
 	allowNonEmpty                    = false
@@ -45,6 +47,7 @@ func init() {
 	mountCmd.Flags().BoolVarP(&noModTime, "no-modtime", "", noModTime, "Don't read the modification time (can speed things up).")
 	mountCmd.Flags().BoolVarP(&debugFUSE, "debug-fuse", "", debugFUSE, "Debug the FUSE internals - needs -v.")
 	mountCmd.Flags().BoolVarP(&noSeek, "no-seek", "", noSeek, "Don't allow seeking in files.")
+	mountCmd.Flags().DurationVarP(&dirCacheTime, "dir-cache-time", "", dirCacheTime, "Time to cache directory entries for.")
 	// mount options
 	mountCmd.Flags().BoolVarP(&readOnly, "read-only", "", readOnly, "Mount read-only.")
 	mountCmd.Flags().BoolVarP(&allowNonEmpty, "allow-non-empty", "", allowNonEmpty, "Allow mounting over a non-empty directory.")
