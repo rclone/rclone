@@ -539,6 +539,13 @@ func (o *Object) SetModTime(modTime time.Time) error {
 
 // Storable returns a boolean showing if this object is storable
 func (o *Object) Storable() bool {
+	// Check for control characters in the remote name and show non storable
+	for _, c := range o.Remote() {
+		if c >= 0x00 && c < 0x20 || c == 0x7F {
+			fs.Debug(o.fs, "Can't store file with control characters: %q", o.Remote())
+			return false
+		}
+	}
 	mode := o.info.Mode()
 	// On windows a file with os.ModeSymlink represents a file with reparse points
 	if runtime.GOOS == "windows" && (mode&os.ModeSymlink) != 0 {
