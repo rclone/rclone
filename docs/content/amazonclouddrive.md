@@ -111,6 +111,12 @@ don't provide an API to permanently delete files, nor to empty the
 trash, so you will have to do that with one of Amazon's apps or via
 the Amazon Drive website.
 
+### Using with non `.com` Amazon accounts ###
+
+Let's say you usually use `amazon.co.uk`. When you authenticate with
+rclone it will take you to an `amazon.com` page to log in.  Your
+`amazon.co.uk` email and password should work here just fine.
+
 ### Specific options ###
 
 Here are the command line options specific to this cloud storage
