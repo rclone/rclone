@@ -41,17 +41,28 @@ var _ fusefs.HandleReader = (*ReadFileHandle)(nil)
 
 // seek to a new offset
 func (fh *ReadFileHandle) seek(offset int64) error {
-	fs.Debug(fh.o, "ReadFileHandle.seek from %d to %d", fh.offset, offset)
-	r, err := fh.o.Open(&fs.SeekOption{Offset: offset})
-	if err != nil {
-		fs.Debug(fh.o, "ReadFileHandle.Read seek failed: %v", err)
-		return err
+	// Can we seek it directly?
+	if do, ok := fh.r.(io.Seeker); ok {
+		fs.Debug(fh.o, "ReadFileHandle.seek from %d to %d (io.Seeker)", fh.offset, offset)
+		_, err := do.Seek(offset, io.SeekStart)
+		if err != nil {
+			fs.Debug(fh.o, "ReadFileHandle.Read io.Seeker failed: %v", err)
+			return err
+		}
+	} else {
+		fs.Debug(fh.o, "ReadFileHandle.seek from %d to %d", fh.offset, offset)
+		// if not re-open with a seek
+		r, err := fh.o.Open(&fs.SeekOption{Offset: offset})
+		if err != nil {
+			fs.Debug(fh.o, "ReadFileHandle.Read seek failed: %v", err)
+			return err
+		}
+		err = fh.r.Close()
+		if err != nil {
+			fs.Debug(fh.o, "ReadFileHandle.Read seek close old failed: %v", err)
+		}
+		fh.r = r
 	}
-	err = fh.r.Close()
-	if err != nil {
-		fs.Debug(fh.o, "ReadFileHandle.Read seek close old failed: %v", err)
-	}
-	fh.r = r
 	fh.offset = offset
 	return nil
 }

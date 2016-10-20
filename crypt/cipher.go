@@ -8,6 +8,7 @@ import (
 	"encoding/base32"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"strings"
 	"sync"
 	"unicode/utf8"
@@ -21,7 +22,7 @@ import (
 	"github.com/rfjakob/eme"
 )
 
-// Constancs
+// Constants
 const (
 	nameCipherBlockSize = aes.BlockSize
 	fileMagic           = "RCLONE\x00\x00"
@@ -55,6 +56,16 @@ var (
 	fileMagicBytes = []byte(fileMagic)
 )
 
+// ReadSeekCloser is the interface of the read handles
+type ReadSeekCloser interface {
+	io.Reader
+	io.Seeker
+	io.Closer
+}
+
+// OpenAtOffset opens the file handle at the offset given
+type OpenAtOffset func(offset int64) (io.ReadCloser, error)
+
 // Cipher is used to swap out the encryption implementations
 type Cipher interface {
 	// EncryptFileName encrypts a file path
@@ -69,6 +80,8 @@ type Cipher interface {
 	EncryptData(io.Reader) (io.Reader, error)
 	// DecryptData
 	DecryptData(io.ReadCloser) (io.ReadCloser, error)
+	// DecryptDataSeek decrypt at a given position
+	DecryptDataSeek(open OpenAtOffset, offset int64) (ReadSeekCloser, error)
 	// EncryptedSize calculates the size of the data when encrypted
 	EncryptedSize(int64) int64
 	// DecryptedSize calculates the size of the data when decrypted
@@ -476,14 +489,16 @@ func (c *cipher) EncryptData(in io.Reader) (io.Reader, error) {
 
 // decrypter decrypts an io.ReaderCloser on the fly
 type decrypter struct {
-	rc       io.ReadCloser
-	nonce    nonce
-	c        *cipher
-	buf      []byte
-	readBuf  []byte
-	bufIndex int
-	bufSize  int
-	err      error
+	rc           io.ReadCloser
+	nonce        nonce
+	initialNonce nonce
+	c            *cipher
+	buf          []byte
+	readBuf      []byte
+	bufIndex     int
+	bufSize      int
+	err          error
+	open         OpenAtOffset
 }
 
 // newDecrypter creates a new file handle decrypting on the fly
@@ -509,6 +524,30 @@ func (c *cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
 	}
 	// retreive the nonce
 	fh.nonce.fromBuf(readBuf[fileMagicSize:])
+	fh.initialNonce = fh.nonce
+	return fh, nil
+}
+
+// newDecrypterSeek creates a new file handle decrypting on the fly
+func (c *cipher) newDecrypterSeek(open OpenAtOffset, offset int64) (fh *decrypter, err error) {
+	// Open initially with no seek
+	rc, err := open(0)
+	if err != nil {
+		return nil, err
+	}
+	// Open the stream which fills in the nonce
+	fh, err = c.newDecrypter(rc)
+	if err != nil {
+		return nil, err
+	}
+	fh.open = open // will be called by fh.Seek
+	if offset != 0 {
+		_, err = fh.Seek(offset, io.SeekStart)
+		if err != nil {
+			_ = fh.Close()
+			return nil, err
+		}
+	}
 	return fh, nil
 }
 
@@ -549,15 +588,60 @@ func (fh *decrypter) Read(p []byte) (n int, err error) {
 	return n, nil
 }
 
-// seek the decryption forwards the amount given
-//
-// returns an offset for the underlying rc to be seeked and the number
-// of bytes to be discarded
-func (fh *decrypter) seek(offset int64) (underlyingOffset int64, discard int64) {
-	blocks, discard := offset/blockDataSize, offset%blockDataSize
-	underlyingOffset = int64(fileHeaderSize) + blocks*(blockHeaderSize+blockDataSize)
-	fh.nonce.add(uint64(blocks))
-	return
+// Seek as per io.Seeker
+func (fh *decrypter) Seek(offset int64, whence int) (int64, error) {
+	if fh.open == nil {
+		return 0, fh.finish(errors.New("can't seek - not initialised with newDecrypterSeek"))
+	}
+	if whence != io.SeekStart {
+		return 0, fh.finish(errors.New("can only seek from the start"))
+	}
+
+	// Reset error or return it if not EOF
+	if fh.err == io.EOF {
+		fh.err = nil
+	} else if fh.err != nil {
+		return 0, fh.err
+	}
+
+	// Can we seek it directly?
+	if do, ok := fh.rc.(io.Seeker); ok {
+		_, err := do.Seek(offset, io.SeekStart)
+		if err != nil {
+			return 0, fh.finish(err)
+		}
+	} else {
+		// if not reopen with seek
+		_ = fh.rc.Close() // close underlying file
+		fh.rc = nil
+
+		// blocks we need to seek, plus bytes we need to discard
+		blocks, discard := offset/blockDataSize, offset%blockDataSize
+
+		// Offset in underlying stream we need to seek
+		underlyingOffset := int64(fileHeaderSize) + blocks*(blockHeaderSize+blockDataSize)
+
+		// Move the nonce on the correct number of blocks from the start
+		fh.nonce = fh.initialNonce
+		fh.nonce.add(uint64(blocks))
+
+		// Re-open the underlying object with the offset given
+		rc, err := fh.open(underlyingOffset)
+		if err != nil {
+			return 0, fh.finish(errors.Wrap(err, "couldn't reopen file with offset"))
+		}
+
+		// Set the file handle
+		fh.rc = rc
+
+		// Discard excess bytes
+		_, err = io.CopyN(ioutil.Discard, fh, discard)
+		if err != nil {
+			return 0, fh.finish(err)
+		}
+	}
+
+	return offset, nil
 }
 
 // finish sets the final error and tidies up
@@ -598,6 +682,19 @@ func (fh *decrypter) finishAndClose(err error) error {
 // DecryptData decrypts the data stream
 func (c *cipher) DecryptData(rc io.ReadCloser) (io.ReadCloser, error) {
 	out, err := c.newDecrypter(rc)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// DecryptDataSeek decrypts the data stream from offset
+//
+// The open function must return a ReadCloser opened to the offset supplied
+//
+// You must use this form of DecryptData if you might want to Seek the file handle
+func (c *cipher) DecryptDataSeek(open OpenAtOffset, offset int64) (ReadSeekCloser, error) {
+	out, err := c.newDecrypterSeek(open, offset)
 	if err != nil {
 		return nil, err
 	}

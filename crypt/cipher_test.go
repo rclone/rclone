@@ -854,6 +854,57 @@ func TestNewDecrypter(t *testing.T) {
 	}
 }
 
+func TestNewDecrypterSeek(t *testing.T) {
+	c, err := newCipher(NameEncryptionStandard, "", "")
+	assert.NoError(t, err)
+	c.cryptoRand = &zeroes{} // nodge the crypto rand generator
+
+	// Make random data
+	const dataSize = 150000
+	plaintext, err := ioutil.ReadAll(newRandomSource(dataSize))
+	assert.NoError(t, err)
+
+	// Encrypt the data
+	buf := bytes.NewBuffer(plaintext)
+	encrypted, err := c.EncryptData(buf)
+	assert.NoError(t, err)
+	ciphertext, err := ioutil.ReadAll(encrypted)
+	assert.NoError(t, err)
+
+	trials := []int{0, 1, 2, 3, 4, 5, 7, 8, 9, 15, 16, 17, 31, 32, 33, 63, 64, 65,
+		127, 128, 129, 255, 256, 257, 511, 512, 513, 1023, 1024, 1025, 2047, 2048, 2049,
+		4095, 4096, 4097, 8191, 8192, 8193, 16383, 16384, 16385, 32767, 32768, 32769,
+		65535, 65536, 65537, 131071, 131072, 131073, dataSize - 1, dataSize}
+
+	// Open stream with a seek of underlyingOffset
+	open := func(underlyingOffset int64) (io.ReadCloser, error) {
+		return ioutil.NopCloser(bytes.NewBuffer(ciphertext[int(underlyingOffset):])), nil
+	}
+
+	// Now try decoding it with a open/seek
+	for _, offset := range trials {
+		rc, err := c.DecryptDataSeek(open, int64(offset))
+		assert.NoError(t, err)
+
+		seekedDecrypted, err := ioutil.ReadAll(rc)
+		assert.NoError(t, err)
+
+		assert.Equal(t, plaintext[offset:], seekedDecrypted)
+	}
+
+	// Now try decoding it with a single open and lots of seeks
+	rc, err := c.DecryptDataSeek(open, 0)
+	for _, offset := range trials {
+		_, err := rc.Seek(int64(offset), io.SeekStart)
+		assert.NoError(t, err)
+
+		seekedDecrypted, err := ioutil.ReadAll(rc)
+		assert.NoError(t, err)
+
+		assert.Equal(t, plaintext[offset:], seekedDecrypted)
+	}
+}
+
 func TestDecrypterRead(t *testing.T) {
 	c, err := newCipher(NameEncryptionStandard, "", "")
 	assert.NoError(t, err)

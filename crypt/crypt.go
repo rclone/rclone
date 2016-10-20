@@ -4,7 +4,6 @@ package crypt
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"path"
 	"sync"
 
@@ -298,7 +297,7 @@ func (o *Object) Hash(hash fs.HashType) (string, error) {
 }
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
-func (o *Object) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
+func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 	var offset int64
 	for _, option := range options {
 		switch x := option.(type) {
@@ -310,46 +309,17 @@ func (o *Object) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
 			}
 		}
 	}
-	in, err := o.Object.Open()
+	rc, err = o.f.cipher.DecryptDataSeek(func(underlyingOffset int64) (io.ReadCloser, error) {
+		if underlyingOffset == 0 {
+			// Open with no seek
+			return o.Object.Open()
+		}
+		// Open stream with a seek of underlyingOffset
+		return o.Object.Open(&fs.SeekOption{Offset: underlyingOffset})
+	}, offset)
 	if err != nil {
 		return nil, err
 	}
-
-	// This reads the header and checks it is OK
-	rc, err := o.f.cipher.DecryptData(in)
-	if err != nil {
-		return nil, err
-	}
-
-	// If seeking required, then...
-	if offset != 0 {
-		// FIXME could cache the unseeked decrypter as we re-read the header on every seek
-		decrypter := rc.(*decrypter)
-
-		// Seek the decrypter and work out where to seek the
-		// underlying file and how many bytes to discard
-		underlyingOffset, discard := decrypter.seek(offset)
-
-		// Re-open stream with a seek of underlyingOffset
-		err = in.Close()
-		if err != nil {
-			return nil, err
-		}
-		in, err := o.Object.Open(&fs.SeekOption{Offset: underlyingOffset})
-		if err != nil {
-			return nil, err
-		}
-
-		// Update the stream
-		decrypter.rc = in
-
-		// Discard the bytes
-		_, err = io.CopyN(ioutil.Discard, decrypter, discard)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return rc, err
 }
 
