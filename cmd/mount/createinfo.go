@@ -26,6 +26,11 @@ func (ci *createInfo) Fs() fs.Info {
 	return ci.f
 }
 
+// String returns the remote path
+func (ci *createInfo) String() string {
+	return ci.remote
+}
+
 // Remote returns the remote path
 func (ci *createInfo) Remote() string {
 	return ci.remote

@@ -165,9 +165,6 @@ type Info interface {
 type Object interface {
 	ObjectInfo
 
-	// String returns a description of the Object
-	String() string
-
 	// SetModTime sets the metadata on the object to set the modification date
 	SetModTime(time.Time) error
 
@@ -199,6 +196,9 @@ type ObjectInfo interface {
 // BasicInfo common interface for Dir and Object providing the very
 // basic attributes of an object.
 type BasicInfo interface {
+	// String returns a description of the Object
+	String() string
+
 	// Remote returns the remote path
 	Remote() string
 
@@ -355,6 +355,11 @@ type Dir struct {
 	When  time.Time // modification or creation time - IsZero for unknown
 	Bytes int64     // size of directory and contents -1 for unknown
 	Count int64     // number of objects -1 for unknown
+}
+
+// String returns the name
+func (d *Dir) String() string {
+	return d.Name
 }
 
 // Remote returns the remote path
@@ -523,6 +528,7 @@ type staticObjectInfo struct {
 
 func (i *staticObjectInfo) Fs() Info           { return i.fs }
 func (i *staticObjectInfo) Remote() string     { return i.remote }
+func (i *staticObjectInfo) String() string     { return i.remote }
 func (i *staticObjectInfo) ModTime() time.Time { return i.modTime }
 func (i *staticObjectInfo) Size() int64        { return i.size }
 func (i *staticObjectInfo) Storable() bool     { return i.storable }
