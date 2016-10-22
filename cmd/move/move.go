@@ -15,7 +15,8 @@ var commandDefintion = &cobra.Command{
 	Short: `Move files from source to dest.`,
 	Long: `
 Moves the contents of the source directory to the destination
-directory. Rclone will error if the source and destination overlap.
+directory. Rclone will error if the source and destination overlap and
+the remote does not support a server side directory move operation.
 
 If no filters are in use and if possible this will server side move
 ` + "`" + `source:path` + "`" + ` into ` + "`" + `dest:path` + "`" + `. After this ` + "`" + `source:path` + "`" + ` will no

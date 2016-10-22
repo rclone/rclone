@@ -671,6 +671,11 @@ func TestServerSideMoveWithFilter(t *testing.T) {
 func TestServerSideMoveOverlap(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
+
+	if _, ok := r.fremote.(fs.DirMover); ok {
+		t.Skip("Skipping test as remote supports DirMove")
+	}
+
 	subRemoteName := r.fremoteName + "/rclone-move-test"
 	fremoteMove, err := fs.NewFs(subRemoteName)
 	require.NoError(t, err)

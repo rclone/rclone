@@ -455,12 +455,6 @@ func MoveDir(fdst, fsrc Fs) error {
 		ErrorLog(fdst, "Nothing to do as source and destination are the same")
 		return nil
 	}
-	// The two remotes mustn't overlap
-	if Overlapping(fdst, fsrc) {
-		err := ErrorCantMoveOverlapping
-		ErrorLog(fdst, "%v", err)
-		return err
-	}
 
 	// First attempt to use DirMover if exists, same Fs and no filters are active
 	if fdstDirMover, ok := fdst.(DirMover); ok && fsrc.Name() == fdst.Name() && Config.Filter.InActive() {
@@ -481,6 +475,13 @@ func MoveDir(fdst, fsrc Fs) error {
 			ErrorLog(fdst, "Server side directory move failed: %v", err)
 			return err
 		}
+	}
+
+	// The two remotes mustn't overlap if we didn't do server side move
+	if Overlapping(fdst, fsrc) {
+		err := ErrorCantMoveOverlapping
+		ErrorLog(fdst, "%v", err)
+		return err
 	}
 
 	// Otherwise move the files one by one
