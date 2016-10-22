@@ -222,12 +222,13 @@ func removeFailedCopy(dst Object) bool {
 	return true
 }
 
-// Copy src object to dst or f if nil
-//
-// If dst is nil then the object must not exist already.  If you do
-// call Copy() with dst nil on a pre-existing file then some filing
-// systems (eg Drive) may duplicate the file.
-func Copy(f Fs, dst, src Object) (err error) {
+// Copy src object to dst or f if nil.  If dst is nil then it uses
+// remote as the name of the new object.
+func Copy(f Fs, dst Object, remote string, src Object) (err error) {
+	if Config.DryRun {
+		Log(src, "Not copying as --dry-run")
+		return nil
+	}
 	maxTries := Config.LowLevelRetries
 	tries := 0
 	doUpdate := dst != nil
@@ -238,7 +239,7 @@ func Copy(f Fs, dst, src Object) (err error) {
 		actionTaken = "Copied (server side copy)"
 		if fCopy, ok := f.(Copier); ok && src.Fs().Name() == f.Name() {
 			var newDst Object
-			newDst, err = fCopy.Copy(src, src.Remote())
+			newDst, err = fCopy.Copy(src, remote)
 			if err == nil {
 				dst = newDst
 			}
@@ -331,6 +332,46 @@ func Copy(f Fs, dst, src Object) (err error) {
 
 	Debug(src, actionTaken)
 	return err
+}
+
+// Move src object to dst or fdst if nil.  If dst is nil then it uses
+// remote as the name of the new object.
+func Move(fdst Fs, dst Object, remote string, src Object) (err error) {
+	if Config.DryRun {
+		Log(src, "Not moving as --dry-run")
+		return nil
+	}
+	// See if we have Move available
+	if do, ok := fdst.(Mover); ok && src.Fs().Name() == fdst.Name() {
+		// Delete destination if it exists
+		if dst != nil {
+			err = DeleteFile(dst)
+			if err != nil {
+				return err
+			}
+		}
+		// Move dst <- src
+		_, err := do.Move(src, remote)
+		switch err {
+		case nil:
+			Debug(src, "Moved")
+			return nil
+		case ErrorCantMove:
+			Debug(src, "Can't move, switching to copy")
+		default:
+			Stats.Error()
+			ErrorLog(dst, "Couldn't move: %v", err)
+			return err
+		}
+	}
+	// Move not found or didn't work so copy dst <- src
+	err = Copy(fdst, dst, remote, src)
+	if err != nil {
+		ErrorLog(src, "Not deleting source as copy failed: %v", err)
+		return err
+	}
+	// Delete src if no error on copy
+	return DeleteFile(src)
 }
 
 // DeleteFile deletes a single file respecting --dry-run and accumulating stats and errors.

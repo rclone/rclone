@@ -27,7 +27,7 @@ type syncCopyMove struct {
 	abort          chan struct{}     // signal to abort the copiers
 	checkerWg      sync.WaitGroup    // wait for checkers
 	toBeChecked    ObjectPairChan    // checkers channel
-	copierWg       sync.WaitGroup    // wait for copiers
+	transfersWg    sync.WaitGroup    // wait for transfers
 	toBeUploaded   ObjectPairChan    // copiers channel
 	errorMu        sync.Mutex        // Mutex covering the errors variables
 	err            error             // normal error from copy process
@@ -230,9 +230,10 @@ func (s *syncCopyMove) pairChecker(in ObjectPairChan, out ObjectPairChan, wg *sy
 	}
 }
 
-// pairCopier reads Objects on in and copies them.
-func (s *syncCopyMove) pairCopier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
+// pairCopyOrMove reads Objects on in and moves or copies them.
+func (s *syncCopyMove) pairCopyOrMove(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
 	defer wg.Done()
+	var err error
 	for {
 		if s.aborting() {
 			return
@@ -244,80 +245,13 @@ func (s *syncCopyMove) pairCopier(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup
 			}
 			src := pair.src
 			Stats.Transferring(src.Remote())
-			var err error
-			if Config.DryRun {
-				Log(src, "Not copying as --dry-run")
+			if s.DoMove {
+				err = Move(fdst, pair.dst, src.Remote(), src)
 			} else {
-				err = Copy(fdst, pair.dst, src)
-				s.processError(err)
+				err = Copy(fdst, pair.dst, src.Remote(), src)
 			}
+			s.processError(err)
 			Stats.DoneTransferring(src.Remote(), err == nil)
-		case <-s.abort:
-			return
-		}
-	}
-}
-
-// pairMover reads Objects on in and moves them if possible, or copies
-// them if not
-func (s *syncCopyMove) pairMover(in ObjectPairChan, fdst Fs, wg *sync.WaitGroup) {
-	defer wg.Done()
-	// See if we have Move available
-	fdstMover, haveMover := fdst.(Mover)
-	for {
-		if s.aborting() {
-			return
-		}
-		select {
-		case pair, ok := <-in:
-			if !ok {
-				return
-			}
-			transferredOK := true
-			src := pair.src
-			dst := pair.dst
-			Stats.Transferring(src.Remote())
-			doCopy := func() {
-				// Copy dst <- src
-				err := Copy(fdst, dst, src)
-				s.processError(err)
-				if err != nil {
-					transferredOK = false
-					ErrorLog(src, "Not deleting as copy failed: %v", err)
-				} else {
-					// Delete src if no error on copy
-					s.processError(DeleteFile(src))
-				}
-			}
-			if Config.DryRun {
-				Log(src, "Not moving as --dry-run")
-			} else if haveMover && src.Fs().Name() == fdst.Name() {
-				// Delete destination if it exists
-				if dst != nil {
-					s.processError(DeleteFile(dst))
-				}
-				// Move dst <- src
-				_, err := fdstMover.Move(src, src.Remote())
-				if err != nil {
-					// If this remote can't do moves,
-					// then set the flag and copy
-					if err == ErrorCantMove {
-						Debug(src, "Can't move, switching to copy")
-						haveMover = false
-						doCopy()
-					} else {
-						Stats.Error()
-						ErrorLog(dst, "Couldn't move: %v", err)
-						s.processError(err)
-						transferredOK = false
-					}
-				} else {
-					Debug(src, "Moved")
-				}
-			} else {
-				doCopy()
-			}
-			Stats.DoneTransferring(src.Remote(), transferredOK)
 		case <-s.abort:
 			return
 		}
@@ -341,13 +275,9 @@ func (s *syncCopyMove) stopCheckers() {
 
 // This starts the background transfers
 func (s *syncCopyMove) startTransfers() {
-	s.copierWg.Add(Config.Transfers)
+	s.transfersWg.Add(Config.Transfers)
 	for i := 0; i < Config.Transfers; i++ {
-		if s.DoMove {
-			go s.pairMover(s.toBeUploaded, s.fdst, &s.copierWg)
-		} else {
-			go s.pairCopier(s.toBeUploaded, s.fdst, &s.copierWg)
-		}
+		go s.pairCopyOrMove(s.toBeUploaded, s.fdst, &s.transfersWg)
 	}
 }
 
@@ -355,7 +285,7 @@ func (s *syncCopyMove) startTransfers() {
 func (s *syncCopyMove) stopTransfers() {
 	close(s.toBeUploaded)
 	Log(s.fdst, "Waiting for transfers to finish")
-	s.copierWg.Wait()
+	s.transfersWg.Wait()
 }
 
 // This deletes the files in the dstFiles map.  If checkSrcMap is set
