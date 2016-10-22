@@ -895,7 +895,7 @@ func TestNewDecrypterSeek(t *testing.T) {
 	// Now try decoding it with a single open and lots of seeks
 	rc, err := c.DecryptDataSeek(open, 0)
 	for _, offset := range trials {
-		_, err := rc.Seek(int64(offset), io.SeekStart)
+		_, err := rc.Seek(int64(offset), 0)
 		assert.NoError(t, err)
 
 		seekedDecrypted, err := ioutil.ReadAll(rc)

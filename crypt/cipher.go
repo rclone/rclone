@@ -542,7 +542,7 @@ func (c *cipher) newDecrypterSeek(open OpenAtOffset, offset int64) (fh *decrypte
 	}
 	fh.open = open // will be called by fh.Seek
 	if offset != 0 {
-		_, err = fh.Seek(offset, io.SeekStart)
+		_, err = fh.Seek(offset, 0)
 		if err != nil {
 			_ = fh.Close()
 			return nil, err
@@ -593,7 +593,7 @@ func (fh *decrypter) Seek(offset int64, whence int) (int64, error) {
 	if fh.open == nil {
 		return 0, fh.finish(errors.New("can't seek - not initialised with newDecrypterSeek"))
 	}
-	if whence != io.SeekStart {
+	if whence != 0 {
 		return 0, fh.finish(errors.New("can only seek from the start"))
 	}
 
@@ -606,7 +606,7 @@ func (fh *decrypter) Seek(offset int64, whence int) (int64, error) {
 
 	// Can we seek it directly?
 	if do, ok := fh.rc.(io.Seeker); ok {
-		_, err := do.Seek(offset, io.SeekStart)
+		_, err := do.Seek(offset, 0)
 		if err != nil {
 			return 0, fh.finish(err)
 		}

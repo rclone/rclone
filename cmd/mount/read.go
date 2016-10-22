@@ -44,7 +44,7 @@ func (fh *ReadFileHandle) seek(offset int64) error {
 	// Can we seek it directly?
 	if do, ok := fh.r.(io.Seeker); ok {
 		fs.Debug(fh.o, "ReadFileHandle.seek from %d to %d (io.Seeker)", fh.offset, offset)
-		_, err := do.Seek(offset, io.SeekStart)
+		_, err := do.Seek(offset, 0)
 		if err != nil {
 			fs.Debug(fh.o, "ReadFileHandle.Read io.Seeker failed: %v", err)
 			return err
