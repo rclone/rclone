@@ -854,6 +854,12 @@ For example to limit bandwidth usage to 10 MBytes/s use `--bwlimit 10M`
 This only limits the bandwidth of the data transfer, it doesn't limit
 the bandwith of the directory listings etc.
 
+For Linux/Unix operating systems: rclone will toggle the bandwidth limiter on
+and off upon receipt of the SIGUSR2 signal. This feature allows the user to
+remove the bandwidth limitations of a long running rclone transfer during
+off-peak hours, and to restore it back to the value specified with --bwlimit
+again when needed.
+
 ### --checkers=N ###
 
 The number of checkers to run in parallel.  Checkers do the equality
