@@ -9,10 +9,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(lsCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
-var lsCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "ls remote:path",
 	Short: `List all the objects in the the path with size and path.`,
 	Run: func(command *cobra.Command, args []string) {

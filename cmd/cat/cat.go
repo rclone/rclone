@@ -9,10 +9,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(catCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
-var catCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "cat remote:path",
 	Short: `Concatenates any files and sends them to stdout.`,
 	Long: `

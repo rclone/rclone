@@ -7,10 +7,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(purgeCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
-var purgeCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "purge remote:path",
 	Short: `Remove the path and all of its contents.`,
 	Long: `

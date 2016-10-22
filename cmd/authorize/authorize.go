@@ -7,10 +7,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(authorizeCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
-var authorizeCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "authorize",
 	Short: `Remote authorization.`,
 	Long: `

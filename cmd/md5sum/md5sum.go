@@ -9,10 +9,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(md5sumCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
-var md5sumCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "md5sum remote:path",
 	Short: `Produces an md5sum file for all the objects in the path.`,
 	Long: `

@@ -9,10 +9,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(sizeCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
-var sizeCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "size remote:path",
 	Short: `Prints the total size and number of objects in remote:path.`,
 	Run: func(command *cobra.Command, args []string) {

@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(gendocsCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
 const gendocFrontmatterTemplate = `---
@@ -25,7 +25,7 @@ url: %s
 ---
 `
 
-var gendocsCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "gendocs output_directory",
 	Short: `Output markdown docs for rclone to the directory supplied.`,
 	Long: `

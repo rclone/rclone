@@ -7,10 +7,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(checkCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
-var checkCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "check source:path dest:path",
 	Short: `Checks the files in the source and destination match.`,
 	Long: `

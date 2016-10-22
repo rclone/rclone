@@ -7,10 +7,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(syncCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
-var syncCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "sync source:path dest:path",
 	Short: `Make source and dest identical, modifying destination only.`,
 	Long: `

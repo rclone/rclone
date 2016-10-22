@@ -7,10 +7,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(configCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
-var configCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "config",
 	Short: `Enter an interactive configuration session.`,
 	Run: func(command *cobra.Command, args []string) {

@@ -7,10 +7,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(cleanupCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
-var cleanupCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "cleanup remote:path",
 	Short: `Clean up the remote if possible`,
 	Long: `

@@ -7,10 +7,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(mkdirCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
-var mkdirCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "mkdir remote:path",
 	Short: `Make the path if it doesn't already exist.`,
 	Run: func(command *cobra.Command, args []string) {

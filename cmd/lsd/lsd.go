@@ -9,10 +9,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(lsdCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
-var lsdCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "lsd remote:path",
 	Short: `List all directories/containers/buckets in the the path.`,
 	Run: func(command *cobra.Command, args []string) {

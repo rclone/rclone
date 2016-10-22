@@ -7,10 +7,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(rmdirCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
-var rmdirCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "rmdir remote:path",
 	Short: `Remove the path if empty.`,
 	Long: `

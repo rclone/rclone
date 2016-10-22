@@ -8,10 +8,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(genautocompleteCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
-var genautocompleteCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "genautocomplete [output_file]",
 	Short: `Output bash completion script for rclone.`,
 	Long: `

@@ -7,10 +7,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(copyCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
-var copyCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "copy source:path dest:path",
 	Short: `Copy files from source to dest, skipping already copied`,
 	Long: `

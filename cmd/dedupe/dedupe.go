@@ -13,11 +13,11 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(dedupeCmd)
-	dedupeCmd.Flags().VarP(&dedupeMode, "dedupe-mode", "", "Dedupe mode interactive|skip|first|newest|oldest|rename.")
+	cmd.Root.AddCommand(commandDefintion)
+	commandDefintion.Flags().VarP(&dedupeMode, "dedupe-mode", "", "Dedupe mode interactive|skip|first|newest|oldest|rename.")
 }
 
-var dedupeCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "dedupe [mode] remote:path",
 	Short: `Interactively find duplicate files delete/rename them.`,
 	Long: `

@@ -7,10 +7,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(deleteCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
-var deleteCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "delete remote:path",
 	Short: `Remove the contents of path.`,
 	Long: `

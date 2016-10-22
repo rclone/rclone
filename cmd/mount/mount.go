@@ -43,26 +43,26 @@ var (
 func init() {
 	umask = unix.Umask(0) // read the umask
 	unix.Umask(umask)     // set it back to what it was
-	cmd.Root.AddCommand(mountCmd)
-	mountCmd.Flags().BoolVarP(&noModTime, "no-modtime", "", noModTime, "Don't read the modification time (can speed things up).")
-	mountCmd.Flags().BoolVarP(&debugFUSE, "debug-fuse", "", debugFUSE, "Debug the FUSE internals - needs -v.")
-	mountCmd.Flags().BoolVarP(&noSeek, "no-seek", "", noSeek, "Don't allow seeking in files.")
-	mountCmd.Flags().DurationVarP(&dirCacheTime, "dir-cache-time", "", dirCacheTime, "Time to cache directory entries for.")
+	cmd.Root.AddCommand(commandDefintion)
+	commandDefintion.Flags().BoolVarP(&noModTime, "no-modtime", "", noModTime, "Don't read the modification time (can speed things up).")
+	commandDefintion.Flags().BoolVarP(&debugFUSE, "debug-fuse", "", debugFUSE, "Debug the FUSE internals - needs -v.")
+	commandDefintion.Flags().BoolVarP(&noSeek, "no-seek", "", noSeek, "Don't allow seeking in files.")
+	commandDefintion.Flags().DurationVarP(&dirCacheTime, "dir-cache-time", "", dirCacheTime, "Time to cache directory entries for.")
 	// mount options
-	mountCmd.Flags().BoolVarP(&readOnly, "read-only", "", readOnly, "Mount read-only.")
-	mountCmd.Flags().BoolVarP(&allowNonEmpty, "allow-non-empty", "", allowNonEmpty, "Allow mounting over a non-empty directory.")
-	mountCmd.Flags().BoolVarP(&allowRoot, "allow-root", "", allowRoot, "Allow access to root user.")
-	mountCmd.Flags().BoolVarP(&allowOther, "allow-other", "", allowOther, "Allow access to other users.")
-	mountCmd.Flags().BoolVarP(&defaultPermissions, "default-permissions", "", defaultPermissions, "Makes kernel enforce access control based on the file mode.")
-	mountCmd.Flags().BoolVarP(&writebackCache, "write-back-cache", "", writebackCache, "Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used.")
-	mountCmd.Flags().VarP(&maxReadAhead, "max-read-ahead", "", "The number of bytes that can be prefetched for sequential reads.")
-	mountCmd.Flags().IntVarP(&umask, "umask", "", umask, "Override the permission bits set by the filesystem.")
-	mountCmd.Flags().Uint32VarP(&uid, "uid", "", uid, "Override the uid field set by the filesystem.")
-	mountCmd.Flags().Uint32VarP(&gid, "gid", "", gid, "Override the gid field set by the filesystem.")
-	//mountCmd.Flags().BoolVarP(&foreground, "foreground", "", foreground, "Do not detach.")
+	commandDefintion.Flags().BoolVarP(&readOnly, "read-only", "", readOnly, "Mount read-only.")
+	commandDefintion.Flags().BoolVarP(&allowNonEmpty, "allow-non-empty", "", allowNonEmpty, "Allow mounting over a non-empty directory.")
+	commandDefintion.Flags().BoolVarP(&allowRoot, "allow-root", "", allowRoot, "Allow access to root user.")
+	commandDefintion.Flags().BoolVarP(&allowOther, "allow-other", "", allowOther, "Allow access to other users.")
+	commandDefintion.Flags().BoolVarP(&defaultPermissions, "default-permissions", "", defaultPermissions, "Makes kernel enforce access control based on the file mode.")
+	commandDefintion.Flags().BoolVarP(&writebackCache, "write-back-cache", "", writebackCache, "Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used.")
+	commandDefintion.Flags().VarP(&maxReadAhead, "max-read-ahead", "", "The number of bytes that can be prefetched for sequential reads.")
+	commandDefintion.Flags().IntVarP(&umask, "umask", "", umask, "Override the permission bits set by the filesystem.")
+	commandDefintion.Flags().Uint32VarP(&uid, "uid", "", uid, "Override the uid field set by the filesystem.")
+	commandDefintion.Flags().Uint32VarP(&gid, "gid", "", gid, "Override the gid field set by the filesystem.")
+	//commandDefintion.Flags().BoolVarP(&foreground, "foreground", "", foreground, "Do not detach.")
 }
 
-var mountCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:   "mount remote:path /path/to/mountpoint",
 	Short: `Mount the remote as a mountpoint. **EXPERIMENTAL**`,
 	Long: `

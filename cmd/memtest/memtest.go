@@ -10,10 +10,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(memtestCmd)
+	cmd.Root.AddCommand(commandDefintion)
 }
 
-var memtestCmd = &cobra.Command{
+var commandDefintion = &cobra.Command{
 	Use:    "memtest remote:path",
 	Short:  `Load all the objects at remote:path and report memory stats.`,
 	Hidden: true,
