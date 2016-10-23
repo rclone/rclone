@@ -16,8 +16,8 @@ import (
 
 // File represents a file
 type File struct {
+	size    int64        // size of file - read and written with atomic int64 - must be 64 bit aligned
 	d       *Dir         // parent directory - read only
-	size    int64        // size of file - read and written with atomic
 	mu      sync.RWMutex // protects the following
 	o       fs.Object    // NB o may be nil if file is being written
 	writers int          // number of writers for this file
