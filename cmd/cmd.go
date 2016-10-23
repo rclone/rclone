@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"runtime"
 	"runtime/pprof"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -94,31 +95,50 @@ func ShowVersion() {
 	fmt.Printf("rclone %s\n", fs.Version)
 }
 
-// newFsSrc creates a src Fs from a name
+// newFsFile creates a dst Fs from a name but may point to a file.
 //
-// This can point to a file
-func newFsSrc(remote string) fs.Fs {
+// It returns a string with the file name if points to a file
+func newFsFile(remote string) (fs.Fs, string) {
 	fsInfo, configName, fsPath, err := fs.ParseRemote(remote)
 	if err != nil {
 		fs.Stats.Error()
 		log.Fatalf("Failed to create file system for %q: %v", remote, err)
 	}
 	f, err := fsInfo.NewFs(configName, fsPath)
-	if err == fs.ErrorIsFile {
+	switch err {
+	case fs.ErrorIsFile:
+		return f, path.Base(fsPath)
+	case nil:
+		return f, ""
+	default:
+		fs.Stats.Error()
+		log.Fatalf("Failed to create file system for %q: %v", remote, err)
+	}
+	return nil, ""
+}
+
+// newFsSrc creates a src Fs from a name
+//
+// It returns a string with the file name if limiting to one file
+//
+// This can point to a file
+func newFsSrc(remote string) (fs.Fs, string) {
+	f, fileName := newFsFile(remote)
+	if fileName != "" {
 		if !fs.Config.Filter.InActive() {
 			fs.Stats.Error()
 			log.Fatalf("Can't limit to single files when using filters: %v", remote)
 		}
 		// Limit transfers to this file
-		err = fs.Config.Filter.AddFile(path.Base(fsPath))
+		err := fs.Config.Filter.AddFile(fileName)
+		if err != nil {
+			fs.Stats.Error()
+			log.Fatalf("Failed to limit to single file %q: %v", remote, err)
+		}
 		// Set --no-traverse as only one file
 		fs.Config.NoTraverse = true
 	}
-	if err != nil {
-		fs.Stats.Error()
-		log.Fatalf("Failed to create file system for %q: %v", remote, err)
-	}
-	return f
+	return f, fileName
 }
 
 // newFsDst creates a dst Fs from a name
@@ -135,14 +155,62 @@ func newFsDst(remote string) fs.Fs {
 
 // NewFsSrcDst creates a new src and dst fs from the arguments
 func NewFsSrcDst(args []string) (fs.Fs, fs.Fs) {
-	fsrc, fdst := newFsSrc(args[0]), newFsDst(args[1])
+	fsrc, _ := newFsSrc(args[0])
+	fdst := newFsDst(args[1])
 	fs.CalculateModifyWindow(fdst, fsrc)
 	return fsrc, fdst
 }
 
+// RemoteSplit splits a remote into a parent and a leaf
+//
+// if it returns parent as an empty string then it wasn't possible
+func RemoteSplit(remote string) (parent string, leaf string) {
+	// Split remote on :
+	i := strings.Index(remote, ":")
+	remoteName := ""
+	remotePath := remote
+	if i >= 0 {
+		remoteName = remote[:i+1]
+		remotePath = remote[i+1:]
+	}
+	if remotePath == "" {
+		return "", ""
+	}
+	// Construct new remote name without last segment
+	parent, leaf = path.Split(remotePath)
+	if leaf == "" {
+		return "", ""
+	}
+	if parent != "/" {
+		parent = strings.TrimSuffix(parent, "/")
+	}
+	parent = remoteName + parent
+	if parent == "" {
+		parent = "."
+	}
+	return parent, leaf
+}
+
+// NewFsSrcDstFiles creates a new src and dst fs from the arguments
+// If src is a file then srcFileName and dstFileName will be non-empty
+func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs, dstFileName string) {
+	fsrc, srcFileName = newFsSrc(args[0])
+	// If copying a file...
+	dstRemote := args[1]
+	if srcFileName != "" {
+		dstRemote, dstFileName = RemoteSplit(dstRemote)
+		if dstRemote == "" {
+			log.Fatalf("Can't find parent directory for %q", args[1])
+		}
+	}
+	fdst = newFsDst(dstRemote)
+	fs.CalculateModifyWindow(fdst, fsrc)
+	return
+}
+
 // NewFsSrc creates a new src fs from the arguments
 func NewFsSrc(args []string) fs.Fs {
-	fsrc := newFsSrc(args[0])
+	fsrc, _ := newFsSrc(args[0])
 	fs.CalculateModifyWindow(fsrc)
 	return fsrc
 }

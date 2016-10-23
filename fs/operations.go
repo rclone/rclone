@@ -222,6 +222,17 @@ func removeFailedCopy(dst Object) bool {
 	return true
 }
 
+// Wrapper to override the remote for an object
+type overrideRemoteObject struct {
+	Object
+	remote string
+}
+
+// Remote returns the overriden remote name
+func (o *overrideRemoteObject) Remote() string {
+	return o.remote
+}
+
 // Copy src object to dst or f if nil.  If dst is nil then it uses
 // remote as the name of the new object.
 func Copy(f Fs, dst Object, remote string, src Object) (err error) {
@@ -260,12 +271,13 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 
 				in := NewAccount(in0, src) // account the transfer
 
+				wrappedSrc := &overrideRemoteObject{Object: src, remote: remote}
 				if doUpdate {
 					actionTaken = "Copied (replaced existing)"
-					err = dst.Update(in, src)
+					err = dst.Update(in, wrappedSrc)
 				} else {
 					actionTaken = "Copied (new)"
-					dst, err = f.Put(in, src)
+					dst, err = f.Put(in, wrappedSrc)
 				}
 				closeErr := in.Close()
 				if err == nil {
@@ -1185,4 +1197,44 @@ func Rmdirs(f Fs) error {
 		}
 	}
 	return nil
+}
+
+// moveOrCopyFile moves or copies a single file possibly to a new name
+func moveOrCopyFile(fdst Fs, fsrc Fs, dstFileName string, srcFileName string, cp bool) (err error) {
+	// Choose operations
+	Op := Move
+	if cp {
+		Op = Copy
+	}
+
+	// Find src object
+	srcObj, err := fsrc.NewObject(srcFileName)
+	if err != nil {
+		return err
+	}
+
+	// Find dst object if it exists
+	dstObj, err := fdst.NewObject(dstFileName)
+	if err == ErrorObjectNotFound {
+		dstObj = nil
+	} else if err != nil {
+		return err
+	}
+
+	if NeedTransfer(dstObj, srcObj) {
+		return Op(fdst, dstObj, dstFileName, srcObj)
+	} else if !cp {
+		return DeleteFile(srcObj)
+	}
+	return nil
+}
+
+// MoveFile moves a single file possibly to a new name
+func MoveFile(fdst Fs, fsrc Fs, dstFileName string, srcFileName string) (err error) {
+	return moveOrCopyFile(fdst, fsrc, dstFileName, srcFileName, false)
+}
+
+// CopyFile moves a single file possibly to a new name
+func CopyFile(fdst Fs, fsrc Fs, dstFileName string, srcFileName string) (err error) {
+	return moveOrCopyFile(fdst, fsrc, dstFileName, srcFileName, true)
 }

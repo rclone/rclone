@@ -120,11 +120,12 @@ func (s *syncCopyMove) readDstFiles() {
 	s.dstFilesResult <- err
 }
 
-// Check to see if src needs to be copied to dst and if so puts it in out
+// NeedTransfer checks to see if src needs to be copied to dst using
+// the current config.
 //
-// Returns a flag which indicates whether the file needs to be transferred or not.
-func (s *syncCopyMove) checkOne(pair ObjectPair) bool {
-	src, dst := pair.src, pair.dst
+// Returns a flag which indicates whether the file needs to be
+// transferred or not.
+func NeedTransfer(dst, src Object) bool {
 	if dst == nil {
 		Debug(src, "Couldn't find file - need to transfer")
 		return true
@@ -213,7 +214,7 @@ func (s *syncCopyMove) pairChecker(in ObjectPairChan, out ObjectPairChan, wg *sy
 			Stats.Checking(src.Remote())
 			// Check to see if can store this
 			if src.Storable() {
-				if s.checkOne(pair) {
+				if NeedTransfer(pair.dst, pair.src) {
 					out <- pair
 				} else {
 					// If moving need to delete the files we don't need to copy
