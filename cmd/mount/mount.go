@@ -113,8 +113,9 @@ mount won't do that, so will be less reliable than the rclone command.
 ### Bugs ###
 
   * All the remotes should work for read, but some may not for write
-    * those which need to know the size in advance won't - eg B2
+    * those which need to know the size in advance won't - eg B2, Amazon Drive
     * maybe should pass in size as -1 to mean work it out
+    * Or put in an an upload cache to cache the files on disk first
 
 ### TODO ###
 
