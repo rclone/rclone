@@ -1,6 +1,6 @@
-When filing an issue, please include the following information if
-possible as well as a description of the problem.  Make sure you test
-with the [latest beta of rclone](http://rclone.org/downloads/).
+When filing an issue, please include the following information if possible as well as a description of the problem.  Make sure you test with the [latest beta of rclone](http://rclone.org/downloads/).
+
+If you've just got a question then please use the [rclone forum](https://forum.rclone.org/) instead of filing an issue.
 
 > What is your rclone version (eg output from `rclone -V`)
 
