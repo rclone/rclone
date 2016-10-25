@@ -604,9 +604,20 @@ func (fh *decrypter) Seek(offset int64, whence int) (int64, error) {
 		return 0, fh.err
 	}
 
-	// Can we seek it directly?
+	// blocks we need to seek, plus bytes we need to discard
+	blocks, discard := offset/blockDataSize, offset%blockDataSize
+
+	// Offset in underlying stream we need to seek
+	underlyingOffset := int64(fileHeaderSize) + blocks*(blockHeaderSize+blockDataSize)
+
+	// Move the nonce on the correct number of blocks from the start
+	fh.nonce = fh.initialNonce
+	fh.nonce.add(uint64(blocks))
+
+	// Can we seek underlying stream directly?
 	if do, ok := fh.rc.(io.Seeker); ok {
-		_, err := do.Seek(offset, 0)
+		// Seek underlying stream directly
+		_, err := do.Seek(underlyingOffset, 0)
 		if err != nil {
 			return 0, fh.finish(err)
 		}
@@ -614,16 +625,6 @@ func (fh *decrypter) Seek(offset int64, whence int) (int64, error) {
 		// if not reopen with seek
 		_ = fh.rc.Close() // close underlying file
 		fh.rc = nil
-
-		// blocks we need to seek, plus bytes we need to discard
-		blocks, discard := offset/blockDataSize, offset%blockDataSize
-
-		// Offset in underlying stream we need to seek
-		underlyingOffset := int64(fileHeaderSize) + blocks*(blockHeaderSize+blockDataSize)
-
-		// Move the nonce on the correct number of blocks from the start
-		fh.nonce = fh.initialNonce
-		fh.nonce.add(uint64(blocks))
 
 		// Re-open the underlying object with the offset given
 		rc, err := fh.open(underlyingOffset)
@@ -633,12 +634,16 @@ func (fh *decrypter) Seek(offset int64, whence int) (int64, error) {
 
 		// Set the file handle
 		fh.rc = rc
+	}
 
-		// Discard excess bytes
-		_, err = io.CopyN(ioutil.Discard, fh, discard)
-		if err != nil {
-			return 0, fh.finish(err)
-		}
+	// Empty the buffer
+	fh.bufIndex = 0
+	fh.bufSize = 0
+
+	// Discard excess bytes
+	_, err := io.CopyN(ioutil.Discard, fh, discard)
+	if err != nil {
+		return 0, fh.finish(err)
 	}
 
 	return offset, nil

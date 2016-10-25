@@ -881,15 +881,26 @@ func TestNewDecrypterSeek(t *testing.T) {
 		return ioutil.NopCloser(bytes.NewBuffer(ciphertext[int(underlyingOffset):])), nil
 	}
 
+	inBlock := make([]byte, 1024)
+
+	// Check the seek worked by reading a block and checking it
+	// against what it should be
+	check := func(rc ReadSeekCloser, offset int) {
+		n, err := io.ReadFull(rc, inBlock)
+		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+			require.NoError(t, err)
+		}
+		seekedDecrypted := inBlock[:n]
+
+		require.Equal(t, plaintext[offset:offset+n], seekedDecrypted)
+	}
+
 	// Now try decoding it with a open/seek
 	for _, offset := range trials {
 		rc, err := c.DecryptDataSeek(open, int64(offset))
 		assert.NoError(t, err)
 
-		seekedDecrypted, err := ioutil.ReadAll(rc)
-		assert.NoError(t, err)
-
-		assert.Equal(t, plaintext[offset:], seekedDecrypted)
+		check(rc, offset)
 	}
 
 	// Now try decoding it with a single open and lots of seeks
@@ -898,10 +909,7 @@ func TestNewDecrypterSeek(t *testing.T) {
 		_, err := rc.Seek(int64(offset), 0)
 		assert.NoError(t, err)
 
-		seekedDecrypted, err := ioutil.ReadAll(rc)
-		assert.NoError(t, err)
-
-		assert.Equal(t, plaintext[offset:], seekedDecrypted)
+		check(rc, offset)
 	}
 }
 
