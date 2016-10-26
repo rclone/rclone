@@ -27,6 +27,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/oauthutil"
 	"github.com/ncw/rclone/pacer"
+	"github.com/ncw/rclone/rest"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"golang.org/x/oauth2"
@@ -811,7 +812,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 		if !bigObject {
 			in, resp, err = file.OpenHeaders(headers)
 		} else {
-			in, resp, err = file.OpenTempURLHeaders(o.fs.noAuthClient, headers)
+			in, resp, err = file.OpenTempURLHeaders(rest.ClientWithHeaderReset(o.fs.noAuthClient, headers), headers)
 		}
 		return o.fs.shouldRetry(resp, err)
 	})

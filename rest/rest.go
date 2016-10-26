@@ -93,8 +93,9 @@ func DecodeJSON(resp *http.Response, result interface{}) (err error) {
 	return decoder.Decode(result)
 }
 
-// Make a new http client which resets the headers passed in on redirect
-func clientWithHeaderReset(c *http.Client, headers map[string]string) *http.Client {
+// ClientWithHeaderReset makes a new http client which resets the
+// headers passed in on redirect
+func ClientWithHeaderReset(c *http.Client, headers map[string]string) *http.Client {
 	if len(headers) == 0 {
 		return c
 	}
@@ -169,7 +170,7 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 	if opts.UserName != "" || opts.Password != "" {
 		req.SetBasicAuth(opts.UserName, opts.Password)
 	}
-	c := clientWithHeaderReset(api.c, headers)
+	c := ClientWithHeaderReset(api.c, headers)
 	api.mu.RUnlock()
 	resp, err = c.Do(req)
 	api.mu.RLock()
