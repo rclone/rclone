@@ -69,6 +69,8 @@ func (fh *ReadFileHandle) seek(offset int64) error {
 
 // Read from the file handle
 func (fh *ReadFileHandle) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.ReadResponse) error {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
 	fs.Debug(fh.o, "ReadFileHandle.Read size %d offset %d", req.Size, req.Offset)
 	if fh.closed {
 		fs.ErrorLog(fh.o, "ReadFileHandle.Read error: %v", errClosedFileHandle)
