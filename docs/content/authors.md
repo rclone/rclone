@@ -40,4 +40,4 @@ Contributors
   * Fredrik Fornwall <fredrik@fornwall.net>
   * Asko Tamm <asko@deekit.net>
   * xor-zz <xor@gstocco.com>
-
+  * Tomasz Mazur <tmazur90@gmail.com>
