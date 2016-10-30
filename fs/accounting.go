@@ -18,8 +18,8 @@ import (
 // Globals
 var (
 	Stats           = NewStats()
+	tokenBucketMu   sync.Mutex // protects the token bucket variables
 	tokenBucket     *tb.Bucket
-	origTokenBucket = tokenBucket
 	prevTokenBucket = tokenBucket
 )
 
@@ -28,13 +28,11 @@ func startTokenBucket() {
 	if bwLimit > 0 {
 		tokenBucket = tb.NewBucket(int64(bwLimit), 100*time.Millisecond)
 		Log(nil, "Starting bandwidth limiter at %vBytes/s", &bwLimit)
-	}
-	origTokenBucket = tokenBucket
-	prevTokenBucket = tokenBucket
 
-	// Start the SIGUSR2 signal handler to toggle bandwidth.
-	// This function does nothing in windows systems.
-	startSignalHandler()
+		// Start the SIGUSR2 signal handler to toggle bandwidth.
+		// This function does nothing in windows systems.
+		startSignalHandler()
+	}
 }
 
 // stringSet holds a set of strings
@@ -341,19 +339,14 @@ func (acc *Account) read(in io.Reader, p []byte) (n int, err error) {
 
 	Stats.Bytes(int64(n))
 
-	// Log bandwidth limiter status change.
-	if tokenBucket != prevTokenBucket {
-		s := "disabled"
-		if tokenBucket != nil {
-			s = "enabled"
-		}
-		Log(nil, "Bandwidth limit %s by user", s)
-		prevTokenBucket = tokenBucket
-	}
+	// Get the token bucket in use
+	tokenBucketMu.Lock()
+	tb := tokenBucket
+	tokenBucketMu.Unlock()
 
 	// Limit the transfer speed if required
-	if tokenBucket != nil {
-		tokenBucket.Wait(int64(n))
+	if tb != nil {
+		tb.Wait(int64(n))
 	}
 	return
 }

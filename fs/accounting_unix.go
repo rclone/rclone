@@ -1,7 +1,7 @@
 // Accounting and limiting reader
 // Unix specific functions.
 
-// +build darwin dragonfly freebsd linux netbsd openbsd
+// +build darwin dragonfly freebsd linux netbsd openbsd solaris
 
 package fs
 
@@ -13,11 +13,6 @@ import (
 
 // startSignalHandler() sets a signal handler to catch SIGUSR2 and toggle throttling.
 func startSignalHandler() {
-	// Don't do anything if no bandwidth limits requested.
-	if bwLimit <= 0 {
-		return
-	}
-
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGUSR2)
 
@@ -25,11 +20,14 @@ func startSignalHandler() {
 		// This runs forever, but blocks until the signal is received.
 		for {
 			<-signals
-			if tokenBucket == nil {
-				tokenBucket = origTokenBucket
-			} else {
-				tokenBucket = nil
+			tokenBucketMu.Lock()
+			tokenBucket, prevTokenBucket = prevTokenBucket, tokenBucket
+			s := "disabled"
+			if tokenBucket != nil {
+				s = "enabled"
 			}
+			tokenBucketMu.Unlock()
+			Log(nil, "Bandwidth limit %s by user", s)
 		}
 	}()
 }
