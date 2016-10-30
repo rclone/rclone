@@ -143,6 +143,9 @@ func NewTransport(transport *http.Transport, logHeader, logBody bool) *Transport
 	}
 }
 
+// A mutex to protect this map
+var checkedHostMu sync.RWMutex
+
 // A map of servers we have checked for time
 var checkedHost = make(map[string]struct{}, 1)
 
@@ -152,7 +155,10 @@ func checkServerTime(req *http.Request, resp *http.Response) {
 	if req.Host != "" {
 		host = req.Host
 	}
-	if _, ok := checkedHost[host]; ok {
+	checkedHostMu.RLock()
+	_, ok := checkedHost[host]
+	checkedHostMu.RUnlock()
+	if ok {
 		return
 	}
 	dateString := resp.Header.Get("Date")
@@ -169,7 +175,9 @@ func checkServerTime(req *http.Request, resp *http.Response) {
 	if dt > window || dt < -window {
 		Log(nil, "Time may be set wrong - time from %q is %v different from this computer", host, dt)
 	}
+	checkedHostMu.Lock()
 	checkedHost[host] = struct{}{}
+	checkedHostMu.Unlock()
 }
 
 // RoundTrip implements the RoundTripper interface.
