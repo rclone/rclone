@@ -40,6 +40,8 @@ var _ fusefs.Handle = (*ReadFileHandle)(nil)
 var _ fusefs.HandleReader = (*ReadFileHandle)(nil)
 
 // seek to a new offset
+//
+// Must be called with fh.mu held
 func (fh *ReadFileHandle) seek(offset int64) error {
 	// Can we seek it directly?
 	if do, ok := fh.r.(io.Seeker); ok {
@@ -85,11 +87,6 @@ func (fh *ReadFileHandle) Read(ctx context.Context, req *fuse.ReadRequest, resp 
 	if req.Size > 0 {
 		fh.readCalled = true
 	}
-	// We don't actually enforce Offset to match where previous read
-	// ended. Maybe we should, but that would mean'd we need to track
-	// it. The kernel *should* do it for us, based on the
-	// fuse.OpenNonSeekable flag.
-	//
 	// One exception to the above is if we fail to fully populate a
 	// page cache page; a read into page cache is always page aligned.
 	// Make sure we never serve a partial read, to avoid that.
