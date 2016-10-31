@@ -41,3 +41,4 @@ Contributors
   * Asko Tamm <asko@deekit.net>
   * xor-zz <xor@gstocco.com>
   * Tomasz Mazur <tmazur90@gmail.com>
+  * Marco Paganini <paganini@paganini.net>
