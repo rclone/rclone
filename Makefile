@@ -3,11 +3,14 @@ TAG := $(shell echo `git describe --tags`-`git rev-parse --abbrev-ref HEAD` | se
 LAST_TAG := $(shell git describe --tags --abbrev=0)
 NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f", $$_)')
 GO_VERSION := $(shell go version)
+GO_FILES := $(shell go list ./... | grep -v /vendor/ )
 GO_LATEST := $(findstring go1.7,$(GO_VERSION))
 BETA_URL := http://beta.rclone.org/$(TAG)/
+# Only needed for Go 1.5
+export GO15VENDOREXPERIMENT=1
 
 rclone:
-	go install -v ./...
+	go install -v
 
 vars:
 	@echo SHELL="'$(SHELL)'"
@@ -20,28 +23,27 @@ vars:
 
 # Full suite of integration tests
 test:	rclone
-	go test ./...
+	go test $(GO_FILES)
 	cd fs && go run test_all.go
 
 # Quick test
 quicktest:
-	go test ./...
-	go test -cpu=2 -race ./...
+	go test $(GO_FILES)
+	go test -cpu=2 -race $(GO_FILES)
 
 # Do source code quality checks
 check:	rclone
 ifdef GO_LATEST
-	go vet ./...
-	errcheck ./...
-	goimports -d . | grep . ; test $$? -eq 1
-	golint ./... | grep -E -v '(StorageUrl|CdnUrl)' ; test $$? -eq 1
+	go vet $(GO_FILES)
+	errcheck $(GO_FILES)
+	find . -name \*.go | grep -v /vendor/ | xargs goimports -d | grep . ; test $$? -eq 1
+	go list ./... | grep -v /vendor/ | xargs -i golint {} | grep -E -v '(StorageUrl|CdnUrl)' ; test $$? -eq 1
 else
 	@echo Skipping tests as not on Go stable
 endif
 
 # Get the build dependencies
 build_dep:
-	go get -t ./...
 ifdef GO_LATEST
 	go get -u github.com/kisielk/errcheck
 	go get -u golang.org/x/tools/cmd/goimports
@@ -53,6 +55,7 @@ endif
 # Update dependencies
 update:
 	go get -t -u -f -v ./...
+	godep save ./...
 
 doc:	rclone.1 MANUAL.html MANUAL.txt
 
