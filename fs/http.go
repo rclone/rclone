@@ -188,7 +188,7 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	if t.logHeader || t.logBody {
 		buf, _ := httputil.DumpRequestOut(req, t.logBody)
 		Debug(nil, "%s", separatorReq)
-		Debug(nil, "%s", "HTTP REQUEST")
+		Debug(nil, "%s (req %p)", "HTTP REQUEST", req)
 		Debug(nil, "%s", string(buf))
 		Debug(nil, "%s", separatorReq)
 	}
@@ -197,7 +197,7 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	// Log response
 	if t.logHeader || t.logBody {
 		Debug(nil, "%s", separatorResp)
-		Debug(nil, "%s", "HTTP RESPONSE")
+		Debug(nil, "%s (req %p)", "HTTP RESPONSE", req)
 		if err != nil {
 			Debug(nil, "Error: %v", err)
 		} else {
