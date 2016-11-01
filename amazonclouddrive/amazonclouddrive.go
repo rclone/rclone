@@ -598,6 +598,110 @@ func (f *Fs) Mkdir() error {
 	return f.dirCache.FindRoot(true)
 }
 
+// Move src to this remote using server side move operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantMove
+func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debug(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+	fs.Debug(src, "\n\nTrying to move '%s' -> '%s'", srcObj.Remote(), remote)
+
+	// Temporary Object under construction
+	dstObj := &Object{
+		fs:     f,
+		remote: remote,
+	}
+	// Check if object already exists
+	err := dstObj.readMetaData()
+	switch err {
+	case nil:
+		// TODO: directory exists?
+		fs.Debug(src, "Move target '%s' already exists, removing it first.")
+		err := dstObj.Remove()
+		if err != nil {
+			return nil, err
+		}
+		dstObj.info = nil
+	case fs.ErrorObjectNotFound:
+		// Not found so we can move it there
+	default:
+		return nil, err
+	}
+
+	sLeaf, sDirectoryID, err := f.dirCache.FindPath(srcObj.Remote(), false)
+	if err != nil {
+		return nil, err
+	}
+	tLeaf, tDirectoryID, err := f.dirCache.FindPath(remote, true)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(srcObj.info.Parents) > 1 && sLeaf != tLeaf {
+		fs.Debug(src, "Cannot move, because object is attached to multiple parents and should be renamed. This would change the name of the node in all parents.")
+		return nil, fs.ErrorCantMove
+	}
+
+	if sLeaf != tLeaf {
+		fs.Debug(src, "renaming")
+		err = srcObj.Rename(tLeaf)
+		if err != nil {
+			fs.Debug(src, "Move: quick path rename failed: %v", err)
+			goto OnConflict
+		}
+	}
+	if sDirectoryID != tDirectoryID {
+		err = srcObj.ReplaceParent(sDirectoryID, tDirectoryID)
+		if err != nil {
+			fs.Debug(src, "Move: quick path parent replace failed: %v", err)
+			return nil, err
+		}
+	}
+	return dstObj, nil
+
+OnConflict:
+	fs.Debug(src, "OMG WE HAD A CONFLICT, DOING SUPER COMPLICATED METHOD")
+
+	fs.Debug(src, "Trashing file")
+	err = srcObj.Remove()
+	if err != nil {
+		return nil, err
+	}
+	fs.Debug(src, "Renaming file")
+	err = srcObj.Rename(tLeaf)
+	if err != nil {
+		return nil, err
+	}
+	// note: replacing parent is forbidden by API, modifying them individually is
+	// okay though
+	fs.Debug(src, "Adding target parent")
+	err = srcObj.AddParent(tDirectoryID)
+	if err != nil {
+		return nil, err
+	}
+	fs.Debug(src, "removing original parent")
+	err = srcObj.RemoveParent(sDirectoryID)
+	if err != nil {
+		return nil, err
+	}
+	fs.Debug(src, "Restoring")
+	err = srcObj.Restore()
+	if err != nil {
+		return nil, err
+	} else {
+		return dstObj, nil
+	}
+}
+
 // purgeCheck remotes the root directory, if check is set then it
 // refuses to do so if it has anything in
 func (f *Fs) purgeCheck(check bool) error {
@@ -908,6 +1012,50 @@ func (o *Object) Remove() error {
 	return err
 }
 
+// Restore an object
+func (o *Object) Restore() error {
+	return o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.info.Restore()
+		return o.fs.shouldRetry(resp, err)
+	})
+}
+
+// Changes name of given object
+func (o *Object) Rename(newName string) error {
+	return o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.info.Rename(newName)
+		return o.fs.shouldRetry(resp, err)
+	})
+}
+
+// Replaces one parent with another, effectively moving the file. Leaves other
+// parents untouched. ReplaceParent cannot be used when the file is trashed.
+func (o *Object) ReplaceParent(oldParentId string, newParentId string) error {
+	fs.Debug(o, "trying parent replace: %s -> %s", oldParentId, newParentId)
+
+	return o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.info.ReplaceParent(oldParentId, newParentId)
+		return o.fs.shouldRetry(resp, err)
+	})
+}
+
+// Adds one additional parent to object.
+func (o *Object) AddParent(newParentId string) error {
+	return o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.info.AddParent(newParentId)
+		return o.fs.shouldRetry(resp, err)
+	})
+}
+
+// Remove given parent from object, leaving the other possible
+// parents untouched. Object can end up having no parents.
+func (o *Object) RemoveParent(parentId string) error {
+	return o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.info.RemoveParent(parentId)
+		return o.fs.shouldRetry(resp, err)
+	})
+}
+
 // MimeType of an Object if known, "" otherwise
 func (o *Object) MimeType() string {
 	if o.info.ContentProperties.ContentType != nil {
@@ -921,7 +1069,7 @@ var (
 	_ fs.Fs     = (*Fs)(nil)
 	_ fs.Purger = (*Fs)(nil)
 	//	_ fs.Copier   = (*Fs)(nil)
-	_ fs.Mover    = (*Fs)(nil)
+	_ fs.Mover = (*Fs)(nil)
 	//	_ fs.DirMover = (*Fs)(nil)
 	_ fs.Object    = (*Object)(nil)
 	_ fs.MimeTyper = &Object{}
