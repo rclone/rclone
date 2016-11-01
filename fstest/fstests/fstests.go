@@ -379,7 +379,6 @@ func TestFsMove(t *testing.T) {
 
 	var file1Move = file1
 	var file2Move = file2
-	subdir := strings.SplitN(file2.Path, "/", 2)[0]
 
 	// check happy path, i.e. no naming conflicts when rename and move are two
 	// separate operations
@@ -398,12 +397,12 @@ func TestFsMove(t *testing.T) {
 	// 2: other.txt
 
 	// Check conflict on "rename, then move"
-	file1Move.Path = subdir + "/other.txt"
+	file1Move.Path = "moveTest/other.txt"
 	src = findObject(t, file1.Path)
 	_, err = remote.(fs.Mover).Move(src, file1Move.Path)
 	require.NoError(t, err)
 	fstest.CheckListing(t, remote, []fstest.Item{file1Move, file2Move})
-	// 1: subdir/other.txt
+	// 1: moveTest/other.txt
 	// 2: other.txt
 
 	// Check conflict on "move, then rename"
