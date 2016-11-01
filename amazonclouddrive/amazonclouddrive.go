@@ -42,7 +42,7 @@ const (
 	statusAvailable             = "AVAILABLE"
 	timeFormat                  = time.RFC3339 // 2014-03-07T22:31:12.173Z
 	minSleep                    = 20 * time.Millisecond
-	warnFileSize                = 50 << 30 // Display warning for files larger than this size
+	warnFileSize                = 50000 << 20 // Display warning for files larger than this size
 )
 
 // Globals
@@ -564,7 +564,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 		return nil, err
 	}
 	if size > warnFileSize {
-		fs.Debug(f, "Warning: file %q may fail because it is too big. Use --max-size=%dGB to skip large files.", remote, warnFileSize>>30)
+		fs.Debug(f, "Warning: file %q may fail because it is too big. Use --max-size=%dM to skip large files.", remote, warnFileSize>>20)
 	}
 	folder := acd.FolderFromId(directoryID, o.fs.c.Nodes)
 	var info *acd.File
