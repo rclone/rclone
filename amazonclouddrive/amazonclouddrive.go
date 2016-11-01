@@ -603,6 +603,114 @@ func (f *Fs) Mkdir() error {
 	return f.dirCache.FindRoot(true)
 }
 
+// Move src to this remote using server side move operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantMove
+func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debug(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+	fs.Debug(src, "Attempting to move to %q", remote)
+
+	// Temporary Object under construction
+	dstObj := &Object{
+		fs:     f,
+		remote: remote,
+	}
+	// check if there's already a directory with the same name
+	pathID, err := f.dirCache.FindDir(remote, false)
+	if err == nil || pathID != "" {
+		fs.Debug(src, "Can't move - there is already a folder with the same name in the target location")
+		return nil, fs.ErrorCantMove
+	}
+	// Check if there's already a file with the same name
+	err = dstObj.readMetaData()
+	switch err {
+	case nil:
+		fs.Debug(src, "Can't move - there is already a file with the same name in the target location")
+		return nil, fs.ErrorCantMove
+	case fs.ErrorObjectNotFound:
+		// Not found so we can move it there
+	default:
+		return nil, err
+	}
+
+	sLeaf, sDirectoryID, err := f.dirCache.FindPath(srcObj.Remote(), false)
+	if err != nil {
+		return nil, err
+	}
+	tLeaf, tDirectoryID, err := f.dirCache.FindPath(remote, true)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(srcObj.info.Parents) > 1 && sLeaf != tLeaf {
+		fs.Debug(src, "Can't move - object is attached to multiple parents and should be renamed. This would change the name of the node in all parents.")
+		return nil, fs.ErrorCantMove
+	}
+
+	if sLeaf != tLeaf {
+		// fs.Debug(src, "renaming")
+		err = srcObj.rename(tLeaf)
+		if err != nil {
+			fs.Debug(src, "Move: quick path rename failed: %v", err)
+			goto OnConflict
+		}
+	}
+	if sDirectoryID != tDirectoryID {
+		// fs.Debug(src, "moving")
+		err = srcObj.replaceParent(sDirectoryID, tDirectoryID)
+		if err != nil {
+			fs.Debug(src, "Move: quick path parent replace failed: %v", err)
+			return nil, err
+		}
+	}
+	f.dirCache.Flush()
+	return dstObj, nil
+
+OnConflict:
+	fs.Debug(src, "Could not directly rename file, presumably because there was a file with the same name already. Instead, the file will now be trashed where such operations do not cause errors. It will be restored to the correct parent after. If any of the subsequent calls fails, the rename/move will be in an invalid state.")
+
+	// fs.Debug(src, "Trashing file")
+	err = srcObj.Remove()
+	if err != nil {
+		return nil, err
+	}
+	// fs.Debug(src, "Renaming file")
+	err = srcObj.rename(tLeaf)
+	if err != nil {
+		return nil, err
+	}
+	// note: replacing parent is forbidden by API, modifying them individually is
+	// okay though
+	// fs.Debug(src, "Adding target parent")
+	err = srcObj.addParent(tDirectoryID)
+	if err != nil {
+		return nil, err
+	}
+	// fs.Debug(src, "removing original parent")
+	err = srcObj.removeParent(sDirectoryID)
+	if err != nil {
+		return nil, err
+	}
+	// fs.Debug(src, "Restoring")
+	err = srcObj.restore()
+	if err != nil {
+		return nil, err
+	} else {
+		f.dirCache.Flush()
+		return dstObj, nil
+	}
+}
+
 // purgeCheck remotes the root directory, if check is set then it
 // refuses to do so if it has anything in
 func (f *Fs) purgeCheck(check bool) error {
@@ -913,6 +1021,64 @@ func (o *Object) Remove() error {
 	return err
 }
 
+// Restore an object
+func (o *Object) restore() error {
+	var info *acd.Node
+		var resp *http.Response
+	var err error
+	err = o.fs.pacer.Call(func() (bool, error) {
+		info, resp, err = o.info.Restore()
+		return o.fs.shouldRetry(resp, err)
+	})
+	if err == nil {
+		o.info = info
+	}
+	return err
+}
+
+// Changes name of given object
+func (o *Object) rename(newName string) error {
+	var info *acd.Node
+	var resp *http.Response
+	var err error
+	err = o.fs.pacer.Call(func() (bool, error) {
+		info, resp, err = o.info.Rename(newName)
+		return o.fs.shouldRetry(resp, err)
+	})
+	if err == nil {
+		o.info = info
+	}
+	return err
+}
+
+// Replaces one parent with another, effectively moving the file. Leaves other
+// parents untouched. ReplaceParent cannot be used when the file is trashed.
+func (o *Object) replaceParent(oldParentId string, newParentId string) error {
+	fs.Debug(o, "trying parent replace: %s -> %s", oldParentId, newParentId)
+
+	return o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.info.ReplaceParent(oldParentId, newParentId)
+		return o.fs.shouldRetry(resp, err)
+	})
+}
+
+// Adds one additional parent to object.
+func (o *Object) addParent(newParentId string) error {
+	return o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.info.AddParent(newParentId)
+		return o.fs.shouldRetry(resp, err)
+	})
+}
+
+// Remove given parent from object, leaving the other possible
+// parents untouched. Object can end up having no parents.
+func (o *Object) removeParent(parentId string) error {
+	return o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.info.RemoveParent(parentId)
+		return o.fs.shouldRetry(resp, err)
+	})
+}
+
 // MimeType of an Object if known, "" otherwise
 func (o *Object) MimeType() string {
 	if o.info.ContentProperties.ContentType != nil {
@@ -926,7 +1092,7 @@ var (
 	_ fs.Fs     = (*Fs)(nil)
 	_ fs.Purger = (*Fs)(nil)
 	//	_ fs.Copier   = (*Fs)(nil)
-	_ fs.Mover    = (*Fs)(nil)
+	_ fs.Mover = (*Fs)(nil)
 	//	_ fs.DirMover = (*Fs)(nil)
 	_ fs.Object    = (*Object)(nil)
 	_ fs.MimeTyper = &Object{}
