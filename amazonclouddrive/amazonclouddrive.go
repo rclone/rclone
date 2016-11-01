@@ -652,7 +652,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	if sLeaf != tLeaf {
-		fs.Debug(src, "renaming")
+		// fs.Debug(src, "renaming")
 		err = srcObj.Rename(tLeaf)
 		if err != nil {
 			fs.Debug(src, "Move: quick path rename failed: %v", err)
@@ -660,6 +660,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		}
 	}
 	if sDirectoryID != tDirectoryID {
+		// fs.Debug(src, "moving")
 		err = srcObj.ReplaceParent(sDirectoryID, tDirectoryID)
 		if err != nil {
 			fs.Debug(src, "Move: quick path parent replace failed: %v", err)
@@ -669,31 +670,31 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	return dstObj, nil
 
 OnConflict:
-	fs.Debug(src, "OMG WE HAD A CONFLICT, DOING SUPER COMPLICATED METHOD")
+	fs.Debug(src, "Could not directly rename file, presumably because there was a file with the same name already. Instead, the file will now be trashed where such operations do not cause errors. It will be restored to the correct parent after. If any of the subsequent calls fails, the rename/move will be in an invalid state.")
 
-	fs.Debug(src, "Trashing file")
+	// fs.Debug(src, "Trashing file")
 	err = srcObj.Remove()
 	if err != nil {
 		return nil, err
 	}
-	fs.Debug(src, "Renaming file")
+	// fs.Debug(src, "Renaming file")
 	err = srcObj.Rename(tLeaf)
 	if err != nil {
 		return nil, err
 	}
 	// note: replacing parent is forbidden by API, modifying them individually is
 	// okay though
-	fs.Debug(src, "Adding target parent")
+	// fs.Debug(src, "Adding target parent")
 	err = srcObj.AddParent(tDirectoryID)
 	if err != nil {
 		return nil, err
 	}
-	fs.Debug(src, "removing original parent")
+	// fs.Debug(src, "removing original parent")
 	err = srcObj.RemoveParent(sDirectoryID)
 	if err != nil {
 		return nil, err
 	}
-	fs.Debug(src, "Restoring")
+	// fs.Debug(src, "Restoring")
 	err = srcObj.Restore()
 	if err != nil {
 		return nil, err
