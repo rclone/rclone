@@ -373,30 +373,53 @@ func TestFsMove(t *testing.T) {
 		t.Skip("FS has no Mover interface")
 	}
 
-	var file1Move = file1
-	file1Move.Path += "-move"
+	// state of files now:
+	// 1: file name.txt
+	// 2: hello sausage?/../z.txt
 
-	// do the move
-	src := findObject(t, file1.Path)
-	dst, err := remote.(fs.Mover).Move(src, file1Move.Path)
+	var file1Move = file1
+	var file2Move = file2
+	subdir := strings.SplitN(file2.Path, "/", 2)[0]
+
+	// check happy path, i.e. no naming conflicts when rename and move are two
+	// separate operations
+	file2Move.Path = "other.txt"
+	src := findObject(t, file2.Path)
+	dst, err := remote.(fs.Mover).Move(src, file2Move.Path)
 	if err == fs.ErrorCantMove {
 		t.Skip("FS can't move")
 	}
 	require.NoError(t, err)
-
 	// check file exists in new listing
-	fstest.CheckListing(t, remote, []fstest.Item{file2, file1Move})
-
+	fstest.CheckListing(t, remote, []fstest.Item{file1, file2Move})
 	// Check dst lightly - list above has checked ModTime/Hashes
-	assert.Equal(t, file1Move.Path, dst.Remote())
+	assert.Equal(t, file2Move.Path, dst.Remote())
+	// 1: file name.txt
+	// 2: other.txt
 
-	// move it back
+	// Check conflict on "rename, then move"
+	file1Move.Path = subdir + "/other.txt"
+	src = findObject(t, file1.Path)
+	_, err = remote.(fs.Mover).Move(src, file1Move.Path)
+	require.NoError(t, err)
+	fstest.CheckListing(t, remote, []fstest.Item{file1Move, file2Move})
+	// 1: subdir/other.txt
+	// 2: other.txt
+
+	// Check conflict on "move, then rename"
 	src = findObject(t, file1Move.Path)
 	_, err = remote.(fs.Mover).Move(src, file1.Path)
 	require.NoError(t, err)
+	fstest.CheckListing(t, remote, []fstest.Item{file1, file2Move})
+	// 1: file name.txt
+	// 2: other.txt
 
-	// check file exists in new listing
-	fstest.CheckListing(t, remote, []fstest.Item{file2, file1})
+	src = findObject(t, file2Move.Path)
+	_, err = remote.(fs.Mover).Move(src, file2.Path)
+	require.NoError(t, err)
+	fstest.CheckListing(t, remote, []fstest.Item{file1, file2})
+	// 1: file name.txt
+	// 2: hello sausage?/../z.txt
 }
 
 // Move src to this remote using server side move operations.
