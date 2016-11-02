@@ -543,6 +543,13 @@ here which are used for testing.  These start with remote name eg
 
 Write CPU profile to file.  This can be analysed with `go tool pprof`.
 
+### --dump-auth ###
+
+Dump HTTP headers - will contain sensitive info such as
+`Authorization:` headers - use `--dump-headers` to dump without
+`Authorization:` headers.  Can be very verbose.  Useful for debugging
+only.
+
 ### --dump-bodies ###
 
 Dump HTTP headers and bodies - may contain sensitive info.  Can be
@@ -555,8 +562,11 @@ and exclude options are filtering on.
 
 ### --dump-headers ###
 
-Dump HTTP headers - may contain sensitive info.  Can be very verbose.
-Useful for debugging only.
+Dump HTTP headers with `Authorization:` lines removed. May still
+contain sensitive info.  Can be very verbose.  Useful for debugging
+only.
+
+Use `--dump-auth` if you do want the `Authorization:` headers.
 
 ### --memprofile=FILE ###
 

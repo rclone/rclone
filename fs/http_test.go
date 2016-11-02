@@ -38,3 +38,27 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(t, old.TLSNextProto, new.TLSNextProto, "when checking .TLSNextProto")
 	assert.Equal(t, old.MaxResponseHeaderBytes, new.MaxResponseHeaderBytes, "when checking .MaxResponseHeaderBytes")
 }
+
+func TestCleanAuth(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want string
+	}{
+		{"", ""},
+		{"floo", "floo"},
+		{"Authorization: ", "Authorization: "},
+		{"Authorization: \n", "Authorization: \n"},
+		{"Authorization: A", "Authorization: X"},
+		{"Authorization: A\n", "Authorization: X\n"},
+		{"Authorization: AAAA", "Authorization: XXXX"},
+		{"Authorization: AAAA\n", "Authorization: XXXX\n"},
+		{"Authorization: AAAAA", "Authorization: XXXX"},
+		{"Authorization: AAAAA\n", "Authorization: XXXX\n"},
+		{"Authorization: AAAA\n", "Authorization: XXXX\n"},
+		{"Authorization: AAAAAAAAA\nPotato: Help\n", "Authorization: XXXX\nPotato: Help\n"},
+		{"Sausage: 1\nAuthorization: AAAAAAAAA\nPotato: Help\n", "Sausage: 1\nAuthorization: XXXX\nPotato: Help\n"},
+	} {
+		got := string(cleanAuth([]byte(test.in)))
+		assert.Equal(t, test.want, got, test.in)
+	}
+}

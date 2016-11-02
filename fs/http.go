@@ -3,6 +3,7 @@
 package fs
 
 import (
+	"bytes"
 	"crypto/tls"
 	"net"
 	"net/http"
@@ -112,7 +113,7 @@ func (ci *ConfigInfo) Transport() http.RoundTripper {
 		//   t.ExpectContinueTimeout
 		ci.initTransport(t)
 		// Wrap that http.Transport in our own transport
-		transport = NewTransport(t, ci.DumpHeaders, ci.DumpBodies)
+		transport = NewTransport(t, ci.DumpHeaders, ci.DumpBodies, ci.DumpAuth)
 	})
 	return transport
 }
@@ -131,15 +132,17 @@ type Transport struct {
 	*http.Transport
 	logHeader bool
 	logBody   bool
+	logAuth   bool
 }
 
 // NewTransport wraps the http.Transport passed in and logs all
 // roundtrips including the body if logBody is set.
-func NewTransport(transport *http.Transport, logHeader, logBody bool) *Transport {
+func NewTransport(transport *http.Transport, logHeader, logBody, logAuth bool) *Transport {
 	return &Transport{
 		Transport: transport,
 		logHeader: logHeader,
 		logBody:   logBody,
+		logAuth:   logAuth,
 	}
 }
 
@@ -180,13 +183,48 @@ func checkServerTime(req *http.Request, resp *http.Response) {
 	checkedHostMu.Unlock()
 }
 
+var authBuf = []byte("Authorization: ")
+
+// cleanAuth gets rid of one Authorization: header within the first 4k
+func cleanAuth(buf []byte) []byte {
+	// Find how much buffer to check
+	n := 4096
+	if len(buf) < n {
+		n = len(buf)
+	}
+	// See if there is an Authorization: header
+	i := bytes.Index(buf[:n], authBuf)
+	if i < 0 {
+		return buf
+	}
+	i += len(authBuf)
+	// Overwrite the next 4 chars with 'X'
+	for j := 0; i < len(buf) && j < 4; j++ {
+		if buf[i] == '\n' {
+			break
+		}
+		buf[i] = 'X'
+		i++
+	}
+	// Snip out to the next '\n'
+	j := bytes.IndexByte(buf[i:], '\n')
+	if j < 0 {
+		return buf[:i]
+	}
+	n = copy(buf[i:], buf[i+j:])
+	return buf[:i+n]
+}
+
 // RoundTrip implements the RoundTripper interface.
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	// Force user agent
 	req.Header.Set("User-Agent", UserAgent)
 	// Log request
-	if t.logHeader || t.logBody {
+	if t.logHeader || t.logBody || t.logAuth {
 		buf, _ := httputil.DumpRequestOut(req, t.logBody)
+		if !t.logAuth {
+			buf = cleanAuth(buf)
+		}
 		Debug(nil, "%s", separatorReq)
 		Debug(nil, "%s (req %p)", "HTTP REQUEST", req)
 		Debug(nil, "%s", string(buf))
@@ -195,7 +233,7 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	// Do round trip
 	resp, err = t.Transport.RoundTrip(req)
 	// Log response
-	if t.logHeader || t.logBody {
+	if t.logHeader || t.logBody || t.logAuth {
 		Debug(nil, "%s", separatorResp)
 		Debug(nil, "%s (req %p)", "HTTP RESPONSE", req)
 		if err != nil {

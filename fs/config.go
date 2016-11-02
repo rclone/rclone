@@ -76,6 +76,7 @@ var (
 	timeout         = pflag.DurationP("timeout", "", 5*60*time.Second, "IO idle timeout")
 	dumpHeaders     = pflag.BoolP("dump-headers", "", false, "Dump HTTP headers - may contain sensitive info")
 	dumpBodies      = pflag.BoolP("dump-bodies", "", false, "Dump HTTP headers and bodies - may contain sensitive info")
+	dumpAuth        = pflag.BoolP("dump-auth", "", false, "Dump HTTP headers with auth info")
 	skipVerify      = pflag.BoolP("no-check-certificate", "", false, "Do not verify the server SSL certificate. Insecure.")
 	AskPassword     = pflag.BoolP("ask-password", "", true, "Allow prompt for password for encrypted configuration.")
 	deleteBefore    = pflag.BoolP("delete-before", "", false, "When synchronizing, delete files on destination before transfering")
@@ -287,6 +288,7 @@ type ConfigInfo struct {
 	Timeout            time.Duration // Data channel timeout
 	DumpHeaders        bool
 	DumpBodies         bool
+	DumpAuth           bool
 	Filter             *Filter
 	InsecureSkipVerify bool // Skip server certificate verification
 	DeleteBefore       bool // Delete before checking
@@ -341,6 +343,7 @@ func LoadConfig() {
 	Config.IgnoreExisting = *ignoreExisting
 	Config.DumpHeaders = *dumpHeaders
 	Config.DumpBodies = *dumpBodies
+	Config.DumpAuth = *dumpAuth
 	Config.InsecureSkipVerify = *skipVerify
 	Config.LowLevelRetries = *lowLevelRetries
 	Config.UpdateOlder = *updateOlder
