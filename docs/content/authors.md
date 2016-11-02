@@ -1,7 +1,7 @@
 ---
 title: "Authors"
 description: "Rclone Authors and Contributors"
-date: "2016-04-22"
+date: "2016-11-02"
 ---
 
 Authors
@@ -42,3 +42,4 @@ Contributors
   * xor-zz <xor@gstocco.com>
   * Tomasz Mazur <tmazur90@gmail.com>
   * Marco Paganini <paganini@paganini.net>
+  * Felix Bünemann <buenemann@louis.info>
