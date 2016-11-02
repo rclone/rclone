@@ -832,9 +832,9 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		start := time.Now()
 		o.fs.startUpload()
 		if size != 0 {
-			info, resp, err = file.OverwriteSized(in, size)
-		} else {
 			info, resp, err = file.Overwrite(in)
+		} else {
+			info, resp, err = file.OverwriteSized(in, size)
 		}
 		o.fs.stopUpload()
 		var ok bool
