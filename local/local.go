@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 	"unicode/utf8"
 
@@ -19,7 +20,10 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
 )
+
+var oneFileSystem = pflag.BoolP("one-file-system", "x", false, "Don't cross filesystem boundaries.")
 
 // Register with Fs
 func init() {
@@ -151,6 +155,15 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 		out.SetError(errors.Wrapf(err, "failed to open directory %q", dirpath))
 		return nil
 	}
+
+	// Obtain dirpath's device
+	fdFi, err := os.Stat(dirpath)
+	if err != nil {
+		out.SetError(errors.Wrapf(err, "failed to stat directory %q", dirpath))
+		return nil
+	}
+	fdDev := fdFi.Sys().(*syscall.Stat_t).Dev
+
 	defer func() {
 		err := fd.Close()
 		if err != nil {
@@ -186,7 +199,7 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 					if out.AddDir(dir) {
 						return nil
 					}
-					if level > 0 {
+					if level > 0 && !(*oneFileSystem && !((fi.Sys().(*syscall.Stat_t)).Dev == fdDev)) {
 						subdirs = append(subdirs, listArgs{remote: newRemote, dirpath: newPath, level: level - 1})
 					}
 				}
