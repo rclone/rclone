@@ -368,11 +368,14 @@ func NewFs(name, root string) (fs.Fs, error) {
 		c:                  c,
 		bucket:             bucket,
 		ses:                ses,
-		acl:                fs.ConfigFile.MustValue(name, "acl", *s3ACL),
+		acl:                fs.ConfigFile.MustValue(name, "acl"),
 		root:               directory,
 		locationConstraint: fs.ConfigFile.MustValue(name, "location_constraint"),
 		sse:                fs.ConfigFile.MustValue(name, "server_side_encryption"),
 		storageClass:       fs.ConfigFile.MustValue(name, "storage_class"),
+	}
+	if *s3ACL != "" {
+		f.acl = *s3ACL
 	}
 	if *s3StorageClass != "" {
 		f.storageClass = *s3StorageClass
