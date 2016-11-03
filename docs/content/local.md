@@ -74,3 +74,48 @@ And use rclone like this:
 This will use UNC paths on `c:\src` but not on `z:\dst`.
 Of course this will cause problems if the absolute path length of a
 file exceeds 258 characters on z, so only use this option if you have to.
+
+### Specific options ###
+
+Here are the command line options specific to local storage
+
+#### --one-file-system, -x ####
+
+This tells rclone to stay in the filesystem specified by the root and
+not to recurse into different file systems.
+
+For example if you have a directory heirachy like this
+
+```
+root
+├── disk1     - disk1 mounted on the root
+│   └── file3 - stored on disk1
+├── disk2     - disk2 mounted on the root
+│   └── file4 - stored on disk12
+├── file1     - stored on the root disk
+└── file2     - stored on the root disk
+```
+
+Using `rclone --one-file-system copy root remote:` will only copy `file1` and `file2`.  Eg
+
+```
+$ rclone -q --one-file-system ls root
+        0 file1
+        0 file2
+```
+
+```
+$ rclone -q ls root
+        0 disk1/file3
+        0 disk2/file4
+        0 file1
+        0 file2
+```
+
+**NB** Rclone (like most unix tools such as `du`, `rsync` and `tar`)
+treats a bind mount to the same device as being on the same
+filesystem.
+
+**NB** This flag is only available on Unix based systems.  On systems
+where it isn't supported (eg Windows) it will not appear as an valid
+flag.

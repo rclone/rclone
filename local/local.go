@@ -12,7 +12,6 @@ import (
 	"runtime"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 	"unicode/utf8"
 
@@ -20,10 +19,10 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 )
 
-var oneFileSystem = pflag.BoolP("one-file-system", "x", false, "Don't cross filesystem boundaries.")
+// Constants
+const devUnset = 0xdeadbeefcafebabe // a device id meaning it is unset
 
 // Register with Fs
 func init() {
@@ -48,6 +47,7 @@ func init() {
 type Fs struct {
 	name        string              // the name of the remote
 	root        string              // The root directory (OS path)
+	dev         uint64              // device number of root node
 	precisionOk sync.Once           // Whether we need to read the precision
 	precision   time.Duration       // precision of local filesystem
 	wmu         sync.Mutex          // used for locking access to 'warned'.
@@ -75,11 +75,15 @@ func NewFs(name, root string) (fs.Fs, error) {
 		name:   name,
 		warned: make(map[string]struct{}),
 		nounc:  nounc == "true",
+		dev:    devUnset,
 	}
 	f.root = f.cleanPath(root)
 
 	// Check to see if this points to a file
 	fi, err := os.Lstat(f.root)
+	if err == nil {
+		f.dev = readDevice(fi)
+	}
 	if err == nil && fi.Mode().IsRegular() {
 		// It is a file, so use the parent as the root
 		f.root, _ = getDirFile(f.root)
@@ -156,14 +160,6 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 		return nil
 	}
 
-	// Obtain dirpath's device
-	fdFi, err := os.Stat(dirpath)
-	if err != nil {
-		out.SetError(errors.Wrapf(err, "failed to stat directory %q", dirpath))
-		return nil
-	}
-	fdDev := fdFi.Sys().(*syscall.Stat_t).Dev
-
 	defer func() {
 		err := fd.Close()
 		if err != nil {
@@ -199,7 +195,7 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 					if out.AddDir(dir) {
 						return nil
 					}
-					if level > 0 && !(*oneFileSystem && !((fi.Sys().(*syscall.Stat_t)).Dev == fdDev)) {
+					if level > 0 && f.dev == readDevice(fi) {
 						subdirs = append(subdirs, listArgs{remote: newRemote, dirpath: newPath, level: level - 1})
 					}
 				}
@@ -302,7 +298,16 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 // Mkdir creates the directory if it doesn't exist
 func (f *Fs) Mkdir() error {
 	// FIXME: https://github.com/syncthing/syncthing/blob/master/lib/osutil/mkdirall_windows.go
-	return os.MkdirAll(f.root, 0777)
+	err := os.MkdirAll(f.root, 0777)
+	if err != nil {
+		return err
+	}
+	fi, err := os.Lstat(f.root)
+	if err != nil {
+		return err
+	}
+	f.dev = readDevice(fi)
+	return nil
 }
 
 // Rmdir removes the directory
