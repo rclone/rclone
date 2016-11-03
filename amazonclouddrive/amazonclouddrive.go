@@ -142,6 +142,7 @@ var retryErrorCodes = []int{
 	408, // Request Timeout
 	429, // Rate exceeded.
 	500, // Get occasional 500 Internal Server Error
+	502, // Bad Gateway when doing big listings
 	503, // Service Unavailable
 	504, // Gateway Time-out
 }
