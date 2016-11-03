@@ -43,3 +43,4 @@ Contributors
   * Tomasz Mazur <tmazur90@gmail.com>
   * Marco Paganini <paganini@paganini.net>
   * Felix Bünemann <buenemann@louis.info>
+  * Durval Menezes <jmrclone@durval.com>
