@@ -27,6 +27,7 @@ func TestFsListEmpty(t *testing.T)         { fstests.TestFsListEmpty(t) }
 func TestFsListDirEmpty(t *testing.T)      { fstests.TestFsListDirEmpty(t) }
 func TestFsNewObjectNotFound(t *testing.T) { fstests.TestFsNewObjectNotFound(t) }
 func TestFsPutFile1(t *testing.T)          { fstests.TestFsPutFile1(t) }
+func TestFsPutError(t *testing.T)          { fstests.TestFsPutError(t) }
 func TestFsPutFile2(t *testing.T)          { fstests.TestFsPutFile2(t) }
 func TestFsUpdateFile1(t *testing.T)       { fstests.TestFsUpdateFile1(t) }
 func TestFsListDirFile2(t *testing.T)      { fstests.TestFsListDirFile2(t) }

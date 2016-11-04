@@ -7,6 +7,7 @@ package fstests
 
 import (
 	"bytes"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -233,6 +234,37 @@ again:
 func TestFsPutFile1(t *testing.T) {
 	skipIfNotOk(t)
 	file1Contents = testPut(t, &file1)
+}
+
+type errorReader struct {
+	err error
+}
+
+func (er errorReader) Read(p []byte) (n int, err error) {
+	return 0, er.err
+}
+
+// TestFsPutError tests uploading a file where there is an error
+//
+// It makes sure that aborting a file half way through does not create
+// a file on the remote.
+func TestFsPutError(t *testing.T) {
+	skipIfNotOk(t)
+
+	// Read 50 bytes then produce an error
+	contents := fstest.RandomString(50)
+	buf := bytes.NewBufferString(contents)
+	er := &errorReader{errors.New("potato")}
+	in := io.MultiReader(buf, er)
+
+	obji := fs.NewStaticObjectInfo(file2.Path, file2.ModTime, 100, true, nil, nil)
+	obj, err := remote.Put(in, obji)
+	// assert.Nil(t, obj) - FIXME some remotes return the object even on nil
+	assert.NotNil(t, err)
+
+	obj, err = remote.NewObject(file2.Path)
+	assert.Nil(t, obj)
+	assert.Equal(t, fs.ErrorObjectNotFound, err)
 }
 
 // TestFsPutFile2 tests putting a file into a subdirectory

@@ -665,12 +665,16 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	in = io.TeeReader(in, hash)
 
 	_, err = io.Copy(out, in)
-	outErr := out.Close()
-	if err != nil {
-		return err
+	closeErr := out.Close()
+	if err == nil {
+		err = closeErr
 	}
-	if outErr != nil {
-		return outErr
+	if err != nil {
+		fs.Debug(o, "Removing partially written file on error: %v", err)
+		if removeErr := os.Remove(o.path); removeErr != nil {
+			fs.ErrorLog(o, "Failed to remove partially written file: %v", removeErr)
+		}
+		return err
 	}
 
 	// All successful so update the hashes

@@ -265,11 +265,6 @@ func Copy(f Fs, dst, src Object) (err error) {
 		// Retry if err returned a retry error
 		if IsRetryError(err) || ShouldRetry(err) {
 			Debug(src, "Received error: %v - low level retry %d/%d", err, tries, maxTries)
-			if removeFailedCopy(dst) {
-				// If we removed dst, then nil it out and note we are not updating
-				dst = nil
-				doUpdate = false
-			}
 			continue
 		}
 		// otherwise finish
@@ -278,7 +273,6 @@ func Copy(f Fs, dst, src Object) (err error) {
 	if err != nil {
 		Stats.Error()
 		ErrorLog(src, "Failed to copy: %v", err)
-		removeFailedCopy(dst)
 		return err
 	}
 
