@@ -474,7 +474,7 @@ func Overlapping(fdst, fsrc Fs) bool {
 //
 // it returns true if differences were found
 // it also returns whether it couldn't be hashed
-func checkIdentical(dst, src Object) (bool, bool) {
+func checkIdentical(dst, src Object) (differ bool, noHash bool) {
 	Stats.Checking(src.Remote())
 	defer Stats.DoneChecking(src.Remote())
 	if src.Size() != dst.Size() {
@@ -489,7 +489,7 @@ func checkIdentical(dst, src Object) (bool, bool) {
 			return true, false
 		}
 		if hash == HashNone {
-			return true, true
+			return false, true
 		}
 		if !same {
 			Stats.Error()
