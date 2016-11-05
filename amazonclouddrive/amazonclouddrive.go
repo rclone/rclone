@@ -613,7 +613,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		fs.Debug(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
-	fs.Debug(src, "\n\nTrying to move '%s' -> '%s'", srcObj.Remote(), remote)
+	fs.Debug(src, "Attempting to move to %q", remote)
 
 	// Temporary Object under construction
 	dstObj := &Object{
@@ -654,7 +654,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 
 	if sLeaf != tLeaf {
 		// fs.Debug(src, "renaming")
-		err = srcObj.Rename(tLeaf)
+		err = srcObj.rename(tLeaf)
 		if err != nil {
 			fs.Debug(src, "Move: quick path rename failed: %v", err)
 			goto OnConflict
@@ -662,7 +662,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	}
 	if sDirectoryID != tDirectoryID {
 		// fs.Debug(src, "moving")
-		err = srcObj.ReplaceParent(sDirectoryID, tDirectoryID)
+		err = srcObj.replaceParent(sDirectoryID, tDirectoryID)
 		if err != nil {
 			fs.Debug(src, "Move: quick path parent replace failed: %v", err)
 			return nil, err
@@ -680,24 +680,24 @@ OnConflict:
 		return nil, err
 	}
 	// fs.Debug(src, "Renaming file")
-	err = srcObj.Rename(tLeaf)
+	err = srcObj.rename(tLeaf)
 	if err != nil {
 		return nil, err
 	}
 	// note: replacing parent is forbidden by API, modifying them individually is
 	// okay though
 	// fs.Debug(src, "Adding target parent")
-	err = srcObj.AddParent(tDirectoryID)
+	err = srcObj.addParent(tDirectoryID)
 	if err != nil {
 		return nil, err
 	}
 	// fs.Debug(src, "removing original parent")
-	err = srcObj.RemoveParent(sDirectoryID)
+	err = srcObj.removeParent(sDirectoryID)
 	if err != nil {
 		return nil, err
 	}
 	// fs.Debug(src, "Restoring")
-	err = srcObj.Restore()
+	err = srcObj.restore()
 	if err != nil {
 		return nil, err
 	} else {
@@ -1017,7 +1017,7 @@ func (o *Object) Remove() error {
 }
 
 // Restore an object
-func (o *Object) Restore() error {
+func (o *Object) restore() error {
 	var info *acd.Node
 		var resp *http.Response
 	var err error
@@ -1032,7 +1032,7 @@ func (o *Object) Restore() error {
 }
 
 // Changes name of given object
-func (o *Object) Rename(newName string) error {
+func (o *Object) rename(newName string) error {
 	var info *acd.Node
 	var resp *http.Response
 	var err error
@@ -1048,7 +1048,7 @@ func (o *Object) Rename(newName string) error {
 
 // Replaces one parent with another, effectively moving the file. Leaves other
 // parents untouched. ReplaceParent cannot be used when the file is trashed.
-func (o *Object) ReplaceParent(oldParentId string, newParentId string) error {
+func (o *Object) replaceParent(oldParentId string, newParentId string) error {
 	fs.Debug(o, "trying parent replace: %s -> %s", oldParentId, newParentId)
 
 	return o.fs.pacer.Call(func() (bool, error) {
@@ -1058,7 +1058,7 @@ func (o *Object) ReplaceParent(oldParentId string, newParentId string) error {
 }
 
 // Adds one additional parent to object.
-func (o *Object) AddParent(newParentId string) error {
+func (o *Object) addParent(newParentId string) error {
 	return o.fs.pacer.Call(func() (bool, error) {
 		resp, err := o.info.AddParent(newParentId)
 		return o.fs.shouldRetry(resp, err)
@@ -1067,7 +1067,7 @@ func (o *Object) AddParent(newParentId string) error {
 
 // Remove given parent from object, leaving the other possible
 // parents untouched. Object can end up having no parents.
-func (o *Object) RemoveParent(parentId string) error {
+func (o *Object) removeParent(parentId string) error {
 	return o.fs.pacer.Call(func() (bool, error) {
 		resp, err := o.info.RemoveParent(parentId)
 		return o.fs.shouldRetry(resp, err)
