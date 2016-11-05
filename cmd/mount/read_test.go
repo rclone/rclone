@@ -90,6 +90,7 @@ func TestReadSeek(t *testing.T) {
 	fd, err := os.Open(run.path("testfile"))
 	assert.NoError(t, err)
 
+	// Seek to half way
 	_, err = fd.Seek(5, 0)
 	assert.NoError(t, err)
 
@@ -97,6 +98,23 @@ func TestReadSeek(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, buf, []byte("HELLO"))
 
+	// Test seeking to the end
+	_, err = fd.Seek(10, 0)
+	assert.NoError(t, err)
+
+	buf, err = ioutil.ReadAll(fd)
+	assert.NoError(t, err)
+	assert.Equal(t, buf, []byte(""))
+
+	// Test seeking beyond the end
+	_, err = fd.Seek(1000000, 0)
+	assert.NoError(t, err)
+
+	buf, err = ioutil.ReadAll(fd)
+	assert.NoError(t, err)
+	assert.Equal(t, buf, []byte(""))
+
+	// Now back to the start
 	_, err = fd.Seek(0, 0)
 	assert.NoError(t, err)
 

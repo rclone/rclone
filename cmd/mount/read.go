@@ -79,6 +79,14 @@ func (fh *ReadFileHandle) Read(ctx context.Context, req *fuse.ReadRequest, resp 
 		return errClosedFileHandle
 	}
 	if req.Offset != fh.offset {
+		// Are we attempting to seek beyond the end of the
+		// file - if so just return EOF leaving the underlying
+		// file in an unchanged state.
+		if req.Offset >= fh.o.Size() {
+			fs.Debug(fh.o, "ReadFileHandle.Read attempt to read beyond end of file: %d > %d", req.Offset, fh.o.Size())
+			resp.Data = nil
+			return nil
+		}
 		err := fh.seek(req.Offset)
 		if err != nil {
 			return err
