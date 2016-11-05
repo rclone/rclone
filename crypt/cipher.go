@@ -714,6 +714,9 @@ func (fh *decrypter) Close() error {
 	}
 	// Show file now closed
 	fh.err = ErrorFileClosed
+	if fh.rc == nil {
+		return nil
+	}
 	return fh.rc.Close()
 }
 
