@@ -420,6 +420,9 @@ func readFilesMap(fs Fs, includeAll bool, dir string) (files map[string]Object, 
 		normalised[normalisedRemote] = struct{}{}
 		return nil
 	})
+	if err != nil {
+		err = errors.Wrapf(err, "error listing: %s", fs)
+	}
 	return files, err
 }
 

@@ -5,6 +5,8 @@ package fs
 import (
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 type syncCopyMove struct {
@@ -103,6 +105,9 @@ func (s *syncCopyMove) readSrcUsingChan() {
 		return nil
 	})
 	close(s.srcFilesChan)
+	if err != nil {
+		err = errors.Wrapf(err, "error listing source: %s", s.fsrc)
+	}
 	s.srcFilesResult <- err
 }
 
