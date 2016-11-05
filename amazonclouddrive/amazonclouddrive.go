@@ -49,9 +49,7 @@ const (
 var (
 	// Flags
 	tempLinkThreshold = fs.SizeSuffix(9 << 30) // Download files bigger than this via the tempLink
-	uploadWaitLimit   = pflag.DurationP("acd-upload-wait-limit", "", 60*time.Second, "Don't wait for completed uploads to appear if they took less than this time.")
-	uploadWaitTime    = pflag.DurationP("acd-upload-wait-time", "", 2*60*time.Second, "Time to wait after a failed complete upload to see if it appears.")
-	uploadWaitPerGB   = pflag.DurationP("acd-upload-wait-per-gb", "", 30*time.Second, "Additional time per GB to wait after a failed complete upload to see if it appears.")
+	uploadWaitPerGB   = pflag.DurationP("acd-upload-wait-per-gb", "", 180*time.Second, "Additional time per GB to wait after a failed complete upload to see if it appears.")
 	// Description of how to auth for this app
 	acdConfig = &oauth2.Config{
 		Scopes: []string{"clouddrive:read_all", "clouddrive:write"},
@@ -491,28 +489,35 @@ func (f *Fs) checkUpload(resp *http.Response, in io.Reader, src fs.ObjectInfo, i
 	// if resp == nil || resp.StatusCode != 408 && resp.StatusCode != 500 && resp.StatusCode != 504 {
 	// 	return false, inInfo, inErr
 	// }
+
+	// The HTTP status
+	httpStatus := "HTTP status UNKNOWN"
+	if resp != nil {
+		httpStatus = resp.Status
+	}
+
 	// check to see if we read to the end
 	buf := make([]byte, 1)
 	n, err := in.Read(buf)
 	if !(n == 0 && err == io.EOF) {
-		fs.Debug(src, "Upload error detected but didn't finish upload: %v", inErr)
+		fs.Debug(src, "Upload error detected but didn't finish upload: %v (%q)", inErr, httpStatus)
 		return false, inInfo, inErr
 	}
 
-	// Only wait for items which have been in transit for > uploadWaitLimit
-	if uploadTime < *uploadWaitLimit {
-		fs.Debug(src, "Upload error detected but not waiting since it only took %v to upload: %v", uploadTime, inErr)
+	// Don't wait for uploads - assume they will appear later
+	if *uploadWaitPerGB <= 0 {
+		fs.Debug(src, "Upload error detected but waiting disabled: %v (%q)", inErr, httpStatus)
 		return false, inInfo, inErr
 	}
 
 	// Time we should wait for the upload
 	uploadWaitPerByte := float64(*uploadWaitPerGB) / 1024 / 1024 / 1024
-	timeToWait := time.Duration(uploadWaitPerByte*float64(src.Size())) + *uploadWaitTime
+	timeToWait := time.Duration(uploadWaitPerByte * float64(src.Size()))
 
 	const sleepTime = 5 * time.Second                        // sleep between tries
 	retries := int((timeToWait + sleepTime - 1) / sleepTime) // number of retries, rounded up
 
-	fs.Debug(src, "Error detected after finished upload - waiting to see if object was uploaded correctly: %v", inErr)
+	fs.Debug(src, "Error detected after finished upload - waiting to see if object was uploaded correctly: %v (%q)", inErr, httpStatus)
 	remote := src.Remote()
 	for i := 1; i <= retries; i++ {
 		o, err := f.NewObject(remote)
@@ -532,7 +537,7 @@ func (f *Fs) checkUpload(resp *http.Response, in io.Reader, src fs.ObjectInfo, i
 		}
 		time.Sleep(sleepTime)
 	}
-	fs.Debug(src, "Giving up waiting for object - returning original error: %v", inErr)
+	fs.Debug(src, "Giving up waiting for object - returning original error: %v (%q)", inErr, httpStatus)
 	return false, inInfo, inErr
 }
 
