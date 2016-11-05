@@ -620,17 +620,18 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		fs:     f,
 		remote: remote,
 	}
-	// Check if object already exists
-	err := dstObj.readMetaData()
+	// check if there's already a directory with the same name
+	pathID, err := f.dirCache.FindDir(remote, false)
+	if err == nil || pathID != "" {
+		fs.Debug(src, "Can't move - there is already a folder with the same name in the target location")
+		return nil, fs.ErrorCantMove
+	}
+	// Check if there's already a file with the same name
+	err = dstObj.readMetaData()
 	switch err {
 	case nil:
-		// TODO: directory exists?
-		fs.Debug(src, "Move target '%s' already exists, removing it first.")
-		err := dstObj.Remove()
-		if err != nil {
-			return nil, err
-		}
-		dstObj.info = nil
+		fs.Debug(src, "Can't move - there is already a file with the same name in the target location")
+		return nil, fs.ErrorCantMove
 	case fs.ErrorObjectNotFound:
 		// Not found so we can move it there
 	default:
@@ -647,7 +648,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	if len(srcObj.info.Parents) > 1 && sLeaf != tLeaf {
-		fs.Debug(src, "Cannot move, because object is attached to multiple parents and should be renamed. This would change the name of the node in all parents.")
+		fs.Debug(src, "Can't move - object is attached to multiple parents and should be renamed. This would change the name of the node in all parents.")
 		return nil, fs.ErrorCantMove
 	}
 
