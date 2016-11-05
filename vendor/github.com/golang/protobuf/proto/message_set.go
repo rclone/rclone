@@ -149,21 +149,9 @@ func skipVarint(buf []byte) []byte {
 
 // MarshalMessageSet encodes the extension map represented by m in the message set wire format.
 // It is called by generated Marshal methods on protocol buffer messages with the message_set_wire_format option.
-func MarshalMessageSet(exts interface{}) ([]byte, error) {
-	var m map[int32]Extension
-	switch exts := exts.(type) {
-	case *XXX_InternalExtensions:
-		if err := encodeExtensions(exts); err != nil {
-			return nil, err
-		}
-		m, _ = exts.extensionsRead()
-	case map[int32]Extension:
-		if err := encodeExtensionsMap(exts); err != nil {
-			return nil, err
-		}
-		m = exts
-	default:
-		return nil, errors.New("proto: not an extension map")
+func MarshalMessageSet(m map[int32]Extension) ([]byte, error) {
+	if err := encodeExtensionMap(m); err != nil {
+		return nil, err
 	}
 
 	// Sort extension IDs to provide a deterministic encoding.
@@ -190,17 +178,7 @@ func MarshalMessageSet(exts interface{}) ([]byte, error) {
 
 // UnmarshalMessageSet decodes the extension map encoded in buf in the message set wire format.
 // It is called by generated Unmarshal methods on protocol buffer messages with the message_set_wire_format option.
-func UnmarshalMessageSet(buf []byte, exts interface{}) error {
-	var m map[int32]Extension
-	switch exts := exts.(type) {
-	case *XXX_InternalExtensions:
-		m = exts.extensionsWrite()
-	case map[int32]Extension:
-		m = exts
-	default:
-		return errors.New("proto: not an extension map")
-	}
-
+func UnmarshalMessageSet(buf []byte, m map[int32]Extension) error {
 	ms := new(messageSet)
 	if err := Unmarshal(buf, ms); err != nil {
 		return err
@@ -231,16 +209,7 @@ func UnmarshalMessageSet(buf []byte, exts interface{}) error {
 
 // MarshalMessageSetJSON encodes the extension map represented by m in JSON format.
 // It is called by generated MarshalJSON methods on protocol buffer messages with the message_set_wire_format option.
-func MarshalMessageSetJSON(exts interface{}) ([]byte, error) {
-	var m map[int32]Extension
-	switch exts := exts.(type) {
-	case *XXX_InternalExtensions:
-		m, _ = exts.extensionsRead()
-	case map[int32]Extension:
-		m = exts
-	default:
-		return nil, errors.New("proto: not an extension map")
-	}
+func MarshalMessageSetJSON(m map[int32]Extension) ([]byte, error) {
 	var b bytes.Buffer
 	b.WriteByte('{')
 
@@ -283,7 +252,7 @@ func MarshalMessageSetJSON(exts interface{}) ([]byte, error) {
 
 // UnmarshalMessageSetJSON decodes the extension map encoded in buf in JSON format.
 // It is called by generated UnmarshalJSON methods on protocol buffer messages with the message_set_wire_format option.
-func UnmarshalMessageSetJSON(buf []byte, exts interface{}) error {
+func UnmarshalMessageSetJSON(buf []byte, m map[int32]Extension) error {
 	// Common-case fast path.
 	if len(buf) == 0 || bytes.Equal(buf, []byte("{}")) {
 		return nil

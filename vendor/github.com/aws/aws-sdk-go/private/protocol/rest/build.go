@@ -222,7 +222,8 @@ func EscapePath(path string, encodeSep bool) string {
 		if noEscape[c] || (c == '/' && !encodeSep) {
 			buf.WriteByte(c)
 		} else {
-			fmt.Fprintf(&buf, "%%%02X", c)
+			buf.WriteByte('%')
+			buf.WriteString(strings.ToUpper(strconv.FormatUint(uint64(c), 16)))
 		}
 	}
 	return buf.String()

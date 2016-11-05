@@ -231,12 +231,8 @@ func (c *Command) Usage() error {
 // HelpFunc returns either the function set by SetHelpFunc for this command
 // or a parent, or it returns a function with default help behavior.
 func (c *Command) HelpFunc() func(*Command, []string) {
-	cmd := c
-	for cmd != nil {
-		if cmd.helpFunc != nil {
-			return cmd.helpFunc
-		}
-		cmd = cmd.parent
+	if helpFunc := c.checkHelpFunc(); helpFunc != nil {
+		return helpFunc
 	}
 	return func(*Command, []string) {
 		c.mergePersistentFlags()
@@ -245,6 +241,20 @@ func (c *Command) HelpFunc() func(*Command, []string) {
 			c.Println(err)
 		}
 	}
+}
+
+// checkHelpFunc checks if there is helpFunc in ancestors of c.
+func (c *Command) checkHelpFunc() func(*Command, []string) {
+	if c == nil {
+		return nil
+	}
+	if c.helpFunc != nil {
+		return c.helpFunc
+	}
+	if c.HasParent() {
+		return c.parent.checkHelpFunc()
+	}
+	return nil
 }
 
 // Help puts out the help for the command.

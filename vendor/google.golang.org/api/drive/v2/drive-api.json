@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"C5oy1hgQsABtYOYIOXWcR3BgYqU/neft8qaFpEH--ZoPk-8DTolbo7o\"",
+ "etag": "\"C5oy1hgQsABtYOYIOXWcR3BgYqU/Bxo7TXXOxzhoC81JSCcKcp551FA\"",
  "discoveryVersion": "v1",
  "id": "drive:v2",
  "name": "drive",
  "version": "v2",
- "revision": "20160721",
+ "revision": "20161018",
  "title": "Drive API",
  "description": "Manages files in Drive including uploading, downloading, searching, detecting changes, and updating sharing permissions.",
  "ownerDomain": "google.com",
@@ -1476,7 +1476,7 @@
     },
     "id": {
      "type": "string",
-     "description": "The ID of the user this permission refers to, and identical to the permissionId in the About and Files resources. When making a drive.permissions.insert request, exactly one of the id or value fields must be specified."
+     "description": "The ID of the user this permission refers to, and identical to the permissionId in the About and Files resources. When making a drive.permissions.insert request, exactly one of the id or value fields must be specified unless the permission type anyone, in which case both id and value are ignored."
     },
     "kind": {
      "type": "string",
@@ -1515,7 +1515,7 @@
     },
     "value": {
      "type": "string",
-     "description": "The email address or domain name for the entity. This is used during inserts and is not populated in responses. When making a drive.permissions.insert request, exactly one of the id or value fields must be specified."
+     "description": "The email address or domain name for the entity. This is used during inserts and is not populated in responses. When making a drive.permissions.insert request, exactly one of the id or value fields must be specified unless the permission type anyone, in which case both id and value are ignored."
     },
     "withLink": {
      "type": "boolean",
@@ -1731,6 +1731,10 @@
      "type": "string",
      "description": "This is always drive#revisionList.",
      "default": "drive#revisionList"
+    },
+    "nextPageToken": {
+     "type": "string",
+     "description": "The page token for the next page of revisions. This field will be absent if the end of the revisions list has been reached. If the token is rejected for any reason, it should be discarded and pagination should be restarted from the first page of results."
     },
     "selfLink": {
      "type": "string",
@@ -4238,6 +4242,18 @@
        "description": "The ID of the file.",
        "required": true,
        "location": "path"
+      },
+      "maxResults": {
+       "type": "integer",
+       "description": "Maximum number of revisions to return.",
+       "format": "int32",
+       "minimum": "1",
+       "location": "query"
+      },
+      "pageToken": {
+       "type": "string",
+       "description": "Page token for revisions. To get the next page of results, set this parameter to the value of \"nextPageToken\" from the previous response.",
+       "location": "query"
       }
      },
      "parameterOrder": [

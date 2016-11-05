@@ -1,4 +1,4 @@
-// Package restxml provides RESTful XML serialization of AWS
+// Package restxml provides RESTful XML serialisation of AWS
 // requests and responses.
 package restxml
 

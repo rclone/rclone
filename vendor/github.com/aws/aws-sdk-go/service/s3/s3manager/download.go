@@ -8,7 +8,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/client"
@@ -35,7 +34,7 @@ type Downloader struct {
 	PartSize int64
 
 	// The number of goroutines to spin up in parallel when sending parts.
-	// If this is set to zero, the DefaultDownloadConcurrency value will be used.
+	// If this is set to zero, the DefaultConcurrency value will be used.
 	Concurrency int
 
 	// An S3 client to use when performing downloads.
@@ -50,13 +49,13 @@ type Downloader struct {
 //
 // Example:
 //     // The session the S3 Downloader will use
-//     sess, err := session.NewSession()
+//     sess := session.New()
 //
 //     // Create a downloader with the session and default options
 //     downloader := s3manager.NewDownloader(sess)
 //
 //     // Create a downloader with the session and custom options
-//     downloader := s3manager.NewDownloader(sess, func(d *s3manager.Downloader) {
+//     downloader := s3manager.NewDownloader(sess, func(d *s3manager.Uploader) {
 //          d.PartSize = 64 * 1024 * 1024 // 64MB per part
 //     })
 func NewDownloader(c client.ConfigProvider, options ...func(*Downloader)) *Downloader {
@@ -78,17 +77,14 @@ func NewDownloader(c client.ConfigProvider, options ...func(*Downloader)) *Downl
 // to make S3 API calls.
 //
 // Example:
-//     // The session the S3 Downloader will use
-//     sess, err := session.NewSession()
-//
 //     // The S3 client the S3 Downloader will use
-//     s3Svc := s3.new(sess)
+//     s3Svc := s3.new(session.New())
 //
 //     // Create a downloader with the s3 client and default options
 //     downloader := s3manager.NewDownloaderWithClient(s3Svc)
 //
 //     // Create a downloader with the s3 client and custom options
-//     downloader := s3manager.NewDownloaderWithClient(s3Svc, func(d *s3manager.Downloader) {
+//     downloader := s3manager.NewDownloaderWithClient(s3Svc, func(d *s3manager.Uploader) {
 //          d.PartSize = 64 * 1024 * 1024 // 64MB per part
 //     })
 func NewDownloaderWithClient(svc s3iface.S3API, options ...func(*Downloader)) *Downloader {
@@ -104,16 +100,12 @@ func NewDownloaderWithClient(svc s3iface.S3API, options ...func(*Downloader)) *D
 	return d
 }
 
-type maxRetrier interface {
-	MaxRetries() int
-}
-
 // Download downloads an object in S3 and writes the payload into w using
 // concurrent GET requests.
 //
 // Additional functional options can be provided to configure the individual
-// download. These options are copies of the Downloader instance Download is called from.
-// Modifying the options will not impact the original Downloader instance.
+// upload. These options are copies of the Uploader instance Upload is called from.
+// Modifying the options will not impact the original Uploader instance.
 //
 // It is safe to call this method concurrently across goroutines.
 //
@@ -124,19 +116,6 @@ func (d Downloader) Download(w io.WriterAt, input *s3.GetObjectInput, options ..
 
 	for _, option := range options {
 		option(&impl.ctx)
-	}
-
-	if s, ok := d.S3.(maxRetrier); ok {
-		impl.partBodyMaxRetries = s.MaxRetries()
-	}
-
-	impl.totalBytes = -1
-	if impl.ctx.Concurrency == 0 {
-		impl.ctx.Concurrency = DefaultDownloadConcurrency
-	}
-
-	if impl.ctx.PartSize == 0 {
-		impl.ctx.PartSize = DefaultDownloadPartSize
 	}
 
 	return impl.download()
@@ -156,13 +135,26 @@ type downloader struct {
 	totalBytes int64
 	written    int64
 	err        error
+}
 
-	partBodyMaxRetries int
+// init initializes the downloader with default options.
+func (d *downloader) init() {
+	d.totalBytes = -1
+
+	if d.ctx.Concurrency == 0 {
+		d.ctx.Concurrency = DefaultDownloadConcurrency
+	}
+
+	if d.ctx.PartSize == 0 {
+		d.ctx.PartSize = DefaultDownloadPartSize
+	}
 }
 
 // download performs the implementation of the object download across ranged
 // GETs.
 func (d *downloader) download() (n int64, err error) {
+	d.init()
+
 	// Spin off first worker to check additional header information
 	d.getChunk()
 
@@ -178,7 +170,7 @@ func (d *downloader) download() (n int64, err error) {
 		// Assign work
 		for d.getErr() == nil {
 			if d.pos >= total {
-				break // We're finished queuing chunks
+				break // We're finished queueing chunks
 			}
 
 			// Queue the next range of bytes to read.
@@ -219,82 +211,49 @@ func (d *downloader) downloadPart(ch chan dlchunk) {
 	defer d.wg.Done()
 	for {
 		chunk, ok := <-ch
-		if !ok || d.getErr() != nil {
+		if !ok {
 			break
 		}
-
-		if err := d.downloadChunk(chunk); err != nil {
-			d.setErr(err)
-			break
-		}
+		d.downloadChunk(chunk)
 	}
 }
 
 // getChunk grabs a chunk of data from the body.
 // Not thread safe. Should only used when grabbing data on a single thread.
 func (d *downloader) getChunk() {
-	if d.getErr() != nil {
-		return
-	}
-
 	chunk := dlchunk{w: d.w, start: d.pos, size: d.ctx.PartSize}
 	d.pos += d.ctx.PartSize
-
-	if err := d.downloadChunk(chunk); err != nil {
-		d.setErr(err)
-	}
+	d.downloadChunk(chunk)
 }
 
 // downloadChunk downloads the chunk froom s3
-func (d *downloader) downloadChunk(chunk dlchunk) error {
+func (d *downloader) downloadChunk(chunk dlchunk) {
+	if d.getErr() != nil {
+		return
+	}
+	// Get the next byte range of data
 	in := &s3.GetObjectInput{}
 	awsutil.Copy(in, d.in)
-
-	// Get the next byte range of data
-	rng := fmt.Sprintf("bytes=%d-%d", chunk.start, chunk.start+chunk.size-1)
+	rng := fmt.Sprintf("bytes=%d-%d",
+		chunk.start, chunk.start+chunk.size-1)
 	in.Range = &rng
 
-	var n int64
-	var err error
-	for retry := 0; retry <= d.partBodyMaxRetries; retry++ {
-		req, resp := d.ctx.S3.GetObjectRequest(in)
-		req.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("S3Manager"))
+	req, resp := d.ctx.S3.GetObjectRequest(in)
+	req.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("S3Manager"))
+	err := req.Send()
 
-		err = req.Send()
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		d.setErr(err)
+	} else {
 		d.setTotalBytes(resp) // Set total if not yet set.
 
-		n, err = io.Copy(&chunk, resp.Body)
+		n, err := io.Copy(&chunk, resp.Body)
 		resp.Body.Close()
-		if err == nil {
-			break
+
+		if err != nil {
+			d.setErr(err)
 		}
-
-		chunk.cur = 0
-		logMessage(d.ctx.S3, aws.LogDebugWithRequestRetries,
-			fmt.Sprintf("DEBUG: object part body download interrupted %s, err, %v, retrying attempt %d",
-				aws.StringValue(in.Key), err, retry))
-	}
-
-	d.incrWritten(n)
-
-	return err
-}
-
-func logMessage(svc s3iface.S3API, level aws.LogLevelType, msg string) {
-	s, ok := svc.(*s3.S3)
-	if !ok {
-		return
-	}
-
-	if s.Config.Logger == nil {
-		return
-	}
-
-	if s.Config.LogLevel.Matches(level) {
-		s.Config.Logger.Log(msg)
+		d.incrWritten(n)
 	}
 }
 

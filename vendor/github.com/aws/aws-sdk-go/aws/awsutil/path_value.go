@@ -106,8 +106,8 @@ func rValuesAtPath(v interface{}, path string, createPath, caseSensitive, nilTer
 
 		if indexStar || index != nil {
 			nextvals = []reflect.Value{}
-			for _, valItem := range values {
-				value := reflect.Indirect(valItem)
+			for _, value := range values {
+				value := reflect.Indirect(value)
 				if value.Kind() != reflect.Slice {
 					continue
 				}

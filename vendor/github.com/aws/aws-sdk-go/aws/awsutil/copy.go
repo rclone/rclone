@@ -3,7 +3,6 @@ package awsutil
 import (
 	"io"
 	"reflect"
-	"time"
 )
 
 // Copy deeply copies a src structure to dst. Useful for copying request and
@@ -50,14 +49,7 @@ func rcopy(dst, src reflect.Value, root bool) {
 		} else {
 			e := src.Type().Elem()
 			if dst.CanSet() && !src.IsNil() {
-				if _, ok := src.Interface().(*time.Time); !ok {
-					dst.Set(reflect.New(e))
-				} else {
-					tempValue := reflect.New(e)
-					tempValue.Elem().Set(src.Elem())
-					// Sets time.Time's unexported values
-					dst.Set(tempValue)
-				}
+				dst.Set(reflect.New(e))
 			}
 			if src.Elem().IsValid() {
 				// Keep the current root state since the depth hasn't changed

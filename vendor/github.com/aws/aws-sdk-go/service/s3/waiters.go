@@ -22,12 +22,6 @@ func (c *S3) WaitUntilBucketExists(input *HeadBucketInput) error {
 				State:    "success",
 				Matcher:  "status",
 				Argument: "",
-				Expected: 301,
-			},
-			{
-				State:    "success",
-				Matcher:  "status",
-				Argument: "",
 				Expected: 403,
 			},
 			{

@@ -87,8 +87,8 @@ func MakeRaw(fd int) (*State, error) {
 	if e != 0 {
 		return nil, error(e)
 	}
-	raw := st &^ (enableEchoInput | enableProcessedInput | enableLineInput | enableProcessedOutput)
-	_, _, e = syscall.Syscall(procSetConsoleMode.Addr(), 2, uintptr(fd), uintptr(raw), 0)
+	st &^= (enableEchoInput | enableProcessedInput | enableLineInput | enableProcessedOutput)
+	_, _, e = syscall.Syscall(procSetConsoleMode.Addr(), 2, uintptr(fd), uintptr(st), 0)
 	if e != 0 {
 		return nil, error(e)
 	}

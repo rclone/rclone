@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/client/metadata"
 )
 
@@ -39,7 +38,6 @@ type Request struct {
 	RetryDelay       time.Duration
 	NotHoist         bool
 	SignedHeaderVals http.Header
-	LastSignedAt     time.Time
 
 	built bool
 }
@@ -73,15 +71,13 @@ func New(cfg aws.Config, clientInfo metadata.ClientInfo, handlers Handlers,
 	if method == "" {
 		method = "POST"
 	}
+	p := operation.HTTPPath
+	if p == "" {
+		p = "/"
+	}
 
 	httpReq, _ := http.NewRequest(method, "", nil)
-
-	var err error
-	httpReq.URL, err = url.Parse(clientInfo.Endpoint + operation.HTTPPath)
-	if err != nil {
-		httpReq.URL = &url.URL{}
-		err = awserr.New("InvalidEndpointURL", "invalid endpoint uri", err)
-	}
+	httpReq.URL, _ = url.Parse(clientInfo.Endpoint + p)
 
 	r := &Request{
 		Config:     cfg,
@@ -95,7 +91,7 @@ func New(cfg aws.Config, clientInfo metadata.ClientInfo, handlers Handlers,
 		HTTPRequest: httpReq,
 		Body:        nil,
 		Params:      params,
-		Error:       err,
+		Error:       nil,
 		Data:        data,
 	}
 	r.SetBufferBody([]byte{})
@@ -135,7 +131,7 @@ func (r *Request) SetStringBody(s string) {
 
 // SetReaderBody will set the request's body reader.
 func (r *Request) SetReaderBody(reader io.ReadSeeker) {
-	r.HTTPRequest.Body = newOffsetReader(reader, 0)
+	r.HTTPRequest.Body = ioutil.NopCloser(reader)
 	r.Body = reader
 }
 
@@ -189,6 +185,7 @@ func debugLogReqError(r *Request, stage string, retrying bool, err error) {
 // which occurred will be returned.
 func (r *Request) Build() error {
 	if !r.built {
+		r.Error = nil
 		r.Handlers.Validate.Run(r)
 		if r.Error != nil {
 			debugLogReqError(r, "Validate Request", false, r.Error)
@@ -205,7 +202,7 @@ func (r *Request) Build() error {
 	return r.Error
 }
 
-// Sign will sign the request returning error if errors are encountered.
+// Sign will sign the request retuning error if errors are encountered.
 //
 // Send will build the request prior to signing. All Sign Handlers will
 // be executed in the order they were set.
@@ -224,53 +221,32 @@ func (r *Request) Sign() error {
 //
 // Send will sign the request prior to sending. All Send Handlers will
 // be executed in the order they were set.
-//
-// Canceling a request is non-deterministic. If a request has been canceled,
-// then the transport will choose, randomly, one of the state channels during
-// reads or getting the connection.
-//
-// readLoop() and getConn(req *Request, cm connectMethod)
-// https://github.com/golang/go/blob/master/src/net/http/transport.go
 func (r *Request) Send() error {
 	for {
+		r.Sign()
+		if r.Error != nil {
+			return r.Error
+		}
+
 		if aws.BoolValue(r.Retryable) {
 			if r.Config.LogLevel.Matches(aws.LogDebugWithRequestRetries) {
 				r.Config.Logger.Log(fmt.Sprintf("DEBUG: Retrying Request %s/%s, attempt %d",
 					r.ClientInfo.ServiceName, r.Operation.Name, r.RetryCount))
 			}
 
-			var body io.ReadCloser
-			if reader, ok := r.HTTPRequest.Body.(*offsetReader); ok {
-				body = reader.CloseAndCopy(r.BodyStart)
-			} else {
-				if r.Config.Logger != nil {
-					r.Config.Logger.Log("Request body type has been overwritten. May cause race conditions")
-				}
-				r.Body.Seek(r.BodyStart, 0)
-				body = ioutil.NopCloser(r.Body)
-			}
+			// Closing response body. Since we are setting a new request to send off, this
+			// response will get squashed and leaked.
+			r.HTTPResponse.Body.Close()
 
-			r.HTTPRequest = copyHTTPRequest(r.HTTPRequest, body)
-			if r.HTTPResponse != nil && r.HTTPResponse.Body != nil {
-				// Closing response body. Since we are setting a new request to send off, this
-				// response will get squashed and leaked.
-				r.HTTPResponse.Body.Close()
-			}
+			// Re-seek the body back to the original point in for a retry so that
+			// send will send the body's contents again in the upcoming request.
+			r.Body.Seek(r.BodyStart, 0)
+			r.HTTPRequest.Body = ioutil.NopCloser(r.Body)
 		}
-
-		r.Sign()
-		if r.Error != nil {
-			return r.Error
-		}
-
 		r.Retryable = nil
 
 		r.Handlers.Send.Run(r)
 		if r.Error != nil {
-			if strings.Contains(r.Error.Error(), "net/http: request canceled") {
-				return r.Error
-			}
-
 			err := r.Error
 			r.Handlers.Retry.Run(r)
 			r.Handlers.AfterRetry.Run(r)
