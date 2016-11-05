@@ -1018,18 +1018,32 @@ func (o *Object) Remove() error {
 
 // Restore an object
 func (o *Object) Restore() error {
-	return o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.info.Restore()
+	var info *acd.Node
+		var resp *http.Response
+	var err error
+	err = o.fs.pacer.Call(func() (bool, error) {
+		info, resp, err = o.info.Restore()
 		return o.fs.shouldRetry(resp, err)
 	})
+	if err == nil {
+		o.info = info
+	}
+	return err
 }
 
 // Changes name of given object
 func (o *Object) Rename(newName string) error {
-	return o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.info.Rename(newName)
+	var info *acd.Node
+	var resp *http.Response
+	var err error
+	err = o.fs.pacer.Call(func() (bool, error) {
+		info, resp, err = o.info.Rename(newName)
 		return o.fs.shouldRetry(resp, err)
 	})
+	if err == nil {
+		o.info = info
+	}
+	return err
 }
 
 // Replaces one parent with another, effectively moving the file. Leaves other
