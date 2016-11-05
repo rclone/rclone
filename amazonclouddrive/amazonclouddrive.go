@@ -668,6 +668,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 			return nil, err
 		}
 	}
+	f.dirCache.Flush()
 	return dstObj, nil
 
 OnConflict:
@@ -700,6 +701,7 @@ OnConflict:
 	if err != nil {
 		return nil, err
 	} else {
+		f.dirCache.Flush()
 		return dstObj, nil
 	}
 }
