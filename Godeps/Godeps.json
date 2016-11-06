@@ -368,6 +368,36 @@
 		{
 			"ImportPath": "google.golang.org/appengine/internal/remote_api",
 			"Rev": "c98f627282072b1230c8795abe98e2914c8a1de9"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/vendor/github.com/go-ini/ini",
+			"Comment": "v1.1.7",
+			"Rev": "13a12060f716145019378a10e2806c174356b857"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/vendor/github.com/jmespath/go-jmespath",
+			"Comment": "v1.1.7",
+			"Rev": "13a12060f716145019378a10e2806c174356b857"
+		},
+		{
+			"ImportPath": "github.com/cpuguy83/go-md2man/vendor/github.com/russross/blackfriday",
+			"Comment": "v1.0.6",
+			"Rev": "a65d4d2de4d5f7c74868dfa9b202a3c8be315aaa"
+		},
+		{
+			"ImportPath": "github.com/cpuguy83/go-md2man/vendor/github.com/shurcooL/sanitized_anchor_name",
+			"Comment": "v1.0.6",
+			"Rev": "a65d4d2de4d5f7c74868dfa9b202a3c8be315aaa"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/vendor/github.com/davecgh/go-spew/spew",
+			"Comment": "v1.1.3-4-g1f4a164",
+			"Rev": "1f4a1643a57e798696635ea4c126e9127adb7d3c"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/vendor/github.com/pmezard/go-difflib/difflib",
+			"Comment": "v1.1.3-4-g1f4a164",
+			"Rev": "1f4a1643a57e798696635ea4c126e9127adb7d3c"
 		}
 	]
 }
