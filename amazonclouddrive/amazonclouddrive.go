@@ -392,6 +392,17 @@ func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly
 				if *node.Status != statusAvailable {
 					continue
 				}
+				// Ignore bogus nodes Amazon Drive sometimes reports
+				hasValidParent := false
+				for _, parent := range node.Parents {
+					if parent == dirID {
+						hasValidParent = true
+						break
+					}
+				}
+				if !hasValidParent {
+					continue
+				}
 				// Store the nodes up in case we have to retry the listing
 				out = append(out, node)
 			}
