@@ -1,5 +1,5 @@
 ---
-date: 2016-11-06T10:15:46Z
+date: 2016-11-06T10:19:14Z
 title: "rclone genautocomplete"
 slug: rclone_genautocomplete
 url: /commands/rclone_genautocomplete/

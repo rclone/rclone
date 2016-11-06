@@ -1,5 +1,5 @@
 ---
-date: 2016-11-06T10:15:46Z
+date: 2016-11-06T10:19:14Z
 title: "rclone rmdir"
 slug: rclone_rmdir
 url: /commands/rclone_rmdir/

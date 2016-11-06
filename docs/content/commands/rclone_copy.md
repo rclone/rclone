@@ -1,5 +1,5 @@
 ---
-date: 2016-11-06T10:15:46Z
+date: 2016-11-06T10:19:14Z
 title: "rclone copy"
 slug: rclone_copy
 url: /commands/rclone_copy/

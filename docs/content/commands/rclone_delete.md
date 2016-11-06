@@ -1,5 +1,5 @@
 ---
-date: 2016-11-06T10:15:46Z
+date: 2016-11-06T10:19:14Z
 title: "rclone delete"
 slug: rclone_delete
 url: /commands/rclone_delete/
