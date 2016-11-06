@@ -17,6 +17,7 @@ import (
 )
 
 const (
+	// LibraryVersion is the current version of this library
 	LibraryVersion     = "0.1.0"
 	defaultMetadataURL = "https://drive.amazonaws.com/drive/v1/"
 	defaultContentURL  = "https://content-na.drive.amazonaws.com/cdproxy/"

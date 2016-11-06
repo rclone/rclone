@@ -64,8 +64,8 @@ type AccountInfo struct {
 	Status     *string `json:"status"`
 }
 
-// Provides information about the current user account like the status and the
-// accepted “Terms Of Use”.
+// GetInfo provides information about the current user account like
+// the status and the accepted “Terms Of Use”.
 func (s *AccountService) GetInfo() (*AccountInfo, *http.Response, error) {
 	req, err := s.client.NewMetadataRequest("GET", "account/info", nil)
 	if err != nil {
@@ -88,7 +88,7 @@ type AccountQuota struct {
 	Available      *uint64    `json:"available"`
 }
 
-// Gets account quota and storage availability information.
+// GetQuota gets account quota and storage availability information.
 func (s *AccountService) GetQuota() (*AccountQuota, *http.Response, error) {
 	req, err := s.client.NewMetadataRequest("GET", "account/quota", nil)
 	if err != nil {
@@ -112,16 +112,20 @@ type AccountUsage struct {
 	Photo          *CategoryUsage `json:"photo"`
 	Video          *CategoryUsage `json:"video"`
 }
+
+// CategoryUsage defines Total and Billable UsageNumbers
 type CategoryUsage struct {
 	Total    *UsageNumbers `json:"total"`
 	Billable *UsageNumbers `json:"billable"`
 }
+
+// UsageNumbers defines Bytes and Count for a metered count
 type UsageNumbers struct {
 	Bytes *uint64 `json:"bytes"`
 	Count *uint64 `json:"count"`
 }
 
-// Gets Account Usage information broken down by content category.
+// GetUsage gets Account Usage information broken down by content category.
 func (s *AccountService) GetUsage() (*AccountUsage, *http.Response, error) {
 	req, err := s.client.NewMetadataRequest("GET", "account/usage", nil)
 	if err != nil {

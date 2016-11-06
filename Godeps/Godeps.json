@@ -190,7 +190,7 @@
 		},
 		{
 			"ImportPath": "github.com/ncw/go-acd",
-			"Rev": "5622f9ac57985c9fd6e1ad419983c20043e007ce"
+			"Rev": "fafd639874ad90ef88345a48bd8aeffdbca6480f"
 		},
 		{
 			"ImportPath": "github.com/ncw/swift",
