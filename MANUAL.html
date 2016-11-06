@@ -12,7 +12,7 @@
 <div id="header">
 <h1 class="title">rclone(1) User Manual</h1>
 <h2 class="author">Nick Craig-Wood</h2>
-<h3 class="date">Aug 24, 2016</h3>
+<h3 class="date">Nov 06, 2016</h3>
 </div>
 <h1 id="rclone">Rclone</h1>
 <p><a href="http://rclone.org/"><img src="http://rclone.org/img/rclone-120x120.png" alt="Logo" /></a></p>
@@ -50,25 +50,47 @@
 </li></li>
 <li><a href="http://rclone.org/downloads/">Downloads</a></li>
 </ul>
-<h2 id="install">Install</h2>
+<h1 id="install">Install</h1>
 <p>Rclone is a Go program and comes as a single binary file.</p>
-<p><a href="http://rclone.org/downloads/">Download</a> the relevant binary.</p>
-<p>Or alternatively if you have Go 1.5+ installed use</p>
-<pre><code>go get github.com/ncw/rclone</code></pre>
-<p>and this will build the binary in <code>$GOPATH/bin</code>. If you have built rclone before then you will want to update its dependencies first with this</p>
-<pre><code>go get -u -v github.com/ncw/rclone/...</code></pre>
+<h2 id="quickstart">Quickstart</h2>
+<ul>
+<li><a href="http://rclone.org/downloads/">Download</a> the relevant binary.</li>
+<li>Unpack and the <code>rclone</code> binary.</li>
+<li>Run <code>rclone config</code> to setup. See <a href="http://rclone.org/docs/">rclone config docs</a> for more details.</li>
+</ul>
+<p>See below for some expanded Linux / macOS instructions.</p>
 <p>See the <a href="http://rclone.org/docs/">Usage section</a> of the docs for how to use rclone, or run <code>rclone -h</code>.</p>
-<h2 id="linux-binary-downloaded-files-install-example">linux binary downloaded files install example</h2>
-<pre><code>unzip rclone-v1.17-linux-amd64.zip
-cd rclone-v1.17-linux-amd64
-#copy binary file
-sudo cp rclone /usr/sbin/
+<h2 id="linux-installation-from-precompiled-binary">Linux installation from precompiled binary</h2>
+<p>Fetch and unpack</p>
+<pre><code>curl -O http://downloads.rclone.org/rclone-current-linux-amd64.zip
+unzip rclone-current-linux-amd64.zip
+cd rclone-*-linux-amd64</code></pre>
+<p>Copy binary file</p>
+<pre><code>sudo cp rclone /usr/sbin/
 sudo chown root:root /usr/sbin/rclone
-sudo chmod 755 /usr/sbin/rclone
-#install manpage
-sudo mkdir -p /usr/local/share/man/man1
+sudo chmod 755 /usr/sbin/rclone</code></pre>
+<p>Install manpage</p>
+<pre><code>sudo mkdir -p /usr/local/share/man/man1
 sudo cp rclone.1 /usr/local/share/man/man1/
 sudo mandb </code></pre>
+<p>Run <code>rclone config</code> to setup. See <a href="http://rclone.org/docs/">rclone config docs</a> for more details.</p>
+<pre><code>rclone config</code></pre>
+<h2 id="macos-installation-from-precompiled-binary">macOS installation from precompiled binary</h2>
+<p>Download the latest version of rclone.</p>
+<pre><code>cd &amp;&amp; curl -O http://downloads.rclone.org/rclone-current-osx-amd64.zip</code></pre>
+<p>Unzip the download and cd to the extracted folder.</p>
+<pre><code>unzip -a rclone-current-osx-amd64.zip &amp;&amp; cd rclone-*-osx-amd64</code></pre>
+<p>Move rclone to your $PATH. You will be prompted for your password.</p>
+<pre><code>sudo mv rclone /usr/local/bin/</code></pre>
+<p>Remove the leftover files.</p>
+<pre><code>cd .. &amp;&amp; rm -rf rclone-*-osx-amd64 rclone-current-osx-amd64.zip</code></pre>
+<p>Run <code>rclone config</code> to setup. See <a href="http://rclone.org/docs/">rclone config docs</a> for more details.</p>
+<pre><code>rclone config</code></pre>
+<h2 id="install-from-source">Install from source</h2>
+<p>Make sure you have at least <a href="https://golang.org/">Go</a> 1.5 installed. Make sure your <code>GOPATH</code> is set, then:</p>
+<pre><code>go get -u -v github.com/ncw/rclone</code></pre>
+<p>and this will build the binary in <code>$GOPATH/bin</code>. If you have built rclone before then you will want to update its dependencies first with this</p>
+<pre><code>go get -u -v github.com/ncw/rclone/...</code></pre>
 <h2 id="installation-with-ansible">Installation with Ansible</h2>
 <p>This can be done with <a href="https://github.com/stefangweichinger/ansible-rclone">Stefan Weichinger's ansible role</a>.</p>
 <p>Instructions</p>
@@ -286,7 +308,7 @@ two-3.txt: renamed from: two.txt</code></pre>
 <pre><code>rclone dedupe rename &quot;drive:Google Photos&quot;</code></pre>
 <pre><code>rclone dedupe [mode] remote:path</code></pre>
 <h3 id="options">Options</h3>
-<pre><code>      --dedupe-mode string   Dedupe mode interactive|skip|first|newest|oldest|rename.</code></pre>
+<pre><code>      --dedupe-mode string   Dedupe mode interactive|skip|first|newest|oldest|rename. (default &quot;interactive&quot;)</code></pre>
 <h2 id="rclone-authorize">rclone authorize</h2>
 <p>Remote authorization.</p>
 <h3 id="synopsis-18">Synopsis</h3>
@@ -318,9 +340,17 @@ two-3.txt: renamed from: two.txt</code></pre>
 <h3 id="synopsis-21">Synopsis</h3>
 <p>This produces markdown docs for the rclone commands to the directory supplied. These are in a format suitable for hugo to render into the rclone.org website.</p>
 <pre><code>rclone gendocs output_directory</code></pre>
+<h2 id="rclone-listremotes">rclone listremotes</h2>
+<p>List all the remotes in the config file.</p>
+<h3 id="synopsis-22">Synopsis</h3>
+<p>rclone listremotes lists all the available remotes from the config file.</p>
+<p>When uses with the -l flag it lists the types too.</p>
+<pre><code>rclone listremotes</code></pre>
+<h3 id="options-1">Options</h3>
+<pre><code>  -l, --long   Show the type as well as names.</code></pre>
 <h2 id="rclone-mount">rclone mount</h2>
 <p>Mount the remote as a mountpoint. <strong>EXPERIMENTAL</strong></p>
-<h3 id="synopsis-22">Synopsis</h3>
+<h3 id="synopsis-23">Synopsis</h3>
 <p>rclone mount allows Linux, FreeBSD and macOS to mount any of Rclone's cloud storage systems as a file system with FUSE.</p>
 <p>This is <strong>EXPERIMENTAL</strong> - use with care.</p>
 <p>First set up your remote using <code>rclone config</code>. Check it works with <code>rclone ls</code> etc.</p>
@@ -331,8 +361,8 @@ two-3.txt: renamed from: two.txt</code></pre>
 <p>Or with OS X</p>
 <pre><code>umount -u /path/to/local/mount</code></pre>
 <h3 id="limitations">Limitations</h3>
-<p>This can only read files seqentially, or write files sequentially. It can't read and write or seek in files.</p>
-<p>rclonefs inherits rclone's directory handling. In rclone's world directories don't really exist. This means that empty directories will have a tendency to disappear once they fall out of the directory cache.</p>
+<p>This can only write files seqentially, it can only seek when reading.</p>
+<p>Rclone mount inherits rclone's directory handling. In rclone's world directories don't really exist. This means that empty directories will have a tendency to disappear once they fall out of the directory cache.</p>
 <p>The bucket based FSes (eg swift, s3, google compute storage, b2) won't work from the root - you will need to specify a bucket, or a path within the bucket. So <code>swift:</code> won't work whereas <code>swift:bucket</code> will as will <code>swift:bucket/path</code>.</p>
 <p>Only supported on Linux, FreeBSD and OS X at the moment.</p>
 <h3 id="rclone-mount-vs-rclone-synccopy">rclone mount vs rclone sync/copy</h3>
@@ -341,8 +371,9 @@ two-3.txt: renamed from: two.txt</code></pre>
 <ul>
 <li>All the remotes should work for read, but some may not for write
 <ul>
-<li>those which need to know the size in advance won't - eg B2</li>
+<li>those which need to know the size in advance won't - eg B2, Amazon Drive</li>
 <li>maybe should pass in size as -1 to mean work it out</li>
+<li>Or put in an an upload cache to cache the files on disk first</li>
 </ul></li>
 </ul>
 <h3 id="todo">TODO</h3>
@@ -352,9 +383,21 @@ two-3.txt: renamed from: two.txt</code></pre>
 <li>Move directories</li>
 </ul>
 <pre><code>rclone mount remote:path /path/to/mountpoint</code></pre>
-<h3 id="options-1">Options</h3>
-<pre><code>      --debug-fuse   Debug the FUSE internals - needs -v.
-      --no-modtime   Don&#39;t read the modification time (can speed things up).</code></pre>
+<h3 id="options-2">Options</h3>
+<pre><code>      --allow-non-empty           Allow mounting over a non-empty directory.
+      --allow-other               Allow access to other users.
+      --allow-root                Allow access to root user.
+      --debug-fuse                Debug the FUSE internals - needs -v.
+      --default-permissions       Makes kernel enforce access control based on the file mode.
+      --dir-cache-time duration   Time to cache directory entries for. (default 5m0s)
+      --gid uint32                Override the gid field set by the filesystem. (default 502)
+      --max-read-ahead int        The number of bytes that can be prefetched for sequential reads. (default 128k)
+      --no-modtime                Don&#39;t read the modification time (can speed things up).
+      --no-seek                   Don&#39;t allow seeking in files.
+      --read-only                 Mount read-only.
+      --uid uint32                Override the uid field set by the filesystem. (default 502)
+      --umask int                 Override the permission bits set by the filesystem. (default 2)
+      --write-back-cache          Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used.</code></pre>
 <h2 id="copying-single-files">Copying single files</h2>
 <p>rclone normally syncs or copies directories. However if the source remote points to a file, rclone will just copy that file. The destination remote must point to a directory - rclone will give the error <code>Failed to create file system for &quot;remote:file&quot;: is a file not a directory</code> if it isn't.</p>
 <p>For example, suppose you have a remote with a file in called <code>test.jpg</code>, then you could copy just that file like this</p>
@@ -391,7 +434,7 @@ two-3.txt: renamed from: two.txt</code></pre>
 <p>This can be used when scripting to make aged backups efficiently, eg</p>
 <pre><code>rclone sync remote:current-backup remote:previous-backup
 rclone sync /path/to/files remote:current-backup</code></pre>
-<h2 id="options-2">Options</h2>
+<h2 id="options-3">Options</h2>
 <p>Rclone has a number of options to control its behaviour.</p>
 <p>Options which use TIME use the go time parser. A duration string is a possibly signed sequence of decimal numbers, each with optional fraction and a unit suffix, such as &quot;300ms&quot;, &quot;-1.5h&quot; or &quot;2h45m&quot;. Valid time units are &quot;ns&quot;, &quot;us&quot; (or &quot;µs&quot;), &quot;ms&quot;, &quot;s&quot;, &quot;m&quot;, &quot;h&quot;.</p>
 <p>Options which use SIZE use kByte by default. However a suffix of <code>b</code> for bytes, <code>k</code> for kBytes, <code>M</code> for MBytes and <code>G</code> for GBytes may be used. These are the binary units, eg 1, 2**10, 2**20, 2**30 respectively.</p>
@@ -399,6 +442,7 @@ rclone sync /path/to/files remote:current-backup</code></pre>
 <p>Bandwidth limit in kBytes/s, or use suffix b|k|M|G. The default is <code>0</code> which means to not limit bandwidth.</p>
 <p>For example to limit bandwidth usage to 10 MBytes/s use <code>--bwlimit 10M</code></p>
 <p>This only limits the bandwidth of the data transfer, it doesn't limit the bandwith of the directory listings etc.</p>
+<p>Note that the units are Bytes/s not Bits/s. Typically connections are measured in Bits/s - to convert divide by 8. For example let's say you have a 10 Mbit/s connection and you wish rclone to use half of it - 5 Mbit/s. This is 5/8 = 0.625MByte/s so you would use a <code>--bwlimit 0.625M</code> parameter for rclone.</p>
 <h3 id="checkersn">--checkers=N</h3>
 <p>The number of checkers to run in parallel. Checkers do the equality checking of files during a sync. For some storage systems (eg s3, swift, dropbox) this can take a significant amount of time so they are run in parallel.</p>
 <p>The default is to run 8 checkers in parallel.</p>
@@ -524,12 +568,15 @@ c/u/q&gt;</code></pre>
 <p>These options are useful when developing or debugging rclone. There are also some more remote specific options which aren't documented here which are used for testing. These start with remote name eg <code>--drive-test-option</code> - see the docs for the remote in question.</p>
 <h3 id="cpuprofilefile">--cpuprofile=FILE</h3>
 <p>Write CPU profile to file. This can be analysed with <code>go tool pprof</code>.</p>
+<h3 id="dump-auth">--dump-auth</h3>
+<p>Dump HTTP headers - will contain sensitive info such as <code>Authorization:</code> headers - use <code>--dump-headers</code> to dump without <code>Authorization:</code> headers. Can be very verbose. Useful for debugging only.</p>
 <h3 id="dump-bodies">--dump-bodies</h3>
 <p>Dump HTTP headers and bodies - may contain sensitive info. Can be very verbose. Useful for debugging only.</p>
 <h3 id="dump-filters">--dump-filters</h3>
 <p>Dump the filters to the output. Useful to see exactly what include and exclude options are filtering on.</p>
 <h3 id="dump-headers">--dump-headers</h3>
-<p>Dump HTTP headers - may contain sensitive info. Can be very verbose. Useful for debugging only.</p>
+<p>Dump HTTP headers with <code>Authorization:</code> lines removed. May still contain sensitive info. Can be very verbose. Useful for debugging only.</p>
+<p>Use <code>--dump-auth</code> if you do want the <code>Authorization:</code> headers.</p>
 <h3 id="memprofilefile">--memprofile=FILE</h3>
 <p>Write memory profile to file. This can be analysed with <code>go tool pprof</code>.</p>
 <h3 id="no-check-certificatetruefalse">--no-check-certificate=true/false</h3>
@@ -567,7 +614,9 @@ c/u/q&gt;</code></pre>
 <p>If you use the <code>-v</code> flag, rclone will produce <code>Error</code>, <code>Info</code> and <code>Debug</code> messages.</p>
 <p>If you use the <code>--log-file=FILE</code> option, rclone will redirect <code>Error</code>, <code>Info</code> and <code>Debug</code> messages along with standard error to FILE.</p>
 <h2 id="exit-code">Exit Code</h2>
-<p>If any errors occurred during the command, rclone will set a non zero exit code. This allows scripts to detect when rclone operations have failed.</p>
+<p>If any errors occurred during the command, rclone with an exit code of <code>1</code>. This allows scripts to detect when rclone operations have failed.</p>
+<p>During the startup phase rclone will exit immediately if an error is detected in the configuration. There will always be a log message immediately before exiting.</p>
+<p>When rclone is running it will accumulate errors as it goes along, and only exit with an non-zero exit code if (after retries) there were no transfers with errors remaining. For every error counted there will be a high priority log message (visibile with <code>-q</code>) showing the message and which file caused the problem. A high priority message is also shown when starting a retry so the user can see that any previous error messages may not be valid after the retry. If rclone has done a retry it will log a high priority message if the retry was successful.</p>
 <h1 id="configuring-rclone-on-a-remote-headless-machine">Configuring rclone on a remote / headless machine</h1>
 <p>Some of the configurations (those involving oauth2) require an Internet connected web browser.</p>
 <p>If you are trying to set rclone up on a remote or headless box with no browser available on it (eg a NAS or a server in a datacenter) then you will need to use an alternative means of configuration. There are two ways of doing it, described below.</p>
@@ -664,10 +713,10 @@ y/e/d&gt;</code></pre>
 <h3 id="directories">Directories</h3>
 <p>Rclone keeps track of directories that could match any file patterns.</p>
 <p>Eg if you add the include rule</p>
-<pre><code>\a\*.jpg</code></pre>
+<pre><code>/a/*.jpg</code></pre>
 <p>Rclone will synthesize the directory include rule</p>
-<pre><code>\a\</code></pre>
-<p>If you put any rules which end in <code>\</code> then it will only match directories.</p>
+<pre><code>/a/</code></pre>
+<p>If you put any rules which end in <code>/</code> then it will only match directories.</p>
 <p>Directory matches are <strong>only</strong> used to optimise directory access patterns - you must still match the files that you want to match. Directory matches won't optimise anything on bucket based remotes (eg s3, swift, google compute storage, b2) which don't have a concept of directory.</p>
 <h3 id="differences-between-rsync-and-rclone-patterns">Differences between rsync and rclone patterns</h3>
 <p>Rclone implements bash style <code>{a,b,c}</code> glob matching which rsync doesn't.</p>
@@ -819,6 +868,7 @@ user2/stuff</code></pre>
 <th align="center">ModTime</th>
 <th align="center">Case Insensitive</th>
 <th align="center">Duplicate Files</th>
+<th align="center">MIME Type</th>
 </tr>
 </thead>
 <tbody>
@@ -828,6 +878,7 @@ user2/stuff</code></pre>
 <td align="center">Yes</td>
 <td align="center">No</td>
 <td align="center">Yes</td>
+<td align="center">R/W</td>
 </tr>
 <tr class="even">
 <td align="left">Amazon S3</td>
@@ -835,6 +886,7 @@ user2/stuff</code></pre>
 <td align="center">Yes</td>
 <td align="center">No</td>
 <td align="center">No</td>
+<td align="center">R/W</td>
 </tr>
 <tr class="odd">
 <td align="left">Openstack Swift</td>
@@ -842,6 +894,7 @@ user2/stuff</code></pre>
 <td align="center">Yes</td>
 <td align="center">No</td>
 <td align="center">No</td>
+<td align="center">R/W</td>
 </tr>
 <tr class="even">
 <td align="left">Dropbox</td>
@@ -849,6 +902,7 @@ user2/stuff</code></pre>
 <td align="center">No</td>
 <td align="center">Yes</td>
 <td align="center">No</td>
+<td align="center">R</td>
 </tr>
 <tr class="odd">
 <td align="left">Google Cloud Storage</td>
@@ -856,6 +910,7 @@ user2/stuff</code></pre>
 <td align="center">Yes</td>
 <td align="center">No</td>
 <td align="center">No</td>
+<td align="center">R/W</td>
 </tr>
 <tr class="even">
 <td align="left">Amazon Drive</td>
@@ -863,6 +918,7 @@ user2/stuff</code></pre>
 <td align="center">No</td>
 <td align="center">Yes</td>
 <td align="center">No</td>
+<td align="center">R</td>
 </tr>
 <tr class="odd">
 <td align="left">Microsoft One Drive</td>
@@ -870,6 +926,7 @@ user2/stuff</code></pre>
 <td align="center">Yes</td>
 <td align="center">Yes</td>
 <td align="center">No</td>
+<td align="center">R</td>
 </tr>
 <tr class="even">
 <td align="left">Hubic</td>
@@ -877,6 +934,7 @@ user2/stuff</code></pre>
 <td align="center">Yes</td>
 <td align="center">No</td>
 <td align="center">No</td>
+<td align="center">R/W</td>
 </tr>
 <tr class="odd">
 <td align="left">Backblaze B2</td>
@@ -884,6 +942,7 @@ user2/stuff</code></pre>
 <td align="center">Yes</td>
 <td align="center">No</td>
 <td align="center">No</td>
+<td align="center">R/W</td>
 </tr>
 <tr class="even">
 <td align="left">Yandex Disk</td>
@@ -891,6 +950,7 @@ user2/stuff</code></pre>
 <td align="center">Yes</td>
 <td align="center">No</td>
 <td align="center">No</td>
+<td align="center">R/W</td>
 </tr>
 <tr class="odd">
 <td align="left">The local filesystem</td>
@@ -898,6 +958,7 @@ user2/stuff</code></pre>
 <td align="center">Yes</td>
 <td align="center">Depends</td>
 <td align="center">No</td>
+<td align="center">-</td>
 </tr>
 </tbody>
 </table>
@@ -921,6 +982,129 @@ The hashes are used when transferring data as an integrity check and can be spec
 <h3 id="duplicate-files">Duplicate files</h3>
 <p>If a cloud storage system allows duplicate files then it can have two objects with the same name.</p>
 <p>This confuses rclone greatly when syncing - use the <code>rclone dedupe</code> command to rename or remove duplicates.</p>
+<h3 id="mime-type">MIME Type</h3>
+<p>MIME types (also known as media types) classify types of documents using a simple text classification, eg <code>text/html</code> or <code>application/pdf</code>.</p>
+<p>Some cloud storage systems support reading (<code>R</code>) the MIME type of objects and some support writing (<code>W</code>) the MIME type of objects.</p>
+<p>The MIME type can be important if you are serving files directly to HTTP from the storage system.</p>
+<p>If you are copying from a remote which supports reading (<code>R</code>) to a remote which supports writing (<code>W</code>) then rclone will preserve the MIME types. Otherwise they will be guessed from the extension, or the remote itself may assign the MIME type.</p>
+<h2 id="optional-features">Optional Features</h2>
+<p>All the remotes support a basic set of features, but there are some optional features supported by some remotes used to make some operations more efficient.</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Name</th>
+<th align="center">Purge</th>
+<th align="center">Copy</th>
+<th align="center">Move</th>
+<th align="center">DirMove</th>
+<th align="center">CleanUp</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Google Drive</td>
+<td align="center">Yes</td>
+<td align="center">Yes</td>
+<td align="center">Yes</td>
+<td align="center">Yes</td>
+<td align="center">No <a href="https://github.com/ncw/rclone/issues/575">#575</a></td>
+</tr>
+<tr class="even">
+<td align="left">Amazon S3</td>
+<td align="center">No</td>
+<td align="center">Yes</td>
+<td align="center">No</td>
+<td align="center">No</td>
+<td align="center">No</td>
+</tr>
+<tr class="odd">
+<td align="left">Openstack Swift</td>
+<td align="center">Yes †</td>
+<td align="center">Yes</td>
+<td align="center">No</td>
+<td align="center">No</td>
+<td align="center">No</td>
+</tr>
+<tr class="even">
+<td align="left">Dropbox</td>
+<td align="center">Yes</td>
+<td align="center">Yes</td>
+<td align="center">Yes</td>
+<td align="center">Yes</td>
+<td align="center">No <a href="https://github.com/ncw/rclone/issues/575">#575</a></td>
+</tr>
+<tr class="odd">
+<td align="left">Google Cloud Storage</td>
+<td align="center">Yes</td>
+<td align="center">Yes</td>
+<td align="center">No</td>
+<td align="center">No</td>
+<td align="center">No</td>
+</tr>
+<tr class="even">
+<td align="left">Amazon Drive</td>
+<td align="center">Yes</td>
+<td align="center">No</td>
+<td align="center">No <a href="https://github.com/ncw/rclone/issues/721">#721</a></td>
+<td align="center">No <a href="https://github.com/ncw/rclone/issues/721">#721</a></td>
+<td align="center">No <a href="https://github.com/ncw/rclone/issues/575">#575</a></td>
+</tr>
+<tr class="odd">
+<td align="left">Microsoft One Drive</td>
+<td align="center">Yes</td>
+<td align="center">Yes</td>
+<td align="center">No <a href="https://github.com/ncw/rclone/issues/197">#197</a></td>
+<td align="center">No <a href="https://github.com/ncw/rclone/issues/197">#197</a></td>
+<td align="center">No <a href="https://github.com/ncw/rclone/issues/575">#575</a></td>
+</tr>
+<tr class="even">
+<td align="left">Hubic</td>
+<td align="center">Yes †</td>
+<td align="center">Yes</td>
+<td align="center">No</td>
+<td align="center">No</td>
+<td align="center">No</td>
+</tr>
+<tr class="odd">
+<td align="left">Backblaze B2</td>
+<td align="center">No</td>
+<td align="center">No</td>
+<td align="center">No</td>
+<td align="center">No</td>
+<td align="center">Yes</td>
+</tr>
+<tr class="even">
+<td align="left">Yandex Disk</td>
+<td align="center">Yes</td>
+<td align="center">No</td>
+<td align="center">No</td>
+<td align="center">No</td>
+<td align="center">No <a href="https://github.com/ncw/rclone/issues/575">#575</a></td>
+</tr>
+<tr class="odd">
+<td align="left">The local filesystem</td>
+<td align="center">Yes</td>
+<td align="center">No</td>
+<td align="center">Yes</td>
+<td align="center">Yes</td>
+<td align="center">No</td>
+</tr>
+</tbody>
+</table>
+<h3 id="purge">Purge</h3>
+<p>This deletes a directory quicker than just deleting all the files in the directory.</p>
+<p>† Note Swift and Hubic implement this in order to delete directory markers but they don't actually have a quicker way of deleting files other than deleting them individually.</p>
+<h3 id="copy">Copy</h3>
+<p>Used when copying an object to and from the same remote. This known as a server side copy so you can copy a file without downloading it and uploading it again. It is used if you use <code>rclone copy</code> or <code>rclone move</code> if the remote doesn't support <code>Move</code> directly.</p>
+<p>If the server doesn't support <code>Copy</code> directly then for copy operations the file is downloaded then re-uploaded.</p>
+<h3 id="move">Move</h3>
+<p>Used when moving/renaming an object on the same remote. This is known as a server side move of a file. This is used in <code>rclone move</code> if the server doesn't support <code>DirMove</code>.</p>
+<p>If the server isn't capable of <code>Move</code> then rclone simulates it with <code>Copy</code> then delete. If the server doesn't support <code>Copy</code> then rclone will download the file and re-upload it.</p>
+<h3 id="dirmove">DirMove</h3>
+<p>This is used to implement <code>rclone move</code> to move a directory if possible. If it isn't then it will use <code>Move</code> on each file (which falls back to <code>Copy</code> then download and upload - see <code>Move</code> section).</p>
+<h3 id="cleanup">CleanUp</h3>
+<p>This is used for emptying the trash for a remote by <code>rclone cleanup</code>.</p>
+<p>If the server can't do <code>CleanUp</code> then <code>rclone cleanup</code> will return an error.</p>
 <h2 id="google-drive">Google Drive</h2>
 <p>Paths are specified as <code>drive:path</code></p>
 <p>Drive paths may be as deep as required, eg <code>drive:directory/subdirectory</code>.</p>
@@ -1053,14 +1237,24 @@ y/e/d&gt; y</code></pre>
 <td align="left">Microsoft Office Document</td>
 </tr>
 <tr class="even">
+<td align="left">epub</td>
+<td align="left">application/epub+zip</td>
+<td align="left">E-book format</td>
+</tr>
+<tr class="odd">
 <td align="left">html</td>
 <td align="left">text/html</td>
 <td align="left">An HTML Document</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">jpg</td>
 <td align="left">image/jpeg</td>
 <td align="left">A JPEG Image File</td>
+</tr>
+<tr class="odd">
+<td align="left">odp</td>
+<td align="left">application/vnd.oasis.opendocument.presentation</td>
+<td align="left">Openoffice Presentation</td>
 </tr>
 <tr class="even">
 <td align="left">ods</td>
@@ -1103,21 +1297,26 @@ y/e/d&gt; y</code></pre>
 <td align="left">Scalable Vector Graphics Format</td>
 </tr>
 <tr class="even">
+<td align="left">tsv</td>
+<td align="left">text/tab-separated-values</td>
+<td align="left">Standard TSV format for spreadsheets</td>
+</tr>
+<tr class="odd">
 <td align="left">txt</td>
 <td align="left">text/plain</td>
 <td align="left">Plain Text</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">xls</td>
 <td align="left">application/vnd.ms-excel</td>
 <td align="left">Microsoft Office Spreadsheet</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">xlsx</td>
 <td align="left">application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</td>
 <td align="left">Microsoft Office Spreadsheet</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">zip</td>
 <td align="left">application/zip</td>
 <td align="left">A ZIP file of HTML, Images CSS</td>
@@ -1274,6 +1473,17 @@ Choose a number from below, or type in your own value
  2 / AES256
    \ &quot;AES256&quot;
 server_side_encryption&gt;
+The storage class to use when storing objects in S3.
+Choose a number from below, or type in your own value
+ 1 / Default
+   \ &quot;&quot;
+ 2 / Standard storage class
+   \ &quot;STANDARD&quot;
+ 3 / Reduced redundancy storage class
+   \ &quot;REDUCED_REDUNDANCY&quot;
+ 4 / Standard Infrequent Access storage class
+   \ &quot;STANDARD_IA&quot;
+storage_class&gt;
 Remote config
 --------------------
 [remote]
@@ -1318,6 +1528,19 @@ y/e/d&gt; y</code></pre>
 <li>Running <code>rclone</code> on an EC2 instance with an IAM role</li>
 </ul>
 <p>If none of these option actually end up providing <code>rclone</code> with AWS credentials then S3 interaction will be non-authenticated (see below).</p>
+<h3 id="specific-options-1">Specific options</h3>
+<p>Here are the command line options specific to this cloud storage system.</p>
+<h4 id="s3-aclstring">--s3-acl=STRING</h4>
+<p>Canned ACL used when creating buckets and/or storing objects in S3.</p>
+<p>For more info visit the <a href="http://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl">canned ACL docs</a>.</p>
+<h4 id="s3-storage-classstring">--s3-storage-class=STRING</h4>
+<p>Storage class to upload new objects with.</p>
+<p>Available options include:</p>
+<ul>
+<li>STANDARD - default storage class</li>
+<li>STANDARD_IA - for less frequently accessed data (e.g backups)</li>
+<li>REDUCED_REDUNDANCY (only for noncritical, reproducible data, has lower redundancy)</li>
+</ul>
 <h3 id="anonymous-access-to-public-buckets">Anonymous access to public buckets</h3>
 <p>If you want to use rclone to access a public bucket, configure with a blank <code>access_key_id</code> and <code>secret_access_key</code>. Eg</p>
 <pre><code>No remotes found - make a new one
@@ -1503,7 +1726,26 @@ y/e/d&gt; y</code></pre>
 <pre><code>rclone ls remote:container</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote container, deleting any excess files in the container.</p>
 <pre><code>rclone sync /home/local/directory remote:container</code></pre>
-<h3 id="specific-options-1">Specific options</h3>
+<h3 id="configuration-from-an-openstack-credentials-file">Configuration from an Openstack credentials file</h3>
+<p>An Opentstack credentials file typically looks something something like this (without the comments)</p>
+<pre><code>export OS_AUTH_URL=https://a.provider.net/v2.0
+export OS_TENANT_ID=ffffffffffffffffffffffffffffffff
+export OS_TENANT_NAME=&quot;1234567890123456&quot;
+export OS_USERNAME=&quot;123abc567xy&quot;
+echo &quot;Please enter your OpenStack Password: &quot;
+read -sr OS_PASSWORD_INPUT
+export OS_PASSWORD=$OS_PASSWORD_INPUT
+export OS_REGION_NAME=&quot;SBG1&quot;
+if [ -z &quot;$OS_REGION_NAME&quot; ]; then unset OS_REGION_NAME; fi</code></pre>
+<p>The config file needs to look something like this where <code>$OS_USERNAME</code> represents the value of the <code>OS_USERNAME</code> variable - <code>123abc567xy</code> in the example above.</p>
+<pre><code>[remote]
+type = swift
+user = $OS_USERNAME
+key = $OS_PASSWORD
+auth = $OS_AUTH_URL
+tenant = $OS_TENANT_NAME</code></pre>
+<p>Note that you may (or may not) need to set <code>region</code> too - try without first.</p>
+<h3 id="specific-options-2">Specific options</h3>
 <p>Here are the command line options specific to this cloud storage system.</p>
 <h4 id="swift-chunk-sizesize">--swift-chunk-size=SIZE</h4>
 <p>Above this size files will be chunked into a _segments container. The default for this is 5GB which is its maximum value.</p>
@@ -1516,6 +1758,7 @@ y/e/d&gt; y</code></pre>
 <h4 id="rclone-gives-failed-to-create-file-system-for-remote-bad-request">Rclone gives Failed to create file system for &quot;remote:&quot;: Bad Request</h4>
 <p>Due to an oddity of the underlying swift library, it gives a &quot;Bad Request&quot; error rather than a more sensible error when the authentication fails for Swift.</p>
 <p>So this most likely means your username / password is wrong. You can investigate further with the <code>--dump-bodies</code> flag.</p>
+<p>This may also be caused by specifying the region when you shouldn't have (eg OVH).</p>
 <h4 id="rclone-gives-failed-to-create-file-system-response-didnt-have-storage-storage-url-and-auth-token">Rclone gives Failed to create file system: Response didn't have storage storage url and auth token</h4>
 <p>This is most likely caused by forgetting to specify your tenant when setting up a swift remote.</p>
 <h2 id="dropbox">Dropbox</h2>
@@ -1589,7 +1832,7 @@ y/e/d&gt; y</code></pre>
 </ul>
 <p>Dropbox doesn't return any sort of checksum (MD5 or SHA1).</p>
 <p>Together that means that syncs to dropbox will effectively have the <code>--size-only</code> flag set.</p>
-<h3 id="specific-options-2">Specific options</h3>
+<h3 id="specific-options-3">Specific options</h3>
 <p>Here are the command line options specific to this cloud storage system.</p>
 <h4 id="dropbox-chunk-sizesize">--dropbox-chunk-size=SIZE</h4>
 <p>Upload chunk size. Max 150M. The default is 128MB. Note that this isn't buffered into memory.</p>
@@ -1781,19 +2024,25 @@ y/e/d&gt; y</code></pre>
 <p>It does store MD5SUMs so for a more accurate sync, you can use the <code>--checksum</code> flag.</p>
 <h3 id="deleting-files-1">Deleting files</h3>
 <p>Any files you delete with rclone will end up in the trash. Amazon don't provide an API to permanently delete files, nor to empty the trash, so you will have to do that with one of Amazon's apps or via the Amazon Drive website.</p>
-<h3 id="specific-options-3">Specific options</h3>
+<h3 id="using-with-non-.com-amazon-accounts">Using with non <code>.com</code> Amazon accounts</h3>
+<p>Let's say you usually use <code>amazon.co.uk</code>. When you authenticate with rclone it will take you to an <code>amazon.com</code> page to log in. Your <code>amazon.co.uk</code> email and password should work here just fine.</p>
+<h3 id="specific-options-4">Specific options</h3>
 <p>Here are the command line options specific to this cloud storage system.</p>
 <h4 id="acd-templink-thresholdsize">--acd-templink-threshold=SIZE</h4>
 <p>Files this size or more will be downloaded via their <code>tempLink</code>. This is to work around a problem with Amazon Drive which blocks downloads of files bigger than about 10GB. The default for this is 9GB which shouldn't need to be changed.</p>
 <p>To download files above this threshold, rclone requests a <code>tempLink</code> which downloads the file through a temporary URL directly from the underlying S3 storage.</p>
-<h4 id="acd-upload-wait-timetime">--acd-upload-wait-time=TIME</h4>
-<p>Sometimes Amazon Drive gives an error when a file has been fully uploaded but the file appears anyway after a little while. This controls the time rclone waits - 2 minutes by default. You might want to increase the time if you are having problems with very big files. Upload with the <code>-v</code> flag for more info.</p>
+<h4 id="acd-upload-wait-per-gbtime">--acd-upload-wait-per-gb=TIME</h4>
+<p>Sometimes Amazon Drive gives an error when a file has been fully uploaded but the file appears anyway after a little while. This happens sometimes for files over 1GB in size and nearly every time for files bigger than 10GB. This parameter controls the time rclone waits for the file to appear.</p>
+<p>The default value for this parameter is 3 minutes per GB, so by default it will wait 3 minutes for every GB uploaded to see if the file appears.</p>
+<p>You can disable this feature by setting it to 0. This may cause conflict errors as rclone retries the failed upload but the file will most likely appear correctly eventually.</p>
+<p>These values were determined empirically by observing lots of uploads of big files for a range of file sizes.</p>
+<p>Upload with the <code>-v</code> flag to see more info about what rclone is doing in this situation.</p>
 <h3 id="limitations-4">Limitations</h3>
 <p>Note that Amazon Drive is case insensitive so you can't have a file called &quot;Hello.doc&quot; and one called &quot;hello.doc&quot;.</p>
 <p>Amazon Drive has rate limiting so you may notice errors in the sync (429 errors). rclone will automatically retry the sync up to 3 times by default (see <code>--retries</code> flag) which should hopefully work around this problem.</p>
 <p>Amazon Drive has an internal limit of file sizes that can be uploaded to the service. This limit is not officially published, but all files larger than this will fail.</p>
 <p>At the time of writing (Jan 2016) is in the area of 50GB per file. This means that larger files are likely to fail.</p>
-<p>Unfortunatly there is no way for rclone to see that this failure is because of file size, so it will retry the operation, as any other failure. To avoid this problem, use <code>--max-size=50GB</code> option to limit the maximum size of uploaded files.</p>
+<p>Unfortunatly there is no way for rclone to see that this failure is because of file size, so it will retry the operation, as any other failure. To avoid this problem, use <code>--max-size 50G</code> option to limit the maximum size of uploaded files.</p>
 <h2 id="microsoft-one-drive">Microsoft One Drive</h2>
 <p>Paths are specified as <code>remote:path</code></p>
 <p>Paths may be as deep as required, eg <code>remote:directory/subdirectory</code>.</p>
@@ -1870,7 +2119,7 @@ y/e/d&gt; y</code></pre>
 <p>One drive supports SHA1 type hashes, so you can use <code>--checksum</code> flag.</p>
 <h3 id="deleting-files-2">Deleting files</h3>
 <p>Any files you delete with rclone will end up in the trash. Microsoft doesn't provide an API to permanently delete files, nor to empty the trash, so you will have to do that with one of Microsoft's apps or via the One Drive website.</p>
-<h3 id="specific-options-4">Specific options</h3>
+<h3 id="specific-options-5">Specific options</h3>
 <p>Here are the command line options specific to this cloud storage system.</p>
 <h4 id="onedrive-chunk-sizesize">--onedrive-chunk-size=SIZE</h4>
 <p>Above this size files will be chunked - must be multiple of 320k. The default is 10MB. Note that the chunks will be buffered into memory.</p>
@@ -2059,7 +2308,25 @@ $ rclone -q ls b2:cleanup-test
 
 $ rclone -q --b2-versions ls b2:cleanup-test
         9 one.txt</code></pre>
-<h3 id="specific-options-5">Specific options</h3>
+<h3 id="data-usage">Data usage</h3>
+<p>It is useful to know how many requests are sent to the server in different scenarios.</p>
+<p>All copy commands send the following 4 requests:</p>
+<pre><code>/b2api/v1/b2_authorize_account
+/b2api/v1/b2_create_bucket
+/b2api/v1/b2_list_buckets
+/b2api/v1/b2_list_file_names</code></pre>
+<p>The <code>b2_list_file_names</code> request will be sent once for every 1k files in the remote path, providing the checksum and modification time of the listed files. As of version 1.33 issue <a href="https://github.com/ncw/rclone/issues/818">#818</a> causes extra requests to be sent when using B2 with Crypt. When a copy operation does not require any files to be uploaded, no more requests will be sent.</p>
+<p>Uploading files that do not require chunking, will send 2 requests per file upload:</p>
+<pre><code>/b2api/v1/b2_get_upload_url
+/b2api/v1/b2_upload_file/</code></pre>
+<p>Uploading files requiring chunking, will send 2 requests (one each to start and finish the upload) and another 2 requests for each chunk:</p>
+<pre><code>/b2api/v1/b2_start_large_file
+/b2api/v1/b2_get_upload_part_url
+/b2api/v1/b2_upload_part/
+/b2api/v1/b2_finish_large_file</code></pre>
+<h3 id="b2-with-crypt">B2 with crypt</h3>
+<p>When using B2 with <code>crypt</code> files are encrypted into a temporary location and streamed from there. This is required to calculate the encrypted file's checksum before beginning the upload. On Windows the %TMPDIR% environment variable is used as the temporary location. If the file requires chunking, both the chunking and encryption will take place in memory.</p>
+<h3 id="specific-options-6">Specific options</h3>
 <p>Here are the command line options specific to this cloud storage system.</p>
 <h4 id="b2-chunk-size-valueesize">--b2-chunk-size valuee=SIZE</h4>
 <p>When uploading large files chunk the file into this size. Note that these chunks are buffered in memory and there might a maximum of <code>--transfers</code> chunks in progress at once. 100,000,000 Bytes is the minimim size (default 96M).</p>
@@ -2203,6 +2470,8 @@ Choose a number from below, or type in your own value
    \ &quot;yandex&quot;
 Storage&gt; 5
 Remote to encrypt/decrypt.
+Normally should contain a &#39;:&#39; and a path, eg &quot;myremote:path/to/dir&quot;,
+&quot;myremote:bucket&quot; or &quot;myremote:&quot;
 remote&gt; remote:path
 How to encrypt the filenames.
 Choose a number from below, or type in your own value
@@ -2240,8 +2509,8 @@ Remote config
 [secret]
 remote = remote:path
 filename_encryption = standard
-password = CfDxopZIXFG0Oo-ac7dPLWWOHkNJbw
-password2 = HYUpfuzHJL8qnX9fOaIYijq0xnVLwyVzp3y4SF3TwYqAU6HLysk
+password = *** ENCRYPTED ***
+password2 = *** ENCRYPTED ***
 --------------------
 y) Yes this is OK
 e) Edit this remote
@@ -2250,6 +2519,10 @@ y/e/d&gt; y</code></pre>
 <p><strong>Important</strong> The password is stored in the config file is lightly obscured so it isn't immediately obvious what it is. It is in no way secure unless you use config file encryption.</p>
 <p>A long passphrase is recommended, or you can use a random one. Note that if you reconfigure rclone with the same passwords/passphrases elsewhere it will be compatible - all the secrets used are derived from those two passwords/passphrases.</p>
 <p>Note that rclone does not encrypt * file length - this can be calcuated within 16 bytes * modification time - used for syncing</p>
+<h2 id="specifying-the-remote">Specifying the remote</h2>
+<p>In normal use, make sure the remote has a <code>:</code> in. If you specify the remote without a <code>:</code> then rclone will use a local directory of that name. So if you use a remote of <code>/path/to/secret/files</code> then rclone will encrypt stuff to that directory. If you use a remote of <code>name</code> then rclone will put files in a directory called <code>name</code> in the current directory.</p>
+<p>If you specify the remote as <code>remote:path/to/dir</code> then rclone will store encrypted files in <code>path/to/dir</code> on the remote. If you are using file name encryption, then when you save files to <code>secret:subdir/subfile</code> this will store them in the unencrypted path <code>path/to/dir</code> but the <code>subdir/subpath</code> bit will be encrypted.</p>
+<p>Note that unless you want encrypted bucket names (which are difficult to manage because you won't know what directory they represent in web interfaces etc), you should probably specify a bucket, eg <code>remote:secretbucket</code> when using bucket based remotes such as S3, Swift, Hubic, B2, GCS.</p>
 <h2 id="example">Example</h2>
 <p>To test I made a little directory of files using &quot;standard&quot; file name encryption.</p>
 <pre><code>plaintext/
@@ -2293,6 +2566,9 @@ $ rclone -q ls secret:
 <p>Standard * file names encrypted * file names can't be as long (~156 characters) * can use sub paths and copy single files * directory structure visibile * identical files names will have identical uploaded names * can use shortcuts to shorten the directory recursion</p>
 <p>Cloud storage systems have various limits on file name length and total path length which you are more likely to hit using &quot;Standard&quot; file name encryption. If you keep your file names to below 156 characters in length then you should be OK on all providers.</p>
 <p>There may be an even more secure file name encryption mode in the future which will address the long file name problem.</p>
+<h3 id="modified-time-and-hashes-1">Modified time and hashes</h3>
+<p>Crypt stores modification times using the underlying remote so support depends on that.</p>
+<p>Hashes are not stored for crypt. However the data integrity is protected by an extremely strong crypto authenticator.</p>
 <h2 id="file-formats">File formats</h2>
 <h3 id="file-encryption">File encryption</h3>
 <p>Files are encrypted 1:1 source file to destination object. The file has a header and is divided into chunks.</p>
@@ -2369,8 +2645,101 @@ nounc = true</code></pre>
 <p>And use rclone like this:</p>
 <p><code>rclone copy c:\src nounc:z:\dst</code></p>
 <p>This will use UNC paths on <code>c:\src</code> but not on <code>z:\dst</code>. Of course this will cause problems if the absolute path length of a file exceeds 258 characters on z, so only use this option if you have to.</p>
+<h3 id="specific-options-7">Specific options</h3>
+<p>Here are the command line options specific to local storage</p>
+<h4 id="one-file-system--x">--one-file-system, -x</h4>
+<p>This tells rclone to stay in the filesystem specified by the root and not to recurse into different file systems.</p>
+<p>For example if you have a directory heirachy like this</p>
+<pre><code>root
+├── disk1     - disk1 mounted on the root
+│   └── file3 - stored on disk1
+├── disk2     - disk2 mounted on the root
+│   └── file4 - stored on disk12
+├── file1     - stored on the root disk
+└── file2     - stored on the root disk</code></pre>
+<p>Using <code>rclone --one-file-system copy root remote:</code> will only copy <code>file1</code> and <code>file2</code>. Eg</p>
+<pre><code>$ rclone -q --one-file-system ls root
+        0 file1
+        0 file2</code></pre>
+<pre><code>$ rclone -q ls root
+        0 disk1/file3
+        0 disk2/file4
+        0 file1
+        0 file2</code></pre>
+<p><strong>NB</strong> Rclone (like most unix tools such as <code>du</code>, <code>rsync</code> and <code>tar</code>) treats a bind mount to the same device as being on the same filesystem.</p>
+<p><strong>NB</strong> This flag is only available on Unix based systems. On systems where it isn't supported (eg Windows) it will not appear as an valid flag.</p>
 <h2 id="changelog">Changelog</h2>
 <ul>
+<li>v1.34 - 2016-11-06
+<ul>
+<li>New Features</li>
+<li>Stop single file and <code>--files-from</code> operations iterating through the source bucket.</li>
+<li>Stop removing failed upload to cloud storage remotes</li>
+<li>Make ContentType be preserved for cloud to cloud copies</li>
+<li>Add support to toggle bandwidth limits via SIGUSR2 - thanks Marco Paganini</li>
+<li><code>rclone check</code> shows count of hashes that couldn't be checked</li>
+<li><code>rclone listremotes</code> command</li>
+<li>Support linux/arm64 build - thanks Fredrik Fornwall</li>
+<li>Remove <code>Authorization:</code> lines from <code>--dump-headers</code> output</li>
+<li>Bug Fixes</li>
+<li>Ignore files with control characters in the names</li>
+<li>Fix <code>rclone move</code> command
+<ul>
+<li>Delete src files which already existed in dst</li>
+<li>Fix deletion of src file when dst file older</li>
+</ul></li>
+<li>Fix <code>rclone check</code> on crypted file systems</li>
+<li>Make failed uploads not count as &quot;Transferred&quot;</li>
+<li>Make sure high level retries show with <code>-q</code></li>
+<li>Use a vendor directory with godep for repeatable builds</li>
+<li><code>rclone mount</code> - FUSE</li>
+<li>Implement FUSE mount options
+<ul>
+<li><code>--no-modtime</code>, <code>--debug-fuse</code>, <code>--read-only</code>, <code>--allow-non-empty</code>, <code>--allow-root</code>, <code>--allow-other</code></li>
+<li><code>--default-permissions</code>, <code>--write-back-cache</code>, <code>--max-read-ahead</code>, <code>--umask</code>, <code>--uid</code>, <code>--gid</code></li>
+</ul></li>
+<li>Add <code>--dir-cache-time</code> to control caching of directory entries</li>
+<li>Implement seek for files opened for read (useful for video players)
+<ul>
+<li>with <code>-no-seek</code> flag to disable</li>
+</ul></li>
+<li>Fix crash on 32 bit ARM (alignment of 64 bit counter)</li>
+<li>...and many more internal fixes and improvements!</li>
+<li>Crypt</li>
+<li>Don't show encrypted password in configurator to stop confusion</li>
+<li>Amazon Drive</li>
+<li>New wait for upload option <code>--acd-upload-wait-per-gb</code>
+<ul>
+<li>upload timeouts scale by file size and can be disabled</li>
+</ul></li>
+<li>Add 502 Bad Gateway to list of errors we retry</li>
+<li>Fix overwriting a file with a zero length file</li>
+<li>Fix ACD file size warning limit - thanks Felix Bünemann</li>
+<li>Local</li>
+<li>Unix: implement <code>-x</code>/<code>--one-file-system</code> to stay on a single file system
+<ul>
+<li>thanks Durval Menezes and Luiz Carlos Rumbelsperger Viana</li>
+</ul></li>
+<li>Windows: ignore the symlink bit on files</li>
+<li>Windows: Ignore directory based junction points</li>
+<li>B2</li>
+<li>Make sure each upload has at least one upload slot - fixes strange upload stats</li>
+<li>Fix uploads when using crypt</li>
+<li>Fix download of large files (sha1 mismatch)</li>
+<li>Return error when we try to create a bucket which someone else owns</li>
+<li>Update B2 docs with Data usage, and Crypt section - thanks Tomasz Mazur</li>
+<li>S3</li>
+<li>Command line and config file support for
+<ul>
+<li>Setting/overriding ACL - thanks Radek Senfeld</li>
+<li>Setting storage class - thanks Asko Tamm</li>
+</ul></li>
+<li>Drive</li>
+<li>Make exponential backoff work exactly as per Google specification</li>
+<li>add <code>.epub</code>, <code>.odp</code> and <code>.tsv</code> as export formats.</li>
+<li>Swift</li>
+<li>Don't read metadata for directory marker objects</li>
+</ul></li>
 <li>v1.33 - 2016-08-24
 <ul>
 <li>New Features</li>
@@ -3150,19 +3519,79 @@ h='&#108;&#x6f;&#x67;&#x69;&#x63;&#46;&#x63;&#122;';a='&#64;';n='&#114;&#x75;&#x
 document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
 // -->
 </script><noscript>&#114;&#x75;&#x73;&#104;&#32;&#x61;&#116;&#32;&#108;&#x6f;&#x67;&#x69;&#x63;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#122;</noscript></li>
+<li>Fredrik Fornwall <script type="text/javascript">
+<!--
+h='&#102;&#x6f;&#114;&#110;&#x77;&#x61;&#108;&#108;&#46;&#110;&#x65;&#116;';a='&#64;';n='&#102;&#114;&#x65;&#100;&#114;&#x69;&#x6b;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#102;&#114;&#x65;&#100;&#114;&#x69;&#x6b;&#32;&#x61;&#116;&#32;&#102;&#x6f;&#114;&#110;&#x77;&#x61;&#108;&#108;&#32;&#100;&#x6f;&#116;&#32;&#110;&#x65;&#116;</noscript></li>
+<li>Asko Tamm <script type="text/javascript">
+<!--
+h='&#100;&#x65;&#x65;&#x6b;&#x69;&#116;&#46;&#110;&#x65;&#116;';a='&#64;';n='&#x61;&#x73;&#x6b;&#x6f;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#x61;&#x73;&#x6b;&#x6f;&#32;&#x61;&#116;&#32;&#100;&#x65;&#x65;&#x6b;&#x69;&#116;&#32;&#100;&#x6f;&#116;&#32;&#110;&#x65;&#116;</noscript></li>
+<li>xor-zz <script type="text/javascript">
+<!--
+h='&#x67;&#x73;&#116;&#x6f;&#x63;&#x63;&#x6f;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#120;&#x6f;&#114;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#120;&#x6f;&#114;&#32;&#x61;&#116;&#32;&#x67;&#x73;&#116;&#x6f;&#x63;&#x63;&#x6f;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
+<li>Tomasz Mazur <script type="text/javascript">
+<!--
+h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#116;&#x6d;&#x61;&#122;&#x75;&#114;&#x39;&#48;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#116;&#x6d;&#x61;&#122;&#x75;&#114;&#x39;&#48;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
+<li>Marco Paganini <script type="text/javascript">
+<!--
+h='&#112;&#x61;&#x67;&#x61;&#110;&#x69;&#110;&#x69;&#46;&#110;&#x65;&#116;';a='&#64;';n='&#112;&#x61;&#x67;&#x61;&#110;&#x69;&#110;&#x69;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#112;&#x61;&#x67;&#x61;&#110;&#x69;&#110;&#x69;&#32;&#x61;&#116;&#32;&#112;&#x61;&#x67;&#x61;&#110;&#x69;&#110;&#x69;&#32;&#100;&#x6f;&#116;&#32;&#110;&#x65;&#116;</noscript></li>
+<li>Felix Bünemann <script type="text/javascript">
+<!--
+h='&#108;&#x6f;&#x75;&#x69;&#x73;&#46;&#x69;&#110;&#102;&#x6f;';a='&#64;';n='&#98;&#x75;&#x65;&#110;&#x65;&#x6d;&#x61;&#110;&#110;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#98;&#x75;&#x65;&#110;&#x65;&#x6d;&#x61;&#110;&#110;&#32;&#x61;&#116;&#32;&#108;&#x6f;&#x75;&#x69;&#x73;&#32;&#100;&#x6f;&#116;&#32;&#x69;&#110;&#102;&#x6f;</noscript></li>
+<li>Durval Menezes <script type="text/javascript">
+<!--
+h='&#100;&#x75;&#114;&#118;&#x61;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#106;&#x6d;&#114;&#x63;&#108;&#x6f;&#110;&#x65;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#106;&#x6d;&#114;&#x63;&#108;&#x6f;&#110;&#x65;&#32;&#x61;&#116;&#32;&#100;&#x75;&#114;&#118;&#x61;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
+<li>Luiz Carlos Rumbelsperger Viana <script type="text/javascript">
+<!--
+h='&#104;&#x6f;&#116;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x6d;&#x61;&#120;&#100;&#x31;&#x33;&#x5f;&#108;&#x75;&#x69;&#122;&#x5f;&#x63;&#x61;&#114;&#108;&#x6f;&#x73;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#x6d;&#x61;&#120;&#100;&#x31;&#x33;&#x5f;&#108;&#x75;&#x69;&#122;&#x5f;&#x63;&#x61;&#114;&#108;&#x6f;&#x73;&#32;&#x61;&#116;&#32;&#104;&#x6f;&#116;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
 </ul>
-<h2 id="contact-the-rclone-project">Contact the rclone project</h2>
+<h1 id="contact-the-rclone-project">Contact the rclone project</h1>
+<h2 id="forum">Forum</h2>
+<p>Forum for general discussions and questions:</p>
+<ul>
+<li>https://forum.rclone.org</li>
+</ul>
+<h2 id="gitub-project">Gitub project</h2>
 <p>The project website is at:</p>
 <ul>
 <li>https://github.com/ncw/rclone</li>
 </ul>
 <p>There you can file bug reports, ask for help or contribute pull requests.</p>
-<p>See also</p>
+<h2 id="google">Google+</h2>
+<p>Rclone has a Google+ page which announcements are posted to</p>
 <ul>
-<li><a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page for general comments</a>
-</li></li>
+<li><a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page for general comments</a></li>
 </ul>
-<p>Or email <script type="text/javascript">
+<h2 id="twitter">Twitter</h2>
+<p>You can also follow me on twitter for rclone announcments</p>
+<ul>
+<li><span class="citation">[@njcw]</span>(https://twitter.com/njcw)</li>
+</ul>
+<h2 id="email">Email</h2>
+<p>Or if all else fails or you want to ask something private or confidential email <script type="text/javascript">
 <!--
 h='&#x63;&#114;&#x61;&#x69;&#x67;&#x2d;&#x77;&#x6f;&#x6f;&#100;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#110;&#x69;&#x63;&#x6b;';e=n+a+h;
 document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+'&#78;&#x69;&#x63;&#x6b;&#32;&#x43;&#114;&#x61;&#x69;&#x67;&#x2d;&#x57;&#x6f;&#x6f;&#100;'+'<\/'+'a'+'>');

@@ -1,12 +1,68 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2016-08-24"
+date: "2016-11-06"
 ---
 
 Changelog
 ---------
 
+  * v1.34 - 2016-11-06
+    * New Features
+      * Stop single file and `--files-from` operations iterating through the source bucket.
+      * Stop removing failed upload to cloud storage remotes
+      * Make ContentType be preserved for cloud to cloud copies
+      * Add support to toggle bandwidth limits via SIGUSR2 - thanks Marco Paganini
+      * `rclone check` shows count of hashes that couldn't be checked
+      * `rclone listremotes` command
+      * Support linux/arm64 build - thanks Fredrik Fornwall
+      * Remove `Authorization:` lines from `--dump-headers` output
+    * Bug Fixes
+      * Ignore files with control characters in the names
+      * Fix `rclone move` command
+        * Delete src files which already existed in dst
+        * Fix deletion of src file when dst file older
+      * Fix `rclone check` on crypted file systems
+      * Make failed uploads not count as "Transferred"
+      * Make sure high level retries show with `-q`
+      * Use a vendor directory with godep for repeatable builds
+    * `rclone mount` - FUSE
+      * Implement FUSE mount options
+        * `--no-modtime`, `--debug-fuse`, `--read-only`, `--allow-non-empty`, `--allow-root`, `--allow-other`
+        * `--default-permissions`, `--write-back-cache`, `--max-read-ahead`, `--umask`, `--uid`, `--gid`
+      * Add `--dir-cache-time` to control caching of directory entries
+      * Implement seek for files opened for read (useful for video players)
+        * with `-no-seek` flag to disable
+      * Fix crash on 32 bit ARM (alignment of 64 bit counter)
+      * ...and many more internal fixes and improvements!
+    * Crypt
+      * Don't show encrypted password in configurator to stop confusion
+    * Amazon Drive
+      * New wait for upload option `--acd-upload-wait-per-gb`
+        * upload timeouts scale by file size and can be disabled
+      * Add 502 Bad Gateway to list of errors we retry
+      * Fix overwriting a file with a zero length file
+      * Fix ACD file size warning limit - thanks Felix Bünemann
+    * Local
+      * Unix: implement `-x`/`--one-file-system` to stay on a single file system
+        * thanks Durval Menezes and Luiz Carlos Rumbelsperger Viana
+      * Windows: ignore the symlink bit on files
+      * Windows: Ignore directory based junction points
+    * B2
+      * Make sure each upload has at least one upload slot - fixes strange upload stats
+      * Fix uploads when using crypt
+      * Fix download of large files (sha1 mismatch)
+      * Return error when we try to create a bucket which someone else owns
+      * Update B2 docs with Data usage, and Crypt section - thanks Tomasz Mazur
+    * S3
+      * Command line and config file support for
+        * Setting/overriding ACL  - thanks Radek Senfeld
+        * Setting storage class - thanks Asko Tamm
+    * Drive
+      * Make exponential backoff work exactly as per Google specification
+      * add `.epub`, `.odp` and `.tsv` as export formats.
+    * Swift
+      * Don't read metadata for directory marker objects
   * v1.33 - 2016-08-24
     * New Features
       * Implement encryption
