@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 const (
@@ -178,16 +179,15 @@ func CheckResponse(r *http.Response) error {
 
 	errBody := ""
 	if data, err := ioutil.ReadAll(r.Body); err == nil {
-		errBody = string(data)
+		errBody = strings.TrimSpace(string(data))
 	}
 
-	errMsg := fmt.Sprintf("HTTP code %v: %q, ", c, r.Status)
+	errMsg := fmt.Sprintf("HTTP code %v: %q: ", c, r.Status)
 	if errBody == "" {
 		errMsg += "no response body"
 	} else {
-		errMsg += fmt.Sprintf("reponse body: %v", errBody)
+		errMsg += fmt.Sprintf("response body: %q", errBody)
 	}
-	errMsg += "\n"
 
 	return errors.New(errMsg)
 }
