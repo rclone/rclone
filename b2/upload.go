@@ -178,7 +178,7 @@ func (up *largeUpload) transferChunk(part int64, body []byte) error {
 		var response api.UploadPartResponse
 
 		resp, err := up.f.srv.CallJSON(&opts, nil, &response)
-		retry, err := up.f.shouldRetryNoReauth(resp, err)
+		retry, err := up.f.shouldRetry(resp, err)
 		// On retryable error clear PartUploadURL
 		if retry {
 			fs.Debug(up.o, "Clearing part upload URL because of error: %v", err)

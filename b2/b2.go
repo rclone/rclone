@@ -1368,7 +1368,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 	// Don't retry, return a retry error instead
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err := o.fs.srv.CallJSON(&opts, nil, &response)
-		retry, err := o.fs.shouldRetryNoReauth(resp, err)
+		retry, err := o.fs.shouldRetry(resp, err)
 		// On retryable error clear UploadURL
 		if retry {
 			fs.Debug(o, "Clearing upload URL because of error: %v", err)
