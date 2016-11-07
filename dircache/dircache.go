@@ -7,7 +7,6 @@ import (
 	"log"
 	"strings"
 	"sync"
-
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
 )
