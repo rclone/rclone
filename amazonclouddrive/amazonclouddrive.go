@@ -753,51 +753,6 @@ func (f *Fs) Hashes() fs.HashSet {
 	return fs.HashSet(fs.HashMD5)
 }
 
-func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
-	srcObj, ok := src.(*Object)
-	if !ok {
-		fs.Debug(src, "Can't move - not same remote type")
-		return nil, fs.ErrorCantMove
-	}
-
-	// Temporary Object under construction
-	dstObj := &Object{
-		fs:     f,
-		remote: remote,
-	}
-
-	var err error
-	_, directoryID, err := f.dirCache.FindPath(remote, false)
-	if err != nil {
-		return nil, err
-	}
-
-	var info *acd.Node
-	var resp *http.Response
-	if directoryID == srcObj.info.Parents[0] {
-		// Do the rename
-		err = f.pacer.Call(func() (bool, error) {
-			info, resp, err = srcObj.info.Rename(remote)
-			return srcObj.fs.shouldRetry(resp, err)
-		})
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		// Do the move
-		err = f.pacer.Call(func() (bool, error) {
-			info, resp, err = srcObj.info.Move(directoryID)
-			return srcObj.fs.shouldRetry(resp, err)
-		})
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	dstObj.info = info
-	return dstObj, nil
-}
-
 // Copy src to this remote using server side copy operations.
 //
 // This is stored with the remote path given
