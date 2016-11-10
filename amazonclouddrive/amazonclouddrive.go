@@ -658,15 +658,15 @@ func (f *Fs) DirMove(src fs.Fs) (err error) {
 	}
 	node := acd.NodeFromId(srcFs.dirCache.RootID(), f.c.Nodes)
 
-	var json_str string
+	var jsonStr string
 	err = f.pacer.Call(func() (bool, error) {
-		json_str, err = node.GetMetadata()
+		jsonStr, err = node.GetMetadata()
 		return f.shouldRetry(nil, err)
 	})
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal([]byte(json_str), &node)
+	err = json.Unmarshal([]byte(jsonStr), &node)
 	if err != nil {
 		return
 	}
@@ -979,19 +979,19 @@ func (o *Object) rename(newName string) error {
 
 // Replaces one parent with another, effectively moving the file. Leaves other
 // parents untouched. ReplaceParent cannot be used when the file is trashed.
-func (o *Object) replaceParent(oldParentId string, newParentId string) error {
-	fs.Debug(o, "trying parent replace: %s -> %s", oldParentId, newParentId)
+func (o *Object) replaceParent(oldParentID string, newParentID string) error {
+	fs.Debug(o, "trying parent replace: %s -> %s", oldParentID, newParentID)
 
 	return o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.info.ReplaceParent(oldParentId, newParentId)
+		resp, err := o.info.ReplaceParent(oldParentID, newParentID)
 		return o.fs.shouldRetry(resp, err)
 	})
 }
 
 // Adds one additional parent to object.
-func (o *Object) addParent(newParentId string) error {
+func (o *Object) addParent(newParentID string) error {
 	return o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.info.AddParent(newParentId)
+		resp, err := o.info.AddParent(newParentID)
 		return o.fs.shouldRetry(resp, err)
 	})
 }
@@ -1098,9 +1098,8 @@ OnConflict:
 	err = o.restore()
 	if err != nil {
 		return nil, err
-	} else {
-		return dstObj, nil
 	}
+	return dstObj, nil
 }
 
 // MimeType of an Object if known, "" otherwise
