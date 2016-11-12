@@ -110,11 +110,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 			config.Auth = append(config.Auth,ssh.PublicKeys( signers ... ))
 		}
 	} else {
-		if clearpass, err := fs.Reveal(pass); err != nil {
+		clearpass, err := fs.Reveal(pass)
+		if err != nil {
 			return nil, err
-		} else {
-			config.Auth = append(config.Auth,ssh.Password(clearpass))
 		}
+		config.Auth = append(config.Auth,ssh.Password(clearpass))
 	}
 	if sshClient, err := ssh.Dial("tcp", host + ":" + port, config); err != nil {
 		return nil,err
@@ -221,17 +221,17 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 	debug( f, "Put '" + src.Remote() + "'")
 	f.mkdir( f.sftpClient.Join( f.root, filepath.Dir( src.Remote() ) ) )
-	if file, err := f.sftpClient.Create( f.sftpClient.Join( f.root, src.Remote() ) ); err == nil {
+	file, err := f.sftpClient.Create( f.sftpClient.Join( f.root, src.Remote() ) )
+	if err == nil {
 		file.ReadFrom( in )
-		if o, err2 := f.NewObject( src.Remote() ); err2 == nil {
+		o, err2 := f.NewObject( src.Remote() )
+		if err2 == nil {
 			o.SetModTime( src.ModTime() )
 			return o,nil
-		} else {
-			return nil,err2
 		}
-	} else {
-		return nil,err
+		return nil,err2
 	}
+	return nil,err
 }
 
 func (f *Fs) mkdir(path string) error {
@@ -246,11 +246,11 @@ func (f *Fs) mkdir(path string) error {
 // Mkdir makes the root directory of the Fs object
 func (f *Fs) Mkdir() error {
 	debug( f, "Mkdir '" + f.root + "'")
-	if o,_ := f.NewObject(""); o == nil {
+	o,_ := f.NewObject("")
+	if o == nil {
 		return f.mkdir(f.root)
-	} else {
-		return nil
 	}
+	return nil
 }
 
 // Rmdir removes the root directory of the Fs object
@@ -373,14 +373,14 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 // Update a remote sftp file using the data <in> and ModTime from <src>
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	debug( o.fs, "Update '" + o.remote + "'")
-	if file, err := o.fs.sftpClient.Create( o.fs.sftpClient.Join( o.fs.root, o.remote ) ); err == nil {
+	file, err := o.fs.sftpClient.Create( o.fs.sftpClient.Join( o.fs.root, o.remote ) )
+	if err == nil {
 		_, err = file.ReadFrom( in )
 		if err != nil { return err }
 		err = o.SetModTime( src.ModTime() )
 		return err
-	} else {
-		return err
 	}
+	return err
 }
 
 // Remove a remote sftp file object
