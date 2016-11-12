@@ -62,6 +62,7 @@ func (f *File) Attr(ctx context.Context, a *fuse.Attr) error {
 			a.Crtime = modTime
 		}
 	}
+	a.Blocks = (a.Size + 511) / 512
 	return nil
 }
 
