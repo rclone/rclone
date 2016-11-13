@@ -304,7 +304,7 @@ func (o *Object) Remote() string {
 // Hash returns "" since SFTP (in Go or OpenSSH) doesn't support remote calculation of hashes
 func (o *Object) Hash(r fs.HashType) (string, error) {
 	debug(o.fs, "Hash '"+o.remote+"'")
-	return "", nil
+	return "", fs.ErrHashUnsupported
 }
 
 // Size returns the size in bytes of the remote sftp file
