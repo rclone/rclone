@@ -119,7 +119,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	if sshClient, err := ssh.Dial("tcp", host + ":" + port, config); err != nil {
 		return nil,err
 	} else if sftpClient, err := sftp.NewClient(sshClient); err != nil {
-		sshClient.Close()
+		_ = sshClient.Close()
 		return nil,err
 	} else {
 		f := &Fs{
@@ -220,25 +220,31 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 // Put data from <in> into a new remote sftp file object described by <src.Remote()> and <src.ModTime()>
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 	debug( f, "Put '" + src.Remote() + "'")
-	f.mkdir( f.sftpClient.Join( f.root, filepath.Dir( src.Remote() ) ) )
+	_ = f.mkdir( f.sftpClient.Join( f.root, filepath.Dir( src.Remote() ) ) )
 	file, err := f.sftpClient.Create( f.sftpClient.Join( f.root, src.Remote() ) )
-	if err == nil {
-		file.ReadFrom( in )
-		o, err2 := f.NewObject( src.Remote() )
-		if err2 == nil {
-			o.SetModTime( src.ModTime() )
-			return o,nil
-		}
-		return nil,err2
+	if err != nil {
+		return nil,err
 	}
-	return nil,err
+	_, err = file.ReadFrom( in )
+	if err != nil {
+		return nil,err
+	}
+	o, err := f.NewObject( src.Remote() )
+	if err != nil {
+		return nil,err
+	}
+	err = o.SetModTime( src.ModTime() )
+	if err != nil {
+		return nil,err
+	}
+	return o,nil
 }
 
 func (f *Fs) mkdir(path string) error {
 	debug( f, "mkdir '" + path + "'")
 	parent := filepath.Dir( path )
 	if( parent != "." && parent != "/" ) {
-		f.mkdir(parent)
+		_ = f.mkdir(parent)
 	}
 	return f.sftpClient.Mkdir( path )
 }
@@ -360,8 +366,14 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 		}
 	}
 	sftpFile, err := o.fs.sftpClient.Open( o.fs.sftpClient.Join( o.fs.root, o.remote ) )
-	if(offset>0) {
-		sftpFile.Seek( offset, io.SeekStart )
+	if err != nil {
+		return nil, err
+	}
+	if (offset>0) {
+		off, err := sftpFile.Seek( offset, io.SeekStart )
+		if err != nil || off != offset {
+			return nil, err
+		}
 	}
 	in = &ObjectReader{
 		object:		o,
