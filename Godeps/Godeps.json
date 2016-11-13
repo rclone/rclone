@@ -221,6 +221,10 @@
 			"Rev": "248dadf4e9068a0b3e79f02ed0a610d935de5302"
 		},
 		{
+			"ImportPath": "github.com/pkg/sftp",
+			"Rev": "bf1c2bb0012cdea62d6c5ae7212a1bb04cfa4d89"
+		},
+		{
 			"ImportPath": "github.com/pmezard/go-difflib/difflib",
 			"Rev": "792786c7400a136282c1664665ae0a8db921c6c2"
 		},
@@ -466,6 +470,10 @@
 			"ImportPath": "google.golang.org/grpc/transport",
 			"Comment": "v1.0.5-9-gc810507",
 			"Rev": "c8105071640ef29fce843ed96983e864bb18eb0e"
+		},
+		{
+			"ImportPath": "github.com/kr/fs",
+			"Rev": "2788f0dbd16903de03cb8186e5c7d97b69ad387b"
 		}
 	]
 }

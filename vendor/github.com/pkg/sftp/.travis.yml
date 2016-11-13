@@ -1,0 +1,29 @@
+language: go
+go_import_path: github.com/pkg/sftp
+go:
+  - 1.5.x
+  - 1.6.x
+  - 1.7.x
+  - tip
+
+os:
+  - linux
+  - osx
+
+sudo: false
+
+addons:
+  ssh_known_hosts:
+      - bitbucket.org
+
+install:
+  - go get -t -v ./...
+  - ssh-keygen -t rsa -q -P "" -f $HOME/.ssh/id_rsa
+
+script:
+  - go test -integration -v ./...
+  - go test -testserver -v ./...
+  - go test -integration -testserver -v ./...
+  - go test -race -integration -v ./...
+  - go test -race -testserver -v ./...
+  - go test -race -integration -testserver -v ./...
