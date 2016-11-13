@@ -370,7 +370,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 		return nil, err
 	}
 	if offset > 0 {
-		off, err := sftpFile.Seek(offset, 0 )
+		off, err := sftpFile.Seek(offset, 0)
 		if err != nil || off != offset {
 			return nil, err
 		}
