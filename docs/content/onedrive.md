@@ -147,3 +147,5 @@ names.  These can't occur on Windows platforms, but on non-Windows
 platforms they are common.  Rclone will map these names to and from an
 identical looking unicode equivalent.  For example if a file has a `?`
 in it will be mapped to `？` instead.
+
+The largest allowed file size is 10GiB (10,737,418,240 bytes).
