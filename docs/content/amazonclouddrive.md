@@ -174,5 +174,5 @@ This means that larger files are likely to fail.
 
 Unfortunatly there is no way for rclone to see that this failure is 
 because of file size, so it will retry the operation, as any other
-failure. To avoid this problem, use `--max-size 50G` option to limit
+failure. To avoid this problem, use `--max-size 50000M` option to limit
 the maximum size of uploaded files.
