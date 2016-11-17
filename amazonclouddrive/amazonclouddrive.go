@@ -590,11 +590,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 	err = f.pacer.CallNoRetry(func() (bool, error) {
 		start := time.Now()
 		f.startUpload()
-		if src.Size() != 0 {
-			info, resp, err = folder.Put(in, leaf)
-		} else {
-			info, resp, err = folder.PutSized(in, size, leaf)
-		}
+		info, resp, err = folder.Put(in, leaf)
 		f.stopUpload()
 		var ok bool
 		ok, info, err = f.checkUpload(resp, in, src, info, err, time.Since(start))
@@ -913,7 +909,6 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
-	size := src.Size()
 	file := acd.File{Node: o.info}
 	var info *acd.File
 	var resp *http.Response
@@ -921,11 +916,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		start := time.Now()
 		o.fs.startUpload()
-		if size != 0 {
-			info, resp, err = file.Overwrite(in)
-		} else {
-			info, resp, err = file.OverwriteSized(in, size)
-		}
+		info, resp, err = file.Overwrite(in)
 		o.fs.stopUpload()
 		var ok bool
 		ok, info, err = o.fs.checkUpload(resp, in, src, info, err, time.Since(start))
