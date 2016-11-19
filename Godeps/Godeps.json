@@ -2,6 +2,9 @@
 	"ImportPath": "github.com/ncw/rclone",
 	"GoVersion": "go1.7",
 	"GodepVersion": "v75",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
 		{
 			"ImportPath": "bazil.org/fuse",
@@ -175,6 +178,10 @@
 			"Rev": "a65d4d2de4d5f7c74868dfa9b202a3c8be315aaa"
 		},
 		{
+			"ImportPath": "github.com/davecgh/go-spew/spew",
+			"Rev": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d"
+		},
+		{
 			"ImportPath": "github.com/go-ini/ini",
 			"Comment": "v1.9.0",
 			"Rev": "193d1ecb466bf97aae8b454a5cfc192941c64809"
@@ -214,6 +221,10 @@
 			"Rev": "248dadf4e9068a0b3e79f02ed0a610d935de5302"
 		},
 		{
+			"ImportPath": "github.com/pmezard/go-difflib/difflib",
+			"Rev": "792786c7400a136282c1664665ae0a8db921c6c2"
+		},
+		{
 			"ImportPath": "github.com/rfjakob/eme",
 			"Comment": "v1.0-10-g601d0e2",
 			"Rev": "601d0e278ceda9aa2085a61c9265f6e690ef5255"
@@ -246,6 +257,16 @@
 		{
 			"ImportPath": "github.com/stacktic/dropbox",
 			"Rev": "58f839b21094d5e0af7caf613599830589233d20"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/assert",
+			"Comment": "v1.1.4-6-g18a02ba",
+			"Rev": "18a02ba4a312f95da08ff4cfc0055750ce50ae9e"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/require",
+			"Comment": "v1.1.4-6-g18a02ba",
+			"Rev": "18a02ba4a312f95da08ff4cfc0055750ce50ae9e"
 		},
 		{
 			"ImportPath": "github.com/tsenart/tb",
