@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/request"
 )
@@ -92,7 +93,7 @@ func buildLocationElements(r *request.Request, v reflect.Value) {
 	}
 
 	r.HTTPRequest.URL.RawQuery = query.Encode()
-	updatePath(r.HTTPRequest.URL, r.HTTPRequest.URL.Path)
+	updatePath(r.HTTPRequest.URL, r.HTTPRequest.URL.Path, aws.BoolValue(r.Config.DisableRestProtocolURICleaning))
 }
 
 func buildBody(r *request.Request, v reflect.Value) {
@@ -193,13 +194,15 @@ func buildQueryString(query url.Values, v reflect.Value, name string) error {
 	return nil
 }
 
-func updatePath(url *url.URL, urlPath string) {
+func updatePath(url *url.URL, urlPath string, disableRestProtocolURICleaning bool) {
 	scheme, query := url.Scheme, url.RawQuery
 
 	hasSlash := strings.HasSuffix(urlPath, "/")
 
 	// clean up path
-	urlPath = path.Clean(urlPath)
+	if !disableRestProtocolURICleaning {
+		urlPath = path.Clean(urlPath)
+	}
 	if hasSlash && !strings.HasSuffix(urlPath, "/") {
 		urlPath += "/"
 	}
@@ -222,8 +225,7 @@ func EscapePath(path string, encodeSep bool) string {
 		if noEscape[c] || (c == '/' && !encodeSep) {
 			buf.WriteByte(c)
 		} else {
-			buf.WriteByte('%')
-			buf.WriteString(strings.ToUpper(strconv.FormatUint(uint64(c), 16)))
+			fmt.Fprintf(&buf, "%%%02X", c)
 		}
 	}
 	return buf.String()

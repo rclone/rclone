@@ -34,36 +34,17 @@ type baseError struct {
 	errs []error
 }
 
-// newBaseError returns an error object for the code, message, and err.
+// newBaseError returns an error object for the code, message, and errors.
 //
 // code is a short no whitespace phrase depicting the classification of
 // the error that is being created.
 //
-// message is the free flow string containing detailed information about the error.
+// message is the free flow string containing detailed information about the
+// error.
 //
-// origErr is the error object which will be nested under the new error to be returned.
-func newBaseError(code, message string, origErr error) *baseError {
-	b := &baseError{
-		code:    code,
-		message: message,
-	}
-
-	if origErr != nil {
-		b.errs = append(b.errs, origErr)
-	}
-
-	return b
-}
-
-// newBaseErrors returns an error object for the code, message, and errors.
-//
-// code is a short no whitespace phrase depicting the classification of
-// the error that is being created.
-//
-// message is the free flow string containing detailed information about the error.
-//
-// origErrs is the error objects which will be nested under the new errors to be returned.
-func newBaseErrors(code, message string, origErrs []error) *baseError {
+// origErrs is the error objects which will be nested under the new errors to
+// be returned.
+func newBaseError(code, message string, origErrs []error) *baseError {
 	b := &baseError{
 		code:    code,
 		message: message,
@@ -103,19 +84,26 @@ func (b baseError) Message() string {
 	return b.message
 }
 
-// OrigErr returns the original error if one was set. Nil is returned if no error
-// was set. This only returns the first element in the list. If the full list is
-// needed, use BatchError
+// OrigErr returns the original error if one was set. Nil is returned if no
+// error was set. This only returns the first element in the list. If the full
+// list is needed, use BatchedErrors.
 func (b baseError) OrigErr() error {
-	if size := len(b.errs); size > 0 {
+	switch len(b.errs) {
+	case 0:
+		return nil
+	case 1:
 		return b.errs[0]
+	default:
+		if err, ok := b.errs[0].(Error); ok {
+			return NewBatchError(err.Code(), err.Message(), b.errs[1:])
+		}
+		return NewBatchError("BatchedErrors",
+			"multiple errors occurred", b.errs)
 	}
-
-	return nil
 }
 
-// OrigErrs returns the original errors if one was set. An empty slice is returned if
-// no error was set:w
+// OrigErrs returns the original errors if one was set. An empty slice is
+// returned if no error was set.
 func (b baseError) OrigErrs() []error {
 	return b.errs
 }
@@ -133,8 +121,8 @@ type requestError struct {
 	requestID  string
 }
 
-// newRequestError returns a wrapped error with additional information for request
-// status code, and service requestID.
+// newRequestError returns a wrapped error with additional information for
+// request status code, and service requestID.
 //
 // Should be used to wrap all request which involve service requests. Even if
 // the request failed without a service response, but had an HTTP status code
@@ -171,6 +159,15 @@ func (r requestError) StatusCode() int {
 // RequestID returns the wrapped requestID
 func (r requestError) RequestID() string {
 	return r.requestID
+}
+
+// OrigErrs returns the original errors if one was set. An empty slice is
+// returned if no error was set.
+func (r requestError) OrigErrs() []error {
+	if b, ok := r.awsError.(BatchedErrors); ok {
+		return b.OrigErrs()
+	}
+	return []error{r.OrigErr()}
 }
 
 // An error list that satisfies the golang interface

@@ -1,4 +1,4 @@
-// Package xmlutil provides XML serialisation of AWS requests and responses.
+// Package xmlutil provides XML serialization of AWS requests and responses.
 package xmlutil
 
 import (

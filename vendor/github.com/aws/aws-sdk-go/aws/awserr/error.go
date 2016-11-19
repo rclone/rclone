@@ -42,9 +42,12 @@ type Error interface {
 	OrigErr() error
 }
 
-// BatchError is a batch of errors which also wraps lower level errors with code, message,
-// and original errors. Calling Error() will only return the error that is at the end
-// of the list.
+// BatchError is a batch of errors which also wraps lower level errors with
+// code, message, and original errors. Calling Error() will include all errors
+// that occurred in the batch.
+//
+// Deprecated: Replaced with BatchedErrors. Only defined for backwards
+// compatibility.
 type BatchError interface {
 	// Satisfy the generic error interface.
 	error
@@ -59,17 +62,35 @@ type BatchError interface {
 	OrigErrs() []error
 }
 
+// BatchedErrors is a batch of errors which also wraps lower level errors with
+// code, message, and original errors. Calling Error() will include all errors
+// that occurred in the batch.
+//
+// Replaces BatchError
+type BatchedErrors interface {
+	// Satisfy the base Error interface.
+	Error
+
+	// Returns the original error if one was set.  Nil is returned if not set.
+	OrigErrs() []error
+}
+
 // New returns an Error object described by the code, message, and origErr.
 //
 // If origErr satisfies the Error interface it will not be wrapped within a new
 // Error object and will instead be returned.
 func New(code, message string, origErr error) Error {
-	return newBaseError(code, message, origErr)
+	var errs []error
+	if origErr != nil {
+		errs = append(errs, origErr)
+	}
+	return newBaseError(code, message, errs)
 }
 
-// NewBatchError returns an baseError with an expectation of an array of errors
-func NewBatchError(code, message string, errs []error) BatchError {
-	return newBaseErrors(code, message, errs)
+// NewBatchError returns an BatchedErrors with a collection of errors as an
+// array of errors.
+func NewBatchError(code, message string, errs []error) BatchedErrors {
+	return newBaseError(code, message, errs)
 }
 
 // A RequestFailure is an interface to extract request failure information from

@@ -6,7 +6,6 @@ package google
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -17,7 +16,6 @@ import (
 	"cloud.google.com/go/compute/metadata"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/jwt"
 )
 
 // DefaultClient returns an HTTP Client that uses the
@@ -112,44 +110,9 @@ func tokenSourceFromFile(ctx context.Context, filename string, scopes []string) 
 	if err != nil {
 		return nil, err
 	}
-	var d struct {
-		// Common fields
-		Type     string
-		ClientID string `json:"client_id"`
-
-		// User Credential fields
-		ClientSecret string `json:"client_secret"`
-		RefreshToken string `json:"refresh_token"`
-
-		// Service Account fields
-		ClientEmail  string `json:"client_email"`
-		PrivateKeyID string `json:"private_key_id"`
-		PrivateKey   string `json:"private_key"`
-	}
-	if err := json.Unmarshal(b, &d); err != nil {
+	var f credentialsFile
+	if err := json.Unmarshal(b, &f); err != nil {
 		return nil, err
 	}
-	switch d.Type {
-	case "authorized_user":
-		cfg := &oauth2.Config{
-			ClientID:     d.ClientID,
-			ClientSecret: d.ClientSecret,
-			Scopes:       append([]string{}, scopes...), // copy
-			Endpoint:     Endpoint,
-		}
-		tok := &oauth2.Token{RefreshToken: d.RefreshToken}
-		return cfg.TokenSource(ctx, tok), nil
-	case "service_account":
-		cfg := &jwt.Config{
-			Email:      d.ClientEmail,
-			PrivateKey: []byte(d.PrivateKey),
-			Scopes:     append([]string{}, scopes...), // copy
-			TokenURL:   JWTTokenURL,
-		}
-		return cfg.TokenSource(ctx), nil
-	case "":
-		return nil, errors.New("missing 'type' field in credentials")
-	default:
-		return nil, fmt.Errorf("unknown credential type: %q", d.Type)
-	}
+	return f.tokenSource(ctx, scopes)
 }

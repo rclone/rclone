@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"C5oy1hgQsABtYOYIOXWcR3BgYqU/Bxo7TXXOxzhoC81JSCcKcp551FA\"",
+ "etag": "\"tbys6C40o18GZwyMen5GMkdK-3s/Q3Kd6t_wsQx8lVoiuJLagBsP-sc\"",
  "discoveryVersion": "v1",
  "id": "drive:v2",
  "name": "drive",
  "version": "v2",
- "revision": "20161018",
+ "revision": "20161103",
  "title": "Drive API",
  "description": "Manages files in Drive including uploading, downloading, searching, detecting changes, and updating sharing permissions.",
  "ownerDomain": "google.com",
@@ -1118,6 +1118,10 @@
       "hidden": {
        "type": "boolean",
        "description": "Deprecated."
+      },
+      "modified": {
+       "type": "boolean",
+       "description": "Whether the file has been modified by this user."
       },
       "restricted": {
        "type": "boolean",
@@ -4246,8 +4250,10 @@
       "maxResults": {
        "type": "integer",
        "description": "Maximum number of revisions to return.",
+       "default": "200",
        "format": "int32",
        "minimum": "1",
+       "maximum": "1000",
        "location": "query"
       },
       "pageToken": {
