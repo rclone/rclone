@@ -52,7 +52,10 @@ Note the top level Makefile targets
   * make test
 
 Both of these will be run by Travis when you make a pull request but
-you can do this yourself locally too.
+you can do this yourself locally too.  These require some extra go
+packages which you can install with
+
+  * make build_dep
 
 Make sure you
 
@@ -119,6 +122,15 @@ contribution.
   * make test
   * make tag
 
+## Updating the vendor dirctory ##
+
+Do these commands to update the entire build directory to the latest
+version of all the dependencies.  This should be done early in the
+release cycle.  Individual dependencies can be added with `godep get`.
+
+  * make build_dep
+  * make update
+  
 ## Writing a new backend ##
 
 Choose a name.  The docs here will use `remote` as an example.
