@@ -57,7 +57,7 @@ endif
 update:
 	rm -rf Godeps vendor
 	go get -t -u -f -v ./...
-	godep save
+	godep save ./...
 
 doc:	rclone.1 MANUAL.html MANUAL.txt
 
