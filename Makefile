@@ -50,12 +50,14 @@ ifdef GO_LATEST
 	go get -u github.com/golang/lint/golint
 	go get -u github.com/mitchellh/gox
 	go get -u github.com/inconshreveable/mousetrap
+	go get -u github.com/tools/godep
 endif
 
 # Update dependencies
 update:
+	rm -rf Godeps vendor
 	go get -t -u -f -v ./...
-	godep update ./...
+	godep save
 
 doc:	rclone.1 MANUAL.html MANUAL.txt
 
