@@ -8,6 +8,7 @@ import (
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
 	"github.com/ncw/rclone/fs"
+	"golang.org/x/net/context"
 )
 
 // FS represents the top level filing system
@@ -96,4 +97,23 @@ func mount(f fs.Fs, mountpoint string) (<-chan error, error) {
 	}
 
 	return errChan, nil
+}
+
+// Check interface satsified
+var _ fusefs.FSStatfser = (*FS)(nil)
+
+// Statfs is called to obtain file system metadata.
+// It should write that data to resp.
+func (f *FS) Statfs(ctx context.Context, req *fuse.StatfsRequest, resp *fuse.StatfsResponse) error {
+	const blockSize = 4096
+	const fsBlocks = (1 << 50) / blockSize
+	resp.Blocks = fsBlocks  // Total data blocks in file system.
+	resp.Bfree = fsBlocks   // Free blocks in file system.
+	resp.Bavail = fsBlocks  // Free blocks in file system if you're not root.
+	resp.Files = 1E9        // Total files in file system.
+	resp.Ffree = 1E9        // Free files in file system.
+	resp.Bsize = blockSize  // Block size
+	resp.Namelen = 255      // Maximum file name length?
+	resp.Frsize = blockSize // Fragment size, smallest addressable data size in the file system.
+	return nil
 }
