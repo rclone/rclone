@@ -36,6 +36,7 @@ import (
 	_ "github.com/rclone/rclone/cmd/memtest"
 	_ "github.com/rclone/rclone/cmd/mkdir"
 	_ "github.com/rclone/rclone/cmd/mount"
+	_ "github.com/rclone/rclone/cmd/mount2"
 	_ "github.com/rclone/rclone/cmd/move"
 	_ "github.com/rclone/rclone/cmd/moveto"
 	_ "github.com/rclone/rclone/cmd/ncdu"
