@@ -396,6 +396,19 @@ This sets the interval.
 
 The default is `1m`. Use 0 to disable.
 
+### --stats-unit=bits|bytes ###
+
+By default data transfer rates will be printed in bytes/second.
+
+This option allows the data rate to be printed in bits/second.
+
+Data transfer volume will still be reported in bytes.
+
+The rate is reported as a binary unit, not SI unit. So 1 Mbit/s
+equals 1,048,576 bits/s and not 1,000,000 bits/s.
+
+The default is `bytes`.
+
 ### --delete-(before,during,after) ###
 
 This option allows you to specify when files on your destination are

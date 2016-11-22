@@ -129,6 +129,11 @@ func (s *StatsInfo) String() string {
 	}
 	dtRounded := dt - (dt % (time.Second / 10))
 	buf := &bytes.Buffer{}
+
+	if Config.DataRateUnit == "bits" {
+		speed = speed * 8
+	}
+
 	fmt.Fprintf(buf, `
 Transferred:   %10s (%s)
 Errors:        %10d
@@ -136,7 +141,7 @@ Checks:        %10d
 Transferred:   %10d
 Elapsed time:  %10v
 `,
-		SizeSuffix(s.bytes).Unit("Bytes"), SizeSuffix(speed).Unit("Bytes/s"),
+		SizeSuffix(s.bytes).Unit("Bytes"), SizeSuffix(speed).Unit(strings.Title(Config.DataRateUnit)+"/s"),
 		s.errors,
 		s.checks,
 		s.transfers,
@@ -438,10 +443,21 @@ func (acc *Account) String() string {
 		where := len(name) - 42
 		name = append([]rune{'.', '.', '.'}, name[where:]...)
 	}
-	if b <= 0 {
-		return fmt.Sprintf("%45s: avg:%7.1f, cur: %6.1f kByte/s. ETA: %s", string(name), avg/1024, cur/1024, etas)
+
+	if Config.DataRateUnit == "bits" {
+		cur, avg = cur*8, avg*8
 	}
-	return fmt.Sprintf("%45s: %2d%% done. avg: %6.1f, cur: %6.1f kByte/s. ETA: %s", string(name), int(100*float64(a)/float64(b)), avg/1024, cur/1024, etas)
+
+	done := ""
+	if b > 0 {
+		done = fmt.Sprintf("%2d%% done, ", int(100*float64(a)/float64(b)))
+	}
+	return fmt.Sprintf("%45s: %s%s, ETA: %s",
+		string(name),
+		done,
+		SizeSuffix(cur).Unit(strings.Title(Config.DataRateUnit)+"/s"),
+		etas,
+	)
 }
 
 // Close the object
