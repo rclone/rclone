@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/spf13/pflag"
 	"github.com/VividCortex/ewma"
 	"github.com/tsenart/tb"
 )
@@ -21,6 +22,7 @@ var (
 	tokenBucketMu   sync.Mutex // protects the token bucket variables
 	tokenBucket     *tb.Bucket
 	prevTokenBucket = tokenBucket
+	statsBps        = pflag.BoolP("statsbps", "", false, "Show stats output in bits per second")
 )
 
 // Start the token bucket if necessary
@@ -82,7 +84,7 @@ func (ss stringSet) Strings() []string {
 		} else {
 			out = name
 		}
-		strings = append(strings, " * "+out)
+		strings = append(strings, out)
 	}
 	sorted := sort.StringSlice(strings)
 	sorted.Sort()
@@ -129,23 +131,37 @@ func (s *StatsInfo) String() string {
 	}
 	dtRounded := dt - (dt % (time.Second / 10))
 	buf := &bytes.Buffer{}
+	
+	transferVolume, transferSpeed := s.bytes, speed
+	transferVolumeUnit, transferSpeedUnit := "Bytes", "Bytes/s"
+
+	if *statsBps {
+		transferVolume, transferSpeed = s.bytes*8, speed*8
+	  	transferVolumeUnit, transferSpeedUnit = "Bits", "Bits/s"
+	}
+	
 	fmt.Fprintf(buf, `
-Transferred:   %10s (%s)
-Errors:        %10d
-Checks:        %10d
-Transferred:   %10d
-Elapsed time:  %10v
+%-20s: %-10s (%-s)
+%-20s: %-10d
+%-20s: %-10d
+%-20s: %-10d
+%-20s: %-10v
 `,
-		SizeSuffix(s.bytes).Unit("Bytes"), SizeSuffix(speed).Unit("Bytes/s"),
+		"Transferred",
+		SizeSuffix(transferVolume).Unit(transferVolumeUnit), SizeSuffix(transferSpeed).Unit(transferSpeedUnit),
+		"Errors",
 		s.errors,
+		"Checks",
 		s.checks,
+		"Transferred",
 		s.transfers,
+		"Elapsed time",
 		dtRounded)
 	if len(s.checking) > 0 {
-		fmt.Fprintf(buf, "Checking:\n%s\n", s.checking)
+		fmt.Fprintf(buf, "%-20s: \n%s\n", "Checking", s.checking)
 	}
 	if len(s.transferring) > 0 {
-		fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring)
+		fmt.Fprintf(buf, "%-20s: \n%s\n", "Transferring", s.transferring)
 	}
 	return buf.String()
 }
@@ -438,10 +454,30 @@ func (acc *Account) String() string {
 		where := len(name) - 42
 		name = append([]rune{'.', '.', '.'}, name[where:]...)
 	}
-	if b <= 0 {
-		return fmt.Sprintf("%45s: avg:%7.1f, cur: %6.1f kByte/s. ETA: %s", string(name), avg/1024, cur/1024, etas)
+	
+	curSpeed, avgSpeed := cur, avg
+	speedUnit := "Bytes/s"
+
+	if *statsBps {
+		curSpeed, avgSpeed = cur*8, avg*8
+		speedUnit = "Bits/s"
 	}
-	return fmt.Sprintf("%45s: %2d%% done. avg: %6.1f, cur: %6.1f kByte/s. ETA: %s", string(name), int(100*float64(a)/float64(b)), avg/1024, cur/1024, etas)
+	
+	if b <= 0 {
+		return fmt.Sprintf("%-21s %s avg: %s, cur: %s. ETA: %s",
+			"*",
+			string(name),
+			SizeSuffix(avgSpeed).Unit(speedUnit),
+			SizeSuffix(curSpeed).Unit(speedUnit),
+			etas)
+	}
+	return fmt.Sprintf("%-21s %s %2d%% done. avg: %s, cur: %s. ETA: %s",
+		"*",
+		string(name),
+		int(100*float64(a)/float64(b)),
+		SizeSuffix(avgSpeed).Unit(speedUnit),
+		SizeSuffix(curSpeed).Unit(speedUnit),
+		etas)
 }
 
 // Close the object
