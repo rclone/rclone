@@ -26,7 +26,7 @@ var (
 	// Flags
 	cpuProfile    = pflag.StringP("cpuprofile", "", "", "Write cpu profile to file")
 	memProfile    = pflag.String("memprofile", "", "Write memory profile to file")
-	statsInterval = pflag.DurationP("stats", "", time.Minute*1, "Interval to print stats (0 to disable)")
+	statsInterval = pflag.DurationP("stats", "", time.Minute*1, "Interval between printing stats, e.g 500ms, 60s, 5m. (0 to disable)")
 	version       bool
 	logFile       = pflag.StringP("log-file", "", "", "Log everything to this file")
 	retries       = pflag.IntP("retries", "", 3, "Retry operations this many times if they fail")
