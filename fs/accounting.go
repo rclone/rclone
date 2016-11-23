@@ -132,12 +132,8 @@ func (s *StatsInfo) String() string {
 	dtRounded := dt - (dt % (time.Second / 10))
 	buf := &bytes.Buffer{}
 	
-	transferVolume, transferSpeed := s.bytes, speed
-	transferVolumeUnit, transferSpeedUnit := "Bytes", "Bytes/s"
-
-	if *statsBps {
-		transferVolume, transferSpeed = s.bytes*8, speed*8
-	  	transferVolumeUnit, transferSpeedUnit = "Bits", "Bits/s"
+	if Config.DataRateUnit == "bits" {
+		speed = speed * 8
 	}
 	
 	fmt.Fprintf(buf, `
@@ -148,7 +144,7 @@ func (s *StatsInfo) String() string {
 %-20s: %-10v
 `,
 		"Transferred",
-		SizeSuffix(transferVolume).Unit(transferVolumeUnit), SizeSuffix(transferSpeed).Unit(transferSpeedUnit),
+		SizeSuffix(s.bytes).Unit("Bytes"), SizeSuffix(speed).Unit(strings.Title(Config.DataRateUnit)+"/s"),
 		"Errors",
 		s.errors,
 		"Checks",
@@ -455,28 +451,24 @@ func (acc *Account) String() string {
 		name = append([]rune{'.', '.', '.'}, name[where:]...)
 	}
 	
-	curSpeed, avgSpeed := cur, avg
-	speedUnit := "Bytes/s"
-
-	if *statsBps {
-		curSpeed, avgSpeed = cur*8, avg*8
-		speedUnit = "Bits/s"
+	if Config.DataRateUnit == "bits" {
+		cur, avg = cur*8, avg*8
 	}
 	
 	if b <= 0 {
 		return fmt.Sprintf("%-21s %s avg: %s, cur: %s. ETA: %s",
 			"*",
 			string(name),
-			SizeSuffix(avgSpeed).Unit(speedUnit),
-			SizeSuffix(curSpeed).Unit(speedUnit),
+			SizeSuffix(avg).Unit(strings.Title(Config.DataRateUnit)+"/s"),
+			SizeSuffix(cur).Unit(strings.Title(Config.DataRateUnit)+"/s"),
 			etas)
 	}
 	return fmt.Sprintf("%-21s %s %2d%% done. avg: %s, cur: %s. ETA: %s",
 		"*",
 		string(name),
 		int(100*float64(a)/float64(b)),
-		SizeSuffix(avgSpeed).Unit(speedUnit),
-		SizeSuffix(curSpeed).Unit(speedUnit),
+		SizeSuffix(avg).Unit(strings.Title(Config.DataRateUnit)+"/s"),
+		SizeSuffix(cur).Unit(strings.Title(Config.DataRateUnit)+"/s"),
 		etas)
 }
 
