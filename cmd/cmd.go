@@ -11,10 +11,10 @@ import (
 	"log"
 	"os"
 	"path"
+	"regexp"
 	"runtime"
 	"runtime/pprof"
 	"time"
-	"regexp"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
