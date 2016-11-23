@@ -301,6 +301,7 @@ type ConfigInfo struct {
 	IgnoreSize         bool
 	NoTraverse         bool
 	NoUpdateModTime    bool
+	DataRateUnit       string
 }
 
 // Find the config directory
