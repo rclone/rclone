@@ -295,7 +295,7 @@ func initConfig() {
 			}
 		}()
 	}
-	
+
 	if m, _ := regexp.MatchString("bits|bytes", *dataRateUnit); m == false {
 		log.Print("Invalid unit passed to --stats-unit. Defaulting to bytes.")
 		fs.Config.DataRateUnit = "bytes"
