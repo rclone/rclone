@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/spf13/pflag"
 	"github.com/VividCortex/ewma"
 	"github.com/tsenart/tb"
 )
@@ -22,7 +21,6 @@ var (
 	tokenBucketMu   sync.Mutex // protects the token bucket variables
 	tokenBucket     *tb.Bucket
 	prevTokenBucket = tokenBucket
-	statsBps        = pflag.BoolP("statsbps", "", false, "Show stats output in bits per second")
 )
 
 // Start the token bucket if necessary
