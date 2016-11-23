@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"runtime/pprof"
 	"time"
+	"regexp"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -27,6 +28,7 @@ var (
 	cpuProfile    = pflag.StringP("cpuprofile", "", "", "Write cpu profile to file")
 	memProfile    = pflag.String("memprofile", "", "Write memory profile to file")
 	statsInterval = pflag.DurationP("stats", "", time.Minute*1, "Interval between printing stats, e.g 500ms, 60s, 5m. (0 to disable)")
+	dataRateUnit  = pflag.StringP("stats-unit", "", "bytes", "Show stats data rate in either bits/s or bytes/s")
 	version       bool
 	logFile       = pflag.StringP("log-file", "", "", "Log everything to this file")
 	retries       = pflag.IntP("retries", "", 3, "Retry operations this many times if they fail")
@@ -292,5 +294,12 @@ func initConfig() {
 				log.Fatal(err)
 			}
 		}()
+	}
+	
+	if m, _ := regexp.MatchString("bits|bytes", *dataRateUnit); m == false {
+		log.Print("Invalid unit passed to --stats-unit. Defaulting to bytes.")
+		fs.Config.DataRateUnit = "bytes"
+	} else {
+		fs.Config.DataRateUnit = *dataRateUnit
 	}
 }
