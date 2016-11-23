@@ -129,11 +129,11 @@ func (s *StatsInfo) String() string {
 	}
 	dtRounded := dt - (dt % (time.Second / 10))
 	buf := &bytes.Buffer{}
-	
+
 	if Config.DataRateUnit == "bits" {
 		speed = speed * 8
 	}
-	
+
 	fmt.Fprintf(buf, `
 %-20s: %-10s (%-s)
 %-20s: %-10d
@@ -448,11 +448,11 @@ func (acc *Account) String() string {
 		where := len(name) - 42
 		name = append([]rune{'.', '.', '.'}, name[where:]...)
 	}
-	
+
 	if Config.DataRateUnit == "bits" {
 		cur, avg = cur*8, avg*8
 	}
-	
+
 	if b <= 0 {
 		return fmt.Sprintf("%-21s %s avg: %s, cur: %s. ETA: %s",
 			"*",
