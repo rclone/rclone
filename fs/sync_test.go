@@ -120,7 +120,7 @@ func TestCopyAfterDelete(t *testing.T) {
 	fstest.CheckItems(t, r.flocal)
 	fstest.CheckItems(t, r.fremote, file1)
 
-	err := fs.Mkdir(r.flocal)
+	err := fs.Mkdir(r.flocal, "")
 	require.NoError(t, err)
 
 	err = fs.CopyDir(r.fremote, r.flocal)

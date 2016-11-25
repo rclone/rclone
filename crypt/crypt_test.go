@@ -24,6 +24,7 @@ func TestFsString(t *testing.T)            { fstests.TestFsString(t) }
 func TestFsRmdirEmpty(t *testing.T)        { fstests.TestFsRmdirEmpty(t) }
 func TestFsRmdirNotFound(t *testing.T)     { fstests.TestFsRmdirNotFound(t) }
 func TestFsMkdir(t *testing.T)             { fstests.TestFsMkdir(t) }
+func TestFsMkdirRmdirSubdir(t *testing.T)  { fstests.TestFsMkdirRmdirSubdir(t) }
 func TestFsListEmpty(t *testing.T)         { fstests.TestFsListEmpty(t) }
 func TestFsListDirEmpty(t *testing.T)      { fstests.TestFsListDirEmpty(t) }
 func TestFsNewObjectNotFound(t *testing.T) { fstests.TestFsNewObjectNotFound(t) }

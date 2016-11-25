@@ -82,7 +82,7 @@ func newRun() *Run {
 		log.Fatalf("Failed to open remote %q: %v", *RemoteName, err)
 	}
 
-	err = r.fremote.Mkdir()
+	err = r.fremote.Mkdir("")
 	if err != nil {
 		log.Fatalf("Failed to open mkdir %q: %v", *RemoteName, err)
 	}

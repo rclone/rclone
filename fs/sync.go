@@ -402,7 +402,7 @@ func (s *syncCopyMove) run() error {
 		return nil
 	}
 
-	err := Mkdir(s.fdst)
+	err := Mkdir(s.fdst, "")
 	if err != nil {
 		return err
 	}

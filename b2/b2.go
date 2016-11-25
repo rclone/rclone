@@ -745,7 +745,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 }
 
 // Mkdir creates the bucket if it doesn't exist
-func (f *Fs) Mkdir() error {
+func (f *Fs) Mkdir(dir string) error {
+	// Can't create subdirs
+	if dir != "" {
+		return nil
+	}
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/b2_create_bucket",
@@ -784,8 +788,8 @@ func (f *Fs) Mkdir() error {
 // Rmdir deletes the bucket if the fs is at the root
 //
 // Returns an error if it isn't empty
-func (f *Fs) Rmdir() error {
-	if f.root != "" {
+func (f *Fs) Rmdir(dir string) error {
+	if f.root != "" || dir != "" {
 		return nil
 	}
 	opts := rest.Opts{
@@ -896,7 +900,7 @@ func (f *Fs) purge(oldOnly bool) error {
 	wg.Wait()
 
 	if !oldOnly {
-		checkErr(f.Rmdir())
+		checkErr(f.Rmdir(""))
 	}
 	return errReturn
 }

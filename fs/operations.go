@@ -707,12 +707,12 @@ func ListDir(f Fs, w io.Writer) error {
 }
 
 // Mkdir makes a destination directory or container
-func Mkdir(f Fs) error {
+func Mkdir(f Fs, dir string) error {
 	if Config.DryRun {
 		Log(f, "Not making directory as dry run is set")
 		return nil
 	}
-	err := f.Mkdir()
+	err := f.Mkdir(dir)
 	if err != nil {
 		Stats.Error()
 		return err
@@ -722,17 +722,17 @@ func Mkdir(f Fs) error {
 
 // TryRmdir removes a container but not if not empty.  It doesn't
 // count errors but may return one.
-func TryRmdir(f Fs) error {
+func TryRmdir(f Fs, dir string) error {
 	if Config.DryRun {
 		Log(f, "Not deleting as dry run is set")
 		return nil
 	}
-	return f.Rmdir()
+	return f.Rmdir(dir)
 }
 
 // Rmdir removes a container but not if not empty
-func Rmdir(f Fs) error {
-	err := TryRmdir(f)
+func Rmdir(f Fs, dir string) error {
+	err := TryRmdir(f, dir)
 	if err != nil {
 		Stats.Error()
 		return err
@@ -764,7 +764,7 @@ func Purge(f Fs) error {
 		if err != nil {
 			return err
 		}
-		err = Rmdir(f)
+		err = Rmdir(f, "")
 	}
 	if err != nil {
 		Stats.Error()

@@ -20,7 +20,7 @@ objects in it, use purge for that.`,
 		cmd.CheckArgs(1, 1, command, args)
 		fdst := cmd.NewFsDst(args)
 		cmd.Run(true, command, func() error {
-			return fs.Rmdir(fdst)
+			return fs.Rmdir(fdst, "")
 		})
 	},
 }

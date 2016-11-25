@@ -135,12 +135,12 @@ type Fs interface {
 	// Mkdir makes the directory (container, bucket)
 	//
 	// Shouldn't return an error if it already exists
-	Mkdir() error
+	Mkdir(dir string) error
 
 	// Rmdir removes the directory (container, bucket) if empty
 	//
 	// Return an error if it doesn't exist or isn't empty
-	Rmdir() error
+	Rmdir(dir string) error
 }
 
 // Info provides an interface to reading information about a filesystem.

@@ -78,6 +78,35 @@ func (dc *DirCache) Flush() {
 	dc.cacheMu.Unlock()
 }
 
+// FlushDir flushes the map of all data starting with dir
+//
+// If dir is empty then this is equivalent to calling ResetRoot
+func (dc *DirCache) FlushDir(dir string) {
+	if dir == "" {
+		dc.ResetRoot()
+		return
+	}
+	dc.cacheMu.Lock()
+
+	// Delete the root dir
+	ID, ok := dc.cache[dir]
+	if ok {
+		delete(dc.cache, dir)
+		delete(dc.invCache, ID)
+	}
+
+	// And any sub directories
+	dir += "/"
+	for key, ID := range dc.cache {
+		if strings.HasPrefix(key, dir) {
+			delete(dc.cache, key)
+			delete(dc.invCache, ID)
+		}
+	}
+
+	dc.cacheMu.Unlock()
+}
+
 // SplitPath splits a path into directory, leaf
 //
 // Path shouldn't start or end with a /

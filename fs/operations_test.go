@@ -201,7 +201,7 @@ func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time, 
 	}
 	const maxTries = 10
 	if !r.mkdir[f.String()] {
-		err := f.Mkdir()
+		err := f.Mkdir("")
 		if err != nil {
 			r.Fatalf("Failed to mkdir %q: %v", f, err)
 		}

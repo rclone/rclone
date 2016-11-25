@@ -448,30 +448,33 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 }
 
 // Mkdir creates the container if it doesn't exist
-func (f *Fs) Mkdir() error {
-	entry, err := f.db.Metadata(f.slashRoot, false, false, "", "", metadataLimit)
+func (f *Fs) Mkdir(dir string) error {
+	root := path.Join(f.slashRoot, dir)
+	entry, err := f.db.Metadata(root, false, false, "", "", metadataLimit)
 	if err == nil {
 		if entry.IsDir {
 			return nil
 		}
 		return errors.Errorf("%q already exists as file", f.root)
 	}
-	_, err = f.db.CreateFolder(f.slashRoot)
+	_, err = f.db.CreateFolder(root)
 	return err
 }
 
 // Rmdir deletes the container
 //
 // Returns an error if it isn't empty
-func (f *Fs) Rmdir() error {
-	entry, err := f.db.Metadata(f.slashRoot, true, false, "", "", 16)
+func (f *Fs) Rmdir(dir string) error {
+	root := path.Join(f.slashRoot, dir)
+	entry, err := f.db.Metadata(root, true, false, "", "", 16)
 	if err != nil {
 		return err
 	}
 	if len(entry.Contents) != 0 {
 		return errors.New("directory not empty")
 	}
-	return f.Purge()
+	_, err = f.db.Delete(root)
+	return err
 }
 
 // Precision returns the precision

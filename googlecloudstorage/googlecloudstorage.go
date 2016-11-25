@@ -448,7 +448,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 }
 
 // Mkdir creates the bucket if it doesn't exist
-func (f *Fs) Mkdir() error {
+func (f *Fs) Mkdir(dir string) error {
+	// Can't create subdirs
+	if dir != "" {
+		return nil
+	}
 	_, err := f.svc.Buckets.Get(f.bucket).Do()
 	if err == nil {
 		// Bucket already exists
@@ -470,8 +474,8 @@ func (f *Fs) Mkdir() error {
 //
 // Returns an error if it isn't empty: Error 409: The bucket you tried
 // to delete was not empty.
-func (f *Fs) Rmdir() error {
-	if f.root != "" {
+func (f *Fs) Rmdir(dir string) error {
+	if f.root != "" || dir != "" {
 		return nil
 	}
 	return f.svc.Buckets.Delete(f.bucket).Do()

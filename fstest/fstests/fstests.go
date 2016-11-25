@@ -116,7 +116,7 @@ func TestFsRmdirEmpty(t *testing.T) {
 // TestFsRmdirNotFound tests deleting a non existent directory
 func TestFsRmdirNotFound(t *testing.T) {
 	skipIfNotOk(t)
-	err := remote.Rmdir()
+	err := remote.Rmdir("")
 	assert.Error(t, err, "Expecting error on Rmdir non existent")
 }
 
@@ -125,6 +125,23 @@ func TestFsMkdir(t *testing.T) {
 	skipIfNotOk(t)
 	fstest.TestMkdir(t, remote)
 	fstest.TestMkdir(t, remote)
+}
+
+// TestFsMkdirRmdirSubdir tests making and removing a sub directory
+func TestFsMkdirRmdirSubdir(t *testing.T) {
+	skipIfNotOk(t)
+	dir := "dir/subdir"
+	err := fs.Mkdir(remote, dir)
+	require.NoError(t, err)
+	fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{"dir", "dir/subdir"}, fs.Config.ModifyWindow)
+
+	err = fs.Rmdir(remote, dir)
+	require.NoError(t, err)
+	fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{"dir"}, fs.Config.ModifyWindow)
+
+	err = fs.Rmdir(remote, "dir")
+	require.NoError(t, err)
+	fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, fs.Config.ModifyWindow)
 }
 
 // TestFsListEmpty tests listing an empty directory
@@ -501,7 +518,7 @@ func TestFsDirMove(t *testing.T) {
 // TestFsRmdirFull tests removing a non empty directory
 func TestFsRmdirFull(t *testing.T) {
 	skipIfNotOk(t)
-	err := remote.Rmdir()
+	err := remote.Rmdir("")
 	require.Error(t, err, "Expecting error on RMdir on non empty remote")
 }
 

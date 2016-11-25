@@ -12,6 +12,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"path"
 	"strings"
 	"time"
 
@@ -592,21 +593,30 @@ func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 }
 
 // Mkdir creates the container if it doesn't exist
-func (f *Fs) Mkdir() error {
-	return f.dirCache.FindRoot(true)
+func (f *Fs) Mkdir(dir string) error {
+	err := f.dirCache.FindRoot(true)
+	if err != nil {
+		return err
+	}
+	if dir != "" {
+		_, err = f.dirCache.FindDir(dir, true)
+	}
+	return err
 }
 
 // Rmdir deletes the container
 //
 // Returns an error if it isn't empty
-func (f *Fs) Rmdir() error {
-	err := f.dirCache.FindRoot(false)
+func (f *Fs) Rmdir(dir string) error {
+	root := path.Join(f.root, dir)
+	dc := f.dirCache
+	rootID, err := dc.FindDir(dir, false)
 	if err != nil {
 		return err
 	}
 	var children *drive.ChildList
 	err = f.pacer.Call(func() (bool, error) {
-		children, err = f.svc.Children.List(f.dirCache.RootID()).MaxResults(10).Do()
+		children, err = f.svc.Children.List(rootID).MaxResults(10).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -616,12 +626,12 @@ func (f *Fs) Rmdir() error {
 		return errors.Errorf("directory not empty: %#v", children.Items)
 	}
 	// Delete the directory if it isn't the root
-	if f.root != "" {
+	if root != "" {
 		err = f.pacer.Call(func() (bool, error) {
 			if *driveUseTrash {
-				_, err = f.svc.Files.Trash(f.dirCache.RootID()).Do()
+				_, err = f.svc.Files.Trash(rootID).Do()
 			} else {
-				err = f.svc.Files.Delete(f.dirCache.RootID()).Do()
+				err = f.svc.Files.Delete(rootID).Do()
 			}
 			return shouldRetry(err)
 		})
@@ -629,7 +639,10 @@ func (f *Fs) Rmdir() error {
 			return err
 		}
 	}
-	f.dirCache.ResetRoot()
+	f.dirCache.FlushDir(dir)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

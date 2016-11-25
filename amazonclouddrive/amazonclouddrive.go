@@ -18,6 +18,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"path"
 	"regexp"
 	"strings"
 	"sync/atomic"
@@ -607,8 +608,15 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 }
 
 // Mkdir creates the container if it doesn't exist
-func (f *Fs) Mkdir() error {
-	return f.dirCache.FindRoot(true)
+func (f *Fs) Mkdir(dir string) error {
+	err := f.dirCache.FindRoot(true)
+	if err != nil {
+		return err
+	}
+	if dir != "" {
+		_, err = f.dirCache.FindDir(dir, true)
+	}
+	return err
 }
 
 // Move src to this remote using server side move operations.
@@ -685,16 +693,16 @@ func (f *Fs) DirMove(src fs.Fs) (err error) {
 
 // purgeCheck remotes the root directory, if check is set then it
 // refuses to do so if it has anything in
-func (f *Fs) purgeCheck(check bool) error {
-	if f.root == "" {
+func (f *Fs) purgeCheck(dir string, check bool) error {
+	root := path.Join(f.root, dir)
+	if root == "" {
 		return errors.New("can't purge root directory")
 	}
 	dc := f.dirCache
-	err := dc.FindRoot(false)
+	rootID, err := dc.FindDir(dir, false)
 	if err != nil {
 		return err
 	}
-	rootID := dc.RootID()
 
 	if check {
 		// check directory is empty
@@ -730,7 +738,7 @@ func (f *Fs) purgeCheck(check bool) error {
 		return err
 	}
 
-	f.dirCache.ResetRoot()
+	f.dirCache.FlushDir(dir)
 	if err != nil {
 		return err
 	}
@@ -740,8 +748,8 @@ func (f *Fs) purgeCheck(check bool) error {
 // Rmdir deletes the root folder
 //
 // Returns an error if it isn't empty
-func (f *Fs) Rmdir() error {
-	return f.purgeCheck(true)
+func (f *Fs) Rmdir(dir string) error {
+	return f.purgeCheck(dir, true)
 }
 
 // Precision return the precision of this Fs
@@ -783,7 +791,7 @@ func (f *Fs) Hashes() fs.HashSet {
 // deleting all the files quicker than just running Remove() on the
 // result of List()
 func (f *Fs) Purge() error {
-	return f.purgeCheck(false)
+	return f.purgeCheck("", false)
 }
 
 // ------------------------------------------------------------

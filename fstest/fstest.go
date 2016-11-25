@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -144,15 +145,16 @@ func (is *Items) Done(t *testing.T) {
 
 // CheckListingWithPrecision checks the fs to see if it has the
 // expected contents with the given precision.
-func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, precision time.Duration) {
+func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs []string, precision time.Duration) {
 	is := NewItems(items)
 	oldErrors := fs.Stats.GetErrors()
 	var objs []fs.Object
+	var dirs []*fs.Dir
 	var err error
 	var retries = *listRetries
 	sleep := time.Second / 2
 	for i := 1; i <= retries; i++ {
-		objs, err = fs.NewLister().Start(f, "").GetObjects()
+		objs, dirs, err = fs.NewLister().Start(f, "").GetAll()
 		if err != nil && err != fs.ErrorDirNotFound {
 			t.Fatalf("Error listing: %v", err)
 		}
@@ -179,18 +181,29 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, precision ti
 	if len(items) == 0 && oldErrors == 0 && fs.Stats.GetErrors() == 1 {
 		fs.Stats.ResetErrors()
 	}
+	// Check the directories - ignore if no directories returned
+	// for remotes which can't do directories
+	if expectedDirs != nil && len(dirs) != 0 {
+		actualDirs := []string{}
+		for _, dir := range dirs {
+			actualDirs = append(actualDirs, dir.Name)
+		}
+		sort.Strings(actualDirs)
+		sort.Strings(expectedDirs)
+		assert.Equal(t, expectedDirs, actualDirs, "directories")
+	}
 }
 
 // CheckListing checks the fs to see if it has the expected contents
 func CheckListing(t *testing.T, f fs.Fs, items []Item) {
 	precision := f.Precision()
-	CheckListingWithPrecision(t, f, items, precision)
+	CheckListingWithPrecision(t, f, items, nil, precision)
 }
 
 // CheckItems checks the fs to see if it has only the items passed in
 // using a precision of fs.Config.ModifyWindow
 func CheckItems(t *testing.T, f fs.Fs, items ...Item) {
-	CheckListingWithPrecision(t, f, items, fs.Config.ModifyWindow)
+	CheckListingWithPrecision(t, f, items, nil, fs.Config.ModifyWindow)
 }
 
 // Time parses a time string or logs a fatal error
@@ -300,7 +313,7 @@ func RandomRemote(remoteName string, subdir bool) (fs.Fs, string, func(), error)
 
 // TestMkdir tests Mkdir works
 func TestMkdir(t *testing.T, remote fs.Fs) {
-	err := fs.Mkdir(remote)
+	err := fs.Mkdir(remote, "")
 	require.NoError(t, err)
 	CheckListing(t, remote, []Item{})
 }
@@ -314,6 +327,6 @@ func TestPurge(t *testing.T, remote fs.Fs) {
 
 // TestRmdir tests Rmdir works
 func TestRmdir(t *testing.T, remote fs.Fs) {
-	err := fs.Rmdir(remote)
+	err := fs.Rmdir(remote, "")
 	require.NoError(t, err)
 }

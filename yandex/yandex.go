@@ -390,25 +390,33 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 }
 
 // Mkdir creates the container if it doesn't exist
-func (f *Fs) Mkdir() error {
-	return mkDirFullPath(f.yd, f.diskRoot)
+func (f *Fs) Mkdir(dir string) error {
+	root := f.diskRoot
+	if dir != "" {
+		root += dir + "/"
+	}
+	return mkDirFullPath(f.yd, root)
 }
 
 // Rmdir deletes the container
 //
 // Returns an error if it isn't empty
-func (f *Fs) Rmdir() error {
-	return f.purgeCheck(true)
+func (f *Fs) Rmdir(dir string) error {
+	return f.purgeCheck(dir, true)
 }
 
 // purgeCheck remotes the root directory, if check is set then it
 // refuses to do so if it has anything in
-func (f *Fs) purgeCheck(check bool) error {
+func (f *Fs) purgeCheck(dir string, check bool) error {
+	root := f.diskRoot
+	if dir != "" {
+		root += dir + "/"
+	}
 	if check {
 		//to comply with rclone logic we check if the directory is empty before delete.
 		//send request to get list of objects in this directory.
 		var opt yandex.ResourceInfoRequestOptions
-		ResourceInfoResponse, err := f.yd.NewResourceInfoRequest(f.diskRoot, opt).Exec()
+		ResourceInfoResponse, err := f.yd.NewResourceInfoRequest(root, opt).Exec()
 		if err != nil {
 			return errors.Wrap(err, "rmdir failed")
 		}
@@ -417,7 +425,7 @@ func (f *Fs) purgeCheck(check bool) error {
 		}
 	}
 	//delete directory
-	return f.yd.Delete(f.diskRoot, true)
+	return f.yd.Delete(root, true)
 }
 
 // Precision return the precision of this Fs
@@ -431,7 +439,7 @@ func (f *Fs) Precision() time.Duration {
 // deleting all the files quicker than just running Remove() on the
 // result of List()
 func (f *Fs) Purge() error {
-	return f.purgeCheck(false)
+	return f.purgeCheck("", false)
 }
 
 // Hashes returns the supported hash sets.

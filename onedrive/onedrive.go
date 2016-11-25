@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -452,8 +453,15 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 }
 
 // Mkdir creates the container if it doesn't exist
-func (f *Fs) Mkdir() error {
-	return f.dirCache.FindRoot(true)
+func (f *Fs) Mkdir(dir string) error {
+	err := f.dirCache.FindRoot(true)
+	if err != nil {
+		return err
+	}
+	if dir != "" {
+		_, err = f.dirCache.FindDir(dir, true)
+	}
+	return err
 }
 
 // deleteObject removes an object by ID
@@ -471,17 +479,17 @@ func (f *Fs) deleteObject(id string) error {
 
 // purgeCheck removes the root directory, if check is set then it
 // refuses to do so if it has anything in
-func (f *Fs) purgeCheck(check bool) error {
-	if f.root == "" {
+func (f *Fs) purgeCheck(dir string, check bool) error {
+	root := path.Join(f.root, dir)
+	if root == "" {
 		return errors.New("can't purge root directory")
 	}
 	dc := f.dirCache
-	err := dc.FindRoot(false)
+	rootID, err := dc.FindDir(dir, false)
 	if err != nil {
 		return err
 	}
-	rootID := dc.RootID()
-	item, _, err := f.readMetaDataForPath(f.root)
+	item, _, err := f.readMetaDataForPath(root)
 	if err != nil {
 		return err
 	}
@@ -495,7 +503,7 @@ func (f *Fs) purgeCheck(check bool) error {
 	if err != nil {
 		return err
 	}
-	f.dirCache.ResetRoot()
+	f.dirCache.FlushDir(dir)
 	if err != nil {
 		return err
 	}
@@ -505,8 +513,8 @@ func (f *Fs) purgeCheck(check bool) error {
 // Rmdir deletes the root folder
 //
 // Returns an error if it isn't empty
-func (f *Fs) Rmdir() error {
-	return f.purgeCheck(true)
+func (f *Fs) Rmdir(dir string) error {
+	return f.purgeCheck(dir, true)
 }
 
 // Precision return the precision of this Fs
@@ -624,7 +632,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 // deleting all the files quicker than just running Remove() on the
 // result of List()
 func (f *Fs) Purge() error {
-	return f.purgeCheck(false)
+	return f.purgeCheck("", false)
 }
 
 // Hashes returns the supported hash sets.
