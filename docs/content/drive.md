@@ -170,7 +170,7 @@ then rclone will choose a format from the default list.
 
 If you prefer an archive copy then you might use `--drive-formats
 pdf`, or if you prefer openoffice/libreoffice formats you might use
-`--drive-formats ods,odt`.
+`--drive-formats ods,odt,odp`.
 
 Note that rclone adds the extension to the google doc, so if it is
 calles `My Spreadsheet` on google docs, it will be exported as `My
