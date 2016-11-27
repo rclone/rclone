@@ -145,6 +145,10 @@ func (is *Items) Done(t *testing.T) {
 
 // CheckListingWithPrecision checks the fs to see if it has the
 // expected contents with the given precision.
+//
+// If expectedDirs is non nil then we check those too.  Note that no
+// directories returned is also OK as some remotes don't return
+// directories.
 func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs []string, precision time.Duration) {
 	is := NewItems(items)
 	oldErrors := fs.Stats.GetErrors()
@@ -158,7 +162,7 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 		if err != nil && err != fs.ErrorDirNotFound {
 			t.Fatalf("Error listing: %v", err)
 		}
-		if len(objs) == len(items) {
+		if len(objs) == len(items) && (expectedDirs == nil || len(dirs) == 0 || len(dirs) == len(expectedDirs)) {
 			// Put an extra sleep in if we did any retries just to make sure it really
 			// is consistent (here is looking at you Amazon Drive!)
 			if i != 1 {

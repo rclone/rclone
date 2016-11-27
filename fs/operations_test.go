@@ -638,3 +638,57 @@ func TestCat(t *testing.T) {
 		t.Errorf("Incorrect output from Cat: %q", res)
 	}
 }
+
+func TestRmdirs(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	// Make some files and dirs we expect to keep
+	file1 := r.WriteObject("A1/B1/C1/one", "aaa", t1)
+	file2 := r.WriteObject("A1/two", "bbb", t2)
+	//..and dirs we expect to delete
+	require.NoError(t, fs.Mkdir(r.fremote, "A2"))
+	require.NoError(t, fs.Mkdir(r.fremote, "A1/B2"))
+	require.NoError(t, fs.Mkdir(r.fremote, "A1/B2/C2"))
+	require.NoError(t, fs.Mkdir(r.fremote, "A1/B1/C3"))
+	require.NoError(t, fs.Mkdir(r.fremote, "A3"))
+	require.NoError(t, fs.Mkdir(r.fremote, "A3/B3"))
+	require.NoError(t, fs.Mkdir(r.fremote, "A3/B3/C4"))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.fremote,
+		[]fstest.Item{
+			file1, file2,
+		},
+		[]string{
+			"A1",
+			"A1/B1",
+			"A1/B1/C1",
+			"A2",
+			"A1/B2",
+			"A1/B2/C2",
+			"A1/B1/C3",
+			"A3",
+			"A3/B3",
+			"A3/B3/C4",
+		},
+		fs.Config.ModifyWindow,
+	)
+
+	require.NoError(t, fs.Rmdirs(r.fremote))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.fremote,
+		[]fstest.Item{
+			file1, file2,
+		},
+		[]string{
+			"A1",
+			"A1/B1",
+			"A1/B1/C1",
+		},
+		fs.Config.ModifyWindow,
+	)
+
+}

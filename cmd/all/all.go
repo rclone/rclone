@@ -25,6 +25,7 @@ import (
 	_ "github.com/ncw/rclone/cmd/move"
 	_ "github.com/ncw/rclone/cmd/purge"
 	_ "github.com/ncw/rclone/cmd/rmdir"
+	_ "github.com/ncw/rclone/cmd/rmdirs"
 	_ "github.com/ncw/rclone/cmd/sha1sum"
 	_ "github.com/ncw/rclone/cmd/size"
 	_ "github.com/ncw/rclone/cmd/sync"

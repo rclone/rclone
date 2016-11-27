@@ -724,7 +724,11 @@ func Mkdir(f Fs, dir string) error {
 // count errors but may return one.
 func TryRmdir(f Fs, dir string) error {
 	if Config.DryRun {
-		Log(f, "Not deleting as dry run is set")
+		if dir != "" {
+			Log(dir, "Not deleting as dry run is set")
+		} else {
+			Log(f, "Not deleting as dry run is set")
+		}
 		return nil
 	}
 	return f.Rmdir(dir)
@@ -1067,4 +1071,63 @@ func Cat(f Fs, w io.Writer) error {
 			ErrorLog(o, "Failed to send to output: %v", err)
 		}
 	})
+}
+
+// Rmdirs removes any empty directories (or directories only
+// containing empty directories) under f, including f.
+func Rmdirs(f Fs) error {
+	list := NewLister().Start(f, "")
+	dirEmpty := make(map[string]bool)
+	dirEmpty[""] = true
+	for {
+		o, dir, err := list.Get()
+		if err != nil {
+			Stats.Error()
+			ErrorLog(f, "Failed to list: %v", err)
+			return err
+		} else if dir != nil {
+			// add a new directory as empty
+			dir := dir.Name
+			_, found := dirEmpty[dir]
+			if !found {
+				dirEmpty[dir] = true
+			}
+		} else if o != nil {
+			// mark the parents of the file as being non-empty
+			dir := o.Remote()
+			for dir != "" {
+				dir = path.Dir(dir)
+				if dir == "." || dir == "/" {
+					dir = ""
+				}
+				empty, found := dirEmpty[dir]
+				// End if we reach a directory which is non-empty
+				if found && !empty {
+					break
+				}
+				dirEmpty[dir] = false
+			}
+		} else {
+			// finished as dir == nil && o == nil
+			break
+		}
+	}
+	// Now delete the empty directories, starting from the longest path
+	var toDelete []string
+	for dir, empty := range dirEmpty {
+		if empty {
+			toDelete = append(toDelete, dir)
+		}
+	}
+	sort.Strings(toDelete)
+	for i := len(toDelete) - 1; i >= 0; i-- {
+		dir := toDelete[i]
+		err := TryRmdir(f, dir)
+		if err != nil {
+			Stats.Error()
+			ErrorLog(dir, "Failed to rmdir: %v", err)
+			return err
+		}
+	}
+	return nil
 }
