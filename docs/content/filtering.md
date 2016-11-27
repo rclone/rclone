@@ -120,13 +120,14 @@ Rclone always does a wildcard match so `\` must always escape a `\`.
 
 ## How the rules are used ##
 
-Rclone maintains a list of include rules and exclude rules.
+Rclone maintains a combined list of include rules and exclude rules.
 
-Each file is matched in order against the list until it finds a match.
-The file is then included or excluded according to the rule type.
+Each file is matched in order, starting from the top, against the rule
+in the list until it finds a match.  The file is then included or
+excluded according to the rule type.
 
-If the matcher falls off the bottom of the list then the path is
-included.
+If the matcher fails to find a match after testing against all the
+entries in the list then the path is included.
 
 For example given the following rules, `+` being include, `-` being
 exclude,
