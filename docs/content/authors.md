@@ -47,3 +47,4 @@ Contributors
   * Luiz Carlos Rumbelsperger Viana <maxd13_luiz_carlos@hotmail.com>
   * Stefan Breunig <stefan-github@yrden.de>
   * Alishan Ladhani <ali-l@users.noreply.github.com>
+  * 0xJAKE <0xJAKE@users.noreply.github.com>
