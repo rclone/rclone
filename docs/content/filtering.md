@@ -29,9 +29,10 @@ The patterns used to match files for inclusion or exclusion are based
 on "file globs" as used by the unix shell.
 
 If the pattern starts with a `/` then it only matches at the top level
-of the directory tree, relative to the root of the remote.
-If it doesn't start with `/` then it is matched starting at the
-**end of the path**, but it will only match a complete path element:
+of the directory tree, **relative to the root of the remote** (not 
+necessarily the root of the local drive). If it doesn't start with `/` 
+then it is matched starting at the **end of the path**, but it will 
+only match a complete path element:
 
     file.jpg  - matches "file.jpg"
               - matches "directory/file.jpg"
