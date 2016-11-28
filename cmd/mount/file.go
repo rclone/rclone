@@ -119,7 +119,7 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 			resp.Flags |= fuse.OpenNonSeekable
 		}
 		return newReadFileHandle(o)
-	case req.Flags.IsWriteOnly():
+	case req.Flags.IsWriteOnly() || (req.Flags.IsReadWrite() && (req.Flags&fuse.OpenTruncate) != 0):
 		resp.Flags |= fuse.OpenNonSeekable
 		src := newCreateInfo(f.d.f, o.Remote())
 		fh, err := newWriteFileHandle(f.d, f, src)
