@@ -49,3 +49,4 @@ Contributors
   * Alishan Ladhani <ali-l@users.noreply.github.com>
   * 0xJAKE <0xJAKE@users.noreply.github.com>
   * Thibault Molleman <thibaultmol@users.noreply.github.com>
+  * Scott McGillivray <scott.mcgillivray@gmail.com>
