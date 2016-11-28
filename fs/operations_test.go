@@ -642,6 +642,11 @@ func TestCat(t *testing.T) {
 func TestRmdirs(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
+
+	// Clean any directories that have crept in so far
+	// FIXME make the Finalise method do this?
+	require.NoError(t, fs.Rmdirs(r.fremote))
+
 	// Make some files and dirs we expect to keep
 	file1 := r.WriteObject("A1/B1/C1/one", "aaa", t1)
 	file2 := r.WriteObject("A1/two", "bbb", t2)
