@@ -336,6 +336,30 @@ func TestSyncAfterChangingModtimeOnlyWithNoUpdateModTime(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, file2)
 }
 
+func TestSyncDoesntUpdateModtime(t *testing.T) {
+	if fs.Config.ModifyWindow == fs.ModTimeNotSupported {
+		t.Skip("Can't run this test on fs which doesn't support mod time")
+	}
+	r := NewRun(t)
+	defer r.Finalise()
+
+	file1 := r.WriteFile("foo", "foo", t2)
+	file2 := r.WriteObject("foo", "bar", t1)
+
+	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.fremote, file2)
+
+	fs.Stats.ResetCounters()
+	err := fs.Sync(r.fremote, r.flocal)
+	require.NoError(t, err)
+
+	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.fremote, file1)
+
+	// We should have transferred exactly one file, not set the mod time
+	assert.Equal(t, int64(1), fs.Stats.GetTransfers())
+}
+
 func TestSyncAfterAddingAFile(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()

@@ -12,7 +12,6 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
@@ -121,34 +120,53 @@ func Equal(src, dst Object) bool {
 		return true
 	}
 
-	var srcModTime time.Time
-	if !Config.CheckSum {
-		if Config.ModifyWindow == ModTimeNotSupported {
-			Debug(src, "Sizes identical")
-			return true
+	// Assert: Size is equal or being ignored
+
+	// If checking checksum and not modtime
+	if Config.CheckSum {
+		// Check the hash
+		same, hash, _ := CheckHashes(src, dst)
+		if !same {
+			Debug(src, "%v differ", hash)
+			return false
 		}
-		// Size the same so check the mtime
-		srcModTime = src.ModTime()
-		dstModTime := dst.ModTime()
-		dt := dstModTime.Sub(srcModTime)
-		ModifyWindow := Config.ModifyWindow
-		if dt >= ModifyWindow || dt <= -ModifyWindow {
-			Debug(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
+		if hash == HashNone {
+			Debug(src, "Size of src and dst objects identical")
 		} else {
-			Debug(src, "Size and modification time the same (differ by %s, within tolerance %s)", dt, ModifyWindow)
-			return true
+			Debug(src, "Size and %v of src and dst objects identical", hash)
 		}
+		return true
 	}
 
-	// mtime is unreadable or different but size is the same so
-	// check the hash
+	// Sizes the same so check the mtime
+	if Config.ModifyWindow == ModTimeNotSupported {
+		Debug(src, "Sizes identical")
+		return true
+	}
+	srcModTime := src.ModTime()
+	dstModTime := dst.ModTime()
+	dt := dstModTime.Sub(srcModTime)
+	ModifyWindow := Config.ModifyWindow
+	if dt < ModifyWindow && dt > -ModifyWindow {
+		Debug(src, "Size and modification time the same (differ by %s, within tolerance %s)", dt, ModifyWindow)
+		return true
+	}
+
+	Debug(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
+
+	// Check if the hashes are the same
 	same, hash, _ := CheckHashes(src, dst)
 	if !same {
-		Debug(src, "Hash differ")
+		Debug(src, "%v differ", hash)
+		return false
+	}
+	if hash == HashNone {
+		// if couldn't check hash, return that they differ
 		return false
 	}
 
-	if !(Config.CheckSum || Config.NoUpdateModTime) {
+	// mod time differs but hash is the same to reset mod time if required
+	if !Config.NoUpdateModTime {
 		// Size and hash the same but mtime different so update the
 		// mtime of the dst object here
 		err := dst.SetModTime(srcModTime)
@@ -157,14 +175,10 @@ func Equal(src, dst Object) bool {
 			return false
 		} else if err != nil {
 			Stats.Error()
-			ErrorLog(dst, "Failed to read set modification time: %v", err)
+			ErrorLog(dst, "Failed to set modification time: %v", err)
+		} else {
+			Debug(src, "Updated modification time in destination")
 		}
-	}
-
-	if hash == HashNone {
-		Debug(src, "Size of src and dst objects identical")
-	} else {
-		Debug(src, "Size and %v of src and dst objects identical", hash)
 	}
 	return true
 }
