@@ -819,7 +819,7 @@ func (o *Object) Hash(t fs.HashType) (string, error) {
 	if t != fs.HashMD5 {
 		return "", fs.ErrHashUnsupported
 	}
-	if o.info.ContentProperties.Md5 != nil {
+	if o.info.ContentProperties != nil && o.info.ContentProperties.Md5 != nil {
 		return *o.info.ContentProperties.Md5, nil
 	}
 	return "", nil
@@ -827,7 +827,10 @@ func (o *Object) Hash(t fs.HashType) (string, error) {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
-	return int64(*o.info.ContentProperties.Size)
+	if o.info.ContentProperties != nil && o.info.ContentProperties.Size != nil {
+		return int64(*o.info.ContentProperties.Size)
+	}
+	return 0 // Object is likely PENDING
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
@@ -1108,7 +1111,7 @@ OnConflict:
 
 // MimeType of an Object if known, "" otherwise
 func (o *Object) MimeType() string {
-	if o.info.ContentProperties.ContentType != nil {
+	if o.info.ContentProperties != nil && o.info.ContentProperties.ContentType != nil {
 		return *o.info.ContentProperties.ContentType
 	}
 	return ""
