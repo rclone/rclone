@@ -27,10 +27,11 @@ func newReadFileHandle(o fs.Object) (*ReadFileHandle, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &ReadFileHandle{
-		r: r,
+	fh := &ReadFileHandle{
 		o: o,
-	}, nil
+		r: fs.NewAccount(r, o), // account and buffer the transfer
+	}
+	return fh, nil
 }
 
 // Check interface satisfied
@@ -63,7 +64,7 @@ func (fh *ReadFileHandle) seek(offset int64) error {
 		if err != nil {
 			fs.Debug(fh.o, "ReadFileHandle.Read seek close old failed: %v", err)
 		}
-		fh.r = r
+		fh.r = fs.NewAccount(r, fh.o) // account and buffer the transfer
 	}
 	fh.offset = offset
 	return nil

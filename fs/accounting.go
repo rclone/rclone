@@ -276,12 +276,28 @@ type Account struct {
 	wholeFileDisabled bool // disables the whole file when doing parts
 }
 
-// NewAccount makes a Account reader for an object
-func NewAccount(in io.ReadCloser, obj Object) *Account {
+// NewAccountSizeName makes a Account reader for an io.ReadCloser of
+// the given size and name
+//
+// If the file is above a certain size it adds an Async reader
+func NewAccountSizeName(in io.ReadCloser, size int64, name string) *Account {
+	// On big files add a buffer
+	if size > 10<<20 {
+		const memUsed = 16 * 1024 * 1024
+		const bufSize = 128 * 1024
+		const buffers = memUsed / bufSize
+		newIn, err := newAsyncReader(in, buffers, bufSize)
+		if err != nil {
+			ErrorLog(name, "Failed to make buffer: %v", err)
+		} else {
+			in = newIn
+		}
+	}
+
 	acc := &Account{
 		in:     in,
-		size:   obj.Size(),
-		name:   obj.Remote(),
+		size:   size,
+		name:   name,
 		exit:   make(chan struct{}),
 		avg:    ewma.NewMovingAverage(),
 		lpTime: time.Now(),
@@ -289,6 +305,11 @@ func NewAccount(in io.ReadCloser, obj Object) *Account {
 	go acc.averageLoop()
 	Stats.inProgress.set(acc.name, acc)
 	return acc
+}
+
+// NewAccount makes a Account reader for an object
+func NewAccount(in io.ReadCloser, obj Object) *Account {
+	return NewAccountSizeName(in, obj.Size(), obj.Remote())
 }
 
 // disableWholeFileAccounting turns off the whole file accounting

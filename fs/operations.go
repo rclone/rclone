@@ -264,12 +264,7 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 			if err != nil {
 				err = errors.Wrap(err, "failed to open source object")
 			} else {
-				// On big files add a buffer
-				if src.Size() > 10<<20 {
-					in0, _ = newAsyncReader(in0, 4, 4<<20)
-				}
-
-				in := NewAccount(in0, src) // account the transfer
+				in := NewAccount(in0, src) // account and buffer the transfer
 
 				wrappedSrc := &overrideRemoteObject{Object: src, remote: remote}
 				if doUpdate {
@@ -1131,7 +1126,7 @@ func Cat(f Fs, w io.Writer) error {
 				ErrorLog(o, "Failed to close: %v", err)
 			}
 		}()
-		inAccounted := NewAccount(in, o) // account the transfer
+		inAccounted := NewAccount(in, o) // account and buffer the transfer
 		_, err = io.Copy(w, inAccounted)
 		if err != nil {
 			Stats.Error()

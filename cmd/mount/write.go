@@ -38,8 +38,9 @@ func newWriteFileHandle(d *Dir, f *File, src fs.ObjectInfo) (*WriteFileHandle, e
 		file:   f,
 	}
 	fh.pipeReader, fh.pipeWriter = io.Pipe()
+	r := fs.NewAccountSizeName(fh.pipeReader, 0, src.Remote()) // account and buffer the transfer
 	go func() {
-		o, err := d.f.Put(fh.pipeReader, src)
+		o, err := d.f.Put(r, src)
 		fh.o = o
 		fh.result <- err
 	}()
