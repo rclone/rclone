@@ -229,7 +229,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	var err error
 	var stopStats chan struct{}
 	if showStats {
-		stopStats = startStats()
+		stopStats = StartStats()
 	}
 	for try := 1; try <= *retries; try++ {
 		err = f()
@@ -286,10 +286,10 @@ func CheckArgs(MinArgs, MaxArgs int, cmd *cobra.Command, args []string) {
 	}
 }
 
-// startStats prints the stats every statsInterval
+// StartStats prints the stats every statsInterval
 //
 // It returns a channel which should be closed to stop the stats.
-func startStats() chan struct{} {
+func StartStats() chan struct{} {
 	stopStats := make(chan struct{})
 	if *statsInterval > 0 {
 		go func() {

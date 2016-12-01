@@ -147,6 +147,10 @@ func Mount(f fs.Fs, mountpoint string) error {
 	dirPerms = 0777 &^ os.FileMode(umask)
 	filePerms = 0666 &^ os.FileMode(umask)
 
+	// Show stats
+	stopStats := cmd.StartStats()
+	defer close(stopStats)
+
 	// Mount it
 	errChan, err := mount(f, mountpoint)
 	if err != nil {

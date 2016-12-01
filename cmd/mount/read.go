@@ -31,6 +31,7 @@ func newReadFileHandle(o fs.Object) (*ReadFileHandle, error) {
 		o: o,
 		r: fs.NewAccount(r, o), // account and buffer the transfer
 	}
+	fs.Stats.Transferring(fh.o.Remote())
 	return fh, nil
 }
 
@@ -123,6 +124,7 @@ func (fh *ReadFileHandle) close() error {
 		return errClosedFileHandle
 	}
 	fh.closed = true
+	fs.Stats.DoneTransferring(fh.o.Remote(), true)
 	return fh.r.Close()
 }
 

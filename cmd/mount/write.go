@@ -45,6 +45,7 @@ func newWriteFileHandle(d *Dir, f *File, src fs.ObjectInfo) (*WriteFileHandle, e
 		fh.result <- err
 	}()
 	fh.file.addWriters(1)
+	fs.Stats.Transferring(fh.remote)
 	return fh, nil
 }
 
@@ -82,6 +83,7 @@ func (fh *WriteFileHandle) close() error {
 		return errClosedFileHandle
 	}
 	fh.closed = true
+	fs.Stats.DoneTransferring(fh.remote, true)
 	fh.file.addWriters(-1)
 	writeCloseErr := fh.pipeWriter.Close()
 	err := <-fh.result
