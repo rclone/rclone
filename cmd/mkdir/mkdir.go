@@ -16,7 +16,7 @@ var commandDefintion = &cobra.Command{
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fdst := cmd.NewFsDst(args)
-		cmd.Run(true, command, func() error {
+		cmd.Run(true, false, command, func() error {
 			return fs.Mkdir(fdst, "")
 		})
 	},

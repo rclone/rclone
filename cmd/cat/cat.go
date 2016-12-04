@@ -33,7 +33,7 @@ Or like this to output any .txt files in dir or subdirectories.
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
-		cmd.Run(false, command, func() error {
+		cmd.Run(false, false, command, func() error {
 			return fs.Cat(fsrc, os.Stdout)
 		})
 	},

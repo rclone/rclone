@@ -36,7 +36,7 @@ go there.
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, fdst := cmd.NewFsSrcDst(args)
-		cmd.Run(true, command, func() error {
+		cmd.Run(true, true, command, func() error {
 			return fs.Sync(fdst, fsrc)
 		})
 	},

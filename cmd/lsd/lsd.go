@@ -18,7 +18,7 @@ var commandDefintion = &cobra.Command{
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
-		cmd.Run(false, command, func() error {
+		cmd.Run(false, false, command, func() error {
 			return fs.ListDir(fsrc, os.Stdout)
 		})
 	},

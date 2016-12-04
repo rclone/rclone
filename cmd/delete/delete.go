@@ -34,7 +34,7 @@ delete all files bigger than 100MBytes.
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
-		cmd.Run(true, command, func() error {
+		cmd.Run(true, false, command, func() error {
 			return fs.Delete(fsrc)
 		})
 	},

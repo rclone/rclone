@@ -23,7 +23,7 @@ don't match.  It doesn't alter the source or destination.
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, fdst := cmd.NewFsSrcDst(args)
-		cmd.Run(false, command, func() error {
+		cmd.Run(false, false, command, func() error {
 			return fs.Check(fdst, fsrc)
 		})
 	},

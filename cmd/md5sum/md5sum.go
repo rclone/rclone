@@ -22,7 +22,7 @@ is in the same format as the standard md5sum tool produces.
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
-		cmd.Run(false, command, func() error {
+		cmd.Run(false, false, command, func() error {
 			return fs.Md5sum(fsrc, os.Stdout)
 		})
 	},

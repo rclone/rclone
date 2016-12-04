@@ -106,7 +106,7 @@ Or
 			args = args[1:]
 		}
 		fdst := cmd.NewFsSrc(args)
-		cmd.Run(false, command, func() error {
+		cmd.Run(false, false, command, func() error {
 			return fs.Deduplicate(fdst, dedupeMode)
 		})
 	},

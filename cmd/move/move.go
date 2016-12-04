@@ -34,7 +34,7 @@ into ` + "`dest:path`" + ` then delete the original (if no errors on copy) in
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, fdst := cmd.NewFsSrcDst(args)
-		cmd.Run(true, command, func() error {
+		cmd.Run(true, true, command, func() error {
 			return fs.MoveDir(fdst, fsrc)
 		})
 	},

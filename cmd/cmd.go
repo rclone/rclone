@@ -225,9 +225,12 @@ func NewFsDst(args []string) fs.Fs {
 }
 
 // Run the function with stats and retries if required
-func Run(Retry bool, cmd *cobra.Command, f func() error) {
+func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	var err error
-	stopStats := startStats()
+	var stopStats chan struct{}
+	if showStats {
+		stopStats = startStats()
+	}
 	for try := 1; try <= *retries; try++ {
 		err = f()
 		if !Retry || (err == nil && !fs.Stats.Errored()) {
@@ -253,11 +256,13 @@ func Run(Retry bool, cmd *cobra.Command, f func() error) {
 			fs.Stats.ResetErrors()
 		}
 	}
-	close(stopStats)
+	if showStats {
+		close(stopStats)
+	}
 	if err != nil {
 		log.Fatalf("Failed to %s: %v", cmd.Name(), err)
 	}
-	if !fs.Config.Quiet || fs.Stats.Errored() || *statsInterval > 0 {
+	if showStats && (!fs.Config.Quiet || fs.Stats.Errored() || *statsInterval > 0) {
 		fs.Log(nil, "%s", fs.Stats)
 	}
 	if fs.Config.Verbose {
