@@ -1262,7 +1262,6 @@ func (r *StatfsRequest) Respond(resp *StatfsResponse) {
 		Bfree:   resp.Bfree,
 		Bavail:  resp.Bavail,
 		Files:   resp.Files,
-		Ffree:   resp.Ffree,
 		Bsize:   resp.Bsize,
 		Namelen: resp.Namelen,
 		Frsize:  resp.Frsize,

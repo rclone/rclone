@@ -401,6 +401,68 @@ func (c *S3) DeleteBucket(input *DeleteBucketInput) (*DeleteBucketOutput, error)
 	return out, err
 }
 
+const opDeleteBucketAnalyticsConfiguration = "DeleteBucketAnalyticsConfiguration"
+
+// DeleteBucketAnalyticsConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteBucketAnalyticsConfiguration operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DeleteBucketAnalyticsConfiguration for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteBucketAnalyticsConfiguration method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteBucketAnalyticsConfigurationRequest method.
+//    req, resp := client.DeleteBucketAnalyticsConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *S3) DeleteBucketAnalyticsConfigurationRequest(input *DeleteBucketAnalyticsConfigurationInput) (req *request.Request, output *DeleteBucketAnalyticsConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opDeleteBucketAnalyticsConfiguration,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/{Bucket}?analytics",
+	}
+
+	if input == nil {
+		input = &DeleteBucketAnalyticsConfigurationInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(restxml.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	output = &DeleteBucketAnalyticsConfigurationOutput{}
+	req.Data = output
+	return
+}
+
+// DeleteBucketAnalyticsConfiguration API operation for Amazon Simple Storage Service.
+//
+// Deletes an analytics configuration for the bucket (specified by the analytics
+// configuration ID).
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation DeleteBucketAnalyticsConfiguration for usage and error information.
+func (c *S3) DeleteBucketAnalyticsConfiguration(input *DeleteBucketAnalyticsConfigurationInput) (*DeleteBucketAnalyticsConfigurationOutput, error) {
+	req, out := c.DeleteBucketAnalyticsConfigurationRequest(input)
+	err := req.Send()
+	return out, err
+}
+
 const opDeleteBucketCors = "DeleteBucketCors"
 
 // DeleteBucketCorsRequest generates a "aws/request.Request" representing the
@@ -462,6 +524,68 @@ func (c *S3) DeleteBucketCors(input *DeleteBucketCorsInput) (*DeleteBucketCorsOu
 	return out, err
 }
 
+const opDeleteBucketInventoryConfiguration = "DeleteBucketInventoryConfiguration"
+
+// DeleteBucketInventoryConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteBucketInventoryConfiguration operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DeleteBucketInventoryConfiguration for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteBucketInventoryConfiguration method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteBucketInventoryConfigurationRequest method.
+//    req, resp := client.DeleteBucketInventoryConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *S3) DeleteBucketInventoryConfigurationRequest(input *DeleteBucketInventoryConfigurationInput) (req *request.Request, output *DeleteBucketInventoryConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opDeleteBucketInventoryConfiguration,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/{Bucket}?inventory",
+	}
+
+	if input == nil {
+		input = &DeleteBucketInventoryConfigurationInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(restxml.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	output = &DeleteBucketInventoryConfigurationOutput{}
+	req.Data = output
+	return
+}
+
+// DeleteBucketInventoryConfiguration API operation for Amazon Simple Storage Service.
+//
+// Deletes an inventory configuration (identified by the inventory ID) from
+// the bucket.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation DeleteBucketInventoryConfiguration for usage and error information.
+func (c *S3) DeleteBucketInventoryConfiguration(input *DeleteBucketInventoryConfigurationInput) (*DeleteBucketInventoryConfigurationOutput, error) {
+	req, out := c.DeleteBucketInventoryConfigurationRequest(input)
+	err := req.Send()
+	return out, err
+}
+
 const opDeleteBucketLifecycle = "DeleteBucketLifecycle"
 
 // DeleteBucketLifecycleRequest generates a "aws/request.Request" representing the
@@ -519,6 +643,68 @@ func (c *S3) DeleteBucketLifecycleRequest(input *DeleteBucketLifecycleInput) (re
 // API operation DeleteBucketLifecycle for usage and error information.
 func (c *S3) DeleteBucketLifecycle(input *DeleteBucketLifecycleInput) (*DeleteBucketLifecycleOutput, error) {
 	req, out := c.DeleteBucketLifecycleRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opDeleteBucketMetricsConfiguration = "DeleteBucketMetricsConfiguration"
+
+// DeleteBucketMetricsConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteBucketMetricsConfiguration operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DeleteBucketMetricsConfiguration for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteBucketMetricsConfiguration method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteBucketMetricsConfigurationRequest method.
+//    req, resp := client.DeleteBucketMetricsConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *S3) DeleteBucketMetricsConfigurationRequest(input *DeleteBucketMetricsConfigurationInput) (req *request.Request, output *DeleteBucketMetricsConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opDeleteBucketMetricsConfiguration,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/{Bucket}?metrics",
+	}
+
+	if input == nil {
+		input = &DeleteBucketMetricsConfigurationInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(restxml.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	output = &DeleteBucketMetricsConfigurationOutput{}
+	req.Data = output
+	return
+}
+
+// DeleteBucketMetricsConfiguration API operation for Amazon Simple Storage Service.
+//
+// Deletes a metrics configuration (specified by the metrics configuration ID)
+// from the bucket.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation DeleteBucketMetricsConfiguration for usage and error information.
+func (c *S3) DeleteBucketMetricsConfiguration(input *DeleteBucketMetricsConfigurationInput) (*DeleteBucketMetricsConfigurationOutput, error) {
+	req, out := c.DeleteBucketMetricsConfigurationRequest(input)
 	err := req.Send()
 	return out, err
 }
@@ -828,6 +1014,65 @@ func (c *S3) DeleteObject(input *DeleteObjectInput) (*DeleteObjectOutput, error)
 	return out, err
 }
 
+const opDeleteObjectTagging = "DeleteObjectTagging"
+
+// DeleteObjectTaggingRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteObjectTagging operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DeleteObjectTagging for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteObjectTagging method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteObjectTaggingRequest method.
+//    req, resp := client.DeleteObjectTaggingRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *S3) DeleteObjectTaggingRequest(input *DeleteObjectTaggingInput) (req *request.Request, output *DeleteObjectTaggingOutput) {
+	op := &request.Operation{
+		Name:       opDeleteObjectTagging,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/{Bucket}/{Key+}?tagging",
+	}
+
+	if input == nil {
+		input = &DeleteObjectTaggingInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &DeleteObjectTaggingOutput{}
+	req.Data = output
+	return
+}
+
+// DeleteObjectTagging API operation for Amazon Simple Storage Service.
+//
+// Removes the tag-set from an existing object.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation DeleteObjectTagging for usage and error information.
+func (c *S3) DeleteObjectTagging(input *DeleteObjectTaggingInput) (*DeleteObjectTaggingOutput, error) {
+	req, out := c.DeleteObjectTaggingRequest(input)
+	err := req.Send()
+	return out, err
+}
+
 const opDeleteObjects = "DeleteObjects"
 
 // DeleteObjectsRequest generates a "aws/request.Request" representing the
@@ -1006,6 +1251,66 @@ func (c *S3) GetBucketAcl(input *GetBucketAclInput) (*GetBucketAclOutput, error)
 	return out, err
 }
 
+const opGetBucketAnalyticsConfiguration = "GetBucketAnalyticsConfiguration"
+
+// GetBucketAnalyticsConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the GetBucketAnalyticsConfiguration operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See GetBucketAnalyticsConfiguration for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetBucketAnalyticsConfiguration method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetBucketAnalyticsConfigurationRequest method.
+//    req, resp := client.GetBucketAnalyticsConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *S3) GetBucketAnalyticsConfigurationRequest(input *GetBucketAnalyticsConfigurationInput) (req *request.Request, output *GetBucketAnalyticsConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opGetBucketAnalyticsConfiguration,
+		HTTPMethod: "GET",
+		HTTPPath:   "/{Bucket}?analytics",
+	}
+
+	if input == nil {
+		input = &GetBucketAnalyticsConfigurationInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &GetBucketAnalyticsConfigurationOutput{}
+	req.Data = output
+	return
+}
+
+// GetBucketAnalyticsConfiguration API operation for Amazon Simple Storage Service.
+//
+// Gets an analytics configuration for the bucket (specified by the analytics
+// configuration ID).
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation GetBucketAnalyticsConfiguration for usage and error information.
+func (c *S3) GetBucketAnalyticsConfiguration(input *GetBucketAnalyticsConfigurationInput) (*GetBucketAnalyticsConfigurationOutput, error) {
+	req, out := c.GetBucketAnalyticsConfigurationRequest(input)
+	err := req.Send()
+	return out, err
+}
+
 const opGetBucketCors = "GetBucketCors"
 
 // GetBucketCorsRequest generates a "aws/request.Request" representing the
@@ -1061,6 +1366,66 @@ func (c *S3) GetBucketCorsRequest(input *GetBucketCorsInput) (req *request.Reque
 // API operation GetBucketCors for usage and error information.
 func (c *S3) GetBucketCors(input *GetBucketCorsInput) (*GetBucketCorsOutput, error) {
 	req, out := c.GetBucketCorsRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opGetBucketInventoryConfiguration = "GetBucketInventoryConfiguration"
+
+// GetBucketInventoryConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the GetBucketInventoryConfiguration operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See GetBucketInventoryConfiguration for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetBucketInventoryConfiguration method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetBucketInventoryConfigurationRequest method.
+//    req, resp := client.GetBucketInventoryConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *S3) GetBucketInventoryConfigurationRequest(input *GetBucketInventoryConfigurationInput) (req *request.Request, output *GetBucketInventoryConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opGetBucketInventoryConfiguration,
+		HTTPMethod: "GET",
+		HTTPPath:   "/{Bucket}?inventory",
+	}
+
+	if input == nil {
+		input = &GetBucketInventoryConfigurationInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &GetBucketInventoryConfigurationOutput{}
+	req.Data = output
+	return
+}
+
+// GetBucketInventoryConfiguration API operation for Amazon Simple Storage Service.
+//
+// Returns an inventory configuration (identified by the inventory ID) from
+// the bucket.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation GetBucketInventoryConfiguration for usage and error information.
+func (c *S3) GetBucketInventoryConfiguration(input *GetBucketInventoryConfigurationInput) (*GetBucketInventoryConfigurationOutput, error) {
+	req, out := c.GetBucketInventoryConfigurationRequest(input)
 	err := req.Send()
 	return out, err
 }
@@ -1301,6 +1666,66 @@ func (c *S3) GetBucketLoggingRequest(input *GetBucketLoggingInput) (req *request
 // API operation GetBucketLogging for usage and error information.
 func (c *S3) GetBucketLogging(input *GetBucketLoggingInput) (*GetBucketLoggingOutput, error) {
 	req, out := c.GetBucketLoggingRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opGetBucketMetricsConfiguration = "GetBucketMetricsConfiguration"
+
+// GetBucketMetricsConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the GetBucketMetricsConfiguration operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See GetBucketMetricsConfiguration for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetBucketMetricsConfiguration method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetBucketMetricsConfigurationRequest method.
+//    req, resp := client.GetBucketMetricsConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *S3) GetBucketMetricsConfigurationRequest(input *GetBucketMetricsConfigurationInput) (req *request.Request, output *GetBucketMetricsConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opGetBucketMetricsConfiguration,
+		HTTPMethod: "GET",
+		HTTPPath:   "/{Bucket}?metrics",
+	}
+
+	if input == nil {
+		input = &GetBucketMetricsConfigurationInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &GetBucketMetricsConfigurationOutput{}
+	req.Data = output
+	return
+}
+
+// GetBucketMetricsConfiguration API operation for Amazon Simple Storage Service.
+//
+// Gets a metrics configuration (specified by the metrics configuration ID)
+// from the bucket.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation GetBucketMetricsConfiguration for usage and error information.
+func (c *S3) GetBucketMetricsConfiguration(input *GetBucketMetricsConfigurationInput) (*GetBucketMetricsConfigurationOutput, error) {
+	req, out := c.GetBucketMetricsConfigurationRequest(input)
 	err := req.Send()
 	return out, err
 }
@@ -1908,6 +2333,65 @@ func (c *S3) GetObjectAcl(input *GetObjectAclInput) (*GetObjectAclOutput, error)
 	return out, err
 }
 
+const opGetObjectTagging = "GetObjectTagging"
+
+// GetObjectTaggingRequest generates a "aws/request.Request" representing the
+// client's request for the GetObjectTagging operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See GetObjectTagging for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetObjectTagging method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetObjectTaggingRequest method.
+//    req, resp := client.GetObjectTaggingRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *S3) GetObjectTaggingRequest(input *GetObjectTaggingInput) (req *request.Request, output *GetObjectTaggingOutput) {
+	op := &request.Operation{
+		Name:       opGetObjectTagging,
+		HTTPMethod: "GET",
+		HTTPPath:   "/{Bucket}/{Key+}?tagging",
+	}
+
+	if input == nil {
+		input = &GetObjectTaggingInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &GetObjectTaggingOutput{}
+	req.Data = output
+	return
+}
+
+// GetObjectTagging API operation for Amazon Simple Storage Service.
+//
+// Returns the tag-set of an object.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation GetObjectTagging for usage and error information.
+func (c *S3) GetObjectTagging(input *GetObjectTaggingInput) (*GetObjectTaggingOutput, error) {
+	req, out := c.GetObjectTaggingRequest(input)
+	err := req.Send()
+	return out, err
+}
+
 const opGetObjectTorrent = "GetObjectTorrent"
 
 // GetObjectTorrentRequest generates a "aws/request.Request" representing the
@@ -2096,6 +2580,183 @@ func (c *S3) HeadObjectRequest(input *HeadObjectInput) (req *request.Request, ou
 //
 func (c *S3) HeadObject(input *HeadObjectInput) (*HeadObjectOutput, error) {
 	req, out := c.HeadObjectRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opListBucketAnalyticsConfigurations = "ListBucketAnalyticsConfigurations"
+
+// ListBucketAnalyticsConfigurationsRequest generates a "aws/request.Request" representing the
+// client's request for the ListBucketAnalyticsConfigurations operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See ListBucketAnalyticsConfigurations for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListBucketAnalyticsConfigurations method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListBucketAnalyticsConfigurationsRequest method.
+//    req, resp := client.ListBucketAnalyticsConfigurationsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *S3) ListBucketAnalyticsConfigurationsRequest(input *ListBucketAnalyticsConfigurationsInput) (req *request.Request, output *ListBucketAnalyticsConfigurationsOutput) {
+	op := &request.Operation{
+		Name:       opListBucketAnalyticsConfigurations,
+		HTTPMethod: "GET",
+		HTTPPath:   "/{Bucket}?analytics",
+	}
+
+	if input == nil {
+		input = &ListBucketAnalyticsConfigurationsInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &ListBucketAnalyticsConfigurationsOutput{}
+	req.Data = output
+	return
+}
+
+// ListBucketAnalyticsConfigurations API operation for Amazon Simple Storage Service.
+//
+// Lists the analytics configurations for the bucket.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation ListBucketAnalyticsConfigurations for usage and error information.
+func (c *S3) ListBucketAnalyticsConfigurations(input *ListBucketAnalyticsConfigurationsInput) (*ListBucketAnalyticsConfigurationsOutput, error) {
+	req, out := c.ListBucketAnalyticsConfigurationsRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opListBucketInventoryConfigurations = "ListBucketInventoryConfigurations"
+
+// ListBucketInventoryConfigurationsRequest generates a "aws/request.Request" representing the
+// client's request for the ListBucketInventoryConfigurations operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See ListBucketInventoryConfigurations for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListBucketInventoryConfigurations method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListBucketInventoryConfigurationsRequest method.
+//    req, resp := client.ListBucketInventoryConfigurationsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *S3) ListBucketInventoryConfigurationsRequest(input *ListBucketInventoryConfigurationsInput) (req *request.Request, output *ListBucketInventoryConfigurationsOutput) {
+	op := &request.Operation{
+		Name:       opListBucketInventoryConfigurations,
+		HTTPMethod: "GET",
+		HTTPPath:   "/{Bucket}?inventory",
+	}
+
+	if input == nil {
+		input = &ListBucketInventoryConfigurationsInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &ListBucketInventoryConfigurationsOutput{}
+	req.Data = output
+	return
+}
+
+// ListBucketInventoryConfigurations API operation for Amazon Simple Storage Service.
+//
+// Returns a list of inventory configurations for the bucket.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation ListBucketInventoryConfigurations for usage and error information.
+func (c *S3) ListBucketInventoryConfigurations(input *ListBucketInventoryConfigurationsInput) (*ListBucketInventoryConfigurationsOutput, error) {
+	req, out := c.ListBucketInventoryConfigurationsRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opListBucketMetricsConfigurations = "ListBucketMetricsConfigurations"
+
+// ListBucketMetricsConfigurationsRequest generates a "aws/request.Request" representing the
+// client's request for the ListBucketMetricsConfigurations operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See ListBucketMetricsConfigurations for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListBucketMetricsConfigurations method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListBucketMetricsConfigurationsRequest method.
+//    req, resp := client.ListBucketMetricsConfigurationsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *S3) ListBucketMetricsConfigurationsRequest(input *ListBucketMetricsConfigurationsInput) (req *request.Request, output *ListBucketMetricsConfigurationsOutput) {
+	op := &request.Operation{
+		Name:       opListBucketMetricsConfigurations,
+		HTTPMethod: "GET",
+		HTTPPath:   "/{Bucket}?metrics",
+	}
+
+	if input == nil {
+		input = &ListBucketMetricsConfigurationsInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &ListBucketMetricsConfigurationsOutput{}
+	req.Data = output
+	return
+}
+
+// ListBucketMetricsConfigurations API operation for Amazon Simple Storage Service.
+//
+// Lists the metrics configurations for the bucket.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation ListBucketMetricsConfigurations for usage and error information.
+func (c *S3) ListBucketMetricsConfigurations(input *ListBucketMetricsConfigurationsInput) (*ListBucketMetricsConfigurationsOutput, error) {
+	req, out := c.ListBucketMetricsConfigurationsRequest(input)
 	err := req.Send()
 	return out, err
 }
@@ -2746,6 +3407,68 @@ func (c *S3) PutBucketAcl(input *PutBucketAclInput) (*PutBucketAclOutput, error)
 	return out, err
 }
 
+const opPutBucketAnalyticsConfiguration = "PutBucketAnalyticsConfiguration"
+
+// PutBucketAnalyticsConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the PutBucketAnalyticsConfiguration operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See PutBucketAnalyticsConfiguration for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the PutBucketAnalyticsConfiguration method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the PutBucketAnalyticsConfigurationRequest method.
+//    req, resp := client.PutBucketAnalyticsConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *S3) PutBucketAnalyticsConfigurationRequest(input *PutBucketAnalyticsConfigurationInput) (req *request.Request, output *PutBucketAnalyticsConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opPutBucketAnalyticsConfiguration,
+		HTTPMethod: "PUT",
+		HTTPPath:   "/{Bucket}?analytics",
+	}
+
+	if input == nil {
+		input = &PutBucketAnalyticsConfigurationInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(restxml.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	output = &PutBucketAnalyticsConfigurationOutput{}
+	req.Data = output
+	return
+}
+
+// PutBucketAnalyticsConfiguration API operation for Amazon Simple Storage Service.
+//
+// Sets an analytics configuration for the bucket (specified by the analytics
+// configuration ID).
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation PutBucketAnalyticsConfiguration for usage and error information.
+func (c *S3) PutBucketAnalyticsConfiguration(input *PutBucketAnalyticsConfigurationInput) (*PutBucketAnalyticsConfigurationOutput, error) {
+	req, out := c.PutBucketAnalyticsConfigurationRequest(input)
+	err := req.Send()
+	return out, err
+}
+
 const opPutBucketCors = "PutBucketCors"
 
 // PutBucketCorsRequest generates a "aws/request.Request" representing the
@@ -2803,6 +3526,68 @@ func (c *S3) PutBucketCorsRequest(input *PutBucketCorsInput) (req *request.Reque
 // API operation PutBucketCors for usage and error information.
 func (c *S3) PutBucketCors(input *PutBucketCorsInput) (*PutBucketCorsOutput, error) {
 	req, out := c.PutBucketCorsRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opPutBucketInventoryConfiguration = "PutBucketInventoryConfiguration"
+
+// PutBucketInventoryConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the PutBucketInventoryConfiguration operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See PutBucketInventoryConfiguration for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the PutBucketInventoryConfiguration method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the PutBucketInventoryConfigurationRequest method.
+//    req, resp := client.PutBucketInventoryConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *S3) PutBucketInventoryConfigurationRequest(input *PutBucketInventoryConfigurationInput) (req *request.Request, output *PutBucketInventoryConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opPutBucketInventoryConfiguration,
+		HTTPMethod: "PUT",
+		HTTPPath:   "/{Bucket}?inventory",
+	}
+
+	if input == nil {
+		input = &PutBucketInventoryConfigurationInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(restxml.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	output = &PutBucketInventoryConfigurationOutput{}
+	req.Data = output
+	return
+}
+
+// PutBucketInventoryConfiguration API operation for Amazon Simple Storage Service.
+//
+// Adds an inventory configuration (identified by the inventory ID) from the
+// bucket.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation PutBucketInventoryConfiguration for usage and error information.
+func (c *S3) PutBucketInventoryConfiguration(input *PutBucketInventoryConfigurationInput) (*PutBucketInventoryConfigurationOutput, error) {
+	req, out := c.PutBucketInventoryConfigurationRequest(input)
 	err := req.Send()
 	return out, err
 }
@@ -2992,6 +3777,68 @@ func (c *S3) PutBucketLoggingRequest(input *PutBucketLoggingInput) (req *request
 // API operation PutBucketLogging for usage and error information.
 func (c *S3) PutBucketLogging(input *PutBucketLoggingInput) (*PutBucketLoggingOutput, error) {
 	req, out := c.PutBucketLoggingRequest(input)
+	err := req.Send()
+	return out, err
+}
+
+const opPutBucketMetricsConfiguration = "PutBucketMetricsConfiguration"
+
+// PutBucketMetricsConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the PutBucketMetricsConfiguration operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See PutBucketMetricsConfiguration for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the PutBucketMetricsConfiguration method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the PutBucketMetricsConfigurationRequest method.
+//    req, resp := client.PutBucketMetricsConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *S3) PutBucketMetricsConfigurationRequest(input *PutBucketMetricsConfigurationInput) (req *request.Request, output *PutBucketMetricsConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opPutBucketMetricsConfiguration,
+		HTTPMethod: "PUT",
+		HTTPPath:   "/{Bucket}?metrics",
+	}
+
+	if input == nil {
+		input = &PutBucketMetricsConfigurationInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(restxml.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	output = &PutBucketMetricsConfigurationOutput{}
+	req.Data = output
+	return
+}
+
+// PutBucketMetricsConfiguration API operation for Amazon Simple Storage Service.
+//
+// Sets a metrics configuration (specified by the metrics configuration ID)
+// for the bucket.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation PutBucketMetricsConfiguration for usage and error information.
+func (c *S3) PutBucketMetricsConfiguration(input *PutBucketMetricsConfigurationInput) (*PutBucketMetricsConfigurationOutput, error) {
+	req, out := c.PutBucketMetricsConfigurationRequest(input)
 	err := req.Send()
 	return out, err
 }
@@ -3618,6 +4465,65 @@ func (c *S3) PutObjectAcl(input *PutObjectAclInput) (*PutObjectAclOutput, error)
 	return out, err
 }
 
+const opPutObjectTagging = "PutObjectTagging"
+
+// PutObjectTaggingRequest generates a "aws/request.Request" representing the
+// client's request for the PutObjectTagging operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See PutObjectTagging for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the PutObjectTagging method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the PutObjectTaggingRequest method.
+//    req, resp := client.PutObjectTaggingRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+func (c *S3) PutObjectTaggingRequest(input *PutObjectTaggingInput) (req *request.Request, output *PutObjectTaggingOutput) {
+	op := &request.Operation{
+		Name:       opPutObjectTagging,
+		HTTPMethod: "PUT",
+		HTTPPath:   "/{Bucket}/{Key+}?tagging",
+	}
+
+	if input == nil {
+		input = &PutObjectTaggingInput{}
+	}
+
+	req = c.newRequest(op, input, output)
+	output = &PutObjectTaggingOutput{}
+	req.Data = output
+	return
+}
+
+// PutObjectTagging API operation for Amazon Simple Storage Service.
+//
+// Sets the supplied tag-set to an object that already exists in a bucket
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Simple Storage Service's
+// API operation PutObjectTagging for usage and error information.
+func (c *S3) PutObjectTagging(input *PutObjectTaggingInput) (*PutObjectTaggingOutput, error) {
+	req, out := c.PutObjectTaggingRequest(input)
+	err := req.Send()
+	return out, err
+}
+
 const opRestoreObject = "RestoreObject"
 
 // RestoreObjectRequest generates a "aws/request.Request" representing the
@@ -4002,6 +4908,309 @@ func (s *AccessControlPolicy) SetGrants(v []*Grant) *AccessControlPolicy {
 // SetOwner sets the Owner field's value.
 func (s *AccessControlPolicy) SetOwner(v *Owner) *AccessControlPolicy {
 	s.Owner = v
+	return s
+}
+
+type AnalyticsAndOperator struct {
+	_ struct{} `type:"structure"`
+
+	// The prefix to use when evaluating an AND predicate.
+	Prefix *string `type:"string"`
+
+	// The list of tags to use when evaluating an AND predicate.
+	Tags []*Tag `locationName:"Tag" locationNameList:"Tag" type:"list" flattened:"true"`
+}
+
+// String returns the string representation
+func (s AnalyticsAndOperator) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AnalyticsAndOperator) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AnalyticsAndOperator) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AnalyticsAndOperator"}
+	if s.Tags != nil {
+		for i, v := range s.Tags {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Tags", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetPrefix sets the Prefix field's value.
+func (s *AnalyticsAndOperator) SetPrefix(v string) *AnalyticsAndOperator {
+	s.Prefix = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *AnalyticsAndOperator) SetTags(v []*Tag) *AnalyticsAndOperator {
+	s.Tags = v
+	return s
+}
+
+type AnalyticsConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The filter used to describe a set of objects for analyses. A filter must
+	// have exactly one prefix, one tag, or one conjunction (AnalyticsAndOperator).
+	// If no filter is provided, all objects will be considered in any analysis.
+	Filter *AnalyticsFilter `type:"structure"`
+
+	// The identifier used to represent an analytics configuration.
+	//
+	// Id is a required field
+	Id *string `type:"string" required:"true"`
+
+	// If present, it indicates that data related to access patterns will be collected
+	// and made available to analyze the tradeoffs between different storage classes.
+	//
+	// StorageClassAnalysis is a required field
+	StorageClassAnalysis *StorageClassAnalysis `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s AnalyticsConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AnalyticsConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AnalyticsConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AnalyticsConfiguration"}
+	if s.Id == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id"))
+	}
+	if s.StorageClassAnalysis == nil {
+		invalidParams.Add(request.NewErrParamRequired("StorageClassAnalysis"))
+	}
+	if s.Filter != nil {
+		if err := s.Filter.Validate(); err != nil {
+			invalidParams.AddNested("Filter", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.StorageClassAnalysis != nil {
+		if err := s.StorageClassAnalysis.Validate(); err != nil {
+			invalidParams.AddNested("StorageClassAnalysis", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFilter sets the Filter field's value.
+func (s *AnalyticsConfiguration) SetFilter(v *AnalyticsFilter) *AnalyticsConfiguration {
+	s.Filter = v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *AnalyticsConfiguration) SetId(v string) *AnalyticsConfiguration {
+	s.Id = &v
+	return s
+}
+
+// SetStorageClassAnalysis sets the StorageClassAnalysis field's value.
+func (s *AnalyticsConfiguration) SetStorageClassAnalysis(v *StorageClassAnalysis) *AnalyticsConfiguration {
+	s.StorageClassAnalysis = v
+	return s
+}
+
+type AnalyticsExportDestination struct {
+	_ struct{} `type:"structure"`
+
+	// A destination signifying output to an S3 bucket.
+	//
+	// S3BucketDestination is a required field
+	S3BucketDestination *AnalyticsS3BucketDestination `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s AnalyticsExportDestination) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AnalyticsExportDestination) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AnalyticsExportDestination) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AnalyticsExportDestination"}
+	if s.S3BucketDestination == nil {
+		invalidParams.Add(request.NewErrParamRequired("S3BucketDestination"))
+	}
+	if s.S3BucketDestination != nil {
+		if err := s.S3BucketDestination.Validate(); err != nil {
+			invalidParams.AddNested("S3BucketDestination", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetS3BucketDestination sets the S3BucketDestination field's value.
+func (s *AnalyticsExportDestination) SetS3BucketDestination(v *AnalyticsS3BucketDestination) *AnalyticsExportDestination {
+	s.S3BucketDestination = v
+	return s
+}
+
+type AnalyticsFilter struct {
+	_ struct{} `type:"structure"`
+
+	// A conjunction (logical AND) of predicates, which is used in evaluating an
+	// analytics filter. The operator must have at least two predicates.
+	And *AnalyticsAndOperator `type:"structure"`
+
+	// The prefix to use when evaluating an analytics filter.
+	Prefix *string `type:"string"`
+
+	// The tag to use when evaluating an analytics filter.
+	Tag *Tag `type:"structure"`
+}
+
+// String returns the string representation
+func (s AnalyticsFilter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AnalyticsFilter) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AnalyticsFilter) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AnalyticsFilter"}
+	if s.And != nil {
+		if err := s.And.Validate(); err != nil {
+			invalidParams.AddNested("And", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Tag != nil {
+		if err := s.Tag.Validate(); err != nil {
+			invalidParams.AddNested("Tag", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAnd sets the And field's value.
+func (s *AnalyticsFilter) SetAnd(v *AnalyticsAndOperator) *AnalyticsFilter {
+	s.And = v
+	return s
+}
+
+// SetPrefix sets the Prefix field's value.
+func (s *AnalyticsFilter) SetPrefix(v string) *AnalyticsFilter {
+	s.Prefix = &v
+	return s
+}
+
+// SetTag sets the Tag field's value.
+func (s *AnalyticsFilter) SetTag(v *Tag) *AnalyticsFilter {
+	s.Tag = v
+	return s
+}
+
+type AnalyticsS3BucketDestination struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon resource name (ARN) of the bucket to which data is exported.
+	//
+	// Bucket is a required field
+	Bucket *string `type:"string" required:"true"`
+
+	// The account ID that owns the destination bucket. If no account ID is provided,
+	// the owner will not be validated prior to exporting data.
+	BucketAccountId *string `type:"string"`
+
+	// The file format used when exporting data to Amazon S3.
+	//
+	// Format is a required field
+	Format *string `type:"string" required:"true" enum:"AnalyticsS3ExportFileFormat"`
+
+	// The prefix to use when exporting data. The exported data begins with this
+	// prefix.
+	Prefix *string `type:"string"`
+}
+
+// String returns the string representation
+func (s AnalyticsS3BucketDestination) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AnalyticsS3BucketDestination) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AnalyticsS3BucketDestination) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AnalyticsS3BucketDestination"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+	if s.Format == nil {
+		invalidParams.Add(request.NewErrParamRequired("Format"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *AnalyticsS3BucketDestination) SetBucket(v string) *AnalyticsS3BucketDestination {
+	s.Bucket = &v
+	return s
+}
+
+// SetBucketAccountId sets the BucketAccountId field's value.
+func (s *AnalyticsS3BucketDestination) SetBucketAccountId(v string) *AnalyticsS3BucketDestination {
+	s.BucketAccountId = &v
+	return s
+}
+
+// SetFormat sets the Format field's value.
+func (s *AnalyticsS3BucketDestination) SetFormat(v string) *AnalyticsS3BucketDestination {
+	s.Format = &v
+	return s
+}
+
+// SetPrefix sets the Prefix field's value.
+func (s *AnalyticsS3BucketDestination) SetPrefix(v string) *AnalyticsS3BucketDestination {
+	s.Prefix = &v
 	return s
 }
 
@@ -4721,6 +5930,15 @@ type CopyObjectInput struct {
 	// The type of storage to use for the object. Defaults to 'STANDARD'.
 	StorageClass *string `location:"header" locationName:"x-amz-storage-class" type:"string" enum:"StorageClass"`
 
+	// The tag-set for the object destination object this value must be used in
+	// conjunction with the TaggingDirective. The tag-set must be encoded as URL
+	// Query parameters
+	Tagging *string `location:"header" locationName:"x-amz-tagging" type:"string"`
+
+	// Specifies whether the object tag-set are copied from the source object or
+	// replaced with tag-set provided in the request.
+	TaggingDirective *string `location:"header" locationName:"x-amz-tagging-directive" type:"string" enum:"TaggingDirective"`
+
 	// If the bucket is configured as a website, redirects requests for this object
 	// to another object in the same bucket or to an external URL. Amazon S3 stores
 	// the value of this header in the object metadata.
@@ -4936,6 +6154,18 @@ func (s *CopyObjectInput) SetServerSideEncryption(v string) *CopyObjectInput {
 // SetStorageClass sets the StorageClass field's value.
 func (s *CopyObjectInput) SetStorageClass(v string) *CopyObjectInput {
 	s.StorageClass = &v
+	return s
+}
+
+// SetTagging sets the Tagging field's value.
+func (s *CopyObjectInput) SetTagging(v string) *CopyObjectInput {
+	s.Tagging = &v
+	return s
+}
+
+// SetTaggingDirective sets the TaggingDirective field's value.
+func (s *CopyObjectInput) SetTaggingDirective(v string) *CopyObjectInput {
+	s.TaggingDirective = &v
 	return s
 }
 
@@ -5668,6 +6898,72 @@ func (s *Delete) SetQuiet(v bool) *Delete {
 	return s
 }
 
+type DeleteBucketAnalyticsConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the bucket from which an analytics configuration is deleted.
+	//
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// The identifier used to represent an analytics configuration.
+	//
+	// Id is a required field
+	Id *string `location:"querystring" locationName:"id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteBucketAnalyticsConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteBucketAnalyticsConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteBucketAnalyticsConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteBucketAnalyticsConfigurationInput"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+	if s.Id == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *DeleteBucketAnalyticsConfigurationInput) SetBucket(v string) *DeleteBucketAnalyticsConfigurationInput {
+	s.Bucket = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *DeleteBucketAnalyticsConfigurationInput) SetId(v string) *DeleteBucketAnalyticsConfigurationInput {
+	s.Id = &v
+	return s
+}
+
+type DeleteBucketAnalyticsConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteBucketAnalyticsConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteBucketAnalyticsConfigurationOutput) GoString() string {
+	return s.String()
+}
+
 type DeleteBucketCorsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5754,6 +7050,72 @@ func (s *DeleteBucketInput) SetBucket(v string) *DeleteBucketInput {
 	return s
 }
 
+type DeleteBucketInventoryConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the bucket containing the inventory configuration to delete.
+	//
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// The ID used to identify the inventory configuration.
+	//
+	// Id is a required field
+	Id *string `location:"querystring" locationName:"id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteBucketInventoryConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteBucketInventoryConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteBucketInventoryConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteBucketInventoryConfigurationInput"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+	if s.Id == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *DeleteBucketInventoryConfigurationInput) SetBucket(v string) *DeleteBucketInventoryConfigurationInput {
+	s.Bucket = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *DeleteBucketInventoryConfigurationInput) SetId(v string) *DeleteBucketInventoryConfigurationInput {
+	s.Id = &v
+	return s
+}
+
+type DeleteBucketInventoryConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteBucketInventoryConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteBucketInventoryConfigurationOutput) GoString() string {
+	return s.String()
+}
+
 type DeleteBucketLifecycleInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5801,6 +7163,72 @@ func (s DeleteBucketLifecycleOutput) String() string {
 
 // GoString returns the string representation
 func (s DeleteBucketLifecycleOutput) GoString() string {
+	return s.String()
+}
+
+type DeleteBucketMetricsConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the bucket containing the metrics configuration to delete.
+	//
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// The ID used to identify the metrics configuration.
+	//
+	// Id is a required field
+	Id *string `location:"querystring" locationName:"id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteBucketMetricsConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteBucketMetricsConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteBucketMetricsConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteBucketMetricsConfigurationInput"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+	if s.Id == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *DeleteBucketMetricsConfigurationInput) SetBucket(v string) *DeleteBucketMetricsConfigurationInput {
+	s.Bucket = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *DeleteBucketMetricsConfigurationInput) SetId(v string) *DeleteBucketMetricsConfigurationInput {
+	s.Id = &v
+	return s
+}
+
+type DeleteBucketMetricsConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteBucketMetricsConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteBucketMetricsConfigurationOutput) GoString() string {
 	return s.String()
 }
 
@@ -6199,6 +7627,89 @@ func (s *DeleteObjectOutput) SetRequestCharged(v string) *DeleteObjectOutput {
 
 // SetVersionId sets the VersionId field's value.
 func (s *DeleteObjectOutput) SetVersionId(v string) *DeleteObjectOutput {
+	s.VersionId = &v
+	return s
+}
+
+type DeleteObjectTaggingInput struct {
+	_ struct{} `type:"structure"`
+
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// Key is a required field
+	Key *string `location:"uri" locationName:"Key" min:"1" type:"string" required:"true"`
+
+	// The versionId of the object that the tag-set will be removed from.
+	VersionId *string `location:"querystring" locationName:"versionId" type:"string"`
+}
+
+// String returns the string representation
+func (s DeleteObjectTaggingInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteObjectTaggingInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteObjectTaggingInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteObjectTaggingInput"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+	if s.Key == nil {
+		invalidParams.Add(request.NewErrParamRequired("Key"))
+	}
+	if s.Key != nil && len(*s.Key) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Key", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *DeleteObjectTaggingInput) SetBucket(v string) *DeleteObjectTaggingInput {
+	s.Bucket = &v
+	return s
+}
+
+// SetKey sets the Key field's value.
+func (s *DeleteObjectTaggingInput) SetKey(v string) *DeleteObjectTaggingInput {
+	s.Key = &v
+	return s
+}
+
+// SetVersionId sets the VersionId field's value.
+func (s *DeleteObjectTaggingInput) SetVersionId(v string) *DeleteObjectTaggingInput {
+	s.VersionId = &v
+	return s
+}
+
+type DeleteObjectTaggingOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The versionId of the object the tag-set was removed from.
+	VersionId *string `location:"header" locationName:"x-amz-version-id" type:"string"`
+}
+
+// String returns the string representation
+func (s DeleteObjectTaggingOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteObjectTaggingOutput) GoString() string {
+	return s.String()
+}
+
+// SetVersionId sets the VersionId field's value.
+func (s *DeleteObjectTaggingOutput) SetVersionId(v string) *DeleteObjectTaggingOutput {
 	s.VersionId = &v
 	return s
 }
@@ -6662,6 +8173,81 @@ func (s *GetBucketAclOutput) SetOwner(v *Owner) *GetBucketAclOutput {
 	return s
 }
 
+type GetBucketAnalyticsConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the bucket from which an analytics configuration is retrieved.
+	//
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// The identifier used to represent an analytics configuration.
+	//
+	// Id is a required field
+	Id *string `location:"querystring" locationName:"id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetBucketAnalyticsConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetBucketAnalyticsConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetBucketAnalyticsConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetBucketAnalyticsConfigurationInput"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+	if s.Id == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *GetBucketAnalyticsConfigurationInput) SetBucket(v string) *GetBucketAnalyticsConfigurationInput {
+	s.Bucket = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *GetBucketAnalyticsConfigurationInput) SetId(v string) *GetBucketAnalyticsConfigurationInput {
+	s.Id = &v
+	return s
+}
+
+type GetBucketAnalyticsConfigurationOutput struct {
+	_ struct{} `type:"structure" payload:"AnalyticsConfiguration"`
+
+	// The configuration and any analyses for the analytics filter.
+	AnalyticsConfiguration *AnalyticsConfiguration `type:"structure"`
+}
+
+// String returns the string representation
+func (s GetBucketAnalyticsConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetBucketAnalyticsConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+// SetAnalyticsConfiguration sets the AnalyticsConfiguration field's value.
+func (s *GetBucketAnalyticsConfigurationOutput) SetAnalyticsConfiguration(v *AnalyticsConfiguration) *GetBucketAnalyticsConfigurationOutput {
+	s.AnalyticsConfiguration = v
+	return s
+}
+
 type GetBucketCorsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6717,6 +8303,81 @@ func (s GetBucketCorsOutput) GoString() string {
 // SetCORSRules sets the CORSRules field's value.
 func (s *GetBucketCorsOutput) SetCORSRules(v []*CORSRule) *GetBucketCorsOutput {
 	s.CORSRules = v
+	return s
+}
+
+type GetBucketInventoryConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the bucket containing the inventory configuration to retrieve.
+	//
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// The ID used to identify the inventory configuration.
+	//
+	// Id is a required field
+	Id *string `location:"querystring" locationName:"id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetBucketInventoryConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetBucketInventoryConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetBucketInventoryConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetBucketInventoryConfigurationInput"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+	if s.Id == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *GetBucketInventoryConfigurationInput) SetBucket(v string) *GetBucketInventoryConfigurationInput {
+	s.Bucket = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *GetBucketInventoryConfigurationInput) SetId(v string) *GetBucketInventoryConfigurationInput {
+	s.Id = &v
+	return s
+}
+
+type GetBucketInventoryConfigurationOutput struct {
+	_ struct{} `type:"structure" payload:"InventoryConfiguration"`
+
+	// Specifies the inventory configuration.
+	InventoryConfiguration *InventoryConfiguration `type:"structure"`
+}
+
+// String returns the string representation
+func (s GetBucketInventoryConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetBucketInventoryConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+// SetInventoryConfiguration sets the InventoryConfiguration field's value.
+func (s *GetBucketInventoryConfigurationOutput) SetInventoryConfiguration(v *InventoryConfiguration) *GetBucketInventoryConfigurationOutput {
+	s.InventoryConfiguration = v
 	return s
 }
 
@@ -6949,6 +8610,81 @@ func (s GetBucketLoggingOutput) GoString() string {
 // SetLoggingEnabled sets the LoggingEnabled field's value.
 func (s *GetBucketLoggingOutput) SetLoggingEnabled(v *LoggingEnabled) *GetBucketLoggingOutput {
 	s.LoggingEnabled = v
+	return s
+}
+
+type GetBucketMetricsConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the bucket containing the metrics configuration to retrieve.
+	//
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// The ID used to identify the metrics configuration.
+	//
+	// Id is a required field
+	Id *string `location:"querystring" locationName:"id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetBucketMetricsConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetBucketMetricsConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetBucketMetricsConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetBucketMetricsConfigurationInput"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+	if s.Id == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *GetBucketMetricsConfigurationInput) SetBucket(v string) *GetBucketMetricsConfigurationInput {
+	s.Bucket = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *GetBucketMetricsConfigurationInput) SetId(v string) *GetBucketMetricsConfigurationInput {
+	s.Id = &v
+	return s
+}
+
+type GetBucketMetricsConfigurationOutput struct {
+	_ struct{} `type:"structure" payload:"MetricsConfiguration"`
+
+	// Specifies the metrics configuration.
+	MetricsConfiguration *MetricsConfiguration `type:"structure"`
+}
+
+// String returns the string representation
+func (s GetBucketMetricsConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetBucketMetricsConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+// SetMetricsConfiguration sets the MetricsConfiguration field's value.
+func (s *GetBucketMetricsConfigurationOutput) SetMetricsConfiguration(v *MetricsConfiguration) *GetBucketMetricsConfigurationOutput {
+	s.MetricsConfiguration = v
 	return s
 }
 
@@ -7805,6 +9541,9 @@ type GetObjectOutput struct {
 
 	StorageClass *string `location:"header" locationName:"x-amz-storage-class" type:"string" enum:"StorageClass"`
 
+	// The number of tags, if any, on the object.
+	TagCount *int64 `location:"header" locationName:"x-amz-tagging-count" type:"integer"`
+
 	// Version of the object.
 	VersionId *string `location:"header" locationName:"x-amz-version-id" type:"string"`
 
@@ -7974,6 +9713,12 @@ func (s *GetObjectOutput) SetStorageClass(v string) *GetObjectOutput {
 	return s
 }
 
+// SetTagCount sets the TagCount field's value.
+func (s *GetObjectOutput) SetTagCount(v int64) *GetObjectOutput {
+	s.TagCount = &v
+	return s
+}
+
 // SetVersionId sets the VersionId field's value.
 func (s *GetObjectOutput) SetVersionId(v string) *GetObjectOutput {
 	s.VersionId = &v
@@ -7983,6 +9728,100 @@ func (s *GetObjectOutput) SetVersionId(v string) *GetObjectOutput {
 // SetWebsiteRedirectLocation sets the WebsiteRedirectLocation field's value.
 func (s *GetObjectOutput) SetWebsiteRedirectLocation(v string) *GetObjectOutput {
 	s.WebsiteRedirectLocation = &v
+	return s
+}
+
+type GetObjectTaggingInput struct {
+	_ struct{} `type:"structure"`
+
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// Key is a required field
+	Key *string `location:"uri" locationName:"Key" min:"1" type:"string" required:"true"`
+
+	// VersionId is a required field
+	VersionId *string `location:"uri" locationName:"VersionId" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetObjectTaggingInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetObjectTaggingInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetObjectTaggingInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetObjectTaggingInput"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+	if s.Key == nil {
+		invalidParams.Add(request.NewErrParamRequired("Key"))
+	}
+	if s.Key != nil && len(*s.Key) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Key", 1))
+	}
+	if s.VersionId == nil {
+		invalidParams.Add(request.NewErrParamRequired("VersionId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *GetObjectTaggingInput) SetBucket(v string) *GetObjectTaggingInput {
+	s.Bucket = &v
+	return s
+}
+
+// SetKey sets the Key field's value.
+func (s *GetObjectTaggingInput) SetKey(v string) *GetObjectTaggingInput {
+	s.Key = &v
+	return s
+}
+
+// SetVersionId sets the VersionId field's value.
+func (s *GetObjectTaggingInput) SetVersionId(v string) *GetObjectTaggingInput {
+	s.VersionId = &v
+	return s
+}
+
+type GetObjectTaggingOutput struct {
+	_ struct{} `type:"structure"`
+
+	// TagSet is a required field
+	TagSet []*Tag `locationNameList:"Tag" type:"list" required:"true"`
+
+	VersionId *string `location:"header" locationName:"x-amz-version-id" type:"string"`
+}
+
+// String returns the string representation
+func (s GetObjectTaggingOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetObjectTaggingOutput) GoString() string {
+	return s.String()
+}
+
+// SetTagSet sets the TagSet field's value.
+func (s *GetObjectTaggingOutput) SetTagSet(v []*Tag) *GetObjectTaggingOutput {
+	s.TagSet = v
+	return s
+}
+
+// SetVersionId sets the VersionId field's value.
+func (s *GetObjectTaggingOutput) SetVersionId(v string) *GetObjectTaggingOutput {
+	s.VersionId = &v
 	return s
 }
 
@@ -8078,6 +9917,44 @@ func (s *GetObjectTorrentOutput) SetBody(v io.ReadCloser) *GetObjectTorrentOutpu
 // SetRequestCharged sets the RequestCharged field's value.
 func (s *GetObjectTorrentOutput) SetRequestCharged(v string) *GetObjectTorrentOutput {
 	s.RequestCharged = &v
+	return s
+}
+
+type GlacierJobParameters struct {
+	_ struct{} `type:"structure"`
+
+	// Glacier retrieval tier at which the restore will be processed.
+	//
+	// Tier is a required field
+	Tier *string `type:"string" required:"true" enum:"Tier"`
+}
+
+// String returns the string representation
+func (s GlacierJobParameters) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GlacierJobParameters) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GlacierJobParameters) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GlacierJobParameters"}
+	if s.Tier == nil {
+		invalidParams.Add(request.NewErrParamRequired("Tier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetTier sets the Tier field's value.
+func (s *GlacierJobParameters) SetTier(v string) *GlacierJobParameters {
+	s.Tier = &v
 	return s
 }
 
@@ -8748,6 +10625,325 @@ func (s *Initiator) SetID(v string) *Initiator {
 	return s
 }
 
+type InventoryConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// Contains information about where to publish the inventory results.
+	//
+	// Destination is a required field
+	Destination *InventoryDestination `type:"structure" required:"true"`
+
+	// Specifies an inventory filter. The inventory only includes objects that meet
+	// the filter's criteria.
+	Filter *InventoryFilter `type:"structure"`
+
+	// The ID used to identify the inventory configuration.
+	//
+	// Id is a required field
+	Id *string `type:"string" required:"true"`
+
+	// Specifies which object version(s) to included in the inventory results.
+	//
+	// IncludedObjectVersions is a required field
+	IncludedObjectVersions *string `type:"string" required:"true" enum:"InventoryIncludedObjectVersions"`
+
+	// Specifies whether the inventory is enabled or disabled.
+	//
+	// IsEnabled is a required field
+	IsEnabled *bool `type:"boolean" required:"true"`
+
+	// Contains the optional fields that are included in the inventory results.
+	OptionalFields []*string `locationNameList:"Field" type:"list"`
+
+	// Specifies the schedule for generating inventory results.
+	//
+	// Schedule is a required field
+	Schedule *InventorySchedule `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s InventoryConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InventoryConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *InventoryConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "InventoryConfiguration"}
+	if s.Destination == nil {
+		invalidParams.Add(request.NewErrParamRequired("Destination"))
+	}
+	if s.Id == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id"))
+	}
+	if s.IncludedObjectVersions == nil {
+		invalidParams.Add(request.NewErrParamRequired("IncludedObjectVersions"))
+	}
+	if s.IsEnabled == nil {
+		invalidParams.Add(request.NewErrParamRequired("IsEnabled"))
+	}
+	if s.Schedule == nil {
+		invalidParams.Add(request.NewErrParamRequired("Schedule"))
+	}
+	if s.Destination != nil {
+		if err := s.Destination.Validate(); err != nil {
+			invalidParams.AddNested("Destination", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Filter != nil {
+		if err := s.Filter.Validate(); err != nil {
+			invalidParams.AddNested("Filter", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Schedule != nil {
+		if err := s.Schedule.Validate(); err != nil {
+			invalidParams.AddNested("Schedule", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDestination sets the Destination field's value.
+func (s *InventoryConfiguration) SetDestination(v *InventoryDestination) *InventoryConfiguration {
+	s.Destination = v
+	return s
+}
+
+// SetFilter sets the Filter field's value.
+func (s *InventoryConfiguration) SetFilter(v *InventoryFilter) *InventoryConfiguration {
+	s.Filter = v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *InventoryConfiguration) SetId(v string) *InventoryConfiguration {
+	s.Id = &v
+	return s
+}
+
+// SetIncludedObjectVersions sets the IncludedObjectVersions field's value.
+func (s *InventoryConfiguration) SetIncludedObjectVersions(v string) *InventoryConfiguration {
+	s.IncludedObjectVersions = &v
+	return s
+}
+
+// SetIsEnabled sets the IsEnabled field's value.
+func (s *InventoryConfiguration) SetIsEnabled(v bool) *InventoryConfiguration {
+	s.IsEnabled = &v
+	return s
+}
+
+// SetOptionalFields sets the OptionalFields field's value.
+func (s *InventoryConfiguration) SetOptionalFields(v []*string) *InventoryConfiguration {
+	s.OptionalFields = v
+	return s
+}
+
+// SetSchedule sets the Schedule field's value.
+func (s *InventoryConfiguration) SetSchedule(v *InventorySchedule) *InventoryConfiguration {
+	s.Schedule = v
+	return s
+}
+
+type InventoryDestination struct {
+	_ struct{} `type:"structure"`
+
+	// Contains the bucket name, file format, bucket owner (optional), and prefix
+	// (optional) where inventory results are published.
+	//
+	// S3BucketDestination is a required field
+	S3BucketDestination *InventoryS3BucketDestination `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s InventoryDestination) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InventoryDestination) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *InventoryDestination) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "InventoryDestination"}
+	if s.S3BucketDestination == nil {
+		invalidParams.Add(request.NewErrParamRequired("S3BucketDestination"))
+	}
+	if s.S3BucketDestination != nil {
+		if err := s.S3BucketDestination.Validate(); err != nil {
+			invalidParams.AddNested("S3BucketDestination", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetS3BucketDestination sets the S3BucketDestination field's value.
+func (s *InventoryDestination) SetS3BucketDestination(v *InventoryS3BucketDestination) *InventoryDestination {
+	s.S3BucketDestination = v
+	return s
+}
+
+type InventoryFilter struct {
+	_ struct{} `type:"structure"`
+
+	// The prefix that an object must have to be included in the inventory results.
+	//
+	// Prefix is a required field
+	Prefix *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s InventoryFilter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InventoryFilter) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *InventoryFilter) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "InventoryFilter"}
+	if s.Prefix == nil {
+		invalidParams.Add(request.NewErrParamRequired("Prefix"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetPrefix sets the Prefix field's value.
+func (s *InventoryFilter) SetPrefix(v string) *InventoryFilter {
+	s.Prefix = &v
+	return s
+}
+
+type InventoryS3BucketDestination struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the account that owns the destination bucket.
+	AccountId *string `type:"string"`
+
+	// The Amazon resource name (ARN) of the bucket where inventory results will
+	// be published.
+	//
+	// Bucket is a required field
+	Bucket *string `type:"string" required:"true"`
+
+	// Specifies the output format of the inventory results.
+	//
+	// Format is a required field
+	Format *string `type:"string" required:"true" enum:"InventoryFormat"`
+
+	// The prefix that is prepended to all inventory results.
+	Prefix *string `type:"string"`
+}
+
+// String returns the string representation
+func (s InventoryS3BucketDestination) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InventoryS3BucketDestination) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *InventoryS3BucketDestination) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "InventoryS3BucketDestination"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+	if s.Format == nil {
+		invalidParams.Add(request.NewErrParamRequired("Format"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAccountId sets the AccountId field's value.
+func (s *InventoryS3BucketDestination) SetAccountId(v string) *InventoryS3BucketDestination {
+	s.AccountId = &v
+	return s
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *InventoryS3BucketDestination) SetBucket(v string) *InventoryS3BucketDestination {
+	s.Bucket = &v
+	return s
+}
+
+// SetFormat sets the Format field's value.
+func (s *InventoryS3BucketDestination) SetFormat(v string) *InventoryS3BucketDestination {
+	s.Format = &v
+	return s
+}
+
+// SetPrefix sets the Prefix field's value.
+func (s *InventoryS3BucketDestination) SetPrefix(v string) *InventoryS3BucketDestination {
+	s.Prefix = &v
+	return s
+}
+
+type InventorySchedule struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies how frequently inventory results are produced.
+	//
+	// Frequency is a required field
+	Frequency *string `type:"string" required:"true" enum:"InventoryFrequency"`
+}
+
+// String returns the string representation
+func (s InventorySchedule) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InventorySchedule) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *InventorySchedule) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "InventorySchedule"}
+	if s.Frequency == nil {
+		invalidParams.Add(request.NewErrParamRequired("Frequency"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFrequency sets the Frequency field's value.
+func (s *InventorySchedule) SetFrequency(v string) *InventorySchedule {
+	s.Frequency = &v
+	return s
+}
+
 // Container for object key name prefix and suffix filtering rules.
 type KeyFilter struct {
 	_ struct{} `type:"structure"`
@@ -8946,6 +11142,10 @@ type LifecycleRule struct {
 
 	Expiration *LifecycleExpiration `type:"structure"`
 
+	// The Filter is used to identify objects that a Lifecycle Rule applies to.
+	// A Filter must have exactly one of Prefix, Tag, or And specified.
+	Filter *LifecycleRuleFilter `type:"structure"`
+
 	// Unique identifier for the rule. The value cannot be longer than 255 characters.
 	ID *string `type:"string"`
 
@@ -8958,10 +11158,9 @@ type LifecycleRule struct {
 
 	NoncurrentVersionTransitions []*NoncurrentVersionTransition `locationName:"NoncurrentVersionTransition" type:"list" flattened:"true"`
 
-	// Prefix identifying one or more objects to which the rule applies.
-	//
-	// Prefix is a required field
-	Prefix *string `type:"string" required:"true"`
+	// Prefix identifying one or more objects to which the rule applies. This is
+	// deprecated; use Filter instead.
+	Prefix *string `deprecated:"true" type:"string"`
 
 	// If 'Enabled', the rule is currently being applied. If 'Disabled', the rule
 	// is not currently being applied.
@@ -8985,11 +11184,13 @@ func (s LifecycleRule) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *LifecycleRule) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "LifecycleRule"}
-	if s.Prefix == nil {
-		invalidParams.Add(request.NewErrParamRequired("Prefix"))
-	}
 	if s.Status == nil {
 		invalidParams.Add(request.NewErrParamRequired("Status"))
+	}
+	if s.Filter != nil {
+		if err := s.Filter.Validate(); err != nil {
+			invalidParams.AddNested("Filter", err.(request.ErrInvalidParams))
+		}
 	}
 
 	if invalidParams.Len() > 0 {
@@ -9007,6 +11208,12 @@ func (s *LifecycleRule) SetAbortIncompleteMultipartUpload(v *AbortIncompleteMult
 // SetExpiration sets the Expiration field's value.
 func (s *LifecycleRule) SetExpiration(v *LifecycleExpiration) *LifecycleRule {
 	s.Expiration = v
+	return s
+}
+
+// SetFilter sets the Filter field's value.
+func (s *LifecycleRule) SetFilter(v *LifecycleRuleFilter) *LifecycleRule {
+	s.Filter = v
 	return s
 }
 
@@ -9043,6 +11250,438 @@ func (s *LifecycleRule) SetStatus(v string) *LifecycleRule {
 // SetTransitions sets the Transitions field's value.
 func (s *LifecycleRule) SetTransitions(v []*Transition) *LifecycleRule {
 	s.Transitions = v
+	return s
+}
+
+// This is used in a Lifecycle Rule Filter to apply a logical AND to two or
+// more predicates. The Lifecycle Rule will apply to any object matching all
+// of the predicates configured inside the And operator.
+type LifecycleRuleAndOperator struct {
+	_ struct{} `type:"structure"`
+
+	Prefix *string `type:"string"`
+
+	// All of these tags must exist in the object's tag set in order for the rule
+	// to apply.
+	Tags []*Tag `locationName:"Tag" locationNameList:"Tag" type:"list" flattened:"true"`
+}
+
+// String returns the string representation
+func (s LifecycleRuleAndOperator) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s LifecycleRuleAndOperator) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *LifecycleRuleAndOperator) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "LifecycleRuleAndOperator"}
+	if s.Tags != nil {
+		for i, v := range s.Tags {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Tags", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetPrefix sets the Prefix field's value.
+func (s *LifecycleRuleAndOperator) SetPrefix(v string) *LifecycleRuleAndOperator {
+	s.Prefix = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *LifecycleRuleAndOperator) SetTags(v []*Tag) *LifecycleRuleAndOperator {
+	s.Tags = v
+	return s
+}
+
+// The Filter is used to identify objects that a Lifecycle Rule applies to.
+// A Filter must have exactly one of Prefix, Tag, or And specified.
+type LifecycleRuleFilter struct {
+	_ struct{} `type:"structure"`
+
+	// This is used in a Lifecycle Rule Filter to apply a logical AND to two or
+	// more predicates. The Lifecycle Rule will apply to any object matching all
+	// of the predicates configured inside the And operator.
+	And *LifecycleRuleAndOperator `type:"structure"`
+
+	// Prefix identifying one or more objects to which the rule applies.
+	Prefix *string `type:"string"`
+
+	// This tag must exist in the object's tag set in order for the rule to apply.
+	Tag *Tag `type:"structure"`
+}
+
+// String returns the string representation
+func (s LifecycleRuleFilter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s LifecycleRuleFilter) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *LifecycleRuleFilter) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "LifecycleRuleFilter"}
+	if s.And != nil {
+		if err := s.And.Validate(); err != nil {
+			invalidParams.AddNested("And", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Tag != nil {
+		if err := s.Tag.Validate(); err != nil {
+			invalidParams.AddNested("Tag", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAnd sets the And field's value.
+func (s *LifecycleRuleFilter) SetAnd(v *LifecycleRuleAndOperator) *LifecycleRuleFilter {
+	s.And = v
+	return s
+}
+
+// SetPrefix sets the Prefix field's value.
+func (s *LifecycleRuleFilter) SetPrefix(v string) *LifecycleRuleFilter {
+	s.Prefix = &v
+	return s
+}
+
+// SetTag sets the Tag field's value.
+func (s *LifecycleRuleFilter) SetTag(v *Tag) *LifecycleRuleFilter {
+	s.Tag = v
+	return s
+}
+
+type ListBucketAnalyticsConfigurationsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the bucket from which analytics configurations are retrieved.
+	//
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// The ContinuationToken that represents a placeholder from where this request
+	// should begin.
+	ContinuationToken *string `location:"querystring" locationName:"continuation-token" type:"string"`
+}
+
+// String returns the string representation
+func (s ListBucketAnalyticsConfigurationsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListBucketAnalyticsConfigurationsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListBucketAnalyticsConfigurationsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListBucketAnalyticsConfigurationsInput"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *ListBucketAnalyticsConfigurationsInput) SetBucket(v string) *ListBucketAnalyticsConfigurationsInput {
+	s.Bucket = &v
+	return s
+}
+
+// SetContinuationToken sets the ContinuationToken field's value.
+func (s *ListBucketAnalyticsConfigurationsInput) SetContinuationToken(v string) *ListBucketAnalyticsConfigurationsInput {
+	s.ContinuationToken = &v
+	return s
+}
+
+type ListBucketAnalyticsConfigurationsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The list of analytics configurations for a bucket.
+	AnalyticsConfigurationList []*AnalyticsConfiguration `locationName:"AnalyticsConfiguration" type:"list" flattened:"true"`
+
+	// The ContinuationToken that represents where this request began.
+	ContinuationToken *string `type:"string"`
+
+	// Indicates whether the returned list of analytics configurations is complete.
+	// A value of true indicates that the list is not complete and the NextContinuationToken
+	// will be provided for a subsequent request.
+	IsTruncated *bool `type:"boolean"`
+
+	// NextContinuationToken is sent when isTruncated is true, which indicates that
+	// there are more analytics configurations to list. The next request must include
+	// this NextContinuationToken. The token is obfuscated and is not a usable value.
+	NextContinuationToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ListBucketAnalyticsConfigurationsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListBucketAnalyticsConfigurationsOutput) GoString() string {
+	return s.String()
+}
+
+// SetAnalyticsConfigurationList sets the AnalyticsConfigurationList field's value.
+func (s *ListBucketAnalyticsConfigurationsOutput) SetAnalyticsConfigurationList(v []*AnalyticsConfiguration) *ListBucketAnalyticsConfigurationsOutput {
+	s.AnalyticsConfigurationList = v
+	return s
+}
+
+// SetContinuationToken sets the ContinuationToken field's value.
+func (s *ListBucketAnalyticsConfigurationsOutput) SetContinuationToken(v string) *ListBucketAnalyticsConfigurationsOutput {
+	s.ContinuationToken = &v
+	return s
+}
+
+// SetIsTruncated sets the IsTruncated field's value.
+func (s *ListBucketAnalyticsConfigurationsOutput) SetIsTruncated(v bool) *ListBucketAnalyticsConfigurationsOutput {
+	s.IsTruncated = &v
+	return s
+}
+
+// SetNextContinuationToken sets the NextContinuationToken field's value.
+func (s *ListBucketAnalyticsConfigurationsOutput) SetNextContinuationToken(v string) *ListBucketAnalyticsConfigurationsOutput {
+	s.NextContinuationToken = &v
+	return s
+}
+
+type ListBucketInventoryConfigurationsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the bucket containing the inventory configurations to retrieve.
+	//
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// The marker used to continue an inventory configuration listing that has been
+	// truncated. Use the NextContinuationToken from a previously truncated list
+	// response to continue the listing. The continuation token is an opaque value
+	// that Amazon S3 understands.
+	ContinuationToken *string `location:"querystring" locationName:"continuation-token" type:"string"`
+}
+
+// String returns the string representation
+func (s ListBucketInventoryConfigurationsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListBucketInventoryConfigurationsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListBucketInventoryConfigurationsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListBucketInventoryConfigurationsInput"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *ListBucketInventoryConfigurationsInput) SetBucket(v string) *ListBucketInventoryConfigurationsInput {
+	s.Bucket = &v
+	return s
+}
+
+// SetContinuationToken sets the ContinuationToken field's value.
+func (s *ListBucketInventoryConfigurationsInput) SetContinuationToken(v string) *ListBucketInventoryConfigurationsInput {
+	s.ContinuationToken = &v
+	return s
+}
+
+type ListBucketInventoryConfigurationsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// If sent in the request, the marker that is used as a starting point for this
+	// inventory configuration list response.
+	ContinuationToken *string `type:"string"`
+
+	// The list of inventory configurations for a bucket.
+	InventoryConfigurationList []*InventoryConfiguration `locationName:"InventoryConfiguration" type:"list" flattened:"true"`
+
+	// Indicates whether the returned list of inventory configurations is truncated
+	// in this response. A value of true indicates that the list is truncated.
+	IsTruncated *bool `type:"boolean"`
+
+	// The marker used to continue this inventory configuration listing. Use the
+	// NextContinuationToken from this response to continue the listing in a subsequent
+	// request. The continuation token is an opaque value that Amazon S3 understands.
+	NextContinuationToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ListBucketInventoryConfigurationsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListBucketInventoryConfigurationsOutput) GoString() string {
+	return s.String()
+}
+
+// SetContinuationToken sets the ContinuationToken field's value.
+func (s *ListBucketInventoryConfigurationsOutput) SetContinuationToken(v string) *ListBucketInventoryConfigurationsOutput {
+	s.ContinuationToken = &v
+	return s
+}
+
+// SetInventoryConfigurationList sets the InventoryConfigurationList field's value.
+func (s *ListBucketInventoryConfigurationsOutput) SetInventoryConfigurationList(v []*InventoryConfiguration) *ListBucketInventoryConfigurationsOutput {
+	s.InventoryConfigurationList = v
+	return s
+}
+
+// SetIsTruncated sets the IsTruncated field's value.
+func (s *ListBucketInventoryConfigurationsOutput) SetIsTruncated(v bool) *ListBucketInventoryConfigurationsOutput {
+	s.IsTruncated = &v
+	return s
+}
+
+// SetNextContinuationToken sets the NextContinuationToken field's value.
+func (s *ListBucketInventoryConfigurationsOutput) SetNextContinuationToken(v string) *ListBucketInventoryConfigurationsOutput {
+	s.NextContinuationToken = &v
+	return s
+}
+
+type ListBucketMetricsConfigurationsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the bucket containing the metrics configurations to retrieve.
+	//
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// The marker that is used to continue a metrics configuration listing that
+	// has been truncated. Use the NextContinuationToken from a previously truncated
+	// list response to continue the listing. The continuation token is an opaque
+	// value that Amazon S3 understands.
+	ContinuationToken *string `location:"querystring" locationName:"continuation-token" type:"string"`
+}
+
+// String returns the string representation
+func (s ListBucketMetricsConfigurationsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListBucketMetricsConfigurationsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListBucketMetricsConfigurationsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListBucketMetricsConfigurationsInput"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *ListBucketMetricsConfigurationsInput) SetBucket(v string) *ListBucketMetricsConfigurationsInput {
+	s.Bucket = &v
+	return s
+}
+
+// SetContinuationToken sets the ContinuationToken field's value.
+func (s *ListBucketMetricsConfigurationsInput) SetContinuationToken(v string) *ListBucketMetricsConfigurationsInput {
+	s.ContinuationToken = &v
+	return s
+}
+
+type ListBucketMetricsConfigurationsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The marker that is used as a starting point for this metrics configuration
+	// list response. This value is present if it was sent in the request.
+	ContinuationToken *string `type:"string"`
+
+	// Indicates whether the returned list of metrics configurations is complete.
+	// A value of true indicates that the list is not complete and the NextContinuationToken
+	// will be provided for a subsequent request.
+	IsTruncated *bool `type:"boolean"`
+
+	// The list of metrics configurations for a bucket.
+	MetricsConfigurationList []*MetricsConfiguration `locationName:"MetricsConfiguration" type:"list" flattened:"true"`
+
+	// The marker used to continue a metrics configuration listing that has been
+	// truncated. Use the NextContinuationToken from a previously truncated list
+	// response to continue the listing. The continuation token is an opaque value
+	// that Amazon S3 understands.
+	NextContinuationToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ListBucketMetricsConfigurationsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListBucketMetricsConfigurationsOutput) GoString() string {
+	return s.String()
+}
+
+// SetContinuationToken sets the ContinuationToken field's value.
+func (s *ListBucketMetricsConfigurationsOutput) SetContinuationToken(v string) *ListBucketMetricsConfigurationsOutput {
+	s.ContinuationToken = &v
+	return s
+}
+
+// SetIsTruncated sets the IsTruncated field's value.
+func (s *ListBucketMetricsConfigurationsOutput) SetIsTruncated(v bool) *ListBucketMetricsConfigurationsOutput {
+	s.IsTruncated = &v
+	return s
+}
+
+// SetMetricsConfigurationList sets the MetricsConfigurationList field's value.
+func (s *ListBucketMetricsConfigurationsOutput) SetMetricsConfigurationList(v []*MetricsConfiguration) *ListBucketMetricsConfigurationsOutput {
+	s.MetricsConfigurationList = v
+	return s
+}
+
+// SetNextContinuationToken sets the NextContinuationToken field's value.
+func (s *ListBucketMetricsConfigurationsOutput) SetNextContinuationToken(v string) *ListBucketMetricsConfigurationsOutput {
+	s.NextContinuationToken = &v
 	return s
 }
 
@@ -10297,6 +12936,175 @@ func (s *LoggingEnabled) SetTargetPrefix(v string) *LoggingEnabled {
 	return s
 }
 
+type MetricsAndOperator struct {
+	_ struct{} `type:"structure"`
+
+	// The prefix used when evaluating an AND predicate.
+	Prefix *string `type:"string"`
+
+	// The list of tags used when evaluating an AND predicate.
+	Tags []*Tag `locationName:"Tag" locationNameList:"Tag" type:"list" flattened:"true"`
+}
+
+// String returns the string representation
+func (s MetricsAndOperator) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s MetricsAndOperator) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *MetricsAndOperator) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "MetricsAndOperator"}
+	if s.Tags != nil {
+		for i, v := range s.Tags {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Tags", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetPrefix sets the Prefix field's value.
+func (s *MetricsAndOperator) SetPrefix(v string) *MetricsAndOperator {
+	s.Prefix = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *MetricsAndOperator) SetTags(v []*Tag) *MetricsAndOperator {
+	s.Tags = v
+	return s
+}
+
+type MetricsConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies a metrics configuration filter. The metrics configuration will
+	// only include objects that meet the filter's criteria. A filter must be a
+	// prefix, a tag, or a conjunction (MetricsAndOperator).
+	Filter *MetricsFilter `type:"structure"`
+
+	// The ID used to identify the metrics configuration.
+	//
+	// Id is a required field
+	Id *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s MetricsConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s MetricsConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *MetricsConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "MetricsConfiguration"}
+	if s.Id == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id"))
+	}
+	if s.Filter != nil {
+		if err := s.Filter.Validate(); err != nil {
+			invalidParams.AddNested("Filter", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFilter sets the Filter field's value.
+func (s *MetricsConfiguration) SetFilter(v *MetricsFilter) *MetricsConfiguration {
+	s.Filter = v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *MetricsConfiguration) SetId(v string) *MetricsConfiguration {
+	s.Id = &v
+	return s
+}
+
+type MetricsFilter struct {
+	_ struct{} `type:"structure"`
+
+	// A conjunction (logical AND) of predicates, which is used in evaluating a
+	// metrics filter. The operator must have at least two predicates, and an object
+	// must match all of the predicates in order for the filter to apply.
+	And *MetricsAndOperator `type:"structure"`
+
+	// The prefix used when evaluating a metrics filter.
+	Prefix *string `type:"string"`
+
+	// The tag used when evaluating a metrics filter.
+	Tag *Tag `type:"structure"`
+}
+
+// String returns the string representation
+func (s MetricsFilter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s MetricsFilter) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *MetricsFilter) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "MetricsFilter"}
+	if s.And != nil {
+		if err := s.And.Validate(); err != nil {
+			invalidParams.AddNested("And", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Tag != nil {
+		if err := s.Tag.Validate(); err != nil {
+			invalidParams.AddNested("Tag", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAnd sets the And field's value.
+func (s *MetricsFilter) SetAnd(v *MetricsAndOperator) *MetricsFilter {
+	s.And = v
+	return s
+}
+
+// SetPrefix sets the Prefix field's value.
+func (s *MetricsFilter) SetPrefix(v string) *MetricsFilter {
+	s.Prefix = &v
+	return s
+}
+
+// SetTag sets the Tag field's value.
+func (s *MetricsFilter) SetTag(v *Tag) *MetricsFilter {
+	s.Tag = v
+	return s
+}
+
 type MultipartUpload struct {
 	_ struct{} `type:"structure"`
 
@@ -11041,6 +13849,91 @@ func (s PutBucketAclOutput) GoString() string {
 	return s.String()
 }
 
+type PutBucketAnalyticsConfigurationInput struct {
+	_ struct{} `type:"structure" payload:"AnalyticsConfiguration"`
+
+	// The configuration and any analyses for the analytics filter.
+	//
+	// AnalyticsConfiguration is a required field
+	AnalyticsConfiguration *AnalyticsConfiguration `locationName:"AnalyticsConfiguration" type:"structure" required:"true"`
+
+	// The name of the bucket to which an analytics configuration is stored.
+	//
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// The identifier used to represent an analytics configuration.
+	//
+	// Id is a required field
+	Id *string `location:"querystring" locationName:"id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s PutBucketAnalyticsConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutBucketAnalyticsConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PutBucketAnalyticsConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PutBucketAnalyticsConfigurationInput"}
+	if s.AnalyticsConfiguration == nil {
+		invalidParams.Add(request.NewErrParamRequired("AnalyticsConfiguration"))
+	}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+	if s.Id == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id"))
+	}
+	if s.AnalyticsConfiguration != nil {
+		if err := s.AnalyticsConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("AnalyticsConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAnalyticsConfiguration sets the AnalyticsConfiguration field's value.
+func (s *PutBucketAnalyticsConfigurationInput) SetAnalyticsConfiguration(v *AnalyticsConfiguration) *PutBucketAnalyticsConfigurationInput {
+	s.AnalyticsConfiguration = v
+	return s
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *PutBucketAnalyticsConfigurationInput) SetBucket(v string) *PutBucketAnalyticsConfigurationInput {
+	s.Bucket = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *PutBucketAnalyticsConfigurationInput) SetId(v string) *PutBucketAnalyticsConfigurationInput {
+	s.Id = &v
+	return s
+}
+
+type PutBucketAnalyticsConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s PutBucketAnalyticsConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutBucketAnalyticsConfigurationOutput) GoString() string {
+	return s.String()
+}
+
 type PutBucketCorsInput struct {
 	_ struct{} `type:"structure" payload:"CORSConfiguration"`
 
@@ -11105,6 +13998,91 @@ func (s PutBucketCorsOutput) String() string {
 
 // GoString returns the string representation
 func (s PutBucketCorsOutput) GoString() string {
+	return s.String()
+}
+
+type PutBucketInventoryConfigurationInput struct {
+	_ struct{} `type:"structure" payload:"InventoryConfiguration"`
+
+	// The name of the bucket where the inventory configuration will be stored.
+	//
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// The ID used to identify the inventory configuration.
+	//
+	// Id is a required field
+	Id *string `location:"querystring" locationName:"id" type:"string" required:"true"`
+
+	// Specifies the inventory configuration.
+	//
+	// InventoryConfiguration is a required field
+	InventoryConfiguration *InventoryConfiguration `locationName:"InventoryConfiguration" type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s PutBucketInventoryConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutBucketInventoryConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PutBucketInventoryConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PutBucketInventoryConfigurationInput"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+	if s.Id == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id"))
+	}
+	if s.InventoryConfiguration == nil {
+		invalidParams.Add(request.NewErrParamRequired("InventoryConfiguration"))
+	}
+	if s.InventoryConfiguration != nil {
+		if err := s.InventoryConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("InventoryConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *PutBucketInventoryConfigurationInput) SetBucket(v string) *PutBucketInventoryConfigurationInput {
+	s.Bucket = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *PutBucketInventoryConfigurationInput) SetId(v string) *PutBucketInventoryConfigurationInput {
+	s.Id = &v
+	return s
+}
+
+// SetInventoryConfiguration sets the InventoryConfiguration field's value.
+func (s *PutBucketInventoryConfigurationInput) SetInventoryConfiguration(v *InventoryConfiguration) *PutBucketInventoryConfigurationInput {
+	s.InventoryConfiguration = v
+	return s
+}
+
+type PutBucketInventoryConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s PutBucketInventoryConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutBucketInventoryConfigurationOutput) GoString() string {
 	return s.String()
 }
 
@@ -11298,6 +14276,91 @@ func (s PutBucketLoggingOutput) String() string {
 
 // GoString returns the string representation
 func (s PutBucketLoggingOutput) GoString() string {
+	return s.String()
+}
+
+type PutBucketMetricsConfigurationInput struct {
+	_ struct{} `type:"structure" payload:"MetricsConfiguration"`
+
+	// The name of the bucket for which the metrics configuration is set.
+	//
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// The ID used to identify the metrics configuration.
+	//
+	// Id is a required field
+	Id *string `location:"querystring" locationName:"id" type:"string" required:"true"`
+
+	// Specifies the metrics configuration.
+	//
+	// MetricsConfiguration is a required field
+	MetricsConfiguration *MetricsConfiguration `locationName:"MetricsConfiguration" type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s PutBucketMetricsConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutBucketMetricsConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PutBucketMetricsConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PutBucketMetricsConfigurationInput"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+	if s.Id == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id"))
+	}
+	if s.MetricsConfiguration == nil {
+		invalidParams.Add(request.NewErrParamRequired("MetricsConfiguration"))
+	}
+	if s.MetricsConfiguration != nil {
+		if err := s.MetricsConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("MetricsConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *PutBucketMetricsConfigurationInput) SetBucket(v string) *PutBucketMetricsConfigurationInput {
+	s.Bucket = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *PutBucketMetricsConfigurationInput) SetId(v string) *PutBucketMetricsConfigurationInput {
+	s.Id = &v
+	return s
+}
+
+// SetMetricsConfiguration sets the MetricsConfiguration field's value.
+func (s *PutBucketMetricsConfigurationInput) SetMetricsConfiguration(v *MetricsConfiguration) *PutBucketMetricsConfigurationInput {
+	s.MetricsConfiguration = v
+	return s
+}
+
+type PutBucketMetricsConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s PutBucketMetricsConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutBucketMetricsConfigurationOutput) GoString() string {
 	return s.String()
 }
 
@@ -12096,6 +15159,9 @@ type PutObjectInput struct {
 	// The type of storage to use for the object. Defaults to 'STANDARD'.
 	StorageClass *string `location:"header" locationName:"x-amz-storage-class" type:"string" enum:"StorageClass"`
 
+	// The tag-set for the object. The tag-set must be encoded as URL Query parameters
+	Tagging *string `location:"header" locationName:"x-amz-tagging" type:"string"`
+
 	// If the bucket is configured as a website, redirects requests for this object
 	// to another object in the same bucket or to an external URL. Amazon S3 stores
 	// the value of this header in the object metadata.
@@ -12269,6 +15335,12 @@ func (s *PutObjectInput) SetStorageClass(v string) *PutObjectInput {
 	return s
 }
 
+// SetTagging sets the Tagging field's value.
+func (s *PutObjectInput) SetTagging(v string) *PutObjectInput {
+	s.Tagging = &v
+	return s
+}
+
 // SetWebsiteRedirectLocation sets the WebsiteRedirectLocation field's value.
 func (s *PutObjectInput) SetWebsiteRedirectLocation(v string) *PutObjectInput {
 	s.WebsiteRedirectLocation = &v
@@ -12365,6 +15437,108 @@ func (s *PutObjectOutput) SetServerSideEncryption(v string) *PutObjectOutput {
 
 // SetVersionId sets the VersionId field's value.
 func (s *PutObjectOutput) SetVersionId(v string) *PutObjectOutput {
+	s.VersionId = &v
+	return s
+}
+
+type PutObjectTaggingInput struct {
+	_ struct{} `type:"structure" payload:"Tagging"`
+
+	// Bucket is a required field
+	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
+
+	// Key is a required field
+	Key *string `location:"uri" locationName:"Key" min:"1" type:"string" required:"true"`
+
+	// Tagging is a required field
+	Tagging *Tagging `locationName:"Tagging" type:"structure" required:"true"`
+
+	// VersionId is a required field
+	VersionId *string `location:"uri" locationName:"VersionId" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s PutObjectTaggingInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutObjectTaggingInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PutObjectTaggingInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PutObjectTaggingInput"}
+	if s.Bucket == nil {
+		invalidParams.Add(request.NewErrParamRequired("Bucket"))
+	}
+	if s.Key == nil {
+		invalidParams.Add(request.NewErrParamRequired("Key"))
+	}
+	if s.Key != nil && len(*s.Key) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Key", 1))
+	}
+	if s.Tagging == nil {
+		invalidParams.Add(request.NewErrParamRequired("Tagging"))
+	}
+	if s.VersionId == nil {
+		invalidParams.Add(request.NewErrParamRequired("VersionId"))
+	}
+	if s.Tagging != nil {
+		if err := s.Tagging.Validate(); err != nil {
+			invalidParams.AddNested("Tagging", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucket sets the Bucket field's value.
+func (s *PutObjectTaggingInput) SetBucket(v string) *PutObjectTaggingInput {
+	s.Bucket = &v
+	return s
+}
+
+// SetKey sets the Key field's value.
+func (s *PutObjectTaggingInput) SetKey(v string) *PutObjectTaggingInput {
+	s.Key = &v
+	return s
+}
+
+// SetTagging sets the Tagging field's value.
+func (s *PutObjectTaggingInput) SetTagging(v *Tagging) *PutObjectTaggingInput {
+	s.Tagging = v
+	return s
+}
+
+// SetVersionId sets the VersionId field's value.
+func (s *PutObjectTaggingInput) SetVersionId(v string) *PutObjectTaggingInput {
+	s.VersionId = &v
+	return s
+}
+
+type PutObjectTaggingOutput struct {
+	_ struct{} `type:"structure"`
+
+	VersionId *string `location:"header" locationName:"x-amz-version-id" type:"string"`
+}
+
+// String returns the string representation
+func (s PutObjectTaggingOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutObjectTaggingOutput) GoString() string {
+	return s.String()
+}
+
+// SetVersionId sets the VersionId field's value.
+func (s *PutObjectTaggingOutput) SetVersionId(v string) *PutObjectTaggingOutput {
 	s.VersionId = &v
 	return s
 }
@@ -12906,6 +16080,9 @@ type RestoreRequest struct {
 	//
 	// Days is a required field
 	Days *int64 `type:"integer" required:"true"`
+
+	// Glacier related prameters pertaining to this job.
+	GlacierJobParameters *GlacierJobParameters `type:"structure"`
 }
 
 // String returns the string representation
@@ -12924,6 +16101,11 @@ func (s *RestoreRequest) Validate() error {
 	if s.Days == nil {
 		invalidParams.Add(request.NewErrParamRequired("Days"))
 	}
+	if s.GlacierJobParameters != nil {
+		if err := s.GlacierJobParameters.Validate(); err != nil {
+			invalidParams.AddNested("GlacierJobParameters", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -12934,6 +16116,12 @@ func (s *RestoreRequest) Validate() error {
 // SetDays sets the Days field's value.
 func (s *RestoreRequest) SetDays(v int64) *RestoreRequest {
 	s.Days = &v
+	return s
+}
+
+// SetGlacierJobParameters sets the GlacierJobParameters field's value.
+func (s *RestoreRequest) SetGlacierJobParameters(v *GlacierJobParameters) *RestoreRequest {
+	s.GlacierJobParameters = v
 	return s
 }
 
@@ -13100,6 +16288,102 @@ func (s *Rule) SetStatus(v string) *Rule {
 // SetTransition sets the Transition field's value.
 func (s *Rule) SetTransition(v *Transition) *Rule {
 	s.Transition = v
+	return s
+}
+
+type StorageClassAnalysis struct {
+	_ struct{} `type:"structure"`
+
+	// A container used to describe how data related to the storage class analysis
+	// should be exported.
+	DataExport *StorageClassAnalysisDataExport `type:"structure"`
+}
+
+// String returns the string representation
+func (s StorageClassAnalysis) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StorageClassAnalysis) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StorageClassAnalysis) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StorageClassAnalysis"}
+	if s.DataExport != nil {
+		if err := s.DataExport.Validate(); err != nil {
+			invalidParams.AddNested("DataExport", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDataExport sets the DataExport field's value.
+func (s *StorageClassAnalysis) SetDataExport(v *StorageClassAnalysisDataExport) *StorageClassAnalysis {
+	s.DataExport = v
+	return s
+}
+
+type StorageClassAnalysisDataExport struct {
+	_ struct{} `type:"structure"`
+
+	// The place to store the data for an analysis.
+	//
+	// Destination is a required field
+	Destination *AnalyticsExportDestination `type:"structure" required:"true"`
+
+	// The version of the output schema to use when exporting data. Must be V_1.
+	//
+	// OutputSchemaVersion is a required field
+	OutputSchemaVersion *string `type:"string" required:"true" enum:"StorageClassAnalysisSchemaVersion"`
+}
+
+// String returns the string representation
+func (s StorageClassAnalysisDataExport) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StorageClassAnalysisDataExport) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StorageClassAnalysisDataExport) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StorageClassAnalysisDataExport"}
+	if s.Destination == nil {
+		invalidParams.Add(request.NewErrParamRequired("Destination"))
+	}
+	if s.OutputSchemaVersion == nil {
+		invalidParams.Add(request.NewErrParamRequired("OutputSchemaVersion"))
+	}
+	if s.Destination != nil {
+		if err := s.Destination.Validate(); err != nil {
+			invalidParams.AddNested("Destination", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDestination sets the Destination field's value.
+func (s *StorageClassAnalysisDataExport) SetDestination(v *AnalyticsExportDestination) *StorageClassAnalysisDataExport {
+	s.Destination = v
+	return s
+}
+
+// SetOutputSchemaVersion sets the OutputSchemaVersion field's value.
+func (s *StorageClassAnalysisDataExport) SetOutputSchemaVersion(v string) *StorageClassAnalysisDataExport {
+	s.OutputSchemaVersion = &v
 	return s
 }
 
@@ -14063,6 +17347,11 @@ func (s *WebsiteConfiguration) SetRoutingRules(v []*RoutingRule) *WebsiteConfigu
 }
 
 const (
+	// AnalyticsS3ExportFileFormatCsv is a AnalyticsS3ExportFileFormat enum value
+	AnalyticsS3ExportFileFormatCsv = "CSV"
+)
+
+const (
 	// BucketAccelerateStatusEnabled is a BucketAccelerateStatus enum value
 	BucketAccelerateStatusEnabled = "Enabled"
 
@@ -14193,6 +17482,47 @@ const (
 
 	// FilterRuleNameSuffix is a FilterRuleName enum value
 	FilterRuleNameSuffix = "suffix"
+)
+
+const (
+	// InventoryFormatCsv is a InventoryFormat enum value
+	InventoryFormatCsv = "CSV"
+)
+
+const (
+	// InventoryFrequencyDaily is a InventoryFrequency enum value
+	InventoryFrequencyDaily = "Daily"
+
+	// InventoryFrequencyWeekly is a InventoryFrequency enum value
+	InventoryFrequencyWeekly = "Weekly"
+)
+
+const (
+	// InventoryIncludedObjectVersionsAll is a InventoryIncludedObjectVersions enum value
+	InventoryIncludedObjectVersionsAll = "All"
+
+	// InventoryIncludedObjectVersionsCurrent is a InventoryIncludedObjectVersions enum value
+	InventoryIncludedObjectVersionsCurrent = "Current"
+)
+
+const (
+	// InventoryOptionalFieldSize is a InventoryOptionalField enum value
+	InventoryOptionalFieldSize = "Size"
+
+	// InventoryOptionalFieldLastModifiedDate is a InventoryOptionalField enum value
+	InventoryOptionalFieldLastModifiedDate = "LastModifiedDate"
+
+	// InventoryOptionalFieldStorageClass is a InventoryOptionalField enum value
+	InventoryOptionalFieldStorageClass = "StorageClass"
+
+	// InventoryOptionalFieldEtag is a InventoryOptionalField enum value
+	InventoryOptionalFieldEtag = "ETag"
+
+	// InventoryOptionalFieldIsMultipartUploaded is a InventoryOptionalField enum value
+	InventoryOptionalFieldIsMultipartUploaded = "IsMultipartUploaded"
+
+	// InventoryOptionalFieldReplicationStatus is a InventoryOptionalField enum value
+	InventoryOptionalFieldReplicationStatus = "ReplicationStatus"
 )
 
 const (
@@ -14346,6 +17676,30 @@ const (
 
 	// StorageClassStandardIa is a StorageClass enum value
 	StorageClassStandardIa = "STANDARD_IA"
+)
+
+const (
+	// StorageClassAnalysisSchemaVersionV1 is a StorageClassAnalysisSchemaVersion enum value
+	StorageClassAnalysisSchemaVersionV1 = "V_1"
+)
+
+const (
+	// TaggingDirectiveCopy is a TaggingDirective enum value
+	TaggingDirectiveCopy = "COPY"
+
+	// TaggingDirectiveReplace is a TaggingDirective enum value
+	TaggingDirectiveReplace = "REPLACE"
+)
+
+const (
+	// TierStandard is a Tier enum value
+	TierStandard = "Standard"
+
+	// TierBulk is a Tier enum value
+	TierBulk = "Bulk"
+
+	// TierExpedited is a Tier enum value
+	TierExpedited = "Expedited"
 )
 
 const (

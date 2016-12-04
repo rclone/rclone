@@ -411,6 +411,47 @@ func (sa *SockaddrHCI) sockaddr() (unsafe.Pointer, _Socklen, error) {
 	return unsafe.Pointer(&sa.raw), SizeofSockaddrHCI, nil
 }
 
+// SockaddrCAN implements the Sockaddr interface for AF_CAN type sockets.
+// The RxID and TxID fields are used for transport protocol addressing in
+// (CAN_TP16, CAN_TP20, CAN_MCNET, and CAN_ISOTP), they can be left with
+// zero values for CAN_RAW and CAN_BCM sockets as they have no meaning.
+//
+// The SockaddrCAN struct must be bound to the socket file descriptor
+// using Bind before the CAN socket can be used.
+//
+//      // Read one raw CAN frame
+//      fd, _ := Socket(AF_CAN, SOCK_RAW, CAN_RAW)
+//      addr := &SockaddrCAN{Ifindex: index}
+//      Bind(fd, addr)
+//      frame := make([]byte, 16)
+//      Read(fd, frame)
+//
+// The full SocketCAN documentation can be found in the linux kernel
+// archives at: https://www.kernel.org/doc/Documentation/networking/can.txt
+type SockaddrCAN struct {
+	Ifindex int
+	RxID    uint32
+	TxID    uint32
+	raw     RawSockaddrCAN
+}
+
+func (sa *SockaddrCAN) sockaddr() (unsafe.Pointer, _Socklen, error) {
+	if sa.Ifindex < 0 || sa.Ifindex > 0x7fffffff {
+		return nil, 0, EINVAL
+	}
+	sa.raw.Family = AF_CAN
+	sa.raw.Ifindex = int32(sa.Ifindex)
+	rx := (*[4]byte)(unsafe.Pointer(&sa.RxID))
+	for i := 0; i < 4; i++ {
+		sa.raw.Addr[i] = rx[i]
+	}
+	tx := (*[4]byte)(unsafe.Pointer(&sa.TxID))
+	for i := 0; i < 4; i++ {
+		sa.raw.Addr[i+4] = tx[i]
+	}
+	return unsafe.Pointer(&sa.raw), SizeofSockaddrCAN, nil
+}
+
 func anyToSockaddr(rsa *RawSockaddrAny) (Sockaddr, error) {
 	switch rsa.Addr.Family {
 	case AF_NETLINK:

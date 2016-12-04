@@ -18,16 +18,16 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// DefaultClient returns an HTTP Client that uses the
-// DefaultTokenSource to obtain authentication credentials.
-//
-// This client should be used when developing services
-// that run on Google App Engine or Google Compute Engine
-// and use "Application Default Credentials."
-//
+// DefaultCredentials holds "Application Default Credentials".
 // For more details, see:
 // https://developers.google.com/accounts/docs/application-default-credentials
-//
+type DefaultCredentials struct {
+	ProjectID   string // may be empty
+	TokenSource oauth2.TokenSource
+}
+
+// DefaultClient returns an HTTP Client that uses the
+// DefaultTokenSource to obtain authentication credentials.
 func DefaultClient(ctx context.Context, scope ...string) (*http.Client, error) {
 	ts, err := DefaultTokenSource(ctx, scope...)
 	if err != nil {
@@ -36,8 +36,18 @@ func DefaultClient(ctx context.Context, scope ...string) (*http.Client, error) {
 	return oauth2.NewClient(ctx, ts), nil
 }
 
-// DefaultTokenSource is a token source that uses
+// DefaultTokenSource returns the token source for
 // "Application Default Credentials".
+// It is a shortcut for FindDefaultCredentials(ctx, scope).TokenSource.
+func DefaultTokenSource(ctx context.Context, scope ...string) (oauth2.TokenSource, error) {
+	creds, err := FindDefaultCredentials(ctx, scope...)
+	if err != nil {
+		return nil, err
+	}
+	return creds.TokenSource, nil
+}
+
+// FindDefaultCredentials searches for "Application Default Credentials".
 //
 // It looks for credentials in the following places,
 // preferring the first location found:
@@ -51,45 +61,40 @@ func DefaultClient(ctx context.Context, scope ...string) (*http.Client, error) {
 //   4. On Google Compute Engine and Google App Engine Managed VMs, it fetches
 //      credentials from the metadata server.
 //      (In this final case any provided scopes are ignored.)
-//
-// For more details, see:
-// https://developers.google.com/accounts/docs/application-default-credentials
-//
-func DefaultTokenSource(ctx context.Context, scope ...string) (oauth2.TokenSource, error) {
+func FindDefaultCredentials(ctx context.Context, scope ...string) (*DefaultCredentials, error) {
 	// First, try the environment variable.
 	const envVar = "GOOGLE_APPLICATION_CREDENTIALS"
 	if filename := os.Getenv(envVar); filename != "" {
-		ts, err := tokenSourceFromFile(ctx, filename, scope)
+		creds, err := readCredentialsFile(ctx, filename, scope)
 		if err != nil {
 			return nil, fmt.Errorf("google: error getting credentials using %v environment variable: %v", envVar, err)
 		}
-		return ts, nil
+		return creds, nil
 	}
 
 	// Second, try a well-known file.
 	filename := wellKnownFile()
-	_, err := os.Stat(filename)
-	if err == nil {
-		ts, err2 := tokenSourceFromFile(ctx, filename, scope)
-		if err2 == nil {
-			return ts, nil
-		}
-		err = err2
-	} else if os.IsNotExist(err) {
-		err = nil // ignore this error
-	}
-	if err != nil {
+	if creds, err := readCredentialsFile(ctx, filename, scope); err == nil {
+		return creds, nil
+	} else if !os.IsNotExist(err) {
 		return nil, fmt.Errorf("google: error getting credentials using well-known file (%v): %v", filename, err)
 	}
 
 	// Third, if we're on Google App Engine use those credentials.
 	if appengineTokenFunc != nil && !appengineVM {
-		return AppEngineTokenSource(ctx, scope...), nil
+		return &DefaultCredentials{
+			ProjectID:   appengineAppIDFunc(ctx),
+			TokenSource: AppEngineTokenSource(ctx, scope...),
+		}, nil
 	}
 
 	// Fourth, if we're on Google Compute Engine use the metadata server.
 	if metadata.OnGCE() {
-		return ComputeTokenSource(""), nil
+		id, _ := metadata.ProjectID()
+		return &DefaultCredentials{
+			ProjectID:   id,
+			TokenSource: ComputeTokenSource(""),
+		}, nil
 	}
 
 	// None are found; return helpful error.
@@ -105,7 +110,7 @@ func wellKnownFile() string {
 	return filepath.Join(guessUnixHomeDir(), ".config", "gcloud", f)
 }
 
-func tokenSourceFromFile(ctx context.Context, filename string, scopes []string) (oauth2.TokenSource, error) {
+func readCredentialsFile(ctx context.Context, filename string, scopes []string) (*DefaultCredentials, error) {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -114,5 +119,12 @@ func tokenSourceFromFile(ctx context.Context, filename string, scopes []string) 
 	if err := json.Unmarshal(b, &f); err != nil {
 		return nil, err
 	}
-	return f.tokenSource(ctx, scopes)
+	ts, err := f.tokenSource(ctx, append([]string(nil), scopes...))
+	if err != nil {
+		return nil, err
+	}
+	return &DefaultCredentials{
+		ProjectID:   f.ProjectID,
+		TokenSource: ts,
+	}, nil
 }

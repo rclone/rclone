@@ -60,6 +60,7 @@ var ErrIllegalHeaderWrite = errors.New("transport: the stream is done or WriteHe
 
 // http2Server implements the ServerTransport interface with HTTP2.
 type http2Server struct {
+	ctx         context.Context
 	conn        net.Conn
 	remoteAddr  net.Addr
 	localAddr   net.Addr
@@ -127,6 +128,7 @@ func newHTTP2Server(conn net.Conn, config *ServerConfig) (_ ServerTransport, err
 	}
 	var buf bytes.Buffer
 	t := &http2Server{
+		ctx:             context.Background(),
 		conn:            conn,
 		remoteAddr:      conn.RemoteAddr(),
 		localAddr:       conn.LocalAddr(),
@@ -144,6 +146,14 @@ func newHTTP2Server(conn net.Conn, config *ServerConfig) (_ ServerTransport, err
 		shutdownChan:    make(chan struct{}),
 		activeStreams:   make(map[uint32]*Stream),
 		streamSendQuota: defaultWindowSize,
+	}
+	if stats.On() {
+		t.ctx = stats.TagConn(t.ctx, &stats.ConnTagInfo{
+			RemoteAddr: t.remoteAddr,
+			LocalAddr:  t.localAddr,
+		})
+		connBegin := &stats.ConnBegin{}
+		stats.HandleConn(t.ctx, connBegin)
 	}
 	go t.controller()
 	t.writableChan <- 0
@@ -177,9 +187,9 @@ func (t *http2Server) operateHeaders(frame *http2.MetaHeadersFrame, handle func(
 	}
 	s.recvCompress = state.encoding
 	if state.timeoutSet {
-		s.ctx, s.cancel = context.WithTimeout(context.TODO(), state.timeout)
+		s.ctx, s.cancel = context.WithTimeout(t.ctx, state.timeout)
 	} else {
-		s.ctx, s.cancel = context.WithCancel(context.TODO())
+		s.ctx, s.cancel = context.WithCancel(t.ctx)
 	}
 	pr := &peer.Peer{
 		Addr: t.remoteAddr,
@@ -241,6 +251,7 @@ func (t *http2Server) operateHeaders(frame *http2.MetaHeadersFrame, handle func(
 	}
 	s.ctx = traceCtx(s.ctx, s.method)
 	if stats.On() {
+		s.ctx = stats.TagRPC(s.ctx, &stats.RPCTagInfo{FullMethodName: s.method})
 		inHeader := &stats.InHeader{
 			FullMethod:  s.method,
 			RemoteAddr:  t.remoteAddr,
@@ -248,7 +259,7 @@ func (t *http2Server) operateHeaders(frame *http2.MetaHeadersFrame, handle func(
 			Compression: s.recvCompress,
 			WireLength:  int(frame.Header().Length),
 		}
-		stats.Handle(s.ctx, inHeader)
+		stats.HandleRPC(s.ctx, inHeader)
 	}
 	handle(s)
 	return
@@ -533,7 +544,7 @@ func (t *http2Server) WriteHeader(s *Stream, md metadata.MD) error {
 		outHeader := &stats.OutHeader{
 			WireLength: bufLen,
 		}
-		stats.Handle(s.Context(), outHeader)
+		stats.HandleRPC(s.Context(), outHeader)
 	}
 	t.writableChan <- 0
 	return nil
@@ -596,7 +607,7 @@ func (t *http2Server) WriteStatus(s *Stream, statusCode codes.Code, statusDesc s
 		outTrailer := &stats.OutTrailer{
 			WireLength: bufLen,
 		}
-		stats.Handle(s.Context(), outTrailer)
+		stats.HandleRPC(s.Context(), outTrailer)
 	}
 	t.closeStream(s)
 	t.writableChan <- 0
@@ -626,19 +637,14 @@ func (t *http2Server) Write(s *Stream, data []byte, opts *Options) error {
 			return nil
 		}
 		size := http2MaxFrameLen
-		s.sendQuotaPool.add(0)
 		// Wait until the stream has some quota to send the data.
 		sq, err := wait(s.ctx, nil, nil, t.shutdownChan, s.sendQuotaPool.acquire())
 		if err != nil {
 			return err
 		}
-		t.sendQuotaPool.add(0)
 		// Wait until the transport has some quota to send the data.
 		tq, err := wait(s.ctx, nil, nil, t.shutdownChan, t.sendQuotaPool.acquire())
 		if err != nil {
-			if _, ok := err.(StreamError); ok {
-				t.sendQuotaPool.cancel()
-			}
 			return err
 		}
 		if sq < size {
@@ -706,7 +712,7 @@ func (t *http2Server) applySettings(ss []http2.Setting) {
 			t.mu.Lock()
 			defer t.mu.Unlock()
 			for _, stream := range t.activeStreams {
-				stream.sendQuotaPool.reset(int(s.Val - t.streamSendQuota))
+				stream.sendQuotaPool.add(int(s.Val - t.streamSendQuota))
 			}
 			t.streamSendQuota = s.Val
 		}
@@ -782,6 +788,10 @@ func (t *http2Server) Close() (err error) {
 	// Cancel all active streams.
 	for _, s := range streams {
 		s.cancel()
+	}
+	if stats.On() {
+		connEnd := &stats.ConnEnd{}
+		stats.HandleConn(t.ctx, connEnd)
 	}
 	return
 }

@@ -83,7 +83,7 @@ func updateEndpointForAccelerate(r *request.Request) {
 
 	if !hostCompatibleBucketName(r.HTTPRequest.URL, bucket) {
 		r.Error = awserr.New("InvalidParameterException",
-			fmt.Sprintf("bucket name %s is not compatibile with S3 Accelerate", bucket),
+			fmt.Sprintf("bucket name %s is not compatible with S3 Accelerate", bucket),
 			nil)
 		return
 	}

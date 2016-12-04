@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"C5oy1hgQsABtYOYIOXWcR3BgYqU/G3kZz5Dv92Y-2NZwaNrcr5jwm4A\"",
+ "etag": "\"tbys6C40o18GZwyMen5GMkdK-3s/sMgjc4eoIFjgub4daTU-MGW0WMA\"",
  "discoveryVersion": "v1",
  "id": "storage:v1",
  "name": "storage",
  "version": "v1",
- "revision": "20161019",
+ "revision": "20161109",
  "title": "Cloud Storage JSON API",
  "description": "Stores and retrieves potentially large, immutable data objects.",
  "ownerDomain": "google.com",
@@ -683,6 +683,11 @@
     "timeDeleted": {
      "type": "string",
      "description": "The deletion time of the object in RFC 3339 format. Will be returned if and only if this version of the object has been deleted.",
+     "format": "date-time"
+    },
+    "timeStorageClassUpdated": {
+     "type": "string",
+     "description": "The time at which the object's storage class was last changed. When the object is initially created, it will be set to timeCreated.",
      "format": "date-time"
     },
     "updated": {

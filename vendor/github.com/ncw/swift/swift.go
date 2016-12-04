@@ -1303,10 +1303,14 @@ type ObjectOpenFile struct {
 	lengthOk   bool           // whether length is valid
 	length     int64          // length of the object if read
 	seeked     bool           // whether we have seeked this file or not
+	overSeeked bool           // set if we have seeked to the end or beyond
 }
 
 // Read bytes from the object - see io.Reader
 func (file *ObjectOpenFile) Read(p []byte) (n int, err error) {
+	if file.overSeeked {
+		return 0, io.EOF
+	}
 	n, err = file.body.Read(p)
 	file.bytes += int64(n)
 	file.pos += int64(n)
@@ -1330,6 +1334,7 @@ func (file *ObjectOpenFile) Read(p []byte) (n int, err error) {
 //
 // Seek(0, 1) will return the current file pointer.
 func (file *ObjectOpenFile) Seek(offset int64, whence int) (newPos int64, err error) {
+	file.overSeeked = false
 	switch whence {
 	case 0: // relative to start
 		newPos = offset
@@ -1340,6 +1345,10 @@ func (file *ObjectOpenFile) Seek(offset int64, whence int) (newPos int64, err er
 			return file.pos, newError(0, "Length of file unknown so can't seek from end")
 		}
 		newPos = file.length + offset
+		if offset >= 0 {
+			file.overSeeked = true
+			return
+		}
 	default:
 		panic("Unknown whence in ObjectOpenFile.Seek")
 	}

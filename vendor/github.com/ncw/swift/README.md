@@ -138,3 +138,4 @@ Contributors
 - Cezar Sa Espinola <cezarsa@gmail.com>
 - Sam Gunaratne <samgzeit@gmail.com>
 - Richard Scothern <richard.scothern@gmail.com>
+- Michel Couillard <couillard.michel@voxlog.ca>

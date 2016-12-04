@@ -82,7 +82,7 @@ func recvResponse(ctx context.Context, dopts dialOptions, t transport.ClientTran
 	if inPayload != nil && err == io.EOF && stream.StatusCode() == codes.OK {
 		// TODO in the current implementation, inTrailer may be handled before inPayload in some cases.
 		// Fix the order if necessary.
-		stats.Handle(ctx, inPayload)
+		stats.HandleRPC(ctx, inPayload)
 	}
 	c.trailerMD = stream.Trailer()
 	return nil
@@ -121,7 +121,7 @@ func sendRequest(ctx context.Context, codec Codec, compressor Compressor, callHd
 	err = t.Write(stream, outBuf, opts)
 	if err == nil && outPayload != nil {
 		outPayload.SentTime = time.Now()
-		stats.Handle(ctx, outPayload)
+		stats.HandleRPC(ctx, outPayload)
 	}
 	// t.NewStream(...) could lead to an early rejection of the RPC (e.g., the service/method
 	// does not exist.) so that t.Write could get io.EOF from wait(...). Leave the following
@@ -172,12 +172,13 @@ func invoke(ctx context.Context, method string, args, reply interface{}, cc *Cli
 		}()
 	}
 	if stats.On() {
+		ctx = stats.TagRPC(ctx, &stats.RPCTagInfo{FullMethodName: method})
 		begin := &stats.Begin{
 			Client:    true,
 			BeginTime: time.Now(),
 			FailFast:  c.failFast,
 		}
-		stats.Handle(ctx, begin)
+		stats.HandleRPC(ctx, begin)
 	}
 	defer func() {
 		if stats.On() {
@@ -186,7 +187,7 @@ func invoke(ctx context.Context, method string, args, reply interface{}, cc *Cli
 				EndTime: time.Now(),
 				Error:   e,
 			}
-			stats.Handle(ctx, end)
+			stats.HandleRPC(ctx, end)
 		}
 	}()
 	topts := &transport.Options{

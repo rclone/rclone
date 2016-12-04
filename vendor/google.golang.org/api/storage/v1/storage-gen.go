@@ -1034,6 +1034,11 @@ type Object struct {
 	// deleted.
 	TimeDeleted string `json:"timeDeleted,omitempty"`
 
+	// TimeStorageClassUpdated: The time at which the object's storage class
+	// was last changed. When the object is initially created, it will be
+	// set to timeCreated.
+	TimeStorageClassUpdated string `json:"timeStorageClassUpdated,omitempty"`
+
 	// Updated: The modification time of the object metadata in RFC 3339
 	// format.
 	Updated string `json:"updated,omitempty"`

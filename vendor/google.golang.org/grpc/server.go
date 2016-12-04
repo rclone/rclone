@@ -583,7 +583,7 @@ func (s *Server) sendResponse(t transport.ServerTransport, stream *transport.Str
 	err = t.Write(stream, p, opts)
 	if err == nil && outPayload != nil {
 		outPayload.SentTime = time.Now()
-		stats.Handle(stream.Context(), outPayload)
+		stats.HandleRPC(stream.Context(), outPayload)
 	}
 	return err
 }
@@ -593,7 +593,7 @@ func (s *Server) processUnaryRPC(t transport.ServerTransport, stream *transport.
 		begin := &stats.Begin{
 			BeginTime: time.Now(),
 		}
-		stats.Handle(stream.Context(), begin)
+		stats.HandleRPC(stream.Context(), begin)
 	}
 	defer func() {
 		if stats.On() {
@@ -603,7 +603,7 @@ func (s *Server) processUnaryRPC(t transport.ServerTransport, stream *transport.
 			if err != nil && err != io.EOF {
 				end.Error = toRPCErr(err)
 			}
-			stats.Handle(stream.Context(), end)
+			stats.HandleRPC(stream.Context(), end)
 		}
 	}()
 	if trInfo != nil {
@@ -698,7 +698,7 @@ func (s *Server) processUnaryRPC(t transport.ServerTransport, stream *transport.
 				inPayload.Payload = v
 				inPayload.Data = req
 				inPayload.Length = len(req)
-				stats.Handle(stream.Context(), inPayload)
+				stats.HandleRPC(stream.Context(), inPayload)
 			}
 			if trInfo != nil {
 				trInfo.tr.LazyLog(&payload{sent: false, msg: v}, true)
@@ -759,7 +759,7 @@ func (s *Server) processStreamingRPC(t transport.ServerTransport, stream *transp
 		begin := &stats.Begin{
 			BeginTime: time.Now(),
 		}
-		stats.Handle(stream.Context(), begin)
+		stats.HandleRPC(stream.Context(), begin)
 	}
 	defer func() {
 		if stats.On() {
@@ -769,7 +769,7 @@ func (s *Server) processStreamingRPC(t transport.ServerTransport, stream *transp
 			if err != nil && err != io.EOF {
 				end.Error = toRPCErr(err)
 			}
-			stats.Handle(stream.Context(), end)
+			stats.HandleRPC(stream.Context(), end)
 		}
 	}()
 	if s.opts.cp != nil {

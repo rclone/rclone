@@ -38,16 +38,12 @@ package stats
 
 import (
 	"net"
-	"sync/atomic"
 	"time"
-
-	"golang.org/x/net/context"
-	"google.golang.org/grpc/grpclog"
 )
 
 // RPCStats contains stats information about RPCs.
-// All stats types in this package implements this interface.
 type RPCStats interface {
+	isRPCStats()
 	// IsClient returns true if this RPCStats is from client side.
 	IsClient() bool
 }
@@ -65,6 +61,8 @@ type Begin struct {
 
 // IsClient indicates if this is from client side.
 func (s *Begin) IsClient() bool { return s.Client }
+
+func (s *Begin) isRPCStats() {}
 
 // InPayload contains the information for an incoming payload.
 type InPayload struct {
@@ -84,6 +82,8 @@ type InPayload struct {
 
 // IsClient indicates if this is from client side.
 func (s *InPayload) IsClient() bool { return s.Client }
+
+func (s *InPayload) isRPCStats() {}
 
 // InHeader contains stats when a header is received.
 // FullMethod, addresses and Compression are only valid if Client is false.
@@ -106,6 +106,8 @@ type InHeader struct {
 // IsClient indicates if this is from client side.
 func (s *InHeader) IsClient() bool { return s.Client }
 
+func (s *InHeader) isRPCStats() {}
+
 // InTrailer contains stats when a trailer is received.
 type InTrailer struct {
 	// Client is true if this InTrailer is from client side.
@@ -116,6 +118,8 @@ type InTrailer struct {
 
 // IsClient indicates if this is from client side.
 func (s *InTrailer) IsClient() bool { return s.Client }
+
+func (s *InTrailer) isRPCStats() {}
 
 // OutPayload contains the information for an outgoing payload.
 type OutPayload struct {
@@ -135,6 +139,8 @@ type OutPayload struct {
 
 // IsClient indicates if this is from client side.
 func (s *OutPayload) IsClient() bool { return s.Client }
+
+func (s *OutPayload) isRPCStats() {}
 
 // OutHeader contains stats when a header is sent.
 // FullMethod, addresses and Compression are only valid if Client is true.
@@ -157,6 +163,8 @@ type OutHeader struct {
 // IsClient indicates if this is from client side.
 func (s *OutHeader) IsClient() bool { return s.Client }
 
+func (s *OutHeader) isRPCStats() {}
+
 // OutTrailer contains stats when a trailer is sent.
 type OutTrailer struct {
 	// Client is true if this OutTrailer is from client side.
@@ -167,6 +175,8 @@ type OutTrailer struct {
 
 // IsClient indicates if this is from client side.
 func (s *OutTrailer) IsClient() bool { return s.Client }
+
+func (s *OutTrailer) isRPCStats() {}
 
 // End contains stats when an RPC ends.
 type End struct {
@@ -181,39 +191,33 @@ type End struct {
 // IsClient indicates if this is from client side.
 func (s *End) IsClient() bool { return s.Client }
 
-var (
-	on      = new(int32)
-	handler func(context.Context, RPCStats)
-)
+func (s *End) isRPCStats() {}
 
-// On indicates whether stats is started.
-func On() bool {
-	return atomic.CompareAndSwapInt32(on, 1, 1)
+// ConnStats contains stats information about connections.
+type ConnStats interface {
+	isConnStats()
+	// IsClient returns true if this ConnStats is from client side.
+	IsClient() bool
 }
 
-// Handle processes the stats using the call back function registered by user.
-func Handle(ctx context.Context, s RPCStats) {
-	handler(ctx, s)
+// ConnBegin contains the stats of a connection when it is established.
+type ConnBegin struct {
+	// Client is true if this ConnBegin is from client side.
+	Client bool
 }
 
-// RegisterHandler registers the user handler function.
-// If another handler was registered before, this new handler will overwrite the old one.
-// This handler function will be called to process the stats.
-func RegisterHandler(f func(context.Context, RPCStats)) {
-	handler = f
+// IsClient indicates if this is from client side.
+func (s *ConnBegin) IsClient() bool { return s.Client }
+
+func (s *ConnBegin) isConnStats() {}
+
+// ConnEnd contains the stats of a connection when it ends.
+type ConnEnd struct {
+	// Client is true if this ConnEnd is from client side.
+	Client bool
 }
 
-// Start starts the stats collection and reporting if there is a registered stats handle.
-func Start() {
-	if handler == nil {
-		grpclog.Println("handler is nil when starting stats. Stats is not started")
-		return
-	}
-	atomic.StoreInt32(on, 1)
-}
+// IsClient indicates if this is from client side.
+func (s *ConnEnd) IsClient() bool { return s.Client }
 
-// Stop stops the stats collection and processing.
-// Stop does not unregister handler.
-func Stop() {
-	atomic.StoreInt32(on, 0)
-}
+func (s *ConnEnd) isConnStats() {}

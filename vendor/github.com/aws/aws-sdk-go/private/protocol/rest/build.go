@@ -47,12 +47,22 @@ var BuildHandler = request.NamedHandler{Name: "awssdk.rest.Build", Fn: Build}
 func Build(r *request.Request) {
 	if r.ParamsFilled() {
 		v := reflect.ValueOf(r.Params).Elem()
-		buildLocationElements(r, v)
+		buildLocationElements(r, v, false)
 		buildBody(r, v)
 	}
 }
 
-func buildLocationElements(r *request.Request, v reflect.Value) {
+// BuildAsGET builds the REST component of a service request with the ability to hoist
+// data from the body.
+func BuildAsGET(r *request.Request) {
+	if r.ParamsFilled() {
+		v := reflect.ValueOf(r.Params).Elem()
+		buildLocationElements(r, v, true)
+		buildBody(r, v)
+	}
+}
+
+func buildLocationElements(r *request.Request, v reflect.Value, buildGETQuery bool) {
 	query := r.HTTPRequest.URL.Query()
 
 	for i := 0; i < v.NumField(); i++ {
@@ -84,6 +94,10 @@ func buildLocationElements(r *request.Request, v reflect.Value) {
 				err = buildURI(r.HTTPRequest.URL, m, name)
 			case "querystring":
 				err = buildQueryString(query, m, name)
+			default:
+				if buildGETQuery {
+					err = buildQueryString(query, m, name)
+				}
 			}
 			r.Error = err
 		}

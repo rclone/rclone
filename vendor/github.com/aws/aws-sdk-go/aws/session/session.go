@@ -34,7 +34,7 @@ type Session struct {
 // If the AWS_SDK_LOAD_CONFIG environment is set to a truthy value, the New
 // method could now encounter an error when loading the configuration. When
 // The environment variable is set, and an error occurs, New will return a
-// session that will fail all requests reporting the error that occured while
+// session that will fail all requests reporting the error that occurred while
 // loading the session. Use NewSession to get the error when creating the
 // session.
 //
@@ -59,7 +59,7 @@ func New(cfgs ...*aws.Config) *Session {
 			// needs to be replicated if an error occurs while creating
 			// the session.
 			msg := "failed to create session with AWS_SDK_LOAD_CONFIG enabled. " +
-				"Use session.NewSession to handle errors occuring during session creation."
+				"Use session.NewSession to handle errors occurring during session creation."
 
 			// Session creation failed, need to report the error and prevent
 			// any requests from succeeding.
@@ -89,7 +89,7 @@ func New(cfgs ...*aws.Config) *Session {
 // to be built with retrieving credentials with AssumeRole set in the config.
 //
 // See the NewSessionWithOptions func for information on how to override or
-// control through code how the Session will be created. Such as specifing the
+// control through code how the Session will be created. Such as specifying the
 // config profile, and controlling if shared config is enabled or not.
 func NewSession(cfgs ...*aws.Config) (*Session, error) {
 	envCfg := loadEnvConfig()
@@ -124,7 +124,7 @@ type Options struct {
 	// Provides config values for the SDK to use when creating service clients
 	// and making API requests to services. Any value set in with this field
 	// will override the associated value provided by the SDK defaults,
-	// environment or config files where relevent.
+	// environment or config files where relevant.
 	//
 	// If not set, configuration values from from SDK defaults, environment,
 	// config will be used.
