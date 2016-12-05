@@ -298,7 +298,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 // Mkdir creates the directory if it doesn't exist
 func (f *Fs) Mkdir(dir string) error {
 	// FIXME: https://github.com/syncthing/syncthing/blob/master/lib/osutil/mkdirall_windows.go
-	root := path.Join(f.root, dir)
+	root := f.cleanPath(filepath.Join(f.root, dir))
 	err := os.MkdirAll(root, 0777)
 	if err != nil {
 		return err
@@ -317,7 +317,8 @@ func (f *Fs) Mkdir(dir string) error {
 //
 // If it isn't empty it will return an error
 func (f *Fs) Rmdir(dir string) error {
-	return os.Remove(path.Join(f.root, dir))
+	root := f.cleanPath(filepath.Join(f.root, dir))
+	return os.Remove(root)
 }
 
 // Precision of the file system
