@@ -350,7 +350,7 @@
 		},
 		{
 			"ImportPath": "golang.org/x/sys/unix",
-			"Rev": "ca83bd2cb9abb47839b50eb4da612f00158f5870"
+			"Rev": "478fcf54317e52ab69f40bb4c7a1520288d7f7ea"
 		},
 		{
 			"ImportPath": "golang.org/x/text/transform",
