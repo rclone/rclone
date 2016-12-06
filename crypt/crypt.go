@@ -152,6 +152,20 @@ func (f *Fs) Hashes() fs.HashSet {
 	return fs.HashSet(fs.HashNone)
 }
 
+// Mkdir makes the directory (container, bucket)
+//
+// Shouldn't return an error if it already exists
+func (f *Fs) Mkdir(dir string) error {
+	return f.Fs.Mkdir(f.cipher.EncryptDirName(dir))
+}
+
+// Rmdir removes the directory (container, bucket) if empty
+//
+// Return an error if it doesn't exist or isn't empty
+func (f *Fs) Rmdir(dir string) error {
+	return f.Fs.Rmdir(f.cipher.EncryptDirName(dir))
+}
+
 // Purge all files in the root and the root directory
 //
 // Implement this if you have a way of deleting all the files
