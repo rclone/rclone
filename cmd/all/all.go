@@ -38,6 +38,7 @@ import (
 	_ "github.com/ncw/rclone/cmd/rcat"
 	_ "github.com/ncw/rclone/cmd/rmdir"
 	_ "github.com/ncw/rclone/cmd/rmdirs"
+	_ "github.com/ncw/rclone/cmd/serve"
 	_ "github.com/ncw/rclone/cmd/sha1sum"
 	_ "github.com/ncw/rclone/cmd/size"
 	_ "github.com/ncw/rclone/cmd/sync"
