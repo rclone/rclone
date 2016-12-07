@@ -754,7 +754,7 @@ func ListDir(f Fs, w io.Writer) error {
 	if Config.MaxDepth > 0 {
 		level = Config.MaxDepth
 	}
-	list := NewLister().SetLevel(level).Start(f, "")
+	list := NewLister().SetFilter(Config.Filter).SetLevel(level).Start(f, "")
 	for {
 		dir, err := list.GetDir()
 		if err != nil {
