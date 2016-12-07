@@ -19,10 +19,6 @@ and exclude rules like `--include`, `--exclude`, `--include-from`,
 try them out is using the `ls` command, or `--dry-run` together with
 `-v`.
 
-**Important** Due to limitations of the command line parser you can
-only use any of these options once - if you duplicate them then rclone
-will use the last one only.
-
 ## Patterns ##
 
 The patterns used to match files for inclusion or exclusion are based
@@ -159,15 +155,43 @@ based remotes (eg s3, swift, google compute storage, b2).
 
 Filtering rules are added with the following command line flags.
 
+### Repeating options ##
+
+You can repeat the following options to add more than one rule of that
+type.
+
+  * `--include`
+  * `--include-from`
+  * `--exclude`
+  * `--exclude-from`
+  * `--filter`
+  * `--filter-from`
+
+Note that all the options of the same type are processed together in
+the order above, regardless of what order they were placed on the
+command line.
+
+So all `--include` options are processed first in the order they
+appeared on the command line, then all `--include-from` options etc.
+
+To mix up the order includes and excludes, the `--filter` flag can be
+used.
+
 ### `--exclude` - Exclude files matching pattern ###
 
 Add a single exclude rule with `--exclude`.
+
+This flag can be repeated.  See above for the order the flags are
+processed in.
 
 Eg `--exclude *.bak` to exclude all bak files from the sync.
 
 ### `--exclude-from` - Read exclude patterns from file ###
 
 Add exclude rules from a file.
+
+This flag can be repeated.  See above for the order the flags are
+processed in.
 
 Prepare a file like this `exclude-file.txt`
 
@@ -184,6 +208,9 @@ This is useful if you have a lot of rules.
 
 Add a single include rule with `--include`.
 
+This flag can be repeated.  See above for the order the flags are
+processed in.
+
 Eg `--include *.{png,jpg}` to include all `png` and `jpg` files in the
 backup and no others.
 
@@ -196,6 +223,9 @@ flexibility then you must use `--filter-from`.
 ### `--include-from` - Read include patterns from file ###
 
 Add include rules from a file.
+
+This flag can be repeated.  See above for the order the flags are
+processed in.
 
 Prepare a file like this `include-file.txt`
 
@@ -221,11 +251,17 @@ This can be used to add a single include or exclude rule.  Include
 rules start with `+ ` and exclude rules start with `- `.  A special
 rule called `!` can be used to clear the existing rules.
 
+This flag can be repeated.  See above for the order the flags are
+processed in.
+
 Eg `--filter "- *.bak"` to exclude all bak files from the sync.
 
 ### `--filter-from` - Read filtering patterns from a file ###
 
 Add include/exclude rules from a file.
+
+This flag can be repeated.  See above for the order the flags are
+processed in.
 
 Prepare a file like this `filter-file.txt`
 
@@ -249,6 +285,9 @@ be excluded from the sync.
 This reads a list of file names from the file passed in and **only**
 these files are transferred.  The filtering rules are ignored
 completely if you use this option.
+
+This option can be repeated to read from more than one file.  These
+are read in the order that they are placed on the command line.
 
 Prepare a file like this `files-from.txt`
 

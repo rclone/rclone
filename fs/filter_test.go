@@ -54,13 +54,8 @@ func TestNewFilterDefault(t *testing.T) {
 	assert.True(t, f.InActive())
 }
 
-// return a pointer to the string
-func stringP(s string) *string {
-	return &s
-}
-
 // testFile creates a temp file with the contents
-func testFile(t *testing.T, contents string) *string {
+func testFile(t *testing.T, contents string) string {
 	out, err := ioutil.TempFile("", "filter_test")
 	require.NoError(t, err)
 	defer func() {
@@ -70,25 +65,24 @@ func testFile(t *testing.T, contents string) *string {
 	_, err = out.Write([]byte(contents))
 	require.NoError(t, err)
 	s := out.Name()
-	return &s
+	return s
 }
 
 func TestNewFilterFull(t *testing.T) {
 	mins := int64(100 * 1024)
 	maxs := int64(1000 * 1024)
-	emptyString := ""
 	isFalse := false
 	isTrue := true
 
 	// Set up the input
 	deleteExcluded = &isTrue
-	filterRule = stringP("- filter1")
-	filterFrom = testFile(t, "#comment\n+ filter2\n- filter3\n")
-	excludeRule = stringP("exclude1")
-	excludeFrom = testFile(t, "#comment\nexclude2\nexclude3\n")
-	includeRule = stringP("include1")
-	includeFrom = testFile(t, "#comment\ninclude2\ninclude3\n")
-	filesFrom = testFile(t, "#comment\nfiles1\nfiles2\n")
+	filterRule = &[]string{"- filter1", "- filter1b"}
+	filterFrom = &[]string{testFile(t, "#comment\n+ filter2\n- filter3\n")}
+	excludeRule = &[]string{"exclude1"}
+	excludeFrom = &[]string{testFile(t, "#comment\nexclude2\nexclude3\n")}
+	includeRule = &[]string{"include1"}
+	includeFrom = &[]string{testFile(t, "#comment\ninclude2\ninclude3\n")}
+	filesFrom = &[]string{testFile(t, "#comment\nfiles1\nfiles2\n")}
 	minSize = SizeSuffix(mins)
 	maxSize = SizeSuffix(maxs)
 
@@ -100,20 +94,20 @@ func TestNewFilterFull(t *testing.T) {
 	}
 	// Reset the input
 	defer func() {
-		rm(*filterFrom)
-		rm(*excludeFrom)
-		rm(*includeFrom)
-		rm(*filesFrom)
+		rm((*filterFrom)[0])
+		rm((*excludeFrom)[0])
+		rm((*includeFrom)[0])
+		rm((*filesFrom)[0])
 		minSize = -1
 		maxSize = -1
 		deleteExcluded = &isFalse
-		filterRule = &emptyString
-		filterFrom = &emptyString
-		excludeRule = &emptyString
-		excludeFrom = &emptyString
-		includeRule = &emptyString
-		includeFrom = &emptyString
-		filesFrom = &emptyString
+		filterRule = nil
+		filterFrom = nil
+		excludeRule = nil
+		excludeFrom = nil
+		includeRule = nil
+		includeFrom = nil
+		filesFrom = nil
 	}()
 
 	f, err := NewFilter()
@@ -130,6 +124,7 @@ func TestNewFilterFull(t *testing.T) {
 - (^|/)exclude2$
 - (^|/)exclude3$
 - (^|/)filter1$
+- (^|/)filter1b$
 + (^|/)filter2$
 - (^|/)filter3$
 - ^.*$
@@ -356,11 +351,11 @@ four
 five
   six  `)
 	defer func() {
-		err := os.Remove(*file)
+		err := os.Remove(file)
 		require.NoError(t, err)
 	}()
 	lines := []string{}
-	err := forEachLine(*file, func(s string) error {
+	err := forEachLine(file, func(s string) error {
 		lines = append(lines, s)
 		return nil
 	})

@@ -20,13 +20,13 @@ import (
 var (
 	// Flags
 	deleteExcluded = pflag.BoolP("delete-excluded", "", false, "Delete files on dest excluded from sync")
-	filterRule     = pflag.StringP("filter", "f", "", "Add a file-filtering rule")
-	filterFrom     = pflag.StringP("filter-from", "", "", "Read filtering patterns from a file")
-	excludeRule    = pflag.StringP("exclude", "", "", "Exclude files matching pattern")
-	excludeFrom    = pflag.StringP("exclude-from", "", "", "Read exclude patterns from file")
-	includeRule    = pflag.StringP("include", "", "", "Include files matching pattern")
-	includeFrom    = pflag.StringP("include-from", "", "", "Read include patterns from file")
-	filesFrom      = pflag.StringP("files-from", "", "", "Read list of source-file names from file")
+	filterRule     = pflag.StringArrayP("filter", "f", nil, "Add a file-filtering rule")
+	filterFrom     = pflag.StringArrayP("filter-from", "", nil, "Read filtering patterns from a file")
+	excludeRule    = pflag.StringArrayP("exclude", "", nil, "Exclude files matching pattern")
+	excludeFrom    = pflag.StringArrayP("exclude-from", "", nil, "Read exclude patterns from file")
+	includeRule    = pflag.StringArrayP("include", "", nil, "Include files matching pattern")
+	includeFrom    = pflag.StringArrayP("include-from", "", nil, "Read include patterns from file")
+	filesFrom      = pflag.StringArrayP("files-from", "", nil, "Read list of source-file names from file")
 	minAge         = pflag.StringP("min-age", "", "", "Don't transfer any file younger than this in s or suffix ms|s|m|h|d|w|M|y")
 	maxAge         = pflag.StringP("max-age", "", "", "Don't transfer any file older than this in s or suffix ms|s|m|h|d|w|M|y")
 	minSize        = SizeSuffix(-1)
@@ -157,54 +157,68 @@ func NewFilter() (f *Filter, err error) {
 	}
 	addImplicitExclude := false
 
-	if *includeRule != "" {
-		err = f.Add(true, *includeRule)
-		if err != nil {
-			return nil, err
-		}
-		addImplicitExclude = true
-	}
-	if *includeFrom != "" {
-		err := forEachLine(*includeFrom, func(line string) error {
-			return f.Add(true, line)
-		})
-		if err != nil {
-			return nil, err
-		}
-		addImplicitExclude = true
-	}
-	if *excludeRule != "" {
-		err = f.Add(false, *excludeRule)
-		if err != nil {
-			return nil, err
+	if includeRule != nil {
+		for _, rule := range *includeRule {
+			err = f.Add(true, rule)
+			if err != nil {
+				return nil, err
+			}
+			addImplicitExclude = true
 		}
 	}
-	if *excludeFrom != "" {
-		err := forEachLine(*excludeFrom, func(line string) error {
-			return f.Add(false, line)
-		})
-		if err != nil {
-			return nil, err
+	if includeFrom != nil {
+		for _, rule := range *includeFrom {
+			err := forEachLine(rule, func(line string) error {
+				return f.Add(true, line)
+			})
+			if err != nil {
+				return nil, err
+			}
+			addImplicitExclude = true
 		}
 	}
-	if *filterRule != "" {
-		err = f.AddRule(*filterRule)
-		if err != nil {
-			return nil, err
+	if excludeRule != nil {
+		for _, rule := range *excludeRule {
+			err = f.Add(false, rule)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
-	if *filterFrom != "" {
-		err := forEachLine(*filterFrom, f.AddRule)
-		if err != nil {
-			return nil, err
+	if excludeFrom != nil {
+		for _, rule := range *excludeFrom {
+			err := forEachLine(rule, func(line string) error {
+				return f.Add(false, line)
+			})
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
-	if *filesFrom != "" {
-		err := forEachLine(*filesFrom, func(line string) error {
-			return f.AddFile(line)
-		})
-		if err != nil {
-			return nil, err
+	if filterRule != nil {
+		for _, rule := range *filterRule {
+			err = f.AddRule(rule)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	if filterFrom != nil {
+		for _, rule := range *filterFrom {
+			err := forEachLine(rule, f.AddRule)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	if filesFrom != nil {
+		for _, rule := range *filesFrom {
+			err := forEachLine(rule, func(line string) error {
+				return f.AddFile(line)
+			})
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	if addImplicitExclude {
