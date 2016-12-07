@@ -273,7 +273,7 @@ func (f *Filter) addDirGlobs(Include bool, glob string) error {
 func (f *Filter) Add(Include bool, glob string) error {
 	isDirRule := strings.HasSuffix(glob, "/")
 	isFileRule := !isDirRule
-	if strings.HasSuffix(glob, "**") {
+	if strings.Contains(glob, "**") {
 		isDirRule, isFileRule = true, true
 	}
 	re, err := globToRegexp(glob)

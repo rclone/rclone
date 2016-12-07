@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -336,6 +337,71 @@ func TestNewFilterMatches(t *testing.T) {
 		{"a", true},
 	})
 	assert.False(t, f.InActive())
+}
+
+func TestFilterAddDirRuleOrFileRule(t *testing.T) {
+	for _, test := range []struct {
+		included bool
+		glob     string
+		want     string
+	}{
+		{
+			false,
+			"potato",
+			`--- File filter rules ---
+- (^|/)potato$
+--- Directory filter rules ---`,
+		},
+		{
+			true,
+			"potato",
+			`--- File filter rules ---
++ (^|/)potato$
+--- Directory filter rules ---
++ ^.*$`,
+		},
+		{
+			false,
+			"*",
+			`--- File filter rules ---
+- (^|/)[^/]*$
+--- Directory filter rules ---
+- ^.*$`,
+		},
+		{
+			true,
+			"*",
+			`--- File filter rules ---
++ (^|/)[^/]*$
+--- Directory filter rules ---
++ ^.*$`,
+		},
+		{
+			false,
+			".*{,/**}",
+			`--- File filter rules ---
+- (^|/)\.[^/]*(|/.*)$
+--- Directory filter rules ---
+- (^|/)\.[^/]*(|/.*)$`,
+		},
+		{
+			true,
+			"a/b/c/d",
+			`--- File filter rules ---
++ (^|/)a/b/c/d$
+--- Directory filter rules ---
++ (^|/)a/b/c/$
++ (^|/)a/b/$
++ (^|/)a/$`,
+		},
+	} {
+		f, err := NewFilter()
+		require.NoError(t, err)
+		err = f.Add(test.included, test.glob)
+		require.NoError(t, err)
+		got := f.DumpFilters()
+		assert.Equal(t, test.want, got, fmt.Sprintf("Add(%v, %q)", test.included, test.glob))
+	}
 }
 
 func TestFilterForEachLine(t *testing.T) {
