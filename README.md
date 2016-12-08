@@ -5,6 +5,7 @@
 [Contributing](CONTRIBUTING.md) |
 [Changelog](http://rclone.org/changelog/) |
 [Installation](http://rclone.org/install/) |
+[Forum](https://forum.rclone.org/)
 [G+](https://google.com/+RcloneOrg)
 
 
