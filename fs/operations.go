@@ -361,7 +361,7 @@ func Move(fdst Fs, dst Object, remote string, src Object) (err error) {
 		_, err := do.Move(src, remote)
 		switch err {
 		case nil:
-			Debug(src, "Moved")
+			Debug(src, "Moved (server side)")
 			return nil
 		case ErrorCantMove:
 			Debug(src, "Can't move, switching to copy")
