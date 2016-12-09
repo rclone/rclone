@@ -275,6 +275,13 @@ type UnWrapper interface {
 	UnWrap() Fs
 }
 
+// DirCacheFlusher is an optional interface for Fs
+type DirCacheFlusher interface {
+	// DirCacheFlush resets the directory cache - used in testing
+	// as an optional interface
+	DirCacheFlush()
+}
+
 // PutUncheckeder is an optional interface for Fs
 type PutUncheckeder interface {
 	// Put in to the remote path with the modTime given of the given size

@@ -635,6 +635,12 @@ func (f *Fs) Purge() error {
 	return f.purgeCheck("", false)
 }
 
+// DirCacheFlush resets the directory cache - used in testing as an
+// optional interface
+func (f *Fs) DirCacheFlush() {
+	f.dirCache.ResetRoot()
+}
+
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() fs.HashSet {
 	return fs.HashSet(fs.HashSHA1)
@@ -960,6 +966,7 @@ var (
 	_ fs.Copier = (*Fs)(nil)
 	// _ fs.Mover    = (*Fs)(nil)
 	// _ fs.DirMover = (*Fs)(nil)
-	_ fs.Object    = (*Object)(nil)
-	_ fs.MimeTyper = &Object{}
+	_ fs.DirCacheFlusher = (*Fs)(nil)
+	_ fs.Object          = (*Object)(nil)
+	_ fs.MimeTyper       = &Object{}
 )

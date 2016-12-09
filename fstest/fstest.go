@@ -175,6 +175,10 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 		sleep *= 2
 		t.Logf("Sleeping for %v for list eventual consistency: %d/%d", sleep, i, retries)
 		time.Sleep(sleep)
+		if do, ok := f.(fs.DirCacheFlusher); ok {
+			t.Logf("Flushing the directory cache")
+			do.DirCacheFlush()
+		}
 	}
 	for _, obj := range objs {
 		require.NotNil(t, obj)

@@ -799,6 +799,12 @@ func (f *Fs) DirMove(src fs.Fs) error {
 	return nil
 }
 
+// DirCacheFlush resets the directory cache - used in testing as an
+// optional interface
+func (f *Fs) DirCacheFlush() {
+	f.dirCache.ResetRoot()
+}
+
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() fs.HashSet {
 	return fs.HashSet(fs.HashMD5)
@@ -1079,12 +1085,13 @@ func (o *Object) MimeType() string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs             = (*Fs)(nil)
-	_ fs.Purger         = (*Fs)(nil)
-	_ fs.Copier         = (*Fs)(nil)
-	_ fs.Mover          = (*Fs)(nil)
-	_ fs.DirMover       = (*Fs)(nil)
-	_ fs.PutUncheckeder = (*Fs)(nil)
-	_ fs.Object         = (*Object)(nil)
-	_ fs.MimeTyper      = &Object{}
+	_ fs.Fs              = (*Fs)(nil)
+	_ fs.Purger          = (*Fs)(nil)
+	_ fs.Copier          = (*Fs)(nil)
+	_ fs.Mover           = (*Fs)(nil)
+	_ fs.DirMover        = (*Fs)(nil)
+	_ fs.DirCacheFlusher = (*Fs)(nil)
+	_ fs.PutUncheckeder  = (*Fs)(nil)
+	_ fs.Object          = (*Object)(nil)
+	_ fs.MimeTyper       = &Object{}
 )

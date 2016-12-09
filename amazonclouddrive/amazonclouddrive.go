@@ -636,6 +636,11 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	}
 	fs.Debug(src, "Attempting to move to %q", remote)
 	return srcObj.move(remote, false)
+
+// DirCacheFlush resets the directory cache - used in testing as an
+// optional interface
+func (f *Fs) DirCacheFlush() {
+	f.dirCache.ResetRoot()
 }
 
 // DirMove moves src directory to this remote using server side move
@@ -1122,8 +1127,9 @@ var (
 	_ fs.Fs     = (*Fs)(nil)
 	_ fs.Purger = (*Fs)(nil)
 	//	_ fs.Copier   = (*Fs)(nil)
-	_ fs.Mover     = (*Fs)(nil)
-	_ fs.DirMover  = (*Fs)(nil)
-	_ fs.Object    = (*Object)(nil)
-	_ fs.MimeTyper = &Object{}
+	_ fs.Mover           = (*Fs)(nil)
+	_ fs.DirMover        = (*Fs)(nil)
+	_ fs.DirCacheFlusher = (*Fs)(nil)
+	_ fs.Object          = (*Object)(nil)
+	_ fs.MimeTyper       = &Object{}
 )
