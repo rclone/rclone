@@ -771,10 +771,14 @@ func (f *Fs) DirMove(src fs.Fs) error {
 	}
 
 	// Check if destination exists
-	f.dirCache.ResetRoot()
-	err := f.dirCache.FindRoot(false)
-	if err == nil {
+	if f.dirCache.FoundRoot() {
 		return fs.ErrorDirExists
+	}
+
+	// Refuse to move to or from the root
+	if f.root == "" || srcFs.root == "" {
+		fs.Debug(src, "DirMove error: Can't move root")
+		return errors.New("can't move root directory")
 	}
 
 	// Find ID of parent
