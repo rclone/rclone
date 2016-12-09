@@ -6,8 +6,8 @@ os:
 - osx
 go:
 - 1.5.4
-- 1.6.3
-- 1.7.3
+- 1.6.4
+- 1.7.4
 install:
 - git fetch --unshallow --tags
 - make vars
@@ -23,5 +23,5 @@ deploy:
   script: make travis_beta
   on:
     branch: master
-    go: 1.7.3
+    go: 1.7.4
     condition: "`uname` == 'Linux'"
