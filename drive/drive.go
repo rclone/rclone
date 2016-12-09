@@ -735,6 +735,12 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		return nil, errors.New("can't move a Google document")
 	}
 
+	// create the destination directory if necessary
+	err := f.dirCache.FindRoot(true)
+	if err != nil {
+		return nil, err
+	}
+
 	// Temporary Object under construction
 	dstObj, dstInfo, err := f.createFileInfo(remote, srcObj.ModTime(), srcObj.bytes)
 	if err != nil {
