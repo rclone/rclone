@@ -917,14 +917,36 @@ func TestDecrypterRead(t *testing.T) {
 	c, err := newCipher(NameEncryptionStandard, "", "")
 	assert.NoError(t, err)
 
-	// Test truncating the header
-	for i := 1; i < blockHeaderSize; i++ {
-		cd := newCloseDetector(bytes.NewBuffer(file1[:len(file1)-i]))
+	// Test truncating the file at each possible point
+	for i := 0; i < len(file16)-1; i++ {
+		what := fmt.Sprintf("truncating to %d/%d", i, len(file16))
+		cd := newCloseDetector(bytes.NewBuffer(file16[:i]))
 		fh, err := c.newDecrypter(cd)
-		assert.NoError(t, err)
+		if i < fileHeaderSize {
+			assert.EqualError(t, err, ErrorEncryptedFileTooShort.Error(), what)
+			continue
+		}
+		if err != nil {
+			assert.NoError(t, err, what)
+			continue
+		}
 		_, err = ioutil.ReadAll(fh)
-		assert.Error(t, err, ErrorEncryptedFileBadHeader.Error())
-		assert.Equal(t, 0, cd.closed)
+		var expectedErr error
+		switch {
+		case i == fileHeaderSize:
+			// This would normally produce an error *except* on the first block
+			expectedErr = nil
+		case i <= fileHeaderSize+blockHeaderSize:
+			expectedErr = ErrorEncryptedFileBadHeader
+		default:
+			expectedErr = io.ErrUnexpectedEOF
+		}
+		if expectedErr != nil {
+			assert.EqualError(t, err, expectedErr.Error(), what)
+		} else {
+			assert.NoError(t, err, what)
+		}
+		assert.Equal(t, 0, cd.closed, what)
 	}
 
 	// Test producing an error on the file on Read the underlying file

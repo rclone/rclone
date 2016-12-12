@@ -579,6 +579,11 @@ func (fh *decrypter) fillBuffer() (err error) {
 	block := fh.buf
 	_, ok := secretbox.Open(block[:0], readBuf[:n], fh.nonce.pointer(), &fh.c.dataKey)
 	if !ok {
+		// if block wouldn't decode and got unexpected EOF
+		// then return that as it is probably a better error
+		if err != nil {
+			return err
+		}
 		return ErrorEncryptedBadBlock
 	}
 	fh.bufIndex = 0
