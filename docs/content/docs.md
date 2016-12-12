@@ -537,6 +537,20 @@ If it is safe in your environment, you can set the `RCLONE_CONFIG_PASS`
 environment variable to contain your password, in which case it will be
 used for decrypting the configuration.
 
+You can set this for a session from a script.  For unix like systems
+save this to a file called `set-rclone-password`:
+
+```
+#!/bin/echo Source this file don't run it
+
+read -s RCLONE_CONFIG_PASS
+export RCLONE_CONFIG_PASS
+```
+
+Then source the file when you want to use it.  From the shell you
+would do `source set-rclone-password`.  It will then ask you for the
+password and set it in the envonment variable.
+
 If you are running rclone inside a script, you might want to disable 
 password prompts. To do that, pass the parameter 
 `--ask-password=false` to rclone. This will make rclone fail instead
