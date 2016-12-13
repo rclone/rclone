@@ -58,6 +58,9 @@ var _ Retrier = wrappedRetryError{(error)(nil)}
 
 // RetryError makes an error which indicates it would like to be retried
 func RetryError(err error) error {
+	if err == nil {
+		err = errors.New("needs retry")
+	}
 	return wrappedRetryError{err}
 }
 
@@ -100,6 +103,9 @@ var _ Fataler = wrappedFatalError{(error)(nil)}
 // FatalError makes an error which indicates it is a fatal error and
 // the sync should stop.
 func FatalError(err error) error {
+	if err == nil {
+		err = errors.New("fatal error")
+	}
 	return wrappedFatalError{err}
 }
 
