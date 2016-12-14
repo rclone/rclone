@@ -27,17 +27,19 @@ type DirEntry struct {
 
 // Dir represents a directory entry
 type Dir struct {
-	f     fs.Fs
-	path  string
-	mu    sync.RWMutex // protects the following
-	read  time.Time    // time directory entry last read
-	items map[string]*DirEntry
+	f       fs.Fs
+	path    string
+	modTime time.Time
+	mu      sync.RWMutex // protects the following
+	read    time.Time    // time directory entry last read
+	items   map[string]*DirEntry
 }
 
-func newDir(f fs.Fs, path string) *Dir {
+func newDir(f fs.Fs, fsDir *fs.Dir) *Dir {
 	return &Dir{
-		f:    f,
-		path: path,
+		f:       f,
+		path:    fsDir.Name,
+		modTime: fsDir.When,
 	}
 }
 
@@ -154,6 +156,10 @@ func (d *Dir) Attr(ctx context.Context, a *fuse.Attr) error {
 	a.Gid = gid
 	a.Uid = uid
 	a.Mode = os.ModeDir | dirPerms
+	a.Atime = d.modTime
+	a.Mtime = d.modTime
+	a.Ctime = d.modTime
+	a.Crtime = d.modTime
 	// FIXME include Valid so get some caching? Also mtime
 	return nil
 }
@@ -172,7 +178,7 @@ func (d *Dir) lookupNode(leaf string) (item *DirEntry, err error) {
 	case fs.Object:
 		node, err = newFile(d, x), nil
 	case *fs.Dir:
-		node, err = newDir(d.f, x.Remote()), nil
+		node, err = newDir(d.f, x), nil
 	default:
 		err = errors.Errorf("unknown type %T", item)
 	}
@@ -275,7 +281,7 @@ func (d *Dir) Mkdir(ctx context.Context, req *fuse.MkdirRequest) (fusefs.Node, e
 		Name: path,
 		When: time.Now(),
 	}
-	dir := newDir(d.f, path)
+	dir := newDir(d.f, fsDir)
 	d.addObject(fsDir, dir)
 	fs.Debug(path, "Dir.Mkdir OK")
 	return dir, nil

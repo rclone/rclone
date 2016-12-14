@@ -5,6 +5,8 @@
 package mount
 
 import (
+	"time"
+
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
 	"github.com/ncw/rclone/fs"
@@ -22,7 +24,11 @@ var _ fusefs.FS = (*FS)(nil)
 // Root returns the root node
 func (f *FS) Root() (fusefs.Node, error) {
 	fs.Debug(f.f, "Root()")
-	return newDir(f.f, ""), nil
+	fsDir := &fs.Dir{
+		Name: "",
+		When: time.Now(),
+	}
+	return newDir(f.f, fsDir), nil
 }
 
 // mountOptions configures the options from the command line flags
