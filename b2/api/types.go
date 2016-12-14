@@ -154,6 +154,8 @@ type ListFileNamesRequest struct {
 	StartFileName string `json:"startFileName,omitempty"` // optional - The first file name to return. If there is a file with this name, it will be returned in the list. If not, the first file name after this the first one after this name.
 	MaxFileCount  int    `json:"maxFileCount,omitempty"`  // optional - The maximum number of files to return from this call. The default value is 100, and the maximum allowed is 1000.
 	StartFileID   string `json:"startFileId,omitempty"`   // optional - What to pass in to startFileId for the next search to continue where this one left off.
+	Prefix        string `json:"prefix,omitempty"`        // optional - Files returned will be limited to those with the given prefix. Defaults to the empty string, which matches all files.
+	Delimiter     string `json:"delimiter,omitempty"`     // Files returned will be limited to those within the top folder, or any one subfolder. Defaults to NULL. Folder names will also be returned. The delimiter character will be used to "break" file names into folders.
 }
 
 // ListFileNamesResponse is as received from b2_list_file_names or b2_list_file_versions

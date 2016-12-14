@@ -465,34 +465,6 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
-// sendDir works out given a lastDir and a remote which directories should be sent
-func sendDir(lastDir string, remote string, level int) (dirNames []string, newLastDir string) {
-	dir := path.Dir(remote)
-	if dir == "." {
-		// No slashes - nothing to do!
-		return nil, lastDir
-	}
-	if dir == lastDir {
-		// Still in same directory
-		return nil, lastDir
-	}
-	newLastDir = lastDir
-	for {
-		slashes := strings.Count(dir, "/")
-		if !strings.HasPrefix(lastDir, dir) && slashes < level {
-			dirNames = append([]string{dir}, dirNames...)
-		}
-		if newLastDir == lastDir {
-			newLastDir = dir
-		}
-		dir = path.Dir(dir)
-		if dir == "." {
-			break
-		}
-	}
-	return dirNames, newLastDir
-}
-
 // listFn is called from list to handle an object
 type listFn func(remote string, object *api.File, isDirectory bool) error
 
@@ -502,6 +474,8 @@ var errEndList = errors.New("end list")
 
 // list lists the objects into the function supplied from
 // the bucket and root supplied
+//
+// dir is the starting directory, "" for root
 //
 // level is the depth to search to
 //
@@ -517,6 +491,14 @@ func (f *Fs) list(dir string, level int, prefix string, limit int, hidden bool, 
 	if dir != "" {
 		root += dir + "/"
 	}
+	delimiter := ""
+	switch level {
+	case 1:
+		delimiter = "/"
+	case fs.MaxLevel:
+	default:
+		return fs.ErrorLevelNotSupported
+	}
 	bucketID, err := f.getBucketID()
 	if err != nil {
 		return err
@@ -528,6 +510,8 @@ func (f *Fs) list(dir string, level int, prefix string, limit int, hidden bool, 
 	var request = api.ListFileNamesRequest{
 		BucketID:     bucketID,
 		MaxFileCount: chunkSize,
+		Prefix:       root,
+		Delimiter:    delimiter,
 	}
 	prefix = root + prefix
 	if prefix != "" {
@@ -541,7 +525,6 @@ func (f *Fs) list(dir string, level int, prefix string, limit int, hidden bool, 
 	if hidden {
 		opts.Path = "/b2_list_file_versions"
 	}
-	lastDir := dir
 	for {
 		err := f.pacer.Call(func() (bool, error) {
 			resp, err := f.srv.CallJSON(&opts, &request, &response)
@@ -553,34 +536,26 @@ func (f *Fs) list(dir string, level int, prefix string, limit int, hidden bool, 
 		for i := range response.Files {
 			file := &response.Files[i]
 			// Finish if file name no longer has prefix
-			if !strings.HasPrefix(file.Name, prefix) {
+			if prefix != "" && !strings.HasPrefix(file.Name, prefix) {
 				return nil
 			}
-			remote := file.Name[len(f.root):]
-			slashes := strings.Count(remote, "/")
-
-			// Check if this file makes a new directories
-			var dirNames []string
-			dirNames, lastDir = sendDir(lastDir, remote, level)
-			for _, dirName := range dirNames {
-				err = fn(dirName, nil, true)
-				if err != nil {
-					if err == errEndList {
-						return nil
-					}
-					return err
-				}
+			if !strings.HasPrefix(file.Name, f.root) {
+				fs.Log(f, "Odd name received %q", file.Name)
+				continue
 			}
-
-			// Send the file
-			if slashes < level {
-				err = fn(remote, file, false)
-				if err != nil {
-					if err == errEndList {
-						return nil
-					}
-					return err
+			remote := file.Name[len(f.root):]
+			// Check for directory
+			isDirectory := level != 0 && strings.HasSuffix(remote, "/")
+			if isDirectory {
+				remote = remote[:len(remote)-1]
+			}
+			// Send object
+			err = fn(remote, file, isDirectory)
+			if err != nil {
+				if err == errEndList {
+					return nil
 				}
+				return err
 			}
 		}
 		// end if no NextFileName
