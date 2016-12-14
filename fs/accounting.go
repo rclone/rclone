@@ -278,22 +278,7 @@ type Account struct {
 
 // NewAccountSizeName makes a Account reader for an io.ReadCloser of
 // the given size and name
-//
-// If the file is above a certain size it adds an Async reader
 func NewAccountSizeName(in io.ReadCloser, size int64, name string) *Account {
-	// On big files add a buffer
-	if size > 10<<20 {
-		const memUsed = 16 * 1024 * 1024
-		const bufSize = 128 * 1024
-		const buffers = memUsed / bufSize
-		newIn, err := newAsyncReader(in, buffers, bufSize)
-		if err != nil {
-			ErrorLog(name, "Failed to make buffer: %v", err)
-		} else {
-			in = newIn
-		}
-	}
-
 	acc := &Account{
 		in:     in,
 		size:   size,
@@ -310,6 +295,47 @@ func NewAccountSizeName(in io.ReadCloser, size int64, name string) *Account {
 // NewAccount makes a Account reader for an object
 func NewAccount(in io.ReadCloser, obj Object) *Account {
 	return NewAccountSizeName(in, obj.Size(), obj.Remote())
+}
+
+// NewAccountSizeName makes a Account reader for an io.ReadCloser of
+// the given size and name
+//
+// If the file is above a certain size it adds an Async reader
+func NewAccountSizeNameWithBuffer(in io.ReadCloser, size int64, name string) *Account {
+	// On big files add a buffer
+	if size > 10<<20 {
+		const memUsed = 16 * 1024 * 1024
+		const bufSize = 128 * 1024
+		const buffers = memUsed / bufSize
+		newIn, err := newAsyncReader(in, buffers, bufSize)
+		if err != nil {
+			ErrorLog(name, "Failed to make buffer: %v", err)
+		} else {
+			in = newIn
+		}
+	}
+	return NewAccountSizeName(in, size, name)
+}
+
+// NewAccountWithBuffer makes a Account reader for an object
+//
+// If the file is above a certain size it adds an Async reader
+func NewAccountWithBuffer(in io.ReadCloser, obj Object) *Account {
+	return NewAccountSizeNameWithBuffer(in, obj.Size(), obj.Remote())
+}
+
+// GetReader returns the underlying io.ReadCloser
+func (acc *Account) GetReader() io.ReadCloser {
+	acc.mu.Lock()
+	defer acc.mu.Unlock()
+	return acc.in
+}
+
+// UpdateReader updates the underlying io.ReadCloser
+func (acc *Account) UpdateReader(in io.ReadCloser) {
+	acc.mu.Lock()
+	acc.in = in
+	acc.mu.Unlock()
 }
 
 // disableWholeFileAccounting turns off the whole file accounting

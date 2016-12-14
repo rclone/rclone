@@ -16,7 +16,7 @@ import (
 type ReadFileHandle struct {
 	mu         sync.Mutex
 	closed     bool // set if handle has been closed
-	r          io.ReadCloser
+	r          *fs.Account
 	o          fs.Object
 	readCalled bool // set if read has been called
 	offset     int64
@@ -29,7 +29,7 @@ func newReadFileHandle(o fs.Object) (*ReadFileHandle, error) {
 	}
 	fh := &ReadFileHandle{
 		o: o,
-		r: fs.NewAccount(r, o), // account and buffer the transfer
+		r: fs.NewAccount(r, o), // account the transfer
 	}
 	fs.Stats.Transferring(fh.o.Remote())
 	return fh, nil
@@ -46,7 +46,8 @@ var _ fusefs.HandleReader = (*ReadFileHandle)(nil)
 // Must be called with fh.mu held
 func (fh *ReadFileHandle) seek(offset int64) error {
 	// Can we seek it directly?
-	if do, ok := fh.r.(io.Seeker); ok {
+	oldReader := fh.r.GetReader()
+	if do, ok := oldReader.(io.Seeker); ok {
 		fs.Debug(fh.o, "ReadFileHandle.seek from %d to %d (io.Seeker)", fh.offset, offset)
 		_, err := do.Seek(offset, 0)
 		if err != nil {
@@ -61,11 +62,12 @@ func (fh *ReadFileHandle) seek(offset int64) error {
 			fs.Debug(fh.o, "ReadFileHandle.Read seek failed: %v", err)
 			return err
 		}
-		err = fh.r.Close()
+		err = oldReader.Close()
 		if err != nil {
 			fs.Debug(fh.o, "ReadFileHandle.Read seek close old failed: %v", err)
 		}
-		fh.r = fs.NewAccount(r, fh.o) // account and buffer the transfer
+		// fh.r = fs.NewAccount(r, fh.o) // account the transfer
+		fh.r.UpdateReader(r)
 	}
 	fh.offset = offset
 	return nil
