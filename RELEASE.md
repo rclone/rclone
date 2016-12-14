@@ -8,7 +8,6 @@ Required software for making a release
   * golint - go get github.com/golang/lint
 
 Making a release
-  * make update
   * make check
   * make test
   * make tag
@@ -22,3 +21,10 @@ Making a release
   * make upload_website
   * git push --tags origin master
   * make upload_github
+
+Early in the next release cycle update the vendored dependencies
+  * make update
+  * git status
+  * git add new files
+  * carry forward any patches to vendor stuff
+  * git commit -a -v
