@@ -108,7 +108,7 @@ operations more efficient.
 | Openstack Swift        | Yes † | Yes  | No   | No      | No      |
 | Dropbox                | Yes   | Yes  | Yes  | Yes     | No  [#575](https://github.com/ncw/rclone/issues/575) |
 | Google Cloud Storage   | Yes   | Yes  | No   | No      | No      |
-| Amazon Drive           | Yes   | No   | No [#721](https://github.com/ncw/rclone/issues/721) | No [#721](https://github.com/ncw/rclone/issues/721)    | No [#575](https://github.com/ncw/rclone/issues/575) |
+| Amazon Drive           | Yes   | No   | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) |
 | Microsoft One Drive    | Yes   | Yes  | No [#197](https://github.com/ncw/rclone/issues/197) | No [#197](https://github.com/ncw/rclone/issues/197)    | No [#575](https://github.com/ncw/rclone/issues/575) |
 | Hubic                  | Yes † | Yes  | No   | No      | No      |
 | Backblaze B2           | No    | No   | No   | No      | Yes     |
