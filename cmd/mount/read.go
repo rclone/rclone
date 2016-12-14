@@ -20,6 +20,7 @@ type ReadFileHandle struct {
 	o          fs.Object
 	readCalled bool // set if read has been called
 	offset     int64
+	retries    int // number of times we have retried
 }
 
 func newReadFileHandle(o fs.Object) (*ReadFileHandle, error) {
@@ -82,39 +83,56 @@ func (fh *ReadFileHandle) Read(ctx context.Context, req *fuse.ReadRequest, resp 
 		fs.ErrorLog(fh.o, "ReadFileHandle.Read error: %v", errClosedFileHandle)
 		return errClosedFileHandle
 	}
-	if req.Offset != fh.offset {
-		// Are we attempting to seek beyond the end of the
-		// file - if so just return EOF leaving the underlying
-		// file in an unchanged state.
-		if req.Offset >= fh.o.Size() {
-			fs.Debug(fh.o, "ReadFileHandle.Read attempt to read beyond end of file: %d > %d", req.Offset, fh.o.Size())
-			resp.Data = nil
-			return nil
+	doSeek := req.Offset != fh.offset
+	var err error
+	var n int
+	var newOffset int64
+	buf := make([]byte, req.Size)
+	for {
+		if doSeek {
+			// Are we attempting to seek beyond the end of the
+			// file - if so just return EOF leaving the underlying
+			// file in an unchanged state.
+			if req.Offset >= fh.o.Size() {
+				fs.Debug(fh.o, "ReadFileHandle.Read attempt to read beyond end of file: %d > %d", req.Offset, fh.o.Size())
+				resp.Data = nil
+				return nil
+			}
+			err := fh.seek(req.Offset)
+			if err != nil {
+				return err
+			}
 		}
-		err := fh.seek(req.Offset)
-		if err != nil {
+		if req.Size > 0 {
+			fh.readCalled = true
+		}
+		// One exception to the above is if we fail to fully populate a
+		// page cache page; a read into page cache is always page aligned.
+		// Make sure we never serve a partial read, to avoid that.
+		n, err = io.ReadFull(fh.r, buf)
+		newOffset = fh.offset + int64(n)
+		// if err == nil && rand.Intn(10) == 0 {
+		// 	err = errors.New("random error")
+		// }
+		if err == nil {
+			break
+		} else if (err == io.ErrUnexpectedEOF || err == io.EOF) && newOffset == fh.o.Size() {
+			// Read to end of file
+			break
+		}
+		if fh.retries >= fs.Config.LowLevelRetries {
+			fs.ErrorLog(fh.o, "ReadFileHandle.Read error: %v", err)
 			return err
 		}
+		fh.retries++
+		fs.ErrorLog(fh.o, "ReadFileHandle.Read error: low level retry %d/%d: %v", fh.retries, fs.Config.LowLevelRetries, err)
+		doSeek = true
 	}
-	if req.Size > 0 {
-		fh.readCalled = true
-	}
-	// One exception to the above is if we fail to fully populate a
-	// page cache page; a read into page cache is always page aligned.
-	// Make sure we never serve a partial read, to avoid that.
-	buf := make([]byte, req.Size)
-	n, err := io.ReadFull(fh.r, buf)
-	if err == io.ErrUnexpectedEOF || err == io.EOF {
-		err = nil
-	}
+	fh.retries = 0 // reset retries
 	resp.Data = buf[:n]
-	fh.offset += int64(n)
-	if err != nil {
-		fs.ErrorLog(fh.o, "ReadFileHandle.Read error: %v", err)
-	} else {
-		fs.Debug(fh.o, "ReadFileHandle.Read OK")
-	}
-	return err
+	fh.offset = newOffset
+	fs.Debug(fh.o, "ReadFileHandle.Read OK")
+	return nil
 }
 
 // close the file handle returning errClosedFileHandle if it has been
