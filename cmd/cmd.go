@@ -224,10 +224,22 @@ func NewFsDst(args []string) fs.Fs {
 	return fdst
 }
 
+// ShowStats returns true if the user added a `--stats` flag to the command line.
+//
+// This is called by Run to override the default value of the
+// showStats passed in.
+func ShowStats() bool {
+	statsIntervalFlag := pflag.Lookup("stats")
+	return statsIntervalFlag != nil && statsIntervalFlag.Changed
+}
+
 // Run the function with stats and retries if required
 func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	var err error
 	var stopStats chan struct{}
+	if !showStats && ShowStats() {
+		showStats = true
+	}
 	if showStats {
 		stopStats = StartStats()
 	}

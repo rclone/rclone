@@ -390,11 +390,17 @@ modification times in the same way as rclone.
 
 ### --stats=TIME ###
 
-Rclone will print stats at regular intervals to show its progress.
+Commands which transfer data (`sync`, `copy`, `copyto`, `move`,
+`moveto`) will print data transfer stats at regular intervals to show
+their progress.
 
 This sets the interval.
 
 The default is `1m`. Use 0 to disable.
+
+If you set the stats interval then all command can show stats.  This
+can be useful when running other commands, `check` or `mount` for
+example.
 
 ### --stats-unit=bits|bytes ###
 
