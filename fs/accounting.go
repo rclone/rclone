@@ -297,7 +297,7 @@ func NewAccount(in io.ReadCloser, obj Object) *Account {
 	return NewAccountSizeName(in, obj.Size(), obj.Remote())
 }
 
-// NewAccountSizeName makes a Account reader for an io.ReadCloser of
+// NewAccountSizeNameWithBuffer makes a Account reader for an io.ReadCloser of
 // the given size and name
 //
 // If the file is above a certain size it adds an Async reader
