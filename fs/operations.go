@@ -109,13 +109,17 @@ func CheckHashes(src, dst Object) (equal bool, hash HashType, err error) {
 // Otherwise the file is considered to be not equal including if there
 // were errors reading info.
 func Equal(src, dst Object) bool {
+	return equal(src, dst, Config.SizeOnly, Config.CheckSum)
+}
+
+func equal(src, dst Object, sizeOnly, checkSum bool) bool {
 	if !Config.IgnoreSize {
 		if src.Size() != dst.Size() {
 			Debug(src, "Sizes differ")
 			return false
 		}
 	}
-	if Config.SizeOnly {
+	if sizeOnly {
 		Debug(src, "Sizes identical")
 		return true
 	}
@@ -123,7 +127,7 @@ func Equal(src, dst Object) bool {
 	// Assert: Size is equal or being ignored
 
 	// If checking checksum and not modtime
-	if Config.CheckSum {
+	if checkSum {
 		// Check the hash
 		same, hash, _ := CheckHashes(src, dst)
 		if !same {

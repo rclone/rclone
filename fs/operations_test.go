@@ -168,6 +168,19 @@ func NewRun(t *testing.T) *Run {
 	return r
 }
 
+// Rename a file in local
+func (r *Run) RenameFile(item fstest.Item, newpath string) fstest.Item {
+	oldFilepath := path.Join(r.localName, item.Path)
+	newFilepath := path.Join(r.localName, newpath)
+	if err := os.Rename(oldFilepath, newFilepath); err != nil {
+		r.Fatalf("Failed to rename file from %q to %q: %v", item.Path, newpath, err)
+	}
+
+	item.Path = newpath
+
+	return item
+}
+
 // Write a file to local
 func (r *Run) WriteFile(filePath, content string, t time.Time) fstest.Item {
 	item := fstest.NewItem(filePath, content, t)

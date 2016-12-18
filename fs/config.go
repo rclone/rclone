@@ -82,6 +82,7 @@ var (
 	deleteBefore    = pflag.BoolP("delete-before", "", false, "When synchronizing, delete files on destination before transfering")
 	deleteDuring    = pflag.BoolP("delete-during", "", false, "When synchronizing, delete files during transfer (default)")
 	deleteAfter     = pflag.BoolP("delete-after", "", false, "When synchronizing, delete files on destination after transfering")
+	trackRenames    = pflag.BoolP("track-renames", "", false, "When synchronizing, track file renames and do a server side move if possible")
 	lowLevelRetries = pflag.IntP("low-level-retries", "", 10, "Number of low level retries to do.")
 	updateOlder     = pflag.BoolP("update", "u", false, "Skip files that are newer on the destination.")
 	noGzip          = pflag.BoolP("no-gzip-encoding", "", false, "Don't set Accept-Encoding: gzip.")
@@ -294,6 +295,7 @@ type ConfigInfo struct {
 	DeleteBefore       bool // Delete before checking
 	DeleteDuring       bool // Delete during checking/transfer
 	DeleteAfter        bool // Delete after successful transfer.
+	TrackRenames       bool // Track file renames.
 	LowLevelRetries    int
 	UpdateOlder        bool // Skip files that are newer on the destination
 	NoGzip             bool // Disable compression
@@ -359,6 +361,8 @@ func LoadConfig() {
 	Config.DeleteBefore = *deleteBefore
 	Config.DeleteDuring = *deleteDuring
 	Config.DeleteAfter = *deleteAfter
+
+	Config.TrackRenames = *trackRenames
 
 	switch {
 	case *deleteBefore && (*deleteDuring || *deleteAfter),
