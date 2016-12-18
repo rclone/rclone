@@ -597,6 +597,36 @@ func TestSyncWithUpdateOlder(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, oneO, twoF, threeO, fourF, fiveF)
 }
 
+// Test with TrackRenames set
+func TestSyncWithTrackRenames(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+
+	fs.Config.TrackRenames = true
+	defer func() {
+		fs.Config.TrackRenames = false
+
+	}()
+
+	f1 := r.WriteFile("potato", "Potato Content", t1)
+	f2 := r.WriteFile("yam", "Yam Content", t2)
+
+	fs.Stats.ResetCounters()
+	require.NoError(t, fs.Sync(r.fremote, r.flocal))
+
+	fstest.CheckItems(t, r.fremote, f1, f2)
+	fstest.CheckItems(t, r.flocal, f1, f2)
+
+	// Now rename locally.
+	f2 = r.RenameFile(f2, "yaml")
+
+	fs.Stats.ResetCounters()
+	require.NoError(t, fs.Sync(r.fremote, r.flocal))
+
+	fstest.CheckItems(t, r.fremote, f1, f2)
+
+}
+
 // Test a server side move if possible, or the backup path if not
 func testServerSideMove(t *testing.T, r *Run, fremoteMove fs.Fs, withFilter bool) {
 	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
