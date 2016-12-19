@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"strings"
 	"sync"
 
 	"github.com/ncw/rclone/fs"
@@ -71,6 +72,9 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 		return nil, errors.Wrap(err, "failed to make cipher")
 	}
 	remote := fs.ConfigFile.MustValue(name, "remote")
+	if strings.HasPrefix(remote, name+":") {
+		return nil, errors.New("can't point crypt remote at itself - check the value of the remote setting")
+	}
 	// Look for a file first
 	remotePath := path.Join(remote, cipher.EncryptFileName(rpath))
 	wrappedFs, err := fs.NewFs(remotePath)
