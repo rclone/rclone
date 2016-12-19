@@ -99,9 +99,12 @@ func putToken(name string, token *oauth2.Token) error {
 	tokenString := string(tokenBytes)
 	old := fs.ConfigFile.MustValue(name, fs.ConfigToken)
 	if tokenString != old {
-		fs.ConfigFile.SetValue(name, fs.ConfigToken, tokenString)
-		fs.SaveConfig()
-		fs.Debug(name, "Saving new token in config file")
+		err = fs.ConfigSetValueAndSave(name, fs.ConfigToken, tokenString)
+		if err != nil {
+			fs.ErrorLog(nil, "Failed to save new token in config file: %v", err)
+		} else {
+			fs.Debug(name, "Saved new token in config file")
+		}
 	}
 	return nil
 }

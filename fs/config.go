@@ -377,8 +377,11 @@ func LoadConfig() {
 	// Load configuration file.
 	var err error
 	ConfigFile, err = loadConfigFile()
-	if err != nil {
-		log.Fatalf("Failed to config file \"%s\": %v", ConfigPath, err)
+	if err == errorConfigFileNotFound {
+		Log(nil, "Config file %q not found - using defaults", ConfigPath)
+		ConfigFile, _ = goconfig.LoadFromReader(&bytes.Buffer{})
+	} else if err != nil {
+		log.Fatalf("Failed to load config file %q: %v", ConfigPath, err)
 	}
 
 	// Load filters
@@ -391,13 +394,17 @@ func LoadConfig() {
 	startTokenBucket()
 }
 
+var errorConfigFileNotFound = errors.New("config file not found")
+
 // loadConfigFile will load a config file, and
 // automatically decrypt it.
 func loadConfigFile() (*goconfig.ConfigFile, error) {
 	b, err := ioutil.ReadFile(ConfigPath)
 	if err != nil {
-		Log(nil, "Failed to load config file \"%v\" - using defaults: %v", ConfigPath, err)
-		return goconfig.LoadFromReader(&bytes.Buffer{})
+		if os.IsNotExist(err) {
+			return nil, errorConfigFileNotFound
+		}
+		return nil, err
 	}
 
 	// Find first non-empty line
@@ -620,6 +627,34 @@ func SaveConfig() {
 	if err != nil {
 		ErrorLog(nil, "Failed to set permissions on config file: %v", err)
 	}
+}
+
+// ConfigSetValueAndSave sets the key to the value and saves just that
+// value in the config file.  It loads the old config file in from
+// disk first and overwrites the given value only.
+func ConfigSetValueAndSave(name, key, value string) (err error) {
+	// Set the value in config in case we fail to reload it
+	ConfigFile.SetValue(name, key, value)
+	// Reload the config file
+	reloadedConfigFile, err := loadConfigFile()
+	if err == errorConfigFileNotFound {
+		// Config file not written yet so ignore reload
+		return nil
+	} else if err != nil {
+		return err
+	}
+	_, err = reloadedConfigFile.GetSection(name)
+	if err != nil {
+		// Section doesn't exist yet so ignore reload
+		return err
+	}
+	// Update the config file with the reloaded version
+	ConfigFile = reloadedConfigFile
+	// Set the value in the reloaded version
+	reloadedConfigFile.SetValue(name, key, value)
+	// Save it again
+	SaveConfig()
+	return nil
 }
 
 // ShowRemotes shows an overview of the config file
