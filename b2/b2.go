@@ -229,15 +229,15 @@ func NewFs(name, root string) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	account := fs.ConfigFile.MustValue(name, "account")
+	account := fs.ConfigFileGet(name, "account")
 	if account == "" {
 		return nil, errors.New("account not found")
 	}
-	key := fs.ConfigFile.MustValue(name, "key")
+	key := fs.ConfigFileGet(name, "key")
 	if key == "" {
 		return nil, errors.New("key not found")
 	}
-	endpoint := fs.ConfigFile.MustValue(name, "endpoint", defaultEndpoint)
+	endpoint := fs.ConfigFileGet(name, "endpoint", defaultEndpoint)
 	f := &Fs{
 		name:         name,
 		bucket:       bucket,

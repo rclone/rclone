@@ -29,7 +29,7 @@ When uses with the -l flag it lists the types too.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
-		remotes := fs.ConfigFile.GetSectionList()
+		remotes := fs.ConfigFileSections()
 		sort.Strings(remotes)
 		maxlen := 1
 		for _, remote := range remotes {
@@ -39,7 +39,7 @@ When uses with the -l flag it lists the types too.
 		}
 		for _, remote := range remotes {
 			if listLong {
-				remoteType := fs.ConfigFile.MustValue(remote, "type", "UNKNOWN")
+				remoteType := fs.ConfigFileGet(remote, "type", "UNKNOWN")
 				fmt.Printf("%-*s %s\n", maxlen+1, remote+":", remoteType)
 			} else {
 				fmt.Printf("%s:\n", remote)

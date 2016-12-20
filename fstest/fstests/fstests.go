@@ -71,7 +71,7 @@ func TestInit(t *testing.T) {
 	fs.LoadConfig()
 	// Set extra config if supplied
 	for _, item := range ExtraConfig {
-		fs.ConfigFile.SetValue(item.Name, item.Key, item.Value)
+		fs.ConfigFileSet(item.Name, item.Key, item.Value)
 	}
 	fs.Config.Verbose = *verbose
 	fs.Config.Quiet = !*verbose

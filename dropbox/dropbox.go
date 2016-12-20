@@ -63,7 +63,7 @@ func init() {
 // Configuration helper - called after the user has put in the defaults
 func configHelper(name string) {
 	// See if already have a token
-	token := fs.ConfigFile.MustValue(name, "token")
+	token := fs.ConfigFileGet(name, "token")
 	if token != "" {
 		fmt.Printf("Already have a dropbox token - refresh?\n")
 		if !fs.Confirm() {
@@ -86,9 +86,9 @@ func configHelper(name string) {
 	token = db.AccessToken()
 
 	// Stuff it in the config file if it has changed
-	old := fs.ConfigFile.MustValue(name, "token")
+	old := fs.ConfigFileGet(name, "token")
 	if token != old {
-		fs.ConfigFile.SetValue(name, "token", token)
+		fs.ConfigFileSet(name, "token", token)
 		fs.SaveConfig()
 	}
 }
@@ -133,11 +133,11 @@ func (f *Fs) String() string {
 func newDropbox(name string) (*dropbox.Dropbox, error) {
 	db := dropbox.NewDropbox()
 
-	appKey := fs.ConfigFile.MustValue(name, "app_key")
+	appKey := fs.ConfigFileGet(name, "app_key")
 	if appKey == "" {
 		appKey = rcloneAppKey
 	}
-	appSecret := fs.ConfigFile.MustValue(name, "app_secret")
+	appSecret := fs.ConfigFileGet(name, "app_secret")
 	if appSecret == "" {
 		appSecret = fs.MustReveal(rcloneEncryptedAppSecret)
 	}
@@ -162,7 +162,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	f.setRoot(root)
 
 	// Read the token from the config file
-	token := fs.ConfigFile.MustValue(name, "token")
+	token := fs.ConfigFileGet(name, "token")
 
 	// Set our custom context which enables our custom transport for timeouts etc
 	db.SetContext(oauthutil.Context())

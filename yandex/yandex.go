@@ -101,7 +101,7 @@ func (f *Fs) String() string {
 // read access token from ConfigFile string
 func getAccessToken(name string) (*oauth2.Token, error) {
 	// Read the token from the config file
-	tokenConfig := fs.ConfigFile.MustValue(name, "token")
+	tokenConfig := fs.ConfigFileGet(name, "token")
 	//Get access token from config string
 	decoder := json.NewDecoder(strings.NewReader(tokenConfig))
 	var result *oauth2.Token

@@ -54,15 +54,12 @@ type oldToken struct {
 // getToken returns the token saved in the config file under
 // section name.
 func getToken(name string) (*oauth2.Token, error) {
-	tokenString, err := fs.ConfigFile.GetValue(string(name), fs.ConfigToken)
-	if err != nil {
-		return nil, err
-	}
+	tokenString := fs.ConfigFileGet(name, fs.ConfigToken)
 	if tokenString == "" {
 		return nil, errors.New("empty token found - please run rclone config again")
 	}
 	token := new(oauth2.Token)
-	err = json.Unmarshal([]byte(tokenString), token)
+	err := json.Unmarshal([]byte(tokenString), token)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +94,7 @@ func putToken(name string, token *oauth2.Token) error {
 		return err
 	}
 	tokenString := string(tokenBytes)
-	old := fs.ConfigFile.MustValue(name, fs.ConfigToken)
+	old := fs.ConfigFileGet(name, fs.ConfigToken)
 	if tokenString != old {
 		err = fs.ConfigSetValueAndSave(name, fs.ConfigToken, tokenString)
 		if err != nil {
@@ -199,12 +196,12 @@ func Context() context.Context {
 // If any value is overridden, true is returned.
 func overrideCredentials(name string, config *oauth2.Config) bool {
 	changed := false
-	ClientID := fs.ConfigFile.MustValue(name, fs.ConfigClientID)
+	ClientID := fs.ConfigFileGet(name, fs.ConfigClientID)
 	if ClientID != "" {
 		config.ClientID = ClientID
 		changed = true
 	}
-	ClientSecret := fs.ConfigFile.MustValue(name, fs.ConfigClientSecret)
+	ClientSecret := fs.ConfigFileGet(name, fs.ConfigClientSecret)
 	if ClientSecret != "" {
 		config.ClientSecret = ClientSecret
 		changed = true
@@ -241,10 +238,10 @@ func NewClient(name string, config *oauth2.Config) (*http.Client, *TokenSource, 
 // It may run an internal webserver to receive the results
 func Config(id, name string, config *oauth2.Config) error {
 	changed := overrideCredentials(name, config)
-	automatic := fs.ConfigFile.MustValue(name, fs.ConfigAutomatic) != ""
+	automatic := fs.ConfigFileGet(name, fs.ConfigAutomatic) != ""
 
 	// See if already have a token
-	tokenString := fs.ConfigFile.MustValue(name, "token")
+	tokenString := fs.ConfigFileGet(name, "token")
 	if tokenString != "" {
 		fmt.Printf("Already have a token - refresh?\n")
 		if !fs.Confirm() {

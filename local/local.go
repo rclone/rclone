@@ -70,7 +70,7 @@ type Object struct {
 func NewFs(name, root string) (fs.Fs, error) {
 	var err error
 
-	nounc, _ := fs.ConfigFile.GetValue(name, "nounc")
+	nounc := fs.ConfigFileGet(name, "nounc")
 	f := &Fs{
 		name:   name,
 		warned: make(map[string]struct{}),

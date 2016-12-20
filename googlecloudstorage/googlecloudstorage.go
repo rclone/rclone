@@ -62,7 +62,7 @@ func init() {
 		Description: "Google Cloud Storage (this is not Google Drive)",
 		NewFs:       NewFs,
 		Config: func(name string) {
-			if fs.ConfigFile.MustValue(name, "service_account_file") != "" {
+			if fs.ConfigFileGet(name, "service_account_file") != "" {
 				return
 			}
 			err := oauthutil.Config("google cloud storage", name, storageConfig)
@@ -208,7 +208,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	var oAuthClient *http.Client
 	var err error
 
-	serviceAccountPath := fs.ConfigFile.MustValue(name, "service_account_file")
+	serviceAccountPath := fs.ConfigFileGet(name, "service_account_file")
 	if serviceAccountPath != "" {
 		oAuthClient, err = getServiceAccountClient(serviceAccountPath)
 		if err != nil {
@@ -230,9 +230,9 @@ func NewFs(name, root string) (fs.Fs, error) {
 		name:          name,
 		bucket:        bucket,
 		root:          directory,
-		projectNumber: fs.ConfigFile.MustValue(name, "project_number"),
-		objectACL:     fs.ConfigFile.MustValue(name, "object_acl"),
-		bucketACL:     fs.ConfigFile.MustValue(name, "bucket_acl"),
+		projectNumber: fs.ConfigFileGet(name, "project_number"),
+		objectACL:     fs.ConfigFileGet(name, "object_acl"),
+		bucketACL:     fs.ConfigFileGet(name, "bucket_acl"),
 	}
 	if f.objectACL == "" {
 		f.objectACL = "private"

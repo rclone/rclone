@@ -283,8 +283,8 @@ func s3ParsePath(path string) (bucket, directory string, err error) {
 func s3Connection(name string) (*s3.S3, *session.Session, error) {
 	// Make the auth
 	v := credentials.Value{
-		AccessKeyID:     fs.ConfigFile.MustValue(name, "access_key_id"),
-		SecretAccessKey: fs.ConfigFile.MustValue(name, "secret_access_key"),
+		AccessKeyID:     fs.ConfigFileGet(name, "access_key_id"),
+		SecretAccessKey: fs.ConfigFileGet(name, "secret_access_key"),
 	}
 
 	// first provider to supply a credential set "wins"
@@ -307,7 +307,7 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 	cred := credentials.NewChainCredentials(providers)
 
 	switch {
-	case fs.ConfigFile.MustBool(name, "env_auth", false):
+	case fs.ConfigFileGetBool(name, "env_auth", false):
 		// No need for empty checks if "env_auth" is true
 	case v.AccessKeyID == "" && v.SecretAccessKey == "":
 		// if no access key/secret and iam is explicitly disabled then fall back to anon interaction
@@ -318,8 +318,8 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 		return nil, nil, errors.New("secret_access_key not found")
 	}
 
-	endpoint := fs.ConfigFile.MustValue(name, "endpoint")
-	region := fs.ConfigFile.MustValue(name, "region")
+	endpoint := fs.ConfigFileGet(name, "endpoint")
+	region := fs.ConfigFileGet(name, "region")
 	if region == "" && endpoint == "" {
 		endpoint = "https://s3.amazonaws.com/"
 	}
@@ -367,11 +367,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 		c:                  c,
 		bucket:             bucket,
 		ses:                ses,
-		acl:                fs.ConfigFile.MustValue(name, "acl"),
+		acl:                fs.ConfigFileGet(name, "acl"),
 		root:               directory,
-		locationConstraint: fs.ConfigFile.MustValue(name, "location_constraint"),
-		sse:                fs.ConfigFile.MustValue(name, "server_side_encryption"),
-		storageClass:       fs.ConfigFile.MustValue(name, "storage_class"),
+		locationConstraint: fs.ConfigFileGet(name, "location_constraint"),
+		sse:                fs.ConfigFileGet(name, "server_side_encryption"),
+		storageClass:       fs.ConfigFileGet(name, "storage_class"),
 	}
 	if *s3ACL != "" {
 		f.acl = *s3ACL

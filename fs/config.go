@@ -17,6 +17,7 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -47,8 +48,8 @@ const (
 
 // Global
 var (
-	// ConfigFile is the config file data structure
-	ConfigFile *goconfig.ConfigFile
+	// configData is the config file data structure
+	configData *goconfig.ConfigFile
 	// HomeDir is the home directory of the user
 	HomeDir = configHome()
 	// ConfigPath points to the config file
@@ -284,10 +285,10 @@ func LoadConfig() {
 
 	// Load configuration file.
 	var err error
-	ConfigFile, err = loadConfigFile()
+	configData, err = loadConfigFile()
 	if err == errorConfigFileNotFound {
 		Log(nil, "Config file %q not found - using defaults", ConfigPath)
-		ConfigFile, _ = goconfig.LoadFromReader(&bytes.Buffer{})
+		configData, _ = goconfig.LoadFromReader(&bytes.Buffer{})
 	} else if err != nil {
 		log.Fatalf("Failed to load config file %q: %v", ConfigPath, err)
 	}
@@ -483,7 +484,7 @@ func changeConfigPassword() {
 // if configKey has been set, the file will be encrypted.
 func SaveConfig() {
 	if len(configKey) == 0 {
-		err := goconfig.SaveConfigFile(ConfigFile, ConfigPath)
+		err := goconfig.SaveConfigFile(configData, ConfigPath)
 		if err != nil {
 			log.Fatalf("Failed to save config file: %v", err)
 		}
@@ -494,7 +495,7 @@ func SaveConfig() {
 		return
 	}
 	var buf bytes.Buffer
-	err := goconfig.SaveConfigData(ConfigFile, &buf)
+	err := goconfig.SaveConfigData(configData, &buf)
 	if err != nil {
 		log.Fatalf("Failed to save config file: %v", err)
 	}
@@ -545,7 +546,7 @@ func SaveConfig() {
 // disk first and overwrites the given value only.
 func ConfigSetValueAndSave(name, key, value string) (err error) {
 	// Set the value in config in case we fail to reload it
-	ConfigFile.SetValue(name, key, value)
+	configData.SetValue(name, key, value)
 	// Reload the config file
 	reloadedConfigFile, err := loadConfigFile()
 	if err == errorConfigFileNotFound {
@@ -560,7 +561,7 @@ func ConfigSetValueAndSave(name, key, value string) (err error) {
 		return err
 	}
 	// Update the config file with the reloaded version
-	ConfigFile = reloadedConfigFile
+	configData = reloadedConfigFile
 	// Set the value in the reloaded version
 	reloadedConfigFile.SetValue(name, key, value)
 	// Save it again
@@ -570,7 +571,7 @@ func ConfigSetValueAndSave(name, key, value string) (err error) {
 
 // ShowRemotes shows an overview of the config file
 func ShowRemotes() {
-	remotes := ConfigFile.GetSectionList()
+	remotes := configData.GetSectionList()
 	if len(remotes) == 0 {
 		return
 	}
@@ -578,13 +579,13 @@ func ShowRemotes() {
 	fmt.Printf("%-20s %s\n", "Name", "Type")
 	fmt.Printf("%-20s %s\n", "====", "====")
 	for _, remote := range remotes {
-		fmt.Printf("%-20s %s\n", remote, ConfigFile.MustValue(remote, "type"))
+		fmt.Printf("%-20s %s\n", remote, ConfigFileGet(remote, "type"))
 	}
 }
 
 // ChooseRemote chooses a remote name
 func ChooseRemote() string {
-	remotes := ConfigFile.GetSectionList()
+	remotes := configData.GetSectionList()
 	sort.Strings(remotes)
 	return Choose("remote", remotes, nil, false)
 }
@@ -703,7 +704,7 @@ func ShowRemote(name string) {
 	fmt.Printf("--------------------\n")
 	fmt.Printf("[%s]\n", name)
 	fs := MustFindByName(name)
-	for _, key := range ConfigFile.GetKeyList(name) {
+	for _, key := range configData.GetKeyList(name) {
 		isPassword := false
 		for _, option := range fs.Options {
 			if option.Name == key && option.IsPassword {
@@ -711,7 +712,7 @@ func ShowRemote(name string) {
 				break
 			}
 		}
-		value := ConfigFile.MustValue(name, key)
+		value := ConfigFileGet(name, key)
 		if isPassword && value != "" {
 			fmt.Printf("%s = *** ENCRYPTED ***\n", key)
 		} else {
@@ -730,7 +731,7 @@ func OkRemote(name string) bool {
 	case 'e':
 		return false
 	case 'd':
-		ConfigFile.DeleteSection(name)
+		configData.DeleteSection(name)
 		return true
 	default:
 		ErrorLog(nil, "Bad choice %c", i)
@@ -741,7 +742,7 @@ func OkRemote(name string) bool {
 // MustFindByName finds the RegInfo for the remote name passed in or
 // exits with a fatal error.
 func MustFindByName(name string) *RegInfo {
-	fsType := ConfigFile.MustValue(name, "type")
+	fsType := ConfigFileGet(name, "type")
 	if fsType == "" {
 		log.Fatalf("Couldn't find type of fs for %q", name)
 	}
@@ -829,10 +830,10 @@ func fsOption() *Option {
 // NewRemote make a new remote from its name
 func NewRemote(name string) {
 	newType := ChooseOption(fsOption())
-	ConfigFile.SetValue(name, "type", newType)
+	configData.SetValue(name, "type", newType)
 	fs := MustFind(newType)
 	for _, option := range fs.Options {
-		ConfigFile.SetValue(name, option.Name, ChooseOption(&option))
+		configData.SetValue(name, option.Name, ChooseOption(&option))
 	}
 	RemoteConfig(name)
 	if OkRemote(name) {
@@ -849,12 +850,12 @@ func EditRemote(fs *RegInfo, name string) {
 	for {
 		for _, option := range fs.Options {
 			key := option.Name
-			value := ConfigFile.MustValue(name, key)
+			value := ConfigFileGet(name, key)
 			fmt.Printf("Value %q = %q\n", key, value)
 			fmt.Printf("Edit? (y/n)>\n")
 			if Confirm() {
 				newValue := ChooseOption(&option)
-				ConfigFile.SetValue(name, key, newValue)
+				configData.SetValue(name, key, newValue)
 			}
 		}
 		RemoteConfig(name)
@@ -867,14 +868,14 @@ func EditRemote(fs *RegInfo, name string) {
 
 // DeleteRemote gets the user to delete a remote
 func DeleteRemote(name string) {
-	ConfigFile.DeleteSection(name)
+	configData.DeleteSection(name)
 	SaveConfig()
 }
 
 // EditConfig edits the config file interactively
 func EditConfig() {
 	for {
-		haveRemotes := len(ConfigFile.GetSectionList()) != 0
+		haveRemotes := len(configData.GetSectionList()) != 0
 		what := []string{"eEdit existing remote", "nNew remote", "dDelete remote", "sSet configuration password", "qQuit config"}
 		if haveRemotes {
 			fmt.Printf("Current remotes:\n\n")
@@ -981,10 +982,87 @@ func Authorize(args []string) {
 	defer DeleteRemote(name)
 
 	// Indicate that we want fully automatic configuration.
-	ConfigFile.SetValue(name, ConfigAutomatic, "yes")
+	configData.SetValue(name, ConfigAutomatic, "yes")
 	if len(args) == 3 {
-		ConfigFile.SetValue(name, ConfigClientID, args[1])
-		ConfigFile.SetValue(name, ConfigClientSecret, args[2])
+		configData.SetValue(name, ConfigClientID, args[1])
+		configData.SetValue(name, ConfigClientSecret, args[2])
 	}
 	fs.Config(name)
+}
+
+// configToEnv converts an config section and name, eg ("myremote",
+// "ignore-size") into an environment name
+// "RCLONE_CONFIG_MYREMOTE_IGNORE_SIZE"
+func configToEnv(section, name string) string {
+	return "RCLONE_CONFIG_" + strings.ToUpper(strings.Replace(section+"_"+name, "-", "_", -1))
+}
+
+// ConfigFileGet gets the config key under section returning the
+// default or empty string if not set.
+//
+// It looks up defaults in the environment if they are present
+func ConfigFileGet(section, key string, defaultVal ...string) string {
+	envKey := configToEnv(section, key)
+	newValue, found := os.LookupEnv(envKey)
+	if found {
+		defaultVal = []string{newValue}
+	}
+	return configData.MustValue(section, key, defaultVal...)
+}
+
+// ConfigFileGetBool gets the config key under section returning the
+// default or false if not set.
+//
+// It looks up defaults in the environment if they are present
+func ConfigFileGetBool(section, key string, defaultVal ...bool) bool {
+	envKey := configToEnv(section, key)
+	newValue, found := os.LookupEnv(envKey)
+	if found {
+		newBool, err := strconv.ParseBool(newValue)
+		if err != nil {
+			ErrorLog(nil, "Couldn't parse %q into bool - ignoring: %v", envKey, err)
+		} else {
+			defaultVal = []bool{newBool}
+		}
+	}
+	return configData.MustBool(section, key, defaultVal...)
+}
+
+// ConfigFileGetInt gets the config key under section returning the
+// default or 0 if not set.
+//
+// It looks up defaults in the environment if they are present
+func ConfigFileGetInt(section, key string, defaultVal ...int) int {
+	envKey := configToEnv(section, key)
+	newValue, found := os.LookupEnv(envKey)
+	if found {
+		newInt, err := strconv.Atoi(newValue)
+		if err != nil {
+			ErrorLog(nil, "Couldn't parse %q into int - ignoring: %v", envKey, err)
+		} else {
+			defaultVal = []int{newInt}
+		}
+	}
+	return configData.MustInt(section, key, defaultVal...)
+}
+
+// ConfigFileSet sets the key in section to value.  It doesn't save
+// the config file.
+func ConfigFileSet(section, key, value string) {
+	configData.SetValue(section, key, value)
+}
+
+var matchEnv = regexp.MustCompile(`^RCLONE_CONFIG_(.*?)_TYPE=.*$`)
+
+// ConfigFileSections returns the sections in the config file
+// including any defined by environment variables.
+func ConfigFileSections() []string {
+	sections := configData.GetSectionList()
+	for _, item := range os.Environ() {
+		matches := matchEnv.FindStringSubmatch(item)
+		if len(matches) == 2 {
+			sections = append(sections, strings.ToLower(matches[1]))
+		}
+	}
+	return sections
 }

@@ -430,9 +430,8 @@ func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, err e
 	fsName, configName, fsPath = "local", "local", path
 	if parts != nil && !isDriveLetter(parts[1]) {
 		configName, fsPath = parts[1], parts[2]
-		var err error
-		fsName, err = ConfigFile.GetValue(configName, "type")
-		if err != nil {
+		fsName = ConfigFileGet(configName, "type")
+		if fsName == "" {
 			return nil, "", "", ErrorNotFoundInConfigFile
 		}
 	}

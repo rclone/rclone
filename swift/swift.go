@@ -144,15 +144,15 @@ func parsePath(path string) (container, directory string, err error) {
 
 // swiftConnection makes a connection to swift
 func swiftConnection(name string) (*swift.Connection, error) {
-	userName := fs.ConfigFile.MustValue(name, "user")
+	userName := fs.ConfigFileGet(name, "user")
 	if userName == "" {
 		return nil, errors.New("user not found")
 	}
-	apiKey := fs.ConfigFile.MustValue(name, "key")
+	apiKey := fs.ConfigFileGet(name, "key")
 	if apiKey == "" {
 		return nil, errors.New("key not found")
 	}
-	authURL := fs.ConfigFile.MustValue(name, "auth")
+	authURL := fs.ConfigFileGet(name, "auth")
 	if authURL == "" {
 		return nil, errors.New("auth not found")
 	}
@@ -160,11 +160,11 @@ func swiftConnection(name string) (*swift.Connection, error) {
 		UserName:       userName,
 		ApiKey:         apiKey,
 		AuthUrl:        authURL,
-		AuthVersion:    fs.ConfigFile.MustInt(name, "auth_version", 0),
-		Tenant:         fs.ConfigFile.MustValue(name, "tenant"),
-		Region:         fs.ConfigFile.MustValue(name, "region"),
-		Domain:         fs.ConfigFile.MustValue(name, "domain"),
-		TenantDomain:   fs.ConfigFile.MustValue(name, "tenant_domain"),
+		AuthVersion:    fs.ConfigFileGetInt(name, "auth_version", 0),
+		Tenant:         fs.ConfigFileGet(name, "tenant"),
+		Region:         fs.ConfigFileGet(name, "region"),
+		Domain:         fs.ConfigFileGet(name, "domain"),
+		TenantDomain:   fs.ConfigFileGet(name, "tenant_domain"),
 		ConnectTimeout: 10 * fs.Config.ConnectTimeout, // Use the timeouts in the transport
 		Timeout:        10 * fs.Config.Timeout,        // Use the timeouts in the transport
 		Transport:      fs.Config.Transport(),
@@ -191,7 +191,7 @@ func NewFsWithConnection(name, root string, c *swift.Connection) (fs.Fs, error) 
 		root:              directory,
 	}
 	// StorageURL overloading
-	storageURL := fs.ConfigFile.MustValue(name, "storage_url")
+	storageURL := fs.ConfigFileGet(name, "storage_url")
 	if storageURL != "" {
 		f.c.StorageUrl = storageURL
 		f.c.Auth = newAuth(f.c.Auth, storageURL)

@@ -48,11 +48,11 @@ func init() {
 
 // NewFs contstructs an Fs from the path, container:path
 func NewFs(name, rpath string) (fs.Fs, error) {
-	mode, err := NewNameEncryptionMode(fs.ConfigFile.MustValue(name, "filename_encryption", "standard"))
+	mode, err := NewNameEncryptionMode(fs.ConfigFileGet(name, "filename_encryption", "standard"))
 	if err != nil {
 		return nil, err
 	}
-	password := fs.ConfigFile.MustValue(name, "password", "")
+	password := fs.ConfigFileGet(name, "password", "")
 	if password == "" {
 		return nil, errors.New("password not set in config file")
 	}
@@ -60,7 +60,7 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decrypt password")
 	}
-	salt := fs.ConfigFile.MustValue(name, "password2", "")
+	salt := fs.ConfigFileGet(name, "password2", "")
 	if salt != "" {
 		salt, err = fs.Reveal(salt)
 		if err != nil {
@@ -71,7 +71,7 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make cipher")
 	}
-	remote := fs.ConfigFile.MustValue(name, "remote")
+	remote := fs.ConfigFileGet(name, "remote")
 	if strings.HasPrefix(remote, name+":") {
 		return nil, errors.New("can't point crypt remote at itself - check the value of the remote setting")
 	}
