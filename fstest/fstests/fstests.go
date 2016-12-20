@@ -547,13 +547,14 @@ func TestObjectString(t *testing.T) {
 func TestObjectFs(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
-	if obj.Fs() != remote {
+	testRemote := remote
+	if obj.Fs() != testRemote {
 		// Check to see if this wraps something else
-		if unwrap, ok := remote.(fs.UnWrapper); ok {
-			remote = unwrap.UnWrap()
+		if unwrap, ok := testRemote.(fs.UnWrapper); ok {
+			testRemote = unwrap.UnWrap()
 		}
 	}
-	assert.Equal(t, obj.Fs(), remote)
+	assert.Equal(t, obj.Fs(), testRemote)
 }
 
 // TestObjectRemote tests the Remote is correct
