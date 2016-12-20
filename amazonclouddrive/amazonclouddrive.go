@@ -31,7 +31,6 @@ import (
 	"github.com/ncw/rclone/pacer"
 	"github.com/ncw/rclone/rest"
 	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 	"golang.org/x/oauth2"
 )
 
@@ -51,7 +50,7 @@ const (
 var (
 	// Flags
 	tempLinkThreshold = fs.SizeSuffix(9 << 30) // Download files bigger than this via the tempLink
-	uploadWaitPerGB   = pflag.DurationP("acd-upload-wait-per-gb", "", 180*time.Second, "Additional time per GB to wait after a failed complete upload to see if it appears.")
+	uploadWaitPerGB   = fs.DurationP("acd-upload-wait-per-gb", "", 180*time.Second, "Additional time per GB to wait after a failed complete upload to see if it appears.")
 	// Description of how to auth for this app
 	acdConfig = &oauth2.Config{
 		Scopes: []string{"clouddrive:read_all", "clouddrive:write"},
@@ -85,7 +84,7 @@ func init() {
 			Help: "Amazon Application Client Secret - leave blank normally.",
 		}},
 	})
-	pflag.VarP(&tempLinkThreshold, "acd-templink-threshold", "", "Files >= this size will be downloaded via their tempLink.")
+	fs.VarP(&tempLinkThreshold, "acd-templink-threshold", "", "Files >= this size will be downloaded via their tempLink.")
 }
 
 // Fs represents a remote acd server

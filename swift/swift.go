@@ -14,7 +14,6 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/swift"
 	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 )
 
 // Constants
@@ -83,7 +82,7 @@ func init() {
 		},
 	})
 	// snet     = flag.Bool("swift-snet", false, "Use internal service network") // FIXME not implemented
-	pflag.VarP(&chunkSize, "swift-chunk-size", "", "Above this size files will be chunked into a _segments container.")
+	fs.VarP(&chunkSize, "swift-chunk-size", "", "Above this size files will be chunked into a _segments container.")
 }
 
 // Fs represents a remote swift server

@@ -21,7 +21,6 @@ import (
 	"github.com/ncw/rclone/pacer"
 	"github.com/ncw/rclone/rest"
 	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 	"golang.org/x/oauth2"
 )
 
@@ -75,8 +74,8 @@ func init() {
 			Help: "Microsoft App Client Secret - leave blank normally.",
 		}},
 	})
-	pflag.VarP(&chunkSize, "onedrive-chunk-size", "", "Above this size files will be chunked - must be multiple of 320k.")
-	pflag.VarP(&uploadCutoff, "onedrive-upload-cutoff", "", "Cutoff for switching to chunked upload - must be <= 100MB")
+	fs.VarP(&chunkSize, "onedrive-chunk-size", "", "Above this size files will be chunked - must be multiple of 320k.")
+	fs.VarP(&uploadCutoff, "onedrive-upload-cutoff", "", "Cutoff for switching to chunked upload - must be <= 100MB")
 }
 
 // Fs represents a remote one drive

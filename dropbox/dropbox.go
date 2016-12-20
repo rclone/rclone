@@ -22,7 +22,6 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/oauthutil"
 	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 	"github.com/stacktic/dropbox"
 )
 
@@ -58,7 +57,7 @@ func init() {
 			Help: "Dropbox App Secret - leave blank normally.",
 		}},
 	})
-	pflag.VarP(&uploadChunkSize, "dropbox-chunk-size", "", fmt.Sprintf("Upload chunk size. Max %v.", maxUploadChunkSize))
+	fs.VarP(&uploadChunkSize, "dropbox-chunk-size", "", fmt.Sprintf("Upload chunk size. Max %v.", maxUploadChunkSize))
 }
 
 // Configuration helper - called after the user has put in the defaults

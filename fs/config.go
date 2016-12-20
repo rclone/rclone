@@ -14,7 +14,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"math"
 	"os"
 	"os/user"
 	"path"
@@ -26,7 +25,6 @@ import (
 
 	"github.com/Unknwon/goconfig"
 	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/text/unicode/norm"
 )
@@ -47,18 +45,6 @@ const (
 	ConfigAutomatic = "config_automatic"
 )
 
-// SizeSuffix is parsed by flag with k/M/G suffixes
-type SizeSuffix int64
-
-// BwTimeSlot represents a bandwidth configuration at a point in time.
-type BwTimeSlot struct {
-	hhmm      int
-	bandwidth SizeSuffix
-}
-
-// BwTimetable contains all configured time slots.
-type BwTimetable []BwTimeSlot
-
 // Global
 var (
 	// ConfigFile is the config file data structure
@@ -70,35 +56,35 @@ var (
 	// Config is the global config
 	Config = &ConfigInfo{}
 	// Flags
-	verbose         = pflag.BoolP("verbose", "v", false, "Print lots more stuff")
-	quiet           = pflag.BoolP("quiet", "q", false, "Print as little stuff as possible")
-	modifyWindow    = pflag.DurationP("modify-window", "", time.Nanosecond, "Max time diff to be considered the same")
-	checkers        = pflag.IntP("checkers", "", 8, "Number of checkers to run in parallel.")
-	transfers       = pflag.IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
-	configFile      = pflag.StringP("config", "", ConfigPath, "Config file.")
-	checkSum        = pflag.BoolP("checksum", "c", false, "Skip based on checksum & size, not mod-time & size")
-	sizeOnly        = pflag.BoolP("size-only", "", false, "Skip based on size only, not mod-time or checksum")
-	ignoreTimes     = pflag.BoolP("ignore-times", "I", false, "Don't skip files that match size and time - transfer all files")
-	ignoreExisting  = pflag.BoolP("ignore-existing", "", false, "Skip all files that exist on destination")
-	dryRun          = pflag.BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
-	connectTimeout  = pflag.DurationP("contimeout", "", 60*time.Second, "Connect timeout")
-	timeout         = pflag.DurationP("timeout", "", 5*60*time.Second, "IO idle timeout")
-	dumpHeaders     = pflag.BoolP("dump-headers", "", false, "Dump HTTP headers - may contain sensitive info")
-	dumpBodies      = pflag.BoolP("dump-bodies", "", false, "Dump HTTP headers and bodies - may contain sensitive info")
-	dumpAuth        = pflag.BoolP("dump-auth", "", false, "Dump HTTP headers with auth info")
-	skipVerify      = pflag.BoolP("no-check-certificate", "", false, "Do not verify the server SSL certificate. Insecure.")
-	AskPassword     = pflag.BoolP("ask-password", "", true, "Allow prompt for password for encrypted configuration.")
-	deleteBefore    = pflag.BoolP("delete-before", "", false, "When synchronizing, delete files on destination before transfering")
-	deleteDuring    = pflag.BoolP("delete-during", "", false, "When synchronizing, delete files during transfer (default)")
-	deleteAfter     = pflag.BoolP("delete-after", "", false, "When synchronizing, delete files on destination after transfering")
-	trackRenames    = pflag.BoolP("track-renames", "", false, "When synchronizing, track file renames and do a server side move if possible")
-	lowLevelRetries = pflag.IntP("low-level-retries", "", 10, "Number of low level retries to do.")
-	updateOlder     = pflag.BoolP("update", "u", false, "Skip files that are newer on the destination.")
-	noGzip          = pflag.BoolP("no-gzip-encoding", "", false, "Don't set Accept-Encoding: gzip.")
-	maxDepth        = pflag.IntP("max-depth", "", -1, "If set limits the recursion depth to this.")
-	ignoreSize      = pflag.BoolP("ignore-size", "", false, "Ignore size when skipping use mod-time or checksum.")
-	noTraverse      = pflag.BoolP("no-traverse", "", false, "Don't traverse destination file system on copy.")
-	noUpdateModTime = pflag.BoolP("no-update-modtime", "", false, "Don't update destination mod-time if files identical.")
+	verbose         = BoolP("verbose", "v", false, "Print lots more stuff")
+	quiet           = BoolP("quiet", "q", false, "Print as little stuff as possible")
+	modifyWindow    = DurationP("modify-window", "", time.Nanosecond, "Max time diff to be considered the same")
+	checkers        = IntP("checkers", "", 8, "Number of checkers to run in parallel.")
+	transfers       = IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
+	configFile      = StringP("config", "", ConfigPath, "Config file.")
+	checkSum        = BoolP("checksum", "c", false, "Skip based on checksum & size, not mod-time & size")
+	sizeOnly        = BoolP("size-only", "", false, "Skip based on size only, not mod-time or checksum")
+	ignoreTimes     = BoolP("ignore-times", "I", false, "Don't skip files that match size and time - transfer all files")
+	ignoreExisting  = BoolP("ignore-existing", "", false, "Skip all files that exist on destination")
+	dryRun          = BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
+	connectTimeout  = DurationP("contimeout", "", 60*time.Second, "Connect timeout")
+	timeout         = DurationP("timeout", "", 5*60*time.Second, "IO idle timeout")
+	dumpHeaders     = BoolP("dump-headers", "", false, "Dump HTTP headers - may contain sensitive info")
+	dumpBodies      = BoolP("dump-bodies", "", false, "Dump HTTP headers and bodies - may contain sensitive info")
+	dumpAuth        = BoolP("dump-auth", "", false, "Dump HTTP headers with auth info")
+	skipVerify      = BoolP("no-check-certificate", "", false, "Do not verify the server SSL certificate. Insecure.")
+	AskPassword     = BoolP("ask-password", "", true, "Allow prompt for password for encrypted configuration.")
+	deleteBefore    = BoolP("delete-before", "", false, "When synchronizing, delete files on destination before transfering")
+	deleteDuring    = BoolP("delete-during", "", false, "When synchronizing, delete files during transfer (default)")
+	deleteAfter     = BoolP("delete-after", "", false, "When synchronizing, delete files on destination after transfering")
+	trackRenames    = BoolP("track-renames", "", false, "When synchronizing, track file renames and do a server side move if possible")
+	lowLevelRetries = IntP("low-level-retries", "", 10, "Number of low level retries to do.")
+	updateOlder     = BoolP("update", "u", false, "Skip files that are newer on the destination.")
+	noGzip          = BoolP("no-gzip-encoding", "", false, "Don't set Accept-Encoding: gzip.")
+	maxDepth        = IntP("max-depth", "", -1, "If set limits the recursion depth to this.")
+	ignoreSize      = BoolP("ignore-size", "", false, "Ignore size when skipping use mod-time or checksum.")
+	noTraverse      = BoolP("no-traverse", "", false, "Don't traverse destination file system on copy.")
+	noUpdateModTime = BoolP("no-update-modtime", "", false, "Don't update destination mod-time if files identical.")
 	bwLimit         BwTimetable
 
 	// Key to use for password en/decryption.
@@ -107,215 +93,8 @@ var (
 )
 
 func init() {
-	pflag.VarP(&bwLimit, "bwlimit", "", "Bandwidth limit in kBytes/s, or use suffix b|k|M|G or a full timetable.")
+	VarP(&bwLimit, "bwlimit", "", "Bandwidth limit in kBytes/s, or use suffix b|k|M|G or a full timetable.")
 }
-
-// Turn SizeSuffix into a string and a suffix
-func (x SizeSuffix) string() (string, string) {
-	scaled := float64(0)
-	suffix := ""
-	switch {
-	case x < 0:
-		return "off", ""
-	case x == 0:
-		return "0", ""
-	case x < 1024:
-		scaled = float64(x)
-		suffix = ""
-	case x < 1024*1024:
-		scaled = float64(x) / 1024
-		suffix = "k"
-	case x < 1024*1024*1024:
-		scaled = float64(x) / 1024 / 1024
-		suffix = "M"
-	default:
-		scaled = float64(x) / 1024 / 1024 / 1024
-		suffix = "G"
-	}
-	if math.Floor(scaled) == scaled {
-		return fmt.Sprintf("%.0f", scaled), suffix
-	}
-	return fmt.Sprintf("%.3f", scaled), suffix
-}
-
-// String turns SizeSuffix into a string
-func (x SizeSuffix) String() string {
-	val, suffix := x.string()
-	return val + suffix
-}
-
-// Unit turns SizeSuffix into a string with a unit
-func (x SizeSuffix) Unit(unit string) string {
-	val, suffix := x.string()
-	if val == "off" {
-		return val
-	}
-	return val + " " + suffix + unit
-}
-
-// Set a SizeSuffix
-func (x *SizeSuffix) Set(s string) error {
-	if len(s) == 0 {
-		return errors.New("empty string")
-	}
-	if strings.ToLower(s) == "off" {
-		*x = -1
-		return nil
-	}
-	suffix := s[len(s)-1]
-	suffixLen := 1
-	var multiplier float64
-	switch suffix {
-	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.':
-		suffixLen = 0
-		multiplier = 1 << 10
-	case 'b', 'B':
-		multiplier = 1
-	case 'k', 'K':
-		multiplier = 1 << 10
-	case 'm', 'M':
-		multiplier = 1 << 20
-	case 'g', 'G':
-		multiplier = 1 << 30
-	default:
-		return errors.Errorf("bad suffix %q", suffix)
-	}
-	s = s[:len(s)-suffixLen]
-	value, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		return err
-	}
-	if value < 0 {
-		return errors.Errorf("size can't be negative %q", s)
-	}
-	value *= multiplier
-	*x = SizeSuffix(value)
-	return nil
-}
-
-// Type of the value
-func (x *SizeSuffix) Type() string {
-	return "int64"
-}
-
-// Check it satisfies the interface
-var _ pflag.Value = (*SizeSuffix)(nil)
-
-// String returns a printable representation of BwTimetable.
-func (x BwTimetable) String() string {
-	ret := []string{}
-	for _, ts := range x {
-		ret = append(ret, fmt.Sprintf("%04.4d,%s", ts.hhmm, ts.bandwidth.String()))
-	}
-	return strings.Join(ret, " ")
-}
-
-// Set the bandwidth timetable.
-func (x *BwTimetable) Set(s string) error {
-	// The timetable is formatted as:
-	// "hh:mm,bandwidth hh:mm,banwidth..." ex: "10:00,10G 11:30,1G 18:00,off"
-	// If only a single bandwidth identifier is provided, we assume constant bandwidth.
-
-	if len(s) == 0 {
-		return errors.New("empty string")
-	}
-	// Single value without time specification.
-	if !strings.Contains(s, " ") && !strings.Contains(s, ",") {
-		ts := BwTimeSlot{}
-		if err := ts.bandwidth.Set(s); err != nil {
-			return err
-		}
-		ts.hhmm = 0
-		*x = BwTimetable{ts}
-		return nil
-	}
-
-	for _, tok := range strings.Split(s, " ") {
-		tv := strings.Split(tok, ",")
-
-		// Format must be HH:MM,BW
-		if len(tv) != 2 {
-			return errors.Errorf("invalid time/bandwidth specification: %q", tok)
-		}
-
-		// Basic timespec sanity checking
-		hhmm := tv[0]
-		if len(hhmm) != 5 {
-			return errors.Errorf("invalid time specification (hh:mm): %q", hhmm)
-		}
-		hh, err := strconv.Atoi(hhmm[0:2])
-		if err != nil {
-			return errors.Errorf("invalid hour in time specification %q: %v", hhmm, err)
-		}
-		if hh < 0 || hh > 23 {
-			return errors.Errorf("invalid hour (must be between 00 and 23): %q", hh)
-		}
-		mm, err := strconv.Atoi(hhmm[3:])
-		if err != nil {
-			return errors.Errorf("invalid minute in time specification: %q: %v", hhmm, err)
-		}
-		if mm < 0 || mm > 59 {
-			return errors.Errorf("invalid minute (must be between 00 and 59): %q", hh)
-		}
-
-		ts := BwTimeSlot{
-			hhmm: (hh * 100) + mm,
-		}
-		// Bandwidth limit for this time slot.
-		if err := ts.bandwidth.Set(tv[1]); err != nil {
-			return err
-		}
-		*x = append(*x, ts)
-	}
-	return nil
-}
-
-// LimitAt returns a BwTimeSlot for the time requested.
-func (x BwTimetable) LimitAt(tt time.Time) BwTimeSlot {
-	// If the timetable is empty, we return an unlimited BwTimeSlot starting at midnight.
-	if len(x) == 0 {
-		return BwTimeSlot{hhmm: 0, bandwidth: -1}
-	}
-
-	hhmm := tt.Hour()*100 + tt.Minute()
-
-	// By default, we return the last element in the timetable. This
-	// satisfies two conditions: 1) If there's only one element it
-	// will always be selected, and 2) The last element of the table
-	// will "wrap around" until overriden by an earlier time slot.
-	// there's only one time slot in the timetable.
-	ret := x[len(x)-1]
-
-	mindif := 0
-	first := true
-
-	// Look for most recent time slot.
-	for _, ts := range x {
-		// Ignore the past
-		if hhmm < ts.hhmm {
-			continue
-		}
-		dif := ((hhmm / 100 * 60) + (hhmm % 100)) - ((ts.hhmm / 100 * 60) + (ts.hhmm % 100))
-		if first {
-			mindif = dif
-			first = false
-		}
-		if dif <= mindif {
-			mindif = dif
-			ret = ts
-		}
-	}
-
-	return ret
-}
-
-// Type of the value
-func (x BwTimetable) Type() string {
-	return "BwTimetable"
-}
-
-// Check it satisfies the interface
-var _ pflag.Value = (*BwTimetable)(nil)
 
 // crypt internals
 var (

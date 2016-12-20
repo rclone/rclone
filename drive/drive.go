@@ -21,7 +21,6 @@ import (
 	"github.com/ncw/rclone/oauthutil"
 	"github.com/ncw/rclone/pacer"
 	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v2"
@@ -42,10 +41,10 @@ const (
 // Globals
 var (
 	// Flags
-	driveFullList      = pflag.BoolP("drive-full-list", "", false, "Use a full listing for directory list. More data but usually quicker. (obsolete)")
-	driveAuthOwnerOnly = pflag.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user. Requires drive-full-list.")
-	driveUseTrash      = pflag.BoolP("drive-use-trash", "", false, "Send files to the trash instead of deleting permanently.")
-	driveExtensions    = pflag.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
+	driveFullList      = fs.BoolP("drive-full-list", "", false, "Use a full listing for directory list. More data but usually quicker. (obsolete)")
+	driveAuthOwnerOnly = fs.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user. Requires drive-full-list.")
+	driveUseTrash      = fs.BoolP("drive-use-trash", "", false, "Send files to the trash instead of deleting permanently.")
+	driveExtensions    = fs.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
 	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
 	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
 	chunkSize         = fs.SizeSuffix(8 * 1024 * 1024)
@@ -103,8 +102,8 @@ func init() {
 			Help: "Google Application Client Secret - leave blank normally.",
 		}},
 	})
-	pflag.VarP(&driveUploadCutoff, "drive-upload-cutoff", "", "Cutoff for switching to chunked upload")
-	pflag.VarP(&chunkSize, "drive-chunk-size", "", "Upload chunk size. Must a power of 2 >= 256k.")
+	fs.VarP(&driveUploadCutoff, "drive-upload-cutoff", "", "Cutoff for switching to chunked upload")
+	fs.VarP(&chunkSize, "drive-chunk-size", "", "Upload chunk size. Must a power of 2 >= 256k.")
 
 	// Invert mimeTypeToExtension
 	extensionToMimeType = make(map[string]string, len(mimeTypeToExtension))

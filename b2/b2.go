@@ -25,7 +25,6 @@ import (
 	"github.com/ncw/rclone/pacer"
 	"github.com/ncw/rclone/rest"
 	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 )
 
 const (
@@ -50,8 +49,8 @@ var (
 	minChunkSize       = fs.SizeSuffix(100E6)
 	chunkSize          = fs.SizeSuffix(96 * 1024 * 1024)
 	uploadCutoff       = fs.SizeSuffix(200E6)
-	b2TestMode         = pflag.StringP("b2-test-mode", "", "", "A flag string for X-Bz-Test-Mode header.")
-	b2Versions         = pflag.BoolP("b2-versions", "", false, "Include old versions in directory listings.")
+	b2TestMode         = fs.StringP("b2-test-mode", "", "", "A flag string for X-Bz-Test-Mode header.")
+	b2Versions         = fs.BoolP("b2-versions", "", false, "Include old versions in directory listings.")
 	errNotWithVersions = errors.New("can't modify or delete files in --b2-versions mode")
 )
 
@@ -73,8 +72,8 @@ func init() {
 		},
 		},
 	})
-	pflag.VarP(&uploadCutoff, "b2-upload-cutoff", "", "Cutoff for switching to chunked upload")
-	pflag.VarP(&chunkSize, "b2-chunk-size", "", "Upload chunk size. Must fit in memory.")
+	fs.VarP(&uploadCutoff, "b2-upload-cutoff", "", "Cutoff for switching to chunked upload")
+	fs.VarP(&chunkSize, "b2-chunk-size", "", "Upload chunk size. Must fit in memory.")
 }
 
 // Fs represents a remote b2 server

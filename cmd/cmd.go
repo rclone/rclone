@@ -26,13 +26,13 @@ import (
 // Globals
 var (
 	// Flags
-	cpuProfile    = pflag.StringP("cpuprofile", "", "", "Write cpu profile to file")
-	memProfile    = pflag.String("memprofile", "", "Write memory profile to file")
-	statsInterval = pflag.DurationP("stats", "", time.Minute*1, "Interval between printing stats, e.g 500ms, 60s, 5m. (0 to disable)")
-	dataRateUnit  = pflag.StringP("stats-unit", "", "bytes", "Show data rate in stats as either 'bits' or 'bytes'/s")
+	cpuProfile    = fs.StringP("cpuprofile", "", "", "Write cpu profile to file")
+	memProfile    = fs.StringP("memprofile", "", "", "Write memory profile to file")
+	statsInterval = fs.DurationP("stats", "", time.Minute*1, "Interval between printing stats, e.g 500ms, 60s, 5m. (0 to disable)")
+	dataRateUnit  = fs.StringP("stats-unit", "", "bytes", "Show data rate in stats as either 'bits' or 'bytes'/s")
 	version       bool
-	logFile       = pflag.StringP("log-file", "", "", "Log everything to this file")
-	retries       = pflag.IntP("retries", "", 3, "Retry operations this many times if they fail")
+	logFile       = fs.StringP("log-file", "", "", "Log everything to this file")
+	retries       = fs.IntP("retries", "", 3, "Retry operations this many times if they fail")
 )
 
 // Root is the main rclone command

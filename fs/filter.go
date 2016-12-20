@@ -13,31 +13,30 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 )
 
 // Global
 var (
 	// Flags
-	deleteExcluded = pflag.BoolP("delete-excluded", "", false, "Delete files on dest excluded from sync")
-	filterRule     = pflag.StringArrayP("filter", "f", nil, "Add a file-filtering rule")
-	filterFrom     = pflag.StringArrayP("filter-from", "", nil, "Read filtering patterns from a file")
-	excludeRule    = pflag.StringArrayP("exclude", "", nil, "Exclude files matching pattern")
-	excludeFrom    = pflag.StringArrayP("exclude-from", "", nil, "Read exclude patterns from file")
-	includeRule    = pflag.StringArrayP("include", "", nil, "Include files matching pattern")
-	includeFrom    = pflag.StringArrayP("include-from", "", nil, "Read include patterns from file")
-	filesFrom      = pflag.StringArrayP("files-from", "", nil, "Read list of source-file names from file")
-	minAge         = pflag.StringP("min-age", "", "", "Don't transfer any file younger than this in s or suffix ms|s|m|h|d|w|M|y")
-	maxAge         = pflag.StringP("max-age", "", "", "Don't transfer any file older than this in s or suffix ms|s|m|h|d|w|M|y")
+	deleteExcluded = BoolP("delete-excluded", "", false, "Delete files on dest excluded from sync")
+	filterRule     = StringArrayP("filter", "f", nil, "Add a file-filtering rule")
+	filterFrom     = StringArrayP("filter-from", "", nil, "Read filtering patterns from a file")
+	excludeRule    = StringArrayP("exclude", "", nil, "Exclude files matching pattern")
+	excludeFrom    = StringArrayP("exclude-from", "", nil, "Read exclude patterns from file")
+	includeRule    = StringArrayP("include", "", nil, "Include files matching pattern")
+	includeFrom    = StringArrayP("include-from", "", nil, "Read include patterns from file")
+	filesFrom      = StringArrayP("files-from", "", nil, "Read list of source-file names from file")
+	minAge         = StringP("min-age", "", "", "Don't transfer any file younger than this in s or suffix ms|s|m|h|d|w|M|y")
+	maxAge         = StringP("max-age", "", "", "Don't transfer any file older than this in s or suffix ms|s|m|h|d|w|M|y")
 	minSize        = SizeSuffix(-1)
 	maxSize        = SizeSuffix(-1)
-	dumpFilters    = pflag.BoolP("dump-filters", "", false, "Dump the filters to the output")
-	//cvsExclude     = pflag.BoolP("cvs-exclude", "C", false, "Exclude files in the same way CVS does")
+	dumpFilters    = BoolP("dump-filters", "", false, "Dump the filters to the output")
+	//cvsExclude     = BoolP("cvs-exclude", "C", false, "Exclude files in the same way CVS does")
 )
 
 func init() {
-	pflag.VarP(&minSize, "min-size", "", "Don't transfer any file smaller than this in k or suffix b|k|M|G")
-	pflag.VarP(&maxSize, "max-size", "", "Don't transfer any file larger than this in k or suffix b|k|M|G")
+	VarP(&minSize, "min-size", "", "Don't transfer any file smaller than this in k or suffix b|k|M|G")
+	VarP(&maxSize, "max-size", "", "Don't transfer any file larger than this in k or suffix b|k|M|G")
 }
 
 // rule is one filter rule
