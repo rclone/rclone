@@ -195,11 +195,11 @@ func TestConfigLoadEncryptedFailures(t *testing.T) {
 	_, err = loadConfigFile()
 	require.Error(t, err)
 
-	// This file contains invalid base64 characters.
+	// This file does not exist.
 	ConfigPath = "./testdata/filenotfound.conf"
 	c, err := loadConfigFile()
-	require.NoError(t, err)
-	require.Len(t, c.GetSectionList(), 0, "Expected 0-length section")
+	assert.Equal(t, errorConfigFileNotFound, err)
+	assert.Nil(t, c)
 }
 
 func TestPassword(t *testing.T) {
