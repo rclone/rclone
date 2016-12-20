@@ -415,6 +415,12 @@ equals 1,048,576 bits/s and not 1,000,000 bits/s.
 
 The default is `bytes`.
 
+### --track-renames ###
+
+By default renames will be performed as a delete and a copy, which is ineffective for remotes that supports server-side move operations.
+
+Setting this option will track renames during `sync` and perform renaming server-side. If the destination does not support server-side move, `sync` will fall back to the default behaviour and log an `error` to the console.  
+
 ### --delete-(before,during,after) ###
 
 This option allows you to specify when files on your destination are
