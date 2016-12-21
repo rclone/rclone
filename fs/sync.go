@@ -356,7 +356,7 @@ func (s *syncCopyMove) renameFiles() error {
 			}
 
 			// At this point, if the files are equal, this is a rename.
-			if equal(srcObject, dstObject, false, true) {
+			if eq, commonHash := equal(srcObject, dstObject, false, true); eq && commonHash {
 				toRename <- ObjectPair{srcObject, dstObject}
 				break
 			}
