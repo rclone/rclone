@@ -142,5 +142,6 @@ func main() {
 	generateTestProgram(t, fns, "Crypt", "2")
 	generateTestProgram(t, fns, "Crypt", "3")
 	generateTestProgram(t, fns, "Sftp", "")
+	generateTestProgram(t, fns, "FTP", "")
 	log.Printf("Done")
 }

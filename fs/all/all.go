@@ -15,4 +15,5 @@ import (
 	_ "github.com/ncw/rclone/sftp"
 	_ "github.com/ncw/rclone/swift"
 	_ "github.com/ncw/rclone/yandex"
+	_ "github.com/ncw/rclone/ftp"
 )

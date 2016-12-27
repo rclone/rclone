@@ -31,6 +31,7 @@ See the following for detailed instructions for
   * [Microsoft OneDrive](/onedrive/)
   * [Yandex Disk](/yandex/)
   * [SFTP](/sftp/)
+  * [FTP](/ftp/)
   * [Crypt](/crypt/) - to encrypt other remotes
 
 Usage

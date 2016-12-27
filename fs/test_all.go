@@ -35,6 +35,7 @@ var (
 		"TestSftp:",
 		"TestSwift:",
 		"TestYandex:",
+		"TestFTP:",
 	}
 	binary = "fs.test"
 	// Flags

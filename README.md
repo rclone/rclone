@@ -25,6 +25,7 @@ Rclone is a command line program to sync files and directories to and from
   * Yandex Disk
   * SFTP
   * The local filesystem
+  * FTP
 
 Features
 
