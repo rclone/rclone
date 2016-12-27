@@ -28,6 +28,7 @@ Here is an overview of the major features of each cloud storage system.
 | Backblaze B2           | SHA1    | Yes     | No               | No              | R/W       |
 | Yandex Disk            | MD5     | Yes     | No               | No              | R/W       |
 | The local filesystem   | All     | Yes     | Depends          | No              | -         |
+| FTP                    | None    | No      | Yes              | No              | -         |
 
 ### Hash ###
 
@@ -114,6 +115,7 @@ operations more efficient.
 | Backblaze B2           | No    | No   | No   | No      | Yes     |
 | Yandex Disk            | Yes   | No   | No   | No      | No  [#575](https://github.com/ncw/rclone/issues/575) |
 | The local filesystem   | Yes   | No   | Yes  | Yes     | No      |
+| FTP                    | No    | No   | No   | No      | No      |
 
 
 ### Purge ###
