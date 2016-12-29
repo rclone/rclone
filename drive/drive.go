@@ -21,6 +21,7 @@ import (
 	"github.com/ncw/rclone/oauthutil"
 	"github.com/ncw/rclone/pacer"
 	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v2"
@@ -46,6 +47,7 @@ var (
 	driveUseTrash      = fs.BoolP("drive-use-trash", "", false, "Send files to the trash instead of deleting permanently.")
 	driveSkipGdocs     = fs.BoolP("drive-skip-gdocs", "", false, "Skip google documents in all listings.")
 	driveExtensions    = fs.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
+	driveListChunk     = pflag.Int64P("drive-list-chunk", "", 1000, "Size of listing chunk 100-1000. 0 to disable.")
 	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
 	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
 	chunkSize         = fs.SizeSuffix(8 * 1024 * 1024)
@@ -219,7 +221,10 @@ func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly
 		query += fmt.Sprintf(" and mimeType!='%s'", driveFolderType)
 	}
 	// fmt.Printf("listAll Query = %q\n", query)
-	list := f.svc.Files.List().Q(query).MaxResults(1000)
+	list := f.svc.Files.List().Q(query)
+	if *driveListChunk > 0 {
+		list = list.MaxResults(*driveListChunk)
+	}
 OUTER:
 	for {
 		var files *drive.FileList
