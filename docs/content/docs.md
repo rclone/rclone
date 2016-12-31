@@ -67,8 +67,8 @@ The main rclone commands with most used first
 * [rclone mkdir](/commands/rclone_mkdir/)	 - Make the path if it doesn't already exist.
 * [rclone rmdir](/commands/rclone_rmdir/)	 - Remove the path.
 * [rclone check](/commands/rclone_check/)	 - Checks the files in the source and destination match.
-* [rclone ls](/commands/rclone_ls/)	 - List all the objects in the the path with size and path.
-* [rclone lsd](/commands/rclone_lsd/)	 - List all directories/containers/buckets in the the path.
+* [rclone ls](/commands/rclone_ls/)	 - List all the objects in the path with size and path.
+* [rclone lsd](/commands/rclone_lsd/)	 - List all directories/containers/buckets in the path.
 * [rclone lsl](/commands/rclone_lsl/)	 - List all the objects path with modification time, size and path.
 * [rclone md5sum](/commands/rclone_md5sum/)	 - Produces an md5sum file for all the objects in the path.
 * [rclone sha1sum](/commands/rclone_sha1sum/)	 - Produces an sha1sum file for all the objects in the path.

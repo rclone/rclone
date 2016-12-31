@@ -14,7 +14,7 @@ func init() {
 
 var commandDefintion = &cobra.Command{
 	Use:   "ls remote:path",
-	Short: `List all the objects in the the path with size and path.`,
+	Short: `List all the objects in the path with size and path.`,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)

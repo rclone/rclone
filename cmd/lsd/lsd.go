@@ -14,7 +14,7 @@ func init() {
 
 var commandDefintion = &cobra.Command{
 	Use:   "lsd remote:path",
-	Short: `List all directories/containers/buckets in the the path.`,
+	Short: `List all directories/containers/buckets in the path.`,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
