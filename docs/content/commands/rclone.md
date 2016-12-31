@@ -131,8 +131,8 @@ rclone
 * [rclone genautocomplete](/commands/rclone_genautocomplete/)	 - Output bash completion script for rclone.
 * [rclone gendocs](/commands/rclone_gendocs/)	 - Output markdown docs for rclone to the directory supplied.
 * [rclone listremotes](/commands/rclone_listremotes/)	 - List all the remotes in the config file.
-* [rclone ls](/commands/rclone_ls/)	 - List all the objects in the the path with size and path.
-* [rclone lsd](/commands/rclone_lsd/)	 - List all directories/containers/buckets in the the path.
+* [rclone ls](/commands/rclone_ls/)	 - List all the objects in the path with size and path.
+* [rclone lsd](/commands/rclone_lsd/)	 - List all directories/containers/buckets in the path.
 * [rclone lsl](/commands/rclone_lsl/)	 - List all the objects path with modification time, size and path.
 * [rclone md5sum](/commands/rclone_md5sum/)	 - Produces an md5sum file for all the objects in the path.
 * [rclone mkdir](/commands/rclone_mkdir/)	 - Make the path if it doesn't already exist.

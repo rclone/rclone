@@ -404,12 +404,12 @@ rclone check source:path dest:path
 
 ## rclone ls
 
-List all the objects in the the path with size and path.
+List all the objects in the path with size and path.
 
 ### Synopsis
 
 
-List all the objects in the the path with size and path.
+List all the objects in the path with size and path.
 
 ```
 rclone ls remote:path
@@ -417,12 +417,12 @@ rclone ls remote:path
 
 ## rclone lsd
 
-List all directories/containers/buckets in the the path.
+List all directories/containers/buckets in the path.
 
 ### Synopsis
 
 
-List all directories/containers/buckets in the the path.
+List all directories/containers/buckets in the path.
 
 ```
 rclone lsd remote:path

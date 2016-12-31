@@ -6,12 +6,12 @@ url: /commands/rclone_lsd/
 ---
 ## rclone lsd
 
-List all directories/containers/buckets in the the path.
+List all directories/containers/buckets in the path.
 
 ### Synopsis
 
 
-List all directories/containers/buckets in the the path.
+List all directories/containers/buckets in the path.
 
 ```
 rclone lsd remote:path

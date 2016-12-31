@@ -6,12 +6,12 @@ url: /commands/rclone_ls/
 ---
 ## rclone ls
 
-List all the objects in the the path with size and path.
+List all the objects in the path with size and path.
 
 ### Synopsis
 
 
-List all the objects in the the path with size and path.
+List all the objects in the path with size and path.
 
 ```
 rclone ls remote:path
