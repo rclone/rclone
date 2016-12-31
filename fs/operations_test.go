@@ -189,6 +189,22 @@ func (r *Run) WriteFile(filePath, content string, t time.Time) fstest.Item {
 	return item
 }
 
+// ForceMkdir creates the remote
+func (r *Run) ForceMkdir(f fs.Fs) {
+	err := f.Mkdir("")
+	if err != nil {
+		r.Fatalf("Failed to mkdir %q: %v", f, err)
+	}
+	r.mkdir[f.String()] = true
+}
+
+// Mkdir creates the remote if it hasn't been created already
+func (r *Run) Mkdir(f fs.Fs) {
+	if !r.mkdir[f.String()] {
+		r.ForceMkdir(f)
+	}
+}
+
 // WriteObjectTo writes an object to the fs, remote passed in
 func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time, useUnchecked bool) fstest.Item {
 	put := f.Put
@@ -199,14 +215,8 @@ func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time, 
 			r.Fatalf("Fs doesn't support PutUnchecked")
 		}
 	}
+	r.Mkdir(f)
 	const maxTries = 10
-	if !r.mkdir[f.String()] {
-		err := f.Mkdir("")
-		if err != nil {
-			r.Fatalf("Failed to mkdir %q: %v", f, err)
-		}
-		r.mkdir[f.String()] = true
-	}
 	for tries := 1; ; tries++ {
 		in := bytes.NewBufferString(content)
 		objinfo := fs.NewStaticObjectInfo(remote, modTime, int64(len(content)), true, nil, nil)
@@ -642,12 +652,14 @@ func TestCat(t *testing.T) {
 func TestRmdirs(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
+	r.Mkdir(r.fremote)
 
 	// Clean any directories that have crept in so far
 	// FIXME make the Finalise method do this?
 	require.NoError(t, fs.Rmdirs(r.fremote))
 
 	// Make some files and dirs we expect to keep
+	r.ForceMkdir(r.fremote)
 	file1 := r.WriteObject("A1/B1/C1/one", "aaa", t1)
 	file2 := r.WriteObject("A1/two", "bbb", t2)
 	//..and dirs we expect to delete
@@ -702,6 +714,7 @@ func TestMoveFile(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
 
+	r.Mkdir(r.fremote)
 	file1 := r.WriteFile("file1", "file1 contents", t1)
 	fstest.CheckItems(t, r.flocal, file1)
 
@@ -732,6 +745,7 @@ func TestCopyFile(t *testing.T) {
 	file2 := file1
 	file2.Path = "sub/file2"
 
+	r.Mkdir(r.fremote)
 	err := fs.CopyFile(r.fremote, r.flocal, file2.Path, file1.Path)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.flocal, file1)

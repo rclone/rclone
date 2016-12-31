@@ -17,6 +17,7 @@ func TestCopyWithDryRun(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+	r.Mkdir(r.fremote)
 
 	fs.Config.DryRun = true
 	err := fs.CopyDir(r.fremote, r.flocal)
@@ -32,6 +33,7 @@ func TestCopy(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+	r.Mkdir(r.fremote)
 
 	err := fs.CopyDir(r.fremote, r.flocal)
 	require.NoError(t, err)
