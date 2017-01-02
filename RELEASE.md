@@ -8,6 +8,8 @@ Required software for making a release
   * golint - go get github.com/golang/lint
 
 Making a release
+  * git status - make sure everything is checked in
+  * Check travis & appveyor builds are green
   * make check
   * make test
   * make tag
@@ -15,7 +17,7 @@ Making a release
   * make doc
   * git commit -a -v
   * make retag
-  * # Set the GOPATH for a gox enabled compiler - . ~/bin/go-cross - not required for go >= 1.5
+  * # Set the GOPATH for a current stable go compiler
   * make cross
   * make upload
   * make upload_website
