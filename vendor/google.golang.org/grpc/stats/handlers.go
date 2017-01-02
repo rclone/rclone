@@ -140,12 +140,6 @@ func Start() {
 	atomic.StoreInt32(on, 1)
 }
 
-// Stop stops the stats collection and processing.
-// Stop does not unregister the handlers.
-func Stop() {
-	atomic.StoreInt32(on, 0)
-}
-
 // On indicates whether the stats collection and processing is on.
 func On() bool {
 	return atomic.CompareAndSwapInt32(on, 1, 1)

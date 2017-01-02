@@ -139,3 +139,4 @@ Contributors
 - Sam Gunaratne <samgzeit@gmail.com>
 - Richard Scothern <richard.scothern@gmail.com>
 - Michel Couillard <couillard.michel@voxlog.ca>
+- Christopher Waldon <ckwaldon@us.ibm.com>

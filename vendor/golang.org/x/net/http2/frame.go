@@ -317,10 +317,12 @@ type Framer struct {
 	// non-Continuation or Continuation on a different stream is
 	// attempted to be written.
 
-	logReads bool
+	logReads, logWrites bool
 
-	debugFramer    *Framer // only use for logging written writes
-	debugFramerBuf *bytes.Buffer
+	debugFramer       *Framer // only use for logging written writes
+	debugFramerBuf    *bytes.Buffer
+	debugReadLoggerf  func(string, ...interface{})
+	debugWriteLoggerf func(string, ...interface{})
 }
 
 func (fr *Framer) maxHeaderListSize() uint32 {
@@ -355,7 +357,7 @@ func (f *Framer) endWrite() error {
 		byte(length>>16),
 		byte(length>>8),
 		byte(length))
-	if logFrameWrites {
+	if f.logWrites {
 		f.logWrite()
 	}
 
@@ -378,10 +380,10 @@ func (f *Framer) logWrite() {
 	f.debugFramerBuf.Write(f.wbuf)
 	fr, err := f.debugFramer.ReadFrame()
 	if err != nil {
-		log.Printf("http2: Framer %p: failed to decode just-written frame", f)
+		f.debugWriteLoggerf("http2: Framer %p: failed to decode just-written frame", f)
 		return
 	}
-	log.Printf("http2: Framer %p: wrote %v", f, summarizeFrame(fr))
+	f.debugWriteLoggerf("http2: Framer %p: wrote %v", f, summarizeFrame(fr))
 }
 
 func (f *Framer) writeByte(v byte)     { f.wbuf = append(f.wbuf, v) }
@@ -399,9 +401,12 @@ const (
 // NewFramer returns a Framer that writes frames to w and reads them from r.
 func NewFramer(w io.Writer, r io.Reader) *Framer {
 	fr := &Framer{
-		w:        w,
-		r:        r,
-		logReads: logFrameReads,
+		w:                 w,
+		r:                 r,
+		logReads:          logFrameReads,
+		logWrites:         logFrameWrites,
+		debugReadLoggerf:  log.Printf,
+		debugWriteLoggerf: log.Printf,
 	}
 	fr.getReadBuf = func(size uint32) []byte {
 		if cap(fr.readBuf) >= int(size) {
@@ -483,7 +488,7 @@ func (fr *Framer) ReadFrame() (Frame, error) {
 		return nil, err
 	}
 	if fr.logReads {
-		log.Printf("http2: Framer %p: read %v", fr, summarizeFrame(f))
+		fr.debugReadLoggerf("http2: Framer %p: read %v", fr, summarizeFrame(f))
 	}
 	if fh.Type == FrameHeaders && fr.ReadMetaHeaders != nil {
 		return fr.readMetaFrame(f.(*HeadersFrame))
@@ -1419,8 +1424,8 @@ func (fr *Framer) readMetaFrame(hf *HeadersFrame) (*MetaHeadersFrame, error) {
 	hdec.SetEmitEnabled(true)
 	hdec.SetMaxStringLength(fr.maxHeaderStringLen())
 	hdec.SetEmitFunc(func(hf hpack.HeaderField) {
-		if VerboseLogs && logFrameReads {
-			log.Printf("http2: decoded hpack field %+v", hf)
+		if VerboseLogs && fr.logReads {
+			fr.debugReadLoggerf("http2: decoded hpack field %+v", hf)
 		}
 		if !httplex.ValidHeaderFieldValue(hf.Value) {
 			invalid = headerFieldValueError(hf.Value)

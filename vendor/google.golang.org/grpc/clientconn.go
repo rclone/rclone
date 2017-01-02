@@ -54,6 +54,8 @@ var (
 	ErrClientConnClosing = errors.New("grpc: the client connection is closing")
 	// ErrClientConnTimeout indicates that the ClientConn cannot establish the
 	// underlying connections within the specified timeout.
+	// DEPRECATED: Please use context.DeadlineExceeded instead. This error will be
+	// removed in Q1 2017.
 	ErrClientConnTimeout = errors.New("grpc: timed out when dialing")
 
 	// errNoTransportSecurity indicates that there is no transport security
@@ -93,6 +95,7 @@ type dialOptions struct {
 	block     bool
 	insecure  bool
 	timeout   time.Duration
+	scChan    <-chan ServiceConfig
 	copts     transport.ConnectOptions
 }
 
@@ -126,6 +129,13 @@ func WithDecompressor(dc Decompressor) DialOption {
 func WithBalancer(b Balancer) DialOption {
 	return func(o *dialOptions) {
 		o.balancer = b
+	}
+}
+
+// WithServiceConfig returns a DialOption which has a channel to read the service configuration.
+func WithServiceConfig(c <-chan ServiceConfig) DialOption {
+	return func(o *dialOptions) {
+		o.scChan = c
 	}
 }
 
@@ -260,6 +270,15 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 		conns:  make(map[Address]*addrConn),
 	}
 	cc.ctx, cc.cancel = context.WithCancel(context.Background())
+	for _, opt := range opts {
+		opt(&cc.dopts)
+	}
+	if cc.dopts.timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, cc.dopts.timeout)
+		defer cancel()
+	}
+
 	defer func() {
 		select {
 		case <-ctx.Done():
@@ -272,10 +291,17 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 		}
 	}()
 
-	for _, opt := range opts {
-		opt(&cc.dopts)
+	if cc.dopts.scChan != nil {
+		// Wait for the initial service config.
+		select {
+		case sc, ok := <-cc.dopts.scChan:
+			if ok {
+				cc.sc = sc
+			}
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
 	}
-
 	// Set defaults.
 	if cc.dopts.codec == nil {
 		cc.dopts.codec = protoCodec{}
@@ -297,6 +323,9 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 	waitC := make(chan error, 1)
 	go func() {
 		var addrs []Address
+		if cc.dopts.balancer == nil && cc.sc.LB != nil {
+			cc.dopts.balancer = cc.sc.LB
+		}
 		if cc.dopts.balancer == nil {
 			// Connect to target directly if balancer is nil.
 			addrs = append(addrs, Address{Addr: target})
@@ -332,10 +361,6 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 		}
 		close(waitC)
 	}()
-	var timeoutCh <-chan time.Time
-	if cc.dopts.timeout > 0 {
-		timeoutCh = time.After(cc.dopts.timeout)
-	}
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -343,13 +368,16 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 		if err != nil {
 			return nil, err
 		}
-	case <-timeoutCh:
-		return nil, ErrClientConnTimeout
 	}
+
 	// If balancer is nil or balancer.Notify() is nil, ok will be false here.
 	// The lbWatcher goroutine will not be created.
 	if ok {
 		go cc.lbWatcher()
+	}
+
+	if cc.dopts.scChan != nil {
+		go cc.scWatcher()
 	}
 	return cc, nil
 }
@@ -397,6 +425,7 @@ type ClientConn struct {
 	dopts     dialOptions
 
 	mu    sync.RWMutex
+	sc    ServiceConfig
 	conns map[Address]*addrConn
 }
 
@@ -431,6 +460,24 @@ func (cc *ClientConn) lbWatcher() {
 		}
 		for _, c := range del {
 			c.tearDown(errConnDrain)
+		}
+	}
+}
+
+func (cc *ClientConn) scWatcher() {
+	for {
+		select {
+		case sc, ok := <-cc.dopts.scChan:
+			if !ok {
+				return
+			}
+			cc.mu.Lock()
+			// TODO: load balance policy runtime change is ignored.
+			// We may revist this decision in the future.
+			cc.sc = sc
+			cc.mu.Unlock()
+		case <-cc.ctx.Done():
+			return
 		}
 	}
 }
@@ -520,6 +567,14 @@ func (cc *ClientConn) resetAddrConn(addr Address, skipWait bool, tearDownErr err
 		}()
 	}
 	return nil
+}
+
+// TODO: Avoid the locking here.
+func (cc *ClientConn) getMethodConfig(method string) (m MethodConfig, ok bool) {
+	cc.mu.RLock()
+	defer cc.mu.RUnlock()
+	m, ok = cc.sc.Methods[method]
+	return
 }
 
 func (cc *ClientConn) getTransport(ctx context.Context, opts BalancerGetOptions) (transport.ClientTransport, func(), error) {

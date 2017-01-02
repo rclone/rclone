@@ -8,6 +8,7 @@ package http2
 
 import (
 	"crypto/tls"
+	"io"
 	"net/http"
 )
 
@@ -38,4 +39,12 @@ func configureServer18(h1 *http.Server, h2 *Server) error {
 
 func shouldLogPanic(panicValue interface{}) bool {
 	return panicValue != nil && panicValue != http.ErrAbortHandler
+}
+
+func reqGetBody(req *http.Request) func() (io.ReadCloser, error) {
+	return req.GetBody
+}
+
+func reqBodyIsNoBody(body io.ReadCloser) bool {
+	return body == http.NoBody
 }

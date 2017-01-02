@@ -343,6 +343,7 @@ func (s *Server) useTransportAuthenticator(rawConn net.Conn) (net.Conn, credenti
 // read gRPC requests and then call the registered handlers to reply to them.
 // Serve returns when lis.Accept fails with fatal errors.  lis will be closed when
 // this method returns.
+// Serve always returns non-nil error.
 func (s *Server) Serve(lis net.Listener) error {
 	s.mu.Lock()
 	s.printf("serving")

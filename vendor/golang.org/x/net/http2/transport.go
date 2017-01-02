@@ -191,6 +191,7 @@ type clientStream struct {
 	ID            uint32
 	resc          chan resAndError
 	bufPipe       pipe // buffered pipe with the flow-controlled response payload
+	startedWrite  bool // started request body write; guarded by cc.mu
 	requestedGzip bool
 	on100         func() // optional code to run if get a 100 continue response
 
@@ -314,6 +315,10 @@ func authorityAddr(scheme string, authority string) (addr string) {
 	if a, err := idna.ToASCII(host); err == nil {
 		host = a
 	}
+	// IPv6 address literal, without a port:
+	if strings.HasPrefix(host, "[") && strings.HasSuffix(host, "]") {
+		return host + ":" + port
+	}
 	return net.JoinHostPort(host, port)
 }
 
@@ -332,8 +337,10 @@ func (t *Transport) RoundTripOpt(req *http.Request, opt RoundTripOpt) (*http.Res
 		}
 		traceGotConn(req, cc)
 		res, err := cc.RoundTrip(req)
-		if shouldRetryRequest(req, err) {
-			continue
+		if err != nil {
+			if req, err = shouldRetryRequest(req, err); err == nil {
+				continue
+			}
 		}
 		if err != nil {
 			t.vlogf("RoundTrip failure: %v", err)
@@ -355,12 +362,41 @@ func (t *Transport) CloseIdleConnections() {
 var (
 	errClientConnClosed   = errors.New("http2: client conn is closed")
 	errClientConnUnusable = errors.New("http2: client conn not usable")
+
+	errClientConnGotGoAway                 = errors.New("http2: Transport received Server's graceful shutdown GOAWAY")
+	errClientConnGotGoAwayAfterSomeReqBody = errors.New("http2: Transport received Server's graceful shutdown GOAWAY; some request body already written")
 )
 
-func shouldRetryRequest(req *http.Request, err error) bool {
-	// TODO: retry GET requests (no bodies) more aggressively, if shutdown
-	// before response.
-	return err == errClientConnUnusable
+// shouldRetryRequest is called by RoundTrip when a request fails to get
+// response headers. It is always called with a non-nil error.
+// It returns either a request to retry (either the same request, or a
+// modified clone), or an error if the request can't be replayed.
+func shouldRetryRequest(req *http.Request, err error) (*http.Request, error) {
+	switch err {
+	default:
+		return nil, err
+	case errClientConnUnusable, errClientConnGotGoAway:
+		return req, nil
+	case errClientConnGotGoAwayAfterSomeReqBody:
+		// If the Body is nil (or http.NoBody), it's safe to reuse
+		// this request and its Body.
+		if req.Body == nil || reqBodyIsNoBody(req.Body) {
+			return req, nil
+		}
+		// Otherwise we depend on the Request having its GetBody
+		// func defined.
+		getBody := reqGetBody(req) // Go 1.8: getBody = req.GetBody
+		if getBody == nil {
+			return nil, errors.New("http2: Transport: peer server initiated graceful shutdown after some of Request.Body was written; define Request.GetBody to avoid this error")
+		}
+		body, err := getBody()
+		if err != nil {
+			return nil, err
+		}
+		newReq := *req
+		newReq.Body = body
+		return &newReq, nil
+	}
 }
 
 func (t *Transport) dialClientConn(addr string, singleUse bool) (*ClientConn, error) {
@@ -512,6 +548,15 @@ func (cc *ClientConn) setGoAway(f *GoAwayFrame) {
 	}
 	if old != nil && old.ErrCode != ErrCodeNo {
 		cc.goAway.ErrCode = old.ErrCode
+	}
+	last := f.LastStreamID
+	for streamID, cs := range cc.streams {
+		if streamID > last {
+			select {
+			case cs.resc <- resAndError{err: errClientConnGotGoAway}:
+			default:
+			}
+		}
 	}
 }
 
@@ -773,6 +818,13 @@ func (cc *ClientConn) RoundTrip(req *http.Request) (*http.Response, error) {
 			cs.abortRequestBodyWrite(errStopReqBodyWrite)
 		}
 		if re.err != nil {
+			if re.err == errClientConnGotGoAway {
+				cc.mu.Lock()
+				if cs.startedWrite {
+					re.err = errClientConnGotGoAwayAfterSomeReqBody
+				}
+				cc.mu.Unlock()
+			}
 			cc.forgetStreamID(cs.ID)
 			return nil, re.err
 		}
@@ -2013,6 +2065,9 @@ func (t *Transport) getBodyWriterState(cs *clientStream, body io.Reader) (s body
 	resc := make(chan error, 1)
 	s.resc = resc
 	s.fn = func() {
+		cs.cc.mu.Lock()
+		cs.startedWrite = true
+		cs.cc.mu.Unlock()
 		resc <- cs.writeRequestBody(body, cs.req.Body)
 	}
 	s.delay = t.expectContinueTimeout()

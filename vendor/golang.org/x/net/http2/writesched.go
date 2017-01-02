@@ -160,6 +160,20 @@ func (wr FrameWriteRequest) String() string {
 	return fmt.Sprintf("[FrameWriteRequest stream=%d, ch=%v, writer=%v]", wr.StreamID(), wr.done != nil, des)
 }
 
+// replyToWriter sends err to wr.done and panics if the send must block
+// This does nothing if wr.done is nil.
+func (wr *FrameWriteRequest) replyToWriter(err error) {
+	if wr.done == nil {
+		return
+	}
+	select {
+	case wr.done <- err:
+	default:
+		panic(fmt.Sprintf("unbuffered done channel passed in for type %T", wr.write))
+	}
+	wr.write = nil // prevent use (assume it's tainted after wr.done send)
+}
+
 // writeQueue is used by implementations of WriteScheduler.
 type writeQueue struct {
 	s []FrameWriteRequest

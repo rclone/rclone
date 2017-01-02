@@ -50,6 +50,9 @@ func Empty(t TestingT, object interface{}, msgAndArgs ...interface{}) {
 //    assert.Equal(t, 123, 123, "123 and 123 should be equal")
 //
 // Returns whether the assertion was successful (true) or not (false).
+//
+// Pointer variable equality is determined based on the equality of the
+// referenced values (as opposed to the memory addresses).
 func Equal(t TestingT, expected interface{}, actual interface{}, msgAndArgs ...interface{}) {
 	if !assert.Equal(t, expected, actual, msgAndArgs...) {
 		t.FailNow()
@@ -319,6 +322,9 @@ func NotEmpty(t TestingT, object interface{}, msgAndArgs ...interface{}) {
 //    assert.NotEqual(t, obj1, obj2, "two objects shouldn't be equal")
 //
 // Returns whether the assertion was successful (true) or not (false).
+//
+// Pointer variable equality is determined based on the equality of the
+// referenced values (as opposed to the memory addresses).
 func NotEqual(t TestingT, expected interface{}, actual interface{}, msgAndArgs ...interface{}) {
 	if !assert.NotEqual(t, expected, actual, msgAndArgs...) {
 		t.FailNow()

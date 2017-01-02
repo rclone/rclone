@@ -10,8 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/private/endpoints"
 )
 
 // A Session provides a central location to create service clients from and
@@ -44,7 +44,7 @@ type Session struct {
 // shared config, and shared credentials will be taken from the shared
 // credentials file.
 //
-// Deprecated: Use NewSession functiions to create sessions instead. NewSession
+// Deprecated: Use NewSession functions to create sessions instead. NewSession
 // has the same functionality as New except an error can be returned when the
 // func is called instead of waiting to receive an error until a request is made.
 func New(cfgs ...*aws.Config) *Session {
@@ -222,6 +222,11 @@ func oldNewSession(cfgs ...*aws.Config) *Session {
 	// Apply the passed in configs so the configuration can be applied to the
 	// default credential chain
 	cfg.MergeIn(cfgs...)
+	if cfg.EndpointResolver == nil {
+		// An endpoint resolver is required for a session to be able to provide
+		// endpoints for service client configurations.
+		cfg.EndpointResolver = endpoints.DefaultResolver()
+	}
 	cfg.Credentials = defaults.CredChain(cfg, handlers)
 
 	// Reapply any passed in configs to override credentials if set
@@ -375,19 +380,39 @@ func (s *Session) Copy(cfgs ...*aws.Config) *Session {
 // configure the service client instances. Passing the Session to the service
 // client's constructor (New) will use this method to configure the client.
 func (s *Session) ClientConfig(serviceName string, cfgs ...*aws.Config) client.Config {
+	// Backwards compatibility, the error will be eaten if user calls ClientConfig
+	// directly. All SDK services will use ClientconfigWithError.
+	cfg, _ := s.clientConfigWithErr(serviceName, cfgs...)
+
+	return cfg
+}
+
+func (s *Session) clientConfigWithErr(serviceName string, cfgs ...*aws.Config) (client.Config, error) {
 	s = s.Copy(cfgs...)
-	endpoint, signingRegion := endpoints.NormalizeEndpoint(
-		aws.StringValue(s.Config.Endpoint),
-		serviceName,
-		aws.StringValue(s.Config.Region),
-		aws.BoolValue(s.Config.DisableSSL),
-		aws.BoolValue(s.Config.UseDualStack),
-	)
+
+	var resolved endpoints.ResolvedEndpoint
+	var err error
+
+	region := aws.StringValue(s.Config.Region)
+
+	if endpoint := aws.StringValue(s.Config.Endpoint); len(endpoint) != 0 {
+		resolved.URL = endpoints.AddScheme(endpoint, aws.BoolValue(s.Config.DisableSSL))
+		resolved.SigningRegion = region
+	} else {
+		resolved, err = s.Config.EndpointResolver.EndpointFor(
+			serviceName, region,
+			func(opt *endpoints.Options) {
+				opt.DisableSSL = aws.BoolValue(s.Config.DisableSSL)
+				opt.UseDualStack = aws.BoolValue(s.Config.UseDualStack)
+			},
+		)
+	}
 
 	return client.Config{
 		Config:        s.Config,
 		Handlers:      s.Handlers,
-		Endpoint:      endpoint,
-		SigningRegion: signingRegion,
-	}
+		Endpoint:      resolved.URL,
+		SigningRegion: resolved.SigningRegion,
+		SigningName:   resolved.SigningName,
+	}, err
 }

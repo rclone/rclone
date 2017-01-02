@@ -209,6 +209,16 @@ func newHTTP2Client(ctx context.Context, addr TargetInfo, opts ConnectOptions) (
 		maxStreams:      math.MaxInt32,
 		streamSendQuota: defaultWindowSize,
 	}
+	if stats.On() {
+		t.ctx = stats.TagConn(t.ctx, &stats.ConnTagInfo{
+			RemoteAddr: t.remoteAddr,
+			LocalAddr:  t.localAddr,
+		})
+		connBegin := &stats.ConnBegin{
+			Client: true,
+		}
+		stats.HandleConn(t.ctx, connBegin)
+	}
 	// Start the reader goroutine for incoming message. Each transport has
 	// a dedicated goroutine which reads HTTP2 frame from network. Then it
 	// dispatches the frame to the corresponding stream entity.
@@ -244,16 +254,6 @@ func newHTTP2Client(ctx context.Context, addr TargetInfo, opts ConnectOptions) (
 	}
 	go t.controller()
 	t.writableChan <- 0
-	if stats.On() {
-		t.ctx = stats.TagConn(t.ctx, &stats.ConnTagInfo{
-			RemoteAddr: t.remoteAddr,
-			LocalAddr:  t.localAddr,
-		})
-		connBegin := &stats.ConnBegin{
-			Client: true,
-		}
-		stats.HandleConn(t.ctx, connBegin)
-	}
 	return t, nil
 }
 

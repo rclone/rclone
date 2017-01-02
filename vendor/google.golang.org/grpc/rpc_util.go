@@ -472,6 +472,44 @@ func convertCode(err error) codes.Code {
 	return codes.Unknown
 }
 
+// MethodConfig defines the configuration recommended by the service providers for a
+// particular method.
+// This is EXPERIMENTAL and subject to change.
+type MethodConfig struct {
+	// WaitForReady indicates whether RPCs sent to this method should wait until
+	// the connection is ready by default (!failfast). The value specified via the
+	// gRPC client API will override the value set here.
+	WaitForReady bool
+	// Timeout is the default timeout for RPCs sent to this method. The actual
+	// deadline used will be the minimum of the value specified here and the value
+	// set by the application via the gRPC client API.  If either one is not set,
+	// then the other will be used.  If neither is set, then the RPC has no deadline.
+	Timeout time.Duration
+	// MaxReqSize is the maximum allowed payload size for an individual request in a
+	// stream (client->server) in bytes. The size which is measured is the serialized,
+	// uncompressed payload in bytes. The actual value used is the minumum of the value
+	// specified here and the value set by the application via the gRPC client API. If
+	// either one is not set, then the other will be used.  If neither is set, then the
+	// built-in default is used.
+	// TODO: support this.
+	MaxReqSize uint64
+	// MaxRespSize is the maximum allowed payload size for an individual response in a
+	// stream (server->client) in bytes.
+	// TODO: support this.
+	MaxRespSize uint64
+}
+
+// ServiceConfig is provided by the service provider and contains parameters for how
+// clients that connect to the service should behave.
+// This is EXPERIMENTAL and subject to change.
+type ServiceConfig struct {
+	// LB is the load balancer the service providers recommends. The balancer specified
+	// via grpc.WithBalancer will override this.
+	LB Balancer
+	// Methods contains a map for the methods in this service.
+	Methods map[string]MethodConfig
+}
+
 // SupportPackageIsVersion4 is referenced from generated protocol buffer files
 // to assert that that code is compatible with this version of the grpc package.
 //

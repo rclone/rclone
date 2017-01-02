@@ -65,6 +65,11 @@ func BuildAsGET(r *request.Request) {
 func buildLocationElements(r *request.Request, v reflect.Value, buildGETQuery bool) {
 	query := r.HTTPRequest.URL.Query()
 
+	// Setup the raw path to match the base path pattern. This is needed
+	// so that when the path is mutated a custom escaped version can be
+	// stored in RawPath that will be used by the Go client.
+	r.HTTPRequest.URL.RawPath = r.HTTPRequest.URL.Path
+
 	for i := 0; i < v.NumField(); i++ {
 		m := v.Field(i)
 		if n := v.Type().Field(i).Name; n[0:1] == strings.ToLower(n[0:1]) {
@@ -81,6 +86,9 @@ func buildLocationElements(r *request.Request, v reflect.Value, buildGETQuery bo
 				m = m.Elem()
 			}
 			if !m.IsValid() {
+				continue
+			}
+			if field.Tag.Get("ignore") != "" {
 				continue
 			}
 
@@ -107,7 +115,9 @@ func buildLocationElements(r *request.Request, v reflect.Value, buildGETQuery bo
 	}
 
 	r.HTTPRequest.URL.RawQuery = query.Encode()
-	updatePath(r.HTTPRequest.URL, r.HTTPRequest.URL.Path, aws.BoolValue(r.Config.DisableRestProtocolURICleaning))
+	if !aws.BoolValue(r.Config.DisableRestProtocolURICleaning) {
+		cleanPath(r.HTTPRequest.URL)
+	}
 }
 
 func buildBody(r *request.Request, v reflect.Value) {
@@ -171,10 +181,11 @@ func buildURI(u *url.URL, v reflect.Value, name string) error {
 		return awserr.New("SerializationError", "failed to encode REST request", err)
 	}
 
-	uri := u.Path
-	uri = strings.Replace(uri, "{"+name+"}", EscapePath(value, true), -1)
-	uri = strings.Replace(uri, "{"+name+"+}", EscapePath(value, false), -1)
-	u.Path = uri
+	u.Path = strings.Replace(u.Path, "{"+name+"}", value, -1)
+	u.Path = strings.Replace(u.Path, "{"+name+"+}", value, -1)
+
+	u.RawPath = strings.Replace(u.RawPath, "{"+name+"}", EscapePath(value, true), -1)
+	u.RawPath = strings.Replace(u.RawPath, "{"+name+"+}", EscapePath(value, false), -1)
 
 	return nil
 }
@@ -208,27 +219,17 @@ func buildQueryString(query url.Values, v reflect.Value, name string) error {
 	return nil
 }
 
-func updatePath(url *url.URL, urlPath string, disableRestProtocolURICleaning bool) {
-	scheme, query := url.Scheme, url.RawQuery
+func cleanPath(u *url.URL) {
+	hasSlash := strings.HasSuffix(u.Path, "/")
 
-	hasSlash := strings.HasSuffix(urlPath, "/")
+	// clean up path, removing duplicate `/`
+	u.Path = path.Clean(u.Path)
+	u.RawPath = path.Clean(u.RawPath)
 
-	// clean up path
-	if !disableRestProtocolURICleaning {
-		urlPath = path.Clean(urlPath)
+	if hasSlash && !strings.HasSuffix(u.Path, "/") {
+		u.Path += "/"
+		u.RawPath += "/"
 	}
-	if hasSlash && !strings.HasSuffix(urlPath, "/") {
-		urlPath += "/"
-	}
-
-	// get formatted URL minus scheme so we can build this into Opaque
-	url.Scheme, url.Path, url.RawQuery = "", "", ""
-	s := url.String()
-	url.Scheme = scheme
-	url.RawQuery = query
-
-	// build opaque URI
-	url.Opaque = s + urlPath
 }
 
 // EscapePath escapes part of a URL path in Amazon style

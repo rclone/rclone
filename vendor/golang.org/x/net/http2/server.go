@@ -278,6 +278,16 @@ func (s *Server) ServeConn(c net.Conn, opts *ServeConnOpts) {
 		pushEnabled:       true,
 	}
 
+	// The net/http package sets the write deadline from the
+	// http.Server.WriteTimeout during the TLS handshake, but then
+	// passes the connection off to us with the deadline already
+	// set. Disarm it here so that it is not applied to additional
+	// streams opened on this connection.
+	// TODO: implement WriteTimeout fully. See Issue 18437.
+	if sc.hs.WriteTimeout != 0 {
+		sc.conn.SetWriteDeadline(time.Time{})
+	}
+
 	if s.NewWriteScheduler != nil {
 		sc.writeSched = s.NewWriteScheduler()
 	} else {
@@ -423,6 +433,11 @@ func (sc *serverConn) maxHeaderListSize() uint32 {
 	return uint32(n + typicalHeaders*perFieldOverhead)
 }
 
+func (sc *serverConn) curOpenStreams() uint32 {
+	sc.serveG.check()
+	return sc.curClientStreams + sc.curPushedStreams
+}
+
 // stream represents a stream. This is the minimal metadata needed by
 // the serve goroutine. Most of the actual stream state is owned by
 // the http.Handler's goroutine in the responseWriter. Because the
@@ -448,8 +463,7 @@ type stream struct {
 	numTrailerValues int64
 	weight           uint8
 	state            streamState
-	sentReset        bool   // only true once detached from streams map
-	gotReset         bool   // only true once detacted from streams map
+	resetQueued      bool   // RST_STREAM queued for write; set by sc.resetStream
 	gotTrailerHeader bool   // HEADER frame for trailers was seen
 	wroteHeaders     bool   // whether we wrote headers (not status 100)
 	reqBuf           []byte // if non-nil, body pipe buffer to return later at EOF
@@ -753,7 +767,7 @@ func (sc *serverConn) serve() {
 			fn(loopNum)
 		}
 
-		if sc.inGoAway && sc.curClientStreams == 0 && !sc.needToSendGoAway && !sc.writingFrame {
+		if sc.inGoAway && sc.curOpenStreams() == 0 && !sc.needToSendGoAway && !sc.writingFrame {
 			return
 		}
 	}
@@ -869,7 +883,33 @@ func (sc *serverConn) writeFrameFromHandler(wr FrameWriteRequest) error {
 func (sc *serverConn) writeFrame(wr FrameWriteRequest) {
 	sc.serveG.check()
 
+	// If true, wr will not be written and wr.done will not be signaled.
 	var ignoreWrite bool
+
+	// We are not allowed to write frames on closed streams. RFC 7540 Section
+	// 5.1.1 says: "An endpoint MUST NOT send frames other than PRIORITY on
+	// a closed stream." Our server never sends PRIORITY, so that exception
+	// does not apply.
+	//
+	// The serverConn might close an open stream while the stream's handler
+	// is still running. For example, the server might close a stream when it
+	// receives bad data from the client. If this happens, the handler might
+	// attempt to write a frame after the stream has been closed (since the
+	// handler hasn't yet been notified of the close). In this case, we simply
+	// ignore the frame. The handler will notice that the stream is closed when
+	// it waits for the frame to be written.
+	//
+	// As an exception to this rule, we allow sending RST_STREAM after close.
+	// This allows us to immediately reject new streams without tracking any
+	// state for those streams (except for the queued RST_STREAM frame). This
+	// may result in duplicate RST_STREAMs in some cases, but the client should
+	// ignore those.
+	if wr.StreamID() != 0 {
+		_, isReset := wr.write.(StreamError)
+		if state, _ := sc.state(wr.StreamID()); state == stateClosed && !isReset {
+			ignoreWrite = true
+		}
+	}
 
 	// Don't send a 100-continue response if we've already sent headers.
 	// See golang.org/issue/14030.
@@ -878,6 +918,11 @@ func (sc *serverConn) writeFrame(wr FrameWriteRequest) {
 		wr.stream.wroteHeaders = true
 	case write100ContinueHeadersFrame:
 		if wr.stream.wroteHeaders {
+			// We do not need to notify wr.done because this frame is
+			// never written with wr.done != nil.
+			if wr.done != nil {
+				panic("wr.done != nil for write100ContinueHeadersFrame")
+			}
 			ignoreWrite = true
 		}
 	}
@@ -901,14 +946,15 @@ func (sc *serverConn) startFrameWrite(wr FrameWriteRequest) {
 	if st != nil {
 		switch st.state {
 		case stateHalfClosedLocal:
-			panic("internal error: attempt to send frame on half-closed-local stream")
-		case stateClosed:
-			if st.sentReset || st.gotReset {
-				// Skip this frame.
-				sc.scheduleFrameWrite()
-				return
+			switch wr.write.(type) {
+			case StreamError, handlerPanicRST, writeWindowUpdate:
+				// RFC 7540 Section 5.1 allows sending RST_STREAM, PRIORITY, and WINDOW_UPDATE
+				// in this state. (We never send PRIORITY from the server, so that is not checked.)
+			default:
+				panic(fmt.Sprintf("internal error: attempt to send frame on a half-closed-local stream: %v", wr))
 			}
-			panic(fmt.Sprintf("internal error: attempt to send a write %v on a closed stream", wr))
+		case stateClosed:
+			panic(fmt.Sprintf("internal error: attempt to send frame on a closed stream: %v", wr))
 		}
 	}
 	if wpp, ok := wr.write.(*writePushPromise); ok {
@@ -916,9 +962,7 @@ func (sc *serverConn) startFrameWrite(wr FrameWriteRequest) {
 		wpp.promisedID, err = wpp.allocatePromisedID()
 		if err != nil {
 			sc.writingFrameAsync = false
-			if wr.done != nil {
-				wr.done <- err
-			}
+			wr.replyToWriter(err)
 			return
 		}
 	}
@@ -951,25 +995,9 @@ func (sc *serverConn) wroteFrame(res frameWriteResult) {
 	sc.writingFrameAsync = false
 
 	wr := res.wr
-	st := wr.stream
 
-	closeStream := endsStream(wr.write)
-
-	if _, ok := wr.write.(handlerPanicRST); ok {
-		sc.closeStream(st, errHandlerPanicked)
-	}
-
-	// Reply (if requested) to the blocked ServeHTTP goroutine.
-	if ch := wr.done; ch != nil {
-		select {
-		case ch <- res.err:
-		default:
-			panic(fmt.Sprintf("unbuffered done channel passed in for type %T", wr.write))
-		}
-	}
-	wr.write = nil // prevent use (assume it's tainted after wr.done send)
-
-	if closeStream {
+	if writeEndsStream(wr.write) {
+		st := wr.stream
 		if st == nil {
 			panic("internal error: expecting non-nil stream")
 		}
@@ -982,14 +1010,28 @@ func (sc *serverConn) wroteFrame(res frameWriteResult) {
 			// reading data (see possible TODO at top of
 			// this file), we go into closed state here
 			// anyway, after telling the peer we're
-			// hanging up on them.
-			st.state = stateHalfClosedLocal // won't last long, but necessary for closeStream via resetStream
-			errCancel := streamError(st.id, ErrCodeCancel)
-			sc.resetStream(errCancel)
+			// hanging up on them. We'll transition to
+			// stateClosed after the RST_STREAM frame is
+			// written.
+			st.state = stateHalfClosedLocal
+			sc.resetStream(streamError(st.id, ErrCodeCancel))
 		case stateHalfClosedRemote:
 			sc.closeStream(st, errHandlerComplete)
 		}
+	} else {
+		switch v := wr.write.(type) {
+		case StreamError:
+			// st may be unknown if the RST_STREAM was generated to reject bad input.
+			if st, ok := sc.streams[v.StreamID]; ok {
+				sc.closeStream(st, v)
+			}
+		case handlerPanicRST:
+			sc.closeStream(wr.stream, errHandlerPanicked)
+		}
 	}
+
+	// Reply (if requested) to unblock the ServeHTTP goroutine.
+	wr.replyToWriter(res.err)
 
 	sc.scheduleFrameWrite()
 }
@@ -1087,8 +1129,7 @@ func (sc *serverConn) resetStream(se StreamError) {
 	sc.serveG.check()
 	sc.writeFrame(FrameWriteRequest{write: se})
 	if st, ok := sc.streams[se.StreamID]; ok {
-		st.sentReset = true
-		sc.closeStream(st, se)
+		st.resetQueued = true
 	}
 }
 
@@ -1252,7 +1293,6 @@ func (sc *serverConn) processResetStream(f *RSTStreamFrame) error {
 		return ConnectionError(ErrCodeProtocol)
 	}
 	if st != nil {
-		st.gotReset = true
 		st.cancelCtx()
 		sc.closeStream(st, streamError(f.StreamID, f.ErrCode))
 	}
@@ -1391,7 +1431,7 @@ func (sc *serverConn) processData(f *DataFrame) error {
 		// type PROTOCOL_ERROR."
 		return ConnectionError(ErrCodeProtocol)
 	}
-	if st == nil || state != stateOpen || st.gotTrailerHeader {
+	if st == nil || state != stateOpen || st.gotTrailerHeader || st.resetQueued {
 		// This includes sending a RST_STREAM if the stream is
 		// in stateHalfClosedLocal (which currently means that
 		// the http.Handler returned, so it's done reading &
@@ -1411,6 +1451,10 @@ func (sc *serverConn) processData(f *DataFrame) error {
 		sc.inflow.take(int32(f.Length))
 		sc.sendWindowUpdate(nil, int(f.Length)) // conn-level
 
+		if st != nil && st.resetQueued {
+			// Already have a stream error in flight. Don't send another.
+			return nil
+		}
 		return streamError(id, ErrCodeStreamClosed)
 	}
 	if st.body == nil {
@@ -1519,6 +1563,11 @@ func (sc *serverConn) processHeaders(f *MetaHeadersFrame) error {
 	// open, let it process its own HEADERS frame (trailers at this
 	// point, if it's valid).
 	if st := sc.streams[f.StreamID]; st != nil {
+		if st.resetQueued {
+			// We're sending RST_STREAM to close the stream, so don't bother
+			// processing this frame.
+			return nil
+		}
 		return st.processTrailerHeaders(f)
 	}
 
@@ -1681,7 +1730,7 @@ func (sc *serverConn) newStream(id, pusherID uint32, state streamState) *stream 
 	} else {
 		sc.curClientStreams++
 	}
-	if sc.curClientStreams+sc.curPushedStreams == 1 {
+	if sc.curOpenStreams() == 1 {
 		sc.setConnState(http.StateActive)
 	}
 
@@ -2556,7 +2605,7 @@ func (sc *serverConn) startPush(msg startPushRequest) {
 			scheme:    msg.url.Scheme,
 			authority: msg.url.Host,
 			path:      msg.url.RequestURI(),
-			header:    msg.header,
+			header:    cloneHeader(msg.header), // clone since handler runs concurrently with writing the PUSH_PROMISE
 		})
 		if err != nil {
 			// Should not happen, since we've already validated msg.url.

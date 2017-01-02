@@ -37,7 +37,7 @@ func GenManTree(cmd *cobra.Command, header *GenManHeader, dir string) error {
 	return GenManTreeFromOpts(cmd, GenManTreeOptions{
 		Header:           header,
 		Path:             dir,
-		CommandSeparator: "_",
+		CommandSeparator: "-",
 	})
 }
 
