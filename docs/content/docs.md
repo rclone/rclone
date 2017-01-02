@@ -417,9 +417,18 @@ The default is `bytes`.
 
 ### --track-renames ###
 
-By default renames will be performed as a delete and a copy, which is ineffective for remotes that supports server-side move operations.
+By default rclone doesn't not keep track of renamed files, so if you
+rename a file locally then sync it to a remote, rclone will delete the
+old file on the remote and upload a new copy.
 
-Setting this option will track renames during `sync` and perform renaming server-side. If the destination does not support server-side move, `sync` will fall back to the default behaviour and log an `error` to the console.  
+If you use this flag, and the remote supports server side copy or
+server side move, and the source and destination have a compatible
+hash, then this will track renames during `sync`, `copy`, and `move`
+operations and perform renaming server-side.
+
+If the destination does not support server-side copy or move, rclone
+will fall back to the default behaviour and log an error level message
+to the console.
 
 ### --delete-(before,during,after) ###
 

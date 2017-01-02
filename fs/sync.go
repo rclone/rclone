@@ -38,20 +38,6 @@ type syncCopyMove struct {
 }
 
 func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) *syncCopyMove {
-
-	// Don't track renames for remotes without server-side rename support.
-	// Some remotes simulate rename by server-side copy and delete, so include
-	// remotes that implements either Mover and Copier.
-	var canMove bool
-	switch fdst.(type) {
-	case Mover, Copier:
-		canMove = true
-	}
-
-	if !canMove && Config.TrackRenames {
-		ErrorLog(nil, "track-renames flag is set, but the destination %q does not support server-side moves", fdst.Name())
-	}
-
 	s := &syncCopyMove{
 		fdst:           fdst,
 		fsrc:           fsrc,
@@ -66,14 +52,28 @@ func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) *syncCopyMove {
 		toBeChecked:    make(ObjectPairChan, Config.Transfers),
 		toBeUploaded:   make(ObjectPairChan, Config.Transfers),
 		deleteBefore:   Delete && Config.DeleteBefore,
-		trackRenames:   canMove && Config.TrackRenames,
+		trackRenames:   Config.TrackRenames,
 	}
 	if s.noTraverse && s.Delete {
 		Debug(s.fdst, "Ignoring --no-traverse with sync")
 		s.noTraverse = false
 	}
+	if s.trackRenames {
+		// Don't track renames for remotes without server-side rename support.
+		// Some remotes simulate rename by server-side copy and delete, so include
+		// remotes that implements either Mover and Copier.
+		switch fdst.(type) {
+		case Mover, Copier:
+		default:
+			ErrorLog(fdst, "Ignoring --track-renames as the destination does not support server-side move or copy")
+			s.trackRenames = false
+		}
+		if fsrc.Hashes().Overlap(fdst.Hashes()).Count() == 0 {
+			ErrorLog(fdst, "Ignoring --track-renames as the source and destination do not have a common hash")
+			s.trackRenames = false
+		}
+	}
 	return s
-
 }
 
 // Check to see if have set the abort flag
