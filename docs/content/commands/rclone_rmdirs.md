@@ -1,24 +1,27 @@
 ---
 date: 2017-01-02T15:29:14Z
-title: "rclone purge"
-slug: rclone_purge
-url: /commands/rclone_purge/
+title: "rclone rmdirs"
+slug: rclone_rmdirs
+url: /commands/rclone_rmdirs/
 ---
-## rclone purge
+## rclone rmdirs
 
-Remove the path and all of its contents.
+Remove any empty directoryies under the path.
 
 ### Synopsis
 
 
+This removes any empty directories (or directories that only contain
+empty directories) under the path that it finds, including the path if
+it has nothing in.
 
-Remove the path and all of its contents.  Note that this does not obey
-include/exclude filters - everything will be removed.  Use `delete` if
-you want to selectively delete files.
+This is useful for tidying up remotes that rclone has left a lot of
+empty directories in.
+
 
 
 ```
-rclone purge remote:path
+rclone rmdirs remote:path
 ```
 
 ### Options inherited from parent commands

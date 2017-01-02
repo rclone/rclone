@@ -15,7 +15,8 @@ Making a release
   * make tag
   * edit docs/content/changelog.md
   * make doc
-  * git commit -a -v
+  * git status - to check for new man pages - git add them
+  * git commit -a -v -m "Version v1.XX"
   * make retag
   * # Set the GOPATH for a current stable go compiler
   * make cross

@@ -1,6 +1,6 @@
 rclone(1) User Manual
 Nick Craig-Wood
-Nov 06, 2016
+Jan 02, 2017
 
 
 
@@ -40,6 +40,7 @@ Links
 
 -   Home page
 -   Github project page for source and bug tracker
+-   Rclone Forum
 -   Google+ page
 -   Downloads
 
@@ -284,7 +285,8 @@ Move files from source to dest.
 Synopsis
 
 Moves the contents of the source directory to the destination directory.
-Rclone will error if the source and destination overlap.
+Rclone will error if the source and destination overlap and the remote
+does not support a server side directory move operation.
 
 If no filters are in use and if possible this will server side move
 source:path into dest:path. After this source:path will no longer longer
@@ -599,6 +601,40 @@ Or like this to output any .txt files in dir or subdirectories.
     rclone cat remote:path
 
 
+rclone copyto
+
+Copy files from source to dest, skipping already copied
+
+Synopsis
+
+If source:path is a file or directory then it copies it to a file or
+directory named dest:path.
+
+This can be used to upload single files to other than their current
+name. If the source is a directory then it acts exactly like the copy
+command.
+
+So
+
+    rclone copyto src dst
+
+where src and dst are rclone paths, either remote:path or /path/to/local
+or C:.
+
+This will:
+
+    if src is file
+        copy it to dst, overwriting an existing file if it exists
+    if src is directory
+        copy it to dst, overwriting existing files if they exist
+        see copy command for full details
+
+This doesn't transfer unchanged files, testing by size and modification
+time or MD5SUM. It doesn't delete files from the destination.
+
+    rclone copyto source:path dest:path
+
+
 rclone genautocomplete
 
 Output bash completion script for rclone.
@@ -705,8 +741,7 @@ that, so will be less reliable than the rclone command.
 Bugs
 
 -   All the remotes should work for read, but some may not for write
-    -   those which need to know the size in advance won't - eg B2,
-        Amazon Drive
+    -   those which need to know the size in advance won't - eg B2
     -   maybe should pass in size as -1 to mean work it out
     -   Or put in an an upload cache to cache the files on disk first
 
@@ -734,6 +769,59 @@ Options
           --uid uint32                Override the uid field set by the filesystem. (default 502)
           --umask int                 Override the permission bits set by the filesystem. (default 2)
           --write-back-cache          Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used.
+
+
+rclone moveto
+
+Move file or directory from source to dest.
+
+Synopsis
+
+If source:path is a file or directory then it moves it to a file or
+directory named dest:path.
+
+This can be used to rename files or upload single files to other than
+their existing name. If the source is a directory then it acts exacty
+like the move command.
+
+So
+
+    rclone moveto src dst
+
+where src and dst are rclone paths, either remote:path or /path/to/local
+or C:.
+
+This will:
+
+    if src is file
+        move it to dst, overwriting an existing file if it exists
+    if src is directory
+        move it to dst, overwriting existing files if they exist
+        see move command for full details
+
+This doesn't transfer unchanged files, testing by size and modification
+time or MD5SUM. src will be deleted on successful transfer.
+
+IMPORTANT: Since this can cause data loss, test first with the --dry-run
+flag.
+
+    rclone moveto source:path dest:path
+
+
+rclone rmdirs
+
+Remove any empty directoryies under the path.
+
+Synopsis
+
+This removes any empty directories (or directories that only contain
+empty directories) under the path that it finds, including the path if
+it has nothing in.
+
+This is useful for tidying up remotes that rclone has left a lot of
+empty directories in.
+
+    rclone rmdirs remote:path
 
 
 Copying single files
@@ -1043,11 +1131,28 @@ modification times in the same way as rclone.
 
 --stats=TIME
 
-Rclone will print stats at regular intervals to show its progress.
+Commands which transfer data (sync, copy, copyto, move, moveto) will
+print data transfer stats at regular intervals to show their progress.
 
 This sets the interval.
 
 The default is 1m. Use 0 to disable.
+
+If you set the stats interval then all command can show stats. This can
+be useful when running other commands, check or mount for example.
+
+--stats-unit=bits|bytes
+
+By default data transfer rates will be printed in bytes/second.
+
+This option allows the data rate to be printed in bits/second.
+
+Data transfer volume will still be reported in bytes.
+
+The rate is reported as a binary unit, not SI unit. So 1 Mbit/s equals
+1,048,576 bits/s and not 1,000,000 bits/s.
+
+The default is bytes.
 
 --delete-(before,during,after)
 
@@ -1172,6 +1277,18 @@ information, maybe except if you use a very strong password.
 If it is safe in your environment, you can set the RCLONE_CONFIG_PASS
 environment variable to contain your password, in which case it will be
 used for decrypting the configuration.
+
+You can set this for a session from a script. For unix like systems save
+this to a file called set-rclone-password:
+
+    #!/bin/echo Source this file don't run it
+
+    read -s RCLONE_CONFIG_PASS
+    export RCLONE_CONFIG_PASS
+
+Then source the file when you want to use it. From the shell you would
+do source set-rclone-password. It will then ask you for the password and
+set it in the envonment variable.
 
 If you are running rclone inside a script, you might want to disable
 password prompts. To do that, pass the parameter --ask-password=false to
@@ -1404,10 +1521,6 @@ exclude rules like --include, --exclude, --include-from, --exclude-from,
 --filter, or --filter-from. The simplest way to try them out is using
 the ls command, or --dry-run together with -v.
 
-IMPORTANT Due to limitations of the command line parser you can only use
-any of these options once - if you duplicate them then rclone will use
-the last one only.
-
 
 Patterns
 
@@ -1415,9 +1528,10 @@ The patterns used to match files for inclusion or exclusion are based on
 "file globs" as used by the unix shell.
 
 If the pattern starts with a / then it only matches at the top level of
-the directory tree, relative to the root of the remote. If it doesn't
-start with / then it is matched starting at the END OF THE PATH, but it
-will only match a complete path element:
+the directory tree, RELATIVE TO THE ROOT OF THE REMOTE (not necessarily
+the root of the local drive). If it doesn't start with / then it is
+matched starting at the END OF THE PATH, but it will only match a
+complete path element:
 
     file.jpg  - matches "file.jpg"
               - matches "directory/file.jpg"
@@ -1504,13 +1618,14 @@ Rclone always does a wildcard match so \ must always escape a \.
 
 How the rules are used
 
-Rclone maintains a list of include rules and exclude rules.
+Rclone maintains a combined list of include rules and exclude rules.
 
-Each file is matched in order against the list until it finds a match.
-The file is then included or excluded according to the rule type.
+Each file is matched in order, starting from the top, against the rule
+in the list until it finds a match. The file is then included or
+excluded according to the rule type.
 
-If the matcher falls off the bottom of the list then the path is
-included.
+If the matcher fails to find a match after testing against all the
+entries in the list then the path is included.
 
 For example given the following rules, + being include, - being exclude,
 
@@ -1541,15 +1656,43 @@ Adding filtering rules
 
 Filtering rules are added with the following command line flags.
 
+Repeating options
+
+You can repeat the following options to add more than one rule of that
+type.
+
+-   --include
+-   --include-from
+-   --exclude
+-   --exclude-from
+-   --filter
+-   --filter-from
+
+Note that all the options of the same type are processed together in the
+order above, regardless of what order they were placed on the command
+line.
+
+So all --include options are processed first in the order they appeared
+on the command line, then all --include-from options etc.
+
+To mix up the order includes and excludes, the --filter flag can be
+used.
+
 --exclude - Exclude files matching pattern
 
 Add a single exclude rule with --exclude.
+
+This flag can be repeated. See above for the order the flags are
+processed in.
 
 Eg --exclude *.bak to exclude all bak files from the sync.
 
 --exclude-from - Read exclude patterns from file
 
 Add exclude rules from a file.
+
+This flag can be repeated. See above for the order the flags are
+processed in.
 
 Prepare a file like this exclude-file.txt
 
@@ -1566,6 +1709,9 @@ This is useful if you have a lot of rules.
 
 Add a single include rule with --include.
 
+This flag can be repeated. See above for the order the flags are
+processed in.
+
 Eg --include *.{png,jpg} to include all png and jpg files in the backup
 and no others.
 
@@ -1578,6 +1724,9 @@ you must use --filter-from.
 --include-from - Read include patterns from file
 
 Add include rules from a file.
+
+This flag can be repeated. See above for the order the flags are
+processed in.
 
 Prepare a file like this include-file.txt
 
@@ -1603,11 +1752,17 @@ This can be used to add a single include or exclude rule. Include rules
 start with + and exclude rules start with -. A special rule called ! can
 be used to clear the existing rules.
 
+This flag can be repeated. See above for the order the flags are
+processed in.
+
 Eg --filter "- *.bak" to exclude all bak files from the sync.
 
 --filter-from - Read filtering patterns from a file
 
 Add include/exclude rules from a file.
+
+This flag can be repeated. See above for the order the flags are
+processed in.
 
 Prepare a file like this filter-file.txt
 
@@ -1631,6 +1786,9 @@ excluded from the sync.
 This reads a list of file names from the file passed in and ONLY these
 files are transferred. The filtering rules are ignored completely if you
 use this option.
+
+This option can be repeated to read from more than one file. These are
+read in the order that they are placed on the command line.
 
 Prepare a file like this files-from.txt
 
@@ -1867,7 +2025,7 @@ more efficient.
   Openstack Swift         Yes †   Yes      No        No        No
   Dropbox                  Yes    Yes      Yes       Yes     No #575
   Google Cloud Storage     Yes    Yes      No        No        No
-  Amazon Drive             Yes     No    No #721   No #721   No #575
+  Amazon Drive             Yes     No      Yes       Yes     No #575
   Microsoft One Drive      Yes    Yes    No #197   No #197   No #575
   Hubic                   Yes †   Yes      No        No        No
   Backblaze B2             No      No      No        No        Yes
@@ -2078,7 +2236,7 @@ rclone will choose a format from the default list.
 
 If you prefer an archive copy then you might use --drive-formats pdf, or
 if you prefer openoffice/libreoffice formats you might use
---drive-formats ods,odt.
+--drive-formats ods,odt,odp.
 
 Note that rclone adds the extension to the google doc, so if it is
 calles My Spreadsheet on google docs, it will be exported as
@@ -3229,8 +3387,9 @@ means that larger files are likely to fail.
 
 Unfortunatly there is no way for rclone to see that this failure is
 because of file size, so it will retry the operation, as any other
-failure. To avoid this problem, use --max-size 50G option to limit the
-maximum size of uploaded files.
+failure. To avoid this problem, use --max-size 50000M option to limit
+the maximum size of uploaded files. Note that --max-size does not split
+files into segments, it only ignores files over this size.
 
 
 Microsoft One Drive
@@ -3371,6 +3530,8 @@ These can't occur on Windows platforms, but on non-Windows platforms
 they are common. Rclone will map these names to and from an identical
 looking unicode equivalent. For example if a file has a ? in it will be
 mapped to ？ instead.
+
+The largest allowed file size is 10GiB (10,737,418,240 bytes).
 
 
 Hubic
@@ -4292,6 +4453,51 @@ it isn't supported (eg Windows) it will not appear as an valid flag.
 
 Changelog
 
+-   v1.35 - 2017-01-02
+    -   New Features
+    -   moveto and copyto commands for choosing a destination name on
+        copy/move
+    -   rmdirs command to recursively delete empty directories
+    -   Allow repeated --include/--exclude/--filter options
+    -   Only show transfer stats on commands which transfer stuff
+        -   show stats on any command using the --stats flag
+    -   Allow overlapping directories in move when server side dir move
+        is supported
+    -   Add --stats-unit option - thanks Scott McGillivray
+    -   Bug Fixes
+    -   Fix the config file being overwritten when two rclones are
+        running
+    -   Make rclone lsd obey the filters properly
+    -   Fix compilation on mips
+    -   Fix not transferring files that don't differ in size
+    -   Fix panic on nil retry/fatal error
+    -   Mount
+    -   Retry reads on error - should help with reliability a lot
+    -   Report the modification times for directories from the remote
+    -   Add bandwidth accounting and limiting (fixes --bwlimit)
+    -   If --stats provided will show stats and which files are
+        transferring
+    -   Support R/W files if truncate is set.
+    -   Implement statfs interface so df works
+    -   Note that write is now supported on Amazon Drive
+    -   Report number of blocks in a file - thanks Stefan Breunig
+    -   Crypt
+    -   Prevent the user pointing crypt at itself
+    -   Fix failed to authenticate decrypted block errors
+        -   these will now return the underlying unexpected EOF instead
+    -   Amazon Drive
+    -   Add support for server side move and directory move - thanks
+        Stefan Breunig
+    -   Fix nil pointer deref on size attribute
+    -   B2
+    -   Use new prefix and delimiter parameters in directory listings
+        -   This makes --max-depth 1 dir listings as used in mount much
+            faster
+    -   Reauth the account while doing uploads too - should help with
+        token expiry
+    -   Drive
+    -   Make DirMove more efficient and complain about moving the root
+    -   Create destination directory on Move()
 -   v1.34 - 2016-11-06
     -   New Features
     -   Stop single file and --files-from operations iterating through
@@ -5070,6 +5276,11 @@ Contributors
 -   Felix Bünemann buenemann@louis.info
 -   Durval Menezes jmrclone@durval.com
 -   Luiz Carlos Rumbelsperger Viana maxd13_luiz_carlos@hotmail.com
+-   Stefan Breunig stefan-github@yrden.de
+-   Alishan Ladhani ali-l@users.noreply.github.com
+-   0xJAKE 0xJAKE@users.noreply.github.com
+-   Thibault Molleman thibaultmol@users.noreply.github.com
+-   Scott McGillivray scott.mcgillivray@gmail.com
 
 
 

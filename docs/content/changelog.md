@@ -7,6 +7,44 @@ date: "2016-11-06"
 Changelog
 ---------
 
+  * v1.35 - 2017-01-02
+    * New Features
+      * moveto and copyto commands for choosing a destination name on copy/move
+      * rmdirs command to recursively delete empty directories
+      * Allow repeated --include/--exclude/--filter options
+      * Only show transfer stats on commands which transfer stuff
+        * show stats on any command using the `--stats` flag
+      * Allow overlapping directories in move when server side dir move is supported
+      * Add --stats-unit option - thanks Scott McGillivray
+    * Bug Fixes
+      * Fix the config file being overwritten when two rclones are running
+      * Make rclone lsd obey the filters properly
+      * Fix compilation on mips
+      * Fix not transferring files that don't differ in size
+      * Fix panic on nil retry/fatal error
+    * Mount
+      * Retry reads on error - should help with reliability a lot
+      * Report the modification times for directories from the remote
+      * Add bandwidth accounting and limiting (fixes --bwlimit)
+      * If --stats provided will show stats and which files are transferring
+      * Support R/W files if truncate is set.
+      * Implement statfs interface so df works
+      * Note that write is now supported on Amazon Drive
+      * Report number of blocks in a file - thanks Stefan Breunig
+    * Crypt
+      * Prevent the user pointing crypt at itself
+      * Fix failed to authenticate decrypted block errors
+        * these will now return the underlying unexpected EOF instead
+    * Amazon Drive
+      * Add support for server side move and directory move - thanks Stefan Breunig
+      * Fix nil pointer deref on size attribute
+    * B2
+      * Use new prefix and delimiter parameters in directory listings
+        * This makes --max-depth 1 dir listings as used in mount much faster
+      * Reauth the account while doing uploads too - should help with token expiry
+    * Drive
+      * Make DirMove more efficient and complain about moving the root
+      * Create destination directory on Move()
   * v1.34 - 2016-11-06
     * New Features
       * Stop single file and `--files-from` operations iterating through the source bucket.

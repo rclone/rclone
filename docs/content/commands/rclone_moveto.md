@@ -1,24 +1,49 @@
 ---
 date: 2017-01-02T15:29:14Z
-title: "rclone purge"
-slug: rclone_purge
-url: /commands/rclone_purge/
+title: "rclone moveto"
+slug: rclone_moveto
+url: /commands/rclone_moveto/
 ---
-## rclone purge
+## rclone moveto
 
-Remove the path and all of its contents.
+Move file or directory from source to dest.
 
 ### Synopsis
 
 
 
-Remove the path and all of its contents.  Note that this does not obey
-include/exclude filters - everything will be removed.  Use `delete` if
-you want to selectively delete files.
+If source:path is a file or directory then it moves it to a file or
+directory named dest:path.
+
+This can be used to rename files or upload single files to other than
+their existing name.  If the source is a directory then it acts exacty
+like the move command.
+
+So
+
+    rclone moveto src dst
+
+where src and dst are rclone paths, either remote:path or
+/path/to/local or C:\windows\path\if\on\windows.
+
+This will:
+
+    if src is file
+        move it to dst, overwriting an existing file if it exists
+    if src is directory
+        move it to dst, overwriting existing files if they exist
+        see move command for full details
+
+This doesn't transfer unchanged files, testing by size and
+modification time or MD5SUM.  src will be deleted on successful
+transfer.
+
+**Important**: Since this can cause data loss, test first with the
+--dry-run flag.
 
 
 ```
-rclone purge remote:path
+rclone moveto source:path dest:path
 ```
 
 ### Options inherited from parent commands
