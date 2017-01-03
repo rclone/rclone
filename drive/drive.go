@@ -479,8 +479,8 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 					jobs = append(jobs, dircache.ListDirJob{DirID: item.Id, Path: remote + "/", Depth: job.Depth - 1})
 				}
 			}
-		case item.Md5Checksum != "":
-			// If item has MD5 sum it is a file stored on drive
+		case item.Md5Checksum != "" || item.FileSize > 0:
+			// If item has MD5 sum or a length it is a file stored on drive
 			o, err := f.newObjectWithInfo(remote, item)
 			if err != nil {
 				out.SetError(err)
