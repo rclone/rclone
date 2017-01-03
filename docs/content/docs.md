@@ -426,9 +426,15 @@ server side move, and the source and destination have a compatible
 hash, then this will track renames during `sync`, `copy`, and `move`
 operations and perform renaming server-side.
 
+Files will be matched by size and hash - if both match then a rename
+will be considered.
+
 If the destination does not support server-side copy or move, rclone
 will fall back to the default behaviour and log an error level message
 to the console.
+
+Note that `--track-renames` is incompatible with `--no-traverse` and
+that it uses extra memory to keep track of all the rename candidates.
 
 ### --delete-(before,during,after) ###
 

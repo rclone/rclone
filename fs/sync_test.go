@@ -616,6 +616,12 @@ func TestSyncWithTrackRenames(t *testing.T) {
 
 	}()
 
+	haveHash := r.fremote.Hashes().Overlap(r.flocal.Hashes()).GetOne() != fs.HashNone
+	_, canMove := r.fremote.(fs.Mover)
+	_, canCopy := r.fremote.(fs.Copier)
+	canTrackRenames := haveHash && (canMove || canCopy)
+	t.Logf("Can track renames: %v", canTrackRenames)
+
 	f1 := r.WriteFile("potato", "Potato Content", t1)
 	f2 := r.WriteFile("yam", "Yam Content", t2)
 
@@ -633,6 +639,11 @@ func TestSyncWithTrackRenames(t *testing.T) {
 
 	fstest.CheckItems(t, r.fremote, f1, f2)
 
+	if canTrackRenames {
+		assert.Equal(t, fs.Stats.GetTransfers(), int64(0))
+	} else {
+		assert.Equal(t, fs.Stats.GetTransfers(), int64(1))
+	}
 }
 
 // Test a server side move if possible, or the backup path if not
