@@ -188,15 +188,34 @@ for bytes, `k` for kBytes, `M` for MBytes and `G` for GBytes may be
 used.  These are the binary units, eg 1, 2\*\*10, 2\*\*20, 2\*\*30
 respectively.
 
-### --bwlimit=SIZE ###
+### --bwlimit=BANDWIDTH_SPEC ###
 
-Bandwidth limit in kBytes/s, or use suffix b|k|M|G.  The default is `0`
-which means to not limit bandwidth.
+This option controls the bandwidth limit. Limits can be specified
+in two ways: As a single limit, or as a timetable.
+
+Single limits last for the duration of the session. To use a single limit,
+specify the desired bandwidth in kBytes/s, or use a suffix b|k|M|G.  The
+default is `0` which means to not limit bandwidth.
 
 For example to limit bandwidth usage to 10 MBytes/s use `--bwlimit 10M`
 
-This only limits the bandwidth of the data transfer, it doesn't limit
-the bandwith of the directory listings etc.
+It is also possible to specify a "timetable" of limits, which will cause
+certain limits to be applied at certain times. To specify a timetable, format your
+entries as "HH:MM,BANDWIDTH HH:MM,BANDWITH...".
+
+An example of a typical timetable to avoid link saturation during daytime
+working hours could be:
+
+`--bwlimit "08:00,512 12:00,10M 13:00,512 18:00,30M 23:00,off"`
+
+In this example, the transfer bandwidth will be set to 512kBytes/sec at 8am.
+At noon, it will raise to 10Mbytes/s, and drop back to 512kBytes/sec at 1pm.
+At 6pm, the bandwidth limit will be set to 30MBytes/s, and at 11pm it will be
+completely disabled (full speed). Anything between 11pm and 8am will remain
+unlimited.
+
+Bandwidth limits only apply to the data transfer. The don't apply to the
+bandwith of the directory listings etc.
 
 Note that the units are Bytes/s not Bits/s.  Typically connections are
 measured in Bits/s - to convert divide by 8.  For example let's say

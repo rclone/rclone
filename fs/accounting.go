@@ -21,18 +21,58 @@ var (
 	tokenBucketMu   sync.Mutex // protects the token bucket variables
 	tokenBucket     *tb.Bucket
 	prevTokenBucket = tokenBucket
+	currLimitMu     sync.Mutex // protects changes to the timeslot
+	currLimit       BwTimeSlot
 )
 
 // Start the token bucket if necessary
 func startTokenBucket() {
-	if bwLimit > 0 {
-		tokenBucket = tb.NewBucket(int64(bwLimit), 100*time.Millisecond)
-		Log(nil, "Starting bandwidth limiter at %vBytes/s", &bwLimit)
+	currLimitMu.Lock()
+	currLimit := bwLimit.LimitAt(time.Now())
+	currLimitMu.Unlock()
+
+	if currLimit.bandwidth > 0 {
+		tokenBucket = tb.NewBucket(int64(currLimit.bandwidth), 100*time.Millisecond)
+		Log(nil, "Starting bandwidth limiter at %vBytes/s", &currLimit.bandwidth)
 
 		// Start the SIGUSR2 signal handler to toggle bandwidth.
 		// This function does nothing in windows systems.
 		startSignalHandler()
 	}
+}
+
+// startTokenTicker creates a ticker to update the bandwidth limiter every minute.
+func startTokenTicker() {
+	ticker := time.NewTicker(time.Minute)
+	go func() {
+		for range ticker.C {
+			limitNow := bwLimit.LimitAt(time.Now())
+			currLimitMu.Lock()
+
+			if currLimit.bandwidth != limitNow.bandwidth {
+				tokenBucketMu.Lock()
+				if tokenBucket != nil {
+					err := tokenBucket.Close()
+					if err != nil {
+						Log(nil, "Error closing token bucket: %v", err)
+					}
+				}
+
+				// Set new bandwidth. If unlimited, set tokenbucket to nil.
+				if limitNow.bandwidth > 0 {
+					tokenBucket = tb.NewBucket(int64(limitNow.bandwidth), 100*time.Millisecond)
+					Log(nil, "Scheduled bandwidth change. Limit set to %vBytes/s", &limitNow.bandwidth)
+				} else {
+					tokenBucket = nil
+					Log(nil, "Scheduled bandwidth change. Bandwidth limits disabled")
+				}
+
+				currLimit = limitNow
+				tokenBucketMu.Unlock()
+			}
+			currLimitMu.Unlock()
+		}
+	}()
 }
 
 // stringSet holds a set of strings
@@ -394,12 +434,12 @@ func (acc *Account) read(in io.Reader, p []byte) (n int, err error) {
 	// Get the token bucket in use
 	tokenBucketMu.Lock()
 	tb := tokenBucket
-	tokenBucketMu.Unlock()
 
 	// Limit the transfer speed if required
 	if tb != nil {
 		tb.Wait(int64(n))
 	}
+	tokenBucketMu.Unlock()
 	return
 }
 

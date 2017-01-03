@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -84,6 +85,106 @@ func TestSizeSuffixSet(t *testing.T) {
 			require.NoError(t, err)
 		}
 		assert.Equal(t, test.want, int64(ss))
+	}
+}
+
+func TestBwTimetableSet(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want BwTimetable
+		err  bool
+	}{
+		{"", BwTimetable{}, true},
+		{"0", BwTimetable{BwTimeSlot{hhmm: 0, bandwidth: 0}}, false},
+		{"666", BwTimetable{BwTimeSlot{hhmm: 0, bandwidth: 666 * 1024}}, false},
+		{"10:20,666", BwTimetable{BwTimeSlot{hhmm: 1020, bandwidth: 666 * 1024}}, false},
+		{
+			"11:00,333 13:40,666 23:50,10M 23:59,off",
+			BwTimetable{
+				BwTimeSlot{hhmm: 1100, bandwidth: 333 * 1024},
+				BwTimeSlot{hhmm: 1340, bandwidth: 666 * 1024},
+				BwTimeSlot{hhmm: 2350, bandwidth: 10 * 1024 * 1024},
+				BwTimeSlot{hhmm: 2359, bandwidth: -1},
+			},
+			false,
+		},
+		{"bad,bad", BwTimetable{}, true},
+		{"bad bad", BwTimetable{}, true},
+		{"bad", BwTimetable{}, true},
+		{"1000X", BwTimetable{}, true},
+		{"2401,666", BwTimetable{}, true},
+		{"1061,666", BwTimetable{}, true},
+	} {
+		tt := BwTimetable{}
+		err := tt.Set(test.in)
+		if test.err {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
+		}
+		assert.Equal(t, test.want, tt)
+	}
+}
+
+func TestBwTimetableLimitAt(t *testing.T) {
+	for _, test := range []struct {
+		tt   BwTimetable
+		now  time.Time
+		want BwTimeSlot
+	}{
+		{
+			BwTimetable{},
+			time.Date(2017, time.April, 20, 15, 0, 0, 0, time.UTC),
+			BwTimeSlot{hhmm: 0, bandwidth: -1},
+		},
+		{
+			BwTimetable{BwTimeSlot{hhmm: 1100, bandwidth: 333 * 1024}},
+			time.Date(2017, time.April, 20, 15, 0, 0, 0, time.UTC),
+			BwTimeSlot{hhmm: 1100, bandwidth: 333 * 1024},
+		},
+		{
+			BwTimetable{
+				BwTimeSlot{hhmm: 1100, bandwidth: 333 * 1024},
+				BwTimeSlot{hhmm: 1300, bandwidth: 666 * 1024},
+				BwTimeSlot{hhmm: 2301, bandwidth: 1024 * 1024},
+				BwTimeSlot{hhmm: 2350, bandwidth: -1},
+			},
+			time.Date(2017, time.April, 20, 10, 15, 0, 0, time.UTC),
+			BwTimeSlot{hhmm: 2350, bandwidth: -1},
+		},
+		{
+			BwTimetable{
+				BwTimeSlot{hhmm: 1100, bandwidth: 333 * 1024},
+				BwTimeSlot{hhmm: 1300, bandwidth: 666 * 1024},
+				BwTimeSlot{hhmm: 2301, bandwidth: 1024 * 1024},
+				BwTimeSlot{hhmm: 2350, bandwidth: -1},
+			},
+			time.Date(2017, time.April, 20, 11, 0, 0, 0, time.UTC),
+			BwTimeSlot{hhmm: 1100, bandwidth: 333 * 1024},
+		},
+		{
+			BwTimetable{
+				BwTimeSlot{hhmm: 1100, bandwidth: 333 * 1024},
+				BwTimeSlot{hhmm: 1300, bandwidth: 666 * 1024},
+				BwTimeSlot{hhmm: 2301, bandwidth: 1024 * 1024},
+				BwTimeSlot{hhmm: 2350, bandwidth: -1},
+			},
+			time.Date(2017, time.April, 20, 13, 1, 0, 0, time.UTC),
+			BwTimeSlot{hhmm: 1300, bandwidth: 666 * 1024},
+		},
+		{
+			BwTimetable{
+				BwTimeSlot{hhmm: 1100, bandwidth: 333 * 1024},
+				BwTimeSlot{hhmm: 1300, bandwidth: 666 * 1024},
+				BwTimeSlot{hhmm: 2301, bandwidth: 1024 * 1024},
+				BwTimeSlot{hhmm: 2350, bandwidth: -1},
+			},
+			time.Date(2017, time.April, 20, 23, 59, 0, 0, time.UTC),
+			BwTimeSlot{hhmm: 2350, bandwidth: -1},
+		},
+	} {
+		slot := test.tt.LimitAt(test.now)
+		assert.Equal(t, test.want, slot)
 	}
 }
 
