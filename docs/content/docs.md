@@ -733,3 +733,64 @@ message and which file caused the problem. A high priority message is
 also shown when starting a retry so the user can see that any previous
 error messages may not be valid after the retry. If rclone has done a
 retry it will log a high priority message if the retry was successful.
+
+Environment Variables
+---------------------
+
+Rclone can be configured entirely using environment variables.  These
+can be used to set defaults for options or config file entries.
+
+### Options ###
+
+Every option in rclone can have its default set by environment
+variable.
+
+To find the name of the environment variable, first take the long
+option name, strip the leading `--`, change `-` to `_`, make
+upper case and prepend `RCLONE_`.
+
+For example to always set `--stats 5s`, set the environment variable
+`RCLONE_STATS=5s`.  If you set stats on the command line this will
+override the environment variable setting.
+
+Or to always use the trash in drive `--drive-use-trash`, set
+`RCLONE_DRIVE_USE_TRASH=true`.
+
+The same parser is used for the options and the environment variables
+so they take exactly the same form.
+
+### Config file ###
+
+You can set defaults for values in the config file on an individual
+remote basis.  If you want to use this feature, you will need to
+discover the name of the config items that you want.  The easiest way
+is to run through `rclone config` by hand, then look in the config
+file to see what the values are (the config file can be found by
+looking at the help for `--config` in `rclone help`).
+
+To find the name of the environment variable, you need to set, take
+`RCLONE_` + name of remote + `_` + name of config file option and make
+it all uppercase.
+
+For example to configure an S3 remote named `mys3:` without a config
+file (using unix ways of setting environment variables):
+
+```
+$ export RCLONE_CONFIG_MYS3_TYPE=s3
+$ export RCLONE_CONFIG_MYS3_ACCESS_KEY_ID=XXX
+$ export RCLONE_CONFIG_MYS3_SECRET_ACCESS_KEY=XXX
+$ rclone lsd MYS3:
+          -1 2016-09-21 12:54:21        -1 my-bucket
+$ rclone listremotes | grep mys3
+mys3:
+```
+
+Note that if you want to create a remote using environment variables
+you must create the `..._TYPE` variable as above.
+
+### Other environment variables ###
+
+  * RCLONE_CONFIG_PASS` set to contain your config file password (see [Configuration Encryption](#configuration-encryption) section)
+  * HTTP_PROXY, HTTPS_PROXY and NO_PROXY (or the lowercase versions thereof).
+    * HTTPS_PROXY takes precedence over HTTP_PROXY for https requests.
+    * The environment values may be either a complete URL or a "host[:port]" for, in which case the "http" scheme is assumed.
