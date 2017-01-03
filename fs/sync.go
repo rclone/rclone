@@ -4,6 +4,7 @@ package fs
 
 import (
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
@@ -19,8 +20,9 @@ type syncCopyMove struct {
 	// internal state
 	noTraverse     bool              // if set don't trafevers the dst
 	deleteBefore   bool              // set if we must delete objects before copying
-	dstFiles       map[string]Object // dst files, only used if Delete
-	srcFiles       map[string]Object // src files, only used if deleteBefore
+	trackRenames   bool              // set if we should do server side renames
+	dstFiles       map[string]Object // dst files, only used if Delete or trackRenames
+	srcFiles       map[string]Object // src files, only used if deleteBefore or trackRenames
 	srcFilesChan   chan Object       // passes src objects
 	srcFilesResult chan error        // error result of src listing
 	dstFilesResult chan error        // error result of dst listing
@@ -36,6 +38,20 @@ type syncCopyMove struct {
 }
 
 func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) *syncCopyMove {
+
+	// Don't track renames for remotes without server-side rename support.
+	// Some remotes simulate rename by server-side copy and delete, so include
+	// remotes that implements either Mover and Copier.
+	var canMove bool
+	switch fdst.(type) {
+	case Mover, Copier:
+		canMove = true
+	}
+
+	if !canMove && Config.TrackRenames {
+		ErrorLog(nil, "track-renames flag is set, but the destination %q does not support server-side moves", fdst.Name())
+	}
+
 	s := &syncCopyMove{
 		fdst:           fdst,
 		fsrc:           fsrc,
@@ -50,6 +66,7 @@ func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) *syncCopyMove {
 		toBeChecked:    make(ObjectPairChan, Config.Transfers),
 		toBeUploaded:   make(ObjectPairChan, Config.Transfers),
 		deleteBefore:   Delete && Config.DeleteBefore,
+		trackRenames:   canMove && Config.TrackRenames,
 	}
 	if s.noTraverse && s.Delete {
 		Debug(s.fdst, "Ignoring --no-traverse with sync")
@@ -320,6 +337,69 @@ func (s *syncCopyMove) deleteFiles(checkSrcMap bool) error {
 	return DeleteFiles(toDelete)
 }
 
+func (s *syncCopyMove) renameFiles() error {
+
+	toRename := make(ObjectPairChan, Config.Transfers)
+
+	for srcRemote, srcObject := range s.srcFiles {
+		if _, exists := s.dstFiles[srcRemote]; exists {
+			continue
+		}
+
+		if s.aborting() {
+			return nil
+		}
+
+		for dstRemote, dstObject := range s.dstFiles {
+			if _, exists := s.srcFiles[dstRemote]; exists {
+				continue
+			}
+
+			// At this point, if the files are equal, this is a rename.
+			if eq, commonHash := equal(srcObject, dstObject, false, true); eq && commonHash {
+				toRename <- ObjectPair{srcObject, dstObject}
+				break
+			}
+		}
+	}
+
+	close(toRename)
+
+	var (
+		wg         sync.WaitGroup
+		filesMu    sync.Mutex
+		errorCount int32
+	)
+
+	wg.Add(Config.Transfers)
+	for i := 0; i < Config.Transfers; i++ {
+		go func() {
+			defer wg.Done()
+			for pair := range toRename {
+				Debug(nil, "Rename %q to %q", pair.dst.Remote(), pair.src.Remote())
+
+				err := MoveFile(s.fdst, s.fdst, pair.src.Remote(), pair.dst.Remote())
+				if err != nil {
+					atomic.AddInt32(&errorCount, 1)
+					continue
+				}
+
+				filesMu.Lock()
+				delete(s.dstFiles, pair.dst.Remote())
+				delete(s.srcFiles, pair.src.Remote())
+				filesMu.Unlock()
+			}
+		}()
+	}
+	Log(nil, "Waiting for renames to finish")
+	wg.Wait()
+	if errorCount > 0 {
+		return errors.Errorf("failed to rename %d files", errorCount)
+	}
+
+	return nil
+}
+
 // Syncs fsrc into fdst
 //
 // If Delete is true then it deletes any files in fdst that aren't in fsrc
@@ -343,17 +423,16 @@ func (s *syncCopyMove) run() error {
 		go s.readDstFiles()
 	}
 
-	// If s.deleteBefore then we need to read the whole source map first
-	if s.deleteBefore {
+	// If s.deleteBefore or s.trackRenames then we need to read the whole source map first
+	readSourceMap := s.deleteBefore || s.trackRenames
+
+	if readSourceMap {
 		// Read source files into the map
 		s.srcFiles, err = readFilesMap(s.fsrc, false, s.dir)
 		if err != nil {
 			return err
 		}
-		// Pump the map into s.srcFilesChan
-		go s.readSrcUsingMap()
-	} else {
-		go s.readSrcUsingChan()
+
 	}
 
 	// Wait for dstfiles to finish reading if we were reading them
@@ -365,13 +444,28 @@ func (s *syncCopyMove) run() error {
 		}
 	}
 
-	// Delete files first if required
+	// Do renames if required
 	// Have dstFiles and srcFiles complete at this point
+	if s.trackRenames {
+		if err = s.renameFiles(); err != nil {
+			return err
+		}
+	}
+
+	// Delete files first if required
 	if s.deleteBefore {
 		err = s.deleteFiles(true)
 		if err != nil {
 			return err
 		}
+	}
+
+	// Now we can fill the src channel.
+	if readSourceMap {
+		// Pump the map into s.srcFilesChan
+		go s.readSrcUsingMap()
+	} else {
+		go s.readSrcUsingChan()
 	}
 
 	// Start background checking and transferring pipeline

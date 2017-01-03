@@ -109,39 +109,48 @@ func CheckHashes(src, dst Object) (equal bool, hash HashType, err error) {
 // Otherwise the file is considered to be not equal including if there
 // were errors reading info.
 func Equal(src, dst Object) bool {
+	eq, _ := equal(src, dst, Config.SizeOnly, Config.CheckSum)
+	return eq
+}
+
+// equal returns whether the two objects are considered equal according
+// to the given configuration.
+// It also returns a second return value that returns whether a compatible
+// hash was found.
+func equal(src, dst Object, sizeOnly, checkSum bool) (bool, bool) {
 	if !Config.IgnoreSize {
 		if src.Size() != dst.Size() {
 			Debug(src, "Sizes differ")
-			return false
+			return false, false
 		}
 	}
-	if Config.SizeOnly {
+	if sizeOnly {
 		Debug(src, "Sizes identical")
-		return true
+		return true, false
 	}
 
 	// Assert: Size is equal or being ignored
 
 	// If checking checksum and not modtime
-	if Config.CheckSum {
+	if checkSum {
 		// Check the hash
 		same, hash, _ := CheckHashes(src, dst)
 		if !same {
 			Debug(src, "%v differ", hash)
-			return false
+			return false, true
 		}
 		if hash == HashNone {
 			Debug(src, "Size of src and dst objects identical")
-		} else {
-			Debug(src, "Size and %v of src and dst objects identical", hash)
+			return true, false
 		}
-		return true
+		Debug(src, "Size and %v of src and dst objects identical", hash)
+		return true, true
 	}
 
 	// Sizes the same so check the mtime
 	if Config.ModifyWindow == ModTimeNotSupported {
 		Debug(src, "Sizes identical")
-		return true
+		return true, false
 	}
 	srcModTime := src.ModTime()
 	dstModTime := dst.ModTime()
@@ -149,7 +158,7 @@ func Equal(src, dst Object) bool {
 	ModifyWindow := Config.ModifyWindow
 	if dt < ModifyWindow && dt > -ModifyWindow {
 		Debug(src, "Size and modification time the same (differ by %s, within tolerance %s)", dt, ModifyWindow)
-		return true
+		return true, false
 	}
 
 	Debug(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
@@ -158,11 +167,11 @@ func Equal(src, dst Object) bool {
 	same, hash, _ := CheckHashes(src, dst)
 	if !same {
 		Debug(src, "%v differ", hash)
-		return false
+		return false, true
 	}
 	if hash == HashNone {
 		// if couldn't check hash, return that they differ
-		return false
+		return false, false
 	}
 
 	// mod time differs but hash is the same to reset mod time if required
@@ -172,7 +181,7 @@ func Equal(src, dst Object) bool {
 		err := dst.SetModTime(srcModTime)
 		if err == ErrorCantSetModTime {
 			Debug(src, "src and dst identical but can't set mod time without re-uploading")
-			return false
+			return false, true
 		} else if err != nil {
 			Stats.Error()
 			ErrorLog(dst, "Failed to set modification time: %v", err)
@@ -180,7 +189,7 @@ func Equal(src, dst Object) bool {
 			Debug(src, "Updated modification time in destination")
 		}
 	}
-	return true
+	return true, true
 }
 
 // MimeTypeFromName returns a guess at the mime type from the name
