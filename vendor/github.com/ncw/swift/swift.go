@@ -102,13 +102,6 @@ type Connection struct {
 	TenantDomainId string            // Id of the tenant's domain (v3 auth only), only needed if it differs the from user domain
 	TrustId        string            // Id of the trust (v3 auth only)
 	Transport      http.RoundTripper `json:"-" xml:"-"` // Optional specialised http.Transport (eg. for Google Appengine)
-	// If set then we won't send `Expect: 100-continue` headers.
-	// This is automatically disabled on go < 1.6 which doesn't
-	// support it and if a 417 error is received.  Note that if
-	// you are using a custom Transport and you wish the `Expect:
-	// 100-continue` mechanism to work, you'll need to set
-	// ExpectContinueTimeout to a non-zero value.
-	DisableExpectContinue bool
 	// These are filled in after Authenticate is called as are the defaults for above
 	StorageUrl string
 	AuthToken  string
@@ -156,7 +149,6 @@ var (
 	TimeoutError        = newError(408, "Timeout when reading or writing data")
 	Forbidden           = newError(403, "Operation forbidden")
 	TooLargeObject      = newError(413, "Too Large Object")
-	RetryNeeded         = newError(401, "Retry needed after token expired")
 
 	// Mappings for authentication errors
 	authErrorMap = errorMap{
@@ -262,17 +254,12 @@ func (c *Connection) setDefaults() {
 		c.Timeout = 60 * time.Second
 	}
 	if c.Transport == nil {
-		tr := &http.Transport{
+		c.Transport = &http.Transport{
 			//		TLSClientConfig:    &tls.Config{RootCAs: pool},
 			//		DisableCompression: true,
 			Proxy:               http.ProxyFromEnvironment,
 			MaxIdleConnsPerHost: 2048,
 		}
-		// If using ExpectContinue make sure it is set in the transport
-		if !c.DisableExpectContinue {
-			SetExpectContinueTimeout(tr, 5*time.Second)
-		}
-		c.Transport = tr
 	}
 	if c.client == nil {
 		c.client = &http.Client{
@@ -476,13 +463,6 @@ func (c *Connection) Call(targetUrl string, p RequestOpts) (resp *http.Response,
 	if retries == 0 {
 		retries = c.Retries
 	}
-	reader := p.Body
-	var wdReader *watchdogReader
-	timer := time.NewTimer(c.ConnectTimeout)
-	if reader != nil {
-		wdReader = newWatchdogReader(reader, c.Timeout, timer)
-		reader = wdReader
-	}
 	var req *http.Request
 	for {
 		var authToken string
@@ -502,6 +482,11 @@ func (c *Connection) Call(targetUrl string, p RequestOpts) (resp *http.Response,
 		}
 		if p.Parameters != nil {
 			URL.RawQuery = p.Parameters.Encode()
+		}
+		timer := time.NewTimer(c.ConnectTimeout)
+		reader := p.Body
+		if reader != nil {
+			reader = newWatchdogReader(reader, c.Timeout, timer)
 		}
 		req, err = http.NewRequest(p.Operation, URL.String(), reader)
 		if err != nil {
@@ -523,12 +508,6 @@ func (c *Connection) Call(targetUrl string, p RequestOpts) (resp *http.Response,
 		}
 		req.Header.Add("User-Agent", c.UserAgent)
 		req.Header.Add("X-Auth-Token", authToken)
-		// Use `Expect: 100-continue` if body set and not disabled
-		usingExpectContinue := false
-		if !DisableExpectContinue && !c.DisableExpectContinue && p.Body != nil {
-			req.Header.Set("Expect", "100-continue")
-			usingExpectContinue = true
-		}
 		resp, err = c.doTimeoutRequest(timer, req)
 		if err != nil {
 			if (p.Operation == "HEAD" || p.Operation == "GET") && retries > 0 {
@@ -537,27 +516,14 @@ func (c *Connection) Call(targetUrl string, p RequestOpts) (resp *http.Response,
 			}
 			return nil, nil, err
 		}
-		if retries <= 0 {
-			break
-		}
-		if resp.StatusCode == 417 && usingExpectContinue {
-			// Disable `Expect: 100-continue` if get 417 error in response
-			c.DisableExpectContinue = true
-		} else if resp.StatusCode == 401 {
-			// Token has expired
+		// Check to see if token has expired
+		if resp.StatusCode == 401 && retries > 0 {
+			_ = resp.Body.Close()
 			c.UnAuthenticate()
-			// If we were reading from a reader and we
-			// can't reset it, then fail here, otherwise
-			// retry.
-			if wdReader != nil && !wdReader.Reset() {
-				return resp, headers, RetryNeeded
-			}
+			retries--
 		} else {
 			break
 		}
-		// Retry
-		_ = resp.Body.Close()
-		retries--
 	}
 
 	if err = c.parseHeaders(resp, p.ErrorMap); err != nil {

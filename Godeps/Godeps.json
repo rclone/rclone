@@ -213,7 +213,7 @@
 		},
 		{
 			"ImportPath": "github.com/ncw/swift",
-			"Rev": "95fc38e8de85903f4bf5b8d62721f0b9e106747a"
+			"Rev": "6c1b1510538e1f00d49a558b7b9b87d71bc454d6"
 		},
 		{
 			"ImportPath": "github.com/pkg/errors",
