@@ -50,3 +50,4 @@ Contributors
   * 0xJAKE <0xJAKE@users.noreply.github.com>
   * Thibault Molleman <thibaultmol@users.noreply.github.com>
   * Scott McGillivray <scott.mcgillivray@gmail.com>
+  * Bjørn Erik Pedersen <bjorn.erik.pedersen@gmail.com>
