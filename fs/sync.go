@@ -283,41 +283,6 @@ func (s *syncCopyMove) pairChecker(in ObjectPairChan, out ObjectPairChan, wg *sy
 	}
 }
 
-// tryRename renames a src object when doing track renames if
-// possible, it returns true if the object was renamed.
-func (s *syncCopyMove) tryRename(src Object) bool {
-	Stats.Checking(src.Remote())
-	defer Stats.DoneChecking(src.Remote())
-
-	hash, err := s.renameHash(src)
-	if err != nil {
-		Debug(src, "Failed to read hash: %v", err)
-		return false
-	}
-	if hash == "" {
-		return false
-	}
-
-	dst := s.popRenameMap(hash)
-	if dst == nil {
-		return false
-	}
-
-	err = MoveFile(s.fdst, s.fdst, src.Remote(), dst.Remote())
-	if err != nil {
-		Debug(src, "Failed to rename to %q: %v", dst.Remote(), err)
-		return false
-	}
-
-	// remove file from dstFiles if present
-	s.dstFilesMu.Lock()
-	delete(s.dstFiles, dst.Remote())
-	s.dstFilesMu.Unlock()
-
-	Debug(src, "Renamed from %q", dst.Remote())
-	return true
-}
-
 // pairRenamer reads Objects~s on in and attempts to rename them,
 // otherwise it sends them out if they need transferring.
 func (s *syncCopyMove) pairRenamer(in ObjectPairChan, out ObjectPairChan, wg *sync.WaitGroup) {
@@ -455,58 +420,24 @@ func (s *syncCopyMove) deleteFiles(checkSrcMap bool) error {
 // renameHash makes a string with the size and the hash for rename detection
 //
 // it may return an empty string in which case no hash could be made
-func (s *syncCopyMove) renameHash(obj Object) (hash string, err error) {
+func (s *syncCopyMove) renameHash(obj Object) (hash string) {
+	var err error
 	hash, err = obj.Hash(s.commonHash)
 	if err != nil {
-		return hash, err
+		Debug(obj, "Hash failed: %v", err)
+		return ""
 	}
 	if hash == "" {
-		return hash, nil
+		return ""
 	}
-	return fmt.Sprintf("%d,%s", obj.Size(), hash), nil
+	return fmt.Sprintf("%d,%s", obj.Size(), hash)
 }
 
-// makeRenameMap builds a map of the destination files by hash
-func (s *syncCopyMove) makeRenameMap() error {
-	Debug(s.fdst, "Making map for --track-renames")
-
-	s.renameMap = make(map[string][]Object)
-	in := make(chan Object, Config.Checkers)
-	go s.pumpMapToChan(s.dstFiles, in)
-
-	var wg sync.WaitGroup
-	wg.Add(Config.Transfers)
-	for i := 0; i < Config.Transfers; i++ {
-		go func() {
-			defer wg.Done()
-			for {
-				if s.aborting() {
-					return
-				}
-				select {
-				case obj, ok := <-in:
-					if !ok {
-						return
-					}
-					Stats.Checking(obj.Remote())
-					hash, err := s.renameHash(obj)
-					Stats.DoneChecking(obj.Remote())
-					if err != nil {
-						s.processError(err)
-					} else if hash != "" {
-						s.renameMapMu.Lock()
-						s.renameMap[hash] = append(s.renameMap[hash], obj)
-						s.renameMapMu.Unlock()
-					}
-				case <-s.abort:
-					return
-				}
-			}
-		}()
-	}
-	wg.Wait()
-	Debug(s.fdst, "Finished making map for --track-renames")
-	return s.currentError()
+// pushRenameMap adds the object with hash to the rename map
+func (s *syncCopyMove) pushRenameMap(hash string, obj Object) {
+	s.renameMapMu.Lock()
+	s.renameMap[hash] = append(s.renameMap[hash], obj)
+	s.renameMapMu.Unlock()
 }
 
 // popRenameMap finds the object with hash and pop the first match from
@@ -526,30 +457,74 @@ func (s *syncCopyMove) popRenameMap(hash string) (dst Object) {
 	return dst
 }
 
-// delRenameMap removes obj from renameMap
-func (s *syncCopyMove) delRenameMap(obj Object) {
-	hash, err := s.renameHash(obj)
-	if err != nil {
-		return
+// makeRenameMap builds a map of the destination files by hash that
+// match sizes in the slice of objects in renameCheck
+func (s *syncCopyMove) makeRenameMap(renameCheck []Object) {
+	Debug(s.fdst, "Making map for --track-renames")
+
+	// first make a map of possible sizes we need to check
+	possibleSizes := map[int64]struct{}{}
+	for _, obj := range renameCheck {
+		possibleSizes[obj.Size()] = struct{}{}
 	}
-	if hash == "" {
-		return
-	}
-	s.renameMapMu.Lock()
-	dsts := s.renameMap[hash]
-	for i, dst := range dsts {
-		if obj.Remote() == dst.Remote() {
-			// remove obj from list if found
-			dsts = append(dsts[:i], dsts[i+1:]...)
-			if len(dsts) > 0 {
-				s.renameMap[hash] = dsts
-			} else {
-				delete(s.renameMap, hash)
+
+	// pump all the dstFiles into in
+	in := make(chan Object, Config.Checkers)
+	go s.pumpMapToChan(s.dstFiles, in)
+
+	// now make a map of size,hash for all dstFiles
+	s.renameMap = make(map[string][]Object)
+	var wg sync.WaitGroup
+	wg.Add(Config.Transfers)
+	for i := 0; i < Config.Transfers; i++ {
+		go func() {
+			defer wg.Done()
+			for obj := range in {
+				// only create hash for dst Object if its size could match
+				if _, found := possibleSizes[obj.Size()]; found {
+					Stats.Checking(obj.Remote())
+					hash := s.renameHash(obj)
+					if hash != "" {
+						s.pushRenameMap(hash, obj)
+					}
+					Stats.DoneChecking(obj.Remote())
+				}
 			}
-			break
-		}
+		}()
 	}
-	s.renameMapMu.Unlock()
+	wg.Wait()
+	Debug(s.fdst, "Finished making map for --track-renames")
+}
+
+// tryRename renames a src object when doing track renames if
+// possible, it returns true if the object was renamed.
+func (s *syncCopyMove) tryRename(src Object) bool {
+	Stats.Checking(src.Remote())
+	defer Stats.DoneChecking(src.Remote())
+
+	hash := s.renameHash(src)
+	if hash == "" {
+		return false
+	}
+
+	dst := s.popRenameMap(hash)
+	if dst == nil {
+		return false
+	}
+
+	err := MoveFile(s.fdst, s.fdst, src.Remote(), dst.Remote())
+	if err != nil {
+		Debug(src, "Failed to rename to %q: %v", dst.Remote(), err)
+		return false
+	}
+
+	// remove file from dstFiles if present
+	s.dstFilesMu.Lock()
+	delete(s.dstFiles, dst.Remote())
+	s.dstFilesMu.Unlock()
+
+	Debug(src, "Renamed from %q", dst.Remote())
+	return true
 }
 
 // Syncs fsrc into fdst
@@ -592,14 +567,6 @@ func (s *syncCopyMove) run() error {
 	if !s.noTraverse {
 		err = <-s.dstFilesResult
 		if err != nil {
-			return err
-		}
-	}
-
-	// Build the map of destination files by hash if required
-	// Have dstFiles complete at this point
-	if s.trackRenames {
-		if err = s.makeRenameMap(); err != nil {
 			return err
 		}
 	}
@@ -648,10 +615,6 @@ func (s *syncCopyMove) run() error {
 				delete(s.dstFiles, remote)
 			}
 			s.dstFilesMu.Unlock()
-			if ok && s.trackRenames {
-				// remove file from rename tracking also
-				s.delRenameMap(dst)
-			}
 		}
 		if dst != nil {
 			s.toBeChecked <- ObjectPair{src, dst}
@@ -665,6 +628,8 @@ func (s *syncCopyMove) run() error {
 	}
 
 	if s.trackRenames {
+		// Build the map of the remaining dstFiles by hash
+		s.makeRenameMap(renameCheck)
 		// Attempt renames for all the files which don't have a matching dst
 		for _, src := range renameCheck {
 			s.toBeRenamed <- ObjectPair{src, nil}
