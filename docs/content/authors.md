@@ -51,3 +51,4 @@ Contributors
   * Thibault Molleman <thibaultmol@users.noreply.github.com>
   * Scott McGillivray <scott.mcgillivray@gmail.com>
   * Bjørn Erik Pedersen <bjorn.erik.pedersen@gmail.com>
+  * Lukas Loesche <lukas@mesosphere.io>
