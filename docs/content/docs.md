@@ -313,6 +313,15 @@ Do a trial run with no permanent changes.  Use this to see what rclone
 would do without actually doing it.  Useful when setting up the `sync`
 command which deletes files in the destination.
 
+### --ignore-checksum ###
+
+Normally rclone will check that the checksums of transferred files
+match, and give an error "corrupted on transfer" if they don't.
+
+You can use this option to skip that check.  You should only use it if
+you have had the "corrupted on transfer" error message and you are
+sure you might want to transfer potentially corrupted data.
+
 ### --ignore-existing ###
 
 Using this option will make rclone unconditionally skip all files
