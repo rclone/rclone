@@ -658,8 +658,6 @@ func commaSeparatedTrailers(req *http.Request) (string, error) {
 	}
 	if len(keys) > 0 {
 		sort.Strings(keys)
-		// TODO: could do better allocation-wise here, but trailers are rare,
-		// so being lazy for now.
 		return strings.Join(keys, ","), nil
 	}
 	return "", nil

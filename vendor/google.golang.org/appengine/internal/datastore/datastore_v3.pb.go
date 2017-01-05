@@ -51,10 +51,12 @@ It has these top-level messages:
 package datastore
 
 import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
 import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
+var _ = fmt.Errorf
 var _ = math.Inf
 
 type Property_Meaning int32
@@ -815,7 +817,7 @@ func (m *Property) GetLocale() string {
 }
 
 type Path struct {
-	Element          []*Path_Element `protobuf:"group,1,rep" json:"element,omitempty"`
+	Element          []*Path_Element `protobuf:"group,1,rep,name=Element" json:"element,omitempty"`
 	XXX_unrecognized []byte          `json:"-"`
 }
 
@@ -1041,7 +1043,7 @@ func (m *CompositeProperty) GetValue() []string {
 type Index struct {
 	EntityType       *string           `protobuf:"bytes,1,req,name=entity_type" json:"entity_type,omitempty"`
 	Ancestor         *bool             `protobuf:"varint,5,req,name=ancestor" json:"ancestor,omitempty"`
-	Property         []*Index_Property `protobuf:"group,2,rep" json:"property,omitempty"`
+	Property         []*Index_Property `protobuf:"group,2,rep,name=Property" json:"property,omitempty"`
 	XXX_unrecognized []byte            `json:"-"`
 }
 
@@ -1310,9 +1312,9 @@ type Query struct {
 	NameSpace           *string           `protobuf:"bytes,29,opt,name=name_space" json:"name_space,omitempty"`
 	Kind                *string           `protobuf:"bytes,3,opt,name=kind" json:"kind,omitempty"`
 	Ancestor            *Reference        `protobuf:"bytes,17,opt,name=ancestor" json:"ancestor,omitempty"`
-	Filter              []*Query_Filter   `protobuf:"group,4,rep" json:"filter,omitempty"`
+	Filter              []*Query_Filter   `protobuf:"group,4,rep,name=Filter" json:"filter,omitempty"`
 	SearchQuery         *string           `protobuf:"bytes,8,opt,name=search_query" json:"search_query,omitempty"`
-	Order               []*Query_Order    `protobuf:"group,9,rep" json:"order,omitempty"`
+	Order               []*Query_Order    `protobuf:"group,9,rep,name=Order" json:"order,omitempty"`
 	Hint                *Query_Hint       `protobuf:"varint,18,opt,name=hint,enum=appengine.Query_Hint" json:"hint,omitempty"`
 	Count               *int32            `protobuf:"varint,23,opt,name=count" json:"count,omitempty"`
 	Offset              *int32            `protobuf:"varint,12,opt,name=offset,def=0" json:"offset,omitempty"`
@@ -1807,7 +1809,7 @@ func (m *CompiledQuery_EntityFilter) GetAncestor() *Reference {
 }
 
 type CompiledCursor struct {
-	Position         *CompiledCursor_Position `protobuf:"group,2,opt" json:"position,omitempty"`
+	Position         *CompiledCursor_Position `protobuf:"group,2,opt,name=Position" json:"position,omitempty"`
 	XXX_unrecognized []byte                   `json:"-"`
 }
 
@@ -2067,7 +2069,7 @@ func (m *GetRequest) GetAllowDeferred() bool {
 }
 
 type GetResponse struct {
-	Entity           []*GetResponse_Entity `protobuf:"group,1,rep" json:"entity,omitempty"`
+	Entity           []*GetResponse_Entity `protobuf:"group,1,rep,name=Entity" json:"entity,omitempty"`
 	Deferred         []*Reference          `protobuf:"bytes,5,rep,name=deferred" json:"deferred,omitempty"`
 	InOrder          *bool                 `protobuf:"varint,6,opt,name=in_order,def=1" json:"in_order,omitempty"`
 	XXX_unrecognized []byte                `json:"-"`
@@ -2726,7 +2728,7 @@ func (m *BeginTransactionRequest) GetAllowMultipleEg() bool {
 
 type CommitResponse struct {
 	Cost             *Cost                     `protobuf:"bytes,1,opt,name=cost" json:"cost,omitempty"`
-	Version          []*CommitResponse_Version `protobuf:"group,3,rep" json:"version,omitempty"`
+	Version          []*CommitResponse_Version `protobuf:"group,3,rep,name=Version" json:"version,omitempty"`
 	XXX_unrecognized []byte                    `json:"-"`
 }
 
@@ -2773,15 +2775,4 @@ func (m *CommitResponse_Version) GetVersion() int64 {
 }
 
 func init() {
-	proto.RegisterEnum("appengine.Property_Meaning", Property_Meaning_name, Property_Meaning_value)
-	proto.RegisterEnum("appengine.Property_FtsTokenizationOption", Property_FtsTokenizationOption_name, Property_FtsTokenizationOption_value)
-	proto.RegisterEnum("appengine.EntityProto_Kind", EntityProto_Kind_name, EntityProto_Kind_value)
-	proto.RegisterEnum("appengine.Index_Property_Direction", Index_Property_Direction_name, Index_Property_Direction_value)
-	proto.RegisterEnum("appengine.CompositeIndex_State", CompositeIndex_State_name, CompositeIndex_State_value)
-	proto.RegisterEnum("appengine.Snapshot_Status", Snapshot_Status_name, Snapshot_Status_value)
-	proto.RegisterEnum("appengine.Query_Hint", Query_Hint_name, Query_Hint_value)
-	proto.RegisterEnum("appengine.Query_Filter_Operator", Query_Filter_Operator_name, Query_Filter_Operator_value)
-	proto.RegisterEnum("appengine.Query_Order_Direction", Query_Order_Direction_name, Query_Order_Direction_value)
-	proto.RegisterEnum("appengine.Error_ErrorCode", Error_ErrorCode_name, Error_ErrorCode_value)
-	proto.RegisterEnum("appengine.PutRequest_AutoIdPolicy", PutRequest_AutoIdPolicy_name, PutRequest_AutoIdPolicy_value)
 }

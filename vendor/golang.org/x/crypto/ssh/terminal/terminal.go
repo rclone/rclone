@@ -772,8 +772,6 @@ func (t *Terminal) readLine() (line string, err error) {
 
 		t.remainder = t.inBuf[:n+len(t.remainder)]
 	}
-
-	panic("unreachable") // for Go 1.0.
 }
 
 // SetPrompt sets the prompt to be used when reading subsequent lines.

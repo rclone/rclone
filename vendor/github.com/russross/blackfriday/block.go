@@ -1244,6 +1244,12 @@ gatherlines:
 		line = i
 	}
 
+	// If reached end of data, the Renderer.ListItem call we're going to make below
+	// is definitely the last in the list.
+	if line >= len(data) {
+		*flags |= LIST_ITEM_END_OF_LIST
+	}
+
 	rawBytes := raw.Bytes()
 
 	// render the contents of the list item

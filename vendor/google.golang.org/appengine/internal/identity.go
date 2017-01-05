@@ -4,9 +4,11 @@
 
 package internal
 
+import netcontext "golang.org/x/net/context"
+
 // These functions are implementations of the wrapper functions
 // in ../appengine/identity.go. See that file for commentary.
 
-func AppID(fqai string) string {
-	return appID(fqai)
+func AppID(c netcontext.Context) string {
+	return appID(FullyQualifiedAppID(c))
 }

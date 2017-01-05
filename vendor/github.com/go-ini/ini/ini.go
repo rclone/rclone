@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"regexp"
 	"runtime"
@@ -30,25 +31,35 @@ import (
 )
 
 const (
+	// Name for default section. You can use this constant or the string literal.
+	// In most of cases, an empty string is all you need to access the section.
 	DEFAULT_SECTION = "DEFAULT"
+
 	// Maximum allowed depth when recursively substituing variable names.
 	_DEPTH_VALUES = 99
-
-	_VERSION = "1.9.0"
+	_VERSION      = "1.23.0"
 )
 
+// Version returns current package version literal.
 func Version() string {
 	return _VERSION
 }
 
 var (
+	// Delimiter to determine or compose a new line.
+	// This variable will be changed to "\r\n" automatically on Windows
+	// at package init time.
 	LineBreak = "\n"
 
 	// Variable regexp pattern: %(variable)s
 	varPattern = regexp.MustCompile(`%\(([^\)]+)\)s`)
 
-	// Write spaces around "=" to look better.
+	// Indicate whether to align "=" sign with spaces to produce pretty output
+	// or reduce all possible spaces for compact format.
 	PrettyFormat = true
+
+	// Explicitly write DEFAULT section header
+	DefaultHeader = false
 )
 
 func init() {
@@ -66,11 +77,12 @@ func inSlice(str string, s []string) bool {
 	return false
 }
 
-// dataSource is a interface that returns file content.
+// dataSource is an interface that returns object which can be read and closed.
 type dataSource interface {
 	ReadCloser() (io.ReadCloser, error)
 }
 
+// sourceFile represents an object that contains content on the local file system.
 type sourceFile struct {
 	name string
 }
@@ -91,784 +103,23 @@ func (rc *bytesReadCloser) Close() error {
 	return nil
 }
 
+// sourceData represents an object that contains content in memory.
 type sourceData struct {
 	data []byte
 }
 
 func (s *sourceData) ReadCloser() (io.ReadCloser, error) {
-	return &bytesReadCloser{bytes.NewReader(s.data)}, nil
+	return ioutil.NopCloser(bytes.NewReader(s.data)), nil
 }
 
-//  ____  __.
-// |    |/ _|____ ___.__.
-// |      <_/ __ <   |  |
-// |    |  \  ___/\___  |
-// |____|__ \___  > ____|
-//         \/   \/\/
-
-// Key represents a key under a section.
-type Key struct {
-	s          *Section
-	Comment    string
-	name       string
-	value      string
-	isAutoIncr bool
-}
-
-// Name returns name of key.
-func (k *Key) Name() string {
-	return k.name
-}
-
-// Value returns raw value of key for performance purpose.
-func (k *Key) Value() string {
-	return k.value
-}
-
-// String returns string representation of value.
-func (k *Key) String() string {
-	val := k.value
-	if strings.Index(val, "%") == -1 {
-		return val
-	}
-
-	for i := 0; i < _DEPTH_VALUES; i++ {
-		vr := varPattern.FindString(val)
-		if len(vr) == 0 {
-			break
-		}
-
-		// Take off leading '%(' and trailing ')s'.
-		noption := strings.TrimLeft(vr, "%(")
-		noption = strings.TrimRight(noption, ")s")
-
-		// Search in the same section.
-		nk, err := k.s.GetKey(noption)
-		if err != nil {
-			// Search again in default section.
-			nk, _ = k.s.f.Section("").GetKey(noption)
-		}
-
-		// Substitute by new value and take off leading '%(' and trailing ')s'.
-		val = strings.Replace(val, vr, nk.value, -1)
-	}
-	return val
-}
-
-// Validate accepts a validate function which can
-// return modifed result as key value.
-func (k *Key) Validate(fn func(string) string) string {
-	return fn(k.String())
-}
-
-// parseBool returns the boolean value represented by the string.
-//
-// It accepts 1, t, T, TRUE, true, True, YES, yes, Yes, y, ON, on, On,
-// 0, f, F, FALSE, false, False, NO, no, No, n, OFF, off, Off.
-// Any other value returns an error.
-func parseBool(str string) (value bool, err error) {
-	switch str {
-	case "1", "t", "T", "true", "TRUE", "True", "YES", "yes", "Yes", "y", "ON", "on", "On":
-		return true, nil
-	case "0", "f", "F", "false", "FALSE", "False", "NO", "no", "No", "n", "OFF", "off", "Off":
-		return false, nil
-	}
-	return false, fmt.Errorf("parsing \"%s\": invalid syntax", str)
-}
-
-// Bool returns bool type value.
-func (k *Key) Bool() (bool, error) {
-	return parseBool(k.String())
-}
-
-// Float64 returns float64 type value.
-func (k *Key) Float64() (float64, error) {
-	return strconv.ParseFloat(k.String(), 64)
-}
-
-// Int returns int type value.
-func (k *Key) Int() (int, error) {
-	return strconv.Atoi(k.String())
-}
-
-// Int64 returns int64 type value.
-func (k *Key) Int64() (int64, error) {
-	return strconv.ParseInt(k.String(), 10, 64)
-}
-
-// Uint returns uint type valued.
-func (k *Key) Uint() (uint, error) {
-	u, e := strconv.ParseUint(k.String(), 10, 64)
-	return uint(u), e
-}
-
-// Uint64 returns uint64 type value.
-func (k *Key) Uint64() (uint64, error) {
-	return strconv.ParseUint(k.String(), 10, 64)
-}
-
-// Duration returns time.Duration type value.
-func (k *Key) Duration() (time.Duration, error) {
-	return time.ParseDuration(k.String())
-}
-
-// TimeFormat parses with given format and returns time.Time type value.
-func (k *Key) TimeFormat(format string) (time.Time, error) {
-	return time.Parse(format, k.String())
-}
-
-// Time parses with RFC3339 format and returns time.Time type value.
-func (k *Key) Time() (time.Time, error) {
-	return k.TimeFormat(time.RFC3339)
-}
-
-// MustString returns default value if key value is empty.
-func (k *Key) MustString(defaultVal string) string {
-	val := k.String()
-	if len(val) == 0 {
-		return defaultVal
-	}
-	return val
-}
-
-// MustBool always returns value without error,
-// it returns false if error occurs.
-func (k *Key) MustBool(defaultVal ...bool) bool {
-	val, err := k.Bool()
-	if len(defaultVal) > 0 && err != nil {
-		return defaultVal[0]
-	}
-	return val
-}
-
-// MustFloat64 always returns value without error,
-// it returns 0.0 if error occurs.
-func (k *Key) MustFloat64(defaultVal ...float64) float64 {
-	val, err := k.Float64()
-	if len(defaultVal) > 0 && err != nil {
-		return defaultVal[0]
-	}
-	return val
-}
-
-// MustInt always returns value without error,
-// it returns 0 if error occurs.
-func (k *Key) MustInt(defaultVal ...int) int {
-	val, err := k.Int()
-	if len(defaultVal) > 0 && err != nil {
-		return defaultVal[0]
-	}
-	return val
-}
-
-// MustInt64 always returns value without error,
-// it returns 0 if error occurs.
-func (k *Key) MustInt64(defaultVal ...int64) int64 {
-	val, err := k.Int64()
-	if len(defaultVal) > 0 && err != nil {
-		return defaultVal[0]
-	}
-	return val
-}
-
-// MustUint always returns value without error,
-// it returns 0 if error occurs.
-func (k *Key) MustUint(defaultVal ...uint) uint {
-	val, err := k.Uint()
-	if len(defaultVal) > 0 && err != nil {
-		return defaultVal[0]
-	}
-	return val
-}
-
-// MustUint64 always returns value without error,
-// it returns 0 if error occurs.
-func (k *Key) MustUint64(defaultVal ...uint64) uint64 {
-	val, err := k.Uint64()
-	if len(defaultVal) > 0 && err != nil {
-		return defaultVal[0]
-	}
-	return val
-}
-
-// MustDuration always returns value without error,
-// it returns zero value if error occurs.
-func (k *Key) MustDuration(defaultVal ...time.Duration) time.Duration {
-	val, err := k.Duration()
-	if len(defaultVal) > 0 && err != nil {
-		return defaultVal[0]
-	}
-	return val
-}
-
-// MustTimeFormat always parses with given format and returns value without error,
-// it returns zero value if error occurs.
-func (k *Key) MustTimeFormat(format string, defaultVal ...time.Time) time.Time {
-	val, err := k.TimeFormat(format)
-	if len(defaultVal) > 0 && err != nil {
-		return defaultVal[0]
-	}
-	return val
-}
-
-// MustTime always parses with RFC3339 format and returns value without error,
-// it returns zero value if error occurs.
-func (k *Key) MustTime(defaultVal ...time.Time) time.Time {
-	return k.MustTimeFormat(time.RFC3339, defaultVal...)
-}
-
-// In always returns value without error,
-// it returns default value if error occurs or doesn't fit into candidates.
-func (k *Key) In(defaultVal string, candidates []string) string {
-	val := k.String()
-	for _, cand := range candidates {
-		if val == cand {
-			return val
-		}
-	}
-	return defaultVal
-}
-
-// InFloat64 always returns value without error,
-// it returns default value if error occurs or doesn't fit into candidates.
-func (k *Key) InFloat64(defaultVal float64, candidates []float64) float64 {
-	val := k.MustFloat64()
-	for _, cand := range candidates {
-		if val == cand {
-			return val
-		}
-	}
-	return defaultVal
-}
-
-// InInt always returns value without error,
-// it returns default value if error occurs or doesn't fit into candidates.
-func (k *Key) InInt(defaultVal int, candidates []int) int {
-	val := k.MustInt()
-	for _, cand := range candidates {
-		if val == cand {
-			return val
-		}
-	}
-	return defaultVal
-}
-
-// InInt64 always returns value without error,
-// it returns default value if error occurs or doesn't fit into candidates.
-func (k *Key) InInt64(defaultVal int64, candidates []int64) int64 {
-	val := k.MustInt64()
-	for _, cand := range candidates {
-		if val == cand {
-			return val
-		}
-	}
-	return defaultVal
-}
-
-// InUint always returns value without error,
-// it returns default value if error occurs or doesn't fit into candidates.
-func (k *Key) InUint(defaultVal uint, candidates []uint) uint {
-	val := k.MustUint()
-	for _, cand := range candidates {
-		if val == cand {
-			return val
-		}
-	}
-	return defaultVal
-}
-
-// InUint64 always returns value without error,
-// it returns default value if error occurs or doesn't fit into candidates.
-func (k *Key) InUint64(defaultVal uint64, candidates []uint64) uint64 {
-	val := k.MustUint64()
-	for _, cand := range candidates {
-		if val == cand {
-			return val
-		}
-	}
-	return defaultVal
-}
-
-// InTimeFormat always parses with given format and returns value without error,
-// it returns default value if error occurs or doesn't fit into candidates.
-func (k *Key) InTimeFormat(format string, defaultVal time.Time, candidates []time.Time) time.Time {
-	val := k.MustTimeFormat(format)
-	for _, cand := range candidates {
-		if val == cand {
-			return val
-		}
-	}
-	return defaultVal
-}
-
-// InTime always parses with RFC3339 format and returns value without error,
-// it returns default value if error occurs or doesn't fit into candidates.
-func (k *Key) InTime(defaultVal time.Time, candidates []time.Time) time.Time {
-	return k.InTimeFormat(time.RFC3339, defaultVal, candidates)
-}
-
-// RangeFloat64 checks if value is in given range inclusively,
-// and returns default value if it's not.
-func (k *Key) RangeFloat64(defaultVal, min, max float64) float64 {
-	val := k.MustFloat64()
-	if val < min || val > max {
-		return defaultVal
-	}
-	return val
-}
-
-// RangeInt checks if value is in given range inclusively,
-// and returns default value if it's not.
-func (k *Key) RangeInt(defaultVal, min, max int) int {
-	val := k.MustInt()
-	if val < min || val > max {
-		return defaultVal
-	}
-	return val
-}
-
-// RangeInt64 checks if value is in given range inclusively,
-// and returns default value if it's not.
-func (k *Key) RangeInt64(defaultVal, min, max int64) int64 {
-	val := k.MustInt64()
-	if val < min || val > max {
-		return defaultVal
-	}
-	return val
-}
-
-// RangeTimeFormat checks if value with given format is in given range inclusively,
-// and returns default value if it's not.
-func (k *Key) RangeTimeFormat(format string, defaultVal, min, max time.Time) time.Time {
-	val := k.MustTimeFormat(format)
-	if val.Unix() < min.Unix() || val.Unix() > max.Unix() {
-		return defaultVal
-	}
-	return val
-}
-
-// RangeTime checks if value with RFC3339 format is in given range inclusively,
-// and returns default value if it's not.
-func (k *Key) RangeTime(defaultVal, min, max time.Time) time.Time {
-	return k.RangeTimeFormat(time.RFC3339, defaultVal, min, max)
-}
-
-// Strings returns list of string divided by given delimiter.
-func (k *Key) Strings(delim string) []string {
-	str := k.String()
-	if len(str) == 0 {
-		return []string{}
-	}
-
-	vals := strings.Split(str, delim)
-	for i := range vals {
-		vals[i] = strings.TrimSpace(vals[i])
-	}
-	return vals
-}
-
-// Float64s returns list of float64 divided by given delimiter. Any invalid input will be treated as zero value.
-func (k *Key) Float64s(delim string) []float64 {
-	vals, _ := k.getFloat64s(delim, true, false)
-	return vals
-}
-
-// Ints returns list of int divided by given delimiter. Any invalid input will be treated as zero value.
-func (k *Key) Ints(delim string) []int {
-	vals, _ := k.getInts(delim, true, false)
-	return vals
+// sourceReadCloser represents an input stream with Close method.
+type sourceReadCloser struct {
+	reader io.ReadCloser
 }
 
-// Int64s returns list of int64 divided by given delimiter. Any invalid input will be treated as zero value.
-func (k *Key) Int64s(delim string) []int64 {
-	vals, _ := k.getInt64s(delim, true, false)
-	return vals
+func (s *sourceReadCloser) ReadCloser() (io.ReadCloser, error) {
+	return s.reader, nil
 }
-
-// Uints returns list of uint divided by given delimiter. Any invalid input will be treated as zero value.
-func (k *Key) Uints(delim string) []uint {
-	vals, _ := k.getUints(delim, true, false)
-	return vals
-}
-
-// Uint64s returns list of uint64 divided by given delimiter. Any invalid input will be treated as zero value.
-func (k *Key) Uint64s(delim string) []uint64 {
-	vals, _ := k.getUint64s(delim, true, false)
-	return vals
-}
-
-// TimesFormat parses with given format and returns list of time.Time divided by given delimiter.
-// Any invalid input will be treated as zero value (0001-01-01 00:00:00 +0000 UTC).
-func (k *Key) TimesFormat(format, delim string) []time.Time {
-	vals, _ := k.getTimesFormat(format, delim, true, false)
-	return vals
-}
-
-// Times parses with RFC3339 format and returns list of time.Time divided by given delimiter.
-// Any invalid input will be treated as zero value (0001-01-01 00:00:00 +0000 UTC).
-func (k *Key) Times(delim string) []time.Time {
-	return k.TimesFormat(time.RFC3339, delim)
-}
-
-// ValidFloat64s returns list of float64 divided by given delimiter. If some value is not float, then
-// it will not be included to result list.
-func (k *Key) ValidFloat64s(delim string) []float64 {
-	vals, _ := k.getFloat64s(delim, false, false)
-	return vals
-}
-
-// ValidInts returns list of int divided by given delimiter. If some value is not integer, then it will
-// not be included to result list.
-func (k *Key) ValidInts(delim string) []int {
-	vals, _ := k.getInts(delim, false, false)
-	return vals
-}
-
-// ValidInt64s returns list of int64 divided by given delimiter. If some value is not 64-bit integer,
-// then it will not be included to result list.
-func (k *Key) ValidInt64s(delim string) []int64 {
-	vals, _ := k.getInt64s(delim, false, false)
-	return vals
-}
-
-// ValidUints returns list of uint divided by given delimiter. If some value is not unsigned integer,
-// then it will not be included to result list.
-func (k *Key) ValidUints(delim string) []uint {
-	vals, _ := k.getUints(delim, false, false)
-	return vals
-}
-
-// ValidUint64s returns list of uint64 divided by given delimiter. If some value is not 64-bit unsigned
-// integer, then it will not be included to result list.
-func (k *Key) ValidUint64s(delim string) []uint64 {
-	vals, _ := k.getUint64s(delim, false, false)
-	return vals
-}
-
-// ValidTimesFormat parses with given format and returns list of time.Time divided by given delimiter.
-func (k *Key) ValidTimesFormat(format, delim string) []time.Time {
-	vals, _ := k.getTimesFormat(format, delim, false, false)
-	return vals
-}
-
-// ValidTimes parses with RFC3339 format and returns list of time.Time divided by given delimiter.
-func (k *Key) ValidTimes(delim string) []time.Time {
-	return k.ValidTimesFormat(time.RFC3339, delim)
-}
-
-// StrictFloat64s returns list of float64 divided by given delimiter or error on first invalid input.
-func (k *Key) StrictFloat64s(delim string) ([]float64, error) {
-	return k.getFloat64s(delim, false, true)
-}
-
-// StrictInts returns list of int divided by given delimiter or error on first invalid input.
-func (k *Key) StrictInts(delim string) ([]int, error) {
-	return k.getInts(delim, false, true)
-}
-
-// StrictInt64s returns list of int64 divided by given delimiter or error on first invalid input.
-func (k *Key) StrictInt64s(delim string) ([]int64, error) {
-	return k.getInt64s(delim, false, true)
-}
-
-// StrictUints returns list of uint divided by given delimiter or error on first invalid input.
-func (k *Key) StrictUints(delim string) ([]uint, error) {
-	return k.getUints(delim, false, true)
-}
-
-// StrictUint64s returns list of uint64 divided by given delimiter or error on first invalid input.
-func (k *Key) StrictUint64s(delim string) ([]uint64, error) {
-	return k.getUint64s(delim, false, true)
-}
-
-// StrictTimesFormat parses with given format and returns list of time.Time divided by given delimiter
-// or error on first invalid input.
-func (k *Key) StrictTimesFormat(format, delim string) ([]time.Time, error) {
-	return k.getTimesFormat(format, delim, false, true)
-}
-
-// StrictTimes parses with RFC3339 format and returns list of time.Time divided by given delimiter
-// or error on first invalid input.
-func (k *Key) StrictTimes(delim string) ([]time.Time, error) {
-	return k.StrictTimesFormat(time.RFC3339, delim)
-}
-
-// getFloat64s returns list of float64 divided by given delimiter.
-func (k *Key) getFloat64s(delim string, addInvalid, returnOnInvalid bool) ([]float64, error) {
-	strs := k.Strings(delim)
-	vals := make([]float64, 0, len(strs))
-	for _, str := range strs {
-		val, err := strconv.ParseFloat(str, 64)
-		if err != nil && returnOnInvalid {
-			return nil, err
-		}
-		if err == nil || addInvalid {
-			vals = append(vals, val)
-		}
-	}
-	return vals, nil
-}
-
-// getInts returns list of int divided by given delimiter.
-func (k *Key) getInts(delim string, addInvalid, returnOnInvalid bool) ([]int, error) {
-	strs := k.Strings(delim)
-	vals := make([]int, 0, len(strs))
-	for _, str := range strs {
-		val, err := strconv.Atoi(str)
-		if err != nil && returnOnInvalid {
-			return nil, err
-		}
-		if err == nil || addInvalid {
-			vals = append(vals, val)
-		}
-	}
-	return vals, nil
-}
-
-// getInt64s returns list of int64 divided by given delimiter.
-func (k *Key) getInt64s(delim string, addInvalid, returnOnInvalid bool) ([]int64, error) {
-	strs := k.Strings(delim)
-	vals := make([]int64, 0, len(strs))
-	for _, str := range strs {
-		val, err := strconv.ParseInt(str, 10, 64)
-		if err != nil && returnOnInvalid {
-			return nil, err
-		}
-		if err == nil || addInvalid {
-			vals = append(vals, val)
-		}
-	}
-	return vals, nil
-}
-
-// getUints returns list of uint divided by given delimiter.
-func (k *Key) getUints(delim string, addInvalid, returnOnInvalid bool) ([]uint, error) {
-	strs := k.Strings(delim)
-	vals := make([]uint, 0, len(strs))
-	for _, str := range strs {
-		val, err := strconv.ParseUint(str, 10, 0)
-		if err != nil && returnOnInvalid {
-			return nil, err
-		}
-		if err == nil || addInvalid {
-			vals = append(vals, uint(val))
-		}
-	}
-	return vals, nil
-}
-
-// getUint64s returns list of uint64 divided by given delimiter.
-func (k *Key) getUint64s(delim string, addInvalid, returnOnInvalid bool) ([]uint64, error) {
-	strs := k.Strings(delim)
-	vals := make([]uint64, 0, len(strs))
-	for _, str := range strs {
-		val, err := strconv.ParseUint(str, 10, 64)
-		if err != nil && returnOnInvalid {
-			return nil, err
-		}
-		if err == nil || addInvalid {
-			vals = append(vals, val)
-		}
-	}
-	return vals, nil
-}
-
-// getTimesFormat parses with given format and returns list of time.Time divided by given delimiter.
-func (k *Key) getTimesFormat(format, delim string, addInvalid, returnOnInvalid bool) ([]time.Time, error) {
-	strs := k.Strings(delim)
-	vals := make([]time.Time, 0, len(strs))
-	for _, str := range strs {
-		val, err := time.Parse(format, str)
-		if err != nil && returnOnInvalid {
-			return nil, err
-		}
-		if err == nil || addInvalid {
-			vals = append(vals, val)
-		}
-	}
-	return vals, nil
-}
-
-// SetValue changes key value.
-func (k *Key) SetValue(v string) {
-	if k.s.f.BlockMode {
-		k.s.f.lock.Lock()
-		defer k.s.f.lock.Unlock()
-	}
-
-	k.value = v
-	k.s.keysHash[k.name] = v
-}
-
-//   _________              __  .__
-//  /   _____/ ____   _____/  |_|__| ____   ____
-//  \_____  \_/ __ \_/ ___\   __\  |/  _ \ /    \
-//  /        \  ___/\  \___|  | |  (  <_> )   |  \
-// /_______  /\___  >\___  >__| |__|\____/|___|  /
-//         \/     \/     \/                    \/
-
-// Section represents a config section.
-type Section struct {
-	f        *File
-	Comment  string
-	name     string
-	keys     map[string]*Key
-	keyList  []string
-	keysHash map[string]string
-}
-
-func newSection(f *File, name string) *Section {
-	return &Section{f, "", name, make(map[string]*Key), make([]string, 0, 10), make(map[string]string)}
-}
-
-// Name returns name of Section.
-func (s *Section) Name() string {
-	return s.name
-}
-
-// NewKey creates a new key to given section.
-func (s *Section) NewKey(name, val string) (*Key, error) {
-	if len(name) == 0 {
-		return nil, errors.New("error creating new key: empty key name")
-	}
-
-	if s.f.BlockMode {
-		s.f.lock.Lock()
-		defer s.f.lock.Unlock()
-	}
-
-	if inSlice(name, s.keyList) {
-		s.keys[name].value = val
-		return s.keys[name], nil
-	}
-
-	s.keyList = append(s.keyList, name)
-	s.keys[name] = &Key{s, "", name, val, false}
-	s.keysHash[name] = val
-	return s.keys[name], nil
-}
-
-// GetKey returns key in section by given name.
-func (s *Section) GetKey(name string) (*Key, error) {
-	// FIXME: change to section level lock?
-	if s.f.BlockMode {
-		s.f.lock.RLock()
-	}
-	key := s.keys[name]
-	if s.f.BlockMode {
-		s.f.lock.RUnlock()
-	}
-
-	if key == nil {
-		// Check if it is a child-section.
-		sname := s.name
-		for {
-			if i := strings.LastIndex(sname, "."); i > -1 {
-				sname = sname[:i]
-				sec, err := s.f.GetSection(sname)
-				if err != nil {
-					continue
-				}
-				return sec.GetKey(name)
-			} else {
-				break
-			}
-		}
-		return nil, fmt.Errorf("error when getting key of section '%s': key '%s' not exists", s.name, name)
-	}
-	return key, nil
-}
-
-// HasKey returns true if section contains a key with given name.
-func (s *Section) HasKey(name string) bool {
-	key, _ := s.GetKey(name)
-	return key != nil
-}
-
-// Haskey is a backwards-compatible name for HasKey.
-func (s *Section) Haskey(name string) bool {
-	return s.HasKey(name)
-}
-
-// HasValue returns true if section contains given raw value.
-func (s *Section) HasValue(value string) bool {
-	if s.f.BlockMode {
-		s.f.lock.RLock()
-		defer s.f.lock.RUnlock()
-	}
-
-	for _, k := range s.keys {
-		if value == k.value {
-			return true
-		}
-	}
-	return false
-}
-
-// Key assumes named Key exists in section and returns a zero-value when not.
-func (s *Section) Key(name string) *Key {
-	key, err := s.GetKey(name)
-	if err != nil {
-		// It's OK here because the only possible error is empty key name,
-		// but if it's empty, this piece of code won't be executed.
-		key, _ = s.NewKey(name, "")
-		return key
-	}
-	return key
-}
-
-// Keys returns list of keys of section.
-func (s *Section) Keys() []*Key {
-	keys := make([]*Key, len(s.keyList))
-	for i := range s.keyList {
-		keys[i] = s.Key(s.keyList[i])
-	}
-	return keys
-}
-
-// KeyStrings returns list of key names of section.
-func (s *Section) KeyStrings() []string {
-	list := make([]string, len(s.keyList))
-	copy(list, s.keyList)
-	return list
-}
-
-// KeysHash returns keys hash consisting of names and values.
-func (s *Section) KeysHash() map[string]string {
-	if s.f.BlockMode {
-		s.f.lock.RLock()
-		defer s.f.lock.RUnlock()
-	}
-
-	hash := map[string]string{}
-	for key, value := range s.keysHash {
-		hash[key] = value
-	}
-	return hash
-}
-
-// DeleteKey deletes a key from section.
-func (s *Section) DeleteKey(name string) {
-	if s.f.BlockMode {
-		s.f.lock.Lock()
-		defer s.f.lock.Unlock()
-	}
-
-	for i, k := range s.keyList {
-		if k == name {
-			s.keyList = append(s.keyList[:i], s.keyList[i+1:]...)
-			delete(s.keys, name)
-			return
-		}
-	}
-}
-
-// ___________.__.__
-// \_   _____/|__|  |   ____
-//  |    __)  |  |  | _/ __ \
-//  |     \   |  |  |_\  ___/
-//  \___  /   |__|____/\___  >
-//      \/                 \/
 
 // File represents a combination of a or more INI file(s) in memory.
 type File struct {
@@ -885,16 +136,20 @@ type File struct {
 	// To keep data in order.
 	sectionList []string
 
+	options LoadOptions
+
 	NameMapper
+	ValueMapper
 }
 
 // newFile initializes File object with given data sources.
-func newFile(dataSources []dataSource) *File {
+func newFile(dataSources []dataSource, opts LoadOptions) *File {
 	return &File{
 		BlockMode:   true,
 		dataSources: dataSources,
 		sections:    make(map[string]*Section),
 		sectionList: make([]string, 0, 10),
+		options:     opts,
 	}
 }
 
@@ -904,14 +159,29 @@ func parseDataSource(source interface{}) (dataSource, error) {
 		return sourceFile{s}, nil
 	case []byte:
 		return &sourceData{s}, nil
+	case io.ReadCloser:
+		return &sourceReadCloser{s}, nil
 	default:
 		return nil, fmt.Errorf("error parsing data source: unknown type '%s'", s)
 	}
 }
 
-// Load loads and parses from INI data sources.
-// Arguments can be mixed of file name with string type, or raw data in []byte.
-func Load(source interface{}, others ...interface{}) (_ *File, err error) {
+type LoadOptions struct {
+	// Loose indicates whether the parser should ignore nonexistent files or return error.
+	Loose bool
+	// Insensitive indicates whether the parser forces all section and key names to lowercase.
+	Insensitive bool
+	// IgnoreContinuation indicates whether to ignore continuation lines while parsing.
+	IgnoreContinuation bool
+	// AllowBooleanKeys indicates whether to allow boolean type keys or treat as value is missing.
+	// This type of keys are mostly used in my.cnf.
+	AllowBooleanKeys bool
+	// Some INI formats allow group blocks that store a block of raw content that doesn't otherwise
+	// conform to key/value pairs. Specify the names of those blocks here.
+	UnparseableSections []string
+}
+
+func LoadSources(opts LoadOptions, source interface{}, others ...interface{}) (_ *File, err error) {
 	sources := make([]dataSource, len(others)+1)
 	sources[0], err = parseDataSource(source)
 	if err != nil {
@@ -923,11 +193,30 @@ func Load(source interface{}, others ...interface{}) (_ *File, err error) {
 			return nil, err
 		}
 	}
-	f := newFile(sources)
+	f := newFile(sources, opts)
 	if err = f.Reload(); err != nil {
 		return nil, err
 	}
 	return f, nil
+}
+
+// Load loads and parses from INI data sources.
+// Arguments can be mixed of file name with string type, or raw data in []byte.
+// It will return error if list contains nonexistent files.
+func Load(source interface{}, others ...interface{}) (*File, error) {
+	return LoadSources(LoadOptions{}, source, others...)
+}
+
+// LooseLoad has exactly same functionality as Load function
+// except it ignores nonexistent files instead of returning error.
+func LooseLoad(source interface{}, others ...interface{}) (*File, error) {
+	return LoadSources(LoadOptions{Loose: true}, source, others...)
+}
+
+// InsensitiveLoad has exactly same functionality as Load function
+// except it forces all section and key names to be lowercased.
+func InsensitiveLoad(source interface{}, others ...interface{}) (*File, error) {
+	return LoadSources(LoadOptions{Insensitive: true}, source, others...)
 }
 
 // Empty returns an empty file object.
@@ -941,6 +230,8 @@ func Empty() *File {
 func (f *File) NewSection(name string) (*Section, error) {
 	if len(name) == 0 {
 		return nil, errors.New("error creating new section: empty section name")
+	} else if f.options.Insensitive && name != DEFAULT_SECTION {
+		name = strings.ToLower(name)
 	}
 
 	if f.BlockMode {
@@ -957,6 +248,18 @@ func (f *File) NewSection(name string) (*Section, error) {
 	return f.sections[name], nil
 }
 
+// NewRawSection creates a new section with an unparseable body.
+func (f *File) NewRawSection(name, body string) (*Section, error) {
+	section, err := f.NewSection(name)
+	if err != nil {
+		return nil, err
+	}
+
+	section.isRawSection = true
+	section.rawBody = body
+	return section, nil
+}
+
 // NewSections creates a list of sections.
 func (f *File) NewSections(names ...string) (err error) {
 	for _, name := range names {
@@ -971,6 +274,8 @@ func (f *File) NewSections(names ...string) (err error) {
 func (f *File) GetSection(name string) (*Section, error) {
 	if len(name) == 0 {
 		name = DEFAULT_SECTION
+	} else if f.options.Insensitive {
+		name = strings.ToLower(name)
 	}
 
 	if f.BlockMode {
@@ -980,7 +285,7 @@ func (f *File) GetSection(name string) (*Section, error) {
 
 	sec := f.sections[name]
 	if sec == nil {
-		return nil, fmt.Errorf("error when getting section: section '%s' not exists", name)
+		return nil, fmt.Errorf("section '%s' does not exist", name)
 	}
 	return sec, nil
 }
@@ -1047,6 +352,11 @@ func (f *File) reload(s dataSource) error {
 func (f *File) Reload() (err error) {
 	for _, s := range f.dataSources {
 		if err = f.reload(s); err != nil {
+			// In loose mode, we create an empty default section for nonexistent files.
+			if os.IsNotExist(err) && f.options.Loose {
+				f.parse(bytes.NewBuffer(nil))
+				continue
+			}
 			return err
 		}
 	}
@@ -1070,7 +380,9 @@ func (f *File) Append(source interface{}, others ...interface{}) error {
 	return f.Reload()
 }
 
-// WriteToIndent writes file content into io.Writer with given value indention.
+// WriteToIndent writes content into io.Writer with given indention.
+// If PrettyFormat has been set to be true,
+// it will align "=" sign with spaces under each section.
 func (f *File) WriteToIndent(w io.Writer, indent string) (n int64, err error) {
 	equalSign := "="
 	if PrettyFormat {
@@ -1090,16 +402,44 @@ func (f *File) WriteToIndent(w io.Writer, indent string) (n int64, err error) {
 			}
 		}
 
-		if i > 0 {
+		if i > 0 || DefaultHeader {
 			if _, err = buf.WriteString("[" + sname + "]" + LineBreak); err != nil {
 				return 0, err
 			}
 		} else {
-			// Write nothing if default section is empty.
+			// Write nothing if default section is empty
 			if len(sec.keyList) == 0 {
 				continue
 			}
 		}
+
+		if sec.isRawSection {
+			if _, err = buf.WriteString(sec.rawBody); err != nil {
+				return 0, err
+			}
+			continue
+		}
+
+		// Count and generate alignment length and buffer spaces using the
+		// longest key. Keys may be modifed if they contain certain characters so
+		// we need to take that into account in our calculation.
+		alignLength := 0
+		if PrettyFormat {
+			for _, kname := range sec.keyList {
+				keyLength := len(kname)
+				// First case will surround key by ` and second by """
+				if strings.ContainsAny(kname, "\"=:") {
+					keyLength += 2
+				} else if strings.Contains(kname, "`") {
+					keyLength += 6
+				}
+
+				if keyLength > alignLength {
+					alignLength = keyLength
+				}
+			}
+		}
+		alignSpaces := bytes.Repeat([]byte(" "), alignLength)
 
 		for _, kname := range sec.keyList {
 			key := sec.Key(kname)
@@ -1120,27 +460,39 @@ func (f *File) WriteToIndent(w io.Writer, indent string) (n int64, err error) {
 			}
 
 			switch {
-			case key.isAutoIncr:
+			case key.isAutoIncrement:
 				kname = "-"
 			case strings.ContainsAny(kname, "\"=:"):
 				kname = "`" + kname + "`"
 			case strings.Contains(kname, "`"):
 				kname = `"""` + kname + `"""`
 			}
+			if _, err = buf.WriteString(kname); err != nil {
+				return 0, err
+			}
+
+			if key.isBooleanType {
+				continue
+			}
+
+			// Write out alignment spaces before "=" sign
+			if PrettyFormat {
+				buf.Write(alignSpaces[:alignLength-len(kname)])
+			}
 
 			val := key.value
-			// In case key value contains "\n", "`", "\"", "#" or ";".
+			// In case key value contains "\n", "`", "\"", "#" or ";"
 			if strings.ContainsAny(val, "\n`") {
 				val = `"""` + val + `"""`
 			} else if strings.ContainsAny(val, "#;") {
 				val = "`" + val + "`"
 			}
-			if _, err = buf.WriteString(kname + equalSign + val + LineBreak); err != nil {
+			if _, err = buf.WriteString(equalSign + val + LineBreak); err != nil {
 				return 0, err
 			}
 		}
 
-		// Put a line between sections.
+		// Put a line between sections
 		if _, err = buf.WriteString(LineBreak); err != nil {
 			return 0, err
 		}

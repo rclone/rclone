@@ -25,10 +25,12 @@ It has these top-level messages:
 package app_identity
 
 import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
 import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
+var _ = fmt.Errorf
 var _ = math.Inf
 
 type AppIdentityServiceError_ErrorCode int32
@@ -291,5 +293,4 @@ func (m *GetDefaultGcsBucketNameResponse) GetDefaultGcsBucketName() string {
 }
 
 func init() {
-	proto.RegisterEnum("appengine.AppIdentityServiceError_ErrorCode", AppIdentityServiceError_ErrorCode_name, AppIdentityServiceError_ErrorCode_value)
 }
