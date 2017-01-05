@@ -145,8 +145,8 @@ If you are using the root directory on its own then don't quote it
 Server Side Copy
 ----------------
 
-Drive, S3, Dropbox, Swift and Google Cloud Storage support server side
-copy.
+Most remotes (but not all - see [the
+overview](/overview/#optional-features)) support server side copy.
 
 This means if you want to copy one folder to another then rclone won't
 download all the files and re-upload them; it will instruct the server
@@ -159,11 +159,12 @@ Eg
 Will copy the contents of `oldbucket` to `newbucket` without
 downloading and re-uploading.
 
-Remotes which don't support server side copy (eg local) **will**
-download and re-upload in this case.
+Remotes which don't support server side copy **will** download and
+re-upload in this case.
 
 Server side copies are used with `sync` and `copy` and will be
-identified in the log when using the `-v` flag.
+identified in the log when using the `-v` flag.  The may also be used
+with `move` if the remote doesn't support server side move.
 
 Server side copies will only be attempted if the remote names are the
 same.
