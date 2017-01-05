@@ -43,6 +43,12 @@ func startTokenBucket() {
 
 // startTokenTicker creates a ticker to update the bandwidth limiter every minute.
 func startTokenTicker() {
+	// If the timetable has a single entry or was not specified, we don't need
+	// a ticker to update the bandwidth.
+	if len(bwLimit) <= 1 {
+		return
+	}
+
 	ticker := time.NewTicker(time.Minute)
 	go func() {
 		for range ticker.C {
