@@ -273,10 +273,13 @@ var _ fusefs.NodeMkdirer = (*Dir)(nil)
 
 // Mkdir creates a new directory
 func (d *Dir) Mkdir(ctx context.Context, req *fuse.MkdirRequest) (fusefs.Node, error) {
-	// We just pretend to have created the directory - rclone will
-	// actually create the directory if we write files into it
 	path := path.Join(d.path, req.Name)
 	fs.Debug(path, "Dir.Mkdir")
+	err := d.f.Mkdir(path)
+	if err != nil {
+		fs.ErrorLog(path, "Dir.Mkdir failed to create directory: %v", err)
+		return nil, err
+	}
 	fsDir := &fs.Dir{
 		Name: path,
 		When: time.Now(),
@@ -308,10 +311,7 @@ func (d *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) error {
 			return err
 		}
 	case *fs.Dir:
-		// Do nothing for deleting directory - rclone can't
-		// currently remote a random directory
-		//
-		// Check directory is empty first though
+		// Check directory is empty first
 		dir := item.node.(*Dir)
 		empty, err := dir.isEmpty()
 		if err != nil {
@@ -322,6 +322,12 @@ func (d *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) error {
 			// return fuse.ENOTEMPTY - doesn't exist though so use EEXIST
 			fs.ErrorLog(path, "Dir.Remove not empty")
 			return fuse.EEXIST
+		}
+		// remove directory
+		err = d.f.Rmdir(path)
+		if err != nil {
+			fs.ErrorLog(path, "Dir.Remove failed to remove directory: %v", err)
+			return err
 		}
 	default:
 		fs.ErrorLog(path, "Dir.Remove unknown type %T", item)
@@ -379,6 +385,16 @@ func (d *Dir) Rename(ctx context.Context, req *fuse.RenameRequest, newDir fusefs
 			// return fuse.ENOTEMPTY - doesn't exist though so use EEXIST
 			fs.ErrorLog(oldPath, "Dir.Rename can't rename non empty directory")
 			return fuse.EEXIST
+		}
+		err = d.f.Rmdir(oldPath)
+		if err != nil {
+			fs.ErrorLog(oldPath, "Dir.Rename failed to remove directory: %v", err)
+			return err
+		}
+		err = d.f.Mkdir(newPath)
+		if err != nil {
+			fs.ErrorLog(newPath, "Dir.Rename failed to create directory: %v", err)
+			return err
 		}
 		newObj = &fs.Dir{
 			Name: newPath,

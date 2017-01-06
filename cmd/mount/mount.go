@@ -88,16 +88,16 @@ Or with OS X
 ### Limitations ###
 
 This can only write files seqentially, it can only seek when reading.
+This means that many applications won't work with their files on an
+rclone mount.
 
-Rclone mount inherits rclone's directory handling.  In rclone's world
-directories don't really exist.  This means that empty directories
-will have a tendency to disappear once they fall out of the directory
-cache.
-
-The bucket based FSes (eg swift, s3, google compute storage, b2) won't
-work from the root - you will need to specify a bucket, or a path
-within the bucket.  So ` + "`swift:`" + ` won't work whereas ` + "`swift:bucket`" + ` will
-as will ` + "`swift:bucket/path`" + `.
+The bucket based remotes (eg Swift, S3, Google Compute Storage, B2,
+Hubic) won't work from the root - you will need to specify a bucket,
+or a path within the bucket.  So ` + "`swift:`" + ` won't work whereas
+` + "`swift:bucket`" + ` will as will ` + "`swift:bucket/path`" + `.
+None of these support the concept of directories, so empty
+directories will have a tendency to disappear once they fall out of
+the directory cache.
 
 Only supported on Linux, FreeBSD and OS X at the moment.
 
