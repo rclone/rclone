@@ -109,7 +109,8 @@ It does store MD5SUMs so for a more accurate sync, you can use the
 Any files you delete with rclone will end up in the trash.  Amazon
 don't provide an API to permanently delete files, nor to empty the
 trash, so you will have to do that with one of Amazon's apps or via
-the Amazon Drive website.
+the Amazon Drive website. As of November 17, 2016, files are 
+automatically deleted by Amazon from the trash after 30 days.
 
 ### Using with non `.com` Amazon accounts ###
 
