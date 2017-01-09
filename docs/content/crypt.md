@@ -61,7 +61,7 @@ Choose a number from below, or type in your own value
 Storage> 5
 Remote to encrypt/decrypt.
 Normally should contain a ':' and a path, eg "myremote:path/to/dir",
-"myremote:bucket" or "myremote:"
+"myremote:bucket" or maybe "myremote:" (not recommended).
 remote> remote:path
 How to encrypt the filenames.
 Choose a number from below, or type in your own value

@@ -27,31 +27,33 @@ Type of storage to configure.
 Choose a number from below, or type in your own value
  1 / Amazon Drive
    \ "amazon cloud drive"
- 2 / Amazon S3 (also Dreamhost, Ceph)
+ 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
    \ "s3"
  3 / Backblaze B2
    \ "b2"
  4 / Dropbox
    \ "dropbox"
- 5 / Google Cloud Storage (this is not Google Drive)
+ 5 / Encrypt/Decrypt a remote
+   \ "crypt"
+ 6 / Google Cloud Storage (this is not Google Drive)
    \ "google cloud storage"
- 6 / Google Drive
+ 7 / Google Drive
    \ "drive"
- 7 / Hubic
+ 8 / Hubic
    \ "hubic"
- 8 / Local Disk
+ 9 / Local Disk
    \ "local"
- 9 / Microsoft OneDrive
+10 / Microsoft OneDrive
    \ "onedrive"
-10 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
    \ "swift"
-11 / Yandex Disk
+12 / Yandex Disk
    \ "yandex"
-Storage> 11
+Storage> 12
 Yandex Client Id - leave blank normally.
-client_id> 
+client_id>
 Yandex Client Secret - leave blank normally.
-client_secret> 
+client_secret>
 Remote config
 Use auto config?
  * Say Y if not sure
@@ -65,8 +67,8 @@ Waiting for code...
 Got code
 --------------------
 [remote]
-client_id = 
-client_secret = 
+client_id =
+client_secret =
 token = {"access_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","token_type":"bearer","expiry":"2016-12-29T12:27:11.362788025Z"}
 --------------------
 y) Yes this is OK
