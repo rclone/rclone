@@ -617,9 +617,7 @@ func TestSyncWithTrackRenames(t *testing.T) {
 	}()
 
 	haveHash := r.fremote.Hashes().Overlap(r.flocal.Hashes()).GetOne() != fs.HashNone
-	_, canMove := r.fremote.(fs.Mover)
-	_, canCopy := r.fremote.(fs.Copier)
-	canTrackRenames := haveHash && (canMove || canCopy)
+	canTrackRenames := haveHash && fs.CanServerSideMove(r.fremote)
 	t.Logf("Can track renames: %v", canTrackRenames)
 
 	f1 := r.WriteFile("potato", "Potato Content", t1)

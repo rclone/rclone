@@ -44,6 +44,7 @@ type syncCopyMove struct {
 }
 
 func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) *syncCopyMove {
+	canServerSideMove := CanServerSideMove(fdst)
 	s := &syncCopyMove{
 		fdst:           fdst,
 		fsrc:           fsrc,
@@ -67,12 +68,8 @@ func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) *syncCopyMove {
 		s.noTraverse = false
 	}
 	if s.trackRenames {
-		// Don't track renames for remotes without server-side rename support.
-		// Some remotes simulate rename by server-side copy and delete, so include
-		// remotes that implements either Mover or Copier.
-		switch fdst.(type) {
-		case Mover, Copier:
-		default:
+		// Don't track renames for remotes without server-side move support.
+		if !canServerSideMove {
 			ErrorLog(fdst, "Ignoring --track-renames as the destination does not support server-side move or copy")
 			s.trackRenames = false
 		}

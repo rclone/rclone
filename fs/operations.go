@@ -385,6 +385,17 @@ func Move(fdst Fs, dst Object, remote string, src Object) (err error) {
 	return DeleteFile(src)
 }
 
+// CanServerSideMove returns true if fdst support server side moves or
+// server side copies
+//
+// Some remotes simulate rename by server-side copy and delete, so include
+// remotes that implements either Mover or Copier.
+func CanServerSideMove(fdst Fs) bool {
+	_, canMove := fdst.(Mover)
+	_, canCopy := fdst.(Copier)
+	return canMove || canCopy
+}
+
 // DeleteFile deletes a single file respecting --dry-run and accumulating stats and errors.
 func DeleteFile(dst Object) (err error) {
 	if Config.DryRun {
