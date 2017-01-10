@@ -654,7 +654,10 @@ func ListFn(f Fs, fn func(Object)) error {
 			for {
 				o, err := list.GetObject()
 				if err != nil {
-					log.Fatal(err)
+					// The error will be persisted within the Lister object and
+					// we'll get an opportunity to return it as we leave this
+					// function.
+					return
 				}
 				// check if we are finished
 				if o == nil {
@@ -667,7 +670,7 @@ func ListFn(f Fs, fn func(Object)) error {
 		}()
 	}
 	wg.Wait()
-	return nil
+	return list.Error()
 }
 
 // mutex for synchronized output

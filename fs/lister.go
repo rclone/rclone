@@ -20,6 +20,7 @@ type Lister struct {
 	finished sync.Once
 	level    int
 	filter   *Filter
+	err      error
 }
 
 // NewLister creates a Lister object.
@@ -154,6 +155,14 @@ func (o *Lister) AddDir(dir *Dir) (abort bool) {
 	return false
 }
 
+// Error returns a globally application error that's been set on the Lister
+// object.
+func (o *Lister) Error() error {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
+	return o.err
+}
+
 // IncludeDirectory returns whether this directory should be
 // included in the listing (and recursed into or not).
 func (o *Lister) IncludeDirectory(remote string) bool {
@@ -168,11 +177,12 @@ func (o *Lister) IncludeDirectory(remote string) bool {
 // Multiple goroutines can set the error state concurrently,
 // but only the first will be returned to the caller.
 func (o *Lister) SetError(err error) {
-	o.mu.RLock()
+	o.mu.Lock()
 	if err != nil && !o.abort {
+		o.err = err
 		o.results <- listerResult{Err: err}
 	}
-	o.mu.RUnlock()
+	o.mu.Unlock()
 	o.Finished()
 }
 
