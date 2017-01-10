@@ -31,40 +31,48 @@ Type of storage to configure.
 Choose a number from below, or type in your own value
  1 / Amazon Drive
    \ "amazon cloud drive"
- 2 / Amazon S3 (also Dreamhost, Ceph)
+ 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
    \ "s3"
  3 / Backblaze B2
    \ "b2"
  4 / Dropbox
    \ "dropbox"
- 5 / Google Cloud Storage (this is not Google Drive)
+ 5 / Encrypt/Decrypt a remote
+   \ "crypt"
+ 6 / Google Cloud Storage (this is not Google Drive)
    \ "google cloud storage"
- 6 / Google Drive
+ 7 / Google Drive
    \ "drive"
- 7 / Hubic
+ 8 / Hubic
    \ "hubic"
- 8 / Local Disk
+ 9 / Local Disk
    \ "local"
- 9 / Microsoft OneDrive
+10 / Microsoft OneDrive
    \ "onedrive"
-10 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
    \ "swift"
-11 / Yandex Disk
+12 / Yandex Disk
    \ "yandex"
 Storage> 1
 Amazon Application Client Id - leave blank normally.
-client_id> 
+client_id>
 Amazon Application Client Secret - leave blank normally.
-client_secret> 
+client_secret>
 Remote config
+Use auto config?
+ * Say Y if not sure
+ * Say N if you are working on a remote or headless machine
+y) Yes
+n) No
+y/n> y
 If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
 Log in and authorize rclone for access
 Waiting for code...
 Got code
 --------------------
 [remote]
-client_id = 
-client_secret = 
+client_id =
+client_secret =
 token = {"access_token":"xxxxxxxxxxxxxxxxxxxxxxx","token_type":"bearer","refresh_token":"xxxxxxxxxxxxxxxxxx","expiry":"2015-09-06T16:07:39.658438471+01:00"}
 --------------------
 y) Yes this is OK
@@ -172,7 +180,7 @@ larger than this will fail.
 At the time of writing (Jan 2016) is in the area of 50GB per file.
 This means that larger files are likely to fail.
 
-Unfortunatly there is no way for rclone to see that this failure is 
+Unfortunatly there is no way for rclone to see that this failure is
 because of file size, so it will retry the operation, as any other
 failure. To avoid this problem, use `--max-size 50000M` option to limit
 the maximum size of uploaded files. Note that `--max-size` does not split
