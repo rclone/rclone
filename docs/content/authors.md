@@ -53,3 +53,4 @@ Contributors
   * Bjørn Erik Pedersen <bjorn.erik.pedersen@gmail.com>
   * Lukas Loesche <lukas@mesosphere.io>
   * emyarod <allllaboutyou@gmail.com>
+  * T.C. Ferguson <tcf909@gmail.com>
