@@ -32,27 +32,29 @@ Type of storage to configure.
 Choose a number from below, or type in your own value
  1 / Amazon Drive
    \ "amazon cloud drive"
- 2 / Amazon S3 (also Dreamhost, Ceph)
+ 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
    \ "s3"
  3 / Backblaze B2
    \ "b2"
  4 / Dropbox
    \ "dropbox"
- 5 / Google Cloud Storage (this is not Google Drive)
+ 5 / Encrypt/Decrypt a remote
+   \ "crypt"
+ 6 / Google Cloud Storage (this is not Google Drive)
    \ "google cloud storage"
- 6 / Google Drive
+ 7 / Google Drive
    \ "drive"
- 7 / Hubic
+ 8 / Hubic
    \ "hubic"
- 8 / Local Disk
+ 9 / Local Disk
    \ "local"
- 9 / Microsoft OneDrive
+10 / Microsoft OneDrive
    \ "onedrive"
-10 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
    \ "swift"
-11 / Yandex Disk
+12 / Yandex Disk
    \ "yandex"
-Storage> 10
+Storage> 11
 User name to log in.
 user> user_name
 API key or password.
@@ -74,25 +76,28 @@ Choose a number from below, or type in your own value
 auth> 1
 User domain - optional (v3 auth)
 domain> Default
-Tenant name - optional
-tenant> 
+Tenant name - optional for v1 auth, required otherwise
+tenant> tenant_name
 Tenant domain - optional (v3 auth)
 tenant_domain>
 Region name - optional
-region> 
+region>
 Storage URL - optional
-storage_url> 
-Remote config
+storage_url>
 AuthVersion - optional - set to (1,2,3) if your auth URL has no version
-auth_version> 
+auth_version>
+Remote config
 --------------------
 [remote]
 user = user_name
 key = password_or_api_key
 auth = https://auth.api.rackspacecloud.com/v1.0
-tenant = 
-region = 
-storage_url = 
+domain = Default
+tenant =
+tenant_domain =
+region =
+storage_url =
+auth_version =
 --------------------
 y) Yes this is OK
 e) Edit this remote
@@ -160,7 +165,7 @@ system.
 
 Above this size files will be chunked into a _segments container.  The
 default for this is 5GB which is its maximum value.
-      
+
 ### Modified time ###
 
 The modified time is stored as metadata on the object as
