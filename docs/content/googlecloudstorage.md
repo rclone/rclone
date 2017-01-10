@@ -30,64 +30,65 @@ Type of storage to configure.
 Choose a number from below, or type in your own value
  1 / Amazon Drive
    \ "amazon cloud drive"
- 2 / Amazon S3 (also Dreamhost, Ceph)
+ 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
    \ "s3"
  3 / Backblaze B2
    \ "b2"
  4 / Dropbox
    \ "dropbox"
- 5 / Google Cloud Storage (this is not Google Drive)
+ 5 / Encrypt/Decrypt a remote
+   \ "crypt"
+ 6 / Google Cloud Storage (this is not Google Drive)
    \ "google cloud storage"
- 6 / Google Drive
+ 7 / Google Drive
    \ "drive"
- 7 / Hubic
+ 8 / Hubic
    \ "hubic"
- 8 / Local Disk
+ 9 / Local Disk
    \ "local"
- 9 / Microsoft OneDrive
+10 / Microsoft OneDrive
    \ "onedrive"
-10 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
    \ "swift"
-11 / Yandex Disk
+12 / Yandex Disk
    \ "yandex"
-Storage> 5
+Storage> 6
 Google Application Client Id - leave blank normally.
-client_id> 
+client_id>
 Google Application Client Secret - leave blank normally.
-client_secret> 
+client_secret>
 Project number optional - needed only for list/create/delete buckets - see your developer console.
 project_number> 12345678
 Service Account Credentials JSON file path - needed only if you want use SA instead of interactive login.
-service_account_file> 
+service_account_file>
 Access Control List for new objects.
 Choose a number from below, or type in your own value
- * Object owner gets OWNER access, and all Authenticated Users get READER access.
- 1) authenticatedRead
- * Object owner gets OWNER access, and project team owners get OWNER access.
- 2) bucketOwnerFullControl
- * Object owner gets OWNER access, and project team owners get READER access.
- 3) bucketOwnerRead
- * Object owner gets OWNER access [default if left blank].
- 4) private
- * Object owner gets OWNER access, and project team members get access according to their roles.
- 5) projectPrivate
- * Object owner gets OWNER access, and all Users get READER access.
- 6) publicRead
+ 1 / Object owner gets OWNER access, and all Authenticated Users get READER access.
+   \ "authenticatedRead"
+ 2 / Object owner gets OWNER access, and project team owners get OWNER access.
+   \ "bucketOwnerFullControl"
+ 3 / Object owner gets OWNER access, and project team owners get READER access.
+   \ "bucketOwnerRead"
+ 4 / Object owner gets OWNER access [default if left blank].
+   \ "private"
+ 5 / Object owner gets OWNER access, and project team members get access according to their roles.
+   \ "projectPrivate"
+ 6 / Object owner gets OWNER access, and all Users get READER access.
+   \ "publicRead"
 object_acl> 4
 Access Control List for new buckets.
 Choose a number from below, or type in your own value
- * Project team owners get OWNER access, and all Authenticated Users get READER access.
- 1) authenticatedRead
- * Project team owners get OWNER access [default if left blank].
- 2) private
- * Project team members get access according to their roles.
- 3) projectPrivate
- * Project team owners get OWNER access, and all Users get READER access.
- 4) publicRead
- * Project team owners get OWNER access, and all Users get WRITER access.
- 5) publicReadWrite
+ 1 / Project team owners get OWNER access, and all Authenticated Users get READER access.
+   \ "authenticatedRead"
+ 2 / Project team owners get OWNER access [default if left blank].
+   \ "private"
+ 3 / Project team members get access according to their roles.
+   \ "projectPrivate"
+ 4 / Project team owners get OWNER access, and all Users get READER access.
+   \ "publicRead"
+ 5 / Project team owners get OWNER access, and all Users get WRITER access.
+   \ "publicReadWrite"
 bucket_acl> 2
-Remote config
 Remote config
 Use auto config?
  * Say Y if not sure
@@ -102,8 +103,8 @@ Got code
 --------------------
 [remote]
 type = google cloud storage
-client_id = 
-client_secret = 
+client_id =
+client_secret =
 token = {"AccessToken":"xxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"x/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_xxxxxxxxx","Expiry":"2014-07-17T20:49:14.929208288+01:00","Extra":null}
 project_number = 12345678
 object_acl = private
