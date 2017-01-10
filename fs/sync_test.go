@@ -742,3 +742,45 @@ func TestServerSideMoveOverlap(t *testing.T) {
 	err = fs.MoveDir(fremoteMove, r.fremote)
 	assert.EqualError(t, err, fs.ErrorCantMoveOverlapping.Error())
 }
+
+// Test with BackupDir set
+func TestSyncBackupDir(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+
+	if !fs.CanServerSideMove(r.fremote) {
+		t.Skip("Skipping test as remote does not support server side move")
+	}
+	r.Mkdir(r.fremote)
+
+	fs.Config.BackupDir = r.fremoteName + "/backup"
+	defer func() {
+		fs.Config.BackupDir = ""
+	}()
+
+	file1 := r.WriteObject("dst/one", "one", t1)
+	file2 := r.WriteObject("dst/two", "two", t2)
+	file3 := r.WriteObject("dst/three", "three", t3)
+	file2a := r.WriteFile("two", "two", t2)
+	file1a := r.WriteFile("one", "oneone", t2)
+
+	fstest.CheckItems(t, r.fremote, file1, file2, file3)
+	fstest.CheckItems(t, r.flocal, file1a, file2a)
+
+	fdst, err := fs.NewFs(r.fremoteName + "/dst")
+	require.NoError(t, err)
+
+	fs.Stats.ResetCounters()
+	err = fs.Sync(fdst, r.flocal)
+	require.NoError(t, err)
+
+	// file1 is overwritten and the old version moved to backup-dir
+	file1.Path = "backup/one"
+	file1a.Path = "dst/one"
+	// file 2 is unchanged
+	// file 3 is deleted (moved to backup dir)
+	file3.Path = "backup/three"
+
+	fstest.CheckItems(t, r.fremote, file1, file2, file3, file1a)
+
+}

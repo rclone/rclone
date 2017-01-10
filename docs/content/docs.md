@@ -189,6 +189,24 @@ for bytes, `k` for kBytes, `M` for MBytes and `G` for GBytes may be
 used.  These are the binary units, eg 1, 2\*\*10, 2\*\*20, 2\*\*30
 respectively.
 
+### --backup-dir=DIR ###
+
+When using `sync`, `copy` or `move` any files which would have been
+overwritten or deleted are moved in their original hierarchy into this
+directory.
+
+The remote in use must support server side move or copy and you must
+use the same remote as the destination of the sync.  The backup
+directory must not overlap the destination directory.
+
+For example
+
+    rclone sync /path/to/local remote:current --backup-dir remote:old
+
+will sync `/path/to/local` to `remote:current`, but for any files
+which would have been updated or deleted will be stored in
+`remote:old`.
+
 ### --bwlimit=BANDWIDTH_SPEC ###
 
 This option controls the bandwidth limit. Limits can be specified

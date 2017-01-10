@@ -41,10 +41,10 @@ type syncCopyMove struct {
 	renameMap      map[string][]Object // dst files by hash - only used by trackRenames
 	renamerWg      sync.WaitGroup      // wait for renamers
 	toBeRenamed    ObjectPairChan      // renamers channel
+	backupDir      Fs                  // place to store overwrites/deletes
 }
 
-func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) *syncCopyMove {
-	canServerSideMove := CanServerSideMove(fdst)
+func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) (*syncCopyMove, error) {
 	s := &syncCopyMove{
 		fdst:           fdst,
 		fsrc:           fsrc,
@@ -69,7 +69,7 @@ func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) *syncCopyMove {
 	}
 	if s.trackRenames {
 		// Don't track renames for remotes without server-side move support.
-		if !canServerSideMove {
+		if !CanServerSideMove(fdst) {
 			ErrorLog(fdst, "Ignoring --track-renames as the destination does not support server-side move or copy")
 			s.trackRenames = false
 		}
@@ -82,7 +82,27 @@ func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) *syncCopyMove {
 		Debug(s.fdst, "Ignoring --no-traverse with --track-renames")
 		s.noTraverse = false
 	}
-	return s
+	// Make Fs for --backup-dir if required
+	if Config.BackupDir != "" {
+		var err error
+		s.backupDir, err = NewFs(Config.BackupDir)
+		if err != nil {
+			return nil, FatalError(errors.Errorf("Failed to make fs for --backup-dir %q: %v", Config.BackupDir, err))
+		}
+		if !CanServerSideMove(s.backupDir) {
+			return nil, FatalError(errors.New("can't use --backup-dir on a remote which doesn't support server side move or copy"))
+		}
+		if !SameConfig(fdst, s.backupDir) {
+			return nil, FatalError(errors.New("parameter to --backup-dir has to be on the same remote as destination"))
+		}
+		if Overlapping(fdst, s.backupDir) {
+			return nil, FatalError(errors.New("destination and parameter to --backup-dir mustn't overlap"))
+		}
+		if Overlapping(fsrc, s.backupDir) {
+			return nil, FatalError(errors.New("source and parameter to --backup-dir mustn't overlap"))
+		}
+	}
+	return s, nil
 }
 
 // Check to see if have set the abort flag
@@ -264,7 +284,19 @@ func (s *syncCopyMove) pairChecker(in ObjectPairChan, out ObjectPairChan, wg *sy
 			// Check to see if can store this
 			if src.Storable() {
 				if NeedTransfer(pair.dst, pair.src) {
-					out <- pair
+					// If destination already exists, then we must move it into --backup-dir if required
+					if pair.dst != nil && s.backupDir != nil {
+						err := Move(s.backupDir, nil, pair.dst.Remote(), pair.dst)
+						if err != nil {
+							s.processError(err)
+						} else {
+							// If successful zero out the dst as it is no longer there and copy the file
+							pair.dst = nil
+							out <- pair
+						}
+					} else {
+						out <- pair
+					}
 				} else {
 					// If moving need to delete the files we don't need to copy
 					if s.DoMove {
@@ -411,7 +443,7 @@ func (s *syncCopyMove) deleteFiles(checkSrcMap bool) error {
 		}
 		close(toDelete)
 	}()
-	return DeleteFiles(toDelete)
+	return deleteFilesWithBackupDir(toDelete, s.backupDir)
 }
 
 // renameHash makes a string with the size and the hash for rename detection
@@ -655,17 +687,29 @@ func (s *syncCopyMove) run() error {
 
 // Sync fsrc into fdst
 func Sync(fdst, fsrc Fs) error {
-	return newSyncCopyMove(fdst, fsrc, true, false).run()
+	do, err := newSyncCopyMove(fdst, fsrc, true, false)
+	if err != nil {
+		return err
+	}
+	return do.run()
 }
 
 // CopyDir copies fsrc into fdst
 func CopyDir(fdst, fsrc Fs) error {
-	return newSyncCopyMove(fdst, fsrc, false, false).run()
+	do, err := newSyncCopyMove(fdst, fsrc, false, false)
+	if err != nil {
+		return err
+	}
+	return do.run()
 }
 
 // moveDir moves fsrc into fdst
 func moveDir(fdst, fsrc Fs) error {
-	return newSyncCopyMove(fdst, fsrc, false, true).run()
+	do, err := newSyncCopyMove(fdst, fsrc, false, true)
+	if err != nil {
+		return err
+	}
+	return do.run()
 }
 
 // MoveDir moves fsrc into fdst

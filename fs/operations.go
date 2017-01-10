@@ -396,26 +396,52 @@ func CanServerSideMove(fdst Fs) bool {
 	return canMove || canCopy
 }
 
-// DeleteFile deletes a single file respecting --dry-run and accumulating stats and errors.
-func DeleteFile(dst Object) (err error) {
-	if Config.DryRun {
-		Log(dst, "Not deleting as --dry-run")
-	} else {
-		Stats.Checking(dst.Remote())
-		err = dst.Remove()
-		Stats.DoneChecking(dst.Remote())
-		if err != nil {
-			Stats.Error()
-			ErrorLog(dst, "Couldn't delete: %v", err)
-		} else {
-			Debug(dst, "Deleted")
-		}
+// deleteFileWithBackupDir deletes a single file respecting --dry-run
+// and accumulating stats and errors.
+//
+// If backupDir is set then it moves the file to there instead of
+// deleting
+func deleteFileWithBackupDir(dst Object, backupDir Fs) (err error) {
+	Stats.Checking(dst.Remote())
+	action, actioned, actioning := "delete", "Deleted", "deleting"
+	if backupDir != nil {
+		action, actioned, actioning = "move into backup dir", "Moved into backup dir", "moving into backup dir"
 	}
+	if Config.DryRun {
+		Log(dst, "Not %s as --dry-run", actioning)
+	} else if backupDir != nil {
+		if !SameConfig(dst.Fs(), backupDir) {
+			err = errors.New("parameter to --backup-dir has to be on the same remote as destination")
+		} else {
+			err = Move(backupDir, nil, dst.Remote(), dst)
+		}
+	} else {
+		err = dst.Remove()
+	}
+	if err != nil {
+		Stats.Error()
+		ErrorLog(dst, "Couldn't %s: %v", action, err)
+	} else {
+		Debug(dst, actioned)
+	}
+	Stats.DoneChecking(dst.Remote())
 	return err
 }
 
-// DeleteFiles removes all the files passed in the channel
-func DeleteFiles(toBeDeleted ObjectsChan) error {
+// DeleteFile deletes a single file respecting --dry-run and accumulating stats and errors.
+//
+// If useBackupDir is set and --backup-dir is in effect then it moves
+// the file to there instead of deleting
+func DeleteFile(dst Object) (err error) {
+	return deleteFileWithBackupDir(dst, nil)
+}
+
+// deleteFilesWithBackupDir removes all the files passed in the
+// channel
+//
+// If backupDir is set the files will be placed into that directory
+// instead of being deleted.
+func deleteFilesWithBackupDir(toBeDeleted ObjectsChan, backupDir Fs) error {
 	var wg sync.WaitGroup
 	wg.Add(Config.Transfers)
 	var errorCount int32
@@ -423,7 +449,7 @@ func DeleteFiles(toBeDeleted ObjectsChan) error {
 		go func() {
 			defer wg.Done()
 			for dst := range toBeDeleted {
-				err := DeleteFile(dst)
+				err := deleteFileWithBackupDir(dst, backupDir)
 				if err != nil {
 					atomic.AddInt32(&errorCount, 1)
 				}
@@ -436,6 +462,11 @@ func DeleteFiles(toBeDeleted ObjectsChan) error {
 		return errors.Errorf("failed to delete %d files", errorCount)
 	}
 	return nil
+}
+
+// DeleteFiles removes all the files passed in the channel
+func DeleteFiles(toBeDeleted ObjectsChan) error {
+	return deleteFilesWithBackupDir(toBeDeleted, nil)
 }
 
 // Read a Objects into add() for the given Fs.
