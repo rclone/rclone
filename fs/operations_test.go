@@ -22,6 +22,7 @@ package fs_test
 import (
 	"bytes"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -768,4 +769,94 @@ func TestCopyFile(t *testing.T) {
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.flocal, file1)
 	fstest.CheckItems(t, r.fremote, file2)
+}
+
+// testFsInfo is for unit testing fs.Info
+type testFsInfo struct {
+	name      string
+	root      string
+	stringVal string
+	precision time.Duration
+	hashes    fs.HashSet
+}
+
+// Name of the remote (as passed into NewFs)
+func (i *testFsInfo) Name() string { return i.name }
+
+// Root of the remote (as passed into NewFs)
+func (i *testFsInfo) Root() string { return i.root }
+
+// String returns a description of the FS
+func (i *testFsInfo) String() string { return i.stringVal }
+
+// Precision of the ModTimes in this Fs
+func (i *testFsInfo) Precision() time.Duration { return i.precision }
+
+// Returns the supported hash types of the filesystem
+func (i *testFsInfo) Hashes() fs.HashSet { return i.hashes }
+
+func TestSameConfig(t *testing.T) {
+	a := &testFsInfo{name: "name", root: "root"}
+	for _, test := range []struct {
+		name     string
+		root     string
+		expected bool
+	}{
+		{"name", "root", true},
+		{"name", "rooty", true},
+		{"namey", "root", false},
+		{"namey", "roott", false},
+	} {
+		b := &testFsInfo{name: test.name, root: test.root}
+		actual := fs.SameConfig(a, b)
+		assert.Equal(t, test.expected, actual)
+		actual = fs.SameConfig(b, a)
+		assert.Equal(t, test.expected, actual)
+	}
+}
+
+func TestSame(t *testing.T) {
+	a := &testFsInfo{name: "name", root: "root"}
+	for _, test := range []struct {
+		name     string
+		root     string
+		expected bool
+	}{
+		{"name", "root", true},
+		{"name", "rooty", false},
+		{"namey", "root", false},
+		{"namey", "roott", false},
+	} {
+		b := &testFsInfo{name: test.name, root: test.root}
+		actual := fs.Same(a, b)
+		assert.Equal(t, test.expected, actual)
+		actual = fs.Same(b, a)
+		assert.Equal(t, test.expected, actual)
+	}
+}
+
+func TestOverlapping(t *testing.T) {
+	a := &testFsInfo{name: "name", root: "root"}
+	for _, test := range []struct {
+		name     string
+		root     string
+		expected bool
+	}{
+		{"name", "root", true},
+		{"namey", "root", false},
+		{"name", "rooty", false},
+		{"namey", "rooty", false},
+		{"name", "roo", false},
+		{"name", "root/toot", true},
+		{"name", "root/toot/", true},
+		{"name", "", true},
+		{"name", "/", true},
+	} {
+		b := &testFsInfo{name: test.name, root: test.root}
+		what := fmt.Sprintf("(%q,%q) vs (%q,%q)", a.name, a.root, b.name, b.root)
+		actual := fs.Overlapping(a, b)
+		assert.Equal(t, test.expected, actual, what)
+		actual = fs.Overlapping(b, a)
+		assert.Equal(t, test.expected, actual, what)
+	}
 }

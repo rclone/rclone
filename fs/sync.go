@@ -676,7 +676,7 @@ func MoveDir(fdst, fsrc Fs) error {
 	}
 
 	// First attempt to use DirMover if exists, same Fs and no filters are active
-	if fdstDirMover, ok := fdst.(DirMover); ok && fsrc.Name() == fdst.Name() && Config.Filter.InActive() {
+	if fdstDirMover, ok := fdst.(DirMover); ok && SameConfig(fsrc, fdst) && Config.Filter.InActive() {
 		if Config.DryRun {
 			Log(fdst, "Not doing server side directory move as --dry-run")
 			return nil

@@ -252,7 +252,7 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 		// Try server side copy first - if has optional interface and
 		// is same underlying remote
 		actionTaken = "Copied (server side copy)"
-		if fCopy, ok := f.(Copier); ok && src.Fs().Name() == f.Name() {
+		if fCopy, ok := f.(Copier); ok && SameConfig(src.Fs(), f) {
 			var newDst Object
 			newDst, err = fCopy.Copy(src, remote)
 			if err == nil {
@@ -353,7 +353,7 @@ func Move(fdst Fs, dst Object, remote string, src Object) (err error) {
 		return nil
 	}
 	// See if we have Move available
-	if do, ok := fdst.(Mover); ok && src.Fs().Name() == fdst.Name() {
+	if do, ok := fdst.(Mover); ok && SameConfig(src.Fs(), fdst) {
 		// Delete destination if it exists
 		if dst != nil {
 			err = DeleteFile(dst)
@@ -536,15 +536,34 @@ func readFilesMaps(fdst Fs, fdstIncludeAll bool, fsrc Fs, fsrcIncludeAll bool, d
 	return dstFiles, srcFiles, err
 }
 
+// SameConfig returns true if fdst and fsrc are using the same config
+// file entry
+func SameConfig(fdst, fsrc Info) bool {
+	return fdst.Name() == fsrc.Name()
+}
+
 // Same returns true if fdst and fsrc point to the same underlying Fs
-func Same(fdst, fsrc Fs) bool {
-	return fdst.Name() == fsrc.Name() && fdst.Root() == fsrc.Root()
+func Same(fdst, fsrc Info) bool {
+	return SameConfig(fdst, fsrc) && fdst.Root() == fsrc.Root()
 }
 
 // Overlapping returns true if fdst and fsrc point to the same
-// underlying Fs or they overlap.
-func Overlapping(fdst, fsrc Fs) bool {
-	return fdst.Name() == fsrc.Name() && (strings.HasPrefix(fdst.Root(), fsrc.Root()) || strings.HasPrefix(fsrc.Root(), fdst.Root()))
+// underlying Fs and they overlap.
+func Overlapping(fdst, fsrc Info) bool {
+	if !SameConfig(fdst, fsrc) {
+		return false
+	}
+	// Return the Root with a trailing / if not empty
+	fixedRoot := func(f Info) string {
+		s := strings.Trim(f.Root(), "/")
+		if s != "" {
+			s += "/"
+		}
+		return s
+	}
+	fdstRoot := fixedRoot(fdst)
+	fsrcRoot := fixedRoot(fsrc)
+	return strings.HasPrefix(fdstRoot, fsrcRoot) || strings.HasPrefix(fsrcRoot, fdstRoot)
 }
 
 // checkIdentical checks to see if dst and src are identical
