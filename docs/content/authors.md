@@ -54,3 +54,4 @@ Contributors
   * Lukas Loesche <lukas@mesosphere.io>
   * emyarod <allllaboutyou@gmail.com>
   * T.C. Ferguson <tcf909@gmail.com>
+  * Brandur <brandur@mutelight.org>
