@@ -81,8 +81,9 @@ func init() {
 // Fs represents a remote one drive
 type Fs struct {
 	name     string             // name of this remote
-	srv      *rest.Client       // the connection to the one drive server
 	root     string             // the path we are working on
+	features *fs.Features       // optional features
+	srv      *rest.Client       // the connection to the one drive server
 	dirCache *dircache.DirCache // Map of directory path to directory id
 	pacer    *pacer.Pacer       // pacer for API calls
 }
@@ -116,6 +117,11 @@ func (f *Fs) Root() string {
 // String converts this Fs to a string
 func (f *Fs) String() string {
 	return fmt.Sprintf("One drive root '%s'", f.root)
+}
+
+// Features returns the optional features of this Fs
+func (f *Fs) Features() *fs.Features {
+	return f.features
 }
 
 // Pattern to match a one drive path
@@ -184,6 +190,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		srv:   rest.NewClient(oAuthClient).SetRoot(rootURL),
 		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 	}
+	f.features = (&fs.Features{CaseInsensitive: true, ReadMimeType: true}).Fill(f)
 	f.srv.SetErrorHandler(errorHandler)
 
 	// Get rootID

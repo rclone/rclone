@@ -96,8 +96,9 @@ func configHelper(name string) {
 // Fs represents a remote dropbox server
 type Fs struct {
 	name           string           // name of this remote
-	db             *dropbox.Dropbox // the connection to the dropbox server
 	root           string           // the path we are working on
+	features       *fs.Features     // optional features
+	db             *dropbox.Dropbox // the connection to the dropbox server
 	slashRoot      string           // root with "/" prefix, lowercase
 	slashRootSlash string           // root with "/" prefix and postfix, lowercase
 }
@@ -127,6 +128,11 @@ func (f *Fs) Root() string {
 // String converts this Fs to a string
 func (f *Fs) String() string {
 	return fmt.Sprintf("Dropbox root '%s'", f.root)
+}
+
+// Features returns the optional features of this Fs
+func (f *Fs) Features() *fs.Features {
+	return f.features
 }
 
 // Makes a new dropbox from the config
@@ -159,6 +165,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		name: name,
 		db:   db,
 	}
+	f.features = (&fs.Features{CaseInsensitive: true, ReadMimeType: true}).Fill(f)
 	f.setRoot(root)
 
 	// Read the token from the config file

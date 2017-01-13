@@ -384,8 +384,8 @@ func TestFsCopy(t *testing.T) {
 	skipIfNotOk(t)
 
 	// Check have Copy
-	_, ok := remote.(fs.Copier)
-	if !ok {
+	doCopy := remote.Features().Copy
+	if doCopy == nil {
 		t.Skip("FS has no Copier interface")
 	}
 
@@ -394,7 +394,7 @@ func TestFsCopy(t *testing.T) {
 
 	// do the copy
 	src := findObject(t, file1.Path)
-	dst, err := remote.(fs.Copier).Copy(src, file1Copy.Path)
+	dst, err := doCopy(src, file1Copy.Path)
 	if err == fs.ErrorCantCopy {
 		t.Skip("FS can't copy")
 	}
@@ -417,8 +417,8 @@ func TestFsMove(t *testing.T) {
 	skipIfNotOk(t)
 
 	// Check have Move
-	_, ok := remote.(fs.Mover)
-	if !ok {
+	doMove := remote.Features().Move
+	if doMove == nil {
 		t.Skip("FS has no Mover interface")
 	}
 
@@ -433,7 +433,7 @@ func TestFsMove(t *testing.T) {
 	// separate operations
 	file2Move.Path = "other.txt"
 	src := findObject(t, file2.Path)
-	dst, err := remote.(fs.Mover).Move(src, file2Move.Path)
+	dst, err := doMove(src, file2Move.Path)
 	if err == fs.ErrorCantMove {
 		t.Skip("FS can't move")
 	}
@@ -448,7 +448,7 @@ func TestFsMove(t *testing.T) {
 	// Check conflict on "rename, then move"
 	file1Move.Path = "moveTest/other.txt"
 	src = findObject(t, file1.Path)
-	_, err = remote.(fs.Mover).Move(src, file1Move.Path)
+	_, err = doMove(src, file1Move.Path)
 	require.NoError(t, err)
 	fstest.CheckListing(t, remote, []fstest.Item{file1Move, file2Move})
 	// 1: moveTest/other.txt
@@ -456,14 +456,14 @@ func TestFsMove(t *testing.T) {
 
 	// Check conflict on "move, then rename"
 	src = findObject(t, file1Move.Path)
-	_, err = remote.(fs.Mover).Move(src, file1.Path)
+	_, err = doMove(src, file1.Path)
 	require.NoError(t, err)
 	fstest.CheckListing(t, remote, []fstest.Item{file1, file2Move})
 	// 1: file name.txt
 	// 2: other.txt
 
 	src = findObject(t, file2Move.Path)
-	_, err = remote.(fs.Mover).Move(src, file2.Path)
+	_, err = doMove(src, file2.Path)
 	require.NoError(t, err)
 	fstest.CheckListing(t, remote, []fstest.Item{file1, file2})
 	// 1: file name.txt
@@ -483,13 +483,13 @@ func TestFsDirMove(t *testing.T) {
 	skipIfNotOk(t)
 
 	// Check have DirMove
-	_, ok := remote.(fs.DirMover)
-	if !ok {
+	doDirMove := remote.Features().DirMove
+	if doDirMove == nil {
 		t.Skip("FS has no DirMover interface")
 	}
 
 	// Check it can't move onto itself
-	err := remote.(fs.DirMover).DirMove(remote)
+	err := doDirMove(remote)
 	require.Equal(t, fs.ErrorDirExists, err)
 
 	// new remote
@@ -498,7 +498,7 @@ func TestFsDirMove(t *testing.T) {
 	defer removeNewRemote()
 
 	// try the move
-	err = newRemote.(fs.DirMover).DirMove(remote)
+	err = newRemote.Features().DirMove(remote)
 	require.NoError(t, err)
 
 	// check remotes
@@ -507,7 +507,7 @@ func TestFsDirMove(t *testing.T) {
 	fstest.CheckListing(t, newRemote, []fstest.Item{file2, file1})
 
 	// move it back
-	err = remote.(fs.DirMover).DirMove(newRemote)
+	err = doDirMove(newRemote)
 	require.NoError(t, err)
 
 	// check remotes
@@ -550,8 +550,8 @@ func TestObjectFs(t *testing.T) {
 	testRemote := remote
 	if obj.Fs() != testRemote {
 		// Check to see if this wraps something else
-		if unwrap, ok := testRemote.(fs.UnWrapper); ok {
-			testRemote = unwrap.UnWrap()
+		if doUnWrap := testRemote.Features().UnWrap; doUnWrap != nil {
+			testRemote = doUnWrap()
 		}
 	}
 	assert.Equal(t, obj.Fs(), testRemote)

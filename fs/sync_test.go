@@ -719,7 +719,7 @@ func TestServerSideMoveOverlap(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
 
-	if _, ok := r.fremote.(fs.DirMover); ok {
+	if r.fremote.Features().DirMove != nil {
 		t.Skip("Skipping test as remote supports DirMove")
 	}
 

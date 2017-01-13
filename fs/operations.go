@@ -252,9 +252,9 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 		// Try server side copy first - if has optional interface and
 		// is same underlying remote
 		actionTaken = "Copied (server side copy)"
-		if fCopy, ok := f.(Copier); ok && SameConfig(src.Fs(), f) {
+		if doCopy := f.Features().Copy; doCopy != nil && SameConfig(src.Fs(), f) {
 			var newDst Object
-			newDst, err = fCopy.Copy(src, remote)
+			newDst, err = doCopy(src, remote)
 			if err == nil {
 				dst = newDst
 			}
@@ -353,7 +353,7 @@ func Move(fdst Fs, dst Object, remote string, src Object) (err error) {
 		return nil
 	}
 	// See if we have Move available
-	if do, ok := fdst.(Mover); ok && SameConfig(src.Fs(), fdst) {
+	if doMove := fdst.Features().Move; doMove != nil && SameConfig(src.Fs(), fdst) {
 		// Delete destination if it exists
 		if dst != nil {
 			err = DeleteFile(dst)
@@ -362,7 +362,7 @@ func Move(fdst Fs, dst Object, remote string, src Object) (err error) {
 			}
 		}
 		// Move dst <- src
-		_, err := do.Move(src, remote)
+		_, err := doMove(src, remote)
 		switch err {
 		case nil:
 			Debug(src, "Moved (server side)")
@@ -391,8 +391,8 @@ func Move(fdst Fs, dst Object, remote string, src Object) (err error) {
 // Some remotes simulate rename by server-side copy and delete, so include
 // remotes that implements either Mover or Copier.
 func CanServerSideMove(fdst Fs) bool {
-	_, canMove := fdst.(Mover)
-	_, canCopy := fdst.(Copier)
+	canMove := fdst.Features().Move != nil
+	canCopy := fdst.Features().Copy != nil
 	return canMove || canCopy
 }
 
@@ -880,12 +880,12 @@ func Rmdir(f Fs, dir string) error {
 func Purge(f Fs) error {
 	doFallbackPurge := true
 	var err error
-	if purger, ok := f.(Purger); ok {
+	if doPurge := f.Features().Purge; doPurge != nil {
 		doFallbackPurge = false
 		if Config.DryRun {
 			Log(f, "Not purging as --dry-run set")
 		} else {
-			err = purger.Purge()
+			err = doPurge()
 			if err == ErrorCantPurge {
 				doFallbackPurge = true
 			}
@@ -929,8 +929,8 @@ func Delete(f Fs) error {
 // dedupeRename renames the objs slice to different names
 func dedupeRename(remote string, objs []Object) {
 	f := objs[0].Fs()
-	mover, ok := f.(Mover)
-	if !ok {
+	doMove := f.Features().Move
+	if doMove == nil {
 		log.Fatalf("Fs %v doesn't support Move", f)
 	}
 	ext := path.Ext(remote)
@@ -938,7 +938,7 @@ func dedupeRename(remote string, objs []Object) {
 	for i, o := range objs {
 		newName := fmt.Sprintf("%s-%d%s", base, i+1, ext)
 		if !Config.DryRun {
-			newObj, err := mover.Move(o, newName)
+			newObj, err := doMove(o, newName)
 			if err != nil {
 				Stats.Error()
 				ErrorLog(o, "Failed to rename: %v", err)
@@ -1159,15 +1159,15 @@ func listToChan(list *Lister) ObjectsChan {
 
 // CleanUp removes the trash for the Fs
 func CleanUp(f Fs) error {
-	fc, ok := f.(CleanUpper)
-	if !ok {
+	doCleanUp := f.Features().CleanUp
+	if doCleanUp == nil {
 		return errors.Errorf("%v doesn't support cleanup", f)
 	}
 	if Config.DryRun {
 		Log(f, "Not running cleanup as --dry-run set")
 		return nil
 	}
-	return fc.CleanUp()
+	return doCleanUp()
 }
 
 // Cat any files to the io.Writer

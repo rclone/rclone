@@ -90,6 +90,7 @@ func init() {
 // Fs represents a remote acd server
 type Fs struct {
 	name         string                 // name of this remote
+	features     *fs.Features           // optional features
 	c            *acd.Client            // the connection to the acd server
 	noAuthClient *http.Client           // unauthenticated http client
 	root         string                 // the path we are working on
@@ -124,6 +125,11 @@ func (f *Fs) Root() string {
 // String converts this Fs to a string
 func (f *Fs) String() string {
 	return fmt.Sprintf("amazon drive root '%s'", f.root)
+}
+
+// Features returns the optional features of this Fs
+func (f *Fs) Features() *fs.Features {
+	return f.features
 }
 
 // Pattern to match a acd path
@@ -184,6 +190,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		noAuthClient: fs.Config.Client(),
 		ts:           ts,
 	}
+	f.features = (&fs.Features{CaseInsensitive: true, ReadMimeType: true}).Fill(f)
 
 	// Update endpoints
 	var resp *http.Response

@@ -79,6 +79,8 @@ func init() {
 // Fs represents a remote b2 server
 type Fs struct {
 	name          string                       // name of this remote
+	root          string                       // the path we are working on if any
+	features      *fs.Features                 // optional features
 	account       string                       // account name
 	key           string                       // auth key
 	endpoint      string                       // name of the starting api endpoint
@@ -86,7 +88,6 @@ type Fs struct {
 	bucket        string                       // the bucket we are working on
 	bucketIDMutex sync.Mutex                   // mutex to protect _bucketID
 	_bucketID     string                       // the ID of the bucket we are working on
-	root          string                       // the path we are working on if any
 	info          api.AuthorizeAccountResponse // result of authorize call
 	uploadMu      sync.Mutex                   // lock for upload variable
 	uploads       []*api.GetUploadURLResponse  // result of get upload URL calls
@@ -128,6 +129,11 @@ func (f *Fs) String() string {
 		return fmt.Sprintf("B2 bucket %s", f.bucket)
 	}
 	return fmt.Sprintf("B2 bucket %s path %s", f.bucket, f.root)
+}
+
+// Features returns the optional features of this Fs
+func (f *Fs) Features() *fs.Features {
+	return f.features
 }
 
 // Pattern to match a b2 path
@@ -250,6 +256,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		uploadTokens: make(chan struct{}, fs.Config.Transfers),
 		extraTokens:  make(chan struct{}, fs.Config.Transfers),
 	}
+	f.features = (&fs.Features{ReadMimeType: true, WriteMimeType: true}).Fill(f)
 	// Set the test flag if required
 	if *b2TestMode != "" {
 		testMode := strings.TrimSpace(*b2TestMode)

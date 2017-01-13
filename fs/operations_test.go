@@ -148,6 +148,9 @@ func NewRun(t *testing.T) *Run {
 			for {
 				o, err := list.GetObject()
 				if err != nil {
+					if err == fs.ErrorDirNotFound {
+						break
+					}
 					t.Fatalf("Error listing: %v", err)
 				}
 				// Check if we are finished
@@ -223,9 +226,8 @@ func (r *Run) Mkdir(f fs.Fs) {
 func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time, useUnchecked bool) fstest.Item {
 	put := f.Put
 	if useUnchecked {
-		if fPutUnchecked, ok := f.(fs.PutUncheckeder); ok {
-			put = fPutUnchecked.PutUnchecked
-		} else {
+		put = f.Features().PutUnchecked
+		if put == nil {
 			r.Fatalf("Fs doesn't support PutUnchecked")
 		}
 	}
@@ -514,12 +516,22 @@ func (r *Run) checkWithDuplicates(t *testing.T, items ...fstest.Item) {
 	assert.Equal(t, wantSize, size)
 }
 
-func TestDeduplicateInteractive(t *testing.T) {
-	if *RemoteName != "TestDrive:" {
-		t.Skip("Can only test deduplicate on google drive")
+func skipIfCantDedupe(t *testing.T, f fs.Fs) {
+	if f.Features().PutUnchecked == nil {
+		t.Skip("Can't test deduplicate - no PutUnchecked")
 	}
+	if !f.Features().DuplicateFiles {
+		t.Skip("Can't test deduplicate - no duplicate files possible")
+	}
+	if !f.Hashes().Contains(fs.HashMD5) {
+		t.Skip("Can't test deduplicate - MD5 not supported")
+	}
+}
+
+func TestDeduplicateInteractive(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
+	skipIfCantDedupe(t, r.fremote)
 
 	file1 := r.WriteUncheckedObject("one", "This is one", t1)
 	file2 := r.WriteUncheckedObject("one", "This is one", t1)
@@ -533,11 +545,9 @@ func TestDeduplicateInteractive(t *testing.T) {
 }
 
 func TestDeduplicateSkip(t *testing.T) {
-	if *RemoteName != "TestDrive:" {
-		t.Skip("Can only test deduplicate on google drive")
-	}
 	r := NewRun(t)
 	defer r.Finalise()
+	skipIfCantDedupe(t, r.fremote)
 
 	file1 := r.WriteUncheckedObject("one", "This is one", t1)
 	file2 := r.WriteUncheckedObject("one", "This is one", t1)
@@ -551,11 +561,9 @@ func TestDeduplicateSkip(t *testing.T) {
 }
 
 func TestDeduplicateFirst(t *testing.T) {
-	if *RemoteName != "TestDrive:" {
-		t.Skip("Can only test deduplicate on google drive")
-	}
 	r := NewRun(t)
 	defer r.Finalise()
+	skipIfCantDedupe(t, r.fremote)
 
 	file1 := r.WriteUncheckedObject("one", "This is one", t1)
 	file2 := r.WriteUncheckedObject("one", "This is one A", t1)
@@ -574,11 +582,9 @@ func TestDeduplicateFirst(t *testing.T) {
 }
 
 func TestDeduplicateNewest(t *testing.T) {
-	if *RemoteName != "TestDrive:" {
-		t.Skip("Can only test deduplicate on google drive")
-	}
 	r := NewRun(t)
 	defer r.Finalise()
+	skipIfCantDedupe(t, r.fremote)
 
 	file1 := r.WriteUncheckedObject("one", "This is one", t1)
 	file2 := r.WriteUncheckedObject("one", "This is one too", t2)
@@ -592,11 +598,9 @@ func TestDeduplicateNewest(t *testing.T) {
 }
 
 func TestDeduplicateOldest(t *testing.T) {
-	if *RemoteName != "TestDrive:" {
-		t.Skip("Can only test deduplicate on google drive")
-	}
 	r := NewRun(t)
 	defer r.Finalise()
+	skipIfCantDedupe(t, r.fremote)
 
 	file1 := r.WriteUncheckedObject("one", "This is one", t1)
 	file2 := r.WriteUncheckedObject("one", "This is one too", t2)
@@ -610,11 +614,9 @@ func TestDeduplicateOldest(t *testing.T) {
 }
 
 func TestDeduplicateRename(t *testing.T) {
-	if *RemoteName != "TestDrive:" {
-		t.Skip("Can only test deduplicate on google drive")
-	}
 	r := NewRun(t)
 	defer r.Finalise()
+	skipIfCantDedupe(t, r.fremote)
 
 	file1 := r.WriteUncheckedObject("one.txt", "This is one", t1)
 	file2 := r.WriteUncheckedObject("one.txt", "This is one too", t2)
@@ -778,6 +780,7 @@ type testFsInfo struct {
 	stringVal string
 	precision time.Duration
 	hashes    fs.HashSet
+	features  fs.Features
 }
 
 // Name of the remote (as passed into NewFs)
@@ -794,6 +797,9 @@ func (i *testFsInfo) Precision() time.Duration { return i.precision }
 
 // Returns the supported hash types of the filesystem
 func (i *testFsInfo) Hashes() fs.HashSet { return i.hashes }
+
+// Returns the supported hash types of the filesystem
+func (i *testFsInfo) Features() *fs.Features { return &i.features }
 
 func TestSameConfig(t *testing.T) {
 	a := &testFsInfo{name: "name", root: "root"}

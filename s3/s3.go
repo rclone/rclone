@@ -216,11 +216,12 @@ var (
 // Fs represents a remote s3 server
 type Fs struct {
 	name               string           // the name of the remote
+	root               string           // root of the bucket - ignore all objects above this
+	features           *fs.Features     // optional features
 	c                  *s3.S3           // the connection to the s3 server
 	ses                *session.Session // the s3 session
 	bucket             string           // the bucket we are working on
 	acl                string           // ACL for new buckets / objects
-	root               string           // root of the bucket - ignore all objects above this
 	locationConstraint string           // location constraint of new buckets
 	sse                string           // the type of server-side encryption
 	storageClass       string           // storage class
@@ -262,6 +263,11 @@ func (f *Fs) String() string {
 		return fmt.Sprintf("S3 bucket %s", f.bucket)
 	}
 	return fmt.Sprintf("S3 bucket %s path %s", f.bucket, f.root)
+}
+
+// Features returns the optional features of this Fs
+func (f *Fs) Features() *fs.Features {
+	return f.features
 }
 
 // Pattern to match a s3 path
@@ -373,6 +379,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		sse:                fs.ConfigFileGet(name, "server_side_encryption"),
 		storageClass:       fs.ConfigFileGet(name, "storage_class"),
 	}
+	f.features = (&fs.Features{ReadMimeType: true, WriteMimeType: true}).Fill(f)
 	if *s3ACL != "" {
 		f.acl = *s3ACL
 	}

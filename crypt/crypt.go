@@ -88,21 +88,30 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	}
 	f := &Fs{
 		Fs:     wrappedFs,
-		cipher: cipher,
-		mode:   mode,
 		name:   name,
 		root:   rpath,
+		cipher: cipher,
+		mode:   mode,
 	}
+	// the features here are ones we could support, and they are
+	// ANDed with the ones from wrappedFs
+	f.features = (&fs.Features{
+		CaseInsensitive: mode == NameEncryptionOff,
+		DuplicateFiles:  true,
+		ReadMimeType:    false, // MimeTypes not supported with crypt
+		WriteMimeType:   false,
+	}).Fill(f).Mask(wrappedFs)
 	return f, err
 }
 
 // Fs represents a wrapped fs.Fs
 type Fs struct {
 	fs.Fs
-	cipher Cipher
-	mode   NameEncryptionMode
-	name   string
-	root   string
+	name     string
+	root     string
+	features *fs.Features // optional features
+	cipher   Cipher
+	mode     NameEncryptionMode
 }
 
 // Name of the remote (as passed into NewFs)
@@ -113,6 +122,11 @@ func (f *Fs) Name() string {
 // Root of the remote (as passed into NewFs)
 func (f *Fs) Root() string {
 	return f.root
+}
+
+// Features returns the optional features of this Fs
+func (f *Fs) Features() *fs.Features {
+	return f.features
 }
 
 // String returns a description of the FS
@@ -177,11 +191,11 @@ func (f *Fs) Rmdir(dir string) error {
 //
 // Return an error if it doesn't exist
 func (f *Fs) Purge() error {
-	do, ok := f.Fs.(fs.Purger)
-	if !ok {
+	do := f.Fs.Features().Purge
+	if do == nil {
 		return fs.ErrorCantPurge
 	}
-	return do.Purge()
+	return do()
 }
 
 // Copy src to this remote using server side copy operations.
@@ -194,15 +208,15 @@ func (f *Fs) Purge() error {
 //
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
-	do, ok := f.Fs.(fs.Copier)
-	if !ok {
+	do := f.Fs.Features().Copy
+	if do == nil {
 		return nil, fs.ErrorCantCopy
 	}
 	o, ok := src.(*Object)
 	if !ok {
 		return nil, fs.ErrorCantCopy
 	}
-	oResult, err := do.Copy(o.Object, f.cipher.EncryptFileName(remote))
+	oResult, err := do(o.Object, f.cipher.EncryptFileName(remote))
 	if err != nil {
 		return nil, err
 	}
@@ -219,15 +233,15 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 //
 // If it isn't possible then return fs.ErrorCantMove
 func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
-	do, ok := f.Fs.(fs.Mover)
-	if !ok {
+	do := f.Fs.Features().Move
+	if do == nil {
 		return nil, fs.ErrorCantMove
 	}
 	o, ok := src.(*Object)
 	if !ok {
 		return nil, fs.ErrorCantMove
 	}
-	oResult, err := do.Move(o.Object, f.cipher.EncryptFileName(remote))
+	oResult, err := do(o.Object, f.cipher.EncryptFileName(remote))
 	if err != nil {
 		return nil, err
 	}
@@ -243,8 +257,8 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 //
 // If destination exists then return fs.ErrorDirExists
 func (f *Fs) DirMove(src fs.Fs) error {
-	do, ok := f.Fs.(fs.DirMover)
-	if !ok {
+	do := f.Fs.Features().DirMove
+	if do == nil {
 		return fs.ErrorCantDirMove
 	}
 	srcFs, ok := src.(*Fs)
@@ -252,7 +266,39 @@ func (f *Fs) DirMove(src fs.Fs) error {
 		fs.Debug(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
-	return do.DirMove(srcFs.Fs)
+	return do(srcFs.Fs)
+}
+
+// PutUnchecked uploads the object
+//
+// This will create a duplicate if we upload a new file without
+// checking to see if there is one already - use Put() for that.
+func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
+	do := f.Fs.Features().PutUnchecked
+	if do == nil {
+		return nil, errors.New("can't PutUnchecked")
+	}
+	wrappedIn, err := f.cipher.EncryptData(in)
+	if err != nil {
+		return nil, err
+	}
+	o, err := do(wrappedIn, f.newObjectInfo(src))
+	if err != nil {
+		return nil, err
+	}
+	return f.newObject(o), nil
+}
+
+// CleanUp the trash in the Fs
+//
+// Implement this if you have a way of emptying the trash or
+// otherwise cleaning up old versions of files.
+func (f *Fs) CleanUp() error {
+	do := f.Fs.Features().CleanUp
+	if do == nil {
+		return errors.New("can't CleanUp")
+	}
+	return do()
 }
 
 // UnWrap returns the Fs that this Fs is wrapping
@@ -473,14 +519,15 @@ func (lo *ListOpts) IncludeDirectory(remote string) bool {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs       = (*Fs)(nil)
-	_ fs.Purger   = (*Fs)(nil)
-	_ fs.Copier   = (*Fs)(nil)
-	_ fs.Mover    = (*Fs)(nil)
-	_ fs.DirMover = (*Fs)(nil)
-	// _ fs.PutUncheckeder = (*Fs)(nil)
-	_ fs.UnWrapper  = (*Fs)(nil)
-	_ fs.ObjectInfo = (*ObjectInfo)(nil)
-	_ fs.Object     = (*Object)(nil)
-	_ fs.ListOpts   = (*ListOpts)(nil)
+	_ fs.Fs             = (*Fs)(nil)
+	_ fs.Purger         = (*Fs)(nil)
+	_ fs.Copier         = (*Fs)(nil)
+	_ fs.Mover          = (*Fs)(nil)
+	_ fs.DirMover       = (*Fs)(nil)
+	_ fs.PutUncheckeder = (*Fs)(nil)
+	_ fs.CleanUpper     = (*Fs)(nil)
+	_ fs.UnWrapper      = (*Fs)(nil)
+	_ fs.ObjectInfo     = (*ObjectInfo)(nil)
+	_ fs.Object         = (*Object)(nil)
+	_ fs.ListOpts       = (*ListOpts)(nil)
 )

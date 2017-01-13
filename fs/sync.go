@@ -720,13 +720,13 @@ func MoveDir(fdst, fsrc Fs) error {
 	}
 
 	// First attempt to use DirMover if exists, same Fs and no filters are active
-	if fdstDirMover, ok := fdst.(DirMover); ok && SameConfig(fsrc, fdst) && Config.Filter.InActive() {
+	if fdstDirMove := fdst.Features().DirMove; fdstDirMove != nil && SameConfig(fsrc, fdst) && Config.Filter.InActive() {
 		if Config.DryRun {
 			Log(fdst, "Not doing server side directory move as --dry-run")
 			return nil
 		}
 		Debug(fdst, "Using server side directory move")
-		err := fdstDirMover.DirMove(fsrc)
+		err := fdstDirMove(fsrc)
 		switch err {
 		case ErrorCantDirMove, ErrorDirExists:
 			Debug(fdst, "Server side directory move failed - fallback to file moves: %v", err)

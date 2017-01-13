@@ -88,10 +88,11 @@ func init() {
 // Fs represents a remote swift server
 type Fs struct {
 	name              string            // name of this remote
+	root              string            // the path we are working on if any
+	features          *fs.Features      // optional features
 	c                 *swift.Connection // the connection to the swift server
 	container         string            // the container we are working on
 	segmentsContainer string            // container to store the segments (if any) in
-	root              string            // the path we are working on if any
 }
 
 // Object describes a swift object
@@ -125,6 +126,11 @@ func (f *Fs) String() string {
 		return fmt.Sprintf("Swift container %s", f.container)
 	}
 	return fmt.Sprintf("Swift container %s path %s", f.container, f.root)
+}
+
+// Features returns the optional features of this Fs
+func (f *Fs) Features() *fs.Features {
+	return f.features
 }
 
 // Pattern to match a swift path
@@ -190,6 +196,7 @@ func NewFsWithConnection(name, root string, c *swift.Connection) (fs.Fs, error) 
 		segmentsContainer: container + "_segments",
 		root:              directory,
 	}
+	f.features = (&fs.Features{ReadMimeType: true, WriteMimeType: true}).Fill(f)
 	// StorageURL overloading
 	storageURL := fs.ConfigFileGet(name, "storage_url")
 	if storageURL != "" {

@@ -115,8 +115,9 @@ func init() {
 // Fs represents a remote drive server
 type Fs struct {
 	name       string             // name of this remote
-	svc        *drive.Service     // the connection to the drive server
 	root       string             // the path we are working on
+	features   *fs.Features       // optional features
+	svc        *drive.Service     // the connection to the drive server
 	client     *http.Client       // authorized client
 	about      *drive.About       // information about the drive, including the root
 	dirCache   *dircache.DirCache // Map of directory path to directory id
@@ -152,6 +153,11 @@ func (f *Fs) Root() string {
 // String converts this Fs to a string
 func (f *Fs) String() string {
 	return fmt.Sprintf("Google drive root '%s'", f.root)
+}
+
+// Features returns the optional features of this Fs
+func (f *Fs) Features() *fs.Features {
+	return f.features
 }
 
 // shouldRetry determines whehter a given err rates being retried
@@ -294,6 +300,7 @@ func NewFs(name, path string) (fs.Fs, error) {
 		root:  root,
 		pacer: pacer.New().SetMinSleep(minSleep).SetPacer(pacer.GoogleDrivePacer),
 	}
+	f.features = (&fs.Features{DuplicateFiles: true, ReadMimeType: true, WriteMimeType: true}).Fill(f)
 
 	// Create a new authorized Drive client.
 	f.client = oAuthClient

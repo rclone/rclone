@@ -47,6 +47,7 @@ func init() {
 type Fs struct {
 	name        string              // the name of the remote
 	root        string              // The root directory (OS path)
+	features    *fs.Features        // optional features
 	dev         uint64              // device number of root node
 	precisionOk sync.Once           // Whether we need to read the precision
 	precision   time.Duration       // precision of local filesystem
@@ -78,6 +79,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		dev:    devUnset,
 	}
 	f.root = f.cleanPath(root)
+	f.features = (&fs.Features{CaseInsensitive: f.caseInsensitive()}).Fill(f)
 
 	// Check to see if this points to a file
 	fi, err := os.Lstat(f.root)
@@ -106,6 +108,21 @@ func (f *Fs) Root() string {
 // String converts this Fs to a string
 func (f *Fs) String() string {
 	return fmt.Sprintf("Local file system at %s", f.root)
+}
+
+// Features returns the optional features of this Fs
+func (f *Fs) Features() *fs.Features {
+	return f.features
+}
+
+// caseInsenstive returns whether the remote is case insensitive or not
+func (f *Fs) caseInsensitive() bool {
+	// FIXME not entirely accurate since you can have case
+	// sensitive Fses on darwin and case insenstive Fses on linux.
+	// Should probably check but that would involve creating a
+	// file in the remote to be most accurate which probably isn't
+	// desirable.
+	return runtime.GOOS == "windows" || runtime.GOOS == "darwin"
 }
 
 // newObject makes a half completed Object

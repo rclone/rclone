@@ -130,10 +130,11 @@ func init() {
 // Fs represents a remote storage server
 type Fs struct {
 	name          string           // name of this remote
+	root          string           // the path we are working on if any
+	features      *fs.Features     // optional features
 	svc           *storage.Service // the connection to the storage server
 	client        *http.Client     // authorized client
 	bucket        string           // the bucket we are working on
-	root          string           // the path we are working on if any
 	projectNumber string           // used for finding buckets
 	objectACL     string           // used when creating new objects
 	bucketACL     string           // used when creating new buckets
@@ -173,6 +174,11 @@ func (f *Fs) String() string {
 		return fmt.Sprintf("Storage bucket %s", f.bucket)
 	}
 	return fmt.Sprintf("Storage bucket %s path %s", f.bucket, f.root)
+}
+
+// Features returns the optional features of this Fs
+func (f *Fs) Features() *fs.Features {
+	return f.features
 }
 
 // Pattern to match a storage path
@@ -234,6 +240,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		objectACL:     fs.ConfigFileGet(name, "object_acl"),
 		bucketACL:     fs.ConfigFileGet(name, "bucket_acl"),
 	}
+	f.features = (&fs.Features{ReadMimeType: true, WriteMimeType: true}).Fill(f)
 	if f.objectACL == "" {
 		f.objectACL = "private"
 	}

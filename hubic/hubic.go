@@ -76,6 +76,7 @@ type credentials struct {
 // Fs represents a remote hubic
 type Fs struct {
 	fs.Fs                    // wrapped Fs
+	features    *fs.Features // optional features
 	client      *http.Client // client for oauth api
 	credentials credentials  // returned from the Hubic API
 	expires     time.Time    // time credentials expire
@@ -169,37 +170,13 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return nil, err
 	}
 	f.Fs = swiftFs
+	f.features = f.Fs.Features().Wrap(f)
 	return f, err
 }
 
-// Purge deletes all the files and the container
-//
-// Optional interface: Only implement this if you have a way of
-// deleting all the files quicker than just running Remove() on the
-// result of List()
-func (f *Fs) Purge() error {
-	fPurge, ok := f.Fs.(fs.Purger)
-	if !ok {
-		return fs.ErrorCantPurge
-	}
-	return fPurge.Purge()
-}
-
-// Copy src to this remote using server side copy operations.
-//
-// This is stored with the remote path given
-//
-// It returns the destination Object and a possible error
-//
-// Will only be called if src.Fs().Name() == f.Name()
-//
-// If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
-	fCopy, ok := f.Fs.(fs.Copier)
-	if !ok {
-		return nil, fs.ErrorCantCopy
-	}
-	return fCopy.Copy(src, remote)
+// Features returns the optional features of this Fs
+func (f *Fs) Features() *fs.Features {
+	return f.features
 }
 
 // UnWrap returns the Fs that this Fs is wrapping
@@ -207,16 +184,8 @@ func (f *Fs) UnWrap() fs.Fs {
 	return f.Fs
 }
 
-// Hashes returns the supported hash sets.
-// Inherited from swift
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashMD5)
-}
-
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs        = (*Fs)(nil)
-	_ fs.Purger    = (*Fs)(nil)
-	_ fs.Copier    = (*Fs)(nil)
 	_ fs.UnWrapper = (*Fs)(nil)
 )

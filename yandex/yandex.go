@@ -65,8 +65,9 @@ func init() {
 // Fs represents a remote yandex
 type Fs struct {
 	name       string
-	yd         *yandex.Client // client for rest api
 	root       string         //root path
+	features   *fs.Features   // optional features
+	yd         *yandex.Client // client for rest api
 	diskRoot   string         //root path with "disk:/" container name
 	mkdircache map[string]int
 }
@@ -98,6 +99,11 @@ func (f *Fs) String() string {
 	return fmt.Sprintf("Yandex %s", f.root)
 }
 
+// Features returns the optional features of this Fs
+func (f *Fs) Features() *fs.Features {
+	return f.features
+}
+
 // read access token from ConfigFile string
 func getAccessToken(name string) (*oauth2.Token, error) {
 	// Read the token from the config file
@@ -126,7 +132,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	f := &Fs{
 		yd: yandexDisk,
 	}
-
+	f.features = (&fs.Features{ReadMimeType: true, WriteMimeType: true}).Fill(f)
 	f.setRoot(root)
 
 	// Check to see if the object exists and is a file

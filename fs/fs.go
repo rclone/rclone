@@ -159,6 +159,9 @@ type Info interface {
 
 	// Returns the supported hash types of the filesystem
 	Hashes() HashSet
+
+	// Features returns the optional features of this Fs
+	Features() *Features
 }
 
 // Object is a filesystem like object provided by an Fs
@@ -215,6 +218,159 @@ type MimeTyper interface {
 	// MimeType returns the content type of the Object if
 	// known, or "" if not
 	MimeType() string
+}
+
+// Features describe the optional features of the Fs
+type Features struct {
+	// Feature flags
+	CaseInsensitive bool
+	DuplicateFiles  bool
+	ReadMimeType    bool
+	WriteMimeType   bool
+
+	// Purge all files in the root and the root directory
+	//
+	// Implement this if you have a way of deleting all the files
+	// quicker than just running Remove() on the result of List()
+	//
+	// Return an error if it doesn't exist
+	Purge func() error
+
+	// Copy src to this remote using server side copy operations.
+	//
+	// This is stored with the remote path given
+	//
+	// It returns the destination Object and a possible error
+	//
+	// Will only be called if src.Fs().Name() == f.Name()
+	//
+	// If it isn't possible then return fs.ErrorCantCopy
+	Copy func(src Object, remote string) (Object, error)
+
+	// Move src to this remote using server side move operations.
+	//
+	// This is stored with the remote path given
+	//
+	// It returns the destination Object and a possible error
+	//
+	// Will only be called if src.Fs().Name() == f.Name()
+	//
+	// If it isn't possible then return fs.ErrorCantMove
+	Move func(src Object, remote string) (Object, error)
+
+	// DirMove moves src to this remote using server side move
+	// operations.
+	//
+	// Will only be called if src.Fs().Name() == f.Name()
+	//
+	// If it isn't possible then return fs.ErrorCantDirMove
+	//
+	// If destination exists then return fs.ErrorDirExists
+	DirMove func(src Fs) error
+
+	// UnWrap returns the Fs that this Fs is wrapping
+	UnWrap func() Fs
+
+	// DirCacheFlush resets the directory cache - used in testing
+	// as an optional interface
+	DirCacheFlush func()
+
+	// Put in to the remote path with the modTime given of the given size
+	//
+	// May create the object even if it returns an error - if so
+	// will return the object and the error, otherwise will return
+	// nil and the error
+	//
+	// May create duplicates or return errors if src already
+	// exists.
+	PutUnchecked func(in io.Reader, src ObjectInfo) (Object, error)
+
+	// CleanUp the trash in the Fs
+	//
+	// Implement this if you have a way of emptying the trash or
+	// otherwise cleaning up old versions of files.
+	CleanUp func() error
+}
+
+// Fill fills in the function pointers in the Features struct from the
+// optional interfaces.  It returns the original updated Features
+// struct passed in.
+func (ft *Features) Fill(f Fs) *Features {
+	if do, ok := f.(Purger); ok {
+		ft.Purge = do.Purge
+	}
+	if do, ok := f.(Copier); ok {
+		ft.Copy = do.Copy
+	}
+	if do, ok := f.(Mover); ok {
+		ft.Move = do.Move
+	}
+	if do, ok := f.(DirMover); ok {
+		ft.DirMove = do.DirMove
+	}
+	if do, ok := f.(UnWrapper); ok {
+		ft.UnWrap = do.UnWrap
+	}
+	if do, ok := f.(DirCacheFlusher); ok {
+		ft.DirCacheFlush = do.DirCacheFlush
+	}
+	if do, ok := f.(PutUncheckeder); ok {
+		ft.PutUnchecked = do.PutUnchecked
+	}
+	if do, ok := f.(CleanUpper); ok {
+		ft.CleanUp = do.CleanUp
+	}
+	return ft
+}
+
+// Mask the Features with the Fs passed in
+//
+// Only optional features which are implemented in both the original
+// Fs AND the one passed in will be advertised.  Any features which
+// aren't in both will be set to false/nil, except for UnWrap which
+// will be left untouched.
+func (ft *Features) Mask(f Fs) *Features {
+	mask := f.Features()
+	ft.CaseInsensitive = ft.CaseInsensitive && mask.CaseInsensitive
+	ft.DuplicateFiles = ft.DuplicateFiles && mask.DuplicateFiles
+	ft.ReadMimeType = ft.ReadMimeType && mask.ReadMimeType
+	ft.WriteMimeType = ft.WriteMimeType && mask.WriteMimeType
+	if mask.Purge == nil {
+		ft.Purge = nil
+	}
+	if mask.Copy == nil {
+		ft.Copy = nil
+	}
+	if mask.Move == nil {
+		ft.Move = nil
+	}
+	if mask.DirMove == nil {
+		ft.DirMove = nil
+	}
+	// if mask.UnWrap == nil {
+	// 	ft.UnWrap = nil
+	// }
+	if mask.DirCacheFlush == nil {
+		ft.DirCacheFlush = nil
+	}
+	if mask.PutUnchecked == nil {
+		ft.PutUnchecked = nil
+	}
+	if mask.CleanUp == nil {
+		ft.CleanUp = nil
+	}
+	return ft
+}
+
+// Wrap makes a Copy of the features passed in, overriding the UnWrap
+// method only if available in f.
+func (ft *Features) Wrap(f Fs) *Features {
+	copy := new(Features)
+	*copy = *ft
+	if do, ok := f.(UnWrapper); ok {
+		copy.UnWrap = do.UnWrap
+	}
+	return copy
 }
 
 // Purger is an optional interfaces for Fs
