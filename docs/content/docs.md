@@ -8,9 +8,9 @@ Configure
 ---------
 
 First you'll need to configure rclone.  As the object storage systems
-have quite complicated authentication these are kept in a config file
-`.rclone.conf` in your home directory by default.  (You can use the
-`--config` option to choose a different config file.)
+have quite complicated authentication these are kept in a config file.
+(See the `--config` entry for how to find the config file and choose
+its location.)
 
 The easiest way to make the config is to run rclone with the config
 option:
@@ -281,11 +281,18 @@ they are incorrect as it would normally.
 
 ### --config=CONFIG_FILE ###
 
-Specify the location of the rclone config file.  Normally this is in
-your home directory as a file called `.rclone.conf`.  If you run
-`rclone -h` and look at the help for the `--config` option you will
-see where the default location is for you.  Use this flag to override
-the config location, eg `rclone --config=".myconfig" .config`.
+Specify the location of the rclone config file.
+
+Normally the config file is in your home directory as a file called
+`.config/rclone/rclone.conf` (or `.rclone.conf` if created with an
+older version). If `$XDG_CONFIG_HOME` is set it will be at
+`$XDG_CONFIG_HOME/rclone/rclone.conf`
+
+If you run `rclone -h` and look at the help for the `--config` option
+you will see where the default location is for you.
+
+Use this flag to override the config location, eg `rclone
+--config=".myconfig" .config`.
 
 ### --contimeout=TIME ###
 
