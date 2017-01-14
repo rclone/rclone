@@ -1007,25 +1007,23 @@ func (o *Object) Remove() error {
 }
 
 // Restore a node
-func (f *Fs) restoreNode(info *acd.Node) (*acd.Node, error) {
+func (f *Fs) restoreNode(info *acd.Node) (newInfo *acd.Node, err error) {
 	var resp *http.Response
-	var err error
 	err = f.pacer.Call(func() (bool, error) {
-		info, resp, err = info.Restore()
+		newInfo, resp, err = info.Restore()
 		return f.shouldRetry(resp, err)
 	})
-	return info, err
+	return newInfo, err
 }
 
 // Changes name of given node
-func (f *Fs) renameNode(info *acd.Node, newName string) (*acd.Node, error) {
+func (f *Fs) renameNode(info *acd.Node, newName string) (newInfo *acd.Node, err error) {
 	var resp *http.Response
-	var err error
 	err = f.pacer.Call(func() (bool, error) {
-		info, resp, err = info.Rename(newName)
+		newInfo, resp, err = info.Rename(newName)
 		return f.shouldRetry(resp, err)
 	})
-	return info, err
+	return newInfo, err
 }
 
 // Replaces one parent with another, effectively moving the file. Leaves other
