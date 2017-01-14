@@ -31,7 +31,8 @@ import (
 )
 
 const (
-	configFileName = ".rclone.conf"
+	configFileName       = "rclone.conf"
+	hiddenConfigFileName = "." + configFileName
 
 	// ConfigToken is the key used to store the token under
 	ConfigToken = "token"
@@ -50,10 +51,8 @@ const (
 var (
 	// configData is the config file data structure
 	configData *goconfig.ConfigFile
-	// HomeDir is the home directory of the user
-	HomeDir = configHome()
 	// ConfigPath points to the config file
-	ConfigPath = path.Join(HomeDir, configFileName)
+	ConfigPath = makeConfigPath()
 	// Config is the global config
 	Config = &ConfigInfo{}
 	// Flags
@@ -215,25 +214,72 @@ type ConfigInfo struct {
 	Suffix             string
 }
 
-// Find the config directory
-func configHome() string {
-	// Find users home directory
+// Return the path to the configuration file
+func makeConfigPath() string {
+	// Find user's home directory
 	usr, err := user.Current()
+	var homedir string
 	if err == nil {
-		return usr.HomeDir
+		homedir = usr.HomeDir
+	} else {
+		// Fall back to reading $HOME - work around user.Current() not
+		// working for cross compiled binaries on OSX.
+		// https://github.com/golang/go/issues/6376
+		homedir = os.Getenv("HOME")
 	}
-	// Fall back to reading $HOME - work around user.Current() not
-	// working for cross compiled binaries on OSX.
-	// https://github.com/golang/go/issues/6376
-	home := os.Getenv("HOME")
-	if home != "" {
-		return home
+
+	// Possibly find the user's XDG config paths
+	// See XDG Base Directory specification
+	// https://specifications.freedesktop.org/basedir-spec/latest/
+	xdgdir := os.Getenv("XDG_CONFIG_HOME")
+	var xdgcfgdir string
+	if xdgdir != "" {
+		xdgcfgdir = path.Join(xdgdir, "rclone")
+	} else if homedir != "" {
+		xdgdir = path.Join(homedir, ".config")
+		xdgcfgdir = path.Join(xdgdir, "rclone")
 	}
-	ErrorLog(nil, "Couldn't find home directory or read HOME environment variable.")
+
+	// Use $XDG_CONFIG_HOME/rclone/rclone.conf if already existing
+	var xdgconf string
+	if xdgcfgdir != "" {
+		xdgconf = path.Join(xdgcfgdir, configFileName)
+		_, err := os.Stat(xdgconf)
+		if err == nil {
+			return xdgconf
+		}
+	}
+
+	// Use $HOME/.rclone.conf if already existing
+	var homeconf string
+	if homedir != "" {
+		homeconf = path.Join(homedir, hiddenConfigFileName)
+		_, err := os.Stat(homeconf)
+		if err == nil {
+			return homeconf
+		}
+	}
+
+	// Try to create $XDG_CONFIG_HOME/rclone/rclone.conf
+	if xdgconf != "" {
+		// xdgconf != "" implies xdgcfgdir != ""
+		err := os.MkdirAll(xdgcfgdir, os.ModePerm)
+		if err == nil {
+			return xdgconf
+		}
+	}
+
+	// Try to create $HOME/.rclone.conf
+	if homeconf != "" {
+		return homeconf
+	}
+
+	// Default to ./.rclone.conf (current working directory)
+	ErrorLog(nil, "Couldn't find home directory or read HOME or XDG_CONFIG_HOME environment variables.")
 	ErrorLog(nil, "Defaulting to storing config in current directory.")
 	ErrorLog(nil, "Use -config flag to workaround.")
 	ErrorLog(nil, "Error was: %v", err)
-	return ""
+	return hiddenConfigFileName
 }
 
 // LoadConfig loads the config file
