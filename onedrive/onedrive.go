@@ -491,6 +491,10 @@ func (f *Fs) purgeCheck(dir string, check bool) error {
 		return errors.New("can't purge root directory")
 	}
 	dc := f.dirCache
+	err := dc.FindRoot(false)
+	if err != nil {
+		return err
+	}
 	rootID, err := dc.FindDir(dir, false)
 	if err != nil {
 		return err
