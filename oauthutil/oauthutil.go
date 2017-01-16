@@ -194,8 +194,11 @@ func Context() context.Context {
 // overrideCredentials sets the ClientID and ClientSecret from the
 // config file if they are not blank.
 // If any value is overridden, true is returned.
-func overrideCredentials(name string, config *oauth2.Config) bool {
-	changed := false
+// the origConfig is copied
+func overrideCredentials(name string, origConfig *oauth2.Config) (config *oauth2.Config, changed bool) {
+	config = new(oauth2.Config)
+	*config = *origConfig
+	changed = false
 	ClientID := fs.ConfigFileGet(name, fs.ConfigClientID)
 	if ClientID != "" {
 		config.ClientID = ClientID
@@ -206,13 +209,13 @@ func overrideCredentials(name string, config *oauth2.Config) bool {
 		config.ClientSecret = ClientSecret
 		changed = true
 	}
-	return changed
+	return config, changed
 }
 
 // NewClient gets a token from the config file and configures a Client
 // with it.  It returns the client and a TokenSource which Invalidate may need to be called on
 func NewClient(name string, config *oauth2.Config) (*http.Client, *TokenSource, error) {
-	overrideCredentials(name, config)
+	config, _ = overrideCredentials(name, config)
 	token, err := getToken(name)
 	if err != nil {
 		return nil, nil, err
@@ -237,7 +240,7 @@ func NewClient(name string, config *oauth2.Config) (*http.Client, *TokenSource, 
 //
 // It may run an internal webserver to receive the results
 func Config(id, name string, config *oauth2.Config) error {
-	changed := overrideCredentials(name, config)
+	config, changed := overrideCredentials(name, config)
 	automatic := fs.ConfigFileGet(name, fs.ConfigAutomatic) != ""
 
 	// See if already have a token
