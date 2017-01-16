@@ -193,7 +193,8 @@ respectively.
 
 When using `sync`, `copy` or `move` any files which would have been
 overwritten or deleted are moved in their original hierarchy into this
-directory.
+directory.  Files with matching paths already in DIR will be
+overwritten.
 
 The remote in use must support server side move or copy and you must
 use the same remote as the destination of the sync.  The backup
@@ -206,6 +207,9 @@ For example
 will sync `/path/to/local` to `remote:current`, but for any files
 which would have been updated or deleted will be stored in
 `remote:old`.
+
+If running rclone from a script you might want to use today's date as
+the directory name passed to `--backup-dir` to store the old files.
 
 ### --bwlimit=BANDWIDTH_SPEC ###
 
