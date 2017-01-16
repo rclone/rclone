@@ -28,8 +28,8 @@ test:	rclone
 
 # Quick test
 quicktest:
-	go test $(GO_FILES)
-	go test -cpu=2 -race $(GO_FILES)
+	RCLONE_CONFIG="/notfound" go test $(GO_FILES)
+	RCLONE_CONFIG="/notfound" go test -cpu=2 -race $(GO_FILES)
 
 # Do source code quality checks
 check:	rclone
