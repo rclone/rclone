@@ -1280,7 +1280,10 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 	if err != nil {
 		return err
 	}
-	defer o.fs.returnUploadURL(upload)
+	defer func() {
+		// return it like this because we might nil it out
+		o.fs.returnUploadURL(upload)
+	}()
 
 	// Headers for upload file
 	//
