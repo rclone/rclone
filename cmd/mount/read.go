@@ -20,7 +20,6 @@ type ReadFileHandle struct {
 	o          fs.Object
 	readCalled bool // set if read has been called
 	offset     int64
-	retries    int // number of times we have retried
 }
 
 func newReadFileHandle(o fs.Object) (*ReadFileHandle, error) {
@@ -44,11 +43,13 @@ var _ fusefs.HandleReader = (*ReadFileHandle)(nil)
 
 // seek to a new offset
 //
+// if reopen is true, then we won't attempt to use an io.Seeker interface
+//
 // Must be called with fh.mu held
-func (fh *ReadFileHandle) seek(offset int64) error {
+func (fh *ReadFileHandle) seek(offset int64, reopen bool) error {
 	// Can we seek it directly?
 	oldReader := fh.r.GetReader()
-	if do, ok := oldReader.(io.Seeker); ok {
+	if do, ok := oldReader.(io.Seeker); !reopen && ok {
 		fs.Debug(fh.o, "ReadFileHandle.seek from %d to %d (io.Seeker)", fh.offset, offset)
 		_, err := do.Seek(offset, 0)
 		if err != nil {
@@ -75,7 +76,7 @@ func (fh *ReadFileHandle) seek(offset int64) error {
 }
 
 // Read from the file handle
-func (fh *ReadFileHandle) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.ReadResponse) error {
+func (fh *ReadFileHandle) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.ReadResponse) (err error) {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
 	fs.Debug(fh.o, "ReadFileHandle.Read size %d offset %d", req.Size, req.Offset)
@@ -84,10 +85,11 @@ func (fh *ReadFileHandle) Read(ctx context.Context, req *fuse.ReadRequest, resp 
 		return errClosedFileHandle
 	}
 	doSeek := req.Offset != fh.offset
-	var err error
 	var n int
 	var newOffset int64
+	retries := 0
 	buf := make([]byte, req.Size)
+	doReopen := false
 	for {
 		if doSeek {
 			// Are we attempting to seek beyond the end of the
@@ -98,41 +100,47 @@ func (fh *ReadFileHandle) Read(ctx context.Context, req *fuse.ReadRequest, resp 
 				resp.Data = nil
 				return nil
 			}
-			err := fh.seek(req.Offset)
-			if err != nil {
-				return err
+			// Otherwise do the seek
+			err = fh.seek(req.Offset, doReopen)
+		} else {
+			err = nil
+		}
+		if err == nil {
+			if req.Size > 0 {
+				fh.readCalled = true
+			}
+			// One exception to the above is if we fail to fully populate a
+			// page cache page; a read into page cache is always page aligned.
+			// Make sure we never serve a partial read, to avoid that.
+			n, err = io.ReadFull(fh.r, buf)
+			newOffset = fh.offset + int64(n)
+			// if err == nil && rand.Intn(10) == 0 {
+			// 	err = errors.New("random error")
+			// }
+			if err == nil {
+				break
+			} else if (err == io.ErrUnexpectedEOF || err == io.EOF) && newOffset == fh.o.Size() {
+				// Have read to end of file - reset error
+				err = nil
+				break
 			}
 		}
-		if req.Size > 0 {
-			fh.readCalled = true
-		}
-		// One exception to the above is if we fail to fully populate a
-		// page cache page; a read into page cache is always page aligned.
-		// Make sure we never serve a partial read, to avoid that.
-		n, err = io.ReadFull(fh.r, buf)
-		newOffset = fh.offset + int64(n)
-		// if err == nil && rand.Intn(10) == 0 {
-		// 	err = errors.New("random error")
-		// }
-		if err == nil {
-			break
-		} else if (err == io.ErrUnexpectedEOF || err == io.EOF) && newOffset == fh.o.Size() {
-			// Read to end of file
+		if retries >= fs.Config.LowLevelRetries {
 			break
 		}
-		if fh.retries >= fs.Config.LowLevelRetries {
-			fs.ErrorLog(fh.o, "ReadFileHandle.Read error: %v", err)
-			return err
-		}
-		fh.retries++
-		fs.ErrorLog(fh.o, "ReadFileHandle.Read error: low level retry %d/%d: %v", fh.retries, fs.Config.LowLevelRetries, err)
+		retries++
+		fs.ErrorLog(fh.o, "ReadFileHandle.Read error: low level retry %d/%d: %v", retries, fs.Config.LowLevelRetries, err)
 		doSeek = true
+		doReopen = true
 	}
-	fh.retries = 0 // reset retries
-	resp.Data = buf[:n]
-	fh.offset = newOffset
-	fs.Debug(fh.o, "ReadFileHandle.Read OK")
-	return nil
+	if err != nil {
+		fs.ErrorLog(fh.o, "ReadFileHandle.Read error: %v", err)
+	} else {
+		resp.Data = buf[:n]
+		fh.offset = newOffset
+		fs.Debug(fh.o, "ReadFileHandle.Read OK")
+	}
+	return err
 }
 
 // close the file handle returning errClosedFileHandle if it has been
