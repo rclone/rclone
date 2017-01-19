@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -143,6 +144,30 @@ func (is *Items) Done(t *testing.T) {
 	assert.Equal(t, 0, len(is.byName), fmt.Sprintf("%d objects not found", len(is.byName)))
 }
 
+// makeListingFromItems returns a string representation of the items
+func makeListingFromItems(items []Item) string {
+	nameLengths := make([]string, len(items))
+	for i, item := range items {
+		remote := item.Path
+		if item.WinPath != "" && runtime.GOOS == "windows" {
+			remote = item.WinPath
+		}
+		nameLengths[i] = fmt.Sprintf("%s (%d)", remote, item.Size)
+	}
+	sort.Strings(nameLengths)
+	return strings.Join(nameLengths, ", ")
+}
+
+// makeListingFromObjects returns a string representation of the objects
+func makeListingFromObjects(objs []fs.Object) string {
+	nameLengths := make([]string, len(objs))
+	for i, obj := range objs {
+		nameLengths[i] = fmt.Sprintf("%s (%d)", obj.Remote(), obj.Size())
+	}
+	sort.Strings(nameLengths)
+	return strings.Join(nameLengths, ", ")
+}
+
 // CheckListingWithPrecision checks the fs to see if it has the
 // expected contents with the given precision.
 //
@@ -157,12 +182,15 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 	var err error
 	var retries = *listRetries
 	sleep := time.Second / 2
+	wantListing := makeListingFromItems(items)
+	gotListing := "<unset>"
 	for i := 1; i <= retries; i++ {
 		objs, dirs, err = fs.NewLister().Start(f, "").GetAll()
 		if err != nil && err != fs.ErrorDirNotFound {
 			t.Fatalf("Error listing: %v", err)
 		}
-		if len(objs) == len(items) && (expectedDirs == nil || len(dirs) == 0 || len(dirs) == len(expectedDirs)) {
+		gotListing = makeListingFromObjects(objs)
+		if wantListing == gotListing && (expectedDirs == nil || len(dirs) == 0 || len(dirs) == len(expectedDirs)) {
 			// Put an extra sleep in if we did any retries just to make sure it really
 			// is consistent (here is looking at you Amazon Drive!)
 			if i != 1 {
@@ -180,6 +208,7 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 			doDirCacheFlush()
 		}
 	}
+	assert.Equal(t, wantListing, gotListing, "listing incorrect")
 	for _, obj := range objs {
 		require.NotNil(t, obj)
 		is.Find(t, obj, precision)
