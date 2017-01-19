@@ -11,16 +11,16 @@ type listerResult struct {
 	Err error
 }
 
-// Lister objects are used for conniltrolling listing of Fs objects
+// Lister objects are used for controlling listing of Fs objects
 type Lister struct {
-	mu       sync.RWMutex
-	buffer   int
-	abort    bool
-	results  chan listerResult
-	finished sync.Once
-	level    int
-	filter   *Filter
-	err      error
+	mu        sync.RWMutex
+	buffer    int
+	abort     bool
+	results   chan listerResult
+	closeOnce sync.Once
+	level     int
+	filter    *Filter
+	err       error
 }
 
 // NewLister creates a Lister object.
@@ -172,6 +172,15 @@ func (o *Lister) IncludeDirectory(remote string) bool {
 	return o.filter.IncludeDirectory(remote)
 }
 
+// finished closes the results channel and sets abort - must be called
+// with o.mu held.
+func (o *Lister) finished() {
+	o.closeOnce.Do(func() {
+		close(o.results)
+		o.abort = true
+	})
+}
+
 // SetError will set an error state, and will cause the listing to
 // be aborted.
 // Multiple goroutines can set the error state concurrently,
@@ -181,19 +190,16 @@ func (o *Lister) SetError(err error) {
 	if err != nil && !o.abort {
 		o.err = err
 		o.results <- listerResult{Err: err}
+		o.finished()
 	}
 	o.mu.Unlock()
-	o.Finished()
 }
 
 // Finished should be called when listing is finished
 func (o *Lister) Finished() {
-	o.finished.Do(func() {
-		o.mu.Lock()
-		o.abort = true
-		close(o.results)
-		o.mu.Unlock()
-	})
+	o.mu.Lock()
+	o.finished()
+	o.mu.Unlock()
 }
 
 // IsFinished returns whether the directory listing is finished or not
