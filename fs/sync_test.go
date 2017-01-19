@@ -744,7 +744,7 @@ func TestServerSideMoveOverlap(t *testing.T) {
 }
 
 // Test with BackupDir set
-func TestSyncBackupDir(t *testing.T) {
+func testSyncBackupDir(t *testing.T, suffix string) {
 	r := NewRun(t)
 	defer r.Finalise()
 
@@ -754,15 +754,19 @@ func TestSyncBackupDir(t *testing.T) {
 	r.Mkdir(r.fremote)
 
 	fs.Config.BackupDir = r.fremoteName + "/backup"
+	fs.Config.Suffix = suffix
 	defer func() {
 		fs.Config.BackupDir = ""
+		fs.Config.Suffix = ""
 	}()
 
+	// Make the setup so we have one, two, three in the dest
+	// and one (different), two (same) in the source
 	file1 := r.WriteObject("dst/one", "one", t1)
-	file2 := r.WriteObject("dst/two", "two", t2)
-	file3 := r.WriteObject("dst/three", "three", t3)
-	file2a := r.WriteFile("two", "two", t2)
-	file1a := r.WriteFile("one", "oneone", t2)
+	file2 := r.WriteObject("dst/two", "two", t1)
+	file3 := r.WriteObject("dst/three", "three", t1)
+	file2a := r.WriteFile("two", "two", t1)
+	file1a := r.WriteFile("one", "oneA", t2)
 
 	fstest.CheckItems(t, r.fremote, file1, file2, file3)
 	fstest.CheckItems(t, r.flocal, file1a, file2a)
@@ -774,13 +778,35 @@ func TestSyncBackupDir(t *testing.T) {
 	err = fs.Sync(fdst, r.flocal)
 	require.NoError(t, err)
 
-	// file1 is overwritten and the old version moved to backup-dir
-	file1.Path = "backup/one"
+	// one should be moved to the backup dir and the new one installed
+	file1.Path = "backup/one" + suffix
 	file1a.Path = "dst/one"
-	// file 2 is unchanged
-	// file 3 is deleted (moved to backup dir)
-	file3.Path = "backup/three"
+	// two should be unchanged
+	// three should be moved to the backup dir
+	file3.Path = "backup/three" + suffix
 
 	fstest.CheckItems(t, r.fremote, file1, file2, file3, file1a)
 
+	// Now check what happens if we do it again
+	// Restore a different three and update one in the source
+	file3a := r.WriteObject("dst/three", "threeA", t2)
+	file1b := r.WriteFile("one", "oneBB", t3)
+	fstest.CheckItems(t, r.fremote, file1, file2, file3, file1a, file3a)
+
+	// This should delete three and overwrite one again, checking
+	// the files got overwritten correctly in backup-dir
+	fs.Stats.ResetCounters()
+	err = fs.Sync(fdst, r.flocal)
+	require.NoError(t, err)
+
+	// one should be moved to the backup dir and the new one installed
+	file1a.Path = "backup/one" + suffix
+	file1b.Path = "dst/one"
+	// two should be unchanged
+	// three should be moved to the backup dir
+	file3a.Path = "backup/three" + suffix
+
+	fstest.CheckItems(t, r.fremote, file1b, file2, file3a, file1a)
 }
+func TestSyncBackupDir(t *testing.T)           { testSyncBackupDir(t, "") }
+func TestSyncBackupDirWithSuffix(t *testing.T) { testSyncBackupDir(t, ".bak") }

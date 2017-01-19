@@ -42,6 +42,7 @@ type syncCopyMove struct {
 	renamerWg      sync.WaitGroup      // wait for renamers
 	toBeRenamed    ObjectPairChan      // renamers channel
 	backupDir      Fs                  // place to store overwrites/deletes
+	suffix         string              // suffix to add to files placed in backupDir
 }
 
 func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) (*syncCopyMove, error) {
@@ -101,6 +102,7 @@ func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) (*syncCopyMove, er
 		if Overlapping(fsrc, s.backupDir) {
 			return nil, FatalError(errors.New("source and parameter to --backup-dir mustn't overlap"))
 		}
+		s.suffix = Config.Suffix
 	}
 	return s, nil
 }
@@ -286,7 +288,9 @@ func (s *syncCopyMove) pairChecker(in ObjectPairChan, out ObjectPairChan, wg *sy
 				if NeedTransfer(pair.dst, pair.src) {
 					// If destination already exists, then we must move it into --backup-dir if required
 					if pair.dst != nil && s.backupDir != nil {
-						err := Move(s.backupDir, nil, pair.dst.Remote(), pair.dst)
+						remoteWithSuffix := pair.dst.Remote() + s.suffix
+						overwritten, _ := s.backupDir.NewObject(remoteWithSuffix)
+						err := Move(s.backupDir, overwritten, remoteWithSuffix, pair.dst)
 						if err != nil {
 							s.processError(err)
 						} else {

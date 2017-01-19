@@ -87,6 +87,7 @@ var (
 	noTraverse      = BoolP("no-traverse", "", false, "Don't traverse destination file system on copy.")
 	noUpdateModTime = BoolP("no-update-modtime", "", false, "Don't update destination mod-time if files identical.")
 	backupDir       = StringP("backup-dir", "", "", "Make backups into hierarchy based in DIR.")
+	suffix          = StringP("suffix", "", "", "Suffix for use with --backup-dir.")
 	bwLimit         BwTimetable
 
 	// Key to use for password en/decryption.
@@ -211,6 +212,7 @@ type ConfigInfo struct {
 	NoUpdateModTime    bool
 	DataRateUnit       string
 	BackupDir          string
+	Suffix             string
 }
 
 // Find the config directory
@@ -263,6 +265,7 @@ func LoadConfig() {
 	Config.NoTraverse = *noTraverse
 	Config.NoUpdateModTime = *noUpdateModTime
 	Config.BackupDir = *backupDir
+	Config.Suffix = *suffix
 
 	ConfigPath = *configFile
 
@@ -284,6 +287,10 @@ func LoadConfig() {
 
 	if Config.IgnoreSize && Config.SizeOnly {
 		log.Fatalf(`Can't use --size-only and --ignore-size together.`)
+	}
+
+	if Config.Suffix != "" && Config.BackupDir == "" {
+		log.Fatalf(`Can only use --suffix with --backup-dir.`)
 	}
 
 	// Load configuration file.

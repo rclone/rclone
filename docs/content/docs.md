@@ -193,8 +193,11 @@ respectively.
 
 When using `sync`, `copy` or `move` any files which would have been
 overwritten or deleted are moved in their original hierarchy into this
-directory.  Files with matching paths already in DIR will be
-overwritten.
+directory.
+
+If `--suffix` is set, then the moved files will have the suffix added
+to them.  If there is a file with the same path (after the suffix has
+been added) in DIR, then it will be overwritten.
 
 The remote in use must support server side move or copy and you must
 use the same remote as the destination of the sync.  The backup
@@ -209,7 +212,8 @@ which would have been updated or deleted will be stored in
 `remote:old`.
 
 If running rclone from a script you might want to use today's date as
-the directory name passed to `--backup-dir` to store the old files.
+the directory name passed to `--backup-dir` to store the old files, or
+you might want to pass `--suffix` with today's date.
 
 ### --bwlimit=BANDWIDTH_SPEC ###
 
@@ -456,6 +460,14 @@ The rate is reported as a binary unit, not SI unit. So 1 Mbit/s
 equals 1,048,576 bits/s and not 1,000,000 bits/s.
 
 The default is `bytes`.
+
+### --suffix=SUFFIX ###
+
+This is for use with `--backup-dir` only.  If this isn't set then
+`--backup-dir` will move files with their original name.  If it is set
+then the files will have SUFFIX added on to them.
+
+See `--backup-dir` for more info.
 
 ### --track-renames ###
 

@@ -413,7 +413,9 @@ func deleteFileWithBackupDir(dst Object, backupDir Fs) (err error) {
 		if !SameConfig(dst.Fs(), backupDir) {
 			err = errors.New("parameter to --backup-dir has to be on the same remote as destination")
 		} else {
-			err = Move(backupDir, nil, dst.Remote(), dst)
+			remoteWithSuffix := dst.Remote() + Config.Suffix
+			overwritten, _ := backupDir.NewObject(remoteWithSuffix)
+			err = Move(backupDir, overwritten, remoteWithSuffix, dst)
 		}
 	} else {
 		err = dst.Remove()
