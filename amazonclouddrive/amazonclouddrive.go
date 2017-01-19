@@ -666,6 +666,18 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		remote: remote,
 		info:   dstInfo,
 	}
+	// Wait for directory caching so we can no longer see the old object
+	time.Sleep(200 * time.Millisecond) // enough time 90% of the time
+	for i := 1; i <= fs.Config.LowLevelRetries; i++ {
+		_, err := srcObj.fs.NewObject(srcObj.remote) // try reading the object
+		if err == fs.ErrorObjectNotFound {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		fs.Debug(src, "Wait for directory listing to update after move %d/%d", i, fs.Config.LowLevelRetries)
+		time.Sleep(1 * time.Second)
+	}
 	return dstObj, nil
 }
 
