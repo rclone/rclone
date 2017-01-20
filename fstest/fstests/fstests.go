@@ -432,6 +432,7 @@ func TestFsMove(t *testing.T) {
 	// check happy path, i.e. no naming conflicts when rename and move are two
 	// separate operations
 	file2Move.Path = "other.txt"
+	file2Move.WinPath = ""
 	src := findObject(t, file2.Path)
 	dst, err := doMove(src, file2Move.Path)
 	if err == fs.ErrorCantMove {
@@ -684,6 +685,7 @@ func TestFsIsFile(t *testing.T) {
 	remoteName := subRemoteName + "/" + file2.Path
 	file2Copy := file2
 	file2Copy.Path = "z.txt"
+	file2Copy.WinPath = ""
 	fileRemote, err := fs.NewFs(remoteName)
 	assert.Equal(t, fs.ErrorIsFile, err)
 	fstest.CheckListing(t, fileRemote, []fstest.Item{file2Copy})
