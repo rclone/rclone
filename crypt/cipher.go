@@ -449,14 +449,13 @@ func (fh *encrypter) Read(p []byte) (n int, err error) {
 		// FIXME should overlap the reads with a go-routine and 2 buffers?
 		readBuf := fh.readBuf[:blockDataSize]
 		n, err = io.ReadFull(fh.in, readBuf)
-		if err == io.EOF {
-			// ReadFull only returns n=0 and EOF
-			return fh.finish(io.EOF)
-		} else if err == io.ErrUnexpectedEOF {
-			// Next read will return EOF
-		} else if err != nil {
+		if n == 0 {
+			// err can't be nil since:
+			// n == len(buf) if and only if err == nil.
 			return fh.finish(err)
 		}
+		// possibly err != nil here, but we will process the
+		// data and the next call to ReadFull will return 0, err
 		// Write nonce to start of block
 		copy(fh.buf, fh.nonce[:])
 		// Encrypt the block using the nonce
@@ -563,26 +562,27 @@ func (fh *decrypter) fillBuffer() (err error) {
 	// FIXME should overlap the reads with a go-routine and 2 buffers?
 	readBuf := fh.readBuf
 	n, err := io.ReadFull(fh.rc, readBuf)
-	if err == io.EOF {
-		// ReadFull only returns n=0 and EOF
-		return io.EOF
-	} else if err == io.ErrUnexpectedEOF {
-		// Next read will return EOF
-	} else if err != nil {
+	if n == 0 {
+		// err can't be nil since:
+		// n == len(buf) if and only if err == nil.
 		return err
 	}
+	// possibly err != nil here, but we will process the data and
+	// the next call to ReadFull will return 0, err
+
 	// Check header + 1 byte exists
 	if n <= blockHeaderSize {
+		if err != nil {
+			return err // return pending error as it is likely more accurate
+		}
 		return ErrorEncryptedFileBadHeader
 	}
 	// Decrypt the block using the nonce
 	block := fh.buf
 	_, ok := secretbox.Open(block[:0], readBuf[:n], fh.nonce.pointer(), &fh.c.dataKey)
 	if !ok {
-		// if block wouldn't decode and got unexpected EOF
-		// then return that as it is probably a better error
 		if err != nil {
-			return err
+			return err // return pending error as it is likely more accurate
 		}
 		return ErrorEncryptedBadBlock
 	}

@@ -788,6 +788,21 @@ func TestNewEncrypter(t *testing.T) {
 
 }
 
+// Test the stream returning 0, io.ErrUnexpectedEOF - this used to
+// cause a fatal loop
+func TestNewEncrypterErrUnexpectedEOF(t *testing.T) {
+	c, err := newCipher(NameEncryptionStandard, "", "")
+	assert.NoError(t, err)
+
+	in := &errorReader{io.ErrUnexpectedEOF}
+	fh, err := c.newEncrypter(in)
+	assert.NoError(t, err)
+
+	n, err := io.CopyN(ioutil.Discard, fh, 1E6)
+	assert.Equal(t, io.ErrUnexpectedEOF, err)
+	assert.Equal(t, int64(32), n)
+}
+
 type errorReader struct {
 	err error
 }
@@ -852,6 +867,23 @@ func TestNewDecrypter(t *testing.T) {
 		file0copy[i] ^= 0x1
 		assert.Equal(t, 1, cd.closed)
 	}
+}
+
+// Test the stream returning 0, io.ErrUnexpectedEOF
+func TestNewDecrypterErrUnexpectedEOF(t *testing.T) {
+	c, err := newCipher(NameEncryptionStandard, "", "")
+	assert.NoError(t, err)
+
+	in2 := &errorReader{io.ErrUnexpectedEOF}
+	in1 := bytes.NewBuffer(file16)
+	in := ioutil.NopCloser(io.MultiReader(in1, in2))
+
+	fh, err := c.newDecrypter(in)
+	assert.NoError(t, err)
+
+	n, err := io.CopyN(ioutil.Discard, fh, 1E6)
+	assert.Equal(t, io.ErrUnexpectedEOF, err)
+	assert.Equal(t, int64(16), n)
 }
 
 func TestNewDecrypterSeek(t *testing.T) {
@@ -936,8 +968,6 @@ func TestDecrypterRead(t *testing.T) {
 		case i == fileHeaderSize:
 			// This would normally produce an error *except* on the first block
 			expectedErr = nil
-		case i <= fileHeaderSize+blockHeaderSize:
-			expectedErr = ErrorEncryptedFileBadHeader
 		default:
 			expectedErr = io.ErrUnexpectedEOF
 		}
