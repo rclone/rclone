@@ -9,8 +9,9 @@ Configure
 
 First you'll need to configure rclone.  As the object storage systems
 have quite complicated authentication these are kept in a config file
-`.rclone.conf` in your home directory by default.  (You can use the
-`--config` option to choose a different config file.)
+`.rclone.conf` in your home directory by default, or
+`$XDG_CONFIG_HOME/rclone/rclone.conf` if `$XDG_CONFIG_HOME` is set.
+(You can use the `--config` option to choose a different config file.)
 
 The easiest way to make the config is to run rclone with the config
 option:
@@ -282,7 +283,8 @@ they are incorrect as it would normally.
 ### --config=CONFIG_FILE ###
 
 Specify the location of the rclone config file.  Normally this is in
-your home directory as a file called `.rclone.conf`.  If you run
+your home directory as a file called `.rclone.conf`, or
+`.config/rclone/rclone.conf`.  If you run
 `rclone -h` and look at the help for the `--config` option you will
 see where the default location is for you.  Use this flag to override
 the config location, eg `rclone --config=".myconfig" .config`.
@@ -555,8 +557,8 @@ Prints the version number
 
 Configuration Encryption
 ------------------------
-Your configuration file contains information for logging in to 
-your cloud services. This means that you should keep your 
+Your configuration file contains information for logging in to
+your cloud services. This means that you should keep your
 `.rclone.conf` file in a secure location.
 
 If you are in an environment where that isn't possible, you can
@@ -598,14 +600,14 @@ c/u/q>
 ```
 
 Your configuration is now encrypted, and every time you start rclone
-you will now be asked for the password. In the same menu you can 
+you will now be asked for the password. In the same menu you can
 change the password or completely remove encryption from your
 configuration.
 
 There is no way to recover the configuration if you lose your password.
 
-rclone uses [nacl secretbox](https://godoc.org/golang.org/x/crypto/nacl/secretbox) 
-which in turn uses XSalsa20 and Poly1305 to encrypt and authenticate 
+rclone uses [nacl secretbox](https://godoc.org/golang.org/x/crypto/nacl/secretbox)
+which in turn uses XSalsa20 and Poly1305 to encrypt and authenticate
 your configuration with secret-key cryptography.
 The password is SHA-256 hashed, which produces the key for secretbox.
 The hashed password is not stored.
@@ -632,8 +634,8 @@ Then source the file when you want to use it.  From the shell you
 would do `source set-rclone-password`.  It will then ask you for the
 password and set it in the envonment variable.
 
-If you are running rclone inside a script, you might want to disable 
-password prompts. To do that, pass the parameter 
+If you are running rclone inside a script, you might want to disable
+password prompts. To do that, pass the parameter
 `--ask-password=false` to rclone. This will make rclone fail instead
 of asking for a password if `RCLONE_CONFIG_PASS` doesn't contain
 a valid password.
