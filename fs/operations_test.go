@@ -883,3 +883,61 @@ func TestOverlapping(t *testing.T) {
 		assert.Equal(t, test.expected, actual, what)
 	}
 }
+
+func TestListDirSorted(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+
+	fs.Config.Filter.MaxSize = 10
+	defer func() {
+		fs.Config.Filter.MaxSize = -1
+	}()
+
+	r.WriteObject("a.txt", "hello world", t1)
+	r.WriteObject("zend.txt", "hello", t1)
+	r.WriteObject("sub dir/hello world", "hello world", t1)
+	r.WriteObject("sub dir/hello world2", "hello world", t1)
+	r.WriteObject("sub dir/sub sub dir/hello world3", "hello world", t1)
+	var items fs.DirEntries
+	var err error
+
+	// Turn the BasicInfo into a name, ending with a / if it is a
+	// dir
+	str := func(i int) string {
+		item := items[i]
+		name := item.Remote()
+		switch item.(type) {
+		case fs.Object:
+		case *fs.Dir:
+			name += "/"
+		default:
+			t.Fatalf("Unknown type %+v", item)
+		}
+		return name
+	}
+
+	items, err = fs.ListDirSorted(r.fremote, true, "")
+	require.NoError(t, err)
+	require.Len(t, items, 3)
+	assert.Equal(t, "a.txt", str(0))
+	assert.Equal(t, "sub dir/", str(1))
+	assert.Equal(t, "zend.txt", str(2))
+
+	items, err = fs.ListDirSorted(r.fremote, false, "")
+	require.NoError(t, err)
+	require.Len(t, items, 2)
+	assert.Equal(t, "sub dir/", str(0))
+	assert.Equal(t, "zend.txt", str(1))
+
+	items, err = fs.ListDirSorted(r.fremote, true, "sub dir")
+	require.NoError(t, err)
+	require.Len(t, items, 3)
+	assert.Equal(t, "sub dir/hello world", str(0))
+	assert.Equal(t, "sub dir/hello world2", str(1))
+	assert.Equal(t, "sub dir/sub sub dir/", str(2))
+
+	items, err = fs.ListDirSorted(r.fremote, false, "sub dir")
+	require.NoError(t, err)
+	require.Len(t, items, 1)
+	assert.Equal(t, "sub dir/sub sub dir/", str(0))
+}

@@ -504,7 +504,72 @@ func readFilesFn(fs Fs, includeAll bool, dir string, add func(Object) error) (er
 			Debug(o, "Excluded from sync (and deletion)")
 		}
 	}
-	return nil
+	return list.Error()
+}
+
+// DirEntries is a slice of Object or *Dir
+type DirEntries []BasicInfo
+
+// Len is part of sort.Interface.
+func (ds DirEntries) Len() int {
+	return len(ds)
+}
+
+// Swap is part of sort.Interface.
+func (ds DirEntries) Swap(i, j int) {
+	ds[i], ds[j] = ds[j], ds[i]
+}
+
+// Less is part of sort.Interface.
+func (ds DirEntries) Less(i, j int) bool {
+	return ds[i].Remote() < ds[j].Remote()
+}
+
+// FIXME can use this in Mount
+
+// ListDirSorted reads Object and *Dir into entries for the given Fs.
+//
+// dir is the start directory, "" for root
+//
+// If includeAll is specified all files will be added, otherwise only
+// files passing the filter will be added.
+//
+// Files will be returned in sorted order
+func ListDirSorted(fs Fs, includeAll bool, dir string) (entries DirEntries, err error) {
+	list := NewLister().SetLevel(1)
+	if !includeAll {
+		list.SetFilter(Config.Filter)
+	}
+	list.Start(fs, dir)
+	for {
+		o, dir, err := list.Get()
+		if err != nil {
+			return nil, err
+		} else if o != nil {
+			// Make sure we don't delete excluded files if not required
+			if includeAll || Config.Filter.IncludeObject(o) {
+				entries = append(entries, o)
+			} else {
+				Debug(o, "Excluded from sync (and deletion)")
+			}
+		} else if dir != nil {
+			if includeAll || Config.Filter.IncludeDirectory(dir.Remote()) {
+				entries = append(entries, dir)
+			} else {
+				Debug(dir, "Excluded from sync (and deletion)")
+			}
+		} else {
+			// finishd since err, o, dir == nil
+			break
+		}
+	}
+	err = list.Error()
+	if err != nil {
+		return nil, err
+	}
+	// sort the directory entries by Remote
+	sort.Sort(entries)
+	return entries, nil
 }
 
 // Read a map of Object.Remote to Object for the given Fs.
