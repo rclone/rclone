@@ -83,6 +83,10 @@ func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) (*syncCopyMove, er
 			s.trackRenames = false
 		}
 	}
+	if s.deleteBefore && s.trackRenames {
+		ErrorLog(fdst, "Ignoring --delete-before with --track-renames - using --delete-after")
+		s.deleteBefore = false
+	}
 	if s.noTraverse && s.trackRenames {
 		Debug(s.fdst, "Ignoring --no-traverse with --track-renames")
 		s.noTraverse = false
