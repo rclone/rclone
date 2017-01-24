@@ -41,6 +41,9 @@ type syncCopyMove struct {
 	renameMap      map[string][]Object // dst files by hash - only used by trackRenames
 	renamerWg      sync.WaitGroup      // wait for renamers
 	toBeRenamed    ObjectPairChan      // renamers channel
+	trackRenamesWg sync.WaitGroup      // wg for background track renames
+	trackRenamesCh chan Object         // objects are pumped in here
+	renameCheck    []Object            // accumulate files to check for rename here
 	backupDir      Fs                  // place to store overwrites/deletes
 	suffix         string              // suffix to add to files placed in backupDir
 }
@@ -63,6 +66,7 @@ func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) (*syncCopyMove, er
 		trackRenames:   Config.TrackRenames,
 		commonHash:     fsrc.Hashes().Overlap(fdst.Hashes()).GetOne(),
 		toBeRenamed:    make(ObjectPairChan, Config.Transfers),
+		trackRenamesCh: make(chan Object, Config.Checkers),
 	}
 	if s.noTraverse && s.Delete {
 		Debug(s.fdst, "Ignoring --no-traverse with sync")
@@ -419,6 +423,29 @@ func (s *syncCopyMove) stopRenamers() {
 	s.renamerWg.Wait()
 }
 
+// This starts the collection of possible renames
+func (s *syncCopyMove) startTrackRenames() {
+	if !s.trackRenames {
+		return
+	}
+	s.trackRenamesWg.Add(1)
+	go func() {
+		defer s.trackRenamesWg.Done()
+		for o := range s.trackRenamesCh {
+			s.renameCheck = append(s.renameCheck, o)
+		}
+	}()
+}
+
+// This stops the background rename collection
+func (s *syncCopyMove) stopTrackRenames() {
+	if !s.trackRenames {
+		return
+	}
+	close(s.trackRenamesCh)
+	s.trackRenamesWg.Wait()
+}
+
 // This deletes the files in the dstFiles map.  If checkSrcMap is set
 // then it checks to see if they exist first in srcFiles the source
 // file map, otherwise it unconditionally deletes them.  If
@@ -491,13 +518,13 @@ func (s *syncCopyMove) popRenameMap(hash string) (dst Object) {
 }
 
 // makeRenameMap builds a map of the destination files by hash that
-// match sizes in the slice of objects in renameCheck
-func (s *syncCopyMove) makeRenameMap(renameCheck []Object) {
+// match sizes in the slice of objects in s.renameCheck
+func (s *syncCopyMove) makeRenameMap() {
 	Debug(s.fdst, "Making map for --track-renames")
 
 	// first make a map of possible sizes we need to check
 	possibleSizes := map[int64]struct{}{}
-	for _, obj := range renameCheck {
+	for _, obj := range s.renameCheck {
 		possibleSizes[obj.Size()] = struct{}{}
 	}
 
@@ -626,7 +653,7 @@ func (s *syncCopyMove) run() error {
 	s.startTransfers()
 
 	// Do the transfers
-	var renameCheck []Object
+	s.startTrackRenames()
 	for src := range s.srcFilesChan {
 		remote := src.Remote()
 		var dst Object
@@ -652,19 +679,20 @@ func (s *syncCopyMove) run() error {
 		if dst != nil {
 			s.toBeChecked <- ObjectPair{src, dst}
 		} else if s.trackRenames {
-			// save object until all matches transferred
-			renameCheck = append(renameCheck, src)
+			// Save object to check for a rename later
+			s.trackRenamesCh <- src
 		} else {
 			// No need to check since doesn't exist
 			s.toBeUploaded <- ObjectPair{src, nil}
 		}
 	}
 
+	s.stopTrackRenames()
 	if s.trackRenames {
 		// Build the map of the remaining dstFiles by hash
-		s.makeRenameMap(renameCheck)
+		s.makeRenameMap()
 		// Attempt renames for all the files which don't have a matching dst
-		for _, src := range renameCheck {
+		for _, src := range s.renameCheck {
 			s.toBeRenamed <- ObjectPair{src, nil}
 		}
 	}
