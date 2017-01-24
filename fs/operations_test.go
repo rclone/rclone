@@ -29,6 +29,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -128,6 +129,13 @@ func newRun() *Run {
 	return r
 }
 
+// dirsToRemove sorts by string length
+type dirsToRemove []string
+
+func (d dirsToRemove) Len() int           { return len(d) }
+func (d dirsToRemove) Swap(i, j int)      { d[i], d[j] = d[j], d[i] }
+func (d dirsToRemove) Less(i, j int) bool { return len(d[i]) > len(d[j]) }
+
 // NewRun initialise the remote and local for testing and returns a
 // run object.  Call this from the tests.
 //
@@ -144,22 +152,31 @@ func NewRun(t *testing.T) *Run {
 		r = new(Run)
 		*r = *oneRun
 		r.cleanRemote = func() {
+			var toDelete dirsToRemove
 			list := fs.NewLister().Start(r.fremote, "")
 			for {
-				o, err := list.GetObject()
+				o, dir, err := list.Get()
 				if err != nil {
 					if err == fs.ErrorDirNotFound {
 						break
 					}
 					t.Fatalf("Error listing: %v", err)
-				}
-				// Check if we are finished
-				if o == nil {
+				} else if o != nil {
+					err = o.Remove()
+					if err != nil {
+						t.Errorf("Error removing file %q: %v", o.Remote(), err)
+					}
+				} else if dir != nil {
+					toDelete = append(toDelete, dir.Remote())
+				} else {
 					break
 				}
-				err = o.Remove()
+			}
+			sort.Sort(toDelete)
+			for _, dir := range toDelete {
+				err := r.fremote.Rmdir(dir)
 				if err != nil {
-					t.Errorf("Error removing file: %v", err)
+					t.Errorf("Error removing dir %q: %v", dir, err)
 				}
 			}
 			// Check remote is empty
