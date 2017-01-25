@@ -457,6 +457,23 @@ func TestSyncAfterRemovingAFileAndAddingAFile(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, file1, file3)
 }
 
+// Sync after removing a file and adding a file
+func TestSyncAfterRemovingAFileAndAddingAFileSubDir(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteFile("a/potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteObject("b/potato", "SMALLER BUT SAME DATE", t2)
+	file3 := r.WriteBoth("c/non empty space", "AhHa!", t2)
+	fstest.CheckItems(t, r.fremote, file2, file3)
+	fstest.CheckItems(t, r.flocal, file1, file3)
+
+	fs.Stats.ResetCounters()
+	err := fs.Sync(r.fremote, r.flocal)
+	require.NoError(t, err)
+	fstest.CheckItems(t, r.flocal, file1, file3)
+	fstest.CheckItems(t, r.fremote, file1, file3)
+}
+
 // Sync after removing a file and adding a file with IO Errors
 func TestSyncAfterRemovingAFileAndAddingAFileWithErrors(t *testing.T) {
 	r := NewRun(t)
