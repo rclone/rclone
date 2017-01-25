@@ -475,38 +475,28 @@ func TestSyncAfterRemovingAFileAndAddingAFileWithErrors(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, file1, file2, file3)
 }
 
-// Sync test delete during
-func TestSyncDeleteDuring(t *testing.T) {
+// Sync test delete after
+func TestSyncDeleteAfter(t *testing.T) {
 	// This is the default so we've checked this already
 	// check it is the default
-	if !(!fs.Config.DeleteBefore && fs.Config.DeleteDuring && !fs.Config.DeleteAfter) {
-		t.Fatalf("Didn't default to --delete-during")
-	}
+	require.Equal(t, fs.Config.DeleteMode, fs.DeleteModeAfter, "Didn't default to --delete-after")
 }
 
-// Sync test delete before
-func TestSyncDeleteBefore(t *testing.T) {
-	fs.Config.DeleteBefore = true
-	fs.Config.DeleteDuring = false
-	fs.Config.DeleteAfter = false
+// Sync test delete during
+func TestSyncDeleteDuring(t *testing.T) {
+	fs.Config.DeleteMode = fs.DeleteModeDuring
 	defer func() {
-		fs.Config.DeleteBefore = false
-		fs.Config.DeleteDuring = true
-		fs.Config.DeleteAfter = false
+		fs.Config.DeleteMode = fs.DeleteModeDefault
 	}()
 
 	TestSyncAfterRemovingAFileAndAddingAFile(t)
 }
 
-// Sync test delete after
-func TestSyncDeleteAfter(t *testing.T) {
-	fs.Config.DeleteBefore = false
-	fs.Config.DeleteDuring = false
-	fs.Config.DeleteAfter = true
+// Sync test delete before
+func TestSyncDeleteBefore(t *testing.T) {
+	fs.Config.DeleteMode = fs.DeleteModeBefore
 	defer func() {
-		fs.Config.DeleteBefore = false
-		fs.Config.DeleteDuring = true
-		fs.Config.DeleteAfter = false
+		fs.Config.DeleteMode = fs.DeleteModeDefault
 	}()
 
 	TestSyncAfterRemovingAFileAndAddingAFile(t)

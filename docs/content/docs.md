@@ -507,6 +507,10 @@ to the console.
 Note that `--track-renames` is incompatible with `--no-traverse` and
 that it uses extra memory to keep track of all the rename candidates.
 
+Note also that `--track-renames` is incompatible with
+`--delete-before` and will select `--delete-after` instead of
+`--delete-during`.
+
 ### --delete-(before,during,after) ###
 
 This option allows you to specify when files on your destination are
@@ -514,16 +518,21 @@ deleted when you sync folders.
 
 Specifying the value `--delete-before` will delete all files present
 on the destination, but not on the source *before* starting the
-transfer of any new or updated files.  This uses extra memory as it
-has to store the source listing before proceeding.
+transfer of any new or updated files. This uses two passes through the
+file systems, one for the deletions and one for the copies.
 
-Specifying `--delete-during` (default value) will delete files while
-checking and uploading files. This is usually the fastest option.
-Currently this works the same as `--delete-after` but it may change in
-the future.
+Specifying `--delete-during` will delete files while checking and
+uploading files. This is the fastest option and uses the least memory.
 
-Specifying `--delete-after` will delay deletion of files until all new/updated
-files have been successfully transfered.
+Specifying `--delete-after` (the default value) will delay deletion of
+files until all new/updated files have been successfully transfered.
+The files to be deleted are collected in the copy pass then deleted
+after the copy pass has completed sucessfully.  The files to be
+deleted are held in memory so this mode may use more memory.  This is
+the safest mode as it will only delete files if there have been no
+errors subsequent to that.  If there have been errors before the
+deletions start then you will get the message `not deleting files as
+there were IO errors`.
 
 ### --timeout=TIME ###
 

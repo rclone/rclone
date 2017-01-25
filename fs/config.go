@@ -199,9 +199,7 @@ type ConfigInfo struct {
 	DumpAuth           bool
 	Filter             *Filter
 	InsecureSkipVerify bool // Skip server certificate verification
-	DeleteBefore       bool // Delete before checking
-	DeleteDuring       bool // Delete during checking/transfer
-	DeleteAfter        bool // Delete after successful transfer.
+	DeleteMode         DeleteMode
 	TrackRenames       bool // Track file renames.
 	LowLevelRetries    int
 	UpdateOlder        bool // Skip files that are newer on the destination
@@ -284,6 +282,19 @@ func makeConfigPath() string {
 	return hiddenConfigFileName
 }
 
+// DeleteMode describes the possible delete modes in the config
+type DeleteMode byte
+
+// DeleteMode constants
+const (
+	DeleteModeOff DeleteMode = iota
+	DeleteModeBefore
+	DeleteModeDuring
+	DeleteModeAfter
+	DeleteModeOnly
+	DeleteModeDefault = DeleteModeAfter
+)
+
 // LoadConfig loads the config file
 func LoadConfig() {
 	// Read some flags if set
@@ -318,20 +329,20 @@ func LoadConfig() {
 
 	ConfigPath = *configFile
 
-	Config.DeleteBefore = *deleteBefore
-	Config.DeleteDuring = *deleteDuring
-	Config.DeleteAfter = *deleteAfter
-
 	Config.TrackRenames = *trackRenames
 
 	switch {
 	case *deleteBefore && (*deleteDuring || *deleteAfter),
 		*deleteDuring && *deleteAfter:
 		log.Fatalf(`Only one of --delete-before, --delete-during or --delete-after can be used.`)
-
-	// If none are specified, use "during".
-	case !*deleteBefore && !*deleteDuring && !*deleteAfter:
-		Config.DeleteDuring = true
+	case *deleteBefore:
+		Config.DeleteMode = DeleteModeBefore
+	case *deleteDuring:
+		Config.DeleteMode = DeleteModeDuring
+	case *deleteAfter:
+		Config.DeleteMode = DeleteModeAfter
+	default:
+		Config.DeleteMode = DeleteModeDefault
 	}
 
 	if Config.IgnoreSize && Config.SizeOnly {

@@ -12,14 +12,13 @@ import (
 
 type syncCopyMove struct {
 	// parameters
-	fdst   Fs
-	fsrc   Fs
-	Delete bool
-	DoMove bool
-	dir    string
+	fdst       Fs
+	fsrc       Fs
+	deleteMode DeleteMode // how we are doing deletions
+	DoMove     bool
+	dir        string
 	// internal state
 	noTraverse     bool                // if set don't trafevers the dst
-	deleteBefore   bool                // set if we must delete objects before copying
 	trackRenames   bool                // set if we should do server side renames
 	dstFilesMu     sync.Mutex          // protect dstFiles
 	dstFiles       map[string]Object   // dst files, always filled
@@ -48,11 +47,11 @@ type syncCopyMove struct {
 	suffix         string              // suffix to add to files placed in backupDir
 }
 
-func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) (*syncCopyMove, error) {
+func newSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool) (*syncCopyMove, error) {
 	s := &syncCopyMove{
 		fdst:           fdst,
 		fsrc:           fsrc,
-		Delete:         Delete,
+		deleteMode:     deleteMode,
 		DoMove:         DoMove,
 		dir:            "",
 		srcFilesChan:   make(chan Object, Config.Checkers+Config.Transfers),
@@ -62,13 +61,12 @@ func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) (*syncCopyMove, er
 		abort:          make(chan struct{}),
 		toBeChecked:    make(ObjectPairChan, Config.Transfers),
 		toBeUploaded:   make(ObjectPairChan, Config.Transfers),
-		deleteBefore:   Delete && Config.DeleteBefore,
 		trackRenames:   Config.TrackRenames,
 		commonHash:     fsrc.Hashes().Overlap(fdst.Hashes()).GetOne(),
 		toBeRenamed:    make(ObjectPairChan, Config.Transfers),
 		trackRenamesCh: make(chan Object, Config.Checkers),
 	}
-	if s.noTraverse && s.Delete {
+	if s.noTraverse && s.deleteMode != DeleteModeOff {
 		Debug(s.fdst, "Ignoring --no-traverse with sync")
 		s.noTraverse = false
 	}
@@ -83,13 +81,15 @@ func newSyncCopyMove(fdst, fsrc Fs, Delete bool, DoMove bool) (*syncCopyMove, er
 			s.trackRenames = false
 		}
 	}
-	if s.deleteBefore && s.trackRenames {
-		ErrorLog(fdst, "Ignoring --delete-before with --track-renames - using --delete-after")
-		s.deleteBefore = false
-	}
-	if s.noTraverse && s.trackRenames {
-		Debug(s.fdst, "Ignoring --no-traverse with --track-renames")
-		s.noTraverse = false
+	if s.trackRenames {
+		// track renames needs delete after
+		if s.deleteMode != DeleteModeOff {
+			s.deleteMode = DeleteModeAfter
+		}
+		if s.noTraverse {
+			Debug(s.fdst, "Ignoring --no-traverse with --track-renames")
+			s.noTraverse = false
+		}
 	}
 	// Make Fs for --backup-dir if required
 	if Config.BackupDir != "" {
@@ -614,8 +614,8 @@ func (s *syncCopyMove) run() error {
 		go s.readDstFiles()
 	}
 
-	// If s.deleteBefore then we need to read the whole source map first
-	readSourceMap := s.deleteBefore
+	// If --delete-before then we need to read the whole source map first
+	readSourceMap := s.deleteMode == DeleteModeBefore
 
 	if readSourceMap {
 		// Read source files into the map
@@ -636,7 +636,7 @@ func (s *syncCopyMove) run() error {
 	}
 
 	// Delete files first if required
-	if s.deleteBefore {
+	if s.deleteMode == DeleteModeBefore {
 		err = s.deleteFiles(true)
 		if err != nil {
 			return err
@@ -710,7 +710,7 @@ func (s *syncCopyMove) run() error {
 	err = <-s.srcFilesResult
 
 	// Delete files during or after
-	if s.Delete && (Config.DeleteDuring || Config.DeleteAfter) {
+	if s.deleteMode == DeleteModeDuring || s.deleteMode == DeleteModeAfter {
 		if err != nil {
 			ErrorLog(s.fdst, "%v", ErrorNotDeleting)
 		} else {
@@ -721,31 +721,37 @@ func (s *syncCopyMove) run() error {
 	return s.currentError()
 }
 
-// Sync fsrc into fdst
-func Sync(fdst, fsrc Fs) error {
-	do, err := newSyncCopyMove(fdst, fsrc, true, false)
+// Syncs fsrc into fdst
+//
+// If Delete is true then it deletes any files in fdst that aren't in fsrc
+//
+// If DoMove is true then files will be moved instead of copied
+//
+// dir is the start directory, "" for root
+func runSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool) error {
+	if deleteMode != DeleteModeOff && DoMove {
+		return errors.New("can't delete and move at the same time")
+	}
+	do, err := newSyncCopyMove(fdst, fsrc, deleteMode, DoMove)
 	if err != nil {
 		return err
 	}
 	return do.run()
+}
+
+// Sync fsrc into fdst
+func Sync(fdst, fsrc Fs) error {
+	return runSyncCopyMove(fdst, fsrc, Config.DeleteMode, false)
 }
 
 // CopyDir copies fsrc into fdst
 func CopyDir(fdst, fsrc Fs) error {
-	do, err := newSyncCopyMove(fdst, fsrc, false, false)
-	if err != nil {
-		return err
-	}
-	return do.run()
+	return runSyncCopyMove(fdst, fsrc, DeleteModeOff, false)
 }
 
 // moveDir moves fsrc into fdst
 func moveDir(fdst, fsrc Fs) error {
-	do, err := newSyncCopyMove(fdst, fsrc, false, true)
-	if err != nil {
-		return err
-	}
-	return do.run()
+	return runSyncCopyMove(fdst, fsrc, DeleteModeOff, true)
 }
 
 // MoveDir moves fsrc into fdst
