@@ -55,3 +55,4 @@ Contributors
   * emyarod <allllaboutyou@gmail.com>
   * T.C. Ferguson <tcf909@gmail.com>
   * Brandur <brandur@mutelight.org>
+  * Dario Giovannetti <dev@dariogiovannetti.net>
