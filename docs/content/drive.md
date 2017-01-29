@@ -203,6 +203,10 @@ Here are the possible extensions with their corresponding mime types.
 | xlsx | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | Microsoft Office Spreadsheet |
 | zip  | application/zip | A ZIP file of HTML, Images CSS |
 
+#### --drive-skip-gdocs ####
+
+Skip google documents in all listings. If given, gdocs practically become invisible to rclone.
+
 ### Limitations ###
 
 Drive has quite a lot of rate limiting.  This causes rclone to be
