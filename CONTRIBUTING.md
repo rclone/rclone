@@ -43,7 +43,7 @@ When ready - run the unit tests for the code you changed
 
     go test -v
 
-Note that you make need to make a test remote, eg `TestSwift` for some
+Note that you may need to make a test remote, eg `TestSwift` for some
 of the unit tests.
 
 Note the top level Makefile targets
@@ -59,7 +59,7 @@ packages which you can install with
 
 Make sure you
 
-  * Add documentation for a new feature
+  * Add documentation for a new feature (see below for where)
   * Add unit tests for a new feature
   * squash commits down to one per feature
   * rebase to master `git rebase master`
@@ -111,16 +111,28 @@ then run in that directory
 
     go run test_all.go
 
+## Writing Documentation ##
+
+If you are adding a new feature then please update the documentation.
+
+If you add a new flag, then if it is a general flag, document it in
+`docs/content/docs.md` - the flags there are supposed to be in
+alphabetical order.  If it is a remote specific flag, then document it
+in `docs/content/remote.md`.
+
+The only documentation you need to edit are the `docs/content/*.md`
+files.  The MANUAL.*, rclone.1, web site etc are all auto generated
+from those during the release process.  See the `make doc` and `make
+website` targets in the Makefile if you are interested in how.  You
+don't need to run these when adding a feature.
+
+Documentation for rclone sub commands is with their code, eg
+`cmd/ls/ls.go`.
+
 ## Making a release ##
 
 There are separate instructions for making a release in the RELEASE.md
-file - doing the first few steps is useful before making a
-contribution.
-
-  * go get -u -f -v ./...
-  * make check
-  * make test
-  * make tag
+file.
 
 ## Updating the vendor dirctory ##
 
