@@ -685,11 +685,11 @@ func Confirm() bool {
 
 // Choose one of the defaults or type a new string if newOk is set
 func Choose(what string, defaults, help []string, newOk bool) string {
-	fmt.Printf("Choose a number from below")
+	valueDescripton := "an existing"
 	if newOk {
-		fmt.Printf(", or type in your own value")
+		valueDescripton = "your own"
 	}
-	fmt.Println()
+	fmt.Printf("Choose a number from below, or type in %s value\n", valueDescripton)
 	for i, text := range defaults {
 		var lines []string
 		if help != nil {
@@ -727,6 +727,11 @@ func Choose(what string, defaults, help []string, newOk bool) string {
 		if err != nil {
 			if newOk {
 				return result
+			}
+			for _, v := range defaults {
+				if result == v {
+					return result
+				}
 			}
 			continue
 		}
