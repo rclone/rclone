@@ -12,6 +12,12 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Globals
+var (
+	// Flags
+	cryptShowMapping = fs.BoolP("crypt-show-mapping", "", false, "For all files listed show how the names encrypt.")
+)
+
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
@@ -485,10 +491,13 @@ func (lo *ListOpts) Level() int {
 // Multiple goroutines can safely add objects concurrently.
 func (lo *ListOpts) Add(obj fs.Object) (abort bool) {
 	remote := obj.Remote()
-	_, err := lo.f.cipher.DecryptFileName(remote)
+	decryptedRemote, err := lo.f.cipher.DecryptFileName(remote)
 	if err != nil {
 		fs.Debug(remote, "Skipping undecryptable file name: %v", err)
 		return lo.ListOpts.IsFinished()
+	}
+	if *cryptShowMapping {
+		fs.Log(decryptedRemote, "Encrypts to %q", remote)
 	}
 	return lo.ListOpts.Add(lo.f.newObject(obj))
 }
@@ -498,10 +507,13 @@ func (lo *ListOpts) Add(obj fs.Object) (abort bool) {
 // Multiple goroutines can safely add objects concurrently.
 func (lo *ListOpts) AddDir(dir *fs.Dir) (abort bool) {
 	remote := dir.Name
-	_, err := lo.f.cipher.DecryptDirName(remote)
+	decryptedRemote, err := lo.f.cipher.DecryptDirName(remote)
 	if err != nil {
 		fs.Debug(remote, "Skipping undecryptable dir name: %v", err)
 		return lo.ListOpts.IsFinished()
+	}
+	if *cryptShowMapping {
+		fs.Log(decryptedRemote, "Encrypts to %q", remote)
 	}
 	return lo.ListOpts.AddDir(lo.f.newDir(dir))
 }

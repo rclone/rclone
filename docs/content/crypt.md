@@ -236,6 +236,21 @@ depends on that.
 Hashes are not stored for crypt.  However the data integrity is
 protected by an extremely strong crypto authenticator.
 
+### Specific options ###
+
+Here are the command line options specific to this cloud storage
+system.
+
+#### --crypt-show-mapping ####
+
+If this flag is set then for each file that the remote is asked to
+list, it will log (at level INFO) a line stating the decrypted file
+name and the encrypted file name.
+
+This is so you can work out which encrypted names are which decrypted
+names just in case you need to do something with the encrypted file
+names, or for debugging purposes.
+
 ## File formats ##
 
 ### File encryption ###
