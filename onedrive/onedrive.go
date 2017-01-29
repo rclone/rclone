@@ -80,12 +80,13 @@ func init() {
 
 // Fs represents a remote one drive
 type Fs struct {
-	name     string             // name of this remote
-	root     string             // the path we are working on
-	features *fs.Features       // optional features
-	srv      *rest.Client       // the connection to the one drive server
-	dirCache *dircache.DirCache // Map of directory path to directory id
-	pacer    *pacer.Pacer       // pacer for API calls
+	name         string             // name of this remote
+	root         string             // the path we are working on
+	features     *fs.Features       // optional features
+	srv          *rest.Client       // the connection to the one drive server
+	dirCache     *dircache.DirCache // Map of directory path to directory id
+	pacer        *pacer.Pacer       // pacer for API calls
+	tokenRenewer *oauthutil.Renew   // renew the token on expiry
 }
 
 // Object describes a one drive object
@@ -179,7 +180,7 @@ func errorHandler(resp *http.Response) error {
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string) (fs.Fs, error) {
 	root = parsePath(root)
-	oAuthClient, _, err := oauthutil.NewClient(name, oauthConfig)
+	oAuthClient, ts, err := oauthutil.NewClient(name, oauthConfig)
 	if err != nil {
 		log.Fatalf("Failed to configure One Drive: %v", err)
 	}
@@ -198,6 +199,12 @@ func NewFs(name, root string) (fs.Fs, error) {
 	if err != nil || rootInfo.ID == "" {
 		return nil, errors.Wrap(err, "failed to get root")
 	}
+
+	// Renew the token in the background
+	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
+		_, _, err := f.readMetaDataForPath("")
+		return err
+	})
 
 	f.dirCache = dircache.New(root, rootInfo.ID, f)
 
@@ -924,6 +931,9 @@ func (o *Object) uploadMultipart(in io.Reader, size int64) (err error) {
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
+	o.fs.tokenRenewer.Start()
+	defer o.fs.tokenRenewer.Stop()
+
 	size := src.Size()
 	modTime := src.ModTime()
 
