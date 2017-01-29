@@ -56,3 +56,4 @@ Contributors
   * T.C. Ferguson <tcf909@gmail.com>
   * Brandur <brandur@mutelight.org>
   * Dario Giovannetti <dev@dariogiovannetti.net>
+  * Károly Oláh <okaresz@aol.com>
