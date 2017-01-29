@@ -144,3 +144,13 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 	*/
 	return nil, errors.New("can't figure out how to open")
 }
+
+// Check interface satisfied
+var _ fusefs.NodeFsyncer = (*File)(nil)
+
+// Fsync the file
+//
+// Note that we don't do anything except return OK
+func (f *File) Fsync(ctx context.Context, req *fuse.FsyncRequest) error {
+	return nil
+}

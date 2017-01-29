@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Test writing a file with no write()'s to it
@@ -100,4 +101,19 @@ func TestWriteFileDoubleClose(t *testing.T) {
 	assert.Error(t, err, "input/output error")
 
 	run.rm(t, "testdoubleclose")
+}
+
+// Test Fsync
+//
+// NB the code for this is in file.go rather than write.go
+func TestWriteFileFsync(t *testing.T) {
+	filepath := run.path("to be synced")
+	fd, err := os.Create(filepath)
+	require.NoError(t, err)
+	_, err = fd.Write([]byte("hello"))
+	require.NoError(t, err)
+	err = fd.Sync()
+	require.NoError(t, err)
+	err = fd.Close()
+	require.NoError(t, err)
 }
