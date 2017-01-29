@@ -79,6 +79,47 @@ file exceeds 258 characters on z, so only use this option if you have to.
 
 Here are the command line options specific to local storage
 
+#### --copy-links, -L ####
+
+Normally rclone will ignore symlinks or junction points (which behave
+like symlinks under Windows).
+
+If you supply this flag then rclone will follow the symlink and copy
+the pointed to file or directory.
+
+This flag applies to all commands.
+
+For example, supposing you have a directory structure like this
+
+```
+$ tree /tmp/a
+/tmp/a
+├── b -> ../b
+├── expected -> ../expected
+├── one
+└── two
+    └── three
+```
+
+Then you can see the difference with and without the flag like this
+
+```
+$ rclone ls /tmp/a
+        6 one
+        6 two/three
+```
+
+and
+
+```
+$ rclone -L ls /tmp/a
+     4174 expected
+        6 one
+        6 two/three
+        6 b/two
+        6 b/one
+```
+
 #### --one-file-system, -x ####
 
 This tells rclone to stay in the filesystem specified by the root and

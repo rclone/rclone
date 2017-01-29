@@ -21,6 +21,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	followSymlinks = fs.BoolP("copy-links", "L", false, "Follow symlinks and copy the pointed to item.")
+)
+
 // Constants
 const devUnset = 0xdeadbeefcafebabe // a device id meaning it is unset
 
@@ -54,6 +58,8 @@ type Fs struct {
 	wmu         sync.Mutex          // used for locking access to 'warned'.
 	warned      map[string]struct{} // whether we have warned about this string
 	nounc       bool                // Skip UNC conversion on Windows
+	// do os.Lstat or os.Stat
+	lstat func(name string) (os.FileInfo, error)
 }
 
 // Object represents a local filesystem object
@@ -77,12 +83,16 @@ func NewFs(name, root string) (fs.Fs, error) {
 		warned: make(map[string]struct{}),
 		nounc:  nounc == "true",
 		dev:    devUnset,
+		lstat:  os.Lstat,
 	}
 	f.root = f.cleanPath(root)
 	f.features = (&fs.Features{CaseInsensitive: f.caseInsensitive()}).Fill(f)
+	if *followSymlinks {
+		f.lstat = os.Stat
+	}
 
 	// Check to see if this points to a file
-	fi, err := os.Lstat(f.root)
+	fi, err := f.lstat(f.root)
 	if err == nil {
 		f.dev = readDevice(fi)
 	}
@@ -197,12 +207,22 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 
 		for _, fi := range fis {
 			name := fi.Name()
+			mode := fi.Mode()
 			newRemote := path.Join(remote, name)
 			newPath := filepath.Join(dirpath, name)
+			// Follow symlinks if required
+			if *followSymlinks && (mode&os.ModeSymlink) != 0 {
+				fi, err = os.Stat(newPath)
+				if err != nil {
+					out.SetError(err)
+					return nil
+				}
+				mode = fi.Mode()
+			}
 			if fi.IsDir() {
 				// Ignore directories which are symlinks.  These are junction points under windows which
 				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
-				if (fi.Mode()&os.ModeSymlink) == 0 && out.IncludeDirectory(newRemote) {
+				if (mode&os.ModeSymlink) == 0 && out.IncludeDirectory(newRemote) {
 					dir := &fs.Dir{
 						Name:  f.cleanRemote(newRemote),
 						When:  fi.ModTime(),
@@ -321,7 +341,7 @@ func (f *Fs) Mkdir(dir string) error {
 		return err
 	}
 	if dir == "" {
-		fi, err := os.Lstat(root)
+		fi, err := f.lstat(root)
 		if err != nil {
 			return err
 		}
@@ -404,7 +424,7 @@ func (f *Fs) readPrecision() (precision time.Duration) {
 // deleting all the files quicker than just running Remove() on the
 // result of List()
 func (f *Fs) Purge() error {
-	fi, err := os.Lstat(f.root)
+	fi, err := f.lstat(f.root)
 	if err != nil {
 		return err
 	}
@@ -591,7 +611,10 @@ func (o *Object) Storable() bool {
 		fs.Debug(o, "Clearing symlink bit to allow a file with reparse points to be copied")
 		mode &^= os.ModeSymlink
 	}
-	if mode&(os.ModeSymlink|os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
+	if mode&os.ModeSymlink != 0 {
+		fs.Debug(o, "Can't follow symlink without -L/--copy-links")
+		return false
+	} else if mode&(os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
 		fs.Debug(o, "Can't transfer non file/directory")
 		return false
 	} else if mode&os.ModeDir != 0 {
@@ -713,7 +736,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 
 // Stat a Object into info
 func (o *Object) lstat() error {
-	info, err := os.Lstat(o.path)
+	info, err := o.fs.lstat(o.path)
 	o.info = info
 	return err
 }
