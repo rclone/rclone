@@ -883,6 +883,25 @@ func fsOption() *Option {
 	return o
 }
 
+// NewRemoteName asks the user for a name for a remote
+func NewRemoteName() (name string) {
+	for {
+		fmt.Printf("name> ")
+		name = ReadLine()
+		parts := matcher.FindStringSubmatch(name + ":")
+		switch {
+		case name == "":
+			fmt.Printf("Can't use empty name.\n")
+		case isDriveLetter(name):
+			fmt.Printf("Can't use %q as it can be confused a drive letter.\n", name)
+		case parts == nil:
+			fmt.Printf("Can't use %q as it has invalid characters in it.\n", name)
+		default:
+			return name
+		}
+	}
+}
+
 // NewRemote make a new remote from its name
 func NewRemote(name string) {
 	newType := ChooseOption(fsOption())
@@ -928,11 +947,37 @@ func DeleteRemote(name string) {
 	SaveConfig()
 }
 
+// copyRemote asks the user for a new remote name and copies name into
+// it
+func copyRemote(name string) {
+	newName := NewRemoteName()
+	// Copy the keys
+	for _, key := range configData.GetKeyList(name) {
+		value := configData.MustValue(name, key, "")
+		configData.SetValue(newName, key, value)
+	}
+}
+
+// RenameRemote renames a config section
+func RenameRemote(name string) {
+	fmt.Printf("Enter new name for %q remote.\n", name)
+	copyRemote(name)
+	configData.DeleteSection(name)
+	SaveConfig()
+}
+
+// CopyRemote copies a config section
+func CopyRemote(name string) {
+	fmt.Printf("Enter name for copy of %q remote.\n", name)
+	copyRemote(name)
+	SaveConfig()
+}
+
 // EditConfig edits the config file interactively
 func EditConfig() {
 	for {
 		haveRemotes := len(configData.GetSectionList()) != 0
-		what := []string{"eEdit existing remote", "nNew remote", "dDelete remote", "sSet configuration password", "qQuit config"}
+		what := []string{"eEdit existing remote", "nNew remote", "dDelete remote", "rRename remote", "cCopy remote", "sSet configuration password", "qQuit config"}
 		if haveRemotes {
 			fmt.Printf("Current remotes:\n\n")
 			ShowRemotes()
@@ -947,26 +992,14 @@ func EditConfig() {
 			fs := MustFindByName(name)
 			EditRemote(fs, name)
 		case 'n':
-		nameLoop:
-			for {
-				fmt.Printf("name> ")
-				name := ReadLine()
-				parts := matcher.FindStringSubmatch(name + ":")
-				switch {
-				case name == "":
-					fmt.Printf("Can't use empty name\n")
-				case isDriveLetter(name):
-					fmt.Printf("Can't use %q as it can be confused a drive letter\n", name)
-				case len(parts) != 3 || parts[2] != "":
-					fmt.Printf("Can't use %q as it has invalid characters in it %v\n", name, parts)
-				default:
-					NewRemote(name)
-					break nameLoop
-				}
-			}
+			NewRemote(NewRemoteName())
 		case 'd':
 			name := ChooseRemote()
 			DeleteRemote(name)
+		case 'r':
+			RenameRemote(ChooseRemote())
+		case 'c':
+			CopyRemote(ChooseRemote())
 		case 's':
 			SetPassword()
 		case 'q':
