@@ -44,6 +44,7 @@ var (
 	driveFullList      = fs.BoolP("drive-full-list", "", false, "Use a full listing for directory list. More data but usually quicker. (obsolete)")
 	driveAuthOwnerOnly = fs.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user. Requires drive-full-list.")
 	driveUseTrash      = fs.BoolP("drive-use-trash", "", false, "Send files to the trash instead of deleting permanently.")
+	driveSkipGdocs     = fs.BoolP("drive-skip-gdocs", "", false, "Skip google documents in all listings.")
 	driveExtensions    = fs.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
 	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
 	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
@@ -494,12 +495,16 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 					out.SetError(err)
 					return true
 				}
-				obj := o.(*Object)
-				obj.isDocument = true
-				obj.url = link
-				obj.bytes = -1
-				if out.Add(o) {
-					return true
+				if !*driveSkipGdocs {
+					obj := o.(*Object)
+					obj.isDocument = true
+					obj.url = link
+					obj.bytes = -1
+					if out.Add(o) {
+						return true
+					}
+				} else {
+					fs.Debug(f, "Skip google document: %q", remote)
 				}
 			}
 		default:
