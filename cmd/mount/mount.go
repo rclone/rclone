@@ -73,7 +73,7 @@ This is **EXPERIMENTAL** - use with care.
 
 First set up your remote using ` + "`rclone config`" + `.  Check it works with ` + "`rclone ls`" + ` etc.
 
-Start the mount like this
+Start the mount like this (note the & on the end to put rclone in the background).
 
     rclone mount remote:path/to/files /path/to/local/mount &
 
@@ -81,9 +81,13 @@ Stop the mount with
 
     fusermount -u /path/to/local/mount
 
+Or if that fails try
+
+    fusermount -z -u /path/to/local/mount
+
 Or with OS X
 
-    umount -u /path/to/local/mount
+    umount /path/to/local/mount
 
 ### Limitations ###
 
