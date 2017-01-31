@@ -5,10 +5,10 @@ package fs
 import (
 	"fmt"
 	"io"
-    "encoding/json"
+	"encoding/json"
 	"log"
 	"mime"
-    "os"
+	"os"
 	"path"
 	"sort"
 	"strings"
