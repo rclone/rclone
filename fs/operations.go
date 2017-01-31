@@ -5,10 +5,10 @@ package fs
 import (
 	"fmt"
 	"io"
-    "encoding/json"
+	"encoding/json"
 	"log"
 	"mime"
-    "os"
+	"os"
 	"path"
 	"sort"
 	"strings"
@@ -717,12 +717,12 @@ func ListFn(f Fs, fn func(Object)) error {
 	list := NewLister().SetFilter(Config.Filter).SetLevel(Config.MaxDepth).Start(f, "")
 	var wg sync.WaitGroup
 	wg.Add(Config.Checkers)
-    if Config.JsonOutput {
-        // Open the JSON array
-        syncFprintf(os.Stdout, "[")
-        firstJson = true
-        printingJson = true
-    }
+	if Config.JsonOutput {
+		// Open the JSON array
+		syncFprintf(os.Stdout, "[")
+		firstJson = true
+		printingJson = true
+	}
 	for i := 0; i < Config.Checkers; i++ {
 		go func() {
 			defer wg.Done()
@@ -745,11 +745,11 @@ func ListFn(f Fs, fn func(Object)) error {
 		}()
 	}
 	wg.Wait()
-    if Config.JsonOutput {
-        printingJson = false
-        // Close the JSON array
-        syncFprintf(os.Stdout, "]")
-    }
+	if Config.JsonOutput {
+		printingJson = false
+		// Close the JSON array
+		syncFprintf(os.Stdout, "]")
+	}
 	return list.Error()
 }
 
@@ -762,15 +762,15 @@ var outMutex sync.Mutex
 func syncFprintf(w io.Writer, format string, a ...interface{}) {
 	outMutex.Lock()
 	defer outMutex.Unlock()
-    // Check if we are printing JSON and that the first output doesn't have a comma printed before it
-    if !firstJson && printingJson {
-        fmt.Print(",")
-    }
-    _, _ = fmt.Fprintf(w, format, a...)
-    // The first JSON output doesn't have a comma before it but all other output does
-    if printingJson {
-        firstJson = false
-    }
+	// Check if we are printing JSON and that the first output doesn't have a comma printed before it
+	if !firstJson && printingJson {
+		fmt.Print(",")
+	}
+	_, _ = fmt.Fprintf(w, format, a...)
+	// The first JSON output doesn't have a comma before it but all other output does
+	if printingJson {
+		firstJson = false
+	}
 }
 
 // List the Fs to the supplied writer
@@ -780,12 +780,12 @@ func syncFprintf(w io.Writer, format string, a ...interface{}) {
 // Lists in parallel which may get them out of order
 func List(f Fs, w io.Writer) error {
 	return ListFn(f, func(o Object) {
-        if Config.JsonOutput {
-            remote, _ := json.Marshal(o.Remote())
-            syncFprintf(w, "{\"Size\":%9d,\"Remote\":%s}", o.Size(), string(remote))
-        } else {
-            syncFprintf(w, "%9d %s\n", o.Size(), o.Remote())
-        }
+		if Config.JsonOutput {
+			remote, _ := json.Marshal(o.Remote())
+			syncFprintf(w, "{\"Size\":%9d,\"Remote\":%s}", o.Size(), string(remote))
+		} else {
+			syncFprintf(w, "%9d %s\n", o.Size(), o.Remote())
+		}
 	})
 }
 
@@ -799,12 +799,12 @@ func ListLong(f Fs, w io.Writer) error {
 		Stats.Checking(o.Remote())
 		modTime := o.ModTime()
 		Stats.DoneChecking(o.Remote())
-        if Config.JsonOutput {
-            remote, _ := json.Marshal(o.Remote())
-            syncFprintf(w, "{\"Size\":%9d,\"Date\":\"%s\",\"Remote\":%s}", o.Size(), modTime.Local().Format("2006-01-02 15:04:05.000000000"), remote)
-        } else {
-            syncFprintf(w, "%9d %s %s\n", o.Size(), modTime.Local().Format("2006-01-02 15:04:05.000000000"), o.Remote())
-        }
+		if Config.JsonOutput {
+			remote, _ := json.Marshal(o.Remote())
+			syncFprintf(w, "{\"Size\":%9d,\"Date\":\"%s\",\"Remote\":%s}", o.Size(), modTime.Local().Format("2006-01-02 15:04:05.000000000"), remote)
+		} else {
+			syncFprintf(w, "%9d %s %s\n", o.Size(), modTime.Local().Format("2006-01-02 15:04:05.000000000"), o.Remote())
+		}
 	})
 }
 
@@ -838,12 +838,12 @@ func hashLister(ht HashType, f Fs, w io.Writer) error {
 			Debug(o, "Failed to read %v: %v", ht, err)
 			sum = "ERROR"
 		}
-        if Config.JsonOutput {
-            remote, _ := json.Marshal(o.Remote())
-            syncFprintf(w, "{\"Hash\":\"%*s\",\"Remote\":%s}", HashWidth[ht], sum, remote)
-        } else {
-            syncFprintf(w, "%*s  %s\n", HashWidth[ht], sum, o.Remote())
-        }
+		if Config.JsonOutput {
+			remote, _ := json.Marshal(o.Remote())
+			syncFprintf(w, "{\"Hash\":\"%*s\",\"Remote\":%s}", HashWidth[ht], sum, remote)
+		} else {
+			syncFprintf(w, "%*s  %s\n", HashWidth[ht], sum, o.Remote())
+		}
 	})
 }
 
@@ -865,10 +865,10 @@ func ListDir(f Fs, w io.Writer) error {
 		level = Config.MaxDepth
 	}
 	list := NewLister().SetFilter(Config.Filter).SetLevel(level).Start(f, "")
-    if Config.JsonOutput {
-        syncFprintf(w, "[")
-    }
-    firstJson = true
+	if Config.JsonOutput {
+		syncFprintf(w, "[")
+	}
+	firstJson = true
 	for {
 		dir, err := list.GetDir()
 		if err != nil {
@@ -877,19 +877,19 @@ func ListDir(f Fs, w io.Writer) error {
 		if dir == nil {
 			break
 		}
-        if Config.JsonOutput {
-            if !firstJson {
-                syncFprintf(w, ",")
-            }
-            syncFprintf(w, "{\"Bytes\":%12d,\"Date\":\"%13s\",\"Count\":%9d,\"Remote\":\"%s\"}", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
-            firstJson = false
-        } else {
-            syncFprintf(w, "%12d %13s %9d %s\n", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
-        }
+		if Config.JsonOutput {
+			if !firstJson {
+				syncFprintf(w, ",")
+			}
+			syncFprintf(w, "{\"Bytes\":%12d,\"Date\":\"%13s\",\"Count\":%9d,\"Remote\":\"%s\"}", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
+			firstJson = false
+		} else {
+			syncFprintf(w, "%12d %13s %9d %s\n", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
+		}
 	}
-    if Config.JsonOutput {
-        syncFprintf(w, "]")
-    }
+	if Config.JsonOutput {
+		syncFprintf(w, "]")
+	}
 	return nil
 }
 
@@ -1067,7 +1067,7 @@ func dedupeInteractive(remote string, objs []Object) {
 
 type objectsSortedByModTime []Object
 
-func (objs objectsSortedByModTime) Len() int      { return len(objs) }
+func (objs objectsSortedByModTime) Len() int	  { return len(objs) }
 func (objs objectsSortedByModTime) Swap(i, j int) { objs[i], objs[j] = objs[j], objs[i] }
 func (objs objectsSortedByModTime) Less(i, j int) bool {
 	return objs[i].ModTime().Before(objs[j].ModTime())
@@ -1079,11 +1079,11 @@ type DeduplicateMode int
 // Deduplicate modes
 const (
 	DeduplicateInteractive DeduplicateMode = iota // interactively ask the user
-	DeduplicateSkip                               // skip all conflicts
-	DeduplicateFirst                              // choose the first object
-	DeduplicateNewest                             // choose the newest object
-	DeduplicateOldest                             // choose the oldest object
-	DeduplicateRename                             // rename the objects
+	DeduplicateSkip							   // skip all conflicts
+	DeduplicateFirst							  // choose the first object
+	DeduplicateNewest							 // choose the newest object
+	DeduplicateOldest							 // choose the oldest object
+	DeduplicateRename							 // rename the objects
 )
 
 func (x DeduplicateMode) String() string {
