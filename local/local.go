@@ -493,6 +493,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 // If it isn't possible then return fs.ErrorCantDirCopy
 //
 // If destination exists then return fs.ErrorDirExists
+/*
 func (f *Fs) DirCopy(src fs.Fs) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
@@ -516,9 +517,10 @@ func (f *Fs) DirCopy(src fs.Fs) error {
 	}
 
 	// Do the local copy
-	// FIXME - Intentional compile error
-	//return errors.New("DirCopy not fully implemented")
+	// FIXME
+	return errors.New("DirCopy not fully implemented")
 }
+*/
 
 // DirMove moves src directory to this remote using server side move
 // operations.
