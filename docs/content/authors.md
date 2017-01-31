@@ -58,3 +58,4 @@ Contributors
   * Dario Giovannetti <dev@dariogiovannetti.net>
   * Károly Oláh <okaresz@aol.com>
   * Jon Yergatian <jon@macfanatic.ca>
+  * Jack Schmidt <github@mowsey.org>
