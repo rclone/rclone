@@ -1067,6 +1067,7 @@ The hashes are used when transferring data as an integrity check and can be spec
 <th align="center">Purge</th>
 <th align="center">Copy</th>
 <th align="center">Move</th>
+<th align="center">DirCopy</th>
 <th align="center">DirMove</th>
 <th align="center">CleanUp</th>
 </tr>
@@ -1171,8 +1172,10 @@ The hashes are used when transferring data as an integrity check and can be spec
 <h3 id="move">Move</h3>
 <p>Used when moving/renaming an object on the same remote. This is known as a server side move of a file. This is used in <code>rclone move</code> if the server doesn't support <code>DirMove</code>.</p>
 <p>If the server isn't capable of <code>Move</code> then rclone simulates it with <code>Copy</code> then delete. If the server doesn't support <code>Copy</code> then rclone will download the file and re-upload it.</p>
+<h3 id="dircopy">DirCopy</h3>
+<p>This is used to implement <code>rclone copy</code> to copy an entire directory if possible. If it isn't then it will use <code>Copy</code> on each file (which falls back to download and upload - see <code>Move</code> section), and Mkdir on each directory (if implemented).</p>
 <h3 id="dirmove">DirMove</h3>
-<p>This is used to implement <code>rclone move</code> to move a directory if possible. If it isn't then it will use <code>Move</code> on each file (which falls back to <code>Copy</code> then download and upload - see <code>Move</code> section).</p>
+<p>This is used to implement <code>rclone move</code> to move a directory if possible. If it isn't then it will use <code>Move</code> on each file (which falls back to <code>Copy</code> then download and upload - see <code>Move</code> section)i, followed by a delete of the original.</p>
 <h3 id="cleanup">CleanUp</h3>
 <p>This is used for emptying the trash for a remote by <code>rclone cleanup</code>.</p>
 <p>If the server can't do <code>CleanUp</code> then <code>rclone cleanup</code> will return an error.</p>

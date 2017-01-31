@@ -2120,19 +2120,19 @@ All the remotes support a basic set of features, but there are some
 optional features supported by some remotes used to make some
 operations more efficient.
 
-| Name                   | Purge | Copy | Move | DirMove | CleanUp |
-| ---------------------- |:-----:|:----:|:----:|:-------:|:-------:|
-| Google Drive           | Yes   | Yes  | Yes  | Yes     | No  [#575](https://github.com/ncw/rclone/issues/575) | 
-| Amazon S3              | No    | Yes  | No   | No      | No      |
-| Openstack Swift        | Yes † | Yes  | No   | No      | No      |
-| Dropbox                | Yes   | Yes  | Yes  | Yes     | No  [#575](https://github.com/ncw/rclone/issues/575) |
-| Google Cloud Storage   | Yes   | Yes  | No   | No      | No      |
-| Amazon Drive           | Yes   | No   | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) |
-| Microsoft One Drive    | Yes   | Yes  | No [#197](https://github.com/ncw/rclone/issues/197) | No [#197](https://github.com/ncw/rclone/issues/197)    | No [#575](https://github.com/ncw/rclone/issues/575) |
-| Hubic                  | Yes † | Yes  | No   | No      | No      |
-| Backblaze B2           | No    | No   | No   | No      | Yes     |
-| Yandex Disk            | Yes   | No   | No   | No      | No  [#575](https://github.com/ncw/rclone/issues/575) |
-| The local filesystem   | Yes   | No   | Yes  | Yes     | No      |
+| Name                   | Purge | Copy | Move | DirCopy | DirMove | CleanUp |
+| ---------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-------:|
+| Google Drive           | Yes   | Yes  | Yes  | No      | Yes     | No  [#575](https://github.com/ncw/rclone/issues/575) |
+| Amazon S3              | No    | Yes  | No   | No      | No      | No      |
+| Openstack Swift        | Yes † | Yes  | No   | No      | No      | No      |
+| Dropbox                | Yes   | Yes  | Yes  | No      | Yes     | No  [#575](https://github.com/ncw/rclone/issues/575) |
+| Google Cloud Storage   | Yes   | Yes  | No   | No      | No      | No      |
+| Amazon Drive           | Yes   | No   | Yes  | No      | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) |
+| Microsoft One Drive    | Yes   | Yes  | No [#197](https://github.com/ncw/rclone/issues/197) | No      | No [#197](https://github.com/ncw/rclone/issues/197)    | No [#575](https://github.com/ncw/rclone/issues/575) |
+| Hubic                  | Yes † | Yes  | No   | No      | No      | No      |
+| Backblaze B2           | No    | No   | No   | No      | No      | Yes     |
+| Yandex Disk            | Yes   | No   | No   | No      | No      | No  [#575](https://github.com/ncw/rclone/issues/575) |
+| The local filesystem   | Yes   | No   | Yes  | No      | Yes     | No      |
 
 
 ### Purge ###
@@ -2168,7 +2168,8 @@ will download the file and re-upload it.
 
 This is used to implement `rclone move` to move a directory if
 possible.  If it isn't then it will use `Move` on each file (which
-falls back to `Copy` then download and upload - see `Move` section).
+falls back to `Copy` then download and upload - see `Move` section),
+followed by a delete of the original.
 
 ### CleanUp ###
 
