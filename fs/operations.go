@@ -1299,7 +1299,7 @@ func MoveFile(fdst Fs, fsrc Fs, dstFileName string, srcFileName string) (err err
 	return moveOrCopyFile(fdst, fsrc, dstFileName, srcFileName, false)
 }
 
-// CopyFile moves a single file possibly to a new name
+// CopyFile copies a single file possibly to a new name
 func CopyFile(fdst Fs, fsrc Fs, dstFileName string, srcFileName string) (err error) {
 	return moveOrCopyFile(fdst, fsrc, dstFileName, srcFileName, true)
 }

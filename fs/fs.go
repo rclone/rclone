@@ -35,6 +35,7 @@ var (
 	ErrorCantPurge            = errors.New("can't purge directory")
 	ErrorCantCopy             = errors.New("can't copy object - incompatible remotes")
 	ErrorCantMove             = errors.New("can't move object - incompatible remotes")
+	ErrorCantDirCopy          = errors.New("can't copy directory - incompatible remotes")
 	ErrorCantDirMove          = errors.New("can't move directory - incompatible remotes")
 	ErrorDirExists            = errors.New("can't copy directory - destination already exists")
 	ErrorCantSetModTime       = errors.New("can't set modified time")
@@ -258,6 +259,16 @@ type Features struct {
 	// If it isn't possible then return fs.ErrorCantMove
 	Move func(src Object, remote string) (Object, error)
 
+	// DirCopy copies src to this remote using server side copy
+	// operations.
+	//
+	// Will only be called if src.Fs().Name() == f.Name()
+	//
+	// If it isn't possible then return fs.ErrorCantDirCopy
+	//
+	// If destination exists then return fs.ErrorDirExists
+	DirCopy func(src Object, remote string) (Object, error)
+
 	// DirMove moves src to this remote using server side move
 	// operations.
 	//
@@ -305,6 +316,9 @@ func (ft *Features) Fill(f Fs) *Features {
 	if do, ok := f.(Mover); ok {
 		ft.Move = do.Move
 	}
+	if do, ok := f.(DirCopier); ok {
+		ft.DirCopy = do.DirCopy
+	}
 	if do, ok := f.(DirMover); ok {
 		ft.DirMove = do.DirMove
 	}
@@ -343,6 +357,9 @@ func (ft *Features) Mask(f Fs) *Features {
 	}
 	if mask.Move == nil {
 		ft.Move = nil
+	}
+	if mask.DirCopy == nil {
+		ft.DirCopy = nil
 	}
 	if mask.DirMove == nil {
 		ft.DirMove = nil
@@ -410,6 +427,20 @@ type Mover interface {
 	//
 	// If it isn't possible then return fs.ErrorCantMove
 	Move(src Object, remote string) (Object, error)
+}
+
+// DirCopier is an optional interface for Fs
+type DirCopier interface {
+	// Copy src dir tree to this remote using server side copy operations.
+	//
+	// This is stored with the remote path given
+	//
+	// It returns the destination Object and a possible error
+	//
+	// Will only be called if src.Fs().Name() == f.Name()
+	//
+	// If it isn't possible then return fs.ErrorCantCopy
+	DirCopy(src Object, remote string) (Object, error)
 }
 
 // DirMover is an optional interface for Fs
