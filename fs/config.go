@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	configFileName	   = "rclone.conf"
+	configFileName       = "rclone.conf"
 	hiddenConfigFileName = "." + configFileName
 
 	// ConfigToken is the key used to store the token under
@@ -56,39 +56,39 @@ var (
 	// Config is the global config
 	Config = &ConfigInfo{}
 	// Flags
-	verbose		 = BoolP("verbose", "v", false, "Print lots more stuff")
-	quiet		   = BoolP("quiet", "q", false, "Print as little stuff as possible")
-	modifyWindow	= DurationP("modify-window", "", time.Nanosecond, "Max time diff to be considered the same")
-	checkers		= IntP("checkers", "", 8, "Number of checkers to run in parallel.")
-	transfers	   = IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
-	configFile	  = StringP("config", "", ConfigPath, "Config file.")
-	checkSum		= BoolP("checksum", "c", false, "Skip based on checksum & size, not mod-time & size")
-	sizeOnly		= BoolP("size-only", "", false, "Skip based on size only, not mod-time or checksum")
-	ignoreTimes	 = BoolP("ignore-times", "I", false, "Don't skip files that match size and time - transfer all files")
+	verbose         = BoolP("verbose", "v", false, "Print lots more stuff")
+	quiet           = BoolP("quiet", "q", false, "Print as little stuff as possible")
+	modifyWindow    = DurationP("modify-window", "", time.Nanosecond, "Max time diff to be considered the same")
+	checkers        = IntP("checkers", "", 8, "Number of checkers to run in parallel.")
+	transfers       = IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
+	configFile      = StringP("config", "", ConfigPath, "Config file.")
+	checkSum        = BoolP("checksum", "c", false, "Skip based on checksum & size, not mod-time & size")
+	sizeOnly        = BoolP("size-only", "", false, "Skip based on size only, not mod-time or checksum")
+	ignoreTimes     = BoolP("ignore-times", "I", false, "Don't skip files that match size and time - transfer all files")
 	ignoreExisting  = BoolP("ignore-existing", "", false, "Skip all files that exist on destination")
-	dryRun		  = BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
+	dryRun          = BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
 	connectTimeout  = DurationP("contimeout", "", 60*time.Second, "Connect timeout")
-	timeout		 = DurationP("timeout", "", 5*60*time.Second, "IO idle timeout")
-	dumpHeaders	 = BoolP("dump-headers", "", false, "Dump HTTP headers - may contain sensitive info")
-	dumpBodies	  = BoolP("dump-bodies", "", false, "Dump HTTP headers and bodies - may contain sensitive info")
-	dumpAuth		= BoolP("dump-auth", "", false, "Dump HTTP headers with auth info")
-	skipVerify	  = BoolP("no-check-certificate", "", false, "Do not verify the server SSL certificate. Insecure.")
-	AskPassword	 = BoolP("ask-password", "", true, "Allow prompt for password for encrypted configuration.")
-	deleteBefore	= BoolP("delete-before", "", false, "When synchronizing, delete files on destination before transfering")
-	deleteDuring	= BoolP("delete-during", "", false, "When synchronizing, delete files during transfer (default)")
-	deleteAfter	 = BoolP("delete-after", "", false, "When synchronizing, delete files on destination after transfering")
-	trackRenames	= BoolP("track-renames", "", false, "When synchronizing, track file renames and do a server side move if possible")
+	timeout         = DurationP("timeout", "", 5*60*time.Second, "IO idle timeout")
+	dumpHeaders     = BoolP("dump-headers", "", false, "Dump HTTP headers - may contain sensitive info")
+	dumpBodies      = BoolP("dump-bodies", "", false, "Dump HTTP headers and bodies - may contain sensitive info")
+	dumpAuth        = BoolP("dump-auth", "", false, "Dump HTTP headers with auth info")
+	skipVerify      = BoolP("no-check-certificate", "", false, "Do not verify the server SSL certificate. Insecure.")
+	AskPassword     = BoolP("ask-password", "", true, "Allow prompt for password for encrypted configuration.")
+	deleteBefore    = BoolP("delete-before", "", false, "When synchronizing, delete files on destination before transfering")
+	deleteDuring    = BoolP("delete-during", "", false, "When synchronizing, delete files during transfer (default)")
+	deleteAfter     = BoolP("delete-after", "", false, "When synchronizing, delete files on destination after transfering")
+	trackRenames    = BoolP("track-renames", "", false, "When synchronizing, track file renames and do a server side move if possible")
 	lowLevelRetries = IntP("low-level-retries", "", 10, "Number of low level retries to do.")
-	updateOlder	 = BoolP("update", "u", false, "Skip files that are newer on the destination.")
-	noGzip		  = BoolP("no-gzip-encoding", "", false, "Don't set Accept-Encoding: gzip.")
-	maxDepth		= IntP("max-depth", "", -1, "If set limits the recursion depth to this.")
-	ignoreSize	  = BoolP("ignore-size", "", false, "Ignore size when skipping use mod-time or checksum.")
-	noTraverse	  = BoolP("no-traverse", "", false, "Don't traverse destination file system on copy.")
+	updateOlder     = BoolP("update", "u", false, "Skip files that are newer on the destination.")
+	noGzip          = BoolP("no-gzip-encoding", "", false, "Don't set Accept-Encoding: gzip.")
+	maxDepth        = IntP("max-depth", "", -1, "If set limits the recursion depth to this.")
+	ignoreSize      = BoolP("ignore-size", "", false, "Ignore size when skipping use mod-time or checksum.")
+	noTraverse      = BoolP("no-traverse", "", false, "Don't traverse destination file system on copy.")
 	noUpdateModTime = BoolP("no-update-modtime", "", false, "Don't update destination mod-time if files identical.")
-	backupDir	   = StringP("backup-dir", "", "", "Make backups into hierarchy based in DIR.")
-	suffix		  = StringP("suffix", "", "", "Suffix for use with --backup-dir.")
-	jsonOutput	  = BoolP("json", "", false, "Output lists as JSON")
-	bwLimit		 BwTimetable
+	backupDir       = StringP("backup-dir", "", "", "Make backups into hierarchy based in DIR.")
+	suffix          = StringP("suffix", "", "", "Suffix for use with --backup-dir.")
+	jsonOutput      = BoolP("json", "", false, "Output lists as JSON")
+	bwLimit         BwTimetable
 
 	// Key to use for password en/decryption.
 	// When nil, no encryption will be used for saving.
@@ -182,38 +182,38 @@ func MustReveal(x string) string {
 
 // ConfigInfo is filesystem config options
 type ConfigInfo struct {
-	Verbose			bool
-	Quiet			  bool
-	DryRun			 bool
-	CheckSum		   bool
-	SizeOnly		   bool
-	IgnoreTimes		bool
-	IgnoreExisting	 bool
-	ModifyWindow	   time.Duration
-	Checkers		   int
-	Transfers		  int
-	ConnectTimeout	 time.Duration // Connect timeout
-	Timeout			time.Duration // Data channel timeout
-	DumpHeaders		bool
-	DumpBodies		 bool
-	DumpAuth		   bool
-	Filter			 *Filter
+	Verbose            bool
+	Quiet              bool
+	DryRun             bool
+	CheckSum           bool
+	SizeOnly           bool
+	IgnoreTimes        bool
+	IgnoreExisting     bool
+	ModifyWindow       time.Duration
+	Checkers           int
+	Transfers          int
+	ConnectTimeout     time.Duration // Connect timeout
+	Timeout            time.Duration // Data channel timeout
+	DumpHeaders        bool
+	DumpBodies         bool
+	DumpAuth           bool
+	Filter             *Filter
 	InsecureSkipVerify bool // Skip server certificate verification
-	DeleteBefore	   bool // Delete before checking
-	DeleteDuring	   bool // Delete during checking/transfer
-	DeleteAfter		bool // Delete after successful transfer.
-	TrackRenames	   bool // Track file renames.
-	LowLevelRetries	int
-	UpdateOlder		bool // Skip files that are newer on the destination
-	NoGzip			 bool // Disable compression
-	MaxDepth		   int
-	IgnoreSize		 bool
-	NoTraverse		 bool
-	NoUpdateModTime	bool
-	DataRateUnit	   string
-	BackupDir		  string
-	Suffix			 string
-	JsonOutput		 bool
+	DeleteBefore       bool // Delete before checking
+	DeleteDuring       bool // Delete during checking/transfer
+	DeleteAfter        bool // Delete after successful transfer.
+	TrackRenames       bool // Track file renames.
+	LowLevelRetries    int
+	UpdateOlder        bool // Skip files that are newer on the destination
+	NoGzip             bool // Disable compression
+	MaxDepth           int
+	IgnoreSize         bool
+	NoTraverse         bool
+	NoUpdateModTime    bool
+	DataRateUnit       string
+	BackupDir          string
+	Suffix             string
+    JsonOutput         bool
 }
 
 // Return the path to the configuration file
@@ -314,7 +314,7 @@ func LoadConfig() {
 	Config.NoUpdateModTime = *noUpdateModTime
 	Config.BackupDir = *backupDir
 	Config.Suffix = *suffix
-	Config.JsonOutput = *jsonOutput
+    Config.JsonOutput = *jsonOutput
 
 	ConfigPath = *configFile
 

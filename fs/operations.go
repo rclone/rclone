@@ -5,10 +5,10 @@ package fs
 import (
 	"fmt"
 	"io"
-	"encoding/json"
+    "encoding/json"
 	"log"
 	"mime"
-	"os"
+    "os"
 	"path"
 	"sort"
 	"strings"
@@ -717,10 +717,10 @@ func ListFn(f Fs, fn func(Object)) error {
 	list := NewLister().SetFilter(Config.Filter).SetLevel(Config.MaxDepth).Start(f, "")
 	var wg sync.WaitGroup
 	wg.Add(Config.Checkers)
-	if Config.JsonOutput {
-		// Open the JSON array
-		syncFprintf(os.Stdout, "[")
-		firstJson = true
+    if Config.JsonOutput {
+        // Open the JSON array
+        syncFprintf(os.Stdout, "[")
+        firstJson = true
 		printingJson = true
 	}
 	for i := 0; i < Config.Checkers; i++ {
