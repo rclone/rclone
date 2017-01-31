@@ -498,7 +498,7 @@ func TestFsDirCopy(t *testing.T) {
 	require.NoError(t, err)
 	defer removeNewRemote()
 
-	// try the move
+	// try the copy
 	err = newRemote.Features().DirCopy(remote)
 	require.NoError(t, err)
 
@@ -508,7 +508,7 @@ func TestFsDirCopy(t *testing.T) {
 	fstest.CheckListing(t, newRemote, []fstest.Item{file2, file1})
 
 	// Delete copy
-	err = dst.Purge()
+	err = fs.Purge(newRemote)
 	require.NoError(t, err)
 
 	// check remotes

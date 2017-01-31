@@ -267,7 +267,7 @@ type Features struct {
 	// If it isn't possible then return fs.ErrorCantDirCopy
 	//
 	// If destination exists then return fs.ErrorDirExists
-	DirCopy func(src Object, remote string) (Object, error)
+	DirCopy func(src Fs) error
 
 	// DirMove moves src to this remote using server side move
 	// operations.
@@ -440,7 +440,7 @@ type DirCopier interface {
 	// Will only be called if src.Fs().Name() == f.Name()
 	//
 	// If it isn't possible then return fs.ErrorCantCopy
-	DirCopy(src Object, remote string) (Object, error)
+	DirCopy(src Fs) error
 }
 
 // DirMover is an optional interface for Fs
