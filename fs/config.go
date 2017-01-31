@@ -213,7 +213,7 @@ type ConfigInfo struct {
 	DataRateUnit       string
 	BackupDir          string
 	Suffix             string
-    JsonOutput         bool
+	JsonOutput         bool
 }
 
 // Return the path to the configuration file
@@ -314,7 +314,7 @@ func LoadConfig() {
 	Config.NoUpdateModTime = *noUpdateModTime
 	Config.BackupDir = *backupDir
 	Config.Suffix = *suffix
-    Config.JsonOutput = *jsonOutput
+	Config.JsonOutput = *jsonOutput
 
 	ConfigPath = *configFile
 
