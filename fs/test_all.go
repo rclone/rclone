@@ -32,6 +32,7 @@ var (
 		"TestHubic:",
 		"TestOneDrive:",
 		"TestS3:",
+		"TestSftp:",
 		"TestSwift:",
 		"TestYandex:",
 	}

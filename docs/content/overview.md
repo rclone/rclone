@@ -27,6 +27,7 @@ Here is an overview of the major features of each cloud storage system.
 | Hubic                  | MD5     | Yes     | No               | No              | R/W       |
 | Backblaze B2           | SHA1    | Yes     | No               | No              | R/W       |
 | Yandex Disk            | MD5     | Yes     | No               | No              | R/W       |
+| SFTP                   | -       | Yes     | Depends          | No              | -         |
 | The local filesystem   | All     | Yes     | Depends          | No              | -         |
 
 ### Hash ###
@@ -60,7 +61,8 @@ This can cause problems when syncing between a case insensitive
 system and a case sensitive system.  The symptom of this is that no
 matter how many times you run the sync it never completes fully.
 
-The local filesystem may or may not be case sensitive depending on OS.
+The local filesystem and SFTP may or may not be case sensitive
+depending on OS.
 
   * Windows - usually case insensitive, though case is preserved
   * OSX - usually case insensitive, though it is possible to format case sensitive
@@ -113,6 +115,7 @@ operations more efficient.
 | Hubic                  | Yes † | Yes  | No   | No      | No      |
 | Backblaze B2           | No    | No   | No   | No      | Yes     |
 | Yandex Disk            | Yes   | No   | No   | No      | No  [#575](https://github.com/ncw/rclone/issues/575) |
+| SFTP                   | No    | No   | Yes  | Yes     | No      |
 | The local filesystem   | Yes   | No   | Yes  | Yes     | No      |
 
 

@@ -23,6 +23,7 @@ Rclone is a command line program to sync files and directories to and from
   * Hubic
   * Backblaze B2
   * Yandex Disk
+  * SFTP
   * The local filesystem
 
 Features

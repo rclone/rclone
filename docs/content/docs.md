@@ -30,6 +30,7 @@ See the following for detailed instructions for
   * [Hubic](/hubic/)
   * [Microsoft One Drive](/onedrive/)
   * [Yandex Disk](/yandex/)
+  * [SFTP](/sftp/)
   * [Crypt](/crypt/) - to encrypt other remotes
 
 Usage

@@ -140,5 +140,6 @@ func main() {
 	generateTestProgram(t, fns, "Yandex", "")
 	generateTestProgram(t, fns, "Crypt", "")
 	generateTestProgram(t, fns, "Crypt", "2")
+	generateTestProgram(t, fns, "Sftp", "")
 	log.Printf("Done")
 }

@@ -29,6 +29,7 @@ docs = [
     "hubic.md",
     "b2.md",
     "yandex.md",
+    "sftp.md",
     "crypt.md",
     "local.md",
     "changelog.md",
