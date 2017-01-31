@@ -1067,7 +1067,7 @@ func dedupeInteractive(remote string, objs []Object) {
 
 type objectsSortedByModTime []Object
 
-func (objs objectsSortedByModTime) Len() int	  { return len(objs) }
+func (objs objectsSortedByModTime) Len() int      { return len(objs) }
 func (objs objectsSortedByModTime) Swap(i, j int) { objs[i], objs[j] = objs[j], objs[i] }
 func (objs objectsSortedByModTime) Less(i, j int) bool {
 	return objs[i].ModTime().Before(objs[j].ModTime())
@@ -1079,11 +1079,11 @@ type DeduplicateMode int
 // Deduplicate modes
 const (
 	DeduplicateInteractive DeduplicateMode = iota // interactively ask the user
-	DeduplicateSkip							   // skip all conflicts
-	DeduplicateFirst							  // choose the first object
-	DeduplicateNewest							 // choose the newest object
-	DeduplicateOldest							 // choose the oldest object
-	DeduplicateRename							 // rename the objects
+	DeduplicateSkip                               // skip all conflicts
+	DeduplicateFirst                              // choose the first object
+	DeduplicateNewest                             // choose the newest object
+	DeduplicateOldest                             // choose the oldest object
+	DeduplicateRename                             // rename the objects
 )
 
 func (x DeduplicateMode) String() string {
