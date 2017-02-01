@@ -672,7 +672,7 @@ func TestRmdirs(t *testing.T) {
 
 	// Clean any directories that have crept in so far
 	// FIXME make the Finalise method do this?
-	require.NoError(t, fs.Rmdirs(r.fremote))
+	require.NoError(t, fs.Rmdirs(r.fremote, ""))
 
 	// Make some files and dirs we expect to keep
 	r.ForceMkdir(r.fremote)
@@ -708,7 +708,7 @@ func TestRmdirs(t *testing.T) {
 		fs.Config.ModifyWindow,
 	)
 
-	require.NoError(t, fs.Rmdirs(r.fremote))
+	require.NoError(t, fs.Rmdirs(r.fremote, ""))
 
 	fstest.CheckListingWithPrecision(
 		t,

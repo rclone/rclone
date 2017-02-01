@@ -877,8 +877,6 @@ func Rmdir(f Fs, dir string) error {
 }
 
 // Purge removes a container and all of its contents
-//
-// FIXME doesn't delete local directories
 func Purge(f Fs) error {
 	doFallbackPurge := true
 	var err error
@@ -900,7 +898,7 @@ func Purge(f Fs) error {
 		if err != nil {
 			return err
 		}
-		err = Rmdir(f, "")
+		err = Rmdirs(f, "")
 	}
 	if err != nil {
 		Stats.Error()
@@ -1207,8 +1205,8 @@ func Cat(f Fs, w io.Writer) error {
 
 // Rmdirs removes any empty directories (or directories only
 // containing empty directories) under f, including f.
-func Rmdirs(f Fs) error {
-	list := NewLister().Start(f, "")
+func Rmdirs(f Fs, dir string) error {
+	list := NewLister().Start(f, dir)
 	dirEmpty := make(map[string]bool)
 	dirEmpty[""] = true
 	for {
