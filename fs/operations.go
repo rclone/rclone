@@ -20,11 +20,6 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-type jsonPrinter struct {
-	mu                sync.Mutex
-	seperatorRequired bool
-}
-
 // CalculateModifyWindow works out modify window for Fses passed in -
 // sets Config.ModifyWindow
 //
@@ -1365,6 +1360,12 @@ func CopyFile(fdst Fs, fsrc Fs, dstFileName string, srcFileName string) (err err
 	return moveOrCopyFile(fdst, fsrc, dstFileName, srcFileName, true)
 }
 
+// This struct stores vars that we can use to make sure that the parallel operations print synchronously 
+type jsonPrinter struct {
+	mu                sync.Mutex
+	seperatorRequired bool
+}
+
 func (j jsonPrinter) Start(w io.Writer) {
 	syncFprintf(w, "[")
 }
@@ -1373,15 +1374,15 @@ func (j jsonPrinter) End(w io.Writer) {
 	syncFprintf(w, "]")
 }
 
+// Fprintf makes sure that each json object is serpated with a comma
 func (j *jsonPrinter) Fprintf(w io.Writer, skipSeperator bool, format string, a ...interface{}) {
 	// Lets skip the seperator when calling the function itself
 	if j.seperatorRequired && !skipSeperator {
 		j.Fprintf(w, true, ",")
 	}
-	// Set the seperator before locking so parallel things don't get in the way of the lock
-	j.seperatorRequired = true
-
 	j.mu.Lock()
 	defer j.mu.Unlock()
+	// Set the seperator before locking so parallel things don't get in the way of the lock
+	j.seperatorRequired = true
 	_, _ = fmt.Fprintf(w, format, a...)
 }
