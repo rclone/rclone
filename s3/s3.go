@@ -76,6 +76,9 @@ func init() {
 				Value: "us-west-1",
 				Help:  "US West (Northern California) Region\nNeeds location constraint us-west-1.",
 			}, {
+				Value: "ca-central-1",
+				Help:  "Canada (Central) Region\nNeeds location constraint ca-central-1.",
+			}, {
 				Value: "eu-west-1",
 				Help:  "EU (Ireland) Region Region\nNeeds location constraint EU or eu-west-1.",
 			}, {
@@ -121,6 +124,9 @@ func init() {
 			}, {
 				Value: "us-west-1",
 				Help:  "US West (Northern California) Region.",
+			}, {
+				Value: "ca-central-1",
+				Help:  "Canada (Central) Region.",
 			}, {
 				Value: "eu-west-1",
 				Help:  "EU (Ireland) Region.",
