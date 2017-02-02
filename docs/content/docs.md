@@ -345,6 +345,10 @@ Normally rclone would skip any files that have the same
 modification time and are the same size (or have the same checksum if
 using `--checksum`).
 
+### --json ###
+
+Using this option will make rclone output all file and directory listings in JSON format.
+
 ### --log-file=FILE ###
 
 Log all of rclone's output to FILE.  This is not active by default.
