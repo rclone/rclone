@@ -1382,7 +1382,7 @@ func (j *jsonPrinter) Fprintf(w io.Writer, skipSeperator bool, format string, a 
 	}
 	j.mu.Lock()
 	defer j.mu.Unlock()
-	// Set the seperator before locking so parallel things don't get in the way of the lock
+	// Set the seperator as soon as we start printing so all further objects have the seperator
 	j.seperatorRequired = true
 	_, _ = fmt.Fprintf(w, format, a...)
 }
