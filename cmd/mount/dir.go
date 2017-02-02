@@ -420,3 +420,13 @@ func (d *Dir) Rename(ctx context.Context, req *fuse.RenameRequest, newDir fusefs
 	fs.ErrorLog(newPath, "Dir.Rename renamed from %q", oldPath)
 	return nil
 }
+
+// Check interface satisfied
+var _ fusefs.NodeFsyncer = (*Dir)(nil)
+
+// Fsync the directory
+//
+// Note that we don't do anything except return OK
+func (d *Dir) Fsync(ctx context.Context, req *fuse.FsyncRequest) error {
+	return nil
+}
