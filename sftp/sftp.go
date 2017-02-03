@@ -60,6 +60,7 @@ type Fs struct {
 	url        string
 	sshClient  *ssh.Client
 	sftpClient *sftp.Client
+	mkdirLock  *stringLock
 }
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -138,6 +139,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		sshClient:  sshClient,
 		sftpClient: sftpClient,
 		url:        "sftp://" + user + "@" + host + ":" + port + "/" + root,
+		mkdirLock:  newStringLock(),
 	}
 	f.features = (&fs.Features{}).Fill(f)
 	if root != "" {
@@ -321,6 +323,8 @@ func (f *Fs) mkParentDir(remote string) error {
 
 // mkdir makes the directory and parents using native paths
 func (f *Fs) mkdir(path string) error {
+	f.mkdirLock.Lock(path)
+	defer f.mkdirLock.Unlock(path)
 	if path == "." || path == "/" {
 		return nil
 	}
