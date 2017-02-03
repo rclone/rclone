@@ -1,0 +1,14 @@
+language: go
+go:
+  - 1.7.3
+before_install:
+- sudo mkdir --mode 0777 -p /var/ftp/incoming
+- sudo apt-get update -qq
+- sudo apt-get install -qq vsftpd
+- sudo cp $TRAVIS_BUILD_DIR/.vsftpd.conf /etc/vsftpd.conf
+- sudo service vsftpd restart
+- sudo sysctl net.ipv6.conf.lo.disable_ipv6=0
+- go get github.com/axw/gocov/gocov
+- go get github.com/mattn/goveralls
+script:
+- $GOPATH/bin/goveralls -service=travis-ci

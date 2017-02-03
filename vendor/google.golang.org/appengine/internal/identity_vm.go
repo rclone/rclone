@@ -2,11 +2,15 @@
 // Use of this source code is governed by the Apache 2.0
 // license that can be found in the LICENSE file.
 
+// +build !appengine
+
 package internal
 
 import (
 	"net/http"
 	"os"
+
+	netcontext "golang.org/x/net/context"
 )
 
 // These functions are implementations of the wrapper functions
@@ -18,16 +22,20 @@ const (
 	hDatacenter             = "X-AppEngine-Datacenter"
 )
 
-func DefaultVersionHostname(req interface{}) string {
-	return req.(*http.Request).Header.Get(hDefaultVersionHostname)
+func ctxHeaders(ctx netcontext.Context) http.Header {
+	return fromContext(ctx).Request().Header
 }
 
-func RequestID(req interface{}) string {
-	return req.(*http.Request).Header.Get(hRequestLogId)
+func DefaultVersionHostname(ctx netcontext.Context) string {
+	return ctxHeaders(ctx).Get(hDefaultVersionHostname)
 }
 
-func Datacenter(req interface{}) string {
-	return req.(*http.Request).Header.Get(hDatacenter)
+func RequestID(ctx netcontext.Context) string {
+	return ctxHeaders(ctx).Get(hRequestLogId)
+}
+
+func Datacenter(ctx netcontext.Context) string {
+	return ctxHeaders(ctx).Get(hDatacenter)
 }
 
 func ServerSoftware() string {
@@ -40,18 +48,18 @@ func ServerSoftware() string {
 
 // TODO(dsymonds): Remove the metadata fetches.
 
-func ModuleName() string {
+func ModuleName(_ netcontext.Context) string {
 	if s := os.Getenv("GAE_MODULE_NAME"); s != "" {
 		return s
 	}
 	return string(mustGetMetadata("instance/attributes/gae_backend_name"))
 }
 
-func VersionID() string {
-	if s := os.Getenv("GAE_MODULE_VERSION"); s != "" {
-		return s
+func VersionID(_ netcontext.Context) string {
+	if s1, s2 := os.Getenv("GAE_MODULE_VERSION"), os.Getenv("GAE_MINOR_VERSION"); s1 != "" && s2 != "" {
+		return s1 + "." + s2
 	}
-	return string(mustGetMetadata("instance/attributes/gae_backend_version"))
+	return string(mustGetMetadata("instance/attributes/gae_backend_version")) + "." + string(mustGetMetadata("instance/attributes/gae_backend_minor_version"))
 }
 
 func InstanceID() string {
@@ -70,7 +78,7 @@ func partitionlessAppID() string {
 	return appID
 }
 
-func fullyQualifiedAppID() string {
+func fullyQualifiedAppID(_ netcontext.Context) string {
 	appID := partitionlessAppID()
 
 	part := os.Getenv("GAE_PARTITION")
@@ -82,4 +90,8 @@ func fullyQualifiedAppID() string {
 		appID = part + "~" + appID
 	}
 	return appID
+}
+
+func IsDevAppServer() bool {
+	return os.Getenv("RUN_WITH_DEVAPPSERVER") != ""
 }

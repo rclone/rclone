@@ -27,10 +27,12 @@ It has these top-level messages:
 package log
 
 import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
 import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
+var _ = fmt.Errorf
 var _ = math.Inf
 
 type LogServiceError_ErrorCode int32
@@ -894,5 +896,4 @@ func (m *LogUsageResponse) GetSummary() *LogUsageRecord {
 }
 
 func init() {
-	proto.RegisterEnum("appengine.LogServiceError_ErrorCode", LogServiceError_ErrorCode_name, LogServiceError_ErrorCode_value)
 }

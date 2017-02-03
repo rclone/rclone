@@ -1,16 +1,23 @@
-# Go App Engine for Managed VMs
+# Go App Engine packages
 
-This repository supports the Go runtime for Managed VMs on App Engine.
+[![Build Status](https://travis-ci.org/golang/appengine.svg)](https://travis-ci.org/golang/appengine)
+
+This repository supports the Go runtime on App Engine,
+including both the standard App Engine and the
+"App Engine flexible environment" (formerly known as "Managed VMs").
 It provides APIs for interacting with App Engine services.
 Its canonical import path is `google.golang.org/appengine`.
 
-See https://cloud.google.com/appengine/docs/go/managed-vms/
+See https://cloud.google.com/appengine/docs/go/
 for more information.
+
+File issue reports and feature requests on the [Google App Engine issue
+tracker](https://code.google.com/p/googleappengine/issues/entry?template=Go%20defect).
 
 ## Directory structure
 The top level directory of this repository is the `appengine` package. It
 contains the
-basic types (e.g. `appengine.Context`) that are used across APIs. Specific API
+basic APIs (e.g. `appengine.NewContext`) that apply across APIs. Specific API
 packages are in subdirectories (e.g. `datastore`).
 
 There is an `internal` subdirectory that contains service protocol buffers,
@@ -19,27 +26,24 @@ should not directly import any package under `internal`.
 
 ## Updating a Go App Engine app
 
-This section describes how to update a traditional Go App Engine app to run on Managed VMs.
+This section describes how to update an older Go App Engine app to use
+these packages. A provided tool, `aefix`, can help automate steps 2 and 3
+(run `go get google.golang.org/appengine/cmd/aefix` to install it), but
+read the details below since `aefix` can't perform all the changes.
 
-### 1. Update YAML files
+### 1. Update YAML files (App Engine flexible environment / Managed VMs only)
 
 The `app.yaml` file (and YAML files for modules) should have these new lines added:
 ```
 vm: true
-manual_scaling:
-  instances: 1
 ```
 See https://cloud.google.com/appengine/docs/go/modules/#Go_Instance_scaling_and_class for details.
 
 ### 2. Update import paths
 
-The import paths for App Engine API packages need to be made relative to `google.golang.org/appengine`.
-You can do that manually, or by running this command to recursively update all Go source files in the current directory:
-(may require GNU sed)
-```
-sed -i '/"appengine/{s,"appengine,"google.golang.org/appengine,;s,appengine_,appengine/,}' \
-  $(find . -name '*.go')
-```
+The import paths for App Engine packages are now fully qualified, based at `google.golang.org/appengine`.
+You will need to update your code to use import paths starting with that; for instance,
+code importing `appengine/datastore` will now need to import `google.golang.org/appengine/datastore`.
 
 ### 3. Update code using deprecated, removed or modified APIs
 
@@ -47,15 +51,23 @@ Most App Engine services are available with exactly the same API.
 A few APIs were cleaned up, and some are not available yet.
 This list summarises the differences:
 
-* `appengine.Datacenter` now takes an `appengine.Context` argument.
+* `appengine.Context` has been replaced with the `Context` type from `golang.org/x/net/context`.
+* Logging methods that were on `appengine.Context` are now functions in `google.golang.org/appengine/log`.
+* `appengine.Timeout` has been removed. Use `context.WithTimeout` instead.
+* `appengine.Datacenter` now takes a `context.Context` argument.
 * `datastore.PropertyLoadSaver` has been simplified to use slices in place of channels.
+* `delay.Call` now returns an error.
 * `search.FieldLoadSaver` now handles document metadata.
+* `urlfetch.Transport` no longer has a Deadline field; set a deadline on the
+  `context.Context` instead.
+* `aetest` no longer declares its own Context type, and uses the standard one instead.
 * `taskqueue.QueueStats` no longer takes a maxTasks argument. That argument has been
   deprecated and unused for a long time.
-* `appengine/aetest`, `appengine/blobstore`, `appengine/cloudsql`
-  and `appengine/runtime` have not been ported yet.
 * `appengine.BackendHostname` and `appengine.BackendInstance` were for the deprecated backends feature.
   Use `appengine.ModuleHostname`and `appengine.ModuleName` instead.
-* `appengine.IsCapabilityDisabled` and `appengine/capability` are obsolete.
-* Most of `appengine/file` is deprecated. Use [Google Cloud Storage](https://code.google.com/p/google-api-go-client/wiki/GettingStarted) instead.
-* `appengine/socket` is deprecated. Use the standard `net` package instead.
+* Most of `appengine/file` and parts of `appengine/blobstore` are deprecated.
+  Use [Google Cloud Storage](https://godoc.org/cloud.google.com/go/storage) if the
+  feature you require is not present in the new
+  [blobstore package](https://google.golang.org/appengine/blobstore).
+* `appengine/socket` is not required on App Engine flexible environment / Managed VMs.
+  Use the standard `net` package instead.

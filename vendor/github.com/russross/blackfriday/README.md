@@ -169,6 +169,15 @@ implements the following extensions:
     You can use 3 or more backticks to mark the beginning of the
     block, and the same number to mark the end of the block.
 
+    To preserve classes of fenced code blocks while using the bluemonday
+    HTML sanitizer, use the following policy:
+
+    ``` go
+    p := bluemonday.UGCPolicy()
+    p.AllowAttrs("class").Matching(regexp.MustCompile("^language-[a-zA-Z0-9]+$")).OnElements("code")
+    html := p.SanitizeBytes(unsafe)
+    ```
+
 *   **Definition lists**. A simple definition list is made of a single-line
     term followed by a colon and the definition for that term.
 
