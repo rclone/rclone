@@ -471,6 +471,51 @@ func TestFsMove(t *testing.T) {
 	// 2: hello sausage?/../z.txt
 }
 
+// Copy src to this remote using server side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirCopy
+//
+// If destination exists then return fs.ErrorDirExists
+
+// TestFsDirCopy tests DirCopy
+func TestFsDirCopy(t *testing.T) {
+	skipIfNotOk(t)
+
+	// Check have DirCopy
+	doDirCopy := remote.Features().DirCopy
+	if doDirCopy == nil {
+		t.Skip("FS has no DirCopier interface")
+	}
+
+	// Check it can't copy onto itself
+	err := doDirCopy(remote)
+	require.Equal(t, fs.ErrorDirExists, err)
+
+	// new remote
+	newRemote, _, removeNewRemote, err := fstest.RandomRemote(RemoteName, false)
+	require.NoError(t, err)
+	defer removeNewRemote()
+
+	// try the copy
+	err = newRemote.Features().DirCopy(remote)
+	require.NoError(t, err)
+
+	// check remotes
+	// FIXME: Prints errors.
+	fstest.CheckListing(t, remote, []fstest.Item{})
+	fstest.CheckListing(t, newRemote, []fstest.Item{file2, file1})
+
+	// Delete copy
+	err = fs.Purge(newRemote)
+	require.NoError(t, err)
+
+	// check remotes
+	fstest.CheckListing(t, remote, []fstest.Item{file2, file1})
+	fstest.CheckListing(t, newRemote, []fstest.Item{})
+}
+
 // Move src to this remote using server side move operations.
 //
 // Will only be called if src.Fs().Name() == f.Name()

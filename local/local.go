@@ -485,6 +485,43 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	return dstObj, nil
 }
 
+// DirCopy copies src directory to this remote using server side copy
+// operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirCopy
+//
+// If destination exists then return fs.ErrorDirExists
+/*
+func (f *Fs) DirCopy(src fs.Fs) error {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		fs.Debug(srcFs, "Can't copy directory - not same remote type")
+		return fs.ErrorCantDirCopy
+	}
+	// Check if source exists
+	sstat, err := os.Lstat(srcFs.root)
+	if err != nil {
+		return err
+	}
+	// And is a directory
+	if !sstat.IsDir() {
+		return fs.ErrorCantDirCopy
+	}
+
+	// Check if destination exists
+	_, err = os.Lstat(f.root)
+	if !os.IsNotExist(err) {
+		return fs.ErrorDirExists
+	}
+
+	// Do the local copy
+	// FIXME
+	return errors.New("DirCopy not fully implemented")
+}
+*/
+
 // DirMove moves src directory to this remote using server side move
 // operations.
 //

@@ -2624,6 +2624,8 @@ Copy
 T}@T{
 Move
 T}@T{
+DirCopy
+T}@T{
 DirMove
 T}@T{
 CleanUp
@@ -2802,6 +2804,13 @@ If the server isn\[aq]t capable of \f[C]Move\f[] then rclone simulates
 it with \f[C]Copy\f[] then delete.
 If the server doesn\[aq]t support \f[C]Copy\f[] then rclone will
 download the file and re\-upload it.
+.SS DirCopy
+.PP
+This is used to implement \f[C]rclone\ copy\f[] to copy an entire
+directory tree if possible.
+If it isn\[aq]t then it will use \f[C]Copy\f[] on each file (which falls
+back to download and upload \- see \f[C]Copy\f[]
+section), and Mkdir on each directory (if implemented).
 .SS DirMove
 .PP
 This is used to implement \f[C]rclone\ move\f[] to move a directory if
