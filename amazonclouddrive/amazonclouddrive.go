@@ -625,23 +625,29 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	dstInfo, err := f.moveNode(srcObj.remote, dstLeaf, dstDirectoryID, srcObj.info, srcLeaf, srcDirectoryID, false)
+	err = f.moveNode(srcObj.remote, dstLeaf, dstDirectoryID, srcObj.info, srcLeaf, srcDirectoryID, false)
 	if err != nil {
 		return nil, err
 	}
-	dstObj := &Object{
-		fs:     f,
-		remote: remote,
-		info:   dstInfo,
-	}
-	// Wait for directory caching so we can no longer see the old object
+	// Wait for directory caching so we can no longer see the old
+	// object and see the new object
 	time.Sleep(200 * time.Millisecond) // enough time 90% of the time
+	var dstObj fs.Object
 	for i := 1; i <= fs.Config.LowLevelRetries; i++ {
-		_, err := srcObj.fs.NewObject(srcObj.remote) // try reading the object
-		if err == fs.ErrorObjectNotFound {
+		var srcErr, dstErr error
+		_, srcErr = srcObj.fs.NewObject(srcObj.remote) // try reading the object
+		if srcErr != nil && srcErr != fs.ErrorObjectNotFound {
+			// exit if error on source
+			return nil, srcErr
+		}
+		dstObj, dstErr = f.NewObject(remote)
+		if dstErr != nil && dstErr != fs.ErrorObjectNotFound {
+			// exit if error on dst
+			return nil, dstErr
+		}
+		if srcErr == fs.ErrorObjectNotFound && dstErr == nil {
+			// finished if src not found and dst found
 			break
-		} else if err != nil {
-			return nil, err
 		}
 		fs.Debug(src, "Wait for directory listing to update after move %d/%d", i, fs.Config.LowLevelRetries)
 		time.Sleep(1 * time.Second)
@@ -719,7 +725,7 @@ func (f *Fs) DirMove(src fs.Fs) (err error) {
 		return err
 	}
 
-	_, err = f.moveNode(srcFs.root, dstLeaf, dstDirectoryID, srcInfo, srcLeaf, srcDirectoryID, true)
+	err = f.moveNode(srcFs.root, dstLeaf, dstDirectoryID, srcInfo, srcLeaf, srcDirectoryID, true)
 
 	srcFs.dirCache.ResetRoot()
 	return err
@@ -1045,7 +1051,7 @@ func (f *Fs) removeParent(info *acd.Node, parentID string) error {
 
 // moveNode moves the node given from the srcLeaf,srcDirectoryID to
 // the dstLeaf,dstDirectoryID
-func (f *Fs) moveNode(name, dstLeaf, dstDirectoryID string, srcInfo *acd.Node, srcLeaf, srcDirectoryID string, useDirErrorMsgs bool) (dstInfo *acd.Node, err error) {
+func (f *Fs) moveNode(name, dstLeaf, dstDirectoryID string, srcInfo *acd.Node, srcLeaf, srcDirectoryID string, useDirErrorMsgs bool) (err error) {
 	// fs.Debug(name, "moveNode dst(%q,%s) <- src(%q,%s)", dstLeaf, dstDirectoryID, srcLeaf, srcDirectoryID)
 	cantMove := fs.ErrorCantMove
 	if useDirErrorMsgs {
@@ -1054,12 +1060,12 @@ func (f *Fs) moveNode(name, dstLeaf, dstDirectoryID string, srcInfo *acd.Node, s
 
 	if len(srcInfo.Parents) > 1 && srcLeaf != dstLeaf {
 		fs.Debug(name, "Move error: object is attached to multiple parents and should be renamed. This would change the name of the node in all parents.")
-		return nil, cantMove
+		return cantMove
 	}
 
 	if srcLeaf != dstLeaf {
 		// fs.Debug(name, "renaming")
-		dstInfo, err = f.renameNode(srcInfo, dstLeaf)
+		_, err = f.renameNode(srcInfo, dstLeaf)
 		if err != nil {
 			fs.Debug(name, "Move: quick path rename failed: %v", err)
 			goto OnConflict
@@ -1070,11 +1076,11 @@ func (f *Fs) moveNode(name, dstLeaf, dstDirectoryID string, srcInfo *acd.Node, s
 		err = f.replaceParent(srcInfo, srcDirectoryID, dstDirectoryID)
 		if err != nil {
 			fs.Debug(name, "Move: quick path parent replace failed: %v", err)
-			return nil, err
+			return err
 		}
 	}
 
-	return dstInfo, nil
+	return nil
 
 OnConflict:
 	fs.Debug(name, "Could not directly rename file, presumably because there was a file with the same name already. Instead, the file will now be trashed where such operations do not cause errors. It will be restored to the correct parent after. If any of the subsequent calls fails, the rename/move will be in an invalid state.")
@@ -1083,13 +1089,13 @@ OnConflict:
 	err = f.removeNode(srcInfo)
 	if err != nil {
 		fs.Debug(name, "Move: remove node failed: %v", err)
-		return nil, err
+		return err
 	}
 	// fs.Debug(name, "Renaming file")
 	_, err = f.renameNode(srcInfo, dstLeaf)
 	if err != nil {
 		fs.Debug(name, "Move: rename node failed: %v", err)
-		return nil, err
+		return err
 	}
 	// note: replacing parent is forbidden by API, modifying them individually is
 	// okay though
@@ -1097,21 +1103,21 @@ OnConflict:
 	err = f.addParent(srcInfo, dstDirectoryID)
 	if err != nil {
 		fs.Debug(name, "Move: addParent failed: %v", err)
-		return nil, err
+		return err
 	}
 	// fs.Debug(name, "removing original parent")
 	err = f.removeParent(srcInfo, srcDirectoryID)
 	if err != nil {
 		fs.Debug(name, "Move: removeParent failed: %v", err)
-		return nil, err
+		return err
 	}
 	// fs.Debug(name, "Restoring")
-	dstInfo, err = f.restoreNode(srcInfo)
+	_, err = f.restoreNode(srcInfo)
 	if err != nil {
 		fs.Debug(name, "Move: restoreNode node failed: %v", err)
-		return nil, err
+		return err
 	}
-	return dstInfo, nil
+	return nil
 }
 
 // MimeType of an Object if known, "" otherwise
