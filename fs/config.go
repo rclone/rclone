@@ -88,6 +88,7 @@ var (
 	noUpdateModTime = BoolP("no-update-modtime", "", false, "Don't update destination mod-time if files identical.")
 	backupDir       = StringP("backup-dir", "", "", "Make backups into hierarchy based in DIR.")
 	suffix          = StringP("suffix", "", "", "Suffix for use with --backup-dir.")
+	jsonOutput      = BoolP("json", "", false, "Output lists as JSON")
 	bwLimit         BwTimetable
 
 	// Key to use for password en/decryption.
@@ -212,6 +213,7 @@ type ConfigInfo struct {
 	DataRateUnit       string
 	BackupDir          string
 	Suffix             string
+	JsonOutput         bool
 }
 
 // Return the path to the configuration file
@@ -326,6 +328,7 @@ func LoadConfig() {
 	Config.NoUpdateModTime = *noUpdateModTime
 	Config.BackupDir = *backupDir
 	Config.Suffix = *suffix
+	Config.JsonOutput = *jsonOutput
 
 	ConfigPath = *configFile
 
