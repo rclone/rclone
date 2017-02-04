@@ -1,10 +1,6 @@
 package sftp
 
-import (
-	"sync"
-
-	"github.com/ncw/rclone/fs"
-)
+import "sync"
 
 // stringLock locks for string IDs passed in
 type stringLock struct {
@@ -29,7 +25,7 @@ func (l *stringLock) Lock(ID string) {
 		}
 		// Wait for the channel to be closed
 		l.mu.Unlock()
-		fs.Logf(nil, "Waiting for stringLock on %q", ID)
+		// fs.Logf(nil, "Waiting for stringLock on %q", ID)
 		<-ch
 		l.mu.Lock()
 	}
