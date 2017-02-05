@@ -660,55 +660,90 @@ func (f *Fs) DirCacheFlush() {
 	f.dirCache.ResetRoot()
 }
 
-// DirMove moves src directory to this remote using server side move
-// operations.
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server side move operations.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (f *Fs) DirMove(src fs.Fs) (err error) {
-	// go test -v -run '^Test(Setup|Init|FsMkdir|FsPutFile1|FsPutFile2|FsUpdateFile1|FsDirMove)$
+func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) (err error) {
 	srcFs, ok := src.(*Fs)
 	if !ok {
 		fs.Debugf(src, "DirMove error: not same remote type")
 		return fs.ErrorCantDirMove
 	}
-
-	// Check if destination exists
-	if f.dirCache.FoundRoot() {
-		fs.Debugf(src, "DirMove error: destination exists")
-		return fs.ErrorDirExists
-	}
+	srcPath := path.Join(srcFs.root, srcRemote)
+	dstPath := path.Join(f.root, dstRemote)
 
 	// Refuse to move to or from the root
-	if f.root == "" || srcFs.root == "" {
+	if srcPath == "" || dstPath == "" {
 		fs.Debugf(src, "DirMove error: Can't move root")
 		return errors.New("can't move root directory")
 	}
 
-	// Find ID of parent
-	dstLeaf, dstDirectoryID, err := f.dirCache.FindPath(f.root, true)
-	if err != nil {
-		return err
-	}
-
-	// Find the ID of the source and make a node from it
+	// find the root src directory
 	err = srcFs.dirCache.FindRoot(false)
 	if err != nil {
-		fs.Debugf(src, "DirMove error: error finding src root: %v", err)
 		return err
 	}
-	srcDirectoryID, err := srcFs.dirCache.RootParentID()
+
+	// find the root dst directory
+	if dstRemote != "" {
+		err = f.dirCache.FindRoot(true)
+		if err != nil {
+			return err
+		}
+	} else {
+		if f.dirCache.FoundRoot() {
+			return fs.ErrorDirExists
+		}
+	}
+
+	// Find ID of dst parent, creating subdirs if necessary
+	findPath := dstRemote
+	if dstRemote == "" {
+		findPath = f.root
+	}
+	dstLeaf, dstDirectoryID, err := f.dirCache.FindPath(findPath, true)
 	if err != nil {
-		fs.Debugf(src, "DirMove error: error finding src RootParentID: %v", err)
 		return err
 	}
-	srcLeaf, _ := dircache.SplitPath(srcFs.root)
+
+	// Check destination does not exist
+	if dstRemote != "" {
+		_, err = f.dirCache.FindDir(dstRemote, false)
+		if err == fs.ErrorDirNotFound {
+			// OK
+		} else if err != nil {
+			return err
+		} else {
+			return fs.ErrorDirExists
+		}
+	}
+
+	// Find ID of src parent
+	findPath = srcRemote
+	var srcDirectoryID string
+	if srcRemote == "" {
+		srcDirectoryID, err = srcFs.dirCache.RootParentID()
+	} else {
+		_, srcDirectoryID, err = srcFs.dirCache.FindPath(findPath, false)
+	}
+	if err != nil {
+		return err
+	}
+	srcLeaf, _ := dircache.SplitPath(srcPath)
+
+	// Find ID of src
+	srcID, err := srcFs.dirCache.FindDir(srcRemote, false)
+	if err != nil {
+		return err
+	}
 
 	// FIXME make a proper node.UpdateMetadata command
-	srcInfo := acd.NodeFromId(srcFs.dirCache.RootID(), f.c.Nodes)
+	srcInfo := acd.NodeFromId(srcID, f.c.Nodes)
 	var jsonStr string
 	err = srcFs.pacer.Call(func() (bool, error) {
 		jsonStr, err = srcInfo.GetMetadata()
@@ -724,10 +759,13 @@ func (f *Fs) DirMove(src fs.Fs) (err error) {
 		return err
 	}
 
-	err = f.moveNode(srcFs.root, dstLeaf, dstDirectoryID, srcInfo, srcLeaf, srcDirectoryID, true)
+	err = f.moveNode(srcPath, dstLeaf, dstDirectoryID, srcInfo, srcLeaf, srcDirectoryID, true)
+	if err != nil {
+		return err
+	}
 
-	srcFs.dirCache.ResetRoot()
-	return err
+	srcFs.dirCache.FlushDir(srcRemote)
+	return nil
 }
 
 // purgeCheck remotes the root directory, if check is set then it

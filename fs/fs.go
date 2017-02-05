@@ -256,15 +256,15 @@ type Features struct {
 	// If it isn't possible then return fs.ErrorCantMove
 	Move func(src Object, remote string) (Object, error)
 
-	// DirMove moves src to this remote using server side move
-	// operations.
+	// DirMove moves src, srcRemote to this remote at dstRemote
+	// using server side move operations.
 	//
 	// Will only be called if src.Fs().Name() == f.Name()
 	//
 	// If it isn't possible then return fs.ErrorCantDirMove
 	//
 	// If destination exists then return fs.ErrorDirExists
-	DirMove func(src Fs) error
+	DirMove func(src Fs, srcRemote, dstRemote string) error
 
 	// UnWrap returns the Fs that this Fs is wrapping
 	UnWrap func() Fs
@@ -412,15 +412,15 @@ type Mover interface {
 
 // DirMover is an optional interface for Fs
 type DirMover interface {
-	// DirMove moves src to this remote using server side move
-	// operations.
+	// DirMove moves src, srcRemote to this remote at dstRemote
+	// using server side move operations.
 	//
 	// Will only be called if src.Fs().Name() == f.Name()
 	//
 	// If it isn't possible then return fs.ErrorCantDirMove
 	//
 	// If destination exists then return fs.ErrorDirExists
-	DirMove(src Fs) error
+	DirMove(src Fs, srcRemote, dstRemote string) error
 }
 
 // UnWrapper is an optional interfaces for Fs

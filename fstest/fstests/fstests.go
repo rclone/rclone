@@ -481,6 +481,8 @@ func TestFsMove(t *testing.T) {
 // If destination exists then return fs.ErrorDirExists
 
 // TestFsDirMove tests DirMove
+//
+// go test -v -run '^Test(Setup|Init|FsMkdir|FsPutFile1|FsPutFile2|FsUpdateFile1|FsDirMove)$
 func TestFsDirMove(t *testing.T) {
 	skipIfNotOk(t)
 
@@ -491,7 +493,7 @@ func TestFsDirMove(t *testing.T) {
 	}
 
 	// Check it can't move onto itself
-	err := doDirMove(remote)
+	err := doDirMove(remote, "", "")
 	require.Equal(t, fs.ErrorDirExists, err)
 
 	// new remote
@@ -499,17 +501,23 @@ func TestFsDirMove(t *testing.T) {
 	require.NoError(t, err)
 	defer removeNewRemote()
 
+	const newName = "new_name/sub_new_name"
 	// try the move
-	err = newRemote.Features().DirMove(remote)
+	err = newRemote.Features().DirMove(remote, "", newName)
 	require.NoError(t, err)
 
 	// check remotes
 	// FIXME: Prints errors.
 	fstest.CheckListing(t, remote, []fstest.Item{})
-	fstest.CheckListing(t, newRemote, []fstest.Item{file2, file1})
+	file1Copy := file1
+	file1Copy.Path = path.Join(newName, file1.Path)
+	file2Copy := file2
+	file2Copy.Path = path.Join(newName, file2.Path)
+	file2Copy.WinPath = path.Join(newName, file2.WinPath)
+	fstest.CheckListing(t, newRemote, []fstest.Item{file2Copy, file1Copy})
 
 	// move it back
-	err = doDirMove(newRemote)
+	err = doDirMove(newRemote, newName, "")
 	require.NoError(t, err)
 
 	// check remotes

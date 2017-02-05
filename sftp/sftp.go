@@ -384,23 +384,25 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	return dstObj, nil
 }
 
-// DirMove moves src directory to this remote using server side move
-// operations.
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server side move operations.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (f *Fs) DirMove(src fs.Fs) error {
+func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
+	srcPath := path.Join(srcFs.root, srcRemote)
+	dstPath := path.Join(f.root, dstRemote)
 
 	// Check if destination exists
-	ok, err := f.dirExists(f.root)
+	ok, err := f.dirExists(dstPath)
 	if err != nil {
 		return errors.Wrap(err, "DirMove dirExists dst failed")
 	}
@@ -408,31 +410,19 @@ func (f *Fs) DirMove(src fs.Fs) error {
 		return fs.ErrorDirExists
 	}
 
-	// Refuse to move to or from the root
-	if f.root == "" || srcFs.root == "" {
-		fs.Debugf(src, "DirMove error: Can't move root")
-		return errors.New("can't move root directory")
-	}
-
 	// Make sure the parent directory exists
-	// err = f.mkParentDir(f.root)
-	// if err != nil {
-	// 	return errors.Wrap(err, "DirMove mkParentDir dst failed")
-	// }
-
-	// Make sure the source directory exists
-	err = srcFs.mkdir(srcFs.root)
+	err = f.mkdir(path.Dir(dstPath))
 	if err != nil {
-		return errors.Wrap(err, "DirMove mkdir src failed")
+		return errors.Wrap(err, "DirMove mkParentDir dst failed")
 	}
 
 	// Do the move
 	err = f.sftpClient.Rename(
-		srcFs.root,
-		f.root,
+		srcPath,
+		dstPath,
 	)
 	if err != nil {
-		return errors.Wrapf(err, "DirMove Rename(%q,%q) failed", srcFs.root, f.root)
+		return errors.Wrapf(err, "DirMove Rename(%q,%q) failed", srcPath, dstPath)
 	}
 	return nil
 }

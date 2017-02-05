@@ -254,15 +254,15 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	return f.newObject(oResult), nil
 }
 
-// DirMove moves src to this remote using server side move
-// operations.
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server side move operations.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (f *Fs) DirMove(src fs.Fs) error {
+func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	do := f.Fs.Features().DirMove
 	if do == nil {
 		return fs.ErrorCantDirMove
@@ -272,7 +272,7 @@ func (f *Fs) DirMove(src fs.Fs) error {
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
-	return do(srcFs.Fs)
+	return do(srcFs.Fs, f.cipher.EncryptDirName(srcRemote), f.cipher.EncryptDirName(dstRemote))
 }
 
 // PutUnchecked uploads the object

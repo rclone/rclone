@@ -1107,7 +1107,7 @@ func MoveDir(fdst, fsrc Fs) error {
 			return nil
 		}
 		Debugf(fdst, "Using server side directory move")
-		err := fdstDirMove(fsrc)
+		err := fdstDirMove(fsrc, "", "")
 		switch err {
 		case ErrorCantDirMove, ErrorDirExists:
 			Infof(fdst, "Server side directory move failed - fallback to file moves: %v", err)

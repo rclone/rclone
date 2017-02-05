@@ -791,34 +791,72 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	return dstObj, nil
 }
 
-// DirMove moves src directory to this remote using server side move
-// operations.
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server side move operations.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (f *Fs) DirMove(src fs.Fs) error {
+func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
-
-	// Check if destination exists
-	if f.dirCache.FoundRoot() {
-		return fs.ErrorDirExists
-	}
+	srcPath := path.Join(srcFs.root, srcRemote)
+	dstPath := path.Join(f.root, dstRemote)
 
 	// Refuse to move to or from the root
-	if f.root == "" || srcFs.root == "" {
+	if srcPath == "" || dstPath == "" {
 		fs.Debugf(src, "DirMove error: Can't move root")
 		return errors.New("can't move root directory")
 	}
 
-	// Find ID of parent
-	leaf, directoryID, err := f.dirCache.FindPath(f.root, true)
+	// find the root src directory
+	err := srcFs.dirCache.FindRoot(false)
+	if err != nil {
+		return err
+	}
+
+	// find the root dst directory
+	if dstRemote != "" {
+		err = f.dirCache.FindRoot(true)
+		if err != nil {
+			return err
+		}
+	} else {
+		if f.dirCache.FoundRoot() {
+			return fs.ErrorDirExists
+		}
+	}
+
+	// Find ID of dst parent, creating subdirs if necessary
+	var leaf, directoryID string
+	findPath := dstRemote
+	if dstRemote == "" {
+		findPath = f.root
+	}
+	leaf, directoryID, err = f.dirCache.FindPath(findPath, true)
+	if err != nil {
+		return err
+	}
+
+	// Check destination does not exist
+	if dstRemote != "" {
+		_, err = f.dirCache.FindDir(dstRemote, false)
+		if err == fs.ErrorDirNotFound {
+			// OK
+		} else if err != nil {
+			return err
+		} else {
+			return fs.ErrorDirExists
+		}
+	}
+
+	// Find ID of src
+	srcID, err := srcFs.dirCache.FindDir(srcRemote, false)
 	if err != nil {
 		return err
 	}
@@ -829,13 +867,13 @@ func (f *Fs) DirMove(src fs.Fs) error {
 		Parents: []*drive.ParentReference{{Id: directoryID}},
 	}
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.svc.Files.Patch(srcFs.dirCache.RootID(), &patch).Do()
+		_, err = f.svc.Files.Patch(srcID, &patch).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
 		return err
 	}
-	srcFs.dirCache.ResetRoot()
+	srcFs.dirCache.FlushDir(srcRemote)
 	return nil
 }
 
