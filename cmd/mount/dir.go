@@ -43,6 +43,17 @@ func newDir(f fs.Fs, fsDir *fs.Dir) *Dir {
 	}
 }
 
+// rename should be called after the directory is renamed
+//
+// Reset the directory to new state, discarding all the objects and
+// reading everything again
+func (d *Dir) rename(newParent *Dir, fsDir *fs.Dir) {
+	d.path = fsDir.Name
+	d.modTime = fsDir.When
+	d.items = nil
+	d.read = time.Time{}
+}
+
 // addObject adds a new object or directory to the directory
 //
 // note that we add new objects rather than updating old ones
@@ -160,7 +171,6 @@ var _ fusefs.Node = (*Dir)(nil)
 
 // Attr updates the attribes of a directory
 func (d *Dir) Attr(ctx context.Context, a *fuse.Attr) error {
-	fs.Debugf(d.path, "Dir.Attr")
 	a.Gid = gid
 	a.Uid = uid
 	a.Mode = os.ModeDir | dirPerms
@@ -168,7 +178,8 @@ func (d *Dir) Attr(ctx context.Context, a *fuse.Attr) error {
 	a.Mtime = d.modTime
 	a.Ctime = d.modTime
 	a.Crtime = d.modTime
-	// FIXME include Valid so get some caching? Also mtime
+	// FIXME include Valid so get some caching?
+	fs.Debugf(d.path, "Dir.Attr %+v", a)
 	return nil
 }
 
@@ -194,7 +205,7 @@ func (d *Dir) lookupNode(leaf string) (item *DirEntry, err error) {
 		return nil, err
 	}
 	item = d.addObject(item.o, node)
-	return item, err
+	return item, nil
 }
 
 // Check interface satisfied
@@ -367,46 +378,55 @@ func (d *Dir) Rename(ctx context.Context, req *fuse.RenameRequest, newDir fusefs
 		return err
 	}
 	var newObj fs.BasicInfo
+	oldNode := oldItem.node
 	switch x := oldItem.o.(type) {
 	case fs.Object:
 		oldObject := x
-		do, ok := d.f.(fs.Mover)
-		if !ok {
-			err := errors.Errorf("Fs %q can't Move files", d.f)
+		// FIXME: could Copy then Delete if Move not available
+		// - though care needed if case insensitive...
+		doMove := d.f.Features().Move
+		if doMove == nil {
+			err := errors.Errorf("Fs %q can't rename files (no Move)", d.f)
 			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 			return err
 		}
-		newObject, err := do.Move(oldObject, newPath)
+		newObject, err := doMove(oldObject, newPath)
 		if err != nil {
 			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 			return err
 		}
 		newObj = newObject
+		// Update the node with the new details
+		if oldNode != nil {
+			if oldFile, ok := oldNode.(*File); ok {
+				fs.Debugf(oldItem.o, "Updating file with %v %p", newObject, oldFile)
+				oldFile.rename(destDir, newObject)
+			}
+		}
 	case *fs.Dir:
-		oldDir := oldItem.node.(*Dir)
-		empty, err := oldDir.isEmpty()
-		if err != nil {
-			fs.Errorf(oldPath, "Dir.Rename dir error: %v", err)
+		doDirMove := d.f.Features().DirMove
+		if doDirMove == nil {
+			err := errors.Errorf("Fs %q can't rename directories (no DirMove)", d.f)
+			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 			return err
 		}
-		if !empty {
-			// return fuse.ENOTEMPTY - doesn't exist though so use EEXIST
-			fs.Errorf(oldPath, "Dir.Rename can't rename non empty directory")
-			return fuse.EEXIST
-		}
-		err = d.f.Rmdir(oldPath)
+		srcRemote := x.Name
+		dstRemote := newPath
+		err = doDirMove(d.f, srcRemote, dstRemote)
 		if err != nil {
-			fs.Errorf(oldPath, "Dir.Rename failed to remove directory: %v", err)
+			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 			return err
 		}
-		err = d.f.Mkdir(newPath)
-		if err != nil {
-			fs.Errorf(newPath, "Dir.Rename failed to create directory: %v", err)
-			return err
-		}
-		newObj = &fs.Dir{
-			Name: newPath,
-			When: time.Now(),
+		newDir := new(fs.Dir)
+		*newDir = *x
+		newDir.Name = newPath
+		newObj = newDir
+		// Update the node with the new details
+		if oldNode != nil {
+			if oldDir, ok := oldNode.(*Dir); ok {
+				fs.Debugf(oldItem.o, "Updating dir with %v %p", newDir, oldDir)
+				oldDir.rename(destDir, newDir)
+			}
 		}
 	default:
 		err = errors.Errorf("unknown type %T", oldItem)
@@ -416,16 +436,9 @@ func (d *Dir) Rename(ctx context.Context, req *fuse.RenameRequest, newDir fusefs
 
 	// Show moved - delete from old dir and add to new
 	d.delObject(req.OldName)
-	destDir.addObject(newObj, nil)
+	destDir.addObject(newObj, oldNode)
 
-	// FIXME need to flush the dir also
-
-	// FIXME use DirMover to move a directory?
-	// or maybe use MoveDir which can move anything
-	// fallback to Copy/Delete if no Move?
-	// if dir is empty then can move it
-
-	fs.Errorf(newPath, "Dir.Rename renamed from %q", oldPath)
+	fs.Debugf(newPath, "Dir.Rename renamed from %q", oldPath)
 	return nil
 }
 

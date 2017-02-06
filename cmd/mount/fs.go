@@ -85,10 +85,12 @@ func mount(f fs.Fs, mountpoint string) (<-chan error, error) {
 		f: f,
 	}
 
+	server := fusefs.New(c, nil)
+
 	// Serve the mount point in the background returning error to errChan
 	errChan := make(chan error, 1)
 	go func() {
-		err := fusefs.Serve(c, filesys)
+		err := server.Serve(filesys)
 		closeErr := c.Close()
 		if err == nil {
 			err = closeErr

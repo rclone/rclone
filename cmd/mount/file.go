@@ -31,6 +31,14 @@ func newFile(d *Dir, o fs.Object) *File {
 	}
 }
 
+// rename should be called to update f.o and f.d after a rename
+func (f *File) rename(d *Dir, o fs.Object) {
+	f.mu.Lock()
+	f.o = o
+	f.d = d
+	f.mu.Unlock()
+}
+
 // addWriters increments or decrements the writers
 func (f *File) addWriters(n int) {
 	f.mu.Lock()
@@ -45,7 +53,6 @@ var _ fusefs.Node = (*File)(nil)
 func (f *File) Attr(ctx context.Context, a *fuse.Attr) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	fs.Debugf(f.o, "File.Attr")
 	a.Gid = gid
 	a.Uid = uid
 	a.Mode = filePerms
@@ -63,6 +70,7 @@ func (f *File) Attr(ctx context.Context, a *fuse.Attr) error {
 		}
 	}
 	a.Blocks = (a.Size + 511) / 512
+	fs.Debugf(f.o, "File.Attr %+v", a)
 	return nil
 }
 
@@ -118,12 +126,18 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 		if noSeek {
 			resp.Flags |= fuse.OpenNonSeekable
 		}
-		return newReadFileHandle(o)
+		fh, err := newReadFileHandle(o)
+		if err != nil {
+			fs.Debugf(o, "File.Open failed to open for read: %v", err)
+			return nil, err
+		}
+		return fh, nil
 	case req.Flags.IsWriteOnly() || (req.Flags.IsReadWrite() && (req.Flags&fuse.OpenTruncate) != 0):
 		resp.Flags |= fuse.OpenNonSeekable
 		src := newCreateInfo(f.d.f, o.Remote())
 		fh, err := newWriteFileHandle(f.d, f, src)
 		if err != nil {
+			fs.Debugf(o, "File.Open failed to open for write: %v", err)
 			return nil, err
 		}
 		return fh, nil

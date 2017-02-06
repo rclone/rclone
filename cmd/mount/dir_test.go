@@ -3,6 +3,7 @@
 package mount
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 
@@ -70,13 +71,21 @@ func TestDirRenameFile(t *testing.T) {
 	run.createFile(t, "file", "potato")
 	run.checkDir(t, "dir/|file 6")
 
-	err := os.Rename(run.path("file"), run.path("dir/file2"))
+	err := os.Rename(run.path("file"), run.path("file2"))
 	require.NoError(t, err)
-	run.checkDir(t, "dir/|dir/file2 6")
+	run.checkDir(t, "dir/|file2 6")
 
-	err = os.Rename(run.path("dir/file2"), run.path("dir/file3"))
+	data, err := ioutil.ReadFile(run.path("file2"))
+	require.NoError(t, err)
+	assert.Equal(t, "potato", string(data))
+
+	err = os.Rename(run.path("file2"), run.path("dir/file3"))
 	require.NoError(t, err)
 	run.checkDir(t, "dir/|dir/file3 6")
+
+	data, err = ioutil.ReadFile(run.path("dir/file3"))
+	require.NoError(t, err)
+	assert.Equal(t, "potato", string(data))
 
 	run.rm(t, "dir/file3")
 	run.rmdir(t, "dir")
@@ -112,22 +121,15 @@ func TestDirRenameFullDir(t *testing.T) {
 	run.checkDir(t, "dir/|dir1/|dir1/potato.txt 11")
 
 	err := os.Rename(run.path("dir1"), run.path("dir/dir2"))
-	require.Error(t, err, "file exists")
-	// Can't currently rename directories with stuff in
-	/*
-			require.NoError(t, err)
-			run.checkDir(t, "dir/|dir/dir2/|dir/dir2/potato.txt 11")
+	require.NoError(t, err)
+	run.checkDir(t, "dir/|dir/dir2/|dir/dir2/potato.txt 11")
 
-			err = os.Rename(run.path("dir/dir2"), run.path("dir/dir3"))
-			require.NoError(t, err)
-			run.checkDir(t, "dir/|dir/dir3/|dir/dir3/potato.txt 11")
+	err = os.Rename(run.path("dir/dir2"), run.path("dir/dir3"))
+	require.NoError(t, err)
+	run.checkDir(t, "dir/|dir/dir3/|dir/dir3/potato.txt 11")
 
-		run.rm(t, "dir/dir3/potato.txt")
-		run.rmdir(t, "dir/dir3")
-	*/
-
-	run.rm(t, "dir1/potato.txt")
-	run.rmdir(t, "dir1")
+	run.rm(t, "dir/dir3/potato.txt")
+	run.rmdir(t, "dir/dir3")
 	run.rmdir(t, "dir")
 	run.checkDir(t, "")
 }
