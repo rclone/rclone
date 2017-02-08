@@ -722,6 +722,8 @@ This option defaults to `false`.
 
 The `--no-traverse` flag controls whether the destination file system
 is traversed when using the `copy` or `move` commands.
+`--no-traverse` is not compatible with `sync` and will be ignored if
+you supply it with `sync`.
 
 If you are only copying a small number of files and/or have a large
 number of files on the destination then `--no-traverse` will stop

@@ -72,7 +72,7 @@ func newSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool) (*syncCo
 		trackRenamesCh: make(chan Object, Config.Checkers),
 	}
 	if s.noTraverse && s.deleteMode != DeleteModeOff {
-		Debug(s.fdst, "Ignoring --no-traverse with sync")
+		ErrorLog(nil, "Ignoring --no-traverse with sync")
 		s.noTraverse = false
 	}
 	if s.trackRenames {
@@ -92,7 +92,7 @@ func newSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool) (*syncCo
 			s.deleteMode = DeleteModeAfter
 		}
 		if s.noTraverse {
-			Debug(s.fdst, "Ignoring --no-traverse with --track-renames")
+			ErrorLog(nil, "Ignoring --no-traverse with --track-renames")
 			s.noTraverse = false
 		}
 	}
