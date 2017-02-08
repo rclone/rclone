@@ -5,6 +5,7 @@ package fs
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"mime"
 	"path"
@@ -1236,7 +1237,14 @@ func CleanUp(f Fs) error {
 }
 
 // Cat any files to the io.Writer
-func Cat(f Fs, w io.Writer) error {
+//
+// if offset == 0 it will be ignored
+// if offset > 0 then the file will be seeked to that offset
+// if offset < 0 then the file will be seeked that far from the end
+//
+// if count < 0 then it will be ignored
+// if count >= 0 then only that many characters will be output
+func Cat(f Fs, w io.Writer, offset, count int64) error {
 	var mu sync.Mutex
 	return ListFn(f, func(o Object) {
 		var err error
@@ -1244,13 +1252,23 @@ func Cat(f Fs, w io.Writer) error {
 		defer func() {
 			Stats.DoneTransferring(o.Remote(), err == nil)
 		}()
-		mu.Lock()
-		defer mu.Unlock()
-		in, err := o.Open()
+		thisOffset := offset
+		if thisOffset < 0 {
+			thisOffset += o.Size()
+		}
+		var options []OpenOption
+		if thisOffset > 0 {
+			options = append(options, &SeekOption{Offset: thisOffset})
+		}
+		in, err := o.Open(options...)
 		if err != nil {
 			Stats.Error()
 			ErrorLog(o, "Failed to open: %v", err)
 			return
+		}
+		reader := in
+		if count >= 0 {
+			reader = ioutil.NopCloser(&io.LimitedReader{R: in, N: count})
 		}
 		defer func() {
 			err = in.Close()
@@ -1259,7 +1277,10 @@ func Cat(f Fs, w io.Writer) error {
 				ErrorLog(o, "Failed to close: %v", err)
 			}
 		}()
-		inAccounted := NewAccountWithBuffer(in, o) // account and buffer the transfer
+		inAccounted := NewAccountWithBuffer(reader, o) // account and buffer the transfer
+		// take the lock just before we output stuff, so at the last possible moment
+		mu.Lock()
+		defer mu.Unlock()
 		_, err = io.Copy(w, inAccounted)
 		if err != nil {
 			Stats.Error()
