@@ -1262,10 +1262,13 @@ func Cat(f Fs, w io.Writer, offset, count int64) error {
 		defer func() {
 			Stats.DoneTransferring(o.Remote(), err == nil)
 		}()
+		size := o.Size()
 		thisOffset := offset
 		if thisOffset < 0 {
-			thisOffset += o.Size()
+			thisOffset += size
 		}
+		// size remaining is now reduced by thisOffset
+		size -= thisOffset
 		var options []OpenOption
 		if thisOffset > 0 {
 			options = append(options, &SeekOption{Offset: thisOffset})
@@ -1278,8 +1281,12 @@ func Cat(f Fs, w io.Writer, offset, count int64) error {
 		}
 		if count >= 0 {
 			in = &readCloser{Reader: &io.LimitedReader{R: in, N: count}, Closer: in}
+			// reduce remaining size to count
+			if size > count {
+				size = count
+			}
 		}
-		in = NewAccountWithBuffer(in, o) // account and buffer the transfer
+		in = NewAccountSizeNameWithBuffer(in, size, o.Remote()) // account and buffer the transfer
 		defer func() {
 			err = in.Close()
 			if err != nil {
