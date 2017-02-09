@@ -105,8 +105,9 @@ func newRun() *Run {
 	// "RCLONE_CONFIG_PASS=hunter2" (or your password)
 	*fs.AskPassword = false
 	fs.LoadConfig()
-	fs.Config.Verbose = *Verbose
-	fs.Config.Quiet = !*Verbose
+	if *Verbose {
+		fs.Config.LogLevel = fs.LogLevelDebug
+	}
 	fs.Config.DumpHeaders = *DumpHeaders
 	fs.Config.DumpBodies = *DumpBodies
 	fs.Config.LowLevelRetries = *LowLevelRetries

@@ -274,12 +274,10 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	if err != nil {
 		log.Fatalf("Failed to %s: %v", cmd.Name(), err)
 	}
-	if showStats && (!fs.Config.Quiet || fs.Stats.Errored() || *statsInterval > 0) {
+	if showStats && (fs.Stats.Errored() || *statsInterval > 0) {
 		fs.Infof(nil, "%s", fs.Stats)
 	}
-	if fs.Config.Verbose {
-		fs.Debugf(nil, "Go routines at exit %d\n", runtime.NumGoroutine())
-	}
+	fs.Debugf(nil, "Go routines at exit %d\n", runtime.NumGoroutine())
 	if fs.Stats.Errored() {
 		os.Exit(1)
 	}

@@ -26,6 +26,7 @@ import (
 
 	"github.com/Unknwon/goconfig"
 	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/text/unicode/norm"
 )
@@ -56,8 +57,9 @@ var (
 	// Config is the global config
 	Config = &ConfigInfo{}
 	// Flags
-	verbose         = BoolP("verbose", "v", false, "Print lots more stuff")
+	verbose         = CountP("verbose", "v", "Print lots more stuff (repeat for more)")
 	quiet           = BoolP("quiet", "q", false, "Print as little stuff as possible")
+	logLevel        = StringP("log-level", "", "INFO", "Log level DEBUG|INFO|NOTICE|ERROR")
 	modifyWindow    = DurationP("modify-window", "", time.Nanosecond, "Max time diff to be considered the same")
 	checkers        = IntP("checkers", "", 8, "Number of checkers to run in parallel.")
 	transfers       = IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
@@ -182,8 +184,7 @@ func MustReveal(x string) string {
 
 // ConfigInfo is filesystem config options
 type ConfigInfo struct {
-	Verbose            bool
-	Quiet              bool
+	LogLevel           LogLevel
 	DryRun             bool
 	CheckSum           bool
 	SizeOnly           bool
@@ -300,8 +301,39 @@ func LoadConfig() {
 	// Read some flags if set
 	//
 	// FIXME read these from the config file too
-	Config.Verbose = *verbose
-	Config.Quiet = *quiet
+	Config.LogLevel = LogLevelNotice
+	if *verbose >= 2 {
+		Config.LogLevel = LogLevelDebug
+	} else if *verbose >= 1 {
+		Config.LogLevel = LogLevelInfo
+	}
+	if *quiet {
+		if *verbose > 0 {
+			log.Fatalf("Can't set -v and -q")
+		}
+		Config.LogLevel = LogLevelError
+	}
+	logLevelFlag := pflag.Lookup("log-level")
+	if logLevelFlag != nil && logLevelFlag.Changed {
+		if *verbose > 0 {
+			log.Fatalf("Can't set -v and --log-level")
+		}
+		if *quiet {
+			log.Fatalf("Can't set -q and --log-level")
+		}
+		switch strings.ToUpper(*logLevel) {
+		case "ERROR":
+			Config.LogLevel = LogLevelError
+		case "NOTICE":
+			Config.LogLevel = LogLevelNotice
+		case "INFO":
+			Config.LogLevel = LogLevelInfo
+		case "DEBUG":
+			Config.LogLevel = LogLevelDebug
+		default:
+			log.Fatalf("Unknown --log-level %q", *logLevel)
+		}
+	}
 	Config.ModifyWindow = *modifyWindow
 	Config.Checkers = *checkers
 	Config.Transfers = *transfers

@@ -313,3 +313,12 @@ func StringArrayP(name, shorthand string, value []string, usage string) (out *[]
 	setDefaultFromEnv(name)
 	return out
 }
+
+// CountP defines a flag which can be overridden by an environment variable
+//
+// It is a thin wrapper around pflag.CountP
+func CountP(name, shorthand string, usage string) (out *int) {
+	out = pflag.CountP(name, shorthand, usage)
+	setDefaultFromEnv(name)
+	return out
+}

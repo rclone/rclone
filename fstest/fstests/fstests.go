@@ -73,8 +73,9 @@ func TestInit(t *testing.T) {
 	for _, item := range ExtraConfig {
 		fs.ConfigFileSet(item.Name, item.Key, item.Value)
 	}
-	fs.Config.Verbose = *verbose
-	fs.Config.Quiet = !*verbose
+	if *verbose {
+		fs.Config.LogLevel = fs.LogLevelDebug
+	}
 	fs.Config.DumpHeaders = *dumpHeaders
 	fs.Config.DumpBodies = *dumpBodies
 	t.Logf("Using remote %q", RemoteName)

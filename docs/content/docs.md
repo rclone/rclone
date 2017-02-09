@@ -362,6 +362,22 @@ This can be useful for tracking down problems with syncs in
 combination with the `-v` flag.  See the Logging section for more
 info.
 
+### --log-level LEVEL ###
+
+This sets the log level for rclone.  The default log level is `INFO`.
+
+`DEBUG` is equivalent to `-vv`. It outputs lots of debug info - useful
+for bug reports and really finding out what rclone is doing.
+
+`INFO` is equivalent to `-v`. It outputs information about each transfer
+and prints stats once a minute by default.
+
+`NOTICE` is the default log level if no logging flags are supplied. It
+outputs very little when things are working normally. It outputs
+warnings and significant events.
+
+`ERROR` is equivalent to `-q`. It only output error messages.
+
 ### --low-level-retries NUMBER ###
 
 This controls the number of low level retries rclone does.
@@ -568,12 +584,14 @@ This can be useful when transferring to a remote which doesn't support
 mod times directly as it is more accurate than a `--size-only` check
 and faster than using `--checksum`.
 
-### -v, --verbose ###
+### -v, -vv, --verbose ###
 
-If you set this flag, rclone will become very verbose telling you
-about every file it considers and transfers.
+With `-v` rclone will tell you about each file that is transferred and
+a small number of significant events.
 
-Very useful for debugging.
+With `-vv` rclone will become very verbose telling you about every
+file it considers and transfers.  Please send bug reports with a log
+with this setting.
 
 ### -V, --version ###
 
@@ -762,21 +780,33 @@ See the [filtering section](/filtering/).
 Logging
 -------
 
-rclone has 3 levels of logging, `Error`, `Info` and `Debug`.
+rclone has 4 levels of logging, `Error`, `Notice`, `Info` and `Debug`.
 
-By default rclone logs `Error` and `Info` to standard error and `Debug`
-to standard output.  This means you can redirect standard output and
-standard error to different places.
+By default rclone logs to standard error.  This means you can redirect
+standard error and still see the normal output of rclone commands (eg
+`rclone ls`).
 
-By default rclone will produce `Error` and `Info` level messages.
+By default rclone will produce `Error` and `Notice` level messages.
 
 If you use the `-q` flag, rclone will only produce `Error` messages.
 
-If you use the `-v` flag, rclone will produce `Error`, `Info` and
-`Debug` messages.
+If you use the `-v` flag, rclone will produce `Error`, `Notice` and
+`Info` messages.
+
+If you use the `-vv` flag, rclone will produce `Error`, `Notice`,
+`Info` and `Debug` messages.
+
+You can also control the log levels with the `--log-level` flag.
 
 If you use the `--log-file=FILE` option, rclone will redirect `Error`,
 `Info` and `Debug` messages along with standard error to FILE.
+
+If you use the `--syslog` flag then rclone will log to syslog and the
+`--syslog-facility` control which facility it uses.
+
+Rclone prefixes all log messages with their level in capitals, eg INFO
+which makes it easy to grep the log file for different kinds of
+information.
 
 Exit Code
 ---------
