@@ -5,7 +5,6 @@ package fs
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"mime"
 	"path"
@@ -1236,6 +1235,17 @@ func CleanUp(f Fs) error {
 	return doCleanUp()
 }
 
+// wrap a Reader and a Closer together into a ReadCloser
+type readCloser struct {
+	io.Reader
+	Closer io.Closer
+}
+
+// Close the Closer
+func (r *readCloser) Close() error {
+	return r.Closer.Close()
+}
+
 // Cat any files to the io.Writer
 //
 // if offset == 0 it will be ignored
@@ -1266,10 +1276,10 @@ func Cat(f Fs, w io.Writer, offset, count int64) error {
 			ErrorLog(o, "Failed to open: %v", err)
 			return
 		}
-		reader := in
 		if count >= 0 {
-			reader = ioutil.NopCloser(&io.LimitedReader{R: in, N: count})
+			in = &readCloser{Reader: &io.LimitedReader{R: in, N: count}, Closer: in}
 		}
+		in = NewAccountWithBuffer(in, o) // account and buffer the transfer
 		defer func() {
 			err = in.Close()
 			if err != nil {
@@ -1277,11 +1287,10 @@ func Cat(f Fs, w io.Writer, offset, count int64) error {
 				ErrorLog(o, "Failed to close: %v", err)
 			}
 		}()
-		inAccounted := NewAccountWithBuffer(reader, o) // account and buffer the transfer
 		// take the lock just before we output stuff, so at the last possible moment
 		mu.Lock()
 		defer mu.Unlock()
-		_, err = io.Copy(w, inAccounted)
+		_, err = io.Copy(w, in)
 		if err != nil {
 			Stats.Error()
 			ErrorLog(o, "Failed to send to output: %v", err)
