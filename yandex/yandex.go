@@ -193,7 +193,7 @@ func (f *Fs) listDir(fn listFn) (err error) {
 					return err
 				}
 			default:
-				fs.Debug(f, "Unknown resource type %q", element.ResourceType)
+				fs.Debugf(f, "Unknown resource type %q", element.ResourceType)
 			}
 		}
 	}
@@ -347,7 +347,7 @@ func (o *Object) setMetaData(info *yandex.ResourceInfoResponse) {
 	}
 	t, err := time.Parse(time.RFC3339Nano, modTimeString)
 	if err != nil {
-		fs.Log("Failed to parse modtime from %q: %v", modTimeString, err)
+		fs.Logf("Failed to parse modtime from %q: %v", modTimeString, err)
 	} else {
 		o.modTime = t
 	}
@@ -494,7 +494,7 @@ func (o *Object) Size() int64 {
 func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Log(o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime
@@ -614,7 +614,7 @@ func mkDirFullPath(client *yandex.Client, path string) error {
 func (o *Object) MimeType() string {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Log(o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return ""
 	}
 	return o.mimeType

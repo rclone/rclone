@@ -54,11 +54,11 @@ var _ fusefs.HandleWriter = (*WriteFileHandle)(nil)
 
 // Write data to the file handle
 func (fh *WriteFileHandle) Write(ctx context.Context, req *fuse.WriteRequest, resp *fuse.WriteResponse) error {
-	fs.Debug(fh.remote, "WriteFileHandle.Write len=%d", len(req.Data))
+	fs.Debugf(fh.remote, "WriteFileHandle.Write len=%d", len(req.Data))
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
 	if fh.closed {
-		fs.ErrorLog(fh.remote, "WriteFileHandle.Write error: %v", errClosedFileHandle)
+		fs.Errorf(fh.remote, "WriteFileHandle.Write error: %v", errClosedFileHandle)
 		return errClosedFileHandle
 	}
 	fh.writeCalled = true
@@ -67,10 +67,10 @@ func (fh *WriteFileHandle) Write(ctx context.Context, req *fuse.WriteRequest, re
 	resp.Size = n
 	fh.file.written(int64(n))
 	if err != nil {
-		fs.ErrorLog(fh.remote, "WriteFileHandle.Write error: %v", err)
+		fs.Errorf(fh.remote, "WriteFileHandle.Write error: %v", err)
 		return err
 	}
-	fs.Debug(fh.remote, "WriteFileHandle.Write OK (%d bytes written)", n)
+	fs.Debugf(fh.remote, "WriteFileHandle.Write OK (%d bytes written)", n)
 	return nil
 }
 
@@ -119,19 +119,19 @@ var _ fusefs.HandleFlusher = (*WriteFileHandle)(nil)
 func (fh *WriteFileHandle) Flush(ctx context.Context, req *fuse.FlushRequest) error {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
-	fs.Debug(fh.remote, "WriteFileHandle.Flush")
+	fs.Debugf(fh.remote, "WriteFileHandle.Flush")
 	// If Write hasn't been called then ignore the Flush - Release
 	// will pick it up
 	if !fh.writeCalled {
-		fs.Debug(fh.remote, "WriteFileHandle.Flush ignoring flush on unwritten handle")
+		fs.Debugf(fh.remote, "WriteFileHandle.Flush ignoring flush on unwritten handle")
 		return nil
 
 	}
 	err := fh.close()
 	if err != nil {
-		fs.ErrorLog(fh.remote, "WriteFileHandle.Flush error: %v", err)
+		fs.Errorf(fh.remote, "WriteFileHandle.Flush error: %v", err)
 	} else {
-		fs.Debug(fh.remote, "WriteFileHandle.Flush OK")
+		fs.Debugf(fh.remote, "WriteFileHandle.Flush OK")
 	}
 	return err
 }
@@ -146,15 +146,15 @@ func (fh *WriteFileHandle) Release(ctx context.Context, req *fuse.ReleaseRequest
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
 	if fh.closed {
-		fs.Debug(fh.remote, "WriteFileHandle.Release nothing to do")
+		fs.Debugf(fh.remote, "WriteFileHandle.Release nothing to do")
 		return nil
 	}
-	fs.Debug(fh.remote, "WriteFileHandle.Release closing")
+	fs.Debugf(fh.remote, "WriteFileHandle.Release closing")
 	err := fh.close()
 	if err != nil {
-		fs.ErrorLog(fh.remote, "WriteFileHandle.Release error: %v", err)
+		fs.Errorf(fh.remote, "WriteFileHandle.Release error: %v", err)
 	} else {
-		fs.Debug(fh.remote, "WriteFileHandle.Release OK")
+		fs.Debugf(fh.remote, "WriteFileHandle.Release OK")
 	}
 	return err
 }

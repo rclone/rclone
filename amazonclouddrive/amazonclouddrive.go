@@ -157,14 +157,14 @@ func (f *Fs) shouldRetry(resp *http.Response, err error) (bool, error) {
 	if resp != nil {
 		if resp.StatusCode == 401 {
 			f.tokenRenewer.Invalidate()
-			fs.Debug(f, "401 error received - invalidating token")
+			fs.Debugf(f, "401 error received - invalidating token")
 			return true, err
 		}
 		// Work around receiving this error sporadically on authentication
 		//
 		// HTTP code 403: "403 Forbidden", reponse body: {"message":"Authorization header requires 'Credential' parameter. Authorization header requires 'Signature' parameter. Authorization header requires 'SignedHeaders' parameter. Authorization header requires existence of either a 'X-Amz-Date' or a 'Date' header. Authorization=Bearer"}
 		if resp.StatusCode == 403 && strings.Contains(err.Error(), "Authorization header requires") {
-			fs.Log(f, "403 \"Authorization header requires...\" error received - retry")
+			fs.Logf(f, "403 \"Authorization header requires...\" error received - retry")
 			return true, err
 		}
 	}
@@ -280,7 +280,7 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err error) {
-	//fs.Debug(f, "FindLeaf(%q, %q)", pathID, leaf)
+	//fs.Debugf(f, "FindLeaf(%q, %q)", pathID, leaf)
 	folder := acd.FolderFromId(pathID, f.c.Nodes)
 	var resp *http.Response
 	var subFolder *acd.Folder
@@ -290,18 +290,18 @@ func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err er
 	})
 	if err != nil {
 		if err == acd.ErrorNodeNotFound {
-			//fs.Debug(f, "...Not found")
+			//fs.Debugf(f, "...Not found")
 			return "", false, nil
 		}
-		//fs.Debug(f, "...Error %v", err)
+		//fs.Debugf(f, "...Error %v", err)
 		return "", false, err
 	}
 	if subFolder.Status != nil && *subFolder.Status != statusAvailable {
-		fs.Debug(f, "Ignoring folder %q in state %q", leaf, *subFolder.Status)
+		fs.Debugf(f, "Ignoring folder %q in state %q", leaf, *subFolder.Status)
 		time.Sleep(1 * time.Second) // FIXME wait for problem to go away!
 		return "", false, nil
 	}
-	//fs.Debug(f, "...Found(%q, %v)", *subFolder.Id, leaf)
+	//fs.Debugf(f, "...Found(%q, %v)", *subFolder.Id, leaf)
 	return *subFolder.Id, true, nil
 }
 
@@ -397,7 +397,7 @@ func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly
 
 // ListDir reads the directory specified by the job into out, returning any more jobs
 func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.ListDirJob, err error) {
-	fs.Debug(f, "Reading %q", job.Path)
+	fs.Debugf(f, "Reading %q", job.Path)
 	maxTries := fs.Config.LowLevelRetries
 	for tries := 1; tries <= maxTries; tries++ {
 		_, err = f.listAll(job.DirID, "", false, false, func(node *acd.Node) bool {
@@ -433,7 +433,7 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 			return false
 		})
 		if fs.IsRetryError(err) {
-			fs.Debug(f, "Directory listing error for %q: %v - low level retry %d/%d", job.Path, err, tries, maxTries)
+			fs.Debugf(f, "Directory listing error for %q: %v - low level retry %d/%d", job.Path, err, tries, maxTries)
 			continue
 		}
 		if err != nil {
@@ -441,7 +441,7 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 		}
 		break
 	}
-	fs.Debug(f, "Finished reading %q", job.Path)
+	fs.Debugf(f, "Finished reading %q", job.Path)
 	return jobs, err
 }
 
@@ -488,13 +488,13 @@ func (f *Fs) checkUpload(resp *http.Response, in io.Reader, src fs.ObjectInfo, i
 	buf := make([]byte, 1)
 	n, err := in.Read(buf)
 	if !(n == 0 && err == io.EOF) {
-		fs.Debug(src, "Upload error detected but didn't finish upload: %v (%q)", inErr, httpStatus)
+		fs.Debugf(src, "Upload error detected but didn't finish upload: %v (%q)", inErr, httpStatus)
 		return false, inInfo, inErr
 	}
 
 	// Don't wait for uploads - assume they will appear later
 	if *uploadWaitPerGB <= 0 {
-		fs.Debug(src, "Upload error detected but waiting disabled: %v (%q)", inErr, httpStatus)
+		fs.Debugf(src, "Upload error detected but waiting disabled: %v (%q)", inErr, httpStatus)
 		return false, inInfo, inErr
 	}
 
@@ -505,27 +505,27 @@ func (f *Fs) checkUpload(resp *http.Response, in io.Reader, src fs.ObjectInfo, i
 	const sleepTime = 5 * time.Second                        // sleep between tries
 	retries := int((timeToWait + sleepTime - 1) / sleepTime) // number of retries, rounded up
 
-	fs.Debug(src, "Error detected after finished upload - waiting to see if object was uploaded correctly: %v (%q)", inErr, httpStatus)
+	fs.Debugf(src, "Error detected after finished upload - waiting to see if object was uploaded correctly: %v (%q)", inErr, httpStatus)
 	remote := src.Remote()
 	for i := 1; i <= retries; i++ {
 		o, err := f.NewObject(remote)
 		if err == fs.ErrorObjectNotFound {
-			fs.Debug(src, "Object not found - waiting (%d/%d)", i, retries)
+			fs.Debugf(src, "Object not found - waiting (%d/%d)", i, retries)
 		} else if err != nil {
-			fs.Debug(src, "Object returned error - waiting (%d/%d): %v", i, retries, err)
+			fs.Debugf(src, "Object returned error - waiting (%d/%d): %v", i, retries, err)
 		} else {
 			if src.Size() == o.Size() {
-				fs.Debug(src, "Object found with correct size %d after waiting (%d/%d) - %v - returning with no error", src.Size(), i, retries, sleepTime*time.Duration(i-1))
+				fs.Debugf(src, "Object found with correct size %d after waiting (%d/%d) - %v - returning with no error", src.Size(), i, retries, sleepTime*time.Duration(i-1))
 				info = &acd.File{
 					Node: o.(*Object).info,
 				}
 				return true, info, nil
 			}
-			fs.Debug(src, "Object found but wrong size %d vs %d - waiting (%d/%d)", src.Size(), o.Size(), i, retries)
+			fs.Debugf(src, "Object found but wrong size %d vs %d - waiting (%d/%d)", src.Size(), o.Size(), i, retries)
 		}
 		time.Sleep(sleepTime)
 	}
-	fs.Debug(src, "Giving up waiting for object - returning original error: %v (%q)", inErr, httpStatus)
+	fs.Debugf(src, "Giving up waiting for object - returning original error: %v (%q)", inErr, httpStatus)
 	return false, inInfo, inErr
 }
 
@@ -558,7 +558,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 		return nil, err
 	}
 	if size > warnFileSize {
-		fs.Debug(f, "Warning: file %q may fail because it is too big. Use --max-size=%dM to skip large files.", remote, warnFileSize>>20)
+		fs.Debugf(f, "Warning: file %q may fail because it is too big. Use --max-size=%dM to skip large files.", remote, warnFileSize>>20)
 	}
 	folder := acd.FolderFromId(directoryID, o.fs.c.Nodes)
 	var info *acd.File
@@ -607,7 +607,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	//  go test -v -run '^Test(Setup|Init|FsMkdir|FsPutFile1|FsPutFile2|FsUpdateFile1|FsMove)$'
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debug(src, "Can't move - not same remote type")
+		fs.Debugf(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -648,7 +648,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 			// finished if src not found and dst found
 			break
 		}
-		fs.Debug(src, "Wait for directory listing to update after move %d/%d", i, fs.Config.LowLevelRetries)
+		fs.Debugf(src, "Wait for directory listing to update after move %d/%d", i, fs.Config.LowLevelRetries)
 		time.Sleep(1 * time.Second)
 	}
 	return dstObj, nil
@@ -672,19 +672,19 @@ func (f *Fs) DirMove(src fs.Fs) (err error) {
 	// go test -v -run '^Test(Setup|Init|FsMkdir|FsPutFile1|FsPutFile2|FsUpdateFile1|FsDirMove)$
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debug(src, "DirMove error: not same remote type")
+		fs.Debugf(src, "DirMove error: not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
 	// Check if destination exists
 	if f.dirCache.FoundRoot() {
-		fs.Debug(src, "DirMove error: destination exists")
+		fs.Debugf(src, "DirMove error: destination exists")
 		return fs.ErrorDirExists
 	}
 
 	// Refuse to move to or from the root
 	if f.root == "" || srcFs.root == "" {
-		fs.Debug(src, "DirMove error: Can't move root")
+		fs.Debugf(src, "DirMove error: Can't move root")
 		return errors.New("can't move root directory")
 	}
 
@@ -697,12 +697,12 @@ func (f *Fs) DirMove(src fs.Fs) (err error) {
 	// Find the ID of the source and make a node from it
 	err = srcFs.dirCache.FindRoot(false)
 	if err != nil {
-		fs.Debug(src, "DirMove error: error finding src root: %v", err)
+		fs.Debugf(src, "DirMove error: error finding src root: %v", err)
 		return err
 	}
 	srcDirectoryID, err := srcFs.dirCache.RootParentID()
 	if err != nil {
-		fs.Debug(src, "DirMove error: error finding src RootParentID: %v", err)
+		fs.Debugf(src, "DirMove error: error finding src RootParentID: %v", err)
 		return err
 	}
 	srcLeaf, _ := dircache.SplitPath(srcFs.root)
@@ -715,12 +715,12 @@ func (f *Fs) DirMove(src fs.Fs) (err error) {
 		return srcFs.shouldRetry(nil, err)
 	})
 	if err != nil {
-		fs.Debug(src, "DirMove error: error reading src metadata: %v", err)
+		fs.Debugf(src, "DirMove error: error reading src metadata: %v", err)
 		return err
 	}
 	err = json.Unmarshal([]byte(jsonStr), &srcInfo)
 	if err != nil {
-		fs.Debug(src, "DirMove error: error reading unpacking src metadata: %v", err)
+		fs.Debugf(src, "DirMove error: error reading unpacking src metadata: %v", err)
 		return err
 	}
 
@@ -759,7 +759,7 @@ func (f *Fs) purgeCheck(dir string, check bool) error {
 				empty = false
 				return true
 			default:
-				fs.Debug("Found ASSET %s", *node.Id)
+				fs.Debugf("Found ASSET %s", *node.Id)
 			}
 			return false
 		})
@@ -817,7 +817,7 @@ func (f *Fs) Hashes() fs.HashSet {
 //func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 // srcObj, ok := src.(*Object)
 // if !ok {
-// 	fs.Debug(src, "Can't copy - not same remote type")
+// 	fs.Debugf(src, "Can't copy - not same remote type")
 // 	return nil, fs.ErrorCantCopy
 // }
 // srcFs := srcObj.fs
@@ -917,12 +917,12 @@ func (o *Object) readMetaData() (err error) {
 func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Log(o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	modTime, err := time.Parse(timeFormat, *o.info.ModifiedDate)
 	if err != nil {
-		fs.Log(o, "Failed to read mtime from object: %v", err)
+		fs.Logf(o, "Failed to read mtime from object: %v", err)
 		return time.Now()
 	}
 	return modTime
@@ -943,7 +943,7 @@ func (o *Object) Storable() bool {
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	bigObject := o.Size() >= int64(tempLinkThreshold)
 	if bigObject {
-		fs.Debug(o, "Dowloading large object via tempLink")
+		fs.Debugf(o, "Dowloading large object via tempLink")
 	}
 	file := acd.File{Node: o.info}
 	var resp *http.Response
@@ -1051,30 +1051,30 @@ func (f *Fs) removeParent(info *acd.Node, parentID string) error {
 // moveNode moves the node given from the srcLeaf,srcDirectoryID to
 // the dstLeaf,dstDirectoryID
 func (f *Fs) moveNode(name, dstLeaf, dstDirectoryID string, srcInfo *acd.Node, srcLeaf, srcDirectoryID string, useDirErrorMsgs bool) (err error) {
-	// fs.Debug(name, "moveNode dst(%q,%s) <- src(%q,%s)", dstLeaf, dstDirectoryID, srcLeaf, srcDirectoryID)
+	// fs.Debugf(name, "moveNode dst(%q,%s) <- src(%q,%s)", dstLeaf, dstDirectoryID, srcLeaf, srcDirectoryID)
 	cantMove := fs.ErrorCantMove
 	if useDirErrorMsgs {
 		cantMove = fs.ErrorCantDirMove
 	}
 
 	if len(srcInfo.Parents) > 1 && srcLeaf != dstLeaf {
-		fs.Debug(name, "Move error: object is attached to multiple parents and should be renamed. This would change the name of the node in all parents.")
+		fs.Debugf(name, "Move error: object is attached to multiple parents and should be renamed. This would change the name of the node in all parents.")
 		return cantMove
 	}
 
 	if srcLeaf != dstLeaf {
-		// fs.Debug(name, "renaming")
+		// fs.Debugf(name, "renaming")
 		_, err = f.renameNode(srcInfo, dstLeaf)
 		if err != nil {
-			fs.Debug(name, "Move: quick path rename failed: %v", err)
+			fs.Debugf(name, "Move: quick path rename failed: %v", err)
 			goto OnConflict
 		}
 	}
 	if srcDirectoryID != dstDirectoryID {
-		// fs.Debug(name, "trying parent replace: %s -> %s", oldParentID, newParentID)
+		// fs.Debugf(name, "trying parent replace: %s -> %s", oldParentID, newParentID)
 		err = f.replaceParent(srcInfo, srcDirectoryID, dstDirectoryID)
 		if err != nil {
-			fs.Debug(name, "Move: quick path parent replace failed: %v", err)
+			fs.Debugf(name, "Move: quick path parent replace failed: %v", err)
 			return err
 		}
 	}
@@ -1082,38 +1082,38 @@ func (f *Fs) moveNode(name, dstLeaf, dstDirectoryID string, srcInfo *acd.Node, s
 	return nil
 
 OnConflict:
-	fs.Debug(name, "Could not directly rename file, presumably because there was a file with the same name already. Instead, the file will now be trashed where such operations do not cause errors. It will be restored to the correct parent after. If any of the subsequent calls fails, the rename/move will be in an invalid state.")
+	fs.Debugf(name, "Could not directly rename file, presumably because there was a file with the same name already. Instead, the file will now be trashed where such operations do not cause errors. It will be restored to the correct parent after. If any of the subsequent calls fails, the rename/move will be in an invalid state.")
 
-	// fs.Debug(name, "Trashing file")
+	// fs.Debugf(name, "Trashing file")
 	err = f.removeNode(srcInfo)
 	if err != nil {
-		fs.Debug(name, "Move: remove node failed: %v", err)
+		fs.Debugf(name, "Move: remove node failed: %v", err)
 		return err
 	}
-	// fs.Debug(name, "Renaming file")
+	// fs.Debugf(name, "Renaming file")
 	_, err = f.renameNode(srcInfo, dstLeaf)
 	if err != nil {
-		fs.Debug(name, "Move: rename node failed: %v", err)
+		fs.Debugf(name, "Move: rename node failed: %v", err)
 		return err
 	}
 	// note: replacing parent is forbidden by API, modifying them individually is
 	// okay though
-	// fs.Debug(name, "Adding target parent")
+	// fs.Debugf(name, "Adding target parent")
 	err = f.addParent(srcInfo, dstDirectoryID)
 	if err != nil {
-		fs.Debug(name, "Move: addParent failed: %v", err)
+		fs.Debugf(name, "Move: addParent failed: %v", err)
 		return err
 	}
-	// fs.Debug(name, "removing original parent")
+	// fs.Debugf(name, "removing original parent")
 	err = f.removeParent(srcInfo, srcDirectoryID)
 	if err != nil {
-		fs.Debug(name, "Move: removeParent failed: %v", err)
+		fs.Debugf(name, "Move: removeParent failed: %v", err)
 		return err
 	}
-	// fs.Debug(name, "Restoring")
+	// fs.Debugf(name, "Restoring")
 	_, err = f.restoreNode(srcInfo)
 	if err != nil {
-		fs.Debug(name, "Move: restoreNode node failed: %v", err)
+		fs.Debugf(name, "Move: restoreNode node failed: %v", err)
 		return err
 	}
 	return nil

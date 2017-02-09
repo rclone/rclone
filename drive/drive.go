@@ -440,7 +440,7 @@ func (f *Fs) findExportFormat(filepath string, item *drive.File) (extension, lin
 	// Warn about unknown export formats
 	for mimeType := range item.ExportLinks {
 		if _, ok := mimeTypeToExtension[mimeType]; !ok {
-			fs.Debug(filepath, "Unknown export type %q - ignoring", mimeType)
+			fs.Debugf(filepath, "Unknown export type %q - ignoring", mimeType)
 		}
 	}
 
@@ -458,7 +458,7 @@ func (f *Fs) findExportFormat(filepath string, item *drive.File) (extension, lin
 
 // ListDir reads the directory specified by the job into out, returning any more jobs
 func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.ListDirJob, err error) {
-	fs.Debug(f, "Reading %q", job.Path)
+	fs.Debugf(f, "Reading %q", job.Path)
 	_, err = f.listAll(job.DirID, "", false, false, func(item *drive.File) bool {
 		remote := job.Path + item.Title
 		switch {
@@ -493,7 +493,7 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 			// If item has export links then it is a google doc
 			extension, link := f.findExportFormat(remote, item)
 			if extension == "" {
-				fs.Debug(remote, "No export formats found")
+				fs.Debugf(remote, "No export formats found")
 			} else {
 				o, err := f.newObjectWithInfo(remote+"."+extension, item)
 				if err != nil {
@@ -509,15 +509,15 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 						return true
 					}
 				} else {
-					fs.Debug(f, "Skip google document: %q", remote)
+					fs.Debugf(f, "Skip google document: %q", remote)
 				}
 			}
 		default:
-			fs.Debug(remote, "Ignoring unknown object")
+			fs.Debugf(remote, "Ignoring unknown object")
 		}
 		return false
 	})
-	fs.Debug(f, "Finished reading %q", job.Path)
+	fs.Debugf(f, "Finished reading %q", job.Path)
 	return jobs, err
 }
 
@@ -679,7 +679,7 @@ func (f *Fs) Precision() time.Duration {
 func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debug(src, "Can't copy - not same remote type")
+		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	if srcObj.isDocument {
@@ -744,7 +744,7 @@ func (f *Fs) Purge() error {
 func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debug(src, "Can't move - not same remote type")
+		fs.Debugf(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 	if srcObj.isDocument {
@@ -788,7 +788,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 func (f *Fs) DirMove(src fs.Fs) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debug(srcFs, "Can't move directory - not same remote type")
+		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -799,7 +799,7 @@ func (f *Fs) DirMove(src fs.Fs) error {
 
 	// Refuse to move to or from the root
 	if f.root == "" || srcFs.root == "" {
-		fs.Debug(src, "DirMove error: Can't move root")
+		fs.Debugf(src, "DirMove error: Can't move root")
 		return errors.New("can't move root directory")
 	}
 
@@ -871,12 +871,12 @@ func (o *Object) Size() int64 {
 		// how big it is
 		_, res, err := o.httpResponse("HEAD", nil)
 		if err != nil {
-			fs.ErrorLog(o, "Error reading size: %v", err)
+			fs.Errorf(o, "Error reading size: %v", err)
 			return 0
 		}
 		_ = res.Body.Close()
 		o.bytes = res.ContentLength
-		// fs.Debug(o, "Read size of document: %v", o.bytes)
+		// fs.Debugf(o, "Read size of document: %v", o.bytes)
 	}
 	return o.bytes
 }
@@ -929,12 +929,12 @@ func (o *Object) readMetaData() (err error) {
 func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Log(o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	modTime, err := time.Parse(timeFormatIn, o.modifiedDate)
 	if err != nil {
-		fs.Log(o, "Failed to read mtime from object: %v", err)
+		fs.Logf(o, "Failed to read mtime from object: %v", err)
 		return time.Now()
 	}
 	return modTime
@@ -1012,7 +1012,7 @@ func (file *openFile) Read(p []byte) (n int, err error) {
 func (file *openFile) Close() (err error) {
 	// If end of file, update bytes read
 	if file.eof {
-		// fs.Debug(file.o, "Updating size of doc after download to %v", file.bytes)
+		// fs.Debugf(file.o, "Updating size of doc after download to %v", file.bytes)
 		file.o.bytes = file.bytes
 	}
 	return file.in.Close()
@@ -1103,7 +1103,7 @@ func (o *Object) Remove() error {
 func (o *Object) MimeType() string {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Log(o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return ""
 	}
 	return o.mimeType

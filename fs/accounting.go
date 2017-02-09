@@ -33,7 +33,7 @@ func startTokenBucket() {
 
 	if currLimit.bandwidth > 0 {
 		tokenBucket = tb.NewBucket(int64(currLimit.bandwidth), 100*time.Millisecond)
-		Log(nil, "Starting bandwidth limiter at %vBytes/s", &currLimit.bandwidth)
+		Logf(nil, "Starting bandwidth limiter at %vBytes/s", &currLimit.bandwidth)
 
 		// Start the SIGUSR2 signal handler to toggle bandwidth.
 		// This function does nothing in windows systems.
@@ -60,17 +60,17 @@ func startTokenTicker() {
 				if tokenBucket != nil {
 					err := tokenBucket.Close()
 					if err != nil {
-						Log(nil, "Error closing token bucket: %v", err)
+						Logf(nil, "Error closing token bucket: %v", err)
 					}
 				}
 
 				// Set new bandwidth. If unlimited, set tokenbucket to nil.
 				if limitNow.bandwidth > 0 {
 					tokenBucket = tb.NewBucket(int64(limitNow.bandwidth), 100*time.Millisecond)
-					Log(nil, "Scheduled bandwidth change. Limit set to %vBytes/s", &limitNow.bandwidth)
+					Logf(nil, "Scheduled bandwidth change. Limit set to %vBytes/s", &limitNow.bandwidth)
 				} else {
 					tokenBucket = nil
-					Log(nil, "Scheduled bandwidth change. Bandwidth limits disabled")
+					Logf(nil, "Scheduled bandwidth change. Bandwidth limits disabled")
 				}
 
 				currLimit = limitNow
@@ -203,7 +203,7 @@ Elapsed time:  %10v
 
 // Log outputs the StatsInfo to the log
 func (s *StatsInfo) Log() {
-	Log(nil, "%v\n", s)
+	Logf(nil, "%v\n", s)
 }
 
 // Bytes updates the stats for bytes bytes
@@ -355,7 +355,7 @@ func NewAccountSizeNameWithBuffer(in io.ReadCloser, size int64, name string) *Ac
 		const buffers = memUsed / bufSize
 		newIn, err := newAsyncReader(in, buffers, bufSize)
 		if err != nil {
-			ErrorLog(name, "Failed to make buffer: %v", err)
+			Errorf(name, "Failed to make buffer: %v", err)
 		} else {
 			in = newIn
 		}
@@ -591,7 +591,7 @@ func (a *accountStream) Read(p []byte) (n int, err error) {
 func AccountByPart(obj Object) *Account {
 	acc := Stats.inProgress.get(obj.Remote())
 	if acc == nil {
-		Debug(obj, "Didn't find object to account part transfer")
+		Debugf(obj, "Didn't find object to account part transfer")
 		return nil
 	}
 	acc.disableWholeFileAccounting()

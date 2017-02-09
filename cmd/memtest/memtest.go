@@ -41,8 +41,8 @@ var commandDefintion = &cobra.Command{
 			runtime.GC()
 			runtime.ReadMemStats(&after)
 			usedMemory := after.Alloc - before.Alloc
-			fs.Log(nil, "%d objects took %d bytes, %.1f bytes/object", len(objs), usedMemory, float64(usedMemory)/float64(len(objs)))
-			fs.Log(nil, "System memory changed from %d to %d bytes a change of %d bytes", before.Sys, after.Sys, after.Sys-before.Sys)
+			fs.Logf(nil, "%d objects took %d bytes, %.1f bytes/object", len(objs), usedMemory, float64(usedMemory)/float64(len(objs)))
+			fs.Logf(nil, "System memory changed from %d to %d bytes a change of %d bytes", before.Sys, after.Sys, after.Sys-before.Sys)
 			return nil
 		})
 	},

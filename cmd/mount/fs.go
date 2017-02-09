@@ -23,7 +23,7 @@ var _ fusefs.FS = (*FS)(nil)
 
 // Root returns the root node
 func (f *FS) Root() (fusefs.Node, error) {
-	fs.Debug(f.f, "Root()")
+	fs.Debugf(f.f, "Root()")
 	fsDir := &fs.Dir{
 		Name: "",
 		When: time.Now(),
@@ -75,7 +75,7 @@ func mountOptions(device string) (options []fuse.MountOption) {
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
 func mount(f fs.Fs, mountpoint string) (<-chan error, error) {
-	fs.Debug(f, "Mounting on %q", mountpoint)
+	fs.Debugf(f, "Mounting on %q", mountpoint)
 	c, err := fuse.Mount(mountpoint, mountOptions(f.Name()+":"+f.Root())...)
 	if err != nil {
 		return nil, err

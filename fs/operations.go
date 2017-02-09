@@ -32,12 +32,12 @@ func CalculateModifyWindow(fs ...Fs) {
 				Config.ModifyWindow = precision
 			}
 			if precision == ModTimeNotSupported {
-				Debug(f, "Modify window not supported")
+				Debugf(f, "Modify window not supported")
 				return
 			}
 		}
 	}
-	Debug(fs[0], "Modify window is %s", Config.ModifyWindow)
+	Debugf(fs[0], "Modify window is %s", Config.ModifyWindow)
 }
 
 // HashEquals checks to see if src == dst, but ignores empty strings
@@ -64,7 +64,7 @@ func HashEquals(src, dst string) bool {
 // If an error is returned it will return equal as false
 func CheckHashes(src, dst Object) (equal bool, hash HashType, err error) {
 	common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
-	// Debug(nil, "Shared hashes: %v", common)
+	// Debugf(nil, "Shared hashes: %v", common)
 	if common.Count() == 0 {
 		return true, HashNone, nil
 	}
@@ -72,7 +72,7 @@ func CheckHashes(src, dst Object) (equal bool, hash HashType, err error) {
 	srcHash, err := src.Hash(hash)
 	if err != nil {
 		Stats.Error()
-		ErrorLog(src, "Failed to calculate src hash: %v", err)
+		Errorf(src, "Failed to calculate src hash: %v", err)
 		return false, hash, err
 	}
 	if srcHash == "" {
@@ -81,7 +81,7 @@ func CheckHashes(src, dst Object) (equal bool, hash HashType, err error) {
 	dstHash, err := dst.Hash(hash)
 	if err != nil {
 		Stats.Error()
-		ErrorLog(dst, "Failed to calculate dst hash: %v", err)
+		Errorf(dst, "Failed to calculate dst hash: %v", err)
 		return false, hash, err
 	}
 	if dstHash == "" {
@@ -115,12 +115,12 @@ func Equal(src, dst Object) bool {
 func equal(src, dst Object, sizeOnly, checkSum bool) bool {
 	if !Config.IgnoreSize {
 		if src.Size() != dst.Size() {
-			Debug(src, "Sizes differ")
+			Debugf(src, "Sizes differ")
 			return false
 		}
 	}
 	if sizeOnly {
-		Debug(src, "Sizes identical")
+		Debugf(src, "Sizes identical")
 		return true
 	}
 
@@ -131,20 +131,20 @@ func equal(src, dst Object, sizeOnly, checkSum bool) bool {
 		// Check the hash
 		same, hash, _ := CheckHashes(src, dst)
 		if !same {
-			Debug(src, "%v differ", hash)
+			Debugf(src, "%v differ", hash)
 			return false
 		}
 		if hash == HashNone {
-			Debug(src, "Size of src and dst objects identical")
+			Debugf(src, "Size of src and dst objects identical")
 		} else {
-			Debug(src, "Size and %v of src and dst objects identical", hash)
+			Debugf(src, "Size and %v of src and dst objects identical", hash)
 		}
 		return true
 	}
 
 	// Sizes the same so check the mtime
 	if Config.ModifyWindow == ModTimeNotSupported {
-		Debug(src, "Sizes identical")
+		Debugf(src, "Sizes identical")
 		return true
 	}
 	srcModTime := src.ModTime()
@@ -152,16 +152,16 @@ func equal(src, dst Object, sizeOnly, checkSum bool) bool {
 	dt := dstModTime.Sub(srcModTime)
 	ModifyWindow := Config.ModifyWindow
 	if dt < ModifyWindow && dt > -ModifyWindow {
-		Debug(src, "Size and modification time the same (differ by %s, within tolerance %s)", dt, ModifyWindow)
+		Debugf(src, "Size and modification time the same (differ by %s, within tolerance %s)", dt, ModifyWindow)
 		return true
 	}
 
-	Debug(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
+	Debugf(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
 
 	// Check if the hashes are the same
 	same, hash, _ := CheckHashes(src, dst)
 	if !same {
-		Debug(src, "%v differ", hash)
+		Debugf(src, "%v differ", hash)
 		return false
 	}
 	if hash == HashNone {
@@ -175,13 +175,13 @@ func equal(src, dst Object, sizeOnly, checkSum bool) bool {
 		// mtime of the dst object here
 		err := dst.SetModTime(srcModTime)
 		if err == ErrorCantSetModTime {
-			Debug(src, "src and dst identical but can't set mod time without re-uploading")
+			Debugf(src, "src and dst identical but can't set mod time without re-uploading")
 			return false
 		} else if err != nil {
 			Stats.Error()
-			ErrorLog(dst, "Failed to set modification time: %v", err)
+			Errorf(dst, "Failed to set modification time: %v", err)
 		} else {
-			Debug(src, "Updated modification time in destination")
+			Debugf(src, "Updated modification time in destination")
 		}
 	}
 	return true
@@ -202,7 +202,7 @@ func MimeType(o ObjectInfo) (mimeType string) {
 	// Read the MimeType from the optional interface if available
 	if do, ok := o.(MimeTyper); ok {
 		mimeType = do.MimeType()
-		Debug(o, "Read MimeType as %q", mimeType)
+		Debugf(o, "Read MimeType as %q", mimeType)
 		if mimeType != "" {
 			return mimeType
 		}
@@ -217,10 +217,10 @@ func removeFailedCopy(dst Object) bool {
 	if dst == nil {
 		return false
 	}
-	Debug(dst, "Removing failed copy")
+	Debugf(dst, "Removing failed copy")
 	removeErr := dst.Remove()
 	if removeErr != nil {
-		Debug(dst, "Failed to remove failed copy: %s", removeErr)
+		Debugf(dst, "Failed to remove failed copy: %s", removeErr)
 		return false
 	}
 	return true
@@ -241,7 +241,7 @@ func (o *overrideRemoteObject) Remote() string {
 // remote as the name of the new object.
 func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 	if Config.DryRun {
-		Log(src, "Not copying as --dry-run")
+		Logf(src, "Not copying as --dry-run")
 		return nil
 	}
 	maxTries := Config.LowLevelRetries
@@ -290,7 +290,7 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 		}
 		// Retry if err returned a retry error
 		if IsRetryError(err) || ShouldRetry(err) {
-			Debug(src, "Received error: %v - low level retry %d/%d", err, tries, maxTries)
+			Debugf(src, "Received error: %v - low level retry %d/%d", err, tries, maxTries)
 			continue
 		}
 		// otherwise finish
@@ -298,7 +298,7 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 	}
 	if err != nil {
 		Stats.Error()
-		ErrorLog(src, "Failed to copy: %v", err)
+		Errorf(src, "Failed to copy: %v", err)
 		return err
 	}
 
@@ -306,7 +306,7 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 	if !Config.IgnoreSize && src.Size() != dst.Size() {
 		Stats.Error()
 		err = errors.Errorf("corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size())
-		ErrorLog(dst, "%v", err)
+		Errorf(dst, "%v", err)
 		removeFailedCopy(dst)
 		return err
 	}
@@ -315,7 +315,7 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 	// TODO(klauspost): This could be extended, so we always create a hash type matching
 	// the destination, and calculate it while sending.
 	common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
-	// Debug(src, "common hashes: %v", common)
+	// Debugf(src, "common hashes: %v", common)
 	if !Config.SizeOnly && common.Count() > 0 {
 		// Get common hash type
 		hashType := common.GetOne()
@@ -324,24 +324,24 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 		srcSum, err = src.Hash(hashType)
 		if err != nil {
 			Stats.Error()
-			ErrorLog(src, "Failed to read src hash: %v", err)
+			Errorf(src, "Failed to read src hash: %v", err)
 		} else if srcSum != "" {
 			var dstSum string
 			dstSum, err = dst.Hash(hashType)
 			if err != nil {
 				Stats.Error()
-				ErrorLog(dst, "Failed to read hash: %v", err)
+				Errorf(dst, "Failed to read hash: %v", err)
 			} else if !Config.IgnoreSize && !HashEquals(srcSum, dstSum) {
 				Stats.Error()
 				err = errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
-				ErrorLog(dst, "%v", err)
+				Errorf(dst, "%v", err)
 				removeFailedCopy(dst)
 				return err
 			}
 		}
 	}
 
-	Debug(src, actionTaken)
+	Debugf(src, actionTaken)
 	return err
 }
 
@@ -349,7 +349,7 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 // remote as the name of the new object.
 func Move(fdst Fs, dst Object, remote string, src Object) (err error) {
 	if Config.DryRun {
-		Log(src, "Not moving as --dry-run")
+		Logf(src, "Not moving as --dry-run")
 		return nil
 	}
 	// See if we have Move available
@@ -365,20 +365,20 @@ func Move(fdst Fs, dst Object, remote string, src Object) (err error) {
 		_, err := doMove(src, remote)
 		switch err {
 		case nil:
-			Debug(src, "Moved (server side)")
+			Debugf(src, "Moved (server side)")
 			return nil
 		case ErrorCantMove:
-			Debug(src, "Can't move, switching to copy")
+			Debugf(src, "Can't move, switching to copy")
 		default:
 			Stats.Error()
-			ErrorLog(dst, "Couldn't move: %v", err)
+			Errorf(dst, "Couldn't move: %v", err)
 			return err
 		}
 	}
 	// Move not found or didn't work so copy dst <- src
 	err = Copy(fdst, dst, remote, src)
 	if err != nil {
-		ErrorLog(src, "Not deleting source as copy failed: %v", err)
+		Errorf(src, "Not deleting source as copy failed: %v", err)
 		return err
 	}
 	// Delete src if no error on copy
@@ -408,7 +408,7 @@ func deleteFileWithBackupDir(dst Object, backupDir Fs) (err error) {
 		action, actioned, actioning = "move into backup dir", "Moved into backup dir", "moving into backup dir"
 	}
 	if Config.DryRun {
-		Log(dst, "Not %s as --dry-run", actioning)
+		Logf(dst, "Not %s as --dry-run", actioning)
 	} else if backupDir != nil {
 		if !SameConfig(dst.Fs(), backupDir) {
 			err = errors.New("parameter to --backup-dir has to be on the same remote as destination")
@@ -422,9 +422,9 @@ func deleteFileWithBackupDir(dst Object, backupDir Fs) (err error) {
 	}
 	if err != nil {
 		Stats.Error()
-		ErrorLog(dst, "Couldn't %s: %v", action, err)
+		Errorf(dst, "Couldn't %s: %v", action, err)
 	} else {
-		Debug(dst, actioned)
+		Debugf(dst, actioned)
 	}
 	Stats.DoneChecking(dst.Remote())
 	return err
@@ -458,7 +458,7 @@ func deleteFilesWithBackupDir(toBeDeleted ObjectsChan, backupDir Fs) error {
 			}
 		}()
 	}
-	Log(nil, "Waiting for deletions to finish")
+	Logf(nil, "Waiting for deletions to finish")
 	wg.Wait()
 	if errorCount > 0 {
 		return errors.Errorf("failed to delete %d files", errorCount)
@@ -501,7 +501,7 @@ func readFilesFn(fs Fs, includeAll bool, dir string, add func(Object) error) (er
 				list.SetError(err)
 			}
 		} else {
-			Debug(o, "Excluded from sync (and deletion)")
+			Debugf(o, "Excluded from sync (and deletion)")
 		}
 	}
 	return list.Error()
@@ -550,13 +550,13 @@ func ListDirSorted(fs Fs, includeAll bool, dir string) (entries DirEntries, err 
 			if includeAll || Config.Filter.IncludeObject(o) {
 				entries = append(entries, o)
 			} else {
-				Debug(o, "Excluded from sync (and deletion)")
+				Debugf(o, "Excluded from sync (and deletion)")
 			}
 		} else if dir != nil {
 			if includeAll || Config.Filter.IncludeDirectory(dir.Remote()) {
 				entries = append(entries, dir)
 			} else {
-				Debug(dir, "Excluded from sync (and deletion)")
+				Debugf(dir, "Excluded from sync (and deletion)")
 			}
 		} else {
 			// finishd since err, o, dir == nil
@@ -587,10 +587,10 @@ func readFilesMap(fs Fs, includeAll bool, dir string) (files map[string]Object, 
 		if _, ok := files[remote]; !ok {
 			files[remote] = o
 			if _, ok := normalised[normalisedRemote]; ok {
-				Log(o, "Warning: File found with same name but different case on %v", o.Fs())
+				Logf(o, "Warning: File found with same name but different case on %v", o.Fs())
 			}
 		} else {
-			Log(o, "Duplicate file detected")
+			Logf(o, "Duplicate file detected")
 		}
 		normalised[normalisedRemote] = struct{}{}
 		return nil
@@ -609,13 +609,13 @@ func readFilesMaps(fdst Fs, fdstIncludeAll bool, fsrc Fs, fsrcIncludeAll bool, d
 
 	list := func(fs Fs, includeAll bool, pMap *map[string]Object, pErr *error) {
 		defer wg.Done()
-		Log(fs, "Building file list")
+		Logf(fs, "Building file list")
 		files, listErr := readFilesMap(fs, includeAll, dir)
 		if listErr != nil {
-			ErrorLog(fs, "Error building file list: %v", listErr)
+			Errorf(fs, "Error building file list: %v", listErr)
 			*pErr = listErr
 		} else {
-			Debug(fs, "Done building file list")
+			Debugf(fs, "Done building file list")
 			*pMap = files
 		}
 	}
@@ -673,7 +673,7 @@ func checkIdentical(dst, src Object) (differ bool, noHash bool) {
 	defer Stats.DoneChecking(src.Remote())
 	if src.Size() != dst.Size() {
 		Stats.Error()
-		ErrorLog(src, "Sizes differ")
+		Errorf(src, "Sizes differ")
 		return true, false
 	}
 	if !Config.SizeOnly {
@@ -687,11 +687,11 @@ func checkIdentical(dst, src Object) (differ bool, noHash bool) {
 		}
 		if !same {
 			Stats.Error()
-			ErrorLog(src, "%v differ", hash)
+			Errorf(src, "%v differ", hash)
 			return true, false
 		}
 	}
-	Debug(src, "OK")
+	Debugf(src, "OK")
 	return false, false
 }
 
@@ -718,17 +718,17 @@ func Check(fdst, fsrc Fs) error {
 		}
 	}
 
-	Log(fdst, "%d files not in %v", len(dstFiles), fsrc)
+	Logf(fdst, "%d files not in %v", len(dstFiles), fsrc)
 	for _, dst := range dstFiles {
 		Stats.Error()
-		ErrorLog(dst, "File not in %v", fsrc)
+		Errorf(dst, "File not in %v", fsrc)
 		atomic.AddInt32(&differences, 1)
 	}
 
-	Log(fsrc, "%d files not in %s", len(srcFiles), fdst)
+	Logf(fsrc, "%d files not in %s", len(srcFiles), fdst)
 	for _, src := range srcFiles {
 		Stats.Error()
-		ErrorLog(src, "File not in %v", fdst)
+		Errorf(src, "File not in %v", fdst)
 		atomic.AddInt32(&differences, 1)
 	}
 
@@ -757,11 +757,11 @@ func Check(fdst, fsrc Fs) error {
 		}()
 	}
 
-	Log(fdst, "Waiting for checks to finish")
+	Logf(fdst, "Waiting for checks to finish")
 	checkerWg.Wait()
-	Log(fdst, "%d differences found", Stats.GetErrors())
+	Logf(fdst, "%d differences found", Stats.GetErrors())
 	if noHashes > 0 {
-		Log(fdst, "%d hashes could not be checked", noHashes)
+		Logf(fdst, "%d hashes could not be checked", noHashes)
 	}
 	if differences > 0 {
 		return errors.Errorf("%d differences found", differences)
@@ -865,7 +865,7 @@ func hashLister(ht HashType, f Fs, w io.Writer) error {
 		if err == ErrHashUnsupported {
 			sum = "UNSUPPORTED"
 		} else if err != nil {
-			Debug(o, "Failed to read %v: %v", ht, err)
+			Debugf(o, "Failed to read %v: %v", ht, err)
 			sum = "ERROR"
 		}
 		syncFprintf(w, "%*s  %s\n", HashWidth[ht], sum, o.Remote())
@@ -906,7 +906,7 @@ func ListDir(f Fs, w io.Writer) error {
 // Mkdir makes a destination directory or container
 func Mkdir(f Fs, dir string) error {
 	if Config.DryRun {
-		Log(f, "Not making directory as dry run is set")
+		Logf(f, "Not making directory as dry run is set")
 		return nil
 	}
 	err := f.Mkdir(dir)
@@ -922,9 +922,9 @@ func Mkdir(f Fs, dir string) error {
 func TryRmdir(f Fs, dir string) error {
 	if Config.DryRun {
 		if dir != "" {
-			Log(dir, "Not deleting as dry run is set")
+			Logf(dir, "Not deleting as dry run is set")
 		} else {
-			Log(f, "Not deleting as dry run is set")
+			Logf(f, "Not deleting as dry run is set")
 		}
 		return nil
 	}
@@ -948,7 +948,7 @@ func Purge(f Fs) error {
 	if doPurge := f.Features().Purge; doPurge != nil {
 		doFallbackPurge = false
 		if Config.DryRun {
-			Log(f, "Not purging as --dry-run set")
+			Logf(f, "Not purging as --dry-run set")
 		} else {
 			err = doPurge()
 			if err == ErrorCantPurge {
@@ -1006,12 +1006,12 @@ func dedupeRename(remote string, objs []Object) {
 			newObj, err := doMove(o, newName)
 			if err != nil {
 				Stats.Error()
-				ErrorLog(o, "Failed to rename: %v", err)
+				Errorf(o, "Failed to rename: %v", err)
 				continue
 			}
-			Log(newObj, "renamed from: %v", o)
+			Logf(newObj, "renamed from: %v", o)
 		} else {
-			Log(remote, "Not renaming to %q as --dry-run", newName)
+			Logf(remote, "Not renaming to %q as --dry-run", newName)
 		}
 	}
 }
@@ -1024,7 +1024,7 @@ func dedupeDeleteAllButOne(keep int, remote string, objs []Object) {
 		}
 		_ = DeleteFile(o)
 	}
-	Log(remote, "Deleted %d extra copies", len(objs)-1)
+	Logf(remote, "Deleted %d extra copies", len(objs)-1)
 }
 
 // dedupeDeleteIdentical deletes all but one of identical (by hash) copies
@@ -1042,7 +1042,7 @@ func dedupeDeleteIdentical(remote string, objs []Object) []Object {
 	objs = nil
 	for md5sum, hashObjs := range byHash {
 		if len(hashObjs) > 1 {
-			Log(remote, "Deleting %d/%d identical duplicates (md5sum %q)", len(hashObjs)-1, len(hashObjs), md5sum)
+			Logf(remote, "Deleting %d/%d identical duplicates (md5sum %q)", len(hashObjs)-1, len(hashObjs), md5sum)
 			for _, o := range hashObjs[1:] {
 				_ = DeleteFile(o)
 			}
@@ -1145,7 +1145,7 @@ var _ pflag.Value = (*DeduplicateMode)(nil)
 // delete all but one or rename them to be different. Only useful with
 // Google Drive which can have duplicate file names.
 func Deduplicate(f Fs, mode DeduplicateMode) error {
-	Log(f, "Looking for duplicates using %v mode.", mode)
+	Logf(f, "Looking for duplicates using %v mode.", mode)
 	files := map[string][]Object{}
 	list := NewLister().Start(f, "")
 	for {
@@ -1162,10 +1162,10 @@ func Deduplicate(f Fs, mode DeduplicateMode) error {
 	}
 	for remote, objs := range files {
 		if len(objs) > 1 {
-			Log(remote, "Found %d duplicates - deleting identical copies", len(objs))
+			Logf(remote, "Found %d duplicates - deleting identical copies", len(objs))
 			objs = dedupeDeleteIdentical(remote, objs)
 			if len(objs) <= 1 {
-				Log(remote, "All duplicates removed")
+				Logf(remote, "All duplicates removed")
 				continue
 			}
 			switch mode {
@@ -1206,7 +1206,7 @@ func listToChan(list *Lister) ObjectsChan {
 			if err != nil {
 				if err != ErrorDirNotFound {
 					Stats.Error()
-					ErrorLog(nil, "Failed to list: %v", err)
+					Errorf(nil, "Failed to list: %v", err)
 				}
 				return
 			}
@@ -1229,7 +1229,7 @@ func CleanUp(f Fs) error {
 		return errors.Errorf("%v doesn't support cleanup", f)
 	}
 	if Config.DryRun {
-		Log(f, "Not running cleanup as --dry-run set")
+		Logf(f, "Not running cleanup as --dry-run set")
 		return nil
 	}
 	return doCleanUp()
@@ -1276,7 +1276,7 @@ func Cat(f Fs, w io.Writer, offset, count int64) error {
 		in, err := o.Open(options...)
 		if err != nil {
 			Stats.Error()
-			ErrorLog(o, "Failed to open: %v", err)
+			Errorf(o, "Failed to open: %v", err)
 			return
 		}
 		if count >= 0 {
@@ -1291,7 +1291,7 @@ func Cat(f Fs, w io.Writer, offset, count int64) error {
 			err = in.Close()
 			if err != nil {
 				Stats.Error()
-				ErrorLog(o, "Failed to close: %v", err)
+				Errorf(o, "Failed to close: %v", err)
 			}
 		}()
 		// take the lock just before we output stuff, so at the last possible moment
@@ -1300,7 +1300,7 @@ func Cat(f Fs, w io.Writer, offset, count int64) error {
 		_, err = io.Copy(w, in)
 		if err != nil {
 			Stats.Error()
-			ErrorLog(o, "Failed to send to output: %v", err)
+			Errorf(o, "Failed to send to output: %v", err)
 		}
 	})
 }
@@ -1315,7 +1315,7 @@ func Rmdirs(f Fs, dir string) error {
 		o, dir, err := list.Get()
 		if err != nil {
 			Stats.Error()
-			ErrorLog(f, "Failed to list: %v", err)
+			Errorf(f, "Failed to list: %v", err)
 			return err
 		} else if dir != nil {
 			// add a new directory as empty
@@ -1357,7 +1357,7 @@ func Rmdirs(f Fs, dir string) error {
 		err := TryRmdir(f, dir)
 		if err != nil {
 			Stats.Error()
-			ErrorLog(dir, "Failed to rmdir: %v", err)
+			Errorf(dir, "Failed to rmdir: %v", err)
 			return err
 		}
 	}

@@ -45,7 +45,7 @@ var _ fusefs.Node = (*File)(nil)
 func (f *File) Attr(ctx context.Context, a *fuse.Attr) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	fs.Debug(f.o, "File.Attr")
+	fs.Debugf(f.o, "File.Attr")
 	a.Gid = gid
 	a.Uid = uid
 	a.Mode = filePerms
@@ -111,7 +111,7 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 		return nil, err
 	}
 
-	fs.Debug(o, "File.Open")
+	fs.Debugf(o, "File.Open")
 
 	switch {
 	case req.Flags.IsReadOnly():

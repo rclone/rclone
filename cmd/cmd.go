@@ -247,22 +247,22 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		err = f()
 		if !Retry || (err == nil && !fs.Stats.Errored()) {
 			if try > 1 {
-				fs.ErrorLog(nil, "Attempt %d/%d succeeded", try, *retries)
+				fs.Errorf(nil, "Attempt %d/%d succeeded", try, *retries)
 			}
 			break
 		}
 		if fs.IsFatalError(err) {
-			fs.ErrorLog(nil, "Fatal error received - not attempting retries")
+			fs.Errorf(nil, "Fatal error received - not attempting retries")
 			break
 		}
 		if fs.IsNoRetryError(err) {
-			fs.ErrorLog(nil, "Can't retry this error - not attempting retries")
+			fs.Errorf(nil, "Can't retry this error - not attempting retries")
 			break
 		}
 		if err != nil {
-			fs.ErrorLog(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, fs.Stats.GetErrors(), err)
+			fs.Errorf(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, fs.Stats.GetErrors(), err)
 		} else {
-			fs.ErrorLog(nil, "Attempt %d/%d failed with %d errors", try, *retries, fs.Stats.GetErrors())
+			fs.Errorf(nil, "Attempt %d/%d failed with %d errors", try, *retries, fs.Stats.GetErrors())
 		}
 		if try < *retries {
 			fs.Stats.ResetErrors()
@@ -275,10 +275,10 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		log.Fatalf("Failed to %s: %v", cmd.Name(), err)
 	}
 	if showStats && (!fs.Config.Quiet || fs.Stats.Errored() || *statsInterval > 0) {
-		fs.Log(nil, "%s", fs.Stats)
+		fs.Logf(nil, "%s", fs.Stats)
 	}
 	if fs.Config.Verbose {
-		fs.Debug(nil, "Go routines at exit %d\n", runtime.NumGoroutine())
+		fs.Debugf(nil, "Go routines at exit %d\n", runtime.NumGoroutine())
 	}
 	if fs.Stats.Errored() {
 		os.Exit(1)
@@ -330,7 +330,7 @@ func initConfig() {
 		}
 		_, err = f.Seek(0, os.SEEK_END)
 		if err != nil {
-			fs.ErrorLog(nil, "Failed to seek log file to end: %v", err)
+			fs.Errorf(nil, "Failed to seek log file to end: %v", err)
 		}
 		log.SetOutput(f)
 		fs.DebugLogger.SetOutput(f)
@@ -341,11 +341,11 @@ func initConfig() {
 	fs.LoadConfig()
 
 	// Write the args for debug purposes
-	fs.Debug("rclone", "Version %q starting with parameters %q", fs.Version, os.Args)
+	fs.Debugf("rclone", "Version %q starting with parameters %q", fs.Version, os.Args)
 
 	// Setup CPU profiling if desired
 	if *cpuProfile != "" {
-		fs.Log(nil, "Creating CPU profile %q\n", *cpuProfile)
+		fs.Logf(nil, "Creating CPU profile %q\n", *cpuProfile)
 		f, err := os.Create(*cpuProfile)
 		if err != nil {
 			fs.Stats.Error()
@@ -362,7 +362,7 @@ func initConfig() {
 	// Setup memory profiling if desired
 	if *memProfile != "" {
 		defer func() {
-			fs.Log(nil, "Saving Memory profile %q\n", *memProfile)
+			fs.Logf(nil, "Saving Memory profile %q\n", *memProfile)
 			f, err := os.Create(*memProfile)
 			if err != nil {
 				fs.Stats.Error()
@@ -382,7 +382,7 @@ func initConfig() {
 	}
 
 	if m, _ := regexp.MatchString("^(bits|bytes)$", *dataRateUnit); m == false {
-		fs.ErrorLog(nil, "Invalid unit passed to --stats-unit. Defaulting to bytes.")
+		fs.Errorf(nil, "Invalid unit passed to --stats-unit. Defaulting to bytes.")
 		fs.Config.DataRateUnit = "bytes"
 	} else {
 		fs.Config.DataRateUnit = *dataRateUnit

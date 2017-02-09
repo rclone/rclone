@@ -349,7 +349,7 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 	ses := session.New()
 	c := s3.New(ses, awsConfig)
 	if region == "other-v2-signature" {
-		fs.Debug(name, "Using v2 auth")
+		fs.Debugf(name, "Using v2 auth")
 		signer := func(req *request.Request) {
 			// Ignore AnonymousCredentials object
 			if req.Config.Credentials == credentials.AnonymousCredentials {
@@ -426,7 +426,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *s3.Object) (fs.Object, error
 	if info != nil {
 		// Set info but not meta
 		if info.LastModified == nil {
-			fs.Log(o, "Failed to read last modified")
+			fs.Logf(o, "Failed to read last modified")
 			o.lastModified = time.Now()
 		} else {
 			o.lastModified = *info.LastModified
@@ -488,12 +488,12 @@ func (f *Fs) list(dir string, level int, fn listFn) error {
 		if level == 1 {
 			for _, commonPrefix := range resp.CommonPrefixes {
 				if commonPrefix.Prefix == nil {
-					fs.Log(f, "Nil common prefix received")
+					fs.Logf(f, "Nil common prefix received")
 					continue
 				}
 				remote := *commonPrefix.Prefix
 				if !strings.HasPrefix(remote, f.root) {
-					fs.Log(f, "Odd name received %q", remote)
+					fs.Logf(f, "Odd name received %q", remote)
 					continue
 				}
 				remote = remote[rootLength:]
@@ -509,7 +509,7 @@ func (f *Fs) list(dir string, level int, fn listFn) error {
 		for _, object := range resp.Contents {
 			key := aws.StringValue(object.Key)
 			if !strings.HasPrefix(key, f.root) {
-				fs.Log(f, "Odd name received %q", key)
+				fs.Logf(f, "Odd name received %q", key)
 				continue
 			}
 			remote := key[rootLength:]
@@ -697,7 +697,7 @@ func (f *Fs) Precision() time.Duration {
 func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debug(src, "Can't copy - not same remote type")
+		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	srcFs := srcObj.fs
@@ -751,7 +751,7 @@ func (o *Object) Hash(t fs.HashType) (string, error) {
 	etag := strings.Trim(strings.ToLower(o.etag), `"`)
 	// Check the etag is a valid md5sum
 	if !matchMd5.MatchString(etag) {
-		// fs.Debug(o, "Invalid md5sum (probably multipart uploaded) - ignoring: %q", etag)
+		// fs.Debugf(o, "Invalid md5sum (probably multipart uploaded) - ignoring: %q", etag)
 		return "", nil
 	}
 	return etag, nil
@@ -793,7 +793,7 @@ func (o *Object) readMetaData() (err error) {
 	o.bytes = size
 	o.meta = resp.Metadata
 	if resp.LastModified == nil {
-		fs.Log(o, "Failed to read last modified from HEAD: %v", err)
+		fs.Logf(o, "Failed to read last modified from HEAD: %v", err)
 		o.lastModified = time.Now()
 	} else {
 		o.lastModified = *resp.LastModified
@@ -809,18 +809,18 @@ func (o *Object) readMetaData() (err error) {
 func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Log(o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	// read mtime out of metadata if available
 	d, ok := o.meta[metaMtime]
 	if !ok || d == nil {
-		// fs.Debug(o, "No metadata")
+		// fs.Debugf(o, "No metadata")
 		return o.lastModified
 	}
 	modTime, err := swift.FloatStringToTime(*d)
 	if err != nil {
-		fs.Log(o, "Failed to read mtime from object: %v", err)
+		fs.Logf(o, "Failed to read mtime from object: %v", err)
 		return o.lastModified
 	}
 	return modTime
@@ -835,7 +835,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 	o.meta[metaMtime] = aws.String(swift.TimeToFloatString(modTime))
 
 	if o.bytes >= maxSizeForCopy {
-		fs.Debug(o, "SetModTime is unsupported for objects bigger than %v bytes", fs.SizeSuffix(maxSizeForCopy))
+		fs.Debugf(o, "SetModTime is unsupported for objects bigger than %v bytes", fs.SizeSuffix(maxSizeForCopy))
 		return nil
 	}
 
@@ -878,7 +878,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 			req.Range = &value
 		default:
 			if option.Mandatory() {
-				fs.Log(o, "Unsupported mandatory option: %v", option)
+				fs.Logf(o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -957,7 +957,7 @@ func (o *Object) Remove() error {
 func (o *Object) MimeType() string {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Log(o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return ""
 	}
 	return o.mimeType

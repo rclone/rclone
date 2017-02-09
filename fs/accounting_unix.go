@@ -27,7 +27,7 @@ func startSignalHandler() {
 				s = "enabled"
 			}
 			tokenBucketMu.Unlock()
-			Log(nil, "Bandwidth limit %s by user", s)
+			Logf(nil, "Bandwidth limit %s by user", s)
 		}
 	}()
 }

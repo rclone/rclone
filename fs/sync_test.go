@@ -321,7 +321,7 @@ func TestSyncAfterChangingModtimeOnlyWithNoUpdateModTime(t *testing.T) {
 	defer r.Finalise()
 
 	if r.fremote.Hashes().Count() == 0 {
-		t.Log("Can't check this if no hashes supported")
+		t.Logf("Can't check this if no hashes supported")
 		return
 	}
 

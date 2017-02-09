@@ -132,7 +132,7 @@ func (up *largeUpload) transferChunk(part int64, body []byte) error {
 	up.sha1s[part-1] = calculatedSHA1
 	size := int64(len(body))
 	err := up.f.pacer.Call(func() (bool, error) {
-		fs.Debug(up.o, "Sending chunk %d length %d", part, len(body))
+		fs.Debugf(up.o, "Sending chunk %d length %d", part, len(body))
 
 		// Get upload URL
 		upload, err := up.getUploadURL()
@@ -181,16 +181,16 @@ func (up *largeUpload) transferChunk(part int64, body []byte) error {
 		retry, err := up.f.shouldRetry(resp, err)
 		// On retryable error clear PartUploadURL
 		if retry {
-			fs.Debug(up.o, "Clearing part upload URL because of error: %v", err)
+			fs.Debugf(up.o, "Clearing part upload URL because of error: %v", err)
 			upload = nil
 		}
 		up.returnUploadURL(upload)
 		return retry, err
 	})
 	if err != nil {
-		fs.Debug(up.o, "Error sending chunk %d: %v", part, err)
+		fs.Debugf(up.o, "Error sending chunk %d: %v", part, err)
 	} else {
-		fs.Debug(up.o, "Done sending chunk %d", part)
+		fs.Debugf(up.o, "Done sending chunk %d", part)
 	}
 	return err
 }
@@ -235,7 +235,7 @@ func (up *largeUpload) cancel() error {
 
 // Upload uploads the chunks from the input
 func (up *largeUpload) Upload() error {
-	fs.Debug(up.o, "Starting upload of large file in %d chunks (id %q)", up.parts, up.id)
+	fs.Debugf(up.o, "Starting upload of large file in %d chunks (id %q)", up.parts, up.id)
 	remaining := up.size
 	errs := make(chan error, 1)
 	var wg sync.WaitGroup
@@ -289,14 +289,14 @@ outer:
 		}
 	}
 	if err != nil {
-		fs.Debug(up.o, "Cancelling large file upload due to error: %v", err)
+		fs.Debugf(up.o, "Cancelling large file upload due to error: %v", err)
 		cancelErr := up.cancel()
 		if cancelErr != nil {
-			fs.ErrorLog(up.o, "Failed to cancel large file upload: %v", cancelErr)
+			fs.Errorf(up.o, "Failed to cancel large file upload: %v", cancelErr)
 		}
 		return err
 	}
 	// Check any errors
-	fs.Debug(up.o, "Finishing large file upload")
+	fs.Debugf(up.o, "Finishing large file upload")
 	return up.finish()
 }

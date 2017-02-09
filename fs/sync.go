@@ -72,17 +72,17 @@ func newSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool) (*syncCo
 		trackRenamesCh: make(chan Object, Config.Checkers),
 	}
 	if s.noTraverse && s.deleteMode != DeleteModeOff {
-		ErrorLog(nil, "Ignoring --no-traverse with sync")
+		Errorf(nil, "Ignoring --no-traverse with sync")
 		s.noTraverse = false
 	}
 	if s.trackRenames {
 		// Don't track renames for remotes without server-side move support.
 		if !CanServerSideMove(fdst) {
-			ErrorLog(fdst, "Ignoring --track-renames as the destination does not support server-side move or copy")
+			Errorf(fdst, "Ignoring --track-renames as the destination does not support server-side move or copy")
 			s.trackRenames = false
 		}
 		if s.commonHash == HashNone {
-			ErrorLog(fdst, "Ignoring --track-renames as the source and destination do not have a common hash")
+			Errorf(fdst, "Ignoring --track-renames as the source and destination do not have a common hash")
 			s.trackRenames = false
 		}
 	}
@@ -92,7 +92,7 @@ func newSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool) (*syncCo
 			s.deleteMode = DeleteModeAfter
 		}
 		if s.noTraverse {
-			ErrorLog(nil, "Ignoring --no-traverse with --track-renames")
+			Errorf(nil, "Ignoring --no-traverse with --track-renames")
 			s.noTraverse = false
 		}
 	}
@@ -195,17 +195,17 @@ func (s *syncCopyMove) readDstFiles() {
 // transferred or not.
 func NeedTransfer(dst, src Object) bool {
 	if dst == nil {
-		Debug(src, "Couldn't find file - need to transfer")
+		Debugf(src, "Couldn't find file - need to transfer")
 		return true
 	}
 	// If we should ignore existing files, don't transfer
 	if Config.IgnoreExisting {
-		Debug(src, "Destination exists, skipping")
+		Debugf(src, "Destination exists, skipping")
 		return false
 	}
 	// If we should upload unconditionally
 	if Config.IgnoreTimes {
-		Debug(src, "Transferring unconditionally as --ignore-times is in use")
+		Debugf(src, "Transferring unconditionally as --ignore-times is in use")
 		return true
 	}
 	// If UpdateOlder is in effect, skip if dst is newer than src
@@ -223,21 +223,21 @@ func NeedTransfer(dst, src Object) bool {
 		}
 		switch {
 		case dt >= modifyWindow:
-			Debug(src, "Destination is newer than source, skipping")
+			Debugf(src, "Destination is newer than source, skipping")
 			return false
 		case dt <= -modifyWindow:
-			Debug(src, "Destination is older than source, transferring")
+			Debugf(src, "Destination is older than source, transferring")
 		default:
 			if src.Size() == dst.Size() {
-				Debug(src, "Destination mod time is within %v of source and sizes identical, skipping", modifyWindow)
+				Debugf(src, "Destination mod time is within %v of source and sizes identical, skipping", modifyWindow)
 				return false
 			}
-			Debug(src, "Destination mod time is within %v of source but sizes differ, transferring", modifyWindow)
+			Debugf(src, "Destination mod time is within %v of source but sizes differ, transferring", modifyWindow)
 		}
 	} else {
 		// Check to see if changed or not
 		if Equal(src, dst) {
-			Debug(src, "Unchanged skipping")
+			Debugf(src, "Unchanged skipping")
 			return false
 		}
 	}
@@ -392,7 +392,7 @@ func (s *syncCopyMove) startCheckers() {
 // This stops the background checkers
 func (s *syncCopyMove) stopCheckers() {
 	close(s.toBeChecked)
-	Log(s.fdst, "Waiting for checks to finish")
+	Logf(s.fdst, "Waiting for checks to finish")
 	s.checkerWg.Wait()
 }
 
@@ -407,7 +407,7 @@ func (s *syncCopyMove) startTransfers() {
 // This stops the background transfers
 func (s *syncCopyMove) stopTransfers() {
 	close(s.toBeUploaded)
-	Log(s.fdst, "Waiting for transfers to finish")
+	Logf(s.fdst, "Waiting for transfers to finish")
 	s.transfersWg.Wait()
 }
 
@@ -428,7 +428,7 @@ func (s *syncCopyMove) stopRenamers() {
 		return
 	}
 	close(s.toBeRenamed)
-	Log(s.fdst, "Waiting for renames to finish")
+	Logf(s.fdst, "Waiting for renames to finish")
 	s.renamerWg.Wait()
 }
 
@@ -484,7 +484,7 @@ func (s *syncCopyMove) stopDeleters() {
 // have been found have been removed from dstFiles already.
 func (s *syncCopyMove) deleteFiles(checkSrcMap bool) error {
 	if Stats.Errored() {
-		ErrorLog(s.fdst, "%v", ErrorNotDeleting)
+		Errorf(s.fdst, "%v", ErrorNotDeleting)
 		return ErrorNotDeleting
 	}
 
@@ -515,7 +515,7 @@ func (s *syncCopyMove) renameHash(obj Object) (hash string) {
 	var err error
 	hash, err = obj.Hash(s.commonHash)
 	if err != nil {
-		Debug(obj, "Hash failed: %v", err)
+		Debugf(obj, "Hash failed: %v", err)
 		return ""
 	}
 	if hash == "" {
@@ -551,7 +551,7 @@ func (s *syncCopyMove) popRenameMap(hash string) (dst Object) {
 // makeRenameMap builds a map of the destination files by hash that
 // match sizes in the slice of objects in s.renameCheck
 func (s *syncCopyMove) makeRenameMap() {
-	Debug(s.fdst, "Making map for --track-renames")
+	Debugf(s.fdst, "Making map for --track-renames")
 
 	// first make a map of possible sizes we need to check
 	possibleSizes := map[int64]struct{}{}
@@ -584,7 +584,7 @@ func (s *syncCopyMove) makeRenameMap() {
 		}()
 	}
 	wg.Wait()
-	Debug(s.fdst, "Finished making map for --track-renames")
+	Debugf(s.fdst, "Finished making map for --track-renames")
 }
 
 // tryRename renames a src object when doing track renames if
@@ -605,7 +605,7 @@ func (s *syncCopyMove) tryRename(src Object) bool {
 
 	err := MoveFile(s.fdst, s.fdst, src.Remote(), dst.Remote())
 	if err != nil {
-		Debug(src, "Failed to rename to %q: %v", dst.Remote(), err)
+		Debugf(src, "Failed to rename to %q: %v", dst.Remote(), err)
 		return false
 	}
 
@@ -614,7 +614,7 @@ func (s *syncCopyMove) tryRename(src Object) bool {
 	delete(s.dstFiles, dst.Remote())
 	s.dstFilesMu.Unlock()
 
-	Debug(src, "Renamed from %q", dst.Remote())
+	Debugf(src, "Renamed from %q", dst.Remote())
 	return true
 }
 
@@ -627,7 +627,7 @@ func (s *syncCopyMove) tryRename(src Object) bool {
 // dir is the start directory, "" for root
 func (s *syncCopyMove) runRecursive() error {
 	if Same(s.fdst, s.fsrc) {
-		ErrorLog(s.fdst, "Nothing to do as source and destination are the same")
+		Errorf(s.fdst, "Nothing to do as source and destination are the same")
 		return nil
 	}
 
@@ -694,7 +694,7 @@ func (s *syncCopyMove) runRecursive() error {
 			if err != nil {
 				dst = nil
 				if err != ErrorObjectNotFound {
-					Debug(src, "Error making NewObject: %v", err)
+					Debugf(src, "Error making NewObject: %v", err)
 				}
 			}
 		} else {
@@ -739,7 +739,7 @@ func (s *syncCopyMove) runRecursive() error {
 	// Delete files during or after
 	if s.deleteMode == DeleteModeDuring || s.deleteMode == DeleteModeAfter {
 		if err != nil {
-			ErrorLog(s.fdst, "%v", ErrorNotDeleting)
+			Errorf(s.fdst, "%v", ErrorNotDeleting)
 		} else {
 			err = s.deleteFiles(false)
 		}
@@ -775,7 +775,7 @@ func (s *syncCopyMove) runDirAtATime() error {
 	}
 
 	if Same(s.fdst, s.fsrc) {
-		ErrorLog(s.fdst, "Nothing to do as source and destination are the same")
+		Errorf(s.fdst, "Nothing to do as source and destination are the same")
 		return nil
 	}
 
@@ -859,7 +859,7 @@ func (s *syncCopyMove) runDirAtATime() error {
 	// Delete files after
 	if s.deleteMode == DeleteModeAfter {
 		if s.currentError() != nil {
-			ErrorLog(s.fdst, "%v", ErrorNotDeleting)
+			Errorf(s.fdst, "%v", ErrorNotDeleting)
 		} else {
 			s.processError(s.deleteFiles(false))
 		}
@@ -941,7 +941,7 @@ func (s *syncCopyMove) transfer(dst, src BasicInfo, job listDirJob, jobs *[]list
 		} else {
 			// FIXME src is file, dst is directory
 			err := errors.New("can't overwrite directory with file")
-			ErrorLog(srcX, "%v", err)
+			Errorf(srcX, "%v", err)
 			s.processError(err)
 		}
 	case *Dir:
@@ -958,7 +958,7 @@ func (s *syncCopyMove) transfer(dst, src BasicInfo, job listDirJob, jobs *[]list
 		} else {
 			// FIXME src is dir, dst is file
 			err := errors.New("can't overwrite file with directory")
-			ErrorLog(dstX, "%v", err)
+			Errorf(dstX, "%v", err)
 			s.processError(err)
 		}
 	default:
@@ -1027,7 +1027,7 @@ func (s *syncCopyMove) _runDirAtATime(job listDirJob) (jobs []listDirJob) {
 				iSrc-- // retry the src
 			}
 		}
-		// Debug(nil, "src = %v, dst = %v", src, dst)
+		// Debugf(nil, "src = %v, dst = %v", src, dst)
 		switch {
 		case src == nil:
 			s.dstOnly(dst, job, &jobs)
@@ -1096,27 +1096,27 @@ func moveDir(fdst, fsrc Fs) error {
 // MoveDir moves fsrc into fdst
 func MoveDir(fdst, fsrc Fs) error {
 	if Same(fdst, fsrc) {
-		ErrorLog(fdst, "Nothing to do as source and destination are the same")
+		Errorf(fdst, "Nothing to do as source and destination are the same")
 		return nil
 	}
 
 	// First attempt to use DirMover if exists, same Fs and no filters are active
 	if fdstDirMove := fdst.Features().DirMove; fdstDirMove != nil && SameConfig(fsrc, fdst) && Config.Filter.InActive() {
 		if Config.DryRun {
-			Log(fdst, "Not doing server side directory move as --dry-run")
+			Logf(fdst, "Not doing server side directory move as --dry-run")
 			return nil
 		}
-		Debug(fdst, "Using server side directory move")
+		Debugf(fdst, "Using server side directory move")
 		err := fdstDirMove(fsrc)
 		switch err {
 		case ErrorCantDirMove, ErrorDirExists:
-			Debug(fdst, "Server side directory move failed - fallback to file moves: %v", err)
+			Debugf(fdst, "Server side directory move failed - fallback to file moves: %v", err)
 		case nil:
-			Debug(fdst, "Server side directory move succeeded")
+			Debugf(fdst, "Server side directory move succeeded")
 			return nil
 		default:
 			Stats.Error()
-			ErrorLog(fdst, "Server side directory move failed: %v", err)
+			Errorf(fdst, "Server side directory move failed: %v", err)
 			return err
 		}
 	}
@@ -1124,7 +1124,7 @@ func MoveDir(fdst, fsrc Fs) error {
 	// The two remotes mustn't overlap if we didn't do server side move
 	if Overlapping(fdst, fsrc) {
 		err := ErrorCantMoveOverlapping
-		ErrorLog(fdst, "%v", err)
+		Errorf(fdst, "%v", err)
 		return err
 	}
 

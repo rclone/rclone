@@ -52,7 +52,7 @@ func (tree *nameTreeNode) getTreeNode(path string) *nameTreeNode {
 	for _, component := range strings.Split(path, "/") {
 		if len(component) == 0 {
 			fs.Stats.Error()
-			fs.ErrorLog(tree, "getTreeNode: path component is empty (full path %q)", path)
+			fs.Errorf(tree, "getTreeNode: path component is empty (full path %q)", path)
 			return nil
 		}
 
@@ -79,7 +79,7 @@ func (tree *nameTreeNode) PutCaseCorrectPath(caseCorrectPath string) {
 	for _, component := range strings.Split(caseCorrectPath, "/") {
 		if len(component) == 0 {
 			fs.Stats.Error()
-			fs.ErrorLog(tree, "PutCaseCorrectPath: path component is empty (full path %q)", caseCorrectPath)
+			fs.Errorf(tree, "PutCaseCorrectPath: path component is empty (full path %q)", caseCorrectPath)
 			return
 		}
 		lowercase := strings.ToLower(component)
@@ -96,7 +96,7 @@ func (tree *nameTreeNode) PutCaseCorrectPath(caseCorrectPath string) {
 func (tree *nameTreeNode) PutCaseCorrectDirectoryName(parentPath string, caseCorrectDirectoryName string) {
 	if len(caseCorrectDirectoryName) == 0 {
 		fs.Stats.Error()
-		fs.ErrorLog(tree, "PutCaseCorrectDirectoryName: empty caseCorrectDirectoryName is not allowed (parentPath: %q)", parentPath)
+		fs.Errorf(tree, "PutCaseCorrectDirectoryName: empty caseCorrectDirectoryName is not allowed (parentPath: %q)", parentPath)
 		return
 	}
 
@@ -113,7 +113,7 @@ func (tree *nameTreeNode) PutCaseCorrectDirectoryName(parentPath string, caseCor
 	} else {
 		if len(directory.CaseCorrectName) > 0 {
 			fs.Stats.Error()
-			fs.ErrorLog(tree, "PutCaseCorrectDirectoryName: directory %q is already exists under parent path %q", caseCorrectDirectoryName, parentPath)
+			fs.Errorf(tree, "PutCaseCorrectDirectoryName: directory %q is already exists under parent path %q", caseCorrectDirectoryName, parentPath)
 			return
 		}
 
@@ -129,7 +129,7 @@ func (tree *nameTreeNode) PutFile(parentPath string, caseCorrectFileName string,
 
 	if node.Files[caseCorrectFileName] != nil {
 		fs.Stats.Error()
-		fs.ErrorLog(tree, "PutFile: file %q is already exists at %q", caseCorrectFileName, parentPath)
+		fs.Errorf(tree, "PutFile: file %q is already exists at %q", caseCorrectFileName, parentPath)
 		return
 	}
 
@@ -148,7 +148,7 @@ func (tree *nameTreeNode) GetPathWithCorrectCase(path string) *string {
 	for _, component := range strings.Split(path, "/") {
 		if component == "" {
 			fs.Stats.Error()
-			fs.ErrorLog(tree, "GetPathWithCorrectCase: path component is empty (full path %q)", path)
+			fs.Errorf(tree, "GetPathWithCorrectCase: path component is empty (full path %q)", path)
 			return nil
 		}
 
@@ -188,7 +188,7 @@ func (tree *nameTreeNode) walkFilesRec(currentPath string, walkFunc nameTreeFile
 		caseCorrectName := directory.CaseCorrectName
 		if caseCorrectName == "" {
 			fs.Stats.Error()
-			fs.ErrorLog(tree, "WalkFiles: exact name of the directory %q is unknown (parent path: %q)", lowerCaseName, currentPath)
+			fs.Errorf(tree, "WalkFiles: exact name of the directory %q is unknown (parent path: %q)", lowerCaseName, currentPath)
 			continue
 		}
 

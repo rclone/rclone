@@ -164,7 +164,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	go func() {
 		// FIXME re-open the connection here...
 		err := f.sshClient.Conn.Wait()
-		fs.ErrorLog(f, "SSH connection closed: %v", err)
+		fs.Errorf(f, "SSH connection closed: %v", err)
 	}()
 	return f, nil
 }
@@ -241,7 +241,7 @@ func (f *Fs) list(out fs.ListOpts, dir string, level int, wg *sync.WaitGroup, to
 	infos, err := f.sftpClient.ReadDir(sftpDir)
 	if err != nil {
 		err = errors.Wrapf(err, "error listing %q", dir)
-		fs.ErrorLog(f, "Listing failed: %v", err)
+		fs.Errorf(f, "Listing failed: %v", err)
 		out.SetError(err)
 		return
 	}
@@ -363,7 +363,7 @@ func (f *Fs) Rmdir(dir string) error {
 func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debug(src, "Can't move - not same remote type")
+		fs.Debugf(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 	err := f.mkParentDir(remote)
@@ -395,7 +395,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 func (f *Fs) DirMove(src fs.Fs) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debug(srcFs, "Can't move directory - not same remote type")
+		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -410,7 +410,7 @@ func (f *Fs) DirMove(src fs.Fs) error {
 
 	// Refuse to move to or from the root
 	if f.root == "" || srcFs.root == "" {
-		fs.Debug(src, "DirMove error: Can't move root")
+		fs.Debugf(src, "DirMove error: Can't move root")
 		return errors.New("can't move root directory")
 	}
 
@@ -540,7 +540,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 			offset = x.Offset
 		default:
 			if option.Mandatory() {
-				fs.Log(o, "Unsupported mandatory option: %v", option)
+				fs.Logf(o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -571,9 +571,9 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	remove := func() {
 		removeErr := o.fs.sftpClient.Remove(o.path())
 		if removeErr != nil {
-			fs.Debug(src, "Failed to remove: %v", removeErr)
+			fs.Debugf(src, "Failed to remove: %v", removeErr)
 		} else {
-			fs.Debug(src, "Removed after failed upload: %v", err)
+			fs.Debugf(src, "Removed after failed upload: %v", err)
 		}
 	}
 	_, err = file.ReadFrom(in)

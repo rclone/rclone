@@ -339,7 +339,7 @@ func (f *Fs) list(dir string, level int, fn listFn) error {
 		}
 		for _, object := range objects.Items {
 			if !strings.HasPrefix(object.Name, root) {
-				fs.Log(f, "Odd name received %q", object.Name)
+				fs.Logf(f, "Odd name received %q", object.Name)
 				continue
 			}
 			remote := object.Name[rootLength:]
@@ -505,7 +505,7 @@ func (f *Fs) Precision() time.Duration {
 func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debug(src, "Can't copy - not same remote type")
+		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -575,7 +575,7 @@ func (o *Object) setMetaData(info *storage.Object) {
 	// Read md5sum
 	md5sumData, err := base64.StdEncoding.DecodeString(info.Md5Hash)
 	if err != nil {
-		fs.Log(o, "Bad MD5 decode: %v", err)
+		fs.Logf(o, "Bad MD5 decode: %v", err)
 	} else {
 		o.md5sum = hex.EncodeToString(md5sumData)
 	}
@@ -588,13 +588,13 @@ func (o *Object) setMetaData(info *storage.Object) {
 			o.modTime = modTime
 			return
 		}
-		fs.Debug(o, "Failed to read mtime from metadata: %s", err)
+		fs.Debugf(o, "Failed to read mtime from metadata: %s", err)
 	}
 
 	// Fallback to the Updated time
 	modTime, err := time.Parse(timeFormatIn, info.Updated)
 	if err != nil {
-		fs.Log(o, "Bad time decode: %v", err)
+		fs.Logf(o, "Bad time decode: %v", err)
 	} else {
 		o.modTime = modTime
 	}
@@ -627,7 +627,7 @@ func (o *Object) readMetaData() (err error) {
 func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
-		// fs.Log(o, "Failed to read metadata: %v", err)
+		// fs.Logf(o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime

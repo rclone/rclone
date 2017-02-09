@@ -173,12 +173,12 @@ func (f *Fs) shouldRetryNoReauth(resp *http.Response, err error) (bool, error) {
 			var err error
 			retryAfter, err = strconv.Atoi(retryAfterString)
 			if err != nil {
-				fs.ErrorLog(f, "Malformed %s header %q: %v", retryAfterHeader, retryAfterString, err)
+				fs.Errorf(f, "Malformed %s header %q: %v", retryAfterHeader, retryAfterString, err)
 			}
 		}
 		retryAfterDuration := time.Duration(retryAfter) * time.Second
 		if f.pacer.GetSleep() < retryAfterDuration {
-			fs.Debug(f, "Setting sleep to %v after error: %v", retryAfterDuration, err)
+			fs.Debugf(f, "Setting sleep to %v after error: %v", retryAfterDuration, err)
 			// We set 1/2 the value here because the pacer will double it immediately
 			f.pacer.SetSleep(retryAfterDuration / 2)
 		}
@@ -191,7 +191,7 @@ func (f *Fs) shouldRetryNoReauth(resp *http.Response, err error) (bool, error) {
 // deserve to be retried.  It returns the err as a convenience
 func (f *Fs) shouldRetry(resp *http.Response, err error) (bool, error) {
 	if resp != nil && resp.StatusCode == 401 {
-		fs.Debug(f, "Unauthorized: %v", err)
+		fs.Debugf(f, "Unauthorized: %v", err)
 		// Reauth
 		authErr := f.authorizeAccount()
 		if authErr != nil {
@@ -208,7 +208,7 @@ func errorHandler(resp *http.Response) error {
 	errResponse := new(api.Error)
 	err := rest.DecodeJSON(resp, &errResponse)
 	if err != nil {
-		fs.Debug(nil, "Couldn't decode error response: %v", err)
+		fs.Debugf(nil, "Couldn't decode error response: %v", err)
 	}
 	if errResponse.Code == "" {
 		errResponse.Code = "unknown"
@@ -259,7 +259,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	if *b2TestMode != "" {
 		testMode := strings.TrimSpace(*b2TestMode)
 		f.srv.SetHeader(testModeHeader, testMode)
-		fs.Debug(f, "Setting test header \"%s: %s\"", testModeHeader, testMode)
+		fs.Debugf(f, "Setting test header \"%s: %s\"", testModeHeader, testMode)
 	}
 	// Fill up the buffer tokens
 	for i := 0; i < fs.Config.Transfers; i++ {
@@ -373,7 +373,7 @@ func (f *Fs) getUploadBlock() []byte {
 	if buf == nil {
 		buf = make([]byte, chunkSize)
 	}
-	// fs.Debug(f, "Getting upload block %p", buf)
+	// fs.Debugf(f, "Getting upload block %p", buf)
 	return buf
 }
 
@@ -383,7 +383,7 @@ func (f *Fs) putUploadBlock(buf []byte) {
 	if len(buf) != int(chunkSize) {
 		panic("bad blocksize returned to pool")
 	}
-	// fs.Debug(f, "Returning upload block %p", buf)
+	// fs.Debugf(f, "Returning upload block %p", buf)
 	f.bufferTokens <- buf
 }
 
@@ -490,7 +490,7 @@ func (f *Fs) list(dir string, level int, prefix string, limit int, hidden bool, 
 				return nil
 			}
 			if !strings.HasPrefix(file.Name, f.root) {
-				fs.Log(f, "Odd name received %q", file.Name)
+				fs.Logf(f, "Odd name received %q", file.Name)
 				continue
 			}
 			remote := file.Name[len(f.root):]
@@ -700,7 +700,7 @@ func (f *Fs) Mkdir(dir string) error {
 					return nil
 				}
 				if getBucketErr != fs.ErrorDirNotFound {
-					fs.Debug(f, "Error checking bucket exists: %v", getBucketErr)
+					fs.Debugf(f, "Error checking bucket exists: %v", getBucketErr)
 				}
 			}
 		}
@@ -807,13 +807,13 @@ func (f *Fs) purge(oldOnly bool) error {
 			fs.Stats.Checking(remote)
 			if oldOnly && last != remote {
 				if object.Action == "hide" {
-					fs.Debug(remote, "Deleting current version (id %q) as it is a hide marker", object.ID)
+					fs.Debugf(remote, "Deleting current version (id %q) as it is a hide marker", object.ID)
 					toBeDeleted <- object
 				} else {
-					fs.Debug(remote, "Not deleting current version (id %q) %q", object.ID, object.Action)
+					fs.Debugf(remote, "Not deleting current version (id %q) %q", object.ID, object.Action)
 				}
 			} else {
-				fs.Debug(remote, "Deleting (id %q)", object.ID)
+				fs.Debugf(remote, "Deleting (id %q)", object.ID)
 				toBeDeleted <- object
 			}
 			last = remote
@@ -986,7 +986,7 @@ func (o *Object) parseTimeString(timeString string) (err error) {
 	}
 	unixMilliseconds, err := strconv.ParseInt(timeString, 10, 64)
 	if err != nil {
-		fs.Debug(o, "Failed to parse mod time string %q: %v", timeString, err)
+		fs.Debugf(o, "Failed to parse mod time string %q: %v", timeString, err)
 		return err
 	}
 	o.modTime = time.Unix(unixMilliseconds/1E3, (unixMilliseconds%1E3)*1E6).UTC()
@@ -1108,12 +1108,12 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	// Read sha1 from header if it isn't set
 	if o.sha1 == "" {
 		o.sha1 = resp.Header.Get(sha1Header)
-		fs.Debug(o, "Reading sha1 from header - %q", o.sha1)
+		fs.Debugf(o, "Reading sha1 from header - %q", o.sha1)
 		// if sha1 header is "none" (in big files), then need
 		// to read it from the metadata
 		if o.sha1 == "none" {
 			o.sha1 = resp.Header.Get(sha1InfoHeader)
-			fs.Debug(o, "Reading sha1 from info - %q", o.sha1)
+			fs.Debugf(o, "Reading sha1 from info - %q", o.sha1)
 		}
 	}
 	// Don't check length or hash on partial content
@@ -1299,7 +1299,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 		retry, err := o.fs.shouldRetry(resp, err)
 		// On retryable error clear UploadURL
 		if retry {
-			fs.Debug(o, "Clearing upload URL because of error: %v", err)
+			fs.Debugf(o, "Clearing upload URL because of error: %v", err)
 			upload = nil
 		}
 		return retry, err

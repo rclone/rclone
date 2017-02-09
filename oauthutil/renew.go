@@ -39,16 +39,16 @@ func (r *Renew) renewOnExpiry() {
 		<-expiry
 		uploads := atomic.LoadInt32(&r.uploads)
 		if uploads != 0 {
-			fs.Debug(r.name, "Token expired - %d uploads in progress - refreshing", uploads)
+			fs.Debugf(r.name, "Token expired - %d uploads in progress - refreshing", uploads)
 			// Do a transaction
 			err := r.run()
 			if err == nil {
-				fs.Debug(r.name, "Token refresh successful")
+				fs.Debugf(r.name, "Token refresh successful")
 			} else {
-				fs.ErrorLog(r.name, "Token refresh failed: %v", err)
+				fs.Errorf(r.name, "Token refresh failed: %v", err)
 			}
 		} else {
-			fs.Debug(r.name, "Token expired but no uploads in progress - doing nothing")
+			fs.Debugf(r.name, "Token expired but no uploads in progress - doing nothing")
 		}
 	}
 }

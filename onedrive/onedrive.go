@@ -169,7 +169,7 @@ func errorHandler(resp *http.Response) error {
 	errResponse := new(api.Error)
 	err := rest.DecodeJSON(resp, &errResponse)
 	if err != nil {
-		fs.Debug(nil, "Couldn't decode error response: %v", err)
+		fs.Debugf(nil, "Couldn't decode error response: %v", err)
 	}
 	if errResponse.ErrorInfo.Code == "" {
 		errResponse.ErrorInfo.Code = resp.Status
@@ -272,7 +272,7 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err error) {
-	// fs.Debug(f, "FindLeaf(%q, %q)", pathID, leaf)
+	// fs.Debugf(f, "FindLeaf(%q, %q)", pathID, leaf)
 	parent, ok := f.dirCache.GetInv(pathID)
 	if !ok {
 		return "", false, errors.New("couldn't find parent ID")
@@ -299,7 +299,7 @@ func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err er
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(pathID, leaf string) (newID string, err error) {
-	// fs.Debug(f, "CreateDir(%q, %q)\n", pathID, leaf)
+	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
 	var resp *http.Response
 	var info *api.Item
 	opts := rest.Opts{
@@ -386,7 +386,7 @@ OUTER:
 
 // ListDir reads the directory specified by the job into out, returning any more jobs
 func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.ListDirJob, err error) {
-	fs.Debug(f, "Reading %q", job.Path)
+	fs.Debugf(f, "Reading %q", job.Path)
 	_, err = f.listAll(job.DirID, false, false, func(info *api.Item) bool {
 		remote := job.Path + info.Name
 		if info.Folder != nil {
@@ -419,7 +419,7 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 		}
 		return false
 	})
-	fs.Debug(f, "Finished reading %q", job.Path)
+	fs.Debugf(f, "Finished reading %q", job.Path)
 	return jobs, err
 }
 
@@ -592,7 +592,7 @@ func (f *Fs) waitForJob(location string, o *Object) error {
 func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debug(src, "Can't copy - not same remote type")
+		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	err := srcObj.readMetaData()
@@ -700,7 +700,7 @@ func (o *Object) Hash(t fs.HashType) (string, error) {
 func (o *Object) Size() int64 {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Log(o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size
@@ -764,7 +764,7 @@ func (o *Object) readMetaData() (err error) {
 func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Log(o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime
@@ -883,7 +883,7 @@ func (o *Object) uploadMultipart(in io.Reader, size int64) (err error) {
 	}
 
 	// Create upload session
-	fs.Debug(o, "Starting multipart upload")
+	fs.Debugf(o, "Starting multipart upload")
 	session, err := o.createUploadSession()
 	if err != nil {
 		return err
@@ -893,10 +893,10 @@ func (o *Object) uploadMultipart(in io.Reader, size int64) (err error) {
 	// Cancel the session if something went wrong
 	defer func() {
 		if err != nil {
-			fs.Debug(o, "Cancelling multipart upload")
+			fs.Debugf(o, "Cancelling multipart upload")
 			cancelErr := o.cancelUploadSession(uploadURL)
 			if cancelErr != nil {
-				fs.Log(o, "Failed to cancel multipart upload: %v", err)
+				fs.Logf(o, "Failed to cancel multipart upload: %v", err)
 			}
 		}
 	}()
@@ -915,7 +915,7 @@ func (o *Object) uploadMultipart(in io.Reader, size int64) (err error) {
 		if err != nil {
 			return err
 		}
-		fs.Debug(o, "Uploading segment %d/%d size %d", position, size, n)
+		fs.Debugf(o, "Uploading segment %d/%d size %d", position, size, n)
 		err = o.uploadFragment(uploadURL, position, size, buf)
 		if err != nil {
 			return err

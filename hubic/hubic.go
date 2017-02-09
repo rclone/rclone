@@ -127,7 +127,7 @@ func (f *Fs) getCredentials() (err error) {
 	if err != nil {
 		return err
 	}
-	// fs.Debug(f, "Got credentials %+v", result)
+	// fs.Debugf(f, "Got credentials %+v", result)
 	if result.Token == "" || result.Endpoint == "" || result.Expires == "" {
 		return errors.New("couldn't read token, result and expired from credentials")
 	}
@@ -137,7 +137,7 @@ func (f *Fs) getCredentials() (err error) {
 		return err
 	}
 	f.expires = expires
-	fs.Debug(f, "Got swift credentials (expiry %v in %v)", f.expires, f.expires.Sub(time.Now()))
+	fs.Debugf(f, "Got swift credentials (expiry %v in %v)", f.expires, f.expires.Sub(time.Now()))
 	return nil
 }
 

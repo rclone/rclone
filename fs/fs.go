@@ -2,11 +2,9 @@
 package fs
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"math"
-	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -612,40 +610,6 @@ func NewFs(path string) (Fs, error) {
 		return nil, err
 	}
 	return fsInfo.NewFs(configName, fsPath)
-}
-
-// DebugLogger - logs to Stdout
-var DebugLogger = log.New(os.Stdout, "", log.LstdFlags)
-
-// makeLog produces a log string from the arguments passed in
-func makeLog(o interface{}, text string, args ...interface{}) string {
-	out := fmt.Sprintf(text, args...)
-	if o == nil {
-		return out
-	}
-	return fmt.Sprintf("%v: %s", o, out)
-}
-
-// Debug writes debugging output for this Object or Fs
-func Debug(o interface{}, text string, args ...interface{}) {
-	if Config.Verbose {
-		DebugLogger.Print(makeLog(o, text, args...))
-	}
-}
-
-// Log writes log output for this Object or Fs.  This should be
-// considered to be Info level logging.
-func Log(o interface{}, text string, args ...interface{}) {
-	if !Config.Quiet {
-		log.Print(makeLog(o, text, args...))
-	}
-}
-
-// ErrorLog writes error log output for this Object or Fs.  It
-// unconditionally logs a message regardless of Config.Quiet or
-// Config.Verbose.
-func ErrorLog(o interface{}, text string, args ...interface{}) {
-	log.Print(makeLog(o, text, args...))
 }
 
 // CheckClose is a utility function used to check the return from

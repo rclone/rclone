@@ -38,7 +38,7 @@ func listDir(f ListDirer, out fs.ListOpts, dirID string, path string) {
 				jobs, err := f.ListDir(out, job)
 				if err != nil {
 					out.SetError(err)
-					fs.Debug(f, "Error reading %s: %s", path, err)
+					fs.Debugf(f, "Error reading %s: %s", path, err)
 				} else {
 					traversing.Add(len(jobs))
 					go func() {

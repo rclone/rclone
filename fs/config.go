@@ -275,10 +275,10 @@ func makeConfigPath() string {
 	}
 
 	// Default to ./.rclone.conf (current working directory)
-	ErrorLog(nil, "Couldn't find home directory or read HOME or XDG_CONFIG_HOME environment variables.")
-	ErrorLog(nil, "Defaulting to storing config in current directory.")
-	ErrorLog(nil, "Use -config flag to workaround.")
-	ErrorLog(nil, "Error was: %v", err)
+	Errorf(nil, "Couldn't find home directory or read HOME or XDG_CONFIG_HOME environment variables.")
+	Errorf(nil, "Defaulting to storing config in current directory.")
+	Errorf(nil, "Use -config flag to workaround.")
+	Errorf(nil, "Error was: %v", err)
 	return hiddenConfigFileName
 }
 
@@ -357,7 +357,7 @@ func LoadConfig() {
 	var err error
 	configData, err = loadConfigFile()
 	if err == errorConfigFileNotFound {
-		Log(nil, "Config file %q not found - using defaults", ConfigPath)
+		Logf(nil, "Config file %q not found - using defaults", ConfigPath)
 		configData, _ = goconfig.LoadFromReader(&bytes.Buffer{})
 	} else if err != nil {
 		log.Fatalf("Failed to load config file %q: %v", ConfigPath, err)
@@ -432,7 +432,7 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 				fmt.Println("Using RCLONE_CONFIG_PASS returned:", err)
 				envpw = ""
 			} else {
-				Debug(nil, "Using RCLONE_CONFIG_PASS password.")
+				Debugf(nil, "Using RCLONE_CONFIG_PASS password.")
 			}
 		}
 		if len(configKey) == 0 {
@@ -456,7 +456,7 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 		}
 
 		// Retry
-		ErrorLog(nil, "Couldn't decrypt configuration, most likely wrong password.")
+		Errorf(nil, "Couldn't decrypt configuration, most likely wrong password.")
 		configKey = nil
 		envpw = ""
 	}
@@ -560,7 +560,7 @@ func SaveConfig() {
 		}
 		err = os.Chmod(ConfigPath, 0600)
 		if err != nil {
-			ErrorLog(nil, "Failed to set permissions on config file: %v", err)
+			Errorf(nil, "Failed to set permissions on config file: %v", err)
 		}
 		return
 	}
@@ -607,7 +607,7 @@ func SaveConfig() {
 
 	err = os.Chmod(ConfigPath, 0600)
 	if err != nil {
-		ErrorLog(nil, "Failed to set permissions on config file: %v", err)
+		Errorf(nil, "Failed to set permissions on config file: %v", err)
 	}
 }
 
@@ -809,7 +809,7 @@ func OkRemote(name string) bool {
 		configData.DeleteSection(name)
 		return true
 	default:
-		ErrorLog(nil, "Bad choice %c", i)
+		Errorf(nil, "Bad choice %c", i)
 	}
 	return false
 }
@@ -868,7 +868,7 @@ func ChooseOption(o *Option) string {
 		case 'n':
 			return ""
 		default:
-			ErrorLog(nil, "Bad choice %c", i)
+			Errorf(nil, "Bad choice %c", i)
 		}
 		return MustObscure(password)
 	}
@@ -1128,7 +1128,7 @@ func ConfigFileGetBool(section, key string, defaultVal ...bool) bool {
 	if found {
 		newBool, err := strconv.ParseBool(newValue)
 		if err != nil {
-			ErrorLog(nil, "Couldn't parse %q into bool - ignoring: %v", envKey, err)
+			Errorf(nil, "Couldn't parse %q into bool - ignoring: %v", envKey, err)
 		} else {
 			defaultVal = []bool{newBool}
 		}
@@ -1146,7 +1146,7 @@ func ConfigFileGetInt(section, key string, defaultVal ...int) int {
 	if found {
 		newInt, err := strconv.Atoi(newValue)
 		if err != nil {
-			ErrorLog(nil, "Couldn't parse %q into int - ignoring: %v", envKey, err)
+			Errorf(nil, "Couldn't parse %q into int - ignoring: %v", envKey, err)
 		} else {
 			defaultVal = []int{newInt}
 		}

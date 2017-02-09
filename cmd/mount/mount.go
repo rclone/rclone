@@ -143,7 +143,7 @@ mount won't do that, so will be less reliable than the rclone command.
 func Mount(f fs.Fs, mountpoint string) error {
 	if debugFUSE {
 		fuse.Debug = func(msg interface{}) {
-			fs.Debug("fuse", "%v", msg)
+			fs.Debugf("fuse", "%v", msg)
 		}
 	}
 

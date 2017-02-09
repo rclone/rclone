@@ -301,7 +301,7 @@ func (f *Fs) listContainerRoot(container, root string, dir string, level int, fn
 					}
 				}
 				if !strings.HasPrefix(object.Name, root) {
-					fs.Log(f, "Odd name received %q", object.Name)
+					fs.Logf(f, "Odd name received %q", object.Name)
 					continue
 				}
 				remote := object.Name[rootLength:]
@@ -484,7 +484,7 @@ func (f *Fs) Purge() error {
 func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debug(src, "Can't copy - not same remote type")
+		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	srcFs := srcObj.fs
@@ -534,7 +534,7 @@ func (o *Object) Hash(t fs.HashType) (string, error) {
 		return "", err
 	}
 	if isDynamicLargeObject || isStaticLargeObject {
-		fs.Debug(o, "Returning empty Md5sum for swift large object")
+		fs.Debugf(o, "Returning empty Md5sum for swift large object")
 		return "", nil
 	}
 	return strings.ToLower(o.info.Hash), nil
@@ -598,12 +598,12 @@ func (o *Object) readMetaData() (err error) {
 func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Debug(o, "Failed to read metadata: %s", err)
+		fs.Debugf(o, "Failed to read metadata: %s", err)
 		return o.info.LastModified
 	}
 	modTime, err := o.headers.ObjectMetadata().GetModTime()
 	if err != nil {
-		// fs.Log(o, "Failed to read mtime from object: %v", err)
+		// fs.Logf(o, "Failed to read mtime from object: %v", err)
 		return o.info.LastModified
 	}
 	return modTime
@@ -664,11 +664,11 @@ func (o *Object) removeSegments(except string) error {
 			return nil
 		}
 		if except != "" && strings.HasPrefix(remote, except) {
-			// fs.Debug(o, "Ignoring current segment file %q in container %q", segmentsRoot+remote, o.fs.segmentsContainer)
+			// fs.Debugf(o, "Ignoring current segment file %q in container %q", segmentsRoot+remote, o.fs.segmentsContainer)
 			return nil
 		}
 		segmentPath := segmentsRoot + remote
-		fs.Debug(o, "Removing segment file %q in container %q", segmentPath, o.fs.segmentsContainer)
+		fs.Debugf(o, "Removing segment file %q in container %q", segmentPath, o.fs.segmentsContainer)
 		return o.fs.c.ObjectDelete(o.fs.segmentsContainer, segmentPath)
 	})
 	if err != nil {
@@ -677,7 +677,7 @@ func (o *Object) removeSegments(except string) error {
 	// remove the segments container if empty, ignore errors
 	err = o.fs.c.ContainerDelete(o.fs.segmentsContainer)
 	if err == nil {
-		fs.Debug(o, "Removed empty container %q", o.fs.segmentsContainer)
+		fs.Debugf(o, "Removed empty container %q", o.fs.segmentsContainer)
 	}
 	return nil
 }
@@ -717,7 +717,7 @@ func (o *Object) updateChunks(in io.Reader, headers swift.Headers, size int64, c
 		headers["Content-Length"] = strconv.FormatInt(n, 10) // set Content-Length as we know it
 		segmentReader := io.LimitReader(in, n)
 		segmentPath := fmt.Sprintf("%s/%08d", segmentsPath, i)
-		fs.Debug(o, "Uploading segment file %q into %q", segmentPath, o.fs.segmentsContainer)
+		fs.Debugf(o, "Uploading segment file %q into %q", segmentPath, o.fs.segmentsContainer)
 		_, err := o.fs.c.ObjectPut(o.fs.segmentsContainer, segmentPath, segmentReader, true, "", "", headers)
 		if err != nil {
 			return "", err
@@ -770,7 +770,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	if isDynamicLargeObject {
 		err = o.removeSegments(uniquePrefix)
 		if err != nil {
-			fs.Log(o, "Failed to remove old segments - carrying on with upload: %v", err)
+			fs.Logf(o, "Failed to remove old segments - carrying on with upload: %v", err)
 		}
 	}
 

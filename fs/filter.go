@@ -232,7 +232,7 @@ func NewFilter() (f *Filter, err error) {
 			return nil, err
 		}
 		f.ModTimeTo = time.Now().Add(-duration)
-		Debug(nil, "--min-age %v to %v", duration, f.ModTimeTo)
+		Debugf(nil, "--min-age %v to %v", duration, f.ModTimeTo)
 	}
 	if *maxAge != "" {
 		duration, err := ParseDuration(*maxAge)
@@ -243,7 +243,7 @@ func NewFilter() (f *Filter, err error) {
 		if !f.ModTimeTo.IsZero() && f.ModTimeTo.Before(f.ModTimeFrom) {
 			return nil, errors.New("argument --min-age can't be larger than --max-age")
 		}
-		Debug(nil, "--max-age %v to %v", duration, f.ModTimeFrom)
+		Debugf(nil, "--max-age %v to %v", duration, f.ModTimeFrom)
 	}
 	if *dumpFilters {
 		fmt.Println("--- start filters ---")

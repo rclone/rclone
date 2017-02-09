@@ -34,7 +34,7 @@ quicktest:
 # Do source code quality checks
 check:	rclone
 ifdef GO_LATEST
-	go vet $(GO_FILES)
+	go tool vet -printfuncs Debugf,Infof,Logf,Errorf . 2>&1 | grep -E -v ^vendor/ ; test $$? -eq 1
 	errcheck $(GO_FILES)
 	find . -name \*.go | grep -v /vendor/ | xargs goimports -d | grep . ; test $$? -eq 1
 	go list ./... | grep -v /vendor/ | xargs -i golint {} | grep -E -v '(StorageUrl|CdnUrl)' ; test $$? -eq 1

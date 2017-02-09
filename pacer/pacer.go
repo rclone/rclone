@@ -208,7 +208,7 @@ func (p *Pacer) beginCall() {
 	p.mu.Lock()
 	// Restart the timer
 	go func(t time.Duration) {
-		// fs.Debug(f, "New sleep for %v at %v", t, time.Now())
+		// fs.Debugf(f, "New sleep for %v at %v", t, time.Now())
 		time.Sleep(t)
 		p.pacer <- struct{}{}
 	}(p.sleepTime)
@@ -236,7 +236,7 @@ func (p *Pacer) defaultPacer(retry bool) {
 			p.sleepTime = p.maxSleep
 		}
 		if p.sleepTime != oldSleepTime {
-			fs.Debug("pacer", "Rate limited, increasing sleep to %v", p.sleepTime)
+			fs.Debugf("pacer", "Rate limited, increasing sleep to %v", p.sleepTime)
 		}
 	} else {
 		p.sleepTime = (p.sleepTime<<p.decayConstant - p.sleepTime) >> p.decayConstant
@@ -244,7 +244,7 @@ func (p *Pacer) defaultPacer(retry bool) {
 			p.sleepTime = p.minSleep
 		}
 		if p.sleepTime != oldSleepTime {
-			fs.Debug("pacer", "Reducing sleep to %v", p.sleepTime)
+			fs.Debugf("pacer", "Reducing sleep to %v", p.sleepTime)
 		}
 	}
 }
@@ -263,7 +263,7 @@ func (p *Pacer) acdPacer(retry bool) {
 	if consecutiveRetries == 0 {
 		if p.sleepTime != p.minSleep {
 			p.sleepTime = p.minSleep
-			fs.Debug("pacer", "Resetting sleep to minimum %v on success", p.sleepTime)
+			fs.Debugf("pacer", "Resetting sleep to minimum %v on success", p.sleepTime)
 		}
 	} else {
 		if consecutiveRetries > 9 {
@@ -277,7 +277,7 @@ func (p *Pacer) acdPacer(retry bool) {
 		if p.sleepTime < p.minSleep {
 			p.sleepTime = p.minSleep
 		}
-		fs.Debug("pacer", "Rate limited, sleeping for %v (%d consecutive low level retries)", p.sleepTime, p.consecutiveRetries)
+		fs.Debugf("pacer", "Rate limited, sleeping for %v (%d consecutive low level retries)", p.sleepTime, p.consecutiveRetries)
 	}
 }
 
@@ -295,7 +295,7 @@ func (p *Pacer) drivePacer(retry bool) {
 	if consecutiveRetries == 0 {
 		if p.sleepTime != p.minSleep {
 			p.sleepTime = p.minSleep
-			fs.Debug("pacer", "Resetting sleep to minimum %v on success", p.sleepTime)
+			fs.Debugf("pacer", "Resetting sleep to minimum %v on success", p.sleepTime)
 		}
 	} else {
 		if consecutiveRetries > 5 {
@@ -304,7 +304,7 @@ func (p *Pacer) drivePacer(retry bool) {
 		// consecutiveRetries starts at 1 so go from 1,2,3,4,5,5 => 1,2,4,8,16,16
 		// maxSleep is 2**(consecutiveRetries-1) seconds + random milliseconds
 		p.sleepTime = time.Second<<uint(consecutiveRetries-1) + time.Duration(rand.Int63n(int64(time.Second)))
-		fs.Debug("pacer", "Rate limited, sleeping for %v (%d consecutive low level retries)", p.sleepTime, p.consecutiveRetries)
+		fs.Debugf("pacer", "Rate limited, sleeping for %v (%d consecutive low level retries)", p.sleepTime, p.consecutiveRetries)
 	}
 }
 
@@ -336,7 +336,7 @@ func (p *Pacer) call(fn Paced, retries int) (err error) {
 		if !retry {
 			break
 		}
-		fs.Debug("pacer", "low level retry %d/%d (error %v)", i, retries, err)
+		fs.Debugf("pacer", "low level retry %d/%d (error %v)", i, retries, err)
 	}
 	if retry {
 		err = fs.RetryError(err)

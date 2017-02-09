@@ -170,13 +170,13 @@ func checkServerTime(req *http.Request, resp *http.Response) {
 	}
 	date, err := http.ParseTime(dateString)
 	if err != nil {
-		Debug(nil, "Couldn't parse Date: from server %s: %q: %v", host, dateString, err)
+		Debugf(nil, "Couldn't parse Date: from server %s: %q: %v", host, dateString, err)
 		return
 	}
 	dt := time.Since(date)
 	const window = 5 * 60 * time.Second
 	if dt > window || dt < -window {
-		Log(nil, "Time may be set wrong - time from %q is %v different from this computer", host, dt)
+		Logf(nil, "Time may be set wrong - time from %q is %v different from this computer", host, dt)
 	}
 	checkedHostMu.Lock()
 	checkedHost[host] = struct{}{}
@@ -219,30 +219,30 @@ func cleanAuth(buf []byte) []byte {
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	// Force user agent
 	req.Header.Set("User-Agent", UserAgent)
-	// Log request
+	// Logf request
 	if t.logHeader || t.logBody || t.logAuth {
 		buf, _ := httputil.DumpRequestOut(req, t.logBody)
 		if !t.logAuth {
 			buf = cleanAuth(buf)
 		}
-		Debug(nil, "%s", separatorReq)
-		Debug(nil, "%s (req %p)", "HTTP REQUEST", req)
-		Debug(nil, "%s", string(buf))
-		Debug(nil, "%s", separatorReq)
+		Debugf(nil, "%s", separatorReq)
+		Debugf(nil, "%s (req %p)", "HTTP REQUEST", req)
+		Debugf(nil, "%s", string(buf))
+		Debugf(nil, "%s", separatorReq)
 	}
 	// Do round trip
 	resp, err = t.Transport.RoundTrip(req)
-	// Log response
+	// Logf response
 	if t.logHeader || t.logBody || t.logAuth {
-		Debug(nil, "%s", separatorResp)
-		Debug(nil, "%s (req %p)", "HTTP RESPONSE", req)
+		Debugf(nil, "%s", separatorResp)
+		Debugf(nil, "%s (req %p)", "HTTP RESPONSE", req)
 		if err != nil {
-			Debug(nil, "Error: %v", err)
+			Debugf(nil, "Error: %v", err)
 		} else {
 			buf, _ := httputil.DumpResponse(resp, t.logBody)
-			Debug(nil, "%s", string(buf))
+			Debugf(nil, "%s", string(buf))
 		}
-		Debug(nil, "%s", separatorResp)
+		Debugf(nil, "%s", separatorResp)
 	}
 	if err == nil {
 		checkServerTime(req, resp)

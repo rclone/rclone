@@ -269,7 +269,7 @@ func (f *Fs) DirMove(src fs.Fs) error {
 	}
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debug(srcFs, "Can't move directory - not same remote type")
+		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 	return do(srcFs.Fs)
@@ -345,7 +345,7 @@ func (o *Object) Remote() string {
 	remote := o.Object.Remote()
 	decryptedName, err := o.f.cipher.DecryptFileName(remote)
 	if err != nil {
-		fs.Debug(remote, "Undecryptable file name: %v", err)
+		fs.Debugf(remote, "Undecryptable file name: %v", err)
 		return remote
 	}
 	return decryptedName
@@ -355,7 +355,7 @@ func (o *Object) Remote() string {
 func (o *Object) Size() int64 {
 	size, err := o.f.cipher.DecryptedSize(o.Object.Size())
 	if err != nil {
-		fs.Debug(o, "Bad size for decrypt: %v", err)
+		fs.Debugf(o, "Bad size for decrypt: %v", err)
 	}
 	return size
 }
@@ -375,7 +375,7 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 			offset = x.Offset
 		default:
 			if option.Mandatory() {
-				fs.Log(o, "Unsupported mandatory option: %v", option)
+				fs.Logf(o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -408,7 +408,7 @@ func (f *Fs) newDir(dir *fs.Dir) *fs.Dir {
 	remote := dir.Name
 	decryptedRemote, err := f.cipher.DecryptDirName(remote)
 	if err != nil {
-		fs.Debug(remote, "Undecryptable dir name: %v", err)
+		fs.Debugf(remote, "Undecryptable dir name: %v", err)
 	} else {
 		new.Name = decryptedRemote
 	}
@@ -493,11 +493,11 @@ func (lo *ListOpts) Add(obj fs.Object) (abort bool) {
 	remote := obj.Remote()
 	decryptedRemote, err := lo.f.cipher.DecryptFileName(remote)
 	if err != nil {
-		fs.Debug(remote, "Skipping undecryptable file name: %v", err)
+		fs.Debugf(remote, "Skipping undecryptable file name: %v", err)
 		return lo.ListOpts.IsFinished()
 	}
 	if *cryptShowMapping {
-		fs.Log(decryptedRemote, "Encrypts to %q", remote)
+		fs.Logf(decryptedRemote, "Encrypts to %q", remote)
 	}
 	return lo.ListOpts.Add(lo.f.newObject(obj))
 }
@@ -509,11 +509,11 @@ func (lo *ListOpts) AddDir(dir *fs.Dir) (abort bool) {
 	remote := dir.Name
 	decryptedRemote, err := lo.f.cipher.DecryptDirName(remote)
 	if err != nil {
-		fs.Debug(remote, "Skipping undecryptable dir name: %v", err)
+		fs.Debugf(remote, "Skipping undecryptable dir name: %v", err)
 		return lo.ListOpts.IsFinished()
 	}
 	if *cryptShowMapping {
-		fs.Log(decryptedRemote, "Encrypts to %q", remote)
+		fs.Logf(decryptedRemote, "Encrypts to %q", remote)
 	}
 	return lo.ListOpts.AddDir(lo.f.newDir(dir))
 }
@@ -523,7 +523,7 @@ func (lo *ListOpts) AddDir(dir *fs.Dir) (abort bool) {
 func (lo *ListOpts) IncludeDirectory(remote string) bool {
 	decryptedRemote, err := lo.f.cipher.DecryptDirName(remote)
 	if err != nil {
-		fs.Debug(remote, "Not including undecryptable directory name: %v", err)
+		fs.Debugf(remote, "Not including undecryptable directory name: %v", err)
 		return false
 	}
 	return lo.ListOpts.IncludeDirectory(decryptedRemote)

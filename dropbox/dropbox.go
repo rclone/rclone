@@ -279,7 +279,7 @@ func (f *Fs) list(out fs.ListOpts, dir string) {
 			out.SetError(err)
 			break
 		}
-		fs.Debug(f, "%d delta entries received", len(deltaPage.Entries))
+		fs.Debugf(f, "%d delta entries received", len(deltaPage.Entries))
 		for i := range deltaPage.Entries {
 			deltaEntry := &deltaPage.Entries[i]
 			entry := deltaEntry.Entry
@@ -287,7 +287,7 @@ func (f *Fs) list(out fs.ListOpts, dir string) {
 				// This notifies of a deleted object
 			} else {
 				if len(entry.Path) <= 1 || entry.Path[0] != '/' {
-					fs.Log(f, "dropbox API inconsistency: a path should always start with a slash and be at least 2 characters: %s", entry.Path)
+					fs.Logf(f, "dropbox API inconsistency: a path should always start with a slash and be at least 2 characters: %s", entry.Path)
 					continue
 				}
 
@@ -500,7 +500,7 @@ func (f *Fs) Precision() time.Duration {
 func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debug(src, "Can't copy - not same remote type")
+		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -543,7 +543,7 @@ func (f *Fs) Purge() error {
 func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debug(src, "Can't move - not same remote type")
+		fs.Debugf(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -573,7 +573,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 func (f *Fs) DirMove(src fs.Fs) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debug(srcFs, "Can't move directory - not same remote type")
+		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -699,7 +699,7 @@ func (o *Object) readMetaData() (err error) {
 func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Log(o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime
@@ -728,7 +728,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 			offset = x.Offset
 		default:
 			if option.Mandatory() {
-				fs.Log(o, "Unsupported mandatory option: %v", option)
+				fs.Logf(o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -752,7 +752,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	remote := o.remotePath()
 	if ignoredFiles.MatchString(remote) {
-		fs.Log(o, "File name disallowed - not uploading")
+		fs.Logf(o, "File name disallowed - not uploading")
 		return nil
 	}
 	entry, err := o.fs.db.UploadByChunk(ioutil.NopCloser(in), int(uploadChunkSize), remote, true, "")
@@ -773,7 +773,7 @@ func (o *Object) Remove() error {
 func (o *Object) MimeType() string {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Log(o, "Failed to read metadata: %v", err)
+		fs.Logf(o, "Failed to read metadata: %v", err)
 		return ""
 	}
 	return o.mimeType

@@ -473,7 +473,7 @@ func TestCheck(t *testing.T) {
 	defer r.Finalise()
 
 	check := func(i int, wantErrors int64) {
-		fs.Debug(r.fremote, "%d: Starting check test", i)
+		fs.Debugf(r.fremote, "%d: Starting check test", i)
 		oldErrors := fs.Stats.GetErrors()
 		err := fs.Check(r.flocal, r.fremote)
 		gotErrors := fs.Stats.GetErrors() - oldErrors
@@ -486,7 +486,7 @@ func TestCheck(t *testing.T) {
 		if wantErrors != gotErrors {
 			t.Errorf("%d: Expecting %d errors but got %d", i, wantErrors, gotErrors)
 		}
-		fs.Debug(r.fremote, "%d: Ending check test", i)
+		fs.Debugf(r.fremote, "%d: Ending check test", i)
 	}
 
 	file1 := r.WriteBoth("rutabaga", "is tasty", t3)

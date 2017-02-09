@@ -309,7 +309,7 @@ func (f *Fs) cleanRemote(name string) string {
 	if !utf8.ValidString(name) {
 		f.wmu.Lock()
 		if _, ok := f.warned[name]; !ok {
-			fs.Debug(f, "Replacing invalid UTF-8 characters in %q", name)
+			fs.Debugf(f, "Replacing invalid UTF-8 characters in %q", name)
 			f.warned[name] = struct{}{}
 		}
 		f.wmu.Unlock()
@@ -446,7 +446,7 @@ func (f *Fs) Purge() error {
 func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debug(src, "Can't move - not same remote type")
+		fs.Debugf(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -496,7 +496,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 func (f *Fs) DirMove(src fs.Fs) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debug(srcFs, "Can't move directory - not same remote type")
+		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 	// Check if source exists
@@ -601,24 +601,24 @@ func (o *Object) Storable() bool {
 	// Check for control characters in the remote name and show non storable
 	for _, c := range o.Remote() {
 		if c >= 0x00 && c < 0x20 || c == 0x7F {
-			fs.Debug(o.fs, "Can't store file with control characters: %q", o.Remote())
+			fs.Debugf(o.fs, "Can't store file with control characters: %q", o.Remote())
 			return false
 		}
 	}
 	mode := o.info.Mode()
 	// On windows a file with os.ModeSymlink represents a file with reparse points
 	if runtime.GOOS == "windows" && (mode&os.ModeSymlink) != 0 {
-		fs.Debug(o, "Clearing symlink bit to allow a file with reparse points to be copied")
+		fs.Debugf(o, "Clearing symlink bit to allow a file with reparse points to be copied")
 		mode &^= os.ModeSymlink
 	}
 	if mode&os.ModeSymlink != 0 {
-		fs.Debug(o, "Can't follow symlink without -L/--copy-links")
+		fs.Debugf(o, "Can't follow symlink without -L/--copy-links")
 		return false
 	} else if mode&(os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
-		fs.Debug(o, "Can't transfer non file/directory")
+		fs.Debugf(o, "Can't transfer non file/directory")
 		return false
 	} else if mode&os.ModeDir != 0 {
-		// fs.Debug(o, "Skipping directory")
+		// fs.Debugf(o, "Skipping directory")
 		return false
 	}
 	return true
@@ -662,7 +662,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 			offset = x.Offset
 		default:
 			if option.Mandatory() {
-				fs.Log(o, "Unsupported mandatory option: %v", option)
+				fs.Logf(o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -714,9 +714,9 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		err = closeErr
 	}
 	if err != nil {
-		fs.Debug(o, "Removing partially written file on error: %v", err)
+		fs.Debugf(o, "Removing partially written file on error: %v", err)
 		if removeErr := os.Remove(o.path); removeErr != nil {
-			fs.ErrorLog(o, "Failed to remove partially written file: %v", removeErr)
+			fs.Errorf(o, "Failed to remove partially written file: %v", removeErr)
 		}
 		return err
 	}
@@ -859,7 +859,7 @@ func cleanWindowsName(f *Fs, name string) string {
 	if name2 != original && f != nil {
 		f.wmu.Lock()
 		if _, ok := f.warned[name]; !ok {
-			fs.Debug(f, "Replacing invalid characters in %q to %q", name, name2)
+			fs.Debugf(f, "Replacing invalid characters in %q to %q", name, name2)
 			f.warned[name] = struct{}{}
 		}
 		f.wmu.Unlock()

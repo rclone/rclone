@@ -98,9 +98,9 @@ func putToken(name string, token *oauth2.Token) error {
 	if tokenString != old {
 		err = fs.ConfigSetValueAndSave(name, fs.ConfigToken, tokenString)
 		if err != nil {
-			fs.ErrorLog(nil, "Failed to save new token in config file: %v", err)
+			fs.Errorf(nil, "Failed to save new token in config file: %v", err)
 		} else {
-			fs.Debug(name, "Saved new token in config file")
+			fs.Debugf(name, "Saved new token in config file")
 		}
 	}
 	return nil
@@ -370,7 +370,7 @@ type authServer struct {
 
 // startWebServer runs an internal web server to receive config details
 func (s *authServer) Start() {
-	fs.Debug(nil, "Starting auth server on %s", s.bindAddress)
+	fs.Debugf(nil, "Starting auth server on %s", s.bindAddress)
 	mux := http.NewServeMux()
 	server := &http.Server{
 		Addr:    s.bindAddress,
@@ -387,15 +387,15 @@ func (s *authServer) Start() {
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		fs.Debug(nil, "Received request on auth server")
+		fs.Debugf(nil, "Received request on auth server")
 		code := req.FormValue("code")
 		if code != "" {
 			state := req.FormValue("state")
 			if state != s.state {
-				fs.Debug(nil, "State did not match: want %q got %q", s.state, state)
+				fs.Debugf(nil, "State did not match: want %q got %q", s.state, state)
 				fmt.Fprintf(w, "<h1>Failure</h1>\n<p>Auth state doesn't match</p>")
 			} else {
-				fs.Debug(nil, "Successfully got code")
+				fs.Debugf(nil, "Successfully got code")
 				if s.code != nil {
 					fmt.Fprintf(w, "<h1>Success</h1>\n<p>Go back to rclone to continue</p>")
 					s.code <- code
@@ -405,7 +405,7 @@ func (s *authServer) Start() {
 			}
 			return
 		}
-		fs.Debug(nil, "No code found on request")
+		fs.Debugf(nil, "No code found on request")
 		w.WriteHeader(500)
 		fmt.Fprintf(w, "<h1>Failed!</h1>\nNo code found returned by remote server.")
 
@@ -417,11 +417,11 @@ func (s *authServer) Start() {
 		log.Fatalf("Failed to start auth webserver: %v", err)
 	}
 	err = server.Serve(s.listener)
-	fs.Debug(nil, "Closed auth server with error: %v", err)
+	fs.Debugf(nil, "Closed auth server with error: %v", err)
 }
 
 func (s *authServer) Stop() {
-	fs.Debug(nil, "Closing auth server")
+	fs.Debugf(nil, "Closing auth server")
 	if s.code != nil {
 		close(s.code)
 		s.code = nil
