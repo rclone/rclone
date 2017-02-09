@@ -929,12 +929,12 @@ func (o *Object) readMetaData() (err error) {
 func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.Debugf(o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	modTime, err := time.Parse(timeFormatIn, o.modifiedDate)
 	if err != nil {
-		fs.Logf(o, "Failed to read mtime from object: %v", err)
+		fs.Debugf(o, "Failed to read mtime from object: %v", err)
 		return time.Now()
 	}
 	return modTime
@@ -1103,7 +1103,7 @@ func (o *Object) Remove() error {
 func (o *Object) MimeType() string {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.Debugf(o, "Failed to read metadata: %v", err)
 		return ""
 	}
 	return o.mimeType

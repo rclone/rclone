@@ -275,7 +275,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		log.Fatalf("Failed to %s: %v", cmd.Name(), err)
 	}
 	if showStats && (!fs.Config.Quiet || fs.Stats.Errored() || *statsInterval > 0) {
-		fs.Logf(nil, "%s", fs.Stats)
+		fs.Infof(nil, "%s", fs.Stats)
 	}
 	if fs.Config.Verbose {
 		fs.Debugf(nil, "Go routines at exit %d\n", runtime.NumGoroutine())
@@ -345,7 +345,7 @@ func initConfig() {
 
 	// Setup CPU profiling if desired
 	if *cpuProfile != "" {
-		fs.Logf(nil, "Creating CPU profile %q\n", *cpuProfile)
+		fs.Infof(nil, "Creating CPU profile %q\n", *cpuProfile)
 		f, err := os.Create(*cpuProfile)
 		if err != nil {
 			fs.Stats.Error()
@@ -362,7 +362,7 @@ func initConfig() {
 	// Setup memory profiling if desired
 	if *memProfile != "" {
 		defer func() {
-			fs.Logf(nil, "Saving Memory profile %q\n", *memProfile)
+			fs.Infof(nil, "Saving Memory profile %q\n", *memProfile)
 			f, err := os.Create(*memProfile)
 			if err != nil {
 				fs.Stats.Error()

@@ -32,12 +32,12 @@ func CalculateModifyWindow(fs ...Fs) {
 				Config.ModifyWindow = precision
 			}
 			if precision == ModTimeNotSupported {
-				Debugf(f, "Modify window not supported")
+				Infof(f, "Modify window not supported")
 				return
 			}
 		}
 	}
-	Debugf(fs[0], "Modify window is %s", Config.ModifyWindow)
+	Infof(fs[0], "Modify window is %s", Config.ModifyWindow)
 }
 
 // HashEquals checks to see if src == dst, but ignores empty strings
@@ -181,7 +181,7 @@ func equal(src, dst Object, sizeOnly, checkSum bool) bool {
 			Stats.Error()
 			Errorf(dst, "Failed to set modification time: %v", err)
 		} else {
-			Debugf(src, "Updated modification time in destination")
+			Infof(src, "Updated modification time in destination")
 		}
 	}
 	return true
@@ -217,10 +217,10 @@ func removeFailedCopy(dst Object) bool {
 	if dst == nil {
 		return false
 	}
-	Debugf(dst, "Removing failed copy")
+	Infof(dst, "Removing failed copy")
 	removeErr := dst.Remove()
 	if removeErr != nil {
-		Debugf(dst, "Failed to remove failed copy: %s", removeErr)
+		Infof(dst, "Failed to remove failed copy: %s", removeErr)
 		return false
 	}
 	return true
@@ -341,7 +341,7 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 		}
 	}
 
-	Debugf(src, actionTaken)
+	Infof(src, actionTaken)
 	return err
 }
 
@@ -365,7 +365,7 @@ func Move(fdst Fs, dst Object, remote string, src Object) (err error) {
 		_, err := doMove(src, remote)
 		switch err {
 		case nil:
-			Debugf(src, "Moved (server side)")
+			Infof(src, "Moved (server side)")
 			return nil
 		case ErrorCantMove:
 			Debugf(src, "Can't move, switching to copy")
@@ -424,7 +424,7 @@ func deleteFileWithBackupDir(dst Object, backupDir Fs) (err error) {
 		Stats.Error()
 		Errorf(dst, "Couldn't %s: %v", action, err)
 	} else {
-		Debugf(dst, actioned)
+		Infof(dst, actioned)
 	}
 	Stats.DoneChecking(dst.Remote())
 	return err
@@ -458,7 +458,7 @@ func deleteFilesWithBackupDir(toBeDeleted ObjectsChan, backupDir Fs) error {
 			}
 		}()
 	}
-	Logf(nil, "Waiting for deletions to finish")
+	Infof(nil, "Waiting for deletions to finish")
 	wg.Wait()
 	if errorCount > 0 {
 		return errors.Errorf("failed to delete %d files", errorCount)
@@ -587,7 +587,7 @@ func readFilesMap(fs Fs, includeAll bool, dir string) (files map[string]Object, 
 		if _, ok := files[remote]; !ok {
 			files[remote] = o
 			if _, ok := normalised[normalisedRemote]; ok {
-				Logf(o, "Warning: File found with same name but different case on %v", o.Fs())
+				Logf(o, "File found with same name but different case on %v", o.Fs())
 			}
 		} else {
 			Logf(o, "Duplicate file detected")
@@ -609,7 +609,7 @@ func readFilesMaps(fdst Fs, fdstIncludeAll bool, fsrc Fs, fsrcIncludeAll bool, d
 
 	list := func(fs Fs, includeAll bool, pMap *map[string]Object, pErr *error) {
 		defer wg.Done()
-		Logf(fs, "Building file list")
+		Infof(fs, "Building file list")
 		files, listErr := readFilesMap(fs, includeAll, dir)
 		if listErr != nil {
 			Errorf(fs, "Error building file list: %v", listErr)
@@ -757,7 +757,7 @@ func Check(fdst, fsrc Fs) error {
 		}()
 	}
 
-	Logf(fdst, "Waiting for checks to finish")
+	Infof(fdst, "Waiting for checks to finish")
 	checkerWg.Wait()
 	Logf(fdst, "%d differences found", Stats.GetErrors())
 	if noHashes > 0 {
@@ -1009,7 +1009,7 @@ func dedupeRename(remote string, objs []Object) {
 				Errorf(o, "Failed to rename: %v", err)
 				continue
 			}
-			Logf(newObj, "renamed from: %v", o)
+			Infof(newObj, "renamed from: %v", o)
 		} else {
 			Logf(remote, "Not renaming to %q as --dry-run", newName)
 		}
@@ -1145,7 +1145,7 @@ var _ pflag.Value = (*DeduplicateMode)(nil)
 // delete all but one or rename them to be different. Only useful with
 // Google Drive which can have duplicate file names.
 func Deduplicate(f Fs, mode DeduplicateMode) error {
-	Logf(f, "Looking for duplicates using %v mode.", mode)
+	Infof(f, "Looking for duplicates using %v mode.", mode)
 	files := map[string][]Object{}
 	list := NewLister().Start(f, "")
 	for {

@@ -33,7 +33,7 @@ func startTokenBucket() {
 
 	if currLimit.bandwidth > 0 {
 		tokenBucket = tb.NewBucket(int64(currLimit.bandwidth), 100*time.Millisecond)
-		Logf(nil, "Starting bandwidth limiter at %vBytes/s", &currLimit.bandwidth)
+		Infof(nil, "Starting bandwidth limiter at %vBytes/s", &currLimit.bandwidth)
 
 		// Start the SIGUSR2 signal handler to toggle bandwidth.
 		// This function does nothing in windows systems.
@@ -60,7 +60,7 @@ func startTokenTicker() {
 				if tokenBucket != nil {
 					err := tokenBucket.Close()
 					if err != nil {
-						Logf(nil, "Error closing token bucket: %v", err)
+						Debugf(nil, "Error closing token bucket: %v", err)
 					}
 				}
 
@@ -203,7 +203,7 @@ Elapsed time:  %10v
 
 // Log outputs the StatsInfo to the log
 func (s *StatsInfo) Log() {
-	Logf(nil, "%v\n", s)
+	Infof(nil, "%v\n", s)
 }
 
 // Bytes updates the stats for bytes bytes

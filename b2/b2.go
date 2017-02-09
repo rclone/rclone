@@ -490,7 +490,7 @@ func (f *Fs) list(dir string, level int, prefix string, limit int, hidden bool, 
 				return nil
 			}
 			if !strings.HasPrefix(file.Name, f.root) {
-				fs.Logf(f, "Odd name received %q", file.Name)
+				fs.Debugf(f, "Odd name received %q", file.Name)
 				continue
 			}
 			remote := file.Name[len(f.root):]

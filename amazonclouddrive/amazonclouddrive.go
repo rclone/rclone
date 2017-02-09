@@ -164,7 +164,7 @@ func (f *Fs) shouldRetry(resp *http.Response, err error) (bool, error) {
 		//
 		// HTTP code 403: "403 Forbidden", reponse body: {"message":"Authorization header requires 'Credential' parameter. Authorization header requires 'Signature' parameter. Authorization header requires 'SignedHeaders' parameter. Authorization header requires existence of either a 'X-Amz-Date' or a 'Date' header. Authorization=Bearer"}
 		if resp.StatusCode == 403 && strings.Contains(err.Error(), "Authorization header requires") {
-			fs.Logf(f, "403 \"Authorization header requires...\" error received - retry")
+			fs.Debugf(f, "403 \"Authorization header requires...\" error received - retry")
 			return true, err
 		}
 	}
@@ -917,12 +917,12 @@ func (o *Object) readMetaData() (err error) {
 func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.Debugf(o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	modTime, err := time.Parse(timeFormat, *o.info.ModifiedDate)
 	if err != nil {
-		fs.Logf(o, "Failed to read mtime from object: %v", err)
+		fs.Debugf(o, "Failed to read mtime from object: %v", err)
 		return time.Now()
 	}
 	return modTime

@@ -392,7 +392,7 @@ func (s *syncCopyMove) startCheckers() {
 // This stops the background checkers
 func (s *syncCopyMove) stopCheckers() {
 	close(s.toBeChecked)
-	Logf(s.fdst, "Waiting for checks to finish")
+	Infof(s.fdst, "Waiting for checks to finish")
 	s.checkerWg.Wait()
 }
 
@@ -407,7 +407,7 @@ func (s *syncCopyMove) startTransfers() {
 // This stops the background transfers
 func (s *syncCopyMove) stopTransfers() {
 	close(s.toBeUploaded)
-	Logf(s.fdst, "Waiting for transfers to finish")
+	Infof(s.fdst, "Waiting for transfers to finish")
 	s.transfersWg.Wait()
 }
 
@@ -428,7 +428,7 @@ func (s *syncCopyMove) stopRenamers() {
 		return
 	}
 	close(s.toBeRenamed)
-	Logf(s.fdst, "Waiting for renames to finish")
+	Infof(s.fdst, "Waiting for renames to finish")
 	s.renamerWg.Wait()
 }
 
@@ -551,7 +551,7 @@ func (s *syncCopyMove) popRenameMap(hash string) (dst Object) {
 // makeRenameMap builds a map of the destination files by hash that
 // match sizes in the slice of objects in s.renameCheck
 func (s *syncCopyMove) makeRenameMap() {
-	Debugf(s.fdst, "Making map for --track-renames")
+	Infof(s.fdst, "Making map for --track-renames")
 
 	// first make a map of possible sizes we need to check
 	possibleSizes := map[int64]struct{}{}
@@ -584,7 +584,7 @@ func (s *syncCopyMove) makeRenameMap() {
 		}()
 	}
 	wg.Wait()
-	Debugf(s.fdst, "Finished making map for --track-renames")
+	Infof(s.fdst, "Finished making map for --track-renames")
 }
 
 // tryRename renames a src object when doing track renames if
@@ -614,7 +614,7 @@ func (s *syncCopyMove) tryRename(src Object) bool {
 	delete(s.dstFiles, dst.Remote())
 	s.dstFilesMu.Unlock()
 
-	Debugf(src, "Renamed from %q", dst.Remote())
+	Infof(src, "Renamed from %q", dst.Remote())
 	return true
 }
 
@@ -1110,9 +1110,9 @@ func MoveDir(fdst, fsrc Fs) error {
 		err := fdstDirMove(fsrc)
 		switch err {
 		case ErrorCantDirMove, ErrorDirExists:
-			Debugf(fdst, "Server side directory move failed - fallback to file moves: %v", err)
+			Infof(fdst, "Server side directory move failed - fallback to file moves: %v", err)
 		case nil:
-			Debugf(fdst, "Server side directory move succeeded")
+			Infof(fdst, "Server side directory move succeeded")
 			return nil
 		default:
 			Stats.Error()

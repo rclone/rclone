@@ -287,7 +287,7 @@ func (f *Fs) list(out fs.ListOpts, dir string) {
 				// This notifies of a deleted object
 			} else {
 				if len(entry.Path) <= 1 || entry.Path[0] != '/' {
-					fs.Logf(f, "dropbox API inconsistency: a path should always start with a slash and be at least 2 characters: %s", entry.Path)
+					fs.Debugf(f, "dropbox API inconsistency: a path should always start with a slash and be at least 2 characters: %s", entry.Path)
 					continue
 				}
 
@@ -699,7 +699,7 @@ func (o *Object) readMetaData() (err error) {
 func (o *Object) ModTime() time.Time {
 	err := o.readMetaData()
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.Debugf(o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime
