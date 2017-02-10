@@ -1,3 +1,4 @@
 after:
 - mv bin/rclone bin/rclone1
-
+- alias rclone='rclone run rclone1'
+- source ~/.bashrc
