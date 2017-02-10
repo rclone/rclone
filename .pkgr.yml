@@ -1,1 +1,2 @@
-cli: /bin/rclone
+after:
+- mv /bin/rclone /bin/rclone1
