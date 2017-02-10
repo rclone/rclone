@@ -1,0 +1,20 @@
+name: rclone
+version: 1.35
+summary: rsync for cloud storage
+description:
+  Google Drive, Amazon Drive, S3, Dropbox, Backblaze B2, One Drive, Swift, Hubic, Cloudfiles, Google Cloud Storage, Yandex Files.
+confinement: strict
+grade: stable
+
+apps:
+  rclone:
+    command: bin/rclone
+    plugs: [home, network, network-bind]
+
+parts:
+  rclone:
+    plugin: go
+    source: https://github.com/ncw/rclone
+    source-type: git
+    go-importpath: github.com/ncw/rclone
+    build-packages: [gcc, libgudev-1.0-dev]
