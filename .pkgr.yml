@@ -1,5 +1,9 @@
+dependencies:
+  - "libicu44 | libicu42"
+  - libpcre3
+  - git-core
+  - golang
 before:
- - apt-get install golang -y
  - export GOROOT=/usr/local/go
  - export GOPATH=$HOME/go
  - export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
