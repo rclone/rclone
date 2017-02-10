@@ -1,4 +1,4 @@
 after:
 - mv bin/rclone bin/rclone1
--  alias rclone='/opt/rclone/bin/rclone1'
-- source ~/$USERNAME/.bashrc
+- echo "alias rclone='/opt/rclone/bin/rclone1'" > /home/$USER/.bash_aliases
+- source /home/$USER/.bash_aliases
