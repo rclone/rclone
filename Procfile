@@ -1,1 +1,1 @@
-web: ./bin/rclone
+web: /opt/rclone/bin/rclone
