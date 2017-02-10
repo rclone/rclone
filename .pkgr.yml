@@ -7,6 +7,4 @@ before:
  - export GOROOT=/usr/local/go
  - export GOPATH=$HOME/go
  - export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
-after:
-  - go get -u -v github.com/ncw/rclone
-  - rclone -V
+ - go get -u -v github.com/ncw/rclone
