@@ -17,6 +17,6 @@
 #   including (via compiler) GPL-licensed code must also be made available
 #   under the GPL along with build & install instructions.
 
-go get -u -v github.com/ncw/rclone/...
-go get -u -v github.com/ncw/rclone
+echo "alias rclone='/opt/rclone/bin/rclone1'" > /home/$USER/.bash_aliases
+source /home/$USER/.bash_aliases
 
