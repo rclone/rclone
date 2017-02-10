@@ -6,7 +6,7 @@
 
 // +build windows
 
-package cmd
+package fs
 
 import (
 	"log"

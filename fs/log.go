@@ -11,9 +11,17 @@ import (
 // LogLevel describes rclone's logs.  These are a subset of the syslog log levels.
 type LogLevel byte
 
-//go:generate stringer -type=LogLevel
-
-// Log levels - a subset of the syslog logs
+// Log levels.  These are the syslog levels of which we only use a
+// subset.
+//
+//    LOG_EMERG      system is unusable
+//    LOG_ALERT      action must be taken immediately
+//    LOG_CRIT       critical conditions
+//    LOG_ERR        error conditions
+//    LOG_WARNING    warning conditions
+//    LOG_NOTICE     normal, but significant, condition
+//    LOG_INFO       informational message
+//    LOG_DEBUG      debug-level message
 const (
 	LogLevelEmergency LogLevel = iota
 	LogLevelAlert
@@ -25,25 +33,52 @@ const (
 	LogLevelDebug  // Debug level, needs -vv
 )
 
-// Outside world interface
+var logLevelToString = []string{
+	LogLevelEmergency: "EMERGENCY",
+	LogLevelAlert:     "ALERT",
+	LogLevelCritical:  "CRITICAL",
+	LogLevelError:     "ERROR",
+	LogLevelWarning:   "WARNING",
+	LogLevelNotice:    "NOTICE",
+	LogLevelInfo:      "INFO",
+	LogLevelDebug:     "DEBUG",
+}
 
-// DebugLogger - logs to Stdout
-var DebugLogger = log.New(os.Stdout, "", log.LstdFlags)
-
-// makeLog produces a log string from the arguments passed in
-func makeLog(o interface{}, text string, args ...interface{}) string {
-	out := fmt.Sprintf(text, args...)
-	if o == nil {
-		return out
+// String turns a LogLevel into a string
+func (l LogLevel) String() string {
+	if l >= LogLevel(len(logLevelToString)) {
+		return fmt.Sprintf("LogLevel(%d)", l)
 	}
-	return fmt.Sprintf("%v: %s", o, out)
+	return logLevelToString[l]
+}
+
+// Flags
+var (
+	logFile        = StringP("log-file", "", "", "Log everything to this file")
+	useSyslog      = BoolP("syslog", "", false, "Use Syslog for logging")
+	syslogFacility = StringP("syslog-facility", "", "DAEMON", "Facility for syslog, eg KERN,USER,...")
+)
+
+// logPrint sends the text to the logger of level
+var logPrint = func(level LogLevel, text string) {
+	text = fmt.Sprintf("%-6s: %s", level, text)
+	log.Print(text)
+}
+
+// logPrintf produces a log string from the arguments passed in
+func logPrintf(level LogLevel, o interface{}, text string, args ...interface{}) {
+	out := fmt.Sprintf(text, args...)
+	if o != nil {
+		out = fmt.Sprintf("%v: %s", o, out)
+	}
+	logPrint(level, out)
 }
 
 // Errorf writes error log output for this Object or Fs.  It
-// unconditionally logs a message regardless of Config.LogLevel
+// should always be seen by the user.
 func Errorf(o interface{}, text string, args ...interface{}) {
 	if Config.LogLevel >= LogLevelError {
-		log.Print(makeLog(o, text, args...))
+		logPrintf(LogLevelError, o, text, args...)
 	}
 }
 
@@ -54,7 +89,7 @@ func Errorf(o interface{}, text string, args ...interface{}) {
 // out with the -q flag.
 func Logf(o interface{}, text string, args ...interface{}) {
 	if Config.LogLevel >= LogLevelNotice {
-		log.Print(makeLog(o, text, args...))
+		logPrintf(LogLevelNotice, o, text, args...)
 	}
 }
 
@@ -63,7 +98,7 @@ func Logf(o interface{}, text string, args ...interface{}) {
 // appear with the -v flag.
 func Infof(o interface{}, text string, args ...interface{}) {
 	if Config.LogLevel >= LogLevelInfo {
-		DebugLogger.Print(makeLog(o, text, args...))
+		logPrintf(LogLevelInfo, o, text, args...)
 	}
 }
 
@@ -71,6 +106,31 @@ func Infof(o interface{}, text string, args ...interface{}) {
 // debug only.  The user must have to specify -vv to see this.
 func Debugf(o interface{}, text string, args ...interface{}) {
 	if Config.LogLevel >= LogLevelDebug {
-		DebugLogger.Print(makeLog(o, text, args...))
+		logPrintf(LogLevelDebug, o, text, args...)
+	}
+}
+
+// InitLogging start the logging as per the command line flags
+func InitLogging() {
+	// Log file output
+	if *logFile != "" {
+		f, err := os.OpenFile(*logFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
+		if err != nil {
+			log.Fatalf("Failed to open log file: %v", err)
+		}
+		_, err = f.Seek(0, os.SEEK_END)
+		if err != nil {
+			Errorf(nil, "Failed to seek log file to end: %v", err)
+		}
+		log.SetOutput(f)
+		redirectStderr(f)
+	}
+
+	// Syslog output
+	if *useSyslog {
+		if *logFile != "" {
+			log.Fatalf("Can't use --syslog and --log-file together")
+		}
+		startSysLog()
 	}
 }

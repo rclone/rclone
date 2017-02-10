@@ -2,7 +2,7 @@
 
 // +build !windows,!solaris,!plan9
 
-package cmd
+package fs
 
 import (
 	"log"

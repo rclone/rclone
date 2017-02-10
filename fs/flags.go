@@ -254,7 +254,7 @@ func setDefaultFromEnv(name string) {
 		if err != nil {
 			log.Fatalf("Invalid value for environment variable %q: %v", key, err)
 		}
-		// log.Printf("Set default for %q from %q to %q (%v)", name, key, newValue, flag.Value)
+		Debugf(nil, "Set default for %q from %q to %q (%v)", name, key, newValue, flag.Value)
 		flag.DefValue = newValue
 	}
 }

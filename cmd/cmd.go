@@ -31,7 +31,6 @@ var (
 	statsInterval = fs.DurationP("stats", "", time.Minute*1, "Interval between printing stats, e.g 500ms, 60s, 5m. (0 to disable)")
 	dataRateUnit  = fs.StringP("stats-unit", "", "bytes", "Show data rate in stats as either 'bits' or 'bytes'/s")
 	version       bool
-	logFile       = fs.StringP("log-file", "", "", "Log everything to this file")
 	retries       = fs.IntP("retries", "", 3, "Retry operations this many times if they fail")
 )
 
@@ -320,20 +319,8 @@ func StartStats() chan struct{} {
 
 // initConfig is run by cobra after initialising the flags
 func initConfig() {
-	// Log file output
-	if *logFile != "" {
-		f, err := os.OpenFile(*logFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
-		if err != nil {
-			log.Fatalf("Failed to open log file: %v", err)
-		}
-		_, err = f.Seek(0, os.SEEK_END)
-		if err != nil {
-			fs.Errorf(nil, "Failed to seek log file to end: %v", err)
-		}
-		log.SetOutput(f)
-		fs.DebugLogger.SetOutput(f)
-		redirectStderr(f)
-	}
+	// Start the logger
+	fs.InitLogging()
 
 	// Load the rest of the config now we have started the logger
 	fs.LoadConfig()
