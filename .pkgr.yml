@@ -1,2 +1,1 @@
-after:
-- mv opt/rclone/bin/rclone bin/rclone1
+cli: /bin/rclone
