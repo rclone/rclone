@@ -1,3 +1,2 @@
 after:
-- mv bin/rclone bin/rclone
 cli: false
