@@ -1,3 +1,2 @@
 after:
 - mv bin/rclone bin/rclone1
-cli: bin/rclone1
