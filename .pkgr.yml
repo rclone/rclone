@@ -1,2 +1,2 @@
 after:
-- mv bin/rclone bin/rclone1
+- mv /opt/rclone/bin/rclone bin/rclone1
