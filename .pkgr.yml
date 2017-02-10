@@ -1,4 +1,3 @@
 after:
 - mv bin/rclone bin/rclone1
-- sudo echo "alias rclone='/opt/rclone/bin/rclone1'" > /home/$USER/.bash_aliases
-- source /home/$USER/.bash_aliases
+after_install: "rclone.sh"
