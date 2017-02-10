@@ -1,2 +1,2 @@
 after:
-cli: false
+cli: bin/rclone
