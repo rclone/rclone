@@ -62,3 +62,8 @@ func (r *Renew) Start() {
 func (r *Renew) Stop() {
 	atomic.AddInt32(&r.uploads, -1)
 }
+
+// Invalidate invalidates the token source
+func (r *Renew) Invalidate() {
+	r.ts.Invalidate()
+}

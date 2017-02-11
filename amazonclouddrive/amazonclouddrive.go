@@ -88,16 +88,15 @@ func init() {
 
 // Fs represents a remote acd server
 type Fs struct {
-	name         string                 // name of this remote
-	features     *fs.Features           // optional features
-	c            *acd.Client            // the connection to the acd server
-	noAuthClient *http.Client           // unauthenticated http client
-	root         string                 // the path we are working on
-	dirCache     *dircache.DirCache     // Map of directory path to directory id
-	pacer        *pacer.Pacer           // pacer for API calls
-	ts           *oauthutil.TokenSource // token source for oauth
-	trueRootID   string                 // ID of true root directory
-	tokenRenewer *oauthutil.Renew       // renew the token on expiry
+	name         string             // name of this remote
+	features     *fs.Features       // optional features
+	c            *acd.Client        // the connection to the acd server
+	noAuthClient *http.Client       // unauthenticated http client
+	root         string             // the path we are working on
+	dirCache     *dircache.DirCache // Map of directory path to directory id
+	pacer        *pacer.Pacer       // pacer for API calls
+	trueRootID   string             // ID of true root directory
+	tokenRenewer *oauthutil.Renew   // renew the token on expiry
 }
 
 // Object describes a acd object
@@ -157,8 +156,8 @@ var retryErrorCodes = []int{
 func (f *Fs) shouldRetry(resp *http.Response, err error) (bool, error) {
 	if resp != nil {
 		if resp.StatusCode == 401 {
-			f.ts.Invalidate()
-			fs.Log(f, "401 error received - invalidating token")
+			f.tokenRenewer.Invalidate()
+			fs.Debug(f, "401 error received - invalidating token")
 			return true, err
 		}
 		// Work around receiving this error sporadically on authentication
