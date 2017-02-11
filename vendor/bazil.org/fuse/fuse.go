@@ -319,7 +319,7 @@ func (h *Header) respond(msg []byte) {
 // Operations may return an error value that implements ErrorNumber to
 // control what specific error number (errno) to return.
 type ErrorNumber interface {
-	// Errno returns the the error number (errno) for this error.
+	// Errno returns the error number (errno) for this error.
 	Errno() Errno
 }
 
