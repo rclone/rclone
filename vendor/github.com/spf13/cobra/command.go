@@ -373,20 +373,18 @@ func (c *Command) resetChildrensParents() {
 	}
 }
 
-// Test if the named flag is a boolean flag.
-func isBooleanFlag(name string, f *flag.FlagSet) bool {
+func hasNoOptDefVal(name string, f *flag.FlagSet) bool {
 	flag := f.Lookup(name)
 	if flag == nil {
 		return false
 	}
-	return flag.Value.Type() == "bool"
+	return len(flag.NoOptDefVal) > 0
 }
 
-// Test if the named flag is a boolean flag.
-func isBooleanShortFlag(name string, f *flag.FlagSet) bool {
+func shortHasNoOptDefVal(name string, fs *flag.FlagSet) bool {
 	result := false
-	f.VisitAll(func(f *flag.Flag) {
-		if f.Shorthand == name && f.Value.Type() == "bool" {
+	fs.VisitAll(func(flag *flag.Flag) {
+		if flag.Shorthand == name && len(flag.NoOptDefVal) > 0 {
 			result = true
 		}
 	})
@@ -412,8 +410,8 @@ func stripFlags(args []string, c *Command) []string {
 				inQuote = true
 			case strings.HasPrefix(y, "--") && !strings.Contains(y, "="):
 				// TODO: this isn't quite right, we should really check ahead for 'true' or 'false'
-				inFlag = !isBooleanFlag(y[2:], c.Flags())
-			case strings.HasPrefix(y, "-") && !strings.Contains(y, "=") && len(y) == 2 && !isBooleanShortFlag(y[1:], c.Flags()):
+				inFlag = !hasNoOptDefVal(y[2:], c.Flags())
+			case strings.HasPrefix(y, "-") && !strings.Contains(y, "=") && len(y) == 2 && !shortHasNoOptDefVal(y[1:], c.Flags()):
 				inFlag = true
 			case inFlag:
 				inFlag = false
