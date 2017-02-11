@@ -4,13 +4,18 @@ This is a short guide on how to contribute things to rclone.
 
 ## Reporting a bug ##
 
-Bug reports are welcome.  Check your issue exists with the latest
-version first. Please add when submitting:
+If you've just got a question or aren't sure if you've found a bug
+then please use the [rclone forum](https://forum.rclone.org/) instead
+of filing an issue.
+
+When filing an issue, please include the following information if
+possible as well as a description of the problem.  Make sure you test
+with the [latest beta of rclone](http://beta.rclone.org/):
 
   * Rclone version (eg output from `rclone -V`)
   * Which OS you are using and how many bits (eg Windows 7, 64 bit)
   * The command you were trying to run (eg `rclone copy /tmp remote:tmp`)
-  * A log of the command with the `-v` flag (eg output from `rclone -v copy /tmp remote:tmp`)
+  * A log of the command with the `-vv` flag (eg output from `rclone -vv copy /tmp remote:tmp`)
     * if the log contains secrets then edit the file with a text editor first to obscure them
 
 ## Submitting a pull request ##

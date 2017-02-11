@@ -309,7 +309,7 @@ func (f *Fs) cleanRemote(name string) string {
 	if !utf8.ValidString(name) {
 		f.wmu.Lock()
 		if _, ok := f.warned[name]; !ok {
-			fs.Debugf(f, "Replacing invalid UTF-8 characters in %q", name)
+			fs.Logf(f, "Replacing invalid UTF-8 characters in %q", name)
 			f.warned[name] = struct{}{}
 		}
 		f.wmu.Unlock()
@@ -601,7 +601,7 @@ func (o *Object) Storable() bool {
 	// Check for control characters in the remote name and show non storable
 	for _, c := range o.Remote() {
 		if c >= 0x00 && c < 0x20 || c == 0x7F {
-			fs.Debugf(o.fs, "Can't store file with control characters: %q", o.Remote())
+			fs.Logf(o.fs, "Can't store file with control characters: %q", o.Remote())
 			return false
 		}
 	}
@@ -612,10 +612,10 @@ func (o *Object) Storable() bool {
 		mode &^= os.ModeSymlink
 	}
 	if mode&os.ModeSymlink != 0 {
-		fs.Debugf(o, "Can't follow symlink without -L/--copy-links")
+		fs.Logf(o, "Can't follow symlink without -L/--copy-links")
 		return false
 	} else if mode&(os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
-		fs.Debugf(o, "Can't transfer non file/directory")
+		fs.Logf(o, "Can't transfer non file/directory")
 		return false
 	} else if mode&os.ModeDir != 0 {
 		// fs.Debugf(o, "Skipping directory")
@@ -714,7 +714,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		err = closeErr
 	}
 	if err != nil {
-		fs.Debugf(o, "Removing partially written file on error: %v", err)
+		fs.Logf(o, "Removing partially written file on error: %v", err)
 		if removeErr := os.Remove(o.path); removeErr != nil {
 			fs.Errorf(o, "Failed to remove partially written file: %v", removeErr)
 		}
@@ -859,7 +859,7 @@ func cleanWindowsName(f *Fs, name string) string {
 	if name2 != original && f != nil {
 		f.wmu.Lock()
 		if _, ok := f.warned[name]; !ok {
-			fs.Debugf(f, "Replacing invalid characters in %q to %q", name, name2)
+			fs.Logf(f, "Replacing invalid characters in %q to %q", name, name2)
 			f.warned[name] = struct{}{}
 		}
 		f.wmu.Unlock()
