@@ -236,6 +236,10 @@ depends on that.
 Hashes are not stored for crypt.  However the data integrity is
 protected by an extremely strong crypto authenticator.
 
+Note that you should use the `rclone cryptcheck` command to check the
+integrity of a crypted remote instead of `rclone check` which can't
+check the checksums properly.
+
 ### Specific options ###
 
 Here are the command line options specific to this cloud storage
@@ -250,6 +254,32 @@ name and the encrypted file name.
 This is so you can work out which encrypted names are which decrypted
 names just in case you need to do something with the encrypted file
 names, or for debugging purposes.
+
+## Backing up a crypted remote ##
+
+If you wish to backup a crypted remote, it it recommended that you use
+`rclone sync` on the encrypted files, and make sure the passwords are
+the same in the new encrypted remote.
+
+This will have the following advantages
+
+  * `rclone sync` will check the checksums while copying
+  * you can use `rclone check` between the encrypted remotes
+  * you don't decrypt and encrypt unecessarily
+
+For example, let's say you have your original remote at `remote:` with
+the encrypted version at `eremote:` with path `remote:crypt`.  You
+would then set up the new remote `remote2:` and then the encrypted
+version `eremote2:` with path `remote2:crypt` using the same passwords
+as `eremote:`.
+
+To sync the two remotes you would do
+
+    rclone sync remote:crypt remote2:crypt
+
+And to check the integrity you would do
+
+    rclone check remote:crypt remote2:crypt
 
 ## File formats ##
 
