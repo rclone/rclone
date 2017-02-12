@@ -695,8 +695,14 @@ func checkIdentical(dst, src Object) (differ bool, noHash bool) {
 	return false, false
 }
 
-// Check the files in fsrc and fdst according to Size and hash
-func Check(fdst, fsrc Fs) error {
+// CheckFn checks the files in fsrc and fdst according to Size and
+// hash using checkFunction on each file to check the hashes.
+//
+// checkFunction sees if dst and src are identical
+//
+// it returns true if differences were found
+// it also returns whether it couldn't be hashed
+func CheckFn(fdst, fsrc Fs, checkFunction func(a, b Object) (differ bool, noHash bool)) error {
 	dstFiles, srcFiles, err := readFilesMaps(fdst, false, fsrc, false, "")
 	if err != nil {
 		return err
@@ -709,10 +715,10 @@ func Check(fdst, fsrc Fs) error {
 
 	// Move all the common files into commonFiles and delete then
 	// from srcFiles and dstFiles
-	commonFiles := make(map[string][]Object)
+	commonFiles := make(map[string][2]Object)
 	for remote, src := range srcFiles {
 		if dst, ok := dstFiles[remote]; ok {
-			commonFiles[remote] = []Object{dst, src}
+			commonFiles[remote] = [2]Object{dst, src}
 			delete(srcFiles, remote)
 			delete(dstFiles, remote)
 		}
@@ -732,7 +738,7 @@ func Check(fdst, fsrc Fs) error {
 		atomic.AddInt32(&differences, 1)
 	}
 
-	checks := make(chan []Object, Config.Transfers)
+	checks := make(chan [2]Object, Config.Transfers)
 	go func() {
 		for _, check := range commonFiles {
 			checks <- check
@@ -746,7 +752,7 @@ func Check(fdst, fsrc Fs) error {
 		go func() {
 			defer checkerWg.Done()
 			for check := range checks {
-				differ, noHash := checkIdentical(check[0], check[1])
+				differ, noHash := checkFunction(check[0], check[1])
 				if differ {
 					atomic.AddInt32(&differences, 1)
 				}
@@ -767,6 +773,11 @@ func Check(fdst, fsrc Fs) error {
 		return errors.Errorf("%d differences found", differences)
 	}
 	return nil
+}
+
+// Check the files in fsrc and fdst according to Size and hash
+func Check(fdst, fsrc Fs) error {
+	return CheckFn(fdst, fsrc, checkIdentical)
 }
 
 // ListFn lists the Fs to the supplied function

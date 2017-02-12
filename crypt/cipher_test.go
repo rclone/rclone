@@ -681,7 +681,7 @@ func testEncryptDecrypt(t *testing.T, bufSize int, copySize int64) {
 	c.cryptoRand = &zeroes{} // zero out the nonce
 	buf := make([]byte, bufSize)
 	source := newRandomSource(copySize)
-	encrypted, err := c.newEncrypter(source)
+	encrypted, err := c.newEncrypter(source, nil)
 	assert.NoError(t, err)
 	decrypted, err := c.newDecrypter(ioutil.NopCloser(encrypted))
 	assert.NoError(t, err)
@@ -775,14 +775,14 @@ func TestNewEncrypter(t *testing.T) {
 
 	z := &zeroes{}
 
-	fh, err := c.newEncrypter(z)
+	fh, err := c.newEncrypter(z, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, nonce{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18}, fh.nonce)
 	assert.Equal(t, []byte{'R', 'C', 'L', 'O', 'N', 'E', 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18}, fh.buf[:32])
 
 	// Test error path
 	c.cryptoRand = bytes.NewBufferString("123456789abcdefghijklmn")
-	fh, err = c.newEncrypter(z)
+	fh, err = c.newEncrypter(z, nil)
 	assert.Nil(t, fh)
 	assert.Error(t, err, "short read of nonce")
 
@@ -795,7 +795,7 @@ func TestNewEncrypterErrUnexpectedEOF(t *testing.T) {
 	assert.NoError(t, err)
 
 	in := &errorReader{io.ErrUnexpectedEOF}
-	fh, err := c.newEncrypter(in)
+	fh, err := c.newEncrypter(in, nil)
 	assert.NoError(t, err)
 
 	n, err := io.CopyN(ioutil.Discard, fh, 1E6)

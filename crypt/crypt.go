@@ -312,6 +312,59 @@ func (f *Fs) UnWrap() fs.Fs {
 	return f.Fs
 }
 
+// ComputeHash takes the nonce from o, and encrypts the contents of
+// src with it, and calcuates the hash given by HashType on the fly
+//
+// Note that we break lots of encapsulation in this function.
+func (f *Fs) ComputeHash(o *Object, src fs.Object, hashType fs.HashType) (hash string, err error) {
+	// Read the nonce - opening the file is sufficient to read the nonce in
+	in, err := o.Open()
+	if err != nil {
+		return "", errors.Wrap(err, "failed to read nonce")
+	}
+	nonce := in.(*decrypter).nonce
+	// fs.Debugf(o, "Read nonce % 2x", nonce)
+
+	// Check nonce isn't all zeros
+	isZero := true
+	for i := range nonce {
+		if nonce[i] != 0 {
+			isZero = false
+		}
+	}
+	if isZero {
+		fs.Errorf(o, "empty nonce read")
+	}
+
+	// Close in once we have read the nonce
+	err = in.Close()
+	if err != nil {
+		return "", errors.Wrap(err, "failed to close nonce read")
+	}
+
+	// Open the src for input
+	in, err = src.Open()
+	if err != nil {
+		return "", errors.Wrap(err, "failed to open src")
+	}
+	defer fs.CheckClose(in, &err)
+
+	// Now encrypt the src with the nonce
+	out, err := f.cipher.(*cipher).newEncrypter(in, &nonce)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to make encrypter")
+	}
+
+	// pipe into hash
+	m := fs.NewMultiHasher()
+	_, err = io.Copy(m, out)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to hash data")
+	}
+
+	return m.Sums()[hashType], nil
+}
+
 // Object describes a wrapped for being read from the Fs
 //
 // This decrypts the remote name and decrypts the data
@@ -364,6 +417,11 @@ func (o *Object) Size() int64 {
 // If no checksum is available it returns ""
 func (o *Object) Hash(hash fs.HashType) (string, error) {
 	return "", nil
+}
+
+// UnWrap returns the wrapped Object
+func (o *Object) UnWrap() fs.Object {
+	return o.Object
 }
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser

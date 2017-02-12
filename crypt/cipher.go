@@ -416,7 +416,7 @@ type encrypter struct {
 }
 
 // newEncrypter creates a new file handle encrypting on the fly
-func (c *cipher) newEncrypter(in io.Reader) (*encrypter, error) {
+func (c *cipher) newEncrypter(in io.Reader, nonce *nonce) (*encrypter, error) {
 	fh := &encrypter{
 		in:      in,
 		c:       c,
@@ -425,9 +425,13 @@ func (c *cipher) newEncrypter(in io.Reader) (*encrypter, error) {
 		bufSize: fileHeaderSize,
 	}
 	// Initialise nonce
-	err := fh.nonce.fromReader(c.cryptoRand)
-	if err != nil {
-		return nil, err
+	if nonce != nil {
+		fh.nonce = *nonce
+	} else {
+		err := fh.nonce.fromReader(c.cryptoRand)
+		if err != nil {
+			return nil, err
+		}
 	}
 	// Copy magic into buffer
 	copy(fh.buf, fileMagicBytes)
@@ -485,7 +489,7 @@ func (fh *encrypter) finish(err error) (int, error) {
 
 // Encrypt data encrypts the data stream
 func (c *cipher) EncryptData(in io.Reader) (io.Reader, error) {
-	out, err := c.newEncrypter(in)
+	out, err := c.newEncrypter(in, nil)
 	if err != nil {
 		return nil, err
 	}
