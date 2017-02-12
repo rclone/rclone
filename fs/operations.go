@@ -3,6 +3,7 @@
 package fs
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -830,9 +831,23 @@ func syncFprintf(w io.Writer, format string, a ...interface{}) {
 //
 // Lists in parallel which may get them out of order
 func List(f Fs, w io.Writer) error {
-	return ListFn(f, func(o Object) {
-		syncFprintf(w, "%9d %s\n", o.Size(), o.Remote())
+	var jsonPrint *jsonPrinter
+	if Config.JsonOutput {
+		jsonPrint = &jsonPrinter{}
+		jsonPrint.Start(w)
+	}
+	var listResult = ListFn(f, func(o Object) {
+		if Config.JsonOutput {
+			remote, _ := json.Marshal(o.Remote())
+			jsonPrint.Fprintf(w, false, "{\"Size\":%9d,\"Remote\":%s}", o.Size(), string(remote))
+		} else {
+			syncFprintf(w, "%9d %s\n", o.Size(), o.Remote())
+		}
 	})
+	if Config.JsonOutput {
+		jsonPrint.End(w)
+	}
+	return listResult
 }
 
 // ListLong lists the Fs to the supplied writer
@@ -841,12 +856,26 @@ func List(f Fs, w io.Writer) error {
 //
 // Lists in parallel which may get them out of order
 func ListLong(f Fs, w io.Writer) error {
-	return ListFn(f, func(o Object) {
+	var jsonPrint *jsonPrinter
+	if Config.JsonOutput {
+		jsonPrint = &jsonPrinter{}
+		jsonPrint.Start(w)
+	}
+	var listResult = ListFn(f, func(o Object) {
 		Stats.Checking(o.Remote())
 		modTime := o.ModTime()
 		Stats.DoneChecking(o.Remote())
-		syncFprintf(w, "%9d %s %s\n", o.Size(), modTime.Local().Format("2006-01-02 15:04:05.000000000"), o.Remote())
+		if Config.JsonOutput {
+			remote, _ := json.Marshal(o.Remote())
+			jsonPrint.Fprintf(w, false, "{\"Size\":%9d,\"Date\":\"%s\",\"Remote\":%s}", o.Size(), modTime.Local().Format("2006-01-02 15:04:05.000000000"), string(remote))
+		} else {
+			syncFprintf(w, "%9d %s %s\n", o.Size(), modTime.Local().Format("2006-01-02 15:04:05.000000000"), o.Remote())
+		}
 	})
+	if Config.JsonOutput {
+		jsonPrint.End(w)
+	}
+	return listResult
 }
 
 // Md5sum list the Fs to the supplied writer
@@ -869,7 +898,12 @@ func Sha1sum(f Fs, w io.Writer) error {
 }
 
 func hashLister(ht HashType, f Fs, w io.Writer) error {
-	return ListFn(f, func(o Object) {
+	var jsonPrint *jsonPrinter
+	if Config.JsonOutput {
+		jsonPrint = &jsonPrinter{}
+		jsonPrint.Start(w)
+	}
+	var listResult = ListFn(f, func(o Object) {
 		Stats.Checking(o.Remote())
 		sum, err := o.Hash(ht)
 		Stats.DoneChecking(o.Remote())
@@ -879,8 +913,17 @@ func hashLister(ht HashType, f Fs, w io.Writer) error {
 			Debugf(o, "Failed to read %v: %v", ht, err)
 			sum = "ERROR"
 		}
-		syncFprintf(w, "%*s  %s\n", HashWidth[ht], sum, o.Remote())
+		if Config.JsonOutput {
+			remote, _ := json.Marshal(o.Remote())
+			jsonPrint.Fprintf(w, false, "{\"Hash\":\"%*s\",\"Remote\":%s}", HashWidth[ht], sum, string(remote))
+		} else {
+			syncFprintf(w, "%*s  %s\n", HashWidth[ht], sum, o.Remote())
+		}
 	})
+	if Config.JsonOutput {
+		jsonPrint.End(w)
+	}
+	return listResult
 }
 
 // Count counts the objects and their sizes in the Fs
@@ -896,6 +939,11 @@ func Count(f Fs) (objects int64, size int64, err error) {
 
 // ListDir lists the directories/buckets/containers in the Fs to the supplied writer
 func ListDir(f Fs, w io.Writer) error {
+	var jsonPrint *jsonPrinter
+	if Config.JsonOutput {
+		jsonPrint = &jsonPrinter{}
+		jsonPrint.Start(w)
+	}
 	level := 1
 	if Config.MaxDepth > 0 {
 		level = Config.MaxDepth
@@ -909,7 +957,15 @@ func ListDir(f Fs, w io.Writer) error {
 		if dir == nil {
 			break
 		}
-		syncFprintf(w, "%12d %13s %9d %s\n", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
+		if Config.JsonOutput {
+			name, _ := json.Marshal(dir.Name)
+			jsonPrint.Fprintf(w, false, "{\"Bytes\":%12d,\"Date\":\"%13s\",\"Count\":%9d,\"Remote\":%s}", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, string(name))
+		} else {
+			syncFprintf(w, "%12d %13s %9d %s\n", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
+		}
+	}
+	if Config.JsonOutput {
+		jsonPrint.End(w)
 	}
 	return nil
 }
@@ -1413,4 +1469,31 @@ func MoveFile(fdst Fs, fsrc Fs, dstFileName string, srcFileName string) (err err
 // CopyFile moves a single file possibly to a new name
 func CopyFile(fdst Fs, fsrc Fs, dstFileName string, srcFileName string) (err error) {
 	return moveOrCopyFile(fdst, fsrc, dstFileName, srcFileName, true)
+}
+
+// This struct stores vars that we can use to make sure that the parallel operations print synchronously 
+type jsonPrinter struct {
+	mu                sync.Mutex
+	seperatorRequired bool
+}
+
+func (j jsonPrinter) Start(w io.Writer) {
+	syncFprintf(w, "[")
+}
+
+func (j jsonPrinter) End(w io.Writer) {
+	syncFprintf(w, "]")
+}
+
+// Fprintf makes sure that each json object is serpated with a comma
+func (j *jsonPrinter) Fprintf(w io.Writer, skipSeperator bool, format string, a ...interface{}) {
+	// Lets skip the seperator when calling the function itself
+	if j.seperatorRequired && !skipSeperator {
+		j.Fprintf(w, true, ",")
+	}
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	// Set the seperator as soon as we start printing so all further objects have the seperator
+	j.seperatorRequired = true
+	_, _ = fmt.Fprintf(w, format, a...)
 }
