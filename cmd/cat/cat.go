@@ -78,16 +78,3 @@ Note that if offset is negative it will count from the end, so
 		})
 	},
 }
-
-/*
-Try removing buffering to stop the transfer!!!
-
-
-Transferred:   2.847 GBytes (2.555 MBytes/s)
-Errors:                 3
-Checks:                 0
-Transferred:         1844
-Elapsed time:     19m0.8s
-Transferring:
- *          2001test/rogers-wedding/0016_1~1.jpg: 74% done, 0 Bytes/s, ETA: -
-*/
