@@ -10,8 +10,8 @@ Rclone is a Go program and comes as a single binary file.
 
 ## Quickstart ##
 
-  * [Download](/downloads/) the relevant binary.
-  * Unpack and the `rclone` binary.
+  * sudo snap install rclone --classic 
+  * install Snapd on your distro using the instructions below
   * Run `rclone config` to setup. See [rclone config docs](http://rclone.org/docs/) for more details.
 
 See below for some expanded Linux / macOS instructions.
