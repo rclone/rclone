@@ -21,8 +21,10 @@ package fs_test
 
 import (
 	"bytes"
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -469,14 +471,14 @@ func TestDelete(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, file3)
 }
 
-func TestCheck(t *testing.T) {
+func testCheck(t *testing.T, checkFunction func(fdst, fsrc fs.Fs) error) {
 	r := NewRun(t)
 	defer r.Finalise()
 
 	check := func(i int, wantErrors int64) {
 		fs.Debugf(r.fremote, "%d: Starting check test", i)
 		oldErrors := fs.Stats.GetErrors()
-		err := fs.Check(r.flocal, r.fremote)
+		err := checkFunction(r.flocal, r.fremote)
 		gotErrors := fs.Stats.GetErrors() - oldErrors
 		if wantErrors == 0 && err != nil {
 			t.Errorf("%d: Got error when not expecting one: %v", i, err)
@@ -515,6 +517,14 @@ func TestCheck(t *testing.T) {
 	r.WriteFile("empty space", "", t2)
 	fstest.CheckItems(t, r.flocal, file1, file2, file3)
 	check(5, 0)
+}
+
+func TestCheck(t *testing.T) {
+	testCheck(t, fs.Check)
+}
+
+func TestCheckDownload(t *testing.T) {
+	testCheck(t, fs.CheckDownload)
 }
 
 func TestCheckSizeOnly(t *testing.T) {
@@ -953,4 +963,108 @@ func TestListDirSorted(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 	assert.Equal(t, "sub dir/sub sub dir/", str(0))
+}
+
+type byteReader struct {
+	c byte
+}
+
+func (br *byteReader) Read(p []byte) (n int, err error) {
+	if br.c == 0 {
+		err = io.EOF
+	} else if len(p) >= 1 {
+		p[0] = br.c
+		n = 1
+		br.c--
+	}
+	return
+}
+
+func TestReadFill(t *testing.T) {
+	buf := []byte{9, 9, 9, 9, 9}
+
+	n, err := fs.ReadFill(&byteReader{0}, buf)
+	assert.Equal(t, io.EOF, err)
+	assert.Equal(t, 0, n)
+	assert.Equal(t, []byte{9, 9, 9, 9, 9}, buf)
+
+	n, err = fs.ReadFill(&byteReader{3}, buf)
+	assert.Equal(t, io.EOF, err)
+	assert.Equal(t, 3, n)
+	assert.Equal(t, []byte{3, 2, 1, 9, 9}, buf)
+
+	n, err = fs.ReadFill(&byteReader{8}, buf)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, 5, n)
+	assert.Equal(t, []byte{8, 7, 6, 5, 4}, buf)
+}
+
+type errorReader struct {
+	err error
+}
+
+func (er errorReader) Read(p []byte) (n int, err error) {
+	return 0, er.err
+}
+
+func TestCheckEqualReaders(t *testing.T) {
+	b65a := make([]byte, 65*1024)
+	b65b := make([]byte, 65*1024)
+	b65b[len(b65b)-1] = 1
+	b66 := make([]byte, 66*1024)
+
+	differ, err := fs.CheckEqualReaders(bytes.NewBuffer(b65a), bytes.NewBuffer(b65a))
+	assert.NoError(t, err)
+	assert.Equal(t, differ, false)
+
+	differ, err = fs.CheckEqualReaders(bytes.NewBuffer(b65a), bytes.NewBuffer(b65b))
+	assert.NoError(t, err)
+	assert.Equal(t, differ, true)
+
+	differ, err = fs.CheckEqualReaders(bytes.NewBuffer(b65a), bytes.NewBuffer(b66))
+	assert.NoError(t, err)
+	assert.Equal(t, differ, true)
+
+	differ, err = fs.CheckEqualReaders(bytes.NewBuffer(b66), bytes.NewBuffer(b65a))
+	assert.NoError(t, err)
+	assert.Equal(t, differ, true)
+
+	myErr := errors.New("sentinel")
+	wrap := func(b []byte) io.Reader {
+		r := bytes.NewBuffer(b)
+		e := errorReader{myErr}
+		return io.MultiReader(r, e)
+	}
+
+	differ, err = fs.CheckEqualReaders(wrap(b65a), bytes.NewBuffer(b65a))
+	assert.Equal(t, myErr, err)
+	assert.Equal(t, differ, true)
+
+	differ, err = fs.CheckEqualReaders(wrap(b65a), bytes.NewBuffer(b65b))
+	assert.Equal(t, myErr, err)
+	assert.Equal(t, differ, true)
+
+	differ, err = fs.CheckEqualReaders(wrap(b65a), bytes.NewBuffer(b66))
+	assert.Equal(t, myErr, err)
+	assert.Equal(t, differ, true)
+
+	differ, err = fs.CheckEqualReaders(wrap(b66), bytes.NewBuffer(b65a))
+	assert.Equal(t, myErr, err)
+	assert.Equal(t, differ, true)
+
+	differ, err = fs.CheckEqualReaders(bytes.NewBuffer(b65a), wrap(b65a))
+	assert.Equal(t, myErr, err)
+	assert.Equal(t, differ, true)
+
+	differ, err = fs.CheckEqualReaders(bytes.NewBuffer(b65a), wrap(b65b))
+	assert.Equal(t, myErr, err)
+	assert.Equal(t, differ, true)
+
+	differ, err = fs.CheckEqualReaders(bytes.NewBuffer(b65a), wrap(b66))
+	assert.Equal(t, myErr, err)
+	assert.Equal(t, differ, true)
+
+	differ, err = fs.CheckEqualReaders(bytes.NewBuffer(b66), wrap(b65a))
+	assert.Equal(t, myErr, err)
+	assert.Equal(t, differ, true)
 }

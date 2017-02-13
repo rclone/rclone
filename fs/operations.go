@@ -3,6 +3,7 @@
 package fs
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -669,29 +670,19 @@ func Overlapping(fdst, fsrc Info) bool {
 // it returns true if differences were found
 // it also returns whether it couldn't be hashed
 func checkIdentical(dst, src Object) (differ bool, noHash bool) {
-	Stats.Checking(src.Remote())
-	defer Stats.DoneChecking(src.Remote())
-	if src.Size() != dst.Size() {
-		Stats.Error()
-		Errorf(src, "Sizes differ")
+	same, hash, err := CheckHashes(src, dst)
+	if err != nil {
+		// CheckHashes will log and count errors
 		return true, false
 	}
-	if !Config.SizeOnly {
-		same, hash, err := CheckHashes(src, dst)
-		if err != nil {
-			// CheckHashes will log and count errors
-			return true, false
-		}
-		if hash == HashNone {
-			return false, true
-		}
-		if !same {
-			Stats.Error()
-			Errorf(src, "%v differ", hash)
-			return true, false
-		}
+	if hash == HashNone {
+		return false, true
 	}
-	Debugf(src, "OK")
+	if !same {
+		Stats.Error()
+		Errorf(src, "%v differ", hash)
+		return true, false
+	}
 	return false, false
 }
 
@@ -746,15 +737,31 @@ func CheckFn(fdst, fsrc Fs, checkFunction func(a, b Object) (differ bool, noHash
 		close(checks)
 	}()
 
+	checkIdentical := func(dst, src Object) (differ bool, noHash bool) {
+		Stats.Checking(src.Remote())
+		defer Stats.DoneChecking(src.Remote())
+		if src.Size() != dst.Size() {
+			Stats.Error()
+			Errorf(src, "Sizes differ")
+			return true, false
+		}
+		if Config.SizeOnly {
+			return false, false
+		}
+		return checkFunction(dst, src)
+	}
+
 	var checkerWg sync.WaitGroup
 	checkerWg.Add(Config.Checkers)
 	for i := 0; i < Config.Checkers; i++ {
 		go func() {
 			defer checkerWg.Done()
 			for check := range checks {
-				differ, noHash := checkFunction(check[0], check[1])
+				differ, noHash := checkIdentical(check[0], check[1])
 				if differ {
 					atomic.AddInt32(&differences, 1)
+				} else {
+					Debugf(check[0], "OK")
 				}
 				if noHash {
 					atomic.AddInt32(&noHashes, 1)
@@ -778,6 +785,88 @@ func CheckFn(fdst, fsrc Fs, checkFunction func(a, b Object) (differ bool, noHash
 // Check the files in fsrc and fdst according to Size and hash
 func Check(fdst, fsrc Fs) error {
 	return CheckFn(fdst, fsrc, checkIdentical)
+}
+
+// ReadFill reads as much data from r into buf as it can
+//
+// It reads until the buffer is full or r.Read returned an error.
+//
+// This is io.ReadFull but when you just want as much data as
+// possible, not an exact size of block.
+func ReadFill(r io.Reader, buf []byte) (n int, err error) {
+	var nn int
+	for n < len(buf) && err == nil {
+		nn, err = r.Read(buf[n:])
+		n += nn
+	}
+	return n, err
+}
+
+// CheckEqualReaders checks to see if in1 and in2 have the same
+// content when read.
+//
+// it returns true if differences were found
+func CheckEqualReaders(in1, in2 io.Reader) (differ bool, err error) {
+	const bufSize = 64 * 1024
+	buf1 := make([]byte, bufSize)
+	buf2 := make([]byte, bufSize)
+	for {
+		n1, err1 := ReadFill(in1, buf1)
+		n2, err2 := ReadFill(in2, buf2)
+		// check errors
+		if err1 != nil && err1 != io.EOF {
+			return true, err1
+		} else if err2 != nil && err2 != io.EOF {
+			return true, err2
+		}
+		// err1 && err2 are nil or io.EOF here
+		// process the data
+		if n1 != n2 || !bytes.Equal(buf1[:n1], buf2[:n2]) {
+			return true, nil
+		}
+		// if both streams finished the we have finished
+		if err1 == io.EOF && err2 == io.EOF {
+			break
+		}
+	}
+	return false, nil
+}
+
+// CheckIdentical checks to see if dst and src are identical by
+// reading all their bytes if necessary.
+//
+// it returns true if differences were found
+func CheckIdentical(dst, src Object) (differ bool, err error) {
+	in1, err := dst.Open()
+	if err != nil {
+		return true, errors.Wrapf(err, "failed to open %q", dst)
+	}
+	in1 = NewAccountWithBuffer(in1, dst) // account and buffer the transfer
+	defer CheckClose(in1, &err)
+
+	in2, err := src.Open()
+	if err != nil {
+		return true, errors.Wrapf(err, "failed to open %q", src)
+	}
+	in2 = NewAccountWithBuffer(in2, src) // account and buffer the transfer
+	defer CheckClose(in2, &err)
+
+	return CheckEqualReaders(in1, in2)
+}
+
+// CheckDownload checks the files in fsrc and fdst according to Size
+// and the actual contents of the files.
+func CheckDownload(fdst, fsrc Fs) error {
+	check := func(a, b Object) (differ bool, noHash bool) {
+		differ, err := CheckIdentical(a, b)
+		if err != nil {
+			Stats.Error()
+			Errorf(a, "Failed to download: %v", err)
+			return true, true
+		}
+		return differ, false
+	}
+	return CheckFn(fdst, fsrc, check)
 }
 
 // ListFn lists the Fs to the supplied function

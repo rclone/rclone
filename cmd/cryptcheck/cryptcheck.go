@@ -68,13 +68,6 @@ func cryptCheck(fdst, fsrc fs.Fs) error {
 	// it returns true if differences were found
 	// it also returns whether it couldn't be hashed
 	checkIdentical := func(dst, src fs.Object) (differ bool, noHash bool) {
-		fs.Stats.Checking(src.Remote())
-		defer fs.Stats.DoneChecking(src.Remote())
-		if src.Size() != dst.Size() {
-			fs.Stats.Error()
-			fs.Errorf(src, "Sizes differ")
-			return true, false
-		}
 		cryptDst := dst.(*crypt.Object)
 		underlyingDst := cryptDst.UnWrap()
 		underlyingHash, err := underlyingDst.Hash(hashType)
