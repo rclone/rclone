@@ -222,7 +222,7 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 			if fi.IsDir() {
 				// Ignore directories which are symlinks.  These are junction points under windows which
 				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
-				if (mode&os.ModeSymlink) == 0 && out.IncludeDirectory(newRemote) {
+				if (mode&os.ModeSymlink) == 0 && out.IncludeDirectory(newRemote) && f.dev == readDevice(fi) {
 					dir := &fs.Dir{
 						Name:  f.cleanRemote(newRemote),
 						When:  fi.ModTime(),
@@ -232,7 +232,7 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 					if out.AddDir(dir) {
 						return nil
 					}
-					if level > 0 && f.dev == readDevice(fi) {
+					if level > 0 {
 						subdirs = append(subdirs, listArgs{remote: newRemote, dirpath: newPath, level: level - 1})
 					}
 				}
