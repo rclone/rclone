@@ -941,12 +941,12 @@ func (s *syncCopyMove) transfer(dst, src BasicInfo, job listDirJob, jobs *[]list
 		} else {
 			// FIXME src is file, dst is directory
 			err := errors.New("can't overwrite directory with file")
-			Errorf(srcX, "%v", err)
+			Errorf(dst, "%v", err)
 			s.processError(err)
 		}
 	case *Dir:
 		// Do the same thing to the entire contents of the directory
-		dstX, ok := dst.(*Dir)
+		_, ok := dst.(*Dir)
 		if ok {
 			if job.srcDepth > 0 && job.dstDepth > 0 {
 				*jobs = append(*jobs, listDirJob{
@@ -958,7 +958,7 @@ func (s *syncCopyMove) transfer(dst, src BasicInfo, job listDirJob, jobs *[]list
 		} else {
 			// FIXME src is dir, dst is file
 			err := errors.New("can't overwrite file with directory")
-			Errorf(dstX, "%v", err)
+			Errorf(dst, "%v", err)
 			s.processError(err)
 		}
 	default:
