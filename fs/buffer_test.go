@@ -20,7 +20,7 @@ func TestAsyncReader(t *testing.T) {
 
 	var dst = make([]byte, 100)
 	n, err := ar.Read(dst)
-	require.NoError(t, err)
+	assert.Equal(t, io.EOF, err)
 	assert.Equal(t, 10, n)
 
 	n, err = ar.Read(dst)

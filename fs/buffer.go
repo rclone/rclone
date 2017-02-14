@@ -183,7 +183,7 @@ func (b *buffer) isEmpty() bool {
 // Any error encountered during the read is returned.
 func (b *buffer) read(rd io.Reader) error {
 	var n int
-	n, b.err = rd.Read(b.buf[0:b.size])
+	n, b.err = ReadFill(rd, b.buf[0:b.size])
 	b.buf = b.buf[0:n]
 	b.offset = 0
 	return b.err
