@@ -15,7 +15,7 @@ import (
 
 func TestAsyncReader(t *testing.T) {
 	buf := ioutil.NopCloser(bytes.NewBufferString("Testbuffer"))
-	ar, err := newAsyncReader(buf, 4, 10000)
+	ar, err := newAsyncReader(buf, 4)
 	require.NoError(t, err)
 
 	var dst = make([]byte, 100)
@@ -40,7 +40,7 @@ func TestAsyncReader(t *testing.T) {
 
 	// Test Close without reading everything
 	buf = ioutil.NopCloser(bytes.NewBuffer(make([]byte, 50000)))
-	ar, err = newAsyncReader(buf, 4, 100)
+	ar, err = newAsyncReader(buf, 4)
 	require.NoError(t, err)
 	err = ar.Close()
 	require.NoError(t, err)
@@ -49,7 +49,7 @@ func TestAsyncReader(t *testing.T) {
 
 func TestAsyncWriteTo(t *testing.T) {
 	buf := ioutil.NopCloser(bytes.NewBufferString("Testbuffer"))
-	ar, err := newAsyncReader(buf, 4, 10000)
+	ar, err := newAsyncReader(buf, 4)
 	require.NoError(t, err)
 
 	var dst = &bytes.Buffer{}
@@ -68,20 +68,14 @@ func TestAsyncWriteTo(t *testing.T) {
 
 func TestAsyncReaderErrors(t *testing.T) {
 	// test nil reader
-	_, err := newAsyncReader(nil, 4, 10000)
+	_, err := newAsyncReader(nil, 4)
 	require.Error(t, err)
 
 	// invalid buffer number
 	buf := ioutil.NopCloser(bytes.NewBufferString("Testbuffer"))
-	_, err = newAsyncReader(buf, 0, 10000)
+	_, err = newAsyncReader(buf, 0)
 	require.Error(t, err)
-	_, err = newAsyncReader(buf, -1, 10000)
-	require.Error(t, err)
-
-	// invalid buffer size
-	_, err = newAsyncReader(buf, 4, 0)
-	require.Error(t, err)
-	_, err = newAsyncReader(buf, 4, -1)
+	_, err = newAsyncReader(buf, -1)
 	require.Error(t, err)
 }
 
@@ -161,7 +155,7 @@ func TestAsyncReaderSizes(t *testing.T) {
 						bufsize := bufsizes[k]
 						read := readmaker.fn(strings.NewReader(text))
 						buf := bufio.NewReaderSize(read, bufsize)
-						ar, _ := newAsyncReader(ioutil.NopCloser(buf), l, 100)
+						ar, _ := newAsyncReader(ioutil.NopCloser(buf), l)
 						s := bufreader.fn(ar)
 						// "timeout" expects the Reader to recover, asyncReader does not.
 						if s != text && readmaker.name != "timeout" {
@@ -200,7 +194,7 @@ func TestAsyncReaderWriteTo(t *testing.T) {
 						bufsize := bufsizes[k]
 						read := readmaker.fn(strings.NewReader(text))
 						buf := bufio.NewReaderSize(read, bufsize)
-						ar, _ := newAsyncReader(ioutil.NopCloser(buf), l, 100)
+						ar, _ := newAsyncReader(ioutil.NopCloser(buf), l)
 						dst := &bytes.Buffer{}
 						wt := ar.(io.WriterTo)
 						_, err := wt.WriteTo(dst)

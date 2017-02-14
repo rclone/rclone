@@ -351,13 +351,13 @@ func NewAccountSizeNameWithBuffer(in io.ReadCloser, size int64, name string) *Ac
 	const bufSize = 1024 * 1024
 	var buffers int
 	if size >= int64(Config.BufferSize) {
-		buffers = int(int64(Config.BufferSize) / bufSize)
+		buffers = int(int64(Config.BufferSize) / asyncBufferSize)
 	} else {
-		buffers = int(size / bufSize)
+		buffers = int(size / asyncBufferSize)
 	}
 	// On big files add a buffer
 	if buffers > 0 {
-		newIn, err := newAsyncReader(in, buffers, bufSize)
+		newIn, err := newAsyncReader(in, buffers)
 		if err != nil {
 			Errorf(name, "Failed to make buffer: %v", err)
 		} else {
