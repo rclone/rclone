@@ -348,11 +348,15 @@ func NewAccount(in io.ReadCloser, obj Object) *Account {
 //
 // If the file is above a certain size it adds an Async reader
 func NewAccountSizeNameWithBuffer(in io.ReadCloser, size int64, name string) *Account {
+	const bufSize = 128 * 1024
+	var buffers int
+	if size >= int64(Config.BufferSize) {
+		buffers = int(int64(Config.BufferSize) / bufSize)
+	} else {
+		buffers = int(size / bufSize)
+	}
 	// On big files add a buffer
-	if size > 10<<20 {
-		const memUsed = 16 * 1024 * 1024
-		const bufSize = 128 * 1024
-		const buffers = memUsed / bufSize
+	if buffers > 0 {
 		newIn, err := newAsyncReader(in, buffers, bufSize)
 		if err != nil {
 			Errorf(name, "Failed to make buffer: %v", err)

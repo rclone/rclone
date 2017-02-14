@@ -91,6 +91,7 @@ var (
 	backupDir       = StringP("backup-dir", "", "", "Make backups into hierarchy based in DIR.")
 	suffix          = StringP("suffix", "", "", "Suffix for use with --backup-dir.")
 	bwLimit         BwTimetable
+	bufferSize      SizeSuffix = 16 << 20
 
 	// Key to use for password en/decryption.
 	// When nil, no encryption will be used for saving.
@@ -99,6 +100,7 @@ var (
 
 func init() {
 	VarP(&bwLimit, "bwlimit", "", "Bandwidth limit in kBytes/s, or use suffix b|k|M|G or a full timetable.")
+	VarP(&bufferSize, "buffer-size", "", "Buffer size when copying files.")
 }
 
 // crypt internals
@@ -213,6 +215,7 @@ type ConfigInfo struct {
 	DataRateUnit       string
 	BackupDir          string
 	Suffix             string
+	BufferSize         SizeSuffix
 }
 
 // Return the path to the configuration file
@@ -358,6 +361,7 @@ func LoadConfig() {
 	Config.NoUpdateModTime = *noUpdateModTime
 	Config.BackupDir = *backupDir
 	Config.Suffix = *suffix
+	Config.BufferSize = bufferSize
 
 	ConfigPath = *configFile
 

@@ -261,6 +261,13 @@ you have a 10 Mbit/s connection and you wish rclone to use half of it
 - 5 Mbit/s.  This is 5/8 = 0.625MByte/s so you would use a `--bwlimit
 0.625M` parameter for rclone.
 
+### --buffer-size=SIZE ###
+
+Use this sized buffer to speed up file transfers.  Each `--transfer`
+will use this much memory for buffering.
+
+Set to 0 to disable the buffering for the minimum memory use.
+
 ### --checkers=N ###
 
 The number of checkers to run in parallel.  Checkers do the equality
