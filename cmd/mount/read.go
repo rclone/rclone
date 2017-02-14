@@ -29,7 +29,7 @@ func newReadFileHandle(o fs.Object) (*ReadFileHandle, error) {
 	}
 	fh := &ReadFileHandle{
 		o: o,
-		r: fs.NewAccount(r, o), // account the transfer
+		r: fs.NewAccountWithBuffer(r, o), // account the transfer
 	}
 	fs.Stats.Transferring(fh.o.Remote())
 	return fh, nil
@@ -68,7 +68,6 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) error {
 		if err != nil {
 			fs.Debugf(fh.o, "ReadFileHandle.Read seek close old failed: %v", err)
 		}
-		// fh.r = fs.NewAccount(r, fh.o) // account the transfer
 		fh.r.UpdateReader(r)
 	}
 	fh.offset = offset
