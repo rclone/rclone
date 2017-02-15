@@ -308,8 +308,20 @@ func TestSyncAfterChangingModtimeOnly(t *testing.T) {
 	fstest.CheckItems(t, r.flocal, file1)
 	fstest.CheckItems(t, r.fremote, file2)
 
+	fs.Config.DryRun = true
+	defer func() { fs.Config.DryRun = false }()
+
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
+	require.NoError(t, err)
+
+	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.fremote, file2)
+
+	fs.Config.DryRun = false
+
+	fs.Stats.ResetCounters()
+	err = fs.Sync(r.fremote, r.flocal)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.flocal, file1)

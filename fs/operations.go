@@ -172,17 +172,21 @@ func equal(src, dst Object, sizeOnly, checkSum bool) bool {
 
 	// mod time differs but hash is the same to reset mod time if required
 	if !Config.NoUpdateModTime {
-		// Size and hash the same but mtime different so update the
-		// mtime of the dst object here
-		err := dst.SetModTime(srcModTime)
-		if err == ErrorCantSetModTime {
-			Debugf(src, "src and dst identical but can't set mod time without re-uploading")
-			return false
-		} else if err != nil {
-			Stats.Error()
-			Errorf(dst, "Failed to set modification time: %v", err)
+		if Config.DryRun {
+			Logf(src, "Not updating modification time as --dry-run")
 		} else {
-			Infof(src, "Updated modification time in destination")
+			// Size and hash the same but mtime different so update the
+			// mtime of the dst object here
+			err := dst.SetModTime(srcModTime)
+			if err == ErrorCantSetModTime {
+				Debugf(src, "src and dst identical but can't set mod time without re-uploading")
+				return false
+			} else if err != nil {
+				Stats.Error()
+				Errorf(dst, "Failed to set modification time: %v", err)
+			} else {
+				Infof(src, "Updated modification time in destination")
+			}
 		}
 	}
 	return true
