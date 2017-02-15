@@ -530,8 +530,6 @@ func (ds DirEntries) Less(i, j int) bool {
 	return ds[i].Remote() < ds[j].Remote()
 }
 
-// FIXME can use this in Mount
-
 // ListDirSorted reads Object and *Dir into entries for the given Fs.
 //
 // dir is the start directory, "" for root

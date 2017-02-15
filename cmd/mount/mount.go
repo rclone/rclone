@@ -114,6 +114,11 @@ can't use retries in the same way without making local copies of the
 uploads.  This might happen in the future, but for the moment rclone
 mount won't do that, so will be less reliable than the rclone command.
 
+### Filters ###
+
+Note that all the rclone filters can be used to select a subset of the
+files to be visible in the mount.
+
 ### Bugs ###
 
   * All the remotes should work for read, but some may not for write

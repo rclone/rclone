@@ -78,7 +78,7 @@ func (d *Dir) readDir() error {
 		}
 		fs.Debugf(d.path, "Re-reading directory (%v old)", age)
 	}
-	objs, dirs, err := fs.NewLister().SetLevel(1).Start(d.f, d.path).GetAll()
+	entries, err := fs.ListDirSorted(d.f, false, d.path)
 	if err == fs.ErrorDirNotFound {
 		// We treat directory not found as empty because we
 		// create directories on the fly
@@ -93,26 +93,34 @@ func (d *Dir) readDir() error {
 	oldItems := d.items
 
 	// Cache the items by name
-	d.items = make(map[string]*DirEntry, len(objs)+len(dirs))
-	for _, obj := range objs {
-		name := path.Base(obj.Remote())
-		d.items[name] = &DirEntry{
-			o:    obj,
-			node: nil,
-		}
-	}
-	for _, dir := range dirs {
-		name := path.Base(dir.Remote())
-		// Use old dir value if it exists
-		if oldItem, ok := oldItems[name]; ok {
-			if _, ok := oldItem.o.(*fs.Dir); ok {
-				d.items[name] = oldItem
-				continue
+	d.items = make(map[string]*DirEntry, len(entries))
+	for _, entry := range entries {
+		switch item := entry.(type) {
+		case fs.Object:
+			obj := item
+			name := path.Base(obj.Remote())
+			d.items[name] = &DirEntry{
+				o:    obj,
+				node: nil,
 			}
-		}
-		d.items[name] = &DirEntry{
-			o:    dir,
-			node: nil,
+		case *fs.Dir:
+			dir := item
+			name := path.Base(dir.Remote())
+			// Use old dir value if it exists
+			if oldItem, ok := oldItems[name]; ok {
+				if _, ok := oldItem.o.(*fs.Dir); ok {
+					d.items[name] = oldItem
+					continue
+				}
+			}
+			d.items[name] = &DirEntry{
+				o:    dir,
+				node: nil,
+			}
+		default:
+			err = errors.Errorf("unknown type %T", item)
+			fs.Errorf(d.path, "readDir error: %v", err)
+			return err
 		}
 	}
 	d.read = when
