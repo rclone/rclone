@@ -152,9 +152,10 @@ func (a *asyncReader) WriteTo(w io.Writer) (n int64, err error) {
 	}
 }
 
-// Close will ensure that the underlying async reader is shut down.
-// It will also close the input supplied on newAsyncReader.
-func (a *asyncReader) Close() (err error) {
+// close will ensure that the underlying async reader is shut down.
+// If closeIn is set it will also close the input supplied on
+// newAsyncReader.
+func (a *asyncReader) close(closeIn bool) (err error) {
 	// Return if already closed
 	select {
 	case <-a.exit:
@@ -171,7 +172,22 @@ func (a *asyncReader) Close() (err error) {
 	for b := range a.ready {
 		a.putBuffer(b)
 	}
-	return a.in.Close()
+	if closeIn {
+		return a.in.Close()
+	}
+	return nil
+}
+
+// Close will ensure that the underlying async reader is shut down.
+// It will also close the input supplied on newAsyncReader.
+func (a *asyncReader) Close() (err error) {
+	return a.close(true)
+}
+
+// Abandon will ensure that the underlying async reader is shut down.
+// It will NOT close the input supplied on newAsyncReader.
+func (a *asyncReader) Abandon() {
+	_ = a.close(false)
 }
 
 // Internal buffer
