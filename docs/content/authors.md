@@ -59,3 +59,4 @@ Contributors
   * Károly Oláh <okaresz@aol.com>
   * Jon Yergatian <jon@macfanatic.ca>
   * Jack Schmidt <github@mowsey.org>
+  * Dedsec1 <Dedsec1@users.noreply.github.com>
