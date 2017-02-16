@@ -203,25 +203,31 @@ type listAllFn func(*drive.File) bool
 // If the user fn ever returns true then it early exits with found = true
 //
 // Search params: https://developers.google.com/drive/search-parameters
-func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
-	query := fmt.Sprintf("trashed=false")
+func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly bool, includeTrashed bool, fn listAllFn) (found bool, err error) {
+	var query []string
+	if !includeTrashed {
+		query = append(query, "trashed=false")
+	}
 	if dirID != "" {
-		query += fmt.Sprintf(" and '%s' in parents", dirID)
+		query = append(query, fmt.Sprintf("'%s' in parents", dirID))
 	}
 	if title != "" {
 		// Escaping the backslash isn't documented but seems to work
 		title = strings.Replace(title, `\`, `\\`, -1)
 		title = strings.Replace(title, `'`, `\'`, -1)
-		query += fmt.Sprintf(" and title='%s'", title)
+		query = append(query, fmt.Sprintf("title='%s'", title))
 	}
 	if directoriesOnly {
-		query += fmt.Sprintf(" and mimeType='%s'", driveFolderType)
+		query = append(query, fmt.Sprintf("mimeType='%s'", driveFolderType))
 	}
 	if filesOnly {
-		query += fmt.Sprintf(" and mimeType!='%s'", driveFolderType)
+		query = append(query, fmt.Sprintf("mimeType!='%s'", driveFolderType))
 	}
 	// fmt.Printf("listAll Query = %q\n", query)
-	list := f.svc.Files.List().Q(query)
+	list := f.svc.Files.List()
+	if len(query) > 0 {
+		list = list.Q(strings.Join(query, " and "))
+	}
 	if *driveListChunk > 0 {
 		list = list.MaxResults(*driveListChunk)
 	}
@@ -390,7 +396,7 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
-	found, err = f.listAll(pathID, leaf, true, false, func(item *drive.File) bool {
+	found, err = f.listAll(pathID, leaf, true, false, false, func(item *drive.File) bool {
 		if item.Title == leaf {
 			pathIDOut = item.Id
 			return true
@@ -459,7 +465,7 @@ func (f *Fs) findExportFormat(filepath string, item *drive.File) (extension, lin
 // ListDir reads the directory specified by the job into out, returning any more jobs
 func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.ListDirJob, err error) {
 	fs.Debugf(f, "Reading %q", job.Path)
-	_, err = f.listAll(job.DirID, "", false, false, func(item *drive.File) bool {
+	_, err = f.listAll(job.DirID, "", false, false, false, func(item *drive.File) bool {
 		remote := job.Path + item.Title
 		switch {
 		case *driveAuthOwnerOnly && !isAuthOwned(item):
@@ -620,34 +626,42 @@ func (f *Fs) Mkdir(dir string) error {
 	return err
 }
 
-// Rmdir deletes the container
+// Rmdir deletes a directory
 //
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(dir string) error {
 	root := path.Join(f.root, dir)
 	dc := f.dirCache
-	rootID, err := dc.FindDir(dir, false)
+	directoryID, err := dc.FindDir(dir, false)
 	if err != nil {
 		return err
 	}
-	var children *drive.ChildList
-	err = f.pacer.Call(func() (bool, error) {
-		children, err = f.svc.Children.List(rootID).MaxResults(10).Do()
-		return shouldRetry(err)
+	var trashedFiles = false
+	found, err := f.listAll(directoryID, "", false, false, true, func(item *drive.File) bool {
+		if item.Labels == nil || !item.Labels.Trashed {
+			fs.Debugf(dir, "Rmdir: contains file: %q", item.Title)
+			return true
+		}
+		fs.Debugf(dir, "Rmdir: contains trashed file: %q", item.Title)
+		trashedFiles = true
+		return false
 	})
 	if err != nil {
 		return err
 	}
-	if len(children.Items) > 0 {
-		return errors.Errorf("directory not empty: %#v", children.Items)
+	if found {
+		return errors.Errorf("directory not empty")
 	}
 	// Delete the directory if it isn't the root
 	if root != "" {
 		err = f.pacer.Call(func() (bool, error) {
-			if *driveUseTrash {
-				_, err = f.svc.Files.Trash(rootID).Do()
+			// trash the directory if it had trashed files
+			// in or the user wants to trash, otherwise
+			// delete it.
+			if trashedFiles || *driveUseTrash {
+				_, err = f.svc.Files.Trash(directoryID).Do()
 			} else {
-				err = f.svc.Files.Delete(rootID).Do()
+				err = f.svc.Files.Delete(directoryID).Do()
 			}
 			return shouldRetry(err)
 		})
@@ -905,7 +919,7 @@ func (o *Object) readMetaData() (err error) {
 		return err
 	}
 
-	found, err := o.fs.listAll(directoryID, leaf, false, true, func(item *drive.File) bool {
+	found, err := o.fs.listAll(directoryID, leaf, false, true, false, func(item *drive.File) bool {
 		if item.Title == leaf {
 			o.setMetaData(item)
 			return true
