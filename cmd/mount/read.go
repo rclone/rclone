@@ -46,30 +46,33 @@ var _ fusefs.HandleReader = (*ReadFileHandle)(nil)
 // if reopen is true, then we won't attempt to use an io.Seeker interface
 //
 // Must be called with fh.mu held
-func (fh *ReadFileHandle) seek(offset int64, reopen bool) error {
-	// Can we seek it directly?
+func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
+	fh.r.StopBuffering() // stop the background reading first
 	oldReader := fh.r.GetReader()
+	r := oldReader
+	// Can we seek it directly?
 	if do, ok := oldReader.(io.Seeker); !reopen && ok {
 		fs.Debugf(fh.o, "ReadFileHandle.seek from %d to %d (io.Seeker)", fh.offset, offset)
-		_, err := do.Seek(offset, 0)
+		_, err = do.Seek(offset, 0)
 		if err != nil {
 			fs.Debugf(fh.o, "ReadFileHandle.Read io.Seeker failed: %v", err)
 			return err
 		}
 	} else {
 		fs.Debugf(fh.o, "ReadFileHandle.seek from %d to %d", fh.offset, offset)
-		// if not re-open with a seek
-		r, err := fh.o.Open(&fs.SeekOption{Offset: offset})
-		if err != nil {
-			fs.Debugf(fh.o, "ReadFileHandle.Read seek failed: %v", err)
-			return err
-		}
+		// close old one
 		err = oldReader.Close()
 		if err != nil {
 			fs.Debugf(fh.o, "ReadFileHandle.Read seek close old failed: %v", err)
 		}
-		fh.r.UpdateReader(r)
+		// re-open with a seek
+		r, err = fh.o.Open(&fs.SeekOption{Offset: offset})
+		if err != nil {
+			fs.Debugf(fh.o, "ReadFileHandle.Read seek failed: %v", err)
+			return err
+		}
 	}
+	fh.r.UpdateReader(r)
 	fh.offset = offset
 	return nil
 }

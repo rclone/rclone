@@ -308,6 +308,7 @@ type Account struct {
 	// shouldn't.
 	mu      sync.Mutex
 	in      io.ReadCloser
+	origIn  io.ReadCloser
 	size    int64
 	name    string
 	statmu  sync.Mutex         // Separate mutex for stat values.
@@ -318,6 +319,7 @@ type Account struct {
 	avg     ewma.MovingAverage // Moving average of last few measurements
 	closed  bool               // set if the file is closed
 	exit    chan struct{}      // channel that will be closed when transfer is finished
+	withBuf bool               // is using a buffered in
 
 	wholeFileDisabled bool // disables the whole file when doing parts
 }
@@ -327,6 +329,7 @@ type Account struct {
 func NewAccountSizeName(in io.ReadCloser, size int64, name string) *Account {
 	acc := &Account{
 		in:     in,
+		origIn: in,
 		size:   size,
 		name:   name,
 		exit:   make(chan struct{}),
@@ -368,7 +371,10 @@ func bufferReadCloser(in io.ReadCloser, size int64, name string) io.ReadCloser {
 //
 // If the file is above a certain size it adds an Async reader
 func NewAccountSizeNameWithBuffer(in io.ReadCloser, size int64, name string) *Account {
-	return NewAccountSizeName(bufferReadCloser(in, size, name), size, name)
+	acc := NewAccountSizeName(in, size, name)
+	acc.in = bufferReadCloser(in, size, name)
+	acc.withBuf = true
+	return acc
 }
 
 // NewAccountWithBuffer makes a Account reader for an object
@@ -382,16 +388,26 @@ func NewAccountWithBuffer(in io.ReadCloser, obj Object) *Account {
 func (acc *Account) GetReader() io.ReadCloser {
 	acc.mu.Lock()
 	defer acc.mu.Unlock()
-	return acc.in
+	return acc.origIn
+}
+
+// StopBuffering stops the async buffer doing any more buffering
+func (acc *Account) StopBuffering() {
+	if asyncIn, ok := acc.in.(*asyncReader); ok {
+		asyncIn.Abandon()
+	}
 }
 
 // UpdateReader updates the underlying io.ReadCloser
 func (acc *Account) UpdateReader(in io.ReadCloser) {
 	acc.mu.Lock()
-	if asyncIn, ok := acc.in.(*asyncReader); ok {
-		asyncIn.Abandon()
+	acc.StopBuffering()
+	acc.origIn = in
+	if acc.withBuf {
+		acc.in = bufferReadCloser(in, acc.size, acc.name)
+	} else {
+		acc.in = in
 	}
-	acc.in = bufferReadCloser(in, acc.size, acc.name)
 	acc.mu.Unlock()
 }
 
