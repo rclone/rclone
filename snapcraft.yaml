@@ -1,5 +1,5 @@
 name: rclone
-version: latest stable build
+version: stable-current
 summary: rsync for cloud storage
 description:
   Google Drive, Amazon Drive, S3, Dropbox, Backblaze B2, One Drive, Swift, Hubic, Cloudfiles, Google Cloud Storage, Yandex Files.
