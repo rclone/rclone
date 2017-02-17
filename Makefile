@@ -48,7 +48,6 @@ ifdef GO_LATEST
 	go get -u github.com/kisielk/errcheck
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u github.com/golang/lint/golint
-	go get -u github.com/mitchellh/gox
 	go get -u github.com/inconshreveable/mousetrap
 	go get -u github.com/tools/godep
 endif
@@ -99,16 +98,16 @@ upload_github:
 	./bin/upload-github $(TAG)
 
 cross:	doc
-	./bin/cross-compile $(TAG)
+	go run bin/cross-compile.go $(TAG)
 
 beta:
-	./bin/cross-compile $(TAG)β
+	go run bin/cross-compile.go $(TAG)β
 	rm build/*-current-*
 	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)β
 	@echo Beta release ready at http://pub.rclone.org/$(TAG)%CE%B2/
 
 travis_beta:
-	./bin/cross-compile $(TAG)β
+	go run bin/cross-compile.go $(TAG)β
 	rm build/*-current-*
 	rclone --config bin/travis.rclone.conf -v copy build/ memstore:beta-rclone-org/$(TAG)
 	@echo Beta release ready at $(BETA_URL)
