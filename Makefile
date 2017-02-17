@@ -4,7 +4,7 @@ LAST_TAG := $(shell git describe --tags --abbrev=0)
 NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f", $$_)')
 GO_VERSION := $(shell go version)
 GO_FILES := $(shell go list ./... | grep -v /vendor/ )
-GO_LATEST := $(findstring go1.7,$(GO_VERSION))
+GO_LATEST := $(findstring go1.8,$(GO_VERSION))
 BETA_URL := http://beta.rclone.org/$(TAG)/
 # Only needed for Go 1.5
 export GO15VENDOREXPERIMENT=1
