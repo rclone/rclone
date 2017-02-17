@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"tbys6C40o18GZwyMen5GMkdK-3s/Q3Kd6t_wsQx8lVoiuJLagBsP-sc\"",
+ "etag": "\"tbys6C40o18GZwyMen5GMkdK-3s/5vvnUnaYZD7vqEjmjYVCOzuEk5s\"",
  "discoveryVersion": "v1",
  "id": "drive:v2",
  "name": "drive",
  "version": "v2",
- "revision": "20161103",
+ "revision": "20170207",
  "title": "Drive API",
  "description": "Manages files in Drive including uploading, downloading, searching, detecting changes, and updating sharing permissions.",
  "ownerDomain": "google.com",
@@ -468,7 +468,7 @@
     },
     "items": {
      "type": "array",
-     "description": "The actual list of apps.",
+     "description": "The list of apps.",
      "items": {
       "$ref": "App"
      }
@@ -533,7 +533,7 @@
     },
     "items": {
      "type": "array",
-     "description": "The actual list of changes.",
+     "description": "The list of changes. If nextPageToken is populated, then this list may be incomplete and an additional page of results should be fetched.",
      "items": {
       "$ref": "Change"
      }
@@ -554,7 +554,7 @@
     },
     "nextPageToken": {
      "type": "string",
-     "description": "The page token for the next page of changes."
+     "description": "The page token for the next page of changes. This will be absent if the end of the changes list has been reached. If the token is rejected for any reason, it should be discarded, and pagination should be restarted from the first page of results."
     },
     "selfLink": {
      "type": "string",
@@ -626,7 +626,7 @@
     },
     "items": {
      "type": "array",
-     "description": "The actual list of children.",
+     "description": "The list of children. If nextPageToken is populated, then this list may be incomplete and an additional page of results should be fetched.",
      "items": {
       "$ref": "ChildReference"
      }
@@ -642,7 +642,7 @@
     },
     "nextPageToken": {
      "type": "string",
-     "description": "The page token for the next page of children."
+     "description": "The page token for the next page of children. This will be absent if the end of the children list has been reached. If the token is rejected for any reason, it should be discarded, and pagination should be restarted from the first page of results."
     },
     "selfLink": {
      "type": "string",
@@ -775,7 +775,7 @@
    "properties": {
     "items": {
      "type": "array",
-     "description": "List of comments.",
+     "description": "The list of comments. If nextPageToken is populated, then this list may be incomplete and an additional page of results should be fetched.",
      "items": {
       "$ref": "Comment"
      }
@@ -791,7 +791,7 @@
     },
     "nextPageToken": {
      "type": "string",
-     "description": "The token to use to request the next page of results."
+     "description": "The page token for the next page of comments. This will be absent if the end of the comments list has been reached. If the token is rejected for any reason, it should be discarded, and pagination should be restarted from the first page of results."
     },
     "selfLink": {
      "type": "string",
@@ -857,7 +857,7 @@
    "properties": {
     "items": {
      "type": "array",
-     "description": "List of reply.",
+     "description": "The list of replies. If nextPageToken is populated, then this list may be incomplete and an additional page of results should be fetched.",
      "items": {
       "$ref": "CommentReply"
      }
@@ -873,7 +873,7 @@
     },
     "nextPageToken": {
      "type": "string",
-     "description": "The token to use to request the next page of results."
+     "description": "The page token for the next page of replies. This will be absent if the end of the replies list has been reached. If the token is rejected for any reason, it should be discarded, and pagination should be restarted from the first page of results."
     },
     "selfLink": {
      "type": "string",
@@ -962,6 +962,10 @@
     "fullFileExtension": {
      "type": "string",
      "description": "The full file extension; extracted from the title. May contain multiple concatenated extensions, such as \"tar.gz\". Removing an extension from the title does not clear this field; however, changing the extension on the title does update this field. This field is only populated for files with content stored in Drive; it is not populated for Google Docs or shortcut files."
+    },
+    "hasThumbnail": {
+     "type": "boolean",
+     "description": "Whether this file has a thumbnail."
     },
     "headRevisionId": {
      "type": "string",
@@ -1262,7 +1266,7 @@
     },
     "thumbnail": {
      "type": "object",
-     "description": "Thumbnail for the file. Only accepted on upload and for files that are not already thumbnailed by Google.",
+     "description": "A thumbnail for the file. This will only be used if Drive cannot generate a standard thumbnail.",
      "properties": {
       "image": {
        "type": "string",
@@ -1277,7 +1281,12 @@
     },
     "thumbnailLink": {
      "type": "string",
-     "description": "A short-lived link to the file's thumbnail. Typically lasts on the order of hours."
+     "description": "A short-lived link to the file's thumbnail. Typically lasts on the order of hours. Only populated when the requesting app can access the file's content."
+    },
+    "thumbnailVersion": {
+     "type": "string",
+     "description": "The thumbnail version for use in thumbnail cache invalidation.",
+     "format": "int64"
     },
     "title": {
      "type": "string",
@@ -1338,7 +1347,7 @@
     },
     "items": {
      "type": "array",
-     "description": "The actual list of files.",
+     "description": "The list of files. If nextPageToken is populated, then this list may be incomplete and an additional page of results should be fetched.",
      "items": {
       "$ref": "File"
      }
@@ -1354,7 +1363,7 @@
     },
     "nextPageToken": {
      "type": "string",
-     "description": "The page token for the next page of files."
+     "description": "The page token for the next page of files. This will be absent if the end of the files list has been reached. If the token is rejected for any reason, it should be discarded, and pagination should be restarted from the first page of results."
     },
     "selfLink": {
      "type": "string",
@@ -1396,7 +1405,7 @@
     },
     "items": {
      "type": "array",
-     "description": "The actual list of parents.",
+     "description": "The list of parents.",
      "items": {
       "$ref": "ParentReference"
      }
@@ -1480,7 +1489,7 @@
     },
     "id": {
      "type": "string",
-     "description": "The ID of the user this permission refers to, and identical to the permissionId in the About and Files resources. When making a drive.permissions.insert request, exactly one of the id or value fields must be specified unless the permission type anyone, in which case both id and value are ignored."
+     "description": "The ID of the user this permission refers to, and identical to the permissionId in the About and Files resources. When making a drive.permissions.insert request, exactly one of the id or value fields must be specified unless the permission type is anyone, in which case both id and value are ignored."
     },
     "kind": {
      "type": "string",
@@ -1519,7 +1528,7 @@
     },
     "value": {
      "type": "string",
-     "description": "The email address or domain name for the entity. This is used during inserts and is not populated in responses. When making a drive.permissions.insert request, exactly one of the id or value fields must be specified unless the permission type anyone, in which case both id and value are ignored."
+     "description": "The email address or domain name for the entity. This is used during inserts and is not populated in responses. When making a drive.permissions.insert request, exactly one of the id or value fields must be specified unless the permission type is anyone, in which case both id and value are ignored."
     },
     "withLink": {
      "type": "boolean",
@@ -1554,7 +1563,7 @@
     },
     "items": {
      "type": "array",
-     "description": "The actual list of permissions.",
+     "description": "The list of permissions.",
      "items": {
       "$ref": "Permission"
      }
@@ -1726,7 +1735,7 @@
     },
     "items": {
      "type": "array",
-     "description": "The actual list of revisions.",
+     "description": "The list of revisions. If nextPageToken is populated, then this list may be incomplete and an additional page of results should be fetched.",
      "items": {
       "$ref": "Revision"
      }
@@ -1743,6 +1752,21 @@
     "selfLink": {
      "type": "string",
      "description": "A link back to this list."
+    }
+   }
+  },
+  "StartPageToken": {
+   "id": "StartPageToken",
+   "type": "object",
+   "properties": {
+    "kind": {
+     "type": "string",
+     "description": "Identifies what kind of resource this is. Value: the fixed string \"drive#startPageToken\".",
+     "default": "drive#startPageToken"
+    },
+    "startPageToken": {
+     "type": "string",
+     "description": "The starting page token for listing changes."
     }
    }
   },
@@ -1925,6 +1949,25 @@
       "https://www.googleapis.com/auth/drive.readonly"
      ]
     },
+    "getStartPageToken": {
+     "id": "drive.changes.getStartPageToken",
+     "path": "changes/startPageToken",
+     "httpMethod": "GET",
+     "description": "Gets the starting pageToken for listing future changes.",
+     "response": {
+      "$ref": "StartPageToken"
+     },
+     "scopes": [
+      "https://www.googleapis.com/auth/drive",
+      "https://www.googleapis.com/auth/drive.appdata",
+      "https://www.googleapis.com/auth/drive.apps.readonly",
+      "https://www.googleapis.com/auth/drive.file",
+      "https://www.googleapis.com/auth/drive.metadata",
+      "https://www.googleapis.com/auth/drive.metadata.readonly",
+      "https://www.googleapis.com/auth/drive.photos.readonly",
+      "https://www.googleapis.com/auth/drive.readonly"
+     ]
+    },
     "list": {
      "id": "drive.changes.list",
      "path": "changes",
@@ -1953,7 +1996,7 @@
       },
       "pageToken": {
        "type": "string",
-       "description": "Page token for changes.",
+       "description": "The token for continuing a previous list request on the next page. This should be set to the value of 'nextPageToken' from the previous response or to the response from the getStartPageToken method.",
        "location": "query"
       },
       "spaces": {
@@ -2011,7 +2054,7 @@
       },
       "pageToken": {
        "type": "string",
-       "description": "Page token for changes.",
+       "description": "The token for continuing a previous list request on the next page. This should be set to the value of 'nextPageToken' from the previous response or to the response from the getStartPageToken method.",
        "location": "query"
       },
       "spaces": {

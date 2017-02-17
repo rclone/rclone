@@ -43,21 +43,14 @@ func limitDial(network, addr string) (net.Conn, error) {
 }
 
 type limitConn struct {
-	mu sync.Mutex // only for closing the net.Conn
+	close sync.Once
 	net.Conn
 }
 
 func (lc *limitConn) Close() error {
-	lc.mu.Lock()
-	defer lc.mu.Unlock()
-
-	if lc.Conn == nil {
-		// Silently ignore double close.
-		return nil
-	}
-	limitRelease()
-	err := lc.Conn.Close()
-	lc.Conn = nil
-	runtime.SetFinalizer(lc, nil)
-	return err
+	defer lc.close.Do(func() {
+		limitRelease()
+		runtime.SetFinalizer(lc, nil)
+	})
+	return lc.Conn.Close()
 }

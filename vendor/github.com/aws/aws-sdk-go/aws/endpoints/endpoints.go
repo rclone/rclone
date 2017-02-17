@@ -27,6 +27,25 @@ type Options struct {
 	// error will be returned. This option will prevent returning endpoints
 	// that look valid, but may not resolve to any real endpoint.
 	StrictMatching bool
+
+	// Enables resolving a service endpoint based on the region provided if the
+	// service does not exist. The service endpoint ID will be used as the service
+	// domain name prefix. By default the endpoint resolver requires the service
+	// to be known when resolving endpoints.
+	//
+	// If resolving an endpoint on the partition list the provided region will
+	// be used to determine which partition's domain name pattern to the service
+	// endpoint ID with. If both the service and region are unkonwn and resolving
+	// the endpoint on partition list an UnknownEndpointError error will be returned.
+	//
+	// If resolving and endpoint on a partition specific resolver that partition's
+	// domain name pattern will be used with the service endpoint ID. If both
+	// region and service do not exist when resolving an endpoint on a specific
+	// partition the partition's domain pattern will be used to combine the
+	// endpoint and region together.
+	//
+	// This option is ignored if StrictMatching is enabled.
+	ResolveUnknownService bool
 }
 
 // Set combines all of the option functions together.
@@ -52,6 +71,12 @@ func UseDualStackOption(o *Options) {
 // option when resolving endpoints.
 func StrictMatchingOption(o *Options) {
 	o.StrictMatching = true
+}
+
+// ResolveUnknownServiceOption sets the ResolveUnknownService option. Can be used
+// as a functional option when resolving endpoints.
+func ResolveUnknownServiceOption(o *Options) {
+	o.ResolveUnknownService = true
 }
 
 // A Resolver provides the interface for functionality to resolve endpoints.
@@ -114,15 +139,18 @@ func (p *Partition) ID() string { return p.id }
 //
 // If the service cannot be found in the metadata the UnknownServiceError
 // error will be returned. This validation will occur regardless if
-// StrictMatching is enabled.
+// StrictMatching is enabled. To enable resolving unknown services set the
+// "ResolveUnknownService" option to true. When StrictMatching is disabled
+// this option allows the partition resolver to resolve a endpoint based on
+// the service endpoint ID provided.
 //
 // When resolving endpoints you can choose to enable StrictMatching. This will
 // require the provided service and region to be known by the partition.
 // If the endpoint cannot be strictly resolved an error will be returned. This
 // mode is useful to ensure the endpoint resolved is valid. Without
-// StrictMatching enabled the enpoint returned my look valid but may not work.
+// StrictMatching enabled the endpoint returned my look valid but may not work.
 // StrictMatching requires the SDK to be updated if you want to take advantage
-// of new regions and services expantions.
+// of new regions and services expansions.
 //
 // Errors that can be returned.
 //   * UnknownServiceError

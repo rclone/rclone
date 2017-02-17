@@ -165,9 +165,7 @@ func (c *tlsCreds) ClientHandshake(ctx context.Context, addr string, rawConn net
 	case <-ctx.Done():
 		return nil, nil, ctx.Err()
 	}
-	// TODO(zhaoq): Omit the auth info for client now. It is more for
-	// information than anything else.
-	return conn, nil, nil
+	return conn, TLSInfo{conn.ConnectionState()}, nil
 }
 
 func (c *tlsCreds) ServerHandshake(rawConn net.Conn) (net.Conn, AuthInfo, error) {

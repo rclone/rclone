@@ -114,11 +114,13 @@ includes_Linux='
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <linux/if.h>
+#include <linux/if_alg.h>
 #include <linux/if_arp.h>
 #include <linux/if_ether.h>
 #include <linux/if_tun.h>
 #include <linux/if_packet.h>
 #include <linux/if_addr.h>
+#include <linux/falloc.h>
 #include <linux/filter.h>
 #include <linux/netlink.h>
 #include <linux/reboot.h>
@@ -312,6 +314,7 @@ ccflags="$@"
 		$2 ~ /^IN_/ ||
 		$2 ~ /^LOCK_(SH|EX|NB|UN)$/ ||
 		$2 ~ /^(AF|SOCK|SO|SOL|IPPROTO|IP|IPV6|ICMP6|TCP|EVFILT|NOTE|EV|SHUT|PROT|MAP|PACKET|MSG|SCM|MCL|DT|MADV|PR)_/ ||
+		$2 ~ /^FALLOC_/ ||
 		$2 == "ICMPV6_FILTER" ||
 		$2 == "SOMAXCONN" ||
 		$2 == "NAME_MAX" ||
@@ -341,6 +344,8 @@ ccflags="$@"
 		$2 ~ /^(BPF|DLT)_/ ||
 		$2 ~ /^CLOCK_/ ||
 		$2 ~ /^CAN_/ ||
+		$2 ~ /^ALG_/ ||
+		$2 ~ /^SPLICE_/ ||
 		$2 !~ "WMESGLEN" &&
 		$2 ~ /^W[A-Z0-9]+$/ {printf("\t%s = C.%s\n", $2, $2)}
 		$2 ~ /^__WCOREFLAG$/ {next}
@@ -456,7 +461,7 @@ main(void)
 		printf("\t%d: \"%s\",\n", e, buf);
 	}
 	printf("}\n\n");
-	
+
 	printf("\n\n// Signal table\n");
 	printf("var signals = [...]string {\n");
 	qsort(signals, nelem(signals), sizeof signals[0], intcmp);

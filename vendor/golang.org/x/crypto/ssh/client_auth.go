@@ -30,8 +30,10 @@ func (c *connection) clientAuthenticate(config *ClientConfig) error {
 	// then any untried methods suggested by the server.
 	tried := make(map[string]bool)
 	var lastMethods []string
+
+	sessionID := c.transport.getSessionID()
 	for auth := AuthMethod(new(noneAuth)); auth != nil; {
-		ok, methods, err := auth.auth(c.transport.getSessionID(), config.User, c.transport, config.Rand)
+		ok, methods, err := auth.auth(sessionID, config.User, c.transport, config.Rand)
 		if err != nil {
 			return err
 		}

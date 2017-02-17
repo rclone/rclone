@@ -14,10 +14,9 @@
 // 	        panic(err)
 // 	}
 // 	defer terminal.Restore(0, oldState)
-package terminal // import "golang.org/x/crypto/ssh/terminal"
+package terminal
 
 import (
-	"io"
 	"syscall"
 	"unsafe"
 )
@@ -72,8 +71,10 @@ func GetState(fd int) (*State, error) {
 // Restore restores the terminal connected to the given file descriptor to a
 // previous state.
 func Restore(fd int, state *State) error {
-	_, _, err := syscall.Syscall6(syscall.SYS_IOCTL, uintptr(fd), ioctlWriteTermios, uintptr(unsafe.Pointer(&state.termios)), 0, 0, 0)
-	return err
+	if _, _, err := syscall.Syscall6(syscall.SYS_IOCTL, uintptr(fd), ioctlWriteTermios, uintptr(unsafe.Pointer(&state.termios)), 0, 0, 0); err != 0 {
+		return err
+	}
+	return nil
 }
 
 // GetSize returns the dimensions of the given terminal.
@@ -84,6 +85,13 @@ func GetSize(fd int) (width, height int, err error) {
 		return -1, -1, err
 	}
 	return int(dimensions[1]), int(dimensions[0]), nil
+}
+
+// passwordReader is an io.Reader that reads from a specific file descriptor.
+type passwordReader int
+
+func (r passwordReader) Read(buf []byte) (int, error) {
+	return syscall.Read(int(r), buf)
 }
 
 // ReadPassword reads a line of input from a terminal without local echo.  This
@@ -107,27 +115,5 @@ func ReadPassword(fd int) ([]byte, error) {
 		syscall.Syscall6(syscall.SYS_IOCTL, uintptr(fd), ioctlWriteTermios, uintptr(unsafe.Pointer(&oldState)), 0, 0, 0)
 	}()
 
-	var buf [16]byte
-	var ret []byte
-	for {
-		n, err := syscall.Read(fd, buf[:])
-		if err != nil {
-			return nil, err
-		}
-		if n == 0 {
-			if len(ret) == 0 {
-				return nil, io.EOF
-			}
-			break
-		}
-		if buf[n-1] == '\n' {
-			n--
-		}
-		ret = append(ret, buf[:n]...)
-		if n < len(buf) {
-			break
-		}
-	}
-
-	return ret, nil
+	return readPasswordLine(passwordReader(fd))
 }

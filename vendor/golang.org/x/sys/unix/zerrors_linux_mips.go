@@ -52,6 +52,13 @@ const (
 	AF_UNSPEC                        = 0x0
 	AF_WANPIPE                       = 0x19
 	AF_X25                           = 0x9
+	ALG_OP_DECRYPT                   = 0x0
+	ALG_OP_ENCRYPT                   = 0x1
+	ALG_SET_AEAD_ASSOCLEN            = 0x4
+	ALG_SET_AEAD_AUTHSIZE            = 0x5
+	ALG_SET_IV                       = 0x2
+	ALG_SET_KEY                      = 0x1
+	ALG_SET_OP                       = 0x3
 	ARPHRD_ADAPT                     = 0x108
 	ARPHRD_APPLETLK                  = 0x8
 	ARPHRD_ARCNET                    = 0x7
@@ -375,6 +382,12 @@ const (
 	EXTA                             = 0xe
 	EXTB                             = 0xf
 	EXTPROC                          = 0x10000
+	FALLOC_FL_COLLAPSE_RANGE         = 0x8
+	FALLOC_FL_INSERT_RANGE           = 0x20
+	FALLOC_FL_KEEP_SIZE              = 0x1
+	FALLOC_FL_NO_HIDE_STALE          = 0x4
+	FALLOC_FL_PUNCH_HOLE             = 0x2
+	FALLOC_FL_ZERO_RANGE             = 0x10
 	FD_CLOEXEC                       = 0x1
 	FD_SETSIZE                       = 0x400
 	FF0                              = 0x0
@@ -1267,6 +1280,10 @@ const (
 	SO_TIMESTAMPING                  = 0x25
 	SO_TIMESTAMPNS                   = 0x23
 	SO_TYPE                          = 0x1008
+	SPLICE_F_GIFT                    = 0x8
+	SPLICE_F_MORE                    = 0x4
+	SPLICE_F_MOVE                    = 0x1
+	SPLICE_F_NONBLOCK                = 0x2
 	S_BLKSIZE                        = 0x200
 	S_IEXEC                          = 0x40
 	S_IFBLK                          = 0x6000

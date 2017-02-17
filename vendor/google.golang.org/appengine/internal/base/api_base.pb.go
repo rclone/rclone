@@ -20,10 +20,12 @@ It has these top-level messages:
 package base
 
 import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
 import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
+var _ = fmt.Errorf
 var _ = math.Inf
 
 type StringProto struct {
@@ -129,6 +131,3 @@ type VoidProto struct {
 func (m *VoidProto) Reset()         { *m = VoidProto{} }
 func (m *VoidProto) String() string { return proto.CompactTextString(m) }
 func (*VoidProto) ProtoMessage()    {}
-
-func init() {
-}

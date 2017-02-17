@@ -14,6 +14,6 @@ before_install:
 script:
   - '! gofmt -s -d -l . 2>&1 | read'
   - '! goimports -l . | read'
-  - 'if [[ $TRAVIS_GO_VERSION != 1.5* ]]; then ! golint ./... | grep -vE "(_string|\.pb)\.go:"; fi'
+  - 'if [[ $TRAVIS_GO_VERSION != 1.5* ]]; then ! golint ./... | grep -vE "(_mock|_string|\.pb)\.go:"; fi'
   - '! go tool vet -all . 2>&1 | grep -vE "constant [0-9]+ not a string in call to Errorf" | grep -vF .pb.go:' # https://github.com/golang/protobuf/issues/214
   - make test testrace

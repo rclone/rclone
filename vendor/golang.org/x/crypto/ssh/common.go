@@ -56,7 +56,7 @@ var supportedHostKeyAlgos = []string{
 // This is based on RFC 4253, section 6.4, but with hmac-md5 variants removed
 // because they have reached the end of their useful life.
 var supportedMACs = []string{
-	"hmac-sha2-256", "hmac-sha1", "hmac-sha1-96",
+	"hmac-sha2-256-etm@openssh.com", "hmac-sha2-256", "hmac-sha1", "hmac-sha1-96",
 }
 
 var supportedCompressions = []string{compressionNone}
@@ -102,6 +102,21 @@ type directionAlgorithms struct {
 	Cipher      string
 	MAC         string
 	Compression string
+}
+
+// rekeyBytes returns a rekeying intervals in bytes.
+func (a *directionAlgorithms) rekeyBytes() int64 {
+	// According to RFC4344 block ciphers should rekey after
+	// 2^(BLOCKSIZE/4) blocks. For all AES flavors BLOCKSIZE is
+	// 128.
+	switch a.Cipher {
+	case "aes128-ctr", "aes192-ctr", "aes256-ctr", gcmCipherID, aes128cbcID:
+		return 16 * (1 << 32)
+
+	}
+
+	// For others, stick with RFC4253 recommendation to rekey after 1 Gb of data.
+	return 1 << 30
 }
 
 type algorithms struct {

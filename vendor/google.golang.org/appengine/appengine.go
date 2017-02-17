@@ -12,53 +12,68 @@ import (
 	"net/http"
 
 	"github.com/golang/protobuf/proto"
+	"golang.org/x/net/context"
 
 	"google.golang.org/appengine/internal"
 )
 
+// The gophers party all night; the rabbits provide the beats.
+
+// Main is the principal entry point for an app running in App Engine.
+//
+// On App Engine Flexible it installs a trivial health checker if one isn't
+// already registered, and starts listening on port 8080 (overridden by the
+// $PORT environment variable).
+//
+// See https://cloud.google.com/appengine/docs/flexible/custom-runtimes#health_check_requests
+// for details on how to do your own health checking.
+//
+// On App Engine Standard it ensures the server has started and is prepared to
+// receive requests.
+//
+// Main never returns.
+//
+// Main is designed so that the app's main package looks like this:
+//
+//      package main
+//
+//      import (
+//              "google.golang.org/appengine"
+//
+//              _ "myapp/package0"
+//              _ "myapp/package1"
+//      )
+//
+//      func main() {
+//              appengine.Main()
+//      }
+//
+// The "myapp/packageX" packages are expected to register HTTP handlers
+// in their init functions.
+func Main() {
+	internal.Main()
+}
+
 // IsDevAppServer reports whether the App Engine app is running in the
 // development App Server.
 func IsDevAppServer() bool {
-	// TODO(dsymonds): Detect this.
-	return false
-}
-
-// Context represents the context of an in-flight HTTP request.
-type Context interface {
-	// Debugf formats its arguments according to the format, analogous to fmt.Printf,
-	// and records the text as a log message at Debug level.
-	Debugf(format string, args ...interface{})
-
-	// Infof is like Debugf, but at Info level.
-	Infof(format string, args ...interface{})
-
-	// Warningf is like Debugf, but at Warning level.
-	Warningf(format string, args ...interface{})
-
-	// Errorf is like Debugf, but at Error level.
-	Errorf(format string, args ...interface{})
-
-	// Criticalf is like Debugf, but at Critical level.
-	Criticalf(format string, args ...interface{})
-
-	// The remaining methods are for internal use only.
-	// Developer-facing APIs wrap these methods to provide a more friendly API.
-
-	// Internal use only.
-	Call(service, method string, in, out proto.Message, opts *internal.CallOptions) error
-	// Internal use only. Use AppID instead.
-	FullyQualifiedAppID() string
-	// Internal use only.
-	Request() interface{}
+	return internal.IsDevAppServer()
 }
 
 // NewContext returns a context for an in-flight HTTP request.
-// Repeated calls will return the same value.
-func NewContext(req *http.Request) Context {
-	return internal.NewContext(req)
+// This function is cheap.
+func NewContext(req *http.Request) context.Context {
+	return WithContext(context.Background(), req)
 }
 
-// TODO(dsymonds): Add BackgroundContext function?
+// WithContext returns a copy of the parent context
+// and associates it with an in-flight HTTP request.
+// This function is cheap.
+func WithContext(parent context.Context, req *http.Request) context.Context {
+	return internal.WithContext(parent, req)
+}
+
+// TODO(dsymonds): Add a Call function here? Otherwise other packages can't access internal.Call.
 
 // BlobKey is a key for a blobstore blob.
 //
@@ -75,4 +90,24 @@ type GeoPoint struct {
 // Valid returns whether a GeoPoint is within [-90, 90] latitude and [-180, 180] longitude.
 func (g GeoPoint) Valid() bool {
 	return -90 <= g.Lat && g.Lat <= 90 && -180 <= g.Lng && g.Lng <= 180
+}
+
+// APICallFunc defines a function type for handling an API call.
+// See WithCallOverride.
+type APICallFunc func(ctx context.Context, service, method string, in, out proto.Message) error
+
+// WithAPICallFunc returns a copy of the parent context
+// that will cause API calls to invoke f instead of their normal operation.
+//
+// This is intended for advanced users only.
+func WithAPICallFunc(ctx context.Context, f APICallFunc) context.Context {
+	return internal.WithCallOverride(ctx, internal.CallOverrideFunc(f))
+}
+
+// APICall performs an API call.
+//
+// This is not intended for general use; it is exported for use in conjunction
+// with WithAPICallFunc.
+func APICall(ctx context.Context, service, method string, in, out proto.Message) error {
+	return internal.Call(ctx, service, method, in, out)
 }

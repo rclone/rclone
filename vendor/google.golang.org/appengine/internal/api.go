@@ -2,10 +2,13 @@
 // Use of this source code is governed by the Apache 2.0
 // license that can be found in the LICENSE file.
 
+// +build !appengine
+
 package internal
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -21,6 +24,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	netcontext "golang.org/x/net/context"
 
 	basepb "google.golang.org/appengine/internal/base"
 	logpb "google.golang.org/appengine/internal/log"
@@ -28,14 +32,15 @@ import (
 )
 
 const (
-	apiPath = "/rpc_http"
+	apiPath             = "/rpc_http"
+	defaultTicketSuffix = "/default.20150612t184001.0"
 )
 
 var (
 	// Incoming headers.
 	ticketHeader       = http.CanonicalHeaderKey("X-AppEngine-API-Ticket")
 	dapperHeader       = http.CanonicalHeaderKey("X-Google-DapperTraceInfo")
-	defNamespaceHeader = http.CanonicalHeaderKey("X-AppEngine-Default-Namespace")
+	traceHeader        = http.CanonicalHeaderKey("X-Cloud-Trace-Context")
 	curNamespaceHeader = http.CanonicalHeaderKey("X-AppEngine-Current-Namespace")
 	userIPHeader       = http.CanonicalHeaderKey("X-AppEngine-User-IP")
 	remoteAddrHeader   = http.CanonicalHeaderKey("X-AppEngine-Remote-Addr")
@@ -56,23 +61,31 @@ var (
 			Dial:  limitDial,
 		},
 	}
+
+	defaultTicketOnce sync.Once
+	defaultTicket     string
 )
 
-func apiHost() string {
-	host, port := "appengine.googleapis.com", "10001"
+func apiURL() *url.URL {
+	host, port := "appengine.googleapis.internal", "10001"
 	if h := os.Getenv("API_HOST"); h != "" {
 		host = h
 	}
 	if p := os.Getenv("API_PORT"); p != "" {
 		port = p
 	}
-	return host + ":" + port
+	return &url.URL{
+		Scheme: "http",
+		Host:   host + ":" + port,
+		Path:   apiPath,
+	}
 }
 
 func handleHTTP(w http.ResponseWriter, r *http.Request) {
 	c := &context{
 		req:       r,
 		outHeader: w.Header(),
+		apiURL:    apiURL(),
 	}
 	stopFlushing := make(chan int)
 
@@ -135,7 +148,8 @@ func handleHTTP(w http.ResponseWriter, r *http.Request) {
 func executeRequestSafely(c *context, r *http.Request) {
 	defer func() {
 		if x := recover(); x != nil {
-			c.logf(4, "%s", renderPanic(x)) // 4 == critical
+			logf(c, 4, "%s", renderPanic(x)) // 4 == critical
+			c.outCode = 500
 		}
 	}()
 
@@ -185,6 +199,10 @@ var ctxs = struct {
 	sync.Mutex
 	m  map[*http.Request]*context
 	bg *context // background context, lazily initialized
+	// dec is used by tests to decorate the netcontext.Context returned
+	// for a given request. This allows tests to add overrides (such as
+	// WithAppIDOverride) to the context. The map is nil outside tests.
+	dec map[*http.Request]func(netcontext.Context) netcontext.Context
 }{
 	m: make(map[*http.Request]*context),
 }
@@ -203,12 +221,45 @@ type context struct {
 		lines   []*logpb.UserAppLogLine
 		flushes int
 	}
+
+	apiURL *url.URL
 }
 
-func NewContext(req *http.Request) *context {
+var contextKey = "holds a *context"
+
+func fromContext(ctx netcontext.Context) *context {
+	c, _ := ctx.Value(&contextKey).(*context)
+	return c
+}
+
+func withContext(parent netcontext.Context, c *context) netcontext.Context {
+	ctx := netcontext.WithValue(parent, &contextKey, c)
+	if ns := c.req.Header.Get(curNamespaceHeader); ns != "" {
+		ctx = withNamespace(ctx, ns)
+	}
+	return ctx
+}
+
+func toContext(c *context) netcontext.Context {
+	return withContext(netcontext.Background(), c)
+}
+
+func IncomingHeaders(ctx netcontext.Context) http.Header {
+	if c := fromContext(ctx); c != nil {
+		return c.req.Header
+	}
+	return nil
+}
+
+func WithContext(parent netcontext.Context, req *http.Request) netcontext.Context {
 	ctxs.Lock()
 	c := ctxs.m[req]
+	d := ctxs.dec[req]
 	ctxs.Unlock()
+
+	if d != nil {
+		parent = d(parent)
+	}
 
 	if c == nil {
 		// Someone passed in an http.Request that is not in-flight.
@@ -216,25 +267,37 @@ func NewContext(req *http.Request) *context {
 		// so that stack traces will be more sensible.
 		log.Panic("appengine: NewContext passed an unknown http.Request")
 	}
-	return c
+	return withContext(parent, c)
 }
 
-func BackgroundContext() *context {
+// DefaultTicket returns a ticket used for background context or dev_appserver.
+func DefaultTicket() string {
+	defaultTicketOnce.Do(func() {
+		if IsDevAppServer() {
+			defaultTicket = "testapp" + defaultTicketSuffix
+			return
+		}
+		appID := partitionlessAppID()
+		escAppID := strings.Replace(strings.Replace(appID, ":", "_", -1), ".", "_", -1)
+		majVersion := VersionID(nil)
+		if i := strings.Index(majVersion, "."); i > 0 {
+			majVersion = majVersion[:i]
+		}
+		defaultTicket = fmt.Sprintf("%s/%s.%s.%s", escAppID, ModuleName(nil), majVersion, InstanceID())
+	})
+	return defaultTicket
+}
+
+func BackgroundContext() netcontext.Context {
 	ctxs.Lock()
 	defer ctxs.Unlock()
 
 	if ctxs.bg != nil {
-		return ctxs.bg
+		return toContext(ctxs.bg)
 	}
 
 	// Compute background security ticket.
-	appID := partitionlessAppID()
-	escAppID := strings.Replace(strings.Replace(appID, ":", "_", -1), ".", "_", -1)
-	majVersion := VersionID()
-	if i := strings.Index(majVersion, "_"); i >= 0 {
-		majVersion = majVersion[:i]
-	}
-	ticket := fmt.Sprintf("%s/%s.%s.%s", escAppID, ModuleName(), majVersion, InstanceID())
+	ticket := DefaultTicket()
 
 	ctxs.bg = &context{
 		req: &http.Request{
@@ -242,12 +305,44 @@ func BackgroundContext() *context {
 				ticketHeader: []string{ticket},
 			},
 		},
+		apiURL: apiURL(),
 	}
 
 	// TODO(dsymonds): Wire up the shutdown handler to do a final flush.
 	go ctxs.bg.logFlusher(make(chan int))
 
-	return ctxs.bg
+	return toContext(ctxs.bg)
+}
+
+// RegisterTestRequest registers the HTTP request req for testing, such that
+// any API calls are sent to the provided URL. It returns a closure to delete
+// the registration.
+// It should only be used by aetest package.
+func RegisterTestRequest(req *http.Request, apiURL *url.URL, decorate func(netcontext.Context) netcontext.Context) func() {
+	c := &context{
+		req:    req,
+		apiURL: apiURL,
+	}
+	ctxs.Lock()
+	defer ctxs.Unlock()
+	if _, ok := ctxs.m[req]; ok {
+		log.Panic("req already associated with context")
+	}
+	if _, ok := ctxs.dec[req]; ok {
+		log.Panic("req already associated with context")
+	}
+	if ctxs.dec == nil {
+		ctxs.dec = make(map[*http.Request]func(netcontext.Context) netcontext.Context)
+	}
+	ctxs.m[req] = c
+	ctxs.dec[req] = decorate
+
+	return func() {
+		ctxs.Lock()
+		delete(ctxs.m, req)
+		delete(ctxs.dec, req)
+		ctxs.Unlock()
+	}
 }
 
 var errTimeout = &CallError{
@@ -286,21 +381,16 @@ func (c *context) Write(b []byte) (int, error) {
 
 func (c *context) WriteHeader(code int) {
 	if c.outCode != 0 {
-		c.Errorf("WriteHeader called multiple times on request.")
+		logf(c, 3, "WriteHeader called multiple times on request.") // error level
 		return
 	}
 	c.outCode = code
 }
 
 func (c *context) post(body []byte, timeout time.Duration) (b []byte, err error) {
-	dst := apiHost()
 	hreq := &http.Request{
 		Method: "POST",
-		URL: &url.URL{
-			Scheme: "http",
-			Host:   dst,
-			Path:   apiPath,
-		},
+		URL:    c.apiURL,
 		Header: http.Header{
 			apiEndpointHeader: apiEndpointHeaderValue,
 			apiMethodHeader:   apiMethodHeaderValue,
@@ -309,10 +399,13 @@ func (c *context) post(body []byte, timeout time.Duration) (b []byte, err error)
 		},
 		Body:          ioutil.NopCloser(bytes.NewReader(body)),
 		ContentLength: int64(len(body)),
-		Host:          dst,
+		Host:          c.apiURL.Host,
 	}
 	if info := c.req.Header.Get(dapperHeader); info != "" {
 		hreq.Header.Set(dapperHeader, info)
+	}
+	if info := c.req.Header.Get(traceHeader); info != "" {
+		hreq.Header.Set(traceHeader, info)
 	}
 
 	tr := apiHTTPClient.Transport.(*http.Transport)
@@ -354,30 +447,42 @@ func (c *context) post(body []byte, timeout time.Duration) (b []byte, err error)
 	return hrespBody, nil
 }
 
-var virtualMethodHeaders = map[string]string{
-	"GetNamespace":        curNamespaceHeader,
-	"GetDefaultNamespace": defNamespaceHeader,
-
-	"user:Email":             http.CanonicalHeaderKey("X-AppEngine-User-Email"),
-	"user:AuthDomain":        http.CanonicalHeaderKey("X-AppEngine-Auth-Domain"),
-	"user:ID":                http.CanonicalHeaderKey("X-AppEngine-User-Id"),
-	"user:IsAdmin":           http.CanonicalHeaderKey("X-AppEngine-User-Is-Admin"),
-	"user:FederatedIdentity": http.CanonicalHeaderKey("X-AppEngine-Federated-Identity"),
-	"user:FederatedProvider": http.CanonicalHeaderKey("X-AppEngine-Federated-Provider"),
-}
-
-func (c *context) Call(service, method string, in, out proto.Message, opts *CallOptions) error {
-	if service == "__go__" {
-		if hdr, ok := virtualMethodHeaders[method]; ok {
-			out.(*basepb.StringProto).Value = proto.String(c.req.Header.Get(hdr))
-			return nil
+func Call(ctx netcontext.Context, service, method string, in, out proto.Message) error {
+	if ns := NamespaceFromContext(ctx); ns != "" {
+		if fn, ok := NamespaceMods[service]; ok {
+			fn(in, ns)
 		}
 	}
 
-	// Default RPC timeout is 5s.
-	timeout := 5 * time.Second
-	if opts != nil && opts.Timeout > 0 {
-		timeout = opts.Timeout
+	if f, ctx, ok := callOverrideFromContext(ctx); ok {
+		return f(ctx, service, method, in, out)
+	}
+
+	// Handle already-done contexts quickly.
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
+	c := fromContext(ctx)
+	if c == nil {
+		// Give a good error message rather than a panic lower down.
+		return errors.New("not an App Engine context")
+	}
+
+	// Apply transaction modifications if we're in a transaction.
+	if t := transactionFromContext(ctx); t != nil {
+		if t.finished {
+			return errors.New("transaction context has expired")
+		}
+		applyTransaction(in, &t.transaction)
+	}
+
+	// Default RPC timeout is 60s.
+	timeout := 60 * time.Second
+	if deadline, ok := ctx.Deadline(); ok {
+		timeout = deadline.Sub(time.Now())
 	}
 
 	data, err := proto.Marshal(in)
@@ -386,6 +491,16 @@ func (c *context) Call(service, method string, in, out proto.Message, opts *Call
 	}
 
 	ticket := c.req.Header.Get(ticketHeader)
+	// Use a test ticket under test environment.
+	if ticket == "" {
+		if appid := ctx.Value(&appIDOverrideKey); appid != nil {
+			ticket = appid.(string) + defaultTicketSuffix
+		}
+	}
+	// Fall back to use background ticket when the request ticket is not available in Flex or dev_appserver.
+	if ticket == "" {
+		ticket = DefaultTicket()
+	}
 	req := &remotepb.Request{
 		ServiceName: &service,
 		Method:      &method,
@@ -434,7 +549,7 @@ func (c *context) Call(service, method string, in, out proto.Message, opts *Call
 	return proto.Unmarshal(res.Response, out)
 }
 
-func (c *context) Request() interface{} {
+func (c *context) Request() *http.Request {
 	return c.req
 }
 
@@ -460,7 +575,10 @@ var logLevelName = map[int64]string{
 	4: "CRITICAL",
 }
 
-func (c *context) logf(level int64, format string, args ...interface{}) {
+func logf(c *context, level int64, format string, args ...interface{}) {
+	if c == nil {
+		panic("not an App Engine context")
+	}
 	s := fmt.Sprintf(format, args...)
 	s = strings.TrimRight(s, "\n") // Remove any trailing newline characters.
 	c.addLogLine(&logpb.UserAppLogLine{
@@ -470,17 +588,6 @@ func (c *context) logf(level int64, format string, args ...interface{}) {
 	})
 	log.Print(logLevelName[level] + ": " + s)
 }
-
-func (c *context) Debugf(format string, args ...interface{})    { c.logf(0, format, args...) }
-func (c *context) Infof(format string, args ...interface{})     { c.logf(1, format, args...) }
-func (c *context) Warningf(format string, args ...interface{})  { c.logf(2, format, args...) }
-func (c *context) Errorf(format string, args ...interface{})    { c.logf(3, format, args...) }
-func (c *context) Criticalf(format string, args ...interface{}) { c.logf(4, format, args...) }
-
-// FullyQualifiedAppID returns the fully-qualified application ID.
-// This may contain a partition prefix (e.g. "s~" for High Replication apps),
-// or a domain prefix (e.g. "example.com:").
-func (c *context) FullyQualifiedAppID() string { return fullyQualifiedAppID() }
 
 // flushLog attempts to flush any pending logs to the appserver.
 // It should not be called concurrently.
@@ -531,7 +638,7 @@ func (c *context) flushLog(force bool) (flushed bool) {
 	c.pendingLogs.Lock()
 	c.pendingLogs.flushes++
 	c.pendingLogs.Unlock()
-	if err := c.Call("logservice", "Flush", req, res, nil); err != nil {
+	if err := Call(toContext(c), "logservice", "Flush", req, res); err != nil {
 		log.Printf("internal.flushLog: Flush RPC: %v", err)
 		rescueLogs = true
 		return false
@@ -563,27 +670,6 @@ func (c *context) logFlusher(stop <-chan int) {
 	}
 }
 
-func ContextForTesting(req *http.Request) *context {
-	return &context{req: req}
-}
-
-// caller is a subset of appengine.Context.
-type caller interface {
-	Call(service, method string, in, out proto.Message, opts *CallOptions) error
-}
-
-var virtualOpts = &CallOptions{
-	// Virtual API calls should happen nearly instantaneously.
-	Timeout: 1 * time.Millisecond,
-}
-
-// VirtAPI invokes a virtual API call for the __go__ service.
-// It is for methods that accept a VoidProto and return a StringProto.
-// It returns an empty string if the call fails.
-func VirtAPI(c caller, method string) string {
-	s := &basepb.StringProto{}
-	if err := c.Call("__go__", method, &basepb.VoidProto{}, s, virtualOpts); err != nil {
-		log.Printf("/__go__.%s failed: %v", method, err)
-	}
-	return s.GetValue()
+func ContextForTesting(req *http.Request) netcontext.Context {
+	return toContext(&context{req: req})
 }

@@ -17,10 +17,12 @@ It has these top-level messages:
 package remote_api
 
 import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
 import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
+var _ = fmt.Errorf
 var _ = math.Inf
 
 type RpcError_ErrorCode int32
@@ -226,5 +228,4 @@ func (m *Response) GetRpcError() *RpcError {
 }
 
 func init() {
-	proto.RegisterEnum("remote_api.RpcError_ErrorCode", RpcError_ErrorCode_name, RpcError_ErrorCode_value)
 }

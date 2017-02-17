@@ -24,6 +24,13 @@ type ConfigProvider interface {
 	ClientConfig(serviceName string, cfgs ...*aws.Config) Config
 }
 
+// ConfigNoResolveEndpointProvider same as ConfigProvider except it will not
+// resolve the endpoint automatically. The service client's endpoint must be
+// provided via the aws.Config.Endpoint field.
+type ConfigNoResolveEndpointProvider interface {
+	ClientConfigNoResolveEndpoint(cfgs ...*aws.Config) Config
+}
+
 // A Client implements the base client request and response handling
 // used by all service clients.
 type Client struct {

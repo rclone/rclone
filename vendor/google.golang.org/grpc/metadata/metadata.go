@@ -32,6 +32,7 @@
  */
 
 // Package metadata define the structure of the metadata supported by gRPC library.
+// Please refer to http://www.grpc.io/docs/guides/wire.html for more information about custom-metadata.
 package metadata
 
 import (
@@ -82,6 +83,7 @@ func DecodeKeyValue(k, v string) (string, string, error) {
 type MD map[string][]string
 
 // New creates a MD from given key-value map.
+// Keys are automatically converted to lowercase. And for keys having "-bin" as suffix, their values will be applied Base64 encoding.
 func New(m map[string]string) MD {
 	md := MD{}
 	for k, v := range m {
@@ -93,6 +95,7 @@ func New(m map[string]string) MD {
 
 // Pairs returns an MD formed by the mapping of key, value ...
 // Pairs panics if len(kv) is odd.
+// Keys are automatically converted to lowercase. And for keys having "-bin" as suffix, their values will be appplied Base64 encoding.
 func Pairs(kv ...string) MD {
 	if len(kv)%2 == 1 {
 		panic(fmt.Sprintf("metadata: Pairs got the odd number of input pairs for metadata: %d", len(kv)))

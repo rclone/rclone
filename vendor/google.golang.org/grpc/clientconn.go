@@ -45,6 +45,7 @@ import (
 	"golang.org/x/net/trace"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/grpclog"
+	"google.golang.org/grpc/stats"
 	"google.golang.org/grpc/transport"
 )
 
@@ -222,6 +223,14 @@ func WithDialer(f func(string, time.Duration) (net.Conn, error)) DialOption {
 	}
 }
 
+// WithStatsHandler returns a DialOption that specifies the stats handler
+// for all the RPCs and underlying network connections in this ClientConn.
+func WithStatsHandler(h stats.Handler) DialOption {
+	return func(o *dialOptions) {
+		o.copts.StatsHandler = h
+	}
+}
+
 // FailOnNonTempDialError returns a DialOption that specified if gRPC fails on non-temporary dial errors.
 // If f is true, and dialer returns a non-temporary error, gRPC will fail the connection to the network
 // address and won't try to reconnect.
@@ -251,6 +260,15 @@ func WithUnaryInterceptor(f UnaryClientInterceptor) DialOption {
 func WithStreamInterceptor(f StreamClientInterceptor) DialOption {
 	return func(o *dialOptions) {
 		o.streamInt = f
+	}
+}
+
+// WithAuthority returns a DialOption that specifies the value to be used as
+// the :authority pseudo-header. This value only works with WithInsecure and
+// has no effect if TransportCredentials are present.
+func WithAuthority(a string) DialOption {
+	return func(o *dialOptions) {
+		o.copts.Authority = a
 	}
 }
 
@@ -312,6 +330,8 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 	creds := cc.dopts.copts.TransportCredentials
 	if creds != nil && creds.Info().ServerName != "" {
 		cc.authority = creds.Info().ServerName
+	} else if cc.dopts.insecure && cc.dopts.copts.Authority != "" {
+		cc.authority = cc.dopts.copts.Authority
 	} else {
 		colonPos := strings.LastIndex(target, ":")
 		if colonPos == -1 {

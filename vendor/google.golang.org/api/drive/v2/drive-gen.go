@@ -98,9 +98,10 @@ func New(client *http.Client) (*Service, error) {
 }
 
 type Service struct {
-	client    *http.Client
-	BasePath  string // API endpoint base URL
-	UserAgent string // optional additional User-Agent fragment
+	client                    *http.Client
+	BasePath                  string // API endpoint base URL
+	UserAgent                 string // optional additional User-Agent fragment
+	GoogleClientHeaderElement string // client header fragment, for Google use only
 
 	About *AboutService
 
@@ -134,6 +135,10 @@ func (s *Service) userAgent() string {
 		return googleapi.UserAgent
 	}
 	return googleapi.UserAgent + " " + s.UserAgent
+}
+
+func (s *Service) clientHeader() string {
+	return gensupport.GoogleClientHeader("20170210", s.GoogleClientHeaderElement)
 }
 
 func NewAboutService(s *Service) *AboutService {
@@ -497,6 +502,20 @@ func (s *AboutFeatures) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+func (s *AboutFeatures) UnmarshalJSON(data []byte) error {
+	type noMethod AboutFeatures
+	var s1 struct {
+		FeatureRate gensupport.JSONFloat64 `json:"featureRate"`
+		*noMethod
+	}
+	s1.noMethod = (*noMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.FeatureRate = float64(s1.FeatureRate)
+	return nil
+}
+
 type AboutImportFormats struct {
 	// Source: The imported file's content type to convert from.
 	Source string `json:"source,omitempty"`
@@ -747,7 +766,7 @@ type AppList struct {
 	// Etag: The ETag of the list.
 	Etag string `json:"etag,omitempty"`
 
-	// Items: The actual list of apps.
+	// Items: The list of apps.
 	Items []*App `json:"items,omitempty"`
 
 	// Kind: This is always drive#appList.
@@ -839,7 +858,9 @@ type ChangeList struct {
 	// Etag: The ETag of the list.
 	Etag string `json:"etag,omitempty"`
 
-	// Items: The actual list of changes.
+	// Items: The list of changes. If nextPageToken is populated, then this
+	// list may be incomplete and an additional page of results should be
+	// fetched.
 	Items []*Change `json:"items,omitempty"`
 
 	// Kind: This is always drive#changeList.
@@ -851,7 +872,10 @@ type ChangeList struct {
 	// NextLink: A link to the next page of changes.
 	NextLink string `json:"nextLink,omitempty"`
 
-	// NextPageToken: The page token for the next page of changes.
+	// NextPageToken: The page token for the next page of changes. This will
+	// be absent if the end of the changes list has been reached. If the
+	// token is rejected for any reason, it should be discarded, and
+	// pagination should be restarted from the first page of results.
 	NextPageToken string `json:"nextPageToken,omitempty"`
 
 	// SelfLink: A link back to this list.
@@ -955,7 +979,9 @@ type ChildList struct {
 	// Etag: The ETag of the list.
 	Etag string `json:"etag,omitempty"`
 
-	// Items: The actual list of children.
+	// Items: The list of children. If nextPageToken is populated, then this
+	// list may be incomplete and an additional page of results should be
+	// fetched.
 	Items []*ChildReference `json:"items,omitempty"`
 
 	// Kind: This is always drive#childList.
@@ -964,7 +990,10 @@ type ChildList struct {
 	// NextLink: A link to the next page of children.
 	NextLink string `json:"nextLink,omitempty"`
 
-	// NextPageToken: The page token for the next page of children.
+	// NextPageToken: The page token for the next page of children. This
+	// will be absent if the end of the children list has been reached. If
+	// the token is rejected for any reason, it should be discarded, and
+	// pagination should be restarted from the first page of results.
 	NextPageToken string `json:"nextPageToken,omitempty"`
 
 	// SelfLink: A link back to this list.
@@ -1157,7 +1186,9 @@ func (s *CommentContext) MarshalJSON() ([]byte, error) {
 
 // CommentList: A list of comments on a file in Google Drive.
 type CommentList struct {
-	// Items: List of comments.
+	// Items: The list of comments. If nextPageToken is populated, then this
+	// list may be incomplete and an additional page of results should be
+	// fetched.
 	Items []*Comment `json:"items,omitempty"`
 
 	// Kind: This is always drive#commentList.
@@ -1166,7 +1197,10 @@ type CommentList struct {
 	// NextLink: A link to the next page of comments.
 	NextLink string `json:"nextLink,omitempty"`
 
-	// NextPageToken: The token to use to request the next page of results.
+	// NextPageToken: The page token for the next page of comments. This
+	// will be absent if the end of the comments list has been reached. If
+	// the token is rejected for any reason, it should be discarded, and
+	// pagination should be restarted from the first page of results.
 	NextPageToken string `json:"nextPageToken,omitempty"`
 
 	// SelfLink: A link back to this list.
@@ -1267,7 +1301,9 @@ func (s *CommentReply) MarshalJSON() ([]byte, error) {
 // CommentReplyList: A list of replies to a comment on a file in Google
 // Drive.
 type CommentReplyList struct {
-	// Items: List of reply.
+	// Items: The list of replies. If nextPageToken is populated, then this
+	// list may be incomplete and an additional page of results should be
+	// fetched.
 	Items []*CommentReply `json:"items,omitempty"`
 
 	// Kind: This is always drive#commentReplyList.
@@ -1276,7 +1312,10 @@ type CommentReplyList struct {
 	// NextLink: A link to the next page of replies.
 	NextLink string `json:"nextLink,omitempty"`
 
-	// NextPageToken: The token to use to request the next page of results.
+	// NextPageToken: The page token for the next page of replies. This will
+	// be absent if the end of the replies list has been reached. If the
+	// token is rejected for any reason, it should be discarded, and
+	// pagination should be restarted from the first page of results.
 	NextPageToken string `json:"nextPageToken,omitempty"`
 
 	// SelfLink: A link back to this list.
@@ -1383,6 +1422,9 @@ type File struct {
 	// This field is only populated for files with content stored in Drive;
 	// it is not populated for Google Docs or shortcut files.
 	FullFileExtension string `json:"fullFileExtension,omitempty"`
+
+	// HasThumbnail: Whether this file has a thumbnail.
+	HasThumbnail bool `json:"hasThumbnail,omitempty"`
 
 	// HeadRevisionId: The ID of the file's head revision. This field is
 	// only populated for files with content stored in Drive; it is not
@@ -1505,13 +1547,18 @@ type File struct {
 	// are 'drive', 'appDataFolder' and 'photos'.
 	Spaces []string `json:"spaces,omitempty"`
 
-	// Thumbnail: Thumbnail for the file. Only accepted on upload and for
-	// files that are not already thumbnailed by Google.
+	// Thumbnail: A thumbnail for the file. This will only be used if Drive
+	// cannot generate a standard thumbnail.
 	Thumbnail *FileThumbnail `json:"thumbnail,omitempty"`
 
 	// ThumbnailLink: A short-lived link to the file's thumbnail. Typically
-	// lasts on the order of hours.
+	// lasts on the order of hours. Only populated when the requesting app
+	// can access the file's content.
 	ThumbnailLink string `json:"thumbnailLink,omitempty"`
+
+	// ThumbnailVersion: The thumbnail version for use in thumbnail cache
+	// invalidation.
+	ThumbnailVersion int64 `json:"thumbnailVersion,omitempty,string"`
 
 	// Title: The title of this file.
 	Title string `json:"title,omitempty"`
@@ -1664,6 +1711,28 @@ func (s *FileImageMediaMetadata) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+func (s *FileImageMediaMetadata) UnmarshalJSON(data []byte) error {
+	type noMethod FileImageMediaMetadata
+	var s1 struct {
+		Aperture         gensupport.JSONFloat64 `json:"aperture"`
+		ExposureBias     gensupport.JSONFloat64 `json:"exposureBias"`
+		ExposureTime     gensupport.JSONFloat64 `json:"exposureTime"`
+		FocalLength      gensupport.JSONFloat64 `json:"focalLength"`
+		MaxApertureValue gensupport.JSONFloat64 `json:"maxApertureValue"`
+		*noMethod
+	}
+	s1.noMethod = (*noMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.Aperture = float64(s1.Aperture)
+	s.ExposureBias = float64(s1.ExposureBias)
+	s.ExposureTime = float64(s1.ExposureTime)
+	s.FocalLength = float64(s1.FocalLength)
+	s.MaxApertureValue = float64(s1.MaxApertureValue)
+	return nil
+}
+
 // FileImageMediaMetadataLocation: Geographic location information
 // stored in the image.
 type FileImageMediaMetadataLocation struct {
@@ -1697,6 +1766,24 @@ func (s *FileImageMediaMetadataLocation) MarshalJSON() ([]byte, error) {
 	type noMethod FileImageMediaMetadataLocation
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+func (s *FileImageMediaMetadataLocation) UnmarshalJSON(data []byte) error {
+	type noMethod FileImageMediaMetadataLocation
+	var s1 struct {
+		Altitude  gensupport.JSONFloat64 `json:"altitude"`
+		Latitude  gensupport.JSONFloat64 `json:"latitude"`
+		Longitude gensupport.JSONFloat64 `json:"longitude"`
+		*noMethod
+	}
+	s1.noMethod = (*noMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.Altitude = float64(s1.Altitude)
+	s.Latitude = float64(s1.Latitude)
+	s.Longitude = float64(s1.Longitude)
+	return nil
 }
 
 // FileIndexableText: Indexable text attributes for the file (can only
@@ -1774,8 +1861,8 @@ func (s *FileLabels) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// FileThumbnail: Thumbnail for the file. Only accepted on upload and
-// for files that are not already thumbnailed by Google.
+// FileThumbnail: A thumbnail for the file. This will only be used if
+// Drive cannot generate a standard thumbnail.
 type FileThumbnail struct {
 	// Image: The URL-safe Base64 encoded bytes of the thumbnail image. It
 	// should conform to RFC 4648 section 5.
@@ -1848,7 +1935,9 @@ type FileList struct {
 	// Etag: The ETag of the list.
 	Etag string `json:"etag,omitempty"`
 
-	// Items: The actual list of files.
+	// Items: The list of files. If nextPageToken is populated, then this
+	// list may be incomplete and an additional page of results should be
+	// fetched.
 	Items []*File `json:"items,omitempty"`
 
 	// Kind: This is always drive#fileList.
@@ -1857,7 +1946,10 @@ type FileList struct {
 	// NextLink: A link to the next page of files.
 	NextLink string `json:"nextLink,omitempty"`
 
-	// NextPageToken: The page token for the next page of files.
+	// NextPageToken: The page token for the next page of files. This will
+	// be absent if the end of the files list has been reached. If the token
+	// is rejected for any reason, it should be discarded, and pagination
+	// should be restarted from the first page of results.
 	NextPageToken string `json:"nextPageToken,omitempty"`
 
 	// SelfLink: A link back to this list.
@@ -1935,7 +2027,7 @@ type ParentList struct {
 	// Etag: The ETag of the list.
 	Etag string `json:"etag,omitempty"`
 
-	// Items: The actual list of parents.
+	// Items: The list of parents.
 	Items []*ParentReference `json:"items,omitempty"`
 
 	// Kind: This is always drive#parentList.
@@ -2044,8 +2136,8 @@ type Permission struct {
 	// Id: The ID of the user this permission refers to, and identical to
 	// the permissionId in the About and Files resources. When making a
 	// drive.permissions.insert request, exactly one of the id or value
-	// fields must be specified unless the permission type anyone, in which
-	// case both id and value are ignored.
+	// fields must be specified unless the permission type is anyone, in
+	// which case both id and value are ignored.
 	Id string `json:"id,omitempty"`
 
 	// Kind: This is always drive#permission.
@@ -2076,8 +2168,8 @@ type Permission struct {
 	// Value: The email address or domain name for the entity. This is used
 	// during inserts and is not populated in responses. When making a
 	// drive.permissions.insert request, exactly one of the id or value
-	// fields must be specified unless the permission type anyone, in which
-	// case both id and value are ignored.
+	// fields must be specified unless the permission type is anyone, in
+	// which case both id and value are ignored.
 	Value string `json:"value,omitempty"`
 
 	// WithLink: Whether the link is required for this permission.
@@ -2151,7 +2243,7 @@ type PermissionList struct {
 	// Etag: The ETag of the list.
 	Etag string `json:"etag,omitempty"`
 
-	// Items: The actual list of permissions.
+	// Items: The list of permissions.
 	Items []*Permission `json:"items,omitempty"`
 
 	// Kind: This is always drive#permissionList.
@@ -2386,7 +2478,9 @@ type RevisionList struct {
 	// Etag: The ETag of the list.
 	Etag string `json:"etag,omitempty"`
 
-	// Items: The actual list of revisions.
+	// Items: The list of revisions. If nextPageToken is populated, then
+	// this list may be incomplete and an additional page of results should
+	// be fetched.
 	Items []*Revision `json:"items,omitempty"`
 
 	// Kind: This is always drive#revisionList.
@@ -2425,6 +2519,41 @@ type RevisionList struct {
 
 func (s *RevisionList) MarshalJSON() ([]byte, error) {
 	type noMethod RevisionList
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type StartPageToken struct {
+	// Kind: Identifies what kind of resource this is. Value: the fixed
+	// string "drive#startPageToken".
+	Kind string `json:"kind,omitempty"`
+
+	// StartPageToken: The starting page token for listing changes.
+	StartPageToken string `json:"startPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Kind") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Kind") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *StartPageToken) MarshalJSON() ([]byte, error) {
+	type noMethod StartPageToken
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -2585,6 +2714,7 @@ func (c *AboutGetCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -2735,6 +2865,7 @@ func (c *AppsGetCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -2906,6 +3037,7 @@ func (c *AppsListCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -3048,6 +3180,7 @@ func (c *ChangesGetCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -3133,6 +3266,136 @@ func (c *ChangesGetCall) Do(opts ...googleapi.CallOption) (*Change, error) {
 
 }
 
+// method id "drive.changes.getStartPageToken":
+
+type ChangesGetStartPageTokenCall struct {
+	s            *Service
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// GetStartPageToken: Gets the starting pageToken for listing future
+// changes.
+func (r *ChangesService) GetStartPageToken() *ChangesGetStartPageTokenCall {
+	c := &ChangesGetStartPageTokenCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ChangesGetStartPageTokenCall) Fields(s ...googleapi.Field) *ChangesGetStartPageTokenCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *ChangesGetStartPageTokenCall) IfNoneMatch(entityTag string) *ChangesGetStartPageTokenCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ChangesGetStartPageTokenCall) Context(ctx context.Context) *ChangesGetStartPageTokenCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ChangesGetStartPageTokenCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ChangesGetStartPageTokenCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "changes/startPageToken")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "drive.changes.getStartPageToken" call.
+// Exactly one of *StartPageToken or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *StartPageToken.ServerResponse.Header or (if a response was returned
+// at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ChangesGetStartPageTokenCall) Do(opts ...googleapi.CallOption) (*StartPageToken, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &StartPageToken{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Gets the starting pageToken for listing future changes.",
+	//   "httpMethod": "GET",
+	//   "id": "drive.changes.getStartPageToken",
+	//   "path": "changes/startPageToken",
+	//   "response": {
+	//     "$ref": "StartPageToken"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/drive",
+	//     "https://www.googleapis.com/auth/drive.appdata",
+	//     "https://www.googleapis.com/auth/drive.apps.readonly",
+	//     "https://www.googleapis.com/auth/drive.file",
+	//     "https://www.googleapis.com/auth/drive.metadata",
+	//     "https://www.googleapis.com/auth/drive.metadata.readonly",
+	//     "https://www.googleapis.com/auth/drive.photos.readonly",
+	//     "https://www.googleapis.com/auth/drive.readonly"
+	//   ]
+	// }
+
+}
+
 // method id "drive.changes.list":
 
 type ChangesListCall struct {
@@ -3172,8 +3435,10 @@ func (c *ChangesListCall) MaxResults(maxResults int64) *ChangesListCall {
 	return c
 }
 
-// PageToken sets the optional parameter "pageToken": Page token for
-// changes.
+// PageToken sets the optional parameter "pageToken": The token for
+// continuing a previous list request on the next page. This should be
+// set to the value of 'nextPageToken' from the previous response or to
+// the response from the getStartPageToken method.
 func (c *ChangesListCall) PageToken(pageToken string) *ChangesListCall {
 	c.urlParams_.Set("pageToken", pageToken)
 	return c
@@ -3235,6 +3500,7 @@ func (c *ChangesListCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -3310,7 +3576,7 @@ func (c *ChangesListCall) Do(opts ...googleapi.CallOption) (*ChangeList, error) 
 	//       "type": "integer"
 	//     },
 	//     "pageToken": {
-	//       "description": "Page token for changes.",
+	//       "description": "The token for continuing a previous list request on the next page. This should be set to the value of 'nextPageToken' from the previous response or to the response from the getStartPageToken method.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -3406,8 +3672,10 @@ func (c *ChangesWatchCall) MaxResults(maxResults int64) *ChangesWatchCall {
 	return c
 }
 
-// PageToken sets the optional parameter "pageToken": Page token for
-// changes.
+// PageToken sets the optional parameter "pageToken": The token for
+// continuing a previous list request on the next page. This should be
+// set to the value of 'nextPageToken' from the previous response or to
+// the response from the getStartPageToken method.
 func (c *ChangesWatchCall) PageToken(pageToken string) *ChangesWatchCall {
 	c.urlParams_.Set("pageToken", pageToken)
 	return c
@@ -3459,6 +3727,7 @@ func (c *ChangesWatchCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.channel)
 	if err != nil {
@@ -3536,7 +3805,7 @@ func (c *ChangesWatchCall) Do(opts ...googleapi.CallOption) (*Channel, error) {
 	//       "type": "integer"
 	//     },
 	//     "pageToken": {
-	//       "description": "Page token for changes.",
+	//       "description": "The token for continuing a previous list request on the next page. This should be set to the value of 'nextPageToken' from the previous response or to the response from the getStartPageToken method.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -3623,6 +3892,7 @@ func (c *ChannelsStopCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.channel)
 	if err != nil {
@@ -3722,6 +3992,7 @@ func (c *ChildrenDeleteCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "files/{folderId}/children/{childId}")
@@ -3839,6 +4110,7 @@ func (c *ChildrenGetCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -3981,6 +4253,7 @@ func (c *ChildrenInsertCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.childreference)
 	if err != nil {
@@ -4160,6 +4433,7 @@ func (c *ChildrenListCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -4338,6 +4612,7 @@ func (c *CommentsDeleteCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "files/{fileId}/comments/{commentId}")
@@ -4463,6 +4738,7 @@ func (c *CommentsGetCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -4607,6 +4883,7 @@ func (c *CommentsInsertCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.comment)
 	if err != nil {
@@ -4782,6 +5059,7 @@ func (c *CommentsListCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -4961,6 +5239,7 @@ func (c *CommentsPatchCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.comment)
 	if err != nil {
@@ -5105,6 +5384,7 @@ func (c *CommentsUpdateCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.comment)
 	if err != nil {
@@ -5303,6 +5583,7 @@ func (c *FilesCopyCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.file)
 	if err != nil {
@@ -5486,6 +5767,7 @@ func (c *FilesDeleteCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "files/{fileId}")
@@ -5581,6 +5863,7 @@ func (c *FilesEmptyTrashCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "files/trash")
@@ -5675,6 +5958,7 @@ func (c *FilesExportCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -5824,6 +6108,7 @@ func (c *FilesGenerateIdsCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -6001,6 +6286,7 @@ func (c *FilesGetCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -6298,6 +6584,7 @@ func (c *FilesInsertCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.file)
 	if err != nil {
@@ -6612,6 +6899,7 @@ func (c *FilesListCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -6922,6 +7210,7 @@ func (c *FilesPatchCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.file)
 	if err != nil {
@@ -7146,6 +7435,7 @@ func (c *FilesTouchCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "files/{fileId}/touch")
@@ -7274,6 +7564,7 @@ func (c *FilesTrashCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "files/{fileId}/trash")
@@ -7400,6 +7691,7 @@ func (c *FilesUntrashCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "files/{fileId}/untrash")
@@ -7692,6 +7984,7 @@ func (c *FilesUpdateCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.file)
 	if err != nil {
@@ -8018,6 +8311,7 @@ func (c *FilesWatchCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.channel)
 	if err != nil {
@@ -8207,6 +8501,7 @@ func (c *ParentsDeleteCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "files/{fileId}/parents/{parentId}")
@@ -8324,6 +8619,7 @@ func (c *ParentsGetCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -8466,6 +8762,7 @@ func (c *ParentsInsertCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.parentreference)
 	if err != nil {
@@ -8610,6 +8907,7 @@ func (c *ParentsListCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -8744,6 +9042,7 @@ func (c *PermissionsDeleteCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "files/{fileId}/permissions/{permissionId}")
@@ -8861,6 +9160,7 @@ func (c *PermissionsGetCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -9011,6 +9311,7 @@ func (c *PermissionsGetIdForEmailCall) doRequest(alt string) (*http.Response, er
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -9162,6 +9463,7 @@ func (c *PermissionsInsertCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.permission)
 	if err != nil {
@@ -9316,6 +9618,7 @@ func (c *PermissionsListCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -9466,6 +9769,7 @@ func (c *PermissionsPatchCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.permission)
 	if err != nil {
@@ -9637,6 +9941,7 @@ func (c *PermissionsUpdateCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.permission)
 	if err != nil {
@@ -9798,6 +10103,7 @@ func (c *PropertiesDeleteCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "files/{fileId}/properties/{propertyKey}")
@@ -9930,6 +10236,7 @@ func (c *PropertiesGetCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -10079,6 +10386,7 @@ func (c *PropertiesInsertCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.property)
 	if err != nil {
@@ -10224,6 +10532,7 @@ func (c *PropertiesListCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -10368,6 +10677,7 @@ func (c *PropertiesPatchCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.property)
 	if err != nil {
@@ -10527,6 +10837,7 @@ func (c *PropertiesUpdateCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.property)
 	if err != nil {
@@ -10696,6 +11007,7 @@ func (c *RealtimeGetCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -10885,6 +11197,7 @@ func (c *RealtimeUpdateCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "files/{fileId}/realtime")
@@ -11055,6 +11368,7 @@ func (c *RepliesDeleteCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "files/{fileId}/comments/{commentId}/replies/{replyId}")
@@ -11189,6 +11503,7 @@ func (c *RepliesGetCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -11343,6 +11658,7 @@ func (c *RepliesInsertCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.commentreply)
 	if err != nil {
@@ -11520,6 +11836,7 @@ func (c *RepliesListCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -11704,6 +12021,7 @@ func (c *RepliesPatchCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.commentreply)
 	if err != nil {
@@ -11858,6 +12176,7 @@ func (c *RepliesUpdateCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.commentreply)
 	if err != nil {
@@ -12008,6 +12327,7 @@ func (c *RevisionsDeleteCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	c.urlParams_.Set("alt", alt)
 	urls := googleapi.ResolveRelative(c.s.BasePath, "files/{fileId}/revisions/{revisionId}")
@@ -12126,6 +12446,7 @@ func (c *RevisionsGetCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -12292,6 +12613,7 @@ func (c *RevisionsListCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	if c.ifNoneMatch_ != "" {
 		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
 	}
@@ -12463,6 +12785,7 @@ func (c *RevisionsPatchCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.revision)
 	if err != nil {
@@ -12608,6 +12931,7 @@ func (c *RevisionsUpdateCall) doRequest(alt string) (*http.Response, error) {
 		reqHeaders[k] = v
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
+	reqHeaders.Set("x-goog-api-client", c.s.clientHeader())
 	var body io.Reader = nil
 	body, err := googleapi.WithoutDataWrapper.JSONReader(c.revision)
 	if err != nil {

@@ -153,16 +153,16 @@ func (c *STS) AssumeRoleRequest(input *AssumeRoleInput) (req *request.Request, o
 // API operation AssumeRole for usage and error information.
 //
 // Returned Error Codes:
-//   * MalformedPolicyDocument
+//   * ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
 //   The request was rejected because the policy document was malformed. The error
 //   message describes the specific error.
 //
-//   * PackedPolicyTooLarge
+//   * ErrCodePackedPolicyTooLargeException "PackedPolicyTooLarge"
 //   The request was rejected because the policy document was too large. The error
 //   message describes how big the policy document is, in packed form, as a percentage
 //   of what the API allows.
 //
-//   * RegionDisabledException
+//   * ErrCodeRegionDisabledException "RegionDisabledException"
 //   STS is not activated in the requested region for the account that is being
 //   asked to generate credentials. The account administrator must use the IAM
 //   console to activate STS in that region. For more information, see Activating
@@ -297,31 +297,31 @@ func (c *STS) AssumeRoleWithSAMLRequest(input *AssumeRoleWithSAMLInput) (req *re
 // API operation AssumeRoleWithSAML for usage and error information.
 //
 // Returned Error Codes:
-//   * MalformedPolicyDocument
+//   * ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
 //   The request was rejected because the policy document was malformed. The error
 //   message describes the specific error.
 //
-//   * PackedPolicyTooLarge
+//   * ErrCodePackedPolicyTooLargeException "PackedPolicyTooLarge"
 //   The request was rejected because the policy document was too large. The error
 //   message describes how big the policy document is, in packed form, as a percentage
 //   of what the API allows.
 //
-//   * IDPRejectedClaim
+//   * ErrCodeIDPRejectedClaimException "IDPRejectedClaim"
 //   The identity provider (IdP) reported that authentication failed. This might
 //   be because the claim is invalid.
 //
 //   If this error is returned for the AssumeRoleWithWebIdentity operation, it
 //   can also mean that the claim has expired or has been explicitly revoked.
 //
-//   * InvalidIdentityToken
+//   * ErrCodeInvalidIdentityTokenException "InvalidIdentityToken"
 //   The web identity token that was passed could not be validated by AWS. Get
 //   a new identity token from the identity provider and then retry the request.
 //
-//   * ExpiredTokenException
+//   * ErrCodeExpiredTokenException "ExpiredTokenException"
 //   The web identity token that was passed is expired or is not valid. Get a
 //   new identity token from the identity provider and then retry the request.
 //
-//   * RegionDisabledException
+//   * ErrCodeRegionDisabledException "RegionDisabledException"
 //   STS is not activated in the requested region for the account that is being
 //   asked to generate credentials. The account administrator must use the IAM
 //   console to activate STS in that region. For more information, see Activating
@@ -478,38 +478,38 @@ func (c *STS) AssumeRoleWithWebIdentityRequest(input *AssumeRoleWithWebIdentityI
 // API operation AssumeRoleWithWebIdentity for usage and error information.
 //
 // Returned Error Codes:
-//   * MalformedPolicyDocument
+//   * ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
 //   The request was rejected because the policy document was malformed. The error
 //   message describes the specific error.
 //
-//   * PackedPolicyTooLarge
+//   * ErrCodePackedPolicyTooLargeException "PackedPolicyTooLarge"
 //   The request was rejected because the policy document was too large. The error
 //   message describes how big the policy document is, in packed form, as a percentage
 //   of what the API allows.
 //
-//   * IDPRejectedClaim
+//   * ErrCodeIDPRejectedClaimException "IDPRejectedClaim"
 //   The identity provider (IdP) reported that authentication failed. This might
 //   be because the claim is invalid.
 //
 //   If this error is returned for the AssumeRoleWithWebIdentity operation, it
 //   can also mean that the claim has expired or has been explicitly revoked.
 //
-//   * IDPCommunicationError
+//   * ErrCodeIDPCommunicationErrorException "IDPCommunicationError"
 //   The request could not be fulfilled because the non-AWS identity provider
 //   (IDP) that was asked to verify the incoming identity token could not be reached.
 //   This is often a transient error caused by network conditions. Retry the request
 //   a limited number of times so that you don't exceed the request rate. If the
 //   error persists, the non-AWS identity provider might be down or not responding.
 //
-//   * InvalidIdentityToken
+//   * ErrCodeInvalidIdentityTokenException "InvalidIdentityToken"
 //   The web identity token that was passed could not be validated by AWS. Get
 //   a new identity token from the identity provider and then retry the request.
 //
-//   * ExpiredTokenException
+//   * ErrCodeExpiredTokenException "ExpiredTokenException"
 //   The web identity token that was passed is expired or is not valid. Get a
 //   new identity token from the identity provider and then retry the request.
 //
-//   * RegionDisabledException
+//   * ErrCodeRegionDisabledException "RegionDisabledException"
 //   STS is not activated in the requested region for the account that is being
 //   asked to generate credentials. The account administrator must use the IAM
 //   console to activate STS in that region. For more information, see Activating
@@ -609,7 +609,7 @@ func (c *STS) DecodeAuthorizationMessageRequest(input *DecodeAuthorizationMessag
 // API operation DecodeAuthorizationMessage for usage and error information.
 //
 // Returned Error Codes:
-//   * InvalidAuthorizationMessageException
+//   * ErrCodeInvalidAuthorizationMessageException "InvalidAuthorizationMessageException"
 //   The error returned if the message passed to DecodeAuthorizationMessage was
 //   invalid. This can happen if the token contains invalid characters, such as
 //   linebreaks.
@@ -814,16 +814,16 @@ func (c *STS) GetFederationTokenRequest(input *GetFederationTokenInput) (req *re
 // API operation GetFederationToken for usage and error information.
 //
 // Returned Error Codes:
-//   * MalformedPolicyDocument
+//   * ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
 //   The request was rejected because the policy document was malformed. The error
 //   message describes the specific error.
 //
-//   * PackedPolicyTooLarge
+//   * ErrCodePackedPolicyTooLargeException "PackedPolicyTooLarge"
 //   The request was rejected because the policy document was too large. The error
 //   message describes how big the policy document is, in packed form, as a percentage
 //   of what the API allows.
 //
-//   * RegionDisabledException
+//   * ErrCodeRegionDisabledException "RegionDisabledException"
 //   STS is not activated in the requested region for the account that is being
 //   asked to generate credentials. The account administrator must use the IAM
 //   console to activate STS in that region. For more information, see Activating
@@ -937,7 +937,7 @@ func (c *STS) GetSessionTokenRequest(input *GetSessionTokenInput) (req *request.
 // API operation GetSessionToken for usage and error information.
 //
 // Returned Error Codes:
-//   * RegionDisabledException
+//   * ErrCodeRegionDisabledException "RegionDisabledException"
 //   STS is not activated in the requested region for the account that is being
 //   asked to generate credentials. The account administrator must use the IAM
 //   console to activate STS in that region. For more information, see Activating

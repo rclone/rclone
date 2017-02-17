@@ -88,6 +88,8 @@ type http2Server struct {
 	// sendQuotaPool provides flow control to outbound message.
 	sendQuotaPool *quotaPool
 
+	stats stats.Handler
+
 	mu            sync.Mutex // guard the following
 	state         transportState
 	activeStreams map[uint32]*Stream
@@ -146,14 +148,15 @@ func newHTTP2Server(conn net.Conn, config *ServerConfig) (_ ServerTransport, err
 		shutdownChan:    make(chan struct{}),
 		activeStreams:   make(map[uint32]*Stream),
 		streamSendQuota: defaultWindowSize,
+		stats:           config.StatsHandler,
 	}
-	if stats.On() {
-		t.ctx = stats.TagConn(t.ctx, &stats.ConnTagInfo{
+	if t.stats != nil {
+		t.ctx = t.stats.TagConn(t.ctx, &stats.ConnTagInfo{
 			RemoteAddr: t.remoteAddr,
 			LocalAddr:  t.localAddr,
 		})
 		connBegin := &stats.ConnBegin{}
-		stats.HandleConn(t.ctx, connBegin)
+		t.stats.HandleConn(t.ctx, connBegin)
 	}
 	go t.controller()
 	t.writableChan <- 0
@@ -250,8 +253,8 @@ func (t *http2Server) operateHeaders(frame *http2.MetaHeadersFrame, handle func(
 		t.updateWindow(s, uint32(n))
 	}
 	s.ctx = traceCtx(s.ctx, s.method)
-	if stats.On() {
-		s.ctx = stats.TagRPC(s.ctx, &stats.RPCTagInfo{FullMethodName: s.method})
+	if t.stats != nil {
+		s.ctx = t.stats.TagRPC(s.ctx, &stats.RPCTagInfo{FullMethodName: s.method})
 		inHeader := &stats.InHeader{
 			FullMethod:  s.method,
 			RemoteAddr:  t.remoteAddr,
@@ -259,7 +262,7 @@ func (t *http2Server) operateHeaders(frame *http2.MetaHeadersFrame, handle func(
 			Compression: s.recvCompress,
 			WireLength:  int(frame.Header().Length),
 		}
-		stats.HandleRPC(s.ctx, inHeader)
+		t.stats.HandleRPC(s.ctx, inHeader)
 	}
 	handle(s)
 	return
@@ -540,11 +543,11 @@ func (t *http2Server) WriteHeader(s *Stream, md metadata.MD) error {
 	if err := t.writeHeaders(s, t.hBuf, false); err != nil {
 		return err
 	}
-	if stats.On() {
+	if t.stats != nil {
 		outHeader := &stats.OutHeader{
 			WireLength: bufLen,
 		}
-		stats.HandleRPC(s.Context(), outHeader)
+		t.stats.HandleRPC(s.Context(), outHeader)
 	}
 	t.writableChan <- 0
 	return nil
@@ -603,11 +606,11 @@ func (t *http2Server) WriteStatus(s *Stream, statusCode codes.Code, statusDesc s
 		t.Close()
 		return err
 	}
-	if stats.On() {
+	if t.stats != nil {
 		outTrailer := &stats.OutTrailer{
 			WireLength: bufLen,
 		}
-		stats.HandleRPC(s.Context(), outTrailer)
+		t.stats.HandleRPC(s.Context(), outTrailer)
 	}
 	t.closeStream(s)
 	t.writableChan <- 0
@@ -789,9 +792,9 @@ func (t *http2Server) Close() (err error) {
 	for _, s := range streams {
 		s.cancel()
 	}
-	if stats.On() {
+	if t.stats != nil {
 		connEnd := &stats.ConnEnd{}
-		stats.HandleConn(t.ctx, connEnd)
+		t.stats.HandleConn(t.ctx, connEnd)
 	}
 	return
 }

@@ -10,20 +10,11 @@ package internal
 
 import (
 	"fmt"
-	"io"
-	"log"
-	"net/http"
-	"net/url"
-	"time"
 
 	"github.com/golang/protobuf/proto"
 
 	remotepb "google.golang.org/appengine/internal/remote_api"
 )
-
-type CallOptions struct {
-	Timeout time.Duration // if non-zero, overrides RPC default
-}
 
 // errorCodeMaps is a map of service name to the error code map for the service.
 var errorCodeMaps = make(map[string]map[int32]string)
@@ -111,52 +102,6 @@ func (e *CallError) Error() string {
 
 func (e *CallError) IsTimeout() bool {
 	return e.Timeout
-}
-
-// The comment below must not be changed.
-// It is used by go-app-builder to recognise that this package has
-// the internal.Main function to use in the synthetic main.
-//   The gophers party all night; the rabbits provide the beats.
-
-// Main is designed so that the complete generated main package is:
-//
-//      package main
-//
-//      import (
-//              "google.golang.org/appengine/internal"
-//
-//              _ "myapp/package0"
-//              _ "myapp/package1"
-//      )
-//
-//      func main() {
-//              internal.Main()
-//      }
-//
-// The "myapp/packageX" packages are expected to register HTTP handlers
-// in their init functions.
-func Main() {
-	installHealthChecker(http.DefaultServeMux)
-
-	if err := http.ListenAndServe(":8080", http.HandlerFunc(handleHTTP)); err != nil {
-		log.Fatalf("http.ListenAndServe: %v", err)
-	}
-}
-
-func installHealthChecker(mux *http.ServeMux) {
-	// If no health check handler has been installed by this point, add a trivial one.
-	const healthPath = "/_ah/health"
-	hreq := &http.Request{
-		Method: "GET",
-		URL: &url.URL{
-			Path: healthPath,
-		},
-	}
-	if _, pat := mux.Handler(hreq); pat != healthPath {
-		mux.HandleFunc(healthPath, func(w http.ResponseWriter, r *http.Request) {
-			io.WriteString(w, "ok")
-		})
-	}
 }
 
 // NamespaceMods is a map from API service to a function that will mutate an RPC request to attach a namespace.

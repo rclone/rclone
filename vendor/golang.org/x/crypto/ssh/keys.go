@@ -10,10 +10,13 @@ import (
 	"crypto/dsa"
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"crypto/md5"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/asn1"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -795,8 +798,8 @@ func ParseDSAPrivateKey(der []byte) (*dsa.PrivateKey, error) {
 		P       *big.Int
 		Q       *big.Int
 		G       *big.Int
-		Priv    *big.Int
 		Pub     *big.Int
+		Priv    *big.Int
 	}
 	rest, err := asn1.Unmarshal(der, &k)
 	if err != nil {
@@ -813,9 +816,9 @@ func ParseDSAPrivateKey(der []byte) (*dsa.PrivateKey, error) {
 				Q: k.Q,
 				G: k.G,
 			},
-			Y: k.Priv,
+			Y: k.Pub,
 		},
-		X: k.Pub,
+		X: k.Priv,
 	}, nil
 }
 
@@ -877,4 +880,26 @@ func parseOpenSSHPrivateKey(key []byte) (*ed25519.PrivateKey, error) {
 	pk := ed25519.PrivateKey(make([]byte, ed25519.PrivateKeySize))
 	copy(pk, pk1.Priv)
 	return &pk, nil
+}
+
+// FingerprintLegacyMD5 returns the user presentation of the key's
+// fingerprint as described by RFC 4716 section 4.
+func FingerprintLegacyMD5(pubKey PublicKey) string {
+	md5sum := md5.Sum(pubKey.Marshal())
+	hexarray := make([]string, len(md5sum))
+	for i, c := range md5sum {
+		hexarray[i] = hex.EncodeToString([]byte{c})
+	}
+	return strings.Join(hexarray, ":")
+}
+
+// FingerprintSHA256 returns the user presentation of the key's
+// fingerprint as unpadded base64 encoded sha256 hash.
+// This format was introduced from OpenSSH 6.8.
+// https://www.openssh.com/txt/release-6.8
+// https://tools.ietf.org/html/rfc4648#section-3.2 (unpadded base64 encoding)
+func FingerprintSHA256(pubKey PublicKey) string {
+	sha256sum := sha256.Sum256(pubKey.Marshal())
+	hash := base64.RawStdEncoding.EncodeToString(sha256sum[:])
+	return "SHA256:" + hash
 }

@@ -48,6 +48,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/stats"
 	"google.golang.org/grpc/transport"
 )
@@ -140,6 +141,7 @@ type callInfo struct {
 	failFast  bool
 	headerMD  metadata.MD
 	trailerMD metadata.MD
+	peer      *peer.Peer
 	traceInfo traceInfo // in trace.go
 }
 
@@ -183,12 +185,20 @@ func Trailer(md *metadata.MD) CallOption {
 	})
 }
 
+// Peer returns a CallOption that retrieves peer information for a
+// unary RPC.
+func Peer(peer *peer.Peer) CallOption {
+	return afterCall(func(c *callInfo) {
+		*peer = *c.peer
+	})
+}
+
 // FailFast configures the action to take when an RPC is attempted on broken
 // connections or unreachable servers. If failfast is true, the RPC will fail
 // immediately. Otherwise, the RPC client will block the call until a
 // connection is available (or the call is canceled or times out) and will retry
 // the call if it fails due to a transient error. Please refer to
-// https://github.com/grpc/grpc/blob/master/doc/fail_fast.md
+// https://github.com/grpc/grpc/blob/master/doc/fail_fast.md. Note: failFast is default to true.
 func FailFast(failFast bool) CallOption {
 	return beforeCall(func(c *callInfo) error {
 		c.failFast = failFast
@@ -486,17 +496,17 @@ type MethodConfig struct {
 	// then the other will be used.  If neither is set, then the RPC has no deadline.
 	Timeout time.Duration
 	// MaxReqSize is the maximum allowed payload size for an individual request in a
-	// stream (client->server) in bytes. The size which is measured is the serialized,
-	// uncompressed payload in bytes. The actual value used is the minumum of the value
-	// specified here and the value set by the application via the gRPC client API. If
-	// either one is not set, then the other will be used.  If neither is set, then the
-	// built-in default is used.
+	// stream (client->server) in bytes. The size which is measured is the serialized
+	// payload after per-message compression (but before stream compression) in bytes.
+	// The actual value used is the minumum of the value specified here and the value set
+	// by the application via the gRPC client API. If either one is not set, then the other
+	// will be used.  If neither is set, then the built-in default is used.
 	// TODO: support this.
-	MaxReqSize uint64
+	MaxReqSize uint32
 	// MaxRespSize is the maximum allowed payload size for an individual response in a
 	// stream (server->client) in bytes.
 	// TODO: support this.
-	MaxRespSize uint64
+	MaxRespSize uint32
 }
 
 // ServiceConfig is provided by the service provider and contains parameters for how

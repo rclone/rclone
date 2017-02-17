@@ -1,13 +1,15 @@
-EME for Go [![Build Status](https://drone.io/github.com/rfjakob/eme/status.png)](https://drone.io/github.com/rfjakob/eme/latest) [![GoDoc](https://godoc.org/github.com/rfjakob/eme?status.svg)](https://godoc.org/github.com/rfjakob/eme) ![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)
+EME for Go [![Build Status](https://travis-ci.org/rfjakob/eme.svg?branch=master)](https://travis-ci.org/rfjakob/eme) [![GoDoc](https://godoc.org/github.com/rfjakob/eme?status.svg)](https://godoc.org/github.com/rfjakob/eme) ![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)
 ==========
 
-EME (ECB-Mix-ECB) is a wide-block encryption mode developed by Halevi
-and Rogaway in 2003 [eme]. (see references below)
+**EME** (ECB-Mix-ECB or, clearer, **Encrypt-Mix-Encrypt**) is a wide-block
+encryption mode developed by Halevi
+and Rogaway in 2003 _[eme]_ (square-bracketed italics like _[this]_ are literature references, detailed in the
+References secion).
 
 EME uses multiple invocations of a block cipher to construct a new
 cipher of bigger block size (in multiples of 16 bytes, up to 2048 bytes).
 
-Quoting from the original [eme] paper:
+Quoting from the original _[eme]_ paper:
 
 > We describe a block-cipher mode of operation, EME, that turns an n-bit block cipher into
 > a tweakable enciphering scheme that acts on strings of mn bits, where m ∈ [1..n]. The mode is
@@ -16,24 +18,28 @@ Quoting from the original [eme] paper:
 > and a “lightweight mixing” in between. We prove EME secure, in the reduction-based sense of
 > modern cryptography.
 
+Figure 2 from the _[eme]_ paper shows an overview of the transformation:
+
+[![Figure 2 form [eme]](paper-eme-fig2.png)](#)
+
 This is an implementation of EME in Go, complete with test vectors from IEEE.
 
 Is it patentend?
 ----------------
 
-In 2007, the UC Davis has decided to abandon [patabandon] the patent
-application for EME [patappl].
+In 2007, the UC Davis has decided to abandon _[patabandon]_ the patent
+application for EME _[patappl]_.
 
 Related algorithms
 ------------------
 
 **EME-32** is EME with the cipher set to AES and the length set to 512.
-That is, EME-32 [eme-32-pdf] is a subset of EME.
+That is, EME-32 _[eme-32-pdf]_ is a subset of EME.
 
-**EME2**, also known as EME* [emestar], is an extended version of EME
+**EME2**, also known as EME* _[emestar]_, is an extended version of EME
 that has built-in handling for data that is not a multiple of 16 bytes
 long.  
-EME2 has been selected for standardization in IEEE P1619.2 [p1619.2].
+EME2 has been selected for standardization in IEEE P1619.2 _[p1619.2]_.
 
 References
 ----------

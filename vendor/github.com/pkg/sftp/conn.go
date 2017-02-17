@@ -14,6 +14,8 @@ type conn struct {
 	io.Reader
 	io.WriteCloser
 	sync.Mutex // used to serialise writes to sendPacket
+	// sendPacketTest is needed to replicate packet issues in testing
+	sendPacketTest func(w io.Writer, m encoding.BinaryMarshaler) error
 }
 
 func (c *conn) recvPacket() (uint8, []byte, error) {
@@ -23,6 +25,9 @@ func (c *conn) recvPacket() (uint8, []byte, error) {
 func (c *conn) sendPacket(m encoding.BinaryMarshaler) error {
 	c.Lock()
 	defer c.Unlock()
+	if c.sendPacketTest != nil {
+		return c.sendPacketTest(c, m)
+	}
 	return sendPacket(c, m)
 }
 
