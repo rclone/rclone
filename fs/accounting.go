@@ -346,42 +346,25 @@ func NewAccount(in io.ReadCloser, obj Object) *Account {
 	return NewAccountSizeName(in, obj.Size(), obj.Remote())
 }
 
-// bufferReadCloser returns a buffered version of in if necessary
-func bufferReadCloser(in io.ReadCloser, size int64, name string) io.ReadCloser {
+// WithBuffer - If the file is above a certain size it adds an Async reader
+func (acc *Account) WithBuffer() *Account {
+	acc.withBuf = true
 	var buffers int
-	if size >= int64(Config.BufferSize) {
+	if acc.size >= int64(Config.BufferSize) {
 		buffers = int(int64(Config.BufferSize) / asyncBufferSize)
 	} else {
-		buffers = int(size / asyncBufferSize)
+		buffers = int(acc.size / asyncBufferSize)
 	}
 	// On big files add a buffer
 	if buffers > 0 {
-		newIn, err := newAsyncReader(in, buffers)
+		in, err := newAsyncReader(acc.in, buffers)
 		if err != nil {
-			Errorf(name, "Failed to make buffer: %v", err)
+			Errorf(acc.name, "Failed to make buffer: %v", err)
 		} else {
-			in = newIn
+			acc.in = in
 		}
 	}
-	return in
-}
-
-// NewAccountSizeNameWithBuffer makes a Account reader for an io.ReadCloser of
-// the given size and name
-//
-// If the file is above a certain size it adds an Async reader
-func NewAccountSizeNameWithBuffer(in io.ReadCloser, size int64, name string) *Account {
-	acc := NewAccountSizeName(in, size, name)
-	acc.in = bufferReadCloser(in, size, name)
-	acc.withBuf = true
 	return acc
-}
-
-// NewAccountWithBuffer makes a Account reader for an object
-//
-// If the file is above a certain size it adds an Async reader
-func NewAccountWithBuffer(in io.ReadCloser, obj Object) *Account {
-	return NewAccountSizeNameWithBuffer(in, obj.Size(), obj.Remote())
 }
 
 // GetReader returns the underlying io.ReadCloser
@@ -402,12 +385,9 @@ func (acc *Account) StopBuffering() {
 func (acc *Account) UpdateReader(in io.ReadCloser) {
 	acc.mu.Lock()
 	acc.StopBuffering()
+	acc.in = in
 	acc.origIn = in
-	if acc.withBuf {
-		acc.in = bufferReadCloser(in, acc.size, acc.name)
-	} else {
-		acc.in = in
-	}
+	acc.WithBuffer()
 	acc.mu.Unlock()
 }
 

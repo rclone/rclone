@@ -273,7 +273,7 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 			if err != nil {
 				err = errors.Wrap(err, "failed to open source object")
 			} else {
-				in := NewAccountWithBuffer(in0, src) // account and buffer the transfer
+				in := NewAccount(in0, src).WithBuffer() // account and buffer the transfer
 
 				wrappedSrc := &overrideRemoteObject{Object: src, remote: remote}
 				if doUpdate {
@@ -843,14 +843,14 @@ func CheckIdentical(dst, src Object) (differ bool, err error) {
 	if err != nil {
 		return true, errors.Wrapf(err, "failed to open %q", dst)
 	}
-	in1 = NewAccountWithBuffer(in1, dst) // account and buffer the transfer
+	in1 = NewAccount(in1, dst).WithBuffer() // account and buffer the transfer
 	defer CheckClose(in1, &err)
 
 	in2, err := src.Open()
 	if err != nil {
 		return true, errors.Wrapf(err, "failed to open %q", src)
 	}
-	in2 = NewAccountWithBuffer(in2, src) // account and buffer the transfer
+	in2 = NewAccount(in2, src).WithBuffer() // account and buffer the transfer
 	defer CheckClose(in2, &err)
 
 	return CheckEqualReaders(in1, in2)
@@ -1388,7 +1388,7 @@ func Cat(f Fs, w io.Writer, offset, count int64) error {
 				size = count
 			}
 		}
-		in = NewAccountSizeNameWithBuffer(in, size, o.Remote()) // account and buffer the transfer
+		in = NewAccountSizeName(in, size, o.Remote()).WithBuffer() // account and buffer the transfer
 		defer func() {
 			err = in.Close()
 			if err != nil {

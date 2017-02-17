@@ -29,7 +29,7 @@ func newReadFileHandle(o fs.Object) (*ReadFileHandle, error) {
 	}
 	fh := &ReadFileHandle{
 		o: o,
-		r: fs.NewAccountWithBuffer(r, o), // account the transfer
+		r: fs.NewAccount(r, o).WithBuffer(), // account the transfer
 	}
 	fs.Stats.Transferring(fh.o.Remote())
 	return fh, nil
