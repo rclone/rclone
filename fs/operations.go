@@ -336,7 +336,7 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 			if err != nil {
 				Stats.Error()
 				Errorf(dst, "Failed to read hash: %v", err)
-			} else if !Config.IgnoreSize && !HashEquals(srcSum, dstSum) {
+			} else if !Config.IgnoreChecksum && !HashEquals(srcSum, dstSum) {
 				Stats.Error()
 				err = errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
 				Errorf(dst, "%v", err)
