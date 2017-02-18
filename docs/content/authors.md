@@ -60,3 +60,4 @@ Contributors
   * Jon Yergatian <jon@macfanatic.ca>
   * Jack Schmidt <github@mowsey.org>
   * Dedsec1 <Dedsec1@users.noreply.github.com>
+  * Hisham Zarka <hzarka@gmail.com>
