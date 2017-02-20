@@ -69,6 +69,9 @@ and configuration walkthroughs.
 
   * http://rclone.org/
 `,
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		runAtExitFunctions()
+	},
 }
 
 // runRoot implements the main rclone command with no subcommands
@@ -341,12 +344,14 @@ func initConfig() {
 			fs.Stats.Error()
 			log.Fatal(err)
 		}
-		defer pprof.StopCPUProfile()
+		AtExit(func() {
+			pprof.StopCPUProfile()
+		})
 	}
 
 	// Setup memory profiling if desired
 	if *memProfile != "" {
-		defer func() {
+		AtExit(func() {
 			fs.Infof(nil, "Saving Memory profile %q\n", *memProfile)
 			f, err := os.Create(*memProfile)
 			if err != nil {
@@ -363,7 +368,7 @@ func initConfig() {
 				fs.Stats.Error()
 				log.Fatal(err)
 			}
-		}()
+		})
 	}
 
 	if m, _ := regexp.MatchString("^(bits|bytes)$", *dataRateUnit); m == false {
