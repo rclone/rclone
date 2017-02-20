@@ -106,7 +106,8 @@ beta:
 	@echo Beta release ready at http://pub.rclone.org/$(TAG)%CE%B2/
 
 travis_beta:
-	go run bin/cross-compile.go -release latest-beta $(TAG)β
+	git log $(LAST_TAG).. > /tmp/git-log.txt
+	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(TAG)β
 	rclone --config bin/travis.rclone.conf -v copy build/ memstore:beta-rclone-org/$(TAG)
 	@echo Beta release ready at $(BETA_URL)
 

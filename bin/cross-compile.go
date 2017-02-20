@@ -21,6 +21,7 @@ var (
 	debug    = flag.Bool("d", false, "Print commands instead of running them.")
 	parallel = flag.Int("parallel", runtime.NumCPU(), "Number of commands to run in parallel.")
 	copyAs   = flag.String("release", "", "Make copies of the releases with this name")
+	gitLog   = flag.String("git-log", "", "git log to include as well")
 )
 
 // GOOS/GOARCH pairs we build for
@@ -98,6 +99,9 @@ func compileArch(version, goos, goarch, dir string) {
 	run("cp", "-a", "../MANUAL.txt", filepath.Join(dir, "README.txt"))
 	run("cp", "-a", "../MANUAL.html", filepath.Join(dir, "README.html"))
 	run("cp", "-a", "../rclone.1", dir)
+	if *gitLog != "" {
+		run("cp", "-a", *gitLog, dir)
+	}
 	zip := dir + ".zip"
 	run("zip", "-r9", zip, dir)
 	if *copyAs != "" {
