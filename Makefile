@@ -98,17 +98,15 @@ upload_github:
 	./bin/upload-github $(TAG)
 
 cross:	doc
-	go run bin/cross-compile.go $(TAG)
+	go run bin/cross-compile.go -release current $(TAG)
 
 beta:
 	go run bin/cross-compile.go $(TAG)β
-	rm build/*-current-*
 	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)β
 	@echo Beta release ready at http://pub.rclone.org/$(TAG)%CE%B2/
 
 travis_beta:
-	go run bin/cross-compile.go $(TAG)β
-	rm build/*-current-*
+	go run bin/cross-compile.go -release latest-beta $(TAG)β
 	rclone --config bin/travis.rclone.conf -v copy build/ memstore:beta-rclone-org/$(TAG)
 	@echo Beta release ready at $(BETA_URL)
 

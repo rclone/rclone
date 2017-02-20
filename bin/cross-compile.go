@@ -20,6 +20,7 @@ var (
 	// Flags
 	debug    = flag.Bool("d", false, "Print commands instead of running them.")
 	parallel = flag.Int("parallel", runtime.NumCPU(), "Number of commands to run in parallel.")
+	copyAs   = flag.String("release", "", "Make copies of the releases with this name")
 )
 
 // GOOS/GOARCH pairs we build for
@@ -99,8 +100,10 @@ func compileArch(version, goos, goarch, dir string) {
 	run("cp", "-a", "../rclone.1", dir)
 	zip := dir + ".zip"
 	run("zip", "-r9", zip, dir)
-	currentZip := strings.Replace(zip, "-"+version, "-current", 1)
-	run("ln", zip, currentZip)
+	if *copyAs != "" {
+		copyAsZip := strings.Replace(zip, "-"+version, "-"+*copyAs, 1)
+		run("ln", zip, copyAsZip)
+	}
 	run("rm", "-rf", dir)
 	log.Printf("Done compiling %s/%s", goos, goarch)
 }
