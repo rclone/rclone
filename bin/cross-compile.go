@@ -73,6 +73,9 @@ func run(args ...string) {
 func compileArch(version, goos, goarch, dir string) {
 	log.Printf("Compiling %s/%s", goos, goarch)
 	output := filepath.Join(dir, "rclone")
+	if goos == "windows" {
+		output += ".exe"
+	}
 	err := os.MkdirAll(dir, 0777)
 	if err != nil {
 		log.Fatalf("Failed to mkdir: %v", err)
