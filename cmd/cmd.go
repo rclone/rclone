@@ -70,6 +70,7 @@ and configuration walkthroughs.
   * http://rclone.org/
 `,
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		fs.Debugf("rclone", "Version %q finishing with parameters %q", fs.Version, os.Args)
 		runAtExitFunctions()
 	},
 }
