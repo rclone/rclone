@@ -371,6 +371,14 @@ func (ft *Features) Wrap(f Fs) *Features {
 	return copy
 }
 
+// ObjectInfoWithMetadata contains an object with its associated metadata
+type ObjectInfoWithMetadata interface {
+	ObjectInfo
+
+	// User defined metadata on this object
+	UserMetadata() map[string]string
+}
+
 // Purger is an optional interfaces for Fs
 type Purger interface {
 	// Purge all files in the root and the root directory

@@ -64,11 +64,12 @@ type Fs struct {
 
 // Object represents a local filesystem object
 type Object struct {
-	fs     *Fs                    // The Fs this object is part of
-	remote string                 // The remote path - properly UTF-8 encoded - for rclone
-	path   string                 // The local path - may not be properly UTF-8 encoded - for OS
-	info   os.FileInfo            // Interface for file info (always present)
-	hashes map[fs.HashType]string // Hashes
+	fs       *Fs                    // The Fs this object is part of
+	remote   string                 // The remote path - properly UTF-8 encoded - for rclone
+	path     string                 // The local path - may not be properly UTF-8 encoded - for OS
+	info     os.FileInfo            // Interface for file info (always present)
+	hashes   map[fs.HashType]string // Hashes
+	metadata map[string]string
 }
 
 // ------------------------------------------------------------
@@ -162,7 +163,8 @@ func (f *Fs) newObjectWithInfo(remote string, info os.FileInfo) (fs.Object, erro
 			return nil, err
 		}
 	}
-	return o, nil
+	err := o.lattr()
+	return o, err
 }
 
 // NewObject finds the Object at remote.  If it can't be found
@@ -624,6 +626,11 @@ func (o *Object) Storable() bool {
 	return true
 }
 
+// UserMetadata Return the map of metadata or nil if no metadata could be found
+func (o *Object) UserMetadata() map[string]string {
+	return o.metadata
+}
+
 // localOpenFile wraps an io.ReadCloser and updates the md5sum of the
 // object that is read
 type localOpenFile struct {
@@ -730,6 +737,16 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		return err
 	}
 
+	// Set the metadata
+	if srcm, ok := src.(fs.ObjectInfoWithMetadata); ok {
+		for attr, value := range srcm.UserMetadata() {
+			xerr := setxattr(o.path, "user.user-metadata."+attr, []byte(value))
+			if xerr != nil {
+				fs.Debug(o, "Could not set attribute", xerr)
+			}
+		}
+	}
+
 	// ReRead info now that we have finished
 	return o.lstat()
 }
@@ -739,6 +756,31 @@ func (o *Object) lstat() error {
 	info, err := o.fs.lstat(o.path)
 	o.info = info
 	return err
+}
+
+// Pattern to match a user metadata stored as an extended attribute on the file system
+var userMetadata = regexp.MustCompile(`^user\.user-metadata\.(.*)`)
+
+// Stat a Object into info
+func (o *Object) lattr() error {
+	listAttr, xerr := listxattr(o.path)
+	fs.Debug(o, "Listing attrs returned", listAttr, xerr)
+	for _, attr := range listAttr {
+		parts := userMetadata.FindStringSubmatch(attr)
+		if parts != nil {
+			fs.Debug(o, "Adding attribute", parts[1])
+			if o.metadata == nil {
+				o.metadata = make(map[string]string)
+			}
+			bytes, xerr := getxattr(o.path, attr)
+			if xerr != nil {
+				fs.Debug(o, "Could not get attribute", xerr)
+			} else {
+				o.metadata[parts[1]] = string(bytes)
+			}
+		}
+	}
+	return nil
 }
 
 // Remove an object
