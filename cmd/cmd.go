@@ -166,7 +166,11 @@ func NewFsSrcDst(args []string) (fs.Fs, fs.Fs) {
 
 // RemoteSplit splits a remote into a parent and a leaf
 //
-// if it returns parent as an empty string then it wasn't possible
+// if it returns leaf as an empty string then remote is a directory
+//
+// if it returns parent as an empty string then that means the current directory
+//
+// The returned values have the property that parent + leaf == remote
 func RemoteSplit(remote string) (parent string, leaf string) {
 	// Split remote on :
 	i := strings.Index(remote, ":")
@@ -175,23 +179,13 @@ func RemoteSplit(remote string) (parent string, leaf string) {
 	if i >= 0 {
 		remoteName = remote[:i+1]
 		remotePath = remote[i+1:]
-	}
-	if remotePath == "" {
-		return "", ""
+	} else if strings.HasSuffix(remotePath, "/") {
+		// if no : and ends with / must be directory
+		return remotePath, ""
 	}
 	// Construct new remote name without last segment
 	parent, leaf = path.Split(remotePath)
-	if leaf == "" {
-		return "", ""
-	}
-	if parent != "/" {
-		parent = strings.TrimSuffix(parent, "/")
-	}
-	parent = remoteName + parent
-	if parent == "" {
-		parent = "."
-	}
-	return parent, leaf
+	return remoteName + parent, leaf
 }
 
 // NewFsSrcDstFiles creates a new src and dst fs from the arguments
@@ -203,7 +197,10 @@ func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs
 	if srcFileName != "" {
 		dstRemote, dstFileName = RemoteSplit(dstRemote)
 		if dstRemote == "" {
-			log.Fatalf("Can't find parent directory for %q", args[1])
+			dstRemote = "."
+		}
+		if dstFileName == "" {
+			log.Fatalf("%q is a directory", args[1])
 		}
 	}
 	fdst = newFsDst(dstRemote)
