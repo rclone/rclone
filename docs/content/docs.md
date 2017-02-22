@@ -840,21 +840,22 @@ information.
 Exit Code
 ---------
 
-If any errors occurred during the command, rclone with an exit code of
-`1`.  This allows scripts to detect when rclone operations have failed.
+If any errors occurred during the command, rclone will exit with a
+non-zero exit code.  This allows scripts to detect when rclone
+operations have failed.
 
 During the startup phase rclone will exit immediately if an error is
 detected in the configuration.  There will always be a log message
 immediately before exiting.
 
 When rclone is running it will accumulate errors as it goes along, and
-only exit with an non-zero exit code if (after retries) there were no
-transfers with errors remaining.  For every error counted there will
-be a high priority log message (visibile with `-q`) showing the
-message and which file caused the problem. A high priority message is
-also shown when starting a retry so the user can see that any previous
-error messages may not be valid after the retry. If rclone has done a
-retry it will log a high priority message if the retry was successful.
+only exit with an non-zero exit code if (after retries) there were
+still failed transfers.  For every error counted there will be a high
+priority log message (visibile with `-q`) showing the message and
+which file caused the problem. A high priority message is also shown
+when starting a retry so the user can see that any previous error
+messages may not be valid after the retry. If rclone has done a retry
+it will log a high priority message if the retry was successful.
 
 Environment Variables
 ---------------------
