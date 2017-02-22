@@ -241,8 +241,7 @@ func strip(path, root string) (string, error) {
 	} else if len(root) == 0 {
 		root = "/"
 	}
-	lowercase := strings.ToLower(path)
-	if !strings.HasPrefix(lowercase, root) {
+	if !strings.HasPrefix(strings.ToLower(path), strings.ToLower(root)) {
 		return "", errors.Errorf("path %q is not under root %q", path, root)
 	}
 	return path[len(root):], nil
@@ -382,7 +381,7 @@ func (f *Fs) listOneLevel(out fs.ListOpts, dir string) {
 	}
 	for i := range dirEntry.Contents {
 		entry := &dirEntry.Contents[i]
-		remote, err := strip(entry.Path, root)
+		remote, err := f.stripRoot(entry.Path)
 		if err != nil {
 			out.SetError(err)
 			return
