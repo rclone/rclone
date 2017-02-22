@@ -1052,7 +1052,7 @@ func runSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool) error {
 		return errors.New("can't delete and move at the same time")
 	}
 	// Run an extra pass to delete only
-	if !*oldSyncMethod && Config.DeleteMode == DeleteModeBefore {
+	if !*oldSyncMethod && deleteMode == DeleteModeBefore {
 		if Config.TrackRenames {
 			return errors.New("can't use --delete-before with --track-renames")
 		}

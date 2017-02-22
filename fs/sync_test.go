@@ -531,6 +531,29 @@ func TestSyncDeleteBefore(t *testing.T) {
 	TestSyncAfterRemovingAFileAndAddingAFile(t)
 }
 
+// Copy test delete before - shouldn't delete anything
+func TestCopyDeleteBefore(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+
+	fs.Config.DeleteMode = fs.DeleteModeBefore
+	defer func() {
+		fs.Config.DeleteMode = fs.DeleteModeDefault
+	}()
+
+	file1 := r.WriteObject("potato", "hopefully not deleted", t1)
+	file2 := r.WriteFile("potato2", "hopefully copied in", t1)
+	fstest.CheckItems(t, r.fremote, file1)
+	fstest.CheckItems(t, r.flocal, file2)
+
+	fs.Stats.ResetCounters()
+	err := fs.CopyDir(r.fremote, r.flocal)
+	require.NoError(t, err)
+
+	fstest.CheckItems(t, r.fremote, file1, file2)
+	fstest.CheckItems(t, r.flocal, file2)
+}
+
 // Test with exclude
 func TestSyncWithExclude(t *testing.T) {
 	r := NewRun(t)
