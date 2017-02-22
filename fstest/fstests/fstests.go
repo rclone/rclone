@@ -54,8 +54,6 @@ var (
 // ExtraConfigItem describes a config item added on the fly while testing
 type ExtraConfigItem struct{ Name, Key, Value string }
 
-const eventualConsistencyRetries = 10
-
 func init() {
 	flag.StringVar(&RemoteName, "remote", "", "Set this to override the default remote name (eg s3:)")
 }
@@ -205,12 +203,12 @@ func TestFsNewObjectNotFound(t *testing.T) {
 func findObject(t *testing.T, Name string) fs.Object {
 	var obj fs.Object
 	var err error
-	for i := 1; i <= eventualConsistencyRetries; i++ {
+	for i := 1; i <= *fstest.ListRetries; i++ {
 		obj, err = remote.NewObject(Name)
 		if err == nil {
 			break
 		}
-		t.Logf("Sleeping for 1 second for findObject eventual consistency: %d/%d (%v)", i, eventualConsistencyRetries, err)
+		t.Logf("Sleeping for 1 second for findObject eventual consistency: %d/%d (%v)", i, *fstest.ListRetries, err)
 		time.Sleep(1 * time.Second)
 	}
 	require.NoError(t, err)
@@ -298,23 +296,48 @@ func TestFsUpdateFile1(t *testing.T) {
 	// Note that the next test will check there are no duplicated file names
 }
 
-// TestFsListDirFile2 tests the files are correctly uploaded
+// TestFsListDirFile2 tests the files are correctly uploaded by doing
+// Depth 1 directory listings
 func TestFsListDirFile2(t *testing.T) {
 	skipIfNotOk(t)
-	var objNames, dirNames []string
-	for i := 1; i <= eventualConsistencyRetries; i++ {
-		objs, dirs, err := fs.NewLister().SetLevel(1).Start(remote, "").GetAll()
-		require.NoError(t, err)
-		objNames = objsToNames(objs)
-		dirNames = dirsToNames(dirs)
-		if len(objNames) >= 1 && len(dirNames) >= 1 {
-			break
+	list := func(dir string, expectedDirNames, expectedObjNames []string) {
+		var objNames, dirNames []string
+		for i := 1; i <= *fstest.ListRetries; i++ {
+			objs, dirs, err := fs.NewLister().SetLevel(1).Start(remote, dir).GetAll()
+			if err == fs.ErrorDirNotFound {
+				objs, dirs, err = fs.NewLister().SetLevel(1).Start(remote, winPath(dir)).GetAll()
+			}
+			require.NoError(t, err)
+			objNames = objsToNames(objs)
+			dirNames = dirsToNames(dirs)
+			if len(objNames) >= len(expectedObjNames) && len(dirNames) >= len(expectedDirNames) {
+				break
+			}
+			t.Logf("Sleeping for 1 second for TestFsListDirFile2 eventual consistency: %d/%d", i, *fstest.ListRetries)
+			time.Sleep(1 * time.Second)
 		}
-		t.Logf("Sleeping for 1 second for TestFsListDirFile2 eventual consistency: %d/%d", i, eventualConsistencyRetries)
-		time.Sleep(1 * time.Second)
+		assert.Equal(t, expectedDirNames, dirNames)
+		assert.Equal(t, expectedObjNames, objNames)
 	}
-	assert.Equal(t, []string{`hello_ sausage`}, dirNames)
-	assert.Equal(t, []string{file1.Path}, objNames)
+	dir := file2.Path
+	deepest := true
+	for dir != "" {
+		expectedObjNames := []string{}
+		expectedDirNames := []string{}
+		child := dir
+		dir = path.Dir(dir)
+		if dir == "." {
+			dir = ""
+			expectedObjNames = append(expectedObjNames, winPath(file1.Path))
+		}
+		if deepest {
+			expectedObjNames = append(expectedObjNames, winPath(file2.Path))
+			deepest = false
+		} else {
+			expectedDirNames = append(expectedDirNames, winPath(child))
+		}
+		list(dir, expectedDirNames, expectedObjNames)
+	}
 }
 
 // TestFsListDirRoot tests that DirList works in the root

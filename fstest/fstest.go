@@ -27,7 +27,8 @@ import (
 var (
 	// MatchTestRemote matches the remote names used for testing
 	MatchTestRemote = regexp.MustCompile(`^rclone-test-[abcdefghijklmnopqrstuvwxyz0123456789]{24}$`)
-	listRetries     = flag.Int("list-retries", 6, "Number or times to retry listing")
+	// ListRetries is the number of times to retry a listing to overcome eventual consistency
+	ListRetries = flag.Int("list-retries", 6, "Number or times to retry listing")
 )
 
 // Seed the random number generator
@@ -185,7 +186,7 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 	var objs []fs.Object
 	var dirs []*fs.Dir
 	var err error
-	var retries = *listRetries
+	var retries = *ListRetries
 	sleep := time.Second / 2
 	wantListing1, wantListing2 := makeListingFromItems(items)
 	gotListing := "<unset>"
