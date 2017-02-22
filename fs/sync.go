@@ -593,17 +593,23 @@ func (s *syncCopyMove) tryRename(src Object) bool {
 	Stats.Checking(src.Remote())
 	defer Stats.DoneChecking(src.Remote())
 
+	// Calculate the hash of the src object
 	hash := s.renameHash(src)
 	if hash == "" {
 		return false
 	}
 
+	// Get a match on fdst
 	dst := s.popRenameMap(hash)
 	if dst == nil {
 		return false
 	}
 
-	err := MoveFile(s.fdst, s.fdst, src.Remote(), dst.Remote())
+	// Find dst object we are about to overwrite if it exists
+	dstOverwritten, _ := s.fdst.NewObject(src.Remote())
+
+	// Rename dst to have name src.Remote()
+	err := Move(s.fdst, dstOverwritten, src.Remote(), dst)
 	if err != nil {
 		Debugf(src, "Failed to rename to %q: %v", dst.Remote(), err)
 		return false
