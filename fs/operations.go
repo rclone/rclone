@@ -88,6 +88,10 @@ func CheckHashes(src, dst Object) (equal bool, hash HashType, err error) {
 	if dstHash == "" {
 		return true, HashNone, nil
 	}
+	if srcHash != dstHash {
+		Debugf(src, "%v = %s (%v)", hash, srcHash, src.Fs())
+		Debugf(dst, "%v = %s (%v)", hash, dstHash, dst.Fs())
+	}
 	return srcHash == dstHash, hash, nil
 }
 
