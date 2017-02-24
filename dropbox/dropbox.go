@@ -381,11 +381,8 @@ func (f *Fs) listOneLevel(out fs.ListOpts, dir string) {
 	}
 	for i := range dirEntry.Contents {
 		entry := &dirEntry.Contents[i]
-		remote, err := f.stripRoot(entry.Path)
-		if err != nil {
-			out.SetError(err)
-			return
-		}
+		// Normalise the path to the dir passed in
+		remote := path.Join(dir, path.Base(entry.Path))
 		if entry.IsDir {
 			dir := &fs.Dir{
 				Name:  remote,
