@@ -69,6 +69,7 @@ func newTest(remote string, subdir bool) *test {
 	}
 	if *verbose {
 		t.cmdLine = append(t.cmdLine, "-test.v")
+		fs.Config.LogLevel = fs.LogLevelDebug
 	}
 	if *runOnly != "" {
 		t.cmdLine = append(t.cmdLine, "-test.run", *runOnly)
@@ -138,24 +139,21 @@ func (t *test) cleanFs() error {
 	if err != nil {
 		return err
 	}
-	dirs, err := fs.NewLister().SetLevel(1).Start(f, "").GetDirs()
+	entries, err := fs.ListDirSorted(f, true, "")
 	if err != nil {
 		return err
 	}
-	for _, dir := range dirs {
+	return entries.ForDirError(func(dir *fs.Dir) error {
 		if fstest.MatchTestRemote.MatchString(dir.Name) {
 			log.Printf("Purging %s%s", t.remote, dir.Name)
 			dir, err := fs.NewFs(t.remote + dir.Name)
 			if err != nil {
 				return err
 			}
-			err = fs.Purge(dir)
-			if err != nil {
-				return err
-			}
+			return fs.Purge(dir)
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 // clean runs a single clean on a fs for left over directories

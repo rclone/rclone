@@ -240,7 +240,7 @@ func (r *Run) readLocal(t *testing.T, dir dirMap, filepath string) {
 
 // reads the remote tree into dir
 func (r *Run) readRemote(t *testing.T, dir dirMap, filepath string) {
-	objs, dirs, err := fs.NewLister().SetLevel(1).Start(r.fremote, filepath).GetAll()
+	objs, dirs, err := fs.WalkGetAll(r.fremote, filepath, true, 1)
 	if err == fs.ErrorDirNotFound {
 		return
 	}

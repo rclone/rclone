@@ -156,25 +156,26 @@ func NewRun(t *testing.T) *Run {
 		*r = *oneRun
 		r.cleanRemote = func() {
 			var toDelete dirsToRemove
-			list := fs.NewLister().Start(r.fremote, "")
-			for {
-				o, dir, err := list.Get()
+			require.NoError(t, fs.Walk(r.fremote, "", true, -1, func(dirPath string, entries fs.DirEntries, err error) error {
 				if err != nil {
 					if err == fs.ErrorDirNotFound {
-						break
+						return nil
 					}
 					t.Fatalf("Error listing: %v", err)
-				} else if o != nil {
-					err = o.Remove()
-					if err != nil {
-						t.Errorf("Error removing file %q: %v", o.Remote(), err)
-					}
-				} else if dir != nil {
-					toDelete = append(toDelete, dir.Remote())
-				} else {
-					break
 				}
-			}
+				for _, entry := range entries {
+					switch x := entry.(type) {
+					case fs.Object:
+						err = x.Remove()
+						if err != nil {
+							t.Errorf("Error removing file %q: %v", x.Remote(), err)
+						}
+					case *fs.Dir:
+						toDelete = append(toDelete, x.Remote())
+					}
+				}
+				return nil
+			}))
 			sort.Sort(toDelete)
 			for _, dir := range toDelete {
 				err := r.fremote.Rmdir(dir)
@@ -666,25 +667,24 @@ func TestDeduplicateRename(t *testing.T) {
 	err := fs.Deduplicate(r.fremote, fs.DeduplicateRename)
 	require.NoError(t, err)
 
-	list := fs.NewLister().Start(r.fremote, "")
-	for {
-		o, err := list.GetObject()
-		require.NoError(t, err)
-		// Check if we are finished
-		if o == nil {
-			break
+	require.NoError(t, fs.Walk(r.fremote, "", true, -1, func(dirPath string, entries fs.DirEntries, err error) error {
+		if err != nil {
+			return err
 		}
-		remote := o.Remote()
-		if remote != "one-1.txt" &&
-			remote != "one-2.txt" &&
-			remote != "one-3.txt" {
-			t.Errorf("Bad file name after rename %q", remote)
-		}
-		size := o.Size()
-		if size != file1.Size && size != file2.Size && size != file3.Size {
-			t.Errorf("Size not one of the object sizes %d", size)
-		}
-	}
+		entries.ForObject(func(o fs.Object) {
+			remote := o.Remote()
+			if remote != "one-1.txt" &&
+				remote != "one-2.txt" &&
+				remote != "one-3.txt" {
+				t.Errorf("Bad file name after rename %q", remote)
+			}
+			size := o.Size()
+			if size != file1.Size && size != file2.Size && size != file3.Size {
+				t.Errorf("Size not one of the object sizes %d", size)
+			}
+		})
+		return nil
+	}))
 }
 
 func TestCat(t *testing.T) {

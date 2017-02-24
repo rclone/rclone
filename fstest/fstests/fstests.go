@@ -181,7 +181,7 @@ func objsToNames(objs []fs.Object) []string {
 // TestFsListDirEmpty tests listing the directories from an empty directory
 func TestFsListDirEmpty(t *testing.T) {
 	skipIfNotOk(t)
-	objs, dirs, err := fs.NewLister().SetLevel(1).Start(remote, "").GetAll()
+	objs, dirs, err := fs.WalkGetAll(remote, "", true, 1)
 	require.NoError(t, err)
 	assert.Equal(t, []string{}, objsToNames(objs))
 	assert.Equal(t, []string{}, dirsToNames(dirs))
@@ -303,9 +303,9 @@ func TestFsListDirFile2(t *testing.T) {
 	list := func(dir string, expectedDirNames, expectedObjNames []string) {
 		var objNames, dirNames []string
 		for i := 1; i <= *fstest.ListRetries; i++ {
-			objs, dirs, err := fs.NewLister().SetLevel(1).Start(remote, dir).GetAll()
+			objs, dirs, err := fs.WalkGetAll(remote, dir, false, 1)
 			if err == fs.ErrorDirNotFound {
-				objs, dirs, err = fs.NewLister().SetLevel(1).Start(remote, winPath(dir)).GetAll()
+				objs, dirs, err = fs.WalkGetAll(remote, winPath(dir), false, 1)
 			}
 			require.NoError(t, err)
 			objNames = objsToNames(objs)
@@ -345,7 +345,7 @@ func TestFsListDirRoot(t *testing.T) {
 	skipIfNotOk(t)
 	rootRemote, err := fs.NewFs(RemoteName)
 	require.NoError(t, err)
-	dirs, err := fs.NewLister().SetLevel(1).Start(rootRemote, "").GetDirs()
+	_, dirs, err := fs.WalkGetAll(rootRemote, "", true, 1)
 	require.NoError(t, err)
 	assert.Contains(t, dirsToNames(dirs), subRemoteLeaf, "Remote leaf not found")
 }
@@ -360,7 +360,7 @@ func TestFsListSubdir(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		dir, _ := path.Split(fileName)
 		dir = dir[:len(dir)-1]
-		objs, dirs, err = fs.NewLister().Start(remote, dir).GetAll()
+		objs, dirs, err = fs.WalkGetAll(remote, dir, true, -1)
 		if err != fs.ErrorDirNotFound {
 			break
 		}
@@ -375,7 +375,7 @@ func TestFsListSubdir(t *testing.T) {
 // TestFsListLevel2 tests List works for 2 levels
 func TestFsListLevel2(t *testing.T) {
 	skipIfNotOk(t)
-	objs, dirs, err := fs.NewLister().SetLevel(2).Start(remote, "").GetAll()
+	objs, dirs, err := fs.WalkGetAll(remote, "", true, 2)
 	if err == fs.ErrorLevelNotSupported {
 		return
 	}

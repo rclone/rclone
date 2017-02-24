@@ -516,32 +516,12 @@ func DeleteFiles(toBeDeleted ObjectsChan) error {
 // Each object is passed ito the function provided.  If that returns
 // an error then the listing will be aborted and that error returned.
 func readFilesFn(fs Fs, includeAll bool, dir string, add func(Object) error) (err error) {
-	list := NewLister()
-	if !includeAll {
-		list.SetFilter(Config.Filter)
-		list.SetLevel(Config.MaxDepth)
-	}
-	list.Start(fs, dir)
-	for {
-		o, err := list.GetObject()
+	return Walk(fs, "", includeAll, Config.MaxDepth, func(dirPath string, entries DirEntries, err error) error {
 		if err != nil {
 			return err
 		}
-		// Check if we are finished
-		if o == nil {
-			break
-		}
-		// Make sure we don't delete excluded files if not required
-		if includeAll || Config.Filter.IncludeObject(o) {
-			err = add(o)
-			if err != nil {
-				list.SetError(err)
-			}
-		} else {
-			Debugf(o, "Excluded from sync (and deletion)")
-		}
-	}
-	return list.Error()
+		return entries.ForObjectError(add)
+	})
 }
 
 // DirEntries is a slice of Object or *Dir
@@ -560,6 +540,54 @@ func (ds DirEntries) Swap(i, j int) {
 // Less is part of sort.Interface.
 func (ds DirEntries) Less(i, j int) bool {
 	return ds[i].Remote() < ds[j].Remote()
+}
+
+// ForObject runs the function supplied on every object in the entries
+func (ds DirEntries) ForObject(fn func(o Object)) {
+	for _, entry := range ds {
+		o, ok := entry.(Object)
+		if ok {
+			fn(o)
+		}
+	}
+}
+
+// ForObjectError runs the function supplied on every object in the entries
+func (ds DirEntries) ForObjectError(fn func(o Object) error) error {
+	for _, entry := range ds {
+		o, ok := entry.(Object)
+		if ok {
+			err := fn(o)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// ForDir runs the function supplied on every object in the entries
+func (ds DirEntries) ForDir(fn func(dir *Dir)) {
+	for _, entry := range ds {
+		dir, ok := entry.(*Dir)
+		if ok {
+			fn(dir)
+		}
+	}
+}
+
+// ForDirError runs the function supplied on every object in the entries
+func (ds DirEntries) ForDirError(fn func(dir *Dir) error) error {
+	for _, entry := range ds {
+		dir, ok := entry.(*Dir)
+		if ok {
+			err := fn(dir)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // ListDirSorted reads Object and *Dir into entries for the given Fs.
@@ -907,32 +935,14 @@ func CheckDownload(fdst, fsrc Fs) error {
 //
 // Lists in parallel which may get them out of order
 func ListFn(f Fs, fn func(Object)) error {
-	list := NewLister().SetFilter(Config.Filter).SetLevel(Config.MaxDepth).Start(f, "")
-	var wg sync.WaitGroup
-	wg.Add(Config.Checkers)
-	for i := 0; i < Config.Checkers; i++ {
-		go func() {
-			defer wg.Done()
-			for {
-				o, err := list.GetObject()
-				if err != nil {
-					// The error will be persisted within the Lister object and
-					// we'll get an opportunity to return it as we leave this
-					// function.
-					return
-				}
-				// check if we are finished
-				if o == nil {
-					return
-				}
-				if Config.Filter.IncludeObject(o) {
-					fn(o)
-				}
-			}
-		}()
-	}
-	wg.Wait()
-	return list.Error()
+	return Walk(f, "", false, Config.MaxDepth, func(dirPath string, entries DirEntries, err error) error {
+		if err != nil {
+			// FIXME count errors and carry on for listing
+			return err
+		}
+		entries.ForObject(fn)
+		return nil
+	})
 }
 
 // mutex for synchronized output
@@ -1026,24 +1036,29 @@ func Count(f Fs) (objects int64, size int64, err error) {
 	return
 }
 
+// ConfigMaxDepth returns the depth to use for a recursive or non recursive listing.
+func ConfigMaxDepth(recursive bool) int {
+	depth := Config.MaxDepth
+	if !recursive && depth < 0 {
+		depth = 1
+	}
+	return depth
+}
+
 // ListDir lists the directories/buckets/containers in the Fs to the supplied writer
 func ListDir(f Fs, w io.Writer) error {
-	level := 1
-	if Config.MaxDepth > 0 {
-		level = Config.MaxDepth
-	}
-	list := NewLister().SetFilter(Config.Filter).SetLevel(level).Start(f, "")
-	for {
-		dir, err := list.GetDir()
+	return Walk(f, "", false, ConfigMaxDepth(false), func(dirPath string, entries DirEntries, err error) error {
 		if err != nil {
-			log.Fatal(err)
+			// FIXME count errors and carry on for listing
+			return err
 		}
-		if dir == nil {
-			break
-		}
-		syncFprintf(w, "%12d %13s %9d %s\n", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
-	}
-	return nil
+		entries.ForDir(func(dir *Dir) {
+			if dir != nil {
+				syncFprintf(w, "%12d %13s %9d %s\n", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
+			}
+		})
+		return nil
+	})
 }
 
 // Mkdir makes a destination directory or container
@@ -1101,8 +1116,7 @@ func Purge(f Fs) error {
 	}
 	if doFallbackPurge {
 		// DeleteFiles and Rmdir observe --dry-run
-		list := NewLister().Start(f, "")
-		err = DeleteFiles(listToChan(list))
+		err = DeleteFiles(listToChan(f))
 		if err != nil {
 			return err
 		}
@@ -1290,18 +1304,18 @@ var _ pflag.Value = (*DeduplicateMode)(nil)
 func Deduplicate(f Fs, mode DeduplicateMode) error {
 	Infof(f, "Looking for duplicates using %v mode.", mode)
 	files := map[string][]Object{}
-	list := NewLister().Start(f, "")
-	for {
-		o, err := list.GetObject()
+	err := Walk(f, "", true, Config.MaxDepth, func(dirPath string, entries DirEntries, err error) error {
 		if err != nil {
 			return err
 		}
-		// Check if we are finished
-		if o == nil {
-			break
-		}
-		remote := o.Remote()
-		files[remote] = append(files[remote], o)
+		entries.ForObject(func(o Object) {
+			remote := o.Remote()
+			files[remote] = append(files[remote], o)
+		})
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 	for remote, objs := range files {
 		if len(objs) > 1 {
@@ -1334,33 +1348,30 @@ func Deduplicate(f Fs, mode DeduplicateMode) error {
 	return nil
 }
 
-// listToChan will transfer all incoming objects to a new channel.
+// listToChan will transfer all objects in the listing to the output
 //
 // If an error occurs, the error will be logged, and it will close the
 // channel.
 //
 // If the error was ErrorDirNotFound then it will be ignored
-func listToChan(list *Lister) ObjectsChan {
+func listToChan(f Fs) ObjectsChan {
 	o := make(ObjectsChan, Config.Checkers)
 	go func() {
 		defer close(o)
-		for {
-			obj, dir, err := list.Get()
+		_ = Walk(f, "", true, Config.MaxDepth, func(dirPath string, entries DirEntries, err error) error {
 			if err != nil {
-				if err != ErrorDirNotFound {
-					Stats.Error()
-					Errorf(nil, "Failed to list: %v", err)
+				if err == ErrorDirNotFound {
+					return nil
 				}
-				return
+				Stats.Error()
+				Errorf(nil, "Failed to list: %v", err)
+				return nil
 			}
-			if dir == nil && obj == nil {
-				return
-			}
-			if obj == nil {
-				continue
-			}
-			o <- obj
-		}
+			entries.ForObject(func(obj Object) {
+				o <- obj
+			})
+			return nil
+		})
 	}()
 	return o
 }
@@ -1451,41 +1462,44 @@ func Cat(f Fs, w io.Writer, offset, count int64) error {
 // Rmdirs removes any empty directories (or directories only
 // containing empty directories) under f, including f.
 func Rmdirs(f Fs, dir string) error {
-	list := NewLister().Start(f, dir)
 	dirEmpty := make(map[string]bool)
 	dirEmpty[""] = true
-	for {
-		o, dir, err := list.Get()
+	err := Walk(f, dir, true, Config.MaxDepth, func(dirPath string, entries DirEntries, err error) error {
 		if err != nil {
 			Stats.Error()
-			Errorf(f, "Failed to list: %v", err)
-			return err
-		} else if dir != nil {
-			// add a new directory as empty
-			dir := dir.Name
-			_, found := dirEmpty[dir]
-			if !found {
-				dirEmpty[dir] = true
-			}
-		} else if o != nil {
-			// mark the parents of the file as being non-empty
-			dir := o.Remote()
-			for dir != "" {
-				dir = path.Dir(dir)
-				if dir == "." || dir == "/" {
-					dir = ""
-				}
-				empty, found := dirEmpty[dir]
-				// End if we reach a directory which is non-empty
-				if found && !empty {
-					break
-				}
-				dirEmpty[dir] = false
-			}
-		} else {
-			// finished as dir == nil && o == nil
-			break
+			Errorf(f, "Failed to list %q: %v", dirPath, err)
+			return nil
 		}
+		for _, entry := range entries {
+			switch x := entry.(type) {
+			case *Dir:
+				// add a new directory as empty
+				dir := x.Name
+				_, found := dirEmpty[dir]
+				if !found {
+					dirEmpty[dir] = true
+				}
+			case Object:
+				// mark the parents of the file as being non-empty
+				dir := x.Remote()
+				for dir != "" {
+					dir = path.Dir(dir)
+					if dir == "." || dir == "/" {
+						dir = ""
+					}
+					empty, found := dirEmpty[dir]
+					// End if we reach a directory which is non-empty
+					if found && !empty {
+						break
+					}
+					dirEmpty[dir] = false
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return errors.Wrap(err, "failed to rmdirs")
 	}
 	// Now delete the empty directories, starting from the longest path
 	var toDelete []string

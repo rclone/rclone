@@ -192,7 +192,7 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 	gotListing := "<unset>"
 	listingOK := false
 	for i := 1; i <= retries; i++ {
-		objs, dirs, err = fs.NewLister().Start(f, "").GetAll()
+		objs, dirs, err = fs.WalkGetAll(f, "", true, -1)
 		if err != nil && err != fs.ErrorDirNotFound {
 			t.Fatalf("Error listing: %v", err)
 		}
