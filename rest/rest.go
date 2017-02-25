@@ -95,6 +95,8 @@ func DecodeJSON(resp *http.Response, result interface{}) (err error) {
 
 // ClientWithHeaderReset makes a new http client which resets the
 // headers passed in on redirect
+//
+// FIXME This is now unecessary with go1.8
 func ClientWithHeaderReset(c *http.Client, headers map[string]string) *http.Client {
 	if len(headers) == 0 {
 		return c
@@ -107,7 +109,7 @@ func ClientWithHeaderReset(c *http.Client, headers map[string]string) *http.Clie
 		// Reset the headers in the new request
 		for k, v := range headers {
 			if v != "" {
-				req.Header.Add(k, v)
+				req.Header.Set(k, v)
 			}
 		}
 		return nil
