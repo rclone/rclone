@@ -327,11 +327,12 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(remote string, info *yandex.ResourceInfoResponse) (o *Object, err error) {
-	o = &Object{
+func (f *Fs) newObjectWithInfo(remote string, info *yandex.ResourceInfoResponse) (fs.Object, error) {
+	o := &Object{
 		fs:     f,
 		remote: remote,
 	}
+	var err error
 	if info != nil {
 		err = o.setMetaData(info)
 	} else {

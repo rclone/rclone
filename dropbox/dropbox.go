@@ -207,11 +207,12 @@ func (f *Fs) setRoot(root string) {
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(remote string, info *dropbox.Entry) (o *Object, err error) {
-	o = &Object{
+func (f *Fs) newObjectWithInfo(remote string, info *dropbox.Entry) (fs.Object, error) {
+	o := &Object{
 		fs:     f,
 		remote: remote,
 	}
+	var err error
 	if info != nil {
 		err = o.setMetadataFromEntry(info)
 	} else {
