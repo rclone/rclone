@@ -1292,6 +1292,11 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 		},
 		ContentLength: &size,
 	}
+	// for go1.8 (see release notes) we must nil the Body if we want a
+	// "Content-Length: 0" header which b2 requires for all files.
+	if size == 0 {
+		opts.Body = nil
+	}
 	var response api.FileInfo
 	// Don't retry, return a retry error instead
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
