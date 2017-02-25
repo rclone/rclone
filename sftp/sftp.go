@@ -151,7 +151,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		}
 		_, err := f.NewObject(remote)
 		if err != nil {
-			if err == fs.ErrorObjectNotFound {
+			if err == fs.ErrorObjectNotFound || errors.Cause(err) == fs.ErrorNotAFile {
 				// File doesn't exist so return old f
 				f.root = root
 				return f, nil
