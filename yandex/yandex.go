@@ -170,31 +170,54 @@ func (f *Fs) setRoot(root string) {
 type listFn func(remote string, item *yandex.ResourceInfoResponse, isDirectory bool) error
 
 // listDir lists this directory only returning objects and directories
-func (f *Fs) listDir(fn listFn) (err error) {
+func (f *Fs) listDir(dir string, fn listFn) (err error) {
 	//request object meta info
 	var opt yandex.ResourceInfoRequestOptions
-	ResourceInfoResponse, err := f.yd.NewResourceInfoRequest(f.diskRoot, opt).Exec()
-	if err != nil {
-		return err
+	root := f.diskRoot
+	if dir != "" {
+		root += dir + "/"
 	}
-	if ResourceInfoResponse.ResourceType == "dir" {
-		//list all subdirs
-		for _, element := range ResourceInfoResponse.Embedded.Items {
-			remote := element.Name
-			switch element.ResourceType {
-			case "dir":
-				err = fn(remote, &element, true)
-				if err != nil {
-					return err
+	var limit uint32 = 1000 // max number of object per request
+	var itemsCount uint32   //number of items per page in response
+	var offset uint32       //for the next page of request
+	opt.Limit = &limit
+	opt.Offset = &offset
+
+	//query each page of list until itemCount is less then limit
+	for {
+		ResourceInfoResponse, err := f.yd.NewResourceInfoRequest(root, opt).Exec()
+		if err != nil {
+			return err
+		}
+		itemsCount = uint32(len(ResourceInfoResponse.Embedded.Items))
+
+		if ResourceInfoResponse.ResourceType == "dir" {
+			//list all subdirs
+			for i, element := range ResourceInfoResponse.Embedded.Items {
+				remote := path.Join(dir, element.Name)
+				fs.Debugf(i, "%q", remote)
+				switch element.ResourceType {
+				case "dir":
+					err = fn(remote, &element, true)
+					if err != nil {
+						return err
+					}
+				case "file":
+					err = fn(remote, &element, false)
+					if err != nil {
+						return err
+					}
+				default:
+					fs.Debugf(f, "Unknown resource type %q", element.ResourceType)
 				}
-			case "file":
-				err = fn(remote, &element, false)
-				if err != nil {
-					return err
-				}
-			default:
-				fs.Debugf(f, "Unknown resource type %q", element.ResourceType)
 			}
+		}
+
+		//offset for the next page of items
+		offset += itemsCount
+		//check if we reached end of list
+		if itemsCount < limit {
+			break
 		}
 	}
 	return nil
@@ -284,22 +307,13 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 	var err error
 	switch out.Level() {
 	case 1:
-		if dir == "" {
-			err = f.listDir(listItem)
-		} else {
-			err = f.list(dir, listItem)
-		}
+		err = f.listDir(dir, listItem)
 	case fs.MaxLevel:
 		err = f.list(dir, listItem)
 	default:
 		out.SetError(fs.ErrorLevelNotSupported)
 	}
-
 	if err != nil {
-		// FIXME
-		// if err == swift.ContainerNotFound {
-		// 	err = fs.ErrorDirNotFound
-		// }
 		out.SetError(err)
 	}
 }

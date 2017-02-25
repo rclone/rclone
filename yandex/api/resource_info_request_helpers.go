@@ -14,10 +14,10 @@ func createResourceInfoRequest(c *Client,
 			parameters["sort"] = opt.SortMode.String()
 		}
 		if opt.Limit != nil {
-			parameters["limit"] = opt.Limit
+			parameters["limit"] = *opt.Limit
 		}
 		if opt.Offset != nil {
-			parameters["offset"] = opt.Offset
+			parameters["offset"] = *opt.Offset
 		}
 		if opt.Fields != nil {
 			parameters["fields"] = strings.Join(opt.Fields, ",")
@@ -26,7 +26,7 @@ func createResourceInfoRequest(c *Client,
 			parameters["preview_size"] = opt.PreviewSize.String()
 		}
 		if opt.PreviewCrop != nil {
-			parameters["preview_crop"] = opt.PreviewCrop
+			parameters["preview_crop"] = *opt.PreviewCrop
 		}
 	}
 	return createGetRequest(c, apiPath, parameters)
