@@ -480,9 +480,7 @@ func (o *Object) stat() error {
 		return errors.Wrap(err, "stat failed")
 	}
 	if info.IsDir() {
-		// FIXME this error message doesn't seem right, but it
-		// is necessary for the NewFS code
-		return fs.ErrorObjectNotFound
+		return errors.Wrapf(fs.ErrorNotAFile, "%q", o.remote)
 	}
 	o.info = info
 	return nil

@@ -7,7 +7,6 @@ package fstests
 
 import (
 	"bytes"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -21,6 +20,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fstest"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -401,6 +401,15 @@ func TestFsNewObject(t *testing.T) {
 func TestFsListFile1and2(t *testing.T) {
 	skipIfNotOk(t)
 	fstest.CheckListing(t, remote, []fstest.Item{file1, file2})
+}
+
+// TestFsNewObjectDir tests NewObject on a directory which should produce an error
+func TestFsNewObjectDir(t *testing.T) {
+	skipIfNotOk(t)
+	dir := path.Dir(file2.Path)
+	obj, err := remote.NewObject(dir)
+	assert.Nil(t, obj)
+	assert.NotNil(t, err)
 }
 
 // TestFsCopy tests Copy

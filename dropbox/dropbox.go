@@ -207,18 +207,18 @@ func (f *Fs) setRoot(root string) {
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(remote string, info *dropbox.Entry) (fs.Object, error) {
-	o := &Object{
+func (f *Fs) newObjectWithInfo(remote string, info *dropbox.Entry) (o *Object, err error) {
+	o = &Object{
 		fs:     f,
 		remote: remote,
 	}
 	if info != nil {
-		o.setMetadataFromEntry(info)
+		err = o.setMetadataFromEntry(info)
 	} else {
-		err := o.readEntryAndSetMetadata()
-		if err != nil {
-			return nil, err
-		}
+		err = o.readEntryAndSetMetadata()
+	}
+	if err != nil {
+		return nil, err
 	}
 	return o, nil
 }
@@ -512,7 +512,10 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "copy failed")
 	}
-	dstObj.setMetadataFromEntry(entry)
+	err = dstObj.setMetadataFromEntry(entry)
+	if err != nil {
+		return nil, errors.Wrap(err, "copy failed")
+	}
 	return dstObj, nil
 }
 
@@ -555,7 +558,10 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "move failed")
 	}
-	dstObj.setMetadataFromEntry(entry)
+	err = dstObj.setMetadataFromEntry(entry)
+	if err != nil {
+		return nil, errors.Wrap(err, "move failed")
+	}
 	return dstObj, nil
 }
 
@@ -631,11 +637,15 @@ func (o *Object) Size() int64 {
 // setMetadataFromEntry sets the fs data from a dropbox.Entry
 //
 // This isn't a complete set of metadata and has an inacurate date
-func (o *Object) setMetadataFromEntry(info *dropbox.Entry) {
+func (o *Object) setMetadataFromEntry(info *dropbox.Entry) error {
+	if info.IsDir {
+		return errors.Wrapf(fs.ErrorNotAFile, "%q", o.remote)
+	}
 	o.bytes = info.Bytes
 	o.modTime = time.Time(info.ClientMtime)
 	o.mimeType = info.MimeType
 	o.hasMetadata = true
+	return nil
 }
 
 // Reads the entry from dropbox
@@ -662,8 +672,7 @@ func (o *Object) readEntryAndSetMetadata() error {
 	if err != nil {
 		return err
 	}
-	o.setMetadataFromEntry(entry)
-	return nil
+	return o.setMetadataFromEntry(entry)
 }
 
 // Returns the remote path for the object
@@ -761,8 +770,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	if err != nil {
 		return errors.Wrap(err, "upload failed")
 	}
-	o.setMetadataFromEntry(entry)
-	return nil
+	return o.setMetadataFromEntry(entry)
 }
 
 // Remove an object

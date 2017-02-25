@@ -313,24 +313,27 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(remote string, info *yandex.ResourceInfoResponse) (fs.Object, error) {
-	o := &Object{
+func (f *Fs) newObjectWithInfo(remote string, info *yandex.ResourceInfoResponse) (o *Object, err error) {
+	o = &Object{
 		fs:     f,
 		remote: remote,
 	}
 	if info != nil {
-		o.setMetaData(info)
+		err = o.setMetaData(info)
 	} else {
-		err := o.readMetaData()
-		if err != nil {
-			return nil, err
-		}
+		err = o.readMetaData()
+	}
+	if err != nil {
+		return nil, err
 	}
 	return o, nil
 }
 
 // setMetaData sets the fs data from a storage.Object
-func (o *Object) setMetaData(info *yandex.ResourceInfoResponse) {
+func (o *Object) setMetaData(info *yandex.ResourceInfoResponse) (err error) {
+	if info.ResourceType != "file" {
+		return errors.Wrapf(fs.ErrorNotAFile, "%q", o.remote)
+	}
 	o.bytes = info.Size
 	o.md5sum = info.Md5
 	o.mimeType = info.MimeType
@@ -347,10 +350,10 @@ func (o *Object) setMetaData(info *yandex.ResourceInfoResponse) {
 	}
 	t, err := time.Parse(time.RFC3339Nano, modTimeString)
 	if err != nil {
-		fs.Logf("Failed to parse modtime from %q: %v", modTimeString, err)
-	} else {
-		o.modTime = t
+		return errors.Wrapf(err, "failed to parse modtime from %q", modTimeString)
 	}
+	o.modTime = t
+	return nil
 }
 
 // readMetaData gets the info if it hasn't already been fetched
@@ -371,8 +374,7 @@ func (o *Object) readMetaData() (err error) {
 		}
 		return err
 	}
-	o.setMetaData(ResourceInfoResponse)
-	return nil
+	return o.setMetaData(ResourceInfoResponse)
 }
 
 // Put the object

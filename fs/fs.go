@@ -42,6 +42,7 @@ var (
 	ErrorListAborted          = errors.New("list aborted")
 	ErrorListOnlyRoot         = errors.New("can only list from root")
 	ErrorIsFile               = errors.New("is a file not a directory")
+	ErrorNotAFile             = errors.New("is a not a regular file")
 	ErrorNotDeleting          = errors.New("not deleting files as there were IO errors")
 	ErrorCantMoveOverlapping  = errors.New("can't move files on overlapping remotes")
 )
