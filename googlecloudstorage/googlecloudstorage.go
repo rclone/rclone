@@ -331,7 +331,7 @@ func (f *Fs) list(dir string, level int, fn listFn) error {
 				if !strings.HasSuffix(prefix, "/") {
 					continue
 				}
-				err = fn(prefix[:len(prefix)-1], &object, true)
+				err = fn(prefix[rootLength:len(prefix)-1], &object, true)
 				if err != nil {
 					return err
 				}
