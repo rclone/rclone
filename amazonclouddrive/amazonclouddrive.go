@@ -558,7 +558,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 		return nil, err
 	}
 	if size > warnFileSize {
-		fs.Debugf(f, "Warning: file %q may fail because it is too big. Use --max-size=%dM to skip large files.", remote, warnFileSize>>20)
+		fs.Logf(f, "Warning: file %q may fail because it is too big. Use --max-size=%dM to skip large files.", remote, warnFileSize>>20)
 	}
 	folder := acd.FolderFromId(directoryID, o.fs.c.Nodes)
 	var info *acd.File
