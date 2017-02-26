@@ -29,9 +29,9 @@ Fetch and unpack
 
 Copy binary file
 
-    sudo cp rclone /usr/sbin/
-    sudo chown root:root /usr/sbin/rclone
-    sudo chmod 755 /usr/sbin/rclone
+    sudo cp rclone /usr/bin/
+    sudo chown root:root /usr/bin/rclone
+    sudo chmod 755 /usr/bin/rclone
     
 Install manpage
 
