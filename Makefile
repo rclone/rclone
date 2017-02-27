@@ -9,8 +9,12 @@ BETA_URL := http://beta.rclone.org/$(TAG)/
 # Only needed for Go 1.5
 export GO15VENDOREXPERIMENT=1
 
+.PHONY: rclone
+
 rclone:
-	go install -v
+	touch fs/version.go
+	go install -v --ldflags "-s -X github.com/ncw/rclone/fs.Version=$(TAG)"
+	cp -av `go env GOPATH`/bin/rclone .
 
 vars:
 	@echo SHELL="'$(SHELL)'"
