@@ -162,7 +162,7 @@ func (f *Fs) newObjectWithInfo(remote string, info os.FileInfo) (fs.Object, erro
 			return nil, err
 		}
 	}
-	if !o.info.Mode().IsRegular() {
+	if o.info.Mode().IsDir() {
 		return nil, errors.Wrapf(fs.ErrorNotAFile, "%q", remote)
 	}
 	return o, nil
