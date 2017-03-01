@@ -467,7 +467,6 @@ func (f *Fs) list(dir string, level int, prefix string, limit int, hidden bool, 
 	if prefix != "" {
 		request.StartFileName = prefix
 	}
-	var response api.ListFileNamesResponse
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/b2_list_file_names",
@@ -476,6 +475,7 @@ func (f *Fs) list(dir string, level int, prefix string, limit int, hidden bool, 
 		opts.Path = "/b2_list_file_versions"
 	}
 	for {
+		var response api.ListFileNamesResponse
 		err := f.pacer.Call(func() (bool, error) {
 			resp, err := f.srv.CallJSON(&opts, &request, &response)
 			return f.shouldRetry(resp, err)
