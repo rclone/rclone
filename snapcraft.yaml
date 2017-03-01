@@ -10,7 +10,7 @@ grade: stable
 apps:
   rclone:
     command: bin/rclone
-    plugs: [home, network, network-bind]
+    plugs: [home, network, network-bind, fuse-support]
 
 parts:
   rclone:
@@ -19,4 +19,4 @@ parts:
     source-tag: v1.35
     source-type: git
     go-importpath: github.com/ncw/rclone
-    build-packages: [gcc, libgudev-1.0-dev]
+    build-packages: [gcc, libgudev-1.0-dev, fuse]
