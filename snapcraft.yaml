@@ -9,7 +9,7 @@ grade: stable
 apps:
   rclone:
     command: bin/rclone
-    plugs: [home, network, network-bind,fuse-support]
+    plugs: [home, network, network-bind]
 
 parts:
   rclone:
