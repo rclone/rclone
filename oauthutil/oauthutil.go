@@ -257,33 +257,36 @@ func Config(id, name string, config *oauth2.Config) error {
 	switch config.RedirectURL {
 	case RedirectURL, RedirectPublicURL, RedirectLocalhostURL:
 		useWebServer = true
-		if automatic {
-			break
+		if !automatic {
+			fmt.Printf("Use auto config?\n")
+			fmt.Printf(" * Say Y if not sure\n")
+			fmt.Printf(" * Say N if you are working on a remote or headless machine\n")
+			auto := fs.Confirm()
+			if !auto {
+				fmt.Printf("For this to work, you will need rclone available on a machine that has a web browser available.\n")
+				fmt.Printf("Execute the following on your machine:\n")
+				if changed {
+					fmt.Printf("\trclone authorize %q %q %q\n", id, config.ClientID, config.ClientSecret)
+				} else {
+					fmt.Printf("\trclone authorize %q\n", id)
+				}
+				fmt.Println("Then paste the result below:")
+				code := ""
+				for code == "" {
+					fmt.Printf("result> ")
+					code = strings.TrimSpace(fs.ReadLine())
+				}
+				token := &oauth2.Token{}
+				err := json.Unmarshal([]byte(code), token)
+				if err != nil {
+					return err
+				}
+				return putToken(name, token)
+			}
 		}
-		fmt.Printf("Use auto config?\n")
-		fmt.Printf(" * Say Y if not sure\n")
-		fmt.Printf(" * Say N if you are working on a remote or headless machine\n")
-		auto := fs.Confirm()
-		if !auto {
-			fmt.Printf("For this to work, you will need rclone available on a machine that has a web browser available.\n")
-			fmt.Printf("Execute the following on your machine:\n")
-			if changed {
-				fmt.Printf("\trclone authorize %q %q %q\n", id, config.ClientID, config.ClientSecret)
-			} else {
-				fmt.Printf("\trclone authorize %q\n", id)
-			}
-			fmt.Println("Then paste the result below:")
-			code := ""
-			for code == "" {
-				fmt.Printf("result> ")
-				code = strings.TrimSpace(fs.ReadLine())
-			}
-			token := &oauth2.Token{}
-			err := json.Unmarshal([]byte(code), token)
-			if err != nil {
-				return err
-			}
-			return putToken(name, token)
+		if changed {
+			fmt.Printf("Set your redirection URI to %s and press Enter.\n", config.RedirectURL)
+			fs.ReadLine()
 		}
 	case TitleBarRedirectURL:
 		useWebServer = automatic
