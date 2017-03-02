@@ -112,37 +112,30 @@ func (f *File) waitForValidObject() (o fs.Object, err error) {
 var _ fusefs.NodeOpener = (*File)(nil)
 
 // Open the file for read or write
-func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenResponse) (fusefs.Handle, error) {
+func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenResponse) (fh fusefs.Handle, err error) {
 	// if o is nil it isn't valid yet
 	o, err := f.waitForValidObject()
 	if err != nil {
 		return nil, err
 	}
-
-	fs.Debugf(o, "File.Open")
+	fs.Debugf(o, "File.Open %v", req.Flags)
 
 	switch {
 	case req.Flags.IsReadOnly():
 		if noSeek {
 			resp.Flags |= fuse.OpenNonSeekable
 		}
-		fh, err := newReadFileHandle(o)
-		if err != nil {
-			fs.Debugf(o, "File.Open failed to open for read: %v", err)
-			return nil, err
-		}
-		return fh, nil
+		fh, err = newReadFileHandle(o)
+		err = errors.Wrap(err, "open for read")
 	case req.Flags.IsWriteOnly() || (req.Flags.IsReadWrite() && (req.Flags&fuse.OpenTruncate) != 0):
 		resp.Flags |= fuse.OpenNonSeekable
 		src := newCreateInfo(f.d.f, o.Remote())
-		fh, err := newWriteFileHandle(f.d, f, src)
-		if err != nil {
-			fs.Debugf(o, "File.Open failed to open for write: %v", err)
-			return nil, err
-		}
-		return fh, nil
+		fh, err = newWriteFileHandle(f.d, f, src)
+		err = errors.Wrap(err, "open for write")
 	case req.Flags.IsReadWrite():
-		return nil, errors.New("can't open read and write")
+		err = errors.New("can't open for read and write simultaneously")
+	default:
+		err = errors.Errorf("can't figure out how to open with flags %v", req.Flags)
 	}
 
 	/*
@@ -156,7 +149,12 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 	   OpenSync      OpenFlags = syscall.O_SYNC
 	   OpenTruncate  OpenFlags = syscall.O_TRUNC
 	*/
-	return nil, errors.New("can't figure out how to open")
+
+	if err != nil {
+		fs.Errorf(o, "File.Open failed: %v", err)
+		return nil, err
+	}
+	return fh, nil
 }
 
 // Check interface satisfied
