@@ -118,6 +118,7 @@ elsewhere it will be compatible - all the secrets used are derived
 from those two passwords/passphrases.
 
 Note that rclone does not encrypt
+
   * file length - this can be calcuated within 16 bytes
   * modification time - used for syncing
 
@@ -208,11 +209,13 @@ $ rclone -q ls remote:path
 Here are some of the features of the file name encryption modes
 
 Off
+
   * doesn't hide file names or directory structure
   * allows for longer file names (~246 characters)
   * can use sub paths and copy single files
 
 Standard
+
   * file names encrypted
   * file names can't be as long (~156 characters)
   * can use sub paths and copy single files
