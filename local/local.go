@@ -702,7 +702,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		return err
 	}
 
-	out, err := os.Create(o.path)
+	out, err := os.OpenFile(o.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		return err
 	}
