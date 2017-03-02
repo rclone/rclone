@@ -243,6 +243,10 @@ func Config(id, name string, config *oauth2.Config) error {
 	config, changed := overrideCredentials(name, config)
 	automatic := fs.ConfigFileGet(name, fs.ConfigAutomatic) != ""
 
+	if changed {
+		fmt.Printf("Make sure your Redirect URL is set to %q in your custom config.\n", config.RedirectURL)
+	}
+
 	// See if already have a token
 	tokenString := fs.ConfigFileGet(name, "token")
 	if tokenString != "" {
