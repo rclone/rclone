@@ -49,7 +49,7 @@ var (
 		},
 		ClientID:     rcloneClientID,
 		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
-		RedirectURL:  oauthutil.RedirectPublicURL,
+		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
 	chunkSize    = fs.SizeSuffix(10 * 1024 * 1024)
 	uploadCutoff = fs.SizeSuffix(10 * 1024 * 1024)
