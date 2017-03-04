@@ -212,6 +212,7 @@ func NewFilter() (f *Filter, err error) {
 	}
 	if filesFrom != nil {
 		for _, rule := range *filesFrom {
+			f.initAddFile() // init to show --files-from set even if no files within
 			err := forEachLine(rule, func(line string) error {
 				return f.AddFile(line)
 			})
@@ -323,12 +324,17 @@ func (f *Filter) AddRule(rule string) error {
 	return errors.Errorf("malformed rule %q", rule)
 }
 
-// AddFile adds a single file to the files from list
-func (f *Filter) AddFile(file string) error {
+// initAddFile creates f.files and f.dirs
+func (f *Filter) initAddFile() {
 	if f.files == nil {
 		f.files = make(FilesMap)
 		f.dirs = make(FilesMap)
 	}
+}
+
+// AddFile adds a single file to the files from list
+func (f *Filter) AddFile(file string) error {
+	f.initAddFile()
 	file = strings.Trim(file, "/")
 	f.files[file] = struct{}{}
 	// Put all the parent directories into f.dirs
