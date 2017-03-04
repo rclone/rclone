@@ -1,0 +1,6 @@
+default_dependencies: false
+dependencies:
+  - git
+  - fuse
+user: "$USERNAME"  
+cli: rclone
