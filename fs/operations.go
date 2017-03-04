@@ -211,7 +211,7 @@ func MimeType(o ObjectInfo) (mimeType string) {
 	// Read the MimeType from the optional interface if available
 	if do, ok := o.(MimeTyper); ok {
 		mimeType = do.MimeType()
-		Debugf(o, "Read MimeType as %q", mimeType)
+		// Debugf(o, "Read MimeType as %q", mimeType)
 		if mimeType != "" {
 			return mimeType
 		}
@@ -246,6 +246,18 @@ func (o *overrideRemoteObject) Remote() string {
 	return o.remote
 }
 
+// MimeType returns the mime type of the underlying object or "" if it
+// can't be worked out
+func (o *overrideRemoteObject) MimeType() string {
+	if do, ok := o.Object.(MimeTyper); ok {
+		return do.MimeType()
+	}
+	return ""
+}
+
+// Check interface is satisfied
+var _ MimeTyper = (*overrideRemoteObject)(nil)
+
 // Copy src object to dst or f if nil.  If dst is nil then it uses
 // remote as the name of the new object.
 func Copy(f Fs, dst Object, remote string, src Object) (err error) {
@@ -278,8 +290,11 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 				err = errors.Wrap(err, "failed to open source object")
 			} else {
 				in := NewAccount(in0, src).WithBuffer() // account and buffer the transfer
-
-				wrappedSrc := &overrideRemoteObject{Object: src, remote: remote}
+				var wrappedSrc ObjectInfo = src
+				// We try to pass the original object if possible
+				if src.Remote() != remote {
+					wrappedSrc = &overrideRemoteObject{Object: src, remote: remote}
+				}
 				if doUpdate {
 					actionTaken = "Copied (replaced existing)"
 					err = dst.Update(in, wrappedSrc)
