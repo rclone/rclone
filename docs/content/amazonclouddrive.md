@@ -51,7 +51,9 @@ Choose a number from below, or type in your own value
    \ "onedrive"
 11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
    \ "swift"
-12 / Yandex Disk
+12 / SSH/SFTP Connection
+   \ "sftp"
+13 / Yandex Disk
    \ "yandex"
 Storage> 1
 Amazon Application Client Id - leave blank normally.
