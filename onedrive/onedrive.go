@@ -252,14 +252,15 @@ func (f *Fs) newObjectWithInfo(remote string, info *api.Item) (fs.Object, error)
 		fs:     f,
 		remote: remote,
 	}
+	var err error
 	if info != nil {
 		// Set info
-		o.setMetaData(info)
+		err = o.setMetaData(info)
 	} else {
-		err := o.readMetaData() // reads info and meta, returning an error
-		if err != nil {
-			return nil, err
-		}
+		err = o.readMetaData() // reads info and meta, returning an error
+	}
+	if err != nil {
+		return nil, err
 	}
 	return o, nil
 }
@@ -572,8 +573,7 @@ func (f *Fs) waitForJob(location string, o *Object) error {
 			if err != nil {
 				return err
 			}
-			o.setMetaData(&info)
-			return nil
+			return o.setMetaData(&info)
 		}
 		time.Sleep(1 * time.Second)
 	}
@@ -711,7 +711,10 @@ func (o *Object) Size() int64 {
 }
 
 // setMetaData sets the metadata from info
-func (o *Object) setMetaData(info *api.Item) {
+func (o *Object) setMetaData(info *api.Item) (err error) {
+	if info.Folder != nil {
+		return errors.Wrapf(fs.ErrorNotAFile, "%q", o.remote)
+	}
 	o.hasMetaData = true
 	o.size = info.Size
 
@@ -734,6 +737,7 @@ func (o *Object) setMetaData(info *api.Item) {
 		o.modTime = time.Time(info.LastModifiedDateTime)
 	}
 	o.id = info.ID
+	return nil
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
@@ -756,8 +760,7 @@ func (o *Object) readMetaData() (err error) {
 		}
 		return err
 	}
-	o.setMetaData(info)
-	return nil
+	return o.setMetaData(info)
 }
 
 // ModTime returns the modification time of the object
@@ -800,8 +803,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 	if err != nil {
 		return err
 	}
-	o.setMetaData(info)
-	return nil
+	return o.setMetaData(info)
 }
 
 // Storable returns a boolean showing whether this object storable
@@ -957,20 +959,19 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 		if err != nil {
 			return err
 		}
-		o.setMetaData(info)
+		err = o.setMetaData(info)
 	} else {
 		err = o.uploadMultipart(in, size)
-		if err != nil {
-			return err
-		}
+	}
+	if err != nil {
+		return err
 	}
 	// Set the mod time now and read metadata
 	info, err = o.setModTime(modTime)
 	if err != nil {
 		return err
 	}
-	o.setMetaData(info)
-	return nil
+	return o.setMetaData(info)
 }
 
 // Remove an object
