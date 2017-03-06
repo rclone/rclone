@@ -676,6 +676,11 @@ func (s *NodesService) putOrOverwrite(in io.Reader, httpVerb, url, name, metadat
 		return nil, resp, err
 	}
 
+	err = <-errChan
+	if err != nil {
+		return nil, resp, err
+	}
+
 	return file, resp, err
 }
 
