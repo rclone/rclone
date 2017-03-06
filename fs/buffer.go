@@ -16,6 +16,8 @@ var asyncBufferPool = sync.Pool{
 	New: func() interface{} { return newBuffer() },
 }
 
+var errorStreamAbandoned = errors.New("stream abandoned")
+
 // asyncReader will do async read-ahead from the input reader
 // and make the data available as an io.Reader.
 // This should be fully transparent, except that once an error
@@ -31,6 +33,7 @@ type asyncReader struct {
 	exited  chan struct{} // Channel is closed been the async reader shuts down
 	size    int           // size of buffer to use
 	closed  bool          // whether we have closed the underlying stream
+	mu      sync.Mutex    // lock for Read/WriteTo/Abandon/Close
 }
 
 // newAsyncReader returns a reader that will asynchronously read from
@@ -39,7 +42,7 @@ type asyncReader struct {
 // function has returned.
 // The input can be read from the returned reader.
 // When done use Close to release the buffers and close the supplied input.
-func newAsyncReader(rd io.ReadCloser, buffers int) (io.ReadCloser, error) {
+func newAsyncReader(rd io.ReadCloser, buffers int) (*asyncReader, error) {
 	if buffers <= 0 {
 		return nil, errors.New("number of buffers too small")
 	}
@@ -113,6 +116,10 @@ func (a *asyncReader) fill() (err error) {
 		}
 		b, ok := <-a.ready
 		if !ok {
+			// Return an error to show fill failed
+			if a.err == nil {
+				return errorStreamAbandoned
+			}
 			return a.err
 		}
 		a.cur = b
@@ -122,6 +129,9 @@ func (a *asyncReader) fill() (err error) {
 
 // Read will return the next available data.
 func (a *asyncReader) Read(p []byte) (n int, err error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	// Swap buffer and maybe return error
 	err = a.fill()
 	if err != nil {
@@ -144,6 +154,9 @@ func (a *asyncReader) Read(p []byte) (n int, err error) {
 // The return value n is the number of bytes written.
 // Any error encountered during the write is also returned.
 func (a *asyncReader) WriteTo(w io.Writer) (n int64, err error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	n = 0
 	for {
 		err = a.fill()
@@ -175,6 +188,9 @@ func (a *asyncReader) Abandon() {
 	// Close and wait for go routine
 	close(a.exit)
 	<-a.exited
+	// take the lock to wait for Read/WriteTo to complete
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	// Return any outstanding buffers to the Pool
 	if a.cur != nil {
 		a.putBuffer(a.cur)

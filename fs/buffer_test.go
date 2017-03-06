@@ -6,8 +6,10 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
+	"sync"
 	"testing"
 	"testing/iotest"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -196,8 +198,7 @@ func TestAsyncReaderWriteTo(t *testing.T) {
 						buf := bufio.NewReaderSize(read, bufsize)
 						ar, _ := newAsyncReader(ioutil.NopCloser(buf), l)
 						dst := &bytes.Buffer{}
-						wt := ar.(io.WriterTo)
-						_, err := wt.WriteTo(dst)
+						_, err := ar.WriteTo(dst)
 						if err != nil && err != io.EOF && err != iotest.ErrTimeout {
 							t.Fatal("Copy:", err)
 						}
@@ -215,3 +216,65 @@ func TestAsyncReaderWriteTo(t *testing.T) {
 		}
 	}
 }
+
+// Read an infinite number of zeros
+type zeroReader struct {
+	closed bool
+}
+
+func (z *zeroReader) Read(p []byte) (n int, err error) {
+	if z.closed {
+		return 0, io.EOF
+	}
+	for i := range p {
+		p[i] = 0
+	}
+	return len(p), nil
+}
+
+func (z *zeroReader) Close() error {
+	if z.closed {
+		panic("double close on zeroReader")
+	}
+	z.closed = true
+	return nil
+}
+
+// Test closing and abandoning
+func testAsyncReaderClose(t *testing.T, writeto bool) {
+	zr := &zeroReader{}
+	a, err := newAsyncReader(zr, 16)
+	require.NoError(t, err)
+	var copyN int64
+	var copyErr error
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if true {
+			// exercise the WriteTo path
+			copyN, copyErr = a.WriteTo(ioutil.Discard)
+		} else {
+			// exercise the Read path
+			buf := make([]byte, 64*1024)
+			for {
+				var n int
+				n, copyErr = a.Read(buf)
+				copyN += int64(n)
+				if copyErr != nil {
+					break
+				}
+			}
+		}
+	}()
+	// Do some copying
+	time.Sleep(100 * time.Millisecond)
+	// Abandon the copy
+	a.Abandon()
+	wg.Wait()
+	assert.Equal(t, errorStreamAbandoned, copyErr)
+	// t.Logf("Copied %d bytes, err %v", copyN, copyErr)
+	assert.True(t, copyN > 0)
+}
+func TestAsyncReaderCloseRead(t *testing.T)    { testAsyncReaderClose(t, false) }
+func TestAsyncReaderCloseWriteTo(t *testing.T) { testAsyncReaderClose(t, true) }
