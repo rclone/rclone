@@ -48,7 +48,7 @@ from various cloud storage systems, such as:
   * Dropbox
   * Google Cloud Storage
   * Amazon Drive
-  * Microsoft One Drive
+  * Microsoft OneDrive
   * Hubic
   * Backblaze B2
   * Yandex Disk

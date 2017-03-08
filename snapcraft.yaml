@@ -3,7 +3,7 @@ version: 1.36
 summary: rsync for cloud storage
 description:
   Rclone is a command line program to sync files to and from cloud storage providers such as
-  Google Drive, Amazon Drive, S3, Dropbox, Backblaze B2, One Drive, Swift, Hubic, Cloudfiles, Google Cloud Storage, Yandex Files.
+  Google Drive, Amazon Drive, S3, Dropbox, Backblaze B2, OneDrive, Swift, Hubic, Cloudfiles, Google Cloud Storage, Yandex Files.
 confinement: strict
 grade: stable
 

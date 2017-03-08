@@ -391,7 +391,7 @@ Changelog
       * Upload releases to github too
     * Swift
       * Fix sync for chunked files
-    * One Drive
+    * OneDrive
       * Re-enable server side copy
       * Don't mask HTTP error codes with JSON decode error
     * S3
@@ -407,11 +407,11 @@ Changelog
       * Stop SetModTime losing metadata (eg X-Object-Manifest)
         * This could have caused data loss for files > 5GB in size
       * Use ContentType from Object to avoid lookups in listings
-    * One Drive
+    * OneDrive
       * disable server side copy as it seems to be broken at Microsoft
   * v1.24 - 2015-11-07
     * New features
-      * Add support for Microsoft One Drive
+      * Add support for Microsoft OneDrive
       * Add `--no-check-certificate` option to disable server certificate verification
       * Add async readahead buffer for faster transfer of big files
     * Fixes

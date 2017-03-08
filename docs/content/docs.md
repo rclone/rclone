@@ -28,7 +28,7 @@ See the following for detailed instructions for
   * [Amazon Drive](/amazonclouddrive/)
   * [Backblaze B2](/b2/)
   * [Hubic](/hubic/)
-  * [Microsoft One Drive](/onedrive/)
+  * [Microsoft OneDrive](/onedrive/)
   * [Yandex Disk](/yandex/)
   * [SFTP](/sftp/)
   * [Crypt](/crypt/) - to encrypt other remotes

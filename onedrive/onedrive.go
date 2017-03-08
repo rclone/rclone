@@ -1,4 +1,4 @@
-// Package onedrive provides an interface to the Microsoft One Drive
+// Package onedrive provides an interface to the Microsoft OneDrive
 // object storage system.
 package onedrive
 
@@ -189,7 +189,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	root = parsePath(root)
 	oAuthClient, ts, err := oauthutil.NewClient(name, oauthConfig)
 	if err != nil {
-		log.Fatalf("Failed to configure One Drive: %v", err)
+		log.Fatalf("Failed to configure OneDrive: %v", err)
 	}
 
 	f := &Fs{
