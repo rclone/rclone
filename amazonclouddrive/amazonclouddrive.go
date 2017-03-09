@@ -631,9 +631,11 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	// Wait for directory caching so we can no longer see the old
 	// object and see the new object
 	time.Sleep(200 * time.Millisecond) // enough time 90% of the time
-	var dstObj fs.Object
+	var (
+		dstObj         fs.Object
+		srcErr, dstErr error
+	)
 	for i := 1; i <= fs.Config.LowLevelRetries; i++ {
-		var srcErr, dstErr error
 		_, srcErr = srcObj.fs.NewObject(srcObj.remote) // try reading the object
 		if srcErr != nil && srcErr != fs.ErrorObjectNotFound {
 			// exit if error on source
@@ -651,7 +653,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		fs.Debugf(src, "Wait for directory listing to update after move %d/%d", i, fs.Config.LowLevelRetries)
 		time.Sleep(1 * time.Second)
 	}
-	return dstObj, nil
+	return dstObj, dstErr
 }
 
 // DirCacheFlush resets the directory cache - used in testing as an
