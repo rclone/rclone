@@ -600,8 +600,10 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		return nil, err
 	}
 
-	if strings.ToLower(srcObj.remote) == strings.ToLower(remote) {
-		return nil, errors.Errorf("can't copy %q -> %q as are same name when lowercase", srcObj.remote, remote)
+	srcPath := srcObj.fs.rootSlash() + srcObj.remote
+	dstPath := f.rootSlash() + remote
+	if strings.ToLower(srcPath) == strings.ToLower(dstPath) {
+		return nil, errors.Errorf("can't copy %q -> %q as are same name when lowercase", srcPath, dstPath)
 	}
 
 	// Create temporary object
