@@ -8,6 +8,7 @@ import (
 	"encoding/base32"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"sync"
 	"unicode/utf8"
@@ -49,6 +50,7 @@ var (
 	ErrorNotAnEncryptedFile      = errors.New("not an encrypted file - no \"" + encryptedSuffix + "\" suffix")
 	ErrorBadSeek                 = errors.New("Seek beyond end of file")
 	defaultSalt                  = []byte{0xA8, 0x0D, 0xF4, 0x3A, 0x8F, 0xBD, 0x03, 0x08, 0xA7, 0xCA, 0xB8, 0x3E, 0x58, 0x1F, 0x86, 0xB1}
+	obfuscQuoteRune              = '!'
 )
 
 // Global variables
@@ -95,6 +97,7 @@ type NameEncryptionMode int
 const (
 	NameEncryptionOff NameEncryptionMode = iota
 	NameEncryptionStandard
+	NameEncryptionObfuscated
 )
 
 // NewNameEncryptionMode turns a string into a NameEncryptionMode
@@ -105,6 +108,8 @@ func NewNameEncryptionMode(s string) (mode NameEncryptionMode, err error) {
 		mode = NameEncryptionOff
 	case "standard":
 		mode = NameEncryptionStandard
+	case "obfuscate":
+		mode = NameEncryptionObfuscated
 	default:
 		err = errors.Errorf("Unknown file name encryption mode %q", s)
 	}
@@ -118,6 +123,8 @@ func (mode NameEncryptionMode) String() (out string) {
 		out = "off"
 	case NameEncryptionStandard:
 		out = "standard"
+	case NameEncryptionObfuscated:
+		out = "obfuscate"
 	default:
 		out = fmt.Sprintf("Unknown mode #%d", mode)
 	}
@@ -284,11 +291,189 @@ func (c *cipher) decryptSegment(ciphertext string) (string, error) {
 	return string(plaintext), err
 }
 
+// Simple obfuscation routines
+func (c *cipher) obfuscateSegment(plaintext string) string {
+	if plaintext == "" {
+		return ""
+	}
+
+	// If the string isn't valid UTF8 then don't rotate; just
+	// prepend a 0.
+	if !utf8.ValidString(plaintext) {
+		return "0." + plaintext
+	}
+
+	// Calculate a simple rotation based on the filename and
+	// the nameKey
+	var dir int
+	for _, runeValue := range plaintext {
+		dir += int(runeValue)
+	}
+	dir = dir % 256
+
+	// We'll use this number to store in the result filename...
+	var result bytes.Buffer
+	_, _ = result.WriteString(strconv.Itoa(dir) + ".")
+
+	// but we'll augment it with the nameKey for real calculation
+	for i := 0; i < len(c.nameKey); i++ {
+		dir += int(c.nameKey[i])
+	}
+
+	// Now for each character, depending on the range it is in
+	// we will actually rotate a different amount
+	for _, runeValue := range plaintext {
+		switch {
+		case runeValue == obfuscQuoteRune:
+			// Quote the Quote character
+			_, _ = result.WriteRune(obfuscQuoteRune)
+			_, _ = result.WriteRune(obfuscQuoteRune)
+
+		case runeValue >= '0' && runeValue <= '9':
+			// Number
+			thisdir := (dir % 9) + 1
+			newRune := '0' + (int(runeValue)-'0'+thisdir)%10
+			_, _ = result.WriteRune(rune(newRune))
+
+		case (runeValue >= 'A' && runeValue <= 'Z') ||
+			(runeValue >= 'a' && runeValue <= 'z'):
+			// ASCII letter.  Try to avoid trivial A->a mappings
+			thisdir := dir%25 + 1
+			// Calculate the offset of this character in A-Za-z
+			pos := int(runeValue - 'A')
+			if pos >= 26 {
+				pos -= 6 // It's lower case
+			}
+			// Rotate the character to the new location
+			pos = (pos + thisdir) % 52
+			if pos >= 26 {
+				pos += 6 // and handle lower case offset again
+			}
+			_, _ = result.WriteRune(rune('A' + pos))
+
+		case runeValue >= 0xA0 && runeValue <= 0xFF:
+			// Latin 1 supplement
+			thisdir := (dir % 95) + 1
+			newRune := 0xA0 + (int(runeValue)-0xA0+thisdir)%96
+			_, _ = result.WriteRune(rune(newRune))
+
+		case runeValue >= 0x100:
+			// Some random Unicode range; we have no good rules here
+			thisdir := (dir % 127) + 1
+			base := int(runeValue - runeValue%256)
+			newRune := rune(base + (int(runeValue)-base+thisdir)%256)
+			// If the new character isn't a valid UTF8 char
+			// then don't rotate it.  Quote it instead
+			if !utf8.ValidRune(newRune) {
+				_, _ = result.WriteRune(obfuscQuoteRune)
+				_, _ = result.WriteRune(runeValue)
+			} else {
+				_, _ = result.WriteRune(newRune)
+			}
+
+		default:
+			// Leave character untouched
+			_, _ = result.WriteRune(runeValue)
+		}
+	}
+	return result.String()
+}
+
+func (c *cipher) deobfuscateSegment(ciphertext string) (string, error) {
+	if ciphertext == "" {
+		return "", nil
+	}
+	pos := strings.Index(ciphertext, ".")
+	if pos == -1 {
+		return "", ErrorNotAnEncryptedFile
+	} // No .
+	num := ciphertext[:pos]
+	if num == "0" {
+		// No rotation; probably original was not valid unicode
+		return ciphertext[pos+1:], nil
+	}
+	dir, err := strconv.Atoi(num)
+	if err != nil {
+		return "", ErrorNotAnEncryptedFile // Not a number
+	}
+
+	// add the nameKey to get the real rotate distance
+	for i := 0; i < len(c.nameKey); i++ {
+		dir += int(c.nameKey[i])
+	}
+
+	var result bytes.Buffer
+
+	inQuote := false
+	for _, runeValue := range ciphertext[pos+1:] {
+		switch {
+		case inQuote:
+			_, _ = result.WriteRune(runeValue)
+			inQuote = false
+
+		case runeValue == obfuscQuoteRune:
+			inQuote = true
+
+		case runeValue >= '0' && runeValue <= '9':
+			// Number
+			thisdir := (dir % 9) + 1
+			newRune := '0' + int(runeValue) - '0' - thisdir
+			if newRune < '0' {
+				newRune += 10
+			}
+			_, _ = result.WriteRune(rune(newRune))
+
+		case (runeValue >= 'A' && runeValue <= 'Z') ||
+			(runeValue >= 'a' && runeValue <= 'z'):
+			thisdir := dir%25 + 1
+			pos := int(runeValue - 'A')
+			if pos >= 26 {
+				pos -= 6
+			}
+			pos = pos - thisdir
+			if pos < 0 {
+				pos += 52
+			}
+			if pos >= 26 {
+				pos += 6
+			}
+			_, _ = result.WriteRune(rune('A' + pos))
+
+		case runeValue >= 0xA0 && runeValue <= 0xFF:
+			thisdir := (dir % 95) + 1
+			newRune := 0xA0 + int(runeValue) - 0xA0 - thisdir
+			if newRune < 0xA0 {
+				newRune += 96
+			}
+			_, _ = result.WriteRune(rune(newRune))
+
+		case runeValue >= 0x100:
+			thisdir := (dir % 127) + 1
+			base := int(runeValue - runeValue%256)
+			newRune := rune(base + (int(runeValue) - base - thisdir))
+			if int(newRune) < base {
+				newRune += 256
+			}
+			_, _ = result.WriteRune(rune(newRune))
+
+		default:
+			_, _ = result.WriteRune(runeValue)
+
+		}
+	}
+
+	return result.String(), nil
+}
+
 // encryptFileName encrypts a file path
 func (c *cipher) encryptFileName(in string) string {
 	segments := strings.Split(in, "/")
 	for i := range segments {
-		segments[i] = c.encryptSegment(segments[i])
+		if c.mode == NameEncryptionStandard {
+			segments[i] = c.encryptSegment(segments[i])
+		} else {
+			segments[i] = c.obfuscateSegment(segments[i])
+		}
 	}
 	return strings.Join(segments, "/")
 }
@@ -314,7 +499,12 @@ func (c *cipher) decryptFileName(in string) (string, error) {
 	segments := strings.Split(in, "/")
 	for i := range segments {
 		var err error
-		segments[i], err = c.decryptSegment(segments[i])
+		if c.mode == NameEncryptionStandard {
+			segments[i], err = c.decryptSegment(segments[i])
+		} else {
+			segments[i], err = c.deobfuscateSegment(segments[i])
+		}
+
 		if err != nil {
 			return "", err
 		}
