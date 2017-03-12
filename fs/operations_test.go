@@ -916,11 +916,14 @@ func TestListDirSorted(t *testing.T) {
 		fs.Config.Filter.MaxSize = -1
 	}()
 
-	r.WriteObject("a.txt", "hello world", t1)
-	r.WriteObject("zend.txt", "hello", t1)
-	r.WriteObject("sub dir/hello world", "hello world", t1)
-	r.WriteObject("sub dir/hello world2", "hello world", t1)
-	r.WriteObject("sub dir/sub sub dir/hello world3", "hello world", t1)
+	files := []fstest.Item{
+		r.WriteObject("a.txt", "hello world", t1),
+		r.WriteObject("zend.txt", "hello", t1),
+		r.WriteObject("sub dir/hello world", "hello world", t1),
+		r.WriteObject("sub dir/hello world2", "hello world", t1),
+		r.WriteObject("sub dir/sub sub dir/hello world3", "hello world", t1),
+	}
+	fstest.CheckItems(t, r.fremote, files...)
 	var items fs.DirEntries
 	var err error
 
