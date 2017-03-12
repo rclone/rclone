@@ -34,13 +34,18 @@ func NewClient(c *http.Client) *Client {
 	return api
 }
 
+// ReadBody reads resp.Body into result, closing the body
+func ReadBody(resp *http.Response) (result []byte, err error) {
+	defer fs.CheckClose(resp.Body, &err)
+	return ioutil.ReadAll(resp.Body)
+}
+
 // defaultErrorHandler doesn't attempt to parse the http body, just
 // returns it in the error message
 func defaultErrorHandler(resp *http.Response) (err error) {
-	defer fs.CheckClose(resp.Body, &err)
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := ReadBody(resp)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error reading error out of body")
 	}
 	return errors.Errorf("HTTP error %v (%v) returned body: %q", resp.StatusCode, resp.Status, body)
 }
@@ -84,6 +89,7 @@ type Opts struct {
 	UserName      string // username for Basic Auth
 	Password      string // password for Basic Auth
 	Options       []fs.OpenOption
+	IgnoreStatus  bool // if set then we don't check error status or parse error body
 }
 
 // DecodeJSON decodes resp.Body into result
@@ -179,8 +185,10 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 	if err != nil {
 		return nil, err
 	}
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return resp, api.errorHandler(resp)
+	if !opts.IgnoreStatus {
+		if resp.StatusCode < 200 || resp.StatusCode > 299 {
+			return resp, api.errorHandler(resp)
+		}
 	}
 	if opts.NoResponse {
 		return resp, resp.Body.Close()
