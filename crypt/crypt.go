@@ -37,6 +37,9 @@ func init() {
 				}, {
 					Value: "standard",
 					Help:  "Encrypt the filenames see the docs for the details.",
+				}, {
+					Value: "obfuscate",
+					Help:  "Very simple filename obfuscation.",
 				},
 			},
 		}, {

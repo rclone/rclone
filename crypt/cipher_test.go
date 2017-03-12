@@ -23,6 +23,7 @@ func TestNewNameEncryptionMode(t *testing.T) {
 	}{
 		{"off", NameEncryptionOff, ""},
 		{"standard", NameEncryptionStandard, ""},
+		{"obfuscate", NameEncryptionObfuscated, ""},
 		{"potato", NameEncryptionMode(0), "Unknown file name encryption mode \"potato\""},
 	} {
 		actual, actualErr := NewNameEncryptionMode(test.in)
@@ -38,7 +39,8 @@ func TestNewNameEncryptionMode(t *testing.T) {
 func TestNewNameEncryptionModeString(t *testing.T) {
 	assert.Equal(t, NameEncryptionOff.String(), "off")
 	assert.Equal(t, NameEncryptionStandard.String(), "standard")
-	assert.Equal(t, NameEncryptionMode(2).String(), "Unknown mode #2")
+	assert.Equal(t, NameEncryptionObfuscated.String(), "obfuscate")
+	assert.Equal(t, NameEncryptionMode(3).String(), "Unknown mode #3")
 }
 
 func TestValidString(t *testing.T) {
@@ -219,6 +221,11 @@ func TestEncryptFileName(t *testing.T) {
 	// Now off mode
 	c, _ = newCipher(NameEncryptionOff, "", "")
 	assert.Equal(t, "1/12/123.bin", c.EncryptFileName("1/12/123"))
+	// Obfuscation mode
+	c, _ = newCipher(NameEncryptionObfuscated, "", "")
+	assert.Equal(t, "49.6/99.23/150.789/53.!!lipps", c.EncryptFileName("1/12/123/!hello"))
+	assert.Equal(t, "161."+string(rune(0xc4)), c.EncryptFileName(string(rune(0xa1))))
+	assert.Equal(t, "160."+string(rune(0x3c2)), c.EncryptFileName(string(rune(0x3a0))))
 }
 
 func TestDecryptFileName(t *testing.T) {
@@ -236,12 +243,33 @@ func TestDecryptFileName(t *testing.T) {
 		{NameEncryptionOff, "1/12/123.bin", "1/12/123", nil},
 		{NameEncryptionOff, "1/12/123.bix", "", ErrorNotAnEncryptedFile},
 		{NameEncryptionOff, ".bin", "", ErrorNotAnEncryptedFile},
+		{NameEncryptionObfuscated, "0.hello", "hello", nil},
+		{NameEncryptionObfuscated, "hello", "", ErrorNotAnEncryptedFile},
+		{NameEncryptionObfuscated, "161." + string(rune(0xc4)), string(rune(0xa1)), nil},
+		{NameEncryptionObfuscated, "160." + string(rune(0x3c2)), string(rune(0x3a0)), nil},
 	} {
 		c, _ := newCipher(test.mode, "", "")
 		actual, actualErr := c.DecryptFileName(test.in)
 		what := fmt.Sprintf("Testing %q (mode=%v)", test.in, test.mode)
 		assert.Equal(t, test.expected, actual, what)
 		assert.Equal(t, test.expectedErr, actualErr, what)
+	}
+}
+
+func TestEncDecMatches(t *testing.T) {
+	for _, test := range []struct {
+		mode NameEncryptionMode
+		in   string
+	}{
+		{NameEncryptionStandard, "1/2/3/4"},
+		{NameEncryptionOff, "1/2/3/4"},
+		{NameEncryptionObfuscated, "1/2/3/4/!hello" + string(rune(0x3a0))},
+	} {
+		c, _ := newCipher(test.mode, "", "")
+		out, err := c.DecryptFileName(c.EncryptFileName(test.in))
+		what := fmt.Sprintf("Testing %q (mode=%v)", test.in, test.mode)
+		assert.Equal(t, out, test.in, what)
+		assert.Equal(t, err, nil, what)
 	}
 }
 

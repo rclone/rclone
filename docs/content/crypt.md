@@ -71,6 +71,8 @@ Choose a number from below, or type in your own value
    \ "off"
  2 / Encrypt the filenames see the docs for the details.
    \ "standard"
+ 3 / Very simple filename obfuscation.
+   \ "obfuscate"
 filename_encryption> 2
 Password or pass phrase for encryption.
 y) Yes type in my own password
@@ -224,6 +226,27 @@ Standard
   * directory structure visibile
   * identical files names will have identical uploaded names
   * can use shortcuts to shorten the directory recursion
+
+Obfuscation
+
+This is a simple "rotate" of the filename, with each file having a rot
+distance based on the filename. We store the distance at the beginning
+of the filename. So a file called "hello" may become "53.jgnnq"
+
+This is not a strong encryption of filenames, but it may stop automated
+scanning tools from picking up on filename patterns. As such it's an
+intermediate between "off" and "standard". The advantage is that it
+allows for longer path segment names.
+
+There is a possibility with some unicode based filenames that the
+obfuscation is weak and may map lower case characters to upper case
+equivalents.  You can not rely on this for strong protection.
+
+  * file names very lightly obfuscated
+  * file names can be longer than standard encryption
+  * can use sub paths and copy single files
+  * directory structure visibile
+  * identical files names will have identical uploaded names
 
 Cloud storage systems have various limits on file name length and
 total path length which you are more likely to hit using "Standard"
