@@ -4,6 +4,7 @@ package onedrive
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -545,33 +546,41 @@ func (f *Fs) waitForJob(location string, o *Object) error {
 	deadline := time.Now().Add(fs.Config.Timeout)
 	for time.Now().Before(deadline) {
 		opts := rest.Opts{
-			Method:   "GET",
-			Path:     location,
-			Absolute: true,
+			Method:       "GET",
+			Path:         location,
+			Absolute:     true,
+			IgnoreStatus: true, // Ignore the http status response since it seems to return valid info on 500 errors
 		}
 		var resp *http.Response
 		var err error
+		var body []byte
 		err = f.pacer.Call(func() (bool, error) {
 			resp, err = f.srv.Call(&opts)
-			return shouldRetry(resp, err)
+			if err != nil {
+				return fs.ShouldRetry(err), err
+			}
+			body, err = rest.ReadBody(resp)
+			return fs.ShouldRetry(err), err
 		})
 		if err != nil {
 			return err
 		}
-		if resp.StatusCode == 202 {
-			var status api.AsyncOperationStatus
-			err = rest.DecodeJSON(resp, &status)
-			if err != nil {
-				return err
-			}
+		// Try to decode the body first as an api.AsyncOperationStatus
+		var status api.AsyncOperationStatus
+		err = json.Unmarshal(body, &status)
+		if err != nil {
+			return errors.Wrapf(err, "async status result not JSON: %q", body)
+		}
+		// See if we decoded anything...
+		if !(status.Operation == "" && status.PercentageComplete == 0 && status.Status == "") {
 			if status.Status == "failed" || status.Status == "deleteFailed" {
-				return errors.Errorf("async operation %q returned %q", status.Operation, status.Status)
+				return errors.Errorf("%s: async operation %q returned %q", o.remote, status.Operation, status.Status)
 			}
-		} else {
+		} else if resp.StatusCode == 200 {
 			var info api.Item
-			err = rest.DecodeJSON(resp, &info)
+			err = json.Unmarshal(body, &info)
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "async item result not JSON: %q", body)
 			}
 			return o.setMetaData(&info)
 		}
