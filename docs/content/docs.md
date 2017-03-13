@@ -526,7 +526,7 @@ On capable OSes (not Windows or Plan9) send all log output to syslog.
 
 This can be useful for running rclone in script or `rclone mount`.
 
-### -syslog-facility string ###
+### --syslog-facility string ###
 
 If using `--syslog` this sets the syslog facility (eg `KERN`, `USER`).
 See `man syslog` for a list of possible facilities.  The default
