@@ -395,7 +395,7 @@ func Move(fdst Fs, dst Object, remote string, src Object) (err error) {
 			Debugf(src, "Can't move, switching to copy")
 		default:
 			Stats.Error()
-			Errorf(dst, "Couldn't move: %v", err)
+			Errorf(src, "Couldn't move: %v", err)
 			return err
 		}
 	}

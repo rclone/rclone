@@ -200,6 +200,17 @@ type CopyItemRequest struct {
 	Name            *string       `json:"name"`            // Optional The new name for the copy. If this isn't provided, the same name will be used as the original.
 }
 
+// MoveItemRequest is the request to copy an item object
+//
+// Note: The parentReference should include either an id or path but
+// not both. If both are included, they need to reference the same
+// item or an error will occur.
+type MoveItemRequest struct {
+	ParentReference *ItemReference       `json:"parentReference,omitempty"` // Reference to the destination parent directory
+	Name            string               `json:"name,omitempty"`            // Optional The new name for the file. If this isn't provided, the same name will be used as the original.
+	FileSystemInfo  *FileSystemInfoFacet `json:"fileSystemInfo,omitempty"`  // File system information on client. Read-write.
+}
+
 // AsyncOperationStatus provides information on the status of a asynchronous job progress.
 //
 // The following API calls return AsyncOperationStatus resources:

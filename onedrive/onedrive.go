@@ -667,6 +667,67 @@ func (f *Fs) Purge() error {
 	return f.purgeCheck("", false)
 }
 
+// Move src to this remote using server side move operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantMove
+func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+
+	// create the destination directory if necessary
+	err := f.dirCache.FindRoot(true)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create temporary object
+	dstObj, leaf, directoryID, err := f.createObject(remote, srcObj.modTime, srcObj.size)
+	if err != nil {
+		return nil, err
+	}
+
+	// Move the object
+	opts := rest.Opts{
+		Method: "PATCH",
+		Path:   "/drive/items/" + srcObj.id,
+	}
+	move := api.MoveItemRequest{
+		Name: replaceReservedChars(leaf),
+		ParentReference: &api.ItemReference{
+			ID: directoryID,
+		},
+		// We set the mod time too as it gets reset otherwise
+		FileSystemInfo: &api.FileSystemInfoFacet{
+			CreatedDateTime:      api.Timestamp(srcObj.modTime),
+			LastModifiedDateTime: api.Timestamp(srcObj.modTime),
+		},
+	}
+	var resp *http.Response
+	var info api.Item
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(&opts, &move, &info)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = dstObj.setMetaData(&info)
+	if err != nil {
+		return nil, err
+	}
+	return dstObj, nil
+}
+
 // DirCacheFlush resets the directory cache - used in testing as an
 // optional interface
 func (f *Fs) DirCacheFlush() {
@@ -1000,7 +1061,7 @@ var (
 	_ fs.Fs     = (*Fs)(nil)
 	_ fs.Purger = (*Fs)(nil)
 	_ fs.Copier = (*Fs)(nil)
-	// _ fs.Mover    = (*Fs)(nil)
+	_ fs.Mover  = (*Fs)(nil)
 	// _ fs.DirMover = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
