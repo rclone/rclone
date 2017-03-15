@@ -1024,6 +1024,11 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 			Path:   "/drive/root:/" + url.QueryEscape(o.srvPath()) + ":/content",
 			Body:   in,
 		}
+		// for go1.8 (see release notes) we must nil the Body if we want a
+		// "Content-Length: 0" header which onedrive requires for all files.
+		if size == 0 {
+			opts.Body = nil
+		}
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 			resp, err = o.fs.srv.CallJSON(&opts, nil, &info)
 			return shouldRetry(resp, err)
