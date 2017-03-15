@@ -615,6 +615,12 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		return nil, errors.Errorf("can't copy %q -> %q as are same name when lowercase", srcPath, dstPath)
 	}
 
+	// create the destination directory if necessary
+	err = f.dirCache.FindRoot(true)
+	if err != nil {
+		return nil, err
+	}
+
 	// Create temporary object
 	dstObj, leaf, directoryID, err := f.createObject(remote, srcObj.modTime, srcObj.size)
 	if err != nil {
