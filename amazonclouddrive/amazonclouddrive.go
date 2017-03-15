@@ -553,7 +553,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 		return nil, err
 	}
 	// If not create it
-	leaf, directoryID, err := f.dirCache.FindPath(remote, true)
+	leaf, directoryID, err := f.dirCache.FindRootAndPath(remote, true)
 	if err != nil {
 		return nil, err
 	}
@@ -925,7 +925,7 @@ func (o *Object) readMetaData() (err error) {
 	if o.info != nil {
 		return nil
 	}
-	leaf, directoryID, err := o.fs.dirCache.FindPath(o.remote, false)
+	leaf, directoryID, err := o.fs.dirCache.FindRootAndPath(o.remote, false)
 	if err != nil {
 		if err == fs.ErrorDirNotFound {
 			return fs.ErrorObjectNotFound

@@ -243,6 +243,17 @@ func (dc *DirCache) FindRoot(create bool) error {
 	return nil
 }
 
+// FindRootAndPath finds the root first if not found then finds leaf and directoryID from a path
+//
+// If create is set parent directories will be created if they don't exist
+func (dc *DirCache) FindRootAndPath(path string, create bool) (leaf, directoryID string, err error) {
+	err = dc.FindRoot(create)
+	if err != nil {
+		return
+	}
+	return dc.FindPath(path, create)
+}
+
 // FoundRoot returns whether the root directory has been found yet
 //
 // Call this from FindLeaf or CreateDir only

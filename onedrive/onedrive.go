@@ -438,7 +438,7 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 // Used to create new objects
 func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Object, leaf string, directoryID string, err error) {
 	// Create the directory for the object if it doesn't exist
-	leaf, directoryID, err = f.dirCache.FindPath(remote, true)
+	leaf, directoryID, err = f.dirCache.FindRootAndPath(remote, true)
 	if err != nil {
 		return nil, leaf, directoryID, err
 	}
@@ -615,12 +615,6 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		return nil, errors.Errorf("can't copy %q -> %q as are same name when lowercase", srcPath, dstPath)
 	}
 
-	// create the destination directory if necessary
-	err = f.dirCache.FindRoot(true)
-	if err != nil {
-		return nil, err
-	}
-
 	// Create temporary object
 	dstObj, leaf, directoryID, err := f.createObject(remote, srcObj.modTime, srcObj.size)
 	if err != nil {
@@ -687,12 +681,6 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	if !ok {
 		fs.Debugf(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
-	}
-
-	// create the destination directory if necessary
-	err := f.dirCache.FindRoot(true)
-	if err != nil {
-		return nil, err
 	}
 
 	// Create temporary object
@@ -825,10 +813,6 @@ func (o *Object) readMetaData() (err error) {
 	if o.hasMetaData {
 		return nil
 	}
-	// leaf, directoryID, err := o.fs.dirCache.FindPath(o.remote, false)
-	// if err != nil {
-	// 	return err
-	// }
 	info, _, err := o.fs.readMetaDataForPath(o.srvPath())
 	if err != nil {
 		if apiErr, ok := err.(*api.Error); ok {

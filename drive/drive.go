@@ -544,7 +544,7 @@ func (f *Fs) createFileInfo(remote string, modTime time.Time, size int64) (*Obje
 		bytes:  size,
 	}
 
-	leaf, directoryID, err := f.dirCache.FindPath(remote, true)
+	leaf, directoryID, err := f.dirCache.FindRootAndPath(remote, true)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -765,12 +765,6 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		return nil, errors.New("can't move a Google document")
 	}
 
-	// create the destination directory if necessary
-	err := f.dirCache.FindRoot(true)
-	if err != nil {
-		return nil, err
-	}
-
 	// Temporary Object under construction
 	dstObj, dstInfo, err := f.createFileInfo(remote, srcObj.ModTime(), srcObj.bytes)
 	if err != nil {
@@ -949,7 +943,7 @@ func (o *Object) readMetaData() (err error) {
 		return nil
 	}
 
-	leaf, directoryID, err := o.fs.dirCache.FindPath(o.remote, false)
+	leaf, directoryID, err := o.fs.dirCache.FindRootAndPath(o.remote, false)
 	if err != nil {
 		if err == fs.ErrorDirNotFound {
 			return fs.ErrorObjectNotFound

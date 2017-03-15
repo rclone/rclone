@@ -770,7 +770,6 @@ func TestMoveFile(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
 
-	r.Mkdir(r.fremote)
 	file1 := r.WriteFile("file1", "file1 contents", t1)
 	fstest.CheckItems(t, r.flocal, file1)
 
@@ -801,7 +800,6 @@ func TestCopyFile(t *testing.T) {
 	file2 := file1
 	file2.Path = "sub/file2"
 
-	r.Mkdir(r.fremote)
 	err := fs.CopyFile(r.fremote, r.flocal, file2.Path, file1.Path)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.flocal, file1)
