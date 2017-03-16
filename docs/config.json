@@ -7,7 +7,7 @@
     "baseurl": "http://rclone.org",
     "title": "rclone - rsync for cloud storage",
     "description": "rclone - rsync for cloud storage: google drive, s3, swift, cloudfiles, dropbox, memstore...",
-    "canonifyurls": true,
+    "canonifyurls": false,
     "blackfriday": {
         "smartDashes": false,
         "plainIDAnchors": true
