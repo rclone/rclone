@@ -59,7 +59,8 @@ type Fs struct {
 	warned      map[string]struct{} // whether we have warned about this string
 	nounc       bool                // Skip UNC conversion on Windows
 	// do os.Lstat or os.Stat
-	lstat func(name string) (os.FileInfo, error)
+	lstat    func(name string) (os.FileInfo, error)
+	dirNames *mapper // directory name mapping
 }
 
 // Object represents a local filesystem object
@@ -79,11 +80,12 @@ func NewFs(name, root string) (fs.Fs, error) {
 
 	nounc := fs.ConfigFileGet(name, "nounc")
 	f := &Fs{
-		name:   name,
-		warned: make(map[string]struct{}),
-		nounc:  nounc == "true",
-		dev:    devUnset,
-		lstat:  os.Lstat,
+		name:     name,
+		warned:   make(map[string]struct{}),
+		nounc:    nounc == "true",
+		dev:      devUnset,
+		lstat:    os.Lstat,
+		dirNames: newMapper(),
 	}
 	f.root = f.cleanPath(root)
 	f.features = (&fs.Features{CaseInsensitive: f.caseInsensitive()}).Fill(f)
@@ -136,8 +138,12 @@ func (f *Fs) caseInsensitive() bool {
 }
 
 // newObject makes a half completed Object
-func (f *Fs) newObject(remote string) *Object {
-	dstPath := f.cleanPath(filepath.Join(f.root, remote))
+//
+// if dstPath is empty then it is made from remote
+func (f *Fs) newObject(remote, dstPath string) *Object {
+	if dstPath == "" {
+		dstPath = f.cleanPath(filepath.Join(f.root, remote))
+	}
 	remote = f.cleanRemote(remote)
 	return &Object{
 		fs:     f,
@@ -149,8 +155,8 @@ func (f *Fs) newObject(remote string) *Object {
 // Return an Object from a path
 //
 // May return nil if an error occurred
-func (f *Fs) newObjectWithInfo(remote string, info os.FileInfo) (fs.Object, error) {
-	o := f.newObject(remote)
+func (f *Fs) newObjectWithInfo(remote, dstPath string, info os.FileInfo) (fs.Object, error) {
+	o := f.newObject(remote, dstPath)
 	if info != nil {
 		o.info = info
 	} else {
@@ -171,7 +177,7 @@ func (f *Fs) newObjectWithInfo(remote string, info os.FileInfo) (fs.Object, erro
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error ErrorObjectNotFound.
 func (f *Fs) NewObject(remote string) (fs.Object, error) {
-	return f.newObjectWithInfo(remote, nil)
+	return f.newObjectWithInfo(remote, "", nil)
 }
 
 // listArgs is the arguments that a new list takes
@@ -227,7 +233,7 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
 				if (mode&os.ModeSymlink) == 0 && out.IncludeDirectory(newRemote) && f.dev == readDevice(fi) {
 					dir := &fs.Dir{
-						Name:  f.cleanRemote(newRemote),
+						Name:  f.dirNames.Save(newRemote, f.cleanRemote(newRemote)),
 						When:  fi.ModTime(),
 						Bytes: 0,
 						Count: 0,
@@ -240,7 +246,7 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 					}
 				}
 			} else {
-				fso, err := f.newObjectWithInfo(newRemote, fi)
+				fso, err := f.newObjectWithInfo(newRemote, newPath, fi)
 				if err != nil {
 					out.SetError(err)
 					return nil
@@ -259,6 +265,7 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 // Ignores everything which isn't Storable, eg links etc
 func (f *Fs) List(out fs.ListOpts, dir string) {
 	defer out.Finished()
+	dir = f.dirNames.Load(dir)
 	root := f.cleanPath(filepath.Join(f.root, dir))
 	dir = f.cleanRemote(dir)
 	_, err := os.Stat(root)
@@ -323,11 +330,49 @@ func (f *Fs) cleanRemote(name string) string {
 	return name
 }
 
+// mapper maps raw to cleaned directory names
+type mapper struct {
+	mu sync.RWMutex      // mutex to protect the below
+	m  map[string]string // map of un-normalised directory names
+}
+
+func newMapper() *mapper {
+	return &mapper{
+		m: make(map[string]string),
+	}
+}
+
+// Lookup a directory name to make a local name (reverses
+// cleanDirName)
+//
+// FIXME this is temporary before we make a proper Directory object
+func (m *mapper) Load(in string) string {
+	m.mu.RLock()
+	out, ok := m.m[in]
+	m.mu.RUnlock()
+	if ok {
+		return out
+	}
+	return in
+}
+
+// Cleans a directory name recording if it needed to be altered
+//
+// FIXME this is temporary before we make a proper Directory object
+func (m *mapper) Save(in, out string) string {
+	if in != out {
+		m.mu.Lock()
+		m.m[out] = in
+		m.mu.Unlock()
+	}
+	return out
+}
+
 // Put the Object to the local filesystem
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 	remote := src.Remote()
 	// Temporary Object under construction - info filled in by Update()
-	o := f.newObject(remote)
+	o := f.newObject(remote, "")
 	err := o.Update(in, src)
 	if err != nil {
 		return nil, err
@@ -454,7 +499,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	// Temporary Object under construction
-	dstObj := f.newObject(remote)
+	dstObj := f.newObject(remote, "")
 
 	// Check it is a file if it exists
 	err := dstObj.lstat()
