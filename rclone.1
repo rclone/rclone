@@ -916,23 +916,22 @@ Start the mount like this
 .IP
 .nf
 \f[C]
-rclone\ mount\ remote:path/to/files\ /path/to/local/mount\ &
+rclone\ mount\ remote:path/to/files\ /path/to/local/mount
 \f[]
 .fi
 .PP
-Stop the mount with
+When the program ends, either via Ctrl+C or receiving a SIGINT or SIGTERM signal,
+the mount is automatically stopped.
+.PP
+The umount operation can fail, for example when the mountpoint is busy.
+When that happens, it is the user's responsibility to stop the mount manually with
 .IP
 .nf
 \f[C]
+#\ Linux
 fusermount\ \-u\ /path/to/local/mount
-\f[]
-.fi
-.PP
-Or with OS X
-.IP
-.nf
-\f[C]
-umount\ \-u\ /path/to/local/mount
+#\ OS\ X
+umount\ /path/to/local/mount
 \f[]
 .fi
 .SS Limitations
