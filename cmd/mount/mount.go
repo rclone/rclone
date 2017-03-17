@@ -7,6 +7,8 @@ package mount
 import (
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"bazil.org/fuse"
@@ -73,20 +75,19 @@ This is **EXPERIMENTAL** - use with care.
 
 First set up your remote using ` + "`rclone config`" + `.  Check it works with ` + "`rclone ls`" + ` etc.
 
-Start the mount like this (note the & on the end to put rclone in the background).
+Start the mount like this
 
-    rclone mount remote:path/to/files /path/to/local/mount &
+    rclone mount remote:path/to/files /path/to/local/mount
 
-Stop the mount with
+When the program ends, either via Ctrl+C or receiving a SIGINT or SIGTERM signal,
+the mount is automatically stopped.
 
+The umount operation can fail, for example when the mountpoint is busy.
+When that happens, it is the user's responsibility to stop the mount manually with
+
+    # Linux
     fusermount -u /path/to/local/mount
-
-Or if that fails try
-
-    fusermount -z -u /path/to/local/mount
-
-Or with OS X
-
+    # OS X
     umount /path/to/local/mount
 
 ### Limitations ###
@@ -168,8 +169,18 @@ func Mount(f fs.Fs, mountpoint string) error {
 		return errors.Wrap(err, "failed to mount FUSE fs")
 	}
 
-	// Wait for umount
-	err = <-errChan
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	select {
+	// umount triggered outside the app
+	case err = <-errChan:
+		break
+	// Program abort: umount
+	case <-sigChan:
+		err = fuse.Unmount(mountpoint)
+	}
+
 	if err != nil {
 		return errors.Wrap(err, "failed to umount FUSE fs")
 	}
