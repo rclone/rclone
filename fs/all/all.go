@@ -9,6 +9,7 @@ import (
 	_ "github.com/ncw/rclone/dropbox"
 	_ "github.com/ncw/rclone/ftp"
 	_ "github.com/ncw/rclone/googlecloudstorage"
+	_ "github.com/ncw/rclone/http"
 	_ "github.com/ncw/rclone/hubic"
 	_ "github.com/ncw/rclone/local"
 	_ "github.com/ncw/rclone/onedrive"
