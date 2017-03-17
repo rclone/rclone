@@ -75,20 +75,19 @@ This is **EXPERIMENTAL** - use with care.
 
 First set up your remote using ` + "`rclone config`" + `.  Check it works with ` + "`rclone ls`" + ` etc.
 
-Start the mount like this (note the & on the end to put rclone in the background).
+Start the mount like this
 
-    rclone mount remote:path/to/files /path/to/local/mount &
+    rclone mount remote:path/to/files /path/to/local/mount
 
-Stop the mount with
+When the program ends, either via Ctrl+C or receiving a SIGINT or SIGTERM signal,
+the mount is automatically stopped.
 
+The umount operation can fail, for example when the mountpoint is busy.
+When that happens, it is the user's responsibility to stop the mount manually with
+
+    # Linux
     fusermount -u /path/to/local/mount
-
-Or if that fails try
-
-    fusermount -z -u /path/to/local/mount
-
-Or with OS X
-
+    # OS X
     umount /path/to/local/mount
 
 ### Limitations ###
