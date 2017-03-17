@@ -7,6 +7,8 @@ package mount
 import (
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"bazil.org/fuse"
@@ -168,8 +170,18 @@ func Mount(f fs.Fs, mountpoint string) error {
 		return errors.Wrap(err, "failed to mount FUSE fs")
 	}
 
-	// Wait for umount
-	err = <-errChan
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	select {
+	// umount triggered outside the app
+	case err = <-errChan:
+		break
+	// Program abort: umount
+	case <-sigChan:
+		err = fuse.Unmount(mountpoint)
+	}
+
 	if err != nil {
 		return errors.Wrap(err, "failed to umount FUSE fs")
 	}
