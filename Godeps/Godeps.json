@@ -1,7 +1,7 @@
 {
 	"ImportPath": "github.com/ncw/rclone",
 	"GoVersion": "go1.7",
-	"GodepVersion": "v75",
+	"GodepVersion": "v79",
 	"Packages": [
 		"./..."
 	],
@@ -209,6 +209,11 @@
 			"Rev": "bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d"
 		},
 		{
+			"ImportPath": "github.com/jmespath/go-jmespath/cmd/jpgo",
+			"Comment": "0.2.2-14-gbd40a432e4c7",
+			"Rev": "bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d"
+		},
+		{
 			"ImportPath": "github.com/kr/fs",
 			"Rev": "2788f0dbd16903de03cb8186e5c7d97b69ad387b"
 		},
@@ -328,35 +333,43 @@
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
-			"Rev": "b4690f45fa1cafc47b1c280c2e75116efe40cc13"
+			"Rev": "a6577fac2d73be281a500b310739095313165611"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context/ctxhttp",
-			"Rev": "b4690f45fa1cafc47b1c280c2e75116efe40cc13"
+			"Rev": "a6577fac2d73be281a500b310739095313165611"
+		},
+		{
+			"ImportPath": "golang.org/x/net/html",
+			"Rev": "a6577fac2d73be281a500b310739095313165611"
+		},
+		{
+			"ImportPath": "golang.org/x/net/html/atom",
+			"Rev": "a6577fac2d73be281a500b310739095313165611"
 		},
 		{
 			"ImportPath": "golang.org/x/net/http2",
-			"Rev": "b4690f45fa1cafc47b1c280c2e75116efe40cc13"
+			"Rev": "a6577fac2d73be281a500b310739095313165611"
 		},
 		{
 			"ImportPath": "golang.org/x/net/http2/hpack",
-			"Rev": "b4690f45fa1cafc47b1c280c2e75116efe40cc13"
+			"Rev": "a6577fac2d73be281a500b310739095313165611"
 		},
 		{
 			"ImportPath": "golang.org/x/net/idna",
-			"Rev": "b4690f45fa1cafc47b1c280c2e75116efe40cc13"
+			"Rev": "a6577fac2d73be281a500b310739095313165611"
 		},
 		{
 			"ImportPath": "golang.org/x/net/internal/timeseries",
-			"Rev": "b4690f45fa1cafc47b1c280c2e75116efe40cc13"
+			"Rev": "a6577fac2d73be281a500b310739095313165611"
 		},
 		{
 			"ImportPath": "golang.org/x/net/lex/httplex",
-			"Rev": "b4690f45fa1cafc47b1c280c2e75116efe40cc13"
+			"Rev": "a6577fac2d73be281a500b310739095313165611"
 		},
 		{
 			"ImportPath": "golang.org/x/net/trace",
-			"Rev": "b4690f45fa1cafc47b1c280c2e75116efe40cc13"
+			"Rev": "a6577fac2d73be281a500b310739095313165611"
 		},
 		{
 			"ImportPath": "golang.org/x/oauth2",
