@@ -21,6 +21,8 @@ Making a release
   * git push --tags origin master
   * git push --tags origin master:stable # update the stable branch for packager.io
   * make upload_github
+  * make startdev
+  * # announce with forum post, twitter post, G+ post
 
 Early in the next release cycle update the vendored dependencies
   * make update

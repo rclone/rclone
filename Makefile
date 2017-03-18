@@ -134,6 +134,8 @@ tag:	doc
 
 retag:
 	git tag -f $(LAST_TAG)
+
+startdev:
 	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(LAST_TAG)-DEV\"\n" | gofmt > fs/version.go
 	git commit -m "Start $(LAST_TAG)-DEV development" fs/version.go
 

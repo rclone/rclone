@@ -1,5 +1,5 @@
 ---
-date: 2017-03-18T11:14:54Z
+date: 2017-03-18T11:19:45Z
 title: "rclone cryptcheck"
 slug: rclone_cryptcheck
 url: /commands/rclone_cryptcheck/
