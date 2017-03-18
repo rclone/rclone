@@ -1,5 +1,5 @@
 name: rclone
-version: 1.35
+version: 1.36
 summary: rsync for cloud storage
 description:
   Rclone is a command line program to sync files to and from cloud storage providers such as
@@ -16,7 +16,7 @@ parts:
   rclone:
     plugin: go
     source: https://github.com/ncw/rclone
-    source-tag: v1.35
+    source-tag: v1.36
     source-type: git
     go-importpath: github.com/ncw/rclone
     build-packages: [gcc, libgudev-1.0-dev, fuse]

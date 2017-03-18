@@ -1,5 +1,5 @@
 ---
-date: 2017-01-02T15:29:14Z
+date: 2017-03-18T11:14:54Z
 title: "rclone dedupe"
 slug: rclone_dedupe
 url: /commands/rclone_dedupe/
@@ -108,12 +108,16 @@ rclone dedupe [mode] remote:path
       --b2-test-mode string               A flag string for X-Bz-Test-Mode header.
       --b2-upload-cutoff int              Cutoff for switching to chunked upload (default 190.735M)
       --b2-versions                       Include old versions in directory listings.
-      --bwlimit int                       Bandwidth limit in kBytes/s, or use suffix b|k|M|G
+      --backup-dir string                 Make backups into hierarchy based in DIR.
+      --buffer-size int                   Buffer size when copying files. (default 16M)
+      --bwlimit BwTimetable               Bandwidth limit in kBytes/s, or use suffix b|k|M|G or a full timetable.
       --checkers int                      Number of checkers to run in parallel. (default 8)
   -c, --checksum                          Skip based on checksum & size, not mod-time & size
       --config string                     Config file. (default "/home/ncw/.rclone.conf")
       --contimeout duration               Connect timeout (default 1m0s)
+  -L, --copy-links                        Follow symlinks and copy the pointed to item.
       --cpuprofile string                 Write cpu profile to file
+      --crypt-show-mapping                For all files listed show how the names encrypt.
       --delete-after                      When synchronizing, delete files on destination after transfering
       --delete-before                     When synchronizing, delete files on destination before transfering
       --delete-during                     When synchronizing, delete files during transfer (default)
@@ -122,6 +126,8 @@ rclone dedupe [mode] remote:path
       --drive-chunk-size int              Upload chunk size. Must a power of 2 >= 256k. (default 8M)
       --drive-formats string              Comma separated list of preferred formats for downloading Google docs. (default "docx,xlsx,pptx,svg")
       --drive-full-list                   Use a full listing for directory list. More data but usually quicker. (obsolete)
+      --drive-list-chunk int              Size of listing chunk 100-1000. 0 to disable. (default 1000)
+      --drive-skip-gdocs                  Skip google documents in all listings.
       --drive-upload-cutoff int           Cutoff for switching to chunked upload (default 8M)
       --drive-use-trash                   Send files to the trash instead of deleting permanently.
       --dropbox-chunk-size int            Upload chunk size. Max 150M. (default 128M)
@@ -135,12 +141,14 @@ rclone dedupe [mode] remote:path
       --files-from stringArray            Read list of source-file names from file
   -f, --filter stringArray                Add a file-filtering rule
       --filter-from stringArray           Read filtering patterns from a file
+      --ignore-checksum                   Skip post copy check of checksums.
       --ignore-existing                   Skip all files that exist on destination
       --ignore-size                       Ignore size when skipping use mod-time or checksum.
   -I, --ignore-times                      Don't skip files that match size and time - transfer all files
       --include stringArray               Include files matching pattern
       --include-from stringArray          Read include patterns from file
       --log-file string                   Log everything to this file
+      --log-level string                  Log level DEBUG|INFO|NOTICE|ERROR (default "INFO")
       --low-level-retries int             Number of low level retries to do. (default 10)
       --max-age string                    Don't transfer any file older than this in s or suffix ms|s|m|h|d|w|M|y
       --max-depth int                     If set limits the recursion depth to this. (default -1)
@@ -153,6 +161,7 @@ rclone dedupe [mode] remote:path
       --no-gzip-encoding                  Don't set Accept-Encoding: gzip.
       --no-traverse                       Don't traverse destination file system on copy.
       --no-update-modtime                 Don't update destination mod-time if files identical.
+      --old-sync-method                   Temporary flag to select old sync method
   -x, --one-file-system                   Don't cross filesystem boundaries.
       --onedrive-chunk-size int           Above this size files will be chunked - must be multiple of 320k. (default 10M)
       --onedrive-upload-cutoff int        Cutoff for switching to chunked upload - must be <= 100MB (default 10M)
@@ -163,14 +172,18 @@ rclone dedupe [mode] remote:path
       --size-only                         Skip based on size only, not mod-time or checksum
       --stats duration                    Interval between printing stats, e.g 500ms, 60s, 5m. (0 to disable) (default 1m0s)
       --stats-unit string                 Show data rate in stats as either 'bits' or 'bytes'/s (default "bytes")
+      --suffix string                     Suffix for use with --backup-dir.
       --swift-chunk-size int              Above this size files will be chunked into a _segments container. (default 5G)
+      --syslog                            Use Syslog for logging
+      --syslog-facility string            Facility for syslog, eg KERN,USER,... (default "DAEMON")
       --timeout duration                  IO idle timeout (default 5m0s)
+      --track-renames                     When synchronizing, track file renames and do a server side move if possible
       --transfers int                     Number of file transfers to run in parallel. (default 4)
   -u, --update                            Skip files that are newer on the destination.
-  -v, --verbose                           Print lots more stuff
+  -v, --verbose count[=-1]                Print lots more stuff (repeat for more)
 ```
 
 ### SEE ALSO
-* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.35-DEV
+* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.36
 
-###### Auto generated by spf13/cobra on 2-Jan-2017
+###### Auto generated by spf13/cobra on 18-Mar-2017

@@ -1,5 +1,5 @@
 ---
-date: 2017-01-02T15:29:14Z
+date: 2017-03-18T11:14:54Z
 title: "rclone mount"
 slug: rclone_mount
 url: /commands/rclone_mount/
@@ -19,7 +19,7 @@ This is **EXPERIMENTAL** - use with care.
 
 First set up your remote using `rclone config`.  Check it works with `rclone ls` etc.
 
-Start the mount like this
+Start the mount like this (note the & on the end to put rclone in the background).
 
     rclone mount remote:path/to/files /path/to/local/mount &
 
@@ -27,23 +27,27 @@ Stop the mount with
 
     fusermount -u /path/to/local/mount
 
+Or if that fails try
+
+    fusermount -z -u /path/to/local/mount
+
 Or with OS X
 
-    umount -u /path/to/local/mount
+    umount /path/to/local/mount
 
 ### Limitations ###
 
 This can only write files seqentially, it can only seek when reading.
+This means that many applications won't work with their files on an
+rclone mount.
 
-Rclone mount inherits rclone's directory handling.  In rclone's world
-directories don't really exist.  This means that empty directories
-will have a tendency to disappear once they fall out of the directory
-cache.
-
-The bucket based FSes (eg swift, s3, google compute storage, b2) won't
-work from the root - you will need to specify a bucket, or a path
-within the bucket.  So `swift:` won't work whereas `swift:bucket` will
-as will `swift:bucket/path`.
+The bucket based remotes (eg Swift, S3, Google Compute Storage, B2,
+Hubic) won't work from the root - you will need to specify a bucket,
+or a path within the bucket.  So `swift:` won't work whereas
+`swift:bucket` will as will `swift:bucket/path`.
+None of these support the concept of directories, so empty
+directories will have a tendency to disappear once they fall out of
+the directory cache.
 
 Only supported on Linux, FreeBSD and OS X at the moment.
 
@@ -55,6 +59,11 @@ commands cope with this with lots of retries.  However rclone mount
 can't use retries in the same way without making local copies of the
 uploads.  This might happen in the future, but for the moment rclone
 mount won't do that, so will be less reliable than the rclone command.
+
+### Filters ###
+
+Note that all the rclone filters can be used to select a subset of the
+files to be visible in the mount.
 
 ### Bugs ###
 
@@ -103,12 +112,16 @@ rclone mount remote:path /path/to/mountpoint
       --b2-test-mode string               A flag string for X-Bz-Test-Mode header.
       --b2-upload-cutoff int              Cutoff for switching to chunked upload (default 190.735M)
       --b2-versions                       Include old versions in directory listings.
-      --bwlimit int                       Bandwidth limit in kBytes/s, or use suffix b|k|M|G
+      --backup-dir string                 Make backups into hierarchy based in DIR.
+      --buffer-size int                   Buffer size when copying files. (default 16M)
+      --bwlimit BwTimetable               Bandwidth limit in kBytes/s, or use suffix b|k|M|G or a full timetable.
       --checkers int                      Number of checkers to run in parallel. (default 8)
   -c, --checksum                          Skip based on checksum & size, not mod-time & size
       --config string                     Config file. (default "/home/ncw/.rclone.conf")
       --contimeout duration               Connect timeout (default 1m0s)
+  -L, --copy-links                        Follow symlinks and copy the pointed to item.
       --cpuprofile string                 Write cpu profile to file
+      --crypt-show-mapping                For all files listed show how the names encrypt.
       --delete-after                      When synchronizing, delete files on destination after transfering
       --delete-before                     When synchronizing, delete files on destination before transfering
       --delete-during                     When synchronizing, delete files during transfer (default)
@@ -117,6 +130,8 @@ rclone mount remote:path /path/to/mountpoint
       --drive-chunk-size int              Upload chunk size. Must a power of 2 >= 256k. (default 8M)
       --drive-formats string              Comma separated list of preferred formats for downloading Google docs. (default "docx,xlsx,pptx,svg")
       --drive-full-list                   Use a full listing for directory list. More data but usually quicker. (obsolete)
+      --drive-list-chunk int              Size of listing chunk 100-1000. 0 to disable. (default 1000)
+      --drive-skip-gdocs                  Skip google documents in all listings.
       --drive-upload-cutoff int           Cutoff for switching to chunked upload (default 8M)
       --drive-use-trash                   Send files to the trash instead of deleting permanently.
       --dropbox-chunk-size int            Upload chunk size. Max 150M. (default 128M)
@@ -130,12 +145,14 @@ rclone mount remote:path /path/to/mountpoint
       --files-from stringArray            Read list of source-file names from file
   -f, --filter stringArray                Add a file-filtering rule
       --filter-from stringArray           Read filtering patterns from a file
+      --ignore-checksum                   Skip post copy check of checksums.
       --ignore-existing                   Skip all files that exist on destination
       --ignore-size                       Ignore size when skipping use mod-time or checksum.
   -I, --ignore-times                      Don't skip files that match size and time - transfer all files
       --include stringArray               Include files matching pattern
       --include-from stringArray          Read include patterns from file
       --log-file string                   Log everything to this file
+      --log-level string                  Log level DEBUG|INFO|NOTICE|ERROR (default "INFO")
       --low-level-retries int             Number of low level retries to do. (default 10)
       --max-age string                    Don't transfer any file older than this in s or suffix ms|s|m|h|d|w|M|y
       --max-depth int                     If set limits the recursion depth to this. (default -1)
@@ -148,6 +165,7 @@ rclone mount remote:path /path/to/mountpoint
       --no-gzip-encoding                  Don't set Accept-Encoding: gzip.
       --no-traverse                       Don't traverse destination file system on copy.
       --no-update-modtime                 Don't update destination mod-time if files identical.
+      --old-sync-method                   Temporary flag to select old sync method
   -x, --one-file-system                   Don't cross filesystem boundaries.
       --onedrive-chunk-size int           Above this size files will be chunked - must be multiple of 320k. (default 10M)
       --onedrive-upload-cutoff int        Cutoff for switching to chunked upload - must be <= 100MB (default 10M)
@@ -158,14 +176,18 @@ rclone mount remote:path /path/to/mountpoint
       --size-only                         Skip based on size only, not mod-time or checksum
       --stats duration                    Interval between printing stats, e.g 500ms, 60s, 5m. (0 to disable) (default 1m0s)
       --stats-unit string                 Show data rate in stats as either 'bits' or 'bytes'/s (default "bytes")
+      --suffix string                     Suffix for use with --backup-dir.
       --swift-chunk-size int              Above this size files will be chunked into a _segments container. (default 5G)
+      --syslog                            Use Syslog for logging
+      --syslog-facility string            Facility for syslog, eg KERN,USER,... (default "DAEMON")
       --timeout duration                  IO idle timeout (default 5m0s)
+      --track-renames                     When synchronizing, track file renames and do a server side move if possible
       --transfers int                     Number of file transfers to run in parallel. (default 4)
   -u, --update                            Skip files that are newer on the destination.
-  -v, --verbose                           Print lots more stuff
+  -v, --verbose count[=-1]                Print lots more stuff (repeat for more)
 ```
 
 ### SEE ALSO
-* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.35-DEV
+* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.36
 
-###### Auto generated by spf13/cobra on 2-Jan-2017
+###### Auto generated by spf13/cobra on 18-Mar-2017

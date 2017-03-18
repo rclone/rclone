@@ -1,11 +1,6 @@
-Required software for making a release
+Extra required software for making a release
   * [github-release](https://github.com/aktau/github-release) for uploading packages
-  * [gox](https://github.com/mitchellh/gox) for cross compiling
-    * Run `gox -build-toolchain`
-    * This assumes you have your own source checkout
   * pandoc for making the html and man pages
-  * errcheck - go get github.com/kisielk/errcheck
-  * golint - go get github.com/golang/lint
 
 Making a release
   * git status - make sure everything is checked in
@@ -16,6 +11,7 @@ Making a release
   * edit docs/content/changelog.md
   * make doc
   * git status - to check for new man pages - git add them
+  * # Update version number in snapcraft.yml
   * git commit -a -v -m "Version v1.XX"
   * make retag
   * # Set the GOPATH for a current stable go compiler
@@ -23,6 +19,7 @@ Making a release
   * make upload
   * make upload_website
   * git push --tags origin master
+  * git push --tags origin master:stable # update the stable branch for packager.io
   * make upload_github
 
 Early in the next release cycle update the vendored dependencies
@@ -31,3 +28,7 @@ Early in the next release cycle update the vendored dependencies
   * git add new files
   * carry forward any patches to vendor stuff
   * git commit -a -v
+
+## Make version number go to -DEV and check in
+
+Make the version number be just in a file?

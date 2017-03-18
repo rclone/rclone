@@ -7,6 +7,89 @@ date: "2016-11-06"
 Changelog
 ---------
 
+  * v1.36 - 2017-03-18
+    * New Features
+      * SFTP remote (Jack Schmidt)
+      * Re-implement sync routine to work a directory at a time reducing memory usage
+      * Logging revamped to be more inline with rsync - now much quieter
+          * -v only shows transfers
+          * -vv is for full debug
+          * --syslog to log to syslog on capable platforms
+      * Implement --backup-dir and --suffix
+      * Implement --track-renames (initial implementation by Bjørn Erik Pedersen)
+      * Add time-based bandwidth limits (Lukas Loesche)
+      * rclone cryptcheck: checks integrity of crypt remotes
+      * Allow all config file variables and options to be set from environment variables
+      * Add --buffer-size parameter to control buffer size for copy
+      * Make --delete-after the default
+      * Add --ignore-checksum flag (fixed by Hisham Zarka)
+      * rclone check: Add --download flag to check all the data, not just hashes
+      * rclone cat: add --head, --tail, --offset, --count and --discard
+      * rclone config: when choosing from a list, allow the value to be entered too
+      * rclone config: allow rename and copy of remotes
+      * rclone obscure: for generating encrypted passwords for rclone's config (T.C. Ferguson)
+      * Comply with XDG Base Directory specification (Dario Giovannetti)
+        * this moves the default location of the config file in a backwards compatible way
+      * Release changes
+        * Ubuntu snap support (Dedsec1)
+        * Compile with go 1.8
+        * MIPS/Linux big and little endian support
+    * Bug Fixes
+      * Fix copyto copying things to the wrong place if the destination dir didn't exist
+      * Fix parsing of remotes in moveto and copyto
+      * Fix --delete-before deleting files on copy
+      * Fix --files-from with an empty file copying everything
+      * Fix sync: don't update mod times if --dry-run set
+      * Fix MimeType propagation
+      * Fix filters to add ** rules to directory rules
+    * Local
+      * Implement -L, --copy-links flag to allow rclone to follow symlinks
+      * Open files in write only mode so rclone can write to an rclone mount
+      * Fix unnormalised unicode causing problems reading directories
+      * Fix interaction between -x flag and --max-depth
+    * Mount
+      * Implement proper directory handling (mkdir, rmdir, renaming)
+      * Make include and exclude filters apply to mount
+      * Implement read and write async buffers - control with --buffer-size
+      * Fix fsync on for directories
+      * Fix retry on network failure when reading off crypt
+    * Crypt
+      * Add --crypt-show-mapping to show encrypted file mapping
+      * Fix crypt writer getting stuck in a loop
+        * **IMPORTANT** this bug had the potential to cause data corruption when
+          * reading data from a network based remote and
+          * writing to a crypt on Google Drive
+        * Use the cryptcheck command to validate your data if you are concerned
+        * If syncing two crypt remotes, sync the unencrypted remote
+    * Amazon Drive
+      * Fix panics on Move (rename)
+      * Fix panic on token expiry
+    * B2
+      * Fix inconsistent listings and rclone check
+      * Fix uploading empty files with go1.8
+      * Constrain memory usage when doing multipart uploads
+      * Fix upload url not being refreshed properly
+    * Drive
+      * Fix Rmdir on directories with trashed files
+      * Fix "Ignoring unknown object" when downloading
+      * Add --drive-list-chunk
+      * Add --drive-skip-gdocs (Károly Oláh)
+    * OneDrive
+      * Implement Move
+      * Fix Copy
+        * Fix overwrite detection in Copy
+        * Fix waitForJob to parse errors correctly
+      * Use token renewer to stop auth errors on long uploads
+      * Fix uploading empty files with go1.8
+    * Google Cloud Storage
+      * Fix depth 1 directory listings
+    * Yandex
+      * Fix single level directory listing
+    * Dropbox
+      * Normalise the case for single level directory listings
+      * Fix depth 1 listing
+    * S3
+      * Added ca-central-1 region (Jon Yergatian)
   * v1.35 - 2017-01-02
     * New Features
       * moveto and copyto commands for choosing a destination name on copy/move

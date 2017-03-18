@@ -122,18 +122,20 @@ serve:	website
 tag:	doc
 	@echo "Old tag is $(LAST_TAG)"
 	@echo "New tag is $(NEW_TAG)"
-	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(NEW_TAG)-DEV\"\n" | gofmt > fs/version.go
+	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(NEW_TAG)\"\n" | gofmt > fs/version.go
 	perl -lpe 's/VERSION/${NEW_TAG}/g; s/DATE/'`date -I`'/g;' docs/content/downloads.md.in > docs/content/downloads.md
 	git tag $(NEW_TAG)
-	@echo "Add this to changelog in docs/content/changelog.md"
-	@echo "  * $(NEW_TAG) -" `date -I`
-	@git log $(LAST_TAG)..$(NEW_TAG) --oneline
+	@echo "Edit the new changelog in docs/content/changelog.md"
+	@echo "  * $(NEW_TAG) -" `date -I` >> docs/content/changelog.md
+	@git log $(LAST_TAG)..$(NEW_TAG) --oneline >> docs/content/changelog.md
 	@echo "Then commit the changes"
 	@echo git commit -m \"Version $(NEW_TAG)\" -a -v
 	@echo "And finally run make retag before make cross etc"
 
 retag:
 	git tag -f $(LAST_TAG)
+	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(LAST_TAG)-DEV\"\n" | gofmt > fs/version.go
+	git commit -m "Start $(LAST_TAG)-DEV development" fs/version.go
 
 gen_tests:
 	cd fstest/fstests && go generate
