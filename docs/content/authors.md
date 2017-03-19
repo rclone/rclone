@@ -62,3 +62,4 @@ Contributors
   * Dedsec1 <Dedsec1@users.noreply.github.com>
   * Hisham Zarka <hzarka@gmail.com>
   * Jérôme Vizcaino <jerome.vizcaino@gmail.com>
+  * Mike Tesch <mjt6129@rit.edu>
