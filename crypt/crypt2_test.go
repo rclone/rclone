@@ -38,8 +38,8 @@ func TestFsListSubdir2(t *testing.T)        { fstests.TestFsListSubdir(t) }
 func TestFsListLevel22(t *testing.T)        { fstests.TestFsListLevel2(t) }
 func TestFsListFile12(t *testing.T)         { fstests.TestFsListFile1(t) }
 func TestFsNewObject2(t *testing.T)         { fstests.TestFsNewObject(t) }
-func TestFsNewObjectDir2(t *testing.T)      { fstests.TestFsNewObjectDir(t) }
 func TestFsListFile1and22(t *testing.T)     { fstests.TestFsListFile1and2(t) }
+func TestFsNewObjectDir2(t *testing.T)      { fstests.TestFsNewObjectDir(t) }
 func TestFsCopy2(t *testing.T)              { fstests.TestFsCopy(t) }
 func TestFsMove2(t *testing.T)              { fstests.TestFsMove(t) }
 func TestFsDirMove2(t *testing.T)           { fstests.TestFsDirMove(t) }
