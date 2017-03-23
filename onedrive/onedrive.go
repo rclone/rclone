@@ -148,7 +148,13 @@ var retryErrorCodes = []int{
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
 func shouldRetry(resp *http.Response, err error) (bool, error) {
-	return fs.ShouldRetry(err) || fs.ShouldRetryHTTP(resp, retryErrorCodes), err
+	authRety := false
+
+	if resp != nil && resp.StatusCode == 401 && len(resp.Header["Www-Authenticate"]) == 1 && strings.Index(resp.Header["Www-Authenticate"][0], "expired_token") >= 0 {
+		authRety = true
+		fs.Debugf(nil, "Should retry: %v", err)
+	}
+	return authRety || fs.ShouldRetry(err) || fs.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
 // readMetaDataForPath reads the metadata from the path
@@ -911,17 +917,19 @@ func (o *Object) createUploadSession() (response *api.CreateUploadResponse, err 
 // uploadFragment uploads a part
 func (o *Object) uploadFragment(url string, start int64, totalSize int64, buf []byte) (err error) {
 	bufSize := int64(len(buf))
+	bufReader := bytes.NewReader(buf)
 	opts := rest.Opts{
 		Method:        "PUT",
 		Path:          url,
 		Absolute:      true,
 		ContentLength: &bufSize,
 		ContentRange:  fmt.Sprintf("bytes %d-%d/%d", start, start+bufSize-1, totalSize),
-		Body:          bytes.NewReader(buf),
+		Body:          bufReader,
 	}
 	var response api.UploadFragmentResponse
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
+		_, _ = bufReader.Seek(0, 0)
 		resp, err = o.fs.srv.CallJSON(&opts, nil, &response)
 		return shouldRetry(resp, err)
 	})
@@ -961,7 +969,7 @@ func (o *Object) uploadMultipart(in io.Reader, size int64) (err error) {
 	// Cancel the session if something went wrong
 	defer func() {
 		if err != nil {
-			fs.Debugf(o, "Cancelling multipart upload")
+			fs.Debugf(o, "Cancelling multipart upload: %v", err)
 			cancelErr := o.cancelUploadSession(uploadURL)
 			if cancelErr != nil {
 				fs.Logf(o, "Failed to cancel multipart upload: %v", err)
