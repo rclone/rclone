@@ -74,6 +74,47 @@ func (f *File) Attr(ctx context.Context, a *fuse.Attr) error {
 	return nil
 }
 
+// Check interface satisfied
+var _ fusefs.NodeSetattrer = (*File)(nil)
+
+// Setattr handles attribute changes from FUSE. Currently supports ModTime only.
+func (f *File) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse.SetattrResponse) error {
+	if noModTime {
+		return nil
+	}
+
+	// if o is nil it isn't valid yet
+	o, err := f.waitForValidObject()
+	if err != nil {
+		return err
+	}
+
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	var newTime time.Time
+	if req.Valid.MtimeNow() {
+		newTime = time.Now()
+	} else if req.Valid.Mtime() {
+		newTime = req.Mtime
+	}
+
+	if !newTime.IsZero() {
+		err := o.SetModTime(newTime)
+		switch err {
+		case nil:
+			fs.Debugf(o, "File.Setattr ModTime OK")
+		case fs.ErrorCantSetModTime:
+			// do nothing, in order to not break "touch somefile" if it exists already
+		default:
+			fs.Errorf(o, "File.Setattr ModTime error: %v", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Update the size while writing
 func (f *File) written(n int64) {
 	atomic.AddInt64(&f.size, n)

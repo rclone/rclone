@@ -169,7 +169,7 @@ func (d *Dir) isEmpty() (bool, error) {
 // Check interface satsified
 var _ fusefs.Node = (*Dir)(nil)
 
-// Attr updates the attribes of a directory
+// Attr updates the attributes of a directory
 func (d *Dir) Attr(ctx context.Context, a *fuse.Attr) error {
 	a.Gid = gid
 	a.Uid = uid
@@ -180,6 +180,27 @@ func (d *Dir) Attr(ctx context.Context, a *fuse.Attr) error {
 	a.Crtime = d.modTime
 	// FIXME include Valid so get some caching?
 	fs.Debugf(d.path, "Dir.Attr %+v", a)
+	return nil
+}
+
+// Check interface satisfied
+var _ fusefs.NodeSetattrer = (*Dir)(nil)
+
+// Setattr handles attribute changes from FUSE. Currently supports ModTime only.
+func (d *Dir) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse.SetattrResponse) error {
+	if noModTime {
+		return nil
+	}
+
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if req.Valid.MtimeNow() {
+		d.modTime = time.Now()
+	} else if req.Valid.Mtime() {
+		d.modTime = req.Mtime
+	}
+
 	return nil
 }
 

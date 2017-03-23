@@ -46,7 +46,7 @@ func init() {
 	umask = unix.Umask(0) // read the umask
 	unix.Umask(umask)     // set it back to what it was
 	cmd.Root.AddCommand(commandDefintion)
-	commandDefintion.Flags().BoolVarP(&noModTime, "no-modtime", "", noModTime, "Don't read the modification time (can speed things up).")
+	commandDefintion.Flags().BoolVarP(&noModTime, "no-modtime", "", noModTime, "Don't read/write the modification time (can speed things up).")
 	commandDefintion.Flags().BoolVarP(&debugFUSE, "debug-fuse", "", debugFUSE, "Debug the FUSE internals - needs -v.")
 	commandDefintion.Flags().BoolVarP(&noSeek, "no-seek", "", noSeek, "Don't allow seeking in files.")
 	commandDefintion.Flags().DurationVarP(&dirCacheTime, "dir-cache-time", "", dirCacheTime, "Time to cache directory entries for.")
@@ -130,8 +130,6 @@ files to be visible in the mount.
 ### TODO ###
 
   * Check hashes on upload/download
-  * Preserve timestamps
-  * Move directories
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)

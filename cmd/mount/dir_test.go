@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -132,4 +133,21 @@ func TestDirRenameFullDir(t *testing.T) {
 	run.rmdir(t, "dir/dir3")
 	run.rmdir(t, "dir")
 	run.checkDir(t, "")
+}
+
+func TestDirModTime(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
+	run.mkdir(t, "dir")
+	mtime := time.Date(2012, 11, 18, 17, 32, 31, 0, time.UTC)
+	err := os.Chtimes(run.path("dir"), mtime, mtime)
+	require.NoError(t, err)
+
+	info, err := os.Stat(run.path("dir"))
+	require.NoError(t, err)
+
+	// avoid errors because of timezone differences
+	assert.Equal(t, info.ModTime().Unix(), mtime.Unix())
+
+	run.rmdir(t, "dir")
 }
