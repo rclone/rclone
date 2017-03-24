@@ -223,9 +223,9 @@ func TestEncryptFileName(t *testing.T) {
 	assert.Equal(t, "1/12/123.bin", c.EncryptFileName("1/12/123"))
 	// Obfuscation mode
 	c, _ = newCipher(NameEncryptionObfuscated, "", "")
-	assert.Equal(t, "49.6/99.23/150.789/53.!!lipps", c.EncryptFileName("1/12/123/!hello"))
-	assert.Equal(t, "161."+string(rune(0xc4)), c.EncryptFileName(string(rune(0xa1))))
-	assert.Equal(t, "160."+string(rune(0x3c2)), c.EncryptFileName(string(rune(0x3a0))))
+	assert.Equal(t, "49.6/99.23/150.890/53.!!lipps", c.EncryptFileName("1/12/123/!hello"))
+	assert.Equal(t, "161.\u00e4", c.EncryptFileName("\u00a1"))
+	assert.Equal(t, "160.\u03c2", c.EncryptFileName("\u03a0"))
 }
 
 func TestDecryptFileName(t *testing.T) {
@@ -245,8 +245,8 @@ func TestDecryptFileName(t *testing.T) {
 		{NameEncryptionOff, ".bin", "", ErrorNotAnEncryptedFile},
 		{NameEncryptionObfuscated, "0.hello", "hello", nil},
 		{NameEncryptionObfuscated, "hello", "", ErrorNotAnEncryptedFile},
-		{NameEncryptionObfuscated, "161." + string(rune(0xc4)), string(rune(0xa1)), nil},
-		{NameEncryptionObfuscated, "160." + string(rune(0x3c2)), string(rune(0x3a0)), nil},
+		{NameEncryptionObfuscated, "161.\u00e4", "\u00a1", nil},
+		{NameEncryptionObfuscated, "160.\u03c2", "\u03a0", nil},
 	} {
 		c, _ := newCipher(test.mode, "", "")
 		actual, actualErr := c.DecryptFileName(test.in)
@@ -263,7 +263,7 @@ func TestEncDecMatches(t *testing.T) {
 	}{
 		{NameEncryptionStandard, "1/2/3/4"},
 		{NameEncryptionOff, "1/2/3/4"},
-		{NameEncryptionObfuscated, "1/2/3/4/!hello" + string(rune(0x3a0))},
+		{NameEncryptionObfuscated, "1/2/3/4/!hello\u03a0"},
 	} {
 		c, _ := newCipher(test.mode, "", "")
 		out, err := c.DecryptFileName(c.EncryptFileName(test.in))
