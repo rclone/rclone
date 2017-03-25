@@ -46,6 +46,7 @@ var (
 	driveAuthOwnerOnly = fs.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user. Requires drive-full-list.")
 	driveUseTrash      = fs.BoolP("drive-use-trash", "", false, "Send files to the trash instead of deleting permanently.")
 	driveSkipGdocs     = fs.BoolP("drive-skip-gdocs", "", false, "Skip google documents in all listings.")
+	driveSharedWithMe  = fs.BoolP("drive-shared-with-me", "", false, "Only show files that are shared with me")
 	driveExtensions    = fs.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
 	driveListChunk     = pflag.Int64P("drive-list-chunk", "", 1000, "Size of listing chunk 100-1000. 0 to disable.")
 	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
