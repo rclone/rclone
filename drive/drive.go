@@ -46,6 +46,7 @@ var (
 	driveAuthOwnerOnly = fs.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user. Requires drive-full-list.")
 	driveUseTrash      = fs.BoolP("drive-use-trash", "", false, "Send files to the trash instead of deleting permanently.")
 	driveSkipGdocs     = fs.BoolP("drive-skip-gdocs", "", false, "Skip google documents in all listings.")
+	driveSharedWithMe  = fs.BoolP("drive-shared-with-me", "", false, "Only show files that are shared with me")
 	driveExtensions    = fs.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
 	driveListChunk     = pflag.Int64P("drive-list-chunk", "", 1000, "Size of listing chunk 100-1000. 0 to disable.")
 	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
@@ -208,7 +209,13 @@ func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly
 	if !includeTrashed {
 		query = append(query, "trashed=false")
 	}
-	if dirID != "" {
+	// Search with sharedWithMe will always return things listed in "Shared With Me" (without any parents)
+	// We must not filter with parent when we try list "ROOT" with drive-shared-with-me
+	// If we need to list file inside those shared folders, we must search it without sharedWithMe
+	if *driveSharedWithMe && dirID == f.about.RootFolderId {
+		query = append(query, "sharedWithMe=true")
+	}
+	if dirID != "" && !(*driveSharedWithMe && dirID == f.about.RootFolderId) {
 		query = append(query, fmt.Sprintf("'%s' in parents", dirID))
 	}
 	if title != "" {
