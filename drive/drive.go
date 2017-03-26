@@ -209,9 +209,9 @@ func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly
 	if !includeTrashed {
 		query = append(query, "trashed=false")
 	}
-    // Search with sharedWithMe will always return things listed in "Shared With Me" (without any parents)
-    // We must not filter with parent when we try list "ROOT" with drive-shared-with-me
-    // If we need to list file inside those shared folders, we must search it without sharedWithMe
+	// Search with sharedWithMe will always return things listed in "Shared With Me" (without any parents)
+	// We must not filter with parent when we try list "ROOT" with drive-shared-with-me
+	// If we need to list file inside those shared folders, we must search it without sharedWithMe
 	if *driveSharedWithMe && dirID == f.about.RootFolderId {
 		query = append(query, "sharedWithMe=true")
 	}
