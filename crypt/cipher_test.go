@@ -84,7 +84,7 @@ func TestValidString(t *testing.T) {
 		{"£100", nil},
 		{`hello? sausage/êé/Hello, 世界/ " ' @ < > & ?/z.txt`, nil},
 		{"£100", nil},
-		// Following tests from http://www.php.net/manual/en/reference.pcre.pattern.modifiers.php#54805
+		// Following tests from https://secure.php.net/manual/en/reference.pcre.pattern.modifiers.php#54805
 		{"a", nil},                                        // Valid ASCII
 		{"\xc3\xb1", nil},                                 // Valid 2 Octet Sequence
 		{"\xc3\x28", ErrorBadDecryptUTF8},                 // Invalid 2 Octet Sequence

@@ -67,7 +67,7 @@ Features
 See the home page for installation, usage, documentation, changelog
 and configuration walkthroughs.
 
-  * http://rclone.org/
+  * https://rclone.org/
 `,
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		fs.Debugf("rclone", "Version %q finishing with parameters %q", fs.Version, os.Args)

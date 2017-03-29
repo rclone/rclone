@@ -7,7 +7,7 @@ date: "2015-12-30"
 <i class="fa fa-space-shuttle"></i>Yandex Disk
 ----------------------------------------
 
-[Yandex Disk](https://disk.yandex.com) is a cloud storage solution created by [Yandex](http://yandex.com).
+[Yandex Disk](https://disk.yandex.com) is a cloud storage solution created by [Yandex](https://yandex.com).
 
 Yandex paths may be as deep as required, eg `remote:directory/subdirectory`.
 

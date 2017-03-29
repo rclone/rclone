@@ -141,7 +141,7 @@ Install the [snap meta layer](https://github.com/morphis/meta-snappy/blob/master
 
 #### openSUSE ####
 
-    sudo zypper addrepo http://download.opensuse.org/repositories/system:/snappy/openSUSE_Leap_42.2/ snappy
+    sudo zypper addrepo https://download.opensuse.org/repositories/system:/snappy/openSUSE_Leap_42.2/ snappy
     sudo zypper install snapd
 
 #### OpenWrt ####

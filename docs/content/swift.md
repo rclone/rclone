@@ -7,11 +7,11 @@ date: "2014-04-26"
 <i class="fa fa-space-shuttle"></i>Swift
 ----------------------------------------
 
-Swift refers to [Openstack Object Storage](http://www.openstack.org/software/openstack-storage/).
+Swift refers to [Openstack Object Storage](https://www.openstack.org/software/openstack-storage/).
 Commercial implementations of that being:
 
-  * [Rackspace Cloud Files](http://www.rackspace.com/cloud/files/)
-  * [Memset Memstore](http://www.memset.com/cloud/storage/)
+  * [Rackspace Cloud Files](https://www.rackspace.com/cloud/files/)
+  * [Memset Memstore](https://www.memset.com/cloud/storage/)
 
 Paths are specified as `remote:container` (or `remote:` for the `lsd`
 command.)  You may put subdirectories in too, eg `remote:container/path/to/dir`.

@@ -24,7 +24,7 @@ Cookies are small files saved to the user's computers hard drive that track, sav
 
 Users are advised that if they wish to deny the use and saving of cookies from this website on to their computers hard drive they should take necessary steps within their web browsers security settings to block all cookies from this website and its external serving vendors.
 
-This website uses tracking software to monitor its visitors to better understand how they use it. This software is provided by Google Analytics which uses cookies to track visitor usage. The software will save a cookie to your computers hard drive in order to track and monitor your engagement and usage of the website, but will not store, save or collect personal information. You can read [Google's privacy policy here](http://www.google.com/privacy.html) for further information.
+This website uses tracking software to monitor its visitors to better understand how they use it. This software is provided by Google Analytics which uses cookies to track visitor usage. The software will save a cookie to your computers hard drive in order to track and monitor your engagement and usage of the website, but will not store, save or collect personal information. You can read [Google's privacy policy here](https://www.google.com/privacy.html) for further information.
 
 Other cookies may be stored to your computers hard drive by external vendors when this website uses referral programs, sponsored links or adverts. Such cookies are used for conversion and referral tracking and typically expire after 30 days, though some may take longer. No personal information is stored, saved or collected.
 
@@ -59,7 +59,7 @@ This website may use social sharing buttons which help share web content directl
   * [Data Protection Act 1998](http://www.legislation.gov.uk/ukpga/1998/29/contents)
   * [Privacy and Electronic Communications Regulations 2003](http://www.legislation.gov.uk/uksi/2003/2426/contents/made)
   * [Privacy and Electronic Communications Regulations 2003 - The Guide](https://ico.org.uk/for-organisations/guide-to-pecr/)
-  * [Twitter Privacy Policy](http://twitter.com/privacy)
-  * [Facebook Privacy Policy](http://www.facebook.com/about/privacy/)
-  * [Google Privacy Policy](http://www.google.com/privacy.html)
+  * [Twitter Privacy Policy](https://twitter.com/privacy)
+  * [Facebook Privacy Policy](https://www.facebook.com/about/privacy/)
+  * [Google Privacy Policy](https://www.google.com/privacy.html)
   * [Sample Website Privacy Policy](http://www.jamieking.co.uk/resources/free_sample_privacy_policy.html)

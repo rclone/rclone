@@ -10,7 +10,7 @@ of filing an issue.
 
 When filing an issue, please include the following information if
 possible as well as a description of the problem.  Make sure you test
-with the [latest beta of rclone](http://beta.rclone.org/):
+with the [latest beta of rclone](https://beta.rclone.org/):
 
   * Rclone version (eg output from `rclone -V`)
   * Which OS you are using and how many bits (eg Windows 7, 64 bit)

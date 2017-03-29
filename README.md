@@ -1,10 +1,10 @@
-[![Logo](http://rclone.org/img/rclone-120x120.png)](http://rclone.org/)
+[![Logo](https://rclone.org/img/rclone-120x120.png)](https://rclone.org/)
 
-[Website](http://rclone.org) |
-[Documentation](http://rclone.org/docs/) |
+[Website](https://rclone.org) |
+[Documentation](https://rclone.org/docs/) |
 [Contributing](CONTRIBUTING.md) |
-[Changelog](http://rclone.org/changelog/) |
-[Installation](http://rclone.org/install/) |
+[Changelog](https://rclone.org/changelog/) |
+[Installation](https://rclone.org/install/) |
 [Forum](https://forum.rclone.org/)
 [G+](https://google.com/+RcloneOrg)
 
@@ -41,7 +41,7 @@ Features
 See the home page for installation, usage, documentation, changelog
 and configuration walkthroughs.
 
-  * http://rclone.org/
+  * https://rclone.org/
 
 License
 -------

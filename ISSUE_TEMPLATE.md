@@ -1,7 +1,7 @@
 When filing an issue, please include the following information if possible as well as a description of the problem.  Make sure you test with the latest beta of rclone.
 
-    http://beta.rclone.org/
-    http://rclone.org/downloads/
+    https://beta.rclone.org/
+    https://rclone.org/downloads/
 
 If you've just got a question or aren't sure if you've found a bug then please use the [rclone forum](https://forum.rclone.org/) instead of filing an issue.
 

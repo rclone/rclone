@@ -2,7 +2,7 @@
 //
 // Code from minix, via
 //
-// http://play.golang.org/p/kLtct7lSUg
+// https://play.golang.org/p/kLtct7lSUg
 
 // +build windows
 

@@ -81,7 +81,7 @@ def read_doc(doc):
     # Remove icons
     contents = re.sub(r'<i class="fa.*?</i>\s*', "", contents)
     # Make [...](/links/) absolute
-    contents = re.sub(r'\((\/.*?\/)\)', r"(http://rclone.org\1)", contents)
+    contents = re.sub(r'\((\/.*?\/)\)', r"(https://rclone.org\1)", contents)
     return contents
 
 def check_docs(docpath):

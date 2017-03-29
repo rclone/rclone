@@ -5,7 +5,7 @@ NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprin
 GO_VERSION := $(shell go version)
 GO_FILES := $(shell go list ./... | grep -v /vendor/ )
 GO_LATEST := $(findstring go1.8,$(GO_VERSION))
-BETA_URL := http://beta.rclone.org/$(TAG)/
+BETA_URL := https://beta.rclone.org/$(TAG)/
 # Only needed for Go 1.5
 export GO15VENDOREXPERIMENT=1
 
@@ -107,7 +107,7 @@ cross:	doc
 beta:
 	go run bin/cross-compile.go $(TAG)β
 	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)β
-	@echo Beta release ready at http://pub.rclone.org/$(TAG)%CE%B2/
+	@echo Beta release ready at https://pub.rclone.org/$(TAG)%CE%B2/
 
 travis_beta:
 	git log $(LAST_TAG).. > /tmp/git-log.txt

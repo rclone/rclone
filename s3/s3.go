@@ -154,7 +154,7 @@ func init() {
 			}},
 		}, {
 			Name: "acl",
-			Help: "Canned ACL used when creating buckets and/or storing objects in S3.\nFor more info visit http://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl",
+			Help: "Canned ACL used when creating buckets and/or storing objects in S3.\nFor more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl",
 			Examples: []fs.OptionExample{{
 				Value: "private",
 				Help:  "Owner gets FULL_CONTROL. No one else has access rights (default).",
