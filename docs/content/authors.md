@@ -63,3 +63,4 @@ Contributors
   * Hisham Zarka <hzarka@gmail.com>
   * Jérôme Vizcaino <jerome.vizcaino@gmail.com>
   * Mike Tesch <mjt6129@rit.edu>
+  * Marvin Watson <marvwatson@users.noreply.github.com>
