@@ -8,7 +8,7 @@ date: "2015-08-19"
 
 ## What is this Privacy Policy for? ##
 
-This privacy policy is for this website http://rclone.org and governs the privacy of its users who choose to use it.
+This privacy policy is for this website https://rclone.org and governs the privacy of its users who choose to use it.
 
 The policy sets out the different areas where user privacy is concerned and outlines the obligations & requirements of the users, the website and website owners. Furthermore the way this website processes, stores and protects user data and information will also be detailed within this policy.
 

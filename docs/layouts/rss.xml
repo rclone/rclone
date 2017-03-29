@@ -3,15 +3,15 @@
       <title>{{ .Title }} on {{ .Site.Title }} </title>
     <link>{{ .Permalink }}</link>
     <language>en-US</language>
-    <author>Enthusiastic Hugo User</author>
-    <rights>Copyright (c) 2014, Enthusiastic Hugo User; all rights reserved.</rights>
+    <author>Nick Craig-Wood</author>
+    <rights>Copyright (c) 2017, Nick Craig-Wood; all rights reserved.</rights>
     <updated>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 MST" }}</updated>
     {{ range first 15 .Data.Pages }}
     <item>
       <title>{{ .Title }}</title>
       <link>{{ .Permalink }}</link>
       <pubDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 MST" }}</pubDate>
-      <author>Enthusiastic Hugo User</author>
+      <author>Nick Craig-Wood</author>
       <guid>{{ .Permalink }}</guid>
       <description>{{ .Content | html }}</description>
     </item>

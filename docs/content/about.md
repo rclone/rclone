@@ -9,7 +9,7 @@ groups: ["about"]
 Rclone
 ======
 
-[![Logo](/img/rclone-120x120.png)](http://rclone.org/)
+[![Logo](/img/rclone-120x120.png)](https://rclone.org/)
 
 Rclone is a command line program to sync files and directories to and from
 
@@ -40,8 +40,8 @@ Features
 
 Links
 
-  * <i class="fa fa-home"></i> [Home page](http://rclone.org/)
-  * <i class="fa fa-github"></i> [Github project page for source and bug tracker](http://github.com/ncw/rclone)
+  * <i class="fa fa-home"></i> [Home page](https://rclone.org/)
+  * <i class="fa fa-github"></i> [Github project page for source and bug tracker](https://github.com/ncw/rclone)
   * <i class="fa fa-comments"></i> [Rclone Forum](https://forum.rclone.org)
   * <i class="fa fa-google-plus"></i> <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page</a>
   * <i class="fa fa-cloud-download"></i>[Downloads](/downloads/)

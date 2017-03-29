@@ -40,7 +40,7 @@ Features
 See the home page for installation, usage, documentation, changelog
 and configuration walkthroughs.
 
-  * http://rclone.org/
+  * https://rclone.org/
 
 
 ```

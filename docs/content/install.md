@@ -12,7 +12,7 @@ Rclone is a Go program and comes as a single binary file.
 
   * [Download](/downloads/) the relevant binary.
   * Unpack and the `rclone` binary.
-  * Run `rclone config` to setup. See [rclone config docs](http://rclone.org/docs/) for more details.
+  * Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
 See below for some expanded Linux / macOS instructions.
 
@@ -23,7 +23,7 @@ run `rclone -h`.
 
 Fetch and unpack
 
-    curl -O http://downloads.rclone.org/rclone-current-linux-amd64.zip
+    curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
     unzip rclone-current-linux-amd64.zip
     cd rclone-*-linux-amd64
 
@@ -39,7 +39,7 @@ Install manpage
     sudo cp rclone.1 /usr/local/share/man/man1/
     sudo mandb 
 
-Run `rclone config` to setup. See [rclone config docs](http://rclone.org/docs/) for more details.
+Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
     rclone config
 
@@ -47,7 +47,7 @@ Run `rclone config` to setup. See [rclone config docs](http://rclone.org/docs/) 
 
 Download the latest version of rclone.
 
-    cd && curl -O http://downloads.rclone.org/rclone-current-osx-amd64.zip
+    cd && curl -O https://downloads.rclone.org/rclone-current-osx-amd64.zip
 
 Unzip the download and cd to the extracted folder.
 
@@ -61,7 +61,7 @@ Remove the leftover files.
 
     cd .. && rm -rf rclone-*-osx-amd64 rclone-current-osx-amd64.zip
 
-Run `rclone config` to setup. See [rclone config docs](http://rclone.org/docs/) for more details.
+Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
     rclone config
 
@@ -100,7 +100,7 @@ Instructions
 
   * install Snapd on your distro using the instructions below
   * sudo snap install rclone --classic 
-  * Run `rclone config` to setup. See [rclone config docs](http://rclone.org/docs/) for more details.
+  * Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
 See below for how to install snapd if it isn't already installed
 
