@@ -66,3 +66,4 @@ Contributors
   * Marvin Watson <marvwatson@users.noreply.github.com>
   * Danny Tsai <danny8376@gmail.com>
   * Yoni Jah <yonjah+git@gmail.com>
+  * Stephen Harris <github@spuddy.org>
