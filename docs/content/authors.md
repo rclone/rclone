@@ -65,3 +65,4 @@ Contributors
   * Mike Tesch <mjt6129@rit.edu>
   * Marvin Watson <marvwatson@users.noreply.github.com>
   * Danny Tsai <danny8376@gmail.com>
+  * Yoni Jah <yonjah+git@gmail.com>
