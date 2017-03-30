@@ -28,3 +28,30 @@ func TestFileModTime(t *testing.T) {
 
 	run.rm(t, "file")
 }
+
+func TestFileModTimeWithOpenWriters(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
+	mtime := time.Date(2012, 11, 18, 17, 32, 31, 0, time.UTC)
+	filepath := run.path("cp-archive-test")
+
+	f, err := os.Create(filepath)
+	require.NoError(t, err)
+
+	_, err = f.Write([]byte{104, 105})
+	require.NoError(t, err)
+
+	err = os.Chtimes(filepath, mtime, mtime)
+	require.NoError(t, err)
+
+	err = f.Close()
+	require.NoError(t, err)
+
+	info, err := os.Stat(filepath)
+	require.NoError(t, err)
+
+	// avoid errors because of timezone differences
+	assert.Equal(t, info.ModTime().Unix(), mtime.Unix())
+
+	run.rm(t, "cp-archive-test")
+}

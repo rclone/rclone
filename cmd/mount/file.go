@@ -16,11 +16,12 @@ import (
 
 // File represents a file
 type File struct {
-	size    int64        // size of file - read and written with atomic int64 - must be 64 bit aligned
-	d       *Dir         // parent directory - read only
-	mu      sync.RWMutex // protects the following
-	o       fs.Object    // NB o may be nil if file is being written
-	writers int          // number of writers for this file
+	size           int64        // size of file - read and written with atomic int64 - must be 64 bit aligned
+	d              *Dir         // parent directory - read only
+	mu             sync.RWMutex // protects the following
+	o              fs.Object    // NB o may be nil if file is being written
+	writers        int          // number of writers for this file
+	pendingModTime time.Time    // will be applied once o becomes available, i.e. after file was written
 }
 
 // newFile creates a new File
@@ -59,6 +60,12 @@ func (f *File) Attr(ctx context.Context, a *fuse.Attr) error {
 	// if o is nil it isn't valid yet, so return the size so far
 	if f.o == nil {
 		a.Size = uint64(atomic.LoadInt64(&f.size))
+		if !noModTime && !f.pendingModTime.IsZero() {
+			a.Atime = f.pendingModTime
+			a.Mtime = f.pendingModTime
+			a.Ctime = f.pendingModTime
+			a.Crtime = f.pendingModTime
+		}
 	} else {
 		a.Size = uint64(f.o.Size())
 		if !noModTime {
@@ -83,33 +90,44 @@ func (f *File) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse
 		return nil
 	}
 
-	// if o is nil it isn't valid yet
-	o, err := f.waitForValidObject()
-	if err != nil {
-		return err
-	}
-
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	var newTime time.Time
 	if req.Valid.MtimeNow() {
-		newTime = time.Now()
+		f.pendingModTime = time.Now()
 	} else if req.Valid.Mtime() {
-		newTime = req.Mtime
+		f.pendingModTime = req.Mtime
 	}
 
-	if !newTime.IsZero() {
-		err := o.SetModTime(newTime)
-		switch err {
-		case nil:
-			fs.Debugf(o, "File.Setattr ModTime OK")
-		case fs.ErrorCantSetModTime:
-			// do nothing, in order to not break "touch somefile" if it exists already
-		default:
-			fs.Errorf(o, "File.Setattr ModTime error: %v", err)
-			return err
-		}
+	if f.o != nil {
+		return f.applyPendingModTime()
+	}
+
+	// queue up for later, hoping f.o becomes available
+	return nil
+}
+
+// call with the mutex held
+func (f *File) applyPendingModTime() error {
+	defer func() { f.pendingModTime = time.Time{} }()
+
+	if f.pendingModTime.IsZero() {
+		return nil
+	}
+
+	if f.o == nil {
+		return errors.New("Cannot apply ModTime, file object is not available")
+	}
+
+	err := f.o.SetModTime(f.pendingModTime)
+	switch err {
+	case nil:
+		fs.Debugf(f.o, "File.applyPendingModTime OK")
+	case fs.ErrorCantSetModTime:
+		// do nothing, in order to not break "touch somefile" if it exists already
+	default:
+		fs.Errorf(f.o, "File.applyPendingModTime error: %v", err)
+		return err
 	}
 
 	return nil
@@ -125,6 +143,7 @@ func (f *File) setObject(o fs.Object) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.o = o
+	_ = f.applyPendingModTime()
 	f.d.addObject(o, f)
 }
 
