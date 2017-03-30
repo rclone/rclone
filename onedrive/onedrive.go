@@ -135,6 +135,14 @@ func parsePath(path string) (root string) {
 	return
 }
 
+// mimics url.PathEscape which only available from go 1.8
+func pathEscape(path string) string {
+	u := url.URL{
+		Path: path,
+	}
+	return u.EscapedPath()
+}
+
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
 	429, // Too Many Requests.
@@ -161,7 +169,7 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 func (f *Fs) readMetaDataForPath(path string) (info *api.Item, resp *http.Response, err error) {
 	opts := rest.Opts{
 		Method: "GET",
-		Path:   "/drive/root:/" + url.QueryEscape(replaceReservedChars(path)),
+		Path:   "/drive/root:/" + pathEscape(replaceReservedChars(path)),
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(&opts, nil, &info)
@@ -849,7 +857,7 @@ func (o *Object) ModTime() time.Time {
 func (o *Object) setModTime(modTime time.Time) (*api.Item, error) {
 	opts := rest.Opts{
 		Method: "PATCH",
-		Path:   "/drive/root:/" + url.QueryEscape(o.srvPath()),
+		Path:   "/drive/root:/" + pathEscape(o.srvPath()),
 	}
 	update := api.SetFileSystemInfo{
 		FileSystemInfo: api.FileSystemInfoFacet{
@@ -904,7 +912,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 func (o *Object) createUploadSession() (response *api.CreateUploadResponse, err error) {
 	opts := rest.Opts{
 		Method: "POST",
-		Path:   "/drive/root:/" + url.QueryEscape(o.srvPath()) + ":/upload.createSession",
+		Path:   "/drive/root:/" + pathEscape(o.srvPath()) + ":/upload.createSession",
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1019,7 +1027,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 		var resp *http.Response
 		opts := rest.Opts{
 			Method: "PUT",
-			Path:   "/drive/root:/" + url.QueryEscape(o.srvPath()) + ":/content",
+			Path:   "/drive/root:/" + pathEscape(o.srvPath()) + ":/content",
 			Body:   in,
 		}
 		// for go1.8 (see release notes) we must nil the Body if we want a
