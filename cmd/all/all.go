@@ -30,6 +30,7 @@ import (
 	_ "github.com/ncw/rclone/cmd/mount"
 	_ "github.com/ncw/rclone/cmd/move"
 	_ "github.com/ncw/rclone/cmd/moveto"
+	_ "github.com/ncw/rclone/cmd/ncdu"
 	_ "github.com/ncw/rclone/cmd/obscure"
 	_ "github.com/ncw/rclone/cmd/purge"
 	_ "github.com/ncw/rclone/cmd/rmdir"
