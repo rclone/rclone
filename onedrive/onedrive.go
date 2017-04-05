@@ -3,7 +3,6 @@
 package onedrive
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -923,21 +922,20 @@ func (o *Object) createUploadSession() (response *api.CreateUploadResponse, err 
 }
 
 // uploadFragment uploads a part
-func (o *Object) uploadFragment(url string, start int64, totalSize int64, buf []byte) (err error) {
-	bufSize := int64(len(buf))
-	bufReader := bytes.NewReader(buf)
+func (o *Object) uploadFragment(url string, start int64, totalSize int64, chunk io.ReadSeeker, chunkSize int64) (err error) {
 	opts := rest.Opts{
 		Method:        "PUT",
 		Path:          url,
 		Absolute:      true,
-		ContentLength: &bufSize,
-		ContentRange:  fmt.Sprintf("bytes %d-%d/%d", start, start+bufSize-1, totalSize),
-		Body:          bufReader,
+		ContentLength: &chunkSize,
+		ContentRange:  fmt.Sprintf("bytes %d-%d/%d", start, start+chunkSize-1, totalSize),
+		Body:          chunk,
 	}
+	fs.Debugf(o, "OPTS: %s", opts.ContentRange)
 	var response api.UploadFragmentResponse
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
-		_, _ = bufReader.Seek(0, 0)
+		_, _ = chunk.Seek(0, 0)
 		resp, err = o.fs.srv.CallJSON(&opts, nil, &response)
 		return shouldRetry(resp, err)
 	})
@@ -988,19 +986,14 @@ func (o *Object) uploadMultipart(in io.Reader, size int64) (err error) {
 	// Upload the chunks
 	remaining := size
 	position := int64(0)
-	buf := make([]byte, int64(chunkSize))
 	for remaining > 0 {
 		n := int64(chunkSize)
 		if remaining < n {
 			n = remaining
-			buf = buf[:n]
 		}
-		_, err = io.ReadFull(in, buf)
-		if err != nil {
-			return err
-		}
+		seg := fs.NewRepeatableReader(io.LimitReader(in, n))
 		fs.Debugf(o, "Uploading segment %d/%d size %d", position, size, n)
-		err = o.uploadFragment(uploadURL, position, size, buf)
+		err = o.uploadFragment(uploadURL, position, size, seg, n)
 		if err != nil {
 			return err
 		}
