@@ -140,7 +140,7 @@ func (f *Fs) Features() *fs.Features {
 
 // String returns a description of the FS
 func (f *Fs) String() string {
-	return fmt.Sprintf("Encrypted %s", f.Fs.String())
+	return fmt.Sprintf("Encrypted drive '%s:%s'", f.name, f.root)
 }
 
 // List the Fs into a channel
