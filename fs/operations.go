@@ -447,7 +447,7 @@ func deleteFileWithBackupDir(dst Object, backupDir Fs) (err error) {
 	if err != nil {
 		Stats.Error()
 		Errorf(dst, "Couldn't %s: %v", action, err)
-	} else {
+	} else if !Config.DryRun {
 		Infof(dst, actioned)
 	}
 	Stats.DoneChecking(dst.Remote())
