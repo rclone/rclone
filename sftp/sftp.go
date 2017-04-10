@@ -6,7 +6,6 @@ package sftp
 
 import (
 	"io"
-	"net"
 	"os"
 	"path"
 	"sync"
@@ -15,8 +14,8 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
+	sshagent "github.com/xanzy/ssh-agent"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
 )
 
 func init() {
@@ -94,15 +93,10 @@ func NewFs(name, root string) (fs.Fs, error) {
 		Timeout:         fs.Config.ConnectTimeout,
 	}
 	if pass == "" {
-		authSock := os.Getenv("SSH_AUTH_SOCK")
-		if authSock == "" {
-			return nil, errors.New("SSH_AUTH_SOCK is unset so can't connect to ssh-agent")
-		}
-		sshAgent, err := net.Dial("unix", authSock)
+		sshAgentClient, _, err := sshagent.New()
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't connect to ssh-agent")
 		}
-		sshAgentClient := agent.NewClient(sshAgent)
 		signers, err := sshAgentClient.Signers()
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't read ssh agent signers")

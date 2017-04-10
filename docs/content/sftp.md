@@ -121,6 +121,8 @@ Modified times are used in syncing and are fully supported.
 
 SFTP does not support any checksums.
 
+The only ssh agent supported under Windows is Putty's pagent.
+
 SFTP isn't supported under plan9 until [this
 issue](https://github.com/pkg/sftp/issues/156) is fixed.
 
