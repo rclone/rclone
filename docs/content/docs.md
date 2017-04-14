@@ -67,7 +67,7 @@ The main rclone commands with most used first
 * [rclone purge](/commands/rclone_purge/)	- Remove the path and all of its contents.
 * [rclone mkdir](/commands/rclone_mkdir/)	- Make the path if it doesn't already exist.
 * [rclone rmdir](/commands/rclone_rmdir/)	- Remove the path.
-* [rclone rmdirs](/commands/rclone_rmdirs/)	- Remove any empty directoryies under the path.
+* [rclone rmdirs](/commands/rclone_rmdirs/)	- Remove any empty directories under the path.
 * [rclone check](/commands/rclone_check/)	- Checks the files in the source and destination match.
 * [rclone ls](/commands/rclone_ls/)		- List all the objects in the path with size and path.
 * [rclone lsd](/commands/rclone_lsd/)		- List all directories/containers/buckets in the path.
