@@ -243,7 +243,7 @@ func TestDecryptFileName(t *testing.T) {
 		{NameEncryptionOff, "1/12/123.bin", "1/12/123", nil},
 		{NameEncryptionOff, "1/12/123.bix", "", ErrorNotAnEncryptedFile},
 		{NameEncryptionOff, ".bin", "", ErrorNotAnEncryptedFile},
-		{NameEncryptionObfuscated, "0.hello", "hello", nil},
+		{NameEncryptionObfuscated, "!.hello", "hello", nil},
 		{NameEncryptionObfuscated, "hello", "", ErrorNotAnEncryptedFile},
 		{NameEncryptionObfuscated, "161.\u00e4", "\u00a1", nil},
 		{NameEncryptionObfuscated, "160.\u03c2", "\u03a0", nil},
@@ -264,6 +264,7 @@ func TestEncDecMatches(t *testing.T) {
 		{NameEncryptionStandard, "1/2/3/4"},
 		{NameEncryptionOff, "1/2/3/4"},
 		{NameEncryptionObfuscated, "1/2/3/4/!hello\u03a0"},
+		{NameEncryptionObfuscated, "Avatar The Last Airbender"},
 	} {
 		c, _ := newCipher(test.mode, "", "")
 		out, err := c.DecryptFileName(c.EncryptFileName(test.in))

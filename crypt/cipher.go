@@ -298,9 +298,9 @@ func (c *cipher) obfuscateSegment(plaintext string) string {
 	}
 
 	// If the string isn't valid UTF8 then don't rotate; just
-	// prepend a 0.
+	// prepend a !.
 	if !utf8.ValidString(plaintext) {
-		return "0." + plaintext
+		return "!." + plaintext
 	}
 
 	// Calculate a simple rotation based on the filename and
@@ -388,7 +388,7 @@ func (c *cipher) deobfuscateSegment(ciphertext string) (string, error) {
 		return "", ErrorNotAnEncryptedFile
 	} // No .
 	num := ciphertext[:pos]
-	if num == "0" {
+	if num == "!" {
 		// No rotation; probably original was not valid unicode
 		return ciphertext[pos+1:], nil
 	}
