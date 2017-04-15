@@ -18,7 +18,7 @@ import (
 // ReadPassword reads a password without echoing it to the terminal.
 func ReadPassword() string {
 	line, err := terminal.ReadPassword(int(os.Stdin.Fd()))
-	fmt.Println("")
+	fmt.Fprintln(os.Stderr)
 	if err != nil {
 		log.Fatalf("Failed to read password: %v", err)
 	}
