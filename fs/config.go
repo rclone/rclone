@@ -516,15 +516,15 @@ func checkPassword(password string) (string, error) {
 
 // GetPassword asks the user for a password with the prompt given.
 func GetPassword(prompt string) string {
-	fmt.Println(prompt)
+	fmt.Fprintln(os.Stderr, prompt)
 	for {
-		fmt.Print("password:")
+		fmt.Fprint(os.Stderr, "password:")
 		password := ReadPassword()
 		password, err := checkPassword(password)
 		if err == nil {
 			return password
 		}
-		fmt.Printf("Bad password: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Bad password: %v\n", err)
 	}
 }
 
@@ -553,7 +553,7 @@ func getConfigPassword(q string) {
 		if err == nil {
 			return
 		}
-		fmt.Println("Error:", err)
+		fmt.Fprintln(os.Stderr, "Error:", err)
 	}
 }
 
