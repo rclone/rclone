@@ -242,7 +242,7 @@ OUTER:
 	for {
 		var files *drive.FileList
 		err = f.pacer.Call(func() (bool, error) {
-			files, err = list.Fields( "items(id,downloadUrl,parents,md5Checksum,fileSize,fileExtension,fullFileExtension,kind,title,modifiedDate,mimeType)", "kind", "nextPageToken").Do()
+			files, err = list.Fields( "items(id,downloadUrl,parents,md5Checksum,fileSize,fileExtension,fullFileExtension,title,modifiedDate,mimeType)", "nextPageToken").Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
