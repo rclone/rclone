@@ -246,7 +246,6 @@ OUTER:
 			return shouldRetry(err)
 		})
 		if err != nil {
-			fmt.Printf("Error: %d\n", err)
 			return false, errors.Wrap(err, "couldn't list directory")
 		}
 		for _, item := range files.Items {
