@@ -1,4 +1,7 @@
 // Package http provides a filesystem interface using golang.org/net/http
+//
+// It treads HTML pages served from the endpoint as directory
+// listings, and includes any links found as files.
 
 // +build !plan9
 
@@ -40,7 +43,7 @@ func init() {
 	fs.Register(fsi)
 }
 
-// Fs stores the interface to the remote SFTP files
+// Fs stores the interface to the remote HTTP files
 type Fs struct {
 	name       string
 	root       string
@@ -214,14 +217,6 @@ func parseTime(n *html.Node) (t time.Time) {
 	return t
 }
 
-// CheckClose is a utility function used to check the return from
-// Close in a defer statement.
-func CheckClose(c io.Closer, err *error) {
-	cerr := c.Close()
-	if *err == nil {
-		*err = cerr
-	}
-}
 func (f *Fs) readDir(path string) ([]*entry, error) {
 	entries := make([]*entry, 0)
 	res, err := f.httpClient.Get(urlJoin(f.endpoint, path))
@@ -229,9 +224,10 @@ func (f *Fs) readDir(path string) ([]*entry, error) {
 		return nil, err
 	}
 	if res.Body == nil || res.StatusCode != http.StatusOK {
+		//return nil, errors.Errorf("directory listing failed with error: % (%d)", res.Status, res.StatusCode)
 		return nil, nil
 	}
-	defer CheckClose(res.Body, &err)
+	defer fs.CheckClose(res.Body, &err)
 
 	switch strings.SplitN(res.Header.Get("Content-Type"), ";", 2)[0] {
 	case "text/html":
@@ -365,7 +361,7 @@ func (o *Object) Fs() fs.Info {
 	return o.fs
 }
 
-// String returns the URL to the remote SFTP file
+// String returns the URL to the remote HTTP file
 func (o *Object) String() string {
 	if o == nil {
 		return "<nil>"
@@ -373,12 +369,12 @@ func (o *Object) String() string {
 	return o.remote
 }
 
-// Remote the name of the remote SFTP file, relative to the fs root
+// Remote the name of the remote HTTP file, relative to the fs root
 func (o *Object) Remote() string {
 	return o.remote
 }
 
-// Hash returns "" since SFTP (in Go or OpenSSH) doesn't support remote calculation of hashes
+// Hash returns "" since HTTP (in Go or OpenSSH) doesn't support remote calculation of hashes
 func (o *Object) Hash(r fs.HashType) (string, error) {
 	return "", fs.ErrHashUnsupported
 }
@@ -511,25 +507,13 @@ func (f *Fs) Rmdir(dir string) error {
 	return nil
 }
 
-// Move renames a remote http file object
-func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
-	return nil, nil
-}
-
 // Update a remote http file using the data <in> and ModTime from <src>
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	return nil
 }
 
-// DirMove moves dir
-func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
-	return nil
-}
-
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs       = &Fs{}
-	_ fs.Mover    = &Fs{}
-	_ fs.DirMover = &Fs{}
-	_ fs.Object   = &Object{}
+	_ fs.Fs     = &Fs{}
+	_ fs.Object = &Object{}
 )
