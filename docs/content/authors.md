@@ -68,3 +68,4 @@ Contributors
   * Yoni Jah <yonjah+git@gmail.com>
   * Stephen Harris <github@spuddy.org>
   * Ihor Dvoretskyi <ihor.dvoretskyi@gmail.com>
+  * Jon Craton <jncraton@gmail.com>
