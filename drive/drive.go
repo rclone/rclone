@@ -84,6 +84,7 @@ var (
 		"text/tab-separated-values":                                                 "tsv",
 	}
 	extensionToMimeType map[string]string
+	partialFields = googleapi.Field("items(id,downloadUrl,exportLinks,fileExtension,fullFileExtension,fileSize,labels,md5Checksum,modifiedDate,mimeType,title,owners)")
 )
 
 // Register with Fs
@@ -242,7 +243,7 @@ OUTER:
 	for {
 		var files *drive.FileList
 		err = f.pacer.Call(func() (bool, error) {
-			files, err = list.Fields( "items(id,downloadUrl,parents,md5Checksum,fileSize,fileExtension,fullFileExtension,title,modifiedDate,mimeType)", "nextPageToken").Do()
+			files, err = list.Fields(partialFields).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
