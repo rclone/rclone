@@ -71,3 +71,4 @@ Contributors
   * Jon Craton <jncraton@gmail.com>
   * Hraban Luyat <hraban@0brg.net>
   * Michael Ledin <mledin89@gmail.com>
+  * Martin Kristensen <me@azgul.com>
