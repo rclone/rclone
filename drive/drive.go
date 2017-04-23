@@ -84,7 +84,7 @@ var (
 		"text/tab-separated-values":                                                 "tsv",
 	}
 	extensionToMimeType map[string]string
-	partialFields = googleapi.Field("items(id,downloadUrl,exportLinks,fileExtension,fullFileExtension,fileSize,labels,md5Checksum,modifiedDate,mimeType,title,owners)")
+	partialFields       = googleapi.Field("items(id,downloadUrl,exportLinks,fileExtension,fullFileExtension,fileSize,labels,md5Checksum,modifiedDate,mimeType,title,owners)")
 )
 
 // Register with Fs
