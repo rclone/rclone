@@ -84,7 +84,7 @@ var (
 		"text/tab-separated-values":                                                 "tsv",
 	}
 	extensionToMimeType map[string]string
-	partialFields       = googleapi.Field("items(id,downloadUrl,exportLinks,fileExtension,fullFileExtension,fileSize,labels,md5Checksum,modifiedDate,mimeType,title,owners)")
+	partialFields       = "items(id,downloadUrl,exportLinks,fileExtension,fullFileExtension,fileSize,labels,md5Checksum,modifiedDate,mimeType,title%s)"
 )
 
 // Register with Fs
@@ -207,6 +207,7 @@ type listAllFn func(*drive.File) bool
 // Search params: https://developers.google.com/drive/search-parameters
 func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly bool, includeTrashed bool, fn listAllFn) (found bool, err error) {
 	var query []string
+
 	if !includeTrashed {
 		query = append(query, "trashed=false")
 	}
@@ -239,11 +240,19 @@ func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly
 	if *driveListChunk > 0 {
 		list = list.MaxResults(*driveListChunk)
 	}
+
+	var fields googleapi.Field
+
+	if *driveAuthOwnerOnly {
+		fields = googleapi.Field(fmt.Sprintf(partialFields, ",owners"))
+	} else {
+		fields = googleapi.Field(fmt.Sprintf(partialFields, ""))
+	}
 OUTER:
 	for {
 		var files *drive.FileList
 		err = f.pacer.Call(func() (bool, error) {
-			files, err = list.Fields(partialFields).Do()
+			files, err = list.Fields(fields).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
