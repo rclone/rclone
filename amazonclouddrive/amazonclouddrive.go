@@ -983,7 +983,7 @@ func (o *Object) Storable() bool {
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	bigObject := o.Size() >= int64(tempLinkThreshold)
 	if bigObject {
-		fs.Debugf(o, "Dowloading large object via tempLink")
+		fs.Debugf(o, "Downloading large object via tempLink")
 	}
 	file := acd.File{Node: o.info}
 	var resp *http.Response
