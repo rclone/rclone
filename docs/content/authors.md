@@ -13,7 +13,7 @@ Contributors
 ------------
 
   * Alex Couper <amcouper@gmail.com>
-  * Leonid Shalupov <leonid@shalupov.com>
+  * Leonid Shalupov <leonid@shalupov.com> <shalupov@diverse.org.ru>
   * Shimon Doodkin <helpmepro1@gmail.com>
   * Colin Nicholson <colin@colinn.com>
   * Klaus Post <klauspost@gmail.com>
@@ -72,3 +72,4 @@ Contributors
   * Hraban Luyat <hraban@0brg.net>
   * Michael Ledin <mledin89@gmail.com>
   * Martin Kristensen <me@azgul.com>
+  * Too Much IO <toomuchio@users.noreply.github.com>
