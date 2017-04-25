@@ -17,6 +17,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 
+	"time"
+
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -99,7 +101,8 @@ func CheckHashes(src, dst Object) (equal bool, hash HashType, err error) {
 // size, mtime and hash
 //
 // If the src and dst size are different then it is considered to be
-// not equal.  If --size-only is in effect then this is the only check
+// not equal.  If --check-newer is set then it is the check made. Else
+// if --size-only is in effect then this is the only check
 // that is done.  If --ignore-size is in effect then this check is
 // skipped and the files are considered the same size.
 //
@@ -118,6 +121,21 @@ func Equal(src, dst Object) bool {
 }
 
 func equal(src, dst Object, sizeOnly, checkSum bool) bool {
+	if Config.CheckNewer {
+		// if the source is NEWER than the dest consider it modified
+		// note "newer" in this situation may mean more recent than the copy
+		// operation that wrote the file to the remote
+		srcModTime := src.ModTime()
+		dstModTime := dst.ModTime()
+		dt := srcModTime.Sub(dstModTime)
+		ModifyWindow := time.Minute
+		if dt >= ModifyWindow {
+			Debugf(src, "Source file is newer (differ by %s, outside tolerance %s)", dt, ModifyWindow)
+			return false
+		}
+		Debugf(src, "Source file is not newer, skipping (differ by %s, inside tolerance %s)", dt, ModifyWindow)
+		return true
+	}
 	if !Config.IgnoreSize {
 		if src.Size() != dst.Size() {
 			Debugf(src, "Sizes differ")

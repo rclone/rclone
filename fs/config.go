@@ -90,8 +90,10 @@ var (
 	noUpdateModTime = BoolP("no-update-modtime", "", false, "Don't update destination mod-time if files identical.")
 	backupDir       = StringP("backup-dir", "", "", "Make backups into hierarchy based in DIR.")
 	suffix          = StringP("suffix", "", "", "Suffix for use with --backup-dir.")
-	bwLimit         BwTimetable
-	bufferSize      SizeSuffix = 16 << 20
+	checkNewer      = BoolP("check-newer", "", false, "On remotes without mod-times, check whether source file is more recent")
+
+	bwLimit    BwTimetable
+	bufferSize SizeSuffix = 16 << 20
 
 	// Key to use for password en/decryption.
 	// When nil, no encryption will be used for saving.
@@ -216,6 +218,7 @@ type ConfigInfo struct {
 	BackupDir          string
 	Suffix             string
 	BufferSize         SizeSuffix
+	CheckNewer         bool
 }
 
 // Return the path to the configuration file
@@ -362,6 +365,7 @@ func LoadConfig() {
 	Config.BackupDir = *backupDir
 	Config.Suffix = *suffix
 	Config.BufferSize = bufferSize
+	Config.CheckNewer = *checkNewer
 
 	ConfigPath = *configFile
 
