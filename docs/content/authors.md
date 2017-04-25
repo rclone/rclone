@@ -73,3 +73,4 @@ Contributors
   * Michael Ledin <mledin89@gmail.com>
   * Martin Kristensen <me@azgul.com>
   * Too Much IO <toomuchio@users.noreply.github.com>
+  * Anisse Astier <anisse@astier.eu>
