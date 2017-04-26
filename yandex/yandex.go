@@ -187,6 +187,10 @@ func (f *Fs) listDir(dir string, fn listFn) (err error) {
 	for {
 		ResourceInfoResponse, err := f.yd.NewResourceInfoRequest(root, opt).Exec()
 		if err != nil {
+			yErr, ok := err.(yandex.DiskClientError)
+			if ok && yErr.Code == "DiskNotFoundError" {
+				return fs.ErrorDirNotFound
+			}
 			return err
 		}
 		itemsCount = uint32(len(ResourceInfoResponse.Embedded.Items))
@@ -246,6 +250,10 @@ func (f *Fs) list(dir string, fn listFn) error {
 		//send request
 		info, err := f.yd.NewFlatFileListRequest(opt).Exec()
 		if err != nil {
+			yErr, ok := err.(yandex.DiskClientError)
+			if ok && yErr.Code == "DiskNotFoundError" {
+				return fs.ErrorDirNotFound
+			}
 			return err
 		}
 		itemsCount = uint32(len(info.Items))
