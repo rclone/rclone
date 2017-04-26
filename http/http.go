@@ -217,9 +217,9 @@ func parseTime(n *html.Node) (t time.Time) {
 	return t
 }
 
-func (f *Fs) readDir(path string) ([]*entry, error) {
+func (f *Fs) readDir(p string) ([]*entry, error) {
 	entries := make([]*entry, 0)
-	res, err := f.httpClient.Get(urlJoin(f.endpoint, path))
+	res, err := f.httpClient.Get(urlJoin(f.endpoint, p))
 	if err != nil {
 		return nil, err
 	}
@@ -244,9 +244,17 @@ func (f *Fs) readDir(path string) ([]*entry, error) {
 						if err != nil {
 							continue
 						}
-						if name == "../" || name == "./" {
+						if name == "../" || name == "./" || name == ".." {
 							break
 						}
+						if strings.Index(name, "?") >= 0 || strings.HasPrefix(name, "http") {
+							break
+						}
+						u, err := url.Parse(name)
+						if err != nil {
+							break
+						}
+						name = path.Clean(u.Path)
 						e := &entry{
 							name: strings.TrimRight(name, "/"),
 							url:  name,
