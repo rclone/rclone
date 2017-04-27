@@ -84,7 +84,7 @@ var (
 		"text/tab-separated-values":                                                 "tsv",
 	}
 	extensionToMimeType map[string]string
-	partialFields       = "items(id,downloadUrl,exportLinks,fileExtension,fullFileExtension,fileSize,labels,md5Checksum,modifiedDate,mimeType,title%s),nextPageToken"
+	partialFields       = "id,downloadUrl,exportLinks,fileExtension,fullFileExtension,fileSize,labels,md5Checksum,modifiedDate,mimeType,title"
 )
 
 // Register with Fs
@@ -241,18 +241,19 @@ func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly
 		list = list.MaxResults(*driveListChunk)
 	}
 
-	var fields googleapi.Field
+	var fields = partialFields
 
 	if *driveAuthOwnerOnly {
-		fields = googleapi.Field(fmt.Sprintf(partialFields, ",owners"))
-	} else {
-		fields = googleapi.Field(fmt.Sprintf(partialFields, ""))
+		fields += ",owners"
 	}
+
+	fields = fmt.Sprintf("items(%s),nextPageToken", fields)
+
 OUTER:
 	for {
 		var files *drive.FileList
 		err = f.pacer.Call(func() (bool, error) {
-			files, err = list.Fields(fields).Do()
+			files, err = list.Fields(googleapi.Field(fields)).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
@@ -435,7 +436,7 @@ func (f *Fs) CreateDir(pathID, leaf string) (newID string, err error) {
 	}
 	var info *drive.File
 	err = f.pacer.Call(func() (bool, error) {
-		info, err = f.svc.Files.Insert(createInfo).Do()
+		info, err = f.svc.Files.Insert(createInfo).Fields(googleapi.Field(partialFields)).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -614,7 +615,7 @@ func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 		// Make the API request to upload metadata and file data.
 		// Don't retry, return a retry error instead
 		err = f.pacer.CallNoRetry(func() (bool, error) {
-			info, err = f.svc.Files.Insert(createInfo).Media(in, googleapi.ContentType("")).Do()
+			info, err = f.svc.Files.Insert(createInfo).Media(in, googleapi.ContentType("")).Fields(googleapi.Field(partialFields)).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
@@ -676,9 +677,9 @@ func (f *Fs) Rmdir(dir string) error {
 			// in or the user wants to trash, otherwise
 			// delete it.
 			if trashedFiles || *driveUseTrash {
-				_, err = f.svc.Files.Trash(directoryID).Do()
+				_, err = f.svc.Files.Trash(directoryID).Fields(googleapi.Field(partialFields)).Do()
 			} else {
-				err = f.svc.Files.Delete(directoryID).Do()
+				err = f.svc.Files.Delete(directoryID).Fields(googleapi.Field(partialFields)).Do()
 			}
 			return shouldRetry(err)
 		})
@@ -724,7 +725,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 
 	var info *drive.File
 	err = o.fs.pacer.Call(func() (bool, error) {
-		info, err = o.fs.svc.Files.Copy(srcObj.id, createInfo).Do()
+		info, err = o.fs.svc.Files.Copy(srcObj.id, createInfo).Fields(googleapi.Field(partialFields)).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -750,9 +751,9 @@ func (f *Fs) Purge() error {
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		if *driveUseTrash {
-			_, err = f.svc.Files.Trash(f.dirCache.RootID()).Do()
+			_, err = f.svc.Files.Trash(f.dirCache.RootID()).Fields(googleapi.Field(partialFields)).Do()
 		} else {
-			err = f.svc.Files.Delete(f.dirCache.RootID()).Do()
+			err = f.svc.Files.Delete(f.dirCache.RootID()).Fields(googleapi.Field(partialFields)).Do()
 		}
 		return shouldRetry(err)
 	})
@@ -791,7 +792,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	// Do the move
 	var info *drive.File
 	err = f.pacer.Call(func() (bool, error) {
-		info, err = f.svc.Files.Patch(srcObj.id, dstInfo).SetModifiedDate(true).Do()
+		info, err = f.svc.Files.Patch(srcObj.id, dstInfo).SetModifiedDate(true).Fields(googleapi.Field(partialFields)).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -878,7 +879,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 		Parents: []*drive.ParentReference{{Id: directoryID}},
 	}
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.svc.Files.Patch(srcID, &patch).Do()
+		_, err = f.svc.Files.Patch(srcID, &patch).Fields(googleapi.Field(partialFields)).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -1016,7 +1017,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 	// Set modified date
 	var info *drive.File
 	err = o.fs.pacer.Call(func() (bool, error) {
-		info, err = o.fs.svc.Files.Update(o.id, updateInfo).SetModifiedDate(true).Do()
+		info, err = o.fs.svc.Files.Update(o.id, updateInfo).SetModifiedDate(true).Fields(googleapi.Field(partialFields)).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -1128,7 +1129,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	if size == 0 || size < int64(driveUploadCutoff) {
 		// Don't retry, return a retry error instead
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-			info, err = o.fs.svc.Files.Update(updateInfo.Id, updateInfo).SetModifiedDate(true).Media(in, googleapi.ContentType("")).Do()
+			info, err = o.fs.svc.Files.Update(updateInfo.Id, updateInfo).SetModifiedDate(true).Media(in, googleapi.ContentType("")).Fields(googleapi.Field(partialFields)).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
@@ -1153,9 +1154,9 @@ func (o *Object) Remove() error {
 	var err error
 	err = o.fs.pacer.Call(func() (bool, error) {
 		if *driveUseTrash {
-			_, err = o.fs.svc.Files.Trash(o.id).Do()
+			_, err = o.fs.svc.Files.Trash(o.id).Fields(googleapi.Field(partialFields)).Do()
 		} else {
-			err = o.fs.svc.Files.Delete(o.id).Do()
+			err = o.fs.svc.Files.Delete(o.id).Fields(googleapi.Field(partialFields)).Do()
 		}
 		return shouldRetry(err)
 	})
