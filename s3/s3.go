@@ -70,6 +70,9 @@ func init() {
 				Value: "us-east-1",
 				Help:  "The default endpoint - a good choice if you are unsure.\nUS Region, Northern Virginia or Pacific Northwest.\nLeave location constraint empty.",
 			}, {
+				Value: "us-east-2",
+				Help:  "US East (Ohio) Region\nNeeds location constraint us-east-2.",
+			}, {
 				Value: "us-west-2",
 				Help:  "US West (Oregon) Region\nNeeds location constraint us-west-2.",
 			}, {
@@ -80,7 +83,10 @@ func init() {
 				Help:  "Canada (Central) Region\nNeeds location constraint ca-central-1.",
 			}, {
 				Value: "eu-west-1",
-				Help:  "EU (Ireland) Region Region\nNeeds location constraint EU or eu-west-1.",
+				Help:  "EU (Ireland) Region\nNeeds location constraint EU or eu-west-1.",
+			}, {
+				Value: "eu-west-2",
+				Help:  "EU (London) Region\nNeeds location constraint eu-west-2.",
 			}, {
 				Value: "eu-central-1",
 				Help:  "EU (Frankfurt) Region\nNeeds location constraint eu-central-1.",
@@ -119,6 +125,9 @@ func init() {
 				Value: "",
 				Help:  "Empty for US Region, Northern Virginia or Pacific Northwest.",
 			}, {
+				Value: "us-east-2",
+				Help:  "US East (Ohio) Region.",
+			}, {
 				Value: "us-west-2",
 				Help:  "US West (Oregon) Region.",
 			}, {
@@ -130,6 +139,9 @@ func init() {
 			}, {
 				Value: "eu-west-1",
 				Help:  "EU (Ireland) Region.",
+			}, {
+				Value: "eu-west-2",
+				Help:  "EU (London) Region.",
 			}, {
 				Value: "EU",
 				Help:  "EU Region.",
