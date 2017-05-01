@@ -3,13 +3,13 @@
 package mount
 
 import (
-	"errors"
 	"io"
 	"sync"
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
 	"github.com/ncw/rclone/fs"
+	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
@@ -26,17 +26,29 @@ type WriteFileHandle struct {
 	result      chan error
 	file        *File
 	writeCalled bool // set the first time Write() is called
+	hash        *fs.MultiHasher
 }
 
 // Check interface satisfied
 var _ fusefs.Handle = (*WriteFileHandle)(nil)
 
 func newWriteFileHandle(d *Dir, f *File, src fs.ObjectInfo) (*WriteFileHandle, error) {
+	var hash *fs.MultiHasher
+	if !noChecksum {
+		var err error
+		hash, err = fs.NewMultiHasherTypes(src.Fs().Hashes())
+		if err != nil {
+			fs.Errorf(src.Fs(), "newWriteFileHandle hash error: %v", err)
+		}
+	}
+
 	fh := &WriteFileHandle{
 		remote: src.Remote(),
 		result: make(chan error, 1),
 		file:   f,
+		hash:   hash,
 	}
+
 	fh.pipeReader, fh.pipeWriter = io.Pipe()
 	r := fs.NewAccountSizeName(fh.pipeReader, 0, src.Remote()).WithBuffer() // account the transfer
 	go func() {
@@ -71,6 +83,13 @@ func (fh *WriteFileHandle) Write(ctx context.Context, req *fuse.WriteRequest, re
 		return err
 	}
 	fs.Debugf(fh.remote, "WriteFileHandle.Write OK (%d bytes written)", n)
+	if fh.hash != nil {
+		_, err = fh.hash.Write(req.Data)
+		if err != nil {
+			fs.Errorf(fh.remote, "WriteFileHandle.Write HashError: %v", err)
+			return err
+		}
+	}
 	return nil
 }
 
@@ -94,6 +113,17 @@ func (fh *WriteFileHandle) close() error {
 	}
 	if err == nil {
 		err = readCloseErr
+	}
+	if err == nil && fh.hash != nil {
+		for hashType, srcSum := range fh.hash.Sums() {
+			dstSum, err := fh.o.Hash(hashType)
+			if err != nil {
+				return err
+			}
+			if !fs.HashEquals(srcSum, dstSum) {
+				return errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
+			}
+		}
 	}
 	return err
 }
