@@ -1,11 +1,12 @@
 // +build linux darwin freebsd
 
-package mount
+package mounttest
 
 import (
 	"os"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,6 +21,9 @@ func TestWriteFileNoWrite(t *testing.T) {
 
 	err = fd.Close()
 	assert.NoError(t, err)
+
+	// FIXME - wait for the Release on the file
+	time.Sleep(10 * time.Millisecond)
 
 	run.checkDir(t, "testnowrite 0")
 

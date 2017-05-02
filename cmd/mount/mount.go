@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"bazil.org/fuse"
+	fusefs "bazil.org/fuse/fs"
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
@@ -154,6 +155,83 @@ like this:
 	},
 }
 
+// mountOptions configures the options from the command line flags
+func mountOptions(device string) (options []fuse.MountOption) {
+	options = []fuse.MountOption{
+		fuse.MaxReadahead(uint32(maxReadAhead)),
+		fuse.Subtype("rclone"),
+		fuse.FSName(device), fuse.VolumeName(device),
+		fuse.NoAppleDouble(),
+		fuse.NoAppleXattr(),
+
+		// Options from benchmarking in the fuse module
+		//fuse.MaxReadahead(64 * 1024 * 1024),
+		//fuse.AsyncRead(), - FIXME this causes
+		// ReadFileHandle.Read error: read /home/files/ISOs/xubuntu-15.10-desktop-amd64.iso: bad file descriptor
+		// which is probably related to errors people are having
+		//fuse.WritebackCache(),
+	}
+	if allowNonEmpty {
+		options = append(options, fuse.AllowNonEmptyMount())
+	}
+	if allowOther {
+		options = append(options, fuse.AllowOther())
+	}
+	if allowRoot {
+		options = append(options, fuse.AllowRoot())
+	}
+	if defaultPermissions {
+		options = append(options, fuse.DefaultPermissions())
+	}
+	if readOnly {
+		options = append(options, fuse.ReadOnly())
+	}
+	if writebackCache {
+		options = append(options, fuse.WritebackCache())
+	}
+	return options
+}
+
+// mount the file system
+//
+// The mount point will be ready when this returns.
+//
+// returns an error, and an error channel for the serve process to
+// report an error when fusermount is called.
+func mount(f fs.Fs, mountpoint string) (<-chan error, func() error, error) {
+	fs.Debugf(f, "Mounting on %q", mountpoint)
+	c, err := fuse.Mount(mountpoint, mountOptions(f.Name()+":"+f.Root())...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	filesys := NewFS(f)
+	server := fusefs.New(c, nil)
+
+	// Serve the mount point in the background returning error to errChan
+	errChan := make(chan error, 1)
+	go func() {
+		err := server.Serve(filesys)
+		closeErr := c.Close()
+		if err == nil {
+			err = closeErr
+		}
+		errChan <- err
+	}()
+
+	// check if the mount process has an error to report
+	<-c.Ready
+	if err := c.MountError; err != nil {
+		return nil, nil, err
+	}
+
+	unmount := func() error {
+		return fuse.Unmount(mountpoint)
+	}
+
+	return errChan, unmount, nil
+}
+
 // Mount mounts the remote at mountpoint.
 //
 // If noModTime is set then it
@@ -175,7 +253,7 @@ func Mount(f fs.Fs, mountpoint string) error {
 	}
 
 	// Mount it
-	_, errChan, err := mount(f, mountpoint)
+	errChan, unmount, err := mount(f, mountpoint)
 	if err != nil {
 		return errors.Wrap(err, "failed to mount FUSE fs")
 	}
@@ -189,7 +267,7 @@ func Mount(f fs.Fs, mountpoint string) error {
 		break
 	// Program abort: umount
 	case <-sigChan:
-		err = fuse.Unmount(mountpoint)
+		err = unmount()
 	}
 
 	if err != nil {

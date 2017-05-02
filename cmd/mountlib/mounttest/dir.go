@@ -1,6 +1,6 @@
 // +build linux darwin freebsd
 
-package mount
+package mounttest
 
 import (
 	"io/ioutil"

@@ -5,114 +5,42 @@
 package mount
 
 import (
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
-
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
+	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
+	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
 // FS represents the top level filing system
 type FS struct {
-	f       fs.Fs
-	rootDir *Dir
+	*mountlib.FS
+	f fs.Fs
 }
 
 // Check interface satistfied
 var _ fusefs.FS = (*FS)(nil)
 
+// NewFS makes a new FS
+func NewFS(f fs.Fs) *FS {
+	fsys := &FS{
+		FS: mountlib.NewFS(f),
+		f:  f,
+	}
+	if noSeek {
+		fsys.FS.NoSeek()
+	}
+	return fsys
+}
+
 // Root returns the root node
 func (f *FS) Root() (fusefs.Node, error) {
-	fs.Debugf(f.f, "Root()")
-	if f.rootDir == nil {
-		fsDir := &fs.Dir{
-			Name: "",
-			When: time.Now(),
-		}
-		f.rootDir = newDir(f.f, fsDir)
-	}
-	return f.rootDir, nil
-}
-
-// mountOptions configures the options from the command line flags
-func mountOptions(device string) (options []fuse.MountOption) {
-	options = []fuse.MountOption{
-		fuse.MaxReadahead(uint32(maxReadAhead)),
-		fuse.Subtype("rclone"),
-		fuse.FSName(device), fuse.VolumeName(device),
-		fuse.NoAppleDouble(),
-		fuse.NoAppleXattr(),
-
-		// Options from benchmarking in the fuse module
-		//fuse.MaxReadahead(64 * 1024 * 1024),
-		//fuse.AsyncRead(), - FIXME this causes
-		// ReadFileHandle.Read error: read /home/files/ISOs/xubuntu-15.10-desktop-amd64.iso: bad file descriptor
-		// which is probably related to errors people are having
-		//fuse.WritebackCache(),
-	}
-	if allowNonEmpty {
-		options = append(options, fuse.AllowNonEmptyMount())
-	}
-	if allowOther {
-		options = append(options, fuse.AllowOther())
-	}
-	if allowRoot {
-		options = append(options, fuse.AllowRoot())
-	}
-	if defaultPermissions {
-		options = append(options, fuse.DefaultPermissions())
-	}
-	if readOnly {
-		options = append(options, fuse.ReadOnly())
-	}
-	if writebackCache {
-		options = append(options, fuse.WritebackCache())
-	}
-	return options
-}
-
-// mount the file system
-//
-// The mount point will be ready when this returns.
-//
-// returns an error, and an error channel for the serve process to
-// report an error when fusermount is called.
-func mount(f fs.Fs, mountpoint string) (*FS, <-chan error, error) {
-	fs.Debugf(f, "Mounting on %q", mountpoint)
-
-	filesys := &FS{
-		f: f,
-	}
-
-	c, err := fuse.Mount(mountpoint, mountOptions(f.Name()+":"+f.Root())...)
+	root, err := f.FS.Root()
 	if err != nil {
-		return filesys, nil, err
+		return nil, translateError(err)
 	}
-	server := fusefs.New(c, nil)
-
-	// Serve the mount point in the background returning error to errChan
-	errChan := make(chan error, 1)
-	go func() {
-		err := server.Serve(filesys)
-		closeErr := c.Close()
-		if err == nil {
-			err = closeErr
-		}
-		errChan <- err
-	}()
-
-	// check if the mount process has an error to report
-	<-c.Ready
-	if err := c.MountError; err != nil {
-		return filesys, nil, err
-	}
-
-	filesys.startSignalHandler()
-	return filesys, errChan, nil
+	return &Dir{root}, nil
 }
 
 // Check interface satsified
@@ -134,15 +62,21 @@ func (f *FS) Statfs(ctx context.Context, req *fuse.StatfsRequest, resp *fuse.Sta
 	return nil
 }
 
-func (f *FS) startSignalHandler() {
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGHUP)
-	go func() {
-		for {
-			<-sigChan
-			if f.rootDir != nil {
-				f.rootDir.ForgetAll()
-			}
+// Translate errors from mountlib
+func translateError(err error) error {
+	if err == nil {
+		return nil
+	}
+	cause := errors.Cause(err)
+	if mErr, ok := cause.(mountlib.Error); ok {
+		switch mErr {
+		case mountlib.ENOENT:
+			return fuse.ENOENT
+		case mountlib.ENOTEMPTY:
+			return fuse.EEXIST // return fuse.ENOTEMPTY - doesn't exist though so use EEXIST
+		case mountlib.EEXIST:
+			return fuse.EEXIST
 		}
-	}()
+	}
+	return err
 }

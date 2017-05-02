@@ -3,48 +3,24 @@
 package mount
 
 import (
-	"sync"
-	"sync/atomic"
 	"time"
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
 // File represents a file
 type File struct {
-	size           int64        // size of file - read and written with atomic int64 - must be 64 bit aligned
-	d              *Dir         // parent directory - read only
-	mu             sync.RWMutex // protects the following
-	o              fs.Object    // NB o may be nil if file is being written
-	writers        int          // number of writers for this file
-	pendingModTime time.Time    // will be applied once o becomes available, i.e. after file was written
-}
-
-// newFile creates a new File
-func newFile(d *Dir, o fs.Object) *File {
-	return &File{
-		d: d,
-		o: o,
-	}
-}
-
-// rename should be called to update f.o and f.d after a rename
-func (f *File) rename(d *Dir, o fs.Object) {
-	f.mu.Lock()
-	f.o = o
-	f.d = d
-	f.mu.Unlock()
-}
-
-// addWriters increments or decrements the writers
-func (f *File) addWriters(n int) {
-	f.mu.Lock()
-	f.writers += n
-	f.mu.Unlock()
+	*mountlib.File
+	// size           int64        // size of file - read and written with atomic int64 - must be 64 bit aligned
+	// d              *Dir         // parent directory - read only
+	// mu             sync.RWMutex // protects the following
+	// o              fs.Object    // NB o may be nil if file is being written
+	// writers        int          // number of writers for this file
+	// pendingModTime time.Time    // will be applied once o becomes available, i.e. after file was written
 }
 
 // Check interface satisfied
@@ -52,32 +28,19 @@ var _ fusefs.Node = (*File)(nil)
 
 // Attr fills out the attributes for the file
 func (f *File) Attr(ctx context.Context, a *fuse.Attr) error {
-	f.mu.Lock()
-	defer f.mu.Unlock()
+	modTime, Size, Blocks, err := f.File.Attr(noModTime)
+	if err != nil {
+		return translateError(err)
+	}
 	a.Gid = gid
 	a.Uid = uid
 	a.Mode = filePerms
-	// if o is nil it isn't valid yet, so return the size so far
-	if f.o == nil {
-		a.Size = uint64(atomic.LoadInt64(&f.size))
-		if !noModTime && !f.pendingModTime.IsZero() {
-			a.Atime = f.pendingModTime
-			a.Mtime = f.pendingModTime
-			a.Ctime = f.pendingModTime
-			a.Crtime = f.pendingModTime
-		}
-	} else {
-		a.Size = uint64(f.o.Size())
-		if !noModTime {
-			modTime := f.o.ModTime()
-			a.Atime = modTime
-			a.Mtime = modTime
-			a.Ctime = modTime
-			a.Crtime = modTime
-		}
-	}
-	a.Blocks = (a.Size + 511) / 512
-	fs.Debugf(f.o, "File.Attr %+v", a)
+	a.Size = Size
+	a.Atime = modTime
+	a.Mtime = modTime
+	a.Ctime = modTime
+	a.Crtime = modTime
+	a.Blocks = Blocks
 	return nil
 }
 
@@ -89,83 +52,13 @@ func (f *File) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse
 	if noModTime {
 		return nil
 	}
-
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
+	var err error
 	if req.Valid.MtimeNow() {
-		f.pendingModTime = time.Now()
+		err = f.File.SetModTime(time.Now())
 	} else if req.Valid.Mtime() {
-		f.pendingModTime = req.Mtime
+		err = f.File.SetModTime(req.Mtime)
 	}
-
-	if f.o != nil {
-		return f.applyPendingModTime()
-	}
-
-	// queue up for later, hoping f.o becomes available
-	return nil
-}
-
-// call with the mutex held
-func (f *File) applyPendingModTime() error {
-	defer func() { f.pendingModTime = time.Time{} }()
-
-	if f.pendingModTime.IsZero() {
-		return nil
-	}
-
-	if f.o == nil {
-		return errors.New("Cannot apply ModTime, file object is not available")
-	}
-
-	err := f.o.SetModTime(f.pendingModTime)
-	switch err {
-	case nil:
-		fs.Debugf(f.o, "File.applyPendingModTime OK")
-	case fs.ErrorCantSetModTime:
-		// do nothing, in order to not break "touch somefile" if it exists already
-	default:
-		fs.Errorf(f.o, "File.applyPendingModTime error: %v", err)
-		return err
-	}
-
-	return nil
-}
-
-// Update the size while writing
-func (f *File) written(n int64) {
-	atomic.AddInt64(&f.size, n)
-}
-
-// Update the object when written
-func (f *File) setObject(o fs.Object) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.o = o
-	_ = f.applyPendingModTime()
-	f.d.addObject(o, f)
-}
-
-// Wait for f.o to become non nil for a short time returning it or an
-// error
-//
-// Call without the mutex held
-func (f *File) waitForValidObject() (o fs.Object, err error) {
-	for i := 0; i < 50; i++ {
-		f.mu.Lock()
-		o = f.o
-		writers := f.writers
-		f.mu.Unlock()
-		if o != nil {
-			return o, nil
-		}
-		if writers == 0 {
-			return nil, errors.New("can't open file - writer failed")
-		}
-		time.Sleep(100 * time.Millisecond)
-	}
-	return nil, fuse.ENOENT
+	return translateError(err)
 }
 
 // Check interface satisfied
@@ -173,25 +66,19 @@ var _ fusefs.NodeOpener = (*File)(nil)
 
 // Open the file for read or write
 func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenResponse) (fh fusefs.Handle, err error) {
-	// if o is nil it isn't valid yet
-	o, err := f.waitForValidObject()
-	if err != nil {
-		return nil, err
-	}
-	fs.Debugf(o, "File.Open %v", req.Flags)
-
 	switch {
 	case req.Flags.IsReadOnly():
 		if noSeek {
 			resp.Flags |= fuse.OpenNonSeekable
 		}
-		fh, err = newReadFileHandle(o)
-		err = errors.Wrap(err, "open for read")
+		var rfh *mountlib.ReadFileHandle
+		rfh, err = f.File.OpenRead()
+		fh = &ReadFileHandle{rfh}
 	case req.Flags.IsWriteOnly() || (req.Flags.IsReadWrite() && (req.Flags&fuse.OpenTruncate) != 0):
 		resp.Flags |= fuse.OpenNonSeekable
-		src := newCreateInfo(f.d.f, o.Remote())
-		fh, err = newWriteFileHandle(f.d, f, src)
-		err = errors.Wrap(err, "open for write")
+		var wfh *mountlib.WriteFileHandle
+		wfh, err = f.File.OpenWrite()
+		fh = &WriteFileHandle{wfh}
 	case req.Flags.IsReadWrite():
 		err = errors.New("can't open for read and write simultaneously")
 	default:
@@ -211,8 +98,7 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 	*/
 
 	if err != nil {
-		fs.Errorf(o, "File.Open failed: %v", err)
-		return nil, err
+		return nil, translateError(err)
 	}
 	return fh, nil
 }

@@ -1,6 +1,4 @@
-// +build linux darwin freebsd
-
-package mount
+package mountlib
 
 import (
 	"time"

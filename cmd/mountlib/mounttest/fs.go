@@ -2,7 +2,7 @@
 
 // Test suite for rclonefs
 
-package mount
+package mounttest
 
 import (
 	"flag"
@@ -33,10 +33,22 @@ var (
 	LowLevelRetries = flag.Int("low-level-retries", 10, "Number of low level retries")
 )
 
+type (
+	UnmountFn func() error
+	MountFn   func(f fs.Fs, mountpoint string) (<-chan error, func() error, error)
+)
+
+var (
+	mountFn MountFn
+)
+
 // TestMain drives the tests
-func TestMain(m *testing.M) {
+func TestMain(m *testing.M, fn MountFn, dirPerms, filePerms os.FileMode) {
+	mountFn = fn
 	flag.Parse()
 	run = newRun()
+	run.dirPerms = dirPerms
+	run.filePerms = filePerms
 	rc := m.Run()
 	run.Finalise()
 	os.Exit(rc)
@@ -44,13 +56,14 @@ func TestMain(m *testing.M) {
 
 // Run holds the remotes for a test run
 type Run struct {
-	mountPath    string
-	fremote      fs.Fs
-	fremoteName  string
-	cleanRemote  func()
-	umountResult <-chan error
-	mountFS      *FS
-	skip         bool
+	mountPath           string
+	fremote             fs.Fs
+	fremoteName         string
+	cleanRemote         func()
+	umountResult        <-chan error
+	umountFn            UnmountFn
+	skip                bool
+	dirPerms, filePerms os.FileMode
 }
 
 // run holds the master Run data
@@ -103,7 +116,7 @@ func newRun() *Run {
 func (r *Run) mount() {
 	log.Printf("mount %q %q", r.fremote, r.mountPath)
 	var err error
-	r.mountFS, r.umountResult, err = mount(r.fremote, r.mountPath)
+	r.umountResult, r.umountFn, err = mountFn(r.fremote, r.mountPath)
 	if err != nil {
 		log.Printf("mount failed: %v", err)
 		r.skip = true
@@ -116,10 +129,17 @@ func (r *Run) umount() {
 		log.Printf("FUSE not found so skipping umount")
 		return
 	}
-	log.Printf("Calling fusermount -u %q", r.mountPath)
-	err := exec.Command("fusermount", "-u", r.mountPath).Run()
+	/*
+		log.Printf("Calling fusermount -u %q", r.mountPath)
+		err := exec.Command("fusermount", "-u", r.mountPath).Run()
+		if err != nil {
+			log.Printf("fusermount failed: %v", err)
+		}
+	*/
+	log.Printf("Unmounting %q", r.mountPath)
+	err := r.umountFn()
 	if err != nil {
-		log.Printf("fusermount failed: %v", err)
+		log.Fatalf("signal to umount failed: %v", err)
 	}
 	log.Printf("Waiting for umount")
 	err = <-r.umountResult
@@ -182,10 +202,10 @@ func (r *Run) readLocal(t *testing.T, dir dirMap, filepath string) {
 		if fi.IsDir() {
 			dir[name+"/"] = struct{}{}
 			r.readLocal(t, dir, name)
-			assert.Equal(t, fi.Mode().Perm(), os.FileMode(dirPerms))
+			assert.Equal(t, r.dirPerms, fi.Mode().Perm())
 		} else {
 			dir[fmt.Sprintf("%s %d", name, fi.Size())] = struct{}{}
-			assert.Equal(t, fi.Mode().Perm(), os.FileMode(filePerms))
+			assert.Equal(t, r.filePerms, fi.Mode().Perm())
 		}
 	}
 }
@@ -267,5 +287,5 @@ func TestRoot(t *testing.T) {
 	fi, err := os.Lstat(run.mountPath)
 	require.NoError(t, err)
 	assert.True(t, fi.IsDir())
-	assert.Equal(t, fi.Mode().Perm(), os.FileMode(dirPerms))
+	assert.Equal(t, fi.Mode().Perm(), run.dirPerms)
 }
