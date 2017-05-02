@@ -8,6 +8,7 @@ import (
 	_ "github.com/ncw/rclone/cmd/cat"
 	_ "github.com/ncw/rclone/cmd/check"
 	_ "github.com/ncw/rclone/cmd/cleanup"
+	_ "github.com/ncw/rclone/cmd/cmount"
 	_ "github.com/ncw/rclone/cmd/config"
 	_ "github.com/ncw/rclone/cmd/copy"
 	_ "github.com/ncw/rclone/cmd/copyto"
