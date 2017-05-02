@@ -65,7 +65,7 @@ Contributors
   * Mike Tesch <mjt6129@rit.edu>
   * Marvin Watson <marvwatson@users.noreply.github.com>
   * Danny Tsai <danny8376@gmail.com>
-  * Yoni Jah <yonjah+git@gmail.com>
+  * Yoni Jah <yonjah+git@gmail.com> <yonjah+github@gmail.com>
   * Stephen Harris <github@spuddy.org>
   * Ihor Dvoretskyi <ihor.dvoretskyi@gmail.com>
   * Jon Craton <jncraton@gmail.com>
