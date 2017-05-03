@@ -2,11 +2,9 @@
 package ftp
 
 import (
-	"fmt"
 	"io"
+	"net/url"
 	"path/filepath"
-	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -24,7 +22,7 @@ var globalMux = sync.Mutex{}
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "Ftp",
+		Name:        "ftp",
 		Description: "FTP interface",
 		NewFs:       NewFs,
 		Options: []fs.Option{
@@ -32,11 +30,12 @@ func init() {
 				Name: "username",
 				Help: "Username",
 			}, {
-				Name: "password",
-				Help: "Password",
+				Name:       "password",
+				Help:       "Password",
+				IsPassword: true,
 			}, {
 				Name: "url",
-				Help: "FTP url",
+				Help: "FTP URL",
 			},
 		},
 	})
@@ -48,7 +47,7 @@ type Fs struct {
 	root     string          // the path we are working on if any
 	features *fs.Features    // optional features
 	c        *ftp.ServerConn // the connection to the FTP server
-	url      URL
+	url      *url.URL
 	mu       sync.Mutex
 }
 
@@ -67,23 +66,6 @@ type FileInfo struct {
 	IsDir   bool
 }
 
-// URL represents an FTP URL
-type URL struct {
-	Scheme string
-	Host   string
-	Port   int
-	Path   string
-}
-
-// ToDial converts the URL to Dial format
-func (u *URL) ToDial() string {
-	return fmt.Sprintf("%s:%d", u.Host, u.Port)
-}
-
-func (u *URL) String() string {
-	return fmt.Sprintf("ftp://%s:%d/%s", u.Host, u.Port, u.Path)
-}
-
 // ------------------------------------------------------------
 
 // Name of this fs
@@ -98,7 +80,7 @@ func (f *Fs) Root() string {
 
 // String returns a description of the FS
 func (f *Fs) String() string {
-	return fmt.Sprintf("FTP Connection to %s", f.url.String())
+	return f.url.String()
 }
 
 // Features returns the optional features of this Fs
@@ -106,39 +88,37 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// Parse a URL
-func parseURL(url string) URL {
-	// This is *similar* to the RFC 3986 regexp but it matches the
-	// port independently from the host
-	r, _ := regexp.Compile("^(([^:/?#]+):)?(//([^/?#:]*))?(:([0-9]+))?([^?#]*)(\\?([^#]*))?(#(.*))?")
-
-	data := r.FindAllStringSubmatch(url, -1)
-
-	if data[0][5] == "" {
-		data[0][5] = "21"
-	}
-	port, _ := strconv.Atoi(data[0][5])
-	return URL{data[0][2], data[0][4], port, data[0][7]}
-}
-
 // Open a new connection to the FTP server.
-func ftpConnection(name, root string) (*ftp.ServerConn, URL, error) {
-	url := fs.ConfigFileGet(name, "url")
+func ftpConnection(name, root string) (*ftp.ServerConn, *url.URL, error) {
+	URL := fs.ConfigFileGet(name, "url")
 	user := fs.ConfigFileGet(name, "username")
 	pass := fs.ConfigFileGet(name, "password")
-	u := parseURL(url)
+	pass, err := fs.Reveal(pass)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed to decrypt password")
+	}
+	u, err := url.Parse(URL)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "open ftp connection url parse")
+	}
 	u.Path = filepath.Join(u.Path, root)
 	fs.Debugf(nil, "New ftp Connection with name %s and url %s (path %s)", name, u.String(), u.Path)
 	globalMux.Lock()
 	defer globalMux.Unlock()
-	c, err := ftp.DialTimeout(u.ToDial(), 30*time.Second)
+	dialAddr := u.Hostname()
+	if u.Port() != "" {
+		dialAddr += ":" + u.Port()
+	} else {
+		dialAddr += ":21"
+	}
+	c, err := ftp.DialTimeout(dialAddr, 30*time.Second)
 	if err != nil {
-		fs.Errorf(nil, "Error while Dialing %s: %s", u.ToDial(), err)
+		fs.Errorf(nil, "Error while Dialing %s: %s", dialAddr, err)
 		return nil, u, err
 	}
 	err = c.Login(user, pass)
 	if err != nil {
-		fs.Errorf(nil, "Error while Logging in into %s: %s", u.ToDial(), err)
+		fs.Errorf(nil, "Error while Logging in into %s: %s", dialAddr, err)
 		return nil, u, err
 	}
 	return c, u, nil
