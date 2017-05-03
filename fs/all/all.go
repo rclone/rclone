@@ -7,6 +7,7 @@ import (
 	_ "github.com/ncw/rclone/crypt"
 	_ "github.com/ncw/rclone/drive"
 	_ "github.com/ncw/rclone/dropbox"
+	_ "github.com/ncw/rclone/ftp"
 	_ "github.com/ncw/rclone/googlecloudstorage"
 	_ "github.com/ncw/rclone/hubic"
 	_ "github.com/ncw/rclone/local"
@@ -15,5 +16,4 @@ import (
 	_ "github.com/ncw/rclone/sftp"
 	_ "github.com/ncw/rclone/swift"
 	_ "github.com/ncw/rclone/yandex"
-	_ "github.com/ncw/rclone/ftp"
 )
