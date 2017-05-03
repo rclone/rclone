@@ -1,8 +1,13 @@
 // Package ftp interfaces with FTP servers
 package ftp
 
+// FIXME Mover and DirMover are possible using f.c.Rename
+// FIXME Should have a pool of connections rather than a global lock
+
 import (
 	"io"
+	"io/ioutil"
+	"net/textproto"
 	"net/url"
 	"path"
 	"strings"
@@ -49,6 +54,9 @@ type Fs struct {
 	c        *ftp.ServerConn // the connection to the FTP server
 	url      *url.URL
 	mu       sync.Mutex
+	user     string
+	pass     string
+	dialAddr string
 }
 
 // Object describes an FTP file
@@ -89,76 +97,124 @@ func (f *Fs) Features() *fs.Features {
 }
 
 // Open a new connection to the FTP server.
-func ftpConnection(name, root string) (*ftp.ServerConn, *url.URL, error) {
+func (f *Fs) ftpConnection() (*ftp.ServerConn, error) {
+	globalMux.Lock()
+	defer globalMux.Unlock()
+	fs.Debugf(f, "Connecting to FTP server")
+	c, err := ftp.DialTimeout(f.dialAddr, 30*time.Second)
+	if err != nil {
+		fs.Errorf(nil, "Error while Dialing %s: %s", f.dialAddr, err)
+		return nil, err
+	}
+	err = c.Login(f.user, f.pass)
+	if err != nil {
+		fs.Errorf(nil, "Error while Logging in into %s: %s", f.dialAddr, err)
+		return nil, err
+	}
+	return c, nil
+}
+
+// NewFs contstructs an Fs from the path, container:path
+func NewFs(name, root string) (ff fs.Fs, err error) {
+	// defer fs.Trace(nil, "name=%q, root=%q", name, root)("fs=%v, err=%v", &ff, &err)
 	URL := fs.ConfigFileGet(name, "url")
 	user := fs.ConfigFileGet(name, "username")
 	pass := fs.ConfigFileGet(name, "password")
-	pass, err := fs.Reveal(pass)
+	pass, err = fs.Reveal(pass)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to decrypt password")
+		return nil, errors.Wrap(err, "NewFS decrypt password")
 	}
 	u, err := url.Parse(URL)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "open ftp connection url parse")
+		return nil, errors.Wrap(err, "NewFS URL parse")
 	}
-	u.Path = path.Join(u.Path, root)
-	fs.Debugf(nil, "New ftp Connection with name %s and url %s (path %s)", name, u.String(), u.Path)
-	globalMux.Lock()
-	defer globalMux.Unlock()
+	urlPath := strings.Trim(u.Path, "/")
+	fullPath := root
+	if urlPath != "" && !strings.HasPrefix("/", root) {
+		fullPath = path.Join(u.Path, root)
+	}
+	root = fullPath
 	dialAddr := u.Hostname()
 	if u.Port() != "" {
 		dialAddr += ":" + u.Port()
 	} else {
 		dialAddr += ":21"
 	}
-	c, err := ftp.DialTimeout(dialAddr, 30*time.Second)
-	if err != nil {
-		fs.Errorf(nil, "Error while Dialing %s: %s", dialAddr, err)
-		return nil, u, err
+	f := &Fs{
+		name:     name,
+		root:     root,
+		url:      u,
+		user:     user,
+		pass:     pass,
+		dialAddr: dialAddr,
 	}
-	err = c.Login(user, pass)
-	if err != nil {
-		fs.Errorf(nil, "Error while Logging in into %s: %s", dialAddr, err)
-		return nil, u, err
-	}
-	return c, u, nil
-}
-
-// NewFs contstructs an Fs from the path, container:path
-func NewFs(name, root string) (fs.Fs, error) {
-	fs.Debugf(nil, "ENTER function 'NewFs' with name %s and root %s", name, root)
-	defer fs.Debugf(nil, "EXIT function 'NewFs'")
-	c, u, err := ftpConnection(name, root)
+	f.features = (&fs.Features{}).Fill(f)
+	f.c, err = f.ftpConnection()
 	if err != nil {
 		return nil, err
 	}
-	f := &Fs{
-		name: name,
-		root: u.Path,
-		c:    c,
-		url:  u,
-		mu:   sync.Mutex{},
+	if root != "" {
+		// Check to see if the root actually an existing file
+		remote := path.Base(root)
+		f.root = path.Dir(root)
+		if f.root == "." {
+			f.root = ""
+		}
+		_, err := f.NewObject(remote)
+		if err != nil {
+			if err == fs.ErrorObjectNotFound || errors.Cause(err) == fs.ErrorNotAFile {
+				// File doesn't exist so return old f
+				f.root = root
+				return f, nil
+			}
+			return nil, err
+		}
+		// return an error with an fs which points to the parent
+		return f, fs.ErrorIsFile
 	}
-	f.features = (&fs.Features{}).Fill(f)
 	return f, err
+}
+
+// translateErrorFile turns FTP errors into rclone errors if possible for a file
+func translateErrorFile(err error) error {
+	switch errX := err.(type) {
+	case *textproto.Error:
+		switch errX.Code {
+		case ftp.StatusFileUnavailable:
+			err = fs.ErrorObjectNotFound
+		}
+	}
+	return err
+}
+
+// translateErrorDir turns FTP errors into rclone errors if possible for a directory
+func translateErrorDir(err error) error {
+	switch errX := err.(type) {
+	case *textproto.Error:
+		switch errX.Code {
+		case ftp.StatusFileUnavailable:
+			err = fs.ErrorDirNotFound
+		}
+	}
+	return err
 }
 
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) NewObject(remote string) (fs.Object, error) {
-	fs.Debugf(f, "ENTER function 'NewObject' called with remote %s", remote)
-	defer fs.Debugf(f, "EXIT function 'NewObject'")
-	dir := path.Dir(remote)
-	base := path.Base(remote)
+func (f *Fs) NewObject(remote string) (o fs.Object, err error) {
+	// defer fs.Trace(remote, "")("o=%v, err=%v", &o, &err)
+	fullPath := path.Join(f.root, remote)
+	dir := path.Dir(fullPath)
+	base := path.Base(fullPath)
 
 	f.mu.Lock()
 	files, err := f.c.List(dir)
 	f.mu.Unlock()
 	if err != nil {
-		return nil, err
+		return nil, translateErrorFile(err)
 	}
-	for i := range files {
-		if files[i].Name == base {
+	for i, file := range files {
+		if file.Type != ftp.EntryTypeFolder && file.Name == base {
 			o := &Object{
 				fs:     f,
 				remote: remote,
@@ -177,13 +233,12 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 }
 
 func (f *Fs) list(out fs.ListOpts, dir string, curlevel int) {
-	fs.Debugf(f, "ENTER function 'list'")
-	defer fs.Debugf(f, "EXIT function 'list'")
+	// defer fs.Trace(dir, "curlevel=%d", curlevel)("")
 	f.mu.Lock()
 	files, err := f.c.List(path.Join(f.root, dir))
 	f.mu.Unlock()
 	if err != nil {
-		out.SetError(err)
+		out.SetError(translateErrorDir(err))
 		return
 	}
 	for i := range files {
@@ -191,6 +246,9 @@ func (f *Fs) list(out fs.ListOpts, dir string, curlevel int) {
 		newremote := path.Join(dir, object.Name)
 		switch object.Type {
 		case ftp.EntryTypeFolder:
+			if object.Name == "." || object.Name == ".." {
+				continue
+			}
 			if out.IncludeDirectory(newremote) {
 				d := &fs.Dir{
 					Name:  newremote,
@@ -234,8 +292,7 @@ func (f *Fs) list(out fs.ListOpts, dir string, curlevel int) {
 // Fses must support recursion levels of fs.MaxLevel and 1.
 // They may return ErrorLevelNotSupported otherwise.
 func (f *Fs) List(out fs.ListOpts, dir string) {
-	fs.Debugf(f, "ENTER function 'List' on directory '%s/%s'", f.root, dir)
-	defer fs.Debugf(f, "EXIT function 'List' for directory '%s/%s'", f.root, dir)
+	// defer fs.Trace(dir, "")("")
 	f.list(out, dir, 1)
 	out.Finished()
 }
@@ -256,7 +313,7 @@ func (f *Fs) Precision() time.Duration {
 // will return the object and the error, otherwise will return
 // nil and the error
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
-	fs.Debugf(f, "Trying to put file %s", src.Remote())
+	// fs.Debugf(f, "Trying to put file %s", src.Remote())
 	o := &Object{
 		fs:     f,
 		remote: src.Remote(),
@@ -266,9 +323,8 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 }
 
 // getInfo reads the FileInfo for a path
-func (f *Fs) getInfo(remote string) (*FileInfo, error) {
-	fs.Debugf(f, "ENTER function 'getInfo' on file %s", remote)
-	defer fs.Debugf(f, "EXIT function 'getInfo'")
+func (f *Fs) getInfo(remote string) (fi *FileInfo, err error) {
+	// defer fs.Trace(remote, "")("fi=%v, err=%v", &fi, &err)
 	dir := path.Dir(remote)
 	base := path.Base(remote)
 
@@ -276,7 +332,7 @@ func (f *Fs) getInfo(remote string) (*FileInfo, error) {
 	files, err := f.c.List(dir)
 	f.mu.Unlock()
 	if err != nil {
-		return nil, err
+		return nil, translateErrorFile(err)
 	}
 
 	for i := range files {
@@ -295,32 +351,32 @@ func (f *Fs) getInfo(remote string) (*FileInfo, error) {
 
 func (f *Fs) mkdir(abspath string) error {
 	_, err := f.getInfo(abspath)
-	if err != nil {
-		fs.Debugf(f, "Trying to create directory %s", abspath)
+	if err == fs.ErrorObjectNotFound {
+		// fs.Debugf(f, "Trying to create directory %s", abspath)
 		f.mu.Lock()
-		err := f.c.MakeDir(abspath)
+		err = f.c.MakeDir(abspath)
 		f.mu.Unlock()
-		if err != nil {
-			return err
-		}
 	}
 	return err
 }
 
 // Mkdir creates the directory if it doesn't exist
-func (f *Fs) Mkdir(dir string) error {
+func (f *Fs) Mkdir(dir string) (err error) {
+	// defer fs.Trace(dir, "")("err=%v", &err)
 	// This actually works as mkdir -p
-	fs.Debugf(f, "ENTER function 'Mkdir' on '%s/%s'", f.root, dir)
-	defer fs.Debugf(f, "EXIT function 'Mkdir' on '%s/%s'", f.root, dir)
 	abspath := path.Join(f.root, dir)
 	tokens := strings.Split(abspath, "/")
 	curdir := ""
 	for i := range tokens {
-		curdir += "/" + tokens[i]
+		curdir += tokens[i]
+		if curdir == "" {
+			continue
+		}
 		err := f.mkdir(curdir)
 		if err != nil {
 			return err
 		}
+		curdir += "/"
 	}
 	return nil
 }
@@ -334,11 +390,11 @@ func (f *Fs) Rmdir(dir string) error {
 	files, err := f.c.List(path.Join(f.root, dir))
 	f.mu.Unlock()
 	if err != nil {
-		return errors.Wrap(err, "rmdir")
+		return translateErrorDir(err)
 	}
-	for i := range files {
-		if files[i].Type == ftp.EntryTypeFolder {
-			err = f.Rmdir(path.Join(dir, files[i].Name))
+	for _, file := range files {
+		if file.Type == ftp.EntryTypeFolder && file.Name != "." && file.Name != ".." {
+			err = f.Rmdir(path.Join(dir, file.Name))
 			if err != nil {
 				return errors.Wrap(err, "rmdir")
 			}
@@ -412,11 +468,21 @@ func (f *ftpReadCloser) Close() error {
 }
 
 // Open an object for read
-func (o *Object) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
+func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
+	// defer fs.Trace(o, "")("rc=%v, err=%v", &rc, &err)
 	path := path.Join(o.fs.root, o.remote)
-	fs.Debugf(o.fs, "ENTER function 'Open' on file '%s' in root '%s'", o.remote, o.fs.root)
-	defer fs.Debugf(o.fs, "EXIT function 'Open' %s", path)
-	c, _, err := ftpConnection(o.fs.name, o.fs.root)
+	var offset int64
+	for _, option := range options {
+		switch x := option.(type) {
+		case *fs.SeekOption:
+			offset = x.Offset
+		default:
+			if option.Mandatory() {
+				fs.Logf(o, "Unsupported mandatory option: %v", option)
+			}
+		}
+	}
+	c, err := o.fs.ftpConnection()
 	if err != nil {
 		return nil, errors.Wrap(err, "open")
 	}
@@ -424,13 +490,22 @@ func (o *Object) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "open")
 	}
-	return &ftpReadCloser{ReadCloser: fd, c: c}, nil
+	rc = &ftpReadCloser{ReadCloser: fd, c: c}
+	if offset != 0 {
+		_, err = io.CopyN(ioutil.Discard, fd, offset)
+		if err != nil {
+			_ = rc.Close()
+			return nil, errors.Wrap(err, "open skipping bytes")
+		}
+	}
+	return rc, nil
 }
 
 // makeAllDir creates the parent directories for the object
 func (o *Object) makeAllDir() error {
-	tokens := strings.Split(path.Dir(o.remote), "/")
-	dir := ""
+	dir, _ := path.Split(o.remote)
+	tokens := strings.Split(dir, "/")
+	dir = ""
 	for i := range tokens {
 		dir += tokens[i] + "/"
 		err := o.fs.Mkdir(dir)
@@ -450,29 +525,38 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	// Create all upper directory first...
 	err := o.makeAllDir()
 	if err != nil {
-		return errors.Wrap(err, "update")
+		return errors.Wrap(err, "update mkdir")
 	}
 	path := path.Join(o.fs.root, o.remote)
-	c, _, err := ftpConnection(o.fs.name, o.fs.root)
+	c, err := o.fs.ftpConnection()
 	if err != nil {
-		return errors.Wrap(err, "update")
+		return errors.Wrap(err, "update connect")
+	}
+	// remove the file if upload failed
+	remove := func() {
+		removeErr := o.Remove()
+		if removeErr != nil {
+			fs.Debugf(o, "Failed to remove: %v", removeErr)
+		} else {
+			fs.Debugf(o, "Removed after failed upload: %v", err)
+		}
 	}
 	err = c.Stor(path, in)
 	if err != nil {
-		return errors.Wrap(err, "update")
+		remove()
+		return errors.Wrap(err, "update stor")
 	}
 	o.info, err = o.fs.getInfo(path)
 	if err != nil {
-		return errors.Wrap(err, "update")
+		return errors.Wrap(err, "update getinfo")
 	}
 	return nil
 }
 
 // Remove an object
-func (o *Object) Remove() error {
+func (o *Object) Remove() (err error) {
+	// defer fs.Trace(o, "")("err=%v", &err)
 	path := path.Join(o.fs.root, o.remote)
-	fs.Debugf(o, "ENTER function 'Remove' for obejct at %s", path)
-	defer fs.Debugf(o, "EXIT function 'Remove' for obejct at %s", path)
 	// Check if it's a directory or a file
 	info, err := o.fs.getInfo(path)
 	if err != nil {
