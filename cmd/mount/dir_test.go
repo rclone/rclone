@@ -151,3 +151,69 @@ func TestDirModTime(t *testing.T) {
 
 	run.rmdir(t, "dir")
 }
+
+func TestDirCacheFlush(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
+	run.checkDir(t, "")
+
+	run.mkdir(t, "dir")
+	run.mkdir(t, "otherdir")
+	run.createFile(t, "dir/file", "1")
+	run.createFile(t, "otherdir/file", "1")
+
+	dm := newDirMap("otherdir/|otherdir/file 1|dir/|dir/file 1")
+	localDm := make(dirMap)
+	run.readLocal(t, localDm, "")
+	assert.Equal(t, dm, localDm, "expected vs fuse mount")
+
+	err := run.fremote.Mkdir("dir/subdir")
+	require.NoError(t, err)
+
+	// expect newly created "subdir" on remote to not show up
+	run.mountFS.rootDir.ForgetPath("otherdir")
+	run.readLocal(t, localDm, "")
+	assert.Equal(t, dm, localDm, "expected vs fuse mount")
+
+	run.mountFS.rootDir.ForgetPath("dir")
+	dm = newDirMap("otherdir/|otherdir/file 1|dir/|dir/file 1|dir/subdir/")
+	run.readLocal(t, localDm, "")
+	assert.Equal(t, dm, localDm, "expected vs fuse mount")
+
+	run.rm(t, "otherdir/file")
+	run.rmdir(t, "otherdir")
+	run.rm(t, "dir/file")
+	run.rmdir(t, "dir/subdir")
+	run.rmdir(t, "dir")
+	run.checkDir(t, "")
+}
+
+func TestDirCacheFlushOnDirRename(t *testing.T) {
+	run.skipIfNoFUSE(t)
+	run.mkdir(t, "dir")
+	run.createFile(t, "dir/file", "1")
+
+	dm := newDirMap("dir/|dir/file 1")
+	localDm := make(dirMap)
+	run.readLocal(t, localDm, "")
+	assert.Equal(t, dm, localDm, "expected vs fuse mount")
+
+	// expect remotely created directory to not show up
+	err := run.fremote.Mkdir("dir/subdir")
+	require.NoError(t, err)
+	run.readLocal(t, localDm, "")
+	assert.Equal(t, dm, localDm, "expected vs fuse mount")
+
+	err = os.Rename(run.path("dir"), run.path("rid"))
+	require.NoError(t, err)
+
+	dm = newDirMap("rid/|rid/subdir/|rid/file 1")
+	localDm = make(dirMap)
+	run.readLocal(t, localDm, "")
+	assert.Equal(t, dm, localDm, "expected vs fuse mount")
+
+	run.rm(t, "rid/file")
+	run.rmdir(t, "rid/subdir")
+	run.rmdir(t, "rid")
+	run.checkDir(t, "")
+}
