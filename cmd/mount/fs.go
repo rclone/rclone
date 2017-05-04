@@ -5,6 +5,9 @@
 package mount
 
 import (
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"bazil.org/fuse"
@@ -15,7 +18,8 @@ import (
 
 // FS represents the top level filing system
 type FS struct {
-	f fs.Fs
+	f       fs.Fs
+	rootDir *Dir
 }
 
 // Check interface satistfied
@@ -24,11 +28,14 @@ var _ fusefs.FS = (*FS)(nil)
 // Root returns the root node
 func (f *FS) Root() (fusefs.Node, error) {
 	fs.Debugf(f.f, "Root()")
-	fsDir := &fs.Dir{
-		Name: "",
-		When: time.Now(),
+	if f.rootDir == nil {
+		fsDir := &fs.Dir{
+			Name: "",
+			When: time.Now(),
+		}
+		f.rootDir = newDir(f.f, fsDir)
 	}
-	return newDir(f.f, fsDir), nil
+	return f.rootDir, nil
 }
 
 // mountOptions configures the options from the command line flags
@@ -74,17 +81,17 @@ func mountOptions(device string) (options []fuse.MountOption) {
 //
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
-func mount(f fs.Fs, mountpoint string) (<-chan error, error) {
+func mount(f fs.Fs, mountpoint string) (*FS, <-chan error, error) {
 	fs.Debugf(f, "Mounting on %q", mountpoint)
-	c, err := fuse.Mount(mountpoint, mountOptions(f.Name()+":"+f.Root())...)
-	if err != nil {
-		return nil, err
-	}
 
 	filesys := &FS{
 		f: f,
 	}
 
+	c, err := fuse.Mount(mountpoint, mountOptions(f.Name()+":"+f.Root())...)
+	if err != nil {
+		return filesys, nil, err
+	}
 	server := fusefs.New(c, nil)
 
 	// Serve the mount point in the background returning error to errChan
@@ -101,10 +108,11 @@ func mount(f fs.Fs, mountpoint string) (<-chan error, error) {
 	// check if the mount process has an error to report
 	<-c.Ready
 	if err := c.MountError; err != nil {
-		return nil, err
+		return filesys, nil, err
 	}
 
-	return errChan, nil
+	filesys.startSignalHandler()
+	return filesys, errChan, nil
 }
 
 // Check interface satsified
@@ -124,4 +132,17 @@ func (f *FS) Statfs(ctx context.Context, req *fuse.StatfsRequest, resp *fuse.Sta
 	resp.Namelen = 255      // Maximum file name length?
 	resp.Frsize = blockSize // Fragment size, smallest addressable data size in the file system.
 	return nil
+}
+
+func (f *FS) startSignalHandler() {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGHUP)
+	go func() {
+		for {
+			<-sigChan
+			if f.rootDir != nil {
+				f.rootDir.ForgetAll()
+			}
+		}
+	}()
 }

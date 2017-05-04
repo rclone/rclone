@@ -49,6 +49,7 @@ type Run struct {
 	fremoteName  string
 	cleanRemote  func()
 	umountResult <-chan error
+	mountFS      *FS
 	skip         bool
 }
 
@@ -102,7 +103,7 @@ func newRun() *Run {
 func (r *Run) mount() {
 	log.Printf("mount %q %q", r.fremote, r.mountPath)
 	var err error
-	r.umountResult, err = mount(r.fremote, r.mountPath)
+	r.mountFS, r.umountResult, err = mount(r.fremote, r.mountPath)
 	if err != nil {
 		log.Printf("mount failed: %v", err)
 		r.skip = true

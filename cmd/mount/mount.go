@@ -122,6 +122,21 @@ mount won't do that, so will be less reliable than the rclone command.
 Note that all the rclone filters can be used to select a subset of the
 files to be visible in the mount.
 
+### Directory Cache ###
+
+Using the ` + "`--dir-cache-time`" + ` flag, you can set how long a
+directory should be considered up to date and not refreshed from the
+backend. Changes made locally in the mount may appear immediately or
+invalidate the cache. However, changes done on the remote will only
+be picked up once the cache expires.
+
+Alternatively, you can send a ` + "`SIGHUP`" + ` signal to rclone for
+it to flush all directory caches, regardless of how old they are.
+Assuming only one rlcone instance is running, you can reset the cache
+like this:
+
+    kill -SIGHUP $(pidof rclone)
+
 ### Bugs ###
 
   * All the remotes should work for read, but some may not for write
@@ -160,7 +175,7 @@ func Mount(f fs.Fs, mountpoint string) error {
 	}
 
 	// Mount it
-	errChan, err := mount(f, mountpoint)
+	_, errChan, err := mount(f, mountpoint)
 	if err != nil {
 		return errors.Wrap(err, "failed to mount FUSE fs")
 	}
