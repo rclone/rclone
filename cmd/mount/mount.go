@@ -134,7 +134,7 @@ be picked up once the cache expires.
 
 Alternatively, you can send a ` + "`SIGHUP`" + ` signal to rclone for
 it to flush all directory caches, regardless of how old they are.
-Assuming only one rlcone instance is running, you can reset the cache
+Assuming only one rclone instance is running, you can reset the cache
 like this:
 
     kill -SIGHUP $(pidof rclone)
