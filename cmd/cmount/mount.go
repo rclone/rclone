@@ -22,7 +22,6 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"golang.org/x/sys/unix"
 )
 
 // Globals
@@ -40,8 +39,8 @@ var (
 	writebackCache                   = false
 	maxReadAhead       fs.SizeSuffix = 128 * 1024
 	umask                            = 0
-	uid                              = uint32(unix.Geteuid())
-	gid                              = uint32(unix.Getegid())
+	uid                              = uint32(0) // set in mount_unix.go
+	gid                              = uint32(0)
 	// foreground                 = false
 	// default permissions for directories - modified by umask in Mount
 	dirPerms  = os.FileMode(0777)
@@ -49,8 +48,6 @@ var (
 )
 
 func init() {
-	umask = unix.Umask(0) // read the umask
-	unix.Umask(umask)     // set it back to what it was
 	cmd.Root.AddCommand(commandDefintion)
 	commandDefintion.Flags().BoolVarP(&noModTime, "no-modtime", "", noModTime, "Don't read/write the modification time (can speed things up).")
 	commandDefintion.Flags().BoolVarP(&debugFUSE, "debug-fuse", "", debugFUSE, "Debug the FUSE internals - needs -v.")
@@ -65,8 +62,6 @@ func init() {
 	commandDefintion.Flags().BoolVarP(&writebackCache, "write-back-cache", "", writebackCache, "Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used.")
 	commandDefintion.Flags().VarP(&maxReadAhead, "max-read-ahead", "", "The number of bytes that can be prefetched for sequential reads.")
 	commandDefintion.Flags().IntVarP(&umask, "umask", "", umask, "Override the permission bits set by the filesystem.")
-	commandDefintion.Flags().Uint32VarP(&uid, "uid", "", uid, "Override the uid field set by the filesystem.")
-	commandDefintion.Flags().Uint32VarP(&gid, "gid", "", gid, "Override the gid field set by the filesystem.")
 	//commandDefintion.Flags().BoolVarP(&foreground, "foreground", "", foreground, "Do not detach.")
 }
 
@@ -84,6 +79,10 @@ First set up your remote using ` + "`rclone config`" + `.  Check it works with `
 Start the mount like this
 
     rclone mount remote:path/to/files /path/to/local/mount
+
+Or on Windows like this where X: is an unused drive letter
+
+    rclone mount remote:path/to/files X:
 
 When the program ends, either via Ctrl+C or receiving a SIGINT or SIGTERM signal,
 the mount is automatically stopped.
@@ -212,12 +211,14 @@ func mount(f fs.Fs, mountpoint string) (*mountlib.FS, <-chan error, func() error
 	fs.Debugf(f, "Mounting on %q", mountpoint)
 
 	// Check the mountpoint
-	fi, err := os.Stat(mountpoint)
-	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "mountpoint")
-	}
-	if !fi.IsDir() {
-		return nil, nil, nil, errors.New("mountpoint is not a directory")
+	if runtime.GOOS != "windows" {
+		fi, err := os.Stat(mountpoint)
+		if err != nil {
+			return nil, nil, nil, errors.Wrap(err, "mountpoint")
+		}
+		if !fi.IsDir() {
+			return nil, nil, nil, errors.New("mountpoint is not a directory")
+		}
 	}
 
 	// Create underlying FS
