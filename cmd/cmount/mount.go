@@ -11,11 +11,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"runtime"
+	"syscall"
 	"time"
 
 	"github.com/billziss-gh/cgofuse/fuse"
 	"github.com/ncw/rclone/cmd"
+	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -123,6 +126,21 @@ mount won't do that, so will be less reliable than the rclone command.
 Note that all the rclone filters can be used to select a subset of the
 files to be visible in the mount.
 
+### Directory Cache ###
+
+Using the ` + "`--dir-cache-time`" + ` flag, you can set how long a
+directory should be considered up to date and not refreshed from the
+backend. Changes made locally in the mount may appear immediately or
+invalidate the cache. However, changes done on the remote will only
+be picked up once the cache expires.
+
+Alternatively, you can send a ` + "`SIGHUP`" + ` signal to rclone for
+it to flush all directory caches, regardless of how old they are.
+Assuming only one rlcone instance is running, you can reset the cache
+like this:
+
+    kill -SIGHUP $(pidof rclone)
+
 ### Bugs ###
 
   * All the remotes should work for read, but some may not for write
@@ -190,16 +208,16 @@ func mountOptions(device string, mountpoint string) (options []string) {
 //
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
-func mount(f fs.Fs, mountpoint string) (<-chan error, func() error, error) {
+func mount(f fs.Fs, mountpoint string) (*mountlib.FS, <-chan error, func() error, error) {
 	fs.Debugf(f, "Mounting on %q", mountpoint)
 
 	// Check the mountpoint
 	fi, err := os.Stat(mountpoint)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "mountpoint")
+		return nil, nil, nil, errors.Wrap(err, "mountpoint")
 	}
 	if !fi.IsDir() {
-		return nil, nil, errors.New("mountpoint is not a directory")
+		return nil, nil, nil, errors.New("mountpoint is not a directory")
 	}
 
 	// Create underlying FS
@@ -235,7 +253,7 @@ func mount(f fs.Fs, mountpoint string) (<-chan error, func() error, error) {
 
 	// Wait for the filesystem to become ready
 	<-fsys.ready
-	return errChan, unmount, nil
+	return fsys.FS, errChan, unmount, nil
 }
 
 // Mount mounts the remote at mountpoint.
@@ -253,15 +271,33 @@ func Mount(f fs.Fs, mountpoint string) error {
 	}
 
 	// Mount it
-	errChan, _, err := mount(f, mountpoint)
+	FS, errChan, _, err := mount(f, mountpoint)
 	if err != nil {
 		return errors.Wrap(err, "failed to mount FUSE fs")
 	}
 
 	// Note cgofuse unmounts the fs on SIGINT etc
 
-	// Wait for mount to finish
-	err = <-errChan
+	sigHup := make(chan os.Signal, 1)
+	signal.Notify(sigHup, syscall.SIGHUP)
+
+waitloop:
+	for {
+		select {
+		// umount triggered outside the app
+		case err = <-errChan:
+			break waitloop
+		// user sent SIGHUP to clear the cache
+		case <-sigHup:
+			root, err := FS.Root()
+			if err != nil {
+				fs.Errorf(f, "Error reading root: %v", err)
+			} else {
+				root.ForgetAll()
+			}
+		}
+	}
+
 	if err != nil {
 		return errors.Wrap(err, "failed to umount FUSE fs")
 	}

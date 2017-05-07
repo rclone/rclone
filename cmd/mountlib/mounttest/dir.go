@@ -170,12 +170,15 @@ func TestDirCacheFlush(t *testing.T) {
 	err := run.fremote.Mkdir("dir/subdir")
 	require.NoError(t, err)
 
+	root, err := run.filesys.Root()
+	require.NoError(t, err)
+
 	// expect newly created "subdir" on remote to not show up
-	run.mountFS.rootDir.ForgetPath("otherdir")
+	root.ForgetPath("otherdir")
 	run.readLocal(t, localDm, "")
 	assert.Equal(t, dm, localDm, "expected vs fuse mount")
 
-	run.mountFS.rootDir.ForgetPath("dir")
+	root.ForgetPath("dir")
 	dm = newDirMap("otherdir/|otherdir/file 1|dir/|dir/file 1|dir/subdir/")
 	run.readLocal(t, localDm, "")
 	assert.Equal(t, dm, localDm, "expected vs fuse mount")

@@ -14,6 +14,8 @@ func TestDirRenameFile(t *testing.T)              { mounttest.TestDirRenameFile(
 func TestDirRenameEmptyDir(t *testing.T)          { mounttest.TestDirRenameEmptyDir(t) }
 func TestDirRenameFullDir(t *testing.T)           { mounttest.TestDirRenameFullDir(t) }
 func TestDirModTime(t *testing.T)                 { mounttest.TestDirModTime(t) }
+func TestDirCacheFlush(t *testing.T)              { mounttest.TestDirCacheFlush(t) }
+func TestDirCacheFlushOnDirRename(t *testing.T)   { mounttest.TestDirCacheFlushOnDirRename(t) }
 func TestFileModTime(t *testing.T)                { mounttest.TestFileModTime(t) }
 func TestFileModTimeWithOpenWriters(t *testing.T) { mounttest.TestFileModTimeWithOpenWriters(t) }
 func TestMount(t *testing.T)                      { mounttest.TestMount(t) }

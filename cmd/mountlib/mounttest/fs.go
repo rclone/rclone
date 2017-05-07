@@ -15,6 +15,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
 	_ "github.com/ncw/rclone/fs/all"
 	"github.com/ncw/rclone/fstest"
@@ -35,7 +36,7 @@ var (
 
 type (
 	UnmountFn func() error
-	MountFn   func(f fs.Fs, mountpoint string) (<-chan error, func() error, error)
+	MountFn   func(f fs.Fs, mountpoint string) (*mountlib.FS, <-chan error, func() error, error)
 )
 
 var (
@@ -56,6 +57,7 @@ func TestMain(m *testing.M, fn MountFn, dirPerms, filePerms os.FileMode) {
 
 // Run holds the remotes for a test run
 type Run struct {
+	filesys             *mountlib.FS
 	mountPath           string
 	fremote             fs.Fs
 	fremoteName         string
@@ -116,7 +118,7 @@ func newRun() *Run {
 func (r *Run) mount() {
 	log.Printf("mount %q %q", r.fremote, r.mountPath)
 	var err error
-	r.umountResult, r.umountFn, err = mountFn(r.fremote, r.mountPath)
+	r.filesys, r.umountResult, r.umountFn, err = mountFn(r.fremote, r.mountPath)
 	if err != nil {
 		log.Printf("mount failed: %v", err)
 		r.skip = true

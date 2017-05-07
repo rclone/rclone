@@ -2,6 +2,7 @@ package mountlib
 
 import (
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -58,14 +59,58 @@ func (d *Dir) Node() Node {
 	return d
 }
 
+// ForgetAll ensures the directory and all its children are purged
+// from the cache.
+func (d *Dir) ForgetAll() {
+	d.ForgetPath("")
+}
+
+// ForgetPath clears the cache for itself and all subdirectories if
+// they match the given path. The path is specified relative from the
+// directory it is called from.
+// It is not possible to traverse the directory tree upwards, i.e.
+// you cannot clear the cache for the Dir's ancestors or siblings.
+func (d *Dir) ForgetPath(relativePath string) {
+	absPath := path.Join(d.path, relativePath)
+	if absPath == "." {
+		absPath = ""
+	}
+
+	d.walk(absPath, func(dir *Dir) {
+		fs.Debugf(dir.path, "forgetting directory cache")
+		dir.read = time.Time{}
+		dir.items = nil
+	})
+}
+
+// walk runs a function on all directories whose path matches
+// the given absolute one. It will be called on a directory's
+// children first. It will not apply the function to parent
+// nodes, regardless of the given path.
+func (d *Dir) walk(absPath string, fun func(*Dir)) {
+	if d.items != nil {
+		for _, entry := range d.items {
+			if dir, ok := entry.Node.(*Dir); ok {
+				dir.walk(absPath, fun)
+			}
+		}
+	}
+
+	if d.path == absPath || absPath == "" || strings.HasPrefix(d.path, absPath+"/") {
+		d.mu.Lock()
+		defer d.mu.Unlock()
+		fun(d)
+	}
+}
+
 // rename should be called after the directory is renamed
 //
 // Reset the directory to new state, discarding all the objects and
 // reading everything again
 func (d *Dir) rename(newParent *Dir, fsDir *fs.Dir) {
+	d.ForgetAll()
 	d.path = fsDir.Name
 	d.modTime = fsDir.When
-	d.items = nil
 	d.read = time.Time{}
 }
 
