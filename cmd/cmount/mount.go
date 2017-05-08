@@ -66,11 +66,12 @@ func init() {
 }
 
 var commandDefintion = &cobra.Command{
-	Use:   "cmount remote:path /path/to/mountpoint",
+	Use:   commandName + " remote:path /path/to/mountpoint",
 	Short: `Mount the remote as a mountpoint. **EXPERIMENTAL**`,
 	Long: `
-rclone mount allows Linux, FreeBSD and macOS to mount any of Rclone's
-cloud storage systems as a file system with FUSE.
+rclone ` + commandName + ` allows Linux, FreeBSD, macOS and Windows to
+mount any of Rclone's cloud storage systems as a file system with
+FUSE.
 
 This is **EXPERIMENTAL** - use with care.
 
@@ -78,11 +79,11 @@ First set up your remote using ` + "`rclone config`" + `.  Check it works with `
 
 Start the mount like this
 
-    rclone mount remote:path/to/files /path/to/local/mount
+    rclone ` + commandName + ` remote:path/to/files /path/to/local/mount
 
 Or on Windows like this where X: is an unused drive letter
 
-    rclone mount remote:path/to/files X:
+    rclone ` + commandName + ` remote:path/to/files X:
 
 When the program ends, either via Ctrl+C or receiving a SIGINT or SIGTERM signal,
 the mount is automatically stopped.
@@ -109,16 +110,16 @@ None of these support the concept of directories, so empty
 directories will have a tendency to disappear once they fall out of
 the directory cache.
 
-Only supported on Linux, FreeBSD and OS X at the moment.
+Only supported on Linux, FreeBSD, OS X and Windows at the moment.
 
-### rclone mount vs rclone sync/copy ##
+### rclone ` + commandName + ` vs rclone sync/copy ##
 
 File systems expect things to be 100% reliable, whereas cloud storage
 systems are a long way from 100% reliable. The rclone sync/copy
-commands cope with this with lots of retries.  However rclone mount
+commands cope with this with lots of retries.  However rclone ` + commandName + `
 can't use retries in the same way without making local copies of the
 uploads.  This might happen in the future, but for the moment rclone
-mount won't do that, so will be less reliable than the rclone command.
+` + commandName + ` won't do that, so will be less reliable than the rclone command.
 
 ### Filters ###
 

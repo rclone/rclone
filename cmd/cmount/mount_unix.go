@@ -5,6 +5,8 @@ package cmount
 
 import "golang.org/x/sys/unix"
 
+const commandName = "cmount"
+
 func init() {
 	umask = unix.Umask(0) // read the umask
 	unix.Umask(umask)     // set it back to what it was
