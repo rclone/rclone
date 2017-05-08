@@ -22,9 +22,9 @@ type FS struct {
 	fuse.FileSystemBase
 	FS          *mountlib.FS
 	f           fs.Fs
-	openDirs    *OpenFiles
-	openFilesWr *OpenFiles
-	openFilesRd *OpenFiles
+	openDirs    *openFiles
+	openFilesWr *openFiles
+	openFilesRd *openFiles
 	ready       chan (struct{})
 }
 
@@ -33,9 +33,9 @@ func NewFS(f fs.Fs) *FS {
 	fsys := &FS{
 		FS:          mountlib.NewFS(f),
 		f:           f,
-		openDirs:    NewOpenFiles(0x01),
-		openFilesWr: NewOpenFiles(0x02),
-		openFilesRd: NewOpenFiles(0x03),
+		openDirs:    newOpenFiles(0x01),
+		openFilesWr: newOpenFiles(0x02),
+		openFilesRd: newOpenFiles(0x03),
 		ready:       make(chan (struct{})),
 	}
 	if noSeek {
@@ -47,20 +47,20 @@ func NewFS(f fs.Fs) *FS {
 	return fsys
 }
 
-type OpenFiles struct {
+type openFiles struct {
 	mu    sync.Mutex
 	mark  uint8
 	nodes []mountlib.Noder
 }
 
-func NewOpenFiles(mark uint8) *OpenFiles {
-	return &OpenFiles{
+func newOpenFiles(mark uint8) *openFiles {
+	return &openFiles{
 		mark: mark,
 	}
 }
 
 // Open a node returning a file handle
-func (of *OpenFiles) Open(node mountlib.Noder) (fh uint64) {
+func (of *openFiles) Open(node mountlib.Noder) (fh uint64) {
 	of.mu.Lock()
 	defer of.mu.Unlock()
 	var i int
@@ -78,12 +78,12 @@ found:
 }
 
 // InRange to see if this fh could be one of ours
-func (of *OpenFiles) InRange(fh uint64) bool {
+func (of *openFiles) InRange(fh uint64) bool {
 	return uint8(fh) == of.mark
 }
 
 // get the node for fh, call with the lock held
-func (of *OpenFiles) get(fh uint64) (i int, node mountlib.Noder, errc int) {
+func (of *openFiles) get(fh uint64) (i int, node mountlib.Noder, errc int) {
 	receivedMark := uint8(fh)
 	if receivedMark != of.mark {
 		fs.Debugf(nil, "Bad file handle: bad mark 0x%X != 0x%X: 0x%X", receivedMark, of.mark, fh)
@@ -104,7 +104,7 @@ func (of *OpenFiles) get(fh uint64) (i int, node mountlib.Noder, errc int) {
 }
 
 // Get the node for the file handle
-func (of *OpenFiles) Get(fh uint64) (node mountlib.Noder, errc int) {
+func (of *openFiles) Get(fh uint64) (node mountlib.Noder, errc int) {
 	of.mu.Lock()
 	_, node, errc = of.get(fh)
 	of.mu.Unlock()
@@ -112,7 +112,7 @@ func (of *OpenFiles) Get(fh uint64) (node mountlib.Noder, errc int) {
 }
 
 // Close the node
-func (of *OpenFiles) Close(fh uint64) (errc int) {
+func (of *openFiles) Close(fh uint64) (errc int) {
 	of.mu.Lock()
 	i, _, errc := of.get(fh)
 	if errc == 0 {
@@ -230,9 +230,9 @@ func (fsys *FS) Init() {
 	close(fsys.ready)
 }
 
-// Destroy() call when it is unmounted (note that depending on how the
-// file system is terminated the file system may not receive the
-// Destroy() call).
+// Destroy is called when it is unmounted (note that depending on how
+// the file system is terminated the file system may not receive the
+// Destroy call).
 func (fsys *FS) Destroy() {
 }
 
@@ -327,6 +327,7 @@ func (fsys *FS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 	return 0
 }
 
+// Open opens a file
 func (fsys *FS) Open(path string, flags int) (errc int, fh uint64) {
 	file, errc := fsys.lookupFile(path)
 	if errc != 0 {
@@ -369,6 +370,7 @@ func (fsys *FS) Create(filePath string, flags int, mode uint32) (errc int, fh ui
 	return 0, fsys.openFilesWr.Open(handle)
 }
 
+// Truncate truncates a file to size
 func (fsys *FS) Truncate(path string, size int64, fh uint64) (errc int) {
 	node, errc := fsys.getNode(path, fh)
 	if errc != 0 {
@@ -429,6 +431,7 @@ func (fsys *FS) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
 	return int(n64)
 }
 
+// Flush flushes an open file descriptor or path
 func (fsys *FS) Flush(path string, fh uint64) (errc int) {
 	handle, errc := fsys.getHandleFromFh(fh)
 	if errc != 0 {
@@ -446,6 +449,7 @@ func (fsys *FS) Flush(path string, fh uint64) (errc int) {
 	return translateError(err)
 }
 
+// Release closes the file if still open
 func (fsys *FS) Release(path string, fh uint64) (errc int) {
 	handle, errc := fsys.getHandleFromFh(fh)
 	if errc != 0 {
