@@ -21,7 +21,7 @@ type ReadFileHandle struct {
 	hash       *fs.MultiHasher
 }
 
-func newReadFileHandle(f *File, o fs.Object, noSeek bool) (*ReadFileHandle, error) {
+func newReadFileHandle(f *File, o fs.Object) (*ReadFileHandle, error) {
 	r, err := o.Open()
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func newReadFileHandle(f *File, o fs.Object, noSeek bool) (*ReadFileHandle, erro
 	fh := &ReadFileHandle{
 		o:      o,
 		r:      fs.NewAccount(r, o).WithBuffer(), // account the transfer
-		noSeek: noSeek,
+		noSeek: f.d.fsys.noSeek,
 		file:   f,
 		hash:   hash,
 	}

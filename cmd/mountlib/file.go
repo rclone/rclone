@@ -165,7 +165,7 @@ func (f *File) OpenRead() (fh *ReadFileHandle, err error) {
 	}
 	fs.Debugf(o, "File.OpenRead")
 
-	fh, err = newReadFileHandle(f, o, f.d.fsys.noSeek)
+	fh, err = newReadFileHandle(f, o)
 	err = errors.Wrap(err, "open for read")
 
 	if err != nil {
