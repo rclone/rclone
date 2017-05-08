@@ -34,6 +34,45 @@ func TestReadByByte(t *testing.T) {
 	run.rm(t, "testfile")
 }
 
+func TestReadChecksum(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
+	// create file big enough so we exceed any single FUSE read
+	// request
+	b := make([]rune, 3*128*1024)
+	for i := range b {
+		b[i] = 'r'
+	}
+	run.createFile(t, "bigfile", string(b))
+
+	// The hash comparison would fail in Flush, if we did not
+	// ensure we read the whole file
+	fd, err := os.Open(run.path("bigfile"))
+	assert.NoError(t, err)
+	buf := make([]byte, 10)
+	_, err = io.ReadFull(fd, buf)
+	assert.NoError(t, err)
+	err = fd.Close()
+	assert.NoError(t, err)
+
+	// The hash comparison would fail, because we only read parts
+	// of the file
+	fd, err = os.Open(run.path("bigfile"))
+	assert.NoError(t, err)
+	// read at start
+	_, err = io.ReadFull(fd, buf)
+	assert.NoError(t, err)
+	// read at end
+	_, err = fd.Seek(int64(len(b)-len(buf)), 0)
+	assert.NoError(t, err)
+	_, err = io.ReadFull(fd, buf)
+	// ensure we don't compare hashes
+	err = fd.Close()
+	assert.NoError(t, err)
+
+	run.rm(t, "bigfile")
+}
+
 // Test seeking
 func TestReadSeek(t *testing.T) {
 	run.skipIfNoFUSE(t)

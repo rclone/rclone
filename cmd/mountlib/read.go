@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/pkg/errors"
 )
 
 // ReadFileHandle is an open for read file handle on a File
@@ -17,6 +18,7 @@ type ReadFileHandle struct {
 	offset     int64
 	noSeek     bool
 	file       *File
+	hash       *fs.MultiHasher
 }
 
 func newReadFileHandle(f *File, o fs.Object, noSeek bool) (*ReadFileHandle, error) {
@@ -24,11 +26,21 @@ func newReadFileHandle(f *File, o fs.Object, noSeek bool) (*ReadFileHandle, erro
 	if err != nil {
 		return nil, err
 	}
+
+	var hash *fs.MultiHasher
+	if !f.d.fsys.noChecksum {
+		hash, err = fs.NewMultiHasherTypes(o.Fs().Hashes())
+		if err != nil {
+			fs.Errorf(o.Fs(), "newReadFileHandle hash error: %v", err)
+		}
+	}
+
 	fh := &ReadFileHandle{
 		o:      o,
 		r:      fs.NewAccount(r, o).WithBuffer(), // account the transfer
 		noSeek: noSeek,
 		file:   f,
+		hash:   hash,
 	}
 	fs.Stats.Transferring(fh.o.Remote())
 	return fh, nil
@@ -49,6 +61,7 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 		return ESPIPE
 	}
 	fh.r.StopBuffering() // stop the background reading first
+	fh.hash = nil
 	oldReader := fh.r.GetReader()
 	r := oldReader
 	// Can we seek it directly?
@@ -142,8 +155,34 @@ func (fh *ReadFileHandle) Read(reqSize, reqOffset int64) (respData []byte, err e
 		respData = buf[:n]
 		fh.offset = newOffset
 		fs.Debugf(fh.o, "ReadFileHandle.Read OK")
+
+		if fh.hash != nil {
+			_, err = fh.hash.Write(respData)
+			if err != nil {
+				fs.Errorf(fh.o, "ReadFileHandle.Read HashError: %v", err)
+				return nil, err
+			}
+		}
 	}
 	return respData, err
+}
+
+func (fh *ReadFileHandle) checkHash() error {
+	if fh.hash == nil || !fh.readCalled || fh.offset < fh.o.Size() {
+		return nil
+	}
+
+	for hashType, dstSum := range fh.hash.Sums() {
+		srcSum, err := fh.o.Hash(hashType)
+		if err != nil {
+			return err
+		}
+		if !fs.HashEquals(dstSum, srcSum) {
+			return errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, dstSum, srcSum)
+		}
+	}
+
+	return nil
 }
 
 // close the file handle returning EBADF if it has been
@@ -156,6 +195,11 @@ func (fh *ReadFileHandle) close() error {
 	}
 	fh.closed = true
 	fs.Stats.DoneTransferring(fh.o.Remote(), true)
+
+	if err := fh.checkHash(); err != nil {
+		return err
+	}
+
 	return fh.r.Close()
 }
 
@@ -167,23 +211,11 @@ func (fh *ReadFileHandle) Flush() error {
 	defer fh.mu.Unlock()
 	fs.Debugf(fh.o, "ReadFileHandle.Flush")
 
-	// Ignore the Flush as there is nothing we can sensibly do and
-	// it seems quite common for Flush to be called from
-	// different threads each of which have read some data.
-	if false {
-		// If Read hasn't been called then ignore the Flush - Release
-		// will pick it up
-		if !fh.readCalled {
-			fs.Debugf(fh.o, "ReadFileHandle.Flush ignoring flush on unread handle")
-			return nil
-
-		}
-		err := fh.close()
-		if err != nil {
-			fs.Errorf(fh.o, "ReadFileHandle.Flush error: %v", err)
-			return err
-		}
+	if err := fh.checkHash(); err != nil {
+		fs.Errorf(fh.o, "ReadFileHandle.Flush error: %v", err)
+		return err
 	}
+
 	fs.Debugf(fh.o, "ReadFileHandle.Flush OK")
 	return nil
 }

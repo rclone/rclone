@@ -21,6 +21,7 @@ func TestFileModTimeWithOpenWriters(t *testing.T) { mounttest.TestFileModTimeWit
 func TestMount(t *testing.T)                      { mounttest.TestMount(t) }
 func TestRoot(t *testing.T)                       { mounttest.TestRoot(t) }
 func TestReadByByte(t *testing.T)                 { mounttest.TestReadByByte(t) }
+func TestReadChecksum(t *testing.T)               { mounttest.TestReadChecksum(t) }
 func TestReadFileDoubleClose(t *testing.T)        { mounttest.TestReadFileDoubleClose(t) }
 func TestReadSeek(t *testing.T)                   { mounttest.TestReadSeek(t) }
 func TestWriteFileNoWrite(t *testing.T)           { mounttest.TestWriteFileNoWrite(t) }

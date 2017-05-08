@@ -31,6 +31,9 @@ func NewFS(f fs.Fs) *FS {
 	if noSeek {
 		fsys.FS.NoSeek()
 	}
+	if noChecksum {
+		fsys.FS.NoChecksum()
+	}
 	return fsys
 }
 

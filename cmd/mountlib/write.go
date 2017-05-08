@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/pkg/errors"
 )
 
 // WriteFileHandle is an open for write handle on a File
@@ -19,13 +20,24 @@ type WriteFileHandle struct {
 	file        *File
 	writeCalled bool // set the first time Write() is called
 	offset      int64
+	hash        *fs.MultiHasher
 }
 
 func newWriteFileHandle(d *Dir, f *File, src fs.ObjectInfo) (*WriteFileHandle, error) {
+	var hash *fs.MultiHasher
+	if !f.d.fsys.noChecksum {
+		var err error
+		hash, err = fs.NewMultiHasherTypes(src.Fs().Hashes())
+		if err != nil {
+			fs.Errorf(src.Fs(), "newWriteFileHandle hash error: %v", err)
+		}
+	}
+
 	fh := &WriteFileHandle{
 		remote: src.Remote(),
 		result: make(chan error, 1),
 		file:   f,
+		hash:   hash,
 	}
 	fh.pipeReader, fh.pipeWriter = io.Pipe()
 	r := fs.NewAccountSizeName(fh.pipeReader, 0, src.Remote()).WithBuffer() // account the transfer
@@ -69,6 +81,13 @@ func (fh *WriteFileHandle) Write(data []byte, offset int64) (written int64, err 
 		return 0, err
 	}
 	fs.Debugf(fh.remote, "WriteFileHandle.Write OK (%d bytes written)", n)
+	if fh.hash != nil {
+		_, err = fh.hash.Write(data[:n])
+		if err != nil {
+			fs.Errorf(fh.remote, "WriteFileHandle.Write HashError: %v", err)
+			return written, err
+		}
+	}
 	return written, nil
 }
 
@@ -97,6 +116,17 @@ func (fh *WriteFileHandle) close() error {
 	}
 	if err == nil {
 		err = readCloseErr
+	}
+	if err == nil && fh.hash != nil {
+		for hashType, srcSum := range fh.hash.Sums() {
+			dstSum, err := fh.o.Hash(hashType)
+			if err != nil {
+				return err
+			}
+			if !fs.HashEquals(srcSum, dstSum) {
+				return errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
+			}
+		}
 	}
 	return err
 }

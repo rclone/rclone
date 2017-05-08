@@ -33,9 +33,10 @@ var (
 
 // FS represents the top level filing system
 type FS struct {
-	f      fs.Fs
-	root   *Dir
-	noSeek bool // don't allow seeking if set
+	f          fs.Fs
+	root       *Dir
+	noSeek     bool // don't allow seeking if set
+	noChecksum bool // don't check checksums if set
 }
 
 // NewFS creates a new filing system and root directory
@@ -54,6 +55,12 @@ func NewFS(f fs.Fs) *FS {
 // NoSeek disables seeking of files
 func (fsys *FS) NoSeek() *FS {
 	fsys.noSeek = true
+	return fsys
+}
+
+// NoChecksum disables checksum checking
+func (fsys *FS) NoChecksum() *FS {
+	fsys.noChecksum = true
 	return fsys
 }
 
