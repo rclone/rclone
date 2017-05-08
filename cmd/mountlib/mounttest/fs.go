@@ -10,8 +10,10 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
@@ -102,9 +104,24 @@ func newRun() *Run {
 		log.Fatalf("Failed to open mkdir %q: %v", *RemoteName, err)
 	}
 
-	r.mountPath, err = ioutil.TempDir("", "rclonefs-mount")
-	if err != nil {
-		log.Fatalf("Failed to create mount dir: %v", err)
+	if runtime.GOOS != "windows" {
+		r.mountPath, err = ioutil.TempDir("", "rclonefs-mount")
+		if err != nil {
+			log.Fatalf("Failed to create mount dir: %v", err)
+		}
+	} else {
+		// Find a free drive letter
+		drive := ""
+		for letter := 'E'; letter <= 'Z'; letter++ {
+			drive = string(letter) + ":"
+			_, err := os.Stat(drive + "\\")
+			if os.IsNotExist(err) {
+				goto found
+			}
+		}
+		log.Fatalf("Couldn't find free drive letter for test")
+	found:
+		r.mountPath = drive
 	}
 
 	// Mount it up
@@ -122,6 +139,9 @@ func (r *Run) mount() {
 		r.skip = true
 	}
 	log.Printf("mount OK")
+	if runtime.GOOS == "windows" {
+		time.Sleep(time.Second) // FIXME remove this when https://github.com/billziss-gh/cgofuse/issues/11 is fixed
+	}
 }
 
 func (r *Run) umount() {
@@ -165,6 +185,10 @@ func (r *Run) Finalise() {
 }
 
 func (r *Run) path(filepath string) string {
+	// return windows drive letter root as E:/
+	if filepath == "" && runtime.GOOS == "windows" {
+		return run.mountPath + "/"
+	}
 	return path.Join(run.mountPath, filepath)
 }
 
