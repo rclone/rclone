@@ -1,5 +1,3 @@
-// +build linux darwin freebsd
-
 package mounttest
 
 import (

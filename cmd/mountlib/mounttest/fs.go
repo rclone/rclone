@@ -1,5 +1,3 @@
-// +build linux darwin freebsd
-
 // Test suite for rclonefs
 
 package mounttest
