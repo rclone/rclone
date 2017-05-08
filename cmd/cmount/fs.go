@@ -47,7 +47,7 @@ func NewFS(f fs.Fs) *FS {
 type OpenFiles struct {
 	mu    sync.Mutex
 	mark  uint8
-	nodes []interface{}
+	nodes []mountlib.Noder
 }
 
 func NewOpenFiles(mark uint8) *OpenFiles {
@@ -57,11 +57,11 @@ func NewOpenFiles(mark uint8) *OpenFiles {
 }
 
 // Open a node returning a file handle
-func (of *OpenFiles) Open(node interface{}) (fh uint64) {
+func (of *OpenFiles) Open(node mountlib.Noder) (fh uint64) {
 	of.mu.Lock()
 	defer of.mu.Unlock()
 	var i int
-	var oldNode interface{}
+	var oldNode mountlib.Noder
 	for i, oldNode = range of.nodes {
 		if oldNode == nil {
 			of.nodes[i] = node
@@ -74,26 +74,34 @@ found:
 	return uint64((i << 8) | int(of.mark))
 }
 
+// InRange to see if this fh could be one of ours
+func (of *OpenFiles) InRange(fh uint64) bool {
+	return uint8(fh) == of.mark
+}
+
 // get the node for fh, call with the lock held
-func (of *OpenFiles) get(fh uint64) (i int, node interface{}, errc int) {
+func (of *OpenFiles) get(fh uint64) (i int, node mountlib.Noder, errc int) {
 	receivedMark := uint8(fh)
 	if receivedMark != of.mark {
+		fs.Debugf(nil, "Bad file handle: bad mark 0x%X != 0x%X: 0x%X", receivedMark, of.mark, fh)
 		return i, nil, -fuse.EBADF
 	}
 	i64 := fh >> 8
 	if i64 > uint64(len(of.nodes)) {
+		fs.Debugf(nil, "Bad file handle: too big: 0x%X", fh)
 		return i, nil, -fuse.EBADF
 	}
 	i = int(i64)
 	node = of.nodes[i]
 	if node == nil {
+		fs.Debugf(nil, "Bad file handle: nil node: 0x%X", fh)
 		return i, nil, -fuse.EBADF
 	}
 	return i, node, 0
 }
 
 // Get the node for the file handle
-func (of *OpenFiles) Get(fh uint64) (node interface{}, errc int) {
+func (of *OpenFiles) Get(fh uint64) (node mountlib.Noder, errc int) {
 	of.mu.Lock()
 	_, node, errc = of.get(fh)
 	of.mu.Unlock()
@@ -150,13 +158,17 @@ func (fsys *FS) lookupFile(path string) (file *mountlib.File, errc int) {
 	return file, 0
 }
 
-// get a read or write file handle
-func (fsys *FS) getReadOrWriteFh(fh uint64) (handle interface{}, errc int) {
-	handle, errc = fsys.openFilesRd.Get(fh)
-	if errc == 0 {
-		return
+// Get the underlying handle from the file handle
+func (fsys *FS) getHandleFromFh(fh uint64) (handle mountlib.Noder, errc int) {
+	switch {
+	case fsys.openFilesRd.InRange(fh):
+		return fsys.openFilesRd.Get(fh)
+	case fsys.openFilesWr.InRange(fh):
+		return fsys.openFilesWr.Get(fh)
+	case fsys.openDirs.InRange(fh):
+		return fsys.openDirs.Get(fh)
 	}
-	return fsys.openFilesWr.Get(fh)
+	return nil, -fuse.EBADF
 }
 
 // get a node from the path or from the fh if not fhUnset
@@ -164,15 +176,10 @@ func (fsys *FS) getNode(path string, fh uint64) (node mountlib.Node, errc int) {
 	if fh == fhUnset {
 		node, errc = fsys.lookupNode(path)
 	} else {
-		var n interface{}
-		n, errc = fsys.getReadOrWriteFh(fh)
+		var n mountlib.Noder
+		n, errc = fsys.getHandleFromFh(fh)
 		if errc == 0 {
-			if get, ok := n.(mountlib.Noder); ok {
-				node = get.Node()
-			} else {
-				fs.Errorf(path, "Bad node type %T", n)
-				errc = -fuse.EIO
-			}
+			node = n.Node()
 		}
 	}
 	return
@@ -324,7 +331,7 @@ func (fsys *FS) Open(path string, flags int) (errc int, fh uint64) {
 	}
 	rdwrMode := flags & fuse.O_ACCMODE
 	var err error
-	var handle interface{}
+	var handle mountlib.Noder
 	switch {
 	case rdwrMode == fuse.O_RDONLY:
 		handle, err = file.OpenRead()
@@ -420,7 +427,7 @@ func (fsys *FS) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
 }
 
 func (fsys *FS) Flush(path string, fh uint64) (errc int) {
-	handle, errc := fsys.getReadOrWriteFh(fh)
+	handle, errc := fsys.getHandleFromFh(fh)
 	if errc != 0 {
 		return errc
 	}
@@ -437,7 +444,7 @@ func (fsys *FS) Flush(path string, fh uint64) (errc int) {
 }
 
 func (fsys *FS) Release(path string, fh uint64) (errc int) {
-	handle, errc := fsys.getReadOrWriteFh(fh)
+	handle, errc := fsys.getHandleFromFh(fh)
 	if errc != 0 {
 		return errc
 	}
