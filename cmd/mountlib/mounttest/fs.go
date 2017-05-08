@@ -17,7 +17,7 @@ import (
 
 	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
-	_ "github.com/ncw/rclone/fs/all"
+	_ "github.com/ncw/rclone/fs/all" // import all the file systems
 	"github.com/ncw/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,8 +35,10 @@ var (
 )
 
 type (
+	// UnmountFn is called to unmount the file system
 	UnmountFn func() error
-	MountFn   func(f fs.Fs, mountpoint string) (*mountlib.FS, <-chan error, func() error, error)
+	// MountFn is called to mount the file system
+	MountFn func(f fs.Fs, mountpoint string) (*mountlib.FS, <-chan error, func() error, error)
 )
 
 var (
@@ -294,8 +296,8 @@ func (r *Run) rmdir(t *testing.T, filepath string) {
 	require.NoError(t, err)
 }
 
-// Check that the Fs is mounted by seeing if the mountpoint is
-// in the mount output
+// TestMount checks that the Fs is mounted by seeing if the mountpoint
+// is in the mount output
 func TestMount(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
@@ -304,7 +306,7 @@ func TestMount(t *testing.T) {
 	assert.Contains(t, string(out), run.mountPath)
 }
 
-// Check root directory is present and correct
+// TestRoot checks root directory is present and correct
 func TestRoot(t *testing.T) {
 	run.skipIfNoFUSE(t)
 

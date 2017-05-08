@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestFileModTime tests mod times on files
 func TestFileModTime(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
@@ -27,6 +28,7 @@ func TestFileModTime(t *testing.T) {
 	run.rm(t, "file")
 }
 
+// TestFileModTimeWithOpenWriters tests mod time on open files
 func TestFileModTimeWithOpenWriters(t *testing.T) {
 	run.skipIfNoFUSE(t)
 

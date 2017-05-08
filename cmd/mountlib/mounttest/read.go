@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Read by byte including don't read any bytes
+// TestReadByByte reads by byte including don't read any bytes
 func TestReadByByte(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
@@ -34,6 +34,7 @@ func TestReadByByte(t *testing.T) {
 	run.rm(t, "testfile")
 }
 
+// TestReadChecksum checks the checksum reading is working
 func TestReadChecksum(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
@@ -73,7 +74,7 @@ func TestReadChecksum(t *testing.T) {
 	run.rm(t, "bigfile")
 }
 
-// Test seeking
+// TestReadSeek test seeking
 func TestReadSeek(t *testing.T) {
 	run.skipIfNoFUSE(t)
 

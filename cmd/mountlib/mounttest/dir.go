@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestDirLs checks out listing
 func TestDirLs(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
@@ -26,6 +27,7 @@ func TestDirLs(t *testing.T) {
 	run.checkDir(t, "")
 }
 
+// TestDirCreateAndRemoveDir tests creating and removing a directory
 func TestDirCreateAndRemoveDir(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
@@ -44,6 +46,7 @@ func TestDirCreateAndRemoveDir(t *testing.T) {
 	run.checkDir(t, "")
 }
 
+// TestDirCreateAndRemoveFile tests creating and removing a file
 func TestDirCreateAndRemoveFile(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
@@ -63,6 +66,7 @@ func TestDirCreateAndRemoveFile(t *testing.T) {
 	run.checkDir(t, "")
 }
 
+// TestDirRenameFile tests renaming a file
 func TestDirRenameFile(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
@@ -91,6 +95,7 @@ func TestDirRenameFile(t *testing.T) {
 	run.checkDir(t, "")
 }
 
+// TestDirRenameEmptyDir tests renaming and empty directory
 func TestDirRenameEmptyDir(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
@@ -111,6 +116,7 @@ func TestDirRenameEmptyDir(t *testing.T) {
 	run.checkDir(t, "")
 }
 
+// TestDirRenameFullDir tests renaming a full directory
 func TestDirRenameFullDir(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
@@ -133,6 +139,7 @@ func TestDirRenameFullDir(t *testing.T) {
 	run.checkDir(t, "")
 }
 
+// TestDirModTime tests mod times
 func TestDirModTime(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
@@ -150,6 +157,7 @@ func TestDirModTime(t *testing.T) {
 	run.rmdir(t, "dir")
 }
 
+// TestDirCacheFlush tests fluching the dir cache
 func TestDirCacheFlush(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
@@ -189,6 +197,7 @@ func TestDirCacheFlush(t *testing.T) {
 	run.checkDir(t, "")
 }
 
+// TestDirCacheFlushOnDirRename tests flushing the dir cache on rename
 func TestDirCacheFlushOnDirRename(t *testing.T) {
 	run.skipIfNoFUSE(t)
 	run.mkdir(t, "dir")

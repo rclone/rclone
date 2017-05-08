@@ -91,7 +91,7 @@ func (fh *WriteFileHandle) Write(data []byte, offset int64) (written int64, err 
 	return written, nil
 }
 
-// Returns the offset of the file pointer
+// Offset returns the offset of the file pointer
 func (fh *WriteFileHandle) Offset() (offset int64) {
 	return fh.offset
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Test writing a file with no write()'s to it
+// TestWriteFileNoWrite tests writing a file with no write()'s to it
 func TestWriteFileNoWrite(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
@@ -27,7 +27,7 @@ func TestWriteFileNoWrite(t *testing.T) {
 	run.rm(t, "testnowrite")
 }
 
-// Test open file in directory listing
+// FIXMETestWriteOpenFileInDirListing tests open file in directory listing
 func FIXMETestWriteOpenFileInDirListing(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
@@ -42,7 +42,7 @@ func FIXMETestWriteOpenFileInDirListing(t *testing.T) {
 	run.rm(t, "testnowrite")
 }
 
-// Test writing a file and reading it back
+// TestWriteFileWrite tests writing a file and reading it back
 func TestWriteFileWrite(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
@@ -53,7 +53,7 @@ func TestWriteFileWrite(t *testing.T) {
 	run.rm(t, "testwrite")
 }
 
-// Test overwriting a file
+// TestWriteFileOverwrite tests overwriting a file
 func TestWriteFileOverwrite(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
@@ -65,7 +65,7 @@ func TestWriteFileOverwrite(t *testing.T) {
 	run.rm(t, "testwrite")
 }
 
-// Test Fsync
+// TestWriteFileFsync tests Fsync
 //
 // NB the code for this is in file.go rather than write.go
 func TestWriteFileFsync(t *testing.T) {

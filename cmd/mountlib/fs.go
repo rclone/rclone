@@ -78,8 +78,8 @@ func NewInode() (inode uint64) {
 }
 
 // Lookup finds the Node by path starting from the root
-func (f *FS) Lookup(path string) (node Node, err error) {
-	node = f.root
+func (fsys *FS) Lookup(path string) (node Node, err error) {
+	node = fsys.root
 	for path != "" {
 		i := strings.IndexRune(path, '/')
 		var name string
@@ -106,7 +106,7 @@ func (f *FS) Lookup(path string) (node Node, err error) {
 
 // Statfs is called to obtain file system metadata.
 // It should write that data to resp.
-func (f *FS) Statfs() error {
+func (fsys *FS) Statfs() error {
 	/* FIXME
 	const blockSize = 4096
 	const fsBlocks = (1 << 50) / blockSize
