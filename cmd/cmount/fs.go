@@ -19,7 +19,6 @@ const fhUnset = ^uint64(0)
 
 // FS represents the top level filing system
 type FS struct {
-	fuse.FileSystemBase
 	FS          *mountlib.FS
 	f           fs.Fs
 	openDirs    *openFiles
@@ -544,8 +543,87 @@ func (fsys *FS) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 	return translateError(err)
 }
 
+// Mknod creates a file node.
+func (fsys *FS) Mknod(path string, mode uint32, dev uint64) (errc int) {
+	defer fs.Trace(path, "mode=0x%X, dev=0x%X", mode, dev)("errc=%d", &errc)
+	return -fuse.ENOSYS
+}
+
+// Fsync synchronizes file contents.
+func (fsys *FS) Fsync(path string, datasync bool, fh uint64) (errc int) {
+	defer fs.Trace(path, "datasync=%v, fh=0x%X", datasync, fh)("errc=%d", &errc)
+	// This is a no-op for rclone
+	return 0
+}
+
+// Link creates a hard link to a file.
+func (fsys *FS) Link(oldpath string, newpath string) (errc int) {
+	defer fs.Trace(oldpath, "newpath=%q", newpath)("errc=%d", &errc)
+	return -fuse.ENOSYS
+}
+
+// Symlink creates a symbolic link.
+func (fsys *FS) Symlink(target string, newpath string) (errc int) {
+	defer fs.Trace(target, "newpath=%q", newpath)("errc=%d", &errc)
+	return -fuse.ENOSYS
+}
+
+// Readlink reads the target of a symbolic link.
+func (fsys *FS) Readlink(path string) (errc int, linkPath string) {
+	defer fs.Trace(path, "")("linkPath=%q, errc=%d", &linkPath, &errc)
+	return -fuse.ENOSYS, ""
+}
+
+// Chmod changes the permission bits of a file.
+func (fsys *FS) Chmod(path string, mode uint32) (errc int) {
+	defer fs.Trace(path, "mode=0%o", mode)("errc=%d", &errc)
+	// This is a no-op for rclone
+	return 0
+}
+
+// Chown changes the owner and group of a file.
+func (fsys *FS) Chown(path string, uid uint32, gid uint32) (errc int) {
+	defer fs.Trace(path, "uid=%d, gid=%d", uid, gid)("errc=%d", &errc)
+	// This is a no-op for rclone
+	return 0
+}
+
+// Access checks file access permissions.
+func (fsys *FS) Access(path string, mask uint32) (errc int) {
+	defer fs.Trace(path, "mask=0%o", mask)("errc=%d", &errc)
+	// This is a no-op for rclone
+	return 0
+}
+
+// Fsyncdir synchronizes directory contents.
+func (fsys *FS) Fsyncdir(path string, datasync bool, fh uint64) (errc int) {
+	defer fs.Trace(path, "datasync=%v, fh=0x%X", datasync, fh)("errc=%d", &errc)
+	// This is a no-op for rclone
+	return 0
+}
+
+// Setxattr sets extended attributes.
+func (fsys *FS) Setxattr(path string, name string, value []byte, flags int) (errc int) {
+	return -fuse.ENOSYS
+}
+
+// Getxattr gets extended attributes.
+func (fsys *FS) Getxattr(path string, name string) (errc int, value []byte) {
+	return -fuse.ENOSYS, nil
+}
+
+// Removexattr removes extended attributes.
+func (fsys *FS) Removexattr(path string, name string) (errc int) {
+	return -fuse.ENOSYS
+}
+
+// Listxattr lists extended attributes.
+func (fsys *FS) Listxattr(path string, fill func(name string) bool) (errc int) {
+	return -fuse.ENOSYS
+}
+
 // Translate errors from mountlib
-func translateError(err error) int {
+func translateError(err error) (errc int) {
 	if err == nil {
 		return 0
 	}
