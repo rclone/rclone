@@ -227,6 +227,7 @@ func (fsys *FS) stat(node mountlib.Node, stat *fuse.Stat_t) (errc int) {
 
 // Init is called after the filesystem is ready
 func (fsys *FS) Init() {
+	defer fs.Trace(fsys.f, "")("")
 	close(fsys.ready)
 }
 
@@ -234,29 +235,28 @@ func (fsys *FS) Init() {
 // the file system is terminated the file system may not receive the
 // Destroy call).
 func (fsys *FS) Destroy() {
+	defer fs.Trace(fsys.f, "")("")
 }
 
 // Getattr reads the attributes for path
 func (fsys *FS) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
-	fs.Debugf(path, "Getattr(path=%q,fh=%d)", path, fh)
+	defer fs.Trace(path, "fh=0x%X", fh)("errc=%v", &errc)
 	node, errc := fsys.getNode(path, fh)
 	if errc == 0 {
 		errc = fsys.stat(node, stat)
 	}
-	fs.Debugf(path, "Getattr returns %d", errc)
 	return
 }
 
 // Opendir opens path as a directory
 func (fsys *FS) Opendir(path string) (errc int, fh uint64) {
-	fs.Debugf(path, "Opendir()")
+	defer fs.Trace(path, "")("errc=%d, fh=0x%X", &errc, &fh)
 	dir, errc := fsys.lookupDir(path)
 	if errc == 0 {
 		fh = fsys.openDirs.Open(dir)
 	} else {
 		fh = fhUnset
 	}
-	fs.Debugf(path, "Opendir returns errc=%d, fh=%d", errc, fh)
 	return
 }
 
@@ -265,7 +265,8 @@ func (fsys *FS) Readdir(dirPath string,
 	fill func(name string, stat *fuse.Stat_t, ofst int64) bool,
 	ofst int64,
 	fh uint64) (errc int) {
-	fs.Debugf(dirPath, "Readdir(ofst=%d,fh=%d)", ofst, fh)
+	itemsRead := -1
+	defer fs.Trace(dirPath, "ofst=%d, fh=0x%X", ofst, fh)("items=%d, errc=%d", &itemsRead, &errc)
 
 	node, errc := fsys.openDirs.Get(fh)
 	if errc != 0 {
@@ -301,19 +302,20 @@ func (fsys *FS) Readdir(dirPath string,
 		name := path.Base(item.Obj.Remote())
 		fill(name, nil, 0)
 	}
+	itemsRead = len(items)
 	return 0
 }
 
 // Releasedir finished reading the directory
 func (fsys *FS) Releasedir(path string, fh uint64) (errc int) {
-	fs.Debugf(path, "Releasedir(fh=%d)", fh)
+	defer fs.Trace(path, "fh=0x%X", fh)("errc=%d", &errc)
 	return fsys.openDirs.Close(fh)
 }
 
 // Statfs reads overall stats on the filessystem
 // FIXME doesn't seem to be ever called
 func (fsys *FS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
-	fs.Debugf(path, "Statfs()")
+	defer fs.Trace(path, "")("stat=%+v, errc=%d", stat, &errc)
 	const blockSize = 4096
 	const fsBlocks = (1 << 50) / blockSize
 	stat.Blocks = fsBlocks  // Total data blocks in file system.
@@ -329,6 +331,7 @@ func (fsys *FS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 
 // Open opens a file
 func (fsys *FS) Open(path string, flags int) (errc int, fh uint64) {
+	defer fs.Trace(path, "flags=0x%X", flags)("errc=%d, fh=0x%X", &errc, &fh)
 	file, errc := fsys.lookupFile(path)
 	if errc != 0 {
 		return errc, fhUnset
@@ -359,6 +362,7 @@ func (fsys *FS) Open(path string, flags int) (errc int, fh uint64) {
 
 // Create creates and opens a file.
 func (fsys *FS) Create(filePath string, flags int, mode uint32) (errc int, fh uint64) {
+	defer fs.Trace(filePath, "flags=0x%X, mode=0%o", flags, mode)("errc=%d, fh=0x%X", &errc, &fh)
 	leaf, parentDir, errc := fsys.lookupParentDir(filePath)
 	if errc != 0 {
 		return errc, fhUnset
@@ -372,6 +376,7 @@ func (fsys *FS) Create(filePath string, flags int, mode uint32) (errc int, fh ui
 
 // Truncate truncates a file to size
 func (fsys *FS) Truncate(path string, size int64, fh uint64) (errc int) {
+	defer fs.Trace(path, "size=%d, fh=0x%X", size, fh)("errc=%d", &errc)
 	node, errc := fsys.getNode(path, fh)
 	if errc != 0 {
 		return errc
@@ -394,6 +399,7 @@ func (fsys *FS) Truncate(path string, size int64, fh uint64) (errc int) {
 }
 
 func (fsys *FS) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
+	defer fs.Trace(path, "ofst=%d, fh=0x%X", ofst, fh)("n=%d", &n)
 	// FIXME detect seek
 	handle, errc := fsys.openFilesRd.Get(fh)
 	if errc != 0 {
@@ -413,6 +419,7 @@ func (fsys *FS) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
 }
 
 func (fsys *FS) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
+	defer fs.Trace(path, "ofst=%d, fh=0x%X", ofst, fh)("n=%d", &n)
 	// FIXME detect seek
 	handle, errc := fsys.openFilesWr.Get(fh)
 	if errc != 0 {
@@ -433,6 +440,7 @@ func (fsys *FS) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
 
 // Flush flushes an open file descriptor or path
 func (fsys *FS) Flush(path string, fh uint64) (errc int) {
+	defer fs.Trace(path, "fh=0x%X", fh)("errc=%d", &errc)
 	handle, errc := fsys.getHandleFromFh(fh)
 	if errc != 0 {
 		return errc
@@ -451,6 +459,7 @@ func (fsys *FS) Flush(path string, fh uint64) (errc int) {
 
 // Release closes the file if still open
 func (fsys *FS) Release(path string, fh uint64) (errc int) {
+	defer fs.Trace(path, "fh=0x%X", fh)("errc=%d", &errc)
 	handle, errc := fsys.getHandleFromFh(fh)
 	if errc != 0 {
 		return errc
@@ -468,8 +477,8 @@ func (fsys *FS) Release(path string, fh uint64) (errc int) {
 }
 
 // Unlink removes a file.
-func (fsys *FS) Unlink(filePath string) int {
-	fs.Debugf(filePath, "Unlink()")
+func (fsys *FS) Unlink(filePath string) (errc int) {
+	defer fs.Trace(filePath, "")("errc=%d", &errc)
 	leaf, parentDir, errc := fsys.lookupParentDir(filePath)
 	if errc != 0 {
 		return errc
@@ -479,7 +488,7 @@ func (fsys *FS) Unlink(filePath string) int {
 
 // Mkdir creates a directory.
 func (fsys *FS) Mkdir(dirPath string, mode uint32) (errc int) {
-	fs.Debugf(dirPath, "Mkdir(0%o)", mode)
+	defer fs.Trace(dirPath, "mode=0%o", mode)("errc=%d", &errc)
 	leaf, parentDir, errc := fsys.lookupParentDir(dirPath)
 	if errc != 0 {
 		return errc
@@ -489,8 +498,8 @@ func (fsys *FS) Mkdir(dirPath string, mode uint32) (errc int) {
 }
 
 // Rmdir removes a directory
-func (fsys *FS) Rmdir(dirPath string) int {
-	fs.Debugf(dirPath, "Rmdir()")
+func (fsys *FS) Rmdir(dirPath string) (errc int) {
+	defer fs.Trace(dirPath, "")("errc=%d", &errc)
 	leaf, parentDir, errc := fsys.lookupParentDir(dirPath)
 	if errc != 0 {
 		return errc
@@ -500,6 +509,7 @@ func (fsys *FS) Rmdir(dirPath string) int {
 
 // Rename renames a file.
 func (fsys *FS) Rename(oldPath string, newPath string) (errc int) {
+	defer fs.Trace(oldPath, "newPath=%q", newPath)("errc=%d", &errc)
 	oldLeaf, oldParentDir, errc := fsys.lookupParentDir(oldPath)
 	if errc != 0 {
 		return errc
@@ -513,7 +523,7 @@ func (fsys *FS) Rename(oldPath string, newPath string) (errc int) {
 
 // Utimens changes the access and modification times of a file.
 func (fsys *FS) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
-	fs.Debugf(path, "Utimens %+v", tmsp)
+	defer fs.Trace(path, "tmsp=%+v", tmsp)("errc=%d", &errc)
 	node, errc := fsys.lookupNode(path)
 	if errc != 0 {
 		return errc
