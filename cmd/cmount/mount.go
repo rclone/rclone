@@ -179,6 +179,13 @@ func mountOptions(device string, mountpoint string) (options []string) {
 		options = append(options, "-o", "noapplexattr")
 	}
 
+	// Windows options
+	if runtime.GOOS == "windows" {
+		// These cause WinFsp to mean the current user
+		options = append(options, "-o", "uid=-1")
+		options = append(options, "-o", "gid=-1")
+	}
+
 	if allowNonEmpty {
 		options = append(options, "-o", "nonempty")
 	}
