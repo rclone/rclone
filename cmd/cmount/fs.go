@@ -6,6 +6,7 @@ package cmount
 import (
 	"os"
 	"path"
+	"runtime"
 	"sync"
 	"time"
 
@@ -312,11 +313,13 @@ func (fsys *FS) Releasedir(path string, fh uint64) (errc int) {
 }
 
 // Statfs reads overall stats on the filessystem
-// FIXME doesn't seem to be ever called
 func (fsys *FS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 	defer fs.Trace(path, "")("stat=%+v, errc=%d", stat, &errc)
 	const blockSize = 4096
-	const fsBlocks = (1 << 50) / blockSize
+	fsBlocks := uint64(1 << 50)
+	if runtime.GOOS == "windows" {
+		fsBlocks = (1 << 43) - 1
+	}
 	stat.Blocks = fsBlocks  // Total data blocks in file system.
 	stat.Bfree = fsBlocks   // Free blocks in file system.
 	stat.Bavail = fsBlocks  // Free blocks in file system if you're not root.
