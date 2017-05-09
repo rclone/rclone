@@ -49,6 +49,11 @@ var osarches = []string{
 	"solaris/amd64",
 }
 
+// Special environment flags for a given arch
+var archFlags = map[string][]string{
+	"386": {"GO386=387"},
+}
+
 // runEnv - run a shell command with env
 func runEnv(args, env []string) {
 	if *debug {
@@ -59,6 +64,9 @@ func runEnv(args, env []string) {
 	cmd.Stderr = os.Stderr
 	if env != nil {
 		cmd.Env = append(os.Environ(), env...)
+	}
+	if *debug {
+		log.Printf("args = %v, env = %v\n", args, cmd.Env)
 	}
 	err := cmd.Run()
 	if err != nil {
@@ -93,6 +101,9 @@ func compileArch(version, goos, goarch, dir string) {
 		"GOOS=" + goos,
 		"GOARCH=" + goarch,
 		"CGO_ENABLED=0",
+	}
+	if flags, ok := archFlags[goarch]; ok {
+		env = append(env, flags...)
 	}
 	runEnv(args, env)
 	// Now build the zip
