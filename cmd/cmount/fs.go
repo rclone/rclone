@@ -161,17 +161,26 @@ func (fsys *FS) lookupFile(path string) (file *mountlib.File, errc int) {
 	return file, 0
 }
 
-// Get the underlying handle from the file handle
-func (fsys *FS) getHandleFromFh(fh uint64) (handle mountlib.Noder, errc int) {
+// Get the underlying openFile handle from the file handle
+func (fsys *FS) getOpenFilesFromFh(fh uint64) (of *openFiles, errc int) {
 	switch {
 	case fsys.openFilesRd.InRange(fh):
-		return fsys.openFilesRd.Get(fh)
+		return fsys.openFilesRd, 0
 	case fsys.openFilesWr.InRange(fh):
-		return fsys.openFilesWr.Get(fh)
+		return fsys.openFilesWr, 0
 	case fsys.openDirs.InRange(fh):
-		return fsys.openDirs.Get(fh)
+		return fsys.openDirs, 0
 	}
 	return nil, -fuse.EBADF
+}
+
+// Get the underlying handle from the file handle
+func (fsys *FS) getHandleFromFh(fh uint64) (handle mountlib.Noder, errc int) {
+	of, errc := fsys.getOpenFilesFromFh(fh)
+	if errc != 0 {
+		return nil, errc
+	}
+	return of.Get(fh)
 }
 
 // get a node from the path or from the fh if not fhUnset
@@ -462,10 +471,15 @@ func (fsys *FS) Flush(path string, fh uint64) (errc int) {
 // Release closes the file if still open
 func (fsys *FS) Release(path string, fh uint64) (errc int) {
 	defer fs.Trace(path, "fh=0x%X", fh)("errc=%d", &errc)
-	handle, errc := fsys.getHandleFromFh(fh)
+	of, errc := fsys.getOpenFilesFromFh(fh)
 	if errc != 0 {
 		return errc
 	}
+	handle, errc := of.Get(fh)
+	if errc != 0 {
+		return errc
+	}
+	_ = of.Close(fh)
 	var err error
 	switch x := handle.(type) {
 	case *mountlib.ReadFileHandle:
