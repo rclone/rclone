@@ -44,8 +44,9 @@ var (
 	gid                              = ^uint32(0) // overriden for non windows in mount_unix.go
 	// foreground                 = false
 	// default permissions for directories - modified by umask in Mount
-	dirPerms  = os.FileMode(0777)
-	filePerms = os.FileMode(0666)
+	dirPerms     = os.FileMode(0777)
+	filePerms    = os.FileMode(0666)
+	extraOptions *[]string
 )
 
 func init() {
@@ -64,6 +65,7 @@ func init() {
 	commandDefintion.Flags().BoolVarP(&writebackCache, "write-back-cache", "", writebackCache, "Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used.")
 	commandDefintion.Flags().VarP(&maxReadAhead, "max-read-ahead", "", "The number of bytes that can be prefetched for sequential reads.")
 	commandDefintion.Flags().IntVarP(&umask, "umask", "", umask, "Override the permission bits set by the filesystem.")
+	extraOptions = commandDefintion.Flags().StringArrayP("option", "o", []string{}, "Option for libfuse/WinFsp. Repeat if required.")
 	//commandDefintion.Flags().BoolVarP(&foreground, "foreground", "", foreground, "Do not detach.")
 }
 
@@ -203,6 +205,9 @@ func mountOptions(device string, mountpoint string) (options []string) {
 	}
 	if writebackCache {
 		// FIXME? options = append(options, "-o", WritebackCache())
+	}
+	for _, option := range *extraOptions {
+		options = append(options, "-o", option)
 	}
 	return options
 }
