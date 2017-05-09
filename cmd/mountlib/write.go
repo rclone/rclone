@@ -52,6 +52,17 @@ func newWriteFileHandle(d *Dir, f *File, src fs.ObjectInfo) (*WriteFileHandle, e
 	return fh, nil
 }
 
+// String converts it to printable
+func (fh *WriteFileHandle) String() string {
+	if fh == nil {
+		return "<nil *WriteFileHandle>"
+	}
+	if fh.file == nil {
+		return "<nil *WriteFileHandle.file>"
+	}
+	return fh.file.String() + " (w)"
+}
+
 // Node returns the Node assocuated with this - satisfies Noder interface
 func (fh *WriteFileHandle) Node() Node {
 	return fh.file

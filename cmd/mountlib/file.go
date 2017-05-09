@@ -1,6 +1,7 @@
 package mountlib
 
 import (
+	"path"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -16,17 +17,27 @@ type File struct {
 	d              *Dir         // parent directory - read only
 	mu             sync.RWMutex // protects the following
 	o              fs.Object    // NB o may be nil if file is being written
+	leaf           string       // leaf name of the object
 	writers        int          // number of writers for this file
 	pendingModTime time.Time    // will be applied once o becomes available, i.e. after file was written
 }
 
 // newFile creates a new File
-func newFile(d *Dir, o fs.Object) *File {
+func newFile(d *Dir, o fs.Object, leaf string) *File {
 	return &File{
 		d:     d,
 		o:     o,
+		leaf:  leaf,
 		inode: NewInode(),
 	}
+}
+
+// String converts it to printable
+func (f *File) String() string {
+	if f == nil {
+		return "<nil *File>"
+	}
+	return path.Join(f.d.path, f.leaf)
 }
 
 // IsFile returns true for File - satisfies Node interface

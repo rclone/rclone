@@ -46,6 +46,17 @@ func newReadFileHandle(f *File, o fs.Object) (*ReadFileHandle, error) {
 	return fh, nil
 }
 
+// String converts it to printable
+func (fh *ReadFileHandle) String() string {
+	if fh == nil {
+		return "<nil *ReadFileHandle>"
+	}
+	if fh.file == nil {
+		return "<nil *ReadFileHandle.file>"
+	}
+	return fh.file.String() + " (r)"
+}
+
 // Node returns the Node assocuated with this - satisfies Noder interface
 func (fh *ReadFileHandle) Node() Node {
 	return fh.file

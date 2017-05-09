@@ -1,6 +1,7 @@
 package mountlib
 
 import (
+	"fmt"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -21,6 +22,7 @@ var (
 
 // Noder represents something which can return a node
 type Noder interface {
+	fmt.Stringer
 	Node() Node
 }
 

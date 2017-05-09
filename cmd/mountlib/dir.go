@@ -44,6 +44,14 @@ func newDir(fsys *FS, f fs.Fs, fsDir *fs.Dir) *Dir {
 	}
 }
 
+// String converts it to printablee
+func (d *Dir) String() string {
+	if d == nil {
+		return "<nil *Dir>"
+	}
+	return d.path + "/"
+}
+
 // IsFile returns false for Dir - satisfies Node interface
 func (d *Dir) IsFile() bool {
 	return false
@@ -252,7 +260,7 @@ func (d *Dir) lookupNode(leaf string) (item *DirEntry, err error) {
 	var node Node
 	switch x := item.Obj.(type) {
 	case fs.Object:
-		node, err = newFile(d, x), nil
+		node, err = newFile(d, x, leaf), nil
 	case *fs.Dir:
 		node, err = newDir(d.fsys, d.f, x), nil
 	default:
@@ -308,7 +316,7 @@ func (d *Dir) Create(name string) (*File, *WriteFileHandle, error) {
 	fs.Debugf(path, "Dir.Create")
 	src := newCreateInfo(d.f, path)
 	// This gets added to the directory when the file is written
-	file := newFile(d, nil)
+	file := newFile(d, nil, name)
 	fh, err := newWriteFileHandle(d, file, src)
 	if err != nil {
 		fs.Errorf(path, "Dir.Create error: %v", err)
