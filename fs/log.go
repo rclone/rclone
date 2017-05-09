@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
+	"runtime"
+	"strings"
 )
 
 // LogLevel describes rclone's logs.  These are a subset of the syslog log levels.
@@ -107,6 +110,50 @@ func Infof(o interface{}, text string, args ...interface{}) {
 func Debugf(o interface{}, text string, args ...interface{}) {
 	if Config.LogLevel >= LogLevelDebug {
 		logPrintf(LogLevelDebug, o, text, args...)
+	}
+}
+
+// fnName returns the name of the calling +2 function
+func fnName() string {
+	pc, _, _, ok := runtime.Caller(2)
+	name := "*Unknown*"
+	if ok {
+		name = runtime.FuncForPC(pc).Name()
+		dot := strings.LastIndex(name, ".")
+		if dot >= 0 {
+			name = name[dot+1:]
+		}
+	}
+	return name
+}
+
+// Trace debugs the entry and exit of the calling function
+//
+// It is designed to be used in a defer statement so it returns a
+// function that logs the exit parameters.
+//
+// Any pointers in the exit function will be dereferenced
+func Trace(o interface{}, format string, a ...interface{}) func(string, ...interface{}) {
+	if Config.LogLevel < LogLevelDebug {
+		return func(format string, a ...interface{}) {}
+	}
+	name := fnName()
+	logPrintf(LogLevelDebug, o, name+": "+format, a...)
+	return func(format string, a ...interface{}) {
+		for i := range a {
+			// read the values of the pointed to items
+			typ := reflect.TypeOf(a[i])
+			if typ.Kind() == reflect.Ptr {
+				value := reflect.ValueOf(a[i])
+				if value.IsNil() {
+					a[i] = nil
+				} else {
+					pointedToValue := reflect.Indirect(value)
+					a[i] = pointedToValue.Interface()
+				}
+			}
+		}
+		logPrintf(LogLevelDebug, o, ">"+name+": "+format, a...)
 	}
 }
 
