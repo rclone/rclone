@@ -38,7 +38,8 @@ func NewFS(f fs.Fs) *FS {
 }
 
 // Root returns the root node
-func (f *FS) Root() (fusefs.Node, error) {
+func (f *FS) Root() (node fusefs.Node, err error) {
+	defer fs.Trace("", "")("node=%+v, err=%v", &node, &err)
 	root, err := f.FS.Root()
 	if err != nil {
 		return nil, translateError(err)
@@ -51,7 +52,8 @@ var _ fusefs.FSStatfser = (*FS)(nil)
 
 // Statfs is called to obtain file system metadata.
 // It should write that data to resp.
-func (f *FS) Statfs(ctx context.Context, req *fuse.StatfsRequest, resp *fuse.StatfsResponse) error {
+func (f *FS) Statfs(ctx context.Context, req *fuse.StatfsRequest, resp *fuse.StatfsResponse) (err error) {
+	defer fs.Trace("", "")("stat=%+v, err=%v", resp, &err)
 	const blockSize = 4096
 	const fsBlocks = (1 << 50) / blockSize
 	resp.Blocks = fsBlocks  // Total data blocks in file system.

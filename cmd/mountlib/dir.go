@@ -149,7 +149,7 @@ func (d *Dir) readDir() error {
 	defer d.mu.Unlock()
 	when := time.Now()
 	if d.read.IsZero() {
-		fs.Debugf(d.path, "Reading directory")
+		// fs.Debugf(d.path, "Reading directory")
 	} else {
 		age := when.Sub(d.read)
 		if age < dirCacheTime {
@@ -236,7 +236,7 @@ func (d *Dir) isEmpty() (bool, error) {
 
 // ModTime returns the modification time of the directory
 func (d *Dir) ModTime() time.Time {
-	fs.Debugf(d.path, "Dir.ModTime %v", d.modTime)
+	// fs.Debugf(d.path, "Dir.ModTime %v", d.modTime)
 	return d.modTime
 }
 
@@ -281,7 +281,7 @@ func (d *Dir) lookupNode(leaf string) (item *DirEntry, err error) {
 // Lookup need not to handle the names "." and "..".
 func (d *Dir) Lookup(name string) (node Node, err error) {
 	path := path.Join(d.path, name)
-	fs.Debugf(path, "Dir.Lookup")
+	// fs.Debugf(path, "Dir.Lookup")
 	item, err := d.lookupNode(name)
 	if err != nil {
 		if err != ENOENT {
@@ -289,13 +289,13 @@ func (d *Dir) Lookup(name string) (node Node, err error) {
 		}
 		return nil, err
 	}
-	fs.Debugf(path, "Dir.Lookup OK")
+	// fs.Debugf(path, "Dir.Lookup OK")
 	return item.Node, nil
 }
 
 // ReadDirAll reads the contents of the directory
 func (d *Dir) ReadDirAll() (items []*DirEntry, err error) {
-	fs.Debugf(d.path, "Dir.ReadDirAll")
+	// fs.Debugf(d.path, "Dir.ReadDirAll")
 	err = d.readDir()
 	if err != nil {
 		fs.Debugf(d.path, "Dir.ReadDirAll error: %v", err)
@@ -306,14 +306,14 @@ func (d *Dir) ReadDirAll() (items []*DirEntry, err error) {
 	for _, item := range d.items {
 		items = append(items, item)
 	}
-	fs.Debugf(d.path, "Dir.ReadDirAll OK with %d entries", len(items))
+	// fs.Debugf(d.path, "Dir.ReadDirAll OK with %d entries", len(items))
 	return items, nil
 }
 
 // Create makes a new file
 func (d *Dir) Create(name string) (*File, *WriteFileHandle, error) {
 	path := path.Join(d.path, name)
-	fs.Debugf(path, "Dir.Create")
+	// fs.Debugf(path, "Dir.Create")
 	src := newCreateInfo(d.f, path)
 	// This gets added to the directory when the file is written
 	file := newFile(d, nil, name)
@@ -322,14 +322,14 @@ func (d *Dir) Create(name string) (*File, *WriteFileHandle, error) {
 		fs.Errorf(path, "Dir.Create error: %v", err)
 		return nil, nil, err
 	}
-	fs.Debugf(path, "Dir.Create OK")
+	// fs.Debugf(path, "Dir.Create OK")
 	return file, fh, nil
 }
 
 // Mkdir creates a new directory
 func (d *Dir) Mkdir(name string) (*Dir, error) {
 	path := path.Join(d.path, name)
-	fs.Debugf(path, "Dir.Mkdir")
+	// fs.Debugf(path, "Dir.Mkdir")
 	err := d.f.Mkdir(path)
 	if err != nil {
 		fs.Errorf(path, "Dir.Mkdir failed to create directory: %v", err)
@@ -341,7 +341,7 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 	}
 	dir := newDir(d.fsys, d.f, fsDir)
 	d.addObject(fsDir, dir)
-	fs.Debugf(path, "Dir.Mkdir OK")
+	// fs.Debugf(path, "Dir.Mkdir OK")
 	return dir, nil
 }
 
@@ -350,7 +350,7 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 // may correspond to a file (unlink) or to a directory (rmdir).
 func (d *Dir) Remove(name string) error {
 	path := path.Join(d.path, name)
-	fs.Debugf(path, "Dir.Remove")
+	// fs.Debugf(path, "Dir.Remove")
 	item, err := d.lookupNode(name)
 	if err != nil {
 		fs.Errorf(path, "Dir.Remove error: %v", err)
@@ -387,7 +387,7 @@ func (d *Dir) Remove(name string) error {
 	}
 	// Remove the item from the directory listing
 	d.delObject(name)
-	fs.Debugf(path, "Dir.Remove OK")
+	// fs.Debugf(path, "Dir.Remove OK")
 	return nil
 }
 
@@ -395,7 +395,7 @@ func (d *Dir) Remove(name string) error {
 func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	oldPath := path.Join(d.path, oldName)
 	newPath := path.Join(destDir.path, newName)
-	fs.Debugf(oldPath, "Dir.Rename to %q", newPath)
+	// fs.Debugf(oldPath, "Dir.Rename to %q", newPath)
 	oldItem, err := d.lookupNode(oldName)
 	if err != nil {
 		fs.Errorf(oldPath, "Dir.Rename error: %v", err)
@@ -462,7 +462,7 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	d.delObject(oldName)
 	destDir.addObject(newObj, oldNode)
 
-	fs.Debugf(newPath, "Dir.Rename renamed from %q", oldPath)
+	// fs.Debugf(newPath, "Dir.Rename renamed from %q", oldPath)
 	return nil
 }
 

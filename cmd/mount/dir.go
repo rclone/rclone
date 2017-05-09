@@ -40,7 +40,8 @@ type Dir struct {
 var _ fusefs.Node = (*Dir)(nil)
 
 // Attr updates the attributes of a directory
-func (d *Dir) Attr(ctx context.Context, a *fuse.Attr) error {
+func (d *Dir) Attr(ctx context.Context, a *fuse.Attr) (err error) {
+	defer fs.Trace(d, "")("attr=%+v, err=%v", a, &err)
 	a.Gid = gid
 	a.Uid = uid
 	a.Mode = os.ModeDir | dirPerms
@@ -59,6 +60,7 @@ var _ fusefs.NodeSetattrer = (*Dir)(nil)
 
 // Setattr handles attribute changes from FUSE. Currently supports ModTime only.
 func (d *Dir) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse.SetattrResponse) (err error) {
+	defer fs.Trace(d, "stat=%+v", req)("err=%v", &err)
 	if noModTime {
 		return nil
 	}
@@ -82,6 +84,7 @@ var _ fusefs.NodeRequestLookuper = (*Dir)(nil)
 //
 // Lookup need not to handle the names "." and "..".
 func (d *Dir) Lookup(ctx context.Context, req *fuse.LookupRequest, resp *fuse.LookupResponse) (node fusefs.Node, err error) {
+	defer fs.Trace(d, "name=%q", req.Name)("node=%+v, err=%v", &node, &err)
 	mnode, err := d.Dir.Lookup(req.Name)
 	if err != nil {
 		return nil, translateError(err)
@@ -100,6 +103,8 @@ var _ fusefs.HandleReadDirAller = (*Dir)(nil)
 
 // ReadDirAll reads the contents of the directory
 func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error) {
+	itemsRead := -1
+	defer fs.Trace(d, "")("item=%d, err=%v", &itemsRead, &err)
 	items, err := d.Dir.ReadDirAll()
 	if err != nil {
 		return nil, translateError(err)
@@ -124,13 +129,15 @@ func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error)
 		}
 		dirents = append(dirents, dirent)
 	}
+	itemsRead = len(dirents)
 	return dirents, nil
 }
 
 var _ fusefs.NodeCreater = (*Dir)(nil)
 
 // Create makes a new file
-func (d *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.CreateResponse) (fusefs.Node, fusefs.Handle, error) {
+func (d *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.CreateResponse) (node fusefs.Node, handle fusefs.Handle, err error) {
+	defer fs.Trace(d, "name=%q", req.Name)("node=%v, handle=%v, err=%v", &node, &handle, &err)
 	file, fh, err := d.Dir.Create(req.Name)
 	if err != nil {
 		return nil, nil, translateError(err)
@@ -141,7 +148,8 @@ func (d *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.Cr
 var _ fusefs.NodeMkdirer = (*Dir)(nil)
 
 // Mkdir creates a new directory
-func (d *Dir) Mkdir(ctx context.Context, req *fuse.MkdirRequest) (fusefs.Node, error) {
+func (d *Dir) Mkdir(ctx context.Context, req *fuse.MkdirRequest) (node fusefs.Node, err error) {
+	defer fs.Trace(d, "name=%q", req.Name)("node=%+v, err=%v", &node, &err)
 	dir, err := d.Dir.Mkdir(req.Name)
 	if err != nil {
 		return nil, translateError(err)
@@ -154,8 +162,9 @@ var _ fusefs.NodeRemover = (*Dir)(nil)
 // Remove removes the entry with the given name from
 // the receiver, which must be a directory.  The entry to be removed
 // may correspond to a file (unlink) or to a directory (rmdir).
-func (d *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) error {
-	err := d.Dir.Remove(req.Name)
+func (d *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) (err error) {
+	defer fs.Trace(d, "name=%q", req.Name)("err=%v", &err)
+	err = d.Dir.Remove(req.Name)
 	if err != nil {
 		return translateError(err)
 	}
@@ -166,13 +175,14 @@ func (d *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) error {
 var _ fusefs.NodeRenamer = (*Dir)(nil)
 
 // Rename the file
-func (d *Dir) Rename(ctx context.Context, req *fuse.RenameRequest, newDir fusefs.Node) error {
+func (d *Dir) Rename(ctx context.Context, req *fuse.RenameRequest, newDir fusefs.Node) (err error) {
+	defer fs.Trace(d, "oldName=%q, newName=%q, newDir=%+v", req.OldName, req.NewName, newDir)("err=%v", &err)
 	destDir, ok := newDir.(*Dir)
 	if !ok {
 		return errors.Errorf("Unknown Dir type %T", newDir)
 	}
 
-	err := d.Dir.Rename(req.OldName, req.NewName, destDir.Dir)
+	err = d.Dir.Rename(req.OldName, req.NewName, destDir.Dir)
 	if err != nil {
 		return translateError(err)
 	}
@@ -184,8 +194,9 @@ func (d *Dir) Rename(ctx context.Context, req *fuse.RenameRequest, newDir fusefs
 var _ fusefs.NodeFsyncer = (*Dir)(nil)
 
 // Fsync the directory
-func (d *Dir) Fsync(ctx context.Context, req *fuse.FsyncRequest) error {
-	err := d.Dir.Fsync()
+func (d *Dir) Fsync(ctx context.Context, req *fuse.FsyncRequest) (err error) {
+	defer fs.Trace(d, "")("err=%v", &err)
+	err = d.Dir.Fsync()
 	if err != nil {
 		return translateError(err)
 	}

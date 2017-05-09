@@ -8,6 +8,7 @@ import (
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
 	"github.com/ncw/rclone/cmd/mountlib"
+	"github.com/ncw/rclone/fs"
 	"golang.org/x/net/context"
 )
 
@@ -25,7 +26,8 @@ var _ fusefs.Handle = (*WriteFileHandle)(nil)
 var _ fusefs.HandleWriter = (*WriteFileHandle)(nil)
 
 // Write data to the file handle
-func (fh *WriteFileHandle) Write(ctx context.Context, req *fuse.WriteRequest, resp *fuse.WriteResponse) error {
+func (fh *WriteFileHandle) Write(ctx context.Context, req *fuse.WriteRequest, resp *fuse.WriteResponse) (err error) {
+	defer fs.Trace(fh, "len=%d, offset=%d", len(req.Data), req.Offset)("written=%d, err=%v", &resp.Size, &err)
 	n, err := fh.WriteFileHandle.Write(req.Data, req.Offset)
 	if err != nil {
 		return translateError(err)
@@ -49,7 +51,8 @@ func (fh *WriteFileHandle) Write(ctx context.Context, req *fuse.WriteRequest, re
 //
 // Filesystems shouldn't assume that flush will always be called after
 // some writes, or that if will be called at all.
-func (fh *WriteFileHandle) Flush(ctx context.Context, req *fuse.FlushRequest) error {
+func (fh *WriteFileHandle) Flush(ctx context.Context, req *fuse.FlushRequest) (err error) {
+	defer fs.Trace(fh, "")("err=%v", &err)
 	return translateError(fh.WriteFileHandle.Flush())
 }
 
@@ -59,6 +62,7 @@ var _ fusefs.HandleReleaser = (*WriteFileHandle)(nil)
 //
 // It isn't called directly from userspace so the error is ignored by
 // the kernel
-func (fh *WriteFileHandle) Release(ctx context.Context, req *fuse.ReleaseRequest) error {
+func (fh *WriteFileHandle) Release(ctx context.Context, req *fuse.ReleaseRequest) (err error) {
+	defer fs.Trace(fh, "")("err=%v", &err)
 	return translateError(fh.WriteFileHandle.Release())
 }

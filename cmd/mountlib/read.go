@@ -106,7 +106,7 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 func (fh *ReadFileHandle) Read(reqSize, reqOffset int64) (respData []byte, err error) {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
-	fs.Debugf(fh.o, "ReadFileHandle.Read size %d offset %d", reqSize, reqOffset)
+	// fs.Debugf(fh.o, "ReadFileHandle.Read size %d offset %d", reqSize, reqOffset)
 	if fh.closed {
 		fs.Errorf(fh.o, "ReadFileHandle.Read error: %v", EBADF)
 		return nil, EBADF
@@ -165,7 +165,7 @@ func (fh *ReadFileHandle) Read(reqSize, reqOffset int64) (respData []byte, err e
 	} else {
 		respData = buf[:n]
 		fh.offset = newOffset
-		fs.Debugf(fh.o, "ReadFileHandle.Read OK")
+		// fs.Debugf(fh.o, "ReadFileHandle.Read OK")
 
 		if fh.hash != nil {
 			_, err = fh.hash.Write(respData)
@@ -220,14 +220,14 @@ func (fh *ReadFileHandle) close() error {
 func (fh *ReadFileHandle) Flush() error {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
-	fs.Debugf(fh.o, "ReadFileHandle.Flush")
+	// fs.Debugf(fh.o, "ReadFileHandle.Flush")
 
 	if err := fh.checkHash(); err != nil {
 		fs.Errorf(fh.o, "ReadFileHandle.Flush error: %v", err)
 		return err
 	}
 
-	fs.Debugf(fh.o, "ReadFileHandle.Flush OK")
+	// fs.Debugf(fh.o, "ReadFileHandle.Flush OK")
 	return nil
 }
 
@@ -247,7 +247,7 @@ func (fh *ReadFileHandle) Release() error {
 	if err != nil {
 		fs.Errorf(fh.o, "ReadFileHandle.Release error: %v", err)
 	} else {
-		fs.Debugf(fh.o, "ReadFileHandle.Release OK")
+		// fs.Debugf(fh.o, "ReadFileHandle.Release OK")
 	}
 	return err
 }

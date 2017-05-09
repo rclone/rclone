@@ -8,6 +8,7 @@ import (
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
 	"github.com/ncw/rclone/cmd/mountlib"
+	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
@@ -27,7 +28,8 @@ type File struct {
 var _ fusefs.Node = (*File)(nil)
 
 // Attr fills out the attributes for the file
-func (f *File) Attr(ctx context.Context, a *fuse.Attr) error {
+func (f *File) Attr(ctx context.Context, a *fuse.Attr) (err error) {
+	defer fs.Trace(f, "")("a=%+v, err=%v", a, &err)
 	modTime, Size, Blocks, err := f.File.Attr(noModTime)
 	if err != nil {
 		return translateError(err)
@@ -48,11 +50,11 @@ func (f *File) Attr(ctx context.Context, a *fuse.Attr) error {
 var _ fusefs.NodeSetattrer = (*File)(nil)
 
 // Setattr handles attribute changes from FUSE. Currently supports ModTime only.
-func (f *File) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse.SetattrResponse) error {
+func (f *File) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse.SetattrResponse) (err error) {
+	defer fs.Trace(f, "a=%+v", req)("err=%v", &err)
 	if noModTime {
 		return nil
 	}
-	var err error
 	if req.Valid.MtimeNow() {
 		err = f.File.SetModTime(time.Now())
 	} else if req.Valid.Mtime() {
@@ -66,6 +68,7 @@ var _ fusefs.NodeOpener = (*File)(nil)
 
 // Open the file for read or write
 func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenResponse) (fh fusefs.Handle, err error) {
+	defer fs.Trace(f, "flags=%v", req.Flags)("fh=%v, err=%v", &fh, &err)
 	switch {
 	case req.Flags.IsReadOnly():
 		if noSeek {
@@ -109,6 +112,7 @@ var _ fusefs.NodeFsyncer = (*File)(nil)
 // Fsync the file
 //
 // Note that we don't do anything except return OK
-func (f *File) Fsync(ctx context.Context, req *fuse.FsyncRequest) error {
+func (f *File) Fsync(ctx context.Context, req *fuse.FsyncRequest) (err error) {
+	defer fs.Trace(f, "")("err=%v", &err)
 	return nil
 }

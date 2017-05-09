@@ -68,7 +68,7 @@ func (fsys *FS) NoChecksum() *FS {
 
 // Root returns the root node
 func (fsys *FS) Root() (*Dir, error) {
-	fs.Debugf(fsys.f, "Root()")
+	// fs.Debugf(fsys.f, "Root()")
 	return fsys.root, nil
 }
 

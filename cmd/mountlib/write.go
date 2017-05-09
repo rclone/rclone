@@ -70,7 +70,7 @@ func (fh *WriteFileHandle) Node() Node {
 
 // Write data to the file handle
 func (fh *WriteFileHandle) Write(data []byte, offset int64) (written int64, err error) {
-	fs.Debugf(fh.remote, "WriteFileHandle.Write len=%d", len(data))
+	// fs.Debugf(fh.remote, "WriteFileHandle.Write len=%d", len(data))
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
 	if fh.offset != offset {
@@ -91,7 +91,7 @@ func (fh *WriteFileHandle) Write(data []byte, offset int64) (written int64, err 
 		fs.Errorf(fh.remote, "WriteFileHandle.Write error: %v", err)
 		return 0, err
 	}
-	fs.Debugf(fh.remote, "WriteFileHandle.Write OK (%d bytes written)", n)
+	// fs.Debugf(fh.remote, "WriteFileHandle.Write OK (%d bytes written)", n)
 	if fh.hash != nil {
 		_, err = fh.hash.Write(data[:n])
 		if err != nil {
@@ -160,7 +160,7 @@ func (fh *WriteFileHandle) close() error {
 func (fh *WriteFileHandle) Flush() error {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
-	fs.Debugf(fh.remote, "WriteFileHandle.Flush")
+	// fs.Debugf(fh.remote, "WriteFileHandle.Flush")
 	// If Write hasn't been called then ignore the Flush - Release
 	// will pick it up
 	if !fh.writeCalled {
@@ -172,7 +172,7 @@ func (fh *WriteFileHandle) Flush() error {
 	if err != nil {
 		fs.Errorf(fh.remote, "WriteFileHandle.Flush error: %v", err)
 	} else {
-		fs.Debugf(fh.remote, "WriteFileHandle.Flush OK")
+		// fs.Debugf(fh.remote, "WriteFileHandle.Flush OK")
 	}
 	return err
 }
@@ -193,7 +193,7 @@ func (fh *WriteFileHandle) Release() error {
 	if err != nil {
 		fs.Errorf(fh.remote, "WriteFileHandle.Release error: %v", err)
 	} else {
-		fs.Debugf(fh.remote, "WriteFileHandle.Release OK")
+		// fs.Debugf(fh.remote, "WriteFileHandle.Release OK")
 	}
 	return err
 }

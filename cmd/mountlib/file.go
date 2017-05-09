@@ -87,7 +87,7 @@ func (f *File) Attr(noModTime bool) (modTime time.Time, Size, Blocks uint64, err
 		}
 	}
 	Blocks = (Size + 511) / 512
-	fs.Debugf(f.o, "File.Attr modTime=%v, Size=%d, Blocks=%v", modTime, Size, Blocks)
+	// fs.Debugf(f.o, "File.Attr modTime=%v, Size=%d, Blocks=%v", modTime, Size, Blocks)
 	return
 }
 
@@ -174,7 +174,7 @@ func (f *File) OpenRead() (fh *ReadFileHandle, err error) {
 	if err != nil {
 		return nil, err
 	}
-	fs.Debugf(o, "File.OpenRead")
+	// fs.Debugf(o, "File.OpenRead")
 
 	fh, err = newReadFileHandle(f, o)
 	err = errors.Wrap(err, "open for read")
@@ -193,7 +193,7 @@ func (f *File) OpenWrite() (fh *WriteFileHandle, err error) {
 	if err != nil {
 		return nil, err
 	}
-	fs.Debugf(o, "File.OpenWrite")
+	// fs.Debugf(o, "File.OpenWrite")
 
 	src := newCreateInfo(f.d.f, o.Remote())
 	fh, err = newWriteFileHandle(f.d, f, src)
