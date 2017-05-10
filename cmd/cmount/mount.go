@@ -269,8 +269,15 @@ func mount(f fs.Fs, mountpoint string) (*mountlib.FS, <-chan error, func() error
 		return errors.New("host unmount failed")
 	}
 
-	// Wait for the filesystem to become ready
-	<-fsys.ready
+	// Wait for the filesystem to become ready, checking the file
+	// system didn't blow up before starting
+	select {
+	case err := <-errChan:
+		err = errors.Wrap(err, "mount stopped before calling Init")
+		return nil, nil, nil, err
+	case <-fsys.ready:
+	}
+
 	return fsys.FS, errChan, unmount, nil
 }
 
