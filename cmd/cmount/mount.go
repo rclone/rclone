@@ -47,6 +47,7 @@ var (
 	dirPerms     = os.FileMode(0777)
 	filePerms    = os.FileMode(0666)
 	extraOptions *[]string
+	extraFlags   *[]string
 )
 
 func init() {
@@ -66,6 +67,7 @@ func init() {
 	commandDefintion.Flags().VarP(&maxReadAhead, "max-read-ahead", "", "The number of bytes that can be prefetched for sequential reads.")
 	commandDefintion.Flags().IntVarP(&umask, "umask", "", umask, "Override the permission bits set by the filesystem.")
 	extraOptions = commandDefintion.Flags().StringArrayP("option", "o", []string{}, "Option for libfuse/WinFsp. Repeat if required.")
+	extraFlags = commandDefintion.Flags().StringArrayP("fuse-flag", "", []string{}, "Flags or arguments to be passed direct to libfuse/WinFsp. Repeat if required.")
 	//commandDefintion.Flags().BoolVarP(&foreground, "foreground", "", foreground, "Do not detach.")
 }
 
@@ -208,6 +210,9 @@ func mountOptions(device string, mountpoint string) (options []string) {
 	}
 	for _, option := range *extraOptions {
 		options = append(options, "-o", option)
+	}
+	for _, option := range *extraFlags {
+		options = append(options, option)
 	}
 	return options
 }
