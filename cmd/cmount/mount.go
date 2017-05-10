@@ -188,6 +188,7 @@ func mountOptions(device string, mountpoint string) (options []string) {
 		// These cause WinFsp to mean the current user
 		options = append(options, "-o", "uid=-1")
 		options = append(options, "-o", "gid=-1")
+		options = append(options, "--FileSystemName=rclone")
 	}
 
 	if allowNonEmpty {
