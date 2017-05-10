@@ -227,7 +227,7 @@ func mountOptions(device string, mountpoint string) (options []string) {
 func mount(f fs.Fs, mountpoint string) (*mountlib.FS, <-chan error, func() error, error) {
 	fs.Debugf(f, "Mounting on %q", mountpoint)
 
-	// Check the mountpoint
+	// Check the mountpoint - in Windows the mountpoint musn't exist before the mount
 	if runtime.GOOS != "windows" {
 		fi, err := os.Stat(mountpoint)
 		if err != nil {
@@ -276,6 +276,22 @@ func mount(f fs.Fs, mountpoint string) (*mountlib.FS, <-chan error, func() error
 		err = errors.Wrap(err, "mount stopped before calling Init")
 		return nil, nil, nil, err
 	case <-fsys.ready:
+	}
+
+	// Wait for the mount point to be available on Windows
+	// On Windows the Init signal comes slightly before the mount is ready
+	if runtime.GOOS == "windows" {
+		const totalWait = 10 * time.Second
+		const individualWait = 10 * time.Millisecond
+		for i := 0; i < int(totalWait/individualWait); i++ {
+			_, err := os.Stat(mountpoint)
+			if err == nil {
+				goto found
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+		fs.Errorf(nil, "mountpoint %q didn't became available after %v - continuing anyway", mountpoint, totalWait)
+	found:
 	}
 
 	return fsys.FS, errChan, unmount, nil

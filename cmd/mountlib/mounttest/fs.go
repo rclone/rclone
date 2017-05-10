@@ -13,7 +13,6 @@ import (
 	"runtime"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
@@ -141,9 +140,6 @@ func (r *Run) mount() {
 		r.skip = true
 	}
 	log.Printf("mount OK")
-	if runtime.GOOS == "windows" {
-		time.Sleep(time.Second) // FIXME remove this when https://github.com/billziss-gh/cgofuse/issues/11 is fixed
-	}
 }
 
 func (r *Run) umount() {
