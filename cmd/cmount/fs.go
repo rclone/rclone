@@ -44,6 +44,9 @@ func NewFS(f fs.Fs) *FS {
 	if noChecksum {
 		fsys.FS.NoChecksum()
 	}
+	if readOnly {
+		fsys.FS.ReadOnly()
+	}
 	return fsys
 }
 
@@ -659,6 +662,8 @@ func translateError(err error) (errc int) {
 			return -fuse.ESPIPE
 		case mountlib.EBADF:
 			return -fuse.EBADF
+		case mountlib.EROFS:
+			return -fuse.EROFS
 		}
 	}
 	fs.Errorf(nil, "IO error: %v", err)

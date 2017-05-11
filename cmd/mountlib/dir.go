@@ -242,6 +242,9 @@ func (d *Dir) ModTime() time.Time {
 
 // SetModTime sets the modTime for this dir
 func (d *Dir) SetModTime(modTime time.Time) error {
+	if d.fsys.readOnly {
+		return EROFS
+	}
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.modTime = modTime
@@ -312,6 +315,9 @@ func (d *Dir) ReadDirAll() (items []*DirEntry, err error) {
 
 // Create makes a new file
 func (d *Dir) Create(name string) (*File, *WriteFileHandle, error) {
+	if d.fsys.readOnly {
+		return nil, nil, EROFS
+	}
 	path := path.Join(d.path, name)
 	// fs.Debugf(path, "Dir.Create")
 	src := newCreateInfo(d.f, path)
@@ -328,6 +334,9 @@ func (d *Dir) Create(name string) (*File, *WriteFileHandle, error) {
 
 // Mkdir creates a new directory
 func (d *Dir) Mkdir(name string) (*Dir, error) {
+	if d.fsys.readOnly {
+		return nil, EROFS
+	}
 	path := path.Join(d.path, name)
 	// fs.Debugf(path, "Dir.Mkdir")
 	err := d.f.Mkdir(path)
@@ -349,6 +358,9 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 // the receiver, which must be a directory.  The entry to be removed
 // may correspond to a file (unlink) or to a directory (rmdir).
 func (d *Dir) Remove(name string) error {
+	if d.fsys.readOnly {
+		return EROFS
+	}
 	path := path.Join(d.path, name)
 	// fs.Debugf(path, "Dir.Remove")
 	item, err := d.lookupNode(name)
@@ -393,6 +405,9 @@ func (d *Dir) Remove(name string) error {
 
 // Rename the file
 func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
+	if d.fsys.readOnly {
+		return EROFS
+	}
 	oldPath := path.Join(d.path, oldName)
 	newPath := path.Join(destDir.path, newName)
 	// fs.Debugf(oldPath, "Dir.Rename to %q", newPath)

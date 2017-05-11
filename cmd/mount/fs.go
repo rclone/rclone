@@ -5,6 +5,8 @@
 package mount
 
 import (
+	"syscall"
+
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
 	"github.com/ncw/rclone/cmd/mountlib"
@@ -33,6 +35,9 @@ func NewFS(f fs.Fs) *FS {
 	}
 	if noChecksum {
 		fsys.FS.NoChecksum()
+	}
+	if readOnly {
+		fsys.FS.ReadOnly()
 	}
 	return fsys
 }
@@ -75,12 +80,20 @@ func translateError(err error) error {
 	cause := errors.Cause(err)
 	if mErr, ok := cause.(mountlib.Error); ok {
 		switch mErr {
+		case mountlib.OK:
+			return nil
 		case mountlib.ENOENT:
 			return fuse.ENOENT
 		case mountlib.ENOTEMPTY:
-			return fuse.EEXIST // return fuse.ENOTEMPTY - doesn't exist though so use EEXIST
+			return fuse.Errno(syscall.ENOTEMPTY)
 		case mountlib.EEXIST:
 			return fuse.EEXIST
+		case mountlib.ESPIPE:
+			return fuse.Errno(syscall.ESPIPE)
+		case mountlib.EBADF:
+			return fuse.Errno(syscall.EBADF)
+		case mountlib.EROFS:
+			return fuse.Errno(syscall.EROFS)
 		}
 	}
 	return err

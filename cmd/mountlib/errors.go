@@ -7,6 +7,8 @@ import "fmt"
 // Error describes low level errors in a cross platform way
 type Error byte
 
+// NB if changing errors translateError in cmd/mount/fs.go, cmd/cmount/fs.go
+
 // Low level errors
 const (
 	OK Error = iota
@@ -15,6 +17,7 @@ const (
 	EEXIST
 	ESPIPE
 	EBADF
+	EROFS
 )
 
 var errorNames = []string{
@@ -24,6 +27,7 @@ var errorNames = []string{
 	EEXIST:    "File exists",
 	ESPIPE:    "Illegal seek",
 	EBADF:     "Bad file descriptor",
+	EROFS:     "Read only file system",
 }
 
 // Error renders the error as a string

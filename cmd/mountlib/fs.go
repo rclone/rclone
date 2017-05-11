@@ -39,6 +39,7 @@ type FS struct {
 	root       *Dir
 	noSeek     bool // don't allow seeking if set
 	noChecksum bool // don't check checksums if set
+	readOnly   bool // if set FS is read only
 }
 
 // NewFS creates a new filing system and root directory
@@ -63,6 +64,13 @@ func (fsys *FS) NoSeek() *FS {
 // NoChecksum disables checksum checking
 func (fsys *FS) NoChecksum() *FS {
 	fsys.noChecksum = true
+	return fsys
+}
+
+// ReadOnly sets the fs into read only mode, returning EROFS for any
+// write operations.
+func (fsys *FS) ReadOnly() *FS {
+	fsys.readOnly = true
 	return fsys
 }
 

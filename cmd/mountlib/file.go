@@ -93,6 +93,9 @@ func (f *File) Attr(noModTime bool) (modTime time.Time, Size, Blocks uint64, err
 
 // SetModTime sets the modtime for the file
 func (f *File) SetModTime(modTime time.Time) error {
+	if f.d.fsys.readOnly {
+		return EROFS
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -188,6 +191,9 @@ func (f *File) OpenRead() (fh *ReadFileHandle, err error) {
 
 // OpenWrite open the file for write
 func (f *File) OpenWrite() (fh *WriteFileHandle, err error) {
+	if f.d.fsys.readOnly {
+		return nil, EROFS
+	}
 	// if o is nil it isn't valid yet
 	o, err := f.waitForValidObject()
 	if err != nil {
