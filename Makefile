@@ -34,7 +34,7 @@ test:	rclone
 # Quick test
 quicktest:
 	RCLONE_CONFIG="/notfound" go test $(GO_FILES)
-	RCLONE_CONFIG="/notfound" go test -cpu=2 -race $(GO_FILES)
+	if [ "$$CGO_ENABLED" != "0" ]; then RCLONE_CONFIG="/notfound" go test -cpu=2 -race $(GO_FILES) ; fi
 
 # Do source code quality checks
 check:	rclone
