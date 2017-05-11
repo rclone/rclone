@@ -6,8 +6,6 @@ GO_VERSION := $(shell go version)
 GO_FILES := $(shell go list ./... | grep -v /vendor/ )
 GO_LATEST := $(findstring go1.8,$(GO_VERSION))
 BETA_URL := https://beta.rclone.org/$(TAG)/
-# Only needed for Go 1.5
-export GO15VENDOREXPERIMENT=1
 
 .PHONY: rclone
 

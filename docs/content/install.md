@@ -67,7 +67,7 @@ Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
 ## Install from source ##
 
-Make sure you have at least [Go](https://golang.org/) 1.5 installed.
+Make sure you have at least [Go](https://golang.org/) 1.6 installed.
 Make sure your `GOPATH` is set, then:
 
     go get -u -v github.com/ncw/rclone
