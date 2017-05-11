@@ -19,15 +19,12 @@ type ReadFileHandle struct {
 	noSeek     bool
 	file       *File
 	hash       *fs.MultiHasher
+	opened     bool
 }
 
 func newReadFileHandle(f *File, o fs.Object) (*ReadFileHandle, error) {
-	r, err := o.Open()
-	if err != nil {
-		return nil, err
-	}
-
 	var hash *fs.MultiHasher
+	var err error
 	if !f.d.fsys.noChecksum {
 		hash, err = fs.NewMultiHasherTypes(o.Fs().Hashes())
 		if err != nil {
@@ -37,13 +34,27 @@ func newReadFileHandle(f *File, o fs.Object) (*ReadFileHandle, error) {
 
 	fh := &ReadFileHandle{
 		o:      o,
-		r:      fs.NewAccount(r, o).WithBuffer(), // account the transfer
 		noSeek: f.d.fsys.noSeek,
 		file:   f,
 		hash:   hash,
 	}
 	fs.Stats.Transferring(fh.o.Remote())
 	return fh, nil
+}
+
+// openPending opens the file if there is a pending open
+// call with the lock held
+func (fh *ReadFileHandle) openPending() (err error) {
+	if fh.opened {
+		return nil
+	}
+	r, err := fh.o.Open()
+	if err != nil {
+		return err
+	}
+	fh.r = fs.NewAccount(r, fh.o).WithBuffer() // account the transfer
+	fh.opened = true
+	return nil
 }
 
 // String converts it to printable
@@ -106,6 +117,10 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 func (fh *ReadFileHandle) Read(reqSize, reqOffset int64) (respData []byte, err error) {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
+	err = fh.openPending() // FIXME pending open could be more efficient in the presense of seek (and retried)
+	if err != nil {
+		return nil, err
+	}
 	// fs.Debugf(fh.o, "ReadFileHandle.Read size %d offset %d", reqSize, reqOffset)
 	if fh.closed {
 		fs.Errorf(fh.o, "ReadFileHandle.Read error: %v", EBADF)
@@ -220,6 +235,9 @@ func (fh *ReadFileHandle) close() error {
 func (fh *ReadFileHandle) Flush() error {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
+	if !fh.opened {
+		return nil
+	}
 	// fs.Debugf(fh.o, "ReadFileHandle.Flush")
 
 	if err := fh.checkHash(); err != nil {
@@ -238,6 +256,9 @@ func (fh *ReadFileHandle) Flush() error {
 func (fh *ReadFileHandle) Release() error {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
+	if !fh.opened {
+		return nil
+	}
 	if fh.closed {
 		fs.Debugf(fh.o, "ReadFileHandle.Release nothing to do")
 		return nil
