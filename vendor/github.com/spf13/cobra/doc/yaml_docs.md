@@ -6,6 +6,8 @@ Generating yaml files from a cobra command is incredibly easy. An example is as 
 package main
 
 import (
+	"log"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
@@ -15,7 +17,10 @@ func main() {
 		Use:   "test",
 		Short: "my test program",
 	}
-	doc.GenYamlTree(cmd, "/tmp")
+	err := doc.GenYamlTree(cmd, "/tmp")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 ```
 
@@ -30,6 +35,7 @@ package main
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
 
 	"k8s.io/kubernetes/pkg/kubectl/cmd"
@@ -40,7 +46,10 @@ import (
 
 func main() {
 	kubectl := cmd.NewKubectlCommand(cmdutil.NewFactory(nil), os.Stdin, ioutil.Discard, ioutil.Discard)
-	doc.GenYamlTree(kubectl, "./")
+	err := doc.GenYamlTree(kubectl, "./")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 ```
 

@@ -25,7 +25,7 @@ import (
 	"unicode/utf8"
 )
 
-const VERSION = "1.5"
+const VERSION = "1.4"
 
 // These are the supported markdown parsing extensions.
 // OR these values together to select multiple extensions.
@@ -105,46 +105,46 @@ const (
 // blockTags is a set of tags that are recognized as HTML block tags.
 // Any of these can be included in markdown text without special escaping.
 var blockTags = map[string]struct{}{
-	"blockquote": {},
-	"del":        {},
-	"div":        {},
-	"dl":         {},
-	"fieldset":   {},
-	"form":       {},
-	"h1":         {},
-	"h2":         {},
-	"h3":         {},
-	"h4":         {},
-	"h5":         {},
-	"h6":         {},
-	"iframe":     {},
-	"ins":        {},
-	"math":       {},
-	"noscript":   {},
-	"ol":         {},
-	"pre":        {},
-	"p":          {},
-	"script":     {},
-	"style":      {},
-	"table":      {},
-	"ul":         {},
+	"blockquote": struct{}{},
+	"del":        struct{}{},
+	"div":        struct{}{},
+	"dl":         struct{}{},
+	"fieldset":   struct{}{},
+	"form":       struct{}{},
+	"h1":         struct{}{},
+	"h2":         struct{}{},
+	"h3":         struct{}{},
+	"h4":         struct{}{},
+	"h5":         struct{}{},
+	"h6":         struct{}{},
+	"iframe":     struct{}{},
+	"ins":        struct{}{},
+	"math":       struct{}{},
+	"noscript":   struct{}{},
+	"ol":         struct{}{},
+	"pre":        struct{}{},
+	"p":          struct{}{},
+	"script":     struct{}{},
+	"style":      struct{}{},
+	"table":      struct{}{},
+	"ul":         struct{}{},
 
 	// HTML5
-	"address":    {},
-	"article":    {},
-	"aside":      {},
-	"canvas":     {},
-	"figcaption": {},
-	"figure":     {},
-	"footer":     {},
-	"header":     {},
-	"hgroup":     {},
-	"main":       {},
-	"nav":        {},
-	"output":     {},
-	"progress":   {},
-	"section":    {},
-	"video":      {},
+	"address":    struct{}{},
+	"article":    struct{}{},
+	"aside":      struct{}{},
+	"canvas":     struct{}{},
+	"figcaption": struct{}{},
+	"figure":     struct{}{},
+	"footer":     struct{}{},
+	"header":     struct{}{},
+	"hgroup":     struct{}{},
+	"main":       struct{}{},
+	"nav":        struct{}{},
+	"output":     struct{}{},
+	"progress":   struct{}{},
+	"section":    struct{}{},
+	"video":      struct{}{},
 }
 
 // Renderer is the rendering interface.
@@ -386,9 +386,9 @@ func MarkdownOptions(input []byte, renderer Renderer, opts Options) []byte {
 }
 
 // first pass:
+// - extract references
+// - expand tabs
 // - normalize newlines
-// - extract references (outside of fenced code blocks)
-// - expand tabs (outside of fenced code blocks)
 // - copy everything else
 func firstPass(p *parser, input []byte) []byte {
 	var out bytes.Buffer
@@ -396,46 +396,46 @@ func firstPass(p *parser, input []byte) []byte {
 	if p.flags&EXTENSION_TAB_SIZE_EIGHT != 0 {
 		tabSize = TAB_SIZE_EIGHT
 	}
-	beg := 0
+	beg, end := 0, 0
 	lastFencedCodeBlockEnd := 0
-	for beg < len(input) {
-		// Find end of this line, then process the line.
-		end := beg
-		for end < len(input) && input[end] != '\n' && input[end] != '\r' {
-			end++
-		}
+	for beg < len(input) { // iterate over lines
+		if end = isReference(p, input[beg:], tabSize); end > 0 {
+			beg += end
+		} else { // skip to the next line
+			end = beg
+			for end < len(input) && input[end] != '\n' && input[end] != '\r' {
+				end++
+			}
 
-		if p.flags&EXTENSION_FENCED_CODE != 0 {
-			// track fenced code block boundaries to suppress tab expansion
-			// and reference extraction inside them:
-			if beg >= lastFencedCodeBlockEnd {
-				if i := p.fencedCodeBlock(&out, input[beg:], false); i > 0 {
-					lastFencedCodeBlockEnd = beg + i
+			if p.flags&EXTENSION_FENCED_CODE != 0 {
+				// track fenced code block boundaries to suppress tab expansion
+				// inside them:
+				if beg >= lastFencedCodeBlockEnd {
+					if i := p.fencedCode(&out, input[beg:], false); i > 0 {
+						lastFencedCodeBlockEnd = beg + i
+					}
 				}
 			}
-		}
 
-		// add the line body if present
-		if end > beg {
-			if end < lastFencedCodeBlockEnd { // Do not expand tabs while inside fenced code blocks.
-				out.Write(input[beg:end])
-			} else if refEnd := isReference(p, input[beg:], tabSize); refEnd > 0 {
-				beg += refEnd
-				continue
-			} else {
-				expandTabs(&out, input[beg:end], tabSize)
+			// add the line body if present
+			if end > beg {
+				if end < lastFencedCodeBlockEnd { // Do not expand tabs while inside fenced code blocks.
+					out.Write(input[beg:end])
+				} else {
+					expandTabs(&out, input[beg:end], tabSize)
+				}
 			}
-		}
+			out.WriteByte('\n')
 
-		if end < len(input) && input[end] == '\r' {
-			end++
-		}
-		if end < len(input) && input[end] == '\n' {
-			end++
-		}
-		out.WriteByte('\n')
+			if end < len(input) && input[end] == '\r' {
+				end++
+			}
+			if end < len(input) && input[end] == '\n' {
+				end++
+			}
 
-		beg = end
+			beg = end
+		}
 	}
 
 	// empty input?
@@ -635,11 +635,11 @@ func scanLinkRef(p *parser, data []byte, i int) (linkOffset, linkEnd, titleOffse
 		i++
 	}
 	linkOffset = i
-	if i == len(data) {
-		return
-	}
 	for i < len(data) && data[i] != ' ' && data[i] != '\t' && data[i] != '\n' && data[i] != '\r' {
 		i++
+	}
+	if i == len(data) {
+		return
 	}
 	linkEnd = i
 	if data[linkOffset] == '<' && data[linkEnd-1] == '>' {

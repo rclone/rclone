@@ -45,8 +45,8 @@ type cmdDoc struct {
 
 // GenYamlTree creates yaml structured ref files for this command and all descendants
 // in the directory given. This function may not work
-// correctly if your command names have - in them. If you have `cmd` with two
-// subcmds, `sub` and `sub-third`. And `sub` has a subcommand called `third`
+// correctly if your command names have `-` in them. If you have `cmd` with two
+// subcmds, `sub` and `sub-third`, and `sub` has a subcommand called `third`
 // it is undefined which help output will be in the file `cmd-sub-third.1`.
 func GenYamlTree(cmd *cobra.Command, dir string) error {
 	identity := func(s string) string { return s }
@@ -54,10 +54,10 @@ func GenYamlTree(cmd *cobra.Command, dir string) error {
 	return GenYamlTreeCustom(cmd, dir, emptyStr, identity)
 }
 
-// GenYamlTreeCustom creates yaml structured ref files
+// GenYamlTreeCustom creates yaml structured ref files.
 func GenYamlTreeCustom(cmd *cobra.Command, dir string, filePrepender, linkHandler func(string) string) error {
 	for _, c := range cmd.Commands() {
-		if !c.IsAvailableCommand() || c.IsHelpCommand() {
+		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
 			continue
 		}
 		if err := GenYamlTreeCustom(c, dir, filePrepender, linkHandler); err != nil {
@@ -82,12 +82,12 @@ func GenYamlTreeCustom(cmd *cobra.Command, dir string, filePrepender, linkHandle
 	return nil
 }
 
-// GenYaml creates yaml output
+// GenYaml creates yaml output.
 func GenYaml(cmd *cobra.Command, w io.Writer) error {
 	return GenYamlCustom(cmd, w, func(s string) string { return s })
 }
 
-// GenYamlCustom creates custom yaml output
+// GenYamlCustom creates custom yaml output.
 func GenYamlCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string) string) error {
 	yamlDoc := cmdDoc{}
 	yamlDoc.Name = cmd.CommandPath()
@@ -117,7 +117,7 @@ func GenYamlCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string) str
 		children := cmd.Commands()
 		sort.Sort(byName(children))
 		for _, child := range children {
-			if !child.IsAvailableCommand() || child.IsHelpCommand() {
+			if !child.IsAvailableCommand() || child.IsAdditionalHelpTopicCommand() {
 				continue
 			}
 			result = append(result, child.Name()+" - "+child.Short)
@@ -130,7 +130,8 @@ func GenYamlCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string) str
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	if _, err := fmt.Fprintf(w, string(final)); err != nil {
+
+	if _, err := w.Write(final); err != nil {
 		return err
 	}
 	return nil

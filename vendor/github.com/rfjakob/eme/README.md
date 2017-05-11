@@ -84,3 +84,13 @@ IEEE, Dec 2008
 http://siswg.net/index2.php?option=com_docman&task=doc_view&gid=156&Itemid=41  
 Note: This is a draft version. The final version is not freely available
 and must be bought from IEEE.
+
+Package Changelog
+-----------------
+
+v1.1, 2017-03-05
+* Add eme.New() / *EMECipher convenience wrapper
+* Improve panic message and parameter wording
+
+v1.0, 2015-12-08
+* Stable release

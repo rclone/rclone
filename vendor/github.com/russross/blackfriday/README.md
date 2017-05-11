@@ -1,4 +1,4 @@
-Blackfriday [![Build Status](https://travis-ci.org/russross/blackfriday.svg?branch=master)](https://travis-ci.org/russross/blackfriday) [![GoDoc](https://godoc.org/github.com/russross/blackfriday?status.svg)](https://godoc.org/github.com/russross/blackfriday)
+Blackfriday [![Build Status](https://travis-ci.org/russross/blackfriday.svg?branch=master)](https://travis-ci.org/russross/blackfriday)
 ===========
 
 Blackfriday is a [Markdown][1] processor implemented in [Go][2]. It
@@ -114,7 +114,7 @@ All features of Sundown are supported, including:
     know and send me the input that does it.
 
     NOTE: "safety" in this context means *runtime safety only*. In order to
-    protect yourself against JavaScript injection in untrusted content, see
+    protect yourself agains JavaScript injection in untrusted content, see
     [this example](https://github.com/russross/blackfriday#sanitize-untrusted-content).
 
 *   **Fast processing**. It is fast enough to render on-demand in
@@ -168,15 +168,6 @@ implements the following extensions:
 
     You can use 3 or more backticks to mark the beginning of the
     block, and the same number to mark the end of the block.
-
-    To preserve classes of fenced code blocks while using the bluemonday
-    HTML sanitizer, use the following policy:
-
-    ``` go
-    p := bluemonday.UGCPolicy()
-    p.AllowAttrs("class").Matching(regexp.MustCompile("^language-[a-zA-Z0-9]+$")).OnElements("code")
-    html := p.SanitizeBytes(unsafe)
-    ```
 
 *   **Definition lists**. A simple definition list is made of a single-line
     term followed by a colon and the definition for that term.
@@ -251,8 +242,6 @@ are a few of note:
     point. In particular, it does not do any inline escaping, so input
     that happens to look like LaTeX code will be passed through without
     modification.
-    
-*   [Md2Vim](https://github.com/FooSoft/md2vim): transforms markdown files into vimdoc format.
 
 
 Todo

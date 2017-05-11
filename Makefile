@@ -58,9 +58,7 @@ endif
 
 # Update dependencies
 update:
-	rm -rf Godeps vendor
-	go get -t -u -f -v ./...
-	godep save ./...
+	dep ensure -update -v
 
 doc:	rclone.1 MANUAL.html MANUAL.txt
 

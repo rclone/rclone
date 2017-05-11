@@ -1,6 +1,11 @@
-// EME (ECB-Mix-ECB) is a length-preserving wide-block encryption mode. It was
-// presented in the 2003 paper "A Parallelizable Enciphering Mode" by Halevi
-// and Rogaway.
+// EME (ECB-Mix-ECB or, clearer, Encrypt-Mix-Encrypt) is a wide-block
+// encryption mode developed by Halevi and Rogaway.
+//
+// It was presented in the 2003 paper "A Parallelizable Enciphering Mode" by
+// Halevi and Rogaway.
+//
+// EME uses multiple invocations of a block cipher to construct a new cipher
+// of bigger block size (in multiples of 16 bytes, up to 2048 bytes).
 package eme
 
 import (
@@ -91,10 +96,14 @@ func tabulateL(bc cipher.Block, m int) [][]byte {
 // The result is returned in a freshly allocated slice of the same
 // size as inputData.
 //
-// Limitations: This only works for ciphers with block size 16.  The
-// size of the tweak slice must also be 16. The inputData must also be
-// a multiple of 16. If any of these pre-conditions are not met, the
-// function will panic.
+// Limitations:
+// * The block cipher must have block size 16 (usually AES).
+// * The size of "tweak" must be 16
+// * "inputData" must be a multiple of 16 bytes long
+// If any of these pre-conditions are not met, the function will panic.
+//
+// Note that you probably don't want to call this function directly and instead
+// use eme.New(), which provides conventient wrappers.
 func Transform(bc cipher.Block, tweak []byte, inputData []byte, direction directionConst) []byte {
 	// In the paper, the tweak is just called "T". Call it the same here to
 	// make following the paper easy.
@@ -170,4 +179,28 @@ func Transform(bc cipher.Block, tweak []byte, inputData []byte, direction direct
 	}
 
 	return C
+}
+
+// EMECipher provides EME-Encryption and -Decryption functions that are more
+// convenient than calling Transform directly.
+type EMECipher struct {
+	bc cipher.Block
+}
+
+// New returns a new EMECipher object. "bc" must have a block size of 16,
+// or subsequent calls to Encrypt and Decrypt will panic.
+func New(bc cipher.Block) *EMECipher {
+	return &EMECipher{
+		bc: bc,
+	}
+}
+
+// Encrypt is equivalent to calling Transform with direction=DirectionEncrypt.
+func (e *EMECipher) Encrypt(tweak []byte, inputData []byte) []byte {
+	return Transform(e.bc, tweak, inputData, DirectionEncrypt)
+}
+
+// Decrypt is equivalent to calling Transform with direction=DirectionDecrypt.
+func (e *EMECipher) Decrypt(tweak []byte, inputData []byte) []byte {
+	return Transform(e.bc, tweak, inputData, DirectionDecrypt)
 }

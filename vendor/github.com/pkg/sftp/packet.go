@@ -170,9 +170,6 @@ func unmarshalExtensionPair(b []byte) (extensionPair, []byte, error) {
 		return ep, b, err
 	}
 	ep.Data, b, err = unmarshalStringSafe(b)
-	if err != nil {
-		return ep, b, err
-	}
 	return ep, b, err
 }
 

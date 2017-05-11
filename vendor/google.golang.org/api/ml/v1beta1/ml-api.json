@@ -1,0 +1,1550 @@
+{
+  "discoveryVersion": "v1",
+  "version_module": "True",
+  "schemas": {
+    "GoogleRpc__Status": {
+      "properties": {
+        "code": {
+          "description": "The status code, which should be an enum value of google.rpc.Code.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "message": {
+          "description": "A developer-facing error message, which should be in English. Any\nuser-facing error message should be localized and sent in the\ngoogle.rpc.Status.details field, or localized by the client.",
+          "type": "string"
+        },
+        "details": {
+          "description": "A list of messages that carry the error details.  There will be a\ncommon set of message types for APIs to use.",
+          "type": "array",
+          "items": {
+            "additionalProperties": {
+              "description": "Properties of the object. Contains field @type with type URL.",
+              "type": "any"
+            },
+            "type": "object"
+          }
+        }
+      },
+      "id": "GoogleRpc__Status",
+      "description": "The `Status` type defines a logical error model that is suitable for different\nprogramming environments, including REST APIs and RPC APIs. It is used by\n[gRPC](https://github.com/grpc). The error model is designed to be:\n\n- Simple to use and understand for most users\n- Flexible enough to meet unexpected needs\n\n# Overview\n\nThe `Status` message contains three pieces of data: error code, error message,\nand error details. The error code should be an enum value of\ngoogle.rpc.Code, but it may accept additional error codes if needed.  The\nerror message should be a developer-facing English message that helps\ndevelopers *understand* and *resolve* the error. If a localized user-facing\nerror message is needed, put the localized message in the error details or\nlocalize it in the client. The optional error details may contain arbitrary\ninformation about the error. There is a predefined set of error detail types\nin the package `google.rpc` which can be used for common error conditions.\n\n# Language mapping\n\nThe `Status` message is the logical representation of the error model, but it\nis not necessarily the actual wire format. When the `Status` message is\nexposed in different client libraries and different wire protocols, it can be\nmapped differently. For example, it will likely be mapped to some exceptions\nin Java, but more likely mapped to some error codes in C.\n\n# Other uses\n\nThe error model and the `Status` message can be used in a variety of\nenvironments, either with or without APIs, to provide a\nconsistent developer experience across different environments.\n\nExample uses of this error model include:\n\n- Partial errors. If a service needs to return partial errors to the client,\n    it may embed the `Status` in the normal response to indicate the partial\n    errors.\n\n- Workflow errors. A typical workflow has multiple steps. Each step may\n    have a `Status` message for error reporting.\n\n- Batch operations. If a client uses batch request and batch response, the\n    `Status` message should be used directly inside batch response, one for\n    each error sub-response.\n\n- Asynchronous operations. If an API call embeds asynchronous operation\n    results in its response, the status of those operations should be\n    represented directly using the `Status` message.\n\n- Logging. If some API errors are stored in logs, the message `Status` could\n    be used directly after any stripping needed for security/privacy reasons.",
+      "type": "object"
+    },
+    "GoogleCloudMlV1beta1__PredictRequest": {
+      "description": "Request for predictions to be issued against a trained model.\n\nThe body of the request is a single JSON object with a single top-level\nfield:\n\n\u003cdl\u003e\n  \u003cdt\u003einstances\u003c/dt\u003e\n  \u003cdd\u003eA JSON array containing values representing the instances to use for\n      prediction.\u003c/dd\u003e\n\u003c/dl\u003e\n\nThe structure of each element of the instances list is determined by your\nmodel's input definition. Instances can include named inputs or can contain\nonly unlabeled values.\n\nNot all data includes named inputs. Some instances will be simple\nJSON values (boolean, number, or string). However, instances are often lists\nof simple values, or complex nested lists. Here are some examples of request\nbodies:\n\nCSV data with each row encoded as a string value:\n\u003cpre\u003e\n{\"instances\": [\"1.0,true,\\\\\"x\\\\\"\", \"-2.0,false,\\\\\"y\\\\\"\"]}\n\u003c/pre\u003e\nPlain text:\n\u003cpre\u003e\n{\"instances\": [\"the quick brown fox\", \"la bruja le dio\"]}\n\u003c/pre\u003e\nSentences encoded as lists of words (vectors of strings):\n\u003cpre\u003e\n{\n  \"instances\": [\n    [\"the\",\"quick\",\"brown\"],\n    [\"la\",\"bruja\",\"le\"],\n    ...\n  ]\n}\n\u003c/pre\u003e\nFloating point scalar values:\n\u003cpre\u003e\n{\"instances\": [0.0, 1.1, 2.2]}\n\u003c/pre\u003e\nVectors of integers:\n\u003cpre\u003e\n{\n  \"instances\": [\n    [0, 1, 2],\n    [3, 4, 5],\n    ...\n  ]\n}\n\u003c/pre\u003e\nTensors (in this case, two-dimensional tensors):\n\u003cpre\u003e\n{\n  \"instances\": [\n    [\n      [0, 1, 2],\n      [3, 4, 5]\n    ],\n    ...\n  ]\n}\n\u003c/pre\u003e\nImages can be represented different ways. In this encoding scheme the first\ntwo dimensions represent the rows and columns of the image, and the third\ncontains lists (vectors) of the R, G, and B values for each pixel.\n\u003cpre\u003e\n{\n  \"instances\": [\n    [\n      [\n        [138, 30, 66],\n        [130, 20, 56],\n        ...\n      ],\n      [\n        [126, 38, 61],\n        [122, 24, 57],\n        ...\n      ],\n      ...\n    ],\n    ...\n  ]\n}\n\u003c/pre\u003e\nJSON strings must be encoded as UTF-8. To send binary data, you must\nbase64-encode the data and mark it as binary. To mark a JSON string\nas binary, replace it with a JSON object with a single attribute named `b64`:\n\u003cpre\u003e{\"b64\": \"...\"} \u003c/pre\u003e\nFor example:\n\nTwo Serialized tf.Examples (fake data, for illustrative purposes only):\n\u003cpre\u003e\n{\"instances\": [{\"b64\": \"X5ad6u\"}, {\"b64\": \"IA9j4nx\"}]}\n\u003c/pre\u003e\nTwo JPEG image byte strings (fake data, for illustrative purposes only):\n\u003cpre\u003e\n{\"instances\": [{\"b64\": \"ASa8asdf\"}, {\"b64\": \"JLK7ljk3\"}]}\n\u003c/pre\u003e\nIf your data includes named references, format each instance as a JSON object\nwith the named references as the keys:\n\nJSON input data to be preprocessed:\n\u003cpre\u003e\n{\n  \"instances\": [\n    {\n      \"a\": 1.0,\n      \"b\": true,\n      \"c\": \"x\"\n    },\n    {\n      \"a\": -2.0,\n      \"b\": false,\n      \"c\": \"y\"\n    }\n  ]\n}\n\u003c/pre\u003e\nSome models have an underlying TensorFlow graph that accepts multiple input\ntensors. In this case, you should use the names of JSON name/value pairs to\nidentify the input tensors, as shown in the following exmaples:\n\nFor a graph with input tensor aliases \"tag\" (string) and \"image\"\n(base64-encoded string):\n\u003cpre\u003e\n{\n  \"instances\": [\n    {\n      \"tag\": \"beach\",\n      \"image\": {\"b64\": \"ASa8asdf\"}\n    },\n    {\n      \"tag\": \"car\",\n      \"image\": {\"b64\": \"JLK7ljk3\"}\n    }\n  ]\n}\n\u003c/pre\u003e\nFor a graph with input tensor aliases \"tag\" (string) and \"image\"\n(3-dimensional array of 8-bit ints):\n\u003cpre\u003e\n{\n  \"instances\": [\n    {\n      \"tag\": \"beach\",\n      \"image\": [\n        [\n          [138, 30, 66],\n          [130, 20, 56],\n          ...\n        ],\n        [\n          [126, 38, 61],\n          [122, 24, 57],\n          ...\n        ],\n        ...\n      ]\n    },\n    {\n      \"tag\": \"car\",\n      \"image\": [\n        [\n          [255, 0, 102],\n          [255, 0, 97],\n          ...\n        ],\n        [\n          [254, 1, 101],\n          [254, 2, 93],\n          ...\n        ],\n        ...\n      ]\n    },\n    ...\n  ]\n}\n\u003c/pre\u003e\nIf the call is successful, the response body will contain one prediction\nentry per instance in the request body. If prediction fails for any\ninstance, the response body will contain no predictions and will contian\na single error entry instead.",
+      "type": "object",
+      "properties": {
+        "httpBody": {
+          "$ref": "GoogleApi__HttpBody",
+          "description": "\nRequired. The prediction request body."
+        }
+      },
+      "id": "GoogleCloudMlV1beta1__PredictRequest"
+    },
+    "GoogleApi__HttpBody": {
+      "properties": {
+        "data": {
+          "type": "string",
+          "description": "HTTP body binary data.",
+          "format": "byte"
+        },
+        "contentType": {
+          "description": "The HTTP Content-Type string representing the content type of the body.",
+          "type": "string"
+        }
+      },
+      "id": "GoogleApi__HttpBody",
+      "description": "Message that represents an arbitrary HTTP body. It should only be used for\npayload formats that can't be represented as JSON, such as raw binary or\nan HTML page.\n\n\nThis message can be used both in streaming and non-streaming API methods in\nthe request as well as the response.\n\nIt can be used as a top-level request field, which is convenient if one\nwants to extract parameters from either the URL or HTTP template into the\nrequest fields and also want access to the raw HTTP body.\n\nExample:\n\n    message GetResourceRequest {\n      // A unique request id.\n      string request_id = 1;\n\n      // The raw HTTP body is bound to this field.\n      google.api.HttpBody http_body = 2;\n    }\n\n    service ResourceService {\n      rpc GetResource(GetResourceRequest) returns (google.api.HttpBody);\n      rpc UpdateResource(google.api.HttpBody) returns (google.protobuf.Empty);\n    }\n\nExample with streaming methods:\n\n    service CaldavService {\n      rpc GetCalendar(stream google.api.HttpBody)\n        returns (stream google.api.HttpBody);\n      rpc UpdateCalendar(stream google.api.HttpBody)\n        returns (stream google.api.HttpBody);\n    }\n\nUse of this type only changes how the request and response bodies are\nhandled, all other features will continue to work unchanged.",
+      "type": "object"
+    },
+    "GoogleCloudMlV1beta1__PredictionInput": {
+      "description": "Represents input parameters for a prediction job.",
+      "type": "object",
+      "properties": {
+        "region": {
+          "description": "Required. The Google Compute Engine region to run the prediction job in.",
+          "type": "string"
+        },
+        "versionName": {
+          "description": "Use this field if you want to specify a version of the model to use. The\nstring is formatted the same way as `model_version`, with the addition\nof the version information:\n\n`\"projects/\u003cvar\u003e[YOUR_PROJECT]\u003c/var\u003e/models/\u003cvar\u003eYOUR_MODEL/versions/\u003cvar\u003e[YOUR_VERSION]\u003c/var\u003e\"`",
+          "type": "string"
+        },
+        "modelName": {
+          "description": "Use this field if you want to use the default version for the specified\nmodel. The string must use the following format:\n\n`\"projects/\u003cvar\u003e[YOUR_PROJECT]\u003c/var\u003e/models/\u003cvar\u003e[YOUR_MODEL]\u003c/var\u003e\"`",
+          "type": "string"
+        },
+        "outputPath": {
+          "description": "Required. The output Google Cloud Storage location.",
+          "type": "string"
+        },
+        "uri": {
+          "description": "Use this field if you want to specify a Google Cloud Storage path for\nthe model to use.",
+          "type": "string"
+        },
+        "maxWorkerCount": {
+          "description": "Optional. The maximum number of workers to be used for parallel processing.\nDefaults to 10 if not specified.",
+          "format": "int64",
+          "type": "string"
+        },
+        "dataFormat": {
+          "enumDescriptions": [
+            "Unspecified format.",
+            "The source file is a text file with instances separated by the\nnew-line character.",
+            "The source file is a TFRecord file.",
+            "The source file is a GZIP-compressed TFRecord file."
+          ],
+          "enum": [
+            "DATA_FORMAT_UNSPECIFIED",
+            "TEXT",
+            "TF_RECORD",
+            "TF_RECORD_GZIP"
+          ],
+          "description": "Required. The format of the input data files.",
+          "type": "string"
+        },
+        "runtimeVersion": {
+          "description": "Optional. The Google Cloud ML runtime version to use for this batch\nprediction. If not set, Google Cloud ML will pick the runtime version used\nduring the CreateVersion request for this model version, or choose the\nlatest stable version when model version information is not available\nsuch as when the model is specified by uri.",
+          "type": "string"
+        },
+        "inputPaths": {
+          "description": "Required. The Google Cloud Storage location of the input data files.\nMay contain wildcards.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "id": "GoogleCloudMlV1beta1__PredictionInput"
+    },
+    "GoogleCloudMlV1beta1__Version": {
+      "description": "Represents a version of the model.\n\nEach version is a trained model deployed in the cloud, ready to handle\nprediction requests. A model can have multiple versions. You can get\ninformation about all of the versions of a given model by calling\n[projects.models.versions.list](/ml-engine/reference/rest/v1beta1/projects.models.versions/list).",
+      "type": "object",
+      "properties": {
+        "deploymentUri": {
+          "description": "Required. The Google Cloud Storage location of the trained model used to\ncreate the version. See the\n[overview of model\ndeployment](/ml-engine/docs/concepts/deployment-overview) for more\ninformaiton.\n\nWhen passing Version to\n[projects.models.versions.create](/ml-engine/reference/rest/v1beta1/projects.models.versions/create)\nthe model service uses the specified location as the source of the model.\nOnce deployed, the model version is hosted by the prediction service, so\nthis location is useful only as a historical record.\nThe total number of model files can't exceed 1000.",
+          "type": "string"
+        },
+        "isDefault": {
+          "description": "Output only. If true, this version will be used to handle prediction\nrequests that do not specify a version.\n\nYou can change the default version by calling\n[projects.methods.versions.setDefault](/ml-engine/reference/rest/v1beta1/projects.models.versions/setDefault).",
+          "type": "boolean"
+        },
+        "createTime": {
+          "description": "Output only. The time the version was created.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "manualScaling": {
+          "description": "Optional. Manually select the number of nodes to use for serving the\nmodel. If unset (i.e., by default), the number of nodes used to serve\nthe model automatically scales with traffic. However, care should be\ntaken to ramp up traffic according to the model's ability to scale. If\nyour model needs to handle bursts of traffic beyond it's ability to\nscale, it is recommended you set this field appropriately.",
+          "$ref": "GoogleCloudMlV1beta1__ManualScaling"
+        },
+        "name": {
+          "type": "string",
+          "description": "Required.The name specified for the version when it was created.\n\nThe version name must be unique within the model it is created in."
+        },
+        "runtimeVersion": {
+          "description": "Optional. The Google Cloud ML runtime version to use for this deployment.\nIf not set, Google Cloud ML will choose a version.",
+          "type": "string"
+        },
+        "lastUseTime": {
+          "description": "Output only. The time the version was last used for prediction.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "description": {
+          "description": "Optional. The description specified for the version when it was created.",
+          "type": "string"
+        }
+      },
+      "id": "GoogleCloudMlV1beta1__Version"
+    },
+    "GoogleCloudMlV1beta1__ListJobsResponse": {
+      "type": "object",
+      "properties": {
+        "nextPageToken": {
+          "description": "Optional. Pass this token as the `page_token` field of the request for a\nsubsequent call.",
+          "type": "string"
+        },
+        "jobs": {
+          "description": "The list of jobs.",
+          "type": "array",
+          "items": {
+            "$ref": "GoogleCloudMlV1beta1__Job"
+          }
+        }
+      },
+      "id": "GoogleCloudMlV1beta1__ListJobsResponse",
+      "description": "Response message for the ListJobs method."
+    },
+    "GoogleCloudMlV1beta1__ListVersionsResponse": {
+      "description": "Response message for the ListVersions method.",
+      "type": "object",
+      "properties": {
+        "versions": {
+          "description": "The list of versions.",
+          "type": "array",
+          "items": {
+            "$ref": "GoogleCloudMlV1beta1__Version"
+          }
+        },
+        "nextPageToken": {
+          "description": "Optional. Pass this token as the `page_token` field of the request for a\nsubsequent call.",
+          "type": "string"
+        }
+      },
+      "id": "GoogleCloudMlV1beta1__ListVersionsResponse"
+    },
+    "GoogleCloudMlV1beta1__Model": {
+      "properties": {
+        "regions": {
+          "description": "Optional. The list of regions where the model is going to be deployed.\nCurrently only one region per model is supported.\nDefaults to 'us-central1' if nothing is set.\nNote:\n*   No matter where a model is deployed, it can always be accessed by\n    users from anywhere, both for online and batch prediction.\n*   The region for a batch prediction job is set by the region field when\n    submitting the batch prediction job and does not take its value from\n    this field.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "name": {
+          "type": "string",
+          "description": "Required. The name specified for the model when it was created.\n\nThe model name must be unique within the project it is created in."
+        },
+        "description": {
+          "description": "Optional. The description specified for the model when it was created.",
+          "type": "string"
+        },
+        "onlinePredictionLogging": {
+          "description": "Optional. If true, enables StackDriver Logging for online prediction.\nDefault is false.",
+          "type": "boolean"
+        },
+        "defaultVersion": {
+          "description": "Output only. The default version of the model. This version will be used to\nhandle prediction requests that do not specify a version.\n\nYou can change the default version by calling\n[projects.methods.versions.setDefault](/ml-engine/reference/rest/v1beta1/projects.models.versions/setDefault).",
+          "$ref": "GoogleCloudMlV1beta1__Version"
+        }
+      },
+      "id": "GoogleCloudMlV1beta1__Model",
+      "description": "Represents a machine learning solution.\n\nA model can have multiple versions, each of which is a deployed, trained\nmodel ready to receive prediction requests. The model itself is just a\ncontainer.",
+      "type": "object"
+    },
+    "GoogleCloudMlV1beta1__CancelJobRequest": {
+      "description": "Request message for the CancelJob method.",
+      "type": "object",
+      "properties": {},
+      "id": "GoogleCloudMlV1beta1__CancelJobRequest"
+    },
+    "GoogleCloudMlV1beta1__Job": {
+      "description": "Represents a training or prediction job.",
+      "type": "object",
+      "properties": {
+        "predictionInput": {
+          "description": "Input parameters to create a prediction job.",
+          "$ref": "GoogleCloudMlV1beta1__PredictionInput"
+        },
+        "state": {
+          "enum": [
+            "STATE_UNSPECIFIED",
+            "QUEUED",
+            "PREPARING",
+            "RUNNING",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLING",
+            "CANCELLED"
+          ],
+          "description": "Output only. The detailed state of a job.",
+          "type": "string",
+          "enumDescriptions": [
+            "The job state is unspecified.",
+            "The job has been just created and processing has not yet begun.",
+            "The service is preparing to run the job.",
+            "The job is in progress.",
+            "The job completed successfully.",
+            "The job failed.\n`error_message` should contain the details of the failure.",
+            "The job is being cancelled.\n`error_message` should describe the reason for the cancellation.",
+            "The job has been cancelled.\n`error_message` should describe the reason for the cancellation."
+          ]
+        },
+        "errorMessage": {
+          "description": "Output only. The details of a failure or a cancellation.",
+          "type": "string"
+        },
+        "jobId": {
+          "type": "string",
+          "description": "Required. The user-specified id of the job."
+        },
+        "endTime": {
+          "description": "Output only. When the job processing was completed.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "startTime": {
+          "description": "Output only. When the job processing was started.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "predictionOutput": {
+          "description": "The current prediction job result.",
+          "$ref": "GoogleCloudMlV1beta1__PredictionOutput"
+        },
+        "trainingOutput": {
+          "$ref": "GoogleCloudMlV1beta1__TrainingOutput",
+          "description": "The current training job result."
+        },
+        "createTime": {
+          "description": "Output only. When the job was created.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "trainingInput": {
+          "$ref": "GoogleCloudMlV1beta1__TrainingInput",
+          "description": "Input parameters to create a training job."
+        }
+      },
+      "id": "GoogleCloudMlV1beta1__Job"
+    },
+    "GoogleCloudMlV1beta1__TrainingInput": {
+      "type": "object",
+      "properties": {
+        "region": {
+          "description": "Required. The Google Compute Engine region to run the training job in.",
+          "type": "string"
+        },
+        "args": {
+          "description": "Optional. Command line arguments to pass to the program.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "workerType": {
+          "description": "Optional. Specifies the type of virtual machine to use for your training\njob's worker nodes.\n\nThe supported values are the same as those described in the entry for\n`masterType`.\n\nThis value must be present when `scaleTier` is set to `CUSTOM` and\n`workerCount` is greater than zero.",
+          "type": "string"
+        },
+        "parameterServerType": {
+          "description": "Optional. Specifies the type of virtual machine to use for your training\njob's parameter server.\n\nThe supported values are the same as those described in the entry for\n`master_type`.\n\nThis value must be present when `scaleTier` is set to `CUSTOM` and\n`parameter_server_count` is greater than zero.",
+          "type": "string"
+        },
+        "scaleTier": {
+          "enumDescriptions": [
+            "A single worker instance. This tier is suitable for learning how to use\nCloud ML, and for experimenting with new models using small datasets.",
+            "Many workers and a few parameter servers.",
+            "A large number of workers with many parameter servers.",
+            "A single worker instance [with a GPU](/ml-engine/docs/how-tos/using-gpus).",
+            "The CUSTOM tier is not a set tier, but rather enables you to use your\nown cluster specification. When you use this tier, set values to\nconfigure your processing cluster according to these guidelines:\n\n*   You _must_ set `TrainingInput.masterType` to specify the type\n    of machine to use for your master node. This is the only required\n    setting.\n\n*   You _may_ set `TrainingInput.workerCount` to specify the number of\n    workers to use. If you specify one or more workers, you _must_ also\n    set `TrainingInput.workerType` to specify the type of machine to use\n    for your worker nodes.\n\n*   You _may_ set `TrainingInput.parameterServerCount` to specify the\n    number of parameter servers to use. If you specify one or more\n    parameter servers, you _must_ also set\n    `TrainingInput.parameterServerType` to specify the type of machine to\n    use for your parameter servers.\n\nNote that all of your workers must use the same machine type, which can\nbe different from your parameter server type and master type. Your\nparameter servers must likewise use the same machine type, which can be\ndifferent from your worker type and master type."
+          ],
+          "enum": [
+            "BASIC",
+            "STANDARD_1",
+            "PREMIUM_1",
+            "BASIC_GPU",
+            "CUSTOM"
+          ],
+          "description": "Required. Specifies the machine types, the number of replicas for workers\nand parameter servers.",
+          "type": "string"
+        },
+        "jobDir": {
+          "description": "Optional. A Google Cloud Storage path in which to store training outputs\nand other data needed for training. This path is passed to your TensorFlow\nprogram as the 'job_dir' command-line argument. The benefit of specifying\nthis field is that Cloud ML validates the path for use in training.",
+          "type": "string"
+        },
+        "hyperparameters": {
+          "description": "Optional. The set of Hyperparameters to tune.",
+          "$ref": "GoogleCloudMlV1beta1__HyperparameterSpec"
+        },
+        "parameterServerCount": {
+          "description": "Optional. The number of parameter server replicas to use for the training\njob. Each replica in the cluster will be of the type specified in\n`parameter_server_type`.\n\nThis value can only be used when `scale_tier` is set to `CUSTOM`.If you\nset this value, you must also set `parameter_server_type`.",
+          "format": "int64",
+          "type": "string"
+        },
+        "packageUris": {
+          "description": "Required. The Google Cloud Storage location of the packages with\nthe training program and any additional dependencies.\nThe maximum number of package URIs is 100.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "workerCount": {
+          "description": "Optional. The number of worker replicas to use for the training job. Each\nreplica in the cluster will be of the type specified in `worker_type`.\n\nThis value can only be used when `scale_tier` is set to `CUSTOM`. If you\nset this value, you must also set `worker_type`.",
+          "format": "int64",
+          "type": "string"
+        },
+        "masterType": {
+          "description": "Optional. Specifies the type of virtual machine to use for your training\njob's master worker.\n\nThe following types are supported:\n\n\u003cdl\u003e\n  \u003cdt\u003estandard\u003c/dt\u003e\n  \u003cdd\u003e\n  A basic machine configuration suitable for training simple models with\n  small to moderate datasets.\n  \u003c/dd\u003e\n  \u003cdt\u003elarge_model\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine with a lot of memory, specially suited for parameter servers\n  when your model is large (having many hidden layers or layers with very\n  large numbers of nodes).\n  \u003c/dd\u003e\n  \u003cdt\u003ecomplex_model_s\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine suitable for the master and workers of the cluster when your\n  model requires more computation than the standard machine can handle\n  satisfactorily.\n  \u003c/dd\u003e\n  \u003cdt\u003ecomplex_model_m\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine with roughly twice the number of cores and roughly double the\n  memory of \u003ccode suppresswarning=\"true\"\u003ecomplex_model_s\u003c/code\u003e.\n  \u003c/dd\u003e\n  \u003cdt\u003ecomplex_model_l\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine with roughly twice the number of cores and roughly double the\n  memory of \u003ccode suppresswarning=\"true\"\u003ecomplex_model_m\u003c/code\u003e.\n  \u003c/dd\u003e\n  \u003cdt\u003estandard_gpu\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine equivalent to \u003ccode suppresswarning=\"true\"\u003estandard\u003c/code\u003e that\n  also includes a\n  \u003ca href=\"/ml-engine/docs/how-tos/using-gpus\"\u003e\n  GPU that you can use in your trainer\u003c/a\u003e.\n  \u003c/dd\u003e\n  \u003cdt\u003ecomplex_model_m_gpu\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine equivalent to\n  \u003ccode suppresswarning=\"true\"\u003ecomplex_model_m\u003c/code\u003e that also includes\n  four GPUs.\n  \u003c/dd\u003e\n\u003c/dl\u003e\n\nYou must set this value when `scaleTier` is set to `CUSTOM`.",
+          "type": "string"
+        },
+        "runtimeVersion": {
+          "description": "Optional. The Google Cloud ML runtime version to use for training.  If not\nset, Google Cloud ML will choose the latest stable version.",
+          "type": "string"
+        },
+        "pythonModule": {
+          "description": "Required. The Python module name to run after installing the packages.",
+          "type": "string"
+        }
+      },
+      "id": "GoogleCloudMlV1beta1__TrainingInput",
+      "description": "Represents input parameters for a training job."
+    },
+    "GoogleLongrunning__ListOperationsResponse": {
+      "id": "GoogleLongrunning__ListOperationsResponse",
+      "description": "The response message for Operations.ListOperations.",
+      "type": "object",
+      "properties": {
+        "operations": {
+          "type": "array",
+          "items": {
+            "$ref": "GoogleLongrunning__Operation"
+          },
+          "description": "A list of operations that matches the specified filter in the request."
+        },
+        "nextPageToken": {
+          "type": "string",
+          "description": "The standard List next-page token."
+        }
+      }
+    },
+    "GoogleCloudMlV1beta1__GetConfigResponse": {
+      "description": "Returns service account information associated with a project.",
+      "type": "object",
+      "properties": {
+        "serviceAccount": {
+          "description": "The service account Cloud ML uses to access resources in the project.",
+          "type": "string"
+        },
+        "serviceAccountProject": {
+          "description": "The project number for `service_account`.",
+          "format": "int64",
+          "type": "string"
+        }
+      },
+      "id": "GoogleCloudMlV1beta1__GetConfigResponse"
+    },
+    "GoogleCloudMlV1beta1__SetDefaultVersionRequest": {
+      "description": "Request message for the SetDefaultVersion request.",
+      "type": "object",
+      "properties": {},
+      "id": "GoogleCloudMlV1beta1__SetDefaultVersionRequest"
+    },
+    "GoogleCloudMlV1__ManualScaling": {
+      "description": "Options for manually scaling a model.",
+      "type": "object",
+      "properties": {
+        "nodes": {
+          "description": "The number of nodes to allocate for this model. These nodes are always up,\nstarting from the time the model is deployed, so the cost of operating\nthis model will be proportional to nodes * number of hours since\ndeployment.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "id": "GoogleCloudMlV1__ManualScaling"
+    },
+    "GoogleCloudMlV1beta1__ParameterSpec": {
+      "description": "Represents a single hyperparameter to optimize.",
+      "type": "object",
+      "properties": {
+        "minValue": {
+          "description": "Required if type is `DOUBLE` or `INTEGER`. This field\nshould be unset if type is `CATEGORICAL`. This value should be integers if\ntype is INTEGER.",
+          "format": "double",
+          "type": "number"
+        },
+        "discreteValues": {
+          "description": "Required if type is `DISCRETE`.\nA list of feasible points.\nThe list should be in strictly increasing order. For instance, this\nparameter might have possible settings of 1.5, 2.5, and 4.0. This list\nshould not contain more than 1,000 values.",
+          "type": "array",
+          "items": {
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "scaleType": {
+          "enumDescriptions": [
+            "By default, no scaling is applied.",
+            "Scales the feasible space to (0, 1) linearly.",
+            "Scales the feasible space logarithmically to (0, 1). The entire feasible\nspace must be strictly positive.",
+            "Scales the feasible space \"reverse\" logarithmically to (0, 1). The result\nis that values close to the top of the feasible space are spread out more\nthan points near the bottom. The entire feasible space must be strictly\npositive."
+          ],
+          "enum": [
+            "NONE",
+            "UNIT_LINEAR_SCALE",
+            "UNIT_LOG_SCALE",
+            "UNIT_REVERSE_LOG_SCALE"
+          ],
+          "description": "Optional. How the parameter should be scaled to the hypercube.\nLeave unset for categorical parameters.\nSome kind of scaling is strongly recommended for real or integral\nparameters (e.g., `UNIT_LINEAR_SCALE`).",
+          "type": "string"
+        },
+        "maxValue": {
+          "description": "Required if typeis `DOUBLE` or `INTEGER`. This field\nshould be unset if type is `CATEGORICAL`. This value should be integers if\ntype is `INTEGER`.",
+          "format": "double",
+          "type": "number"
+        },
+        "type": {
+          "enumDescriptions": [
+            "You must specify a valid type. Using this unspecified type will result in\nan error.",
+            "Type for real-valued parameters.",
+            "Type for integral parameters.",
+            "The parameter is categorical, with a value chosen from the categories\nfield.",
+            "The parameter is real valued, with a fixed set of feasible points. If\n`type==DISCRETE`, feasible_points must be provided, and\n{`min_value`, `max_value`} will be ignored."
+          ],
+          "enum": [
+            "PARAMETER_TYPE_UNSPECIFIED",
+            "DOUBLE",
+            "INTEGER",
+            "CATEGORICAL",
+            "DISCRETE"
+          ],
+          "description": "Required. The type of the parameter.",
+          "type": "string"
+        },
+        "categoricalValues": {
+          "description": "Required if type is `CATEGORICAL`. The list of possible categories.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "parameterName": {
+          "description": "Required. The parameter name must be unique amongst all ParameterConfigs in\na HyperparameterSpec message. E.g., \"learning_rate\".",
+          "type": "string"
+        }
+      },
+      "id": "GoogleCloudMlV1beta1__ParameterSpec"
+    },
+    "GoogleCloudMlV1beta1_HyperparameterOutput_HyperparameterMetric": {
+      "description": "An observed value of a metric.",
+      "type": "object",
+      "properties": {
+        "trainingStep": {
+          "description": "The global training step for this metric.",
+          "format": "int64",
+          "type": "string"
+        },
+        "objectiveValue": {
+          "description": "The objective value at this training step.",
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "id": "GoogleCloudMlV1beta1_HyperparameterOutput_HyperparameterMetric"
+    },
+    "GoogleCloudMlV1beta1__PredictionOutput": {
+      "description": "Represents results of a prediction job.",
+      "type": "object",
+      "properties": {
+        "errorCount": {
+          "type": "string",
+          "description": "The number of data instances which resulted in errors.",
+          "format": "int64"
+        },
+        "outputPath": {
+          "description": "The output Google Cloud Storage location provided at the job creation time.",
+          "type": "string"
+        },
+        "nodeHours": {
+          "description": "Node hours used by the batch prediction job.",
+          "format": "double",
+          "type": "number"
+        },
+        "predictionCount": {
+          "description": "The number of generated predictions.",
+          "format": "int64",
+          "type": "string"
+        }
+      },
+      "id": "GoogleCloudMlV1beta1__PredictionOutput"
+    },
+    "GoogleCloudMlV1beta1__TrainingOutput": {
+      "description": "Represents results of a training job. Output only.",
+      "type": "object",
+      "properties": {
+        "trials": {
+          "description": "Results for individual Hyperparameter trials.\nOnly set for hyperparameter tuning jobs.",
+          "type": "array",
+          "items": {
+            "$ref": "GoogleCloudMlV1beta1__HyperparameterOutput"
+          }
+        },
+        "completedTrialCount": {
+          "description": "The number of hyperparameter tuning trials that completed successfully.\nOnly set for hyperparameter tuning jobs.",
+          "format": "int64",
+          "type": "string"
+        },
+        "isHyperparameterTuningJob": {
+          "description": "Whether this job is a hyperparameter tuning job.",
+          "type": "boolean"
+        },
+        "consumedMLUnits": {
+          "description": "The amount of ML units consumed by the job.",
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "id": "GoogleCloudMlV1beta1__TrainingOutput"
+    },
+    "GoogleCloudMlV1__Version": {
+      "description": "Represents a version of the model.\n\nEach version is a trained model deployed in the cloud, ready to handle\nprediction requests. A model can have multiple versions. You can get\ninformation about all of the versions of a given model by calling\n[projects.models.versions.list](/ml-engine/reference/rest/v1/projects.models.versions/list).",
+      "type": "object",
+      "properties": {
+        "lastUseTime": {
+          "description": "Output only. The time the version was last used for prediction.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "runtimeVersion": {
+          "description": "Optional. The Google Cloud ML runtime version to use for this deployment.\nIf not set, Google Cloud ML will choose a version.",
+          "type": "string"
+        },
+        "description": {
+          "description": "Optional. The description specified for the version when it was created.",
+          "type": "string"
+        },
+        "deploymentUri": {
+          "type": "string",
+          "description": "Required. The Google Cloud Storage location of the trained model used to\ncreate the version. See the\n[overview of model\ndeployment](/ml-engine/docs/concepts/deployment-overview) for more\ninformaiton.\n\nWhen passing Version to\n[projects.models.versions.create](/ml-engine/reference/rest/v1/projects.models.versions/create)\nthe model service uses the specified location as the source of the model.\nOnce deployed, the model version is hosted by the prediction service, so\nthis location is useful only as a historical record.\nThe total number of model files can't exceed 1000."
+        },
+        "isDefault": {
+          "description": "Output only. If true, this version will be used to handle prediction\nrequests that do not specify a version.\n\nYou can change the default version by calling\n[projects.methods.versions.setDefault](/ml-engine/reference/rest/v1/projects.models.versions/setDefault).",
+          "type": "boolean"
+        },
+        "createTime": {
+          "description": "Output only. The time the version was created.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "manualScaling": {
+          "description": "Optional. Manually select the number of nodes to use for serving the\nmodel. If unset (i.e., by default), the number of nodes used to serve\nthe model automatically scales with traffic. However, care should be\ntaken to ramp up traffic according to the model's ability to scale. If\nyour model needs to handle bursts of traffic beyond it's ability to\nscale, it is recommended you set this field appropriately.",
+          "$ref": "GoogleCloudMlV1__ManualScaling"
+        },
+        "name": {
+          "description": "Required.The name specified for the version when it was created.\n\nThe version name must be unique within the model it is created in.",
+          "type": "string"
+        }
+      },
+      "id": "GoogleCloudMlV1__Version"
+    },
+    "GoogleCloudMlV1beta1__HyperparameterSpec": {
+      "description": "Represents a set of hyperparameters to optimize.",
+      "type": "object",
+      "properties": {
+        "maxParallelTrials": {
+          "description": "Optional. The number of training trials to run concurrently.\nYou can reduce the time it takes to perform hyperparameter tuning by adding\ntrials in parallel. However, each trail only benefits from the information\ngained in completed trials. That means that a trial does not get access to\nthe results of trials running at the same time, which could reduce the\nquality of the overall optimization.\n\nEach trial will use the same scale tier and machine types.\n\nDefaults to one.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "goal": {
+          "enumDescriptions": [
+            "Goal Type will default to maximize.",
+            "Maximize the goal metric.",
+            "Minimize the goal metric."
+          ],
+          "enum": [
+            "GOAL_TYPE_UNSPECIFIED",
+            "MAXIMIZE",
+            "MINIMIZE"
+          ],
+          "description": "Required. The type of goal to use for tuning. Available types are\n`MAXIMIZE` and `MINIMIZE`.\n\nDefaults to `MAXIMIZE`.",
+          "type": "string"
+        },
+        "hyperparameterMetricTag": {
+          "description": "Optional. The Tensorflow summary tag name to use for optimizing trials. For\ncurrent versions of Tensorflow, this tag name should exactly match what is\nshown in Tensorboard, including all scopes.  For versions of Tensorflow\nprior to 0.12, this should be only the tag passed to tf.Summary.\nBy default, \"training/hptuning/metric\" will be used.",
+          "type": "string"
+        },
+        "params": {
+          "type": "array",
+          "items": {
+            "$ref": "GoogleCloudMlV1beta1__ParameterSpec"
+          },
+          "description": "Required. The set of parameters to tune."
+        },
+        "maxTrials": {
+          "description": "Optional. How many training trials should be attempted to optimize\nthe specified hyperparameters.\n\nDefaults to one.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "id": "GoogleCloudMlV1beta1__HyperparameterSpec"
+    },
+    "GoogleCloudMlV1beta1__OperationMetadata": {
+      "description": "Represents the metadata of the long-running operation.",
+      "type": "object",
+      "properties": {
+        "operationType": {
+          "enum": [
+            "OPERATION_TYPE_UNSPECIFIED",
+            "CREATE_VERSION",
+            "DELETE_VERSION",
+            "DELETE_MODEL"
+          ],
+          "description": "The operation type.",
+          "type": "string",
+          "enumDescriptions": [
+            "Unspecified operation type.",
+            "An operation to create a new version.",
+            "An operation to delete an existing version.",
+            "An operation to delete an existing model."
+          ]
+        },
+        "startTime": {
+          "description": "The time operation processing started.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "isCancellationRequested": {
+          "description": "Indicates whether a request to cancel this operation has been made.",
+          "type": "boolean"
+        },
+        "createTime": {
+          "description": "The time the operation was submitted.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "modelName": {
+          "description": "Contains the name of the model associated with the operation.",
+          "type": "string"
+        },
+        "version": {
+          "description": "Contains the version associated with the operation.",
+          "$ref": "GoogleCloudMlV1beta1__Version"
+        },
+        "endTime": {
+          "description": "The time operation processing completed.",
+          "format": "google-datetime",
+          "type": "string"
+        }
+      },
+      "id": "GoogleCloudMlV1beta1__OperationMetadata"
+    },
+    "GoogleCloudMlV1__OperationMetadata": {
+      "description": "Represents the metadata of the long-running operation.",
+      "type": "object",
+      "properties": {
+        "createTime": {
+          "description": "The time the operation was submitted.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "modelName": {
+          "description": "Contains the name of the model associated with the operation.",
+          "type": "string"
+        },
+        "version": {
+          "$ref": "GoogleCloudMlV1__Version",
+          "description": "Contains the version associated with the operation."
+        },
+        "endTime": {
+          "type": "string",
+          "description": "The time operation processing completed.",
+          "format": "google-datetime"
+        },
+        "operationType": {
+          "enumDescriptions": [
+            "Unspecified operation type.",
+            "An operation to create a new version.",
+            "An operation to delete an existing version.",
+            "An operation to delete an existing model."
+          ],
+          "enum": [
+            "OPERATION_TYPE_UNSPECIFIED",
+            "CREATE_VERSION",
+            "DELETE_VERSION",
+            "DELETE_MODEL"
+          ],
+          "description": "The operation type.",
+          "type": "string"
+        },
+        "startTime": {
+          "description": "The time operation processing started.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "isCancellationRequested": {
+          "description": "Indicates whether a request to cancel this operation has been made.",
+          "type": "boolean"
+        }
+      },
+      "id": "GoogleCloudMlV1__OperationMetadata"
+    },
+    "GoogleCloudMlV1beta1__ListModelsResponse": {
+      "description": "Response message for the ListModels method.",
+      "type": "object",
+      "properties": {
+        "models": {
+          "description": "The list of models.",
+          "type": "array",
+          "items": {
+            "$ref": "GoogleCloudMlV1beta1__Model"
+          }
+        },
+        "nextPageToken": {
+          "type": "string",
+          "description": "Optional. Pass this token as the `page_token` field of the request for a\nsubsequent call."
+        }
+      },
+      "id": "GoogleCloudMlV1beta1__ListModelsResponse"
+    },
+    "GoogleLongrunning__Operation": {
+      "description": "This resource represents a long-running operation that is the result of a\nnetwork API call.",
+      "type": "object",
+      "properties": {
+        "response": {
+          "additionalProperties": {
+            "description": "Properties of the object. Contains field @type with type URL.",
+            "type": "any"
+          },
+          "description": "The normal response of the operation in case of success.  If the original\nmethod returns no data on success, such as `Delete`, the response is\n`google.protobuf.Empty`.  If the original method is standard\n`Get`/`Create`/`Update`, the response should be the resource.  For other\nmethods, the response should have the type `XxxResponse`, where `Xxx`\nis the original method name.  For example, if the original method name\nis `TakeSnapshot()`, the inferred response type is\n`TakeSnapshotResponse`.",
+          "type": "object"
+        },
+        "name": {
+          "description": "The server-assigned name, which is only unique within the same service that\noriginally returns it. If you use the default HTTP mapping, the\n`name` should have the format of `operations/some/unique/name`.",
+          "type": "string"
+        },
+        "error": {
+          "$ref": "GoogleRpc__Status",
+          "description": "The error result of the operation in case of failure or cancellation."
+        },
+        "metadata": {
+          "additionalProperties": {
+            "description": "Properties of the object. Contains field @type with type URL.",
+            "type": "any"
+          },
+          "description": "Service-specific metadata associated with the operation.  It typically\ncontains progress information and common metadata such as create time.\nSome services might not provide such metadata.  Any method that returns a\nlong-running operation should document the metadata type, if any.",
+          "type": "object"
+        },
+        "done": {
+          "description": "If the value is `false`, it means the operation is still in progress.\nIf true, the operation is completed, and either `error` or `response` is\navailable.",
+          "type": "boolean"
+        }
+      },
+      "id": "GoogleLongrunning__Operation"
+    },
+    "GoogleCloudMlV1beta1__HyperparameterOutput": {
+      "id": "GoogleCloudMlV1beta1__HyperparameterOutput",
+      "description": "Represents the result of a single hyperparameter tuning trial from a\ntraining job. The TrainingOutput object that is returned on successful\ncompletion of a training job with hyperparameter tuning includes a list\nof HyperparameterOutput objects, one for each successful trial.",
+      "type": "object",
+      "properties": {
+        "finalMetric": {
+          "$ref": "GoogleCloudMlV1beta1_HyperparameterOutput_HyperparameterMetric",
+          "description": "The final objective metric seen for this trial."
+        },
+        "hyperparameters": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The hyperparameters given to this trial.",
+          "type": "object"
+        },
+        "trialId": {
+          "description": "The trial id for these results.",
+          "type": "string"
+        },
+        "allMetrics": {
+          "description": "All recorded object metrics for this trial.",
+          "type": "array",
+          "items": {
+            "$ref": "GoogleCloudMlV1beta1_HyperparameterOutput_HyperparameterMetric"
+          }
+        }
+      }
+    },
+    "GoogleProtobuf__Empty": {
+      "description": "A generic empty message that you can re-use to avoid defining duplicated\nempty messages in your APIs. A typical example is to use it as the request\nor the response type of an API method. For instance:\n\n    service Foo {\n      rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);\n    }\n\nThe JSON representation for `Empty` is empty JSON object `{}`.",
+      "type": "object",
+      "properties": {},
+      "id": "GoogleProtobuf__Empty"
+    },
+    "GoogleCloudMlV1beta1__ManualScaling": {
+      "description": "Options for manually scaling a model.",
+      "type": "object",
+      "properties": {
+        "nodes": {
+          "description": "The number of nodes to allocate for this model. These nodes are always up,\nstarting from the time the model is deployed, so the cost of operating\nthis model will be proportional to nodes * number of hours since\ndeployment.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "id": "GoogleCloudMlV1beta1__ManualScaling"
+    }
+  },
+  "icons": {
+    "x32": "http://www.google.com/images/icons/product/search-32.gif",
+    "x16": "http://www.google.com/images/icons/product/search-16.gif"
+  },
+  "protocol": "rest",
+  "canonicalName": "Cloud Machine Learning Engine",
+  "auth": {
+    "oauth2": {
+      "scopes": {
+        "https://www.googleapis.com/auth/cloud-platform": {
+          "description": "View and manage your data across Google Cloud Platform services"
+        }
+      }
+    }
+  },
+  "rootUrl": "https://ml.googleapis.com/",
+  "ownerDomain": "google.com",
+  "name": "ml",
+  "batchPath": "batch",
+  "title": "Google Cloud Machine Learning Engine",
+  "ownerName": "Google",
+  "resources": {
+    "projects": {
+      "methods": {
+        "predict": {
+          "response": {
+            "$ref": "GoogleApi__HttpBody"
+          },
+          "parameterOrder": [
+            "name"
+          ],
+          "httpMethod": "POST",
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform"
+          ],
+          "parameters": {
+            "name": {
+              "pattern": "^projects/.+$",
+              "location": "path",
+              "description": "Required. The resource name of a model or a version.\n\nAuthorization: requires `Viewer` role on the parent project.",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "flatPath": "v1beta1/projects/{projectsId}:predict",
+          "path": "v1beta1/{+name}:predict",
+          "id": "ml.projects.predict",
+          "description": "Performs prediction on the data in the request.\n\n**** REMOVE FROM GENERATED DOCUMENTATION",
+          "request": {
+            "$ref": "GoogleCloudMlV1beta1__PredictRequest"
+          }
+        },
+        "getConfig": {
+          "httpMethod": "GET",
+          "parameterOrder": [
+            "name"
+          ],
+          "response": {
+            "$ref": "GoogleCloudMlV1beta1__GetConfigResponse"
+          },
+          "parameters": {
+            "name": {
+              "location": "path",
+              "description": "Required. The project name.\n\nAuthorization: requires `Viewer` role on the specified project.",
+              "required": true,
+              "type": "string",
+              "pattern": "^projects/[^/]+$"
+            }
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform"
+          ],
+          "flatPath": "v1beta1/projects/{projectsId}:getConfig",
+          "id": "ml.projects.getConfig",
+          "path": "v1beta1/{+name}:getConfig",
+          "description": "Get the service account information associated with your project. You need\nthis information in order to grant the service account persmissions for\nthe Google Cloud Storage location where you put your model training code\nfor training the model with Google Cloud Machine Learning."
+        }
+      },
+      "resources": {
+        "operations": {
+          "methods": {
+            "list": {
+              "description": "Lists operations that match the specified filter in the request. If the\nserver doesn't support this method, it returns `UNIMPLEMENTED`.\n\nNOTE: the `name` binding below allows API services to override the binding\nto use different resource name schemes, such as `users/*/operations`.",
+              "response": {
+                "$ref": "GoogleLongrunning__ListOperationsResponse"
+              },
+              "parameterOrder": [
+                "name"
+              ],
+              "httpMethod": "GET",
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "parameters": {
+                "filter": {
+                  "location": "query",
+                  "description": "The standard list filter.",
+                  "type": "string"
+                },
+                "name": {
+                  "required": true,
+                  "type": "string",
+                  "pattern": "^projects/[^/]+$",
+                  "location": "path",
+                  "description": "The name of the operation collection."
+                },
+                "pageToken": {
+                  "description": "The standard list page token.",
+                  "type": "string",
+                  "location": "query"
+                },
+                "pageSize": {
+                  "location": "query",
+                  "description": "The standard list page size.",
+                  "format": "int32",
+                  "type": "integer"
+                }
+              },
+              "flatPath": "v1beta1/projects/{projectsId}/operations",
+              "path": "v1beta1/{+name}/operations",
+              "id": "ml.projects.operations.list"
+            },
+            "get": {
+              "description": "Gets the latest state of a long-running operation.  Clients can use this\nmethod to poll the operation result at intervals as recommended by the API\nservice.",
+              "response": {
+                "$ref": "GoogleLongrunning__Operation"
+              },
+              "parameterOrder": [
+                "name"
+              ],
+              "httpMethod": "GET",
+              "parameters": {
+                "name": {
+                  "pattern": "^projects/[^/]+/operations/[^/]+$",
+                  "location": "path",
+                  "description": "The name of the operation resource.",
+                  "required": true,
+                  "type": "string"
+                }
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "flatPath": "v1beta1/projects/{projectsId}/operations/{operationsId}",
+              "path": "v1beta1/{+name}",
+              "id": "ml.projects.operations.get"
+            },
+            "cancel": {
+              "description": "Starts asynchronous cancellation on a long-running operation.  The server\nmakes a best effort to cancel the operation, but success is not\nguaranteed.  If the server doesn't support this method, it returns\n`google.rpc.Code.UNIMPLEMENTED`.  Clients can use\nOperations.GetOperation or\nother methods to check whether the cancellation succeeded or whether the\noperation completed despite cancellation. On successful cancellation,\nthe operation is not deleted; instead, it becomes an operation with\nan Operation.error value with a google.rpc.Status.code of 1,\ncorresponding to `Code.CANCELLED`.",
+              "response": {
+                "$ref": "GoogleProtobuf__Empty"
+              },
+              "parameterOrder": [
+                "name"
+              ],
+              "httpMethod": "POST",
+              "parameters": {
+                "name": {
+                  "pattern": "^projects/[^/]+/operations/[^/]+$",
+                  "location": "path",
+                  "description": "The name of the operation resource to be cancelled.",
+                  "required": true,
+                  "type": "string"
+                }
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "flatPath": "v1beta1/projects/{projectsId}/operations/{operationsId}:cancel",
+              "path": "v1beta1/{+name}:cancel",
+              "id": "ml.projects.operations.cancel"
+            },
+            "delete": {
+              "httpMethod": "DELETE",
+              "parameterOrder": [
+                "name"
+              ],
+              "response": {
+                "$ref": "GoogleProtobuf__Empty"
+              },
+              "parameters": {
+                "name": {
+                  "pattern": "^projects/[^/]+/operations/[^/]+$",
+                  "location": "path",
+                  "description": "The name of the operation resource to be deleted.",
+                  "required": true,
+                  "type": "string"
+                }
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "flatPath": "v1beta1/projects/{projectsId}/operations/{operationsId}",
+              "id": "ml.projects.operations.delete",
+              "path": "v1beta1/{+name}",
+              "description": "Deletes a long-running operation. This method indicates that the client is\nno longer interested in the operation result. It does not cancel the\noperation. If the server doesn't support this method, it returns\n`google.rpc.Code.UNIMPLEMENTED`."
+            }
+          }
+        },
+        "models": {
+          "methods": {
+            "delete": {
+              "description": "Deletes a model.\n\nYou can only delete a model if there are no versions in it. You can delete\nversions by calling\n[projects.models.versions.delete](/ml-engine/reference/rest/v1beta1/projects.models.versions/delete).",
+              "httpMethod": "DELETE",
+              "parameterOrder": [
+                "name"
+              ],
+              "response": {
+                "$ref": "GoogleLongrunning__Operation"
+              },
+              "parameters": {
+                "name": {
+                  "location": "path",
+                  "description": "Required. The name of the model.\n\nAuthorization: requires `Editor` role on the parent project.",
+                  "required": true,
+                  "type": "string",
+                  "pattern": "^projects/[^/]+/models/[^/]+$"
+                }
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "flatPath": "v1beta1/projects/{projectsId}/models/{modelsId}",
+              "id": "ml.projects.models.delete",
+              "path": "v1beta1/{+name}"
+            },
+            "list": {
+              "response": {
+                "$ref": "GoogleCloudMlV1beta1__ListModelsResponse"
+              },
+              "parameterOrder": [
+                "parent"
+              ],
+              "httpMethod": "GET",
+              "parameters": {
+                "pageToken": {
+                  "location": "query",
+                  "description": "Optional. A page token to request the next page of results.\n\nYou get the token from the `next_page_token` field of the response from\nthe previous call.",
+                  "type": "string"
+                },
+                "pageSize": {
+                  "location": "query",
+                  "description": "Optional. The number of models to retrieve per \"page\" of results. If there\nare more remaining results than this number, the response message will\ncontain a valid value in the `next_page_token` field.\n\nThe default value is 20, and the maximum page size is 100.",
+                  "format": "int32",
+                  "type": "integer"
+                },
+                "parent": {
+                  "description": "Required. The name of the project whose models are to be listed.\n\nAuthorization: requires `Viewer` role on the specified project.",
+                  "required": true,
+                  "type": "string",
+                  "pattern": "^projects/[^/]+$",
+                  "location": "path"
+                }
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "flatPath": "v1beta1/projects/{projectsId}/models",
+              "path": "v1beta1/{+parent}/models",
+              "id": "ml.projects.models.list",
+              "description": "Lists the models in a project.\n\nEach project can contain multiple models, and each model can have multiple\nversions."
+            },
+            "get": {
+              "parameters": {
+                "name": {
+                  "location": "path",
+                  "description": "Required. The name of the model.\n\nAuthorization: requires `Viewer` role on the parent project.",
+                  "required": true,
+                  "type": "string",
+                  "pattern": "^projects/[^/]+/models/[^/]+$"
+                }
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "flatPath": "v1beta1/projects/{projectsId}/models/{modelsId}",
+              "path": "v1beta1/{+name}",
+              "id": "ml.projects.models.get",
+              "description": "Gets information about a model, including its name, the description (if\nset), and the default version (if at least one version of the model has\nbeen deployed).",
+              "response": {
+                "$ref": "GoogleCloudMlV1beta1__Model"
+              },
+              "parameterOrder": [
+                "name"
+              ],
+              "httpMethod": "GET"
+            },
+            "create": {
+              "response": {
+                "$ref": "GoogleCloudMlV1beta1__Model"
+              },
+              "parameterOrder": [
+                "parent"
+              ],
+              "httpMethod": "POST",
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "parameters": {
+                "parent": {
+                  "pattern": "^projects/[^/]+$",
+                  "location": "path",
+                  "description": "Required. The project name.\n\nAuthorization: requires `Editor` role on the specified project.",
+                  "required": true,
+                  "type": "string"
+                }
+              },
+              "flatPath": "v1beta1/projects/{projectsId}/models",
+              "path": "v1beta1/{+parent}/models",
+              "id": "ml.projects.models.create",
+              "description": "Creates a model which will later contain one or more versions.\n\nYou must add at least one version before you can request predictions from\nthe model. Add versions by calling\n[projects.models.versions.create](/ml-engine/reference/rest/v1beta1/projects.models.versions/create).",
+              "request": {
+                "$ref": "GoogleCloudMlV1beta1__Model"
+              }
+            }
+          },
+          "resources": {
+            "versions": {
+              "methods": {
+                "list": {
+                  "flatPath": "v1beta1/projects/{projectsId}/models/{modelsId}/versions",
+                  "id": "ml.projects.models.versions.list",
+                  "path": "v1beta1/{+parent}/versions",
+                  "description": "Gets basic information about all the versions of a model.\n\nIf you expect that a model has a lot of versions, or if you need to handle\nonly a limited number of results at a time, you can request that the list\nbe retrieved in batches (called pages):",
+                  "httpMethod": "GET",
+                  "parameterOrder": [
+                    "parent"
+                  ],
+                  "response": {
+                    "$ref": "GoogleCloudMlV1beta1__ListVersionsResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "parameters": {
+                    "parent": {
+                      "pattern": "^projects/[^/]+/models/[^/]+$",
+                      "location": "path",
+                      "description": "Required. The name of the model for which to list the version.\n\nAuthorization: requires `Viewer` role on the parent project.",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "pageToken": {
+                      "location": "query",
+                      "description": "Optional. A page token to request the next page of results.\n\nYou get the token from the `next_page_token` field of the response from\nthe previous call.",
+                      "type": "string"
+                    },
+                    "pageSize": {
+                      "location": "query",
+                      "description": "Optional. The number of versions to retrieve per \"page\" of results. If\nthere are more remaining results than this number, the response message\nwill contain a valid value in the `next_page_token` field.\n\nThe default value is 20, and the maximum page size is 100.",
+                      "format": "int32",
+                      "type": "integer"
+                    }
+                  }
+                },
+                "get": {
+                  "httpMethod": "GET",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "response": {
+                    "$ref": "GoogleCloudMlV1beta1__Version"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The name of the version.\n\nAuthorization: requires `Viewer` role on the parent project.",
+                      "required": true,
+                      "type": "string",
+                      "pattern": "^projects/[^/]+/models/[^/]+/versions/[^/]+$",
+                      "location": "path"
+                    }
+                  },
+                  "flatPath": "v1beta1/projects/{projectsId}/models/{modelsId}/versions/{versionsId}",
+                  "id": "ml.projects.models.versions.get",
+                  "path": "v1beta1/{+name}",
+                  "description": "Gets information about a model version.\n\nModels can have multiple versions. You can call\n[projects.models.versions.list](/ml-engine/reference/rest/v1beta1/projects.models.versions/list)\nto get the same information that this method returns for all of the\nversions of a model."
+                },
+                "create": {
+                  "description": "Creates a new version of a model from a trained TensorFlow model.\n\nIf the version created in the cloud by this call is the first deployed\nversion of the specified model, it will be made the default version of the\nmodel. When you add a version to a model that already has one or more\nversions, the default version does not automatically change. If you want a\nnew version to be the default, you must call\n[projects.models.versions.setDefault](/ml-engine/reference/rest/v1beta1/projects.models.versions/setDefault).",
+                  "request": {
+                    "$ref": "GoogleCloudMlV1beta1__Version"
+                  },
+                  "response": {
+                    "$ref": "GoogleLongrunning__Operation"
+                  },
+                  "parameterOrder": [
+                    "parent"
+                  ],
+                  "httpMethod": "POST",
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The name of the model.\n\nAuthorization: requires `Editor` role on the parent project.",
+                      "required": true,
+                      "type": "string",
+                      "pattern": "^projects/[^/]+/models/[^/]+$",
+                      "location": "path"
+                    }
+                  },
+                  "flatPath": "v1beta1/projects/{projectsId}/models/{modelsId}/versions",
+                  "path": "v1beta1/{+parent}/versions",
+                  "id": "ml.projects.models.versions.create"
+                },
+                "setDefault": {
+                  "response": {
+                    "$ref": "GoogleCloudMlV1beta1__Version"
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "httpMethod": "POST",
+                  "parameters": {
+                    "name": {
+                      "location": "path",
+                      "description": "Required. The name of the version to make the default for the model. You\ncan get the names of all the versions of a model by calling\n[projects.models.versions.list](/ml-engine/reference/rest/v1beta1/projects.models.versions/list).\n\nAuthorization: requires `Editor` role on the parent project.",
+                      "required": true,
+                      "type": "string",
+                      "pattern": "^projects/[^/]+/models/[^/]+/versions/[^/]+$"
+                    }
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "flatPath": "v1beta1/projects/{projectsId}/models/{modelsId}/versions/{versionsId}:setDefault",
+                  "path": "v1beta1/{+name}:setDefault",
+                  "id": "ml.projects.models.versions.setDefault",
+                  "request": {
+                    "$ref": "GoogleCloudMlV1beta1__SetDefaultVersionRequest"
+                  },
+                  "description": "Designates a version to be the default for the model.\n\nThe default version is used for prediction requests made against the model\nthat don't specify a version.\n\nThe first version to be created for a model is automatically set as the\ndefault. You must make any subsequent changes to the default version\nsetting manually using this method."
+                },
+                "delete": {
+                  "description": "Deletes a model version.\n\nEach model can have multiple versions deployed and in use at any given\ntime. Use this method to remove a single version.\n\nNote: You cannot delete the version that is set as the default version\nof the model unless it is the only remaining version.",
+                  "response": {
+                    "$ref": "GoogleLongrunning__Operation"
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "httpMethod": "DELETE",
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The name of the version. You can get the names of all the\nversions of a model by calling\n[projects.models.versions.list](/ml-engine/reference/rest/v1beta1/projects.models.versions/list).\n\nAuthorization: requires `Editor` role on the parent project.",
+                      "required": true,
+                      "type": "string",
+                      "pattern": "^projects/[^/]+/models/[^/]+/versions/[^/]+$",
+                      "location": "path"
+                    }
+                  },
+                  "flatPath": "v1beta1/projects/{projectsId}/models/{modelsId}/versions/{versionsId}",
+                  "path": "v1beta1/{+name}",
+                  "id": "ml.projects.models.versions.delete"
+                }
+              }
+            }
+          }
+        },
+        "jobs": {
+          "methods": {
+            "list": {
+              "response": {
+                "$ref": "GoogleCloudMlV1beta1__ListJobsResponse"
+              },
+              "parameterOrder": [
+                "parent"
+              ],
+              "httpMethod": "GET",
+              "parameters": {
+                "filter": {
+                  "description": "Optional. Specifies the subset of jobs to retrieve.",
+                  "type": "string",
+                  "location": "query"
+                },
+                "pageToken": {
+                  "description": "Optional. A page token to request the next page of results.\n\nYou get the token from the `next_page_token` field of the response from\nthe previous call.",
+                  "type": "string",
+                  "location": "query"
+                },
+                "pageSize": {
+                  "description": "Optional. The number of jobs to retrieve per \"page\" of results. If there\nare more remaining results than this number, the response message will\ncontain a valid value in the `next_page_token` field.\n\nThe default value is 20, and the maximum page size is 100.",
+                  "format": "int32",
+                  "type": "integer",
+                  "location": "query"
+                },
+                "parent": {
+                  "location": "path",
+                  "description": "Required. The name of the project for which to list jobs.\n\nAuthorization: requires `Viewer` role on the specified project.",
+                  "required": true,
+                  "type": "string",
+                  "pattern": "^projects/[^/]+$"
+                }
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "flatPath": "v1beta1/projects/{projectsId}/jobs",
+              "path": "v1beta1/{+parent}/jobs",
+              "id": "ml.projects.jobs.list",
+              "description": "Lists the jobs in the project."
+            },
+            "get": {
+              "description": "Describes a job.",
+              "response": {
+                "$ref": "GoogleCloudMlV1beta1__Job"
+              },
+              "parameterOrder": [
+                "name"
+              ],
+              "httpMethod": "GET",
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "parameters": {
+                "name": {
+                  "description": "Required. The name of the job to get the description of.\n\nAuthorization: requires `Viewer` role on the parent project.",
+                  "required": true,
+                  "type": "string",
+                  "pattern": "^projects/[^/]+/jobs/[^/]+$",
+                  "location": "path"
+                }
+              },
+              "flatPath": "v1beta1/projects/{projectsId}/jobs/{jobsId}",
+              "path": "v1beta1/{+name}",
+              "id": "ml.projects.jobs.get"
+            },
+            "create": {
+              "httpMethod": "POST",
+              "parameterOrder": [
+                "parent"
+              ],
+              "response": {
+                "$ref": "GoogleCloudMlV1beta1__Job"
+              },
+              "parameters": {
+                "parent": {
+                  "location": "path",
+                  "description": "Required. The project name.\n\nAuthorization: requires `Editor` role on the specified project.",
+                  "required": true,
+                  "type": "string",
+                  "pattern": "^projects/[^/]+$"
+                }
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "flatPath": "v1beta1/projects/{projectsId}/jobs",
+              "id": "ml.projects.jobs.create",
+              "path": "v1beta1/{+parent}/jobs",
+              "request": {
+                "$ref": "GoogleCloudMlV1beta1__Job"
+              },
+              "description": "Creates a training or a batch prediction job."
+            },
+            "cancel": {
+              "httpMethod": "POST",
+              "parameterOrder": [
+                "name"
+              ],
+              "response": {
+                "$ref": "GoogleProtobuf__Empty"
+              },
+              "parameters": {
+                "name": {
+                  "description": "Required. The name of the job to cancel.\n\nAuthorization: requires `Editor` role on the parent project.",
+                  "required": true,
+                  "type": "string",
+                  "pattern": "^projects/[^/]+/jobs/[^/]+$",
+                  "location": "path"
+                }
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "flatPath": "v1beta1/projects/{projectsId}/jobs/{jobsId}:cancel",
+              "id": "ml.projects.jobs.cancel",
+              "path": "v1beta1/{+name}:cancel",
+              "request": {
+                "$ref": "GoogleCloudMlV1beta1__CancelJobRequest"
+              },
+              "description": "Cancels a running job."
+            }
+          }
+        }
+      }
+    }
+  },
+  "parameters": {
+    "uploadType": {
+      "location": "query",
+      "description": "Legacy upload protocol for media (e.g. \"media\", \"multipart\").",
+      "type": "string"
+    },
+    "fields": {
+      "description": "Selector specifying which fields to include in a partial response.",
+      "type": "string",
+      "location": "query"
+    },
+    "$.xgafv": {
+      "enum": [
+        "1",
+        "2"
+      ],
+      "description": "V1 error format.",
+      "type": "string",
+      "enumDescriptions": [
+        "v1 error format",
+        "v2 error format"
+      ],
+      "location": "query"
+    },
+    "callback": {
+      "location": "query",
+      "description": "JSONP",
+      "type": "string"
+    },
+    "alt": {
+      "enumDescriptions": [
+        "Responses with Content-Type of application/json",
+        "Media download with context-dependent Content-Type",
+        "Responses with Content-Type of application/x-protobuf"
+      ],
+      "location": "query",
+      "description": "Data format for response.",
+      "default": "json",
+      "enum": [
+        "json",
+        "media",
+        "proto"
+      ],
+      "type": "string"
+    },
+    "access_token": {
+      "description": "OAuth access token.",
+      "type": "string",
+      "location": "query"
+    },
+    "key": {
+      "location": "query",
+      "description": "API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.",
+      "type": "string"
+    },
+    "quotaUser": {
+      "location": "query",
+      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.",
+      "type": "string"
+    },
+    "pp": {
+      "description": "Pretty-print response.",
+      "type": "boolean",
+      "default": "true",
+      "location": "query"
+    },
+    "oauth_token": {
+      "location": "query",
+      "description": "OAuth 2.0 token for the current user.",
+      "type": "string"
+    },
+    "bearer_token": {
+      "description": "OAuth bearer token.",
+      "type": "string",
+      "location": "query"
+    },
+    "upload_protocol": {
+      "location": "query",
+      "description": "Upload protocol for media (e.g. \"raw\", \"multipart\").",
+      "type": "string"
+    },
+    "prettyPrint": {
+      "location": "query",
+      "description": "Returns response with indentations and line breaks.",
+      "type": "boolean",
+      "default": "true"
+    }
+  },
+  "version": "v1beta1",
+  "baseUrl": "https://ml.googleapis.com/",
+  "servicePath": "",
+  "description": "An API to enable creating and using machine learning models.",
+  "kind": "discovery#restDescription",
+  "basePath": "",
+  "id": "ml:v1beta1",
+  "revision": "20170509",
+  "documentationLink": "https://cloud.google.com/ml/"
+}

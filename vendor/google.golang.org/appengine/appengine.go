@@ -6,7 +6,7 @@
 //
 // For more information on how to write Go apps for Google App Engine, see:
 // https://cloud.google.com/appengine/docs/go/
-package appengine
+package appengine // import "google.golang.org/appengine"
 
 import (
 	"net/http"
@@ -28,8 +28,7 @@ import (
 // See https://cloud.google.com/appengine/docs/flexible/custom-runtimes#health_check_requests
 // for details on how to do your own health checking.
 //
-// On App Engine Standard it ensures the server has started and is prepared to
-// receive requests.
+// Main is not yet supported on App Engine Standard.
 //
 // Main never returns.
 //

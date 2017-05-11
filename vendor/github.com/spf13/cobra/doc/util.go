@@ -27,7 +27,7 @@ func hasSeeAlso(cmd *cobra.Command) bool {
 		return true
 	}
 	for _, c := range cmd.Commands() {
-		if !c.IsAvailableCommand() || c.IsHelpCommand() {
+		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
 			continue
 		}
 		return true

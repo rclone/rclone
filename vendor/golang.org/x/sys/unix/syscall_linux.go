@@ -551,6 +551,28 @@ func (sa *SockaddrALG) sockaddr() (unsafe.Pointer, _Socklen, error) {
 	return unsafe.Pointer(&sa.raw), SizeofSockaddrALG, nil
 }
 
+// SockaddrVM implements the Sockaddr interface for AF_VSOCK type sockets.
+// SockaddrVM provides access to Linux VM sockets: a mechanism that enables
+// bidirectional communication between a hypervisor and its guest virtual
+// machines.
+type SockaddrVM struct {
+	// CID and Port specify a context ID and port address for a VM socket.
+	// Guests have a unique CID, and hosts may have a well-known CID of:
+	//  - VMADDR_CID_HYPERVISOR: refers to the hypervisor process.
+	//  - VMADDR_CID_HOST: refers to other processes on the host.
+	CID  uint32
+	Port uint32
+	raw  RawSockaddrVM
+}
+
+func (sa *SockaddrVM) sockaddr() (unsafe.Pointer, _Socklen, error) {
+	sa.raw.Family = AF_VSOCK
+	sa.raw.Port = sa.Port
+	sa.raw.Cid = sa.CID
+
+	return unsafe.Pointer(&sa.raw), SizeofSockaddrVM, nil
+}
+
 func anyToSockaddr(rsa *RawSockaddrAny) (Sockaddr, error) {
 	switch rsa.Addr.Family {
 	case AF_NETLINK:
@@ -618,6 +640,14 @@ func anyToSockaddr(rsa *RawSockaddrAny) (Sockaddr, error) {
 		sa.ZoneId = pp.Scope_id
 		for i := 0; i < len(sa.Addr); i++ {
 			sa.Addr[i] = pp.Addr[i]
+		}
+		return sa, nil
+
+	case AF_VSOCK:
+		pp := (*RawSockaddrVM)(unsafe.Pointer(rsa))
+		sa := &SockaddrVM{
+			CID:  pp.Cid,
+			Port: pp.Port,
 		}
 		return sa, nil
 	}
@@ -710,6 +740,13 @@ func GetsockoptICMPv6Filter(fd, level, opt int) (*ICMPv6Filter, error) {
 func GetsockoptUcred(fd, level, opt int) (*Ucred, error) {
 	var value Ucred
 	vallen := _Socklen(SizeofUcred)
+	err := getsockopt(fd, level, opt, unsafe.Pointer(&value), &vallen)
+	return &value, err
+}
+
+func GetsockoptTCPInfo(fd, level, opt int) (*TCPInfo, error) {
+	var value TCPInfo
+	vallen := _Socklen(SizeofTCPInfo)
 	err := getsockopt(fd, level, opt, unsafe.Pointer(&value), &vallen)
 	return &value, err
 }
@@ -851,6 +888,10 @@ func PtracePeekData(pid int, addr uintptr, out []byte) (count int, err error) {
 	return ptracePeek(PTRACE_PEEKDATA, pid, addr, out)
 }
 
+func PtracePeekUser(pid int, addr uintptr, out []byte) (count int, err error) {
+	return ptracePeek(PTRACE_PEEKUSR, pid, addr, out)
+}
+
 func ptracePoke(pokeReq int, peekReq int, pid int, addr uintptr, data []byte) (count int, err error) {
 	// As for ptracePeek, we need to align our accesses to deal
 	// with the possibility of straddling an invalid page.
@@ -949,38 +990,24 @@ func Reboot(cmd int) (err error) {
 	return reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, cmd, "")
 }
 
-func clen(n []byte) int {
-	for i := 0; i < len(n); i++ {
-		if n[i] == 0 {
-			return i
-		}
-	}
-	return len(n)
-}
-
 func ReadDirent(fd int, buf []byte) (n int, err error) {
 	return Getdents(fd, buf)
 }
 
-func ParseDirent(buf []byte, max int, names []string) (consumed int, count int, newnames []string) {
-	origlen := len(buf)
-	count = 0
-	for max != 0 && len(buf) > 0 {
-		dirent := (*Dirent)(unsafe.Pointer(&buf[0]))
-		buf = buf[dirent.Reclen:]
-		if dirent.Ino == 0 { // File absent in directory.
-			continue
-		}
-		bytes := (*[10000]byte)(unsafe.Pointer(&dirent.Name[0]))
-		var name = string(bytes[0:clen(bytes[:])])
-		if name == "." || name == ".." { // Useless names
-			continue
-		}
-		max--
-		count++
-		names = append(names, name)
+func direntIno(buf []byte) (uint64, bool) {
+	return readInt(buf, unsafe.Offsetof(Dirent{}.Ino), unsafe.Sizeof(Dirent{}.Ino))
+}
+
+func direntReclen(buf []byte) (uint64, bool) {
+	return readInt(buf, unsafe.Offsetof(Dirent{}.Reclen), unsafe.Sizeof(Dirent{}.Reclen))
+}
+
+func direntNamlen(buf []byte) (uint64, bool) {
+	reclen, ok := direntReclen(buf)
+	if !ok {
+		return 0, false
 	}
-	return origlen - len(buf), count, names
+	return reclen - uint64(unsafe.Offsetof(Dirent{}.Name)), true
 }
 
 //sys	mount(source string, target string, fstype string, flags uintptr, data *byte) (err error)
@@ -1038,6 +1065,7 @@ func Getpgrp() (pid int) {
 //sysnb	Getpid() (pid int)
 //sysnb	Getppid() (ppid int)
 //sys	Getpriority(which int, who int) (prio int, err error)
+//sys	Getrandom(buf []byte, flags int) (n int, err error)
 //sysnb	Getrusage(who int, rusage *Rusage) (err error)
 //sysnb	Getsid(pid int) (sid int, err error)
 //sysnb	Gettid() (tid int)

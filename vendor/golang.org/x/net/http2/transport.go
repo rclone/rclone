@@ -1528,8 +1528,7 @@ func (rl *clientConnReadLoop) handleResponse(cs *clientStream, f *MetaHeadersFra
 		return res, nil
 	}
 
-	buf := new(bytes.Buffer) // TODO(bradfitz): recycle this garbage
-	cs.bufPipe = pipe{b: buf}
+	cs.bufPipe = pipe{b: &dataBuffer{expected: res.ContentLength}}
 	cs.bytesRemain = res.ContentLength
 	res.Body = transportResponseBody{cs}
 	go cs.awaitRequestCancel(cs.req)

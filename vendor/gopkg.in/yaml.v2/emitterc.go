@@ -666,7 +666,6 @@ func yaml_emitter_emit_node(emitter *yaml_emitter_t, event *yaml_event_t,
 		return yaml_emitter_set_emitter_error(emitter,
 			"expected SCALAR, SEQUENCE-START, MAPPING-START, or ALIAS")
 	}
-	return false
 }
 
 // Expect ALIAS.

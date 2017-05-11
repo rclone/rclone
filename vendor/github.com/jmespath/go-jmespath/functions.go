@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -125,197 +124,197 @@ type functionCaller struct {
 func newFunctionCaller() *functionCaller {
 	caller := &functionCaller{}
 	caller.functionTable = map[string]functionEntry{
-		"length": {
+		"length": functionEntry{
 			name: "length",
 			arguments: []argSpec{
-				{types: []jpType{jpString, jpArray, jpObject}},
+				argSpec{types: []jpType{jpString, jpArray, jpObject}},
 			},
 			handler: jpfLength,
 		},
-		"starts_with": {
+		"starts_with": functionEntry{
 			name: "starts_with",
 			arguments: []argSpec{
-				{types: []jpType{jpString}},
-				{types: []jpType{jpString}},
+				argSpec{types: []jpType{jpString}},
+				argSpec{types: []jpType{jpString}},
 			},
 			handler: jpfStartsWith,
 		},
-		"abs": {
+		"abs": functionEntry{
 			name: "abs",
 			arguments: []argSpec{
-				{types: []jpType{jpNumber}},
+				argSpec{types: []jpType{jpNumber}},
 			},
 			handler: jpfAbs,
 		},
-		"avg": {
+		"avg": functionEntry{
 			name: "avg",
 			arguments: []argSpec{
-				{types: []jpType{jpArrayNumber}},
+				argSpec{types: []jpType{jpArrayNumber}},
 			},
 			handler: jpfAvg,
 		},
-		"ceil": {
+		"ceil": functionEntry{
 			name: "ceil",
 			arguments: []argSpec{
-				{types: []jpType{jpNumber}},
+				argSpec{types: []jpType{jpNumber}},
 			},
 			handler: jpfCeil,
 		},
-		"contains": {
+		"contains": functionEntry{
 			name: "contains",
 			arguments: []argSpec{
-				{types: []jpType{jpArray, jpString}},
-				{types: []jpType{jpAny}},
+				argSpec{types: []jpType{jpArray, jpString}},
+				argSpec{types: []jpType{jpAny}},
 			},
 			handler: jpfContains,
 		},
-		"ends_with": {
+		"ends_with": functionEntry{
 			name: "ends_with",
 			arguments: []argSpec{
-				{types: []jpType{jpString}},
-				{types: []jpType{jpString}},
+				argSpec{types: []jpType{jpString}},
+				argSpec{types: []jpType{jpString}},
 			},
 			handler: jpfEndsWith,
 		},
-		"floor": {
+		"floor": functionEntry{
 			name: "floor",
 			arguments: []argSpec{
-				{types: []jpType{jpNumber}},
+				argSpec{types: []jpType{jpNumber}},
 			},
 			handler: jpfFloor,
 		},
-		"map": {
+		"map": functionEntry{
 			name: "amp",
 			arguments: []argSpec{
-				{types: []jpType{jpExpref}},
-				{types: []jpType{jpArray}},
+				argSpec{types: []jpType{jpExpref}},
+				argSpec{types: []jpType{jpArray}},
 			},
 			handler:   jpfMap,
 			hasExpRef: true,
 		},
-		"max": {
+		"max": functionEntry{
 			name: "max",
 			arguments: []argSpec{
-				{types: []jpType{jpArrayNumber, jpArrayString}},
+				argSpec{types: []jpType{jpArrayNumber, jpArrayString}},
 			},
 			handler: jpfMax,
 		},
-		"merge": {
+		"merge": functionEntry{
 			name: "merge",
 			arguments: []argSpec{
-				{types: []jpType{jpObject}, variadic: true},
+				argSpec{types: []jpType{jpObject}, variadic: true},
 			},
 			handler: jpfMerge,
 		},
-		"max_by": {
+		"max_by": functionEntry{
 			name: "max_by",
 			arguments: []argSpec{
-				{types: []jpType{jpArray}},
-				{types: []jpType{jpExpref}},
+				argSpec{types: []jpType{jpArray}},
+				argSpec{types: []jpType{jpExpref}},
 			},
 			handler:   jpfMaxBy,
 			hasExpRef: true,
 		},
-		"sum": {
+		"sum": functionEntry{
 			name: "sum",
 			arguments: []argSpec{
-				{types: []jpType{jpArrayNumber}},
+				argSpec{types: []jpType{jpArrayNumber}},
 			},
 			handler: jpfSum,
 		},
-		"min": {
+		"min": functionEntry{
 			name: "min",
 			arguments: []argSpec{
-				{types: []jpType{jpArrayNumber, jpArrayString}},
+				argSpec{types: []jpType{jpArrayNumber, jpArrayString}},
 			},
 			handler: jpfMin,
 		},
-		"min_by": {
+		"min_by": functionEntry{
 			name: "min_by",
 			arguments: []argSpec{
-				{types: []jpType{jpArray}},
-				{types: []jpType{jpExpref}},
+				argSpec{types: []jpType{jpArray}},
+				argSpec{types: []jpType{jpExpref}},
 			},
 			handler:   jpfMinBy,
 			hasExpRef: true,
 		},
-		"type": {
+		"type": functionEntry{
 			name: "type",
 			arguments: []argSpec{
-				{types: []jpType{jpAny}},
+				argSpec{types: []jpType{jpAny}},
 			},
 			handler: jpfType,
 		},
-		"keys": {
+		"keys": functionEntry{
 			name: "keys",
 			arguments: []argSpec{
-				{types: []jpType{jpObject}},
+				argSpec{types: []jpType{jpObject}},
 			},
 			handler: jpfKeys,
 		},
-		"values": {
+		"values": functionEntry{
 			name: "values",
 			arguments: []argSpec{
-				{types: []jpType{jpObject}},
+				argSpec{types: []jpType{jpObject}},
 			},
 			handler: jpfValues,
 		},
-		"sort": {
+		"sort": functionEntry{
 			name: "sort",
 			arguments: []argSpec{
-				{types: []jpType{jpArrayString, jpArrayNumber}},
+				argSpec{types: []jpType{jpArrayString, jpArrayNumber}},
 			},
 			handler: jpfSort,
 		},
-		"sort_by": {
+		"sort_by": functionEntry{
 			name: "sort_by",
 			arguments: []argSpec{
-				{types: []jpType{jpArray}},
-				{types: []jpType{jpExpref}},
+				argSpec{types: []jpType{jpArray}},
+				argSpec{types: []jpType{jpExpref}},
 			},
 			handler:   jpfSortBy,
 			hasExpRef: true,
 		},
-		"join": {
+		"join": functionEntry{
 			name: "join",
 			arguments: []argSpec{
-				{types: []jpType{jpString}},
-				{types: []jpType{jpArrayString}},
+				argSpec{types: []jpType{jpString}},
+				argSpec{types: []jpType{jpArrayString}},
 			},
 			handler: jpfJoin,
 		},
-		"reverse": {
+		"reverse": functionEntry{
 			name: "reverse",
 			arguments: []argSpec{
-				{types: []jpType{jpArray, jpString}},
+				argSpec{types: []jpType{jpArray, jpString}},
 			},
 			handler: jpfReverse,
 		},
-		"to_array": {
+		"to_array": functionEntry{
 			name: "to_array",
 			arguments: []argSpec{
-				{types: []jpType{jpAny}},
+				argSpec{types: []jpType{jpAny}},
 			},
 			handler: jpfToArray,
 		},
-		"to_string": {
+		"to_string": functionEntry{
 			name: "to_string",
 			arguments: []argSpec{
-				{types: []jpType{jpAny}},
+				argSpec{types: []jpType{jpAny}},
 			},
 			handler: jpfToString,
 		},
-		"to_number": {
+		"to_number": functionEntry{
 			name: "to_number",
 			arguments: []argSpec{
-				{types: []jpType{jpAny}},
+				argSpec{types: []jpType{jpAny}},
 			},
 			handler: jpfToNumber,
 		},
-		"not_null": {
+		"not_null": functionEntry{
 			name: "not_null",
 			arguments: []argSpec{
-				{types: []jpType{jpAny}, variadic: true},
+				argSpec{types: []jpType{jpAny}, variadic: true},
 			},
 			handler: jpfNotNull,
 		},
@@ -358,7 +357,7 @@ func (a *argSpec) typeCheck(arg interface{}) error {
 				return nil
 			}
 		case jpArray:
-			if isSliceType(arg) {
+			if _, ok := arg.([]interface{}); ok {
 				return nil
 			}
 		case jpObject:
@@ -410,9 +409,8 @@ func jpfLength(arguments []interface{}) (interface{}, error) {
 	arg := arguments[0]
 	if c, ok := arg.(string); ok {
 		return float64(utf8.RuneCountInString(c)), nil
-	} else if isSliceType(arg) {
-		v := reflect.ValueOf(arg)
-		return float64(v.Len()), nil
+	} else if c, ok := arg.([]interface{}); ok {
+		return float64(len(c)), nil
 	} else if c, ok := arg.(map[string]interface{}); ok {
 		return float64(len(c)), nil
 	}

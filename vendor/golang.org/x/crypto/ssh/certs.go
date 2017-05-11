@@ -251,10 +251,18 @@ type CertChecker struct {
 	// for user certificates.
 	SupportedCriticalOptions []string
 
-	// IsAuthority should return true if the key is recognized as
-	// an authority. This allows for certificates to be signed by other
-	// certificates.
-	IsAuthority func(auth PublicKey) bool
+	// IsUserAuthority should return true if the key is recognized as an
+	// authority for the given user certificate. This allows for
+	// certificates to be signed by other certificates. This must be set
+	// if this CertChecker will be checking user certificates.
+	IsUserAuthority func(auth PublicKey) bool
+
+	// IsHostAuthority should report whether the key is recognized as
+	// an authority for this host. This allows for certificates to be
+	// signed by other keys, and for those other keys to only be valid
+	// signers for particular hostnames. This must be set if this
+	// CertChecker will be checking host certificates.
+	IsHostAuthority func(auth PublicKey, address string) bool
 
 	// Clock is used for verifying time stamps. If nil, time.Now
 	// is used.
@@ -268,7 +276,7 @@ type CertChecker struct {
 	// HostKeyFallback is called when CertChecker.CheckHostKey encounters a
 	// public key that is not a certificate. It must implement host key
 	// validation or else, if nil, all such keys are rejected.
-	HostKeyFallback func(addr string, remote net.Addr, key PublicKey) error
+	HostKeyFallback HostKeyCallback
 
 	// IsRevoked is called for each certificate so that revocation checking
 	// can be implemented. It should return true if the given certificate
@@ -356,7 +364,13 @@ func (c *CertChecker) CheckCert(principal string, cert *Certificate) error {
 		}
 	}
 
-	if !c.IsAuthority(cert.SignatureKey) {
+	// if this is a host cert, principal is the remote hostname as passed
+	// to CheckHostCert.
+	if cert.CertType == HostCert && !c.IsHostAuthority(cert.SignatureKey, principal) {
+		return fmt.Errorf("ssh: no authorities for hostname: %v", principal)
+	}
+
+	if cert.CertType == UserCert && !c.IsUserAuthority(cert.SignatureKey) {
 		return fmt.Errorf("ssh: certificate signed by unrecognized authority")
 	}
 

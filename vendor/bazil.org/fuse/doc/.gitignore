@@ -1,0 +1,4 @@
+/*.seq.svg
+
+# not ignoring *.seq.png; we want those committed to the repo
+# for embedding on Github

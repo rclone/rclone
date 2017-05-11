@@ -6,6 +6,8 @@ Generating man pages from a cobra command is incredibly easy. An example is as f
 package main
 
 import (
+	"log"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
@@ -15,7 +17,10 @@ func main() {
 		Use:   "test",
 		Short: "my test program",
 	}
-	doc.GenMarkdownTree(cmd, "/tmp")
+	err := doc.GenMarkdownTree(cmd, "/tmp")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 ```
 
@@ -29,6 +34,7 @@ This program can actually generate docs for the kubectl command in the kubernete
 package main
 
 import (
+	"log"
 	"io/ioutil"
 	"os"
 
@@ -40,7 +46,10 @@ import (
 
 func main() {
 	kubectl := cmd.NewKubectlCommand(cmdutil.NewFactory(nil), os.Stdin, ioutil.Discard, ioutil.Discard)
-	doc.GenMarkdownTree(kubectl, "./")
+	err := doc.GenMarkdownTree(kubectl, "./")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 ```
 
@@ -52,7 +61,10 @@ You may wish to have more control over the output, or only generate for a single
 
 ```go
 	out := new(bytes.Buffer)
-	doc.GenMarkdown(cmd, out)
+	err := doc.GenMarkdown(cmd, out)
+	if err != nil {
+		log.Fatal(err)
+	}
 ```
 
 This will write the markdown doc for ONLY "cmd" into the out, buffer.

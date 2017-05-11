@@ -120,7 +120,6 @@ func (p *parser) parse() *node {
 	default:
 		panic("attempted to parse unknown event: " + strconv.Itoa(int(p.event.typ)))
 	}
-	panic("unreachable")
 }
 
 func (p *parser) node(kind int) *node {

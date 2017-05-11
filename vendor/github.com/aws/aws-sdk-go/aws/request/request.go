@@ -16,6 +16,24 @@ import (
 	"github.com/aws/aws-sdk-go/aws/client/metadata"
 )
 
+const (
+	// ErrCodeSerialization is the serialization error code that is received
+	// during protocol unmarshaling.
+	ErrCodeSerialization = "SerializationError"
+
+	// ErrCodeRead is an error that is returned during HTTP reads.
+	ErrCodeRead = "ReadError"
+
+	// ErrCodeResponseTimeout is the connection timeout error that is recieved
+	// during body reads.
+	ErrCodeResponseTimeout = "ResponseTimeout"
+
+	// CanceledErrorCode is the error code that will be returned by an
+	// API request that was canceled. Requests given a aws.Context may
+	// return this error when canceled.
+	CanceledErrorCode = "RequestCanceled"
+)
+
 // A Request is the service request to be made.
 type Request struct {
 	Config     aws.Config
@@ -23,30 +41,33 @@ type Request struct {
 	Handlers   Handlers
 
 	Retryer
-	Time             time.Time
-	ExpireTime       time.Duration
-	Operation        *Operation
-	HTTPRequest      *http.Request
-	HTTPResponse     *http.Response
-	Body             io.ReadSeeker
-	BodyStart        int64 // offset from beginning of Body that the request body starts
-	Params           interface{}
-	Error            error
-	Data             interface{}
-	RequestID        string
-	RetryCount       int
-	Retryable        *bool
-	RetryDelay       time.Duration
-	NotHoist         bool
-	SignedHeaderVals http.Header
-	LastSignedAt     time.Time
+	Time                   time.Time
+	ExpireTime             time.Duration
+	Operation              *Operation
+	HTTPRequest            *http.Request
+	HTTPResponse           *http.Response
+	Body                   io.ReadSeeker
+	BodyStart              int64 // offset from beginning of Body that the request body starts
+	Params                 interface{}
+	Error                  error
+	Data                   interface{}
+	RequestID              string
+	RetryCount             int
+	Retryable              *bool
+	RetryDelay             time.Duration
+	NotHoist               bool
+	SignedHeaderVals       http.Header
+	LastSignedAt           time.Time
+	DisableFollowRedirects bool
+
+	context aws.Context
 
 	built bool
 
-	// Need to persist an intermideant body betweend the input Body and HTTP
+	// Need to persist an intermediate body between the input Body and HTTP
 	// request body because the HTTP Client's transport can maintain a reference
 	// to the HTTP request's body after the client has returned. This value is
-	// safe to use concurrently and rewraps the input Body for each HTTP request.
+	// safe to use concurrently and wrap the input Body for each HTTP request.
 	safeBody *offsetReader
 }
 
@@ -58,14 +79,6 @@ type Operation struct {
 	*Paginator
 
 	BeforePresignFn func(r *Request) error
-}
-
-// Paginator keeps track of pagination configuration for an API operation.
-type Paginator struct {
-	InputTokens     []string
-	OutputTokens    []string
-	LimitToken      string
-	TruncationToken string
 }
 
 // New returns a new Request pointer for the service API
@@ -109,6 +122,94 @@ func New(cfg aws.Config, clientInfo metadata.ClientInfo, handlers Handlers,
 	r.SetBufferBody([]byte{})
 
 	return r
+}
+
+// A Option is a functional option that can augment or modify a request when
+// using a WithContext API operation method.
+type Option func(*Request)
+
+// WithGetResponseHeader builds a request Option which will retrieve a single
+// header value from the HTTP Response. If there are multiple values for the
+// header key use WithGetResponseHeaders instead to access the http.Header
+// map directly. The passed in val pointer must be non-nil.
+//
+// This Option can be used multiple times with a single API operation.
+//
+//    var id2, versionID string
+//    svc.PutObjectWithContext(ctx, params,
+//        request.WithGetResponseHeader("x-amz-id-2", &id2),
+//        request.WithGetResponseHeader("x-amz-version-id", &versionID),
+//    )
+func WithGetResponseHeader(key string, val *string) Option {
+	return func(r *Request) {
+		r.Handlers.Complete.PushBack(func(req *Request) {
+			*val = req.HTTPResponse.Header.Get(key)
+		})
+	}
+}
+
+// WithGetResponseHeaders builds a request Option which will retrieve the
+// headers from the HTTP response and assign them to the passed in headers
+// variable. The passed in headers pointer must be non-nil.
+//
+//    var headers http.Header
+//    svc.PutObjectWithContext(ctx, params, request.WithGetResponseHeaders(&headers))
+func WithGetResponseHeaders(headers *http.Header) Option {
+	return func(r *Request) {
+		r.Handlers.Complete.PushBack(func(req *Request) {
+			*headers = req.HTTPResponse.Header
+		})
+	}
+}
+
+// WithLogLevel is a request option that will set the request to use a specific
+// log level when the request is made.
+//
+//     svc.PutObjectWithContext(ctx, params, request.WithLogLevel(aws.LogDebugWithHTTPBody)
+func WithLogLevel(l aws.LogLevelType) Option {
+	return func(r *Request) {
+		r.Config.LogLevel = aws.LogLevel(l)
+	}
+}
+
+// ApplyOptions will apply each option to the request calling them in the order
+// the were provided.
+func (r *Request) ApplyOptions(opts ...Option) {
+	for _, opt := range opts {
+		opt(r)
+	}
+}
+
+// Context will always returns a non-nil context. If Request does not have a
+// context aws.BackgroundContext will be returned.
+func (r *Request) Context() aws.Context {
+	if r.context != nil {
+		return r.context
+	}
+	return aws.BackgroundContext()
+}
+
+// SetContext adds a Context to the current request that can be used to cancel
+// a in-flight request. The Context value must not be nil, or this method will
+// panic.
+//
+// Unlike http.Request.WithContext, SetContext does not return a copy of the
+// Request. It is not safe to use use a single Request value for multiple
+// requests. A new Request should be created for each API operation request.
+//
+// Go 1.6 and below:
+// The http.Request's Cancel field will be set to the Done() value of
+// the context. This will overwrite the Cancel field's value.
+//
+// Go 1.7 and above:
+// The http.Request.WithContext will be used to set the context on the underlying
+// http.Request. This will create a shallow copy of the http.Request. The SDK
+// may create sub contexts in the future for nested requests such as retries.
+func (r *Request) SetContext(ctx aws.Context) {
+	if ctx == nil {
+		panic("context cannot be nil")
+	}
+	setRequestContext(r, ctx)
 }
 
 // WillRetry returns if the request's can be retried.
@@ -262,7 +363,7 @@ func (r *Request) ResetBody() {
 	// Related golang/go#18257
 	l, err := computeBodyLength(r.Body)
 	if err != nil {
-		r.Error = awserr.New("SerializationError", "failed to compute request body size", err)
+		r.Error = awserr.New(ErrCodeSerialization, "failed to compute request body size", err)
 		return
 	}
 
@@ -344,6 +445,12 @@ func (r *Request) GetBody() io.ReadSeeker {
 //
 // Send will not close the request.Request's body.
 func (r *Request) Send() error {
+	defer func() {
+		// Regardless of success or failure of the request trigger the Complete
+		// request handlers.
+		r.Handlers.Complete.Run(r)
+	}()
+
 	for {
 		if aws.BoolValue(r.Retryable) {
 			if r.Config.LogLevel.Matches(aws.LogDebugWithRequestRetries) {
@@ -446,6 +553,9 @@ func shouldRetryCancel(r *Request) bool {
 	timeoutErr := false
 	errStr := r.Error.Error()
 	if ok {
+		if awsErr.Code() == CanceledErrorCode {
+			return false
+		}
 		err := awsErr.OrigErr()
 		netErr, netOK := err.(net.Error)
 		timeoutErr = netOK && netErr.Temporary()

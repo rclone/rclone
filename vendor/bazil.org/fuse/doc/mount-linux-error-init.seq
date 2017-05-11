@@ -1,0 +1,32 @@
+seqdiag {
+  app;
+  fuse [label="bazil.org/fuse"];
+  fusermount;
+  kernel;
+  mounts;
+
+  app;
+  fuse [label="bazil.org/fuse"];
+  fusermount;
+  kernel;
+  mounts;
+
+  app -> fuse [label="Mount"];
+  fuse -> fusermount [label="spawn, pass socketpair fd"];
+  fusermount -> kernel [label="open /dev/fuse"];
+  fusermount -> kernel [label="mount(2)"];
+  kernel ->> mounts [label="mount is visible"];
+  fusermount <-- kernel [label="mount(2) returns"];
+  fuse <<-- fusermount [diagonal, label="exit, receive /dev/fuse fd", leftnote="on Linux, successful exit here\nmeans the mount has happened,\nthough InitRequest might not have yet"];
+  app <-- fuse [label="Mount returns\nConn.Ready is already closed"];
+
+  app -> fuse [label="fs.Serve"];
+  fuse => kernel [label="read /dev/fuse fd", note="starts with InitRequest"];
+  fuse -> app [label="Init"];
+  fuse <-- app [color=red];
+  fuse -> kernel [label="write /dev/fuse fd", color=red];
+  kernel -> kernel [label="set connection\nstate to error", color=red];
+  fuse <-- kernel;
+  ... conn.MountError == nil, so it is still mounted ...
+  ... call conn.Close to clean up ...
+}

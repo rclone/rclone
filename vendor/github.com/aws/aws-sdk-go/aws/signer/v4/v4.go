@@ -194,6 +194,10 @@ type Signer struct {
 	// This value should only be used for testing. If it is nil the default
 	// time.Now will be used.
 	currentTimeFn func() time.Time
+
+	// UnsignedPayload will prevent signing of the payload. This will only
+	// work for services that have support for this.
+	UnsignedPayload bool
 }
 
 // NewSigner returns a Signer pointer configured with the credentials and optional
@@ -227,6 +231,7 @@ type signingCtx struct {
 	isPresign          bool
 	formattedTime      string
 	formattedShortTime string
+	unsignedPayload    bool
 
 	bodyDigest       string
 	signedHeaders    string
@@ -317,6 +322,7 @@ func (v4 Signer) signWithBody(r *http.Request, body io.ReadSeeker, service, regi
 		ServiceName:            service,
 		Region:                 region,
 		DisableURIPathEscaping: v4.DisableURIPathEscaping,
+		unsignedPayload:        v4.UnsignedPayload,
 	}
 
 	for key := range ctx.Query {
@@ -409,7 +415,18 @@ var SignRequestHandler = request.NamedHandler{
 func SignSDKRequest(req *request.Request) {
 	signSDKRequestWithCurrTime(req, time.Now)
 }
-func signSDKRequestWithCurrTime(req *request.Request, curTimeFn func() time.Time) {
+
+// BuildNamedHandler will build a generic handler for signing.
+func BuildNamedHandler(name string, opts ...func(*Signer)) request.NamedHandler {
+	return request.NamedHandler{
+		Name: name,
+		Fn: func(req *request.Request) {
+			signSDKRequestWithCurrTime(req, time.Now, opts...)
+		},
+	}
+}
+
+func signSDKRequestWithCurrTime(req *request.Request, curTimeFn func() time.Time, opts ...func(*Signer)) {
 	// If the request does not need to be signed ignore the signing of the
 	// request if the AnonymousCredentials object is used.
 	if req.Config.Credentials == credentials.AnonymousCredentials {
@@ -440,6 +457,10 @@ func signSDKRequestWithCurrTime(req *request.Request, curTimeFn func() time.Time
 		// on top of by the signer.
 		v4.DisableRequestBodyOverwrite = true
 	})
+
+	for _, opt := range opts {
+		opt(v4)
+	}
 
 	signingTime := req.Time
 	if !req.LastSignedAt.IsZero() {
@@ -634,14 +655,14 @@ func (ctx *signingCtx) buildSignature() {
 func (ctx *signingCtx) buildBodyDigest() {
 	hash := ctx.Request.Header.Get("X-Amz-Content-Sha256")
 	if hash == "" {
-		if ctx.isPresign && ctx.ServiceName == "s3" {
+		if ctx.unsignedPayload || (ctx.isPresign && ctx.ServiceName == "s3") {
 			hash = "UNSIGNED-PAYLOAD"
 		} else if ctx.Body == nil {
 			hash = emptyStringSHA256
 		} else {
 			hash = hex.EncodeToString(makeSha256Reader(ctx.Body))
 		}
-		if ctx.ServiceName == "s3" || ctx.ServiceName == "glacier" {
+		if ctx.unsignedPayload || ctx.ServiceName == "s3" || ctx.ServiceName == "glacier" {
 			ctx.Request.Header.Set("X-Amz-Content-Sha256", hash)
 		}
 	}

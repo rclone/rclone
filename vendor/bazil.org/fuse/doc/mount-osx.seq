@@ -1,0 +1,45 @@
+seqdiag {
+  // seqdiag -T svg -o doc/mount-osx.svg doc/mount-osx.seq
+  app;
+  fuse [label="bazil.org/fuse"];
+  wait [label="callMount\nhelper goroutine"];
+  mount_osxfusefs;
+  kernel;
+  mounts;
+
+  app -> fuse [label="Mount"];
+  fuse -> kernel [label="open /dev/osxfuseN"];
+  fuse -> mount_osxfusefs [label="spawn, pass fd"];
+  fuse -> wait [label="goroutine", note="blocks on cmd.Wait"];
+  app <-- fuse [label="Mount returns"];
+
+  mount_osxfusefs -> kernel [label="mount(2)"];
+
+  app -> fuse [label="fs.Serve"];
+  fuse => kernel [label="read /dev/osxfuseN fd", note="starts with InitRequest,\nalso seen before mount exits:\ntwo StatfsRequest calls"];
+  fuse => app [label="FS/Node/Handle methods"];
+  fuse => kernel [label="write /dev/osxfuseN fd"];
+  ... repeat ...
+
+  kernel ->> mounts [label="mount is visible"];
+  mount_osxfusefs <-- kernel [label="mount(2) returns"];
+  wait <<-- mount_osxfusefs [diagonal, label="exit", leftnote="on OS X, successful exit\nhere means we finally know\nthe mount has happened\n(can't trust InitRequest,\nkernel might have timed out\nwaiting for InitResponse)"];
+
+  app <<-- wait [diagonal, label="mount is ready,\nclose Conn.Ready", rightnote="InitRequest and StatfsRequest\nmay or may not be seen\nbefore Conn.Ready,\ndepending on platform"];
+
+  ... shutting down ...
+  app -> fuse [label="Unmount"];
+  fuse -> kernel [label="umount(2)"];
+  kernel <<-- mounts;
+  fuse <-- kernel;
+  app <-- fuse [label="Unmount returns"];
+
+  // actually triggers before above
+  fuse <<-- kernel [diagonal, label="/dev/osxfuseN EOF"];
+  app <-- fuse [label="fs.Serve returns"];
+
+  app -> fuse [label="conn.Close"];
+  fuse -> kernel [label="close /dev/osxfuseN"];
+  fuse <-- kernel;
+  app <-- fuse;
+}

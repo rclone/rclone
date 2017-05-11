@@ -1,0 +1,32 @@
+seqdiag {
+  app;
+  fuse [label="bazil.org/fuse"];
+  wait [label="callMount\nhelper goroutine"];
+  mount_osxfusefs;
+  kernel;
+
+  app -> fuse [label="Mount"];
+  fuse -> kernel [label="open /dev/osxfuseN"];
+  fuse -> mount_osxfusefs [label="spawn, pass fd"];
+  fuse -> wait [label="goroutine", note="blocks on cmd.Wait"];
+  app <-- fuse [label="Mount returns"];
+
+  mount_osxfusefs -> kernel [label="mount(2)"];
+
+  app -> fuse [label="fs.Serve"];
+  fuse => kernel [label="read /dev/osxfuseN fd", note="starts with InitRequest,\nalso seen before mount exits:\ntwo StatfsRequest calls"];
+  fuse -> app [label="Init"];
+  fuse <-- app [color=red];
+  fuse -> kernel [label="write /dev/osxfuseN fd", color=red];
+  fuse <-- kernel;
+
+  mount_osxfusefs <-- kernel [label="mount(2) returns", color=red];
+  wait <<-- mount_osxfusefs [diagonal, label="exit", color=red];
+  app <<-- wait [diagonal, label="mount has failed,\nclose Conn.Ready", color=red];
+
+  // actually triggers before above
+  fuse <<-- kernel [diagonal, label="/dev/osxfuseN EOF"];
+  app <-- fuse [label="fs.Serve returns"];
+  ... conn.MountError != nil, so it was was never mounted ...
+  ... call conn.Close to clean up ...
+}

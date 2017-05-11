@@ -34,7 +34,7 @@
 // Package stats is for collecting and reporting various network and RPC stats.
 // This package is for monitoring purpose only. All fields are read-only.
 // All APIs are experimental.
-package stats
+package stats // import "google.golang.org/grpc/stats"
 
 import (
 	"net"
@@ -184,7 +184,7 @@ type End struct {
 	Client bool
 	// EndTime is the time when the RPC ends.
 	EndTime time.Time
-	// Error is the error just happened. Its type is gRPC error.
+	// Error is the error just happened.  It implements status.Status if non-nil.
 	Error error
 }
 

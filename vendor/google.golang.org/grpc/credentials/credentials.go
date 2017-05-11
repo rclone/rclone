@@ -35,7 +35,7 @@
 // which encapsulate all the state needed by a client to authenticate with a
 // server and make various assertions, e.g., about the client's identity, role,
 // or whether it is authorized to make a particular call.
-package credentials
+package credentials // import "google.golang.org/grpc/credentials"
 
 import (
 	"crypto/tls"
@@ -102,6 +102,10 @@ type TransportCredentials interface {
 	// authentication protocol on rawConn for clients. It returns the authenticated
 	// connection and the corresponding auth information about the connection.
 	// Implementations must use the provided context to implement timely cancellation.
+	// gRPC will try to reconnect if the error returned is a temporary error
+	// (io.EOF, context.DeadlineExceeded or err.Temporary() == true).
+	// If the returned error is a wrapper error, implementations should make sure that
+	// the error implements Temporary() to have the correct retry behaviors.
 	ClientHandshake(context.Context, string, net.Conn) (net.Conn, AuthInfo, error)
 	// ServerHandshake does the authentication handshake for servers. It returns
 	// the authenticated connection and the corresponding auth information about

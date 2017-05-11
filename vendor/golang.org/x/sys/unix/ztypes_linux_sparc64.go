@@ -226,6 +226,14 @@ type RawSockaddrALG struct {
 	Name   [64]uint8
 }
 
+type RawSockaddrVM struct {
+	Family    uint16
+	Reserved1 uint16
+	Port      uint32
+	Cid       uint32
+	Zero      [4]uint8
+}
+
 type RawSockaddr struct {
 	Family uint16
 	Data   [14]int8
@@ -352,6 +360,7 @@ const (
 	SizeofSockaddrHCI       = 0x6
 	SizeofSockaddrCAN       = 0x10
 	SizeofSockaddrALG       = 0x58
+	SizeofSockaddrVM        = 0x10
 	SizeofLinger            = 0x8
 	SizeofIPMreq            = 0x8
 	SizeofIPMreqn           = 0xc

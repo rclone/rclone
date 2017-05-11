@@ -1,0 +1,136 @@
+
+## Gopkg.toml example (these lines may be deleted)
+
+## "required" lists a set of packages (not projects) that must be included in
+## Gopkg.lock. This list is merged with the set of packages imported by the current
+## project. Use it when your project needs a package it doesn't explicitly import -
+## including "main" packages.
+# required = ["github.com/user/thing/cmd/thing"]
+
+## "ignored" lists a set of packages (not projects) that are ignored when
+## dep statically analyzes source code. Ignored packages can be in this project,
+## or in a dependency.
+# ignored = ["github.com/user/project/badpkg"]
+
+## Dependencies define constraints on dependent projects. They are respected by
+## dep whether coming from the Gopkg.toml of the current project or a dependency.
+# [[dependencies]]
+## Required: the root import path of the project being constrained.
+# name = "github.com/user/project"
+#
+## Recommended: the version constraint to enforce for the project.
+## Only one of "branch", "version" or "revision" can be specified.
+# version = "1.0.0"
+# branch = "master"
+# revision = "abc123"
+#
+## Optional: an alternate location (URL or import path) for the project's source.
+# source = "https://github.com/myfork/package.git"
+
+## Overrides have the same structure as [[dependencies]], but supercede all
+## [[dependencies]] declarations from all projects. Only the current project's
+## [[overrides]] are applied.
+##
+## Overrides are a sledgehammer. Use them only as a last resort.
+# [[overrides]]
+## Required: the root import path of the project being constrained.
+# name = "github.com/user/project"
+#
+## Optional: specifying a version constraint override will cause all other
+## constraints on this project to be ignored; only the overriden constraint
+## need be satisfied.
+## Again, only one of "branch", "version" or "revision" can be specified.
+# version = "1.0.0"
+# branch = "master"
+# revision = "abc123"
+#
+## Optional: specifying an alternate source location as an override will
+## enforce that the alternate location is used for that project, regardless of
+## what source location any dependent projects specify.
+# source = "https://github.com/myfork/package.git"
+
+
+
+[[dependencies]]
+  branch = "master"
+  name = "bazil.org/fuse"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/Unknwon/goconfig"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/VividCortex/ewma"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/aws/aws-sdk-go"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/ncw/go-acd"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/ncw/swift"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/pkg/errors"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/pkg/sftp"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/rfjakob/eme"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/skratchdot/open-golang"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/spf13/cobra"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/spf13/pflag"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/stacktic/dropbox"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/stretchr/testify"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/tsenart/tb"
+
+[[dependencies]]
+  branch = "master"
+  name = "golang.org/x/crypto"
+
+[[dependencies]]
+  branch = "master"
+  name = "golang.org/x/net"
+
+[[dependencies]]
+  branch = "master"
+  name = "golang.org/x/oauth2"
+
+[[dependencies]]
+  branch = "master"
+  name = "golang.org/x/sys"
+
+[[dependencies]]
+  branch = "master"
+  name = "golang.org/x/text"
+
+[[dependencies]]
+  branch = "master"
+  name = "google.golang.org/api"

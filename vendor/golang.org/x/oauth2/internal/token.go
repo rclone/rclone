@@ -120,6 +120,15 @@ var brokenAuthHeaderProviders = []string{
 	"https://www.wunderlist.com/oauth/",
 	"https://api.patreon.com/",
 	"https://sandbox.codeswholesale.com/oauth/token",
+	"https://api.sipgate.com/v1/authorization/oauth",
+}
+
+// brokenAuthHeaderDomains lists broken providers that issue dynamic endpoints.
+var brokenAuthHeaderDomains = []string{
+	".force.com",
+	".myshopify.com",
+	".okta.com",
+	".oktapreview.com",
 }
 
 func RegisterBrokenAuthHeaderProvider(tokenURL string) {
@@ -142,6 +151,14 @@ func providerAuthHeaderWorks(tokenURL string) bool {
 		}
 	}
 
+	if u, err := url.Parse(tokenURL); err == nil {
+		for _, s := range brokenAuthHeaderDomains {
+			if strings.HasSuffix(u.Host, s) {
+				return false
+			}
+		}
+	}
+
 	// Assume the provider implements the spec properly
 	// otherwise. We can add more exceptions as they're
 	// discovered. We will _not_ be adding configurable hooks
@@ -155,9 +172,13 @@ func RetrieveToken(ctx context.Context, clientID, clientSecret, tokenURL string,
 		return nil, err
 	}
 	bustedAuth := !providerAuthHeaderWorks(tokenURL)
-	if bustedAuth && clientSecret != "" {
-		v.Set("client_id", clientID)
-		v.Set("client_secret", clientSecret)
+	if bustedAuth {
+		if clientID != "" {
+			v.Set("client_id", clientID)
+		}
+		if clientSecret != "" {
+			v.Set("client_secret", clientSecret)
+		}
 	}
 	req, err := http.NewRequest("POST", tokenURL, strings.NewReader(v.Encode()))
 	if err != nil {

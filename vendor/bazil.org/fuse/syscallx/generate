@@ -1,0 +1,34 @@
+#!/bin/sh
+set -e
+
+mksys="$(go env GOROOT)/src/pkg/syscall/mksyscall.pl"
+
+fix() {
+    sed 's,^package syscall$,&x\nimport "syscall",' \
+	| gofmt -r='BytePtrFromString -> syscall.BytePtrFromString' \
+	| gofmt -r='Syscall6 -> syscall.Syscall6' \
+	| gofmt -r='Syscall -> syscall.Syscall' \
+	| gofmt -r='SYS_GETXATTR -> syscall.SYS_GETXATTR' \
+	| gofmt -r='SYS_LISTXATTR -> syscall.SYS_LISTXATTR' \
+	| gofmt -r='SYS_SETXATTR -> syscall.SYS_SETXATTR' \
+	| gofmt -r='SYS_REMOVEXATTR -> syscall.SYS_REMOVEXATTR' \
+	| gofmt -r='SYS_MSYNC -> syscall.SYS_MSYNC'
+}
+
+cd "$(dirname "$0")"
+
+$mksys xattr_darwin.go \
+    | fix \
+    >xattr_darwin_amd64.go
+
+$mksys -l32 xattr_darwin.go \
+    | fix \
+    >xattr_darwin_386.go
+
+$mksys msync.go \
+    | fix \
+    >msync_amd64.go
+
+$mksys -l32 msync.go \
+    | fix \
+    >msync_386.go

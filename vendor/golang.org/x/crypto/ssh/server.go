@@ -45,6 +45,12 @@ type ServerConfig struct {
 	// authenticating.
 	NoClientAuth bool
 
+	// MaxAuthTries specifies the maximum number of authentication attempts
+	// permitted per connection. If set to a negative number, the number of
+	// attempts are unlimited. If set to zero, the number of attempts are limited
+	// to 6.
+	MaxAuthTries int
+
 	// PasswordCallback, if non-nil, is called when a user
 	// attempts to authenticate using a password.
 	PasswordCallback func(conn ConnMetadata, password []byte) (*Permissions, error)
@@ -143,6 +149,10 @@ type ServerConn struct {
 func NewServerConn(c net.Conn, config *ServerConfig) (*ServerConn, <-chan NewChannel, <-chan *Request, error) {
 	fullConf := *config
 	fullConf.SetDefaults()
+	if fullConf.MaxAuthTries == 0 {
+		fullConf.MaxAuthTries = 6
+	}
+
 	s := &connection{
 		sshConn: sshConn{conn: c},
 	}
@@ -267,8 +277,23 @@ func (s *connection) serverAuthenticate(config *ServerConfig) (*Permissions, err
 	var cache pubKeyCache
 	var perms *Permissions
 
+	authFailures := 0
+
 userAuthLoop:
 	for {
+		if authFailures >= config.MaxAuthTries && config.MaxAuthTries > 0 {
+			discMsg := &disconnectMsg{
+				Reason:  2,
+				Message: "too many authentication failures",
+			}
+
+			if err := s.transport.writePacket(Marshal(discMsg)); err != nil {
+				return nil, err
+			}
+
+			return nil, discMsg
+		}
+
 		var userAuthReq userAuthRequestMsg
 		if packet, err := s.transport.readPacket(); err != nil {
 			return nil, err
@@ -288,6 +313,11 @@ userAuthLoop:
 		case "none":
 			if config.NoClientAuth {
 				authErr = nil
+			}
+
+			// allow initial attempt of 'none' without penalty
+			if authFailures == 0 {
+				authFailures--
 			}
 		case "password":
 			if config.PasswordCallback == nil {
@@ -360,6 +390,7 @@ userAuthLoop:
 			if isQuery {
 				// The client can query if the given public key
 				// would be okay.
+
 				if len(payload) > 0 {
 					return nil, parseError(msgUserAuthRequest)
 				}
@@ -408,6 +439,8 @@ userAuthLoop:
 		if authErr == nil {
 			break userAuthLoop
 		}
+
+		authFailures++
 
 		var failureMsg userAuthFailureMsg
 		if config.PasswordCallback != nil {

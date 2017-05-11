@@ -98,7 +98,7 @@
 // Behavior and metadata of the mounted file system can be changed by
 // passing MountOption values to Mount.
 //
-package fuse
+package fuse // import "bazil.org/fuse"
 
 import (
 	"bytes"

@@ -88,8 +88,8 @@ __handle_reply()
                 local index flag
                 flag="${cur%%=*}"
                 __index_of_word "${flag}" "${flags_with_completion[@]}"
+                COMPREPLY=()
                 if [[ ${index} -ge 0 ]]; then
-                    COMPREPLY=()
                     PREFIX=""
                     cur="${cur#*=}"
                     ${flags_completion[${index}]}
@@ -225,7 +225,7 @@ __handle_command()
     fi
     c=$((c+1))
     __debug "${FUNCNAME[0]}: looking for ${next_command}"
-    declare -F $next_command >/dev/null && $next_command
+    declare -F "$next_command" >/dev/null && $next_command
 }
 
 __handle_word()

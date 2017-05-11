@@ -129,8 +129,21 @@ func (bo *Backoff) Pause() time.Duration {
 	return d
 }
 
+type grpcOpt []grpc.CallOption
+
+func (o grpcOpt) Resolve(s *CallSettings) {
+	s.GRPC = o
+}
+
+func WithGRPCOptions(opt ...grpc.CallOption) CallOption {
+	return grpcOpt(append([]grpc.CallOption(nil), opt...))
+}
+
 type CallSettings struct {
 	// Retry returns a Retryer to be used to control retry logic of a method call.
 	// If Retry is nil or the returned Retryer is nil, the call will not be retried.
 	Retry func() Retryer
+
+	// CallOptions to be forwarded to GRPC.
+	GRPC []grpc.CallOption
 }
