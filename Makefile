@@ -137,3 +137,7 @@ startdev:
 
 gen_tests:
 	cd fstest/fstests && go generate
+
+winzip:
+	zip -9 rclone-$(TAG).zip rclone.exe
+
