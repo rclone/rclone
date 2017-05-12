@@ -7,7 +7,7 @@ clone_folder: c:\gopath\src\github.com\ncw\rclone
 environment:
   GOPATH: c:\gopath
   CPATH: C:\Program Files (x86)\WinFsp\inc\fuse
-  PATH: C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw64\bin;%PATH%
+  PATH: C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw64\bin;c:\MinGW\bin;%PATH%
 
 install:
 - choco install winfsp -y
@@ -20,6 +20,5 @@ build_script:
 - go install
 
 test_script:
-- rmdir vendor\bazil.org\fuse /s /q
-- go test -cpu=2 ./...
-- go test -cpu=2 -short -race ./...
+- copy c:\MinGW\bin\mingw32-make.exe c:\MinGW\bin\make.exe
+- make quicktest
