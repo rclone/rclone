@@ -1,4 +1,4 @@
-memo = "0c86c911e62d7207fb8549d69519a5a795ce4b36aadce87b84504f109eefe60b"
+memo = "28c7ca08636da6264c587a36b72ce4f3a45fdf5c32969ffd2092b98456c73685"
 
 [[projects]]
   branch = "master"
@@ -29,6 +29,12 @@ memo = "0c86c911e62d7207fb8549d69519a5a795ce4b36aadce87b84504f109eefe60b"
   name = "github.com/aws/aws-sdk-go"
   packages = ["aws","aws/awserr","aws/awsutil","aws/client","aws/client/metadata","aws/corehandlers","aws/credentials","aws/credentials/ec2rolecreds","aws/credentials/endpointcreds","aws/credentials/stscreds","aws/defaults","aws/ec2metadata","aws/endpoints","aws/request","aws/session","aws/signer/v4","private/protocol","private/protocol/query","private/protocol/query/queryutil","private/protocol/rest","private/protocol/restxml","private/protocol/xml/xmlutil","service/s3","service/s3/s3iface","service/s3/s3manager","service/sts"]
   revision = "57572ec625c9aa8bf5c45453efa923bacabc0afe"
+
+[[projects]]
+  name = "github.com/billziss-gh/cgofuse"
+  packages = ["fuse"]
+  revision = "b402ef9fb28afcc443348ba2d46b5bfd88867fea"
+  version = "v1.0"
 
 [[projects]]
   name = "github.com/cpuguy83/go-md2man"
