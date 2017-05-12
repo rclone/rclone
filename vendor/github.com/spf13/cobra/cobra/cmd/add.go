@@ -20,7 +20,6 @@ import (
 	"unicode"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func init() {
@@ -117,7 +116,7 @@ func createCmdFile(license License, path, cmdName string) {
 	template := `{{comment .copyright}}
 {{comment .license}}
 
-package cmd
+package {{.cmdPackage}}
 
 import (
 	"fmt"
@@ -158,7 +157,7 @@ func init() {
 	data := make(map[string]interface{})
 	data["copyright"] = copyrightLine()
 	data["license"] = license.Header
-	data["viper"] = viper.GetBool("useViper")
+	data["cmdPackage"] = filepath.Base(filepath.Dir(path)) // last dir of path
 	data["parentName"] = parentName
 	data["cmdName"] = cmdName
 

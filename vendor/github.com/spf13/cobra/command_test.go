@@ -227,7 +227,7 @@ func TestFlagErrorFunc(t *testing.T) {
 
 // TestSortedFlags checks,
 // if cmd.LocalFlags() is unsorted when cmd.Flags().SortFlags set to false.
-// https://github.com/spf13/cobra/issues/404
+// Related to https://github.com/spf13/cobra/issues/404.
 func TestSortedFlags(t *testing.T) {
 	cmd := &Command{}
 	cmd.Flags().SortFlags = false
@@ -263,13 +263,13 @@ func isStringInStringSlice(s string, ss []string) bool {
 // TestHelpFlagInHelp checks,
 // if '--help' flag is shown in help for child (executing `parent help child`),
 // that has no other flags.
-// https://github.com/spf13/cobra/issues/302
+// Related to https://github.com/spf13/cobra/issues/302.
 func TestHelpFlagInHelp(t *testing.T) {
 	output := new(bytes.Buffer)
-	parent := &Command{Use: "parent", Long: "long", Run: func(*Command, []string) { return }}
+	parent := &Command{Use: "parent", Run: func(*Command, []string) {}}
 	parent.SetOutput(output)
 
-	child := &Command{Use: "child", Long: "long", Run: func(*Command, []string) { return }}
+	child := &Command{Use: "child", Run: func(*Command, []string) {}}
 	parent.AddCommand(child)
 
 	parent.SetArgs([]string{"help", "child"})
@@ -279,6 +279,22 @@ func TestHelpFlagInHelp(t *testing.T) {
 	}
 
 	if !strings.Contains(output.String(), "[flags]") {
-		t.Fatalf("\nExpecting to contain: %v\nGot: %v", "[flags]", output.String())
+		t.Errorf("\nExpecting to contain: %v\nGot: %v", "[flags]", output.String())
 	}
+}
+
+// TestMergeCommandLineToFlags checks,
+// if pflag.CommandLine is correctly merged to c.Flags() after first call
+// of c.mergePersistentFlags.
+// Related to https://github.com/spf13/cobra/issues/443.
+func TestMergeCommandLineToFlags(t *testing.T) {
+	pflag.Bool("boolflag", false, "")
+	c := &Command{Use: "c", Run: func(*Command, []string) {}}
+	c.mergePersistentFlags()
+	if c.Flags().Lookup("boolflag") == nil {
+		t.Fatal("Expecting to have flag from CommandLine in c.Flags()")
+	}
+
+	// Reset pflag.CommandLine flagset.
+	pflag.CommandLine = pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
 }

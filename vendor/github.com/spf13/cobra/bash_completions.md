@@ -106,7 +106,7 @@ node                 pod                    replicationcontroller  service
 
 If your nouns have a number of aliases, you can define them alongside `ValidArgs` using `ArgAliases`:
 
-```go`
+```go
 argAliases []string = { "pods", "nodes", "services", "svc", "replicationcontrollers", "rc" }
 
 cmd := &cobra.Command{

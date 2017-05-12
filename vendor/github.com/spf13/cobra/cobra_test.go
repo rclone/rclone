@@ -1150,12 +1150,12 @@ func TestGlobalNormFuncPropagation(t *testing.T) {
 
 func TestFlagOnPflagCommandLine(t *testing.T) {
 	flagName := "flagOnCommandLine"
-	pflag.CommandLine.String(flagName, "", "about my flag")
+	pflag.String(flagName, "", "about my flag")
 	r := fullSetupTest("--help")
 
 	checkResultContains(t, r, flagName)
 
-	// reset CommandLine flagset
+	// Reset pflag.CommandLine flagset.
 	pflag.CommandLine = pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
 }
 

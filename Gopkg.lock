@@ -142,7 +142,7 @@ memo = "0c86c911e62d7207fb8549d69519a5a795ce4b36aadce87b84504f109eefe60b"
   branch = "master"
   name = "github.com/spf13/cobra"
   packages = [".","doc"]
-  revision = "1362f95a8d6fe330d00a64380d6e0b65f4992c72"
+  revision = "90687e7bfc7e1e5cd88eb1f513f32f01dc03dd7c"
 
 [[projects]]
   branch = "master"

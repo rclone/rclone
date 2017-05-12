@@ -1275,8 +1275,8 @@ func (c *Command) Parent() *Command {
 // mergePersistentFlags merges c.PersistentFlags() to c.Flags()
 // and adds missing persistent flags of all parents.
 func (c *Command) mergePersistentFlags() {
-	c.Flags().AddFlagSet(c.PersistentFlags())
 	c.updateParentsPflags()
+	c.Flags().AddFlagSet(c.PersistentFlags())
 	c.Flags().AddFlagSet(c.parentsPflags)
 }
 
