@@ -1,3 +1,13 @@
+Release v1.8.22 (2017-05-11)
+===
+
+### Service Client Updates
+* `service/elb`: Updates service API, documentation, and paginators
+* `service/elbv2`: Updates service API and documentation
+* `service/lexmodelbuildingservice`: Updates service API and documentation
+* `service/organizations`: Updates service API, documentation, paginators, and examples
+  * AWS Organizations APIs that return an Account object now include the email address associated with the account’s root user.
+
 Release v1.8.21 (2017-05-09)
 ===
 

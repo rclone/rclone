@@ -115,6 +115,23 @@
         {"shape":"BadRequestException"}
       ]
     },
+    "DeleteBotVersion":{
+      "name":"DeleteBotVersion",
+      "http":{
+        "method":"DELETE",
+        "requestUri":"/bots/{name}/versions/{version}",
+        "responseCode":204
+      },
+      "input":{"shape":"DeleteBotVersionRequest"},
+      "errors":[
+        {"shape":"NotFoundException"},
+        {"shape":"ConflictException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"BadRequestException"},
+        {"shape":"ResourceInUseException"}
+      ]
+    },
     "DeleteIntent":{
       "name":"DeleteIntent",
       "http":{
@@ -132,6 +149,23 @@
         {"shape":"ResourceInUseException"}
       ]
     },
+    "DeleteIntentVersion":{
+      "name":"DeleteIntentVersion",
+      "http":{
+        "method":"DELETE",
+        "requestUri":"/intents/{name}/versions/{version}",
+        "responseCode":204
+      },
+      "input":{"shape":"DeleteIntentVersionRequest"},
+      "errors":[
+        {"shape":"NotFoundException"},
+        {"shape":"ConflictException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"BadRequestException"},
+        {"shape":"ResourceInUseException"}
+      ]
+    },
     "DeleteSlotType":{
       "name":"DeleteSlotType",
       "http":{
@@ -140,6 +174,23 @@
         "responseCode":204
       },
       "input":{"shape":"DeleteSlotTypeRequest"},
+      "errors":[
+        {"shape":"NotFoundException"},
+        {"shape":"ConflictException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"BadRequestException"},
+        {"shape":"ResourceInUseException"}
+      ]
+    },
+    "DeleteSlotTypeVersion":{
+      "name":"DeleteSlotTypeVersion",
+      "http":{
+        "method":"DELETE",
+        "requestUri":"/slottypes/{name}/version/{version}",
+        "responseCode":204
+      },
+      "input":{"shape":"DeleteSlotTypeVersionRequest"},
       "errors":[
         {"shape":"NotFoundException"},
         {"shape":"ConflictException"},
@@ -814,8 +865,26 @@
           "shape":"BotName",
           "location":"uri",
           "locationName":"name"
+        }
+      }
+    },
+    "DeleteBotVersionRequest":{
+      "type":"structure",
+      "required":[
+        "name",
+        "version"
+      ],
+      "members":{
+        "name":{
+          "shape":"BotName",
+          "location":"uri",
+          "locationName":"name"
         },
-        "version":{"shape":"Version"}
+        "version":{
+          "shape":"NumericalVersion",
+          "location":"uri",
+          "locationName":"version"
+        }
       }
     },
     "DeleteIntentRequest":{
@@ -826,8 +895,26 @@
           "shape":"IntentName",
           "location":"uri",
           "locationName":"name"
+        }
+      }
+    },
+    "DeleteIntentVersionRequest":{
+      "type":"structure",
+      "required":[
+        "name",
+        "version"
+      ],
+      "members":{
+        "name":{
+          "shape":"IntentName",
+          "location":"uri",
+          "locationName":"name"
         },
-        "version":{"shape":"Version"}
+        "version":{
+          "shape":"NumericalVersion",
+          "location":"uri",
+          "locationName":"version"
+        }
       }
     },
     "DeleteSlotTypeRequest":{
@@ -838,8 +925,26 @@
           "shape":"SlotTypeName",
           "location":"uri",
           "locationName":"name"
+        }
+      }
+    },
+    "DeleteSlotTypeVersionRequest":{
+      "type":"structure",
+      "required":[
+        "name",
+        "version"
+      ],
+      "members":{
+        "name":{
+          "shape":"SlotTypeName",
+          "location":"uri",
+          "locationName":"name"
         },
-        "version":{"shape":"Version"}
+        "version":{
+          "shape":"NumericalVersion",
+          "location":"uri",
+          "locationName":"version"
+        }
       }
     },
     "DeleteUtterancesRequest":{
@@ -1565,6 +1670,12 @@
       },
       "error":{"httpStatusCode":404},
       "exception":true
+    },
+    "NumericalVersion":{
+      "type":"string",
+      "max":64,
+      "min":1,
+      "pattern":"[0-9]+"
     },
     "PreconditionFailedException":{
       "type":"structure",

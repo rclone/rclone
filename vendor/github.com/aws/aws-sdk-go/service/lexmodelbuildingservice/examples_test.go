@@ -87,8 +87,7 @@ func ExampleLexModelBuildingService_DeleteBot() {
 	svc := lexmodelbuildingservice.New(sess)
 
 	params := &lexmodelbuildingservice.DeleteBotInput{
-		Name:    aws.String("BotName"), // Required
-		Version: aws.String("Version"),
+		Name: aws.String("BotName"), // Required
 	}
 	resp, err := svc.DeleteBot(params)
 
@@ -148,16 +147,59 @@ func ExampleLexModelBuildingService_DeleteBotChannelAssociation() {
 	fmt.Println(resp)
 }
 
+func ExampleLexModelBuildingService_DeleteBotVersion() {
+	sess := session.Must(session.NewSession())
+
+	svc := lexmodelbuildingservice.New(sess)
+
+	params := &lexmodelbuildingservice.DeleteBotVersionInput{
+		Name:    aws.String("BotName"),          // Required
+		Version: aws.String("NumericalVersion"), // Required
+	}
+	resp, err := svc.DeleteBotVersion(params)
+
+	if err != nil {
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
+	}
+
+	// Pretty-print the response data.
+	fmt.Println(resp)
+}
+
 func ExampleLexModelBuildingService_DeleteIntent() {
 	sess := session.Must(session.NewSession())
 
 	svc := lexmodelbuildingservice.New(sess)
 
 	params := &lexmodelbuildingservice.DeleteIntentInput{
-		Name:    aws.String("IntentName"), // Required
-		Version: aws.String("Version"),
+		Name: aws.String("IntentName"), // Required
 	}
 	resp, err := svc.DeleteIntent(params)
+
+	if err != nil {
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
+	}
+
+	// Pretty-print the response data.
+	fmt.Println(resp)
+}
+
+func ExampleLexModelBuildingService_DeleteIntentVersion() {
+	sess := session.Must(session.NewSession())
+
+	svc := lexmodelbuildingservice.New(sess)
+
+	params := &lexmodelbuildingservice.DeleteIntentVersionInput{
+		Name:    aws.String("IntentName"),       // Required
+		Version: aws.String("NumericalVersion"), // Required
+	}
+	resp, err := svc.DeleteIntentVersion(params)
 
 	if err != nil {
 		// Print the error, cast err to awserr.Error to get the Code and
@@ -176,10 +218,31 @@ func ExampleLexModelBuildingService_DeleteSlotType() {
 	svc := lexmodelbuildingservice.New(sess)
 
 	params := &lexmodelbuildingservice.DeleteSlotTypeInput{
-		Name:    aws.String("SlotTypeName"), // Required
-		Version: aws.String("Version"),
+		Name: aws.String("SlotTypeName"), // Required
 	}
 	resp, err := svc.DeleteSlotType(params)
+
+	if err != nil {
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
+	}
+
+	// Pretty-print the response data.
+	fmt.Println(resp)
+}
+
+func ExampleLexModelBuildingService_DeleteSlotTypeVersion() {
+	sess := session.Must(session.NewSession())
+
+	svc := lexmodelbuildingservice.New(sess)
+
+	params := &lexmodelbuildingservice.DeleteSlotTypeVersionInput{
+		Name:    aws.String("SlotTypeName"),     // Required
+		Version: aws.String("NumericalVersion"), // Required
+	}
+	resp, err := svc.DeleteSlotTypeVersion(params)
 
 	if err != nil {
 		// Print the error, cast err to awserr.Error to get the Code and

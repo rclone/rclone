@@ -387,9 +387,8 @@ func (c *LexModelBuildingService) DeleteBotRequest(input *DeleteBotInput) (req *
 
 // DeleteBot API operation for Amazon Lex Model Building Service.
 //
-// Deletes a bot. If you specify a bot version in the request, the API deletes
-// only the specified bot version. If you don't specify a version, the API deletes
-// all versions of the bot, including the $LATEST version.
+// Deletes all versions of the bot, including the $LATEST version. To delete
+// a specific version of the bot, use the operation.
 //
 // If a bot has an alias, you can't delete it. Instead, the DeleteBot operation
 // returns a ResourceInUseException exception that includes a reference to the
@@ -675,6 +674,118 @@ func (c *LexModelBuildingService) DeleteBotChannelAssociationWithContext(ctx aws
 	return out, req.Send()
 }
 
+const opDeleteBotVersion = "DeleteBotVersion"
+
+// DeleteBotVersionRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteBotVersion operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DeleteBotVersion for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteBotVersion method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteBotVersionRequest method.
+//    req, resp := client.DeleteBotVersionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/lex-models-2017-04-19/DeleteBotVersion
+func (c *LexModelBuildingService) DeleteBotVersionRequest(input *DeleteBotVersionInput) (req *request.Request, output *DeleteBotVersionOutput) {
+	op := &request.Operation{
+		Name:       opDeleteBotVersion,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/bots/{name}/versions/{version}",
+	}
+
+	if input == nil {
+		input = &DeleteBotVersionInput{}
+	}
+
+	output = &DeleteBotVersionOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(restjson.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeleteBotVersion API operation for Amazon Lex Model Building Service.
+//
+// Deletes a specific version of a bot. To delete all versions of a bot, use
+// the operation.
+//
+// This operation requires permissions for the lex:DeleteBotVersion action.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lex Model Building Service's
+// API operation DeleteBotVersion for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The resource specified in the request was not found. Check the resource and
+//   try again.
+//
+//   * ErrCodeConflictException "ConflictException"
+//   There was a conflict processing the request. Try your request again.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   The request exceeded a limit. Try your request again.
+//
+//   * ErrCodeInternalFailureException "InternalFailureException"
+//   An internal Amazon Lex error occurred. Try your request again.
+//
+//   * ErrCodeBadRequestException "BadRequestException"
+//   The request is not well formed. For example, a value is invalid or a required
+//   field is missing. Check the field values, and try again.
+//
+//   * ErrCodeResourceInUseException "ResourceInUseException"
+//   The resource that you are attempting to delete is referred to by another
+//   resource. Use this information to remove references to the resource that
+//   you are trying to delete.
+//
+//   The body of the exception contains a JSON object that describes the resource.
+//
+//   { "resourceType": BOT | BOTALIAS | BOTCHANNEL | INTENT,
+//
+//   "resourceReference": {
+//
+//   "name": string, "version": string } }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/lex-models-2017-04-19/DeleteBotVersion
+func (c *LexModelBuildingService) DeleteBotVersion(input *DeleteBotVersionInput) (*DeleteBotVersionOutput, error) {
+	req, out := c.DeleteBotVersionRequest(input)
+	return out, req.Send()
+}
+
+// DeleteBotVersionWithContext is the same as DeleteBotVersion with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteBotVersion for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LexModelBuildingService) DeleteBotVersionWithContext(ctx aws.Context, input *DeleteBotVersionInput, opts ...request.Option) (*DeleteBotVersionOutput, error) {
+	req, out := c.DeleteBotVersionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteIntent = "DeleteIntent"
 
 // DeleteIntentRequest generates a "aws/request.Request" representing the
@@ -722,10 +833,8 @@ func (c *LexModelBuildingService) DeleteIntentRequest(input *DeleteIntentInput) 
 
 // DeleteIntent API operation for Amazon Lex Model Building Service.
 //
-// Deletes an intent. If you specify a version in the request, the API deletes
-// only the specified version of the intent. If you don't specify a version
-// in the request, the API deletes all of the versions of the intent, including
-// the $LATEST version.
+// Deletes all versions of the intent, including the $LATEST version. To delete
+// a specific version of the intent, use the operation.
 //
 // You can delete a version of an intent only if it is not referenced. To delete
 // an intent that is referred to in one or more bots (see how-it-works), you
@@ -799,6 +908,118 @@ func (c *LexModelBuildingService) DeleteIntentWithContext(ctx aws.Context, input
 	return out, req.Send()
 }
 
+const opDeleteIntentVersion = "DeleteIntentVersion"
+
+// DeleteIntentVersionRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteIntentVersion operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DeleteIntentVersion for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteIntentVersion method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteIntentVersionRequest method.
+//    req, resp := client.DeleteIntentVersionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/lex-models-2017-04-19/DeleteIntentVersion
+func (c *LexModelBuildingService) DeleteIntentVersionRequest(input *DeleteIntentVersionInput) (req *request.Request, output *DeleteIntentVersionOutput) {
+	op := &request.Operation{
+		Name:       opDeleteIntentVersion,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/intents/{name}/versions/{version}",
+	}
+
+	if input == nil {
+		input = &DeleteIntentVersionInput{}
+	}
+
+	output = &DeleteIntentVersionOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(restjson.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeleteIntentVersion API operation for Amazon Lex Model Building Service.
+//
+// Deletes a specific version of an intent. To delete all versions of a intent,
+// use the operation.
+//
+// This operation requires permissions for the lex:DeleteIntentVersion action.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lex Model Building Service's
+// API operation DeleteIntentVersion for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The resource specified in the request was not found. Check the resource and
+//   try again.
+//
+//   * ErrCodeConflictException "ConflictException"
+//   There was a conflict processing the request. Try your request again.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   The request exceeded a limit. Try your request again.
+//
+//   * ErrCodeInternalFailureException "InternalFailureException"
+//   An internal Amazon Lex error occurred. Try your request again.
+//
+//   * ErrCodeBadRequestException "BadRequestException"
+//   The request is not well formed. For example, a value is invalid or a required
+//   field is missing. Check the field values, and try again.
+//
+//   * ErrCodeResourceInUseException "ResourceInUseException"
+//   The resource that you are attempting to delete is referred to by another
+//   resource. Use this information to remove references to the resource that
+//   you are trying to delete.
+//
+//   The body of the exception contains a JSON object that describes the resource.
+//
+//   { "resourceType": BOT | BOTALIAS | BOTCHANNEL | INTENT,
+//
+//   "resourceReference": {
+//
+//   "name": string, "version": string } }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/lex-models-2017-04-19/DeleteIntentVersion
+func (c *LexModelBuildingService) DeleteIntentVersion(input *DeleteIntentVersionInput) (*DeleteIntentVersionOutput, error) {
+	req, out := c.DeleteIntentVersionRequest(input)
+	return out, req.Send()
+}
+
+// DeleteIntentVersionWithContext is the same as DeleteIntentVersion with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteIntentVersion for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LexModelBuildingService) DeleteIntentVersionWithContext(ctx aws.Context, input *DeleteIntentVersionInput, opts ...request.Option) (*DeleteIntentVersionOutput, error) {
+	req, out := c.DeleteIntentVersionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteSlotType = "DeleteSlotType"
 
 // DeleteSlotTypeRequest generates a "aws/request.Request" representing the
@@ -846,19 +1067,19 @@ func (c *LexModelBuildingService) DeleteSlotTypeRequest(input *DeleteSlotTypeInp
 
 // DeleteSlotType API operation for Amazon Lex Model Building Service.
 //
-// Deletes a slot type. If you specify a version in the request, the API deletes
-// the specific version. If you don't specify a version in the request, the
-// API deletes all versions of the slot type, including the $LATEST version.
+// Deletes all versions of the slot type, including the $LATEST version. To
+// delete a specific version of the slot type, use the operation.
 //
 // You can delete a version of a slot type only if it is not referenced. To
 // delete a slot type that is referred to in one or more intents, you must remove
 // those references first.
 //
-// If you get the SlotTypeInUse exception, the exception provides an example
-// reference that shows the intent where the slot type is referenced. To remove
-// the reference to the slot type, either update the intent or delete it. If
-// you get the same exception when you attempt to delete the intent again, repeat
-// until the intent has no references and the DeleteSlotType call is successful.
+// If you get the ResourceInUseException exception, the exception provides an
+// example reference that shows the intent where the slot type is referenced.
+// To remove the reference to the slot type, either update the intent or delete
+// it. If you get the same exception when you attempt to delete the slot type
+// again, repeat until the slot type has no references and the DeleteSlotType
+// call is successful.
 //
 // This operation requires permission for the lex:DeleteSlotType action.
 //
@@ -922,6 +1143,118 @@ func (c *LexModelBuildingService) DeleteSlotTypeWithContext(ctx aws.Context, inp
 	return out, req.Send()
 }
 
+const opDeleteSlotTypeVersion = "DeleteSlotTypeVersion"
+
+// DeleteSlotTypeVersionRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteSlotTypeVersion operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DeleteSlotTypeVersion for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteSlotTypeVersion method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteSlotTypeVersionRequest method.
+//    req, resp := client.DeleteSlotTypeVersionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/lex-models-2017-04-19/DeleteSlotTypeVersion
+func (c *LexModelBuildingService) DeleteSlotTypeVersionRequest(input *DeleteSlotTypeVersionInput) (req *request.Request, output *DeleteSlotTypeVersionOutput) {
+	op := &request.Operation{
+		Name:       opDeleteSlotTypeVersion,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/slottypes/{name}/version/{version}",
+	}
+
+	if input == nil {
+		input = &DeleteSlotTypeVersionInput{}
+	}
+
+	output = &DeleteSlotTypeVersionOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(restjson.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeleteSlotTypeVersion API operation for Amazon Lex Model Building Service.
+//
+// Deletes a specific version of a slot type. To delete all versions of a slot
+// type, use the operation.
+//
+// This operation requires permissions for the lex:DeleteSlotTypeVersion action.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Lex Model Building Service's
+// API operation DeleteSlotTypeVersion for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeNotFoundException "NotFoundException"
+//   The resource specified in the request was not found. Check the resource and
+//   try again.
+//
+//   * ErrCodeConflictException "ConflictException"
+//   There was a conflict processing the request. Try your request again.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   The request exceeded a limit. Try your request again.
+//
+//   * ErrCodeInternalFailureException "InternalFailureException"
+//   An internal Amazon Lex error occurred. Try your request again.
+//
+//   * ErrCodeBadRequestException "BadRequestException"
+//   The request is not well formed. For example, a value is invalid or a required
+//   field is missing. Check the field values, and try again.
+//
+//   * ErrCodeResourceInUseException "ResourceInUseException"
+//   The resource that you are attempting to delete is referred to by another
+//   resource. Use this information to remove references to the resource that
+//   you are trying to delete.
+//
+//   The body of the exception contains a JSON object that describes the resource.
+//
+//   { "resourceType": BOT | BOTALIAS | BOTCHANNEL | INTENT,
+//
+//   "resourceReference": {
+//
+//   "name": string, "version": string } }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/lex-models-2017-04-19/DeleteSlotTypeVersion
+func (c *LexModelBuildingService) DeleteSlotTypeVersion(input *DeleteSlotTypeVersionInput) (*DeleteSlotTypeVersionOutput, error) {
+	req, out := c.DeleteSlotTypeVersionRequest(input)
+	return out, req.Send()
+}
+
+// DeleteSlotTypeVersionWithContext is the same as DeleteSlotTypeVersion with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteSlotTypeVersion for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LexModelBuildingService) DeleteSlotTypeVersionWithContext(ctx aws.Context, input *DeleteSlotTypeVersionInput, opts ...request.Option) (*DeleteSlotTypeVersionOutput, error) {
+	req, out := c.DeleteSlotTypeVersionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteUtterances = "DeleteUtterances"
 
 // DeleteUtterancesRequest generates a "aws/request.Request" representing the
@@ -971,9 +1304,13 @@ func (c *LexModelBuildingService) DeleteUtterancesRequest(input *DeleteUtterance
 //
 // Deletes stored utterances.
 //
-// When you create or update a bot using the operation, configure your bot to
-// store user utterances by setting privacySetting to STORE_UTTERANCES. Use
-// DeleteUtterances to remove the stored utterances for a specific user .
+// Amazon Lex stores the utterances that users send to your bot unless the childDirected
+// field in the bot is set to true. Utterances are stored for 15 days for use
+// with the operation, and then stored indefinately for use in improving the
+// ability of your bot to respond to user input.
+//
+// Use the DeleteStoredUtterances operation to manually delete stored utterances
+// for a specific user.
 //
 // This operation requires permissions for the lex:DeleteUtterances action.
 //
@@ -1163,6 +1500,8 @@ func (c *LexModelBuildingService) GetBotAliasRequest(input *GetBotAliasInput) (r
 // Returns information about an Amazon Lex bot alias. For more information about
 // aliases, see versioning-aliases.
 //
+// This operation requires permissions for the lex:GetBotAlias action.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -1259,6 +1598,8 @@ func (c *LexModelBuildingService) GetBotAliasesRequest(input *GetBotAliasesInput
 // GetBotAliases API operation for Amazon Lex Model Building Service.
 //
 // Returns a list of aliases for a specified Amazon Lex bot.
+//
+// This operation requires permissions for the lex:GetBotAliases action.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1398,6 +1739,9 @@ func (c *LexModelBuildingService) GetBotChannelAssociationRequest(input *GetBotC
 // Returns information about the association between an Amazon Lex bot and a
 // messaging platform.
 //
+// This operation requires permissions for the lex:GetBotChannelAssociation
+// action.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -1494,6 +1838,9 @@ func (c *LexModelBuildingService) GetBotChannelAssociationsRequest(input *GetBot
 // GetBotChannelAssociations API operation for Amazon Lex Model Building Service.
 //
 // Returns a list of all of the channels associated with the specified bot.
+//
+// The GetBotChannelAssociations operation requires permissions for the lex:GetBotChannelAssociations
+// action.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1645,6 +1992,8 @@ func (c *LexModelBuildingService) GetBotVersionsRequest(input *GetBotVersionsInp
 //
 // The GetBotVersions operation always returns at least one version, the $LATEST
 // version.
+//
+// This operation requires permissions for the lex:GetBotVersions action.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2437,6 +2786,8 @@ func (c *LexModelBuildingService) GetIntentVersionsRequest(input *GetIntentVersi
 // The GetIntentVersions operation always returns at least one version, the
 // $LATEST version.
 //
+// This operation requires permissions for the lex:GetIntentVersions action.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -2841,6 +3192,8 @@ func (c *LexModelBuildingService) GetSlotTypeVersionsRequest(input *GetSlotTypeV
 // The GetSlotTypeVersions operation always returns at least one version, the
 // $LATEST version.
 //
+// This operation requires permissions for the lex:GetSlotTypeVersions action.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -3150,8 +3503,15 @@ func (c *LexModelBuildingService) GetUtterancesViewRequest(input *GetUtterancesV
 // old version and the new so that you can compare the performance across the
 // two versions.
 //
-// You can request information for up to 5 versions in each request. The response
-// contains information about a maximum of 100 utterances for each version.
+// Data is available for the last 15 days. You can request information for up
+// to 5 versions in each request. The response contains information about a
+// maximum of 100 utterances for each version.
+//
+// If the bot's childDirected field is set to true, utterances for the bot are
+// not stored and cannot be retrieved with the GetUtterancesView operation.
+// For more information, see .
+//
+// This operation requires permissions for the lex:GetUtterancesView action.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3239,10 +3599,10 @@ func (c *LexModelBuildingService) PutBotRequest(input *PutBotInput) (req *reques
 // PutBot API operation for Amazon Lex Model Building Service.
 //
 // Creates an Amazon Lex conversational bot or replaces an existing bot. When
-// you create or update an intent you only required to specify a name. You can
-// use this to add intents later, or to remove intents from an existing bot.
-// When you create a bot with a name only, the bot is created or updated but
-// Amazon Lex returns the response FAILED. You can build the bot after you add one or more intents. For more information
+// you create or update a bot you only required to specify a name. You can use
+// this to add intents later, or to remove intents from an existing bot. When
+// you create a bot with a name only, the bot is created or updated but Amazon
+// Lex returns the response FAILED. You can build the bot after you add one or more intents. For more information
 // about Amazon Lex bots, see how-it-works.
 //
 // If you specify the name of an existing bot, the fields in the request replace
@@ -3485,8 +3845,7 @@ func (c *LexModelBuildingService) PutIntentRequest(input *PutIntentInput) (req *
 //
 // For more information, see how-it-works.
 //
-// This operation requires permissions for the lex:PutIntent action. For more
-// information, see auth-and-access-control.
+// This operation requires permissions for the lex:PutIntent action.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4100,7 +4459,7 @@ type CreateBotVersionOutput struct {
 	// see .
 	AbortStatement *Statement `locationName:"abortStatement" type:"structure"`
 
-	// Checksum identifying the version of the boat that was created.
+	// Checksum identifying the version of the bot that was created.
 	Checksum *string `locationName:"checksum" type:"string"`
 
 	// For each Amazon Lex bot created with the Amazon Lex Model Building Service,
@@ -4793,9 +5152,6 @@ type DeleteBotInput struct {
 	//
 	// Name is a required field
 	Name *string `location:"uri" locationName:"name" min:"2" type:"string" required:"true"`
-
-	// The version of the bot.
-	Version *string `locationName:"version" min:"1" type:"string"`
 }
 
 // String returns the string representation
@@ -4817,9 +5173,6 @@ func (s *DeleteBotInput) Validate() error {
 	if s.Name != nil && len(*s.Name) < 2 {
 		invalidParams.Add(request.NewErrParamMinLen("Name", 2))
 	}
-	if s.Version != nil && len(*s.Version) < 1 {
-		invalidParams.Add(request.NewErrParamMinLen("Version", 1))
-	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -4830,12 +5183,6 @@ func (s *DeleteBotInput) Validate() error {
 // SetName sets the Name field's value.
 func (s *DeleteBotInput) SetName(v string) *DeleteBotInput {
 	s.Name = &v
-	return s
-}
-
-// SetVersion sets the Version field's value.
-func (s *DeleteBotInput) SetVersion(v string) *DeleteBotInput {
-	s.Version = &v
 	return s
 }
 
@@ -4854,6 +5201,81 @@ func (s DeleteBotOutput) GoString() string {
 	return s.String()
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/lex-models-2017-04-19/DeleteBotVersionRequest
+type DeleteBotVersionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the bot.
+	//
+	// Name is a required field
+	Name *string `location:"uri" locationName:"name" min:"2" type:"string" required:"true"`
+
+	// The version of the bot to delete. You cannot delete the $LATEST version of
+	// the bot. To delete the $LATEST version, use the operation.
+	//
+	// Version is a required field
+	Version *string `location:"uri" locationName:"version" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteBotVersionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteBotVersionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteBotVersionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteBotVersionInput"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 2 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 2))
+	}
+	if s.Version == nil {
+		invalidParams.Add(request.NewErrParamRequired("Version"))
+	}
+	if s.Version != nil && len(*s.Version) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Version", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetName sets the Name field's value.
+func (s *DeleteBotVersionInput) SetName(v string) *DeleteBotVersionInput {
+	s.Name = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *DeleteBotVersionInput) SetVersion(v string) *DeleteBotVersionInput {
+	s.Version = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/lex-models-2017-04-19/DeleteBotVersionOutput
+type DeleteBotVersionOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteBotVersionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteBotVersionOutput) GoString() string {
+	return s.String()
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/lex-models-2017-04-19/DeleteIntentRequest
 type DeleteIntentInput struct {
 	_ struct{} `type:"structure"`
@@ -4862,9 +5284,6 @@ type DeleteIntentInput struct {
 	//
 	// Name is a required field
 	Name *string `location:"uri" locationName:"name" min:"1" type:"string" required:"true"`
-
-	// The version of the intent.
-	Version *string `locationName:"version" min:"1" type:"string"`
 }
 
 // String returns the string representation
@@ -4886,9 +5305,6 @@ func (s *DeleteIntentInput) Validate() error {
 	if s.Name != nil && len(*s.Name) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
 	}
-	if s.Version != nil && len(*s.Version) < 1 {
-		invalidParams.Add(request.NewErrParamMinLen("Version", 1))
-	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -4899,12 +5315,6 @@ func (s *DeleteIntentInput) Validate() error {
 // SetName sets the Name field's value.
 func (s *DeleteIntentInput) SetName(v string) *DeleteIntentInput {
 	s.Name = &v
-	return s
-}
-
-// SetVersion sets the Version field's value.
-func (s *DeleteIntentInput) SetVersion(v string) *DeleteIntentInput {
-	s.Version = &v
 	return s
 }
 
@@ -4923,6 +5333,81 @@ func (s DeleteIntentOutput) GoString() string {
 	return s.String()
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/lex-models-2017-04-19/DeleteIntentVersionRequest
+type DeleteIntentVersionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the intent.
+	//
+	// Name is a required field
+	Name *string `location:"uri" locationName:"name" min:"1" type:"string" required:"true"`
+
+	// The version of the intent to delete. You cannot delete the $LATEST version
+	// of the intent. To delete the $LATEST version, use the operation.
+	//
+	// Version is a required field
+	Version *string `location:"uri" locationName:"version" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteIntentVersionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteIntentVersionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteIntentVersionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteIntentVersionInput"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+	if s.Version == nil {
+		invalidParams.Add(request.NewErrParamRequired("Version"))
+	}
+	if s.Version != nil && len(*s.Version) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Version", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetName sets the Name field's value.
+func (s *DeleteIntentVersionInput) SetName(v string) *DeleteIntentVersionInput {
+	s.Name = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *DeleteIntentVersionInput) SetVersion(v string) *DeleteIntentVersionInput {
+	s.Version = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/lex-models-2017-04-19/DeleteIntentVersionOutput
+type DeleteIntentVersionOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteIntentVersionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteIntentVersionOutput) GoString() string {
+	return s.String()
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/lex-models-2017-04-19/DeleteSlotTypeRequest
 type DeleteSlotTypeInput struct {
 	_ struct{} `type:"structure"`
@@ -4931,9 +5416,6 @@ type DeleteSlotTypeInput struct {
 	//
 	// Name is a required field
 	Name *string `location:"uri" locationName:"name" min:"1" type:"string" required:"true"`
-
-	// The version of the slot type.
-	Version *string `locationName:"version" min:"1" type:"string"`
 }
 
 // String returns the string representation
@@ -4955,9 +5437,6 @@ func (s *DeleteSlotTypeInput) Validate() error {
 	if s.Name != nil && len(*s.Name) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
 	}
-	if s.Version != nil && len(*s.Version) < 1 {
-		invalidParams.Add(request.NewErrParamMinLen("Version", 1))
-	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -4968,12 +5447,6 @@ func (s *DeleteSlotTypeInput) Validate() error {
 // SetName sets the Name field's value.
 func (s *DeleteSlotTypeInput) SetName(v string) *DeleteSlotTypeInput {
 	s.Name = &v
-	return s
-}
-
-// SetVersion sets the Version field's value.
-func (s *DeleteSlotTypeInput) SetVersion(v string) *DeleteSlotTypeInput {
-	s.Version = &v
 	return s
 }
 
@@ -4989,6 +5462,81 @@ func (s DeleteSlotTypeOutput) String() string {
 
 // GoString returns the string representation
 func (s DeleteSlotTypeOutput) GoString() string {
+	return s.String()
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/lex-models-2017-04-19/DeleteSlotTypeVersionRequest
+type DeleteSlotTypeVersionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the slot type.
+	//
+	// Name is a required field
+	Name *string `location:"uri" locationName:"name" min:"1" type:"string" required:"true"`
+
+	// The version of the slot type to delete. You cannot delete the $LATEST version
+	// of the slot type. To delete the $LATEST version, use the operation.
+	//
+	// Version is a required field
+	Version *string `location:"uri" locationName:"version" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteSlotTypeVersionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteSlotTypeVersionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteSlotTypeVersionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteSlotTypeVersionInput"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+	if s.Version == nil {
+		invalidParams.Add(request.NewErrParamRequired("Version"))
+	}
+	if s.Version != nil && len(*s.Version) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Version", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetName sets the Name field's value.
+func (s *DeleteSlotTypeVersionInput) SetName(v string) *DeleteSlotTypeVersionInput {
+	s.Name = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *DeleteSlotTypeVersionInput) SetVersion(v string) *DeleteSlotTypeVersionInput {
+	s.Version = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/lex-models-2017-04-19/DeleteSlotTypeVersionOutput
+type DeleteSlotTypeVersionOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteSlotTypeVersionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteSlotTypeVersionOutput) GoString() string {
 	return s.String()
 }
 
@@ -8928,12 +9476,12 @@ type Slot struct {
 	// Name is a required field
 	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
 
-	// Specifies the order in which to elicit slot values from the user. For example,
-	// if the intent has two slots with priorities 1 and 2, AWS Amazon Lex first
+	// Directs Lex the order in which to elicit this slot value from the user. For
+	// example, if the intent has two slots with priorities 1 and 2, AWS Lex first
 	// elicits a value for the slot with priority 1.
 	//
-	// If multiple slots share the same priority, the order in which Amazon Lex
-	// elicits values is arbitrary.
+	// If multiple slots share the same priority, the order in which Lex elicits
+	// values is arbitrary.
 	Priority *int64 `locationName:"priority" type:"integer"`
 
 	// A set of possible responses for the slot type used by text-based clients.

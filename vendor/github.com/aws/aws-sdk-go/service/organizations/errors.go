@@ -56,7 +56,53 @@ const (
 	// Performing this operation violates a minimum or maximum value limit. For
 	// example, attempting to removing the last SCP from an OU or root, inviting
 	// or creating too many accounts to the organization, or attaching too many
-	// policies to an account, OU, or root.
+	// policies to an account, OU, or root. This exception includes a reason that
+	// contains additional information about the violated limit:
+	//
+	// ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
+	// of accounts in an organization. Note: deleted and closed accounts still count
+	// toward your limit.
+	//
+	//    * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
+	//    handshakes you can send in one day.
+	//
+	//    * OU_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the number of organizational
+	//    units you can have in an organization.
+	//
+	//    * OU_DEPTH_LIMIT_EXCEEDED: You attempted to create an organizational unit
+	//    tree that is too many levels deep.
+	//
+	//    * POLICY_NUMBER_LIMIT_EXCEEDED. You attempted to exceed the number of
+	//    policies that you can have in an organization.
+	//
+	//    * MAX_POLICY_TYPE_ATTACHMENT_LIMIT_EXCEEDED: You attempted to exceed the
+	//    number of policies of a certain type that can be attached to an entity
+	//    at one time.
+	//
+	//    * MIN_POLICY_TYPE_ATTACHMENT_LIMIT_EXCEEDED: You attempted to detach a
+	//    policy from an entity that would cause the entity to have fewer than the
+	//    minimum number of policies of a certain type required.
+	//
+	//    * ACCOUNT_CANNOT_LEAVE_ORGANIZATION: You attempted to remove an account
+	//    from an organization that was created from within organizations.
+	//
+	//    * MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To create an organization
+	//    with this account, you first must associate a payment instrument, such
+	//    as a credit card, with the account.
+	//
+	//    * MEMBER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To complete this operation
+	//    with this member account, you first must associate a payment instrument,
+	//    such as a credit card, with the account.
+	//
+	//    * ACCOUNT_CREATION_RATE_LIMIT_EXCEEDED: You attempted to exceed the number
+	//    of accounts that you can create in one day.
+	//
+	//    * MASTER_ACCOUNT_ADDRESS_DOES_NOT_MATCH_MARKETPLACE: To create an account
+	//    in this organization, you first must migrate the organization's master
+	//    account to the marketplace that corresponds to the master account's address.
+	//    For example, accounts with India addresses must be associated with the
+	//    AISPL marketplace. All accounts in an organization must be associated
+	//    with the same marketplace.
 	ErrCodeConstraintViolationException = "ConstraintViolationException"
 
 	// ErrCodeCreateAccountStatusNotFoundException for service response error code
@@ -126,6 +172,37 @@ const (
 	//
 	// The requested operation would violate the constraint identified in the reason
 	// code.
+	//
+	//    * ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on
+	//    the number of accounts in an organization. Note: deleted and closed accounts
+	//    still count toward your limit.
+	//
+	//    * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
+	//    handshakes you can send in one day.
+	//
+	//    * ALREADY_IN_AN_ORGANIZATION: The handshake request is invalid because
+	//    the invited account is already a member of an organization.
+	//
+	//    * ORGANIZATION_ALREADY_HAS_ALL_FEATURES: The handshake request is invalid
+	//    because the organization has already enabled all features.
+	//
+	//    * INVITE_DISABLED_DURING_ENABLE_ALL_FEATURES: You cannot issue new invitations
+	//    to join an organization while it is in the process of enabling all features.
+	//    You can resume inviting accounts after you finalize the process when all
+	//    accounts have agreed to the change.
+	//
+	//    * PAYMENT_INSTRUMENT_REQUIRED: You cannot complete the operation with
+	//    an account that does not have a payment instrument, such as a credit card,
+	//    associated with it.
+	//
+	//    * ORGANIZATION_FROM_DIFFERENT_SELLER_OF_RECORD: The request failed because
+	//    the account is from a different marketplace than the accounts in the organization.
+	//    For example, accounts with India addresses must be associated with the
+	//    AISPL marketplace. All accounts in an organization must be from the same
+	//    marketplace.
+	//
+	//    * ORGANIZATION_MEMBERSHIP_CHANGE_RATE_LIMIT_EXCEEDED: You attempted to
+	//    change the membership of an account too quickly after its previous change.
 	ErrCodeHandshakeConstraintViolationException = "HandshakeConstraintViolationException"
 
 	// ErrCodeHandshakeNotFoundException for service response error code
@@ -145,7 +222,54 @@ const (
 	// ErrCodeInvalidInputException for service response error code
 	// "InvalidInputException".
 	//
-	// You provided invalid values for one or more of the request parameters.
+	// The requested operation failed because you provided invalid values for one
+	// or more of the request parameters. This exception includes a reason that
+	// contains additional information about the violated limit:
+	//
+	//    * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+	//    organization, or email) as a party.
+	//
+	//    * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+	//    organization.
+	//
+	//    * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+	//
+	//    * INVALID_ENUM: You specified a value that is not valid for that parameter.
+	//
+	//    * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
+	//    at least one invalid value.
+	//
+	//    * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
+	//    than allowed.
+	//
+	//    * MAX_VALUE_EXCEEDED: You provided a numeric parameter that has a larger
+	//    value than allowed.
+	//
+	//    * MIN_LENGTH_EXCEEDED: You provided a string parameter that is shorter
+	//    than allowed.
+	//
+	//    * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
+	//    value than allowed.
+	//
+	//    * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+	//    cannot be modified.
+	//
+	//    * INVALID_PATTERN: You provided a value that doesn't match the required
+	//    pattern.
+	//
+	//    * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+	//    match the required pattern.
+	//
+	//    * INPUT_REQUIRED: You must include a value for all required parameters.
+	//
+	//    * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+	//    from the response to a previous call of the operation.
+	//
+	//    * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+	//    for the operation.
+	//
+	//    * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
+	//    between entities in the same root.
 	ErrCodeInvalidInputException = "InvalidInputException"
 
 	// ErrCodeMalformedPolicyDocumentException for service response error code

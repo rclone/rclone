@@ -12,6 +12,7 @@
     "DeleteRule": "<p>Deletes the specified rule.</p>",
     "DeleteTargetGroup": "<p>Deletes the specified target group.</p> <p>You can delete a target group if it is not referenced by any actions. Deleting a target group also deletes any associated health checks.</p>",
     "DeregisterTargets": "<p>Deregisters the specified targets from the specified target group. After the targets are deregistered, they no longer receive traffic from the load balancer.</p>",
+    "DescribeAccountLimits": "<p>Describes the current Elastic Load Balancing resource limits for your AWS account.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-limits.html\">Limits for Your Application Load Balancer</a> in the <i>Application Load Balancer Guide</i>.</p>",
     "DescribeListeners": "<p>Describes the specified listeners or the listeners for the specified Application Load Balancer. You must specify either a load balancer or one or more listeners.</p>",
     "DescribeLoadBalancerAttributes": "<p>Describes the attributes for the specified Application Load Balancer.</p>",
     "DescribeLoadBalancers": "<p>Describes the specified Application Load Balancers or all of your Application Load Balancers.</p> <p>To describe the listeners for a load balancer, use <a>DescribeListeners</a>. To describe the attributes for a load balancer, use <a>DescribeLoadBalancerAttributes</a>.</p>",
@@ -243,6 +244,16 @@
       "refs": {
       }
     },
+    "DescribeAccountLimitsInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeAccountLimitsOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
     "DescribeListenersInput": {
       "base": null,
       "refs": {
@@ -451,6 +462,18 @@
         "Rule$IsDefault": "<p>Indicates whether this is the default rule.</p>"
       }
     },
+    "Limit": {
+      "base": "<p>Information about an Elastic Load Balancing resource limit for your AWS account.</p>",
+      "refs": {
+        "Limits$member": null
+      }
+    },
+    "Limits": {
+      "base": null,
+      "refs": {
+        "DescribeAccountLimitsOutput$Limits": "<p>Information about the limits.</p>"
+      }
+    },
     "ListOfString": {
       "base": null,
       "refs": {
@@ -603,6 +626,8 @@
     "Marker": {
       "base": null,
       "refs": {
+        "DescribeAccountLimitsInput$Marker": "<p>The marker for the next set of results. (You received this marker from a previous call.)</p>",
+        "DescribeAccountLimitsOutput$NextMarker": "<p>The marker to use when requesting the next set of results. If there are no additional results, the string is empty.</p>",
         "DescribeListenersInput$Marker": "<p>The marker for the next set of results. (You received this marker from a previous call.)</p>",
         "DescribeListenersOutput$NextMarker": "<p>The marker to use when requesting the next set of results. If there are no additional results, the string is empty.</p>",
         "DescribeLoadBalancersInput$Marker": "<p>The marker for the next set of results. (You received this marker from a previous call.)</p>",
@@ -619,6 +644,12 @@
         "CreateTargetGroupInput$Matcher": "<p>The HTTP codes to use when checking for a successful response from a target. The default is 200.</p>",
         "ModifyTargetGroupInput$Matcher": "<p>The HTTP codes to use when checking for a successful response from a target.</p>",
         "TargetGroup$Matcher": "<p>The HTTP codes to use when checking for a successful response from a target.</p>"
+      }
+    },
+    "Max": {
+      "base": null,
+      "refs": {
+        "Limit$Max": "<p>The maximum value of the limit.</p>"
       }
     },
     "ModifyListenerInput": {
@@ -671,6 +702,12 @@
       "refs": {
       }
     },
+    "Name": {
+      "base": null,
+      "refs": {
+        "Limit$Name": "<p>The name of the limit. The possible values are:</p> <ul> <li> <p>application-load-balancers</p> </li> <li> <p>listeners-per-application-load-balancer</p> </li> <li> <p>rules-per-application-load-balancer</p> </li> <li> <p>target-groups</p> </li> <li> <p>targets-per-application-load-balancer</p> </li> </ul>"
+      }
+    },
     "OperationNotPermittedException": {
       "base": "<p>This operation is not allowed.</p>",
       "refs": {
@@ -679,6 +716,7 @@
     "PageSize": {
       "base": null,
       "refs": {
+        "DescribeAccountLimitsInput$PageSize": "<p>The maximum number of results to return with this call.</p>",
         "DescribeListenersInput$PageSize": "<p>The maximum number of results to return with this call.</p>",
         "DescribeLoadBalancersInput$PageSize": "<p>The maximum number of results to return with this call.</p>",
         "DescribeSSLPoliciesInput$PageSize": "<p>The maximum number of results to return with this call.</p>",

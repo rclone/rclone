@@ -985,6 +985,85 @@ func (c *ELBV2) DeregisterTargetsWithContext(ctx aws.Context, input *DeregisterT
 	return out, req.Send()
 }
 
+const opDescribeAccountLimits = "DescribeAccountLimits"
+
+// DescribeAccountLimitsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeAccountLimits operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DescribeAccountLimits for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeAccountLimits method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeAccountLimitsRequest method.
+//    req, resp := client.DescribeAccountLimitsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/elasticloadbalancingv2-2015-12-01/DescribeAccountLimits
+func (c *ELBV2) DescribeAccountLimitsRequest(input *DescribeAccountLimitsInput) (req *request.Request, output *DescribeAccountLimitsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeAccountLimits,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeAccountLimitsInput{}
+	}
+
+	output = &DescribeAccountLimitsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeAccountLimits API operation for Elastic Load Balancing.
+//
+// Describes the current Elastic Load Balancing resource limits for your AWS
+// account.
+//
+// For more information, see Limits for Your Application Load Balancer (http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-limits.html)
+// in the Application Load Balancer Guide.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Elastic Load Balancing's
+// API operation DescribeAccountLimits for usage and error information.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/elasticloadbalancingv2-2015-12-01/DescribeAccountLimits
+func (c *ELBV2) DescribeAccountLimits(input *DescribeAccountLimitsInput) (*DescribeAccountLimitsOutput, error) {
+	req, out := c.DescribeAccountLimitsRequest(input)
+	return out, req.Send()
+}
+
+// DescribeAccountLimitsWithContext is the same as DescribeAccountLimits with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeAccountLimits for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ELBV2) DescribeAccountLimitsWithContext(ctx aws.Context, input *DescribeAccountLimitsInput, opts ...request.Option) (*DescribeAccountLimitsOutput, error) {
+	req, out := c.DescribeAccountLimitsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDescribeListeners = "DescribeListeners"
 
 // DescribeListenersRequest generates a "aws/request.Request" representing the
@@ -4094,6 +4173,87 @@ func (s DeregisterTargetsOutput) GoString() string {
 	return s.String()
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/elasticloadbalancingv2-2015-12-01/DescribeAccountLimitsInput
+type DescribeAccountLimitsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The marker for the next set of results. (You received this marker from a
+	// previous call.)
+	Marker *string `type:"string"`
+
+	// The maximum number of results to return with this call.
+	PageSize *int64 `min:"1" type:"integer"`
+}
+
+// String returns the string representation
+func (s DescribeAccountLimitsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeAccountLimitsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeAccountLimitsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeAccountLimitsInput"}
+	if s.PageSize != nil && *s.PageSize < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("PageSize", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMarker sets the Marker field's value.
+func (s *DescribeAccountLimitsInput) SetMarker(v string) *DescribeAccountLimitsInput {
+	s.Marker = &v
+	return s
+}
+
+// SetPageSize sets the PageSize field's value.
+func (s *DescribeAccountLimitsInput) SetPageSize(v int64) *DescribeAccountLimitsInput {
+	s.PageSize = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/elasticloadbalancingv2-2015-12-01/DescribeAccountLimitsOutput
+type DescribeAccountLimitsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Information about the limits.
+	Limits []*Limit `type:"list"`
+
+	// The marker to use when requesting the next set of results. If there are no
+	// additional results, the string is empty.
+	NextMarker *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeAccountLimitsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeAccountLimitsOutput) GoString() string {
+	return s.String()
+}
+
+// SetLimits sets the Limits field's value.
+func (s *DescribeAccountLimitsOutput) SetLimits(v []*Limit) *DescribeAccountLimitsOutput {
+	s.Limits = v
+	return s
+}
+
+// SetNextMarker sets the NextMarker field's value.
+func (s *DescribeAccountLimitsOutput) SetNextMarker(v string) *DescribeAccountLimitsOutput {
+	s.NextMarker = &v
+	return s
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/elasticloadbalancingv2-2015-12-01/DescribeListenersInput
 type DescribeListenersInput struct {
 	_ struct{} `type:"structure"`
@@ -4816,6 +4976,50 @@ func (s DescribeTargetHealthOutput) GoString() string {
 // SetTargetHealthDescriptions sets the TargetHealthDescriptions field's value.
 func (s *DescribeTargetHealthOutput) SetTargetHealthDescriptions(v []*TargetHealthDescription) *DescribeTargetHealthOutput {
 	s.TargetHealthDescriptions = v
+	return s
+}
+
+// Information about an Elastic Load Balancing resource limit for your AWS account.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/elasticloadbalancingv2-2015-12-01/Limit
+type Limit struct {
+	_ struct{} `type:"structure"`
+
+	// The maximum value of the limit.
+	Max *string `type:"string"`
+
+	// The name of the limit. The possible values are:
+	//
+	//    * application-load-balancers
+	//
+	//    * listeners-per-application-load-balancer
+	//
+	//    * rules-per-application-load-balancer
+	//
+	//    * target-groups
+	//
+	//    * targets-per-application-load-balancer
+	Name *string `type:"string"`
+}
+
+// String returns the string representation
+func (s Limit) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Limit) GoString() string {
+	return s.String()
+}
+
+// SetMax sets the Max field's value.
+func (s *Limit) SetMax(v string) *Limit {
+	s.Max = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *Limit) SetName(v string) *Limit {
+	s.Name = &v
 	return s
 }
 

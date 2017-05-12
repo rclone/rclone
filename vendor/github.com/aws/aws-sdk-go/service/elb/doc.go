@@ -12,17 +12,18 @@
 // the load balancer and a protocol and port number for connections from the
 // load balancer to the instances.
 //
-// Elastic Load Balancing supports two types of load balancers: Classic load
-// balancers and Application load balancers (new). A Classic load balancer makes
+// Elastic Load Balancing supports two types of load balancers: Classic Load
+// Balancers and Application Load Balancers (new). A Classic Load Balancer makes
 // routing and load balancing decisions either at the transport layer (TCP/SSL)
 // or the application layer (HTTP/HTTPS), and supports either EC2-Classic or
-// a VPC. An Application load balancer makes routing and load balancing decisions
+// a VPC. An Application Load Balancer makes routing and load balancing decisions
 // at the application layer (HTTP/HTTPS), supports path-based routing, and can
 // route requests to one or more ports on each EC2 instance or container instance
-// in your virtual private cloud (VPC). For more information, see the .
+// in your virtual private cloud (VPC). For more information, see the Elastic
+// Load Balancing User Guide (http://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html).
 //
-// This reference covers the 2012-06-01 API, which supports Classic load balancers.
-// The 2015-12-01 API supports Application load balancers.
+// This reference covers the 2012-06-01 API, which supports Classic Load Balancers.
+// The 2015-12-01 API supports Application Load Balancers.
 //
 // To get started, create a load balancer with one or more listeners using CreateLoadBalancer.
 // Register your instances with the load balancer using RegisterInstancesWithLoadBalancer.

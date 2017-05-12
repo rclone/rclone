@@ -1,12 +1,12 @@
 {
   "version":"2.0",
   "metadata":{
-    "uid":"elasticloadbalancing-2012-06-01",
     "apiVersion":"2012-06-01",
     "endpointPrefix":"elasticloadbalancing",
     "protocol":"query",
     "serviceFullName":"Elastic Load Balancing",
     "signatureVersion":"v4",
+    "uid":"elasticloadbalancing-2012-06-01",
     "xmlNamespace":"http://elasticloadbalancing.amazonaws.com/doc/2012-06-01/"
   },
   "operations":{
@@ -234,6 +234,18 @@
         {"shape":"AccessPointNotFoundException"},
         {"shape":"InvalidEndPointException"}
       ]
+    },
+    "DescribeAccountLimits":{
+      "name":"DescribeAccountLimits",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeAccountLimitsInput"},
+      "output":{
+        "shape":"DescribeAccountLimitsOutput",
+        "resultWrapper":"DescribeAccountLimitsResult"
+      }
     },
     "DescribeInstanceHealth":{
       "name":"DescribeInstanceHealth",
@@ -863,6 +875,20 @@
         "NextMarker":{"shape":"Marker"}
       }
     },
+    "DescribeAccountLimitsInput":{
+      "type":"structure",
+      "members":{
+        "Marker":{"shape":"Marker"},
+        "PageSize":{"shape":"PageSize"}
+      }
+    },
+    "DescribeAccountLimitsOutput":{
+      "type":"structure",
+      "members":{
+        "Limits":{"shape":"Limits"},
+        "NextMarker":{"shape":"Marker"}
+      }
+    },
     "DescribeEndPointStateInput":{
       "type":"structure",
       "required":["LoadBalancerName"],
@@ -1124,6 +1150,17 @@
         "CookieExpirationPeriod":{"shape":"CookieExpirationPeriod"}
       }
     },
+    "Limit":{
+      "type":"structure",
+      "members":{
+        "Name":{"shape":"Name"},
+        "Max":{"shape":"Max"}
+      }
+    },
+    "Limits":{
+      "type":"list",
+      "member":{"shape":"Limit"}
+    },
     "Listener":{
       "type":"structure",
       "required":[
@@ -1223,6 +1260,7 @@
     },
     "LoadBalancerScheme":{"type":"string"},
     "Marker":{"type":"string"},
+    "Max":{"type":"string"},
     "ModifyLoadBalancerAttributesInput":{
       "type":"structure",
       "required":[
@@ -1241,6 +1279,7 @@
         "LoadBalancerAttributes":{"shape":"LoadBalancerAttributes"}
       }
     },
+    "Name":{"type":"string"},
     "PageSize":{
       "type":"integer",
       "max":400,

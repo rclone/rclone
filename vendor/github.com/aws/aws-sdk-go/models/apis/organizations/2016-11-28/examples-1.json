@@ -392,6 +392,7 @@
         "output": {
           "Account": {
             "Arn": "arn:aws:organizations::111111111111:account/o-exampleorgid/555555555555",
+            "Email": "anika@example.com",
             "Id": "555555555555",
             "Name": "Beta Account"
           }
@@ -762,6 +763,7 @@
           "Accounts": [
             {
               "Arn": "arn:aws:organizations::111111111111:account/o-exampleorgid/111111111111",
+              "Email": "bill@example.com",
               "Id": "111111111111",
               "JoinedMethod": "INVITED",
               "JoinedTimestamp": "20161215T193015Z",
@@ -770,6 +772,7 @@
             },
             {
               "Arn": "arn:aws:organizations::111111111111:account/o-exampleorgid/222222222222",
+              "Email": "alice@example.com",
               "Id": "222222222222",
               "JoinedMethod": "INVITED",
               "JoinedTimestamp": "20161215T210221Z",
@@ -778,6 +781,7 @@
             },
             {
               "Arn": "arn:aws:organizations::111111111111:account/o-exampleorgid/333333333333",
+              "Email": "juan@example.com",
               "Id": "333333333333",
               "JoinedMethod": "INVITED",
               "JoinedTimestamp": "20161215T210347Z",
@@ -786,6 +790,7 @@
             },
             {
               "Arn": "arn:aws:organizations::111111111111:account/o-exampleorgid/444444444444",
+              "Email": "anika@example.com",
               "Id": "444444444444",
               "JoinedMethod": "INVITED",
               "JoinedTimestamp": "20161215T210332Z",
@@ -814,15 +819,21 @@
           "Accounts": [
             {
               "Arn": "arn:aws:organizations::111111111111:account/o-exampleorgid/333333333333",
+              "Email": "juan@example.com",
               "Id": "333333333333",
               "JoinedMethod": "INVITED",
-              "JoinedTimestamp": "2016-12-28T14:43:03.39Z"
+              "JoinedTimestamp": 1481835795.536,
+              "Name": "Development Account",
+              "Status": "ACTIVE"
             },
             {
               "Arn": "arn:aws:organizations::111111111111:account/o-exampleorgid/444444444444",
+              "Email": "anika@example.com",
               "Id": "444444444444",
               "JoinedMethod": "INVITED",
-              "JoinedTimestamp": "2016-12-28T14:47:33.23Z"
+              "JoinedTimestamp": 1481835812.143,
+              "Name": "Test Account",
+              "Status": "ACTIVE"
             }
           ]
         },

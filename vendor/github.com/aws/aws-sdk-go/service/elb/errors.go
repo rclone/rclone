@@ -130,5 +130,7 @@ const (
 
 	// ErrCodeUnsupportedProtocolException for service response error code
 	// "UnsupportedProtocol".
+	//
+	// The specified protocol or signature version is not supported.
 	ErrCodeUnsupportedProtocolException = "UnsupportedProtocol"
 )

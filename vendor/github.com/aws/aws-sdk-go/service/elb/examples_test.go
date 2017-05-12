@@ -377,6 +377,28 @@ func ExampleELB_DeregisterInstancesFromLoadBalancer() {
 	fmt.Println(resp)
 }
 
+func ExampleELB_DescribeAccountLimits() {
+	sess := session.Must(session.NewSession())
+
+	svc := elb.New(sess)
+
+	params := &elb.DescribeAccountLimitsInput{
+		Marker:   aws.String("Marker"),
+		PageSize: aws.Int64(1),
+	}
+	resp, err := svc.DescribeAccountLimits(params)
+
+	if err != nil {
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		fmt.Println(err.Error())
+		return
+	}
+
+	// Pretty-print the response data.
+	fmt.Println(resp)
+}
+
 func ExampleELB_DescribeInstanceHealth() {
 	sess := session.Must(session.NewSession())
 
