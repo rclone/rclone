@@ -7,7 +7,7 @@ GO_FILES := $(shell go list ./... | grep -v /vendor/ )
 GO_LATEST := $(findstring go1.8,$(GO_VERSION))
 BETA_URL := https://beta.rclone.org/$(TAG)/
 
-.PHONY: rclone
+.PHONY: rclone vars version
 
 rclone:
 	touch fs/version.go
@@ -22,6 +22,9 @@ vars:
 	@echo GO_VERSION="'$(GO_VERSION)'"
 	@echo GO_LATEST="'$(GO_LATEST)'"
 	@echo BETA_URL="'$(BETA_URL)'"
+
+version:
+	@echo '$(TAG)'
 
 # Full suite of integration tests
 test:	rclone
@@ -105,9 +108,17 @@ beta:
 	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)β
 	@echo Beta release ready at https://pub.rclone.org/$(TAG)%CE%B2/
 
+log_since_last_release:
+	git log $(LAST_TAG)..
+
+upload_beta:
+	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ memstore:beta-rclone-org/$(TAG)
+	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' build/ memstore:beta-rclone-org
+	@echo Beta release ready at $(BETA_URL)
+
 travis_beta:
 	git log $(LAST_TAG).. > /tmp/git-log.txt
-	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(TAG)β
+	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt -exclude "^windows/" $(TAG)β
 	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ memstore:beta-rclone-org/$(TAG)
 	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' build/ memstore:beta-rclone-org
 	@echo Beta release ready at $(BETA_URL)

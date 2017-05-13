@@ -5,12 +5,20 @@ os: Windows Server 2012 R2
 clone_folder: c:\gopath\src\github.com\ncw\rclone
 
 environment:
-  GOPATH: c:\gopath
+  GOPATH: C:\gopath
   CPATH: C:\Program Files (x86)\WinFsp\inc\fuse
-  PATH: C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw64\bin;c:\MinGW\bin;%PATH%
+  ORIGPATH: '%PATH%'
+  NOCCPATH: C:\MinGW\bin;%GOPATH%\bin;%PATH%
+  PATHCC64: C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw64\bin;%NOCCPATH%
+  PATHCC32: C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin;%NOCCPATH%
+  PATH: '%PATHCC64%'
+  RCLONE_CONFIG_PASS:
+    secure: HbzxSy9zQ8NYWN9NNPf6ALQO9Q0mwRNqwehsLcOEHy0=
 
 install:
 - choco install winfsp -y
+- choco install zip -y
+- copy c:\MinGW\bin\mingw32-make.exe c:\MinGW\bin\make.exe
 
 build_script:
 - echo %PATH%
@@ -18,7 +26,21 @@ build_script:
 - go version
 - go env
 - go install
+- go build
+- make log_since_last_release > %TEMP%\git-log.txt
+- make version > %TEMP%\version
+- set /p RCLONE_VERSION=<%TEMP%\version
+- set PATH=%PATHCC32%
+- go run bin/cross-compile.go -release beta-latest -git-log %TEMP%\git-log.txt -include "^windows/386" -cgo %RCLONE_VERSION%
+- set PATH=%PATHCC64%
+- go run bin/cross-compile.go -release beta-latest -git-log %TEMP%\git-log.txt -include "^windows/amd64" -cgo -no-clean %RCLONE_VERSION%
 
 test_script:
-- copy c:\MinGW\bin\mingw32-make.exe c:\MinGW\bin\make.exe
 - make quicktest
+
+artifacts:
+- path: rclone.exe
+- path: build/*-v*.zip
+
+deploy_script:
+- IF "%APPVEYOR_REPO_BRANCH%" == "master" make upload_beta
