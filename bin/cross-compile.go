@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -22,6 +23,9 @@ var (
 	parallel = flag.Int("parallel", runtime.NumCPU(), "Number of commands to run in parallel.")
 	copyAs   = flag.String("release", "", "Make copies of the releases with this name")
 	gitLog   = flag.String("git-log", "", "git log to include as well")
+	include  = flag.String("include", "^.*$", "os/arch regexp to include")
+	exclude  = flag.String("exclude", "^$", "os/arch regexp to exclude")
+	cgo      = flag.Bool("cgo", false, "Use cgo for the build")
 )
 
 // GOOS/GOARCH pairs we build for
@@ -100,7 +104,11 @@ func compileArch(version, goos, goarch, dir string) {
 	env := []string{
 		"GOOS=" + goos,
 		"GOARCH=" + goarch,
-		"CGO_ENABLED=0",
+	}
+	if !*cgo {
+		env = append(env, "CGO_ENABLED=0")
+	} else {
+		env = append(env, "CGO_ENABLED=1")
 	}
 	if flags, ok := archFlags[goarch]; ok {
 		env = append(env, flags...)
@@ -136,7 +144,19 @@ func compile(version string) {
 			}
 		}()
 	}
+	includeRe, err := regexp.Compile(*include)
+	if err != nil {
+		log.Fatalf("Bad -include regexp: %v", err)
+	}
+	excludeRe, err := regexp.Compile(*exclude)
+	if err != nil {
+		log.Fatalf("Bad -exclude regexp: %v", err)
+	}
+	compiled := 0
 	for _, osarch := range osarches {
+		if excludeRe.MatchString(osarch) || !includeRe.MatchString(osarch) {
+			continue
+		}
 		parts := strings.Split(osarch, "/")
 		if len(parts) != 2 {
 			log.Fatalf("Bad osarch %q", osarch)
@@ -150,10 +170,11 @@ func compile(version string) {
 		run <- func() {
 			compileArch(version, goos, goarch, dir)
 		}
+		compiled++
 	}
 	close(run)
 	wg.Wait()
-	log.Printf("Compiled %d arches in %v", len(osarches), time.Since(start))
+	log.Printf("Compiled %d arches in %v", compiled, time.Since(start))
 }
 
 func main() {
