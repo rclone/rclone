@@ -90,9 +90,10 @@ func NewFs(name, root string) (fs.Fs, error) {
 		port = "22"
 	}
 	config := &ssh.ClientConfig{
-		User:    user,
-		Auth:    []ssh.AuthMethod{},
-		Timeout: fs.Config.ConnectTimeout,
+		User:            user,
+		Auth:            []ssh.AuthMethod{},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		Timeout:         fs.Config.ConnectTimeout,
 	}
 	if pass == "" {
 		authSock := os.Getenv("SSH_AUTH_SOCK")
