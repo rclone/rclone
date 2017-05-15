@@ -75,3 +75,4 @@ Contributors
   * Too Much IO <toomuchio@users.noreply.github.com>
   * Anisse Astier <anisse@astier.eu>
   * Zahiar Ahmed <zahiar@live.com>
+  * Igor Kharin <igorkharin@gmail.com>
