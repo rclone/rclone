@@ -26,6 +26,7 @@ var (
 	include  = flag.String("include", "^.*$", "os/arch regexp to include")
 	exclude  = flag.String("exclude", "^$", "os/arch regexp to exclude")
 	cgo      = flag.Bool("cgo", false, "Use cgo for the build")
+	noClean  = flag.Bool("no-clean", false, "Don't clean the build directory before running.")
 )
 
 // GOOS/GOARCH pairs we build for
@@ -184,8 +185,10 @@ func main() {
 		log.Fatalf("Syntax: %s <version>", os.Args[0])
 	}
 	version := args[0]
-	run("rm", "-rf", "build")
-	run("mkdir", "build")
+	if !*noClean {
+		run("rm", "-rf", "build")
+		run("mkdir", "build")
+	}
 	err := os.Chdir("build")
 	if err != nil {
 		log.Fatalf("Couldn't cd into build dir: %v", err)
