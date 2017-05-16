@@ -15,9 +15,13 @@ package fuse
 /*
 #cgo darwin CFLAGS: -DFUSE_USE_VERSION=28 -D_FILE_OFFSET_BITS=64 -I/usr/local/include/osxfuse/fuse
 #cgo darwin LDFLAGS: -L/usr/local/lib -losxfuse
+
 #cgo linux CFLAGS: -DFUSE_USE_VERSION=28 -D_FILE_OFFSET_BITS=64 -I/usr/include/fuse
 #cgo linux LDFLAGS: -lfuse
-#cgo windows CFLAGS: -D_WIN32_WINNT=0x0600 -DFUSE_USE_VERSION=28
+
+// Use `set CPATH=C:\Program Files (x86)\WinFsp\inc\fuse` on Windows.
+// The flag `I/usr/local/include/winfsp` only works on xgo and docker.
+#cgo windows CFLAGS: -D_WIN32_WINNT=0x0600 -DFUSE_USE_VERSION=28 -I/usr/local/include/winfsp
 
 #if !(defined(__APPLE__) || defined(__linux__) || defined(_WIN32))
 #error platform not supported
@@ -907,7 +911,7 @@ func hostInit(conn0 *C.struct_fuse_conn_info) (user_data unsafe.Pointer) {
 		C.bool(host.capCaseInsensitive),
 		C.bool(host.capReaddirPlus))
 	if nil != host.sigc {
-		signal.Notify(host.sigc, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
+		signal.Notify(host.sigc, syscall.SIGINT, syscall.SIGTERM)
 	}
 	host.fsop.Init()
 	return
@@ -1023,9 +1027,6 @@ func (host *FileSystemHost) SetCapReaddirPlus(value bool) {
 // It is allowed for the mountpoint to be the empty string ("") in which case opts is assumed
 // to contain the mountpoint. It is also allowed for opts to be nil, although in this case the
 // mountpoint must be non-empty.
-//
-// The file system is considered mounted only after its Init() method has been called
-// and before its Destroy() method has been called.
 func (host *FileSystemHost) Mount(mountpoint string, opts []string) bool {
 	if 0 == C.hostInitializeFuse() {
 		panic("cgofuse: cannot find winfsp")

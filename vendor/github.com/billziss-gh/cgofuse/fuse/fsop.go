@@ -12,10 +12,15 @@
 
 // Package fuse allows the creation of user mode file systems in Go.
 //
-// A user mode file system must implement the methods in FileSystemInterface
-// and be hosted (mounted) by a FileSystemHost.
-// Alternatively a user mode file system can use the FileSystemBase struct which
-// provides default implementations of the methods in FileSystemInterface.
+// A user mode file system is a user mode process that receives file system operations
+// from the OS FUSE layer and satisfies them in user mode. A user mode file system
+// implements the interface FileSystemInterface either directly or by embedding a
+// FileSystemBase struct which provides a default (empty) implementation of all methods
+// in FileSystemInterface.
+//
+// In order to expose the user mode file system to the OS, the file system must be hosted
+// (mounted) by a FileSystemHost. The FileSystemHost Mount() method is used for this
+// purpose.
 package fuse
 
 /*
@@ -397,18 +402,28 @@ type Lock_t struct {
 }
 */
 
-// FileSystemInterface is the interface that all file systems must implement.
-// The file system will receive an Init() call when it is mounted and a Destroy()
-// call when it is unmounted (note that depending on how the file system is
-// terminated the file system may not receive the Destroy() call). All other
-// operations must return 0 on success or a FUSE error on failure. To return an
-// error return the NEGATIVE value of a particular error.  For example, to report
-// "file not found" return -fuse.ENOENT.
+// FileSystemInterface is the interface that a user mode interface must implement.
+//
+// The file system will receive an Init() call when the file system is created;
+// the Init() call will happen prior to receiving any other file system calls.
+// Note that there are no guarantees on the exact timing of when Init() is called.
+// For example, it cannot be assumed that the file system is mounted at the time
+// the Init() call is received.
+//
+// The file system will receive a Destroy() call when the file system is destroyed;
+// the Destroy() call will always be the last call to be received by the file system.
+// Note that depending on how the file system is terminated the file system may not
+// receive the Destroy() call. For example, it will not receive the Destroy() call
+// if the file system process is forcibly killed.
+//
+// Except for Init() and Destroy() all file system operations must return 0 on success
+// or a FUSE error on failure. To return an error return the NEGATIVE value of a
+// particular error.  For example, to report "file not found" return -fuse.ENOENT.
 type FileSystemInterface interface {
-	// Init is called when the file system is mounted.
+	// Init is called when the file system is created.
 	Init()
 
-	// Destroy is called when the file system is unmounted.
+	// Destroy is called when the file system is destroyed.
 	Destroy()
 
 	// Statfs gets file system statistics.
@@ -526,12 +541,12 @@ var _ error = (*Error)(nil)
 type FileSystemBase struct {
 }
 
-// Init is called when the file system is mounted.
+// Init is called when the file system is created.
 // The FileSystemBase implementation does nothing.
 func (*FileSystemBase) Init() {
 }
 
-// Destroy is called when the file system is unmounted.
+// Destroy is called when the file system is destroyed.
 // The FileSystemBase implementation does nothing.
 func (*FileSystemBase) Destroy() {
 }
