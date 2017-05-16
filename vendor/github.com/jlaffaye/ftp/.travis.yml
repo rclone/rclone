@@ -1,0 +1,15 @@
+language: go
+dist: trusty
+sudo: required
+go:
+  - 1.7.5
+  - 1.8.1
+env:
+  - FTP_SERVER=vsftpd
+  - FTP_SERVER=proftpd
+before_install:
+- sudo $TRAVIS_BUILD_DIR/.travis/prepare.sh "$FTP_SERVER"
+- sudo sysctl net.ipv6.conf.lo.disable_ipv6=0
+- go get github.com/mattn/goveralls
+script:
+- goveralls -v

@@ -1,4 +1,4 @@
-memo = "28c7ca08636da6264c587a36b72ce4f3a45fdf5c32969ffd2092b98456c73685"
+memo = "8903edaabf2c61a2bb9386fb033b3ff7710880ee02387c7a3f5eaaee82cd6e67"
 
 [[projects]]
   branch = "master"
@@ -77,6 +77,12 @@ memo = "28c7ca08636da6264c587a36b72ce4f3a45fdf5c32969ffd2092b98456c73685"
   name = "github.com/inconshreveable/mousetrap"
   packages = ["."]
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/jlaffaye/ftp"
+  packages = ["."]
+  revision = "5c7b901224c7880b293e0b5486cb6ebf97bfca37"
 
 [[projects]]
   name = "github.com/jmespath/go-jmespath"
