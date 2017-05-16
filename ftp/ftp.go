@@ -134,10 +134,8 @@ func NewFs(name, root string) (ff fs.Fs, err error) {
 		fullPath = path.Join(u.Path, root)
 	}
 	root = fullPath
-	dialAddr := u.Hostname()
-	if u.Port() != "" {
-		dialAddr += ":" + u.Port()
-	} else {
+	dialAddr := u.Host
+	if strings.IndexRune(dialAddr, ':') < 0 {
 		dialAddr += ":21"
 	}
 	f := &Fs{
