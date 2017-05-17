@@ -57,6 +57,10 @@
 
 [[dependencies]]
   branch = "master"
+  name = "github.com/Azure/azure-sdk-for-go"
+
+[[dependencies]]
+  branch = "master"
   name = "github.com/Unknwon/goconfig"
 
 [[dependencies]]
