@@ -336,11 +336,15 @@ func (f *Fs) Precision() time.Duration {
 // nil and the error
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 	// fs.Debugf(f, "Trying to put file %s", src.Remote())
+	err := f.mkParentDir(src.Remote())
+	if err != nil {
+		return nil, errors.Wrap(err, "Put mkParentDir failed")
+	}
 	o := &Object{
 		fs:     f,
 		remote: src.Remote(),
 	}
-	err := o.Update(in, src)
+	err = o.Update(in, src)
 	return o, err
 }
 
@@ -374,39 +378,46 @@ func (f *Fs) getInfo(remote string) (fi *FileInfo, err error) {
 	return nil, fs.ErrorObjectNotFound
 }
 
+// mkdir makes the directory and parents using unrooted paths
 func (f *Fs) mkdir(abspath string) error {
-	_, err := f.getInfo(abspath)
-	if err == fs.ErrorObjectNotFound {
-		// fs.Debugf(f, "Trying to create directory %s", abspath)
-		c, connErr := f.getFtpConnection()
-		if connErr != nil {
-			return errors.Wrap(connErr, "mkdir")
-		}
-		err = c.MakeDir(abspath)
-		f.putFtpConnection(&c)
+	if abspath == "." || abspath == "/" {
+		return nil
 	}
+	fi, err := f.getInfo(abspath)
+	if err == nil {
+		if fi.IsDir {
+			return nil
+		}
+		return fs.ErrorIsFile
+	} else if err != fs.ErrorObjectNotFound {
+		return errors.Wrapf(err, "mkdir %q failed", abspath)
+	}
+	parent := path.Dir(abspath)
+	err = f.mkdir(parent)
+	if err != nil {
+		return err
+	}
+	c, connErr := f.getFtpConnection()
+	if connErr != nil {
+		return errors.Wrap(connErr, "mkdir")
+	}
+	err = c.MakeDir(abspath)
+	f.putFtpConnection(&c)
 	return err
+}
+
+// mkParentDir makes the parent of remote if necessary and any
+// directories above that
+func (f *Fs) mkParentDir(remote string) error {
+	parent := path.Dir(remote)
+	return f.mkdir(path.Join(f.root, parent))
 }
 
 // Mkdir creates the directory if it doesn't exist
 func (f *Fs) Mkdir(dir string) (err error) {
 	// defer fs.Trace(dir, "")("err=%v", &err)
-	// This actually works as mkdir -p
-	abspath := path.Join(f.root, dir)
-	tokens := strings.Split(abspath, "/")
-	curdir := ""
-	for i := range tokens {
-		curdir += tokens[i]
-		if curdir == "" {
-			continue
-		}
-		err := f.mkdir(curdir)
-		if err != nil {
-			return err
-		}
-		curdir += "/"
-	}
-	return nil
+	root := path.Join(f.root, dir)
+	return f.mkdir(root)
 }
 
 // Rmdir removes the directory (container, bucket) if empty
@@ -509,21 +520,6 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 	return rc, nil
 }
 
-// makeAllDir creates the parent directories for the object
-func (o *Object) makeAllDir() error {
-	dir, _ := path.Split(o.remote)
-	tokens := strings.Split(dir, "/")
-	dir = ""
-	for i := range tokens {
-		dir += tokens[i] + "/"
-		err := o.fs.Mkdir(dir)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // Update the already existing object
 //
 // Copy the reader into the object updating modTime and size
@@ -531,11 +527,6 @@ func (o *Object) makeAllDir() error {
 // The new object may have been created if an error is returned
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 	// defer fs.Trace(o, "src=%v", src)("err=%v", &err)
-	// Create all upper directory first...
-	err = o.makeAllDir()
-	if err != nil {
-		return errors.Wrap(err, "update mkdir")
-	}
 	path := path.Join(o.fs.root, o.remote)
 	// remove the file if upload failed
 	remove := func() {
