@@ -414,27 +414,9 @@ func (f *Fs) Mkdir(dir string) (err error) {
 //
 // Return an error if it doesn't exist or isn't empty
 func (f *Fs) Rmdir(dir string) error {
-	// This is actually a recursive remove directory
 	c, err := f.getFtpConnection()
 	if err != nil {
-		return errors.Wrap(err, "Rmdir")
-	}
-	files, err := c.List(path.Join(f.root, dir))
-	f.putFtpConnection(&c)
-	if err != nil {
-		return translateErrorDir(err)
-	}
-	for _, file := range files {
-		if file.Type == ftp.EntryTypeFolder && file.Name != "." && file.Name != ".." {
-			err = f.Rmdir(path.Join(dir, file.Name))
-			if err != nil {
-				return errors.Wrap(err, "rmdir")
-			}
-		}
-	}
-	c, err = f.getFtpConnection()
-	if err != nil {
-		return errors.Wrap(err, "Rmdir")
+		return errors.Wrap(translateErrorFile(err), "Rmdir")
 	}
 	err = c.RemoveDir(path.Join(f.root, dir))
 	f.putFtpConnection(&c)
