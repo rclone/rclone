@@ -2,7 +2,6 @@
 package ftp
 
 // FIXME Mover and DirMover are possible using c.Rename
-// FIXME support conntimeout
 
 import (
 	"io"
@@ -93,7 +92,7 @@ func (f *Fs) Features() *fs.Features {
 // Open a new connection to the FTP server.
 func (f *Fs) ftpConnection() (*ftp.ServerConn, error) {
 	fs.Debugf(f, "Connecting to FTP server")
-	c, err := ftp.DialTimeout(f.dialAddr, 30*time.Second)
+	c, err := ftp.DialTimeout(f.dialAddr, fs.Config.ConnectTimeout)
 	if err != nil {
 		fs.Errorf(f, "Error while Dialing %s: %s", f.dialAddr, err)
 		return nil, errors.Wrap(err, "ftpConnection Dial")

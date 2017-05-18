@@ -118,6 +118,6 @@ FTP does not support any checksums.
 Note that since FTP isn't HTTP based the following flags don't work
 with it: `--dump-headers`, `--dump-bodies`, `--dump-auth`
 
-Note that `--timeout` and `--contimeout` aren't supported.
+Note that `--timeout` isn't supported (but `--contimeout` is).
 
 FTP could support server side move but doesn't yet.
