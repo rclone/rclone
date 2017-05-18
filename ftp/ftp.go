@@ -433,6 +433,86 @@ func (f *Fs) Rmdir(dir string) error {
 	return translateErrorDir(err)
 }
 
+// Move renames a remote file object
+func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+	err := f.mkParentDir(remote)
+	if err != nil {
+		return nil, errors.Wrap(err, "Move mkParentDir failed")
+	}
+	c, err := f.getFtpConnection()
+	if err != nil {
+		return nil, errors.Wrap(err, "Move")
+	}
+	err = c.Rename(
+		path.Join(srcObj.fs.root, srcObj.remote),
+		path.Join(f.root, remote),
+	)
+	f.putFtpConnection(&c)
+	if err != nil {
+		return nil, errors.Wrap(err, "Move Rename failed")
+	}
+	dstObj, err := f.NewObject(remote)
+	if err != nil {
+		return nil, errors.Wrap(err, "Move NewObject failed")
+	}
+	return dstObj, nil
+}
+
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
+func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		return fs.ErrorCantDirMove
+	}
+	srcPath := path.Join(srcFs.root, srcRemote)
+	dstPath := path.Join(f.root, dstRemote)
+
+	// Check if destination exists
+	fi, err := f.getInfo(dstPath)
+	if err == nil {
+		if fi.IsDir {
+			return fs.ErrorDirExists
+		}
+		return fs.ErrorIsFile
+	} else if err != fs.ErrorObjectNotFound {
+		return errors.Wrapf(err, "DirMove getInfo failed")
+	}
+
+	// Make sure the parent directory exists
+	err = f.mkdir(path.Dir(dstPath))
+	if err != nil {
+		return errors.Wrap(err, "DirMove mkParentDir dst failed")
+	}
+
+	// Do the move
+	c, err := f.getFtpConnection()
+	if err != nil {
+		return errors.Wrap(err, "DirMove")
+	}
+	err = c.Rename(
+		srcPath,
+		dstPath,
+	)
+	f.putFtpConnection(&c)
+	if err != nil {
+		return errors.Wrapf(err, "DirMove Rename(%q,%q) failed", srcPath, dstPath)
+	}
+	return nil
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -579,6 +659,8 @@ func (o *Object) Remove() (err error) {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs     = &Fs{}
-	_ fs.Object = &Object{}
+	_ fs.Fs       = &Fs{}
+	_ fs.Mover    = &Fs{}
+	_ fs.DirMover = &Fs{}
+	_ fs.Object   = &Object{}
 )
