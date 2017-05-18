@@ -76,3 +76,4 @@ Contributors
   * Anisse Astier <anisse@astier.eu>
   * Zahiar Ahmed <zahiar@live.com>
   * Igor Kharin <igorkharin@gmail.com>
+  * Bill Zissimopoulos <billziss@navimatics.com>
