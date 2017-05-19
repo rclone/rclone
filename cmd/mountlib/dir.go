@@ -96,6 +96,8 @@ func (d *Dir) ForgetPath(relativePath string) {
 // children first. It will not apply the function to parent
 // nodes, regardless of the given path.
 func (d *Dir) walk(absPath string, fun func(*Dir)) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	if d.items != nil {
 		for _, entry := range d.items {
 			if dir, ok := entry.Node.(*Dir); ok {
@@ -105,8 +107,6 @@ func (d *Dir) walk(absPath string, fun func(*Dir)) {
 	}
 
 	if d.path == absPath || absPath == "" || strings.HasPrefix(d.path, absPath+"/") {
-		d.mu.Lock()
-		defer d.mu.Unlock()
 		fun(d)
 	}
 }
