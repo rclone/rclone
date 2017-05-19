@@ -23,6 +23,7 @@ import (
 
 var (
 	followSymlinks = fs.BoolP("copy-links", "L", false, "Follow symlinks and copy the pointed to item.")
+	noUTFNorm      = fs.BoolP("local-no-unicode-normalization", "", false, "Don't apply unicode normalization to paths and filenames")
 )
 
 // Constants
@@ -325,7 +326,9 @@ func (f *Fs) cleanRemote(name string) string {
 		f.wmu.Unlock()
 		name = string([]rune(name))
 	}
-	name = norm.NFC.String(name)
+	if !*noUTFNorm {
+		name = norm.NFC.String(name)
+	}
 	name = filepath.ToSlash(name)
 	return name
 }
