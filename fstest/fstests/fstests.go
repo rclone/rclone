@@ -661,10 +661,14 @@ func TestObjectSize(t *testing.T) {
 }
 
 // read the contents of an object as a string
-func readObject(t *testing.T, obj fs.Object, options ...fs.OpenOption) string {
+func readObject(t *testing.T, obj fs.Object, limit int64, options ...fs.OpenOption) string {
 	in, err := obj.Open(options...)
 	require.NoError(t, err)
-	contents, err := ioutil.ReadAll(in)
+	var r io.Reader = in
+	if limit >= 0 {
+		r = &io.LimitedReader{R: r, N: limit}
+	}
+	contents, err := ioutil.ReadAll(r)
 	require.NoError(t, err)
 	err = in.Close()
 	require.NoError(t, err)
@@ -675,14 +679,21 @@ func readObject(t *testing.T, obj fs.Object, options ...fs.OpenOption) string {
 func TestObjectOpen(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
-	assert.Equal(t, file1Contents, readObject(t, obj), "contents of file1 differ")
+	assert.Equal(t, file1Contents, readObject(t, obj, -1), "contents of file1 differ")
 }
 
 // TestObjectOpenSeek tests that Open works with Seek
 func TestObjectOpenSeek(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
-	assert.Equal(t, file1Contents[50:], readObject(t, obj, &fs.SeekOption{Offset: 50}), "contents of file1 differ after seek")
+	assert.Equal(t, file1Contents[50:], readObject(t, obj, -1, &fs.SeekOption{Offset: 50}), "contents of file1 differ after seek")
+}
+
+// TestObjectPartialRead tests that reading only part of the object does the correct thing
+func TestObjectPartialRead(t *testing.T) {
+	skipIfNotOk(t)
+	obj := findObject(t, file1.Path)
+	assert.Equal(t, file1Contents[:50], readObject(t, obj, 50), "contents of file1 differ after limited read")
 }
 
 // TestObjectUpdate tests that Update works
@@ -708,7 +719,7 @@ func TestObjectUpdate(t *testing.T) {
 	file1.Check(t, obj, remote.Precision())
 
 	// check contents correct
-	assert.Equal(t, contents, readObject(t, obj), "contents of updated file1 differ")
+	assert.Equal(t, contents, readObject(t, obj, -1), "contents of updated file1 differ")
 	file1Contents = contents
 }
 
