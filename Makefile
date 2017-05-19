@@ -6,12 +6,16 @@ GO_VERSION := $(shell go version)
 GO_FILES := $(shell go list ./... | grep -v /vendor/ )
 GO_LATEST := $(findstring go1.8,$(GO_VERSION))
 BETA_URL := https://beta.rclone.org/$(TAG)/
+# Pass in GOTAGS=xyz on the make command line to set build tags
+ifdef GOTAGS
+BUILDTAGS=-tags "$(GOTAGS)"
+endif
 
 .PHONY: rclone vars version
 
 rclone:
 	touch fs/version.go
-	go install -v --ldflags "-s -X github.com/ncw/rclone/fs.Version=$(TAG)"
+	go install -v --ldflags "-s -X github.com/ncw/rclone/fs.Version=$(TAG)" $(BUILDTAGS)
 	cp -av `go env GOPATH`/bin/rclone .
 
 vars:
@@ -28,19 +32,19 @@ version:
 
 # Full suite of integration tests
 test:	rclone
-	go test $(GO_FILES)
-	cd fs && go run test_all.go
+	go test $(BUILDTAGS) $(GO_FILES)
+	cd fs && go run $(BUILDTAGS) test_all.go
 
 # Quick test
 quicktest:
-	RCLONE_CONFIG="/notfound" go test $(GO_FILES)
-	if [ "$$CGO_ENABLED" != "0" ]; then RCLONE_CONFIG="/notfound" go test -cpu=2 -race $(GO_FILES) ; fi
+	RCLONE_CONFIG="/notfound" go test $(BUILDTAGS) $(GO_FILES)
+	RCLONE_CONFIG="/notfound" go test $(BUILDTAGS) -cpu=2 -race $(GO_FILES)
 
 # Do source code quality checks
 check:	rclone
 ifdef GO_LATEST
-	go tool vet -printfuncs Debugf,Infof,Logf,Errorf . 2>&1 | grep -E -v vendor/ ; test $$? -eq 1
-	errcheck $(GO_FILES)
+	go tool vet $(BUILDTAGS) -printfuncs Debugf,Infof,Logf,Errorf . 2>&1 | grep -E -v vendor/ ; test $$? -eq 1
+	errcheck $(BUILDTAGS) $(GO_FILES)
 	find . -name \*.go | grep -v /vendor/ | xargs goimports -d | grep . ; test $$? -eq 1
 	go list ./... | grep -v /vendor/ | xargs -i golint {} | grep -E -v '(StorageUrl|CdnUrl)' ; test $$? -eq 1
 else
@@ -101,10 +105,10 @@ upload_github:
 	./bin/upload-github $(TAG)
 
 cross:	doc
-	go run bin/cross-compile.go -release current $(TAG)
+	go run bin/cross-compile.go -release current $(BUILDTAGS) $(TAG)
 
 beta:
-	go run bin/cross-compile.go $(TAG)β
+	go run bin/cross-compile.go $(BUILDTAGS) $(TAG)β
 	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)β
 	@echo Beta release ready at https://pub.rclone.org/$(TAG)%CE%B2/
 
@@ -118,7 +122,7 @@ upload_beta:
 
 travis_beta:
 	git log $(LAST_TAG).. > /tmp/git-log.txt
-	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt -exclude "^windows/" $(TAG)β
+	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt -exclude "^windows/" $(BUILDTAGS) $(TAG)β
 	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ memstore:beta-rclone-org/$(TAG)
 	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' build/ memstore:beta-rclone-org
 	@echo Beta release ready at $(BETA_URL)

@@ -27,6 +27,7 @@ var (
 	exclude  = flag.String("exclude", "^$", "os/arch regexp to exclude")
 	cgo      = flag.Bool("cgo", false, "Use cgo for the build")
 	noClean  = flag.Bool("no-clean", false, "Don't clean the build directory before running.")
+	tags     = flag.String("tags", "", "Space separated list of build tags")
 )
 
 // GOOS/GOARCH pairs we build for
@@ -100,6 +101,7 @@ func compileArch(version, goos, goarch, dir string) {
 		"--ldflags", "-s -X github.com/ncw/rclone/fs.Version=" + version,
 		"-i",
 		"-o", output,
+		"-tags", *tags,
 		"..",
 	}
 	env := []string{

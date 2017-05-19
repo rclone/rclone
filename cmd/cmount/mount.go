@@ -2,6 +2,7 @@
 //
 // This uses the cgo based cgofuse library
 
+// +build cmount
 // +build cgo
 // +build linux darwin freebsd windows
 

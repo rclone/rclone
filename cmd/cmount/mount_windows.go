@@ -1,3 +1,4 @@
+// +build cmount
 // +build cgo
 // +build windows
 
