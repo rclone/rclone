@@ -1,8 +1,6 @@
 // Package ftp interfaces with FTP servers
 package ftp
 
-// FIXME Mover and DirMover are possible using c.Rename
-
 import (
 	"io"
 	"net/textproto"
@@ -568,6 +566,13 @@ type ftpReadCloser struct {
 // Close the FTP reader and return the connection to the pool
 func (f *ftpReadCloser) Close() error {
 	err := f.ReadCloser.Close()
+	switch errX := err.(type) {
+	case *textproto.Error:
+		switch errX.Code {
+		case ftp.StatusTransfertAborted, ftp.StatusFileUnavailable:
+			err = nil
+		}
+	}
 	f.f.putFtpConnection(&f.c)
 	return err
 }
