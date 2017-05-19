@@ -558,14 +558,31 @@ func (o *Object) Storable() bool {
 
 // ftpReadCloser implements io.ReadCloser for FTP objects.
 type ftpReadCloser struct {
-	io.ReadCloser
-	c *ftp.ServerConn
-	f *Fs
+	rc  io.ReadCloser
+	c   *ftp.ServerConn
+	f   *Fs
+	err error // errors found during read
+}
+
+// Read bytes into p
+func (f *ftpReadCloser) Read(p []byte) (n int, err error) {
+	n, err = f.rc.Read(p)
+	if err != nil && err != io.EOF {
+		f.err = err // store any errors for Close to examine
+	}
+	return
 }
 
 // Close the FTP reader and return the connection to the pool
 func (f *ftpReadCloser) Close() error {
-	err := f.ReadCloser.Close()
+	err := f.rc.Close()
+	// if errors while reading or closing, dump the connection
+	if err != nil || f.err != nil {
+		_ = f.c.Quit()
+	} else {
+		f.f.putFtpConnection(&f.c)
+	}
+	// mask the error if it was caused by a premature close
 	switch errX := err.(type) {
 	case *textproto.Error:
 		switch errX.Code {
@@ -573,7 +590,6 @@ func (f *ftpReadCloser) Close() error {
 			err = nil
 		}
 	}
-	f.f.putFtpConnection(&f.c)
 	return err
 }
 
@@ -601,7 +617,7 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 		o.fs.putFtpConnection(&c)
 		return nil, errors.Wrap(err, "open")
 	}
-	rc = &ftpReadCloser{ReadCloser: fd, c: c, f: o.fs}
+	rc = &ftpReadCloser{rc: fd, c: c, f: o.fs}
 	return rc, nil
 }
 
