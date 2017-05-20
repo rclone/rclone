@@ -312,7 +312,7 @@ func Config(id, name string, config *oauth2.Config) error {
 		return err
 	}
 	state := fmt.Sprintf("%x", stateBytes)
-	authURL := config.AuthCodeURL(state)
+	authURL := config.AuthCodeURL(state, oauth2.AccessTypeOffline)
 
 	// Prepare webserver
 	server := authServer{
