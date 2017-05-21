@@ -64,7 +64,7 @@ func getToken(name string) (*oauth2.Token, error) {
 		return nil, err
 	}
 	// if has data then return it
-	if token.AccessToken != "" && token.RefreshToken != "" {
+	if token.AccessToken != "" {
 		return token, nil
 	}
 	// otherwise try parsing as oldToken
