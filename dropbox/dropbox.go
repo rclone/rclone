@@ -1,38 +1,61 @@
 // Package dropbox provides an interface to Dropbox object storage
 package dropbox
 
-/*
-Limitations of dropbox
+// FIXME put low level retries in
+// FIXME add dropbox style hashes
+// FIXME dropbox for business would be quite easy to add
 
-File system is case insensitive
+/*
+FIXME is case folding of PathDisplay going to cause a problem?
+
+From the docs
+
+path_display String. The cased path to be used for display purposes
+only. In rare instances the casing will not correctly match the user's
+filesystem, but this behavior will match the path provided in the Core
+API v1, and at least the last path component will have the correct
+casing. Changes to only the casing of paths won't be returned by
+list_folder/continue. This field will be null if the file or folder is
+not mounted. This field is optional.
 */
 
 import (
 	"crypto/md5"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"path"
 	"regexp"
 	"strings"
 	"time"
 
+	"golang.org/x/oauth2"
+
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/files"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/oauthutil"
 	"github.com/pkg/errors"
-	"github.com/stacktic/dropbox"
 )
 
 // Constants
 const (
-	rcloneAppKey             = "5jcck7diasz0rqy"
-	rcloneEncryptedAppSecret = "fRS5vVLr2v6FbyXYnIgjwBuUAt0osq_QZTXAEcmZ7g"
-	metadataLimit            = dropbox.MetadataLimitDefault // max items to fetch at once
+	rcloneClientID              = "5jcck7diasz0rqy"
+	rcloneEncryptedClientSecret = "fRS5vVLr2v6FbyXYnIgjwBuUAt0osq_QZTXAEcmZ7g"
 )
 
 var (
+	// Description of how to auth for this app
+	dropboxConfig = &oauth2.Config{
+		Scopes: []string{},
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "https://www.dropbox.com/1/oauth2/authorize",
+			TokenURL: "https://api.dropboxapi.com/1/oauth2/token",
+		}, // FIXME replace with this once vendored dropbox.OAuthEndpoint(""),
+		ClientID:     rcloneClientID,
+		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
+		RedirectURL:  oauthutil.RedirectLocalhostURL,
+	}
 	// A regexp matching path names for files Dropbox ignores
 	// See https://www.dropbox.com/en/help/145 - Ignored files
 	ignoredFiles = regexp.MustCompile(`(?i)(^|/)(desktop\.ini|thumbs\.db|\.ds_store|icon\r|\.dropbox|\.dropbox.attr)$`)
@@ -48,7 +71,12 @@ func init() {
 		Name:        "dropbox",
 		Description: "Dropbox",
 		NewFs:       NewFs,
-		Config:      configHelper,
+		Config: func(name string) {
+			err := oauthutil.Config("dropbox", name, dropboxConfig)
+			if err != nil {
+				log.Fatalf("Failed to configure token: %v", err)
+			}
+		},
 		Options: []fs.Option{{
 			Name: "app_key",
 			Help: "Dropbox App Key - leave blank normally.",
@@ -60,47 +88,14 @@ func init() {
 	fs.VarP(&uploadChunkSize, "dropbox-chunk-size", "", fmt.Sprintf("Upload chunk size. Max %v.", maxUploadChunkSize))
 }
 
-// Configuration helper - called after the user has put in the defaults
-func configHelper(name string) {
-	// See if already have a token
-	token := fs.ConfigFileGet(name, "token")
-	if token != "" {
-		fmt.Printf("Already have a dropbox token - refresh?\n")
-		if !fs.Confirm() {
-			return
-		}
-	}
-
-	// Get a dropbox
-	db, err := newDropbox(name)
-	if err != nil {
-		log.Fatalf("Failed to create dropbox client: %v", err)
-	}
-
-	// This method will ask the user to visit an URL and paste the generated code.
-	if err := db.Auth(); err != nil {
-		log.Fatalf("Failed to authorize: %v", err)
-	}
-
-	// Get the token
-	token = db.AccessToken()
-
-	// Stuff it in the config file if it has changed
-	old := fs.ConfigFileGet(name, "token")
-	if token != old {
-		fs.ConfigFileSet(name, "token", token)
-		fs.SaveConfig()
-	}
-}
-
 // Fs represents a remote dropbox server
 type Fs struct {
-	name           string           // name of this remote
-	root           string           // the path we are working on
-	features       *fs.Features     // optional features
-	db             *dropbox.Dropbox // the connection to the dropbox server
-	slashRoot      string           // root with "/" prefix, lowercase
-	slashRootSlash string           // root with "/" prefix and postfix, lowercase
+	name           string       // name of this remote
+	root           string       // the path we are working on
+	features       *fs.Features // optional features
+	srv            files.Client // the connection to the dropbox server
+	slashRoot      string       // root with "/" prefix, lowercase
+	slashRootSlash string       // root with "/" prefix and postfix, lowercase
 }
 
 // Object describes a dropbox object
@@ -110,7 +105,6 @@ type Object struct {
 	bytes       int64     // size of the object
 	modTime     time.Time // time it was last modified
 	hasMetadata bool      // metadata is valid
-	mimeType    string    // content type according to the server
 }
 
 // ------------------------------------------------------------
@@ -135,51 +129,45 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// Makes a new dropbox from the config
-func newDropbox(name string) (*dropbox.Dropbox, error) {
-	db := dropbox.NewDropbox()
-
-	appKey := fs.ConfigFileGet(name, "app_key")
-	if appKey == "" {
-		appKey = rcloneAppKey
-	}
-	appSecret := fs.ConfigFileGet(name, "app_secret")
-	if appSecret == "" {
-		appSecret = fs.MustReveal(rcloneEncryptedAppSecret)
-	}
-
-	err := db.SetAppInfo(appKey, appSecret)
-	return db, err
-}
-
 // NewFs contstructs an Fs from the path, container:path
 func NewFs(name, root string) (fs.Fs, error) {
 	if uploadChunkSize > maxUploadChunkSize {
 		return nil, errors.Errorf("chunk size too big, must be < %v", maxUploadChunkSize)
 	}
-	db, err := newDropbox(name)
-	if err != nil {
-		return nil, err
+
+	// Convert the old token if it exists.  The old token was just
+	// just a string, the new one is a JSON blob
+	oldToken := strings.TrimSpace(fs.ConfigFileGet(name, fs.ConfigToken))
+	if oldToken != "" && oldToken[0] != '{' {
+		fs.Infof(name, "Converting token to new format")
+		newToken := fmt.Sprintf(`{"access_token":"%s","token_type":"bearer","expiry":"0001-01-01T00:00:00Z"}`, oldToken)
+		err := fs.ConfigSetValueAndSave(name, fs.ConfigToken, newToken)
+		if err != nil {
+			return nil, errors.Wrap(err, "NewFS convert token")
+		}
 	}
+
+	oAuthClient, _, err := oauthutil.NewClient(name, dropboxConfig)
+	if err != nil {
+		log.Fatalf("Failed to configure dropbox: %v", err)
+	}
+
+	config := dropbox.Config{
+		Verbose: false,       // enables verbose logging in the SDK
+		Client:  oAuthClient, // maybe???
+	}
+	srv := files.New(config)
+
 	f := &Fs{
 		name: name,
-		db:   db,
+		srv:  srv,
 	}
 	f.features = (&fs.Features{CaseInsensitive: true, ReadMimeType: true}).Fill(f)
 	f.setRoot(root)
 
-	// Read the token from the config file
-	token := fs.ConfigFileGet(name, "token")
-
-	// Set our custom context which enables our custom transport for timeouts etc
-	db.SetContext(oauthutil.Context())
-
-	// Authorize the client
-	db.SetAccessToken(token)
-
 	// See if the root is actually an object
-	entry, err := f.db.Metadata(f.slashRoot, false, false, "", "", metadataLimit)
-	if err == nil && !entry.IsDir {
+	_, err = f.getFileMetadata(f.slashRoot)
+	if err == nil {
 		newRoot := path.Dir(f.root)
 		if newRoot == "." {
 			newRoot = ""
@@ -188,7 +176,6 @@ func NewFs(name, root string) (fs.Fs, error) {
 		// return an error with an fs which points to the parent
 		return f, fs.ErrorIsFile
 	}
-
 	return f, nil
 }
 
@@ -204,10 +191,58 @@ func (f *Fs) setRoot(root string) {
 	}
 }
 
+// getMetadata gets the metadata for a file or directory
+func (f *Fs) getMetadata(objPath string) (entry files.IsMetadata, notFound bool, err error) {
+	entry, err = f.srv.GetMetadata(&files.GetMetadataArg{Path: objPath})
+	if err != nil {
+		switch e := err.(type) {
+		case files.GetMetadataAPIError:
+			switch e.EndpointError.Path.Tag {
+			case files.LookupErrorNotFound:
+				notFound = true
+				err = nil
+			}
+		}
+	}
+	return
+}
+
+// getFileMetadata gets the metadata for a file
+func (f *Fs) getFileMetadata(filePath string) (fileInfo *files.FileMetadata, err error) {
+	entry, notFound, err := f.getMetadata(filePath)
+	if err != nil {
+		return nil, err
+	}
+	if notFound {
+		return nil, fs.ErrorObjectNotFound
+	}
+	fileInfo, ok := entry.(*files.FileMetadata)
+	if !ok {
+		return nil, fs.ErrorNotAFile
+	}
+	return fileInfo, nil
+}
+
+// getDirMetadata gets the metadata for a directory
+func (f *Fs) getDirMetadata(dirPath string) (dirInfo *files.FolderMetadata, err error) {
+	entry, notFound, err := f.getMetadata(dirPath)
+	if err != nil {
+		return nil, err
+	}
+	if notFound {
+		return nil, fs.ErrorDirNotFound
+	}
+	dirInfo, ok := entry.(*files.FolderMetadata)
+	if !ok {
+		return nil, fs.ErrorIsFile
+	}
+	return dirInfo, nil
+}
+
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(remote string, info *dropbox.Entry) (fs.Object, error) {
+func (f *Fs) newObjectWithInfo(remote string, info *files.FileMetadata) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -254,155 +289,102 @@ func (f *Fs) stripRoot(path string) (string, error) {
 }
 
 // Walk the root returning a channel of Objects
-func (f *Fs) list(out fs.ListOpts, dir string) {
-	// Track path component case, it could be different for entries coming from DropBox API
-	// See https://www.dropboxforum.com/hc/communities/public/questions/201665409-Wrong-character-case-of-folder-name-when-calling-listFolder-using-Sync-API?locale=en-us
-	// and https://github.com/ncw/rclone/issues/53
-	nameTree := newNameTree()
-	cursor := ""
+func (f *Fs) list(out fs.ListOpts, dir string, recursive bool) {
 	root := f.slashRoot
 	if dir != "" {
 		root += "/" + dir
-		// We assume that dir is entered in the correct case
-		// here which is likely since it probably came from a
-		// directory listing
-		nameTree.PutCaseCorrectPath(strings.Trim(root, "/"))
 	}
+
+	started := false
+	var res *files.ListFolderResult
+	var err error
 	for {
-		deltaPage, err := f.db.Delta(cursor, root)
-		if err != nil {
-			out.SetError(errors.Wrap(err, "couldn't list"))
-			return
-		}
-		if deltaPage.Reset && cursor != "" {
-			err = errors.New("unexpected reset during listing")
-			out.SetError(err)
-			break
-		}
-		fs.Debugf(f, "%d delta entries received", len(deltaPage.Entries))
-		for i := range deltaPage.Entries {
-			deltaEntry := &deltaPage.Entries[i]
-			entry := deltaEntry.Entry
-			if entry == nil {
-				// This notifies of a deleted object
-			} else {
-				if len(entry.Path) <= 1 || entry.Path[0] != '/' {
-					fs.Debugf(f, "dropbox API inconsistency: a path should always start with a slash and be at least 2 characters: %s", entry.Path)
-					continue
-				}
-
-				lastSlashIndex := strings.LastIndex(entry.Path, "/")
-
-				var parentPath string
-				if lastSlashIndex == 0 {
-					parentPath = ""
-				} else {
-					parentPath = entry.Path[1:lastSlashIndex]
-				}
-				lastComponent := entry.Path[lastSlashIndex+1:]
-
-				if entry.IsDir {
-					nameTree.PutCaseCorrectDirectoryName(parentPath, lastComponent)
-					name, err := f.stripRoot(entry.Path + "/")
-					if err != nil {
-						out.SetError(err)
-						return
-					}
-					name = strings.Trim(name, "/")
-					if name != "" && name != dir {
-						dir := &fs.Dir{
-							Name:  name,
-							When:  time.Time(entry.ClientMtime),
-							Bytes: entry.Bytes,
-							Count: -1,
-						}
-						if out.AddDir(dir) {
-							return
-						}
-					}
-				} else {
-					parentPathCorrectCase := nameTree.GetPathWithCorrectCase(parentPath)
-					if parentPathCorrectCase != nil {
-						path, err := f.stripRoot(*parentPathCorrectCase + "/" + lastComponent)
-						if err != nil {
-							out.SetError(err)
-							return
-						}
-						o, err := f.newObjectWithInfo(path, entry)
-						if err != nil {
-							out.SetError(err)
-							return
-						}
-						if out.Add(o) {
-							return
-						}
-					} else {
-						nameTree.PutFile(parentPath, lastComponent, entry)
-					}
-				}
+		if !started {
+			arg := files.ListFolderArg{
+				Path:      root,
+				Recursive: recursive,
 			}
-		}
-		if !deltaPage.HasMore {
-			break
-		}
-		cursor = deltaPage.Cursor.Cursor
-
-	}
-
-	walkFunc := func(caseCorrectFilePath string, entry *dropbox.Entry) error {
-		path, err := f.stripRoot("/" + caseCorrectFilePath)
-		if err != nil {
-			return err
-		}
-		o, err := f.newObjectWithInfo(path, entry)
-		if err != nil {
-			return err
-		}
-		if out.Add(o) {
-			return fs.ErrorListAborted
-		}
-		return nil
-	}
-	err := nameTree.WalkFiles(f.root, walkFunc)
-	if err != nil {
-		out.SetError(err)
-	}
-}
-
-// listOneLevel walks the path one level deep
-func (f *Fs) listOneLevel(out fs.ListOpts, dir string) {
-	root := f.root
-	if dir != "" {
-		root += "/" + dir
-	}
-	dirEntry, err := f.db.Metadata(root, true, false, "", "", metadataLimit)
-	if err != nil {
-		out.SetError(errors.Wrap(err, "couldn't list single level"))
-		return
-	}
-	for i := range dirEntry.Contents {
-		entry := &dirEntry.Contents[i]
-		// Normalise the path to the dir passed in
-		remote := path.Join(dir, path.Base(entry.Path))
-		if entry.IsDir {
-			dir := &fs.Dir{
-				Name:  remote,
-				When:  time.Time(entry.ClientMtime),
-				Bytes: entry.Bytes,
-				Count: -1,
+			if root == "/" {
+				arg.Path = "" // Specify root folder as empty string
 			}
-			if out.AddDir(dir) {
-				return
-			}
-		} else {
-			o, err := f.newObjectWithInfo(remote, entry)
+			res, err = f.srv.ListFolder(&arg)
 			if err != nil {
+				switch e := err.(type) {
+				case files.ListFolderAPIError:
+					switch e.EndpointError.Path.Tag {
+					case files.LookupErrorNotFound:
+						err = fs.ErrorDirNotFound
+					}
+				}
 				out.SetError(err)
 				return
 			}
-			if out.Add(o) {
+			started = false
+		} else {
+			arg := files.ListFolderContinueArg{
+				Cursor: res.Cursor,
+			}
+			res, err = f.srv.ListFolderContinue(&arg)
+			if err != nil {
+				out.SetError(errors.Wrap(err, "list continue"))
 				return
 			}
+		}
+		for _, entry := range res.Entries {
+			var fileInfo *files.FileMetadata
+			var folderInfo *files.FolderMetadata
+			var metadata *files.Metadata
+			switch info := entry.(type) {
+			case *files.FolderMetadata:
+				folderInfo = info
+				metadata = &info.Metadata
+			case *files.FileMetadata:
+				fileInfo = info
+				metadata = &info.Metadata
+			default:
+				fs.Errorf(f, "Unknown type %T", entry)
+				continue
+			}
+
+			entryPath := metadata.PathDisplay // FIXME  PathLower
+
+			if folderInfo != nil {
+				name, err := f.stripRoot(entryPath + "/")
+				if err != nil {
+					out.SetError(err)
+					return
+				}
+				name = strings.Trim(name, "/")
+				if name != "" && name != dir {
+					dir := &fs.Dir{
+						Name: name,
+						When: time.Now(),
+						//When:  folderInfo.ClientMtime,
+						//Bytes: folderInfo.Bytes,
+						//Count: -1,
+					}
+					if out.AddDir(dir) {
+						return
+					}
+				}
+			} else if fileInfo != nil {
+				path, err := f.stripRoot(entryPath)
+				if err != nil {
+					out.SetError(err)
+					return
+				}
+				o, err := f.newObjectWithInfo(path, fileInfo)
+				if err != nil {
+					out.SetError(err)
+					return
+				}
+				if out.Add(o) {
+					return
+				}
+			}
+		}
+		if !res.HasMore {
+			break
 		}
 	}
 }
@@ -413,9 +395,9 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 	level := out.Level()
 	switch level {
 	case 1:
-		f.listOneLevel(out, dir)
+		f.list(out, dir, false)
 	case fs.MaxLevel:
-		f.list(out, dir)
+		f.list(out, dir, true)
 	default:
 		out.SetError(fs.ErrorLevelNotSupported)
 	}
@@ -453,14 +435,25 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(dir string) error {
 	root := path.Join(f.slashRoot, dir)
-	entry, err := f.db.Metadata(root, false, false, "", "", metadataLimit)
-	if err == nil {
-		if entry.IsDir {
-			return nil
-		}
-		return errors.Errorf("%q already exists as file", f.root)
+
+	// can't create or run metadata on root
+	if root == "/" {
+		return nil
 	}
-	_, err = f.db.CreateFolder(root)
+
+	// check directory doesn't exist
+	_, err := f.getDirMetadata(root)
+	if err == nil {
+		return nil // directory exists already
+	} else if err != fs.ErrorDirNotFound {
+		return err // some other error
+	}
+
+	// create it
+	arg2 := files.CreateFolderArg{
+		Path: root,
+	}
+	_, err = f.srv.CreateFolder(&arg2)
 	return err
 }
 
@@ -469,20 +462,42 @@ func (f *Fs) Mkdir(dir string) error {
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(dir string) error {
 	root := path.Join(f.slashRoot, dir)
-	entry, err := f.db.Metadata(root, true, false, "", "", 16)
-	if err != nil {
-		return err
+
+	// can't remove root
+	if root == "/" {
+		return errors.New("can't remove root directory")
 	}
-	if len(entry.Contents) != 0 {
+
+	// check directory exists
+	_, err := f.getDirMetadata(root)
+	if err != nil {
+		return errors.Wrap(err, "Rmdir")
+	}
+
+	// check directory empty
+	arg := files.ListFolderArg{
+		Path:      root,
+		Recursive: false,
+	}
+	if root == "/" {
+		arg.Path = "" // Specify root folder as empty string
+	}
+	res, err := f.srv.ListFolder(&arg)
+	if err != nil {
+		return errors.Wrap(err, "Rmdir")
+	}
+	if len(res.Entries) != 0 {
 		return errors.New("directory not empty")
 	}
-	_, err = f.db.Delete(root)
+
+	// remove it
+	_, err = f.srv.Delete(&files.DeleteArg{Path: root})
 	return err
 }
 
 // Precision returns the precision
 func (f *Fs) Precision() time.Duration {
-	return fs.ModTimeNotSupported
+	return time.Second
 }
 
 // Copy src to this remote using server side copy operations.
@@ -507,16 +522,25 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		remote: remote,
 	}
 
-	srcPath := srcObj.remotePath()
-	dstPath := dstObj.remotePath()
-	entry, err := f.db.Copy(srcPath, dstPath, false)
+	// Copy
+	arg := files.RelocationArg{}
+	arg.FromPath = srcObj.remotePath()
+	arg.ToPath = dstObj.remotePath()
+	entry, err := f.srv.Copy(&arg)
 	if err != nil {
 		return nil, errors.Wrap(err, "copy failed")
 	}
-	err = dstObj.setMetadataFromEntry(entry)
+
+	// Set the metadata
+	fileInfo, ok := entry.(*files.FileMetadata)
+	if !ok {
+		return nil, fs.ErrorNotAFile
+	}
+	err = dstObj.setMetadataFromEntry(fileInfo)
 	if err != nil {
 		return nil, errors.Wrap(err, "copy failed")
 	}
+
 	return dstObj, nil
 }
 
@@ -527,7 +551,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 // result of List()
 func (f *Fs) Purge() error {
 	// Let dropbox delete the filesystem tree
-	_, err := f.db.Delete(f.slashRoot)
+	_, err := f.srv.Delete(&files.DeleteArg{Path: f.slashRoot})
 	return err
 }
 
@@ -553,13 +577,21 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		remote: remote,
 	}
 
-	srcPath := srcObj.remotePath()
-	dstPath := dstObj.remotePath()
-	entry, err := f.db.Move(srcPath, dstPath)
+	// Do the move
+	arg := files.RelocationArg{}
+	arg.FromPath = srcObj.remotePath()
+	arg.ToPath = dstObj.remotePath()
+	entry, err := f.srv.Move(&arg)
 	if err != nil {
 		return nil, errors.Wrap(err, "move failed")
 	}
-	err = dstObj.setMetadataFromEntry(entry)
+
+	// Set the metadata
+	fileInfo, ok := entry.(*files.FileMetadata)
+	if !ok {
+		return nil, fs.ErrorNotAFile
+	}
+	err = dstObj.setMetadataFromEntry(fileInfo)
 	if err != nil {
 		return nil, errors.Wrap(err, "move failed")
 	}
@@ -584,19 +616,25 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	dstPath := path.Join(f.slashRoot, dstRemote)
 
 	// Check if destination exists
-	entry, err := f.db.Metadata(f.slashRoot, false, false, "", "", metadataLimit)
-	if err == nil && !entry.IsDeleted {
+	_, err := f.getDirMetadata(f.slashRoot)
+	if err == nil {
 		return fs.ErrorDirExists
+	} else if err != fs.ErrorDirNotFound {
+		return err
 	}
 
 	// Make sure the parent directory exists
 	// ...apparently not necessary
 
 	// Do the move
-	_, err = f.db.Move(srcPath, dstPath)
+	arg := files.RelocationArg{}
+	arg.FromPath = srcPath
+	arg.ToPath = dstPath
+	_, err = f.srv.Move(&arg)
 	if err != nil {
 		return errors.Wrap(err, "MoveDir failed")
 	}
+
 	return nil
 }
 
@@ -635,32 +673,19 @@ func (o *Object) Size() int64 {
 	return o.bytes
 }
 
-// setMetadataFromEntry sets the fs data from a dropbox.Entry
+// setMetadataFromEntry sets the fs data from a files.FileMetadata
 //
 // This isn't a complete set of metadata and has an inacurate date
-func (o *Object) setMetadataFromEntry(info *dropbox.Entry) error {
-	if info.IsDir {
-		return errors.Wrapf(fs.ErrorNotAFile, "%q", o.remote)
-	}
-	o.bytes = info.Bytes
-	o.modTime = time.Time(info.ClientMtime)
-	o.mimeType = info.MimeType
+func (o *Object) setMetadataFromEntry(info *files.FileMetadata) error {
+	o.bytes = int64(info.Size)
+	o.modTime = info.ClientModified
 	o.hasMetadata = true
 	return nil
 }
 
-// Reads the entry from dropbox
-func (o *Object) readEntry() (*dropbox.Entry, error) {
-	entry, err := o.fs.db.Metadata(o.remotePath(), false, false, "", "", metadataLimit)
-	if err != nil {
-		if dropboxErr, ok := err.(*dropbox.Error); ok {
-			if dropboxErr.StatusCode == http.StatusNotFound {
-				return nil, fs.ErrorObjectNotFound
-			}
-		}
-		return nil, err
-	}
-	return entry, nil
+// Reads the entry for a file from dropbox
+func (o *Object) readEntry() (*files.FileMetadata, error) {
+	return o.fs.getFileMetadata(o.remotePath())
 }
 
 // Read entry if not set and set metadata from it
@@ -721,7 +746,9 @@ func (o *Object) ModTime() time.Time {
 //
 // Commits the datastore
 func (o *Object) SetModTime(modTime time.Time) error {
-	// FIXME not implemented
+	// Dropbox doesn't have a way of doing this so returning this
+	// error will cause the file to be re-uploaded to set the
+	// time.
 	return fs.ErrorCantSetModTime
 }
 
@@ -732,28 +759,67 @@ func (o *Object) Storable() bool {
 
 // Open an object for read
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	// FIXME should send a patch for dropbox module which allow setting headers
-	var offset int64
-	for _, option := range options {
-		switch x := option.(type) {
-		case *fs.SeekOption:
-			offset = x.Offset
-		default:
-			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
-			}
-		}
-	}
+	headers := fs.OpenOptionHeaders(options)
+	arg := files.DownloadArg{Path: o.remotePath(), ExtraHeaders: headers}
+	_, in, err = o.fs.srv.Download(&arg)
 
-	in, _, err = o.fs.db.Download(o.remotePath(), "", offset)
-	if dropboxErr, ok := err.(*dropbox.Error); ok {
-		// Dropbox return 461 for copyright violation so don't
-		// attempt to retry this error
-		if dropboxErr.StatusCode == 461 {
+	switch e := err.(type) {
+	case files.DownloadAPIError:
+		// Don't attempt to retry copyright violation errors
+		if e.EndpointError.Path.Tag == files.LookupErrorRestrictedContent {
 			return nil, fs.NoRetryError(err)
 		}
 	}
+
 	return
+}
+
+// uploadChunked uploads the object in parts
+//
+// Call only if size is >= uploadChunkSize
+//
+// FIXME rework for retries
+func (o *Object) uploadChunked(in io.Reader, commitInfo *files.CommitInfo, size int64) (entry *files.FileMetadata, err error) {
+	chunkSize := int64(uploadChunkSize)
+	chunks := int(size/chunkSize) + 1
+
+	// write the first whole chunk
+	fs.Debugf(o, "Uploading chunk 1/%d", chunks)
+	res, err := o.fs.srv.UploadSessionStart(&files.UploadSessionStartArg{}, &io.LimitedReader{R: in, N: chunkSize})
+	if err != nil {
+		return nil, err
+	}
+
+	cursor := files.UploadSessionCursor{
+		SessionId: res.SessionId,
+		Offset:    uint64(chunkSize),
+	}
+	appendArg := files.UploadSessionAppendArg{
+		Cursor: &cursor,
+		Close:  false,
+	}
+
+	// write more whole chunks (if any)
+	for i := 2; i < chunks; i++ {
+		fs.Debugf(o, "Uploading chunk %d/%d", i, chunks)
+		err = o.fs.srv.UploadSessionAppendV2(&appendArg, &io.LimitedReader{R: in, N: chunkSize})
+		if err != nil {
+			return nil, err
+		}
+		cursor.Offset += uint64(chunkSize)
+	}
+
+	// write the remains
+	args := &files.UploadSessionFinishArg{
+		Cursor: &cursor,
+		Commit: commitInfo,
+	}
+	fs.Debugf(o, "Uploading chunk %d/%d", chunks, chunks)
+	entry, err = o.fs.srv.UploadSessionFinish(args, in)
+	if err != nil {
+		return nil, err
+	}
+	return entry, nil
 }
 
 // Update the already existing object
@@ -767,7 +833,19 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 		fs.Logf(o, "File name disallowed - not uploading")
 		return nil
 	}
-	entry, err := o.fs.db.UploadByChunk(ioutil.NopCloser(in), int(uploadChunkSize), remote, true, "")
+	commitInfo := files.NewCommitInfo(o.remotePath())
+	commitInfo.Mode.Tag = "overwrite"
+	// The Dropbox API only accepts timestamps in UTC with second precision.
+	commitInfo.ClientModified = src.ModTime().UTC().Round(time.Second)
+
+	size := src.Size()
+	var err error
+	var entry *files.FileMetadata
+	if size > int64(uploadChunkSize) {
+		entry, err = o.uploadChunked(in, commitInfo, size)
+	} else {
+		entry, err = o.fs.srv.Upload(commitInfo, in)
+	}
 	if err != nil {
 		return errors.Wrap(err, "upload failed")
 	}
@@ -776,27 +854,16 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 
 // Remove an object
 func (o *Object) Remove() error {
-	_, err := o.fs.db.Delete(o.remotePath())
+	_, err := o.fs.srv.Delete(&files.DeleteArg{Path: o.remotePath()})
 	return err
-}
-
-// MimeType of an Object if known, "" otherwise
-func (o *Object) MimeType() string {
-	err := o.readMetaData()
-	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
-		return ""
-	}
-	return o.mimeType
 }
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs        = (*Fs)(nil)
-	_ fs.Copier    = (*Fs)(nil)
-	_ fs.Purger    = (*Fs)(nil)
-	_ fs.Mover     = (*Fs)(nil)
-	_ fs.DirMover  = (*Fs)(nil)
-	_ fs.Object    = (*Object)(nil)
-	_ fs.MimeTyper = (*Object)(nil)
+	_ fs.Fs       = (*Fs)(nil)
+	_ fs.Copier   = (*Fs)(nil)
+	_ fs.Purger   = (*Fs)(nil)
+	_ fs.Mover    = (*Fs)(nil)
+	_ fs.DirMover = (*Fs)(nil)
+	_ fs.Object   = (*Object)(nil)
 )
