@@ -9,16 +9,14 @@ import (
 	"net"
 	"os"
 	"path"
-	"path/filepath"
 	"sync"
 	"time"
-
-	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
 )
 
 func init() {
@@ -323,27 +321,27 @@ func (f *Fs) mkParentDir(remote string) error {
 }
 
 // mkdir makes the directory and parents using native paths
-func (f *Fs) mkdir(path string) error {
-	f.mkdirLock.Lock(path)
-	defer f.mkdirLock.Unlock(path)
-	if path == "." || path == "/" {
+func (f *Fs) mkdir(dirPath string) error {
+	f.mkdirLock.Lock(dirPath)
+	defer f.mkdirLock.Unlock(dirPath)
+	if dirPath == "." || dirPath == "/" {
 		return nil
 	}
-	ok, err := f.dirExists(path)
+	ok, err := f.dirExists(dirPath)
 	if err != nil {
 		return errors.Wrap(err, "mkdir dirExists failed")
 	}
 	if ok {
 		return nil
 	}
-	parent := filepath.Dir(path)
+	parent := path.Dir(dirPath)
 	err = f.mkdir(parent)
 	if err != nil {
 		return err
 	}
-	err = f.sftpClient.Mkdir(path)
+	err = f.sftpClient.Mkdir(dirPath)
 	if err != nil {
-		return errors.Wrapf(err, "mkdir %q failed", path)
+		return errors.Wrapf(err, "mkdir %q failed", dirPath)
 	}
 	return nil
 }
