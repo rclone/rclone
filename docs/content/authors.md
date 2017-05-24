@@ -79,3 +79,4 @@ Contributors
   * Bill Zissimopoulos <billziss@navimatics.com>
   * Bob Potter <bobby.potter@gmail.com>
   * Steven Lu <tacticalazn@gmail.com>
+  * Sjur Fredriksen <sjurtf@ifi.uio.no>
