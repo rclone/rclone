@@ -16,9 +16,11 @@ Here is an example of making an FTP configuration.  First run
     rclone config
 
 This will guide you through an interactive setup process. An FTP
-backend only needs an URL and and username and password. With
-anonymous FTP server you will need to use `anonymous` as username and
-your email address as password.
+backend only needs an URL and username and password. With
+anonymous FTP server, you will need to use `anonymous` as username and
+your email address as the password. If you want to use a non-standard FTP 
+port, please specify this with a colon and the port number at the end of 
+the URL. For example `ftp://ftp.mirrorservice.org:5555`
 
 ```
 No remotes found - make a new one
