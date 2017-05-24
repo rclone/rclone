@@ -121,9 +121,26 @@ func (f *Fs) getFtpConnection() (c *ftp.ServerConn, err error) {
 // Return an FTP connection to the pool
 //
 // It nils the pointed to connection out so it can't be reused
-func (f *Fs) putFtpConnection(c **ftp.ServerConn) {
+//
+// if err is not nil then it checks the connection is alive using a
+// NOOP request
+func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
+	c := *pc
+	*pc = nil
+	if err != nil {
+		// If not a regular FTP error code then check the connection
+		_, isRegularError := errors.Cause(err).(*textproto.Error)
+		if !isRegularError {
+			nopErr := c.NoOp()
+			if nopErr != nil {
+				fs.Debugf(f, "Connection failed, closing: %v", nopErr)
+				_ = c.Quit()
+				return
+			}
+		}
+	}
 	f.poolMu.Lock()
-	f.pool = append(f.pool, *c)
+	f.pool = append(f.pool, c)
 	f.poolMu.Unlock()
 }
 
@@ -165,7 +182,7 @@ func NewFs(name, root string) (ff fs.Fs, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "NewFs")
 	}
-	f.putFtpConnection(&c)
+	f.putFtpConnection(&c, nil)
 	if root != "" {
 		// Check to see if the root actually an existing file
 		remote := path.Base(root)
@@ -225,7 +242,7 @@ func (f *Fs) NewObject(remote string) (o fs.Object, err error) {
 		return nil, errors.Wrap(err, "NewObject")
 	}
 	files, err := c.List(dir)
-	f.putFtpConnection(&c)
+	f.putFtpConnection(&c, err)
 	if err != nil {
 		return nil, translateErrorFile(err)
 	}
@@ -256,7 +273,7 @@ func (f *Fs) list(out fs.ListOpts, dir string, curlevel int) {
 		return
 	}
 	files, err := c.List(path.Join(f.root, dir))
-	f.putFtpConnection(&c)
+	f.putFtpConnection(&c, err)
 	if err != nil {
 		out.SetError(translateErrorDir(err))
 		return
@@ -357,7 +374,7 @@ func (f *Fs) getInfo(remote string) (fi *FileInfo, err error) {
 		return nil, errors.Wrap(err, "getInfo")
 	}
 	files, err := c.List(dir)
-	f.putFtpConnection(&c)
+	f.putFtpConnection(&c, err)
 	if err != nil {
 		return nil, translateErrorFile(err)
 	}
@@ -400,7 +417,7 @@ func (f *Fs) mkdir(abspath string) error {
 		return errors.Wrap(connErr, "mkdir")
 	}
 	err = c.MakeDir(abspath)
-	f.putFtpConnection(&c)
+	f.putFtpConnection(&c, err)
 	return err
 }
 
@@ -427,7 +444,7 @@ func (f *Fs) Rmdir(dir string) error {
 		return errors.Wrap(translateErrorFile(err), "Rmdir")
 	}
 	err = c.RemoveDir(path.Join(f.root, dir))
-	f.putFtpConnection(&c)
+	f.putFtpConnection(&c, err)
 	return translateErrorDir(err)
 }
 
@@ -450,7 +467,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		path.Join(srcObj.fs.root, srcObj.remote),
 		path.Join(f.root, remote),
 	)
-	f.putFtpConnection(&c)
+	f.putFtpConnection(&c, err)
 	if err != nil {
 		return nil, errors.Wrap(err, "Move Rename failed")
 	}
@@ -504,7 +521,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 		srcPath,
 		dstPath,
 	)
-	f.putFtpConnection(&c)
+	f.putFtpConnection(&c, err)
 	if err != nil {
 		return errors.Wrapf(err, "DirMove Rename(%q,%q) failed", srcPath, dstPath)
 	}
@@ -580,7 +597,7 @@ func (f *ftpReadCloser) Close() error {
 	if err != nil || f.err != nil {
 		_ = f.c.Quit()
 	} else {
-		f.f.putFtpConnection(&f.c)
+		f.f.putFtpConnection(&f.c, nil)
 	}
 	// mask the error if it was caused by a premature close
 	switch errX := err.(type) {
@@ -614,7 +631,7 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 	}
 	fd, err := c.RetrFrom(path, uint64(offset))
 	if err != nil {
-		o.fs.putFtpConnection(&c)
+		o.fs.putFtpConnection(&c, err)
 		return nil, errors.Wrap(err, "open")
 	}
 	rc = &ftpReadCloser{rc: fd, c: c, f: o.fs}
@@ -648,7 +665,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
 		remove()
 		return errors.Wrap(err, "update stor")
 	}
-	o.fs.putFtpConnection(&c)
+	o.fs.putFtpConnection(&c, nil)
 	o.info, err = o.fs.getInfo(path)
 	if err != nil {
 		return errors.Wrap(err, "update getinfo")
@@ -673,7 +690,7 @@ func (o *Object) Remove() (err error) {
 			return errors.Wrap(err, "Remove")
 		}
 		err = c.Delete(path)
-		o.fs.putFtpConnection(&c)
+		o.fs.putFtpConnection(&c, err)
 	}
 	return err
 }
