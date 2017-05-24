@@ -38,7 +38,7 @@ func init() {
 			Optional: true,
 		}, {
 			Name:     "port",
-			Help:     "SSH port",
+			Help:     "SSH port, leave blank to use default (22)",
 			Optional: true,
 		}, {
 			Name:       "pass",

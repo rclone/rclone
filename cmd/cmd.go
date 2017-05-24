@@ -40,7 +40,7 @@ var Root = &cobra.Command{
 	Short: "Sync files and directories to and from local and remote object stores - " + fs.Version,
 	Long: `
 Rclone is a command line program to sync files and directories to and
-from various cloud storage systems, such as:
+from various cloud storage systems and using file transfer services, such as:
 
   * Google Drive
   * Amazon S3
@@ -52,6 +52,8 @@ from various cloud storage systems, such as:
   * Hubic
   * Backblaze B2
   * Yandex Disk
+  * SFTP
+  * FTP
   * The local filesystem
 
 Features

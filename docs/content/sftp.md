@@ -45,23 +45,25 @@ Choose a number from below, or type in your own value
    \ "dropbox"
  5 / Encrypt/Decrypt a remote
    \ "crypt"
- 6 / Google Cloud Storage (this is not Google Drive)
+ 6 / FTP Connection
+   \ "ftp"
+ 7 / Google Cloud Storage (this is not Google Drive)
    \ "google cloud storage"
- 7 / Google Drive
+ 8 / Google Drive
    \ "drive"
- 8 / Hubic
+ 9 / Hubic
    \ "hubic"
- 9 / Local Disk
+10 / Local Disk
    \ "local"
-10 / Microsoft OneDrive
+11 / Microsoft OneDrive
    \ "onedrive"
-11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
    \ "swift"
-12 / SSH/SFTP Connection
+13 / SSH/SFTP Connection
    \ "sftp"
-13 / Yandex Disk
+14 / Yandex Disk
    \ "yandex"
-Storage> 12  
+Storage> sftp
 SSH host to connect to
 Choose a number from below, or type in your own value
  1 / Connect to example.com
@@ -69,7 +71,7 @@ Choose a number from below, or type in your own value
 host> example.com
 SSH username, leave blank for current username, ncw
 user> 
-SSH port
+SSH port, leave blank to use default (22)
 port> 
 SSH password, leave blank to use ssh-agent
 y) Yes type in my own password

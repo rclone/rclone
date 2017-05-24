@@ -7,7 +7,7 @@ date: "2017-01-01"
 <i class="fa fa-file"></i> FTP
 ------------------------------
 
-FTP is the File Transfer Protocl. FTP support is provided using the
+FTP is the File Transfer Protocol. FTP support is provided using the
 [github.com/jlaffaye/ftp](https://godoc.org/github.com/jlaffaye/ftp)
 package.
 
@@ -15,12 +15,10 @@ Here is an example of making an FTP configuration.  First run
 
     rclone config
 
-This will guide you through an interactive setup process. An FTP
-backend only needs an URL and username and password. With
-anonymous FTP server, you will need to use `anonymous` as username and
-your email address as the password. If you want to use a non-standard FTP 
-port, please specify this with a colon and the port number at the end of 
-the URL. For example `ftp://ftp.mirrorservice.org:5555`
+This will guide you through an interactive setup process. An FTP remote only
+needs a host together with and a username and a password. With anonymous FTP
+server, you will need to use `anonymous` as username and your email address as
+the password.
 
 ```
 No remotes found - make a new one
@@ -43,7 +41,7 @@ Choose a number from below, or type in your own value
    \ "dropbox"
  5 / Encrypt/Decrypt a remote
    \ "crypt"
- 6 / FTP interface
+ 6 / FTP Connection 
    \ "ftp"
  7 / Google Cloud Storage (this is not Google Drive)
    \ "google cloud storage"
@@ -62,9 +60,16 @@ Choose a number from below, or type in your own value
 14 / Yandex Disk
    \ "yandex"
 Storage> ftp
-Username
-username> anonymous
-Password
+FTP host to connect to
+Choose a number from below, or type in your own value
+ 1 / Connect to ftp.example.com
+   \ "ftp.example.com"
+host> ftp.example.com
+FTP username, leave blank for current username, ncw
+user>
+FTP port, leave blank to use default (21)
+port>
+FTP password
 y) Yes type in my own password
 g) Generate random password
 y/g> y
@@ -72,14 +77,13 @@ Enter the password:
 password:
 Confirm the password:
 password:
-FTP URL
-url> ftp://ftp.mirrorservice.org/
 Remote config
 --------------------
 [remote]
-username = anonymous
-password = *** ENCRYPTED ***
-url = ftp://ftp.mirrorservice.org/
+host = ftp.example.com
+user = 
+port =
+pass = *** ENCRYPTED ***
 --------------------
 y) Yes this is OK
 e) Edit this remote
