@@ -5,8 +5,8 @@ import (
 	"io"
 	"net/textproto"
 	"net/url"
+	"os"
 	"path"
-	"strings"
 	"sync"
 	"time"
 
@@ -19,19 +19,30 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "ftp",
-		Description: "FTP interface",
+		Description: "FTP Connection",
 		NewFs:       NewFs,
 		Options: []fs.Option{
 			{
-				Name: "username",
-				Help: "Username",
+				Name:     "host",
+				Help:     "FTP host to connect to",
+				Optional: false,
+				Examples: []fs.OptionExample{{
+					Value: "ftp.example.com",
+					Help:  "Connect to ftp.example.com",
+				}},
 			}, {
-				Name:       "password",
-				Help:       "Password",
+				Name:     "user",
+				Help:     "FTP username, leave blank for current username, " + os.Getenv("USER"),
+				Optional: true,
+			}, {
+				Name:     "port",
+				Help:     "FTP port, leave blank to use default (21) ",
+				Optional: true,
+			}, {
+				Name:       "pass",
+				Help:       "FTP password",
 				IsPassword: true,
-			}, {
-				Name: "url",
-				Help: "FTP URL",
+				Optional:   false,
 			},
 		},
 	})
@@ -130,27 +141,27 @@ func (f *Fs) putFtpConnection(c **ftp.ServerConn) {
 // NewFs contstructs an Fs from the path, container:path
 func NewFs(name, root string) (ff fs.Fs, err error) {
 	// defer fs.Trace(nil, "name=%q, root=%q", name, root)("fs=%v, err=%v", &ff, &err)
-	URL := fs.ConfigFileGet(name, "url")
-	user := fs.ConfigFileGet(name, "username")
-	pass := fs.ConfigFileGet(name, "password")
+	host := fs.ConfigFileGet(name, "host")
+	user := fs.ConfigFileGet(name, "user")
+	pass := fs.ConfigFileGet(name, "pass")
+	port := fs.ConfigFileGet(name, "port")
 	pass, err = fs.Reveal(pass)
 	if err != nil {
 		return nil, errors.Wrap(err, "NewFS decrypt password")
 	}
-	u, err := url.Parse(URL)
+	if user == "" {
+		user = os.Getenv("USER")
+	}
+	if port == "" {
+		port = "21"
+	}
+
+	dialAddr := host + ":" + port
+	u, err := url.Parse("ftp://" + dialAddr)
 	if err != nil {
 		return nil, errors.Wrap(err, "NewFS URL parse")
 	}
-	urlPath := strings.Trim(u.Path, "/")
-	fullPath := root
-	if urlPath != "" && !strings.HasPrefix("/", root) {
-		fullPath = path.Join(u.Path, root)
-	}
-	root = fullPath
-	dialAddr := u.Host
-	if strings.IndexRune(dialAddr, ':') < 0 {
-		dialAddr += ":21"
-	}
+
 	f := &Fs{
 		name:     name,
 		root:     root,
