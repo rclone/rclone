@@ -78,3 +78,4 @@ Contributors
   * Igor Kharin <igorkharin@gmail.com>
   * Bill Zissimopoulos <billziss@navimatics.com>
   * Bob Potter <bobby.potter@gmail.com>
+  * Steven Lu <tacticalazn@gmail.com>
