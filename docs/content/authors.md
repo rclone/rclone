@@ -77,3 +77,4 @@ Contributors
   * Zahiar Ahmed <zahiar@live.com>
   * Igor Kharin <igorkharin@gmail.com>
   * Bill Zissimopoulos <billziss@navimatics.com>
+  * Bob Potter <bobby.potter@gmail.com>
