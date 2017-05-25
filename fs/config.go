@@ -1196,6 +1196,13 @@ func ConfigFileSet(section, key, value string) {
 	configData.SetValue(section, key, value)
 }
 
+// ConfigFileDeleteKey deletes the config key in the config file.
+// It returns true if the key was deleted,
+// or returns false if the section or key didn't exist.
+func ConfigFileDeleteKey(section, key string) bool {
+	return configData.DeleteKey(section, key)
+}
+
 var matchEnv = regexp.MustCompile(`^RCLONE_CONFIG_(.*?)_TYPE=.*$`)
 
 // ConfigFileSections returns the sections in the config file
