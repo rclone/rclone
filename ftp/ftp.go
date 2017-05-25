@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -53,7 +54,7 @@ type Fs struct {
 	name     string       // name of this remote
 	root     string       // the path we are working on if any
 	features *fs.Features // optional features
-	url      *url.URL
+	url      string
 	user     string
 	pass     string
 	dialAddr string
@@ -90,7 +91,7 @@ func (f *Fs) Root() string {
 
 // String returns a description of the FS
 func (f *Fs) String() string {
-	return f.url.String()
+	return f.url
 }
 
 // Features returns the optional features of this Fs
@@ -158,6 +159,29 @@ func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
 // NewFs contstructs an Fs from the path, container:path
 func NewFs(name, root string) (ff fs.Fs, err error) {
 	// defer fs.Trace(nil, "name=%q, root=%q", name, root)("fs=%v, err=%v", &ff, &err)
+	// FIXME Convert the old scheme used for the first beta - remove after release
+	if ftpURL := fs.ConfigFileGet(name, "url"); ftpURL != "" {
+		fs.Infof(name, "Converting old configuration")
+		u, err := url.Parse(ftpURL)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Failed to parse old url %q", ftpURL)
+		}
+		parts := strings.Split(u.Host, ":")
+		fs.ConfigFileSet(name, "host", parts[0])
+		if len(parts) > 1 {
+			fs.ConfigFileSet(name, "port", parts[1])
+		}
+		fs.ConfigFileSet(name, "host", u.Host)
+		fs.ConfigFileSet(name, "user", fs.ConfigFileGet(name, "username"))
+		fs.ConfigFileSet(name, "pass", fs.ConfigFileGet(name, "password"))
+		fs.ConfigFileDeleteKey(name, "username")
+		fs.ConfigFileDeleteKey(name, "password")
+		fs.ConfigFileDeleteKey(name, "url")
+		fs.SaveConfig()
+		if u.Path != "" && u.Path != "/" {
+			fs.Errorf(name, "Path %q in FTP URL no longer supported - put it on the end of the remote %s:%s", u.Path, name, u.Path)
+		}
+	}
 	host := fs.ConfigFileGet(name, "host")
 	user := fs.ConfigFileGet(name, "user")
 	pass := fs.ConfigFileGet(name, "pass")
@@ -174,11 +198,7 @@ func NewFs(name, root string) (ff fs.Fs, err error) {
 	}
 
 	dialAddr := host + ":" + port
-	u, err := url.Parse("ftp://" + dialAddr)
-	if err != nil {
-		return nil, errors.Wrap(err, "NewFS URL parse")
-	}
-
+	u := "ftp://" + path.Join(dialAddr+"/", root)
 	f := &Fs{
 		name:     name,
 		root:     root,
