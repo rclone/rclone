@@ -217,3 +217,4 @@ Add your fs to the docs
   * `docs/content/about.md` - front page of rclone.org
   * `docs/layouts/chrome/navbar.html` - add it to the website navigation
   * `bin/make_manual.py` - add the page to the `docs` constant
+  * `cmd/cmd.go` - the main help for rclone
