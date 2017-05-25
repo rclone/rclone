@@ -32,6 +32,7 @@ var (
 	debugFUSE    = false
 	noSeek       = false
 	dirCacheTime = 5 * 60 * time.Second
+	pollInterval = time.Minute
 	// mount options
 	readOnly                         = false
 	allowNonEmpty                    = false
@@ -58,6 +59,7 @@ func init() {
 	commandDefintion.Flags().BoolVarP(&debugFUSE, "debug-fuse", "", debugFUSE, "Debug the FUSE internals - needs -v.")
 	commandDefintion.Flags().BoolVarP(&noSeek, "no-seek", "", noSeek, "Don't allow seeking in files.")
 	commandDefintion.Flags().DurationVarP(&dirCacheTime, "dir-cache-time", "", dirCacheTime, "Time to cache directory entries for.")
+	commandDefintion.Flags().DurationVarP(&pollInterval, "poll-interval", "", pollInterval, "Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable.")
 	// mount options
 	commandDefintion.Flags().BoolVarP(&readOnly, "read-only", "", readOnly, "Mount read-only.")
 	commandDefintion.Flags().BoolVarP(&allowNonEmpty, "allow-non-empty", "", allowNonEmpty, "Allow mounting over a non-empty directory.")

@@ -267,6 +267,11 @@ type Features struct {
 	// If destination exists then return fs.ErrorDirExists
 	DirMove func(src Fs, srcRemote, dstRemote string) error
 
+	// DirChangeNotify calls the passed function with a path
+	// of a directory that has had changes. If the implementation
+	// uses polling, it should adhere to the given interval.
+	DirChangeNotify func(func(string), time.Duration) chan bool
+
 	// UnWrap returns the Fs that this Fs is wrapping
 	UnWrap func() Fs
 
@@ -307,6 +312,9 @@ func (ft *Features) Fill(f Fs) *Features {
 	if do, ok := f.(DirMover); ok {
 		ft.DirMove = do.DirMove
 	}
+	if do, ok := f.(DirChangeNotifier); ok {
+		ft.DirChangeNotify = do.DirChangeNotify
+	}
 	if do, ok := f.(UnWrapper); ok {
 		ft.UnWrap = do.UnWrap
 	}
@@ -345,6 +353,9 @@ func (ft *Features) Mask(f Fs) *Features {
 	}
 	if mask.DirMove == nil {
 		ft.DirMove = nil
+	}
+	if mask.DirChangeNotify == nil {
+		ft.DirChangeNotify = nil
 	}
 	// if mask.UnWrap == nil {
 	// 	ft.UnWrap = nil
@@ -422,6 +433,14 @@ type DirMover interface {
 	//
 	// If destination exists then return fs.ErrorDirExists
 	DirMove(src Fs, srcRemote, dstRemote string) error
+}
+
+// DirChangeNotifier is an optional interface for Fs
+type DirChangeNotifier interface {
+	// DirChangeNotify calls the passed function with a path
+	// of a directory that has had changes. If the implementation
+	// uses polling, it should adhere to the given interval.
+	DirChangeNotify(func(string), time.Duration) chan bool
 }
 
 // UnWrapper is an optional interfaces for Fs

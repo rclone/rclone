@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"path"
+	"sort"
 	"strings"
 	"time"
 
@@ -889,6 +890,106 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	return nil
 }
 
+// DirChangeNotify polls for changes from the remote and hands the path to the
+// given function. Only changes that can be resolved to a path through the
+// DirCache will handled.
+//
+// Automatically restarts itself in case of unexpected behaviour of the remote.
+//
+// Close the returned channel to stop being notified.
+func (f *Fs) DirChangeNotify(notifyFunc func(string), pollInterval time.Duration) chan bool {
+	quit := make(chan bool)
+	go func() {
+		select {
+		case <-quit:
+			return
+		default:
+			for {
+				f.dirchangeNotifyRunner(notifyFunc, pollInterval)
+				fs.Debugf(f, "Notify listener service ran into issues, restarting shortly.")
+				time.Sleep(pollInterval)
+			}
+		}
+	}()
+	return quit
+}
+
+func (f *Fs) dirchangeNotifyRunner(notifyFunc func(string), pollInterval time.Duration) {
+	var err error
+	var changeList *drive.ChangeList
+	var pageToken string
+	var largestChangeID int64
+
+	var startPageToken *drive.StartPageToken
+	err = f.pacer.Call(func() (bool, error) {
+		startPageToken, err = f.svc.Changes.GetStartPageToken().Do()
+		return shouldRetry(err)
+	})
+	if err != nil {
+		fs.Debugf(f, "Failed to get StartPageToken: %v", err)
+		return
+	}
+	pageToken = startPageToken.StartPageToken
+
+	for {
+		fs.Debugf(f, "Checking for changes on remote")
+		err = f.pacer.Call(func() (bool, error) {
+			changesCall := f.svc.Changes.List().PageToken(pageToken).Fields(googleapi.Field("nextPageToken,largestChangeId,newStartPageToken,items(fileId,file/parents(id))"))
+			if largestChangeID != 0 {
+				changesCall = changesCall.StartChangeId(largestChangeID)
+			}
+			if *driveListChunk > 0 {
+				changesCall = changesCall.MaxResults(*driveListChunk)
+			}
+			changeList, err = changesCall.Do()
+			return shouldRetry(err)
+		})
+		if err != nil {
+			fs.Debugf(f, "Failed to get Changes: %v", err)
+			return
+		}
+
+		pathsToClear := make([]string, 0)
+		for _, change := range changeList.Items {
+			if path, ok := f.dirCache.GetInv(change.FileId); ok {
+				pathsToClear = append(pathsToClear, path)
+			}
+
+			if change.File != nil {
+				for _, parent := range change.File.Parents {
+					if path, ok := f.dirCache.GetInv(parent.Id); ok {
+						pathsToClear = append(pathsToClear, path)
+					}
+				}
+			}
+		}
+		lastNotifiedPath := ""
+		sort.Strings(pathsToClear)
+		for _, path := range pathsToClear {
+			if lastNotifiedPath != "" && (path == lastNotifiedPath || strings.HasPrefix(path+"/", lastNotifiedPath)) {
+				continue
+			}
+			lastNotifiedPath = path
+			notifyFunc(path)
+		}
+
+		if changeList.LargestChangeId != 0 {
+			largestChangeID = changeList.LargestChangeId
+		}
+		if changeList.NewStartPageToken != "" {
+			pageToken = changeList.NewStartPageToken
+			fs.Debugf(f, "All changes were processed. Waiting for more.")
+			time.Sleep(pollInterval)
+		} else if changeList.NextPageToken != "" {
+			pageToken = changeList.NextPageToken
+			fs.Debugf(f, "There are more changes pending, checking now.")
+		} else {
+			fs.Debugf(f, "Did not get any page token, something went wrong! %+v", changeList)
+			return
+		}
+	}
+}
+
 // DirCacheFlush resets the directory cache - used in testing as an
 // optional interface
 func (f *Fs) DirCacheFlush() {
@@ -1175,13 +1276,14 @@ func (o *Object) MimeType() string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs              = (*Fs)(nil)
-	_ fs.Purger          = (*Fs)(nil)
-	_ fs.Copier          = (*Fs)(nil)
-	_ fs.Mover           = (*Fs)(nil)
-	_ fs.DirMover        = (*Fs)(nil)
-	_ fs.DirCacheFlusher = (*Fs)(nil)
-	_ fs.PutUncheckeder  = (*Fs)(nil)
-	_ fs.Object          = (*Object)(nil)
-	_ fs.MimeTyper       = &Object{}
+	_ fs.Fs                = (*Fs)(nil)
+	_ fs.Purger            = (*Fs)(nil)
+	_ fs.Copier            = (*Fs)(nil)
+	_ fs.Mover             = (*Fs)(nil)
+	_ fs.DirMover          = (*Fs)(nil)
+	_ fs.DirCacheFlusher   = (*Fs)(nil)
+	_ fs.DirChangeNotifier = (*Fs)(nil)
+	_ fs.PutUncheckeder    = (*Fs)(nil)
+	_ fs.Object            = (*Object)(nil)
+	_ fs.MimeTyper         = &Object{}
 )

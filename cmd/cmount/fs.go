@@ -48,6 +48,9 @@ func NewFS(f fs.Fs) *FS {
 	if readOnly {
 		fsys.FS.ReadOnly()
 	}
+	if pollInterval > 0 {
+		fsys.FS.PollChanges(pollInterval)
+	}
 	return fsys
 }
 

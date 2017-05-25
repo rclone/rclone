@@ -577,6 +577,36 @@ func TestFsPrecision(t *testing.T) {
 	// FIXME check expected precision
 }
 
+// TestFsDirChangeNotify tests that changes to directories are properly
+// propagated
+//
+// go test -v -remote TestDrive: -run '^Test(Setup|Init|FsDirChangeNotify)$' -verbose
+func TestFsDirChangeNotify(t *testing.T) {
+	skipIfNotOk(t)
+
+	// Check have DirChangeNotify
+	doDirChangeNotify := remote.Features().DirChangeNotify
+	if doDirChangeNotify == nil {
+		t.Skip("FS has no DirChangeNotify interface")
+	}
+
+	err := fs.Mkdir(remote, "dir")
+	require.NoError(t, err)
+
+	changes := []string{}
+	quitChannel := doDirChangeNotify(func(x string) {
+		changes = append(changes, x)
+	}, time.Second)
+	defer func() { close(quitChannel) }()
+
+	err = fs.Mkdir(remote, "dir/subdir")
+	require.NoError(t, err)
+
+	time.Sleep(2 * time.Second)
+
+	assert.Equal(t, []string{"dir"}, changes)
+}
+
 // TestObjectString tests the Object String method
 func TestObjectString(t *testing.T) {
 	skipIfNotOk(t)

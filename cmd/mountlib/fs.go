@@ -51,7 +51,20 @@ func NewFS(f fs.Fs) *FS {
 	fsys := &FS{
 		f: f,
 	}
+
 	fsys.root = newDir(fsys, f, fsDir)
+
+	return fsys
+}
+
+// PollChanges will poll the remote every pollInterval for changes if the remote
+// supports it. If a non-polling option is used, the given time interval can be
+// ignored
+func (fsys *FS) PollChanges(pollInterval time.Duration) *FS {
+	doDirChangeNotify := fsys.f.Features().DirChangeNotify
+	if doDirChangeNotify != nil {
+		doDirChangeNotify(fsys.root.ForgetPath, pollInterval)
+	}
 	return fsys
 }
 
