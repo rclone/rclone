@@ -1,4 +1,4 @@
-memo = "8903edaabf2c61a2bb9386fb033b3ff7710880ee02387c7a3f5eaaee82cd6e67"
+memo = "73fcf12d2ac21c6ada1f1c0d63c636506e4f576081d0509e38d53086f6f67447"
 
 [[projects]]
   branch = "master"
@@ -179,6 +179,12 @@ memo = "8903edaabf2c61a2bb9386fb033b3ff7710880ee02387c7a3f5eaaee82cd6e67"
   name = "github.com/tsenart/tb"
   packages = ["."]
   revision = "19f4c3d79d2bd67d0911b2e310b999eeea4454c1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/xanzy/ssh-agent"
+  packages = ["."]
+  revision = "ba9c9e33906f58169366275e3450db66139a31a9"
 
 [[projects]]
   branch = "master"
