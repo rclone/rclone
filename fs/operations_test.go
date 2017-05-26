@@ -386,13 +386,15 @@ func TestLsLong(t *testing.T) {
 	}
 }
 
-func TestMd5sum(t *testing.T) {
+func TestHashSums(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth("empty space", "", t2)
 
 	fstest.CheckItems(t, r.fremote, file1, file2)
+
+	// MD5 Sum
 
 	var buf bytes.Buffer
 	err := fs.Md5sum(r.fremote, &buf)
@@ -408,20 +410,12 @@ func TestMd5sum(t *testing.T) {
 		!strings.Contains(res, "                                  potato2\n") {
 		t.Errorf("potato2 missing: %q", res)
 	}
-}
 
-func TestSha1sum(t *testing.T) {
-	r := NewRun(t)
-	defer r.Finalise()
-	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
-	file2 := r.WriteBoth("empty space", "", t2)
+	// SHA1 Sum
 
-	fstest.CheckItems(t, r.fremote, file1, file2)
-
-	var buf bytes.Buffer
-	err := fs.Sha1sum(r.fremote, &buf)
+	err = fs.Sha1sum(r.fremote, &buf)
 	require.NoError(t, err)
-	res := buf.String()
+	res = buf.String()
 	if !strings.Contains(res, "da39a3ee5e6b4b0d3255bfef95601890afd80709  empty space\n") &&
 		!strings.Contains(res, "                             UNSUPPORTED  empty space\n") &&
 		!strings.Contains(res, "                                          empty space\n") {
@@ -430,6 +424,22 @@ func TestSha1sum(t *testing.T) {
 	if !strings.Contains(res, "9dc7f7d3279715991a22853f5981df582b7f9f6d  potato2\n") &&
 		!strings.Contains(res, "                             UNSUPPORTED  potato2\n") &&
 		!strings.Contains(res, "                                          potato2\n") {
+		t.Errorf("potato2 missing: %q", res)
+	}
+
+	// Dropbox Hash Sum
+
+	err = fs.DropboxHashSum(r.fremote, &buf)
+	require.NoError(t, err)
+	res = buf.String()
+	if !strings.Contains(res, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  empty space\n") &&
+		!strings.Contains(res, "                                                                     UNSUPPORTED  empty space\n") &&
+		!strings.Contains(res, "                                                                                  empty space\n") {
+		t.Errorf("empty space missing: %q", res)
+	}
+	if !strings.Contains(res, "a979481df794fed9c3990a6a422e0b1044ac802c15fab13af9c687f8bdbee01a  potato2\n") &&
+		!strings.Contains(res, "                                                                     UNSUPPORTED  potato2\n") &&
+		!strings.Contains(res, "                                                                                  potato2\n") {
 		t.Errorf("potato2 missing: %q", res)
 	}
 }

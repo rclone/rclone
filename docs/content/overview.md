@@ -20,7 +20,7 @@ Here is an overview of the major features of each cloud storage system.
 | Google Drive           | MD5     | Yes     | No               | Yes             | R/W       |
 | Amazon S3              | MD5     | Yes     | No               | No              | R/W       |
 | Openstack Swift        | MD5     | Yes     | No               | No              | R/W       |
-| Dropbox                | -       | Yes     | Yes              | No              | -         |
+| Dropbox                | DBHASH †| Yes     | Yes              | No              | -         |
 | Google Cloud Storage   | MD5     | Yes     | No               | No              | R/W       |
 | Amazon Drive           | MD5     | No      | Yes              | No              | R         |
 | Microsoft OneDrive     | SHA1    | Yes     | Yes              | No              | R         |
@@ -28,7 +28,7 @@ Here is an overview of the major features of each cloud storage system.
 | Backblaze B2           | SHA1    | Yes     | No               | No              | R/W       |
 | Yandex Disk            | MD5     | Yes     | No               | No              | R/W       |
 | SFTP                   | -       | Yes     | Depends          | No              | -         |
-| FTP                    | None    | No      | Yes              | No              | -         |
+| FTP                    | -       | No      | Yes              | No              | -         |
 | The local filesystem   | All     | Yes     | Depends          | No              | -         |
 
 ### Hash ###
@@ -40,6 +40,10 @@ the `check` command.
 
 To use the checksum checks between filesystems they must support a 
 common hash type.
+
+† Note that Dropbox supports [its own custom
+hash](https://www.dropbox.com/developers/reference/content-hash).
+This is an SHA256 sum of all the 4MB block SHA256s.
 
 ### ModTime ###
 

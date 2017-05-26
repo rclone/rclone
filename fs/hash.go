@@ -9,6 +9,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/ncw/rclone/dropbox/dbhash"
 	"github.com/pkg/errors"
 )
 
@@ -26,18 +27,23 @@ const (
 	// HashSHA1 indicates SHA-1 support
 	HashSHA1
 
+	// HashDropbox indicates Dropbox special hash
+	// https://www.dropbox.com/developers/reference/content-hash
+	HashDropbox
+
 	// HashNone indicates no hashes are supported
 	HashNone HashType = 0
 )
 
 // SupportedHashes returns a set of all the supported hashes by
 // HashStream and MultiHasher.
-var SupportedHashes = NewHashSet(HashMD5, HashSHA1)
+var SupportedHashes = NewHashSet(HashMD5, HashSHA1, HashDropbox)
 
 // HashWidth returns the width in characters for any HashType
 var HashWidth = map[HashType]int{
-	HashMD5:  32,
-	HashSHA1: 40,
+	HashMD5:     32,
+	HashSHA1:    40,
+	HashDropbox: 64,
 }
 
 // HashStream will calculate hashes of all supported hash types.
@@ -73,6 +79,8 @@ func (h HashType) String() string {
 		return "MD5"
 	case HashSHA1:
 		return "SHA-1"
+	case HashDropbox:
+		return "DropboxHash"
 	default:
 		err := fmt.Sprintf("internal error: unknown hash type: 0x%x", int(h))
 		panic(err)
@@ -94,6 +102,8 @@ func hashFromTypes(set HashSet) (map[HashType]hash.Hash, error) {
 			hashers[t] = md5.New()
 		case HashSHA1:
 			hashers[t] = sha1.New()
+		case HashDropbox:
+			hashers[t] = dbhash.New()
 		default:
 			err := fmt.Sprintf("internal error: Unsupported hash type %v", t)
 			panic(err)

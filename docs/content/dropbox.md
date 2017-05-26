@@ -91,7 +91,7 @@ To copy a local directory to a dropbox directory called backup
 
     rclone copy /home/source remote:backup
 
-### Modified time and MD5SUMs ###
+### Modified time and Hashes ###
 
 Dropbox supports modified times, but the only way to set a
 modification time is to re-upload the file.
@@ -101,6 +101,10 @@ rclone which didn't support the v2 API and modified times, rclone will
 decide to upload all your old data to fix the modification times.  If
 you don't want this to happen use `--size-only` or `--checksum` flag
 to stop it.
+
+Dropbox supports [its own hash
+type](https://www.dropbox.com/developers/reference/content-hash) which
+is checked for all transfers.
 
 ### Specific options ###
 

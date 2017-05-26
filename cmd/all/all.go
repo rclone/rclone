@@ -13,6 +13,7 @@ import (
 	_ "github.com/ncw/rclone/cmd/copy"
 	_ "github.com/ncw/rclone/cmd/copyto"
 	_ "github.com/ncw/rclone/cmd/cryptcheck"
+	_ "github.com/ncw/rclone/cmd/dbhashsum"
 	_ "github.com/ncw/rclone/cmd/dedupe"
 	_ "github.com/ncw/rclone/cmd/delete"
 	_ "github.com/ncw/rclone/cmd/genautocomplete"

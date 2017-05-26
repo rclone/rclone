@@ -65,16 +65,18 @@ var hashTestSet = []hashTest{
 	{
 		input: []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
 		output: map[fs.HashType]string{
-			fs.HashMD5:  "bf13fc19e5151ac57d4252e0e0f87abe",
-			fs.HashSHA1: "3ab6543c08a75f292a5ecedac87ec41642d12166",
+			fs.HashMD5:     "bf13fc19e5151ac57d4252e0e0f87abe",
+			fs.HashSHA1:    "3ab6543c08a75f292a5ecedac87ec41642d12166",
+			fs.HashDropbox: "214d2fcf3566e94c99ad2f59bd993daca46d8521a0c447adf4b324f53fddc0c7",
 		},
 	},
 	// Empty data set
 	{
 		input: []byte{},
 		output: map[fs.HashType]string{
-			fs.HashMD5:  "d41d8cd98f00b204e9800998ecf8427e",
-			fs.HashSHA1: "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+			fs.HashMD5:     "d41d8cd98f00b204e9800998ecf8427e",
+			fs.HashSHA1:    "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+			fs.HashDropbox: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 		},
 	},
 }
@@ -88,13 +90,13 @@ func TestMultiHasher(t *testing.T) {
 		sums := mh.Sums()
 		for k, v := range sums {
 			expect, ok := test.output[k]
-			require.True(t, ok)
+			require.True(t, ok, "test output for hash not found")
 			assert.Equal(t, v, expect)
 		}
 		// Test that all are present
 		for k, v := range test.output {
 			expect, ok := sums[k]
-			require.True(t, ok)
+			require.True(t, ok, "test output for hash not found")
 			assert.Equal(t, v, expect)
 		}
 	}
@@ -145,8 +147,8 @@ func TestHashStreamTypes(t *testing.T) {
 }
 
 func TestHashSetStringer(t *testing.T) {
-	h := fs.NewHashSet(fs.HashSHA1, fs.HashMD5)
-	assert.Equal(t, h.String(), "[MD5, SHA-1]")
+	h := fs.NewHashSet(fs.HashSHA1, fs.HashMD5, fs.HashDropbox)
+	assert.Equal(t, h.String(), "[MD5, SHA-1, DropboxHash]")
 	h = fs.NewHashSet(fs.HashSHA1)
 	assert.Equal(t, h.String(), "[SHA-1]")
 	h = fs.NewHashSet()

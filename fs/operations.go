@@ -978,6 +978,15 @@ func Sha1sum(f Fs, w io.Writer) error {
 	return hashLister(HashSHA1, f, w)
 }
 
+// DropboxHashSum list the Fs to the supplied writer
+//
+// Obeys includes and excludes
+//
+// Lists in parallel which may get them out of order
+func DropboxHashSum(f Fs, w io.Writer) error {
+	return hashLister(HashDropbox, f, w)
+}
+
 func hashLister(ht HashType, f Fs, w io.Writer) error {
 	return ListFn(f, func(o Object) {
 		Stats.Checking(o.Remote())

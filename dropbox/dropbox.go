@@ -2,7 +2,6 @@
 package dropbox
 
 // FIXME put low level retries in
-// FIXME add dropbox style hashes
 // FIXME dropbox for business would be quite easy to add
 
 /*
@@ -99,12 +98,14 @@ type Fs struct {
 }
 
 // Object describes a dropbox object
+//
+// Dropbox Objects always have full metadata
 type Object struct {
-	fs          *Fs       // what this object is part of
-	remote      string    // The remote path
-	bytes       int64     // size of the object
-	modTime     time.Time // time it was last modified
-	hasMetadata bool      // metadata is valid
+	fs      *Fs       // what this object is part of
+	remote  string    // The remote path
+	bytes   int64     // size of the object
+	modTime time.Time // time it was last modified
+	hash    string    // content_hash of the object
 }
 
 // ------------------------------------------------------------
@@ -640,7 +641,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashNone)
+	return fs.HashSet(fs.HashDropbox)
 }
 
 // ------------------------------------------------------------
@@ -663,9 +664,16 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-// Hash is unsupported on Dropbox
+// Hash returns the dropbox special hash
 func (o *Object) Hash(t fs.HashType) (string, error) {
-	return "", fs.ErrHashUnsupported
+	if t != fs.HashDropbox {
+		return "", fs.ErrHashUnsupported
+	}
+	err := o.readMetaData()
+	if err != nil {
+		return "", errors.Wrap(err, "failed to read hash from metadata")
+	}
+	return o.hash, nil
 }
 
 // Size returns the size of an object in bytes
@@ -679,7 +687,7 @@ func (o *Object) Size() int64 {
 func (o *Object) setMetadataFromEntry(info *files.FileMetadata) error {
 	o.bytes = int64(info.Size)
 	o.modTime = info.ClientModified
-	o.hasMetadata = true
+	o.hash = info.ContentHash
 	return nil
 }
 
@@ -722,7 +730,7 @@ func (o *Object) metadataKey() string {
 
 // readMetaData gets the info if it hasn't already been fetched
 func (o *Object) readMetaData() (err error) {
-	if o.hasMetadata {
+	if !o.modTime.IsZero() {
 		return nil
 	}
 	// Last resort
