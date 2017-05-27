@@ -788,6 +788,11 @@ func TestMoveFile(t *testing.T) {
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.flocal)
 	fstest.CheckItems(t, r.fremote, file2)
+
+	err = fs.MoveFile(r.fremote, r.flocal, file2.Path, file2.Path)
+	require.NoError(t, err)
+	fstest.CheckItems(t, r.flocal)
+	fstest.CheckItems(t, r.fremote, file2)
 }
 
 func TestCopyFile(t *testing.T) {
@@ -806,6 +811,11 @@ func TestCopyFile(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, file2)
 
 	err = fs.CopyFile(r.fremote, r.flocal, file2.Path, file1.Path)
+	require.NoError(t, err)
+	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.fremote, file2)
+
+	err = fs.CopyFile(r.fremote, r.flocal, file2.Path, file2.Path)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.flocal, file1)
 	fstest.CheckItems(t, r.fremote, file2)
