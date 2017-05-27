@@ -16,6 +16,7 @@ import (
 	"log"
 	"os"
 	"os/user"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -589,61 +590,74 @@ func changeConfigPassword() {
 // SaveConfig saves configuration file.
 // if configKey has been set, the file will be encrypted.
 func SaveConfig() {
-	if len(configKey) == 0 {
-		err := goconfig.SaveConfigFile(configData, ConfigPath)
-		if err != nil {
-			log.Fatalf("Failed to save config file: %v", err)
-		}
-		err = os.Chmod(ConfigPath, 0600)
-		if err != nil {
-			Errorf(nil, "Failed to set permissions on config file: %v", err)
-		}
+	dir, name := path.Split(ConfigPath)
+	f, err := ioutil.TempFile(dir, name)
+	if err != nil {
+		log.Fatalf("Failed to create temp file for new config: %v", err)
 		return
 	}
+	defer func() {
+		if err := os.Remove(f.Name()); err != nil && !os.IsNotExist(err) {
+			Errorf(nil, "Failed to remove temp config file: %v", err)
+		}
+	}()
+
 	var buf bytes.Buffer
-	err := goconfig.SaveConfigData(configData, &buf)
+	err = goconfig.SaveConfigData(configData, &buf)
 	if err != nil {
 		log.Fatalf("Failed to save config file: %v", err)
 	}
 
-	f, err := os.Create(ConfigPath)
-	if err != nil {
-		log.Fatalf("Failed to save config file: %v", err)
+	if len(configKey) == 0 {
+		if _, err := buf.WriteTo(f); err != nil {
+			log.Fatalf("Failed to write temp config file: %v", err)
+		}
+	} else {
+		fmt.Fprintln(f, "# Encrypted rclone configuration File")
+		fmt.Fprintln(f, "")
+		fmt.Fprintln(f, "RCLONE_ENCRYPT_V0:")
+
+		// Generate new nonce and write it to the start of the ciphertext
+		var nonce [24]byte
+		n, _ := rand.Read(nonce[:])
+		if n != 24 {
+			log.Fatalf("nonce short read: %d", n)
+		}
+		enc := base64.NewEncoder(base64.StdEncoding, f)
+		_, err = enc.Write(nonce[:])
+		if err != nil {
+			log.Fatalf("Failed to write temp config file: %v", err)
+		}
+
+		var key [32]byte
+		copy(key[:], configKey[:32])
+
+		b := secretbox.Seal(nil, buf.Bytes(), &nonce, &key)
+		_, err = enc.Write(b)
+		if err != nil {
+			log.Fatalf("Failed to write temp config file: %v", err)
+		}
+		_ = enc.Close()
 	}
 
-	fmt.Fprintln(f, "# Encrypted rclone configuration File")
-	fmt.Fprintln(f, "")
-	fmt.Fprintln(f, "RCLONE_ENCRYPT_V0:")
-
-	// Generate new nonce and write it to the start of the ciphertext
-	var nonce [24]byte
-	n, _ := rand.Read(nonce[:])
-	if n != 24 {
-		log.Fatalf("nonce short read: %d", n)
-	}
-	enc := base64.NewEncoder(base64.StdEncoding, f)
-	_, err = enc.Write(nonce[:])
-	if err != nil {
-		log.Fatalf("Failed to write config file: %v", err)
-	}
-
-	var key [32]byte
-	copy(key[:], configKey[:32])
-
-	b := secretbox.Seal(nil, buf.Bytes(), &nonce, &key)
-	_, err = enc.Write(b)
-	if err != nil {
-		log.Fatalf("Failed to write config file: %v", err)
-	}
-	_ = enc.Close()
 	err = f.Close()
 	if err != nil {
 		log.Fatalf("Failed to close config file: %v", err)
 	}
 
-	err = os.Chmod(ConfigPath, 0600)
+	err = os.Chmod(f.Name(), 0600)
 	if err != nil {
 		Errorf(nil, "Failed to set permissions on config file: %v", err)
+	}
+
+	if err = os.Rename(ConfigPath, ConfigPath+".old"); err != nil {
+		log.Fatalf("Failed to move previous config to backup location: %v", err)
+	}
+	if err = os.Rename(f.Name(), ConfigPath); err != nil {
+		log.Fatalf("Failed to move newly written config to final location: %v", err)
+	}
+	if err := os.Remove(ConfigPath + ".old"); err != nil {
+		Errorf(nil, "Failed to remove backup config file: %v", err)
 	}
 }
 
@@ -1194,6 +1208,13 @@ func ConfigFileGetInt(section, key string, defaultVal ...int) int {
 // the config file.
 func ConfigFileSet(section, key, value string) {
 	configData.SetValue(section, key, value)
+}
+
+// ConfigFileDeleteKey deletes the config key in the config file.
+// It returns true if the key was deleted,
+// or returns false if the section or key didn't exist.
+func ConfigFileDeleteKey(section, key string) bool {
+	return configData.DeleteKey(section, key)
 }
 
 var matchEnv = regexp.MustCompile(`^RCLONE_CONFIG_(.*?)_TYPE=.*$`)
