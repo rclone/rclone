@@ -380,7 +380,7 @@ func (f *Fs) Precision() time.Duration {
 // May create the object even if it returns an error - if so
 // will return the object and the error, otherwise will return
 // nil and the error
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
+func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	// fs.Debugf(f, "Trying to put file %s", src.Remote())
 	err := f.mkParentDir(src.Remote())
 	if err != nil {
@@ -390,7 +390,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 		fs:     f,
 		remote: src.Remote(),
 	}
-	err = o.Update(in, src)
+	err = o.Update(in, src, options...)
 	return o, err
 }
 
@@ -674,7 +674,7 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 // Copy the reader into the object updating modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
+func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	// defer fs.Trace(o, "src=%v", src)("err=%v", &err)
 	path := path.Join(o.fs.root, o.remote)
 	// remove the file if upload failed

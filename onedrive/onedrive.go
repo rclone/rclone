@@ -468,7 +468,7 @@ func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Obje
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
+func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
 	size := src.Size()
 	modTime := src.ModTime()
@@ -477,7 +477,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	return o, o.Update(in, src)
+	return o, o.Update(in, src, options...)
 }
 
 // Mkdir creates the container if it doesn't exist
@@ -1007,7 +1007,7 @@ func (o *Object) uploadMultipart(in io.Reader, size int64) (err error) {
 // Update the object with the contents of the io.Reader, modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo) (err error) {
+func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	o.fs.tokenRenewer.Start()
 	defer o.fs.tokenRenewer.Stop()
 

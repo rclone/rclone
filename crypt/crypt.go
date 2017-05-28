@@ -162,7 +162,7 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 // May create the object even if it returns an error - if so
 // will return the object and the error, otherwise will return
 // nil and the error
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
+func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	wrappedIn, err := f.cipher.EncryptData(in)
 	if err != nil {
 		return nil, err
@@ -282,7 +282,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 //
 // This will create a duplicate if we upload a new file without
 // checking to see if there is one already - use Put() for that.
-func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
+func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	do := f.Fs.Features().PutUnchecked
 	if do == nil {
 		return nil, errors.New("can't PutUnchecked")
@@ -455,7 +455,7 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 }
 
 // Update in to the object with the modTime given of the given size
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
+func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	wrappedIn, err := o.f.cipher.EncryptData(in)
 	if err != nil {
 		return err

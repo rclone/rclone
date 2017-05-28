@@ -290,7 +290,7 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 }
 
 // Put data from <in> into a new remote sftp file object described by <src.Remote()> and <src.ModTime()>
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
+func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	err := f.mkParentDir(src.Remote())
 	if err != nil {
 		return nil, errors.Wrap(err, "Put mkParentDir failed")
@@ -300,7 +300,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 		fs:     f,
 		remote: src.Remote(),
 	}
-	err = o.Update(in, src)
+	err = o.Update(in, src, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -543,7 +543,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 }
 
 // Update a remote sftp file using the data <in> and ModTime from <src>
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
+func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	file, err := o.fs.sftpClient.Create(o.path())
 	if err != nil {
 		return errors.Wrap(err, "Update Create failed")

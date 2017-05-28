@@ -94,6 +94,27 @@ func (o *HTTPOption) Mandatory() bool {
 	return false
 }
 
+// HashesOption defines an option used to tell the local fs to limit
+// the number of hashes it calculates.
+type HashesOption struct {
+	Hashes HashSet
+}
+
+// Header formats the option as an http header
+func (o *HashesOption) Header() (key string, value string) {
+	return "", ""
+}
+
+// String formats the option into human readable form
+func (o *HashesOption) String() string {
+	return fmt.Sprintf("HashesOption(%v)", o.Hashes)
+}
+
+// Mandatory returns whether the option must be parsed or can be ignored
+func (o *HashesOption) Mandatory() bool {
+	return false
+}
+
 // OpenOptionAddHeaders adds each header found in options to the
 // headers map provided the key was non empty.
 func OpenOptionAddHeaders(options []OpenOption, headers map[string]string) {

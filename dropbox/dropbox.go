@@ -424,13 +424,13 @@ func (rc *readCloser) Close() error {
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
+func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	// Temporary Object under construction
 	o := &Object{
 		fs:     f,
 		remote: src.Remote(),
 	}
-	return o, o.Update(in, src)
+	return o, o.Update(in, src, options...)
 }
 
 // Mkdir creates the container if it doesn't exist
@@ -835,7 +835,7 @@ func (o *Object) uploadChunked(in io.Reader, commitInfo *files.CommitInfo, size 
 // Copy the reader into the object updating modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
+func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	remote := o.remotePath()
 	if ignoredFiles.MatchString(remote) {
 		fs.Logf(o, "File name disallowed - not uploading")

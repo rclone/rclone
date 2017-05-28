@@ -129,7 +129,7 @@ type Fs interface {
 	// May create the object even if it returns an error - if so
 	// will return the object and the error, otherwise will return
 	// nil and the error
-	Put(in io.Reader, src ObjectInfo) (Object, error)
+	Put(in io.Reader, src ObjectInfo, options ...OpenOption) (Object, error)
 
 	// Mkdir makes the directory (container, bucket)
 	//
@@ -174,7 +174,7 @@ type Object interface {
 	Open(options ...OpenOption) (io.ReadCloser, error)
 
 	// Update in to the object with the modTime given of the given size
-	Update(in io.Reader, src ObjectInfo) error
+	Update(in io.Reader, src ObjectInfo, options ...OpenOption) error
 
 	// Removes this object
 	Remove() error
@@ -287,7 +287,7 @@ type Features struct {
 	//
 	// May create duplicates or return errors if src already
 	// exists.
-	PutUnchecked func(in io.Reader, src ObjectInfo) (Object, error)
+	PutUnchecked func(in io.Reader, src ObjectInfo, options ...OpenOption) (Object, error)
 
 	// CleanUp the trash in the Fs
 	//
@@ -466,7 +466,7 @@ type PutUncheckeder interface {
 	//
 	// May create duplicates or return errors if src already
 	// exists.
-	PutUnchecked(in io.Reader, src ObjectInfo) (Object, error)
+	PutUnchecked(in io.Reader, src ObjectInfo, options ...OpenOption) (Object, error)
 }
 
 // CleanUpper is an optional interfaces for Fs

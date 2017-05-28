@@ -372,11 +372,11 @@ func (m *mapper) Save(in, out string) string {
 }
 
 // Put the Object to the local filesystem
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
+func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
 	// Temporary Object under construction - info filled in by Update()
 	o := f.newObject(remote, "")
-	err := o.Update(in, src)
+	err := o.Update(in, src, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -707,10 +707,13 @@ func (file *localOpenFile) Close() (err error) {
 // Open an object for read
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	var offset int64
+	hashes := fs.SupportedHashes
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
 			offset = x.Offset
+		case *fs.HashesOption:
+			hashes = x.Hashes
 		default:
 			if option.Mandatory() {
 				fs.Logf(o, "Unsupported mandatory option: %v", option)
@@ -728,11 +731,15 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 		// don't attempt to make checksums
 		return fd, err
 	}
+	hash, err := fs.NewMultiHasherTypes(hashes)
+	if err != nil {
+		return nil, err
+	}
 	// Update the md5sum as we go along
 	in = &localOpenFile{
 		o:    o,
 		in:   fd,
-		hash: fs.NewMultiHasher(),
+		hash: hash,
 	}
 	return in, nil
 }
@@ -744,7 +751,15 @@ func (o *Object) mkdirAll() error {
 }
 
 // Update the object from in with modTime and size
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
+func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	hashes := fs.SupportedHashes
+	for _, option := range options {
+		switch x := option.(type) {
+		case *fs.HashesOption:
+			hashes = x.Hashes
+		}
+	}
+
 	err := o.mkdirAll()
 	if err != nil {
 		return err
@@ -756,7 +771,10 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
 	}
 
 	// Calculate the hash of the object we are reading as we go along
-	hash := fs.NewMultiHasher()
+	hash, err := fs.NewMultiHasherTypes(hashes)
+	if err != nil {
+		return err
+	}
 	in = io.TeeReader(in, hash)
 
 	_, err = io.Copy(out, in)

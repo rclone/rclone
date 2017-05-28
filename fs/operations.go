@@ -268,6 +268,17 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 	maxTries := Config.LowLevelRetries
 	tries := 0
 	doUpdate := dst != nil
+	// work out which hash to use - limit to 1 hash in common
+	var common HashSet
+	hashType := HashNone
+	if !Config.SizeOnly {
+		common = src.Fs().Hashes().Overlap(f.Hashes())
+		if common.Count() > 0 {
+			hashType = common.GetOne()
+			common = HashSet(hashType)
+		}
+	}
+	hashOption := &HashesOption{Hashes: common}
 	var actionTaken string
 	for {
 		// Try server side copy first - if has optional interface and
@@ -285,7 +296,7 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 		// If can't server side copy, do it manually
 		if err == ErrorCantCopy {
 			var in0 io.ReadCloser
-			in0, err = src.Open()
+			in0, err = src.Open(hashOption)
 			if err != nil {
 				err = errors.Wrap(err, "failed to open source object")
 			} else {
@@ -297,10 +308,10 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 				}
 				if doUpdate {
 					actionTaken = "Copied (replaced existing)"
-					err = dst.Update(in, wrappedSrc)
+					err = dst.Update(in, wrappedSrc, hashOption)
 				} else {
 					actionTaken = "Copied (new)"
-					dst, err = f.Put(in, wrappedSrc)
+					dst, err = f.Put(in, wrappedSrc, hashOption)
 				}
 				closeErr := in.Close()
 				if err == nil {
@@ -338,12 +349,7 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 	// Verify hashes are the same after transfer - ignoring blank hashes
 	// TODO(klauspost): This could be extended, so we always create a hash type matching
 	// the destination, and calculate it while sending.
-	common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
-	// Debugf(src, "common hashes: %v", common)
-	if !Config.SizeOnly && common.Count() > 0 {
-		// Get common hash type
-		hashType := common.GetOne()
-
+	if hashType != HashNone {
 		var srcSum string
 		srcSum, err = src.Hash(hashType)
 		if err != nil {

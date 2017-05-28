@@ -31,8 +31,10 @@ func (o mockObject) Size() int64                                       { return 
 func (o mockObject) Storable() bool                                    { return true }
 func (o mockObject) SetModTime(time.Time) error                        { return errNotImpl }
 func (o mockObject) Open(options ...OpenOption) (io.ReadCloser, error) { return nil, errNotImpl }
-func (o mockObject) Update(in io.Reader, src ObjectInfo) error         { return errNotImpl }
-func (o mockObject) Remove() error                                     { return errNotImpl }
+func (o mockObject) Update(in io.Reader, src ObjectInfo, options ...OpenOption) error {
+	return errNotImpl
+}
+func (o mockObject) Remove() error { return errNotImpl }
 
 type mockFs struct {
 	listFn func(o ListOpts, dir string)

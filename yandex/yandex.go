@@ -397,7 +397,7 @@ func (o *Object) readMetaData() (err error) {
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
+func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
 	size := src.Size()
 	modTime := src.ModTime()
@@ -409,7 +409,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
 		modTime: modTime,
 	}
 	//TODO maybe read metadata after upload to check if file uploaded successfully
-	return o, o.Update(in, src)
+	return o, o.Update(in, src, options...)
 }
 
 // Mkdir creates the container if it doesn't exist
@@ -556,7 +556,7 @@ func (o *Object) remotePath() string {
 // Copy the reader into the object updating modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
+func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	size := src.Size()
 	modTime := src.ModTime()
 
