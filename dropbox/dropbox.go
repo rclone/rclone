@@ -28,8 +28,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/files"
+	"github.com/ncw/dropbox-sdk-go-unofficial/dropbox"
+	"github.com/ncw/dropbox-sdk-go-unofficial/dropbox/files"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/oauthutil"
 	"github.com/ncw/rclone/pacer"
@@ -50,10 +50,11 @@ var (
 	// Description of how to auth for this app
 	dropboxConfig = &oauth2.Config{
 		Scopes: []string{},
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://www.dropbox.com/1/oauth2/authorize",
-			TokenURL: "https://api.dropboxapi.com/1/oauth2/token",
-		}, // FIXME replace with this once vendored dropbox.OAuthEndpoint(""),
+		// Endpoint: oauth2.Endpoint{
+		// 	AuthURL:  "https://www.dropbox.com/1/oauth2/authorize",
+		// 	TokenURL: "https://api.dropboxapi.com/1/oauth2/token",
+		// },
+		Endpoint:     dropbox.OAuthEndpoint(""),
 		ClientID:     rcloneClientID,
 		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,

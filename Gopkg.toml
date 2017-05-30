@@ -134,3 +134,7 @@
 [[dependencies]]
   branch = "master"
   name = "google.golang.org/api"
+
+[[dependencies]]
+  branch = "master"
+  name = "github.com/ncw/dropbox-sdk-go-unofficial"

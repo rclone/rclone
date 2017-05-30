@@ -1,4 +1,4 @@
-memo = "73fcf12d2ac21c6ada1f1c0d63c636506e4f576081d0509e38d53086f6f67447"
+memo = "e0227ed773a9f6c56d1bfac9de1d87c2a74ce142e418b661b74931d2e2b20945"
 
 [[projects]]
   branch = "master"
@@ -98,6 +98,12 @@ memo = "73fcf12d2ac21c6ada1f1c0d63c636506e4f576081d0509e38d53086f6f67447"
 
 [[projects]]
   branch = "master"
+  name = "github.com/ncw/dropbox-sdk-go-unofficial"
+  packages = ["dropbox","dropbox/async","dropbox/files","dropbox/properties"]
+  revision = "5d9f46f9862ae5f65e264e178de6ce2c41a32d40"
+
+[[projects]]
+  branch = "master"
   name = "github.com/ncw/go-acd"
   packages = ["."]
   revision = "96a49aad3fc3889629f2eceb004927386884bd92"
@@ -161,12 +167,6 @@ memo = "73fcf12d2ac21c6ada1f1c0d63c636506e4f576081d0509e38d53086f6f67447"
   name = "github.com/spf13/pflag"
   packages = ["."]
   revision = "e57e3eeb33f795204c1ca35f56c44f83227c6e66"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/stacktic/dropbox"
-  packages = ["."]
-  revision = "58f839b21094d5e0af7caf613599830589233d20"
 
 [[projects]]
   branch = "master"
