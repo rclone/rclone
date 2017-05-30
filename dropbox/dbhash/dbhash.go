@@ -117,7 +117,7 @@ func (d *digest) BlockSize() int {
 func Sum(data []byte) [Size]byte {
 	var d digest
 	d.Reset()
-	d.Write(data)
+	_, _ = d.Write(data)
 	var out [Size]byte
 	d.Sum(out[:0])
 	return out
