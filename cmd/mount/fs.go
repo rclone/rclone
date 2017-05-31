@@ -42,6 +42,7 @@ func NewFS(f fs.Fs) *FS {
 	if pollInterval > 0 {
 		fsys.FS.PollChanges(pollInterval)
 	}
+	fsys.FS.SetDirCacheTime(dirCacheTime)
 	return fsys
 }
 
