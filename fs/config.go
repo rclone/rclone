@@ -650,13 +650,13 @@ func SaveConfig() {
 		Errorf(nil, "Failed to set permissions on config file: %v", err)
 	}
 
-	if err = os.Rename(ConfigPath, ConfigPath+".old"); err != nil {
+	if err = os.Rename(ConfigPath, ConfigPath+".old"); err != nil && !os.IsNotExist(err) {
 		log.Fatalf("Failed to move previous config to backup location: %v", err)
 	}
 	if err = os.Rename(f.Name(), ConfigPath); err != nil {
-		log.Fatalf("Failed to move newly written config to final location: %v", err)
+		log.Fatalf("Failed to move newly written config from %s to final location: %v", f.Name(), err)
 	}
-	if err := os.Remove(ConfigPath + ".old"); err != nil {
+	if err := os.Remove(ConfigPath + ".old"); err != nil && !os.IsNotExist(err) {
 		Errorf(nil, "Failed to remove backup config file: %v", err)
 	}
 }
