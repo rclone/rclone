@@ -35,11 +35,12 @@ var (
 
 // FS represents the top level filing system
 type FS struct {
-	f          fs.Fs
-	root       *Dir
-	noSeek     bool // don't allow seeking if set
-	noChecksum bool // don't check checksums if set
-	readOnly   bool // if set FS is read only
+	f            fs.Fs
+	root         *Dir
+	noSeek       bool          // don't allow seeking if set
+	noChecksum   bool          // don't check checksums if set
+	readOnly     bool          // if set FS is read only
+	dirCacheTime time.Duration // how long to consider directory listing cache valid
 }
 
 // NewFS creates a new filing system and root directory
@@ -54,6 +55,13 @@ func NewFS(f fs.Fs) *FS {
 
 	fsys.root = newDir(fsys, f, fsDir)
 
+	return fsys
+}
+
+// SetDirCacheTime allows to set how long a directory listing is considered
+// valid. Set to 0 always request a fresh version from the remote.
+func (fsys *FS) SetDirCacheTime(dirCacheTime time.Duration) *FS {
+	fsys.dirCacheTime = dirCacheTime
 	return fsys
 }
 

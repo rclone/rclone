@@ -10,8 +10,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-var dirCacheTime = 60 * time.Second // FIXME needs to be settable
-
 // DirEntry describes the contents of a directory entry
 //
 // It can be a file or a directory
@@ -152,7 +150,7 @@ func (d *Dir) readDir() error {
 		// fs.Debugf(d.path, "Reading directory")
 	} else {
 		age := when.Sub(d.read)
-		if age < dirCacheTime {
+		if age < d.fsys.dirCacheTime {
 			return nil
 		}
 		fs.Debugf(d.path, "Re-reading directory (%v old)", age)
