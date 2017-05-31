@@ -193,7 +193,7 @@ func NewFsWithConnection(name, root string, c *swift.Connection) (fs.Fs, error) 
 		name:              name,
 		c:                 c,
 		container:         container,
-		segmentsContainer: container + "_segments",
+		segmentsContainer: ".segments_" + container,
 		root:              directory,
 	}
 	f.features = (&fs.Features{ReadMimeType: true, WriteMimeType: true}).Fill(f)
