@@ -80,3 +80,4 @@ Contributors
   * Bob Potter <bobby.potter@gmail.com>
   * Steven Lu <tacticalazn@gmail.com>
   * Sjur Fredriksen <sjurtf@ifi.uio.no>
+  * Ruwbin <hubus12345@gmail.com>
