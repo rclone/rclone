@@ -16,7 +16,6 @@ import (
 	"log"
 	"os"
 	"os/user"
-	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -590,7 +589,7 @@ func changeConfigPassword() {
 // SaveConfig saves configuration file.
 // if configKey has been set, the file will be encrypted.
 func SaveConfig() {
-	dir, name := path.Split(ConfigPath)
+	dir, name := filepath.Split(ConfigPath)
 	f, err := ioutil.TempFile(dir, name)
 	if err != nil {
 		log.Fatalf("Failed to create temp file for new config: %v", err)
