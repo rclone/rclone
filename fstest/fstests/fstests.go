@@ -45,18 +45,15 @@ var (
 		Path:    `hello? sausage/êé/Hello, 世界/ " ' @ < > & ? + ≠/z.txt`,
 		WinPath: `hello_ sausage/êé/Hello, 世界/ _ ' @ _ _ & _ + ≠/z.txt`,
 	}
-	file2Contents = ""
-	verbose       = flag.Bool("verbose", false, "Set to enable logging")
-	dumpHeaders   = flag.Bool("dump-headers", false, "Dump HTTP headers - may contain sensitive info")
-	dumpBodies    = flag.Bool("dump-bodies", false, "Dump HTTP headers and bodies - may contain sensitive info")
+	file2Contents  = ""
+	verbose        = flag.Bool("verbose", false, "Set to enable logging")
+	dumpHeaders    = flag.Bool("dump-headers", false, "Dump HTTP headers - may contain sensitive info")
+	dumpBodies     = flag.Bool("dump-bodies", false, "Dump HTTP headers and bodies - may contain sensitive info")
+	overrideRemote = flag.String("remote", "", "Set this to override the default remote name (eg s3:)")
 )
 
 // ExtraConfigItem describes a config item added on the fly while testing
 type ExtraConfigItem struct{ Name, Key, Value string }
-
-func init() {
-	flag.StringVar(&RemoteName, "remote", "", "Set this to override the default remote name (eg s3:)")
-}
 
 // TestInit tests basic intitialisation
 func TestInit(t *testing.T) {
@@ -76,6 +73,9 @@ func TestInit(t *testing.T) {
 	}
 	fs.Config.DumpHeaders = *dumpHeaders
 	fs.Config.DumpBodies = *dumpBodies
+	if *overrideRemote != "" {
+		RemoteName = *overrideRemote
+	}
 	t.Logf("Using remote %q", RemoteName)
 	if RemoteName == "" {
 		RemoteName, err = fstest.LocalRemote()
