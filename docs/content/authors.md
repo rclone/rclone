@@ -81,3 +81,4 @@ Contributors
   * Steven Lu <tacticalazn@gmail.com>
   * Sjur Fredriksen <sjurtf@ifi.uio.no>
   * Ruwbin <hubus12345@gmail.com>
+  * Fabian Möller <fabianm88@gmail.com>
