@@ -254,8 +254,8 @@ At 6pm, the bandwidth limit will be set to 30MBytes/s, and at 11pm it will be
 completely disabled (full speed). Anything between 11pm and 8am will remain
 unlimited.
 
-Bandwidth limits only apply to the data transfer. The don't apply to the
-bandwith of the directory listings etc.
+Bandwidth limits only apply to the data transfer. They don't apply to the
+bandwidth of the directory listings etc.
 
 Note that the units are Bytes/s not Bits/s.  Typically connections are
 measured in Bits/s - to convert divide by 8.  For example let's say
@@ -572,9 +572,9 @@ Specifying `--delete-during` will delete files while checking and
 uploading files. This is the fastest option and uses the least memory.
 
 Specifying `--delete-after` (the default value) will delay deletion of
-files until all new/updated files have been successfully transfered.
+files until all new/updated files have been successfully transferred.
 The files to be deleted are collected in the copy pass then deleted
-after the copy pass has completed sucessfully.  The files to be
+after the copy pass has completed successfully.  The files to be
 deleted are held in memory so this mode may use more memory.  This is
 the safest mode as it will only delete files if there have been no
 errors subsequent to that.  If there have been errors before the
@@ -607,7 +607,7 @@ updated if the sizes are different.
 
 On remotes which don't support mod time directly the time checked will
 be the uploaded time.  This means that if uploading to one of these
-remoes, rclone will skip any files which exist on the destination and
+remotes, rclone will skip any files which exist on the destination and
 have an uploaded time that is newer than the modification time of the
 source file.
 
@@ -705,7 +705,7 @@ export RCLONE_CONFIG_PASS
 
 Then source the file when you want to use it.  From the shell you
 would do `source set-rclone-password`.  It will then ask you for the
-password and set it in the envonment variable.
+password and set it in the environment variable.
 
 If you are running rclone inside a script, you might want to disable 
 password prompts. To do that, pass the parameter 
@@ -778,7 +778,7 @@ If you are only copying a small number of files and/or have a large
 number of files on the destination then `--no-traverse` will stop
 rclone listing the destination and save time.
 
-However if you are copying a large number of files, escpecially if you
+However if you are copying a large number of files, especially if you
 are doing a copy where lots of the files haven't changed and won't
 need copying then you shouldn't use `--no-traverse`.
 
@@ -853,7 +853,7 @@ immediately before exiting.
 When rclone is running it will accumulate errors as it goes along, and
 only exit with an non-zero exit code if (after retries) there were
 still failed transfers.  For every error counted there will be a high
-priority log message (visibile with `-q`) showing the message and
+priority log message (visible with `-q`) showing the message and
 which file caused the problem. A high priority message is also shown
 when starting a retry so the user can see that any previous error
 messages may not be valid after the retry. If rclone has done a retry
