@@ -22,10 +22,13 @@ Here is an example of how to make a remote called `remote`.  First run:
 This will guide you through an interactive setup process:
 
 ```
+No remotes found - make a new one
 n) New remote
-d) Delete remote
+r) Rename remote
+c) Copy remote
+s) Set configuration password
 q) Quit config
-e/n/d/q> n
+n/r/c/s/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
@@ -39,27 +42,29 @@ Choose a number from below, or type in your own value
    \ "dropbox"
  5 / Encrypt/Decrypt a remote
    \ "crypt"
- 6 / Google Cloud Storage (this is not Google Drive)
+ 6 / FTP Connection
+   \ "ftp"
+ 7 / Google Cloud Storage (this is not Google Drive)
    \ "google cloud storage"
- 7 / Google Drive
+ 8 / Google Drive
    \ "drive"
- 8 / Hubic
+ 9 / Hubic
    \ "hubic"
- 9 / Local Disk
+10 / Local Disk
    \ "local"
-10 / Microsoft OneDrive
+11 / Microsoft OneDrive
    \ "onedrive"
-11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
    \ "swift"
-12 / SSH/SFTP Connection
+13 / SSH/SFTP Connection
    \ "sftp"
-13 / Yandex Disk
+14 / Yandex Disk
    \ "yandex"
-Storage> 7
+Storage> 8
 Google Application Client Id - leave blank normally.
-client_id>
+client_id> 
 Google Application Client Secret - leave blank normally.
-client_secret>
+client_secret> 
 Remote config
 Use auto config?
  * Say Y if not sure
@@ -71,10 +76,14 @@ If your browser doesn't open automatically go to the following link: http://127.
 Log in and authorize rclone for access
 Waiting for code...
 Got code
+Configure this as a team drive?
+y) Yes
+n) No
+y/n> n
 --------------------
 [remote]
-client_id =
-client_secret =
+client_id = 
+client_secret = 
 token = {"AccessToken":"xxxx.x.xxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx","Expiry":"2014-03-16T13:57:58.955387075Z","Extra":null}
 --------------------
 y) Yes this is OK
@@ -103,6 +112,44 @@ List all the files in your drive
 To copy a local directory to a drive directory called backup
 
     rclone copy /home/source remote:backup
+
+### Team drives ###
+
+If you want to configure the remote to point to a Google Team Drive
+then answer `y` to the question `Configure this as a team drive?`.
+
+This will fetch the list of Team Drives from google and allow you to
+configure which one you want to use.  You can also type in a team
+drive ID if you prefer.
+
+For example:
+
+```
+Configure this as a team drive?
+y) Yes
+n) No
+y/n> y
+Fetching team drive list...
+Choose a number from below, or type in your own value
+ 1 / Rclone Test
+   \ "xxxxxxxxxxxxxxxxxxxx"
+ 2 / Rclone Test 2
+   \ "yyyyyyyyyyyyyyyyyyyy"
+ 3 / Rclone Test 3
+   \ "zzzzzzzzzzzzzzzzzzzz"
+Enter a Team Drive ID> 1
+--------------------
+[remote]
+client_id = 
+client_secret = 
+token = {"AccessToken":"xxxx.x.xxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx","Expiry":"2014-03-16T13:57:58.955387075Z","Extra":null}
+team_drive = xxxxxxxxxxxxxxxxxxxx
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d> y
+```
 
 ### Modified time ###
 

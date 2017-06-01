@@ -99,6 +99,10 @@ func init() {
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
+			err = configTeamDrive(name)
+			if err != nil {
+				log.Fatalf("Failed to configure team drive: %v", err)
+			}
 		},
 		Options: []fs.Option{{
 			Name: fs.ConfigClientID,
@@ -120,15 +124,17 @@ func init() {
 
 // Fs represents a remote drive server
 type Fs struct {
-	name       string             // name of this remote
-	root       string             // the path we are working on
-	features   *fs.Features       // optional features
-	svc        *drive.Service     // the connection to the drive server
-	client     *http.Client       // authorized client
-	about      *drive.About       // information about the drive, including the root
-	dirCache   *dircache.DirCache // Map of directory path to directory id
-	pacer      *pacer.Pacer       // To pace the API calls
-	extensions []string           // preferred extensions to download docs
+	name        string             // name of this remote
+	root        string             // the path we are working on
+	features    *fs.Features       // optional features
+	svc         *drive.Service     // the connection to the drive server
+	client      *http.Client       // authorized client
+	about       *drive.About       // information about the drive, including the root
+	dirCache    *dircache.DirCache // Map of directory path to directory id
+	pacer       *pacer.Pacer       // To pace the API calls
+	extensions  []string           // preferred extensions to download docs
+	teamDriveID string             // team drive ID, may be ""
+	isTeamDrive bool               // true if this is a team drive
 }
 
 // Object describes a drive object
@@ -241,6 +247,12 @@ func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly
 	if *driveListChunk > 0 {
 		list = list.MaxResults(*driveListChunk)
 	}
+	if f.isTeamDrive {
+		list.TeamDriveId(f.teamDriveID)
+		list.SupportsTeamDrives(true)
+		list.IncludeTeamDriveItems(true)
+		list.Corpora("teamDrive")
+	}
 
 	var fields = partialFields
 
@@ -307,6 +319,61 @@ func (f *Fs) parseExtensions(extensions string) error {
 	return nil
 }
 
+// Figure out if the user wants to use a team drive
+func configTeamDrive(name string) error {
+	teamDrive := fs.ConfigFileGet(name, "team_drive")
+	if teamDrive == "" {
+		fmt.Printf("Configure this as a team drive?\n")
+	} else {
+		fmt.Printf("Change current team drive ID %q?\n", teamDrive)
+	}
+	if !fs.Confirm() {
+		return nil
+	}
+	client, _, err := oauthutil.NewClient(name, driveConfig)
+	if err != nil {
+		return errors.Wrap(err, "config team drive failed to make oauth client")
+	}
+	svc, err := drive.New(client)
+	if err != nil {
+		return errors.Wrap(err, "config team drive failed to make drive client")
+	}
+	fmt.Printf("Fetching team drive list...\n")
+	var driveIDs, driveNames []string
+	listTeamDrives := svc.Teamdrives.List().MaxResults(100)
+	for {
+		var teamDrives *drive.TeamDriveList
+		err = newPacer().Call(func() (bool, error) {
+			teamDrives, err = listTeamDrives.Do()
+			return shouldRetry(err)
+		})
+		if err != nil {
+			return errors.Wrap(err, "list team drives failed")
+		}
+		for _, drive := range teamDrives.Items {
+			driveIDs = append(driveIDs, drive.Id)
+			driveNames = append(driveNames, drive.Name)
+		}
+		if teamDrives.NextPageToken == "" {
+			break
+		}
+		listTeamDrives.PageToken(teamDrives.NextPageToken)
+	}
+	var driveID string
+	if len(driveIDs) == 0 {
+		fmt.Printf("No team drives found in your account")
+	} else {
+		driveID = fs.Choose("Enter a Team Drive ID", driveIDs, driveNames, true)
+	}
+	fs.ConfigFileSet(name, "team_drive", driveID)
+	return nil
+}
+
+// newPacer makes a pacer configured for drive
+func newPacer() *pacer.Pacer {
+	return pacer.New().SetMinSleep(minSleep).SetPacer(pacer.GoogleDrivePacer)
+}
+
 // NewFs contstructs an Fs from the path, container:path
 func NewFs(name, path string) (fs.Fs, error) {
 	if !isPowerOfTwo(int64(chunkSize)) {
@@ -329,8 +396,10 @@ func NewFs(name, path string) (fs.Fs, error) {
 	f := &Fs{
 		name:  name,
 		root:  root,
-		pacer: pacer.New().SetMinSleep(minSleep).SetPacer(pacer.GoogleDrivePacer),
+		pacer: newPacer(),
 	}
+	f.teamDriveID = fs.ConfigFileGet(name, "team_drive")
+	f.isTeamDrive = f.teamDriveID != ""
 	f.features = (&fs.Features{DuplicateFiles: true, ReadMimeType: true, WriteMimeType: true}).Fill(f)
 
 	// Create a new authorized Drive client.
@@ -347,6 +416,10 @@ func NewFs(name, path string) (fs.Fs, error) {
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't read info about Drive")
+	}
+	// override root folder for a team drive
+	if f.isTeamDrive {
+		f.about.RootFolderId = f.teamDriveID
 	}
 
 	f.dirCache = dircache.New(root, f.about.RootFolderId, f)
@@ -437,7 +510,7 @@ func (f *Fs) CreateDir(pathID, leaf string) (newID string, err error) {
 	}
 	var info *drive.File
 	err = f.pacer.Call(func() (bool, error) {
-		info, err = f.svc.Files.Insert(createInfo).Fields(googleapi.Field(partialFields)).Do()
+		info, err = f.svc.Files.Insert(createInfo).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -616,7 +689,7 @@ func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOpt
 		// Make the API request to upload metadata and file data.
 		// Don't retry, return a retry error instead
 		err = f.pacer.CallNoRetry(func() (bool, error) {
-			info, err = f.svc.Files.Insert(createInfo).Media(in, googleapi.ContentType("")).Fields(googleapi.Field(partialFields)).Do()
+			info, err = f.svc.Files.Insert(createInfo).Media(in, googleapi.ContentType("")).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
@@ -678,9 +751,9 @@ func (f *Fs) Rmdir(dir string) error {
 			// in or the user wants to trash, otherwise
 			// delete it.
 			if trashedFiles || *driveUseTrash {
-				_, err = f.svc.Files.Trash(directoryID).Fields(googleapi.Field(partialFields)).Do()
+				_, err = f.svc.Files.Trash(directoryID).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).Do()
 			} else {
-				err = f.svc.Files.Delete(directoryID).Fields(googleapi.Field(partialFields)).Do()
+				err = f.svc.Files.Delete(directoryID).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).Do()
 			}
 			return shouldRetry(err)
 		})
@@ -726,7 +799,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 
 	var info *drive.File
 	err = o.fs.pacer.Call(func() (bool, error) {
-		info, err = o.fs.svc.Files.Copy(srcObj.id, createInfo).Fields(googleapi.Field(partialFields)).Do()
+		info, err = o.fs.svc.Files.Copy(srcObj.id, createInfo).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -752,9 +825,9 @@ func (f *Fs) Purge() error {
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		if *driveUseTrash {
-			_, err = f.svc.Files.Trash(f.dirCache.RootID()).Fields(googleapi.Field(partialFields)).Do()
+			_, err = f.svc.Files.Trash(f.dirCache.RootID()).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).Do()
 		} else {
-			err = f.svc.Files.Delete(f.dirCache.RootID()).Fields(googleapi.Field(partialFields)).Do()
+			err = f.svc.Files.Delete(f.dirCache.RootID()).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).Do()
 		}
 		return shouldRetry(err)
 	})
@@ -793,7 +866,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	// Do the move
 	var info *drive.File
 	err = f.pacer.Call(func() (bool, error) {
-		info, err = f.svc.Files.Patch(srcObj.id, dstInfo).SetModifiedDate(true).Fields(googleapi.Field(partialFields)).Do()
+		info, err = f.svc.Files.Patch(srcObj.id, dstInfo).SetModifiedDate(true).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -880,7 +953,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 		Parents: []*drive.ParentReference{{Id: directoryID}},
 	}
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.svc.Files.Patch(srcID, &patch).Fields(googleapi.Field(partialFields)).Do()
+		_, err = f.svc.Files.Patch(srcID, &patch).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -922,7 +995,7 @@ func (f *Fs) dirchangeNotifyRunner(notifyFunc func(string), pollInterval time.Du
 
 	var startPageToken *drive.StartPageToken
 	err = f.pacer.Call(func() (bool, error) {
-		startPageToken, err = f.svc.Changes.GetStartPageToken().Do()
+		startPageToken, err = f.svc.Changes.GetStartPageToken().SupportsTeamDrives(f.isTeamDrive).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -941,7 +1014,7 @@ func (f *Fs) dirchangeNotifyRunner(notifyFunc func(string), pollInterval time.Du
 			if *driveListChunk > 0 {
 				changesCall = changesCall.MaxResults(*driveListChunk)
 			}
-			changeList, err = changesCall.Do()
+			changeList, err = changesCall.SupportsTeamDrives(f.isTeamDrive).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
@@ -1118,7 +1191,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 	// Set modified date
 	var info *drive.File
 	err = o.fs.pacer.Call(func() (bool, error) {
-		info, err = o.fs.svc.Files.Update(o.id, updateInfo).SetModifiedDate(true).Fields(googleapi.Field(partialFields)).Do()
+		info, err = o.fs.svc.Files.Update(o.id, updateInfo).SetModifiedDate(true).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(o.fs.isTeamDrive).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -1230,7 +1303,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	if size == 0 || size < int64(driveUploadCutoff) {
 		// Don't retry, return a retry error instead
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-			info, err = o.fs.svc.Files.Update(updateInfo.Id, updateInfo).SetModifiedDate(true).Media(in, googleapi.ContentType("")).Fields(googleapi.Field(partialFields)).Do()
+			info, err = o.fs.svc.Files.Update(updateInfo.Id, updateInfo).SetModifiedDate(true).Media(in, googleapi.ContentType("")).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(o.fs.isTeamDrive).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
@@ -1255,9 +1328,9 @@ func (o *Object) Remove() error {
 	var err error
 	err = o.fs.pacer.Call(func() (bool, error) {
 		if *driveUseTrash {
-			_, err = o.fs.svc.Files.Trash(o.id).Fields(googleapi.Field(partialFields)).Do()
+			_, err = o.fs.svc.Files.Trash(o.id).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(o.fs.isTeamDrive).Do()
 		} else {
-			err = o.fs.svc.Files.Delete(o.id).Fields(googleapi.Field(partialFields)).Do()
+			err = o.fs.svc.Files.Delete(o.id).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(o.fs.isTeamDrive).Do()
 		}
 		return shouldRetry(err)
 	})
