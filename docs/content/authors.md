@@ -82,3 +82,4 @@ Contributors
   * Sjur Fredriksen <sjurtf@ifi.uio.no>
   * Ruwbin <hubus12345@gmail.com>
   * Fabian Möller <fabianm88@gmail.com>
+  * Edward Q. Bridges <github@eqbridges.com>
