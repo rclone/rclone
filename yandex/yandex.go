@@ -326,6 +326,12 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 	}
 }
 
+// ListR lists the objects and directories of the Fs starting
+// from dir recursively into out.
+func (f *Fs) ListR(out fs.ListOpts, dir string) {
+	f.List(out, dir) // FIXME
+}
+
 // NewObject finds the Object at remote.  If it can't be found it
 // returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(remote string) (fs.Object, error) {
@@ -647,8 +653,9 @@ func (o *Object) MimeType() string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs     = (*Fs)(nil)
-	_ fs.Purger = (*Fs)(nil)
+	_ fs.Fs      = (*Fs)(nil)
+	_ fs.Purger  = (*Fs)(nil)
+	_ fs.ListRer = (*Fs)(nil)
 	//_ fs.Copier = (*Fs)(nil)
 	_ fs.Object    = (*Object)(nil)
 	_ fs.MimeTyper = &Object{}

@@ -397,6 +397,12 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 	return
 }
 
+// ListR lists the objects and directories of the Fs starting
+// from dir recursively into out.
+func (f *Fs) ListR(out fs.ListOpts, dir string) {
+	f.List(out, dir) // FIXME
+}
+
 // Put the object into the container
 //
 // Copy the reader in to the new object which is returned
@@ -830,6 +836,7 @@ var (
 	_ fs.Fs        = &Fs{}
 	_ fs.Purger    = &Fs{}
 	_ fs.Copier    = &Fs{}
+	_ fs.ListRer   = &Fs{}
 	_ fs.Object    = &Object{}
 	_ fs.MimeTyper = &Object{}
 )

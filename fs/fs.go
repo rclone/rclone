@@ -295,6 +295,19 @@ type Features struct {
 	// Implement this if you have a way of emptying the trash or
 	// otherwise cleaning up old versions of files.
 	CleanUp func() error
+
+	// ListR lists the objects and directories of the Fs starting
+	// from dir recursively into out.
+	//
+	// dir should be "" to start from the root, and should not
+	// have trailing slashes.
+	//
+	// This should return ErrDirNotFound (using out.SetError())
+	// if the directory isn't found.
+	//
+	// Don't implement this unless you have a more efficient way
+	// of listing recursively that doing a directory traversal.
+	ListR func(out ListOpts, dir string)
 }
 
 // Fill fills in the function pointers in the Features struct from the
@@ -327,6 +340,9 @@ func (ft *Features) Fill(f Fs) *Features {
 	}
 	if do, ok := f.(CleanUpper); ok {
 		ft.CleanUp = do.CleanUp
+	}
+	if do, ok := f.(ListRer); ok {
+		ft.ListR = do.ListR
 	}
 	return ft
 }
@@ -369,6 +385,9 @@ func (ft *Features) Mask(f Fs) *Features {
 	}
 	if mask.CleanUp == nil {
 		ft.CleanUp = nil
+	}
+	if mask.ListR == nil {
+		ft.ListR = nil
 	}
 	return ft
 }
@@ -477,6 +496,22 @@ type CleanUpper interface {
 	// Implement this if you have a way of emptying the trash or
 	// otherwise cleaning up old versions of files.
 	CleanUp() error
+}
+
+// ListRer is an optional interfaces for Fs
+type ListRer interface {
+	// ListR lists the objects and directories of the Fs starting
+	// from dir recursively into out.
+	//
+	// dir should be "" to start from the root, and should not
+	// have trailing slashes.
+	//
+	// This should return ErrDirNotFound (using out.SetError())
+	// if the directory isn't found.
+	//
+	// Don't implement this unless you have a more efficient way
+	// of listing recursively that doing a directory traversal.
+	ListR(out ListOpts, dir string)
 }
 
 // ObjectsChan is a channel of Objects

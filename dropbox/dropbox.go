@@ -16,6 +16,9 @@ API v1, and at least the last path component will have the correct
 casing. Changes to only the casing of paths won't be returned by
 list_folder/continue. This field will be null if the file or folder is
 not mounted. This field is optional.
+
+This only becomes a problem if dropbox implements the ListR interface
+which it currently doesn't.
 */
 
 import (

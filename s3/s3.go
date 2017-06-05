@@ -626,6 +626,12 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 	return
 }
 
+// ListR lists the objects and directories of the Fs starting
+// from dir recursively into out.
+func (f *Fs) ListR(out fs.ListOpts, dir string) {
+	f.List(out, dir) // FIXME
+}
+
 // Put the Object into the bucket
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	// Temporary Object under construction
@@ -998,6 +1004,7 @@ func (o *Object) MimeType() string {
 var (
 	_ fs.Fs        = &Fs{}
 	_ fs.Copier    = &Fs{}
+	_ fs.ListRer   = &Fs{}
 	_ fs.Object    = &Object{}
 	_ fs.MimeTyper = &Object{}
 )

@@ -595,6 +595,12 @@ func (f *Fs) List(out fs.ListOpts, dir string) {
 	return
 }
 
+// ListR lists the objects and directories of the Fs starting
+// from dir recursively into out.
+func (f *Fs) ListR(out fs.ListOpts, dir string) {
+	f.List(out, dir) // FIXME
+}
+
 // listBucketFn is called from listBucketsToFn to handle a bucket
 type listBucketFn func(*api.Bucket) error
 
@@ -1365,6 +1371,7 @@ var (
 	_ fs.Fs         = &Fs{}
 	_ fs.Purger     = &Fs{}
 	_ fs.CleanUpper = &Fs{}
+	_ fs.ListRer    = &Fs{}
 	_ fs.Object     = &Object{}
 	_ fs.MimeTyper  = &Object{}
 )
