@@ -564,6 +564,8 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 			// ignore object or directory
 		case item.MimeType == driveFolderType:
 			if out.IncludeDirectory(remote) {
+				// cache the directory ID for later lookups
+				f.dirCache.Put(remote, item.Id)
 				dir := &fs.Dir{
 					Name:  remote,
 					Bytes: -1,

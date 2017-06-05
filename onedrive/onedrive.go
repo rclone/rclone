@@ -406,6 +406,8 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 		remote := job.Path + info.Name
 		if info.Folder != nil {
 			if out.IncludeDirectory(remote) {
+				// cache the directory ID for later lookups
+				f.dirCache.Put(remote, info.ID)
 				dir := &fs.Dir{
 					Name:  remote,
 					Bytes: -1,

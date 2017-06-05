@@ -405,6 +405,8 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 			switch *node.Kind {
 			case folderKind:
 				if out.IncludeDirectory(remote) {
+					// cache the directory ID for later lookups
+					f.dirCache.Put(remote, *node.Id)
 					dir := &fs.Dir{
 						Name:  remote,
 						Bytes: -1,
