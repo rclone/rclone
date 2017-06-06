@@ -405,7 +405,7 @@ func TestHashSums(t *testing.T) {
 		!strings.Contains(res, "                                  empty space\n") {
 		t.Errorf("empty space missing: %q", res)
 	}
-	if !strings.Contains(res, "6548b156ea68a4e003e786df99eee76  potato2\n") &&
+	if !strings.Contains(res, "d6548b156ea68a4e003e786df99eee76  potato2\n") &&
 		!strings.Contains(res, "                     UNSUPPORTED  potato2\n") &&
 		!strings.Contains(res, "                                  potato2\n") {
 		t.Errorf("potato2 missing: %q", res)
@@ -413,6 +413,7 @@ func TestHashSums(t *testing.T) {
 
 	// SHA1 Sum
 
+	buf.Reset()
 	err = fs.Sha1sum(r.fremote, &buf)
 	require.NoError(t, err)
 	res = buf.String()
@@ -429,17 +430,18 @@ func TestHashSums(t *testing.T) {
 
 	// Dropbox Hash Sum
 
+	buf.Reset()
 	err = fs.DropboxHashSum(r.fremote, &buf)
 	require.NoError(t, err)
 	res = buf.String()
 	if !strings.Contains(res, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  empty space\n") &&
-		!strings.Contains(res, "                                                                     UNSUPPORTED  empty space\n") &&
-		!strings.Contains(res, "                                                                                  empty space\n") {
+		!strings.Contains(res, "                                                     UNSUPPORTED  empty space\n") &&
+		!strings.Contains(res, "                                                                  empty space\n") {
 		t.Errorf("empty space missing: %q", res)
 	}
 	if !strings.Contains(res, "a979481df794fed9c3990a6a422e0b1044ac802c15fab13af9c687f8bdbee01a  potato2\n") &&
-		!strings.Contains(res, "                                                                     UNSUPPORTED  potato2\n") &&
-		!strings.Contains(res, "                                                                                  potato2\n") {
+		!strings.Contains(res, "                                                     UNSUPPORTED  potato2\n") &&
+		!strings.Contains(res, "                                                                  potato2\n") {
 		t.Errorf("potato2 missing: %q", res)
 	}
 }
