@@ -20,6 +20,7 @@ import (
 // Constants
 const (
 	directoryMarkerContentType = "application/directory" // content type of directory marker objects
+	listChunks                 = 1000                    // chunk size to read directory listings
 )
 
 // Globals
@@ -281,7 +282,7 @@ func (f *Fs) listContainerRoot(container, root string, dir string, level int, fn
 	// Options for ObjectsWalk
 	opts := swift.ObjectsOpts{
 		Prefix: prefix,
-		Limit:  256,
+		Limit:  listChunks,
 	}
 	switch level {
 	case 1:

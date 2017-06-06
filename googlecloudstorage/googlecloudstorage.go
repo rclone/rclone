@@ -42,7 +42,7 @@ const (
 	timeFormatIn                = time.RFC3339
 	timeFormatOut               = "2006-01-02T15:04:05.000000000Z07:00"
 	metaMtime                   = "mtime" // key to store mtime under in metadata
-	listChunks                  = 256     // chunk size to read directory listings
+	listChunks                  = 1000    // chunk size to read directory listings
 )
 
 var (
