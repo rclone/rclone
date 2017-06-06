@@ -49,6 +49,8 @@ type syncCopyMove struct {
 	renameCheck    []Object            // accumulate files to check for rename here
 	backupDir      Fs                  // place to store overwrites/deletes
 	suffix         string              // suffix to add to files placed in backupDir
+	srcListDir     listDirFn           // function to call to list a directory in the src
+	dstListDir     listDirFn           // function to call to list a directory in the dst
 }
 
 func newSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool) (*syncCopyMove, error) {
@@ -117,7 +119,45 @@ func newSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool) (*syncCo
 		}
 		s.suffix = Config.Suffix
 	}
+	s.srcListDir = s.makeListDir(fsrc, false)
+	s.dstListDir = s.makeListDir(fdst, Config.Filter.DeleteExcluded)
 	return s, nil
+}
+
+// list a directory into entries, err
+type listDirFn func(dir string) (entries DirEntries, err error)
+
+// makeListDir makes a listing function for the given fs and includeAll flags
+func (s *syncCopyMove) makeListDir(f Fs, includeAll bool) listDirFn {
+	if !Config.UseListR || f.Features().ListR == nil {
+		return func(dir string) (entries DirEntries, err error) {
+			return ListDirSorted(f, includeAll, dir)
+		}
+	}
+	var (
+		mu      sync.Mutex
+		started bool
+		dirs    DirTree
+		dirsErr error
+	)
+	return func(dir string) (entries DirEntries, err error) {
+		mu.Lock()
+		defer mu.Unlock()
+		if !started {
+			dirs, dirsErr = NewDirTree(f, s.dir, includeAll, Config.MaxDepth)
+			started = true
+		}
+		if dirsErr != nil {
+			return nil, dirsErr
+		}
+		entries, ok := dirs[dir]
+		if !ok {
+			err = ErrorDirNotFound
+		} else {
+			delete(dirs, dir)
+		}
+		return entries, err
+	}
 }
 
 // Check to see if have set the abort flag
@@ -985,14 +1025,14 @@ func (s *syncCopyMove) _runDirAtATime(job listDirJob) (jobs []listDirJob) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			srcList, srcListErr = ListDirSorted(s.fsrc, false, job.remote)
+			srcList, srcListErr = s.srcListDir(job.remote)
 		}()
 	}
 	if !job.noDst {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			dstList, dstListErr = ListDirSorted(s.fdst, Config.Filter.DeleteExcluded, job.remote)
+			dstList, dstListErr = s.dstListDir(job.remote)
 		}()
 	}
 

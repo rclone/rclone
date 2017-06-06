@@ -52,6 +52,7 @@ var (
 	DumpBodies      = flag.Bool("dump-bodies", false, "Set to dump bodies (needs -verbose)")
 	Individual      = flag.Bool("individual", false, "Make individual bucket/container/directory for each test - much slower")
 	LowLevelRetries = flag.Int("low-level-retries", 10, "Number of low level retries")
+	UseListR        = flag.Bool("fast-list", false, "Use recursive list if available. Uses more memory but fewer transactions.")
 )
 
 // Some times used in the tests
@@ -113,6 +114,7 @@ func newRun() *Run {
 	fs.Config.DumpHeaders = *DumpHeaders
 	fs.Config.DumpBodies = *DumpBodies
 	fs.Config.LowLevelRetries = *LowLevelRetries
+	fs.Config.UseListR = *UseListR
 	var err error
 	r.fremote, r.fremoteName, r.cleanRemote, err = fstest.RandomRemote(*RemoteName, *SubDir)
 	if err != nil {
