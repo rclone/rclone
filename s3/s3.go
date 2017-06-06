@@ -674,6 +674,10 @@ func (f *Fs) Mkdir(dir string) error {
 		if err.Code() == "BucketAlreadyOwnedByYou" {
 			return nil
 		}
+		// Unfortunately AWS (and others) are not reliably returning
+		// BucketAlreadyOwnedByYou in all cases.
+		// Carry on and wait for failure later.
+		return nil
 	}
 	return err
 }
