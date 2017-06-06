@@ -1,11 +1,13 @@
 package fs
 
 import (
+	"fmt"
 	"sync"
 	"testing"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type (
@@ -79,6 +81,30 @@ func (ls *listDirs) ListDir(f Fs, includeAll bool, dir string) (entries DirEntri
 	return result.entries, result.err
 }
 
+// ListR returns the expected listing for the directory using ListR
+func (ls *listDirs) ListR(f Fs, dir string, callback listRCallback) (err error) {
+	ls.mu.Lock()
+	defer ls.mu.Unlock()
+	assert.Equal(ls.t, ls.fs, f)
+	//assert.Equal(ls.t, ls.includeAll, includeAll)
+
+	var errorReturn error
+	for dirPath, result := range ls.results {
+		// Put expected results for call of WalkFn
+		// Note that we don't call the function at all if we got an error
+		if result.err != nil {
+			errorReturn = result.err
+		}
+		if errorReturn == nil {
+			err = callback(result.entries)
+			require.NoError(ls.t, err)
+			ls.walkResults[dirPath] = result
+		}
+	}
+	ls.results = listResults{}
+	return errorReturn
+}
+
 // IsFinished checks everything expected was used up
 func (ls *listDirs) IsFinished() {
 	if ls.checkMaps {
@@ -92,6 +118,7 @@ func (ls *listDirs) IsFinished() {
 func (ls *listDirs) WalkFn(dir string, entries DirEntries, err error) error {
 	ls.mu.Lock()
 	defer ls.mu.Unlock()
+	// ls.t.Logf("WalkFn(%q, %v, %q)", dir, entries, err)
 
 	// Fetch expected entries and err
 	result, ok := ls.walkResults[dir]
@@ -123,12 +150,21 @@ func (ls *listDirs) Walk() {
 	ls.IsFinished()
 }
 
+// WalkR does the walkR and tests the expectations
+func (ls *listDirs) WalkR() {
+	err := walkR(nil, "", ls.includeAll, ls.maxLevel, ls.WalkFn, ls.ListR)
+	assert.Equal(ls.t, ls.finalError, err)
+	if ls.finalError == nil {
+		ls.IsFinished()
+	}
+}
+
 func newDir(name string) *Dir {
 	return &Dir{Name: name}
 }
 
-func TestWalkEmpty(t *testing.T) {
-	newListDirs(t, nil, false,
+func testWalkEmpty(t *testing.T) *listDirs {
+	return newListDirs(t, nil, false,
 		listResults{
 			"": {entries: DirEntries{}, err: nil},
 		},
@@ -136,11 +172,13 @@ func TestWalkEmpty(t *testing.T) {
 			"": nil,
 		},
 		nil,
-	).Walk()
+	)
 }
+func TestWalkEmpty(t *testing.T)  { testWalkEmpty(t).Walk() }
+func TestWalkREmpty(t *testing.T) { testWalkEmpty(t).WalkR() }
 
-func TestWalkEmptySkip(t *testing.T) {
-	newListDirs(t, nil, true,
+func testWalkEmptySkip(t *testing.T) *listDirs {
+	return newListDirs(t, nil, true,
 		listResults{
 			"": {entries: DirEntries{}, err: nil},
 		},
@@ -148,11 +186,13 @@ func TestWalkEmptySkip(t *testing.T) {
 			"": ErrorSkipDir,
 		},
 		nil,
-	).Walk()
+	)
 }
+func TestWalkEmptySkip(t *testing.T)  { testWalkEmptySkip(t).Walk() }
+func TestWalkREmptySkip(t *testing.T) { testWalkEmptySkip(t).WalkR() }
 
-func TestWalkNotFound(t *testing.T) {
-	newListDirs(t, nil, true,
+func testWalkNotFound(t *testing.T) *listDirs {
+	return newListDirs(t, nil, true,
 		listResults{
 			"": {err: ErrorDirNotFound},
 		},
@@ -160,10 +200,13 @@ func TestWalkNotFound(t *testing.T) {
 			"": ErrorDirNotFound,
 		},
 		ErrorDirNotFound,
-	).Walk()
+	)
 }
+func TestWalkNotFound(t *testing.T)  { testWalkNotFound(t).Walk() }
+func TestWalkRNotFound(t *testing.T) { testWalkNotFound(t).WalkR() }
 
 func TestWalkNotFoundMaskError(t *testing.T) {
+	// this doesn't work for WalkR
 	newListDirs(t, nil, true,
 		listResults{
 			"": {err: ErrorDirNotFound},
@@ -176,6 +219,7 @@ func TestWalkNotFoundMaskError(t *testing.T) {
 }
 
 func TestWalkNotFoundSkipkError(t *testing.T) {
+	// this doesn't work for WalkR
 	newListDirs(t, nil, true,
 		listResults{
 			"": {err: ErrorDirNotFound},
@@ -187,17 +231,21 @@ func TestWalkNotFoundSkipkError(t *testing.T) {
 	).Walk()
 }
 
-func testWalkLevels(t *testing.T, maxLevel int) {
+func testWalkLevels(t *testing.T, maxLevel int) *listDirs {
 	da := newDir("a")
+	oA := mockObject("A")
 	db := newDir("a/b")
+	oB := mockObject("a/B")
 	dc := newDir("a/b/c")
+	oC := mockObject("a/b/C")
 	dd := newDir("a/b/c/d")
-	newListDirs(t, nil, false,
+	oD := mockObject("a/b/c/D")
+	return newListDirs(t, nil, false,
 		listResults{
-			"":        {entries: DirEntries{da}, err: nil},
-			"a":       {entries: DirEntries{db}, err: nil},
-			"a/b":     {entries: DirEntries{dc}, err: nil},
-			"a/b/c":   {entries: DirEntries{dd}, err: nil},
+			"":        {entries: DirEntries{oA, da}, err: nil},
+			"a":       {entries: DirEntries{oB, db}, err: nil},
+			"a/b":     {entries: DirEntries{oC, dc}, err: nil},
+			"a/b/c":   {entries: DirEntries{oD, dd}, err: nil},
 			"a/b/c/d": {entries: DirEntries{}, err: nil},
 		},
 		errorMap{
@@ -208,51 +256,54 @@ func testWalkLevels(t *testing.T, maxLevel int) {
 			"a/b/c/d": nil,
 		},
 		nil,
-	).SetLevel(maxLevel).Walk()
+	).SetLevel(maxLevel)
 }
+func TestWalkLevels(t *testing.T)               { testWalkLevels(t, -1).Walk() }
+func TestWalkRLevels(t *testing.T)              { testWalkLevels(t, -1).WalkR() }
+func TestWalkLevelsNoRecursive10(t *testing.T)  { testWalkLevels(t, 10).Walk() }
+func TestWalkRLevelsNoRecursive10(t *testing.T) { testWalkLevels(t, 10).WalkR() }
 
-func TestWalkLevels(t *testing.T) {
-	testWalkLevels(t, -1)
-}
-
-func TestWalkLevelsNoRecursive10(t *testing.T) {
-	testWalkLevels(t, 10)
-}
-
-func TestWalkLevelsNoRecursive(t *testing.T) {
+func testWalkLevelsNoRecursive(t *testing.T) *listDirs {
 	da := newDir("a")
-	newListDirs(t, nil, false,
+	oA := mockObject("A")
+	return newListDirs(t, nil, false,
 		listResults{
-			"": {entries: DirEntries{da}, err: nil},
+			"": {entries: DirEntries{oA, da}, err: nil},
 		},
 		errorMap{
 			"": nil,
 		},
 		nil,
-	).SetLevel(1).Walk()
+	).SetLevel(1)
 }
+func TestWalkLevelsNoRecursive(t *testing.T)  { testWalkLevelsNoRecursive(t).Walk() }
+func TestWalkRLevelsNoRecursive(t *testing.T) { testWalkLevelsNoRecursive(t).WalkR() }
 
-func TestWalkLevels2(t *testing.T) {
+func testWalkLevels2(t *testing.T) *listDirs {
 	da := newDir("a")
+	oA := mockObject("A")
 	db := newDir("a/b")
-	newListDirs(t, nil, false,
+	oB := mockObject("a/B")
+	return newListDirs(t, nil, false,
 		listResults{
-			"":  {entries: DirEntries{da}, err: nil},
-			"a": {entries: DirEntries{db}, err: nil},
+			"":  {entries: DirEntries{oA, da}, err: nil},
+			"a": {entries: DirEntries{oB, db}, err: nil},
 		},
 		errorMap{
 			"":  nil,
 			"a": nil,
 		},
 		nil,
-	).SetLevel(2).Walk()
+	).SetLevel(2)
 }
+func TestWalkLevels2(t *testing.T)  { testWalkLevels2(t).Walk() }
+func TestWalkRLevels2(t *testing.T) { testWalkLevels2(t).WalkR() }
 
-func TestWalkSkip(t *testing.T) {
+func testWalkSkip(t *testing.T) *listDirs {
 	da := newDir("a")
 	db := newDir("a/b")
 	dc := newDir("a/b/c")
-	newListDirs(t, nil, false,
+	return newListDirs(t, nil, false,
 		listResults{
 			"":    {entries: DirEntries{da}, err: nil},
 			"a":   {entries: DirEntries{db}, err: nil},
@@ -264,10 +315,12 @@ func TestWalkSkip(t *testing.T) {
 			"a/b": ErrorSkipDir,
 		},
 		nil,
-	).Walk()
+	)
 }
+func TestWalkSkip(t *testing.T)  { testWalkSkip(t).Walk() }
+func TestWalkRSkip(t *testing.T) { testWalkSkip(t).WalkR() }
 
-func TestWalkErrors(t *testing.T) {
+func testWalkErrors(t *testing.T) *listDirs {
 	lr := listResults{}
 	em := errorMap{}
 	de := make(DirEntries, 10)
@@ -279,12 +332,14 @@ func TestWalkErrors(t *testing.T) {
 	}
 	lr[""] = listResult{entries: de, err: nil}
 	em[""] = nil
-	newListDirs(t, nil, true,
+	return newListDirs(t, nil, true,
 		lr,
 		em,
 		ErrorDirNotFound,
-	).NoCheckMaps().Walk()
+	).NoCheckMaps()
 }
+func TestWalkErrors(t *testing.T)  { testWalkErrors(t).Walk() }
+func TestWalkRErrors(t *testing.T) { testWalkErrors(t).WalkR() }
 
 var errorBoom = errors.New("boom")
 
@@ -314,20 +369,177 @@ func makeTree(level int, terminalErrors bool) (listResults, errorMap) {
 	return lr, em
 }
 
-func TestWalkMulti(t *testing.T) {
+func testWalkMulti(t *testing.T) *listDirs {
 	lr, em := makeTree(3, false)
-	newListDirs(t, nil, true,
+	return newListDirs(t, nil, true,
 		lr,
 		em,
 		nil,
-	).Walk()
+	)
 }
+func TestWalkMulti(t *testing.T)  { testWalkMulti(t).Walk() }
+func TestWalkRMulti(t *testing.T) { testWalkMulti(t).WalkR() }
 
-func TestWalkMultiErrors(t *testing.T) {
+func testWalkMultiErrors(t *testing.T) *listDirs {
 	lr, em := makeTree(3, true)
-	newListDirs(t, nil, true,
+	return newListDirs(t, nil, true,
 		lr,
 		em,
 		errorBoom,
-	).NoCheckMaps().Walk()
+	).NoCheckMaps()
+}
+func TestWalkMultiErrors(t *testing.T)  { testWalkMultiErrors(t).Walk() }
+func TestWalkRMultiErrors(t *testing.T) { testWalkMultiErrors(t).Walk() }
+
+// a very simple listRcallback function
+func makeListRCallback(entries DirEntries, err error) listRFunc {
+	return func(f Fs, dir string, callback listRCallback) error {
+		if err == nil {
+			err = callback(entries)
+		}
+		return err
+	}
+}
+
+func TestWalkRDirTree(t *testing.T) {
+	for _, test := range []struct {
+		entries DirEntries
+		want    string
+		err     error
+		root    string
+		level   int
+	}{
+		{DirEntries{}, "/\n", nil, "", -1},
+		{DirEntries{mockObject("a")}, `/
+  a
+`, nil, "", -1},
+		{DirEntries{mockObject("a/b")}, `/
+  a/
+a/
+  b
+`, nil, "", -1},
+		{DirEntries{mockObject("a/b/c/d")}, `/
+  a/
+a/
+  b/
+a/b/
+  c/
+a/b/c/
+  d
+`, nil, "", -1},
+		{DirEntries{mockObject("a")}, "", errorBoom, "", -1},
+		{DirEntries{
+			mockObject("0/1/2/3"),
+			mockObject("4/5/6/7"),
+			mockObject("8/9/a/b"),
+			mockObject("c/d/e/f"),
+			mockObject("g/h/i/j"),
+			mockObject("k/l/m/n"),
+			mockObject("o/p/q/r"),
+			mockObject("s/t/u/v"),
+			mockObject("w/x/y/z"),
+		}, `/
+  0/
+  4/
+  8/
+  c/
+  g/
+  k/
+  o/
+  s/
+  w/
+0/
+  1/
+0/1/
+  2/
+0/1/2/
+  3
+4/
+  5/
+4/5/
+  6/
+4/5/6/
+  7
+8/
+  9/
+8/9/
+  a/
+8/9/a/
+  b
+c/
+  d/
+c/d/
+  e/
+c/d/e/
+  f
+g/
+  h/
+g/h/
+  i/
+g/h/i/
+  j
+k/
+  l/
+k/l/
+  m/
+k/l/m/
+  n
+o/
+  p/
+o/p/
+  q/
+o/p/q/
+  r
+s/
+  t/
+s/t/
+  u/
+s/t/u/
+  v
+w/
+  x/
+w/x/
+  y/
+w/x/y/
+  z
+`, nil, "", -1},
+		{DirEntries{
+			mockObject("a/b/c/d/e/f1"),
+			mockObject("a/b/c/d/e/f2"),
+			mockObject("a/b/c/d/e/f3"),
+		}, `a/b/c/
+  d/
+a/b/c/d/
+  e/
+a/b/c/d/e/
+  f1
+  f2
+  f3
+`, nil, "a/b/c", -1},
+		{DirEntries{
+			mockObject("A"),
+			mockObject("a/B"),
+			mockObject("a/b/C"),
+			mockObject("a/b/c/D"),
+			mockObject("a/b/c/d/E"),
+		}, `/
+  A
+  a/
+a/
+  B
+  b/
+`, nil, "", 2},
+		{DirEntries{
+			mockObject("a/b/c"),
+			mockObject("a/b/c/d/e"),
+		}, `/
+  a/
+a/
+  b/
+`, nil, "", 2},
+	} {
+		r, err := walkRDirTree(nil, test.root, true, test.level, makeListRCallback(test.entries, test.err))
+		assert.Equal(t, test.err, err, fmt.Sprintf("%+v", test))
+		assert.Equal(t, test.want, r.String(), fmt.Sprintf("%+v", test))
+	}
 }

@@ -3,6 +3,11 @@
 package fs
 
 import (
+	"bytes"
+	"fmt"
+	"path"
+	"sort"
+	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -12,6 +17,10 @@ import (
 // directory named in the call is to be skipped. It is not returned as
 // an error by any function.
 var ErrorSkipDir = errors.New("skip this directory")
+
+// ErrorCantListR is returned by WalkR if the underlying Fs isn't
+// capable of doing a recursive listing.
+var ErrorCantListR = errors.New("recursive directory listing not available")
 
 // WalkFunc is the type of the function called for directory
 // visited by Walk. The path argument contains remote path to the directory.
@@ -39,9 +48,30 @@ type WalkFunc func(path string, entries DirEntries, err error) error
 //
 // Parent directories are always listed before their children
 //
+// This is implemented by WalkR if Config.UseRecursiveListing is true
+// and f supports it and level > 1, or WalkN otherwise.
+//
 // NB (f, path) to be replaced by fs.Dir at some point
 func Walk(f Fs, path string, includeAll bool, maxLevel int, fn WalkFunc) error {
+	if (maxLevel < 0 || maxLevel > 1) && Config.UseListR && f.Features().ListR != nil {
+		return WalkR(f, path, includeAll, maxLevel, fn)
+	}
+	return WalkN(f, path, includeAll, maxLevel, fn)
+}
+
+// WalkN lists the directory.
+//
+// It implements Walk using non recursive directory listing.
+func WalkN(f Fs, path string, includeAll bool, maxLevel int, fn WalkFunc) error {
 	return walk(f, path, includeAll, maxLevel, fn, ListDirSorted)
+}
+
+// WalkR lists the directory.
+//
+// It implements Walk using recursive directory listing if
+// available, or returns ErrorCantListR if not.
+func WalkR(f Fs, path string, includeAll bool, maxLevel int, fn WalkFunc) error {
+	return walkR(f, path, includeAll, maxLevel, fn, listR)
 }
 
 type listDirFunc func(fs Fs, includeAll bool, dir string) (entries DirEntries, err error)
@@ -137,6 +167,229 @@ func walk(f Fs, path string, includeAll bool, maxLevel int, fn WalkFunc, listDir
 	close(errs)
 	// return the first error returned or nil
 	return <-errs
+}
+
+// DirTree is a map of directories to entries
+type DirTree map[string]DirEntries
+
+// parentDir finds the parent directory of path
+func parentDir(entryPath string) string {
+	dirPath := path.Dir(entryPath)
+	if dirPath == "." {
+		dirPath = ""
+	}
+	return dirPath
+}
+
+// add an entry to the tree
+func (dt DirTree) add(entry BasicInfo) {
+	dirPath := parentDir(entry.Remote())
+	dt[dirPath] = append(dt[dirPath], entry)
+}
+
+// add a directory entry to the tree
+func (dt DirTree) addDir(entry BasicInfo) {
+	dt.add(entry)
+	// create the directory itself if it doesn't exist already
+	dirPath := entry.Remote()
+	if _, ok := dt[dirPath]; !ok {
+		dt[dirPath] = nil
+	}
+}
+
+// check that dirPath has a *Dir in its parent
+func (dt DirTree) checkParent(root, dirPath string) {
+	if dirPath == root {
+		return
+	}
+	parentPath := parentDir(dirPath)
+	entries := dt[parentPath]
+	for _, entry := range entries {
+		if entry.Remote() == dirPath {
+			return
+		}
+	}
+	dt[parentPath] = append(entries, &Dir{
+		Name: dirPath,
+	})
+	dt.checkParent(root, parentPath)
+}
+
+// check every directory in the tree has *Dir in its parent
+func (dt DirTree) checkParents(root string) {
+	for dirPath := range dt {
+		dt.checkParent(root, dirPath)
+	}
+}
+
+// Sort sorts all the Entries
+func (dt DirTree) Sort() {
+	for _, entries := range dt {
+		sort.Sort(entries)
+	}
+}
+
+// Dirs returns the directories in sorted order
+func (dt DirTree) Dirs() (dirNames []string) {
+	for dirPath := range dt {
+		dirNames = append(dirNames, dirPath)
+	}
+	sort.Strings(dirNames)
+	return dirNames
+}
+
+// String emits a simple representation of the DirTree
+func (dt DirTree) String() string {
+	out := new(bytes.Buffer)
+	for _, dir := range dt.Dirs() {
+		fmt.Fprintf(out, "%s/\n", dir)
+		for _, entry := range dt[dir] {
+			flag := ""
+			if _, ok := entry.(*Dir); ok {
+				flag = "/"
+			}
+			fmt.Fprintf(out, "  %s%s\n", path.Base(entry.Remote()), flag)
+		}
+	}
+	return out.String()
+}
+
+type listRCallback func(entries DirEntries) error
+
+type listRFunc func(f Fs, dir string, callback listRCallback) error
+
+// FIXME Pretend ListR function
+func listR(f Fs, dir string, callback listRCallback) (err error) {
+	listR := f.Features().ListR
+	if listR == nil {
+		return ErrorCantListR
+	}
+	const maxEntries = 100
+	entries := make(DirEntries, 0, maxEntries)
+	list := NewLister()
+	list.Start(f, dir)
+	for {
+		o, dir, err := list.Get()
+		if err != nil {
+			return err
+		} else if o != nil {
+			entries = append(entries, o)
+		} else if dir != nil {
+			entries = append(entries, dir)
+		} else {
+			// finishd since err, o, dir == nil
+			break
+		}
+		if len(entries) >= maxEntries {
+			err = callback(entries)
+			if err != nil {
+				return err
+			}
+			entries = entries[:0]
+		}
+	}
+	err = list.Error()
+	if err != nil {
+		return err
+	}
+	if len(entries) > 0 {
+		err = callback(entries)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+
+}
+
+func walkRDirTree(f Fs, path string, includeAll bool, maxLevel int, listRFn listRFunc) (DirTree, error) {
+	dirs := make(DirTree)
+	err := listRFn(f, path, func(entries DirEntries) error {
+		for _, entry := range entries {
+			slashes := strings.Count(entry.Remote(), "/")
+			switch x := entry.(type) {
+			case Object:
+				// Make sure we don't delete excluded files if not required
+				if includeAll || Config.Filter.IncludeObject(x) {
+					if maxLevel < 0 || slashes <= maxLevel-1 {
+						dirs.add(x)
+					} else {
+						// Make sure we include any parent directories of excluded objects
+						dirPath := x.Remote()
+						for ; slashes > maxLevel-1; slashes-- {
+							dirPath = parentDir(dirPath)
+						}
+						dirs.checkParent(path, dirPath)
+					}
+				} else {
+					Debugf(x, "Excluded from sync (and deletion)")
+				}
+			case *Dir:
+				if includeAll || Config.Filter.IncludeDirectory(x.Remote()) {
+					if maxLevel < 0 || slashes <= maxLevel-1 {
+						if slashes == maxLevel-1 {
+							// Just add the object if at maxLevel
+							dirs.add(x)
+						} else {
+							dirs.addDir(x)
+						}
+					}
+				} else {
+					Debugf(x, "Excluded from sync (and deletion)")
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dirs.checkParents(path)
+	if len(dirs) == 0 {
+		dirs[path] = nil
+	}
+	dirs.Sort()
+	return dirs, nil
+}
+
+// NewDirTree returns a DirTree filled with the directory listing using the parameters supplied
+func NewDirTree(f Fs, path string, includeAll bool, maxLevel int) (DirTree, error) {
+	return walkRDirTree(f, path, includeAll, maxLevel, listR)
+}
+
+func walkR(f Fs, path string, includeAll bool, maxLevel int, fn WalkFunc, listRFn listRFunc) error {
+	dirs, err := walkRDirTree(f, path, includeAll, maxLevel, listRFn)
+	if err != nil {
+		return err
+	}
+	skipping := false
+	skipPrefix := ""
+	emptyDir := DirEntries{}
+	for _, dirPath := range dirs.Dirs() {
+		if skipping {
+			// Skip over directories as required
+			if strings.HasPrefix(dirPath, skipPrefix) {
+				continue
+			}
+			skipping = false
+		}
+		entries := dirs[dirPath]
+		if entries == nil {
+			entries = emptyDir
+		}
+		sort.Sort(entries)
+		err = fn(dirPath, entries, nil)
+		if err == ErrorSkipDir {
+			skipping = true
+			skipPrefix = dirPath
+			if skipPrefix != "" {
+				skipPrefix += "/"
+			}
+		} else if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // WalkGetAll runs Walk getting all the results

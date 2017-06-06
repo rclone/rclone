@@ -168,6 +168,12 @@ to your Service Account credentials at the `service_account_file`
 prompt and rclone won't use the browser based authentication
 flow.
 
+### --fast-list ###
+
+This remote supports `--fast-list` which allows you to use fewer
+transactions in exchange for more memory. See the [rclone
+docs](/docs/#fast-list) for more details.
+
 ### Modified time ###
 
 Google google cloud storage stores md5sums natively and rclone stores

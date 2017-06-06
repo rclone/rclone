@@ -96,6 +96,7 @@ var (
 	noUpdateModTime = BoolP("no-update-modtime", "", false, "Don't update destination mod-time if files identical.")
 	backupDir       = StringP("backup-dir", "", "", "Make backups into hierarchy based in DIR.")
 	suffix          = StringP("suffix", "", "", "Suffix for use with --backup-dir.")
+	useListR        = BoolP("fast-list", "", false, "Use recursive list if available. Uses more memory but fewer transactions.")
 	bwLimit         BwTimetable
 	bufferSize      SizeSuffix = 16 << 20
 
@@ -221,6 +222,7 @@ type ConfigInfo struct {
 	DataRateUnit       string
 	BackupDir          string
 	Suffix             string
+	UseListR           bool
 	BufferSize         SizeSuffix
 }
 
@@ -367,6 +369,7 @@ func LoadConfig() {
 	Config.NoUpdateModTime = *noUpdateModTime
 	Config.BackupDir = *backupDir
 	Config.Suffix = *suffix
+	Config.UseListR = *useListR
 	Config.BufferSize = bufferSize
 
 	ConfigPath = *configFile

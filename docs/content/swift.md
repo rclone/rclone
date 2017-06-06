@@ -158,6 +158,12 @@ tenant = $OS_TENANT_NAME
 
 Note that you may (or may not) need to set `region` too - try without first.
 
+### --fast-list ###
+
+This remote supports `--fast-list` which allows you to use fewer
+transactions in exchange for more memory. See the [rclone
+docs](/docs/#fast-list) for more details.
+
 ### Specific options ###
 
 Here are the command line options specific to this cloud storage

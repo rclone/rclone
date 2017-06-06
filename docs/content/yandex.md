@@ -107,6 +107,12 @@ excess files in the path.
 
     rclone sync /home/local/directory remote:directory
 
+### --fast-list ###
+
+This remote supports `--fast-list` which allows you to use fewer
+transactions in exchange for more memory. See the [rclone
+docs](/docs/#fast-list) for more details.
+
 ### Modified time ###
 
 Modified times are supported and are stored accurate to 1 ns in custom

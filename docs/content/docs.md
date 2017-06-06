@@ -581,6 +581,38 @@ errors subsequent to that.  If there have been errors before the
 deletions start then you will get the message `not deleting files as
 there were IO errors`.
 
+### --fast-list ###
+
+When doing anything which involves a directory listing (eg `sync`,
+`copy`, `ls` - in fact nearly every command), rclone normally lists a
+directory and processes it before using more directory lists to
+process any subdirectories.  This can be parallelised and works very
+quickly using the least amount of memory.
+
+However some remotes have a way of listing all files beneath a
+directory in one (or a small number) of transactions.  These tend to
+be the bucket based remotes (eg s3, b2, gcs, swift, hubic).
+
+If you use the `--fast-list` flag then rclone will use this method for
+listing directories.  This will have the following consequences for
+the listing:
+
+  * It **will** use fewer transactions (important if you pay for them)
+  * It **will** use more memory.  Rclone has to load the whole listing into memory.
+  * It *may* be faster because it uses fewer transactions
+  * It *may* be slower because it can't be parallelized
+
+rclone should always give identical results with and without
+`--fast-list`.
+
+If you pay for transactions and can fit your entire sync listing into
+memory then `--fast-list` is recommended.  If you have a very big sync
+to do then don't use `--fast-list` otherwise you will run out of
+memory.
+
+If you use `--fast-list` on a remote which doesn't support it, then
+rclone will just ignore it.
+
 ### --timeout=TIME ###
 
 This sets the IO idle timeout.  If a transfer has started but then

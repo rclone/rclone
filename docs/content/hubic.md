@@ -110,6 +110,12 @@ browser*, you need to copy your files to the `default` directory
 
     rclone copy /home/source remote:default/backup
 
+### --fast-list ###
+
+This remote supports `--fast-list` which allows you to use fewer
+transactions in exchange for more memory. See the [rclone
+docs](/docs/#fast-list) for more details.
+
 ### Modified time ###
 
 The modified time is stored as metadata on the object as

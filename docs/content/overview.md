@@ -108,21 +108,21 @@ All the remotes support a basic set of features, but there are some
 optional features supported by some remotes used to make some
 operations more efficient.
 
-| Name                   | Purge | Copy | Move | DirMove | CleanUp |
-| ---------------------- |:-----:|:----:|:----:|:-------:|:-------:|
-| Google Drive           | Yes   | Yes  | Yes  | Yes     | No  [#575](https://github.com/ncw/rclone/issues/575) | 
-| Amazon S3              | No    | Yes  | No   | No      | No      |
-| Openstack Swift        | Yes † | Yes  | No   | No      | No      |
-| Dropbox                | Yes   | Yes  | Yes  | Yes     | No  [#575](https://github.com/ncw/rclone/issues/575) |
-| Google Cloud Storage   | Yes   | Yes  | No   | No      | No      |
-| Amazon Drive           | Yes   | No   | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) |
-| Microsoft OneDrive     | Yes   | Yes  | Yes  | No [#197](https://github.com/ncw/rclone/issues/197)    | No [#575](https://github.com/ncw/rclone/issues/575) |
-| Hubic                  | Yes † | Yes  | No   | No      | No      |
-| Backblaze B2           | No    | No   | No   | No      | Yes     |
-| Yandex Disk            | Yes   | No   | No   | No      | No  [#575](https://github.com/ncw/rclone/issues/575) |
-| SFTP                   | No    | No   | Yes  | Yes     | No      |
-| FTP                    | No    | No   | Yes  | Yes     | No      |
-| The local filesystem   | Yes   | No   | Yes  | Yes     | No      |
+| Name                   | Purge | Copy | Move | DirMove | CleanUp | ListR |
+| ---------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|
+| Google Drive           | Yes   | Yes  | Yes  | Yes     | No  [#575](https://github.com/ncw/rclone/issues/575) |  No    |
+| Amazon S3              | No    | Yes  | No   | No      | No      | Yes   |
+| Openstack Swift        | Yes † | Yes  | No   | No      | No      | Yes   |
+| Dropbox                | Yes   | Yes  | Yes  | Yes     | No  [#575](https://github.com/ncw/rclone/issues/575) | No    |
+| Google Cloud Storage   | Yes   | Yes  | No   | No      | No      | Yes   |
+| Amazon Drive           | Yes   | No   | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No    |
+| Microsoft OneDrive     | Yes   | Yes  | Yes  | No [#197](https://github.com/ncw/rclone/issues/197)    | No [#575](https://github.com/ncw/rclone/issues/575) | No    |
+| Hubic                  | Yes † | Yes  | No   | No      | No      | Yes   |
+| Backblaze B2           | No    | No   | No   | No      | Yes     | Yes   |
+| Yandex Disk            | Yes   | No   | No   | No      | No  [#575](https://github.com/ncw/rclone/issues/575) | Yes   |
+| SFTP                   | No    | No   | Yes  | Yes     | No      | No    |
+| FTP                    | No    | No   | Yes  | Yes     | No      | No    |
+| The local filesystem   | Yes   | No   | Yes  | Yes     | No      | No    |
 
 
 ### Purge ###
@@ -166,3 +166,9 @@ This is used for emptying the trash for a remote by `rclone cleanup`.
 
 If the server can't do `CleanUp` then `rclone cleanup` will return an
 error.
+
+### ListR ###
+
+The remote supports a recursive list to list all the contents beneath
+a directory quickly.  This enables the `--fast-list` flag to work.
+See the [rclone docs](/docs/#fast-list) for more details.
