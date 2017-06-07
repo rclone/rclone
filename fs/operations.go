@@ -1528,11 +1528,17 @@ func moveOrCopyFile(fdst Fs, fsrc Fs, dstFileName string, srcFileName string, cp
 	}
 
 	if NeedTransfer(dstObj, srcObj) {
-		return Op(fdst, dstObj, dstFileName, srcObj)
-	} else if !cp {
-		return DeleteFile(srcObj)
+		Stats.Transferring(srcFileName)
+		err = Op(fdst, dstObj, dstFileName, srcObj)
+		Stats.DoneTransferring(srcFileName, err == nil)
+	} else {
+		Stats.Checking(srcFileName)
+		if !cp {
+			err = DeleteFile(srcObj)
+		}
+		defer Stats.DoneChecking(srcFileName)
 	}
-	return nil
+	return err
 }
 
 // MoveFile moves a single file possibly to a new name
