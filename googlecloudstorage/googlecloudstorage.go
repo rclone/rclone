@@ -24,6 +24,7 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ncw/rclone/fs"
@@ -135,6 +136,8 @@ type Fs struct {
 	svc           *storage.Service // the connection to the storage server
 	client        *http.Client     // authorized client
 	bucket        string           // the bucket we are working on
+	bucketOKMu    sync.Mutex       // mutex to protect bucket OK
+	bucketOK      bool             // true if we have created the bucket
 	projectNumber string           // used for finding buckets
 	objectACL     string           // used when creating new objects
 	bucketACL     string           // used when creating new buckets
@@ -456,13 +459,15 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 
 // Mkdir creates the bucket if it doesn't exist
 func (f *Fs) Mkdir(dir string) error {
-	// Can't create subdirs
-	if dir != "" {
+	f.bucketOKMu.Lock()
+	defer f.bucketOKMu.Unlock()
+	if f.bucketOK {
 		return nil
 	}
 	_, err := f.svc.Buckets.Get(f.bucket).Do()
 	if err == nil {
 		// Bucket already exists
+		f.bucketOK = true
 		return nil
 	}
 
@@ -474,6 +479,9 @@ func (f *Fs) Mkdir(dir string) error {
 		Name: f.bucket,
 	}
 	_, err = f.svc.Buckets.Insert(f.projectNumber, &bucket).PredefinedAcl(f.bucketACL).Do()
+	if err == nil {
+		f.bucketOK = true
+	}
 	return err
 }
 
@@ -482,10 +490,16 @@ func (f *Fs) Mkdir(dir string) error {
 // Returns an error if it isn't empty: Error 409: The bucket you tried
 // to delete was not empty.
 func (f *Fs) Rmdir(dir string) error {
+	f.bucketOKMu.Lock()
+	defer f.bucketOKMu.Unlock()
 	if f.root != "" || dir != "" {
 		return nil
 	}
-	return f.svc.Buckets.Delete(f.bucket).Do()
+	err := f.svc.Buckets.Delete(f.bucket).Do()
+	if err == nil {
+		f.bucketOK = false
+	}
+	return err
 }
 
 // Precision returns the precision
@@ -684,6 +698,10 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	err := o.fs.Mkdir("")
+	if err != nil {
+		return err
+	}
 	size := src.Size()
 	modTime := src.ModTime()
 

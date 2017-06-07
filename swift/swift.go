@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ncw/rclone/fs"
@@ -92,6 +93,8 @@ type Fs struct {
 	features          *fs.Features      // optional features
 	c                 *swift.Connection // the connection to the swift server
 	container         string            // the container we are working on
+	containerOKMu     sync.Mutex        // mutex to protect container OK
+	containerOK       bool              // true if we have created the container
 	segmentsContainer string            // container to store the segments (if any) in
 }
 
@@ -410,30 +413,36 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(dir string) error {
-	// Can't create subdirs
-	if dir != "" {
+	f.containerOKMu.Lock()
+	defer f.containerOKMu.Unlock()
+	if f.containerOK {
 		return nil
 	}
 	// Check to see if container exists first
 	_, _, err := f.c.Container(f.container)
-	if err == nil {
-		return nil
-	}
 	if err == swift.ContainerNotFound {
-		return f.c.ContainerCreate(f.container, nil)
+		err = f.c.ContainerCreate(f.container, nil)
+	}
+	if err == nil {
+		f.containerOK = true
 	}
 	return err
-
 }
 
 // Rmdir deletes the container if the fs is at the root
 //
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(dir string) error {
+	f.containerOKMu.Lock()
+	defer f.containerOKMu.Unlock()
 	if f.root != "" || dir != "" {
 		return nil
 	}
-	return f.c.ContainerDelete(f.container)
+	err := f.c.ContainerDelete(f.container)
+	if err == nil {
+		f.containerOK = false
+	}
+	return err
 }
 
 // Precision of the remote
@@ -738,6 +747,10 @@ func (o *Object) updateChunks(in io.Reader, headers swift.Headers, size int64, c
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	err := o.fs.Mkdir("")
+	if err != nil {
+		return err
+	}
 	size := src.Size()
 	modTime := src.ModTime()
 

@@ -86,6 +86,8 @@ type Fs struct {
 	endpoint      string                       // name of the starting api endpoint
 	srv           *rest.Client                 // the connection to the b2 server
 	bucket        string                       // the bucket we are working on
+	bucketOKMu    sync.Mutex                   // mutex to protect bucket OK
+	bucketOK      bool                         // true if we have created the bucket
 	bucketIDMutex sync.Mutex                   // mutex to protect _bucketID
 	_bucketID     string                       // the ID of the bucket we are working on
 	info          api.AuthorizeAccountResponse // result of authorize call
@@ -671,8 +673,9 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 
 // Mkdir creates the bucket if it doesn't exist
 func (f *Fs) Mkdir(dir string) error {
-	// Can't create subdirs
-	if dir != "" {
+	f.bucketOKMu.Lock()
+	defer f.bucketOKMu.Unlock()
+	if f.bucketOK {
 		return nil
 	}
 	opts := rest.Opts{
@@ -697,6 +700,7 @@ func (f *Fs) Mkdir(dir string) error {
 				_, getBucketErr := f.getBucketID()
 				if getBucketErr == nil {
 					// found so it is our bucket
+					f.bucketOK = true
 					return nil
 				}
 				if getBucketErr != fs.ErrorDirNotFound {
@@ -707,6 +711,7 @@ func (f *Fs) Mkdir(dir string) error {
 		return errors.Wrap(err, "failed to create bucket")
 	}
 	f.setBucketID(response.ID)
+	f.bucketOK = true
 	return nil
 }
 
@@ -714,6 +719,8 @@ func (f *Fs) Mkdir(dir string) error {
 //
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(dir string) error {
+	f.bucketOKMu.Lock()
+	defer f.bucketOKMu.Unlock()
 	if f.root != "" || dir != "" {
 		return nil
 	}
@@ -737,6 +744,7 @@ func (f *Fs) Rmdir(dir string) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to delete bucket")
 	}
+	f.bucketOK = false
 	f.clearBucketID()
 	f.clearUploadURL()
 	return nil
@@ -1164,6 +1172,10 @@ func urlEncode(in string) string {
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	if *b2Versions {
 		return errNotWithVersions
+	}
+	err = o.fs.Mkdir("")
+	if err != nil {
+		return err
 	}
 	size := src.Size()
 

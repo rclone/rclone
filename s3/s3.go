@@ -21,6 +21,7 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -239,6 +240,8 @@ type Fs struct {
 	c                  *s3.S3           // the connection to the s3 server
 	ses                *session.Session // the s3 session
 	bucket             string           // the bucket we are working on
+	bucketOKMu         sync.Mutex       // mutex to protect bucket OK
+	bucketOK           bool             // true if we have created the bucket
 	acl                string           // ACL for new buckets / objects
 	locationConstraint string           // location constraint of new buckets
 	sse                string           // the type of server-side encryption
@@ -652,11 +655,15 @@ func (f *Fs) dirExists() (bool, error) {
 
 // Mkdir creates the bucket if it doesn't exist
 func (f *Fs) Mkdir(dir string) error {
-	// Can't create subdirs
-	if dir != "" {
+	f.bucketOKMu.Lock()
+	defer f.bucketOKMu.Unlock()
+	if f.bucketOK {
 		return nil
 	}
 	exists, err := f.dirExists()
+	if err == nil {
+		f.bucketOK = exists
+	}
 	if err != nil || exists {
 		return err
 	}
@@ -672,8 +679,11 @@ func (f *Fs) Mkdir(dir string) error {
 	_, err = f.c.CreateBucket(&req)
 	if err, ok := err.(awserr.Error); ok {
 		if err.Code() == "BucketAlreadyOwnedByYou" {
-			return nil
+			err = nil
 		}
+	}
+	if err == nil {
+		f.bucketOK = true
 	}
 	return err
 }
@@ -682,6 +692,8 @@ func (f *Fs) Mkdir(dir string) error {
 //
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(dir string) error {
+	f.bucketOKMu.Lock()
+	defer f.bucketOKMu.Unlock()
 	if f.root != "" || dir != "" {
 		return nil
 	}
@@ -689,6 +701,9 @@ func (f *Fs) Rmdir(dir string) error {
 		Bucket: &f.bucket,
 	}
 	_, err := f.c.DeleteBucket(&req)
+	if err == nil {
+		f.bucketOK = false
+	}
 	return err
 }
 
@@ -903,6 +918,10 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 
 // Update the Object from in with modTime and size
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	err := o.fs.Mkdir("")
+	if err != nil {
+		return err
+	}
 	modTime := src.ModTime()
 
 	uploader := s3manager.NewUploader(o.fs.ses, func(u *s3manager.Uploader) {
@@ -943,7 +962,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	if o.fs.storageClass != "" {
 		req.StorageClass = &o.fs.storageClass
 	}
-	_, err := uploader.Upload(&req)
+	_, err = uploader.Upload(&req)
 	if err != nil {
 		return err
 	}
