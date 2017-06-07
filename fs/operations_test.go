@@ -833,6 +833,46 @@ func TestCopyFile(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, file2)
 }
 
+func TestCheckNewer(t *testing.T) {
+	fs.Config.CheckNewer = true
+	defer func() { fs.Config.CheckNewer = false }()
+	r := NewRun(t)
+	defer r.Finalise()
+
+	item1L := r.WriteFile("file1", "file1 contents", t1)
+	// difference here emphasizes that this option is blind to the CONTENTS
+	item1R := r.WriteObject(item1L.Path, "file1 contentz", t1)
+
+	// Find src object, dst object
+	objL, err := r.flocal.NewObject(item1L.Path)
+	if err != nil {
+		t.Error("did not find local object")
+		return
+	}
+	objR, err := r.fremote.NewObject(item1R.Path)
+	if err != nil {
+		t.Error("did not find remote object")
+		return
+	}
+
+	// ultimately NeedTransfer calls operations.equal() which is where the
+	// CheckNewer flag has its effect
+	need := fs.NeedTransfer(objR, objL)
+	if need {
+		t.Error("Transfer 'needed' when local file is not newer")
+	}
+
+	// non-difference here emphasizes that this option sees the TIMES
+	r.WriteFile("file1", "file1 contents", t1.Add(time.Minute))
+	objL, err = r.flocal.NewObject(item1L.Path)
+
+	need = fs.NeedTransfer(objR, objL)
+	if !need {
+		t.Error("Transfer 'not needed' when local file is newer")
+	}
+
+}
+
 // testFsInfo is for unit testing fs.Info
 type testFsInfo struct {
 	name      string

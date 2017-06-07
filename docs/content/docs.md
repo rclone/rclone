@@ -270,6 +270,30 @@ will use this much memory for buffering.
 
 Set to 0 to disable the buffering for the minimum memory use.
 
+### --check-newer ###
+
+Use of a remote that does not support setting the file modification 
+time (such as Amazon Cloud Drive) as the base for an encrytped 
+remote presents some difficulties in determining which files to 
+process when repeating a copy or other command e.g. with the intent
+of keeping a backup up-to-date.  The file modification time is 
+not checked, and --checksum is not effective (as of v1.36) as the 
+crypt filesystem does not provide it. So in general checks for 
+source and dest files being equal amount to comparing file size. 
+Thus files that have been modified on the source since the last copy
+or similar operation but are still the same size will be skipped.
+
+The --check-newer option provides an alternative that may be 
+helpful in this situation.  With this option the source file time is
+compared to the timestamp on the destination file, but only to 
+determine if the source is more recent (more than one minute 
+newer).  "More recent" in this situation indicates that the file 
+was modified more recently than the operation (e.g. copy) that 
+put the file on the destination.
+
+This option takes precedence over --checksum and --size-only so 
+in effect those options are ignored if combined with --check-newer.
+
 ### --checkers=N ###
 
 The number of checkers to run in parallel.  Checkers do the equality
