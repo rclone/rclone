@@ -46,6 +46,14 @@ Links
 
 Rclone is a Go program and comes as a single binary file.
 
+## Linux installation from snaps ##
+
+Install rclone in seconds on [Ubuntu and other snap supported Linux distributions](https://snapcraft.io/docs/core/install) with:
+
+    snap install rclone
+
+Installing a snap is very quick. Snaps are secure. They are isolated with all of their dependencies. Snaps also auto update when a new version is released.
+
 ## Quickstart ##
 
   * [Download](http://rclone.org/downloads/) the relevant binary.
