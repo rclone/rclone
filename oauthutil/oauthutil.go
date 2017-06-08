@@ -209,6 +209,16 @@ func overrideCredentials(name string, origConfig *oauth2.Config) (config *oauth2
 		config.ClientSecret = ClientSecret
 		changed = true
 	}
+	AuthURL := fs.ConfigFileGet(name, fs.ConfigAuthURL)
+	if AuthURL != "" {
+		config.Endpoint.AuthURL = AuthURL
+		changed = true
+	}
+	TokenURL := fs.ConfigFileGet(name, fs.ConfigTokenURL)
+	if TokenURL != "" {
+		config.Endpoint.TokenURL = TokenURL
+		changed = true
+	}
 	return config, changed
 }
 

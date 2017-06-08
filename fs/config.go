@@ -44,6 +44,12 @@ const (
 	// ConfigClientSecret is the config key used to store the client secret
 	ConfigClientSecret = "client_secret"
 
+	// ConfigAuthURL is the config key used to store the auth server endpoint
+	ConfigAuthURL = "auth_url"
+
+	// ConfigTokenURL is the config key used to store the token server endpoint
+	ConfigTokenURL = "token_url"
+
 	// ConfigAutomatic indicates that we want non-interactive configuration
 	ConfigAutomatic = "config_automatic"
 )
