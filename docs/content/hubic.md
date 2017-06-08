@@ -104,6 +104,10 @@ List all the files in your Hubic
 To copy a local directory to an Hubic directory called backup
 
     rclone copy /home/source remote:backup
+    
+If you want the directory to be visible in the official *Hubic browser*, you need to copy your files in the directory *default*
+
+     rclone copy /home/source remote:default/backup
 
 If you want the directory to be visible in the official *Hubic
 browser*, you need to copy your files to the `default` directory
