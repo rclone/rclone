@@ -1,7 +1,7 @@
 ---
 title: "Amazon Drive"
 description: "Rclone docs for Amazon Drive"
-date: "2016-07-11"
+date: "2017-06-10"
 ---
 
 <i class="fa fa-amazon"></i> Amazon Drive
@@ -15,6 +15,26 @@ The initial setup for Amazon Drive involves getting a token from
 Amazon which you need to do in your browser.  `rclone config` walks
 you through it.
 
+The configuration process for Amazon Drive may involve using an [oauth
+proxy](https://github.com/ncw/oauthproxy). This is used to keep the
+Amazon credentials out of the source code.  The proxy runs in Google's
+very secure App Engine environment and doesn't store any credentials
+which pass through it.
+
+**NB** rclone doesn't not currently have its own Amazon Drive
+credentials (see [the
+forum](https://forum.rclone.org/t/rclone-has-been-banned-from-amazon-drive/)
+for why) so you will either need to have your own `client_id` and
+`client_secret` with Amazon Drive, or use a a third party ouath proxy
+in which case you will need to enter `client_id`, `client_secret`,
+`auth_url` and `token_url`.
+
+Note also if you are not using Amazon's `auth_url` and `token_url`,
+(ie you filled in something for those) then if setting up on a remote
+machine you can only use the [copying the config method of
+configuration](https://rclone.org/remote_setup/#configuring-by-copying-the-config-file)
+- `rclone authorize` will not work.
+
 Here is an example of how to make a remote called `remote`.  First run:
 
      rclone config
@@ -22,10 +42,13 @@ Here is an example of how to make a remote called `remote`.  First run:
 This will guide you through an interactive setup process:
 
 ```
+No remotes found - make a new one
 n) New remote
-d) Delete remote
+r) Rename remote
+c) Copy remote
+s) Set configuration password
 q) Quit config
-e/n/d/q> n
+n/r/c/s/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
@@ -39,28 +62,35 @@ Choose a number from below, or type in your own value
    \ "dropbox"
  5 / Encrypt/Decrypt a remote
    \ "crypt"
- 6 / Google Cloud Storage (this is not Google Drive)
+ 6 / FTP Connection
+   \ "ftp"
+ 7 / Google Cloud Storage (this is not Google Drive)
    \ "google cloud storage"
- 7 / Google Drive
+ 8 / Google Drive
    \ "drive"
- 8 / Hubic
+ 9 / Hubic
    \ "hubic"
- 9 / Local Disk
+10 / Local Disk
    \ "local"
-10 / Microsoft OneDrive
+11 / Microsoft OneDrive
    \ "onedrive"
-11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
    \ "swift"
-12 / SSH/SFTP Connection
+13 / SSH/SFTP Connection
    \ "sftp"
-13 / Yandex Disk
+14 / Yandex Disk
    \ "yandex"
 Storage> 1
-Amazon Application Client Id - leave blank normally.
-client_id>
-Amazon Application Client Secret - leave blank normally.
-client_secret>
+Amazon Application Client Id - required.
+client_id> your client ID goes here
+Amazon Application Client Secret - required.
+client_secret> your client secret goes here
+Auth server URL - leave blank to use Amazon's.
+auth_url> Optional auth URL
+Token server url - leave blank to use Amazon's.
+token_url> Optional token URL
 Remote config
+Make sure your Redirect URL is set to "http://127.0.0.1:53682/" in your custom config.
 Use auto config?
  * Say Y if not sure
  * Say N if you are working on a remote or headless machine
@@ -73,8 +103,10 @@ Waiting for code...
 Got code
 --------------------
 [remote]
-client_id =
-client_secret =
+client_id = your client ID goes here
+client_secret = your client secret goes here
+auth_url = Optional auth URL
+token_url = Optional token URL
 token = {"access_token":"xxxxxxxxxxxxxxxxxxxxxxx","token_type":"bearer","refresh_token":"xxxxxxxxxxxxxxxxxx","expiry":"2015-09-06T16:07:39.658438471+01:00"}
 --------------------
 y) Yes this is OK

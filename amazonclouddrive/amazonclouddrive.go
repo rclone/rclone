@@ -34,15 +34,13 @@ import (
 )
 
 const (
-	rcloneClientID              = "amzn1.application-oa2-client.6bf18d2d1f5b485c94c8988bb03ad0e7"
-	rcloneEncryptedClientSecret = "ZP12wYlGw198FtmqfOxyNAGXU3fwVcQdmt--ba1d00wJnUs0LOzvVyXVDbqhbcUqnr5Vd1QejwWmiv1Ep7UJG1kUQeuBP5n9goXWd5MrAf0"
-	folderKind                  = "FOLDER"
-	fileKind                    = "FILE"
-	assetKind                   = "ASSET"
-	statusAvailable             = "AVAILABLE"
-	timeFormat                  = time.RFC3339 // 2014-03-07T22:31:12.173Z
-	minSleep                    = 20 * time.Millisecond
-	warnFileSize                = 50000 << 20 // Display warning for files larger than this size
+	folderKind      = "FOLDER"
+	fileKind        = "FILE"
+	assetKind       = "ASSET"
+	statusAvailable = "AVAILABLE"
+	timeFormat      = time.RFC3339 // 2014-03-07T22:31:12.173Z
+	minSleep        = 20 * time.Millisecond
+	warnFileSize    = 50000 << 20 // Display warning for files larger than this size
 )
 
 // Globals
@@ -57,8 +55,8 @@ var (
 			AuthURL:  "https://www.amazon.com/ap/oa",
 			TokenURL: "https://api.amazon.com/auth/o2/token",
 		},
-		ClientID:     rcloneClientID,
-		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
+		ClientID:     "",
+		ClientSecret: "",
 		RedirectURL:  oauthutil.RedirectURL,
 	}
 )
@@ -77,10 +75,16 @@ func init() {
 		},
 		Options: []fs.Option{{
 			Name: fs.ConfigClientID,
-			Help: "Amazon Application Client Id - leave blank normally.",
+			Help: "Amazon Application Client Id - required.",
 		}, {
 			Name: fs.ConfigClientSecret,
-			Help: "Amazon Application Client Secret - leave blank normally.",
+			Help: "Amazon Application Client Secret - required.",
+		}, {
+			Name: fs.ConfigAuthURL,
+			Help: "Auth server URL - leave blank to use Amazon's.",
+		}, {
+			Name: fs.ConfigTokenURL,
+			Help: "Token server url - leave blank to use Amazon's.",
 		}},
 	})
 	fs.VarP(&tempLinkThreshold, "acd-templink-threshold", "", "Files >= this size will be downloaded via their tempLink.")
