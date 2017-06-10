@@ -418,6 +418,10 @@ func (f *Fs) Mkdir(dir string) error {
 	if f.containerOK {
 		return nil
 	}
+	// if we are at the root, then it is OK
+	if f.container == "" {
+		return nil
+	}
 	// Check to see if container exists first
 	_, _, err := f.c.Container(f.container)
 	if err == swift.ContainerNotFound {
@@ -747,6 +751,9 @@ func (o *Object) updateChunks(in io.Reader, headers swift.Headers, size int64, c
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	if o.fs.container == "" {
+		return fs.FatalError(errors.New("container name needed in remote"))
+	}
 	err := o.fs.Mkdir("")
 	if err != nil {
 		return err
