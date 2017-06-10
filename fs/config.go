@@ -1058,7 +1058,8 @@ func EditConfig() {
 			fmt.Printf("\n")
 		} else {
 			fmt.Printf("No remotes found - make a new one\n")
-			what = append(what[1:2], what[3:]...)
+			// take 2nd item and last 2 items of menu list
+			what = append(what[1:2], what[len(what)-2:]...)
 		}
 		switch i := Command(what); i {
 		case 'e':
