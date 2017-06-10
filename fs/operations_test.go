@@ -704,7 +704,7 @@ func TestCat(t *testing.T) {
 		{0, -1, "ABCDEFGHIJ", "012345678"},
 		{0, 5, "ABCDE", "01234"},
 		{-3, -1, "HIJ", "678"},
-		{2, 3, "CDE", "234"},
+		{1, 3, "BCD", "123"},
 	} {
 		var buf bytes.Buffer
 		err := fs.Cat(r.fremote, &buf, test.offset, test.count)
