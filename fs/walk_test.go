@@ -2,8 +2,10 @@ package fs
 
 import (
 	"fmt"
+	"io"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -33,6 +35,24 @@ type (
 		maxLevel    int
 	}
 )
+
+var errNotImpl = errors.New("not implemented")
+
+type mockObject string
+
+func (o mockObject) String() string                                    { return string(o) }
+func (o mockObject) Fs() Info                                          { return nil }
+func (o mockObject) Remote() string                                    { return string(o) }
+func (o mockObject) Hash(HashType) (string, error)                     { return "", errNotImpl }
+func (o mockObject) ModTime() (t time.Time)                            { return t }
+func (o mockObject) Size() int64                                       { return 0 }
+func (o mockObject) Storable() bool                                    { return true }
+func (o mockObject) SetModTime(time.Time) error                        { return errNotImpl }
+func (o mockObject) Open(options ...OpenOption) (io.ReadCloser, error) { return nil, errNotImpl }
+func (o mockObject) Update(in io.Reader, src ObjectInfo, options ...OpenOption) error {
+	return errNotImpl
+}
+func (o mockObject) Remove() error { return errNotImpl }
 
 func newListDirs(t *testing.T, f Fs, includeAll bool, results listResults, walkErrors errorMap, finalError error) *listDirs {
 	return &listDirs{
@@ -82,11 +102,9 @@ func (ls *listDirs) ListDir(f Fs, includeAll bool, dir string) (entries DirEntri
 }
 
 // ListR returns the expected listing for the directory using ListR
-func (ls *listDirs) ListR(f Fs, dir string, callback listRCallback) (err error) {
+func (ls *listDirs) ListR(dir string, callback ListRCallback) (err error) {
 	ls.mu.Lock()
 	defer ls.mu.Unlock()
-	assert.Equal(ls.t, ls.fs, f)
-	//assert.Equal(ls.t, ls.includeAll, includeAll)
 
 	var errorReturn error
 	for dirPath, result := range ls.results {
@@ -392,8 +410,8 @@ func TestWalkMultiErrors(t *testing.T)  { testWalkMultiErrors(t).Walk() }
 func TestWalkRMultiErrors(t *testing.T) { testWalkMultiErrors(t).Walk() }
 
 // a very simple listRcallback function
-func makeListRCallback(entries DirEntries, err error) listRFunc {
-	return func(f Fs, dir string, callback listRCallback) error {
+func makeListRCallback(entries DirEntries, err error) ListRFn {
+	return func(dir string, callback ListRCallback) error {
 		if err == nil {
 			err = callback(entries)
 		}

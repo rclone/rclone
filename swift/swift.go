@@ -273,8 +273,8 @@ type listFn func(remote string, object *swift.Object, isDirectory bool) error
 // listContainerRoot lists the objects into the function supplied from
 // the container and root supplied
 //
-// Level is the level of the recursion
-func (f *Fs) listContainerRoot(container, root string, dir string, level int, fn listFn) error {
+// Set recurse to read sub directories
+func (f *Fs) listContainerRoot(container, root string, dir string, recurse bool, fn listFn) error {
 	prefix := root
 	if dir != "" {
 		prefix += dir + "/"
@@ -284,12 +284,8 @@ func (f *Fs) listContainerRoot(container, root string, dir string, level int, fn
 		Prefix: prefix,
 		Limit:  listChunks,
 	}
-	switch level {
-	case 1:
+	if !recurse {
 		opts.Delimiter = '/'
-	case fs.MaxLevel:
-	default:
-		return fs.ErrorLevelNotSupported
 	}
 	rootLength := len(root)
 	return f.c.ObjectsWalk(container, &opts, func(opts *swift.ObjectsOpts) (interface{}, error) {
@@ -298,7 +294,7 @@ func (f *Fs) listContainerRoot(container, root string, dir string, level int, fn
 			for i := range objects {
 				object := &objects[i]
 				isDirectory := false
-				if level == 1 {
+				if !recurse {
 					if strings.HasSuffix(object.Name, "/") {
 						isDirectory = true
 						object.Name = object.Name[:len(object.Name)-1]
@@ -319,29 +315,18 @@ func (f *Fs) listContainerRoot(container, root string, dir string, level int, fn
 	})
 }
 
-// list the objects into the function supplied
-func (f *Fs) list(dir string, level int, fn listFn) error {
-	return f.listContainerRoot(f.container, f.root, dir, level, fn)
-}
+type addEntryFn func(fs.BasicInfo) error
 
-// listFiles walks the path returning a channel of Objects
-func (f *Fs) listFiles(out fs.ListOpts, dir string) {
-	defer out.Finished()
-	if f.container == "" {
-		out.SetError(errors.New("can't list objects at root - choose a container using lsd"))
-		return
-	}
-	// List the objects
-	err := f.list(dir, out.Level(), func(remote string, object *swift.Object, isDirectory bool) error {
+// list the objects into the function supplied
+func (f *Fs) list(dir string, recurse bool, fn addEntryFn) error {
+	return f.listContainerRoot(f.container, f.root, dir, recurse, func(remote string, object *swift.Object, isDirectory bool) (err error) {
 		if isDirectory {
-			dir := &fs.Dir{
+			d := &fs.Dir{
 				Name:  remote,
 				Bytes: object.Bytes,
 				Count: 0,
 			}
-			if out.AddDir(dir) {
-				return fs.ErrorListAborted
-			}
+			err = fn(d)
 		} else {
 			o, err := f.newObjectWithInfo(remote, object)
 			if err != nil {
@@ -349,59 +334,96 @@ func (f *Fs) listFiles(out fs.ListOpts, dir string) {
 			}
 			// Storable does a full metadata read on 0 size objects which might be dynamic large objects
 			if o.Storable() {
-				if out.Add(o) {
-					return fs.ErrorListAborted
-				}
+				err = fn(o)
 			}
 		}
+		return err
+	})
+}
+
+// listDir lists a single directory
+func (f *Fs) listDir(dir string) (entries fs.DirEntries, err error) {
+	if f.container == "" {
+		return nil, fs.ErrorListBucketRequired
+	}
+	// List the objects
+	err = f.list(dir, false, func(entry fs.BasicInfo) error {
+		entries = append(entries, entry)
 		return nil
 	})
 	if err != nil {
 		if err == swift.ContainerNotFound {
 			err = fs.ErrorDirNotFound
 		}
-		out.SetError(err)
+		return nil, err
 	}
+	return entries, nil
 }
 
 // listContainers lists the containers
-func (f *Fs) listContainers(out fs.ListOpts, dir string) {
-	defer out.Finished()
+func (f *Fs) listContainers(dir string) (entries fs.DirEntries, err error) {
 	if dir != "" {
-		out.SetError(fs.ErrorListOnlyRoot)
-		return
+		return nil, fs.ErrorListBucketRequired
 	}
 	containers, err := f.c.ContainersAll(nil)
 	if err != nil {
-		out.SetError(err)
-		return
+		return nil, errors.Wrap(err, "container listing failed")
 	}
 	for _, container := range containers {
-		dir := &fs.Dir{
+		d := &fs.Dir{
 			Name:  container.Name,
 			Bytes: container.Bytes,
 			Count: container.Count,
 		}
-		if out.AddDir(dir) {
-			break
-		}
+		entries = append(entries, d)
 	}
+	return entries, nil
 }
 
-// List walks the path returning files and directories to out
-func (f *Fs) List(out fs.ListOpts, dir string) {
+// List the objects and directories in dir into entries.  The
+// entries can be returned in any order but should be for a
+// complete directory.
+//
+// dir should be "" to list the root, and should not have
+// trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	if f.container == "" {
-		f.listContainers(out, dir)
-	} else {
-		f.listFiles(out, dir)
+		return f.listContainers(dir)
 	}
-	return
+	return f.listDir(dir)
 }
 
 // ListR lists the objects and directories of the Fs starting
 // from dir recursively into out.
-func (f *Fs) ListR(out fs.ListOpts, dir string) {
-	f.List(out, dir) // FIXME
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+//
+// Don't implement this unless you have a more efficient way
+// of listing recursively that doing a directory traversal.
+func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
+	if f.container == "" {
+		return errors.New("container needed for recursive list")
+	}
+	list := fs.NewListRHelper(callback)
+	err = f.list(dir, true, func(entry fs.BasicInfo) error {
+		return list.Add(entry)
+	})
+	if err != nil {
+		return err
+	}
+	return list.Flush()
 }
 
 // Put the object into the container
@@ -471,12 +493,8 @@ func (f *Fs) Purge() error {
 	go func() {
 		delErr <- fs.DeleteFiles(toBeDeleted)
 	}()
-	err := f.list("", fs.MaxLevel, func(remote string, object *swift.Object, isDirectory bool) error {
-		if !isDirectory {
-			o, err := f.newObjectWithInfo(remote, object)
-			if err != nil {
-				return err
-			}
+	err := f.list("", true, func(entry fs.BasicInfo) error {
+		if o, ok := entry.(*Object); ok {
 			toBeDeleted <- o
 		}
 		return nil
@@ -679,7 +697,7 @@ func min(x, y int64) int64 {
 // if except is passed in then segments with that prefix won't be deleted
 func (o *Object) removeSegments(except string) error {
 	segmentsRoot := o.fs.root + o.remote + "/"
-	err := o.fs.listContainerRoot(o.fs.segmentsContainer, segmentsRoot, "", fs.MaxLevel, func(remote string, object *swift.Object, isDirectory bool) error {
+	err := o.fs.listContainerRoot(o.fs.segmentsContainer, segmentsRoot, "", true, func(remote string, object *swift.Object, isDirectory bool) error {
 		if isDirectory {
 			return nil
 		}

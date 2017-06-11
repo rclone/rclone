@@ -41,7 +41,7 @@ var (
 	ErrorObjectNotFound              = errors.New("object not found")
 	ErrorLevelNotSupported           = errors.New("level value not supported")
 	ErrorListAborted                 = errors.New("list aborted")
-	ErrorListOnlyRoot                = errors.New("can only list from root")
+	ErrorListBucketRequired          = errors.New("bucket or container name is needed in remote")
 	ErrorIsFile                      = errors.New("is a file not a directory")
 	ErrorNotAFile                    = errors.New("is a not a regular file")
 	ErrorNotDeleting                 = errors.New("not deleting files as there were IO errors")
@@ -103,17 +103,16 @@ func Register(info *RegInfo) {
 
 // ListFser is the interface for listing a remote Fs
 type ListFser interface {
-	// List the objects and directories of the Fs starting from dir
+	// List the objects and directories in dir into entries.  The
+	// entries can be returned in any order but should be for a
+	// complete directory.
 	//
-	// dir should be "" to start from the root, and should not
-	// have trailing slashes.
+	// dir should be "" to list the root, and should not have
+	// trailing slashes.
 	//
-	// This should return ErrDirNotFound (using out.SetError())
-	// if the directory isn't found.
-	//
-	// Fses must support recursion levels of fs.MaxLevel and 1.
-	// They may return ErrorLevelNotSupported otherwise.
-	List(out ListOpts, dir string)
+	// This should return ErrDirNotFound if the directory isn't
+	// found.
+	List(dir string) (entries DirEntries, err error)
 
 	// NewObject finds the Object at remote.  If it can't be found
 	// it returns the error ErrorObjectNotFound.
@@ -220,6 +219,15 @@ type MimeTyper interface {
 	MimeType() string
 }
 
+// ListRCallback defines a callback function for ListR to use
+//
+// It is called for each tranche of entries read from the listing and
+// if it returns an error, the listing stops.
+type ListRCallback func(entries DirEntries) error
+
+// ListRFn is defines the call used to recursively list a directory
+type ListRFn func(dir string, callback ListRCallback) error
+
 // Features describe the optional features of the Fs
 type Features struct {
 	// Feature flags
@@ -302,12 +310,17 @@ type Features struct {
 	// dir should be "" to start from the root, and should not
 	// have trailing slashes.
 	//
-	// This should return ErrDirNotFound (using out.SetError())
-	// if the directory isn't found.
+	// This should return ErrDirNotFound if the directory isn't
+	// found.
+	//
+	// It should call callback for each tranche of entries read.
+	// These need not be returned in any particular order.  If
+	// callback returns an error then the listing will stop
+	// immediately.
 	//
 	// Don't implement this unless you have a more efficient way
 	// of listing recursively that doing a directory traversal.
-	ListR func(out ListOpts, dir string)
+	ListR ListRFn
 }
 
 // Fill fills in the function pointers in the Features struct from the
@@ -506,53 +519,21 @@ type ListRer interface {
 	// dir should be "" to start from the root, and should not
 	// have trailing slashes.
 	//
-	// This should return ErrDirNotFound (using out.SetError())
-	// if the directory isn't found.
+	// This should return ErrDirNotFound if the directory isn't
+	// found.
+	//
+	// It should call callback for each tranche of entries read.
+	// These need not be returned in any particular order.  If
+	// callback returns an error then the listing will stop
+	// immediately.
 	//
 	// Don't implement this unless you have a more efficient way
 	// of listing recursively that doing a directory traversal.
-	ListR(out ListOpts, dir string)
+	ListR(dir string, callback ListRCallback) error
 }
 
 // ObjectsChan is a channel of Objects
 type ObjectsChan chan Object
-
-// ListOpts describes the interface used for Fs.List operations
-type ListOpts interface {
-	// Add an object to the output.
-	// If the function returns true, the operation has been aborted.
-	// Multiple goroutines can safely add objects concurrently.
-	Add(obj Object) (abort bool)
-
-	// Add a directory to the output.
-	// If the function returns true, the operation has been aborted.
-	// Multiple goroutines can safely add objects concurrently.
-	AddDir(dir *Dir) (abort bool)
-
-	// IncludeDirectory returns whether this directory should be
-	// included in the listing (and recursed into or not).
-	IncludeDirectory(remote string) bool
-
-	// SetError will set an error state, and will cause the listing to
-	// be aborted.
-	// Multiple goroutines can set the error state concurrently,
-	// but only the first will be returned to the caller.
-	SetError(err error)
-
-	// Level returns the level it should recurse to.  Fses may
-	// ignore this in which case the listing will be less
-	// efficient.
-	Level() int
-
-	// Buffer returns the channel depth in use
-	Buffer() int
-
-	// Finished should be called when listing is finished
-	Finished()
-
-	// IsFinished returns whether Finished or SetError have been called
-	IsFinished() bool
-}
 
 // Objects is a slice of Object~s
 type Objects []Object

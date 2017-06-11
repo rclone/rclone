@@ -399,50 +399,57 @@ OUTER:
 	return
 }
 
-// ListDir reads the directory specified by the job into out, returning any more jobs
-func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.ListDirJob, err error) {
-	fs.Debugf(f, "Reading %q", job.Path)
-	_, err = f.listAll(job.DirID, false, false, func(info *api.Item) bool {
-		remote := job.Path + info.Name
+// List the objects and directories in dir into entries.  The
+// entries can be returned in any order but should be for a
+// complete directory.
+//
+// dir should be "" to list the root, and should not have
+// trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+	err = f.dirCache.FindRoot(false)
+	if err != nil {
+		return nil, err
+	}
+	directoryID, err := f.dirCache.FindDir(dir, false)
+	if err != nil {
+		return nil, err
+	}
+	var iErr error
+	_, err = f.listAll(directoryID, false, false, func(info *api.Item) bool {
+		remote := path.Join(dir, info.Name)
 		if info.Folder != nil {
-			if out.IncludeDirectory(remote) {
-				// cache the directory ID for later lookups
-				f.dirCache.Put(remote, info.ID)
-				dir := &fs.Dir{
-					Name:  remote,
-					Bytes: -1,
-					Count: -1,
-					When:  time.Time(info.LastModifiedDateTime),
-				}
-				if info.Folder != nil {
-					dir.Count = info.Folder.ChildCount
-				}
-				if out.AddDir(dir) {
-					return true
-				}
-				if job.Depth > 0 {
-					jobs = append(jobs, dircache.ListDirJob{DirID: info.ID, Path: remote + "/", Depth: job.Depth - 1})
-				}
+			// cache the directory ID for later lookups
+			f.dirCache.Put(remote, info.ID)
+			d := &fs.Dir{
+				Name:  remote,
+				Bytes: -1,
+				Count: -1,
+				When:  time.Time(info.LastModifiedDateTime),
 			}
+			if info.Folder != nil {
+				d.Count = info.Folder.ChildCount
+			}
+			entries = append(entries, d)
 		} else {
 			o, err := f.newObjectWithInfo(remote, info)
 			if err != nil {
-				out.SetError(err)
+				iErr = err
 				return true
 			}
-			if out.Add(o) {
-				return true
-			}
+			entries = append(entries, o)
 		}
 		return false
 	})
-	fs.Debugf(f, "Finished reading %q", job.Path)
-	return jobs, err
-}
-
-// List walks the path returning files and directories into out
-func (f *Fs) List(out fs.ListOpts, dir string) {
-	f.dirCache.List(f, out, dir)
+	if err != nil {
+		return nil, err
+	}
+	if iErr != nil {
+		return nil, iErr
+	}
+	return entries, nil
 }
 
 // Creates from the parameters passed in a half finished Object which

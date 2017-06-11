@@ -99,6 +99,20 @@ func skipIfNotOk(t *testing.T) {
 	}
 }
 
+// Skip if remote is not ListR capable, otherwise set the useListR
+// flag, returning a function to restore its value
+func skipIfNotListR(t *testing.T) func() {
+	skipIfNotOk(t)
+	if remote.Features().ListR == nil {
+		t.Skip("FS has no ListR interface")
+	}
+	previous := fs.Config.UseListR
+	fs.Config.UseListR = true
+	return func() {
+		fs.Config.UseListR = previous
+	}
+}
+
 // TestFsString tests the String method
 func TestFsString(t *testing.T) {
 	skipIfNotOk(t)
@@ -185,6 +199,12 @@ func TestFsListDirEmpty(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []string{}, objsToNames(objs))
 	assert.Equal(t, []string{}, dirsToNames(dirs))
+}
+
+// TestFsListRDirEmpty tests listing the directories from an empty directory using ListR
+func TestFsListRDirEmpty(t *testing.T) {
+	defer skipIfNotListR(t)()
+	TestFsListDirEmpty(t)
 }
 
 // TestFsNewObjectNotFound tests not finding a object
@@ -340,6 +360,13 @@ func TestFsListDirFile2(t *testing.T) {
 	}
 }
 
+// TestFsListRDirFile2 tests the files are correctly uploaded by doing
+// Depth 1 directory listings using ListR
+func TestFsListRDirFile2(t *testing.T) {
+	defer skipIfNotListR(t)()
+	TestFsListDirFile2(t)
+}
+
 // TestFsListDirRoot tests that DirList works in the root
 func TestFsListDirRoot(t *testing.T) {
 	skipIfNotOk(t)
@@ -348,6 +375,12 @@ func TestFsListDirRoot(t *testing.T) {
 	_, dirs, err := fs.WalkGetAll(rootRemote, "", true, 1)
 	require.NoError(t, err)
 	assert.Contains(t, dirsToNames(dirs), subRemoteLeaf, "Remote leaf not found")
+}
+
+// TestFsListRDirRoot tests that DirList works in the root using ListR
+func TestFsListRDirRoot(t *testing.T) {
+	defer skipIfNotListR(t)()
+	TestFsListDirRoot(t)
 }
 
 // TestFsListSubdir tests List works for a subdirectory
@@ -372,6 +405,12 @@ func TestFsListSubdir(t *testing.T) {
 	require.Len(t, dirs, 0)
 }
 
+// TestFsListRSubdir tests List works for a subdirectory using ListR
+func TestFsListRSubdir(t *testing.T) {
+	defer skipIfNotListR(t)()
+	TestFsListSubdir(t)
+}
+
 // TestFsListLevel2 tests List works for 2 levels
 func TestFsListLevel2(t *testing.T) {
 	skipIfNotOk(t)
@@ -382,6 +421,12 @@ func TestFsListLevel2(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []string{file1.Path}, objsToNames(objs))
 	assert.Equal(t, []string{`hello_ sausage`, `hello_ sausage/êé`}, dirsToNames(dirs))
+}
+
+// TestFsListRLevel2 tests List works for 2 levels using ListR
+func TestFsListRLevel2(t *testing.T) {
+	defer skipIfNotListR(t)()
+	TestFsListLevel2(t)
 }
 
 // TestFsListFile1 tests file present

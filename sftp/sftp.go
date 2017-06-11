@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"sync"
 	"time"
 
 	"github.com/ncw/rclone/fs"
@@ -219,74 +218,52 @@ func (f *Fs) dirExists(dir string) (bool, error) {
 	return true, nil
 }
 
-func (f *Fs) list(out fs.ListOpts, dir string, level int, wg *sync.WaitGroup, tokens chan struct{}) {
-	defer wg.Done()
-	// take a token
-	<-tokens
-	// return it when done
-	defer func() {
-		tokens <- struct{}{}
-	}()
-	sftpDir := path.Join(f.root, dir)
+// List the objects and directories in dir into entries.  The
+// entries can be returned in any order but should be for a
+// complete directory.
+//
+// dir should be "" to list the root, and should not have
+// trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+	root := path.Join(f.root, dir)
+	ok, err := f.dirExists(root)
+	if err != nil {
+		return nil, errors.Wrap(err, "List failed")
+	}
+	if !ok {
+		return nil, fs.ErrorDirNotFound
+	}
+	sftpDir := root
 	if sftpDir == "" {
 		sftpDir = "."
 	}
 	infos, err := f.sftpClient.ReadDir(sftpDir)
 	if err != nil {
-		err = errors.Wrapf(err, "error listing %q", dir)
-		fs.Errorf(f, "Listing failed: %v", err)
-		out.SetError(err)
-		return
+		return nil, errors.Wrapf(err, "error listing %q", dir)
 	}
 	for _, info := range infos {
 		remote := path.Join(dir, info.Name())
 		if info.IsDir() {
-			if out.IncludeDirectory(remote) {
-				dir := &fs.Dir{
-					Name:  remote,
-					When:  info.ModTime(),
-					Bytes: -1,
-					Count: -1,
-				}
-				out.AddDir(dir)
-				if level < out.Level() {
-					wg.Add(1)
-					go f.list(out, remote, level+1, wg, tokens)
-				}
+			d := &fs.Dir{
+				Name:  remote,
+				When:  info.ModTime(),
+				Bytes: -1,
+				Count: -1,
 			}
+			entries = append(entries, d)
 		} else {
-			file := &Object{
+			o := &Object{
 				fs:     f,
 				remote: remote,
 				info:   info,
 			}
-			out.Add(file)
+			entries = append(entries, o)
 		}
 	}
-}
-
-// List the files and directories starting at <dir>
-func (f *Fs) List(out fs.ListOpts, dir string) {
-	root := path.Join(f.root, dir)
-	ok, err := f.dirExists(root)
-	if err != nil {
-		out.SetError(errors.Wrap(err, "List failed"))
-		return
-	}
-	if !ok {
-		out.SetError(fs.ErrorDirNotFound)
-		return
-	}
-	// tokens to control the concurrency
-	tokens := make(chan struct{}, fs.Config.Checkers)
-	for i := 0; i < fs.Config.Checkers; i++ {
-		tokens <- struct{}{}
-	}
-	wg := new(sync.WaitGroup)
-	wg.Add(1)
-	f.list(out, dir, 1, wg, tokens)
-	wg.Wait()
-	out.Finished()
+	return entries, nil
 }
 
 // Put data from <in> into a new remote sftp file object described by <src.Remote()> and <src.ModTime()>

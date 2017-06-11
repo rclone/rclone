@@ -438,18 +438,14 @@ var errEndList = errors.New("end list")
 // than 1000)
 //
 // If hidden is set then it will list the hidden (deleted) files too.
-func (f *Fs) list(dir string, level int, prefix string, limit int, hidden bool, fn listFn) error {
+func (f *Fs) list(dir string, recurse bool, prefix string, limit int, hidden bool, fn listFn) error {
 	root := f.root
 	if dir != "" {
 		root += dir + "/"
 	}
 	delimiter := ""
-	switch level {
-	case 1:
+	if !recurse {
 		delimiter = "/"
-	case fs.MaxLevel:
-	default:
-		return fs.ErrorLevelNotSupported
 	}
 	bucketID, err := f.getBucketID()
 	if err != nil {
@@ -497,7 +493,7 @@ func (f *Fs) list(dir string, level int, prefix string, limit int, hidden bool, 
 			}
 			remote := file.Name[len(f.root):]
 			// Check for directory
-			isDirectory := level != 0 && strings.HasSuffix(remote, "/")
+			isDirectory := strings.HasSuffix(remote, "/")
 			if isDirectory {
 				remote = remote[:len(remote)-1]
 			}
@@ -522,83 +518,120 @@ func (f *Fs) list(dir string, level int, prefix string, limit int, hidden bool, 
 	return nil
 }
 
-// listFiles walks the path returning files and directories to out
-func (f *Fs) listFiles(out fs.ListOpts, dir string) {
-	defer out.Finished()
-	// List the objects
+// Convert a list item into a BasicInfo
+func (f *Fs) itemToDirEntry(remote string, object *api.File, isDirectory bool, last *string) (fs.BasicInfo, error) {
+	if isDirectory {
+		d := &fs.Dir{
+			Name:  remote,
+			Bytes: -1,
+			Count: -1,
+		}
+		return d, nil
+	}
+	if remote == *last {
+		remote = object.UploadTimestamp.AddVersion(remote)
+	} else {
+		*last = remote
+	}
+	// hide objects represent deleted files which we don't list
+	if object.Action == "hide" {
+		return nil, nil
+	}
+	o, err := f.newObjectWithInfo(remote, object)
+	if err != nil {
+		return nil, err
+	}
+	return o, nil
+}
+
+// listDir lists a single directory
+func (f *Fs) listDir(dir string) (entries fs.DirEntries, err error) {
 	last := ""
-	err := f.list(dir, out.Level(), "", 0, *b2Versions, func(remote string, object *api.File, isDirectory bool) error {
-		if isDirectory {
-			dir := &fs.Dir{
-				Name:  remote,
-				Bytes: -1,
-				Count: -1,
-			}
-			if out.AddDir(dir) {
-				return fs.ErrorListAborted
-			}
-		} else {
-			if remote == last {
-				remote = object.UploadTimestamp.AddVersion(remote)
-			} else {
-				last = remote
-			}
-			// hide objects represent deleted files which we don't list
-			if object.Action == "hide" {
-				return nil
-			}
-			o, err := f.newObjectWithInfo(remote, object)
-			if err != nil {
-				return err
-			}
-			if out.Add(o) {
-				return fs.ErrorListAborted
-			}
+	err = f.list(dir, false, "", 0, *b2Versions, func(remote string, object *api.File, isDirectory bool) error {
+		entry, err := f.itemToDirEntry(remote, object, isDirectory, &last)
+		if err != nil {
+			return err
+		}
+		if entry != nil {
+			entries = append(entries, entry)
 		}
 		return nil
 	})
 	if err != nil {
-		out.SetError(err)
+		return nil, err
 	}
+	return entries, nil
 }
 
 // listBuckets returns all the buckets to out
-func (f *Fs) listBuckets(out fs.ListOpts, dir string) {
-	defer out.Finished()
+func (f *Fs) listBuckets(dir string) (entries fs.DirEntries, err error) {
 	if dir != "" {
-		out.SetError(fs.ErrorListOnlyRoot)
-		return
+		return nil, fs.ErrorListBucketRequired
 	}
-	err := f.listBucketsToFn(func(bucket *api.Bucket) error {
-		dir := &fs.Dir{
+	err = f.listBucketsToFn(func(bucket *api.Bucket) error {
+		d := &fs.Dir{
 			Name:  bucket.Name,
 			Bytes: -1,
 			Count: -1,
 		}
-		if out.AddDir(dir) {
-			return fs.ErrorListAborted
-		}
+		entries = append(entries, d)
 		return nil
 	})
 	if err != nil {
-		out.SetError(err)
+		return nil, err
 	}
+	return entries, nil
 }
 
-// List walks the path returning files and directories to out
-func (f *Fs) List(out fs.ListOpts, dir string) {
+// List the objects and directories in dir into entries.  The
+// entries can be returned in any order but should be for a
+// complete directory.
+//
+// dir should be "" to list the root, and should not have
+// trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	if f.bucket == "" {
-		f.listBuckets(out, dir)
-	} else {
-		f.listFiles(out, dir)
+		return f.listBuckets(dir)
 	}
-	return
+	return f.listDir(dir)
 }
 
 // ListR lists the objects and directories of the Fs starting
 // from dir recursively into out.
-func (f *Fs) ListR(out fs.ListOpts, dir string) {
-	f.List(out, dir) // FIXME
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+//
+// Don't implement this unless you have a more efficient way
+// of listing recursively that doing a directory traversal.
+func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
+	if f.bucket == "" {
+		return fs.ErrorListBucketRequired
+	}
+	list := fs.NewListRHelper(callback)
+	last := ""
+	err = f.list(dir, true, "", 0, *b2Versions, func(remote string, object *api.File, isDirectory bool) error {
+		entry, err := f.itemToDirEntry(remote, object, isDirectory, &last)
+		if err != nil {
+			return err
+		}
+		return list.Add(entry)
+	})
+	if err != nil {
+		return err
+	}
+	return list.Flush()
 }
 
 // listBucketFn is called from listBucketsToFn to handle a bucket
@@ -816,7 +849,7 @@ func (f *Fs) purge(oldOnly bool) error {
 		}()
 	}
 	last := ""
-	checkErr(f.list("", fs.MaxLevel, "", 0, true, func(remote string, object *api.File, isDirectory bool) error {
+	checkErr(f.list("", true, "", 0, true, func(remote string, object *api.File, isDirectory bool) error {
 		if !isDirectory {
 			fs.Stats.Checking(remote)
 			if oldOnly && last != remote {
@@ -961,7 +994,7 @@ func (o *Object) readMetaData() (err error) {
 		maxSearched = maxVersions
 	}
 	var info *api.File
-	err = o.fs.list("", fs.MaxLevel, baseRemote, maxSearched, *b2Versions, func(remote string, object *api.File, isDirectory bool) error {
+	err = o.fs.list("", true, baseRemote, maxSearched, *b2Versions, func(remote string, object *api.File, isDirectory bool) error {
 		if isDirectory {
 			return nil
 		}

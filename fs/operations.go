@@ -595,41 +595,41 @@ func (ds DirEntries) ForDirError(fn func(dir *Dir) error) error {
 // dir is the start directory, "" for root
 //
 // If includeAll is specified all files will be added, otherwise only
-// files passing the filter will be added.
+// files and directories passing the filter will be added.
 //
 // Files will be returned in sorted order
 func ListDirSorted(fs Fs, includeAll bool, dir string) (entries DirEntries, err error) {
-	list := NewLister().SetLevel(1)
-	if !includeAll {
-		list.SetFilter(Config.Filter)
-	}
-	list.Start(fs, dir)
-	for {
-		o, dir, err := list.Get()
-		if err != nil {
-			return nil, err
-		} else if o != nil {
-			// Make sure we don't delete excluded files if not required
-			if includeAll || Config.Filter.IncludeObject(o) {
-				entries = append(entries, o)
-			} else {
-				Debugf(o, "Excluded from sync (and deletion)")
-			}
-		} else if dir != nil {
-			if includeAll || Config.Filter.IncludeDirectory(dir.Remote()) {
-				entries = append(entries, dir)
-			} else {
-				Debugf(dir, "Excluded from sync (and deletion)")
-			}
-		} else {
-			// finishd since err, o, dir == nil
-			break
-		}
-	}
-	err = list.Error()
+	// Get unfiltered entries from the fs
+	entries, err = fs.List(dir)
 	if err != nil {
 		return nil, err
 	}
+
+	// filter the entries if required
+	if !includeAll {
+		newEntries := make(DirEntries, 0, len(entries))
+		for _, entry := range entries {
+			switch x := entry.(type) {
+			case Object:
+				// Make sure we don't delete excluded files if not required
+				if Config.Filter.IncludeObject(x) {
+					newEntries = append(newEntries, entry)
+				} else {
+					Debugf(x, "Excluded from sync (and deletion)")
+				}
+			case *Dir:
+				if Config.Filter.IncludeDirectory(x.Remote()) {
+					newEntries = append(newEntries, entry)
+				} else {
+					Debugf(x, "Excluded from sync (and deletion)")
+				}
+			default:
+				return nil, errors.Errorf("unknown object type %T", entry)
+			}
+		}
+		entries = newEntries
+	}
+
 	// sort the directory entries by Remote
 	sort.Sort(entries)
 	return entries, nil

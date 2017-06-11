@@ -202,17 +202,17 @@ func parseDrivePath(path string) (root string, err error) {
 	return
 }
 
-// User function to process a File item from listAll
+// User function to process a File item from list
 //
 // Should return true to finish processing
-type listAllFn func(*drive.File) bool
+type listFn func(*drive.File) bool
 
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
 //
 // Search params: https://developers.google.com/drive/search-parameters
-func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly bool, includeTrashed bool, fn listAllFn) (found bool, err error) {
+func (f *Fs) list(dirID string, title string, directoriesOnly bool, filesOnly bool, includeTrashed bool, fn listFn) (found bool, err error) {
 	var query []string
 
 	if !includeTrashed {
@@ -239,7 +239,7 @@ func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly
 	if filesOnly {
 		query = append(query, fmt.Sprintf("mimeType!='%s'", driveFolderType))
 	}
-	// fmt.Printf("listAll Query = %q\n", query)
+	// fmt.Printf("list Query = %q\n", query)
 	list := f.svc.Files.List()
 	if len(query) > 0 {
 		list = list.Q(strings.Join(query, " and "))
@@ -488,7 +488,7 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
-	found, err = f.listAll(pathID, leaf, true, false, false, func(item *drive.File) bool {
+	found, err = f.list(pathID, leaf, true, false, false, func(item *drive.File) bool {
 		if item.Title == leaf {
 			pathIDOut = item.Id
 			return true
@@ -554,41 +554,49 @@ func (f *Fs) findExportFormat(filepath string, item *drive.File) (extension, lin
 	return "", ""
 }
 
-// ListDir reads the directory specified by the job into out, returning any more jobs
-func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.ListDirJob, err error) {
-	fs.Debugf(f, "Reading %q", job.Path)
-	_, err = f.listAll(job.DirID, "", false, false, false, func(item *drive.File) bool {
-		remote := job.Path + item.Title
+// List the objects and directories in dir into entries.  The
+// entries can be returned in any order but should be for a
+// complete directory.
+//
+// dir should be "" to list the root, and should not have
+// trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+	err = f.dirCache.FindRoot(false)
+	if err != nil {
+		return nil, err
+	}
+	directoryID, err := f.dirCache.FindDir(dir, false)
+	if err != nil {
+		return nil, err
+	}
+
+	var iErr error
+	_, err = f.list(directoryID, "", false, false, false, func(item *drive.File) bool {
+		remote := path.Join(dir, item.Title)
 		switch {
 		case *driveAuthOwnerOnly && !isAuthOwned(item):
 			// ignore object or directory
 		case item.MimeType == driveFolderType:
-			if out.IncludeDirectory(remote) {
-				// cache the directory ID for later lookups
-				f.dirCache.Put(remote, item.Id)
-				dir := &fs.Dir{
-					Name:  remote,
-					Bytes: -1,
-					Count: -1,
-				}
-				dir.When, _ = time.Parse(timeFormatIn, item.ModifiedDate)
-				if out.AddDir(dir) {
-					return true
-				}
-				if job.Depth > 0 {
-					jobs = append(jobs, dircache.ListDirJob{DirID: item.Id, Path: remote + "/", Depth: job.Depth - 1})
-				}
+			// cache the directory ID for later lookups
+			f.dirCache.Put(remote, item.Id)
+			d := &fs.Dir{
+				Name:  remote,
+				Bytes: -1,
+				Count: -1,
 			}
+			d.When, _ = time.Parse(timeFormatIn, item.ModifiedDate)
+			entries = append(entries, d)
 		case item.Md5Checksum != "" || item.FileSize > 0:
 			// If item has MD5 sum or a length it is a file stored on drive
 			o, err := f.newObjectWithInfo(remote, item)
 			if err != nil {
-				out.SetError(err)
+				iErr = err
 				return true
 			}
-			if out.Add(o) {
-				return true
-			}
+			entries = append(entries, o)
 		case len(item.ExportLinks) != 0:
 			// If item has export links then it is a google doc
 			extension, link := f.findExportFormat(remote, item)
@@ -597,7 +605,7 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 			} else {
 				o, err := f.newObjectWithInfo(remote+"."+extension, item)
 				if err != nil {
-					out.SetError(err)
+					iErr = err
 					return true
 				}
 				if !*driveSkipGdocs {
@@ -605,9 +613,7 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 					obj.isDocument = true
 					obj.url = link
 					obj.bytes = -1
-					if out.Add(o) {
-						return true
-					}
+					entries = append(entries, o)
 				} else {
 					fs.Debugf(f, "Skip google document: %q", remote)
 				}
@@ -617,13 +623,13 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 		}
 		return false
 	})
-	fs.Debugf(f, "Finished reading %q", job.Path)
-	return jobs, err
-}
-
-// List walks the path returning files and directories to out
-func (f *Fs) List(out fs.ListOpts, dir string) {
-	f.dirCache.List(f, out, dir)
+	if err != nil {
+		return nil, err
+	}
+	if iErr != nil {
+		return nil, iErr
+	}
+	return entries, nil
 }
 
 // Creates a drive.File info from the parameters passed in and a half
@@ -731,7 +737,7 @@ func (f *Fs) Rmdir(dir string) error {
 		return err
 	}
 	var trashedFiles = false
-	found, err := f.listAll(directoryID, "", false, false, true, func(item *drive.File) bool {
+	found, err := f.list(directoryID, "", false, false, true, func(item *drive.File) bool {
 		if item.Labels == nil || !item.Labels.Trashed {
 			fs.Debugf(dir, "Rmdir: contains file: %q", item.Title)
 			return true
@@ -1145,7 +1151,7 @@ func (o *Object) readMetaData() (err error) {
 		return err
 	}
 
-	found, err := o.fs.listAll(directoryID, leaf, false, true, false, func(item *drive.File) bool {
+	found, err := o.fs.list(directoryID, leaf, false, true, false, func(item *drive.File) bool {
 		if item.Title == leaf {
 			o.setMetaData(item)
 			return true

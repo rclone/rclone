@@ -6,7 +6,6 @@ import (
 	"io"
 	"path"
 	"strings"
-	"sync"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
@@ -143,9 +142,91 @@ func (f *Fs) String() string {
 	return fmt.Sprintf("Encrypted drive '%s:%s'", f.name, f.root)
 }
 
-// List the Fs into a channel
-func (f *Fs) List(opts fs.ListOpts, dir string) {
-	f.Fs.List(f.newListOpts(opts, dir), f.cipher.EncryptDirName(dir))
+// Encrypt an object file name to entries.
+func (f *Fs) add(entries *fs.DirEntries, obj fs.Object) {
+	remote := obj.Remote()
+	decryptedRemote, err := f.cipher.DecryptFileName(remote)
+	if err != nil {
+		fs.Debugf(remote, "Skipping undecryptable file name: %v", err)
+		return
+	}
+	if *cryptShowMapping {
+		fs.Logf(decryptedRemote, "Encrypts to %q", remote)
+	}
+	*entries = append(*entries, f.newObject(obj))
+}
+
+// Encrypt an directory file name to entries.
+func (f *Fs) addDir(entries *fs.DirEntries, dir *fs.Dir) {
+	remote := dir.Name
+	decryptedRemote, err := f.cipher.DecryptDirName(remote)
+	if err != nil {
+		fs.Debugf(remote, "Skipping undecryptable dir name: %v", err)
+		return
+	}
+	if *cryptShowMapping {
+		fs.Logf(decryptedRemote, "Encrypts to %q", remote)
+	}
+	*entries = append(*entries, f.newDir(dir))
+}
+
+// Encrypt some directory entries
+func (f *Fs) encryptEntries(entries fs.DirEntries) (newEntries fs.DirEntries, err error) {
+	newEntries = make(fs.DirEntries, 0, len(entries))
+	for _, entry := range entries {
+		switch x := entry.(type) {
+		case fs.Object:
+			f.add(&newEntries, x)
+		case *fs.Dir:
+			f.addDir(&newEntries, x)
+		default:
+			return nil, errors.Errorf("Unknown object type %T", entry)
+		}
+	}
+	return newEntries, nil
+}
+
+// List the objects and directories in dir into entries.  The
+// entries can be returned in any order but should be for a
+// complete directory.
+//
+// dir should be "" to list the root, and should not have
+// trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+	entries, err = f.Fs.List(f.cipher.EncryptDirName(dir))
+	if err != nil {
+		return nil, err
+	}
+	return f.encryptEntries(entries)
+}
+
+// ListR lists the objects and directories of the Fs starting
+// from dir recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+//
+// Don't implement this unless you have a more efficient way
+// of listing recursively that doing a directory traversal.
+func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
+	return f.Fs.Features().ListR(f.cipher.EncryptDirName(dir), func(entries fs.DirEntries) error {
+		newEntries, err := f.encryptEntries(entries)
+		if err != nil {
+			return err
+		}
+		return callback(newEntries)
+	})
 }
 
 // NewObject finds the Object at remote.
@@ -512,84 +593,6 @@ func (o *ObjectInfo) Hash(hash fs.HashType) (string, error) {
 	return "", nil
 }
 
-// ListOpts wraps a listopts decrypting the directory listing and
-// replacing the Objects
-type ListOpts struct {
-	fs.ListOpts
-	f    *Fs
-	dir  string              // dir we are listing
-	mu   sync.Mutex          // to protect dirs
-	dirs map[string]struct{} // keep track of synthetic directory objects added
-}
-
-// Make a ListOpts wrapper
-func (f *Fs) newListOpts(lo fs.ListOpts, dir string) *ListOpts {
-	if dir != "" {
-		dir += "/"
-	}
-	return &ListOpts{
-		ListOpts: lo,
-		f:        f,
-		dir:      dir,
-		dirs:     make(map[string]struct{}),
-	}
-
-}
-
-// Level gets the recursion level for this listing.
-//
-// Fses may ignore this, but should implement it for improved efficiency if possible.
-//
-// Level 1 means list just the contents of the directory
-//
-// Each returned item must have less than level `/`s in.
-func (lo *ListOpts) Level() int {
-	return lo.ListOpts.Level()
-}
-
-// Add an object to the output.
-// If the function returns true, the operation has been aborted.
-// Multiple goroutines can safely add objects concurrently.
-func (lo *ListOpts) Add(obj fs.Object) (abort bool) {
-	remote := obj.Remote()
-	decryptedRemote, err := lo.f.cipher.DecryptFileName(remote)
-	if err != nil {
-		fs.Debugf(remote, "Skipping undecryptable file name: %v", err)
-		return lo.ListOpts.IsFinished()
-	}
-	if *cryptShowMapping {
-		fs.Logf(decryptedRemote, "Encrypts to %q", remote)
-	}
-	return lo.ListOpts.Add(lo.f.newObject(obj))
-}
-
-// AddDir adds a directory to the output.
-// If the function returns true, the operation has been aborted.
-// Multiple goroutines can safely add objects concurrently.
-func (lo *ListOpts) AddDir(dir *fs.Dir) (abort bool) {
-	remote := dir.Name
-	decryptedRemote, err := lo.f.cipher.DecryptDirName(remote)
-	if err != nil {
-		fs.Debugf(remote, "Skipping undecryptable dir name: %v", err)
-		return lo.ListOpts.IsFinished()
-	}
-	if *cryptShowMapping {
-		fs.Logf(decryptedRemote, "Encrypts to %q", remote)
-	}
-	return lo.ListOpts.AddDir(lo.f.newDir(dir))
-}
-
-// IncludeDirectory returns whether this directory should be
-// included in the listing (and recursed into or not).
-func (lo *ListOpts) IncludeDirectory(remote string) bool {
-	decryptedRemote, err := lo.f.cipher.DecryptDirName(remote)
-	if err != nil {
-		fs.Debugf(remote, "Not including undecryptable directory name: %v", err)
-		return false
-	}
-	return lo.ListOpts.IncludeDirectory(decryptedRemote)
-}
-
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs             = (*Fs)(nil)
@@ -600,7 +603,7 @@ var (
 	_ fs.PutUncheckeder = (*Fs)(nil)
 	_ fs.CleanUpper     = (*Fs)(nil)
 	_ fs.UnWrapper      = (*Fs)(nil)
+	_ fs.ListRer        = (*Fs)(nil)
 	_ fs.ObjectInfo     = (*ObjectInfo)(nil)
 	_ fs.Object         = (*Object)(nil)
-	_ fs.ListOpts       = (*ListOpts)(nil)
 )

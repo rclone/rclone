@@ -3,7 +3,6 @@
 package amazonclouddrive
 
 /*
-
 FIXME make searching for directory in id and file in id more efficient
 - use the name: search parameter - remember the escaping rules
 - use Folder GetNode and GetFile
@@ -399,47 +398,58 @@ func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly
 	return
 }
 
-// ListDir reads the directory specified by the job into out, returning any more jobs
-func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.ListDirJob, err error) {
-	fs.Debugf(f, "Reading %q", job.Path)
+// List the objects and directories in dir into entries.  The
+// entries can be returned in any order but should be for a
+// complete directory.
+//
+// dir should be "" to list the root, and should not have
+// trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+	err = f.dirCache.FindRoot(false)
+	if err != nil {
+		return nil, err
+	}
+	directoryID, err := f.dirCache.FindDir(dir, false)
+	if err != nil {
+		return nil, err
+	}
 	maxTries := fs.Config.LowLevelRetries
+	var iErr error
 	for tries := 1; tries <= maxTries; tries++ {
-		_, err = f.listAll(job.DirID, "", false, false, func(node *acd.Node) bool {
-			remote := job.Path + *node.Name
+		entries = nil
+		_, err = f.listAll(directoryID, "", false, false, func(node *acd.Node) bool {
+			remote := path.Join(dir, *node.Name)
 			switch *node.Kind {
 			case folderKind:
-				if out.IncludeDirectory(remote) {
-					// cache the directory ID for later lookups
-					f.dirCache.Put(remote, *node.Id)
-					dir := &fs.Dir{
-						Name:  remote,
-						Bytes: -1,
-						Count: -1,
-					}
-					dir.When, _ = time.Parse(timeFormat, *node.ModifiedDate) // FIXME
-					if out.AddDir(dir) {
-						return true
-					}
-					if job.Depth > 0 {
-						jobs = append(jobs, dircache.ListDirJob{DirID: *node.Id, Path: remote + "/", Depth: job.Depth - 1})
-					}
+				// cache the directory ID for later lookups
+				f.dirCache.Put(remote, *node.Id)
+				d := &fs.Dir{
+					Name:  remote,
+					Bytes: -1,
+					Count: -1,
 				}
+				d.When, _ = time.Parse(timeFormat, *node.ModifiedDate) // FIXME
+				entries = append(entries, d)
 			case fileKind:
 				o, err := f.newObjectWithInfo(remote, node)
 				if err != nil {
-					out.SetError(err)
+					iErr = err
 					return true
 				}
-				if out.Add(o) {
-					return true
-				}
+				entries = append(entries, o)
 			default:
 				// ignore ASSET etc
 			}
 			return false
 		})
+		if iErr != nil {
+			return nil, iErr
+		}
 		if fs.IsRetryError(err) {
-			fs.Debugf(f, "Directory listing error for %q: %v - low level retry %d/%d", job.Path, err, tries, maxTries)
+			fs.Debugf(f, "Directory listing error for %q: %v - low level retry %d/%d", dir, err, tries, maxTries)
 			continue
 		}
 		if err != nil {
@@ -447,13 +457,7 @@ func (f *Fs) ListDir(out fs.ListOpts, job dircache.ListDirJob) (jobs []dircache.
 		}
 		break
 	}
-	fs.Debugf(f, "Finished reading %q", job.Path)
-	return jobs, err
-}
-
-// List walks the path returning iles and directories into out
-func (f *Fs) List(out fs.ListOpts, dir string) {
-	f.dirCache.List(f, out, dir)
+	return entries, nil
 }
 
 // checkUpload checks to see if an error occurred after the file was

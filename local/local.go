@@ -181,26 +181,32 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, "", nil)
 }
 
-// listArgs is the arguments that a new list takes
-type listArgs struct {
-	remote  string
-	dirpath string
-	level   int
-}
-
-// list traverses the directory passed in, listing to out.
-// it returns a boolean whether it is finished or not.
-func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (subdirs []listArgs) {
-	fd, err := os.Open(dirpath)
+// List the objects and directories in dir into entries.  The
+// entries can be returned in any order but should be for a
+// complete directory.
+//
+// dir should be "" to list the root, and should not have
+// trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+	dir = f.dirNames.Load(dir)
+	fsDirPath := f.cleanPath(filepath.Join(f.root, dir))
+	remote := f.cleanRemote(dir)
+	_, err = os.Stat(fsDirPath)
 	if err != nil {
-		out.SetError(errors.Wrapf(err, "failed to open directory %q", dirpath))
-		return nil
+		return nil, fs.ErrorDirNotFound
 	}
 
+	fd, err := os.Open(fsDirPath)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to open directory %q", dir)
+	}
 	defer func() {
-		err := fd.Close()
-		if err != nil {
-			out.SetError(errors.Wrapf(err, "failed to close directory %q:", dirpath))
+		cerr := fd.Close()
+		if cerr != nil && err == nil {
+			err = errors.Wrapf(cerr, "failed to close directory %q:", dir)
 		}
 	}()
 
@@ -210,106 +216,46 @@ func (f *Fs) list(out fs.ListOpts, remote string, dirpath string, level int) (su
 			break
 		}
 		if err != nil {
-			out.SetError(errors.Wrapf(err, "failed to read directory %q", dirpath))
-
-			return nil
+			return nil, errors.Wrapf(err, "failed to read directory %q", dir)
 		}
 
 		for _, fi := range fis {
 			name := fi.Name()
 			mode := fi.Mode()
 			newRemote := path.Join(remote, name)
-			newPath := filepath.Join(dirpath, name)
+			newPath := filepath.Join(fsDirPath, name)
 			// Follow symlinks if required
 			if *followSymlinks && (mode&os.ModeSymlink) != 0 {
 				fi, err = os.Stat(newPath)
 				if err != nil {
-					out.SetError(err)
-					return nil
+					return nil, err
 				}
 				mode = fi.Mode()
 			}
 			if fi.IsDir() {
 				// Ignore directories which are symlinks.  These are junction points under windows which
 				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
-				if (mode&os.ModeSymlink) == 0 && out.IncludeDirectory(newRemote) && f.dev == readDevice(fi) {
-					dir := &fs.Dir{
+				if (mode&os.ModeSymlink) == 0 && f.dev == readDevice(fi) {
+					d := &fs.Dir{
 						Name:  f.dirNames.Save(newRemote, f.cleanRemote(newRemote)),
 						When:  fi.ModTime(),
 						Bytes: 0,
 						Count: 0,
 					}
-					if out.AddDir(dir) {
-						return nil
-					}
-					if level > 0 {
-						subdirs = append(subdirs, listArgs{remote: newRemote, dirpath: newPath, level: level - 1})
-					}
+					entries = append(entries, d)
 				}
 			} else {
 				fso, err := f.newObjectWithInfo(newRemote, newPath, fi)
 				if err != nil {
-					out.SetError(err)
-					return nil
+					return nil, err
 				}
-				if fso.Storable() && out.Add(fso) {
-					return nil
+				if fso.Storable() {
+					entries = append(entries, fso)
 				}
 			}
 		}
 	}
-	return subdirs
-}
-
-// List the path into out
-//
-// Ignores everything which isn't Storable, eg links etc
-func (f *Fs) List(out fs.ListOpts, dir string) {
-	defer out.Finished()
-	dir = f.dirNames.Load(dir)
-	root := f.cleanPath(filepath.Join(f.root, dir))
-	dir = f.cleanRemote(dir)
-	_, err := os.Stat(root)
-	if err != nil {
-		out.SetError(fs.ErrorDirNotFound)
-		return
-	}
-
-	in := make(chan listArgs, out.Buffer())
-	var wg sync.WaitGroup         // sync closing of go routines
-	var traversing sync.WaitGroup // running directory traversals
-
-	// Start the process
-	traversing.Add(1)
-	in <- listArgs{remote: dir, dirpath: root, level: out.Level() - 1}
-	for i := 0; i < fs.Config.Checkers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for job := range in {
-				if out.IsFinished() {
-					continue
-				}
-				newJobs := f.list(out, job.remote, job.dirpath, job.level)
-				// Now we have traversed this directory, send
-				// these ones off for traversal
-				if len(newJobs) != 0 {
-					traversing.Add(len(newJobs))
-					go func() {
-						for _, newJob := range newJobs {
-							in <- newJob
-						}
-					}()
-				}
-				traversing.Done()
-			}
-		}()
-	}
-
-	// Wait for traversal to finish
-	traversing.Wait()
-	close(in)
-	wg.Wait()
+	return entries, nil
 }
 
 // cleanRemote makes string a valid UTF-8 string for remote strings.

@@ -296,18 +296,25 @@ func (f *Fs) NewObject(remote string) (o fs.Object, err error) {
 	return nil, fs.ErrorObjectNotFound
 }
 
-func (f *Fs) list(out fs.ListOpts, dir string, curlevel int) {
+// List the objects and directories in dir into entries.  The
+// entries can be returned in any order but should be for a
+// complete directory.
+//
+// dir should be "" to list the root, and should not have
+// trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	// defer fs.Trace(dir, "curlevel=%d", curlevel)("")
 	c, err := f.getFtpConnection()
 	if err != nil {
-		out.SetError(errors.Wrap(err, "list"))
-		return
+		return nil, errors.Wrap(err, "list")
 	}
 	files, err := c.List(path.Join(f.root, dir))
 	f.putFtpConnection(&c, err)
 	if err != nil {
-		out.SetError(translateErrorDir(err))
-		return
+		return nil, translateErrorDir(err)
 	}
 	for i := range files {
 		object := files[i]
@@ -317,20 +324,13 @@ func (f *Fs) list(out fs.ListOpts, dir string, curlevel int) {
 			if object.Name == "." || object.Name == ".." {
 				continue
 			}
-			if out.IncludeDirectory(newremote) {
-				d := &fs.Dir{
-					Name:  newremote,
-					When:  object.Time,
-					Bytes: 0,
-					Count: -1,
-				}
-				if curlevel < out.Level() {
-					f.list(out, path.Join(dir, object.Name), curlevel+1)
-				}
-				if out.AddDir(d) {
-					return
-				}
+			d := &fs.Dir{
+				Name:  newremote,
+				When:  object.Time,
+				Bytes: 0,
+				Count: -1,
 			}
+			entries = append(entries, d)
 		default:
 			o := &Object{
 				fs:     f,
@@ -342,27 +342,10 @@ func (f *Fs) list(out fs.ListOpts, dir string, curlevel int) {
 				ModTime: object.Time,
 			}
 			o.info = info
-			if out.Add(o) {
-				return
-			}
+			entries = append(entries, o)
 		}
 	}
-}
-
-// List the objects and directories of the Fs starting from dir
-//
-// dir should be "" to start from the root, and should not
-// have trailing slashes.
-//
-// This should return ErrDirNotFound (using out.SetError())
-// if the directory isn't found.
-//
-// Fses must support recursion levels of fs.MaxLevel and 1.
-// They may return ErrorLevelNotSupported otherwise.
-func (f *Fs) List(out fs.ListOpts, dir string) {
-	// defer fs.Trace(dir, "")("")
-	f.list(out, dir, 1)
-	out.Finished()
+	return entries, nil
 }
 
 // Hashes are not supported

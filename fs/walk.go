@@ -71,6 +71,10 @@ func WalkN(f Fs, path string, includeAll bool, maxLevel int, fn WalkFunc) error 
 // It implements Walk using recursive directory listing if
 // available, or returns ErrorCantListR if not.
 func WalkR(f Fs, path string, includeAll bool, maxLevel int, fn WalkFunc) error {
+	listR := f.Features().ListR
+	if listR == nil {
+		return ErrorCantListR
+	}
 	return walkR(f, path, includeAll, maxLevel, fn, listR)
 }
 
@@ -254,57 +258,12 @@ func (dt DirTree) String() string {
 	return out.String()
 }
 
-type listRCallback func(entries DirEntries) error
-
-type listRFunc func(f Fs, dir string, callback listRCallback) error
-
-// FIXME Pretend ListR function
-func listR(f Fs, dir string, callback listRCallback) (err error) {
-	listR := f.Features().ListR
-	if listR == nil {
-		return ErrorCantListR
-	}
-	const maxEntries = 100
-	entries := make(DirEntries, 0, maxEntries)
-	list := NewLister()
-	list.Start(f, dir)
-	for {
-		o, dir, err := list.Get()
-		if err != nil {
-			return err
-		} else if o != nil {
-			entries = append(entries, o)
-		} else if dir != nil {
-			entries = append(entries, dir)
-		} else {
-			// finishd since err, o, dir == nil
-			break
-		}
-		if len(entries) >= maxEntries {
-			err = callback(entries)
-			if err != nil {
-				return err
-			}
-			entries = entries[:0]
-		}
-	}
-	err = list.Error()
-	if err != nil {
-		return err
-	}
-	if len(entries) > 0 {
-		err = callback(entries)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-
-}
-
-func walkRDirTree(f Fs, path string, includeAll bool, maxLevel int, listRFn listRFunc) (DirTree, error) {
+func walkRDirTree(f Fs, path string, includeAll bool, maxLevel int, listR ListRFn) (DirTree, error) {
 	dirs := make(DirTree)
-	err := listRFn(f, path, func(entries DirEntries) error {
+	var mu sync.Mutex
+	err := listR(path, func(entries DirEntries) error {
+		mu.Lock()
+		defer mu.Unlock()
 		for _, entry := range entries {
 			slashes := strings.Count(entry.Remote(), "/")
 			switch x := entry.(type) {
@@ -352,13 +311,19 @@ func walkRDirTree(f Fs, path string, includeAll bool, maxLevel int, listRFn list
 	return dirs, nil
 }
 
-// NewDirTree returns a DirTree filled with the directory listing using the parameters supplied
+// NewDirTree returns a DirTree filled with the directory listing
+// using the parameters supplied.  This will return ErrorCantListR for
+// remotes which don't support ListR.
 func NewDirTree(f Fs, path string, includeAll bool, maxLevel int) (DirTree, error) {
+	listR := f.Features().ListR
+	if listR == nil {
+		return nil, ErrorCantListR
+	}
 	return walkRDirTree(f, path, includeAll, maxLevel, listR)
 }
 
-func walkR(f Fs, path string, includeAll bool, maxLevel int, fn WalkFunc, listRFn listRFunc) error {
-	dirs, err := walkRDirTree(f, path, includeAll, maxLevel, listRFn)
+func walkR(f Fs, path string, includeAll bool, maxLevel int, fn WalkFunc, listR ListRFn) error {
+	dirs, err := walkRDirTree(f, path, includeAll, maxLevel, listR)
 	if err != nil {
 		return err
 	}
@@ -409,4 +374,42 @@ func WalkGetAll(f Fs, path string, includeAll bool, maxLevel int) (objs []Object
 		return nil
 	})
 	return
+}
+
+// ListRHelper is used in the implementation of ListR to accumulate DirEntries
+type ListRHelper struct {
+	callback ListRCallback
+	entries  DirEntries
+}
+
+// NewListRHelper should be called from ListR with the callback passed in
+func NewListRHelper(callback ListRCallback) *ListRHelper {
+	return &ListRHelper{
+		callback: callback,
+	}
+}
+
+// send sends the stored entries to the callback if there are >= max
+// entries.
+func (lh *ListRHelper) send(max int) (err error) {
+	if len(lh.entries) >= max {
+		err = lh.callback(lh.entries)
+		lh.entries = lh.entries[:0]
+	}
+	return err
+}
+
+// Add an entry to the stored entries and send them if there are more
+// than a certain amount
+func (lh *ListRHelper) Add(entry BasicInfo) error {
+	if entry == nil {
+		return nil
+	}
+	lh.entries = append(lh.entries, entry)
+	return lh.send(100)
+}
+
+// Flush the stored entries (if any) sending them to the callback
+func (lh *ListRHelper) Flush() error {
+	return lh.send(1)
 }
