@@ -476,6 +476,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *drive.File) (fs.Object, erro
 			return nil, err
 		}
 	}
+	fs.Debugf(o, "ID = %q", o.id)
 	return o, nil
 }
 
