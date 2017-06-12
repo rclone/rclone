@@ -22,6 +22,7 @@ import (
 	_ "github.com/ncw/rclone/cmd/ls"
 	_ "github.com/ncw/rclone/cmd/ls2"
 	_ "github.com/ncw/rclone/cmd/lsd"
+	_ "github.com/ncw/rclone/cmd/lsjson"
 	_ "github.com/ncw/rclone/cmd/lsl"
 	_ "github.com/ncw/rclone/cmd/md5sum"
 	_ "github.com/ncw/rclone/cmd/memtest"
