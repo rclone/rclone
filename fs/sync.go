@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var oldSyncMethod = BoolP("old-sync-method", "", false, "Temporary flag to select old sync method")
+var oldSyncMethod = BoolP("old-sync-method", "", false, "Deprecated - use --fast-list instead")
 
 type syncCopyMove struct {
 	// parameters
@@ -186,46 +186,6 @@ outer:
 	}
 	close(out)
 	s.srcFilesResult <- nil
-}
-
-// This reads the source files from s.srcFiles into srcFilesChan then
-// closes it
-//
-// It returns the final result of the read into s.srcFilesResult
-func (s *syncCopyMove) readSrcUsingMap() {
-	s.pumpMapToChan(s.srcFiles, s.srcFilesChan)
-	s.srcFilesResult <- nil
-}
-
-// This reads the source files into srcFilesChan then closes it
-//
-// It returns the final result of the read into s.srcFilesResult
-func (s *syncCopyMove) readSrcUsingChan() {
-	err := readFilesFn(s.fsrc, false, s.dir, func(o Object) error {
-		if s.aborting() {
-			return ErrorListAborted
-		}
-		select {
-		case s.srcFilesChan <- o:
-		case <-s.abort:
-			return ErrorListAborted
-		}
-		return nil
-	})
-	close(s.srcFilesChan)
-	if err != nil {
-		err = errors.Wrapf(err, "error listing source: %s", s.fsrc)
-	}
-	s.srcFilesResult <- err
-}
-
-// This reads the destination files in into dstFiles
-//
-// It returns the final result of the read into s.dstFilesResult
-func (s *syncCopyMove) readDstFiles() {
-	var err error
-	s.dstFiles, err = readFilesMap(s.fdst, Config.Filter.DeleteExcluded, s.dir)
-	s.dstFilesResult <- err
 }
 
 // NeedTransfer checks to see if src needs to be copied to dst using
@@ -664,136 +624,6 @@ func (s *syncCopyMove) tryRename(src Object) bool {
 	return true
 }
 
-// Syncs fsrc into fdst
-//
-// If Delete is true then it deletes any files in fdst that aren't in fsrc
-//
-// If DoMove is true then files will be moved instead of copied
-//
-// dir is the start directory, "" for root
-func (s *syncCopyMove) runRecursive() error {
-	if Same(s.fdst, s.fsrc) {
-		Errorf(s.fdst, "Nothing to do as source and destination are the same")
-		return nil
-	}
-
-	err := Mkdir(s.fdst, "")
-	if err != nil {
-		return err
-	}
-
-	// Start reading dstFiles if required
-	if !s.noTraverse {
-		go s.readDstFiles()
-	}
-
-	// If --delete-before then we need to read the whole source map first
-	readSourceMap := s.deleteMode == DeleteModeBefore
-
-	if readSourceMap {
-		// Read source files into the map
-		s.srcFiles, err = readFilesMap(s.fsrc, false, s.dir)
-		if err != nil {
-			return err
-		}
-
-	}
-
-	// Wait for dstfiles to finish reading if we were reading them
-	// and report any errors
-	if !s.noTraverse {
-		err = <-s.dstFilesResult
-		if err != nil {
-			return err
-		}
-	}
-
-	// Delete files first if required
-	if s.deleteMode == DeleteModeBefore {
-		err = s.deleteFiles(true)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Now we can fill the src channel.
-	if readSourceMap {
-		// Pump the map into s.srcFilesChan
-		go s.readSrcUsingMap()
-	} else {
-		go s.readSrcUsingChan()
-	}
-
-	// Start background checking and transferring pipeline
-	s.startCheckers()
-	s.startRenamers()
-	s.startTransfers()
-
-	// Do the transfers
-	s.startTrackRenames()
-	for src := range s.srcFilesChan {
-		remote := src.Remote()
-		var dst Object
-		if s.noTraverse {
-			var err error
-			dst, err = s.fdst.NewObject(remote)
-			if err != nil {
-				dst = nil
-				if err != ErrorObjectNotFound {
-					Debugf(src, "Error making NewObject: %v", err)
-				}
-			}
-		} else {
-			s.dstFilesMu.Lock()
-			var ok bool
-			dst, ok = s.dstFiles[remote]
-			if ok {
-				// Remove file from s.dstFiles because it exists in srcFiles
-				delete(s.dstFiles, remote)
-			}
-			s.dstFilesMu.Unlock()
-		}
-		if dst != nil {
-			s.toBeChecked <- ObjectPair{src, dst}
-		} else if s.trackRenames {
-			// Save object to check for a rename later
-			s.trackRenamesCh <- src
-		} else {
-			// No need to check since doesn't exist
-			s.toBeUploaded <- ObjectPair{src, nil}
-		}
-	}
-
-	s.stopTrackRenames()
-	if s.trackRenames {
-		// Build the map of the remaining dstFiles by hash
-		s.makeRenameMap()
-		// Attempt renames for all the files which don't have a matching dst
-		for _, src := range s.renameCheck {
-			s.toBeRenamed <- ObjectPair{src, nil}
-		}
-	}
-
-	// Stop background checking and transferring pipeline
-	s.stopCheckers()
-	s.stopRenamers()
-	s.stopTransfers()
-
-	// Retrieve the delayed error from the source listing goroutine
-	err = <-s.srcFilesResult
-
-	// Delete files during or after
-	if s.deleteMode == DeleteModeDuring || s.deleteMode == DeleteModeAfter {
-		if err != nil {
-			Errorf(s.fdst, "%v", ErrorNotDeleting)
-		} else {
-			err = s.deleteFiles(false)
-		}
-	}
-	s.processError(err)
-	return s.currentError()
-}
-
 // listDirJob describe a directory listing that needs to be done
 type listDirJob struct {
 	remote   string
@@ -810,7 +640,7 @@ type listDirJob struct {
 // If DoMove is true then files will be moved instead of copied
 //
 // dir is the start directory, "" for root
-func (s *syncCopyMove) runDirAtATime() error {
+func (s *syncCopyMove) run() error {
 	srcDepth := Config.MaxDepth
 	if srcDepth < 0 {
 		srcDepth = MaxLevel
@@ -856,7 +686,7 @@ func (s *syncCopyMove) runDirAtATime() error {
 					if !ok {
 						return
 					}
-					jobs := s._runDirAtATime(job)
+					jobs := s._run(job)
 					if len(jobs) > 0 {
 						traversing.Add(len(jobs))
 						go func() {
@@ -1013,7 +843,7 @@ func (s *syncCopyMove) transfer(dst, src BasicInfo, job listDirJob, jobs *[]list
 }
 
 // returns errors using processError
-func (s *syncCopyMove) _runDirAtATime(job listDirJob) (jobs []listDirJob) {
+func (s *syncCopyMove) _run(job listDirJob) (jobs []listDirJob) {
 	var (
 		srcList, dstList       DirEntries
 		srcListErr, dstListErr error
@@ -1094,20 +924,23 @@ func (s *syncCopyMove) _runDirAtATime(job listDirJob) (jobs []listDirJob) {
 //
 // dir is the start directory, "" for root
 func runSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool) error {
+	if *oldSyncMethod {
+		return FatalError(errors.New("--old-sync-method is deprecated use --fast-list instead"))
+	}
 	if deleteMode != DeleteModeOff && DoMove {
-		return errors.New("can't delete and move at the same time")
+		return FatalError(errors.New("can't delete and move at the same time"))
 	}
 	// Run an extra pass to delete only
-	if !*oldSyncMethod && deleteMode == DeleteModeBefore {
+	if deleteMode == DeleteModeBefore {
 		if Config.TrackRenames {
-			return errors.New("can't use --delete-before with --track-renames")
+			return FatalError(errors.New("can't use --delete-before with --track-renames"))
 		}
 		// only delete stuff during in this pass
 		do, err := newSyncCopyMove(fdst, fsrc, DeleteModeOnly, false)
 		if err != nil {
 			return err
 		}
-		err = do.runDirAtATime()
+		err = do.run()
 		if err != nil {
 			return err
 		}
@@ -1118,10 +951,7 @@ func runSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool) error {
 	if err != nil {
 		return err
 	}
-	if *oldSyncMethod {
-		return do.runRecursive()
-	}
-	return do.runDirAtATime()
+	return do.run()
 }
 
 // Sync fsrc into fdst
