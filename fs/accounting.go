@@ -474,11 +474,9 @@ func (acc *Account) Progress() (bytes, size int64) {
 		return 0, 0
 	}
 	acc.statmu.Lock()
-	if bytes > size {
-		size = 0
-	}
-	defer acc.statmu.Unlock()
-	return acc.bytes, acc.size
+	bytes, size = acc.bytes, acc.size
+	acc.statmu.Unlock()
+	return bytes, size
 }
 
 // Speed returns the speed of the current file transfer
@@ -528,7 +526,7 @@ func (acc *Account) ETA() (eta time.Duration, ok bool) {
 // String produces stats for this file
 func (acc *Account) String() string {
 	a, b := acc.Progress()
-	avg, cur := acc.Speed()
+	_, cur := acc.Speed()
 	eta, etaok := acc.ETA()
 	etas := "-"
 	if etaok {
@@ -545,7 +543,7 @@ func (acc *Account) String() string {
 	}
 
 	if Config.DataRateUnit == "bits" {
-		cur, avg = cur*8, avg*8
+		cur = cur * 8
 	}
 
 	done := ""

@@ -157,7 +157,7 @@ func (f *Fs) setRoot(root string) {
 	f.root = strings.Trim(root, "/")
 	//Set disk root path.
 	//Adding "disk:" to root path as all paths on disk start with it
-	var diskRoot = ""
+	var diskRoot string
 	if f.root == "" {
 		diskRoot = "disk:/"
 	} else {

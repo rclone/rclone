@@ -67,6 +67,7 @@ func TestReadChecksum(t *testing.T) {
 	_, err = fd.Seek(int64(len(b)-len(buf)), 0)
 	assert.NoError(t, err)
 	_, err = io.ReadFull(fd, buf)
+	assert.NoError(t, err)
 	// ensure we don't compare hashes
 	err = fd.Close()
 	assert.NoError(t, err)

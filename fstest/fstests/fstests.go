@@ -216,14 +216,14 @@ func findObject(t *testing.T, Name string) fs.Object {
 }
 
 func testPut(t *testing.T, file *fstest.Item) string {
+	tries := 1
+	const maxTries = 10
 again:
 	contents := fstest.RandomString(100)
 	buf := bytes.NewBufferString(contents)
 	hash := fs.NewMultiHasher()
 	in := io.TeeReader(buf, hash)
 
-	tries := 1
-	const maxTries = 10
 	file.Size = int64(buf.Len())
 	obji := fs.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
 	obj, err := remote.Put(in, obji)
@@ -274,11 +274,11 @@ func TestFsPutError(t *testing.T) {
 	in := io.MultiReader(buf, er)
 
 	obji := fs.NewStaticObjectInfo(file2.Path, file2.ModTime, 100, true, nil, nil)
-	obj, err := remote.Put(in, obji)
+	_, err := remote.Put(in, obji)
 	// assert.Nil(t, obj) - FIXME some remotes return the object even on nil
 	assert.NotNil(t, err)
 
-	obj, err = remote.NewObject(file2.Path)
+	obj, err := remote.NewObject(file2.Path)
 	assert.Nil(t, obj)
 	assert.Equal(t, fs.ErrorObjectNotFound, err)
 }

@@ -39,7 +39,7 @@ func TestWriteFileDoubleClose(t *testing.T) {
 	assert.NoError(t, err)
 
 	// write to the other dup - should produce an error
-	n, err = syscall.Write(fd2, buf)
+	_, err = syscall.Write(fd2, buf)
 	assert.Error(t, err, "input/output error")
 
 	// close the dup - should produce an error

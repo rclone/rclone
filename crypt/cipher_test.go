@@ -689,7 +689,7 @@ func TestRandomSource(t *testing.T) {
 	buf := make([]byte, 16)
 	_, _ = source.Read(buf)
 	sink = newRandomSource(1E8)
-	n, err = io.Copy(sink, source)
+	_, err = io.Copy(sink, source)
 	assert.Error(t, err, "Error in stream")
 }
 
@@ -966,6 +966,7 @@ func TestNewDecrypterSeek(t *testing.T) {
 
 	// Now try decoding it with a single open and lots of seeks
 	rc, err := c.DecryptDataSeek(open, 0)
+	assert.NoError(t, err)
 	for _, offset := range trials {
 		_, err := rc.Seek(int64(offset), 0)
 		assert.NoError(t, err)
@@ -1050,6 +1051,7 @@ func TestDecrypterClose(t *testing.T) {
 	// close before reading
 	assert.Equal(t, nil, fh.err)
 	err = fh.Close()
+	assert.NoError(t, err)
 	assert.Equal(t, ErrorFileClosed, fh.err)
 	assert.Equal(t, 1, cd.closed)
 
@@ -1070,6 +1072,7 @@ func TestDecrypterClose(t *testing.T) {
 	assert.Equal(t, []byte{1}, out)
 	assert.Equal(t, io.EOF, fh.err)
 	err = fh.Close()
+	assert.NoError(t, err)
 	assert.Equal(t, ErrorFileClosed, fh.err)
 	assert.Equal(t, 1, cd.closed)
 }

@@ -472,7 +472,6 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 			err := setConfigPassword(envpw)
 			if err != nil {
 				fmt.Println("Using RCLONE_CONFIG_PASS returned:", err)
-				envpw = ""
 			} else {
 				Debugf(nil, "Using RCLONE_CONFIG_PASS password.")
 			}

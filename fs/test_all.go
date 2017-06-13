@@ -139,6 +139,9 @@ func (t *test) cleanFs() error {
 		return err
 	}
 	dirs, err := fs.NewLister().SetLevel(1).Start(f, "").GetDirs()
+	if err != nil {
+		return err
+	}
 	for _, dir := range dirs {
 		if fstest.MatchTestRemote.MatchString(dir.Name) {
 			log.Printf("Purging %s%s", t.remote, dir.Name)

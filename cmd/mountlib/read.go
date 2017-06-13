@@ -139,7 +139,6 @@ func (fh *ReadFileHandle) Read(reqSize, reqOffset int64) (respData []byte, err e
 			// file in an unchanged state.
 			if reqOffset >= fh.o.Size() {
 				fs.Debugf(fh.o, "ReadFileHandle.Read attempt to read beyond end of file: %d > %d", reqOffset, fh.o.Size())
-				respData = nil
 				return nil, nil
 			}
 			// Otherwise do the seek
