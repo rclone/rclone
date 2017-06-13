@@ -183,7 +183,14 @@ func equal(src, dst Object, sizeOnly, checkSum bool) bool {
 			// mtime of the dst object here
 			err := dst.SetModTime(srcModTime)
 			if err == ErrorCantSetModTime {
-				Debugf(src, "src and dst identical but can't set mod time without re-uploading")
+				Debugf(dst, "src and dst identical but can't set mod time without re-uploading")
+				return false
+			} else if err == ErrorCantSetModTimeWithoutDelete {
+				Debugf(dst, "src and dst identical but can't set mod time without deleting and re-uploading")
+				err = dst.Remove()
+				if err != nil {
+					Errorf(dst, "failed to delete before re-upload: %v", err)
+				}
 				return false
 			} else if err != nil {
 				Stats.Error()

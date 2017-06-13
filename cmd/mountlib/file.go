@@ -125,7 +125,7 @@ func (f *File) applyPendingModTime() error {
 	switch err {
 	case nil:
 		fs.Debugf(f.o, "File.applyPendingModTime OK")
-	case fs.ErrorCantSetModTime:
+	case fs.ErrorCantSetModTime, fs.ErrorCantSetModTimeWithoutDelete:
 		// do nothing, in order to not break "touch somefile" if it exists already
 	default:
 		fs.Errorf(f.o, "File.applyPendingModTime error: %v", err)

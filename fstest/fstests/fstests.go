@@ -672,7 +672,7 @@ func TestObjectSetModTime(t *testing.T) {
 	newModTime := fstest.Time("2011-12-13T14:15:16.999999999Z")
 	obj := findObject(t, file1.Path)
 	err := obj.SetModTime(newModTime)
-	if err == fs.ErrorCantSetModTime {
+	if err == fs.ErrorCantSetModTime || err == fs.ErrorCantSetModTimeWithoutDelete {
 		t.Log(err)
 		return
 	}
