@@ -142,7 +142,7 @@ func newTest(remote string, subdir bool, fastlist bool) *test {
 	if fastlist {
 		t.cmdLine = append(t.cmdLine, "-fast-list")
 	}
-	t.cmdString = strings.Join(t.cmdLine, " ")
+	t.cmdString = toShell(t.cmdLine)
 	return t
 }
 
@@ -178,13 +178,37 @@ func (t *test) findFailures() {
 	}
 }
 
-// trial runs a single test
-func (t *test) trial() {
+// nextCmdLine returns the next command line
+func (t *test) nextCmdLine() []string {
 	cmdLine := t.cmdLine[:]
 	if t.runFlag != "" {
 		cmdLine = append(cmdLine, "-test.run", t.runFlag)
 	}
-	cmdString := strings.Join(cmdLine, " ")
+	return cmdLine
+}
+
+// if matches then is definitely OK in the shell
+var shellOK = regexp.MustCompile("^[A-Za-z0-9./_:-]+$")
+
+// converts a argv style input into a shell command
+func toShell(args []string) (result string) {
+	for _, arg := range args {
+		if result != "" {
+			result += " "
+		}
+		if shellOK.MatchString(arg) {
+			result += arg
+		} else {
+			result += "'" + arg + "'"
+		}
+	}
+	return result
+}
+
+// trial runs a single test
+func (t *test) trial() {
+	cmdLine := t.nextCmdLine()
+	cmdString := toShell(cmdLine)
 	log.Printf("%q - Starting (try %d/%d)", cmdString, t.try, *maxTries)
 	cmd := exec.Command(cmdLine[0], cmdLine[1:]...)
 	start := time.Now()
@@ -346,7 +370,7 @@ func main() {
 	} else {
 		log.Printf("FAIL: %d tests failed in %v", len(failed), duration)
 		for _, t := range failed {
-			log.Printf("  * %s", t.cmdString)
+			log.Printf("  * %s", toShell(t.nextCmdLine()))
 			log.Printf("    * Failed tests: %v", t.failedTests)
 		}
 		os.Exit(1)
