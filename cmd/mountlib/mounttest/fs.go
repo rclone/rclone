@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
@@ -156,6 +157,11 @@ func (r *Run) umount() {
 	*/
 	log.Printf("Unmounting %q", r.mountPath)
 	err := r.umountFn()
+	if err != nil {
+		log.Printf("signal to umount failed - retrying: %v", err)
+		time.Sleep(3 * time.Second)
+		err = r.umountFn()
+	}
 	if err != nil {
 		log.Fatalf("signal to umount failed: %v", err)
 	}
