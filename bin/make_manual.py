@@ -38,6 +38,7 @@ docs = [
     "licence.md",
     "authors.md",
     "contact.md",
+    "qingstor.md",
 ]
 
 # Order to put the commands in - any not on here will be in sorted order
