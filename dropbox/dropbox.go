@@ -75,7 +75,7 @@ func init() {
 		Description: "Dropbox",
 		NewFs:       NewFs,
 		Config: func(name string) {
-			err := oauthutil.Config("dropbox", name, dropboxConfig)
+			err := oauthutil.ConfigNoOffline("dropbox", name, dropboxConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}

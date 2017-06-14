@@ -250,6 +250,16 @@ func NewClient(name string, config *oauth2.Config) (*http.Client, *TokenSource, 
 //
 // It may run an internal webserver to receive the results
 func Config(id, name string, config *oauth2.Config) error {
+	return doConfig(id, name, config, true)
+}
+
+// ConfigNoOffline does the same as Config but does not pass the
+// "access_type=offline" parameter.
+func ConfigNoOffline(id, name string, config *oauth2.Config) error {
+	return doConfig(id, name, config, false)
+}
+
+func doConfig(id, name string, config *oauth2.Config, offline bool) error {
 	config, changed := overrideCredentials(name, config)
 	automatic := fs.ConfigFileGet(name, fs.ConfigAutomatic) != ""
 
@@ -322,7 +332,11 @@ func Config(id, name string, config *oauth2.Config) error {
 		return err
 	}
 	state := fmt.Sprintf("%x", stateBytes)
-	authURL := config.AuthCodeURL(state, oauth2.AccessTypeOffline)
+	var opts []oauth2.AuthCodeOption
+	if offline {
+		opts = append(opts, oauth2.AccessTypeOffline)
+	}
+	authURL := config.AuthCodeURL(state, opts...)
 
 	// Prepare webserver
 	server := authServer{
