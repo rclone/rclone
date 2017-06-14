@@ -30,6 +30,7 @@ Here is an overview of the major features of each cloud storage system.
 | SFTP                   | -       | Yes     | Depends          | No              | -         |
 | FTP                    | -       | No      | Yes              | No              | -         |
 | The local filesystem   | All     | Yes     | Depends          | No              | -         |
+| QingStor               | MD5     | No      | No               | No              | R/W       |
 
 ### Hash ###
 
@@ -123,6 +124,7 @@ operations more efficient.
 | SFTP                   | No    | No   | Yes  | Yes     | No      |
 | FTP                    | No    | No   | Yes  | Yes     | No      |
 | The local filesystem   | Yes   | No   | Yes  | Yes     | No      |
+| QingStor               | No    | Yes  | No   | No      | No      |
 
 
 ### Purge ###

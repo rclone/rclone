@@ -14,6 +14,12 @@
   version = "v0.7.0"
 
 [[projects]]
+  name = "github.com/Sirupsen/logrus"
+  packages = ["."]
+  revision = "ba1b36c82c5e05c4f912a88eab0dcd91a171688f"
+  version = "v0.11.5"
+
+[[projects]]
   branch = "master"
   name = "github.com/Unknwon/goconfig"
   packages = ["."]
@@ -116,6 +122,12 @@
   revision = "8e9b10220613abdbc2896808ee6b43e411a4fa6c"
 
 [[projects]]
+  name = "github.com/pengsrc/go-shared"
+  packages = ["check","convert","json","yaml"]
+  revision = "454950d6a0782c34427d4f29b46c6bf447256f20"
+  version = "v0.0.8"
+
+[[projects]]
   branch = "master"
   name = "github.com/pkg/errors"
   packages = ["."]
@@ -188,6 +200,12 @@
   revision = "ba9c9e33906f58169366275e3450db66139a31a9"
 
 [[projects]]
+  name = "github.com/yunify/qingstor-sdk-go"
+  packages = [".","config","logger","request","request/builder","request/data","request/errors","request/signer","request/unpacker","service","utils"]
+  revision = "26f2cc6f249f4c2a08ed89f1d7d566a463c1dfc2"
+  version = "v2.2.5"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["curve25519","ed25519","ed25519/internal/edwards25519","nacl/secretbox","pbkdf2","poly1305","salsa20/salsa","scrypt","ssh","ssh/agent","ssh/terminal"]
@@ -250,6 +268,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e0227ed773a9f6c56d1bfac9de1d87c2a74ce142e418b661b74931d2e2b20945"
+  inputs-digest = "e5d684795215d38d47369bef986d72c41bc88f93127cd1036a7d125332f21b22"
   solver-name = "gps-cdcl"
   solver-version = 1
