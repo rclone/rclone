@@ -12,10 +12,10 @@
 <div id="header">
 <h1 class="title">rclone(1) User Manual</h1>
 <h2 class="author">Nick Craig-Wood</h2>
-<h3 class="date">Mar 18, 2017</h3>
+<h3 class="date">Jun 15, 2017</h3>
 </div>
 <h1 id="rclone">Rclone</h1>
-<p><a href="http://rclone.org/"><img src="http://rclone.org/img/rclone-120x120.png" alt="Logo" /></a></p>
+<p><a href="https://rclone.org/"><img src="https://rclone.org/img/rclone-120x120.png" alt="Logo" /></a></p>
 <p>Rclone is a command line program to sync files and directories to and from</p>
 <ul>
 <li>Google Drive</li>
@@ -24,11 +24,12 @@
 <li>Dropbox</li>
 <li>Google Cloud Storage</li>
 <li>Amazon Drive</li>
-<li>Microsoft One Drive</li>
+<li>Microsoft OneDrive</li>
 <li>Hubic</li>
 <li>Backblaze B2</li>
 <li>Yandex Disk</li>
 <li>SFTP</li>
+<li>FTP</li>
 <li>The local filesystem</li>
 </ul>
 <p>Features</p>
@@ -36,34 +37,34 @@
 <li>MD5/SHA1 hashes checked at all times for file integrity</li>
 <li>Timestamps preserved on files</li>
 <li>Partial syncs supported on a whole file basis</li>
-<li><a href="http://rclone.org/commands/rclone_copy/">Copy</a> mode to just copy new/changed files</li>
-<li><a href="http://rclone.org/commands/rclone_sync/">Sync</a> (one way) mode to make a directory identical</li>
-<li><a href="http://rclone.org/commands/rclone_check/">Check</a> mode to check for file hash equality</li>
+<li><a href="https://rclone.org/commands/rclone_copy/">Copy</a> mode to just copy new/changed files</li>
+<li><a href="https://rclone.org/commands/rclone_sync/">Sync</a> (one way) mode to make a directory identical</li>
+<li><a href="https://rclone.org/commands/rclone_check/">Check</a> mode to check for file hash equality</li>
 <li>Can sync to and from network, eg two different cloud accounts</li>
-<li>Optional encryption (<a href="http://rclone.org/crypt/">Crypt</a>)</li>
-<li>Optional FUSE mount (<a href="http://rclone.org/commands/rclone_mount/">rclone mount</a>)</li>
+<li>Optional encryption (<a href="https://rclone.org/crypt/">Crypt</a>)</li>
+<li>Optional FUSE mount (<a href="https://rclone.org/commands/rclone_mount/">rclone mount</a>)</li>
 </ul>
 <p>Links</p>
 <ul>
-<li><a href="http://rclone.org/">Home page</a></li>
-<li><a href="http://github.com/ncw/rclone">Github project page for source and bug tracker</a></li>
+<li><a href="https://rclone.org/">Home page</a></li>
+<li><a href="https://github.com/ncw/rclone">Github project page for source and bug tracker</a></li>
 <li><a href="https://forum.rclone.org">Rclone Forum</a></li>
 <li><a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page</a></li>
-<li><a href="http://rclone.org/downloads/">Downloads</a></li>
+<li><a href="https://rclone.org/downloads/">Downloads</a></li>
 </ul>
 <h1 id="install">Install</h1>
 <p>Rclone is a Go program and comes as a single binary file.</p>
 <h2 id="quickstart">Quickstart</h2>
 <ul>
-<li><a href="http://rclone.org/downloads/">Download</a> the relevant binary.</li>
+<li><a href="https://rclone.org/downloads/">Download</a> the relevant binary.</li>
 <li>Unpack and the <code>rclone</code> binary.</li>
-<li>Run <code>rclone config</code> to setup. See <a href="http://rclone.org/docs/">rclone config docs</a> for more details.</li>
+<li>Run <code>rclone config</code> to setup. See <a href="https://rclone.org/docs/">rclone config docs</a> for more details.</li>
 </ul>
 <p>See below for some expanded Linux / macOS instructions.</p>
-<p>See the <a href="http://rclone.org/docs/">Usage section</a> of the docs for how to use rclone, or run <code>rclone -h</code>.</p>
+<p>See the <a href="https://rclone.org/docs/">Usage section</a> of the docs for how to use rclone, or run <code>rclone -h</code>.</p>
 <h2 id="linux-installation-from-precompiled-binary">Linux installation from precompiled binary</h2>
 <p>Fetch and unpack</p>
-<pre><code>curl -O http://downloads.rclone.org/rclone-current-linux-amd64.zip
+<pre><code>curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
 unzip rclone-current-linux-amd64.zip
 cd rclone-*-linux-amd64</code></pre>
 <p>Copy binary file</p>
@@ -74,21 +75,21 @@ sudo chmod 755 /usr/bin/rclone</code></pre>
 <pre><code>sudo mkdir -p /usr/local/share/man/man1
 sudo cp rclone.1 /usr/local/share/man/man1/
 sudo mandb </code></pre>
-<p>Run <code>rclone config</code> to setup. See <a href="http://rclone.org/docs/">rclone config docs</a> for more details.</p>
+<p>Run <code>rclone config</code> to setup. See <a href="https://rclone.org/docs/">rclone config docs</a> for more details.</p>
 <pre><code>rclone config</code></pre>
 <h2 id="macos-installation-from-precompiled-binary">macOS installation from precompiled binary</h2>
 <p>Download the latest version of rclone.</p>
-<pre><code>cd &amp;&amp; curl -O http://downloads.rclone.org/rclone-current-osx-amd64.zip</code></pre>
+<pre><code>cd &amp;&amp; curl -O https://downloads.rclone.org/rclone-current-osx-amd64.zip</code></pre>
 <p>Unzip the download and cd to the extracted folder.</p>
 <pre><code>unzip -a rclone-current-osx-amd64.zip &amp;&amp; cd rclone-*-osx-amd64</code></pre>
 <p>Move rclone to your $PATH. You will be prompted for your password.</p>
 <pre><code>sudo mv rclone /usr/local/bin/</code></pre>
 <p>Remove the leftover files.</p>
 <pre><code>cd .. &amp;&amp; rm -rf rclone-*-osx-amd64 rclone-current-osx-amd64.zip</code></pre>
-<p>Run <code>rclone config</code> to setup. See <a href="http://rclone.org/docs/">rclone config docs</a> for more details.</p>
+<p>Run <code>rclone config</code> to setup. See <a href="https://rclone.org/docs/">rclone config docs</a> for more details.</p>
 <pre><code>rclone config</code></pre>
 <h2 id="install-from-source">Install from source</h2>
-<p>Make sure you have at least <a href="https://golang.org/">Go</a> 1.5 installed. Make sure your <code>GOPATH</code> is set, then:</p>
+<p>Make sure you have at least <a href="https://golang.org/">Go</a> 1.6 installed. Make sure your <code>GOPATH</code> is set, then:</p>
 <pre><code>go get -u -v github.com/ncw/rclone</code></pre>
 <p>and this will build the binary in <code>$GOPATH/bin</code>. If you have built rclone before then you will want to update its dependencies first with this</p>
 <pre><code>go get -u -v github.com/ncw/rclone/...</code></pre>
@@ -107,7 +108,7 @@ sudo mandb </code></pre>
 <ul>
 <li>install Snapd on your distro using the instructions below</li>
 <li>sudo snap install rclone --classic</li>
-<li>Run <code>rclone config</code> to setup. See <a href="http://rclone.org/docs/">rclone config docs</a> for more details.</li>
+<li>Run <code>rclone config</code> to setup. See <a href="https://rclone.org/docs/">rclone config docs</a> for more details.</li>
 </ul>
 <p>See below for how to install snapd if it isn't already installed</p>
 <h4 id="arch">Arch</h4>
@@ -129,7 +130,7 @@ sudo dnf install snapd</code></pre>
 <h4 id="openembeddedyocto">OpenEmbedded/Yocto</h4>
 <p>Install the <a href="https://github.com/morphis/meta-snappy/blob/master/README.md">snap meta layer</a>.</p>
 <h4 id="opensuse">openSUSE</h4>
-<pre><code>sudo zypper addrepo http://download.opensuse.org/repositories/system:/snappy/openSUSE_Leap_42.2/ snappy
+<pre><code>sudo zypper addrepo https://download.opensuse.org/repositories/system:/snappy/openSUSE_Leap_42.2/ snappy
 sudo zypper install snapd</code></pre>
 <h4 id="openwrt">OpenWrt</h4>
 <p>Enable the snap-openwrt feed.</p>
@@ -139,19 +140,20 @@ sudo zypper install snapd</code></pre>
 <pre><code>rclone config</code></pre>
 <p>See the following for detailed instructions for</p>
 <ul>
-<li><a href="http://rclone.org/drive/">Google drive</a></li>
-<li><a href="http://rclone.org/s3/">Amazon S3</a></li>
-<li><a href="http://rclone.org/swift/">Swift / Rackspace Cloudfiles / Memset Memstore</a></li>
-<li><a href="http://rclone.org/dropbox/">Dropbox</a></li>
-<li><a href="http://rclone.org/googlecloudstorage/">Google Cloud Storage</a></li>
-<li><a href="http://rclone.org/local/">Local filesystem</a></li>
-<li><a href="http://rclone.org/amazonclouddrive/">Amazon Drive</a></li>
-<li><a href="http://rclone.org/b2/">Backblaze B2</a></li>
-<li><a href="http://rclone.org/hubic/">Hubic</a></li>
-<li><a href="http://rclone.org/onedrive/">Microsoft One Drive</a></li>
-<li><a href="http://rclone.org/yandex/">Yandex Disk</a></li>
-<li><a href="http://rclone.org/sftp/">SFTP</a></li>
-<li><a href="http://rclone.org/crypt/">Crypt</a> - to encrypt other remotes</li>
+<li><a href="https://rclone.org/drive/">Google drive</a></li>
+<li><a href="https://rclone.org/s3/">Amazon S3</a></li>
+<li><a href="https://rclone.org/swift/">Swift / Rackspace Cloudfiles / Memset Memstore</a></li>
+<li><a href="https://rclone.org/dropbox/">Dropbox</a></li>
+<li><a href="https://rclone.org/googlecloudstorage/">Google Cloud Storage</a></li>
+<li><a href="https://rclone.org/local/">Local filesystem</a></li>
+<li><a href="https://rclone.org/amazonclouddrive/">Amazon Drive</a></li>
+<li><a href="https://rclone.org/b2/">Backblaze B2</a></li>
+<li><a href="https://rclone.org/hubic/">Hubic</a></li>
+<li><a href="https://rclone.org/onedrive/">Microsoft OneDrive</a></li>
+<li><a href="https://rclone.org/yandex/">Yandex Disk</a></li>
+<li><a href="https://rclone.org/sftp/">SFTP</a></li>
+<li><a href="https://rclone.org/ftp/">FTP</a></li>
+<li><a href="https://rclone.org/crypt/">Crypt</a> - to encrypt other remotes</li>
 </ul>
 <h2 id="usage">Usage</h2>
 <p>Rclone syncs a directory tree from one storage system to another.</p>
@@ -239,7 +241,7 @@ rclone --dry-run --min-size 100M delete remote:path</code></pre>
 <p>Checks the files in the source and destination match. It compares sizes and hashes (MD5 or SHA1) and logs a report of files which don't match. It doesn't alter the source or destination.</p>
 <p>If you supply the --size-only flag, it will only compare the sizes not the hashes as well. Use this for a quick check.</p>
 <p>If you supply the --download flag, it will download the data from both remotes and check them against each other on the fly. This can be useful for remotes that don't support hashes or if you really want to check all the data.</p>
-<pre><code>rclone check source:path dest:path</code></pre>
+<pre><code>rclone check source:path dest:path [flags]</code></pre>
 <h3 id="options">Options</h3>
 <pre><code>      --download   Check by downloading rather than with hash.</code></pre>
 <h2 id="rclone-ls">rclone ls</h2>
@@ -342,7 +344,7 @@ two-3.txt: renamed from: two.txt</code></pre>
 <pre><code>rclone dedupe --dedupe-mode rename &quot;drive:Google Photos&quot;</code></pre>
 <p>Or</p>
 <pre><code>rclone dedupe rename &quot;drive:Google Photos&quot;</code></pre>
-<pre><code>rclone dedupe [mode] remote:path</code></pre>
+<pre><code>rclone dedupe [mode] remote:path [flags]</code></pre>
 <h3 id="options-1">Options</h3>
 <pre><code>      --dedupe-mode string   Dedupe mode interactive|skip|first|newest|oldest|rename. (default &quot;interactive&quot;)</code></pre>
 <h2 id="rclone-authorize">rclone authorize</h2>
@@ -361,7 +363,7 @@ two-3.txt: renamed from: two.txt</code></pre>
 <p>Or like this to output any .txt files in dir or subdirectories.</p>
 <pre><code>rclone --include &quot;*.txt&quot; cat remote:path/to/dir</code></pre>
 <p>Use the --head flag to print characters only at the start, --tail for the end and --offset and --count to print a section in the middle. Note that if offset is negative it will count from the end, so --offset -1 --count 1 is equivalent to --tail 1.</p>
-<pre><code>rclone cat remote:path</code></pre>
+<pre><code>rclone cat remote:path [flags]</code></pre>
 <h3 id="options-2">Options</h3>
 <pre><code>      --count int    Only print N characters. (default -1)
       --discard      Discard the output instead of printing.
@@ -396,9 +398,14 @@ if src is directory
 <pre><code>rclone cryptcheck remote:path encryptedremote:path</code></pre>
 <p>After it has run it will log the status of the encryptedremote:.</p>
 <pre><code>rclone cryptcheck remote:path cryptedremote:path</code></pre>
+<h2 id="rclone-dbhashsum">rclone dbhashsum</h2>
+<p>Produces a Dropbbox hash file for all the objects in the path.</p>
+<h3 id="synopsis-22">Synopsis</h3>
+<p>Produces a Dropbox hash file for all the objects in the path. The hashes are calculated according to <a href="https://www.dropbox.com/developers/reference/content-hash">Dropbox content hash rules</a>. The output is in the same format as md5sum and sha1sum.</p>
+<pre><code>rclone dbhashsum remote:path</code></pre>
 <h2 id="rclone-genautocomplete">rclone genautocomplete</h2>
 <p>Output bash completion script for rclone.</p>
-<h3 id="synopsis-22">Synopsis</h3>
+<h3 id="synopsis-23">Synopsis</h3>
 <p>Generates a bash shell autocompletion script for rclone.</p>
 <p>This writes to /etc/bash_completion.d/rclone by default so will probably need to be run with sudo or as root, eg</p>
 <pre><code>sudo rclone genautocomplete</code></pre>
@@ -408,31 +415,48 @@ if src is directory
 <pre><code>rclone genautocomplete [output_file]</code></pre>
 <h2 id="rclone-gendocs">rclone gendocs</h2>
 <p>Output markdown docs for rclone to the directory supplied.</p>
-<h3 id="synopsis-23">Synopsis</h3>
+<h3 id="synopsis-24">Synopsis</h3>
 <p>This produces markdown docs for the rclone commands to the directory supplied. These are in a format suitable for hugo to render into the rclone.org website.</p>
-<pre><code>rclone gendocs output_directory</code></pre>
+<pre><code>rclone gendocs output_directory [flags]</code></pre>
+<h3 id="options-3">Options</h3>
+<pre><code>  -h, --help   help for gendocs</code></pre>
 <h2 id="rclone-listremotes">rclone listremotes</h2>
 <p>List all the remotes in the config file.</p>
-<h3 id="synopsis-24">Synopsis</h3>
+<h3 id="synopsis-25">Synopsis</h3>
 <p>rclone listremotes lists all the available remotes from the config file.</p>
 <p>When uses with the -l flag it lists the types too.</p>
-<pre><code>rclone listremotes</code></pre>
-<h3 id="options-3">Options</h3>
+<pre><code>rclone listremotes [flags]</code></pre>
+<h3 id="options-4">Options</h3>
 <pre><code>  -l, --long   Show the type as well as names.</code></pre>
+<h2 id="rclone-lsjson">rclone lsjson</h2>
+<p>List directories and objects in the path in JSON format.</p>
+<h3 id="synopsis-26">Synopsis</h3>
+<p>List directories and objects in the path in JSON format.</p>
+<p>The output is an array of Items, where each Item looks like this</p>
+<p>{ &quot;Hashes&quot; : { &quot;SHA-1&quot; : &quot;f572d396fae9206628714fb2ce00f72e94f2258f&quot;, &quot;MD5&quot; : &quot;b1946ac92492d2347c6235b4d2611184&quot;, &quot;DropboxHash&quot; : &quot;ecb65bb98f9d905b70458986c39fcbad7715e5f2fcc3b1f07767d7c83e2438cc&quot; }, &quot;IsDir&quot; : false, &quot;ModTime&quot; : &quot;2017-05-31T16:15:57.034468261+01:00&quot;, &quot;Name&quot; : &quot;file.txt&quot;, &quot;Path&quot; : &quot;full/path/goes/here/file.txt&quot;, &quot;Size&quot; : 6 }</p>
+<p>If --hash is not specified the the Hashes property won't be emitted.</p>
+<p>If --no-modtime is specified then ModTime will be blank.</p>
+<p>The time is in RFC3339 format with nanosecond precision.</p>
+<p>The whole output can be processed as a JSON blob, or alternatively it can be processed line by line as each item is written one to a line.</p>
+<pre><code>rclone lsjson remote:path [flags]</code></pre>
+<h3 id="options-5">Options</h3>
+<pre><code>      --hash         Include hashes in the output (may take longer).
+      --no-modtime   Don&#39;t read the modification time (can speed things up).
+  -R, --recursive    Recurse into the listing.</code></pre>
 <h2 id="rclone-mount">rclone mount</h2>
 <p>Mount the remote as a mountpoint. <strong>EXPERIMENTAL</strong></p>
-<h3 id="synopsis-25">Synopsis</h3>
+<h3 id="synopsis-27">Synopsis</h3>
 <p>rclone mount allows Linux, FreeBSD and macOS to mount any of Rclone's cloud storage systems as a file system with FUSE.</p>
 <p>This is <strong>EXPERIMENTAL</strong> - use with care.</p>
 <p>First set up your remote using <code>rclone config</code>. Check it works with <code>rclone ls</code> etc.</p>
-<p>Start the mount like this (note the &amp; on the end to put rclone in the background).</p>
-<pre><code>rclone mount remote:path/to/files /path/to/local/mount &amp;</code></pre>
-<p>Stop the mount with</p>
-<pre><code>fusermount -u /path/to/local/mount</code></pre>
-<p>Or if that fails try</p>
-<pre><code>fusermount -z -u /path/to/local/mount</code></pre>
-<p>Or with OS X</p>
-<pre><code>umount /path/to/local/mount</code></pre>
+<p>Start the mount like this</p>
+<pre><code>rclone mount remote:path/to/files /path/to/local/mount</code></pre>
+<p>When the program ends, either via Ctrl+C or receiving a SIGINT or SIGTERM signal, the mount is automatically stopped.</p>
+<p>The umount operation can fail, for example when the mountpoint is busy. When that happens, it is the user's responsibility to stop the mount manually with</p>
+<pre><code># Linux
+fusermount -u /path/to/local/mount
+# OS X
+umount /path/to/local/mount</code></pre>
 <h3 id="limitations">Limitations</h3>
 <p>This can only write files seqentially, it can only seek when reading. This means that many applications won't work with their files on an rclone mount.</p>
 <p>The bucket based remotes (eg Swift, S3, Google Compute Storage, B2, Hubic) won't work from the root - you will need to specify a bucket, or a path within the bucket. So <code>swift:</code> won't work whereas <code>swift:bucket</code> will as will <code>swift:bucket/path</code>. None of these support the concept of directories, so empty directories will have a tendency to disappear once they fall out of the directory cache.</p>
@@ -441,6 +465,10 @@ if src is directory
 <p>File systems expect things to be 100% reliable, whereas cloud storage systems are a long way from 100% reliable. The rclone sync/copy commands cope with this with lots of retries. However rclone mount can't use retries in the same way without making local copies of the uploads. This might happen in the future, but for the moment rclone mount won't do that, so will be less reliable than the rclone command.</p>
 <h3 id="filters">Filters</h3>
 <p>Note that all the rclone filters can be used to select a subset of the files to be visible in the mount.</p>
+<h3 id="directory-cache">Directory Cache</h3>
+<p>Using the <code>--dir-cache-time</code> flag, you can set how long a directory should be considered up to date and not refreshed from the backend. Changes made locally in the mount may appear immediately or invalidate the cache. However, changes done on the remote will only be picked up once the cache expires.</p>
+<p>Alternatively, you can send a <code>SIGHUP</code> signal to rclone for it to flush all directory caches, regardless of how old they are. Assuming only one rclone instance is running, you can reset the cache like this:</p>
+<pre><code>kill -SIGHUP $(pidof rclone)</code></pre>
 <h3 id="bugs">Bugs</h3>
 <ul>
 <li>All the remotes should work for read, but some may not for write
@@ -450,14 +478,8 @@ if src is directory
 <li>Or put in an an upload cache to cache the files on disk first</li>
 </ul></li>
 </ul>
-<h3 id="todo">TODO</h3>
-<ul>
-<li>Check hashes on upload/download</li>
-<li>Preserve timestamps</li>
-<li>Move directories</li>
-</ul>
-<pre><code>rclone mount remote:path /path/to/mountpoint</code></pre>
-<h3 id="options-4">Options</h3>
+<pre><code>rclone mount remote:path /path/to/mountpoint [flags]</code></pre>
+<h3 id="options-6">Options</h3>
 <pre><code>      --allow-non-empty           Allow mounting over a non-empty directory.
       --allow-other               Allow access to other users.
       --allow-root                Allow access to root user.
@@ -466,15 +488,17 @@ if src is directory
       --dir-cache-time duration   Time to cache directory entries for. (default 5m0s)
       --gid uint32                Override the gid field set by the filesystem. (default 502)
       --max-read-ahead int        The number of bytes that can be prefetched for sequential reads. (default 128k)
-      --no-modtime                Don&#39;t read the modification time (can speed things up).
+      --no-checksum               Don&#39;t compare checksums on up/download.
+      --no-modtime                Don&#39;t read/write the modification time (can speed things up).
       --no-seek                   Don&#39;t allow seeking in files.
+      --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable. (default 1m0s)
       --read-only                 Mount read-only.
       --uid uint32                Override the uid field set by the filesystem. (default 502)
       --umask int                 Override the permission bits set by the filesystem. (default 2)
       --write-back-cache          Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used.</code></pre>
 <h2 id="rclone-moveto">rclone moveto</h2>
 <p>Move file or directory from source to dest.</p>
-<h3 id="synopsis-26">Synopsis</h3>
+<h3 id="synopsis-28">Synopsis</h3>
 <p>If source:path is a file or directory then it moves it to a file or directory named dest:path.</p>
 <p>This can be used to rename files or upload single files to other than their existing name. If the source is a directory then it acts exacty like the move command.</p>
 <p>So</p>
@@ -489,14 +513,30 @@ if src is directory
 <p>This doesn't transfer unchanged files, testing by size and modification time or MD5SUM. src will be deleted on successful transfer.</p>
 <p><strong>Important</strong>: Since this can cause data loss, test first with the --dry-run flag.</p>
 <pre><code>rclone moveto source:path dest:path</code></pre>
+<h2 id="rclone-ncdu">rclone ncdu</h2>
+<p>Explore a remote with a text based user interface.</p>
+<h3 id="synopsis-29">Synopsis</h3>
+<p>This displays a text based user interface allowing the navigation of a remote. It is most useful for answering the question - &quot;What is using all my disk space?&quot;.</p>
+<p>To make the user interface it first scans the entire remote given and builds an in memory representation. rclone ncdu can be used during this scanning phase and you will see it building up the directory structure as it goes along.</p>
+<p>Here are the keys - press '?' to toggle the help on and off</p>
+<pre><code> ↑,↓ or k,j to Move
+ →,l to enter
+ ←,h to return
+ c toggle counts
+ g toggle graph
+ n,s,C sort by name,size,count
+ ? to toggle help on and off
+ q/ESC/c-C to quit</code></pre>
+<p>This an homage to the <a href="https://dev.yorhel.nl/ncdu">ncdu tool</a> but for rclone remotes. It is missing lots of features at the moment, most importantly deleting files, but is useful as it stands.</p>
+<pre><code>rclone ncdu remote:path</code></pre>
 <h2 id="rclone-obscure">rclone obscure</h2>
 <p>Obscure password for use in the rclone.conf</p>
-<h3 id="synopsis-27">Synopsis</h3>
+<h3 id="synopsis-30">Synopsis</h3>
 <p>Obscure password for use in the rclone.conf</p>
 <pre><code>rclone obscure password</code></pre>
 <h2 id="rclone-rmdirs">rclone rmdirs</h2>
 <p>Remove any empty directoryies under the path.</p>
-<h3 id="synopsis-28">Synopsis</h3>
+<h3 id="synopsis-31">Synopsis</h3>
 <p>This removes any empty directories (or directories that only contain empty directories) under the path that it finds, including the path if it has nothing in.</p>
 <p>This is useful for tidying up remotes that rclone has left a lot of empty directories in.</p>
 <pre><code>rclone rmdirs remote:path</code></pre>
@@ -536,7 +576,7 @@ if src is directory
 <p>This can be used when scripting to make aged backups efficiently, eg</p>
 <pre><code>rclone sync remote:current-backup remote:previous-backup
 rclone sync /path/to/files remote:current-backup</code></pre>
-<h2 id="options-5">Options</h2>
+<h2 id="options-7">Options</h2>
 <p>Rclone has a number of options to control its behaviour.</p>
 <p>Options which use TIME use the go time parser. A duration string is a possibly signed sequence of decimal numbers, each with optional fraction and a unit suffix, such as &quot;300ms&quot;, &quot;-1.5h&quot; or &quot;2h45m&quot;. Valid time units are &quot;ns&quot;, &quot;us&quot; (or &quot;µs&quot;), &quot;ms&quot;, &quot;s&quot;, &quot;m&quot;, &quot;h&quot;.</p>
 <p>Options which use SIZE use kByte by default. However a suffix of <code>b</code> for bytes, <code>k</code> for kBytes, <code>M</code> for MBytes and <code>G</code> for GBytes may be used. These are the binary units, eg 1, 2**10, 2**20, 2**30 respectively.</p>
@@ -556,7 +596,7 @@ rclone sync /path/to/files remote:current-backup</code></pre>
 <p>An example of a typical timetable to avoid link saturation during daytime working hours could be:</p>
 <p><code>--bwlimit &quot;08:00,512 12:00,10M 13:00,512 18:00,30M 23:00,off&quot;</code></p>
 <p>In this example, the transfer bandwidth will be set to 512kBytes/sec at 8am. At noon, it will raise to 10Mbytes/s, and drop back to 512kBytes/sec at 1pm. At 6pm, the bandwidth limit will be set to 30MBytes/s, and at 11pm it will be completely disabled (full speed). Anything between 11pm and 8am will remain unlimited.</p>
-<p>Bandwidth limits only apply to the data transfer. The don't apply to the bandwith of the directory listings etc.</p>
+<p>Bandwidth limits only apply to the data transfer. They don't apply to the bandwidth of the directory listings etc.</p>
 <p>Note that the units are Bytes/s not Bits/s. Typically connections are measured in Bits/s - to convert divide by 8. For example let's say you have a 10 Mbit/s connection and you wish rclone to use half of it - 5 Mbit/s. This is 5/8 = 0.625MByte/s so you would use a <code>--bwlimit 0.625M</code> parameter for rclone.</p>
 <h3 id="buffer-sizesize">--buffer-size=SIZE</h3>
 <p>Use this sized buffer to speed up file transfers. Each <code>--transfer</code> will use this much memory for buffering.</p>
@@ -567,7 +607,7 @@ rclone sync /path/to/files remote:current-backup</code></pre>
 <h3 id="c---checksum">-c, --checksum</h3>
 <p>Normally rclone will look at modification time and size of files to see if they are equal. If you set this flag then rclone will check the file hash and size to determine if files are equal.</p>
 <p>This is useful when the remote doesn't support setting modified time and a more accurate sync is desired than just checking the file size.</p>
-<p>This is very useful when transferring between remotes which store the same hash type on the object, eg Drive and Swift. For details of which remotes support which hash type see the table in the <a href="http://rclone.org/overview/">overview section</a>.</p>
+<p>This is very useful when transferring between remotes which store the same hash type on the object, eg Drive and Swift. For details of which remotes support which hash type see the table in the <a href="https://rclone.org/overview/">overview section</a>.</p>
 <p>Eg <code>rclone --checksum sync s3:/bucket swift:/bucket</code> would run much quicker than without the <code>--checksum</code> flag.</p>
 <p>When using this flag, rclone won't update mtimes of remote files if they are incorrect as it would normally.</p>
 <h3 id="configconfig_file">--config=CONFIG_FILE</h3>
@@ -663,7 +703,20 @@ rclone sync /path/to/files remote:current-backup</code></pre>
 <p>This option allows you to specify when files on your destination are deleted when you sync folders.</p>
 <p>Specifying the value <code>--delete-before</code> will delete all files present on the destination, but not on the source <em>before</em> starting the transfer of any new or updated files. This uses two passes through the file systems, one for the deletions and one for the copies.</p>
 <p>Specifying <code>--delete-during</code> will delete files while checking and uploading files. This is the fastest option and uses the least memory.</p>
-<p>Specifying <code>--delete-after</code> (the default value) will delay deletion of files until all new/updated files have been successfully transfered. The files to be deleted are collected in the copy pass then deleted after the copy pass has completed sucessfully. The files to be deleted are held in memory so this mode may use more memory. This is the safest mode as it will only delete files if there have been no errors subsequent to that. If there have been errors before the deletions start then you will get the message <code>not deleting files as there were IO errors</code>.</p>
+<p>Specifying <code>--delete-after</code> (the default value) will delay deletion of files until all new/updated files have been successfully transferred. The files to be deleted are collected in the copy pass then deleted after the copy pass has completed successfully. The files to be deleted are held in memory so this mode may use more memory. This is the safest mode as it will only delete files if there have been no errors subsequent to that. If there have been errors before the deletions start then you will get the message <code>not deleting files as there were IO errors</code>.</p>
+<h3 id="fast-list">--fast-list</h3>
+<p>When doing anything which involves a directory listing (eg <code>sync</code>, <code>copy</code>, <code>ls</code> - in fact nearly every command), rclone normally lists a directory and processes it before using more directory lists to process any subdirectories. This can be parallelised and works very quickly using the least amount of memory.</p>
+<p>However some remotes have a way of listing all files beneath a directory in one (or a small number) of transactions. These tend to be the bucket based remotes (eg s3, b2, gcs, swift, hubic).</p>
+<p>If you use the <code>--fast-list</code> flag then rclone will use this method for listing directories. This will have the following consequences for the listing:</p>
+<ul>
+<li>It <strong>will</strong> use fewer transactions (important if you pay for them)</li>
+<li>It <strong>will</strong> use more memory. Rclone has to load the whole listing into memory.</li>
+<li>It <em>may</em> be faster because it uses fewer transactions</li>
+<li>It <em>may</em> be slower because it can't be parallelized</li>
+</ul>
+<p>rclone should always give identical results with and without <code>--fast-list</code>.</p>
+<p>If you pay for transactions and can fit your entire sync listing into memory then <code>--fast-list</code> is recommended. If you have a very big sync to do then don't use <code>--fast-list</code> otherwise you will run out of memory.</p>
+<p>If you use <code>--fast-list</code> on a remote which doesn't support it, then rclone will just ignore it.</p>
 <h3 id="timeouttime">--timeout=TIME</h3>
 <p>This sets the IO idle timeout. If a transfer has started but then becomes idle for this long it is considered broken and disconnected.</p>
 <p>The default is <code>5m</code>. Set to 0 to disable.</p>
@@ -673,7 +726,7 @@ rclone sync /path/to/files remote:current-backup</code></pre>
 <h3 id="u---update">-u, --update</h3>
 <p>This forces rclone to skip any files which exist on the destination and have a modified time that is newer than the source file.</p>
 <p>If an existing destination file has a modification time equal (within the computed modify window precision) to the source file's, it will be updated if the sizes are different.</p>
-<p>On remotes which don't support mod time directly the time checked will be the uploaded time. This means that if uploading to one of these remoes, rclone will skip any files which exist on the destination and have an uploaded time that is newer than the modification time of the source file.</p>
+<p>On remotes which don't support mod time directly the time checked will be the uploaded time. This means that if uploading to one of these remotes, rclone will skip any files which exist on the destination and have an uploaded time that is newer than the modification time of the source file.</p>
 <p>This can be useful when transferring to a remote which doesn't support mod times directly as it is more accurate than a <code>--size-only</code> check and faster than using <code>--checksum</code>.</p>
 <h3 id="v--vv---verbose">-v, -vv, --verbose</h3>
 <p>With <code>-v</code> rclone will tell you about each file that is transferred and a small number of significant events.</p>
@@ -720,7 +773,7 @@ c/u/q&gt;</code></pre>
 
 read -s RCLONE_CONFIG_PASS
 export RCLONE_CONFIG_PASS</code></pre>
-<p>Then source the file when you want to use it. From the shell you would do <code>source set-rclone-password</code>. It will then ask you for the password and set it in the envonment variable.</p>
+<p>Then source the file when you want to use it. From the shell you would do <code>source set-rclone-password</code>. It will then ask you for the password and set it in the environment variable.</p>
 <p>If you are running rclone inside a script, you might want to disable password prompts. To do that, pass the parameter <code>--ask-password=false</code> to rclone. This will make rclone fail instead of asking for a password if <code>RCLONE_CONFIG_PASS</code> doesn't contain a valid password.</p>
 <h2 id="developer-options">Developer options</h2>
 <p>These options are useful when developing or debugging rclone. There are also some more remote specific options which aren't documented here which are used for testing. These start with remote name eg <code>--drive-test-option</code> - see the docs for the remote in question.</p>
@@ -744,7 +797,7 @@ export RCLONE_CONFIG_PASS</code></pre>
 <h3 id="no-traverse">--no-traverse</h3>
 <p>The <code>--no-traverse</code> flag controls whether the destination file system is traversed when using the <code>copy</code> or <code>move</code> commands. <code>--no-traverse</code> is not compatible with <code>sync</code> and will be ignored if you supply it with <code>sync</code>.</p>
 <p>If you are only copying a small number of files and/or have a large number of files on the destination then <code>--no-traverse</code> will stop rclone listing the destination and save time.</p>
-<p>However if you are copying a large number of files, escpecially if you are doing a copy where lots of the files haven't changed and won't need copying then you shouldn't use <code>--no-traverse</code>.</p>
+<p>However if you are copying a large number of files, especially if you are doing a copy where lots of the files haven't changed and won't need copying then you shouldn't use <code>--no-traverse</code>.</p>
 <p>It can also be used to reduce the memory usage of rclone when copying - <code>rclone --no-traverse copy src dst</code> won't load either the source or destination listings into memory so will use the minimum amount of memory.</p>
 <h2 id="filtering">Filtering</h2>
 <p>For the filtering options</p>
@@ -763,7 +816,7 @@ export RCLONE_CONFIG_PASS</code></pre>
 <li><code>--max-age</code></li>
 <li><code>--dump-filters</code></li>
 </ul>
-<p>See the <a href="http://rclone.org/filtering/">filtering section</a>.</p>
+<p>See the <a href="https://rclone.org/filtering/">filtering section</a>.</p>
 <h2 id="logging">Logging</h2>
 <p>rclone has 4 levels of logging, <code>Error</code>, <code>Notice</code>, <code>Info</code> and <code>Debug</code>.</p>
 <p>By default rclone logs to standard error. This means you can redirect standard error and still see the normal output of rclone commands (eg <code>rclone ls</code>).</p>
@@ -778,10 +831,10 @@ export RCLONE_CONFIG_PASS</code></pre>
 <h2 id="exit-code">Exit Code</h2>
 <p>If any errors occurred during the command, rclone will exit with a non-zero exit code. This allows scripts to detect when rclone operations have failed.</p>
 <p>During the startup phase rclone will exit immediately if an error is detected in the configuration. There will always be a log message immediately before exiting.</p>
-<p>When rclone is running it will accumulate errors as it goes along, and only exit with an non-zero exit code if (after retries) there were still failed transfers. For every error counted there will be a high priority log message (visibile with <code>-q</code>) showing the message and which file caused the problem. A high priority message is also shown when starting a retry so the user can see that any previous error messages may not be valid after the retry. If rclone has done a retry it will log a high priority message if the retry was successful.</p>
+<p>When rclone is running it will accumulate errors as it goes along, and only exit with an non-zero exit code if (after retries) there were still failed transfers. For every error counted there will be a high priority log message (visible with <code>-q</code>) showing the message and which file caused the problem. A high priority message is also shown when starting a retry so the user can see that any previous error messages may not be valid after the retry. If rclone has done a retry it will log a high priority message if the retry was successful.</p>
 <h2 id="environment-variables">Environment Variables</h2>
 <p>Rclone can be configured entirely using environment variables. These can be used to set defaults for options or config file entries.</p>
-<h3 id="options-6">Options</h3>
+<h3 id="options-8">Options</h3>
 <p>Every option in rclone can have its default set by environment variable.</p>
 <p>To find the name of the environment variable, first take the long option name, strip the leading <code>--</code>, change <code>-</code> to <code>_</code>, make upper case and prepend <code>RCLONE_</code>.</p>
 <p>For example to always set <code>--stats 5s</code>, set the environment variable <code>RCLONE_STATS=5s</code>. If you set stats on the command line this will override the environment variable setting.</p>
@@ -1073,7 +1126,7 @@ user2/stuff</code></pre>
 <table>
 <thead>
 <tr class="header">
-<th align="left">Name</th>
+<th>Name</th>
 <th align="center">Hash</th>
 <th align="center">ModTime</th>
 <th align="center">Case Insensitive</th>
@@ -1083,7 +1136,7 @@ user2/stuff</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">Google Drive</td>
+<td>Google Drive</td>
 <td align="center">MD5</td>
 <td align="center">Yes</td>
 <td align="center">No</td>
@@ -1091,7 +1144,7 @@ user2/stuff</code></pre>
 <td align="center">R/W</td>
 </tr>
 <tr class="even">
-<td align="left">Amazon S3</td>
+<td>Amazon S3</td>
 <td align="center">MD5</td>
 <td align="center">Yes</td>
 <td align="center">No</td>
@@ -1099,7 +1152,7 @@ user2/stuff</code></pre>
 <td align="center">R/W</td>
 </tr>
 <tr class="odd">
-<td align="left">Openstack Swift</td>
+<td>Openstack Swift</td>
 <td align="center">MD5</td>
 <td align="center">Yes</td>
 <td align="center">No</td>
@@ -1107,15 +1160,15 @@ user2/stuff</code></pre>
 <td align="center">R/W</td>
 </tr>
 <tr class="even">
-<td align="left">Dropbox</td>
+<td>Dropbox</td>
+<td align="center">DBHASH †</td>
+<td align="center">Yes</td>
+<td align="center">Yes</td>
+<td align="center">No</td>
 <td align="center">-</td>
-<td align="center">No</td>
-<td align="center">Yes</td>
-<td align="center">No</td>
-<td align="center">R</td>
 </tr>
 <tr class="odd">
-<td align="left">Google Cloud Storage</td>
+<td>Google Cloud Storage</td>
 <td align="center">MD5</td>
 <td align="center">Yes</td>
 <td align="center">No</td>
@@ -1123,7 +1176,7 @@ user2/stuff</code></pre>
 <td align="center">R/W</td>
 </tr>
 <tr class="even">
-<td align="left">Amazon Drive</td>
+<td>Amazon Drive</td>
 <td align="center">MD5</td>
 <td align="center">No</td>
 <td align="center">Yes</td>
@@ -1131,7 +1184,7 @@ user2/stuff</code></pre>
 <td align="center">R</td>
 </tr>
 <tr class="odd">
-<td align="left">Microsoft One Drive</td>
+<td>Microsoft OneDrive</td>
 <td align="center">SHA1</td>
 <td align="center">Yes</td>
 <td align="center">Yes</td>
@@ -1139,7 +1192,7 @@ user2/stuff</code></pre>
 <td align="center">R</td>
 </tr>
 <tr class="even">
-<td align="left">Hubic</td>
+<td>Hubic</td>
 <td align="center">MD5</td>
 <td align="center">Yes</td>
 <td align="center">No</td>
@@ -1147,7 +1200,7 @@ user2/stuff</code></pre>
 <td align="center">R/W</td>
 </tr>
 <tr class="odd">
-<td align="left">Backblaze B2</td>
+<td>Backblaze B2</td>
 <td align="center">SHA1</td>
 <td align="center">Yes</td>
 <td align="center">No</td>
@@ -1155,7 +1208,7 @@ user2/stuff</code></pre>
 <td align="center">R/W</td>
 </tr>
 <tr class="even">
-<td align="left">Yandex Disk</td>
+<td>Yandex Disk</td>
 <td align="center">MD5</td>
 <td align="center">Yes</td>
 <td align="center">No</td>
@@ -1163,7 +1216,7 @@ user2/stuff</code></pre>
 <td align="center">R/W</td>
 </tr>
 <tr class="odd">
-<td align="left">SFTP</td>
+<td>SFTP</td>
 <td align="center">-</td>
 <td align="center">Yes</td>
 <td align="center">Depends</td>
@@ -1171,7 +1224,15 @@ user2/stuff</code></pre>
 <td align="center">-</td>
 </tr>
 <tr class="even">
-<td align="left">The local filesystem</td>
+<td>FTP</td>
+<td align="center">-</td>
+<td align="center">No</td>
+<td align="center">Yes</td>
+<td align="center">No</td>
+<td align="center">-</td>
+</tr>
+<tr class="odd">
+<td>The local filesystem</td>
 <td align="center">All</td>
 <td align="center">Yes</td>
 <td align="center">Depends</td>
@@ -1184,6 +1245,7 @@ user2/stuff</code></pre>
 <p>The cloud storage system supports various hash types of the objects.<br />
 The hashes are used when transferring data as an integrity check and can be specifically used with the <code>--checksum</code> flag in syncs and in the <code>check</code> command.</p>
 <p>To use the checksum checks between filesystems they must support a common hash type.</p>
+<p>† Note that Dropbox supports <a href="https://www.dropbox.com/developers/reference/content-hash">its own custom hash</a>. This is an SHA256 sum of all the 4MB block SHA256s.</p>
 <h3 id="modtime">ModTime</h3>
 <p>The cloud storage system supports setting modification times on objects. If it does then this enables a using the modification times as part of the sync. If not then only the size will be checked by default, though the MD5SUM can be checked with the <code>--checksum</code> flag.</p>
 <p>All cloud storage systems support some kind of date on the object and these will be set when transferring from the cloud storage system.</p>
@@ -1210,109 +1272,131 @@ The hashes are used when transferring data as an integrity check and can be spec
 <table>
 <thead>
 <tr class="header">
-<th align="left">Name</th>
+<th>Name</th>
 <th align="center">Purge</th>
 <th align="center">Copy</th>
 <th align="center">Move</th>
 <th align="center">DirMove</th>
 <th align="center">CleanUp</th>
+<th align="center">ListR</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">Google Drive</td>
+<td>Google Drive</td>
 <td align="center">Yes</td>
 <td align="center">Yes</td>
 <td align="center">Yes</td>
 <td align="center">Yes</td>
 <td align="center">No <a href="https://github.com/ncw/rclone/issues/575">#575</a></td>
+<td align="center">No</td>
 </tr>
 <tr class="even">
-<td align="left">Amazon S3</td>
+<td>Amazon S3</td>
 <td align="center">No</td>
 <td align="center">Yes</td>
 <td align="center">No</td>
 <td align="center">No</td>
 <td align="center">No</td>
+<td align="center">Yes</td>
 </tr>
 <tr class="odd">
-<td align="left">Openstack Swift</td>
+<td>Openstack Swift</td>
 <td align="center">Yes †</td>
 <td align="center">Yes</td>
 <td align="center">No</td>
 <td align="center">No</td>
 <td align="center">No</td>
+<td align="center">Yes</td>
 </tr>
 <tr class="even">
-<td align="left">Dropbox</td>
+<td>Dropbox</td>
 <td align="center">Yes</td>
 <td align="center">Yes</td>
 <td align="center">Yes</td>
 <td align="center">Yes</td>
 <td align="center">No <a href="https://github.com/ncw/rclone/issues/575">#575</a></td>
+<td align="center">No</td>
 </tr>
 <tr class="odd">
-<td align="left">Google Cloud Storage</td>
+<td>Google Cloud Storage</td>
 <td align="center">Yes</td>
 <td align="center">Yes</td>
 <td align="center">No</td>
 <td align="center">No</td>
 <td align="center">No</td>
+<td align="center">Yes</td>
 </tr>
 <tr class="even">
-<td align="left">Amazon Drive</td>
+<td>Amazon Drive</td>
 <td align="center">Yes</td>
 <td align="center">No</td>
 <td align="center">Yes</td>
 <td align="center">Yes</td>
 <td align="center">No <a href="https://github.com/ncw/rclone/issues/575">#575</a></td>
+<td align="center">No</td>
 </tr>
 <tr class="odd">
-<td align="left">Microsoft One Drive</td>
+<td>Microsoft OneDrive</td>
 <td align="center">Yes</td>
 <td align="center">Yes</td>
 <td align="center">Yes</td>
 <td align="center">No <a href="https://github.com/ncw/rclone/issues/197">#197</a></td>
 <td align="center">No <a href="https://github.com/ncw/rclone/issues/575">#575</a></td>
+<td align="center">No</td>
 </tr>
 <tr class="even">
-<td align="left">Hubic</td>
+<td>Hubic</td>
 <td align="center">Yes †</td>
 <td align="center">Yes</td>
 <td align="center">No</td>
 <td align="center">No</td>
 <td align="center">No</td>
+<td align="center">Yes</td>
 </tr>
 <tr class="odd">
-<td align="left">Backblaze B2</td>
+<td>Backblaze B2</td>
 <td align="center">No</td>
 <td align="center">No</td>
 <td align="center">No</td>
 <td align="center">No</td>
 <td align="center">Yes</td>
+<td align="center">Yes</td>
 </tr>
 <tr class="even">
-<td align="left">Yandex Disk</td>
+<td>Yandex Disk</td>
 <td align="center">Yes</td>
 <td align="center">No</td>
 <td align="center">No</td>
 <td align="center">No</td>
 <td align="center">No <a href="https://github.com/ncw/rclone/issues/575">#575</a></td>
+<td align="center">Yes</td>
 </tr>
 <tr class="odd">
-<td align="left">SFTP</td>
+<td>SFTP</td>
 <td align="center">No</td>
 <td align="center">No</td>
 <td align="center">Yes</td>
 <td align="center">Yes</td>
+<td align="center">No</td>
 <td align="center">No</td>
 </tr>
 <tr class="even">
-<td align="left">The local filesystem</td>
+<td>FTP</td>
+<td align="center">No</td>
+<td align="center">No</td>
+<td align="center">Yes</td>
+<td align="center">Yes</td>
+<td align="center">No</td>
+<td align="center">No</td>
+</tr>
+<tr class="odd">
+<td>The local filesystem</td>
 <td align="center">Yes</td>
 <td align="center">No</td>
 <td align="center">Yes</td>
 <td align="center">Yes</td>
+<td align="center">No</td>
 <td align="center">No</td>
 </tr>
 </tbody>
@@ -1331,6 +1415,8 @@ The hashes are used when transferring data as an integrity check and can be spec
 <h3 id="cleanup">CleanUp</h3>
 <p>This is used for emptying the trash for a remote by <code>rclone cleanup</code>.</p>
 <p>If the server can't do <code>CleanUp</code> then <code>rclone cleanup</code> will return an error.</p>
+<h3 id="listr">ListR</h3>
+<p>The remote supports a recursive list to list all the contents beneath a directory quickly. This enables the <code>--fast-list</code> flag to work. See the <a href="/docs/#fast-list">rclone docs</a> for more details.</p>
 <h2 id="google-drive">Google Drive</h2>
 <p>Paths are specified as <code>drive:path</code></p>
 <p>Drive paths may be as deep as required, eg <code>drive:directory/subdirectory</code>.</p>
@@ -1338,10 +1424,13 @@ The hashes are used when transferring data as an integrity check and can be spec
 <p>Here is an example of how to make a remote called <code>remote</code>. First run:</p>
 <pre><code> rclone config</code></pre>
 <p>This will guide you through an interactive setup process:</p>
-<pre><code>n) New remote
-d) Delete remote
+<pre><code>No remotes found - make a new one
+n) New remote
+r) Rename remote
+c) Copy remote
+s) Set configuration password
 q) Quit config
-e/n/d/q&gt; n
+n/r/c/s/q&gt; n
 name&gt; remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
@@ -1355,27 +1444,29 @@ Choose a number from below, or type in your own value
    \ &quot;dropbox&quot;
  5 / Encrypt/Decrypt a remote
    \ &quot;crypt&quot;
- 6 / Google Cloud Storage (this is not Google Drive)
+ 6 / FTP Connection
+   \ &quot;ftp&quot;
+ 7 / Google Cloud Storage (this is not Google Drive)
    \ &quot;google cloud storage&quot;
- 7 / Google Drive
+ 8 / Google Drive
    \ &quot;drive&quot;
- 8 / Hubic
+ 9 / Hubic
    \ &quot;hubic&quot;
- 9 / Local Disk
+10 / Local Disk
    \ &quot;local&quot;
-10 / Microsoft OneDrive
+11 / Microsoft OneDrive
    \ &quot;onedrive&quot;
-11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
    \ &quot;swift&quot;
-12 / SSH/SFTP Connection
+13 / SSH/SFTP Connection
    \ &quot;sftp&quot;
-13 / Yandex Disk
+14 / Yandex Disk
    \ &quot;yandex&quot;
-Storage&gt; 7
+Storage&gt; 8
 Google Application Client Id - leave blank normally.
-client_id&gt;
+client_id&gt; 
 Google Application Client Secret - leave blank normally.
-client_secret&gt;
+client_secret&gt; 
 Remote config
 Use auto config?
  * Say Y if not sure
@@ -1387,10 +1478,14 @@ If your browser doesn&#39;t open automatically go to the following link: http://
 Log in and authorize rclone for access
 Waiting for code...
 Got code
+Configure this as a team drive?
+y) Yes
+n) No
+y/n&gt; n
 --------------------
 [remote]
-client_id =
-client_secret =
+client_id = 
+client_secret = 
 token = {&quot;AccessToken&quot;:&quot;xxxx.x.xxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&quot;,&quot;RefreshToken&quot;:&quot;1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx&quot;,&quot;Expiry&quot;:&quot;2014-03-16T13:57:58.955387075Z&quot;,&quot;Extra&quot;:null}
 --------------------
 y) Yes this is OK
@@ -1405,6 +1500,34 @@ y/e/d&gt; y</code></pre>
 <pre><code>rclone ls remote:</code></pre>
 <p>To copy a local directory to a drive directory called backup</p>
 <pre><code>rclone copy /home/source remote:backup</code></pre>
+<h3 id="team-drives">Team drives</h3>
+<p>If you want to configure the remote to point to a Google Team Drive then answer <code>y</code> to the question <code>Configure this as a team drive?</code>.</p>
+<p>This will fetch the list of Team Drives from google and allow you to configure which one you want to use. You can also type in a team drive ID if you prefer.</p>
+<p>For example:</p>
+<pre><code>Configure this as a team drive?
+y) Yes
+n) No
+y/n&gt; y
+Fetching team drive list...
+Choose a number from below, or type in your own value
+ 1 / Rclone Test
+   \ &quot;xxxxxxxxxxxxxxxxxxxx&quot;
+ 2 / Rclone Test 2
+   \ &quot;yyyyyyyyyyyyyyyyyyyy&quot;
+ 3 / Rclone Test 3
+   \ &quot;zzzzzzzzzzzzzzzzzzzz&quot;
+Enter a Team Drive ID&gt; 1
+--------------------
+[remote]
+client_id = 
+client_secret = 
+token = {&quot;AccessToken&quot;:&quot;xxxx.x.xxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&quot;,&quot;RefreshToken&quot;:&quot;1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx&quot;,&quot;Expiry&quot;:&quot;2014-03-16T13:57:58.955387075Z&quot;,&quot;Extra&quot;:null}
+team_drive = xxxxxxxxxxxxxxxxxxxx
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d&gt; y</code></pre>
 <h3 id="modified-time">Modified time</h3>
 <p>Google drive stores modification times accurate to 1 ms.</p>
 <h3 id="revisions">Revisions</h3>
@@ -1445,111 +1568,111 @@ y/e/d&gt; y</code></pre>
 </colgroup>
 <thead>
 <tr class="header">
-<th align="left">Extension</th>
-<th align="left">Mime Type</th>
-<th align="left">Description</th>
+<th>Extension</th>
+<th>Mime Type</th>
+<th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">csv</td>
-<td align="left">text/csv</td>
-<td align="left">Standard CSV format for Spreadsheets</td>
+<td>csv</td>
+<td>text/csv</td>
+<td>Standard CSV format for Spreadsheets</td>
 </tr>
 <tr class="even">
-<td align="left">doc</td>
-<td align="left">application/msword</td>
-<td align="left">Micosoft Office Document</td>
+<td>doc</td>
+<td>application/msword</td>
+<td>Micosoft Office Document</td>
 </tr>
 <tr class="odd">
-<td align="left">docx</td>
-<td align="left">application/vnd.openxmlformats-officedocument.wordprocessingml.document</td>
-<td align="left">Microsoft Office Document</td>
+<td>docx</td>
+<td>application/vnd.openxmlformats-officedocument.wordprocessingml.document</td>
+<td>Microsoft Office Document</td>
 </tr>
 <tr class="even">
-<td align="left">epub</td>
-<td align="left">application/epub+zip</td>
-<td align="left">E-book format</td>
+<td>epub</td>
+<td>application/epub+zip</td>
+<td>E-book format</td>
 </tr>
 <tr class="odd">
-<td align="left">html</td>
-<td align="left">text/html</td>
-<td align="left">An HTML Document</td>
+<td>html</td>
+<td>text/html</td>
+<td>An HTML Document</td>
 </tr>
 <tr class="even">
-<td align="left">jpg</td>
-<td align="left">image/jpeg</td>
-<td align="left">A JPEG Image File</td>
+<td>jpg</td>
+<td>image/jpeg</td>
+<td>A JPEG Image File</td>
 </tr>
 <tr class="odd">
-<td align="left">odp</td>
-<td align="left">application/vnd.oasis.opendocument.presentation</td>
-<td align="left">Openoffice Presentation</td>
+<td>odp</td>
+<td>application/vnd.oasis.opendocument.presentation</td>
+<td>Openoffice Presentation</td>
 </tr>
 <tr class="even">
-<td align="left">ods</td>
-<td align="left">application/vnd.oasis.opendocument.spreadsheet</td>
-<td align="left">Openoffice Spreadsheet</td>
+<td>ods</td>
+<td>application/vnd.oasis.opendocument.spreadsheet</td>
+<td>Openoffice Spreadsheet</td>
 </tr>
 <tr class="odd">
-<td align="left">ods</td>
-<td align="left">application/x-vnd.oasis.opendocument.spreadsheet</td>
-<td align="left">Openoffice Spreadsheet</td>
+<td>ods</td>
+<td>application/x-vnd.oasis.opendocument.spreadsheet</td>
+<td>Openoffice Spreadsheet</td>
 </tr>
 <tr class="even">
-<td align="left">odt</td>
-<td align="left">application/vnd.oasis.opendocument.text</td>
-<td align="left">Openoffice Document</td>
+<td>odt</td>
+<td>application/vnd.oasis.opendocument.text</td>
+<td>Openoffice Document</td>
 </tr>
 <tr class="odd">
-<td align="left">pdf</td>
-<td align="left">application/pdf</td>
-<td align="left">Adobe PDF Format</td>
+<td>pdf</td>
+<td>application/pdf</td>
+<td>Adobe PDF Format</td>
 </tr>
 <tr class="even">
-<td align="left">png</td>
-<td align="left">image/png</td>
-<td align="left">PNG Image Format</td>
+<td>png</td>
+<td>image/png</td>
+<td>PNG Image Format</td>
 </tr>
 <tr class="odd">
-<td align="left">pptx</td>
-<td align="left">application/vnd.openxmlformats-officedocument.presentationml.presentation</td>
-<td align="left">Microsoft Office Powerpoint</td>
+<td>pptx</td>
+<td>application/vnd.openxmlformats-officedocument.presentationml.presentation</td>
+<td>Microsoft Office Powerpoint</td>
 </tr>
 <tr class="even">
-<td align="left">rtf</td>
-<td align="left">application/rtf</td>
-<td align="left">Rich Text Format</td>
+<td>rtf</td>
+<td>application/rtf</td>
+<td>Rich Text Format</td>
 </tr>
 <tr class="odd">
-<td align="left">svg</td>
-<td align="left">image/svg+xml</td>
-<td align="left">Scalable Vector Graphics Format</td>
+<td>svg</td>
+<td>image/svg+xml</td>
+<td>Scalable Vector Graphics Format</td>
 </tr>
 <tr class="even">
-<td align="left">tsv</td>
-<td align="left">text/tab-separated-values</td>
-<td align="left">Standard TSV format for spreadsheets</td>
+<td>tsv</td>
+<td>text/tab-separated-values</td>
+<td>Standard TSV format for spreadsheets</td>
 </tr>
 <tr class="odd">
-<td align="left">txt</td>
-<td align="left">text/plain</td>
-<td align="left">Plain Text</td>
+<td>txt</td>
+<td>text/plain</td>
+<td>Plain Text</td>
 </tr>
 <tr class="even">
-<td align="left">xls</td>
-<td align="left">application/vnd.ms-excel</td>
-<td align="left">Microsoft Office Spreadsheet</td>
+<td>xls</td>
+<td>application/vnd.ms-excel</td>
+<td>Microsoft Office Spreadsheet</td>
 </tr>
 <tr class="odd">
-<td align="left">xlsx</td>
-<td align="left">application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</td>
-<td align="left">Microsoft Office Spreadsheet</td>
+<td>xlsx</td>
+<td>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</td>
+<td>Microsoft Office Spreadsheet</td>
 </tr>
 <tr class="even">
-<td align="left">zip</td>
-<td align="left">application/zip</td>
-<td align="left">A ZIP file of HTML, Images CSS</td>
+<td>zip</td>
+<td>application/zip</td>
+<td>A ZIP file of HTML, Images CSS</td>
 </tr>
 </tbody>
 </table>
@@ -1694,7 +1817,7 @@ Choose a number from below, or type in your own value
    \ &quot;sa-east-1&quot;
 location_constraint&gt; 1
 Canned ACL used when creating buckets and/or storing objects in S3.
-For more info visit http://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
+For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
 Choose a number from below, or type in your own value
  1 / Owner gets FULL_CONTROL. No one else has access rights (default).
    \ &quot;private&quot;
@@ -1756,6 +1879,8 @@ y/e/d&gt; y</code></pre>
 <pre><code>rclone ls remote:bucket</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote bucket, deleting any excess files in the bucket.</p>
 <pre><code>rclone sync /home/local/directory remote:bucket</code></pre>
+<h3 id="fast-list-1">--fast-list</h3>
+<p>This remote supports <code>--fast-list</code> which allows you to use fewer transactions in exchange for more memory. See the <a href="/docs/#fast-list">rclone docs</a> for more details.</p>
 <h3 id="modified-time-1">Modified time</h3>
 <p>The modified time is stored as metadata on the object as <code>X-Amz-Meta-Mtime</code> as floating point since the epoch accurate to 1 ns.</p>
 <h3 id="multipart-uploads">Multipart uploads</h3>
@@ -1777,11 +1902,49 @@ y/e/d&gt; y</code></pre>
 <li>Running <code>rclone</code> on an EC2 instance with an IAM role</li>
 </ul>
 <p>If none of these option actually end up providing <code>rclone</code> with AWS credentials then S3 interaction will be non-authenticated (see below).</p>
+<h3 id="s3-permissions">S3 Permissions</h3>
+<p>When using the <code>sync</code> subcommand of <code>rclone</code> the following minimum permissions are required to be available on the bucket being written to:</p>
+<ul>
+<li><code>ListBucket</code></li>
+<li><code>DeleteObject</code></li>
+<li><code>GetObject</code></li>
+<li><code>PutObject</code></li>
+<li><code>PutObjectACL</code></li>
+</ul>
+<p>Example policy:</p>
+<pre><code>{
+    &quot;Version&quot;: &quot;2012-10-17&quot;,
+    &quot;Statement&quot;: [
+        {
+            &quot;Effect&quot;: &quot;Allow&quot;,
+            &quot;Principal&quot;: {
+                &quot;AWS&quot;: &quot;arn:aws:iam::USER_SID:user/USER_NAME&quot;
+            },
+            &quot;Action&quot;: [
+                &quot;s3:ListBucket&quot;,
+                &quot;s3:DeleteObject&quot;,
+                &quot;s3:GetObject&quot;,
+                &quot;s3:PutObject&quot;,
+                &quot;s3:PutObjectAcl&quot;
+            ],
+            &quot;Resource&quot;: [
+              &quot;arn:aws:s3:::BUCKET_NAME/*&quot;,
+              &quot;arn:aws:s3:::BUCKET_NAME&quot;
+            ]
+        }
+    ]
+}</code></pre>
+<p>Notes on above:</p>
+<ol style="list-style-type: decimal">
+<li>This is a policy that can be used when creating bucket. It assumes that <code>USER_NAME</code> has been created.</li>
+<li>The Resource entry must include both resource ARNs, as one implies the bucket and the other implies the bucket's objects.</li>
+</ol>
+<p>For reference, <a href="https://gist.github.com/ebridges/ebfc9042dd7c756cd101cfa807b7ae2b">here's an Ansible script</a> that will generate one or more buckets that will work with <code>rclone sync</code>.</p>
 <h3 id="specific-options-1">Specific options</h3>
 <p>Here are the command line options specific to this cloud storage system.</p>
 <h4 id="s3-aclstring">--s3-acl=STRING</h4>
 <p>Canned ACL used when creating buckets and/or storing objects in S3.</p>
-<p>For more info visit the <a href="http://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl">canned ACL docs</a>.</p>
+<p>For more info visit the <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl">canned ACL docs</a>.</p>
 <h4 id="s3-storage-classstring">--s3-storage-class=STRING</h4>
 <p>Storage class to upload new objects with.</p>
 <p>Available options include:</p>
@@ -1882,10 +2045,10 @@ server_side_encryption =</code></pre>
 <p>So once set up, for example to copy files into a bucket</p>
 <pre><code>rclone --size-only copy /path/to/files minio:bucket</code></pre>
 <h2 id="swift">Swift</h2>
-<p>Swift refers to <a href="http://www.openstack.org/software/openstack-storage/">Openstack Object Storage</a>. Commercial implementations of that being:</p>
+<p>Swift refers to <a href="https://www.openstack.org/software/openstack-storage/">Openstack Object Storage</a>. Commercial implementations of that being:</p>
 <ul>
-<li><a href="http://www.rackspace.com/cloud/files/">Rackspace Cloud Files</a></li>
-<li><a href="http://www.memset.com/cloud/storage/">Memset Memstore</a></li>
+<li><a href="https://www.rackspace.com/cloud/files/">Rackspace Cloud Files</a></li>
+<li><a href="https://www.memset.com/cloud/storage/">Memset Memstore</a></li>
 </ul>
 <p>Paths are specified as <code>remote:container</code> (or <code>remote:</code> for the <code>lsd</code> command.) You may put subdirectories in too, eg <code>remote:container/path/to/dir</code>.</p>
 <p>Here is an example of making a swift configuration. First run</p>
@@ -2001,6 +2164,8 @@ key = $OS_PASSWORD
 auth = $OS_AUTH_URL
 tenant = $OS_TENANT_NAME</code></pre>
 <p>Note that you may (or may not) need to set <code>region</code> too - try without first.</p>
+<h3 id="fast-list-2">--fast-list</h3>
+<p>This remote supports <code>--fast-list</code> which allows you to use fewer transactions in exchange for more memory. See the <a href="/docs/#fast-list">rclone docs</a> for more details.</p>
 <h3 id="specific-options-2">Specific options</h3>
 <p>Here are the command line options specific to this cloud storage system.</p>
 <h4 id="swift-chunk-sizesize">--swift-chunk-size=SIZE</h4>
@@ -2083,15 +2248,10 @@ y/e/d&gt; y</code></pre>
 <pre><code>rclone ls remote:</code></pre>
 <p>To copy a local directory to a dropbox directory called backup</p>
 <pre><code>rclone copy /home/source remote:backup</code></pre>
-<h3 id="modified-time-and-md5sums">Modified time and MD5SUMs</h3>
-<p>Dropbox doesn't provide the ability to set modification times in the V1 public API, so rclone can't support modified time with Dropbox.</p>
-<p>This may change in the future - see these issues for details:</p>
-<ul>
-<li><a href="https://github.com/ncw/rclone/issues/349">Dropbox V2 API</a></li>
-<li><a href="https://github.com/ncw/rclone/issues/348">Allow syncs for remotes that can't set modtime on existing objects</a></li>
-</ul>
-<p>Dropbox doesn't return any sort of checksum (MD5 or SHA1).</p>
-<p>Together that means that syncs to dropbox will effectively have the <code>--size-only</code> flag set.</p>
+<h3 id="modified-time-and-hashes">Modified time and Hashes</h3>
+<p>Dropbox supports modified times, but the only way to set a modification time is to re-upload the file.</p>
+<p>This means that if you uploaded your data with an older version of rclone which didn't support the v2 API and modified times, rclone will decide to upload all your old data to fix the modification times. If you don't want this to happen use <code>--size-only</code> or <code>--checksum</code> flag to stop it.</p>
+<p>Dropbox supports <a href="https://www.dropbox.com/developers/reference/content-hash">its own hash type</a> which is checked for all transfers.</p>
 <h3 id="specific-options-3">Specific options</h3>
 <p>Here are the command line options specific to this cloud storage system.</p>
 <h4 id="dropbox-chunk-sizesize">--dropbox-chunk-size=SIZE</h4>
@@ -2099,7 +2259,7 @@ y/e/d&gt; y</code></pre>
 <h3 id="limitations-3">Limitations</h3>
 <p>Note that Dropbox is case insensitive so you can't have a file called &quot;Hello.doc&quot; and one called &quot;hello.doc&quot;.</p>
 <p>There are some file names such as <code>thumbs.db</code> which Dropbox can't store. There is a full list of them in the <a href="https://www.dropbox.com/en/help/145">&quot;Ignored Files&quot; section of this document</a>. Rclone will issue an error message <code>File name disallowed - not uploading</code> if it attempt to upload one of those file names, but the sync won't fail.</p>
-<p>If you have more than 10,000 files in a directory then <code>rclone purge dropbox:dir</code> will return the error <code>Failed to purge: There are too many files involved in this operation</code>. As a work-around do an <code>rclone delete dropbix:dir</code> followed by an <code>rclone rmdir dropbox:dir</code>.</p>
+<p>If you have more than 10,000 files in a directory then <code>rclone purge dropbox:dir</code> will return the error <code>Failed to purge: There are too many files involved in this operation</code>. As a work-around do an <code>rclone delete dropbox:dir</code> followed by an <code>rclone rmdir dropbox:dir</code>.</p>
 <h2 id="google-cloud-storage">Google Cloud Storage</h2>
 <p>Paths are specified as <code>remote:bucket</code> (or <code>remote:</code> for the <code>lsd</code> command.) You may put subdirectories in too, eg <code>remote:bucket/path/to/dir</code>.</p>
 <p>The initial setup for google cloud storage involves getting a token from Google Cloud Storage which you need to do in your browser. <code>rclone config</code> walks you through it.</p>
@@ -2215,19 +2375,27 @@ y/e/d&gt; y</code></pre>
 <p>You can set up rclone with Google Cloud Storage in an unattended mode, i.e. not tied to a specific end-user Google account. This is useful when you want to synchronise files onto machines that don't have actively logged-in users, for example build machines.</p>
 <p>To get credentials for Google Cloud Platform <a href="https://cloud.google.com/iam/docs/service-accounts">IAM Service Accounts</a>, please head to the <a href="https://console.cloud.google.com/permissions/serviceaccounts">Service Account</a> section of the Google Developer Console. Service Accounts behave just like normal <code>User</code> permissions in <a href="https://cloud.google.com/storage/docs/access-control">Google Cloud Storage ACLs</a>, so you can limit their access (e.g. make them read only). After creating an account, a JSON file containing the Service Account's credentials will be downloaded onto your machines. These credentials are what rclone will use for authentication.</p>
 <p>To use a Service Account instead of OAuth2 token flow, enter the path to your Service Account credentials at the <code>service_account_file</code> prompt and rclone won't use the browser based authentication flow.</p>
+<h3 id="fast-list-3">--fast-list</h3>
+<p>This remote supports <code>--fast-list</code> which allows you to use fewer transactions in exchange for more memory. See the <a href="/docs/#fast-list">rclone docs</a> for more details.</p>
 <h3 id="modified-time-3">Modified time</h3>
 <p>Google google cloud storage stores md5sums natively and rclone stores modification times as metadata on the object, under the &quot;mtime&quot; key in RFC3339 format accurate to 1ns.</p>
 <h2 id="amazon-drive">Amazon Drive</h2>
 <p>Paths are specified as <code>remote:path</code></p>
 <p>Paths may be as deep as required, eg <code>remote:directory/subdirectory</code>.</p>
 <p>The initial setup for Amazon Drive involves getting a token from Amazon which you need to do in your browser. <code>rclone config</code> walks you through it.</p>
+<p>The configuration process for Amazon Drive may involve using an <a href="https://github.com/ncw/oauthproxy">oauth proxy</a>. This is used to keep the Amazon credentials out of the source code. The proxy runs in Google's very secure App Engine environment and doesn't store any credentials which pass through it.</p>
+<p><strong>NB</strong> rclone doesn't not currently have its own Amazon Drive credentials (see <a href="https://forum.rclone.org/t/rclone-has-been-banned-from-amazon-drive/">the forum</a> for why) so you will either need to have your own <code>client_id</code> and <code>client_secret</code> with Amazon Drive, or use a a third party ouath proxy in which case you will need to enter <code>client_id</code>, <code>client_secret</code>, <code>auth_url</code> and <code>token_url</code>.</p>
+<p>Note also if you are not using Amazon's <code>auth_url</code> and <code>token_url</code>, (ie you filled in something for those) then if setting up on a remote machine you can only use the <a href="https://rclone.org/remote_setup/#configuring-by-copying-the-config-file">copying the config method of configuration</a> - <code>rclone authorize</code> will not work.</p>
 <p>Here is an example of how to make a remote called <code>remote</code>. First run:</p>
 <pre><code> rclone config</code></pre>
 <p>This will guide you through an interactive setup process:</p>
-<pre><code>n) New remote
-d) Delete remote
+<pre><code>No remotes found - make a new one
+n) New remote
+r) Rename remote
+c) Copy remote
+s) Set configuration password
 q) Quit config
-e/n/d/q&gt; n
+n/r/c/s/q&gt; n
 name&gt; remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
@@ -2241,28 +2409,35 @@ Choose a number from below, or type in your own value
    \ &quot;dropbox&quot;
  5 / Encrypt/Decrypt a remote
    \ &quot;crypt&quot;
- 6 / Google Cloud Storage (this is not Google Drive)
+ 6 / FTP Connection
+   \ &quot;ftp&quot;
+ 7 / Google Cloud Storage (this is not Google Drive)
    \ &quot;google cloud storage&quot;
- 7 / Google Drive
+ 8 / Google Drive
    \ &quot;drive&quot;
- 8 / Hubic
+ 9 / Hubic
    \ &quot;hubic&quot;
- 9 / Local Disk
+10 / Local Disk
    \ &quot;local&quot;
-10 / Microsoft OneDrive
+11 / Microsoft OneDrive
    \ &quot;onedrive&quot;
-11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
    \ &quot;swift&quot;
-12 / SSH/SFTP Connection
+13 / SSH/SFTP Connection
    \ &quot;sftp&quot;
-13 / Yandex Disk
+14 / Yandex Disk
    \ &quot;yandex&quot;
 Storage&gt; 1
-Amazon Application Client Id - leave blank normally.
-client_id&gt;
-Amazon Application Client Secret - leave blank normally.
-client_secret&gt;
+Amazon Application Client Id - required.
+client_id&gt; your client ID goes here
+Amazon Application Client Secret - required.
+client_secret&gt; your client secret goes here
+Auth server URL - leave blank to use Amazon&#39;s.
+auth_url&gt; Optional auth URL
+Token server url - leave blank to use Amazon&#39;s.
+token_url&gt; Optional token URL
 Remote config
+Make sure your Redirect URL is set to &quot;http://127.0.0.1:53682/&quot; in your custom config.
 Use auto config?
  * Say Y if not sure
  * Say N if you are working on a remote or headless machine
@@ -2275,15 +2450,17 @@ Waiting for code...
 Got code
 --------------------
 [remote]
-client_id =
-client_secret =
+client_id = your client ID goes here
+client_secret = your client secret goes here
+auth_url = Optional auth URL
+token_url = Optional token URL
 token = {&quot;access_token&quot;:&quot;xxxxxxxxxxxxxxxxxxxxxxx&quot;,&quot;token_type&quot;:&quot;bearer&quot;,&quot;refresh_token&quot;:&quot;xxxxxxxxxxxxxxxxxx&quot;,&quot;expiry&quot;:&quot;2015-09-06T16:07:39.658438471+01:00&quot;}
 --------------------
 y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
-<p>See the <a href="http://rclone.org/remote_setup/">remote setup docs</a> for how to set it up on a machine with no Internet browser available.</p>
+<p>See the <a href="https://rclone.org/remote_setup/">remote setup docs</a> for how to set it up on a machine with no Internet browser available.</p>
 <p>Note that rclone runs a webserver on your local machine to collect the token as returned from Amazon. This only runs from the moment it opens your browser to the moment you get back the verification code. This is on <code>http://127.0.0.1:53682/</code> and this it may require you to unblock it temporarily if you are running a host firewall.</p>
 <p>Once configured you can then use <code>rclone</code> like this,</p>
 <p>List directories in top level of your Amazon Drive</p>
@@ -2292,7 +2469,7 @@ y/e/d&gt; y</code></pre>
 <pre><code>rclone ls remote:</code></pre>
 <p>To copy a local directory to an Amazon Drive directory called backup</p>
 <pre><code>rclone copy /home/source remote:backup</code></pre>
-<h3 id="modified-time-and-md5sums-1">Modified time and MD5SUMs</h3>
+<h3 id="modified-time-and-md5sums">Modified time and MD5SUMs</h3>
 <p>Amazon Drive doesn't allow modification times to be changed via the API so these won't be accurate or used for syncing.</p>
 <p>It does store MD5SUMs so for a more accurate sync, you can use the <code>--checksum</code> flag.</p>
 <h3 id="deleting-files-1">Deleting files</h3>
@@ -2315,7 +2492,7 @@ y/e/d&gt; y</code></pre>
 <p>Amazon Drive has rate limiting so you may notice errors in the sync (429 errors). rclone will automatically retry the sync up to 3 times by default (see <code>--retries</code> flag) which should hopefully work around this problem.</p>
 <p>Amazon Drive has an internal limit of file sizes that can be uploaded to the service. This limit is not officially published, but all files larger than this will fail.</p>
 <p>At the time of writing (Jan 2016) is in the area of 50GB per file. This means that larger files are likely to fail.</p>
-<p>Unfortunatly there is no way for rclone to see that this failure is because of file size, so it will retry the operation, as any other failure. To avoid this problem, use <code>--max-size 50000M</code> option to limit the maximum size of uploaded files. Note that <code>--max-size</code> does not split files into segments, it only ignores files over this size.</p>
+<p>Unfortunately there is no way for rclone to see that this failure is because of file size, so it will retry the operation, as any other failure. To avoid this problem, use <code>--max-size 50000M</code> option to limit the maximum size of uploaded files. Note that <code>--max-size</code> does not split files into segments, it only ignores files over this size.</p>
 <h2 id="microsoft-onedrive">Microsoft OneDrive</h2>
 <p>Paths are specified as <code>remote:path</code></p>
 <p>Paths may be as deep as required, eg <code>remote:directory/subdirectory</code>.</p>
@@ -2382,7 +2559,7 @@ y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
-<p>See the <a href="http://rclone.org/remote_setup/">remote setup docs</a> for how to set it up on a machine with no Internet browser available.</p>
+<p>See the <a href="https://rclone.org/remote_setup/">remote setup docs</a> for how to set it up on a machine with no Internet browser available.</p>
 <p>Note that rclone runs a webserver on your local machine to collect the token as returned from Microsoft. This only runs from the moment it opens your browser to the moment you get back the verification code. This is on <code>http://127.0.0.1:53682/</code> and this it may require you to unblock it temporarily if you are running a host firewall.</p>
 <p>Once configured you can then use <code>rclone</code> like this,</p>
 <p>List directories in top level of your OneDrive</p>
@@ -2391,7 +2568,7 @@ y/e/d&gt; y</code></pre>
 <pre><code>rclone ls remote:</code></pre>
 <p>To copy a local directory to an OneDrive directory called backup</p>
 <pre><code>rclone copy /home/source remote:backup</code></pre>
-<h3 id="modified-time-and-hashes">Modified time and hashes</h3>
+<h3 id="modified-time-and-hashes-1">Modified time and hashes</h3>
 <p>OneDrive allows modification times to be set on objects accurate to 1 second. These will be used to detect whether objects need syncing or not.</p>
 <p>One drive supports SHA1 type hashes, so you can use <code>--checksum</code> flag.</p>
 <h3 id="deleting-files-2">Deleting files</h3>
@@ -2472,7 +2649,7 @@ y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
-<p>See the <a href="http://rclone.org/remote_setup/">remote setup docs</a> for how to set it up on a machine with no Internet browser available.</p>
+<p>See the <a href="https://rclone.org/remote_setup/">remote setup docs</a> for how to set it up on a machine with no Internet browser available.</p>
 <p>Note that rclone runs a webserver on your local machine to collect the token as returned from Hubic. This only runs from the moment it opens your browser to the moment you get back the verification code. This is on <code>http://127.0.0.1:53682/</code> and this it may require you to unblock it temporarily if you are running a host firewall.</p>
 <p>Once configured you can then use <code>rclone</code> like this,</p>
 <p>List containers in the top level of your Hubic</p>
@@ -2483,6 +2660,8 @@ y/e/d&gt; y</code></pre>
 <pre><code>rclone copy /home/source remote:backup</code></pre>
 <p>If you want the directory to be visible in the official <em>Hubic browser</em>, you need to copy your files to the <code>default</code> directory</p>
 <pre><code>rclone copy /home/source remote:default/backup</code></pre>
+<h3 id="fast-list-4">--fast-list</h3>
+<p>This remote supports <code>--fast-list</code> which allows you to use fewer transactions in exchange for more memory. See the <a href="/docs/#fast-list">rclone docs</a> for more details.</p>
 <h3 id="modified-time-4">Modified time</h3>
 <p>The modified time is stored as metadata on the object as <code>X-Object-Meta-Mtime</code> as floating point since the epoch accurate to 1 ns.</p>
 <p>This is a defacto standard (used in the official python-swiftclient amongst others) for storing the modification time for an object.</p>
@@ -2556,6 +2735,8 @@ y/e/d&gt; y</code></pre>
 <pre><code>rclone ls remote:bucket</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote bucket, deleting any excess files in the bucket.</p>
 <pre><code>rclone sync /home/local/directory remote:bucket</code></pre>
+<h3 id="fast-list-5">--fast-list</h3>
+<p>This remote supports <code>--fast-list</code> which allows you to use fewer transactions in exchange for more memory. See the <a href="/docs/#fast-list">rclone docs</a> for more details.</p>
 <h3 id="modified-time-5">Modified time</h3>
 <p>The modified time is stored as metadata on the object as <code>X-Bz-Info-src_last_modified_millis</code> as milliseconds since 1970-01-01 in the Backblaze standard. Other tools should be able to use this as a modified time.</p>
 <p>Modified times are used in syncing and are fully supported except in the case of updating a modification time on an existing object. In this case the object will be uploaded again as B2 doesn't have an API method to set the modification time independent of doing an upload.</p>
@@ -2642,7 +2823,7 @@ $ rclone -q --b2-versions ls b2:cleanup-test
 <p>Showing that the current version is unchanged but older versions can be seen. These have the UTC date that they were uploaded to the server to the nearest millisecond appended to them.</p>
 <p>Note that when using <code>--b2-versions</code> no file write operations are permitted, so you can't upload files or delete them.</p>
 <h2 id="yandex-disk">Yandex Disk</h2>
-<p><a href="https://disk.yandex.com">Yandex Disk</a> is a cloud storage solution created by <a href="http://yandex.com">Yandex</a>.</p>
+<p><a href="https://disk.yandex.com">Yandex Disk</a> is a cloud storage solution created by <a href="https://yandex.com">Yandex</a>.</p>
 <p>Yandex paths may be as deep as required, eg <code>remote:directory/subdirectory</code>.</p>
 <p>Here is an example of making a yandex configuration. First run</p>
 <pre><code>rclone config</code></pre>
@@ -2706,7 +2887,7 @@ y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
-<p>See the <a href="http://rclone.org/remote_setup/">remote setup docs</a> for how to set it up on a machine with no Internet browser available.</p>
+<p>See the <a href="https://rclone.org/remote_setup/">remote setup docs</a> for how to set it up on a machine with no Internet browser available.</p>
 <p>Note that rclone runs a webserver on your local machine to collect the token as returned from Yandex Disk. This only runs from the moment it opens your browser to the moment you get back the verification code. This is on <code>http://127.0.0.1:53682/</code> and this it may require you to unblock it temporarily if you are running a host firewall.</p>
 <p>Once configured you can then use <code>rclone</code> like this,</p>
 <p>See top level directories</p>
@@ -2717,6 +2898,8 @@ y/e/d&gt; y</code></pre>
 <pre><code>rclone ls remote:directory</code></pre>
 <p>Sync <code>/home/local/directory</code> to the remote path, deleting any excess files in the path.</p>
 <pre><code>rclone sync /home/local/directory remote:directory</code></pre>
+<h3 id="fast-list-6">--fast-list</h3>
+<p>This remote supports <code>--fast-list</code> which allows you to use fewer transactions in exchange for more memory. See the <a href="/docs/#fast-list">rclone docs</a> for more details.</p>
 <h3 id="modified-time-6">Modified time</h3>
 <p>Modified times are supported and are stored accurate to 1 ns in custom metadata called <code>rclone_modified</code> in RFC3339 with nanoseconds format.</p>
 <h3 id="md5-checksums">MD5 checksums</h3>
@@ -2748,23 +2931,25 @@ Choose a number from below, or type in your own value
    \ &quot;dropbox&quot;
  5 / Encrypt/Decrypt a remote
    \ &quot;crypt&quot;
- 6 / Google Cloud Storage (this is not Google Drive)
+ 6 / FTP Connection
+   \ &quot;ftp&quot;
+ 7 / Google Cloud Storage (this is not Google Drive)
    \ &quot;google cloud storage&quot;
- 7 / Google Drive
+ 8 / Google Drive
    \ &quot;drive&quot;
- 8 / Hubic
+ 9 / Hubic
    \ &quot;hubic&quot;
- 9 / Local Disk
+10 / Local Disk
    \ &quot;local&quot;
-10 / Microsoft OneDrive
+11 / Microsoft OneDrive
    \ &quot;onedrive&quot;
-11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
    \ &quot;swift&quot;
-12 / SSH/SFTP Connection
+13 / SSH/SFTP Connection
    \ &quot;sftp&quot;
-13 / Yandex Disk
+14 / Yandex Disk
    \ &quot;yandex&quot;
-Storage&gt; 12  
+Storage&gt; sftp
 SSH host to connect to
 Choose a number from below, or type in your own value
  1 / Connect to example.com
@@ -2772,7 +2957,7 @@ Choose a number from below, or type in your own value
 host&gt; example.com
 SSH username, leave blank for current username, ncw
 user&gt; 
-SSH port
+SSH port, leave blank to use default (22)
 port&gt; 
 SSH password, leave blank to use ssh-agent
 y) Yes type in my own password
@@ -2805,6 +2990,7 @@ y/e/d&gt; y</code></pre>
 <p>Modified times are used in syncing and are fully supported.</p>
 <h3 id="limitations-7">Limitations</h3>
 <p>SFTP does not support any checksums.</p>
+<p>The only ssh agent supported under Windows is Putty's pagent.</p>
 <p>SFTP isn't supported under plan9 until <a href="https://github.com/pkg/sftp/issues/156">this issue</a> is fixed.</p>
 <p>Note that since SFTP isn't HTTP based the following flags don't work with it: <code>--dump-headers</code>, <code>--dump-bodies</code>, <code>--dump-auth</code></p>
 <p>Note that <code>--timeout</code> isn't supported (but <code>--contimeout</code> is).</p>
@@ -2858,6 +3044,8 @@ Choose a number from below, or type in your own value
    \ &quot;off&quot;
  2 / Encrypt the filenames see the docs for the details.
    \ &quot;standard&quot;
+ 3 / Very simple filename obfuscation.
+   \ &quot;obfuscate&quot;
 filename_encryption&gt; 2
 Password or pass phrase for encryption.
 y) Yes type in my own password
@@ -2960,9 +3148,20 @@ $ rclone -q ls secret:
 <li>identical files names will have identical uploaded names</li>
 <li>can use shortcuts to shorten the directory recursion</li>
 </ul>
+<p>Obfuscation</p>
+<p>This is a simple &quot;rotate&quot; of the filename, with each file having a rot distance based on the filename. We store the distance at the beginning of the filename. So a file called &quot;hello&quot; may become &quot;53.jgnnq&quot;</p>
+<p>This is not a strong encryption of filenames, but it may stop automated scanning tools from picking up on filename patterns. As such it's an intermediate between &quot;off&quot; and &quot;standard&quot;. The advantage is that it allows for longer path segment names.</p>
+<p>There is a possibility with some unicode based filenames that the obfuscation is weak and may map lower case characters to upper case equivalents. You can not rely on this for strong protection.</p>
+<ul>
+<li>file names very lightly obfuscated</li>
+<li>file names can be longer than standard encryption</li>
+<li>can use sub paths and copy single files</li>
+<li>directory structure visibile</li>
+<li>identical files names will have identical uploaded names</li>
+</ul>
 <p>Cloud storage systems have various limits on file name length and total path length which you are more likely to hit using &quot;Standard&quot; file name encryption. If you keep your file names to below 156 characters in length then you should be OK on all providers.</p>
 <p>There may be an even more secure file name encryption mode in the future which will address the long file name problem.</p>
-<h3 id="modified-time-and-hashes-1">Modified time and hashes</h3>
+<h3 id="modified-time-and-hashes-2">Modified time and hashes</h3>
 <p>Crypt stores modification times using the underlying remote so support depends on that.</p>
 <p>Hashes are not stored for crypt. However the data integrity is protected by an extremely strong crypto authenticator.</p>
 <p>Note that you should use the <code>rclone cryptcheck</code> command to check the integrity of a crypted remote instead of <code>rclone check</code> which can't check the checksums properly.</p>
@@ -3035,12 +3234,102 @@ $ rclone -q ls secret:
 <h3 id="key-derivation">Key derivation</h3>
 <p>Rclone uses <code>scrypt</code> with parameters <code>N=16384, r=8, p=1</code> with a an optional user supplied salt (password2) to derive the 32+32+16 = 80 bytes of key material required. If the user doesn't supply a salt then rclone uses an internal one.</p>
 <p><code>scrypt</code> makes it impractical to mount a dictionary attack on rclone encrypted data. For full protection agains this you should always use a salt.</p>
+<h2 id="ftp">FTP</h2>
+<p>FTP is the File Transfer Protocol. FTP support is provided using the <a href="https://godoc.org/github.com/jlaffaye/ftp">github.com/jlaffaye/ftp</a> package.</p>
+<p>Here is an example of making an FTP configuration. First run</p>
+<pre><code>rclone config</code></pre>
+<p>This will guide you through an interactive setup process. An FTP remote only needs a host together with and a username and a password. With anonymous FTP server, you will need to use <code>anonymous</code> as username and your email address as the password.</p>
+<pre><code>No remotes found - make a new one
+n) New remote
+r) Rename remote
+c) Copy remote
+s) Set configuration password
+q) Quit config
+n/r/c/s/q&gt; n
+name&gt; remote
+Type of storage to configure.
+Choose a number from below, or type in your own value
+ 1 / Amazon Drive
+   \ &quot;amazon cloud drive&quot;
+ 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+   \ &quot;s3&quot;
+ 3 / Backblaze B2
+   \ &quot;b2&quot;
+ 4 / Dropbox
+   \ &quot;dropbox&quot;
+ 5 / Encrypt/Decrypt a remote
+   \ &quot;crypt&quot;
+ 6 / FTP Connection 
+   \ &quot;ftp&quot;
+ 7 / Google Cloud Storage (this is not Google Drive)
+   \ &quot;google cloud storage&quot;
+ 8 / Google Drive
+   \ &quot;drive&quot;
+ 9 / Hubic
+   \ &quot;hubic&quot;
+10 / Local Disk
+   \ &quot;local&quot;
+11 / Microsoft OneDrive
+   \ &quot;onedrive&quot;
+12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+   \ &quot;swift&quot;
+13 / SSH/SFTP Connection
+   \ &quot;sftp&quot;
+14 / Yandex Disk
+   \ &quot;yandex&quot;
+Storage&gt; ftp
+FTP host to connect to
+Choose a number from below, or type in your own value
+ 1 / Connect to ftp.example.com
+   \ &quot;ftp.example.com&quot;
+host&gt; ftp.example.com
+FTP username, leave blank for current username, ncw
+user&gt;
+FTP port, leave blank to use default (21)
+port&gt;
+FTP password
+y) Yes type in my own password
+g) Generate random password
+y/g&gt; y
+Enter the password:
+password:
+Confirm the password:
+password:
+Remote config
+--------------------
+[remote]
+host = ftp.example.com
+user = 
+port =
+pass = *** ENCRYPTED ***
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d&gt; y</code></pre>
+<p>This remote is called <code>remote</code> and can now be used like this</p>
+<p>See all directories in the home directory</p>
+<pre><code>rclone lsd remote:</code></pre>
+<p>Make a new directory</p>
+<pre><code>rclone mkdir remote:path/to/directory</code></pre>
+<p>List the contents of a directory</p>
+<pre><code>rclone ls remote:path/to/directory</code></pre>
+<p>Sync <code>/home/local/directory</code> to the remote directory, deleting any excess files in the directory.</p>
+<pre><code>rclone sync /home/local/directory remote:directory</code></pre>
+<h3 id="modified-time-8">Modified time</h3>
+<p>FTP does not support modified times. Any times you see on the server will be time of upload.</p>
+<h3 id="checksums">Checksums</h3>
+<p>FTP does not support any checksums.</p>
+<h3 id="limitations-8">Limitations</h3>
+<p>Note that since FTP isn't HTTP based the following flags don't work with it: <code>--dump-headers</code>, <code>--dump-bodies</code>, <code>--dump-auth</code></p>
+<p>Note that <code>--timeout</code> isn't supported (but <code>--contimeout</code> is).</p>
+<p>FTP could support server side move but doesn't yet.</p>
 <h2 id="local-filesystem">Local Filesystem</h2>
 <p>Local paths are specified as normal filesystem paths, eg <code>/path/to/wherever</code>, so</p>
 <pre><code>rclone sync /home/source /tmp/destination</code></pre>
 <p>Will sync <code>/home/source</code> to <code>/tmp/destination</code></p>
 <p>These can be configured into the config file for consistencies sake, but it is probably easier not to.</p>
-<h3 id="modified-time-8">Modified time</h3>
+<h3 id="modified-time-9">Modified time</h3>
 <p>Rclone reads and writes the modified time using an accuracy determined by the OS. Typically this is 1ns on Linux, 10 ns on Windows and 1 Second on OS X.</p>
 <h3 id="filenames">Filenames</h3>
 <p>Filenames are expected to be encoded in UTF-8 on disk. This is the normal case for Windows and OS X.</p>
@@ -3085,6 +3374,10 @@ nounc = true</code></pre>
         6 two/three
         6 b/two
         6 b/one</code></pre>
+<h4 id="no-local-unicode-normalization">--no-local-unicode-normalization</h4>
+<p>By default rclone normalizes (NFC) the unicode representation of filenames and directories. This flag disables that normalization and uses the same representation as the local filesystem.</p>
+<p>This can be useful if you need to retain the local unicode representation and you are using a cloud provider which supports unnormalized names (e.g. S3 or ACD).</p>
+<p>This should also work with any provider if you are using crypt and have file name encryption (the default) or obfuscation turned on.</p>
 <h4 id="one-file-system--x">--one-file-system, -x</h4>
 <p>This tells rclone to stay in the filesystem specified by the root and not to recurse into different file systems.</p>
 <p>For example if you have a directory heirachy like this</p>
@@ -3557,7 +3850,7 @@ nounc = true</code></pre>
 <li>Upload releases to github too</li>
 <li>Swift</li>
 <li>Fix sync for chunked files</li>
-<li>One Drive</li>
+<li>OneDrive</li>
 <li>Re-enable server side copy</li>
 <li>Don't mask HTTP error codes with JSON decode error</li>
 <li>S3</li>
@@ -3579,13 +3872,13 @@ nounc = true</code></pre>
 <li>This could have caused data loss for files &gt; 5GB in size</li>
 </ul></li>
 <li>Use ContentType from Object to avoid lookups in listings</li>
-<li>One Drive</li>
+<li>OneDrive</li>
 <li>disable server side copy as it seems to be broken at Microsoft</li>
 </ul></li>
 <li>v1.24 - 2015-11-07
 <ul>
 <li>New features</li>
-<li>Add support for Microsoft One Drive</li>
+<li>Add support for Microsoft OneDrive</li>
 <li>Add <code>--no-check-certificate</code> option to disable server certificate verification</li>
 <li>Add async readahead buffer for faster transfer of big files</li>
 <li>Fixes</li>
@@ -3869,9 +4162,9 @@ nounc = true</code></pre>
 <p>Yes they do. All the rclone commands (eg <code>sync</code>, <code>copy</code> etc) will work on all the remote storage systems.</p>
 <h3 id="can-i-copy-the-config-from-one-machine-to-another">Can I copy the config from one machine to another</h3>
 <p>Sure! Rclone stores all of its config in a single file. If you want to find this file, the simplest way is to run <code>rclone -h</code> and look at the help for the <code>--config</code> flag which will tell you where it is.</p>
-<p>See the <a href="http://rclone.org/remote_setup/">remote setup docs</a> for more info.</p>
+<p>See the <a href="https://rclone.org/remote_setup/">remote setup docs</a> for more info.</p>
 <h3 id="how-do-i-configure-rclone-on-a-remote-headless-box-with-no-browser">How do I configure rclone on a remote / headless box with no browser?</h3>
-<p>This has now been documented in its own <a href="http://rclone.org/remote_setup/">remote setup page</a>.</p>
+<p>This has now been documented in its own <a href="https://rclone.org/remote_setup/">remote setup page</a>.</p>
 <h3 id="can-rclone-sync-directly-from-drive-to-s3">Can rclone sync directly from drive to s3</h3>
 <p>Rclone can sync between two remote cloud storage systems just fine.</p>
 <p>Note that it effectively downloads the file and uploads it again, so the node running rclone would need to have lots of bandwidth.</p>
@@ -3918,7 +4211,7 @@ ntpclient -s -h pool.ntp.org</code></pre>
 <p>This is caused by uploading these files from a Windows computer which hasn't got the Microsoft Office suite installed. The easiest way to fix is to install the Word viewer and the Microsoft Office Compatibility Pack for Word, Excel, and PowerPoint 2007 and later versions' file formats</p>
 <h2 id="license">License</h2>
 <p>This is free software under the terms of MIT the license (check the COPYING file included with the source code).</p>
-<pre><code>Copyright (C) 2012 by Nick Craig-Wood http://www.craig-wood.com/nick/
+<pre><code>Copyright (C) 2012 by Nick Craig-Wood https://www.craig-wood.com/nick/
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the &quot;Software&quot;), to deal
@@ -3939,309 +4232,81 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.</code></pre>
 <h2 id="authors">Authors</h2>
 <ul>
-<li>Nick Craig-Wood <script type="text/javascript">
-<!--
-h='&#x63;&#114;&#x61;&#x69;&#x67;&#x2d;&#x77;&#x6f;&#x6f;&#100;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#110;&#x69;&#x63;&#x6b;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#110;&#x69;&#x63;&#x6b;&#32;&#x61;&#116;&#32;&#x63;&#114;&#x61;&#x69;&#x67;&#x2d;&#x77;&#x6f;&#x6f;&#100;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
+<li>Nick Craig-Wood <a href="mailto:nick@craig-wood.com">nick@craig-wood.com</a></li>
 </ul>
 <h2 id="contributors">Contributors</h2>
 <ul>
-<li>Alex Couper <script type="text/javascript">
-<!--
-h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x61;&#x6d;&#x63;&#x6f;&#x75;&#112;&#x65;&#114;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x61;&#x6d;&#x63;&#x6f;&#x75;&#112;&#x65;&#114;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Leonid Shalupov <script type="text/javascript">
-<!--
-h='&#x73;&#104;&#x61;&#108;&#x75;&#112;&#x6f;&#118;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#108;&#x65;&#x6f;&#110;&#x69;&#100;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#108;&#x65;&#x6f;&#110;&#x69;&#100;&#32;&#x61;&#116;&#32;&#x73;&#104;&#x61;&#108;&#x75;&#112;&#x6f;&#118;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Shimon Doodkin <script type="text/javascript">
-<!--
-h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#104;&#x65;&#108;&#112;&#x6d;&#x65;&#112;&#114;&#x6f;&#x31;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#104;&#x65;&#108;&#112;&#x6d;&#x65;&#112;&#114;&#x6f;&#x31;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Colin Nicholson <script type="text/javascript">
-<!--
-h='&#x63;&#x6f;&#108;&#x69;&#110;&#110;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x63;&#x6f;&#108;&#x69;&#110;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x63;&#x6f;&#108;&#x69;&#110;&#32;&#x61;&#116;&#32;&#x63;&#x6f;&#108;&#x69;&#110;&#110;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Klaus Post <script type="text/javascript">
-<!--
-h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x6b;&#108;&#x61;&#x75;&#x73;&#112;&#x6f;&#x73;&#116;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x6b;&#108;&#x61;&#x75;&#x73;&#112;&#x6f;&#x73;&#116;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Sergey Tolmachev <script type="text/javascript">
-<!--
-h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#116;&#x6f;&#108;&#x73;&#x69;&#46;&#114;&#x75;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#116;&#x6f;&#108;&#x73;&#x69;&#46;&#114;&#x75;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Adriano Aurélio Meirelles <script type="text/javascript">
-<!--
-h='&#x61;&#116;&#x69;&#110;&#x67;&#x65;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x61;&#100;&#114;&#x69;&#x61;&#110;&#x6f;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x61;&#100;&#114;&#x69;&#x61;&#110;&#x6f;&#32;&#x61;&#116;&#32;&#x61;&#116;&#x69;&#110;&#x67;&#x65;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>C. Bess <script type="text/javascript">
-<!--
-h='&#x75;&#x73;&#x65;&#114;&#x73;&#46;&#110;&#x6f;&#114;&#x65;&#112;&#108;&#x79;&#46;&#x67;&#x69;&#116;&#104;&#x75;&#98;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x63;&#98;&#x65;&#x73;&#x73;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x63;&#98;&#x65;&#x73;&#x73;&#32;&#x61;&#116;&#32;&#x75;&#x73;&#x65;&#114;&#x73;&#32;&#100;&#x6f;&#116;&#32;&#110;&#x6f;&#114;&#x65;&#112;&#108;&#x79;&#32;&#100;&#x6f;&#116;&#32;&#x67;&#x69;&#116;&#104;&#x75;&#98;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Dmitry Burdeev <script type="text/javascript">
-<!--
-h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#100;&#x69;&#98;&#x75;&#50;&#56;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#100;&#x69;&#98;&#x75;&#50;&#56;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Joseph Spurrier <script type="text/javascript">
-<!--
-h='&#106;&#x6f;&#x73;&#x65;&#112;&#104;&#x73;&#112;&#x75;&#114;&#114;&#x69;&#x65;&#114;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x67;&#x69;&#116;&#104;&#x75;&#98;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x67;&#x69;&#116;&#104;&#x75;&#98;&#32;&#x61;&#116;&#32;&#106;&#x6f;&#x73;&#x65;&#112;&#104;&#x73;&#112;&#x75;&#114;&#114;&#x69;&#x65;&#114;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Björn Harrtell <script type="text/javascript">
-<!--
-h='&#x77;&#x6f;&#108;&#x6f;&#108;&#x6f;&#46;&#x6f;&#114;&#x67;';a='&#64;';n='&#98;&#106;&#x6f;&#114;&#110;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#98;&#106;&#x6f;&#114;&#110;&#32;&#x61;&#116;&#32;&#x77;&#x6f;&#108;&#x6f;&#108;&#x6f;&#32;&#100;&#x6f;&#116;&#32;&#x6f;&#114;&#x67;</noscript></li>
-<li>Xavier Lucas <script type="text/javascript">
-<!--
-h='&#x63;&#x6f;&#114;&#112;&#46;&#x6f;&#118;&#104;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#120;&#x61;&#118;&#x69;&#x65;&#114;&#46;&#108;&#x75;&#x63;&#x61;&#x73;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#120;&#x61;&#118;&#x69;&#x65;&#114;&#46;&#108;&#x75;&#x63;&#x61;&#x73;&#32;&#x61;&#116;&#32;&#x63;&#x6f;&#114;&#112;&#32;&#100;&#x6f;&#116;&#32;&#x6f;&#118;&#104;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Werner Beroux <script type="text/javascript">
-<!--
-h='&#98;&#x65;&#114;&#x6f;&#x75;&#120;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x77;&#x65;&#114;&#110;&#x65;&#114;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x77;&#x65;&#114;&#110;&#x65;&#114;&#32;&#x61;&#116;&#32;&#98;&#x65;&#114;&#x6f;&#x75;&#120;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Brian Stengaard <script type="text/javascript">
-<!--
-h='&#x73;&#116;&#x65;&#110;&#x67;&#x61;&#x61;&#114;&#100;&#46;&#x65;&#x75;';a='&#64;';n='&#98;&#114;&#x69;&#x61;&#110;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#98;&#114;&#x69;&#x61;&#110;&#32;&#x61;&#116;&#32;&#x73;&#116;&#x65;&#110;&#x67;&#x61;&#x61;&#114;&#100;&#32;&#100;&#x6f;&#116;&#32;&#x65;&#x75;</noscript></li>
-<li>Jakub Gedeon <script type="text/javascript">
-<!--
-h='&#x73;&#x6f;&#102;&#x69;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#106;&#x67;&#x65;&#100;&#x65;&#x6f;&#110;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#106;&#x67;&#x65;&#100;&#x65;&#x6f;&#110;&#32;&#x61;&#116;&#32;&#x73;&#x6f;&#102;&#x69;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Jim Tittsler <script type="text/javascript">
-<!--
-h='&#x6f;&#110;&#106;&#x61;&#112;&#x61;&#110;&#46;&#110;&#x65;&#116;';a='&#64;';n='&#106;&#x77;&#116;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#106;&#x77;&#116;&#32;&#x61;&#116;&#32;&#x6f;&#110;&#106;&#x61;&#112;&#x61;&#110;&#32;&#100;&#x6f;&#116;&#32;&#110;&#x65;&#116;</noscript></li>
-<li>Michal Witkowski <script type="text/javascript">
-<!--
-h='&#x69;&#x6d;&#112;&#114;&#x6f;&#98;&#x61;&#98;&#108;&#x65;&#46;&#x69;&#x6f;';a='&#64;';n='&#x6d;&#x69;&#x63;&#104;&#x61;&#108;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x6d;&#x69;&#x63;&#104;&#x61;&#108;&#32;&#x61;&#116;&#32;&#x69;&#x6d;&#112;&#114;&#x6f;&#98;&#x61;&#98;&#108;&#x65;&#32;&#100;&#x6f;&#116;&#32;&#x69;&#x6f;</noscript></li>
-<li>Fabian Ruff <script type="text/javascript">
-<!--
-h='&#x73;&#x61;&#112;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#102;&#x61;&#98;&#x69;&#x61;&#110;&#46;&#114;&#x75;&#102;&#102;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#102;&#x61;&#98;&#x69;&#x61;&#110;&#46;&#114;&#x75;&#102;&#102;&#32;&#x61;&#116;&#32;&#x73;&#x61;&#112;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Leigh Klotz <script type="text/javascript">
-<!--
-h='&#x71;&#x75;&#x69;&#120;&#x65;&#x79;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x6b;&#108;&#x6f;&#116;&#122;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x6b;&#108;&#x6f;&#116;&#122;&#32;&#x61;&#116;&#32;&#x71;&#x75;&#x69;&#120;&#x65;&#x79;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Romain Lapray <script type="text/javascript">
-<!--
-h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#108;&#x61;&#112;&#114;&#x61;&#x79;&#46;&#114;&#x6f;&#x6d;&#x61;&#x69;&#110;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#108;&#x61;&#112;&#114;&#x61;&#x79;&#46;&#114;&#x6f;&#x6d;&#x61;&#x69;&#110;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Justin R. Wilson <script type="text/javascript">
-<!--
-h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#106;&#114;&#x77;&#x39;&#x37;&#50;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#106;&#114;&#x77;&#x39;&#x37;&#50;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Antonio Messina <script type="text/javascript">
-<!--
-h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x61;&#110;&#116;&#x6f;&#110;&#x69;&#x6f;&#46;&#x73;&#46;&#x6d;&#x65;&#x73;&#x73;&#x69;&#110;&#x61;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x61;&#110;&#116;&#x6f;&#110;&#x69;&#x6f;&#46;&#x73;&#46;&#x6d;&#x65;&#x73;&#x73;&#x69;&#110;&#x61;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Stefan G. Weichinger <script type="text/javascript">
-<!--
-h='&#x6f;&#x6f;&#112;&#x73;&#46;&#x63;&#x6f;&#46;&#x61;&#116;';a='&#64;';n='&#x6f;&#102;&#102;&#x69;&#x63;&#x65;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x6f;&#102;&#102;&#x69;&#x63;&#x65;&#32;&#x61;&#116;&#32;&#x6f;&#x6f;&#112;&#x73;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#32;&#100;&#x6f;&#116;&#32;&#x61;&#116;</noscript></li>
-<li>Per Cederberg <script type="text/javascript">
-<!--
-h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x63;&#x65;&#100;&#x65;&#114;&#98;&#x65;&#114;&#x67;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x63;&#x65;&#100;&#x65;&#114;&#98;&#x65;&#114;&#x67;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Radek Šenfeld <script type="text/javascript">
-<!--
-h='&#108;&#x6f;&#x67;&#x69;&#x63;&#46;&#x63;&#122;';a='&#64;';n='&#114;&#x75;&#x73;&#104;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#114;&#x75;&#x73;&#104;&#32;&#x61;&#116;&#32;&#108;&#x6f;&#x67;&#x69;&#x63;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#122;</noscript></li>
-<li>Fredrik Fornwall <script type="text/javascript">
-<!--
-h='&#102;&#x6f;&#114;&#110;&#x77;&#x61;&#108;&#108;&#46;&#110;&#x65;&#116;';a='&#64;';n='&#102;&#114;&#x65;&#100;&#114;&#x69;&#x6b;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#102;&#114;&#x65;&#100;&#114;&#x69;&#x6b;&#32;&#x61;&#116;&#32;&#102;&#x6f;&#114;&#110;&#x77;&#x61;&#108;&#108;&#32;&#100;&#x6f;&#116;&#32;&#110;&#x65;&#116;</noscript></li>
-<li>Asko Tamm <script type="text/javascript">
-<!--
-h='&#100;&#x65;&#x65;&#x6b;&#x69;&#116;&#46;&#110;&#x65;&#116;';a='&#64;';n='&#x61;&#x73;&#x6b;&#x6f;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x61;&#x73;&#x6b;&#x6f;&#32;&#x61;&#116;&#32;&#100;&#x65;&#x65;&#x6b;&#x69;&#116;&#32;&#100;&#x6f;&#116;&#32;&#110;&#x65;&#116;</noscript></li>
-<li>xor-zz <script type="text/javascript">
-<!--
-h='&#x67;&#x73;&#116;&#x6f;&#x63;&#x63;&#x6f;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#120;&#x6f;&#114;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#120;&#x6f;&#114;&#32;&#x61;&#116;&#32;&#x67;&#x73;&#116;&#x6f;&#x63;&#x63;&#x6f;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Tomasz Mazur <script type="text/javascript">
-<!--
-h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#116;&#x6d;&#x61;&#122;&#x75;&#114;&#x39;&#48;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#116;&#x6d;&#x61;&#122;&#x75;&#114;&#x39;&#48;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Marco Paganini <script type="text/javascript">
-<!--
-h='&#112;&#x61;&#x67;&#x61;&#110;&#x69;&#110;&#x69;&#46;&#110;&#x65;&#116;';a='&#64;';n='&#112;&#x61;&#x67;&#x61;&#110;&#x69;&#110;&#x69;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#112;&#x61;&#x67;&#x61;&#110;&#x69;&#110;&#x69;&#32;&#x61;&#116;&#32;&#112;&#x61;&#x67;&#x61;&#110;&#x69;&#110;&#x69;&#32;&#100;&#x6f;&#116;&#32;&#110;&#x65;&#116;</noscript></li>
-<li>Felix Bünemann <script type="text/javascript">
-<!--
-h='&#108;&#x6f;&#x75;&#x69;&#x73;&#46;&#x69;&#110;&#102;&#x6f;';a='&#64;';n='&#98;&#x75;&#x65;&#110;&#x65;&#x6d;&#x61;&#110;&#110;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#98;&#x75;&#x65;&#110;&#x65;&#x6d;&#x61;&#110;&#110;&#32;&#x61;&#116;&#32;&#108;&#x6f;&#x75;&#x69;&#x73;&#32;&#100;&#x6f;&#116;&#32;&#x69;&#110;&#102;&#x6f;</noscript></li>
-<li>Durval Menezes <script type="text/javascript">
-<!--
-h='&#100;&#x75;&#114;&#118;&#x61;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#106;&#x6d;&#114;&#x63;&#108;&#x6f;&#110;&#x65;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#106;&#x6d;&#114;&#x63;&#108;&#x6f;&#110;&#x65;&#32;&#x61;&#116;&#32;&#100;&#x75;&#114;&#118;&#x61;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Luiz Carlos Rumbelsperger Viana <script type="text/javascript">
-<!--
-h='&#104;&#x6f;&#116;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x6d;&#x61;&#120;&#100;&#x31;&#x33;&#x5f;&#108;&#x75;&#x69;&#122;&#x5f;&#x63;&#x61;&#114;&#108;&#x6f;&#x73;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x6d;&#x61;&#120;&#100;&#x31;&#x33;&#x5f;&#108;&#x75;&#x69;&#122;&#x5f;&#x63;&#x61;&#114;&#108;&#x6f;&#x73;&#32;&#x61;&#116;&#32;&#104;&#x6f;&#116;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Stefan Breunig <script type="text/javascript">
-<!--
-h='&#x79;&#114;&#100;&#x65;&#110;&#46;&#100;&#x65;';a='&#64;';n='&#x73;&#116;&#x65;&#102;&#x61;&#110;&#x2d;&#x67;&#x69;&#116;&#104;&#x75;&#98;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x73;&#116;&#x65;&#102;&#x61;&#110;&#x2d;&#x67;&#x69;&#116;&#104;&#x75;&#98;&#32;&#x61;&#116;&#32;&#x79;&#114;&#100;&#x65;&#110;&#32;&#100;&#x6f;&#116;&#32;&#100;&#x65;</noscript></li>
-<li>Alishan Ladhani <script type="text/javascript">
-<!--
-h='&#x75;&#x73;&#x65;&#114;&#x73;&#46;&#110;&#x6f;&#114;&#x65;&#112;&#108;&#x79;&#46;&#x67;&#x69;&#116;&#104;&#x75;&#98;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x61;&#108;&#x69;&#x2d;&#108;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x61;&#108;&#x69;&#x2d;&#108;&#32;&#x61;&#116;&#32;&#x75;&#x73;&#x65;&#114;&#x73;&#32;&#100;&#x6f;&#116;&#32;&#110;&#x6f;&#114;&#x65;&#112;&#108;&#x79;&#32;&#100;&#x6f;&#116;&#32;&#x67;&#x69;&#116;&#104;&#x75;&#98;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>0xJAKE <script type="text/javascript">
-<!--
-h='&#x75;&#x73;&#x65;&#114;&#x73;&#46;&#110;&#x6f;&#114;&#x65;&#112;&#108;&#x79;&#46;&#x67;&#x69;&#116;&#104;&#x75;&#98;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#48;&#120;&#74;&#x41;&#x4b;&#x45;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#48;&#120;&#74;&#x41;&#x4b;&#x45;&#32;&#x61;&#116;&#32;&#x75;&#x73;&#x65;&#114;&#x73;&#32;&#100;&#x6f;&#116;&#32;&#110;&#x6f;&#114;&#x65;&#112;&#108;&#x79;&#32;&#100;&#x6f;&#116;&#32;&#x67;&#x69;&#116;&#104;&#x75;&#98;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Thibault Molleman <script type="text/javascript">
-<!--
-h='&#x75;&#x73;&#x65;&#114;&#x73;&#46;&#110;&#x6f;&#114;&#x65;&#112;&#108;&#x79;&#46;&#x67;&#x69;&#116;&#104;&#x75;&#98;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#116;&#104;&#x69;&#98;&#x61;&#x75;&#108;&#116;&#x6d;&#x6f;&#108;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#116;&#104;&#x69;&#98;&#x61;&#x75;&#108;&#116;&#x6d;&#x6f;&#108;&#32;&#x61;&#116;&#32;&#x75;&#x73;&#x65;&#114;&#x73;&#32;&#100;&#x6f;&#116;&#32;&#110;&#x6f;&#114;&#x65;&#112;&#108;&#x79;&#32;&#100;&#x6f;&#116;&#32;&#x67;&#x69;&#116;&#104;&#x75;&#98;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Scott McGillivray <script type="text/javascript">
-<!--
-h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x73;&#x63;&#x6f;&#116;&#116;&#46;&#x6d;&#x63;&#x67;&#x69;&#108;&#108;&#x69;&#118;&#114;&#x61;&#x79;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x73;&#x63;&#x6f;&#116;&#116;&#46;&#x6d;&#x63;&#x67;&#x69;&#108;&#108;&#x69;&#118;&#114;&#x61;&#x79;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Bjørn Erik Pedersen <script type="text/javascript">
-<!--
-h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#98;&#106;&#x6f;&#114;&#110;&#46;&#x65;&#114;&#x69;&#x6b;&#46;&#112;&#x65;&#100;&#x65;&#114;&#x73;&#x65;&#110;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#98;&#106;&#x6f;&#114;&#110;&#46;&#x65;&#114;&#x69;&#x6b;&#46;&#112;&#x65;&#100;&#x65;&#114;&#x73;&#x65;&#110;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Lukas Loesche <script type="text/javascript">
-<!--
-h='&#x6d;&#x65;&#x73;&#x6f;&#x73;&#112;&#104;&#x65;&#114;&#x65;&#46;&#x69;&#x6f;';a='&#64;';n='&#108;&#x75;&#x6b;&#x61;&#x73;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#108;&#x75;&#x6b;&#x61;&#x73;&#32;&#x61;&#116;&#32;&#x6d;&#x65;&#x73;&#x6f;&#x73;&#112;&#104;&#x65;&#114;&#x65;&#32;&#100;&#x6f;&#116;&#32;&#x69;&#x6f;</noscript></li>
-<li>emyarod <script type="text/javascript">
-<!--
-h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x61;&#108;&#108;&#108;&#108;&#x61;&#98;&#x6f;&#x75;&#116;&#x79;&#x6f;&#x75;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x61;&#108;&#108;&#108;&#108;&#x61;&#98;&#x6f;&#x75;&#116;&#x79;&#x6f;&#x75;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>T.C. Ferguson <script type="text/javascript">
-<!--
-h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#116;&#x63;&#102;&#x39;&#48;&#x39;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#116;&#x63;&#102;&#x39;&#48;&#x39;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Brandur <script type="text/javascript">
-<!--
-h='&#x6d;&#x75;&#116;&#x65;&#108;&#x69;&#x67;&#104;&#116;&#46;&#x6f;&#114;&#x67;';a='&#64;';n='&#98;&#114;&#x61;&#110;&#100;&#x75;&#114;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#98;&#114;&#x61;&#110;&#100;&#x75;&#114;&#32;&#x61;&#116;&#32;&#x6d;&#x75;&#116;&#x65;&#108;&#x69;&#x67;&#104;&#116;&#32;&#100;&#x6f;&#116;&#32;&#x6f;&#114;&#x67;</noscript></li>
-<li>Dario Giovannetti <script type="text/javascript">
-<!--
-h='&#100;&#x61;&#114;&#x69;&#x6f;&#x67;&#x69;&#x6f;&#118;&#x61;&#110;&#110;&#x65;&#116;&#116;&#x69;&#46;&#110;&#x65;&#116;';a='&#64;';n='&#100;&#x65;&#118;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#100;&#x65;&#118;&#32;&#x61;&#116;&#32;&#100;&#x61;&#114;&#x69;&#x6f;&#x67;&#x69;&#x6f;&#118;&#x61;&#110;&#110;&#x65;&#116;&#116;&#x69;&#32;&#100;&#x6f;&#116;&#32;&#110;&#x65;&#116;</noscript></li>
-<li>Károly Oláh <script type="text/javascript">
-<!--
-h='&#x61;&#x6f;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x6f;&#x6b;&#x61;&#114;&#x65;&#x73;&#122;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x6f;&#x6b;&#x61;&#114;&#x65;&#x73;&#122;&#32;&#x61;&#116;&#32;&#x61;&#x6f;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Jon Yergatian <script type="text/javascript">
-<!--
-h='&#x6d;&#x61;&#x63;&#102;&#x61;&#110;&#x61;&#116;&#x69;&#x63;&#46;&#x63;&#x61;';a='&#64;';n='&#106;&#x6f;&#110;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#106;&#x6f;&#110;&#32;&#x61;&#116;&#32;&#x6d;&#x61;&#x63;&#102;&#x61;&#110;&#x61;&#116;&#x69;&#x63;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x61;</noscript></li>
-<li>Jack Schmidt <script type="text/javascript">
-<!--
-h='&#x6d;&#x6f;&#x77;&#x73;&#x65;&#x79;&#46;&#x6f;&#114;&#x67;';a='&#64;';n='&#x67;&#x69;&#116;&#104;&#x75;&#98;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#x67;&#x69;&#116;&#104;&#x75;&#98;&#32;&#x61;&#116;&#32;&#x6d;&#x6f;&#x77;&#x73;&#x65;&#x79;&#32;&#100;&#x6f;&#116;&#32;&#x6f;&#114;&#x67;</noscript></li>
-<li>Dedsec1 <script type="text/javascript">
-<!--
-h='&#x75;&#x73;&#x65;&#114;&#x73;&#46;&#110;&#x6f;&#114;&#x65;&#112;&#108;&#x79;&#46;&#x67;&#x69;&#116;&#104;&#x75;&#98;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#68;&#x65;&#100;&#x73;&#x65;&#x63;&#x31;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#68;&#x65;&#100;&#x73;&#x65;&#x63;&#x31;&#32;&#x61;&#116;&#32;&#x75;&#x73;&#x65;&#114;&#x73;&#32;&#100;&#x6f;&#116;&#32;&#110;&#x6f;&#114;&#x65;&#112;&#108;&#x79;&#32;&#100;&#x6f;&#116;&#32;&#x67;&#x69;&#116;&#104;&#x75;&#98;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
-<li>Hisham Zarka <script type="text/javascript">
-<!--
-h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#104;&#122;&#x61;&#114;&#x6b;&#x61;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#104;&#122;&#x61;&#114;&#x6b;&#x61;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;</noscript></li>
+<li>Alex Couper <a href="mailto:amcouper@gmail.com">amcouper@gmail.com</a></li>
+<li>Leonid Shalupov <a href="mailto:leonid@shalupov.com">leonid@shalupov.com</a> <a href="mailto:shalupov@diverse.org.ru">shalupov@diverse.org.ru</a></li>
+<li>Shimon Doodkin <a href="mailto:helpmepro1@gmail.com">helpmepro1@gmail.com</a></li>
+<li>Colin Nicholson <a href="mailto:colin@colinn.com">colin@colinn.com</a></li>
+<li>Klaus Post <a href="mailto:klauspost@gmail.com">klauspost@gmail.com</a></li>
+<li>Sergey Tolmachev <a href="mailto:tolsi.ru@gmail.com">tolsi.ru@gmail.com</a></li>
+<li>Adriano Aurélio Meirelles <a href="mailto:adriano@atinge.com">adriano@atinge.com</a></li>
+<li>C. Bess <a href="mailto:cbess@users.noreply.github.com">cbess@users.noreply.github.com</a></li>
+<li>Dmitry Burdeev <a href="mailto:dibu28@gmail.com">dibu28@gmail.com</a></li>
+<li>Joseph Spurrier <a href="mailto:github@josephspurrier.com">github@josephspurrier.com</a></li>
+<li>Björn Harrtell <a href="mailto:bjorn@wololo.org">bjorn@wololo.org</a></li>
+<li>Xavier Lucas <a href="mailto:xavier.lucas@corp.ovh.com">xavier.lucas@corp.ovh.com</a></li>
+<li>Werner Beroux <a href="mailto:werner@beroux.com">werner@beroux.com</a></li>
+<li>Brian Stengaard <a href="mailto:brian@stengaard.eu">brian@stengaard.eu</a></li>
+<li>Jakub Gedeon <a href="mailto:jgedeon@sofi.com">jgedeon@sofi.com</a></li>
+<li>Jim Tittsler <a href="mailto:jwt@onjapan.net">jwt@onjapan.net</a></li>
+<li>Michal Witkowski <a href="mailto:michal@improbable.io">michal@improbable.io</a></li>
+<li>Fabian Ruff <a href="mailto:fabian.ruff@sap.com">fabian.ruff@sap.com</a></li>
+<li>Leigh Klotz <a href="mailto:klotz@quixey.com">klotz@quixey.com</a></li>
+<li>Romain Lapray <a href="mailto:lapray.romain@gmail.com">lapray.romain@gmail.com</a></li>
+<li>Justin R. Wilson <a href="mailto:jrw972@gmail.com">jrw972@gmail.com</a></li>
+<li>Antonio Messina <a href="mailto:antonio.s.messina@gmail.com">antonio.s.messina@gmail.com</a></li>
+<li>Stefan G. Weichinger <a href="mailto:office@oops.co.at">office@oops.co.at</a></li>
+<li>Per Cederberg <a href="mailto:cederberg@gmail.com">cederberg@gmail.com</a></li>
+<li>Radek Šenfeld <a href="mailto:rush@logic.cz">rush@logic.cz</a></li>
+<li>Fredrik Fornwall <a href="mailto:fredrik@fornwall.net">fredrik@fornwall.net</a></li>
+<li>Asko Tamm <a href="mailto:asko@deekit.net">asko@deekit.net</a></li>
+<li>xor-zz <a href="mailto:xor@gstocco.com">xor@gstocco.com</a></li>
+<li>Tomasz Mazur <a href="mailto:tmazur90@gmail.com">tmazur90@gmail.com</a></li>
+<li>Marco Paganini <a href="mailto:paganini@paganini.net">paganini@paganini.net</a></li>
+<li>Felix Bünemann <a href="mailto:buenemann@louis.info">buenemann@louis.info</a></li>
+<li>Durval Menezes <a href="mailto:jmrclone@durval.com">jmrclone@durval.com</a></li>
+<li>Luiz Carlos Rumbelsperger Viana <a href="mailto:maxd13_luiz_carlos@hotmail.com">maxd13_luiz_carlos@hotmail.com</a></li>
+<li>Stefan Breunig <a href="mailto:stefan-github@yrden.de">stefan-github@yrden.de</a></li>
+<li>Alishan Ladhani <a href="mailto:ali-l@users.noreply.github.com">ali-l@users.noreply.github.com</a></li>
+<li>0xJAKE <a href="mailto:0xJAKE@users.noreply.github.com">0xJAKE@users.noreply.github.com</a></li>
+<li>Thibault Molleman <a href="mailto:thibaultmol@users.noreply.github.com">thibaultmol@users.noreply.github.com</a></li>
+<li>Scott McGillivray <a href="mailto:scott.mcgillivray@gmail.com">scott.mcgillivray@gmail.com</a></li>
+<li>Bjørn Erik Pedersen <a href="mailto:bjorn.erik.pedersen@gmail.com">bjorn.erik.pedersen@gmail.com</a></li>
+<li>Lukas Loesche <a href="mailto:lukas@mesosphere.io">lukas@mesosphere.io</a></li>
+<li>emyarod <a href="mailto:allllaboutyou@gmail.com">allllaboutyou@gmail.com</a></li>
+<li>T.C. Ferguson <a href="mailto:tcf909@gmail.com">tcf909@gmail.com</a></li>
+<li>Brandur <a href="mailto:brandur@mutelight.org">brandur@mutelight.org</a></li>
+<li>Dario Giovannetti <a href="mailto:dev@dariogiovannetti.net">dev@dariogiovannetti.net</a></li>
+<li>Károly Oláh <a href="mailto:okaresz@aol.com">okaresz@aol.com</a></li>
+<li>Jon Yergatian <a href="mailto:jon@macfanatic.ca">jon@macfanatic.ca</a></li>
+<li>Jack Schmidt <a href="mailto:github@mowsey.org">github@mowsey.org</a></li>
+<li>Dedsec1 <a href="mailto:Dedsec1@users.noreply.github.com">Dedsec1@users.noreply.github.com</a></li>
+<li>Hisham Zarka <a href="mailto:hzarka@gmail.com">hzarka@gmail.com</a></li>
+<li>Jérôme Vizcaino <a href="mailto:jerome.vizcaino@gmail.com">jerome.vizcaino@gmail.com</a></li>
+<li>Mike Tesch <a href="mailto:mjt6129@rit.edu">mjt6129@rit.edu</a></li>
+<li>Marvin Watson <a href="mailto:marvwatson@users.noreply.github.com">marvwatson@users.noreply.github.com</a></li>
+<li>Danny Tsai <a href="mailto:danny8376@gmail.com">danny8376@gmail.com</a></li>
+<li>Yoni Jah <a href="mailto:yonjah+git@gmail.com">yonjah+git@gmail.com</a> <a href="mailto:yonjah+github@gmail.com">yonjah+github@gmail.com</a></li>
+<li>Stephen Harris <a href="mailto:github@spuddy.org">github@spuddy.org</a></li>
+<li>Ihor Dvoretskyi <a href="mailto:ihor.dvoretskyi@gmail.com">ihor.dvoretskyi@gmail.com</a></li>
+<li>Jon Craton <a href="mailto:jncraton@gmail.com">jncraton@gmail.com</a></li>
+<li>Hraban Luyat <a href="mailto:hraban@0brg.net">hraban@0brg.net</a></li>
+<li>Michael Ledin <a href="mailto:mledin89@gmail.com">mledin89@gmail.com</a></li>
+<li>Martin Kristensen <a href="mailto:me@azgul.com">me@azgul.com</a></li>
+<li>Too Much IO <a href="mailto:toomuchio@users.noreply.github.com">toomuchio@users.noreply.github.com</a></li>
+<li>Anisse Astier <a href="mailto:anisse@astier.eu">anisse@astier.eu</a></li>
+<li>Zahiar Ahmed <a href="mailto:zahiar@live.com">zahiar@live.com</a></li>
+<li>Igor Kharin <a href="mailto:igorkharin@gmail.com">igorkharin@gmail.com</a></li>
+<li>Bill Zissimopoulos <a href="mailto:billziss@navimatics.com">billziss@navimatics.com</a></li>
+<li>Bob Potter <a href="mailto:bobby.potter@gmail.com">bobby.potter@gmail.com</a></li>
+<li>Steven Lu <a href="mailto:tacticalazn@gmail.com">tacticalazn@gmail.com</a></li>
+<li>Sjur Fredriksen <a href="mailto:sjurtf@ifi.uio.no">sjurtf@ifi.uio.no</a></li>
+<li>Ruwbin <a href="mailto:hubus12345@gmail.com">hubus12345@gmail.com</a></li>
+<li>Fabian Möller <a href="mailto:fabianm88@gmail.com">fabianm88@gmail.com</a></li>
+<li>Edward Q. Bridges <a href="mailto:github@eqbridges.com">github@eqbridges.com</a></li>
 </ul>
 <h1 id="contact-the-rclone-project">Contact the rclone project</h1>
 <h2 id="forum">Forum</h2>
@@ -4266,11 +4331,6 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+e+'<\
 <li><span class="citation">[@njcw]</span>(https://twitter.com/njcw)</li>
 </ul>
 <h2 id="email">Email</h2>
-<p>Or if all else fails or you want to ask something private or confidential email <script type="text/javascript">
-<!--
-h='&#x63;&#114;&#x61;&#x69;&#x67;&#x2d;&#x77;&#x6f;&#x6f;&#100;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#110;&#x69;&#x63;&#x6b;';e=n+a+h;
-document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+'&#78;&#x69;&#x63;&#x6b;&#32;&#x43;&#114;&#x61;&#x69;&#x67;&#x2d;&#x57;&#x6f;&#x6f;&#100;'+'<\/'+'a'+'>');
-// -->
-</script><noscript>&#78;&#x69;&#x63;&#x6b;&#32;&#x43;&#114;&#x61;&#x69;&#x67;&#x2d;&#x57;&#x6f;&#x6f;&#100;&#32;&#40;&#110;&#x69;&#x63;&#x6b;&#32;&#x61;&#116;&#32;&#x63;&#114;&#x61;&#x69;&#x67;&#x2d;&#x77;&#x6f;&#x6f;&#100;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;&#x29;</noscript></p>
+<p>Or if all else fails or you want to ask something private or confidential email <a href="mailto:nick@craig-wood.com">Nick Craig-Wood</a></p>
 </body>
 </html>

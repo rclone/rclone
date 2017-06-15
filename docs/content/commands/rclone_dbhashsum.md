@@ -1,29 +1,25 @@
 ---
 date: 2017-06-15T20:06:09+01:00
-title: "rclone gendocs"
-slug: rclone_gendocs
-url: /commands/rclone_gendocs/
+title: "rclone dbhashsum"
+slug: rclone_dbhashsum
+url: /commands/rclone_dbhashsum/
 ---
-## rclone gendocs
+## rclone dbhashsum
 
-Output markdown docs for rclone to the directory supplied.
+Produces a Dropbbox hash file for all the objects in the path.
 
 ### Synopsis
 
 
 
-This produces markdown docs for the rclone commands to the directory
-supplied.  These are in a format suitable for hugo to render into the
-rclone.org website.
+Produces a Dropbox hash file for all the objects in the path.  The
+hashes are calculated according to [Dropbox content hash
+rules](https://www.dropbox.com/developers/reference/content-hash).
+The output is in the same format as md5sum and sha1sum.
+
 
 ```
-rclone gendocs output_directory [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for gendocs
+rclone dbhashsum remote:path
 ```
 
 ### Options inherited from parent commands

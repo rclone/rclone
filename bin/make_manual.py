@@ -31,6 +31,7 @@ docs = [
     "yandex.md",
     "sftp.md",
     "crypt.md",
+    "ftp.md",
     "local.md",
     "changelog.md",
     "bugs.md",

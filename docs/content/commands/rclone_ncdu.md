@@ -1,29 +1,44 @@
 ---
 date: 2017-06-15T20:06:09+01:00
-title: "rclone gendocs"
-slug: rclone_gendocs
-url: /commands/rclone_gendocs/
+title: "rclone ncdu"
+slug: rclone_ncdu
+url: /commands/rclone_ncdu/
 ---
-## rclone gendocs
+## rclone ncdu
 
-Output markdown docs for rclone to the directory supplied.
+Explore a remote with a text based user interface.
 
 ### Synopsis
 
 
 
-This produces markdown docs for the rclone commands to the directory
-supplied.  These are in a format suitable for hugo to render into the
-rclone.org website.
+This displays a text based user interface allowing the navigation of a
+remote. It is most useful for answering the question - "What is using
+all my disk space?".
+
+To make the user interface it first scans the entire remote given and
+builds an in memory representation.  rclone ncdu can be used during
+this scanning phase and you will see it building up the directory
+structure as it goes along.
+
+Here are the keys - press '?' to toggle the help on and off
+
+     ↑,↓ or k,j to Move
+     →,l to enter
+     ←,h to return
+     c toggle counts
+     g toggle graph
+     n,s,C sort by name,size,count
+     ? to toggle help on and off
+     q/ESC/c-C to quit
+
+This an homage to the [ncdu tool](https://dev.yorhel.nl/ncdu) but for
+rclone remotes.  It is missing lots of features at the moment, most
+importantly deleting files, but is useful as it stands.
+
 
 ```
-rclone gendocs output_directory [flags]
-```
-
-### Options
-
-```
-  -h, --help   help for gendocs
+rclone ncdu remote:path
 ```
 
 ### Options inherited from parent commands

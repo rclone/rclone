@@ -1,29 +1,53 @@
 ---
 date: 2017-06-15T20:06:09+01:00
-title: "rclone gendocs"
-slug: rclone_gendocs
-url: /commands/rclone_gendocs/
+title: "rclone lsjson"
+slug: rclone_lsjson
+url: /commands/rclone_lsjson/
 ---
-## rclone gendocs
+## rclone lsjson
 
-Output markdown docs for rclone to the directory supplied.
+List directories and objects in the path in JSON format.
 
 ### Synopsis
 
 
+List directories and objects in the path in JSON format.
 
-This produces markdown docs for the rclone commands to the directory
-supplied.  These are in a format suitable for hugo to render into the
-rclone.org website.
+The output is an array of Items, where each Item looks like this
+
+   {
+      "Hashes" : {
+         "SHA-1" : "f572d396fae9206628714fb2ce00f72e94f2258f",
+         "MD5" : "b1946ac92492d2347c6235b4d2611184",
+         "DropboxHash" : "ecb65bb98f9d905b70458986c39fcbad7715e5f2fcc3b1f07767d7c83e2438cc"
+      },
+      "IsDir" : false,
+      "ModTime" : "2017-05-31T16:15:57.034468261+01:00",
+      "Name" : "file.txt",
+      "Path" : "full/path/goes/here/file.txt",
+      "Size" : 6
+   }
+
+If --hash is not specified the the Hashes property won't be emitted.
+
+If --no-modtime is specified then ModTime will be blank.
+
+The time is in RFC3339 format with nanosecond precision.
+
+The whole output can be processed as a JSON blob, or alternatively it
+can be processed line by line as each item is written one to a line.
+
 
 ```
-rclone gendocs output_directory [flags]
+rclone lsjson remote:path [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for gendocs
+      --hash         Include hashes in the output (may take longer).
+      --no-modtime   Don't read the modification time (can speed things up).
+  -R, --recursive    Recurse into the listing.
 ```
 
 ### Options inherited from parent commands
