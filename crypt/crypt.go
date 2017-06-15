@@ -170,9 +170,9 @@ func (f *Fs) addDir(entries *fs.DirEntries, dir *fs.Dir) {
 	*entries = append(*entries, f.newDir(dir))
 }
 
-// Encrypt some directory entries
+// Encrypt some directory entries.  This alters entries returning it as newEntries.
 func (f *Fs) encryptEntries(entries fs.DirEntries) (newEntries fs.DirEntries, err error) {
-	newEntries = make(fs.DirEntries, 0, len(entries))
+	newEntries = entries[:0] // in place filter
 	for _, entry := range entries {
 		switch x := entry.(type) {
 		case fs.Object:
