@@ -98,6 +98,12 @@
   revision = "2788f0dbd16903de03cb8186e5c7d97b69ad387b"
 
 [[projects]]
+  name = "github.com/mattn/go-runewidth"
+  packages = ["."]
+  revision = "9e777a8366cce605130a531d2cd6363d07ad7317"
+  version = "v0.0.2"
+
+[[projects]]
   branch = "master"
   name = "github.com/ncw/dropbox-sdk-go-unofficial"
   packages = ["dropbox","dropbox/async","dropbox/files","dropbox/properties"]
@@ -114,6 +120,12 @@
   name = "github.com/ncw/swift"
   packages = ["."]
   revision = "8e9b10220613abdbc2896808ee6b43e411a4fa6c"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/nsf/termbox-go"
+  packages = ["."]
+  revision = "4163cd39dda1c0dda883a713640bc01e08951c24"
 
 [[projects]]
   branch = "master"
@@ -250,6 +262,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e0227ed773a9f6c56d1bfac9de1d87c2a74ce142e418b661b74931d2e2b20945"
+  inputs-digest = "0d9d9076ed37a1be89629d9d43c5291394ed374e91c775ce3993d354e1e74a25"
   solver-name = "gps-cdcl"
   solver-version = 1
