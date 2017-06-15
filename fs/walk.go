@@ -117,9 +117,20 @@ func walk(f Fs, path string, includeAll bool, maxLevel int, fn WalkFunc, listDir
 						return
 					}
 					entries, err := listDir(f, includeAll, job.remote)
+					var jobs []listJob
+					if err == nil && job.depth != 0 {
+						entries.ForDir(func(dir *Dir) {
+							// Recurse for the directory
+							jobs = append(jobs, listJob{
+								remote: dir.Remote(),
+								depth:  job.depth - 1,
+							})
+						})
+					}
 					mu.Lock()
 					err = fn(job.remote, entries, err)
 					mu.Unlock()
+					// NB once we have passed entries to fn we mustn't touch it again
 					if err != nil && err != ErrorSkipDir {
 						traversing.Done()
 						Stats.Error()
@@ -132,17 +143,7 @@ func walk(f Fs, path string, includeAll bool, maxLevel int, fn WalkFunc, listDir
 						}
 						continue
 					}
-					var jobs []listJob
-					if job.depth != 0 && err == nil {
-						entries.ForDir(func(dir *Dir) {
-							// Recurse for the directory
-							jobs = append(jobs, listJob{
-								remote: dir.Remote(),
-								depth:  job.depth - 1,
-							})
-						})
-					}
-					if len(jobs) > 0 {
+					if err == nil && len(jobs) > 0 {
 						traversing.Add(len(jobs))
 						go func() {
 							// Now we have traversed this directory, send these
