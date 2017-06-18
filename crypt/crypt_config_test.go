@@ -30,4 +30,5 @@ func init() {
 		{Name: name3, Key: "password", Value: fs.MustObscure("potato2")},
 		{Name: name3, Key: "filename_encryption", Value: "obfuscate"},
 	}
+	fstests.SkipBadWindowsCharacters[name3+":"] = true
 }

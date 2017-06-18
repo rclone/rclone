@@ -35,7 +35,9 @@ var (
 	NilObject fs.Object
 	// ExtraConfig is for adding config to a remote
 	ExtraConfig = []ExtraConfigItem{}
-	file1       = fstest.Item{
+	// SkipBadWindowsCharacters skips unusable characters for windows if set
+	SkipBadWindowsCharacters = map[string]bool{}
+	file1                    = fstest.Item{
 		ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
 		Path:    "file name.txt",
 	}
@@ -58,6 +60,12 @@ type ExtraConfigItem struct{ Name, Key, Value string }
 // TestInit tests basic intitialisation
 func TestInit(t *testing.T) {
 	var err error
+
+	// Remove bad characters from Windows file name if set
+	if SkipBadWindowsCharacters[RemoteName] {
+		t.Logf("Removing bad windows characters from test file")
+		file2.Path = winPath(file2.Path)
+	}
 
 	// Never ask for passwords, fail instead.
 	// If your local config is encrypted set environment variable
@@ -165,11 +173,13 @@ func TestFsListEmpty(t *testing.T) {
 
 // winPath converts a path into a windows safe path
 func winPath(s string) string {
-	s = strings.Replace(s, "?", "_", -1)
-	s = strings.Replace(s, `"`, "_", -1)
-	s = strings.Replace(s, "<", "_", -1)
-	s = strings.Replace(s, ">", "_", -1)
-	return s
+	return strings.Map(func(r rune) rune {
+		switch r {
+		case '<', '>', '"', '|', '?', '*', ':':
+			return '_'
+		}
+		return r
+	}, s)
 }
 
 // dirsToNames returns a sorted list of names
@@ -323,9 +333,9 @@ func TestFsListDirFile2(t *testing.T) {
 	list := func(dir string, expectedDirNames, expectedObjNames []string) {
 		var objNames, dirNames []string
 		for i := 1; i <= *fstest.ListRetries; i++ {
-			objs, dirs, err := fs.WalkGetAll(remote, dir, false, 1)
-			if err == fs.ErrorDirNotFound {
-				objs, dirs, err = fs.WalkGetAll(remote, winPath(dir), false, 1)
+			objs, dirs, err := fs.WalkGetAll(remote, dir, true, 1)
+			if errors.Cause(err) == fs.ErrorDirNotFound {
+				objs, dirs, err = fs.WalkGetAll(remote, winPath(dir), true, 1)
 			}
 			require.NoError(t, err)
 			objNames = objsToNames(objs)
