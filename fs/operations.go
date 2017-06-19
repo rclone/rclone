@@ -607,7 +607,7 @@ func ListDirSorted(fs Fs, includeAll bool, dir string) (entries DirEntries, err 
 
 	// filter the entries if required
 	if !includeAll {
-		newEntries := make(DirEntries, 0, len(entries))
+		newEntries := entries[:0] // in place filter
 		for _, entry := range entries {
 			switch x := entry.(type) {
 			case Object:
