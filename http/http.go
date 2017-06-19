@@ -1,18 +1,16 @@
 // Package http provides a filesystem interface using golang.org/net/http
 //
-// It treads HTML pages served from the endpoint as directory
+// It treats HTML pages served from the endpoint as directory
 // listings, and includes any links found as files.
 
-// +build !plan9
+// +build go1.7
 
 package http
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -23,7 +21,10 @@ import (
 	"golang.org/x/net/html"
 )
 
-var errorReadOnly = errors.New("http remotes are read only")
+var (
+	errorReadOnly = errors.New("http remotes are read only")
+	timeUnset     = time.Unix(0, 0)
+)
 
 func init() {
 	fsi := &fs.RegInfo{
@@ -31,7 +32,7 @@ func init() {
 		Description: "http Connection",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name:     "endpoint",
+			Name:     "url",
 			Help:     "URL of http host to connect to",
 			Optional: false,
 			Examples: []fs.OptionExample{{
@@ -54,49 +55,86 @@ type Fs struct {
 
 // Object is a remote object that has been stat'd (so it exists, but is not necessarily open for reading)
 type Object struct {
-	fs     *Fs
-	remote string
-	info   os.FileInfo
+	fs          *Fs
+	remote      string
+	size        int64
+	modTime     time.Time
+	contentType string
 }
 
-// ObjectReader holds the File interface to a remote http file opened for reading
-type ObjectReader struct {
-	object   *Object
-	httpFile io.ReadCloser
-}
-
-func urlJoin(u *url.URL, paths ...string) string {
-	r := u
-	for _, p := range paths {
-		if p == "/" {
-			continue
-		}
-		rel, _ := url.Parse(p)
-		r = r.ResolveReference(rel)
+// Join a URL and a path returning a new URL
+func urlJoin(base *url.URL, path string) *url.URL {
+	rel, err := url.Parse(path)
+	if err != nil {
+		fs.Errorf(nil, "Error parsing %q as URL: %v", path, err)
 	}
-	return r.String()
+	return base.ResolveReference(rel)
+}
+
+// statusError returns an error if the res contained an error
+func statusError(res *http.Response, err error) error {
+	if err != nil {
+		return err
+	}
+	if res.StatusCode < 200 || res.StatusCode > 299 {
+		_ = res.Body.Close()
+		return errors.Errorf("HTTP Error %d: %s", res.StatusCode, res.Status)
+	}
+	return nil
 }
 
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
 func NewFs(name, root string) (fs.Fs, error) {
-	endpoint := fs.ConfigFileGet(name, "endpoint")
+	endpoint := fs.ConfigFileGet(name, "url")
+	if !strings.HasSuffix(endpoint, "/") {
+		endpoint += "/"
+	}
 
-	u, err := url.Parse(endpoint)
+	// Parse the endpoint and stick the root onto it
+	base, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, err
+	}
+	rootURL, err := url.Parse(root)
+	if err != nil {
+		return nil, err
+	}
+	u := base.ResolveReference(rootURL)
+
+	client := fs.Config.Client()
+
+	var isFile = false
+	if !strings.HasSuffix(u.String(), "/") {
+		// Make a client which doesn't follow redirects so the server
+		// doesn't redirect http://host/dir to http://host/dir/
+		noRedir := *client
+		noRedir.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
+		// check to see if points to a file
+		res, err := noRedir.Head(u.String())
+		err = statusError(res, err)
+		if err == nil {
+			isFile = true
+		}
+	}
+
+	newRoot := u.String()
+	if isFile {
+		// Point to the parent if this is a file
+		newRoot, _ = path.Split(u.String())
+	} else {
+		if !strings.HasSuffix(newRoot, "/") {
+			newRoot += "/"
+		}
+	}
+
+	u, err = url.Parse(newRoot)
 	if err != nil {
 		return nil, err
 	}
 
-	if !strings.HasSuffix(root, "/") && root != "" {
-		root += "/"
-	}
-
-	client := fs.Config.Client()
-
-	_, err = client.Head(urlJoin(u, root))
-	if err != nil {
-		return nil, errors.Wrap(err, "couldn't connect http")
-	}
 	f := &Fs{
 		name:       name,
 		root:       root,
@@ -104,6 +142,9 @@ func NewFs(name, root string) (fs.Fs, error) {
 		endpoint:   u,
 	}
 	f.features = (&fs.Features{}).Fill(f)
+	if isFile {
+		return f, fs.ErrorIsFile
+	}
 	return f, nil
 }
 
@@ -119,7 +160,7 @@ func (f *Fs) Root() string {
 
 // String returns the URL for the filesystem
 func (f *Fs) String() string {
-	return urlJoin(f.endpoint, f.root)
+	return f.endpoint.String()
 }
 
 // Features returns the optional features of this Fs
@@ -145,51 +186,6 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	return o, nil
 }
 
-// dirExists returns true,nil if the directory exists, false, nil if
-// it doesn't or false, err
-func (f *Fs) dirExists(dir string) (bool, error) {
-	res, err := f.httpClient.Head(urlJoin(f.endpoint, dir))
-	if err != nil {
-		return false, err
-	}
-	if res.StatusCode == http.StatusOK {
-		return true, nil
-	}
-	return false, nil
-}
-
-type entry struct {
-	name  string
-	url   string
-	size  int64
-	mode  os.FileMode
-	mtime int64
-}
-
-func (e *entry) Name() string {
-	return e.name
-}
-
-func (e *entry) Size() int64 {
-	return e.size
-}
-
-func (e *entry) Mode() os.FileMode {
-	return os.FileMode(e.mode)
-}
-
-func (e *entry) ModTime() time.Time {
-	return time.Unix(e.mtime, 0)
-}
-
-func (e *entry) IsDir() bool {
-	return e.mode&os.ModeDir != 0
-}
-
-func (e *entry) Sys() interface{} {
-	return nil
-}
-
 func parseInt64(s string) int64 {
 	n, e := strconv.ParseInt(s, 10, 64)
 	if e != nil {
@@ -198,84 +194,95 @@ func parseInt64(s string) int64 {
 	return n
 }
 
-func parseBool(s string) bool {
-	b, e := strconv.ParseBool(s)
-	if e != nil {
-		return false
+// parseName turns a name as found in the page into a remote path or returns false
+func parseName(base *url.URL, val string) (string, bool) {
+	name, err := url.QueryUnescape(val)
+	if err != nil {
+		return "", false
 	}
-	return b
-}
-
-func prepareTimeString(ts string) string {
-	return strings.Trim(strings.Join(strings.SplitN(strings.Trim(ts, "\t "), " ", 3)[0:2], " "), "\r\n\t ")
-}
-
-func parseTime(n *html.Node) (t time.Time) {
-	if ts := prepareTimeString(n.Data); ts != "" {
-		t, _ = time.Parse("2-Jan-2006 15:04", ts)
+	u := urlJoin(base, name)
+	uStr := u.String()
+	if strings.Index(uStr, "?") >= 0 {
+		return "", false
 	}
-	return t
+	baseStr := base.String()
+	// check has URL prefix
+	if !strings.HasPrefix(uStr, baseStr) {
+		return "", false
+	}
+	// check has path prefix
+	if !strings.HasPrefix(u.Path, base.Path) {
+		return "", false
+	}
+	// calculate the name relative to the base
+	name = u.Path[len(base.Path):]
+	// musn't be empty
+	if name == "" {
+		return "", false
+	}
+	// mustn't contain a /
+	slash := strings.Index(name, "/")
+	if slash >= 0 && slash != len(name)-1 {
+		return "", false
+	}
+	return name, true
 }
 
-func (f *Fs) readDir(p string) ([]*entry, error) {
-	entries := make([]*entry, 0)
-	res, err := f.httpClient.Get(urlJoin(f.endpoint, p))
+// Parse turns HTML for a directory into names
+// base should be the base URL to resolve any relative names from
+func parse(base *url.URL, in io.Reader) (names []string, err error) {
+	doc, err := html.Parse(in)
 	if err != nil {
 		return nil, err
 	}
-	if res.Body == nil || res.StatusCode != http.StatusOK {
-		//return nil, errors.Errorf("directory listing failed with error: % (%d)", res.Status, res.StatusCode)
-		return nil, nil
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		if n.Type == html.ElementNode && n.Data == "a" {
+			for _, a := range n.Attr {
+				if a.Key == "href" {
+					name, ok := parseName(base, a.Val)
+					if ok {
+						names = append(names, name)
+					}
+					break
+				}
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			walk(c)
+		}
+	}
+	walk(doc)
+	return names, nil
+}
+
+// Read the directory passed in
+func (f *Fs) readDir(dir string) (names []string, err error) {
+	u := urlJoin(f.endpoint, dir)
+	if !strings.HasSuffix(u.String(), "/") {
+		return nil, errors.Errorf("internal error: readDir URL %q didn't end in /", u.String())
+	}
+	res, err := f.httpClient.Get(u.String())
+	if err == nil && res.StatusCode == http.StatusNotFound {
+		return nil, fs.ErrorDirNotFound
+	}
+	err = statusError(res, err)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to readDir")
 	}
 	defer fs.CheckClose(res.Body, &err)
 
-	switch strings.SplitN(res.Header.Get("Content-Type"), ";", 2)[0] {
+	contentType := strings.SplitN(res.Header.Get("Content-Type"), ";", 2)[0]
+	switch contentType {
 	case "text/html":
-		doc, err := html.Parse(res.Body)
+		names, err = parse(u, res.Body)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "readDir")
 		}
-		var walk func(*html.Node)
-		walk = func(n *html.Node) {
-			if n.Type == html.ElementNode && n.Data == "a" {
-				for _, a := range n.Attr {
-					if a.Key == "href" {
-						name, err := url.QueryUnescape(a.Val)
-						if err != nil {
-							continue
-						}
-						if name == "../" || name == "./" || name == ".." {
-							break
-						}
-						if strings.Index(name, "?") >= 0 || strings.HasPrefix(name, "http") {
-							break
-						}
-						u, err := url.Parse(name)
-						if err != nil {
-							break
-						}
-						name = path.Clean(u.Path)
-						e := &entry{
-							name: strings.TrimRight(name, "/"),
-							url:  name,
-						}
-						if a.Val[len(a.Val)-1] == '/' {
-							e.mode = os.FileMode(0555) | os.ModeDir
-						} else {
-							e.mode = os.FileMode(0444)
-						}
-						entries = append(entries, e)
-						break
-					}
-				}
-			}
-			for c := n.FirstChild; c != nil; c = c.NextSibling {
-				walk(c)
-			}
-		}
-		walk(doc)
+	default:
+		return nil, errors.Errorf("Can't parse content type %q", contentType)
 	}
-	return entries, nil
+	return names, nil
 }
 
 // List the objects and directories in dir into entries.  The
@@ -288,36 +295,21 @@ func (f *Fs) readDir(p string) ([]*entry, error) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
-	endpoint := path.Join(f.root, dir)
-	if !strings.HasSuffix(dir, "/") {
-		endpoint += "/"
+	if !strings.HasSuffix(dir, "/") && dir != "" {
+		dir += "/"
 	}
-	ok, err := f.dirExists(endpoint)
-	if err != nil {
-		return nil, errors.Wrap(err, "List failed")
-	}
-	if !ok {
-		return nil, fs.ErrorDirNotFound
-	}
-	httpDir := path.Join(f.root, dir)
-	if !strings.HasSuffix(dir, "/") {
-		httpDir += "/"
-	}
-	infos, err := f.readDir(httpDir)
+	names, err := f.readDir(dir)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error listing %q", dir)
 	}
-	for _, info := range infos {
-		remote := ""
-		if dir != "" {
-			remote = dir + "/" + info.Name()
-		} else {
-			remote = info.Name()
-		}
-		if info.IsDir() {
+	for _, name := range names {
+		isDir := name[len(name)-1] == '/'
+		name = strings.TrimRight(name, "/")
+		remote := path.Join(dir, name)
+		if isDir {
 			dir := &fs.Dir{
 				Name:  remote,
-				When:  info.ModTime(),
+				When:  timeUnset,
 				Bytes: 0,
 				Count: 0,
 			}
@@ -326,7 +318,6 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 			file := &Object{
 				fs:     f,
 				remote: remote,
-				info:   info,
 			}
 			if err = file.stat(); err != nil {
 				continue
@@ -371,12 +362,12 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 
 // Size returns the size in bytes of the remote http file
 func (o *Object) Size() int64 {
-	return o.info.Size()
+	return o.size
 }
 
 // ModTime returns the modification time of the remote http file
 func (o *Object) ModTime() time.Time {
-	return o.info.ModTime()
+	return o.modTime
 }
 
 // path returns the native path of the object
@@ -386,37 +377,19 @@ func (o *Object) path() string {
 
 // stat updates the info field in the Object
 func (o *Object) stat() error {
-	endpoint := urlJoin(o.fs.endpoint, o.fs.root, o.remote)
-	if o.info.IsDir() {
-		endpoint += "/"
-	}
+	endpoint := urlJoin(o.fs.endpoint, o.remote).String()
 	res, err := o.fs.httpClient.Head(endpoint)
+	err = statusError(res, err)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to stat")
 	}
-	if res.StatusCode != http.StatusOK {
-		return errors.New("failed to stat")
-	}
-	var mtime int64
 	t, err := http.ParseTime(res.Header.Get("Last-Modified"))
 	if err != nil {
-		mtime = 0
-	} else {
-		mtime = t.Unix()
+		t = timeUnset
 	}
-	size := parseInt64(res.Header.Get("Content-Length"))
-	e := &entry{
-		name:  o.remote,
-		size:  size,
-		mtime: mtime,
-		mode:  os.FileMode(0444),
-	}
-	if strings.HasSuffix(o.remote, "/") {
-		e.mode = os.FileMode(0555) | os.ModeDir
-		e.size = 0
-		e.name = o.remote[:len(o.remote)-1]
-	}
-	o.info = e
+	o.size = parseInt64(res.Header.Get("Content-Length"))
+	o.modTime = t
+	o.contentType = res.Header.Get("Content-Type")
 	return nil
 }
 
@@ -429,52 +402,29 @@ func (o *Object) SetModTime(modTime time.Time) error {
 
 // Storable returns whether the remote http file is a regular file (not a directory, symbolic link, block device, character device, named pipe, etc)
 func (o *Object) Storable() bool {
-	return o.info.Mode().IsRegular()
-}
-
-// Read from a remote http file object reader
-func (file *ObjectReader) Read(p []byte) (n int, err error) {
-	n, err = file.httpFile.Read(p)
-	return n, err
-}
-
-// Close a reader of a remote http file
-func (file *ObjectReader) Close() (err error) {
-	return file.httpFile.Close()
+	return true
 }
 
 // Open a remote http file object for reading. Seek is supported
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	var offset int64
-	endpoint := urlJoin(o.fs.endpoint, o.fs.root, o.remote)
-	offset = 0
-	for _, option := range options {
-		switch x := option.(type) {
-		case *fs.SeekOption:
-			offset = x.Offset
-		default:
-			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
-			}
-		}
-	}
-
+	endpoint := urlJoin(o.fs.endpoint, o.remote).String()
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "Open failed")
 	}
-	if offset > 0 {
-		req.Header.Set("Range", fmt.Sprintf("bytes=%d-", offset))
+
+	// Add optional headers
+	for k, v := range fs.OpenOptionHeaders(options) {
+		req.Header.Add(k, v)
 	}
+
+	// Do the request
 	res, err := o.fs.httpClient.Do(req)
+	err = statusError(res, err)
 	if err != nil {
 		return nil, errors.Wrap(err, "Open failed")
 	}
-	in = &ObjectReader{
-		object:   o,
-		httpFile: res.Body,
-	}
-	return in, nil
+	return res.Body, nil
 }
 
 // Hashes returns fs.HashNone to indicate remote hashing is unavailable
@@ -502,8 +452,14 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	return errorReadOnly
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	return o.contentType
+}
+
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs     = &Fs{}
-	_ fs.Object = &Object{}
+	_ fs.Fs        = &Fs{}
+	_ fs.Object    = &Object{}
+	_ fs.MimeTyper = &Object{}
 )

@@ -32,6 +32,7 @@ See the following for detailed instructions for
   * [Yandex Disk](/yandex/)
   * [SFTP](/sftp/)
   * [FTP](/ftp/)
+  * [HTTP](/http/)
   * [Crypt](/crypt/) - to encrypt other remotes
 
 Usage

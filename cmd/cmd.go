@@ -53,6 +53,7 @@ from various cloud storage systems and using file transfer services, such as:
   * Yandex Disk
   * SFTP
   * FTP
+  * HTTP
   * The local filesystem
 
 Features

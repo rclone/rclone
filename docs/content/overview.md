@@ -29,6 +29,7 @@ Here is an overview of the major features of each cloud storage system.
 | Yandex Disk            | MD5     | Yes     | No               | No              | R/W       |
 | SFTP                   | -       | Yes     | Depends          | No              | -         |
 | FTP                    | -       | No      | Yes              | No              | -         |
+| HTTP                   | -       | No      | Yes              | No              | R         |
 | The local filesystem   | All     | Yes     | Depends          | No              | -         |
 
 ### Hash ###
@@ -122,6 +123,7 @@ operations more efficient.
 | Yandex Disk            | Yes   | No   | No   | No      | No  [#575](https://github.com/ncw/rclone/issues/575) | Yes   |
 | SFTP                   | No    | No   | Yes  | Yes     | No      | No    |
 | FTP                    | No    | No   | Yes  | Yes     | No      | No    |
+| HTTP                   | No    | No   | No   | No      | No      | No    |
 | The local filesystem   | Yes   | No   | Yes  | Yes     | No      | No    |
 
 
