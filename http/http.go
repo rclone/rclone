@@ -16,14 +16,14 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
-
-	"golang.org/x/net/html"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
+	"golang.org/x/net/html"
 )
+
+var errorReadOnly = errors.New("http remotes are read only")
 
 func init() {
 	fsi := &fs.RegInfo{
@@ -32,10 +32,10 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "endpoint",
-			Help:     "http host to connect to",
+			Help:     "URL of http host to connect to",
 			Optional: false,
 			Examples: []fs.OptionExample{{
-				Value: "example.com",
+				Value: "https://example.com",
 				Help:  "Connect to example.com",
 			}},
 		}},
@@ -278,24 +278,34 @@ func (f *Fs) readDir(p string) ([]*entry, error) {
 	return entries, nil
 }
 
-func (f *Fs) list(out fs.ListOpts, dir string, level int, wg *sync.WaitGroup, tokens chan struct{}) {
-	defer wg.Done()
-	// take a token
-	<-tokens
-	// return it when done
-	defer func() {
-		tokens <- struct{}{}
-	}()
+// List the objects and directories in dir into entries.  The
+// entries can be returned in any order but should be for a
+// complete directory.
+//
+// dir should be "" to list the root, and should not have
+// trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+	endpoint := path.Join(f.root, dir)
+	if !strings.HasSuffix(dir, "/") {
+		endpoint += "/"
+	}
+	ok, err := f.dirExists(endpoint)
+	if err != nil {
+		return nil, errors.Wrap(err, "List failed")
+	}
+	if !ok {
+		return nil, fs.ErrorDirNotFound
+	}
 	httpDir := path.Join(f.root, dir)
 	if !strings.HasSuffix(dir, "/") {
 		httpDir += "/"
 	}
 	infos, err := f.readDir(httpDir)
 	if err != nil {
-		err = errors.Wrapf(err, "error listing %q", dir)
-		fs.Errorf(f, "Listing failed: %v", err)
-		out.SetError(err)
-		return
+		return nil, errors.Wrapf(err, "error listing %q", dir)
 	}
 	for _, info := range infos {
 		remote := ""
@@ -305,19 +315,13 @@ func (f *Fs) list(out fs.ListOpts, dir string, level int, wg *sync.WaitGroup, to
 			remote = info.Name()
 		}
 		if info.IsDir() {
-			if out.IncludeDirectory(remote) {
-				dir := &fs.Dir{
-					Name:  remote,
-					When:  info.ModTime(),
-					Bytes: 0,
-					Count: 0,
-				}
-				out.AddDir(dir)
-				if level < out.Level() {
-					wg.Add(1)
-					go f.list(out, remote, level+1, wg, tokens)
-				}
+			dir := &fs.Dir{
+				Name:  remote,
+				When:  info.ModTime(),
+				Bytes: 0,
+				Count: 0,
 			}
+			entries = append(entries, dir)
 		} else {
 			file := &Object{
 				fs:     f,
@@ -327,41 +331,19 @@ func (f *Fs) list(out fs.ListOpts, dir string, level int, wg *sync.WaitGroup, to
 			if err = file.stat(); err != nil {
 				continue
 			}
-			out.Add(file)
+			entries = append(entries, file)
 		}
 	}
+	return entries, nil
 }
 
-// List the files and directories starting at <dir>
-func (f *Fs) List(out fs.ListOpts, dir string) {
-	endpoint := path.Join(f.root, dir)
-	if !strings.HasSuffix(dir, "/") {
-		endpoint += "/"
-	}
-	ok, err := f.dirExists(endpoint)
-	if err != nil {
-		out.SetError(errors.Wrap(err, "List failed"))
-		return
-	}
-	if !ok {
-		out.SetError(fs.ErrorDirNotFound)
-		return
-	}
-	// tokens to control the concurrency
-	tokens := make(chan struct{}, fs.Config.Checkers)
-	for i := 0; i < fs.Config.Checkers; i++ {
-		tokens <- struct{}{}
-	}
-	wg := new(sync.WaitGroup)
-	wg.Add(1)
-	f.list(out, dir, 1, wg, tokens)
-	wg.Wait()
-	out.Finished()
-}
-
-// Put data from <in> into a new remote http file object described by <src.Remote()> and <src.ModTime()>
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo) (fs.Object, error) {
-	return nil, nil
+// Put in to the remote path with the modTime given of the given size
+//
+// May create the object even if it returns an error - if so
+// will return the object and the error, otherwise will return
+// nil and the error
+func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return nil, errorReadOnly
 }
 
 // Fs is the filesystem this remote http file object is located within
@@ -442,7 +424,7 @@ func (o *Object) stat() error {
 //
 // it also updates the info field
 func (o *Object) SetModTime(modTime time.Time) error {
-	return nil
+	return errorReadOnly
 }
 
 // Storable returns whether the remote http file is a regular file (not a directory, symbolic link, block device, character device, named pipe, etc)
@@ -502,22 +484,22 @@ func (f *Fs) Hashes() fs.HashSet {
 
 // Mkdir makes the root directory of the Fs object
 func (f *Fs) Mkdir(dir string) error {
-	return nil
+	return errorReadOnly
 }
 
 // Remove a remote http file object
 func (o *Object) Remove() error {
-	return nil
+	return errorReadOnly
 }
 
 // Rmdir removes the root directory of the Fs object
 func (f *Fs) Rmdir(dir string) error {
-	return nil
+	return errorReadOnly
 }
 
-// Update a remote http file using the data <in> and ModTime from <src>
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo) error {
-	return nil
+// Update in to the object with the modTime given of the given size
+func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	return errorReadOnly
 }
 
 // Check the interfaces are satisfied
