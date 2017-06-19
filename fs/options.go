@@ -31,12 +31,12 @@ func (o *RangeOption) Header() (key string, value string) {
 	key = "Range"
 	value = "bytes="
 	if o.Start >= 0 {
-		value += strconv.FormatInt(o.Start, 64)
+		value += strconv.FormatInt(o.Start, 10)
 
 	}
 	value += "-"
 	if o.End >= 0 {
-		value += strconv.FormatInt(o.End, 64)
+		value += strconv.FormatInt(o.End, 10)
 	}
 	return key, value
 }
