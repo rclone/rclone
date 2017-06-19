@@ -34,8 +34,8 @@
 [[projects]]
   name = "github.com/billziss-gh/cgofuse"
   packages = ["fuse"]
-  revision = "b402ef9fb28afcc443348ba2d46b5bfd88867fea"
-  version = "v1.0"
+  revision = "35bcf037030dcadcd247618c75c00c6cd17482d7"
+  version = "v1.0.2"
 
 [[projects]]
   name = "github.com/cpuguy83/go-md2man"

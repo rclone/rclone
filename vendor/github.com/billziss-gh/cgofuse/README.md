@@ -2,6 +2,7 @@
 
 [![Travis CI](https://img.shields.io/travis/billziss-gh/cgofuse.svg?label=osx/linux)](https://travis-ci.org/billziss-gh/cgofuse)
 [![AppVeyor](https://img.shields.io/appveyor/ci/billziss-gh/cgofuse.svg?label=windows)](https://ci.appveyor.com/project/billziss-gh/cgofuse)
+[![CircleCI](https://img.shields.io/circleci/project/github/billziss-gh/cgofuse.svg?label=cross-build)](https://circleci.com/gh/billziss-gh/cgofuse)
 [![GoDoc](https://godoc.org/github.com/billziss-gh/cgofuse/fuse?status.svg)](https://godoc.org/github.com/billziss-gh/cgofuse/fuse)
 
 Cgofuse is a cross-platform FUSE library for Go. It is implemented using [cgo](https://golang.org/cmd/cgo/) and can be ported to any platform that has a FUSE implementation.
@@ -32,6 +33,20 @@ Cgofuse currently runs on **OSX**, **Linux** and **Windows** (using [WinFsp](htt
     > cd cgofuse
     > set CPATH=C:\Program Files (x86)\WinFsp\inc\fuse
     > go install -v ./fuse ./examples/memfs
+    ```
+
+## How to cross-compile your project using xgo
+
+You can easily cross-compile your project using [xgo](https://github.com/karalabe/xgo) and the [billziss/xgo-cgofuse](https://hub.docker.com/r/billziss/xgo-cgofuse/) docker image.
+
+- Prerequisites: [docker](https://www.docker.com), [xgo](https://github.com/karalabe/xgo)
+- Build:
+    ```
+    $ docker pull billziss/xgo-cgofuse
+    $ go get -u github.com/karalabe/xgo
+    $ cd YOUR-PROJECT-THAT-USES-CGOFUSE
+    $ xgo --image=billziss/xgo-cgofuse \
+        --targets=darwin/386,darwin/amd64,linux/386,linux/amd64,windows/386,windows/amd64 .
     ```
 
 ## How to use
