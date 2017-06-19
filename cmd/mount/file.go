@@ -30,13 +30,13 @@ var _ fusefs.Node = (*File)(nil)
 // Attr fills out the attributes for the file
 func (f *File) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	defer fs.Trace(f, "")("a=%+v, err=%v", a, &err)
-	modTime, Size, Blocks, err := f.File.Attr(noModTime)
+	modTime, Size, Blocks, err := f.File.Attr(mountlib.NoModTime)
 	if err != nil {
 		return translateError(err)
 	}
-	a.Gid = gid
-	a.Uid = uid
-	a.Mode = filePerms
+	a.Gid = mountlib.GID
+	a.Uid = mountlib.UID
+	a.Mode = mountlib.FilePerms
 	a.Size = Size
 	a.Atime = modTime
 	a.Mtime = modTime
@@ -52,7 +52,7 @@ var _ fusefs.NodeSetattrer = (*File)(nil)
 // Setattr handles attribute changes from FUSE. Currently supports ModTime only.
 func (f *File) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse.SetattrResponse) (err error) {
 	defer fs.Trace(f, "a=%+v", req)("err=%v", &err)
-	if noModTime {
+	if mountlib.NoModTime {
 		return nil
 	}
 	if req.Valid.MtimeNow() {
@@ -71,7 +71,7 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 	defer fs.Trace(f, "flags=%v", req.Flags)("fh=%v, err=%v", &fh, &err)
 	switch {
 	case req.Flags.IsReadOnly():
-		if noSeek {
+		if mountlib.NoSeek {
 			resp.Flags |= fuse.OpenNonSeekable
 		}
 		var rfh *mountlib.ReadFileHandle

@@ -53,15 +53,22 @@ func NewFS(f fs.Fs) *FS {
 		f: f,
 	}
 
+	if NoSeek {
+		fsys.noSeek = true
+	}
+	if NoChecksum {
+		fsys.noChecksum = true
+	}
+	if ReadOnly {
+		fsys.readOnly = true
+	}
+	fsys.dirCacheTime = DirCacheTime
+
 	fsys.root = newDir(fsys, f, fsDir)
 
-	return fsys
-}
-
-// SetDirCacheTime allows to set how long a directory listing is considered
-// valid. Set to 0 always request a fresh version from the remote.
-func (fsys *FS) SetDirCacheTime(dirCacheTime time.Duration) *FS {
-	fsys.dirCacheTime = dirCacheTime
+	if PollInterval > 0 {
+		fsys.PollChanges(PollInterval)
+	}
 	return fsys
 }
 
@@ -73,25 +80,6 @@ func (fsys *FS) PollChanges(pollInterval time.Duration) *FS {
 	if doDirChangeNotify != nil {
 		doDirChangeNotify(fsys.root.ForgetPath, pollInterval)
 	}
-	return fsys
-}
-
-// NoSeek disables seeking of files
-func (fsys *FS) NoSeek() *FS {
-	fsys.noSeek = true
-	return fsys
-}
-
-// NoChecksum disables checksum checking
-func (fsys *FS) NoChecksum() *FS {
-	fsys.noChecksum = true
-	return fsys
-}
-
-// ReadOnly sets the fs into read only mode, returning EROFS for any
-// write operations.
-func (fsys *FS) ReadOnly() *FS {
-	fsys.readOnly = true
 	return fsys
 }
 

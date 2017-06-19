@@ -8,7 +8,7 @@ import (
 	"github.com/ncw/rclone/cmd/mountlib/mounttest"
 )
 
-func TestMain(m *testing.M)                       { mounttest.TestMain(m, mount, dirPerms, filePerms) }
+func TestMain(m *testing.M)                       { mounttest.TestMain(m, mount) }
 func TestDirLs(t *testing.T)                      { mounttest.TestDirLs(t) }
 func TestDirCreateAndRemoveDir(t *testing.T)      { mounttest.TestDirCreateAndRemoveDir(t) }
 func TestDirCreateAndRemoveFile(t *testing.T)     { mounttest.TestDirCreateAndRemoveFile(t) }

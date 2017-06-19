@@ -39,19 +39,6 @@ func NewFS(f fs.Fs) *FS {
 		openFilesRd: newOpenFiles(0x03),
 		ready:       make(chan (struct{})),
 	}
-	if noSeek {
-		fsys.FS.NoSeek()
-	}
-	if noChecksum {
-		fsys.FS.NoChecksum()
-	}
-	if readOnly {
-		fsys.FS.ReadOnly()
-	}
-	if pollInterval > 0 {
-		fsys.FS.PollChanges(pollInterval)
-	}
-	fsys.FS.SetDirCacheTime(dirCacheTime)
 	return fsys
 }
 
@@ -214,21 +201,21 @@ func (fsys *FS) stat(node mountlib.Node, stat *fuse.Stat_t) (errc int) {
 	switch x := node.(type) {
 	case *mountlib.Dir:
 		modTime = x.ModTime()
-		Mode = dirPerms | fuse.S_IFDIR
+		Mode = mountlib.DirPerms | fuse.S_IFDIR
 	case *mountlib.File:
 		var err error
-		modTime, Size, Blocks, err = x.Attr(noModTime)
+		modTime, Size, Blocks, err = x.Attr(mountlib.NoModTime)
 		if err != nil {
 			return translateError(err)
 		}
-		Mode = filePerms | fuse.S_IFREG
+		Mode = mountlib.FilePerms | fuse.S_IFREG
 	}
 	//stat.Dev = 1
 	stat.Ino = node.Inode() // FIXME do we need to set the inode number?
 	stat.Mode = uint32(Mode)
 	stat.Nlink = 1
-	stat.Uid = uid
-	stat.Gid = gid
+	stat.Uid = mountlib.UID
+	stat.Gid = mountlib.GID
 	//stat.Rdev
 	stat.Size = int64(Size)
 	t := fuse.NewTimespec(modTime)

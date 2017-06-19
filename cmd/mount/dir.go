@@ -42,9 +42,9 @@ var _ fusefs.Node = (*Dir)(nil)
 // Attr updates the attributes of a directory
 func (d *Dir) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	defer fs.Trace(d, "")("attr=%+v, err=%v", a, &err)
-	a.Gid = gid
-	a.Uid = uid
-	a.Mode = os.ModeDir | dirPerms
+	a.Gid = mountlib.GID
+	a.Uid = mountlib.UID
+	a.Mode = os.ModeDir | mountlib.DirPerms
 	modTime := d.ModTime()
 	a.Atime = modTime
 	a.Mtime = modTime
@@ -61,7 +61,7 @@ var _ fusefs.NodeSetattrer = (*Dir)(nil)
 // Setattr handles attribute changes from FUSE. Currently supports ModTime only.
 func (d *Dir) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse.SetattrResponse) (err error) {
 	defer fs.Trace(d, "stat=%+v", req)("err=%v", &err)
-	if noModTime {
+	if mountlib.NoModTime {
 		return nil
 	}
 

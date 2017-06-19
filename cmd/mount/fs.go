@@ -30,19 +30,6 @@ func NewFS(f fs.Fs) *FS {
 		FS: mountlib.NewFS(f),
 		f:  f,
 	}
-	if noSeek {
-		fsys.FS.NoSeek()
-	}
-	if noChecksum {
-		fsys.FS.NoChecksum()
-	}
-	if readOnly {
-		fsys.FS.ReadOnly()
-	}
-	if pollInterval > 0 {
-		fsys.FS.PollChanges(pollInterval)
-	}
-	fsys.FS.SetDirCacheTime(dirCacheTime)
 	return fsys
 }
 
