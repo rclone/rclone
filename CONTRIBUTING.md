@@ -190,8 +190,8 @@ Research
 
 Getting going
 
-  * Create `remote/remote.go` (copy this from a similar fs)
-  * Add your fs to the imports in `fs/all/all.go`
+  * Create `remote/remote.go` (copy this from a similar remote)
+  * Add your remote to the imports in `fs/all/all.go`
 
 Unit tests
 
@@ -205,10 +205,13 @@ Integration tests
   * Add your fs to `fs/test_all.go`
   * Make sure integration tests pass with
       * `cd fs`
-      * `go test -v -remote TestRemote:` and
+      * `go test -v -remote TestRemote:`
+  * If you are making a bucket based remote, then check with this also
       * `go test -v -remote TestRemote: -subdir`
+  * And if your remote defines `ListR` this also
+      * `go test -v -remote TestRemote: -fast-list`
 
-Add your fs to the docs
+Add your fs to the docs - you'll need to pick an icon for it from [fontawesome](http://fontawesome.io/icons/).
 
   * `README.md` - main Github page
   * `docs/content/remote.md` - main docs page
