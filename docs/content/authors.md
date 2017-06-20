@@ -83,3 +83,4 @@ Contributors
   * Ruwbin <hubus12345@gmail.com>
   * Fabian Möller <fabianm88@gmail.com>
   * Edward Q. Bridges <github@eqbridges.com>
+  * Vasiliy Tolstov <v.tolstov@selfip.ru>
