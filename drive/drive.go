@@ -231,6 +231,8 @@ func (f *Fs) list(dirID string, title string, directoriesOnly bool, filesOnly bo
 		// Escaping the backslash isn't documented but seems to work
 		title = strings.Replace(title, `\`, `\\`, -1)
 		title = strings.Replace(title, `'`, `\'`, -1)
+		// Convert ／ to / for search
+		title = strings.Replace(title, "／", "/", -1)
 		query = append(query, fmt.Sprintf("title='%s'", title))
 	}
 	if directoriesOnly {
@@ -273,6 +275,8 @@ OUTER:
 			return false, errors.Wrap(err, "couldn't list directory")
 		}
 		for _, item := range files.Items {
+			// Convert / to ／ for listing purposes
+			item.Title = strings.Replace(item.Title, "/", "／", -1)
 			if fn(item) {
 				found = true
 				break OUTER
