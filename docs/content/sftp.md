@@ -21,17 +21,14 @@ Here is an example of making a SFTP configuration.  First run
 
     rclone config
 
-This will guide you through an interactive setup process.  You will
-need your account number (a short hex number) and key (a long hex
-number) which you can get from the SFTP control panel.
+This will guide you through an interactive setup process.
+
 ```
 No remotes found - make a new one
 n) New remote
-r) Rename remote
-c) Copy remote
 s) Set configuration password
 q) Quit config
-n/r/c/s/q> n
+n/s/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
@@ -63,6 +60,8 @@ Choose a number from below, or type in your own value
    \ "sftp"
 14 / Yandex Disk
    \ "yandex"
+15 / http Connection
+   \ "http"
 Storage> sftp
 SSH host to connect to
 Choose a number from below, or type in your own value
@@ -70,21 +69,24 @@ Choose a number from below, or type in your own value
    \ "example.com"
 host> example.com
 SSH username, leave blank for current username, ncw
-user> 
+user> sftpuser
 SSH port, leave blank to use default (22)
 port> 
-SSH password, leave blank to use ssh-agent
+SSH password, leave blank to use ssh-agent.
 y) Yes type in my own password
 g) Generate random password
 n) No leave this optional password blank
 y/g/n> n
+Path to unencrypted PEM-encoded private key file, leave blank to use ssh-agent.
+key_file> 
 Remote config
 --------------------
 [remote]
 host = example.com
-user = 
+user = sftpuser
 port = 
 pass = 
+key_file = 
 --------------------
 y) Yes this is OK
 e) Edit this remote
@@ -110,6 +112,34 @@ Sync `/home/local/directory` to the remote directory, deleting any
 excess files in the directory.
 
     rclone sync /home/local/directory remote:directory
+
+### SSH Authentication ###
+
+The SFTP remote supports 3 authentication methods
+
+  * Password
+  * Key file
+  * ssh-agent
+
+Key files should be unencrypted PEM-encoded private key files.  For
+instance `/home/$USER/.ssh/id_rsa`.
+
+If you don't specify `pass` or `key_file` then it will attempt to
+contact an ssh-agent.
+
+### ssh-agent on macOS ###
+
+Note that there seem to be various problems with using an ssh-agent on
+macOS due to recent changes in the OS.  The most effective work-around
+seems to be to start an ssh-agent in each session, eg
+
+    eval `ssh-agent -s` && ssh-add -A
+
+And then at the end of the session
+
+    eval `ssh-agent -k`
+
+These commands can be used in scripts of course.
 
 ### Modified time ###
 

@@ -6,6 +6,7 @@ package sftp
 
 import (
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"time"
@@ -40,9 +41,13 @@ func init() {
 			Optional: true,
 		}, {
 			Name:       "pass",
-			Help:       "SSH password, leave blank to use ssh-agent",
+			Help:       "SSH password, leave blank to use ssh-agent.",
 			Optional:   true,
 			IsPassword: true,
+		}, {
+			Name:     "key_file",
+			Help:     "Path to unencrypted PEM-encoded private key file, leave blank to use ssh-agent.",
+			Optional: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -79,6 +84,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	host := fs.ConfigFileGet(name, "host")
 	port := fs.ConfigFileGet(name, "port")
 	pass := fs.ConfigFileGet(name, "pass")
+	keyFile := fs.ConfigFileGet(name, "key_file")
 	if user == "" {
 		user = os.Getenv("USER")
 	}
@@ -91,7 +97,9 @@ func NewFs(name, root string) (fs.Fs, error) {
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         fs.Config.ConnectTimeout,
 	}
-	if pass == "" {
+
+	// Add ssh agent-auth if no password or file specified
+	if pass == "" && keyFile == "" {
 		sshAgentClient, _, err := sshagent.New()
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't connect to ssh-agent")
@@ -100,22 +108,31 @@ func NewFs(name, root string) (fs.Fs, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't read ssh agent signers")
 		}
-		/*
-			for i, signer := range signers {
-				if 2*i < len(signers) {
-					signers[i] = signers[len(signers)-i-1]
-					signers[len(signers)-i-1] = signer
-				}
-			}
-		*/
 		config.Auth = append(config.Auth, ssh.PublicKeys(signers...))
-	} else {
+	}
+
+	// Load key file if specified
+	if keyFile != "" {
+		key, err := ioutil.ReadFile(keyFile)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to read private key file")
+		}
+		signer, err := ssh.ParsePrivateKey(key)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to parse private key file")
+		}
+		config.Auth = append(config.Auth, ssh.PublicKeys(signer))
+	}
+
+	// Auth from password if specified
+	if pass != "" {
 		clearpass, err := fs.Reveal(pass)
 		if err != nil {
 			return nil, err
 		}
 		config.Auth = append(config.Auth, ssh.Password(clearpass))
 	}
+
 	sshClient, err := ssh.Dial("tcp", host+":"+port, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't connect ssh")
