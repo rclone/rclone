@@ -55,6 +55,7 @@ from various cloud storage systems and using file transfer services, such as:
   * FTP
   * HTTP
   * The local filesystem
+  * QingStor
 
 Features
 

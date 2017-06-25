@@ -27,6 +27,7 @@ Rclone is a command line program to sync files and directories to and from
   * FTP
   * HTTP
   * The local filesystem
+  * QingStor
 
 Features
 
