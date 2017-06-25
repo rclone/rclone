@@ -3,6 +3,8 @@ package fs
 import (
 	"bytes"
 	"crypto/rand"
+	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -36,6 +38,64 @@ func TestObscure(t *testing.T) {
 		assert.Equal(t, test.in, recoveredIn, "not bidirectional")
 
 	}
+}
+
+func TestCRUD(t *testing.T) {
+	configKey = nil // reset password
+	// create temp config file
+	tempFile, err := ioutil.TempFile("", "crud.conf")
+	assert.NoError(t, err)
+	path := tempFile.Name()
+	defer func() {
+		err := os.Remove(path)
+		assert.NoError(t, err)
+	}()
+	assert.NoError(t, tempFile.Close())
+
+	// temporarily adapt configuration
+	oldOsStdout := os.Stdout
+	oldConfigFile := configFile
+	oldConfig := Config
+	oldReadLine := ReadLine
+	os.Stdout = nil
+	configFile = &path
+	Config = &ConfigInfo{}
+	defer func() {
+		os.Stdout = oldOsStdout
+		configFile = oldConfigFile
+		ReadLine = oldReadLine
+		Config = oldConfig
+	}()
+
+	LoadConfig()
+	assert.Equal(t, []string{}, configData.GetSectionList())
+
+	// add new remote
+	i := 0
+	ReadLine = func() string {
+		answers := []string{
+			"local", // type is local
+			"1",     // yes, disable long filenames
+			"y",     // looks good, save
+		}
+		i = i + 1
+		return answers[i-1]
+	}
+	NewRemote("test")
+	assert.Equal(t, []string{"test"}, configData.GetSectionList())
+
+	// normal rename, test → asdf
+	ReadLine = func() string { return "asdf" }
+	RenameRemote("test")
+	assert.Equal(t, []string{"asdf"}, configData.GetSectionList())
+
+	// no-op rename, asdf → asdf
+	RenameRemote("asdf")
+	assert.Equal(t, []string{"asdf"}, configData.GetSectionList())
+
+	// delete remote
+	DeleteRemote("asdf")
+	assert.Equal(t, []string{}, configData.GetSectionList())
 }
 
 // Test some error cases

@@ -718,7 +718,7 @@ func ChooseRemote() string {
 }
 
 // ReadLine reads some input
-func ReadLine() string {
+var ReadLine = func() string {
 	buf := bufio.NewReader(os.Stdin)
 	line, err := buf.ReadString('\n')
 	if err != nil {
@@ -1024,22 +1024,25 @@ func DeleteRemote(name string) {
 }
 
 // copyRemote asks the user for a new remote name and copies name into
-// it
-func copyRemote(name string) {
+// it. Returns the new name.
+func copyRemote(name string) string {
 	newName := NewRemoteName()
 	// Copy the keys
 	for _, key := range configData.GetKeyList(name) {
 		value := configData.MustValue(name, key, "")
 		configData.SetValue(newName, key, value)
 	}
+	return newName
 }
 
 // RenameRemote renames a config section
 func RenameRemote(name string) {
 	fmt.Printf("Enter new name for %q remote.\n", name)
-	copyRemote(name)
-	configData.DeleteSection(name)
-	SaveConfig()
+	newName := copyRemote(name)
+	if name != newName {
+		configData.DeleteSection(name)
+		SaveConfig()
+	}
 }
 
 // CopyRemote copies a config section
