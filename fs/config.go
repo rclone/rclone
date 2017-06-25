@@ -652,7 +652,18 @@ func SaveConfig() {
 		log.Fatalf("Failed to close config file: %v", err)
 	}
 
-	err = os.Chmod(f.Name(), 0600)
+	var fileMode os.FileMode = 0600
+	info, err := os.Stat(ConfigPath)
+	if err != nil {
+		Debugf(nil, "Using default permissions for config file: %v", fileMode)
+	} else if info.Mode() != fileMode {
+		Debugf(nil, "Keeping previous permissions for config file: %v", info.Mode())
+		fileMode = info.Mode()
+	}
+
+	attemptCopyGroup(ConfigPath, f.Name())
+
+	err = os.Chmod(f.Name(), fileMode)
 	if err != nil {
 		Errorf(nil, "Failed to set permissions on config file: %v", err)
 	}
