@@ -1,0 +1,33 @@
+hash: 2e6b1ed4a2ee0638abc2e819ac3c247eaf80fa0f2053cfc41eecf883054c6032
+updated: 2017-05-22T14:58:58.927797848+08:00
+imports:
+- name: github.com/pengsrc/go-shared
+  version: 454950d6a0782c34427d4f29b46c6bf447256f20
+  subpackages:
+  - check
+  - convert
+  - json
+  - yaml
+- name: github.com/Sirupsen/logrus
+  version: d26492970760ca5d33129d2d799e34be5c4782eb
+- name: golang.org/x/sys
+  version: f3918c30c5c2cb527c0b071a27c35120a6c0719a
+  repo: https://github.com/golang/sys.git
+  subpackages:
+  - unix
+- name: gopkg.in/yaml.v2
+  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+  repo: https://github.com/go-yaml/yaml.git
+testImports:
+- name: github.com/davecgh/go-spew
+  version: 346938d642f2ec3594ed81d874461961cd0faa76
+  subpackages:
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  subpackages:
+  - difflib
+- name: github.com/stretchr/testify
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
+  subpackages:
+  - assert

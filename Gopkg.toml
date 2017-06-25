@@ -132,3 +132,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/ncw/dropbox-sdk-go-unofficial"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/yunify/qingstor-sdk-go"
