@@ -29,6 +29,7 @@ Here is an overview of the major features of each cloud storage system.
 | Hubic                  | MD5     | Yes     | No               | No              | R/W       |
 | Microsoft OneDrive     | SHA1    | Yes     | Yes              | No              | R         |
 | Openstack Swift        | MD5     | Yes     | No               | No              | R/W       |
+| QingStor               | -       | No      | No               | No              | R/W       |
 | SFTP                   | -       | Yes     | Depends          | No              | -         |
 | Yandex Disk            | MD5     | Yes     | No               | No              | R/W       |
 | The local filesystem   | All     | Yes     | Depends          | No              | -         |
@@ -124,6 +125,7 @@ operations more efficient.
 | Hubic                  | Yes † | Yes  | No   | No      | No      | Yes   |
 | Microsoft OneDrive     | Yes   | Yes  | Yes  | No [#197](https://github.com/ncw/rclone/issues/197)    | No [#575](https://github.com/ncw/rclone/issues/575) | No    |
 | Openstack Swift        | Yes † | Yes  | No   | No      | No      | Yes   |
+| QingStor               | No    | Yes  | No   | No      | No      | Yes   |
 | SFTP                   | No    | No   | Yes  | Yes     | No      | No    |
 | Yandex Disk            | Yes   | No   | No   | No      | No  [#575](https://github.com/ncw/rclone/issues/575) | Yes   |
 | The local filesystem   | Yes   | No   | Yes  | Yes     | No      | No    |

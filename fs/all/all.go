@@ -14,6 +14,7 @@ import (
 	_ "github.com/ncw/rclone/hubic"
 	_ "github.com/ncw/rclone/local"
 	_ "github.com/ncw/rclone/onedrive"
+	_ "github.com/ncw/rclone/qingstor"
 	_ "github.com/ncw/rclone/s3"
 	_ "github.com/ncw/rclone/sftp"
 	_ "github.com/ncw/rclone/swift"

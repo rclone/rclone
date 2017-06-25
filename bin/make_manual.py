@@ -33,6 +33,7 @@ docs = [
     "http.md",
     "hubic.md",
     "onedrive.md",
+    "qingstor.md",
     "swift.md",
     "sftp.md",
     "yandex.md",

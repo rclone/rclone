@@ -53,6 +53,7 @@ from various cloud storage systems and using file transfer services, such as:
   * Hubic
   * Microsoft OneDrive
   * Openstack Swift / Rackspace cloud files / Memset Memstore
+  * QingStor
   * SFTP
   * Yandex Disk
   * The local filesystem

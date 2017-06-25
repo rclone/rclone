@@ -31,8 +31,9 @@ See the following for detailed instructions for
   * [HTTP](/http/)
   * [Hubic](/hubic/)
   * [Microsoft OneDrive](/onedrive/)
+  * [Openstack Swift / Rackspace Cloudfiles / Memset Memstore](/swift/)
+  * [QingStor](/qingstor/)
   * [SFTP](/sftp/)
-  * [Swift / Rackspace Cloudfiles / Memset Memstore](/swift/)
   * [Yandex Disk](/yandex/)
   * [The local filesystem](/local/)
 

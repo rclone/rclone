@@ -103,6 +103,11 @@ var (
 			SubDir:   false,
 			FastList: false,
 		},
+		{
+			Name:     "TestQingStor:",
+			SubDir:   false,
+			FastList: false,
+		},
 	}
 	binary = "fs.test"
 	// Flags

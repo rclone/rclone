@@ -162,5 +162,6 @@ func main() {
 	generateTestProgram(t, fns, "Sftp")
 	generateTestProgram(t, fns, "FTP")
 	generateTestProgram(t, fns, "Box")
+	generateTestProgram(t, fns, "QingStor")
 	log.Printf("Done")
 }
