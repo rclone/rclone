@@ -7,7 +7,7 @@ date: "2015-06-06"
 Configure
 ---------
 
-First you'll need to configure rclone.  As the object storage systems
+First, you'll need to configure rclone.  As the object storage systems
 have quite complicated authentication these are kept in a config file.
 (See the `--config` entry for how to find the config file and choose
 its location.)
@@ -19,7 +19,7 @@ option:
 
 See the following for detailed instructions for
 
-  * [Google drive](/drive/)
+  * [Google Drive](/drive/)
   * [Amazon S3](/s3/)
   * [Swift / Rackspace Cloudfiles / Memset Memstore](/swift/)
   * [Dropbox](/dropbox/)
@@ -89,14 +89,14 @@ The main rclone commands with most used first
 * [rclone mount](/commands/rclone_mount/)	- Mount the remote as a mountpoint. **EXPERIMENTAL**
 * [rclone moveto](/commands/rclone_moveto/)	- Move file or directory from source to dest.
 * [rclone obscure](/commands/rclone_obscure/)	- Obscure password for use in the rclone.conf
-* [rclone cryptcheck](/commands/rclone_cryptcheck/)	- Checks the integritity of a crypted remote.
+* [rclone cryptcheck](/commands/rclone_cryptcheck/)	- Checks the integrity of a crypted remote.
 
 See the [commands index](/commands/) for the full list.
 
 Copying single files
 --------------------
 
-rclone normally syncs or copies directories.  However if the source
+rclone normally syncs or copies directories.  However, if the source
 remote points to a file, rclone will just copy that file.  The
 destination remote must point to a directory - rclone will give the
 error `Failed to create file system for "remote:file": is a file not a
@@ -117,7 +117,7 @@ Where `/tmp/files` contains the single line
 
     test.jpg
 
-It is recommended to use `copy` when copying single files not `sync`.
+It is recommended to use `copy` when copying individual files, not `sync`.
 They have pretty much the same effect but `copy` will use a lot less
 memory.
 
@@ -198,7 +198,7 @@ possibly signed sequence of decimal numbers, each with optional
 fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid
 time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-Options which use SIZE use kByte by default.  However a suffix of `b`
+Options which use SIZE use kByte by default.  However, a suffix of `b`
 for bytes, `k` for kBytes, `M` for MBytes and `G` for GBytes may be
 used.  These are the binary units, eg 1, 2\*\*10, 2\*\*20, 2\*\*30
 respectively.
@@ -238,11 +238,11 @@ Single limits last for the duration of the session. To use a single limit,
 specify the desired bandwidth in kBytes/s, or use a suffix b|k|M|G.  The
 default is `0` which means to not limit bandwidth.
 
-For example to limit bandwidth usage to 10 MBytes/s use `--bwlimit 10M`
+For example, to limit bandwidth usage to 10 MBytes/s use `--bwlimit 10M`
 
 It is also possible to specify a "timetable" of limits, which will cause
 certain limits to be applied at certain times. To specify a timetable, format your
-entries as "HH:MM,BANDWIDTH HH:MM,BANDWITH...".
+entries as "HH:MM,BANDWIDTH HH:MM,BANDWIDTH...".
 
 An example of a typical timetable to avoid link saturation during daytime
 working hours could be:
@@ -258,8 +258,8 @@ unlimited.
 Bandwidth limits only apply to the data transfer. They don't apply to the
 bandwidth of the directory listings etc.
 
-Note that the units are Bytes/s not Bits/s.  Typically connections are
-measured in Bits/s - to convert divide by 8.  For example let's say
+Note that the units are Bytes/s, not Bits/s.  Typically connections are
+measured in Bits/s - to convert divide by 8.  For example, let's say
 you have a 10 Mbit/s connection and you wish rclone to use half of it
 - 5 Mbit/s.  This is 5/8 = 0.625MByte/s so you would use a `--bwlimit
 0.625M` parameter for rclone.
@@ -269,13 +269,13 @@ you have a 10 Mbit/s connection and you wish rclone to use half of it
 Use this sized buffer to speed up file transfers.  Each `--transfer`
 will use this much memory for buffering.
 
-Set to 0 to disable the buffering for the minimum memory use.
+Set to 0 to disable the buffering for the minimum memory usage.
 
 ### --checkers=N ###
 
 The number of checkers to run in parallel.  Checkers do the equality
-checking of files during a sync.  For some storage systems (eg s3,
-swift, dropbox) this can take a significant amount of time so they are
+checking of files during a sync.  For some storage systems (eg S3,
+Swift, Dropbox) this can take a significant amount of time so they are
 run in parallel.
 
 The default is to run 8 checkers in parallel.
@@ -362,7 +362,7 @@ checks the checksum.
 It will also cause rclone to skip verifying the sizes are the same
 after transfer.
 
-This can be useful for transferring files to and from onedrive which
+This can be useful for transferring files to and from OneDrive which
 occasionally misreports the size of image files (see
 [#399](https://github.com/ncw/rclone/issues/399) for more info).
 
@@ -396,7 +396,7 @@ and prints stats once a minute by default.
 outputs very little when things are working normally. It outputs
 warnings and significant events.
 
-`ERROR` is equivalent to `-q`. It only output error messages.
+`ERROR` is equivalent to `-q`. It only outputs error messages.
 
 ### --low-level-retries NUMBER ###
 
@@ -407,8 +407,8 @@ HTTP request.  This might be uploading a chunk of a big file for
 example.  You will see low level retries in the log with the `-v`
 flag.
 
-This shouldn't need to be changed from the default in normal
-operations, however if you get a lot of low level retries you may wish
+This shouldn't need to be changed from the default in normal operations.
+However, if you get a lot of low level retries you may wish
 to reduce the value so rclone moves on to a high level retry (see the
 `--retries` flag) quicker.
 
@@ -472,7 +472,7 @@ this flag it will make as little output as possible.
 
 Retry the entire sync if it fails this many times it fails (default 3).
 
-Some remotes can be unreliable and a few retries helps pick up the
+Some remotes can be unreliable and a few retries help pick up the
 files which didn't get transferred because of errors.
 
 Disable retries with `--retries 1`.
@@ -483,7 +483,7 @@ Normally rclone will look at modification time and size of files to
 see if they are equal.  If you set this flag then rclone will check
 only the size.
 
-This can be useful transferring files from dropbox which have been
+This can be useful transferring files from Dropbox which have been
 modified by the desktop sync client which doesn't set checksums of
 modification times in the same way as rclone.
 
@@ -503,7 +503,7 @@ example.
 
 ### --stats-unit=bits|bytes ###
 
-By default data transfer rates will be printed in bytes/second.
+By default, data transfer rates will be printed in bytes/second.
 
 This option allows the data rate to be printed in bits/second.
 
@@ -526,7 +526,7 @@ See `--backup-dir` for more info.
 
 On capable OSes (not Windows or Plan9) send all log output to syslog.
 
-This can be useful for running rclone in script or `rclone mount`.
+This can be useful for running rclone in a script or `rclone mount`.
 
 ### --syslog-facility string ###
 
@@ -536,7 +536,7 @@ facility is `DAEMON`.
 
 ### --track-renames ###
 
-By default rclone doesn't not keep track of renamed files, so if you
+By default, rclone doesn't keep track of renamed files, so if you
 rename a file locally then sync it to a remote, rclone will delete the
 old file on the remote and upload a new copy.
 
@@ -590,9 +590,9 @@ directory and processes it before using more directory lists to
 process any subdirectories.  This can be parallelised and works very
 quickly using the least amount of memory.
 
-However some remotes have a way of listing all files beneath a
+However, some remotes have a way of listing all files beneath a
 directory in one (or a small number) of transactions.  These tend to
-be the bucket based remotes (eg s3, b2, gcs, swift, hubic).
+be the bucket based remotes (eg S3, B2, GCS, Swift, Hubic).
 
 If you use the `--fast-list` flag then rclone will use this method for
 listing directories.  This will have the following consequences for
@@ -706,7 +706,7 @@ c/u/q>
 ```
 
 Your configuration is now encrypted, and every time you start rclone
-you will now be asked for the password. In the same menu you can 
+you will now be asked for the password. In the same menu, you can
 change the password or completely remove encryption from your
 configuration.
 
@@ -811,7 +811,7 @@ If you are only copying a small number of files and/or have a large
 number of files on the destination then `--no-traverse` will stop
 rclone listing the destination and save time.
 
-However if you are copying a large number of files, especially if you
+However, if you are copying a large number of files, especially if you
 are doing a copy where lots of the files haven't changed and won't
 need copying then you shouldn't use `--no-traverse`.
 
@@ -846,11 +846,11 @@ Logging
 
 rclone has 4 levels of logging, `Error`, `Notice`, `Info` and `Debug`.
 
-By default rclone logs to standard error.  This means you can redirect
+By default, rclone logs to standard error.  This means you can redirect
 standard error and still see the normal output of rclone commands (eg
 `rclone ls`).
 
-By default rclone will produce `Error` and `Notice` level messages.
+By default, rclone will produce `Error` and `Notice` level messages.
 
 If you use the `-q` flag, rclone will only produce `Error` messages.
 
@@ -875,16 +875,16 @@ information.
 Exit Code
 ---------
 
-If any errors occurred during the command, rclone will exit with a
+If any errors occur during the command execution, rclone will exit with a
 non-zero exit code.  This allows scripts to detect when rclone
 operations have failed.
 
-During the startup phase rclone will exit immediately if an error is
+During the startup phase, rclone will exit immediately if an error is
 detected in the configuration.  There will always be a log message
 immediately before exiting.
 
 When rclone is running it will accumulate errors as it goes along, and
-only exit with an non-zero exit code if (after retries) there were
+only exit with a non-zero exit code if (after retries) there were
 still failed transfers.  For every error counted there will be a high
 priority log message (visible with `-q`) showing the message and
 which file caused the problem. A high priority message is also shown
@@ -903,11 +903,11 @@ can be used to set defaults for options or config file entries.
 Every option in rclone can have its default set by environment
 variable.
 
-To find the name of the environment variable, first take the long
+To find the name of the environment variable, first, take the long
 option name, strip the leading `--`, change `-` to `_`, make
 upper case and prepend `RCLONE_`.
 
-For example to always set `--stats 5s`, set the environment variable
+For example, to always set `--stats 5s`, set the environment variable
 `RCLONE_STATS=5s`.  If you set stats on the command line this will
 override the environment variable setting.
 
@@ -930,7 +930,7 @@ To find the name of the environment variable, you need to set, take
 `RCLONE_` + name of remote + `_` + name of config file option and make
 it all uppercase.
 
-For example to configure an S3 remote named `mys3:` without a config
+For example, to configure an S3 remote named `mys3:` without a config
 file (using unix ways of setting environment variables):
 
 ```
