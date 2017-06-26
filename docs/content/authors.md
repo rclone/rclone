@@ -84,3 +84,5 @@ Contributors
   * Fabian Möller <fabianm88@gmail.com>
   * Edward Q. Bridges <github@eqbridges.com>
   * Vasiliy Tolstov <v.tolstov@selfip.ru>
+  * Harshavardhana <harsha@minio.io>
+  * sainaen <sainaen@gmail.com>
