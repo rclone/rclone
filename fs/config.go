@@ -65,7 +65,6 @@ var (
 	// Flags
 	verbose         = CountP("verbose", "v", "Print lots more stuff (repeat for more)")
 	quiet           = BoolP("quiet", "q", false, "Print as little stuff as possible")
-	logLevel        = StringP("log-level", "", "INFO", "Log level DEBUG|INFO|NOTICE|ERROR")
 	modifyWindow    = DurationP("modify-window", "", time.Nanosecond, "Max time diff to be considered the same")
 	checkers        = IntP("checkers", "", 8, "Number of checkers to run in parallel.")
 	transfers       = IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
@@ -97,6 +96,8 @@ var (
 	backupDir       = StringP("backup-dir", "", "", "Make backups into hierarchy based in DIR.")
 	suffix          = StringP("suffix", "", "", "Suffix for use with --backup-dir.")
 	useListR        = BoolP("fast-list", "", false, "Use recursive list if available. Uses more memory but fewer transactions.")
+	logLevel        = LogLevelNotice
+	statsLogLevel   = LogLevelInfo
 	bwLimit         BwTimetable
 	bufferSize      SizeSuffix = 16 << 20
 
@@ -106,6 +107,8 @@ var (
 )
 
 func init() {
+	VarP(&logLevel, "log-level", "", "Log level DEBUG|INFO|NOTICE|ERROR")
+	VarP(&statsLogLevel, "stats-log-level", "", "Log level to show --stats output DEBUG|INFO|NOTICE|ERROR")
 	VarP(&bwLimit, "bwlimit", "", "Bandwidth limit in kBytes/s, or use suffix b|k|M|G or a full timetable.")
 	VarP(&bufferSize, "buffer-size", "", "Buffer size when copying files.")
 }
@@ -194,6 +197,7 @@ func MustReveal(x string) string {
 // ConfigInfo is filesystem config options
 type ConfigInfo struct {
 	LogLevel           LogLevel
+	StatsLogLevel      LogLevel
 	DryRun             bool
 	CheckSum           bool
 	SizeOnly           bool
@@ -332,19 +336,9 @@ func LoadConfig() {
 		if *quiet {
 			log.Fatalf("Can't set -q and --log-level")
 		}
-		switch strings.ToUpper(*logLevel) {
-		case "ERROR":
-			Config.LogLevel = LogLevelError
-		case "NOTICE":
-			Config.LogLevel = LogLevelNotice
-		case "INFO":
-			Config.LogLevel = LogLevelInfo
-		case "DEBUG":
-			Config.LogLevel = LogLevelDebug
-		default:
-			log.Fatalf("Unknown --log-level %q", *logLevel)
-		}
+		Config.LogLevel = logLevel
 	}
+	Config.StatsLogLevel = statsLogLevel
 	Config.ModifyWindow = *modifyWindow
 	Config.Checkers = *checkers
 	Config.Transfers = *transfers

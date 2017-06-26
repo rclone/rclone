@@ -9,6 +9,9 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+
+	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
 )
 
 // LogLevel describes rclone's logs.  These are a subset of the syslog log levels.
@@ -55,6 +58,25 @@ func (l LogLevel) String() string {
 	return logLevelToString[l]
 }
 
+// Set a LogLevel
+func (l *LogLevel) Set(s string) error {
+	for n, name := range logLevelToString {
+		if s != "" && name == s {
+			*l = LogLevel(n)
+			return nil
+		}
+	}
+	return errors.Errorf("Unknown log level %q", s)
+}
+
+// Type of the value
+func (l *LogLevel) Type() string {
+	return "string"
+}
+
+// Check it satisfies the interface
+var _ pflag.Value = (*LogLevel)(nil)
+
 // Flags
 var (
 	logFile        = StringP("log-file", "", "", "Log everything to this file")
@@ -75,6 +97,13 @@ func logPrintf(level LogLevel, o interface{}, text string, args ...interface{}) 
 		out = fmt.Sprintf("%v: %s", o, out)
 	}
 	logPrint(level, out)
+}
+
+// LogLevelPrintf writes logs at the given level
+func LogLevelPrintf(level LogLevel, o interface{}, text string, args ...interface{}) {
+	if Config.LogLevel >= level {
+		logPrintf(level, o, text, args...)
+	}
 }
 
 // Errorf writes error log output for this Object or Fs.  It

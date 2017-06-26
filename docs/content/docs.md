@@ -396,8 +396,8 @@ using `--checksum`).
 
 Log all of rclone's output to FILE.  This is not active by default.
 This can be useful for tracking down problems with syncs in
-combination with the `-v` flag.  See the Logging section for more
-info.
+combination with the `-v` flag.  See the [Logging section](#logging)
+for more info.
 
 ### --log-level LEVEL ###
 
@@ -514,9 +514,22 @@ This sets the interval.
 
 The default is `1m`. Use 0 to disable.
 
-If you set the stats interval then all command can show stats.  This
+If you set the stats interval then all commands can show stats.  This
 can be useful when running other commands, `check` or `mount` for
 example.
+
+Stats are logged at `INFO` level by default which means they won't
+show at default log level `NOTICE`.  Use `--stats-log-level NOTICE` or
+`-v` to make them show.  See the [Logging section](#logging) for more
+info on log levels.
+
+### --stats-log-level string ###
+
+Log level to show `--stats` output at.  This can be `DEBUG`, `INFO`,
+`NOTICE`, or `ERROR`.  The default is `INFO`.  This means at the
+default level of logging which is `NOTICE` the stats won't show - if
+you want them to then use `-stats-log-level NOTICE`.  See the [Logging
+section](#logging) for more info on log levels.
 
 ### --stats-unit=bits|bytes ###
 
