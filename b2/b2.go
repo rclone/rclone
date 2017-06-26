@@ -46,7 +46,7 @@ const (
 
 // Globals
 var (
-	minChunkSize       = fs.SizeSuffix(100E6)
+	minChunkSize       = fs.SizeSuffix(5E6)
 	chunkSize          = fs.SizeSuffix(96 * 1024 * 1024)
 	uploadCutoff       = fs.SizeSuffix(200E6)
 	b2TestMode         = fs.StringP("b2-test-mode", "", "", "A flag string for X-Bz-Test-Mode header.")
