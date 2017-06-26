@@ -13,7 +13,6 @@ type WriteFileHandle struct {
 	mu          sync.Mutex
 	closed      bool // set if handle has been closed
 	remote      string
-	pipeReader  *io.PipeReader
 	pipeWriter  *io.PipeWriter
 	o           fs.Object
 	result      chan error
@@ -39,10 +38,16 @@ func newWriteFileHandle(d *Dir, f *File, src fs.ObjectInfo) (*WriteFileHandle, e
 		file:   f,
 		hash:   hash,
 	}
-	fh.pipeReader, fh.pipeWriter = io.Pipe()
-	r := fs.NewAccountSizeName(fh.pipeReader, 0, src.Remote()).WithBuffer() // account the transfer
+	var pipeReader *io.PipeReader
+	pipeReader, fh.pipeWriter = io.Pipe()
 	go func() {
+		r := fs.NewAccountSizeName(pipeReader, 0, src.Remote()).WithBuffer() // account the transfer
 		o, err := d.f.Put(r, src)
+		if err != nil {
+			fs.Errorf(fh.remote, "WriteFileHandle.New Put failed: %v", err)
+		}
+		// Close the Account and thus the pipeReader so the pipeWriter fails with ErrClosedPipe
+		_ = r.Close()
 		fh.o = o
 		fh.result <- err
 	}()
@@ -120,13 +125,9 @@ func (fh *WriteFileHandle) close() error {
 	fh.file.addWriters(-1)
 	writeCloseErr := fh.pipeWriter.Close()
 	err := <-fh.result
-	readCloseErr := fh.pipeReader.Close()
 	if err == nil {
 		fh.file.setObject(fh.o)
 		err = writeCloseErr
-	}
-	if err == nil {
-		err = readCloseErr
 	}
 	if err == nil && fh.hash != nil {
 		for hashType, srcSum := range fh.hash.Sums() {
