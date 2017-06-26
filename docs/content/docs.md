@@ -177,8 +177,10 @@ Remotes which don't support server side copy **will** download and
 re-upload in this case.
 
 Server side copies are used with `sync` and `copy` and will be
-identified in the log when using the `-v` flag.  The may also be used
-with `move` if the remote doesn't support server side move.
+identified in the log when using the `-v` flag.  The `move` command
+may also use them if remote doesn't support server side move directly.
+This is done by issuing a server side copy then a delete which is much
+quicker than a download and re-upload.
 
 Server side copies will only be attempted if the remote names are the
 same.
