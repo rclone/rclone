@@ -156,6 +156,23 @@ If you are using the root directory on its own then don't quote it
 
     rclone copy E:\ remote:backup
 
+Copying files or directories with `:` in the names
+--------------------------------------------------
+
+rclone uses `:` to mark a remote name.  This is, however, a valid
+filename component in non-Windows OSes.  The remote name parser will
+only search for a `:` up to the first `/` so if you need to act on a
+file or directory like this then use the full path starting with a
+`/`, or use `./` as a current directory prefix.
+
+So to sync a directory called `sync:me` to a remote called `remote:` use
+
+    rclone sync ./sync:me remote:path
+
+or
+
+    rclone sync /full/path/to/sync:me remote:path
+
 Server Side Copy
 ----------------
 
