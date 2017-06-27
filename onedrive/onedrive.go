@@ -208,17 +208,17 @@ func NewFs(name, root string) (fs.Fs, error) {
 	f.features = (&fs.Features{CaseInsensitive: true, ReadMimeType: true}).Fill(f)
 	f.srv.SetErrorHandler(errorHandler)
 
-	// Get rootID
-	rootInfo, _, err := f.readMetaDataForPath("")
-	if err != nil || rootInfo.ID == "" {
-		return nil, errors.Wrap(err, "failed to get root")
-	}
-
 	// Renew the token in the background
 	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
 		_, _, err := f.readMetaDataForPath("")
 		return err
 	})
+
+	// Get rootID
+	rootInfo, _, err := f.readMetaDataForPath("")
+	if err != nil || rootInfo.ID == "" {
+		return nil, errors.Wrap(err, "failed to get root")
+	}
 
 	f.dirCache = dircache.New(root, rootInfo.ID, f)
 

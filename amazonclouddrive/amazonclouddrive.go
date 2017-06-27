@@ -192,6 +192,12 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 	f.features = (&fs.Features{CaseInsensitive: true, ReadMimeType: true}).Fill(f)
 
+	// Renew the token in the background
+	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
+		_, err := f.getRootInfo()
+		return err
+	})
+
 	// Update endpoints
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
@@ -208,12 +214,6 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return nil, errors.Wrap(err, "failed to get root")
 	}
 	f.trueRootID = *rootInfo.Id
-
-	// Renew the token in the background
-	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
-		_, err := f.getRootInfo()
-		return err
-	})
 
 	f.dirCache = dircache.New(root, f.trueRootID, f)
 
