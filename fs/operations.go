@@ -1061,12 +1061,21 @@ func ListDir(f Fs, w io.Writer) error {
 	})
 }
 
+// logDirName returns an object for the logger
+func logDirName(f Fs, dir string) interface{} {
+	if dir != "" {
+		return dir
+	}
+	return f
+}
+
 // Mkdir makes a destination directory or container
 func Mkdir(f Fs, dir string) error {
 	if Config.DryRun {
-		Logf(f, "Not making directory as dry run is set")
+		Logf(logDirName(f, dir), "Not making directory as dry run is set")
 		return nil
 	}
+	Debugf(logDirName(f, dir), "Making directory")
 	err := f.Mkdir(dir)
 	if err != nil {
 		Stats.Error()
@@ -1079,13 +1088,10 @@ func Mkdir(f Fs, dir string) error {
 // count errors but may return one.
 func TryRmdir(f Fs, dir string) error {
 	if Config.DryRun {
-		if dir != "" {
-			Logf(dir, "Not deleting as dry run is set")
-		} else {
-			Logf(f, "Not deleting as dry run is set")
-		}
+		Logf(logDirName(f, dir), "Not deleting as dry run is set")
 		return nil
 	}
+	Debugf(logDirName(f, dir), "Removing directory")
 	return f.Rmdir(dir)
 }
 
