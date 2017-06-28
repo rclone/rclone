@@ -520,13 +520,17 @@ func (f *Fs) Purge() error {
 //
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
+	err := f.Mkdir("")
+	if err != nil {
+		return nil, err
+	}
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	srcFs := srcObj.fs
-	_, err := f.c.ObjectCopy(srcFs.container, srcFs.root+srcObj.remote, f.container, f.root+remote, nil)
+	_, err = f.c.ObjectCopy(srcFs.container, srcFs.root+srcObj.remote, f.container, f.root+remote, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -755,6 +755,10 @@ func (f *Fs) Precision() time.Duration {
 //
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
+	err := f.Mkdir("")
+	if err != nil {
+		return nil, err
+	}
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
@@ -769,7 +773,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		CopySource:        &source,
 		MetadataDirective: aws.String(s3.MetadataDirectiveCopy),
 	}
-	_, err := f.c.CopyObject(&req)
+	_, err = f.c.CopyObject(&req)
 	if err != nil {
 		return nil, err
 	}
