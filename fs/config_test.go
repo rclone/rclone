@@ -56,15 +56,18 @@ func TestCRUD(t *testing.T) {
 	oldOsStdout := os.Stdout
 	oldConfigFile := configFile
 	oldConfig := Config
+	oldConfigData := configData
 	oldReadLine := ReadLine
 	os.Stdout = nil
 	configFile = &path
 	Config = &ConfigInfo{}
+	configData = nil
 	defer func() {
 		os.Stdout = oldOsStdout
 		configFile = oldConfigFile
 		ReadLine = oldReadLine
 		Config = oldConfig
+		configData = oldConfigData
 	}()
 
 	LoadConfig()
