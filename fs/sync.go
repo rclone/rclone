@@ -655,12 +655,6 @@ func (s *syncCopyMove) run() error {
 		return nil
 	}
 
-	// Make the destination directory
-	err := Mkdir(s.fdst, s.dir)
-	if err != nil {
-		return err
-	}
-
 	// Start background checking and transferring pipeline
 	s.startCheckers()
 	s.startRenamers()
