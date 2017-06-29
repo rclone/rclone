@@ -242,6 +242,7 @@ type Fs struct {
 	bucket             string           // the bucket we are working on
 	bucketOKMu         sync.Mutex       // mutex to protect bucket OK
 	bucketOK           bool             // true if we have created the bucket
+	bucketDeleted      bool             // true if we have deleted the bucket
 	acl                string           // ACL for new buckets / objects
 	locationConstraint string           // location constraint of new buckets
 	sse                string           // the type of server-side encryption
@@ -670,6 +671,8 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 }
 
 // Check if the bucket exists
+//
+// NB this can return incorrect results if called immediately after bucket deletion
 func (f *Fs) dirExists() (bool, error) {
 	req := s3.HeadBucketInput{
 		Bucket: &f.bucket,
@@ -693,12 +696,14 @@ func (f *Fs) Mkdir(dir string) error {
 	if f.bucketOK {
 		return nil
 	}
-	exists, err := f.dirExists()
-	if err == nil {
-		f.bucketOK = exists
-	}
-	if err != nil || exists {
-		return err
+	if !f.bucketDeleted {
+		exists, err := f.dirExists()
+		if err == nil {
+			f.bucketOK = exists
+		}
+		if err != nil || exists {
+			return err
+		}
 	}
 	req := s3.CreateBucketInput{
 		Bucket: &f.bucket,
@@ -709,7 +714,7 @@ func (f *Fs) Mkdir(dir string) error {
 			LocationConstraint: &f.locationConstraint,
 		}
 	}
-	_, err = f.c.CreateBucket(&req)
+	_, err := f.c.CreateBucket(&req)
 	if err, ok := err.(awserr.Error); ok {
 		if err.Code() == "BucketAlreadyOwnedByYou" {
 			err = nil
@@ -717,6 +722,7 @@ func (f *Fs) Mkdir(dir string) error {
 	}
 	if err == nil {
 		f.bucketOK = true
+		f.bucketDeleted = false
 	}
 	return err
 }
@@ -736,6 +742,7 @@ func (f *Fs) Rmdir(dir string) error {
 	_, err := f.c.DeleteBucket(&req)
 	if err == nil {
 		f.bucketOK = false
+		f.bucketDeleted = true
 	}
 	return err
 }

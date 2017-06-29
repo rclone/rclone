@@ -715,6 +715,7 @@ func testServerSideMove(t *testing.T, r *Run, fremoteMove fs.Fs, withFilter bool
 
 	// Purge the original before moving
 	require.NoError(t, fs.Purge(r.fremote))
+	fstest.CheckItems(t, r.fremote)
 
 	// Move it back again, dst does not exist this time
 	fs.Stats.ResetCounters()
