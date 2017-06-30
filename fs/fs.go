@@ -101,8 +101,10 @@ func Register(info *RegInfo) {
 	fsRegistry = append(fsRegistry, info)
 }
 
-// ListFser is the interface for listing a remote Fs
-type ListFser interface {
+// Fs is the interface a cloud storage system must provide
+type Fs interface {
+	Info
+
 	// List the objects and directories in dir into entries.  The
 	// entries can be returned in any order but should be for a
 	// complete directory.
@@ -117,12 +119,6 @@ type ListFser interface {
 	// NewObject finds the Object at remote.  If it can't be found
 	// it returns the error ErrorObjectNotFound.
 	NewObject(remote string) (Object, error)
-}
-
-// Fs is the interface a cloud storage system must provide
-type Fs interface {
-	Info
-	ListFser
 
 	// Put in to the remote path with the modTime given of the given size
 	//
@@ -142,7 +138,7 @@ type Fs interface {
 	Rmdir(dir string) error
 }
 
-// Info provides an interface to reading information about a filesystem.
+// Info provides a read only interface to information about a filesystem.
 type Info interface {
 	// Name of the remote (as passed into NewFs)
 	Name() string
@@ -180,7 +176,7 @@ type Object interface {
 	Remove() error
 }
 
-// ObjectInfo contains information about an object.
+// ObjectInfo provides read only information about an object.
 type ObjectInfo interface {
 	BasicInfo
 
@@ -195,8 +191,8 @@ type ObjectInfo interface {
 	Storable() bool
 }
 
-// BasicInfo common interface for Dir and Object providing the very
-// basic attributes of an object.
+// BasicInfo provides read only information about the common subset of
+// a Dir or Object.
 type BasicInfo interface {
 	// String returns a description of the Object
 	String() string
