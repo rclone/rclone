@@ -360,8 +360,8 @@ func (f *Fs) list(dir string, recurse bool, fn listFn) error {
 	return nil
 }
 
-// Convert a list item into a BasicInfo
-func (f *Fs) itemToDirEntry(remote string, object *storage.Object, isDirectory bool) (fs.BasicInfo, error) {
+// Convert a list item into a DirEntry
+func (f *Fs) itemToDirEntry(remote string, object *storage.Object, isDirectory bool) (fs.DirEntry, error) {
 	if isDirectory {
 		d := &fs.Dir{
 			Name:  remote,

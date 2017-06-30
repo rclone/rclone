@@ -187,13 +187,13 @@ func parentDir(entryPath string) string {
 }
 
 // add an entry to the tree
-func (dt DirTree) add(entry BasicInfo) {
+func (dt DirTree) add(entry DirEntry) {
 	dirPath := parentDir(entry.Remote())
 	dt[dirPath] = append(dt[dirPath], entry)
 }
 
 // add a directory entry to the tree
-func (dt DirTree) addDir(entry BasicInfo) {
+func (dt DirTree) addDir(entry DirEntry) {
 	dt.add(entry)
 	// create the directory itself if it doesn't exist already
 	dirPath := entry.Remote()
@@ -402,7 +402,7 @@ func (lh *ListRHelper) send(max int) (err error) {
 
 // Add an entry to the stored entries and send them if there are more
 // than a certain amount
-func (lh *ListRHelper) Add(entry BasicInfo) error {
+func (lh *ListRHelper) Add(entry DirEntry) error {
 	if entry == nil {
 		return nil
 	}

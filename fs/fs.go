@@ -178,7 +178,7 @@ type Object interface {
 
 // ObjectInfo provides read only information about an object.
 type ObjectInfo interface {
-	BasicInfo
+	DirEntry
 
 	// Fs returns read only access to the Fs that this object is part of
 	Fs() Info
@@ -191,9 +191,10 @@ type ObjectInfo interface {
 	Storable() bool
 }
 
-// BasicInfo provides read only information about the common subset of
-// a Dir or Object.
-type BasicInfo interface {
+// DirEntry provides read only information about the common subset of
+// a Dir or Object.  These are returned from directory listings - type
+// assert them into the correct type.
+type DirEntry interface {
 	// String returns a description of the Object
 	String() string
 
@@ -576,10 +577,7 @@ func (d *Dir) Size() int64 {
 }
 
 // Check interface
-var _ BasicInfo = (*Dir)(nil)
-
-// DirChan is a channel of Dir objects
-type DirChan chan *Dir
+var _ DirEntry = (*Dir)(nil)
 
 // Find looks for an Info object for the name passed in
 //

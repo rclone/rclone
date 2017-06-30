@@ -952,7 +952,7 @@ func TestListDirSorted(t *testing.T) {
 	var items fs.DirEntries
 	var err error
 
-	// Turn the BasicInfo into a name, ending with a / if it is a
+	// Turn the DirEntry into a name, ending with a / if it is a
 	// dir
 	str := func(i int) string {
 		item := items[i]

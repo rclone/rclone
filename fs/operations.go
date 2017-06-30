@@ -525,7 +525,7 @@ func readFilesFn(fs Fs, includeAll bool, dir string, add func(Object) error) (er
 }
 
 // DirEntries is a slice of Object or *Dir
-type DirEntries []BasicInfo
+type DirEntries []DirEntry
 
 // Len is part of sort.Interface.
 func (ds DirEntries) Len() int {

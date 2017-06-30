@@ -166,8 +166,8 @@ func (f *Fs) setRoot(root string) {
 	f.diskRoot = diskRoot
 }
 
-// Convert a list item into a BasicInfo
-func (f *Fs) itemToDirEntry(remote string, object *yandex.ResourceInfoResponse) (fs.BasicInfo, error) {
+// Convert a list item into a DirEntry
+func (f *Fs) itemToDirEntry(remote string, object *yandex.ResourceInfoResponse) (fs.DirEntry, error) {
 	switch object.ResourceType {
 	case "dir":
 		t, err := time.Parse(time.RFC3339Nano, object.Modified)

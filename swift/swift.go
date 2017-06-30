@@ -315,7 +315,7 @@ func (f *Fs) listContainerRoot(container, root string, dir string, recurse bool,
 	})
 }
 
-type addEntryFn func(fs.BasicInfo) error
+type addEntryFn func(fs.DirEntry) error
 
 // list the objects into the function supplied
 func (f *Fs) list(dir string, recurse bool, fn addEntryFn) error {
@@ -347,7 +347,7 @@ func (f *Fs) listDir(dir string) (entries fs.DirEntries, err error) {
 		return nil, fs.ErrorListBucketRequired
 	}
 	// List the objects
-	err = f.list(dir, false, func(entry fs.BasicInfo) error {
+	err = f.list(dir, false, func(entry fs.DirEntry) error {
 		entries = append(entries, entry)
 		return nil
 	})
@@ -417,7 +417,7 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 		return errors.New("container needed for recursive list")
 	}
 	list := fs.NewListRHelper(callback)
-	err = f.list(dir, true, func(entry fs.BasicInfo) error {
+	err = f.list(dir, true, func(entry fs.DirEntry) error {
 		return list.Add(entry)
 	})
 	if err != nil {
@@ -493,7 +493,7 @@ func (f *Fs) Purge() error {
 	go func() {
 		delErr <- fs.DeleteFiles(toBeDeleted)
 	}()
-	err := f.list("", true, func(entry fs.BasicInfo) error {
+	err := f.list("", true, func(entry fs.DirEntry) error {
 		if o, ok := entry.(*Object); ok {
 			toBeDeleted <- o
 		}

@@ -518,8 +518,8 @@ func (f *Fs) list(dir string, recurse bool, prefix string, limit int, hidden boo
 	return nil
 }
 
-// Convert a list item into a BasicInfo
-func (f *Fs) itemToDirEntry(remote string, object *api.File, isDirectory bool, last *string) (fs.BasicInfo, error) {
+// Convert a list item into a DirEntry
+func (f *Fs) itemToDirEntry(remote string, object *api.File, isDirectory bool, last *string) (fs.DirEntry, error) {
 	if isDirectory {
 		d := &fs.Dir{
 			Name:  remote,

@@ -21,7 +21,7 @@ import (
 //
 // node may be nil, but o may not
 type DirEntry struct {
-	o    fs.BasicInfo
+	o    fs.DirEntry
 	node fusefs.Node
 }
 

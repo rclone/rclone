@@ -738,7 +738,7 @@ func (s *syncCopyMove) run() error {
 }
 
 // Have an object which is in the destination only
-func (s *syncCopyMove) dstOnly(dst BasicInfo, job listDirJob, jobs *[]listDirJob) {
+func (s *syncCopyMove) dstOnly(dst DirEntry, job listDirJob, jobs *[]listDirJob) {
 	if s.deleteMode == DeleteModeOff {
 		return
 	}
@@ -771,7 +771,7 @@ func (s *syncCopyMove) dstOnly(dst BasicInfo, job listDirJob, jobs *[]listDirJob
 }
 
 // Have an object which is in the source only
-func (s *syncCopyMove) srcOnly(src BasicInfo, job listDirJob, jobs *[]listDirJob) {
+func (s *syncCopyMove) srcOnly(src DirEntry, job listDirJob, jobs *[]listDirJob) {
 	if s.deleteMode == DeleteModeOnly {
 		return
 	}
@@ -799,7 +799,7 @@ func (s *syncCopyMove) srcOnly(src BasicInfo, job listDirJob, jobs *[]listDirJob
 }
 
 // Given a src and a dst, transfer the src to dst
-func (s *syncCopyMove) transfer(dst, src BasicInfo, job listDirJob, jobs *[]listDirJob) {
+func (s *syncCopyMove) transfer(dst, src DirEntry, job listDirJob, jobs *[]listDirJob) {
 	switch srcX := src.(type) {
 	case Object:
 		if s.deleteMode == DeleteModeOnly {
@@ -878,7 +878,7 @@ func (s *syncCopyMove) _run(job listDirJob) (jobs []listDirJob) {
 		if s.aborting() {
 			return nil
 		}
-		var src, dst BasicInfo
+		var src, dst DirEntry
 		if iSrc < len(srcList) {
 			src = srcList[iSrc]
 		}

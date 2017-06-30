@@ -548,8 +548,8 @@ func (f *Fs) list(dir string, recurse bool, fn listFn) error {
 	return nil
 }
 
-// Convert a list item into a BasicInfo
-func (f *Fs) itemToDirEntry(remote string, object *s3.Object, isDirectory bool) (fs.BasicInfo, error) {
+// Convert a list item into a DirEntry
+func (f *Fs) itemToDirEntry(remote string, object *s3.Object, isDirectory bool) (fs.DirEntry, error) {
 	if isDirectory {
 		size := int64(0)
 		if object.Size != nil {

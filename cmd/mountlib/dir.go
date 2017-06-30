@@ -16,7 +16,7 @@ import (
 //
 // node may be nil, but o may not
 type DirEntry struct {
-	Obj  fs.BasicInfo
+	Obj  fs.DirEntry
 	Node Node
 }
 
@@ -123,7 +123,7 @@ func (d *Dir) rename(newParent *Dir, fsDir *fs.Dir) {
 // addObject adds a new object or directory to the directory
 //
 // note that we add new objects rather than updating old ones
-func (d *Dir) addObject(o fs.BasicInfo, node Node) *DirEntry {
+func (d *Dir) addObject(o fs.DirEntry, node Node) *DirEntry {
 	item := &DirEntry{
 		Obj:  o,
 		Node: node,
@@ -414,7 +414,7 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 		fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 		return err
 	}
-	var newObj fs.BasicInfo
+	var newObj fs.DirEntry
 	oldNode := oldItem.Node
 	switch x := oldItem.Obj.(type) {
 	case fs.Object:
