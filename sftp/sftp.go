@@ -66,9 +66,11 @@ type Fs struct {
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
 type Object struct {
-	fs     *Fs
-	remote string
-	info   os.FileInfo
+	fs      *Fs
+	remote  string
+	size    int64       // size of the object
+	modTime time.Time   // modification time of the object
+	mode    os.FileMode // mode bits from the file
 }
 
 // ObjectReader holds the sftp.File interface to a remote SFTP file opened for reading
@@ -270,8 +272,8 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 			o := &Object{
 				fs:     f,
 				remote: remote,
-				info:   info,
 			}
+			o.setMetadata(info)
 			entries = append(entries, o)
 		}
 	}
@@ -439,12 +441,12 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 
 // Size returns the size in bytes of the remote sftp file
 func (o *Object) Size() int64 {
-	return o.info.Size()
+	return o.size
 }
 
 // ModTime returns the modification time of the remote sftp file
 func (o *Object) ModTime() time.Time {
-	return o.info.ModTime()
+	return o.modTime
 }
 
 // path returns the native path of the object
@@ -452,7 +454,14 @@ func (o *Object) path() string {
 	return path.Join(o.fs.root, o.remote)
 }
 
-// stat updates the info field in the Object
+// setMetadata updates the info in the object from the stat result passed in
+func (o *Object) setMetadata(info os.FileInfo) {
+	o.modTime = info.ModTime()
+	o.size = info.Size()
+	o.mode = info.Mode()
+}
+
+// stat updates the info in the Object
 func (o *Object) stat() error {
 	info, err := o.fs.sftpClient.Stat(o.path())
 	if err != nil {
@@ -464,7 +473,7 @@ func (o *Object) stat() error {
 	if info.IsDir() {
 		return errors.Wrapf(fs.ErrorNotAFile, "%q", o.remote)
 	}
-	o.info = info
+	o.setMetadata(info)
 	return nil
 }
 
@@ -485,7 +494,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 
 // Storable returns whether the remote sftp file is a regular file (not a directory, symbolic link, block device, character device, named pipe, etc)
 func (o *Object) Storable() bool {
-	return o.info.Mode().IsRegular()
+	return o.mode.IsRegular()
 }
 
 // Read from a remote sftp file object reader

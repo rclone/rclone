@@ -66,11 +66,13 @@ type Fs struct {
 
 // Object represents a local filesystem object
 type Object struct {
-	fs     *Fs                    // The Fs this object is part of
-	remote string                 // The remote path - properly UTF-8 encoded - for rclone
-	path   string                 // The local path - may not be properly UTF-8 encoded - for OS
-	info   os.FileInfo            // Interface for file info (always present)
-	hashes map[fs.HashType]string // Hashes
+	fs      *Fs    // The Fs this object is part of
+	remote  string // The remote path - properly UTF-8 encoded - for rclone
+	path    string // The local path - may not be properly UTF-8 encoded - for OS
+	size    int64  // file metadata - always present
+	mode    os.FileMode
+	modTime time.Time
+	hashes  map[fs.HashType]string // Hashes
 }
 
 // ------------------------------------------------------------
@@ -159,7 +161,7 @@ func (f *Fs) newObject(remote, dstPath string) *Object {
 func (f *Fs) newObjectWithInfo(remote, dstPath string, info os.FileInfo) (fs.Object, error) {
 	o := f.newObject(remote, dstPath)
 	if info != nil {
-		o.info = info
+		o.setMetadata(info)
 	} else {
 		err := o.lstat()
 		if err != nil {
@@ -169,7 +171,7 @@ func (f *Fs) newObjectWithInfo(remote, dstPath string, info os.FileInfo) (fs.Obj
 			return nil, err
 		}
 	}
-	if o.info.Mode().IsDir() {
+	if o.mode.IsDir() {
 		return nil, errors.Wrapf(fs.ErrorNotAFile, "%q", remote)
 	}
 	return o, nil
@@ -451,7 +453,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		// OK
 	} else if err != nil {
 		return nil, err
-	} else if !dstObj.info.Mode().IsRegular() {
+	} else if !dstObj.mode.IsRegular() {
 		// It isn't a file
 		return nil, errors.New("can't move file onto non-file")
 	}
@@ -539,14 +541,14 @@ func (o *Object) Remote() string {
 // Hash returns the requested hash of a file as a lowercase hex string
 func (o *Object) Hash(r fs.HashType) (string, error) {
 	// Check that the underlying file hasn't changed
-	oldtime := o.info.ModTime()
-	oldsize := o.info.Size()
+	oldtime := o.modTime
+	oldsize := o.size
 	err := o.lstat()
 	if err != nil {
 		return "", errors.Wrap(err, "hash: failed to stat")
 	}
 
-	if !o.info.ModTime().Equal(oldtime) || oldsize != o.info.Size() {
+	if !o.modTime.Equal(oldtime) || oldsize != o.size {
 		o.hashes = nil
 	}
 
@@ -570,12 +572,12 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
-	return o.info.Size()
+	return o.size
 }
 
 // ModTime returns the modification time of the object
 func (o *Object) ModTime() time.Time {
-	return o.info.ModTime()
+	return o.modTime
 }
 
 // SetModTime sets the modification time of the local fs object
@@ -597,7 +599,7 @@ func (o *Object) Storable() bool {
 			return false
 		}
 	}
-	mode := o.info.Mode()
+	mode := o.mode
 	// On windows a file with os.ModeSymlink represents a file with reparse points
 	if runtime.GOOS == "windows" && (mode&os.ModeSymlink) != 0 {
 		fs.Debugf(o, "Clearing symlink bit to allow a file with reparse points to be copied")
@@ -744,10 +746,19 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	return o.lstat()
 }
 
+// setMetadata sets the file info from the os.FileInfo passed in
+func (o *Object) setMetadata(info os.FileInfo) {
+	o.size = info.Size()
+	o.modTime = info.ModTime()
+	o.mode = info.Mode()
+}
+
 // Stat a Object into info
 func (o *Object) lstat() error {
 	info, err := o.fs.lstat(o.path)
-	o.info = info
+	if err == nil {
+		o.setMetadata(info)
+	}
 	return err
 }
 
