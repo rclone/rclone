@@ -566,20 +566,20 @@ func (ds DirEntries) ForObjectError(fn func(o Object) error) error {
 	return nil
 }
 
-// ForDir runs the function supplied on every object in the entries
-func (ds DirEntries) ForDir(fn func(dir *Dir)) {
+// ForDir runs the function supplied on every Directory in the entries
+func (ds DirEntries) ForDir(fn func(dir Directory)) {
 	for _, entry := range ds {
-		dir, ok := entry.(*Dir)
+		dir, ok := entry.(Directory)
 		if ok {
 			fn(dir)
 		}
 	}
 }
 
-// ForDirError runs the function supplied on every object in the entries
-func (ds DirEntries) ForDirError(fn func(dir *Dir) error) error {
+// ForDirError runs the function supplied on every Directory in the entries
+func (ds DirEntries) ForDirError(fn func(dir Directory) error) error {
 	for _, entry := range ds {
-		dir, ok := entry.(*Dir)
+		dir, ok := entry.(Directory)
 		if ok {
 			err := fn(dir)
 			if err != nil {
@@ -617,7 +617,7 @@ func ListDirSorted(fs Fs, includeAll bool, dir string) (entries DirEntries, err 
 				} else {
 					Debugf(x, "Excluded from sync (and deletion)")
 				}
-			case *Dir:
+			case Directory:
 				if Config.Filter.IncludeDirectory(x.Remote()) {
 					newEntries = append(newEntries, entry)
 				} else {
@@ -1052,9 +1052,9 @@ func ListDir(f Fs, w io.Writer) error {
 			// FIXME count errors and carry on for listing
 			return err
 		}
-		entries.ForDir(func(dir *Dir) {
+		entries.ForDir(func(dir Directory) {
 			if dir != nil {
-				syncFprintf(w, "%12d %13s %9d %s\n", dir.Bytes, dir.When.Format("2006-01-02 15:04:05"), dir.Count, dir.Name)
+				syncFprintf(w, "%12d %13s %9d %s\n", dir.Size(), dir.ModTime().Format("2006-01-02 15:04:05"), dir.Items(), dir.Remote())
 			}
 		})
 		return nil
@@ -1478,9 +1478,9 @@ func Rmdirs(f Fs, dir string) error {
 		}
 		for _, entry := range entries {
 			switch x := entry.(type) {
-			case *Dir:
+			case Directory:
 				// add a new directory as empty
-				dir := x.Name
+				dir := x.Remote()
 				_, found := dirEmpty[dir]
 				if !found {
 					dirEmpty[dir] = true

@@ -174,12 +174,7 @@ func (f *Fs) itemToDirEntry(remote string, object *yandex.ResourceInfoResponse) 
 		if err != nil {
 			return nil, errors.Wrap(err, "error parsing time in directory item")
 		}
-		d := &fs.Dir{
-			Name:  remote,
-			When:  t,
-			Bytes: int64(object.Size),
-			Count: -1,
-		}
+		d := fs.NewDir(remote, t).SetSize(int64(object.Size))
 		return d, nil
 	case "file":
 		o, err := f.newObjectWithInfo(remote, object)

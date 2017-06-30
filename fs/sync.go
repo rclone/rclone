@@ -755,7 +755,7 @@ func (s *syncCopyMove) dstOnly(dst DirEntry, job listDirJob, jobs *[]listDirJob)
 		default:
 			panic(fmt.Sprintf("unexpected delete mode %d", s.deleteMode))
 		}
-	case *Dir:
+	case Directory:
 		// Do the same thing to the entire contents of the directory
 		if job.dstDepth > 0 {
 			*jobs = append(*jobs, listDirJob{
@@ -784,7 +784,7 @@ func (s *syncCopyMove) srcOnly(src DirEntry, job listDirJob, jobs *[]listDirJob)
 			// No need to check since doesn't exist
 			s.toBeUploaded <- ObjectPair{x, nil}
 		}
-	case *Dir:
+	case Directory:
 		// Do the same thing to the entire contents of the directory
 		if job.srcDepth > 0 {
 			*jobs = append(*jobs, listDirJob{
@@ -814,9 +814,9 @@ func (s *syncCopyMove) transfer(dst, src DirEntry, job listDirJob, jobs *[]listD
 			Errorf(dst, "%v", err)
 			s.processError(err)
 		}
-	case *Dir:
+	case Directory:
 		// Do the same thing to the entire contents of the directory
-		_, ok := dst.(*Dir)
+		_, ok := dst.(Directory)
 		if ok {
 			if job.srcDepth > 0 && job.dstDepth > 0 {
 				*jobs = append(*jobs, listDirJob{

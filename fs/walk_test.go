@@ -177,8 +177,8 @@ func (ls *listDirs) WalkR() {
 	}
 }
 
-func newDir(name string) *Dir {
-	return &Dir{Name: name}
+func newDir(name string) Directory {
+	return NewDir(name, time.Time{})
 }
 
 func testWalkEmpty(t *testing.T) *listDirs {

@@ -32,7 +32,7 @@ var commandDefintion = &cobra.Command{
 					return nil
 				}
 				for _, entry := range entries {
-					_, isDir := entry.(*fs.Dir)
+					_, isDir := entry.(fs.Directory)
 					if isDir {
 						fmt.Println(entry.Remote() + "/")
 					} else {

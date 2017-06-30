@@ -99,7 +99,7 @@ can be processed line by line as each item is written one to a line.
 						item.ModTime = Timestamp(entry.ModTime())
 					}
 					switch x := entry.(type) {
-					case *fs.Dir:
+					case fs.Directory:
 						item.IsDir = true
 					case fs.Object:
 						item.IsDir = false

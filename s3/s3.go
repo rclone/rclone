@@ -555,11 +555,7 @@ func (f *Fs) itemToDirEntry(remote string, object *s3.Object, isDirectory bool) 
 		if object.Size != nil {
 			size = *object.Size
 		}
-		d := &fs.Dir{
-			Name:  remote,
-			Bytes: size,
-			Count: 0,
-		}
+		d := fs.NewDir(remote, time.Time{}).SetSize(size)
 		return d, nil
 	}
 	o, err := f.newObjectWithInfo(remote, object)
@@ -599,12 +595,7 @@ func (f *Fs) listBuckets(dir string) (entries fs.DirEntries, err error) {
 		return nil, err
 	}
 	for _, bucket := range resp.Buckets {
-		d := &fs.Dir{
-			Name:  aws.StringValue(bucket.Name),
-			When:  aws.TimeValue(bucket.CreationDate),
-			Bytes: -1,
-			Count: -1,
-		}
+		d := fs.NewDir(aws.StringValue(bucket.Name), aws.TimeValue(bucket.CreationDate))
 		entries = append(entries, d)
 	}
 	return entries, nil

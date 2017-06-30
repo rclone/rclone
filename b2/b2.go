@@ -521,11 +521,7 @@ func (f *Fs) list(dir string, recurse bool, prefix string, limit int, hidden boo
 // Convert a list item into a DirEntry
 func (f *Fs) itemToDirEntry(remote string, object *api.File, isDirectory bool, last *string) (fs.DirEntry, error) {
 	if isDirectory {
-		d := &fs.Dir{
-			Name:  remote,
-			Bytes: -1,
-			Count: -1,
-		}
+		d := fs.NewDir(remote, time.Time{})
 		return d, nil
 	}
 	if remote == *last {
@@ -569,11 +565,7 @@ func (f *Fs) listBuckets(dir string) (entries fs.DirEntries, err error) {
 		return nil, fs.ErrorListBucketRequired
 	}
 	err = f.listBucketsToFn(func(bucket *api.Bucket) error {
-		d := &fs.Dir{
-			Name:  bucket.Name,
-			Bytes: -1,
-			Count: -1,
-		}
+		d := fs.NewDir(bucket.Name, time.Time{})
 		entries = append(entries, d)
 		return nil
 	})

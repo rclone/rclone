@@ -209,6 +209,15 @@ type DirEntry interface {
 	Size() int64
 }
 
+// Directory is a filesystem like directory provided by an Fs
+type Directory interface {
+	DirEntry
+
+	// Items returns the count of items in this directory or this
+	// directory and subdirectories if known, -1 for unknown
+	Items() int64
+}
+
 // MimeTyper is an optional interface for Object
 type MimeTyper interface {
 	// MimeType returns the content type of the Object if
@@ -544,41 +553,6 @@ type ObjectPair struct {
 // ObjectPairChan is a channel of ObjectPair
 type ObjectPairChan chan ObjectPair
 
-// Dir describes a directory for directory/container/bucket lists
-type Dir struct {
-	Name  string    // name of the directory
-	When  time.Time // modification or creation time - IsZero for unknown
-	Bytes int64     // size of directory and contents -1 for unknown
-	Count int64     // number of objects -1 for unknown
-}
-
-// String returns the name
-func (d *Dir) String() string {
-	return d.Name
-}
-
-// Remote returns the remote path
-func (d *Dir) Remote() string {
-	return d.Name
-}
-
-// ModTime returns the modification date of the file
-// It should return a best guess if one isn't available
-func (d *Dir) ModTime() time.Time {
-	if !d.When.IsZero() {
-		return d.When
-	}
-	return time.Now()
-}
-
-// Size returns the size of the file
-func (d *Dir) Size() int64 {
-	return d.Bytes
-}
-
-// Check interface
-var _ DirEntry = (*Dir)(nil)
-
 // Find looks for an Info object for the name passed in
 //
 // Services are looked up in the config file
@@ -650,51 +624,4 @@ func CheckClose(c io.Closer, err *error) {
 	if *err == nil {
 		*err = cerr
 	}
-}
-
-// NewStaticObjectInfo returns a static ObjectInfo
-// If hashes is nil and fs is not nil, the hash map will be replaced with
-// empty hashes of the types supported by the fs.
-func NewStaticObjectInfo(remote string, modTime time.Time, size int64, storable bool, hashes map[HashType]string, fs Info) ObjectInfo {
-	info := &staticObjectInfo{
-		remote:   remote,
-		modTime:  modTime,
-		size:     size,
-		storable: storable,
-		hashes:   hashes,
-		fs:       fs,
-	}
-	if fs != nil && hashes == nil {
-		set := fs.Hashes().Array()
-		info.hashes = make(map[HashType]string)
-		for _, ht := range set {
-			info.hashes[ht] = ""
-		}
-	}
-	return info
-}
-
-type staticObjectInfo struct {
-	remote   string
-	modTime  time.Time
-	size     int64
-	storable bool
-	hashes   map[HashType]string
-	fs       Info
-}
-
-func (i *staticObjectInfo) Fs() Info           { return i.fs }
-func (i *staticObjectInfo) Remote() string     { return i.remote }
-func (i *staticObjectInfo) String() string     { return i.remote }
-func (i *staticObjectInfo) ModTime() time.Time { return i.modTime }
-func (i *staticObjectInfo) Size() int64        { return i.size }
-func (i *staticObjectInfo) Storable() bool     { return i.storable }
-func (i *staticObjectInfo) Hash(h HashType) (string, error) {
-	if len(i.hashes) == 0 {
-		return "", ErrHashUnsupported
-	}
-	if hash, ok := i.hashes[h]; ok {
-		return hash, nil
-	}
-	return "", ErrHashUnsupported
 }

@@ -264,12 +264,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	for _, info := range infos {
 		remote := path.Join(dir, info.Name())
 		if info.IsDir() {
-			d := &fs.Dir{
-				Name:  remote,
-				When:  info.ModTime(),
-				Bytes: -1,
-				Count: -1,
-			}
+			d := fs.NewDir(remote, info.ModTime())
 			entries = append(entries, d)
 		} else {
 			o := &Object{

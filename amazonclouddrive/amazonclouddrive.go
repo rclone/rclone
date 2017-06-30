@@ -426,12 +426,8 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 			case folderKind:
 				// cache the directory ID for later lookups
 				f.dirCache.Put(remote, *node.Id)
-				d := &fs.Dir{
-					Name:  remote,
-					Bytes: -1,
-					Count: -1,
-				}
-				d.When, _ = time.Parse(timeFormat, *node.ModifiedDate) // FIXME
+				when, _ := time.Parse(timeFormat, *node.ModifiedDate) // FIXME
+				d := fs.NewDir(remote, when)
 				entries = append(entries, d)
 			case fileKind:
 				o, err := f.newObjectWithInfo(remote, node)

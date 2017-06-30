@@ -118,7 +118,7 @@ func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error)
 				Type: fuse.DT_File,
 				Name: path.Base(x.Remote()),
 			}
-		case *fs.Dir:
+		case fs.Directory:
 			dirent = fuse.Dirent{
 				// Inode FIXME ???
 				Type: fuse.DT_Dir,

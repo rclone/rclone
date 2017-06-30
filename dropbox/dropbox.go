@@ -392,13 +392,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 				}
 				name = strings.Trim(name, "/")
 				if name != "" && name != dir {
-					d := &fs.Dir{
-						Name: name,
-						When: time.Now(),
-						//When:  folderInfo.ClientMtime,
-						//Bytes: folderInfo.Bytes,
-						//Count: -1,
-					}
+					d := fs.NewDir(name, time.Now())
 					entries = append(entries, d)
 				}
 			} else if fileInfo != nil {

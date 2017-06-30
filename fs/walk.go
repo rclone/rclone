@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -119,7 +120,7 @@ func walk(f Fs, path string, includeAll bool, maxLevel int, fn WalkFunc, listDir
 					entries, err := listDir(f, includeAll, job.remote)
 					var jobs []listJob
 					if err == nil && job.depth != 0 {
-						entries.ForDir(func(dir *Dir) {
+						entries.ForDir(func(dir Directory) {
 							// Recurse for the directory
 							jobs = append(jobs, listJob{
 								remote: dir.Remote(),
@@ -214,9 +215,7 @@ func (dt DirTree) checkParent(root, dirPath string) {
 			return
 		}
 	}
-	dt[parentPath] = append(entries, &Dir{
-		Name: dirPath,
-	})
+	dt[parentPath] = append(entries, NewDir(dirPath, time.Now()))
 	dt.checkParent(root, parentPath)
 }
 
@@ -250,7 +249,7 @@ func (dt DirTree) String() string {
 		fmt.Fprintf(out, "%s/\n", dir)
 		for _, entry := range dt[dir] {
 			flag := ""
-			if _, ok := entry.(*Dir); ok {
+			if _, ok := entry.(Directory); ok {
 				flag = "/"
 			}
 			fmt.Fprintf(out, "  %s%s\n", path.Base(entry.Remote()), flag)
@@ -284,7 +283,7 @@ func walkRDirTree(f Fs, path string, includeAll bool, maxLevel int, listR ListRF
 				} else {
 					Debugf(x, "Excluded from sync (and deletion)")
 				}
-			case *Dir:
+			case Directory:
 				if includeAll || Config.Filter.IncludeDirectory(x.Remote()) {
 					if maxLevel < 0 || slashes <= maxLevel-1 {
 						if slashes == maxLevel-1 {
@@ -359,7 +358,7 @@ func walkR(f Fs, path string, includeAll bool, maxLevel int, fn WalkFunc, listR 
 }
 
 // WalkGetAll runs Walk getting all the results
-func WalkGetAll(f Fs, path string, includeAll bool, maxLevel int) (objs []Object, dirs []*Dir, err error) {
+func WalkGetAll(f Fs, path string, includeAll bool, maxLevel int) (objs []Object, dirs []Directory, err error) {
 	err = Walk(f, path, includeAll, maxLevel, func(dirPath string, entries DirEntries, err error) error {
 		if err != nil {
 			return err
@@ -368,7 +367,7 @@ func WalkGetAll(f Fs, path string, includeAll bool, maxLevel int) (objs []Object
 			switch x := entry.(type) {
 			case Object:
 				objs = append(objs, x)
-			case *Dir:
+			case Directory:
 				dirs = append(dirs, x)
 			}
 		}

@@ -236,12 +236,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 				// Ignore directories which are symlinks.  These are junction points under windows which
 				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
 				if (mode&os.ModeSymlink) == 0 && f.dev == readDevice(fi) {
-					d := &fs.Dir{
-						Name:  f.dirNames.Save(newRemote, f.cleanRemote(newRemote)),
-						When:  fi.ModTime(),
-						Bytes: 0,
-						Count: 0,
-					}
+					d := fs.NewDir(f.dirNames.Save(newRemote, f.cleanRemote(newRemote)), fi.ModTime())
 					entries = append(entries, d)
 				}
 			} else {

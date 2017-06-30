@@ -80,7 +80,7 @@ func (d *Dir) Entries() fs.DirEntries {
 // Call with d.mu held
 func (d *Dir) getDir(i int) (subDir *Dir, isDir bool) {
 	obj := d.entries[i]
-	dir, ok := obj.(*fs.Dir)
+	dir, ok := obj.(fs.Directory)
 	if !ok {
 		return nil, false
 	}

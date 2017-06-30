@@ -45,10 +45,7 @@ type FS struct {
 
 // NewFS creates a new filing system and root directory
 func NewFS(f fs.Fs) *FS {
-	fsDir := &fs.Dir{
-		Name: "",
-		When: time.Now(),
-	}
+	fsDir := fs.NewDir("", time.Now())
 	fsys := &FS{
 		f: f,
 	}

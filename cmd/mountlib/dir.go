@@ -32,12 +32,12 @@ type Dir struct {
 	items   map[string]*DirEntry
 }
 
-func newDir(fsys *FS, f fs.Fs, fsDir *fs.Dir) *Dir {
+func newDir(fsys *FS, f fs.Fs, fsDir fs.Directory) *Dir {
 	return &Dir{
 		fsys:    fsys,
 		f:       f,
-		path:    fsDir.Name,
-		modTime: fsDir.When,
+		path:    fsDir.Remote(),
+		modTime: fsDir.ModTime(),
 		inode:   NewInode(),
 	}
 }
@@ -113,10 +113,10 @@ func (d *Dir) walk(absPath string, fun func(*Dir)) {
 //
 // Reset the directory to new state, discarding all the objects and
 // reading everything again
-func (d *Dir) rename(newParent *Dir, fsDir *fs.Dir) {
+func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.ForgetAll()
-	d.path = fsDir.Name
-	d.modTime = fsDir.When
+	d.path = fsDir.Remote()
+	d.modTime = fsDir.ModTime()
 	d.read = time.Time{}
 }
 
@@ -180,12 +180,12 @@ func (d *Dir) readDir() error {
 				Obj:  obj,
 				Node: nil,
 			}
-		case *fs.Dir:
+		case fs.Directory:
 			dir := item
 			name := path.Base(dir.Remote())
 			// Use old dir value if it exists
 			if oldItem, ok := oldItems[name]; ok {
-				if _, ok := oldItem.Obj.(*fs.Dir); ok {
+				if _, ok := oldItem.Obj.(fs.Directory); ok {
 					d.items[name] = oldItem
 					continue
 				}
@@ -262,7 +262,7 @@ func (d *Dir) lookupNode(leaf string) (item *DirEntry, err error) {
 	switch x := item.Obj.(type) {
 	case fs.Object:
 		node, err = newFile(d, x, leaf), nil
-	case *fs.Dir:
+	case fs.Directory:
 		node, err = newDir(d.fsys, d.f, x), nil
 	default:
 		err = errors.Errorf("unknown type %T", item)
@@ -342,10 +342,7 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 		fs.Errorf(path, "Dir.Mkdir failed to create directory: %v", err)
 		return nil, err
 	}
-	fsDir := &fs.Dir{
-		Name: path,
-		When: time.Now(),
-	}
+	fsDir := fs.NewDir(path, time.Now())
 	dir := newDir(d.fsys, d.f, fsDir)
 	d.addObject(fsDir, dir)
 	// fs.Debugf(path, "Dir.Mkdir OK")
@@ -373,7 +370,7 @@ func (d *Dir) Remove(name string) error {
 			fs.Errorf(path, "Dir.Remove file error: %v", err)
 			return err
 		}
-	case *fs.Dir:
+	case fs.Directory:
 		// Check directory is empty first
 		dir := item.Node.(*Dir)
 		empty, err := dir.isEmpty()
@@ -440,23 +437,21 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 				oldFile.rename(destDir, newObject)
 			}
 		}
-	case *fs.Dir:
+	case fs.Directory:
 		doDirMove := d.f.Features().DirMove
 		if doDirMove == nil {
 			err := errors.Errorf("Fs %q can't rename directories (no DirMove)", d.f)
 			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 			return err
 		}
-		srcRemote := x.Name
+		srcRemote := x.Remote()
 		dstRemote := newPath
 		err = doDirMove(d.f, srcRemote, dstRemote)
 		if err != nil {
 			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 			return err
 		}
-		newDir := new(fs.Dir)
-		*newDir = *x
-		newDir.Name = newPath
+		newDir := fs.NewDirCopy(x).SetRemote(newPath)
 		newObj = newDir
 		// Update the node with the new details
 		if oldNode != nil {

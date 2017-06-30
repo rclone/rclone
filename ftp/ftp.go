@@ -324,12 +324,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 			if object.Name == "." || object.Name == ".." {
 				continue
 			}
-			d := &fs.Dir{
-				Name:  newremote,
-				When:  object.Time,
-				Bytes: 0,
-				Count: -1,
-			}
+			d := fs.NewDir(newremote, object.Time)
 			entries = append(entries, d)
 		default:
 			o := &Object{

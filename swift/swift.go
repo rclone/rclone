@@ -321,11 +321,7 @@ type addEntryFn func(fs.DirEntry) error
 func (f *Fs) list(dir string, recurse bool, fn addEntryFn) error {
 	return f.listContainerRoot(f.container, f.root, dir, recurse, func(remote string, object *swift.Object, isDirectory bool) (err error) {
 		if isDirectory {
-			d := &fs.Dir{
-				Name:  remote,
-				Bytes: object.Bytes,
-				Count: 0,
-			}
+			d := fs.NewDir(remote, time.Time{}).SetSize(object.Bytes)
 			err = fn(d)
 		} else {
 			o, err := f.newObjectWithInfo(remote, object)
@@ -370,11 +366,7 @@ func (f *Fs) listContainers(dir string) (entries fs.DirEntries, err error) {
 		return nil, errors.Wrap(err, "container listing failed")
 	}
 	for _, container := range containers {
-		d := &fs.Dir{
-			Name:  container.Name,
-			Bytes: container.Bytes,
-			Count: container.Count,
-		}
+		d := fs.NewDir(container.Name, time.Time{}).SetSize(container.Bytes).SetItems(container.Count)
 		entries = append(entries, d)
 	}
 	return entries, nil

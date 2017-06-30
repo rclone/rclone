@@ -67,8 +67,8 @@ func testListRoot(t *testing.T, f fs.Fs) {
 
 	e := entries[0]
 	assert.Equal(t, "four", e.Remote())
-	assert.Equal(t, int64(0), e.Size())
-	_, ok := e.(*fs.Dir)
+	assert.Equal(t, int64(-1), e.Size())
+	_, ok := e.(fs.Directory)
 	assert.True(t, ok)
 
 	e = entries[1]
@@ -79,8 +79,8 @@ func testListRoot(t *testing.T, f fs.Fs) {
 
 	e = entries[2]
 	assert.Equal(t, "three", e.Remote())
-	assert.Equal(t, int64(0), e.Size())
-	_, ok = e.(*fs.Dir)
+	assert.Equal(t, int64(-1), e.Size())
+	_, ok = e.(fs.Directory)
 	assert.True(t, ok)
 
 	e = entries[3]

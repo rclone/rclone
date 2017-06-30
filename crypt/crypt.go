@@ -157,8 +157,8 @@ func (f *Fs) add(entries *fs.DirEntries, obj fs.Object) {
 }
 
 // Encrypt an directory file name to entries.
-func (f *Fs) addDir(entries *fs.DirEntries, dir *fs.Dir) {
-	remote := dir.Name
+func (f *Fs) addDir(entries *fs.DirEntries, dir fs.Directory) {
+	remote := dir.Remote()
 	decryptedRemote, err := f.cipher.DecryptDirName(remote)
 	if err != nil {
 		fs.Debugf(remote, "Skipping undecryptable dir name: %v", err)
@@ -177,7 +177,7 @@ func (f *Fs) encryptEntries(entries fs.DirEntries) (newEntries fs.DirEntries, er
 		switch x := entry.(type) {
 		case fs.Object:
 			f.add(&newEntries, x)
-		case *fs.Dir:
+		case fs.Directory:
 			f.addDir(&newEntries, x)
 		default:
 			return nil, errors.Errorf("Unknown object type %T", entry)
@@ -545,16 +545,16 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 }
 
 // newDir returns a dir with the Name decrypted
-func (f *Fs) newDir(dir *fs.Dir) *fs.Dir {
-	new := *dir
-	remote := dir.Name
+func (f *Fs) newDir(dir fs.Directory) fs.Directory {
+	new := fs.NewDirCopy(dir)
+	remote := dir.Remote()
 	decryptedRemote, err := f.cipher.DecryptDirName(remote)
 	if err != nil {
 		fs.Debugf(remote, "Undecryptable dir name: %v", err)
 	} else {
-		new.Name = decryptedRemote
+		new.SetRemote(decryptedRemote)
 	}
-	return &new
+	return new
 }
 
 // ObjectInfo describes a wrapped fs.ObjectInfo for being the source

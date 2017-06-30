@@ -363,11 +363,7 @@ func (f *Fs) list(dir string, recurse bool, fn listFn) error {
 // Convert a list item into a DirEntry
 func (f *Fs) itemToDirEntry(remote string, object *storage.Object, isDirectory bool) (fs.DirEntry, error) {
 	if isDirectory {
-		d := &fs.Dir{
-			Name:  remote,
-			Bytes: int64(object.Size),
-			Count: 0,
-		}
+		d := fs.NewDir(remote, time.Time{}).SetSize(int64(object.Size))
 		return d, nil
 	}
 	o, err := f.newObjectWithInfo(remote, object)
@@ -411,11 +407,7 @@ func (f *Fs) listBuckets(dir string) (entries fs.DirEntries, err error) {
 			return nil, err
 		}
 		for _, bucket := range buckets.Items {
-			d := &fs.Dir{
-				Name:  bucket.Name,
-				Bytes: 0,
-				Count: 0,
-			}
+			d := fs.NewDir(bucket.Name, time.Time{})
 			entries = append(entries, d)
 		}
 		if buckets.NextPageToken == "" {

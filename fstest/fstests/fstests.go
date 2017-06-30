@@ -183,10 +183,10 @@ func winPath(s string) string {
 }
 
 // dirsToNames returns a sorted list of names
-func dirsToNames(dirs []*fs.Dir) []string {
+func dirsToNames(dirs []fs.Directory) []string {
 	names := []string{}
 	for _, dir := range dirs {
-		names = append(names, winPath(dir.Name))
+		names = append(names, winPath(dir.Remote()))
 	}
 	sort.Strings(names)
 	return names
@@ -399,7 +399,7 @@ func TestFsListSubdir(t *testing.T) {
 	fileName := file2.Path
 	var err error
 	var objs []fs.Object
-	var dirs []*fs.Dir
+	var dirs []fs.Directory
 	for i := 0; i < 2; i++ {
 		dir, _ := path.Split(fileName)
 		dir = dir[:len(dir)-1]

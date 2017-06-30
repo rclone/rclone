@@ -307,12 +307,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 		name = strings.TrimRight(name, "/")
 		remote := path.Join(dir, name)
 		if isDir {
-			dir := &fs.Dir{
-				Name:  remote,
-				When:  timeUnset,
-				Bytes: 0,
-				Count: 0,
-			}
+			dir := fs.NewDir(remote, timeUnset)
 			entries = append(entries, dir)
 		} else {
 			file := &Object{

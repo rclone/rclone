@@ -172,7 +172,7 @@ func NewRun(t *testing.T) *Run {
 						if err != nil {
 							t.Errorf("Error removing file %q: %v", x.Remote(), err)
 						}
-					case *fs.Dir:
+					case fs.Directory:
 						toDelete = append(toDelete, x.Remote())
 					}
 				}
@@ -959,7 +959,7 @@ func TestListDirSorted(t *testing.T) {
 		name := item.Remote()
 		switch item.(type) {
 		case fs.Object:
-		case *fs.Dir:
+		case fs.Directory:
 			name += "/"
 		default:
 			t.Fatalf("Unknown type %+v", item)

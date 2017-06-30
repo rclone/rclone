@@ -184,7 +184,7 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 	is := NewItems(items)
 	oldErrors := fs.Stats.GetErrors()
 	var objs []fs.Object
-	var dirs []*fs.Dir
+	var dirs []fs.Directory
 	var err error
 	var retries = *ListRetries
 	sleep := time.Second / 2
@@ -231,7 +231,7 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 	if expectedDirs != nil && len(dirs) != 0 {
 		actualDirs := []string{}
 		for _, dir := range dirs {
-			actualDirs = append(actualDirs, dir.Name)
+			actualDirs = append(actualDirs, dir.Remote())
 		}
 		sort.Strings(actualDirs)
 		sort.Strings(expectedDirs)
