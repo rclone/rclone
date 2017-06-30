@@ -836,6 +836,77 @@ func (s *syncCopyMove) transfer(dst, src DirEntry, job listDirJob, jobs *[]listD
 	}
 }
 
+type matchPair struct {
+	src, dst DirEntry
+}
+
+// Process the two sorted listings, matching up the items in the two
+// sorted slices
+//
+// Into srcOnly go Entries which only exist in the srcList
+// Into dstOnly go Entries which only exist in the dstList
+// Into matches go matchPair's of src and dst which have the same name
+//
+// This checks for duplicates and checks the list is sorted.
+func matchListings(srcList, dstList DirEntries) (srcOnly DirEntries, dstOnly DirEntries, matches []matchPair) {
+	for iSrc, iDst := 0, 0; ; iSrc, iDst = iSrc+1, iDst+1 {
+		var src, dst DirEntry
+		var srcRemote, dstRemote string
+		if iSrc < len(srcList) {
+			src = srcList[iSrc]
+			srcRemote = src.Remote()
+		}
+		if iDst < len(dstList) {
+			dst = dstList[iDst]
+			dstRemote = dst.Remote()
+		}
+		if src == nil && dst == nil {
+			break
+		}
+		if src != nil && iSrc > 0 {
+			prev := srcList[iSrc-1].Remote()
+			if srcRemote == prev {
+				Logf(src, "Duplicate file found in source - ignoring")
+				src = nil // ignore the src
+			} else if srcRemote < prev {
+				Errorf(src, "Out of order listing in source")
+				src = nil // ignore the src
+			}
+		}
+		if dst != nil && iDst > 0 {
+			prev := dstList[iDst-1].Remote()
+			if dstRemote == prev {
+				Logf(dst, "Duplicate file found in destination - ignoring")
+				dst = nil // ignore the dst
+			} else if dstRemote < prev {
+				Errorf(dst, "Out of order listing in destination")
+				dst = nil // ignore the dst
+			}
+		}
+		if src != nil && dst != nil {
+			if srcRemote < dstRemote {
+				dst = nil
+				iDst-- // retry the dst
+			} else if srcRemote > dstRemote {
+				src = nil
+				iSrc-- // retry the src
+			}
+		}
+		// Debugf(nil, "src = %v, dst = %v", src, dst)
+		switch {
+		case src == nil && dst == nil:
+			// do nothing
+		case src == nil:
+			dstOnly = append(dstOnly, dst)
+		case dst == nil:
+			srcOnly = append(srcOnly, src)
+		default:
+			matches = append(matches, matchPair{src: src, dst: dst})
+		}
+	}
+	return
+}
+
 // returns errors using processError
 func (s *syncCopyMove) _run(job listDirJob) (jobs []listDirJob) {
 	var (
@@ -873,39 +944,25 @@ func (s *syncCopyMove) _run(job listDirJob) (jobs []listDirJob) {
 		return nil
 	}
 
-	// Process the two listings, matching up the items in the two sorted slices
-	for iSrc, iDst := 0, 0; ; iSrc, iDst = iSrc+1, iDst+1 {
+	// Work out what to do and do it
+	srcOnly, dstOnly, matches := matchListings(srcList, dstList)
+	for _, src := range srcOnly {
 		if s.aborting() {
 			return nil
 		}
-		var src, dst DirEntry
-		if iSrc < len(srcList) {
-			src = srcList[iSrc]
+		s.srcOnly(src, job, &jobs)
+	}
+	for _, dst := range dstOnly {
+		if s.aborting() {
+			return nil
 		}
-		if iDst < len(dstList) {
-			dst = dstList[iDst]
+		s.dstOnly(dst, job, &jobs)
+	}
+	for _, match := range matches {
+		if s.aborting() {
+			return nil
 		}
-		if src == nil && dst == nil {
-			break
-		}
-		if src != nil && dst != nil {
-			if src.Remote() < dst.Remote() {
-				dst = nil
-				iDst-- // retry the dst
-			} else if src.Remote() > dst.Remote() {
-				src = nil
-				iSrc-- // retry the src
-			}
-		}
-		// Debugf(nil, "src = %v, dst = %v", src, dst)
-		switch {
-		case src == nil:
-			s.dstOnly(dst, job, &jobs)
-		case dst == nil:
-			s.srcOnly(src, job, &jobs)
-		default:
-			s.transfer(dst, src, job, &jobs)
-		}
+		s.transfer(match.dst, match.src, job, &jobs)
 	}
 	return jobs
 }
