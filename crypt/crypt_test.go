@@ -21,6 +21,8 @@ func TestSetup(t *testing.T) {
 // Generic tests for the Fs
 func TestInit(t *testing.T)                { fstests.TestInit(t) }
 func TestFsString(t *testing.T)            { fstests.TestFsString(t) }
+func TestFsName(t *testing.T)              { fstests.TestFsName(t) }
+func TestFsRoot(t *testing.T)              { fstests.TestFsRoot(t) }
 func TestFsRmdirEmpty(t *testing.T)        { fstests.TestFsRmdirEmpty(t) }
 func TestFsRmdirNotFound(t *testing.T)     { fstests.TestFsRmdirNotFound(t) }
 func TestFsMkdir(t *testing.T)             { fstests.TestFsMkdir(t) }

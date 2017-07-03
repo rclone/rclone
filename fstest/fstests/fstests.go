@@ -52,6 +52,7 @@ var (
 	dumpHeaders    = flag.Bool("dump-headers", false, "Dump HTTP headers - may contain sensitive info")
 	dumpBodies     = flag.Bool("dump-bodies", false, "Dump HTTP headers and bodies - may contain sensitive info")
 	overrideRemote = flag.String("remote", "", "Set this to override the default remote name (eg s3:)")
+	isLocalRemote  bool
 )
 
 // ExtraConfigItem describes a config item added on the fly while testing
@@ -88,6 +89,7 @@ func TestInit(t *testing.T) {
 	if RemoteName == "" {
 		RemoteName, err = fstest.LocalRemote()
 		require.NoError(t, err)
+		isLocalRemote = true
 	}
 	subRemoteName, subRemoteLeaf, err = fstest.RandomRemoteName(RemoteName)
 	require.NoError(t, err)
@@ -125,7 +127,29 @@ func skipIfNotListR(t *testing.T) func() {
 func TestFsString(t *testing.T) {
 	skipIfNotOk(t)
 	str := remote.String()
-	require.NotEqual(t, str, "")
+	require.NotEqual(t, "", str)
+}
+
+// TestFsName tests the Name method
+func TestFsName(t *testing.T) {
+	skipIfNotOk(t)
+	got := remote.Name()
+	want := RemoteName
+	if isLocalRemote {
+		want = "local:"
+	}
+	require.Equal(t, want, got+":")
+}
+
+// TestFsRoot tests the Root method
+func TestFsRoot(t *testing.T) {
+	skipIfNotOk(t)
+	name := remote.Name() + ":"
+	root := remote.Root()
+	if isLocalRemote {
+		name = ""
+	}
+	require.Equal(t, subRemoteName, name+root)
 }
 
 // TestFsRmdirEmpty tests deleting an empty directory

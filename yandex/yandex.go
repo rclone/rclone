@@ -130,7 +130,8 @@ func NewFs(name, root string) (fs.Fs, error) {
 	yandexDisk := yandex.NewClient(token.AccessToken, fs.Config.Client())
 
 	f := &Fs{
-		yd: yandexDisk,
+		name: name,
+		yd:   yandexDisk,
 	}
 	f.features = (&fs.Features{ReadMimeType: true, WriteMimeType: true}).Fill(f)
 	f.setRoot(root)
