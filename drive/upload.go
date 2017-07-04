@@ -11,7 +11,6 @@
 package drive
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -110,9 +109,8 @@ func (f *Fs) Upload(in io.Reader, size int64, contentType string, info *drive.Fi
 }
 
 // Make an http.Request for the range passed in
-func (rx *resumableUpload) makeRequest(start int64, body []byte) *http.Request {
-	reqSize := int64(len(body))
-	req, _ := http.NewRequest("POST", rx.URI, bytes.NewBuffer(body))
+func (rx *resumableUpload) makeRequest(start int64, body io.ReadSeeker, reqSize int64) *http.Request {
+	req, _ := http.NewRequest("POST", rx.URI, body)
 	req.ContentLength = reqSize
 	if reqSize != 0 {
 		req.Header.Set("Content-Range", fmt.Sprintf("bytes %v-%v/%v", start, start+reqSize-1, rx.ContentLength))
@@ -131,7 +129,7 @@ var rangeRE = regexp.MustCompile(`^0\-(\d+)$`)
 //
 // If error is nil, then start should be valid
 func (rx *resumableUpload) transferStatus() (start int64, err error) {
-	req := rx.makeRequest(0, nil)
+	req := rx.makeRequest(0, nil, 0)
 	res, err := rx.f.client.Do(req)
 	if err != nil {
 		return 0, err
@@ -158,8 +156,8 @@ func (rx *resumableUpload) transferStatus() (start int64, err error) {
 }
 
 // Transfer a chunk - caller must call googleapi.CloseBody(res) if err == nil || res != nil
-func (rx *resumableUpload) transferChunk(start int64, body []byte) (int, error) {
-	req := rx.makeRequest(start, body)
+func (rx *resumableUpload) transferChunk(start int64, chunk io.ReadSeeker, chunkSize int64) (int, error) {
+	req := rx.makeRequest(start, chunk, chunkSize)
 	res, err := rx.f.client.Do(req)
 	if err != nil {
 		return 599, err
@@ -194,26 +192,19 @@ func (rx *resumableUpload) transferChunk(start int64, body []byte) (int, error) 
 // It retries each chunk maxTries times (with a pause of uploadPause between attempts).
 func (rx *resumableUpload) Upload() (*drive.File, error) {
 	start := int64(0)
-	buf := make([]byte, chunkSize)
 	var StatusCode int
+	var err error
 	for start < rx.ContentLength {
 		reqSize := rx.ContentLength - start
 		if reqSize >= int64(chunkSize) {
 			reqSize = int64(chunkSize)
-		} else {
-			buf = buf[:reqSize]
 		}
-
-		// Read the chunk
-		_, err := io.ReadFull(rx.Media, buf)
-		if err != nil {
-			return nil, err
-		}
+		chunk := fs.NewRepeatableReader(io.LimitReader(rx.Media, reqSize))
 
 		// Transfer the chunk
 		err = rx.f.pacer.Call(func() (bool, error) {
 			fs.Debugf(rx.remote, "Sending chunk %d length %d", start, reqSize)
-			StatusCode, err = rx.transferChunk(start, buf)
+			StatusCode, err = rx.transferChunk(start, chunk, reqSize)
 			again, err := shouldRetry(err)
 			if StatusCode == statusResumeIncomplete || StatusCode == http.StatusCreated || StatusCode == http.StatusOK {
 				again = false
