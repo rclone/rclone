@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"sync"
 
@@ -77,19 +78,28 @@ func (api *Client) SetHeader(key, value string) *Client {
 
 // Opts contains parameters for Call, CallJSON etc
 type Opts struct {
-	Method        string
-	Path          string
-	Absolute      bool // Path is absolute
-	Body          io.Reader
-	NoResponse    bool // set to close Body
-	ContentType   string
-	ContentLength *int64
-	ContentRange  string
-	ExtraHeaders  map[string]string
-	UserName      string // username for Basic Auth
-	Password      string // password for Basic Auth
-	Options       []fs.OpenOption
-	IgnoreStatus  bool // if set then we don't check error status or parse error body
+	Method                string
+	Path                  string
+	Absolute              bool // Path is absolute
+	Body                  io.Reader
+	NoResponse            bool // set to close Body
+	ContentType           string
+	ContentLength         *int64
+	ContentRange          string
+	ExtraHeaders          map[string]string
+	UserName              string // username for Basic Auth
+	Password              string // password for Basic Auth
+	Options               []fs.OpenOption
+	IgnoreStatus          bool   // if set then we don't check error status or parse error body
+	MultipartMetadataName string // set the following 3 vars
+	MultipartContentName  string // and Body and pass in request
+	MultipartFileName     string // for multipart upload
+}
+
+// Copy creates a copy of the options
+func (o *Opts) Copy() *Opts {
+	newOpts := *o
+	return &newOpts
 }
 
 // DecodeJSON decodes resp.Body into result
@@ -202,16 +212,53 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 //
 // It will return resp if at all possible, even if err is set
 func (api *Client) CallJSON(opts *Opts, request interface{}, response interface{}) (resp *http.Response, err error) {
-	// Set the body up as a JSON object if required
-	if opts.Body == nil && request != nil {
-		body, err := json.Marshal(request)
+	var requestBody []byte
+	// Marshal the request if given
+	if request != nil {
+		opts = opts.Copy()
+		requestBody, err = json.Marshal(request)
+		opts.ContentType = "application/json"
 		if err != nil {
 			return nil, err
 		}
-		var newOpts = *opts
-		newOpts.Body = bytes.NewBuffer(body)
-		newOpts.ContentType = "application/json"
-		opts = &newOpts
+		// Set the body up as a JSON object if required
+		if opts.Body == nil {
+			opts.Body = bytes.NewBuffer(requestBody)
+		}
+	}
+	errChan := make(chan error, 1)
+	isMultipart := opts.MultipartMetadataName != "" && opts.Body != nil && request != nil
+	if isMultipart {
+		bodyReader, bodyWriter := io.Pipe()
+		writer := multipart.NewWriter(bodyWriter)
+		opts.ContentType = writer.FormDataContentType()
+		in := opts.Body
+		opts.Body = bodyReader
+		go func() {
+			defer func() { _ = bodyWriter.Close() }()
+			var err error
+
+			// Create the first part
+			err = writer.WriteField(opts.MultipartMetadataName, string(requestBody))
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			// Add the file part
+			part, err := writer.CreateFormFile(opts.MultipartContentName, opts.MultipartFileName)
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			// Copy it in
+			if _, err := io.Copy(part, in); err != nil {
+				errChan <- err
+				return
+			}
+			errChan <- writer.Close()
+		}()
 	}
 	resp, err = api.Call(opts)
 	if err != nil {
@@ -219,6 +266,12 @@ func (api *Client) CallJSON(opts *Opts, request interface{}, response interface{
 	}
 	if response == nil || opts.NoResponse {
 		return resp, nil
+	}
+	if isMultipart {
+		err = <-errChan
+		if err != nil {
+			return resp, err
+		}
 	}
 	err = DecodeJSON(resp, response)
 	return resp, err
