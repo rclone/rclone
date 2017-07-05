@@ -232,10 +232,11 @@ func (t *test) cleanFs() error {
 	if err != nil {
 		return err
 	}
-	return entries.ForDirError(func(dir *fs.Dir) error {
-		if fstest.MatchTestRemote.MatchString(dir.Name) {
-			log.Printf("Purging %s%s", t.remote, dir.Name)
-			dir, err := fs.NewFs(t.remote + dir.Name)
+	return entries.ForDirError(func(dir fs.Directory) error {
+		remote := dir.Remote()
+		if fstest.MatchTestRemote.MatchString(remote) {
+			log.Printf("Purging %s%s", t.remote, remote)
+			dir, err := fs.NewFs(t.remote + remote)
 			if err != nil {
 				return err
 			}
