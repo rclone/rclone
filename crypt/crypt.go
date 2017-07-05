@@ -248,7 +248,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 	if err != nil {
 		return nil, err
 	}
-	o, err := f.Fs.Put(wrappedIn, f.newObjectInfo(src))
+	o, err := f.Fs.Put(wrappedIn, f.newObjectInfo(src), options...)
 	if err != nil {
 		return nil, err
 	}

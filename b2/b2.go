@@ -699,7 +699,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 		fs:     f,
 		remote: src.Remote(),
 	}
-	return fs, fs.Update(in, src)
+	return fs, fs.Update(in, src, options...)
 }
 
 // Mkdir creates the bucket if it doesn't exist

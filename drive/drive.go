@@ -673,10 +673,10 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 	exisitingObj, err := f.newObjectWithInfo(src.Remote(), nil)
 	switch err {
 	case nil:
-		return exisitingObj, exisitingObj.Update(in, src)
+		return exisitingObj, exisitingObj.Update(in, src, options...)
 	case fs.ErrorObjectNotFound:
 		// Not found so create it
-		return f.PutUnchecked(in, src)
+		return f.PutUnchecked(in, src, options...)
 	default:
 		return nil, err
 	}

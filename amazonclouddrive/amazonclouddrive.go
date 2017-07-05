@@ -552,7 +552,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 	err := o.readMetaData()
 	switch err {
 	case nil:
-		return o, o.Update(in, src)
+		return o, o.Update(in, src, options...)
 	case fs.ErrorObjectNotFound:
 		// Not found so create it
 	default:
