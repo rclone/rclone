@@ -79,9 +79,10 @@ func (api *Client) SetHeader(key, value string) *Client {
 
 // Opts contains parameters for Call, CallJSON etc
 type Opts struct {
-	Method                string
-	Path                  string
-	Absolute              bool // Path is absolute
+	Method                string // GET, POST etc
+	Path                  string // relative to RootURL unless Absolute set
+	Absolute              bool   // Path is absolute - dont add RootURL
+	RootURL               string // override RootURL passed into SetRoot()
 	Body                  io.Reader
 	NoResponse            bool // set to close Body
 	ContentType           string
@@ -150,10 +151,14 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 	if opts.Absolute {
 		url = opts.Path
 	} else {
-		if api.rootURL == "" {
+		url = api.rootURL
+		if opts.RootURL != "" {
+			url = opts.RootURL
+		}
+		if url == "" {
 			return nil, errors.New("RootURL not set")
 		}
-		url = api.rootURL + opts.Path
+		url += opts.Path
 	}
 	if opts.Parameters != nil && len(opts.Parameters) > 0 {
 		url += "?" + opts.Parameters.Encode()
