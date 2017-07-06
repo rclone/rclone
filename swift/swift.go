@@ -295,10 +295,7 @@ func (f *Fs) listContainerRoot(container, root string, dir string, recurse bool,
 				object := &objects[i]
 				isDirectory := false
 				if !recurse {
-					if strings.HasSuffix(object.Name, "/") {
-						isDirectory = true
-						object.Name = object.Name[:len(object.Name)-1]
-					}
+					isDirectory = strings.HasSuffix(object.Name, "/")
 				}
 				if !strings.HasPrefix(object.Name, root) {
 					fs.Logf(f, "Odd name received %q", object.Name)
@@ -321,6 +318,7 @@ type addEntryFn func(fs.DirEntry) error
 func (f *Fs) list(dir string, recurse bool, fn addEntryFn) error {
 	return f.listContainerRoot(f.container, f.root, dir, recurse, func(remote string, object *swift.Object, isDirectory bool) (err error) {
 		if isDirectory {
+			remote = strings.TrimRight(remote, "/")
 			d := fs.NewDir(remote, time.Time{}).SetSize(object.Bytes)
 			err = fn(d)
 		} else {
