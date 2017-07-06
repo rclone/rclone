@@ -178,6 +178,10 @@ sending them to the trash is required instead then use the
 Here are the command line options specific to this cloud storage
 system.
 
+#### --drive-auth-owner-only ####
+
+Only consider files owned by the authenticated user.
+
 #### --drive-chunk-size=SIZE ####
 
 Upload chunk size. Must a power of 2 >= 256k. Default value is 8 MB.
@@ -187,23 +191,9 @@ is buffered in memory one per transfer.
 
 Reducing this will reduce memory usage but decrease performance.
 
-#### --drive-full-list ####
-
-No longer does anything - kept for backwards compatibility.
-
-#### --drive-upload-cutoff=SIZE ####
-
-File size cutoff for switching to chunked upload.  Default is 8 MB.
-
-#### --drive-use-trash ####
-
-Send files to the trash instead of deleting permanently. Defaults to
-off, namely deleting files permanently.
-
 #### --drive-auth-owner-only ####
 
-Only consider files owned by the authenticated user. Requires
-that --drive-full-list=true (default).
+Only consider files owned by the authenticated user.
 
 #### --drive-formats ####
 
@@ -252,9 +242,30 @@ Here are the possible extensions with their corresponding mime types.
 | xlsx | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | Microsoft Office Spreadsheet |
 | zip  | application/zip | A ZIP file of HTML, Images CSS |
 
+#### --drive-list-chunk int ####
+
+Size of listing chunk 100-1000. 0 to disable. (default 1000)
+
+#### --drive-shared-with-me ####
+
+Only show files that are shared with me
+
 #### --drive-skip-gdocs ####
 
 Skip google documents in all listings. If given, gdocs practically become invisible to rclone.
+
+#### --drive-trashed-only ####
+
+Only show files that are in the trash
+
+#### --drive-upload-cutoff=SIZE ####
+
+File size cutoff for switching to chunked upload.  Default is 8 MB.
+
+#### --drive-use-trash ####
+
+Send files to the trash instead of deleting permanently. Defaults to
+off, namely deleting files permanently.
 
 ### Limitations ###
 
