@@ -630,8 +630,14 @@ func ListDirSorted(fs Fs, includeAll bool, dir string) (entries DirEntries, err 
 		entries = newEntries
 	}
 
-	// sort the directory entries by Remote
-	sort.Sort(entries)
+	// Sort the directory entries by Remote
+	//
+	// We use a stable sort here just in case there are
+	// duplicates. Assuming the remote delivers the entries in a
+	// consistent order, this will give the best user experience
+	// in syncing as it will use the first entry for the sync
+	// comparison.
+	sort.Stable(entries)
 	return entries, nil
 }
 

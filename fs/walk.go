@@ -229,7 +229,7 @@ func (dt DirTree) checkParents(root string) {
 // Sort sorts all the Entries
 func (dt DirTree) Sort() {
 	for _, entries := range dt {
-		sort.Sort(entries)
+		sort.Stable(entries)
 	}
 }
 
@@ -342,7 +342,6 @@ func walkR(f Fs, path string, includeAll bool, maxLevel int, fn WalkFunc, listR 
 		if entries == nil {
 			entries = emptyDir
 		}
-		sort.Sort(entries)
 		err = fn(dirPath, entries, nil)
 		if err == ErrorSkipDir {
 			skipping = true
