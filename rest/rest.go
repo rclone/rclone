@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"sync"
 
 	"github.com/ncw/rclone/fs"
@@ -90,10 +91,11 @@ type Opts struct {
 	UserName              string // username for Basic Auth
 	Password              string // password for Basic Auth
 	Options               []fs.OpenOption
-	IgnoreStatus          bool   // if set then we don't check error status or parse error body
-	MultipartMetadataName string // set the following 3 vars
-	MultipartContentName  string // and Body and pass in request
-	MultipartFileName     string // for multipart upload
+	IgnoreStatus          bool       // if set then we don't check error status or parse error body
+	MultipartMetadataName string     // set the following 3 vars
+	MultipartContentName  string     // and Body and pass in request
+	MultipartFileName     string     // for multipart upload
+	Parameters            url.Values // any parameters for the final URL
 }
 
 // Copy creates a copy of the options
@@ -152,6 +154,9 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 			return nil, errors.New("RootURL not set")
 		}
 		url = api.rootURL + opts.Path
+	}
+	if opts.Parameters != nil && len(opts.Parameters) > 0 {
+		url += "?" + opts.Parameters.Encode()
 	}
 	req, err := http.NewRequest(opts.Method, url, opts.Body)
 	if err != nil {
