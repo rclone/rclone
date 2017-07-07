@@ -1,5 +1,5 @@
 SHELL = /bin/bash
-TAG := $(shell echo `git describe --abbrev=8 --tags`-`git rev-parse --abbrev-ref HEAD` | sed 's/-\([0-9]\)-/-0\1-/; s/-\(HEAD\|master\)$$//')
+TAG := $(shell echo `git describe --abbrev=8 --tags`-`git rev-parse --abbrev-ref HEAD` | sed 's/-\([0-9]\)-/-00\1-/; s/-\([0-9][0-9]\)-/-0\1-/; s/-\(HEAD\|master\)$$//')
 LAST_TAG := $(shell git describe --tags --abbrev=0)
 NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f", $$_)')
 GO_VERSION := $(shell go version)
