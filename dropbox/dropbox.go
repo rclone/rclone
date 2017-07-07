@@ -354,7 +354,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 				}
 				return nil, err
 			}
-			started = false
+			started = true
 		} else {
 			arg := files.ListFolderContinueArg{
 				Cursor: res.Cursor,
