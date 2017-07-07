@@ -163,10 +163,9 @@ func (up *largeUpload) transferChunk(part int64, body []byte) error {
 		// data arrived correctly.  The same SHA1 checksum must be
 		// passed to b2_finish_large_file.
 		opts := rest.Opts{
-			Method:   "POST",
-			Absolute: true,
-			Path:     upload.UploadURL,
-			Body:     fs.AccountPart(up.o, bytes.NewBuffer(body)),
+			Method:  "POST",
+			RootURL: upload.UploadURL,
+			Body:    fs.AccountPart(up.o, bytes.NewBuffer(body)),
 			ExtraHeaders: map[string]string{
 				"Authorization":    upload.AuthorizationToken,
 				"X-Bz-Part-Number": fmt.Sprintf("%d", part),

@@ -393,8 +393,8 @@ OUTER:
 		if result.NextLink == "" {
 			break
 		}
-		opts.Path = result.NextLink
-		opts.Absolute = true
+		opts.Path = ""
+		opts.RootURL = result.NextLink
 	}
 	return
 }
@@ -564,8 +564,7 @@ func (f *Fs) waitForJob(location string, o *Object) error {
 	for time.Now().Before(deadline) {
 		opts := rest.Opts{
 			Method:       "GET",
-			Path:         location,
-			Absolute:     true,
+			RootURL:      location,
 			IgnoreStatus: true, // Ignore the http status response since it seems to return valid info on 500 errors
 		}
 		var resp *http.Response
@@ -929,13 +928,11 @@ func (o *Object) createUploadSession() (response *api.CreateUploadResponse, err 
 func (o *Object) uploadFragment(url string, start int64, totalSize int64, chunk io.ReadSeeker, chunkSize int64) (err error) {
 	opts := rest.Opts{
 		Method:        "PUT",
-		Path:          url,
-		Absolute:      true,
+		RootURL:       url,
 		ContentLength: &chunkSize,
 		ContentRange:  fmt.Sprintf("bytes %d-%d/%d", start, start+chunkSize-1, totalSize),
 		Body:          chunk,
 	}
-	fs.Debugf(o, "OPTS: %s", opts.ContentRange)
 	var response api.UploadFragmentResponse
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -950,8 +947,7 @@ func (o *Object) uploadFragment(url string, start int64, totalSize int64, chunk 
 func (o *Object) cancelUploadSession(url string) (err error) {
 	opts := rest.Opts{
 		Method:     "DELETE",
-		Path:       url,
-		Absolute:   true,
+		RootURL:    url,
 		NoResponse: true,
 	}
 	var resp *http.Response
