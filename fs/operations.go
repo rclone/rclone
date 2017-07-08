@@ -590,6 +590,18 @@ func (ds DirEntries) ForDirError(fn func(dir Directory) error) error {
 	return nil
 }
 
+// DirEntryType returns a string description of the DirEntry, either
+// "object", "directory" or "unknown type XXX"
+func DirEntryType(d DirEntry) string {
+	switch d.(type) {
+	case Object:
+		return "object"
+	case Directory:
+		return "directory"
+	}
+	return fmt.Sprintf("unknown type %T", d)
+}
+
 // ListDirSorted reads Object and *Dir into entries for the given Fs.
 //
 // dir is the start directory, "" for root

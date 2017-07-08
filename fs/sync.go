@@ -866,7 +866,7 @@ func matchListings(srcList, dstList DirEntries) (srcOnly DirEntries, dstOnly Dir
 		if src != nil && iSrc > 0 {
 			prev := srcList[iSrc-1].Remote()
 			if srcRemote == prev {
-				Logf(src, "Duplicate file found in source - ignoring")
+				Logf(src, "Duplicate %s found in source - ignoring", DirEntryType(src))
 				src = nil // ignore the src
 			} else if srcRemote < prev {
 				Errorf(src, "Out of order listing in source")
@@ -876,7 +876,7 @@ func matchListings(srcList, dstList DirEntries) (srcOnly DirEntries, dstOnly Dir
 		if dst != nil && iDst > 0 {
 			prev := dstList[iDst-1].Remote()
 			if dstRemote == prev {
-				Logf(dst, "Duplicate file found in destination - ignoring")
+				Logf(dst, "Duplicate %s found in destination - ignoring", DirEntryType(dst))
 				dst = nil // ignore the dst
 			} else if dstRemote < prev {
 				Errorf(dst, "Out of order listing in destination")
