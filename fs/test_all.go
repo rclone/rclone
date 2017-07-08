@@ -98,6 +98,11 @@ var (
 			SubDir:   false,
 			FastList: false,
 		},
+		{
+			Name:     "TestBox:",
+			SubDir:   false,
+			FastList: false,
+		},
 	}
 	binary = "fs.test"
 	// Flags

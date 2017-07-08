@@ -191,7 +191,10 @@ Research
 Getting going
 
   * Create `remote/remote.go` (copy this from a similar remote)
+    * onedrive is a good one to start from if you have a directory based remote
+    * b2 is a good one to start from if you have a bucket based remote
   * Add your remote to the imports in `fs/all/all.go`
+  * If web based remotes are easiest to maintain if they use rclone's rest module, but if there is a really good go SDK then use that instead.
 
 Unit tests
 
@@ -211,7 +214,7 @@ Integration tests
   * And if your remote defines `ListR` this also
       * `go test -v -remote TestRemote: -fast-list`
 
-Add your fs to the docs - you'll need to pick an icon for it from [fontawesome](http://fontawesome.io/icons/).
+Add your fs to the docs - you'll need to pick an icon for it from [fontawesome](http://fontawesome.io/icons/).  Keep lists of remotes in alphabetical order but with the local file system last.
 
   * `README.md` - main Github page
   * `docs/content/remote.md` - main docs page

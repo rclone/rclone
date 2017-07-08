@@ -19,21 +19,22 @@ option:
 
 See the following for detailed instructions for
 
-  * [Google Drive](/drive/)
-  * [Amazon S3](/s3/)
-  * [Swift / Rackspace Cloudfiles / Memset Memstore](/swift/)
-  * [Dropbox](/dropbox/)
-  * [Google Cloud Storage](/googlecloudstorage/)
-  * [Local filesystem](/local/)
   * [Amazon Drive](/amazonclouddrive/)
+  * [Amazon S3](/s3/)
   * [Backblaze B2](/b2/)
+  * [Box](/box/)
+  * [Crypt](/crypt/) - to encrypt other remotes
+  * [Dropbox](/dropbox/)
+  * [FTP](/ftp/)
+  * [Google Cloud Storage](/googlecloudstorage/)
+  * [Google Drive](/drive/)
+  * [HTTP](/http/)
   * [Hubic](/hubic/)
   * [Microsoft OneDrive](/onedrive/)
-  * [Yandex Disk](/yandex/)
   * [SFTP](/sftp/)
-  * [FTP](/ftp/)
-  * [HTTP](/http/)
-  * [Crypt](/crypt/) - to encrypt other remotes
+  * [Swift / Rackspace Cloudfiles / Memset Memstore](/swift/)
+  * [Yandex Disk](/yandex/)
+  * [The local filesystem](/local/)
 
 Usage
 -----
