@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
@@ -147,9 +148,11 @@ func TestFsRoot(t *testing.T) {
 	name := remote.Name() + ":"
 	root := remote.Root()
 	if isLocalRemote {
-		name = ""
+		// only check last path element on local
+		require.Equal(t, filepath.Base(subRemoteName), filepath.Base(root))
+	} else {
+		require.Equal(t, subRemoteName, name+root)
 	}
-	require.Equal(t, subRemoteName, name+root)
 }
 
 // TestFsRmdirEmpty tests deleting an empty directory
