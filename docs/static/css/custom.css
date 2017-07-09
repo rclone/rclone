@@ -39,3 +39,9 @@ h5:hover .header-link,
 h6:hover .header-link {
   opacity: 1;
 }
+
+/* Fix spacing between menu items */
+.navbar-default .dropdown-menu>li>a {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
