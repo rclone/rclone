@@ -274,6 +274,33 @@ limited to transferring about 2 files per second only.  Individual
 files may be transferred much faster at 100s of MBytes/s but lots of
 small files can take a long time.
 
+### Duplicated files ###
+
+Sometimes, for no reason I've been able to track down, drive will
+duplicate a file that rclone uploads.  Drive unlike all the other
+remotes can have duplicated files.
+
+Duplicated files cause problems with the syncing and you will see
+messages in the log about duplicates.
+
+Use `rclone dedupe` to fix duplicated files.
+
+Note that this isn't just a problem with rclone, even Google Photos on
+Android duplicates files on drive sometimes.
+
+### Rclone appears to be re-copying files it shouldn't ###
+
+There are two possible reasons for rclone to recopy files which
+haven't changed to Google Drive.
+
+The first is the duplicated file issue above - run `rclone dedupe` and
+check your logs for duplicate object or directory messages.
+
+The second is that sometimes Google reports different sizes for the
+Google Docs exports which will cause rclone to re-download Google Docs
+for no apparent reason.  `--ignore-size` is a not very satisfactory
+work-around for this if it is causing you a lot of problems.
+
 ### Making your own client_id ###
 
 When you use rclone with Google drive in its default configuration you
