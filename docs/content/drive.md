@@ -301,6 +301,13 @@ Google Docs exports which will cause rclone to re-download Google Docs
 for no apparent reason.  `--ignore-size` is a not very satisfactory
 work-around for this if it is causing you a lot of problems.
 
+### Google docs downloads sometimes fail with "Failed to copy: read X bytes expecting Y" ###
+
+This is the same problem as above.  Google reports the google doc is
+one size, but rclone downloads a different size.  Work-around with the
+`--ignore-size` flag or wait for rclone to retry the download which it
+will.
+
 ### Making your own client_id ###
 
 When you use rclone with Google drive in its default configuration you
