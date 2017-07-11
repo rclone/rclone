@@ -1,0 +1,8 @@
+{
+  "output": {
+    "file_naming": {
+      "style": "snake_case",
+      "extension": ".go"
+    }
+  }
+}

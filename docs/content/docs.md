@@ -34,6 +34,7 @@ See the following for detailed instructions for
   * [FTP](/ftp/)
   * [HTTP](/http/)
   * [Crypt](/crypt/) - to encrypt other remotes
+  * [QingStor](/qingstor/)
 
 Usage
 -----
