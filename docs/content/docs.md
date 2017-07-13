@@ -566,6 +566,40 @@ If using `--syslog` this sets the syslog facility (eg `KERN`, `USER`).
 See `man syslog` for a list of possible facilities.  The default
 facility is `DAEMON`.
 
+### --tpslimit float ###
+
+Limit HTTP transactions per second to this. Default is 0 which is used
+to mean unlimited transactions per second.
+
+For example to limit rclone to 10 HTTP transactions per second use
+`--tpslimit 10`, or to 1 transaction every 2 seconds use `--tpslimit
+0.5`.
+
+Use this when the number of transactions per second from rclone is
+causing a problem with the cloud storage provider (eg getting you
+banned or rate limited).
+
+This can be very useful for `rclone mount` to control the behaviour of
+applications using it.
+
+See also `--tpslimit-burst`.
+
+### --tpslimit-burst int ###
+
+Max burst of transactions for `--tpslimit`. (default 1)
+
+Normally `--tpslimit` will do exactly the number of transaction per
+second specified.  However if you supply `--tps-burst` then rclone can
+save up some transactions from when it was idle giving a burst of up
+to the parameter supplied.
+
+For example if you provide `--tpslimit-burst 10` then if rclone has
+been idle for more than 10*`--tpslimit` then it can do 10 transactions
+very quickly before they are limited again.
+
+This may be used to increase performance of `--tpslimit` without
+changing the long term average number of transactions per second.
+
 ### --track-renames ###
 
 By default, rclone doesn't keep track of renamed files, so if you

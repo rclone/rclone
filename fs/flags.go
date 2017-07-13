@@ -286,6 +286,15 @@ func IntP(name, shorthand string, value int, usage string) (out *int) {
 	return out
 }
 
+// Float64P defines a flag which can be overridden by an environment variable
+//
+// It is a thin wrapper around pflag.Float64P
+func Float64P(name, shorthand string, value float64, usage string) (out *float64) {
+	out = pflag.Float64P(name, shorthand, value, usage)
+	setDefaultFromEnv(name)
+	return out
+}
+
 // DurationP defines a flag which can be overridden by an environment variable
 //
 // It is a thin wrapper around pflag.DurationP

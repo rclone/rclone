@@ -96,6 +96,8 @@ var (
 	backupDir       = StringP("backup-dir", "", "", "Make backups into hierarchy based in DIR.")
 	suffix          = StringP("suffix", "", "", "Suffix for use with --backup-dir.")
 	useListR        = BoolP("fast-list", "", false, "Use recursive list if available. Uses more memory but fewer transactions.")
+	tpsLimit        = Float64P("tpslimit", "", 0, "Limit HTTP transactions per second to this.")
+	tpsLimitBurst   = IntP("tpslimit-burst", "", 1, "Max burst of transactions for --tpslimit.")
 	logLevel        = LogLevelNotice
 	statsLogLevel   = LogLevelInfo
 	bwLimit         BwTimetable
@@ -228,6 +230,8 @@ type ConfigInfo struct {
 	Suffix             string
 	UseListR           bool
 	BufferSize         SizeSuffix
+	TPSLimit           float64
+	TPSLimitBurst      int
 }
 
 // Return the path to the configuration file
@@ -364,6 +368,8 @@ func LoadConfig() {
 	Config.BackupDir = *backupDir
 	Config.Suffix = *suffix
 	Config.UseListR = *useListR
+	Config.TPSLimit = *tpsLimit
+	Config.TPSLimitBurst = *tpsLimitBurst
 	Config.BufferSize = bufferSize
 
 	ConfigPath = *configFile
@@ -413,6 +419,9 @@ func LoadConfig() {
 
 	// Start the bandwidth update ticker
 	startTokenTicker()
+
+	// Start the transactions per second limiter
+	startHTTPTokenBucket()
 }
 
 var errorConfigFileNotFound = errors.New("config file not found")
