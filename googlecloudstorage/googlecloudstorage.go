@@ -45,6 +45,8 @@ const (
 )
 
 var (
+	gcsLocation     = fs.StringP("gcs-location", "", "", "Default location for buckets (see https://cloud.google.com/storage/docs/bucket-locations).")
+	gcsStorageClass = fs.StringP("gcs-storage-class", "", "", "Default storage class for buckets (MULTI_REGIONAL|REGIONAL|STANDARD|NEARLINE, COLDLINE|DURABLE_REDUCED_AVAILABILITY).")
 	// Description of how to auth for this app
 	storageConfig = &oauth2.Config{
 		Scopes:       []string{storage.DevstorageFullControlScope},
@@ -471,7 +473,9 @@ func (f *Fs) Mkdir(dir string) error {
 	}
 
 	bucket := storage.Bucket{
-		Name: f.bucket,
+		Name:         f.bucket,
+		Location:     *gcsLocation,
+		StorageClass: *gcsStorageClass,
 	}
 	_, err = f.svc.Buckets.Insert(f.projectNumber, &bucket).PredefinedAcl(f.bucketACL).Do()
 	return err
