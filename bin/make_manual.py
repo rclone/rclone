@@ -38,6 +38,7 @@ docs = [
     "mega.md",
     "azureblob.md",
     "onedrive.md",
+    "opendrive.md",
     "qingstor.md",
     "swift.md",
     "pcloud.md",

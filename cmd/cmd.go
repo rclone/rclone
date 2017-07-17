@@ -85,6 +85,7 @@ from various cloud storage systems and using file transfer services, such as:
   * Mega
   * Microsoft Azure Blob Storage
   * Microsoft OneDrive
+  * OpenDrive
   * Openstack Swift / Rackspace cloud files / Memset Memstore
   * pCloud
   * QingStor
