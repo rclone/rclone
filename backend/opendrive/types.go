@@ -1,5 +1,9 @@
 package opendrive
 
+import (
+	"encoding/json"
+)
+
 // Account describes a OpenDRIVE account
 type Account struct {
 	Username string `json:"username"`
@@ -11,20 +15,20 @@ type UserSessionInfo struct {
 	Username string `json:"username"`
 	Password string `json:"passwd"`
 
-	SessionID          string `json:"SessionID"`
-	UserName           string `json:"UserName"`
-	UserFirstName      string `json:"UserFirstName"`
-	UserLastName       string `json:"UserLastName"`
-	AccType            string `json:"AccType"`
-	UserLang           string `json:"UserLang"`
-	UserID             string `json:"UserID"`
-	IsAccountUser      int    `json:"IsAccountUser"`
-	DriveName          string `json:"DriveName"`
-	UserLevel          string `json:"UserLevel"`
-	UserPlan           string `json:"UserPlan"`
-	FVersioning        string `json:"FVersioning"`
-	UserDomain         string `json:"UserDomain"`
-	PartnerUsersDomain string `json:"PartnerUsersDomain"`
+	SessionID          string          `json:"SessionID"`
+	UserName           string          `json:"UserName"`
+	UserFirstName      string          `json:"UserFirstName"`
+	UserLastName       string          `json:"UserLastName"`
+	AccType            string          `json:"AccType"`
+	UserLang           string          `json:"UserLang"`
+	UserID             string          `json:"UserID"`
+	IsAccountUser      json.RawMessage `json:"IsAccountUser"`
+	DriveName          string          `json:"DriveName"`
+	UserLevel          string          `json:"UserLevel"`
+	UserPlan           string          `json:"UserPlan"`
+	FVersioning        string          `json:"FVersioning"`
+	UserDomain         string          `json:"UserDomain"`
+	PartnerUsersDomain string          `json:"PartnerUsersDomain"`
 }
 
 // FolderList describes a OpenDRIVE listing
@@ -52,9 +56,48 @@ type Folder struct {
 	Encrypted     string `json:"Encrypted"`
 }
 
+type createFolder struct {
+	SessionID           string  `json:"session_id"`
+	FolderName          string `json:"folder_name"`
+	FolderSubParent     string `json:"folder_sub_parent"`
+	FolderIsPublic      int64  `json:"folder_is_public"`     // (0 = private, 1 = public, 2 = hidden)
+	FolderPublicUpl     int64 `json:"folder_public_upl"`     // (0 = disabled, 1 = enabled)
+	FolderPublicDisplay int64 `json:"folder_public_display"` // (0 = disabled, 1 = enabled)
+	FolderPublicDnl     int64 `json:"folder_public_dnl"`     // (0 = disabled, 1 = enabled).
+}
+
+type createFolderResponse struct {
+	FolderID      string `json:"FolderID"`
+	Name          string `json:"Name"`
+	DateCreated   int    `json:"DateCreated"`
+	DirUpdateTime int    `json:"DirUpdateTime"`
+	Access        int    `json:"Access"`
+	DateModified  int    `json:"DateModified"`
+	Shared        string `json:"Shared"`
+	Description   string `json:"Description"`
+	Link          string `json:"Link"`
+}
+
+type moveFolder struct {
+	SessionID   string `json:"session_id"`
+	FolderID    string `json:"folder_id"`
+	DstFolderID string `json:"dst_folder_id"`
+	Move        string `json:"move"`
+}
+
+type moveFolderResponse struct {
+	FolderID string `json:"FolderID"`
+}
+
+type removeFolder struct {
+	SessionID string  `json:"session_id"`
+	FolderID  string `json:"folder_id"`
+}
+
 // File describes a OpenDRIVE file
 type File struct {
 	FileID            string `json:"FileId"`
+	FileHash          string `json:"FileHash"`
 	Name              string `json:"Name"`
 	GroupID           int    `json:"GroupID"`
 	Extension         string `json:"Extension"`
@@ -72,6 +115,19 @@ type File struct {
 	ThumbLink         string `json:"ThumbLink"`
 	Password          string `json:"Password"`
 	EditOnline        int    `json:"EditOnline"`
+}
+
+type copyFile struct {
+	SessionID         string `json:"session_id"`
+	SrcFileID         string `json:"src_file_id"`
+	DstFolderID       string `json:"dst_folder_id"`
+	Move              string `json:"move"`
+	OverwriteIfExists string `json:"overwrite_if_exists"`
+}
+
+type copyFileResponse struct {
+	FileID string `json:"FileID"`
+	Size   string `json:"Size"`
 }
 
 type createFile struct {
@@ -102,6 +158,12 @@ type createFileResponse struct {
 	RequireHashOnly    int    `json:"RequireHashOnly"`
 }
 
+type modTimeFile struct {
+	SessionID            string `json:"session_id"`
+	FileID               string `json:"file_id"`
+	FileModificationTime string `json:"file_modification_time"`
+}
+
 type openUpload struct {
 	SessionID string `json:"session_id"`
 	FileID    string `json:"file_id"`
@@ -124,6 +186,14 @@ type closeUpload struct {
 }
 
 type closeUploadResponse struct {
+	FileID   string `json:"FileID"`
 	FileHash string `json:"FileHash"`
 	Size     int64  `json:"Size"`
 }
+
+type permissions struct {
+	SessionID    string `json:"session_id"`
+	FileID       string `json:"file_id"`
+	FileIsPublic int64  `json:"file_ispublic"`
+}
+
