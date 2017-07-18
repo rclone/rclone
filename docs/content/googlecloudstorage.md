@@ -1,7 +1,7 @@
 ---
 title: "Google Cloud Storage"
 description: "Rclone docs for Google Cloud Storage"
-date: "2015-09-12"
+date: "2017-07-18"
 ---
 
 <i class="fa fa-google"></i> Google Cloud Storage
@@ -91,6 +91,52 @@ Choose a number from below, or type in your own value
  5 / Project team owners get OWNER access, and all Users get WRITER access.
    \ "publicReadWrite"
 bucket_acl> 2
+Location for the newly created buckets.
+Choose a number from below, or type in your own value
+ 1 / Empty for default location (US).
+   \ ""
+ 2 / Multi-regional location for Asia.
+   \ "asia"
+ 3 / Multi-regional location for Europe.
+   \ "eu"
+ 4 / Multi-regional location for United States.
+   \ "us"
+ 5 / Taiwan.
+   \ "asia-east1"
+ 6 / Tokyo.
+   \ "asia-northeast1"
+ 7 / Singapore.
+   \ "asia-southeast1"
+ 8 / Sydney.
+   \ "australia-southeast1"
+ 9 / Belgium.
+   \ "europe-west1"
+10 / London.
+   \ "europe-west2"
+11 / Iowa.
+   \ "us-central1"
+12 / South Carolina.
+   \ "us-east1"
+13 / Northern Virginia.
+   \ "us-east4"
+14 / Oregon.
+   \ "us-west1"
+location> 12
+The storage class to use when storing objects in Google Cloud Storage.
+Choose a number from below, or type in your own value
+ 1 / Default
+   \ ""
+ 2 / Multi-regional storage class
+   \ "MULTI_REGIONAL"
+ 3 / Regional storage class
+   \ "REGIONAL"
+ 4 / Nearline storage class
+   \ "NEARLINE"
+ 5 / Coldline storage class
+   \ "COLDLINE"
+ 6 / Durable reduced availability storage class
+   \ "DURABLE_REDUCED_AVAILABILITY"
+storage_class> 5
 Remote config
 Use auto config?
  * Say Y if not sure
