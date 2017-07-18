@@ -618,29 +618,40 @@ func ListDirSorted(fs Fs, includeAll bool, dir string) (entries DirEntries, err 
 	}
 
 	// filter the entries if required
-	if !includeAll {
-		newEntries := entries[:0] // in place filter
-		for _, entry := range entries {
+	newEntries := entries[:0] // in place filter
+	prefix := ""
+	if dir != "" {
+		prefix = dir + "/"
+	}
+	for _, entry := range entries {
+		ok := true
+		if !includeAll {
 			switch x := entry.(type) {
 			case Object:
 				// Make sure we don't delete excluded files if not required
-				if Config.Filter.IncludeObject(x) {
-					newEntries = append(newEntries, entry)
-				} else {
+				if !Config.Filter.IncludeObject(x) {
+					ok = false
 					Debugf(x, "Excluded from sync (and deletion)")
 				}
 			case Directory:
-				if Config.Filter.IncludeDirectory(x.Remote()) {
-					newEntries = append(newEntries, entry)
-				} else {
+				if !Config.Filter.IncludeDirectory(x.Remote()) {
+					ok = false
 					Debugf(x, "Excluded from sync (and deletion)")
 				}
 			default:
 				return nil, errors.Errorf("unknown object type %T", entry)
 			}
 		}
-		entries = newEntries
+		remote := entry.Remote()
+		if ok && (!strings.HasPrefix(remote, prefix) || remote == prefix) {
+			ok = false
+			Errorf(entry, "Entry doesn't belong in directory %q - ignoring", dir)
+		}
+		if ok {
+			newEntries = append(newEntries, entry)
+		}
 	}
+	entries = newEntries
 
 	// Sort the directory entries by Remote
 	//
