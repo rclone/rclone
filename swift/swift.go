@@ -297,8 +297,14 @@ func (f *Fs) listContainerRoot(container, root string, dir string, recurse bool,
 				if !recurse {
 					isDirectory = strings.HasSuffix(object.Name, "/")
 				}
-				if !strings.HasPrefix(object.Name, root) {
+				if !strings.HasPrefix(object.Name, prefix) {
 					fs.Logf(f, "Odd name received %q", object.Name)
+					continue
+				}
+				if object.Name == prefix {
+					// If we have zero length directory markers ending in / then swift
+					// will return them in the listing for the directory which causes
+					// duplicate directories.  Ignore them here.
 					continue
 				}
 				remote := object.Name[rootLength:]
