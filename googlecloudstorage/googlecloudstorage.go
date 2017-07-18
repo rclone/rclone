@@ -46,6 +46,8 @@ const (
 )
 
 var (
+	gcsLocation     = fs.StringP("gcs-location", "", "", "Default location for buckets (us|eu|asia|us-central1|us-east1|us-east4|us-west1|asia-east1|asia-noetheast1|asia-southeast1|australia-southeast1|europe-west1|europe-west2).")
+	gcsStorageClass = fs.StringP("gcs-storage-class", "", "", "Default storage class for buckets (MULTI_REGIONAL|REGIONAL|STANDARD|NEARLINE|COLDLINE|DURABLE_REDUCED_AVAILABILITY).")
 	// Description of how to auth for this app
 	storageConfig = &oauth2.Config{
 		Scopes:       []string{storage.DevstorageFullControlScope},
@@ -124,6 +126,74 @@ func init() {
 				Value: "publicReadWrite",
 				Help:  "Project team owners get OWNER access, and all Users get WRITER access.",
 			}},
+		}, {
+			Name: "location",
+			Help: "Location for the newly created buckets.",
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "Empty for default location (US).",
+			}, {
+				Value: "asia",
+				Help:  "Multi-regional location for Asia.",
+			}, {
+				Value: "eu",
+				Help:  "Multi-regional location for Europe.",
+			}, {
+				Value: "us",
+				Help:  "Multi-regional location for United States.",
+			}, {
+				Value: "asia-east1",
+				Help:  "Taiwan.",
+			}, {
+				Value: "asia-northeast1",
+				Help:  "Tokyo.",
+			}, {
+				Value: "asia-southeast1",
+				Help:  "Singapore.",
+			}, {
+				Value: "australia-southeast1",
+				Help:  "Sydney.",
+			}, {
+				Value: "europe-west1",
+				Help:  "Belgium.",
+			}, {
+				Value: "europe-west2",
+				Help:  "London.",
+			}, {
+				Value: "us-central1",
+				Help:  "Iowa.",
+			}, {
+				Value: "us-east1",
+				Help:  "South Carolina.",
+			}, {
+				Value: "us-east4",
+				Help:  "Northern Virginia.",
+			}, {
+				Value: "us-west1",
+				Help:  "Oregon.",
+			}},
+		}, {
+			Name: "storage_class",
+			Help: "The storage class to use when storing objects in Google Cloud Storage.",
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "Default",
+			}, {
+				Value: "MULTI_REGIONAL",
+				Help:  "Multi-regional storage class",
+			}, {
+				Value: "REGIONAL",
+				Help:  "Regional storage class",
+			}, {
+				Value: "NEARLINE",
+				Help:  "Nearline storage class",
+			}, {
+				Value: "COLDLINE",
+				Help:  "Coldline storage class",
+			}, {
+				Value: "DURABLE_REDUCED_AVAILABILITY",
+				Help:  "Durable reduced availability storage class",
+			}},
 		}},
 	})
 }
@@ -141,6 +211,8 @@ type Fs struct {
 	projectNumber string           // used for finding buckets
 	objectACL     string           // used when creating new objects
 	bucketACL     string           // used when creating new buckets
+	location      string           // location of new buckets
+	storageClass  string           // storage class of new buckets
 }
 
 // Object describes a storage object
@@ -242,6 +314,8 @@ func NewFs(name, root string) (fs.Fs, error) {
 		projectNumber: fs.ConfigFileGet(name, "project_number"),
 		objectACL:     fs.ConfigFileGet(name, "object_acl"),
 		bucketACL:     fs.ConfigFileGet(name, "bucket_acl"),
+		location:      fs.ConfigFileGet(name, "location"),
+		storageClass:  fs.ConfigFileGet(name, "storage_class"),
 	}
 	f.features = (&fs.Features{ReadMimeType: true, WriteMimeType: true}).Fill(f)
 	if f.objectACL == "" {
@@ -249,6 +323,12 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 	if f.bucketACL == "" {
 		f.bucketACL = "private"
+	}
+	if *gcsLocation != "" {
+		f.location = *gcsLocation
+	}
+	if *gcsStorageClass != "" {
+		f.storageClass = *gcsStorageClass
 	}
 
 	// Create a new authorized Drive client.
@@ -501,7 +581,9 @@ func (f *Fs) Mkdir(dir string) error {
 	}
 
 	bucket := storage.Bucket{
-		Name: f.bucket,
+		Name:         f.bucket,
+		Location:     f.location,
+		StorageClass: f.storageClass,
 	}
 	_, err = f.svc.Buckets.Insert(f.projectNumber, &bucket).PredefinedAcl(f.bucketACL).Do()
 	if err == nil {
