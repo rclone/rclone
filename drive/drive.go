@@ -216,7 +216,11 @@ type listFn func(*drive.File) bool
 func (f *Fs) list(dirID string, title string, directoriesOnly bool, filesOnly bool, includeAll bool, fn listFn) (found bool, err error) {
 	var query []string
 	if !includeAll {
-		query = append(query, "trashed="+strconv.FormatBool(*driveTrashedOnly))
+		q := "trashed=" + strconv.FormatBool(*driveTrashedOnly)
+		if *driveTrashedOnly {
+			q = fmt.Sprintf("(mimeType='%s' or %s)", driveFolderType, q)
+		}
+		query = append(query, q)
 	}
 	// Search with sharedWithMe will always return things listed in "Shared With Me" (without any parents)
 	// We must not filter with parent when we try list "ROOT" with drive-shared-with-me
@@ -241,10 +245,10 @@ func (f *Fs) list(dirID string, title string, directoriesOnly bool, filesOnly bo
 	if filesOnly {
 		query = append(query, fmt.Sprintf("mimeType!='%s'", driveFolderType))
 	}
-	// fmt.Printf("list Query = %q\n", query)
 	list := f.svc.Files.List()
 	if len(query) > 0 {
 		list = list.Q(strings.Join(query, " and "))
+		// fmt.Printf("list Query = %q\n", query)
 	}
 	if *driveListChunk > 0 {
 		list = list.MaxResults(*driveListChunk)

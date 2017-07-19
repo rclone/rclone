@@ -256,7 +256,8 @@ Skip google documents in all listings. If given, gdocs practically become invisi
 
 #### --drive-trashed-only ####
 
-Only show files that are in the trash
+Only show files that are in the trash.  This will show trashed files
+in their original directory structure.
 
 #### --drive-upload-cutoff=SIZE ####
 
