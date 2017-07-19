@@ -616,36 +616,52 @@ func ListDirSorted(fs Fs, includeAll bool, dir string) (entries DirEntries, err 
 	if err != nil {
 		return nil, err
 	}
+	return filterAndSortDir(entries, includeAll, dir, Config.Filter.IncludeObject, Config.Filter.IncludeDirectory)
+}
 
-	// filter the entries if required
-	newEntries := entries[:0] // in place filter
+// filter (if required) and check the entries, then sort them
+func filterAndSortDir(entries DirEntries, includeAll bool, dir string,
+	IncludeObject func(o Object) bool,
+	IncludeDirectory func(remote string) bool) (newEntries DirEntries, err error) {
+	newEntries = entries[:0] // in place filter
 	prefix := ""
 	if dir != "" {
 		prefix = dir + "/"
 	}
 	for _, entry := range entries {
 		ok := true
-		if !includeAll {
-			switch x := entry.(type) {
-			case Object:
-				// Make sure we don't delete excluded files if not required
-				if !Config.Filter.IncludeObject(x) {
-					ok = false
-					Debugf(x, "Excluded from sync (and deletion)")
-				}
-			case Directory:
-				if !Config.Filter.IncludeDirectory(x.Remote()) {
-					ok = false
-					Debugf(x, "Excluded from sync (and deletion)")
-				}
-			default:
-				return nil, errors.Errorf("unknown object type %T", entry)
+		// check includes and types
+		switch x := entry.(type) {
+		case Object:
+			// Make sure we don't delete excluded files if not required
+			if !includeAll && !IncludeObject(x) {
+				ok = false
+				Debugf(x, "Excluded from sync (and deletion)")
 			}
+		case Directory:
+			if !includeAll && !IncludeDirectory(x.Remote()) {
+				ok = false
+				Debugf(x, "Excluded from sync (and deletion)")
+			}
+		default:
+			return nil, errors.Errorf("unknown object type %T", entry)
 		}
+		// check remote name belongs in this directry
 		remote := entry.Remote()
-		if ok && (!strings.HasPrefix(remote, prefix) || remote == prefix) {
+		switch {
+		case !ok:
+			// ignore
+		case !strings.HasPrefix(remote, prefix):
 			ok = false
-			Errorf(entry, "Entry doesn't belong in directory %q - ignoring", dir)
+			Errorf(entry, "Entry doesn't belong in directory %q (too short) - ignoring", dir)
+		case remote == prefix:
+			ok = false
+			Errorf(entry, "Entry doesn't belong in directory %q (same as directory) - ignoring", dir)
+		case strings.ContainsRune(remote[len(prefix):], '/'):
+			ok = false
+			Errorf(entry, "Entry doesn't belong in directory %q (contains subdir) - ignoring", dir)
+		default:
+			// ok
 		}
 		if ok {
 			newEntries = append(newEntries, entry)

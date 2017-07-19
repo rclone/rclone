@@ -54,6 +54,13 @@ func (o mockObject) Update(in io.Reader, src ObjectInfo, options ...OpenOption) 
 }
 func (o mockObject) Remove() error { return errNotImpl }
 
+type unknownDirEntry string
+
+func (o unknownDirEntry) String() string         { return string(o) }
+func (o unknownDirEntry) Remote() string         { return string(o) }
+func (o unknownDirEntry) ModTime() (t time.Time) { return t }
+func (o unknownDirEntry) Size() int64            { return 0 }
+
 func newListDirs(t *testing.T, f Fs, includeAll bool, results listResults, walkErrors errorMap, finalError error) *listDirs {
 	return &listDirs{
 		t:           t,
