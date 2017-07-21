@@ -1153,7 +1153,7 @@ rclone obscure password
 
 ## rclone rmdirs
 
-Remove any empty directoryies under the path.
+Remove empty directories under the path.
 
 ### Synopsis
 
