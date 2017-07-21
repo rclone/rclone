@@ -172,3 +172,8 @@ filesystem.
 **NB** This flag is only available on Unix based systems.  On systems
 where it isn't supported (eg Windows) it will not appear as an valid
 flag.
+
+#### --skip-links ####
+
+This flag disables warning messages on skipped symlinks or junction
+points, as you explicitly acknowledge that they should be skipped.
