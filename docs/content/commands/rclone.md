@@ -166,7 +166,7 @@ rclone [flags]
 * [rclone obscure](/commands/rclone_obscure/)	 - Obscure password for use in the rclone.conf
 * [rclone purge](/commands/rclone_purge/)	 - Remove the path and all of its contents.
 * [rclone rmdir](/commands/rclone_rmdir/)	 - Remove the path if empty.
-* [rclone rmdirs](/commands/rclone_rmdirs/)	 - Remove any empty directoryies under the path.
+* [rclone rmdirs](/commands/rclone_rmdirs/)	 - Remove empty directories under the path.
 * [rclone sha1sum](/commands/rclone_sha1sum/)	 - Produces an sha1sum file for all the objects in the path.
 * [rclone size](/commands/rclone_size/)	 - Prints the total size and number of objects in remote:path.
 * [rclone sync](/commands/rclone_sync/)	 - Make source and dest identical, modifying destination only.
