@@ -23,6 +23,7 @@ import (
 
 var (
 	followSymlinks = fs.BoolP("copy-links", "L", false, "Follow symlinks and copy the pointed to item.")
+	skipSymlinks   = fs.BoolP("skip-links", "", false, "Don't warn about skipped symlinks.")
 	noUTFNorm      = fs.BoolP("local-no-unicode-normalization", "", false, "Don't apply unicode normalization to paths and filenames")
 )
 
@@ -606,7 +607,9 @@ func (o *Object) Storable() bool {
 		mode &^= os.ModeSymlink
 	}
 	if mode&os.ModeSymlink != 0 {
-		fs.Logf(o, "Can't follow symlink without -L/--copy-links")
+		if !*skipSymlinks {
+			fs.Logf(o, "Can't follow symlink without -L/--copy-links")
+		}
 		return false
 	} else if mode&(os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
 		fs.Logf(o, "Can't transfer non file/directory")
