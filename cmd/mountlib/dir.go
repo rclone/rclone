@@ -27,9 +27,9 @@ type Dir struct {
 	f       fs.Fs
 	path    string
 	modTime time.Time
-	mu      sync.RWMutex // protects the following
-	read    time.Time    // time directory entry last read
-	items   map[string]*DirEntry
+	mu      sync.Mutex           // protects the following
+	read    time.Time            // time directory entry last read
+	items   map[string]*DirEntry // NB can be nil when directory not read yet
 }
 
 func newDir(fsys *FS, f fs.Fs, fsDir fs.Directory) *Dir {
@@ -129,7 +129,9 @@ func (d *Dir) addObject(o fs.DirEntry, node Node) *DirEntry {
 		Node: node,
 	}
 	d.mu.Lock()
-	d.items[path.Base(o.Remote())] = item
+	if d.items != nil {
+		d.items[path.Base(o.Remote())] = item
+	}
 	d.mu.Unlock()
 	return item
 }
@@ -137,16 +139,16 @@ func (d *Dir) addObject(o fs.DirEntry, node Node) *DirEntry {
 // delObject removes an object from the directory
 func (d *Dir) delObject(leaf string) {
 	d.mu.Lock()
-	delete(d.items, leaf)
+	if d.items != nil {
+		delete(d.items, leaf)
+	}
 	d.mu.Unlock()
 }
 
-// read the directory
-func (d *Dir) readDir() error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+// read the directory and sets d.items - must be called with the lock held
+func (d *Dir) _readDir() error {
 	when := time.Now()
-	if d.read.IsZero() {
+	if d.read.IsZero() || d.items == nil {
 		// fs.Debugf(d.path, "Reading directory")
 	} else {
 		age := when.Sub(d.read)
@@ -184,10 +186,12 @@ func (d *Dir) readDir() error {
 			dir := item
 			name := path.Base(dir.Remote())
 			// Use old dir value if it exists
-			if oldItem, ok := oldItems[name]; ok {
-				if _, ok := oldItem.Obj.(fs.Directory); ok {
-					d.items[name] = oldItem
-					continue
+			if oldItems != nil {
+				if oldItem, ok := oldItems[name]; ok {
+					if _, ok := oldItem.Obj.(fs.Directory); ok {
+						d.items[name] = oldItem
+						continue
+					}
 				}
 			}
 			d.items[name] = &DirEntry{
@@ -208,13 +212,13 @@ func (d *Dir) readDir() error {
 //
 // returns ENOENT if not found.
 func (d *Dir) lookup(leaf string) (*DirEntry, error) {
-	err := d.readDir()
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	err := d._readDir()
 	if err != nil {
 		return nil, err
 	}
-	d.mu.RLock()
 	item, ok := d.items[leaf]
-	d.mu.RUnlock()
 	if !ok {
 		return nil, ENOENT
 	}
@@ -223,12 +227,12 @@ func (d *Dir) lookup(leaf string) (*DirEntry, error) {
 
 // Check to see if a directory is empty
 func (d *Dir) isEmpty() (bool, error) {
-	err := d.readDir()
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	err := d._readDir()
 	if err != nil {
 		return false, err
 	}
-	d.mu.RLock()
-	defer d.mu.RUnlock()
 	return len(d.items) == 0, nil
 }
 
@@ -297,13 +301,13 @@ func (d *Dir) Lookup(name string) (node Node, err error) {
 // ReadDirAll reads the contents of the directory
 func (d *Dir) ReadDirAll() (items []*DirEntry, err error) {
 	// fs.Debugf(d.path, "Dir.ReadDirAll")
-	err = d.readDir()
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	err = d._readDir()
 	if err != nil {
 		fs.Debugf(d.path, "Dir.ReadDirAll error: %v", err)
 		return nil, err
 	}
-	d.mu.RLock()
-	defer d.mu.RUnlock()
 	for _, item := range d.items {
 		items = append(items, item)
 	}
