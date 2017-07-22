@@ -1,12 +1,115 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2016-11-06"
+date: "2017-07-22"
 ---
 
 Changelog
 ---------
 
+  * v1.37 - 2017-07-22
+    * New backends
+      * FTP - thanks to Antonio Messina
+      * HTTP - thanks to Vasiliy Tolstov
+    * New commands
+      * rclone ncdu - for exploring a remote with a text based user interface.
+      * rclone lsjson - for listing with a machine readable output
+      * rclone dbhashsum - to show Dropbox style hashes of files (local or Dropbox)
+    * New Features
+      * Implement --fast-list flag
+        * This allows remotes to list recursively if they can
+        * This uses less transactions (important if you pay for them)
+        * This may or may not be quicker
+        * This will user more memory as it has to hold the listing in memory
+        * --old-sync-method deprecated - the remaining uses are covered by --fast-list
+        * This involved a major re-write of all the listing code
+      * Add --tpslimit and --tpslimit-burst to limit transactions per second
+        * this is useful in conjuction with `rclone mount` to limit external apps
+      * Add --stats-log-level so can see --stats without -v
+      * Print password prompts to stderr - Hraban Luyat
+      * Warn about duplicate files when syncing
+      * Oauth improvements
+        * allow auth_url and token_url to be set in the config file
+        * Print redirection URI if using own credentials.
+      * Don't Mkdir at the start of sync to save transactions
+    * Compile
+      * Update build to go1.8.3
+      * Require go1.6 for building rclone
+      * Compile 386 builds with "GO386=387" for maximum compatibility
+    * Bug Fixes
+      * Fix menu selection when no remotes
+      * Config saving reworked to not kill the file if disk gets full
+      * Don't delete remote if name does not change while renaming
+      * moveto, copyto: report transfers and checks as per move and copy
+    * Local
+      * Add --local-no-unicode-normalization flag - Bob Potter
+    * Mount
+      * Now supported on Windows using cgofuse and WinFsp - thanks to Bill Zissimopoulos for much help
+      * Compare checksums on upload/download via FUSE
+      * Unmount when program ends with SIGINT (Ctrl+C) or SIGTERM - Jérôme Vizcaino
+      * On read only open of file, make open pending until first read
+      * Make --read-only reject modify operations
+      * Implement ModTime via FUSE for remotes that support it
+      * Allow modTime to be changed even before all writers are closed
+      * Fix panic on renames
+      * Fix hang on errored upload
+    * Crypt
+      * Report the name:root as specified by the user
+      * Add an "obfuscate" option for filename encryption - Stephen Harris
+    * Amazon Drive
+      * Fix initialization order for token renewer
+      * Remove revoked credentials, allow oauth proxy config and update docs
+    * B2
+      * Reduce minimum chunk size to 5MB
+    * Drive
+      * Add team drive support
+      * Reduce bandwidth by adding fields for partial responses - Martin Kristensen
+      * Implement --drive-shared-with-me flag to view shared with me files - Danny Tsai
+      * Add --drive-trashed-only to read only the files in the trash
+      * Remove obsolete --drive-full-list
+      * Add missing seek to start on retries of chunked uploads
+      * Fix stats accounting for upload
+      * Convert / in names to a unicode equivalent (／)
+      * Poll for Google Drive changes when mounted
+    * OneDrive
+      * Fix the uploading of files with spaces
+      * Fix initialization order for token renewer
+      * Display speeds accurately when uploading - Yoni Jah
+      * Swap to using http://localhost:53682/ as redirect URL - Michael Ledin
+      * Retry on token expired error, reset upload body on retry - Yoni Jah
+    * Google Cloud Storage
+      * Add ability to specify location and storage class via config and command line - thanks gdm85
+      * Create container if necessary on server side copy
+      * Increase directory listing chunk to 1000 to increase performance
+      * Obtain a refresh token for GCS - Steven Lu
+    * Yandex
+      * Fix the name reported in log messages (was empty)
+      * Correct error return for listing empty directory
+    * Dropbox
+      * Rewritten to use the v2 API
+        * Now supports ModTime
+          * Can only set by uploading the file again
+          * If you uploaded with an old rclone, rclone may upload everything again
+          * Use `--size-only` or `--checksum` to avoid this
+        * Now supports the Dropbox content hashing scheme
+        * Now supports low level retries
+    * S3
+      * Work around eventual consistency in bucket creation
+      * Create container if necessary on server side copy
+      * Add us-east-2 (Ohio) and eu-west-2 (London) S3 regions - Zahiar Ahmed
+    * Swift, Hubic
+      * Fix zero length directory markers showing in the subdirectory listing
+        * this caused lots of duplicate transfers
+      * Fix paged directory listings
+        * this caused duplicate directory errors
+      * Create container if necessary on server side copy
+      * Increase directory listing chunk to 1000 to increase performance
+      * Make sensible error if the user forgets the container
+    * SFTP
+      * Add support for using ssh key files
+      * Fix under Windows
+      * Fix ssh agent on Windows
+      * Adapt to latest version of library - Igor Kharin
   * v1.36 - 2017-03-18
     * New Features
       * SFTP remote (Jack Schmidt)

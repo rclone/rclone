@@ -1,5 +1,5 @@
 ---
-date: 2017-06-15T20:06:09+01:00
+date: 2017-07-22T18:15:25+01:00
 title: "rclone lsl"
 slug: rclone_lsl
 url: /commands/rclone_lsl/
@@ -41,13 +41,13 @@ rclone lsl remote:path
       --delete-before                     When synchronizing, delete files on destination before transfering
       --delete-during                     When synchronizing, delete files during transfer (default)
       --delete-excluded                   Delete files on dest excluded from sync
-      --drive-auth-owner-only             Only consider files owned by the authenticated user. Requires drive-full-list.
+      --drive-auth-owner-only             Only consider files owned by the authenticated user.
       --drive-chunk-size int              Upload chunk size. Must a power of 2 >= 256k. (default 8M)
       --drive-formats string              Comma separated list of preferred formats for downloading Google docs. (default "docx,xlsx,pptx,svg")
-      --drive-full-list                   Use a full listing for directory list. More data but usually quicker. (obsolete)
       --drive-list-chunk int              Size of listing chunk 100-1000. 0 to disable. (default 1000)
       --drive-shared-with-me              Only show files that are shared with me
       --drive-skip-gdocs                  Skip google documents in all listings.
+      --drive-trashed-only                Only show files that are in the trash
       --drive-upload-cutoff int           Cutoff for switching to chunked upload (default 8M)
       --drive-use-trash                   Send files to the trash instead of deleting permanently.
       --dropbox-chunk-size int            Upload chunk size. Max 150M. (default 128M)
@@ -62,6 +62,8 @@ rclone lsl remote:path
       --files-from stringArray            Read list of source-file names from file
   -f, --filter stringArray                Add a file-filtering rule
       --filter-from stringArray           Read filtering patterns from a file
+      --gcs-location string               Default location for buckets (us|eu|asia|us-central1|us-east1|us-east4|us-west1|asia-east1|asia-noetheast1|asia-southeast1|australia-southeast1|europe-west1|europe-west2).
+      --gcs-storage-class string          Default storage class for buckets (MULTI_REGIONAL|REGIONAL|STANDARD|NEARLINE|COLDLINE|DURABLE_REDUCED_AVAILABILITY).
       --ignore-checksum                   Skip post copy check of checksums.
       --ignore-existing                   Skip all files that exist on destination
       --ignore-size                       Ignore size when skipping use mod-time or checksum.
@@ -70,7 +72,7 @@ rclone lsl remote:path
       --include-from stringArray          Read include patterns from file
       --local-no-unicode-normalization    Don't apply unicode normalization to paths and filenames
       --log-file string                   Log everything to this file
-      --log-level string                  Log level DEBUG|INFO|NOTICE|ERROR (default "INFO")
+      --log-level string                  Log level DEBUG|INFO|NOTICE|ERROR (default "NOTICE")
       --low-level-retries int             Number of low level retries to do. (default 10)
       --max-age string                    Don't transfer any file older than this in s or suffix ms|s|m|h|d|w|M|y
       --max-depth int                     If set limits the recursion depth to this. (default -1)
@@ -93,12 +95,15 @@ rclone lsl remote:path
       --s3-storage-class string           Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA)
       --size-only                         Skip based on size only, not mod-time or checksum
       --stats duration                    Interval between printing stats, e.g 500ms, 60s, 5m. (0 to disable) (default 1m0s)
+      --stats-log-level string            Log level to show --stats output DEBUG|INFO|NOTICE|ERROR (default "INFO")
       --stats-unit string                 Show data rate in stats as either 'bits' or 'bytes'/s (default "bytes")
       --suffix string                     Suffix for use with --backup-dir.
       --swift-chunk-size int              Above this size files will be chunked into a _segments container. (default 5G)
       --syslog                            Use Syslog for logging
       --syslog-facility string            Facility for syslog, eg KERN,USER,... (default "DAEMON")
       --timeout duration                  IO idle timeout (default 5m0s)
+      --tpslimit float                    Limit HTTP transactions per second to this.
+      --tpslimit-burst int                Max burst of transactions for --tpslimit. (default 1)
       --track-renames                     When synchronizing, track file renames and do a server side move if possible
       --transfers int                     Number of file transfers to run in parallel. (default 4)
   -u, --update                            Skip files that are newer on the destination.
@@ -106,6 +111,6 @@ rclone lsl remote:path
 ```
 
 ### SEE ALSO
-* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.36-190-gc34f11a9
+* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.37
 
-###### Auto generated by spf13/cobra on 15-Jun-2017
+###### Auto generated by spf13/cobra on 22-Jul-2017

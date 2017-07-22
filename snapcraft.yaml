@@ -1,5 +1,5 @@
 name: rclone
-version: 1.36
+version: 1.37
 summary: rsync for cloud storage
 description:
   Rclone is a command line program to sync files to and from cloud storage providers such as

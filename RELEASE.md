@@ -16,10 +16,12 @@ Making a release
   * make retag
   * # Set the GOPATH for a current stable go compiler
   * make cross
-  * make upload
-  * make upload_website
   * git push --tags origin master
   * git push --tags origin master:stable # update the stable branch for packager.io
+  * # Wait for the appveyor and travis builds to complete then fetch the windows binaries from appveyor
+  * make fetch_windows
+  * make upload
+  * make upload_website
   * make upload_github
   * make startdev
   * # announce with forum post, twitter post, G+ post

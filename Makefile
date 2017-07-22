@@ -129,6 +129,12 @@ travis_beta:
 	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' build/ memstore:beta-rclone-org
 	@echo Beta release ready at $(BETA_URL)
 
+# Fetch the windows builds from appveyor
+fetch_windows:
+	rclone -v copy --include 'rclone-v*-windows-*.zip' memstore:beta-rclone-org build/$(TAG) build/
+	cp -av rclone-v*-windows-*.zip rclone-current-windows-386.zip
+	cp -av rclone-v*-windows-*.zip rclone-current-windows-amd64.zip
+
 serve:	website
 	cd docs && hugo server -v -w
 
