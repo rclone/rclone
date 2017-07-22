@@ -33,6 +33,4 @@ Early in the next release cycle update the vendored dependencies
   * carry forward any patches to vendor stuff
   * git commit -a -v
 
-## Make version number go to -DEV and check in
-
 Make the version number be just in a file?

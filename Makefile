@@ -131,9 +131,10 @@ travis_beta:
 
 # Fetch the windows builds from appveyor
 fetch_windows:
-	rclone -v copy --include 'rclone-v*-windows-*.zip' memstore:beta-rclone-org build/$(TAG) build/
-	cp -av rclone-v*-windows-*.zip rclone-current-windows-386.zip
-	cp -av rclone-v*-windows-*.zip rclone-current-windows-amd64.zip
+	rclone -v copy --include 'rclone-v*-windows-*.zip' memstore:beta-rclone-org/$(TAG) build/
+	-#cp -av build/rclone-v*-windows-386.zip build/rclone-current-windows-386.zip
+	-#cp -av build/rclone-v*-windows-amd64.zip build/rclone-current-windows-amd64.zip
+	md5sum build/rclone-*-windows-*.zip | sort
 
 serve:	website
 	cd docs && hugo server -v -w
