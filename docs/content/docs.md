@@ -283,6 +283,14 @@ you have a 10 Mbit/s connection and you wish rclone to use half of it
 - 5 Mbit/s.  This is 5/8 = 0.625MByte/s so you would use a `--bwlimit
 0.625M` parameter for rclone.
 
+On Unix systems (Linux, MacOS, …) the bandwidth limiter can be toggled by
+sending a `SIGUSR2` signal to rclone. This allows to remove the limitations
+of a long running rclone transfer and to restore it back to the value specified
+with `--bwlimit` quickly when needed. Assuming there is only one rclone instance
+running, you can toggle the limiter like this:
+
+    kill -SIGUSR2 $(pidof rclone)
+
 ### --buffer-size=SIZE ###
 
 Use this sized buffer to speed up file transfers.  Each `--transfer`
