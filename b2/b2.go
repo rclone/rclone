@@ -51,6 +51,7 @@ var (
 	uploadCutoff       = fs.SizeSuffix(200E6)
 	b2TestMode         = fs.StringP("b2-test-mode", "", "", "A flag string for X-Bz-Test-Mode header.")
 	b2Versions         = fs.BoolP("b2-versions", "", false, "Include old versions in directory listings.")
+	b2HardDelete       = fs.BoolP("b2-hard-delete", "", false, "Permanently delete files on remote removal, otherwise hide files.")
 	errNotWithVersions = errors.New("can't modify or delete files in --b2-versions mode")
 )
 
@@ -786,6 +787,31 @@ func (f *Fs) Precision() time.Duration {
 	return time.Millisecond
 }
 
+// hide hides a file on the remote
+func (f *Fs) hide(Name string) error {
+	bucketID, err := f.getBucketID()
+	if err != nil {
+		return err
+	}
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/b2_hide_file",
+	}
+	var request = api.HideFileRequest{
+		BucketID: bucketID,
+		Name:     Name,
+	}
+	var response api.File
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(&opts, &request, &response)
+		return f.shouldRetry(resp, err)
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to hide %q", Name)
+	}
+	return nil
+}
+
 // deleteByID deletes a file version given Name and ID
 func (f *Fs) deleteByID(ID, Name string) error {
 	opts := rest.Opts{
@@ -1363,27 +1389,10 @@ func (o *Object) Remove() error {
 	if *b2Versions {
 		return errNotWithVersions
 	}
-	bucketID, err := o.fs.getBucketID()
-	if err != nil {
-		return err
+	if *b2HardDelete {
+		return o.fs.deleteByID(o.id, o.remote)
 	}
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/b2_hide_file",
-	}
-	var request = api.HideFileRequest{
-		BucketID: bucketID,
-		Name:     o.fs.root + o.remote,
-	}
-	var response api.File
-	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.fs.srv.CallJSON(&opts, &request, &response)
-		return o.fs.shouldRetry(resp, err)
-	})
-	if err != nil {
-		return errors.Wrap(err, "failed to delete file")
-	}
-	return nil
+	return o.fs.hide(o.fs.root + o.remote)
 }
 
 // MimeType of an Object if known, "" otherwise
