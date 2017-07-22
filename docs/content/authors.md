@@ -87,3 +87,4 @@ Contributors
   * Harshavardhana <harsha@minio.io>
   * sainaen <sainaen@gmail.com>
   * gdm85 <gdm85@users.noreply.github.com>
+  * Yaroslav Halchenko <debian@onerussian.com>
