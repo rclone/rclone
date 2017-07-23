@@ -71,6 +71,19 @@ When that happens, it is the user's responsibility to stop the mount manually wi
     # OS X
     umount /path/to/local/mount
 
+### Installing on Windows ###
+
+To run rclone ` + commandName + ` on Windows, you will need to
+download and install [WinFsp](http://www.secfs.net/winfsp/).
+
+WinFsp is an [open source](https://github.com/billziss-gh/winfsp)
+Windows File System Proxy which makes it easy to write user space file
+systems for Windows.  It provides a FUSE emulation layer which rclone
+uses combination with
+[cgofuse](https://github.com/billziss-gh/cgofuse).  Both of these
+packages are by Bill Zissimopoulos who was very helpful during the
+implementation of rclone ` + commandName + ` for Windows.
+
 ### Limitations ###
 
 This can only write files seqentially, it can only seek when reading.
