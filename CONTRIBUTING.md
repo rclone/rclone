@@ -139,6 +139,41 @@ Documentation for rclone sub commands is with their code, eg
 There are separate instructions for making a release in the RELEASE.md
 file.
 
+## Commit messages ##
+
+Please make the first line of your commit message a summary of the
+change, and prefix it with the directory of the change followed by a
+colon.  The changelog gets made by looking at just these first lines
+so make it good!
+
+If you have more to say about the commit, then enter a blank line and
+carry on the description.  Remember to say why the change was needed -
+the commit itself shows what was changed.
+
+If the change fixes an issue then write `Fixes #1234` in the commit
+message.  This can be on the subject line if it will fit.  If you
+don't want to close the associated issue just put `#1234` and the
+change will get linked into the issue.
+
+Here is an example of a short commit message:
+
+```
+drive: add team drive support - fixes #885
+```
+
+And here is an example of a longer one:
+
+```
+mount: fix hang on errored upload
+
+In certain circumstances if an upload failed then the mount could hang
+indefinitely. This was fixed by closing the read pipe after the Put
+completed.  This will cause the write side to return a pipe closed
+error fixing the hang.
+
+Fixes #1498
+```
+
 ## Adding a dependency ##
 
 rclone uses the [dep](https://github.com/golang/dep) tool to manage
@@ -175,7 +210,22 @@ commit as above.
 
 This should be done early in the release cycle to pick up new versions
 of packages in time for them to get some testing.
-  
+
+## Updating a backend ##
+
+If you update a backend then please run the unit tests and the
+integration tests for that backend.
+
+Assuming the backend is called `remote`, make create a config entry
+called `TestRemote` for the tests to use.
+
+Now `cd remote` and run `go test -v` to run the unit tests.
+
+Then `cd fs` and run `go test -v -remote TestRemote:` to run the
+integration tests.
+
+The next section goes into more detail about the tests.
+
 ## Writing a new backend ##
 
 Choose a name.  The docs here will use `remote` as an example.
