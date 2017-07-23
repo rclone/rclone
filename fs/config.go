@@ -99,7 +99,7 @@ var (
 	useListR        = BoolP("fast-list", "", false, "Use recursive list if available. Uses more memory but fewer transactions.")
 	tpsLimit        = Float64P("tpslimit", "", 0, "Limit HTTP transactions per second to this.")
 	tpsLimitBurst   = IntP("tpslimit-burst", "", 1, "Max burst of transactions for --tpslimit.")
-	bindAddr        = StringP("bind", "", "", "Local address to bind to for outgoing connections, IPv4, IPv4 or name.")
+	bindAddr        = StringP("bind", "", "", "Local address to bind to for outgoing connections, IPv4, IPv6 or name.")
 	logLevel        = LogLevelNotice
 	statsLogLevel   = LogLevelInfo
 	bwLimit         BwTimetable
