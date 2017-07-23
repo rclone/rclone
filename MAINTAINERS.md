@@ -15,7 +15,7 @@ This is a guide for how to be an rclone maintainer.
 
 When a ticket comes in it should be triaged.  This means it should be classified into a bug or an enhancement or a request for support.
 
-Quite a lot of tickets need a bit of back an forth to determine whether it is a valid ticket.
+Quite a lot of tickets need a bit of back and forth to determine whether it is a valid ticket.
 
 If it turns out to be a bug or an enhancement it should be tagged as such, with the appropriate other tags.  Don't forget the "quickie" tag to give new contributors something easy to do to get going.
 
@@ -33,7 +33,9 @@ Close tickets as soon as you can - make sure they are tagged with a release.  Po
 
 Try to process pull requests promptly!
 
-Merging pull requests on Github itself works quite well now-a-days so you can squash and rebase or rebase pull requests.  rclone doesn't use merge commits.
+Merging pull requests on Github itself works quite well now-a-days so you can squash and rebase or rebase pull requests.  rclone doesn't use merge commits.  Use the squash and rebase option if you need to edit the commit message.
+
+After merging the commit, in your local master branch, do `git pull` then run `bin/update-authors.py` to update the authors file then `git push`.
 
 Sometimes pull requests need to be left open for a while - this especially true of contributions of new backends which take a long time to get right.
 
