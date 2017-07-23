@@ -21,7 +21,6 @@ package unix
 #include <termios.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/capability.h>
 #include <sys/event.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
@@ -131,10 +130,7 @@ struct if_data8 {
 	u_long  ifi_iqdrops;
 	u_long  ifi_noproto;
 	u_long  ifi_hwassist;
-// FIXME: these are now unions, so maybe need to change definitions?
-#undef ifi_epoch
 	time_t  ifi_epoch;
-#undef ifi_lastchange
 	struct  timeval ifi_lastchange;
 };
 
@@ -355,7 +351,3 @@ type BpfZbufHeader C.struct_bpf_zbuf_header
 // Terminal handling
 
 type Termios C.struct_termios
-
-// Capabilities
-
-type CapRights C.struct_cap_rights
