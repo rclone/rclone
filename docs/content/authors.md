@@ -88,3 +88,4 @@ Contributors
   * sainaen <sainaen@gmail.com>
   * gdm85 <gdm85@users.noreply.github.com>
   * Yaroslav Halchenko <debian@onerussian.com>
+  * John Papandriopoulos <jpap@users.noreply.github.com>
