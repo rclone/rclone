@@ -64,6 +64,10 @@ type CloudWatchEventsAPI interface {
 	DeleteRuleWithContext(aws.Context, *cloudwatchevents.DeleteRuleInput, ...request.Option) (*cloudwatchevents.DeleteRuleOutput, error)
 	DeleteRuleRequest(*cloudwatchevents.DeleteRuleInput) (*request.Request, *cloudwatchevents.DeleteRuleOutput)
 
+	DescribeEventBus(*cloudwatchevents.DescribeEventBusInput) (*cloudwatchevents.DescribeEventBusOutput, error)
+	DescribeEventBusWithContext(aws.Context, *cloudwatchevents.DescribeEventBusInput, ...request.Option) (*cloudwatchevents.DescribeEventBusOutput, error)
+	DescribeEventBusRequest(*cloudwatchevents.DescribeEventBusInput) (*request.Request, *cloudwatchevents.DescribeEventBusOutput)
+
 	DescribeRule(*cloudwatchevents.DescribeRuleInput) (*cloudwatchevents.DescribeRuleOutput, error)
 	DescribeRuleWithContext(aws.Context, *cloudwatchevents.DescribeRuleInput, ...request.Option) (*cloudwatchevents.DescribeRuleOutput, error)
 	DescribeRuleRequest(*cloudwatchevents.DescribeRuleInput) (*request.Request, *cloudwatchevents.DescribeRuleOutput)
@@ -92,6 +96,10 @@ type CloudWatchEventsAPI interface {
 	PutEventsWithContext(aws.Context, *cloudwatchevents.PutEventsInput, ...request.Option) (*cloudwatchevents.PutEventsOutput, error)
 	PutEventsRequest(*cloudwatchevents.PutEventsInput) (*request.Request, *cloudwatchevents.PutEventsOutput)
 
+	PutPermission(*cloudwatchevents.PutPermissionInput) (*cloudwatchevents.PutPermissionOutput, error)
+	PutPermissionWithContext(aws.Context, *cloudwatchevents.PutPermissionInput, ...request.Option) (*cloudwatchevents.PutPermissionOutput, error)
+	PutPermissionRequest(*cloudwatchevents.PutPermissionInput) (*request.Request, *cloudwatchevents.PutPermissionOutput)
+
 	PutRule(*cloudwatchevents.PutRuleInput) (*cloudwatchevents.PutRuleOutput, error)
 	PutRuleWithContext(aws.Context, *cloudwatchevents.PutRuleInput, ...request.Option) (*cloudwatchevents.PutRuleOutput, error)
 	PutRuleRequest(*cloudwatchevents.PutRuleInput) (*request.Request, *cloudwatchevents.PutRuleOutput)
@@ -99,6 +107,10 @@ type CloudWatchEventsAPI interface {
 	PutTargets(*cloudwatchevents.PutTargetsInput) (*cloudwatchevents.PutTargetsOutput, error)
 	PutTargetsWithContext(aws.Context, *cloudwatchevents.PutTargetsInput, ...request.Option) (*cloudwatchevents.PutTargetsOutput, error)
 	PutTargetsRequest(*cloudwatchevents.PutTargetsInput) (*request.Request, *cloudwatchevents.PutTargetsOutput)
+
+	RemovePermission(*cloudwatchevents.RemovePermissionInput) (*cloudwatchevents.RemovePermissionOutput, error)
+	RemovePermissionWithContext(aws.Context, *cloudwatchevents.RemovePermissionInput, ...request.Option) (*cloudwatchevents.RemovePermissionOutput, error)
+	RemovePermissionRequest(*cloudwatchevents.RemovePermissionInput) (*request.Request, *cloudwatchevents.RemovePermissionOutput)
 
 	RemoveTargets(*cloudwatchevents.RemoveTargetsInput) (*cloudwatchevents.RemoveTargetsOutput, error)
 	RemoveTargetsWithContext(aws.Context, *cloudwatchevents.RemoveTargetsInput, ...request.Option) (*cloudwatchevents.RemoveTargetsOutput, error)

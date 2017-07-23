@@ -1,16 +1,16 @@
 {
   "version":"2.0",
   "metadata":{
-    "uid":"swf-2012-01-25",
     "apiVersion":"2012-01-25",
     "endpointPrefix":"swf",
     "jsonVersion":"1.0",
+    "protocol":"json",
     "serviceAbbreviation":"Amazon SWF",
     "serviceFullName":"Amazon Simple Workflow Service",
     "signatureVersion":"v4",
     "targetPrefix":"SimpleWorkflowService",
     "timestampFormat":"unixTimestamp",
-    "protocol":"json"
+    "uid":"swf-2012-01-25"
   },
   "operations":{
     "CountClosedWorkflowExecutions":{
@@ -22,14 +22,8 @@
       "input":{"shape":"CountClosedWorkflowExecutionsInput"},
       "output":{"shape":"WorkflowExecutionCount"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "CountOpenWorkflowExecutions":{
@@ -41,14 +35,8 @@
       "input":{"shape":"CountOpenWorkflowExecutionsInput"},
       "output":{"shape":"WorkflowExecutionCount"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "CountPendingActivityTasks":{
@@ -60,14 +48,8 @@
       "input":{"shape":"CountPendingActivityTasksInput"},
       "output":{"shape":"PendingTaskCount"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "CountPendingDecisionTasks":{
@@ -79,14 +61,8 @@
       "input":{"shape":"CountPendingDecisionTasksInput"},
       "output":{"shape":"PendingTaskCount"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "DeprecateActivityType":{
@@ -97,18 +73,9 @@
       },
       "input":{"shape":"DeprecateActivityTypeInput"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"TypeDeprecatedFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"TypeDeprecatedFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "DeprecateDomain":{
@@ -119,18 +86,9 @@
       },
       "input":{"shape":"DeprecateDomainInput"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"DomainDeprecatedFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"DomainDeprecatedFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "DeprecateWorkflowType":{
@@ -141,18 +99,9 @@
       },
       "input":{"shape":"DeprecateWorkflowTypeInput"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"TypeDeprecatedFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"TypeDeprecatedFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "DescribeActivityType":{
@@ -164,14 +113,8 @@
       "input":{"shape":"DescribeActivityTypeInput"},
       "output":{"shape":"ActivityTypeDetail"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "DescribeDomain":{
@@ -183,14 +126,8 @@
       "input":{"shape":"DescribeDomainInput"},
       "output":{"shape":"DomainDetail"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "DescribeWorkflowExecution":{
@@ -202,14 +139,8 @@
       "input":{"shape":"DescribeWorkflowExecutionInput"},
       "output":{"shape":"WorkflowExecutionDetail"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "DescribeWorkflowType":{
@@ -221,14 +152,8 @@
       "input":{"shape":"DescribeWorkflowTypeInput"},
       "output":{"shape":"WorkflowTypeDetail"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "GetWorkflowExecutionHistory":{
@@ -240,14 +165,8 @@
       "input":{"shape":"GetWorkflowExecutionHistoryInput"},
       "output":{"shape":"History"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "ListActivityTypes":{
@@ -259,14 +178,8 @@
       "input":{"shape":"ListActivityTypesInput"},
       "output":{"shape":"ActivityTypeInfos"},
       "errors":[
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        },
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        }
+        {"shape":"OperationNotPermittedFault"},
+        {"shape":"UnknownResourceFault"}
       ]
     },
     "ListClosedWorkflowExecutions":{
@@ -278,14 +191,8 @@
       "input":{"shape":"ListClosedWorkflowExecutionsInput"},
       "output":{"shape":"WorkflowExecutionInfos"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "ListDomains":{
@@ -297,10 +204,7 @@
       "input":{"shape":"ListDomainsInput"},
       "output":{"shape":"DomainInfos"},
       "errors":[
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "ListOpenWorkflowExecutions":{
@@ -312,14 +216,8 @@
       "input":{"shape":"ListOpenWorkflowExecutionsInput"},
       "output":{"shape":"WorkflowExecutionInfos"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "ListWorkflowTypes":{
@@ -331,14 +229,8 @@
       "input":{"shape":"ListWorkflowTypesInput"},
       "output":{"shape":"WorkflowTypeInfos"},
       "errors":[
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        },
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        }
+        {"shape":"OperationNotPermittedFault"},
+        {"shape":"UnknownResourceFault"}
       ]
     },
     "PollForActivityTask":{
@@ -350,18 +242,9 @@
       "input":{"shape":"PollForActivityTaskInput"},
       "output":{"shape":"ActivityTask"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        },
-        {
-          "shape":"LimitExceededFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"},
+        {"shape":"LimitExceededFault"}
       ]
     },
     "PollForDecisionTask":{
@@ -373,18 +256,9 @@
       "input":{"shape":"PollForDecisionTaskInput"},
       "output":{"shape":"DecisionTask"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        },
-        {
-          "shape":"LimitExceededFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"},
+        {"shape":"LimitExceededFault"}
       ]
     },
     "RecordActivityTaskHeartbeat":{
@@ -396,14 +270,8 @@
       "input":{"shape":"RecordActivityTaskHeartbeatInput"},
       "output":{"shape":"ActivityTaskStatus"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "RegisterActivityType":{
@@ -414,22 +282,10 @@
       },
       "input":{"shape":"RegisterActivityTypeInput"},
       "errors":[
-        {
-          "shape":"TypeAlreadyExistsFault",
-          "exception":true
-        },
-        {
-          "shape":"LimitExceededFault",
-          "exception":true
-        },
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"TypeAlreadyExistsFault"},
+        {"shape":"LimitExceededFault"},
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "RegisterDomain":{
@@ -440,18 +296,9 @@
       },
       "input":{"shape":"RegisterDomainInput"},
       "errors":[
-        {
-          "shape":"DomainAlreadyExistsFault",
-          "exception":true
-        },
-        {
-          "shape":"LimitExceededFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"DomainAlreadyExistsFault"},
+        {"shape":"LimitExceededFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "RegisterWorkflowType":{
@@ -462,22 +309,10 @@
       },
       "input":{"shape":"RegisterWorkflowTypeInput"},
       "errors":[
-        {
-          "shape":"TypeAlreadyExistsFault",
-          "exception":true
-        },
-        {
-          "shape":"LimitExceededFault",
-          "exception":true
-        },
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"TypeAlreadyExistsFault"},
+        {"shape":"LimitExceededFault"},
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "RequestCancelWorkflowExecution":{
@@ -488,14 +323,8 @@
       },
       "input":{"shape":"RequestCancelWorkflowExecutionInput"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "RespondActivityTaskCanceled":{
@@ -506,14 +335,8 @@
       },
       "input":{"shape":"RespondActivityTaskCanceledInput"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "RespondActivityTaskCompleted":{
@@ -524,14 +347,8 @@
       },
       "input":{"shape":"RespondActivityTaskCompletedInput"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "RespondActivityTaskFailed":{
@@ -542,14 +359,8 @@
       },
       "input":{"shape":"RespondActivityTaskFailedInput"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "RespondDecisionTaskCompleted":{
@@ -560,14 +371,8 @@
       },
       "input":{"shape":"RespondDecisionTaskCompletedInput"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "SignalWorkflowExecution":{
@@ -578,14 +383,8 @@
       },
       "input":{"shape":"SignalWorkflowExecutionInput"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     },
     "StartWorkflowExecution":{
@@ -597,30 +396,12 @@
       "input":{"shape":"StartWorkflowExecutionInput"},
       "output":{"shape":"Run"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"TypeDeprecatedFault",
-          "exception":true
-        },
-        {
-          "shape":"WorkflowExecutionAlreadyStartedFault",
-          "exception":true
-        },
-        {
-          "shape":"LimitExceededFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        },
-        {
-          "shape":"DefaultUndefinedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"TypeDeprecatedFault"},
+        {"shape":"WorkflowExecutionAlreadyStartedFault"},
+        {"shape":"LimitExceededFault"},
+        {"shape":"OperationNotPermittedFault"},
+        {"shape":"DefaultUndefinedFault"}
       ]
     },
     "TerminateWorkflowExecution":{
@@ -631,22 +412,16 @@
       },
       "input":{"shape":"TerminateWorkflowExecutionInput"},
       "errors":[
-        {
-          "shape":"UnknownResourceFault",
-          "exception":true
-        },
-        {
-          "shape":"OperationNotPermittedFault",
-          "exception":true
-        }
+        {"shape":"UnknownResourceFault"},
+        {"shape":"OperationNotPermittedFault"}
       ]
     }
   },
   "shapes":{
     "ActivityId":{
       "type":"string",
-      "min":1,
-      "max":256
+      "max":256,
+      "min":1
     },
     "ActivityTask":{
       "type":"structure",
@@ -837,8 +612,8 @@
     },
     "Arn":{
       "type":"string",
-      "min":1,
-      "max":1224
+      "max":1600,
+      "min":1
     },
     "CancelTimerDecisionAttributes":{
       "type":"structure",
@@ -1381,18 +1156,18 @@
     },
     "DomainName":{
       "type":"string",
-      "min":1,
-      "max":256
+      "max":256,
+      "min":1
     },
     "DurationInDays":{
       "type":"string",
-      "min":1,
-      "max":8
+      "max":8,
+      "min":1
     },
     "DurationInSeconds":{
       "type":"string",
-      "min":1,
-      "max":8
+      "max":8,
+      "min":1
     },
     "DurationInSecondsOptional":{
       "type":"string",
@@ -1527,18 +1302,18 @@
     },
     "FunctionId":{
       "type":"string",
-      "min":1,
-      "max":256
+      "max":256,
+      "min":1
     },
     "FunctionInput":{
       "type":"string",
-      "min":1,
-      "max":32768
+      "max":32768,
+      "min":0
     },
     "FunctionName":{
       "type":"string",
-      "min":1,
-      "max":64
+      "max":64,
+      "min":1
     },
     "GetWorkflowExecutionHistoryInput":{
       "type":"structure",
@@ -1672,6 +1447,7 @@
       "members":{
         "id":{"shape":"FunctionId"},
         "name":{"shape":"FunctionName"},
+        "control":{"shape":"Data"},
         "input":{"shape":"FunctionInput"},
         "startToCloseTimeout":{"shape":"DurationInSecondsOptional"},
         "decisionTaskCompletedEventId":{"shape":"EventId"}
@@ -1786,8 +1562,8 @@
     },
     "MarkerName":{
       "type":"string",
-      "min":1,
-      "max":256
+      "max":256,
+      "min":1
     },
     "MarkerRecordedEventAttributes":{
       "type":"structure",
@@ -1803,13 +1579,13 @@
     },
     "Name":{
       "type":"string",
-      "min":1,
-      "max":256
+      "max":256,
+      "min":1
     },
     "OpenDecisionTasksCount":{
       "type":"integer",
-      "min":0,
-      "max":1
+      "max":1,
+      "min":0
     },
     "OperationNotPermittedFault":{
       "type":"structure",
@@ -1820,8 +1596,8 @@
     },
     "PageSize":{
       "type":"integer",
-      "min":0,
-      "max":1000
+      "max":1000,
+      "min":0
     },
     "PageToken":{
       "type":"string",
@@ -1986,7 +1762,7 @@
       "required":["workflowId"],
       "members":{
         "workflowId":{"shape":"WorkflowId"},
-        "runId":{"shape":"RunIdOptional"},
+        "runId":{"shape":"WorkflowRunIdOptional"},
         "control":{"shape":"Data"}
       }
     },
@@ -2008,7 +1784,7 @@
       ],
       "members":{
         "workflowId":{"shape":"WorkflowId"},
-        "runId":{"shape":"RunIdOptional"},
+        "runId":{"shape":"WorkflowRunIdOptional"},
         "cause":{"shape":"RequestCancelExternalWorkflowExecutionFailedCause"},
         "initiatedEventId":{"shape":"EventId"},
         "decisionTaskCompletedEventId":{"shape":"EventId"},
@@ -2023,7 +1799,7 @@
       ],
       "members":{
         "workflowId":{"shape":"WorkflowId"},
-        "runId":{"shape":"RunIdOptional"},
+        "runId":{"shape":"WorkflowRunIdOptional"},
         "decisionTaskCompletedEventId":{"shape":"EventId"},
         "control":{"shape":"Data"}
       }
@@ -2037,7 +1813,7 @@
       "members":{
         "domain":{"shape":"DomainName"},
         "workflowId":{"shape":"WorkflowId"},
-        "runId":{"shape":"RunIdOptional"}
+        "runId":{"shape":"WorkflowRunIdOptional"}
       }
     },
     "RespondActivityTaskCanceledInput":{
@@ -2078,17 +1854,8 @@
     "Run":{
       "type":"structure",
       "members":{
-        "runId":{"shape":"RunId"}
+        "runId":{"shape":"WorkflowRunId"}
       }
-    },
-    "RunId":{
-      "type":"string",
-      "min":1,
-      "max":64
-    },
-    "RunIdOptional":{
-      "type":"string",
-      "max":64
     },
     "ScheduleActivityTaskDecisionAttributes":{
       "type":"structure",
@@ -2149,6 +1916,7 @@
       "members":{
         "id":{"shape":"FunctionId"},
         "name":{"shape":"FunctionName"},
+        "control":{"shape":"Data"},
         "input":{"shape":"FunctionInput"},
         "startToCloseTimeout":{"shape":"DurationInSecondsOptional"}
       }
@@ -2185,7 +1953,7 @@
       ],
       "members":{
         "workflowId":{"shape":"WorkflowId"},
-        "runId":{"shape":"RunIdOptional"},
+        "runId":{"shape":"WorkflowRunIdOptional"},
         "signalName":{"shape":"SignalName"},
         "input":{"shape":"Data"},
         "control":{"shape":"Data"}
@@ -2209,7 +1977,7 @@
       ],
       "members":{
         "workflowId":{"shape":"WorkflowId"},
-        "runId":{"shape":"RunIdOptional"},
+        "runId":{"shape":"WorkflowRunIdOptional"},
         "cause":{"shape":"SignalExternalWorkflowExecutionFailedCause"},
         "initiatedEventId":{"shape":"EventId"},
         "decisionTaskCompletedEventId":{"shape":"EventId"},
@@ -2225,7 +1993,7 @@
       ],
       "members":{
         "workflowId":{"shape":"WorkflowId"},
-        "runId":{"shape":"RunIdOptional"},
+        "runId":{"shape":"WorkflowRunIdOptional"},
         "signalName":{"shape":"SignalName"},
         "input":{"shape":"Data"},
         "decisionTaskCompletedEventId":{"shape":"EventId"},
@@ -2234,8 +2002,8 @@
     },
     "SignalName":{
       "type":"string",
-      "min":1,
-      "max":256
+      "max":256,
+      "min":1
     },
     "SignalWorkflowExecutionInput":{
       "type":"structure",
@@ -2247,7 +2015,7 @@
       "members":{
         "domain":{"shape":"DomainName"},
         "workflowId":{"shape":"WorkflowId"},
-        "runId":{"shape":"RunIdOptional"},
+        "runId":{"shape":"WorkflowRunIdOptional"},
         "signalName":{"shape":"SignalName"},
         "input":{"shape":"Data"}
       }
@@ -2399,8 +2167,8 @@
     },
     "Tag":{
       "type":"string",
-      "min":1,
-      "max":256
+      "max":256,
+      "min":0
     },
     "TagFilter":{
       "type":"structure",
@@ -2421,14 +2189,11 @@
         "name":{"shape":"Name"}
       }
     },
-    "TaskPriority":{
-      "type":"string",
-      "max":11
-    },
+    "TaskPriority":{"type":"string"},
     "TaskToken":{
       "type":"string",
-      "min":1,
-      "max":1024
+      "max":1024,
+      "min":1
     },
     "TerminateReason":{
       "type":"string",
@@ -2443,7 +2208,7 @@
       "members":{
         "domain":{"shape":"DomainName"},
         "workflowId":{"shape":"WorkflowId"},
-        "runId":{"shape":"RunIdOptional"},
+        "runId":{"shape":"WorkflowRunIdOptional"},
         "reason":{"shape":"TerminateReason"},
         "details":{"shape":"Data"},
         "childPolicy":{"shape":"ChildPolicy"}
@@ -2475,8 +2240,8 @@
     },
     "TimerId":{
       "type":"string",
-      "min":1,
-      "max":256
+      "max":256,
+      "min":1
     },
     "TimerStartedEventAttributes":{
       "type":"structure",
@@ -2517,8 +2282,8 @@
     },
     "Version":{
       "type":"string",
-      "min":1,
-      "max":64
+      "max":64,
+      "min":1
     },
     "VersionOptional":{
       "type":"string",
@@ -2532,7 +2297,7 @@
       ],
       "members":{
         "workflowId":{"shape":"WorkflowId"},
-        "runId":{"shape":"RunId"}
+        "runId":{"shape":"WorkflowRunId"}
       }
     },
     "WorkflowExecutionAlreadyStartedFault":{
@@ -2599,7 +2364,7 @@
       "members":{
         "input":{"shape":"Data"},
         "decisionTaskCompletedEventId":{"shape":"EventId"},
-        "newExecutionRunId":{"shape":"RunId"},
+        "newExecutionRunId":{"shape":"WorkflowRunId"},
         "executionStartToCloseTimeout":{"shape":"DurationInSecondsOptional"},
         "taskList":{"shape":"TaskList"},
         "taskPriority":{"shape":"TaskPriority"},
@@ -2720,10 +2485,10 @@
         "taskStartToCloseTimeout":{"shape":"DurationInSecondsOptional"},
         "childPolicy":{"shape":"ChildPolicy"},
         "taskList":{"shape":"TaskList"},
+        "taskPriority":{"shape":"TaskPriority"},
         "workflowType":{"shape":"WorkflowType"},
         "tagList":{"shape":"TagList"},
-        "taskPriority":{"shape":"TaskPriority"},
-        "continuedExecutionRunId":{"shape":"RunIdOptional"},
+        "continuedExecutionRunId":{"shape":"WorkflowRunIdOptional"},
         "parentWorkflowExecution":{"shape":"WorkflowExecution"},
         "parentInitiatedEventId":{"shape":"EventId"},
         "lambdaRole":{"shape":"Arn"}
@@ -2764,8 +2529,17 @@
     },
     "WorkflowId":{
       "type":"string",
-      "min":1,
-      "max":256
+      "max":256,
+      "min":1
+    },
+    "WorkflowRunId":{
+      "type":"string",
+      "max":64,
+      "min":1
+    },
+    "WorkflowRunIdOptional":{
+      "type":"string",
+      "max":64
     },
     "WorkflowType":{
       "type":"structure",

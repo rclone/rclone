@@ -2,6 +2,8 @@ package awstesting
 
 import (
 	"io"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/private/util"
@@ -91,4 +93,29 @@ func (c *FakeContext) Err() error {
 // Value ignores the Value and always returns nil
 func (c *FakeContext) Value(key interface{}) interface{} {
 	return nil
+}
+
+// StashEnv stashes the current environment variables and returns an array of
+// all environment values as key=val strings.
+func StashEnv() []string {
+	env := os.Environ()
+	os.Clearenv()
+
+	return env
+}
+
+// PopEnv takes the list of the environment values and injects them into the
+// process's environment variable data. Clears any existing environment values
+// that may already exist.
+func PopEnv(env []string) {
+	os.Clearenv()
+
+	for _, e := range env {
+		p := strings.SplitN(e, "=", 2)
+		k, v := p[0], ""
+		if len(p) > 1 {
+			v = p[1]
+		}
+		os.Setenv(k, v)
+	}
 }

@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/internal/shareddefaults"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -95,6 +96,25 @@ func TestSharedCredentialsProviderColonInCredFile(t *testing.T) {
 	assert.Equal(t, "accessKey", creds.AccessKeyID, "Expect access key ID to match")
 	assert.Equal(t, "secret", creds.SecretAccessKey, "Expect secret access key to match")
 	assert.Empty(t, creds.SessionToken, "Expect no token")
+}
+
+func TestSharedCredentialsProvider_DefaultFilename(t *testing.T) {
+	os.Clearenv()
+	os.Setenv("USERPROFILE", "profile_dir")
+	os.Setenv("HOME", "home_dir")
+
+	// default filename and profile
+	p := SharedCredentialsProvider{}
+
+	filename, err := p.filename()
+
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
+
+	if e, a := shareddefaults.SharedCredentialsFilename(), filename; e != a {
+		t.Errorf("expect %q filename, got %q", e, a)
+	}
 }
 
 func BenchmarkSharedCredentialsProvider(b *testing.B) {

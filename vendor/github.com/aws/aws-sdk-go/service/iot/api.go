@@ -457,7 +457,11 @@ func (c *IoT) CreateCertificateFromCsrRequest(input *CreateCertificateFromCsrInp
 //
 // Creates an X.509 certificate using the specified certificate signing request.
 //
-// Note Reusing the same certificate signing request (CSR) results in a distinct
+// Note: The CSR must include a public key that is either an RSA key with a
+// length of at least 2048 bits or an ECC key from NIST P-256 or NIST P-384
+// curves.
+//
+// Note: Reusing the same certificate signing request (CSR) results in a distinct
 // certificate.
 //
 // You can create multiple certificates in a batch by creating a directory,
@@ -4462,10 +4466,10 @@ func (c *IoT) RegisterCACertificateRequest(input *RegisterCACertificateInput) (r
 // Registers a CA certificate with AWS IoT. This CA certificate can then be
 // used to sign device certificates, which can be then registered with AWS IoT.
 // You can register up to 10 CA certificates per AWS account that have the same
-// subject field and public key. This enables you to have up to 10 certificate
-// authorities sign your device certificates. If you have more than one CA certificate
-// registered, make sure you pass the CA certificate when you register your
-// device certificates with the RegisterCertificate API.
+// subject field. This enables you to have up to 10 certificate authorities
+// sign your device certificates. If you have more than one CA certificate registered,
+// make sure you pass the CA certificate when you register your device certificates
+// with the RegisterCertificate API.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5513,6 +5517,9 @@ type Action struct {
 	// Write to an Amazon S3 bucket.
 	S3 *S3Action `locationName:"s3" type:"structure"`
 
+	// Send a message to a Salesforce IoT Cloud Input Stream.
+	Salesforce *SalesforceAction `locationName:"salesforce" type:"structure"`
+
 	// Publish to an Amazon SNS topic.
 	Sns *SnsAction `locationName:"sns" type:"structure"`
 
@@ -5581,6 +5588,11 @@ func (s *Action) Validate() error {
 	if s.S3 != nil {
 		if err := s.S3.Validate(); err != nil {
 			invalidParams.AddNested("S3", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Salesforce != nil {
+		if err := s.Salesforce.Validate(); err != nil {
+			invalidParams.AddNested("Salesforce", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.Sns != nil {
@@ -5657,6 +5669,12 @@ func (s *Action) SetRepublish(v *RepublishAction) *Action {
 // SetS3 sets the S3 field's value.
 func (s *Action) SetS3(v *S3Action) *Action {
 	s.S3 = v
+	return s
+}
+
+// SetSalesforce sets the Salesforce field's value.
+func (s *Action) SetSalesforce(v *SalesforceAction) *Action {
+	s.Salesforce = v
 	return s
 }
 
@@ -5820,7 +5838,7 @@ type AttributePayload struct {
 
 	// A JSON string containing up to three key-value pair in JSON format. For example:
 	//
-	// {\"attributes\":{\"string1\":\"string2\"}})
+	// {\"attributes\":{\"string1\":\"string2\"}}
 	Attributes map[string]*string `locationName:"attributes" type:"map"`
 
 	// Specifies whether the list of attributes provided in the AttributePayload
@@ -6792,7 +6810,7 @@ type CreateThingInput struct {
 	// The attribute payload, which consists of up to three name/value pairs in
 	// a JSON document. For example:
 	//
-	// {\"attributes\":{\"string1\":\"string2\"}})
+	// {\"attributes\":{\"string1\":\"string2\"}}
 	AttributePayload *AttributePayload `locationName:"attributePayload" type:"structure"`
 
 	// The name of the thing to create.
@@ -7887,7 +7905,7 @@ type DescribeThingTypeOutput struct {
 
 	// The ThingTypeMetadata contains additional information about the thing type
 	// including: creation date and time, a value indicating whether the thing type
-	// is deprecated, and a date and time when time was deprecated.
+	// is deprecated, and a date and time when it was deprecated.
 	ThingTypeMetadata *ThingTypeMetadata `locationName:"thingTypeMetadata" type:"structure"`
 
 	// The name of the thing type.
@@ -10620,6 +10638,7 @@ type RegisterCertificateInput struct {
 	// A boolean value that specifies if the CA certificate is set to active.
 	SetAsActive *bool `location:"querystring" locationName:"setAsActive" deprecated:"true" type:"boolean"`
 
+	// The status of the register certificate request.
 	Status *string `locationName:"status" type:"string" enum:"CertificateStatus"`
 }
 
@@ -10979,6 +10998,65 @@ func (s *S3Action) SetRoleArn(v string) *S3Action {
 	return s
 }
 
+// Describes an action to write a message to a Salesforce IoT Cloud Input Stream.
+type SalesforceAction struct {
+	_ struct{} `type:"structure"`
+
+	// The token used to authenticate access to the Salesforce IoT Cloud Input Stream.
+	// The token is available from the Salesforce IoT Cloud platform after creation
+	// of the Input Stream.
+	//
+	// Token is a required field
+	Token *string `locationName:"token" min:"40" type:"string" required:"true"`
+
+	// The URL exposed by the Salesforce IoT Cloud Input Stream. The URL is available
+	// from the Salesforce IoT Cloud platform after creation of the Input Stream.
+	//
+	// Url is a required field
+	Url *string `locationName:"url" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s SalesforceAction) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SalesforceAction) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SalesforceAction) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SalesforceAction"}
+	if s.Token == nil {
+		invalidParams.Add(request.NewErrParamRequired("Token"))
+	}
+	if s.Token != nil && len(*s.Token) < 40 {
+		invalidParams.Add(request.NewErrParamMinLen("Token", 40))
+	}
+	if s.Url == nil {
+		invalidParams.Add(request.NewErrParamRequired("Url"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetToken sets the Token field's value.
+func (s *SalesforceAction) SetToken(v string) *SalesforceAction {
+	s.Token = &v
+	return s
+}
+
+// SetUrl sets the Url field's value.
+func (s *SalesforceAction) SetUrl(v string) *SalesforceAction {
+	s.Url = &v
+	return s
+}
+
 // The input for the SetDefaultPolicyVersion operation.
 type SetDefaultPolicyVersionInput struct {
 	_ struct{} `type:"structure"`
@@ -11115,7 +11193,8 @@ type SnsAction struct {
 	// "JSON" and "RAW". The default value of the attribute is "RAW". SNS uses this
 	// setting to determine if the payload should be parsed and relevant platform-specific
 	// bits of the payload should be extracted. To read more about SNS message formats,
-	// see  refer to their official documentation. (http://docs.aws.amazon.com/sns/latest/dg/json-formats.html)
+	// see http://docs.aws.amazon.com/sns/latest/dg/json-formats.html (http://docs.aws.amazon.com/sns/latest/dg/json-formats.html)
+	// refer to their official documentation.
 	MessageFormat *string `locationName:"messageFormat" type:"string" enum:"MessageFormat"`
 
 	// The ARN of the IAM role that grants access.
@@ -11293,7 +11372,7 @@ type ThingTypeDefinition struct {
 
 	// The ThingTypeMetadata contains additional information about the thing type
 	// including: creation date and time, a value indicating whether the thing type
-	// is deprecated, and a date and time when time was deprecated.
+	// is deprecated, and a date and time when it was deprecated.
 	ThingTypeMetadata *ThingTypeMetadata `locationName:"thingTypeMetadata" type:"structure"`
 
 	// The name of the thing type.
@@ -11952,7 +12031,7 @@ type UpdateThingInput struct {
 	// A list of thing attributes, a JSON string containing name-value pairs. For
 	// example:
 	//
-	// {\"attributes\":{\"name1\":\"value2\"}})
+	// {\"attributes\":{\"name1\":\"value2\"}}
 	//
 	// This data is used to add new attributes or update existing attributes.
 	AttributePayload *AttributePayload `locationName:"attributePayload" type:"structure"`

@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/wZaClgEOt_sdgi-MJA2ZIUoCxK0\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/GZBaoIT2JIa-WG47c56OJgYWjRw\"",
  "discoveryVersion": "v1",
  "id": "drive:v2",
  "name": "drive",
  "version": "v2",
- "revision": "20170420",
+ "revision": "20170623",
  "title": "Drive API",
  "description": "Manages files in Drive including uploading, downloading, searching, detecting changes, and updating sharing permissions.",
  "ownerDomain": "google.com",
@@ -1080,7 +1080,7 @@
     },
     "hasThumbnail": {
      "type": "boolean",
-     "description": "Whether this file has a thumbnail."
+     "description": "Whether this file has a thumbnail. This does not indicate whether the requesting app has access to the thumbnail. To check access, look for the presence of the thumbnailLink field."
     },
     "headRevisionId": {
      "type": "string",
@@ -1600,11 +1600,11 @@
     },
     "authKey": {
      "type": "string",
-     "description": "The authkey parameter required for this permission."
+     "description": "Deprecated."
     },
     "deleted": {
      "type": "boolean",
-     "description": "Whether the account of the permission has been deleted. This field only pertains to user and group permissions."
+     "description": "Whether the account associated with this permission has been deleted. This field only pertains to user and group permissions."
     },
     "domain": {
      "type": "string",
@@ -1949,7 +1949,7 @@
    "properties": {
     "backgroundImageFile": {
      "type": "object",
-     "description": "An image file and cropping parameters from which a background image for this Team Drive is set. This is a write only field that can only be set on a drive.teamdrives.update request that does not set themeId. When specified, all fields of the backgroundImageFile must be set.",
+     "description": "An image file and cropping parameters from which a background image for this Team Drive is set. This is a write only field; it can only be set on drive.teamdrives.update requests that don't set themeId. When specified, all fields of the backgroundImageFile must be set.",
      "properties": {
       "id": {
        "type": "string",
@@ -1957,17 +1957,17 @@
       },
       "width": {
        "type": "number",
-       "description": "The width of the cropped image in the closed range of 0 to 1, which is the width of the cropped image divided by the width of the entire image. The height is computed by applying a width to height aspect ratio of 80 to 9. The resulting image must be at least 1280 pixels wide and 144 pixels high.",
+       "description": "The width of the cropped image in the closed range of 0 to 1. This value represents the width of the cropped image divided by the width of the entire image. The height is computed by applying a width to height aspect ratio of 80 to 9. The resulting image must be at least 1280 pixels wide and 144 pixels high.",
        "format": "float"
       },
       "xCoordinate": {
        "type": "number",
-       "description": "The X coordinate of the upper left corner of the cropping area in the background image. This is a value in the closed range of 0 to 1 which is the horizontal distance from the left side of the entire image to the left side of the cropping area divided by the width of the entire image.",
+       "description": "The X coordinate of the upper left corner of the cropping area in the background image. This is a value in the closed range of 0 to 1. This value represents the horizontal distance from the left side of the entire image to the left side of the cropping area divided by the width of the entire image.",
        "format": "float"
       },
       "yCoordinate": {
        "type": "number",
-       "description": "The Y coordinate of the upper left corner of the cropping area in the background image. This is a value in the closed range of 0 to 1 which is the vertical distance from the top side of the entire image to the top side of the cropping area divided by the height of the entire image.",
+       "description": "The Y coordinate of the upper left corner of the cropping area in the background image. This is a value in the closed range of 0 to 1. This value represents the vertical distance from the top side of the entire image to the top side of the cropping area divided by the height of the entire image.",
        "format": "float"
       }
      }
@@ -2057,7 +2057,7 @@
     },
     "themeId": {
      "type": "string",
-     "description": "The ID of the theme from which the background image and color will be set. The set of possible teamDriveThemes can be retrieved from a drive.about.get response. When not specified on a drive.teamdrives.insert request, a random theme is chosen from which the background image and color are set. This is a write only field that can only be set on a request that does not set colorRgb or backgroundImageFile."
+     "description": "The ID of the theme from which the background image and color will be set. The set of possible teamDriveThemes can be retrieved from a drive.about.get response. When not specified on a drive.teamdrives.insert request, a random theme is chosen from which the background image and color are set. This is a write-only field; it can only be set on requests that don't set colorRgb or backgroundImageFile."
     }
    }
   },
@@ -2993,7 +2993,7 @@
      "id": "drive.files.export",
      "path": "files/{fileId}/export",
      "httpMethod": "GET",
-     "description": "Exports a Google Doc to the requested MIME type and returns the exported content.",
+     "description": "Exports a Google Doc to the requested MIME type and returns the exported content. Please note that the exported content is limited to 10MB.",
      "parameters": {
       "fileId": {
        "type": "string",

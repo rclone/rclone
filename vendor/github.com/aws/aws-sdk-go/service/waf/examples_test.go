@@ -3,942 +3,1423 @@
 package waf_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/waf"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleWAF_CreateByteMatchSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.CreateByteMatchSetInput{
-		ChangeToken: aws.String("ChangeToken"),  // Required
-		Name:        aws.String("ResourceName"), // Required
-	}
-	resp, err := svc.CreateByteMatchSet(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		panic(err)
+	}
+	return &t
+}
+
+// To create an IP set
+//
+// The following example creates an IP match set named MyIPSetFriendlyName.
+func ExampleWAF_CreateIPSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.CreateIPSetInput{
+		ChangeToken: aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		Name:        aws.String("MyIPSetFriendlyName"),
+	}
+
+	result, err := svc.CreateIPSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeDisallowedNameException:
+				fmt.Println(waf.ErrCodeDisallowedNameException, aerr.Error())
+			case waf.ErrCodeInvalidParameterException:
+				fmt.Println(waf.ErrCodeInvalidParameterException, aerr.Error())
+			case waf.ErrCodeLimitsExceededException:
+				fmt.Println(waf.ErrCodeLimitsExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleWAF_CreateIPSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.CreateIPSetInput{
-		ChangeToken: aws.String("ChangeToken"),  // Required
-		Name:        aws.String("ResourceName"), // Required
+// To create a rule
+//
+// The following example creates a rule named WAFByteHeaderRule.
+func ExampleWAF_CreateRule_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.CreateRuleInput{
+		ChangeToken: aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		MetricName:  aws.String("WAFByteHeaderRule"),
+		Name:        aws.String("WAFByteHeaderRule"),
 	}
-	resp, err := svc.CreateIPSet(params)
 
+	result, err := svc.CreateRule(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeDisallowedNameException:
+				fmt.Println(waf.ErrCodeDisallowedNameException, aerr.Error())
+			case waf.ErrCodeInvalidParameterException:
+				fmt.Println(waf.ErrCodeInvalidParameterException, aerr.Error())
+			case waf.ErrCodeLimitsExceededException:
+				fmt.Println(waf.ErrCodeLimitsExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleWAF_CreateRule() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.CreateRuleInput{
-		ChangeToken: aws.String("ChangeToken"),  // Required
-		MetricName:  aws.String("MetricName"),   // Required
-		Name:        aws.String("ResourceName"), // Required
+// To create a size constraint
+//
+// The following example creates size constraint set named MySampleSizeConstraintSet.
+func ExampleWAF_CreateSizeConstraintSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.CreateSizeConstraintSetInput{
+		ChangeToken: aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		Name:        aws.String("MySampleSizeConstraintSet"),
 	}
-	resp, err := svc.CreateRule(params)
 
+	result, err := svc.CreateSizeConstraintSet(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeDisallowedNameException:
+				fmt.Println(waf.ErrCodeDisallowedNameException, aerr.Error())
+			case waf.ErrCodeInvalidParameterException:
+				fmt.Println(waf.ErrCodeInvalidParameterException, aerr.Error())
+			case waf.ErrCodeLimitsExceededException:
+				fmt.Println(waf.ErrCodeLimitsExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleWAF_CreateSizeConstraintSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.CreateSizeConstraintSetInput{
-		ChangeToken: aws.String("ChangeToken"),  // Required
-		Name:        aws.String("ResourceName"), // Required
+// To create a SQL injection match set
+//
+// The following example creates a SQL injection match set named MySQLInjectionMatchSet.
+func ExampleWAF_CreateSqlInjectionMatchSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.CreateSqlInjectionMatchSetInput{
+		ChangeToken: aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		Name:        aws.String("MySQLInjectionMatchSet"),
 	}
-	resp, err := svc.CreateSizeConstraintSet(params)
 
+	result, err := svc.CreateSqlInjectionMatchSet(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeDisallowedNameException:
+				fmt.Println(waf.ErrCodeDisallowedNameException, aerr.Error())
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeInvalidParameterException:
+				fmt.Println(waf.ErrCodeInvalidParameterException, aerr.Error())
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeLimitsExceededException:
+				fmt.Println(waf.ErrCodeLimitsExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleWAF_CreateSqlInjectionMatchSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.CreateSqlInjectionMatchSetInput{
-		ChangeToken: aws.String("ChangeToken"),  // Required
-		Name:        aws.String("ResourceName"), // Required
-	}
-	resp, err := svc.CreateSqlInjectionMatchSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_CreateWebACL() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.CreateWebACLInput{
-		ChangeToken: aws.String("ChangeToken"), // Required
-		DefaultAction: &waf.WafAction{ // Required
-			Type: aws.String("WafActionType"), // Required
-		},
-		MetricName: aws.String("MetricName"),   // Required
-		Name:       aws.String("ResourceName"), // Required
-	}
-	resp, err := svc.CreateWebACL(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_CreateXssMatchSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.CreateXssMatchSetInput{
-		ChangeToken: aws.String("ChangeToken"),  // Required
-		Name:        aws.String("ResourceName"), // Required
-	}
-	resp, err := svc.CreateXssMatchSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_DeleteByteMatchSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.DeleteByteMatchSetInput{
-		ByteMatchSetId: aws.String("ResourceId"),  // Required
-		ChangeToken:    aws.String("ChangeToken"), // Required
-	}
-	resp, err := svc.DeleteByteMatchSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_DeleteIPSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.DeleteIPSetInput{
-		ChangeToken: aws.String("ChangeToken"), // Required
-		IPSetId:     aws.String("ResourceId"),  // Required
-	}
-	resp, err := svc.DeleteIPSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_DeleteRule() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.DeleteRuleInput{
-		ChangeToken: aws.String("ChangeToken"), // Required
-		RuleId:      aws.String("ResourceId"),  // Required
-	}
-	resp, err := svc.DeleteRule(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_DeleteSizeConstraintSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.DeleteSizeConstraintSetInput{
-		ChangeToken:         aws.String("ChangeToken"), // Required
-		SizeConstraintSetId: aws.String("ResourceId"),  // Required
-	}
-	resp, err := svc.DeleteSizeConstraintSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_DeleteSqlInjectionMatchSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.DeleteSqlInjectionMatchSetInput{
-		ChangeToken:            aws.String("ChangeToken"), // Required
-		SqlInjectionMatchSetId: aws.String("ResourceId"),  // Required
-	}
-	resp, err := svc.DeleteSqlInjectionMatchSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_DeleteWebACL() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.DeleteWebACLInput{
-		ChangeToken: aws.String("ChangeToken"), // Required
-		WebACLId:    aws.String("ResourceId"),  // Required
-	}
-	resp, err := svc.DeleteWebACL(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_DeleteXssMatchSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.DeleteXssMatchSetInput{
-		ChangeToken:   aws.String("ChangeToken"), // Required
-		XssMatchSetId: aws.String("ResourceId"),  // Required
-	}
-	resp, err := svc.DeleteXssMatchSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_GetByteMatchSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.GetByteMatchSetInput{
-		ByteMatchSetId: aws.String("ResourceId"), // Required
-	}
-	resp, err := svc.GetByteMatchSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_GetChangeToken() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	var params *waf.GetChangeTokenInput
-	resp, err := svc.GetChangeToken(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_GetChangeTokenStatus() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.GetChangeTokenStatusInput{
-		ChangeToken: aws.String("ChangeToken"), // Required
-	}
-	resp, err := svc.GetChangeTokenStatus(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_GetIPSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.GetIPSetInput{
-		IPSetId: aws.String("ResourceId"), // Required
-	}
-	resp, err := svc.GetIPSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_GetRule() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.GetRuleInput{
-		RuleId: aws.String("ResourceId"), // Required
-	}
-	resp, err := svc.GetRule(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_GetSampledRequests() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.GetSampledRequestsInput{
-		MaxItems: aws.Int64(1),             // Required
-		RuleId:   aws.String("ResourceId"), // Required
-		TimeWindow: &waf.TimeWindow{ // Required
-			EndTime:   aws.Time(time.Now()), // Required
-			StartTime: aws.Time(time.Now()), // Required
-		},
-		WebAclId: aws.String("ResourceId"), // Required
-	}
-	resp, err := svc.GetSampledRequests(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_GetSizeConstraintSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.GetSizeConstraintSetInput{
-		SizeConstraintSetId: aws.String("ResourceId"), // Required
-	}
-	resp, err := svc.GetSizeConstraintSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_GetSqlInjectionMatchSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.GetSqlInjectionMatchSetInput{
-		SqlInjectionMatchSetId: aws.String("ResourceId"), // Required
-	}
-	resp, err := svc.GetSqlInjectionMatchSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_GetWebACL() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.GetWebACLInput{
-		WebACLId: aws.String("ResourceId"), // Required
-	}
-	resp, err := svc.GetWebACL(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_GetXssMatchSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.GetXssMatchSetInput{
-		XssMatchSetId: aws.String("ResourceId"), // Required
-	}
-	resp, err := svc.GetXssMatchSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_ListByteMatchSets() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.ListByteMatchSetsInput{
-		Limit:      aws.Int64(1),
-		NextMarker: aws.String("NextMarker"),
-	}
-	resp, err := svc.ListByteMatchSets(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_ListIPSets() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.ListIPSetsInput{
-		Limit:      aws.Int64(1),
-		NextMarker: aws.String("NextMarker"),
-	}
-	resp, err := svc.ListIPSets(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_ListRules() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.ListRulesInput{
-		Limit:      aws.Int64(1),
-		NextMarker: aws.String("NextMarker"),
-	}
-	resp, err := svc.ListRules(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_ListSizeConstraintSets() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.ListSizeConstraintSetsInput{
-		Limit:      aws.Int64(1),
-		NextMarker: aws.String("NextMarker"),
-	}
-	resp, err := svc.ListSizeConstraintSets(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_ListSqlInjectionMatchSets() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.ListSqlInjectionMatchSetsInput{
-		Limit:      aws.Int64(1),
-		NextMarker: aws.String("NextMarker"),
-	}
-	resp, err := svc.ListSqlInjectionMatchSets(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_ListWebACLs() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.ListWebACLsInput{
-		Limit:      aws.Int64(1),
-		NextMarker: aws.String("NextMarker"),
-	}
-	resp, err := svc.ListWebACLs(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_ListXssMatchSets() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.ListXssMatchSetsInput{
-		Limit:      aws.Int64(1),
-		NextMarker: aws.String("NextMarker"),
-	}
-	resp, err := svc.ListXssMatchSets(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_UpdateByteMatchSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.UpdateByteMatchSetInput{
-		ByteMatchSetId: aws.String("ResourceId"),  // Required
-		ChangeToken:    aws.String("ChangeToken"), // Required
-		Updates: []*waf.ByteMatchSetUpdate{ // Required
-			{ // Required
-				Action: aws.String("ChangeAction"), // Required
-				ByteMatchTuple: &waf.ByteMatchTuple{ // Required
-					FieldToMatch: &waf.FieldToMatch{ // Required
-						Type: aws.String("MatchFieldType"), // Required
-						Data: aws.String("MatchFieldData"),
-					},
-					PositionalConstraint: aws.String("PositionalConstraint"), // Required
-					TargetString:         []byte("PAYLOAD"),                  // Required
-					TextTransformation:   aws.String("TextTransformation"),   // Required
-				},
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.UpdateByteMatchSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_UpdateIPSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.UpdateIPSetInput{
-		ChangeToken: aws.String("ChangeToken"), // Required
-		IPSetId:     aws.String("ResourceId"),  // Required
-		Updates: []*waf.IPSetUpdate{ // Required
-			{ // Required
-				Action: aws.String("ChangeAction"), // Required
-				IPSetDescriptor: &waf.IPSetDescriptor{ // Required
-					Type:  aws.String("IPSetDescriptorType"),  // Required
-					Value: aws.String("IPSetDescriptorValue"), // Required
-				},
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.UpdateIPSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_UpdateRule() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.UpdateRuleInput{
-		ChangeToken: aws.String("ChangeToken"), // Required
-		RuleId:      aws.String("ResourceId"),  // Required
-		Updates: []*waf.RuleUpdate{ // Required
-			{ // Required
-				Action: aws.String("ChangeAction"), // Required
-				Predicate: &waf.Predicate{ // Required
-					DataId:  aws.String("ResourceId"),    // Required
-					Negated: aws.Bool(true),              // Required
-					Type:    aws.String("PredicateType"), // Required
-				},
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.UpdateRule(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_UpdateSizeConstraintSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.UpdateSizeConstraintSetInput{
-		ChangeToken:         aws.String("ChangeToken"), // Required
-		SizeConstraintSetId: aws.String("ResourceId"),  // Required
-		Updates: []*waf.SizeConstraintSetUpdate{ // Required
-			{ // Required
-				Action: aws.String("ChangeAction"), // Required
-				SizeConstraint: &waf.SizeConstraint{ // Required
-					ComparisonOperator: aws.String("ComparisonOperator"), // Required
-					FieldToMatch: &waf.FieldToMatch{ // Required
-						Type: aws.String("MatchFieldType"), // Required
-						Data: aws.String("MatchFieldData"),
-					},
-					Size:               aws.Int64(1),                     // Required
-					TextTransformation: aws.String("TextTransformation"), // Required
-				},
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.UpdateSizeConstraintSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_UpdateSqlInjectionMatchSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.UpdateSqlInjectionMatchSetInput{
-		ChangeToken:            aws.String("ChangeToken"), // Required
-		SqlInjectionMatchSetId: aws.String("ResourceId"),  // Required
-		Updates: []*waf.SqlInjectionMatchSetUpdate{ // Required
-			{ // Required
-				Action: aws.String("ChangeAction"), // Required
-				SqlInjectionMatchTuple: &waf.SqlInjectionMatchTuple{ // Required
-					FieldToMatch: &waf.FieldToMatch{ // Required
-						Type: aws.String("MatchFieldType"), // Required
-						Data: aws.String("MatchFieldData"),
-					},
-					TextTransformation: aws.String("TextTransformation"), // Required
-				},
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.UpdateSqlInjectionMatchSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleWAF_UpdateWebACL() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.UpdateWebACLInput{
-		ChangeToken: aws.String("ChangeToken"), // Required
-		WebACLId:    aws.String("ResourceId"),  // Required
+// To create a web ACL
+//
+// The following example creates a web ACL named CreateExample.
+func ExampleWAF_CreateWebACL_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.CreateWebACLInput{
+		ChangeToken: aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
 		DefaultAction: &waf.WafAction{
-			Type: aws.String("WafActionType"), // Required
+			Type: aws.String("ALLOW"),
+		},
+		MetricName: aws.String("CreateExample"),
+		Name:       aws.String("CreateExample"),
+	}
+
+	result, err := svc.CreateWebACL(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeDisallowedNameException:
+				fmt.Println(waf.ErrCodeDisallowedNameException, aerr.Error())
+			case waf.ErrCodeInvalidParameterException:
+				fmt.Println(waf.ErrCodeInvalidParameterException, aerr.Error())
+			case waf.ErrCodeLimitsExceededException:
+				fmt.Println(waf.ErrCodeLimitsExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create an XSS match set
+//
+// The following example creates an XSS match set named MySampleXssMatchSet.
+func ExampleWAF_CreateXssMatchSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.CreateXssMatchSetInput{
+		ChangeToken: aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		Name:        aws.String("MySampleXssMatchSet"),
+	}
+
+	result, err := svc.CreateXssMatchSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeDisallowedNameException:
+				fmt.Println(waf.ErrCodeDisallowedNameException, aerr.Error())
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeInvalidParameterException:
+				fmt.Println(waf.ErrCodeInvalidParameterException, aerr.Error())
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeLimitsExceededException:
+				fmt.Println(waf.ErrCodeLimitsExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a byte match set
+//
+// The following example deletes a byte match set with the ID exampleIDs3t-46da-4fdb-b8d5-abc321j569j5.
+func ExampleWAF_DeleteByteMatchSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.DeleteByteMatchSetInput{
+		ByteMatchSetId: aws.String("exampleIDs3t-46da-4fdb-b8d5-abc321j569j5"),
+		ChangeToken:    aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+	}
+
+	result, err := svc.DeleteByteMatchSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			case waf.ErrCodeReferencedItemException:
+				fmt.Println(waf.ErrCodeReferencedItemException, aerr.Error())
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeNonEmptyEntityException:
+				fmt.Println(waf.ErrCodeNonEmptyEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete an IP set
+//
+// The following example deletes an IP match set  with the ID example1ds3t-46da-4fdb-b8d5-abc321j569j5.
+func ExampleWAF_DeleteIPSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.DeleteIPSetInput{
+		ChangeToken: aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		IPSetId:     aws.String("example1ds3t-46da-4fdb-b8d5-abc321j569j5"),
+	}
+
+	result, err := svc.DeleteIPSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			case waf.ErrCodeReferencedItemException:
+				fmt.Println(waf.ErrCodeReferencedItemException, aerr.Error())
+			case waf.ErrCodeNonEmptyEntityException:
+				fmt.Println(waf.ErrCodeNonEmptyEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a rule
+//
+// The following example deletes a rule with the ID WAFRule-1-Example.
+func ExampleWAF_DeleteRule_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.DeleteRuleInput{
+		ChangeToken: aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		RuleId:      aws.String("WAFRule-1-Example"),
+	}
+
+	result, err := svc.DeleteRule(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			case waf.ErrCodeReferencedItemException:
+				fmt.Println(waf.ErrCodeReferencedItemException, aerr.Error())
+			case waf.ErrCodeNonEmptyEntityException:
+				fmt.Println(waf.ErrCodeNonEmptyEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a size constraint set
+//
+// The following example deletes a size constraint set  with the ID example1ds3t-46da-4fdb-b8d5-abc321j569j5.
+func ExampleWAF_DeleteSizeConstraintSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.DeleteSizeConstraintSetInput{
+		ChangeToken:         aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		SizeConstraintSetId: aws.String("example1ds3t-46da-4fdb-b8d5-abc321j569j5"),
+	}
+
+	result, err := svc.DeleteSizeConstraintSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			case waf.ErrCodeReferencedItemException:
+				fmt.Println(waf.ErrCodeReferencedItemException, aerr.Error())
+			case waf.ErrCodeNonEmptyEntityException:
+				fmt.Println(waf.ErrCodeNonEmptyEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a SQL injection match set
+//
+// The following example deletes a SQL injection match set  with the ID example1ds3t-46da-4fdb-b8d5-abc321j569j5.
+func ExampleWAF_DeleteSqlInjectionMatchSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.DeleteSqlInjectionMatchSetInput{
+		ChangeToken:            aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		SqlInjectionMatchSetId: aws.String("example1ds3t-46da-4fdb-b8d5-abc321j569j5"),
+	}
+
+	result, err := svc.DeleteSqlInjectionMatchSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			case waf.ErrCodeReferencedItemException:
+				fmt.Println(waf.ErrCodeReferencedItemException, aerr.Error())
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeNonEmptyEntityException:
+				fmt.Println(waf.ErrCodeNonEmptyEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a web ACL
+//
+// The following example deletes a web ACL with the ID example-46da-4444-5555-example.
+func ExampleWAF_DeleteWebACL_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.DeleteWebACLInput{
+		ChangeToken: aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		WebACLId:    aws.String("example-46da-4444-5555-example"),
+	}
+
+	result, err := svc.DeleteWebACL(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			case waf.ErrCodeReferencedItemException:
+				fmt.Println(waf.ErrCodeReferencedItemException, aerr.Error())
+			case waf.ErrCodeNonEmptyEntityException:
+				fmt.Println(waf.ErrCodeNonEmptyEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete an XSS match set
+//
+// The following example deletes an XSS match set with the ID example1ds3t-46da-4fdb-b8d5-abc321j569j5.
+func ExampleWAF_DeleteXssMatchSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.DeleteXssMatchSetInput{
+		ChangeToken:   aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		XssMatchSetId: aws.String("example1ds3t-46da-4fdb-b8d5-abc321j569j5"),
+	}
+
+	result, err := svc.DeleteXssMatchSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			case waf.ErrCodeReferencedItemException:
+				fmt.Println(waf.ErrCodeReferencedItemException, aerr.Error())
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeNonEmptyEntityException:
+				fmt.Println(waf.ErrCodeNonEmptyEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get a byte match set
+//
+// The following example returns the details of a byte match set with the ID exampleIDs3t-46da-4fdb-b8d5-abc321j569j5.
+func ExampleWAF_GetByteMatchSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.GetByteMatchSetInput{
+		ByteMatchSetId: aws.String("exampleIDs3t-46da-4fdb-b8d5-abc321j569j5"),
+	}
+
+	result, err := svc.GetByteMatchSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get a change token
+//
+// The following example returns a change token to use for a create, update or delete
+// operation.
+func ExampleWAF_GetChangeToken_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.GetChangeTokenInput{}
+
+	result, err := svc.GetChangeToken(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get the change token status
+//
+// The following example returns the status of a change token with the ID abcd12f2-46da-4fdb-b8d5-fbd4c466928f.
+func ExampleWAF_GetChangeTokenStatus_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.GetChangeTokenStatusInput{
+		ChangeToken: aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+	}
+
+	result, err := svc.GetChangeTokenStatus(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get an IP set
+//
+// The following example returns the details of an IP match set with the ID example1ds3t-46da-4fdb-b8d5-abc321j569j5.
+func ExampleWAF_GetIPSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.GetIPSetInput{
+		IPSetId: aws.String("example1ds3t-46da-4fdb-b8d5-abc321j569j5"),
+	}
+
+	result, err := svc.GetIPSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get a rule
+//
+// The following example returns the details of a rule with the ID example1ds3t-46da-4fdb-b8d5-abc321j569j5.
+func ExampleWAF_GetRule_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.GetRuleInput{
+		RuleId: aws.String("example1ds3t-46da-4fdb-b8d5-abc321j569j5"),
+	}
+
+	result, err := svc.GetRule(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get a sampled requests
+//
+// The following example returns detailed information about 100 requests --a sample--
+// that AWS WAF randomly selects from among the first 5,000 requests that your AWS resource
+// received between the time period 2016-09-27T15:50Z to 2016-09-27T15:50Z.
+func ExampleWAF_GetSampledRequests_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.GetSampledRequestsInput{
+		MaxItems: aws.Int64(100),
+		RuleId:   aws.String("WAFRule-1-Example"),
+		TimeWindow: &waf.TimeWindow{
+			EndTime:   parseTime("2006-01-02T15:04:05Z", "2016-09-27T15:50Z"),
+			StartTime: parseTime("2006-01-02T15:04:05Z", "2016-09-27T15:50Z"),
+		},
+		WebAclId: aws.String("createwebacl-1472061481310"),
+	}
+
+	result, err := svc.GetSampledRequests(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get a size constraint set
+//
+// The following example returns the details of a size constraint match set with the
+// ID example1ds3t-46da-4fdb-b8d5-abc321j569j5.
+func ExampleWAF_GetSizeConstraintSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.GetSizeConstraintSetInput{
+		SizeConstraintSetId: aws.String("example1ds3t-46da-4fdb-b8d5-abc321j569j5"),
+	}
+
+	result, err := svc.GetSizeConstraintSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get a SQL injection match set
+//
+// The following example returns the details of a SQL injection match set with the ID
+// example1ds3t-46da-4fdb-b8d5-abc321j569j5.
+func ExampleWAF_GetSqlInjectionMatchSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.GetSqlInjectionMatchSetInput{
+		SqlInjectionMatchSetId: aws.String("example1ds3t-46da-4fdb-b8d5-abc321j569j5"),
+	}
+
+	result, err := svc.GetSqlInjectionMatchSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get a web ACL
+//
+// The following example returns the details of a web ACL with the ID createwebacl-1472061481310.
+func ExampleWAF_GetWebACL_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.GetWebACLInput{
+		WebACLId: aws.String("createwebacl-1472061481310"),
+	}
+
+	result, err := svc.GetWebACL(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get an XSS match set
+//
+// The following example returns the details of an XSS match set with the ID example1ds3t-46da-4fdb-b8d5-abc321j569j5.
+func ExampleWAF_GetXssMatchSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.GetXssMatchSetInput{
+		XssMatchSetId: aws.String("example1ds3t-46da-4fdb-b8d5-abc321j569j5"),
+	}
+
+	result, err := svc.GetXssMatchSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list IP sets
+//
+// The following example returns an array of up to 100 IP match sets.
+func ExampleWAF_ListIPSets_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.ListIPSetsInput{
+		Limit: aws.Int64(100),
+	}
+
+	result, err := svc.ListIPSets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list rules
+//
+// The following example returns an array of up to 100 rules.
+func ExampleWAF_ListRules_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.ListRulesInput{
+		Limit: aws.Int64(100),
+	}
+
+	result, err := svc.ListRules(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list a size constraint sets
+//
+// The following example returns an array of up to 100 size contraint match sets.
+func ExampleWAF_ListSizeConstraintSets_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.ListSizeConstraintSetsInput{
+		Limit: aws.Int64(100),
+	}
+
+	result, err := svc.ListSizeConstraintSets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list SQL injection match sets
+//
+// The following example returns an array of up to 100 SQL injection match sets.
+func ExampleWAF_ListSqlInjectionMatchSets_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.ListSqlInjectionMatchSetsInput{
+		Limit: aws.Int64(100),
+	}
+
+	result, err := svc.ListSqlInjectionMatchSets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list Web ACLs
+//
+// The following example returns an array of up to 100 web ACLs.
+func ExampleWAF_ListWebACLs_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.ListWebACLsInput{
+		Limit: aws.Int64(100),
+	}
+
+	result, err := svc.ListWebACLs(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list XSS match sets
+//
+// The following example returns an array of up to 100 XSS match sets.
+func ExampleWAF_ListXssMatchSets_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.ListXssMatchSetsInput{
+		Limit: aws.Int64(100),
+	}
+
+	result, err := svc.ListXssMatchSets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To update a byte match set
+//
+// The following example deletes a ByteMatchTuple object (filters) in an byte match
+// set with the ID exampleIDs3t-46da-4fdb-b8d5-abc321j569j5.
+func ExampleWAF_UpdateByteMatchSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.UpdateByteMatchSetInput{
+		ByteMatchSetId: aws.String("exampleIDs3t-46da-4fdb-b8d5-abc321j569j5"),
+		ChangeToken:    aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		Updates: []*waf.ByteMatchSetUpdate{
+			{
+				Action: aws.String("DELETE"),
+			},
+		},
+	}
+
+	result, err := svc.UpdateByteMatchSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeInvalidOperationException:
+				fmt.Println(waf.ErrCodeInvalidOperationException, aerr.Error())
+			case waf.ErrCodeInvalidParameterException:
+				fmt.Println(waf.ErrCodeInvalidParameterException, aerr.Error())
+			case waf.ErrCodeNonexistentContainerException:
+				fmt.Println(waf.ErrCodeNonexistentContainerException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeLimitsExceededException:
+				fmt.Println(waf.ErrCodeLimitsExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To update an IP set
+//
+// The following example deletes an IPSetDescriptor object in an IP match set with the
+// ID example1ds3t-46da-4fdb-b8d5-abc321j569j5.
+func ExampleWAF_UpdateIPSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.UpdateIPSetInput{
+		ChangeToken: aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		IPSetId:     aws.String("example1ds3t-46da-4fdb-b8d5-abc321j569j5"),
+		Updates: []*waf.IPSetUpdate{
+			{
+				Action: aws.String("DELETE"),
+			},
+		},
+	}
+
+	result, err := svc.UpdateIPSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeInvalidOperationException:
+				fmt.Println(waf.ErrCodeInvalidOperationException, aerr.Error())
+			case waf.ErrCodeInvalidParameterException:
+				fmt.Println(waf.ErrCodeInvalidParameterException, aerr.Error())
+			case waf.ErrCodeNonexistentContainerException:
+				fmt.Println(waf.ErrCodeNonexistentContainerException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			case waf.ErrCodeReferencedItemException:
+				fmt.Println(waf.ErrCodeReferencedItemException, aerr.Error())
+			case waf.ErrCodeLimitsExceededException:
+				fmt.Println(waf.ErrCodeLimitsExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To update a rule
+//
+// The following example deletes a Predicate object in a rule with the ID example1ds3t-46da-4fdb-b8d5-abc321j569j5.
+func ExampleWAF_UpdateRule_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.UpdateRuleInput{
+		ChangeToken: aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		RuleId:      aws.String("example1ds3t-46da-4fdb-b8d5-abc321j569j5"),
+		Updates: []*waf.RuleUpdate{
+			{
+				Action: aws.String("DELETE"),
+			},
+		},
+	}
+
+	result, err := svc.UpdateRule(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeInvalidOperationException:
+				fmt.Println(waf.ErrCodeInvalidOperationException, aerr.Error())
+			case waf.ErrCodeInvalidParameterException:
+				fmt.Println(waf.ErrCodeInvalidParameterException, aerr.Error())
+			case waf.ErrCodeNonexistentContainerException:
+				fmt.Println(waf.ErrCodeNonexistentContainerException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			case waf.ErrCodeReferencedItemException:
+				fmt.Println(waf.ErrCodeReferencedItemException, aerr.Error())
+			case waf.ErrCodeLimitsExceededException:
+				fmt.Println(waf.ErrCodeLimitsExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To update a size constraint set
+//
+// The following example deletes a SizeConstraint object (filters) in a size constraint
+// set with the ID example1ds3t-46da-4fdb-b8d5-abc321j569j5.
+func ExampleWAF_UpdateSizeConstraintSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.UpdateSizeConstraintSetInput{
+		ChangeToken:         aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		SizeConstraintSetId: aws.String("example1ds3t-46da-4fdb-b8d5-abc321j569j5"),
+		Updates: []*waf.SizeConstraintSetUpdate{
+			{
+				Action: aws.String("DELETE"),
+			},
+		},
+	}
+
+	result, err := svc.UpdateSizeConstraintSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeInvalidOperationException:
+				fmt.Println(waf.ErrCodeInvalidOperationException, aerr.Error())
+			case waf.ErrCodeInvalidParameterException:
+				fmt.Println(waf.ErrCodeInvalidParameterException, aerr.Error())
+			case waf.ErrCodeNonexistentContainerException:
+				fmt.Println(waf.ErrCodeNonexistentContainerException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			case waf.ErrCodeReferencedItemException:
+				fmt.Println(waf.ErrCodeReferencedItemException, aerr.Error())
+			case waf.ErrCodeLimitsExceededException:
+				fmt.Println(waf.ErrCodeLimitsExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To update a SQL injection match set
+//
+// The following example deletes a SqlInjectionMatchTuple object (filters) in a SQL
+// injection match set with the ID example1ds3t-46da-4fdb-b8d5-abc321j569j5.
+func ExampleWAF_UpdateSqlInjectionMatchSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.UpdateSqlInjectionMatchSetInput{
+		ChangeToken:            aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		SqlInjectionMatchSetId: aws.String("example1ds3t-46da-4fdb-b8d5-abc321j569j5"),
+		Updates: []*waf.SqlInjectionMatchSetUpdate{
+			{
+				Action: aws.String("DELETE"),
+			},
+		},
+	}
+
+	result, err := svc.UpdateSqlInjectionMatchSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeInvalidOperationException:
+				fmt.Println(waf.ErrCodeInvalidOperationException, aerr.Error())
+			case waf.ErrCodeInvalidParameterException:
+				fmt.Println(waf.ErrCodeInvalidParameterException, aerr.Error())
+			case waf.ErrCodeNonexistentContainerException:
+				fmt.Println(waf.ErrCodeNonexistentContainerException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeLimitsExceededException:
+				fmt.Println(waf.ErrCodeLimitsExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To update a Web ACL
+//
+// The following example deletes an ActivatedRule object in a WebACL with the ID webacl-1472061481310.
+func ExampleWAF_UpdateWebACL_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.UpdateWebACLInput{
+		ChangeToken: aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		DefaultAction: &waf.WafAction{
+			Type: aws.String("ALLOW"),
 		},
 		Updates: []*waf.WebACLUpdate{
-			{ // Required
-				Action: aws.String("ChangeAction"), // Required
-				ActivatedRule: &waf.ActivatedRule{ // Required
-					Action: &waf.WafAction{ // Required
-						Type: aws.String("WafActionType"), // Required
-					},
-					Priority: aws.Int64(1),             // Required
-					RuleId:   aws.String("ResourceId"), // Required
-				},
+			{
+				Action: aws.String("DELETE"),
 			},
-			// More values...
 		},
+		WebACLId: aws.String("webacl-1472061481310"),
 	}
-	resp, err := svc.UpdateWebACL(params)
 
+	result, err := svc.UpdateWebACL(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeInvalidOperationException:
+				fmt.Println(waf.ErrCodeInvalidOperationException, aerr.Error())
+			case waf.ErrCodeInvalidParameterException:
+				fmt.Println(waf.ErrCodeInvalidParameterException, aerr.Error())
+			case waf.ErrCodeNonexistentContainerException:
+				fmt.Println(waf.ErrCodeNonexistentContainerException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			case waf.ErrCodeReferencedItemException:
+				fmt.Println(waf.ErrCodeReferencedItemException, aerr.Error())
+			case waf.ErrCodeLimitsExceededException:
+				fmt.Println(waf.ErrCodeLimitsExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleWAF_UpdateXssMatchSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := waf.New(sess)
-
-	params := &waf.UpdateXssMatchSetInput{
-		ChangeToken: aws.String("ChangeToken"), // Required
-		Updates: []*waf.XssMatchSetUpdate{ // Required
-			{ // Required
-				Action: aws.String("ChangeAction"), // Required
-				XssMatchTuple: &waf.XssMatchTuple{ // Required
-					FieldToMatch: &waf.FieldToMatch{ // Required
-						Type: aws.String("MatchFieldType"), // Required
-						Data: aws.String("MatchFieldData"),
-					},
-					TextTransformation: aws.String("TextTransformation"), // Required
-				},
+// To update an XSS match set
+//
+// The following example deletes an XssMatchTuple object (filters) in an XssMatchSet
+// with the ID example1ds3t-46da-4fdb-b8d5-abc321j569j5.
+func ExampleWAF_UpdateXssMatchSet_shared00() {
+	svc := waf.New(session.New())
+	input := &waf.UpdateXssMatchSetInput{
+		ChangeToken: aws.String("abcd12f2-46da-4fdb-b8d5-fbd4c466928f"),
+		Updates: []*waf.XssMatchSetUpdate{
+			{
+				Action: aws.String("DELETE"),
 			},
-			// More values...
 		},
-		XssMatchSetId: aws.String("ResourceId"), // Required
+		XssMatchSetId: aws.String("example1ds3t-46da-4fdb-b8d5-abc321j569j5"),
 	}
-	resp, err := svc.UpdateXssMatchSet(params)
 
+	result, err := svc.UpdateXssMatchSet(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case waf.ErrCodeInternalErrorException:
+				fmt.Println(waf.ErrCodeInternalErrorException, aerr.Error())
+			case waf.ErrCodeInvalidAccountException:
+				fmt.Println(waf.ErrCodeInvalidAccountException, aerr.Error())
+			case waf.ErrCodeInvalidOperationException:
+				fmt.Println(waf.ErrCodeInvalidOperationException, aerr.Error())
+			case waf.ErrCodeInvalidParameterException:
+				fmt.Println(waf.ErrCodeInvalidParameterException, aerr.Error())
+			case waf.ErrCodeNonexistentContainerException:
+				fmt.Println(waf.ErrCodeNonexistentContainerException, aerr.Error())
+			case waf.ErrCodeNonexistentItemException:
+				fmt.Println(waf.ErrCodeNonexistentItemException, aerr.Error())
+			case waf.ErrCodeStaleDataException:
+				fmt.Println(waf.ErrCodeStaleDataException, aerr.Error())
+			case waf.ErrCodeLimitsExceededException:
+				fmt.Println(waf.ErrCodeLimitsExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }

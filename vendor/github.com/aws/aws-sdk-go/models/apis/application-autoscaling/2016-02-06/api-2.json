@@ -101,6 +101,7 @@
         {"shape":"LimitExceededException"},
         {"shape":"ObjectNotFoundException"},
         {"shape":"ConcurrentUpdateException"},
+        {"shape":"FailedResourceAccessException"},
         {"shape":"InternalServiceException"}
       ]
     },
@@ -152,6 +153,21 @@
       "exception":true
     },
     "Cooldown":{"type":"integer"},
+    "CustomizedMetricSpecification":{
+      "type":"structure",
+      "required":[
+        "MetricName",
+        "Namespace",
+        "Statistic"
+      ],
+      "members":{
+        "MetricName":{"shape":"MetricName"},
+        "Namespace":{"shape":"MetricNamespace"},
+        "Dimensions":{"shape":"MetricDimensions"},
+        "Statistic":{"shape":"MetricStatistic"},
+        "Unit":{"shape":"MetricUnit"}
+      }
+    },
     "DeleteScalingPolicyRequest":{
       "type":"structure",
       "required":[
@@ -283,7 +299,44 @@
         "Maximum"
       ]
     },
+    "MetricDimension":{
+      "type":"structure",
+      "required":[
+        "Name",
+        "Value"
+      ],
+      "members":{
+        "Name":{"shape":"MetricDimensionName"},
+        "Value":{"shape":"MetricDimensionValue"}
+      }
+    },
+    "MetricDimensionName":{"type":"string"},
+    "MetricDimensionValue":{"type":"string"},
+    "MetricDimensions":{
+      "type":"list",
+      "member":{"shape":"MetricDimension"}
+    },
+    "MetricName":{"type":"string"},
+    "MetricNamespace":{"type":"string"},
     "MetricScale":{"type":"double"},
+    "MetricStatistic":{
+      "type":"string",
+      "enum":[
+        "Average",
+        "Minimum",
+        "Maximum",
+        "SampleCount",
+        "Sum"
+      ]
+    },
+    "MetricType":{
+      "type":"string",
+      "enum":[
+        "DynamoDBReadCapacityUtilization",
+        "DynamoDBWriteCapacityUtilization"
+      ]
+    },
+    "MetricUnit":{"type":"string"},
     "MinAdjustmentMagnitude":{"type":"integer"},
     "ObjectNotFoundException":{
       "type":"structure",
@@ -300,7 +353,18 @@
     },
     "PolicyType":{
       "type":"string",
-      "enum":["StepScaling"]
+      "enum":[
+        "StepScaling",
+        "TargetTrackingScaling"
+      ]
+    },
+    "PredefinedMetricSpecification":{
+      "type":"structure",
+      "required":["PredefinedMetricType"],
+      "members":{
+        "PredefinedMetricType":{"shape":"MetricType"},
+        "ResourceLabel":{"shape":"ResourceLabel"}
+      }
     },
     "PutScalingPolicyRequest":{
       "type":"structure",
@@ -316,14 +380,16 @@
         "ResourceId":{"shape":"ResourceIdMaxLen1600"},
         "ScalableDimension":{"shape":"ScalableDimension"},
         "PolicyType":{"shape":"PolicyType"},
-        "StepScalingPolicyConfiguration":{"shape":"StepScalingPolicyConfiguration"}
+        "StepScalingPolicyConfiguration":{"shape":"StepScalingPolicyConfiguration"},
+        "TargetTrackingScalingPolicyConfiguration":{"shape":"TargetTrackingScalingPolicyConfiguration"}
       }
     },
     "PutScalingPolicyResponse":{
       "type":"structure",
       "required":["PolicyARN"],
       "members":{
-        "PolicyARN":{"shape":"ResourceIdMaxLen1600"}
+        "PolicyARN":{"shape":"ResourceIdMaxLen1600"},
+        "Alarms":{"shape":"Alarms"}
       }
     },
     "RegisterScalableTargetRequest":{
@@ -362,13 +428,22 @@
       "type":"list",
       "member":{"shape":"ResourceIdMaxLen1600"}
     },
+    "ResourceLabel":{
+      "type":"string",
+      "max":1023,
+      "min":1
+    },
     "ScalableDimension":{
       "type":"string",
       "enum":[
         "ecs:service:DesiredCount",
         "ec2:spot-fleet-request:TargetCapacity",
         "elasticmapreduce:instancegroup:InstanceCount",
-        "appstream:fleet:DesiredCapacity"
+        "appstream:fleet:DesiredCapacity",
+        "dynamodb:table:ReadCapacityUnits",
+        "dynamodb:table:WriteCapacityUnits",
+        "dynamodb:index:ReadCapacityUnits",
+        "dynamodb:index:WriteCapacityUnits"
       ]
     },
     "ScalableTarget":{
@@ -461,6 +536,7 @@
         "ScalableDimension":{"shape":"ScalableDimension"},
         "PolicyType":{"shape":"PolicyType"},
         "StepScalingPolicyConfiguration":{"shape":"StepScalingPolicyConfiguration"},
+        "TargetTrackingScalingPolicyConfiguration":{"shape":"TargetTrackingScalingPolicyConfiguration"},
         "Alarms":{"shape":"Alarms"},
         "CreationTime":{"shape":"TimestampType"}
       }
@@ -471,7 +547,8 @@
         "ecs",
         "elasticmapreduce",
         "ec2",
-        "appstream"
+        "appstream",
+        "dynamodb"
       ]
     },
     "StepAdjustment":{
@@ -495,6 +572,17 @@
         "MinAdjustmentMagnitude":{"shape":"MinAdjustmentMagnitude"},
         "Cooldown":{"shape":"Cooldown"},
         "MetricAggregationType":{"shape":"MetricAggregationType"}
+      }
+    },
+    "TargetTrackingScalingPolicyConfiguration":{
+      "type":"structure",
+      "required":["TargetValue"],
+      "members":{
+        "TargetValue":{"shape":"MetricScale"},
+        "PredefinedMetricSpecification":{"shape":"PredefinedMetricSpecification"},
+        "CustomizedMetricSpecification":{"shape":"CustomizedMetricSpecification"},
+        "ScaleOutCooldown":{"shape":"Cooldown"},
+        "ScaleInCooldown":{"shape":"Cooldown"}
       }
     },
     "TimestampType":{"type":"timestamp"},

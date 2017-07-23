@@ -106,6 +106,22 @@ var SendHandler = request.NamedHandler{
 			sender = sendWithoutFollowRedirects
 		}
 
+		if request.NoBody == r.HTTPRequest.Body {
+			// Strip off the request body if the NoBody reader was used as a
+			// place holder for a request body. This prevents the SDK from
+			// making requests with a request body when it would be invalid
+			// to do so.
+			//
+			// Use a shallow copy of the http.Request to ensure the race condition
+			// of transport on Body will not trigger
+			reqOrig, reqCopy := r.HTTPRequest, *r.HTTPRequest
+			reqCopy.Body = nil
+			r.HTTPRequest = &reqCopy
+			defer func() {
+				r.HTTPRequest = reqOrig
+			}()
+		}
+
 		var err error
 		r.HTTPResponse, err = sender(r)
 		if err != nil {

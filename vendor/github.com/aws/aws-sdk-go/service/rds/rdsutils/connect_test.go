@@ -10,12 +10,30 @@ import (
 )
 
 func TestBuildAuthToken(t *testing.T) {
-	endpoint := "https://prod-instance.us-east-1.rds.amazonaws.com:3306"
-	region := "us-west-2"
-	creds := credentials.NewStaticCredentials("AKID", "SECRET", "SESSION")
-	user := "mysqlUser"
+	cases := []struct {
+		endpoint      string
+		region        string
+		user          string
+		expectedRegex string
+	}{
+		{
+			"https://prod-instance.us-east-1.rds.amazonaws.com:3306",
+			"us-west-2",
+			"mysqlUser",
+			`^prod-instance\.us-east-1\.rds\.amazonaws\.com:3306\?Action=connect.*?DBUser=mysqlUser.*`,
+		},
+		{
+			"prod-instance.us-east-1.rds.amazonaws.com:3306",
+			"us-west-2",
+			"mysqlUser",
+			`^prod-instance\.us-east-1\.rds\.amazonaws\.com:3306\?Action=connect.*?DBUser=mysqlUser.*`,
+		},
+	}
 
-	url, err := rdsutils.BuildAuthToken(endpoint, region, user, creds)
-	assert.NoError(t, err)
-	assert.Regexp(t, `^prod-instance\.us-east-1\.rds\.amazonaws\.com:3306\?Action=connect.*?DBUser=mysqlUser.*`, url)
+	for _, c := range cases {
+		creds := credentials.NewStaticCredentials("AKID", "SECRET", "SESSION")
+		url, err := rdsutils.BuildAuthToken(c.endpoint, c.region, c.user, creds)
+		assert.NoError(t, err)
+		assert.Regexp(t, c.expectedRegex, url)
+	}
 }

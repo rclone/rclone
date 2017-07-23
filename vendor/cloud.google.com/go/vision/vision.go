@@ -35,6 +35,8 @@ type Client struct {
 }
 
 // NewClient creates a new vision client.
+//
+// Deprecated: Use NewImageAnnotatorClient from cloud.google.com/go/vision/apiv1 instead.
 func NewClient(ctx context.Context, opts ...option.ClientOption) (*Client, error) {
 	c, err := vkit.NewImageAnnotatorClient(ctx, opts...)
 	if err != nil {
@@ -49,7 +51,7 @@ func (c *Client) Close() error {
 	return c.client.Close()
 }
 
-// Annotate annotates multiple images, each with a potentially differeent set
+// Annotate annotates multiple images, each with a potentially different set
 // of features.
 func (c *Client) Annotate(ctx context.Context, requests ...*AnnotateRequest) ([]*Annotations, error) {
 	var reqs []*pb.AnnotateImageRequest
@@ -174,10 +176,7 @@ func (c *Client) annotateOne(ctx context.Context, req *AnnotateRequest) (*Annota
 	anns := annsSlice[0]
 	// When there is only one image and one feature, the Annotations.Error field is
 	// unambiguously about that one detection, so we "promote" it to the error return value.
-	if anns.Error != nil {
-		return nil, anns.Error
-	}
-	return anns, nil
+	return anns, anns.Error
 }
 
 // TODO(jba): add examples for all single-feature functions (below).

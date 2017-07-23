@@ -36,12 +36,13 @@ import (
 )
 
 func TestSignedURL(t *testing.T) {
+	t.Parallel()
 	expires, _ := time.Parse(time.RFC3339, "2002-10-02T10:00:00-05:00")
 	url, err := SignedURL("bucket-name", "object-name", &SignedURLOptions{
 		GoogleAccessID: "xxx@clientid",
 		PrivateKey:     dummyKey("rsa"),
 		Method:         "GET",
-		MD5:            []byte("202cb962ac59075b964b07152d234b70"),
+		MD5:            "ICy5YqxZB1uWSwcVLSNLcA==",
 		Expires:        expires,
 		ContentType:    "application/json",
 		Headers:        []string{"x-header1", "x-header2"},
@@ -51,25 +52,26 @@ func TestSignedURL(t *testing.T) {
 	}
 	want := "https://storage.googleapis.com/bucket-name/object-name?" +
 		"Expires=1033570800&GoogleAccessId=xxx%40clientid&Signature=" +
-		"ITqNWQHr7ayIj%2B0Ds5%2FzUT2cWMQQouuFmu6L11Zd3kfNKvm3sjyGIzO" +
-		"gZsSUoter1SxP7BcrCzgqIZ9fQmgQnuIpqqLL4kcGmTbKsQS6hTknpJM%2F" +
-		"2lS4NY6UH1VXBgm2Tce28kz8rnmqG6svcGvtWuOgJsETeSIl1R9nAEIDCEq" +
-		"ZJzoOiru%2BODkHHkpoFjHWAwHugFHX%2B9EX4SxaytiN3oEy48HpYGWV0I" +
-		"h8NvU1hmeWzcLr41GnTADeCn7Eg%2Fb5H2GCNO70Cz%2Bw2fn%2BofLCUeR" +
-		"YQd%2FhES8oocv5kpHZkstc8s8uz3aKMsMauzZ9MOmGy%2F6VULBgIVvi6a" +
-		"AwEBIYOw%3D%3D"
+		"ZMw18bZVhySNYAMEX87RMyuZCUMtGLVi%2B2zU2ByiQ0Rxgij%2BhFZ5LsT" +
+		"5ZPIH5h3QXB%2BiSb1URJnZo3aF0exVP%2FYR1hpg2e65w9HHt7yYjIqcg" +
+		"%2FfAOIyxriFtgRYk3oAv%2FFLF62fI8iF%2BCp0fWSm%2FHggz22blVnQz" +
+		"EtSP%2BuRhFle4172L%2B710sfMDtyQLKTz6W4TmRjC9ymTi8mVj95dZgyF" +
+		"RXbibTdtw0JzndE0Ig4c6pU4xDPPiyaziUSVDMIpzZDJH1GYOGHxbFasba4" +
+		"1rRoWWkdBnsMtHm2ck%2FsFD2leL6u8q0OpVAc4ZdxseucL4OpCy%2BCLhQ" +
+		"JFQT5bqSljP0g%3D%3D"
 	if url != want {
 		t.Fatalf("Unexpected signed URL; found %v", url)
 	}
 }
 
 func TestSignedURL_PEMPrivateKey(t *testing.T) {
+	t.Parallel()
 	expires, _ := time.Parse(time.RFC3339, "2002-10-02T10:00:00-05:00")
 	url, err := SignedURL("bucket-name", "object-name", &SignedURLOptions{
 		GoogleAccessID: "xxx@clientid",
 		PrivateKey:     dummyKey("pem"),
 		Method:         "GET",
-		MD5:            []byte("202cb962ac59075b964b07152d234b70"),
+		MD5:            "ICy5YqxZB1uWSwcVLSNLcA==",
 		Expires:        expires,
 		ContentType:    "application/json",
 		Headers:        []string{"x-header1", "x-header2"},
@@ -79,16 +81,16 @@ func TestSignedURL_PEMPrivateKey(t *testing.T) {
 	}
 	want := "https://storage.googleapis.com/bucket-name/object-name?" +
 		"Expires=1033570800&GoogleAccessId=xxx%40clientid&Signature=" +
-		"B7XkS4dfmVDoe%2FoDeXZkWlYmg8u2kI0SizTrzL5%2B9RmKnb5j7Kf34DZ" +
-		"JL8Hcjr1MdPFLNg2QV4lEH86Gqgqt%2Fv3jFOTRl4wlzcRU%2FvV5c5HU8M" +
-		"qW0FZ0IDbqod2RdsMONLEO6yQWV2HWFrMLKl2yMFlWCJ47et%2BFaHe6v4Z" +
-		"EBc0%3D"
+		"gHlh63sOxJnNj22X%2B%2F4kwOSNMeqwXWr4udEfrzJPQcq1xzxA8ovMM5SOrOc%" +
+		"2FuE%2Ftc9%2Bq7a42CDBwZff1PsvuJMBDaPbluU257h%2Bvxx8lHMnb%2Bg1wD1" +
+		"99FiCE014MRH9TlIg%2FdXRkErosVWTy4GqAgZemmKHo0HwDGT6IovB9mdg%3D"
 	if url != want {
 		t.Fatalf("Unexpected signed URL; found %v", url)
 	}
 }
 
 func TestSignedURL_SignBytes(t *testing.T) {
+	t.Parallel()
 	expires, _ := time.Parse(time.RFC3339, "2002-10-02T10:00:00-05:00")
 	url, err := SignedURL("bucket-name", "object-name", &SignedURLOptions{
 		GoogleAccessID: "xxx@clientid",
@@ -96,7 +98,7 @@ func TestSignedURL_SignBytes(t *testing.T) {
 			return []byte("signed"), nil
 		},
 		Method:      "GET",
-		MD5:         []byte("202cb962ac59075b964b07152d234b70"),
+		MD5:         "ICy5YqxZB1uWSwcVLSNLcA==",
 		Expires:     expires,
 		ContentType: "application/json",
 		Headers:     []string{"x-header1", "x-header2"},
@@ -113,12 +115,13 @@ func TestSignedURL_SignBytes(t *testing.T) {
 }
 
 func TestSignedURL_URLUnsafeObjectName(t *testing.T) {
+	t.Parallel()
 	expires, _ := time.Parse(time.RFC3339, "2002-10-02T10:00:00-05:00")
 	url, err := SignedURL("bucket-name", "object name界", &SignedURLOptions{
 		GoogleAccessID: "xxx@clientid",
 		PrivateKey:     dummyKey("pem"),
 		Method:         "GET",
-		MD5:            []byte("202cb962ac59075b964b07152d234b70"),
+		MD5:            "ICy5YqxZB1uWSwcVLSNLcA==",
 		Expires:        expires,
 		ContentType:    "application/json",
 		Headers:        []string{"x-header1", "x-header2"},
@@ -126,19 +129,20 @@ func TestSignedURL_URLUnsafeObjectName(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	want := "https://storage.googleapis.com/bucket-name/object%20nam" +
-		"e%E7%95%8C?Expires=1033570800&GoogleAccessId=xxx%40clientid" +
-		"&Signature=bxORkrAm73INEMHktrE7VoUZQzVPvL5NFZ7noAI5zK%2BGSm" +
-		"%2BWFvsK%2FVnRGtYK9BK89jz%2BX4ZQd87nkMEJw1OsqmGNiepyzB%2B3o" +
-		"sUYrHyV7UnKs9bkQpBkqPFlfgK1o7oX4NJjA1oKjuHP%2Fj5%2FC15OPa3c" +
-		"vHV619BEb7vf30nAwQM%3D"
+	want := "https://storage.googleapis.com/bucket-name/object%20name%E7%95%8C?" +
+		"Expires=1033570800&GoogleAccessId=xxx%40clientid&Signature=" +
+		"LSxs1YwXNKOa7mQv1ZAI2ao0Fuv6yXLLU7%2BQ97z2B7hYZ57OiFwQ72EdGXSiIM" +
+		"JwLisEKkwoSlYCMm3uuTdgJtXXVi7SYXMfdeKaonyQwMv531KETCBTSewt8CW%2B" +
+		"FaUJ5SEYG44SeJCiqeIr3GF7t90UNWs6TdFXDaKShpQzBGg%3D"
 	if url != want {
 		t.Fatalf("Unexpected signed URL; found %v", url)
 	}
 }
 
 func TestSignedURL_MissingOptions(t *testing.T) {
+	t.Parallel()
 	pk := dummyKey("rsa")
+	expires, _ := time.Parse(time.RFC3339, "2002-10-02T10:00:00-05:00")
 	var tests = []struct {
 		opts   *SignedURLOptions
 		errMsg string
@@ -181,6 +185,16 @@ func TestSignedURL_MissingOptions(t *testing.T) {
 			},
 			"missing required expires",
 		},
+		{
+			&SignedURLOptions{
+				GoogleAccessID: "access_id",
+				PrivateKey:     pk,
+				Method:         "PUT",
+				Expires:        expires,
+				MD5:            "invalid",
+			},
+			"invalid MD5 checksum",
+		},
 	}
 	for _, test := range tests {
 		_, err := SignedURL("bucket", "name", test.opts)
@@ -199,6 +213,7 @@ func dummyKey(kind string) []byte {
 }
 
 func TestCopyToMissingFields(t *testing.T) {
+	t.Parallel()
 	var tests = []struct {
 		srcBucket, srcName, destBucket, destName string
 		errMsg                                   string
@@ -236,6 +251,7 @@ func TestCopyToMissingFields(t *testing.T) {
 }
 
 func TestObjectNames(t *testing.T) {
+	t.Parallel()
 	// Naming requirements: https://cloud.google.com/storage/docs/bucket-naming
 	const maxLegalLength = 1024
 
@@ -301,7 +317,7 @@ func TestObjectNames(t *testing.T) {
 		GoogleAccessID: "xxx@clientid",
 		PrivateKey:     dummyKey("rsa"),
 		Method:         "GET",
-		MD5:            []byte("202cb962ac59075b964b07152d234b70"),
+		MD5:            "ICy5YqxZB1uWSwcVLSNLcA==",
 		Expires:        time.Date(2002, time.October, 2, 10, 0, 0, 0, time.UTC),
 		ContentType:    "application/json",
 		Headers:        []string{"x-header1", "x-header2"},
@@ -319,6 +335,7 @@ func TestObjectNames(t *testing.T) {
 }
 
 func TestCondition(t *testing.T) {
+	t.Parallel()
 	gotReq := make(chan *http.Request, 1)
 	hc, close := newTestServer(func(w http.ResponseWriter, r *http.Request) {
 		io.Copy(ioutil.Discard, r.Body)
@@ -419,6 +436,7 @@ func TestCondition(t *testing.T) {
 }
 
 func TestConditionErrors(t *testing.T) {
+	t.Parallel()
 	for _, conds := range []Conditions{
 		{GenerationMatch: 0},
 		{DoesNotExist: false}, // same as above, actually
@@ -434,6 +452,7 @@ func TestConditionErrors(t *testing.T) {
 
 // Test object compose.
 func TestObjectCompose(t *testing.T) {
+	t.Parallel()
 	gotURL := make(chan string, 1)
 	gotBody := make(chan []byte, 1)
 	hc, close := newTestServer(func(w http.ResponseWriter, r *http.Request) {
@@ -612,6 +631,7 @@ func TestObjectCompose(t *testing.T) {
 // Test that ObjectIterator's Next and NextPage methods correctly terminate
 // if there is nothing to iterate over.
 func TestEmptyObjectIterator(t *testing.T) {
+	t.Parallel()
 	hClient, close := newTestServer(func(w http.ResponseWriter, r *http.Request) {
 		io.Copy(ioutil.Discard, r.Body)
 		fmt.Fprintf(w, "{}")
@@ -623,24 +643,16 @@ func TestEmptyObjectIterator(t *testing.T) {
 		t.Fatal(err)
 	}
 	it := client.Bucket("b").Objects(ctx, nil)
-	c := make(chan error, 1)
-	go func() {
-		_, err := it.Next()
-		c <- err
-	}()
-	select {
-	case err := <-c:
-		if err != iterator.Done {
-			t.Errorf("got %v, want Done", err)
-		}
-	case <-time.After(50 * time.Millisecond):
-		t.Error("timed out")
+	_, err = it.Next()
+	if err != iterator.Done {
+		t.Errorf("got %v, want Done", err)
 	}
 }
 
 // Test that BucketIterator's Next method correctly terminates if there is
 // nothing to iterate over.
 func TestEmptyBucketIterator(t *testing.T) {
+	t.Parallel()
 	hClient, close := newTestServer(func(w http.ResponseWriter, r *http.Request) {
 		io.Copy(ioutil.Discard, r.Body)
 		fmt.Fprintf(w, "{}")
@@ -652,18 +664,24 @@ func TestEmptyBucketIterator(t *testing.T) {
 		t.Fatal(err)
 	}
 	it := client.Buckets(ctx, "project")
-	c := make(chan error, 1)
-	go func() {
-		_, err := it.Next()
-		c <- err
-	}()
-	select {
-	case err := <-c:
-		if err != iterator.Done {
-			t.Errorf("got %v, want Done", err)
+	_, err = it.Next()
+	if err != iterator.Done {
+		t.Errorf("got %v, want Done", err)
+	}
+
+}
+
+func TestCodecUint32(t *testing.T) {
+	t.Parallel()
+	for _, u := range []uint32{0, 1, 256, 0xFFFFFFFF} {
+		s := encodeUint32(u)
+		d, err := decodeUint32(s)
+		if err != nil {
+			t.Fatal(err)
 		}
-	case <-time.After(50 * time.Millisecond):
-		t.Error("timed out")
+		if d != u {
+			t.Errorf("got %d, want input %d", d, u)
+		}
 	}
 }
 

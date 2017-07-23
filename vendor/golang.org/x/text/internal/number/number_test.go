@@ -5,6 +5,7 @@
 package number
 
 import (
+	"fmt"
 	"testing"
 
 	"golang.org/x/text/internal/testtext"
@@ -26,9 +27,9 @@ func TestInfo(t *testing.T) {
 		// U+096F DEVANAGARI DIGIT NINE ('९')
 		{"de-BE-u-nu-deva", SymGroup, ".", '\u096f'}, // miss -> latn -> de
 		{"de-Cyrl-BE", SymGroup, ",", '9'},           // inherits from root
-		{"de-CH", SymGroup, "'", '9'},                // overrides values in de
-		{"de-CH-oxendict", SymGroup, "'", '9'},       // inherits from de-CH (no compact index)
-		{"de-CH-u-nu-deva", SymGroup, "'", '\u096f'}, // miss -> latn -> de-CH
+		{"de-CH", SymGroup, "’", '9'},                // overrides values in de
+		{"de-CH-oxendict", SymGroup, "’", '9'},       // inherits from de-CH (no compact index)
+		{"de-CH-u-nu-deva", SymGroup, "’", '\u096f'}, // miss -> latn -> de-CH
 
 		{"pa", SymExponential, "E", '9'},
 
@@ -51,13 +52,22 @@ func TestInfo(t *testing.T) {
 		{"en-u-nu-roman", SymPlusSign, "+", '9'},
 	}
 	for _, tc := range testCases {
-		info := InfoFromTag(language.MustParse(tc.lang))
-		if got := info.Symbol(tc.sym); got != tc.wantSym {
-			t.Errorf("%s:%v:sym: got %q; want %q", tc.lang, tc.sym, got, tc.wantSym)
-		}
-		if got := info.Digit('9'); got != tc.wantNine {
-			t.Errorf("%s:%v:nine: got %q; want %q", tc.lang, tc.sym, got, tc.wantNine)
-		}
+		t.Run(fmt.Sprintf("%s:%v", tc.lang, tc.sym), func(t *testing.T) {
+			info := InfoFromTag(language.MustParse(tc.lang))
+			if got := info.Symbol(tc.sym); got != tc.wantSym {
+				t.Errorf("sym: got %q; want %q", got, tc.wantSym)
+			}
+			if got := info.Digit('9'); got != tc.wantNine {
+				t.Errorf("Digit(9): got %+q; want %+q", got, tc.wantNine)
+			}
+			var buf [4]byte
+			if got := string(buf[:info.WriteDigit(buf[:], '9')]); got != string(tc.wantNine) {
+				t.Errorf("WriteDigit(9): got %+q; want %+q", got, tc.wantNine)
+			}
+			if got := string(info.AppendDigit([]byte{}, 9)); got != string(tc.wantNine) {
+				t.Errorf("AppendDigit(9): got %+q; want %+q", got, tc.wantNine)
+			}
+		})
 	}
 }
 

@@ -322,33 +322,35 @@ func (c *checker) span(src []byte, atEOF bool) (n int, err error) {
 			}
 			return n, errDisallowedRune
 		}
+		doLookAhead := false
 		if property(e) < c.p.class.validFrom {
 			if d.rule == nil {
 				return n, errDisallowedRune
 			}
-			doLookAhead, err := d.rule(c.beforeBits)
+			doLookAhead, err = d.rule(c.beforeBits)
 			if err != nil {
 				return n, err
-			}
-			if doLookAhead {
-				c.beforeBits &= d.keep
-				c.beforeBits |= d.set
-				// We may still have a lookahead rule which we will require to
-				// complete (by checking termBits == 0) before setting the new
-				// bits.
-				if c.termBits != 0 && (!c.checkLookahead() || c.termBits == 0) {
-					return n, err
-				}
-				c.termBits = d.term
-				c.acceptBits = d.accept
-				n += sz
-				continue
 			}
 		}
 		c.beforeBits &= d.keep
 		c.beforeBits |= d.set
-		if c.termBits != 0 && !c.checkLookahead() {
-			return n, errContext
+		if c.termBits != 0 {
+			// We are currently in an unterminated lookahead.
+			if c.beforeBits&c.termBits != 0 {
+				c.termBits = 0
+				c.acceptBits = 0
+			} else if c.beforeBits&c.acceptBits == 0 {
+				// Invalid continuation of the unterminated lookahead sequence.
+				return n, errContext
+			}
+		}
+		if doLookAhead {
+			if c.termBits != 0 {
+				// A previous lookahead run has not been terminated yet.
+				return n, errContext
+			}
+			c.termBits = d.term
+			c.acceptBits = d.accept
 		}
 		n += sz
 	}
@@ -356,18 +358,6 @@ func (c *checker) span(src []byte, atEOF bool) (n int, err error) {
 		err = errContext
 	}
 	return n, err
-}
-
-func (c *checker) checkLookahead() bool {
-	switch {
-	case c.beforeBits&c.termBits != 0:
-		c.termBits = 0
-		c.acceptBits = 0
-	case c.beforeBits&c.acceptBits != 0:
-	default:
-		return false
-	}
-	return true
 }
 
 // TODO: we may get rid of this transform if transform.Chain understands

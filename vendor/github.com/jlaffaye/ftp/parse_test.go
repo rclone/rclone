@@ -56,6 +56,9 @@ var listTests = []line{
 	{"drwxr-xr-x    3 110      1002            3 Dec 02  2009 spaces   dir   name", "spaces   dir   name", 0, EntryTypeFolder, time.Date(2009, time.December, 2, 0, 0, 0, 0, time.UTC)},
 	{"-rwxr-xr-x    3 110      1002            1234567 Dec 02  2009 file   name", "file   name", 1234567, EntryTypeFile, time.Date(2009, time.December, 2, 0, 0, 0, 0, time.UTC)},
 	{"-rwxr-xr-x    3 110      1002            1234567 Dec 02  2009  foo bar ", " foo bar ", 1234567, EntryTypeFile, time.Date(2009, time.December, 2, 0, 0, 0, 0, time.UTC)},
+
+	// Odd link count from hostedftp.com
+	{"-r--------   0 user group     65222236 Feb 24 00:39 RegularFile", "RegularFile", 65222236, EntryTypeFile, time.Date(thisYear, time.February, 24, 0, 39, 0, 0, time.UTC)},
 }
 
 // Not supported, we expect a specific error message
@@ -66,6 +69,7 @@ var listTestsFail = []unsupportedLine{
 	{"modify=20150806235817;invalid;UNIX.owner=0; movies", "Unsupported LIST line"},
 	{"Zrwxrwxrwx   1 root     other          7 Jan 25 00:17 bin -> usr/bin", "Unknown entry type"},
 	{"total 1", "Unsupported LIST line"},
+	{"000000000x ", "Unsupported LIST line"}, // see https://github.com/jlaffaye/ftp/issues/97
 	{"", "Unsupported LIST line"},
 }
 

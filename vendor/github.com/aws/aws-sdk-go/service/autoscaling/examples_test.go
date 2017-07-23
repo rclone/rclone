@@ -3,1382 +3,1935 @@
 package autoscaling_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleAutoScaling_AttachInstances() {
-	sess := session.Must(session.NewSession())
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
+	if err != nil {
+		panic(err)
+	}
+	return &t
+}
 
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.AttachInstancesInput{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
+// To attach an instance to an Auto Scaling group
+//
+// This example attaches the specified instance to the specified Auto Scaling group.
+func ExampleAutoScaling_AttachInstances_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.AttachInstancesInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
 		InstanceIds: []*string{
-			aws.String("XmlStringMaxLen19"), // Required
-			// More values...
+			aws.String("i-93633f9b"),
 		},
 	}
-	resp, err := svc.AttachInstances(params)
 
+	result, err := svc.AttachInstances(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_AttachLoadBalancerTargetGroups() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.AttachLoadBalancerTargetGroupsInput{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
-		TargetGroupARNs: []*string{ // Required
-			aws.String("XmlStringMaxLen511"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.AttachLoadBalancerTargetGroups(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleAutoScaling_AttachLoadBalancers() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.AttachLoadBalancersInput{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
-		LoadBalancerNames: []*string{ // Required
-			aws.String("XmlStringMaxLen255"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.AttachLoadBalancers(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleAutoScaling_CompleteLifecycleAction() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.CompleteLifecycleActionInput{
-		AutoScalingGroupName:  aws.String("ResourceName"),          // Required
-		LifecycleActionResult: aws.String("LifecycleActionResult"), // Required
-		LifecycleHookName:     aws.String("AsciiStringMaxLen255"),  // Required
-		InstanceId:            aws.String("XmlStringMaxLen19"),
-		LifecycleActionToken:  aws.String("LifecycleActionToken"),
-	}
-	resp, err := svc.CompleteLifecycleAction(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleAutoScaling_CreateAutoScalingGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.CreateAutoScalingGroupInput{
-		AutoScalingGroupName: aws.String("XmlStringMaxLen255"), // Required
-		MaxSize:              aws.Int64(1),                     // Required
-		MinSize:              aws.Int64(1),                     // Required
-		AvailabilityZones: []*string{
-			aws.String("XmlStringMaxLen255"), // Required
-			// More values...
-		},
-		DefaultCooldown:         aws.Int64(1),
-		DesiredCapacity:         aws.Int64(1),
-		HealthCheckGracePeriod:  aws.Int64(1),
-		HealthCheckType:         aws.String("XmlStringMaxLen32"),
-		InstanceId:              aws.String("XmlStringMaxLen19"),
-		LaunchConfigurationName: aws.String("ResourceName"),
-		LoadBalancerNames: []*string{
-			aws.String("XmlStringMaxLen255"), // Required
-			// More values...
-		},
-		NewInstancesProtectedFromScaleIn: aws.Bool(true),
-		PlacementGroup:                   aws.String("XmlStringMaxLen255"),
-		Tags: []*autoscaling.Tag{
-			{ // Required
-				Key:               aws.String("TagKey"), // Required
-				PropagateAtLaunch: aws.Bool(true),
-				ResourceId:        aws.String("XmlString"),
-				ResourceType:      aws.String("XmlString"),
-				Value:             aws.String("TagValue"),
-			},
-			// More values...
-		},
+// To attach a target group to an Auto Scaling group
+//
+// This example attaches the specified target group to the specified Auto Scaling group.
+func ExampleAutoScaling_AttachLoadBalancerTargetGroups_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.AttachLoadBalancerTargetGroupsInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
 		TargetGroupARNs: []*string{
-			aws.String("XmlStringMaxLen511"), // Required
-			// More values...
+			aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
 		},
-		TerminationPolicies: []*string{
-			aws.String("XmlStringMaxLen1600"), // Required
-			// More values...
-		},
-		VPCZoneIdentifier: aws.String("XmlStringMaxLen2047"),
 	}
-	resp, err := svc.CreateAutoScalingGroup(params)
 
+	result, err := svc.AttachLoadBalancerTargetGroups(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_CreateLaunchConfiguration() {
-	sess := session.Must(session.NewSession())
+// To attach a load balancer to an Auto Scaling group
+//
+// This example attaches the specified load balancer to the specified Auto Scaling group.
+func ExampleAutoScaling_AttachLoadBalancers_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.AttachLoadBalancersInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		LoadBalancerNames: []*string{
+			aws.String("my-load-balancer"),
+		},
+	}
 
-	svc := autoscaling.New(sess)
+	result, err := svc.AttachLoadBalancers(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &autoscaling.CreateLaunchConfigurationInput{
-		LaunchConfigurationName:  aws.String("XmlStringMaxLen255"), // Required
-		AssociatePublicIpAddress: aws.Bool(true),
-		BlockDeviceMappings: []*autoscaling.BlockDeviceMapping{
-			{ // Required
-				DeviceName: aws.String("XmlStringMaxLen255"), // Required
-				Ebs: &autoscaling.Ebs{
-					DeleteOnTermination: aws.Bool(true),
-					Encrypted:           aws.Bool(true),
-					Iops:                aws.Int64(1),
-					SnapshotId:          aws.String("XmlStringMaxLen255"),
-					VolumeSize:          aws.Int64(1),
-					VolumeType:          aws.String("BlockDeviceEbsVolumeType"),
-				},
-				NoDevice:    aws.Bool(true),
-				VirtualName: aws.String("XmlStringMaxLen255"),
-			},
-			// More values...
+	fmt.Println(result)
+}
+
+// To complete the lifecycle action
+//
+// This example notifies Auto Scaling that the specified lifecycle action is complete
+// so that it can finish launching or terminating the instance.
+func ExampleAutoScaling_CompleteLifecycleAction_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.CompleteLifecycleActionInput{
+		AutoScalingGroupName:  aws.String("my-auto-scaling-group"),
+		LifecycleActionResult: aws.String("CONTINUE"),
+		LifecycleActionToken:  aws.String("bcd2f1b8-9a78-44d3-8a7a-4dd07d7cf635"),
+		LifecycleHookName:     aws.String("my-lifecycle-hook"),
+	}
+
+	result, err := svc.CompleteLifecycleAction(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create an Auto Scaling group
+//
+// This example creates an Auto Scaling group.
+func ExampleAutoScaling_CreateAutoScalingGroup_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.CreateAutoScalingGroupInput{
+		AutoScalingGroupName:    aws.String("my-auto-scaling-group"),
+		LaunchConfigurationName: aws.String("my-launch-config"),
+		MaxSize:                 aws.Int64(3),
+		MinSize:                 aws.Int64(1),
+		VPCZoneIdentifier:       aws.String("subnet-4176792c"),
+	}
+
+	result, err := svc.CreateAutoScalingGroup(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeAlreadyExistsFault:
+				fmt.Println(autoscaling.ErrCodeAlreadyExistsFault, aerr.Error())
+			case autoscaling.ErrCodeLimitExceededFault:
+				fmt.Println(autoscaling.ErrCodeLimitExceededFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create an Auto Scaling group with an attached load balancer
+//
+// This example creates an Auto Scaling group and attaches the specified Classic Load
+// Balancer.
+func ExampleAutoScaling_CreateAutoScalingGroup_shared01() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.CreateAutoScalingGroupInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		AvailabilityZones: []*string{
+			aws.String("us-west-2c"),
 		},
-		ClassicLinkVPCId: aws.String("XmlStringMaxLen255"),
-		ClassicLinkVPCSecurityGroups: []*string{
-			aws.String("XmlStringMaxLen255"), // Required
-			// More values...
+		HealthCheckGracePeriod:  aws.Int64(120),
+		HealthCheckType:         aws.String("ELB"),
+		LaunchConfigurationName: aws.String("my-launch-config"),
+		LoadBalancerNames: []*string{
+			aws.String("my-load-balancer"),
 		},
-		EbsOptimized:       aws.Bool(true),
-		IamInstanceProfile: aws.String("XmlStringMaxLen1600"),
-		ImageId:            aws.String("XmlStringMaxLen255"),
-		InstanceId:         aws.String("XmlStringMaxLen19"),
-		InstanceMonitoring: &autoscaling.InstanceMonitoring{
-			Enabled: aws.Bool(true),
+		MaxSize: aws.Int64(3),
+		MinSize: aws.Int64(1),
+	}
+
+	result, err := svc.CreateAutoScalingGroup(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeAlreadyExistsFault:
+				fmt.Println(autoscaling.ErrCodeAlreadyExistsFault, aerr.Error())
+			case autoscaling.ErrCodeLimitExceededFault:
+				fmt.Println(autoscaling.ErrCodeLimitExceededFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create an Auto Scaling group with an attached target group
+//
+// This example creates an Auto Scaling group and attaches the specified target group.
+func ExampleAutoScaling_CreateAutoScalingGroup_shared02() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.CreateAutoScalingGroupInput{
+		AutoScalingGroupName:    aws.String("my-auto-scaling-group"),
+		HealthCheckGracePeriod:  aws.Int64(120),
+		HealthCheckType:         aws.String("ELB"),
+		LaunchConfigurationName: aws.String("my-launch-config"),
+		MaxSize:                 aws.Int64(3),
+		MinSize:                 aws.Int64(1),
+		TargetGroupARNs: []*string{
+			aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
 		},
-		InstanceType:     aws.String("XmlStringMaxLen255"),
-		KernelId:         aws.String("XmlStringMaxLen255"),
-		KeyName:          aws.String("XmlStringMaxLen255"),
-		PlacementTenancy: aws.String("XmlStringMaxLen64"),
-		RamdiskId:        aws.String("XmlStringMaxLen255"),
+		VPCZoneIdentifier: aws.String("subnet-4176792c, subnet-65ea5f08"),
+	}
+
+	result, err := svc.CreateAutoScalingGroup(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeAlreadyExistsFault:
+				fmt.Println(autoscaling.ErrCodeAlreadyExistsFault, aerr.Error())
+			case autoscaling.ErrCodeLimitExceededFault:
+				fmt.Println(autoscaling.ErrCodeLimitExceededFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create a launch configuration
+//
+// This example creates a launch configuration.
+func ExampleAutoScaling_CreateLaunchConfiguration_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.CreateLaunchConfigurationInput{
+		IamInstanceProfile:      aws.String("my-iam-role"),
+		ImageId:                 aws.String("ami-12345678"),
+		InstanceType:            aws.String("m3.medium"),
+		LaunchConfigurationName: aws.String("my-launch-config"),
 		SecurityGroups: []*string{
-			aws.String("XmlString"), // Required
-			// More values...
+			aws.String("sg-eb2af88e"),
 		},
-		SpotPrice: aws.String("SpotPrice"),
-		UserData:  aws.String("XmlStringUserData"),
 	}
-	resp, err := svc.CreateLaunchConfiguration(params)
 
+	result, err := svc.CreateLaunchConfiguration(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeAlreadyExistsFault:
+				fmt.Println(autoscaling.ErrCodeAlreadyExistsFault, aerr.Error())
+			case autoscaling.ErrCodeLimitExceededFault:
+				fmt.Println(autoscaling.ErrCodeLimitExceededFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_CreateOrUpdateTags() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.CreateOrUpdateTagsInput{
-		Tags: []*autoscaling.Tag{ // Required
-			{ // Required
-				Key:               aws.String("TagKey"), // Required
+// To create or update tags for an Auto Scaling group
+//
+// This example adds two tags to the specified Auto Scaling group.
+func ExampleAutoScaling_CreateOrUpdateTags_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.CreateOrUpdateTagsInput{
+		Tags: []*autoscaling.Tag{
+			{
+				Key:               aws.String("Role"),
 				PropagateAtLaunch: aws.Bool(true),
-				ResourceId:        aws.String("XmlString"),
-				ResourceType:      aws.String("XmlString"),
-				Value:             aws.String("TagValue"),
+				ResourceId:        aws.String("my-auto-scaling-group"),
+				ResourceType:      aws.String("auto-scaling-group"),
+				Value:             aws.String("WebServer"),
 			},
-			// More values...
+			{
+				Key:               aws.String("Dept"),
+				PropagateAtLaunch: aws.Bool(true),
+				ResourceId:        aws.String("my-auto-scaling-group"),
+				ResourceType:      aws.String("auto-scaling-group"),
+				Value:             aws.String("Research"),
+			},
 		},
 	}
-	resp, err := svc.CreateOrUpdateTags(params)
 
+	result, err := svc.CreateOrUpdateTags(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeLimitExceededFault:
+				fmt.Println(autoscaling.ErrCodeLimitExceededFault, aerr.Error())
+			case autoscaling.ErrCodeAlreadyExistsFault:
+				fmt.Println(autoscaling.ErrCodeAlreadyExistsFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			case autoscaling.ErrCodeResourceInUseFault:
+				fmt.Println(autoscaling.ErrCodeResourceInUseFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DeleteAutoScalingGroup() {
-	sess := session.Must(session.NewSession())
+// To delete an Auto Scaling group
+//
+// This example deletes the specified Auto Scaling group.
+func ExampleAutoScaling_DeleteAutoScalingGroup_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DeleteAutoScalingGroupInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+	}
 
-	svc := autoscaling.New(sess)
+	result, err := svc.DeleteAutoScalingGroup(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeScalingActivityInProgressFault:
+				fmt.Println(autoscaling.ErrCodeScalingActivityInProgressFault, aerr.Error())
+			case autoscaling.ErrCodeResourceInUseFault:
+				fmt.Println(autoscaling.ErrCodeResourceInUseFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &autoscaling.DeleteAutoScalingGroupInput{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
+	fmt.Println(result)
+}
+
+// To delete an Auto Scaling group and all its instances
+//
+// This example deletes the specified Auto Scaling group and all its instances.
+func ExampleAutoScaling_DeleteAutoScalingGroup_shared01() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DeleteAutoScalingGroupInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
 		ForceDelete:          aws.Bool(true),
 	}
-	resp, err := svc.DeleteAutoScalingGroup(params)
 
+	result, err := svc.DeleteAutoScalingGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeScalingActivityInProgressFault:
+				fmt.Println(autoscaling.ErrCodeScalingActivityInProgressFault, aerr.Error())
+			case autoscaling.ErrCodeResourceInUseFault:
+				fmt.Println(autoscaling.ErrCodeResourceInUseFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DeleteLaunchConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DeleteLaunchConfigurationInput{
-		LaunchConfigurationName: aws.String("ResourceName"), // Required
+// To delete a launch configuration
+//
+// This example deletes the specified launch configuration.
+func ExampleAutoScaling_DeleteLaunchConfiguration_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DeleteLaunchConfigurationInput{
+		LaunchConfigurationName: aws.String("my-launch-config"),
 	}
-	resp, err := svc.DeleteLaunchConfiguration(params)
 
+	result, err := svc.DeleteLaunchConfiguration(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceInUseFault:
+				fmt.Println(autoscaling.ErrCodeResourceInUseFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DeleteLifecycleHook() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DeleteLifecycleHookInput{
-		AutoScalingGroupName: aws.String("ResourceName"),         // Required
-		LifecycleHookName:    aws.String("AsciiStringMaxLen255"), // Required
+// To delete a lifecycle hook
+//
+// This example deletes the specified lifecycle hook.
+func ExampleAutoScaling_DeleteLifecycleHook_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DeleteLifecycleHookInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		LifecycleHookName:    aws.String("my-lifecycle-hook"),
 	}
-	resp, err := svc.DeleteLifecycleHook(params)
 
+	result, err := svc.DeleteLifecycleHook(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DeleteNotificationConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DeleteNotificationConfigurationInput{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
-		TopicARN:             aws.String("ResourceName"), // Required
+// To delete an Auto Scaling notification
+//
+// This example deletes the specified notification from the specified Auto Scaling group.
+func ExampleAutoScaling_DeleteNotificationConfiguration_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DeleteNotificationConfigurationInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		TopicARN:             aws.String("arn:aws:sns:us-west-2:123456789012:my-sns-topic"),
 	}
-	resp, err := svc.DeleteNotificationConfiguration(params)
 
+	result, err := svc.DeleteNotificationConfiguration(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DeletePolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DeletePolicyInput{
-		PolicyName:           aws.String("ResourceName"), // Required
-		AutoScalingGroupName: aws.String("ResourceName"),
+// To delete an Auto Scaling policy
+//
+// This example deletes the specified Auto Scaling policy.
+func ExampleAutoScaling_DeletePolicy_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DeletePolicyInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		PolicyName:           aws.String("ScaleIn"),
 	}
-	resp, err := svc.DeletePolicy(params)
 
+	result, err := svc.DeletePolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DeleteScheduledAction() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DeleteScheduledActionInput{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
-		ScheduledActionName:  aws.String("ResourceName"), // Required
+// To delete a scheduled action from an Auto Scaling group
+//
+// This example deletes the specified scheduled action from the specified Auto Scaling
+// group.
+func ExampleAutoScaling_DeleteScheduledAction_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DeleteScheduledActionInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		ScheduledActionName:  aws.String("my-scheduled-action"),
 	}
-	resp, err := svc.DeleteScheduledAction(params)
 
+	result, err := svc.DeleteScheduledAction(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DeleteTags() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DeleteTagsInput{
-		Tags: []*autoscaling.Tag{ // Required
-			{ // Required
-				Key:               aws.String("TagKey"), // Required
-				PropagateAtLaunch: aws.Bool(true),
-				ResourceId:        aws.String("XmlString"),
-				ResourceType:      aws.String("XmlString"),
-				Value:             aws.String("TagValue"),
+// To delete a tag from an Auto Scaling group
+//
+// This example deletes the specified tag from the specified Auto Scaling group.
+func ExampleAutoScaling_DeleteTags_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DeleteTagsInput{
+		Tags: []*autoscaling.Tag{
+			{
+				Key:          aws.String("Dept"),
+				ResourceId:   aws.String("my-auto-scaling-group"),
+				ResourceType: aws.String("auto-scaling-group"),
+				Value:        aws.String("Research"),
 			},
-			// More values...
 		},
 	}
-	resp, err := svc.DeleteTags(params)
 
+	result, err := svc.DeleteTags(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			case autoscaling.ErrCodeResourceInUseFault:
+				fmt.Println(autoscaling.ErrCodeResourceInUseFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DescribeAccountLimits() {
-	sess := session.Must(session.NewSession())
+// To describe your Auto Scaling account limits
+//
+// This example describes the Auto Scaling limits for your AWS account.
+func ExampleAutoScaling_DescribeAccountLimits_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribeAccountLimitsInput{}
 
-	svc := autoscaling.New(sess)
-
-	var params *autoscaling.DescribeAccountLimitsInput
-	resp, err := svc.DescribeAccountLimits(params)
-
+	result, err := svc.DescribeAccountLimits(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DescribeAdjustmentTypes() {
-	sess := session.Must(session.NewSession())
+// To describe the Auto Scaling adjustment types
+//
+// This example describes the available adjustment types.
+func ExampleAutoScaling_DescribeAdjustmentTypes_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribeAdjustmentTypesInput{}
 
-	svc := autoscaling.New(sess)
-
-	var params *autoscaling.DescribeAdjustmentTypesInput
-	resp, err := svc.DescribeAdjustmentTypes(params)
-
+	result, err := svc.DescribeAdjustmentTypes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DescribeAutoScalingGroups() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DescribeAutoScalingGroupsInput{
+// To describe an Auto Scaling group
+//
+// This example describes the specified Auto Scaling group.
+func ExampleAutoScaling_DescribeAutoScalingGroups_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribeAutoScalingGroupsInput{
 		AutoScalingGroupNames: []*string{
-			aws.String("ResourceName"), // Required
-			// More values...
+			aws.String("my-auto-scaling-group"),
 		},
-		MaxRecords: aws.Int64(1),
-		NextToken:  aws.String("XmlString"),
 	}
-	resp, err := svc.DescribeAutoScalingGroups(params)
 
+	result, err := svc.DescribeAutoScalingGroups(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeInvalidNextToken:
+				fmt.Println(autoscaling.ErrCodeInvalidNextToken, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DescribeAutoScalingInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DescribeAutoScalingInstancesInput{
+// To describe one or more Auto Scaling instances
+//
+// This example describes the specified Auto Scaling instance.
+func ExampleAutoScaling_DescribeAutoScalingInstances_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribeAutoScalingInstancesInput{
 		InstanceIds: []*string{
-			aws.String("XmlStringMaxLen19"), // Required
-			// More values...
+			aws.String("i-4ba0837f"),
 		},
-		MaxRecords: aws.Int64(1),
-		NextToken:  aws.String("XmlString"),
 	}
-	resp, err := svc.DescribeAutoScalingInstances(params)
 
+	result, err := svc.DescribeAutoScalingInstances(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeInvalidNextToken:
+				fmt.Println(autoscaling.ErrCodeInvalidNextToken, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DescribeAutoScalingNotificationTypes() {
-	sess := session.Must(session.NewSession())
+// To describe the Auto Scaling notification types
+//
+// This example describes the available notification types.
+func ExampleAutoScaling_DescribeAutoScalingNotificationTypes_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribeAutoScalingNotificationTypesInput{}
 
-	svc := autoscaling.New(sess)
-
-	var params *autoscaling.DescribeAutoScalingNotificationTypesInput
-	resp, err := svc.DescribeAutoScalingNotificationTypes(params)
-
+	result, err := svc.DescribeAutoScalingNotificationTypes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DescribeLaunchConfigurations() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DescribeLaunchConfigurationsInput{
+// To describe Auto Scaling launch configurations
+//
+// This example describes the specified launch configuration.
+func ExampleAutoScaling_DescribeLaunchConfigurations_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribeLaunchConfigurationsInput{
 		LaunchConfigurationNames: []*string{
-			aws.String("ResourceName"), // Required
-			// More values...
-		},
-		MaxRecords: aws.Int64(1),
-		NextToken:  aws.String("XmlString"),
-	}
-	resp, err := svc.DescribeLaunchConfigurations(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleAutoScaling_DescribeLifecycleHookTypes() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	var params *autoscaling.DescribeLifecycleHookTypesInput
-	resp, err := svc.DescribeLifecycleHookTypes(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleAutoScaling_DescribeLifecycleHooks() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DescribeLifecycleHooksInput{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
-		LifecycleHookNames: []*string{
-			aws.String("AsciiStringMaxLen255"), // Required
-			// More values...
+			aws.String("my-launch-config"),
 		},
 	}
-	resp, err := svc.DescribeLifecycleHooks(params)
 
+	result, err := svc.DescribeLaunchConfigurations(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeInvalidNextToken:
+				fmt.Println(autoscaling.ErrCodeInvalidNextToken, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DescribeLoadBalancerTargetGroups() {
-	sess := session.Must(session.NewSession())
+// To describe the available types of lifecycle hooks
+//
+// This example describes the available lifecycle hook types.
+func ExampleAutoScaling_DescribeLifecycleHookTypes_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribeLifecycleHookTypesInput{}
 
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DescribeLoadBalancerTargetGroupsInput{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
-		MaxRecords:           aws.Int64(1),
-		NextToken:            aws.String("XmlString"),
-	}
-	resp, err := svc.DescribeLoadBalancerTargetGroups(params)
-
+	result, err := svc.DescribeLifecycleHookTypes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DescribeLoadBalancers() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DescribeLoadBalancersInput{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
-		MaxRecords:           aws.Int64(1),
-		NextToken:            aws.String("XmlString"),
+// To describe your lifecycle hooks
+//
+// This example describes the lifecycle hooks for the specified Auto Scaling group.
+func ExampleAutoScaling_DescribeLifecycleHooks_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribeLifecycleHooksInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
 	}
-	resp, err := svc.DescribeLoadBalancers(params)
 
+	result, err := svc.DescribeLifecycleHooks(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DescribeMetricCollectionTypes() {
-	sess := session.Must(session.NewSession())
+// To describe the target groups for an Auto Scaling group
+//
+// This example describes the target groups attached to the specified Auto Scaling group.
+func ExampleAutoScaling_DescribeLoadBalancerTargetGroups_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribeLoadBalancerTargetGroupsInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+	}
 
-	svc := autoscaling.New(sess)
-
-	var params *autoscaling.DescribeMetricCollectionTypesInput
-	resp, err := svc.DescribeMetricCollectionTypes(params)
-
+	result, err := svc.DescribeLoadBalancerTargetGroups(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DescribeNotificationConfigurations() {
-	sess := session.Must(session.NewSession())
+// To describe the load balancers for an Auto Scaling group
+//
+// This example describes the load balancers attached to the specified Auto Scaling
+// group.
+func ExampleAutoScaling_DescribeLoadBalancers_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribeLoadBalancersInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+	}
 
-	svc := autoscaling.New(sess)
+	result, err := svc.DescribeLoadBalancers(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &autoscaling.DescribeNotificationConfigurationsInput{
+	fmt.Println(result)
+}
+
+// To describe the Auto Scaling metric collection types
+//
+// This example describes the available metric collection types.
+func ExampleAutoScaling_DescribeMetricCollectionTypes_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribeMetricCollectionTypesInput{}
+
+	result, err := svc.DescribeMetricCollectionTypes(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe Auto Scaling notification configurations
+//
+// This example describes the notification configurations for the specified Auto Scaling
+// group.
+func ExampleAutoScaling_DescribeNotificationConfigurations_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribeNotificationConfigurationsInput{
 		AutoScalingGroupNames: []*string{
-			aws.String("ResourceName"), // Required
-			// More values...
+			aws.String("my-auto-scaling-group"),
 		},
-		MaxRecords: aws.Int64(1),
-		NextToken:  aws.String("XmlString"),
 	}
-	resp, err := svc.DescribeNotificationConfigurations(params)
 
+	result, err := svc.DescribeNotificationConfigurations(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeInvalidNextToken:
+				fmt.Println(autoscaling.ErrCodeInvalidNextToken, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DescribePolicies() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DescribePoliciesInput{
-		AutoScalingGroupName: aws.String("ResourceName"),
-		MaxRecords:           aws.Int64(1),
-		NextToken:            aws.String("XmlString"),
-		PolicyNames: []*string{
-			aws.String("ResourceName"), // Required
-			// More values...
-		},
-		PolicyTypes: []*string{
-			aws.String("XmlStringMaxLen64"), // Required
-			// More values...
-		},
+// To describe Auto Scaling policies
+//
+// This example describes the policies for the specified Auto Scaling group.
+func ExampleAutoScaling_DescribePolicies_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribePoliciesInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
 	}
-	resp, err := svc.DescribePolicies(params)
 
+	result, err := svc.DescribePolicies(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeInvalidNextToken:
+				fmt.Println(autoscaling.ErrCodeInvalidNextToken, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DescribeScalingActivities() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DescribeScalingActivitiesInput{
-		ActivityIds: []*string{
-			aws.String("XmlString"), // Required
-			// More values...
-		},
-		AutoScalingGroupName: aws.String("ResourceName"),
-		MaxRecords:           aws.Int64(1),
-		NextToken:            aws.String("XmlString"),
+// To describe the scaling activities for an Auto Scaling group
+//
+// This example describes the scaling activities for the specified Auto Scaling group.
+func ExampleAutoScaling_DescribeScalingActivities_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribeScalingActivitiesInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
 	}
-	resp, err := svc.DescribeScalingActivities(params)
 
+	result, err := svc.DescribeScalingActivities(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeInvalidNextToken:
+				fmt.Println(autoscaling.ErrCodeInvalidNextToken, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DescribeScalingProcessTypes() {
-	sess := session.Must(session.NewSession())
+// To describe the Auto Scaling process types
+//
+// This example describes the Auto Scaling process types.
+func ExampleAutoScaling_DescribeScalingProcessTypes_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribeScalingProcessTypesInput{}
 
-	svc := autoscaling.New(sess)
-
-	var params *autoscaling.DescribeScalingProcessTypesInput
-	resp, err := svc.DescribeScalingProcessTypes(params)
-
+	result, err := svc.DescribeScalingProcessTypes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DescribeScheduledActions() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DescribeScheduledActionsInput{
-		AutoScalingGroupName: aws.String("ResourceName"),
-		EndTime:              aws.Time(time.Now()),
-		MaxRecords:           aws.Int64(1),
-		NextToken:            aws.String("XmlString"),
-		ScheduledActionNames: []*string{
-			aws.String("ResourceName"), // Required
-			// More values...
-		},
-		StartTime: aws.Time(time.Now()),
+// To describe scheduled actions
+//
+// This example describes the scheduled actions for the specified Auto Scaling group.
+func ExampleAutoScaling_DescribeScheduledActions_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribeScheduledActionsInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
 	}
-	resp, err := svc.DescribeScheduledActions(params)
 
+	result, err := svc.DescribeScheduledActions(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeInvalidNextToken:
+				fmt.Println(autoscaling.ErrCodeInvalidNextToken, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DescribeTags() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DescribeTagsInput{
+// To describe tags
+//
+// This example describes the tags for the specified Auto Scaling group.
+func ExampleAutoScaling_DescribeTags_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribeTagsInput{
 		Filters: []*autoscaling.Filter{
-			{ // Required
-				Name: aws.String("XmlString"),
+			{
+				Name: aws.String("auto-scaling-group"),
 				Values: []*string{
-					aws.String("XmlString"), // Required
-					// More values...
+					aws.String("my-auto-scaling-group"),
 				},
 			},
-			// More values...
 		},
-		MaxRecords: aws.Int64(1),
-		NextToken:  aws.String("XmlString"),
 	}
-	resp, err := svc.DescribeTags(params)
 
+	result, err := svc.DescribeTags(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeInvalidNextToken:
+				fmt.Println(autoscaling.ErrCodeInvalidNextToken, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DescribeTerminationPolicyTypes() {
-	sess := session.Must(session.NewSession())
+// To describe termination policy types
+//
+// This example describes the available termination policy types.
+func ExampleAutoScaling_DescribeTerminationPolicyTypes_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DescribeTerminationPolicyTypesInput{}
 
-	svc := autoscaling.New(sess)
-
-	var params *autoscaling.DescribeTerminationPolicyTypesInput
-	resp, err := svc.DescribeTerminationPolicyTypes(params)
-
+	result, err := svc.DescribeTerminationPolicyTypes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DetachInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DetachInstancesInput{
-		AutoScalingGroupName:           aws.String("ResourceName"), // Required
-		ShouldDecrementDesiredCapacity: aws.Bool(true),             // Required
+// To detach an instance from an Auto Scaling group
+//
+// This example detaches the specified instance from the specified Auto Scaling group.
+func ExampleAutoScaling_DetachInstances_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DetachInstancesInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
 		InstanceIds: []*string{
-			aws.String("XmlStringMaxLen19"), // Required
-			// More values...
+			aws.String("i-93633f9b"),
 		},
+		ShouldDecrementDesiredCapacity: aws.Bool(true),
 	}
-	resp, err := svc.DetachInstances(params)
 
+	result, err := svc.DetachInstances(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DetachLoadBalancerTargetGroups() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DetachLoadBalancerTargetGroupsInput{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
-		TargetGroupARNs: []*string{ // Required
-			aws.String("XmlStringMaxLen511"), // Required
-			// More values...
+// To detach a target group from an Auto Scaling group
+//
+// This example detaches the specified target group from the specified Auto Scaling
+// group
+func ExampleAutoScaling_DetachLoadBalancerTargetGroups_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DetachLoadBalancerTargetGroupsInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		TargetGroupARNs: []*string{
+			aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
 		},
 	}
-	resp, err := svc.DetachLoadBalancerTargetGroups(params)
 
+	result, err := svc.DetachLoadBalancerTargetGroups(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DetachLoadBalancers() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DetachLoadBalancersInput{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
-		LoadBalancerNames: []*string{ // Required
-			aws.String("XmlStringMaxLen255"), // Required
-			// More values...
+// To detach a load balancer from an Auto Scaling group
+//
+// This example detaches the specified load balancer from the specified Auto Scaling
+// group.
+func ExampleAutoScaling_DetachLoadBalancers_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DetachLoadBalancersInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		LoadBalancerNames: []*string{
+			aws.String("my-load-balancer"),
 		},
 	}
-	resp, err := svc.DetachLoadBalancers(params)
 
+	result, err := svc.DetachLoadBalancers(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_DisableMetricsCollection() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.DisableMetricsCollectionInput{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
+// To disable metrics collection for an Auto Scaling group
+//
+// This example disables collecting data for the GroupDesiredCapacity metric for the
+// specified Auto Scaling group.
+func ExampleAutoScaling_DisableMetricsCollection_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.DisableMetricsCollectionInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
 		Metrics: []*string{
-			aws.String("XmlStringMaxLen255"), // Required
-			// More values...
+			aws.String("GroupDesiredCapacity"),
 		},
 	}
-	resp, err := svc.DisableMetricsCollection(params)
 
+	result, err := svc.DisableMetricsCollection(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_EnableMetricsCollection() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.EnableMetricsCollectionInput{
-		AutoScalingGroupName: aws.String("ResourceName"),       // Required
-		Granularity:          aws.String("XmlStringMaxLen255"), // Required
-		Metrics: []*string{
-			aws.String("XmlStringMaxLen255"), // Required
-			// More values...
-		},
+// To enable metrics collection for an Auto Scaling group
+//
+// This example enables data collection for the specified Auto Scaling group.
+func ExampleAutoScaling_EnableMetricsCollection_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.EnableMetricsCollectionInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		Granularity:          aws.String("1Minute"),
 	}
-	resp, err := svc.EnableMetricsCollection(params)
 
+	result, err := svc.EnableMetricsCollection(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_EnterStandby() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.EnterStandbyInput{
-		AutoScalingGroupName:           aws.String("ResourceName"), // Required
-		ShouldDecrementDesiredCapacity: aws.Bool(true),             // Required
+// To move instances into standby mode
+//
+// This example puts the specified instance into standby mode.
+func ExampleAutoScaling_EnterStandby_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.EnterStandbyInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
 		InstanceIds: []*string{
-			aws.String("XmlStringMaxLen19"), // Required
-			// More values...
+			aws.String("i-93633f9b"),
 		},
+		ShouldDecrementDesiredCapacity: aws.Bool(true),
 	}
-	resp, err := svc.EnterStandby(params)
 
+	result, err := svc.EnterStandby(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_ExecutePolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.ExecutePolicyInput{
-		PolicyName:           aws.String("ResourceName"), // Required
-		AutoScalingGroupName: aws.String("ResourceName"),
-		BreachThreshold:      aws.Float64(1.0),
+// To execute an Auto Scaling policy
+//
+// This example executes the specified Auto Scaling policy for the specified Auto Scaling
+// group.
+func ExampleAutoScaling_ExecutePolicy_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.ExecutePolicyInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
 		HonorCooldown:        aws.Bool(true),
-		MetricValue:          aws.Float64(1.0),
+		PolicyName:           aws.String("ScaleIn"),
 	}
-	resp, err := svc.ExecutePolicy(params)
 
+	result, err := svc.ExecutePolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeScalingActivityInProgressFault:
+				fmt.Println(autoscaling.ErrCodeScalingActivityInProgressFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_ExitStandby() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.ExitStandbyInput{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
+// To move instances out of standby mode
+//
+// This example moves the specified instance out of standby mode.
+func ExampleAutoScaling_ExitStandby_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.ExitStandbyInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
 		InstanceIds: []*string{
-			aws.String("XmlStringMaxLen19"), // Required
-			// More values...
+			aws.String("i-93633f9b"),
 		},
 	}
-	resp, err := svc.ExitStandby(params)
 
+	result, err := svc.ExitStandby(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_PutLifecycleHook() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.PutLifecycleHookInput{
-		AutoScalingGroupName:  aws.String("ResourceName"),         // Required
-		LifecycleHookName:     aws.String("AsciiStringMaxLen255"), // Required
-		DefaultResult:         aws.String("LifecycleActionResult"),
-		HeartbeatTimeout:      aws.Int64(1),
-		LifecycleTransition:   aws.String("LifecycleTransition"),
-		NotificationMetadata:  aws.String("XmlStringMaxLen1023"),
-		NotificationTargetARN: aws.String("NotificationTargetResourceName"),
-		RoleARN:               aws.String("ResourceName"),
+// To create a lifecycle hook
+//
+// This example creates a lifecycle hook.
+func ExampleAutoScaling_PutLifecycleHook_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.PutLifecycleHookInput{
+		AutoScalingGroupName:  aws.String("my-auto-scaling-group"),
+		LifecycleHookName:     aws.String("my-lifecycle-hook"),
+		LifecycleTransition:   aws.String("autoscaling:EC2_INSTANCE_LAUNCHING"),
+		NotificationTargetARN: aws.String("arn:aws:sns:us-west-2:123456789012:my-sns-topic --role-arn"),
+		RoleARN:               aws.String("arn:aws:iam::123456789012:role/my-auto-scaling-role"),
 	}
-	resp, err := svc.PutLifecycleHook(params)
 
+	result, err := svc.PutLifecycleHook(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeLimitExceededFault:
+				fmt.Println(autoscaling.ErrCodeLimitExceededFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_PutNotificationConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.PutNotificationConfigurationInput{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
-		NotificationTypes: []*string{ // Required
-			aws.String("XmlStringMaxLen255"), // Required
-			// More values...
+// To add an Auto Scaling notification
+//
+// This example adds the specified notification to the specified Auto Scaling group.
+func ExampleAutoScaling_PutNotificationConfiguration_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.PutNotificationConfigurationInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		NotificationTypes: []*string{
+			aws.String("autoscaling:TEST_NOTIFICATION"),
 		},
-		TopicARN: aws.String("ResourceName"), // Required
+		TopicARN: aws.String("arn:aws:sns:us-west-2:123456789012:my-sns-topic"),
 	}
-	resp, err := svc.PutNotificationConfiguration(params)
 
+	result, err := svc.PutNotificationConfiguration(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeLimitExceededFault:
+				fmt.Println(autoscaling.ErrCodeLimitExceededFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_PutScalingPolicy() {
-	sess := session.Must(session.NewSession())
+// To add a scaling policy to an Auto Scaling group
+//
+// This example adds the specified policy to the specified Auto Scaling group.
+func ExampleAutoScaling_PutScalingPolicy_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.PutScalingPolicyInput{
+		AdjustmentType:       aws.String("ChangeInCapacity"),
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		PolicyName:           aws.String("ScaleIn"),
+		ScalingAdjustment:    aws.Int64(-1),
+	}
 
-	svc := autoscaling.New(sess)
+	result, err := svc.PutScalingPolicy(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeLimitExceededFault:
+				fmt.Println(autoscaling.ErrCodeLimitExceededFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &autoscaling.PutScalingPolicyInput{
-		AdjustmentType:          aws.String("XmlStringMaxLen255"), // Required
-		AutoScalingGroupName:    aws.String("ResourceName"),       // Required
-		PolicyName:              aws.String("XmlStringMaxLen255"), // Required
-		Cooldown:                aws.Int64(1),
-		EstimatedInstanceWarmup: aws.Int64(1),
-		MetricAggregationType:   aws.String("XmlStringMaxLen32"),
-		MinAdjustmentMagnitude:  aws.Int64(1),
-		MinAdjustmentStep:       aws.Int64(1),
-		PolicyType:              aws.String("XmlStringMaxLen64"),
-		ScalingAdjustment:       aws.Int64(1),
-		StepAdjustments: []*autoscaling.StepAdjustment{
-			{ // Required
-				ScalingAdjustment:        aws.Int64(1), // Required
-				MetricIntervalLowerBound: aws.Float64(1.0),
-				MetricIntervalUpperBound: aws.Float64(1.0),
-			},
-			// More values...
+	fmt.Println(result)
+}
+
+// To add a scheduled action to an Auto Scaling group
+//
+// This example adds the specified scheduled action to the specified Auto Scaling group.
+func ExampleAutoScaling_PutScheduledUpdateGroupAction_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.PutScheduledUpdateGroupActionInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		DesiredCapacity:      aws.Int64(4),
+		EndTime:              parseTime("2006-01-02T15:04:05Z", "2014-05-12T08:00:00Z"),
+		MaxSize:              aws.Int64(6),
+		MinSize:              aws.Int64(2),
+		ScheduledActionName:  aws.String("my-scheduled-action"),
+		StartTime:            parseTime("2006-01-02T15:04:05Z", "2014-05-12T08:00:00Z"),
+	}
+
+	result, err := svc.PutScheduledUpdateGroupAction(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeAlreadyExistsFault:
+				fmt.Println(autoscaling.ErrCodeAlreadyExistsFault, aerr.Error())
+			case autoscaling.ErrCodeLimitExceededFault:
+				fmt.Println(autoscaling.ErrCodeLimitExceededFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To record a lifecycle action heartbeat
+//
+// This example records a lifecycle action heartbeat to keep the instance in a pending
+// state.
+func ExampleAutoScaling_RecordLifecycleActionHeartbeat_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.RecordLifecycleActionHeartbeatInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		LifecycleActionToken: aws.String("bcd2f1b8-9a78-44d3-8a7a-4dd07d7cf635"),
+		LifecycleHookName:    aws.String("my-lifecycle-hook"),
+	}
+
+	result, err := svc.RecordLifecycleActionHeartbeat(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To resume Auto Scaling processes
+//
+// This example resumes the specified suspended scaling process for the specified Auto
+// Scaling group.
+func ExampleAutoScaling_ResumeProcesses_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.ScalingProcessQuery{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		ScalingProcesses: []*string{
+			aws.String("AlarmNotification"),
 		},
 	}
-	resp, err := svc.PutScalingPolicy(params)
 
+	result, err := svc.ResumeProcesses(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceInUseFault:
+				fmt.Println(autoscaling.ErrCodeResourceInUseFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_PutScheduledUpdateGroupAction() {
-	sess := session.Must(session.NewSession())
+// To set the desired capacity for an Auto Scaling group
+//
+// This example sets the desired capacity for the specified Auto Scaling group.
+func ExampleAutoScaling_SetDesiredCapacity_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.SetDesiredCapacityInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		DesiredCapacity:      aws.Int64(2),
+		HonorCooldown:        aws.Bool(true),
+	}
 
-	svc := autoscaling.New(sess)
+	result, err := svc.SetDesiredCapacity(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeScalingActivityInProgressFault:
+				fmt.Println(autoscaling.ErrCodeScalingActivityInProgressFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &autoscaling.PutScheduledUpdateGroupActionInput{
-		AutoScalingGroupName: aws.String("ResourceName"),       // Required
-		ScheduledActionName:  aws.String("XmlStringMaxLen255"), // Required
-		DesiredCapacity:      aws.Int64(1),
-		EndTime:              aws.Time(time.Now()),
-		MaxSize:              aws.Int64(1),
+	fmt.Println(result)
+}
+
+// To set the health status of an instance
+//
+// This example sets the health status of the specified instance to Unhealthy.
+func ExampleAutoScaling_SetInstanceHealth_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.SetInstanceHealthInput{
+		HealthStatus: aws.String("Unhealthy"),
+		InstanceId:   aws.String("i-93633f9b"),
+	}
+
+	result, err := svc.SetInstanceHealth(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To enable instance protection for an instance
+//
+// This example enables instance protection for the specified instance.
+func ExampleAutoScaling_SetInstanceProtection_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.SetInstanceProtectionInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		InstanceIds: []*string{
+			aws.String("i-93633f9b"),
+		},
+		ProtectedFromScaleIn: aws.Bool(true),
+	}
+
+	result, err := svc.SetInstanceProtection(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeLimitExceededFault:
+				fmt.Println(autoscaling.ErrCodeLimitExceededFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To disable instance protection for an instance
+//
+// This example disables instance protection for the specified instance.
+func ExampleAutoScaling_SetInstanceProtection_shared01() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.SetInstanceProtectionInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		InstanceIds: []*string{
+			aws.String("i-93633f9b"),
+		},
+		ProtectedFromScaleIn: aws.Bool(false),
+	}
+
+	result, err := svc.SetInstanceProtection(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeLimitExceededFault:
+				fmt.Println(autoscaling.ErrCodeLimitExceededFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To suspend Auto Scaling processes
+//
+// This example suspends the specified scaling process for the specified Auto Scaling
+// group.
+func ExampleAutoScaling_SuspendProcesses_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.ScalingProcessQuery{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		ScalingProcesses: []*string{
+			aws.String("AlarmNotification"),
+		},
+	}
+
+	result, err := svc.SuspendProcesses(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeResourceInUseFault:
+				fmt.Println(autoscaling.ErrCodeResourceInUseFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To terminate an instance in an Auto Scaling group
+//
+// This example terminates the specified instance from the specified Auto Scaling group
+// without updating the size of the group. Auto Scaling launches a replacement instance
+// after the specified instance terminates.
+func ExampleAutoScaling_TerminateInstanceInAutoScalingGroup_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.TerminateInstanceInAutoScalingGroupInput{
+		InstanceId:                     aws.String("i-93633f9b"),
+		ShouldDecrementDesiredCapacity: aws.Bool(false),
+	}
+
+	result, err := svc.TerminateInstanceInAutoScalingGroup(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeScalingActivityInProgressFault:
+				fmt.Println(autoscaling.ErrCodeScalingActivityInProgressFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To update the launch configuration
+//
+// This example updates the launch configuration of the specified Auto Scaling group.
+func ExampleAutoScaling_UpdateAutoScalingGroup_shared00() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.UpdateAutoScalingGroupInput{
+		AutoScalingGroupName:    aws.String("my-auto-scaling-group"),
+		LaunchConfigurationName: aws.String("new-launch-config"),
+	}
+
+	result, err := svc.UpdateAutoScalingGroup(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeScalingActivityInProgressFault:
+				fmt.Println(autoscaling.ErrCodeScalingActivityInProgressFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To update the minimum and maximum size
+//
+// This example updates the minimum size and maximum size of the specified Auto Scaling
+// group.
+func ExampleAutoScaling_UpdateAutoScalingGroup_shared01() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.UpdateAutoScalingGroupInput{
+		AutoScalingGroupName: aws.String("my-auto-scaling-group"),
+		MaxSize:              aws.Int64(3),
 		MinSize:              aws.Int64(1),
-		Recurrence:           aws.String("XmlStringMaxLen255"),
-		StartTime:            aws.Time(time.Now()),
-		Time:                 aws.Time(time.Now()),
 	}
-	resp, err := svc.PutScheduledUpdateGroupAction(params)
 
+	result, err := svc.UpdateAutoScalingGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeScalingActivityInProgressFault:
+				fmt.Println(autoscaling.ErrCodeScalingActivityInProgressFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleAutoScaling_RecordLifecycleActionHeartbeat() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.RecordLifecycleActionHeartbeatInput{
-		AutoScalingGroupName: aws.String("ResourceName"),         // Required
-		LifecycleHookName:    aws.String("AsciiStringMaxLen255"), // Required
-		InstanceId:           aws.String("XmlStringMaxLen19"),
-		LifecycleActionToken: aws.String("LifecycleActionToken"),
-	}
-	resp, err := svc.RecordLifecycleActionHeartbeat(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleAutoScaling_ResumeProcesses() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.ScalingProcessQuery{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
-		ScalingProcesses: []*string{
-			aws.String("XmlStringMaxLen255"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.ResumeProcesses(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleAutoScaling_SetDesiredCapacity() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.SetDesiredCapacityInput{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
-		DesiredCapacity:      aws.Int64(1),               // Required
-		HonorCooldown:        aws.Bool(true),
-	}
-	resp, err := svc.SetDesiredCapacity(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleAutoScaling_SetInstanceHealth() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.SetInstanceHealthInput{
-		HealthStatus:             aws.String("XmlStringMaxLen32"), // Required
-		InstanceId:               aws.String("XmlStringMaxLen19"), // Required
-		ShouldRespectGracePeriod: aws.Bool(true),
-	}
-	resp, err := svc.SetInstanceHealth(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleAutoScaling_SetInstanceProtection() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.SetInstanceProtectionInput{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
-		InstanceIds: []*string{ // Required
-			aws.String("XmlStringMaxLen19"), // Required
-			// More values...
-		},
-		ProtectedFromScaleIn: aws.Bool(true), // Required
-	}
-	resp, err := svc.SetInstanceProtection(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleAutoScaling_SuspendProcesses() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.ScalingProcessQuery{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
-		ScalingProcesses: []*string{
-			aws.String("XmlStringMaxLen255"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.SuspendProcesses(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleAutoScaling_TerminateInstanceInAutoScalingGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.TerminateInstanceInAutoScalingGroupInput{
-		InstanceId:                     aws.String("XmlStringMaxLen19"), // Required
-		ShouldDecrementDesiredCapacity: aws.Bool(true),                  // Required
-	}
-	resp, err := svc.TerminateInstanceInAutoScalingGroup(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleAutoScaling_UpdateAutoScalingGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := autoscaling.New(sess)
-
-	params := &autoscaling.UpdateAutoScalingGroupInput{
-		AutoScalingGroupName: aws.String("ResourceName"), // Required
-		AvailabilityZones: []*string{
-			aws.String("XmlStringMaxLen255"), // Required
-			// More values...
-		},
-		DefaultCooldown:         aws.Int64(1),
-		DesiredCapacity:         aws.Int64(1),
-		HealthCheckGracePeriod:  aws.Int64(1),
-		HealthCheckType:         aws.String("XmlStringMaxLen32"),
-		LaunchConfigurationName: aws.String("ResourceName"),
-		MaxSize:                 aws.Int64(1),
-		MinSize:                 aws.Int64(1),
+// To enable instance protection
+//
+// This example enables instance protection for the specified Auto Scaling group.
+func ExampleAutoScaling_UpdateAutoScalingGroup_shared02() {
+	svc := autoscaling.New(session.New())
+	input := &autoscaling.UpdateAutoScalingGroupInput{
+		AutoScalingGroupName:             aws.String("my-auto-scaling-group"),
 		NewInstancesProtectedFromScaleIn: aws.Bool(true),
-		PlacementGroup:                   aws.String("XmlStringMaxLen255"),
-		TerminationPolicies: []*string{
-			aws.String("XmlStringMaxLen1600"), // Required
-			// More values...
-		},
-		VPCZoneIdentifier: aws.String("XmlStringMaxLen2047"),
 	}
-	resp, err := svc.UpdateAutoScalingGroup(params)
 
+	result, err := svc.UpdateAutoScalingGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeScalingActivityInProgressFault:
+				fmt.Println(autoscaling.ErrCodeScalingActivityInProgressFault, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }

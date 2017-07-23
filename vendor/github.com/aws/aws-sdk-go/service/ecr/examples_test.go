@@ -3,448 +3,341 @@
 package ecr_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleECR_BatchCheckLayerAvailability() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecr.New(sess)
-
-	params := &ecr.BatchCheckLayerAvailabilityInput{
-		LayerDigests: []*string{ // Required
-			aws.String("BatchedOperationLayerDigest"), // Required
-			// More values...
-		},
-		RepositoryName: aws.String("RepositoryName"), // Required
-		RegistryId:     aws.String("RegistryId"),
-	}
-	resp, err := svc.BatchCheckLayerAvailability(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
+		panic(err)
 	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	return &t
 }
 
-func ExampleECR_BatchDeleteImage() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecr.New(sess)
-
-	params := &ecr.BatchDeleteImageInput{
-		ImageIds: []*ecr.ImageIdentifier{ // Required
-			{ // Required
-				ImageDigest: aws.String("ImageDigest"),
-				ImageTag:    aws.String("ImageTag"),
-			},
-			// More values...
-		},
-		RepositoryName: aws.String("RepositoryName"), // Required
-		RegistryId:     aws.String("RegistryId"),
-	}
-	resp, err := svc.BatchDeleteImage(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECR_BatchGetImage() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecr.New(sess)
-
-	params := &ecr.BatchGetImageInput{
-		ImageIds: []*ecr.ImageIdentifier{ // Required
-			{ // Required
-				ImageDigest: aws.String("ImageDigest"),
-				ImageTag:    aws.String("ImageTag"),
-			},
-			// More values...
-		},
-		RepositoryName: aws.String("RepositoryName"), // Required
-		AcceptedMediaTypes: []*string{
-			aws.String("MediaType"), // Required
-			// More values...
-		},
-		RegistryId: aws.String("RegistryId"),
-	}
-	resp, err := svc.BatchGetImage(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECR_CompleteLayerUpload() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecr.New(sess)
-
-	params := &ecr.CompleteLayerUploadInput{
-		LayerDigests: []*string{ // Required
-			aws.String("LayerDigest"), // Required
-			// More values...
-		},
-		RepositoryName: aws.String("RepositoryName"), // Required
-		UploadId:       aws.String("UploadId"),       // Required
-		RegistryId:     aws.String("RegistryId"),
-	}
-	resp, err := svc.CompleteLayerUpload(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECR_CreateRepository() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecr.New(sess)
-
-	params := &ecr.CreateRepositoryInput{
-		RepositoryName: aws.String("RepositoryName"), // Required
-	}
-	resp, err := svc.CreateRepository(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECR_DeleteRepository() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecr.New(sess)
-
-	params := &ecr.DeleteRepositoryInput{
-		RepositoryName: aws.String("RepositoryName"), // Required
-		Force:          aws.Bool(true),
-		RegistryId:     aws.String("RegistryId"),
-	}
-	resp, err := svc.DeleteRepository(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECR_DeleteRepositoryPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecr.New(sess)
-
-	params := &ecr.DeleteRepositoryPolicyInput{
-		RepositoryName: aws.String("RepositoryName"), // Required
-		RegistryId:     aws.String("RegistryId"),
-	}
-	resp, err := svc.DeleteRepositoryPolicy(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECR_DescribeImages() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecr.New(sess)
-
-	params := &ecr.DescribeImagesInput{
-		RepositoryName: aws.String("RepositoryName"), // Required
-		Filter: &ecr.DescribeImagesFilter{
-			TagStatus: aws.String("TagStatus"),
-		},
+// To delete multiple images
+//
+// This example deletes images with the tags precise and trusty in a repository called
+// ubuntu in the default registry for an account.
+func ExampleECR_BatchDeleteImage_shared00() {
+	svc := ecr.New(session.New())
+	input := &ecr.BatchDeleteImageInput{
 		ImageIds: []*ecr.ImageIdentifier{
-			{ // Required
-				ImageDigest: aws.String("ImageDigest"),
-				ImageTag:    aws.String("ImageTag"),
+			{
+				ImageTag: aws.String("precise"),
 			},
-			// More values...
 		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
-		RegistryId: aws.String("RegistryId"),
+		RepositoryName: aws.String("ubuntu"),
 	}
-	resp, err := svc.DescribeImages(params)
 
+	result, err := svc.BatchDeleteImage(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecr.ErrCodeServerException:
+				fmt.Println(ecr.ErrCodeServerException, aerr.Error())
+			case ecr.ErrCodeInvalidParameterException:
+				fmt.Println(ecr.ErrCodeInvalidParameterException, aerr.Error())
+			case ecr.ErrCodeRepositoryNotFoundException:
+				fmt.Println(ecr.ErrCodeRepositoryNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleECR_DescribeRepositories() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecr.New(sess)
-
-	params := &ecr.DescribeRepositoriesInput{
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
-		RegistryId: aws.String("RegistryId"),
-		RepositoryNames: []*string{
-			aws.String("RepositoryName"), // Required
-			// More values...
+// To obtain multiple images in a single request
+//
+// This example obtains information for an image with a specified image digest ID from
+// the repository named ubuntu in the current account.
+func ExampleECR_BatchGetImage_shared00() {
+	svc := ecr.New(session.New())
+	input := &ecr.BatchGetImageInput{
+		ImageIds: []*ecr.ImageIdentifier{
+			{
+				ImageTag: aws.String("precise"),
+			},
 		},
+		RepositoryName: aws.String("ubuntu"),
 	}
-	resp, err := svc.DescribeRepositories(params)
 
+	result, err := svc.BatchGetImage(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecr.ErrCodeServerException:
+				fmt.Println(ecr.ErrCodeServerException, aerr.Error())
+			case ecr.ErrCodeInvalidParameterException:
+				fmt.Println(ecr.ErrCodeInvalidParameterException, aerr.Error())
+			case ecr.ErrCodeRepositoryNotFoundException:
+				fmt.Println(ecr.ErrCodeRepositoryNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleECR_GetAuthorizationToken() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecr.New(sess)
-
-	params := &ecr.GetAuthorizationTokenInput{
-		RegistryIds: []*string{
-			aws.String("RegistryId"), // Required
-			// More values...
-		},
+// To create a new repository
+//
+// This example creates a repository called nginx-web-app inside the project-a namespace
+// in the default registry for an account.
+func ExampleECR_CreateRepository_shared00() {
+	svc := ecr.New(session.New())
+	input := &ecr.CreateRepositoryInput{
+		RepositoryName: aws.String("project-a/nginx-web-app"),
 	}
-	resp, err := svc.GetAuthorizationToken(params)
 
+	result, err := svc.CreateRepository(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecr.ErrCodeServerException:
+				fmt.Println(ecr.ErrCodeServerException, aerr.Error())
+			case ecr.ErrCodeInvalidParameterException:
+				fmt.Println(ecr.ErrCodeInvalidParameterException, aerr.Error())
+			case ecr.ErrCodeRepositoryAlreadyExistsException:
+				fmt.Println(ecr.ErrCodeRepositoryAlreadyExistsException, aerr.Error())
+			case ecr.ErrCodeLimitExceededException:
+				fmt.Println(ecr.ErrCodeLimitExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleECR_GetDownloadUrlForLayer() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecr.New(sess)
-
-	params := &ecr.GetDownloadUrlForLayerInput{
-		LayerDigest:    aws.String("LayerDigest"),    // Required
-		RepositoryName: aws.String("RepositoryName"), // Required
-		RegistryId:     aws.String("RegistryId"),
-	}
-	resp, err := svc.GetDownloadUrlForLayer(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECR_GetRepositoryPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecr.New(sess)
-
-	params := &ecr.GetRepositoryPolicyInput{
-		RepositoryName: aws.String("RepositoryName"), // Required
-		RegistryId:     aws.String("RegistryId"),
-	}
-	resp, err := svc.GetRepositoryPolicy(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECR_InitiateLayerUpload() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecr.New(sess)
-
-	params := &ecr.InitiateLayerUploadInput{
-		RepositoryName: aws.String("RepositoryName"), // Required
-		RegistryId:     aws.String("RegistryId"),
-	}
-	resp, err := svc.InitiateLayerUpload(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECR_ListImages() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecr.New(sess)
-
-	params := &ecr.ListImagesInput{
-		RepositoryName: aws.String("RepositoryName"), // Required
-		Filter: &ecr.ListImagesFilter{
-			TagStatus: aws.String("TagStatus"),
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
-		RegistryId: aws.String("RegistryId"),
-	}
-	resp, err := svc.ListImages(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECR_PutImage() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecr.New(sess)
-
-	params := &ecr.PutImageInput{
-		ImageManifest:  aws.String("ImageManifest"),  // Required
-		RepositoryName: aws.String("RepositoryName"), // Required
-		ImageTag:       aws.String("ImageTag"),
-		RegistryId:     aws.String("RegistryId"),
-	}
-	resp, err := svc.PutImage(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECR_SetRepositoryPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecr.New(sess)
-
-	params := &ecr.SetRepositoryPolicyInput{
-		PolicyText:     aws.String("RepositoryPolicyText"), // Required
-		RepositoryName: aws.String("RepositoryName"),       // Required
+// To force delete a repository
+//
+// This example force deletes a repository named ubuntu in the default registry for
+// an account. The force parameter is required if the repository contains images.
+func ExampleECR_DeleteRepository_shared00() {
+	svc := ecr.New(session.New())
+	input := &ecr.DeleteRepositoryInput{
 		Force:          aws.Bool(true),
-		RegistryId:     aws.String("RegistryId"),
+		RepositoryName: aws.String("ubuntu"),
 	}
-	resp, err := svc.SetRepositoryPolicy(params)
 
+	result, err := svc.DeleteRepository(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecr.ErrCodeServerException:
+				fmt.Println(ecr.ErrCodeServerException, aerr.Error())
+			case ecr.ErrCodeInvalidParameterException:
+				fmt.Println(ecr.ErrCodeInvalidParameterException, aerr.Error())
+			case ecr.ErrCodeRepositoryNotFoundException:
+				fmt.Println(ecr.ErrCodeRepositoryNotFoundException, aerr.Error())
+			case ecr.ErrCodeRepositoryNotEmptyException:
+				fmt.Println(ecr.ErrCodeRepositoryNotEmptyException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleECR_UploadLayerPart() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecr.New(sess)
-
-	params := &ecr.UploadLayerPartInput{
-		LayerPartBlob:  []byte("PAYLOAD"),            // Required
-		PartFirstByte:  aws.Int64(1),                 // Required
-		PartLastByte:   aws.Int64(1),                 // Required
-		RepositoryName: aws.String("RepositoryName"), // Required
-		UploadId:       aws.String("UploadId"),       // Required
-		RegistryId:     aws.String("RegistryId"),
+// To delete the policy associated with a repository
+//
+// This example deletes the policy associated with the repository named ubuntu in the
+// current account.
+func ExampleECR_DeleteRepositoryPolicy_shared00() {
+	svc := ecr.New(session.New())
+	input := &ecr.DeleteRepositoryPolicyInput{
+		RepositoryName: aws.String("ubuntu"),
 	}
-	resp, err := svc.UploadLayerPart(params)
 
+	result, err := svc.DeleteRepositoryPolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecr.ErrCodeServerException:
+				fmt.Println(ecr.ErrCodeServerException, aerr.Error())
+			case ecr.ErrCodeInvalidParameterException:
+				fmt.Println(ecr.ErrCodeInvalidParameterException, aerr.Error())
+			case ecr.ErrCodeRepositoryNotFoundException:
+				fmt.Println(ecr.ErrCodeRepositoryNotFoundException, aerr.Error())
+			case ecr.ErrCodeRepositoryPolicyNotFoundException:
+				fmt.Println(ecr.ErrCodeRepositoryPolicyNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
+}
+
+// To describe all repositories in the current account
+//
+// The following example obtains a list and description of all repositories in the default
+// registry to which the current user has access.
+func ExampleECR_DescribeRepositories_shared00() {
+	svc := ecr.New(session.New())
+	input := &ecr.DescribeRepositoriesInput{}
+
+	result, err := svc.DescribeRepositories(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecr.ErrCodeServerException:
+				fmt.Println(ecr.ErrCodeServerException, aerr.Error())
+			case ecr.ErrCodeInvalidParameterException:
+				fmt.Println(ecr.ErrCodeInvalidParameterException, aerr.Error())
+			case ecr.ErrCodeRepositoryNotFoundException:
+				fmt.Println(ecr.ErrCodeRepositoryNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To obtain an authorization token
+//
+// This example gets an authorization token for your default registry.
+func ExampleECR_GetAuthorizationToken_shared00() {
+	svc := ecr.New(session.New())
+	input := &ecr.GetAuthorizationTokenInput{}
+
+	result, err := svc.GetAuthorizationToken(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecr.ErrCodeServerException:
+				fmt.Println(ecr.ErrCodeServerException, aerr.Error())
+			case ecr.ErrCodeInvalidParameterException:
+				fmt.Println(ecr.ErrCodeInvalidParameterException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get the current policy for a repository
+//
+// This example obtains the repository policy for the repository named ubuntu.
+func ExampleECR_GetRepositoryPolicy_shared00() {
+	svc := ecr.New(session.New())
+	input := &ecr.GetRepositoryPolicyInput{
+		RepositoryName: aws.String("ubuntu"),
+	}
+
+	result, err := svc.GetRepositoryPolicy(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecr.ErrCodeServerException:
+				fmt.Println(ecr.ErrCodeServerException, aerr.Error())
+			case ecr.ErrCodeInvalidParameterException:
+				fmt.Println(ecr.ErrCodeInvalidParameterException, aerr.Error())
+			case ecr.ErrCodeRepositoryNotFoundException:
+				fmt.Println(ecr.ErrCodeRepositoryNotFoundException, aerr.Error())
+			case ecr.ErrCodeRepositoryPolicyNotFoundException:
+				fmt.Println(ecr.ErrCodeRepositoryPolicyNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list all images in a repository
+//
+// This example lists all of the images in the repository named ubuntu in the default
+// registry in the current account.
+func ExampleECR_ListImages_shared00() {
+	svc := ecr.New(session.New())
+	input := &ecr.ListImagesInput{
+		RepositoryName: aws.String("ubuntu"),
+	}
+
+	result, err := svc.ListImages(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecr.ErrCodeServerException:
+				fmt.Println(ecr.ErrCodeServerException, aerr.Error())
+			case ecr.ErrCodeInvalidParameterException:
+				fmt.Println(ecr.ErrCodeInvalidParameterException, aerr.Error())
+			case ecr.ErrCodeRepositoryNotFoundException:
+				fmt.Println(ecr.ErrCodeRepositoryNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
 }

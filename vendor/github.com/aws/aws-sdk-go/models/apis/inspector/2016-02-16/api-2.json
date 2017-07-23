@@ -207,6 +207,23 @@
         {"shape":"InvalidInputException"}
       ]
     },
+    "GetAssessmentReport":{
+      "name":"GetAssessmentReport",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetAssessmentReportRequest"},
+      "output":{"shape":"GetAssessmentReportResponse"},
+      "errors":[
+        {"shape":"InternalException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"NoSuchEntityException"},
+        {"shape":"AssessmentRunInProgressException"},
+        {"shape":"UnsupportedFeatureException"}
+      ]
+    },
     "GetTelemetryMetadata":{
       "name":"GetTelemetryMetadata",
       "http":{
@@ -656,7 +673,8 @@
         "stateChangedAt",
         "dataCollected",
         "stateChanges",
-        "notifications"
+        "notifications",
+        "findingCounts"
       ],
       "members":{
         "arn":{"shape":"Arn"},
@@ -672,7 +690,8 @@
         "stateChangedAt":{"shape":"Timestamp"},
         "dataCollected":{"shape":"Bool"},
         "stateChanges":{"shape":"AssessmentRunStateChangeList"},
-        "notifications":{"shape":"AssessmentRunNotificationList"}
+        "notifications":{"shape":"AssessmentRunNotificationList"},
+        "findingCounts":{"shape":"AssessmentRunFindingCounts"}
       }
     },
     "AssessmentRunAgent":{
@@ -716,6 +735,11 @@
         "completionTimeRange":{"shape":"TimestampRange"},
         "stateChangeTimeRange":{"shape":"TimestampRange"}
       }
+    },
+    "AssessmentRunFindingCounts":{
+      "type":"map",
+      "key":{"shape":"Severity"},
+      "value":{"shape":"FindingCount"}
     },
     "AssessmentRunInProgressArnList":{
       "type":"list",
@@ -790,8 +814,10 @@
         "COLLECTING_DATA",
         "STOP_DATA_COLLECTION_PENDING",
         "DATA_COLLECTED",
+        "START_EVALUATING_RULES_PENDING",
         "EVALUATING_RULES",
         "FAILED",
+        "ERROR",
         "COMPLETED",
         "COMPLETED_WITH_ERRORS"
       ]
@@ -1248,6 +1274,7 @@
         "updatedAt":{"shape":"Timestamp"}
       }
     },
+    "FindingCount":{"type":"integer"},
     "FindingFilter":{
       "type":"structure",
       "members":{
@@ -1269,8 +1296,29 @@
     "FindingList":{
       "type":"list",
       "member":{"shape":"Finding"},
-      "max":10,
+      "max":100,
       "min":0
+    },
+    "GetAssessmentReportRequest":{
+      "type":"structure",
+      "required":[
+        "assessmentRunArn",
+        "reportFileFormat",
+        "reportType"
+      ],
+      "members":{
+        "assessmentRunArn":{"shape":"Arn"},
+        "reportFileFormat":{"shape":"ReportFileFormat"},
+        "reportType":{"shape":"ReportType"}
+      }
+    },
+    "GetAssessmentReportResponse":{
+      "type":"structure",
+      "required":["status"],
+      "members":{
+        "status":{"shape":"ReportStatus"},
+        "url":{"shape":"Url"}
+      }
     },
     "GetTelemetryMetadataRequest":{
       "type":"structure",
@@ -1710,6 +1758,28 @@
         "failedItems":{"shape":"FailedItems"}
       }
     },
+    "ReportFileFormat":{
+      "type":"string",
+      "enum":[
+        "HTML",
+        "PDF"
+      ]
+    },
+    "ReportStatus":{
+      "type":"string",
+      "enum":[
+        "WORK_IN_PROGRESS",
+        "FAILED",
+        "COMPLETED"
+      ]
+    },
+    "ReportType":{
+      "type":"string",
+      "enum":[
+        "FINDING",
+        "FULL"
+      ]
+    },
     "ResourceGroup":{
       "type":"structure",
       "required":[
@@ -1931,6 +2001,18 @@
         "topicArn":{"shape":"Arn"}
       }
     },
+    "UnsupportedFeatureException":{
+      "type":"structure",
+      "required":[
+        "message",
+        "canRetry"
+      ],
+      "members":{
+        "message":{"shape":"ErrorMessage"},
+        "canRetry":{"shape":"Bool"}
+      },
+      "exception":true
+    },
     "UpdateAssessmentTargetRequest":{
       "type":"structure",
       "required":[
@@ -1943,6 +2025,10 @@
         "assessmentTargetName":{"shape":"AssessmentTargetName"},
         "resourceGroupArn":{"shape":"Arn"}
       }
+    },
+    "Url":{
+      "type":"string",
+      "max":2048
     },
     "UserAttributeKeyList":{
       "type":"list",

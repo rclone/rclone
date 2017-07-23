@@ -22,6 +22,7 @@ import (
 	"encoding/base64"
 	"flag"
 	"fmt"
+	"hash/crc32"
 	"io"
 	"io/ioutil"
 	"log"
@@ -30,15 +31,14 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	gax "github.com/googleapis/gax-go"
-
 	"golang.org/x/net/context"
 
-	"cloud.google.com/go/internal"
+	"cloud.google.com/go/iam"
 	"cloud.google.com/go/internal/testutil"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iterator"
@@ -122,23 +122,131 @@ func TestBucketMethods(t *testing.T) {
 
 	projectID := testutil.ProjID()
 	newBucket := bucket + "-new"
+	b := client.Bucket(newBucket)
 	// Test Create and Delete.
-	if err := client.Bucket(newBucket).Create(ctx, projectID, nil); err != nil {
+	if err := b.Create(ctx, projectID, nil); err != nil {
 		t.Errorf("Bucket(%v).Create(%v, %v) failed: %v", newBucket, projectID, nil, err)
+	}
+	attrs, err := b.Attrs(ctx)
+	if err != nil {
+		t.Error(err)
+	} else {
+		if got, want := attrs.MetaGeneration, int64(1); got != want {
+			t.Errorf("got metagen %d, want %d", got, want)
+		}
+		if got, want := attrs.StorageClass, "STANDARD"; got != want {
+			t.Errorf("got storage class %q, want %q", got, want)
+		}
+		if attrs.VersioningEnabled {
+			t.Error("got versioning enabled, wanted it disabled")
+		}
 	}
 	if err := client.Bucket(newBucket).Delete(ctx); err != nil {
 		t.Errorf("Bucket(%v).Delete failed: %v", newBucket, err)
 	}
 
 	// Test Create and Delete with attributes.
-	attrs := BucketAttrs{
-		DefaultObjectACL: []ACLRule{{Entity: "domain-google.com", Role: RoleReader}},
+	labels := map[string]string{
+		"l1":    "v1",
+		"empty": "",
 	}
-	if err := client.Bucket(newBucket).Create(ctx, projectID, &attrs); err != nil {
+	attrs = &BucketAttrs{
+		StorageClass:      "NEARLINE",
+		VersioningEnabled: true,
+		Labels:            labels,
+	}
+	if err := client.Bucket(newBucket).Create(ctx, projectID, attrs); err != nil {
 		t.Errorf("Bucket(%v).Create(%v, %v) failed: %v", newBucket, projectID, attrs, err)
+	}
+	attrs, err = b.Attrs(ctx)
+	if err != nil {
+		t.Error(err)
+	} else {
+		if got, want := attrs.MetaGeneration, int64(1); got != want {
+			t.Errorf("got metagen %d, want %d", got, want)
+		}
+		if got, want := attrs.StorageClass, "NEARLINE"; got != want {
+			t.Errorf("got storage class %q, want %q", got, want)
+		}
+		if !attrs.VersioningEnabled {
+			t.Error("got versioning disabled, wanted it enabled")
+		}
+		if got, want := attrs.Labels, labels; !reflect.DeepEqual(got, want) {
+			t.Errorf("labels: got %v, want %v", got, want)
+		}
 	}
 	if err := client.Bucket(newBucket).Delete(ctx); err != nil {
 		t.Errorf("Bucket(%v).Delete failed: %v", newBucket, err)
+	}
+}
+
+func TestIntegration_BucketUpdate(t *testing.T) {
+	ctx := context.Background()
+	client, bucket := testConfig(ctx, t)
+	defer client.Close()
+
+	b := client.Bucket(bucket)
+	attrs, err := b.Attrs(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if attrs.VersioningEnabled {
+		t.Fatal("bucket should not have versioning by default")
+	}
+	if len(attrs.Labels) > 0 {
+		t.Fatal("bucket should not have labels initially")
+	}
+
+	// Using empty BucketAttrsToUpdate should be a no-nop.
+	attrs, err = b.Update(ctx, BucketAttrsToUpdate{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if attrs.VersioningEnabled {
+		t.Fatal("should not have versioning")
+	}
+	if len(attrs.Labels) > 0 {
+		t.Fatal("should not have labels")
+	}
+
+	// Turn on versioning, add some labels.
+	ua := BucketAttrsToUpdate{VersioningEnabled: true}
+	ua.SetLabel("l1", "v1")
+	ua.SetLabel("empty", "")
+	attrs, err = b.Update(ctx, ua)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !attrs.VersioningEnabled {
+		t.Fatal("should have versioning now")
+	}
+	wantLabels := map[string]string{
+		"l1":    "v1",
+		"empty": "",
+	}
+	if !reflect.DeepEqual(attrs.Labels, wantLabels) {
+		t.Fatalf("got %v, want %v", attrs.Labels, wantLabels)
+	}
+
+	// Turn  off versioning again; add and remove some more labels.
+	ua = BucketAttrsToUpdate{VersioningEnabled: false}
+	ua.SetLabel("l1", "v2")   // update
+	ua.SetLabel("new", "new") // create
+	ua.DeleteLabel("empty")   // delete
+	ua.DeleteLabel("absent")  // delete non-existent
+	attrs, err = b.Update(ctx, ua)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if attrs.VersioningEnabled {
+		t.Fatal("should have versioning off")
+	}
+	wantLabels = map[string]string{
+		"l1":  "v2",
+		"new": "new",
+	}
+	if !reflect.DeepEqual(attrs.Labels, wantLabels) {
+		t.Fatalf("got %v, want %v", attrs.Labels, wantLabels)
 	}
 }
 
@@ -159,7 +267,7 @@ func TestIntegration_ConditionalDelete(t *testing.T) {
 	}
 
 	gen := wc.Attrs().Generation
-	metaGen := wc.Attrs().MetaGeneration
+	metaGen := wc.Attrs().Metageneration
 
 	if err := o.Generation(gen - 1).Delete(ctx); err == nil {
 		t.Fatalf("Unexpected successful delete with Generation")
@@ -215,6 +323,9 @@ func TestObjects(t *testing.T) {
 			t.Errorf("Can't create a reader for %v, errored with %v", obj, err)
 			continue
 		}
+		if !rc.checkCRC {
+			t.Errorf("%v: not checking CRC", obj)
+		}
 		slurp, err := ioutil.ReadAll(rc)
 		if err != nil {
 			t.Errorf("Can't ReadAll object %v, errored with %v", obj, err)
@@ -230,12 +341,29 @@ func TestObjects(t *testing.T) {
 		}
 		rc.Close()
 
+		// Check early close.
+		buf := make([]byte, 1)
+		rc, err = bkt.Object(obj).NewReader(ctx)
+		if err != nil {
+			t.Fatalf("%v: %v", obj, err)
+		}
+		_, err = rc.Read(buf)
+		if err != nil {
+			t.Fatalf("%v: %v", obj, err)
+		}
+		if got, want := buf, contents[obj][:1]; !bytes.Equal(got, want) {
+			t.Errorf("Contents[0] (%q) = %q; want %q", obj, got, want)
+		}
+		if err := rc.Close(); err != nil {
+			t.Errorf("%v Close: %v", obj, err)
+		}
+
 		// Test SignedURL
 		opts := &SignedURLOptions{
 			GoogleAccessID: "xxx@clientid",
 			PrivateKey:     dummyKey("rsa"),
 			Method:         "GET",
-			MD5:            []byte("202cb962ac59075b964b07152d234b70"),
+			MD5:            "ICy5YqxZB1uWSwcVLSNLcA==",
 			Expires:        time.Date(2020, time.October, 2, 10, 0, 0, 0, time.UTC),
 			ContentType:    "application/json",
 			Headers:        []string{"x-header1", "x-header2"},
@@ -597,26 +725,11 @@ func testObjectIterator(t *testing.T, bkt *BucketHandle, objects []string) {
 		}
 		attrs = append(attrs, attr)
 	}
-	// The following iterator test fails occasionally, probably because the
-	// underlying Objects.List operation is eventually consistent. So we retry
-	// it.
-	tctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-	var msg string
-	var ok bool
-	err := internal.Retry(tctx, gax.Backoff{}, func() (stop bool, err error) {
-		msg, ok = itesting.TestIterator(attrs,
-			func() interface{} { return bkt.Objects(ctx, &Query{Prefix: "obj"}) },
-			func(it interface{}) (interface{}, error) { return it.(*ObjectIterator).Next() })
-		if ok {
-			return true, nil
-		} else {
-			t.Logf("TestIterator failed, trying again: %s", msg)
-			return false, nil
-		}
-	})
+	msg, ok := itesting.TestIterator(attrs,
+		func() interface{} { return bkt.Objects(ctx, &Query{Prefix: "obj"}) },
+		func(it interface{}) (interface{}, error) { return it.(*ObjectIterator).Next() })
 	if !ok {
-		t.Errorf("ObjectIterator.Next: %s (err=%v)", msg, err)
+		t.Errorf("ObjectIterator.Next: %s", msg)
 	}
 	// TODO(jba): test query.Delimiter != ""
 }
@@ -772,6 +885,7 @@ func TestWriterContentType(t *testing.T) {
 }
 
 func TestZeroSizedObject(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	client, bucket := testConfig(ctx, t)
 	defer client.Close()
@@ -952,6 +1066,7 @@ func TestIntegration_Encryption(t *testing.T) {
 }
 
 func TestIntegration_NonexistentBucket(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	client, bucket := testConfig(ctx, t)
 	defer client.Close()
@@ -1045,6 +1160,147 @@ func TestIntegration_BucketInCopyAttrs(t *testing.T) {
 	_, err := copier.callRewrite(ctx, obj, rawObject)
 	if err == nil {
 		t.Errorf("got nil, want error")
+	}
+}
+
+func TestIntegration_NoUnicodeNormalization(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	client, _ := testConfig(ctx, t)
+	defer client.Close()
+	bkt := client.Bucket("storage-library-test-bucket")
+
+	for _, tst := range []struct {
+		nameQuoted, content string
+	}{
+		{`"Caf\u00e9"`, "Normalization Form C"},
+		{`"Cafe\u0301"`, "Normalization Form D"},
+	} {
+		name, err := strconv.Unquote(tst.nameQuoted)
+		if err != nil {
+			t.Fatalf("invalid name: %s: %v", tst.nameQuoted, err)
+		}
+		got, err := readObject(ctx, bkt.Object(name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if g := string(got); g != tst.content {
+			t.Errorf("content of %s is %q, want %q", tst.nameQuoted, g, tst.content)
+		}
+	}
+}
+
+func TestIntegration_HashesOnUpload(t *testing.T) {
+	// Check that the user can provide hashes on upload, and that these are checked.
+	if testing.Short() {
+		t.Skip("Integration tests skipped in short mode")
+	}
+	ctx := context.Background()
+	client, bucket := testConfig(ctx, t)
+	if client == nil {
+		t.Skip("Integration tests skipped. See CONTRIBUTING.md for details")
+	}
+	defer client.Close()
+	obj := client.Bucket(bucket).Object("hashesOnUpload-1")
+	data := []byte("I can't wait to be verified")
+
+	write := func(w *Writer) error {
+		if _, err := w.Write(data); err != nil {
+			w.Close()
+			return err
+		}
+		return w.Close()
+	}
+
+	crc32c := crc32.Checksum(data, crc32cTable)
+	// The correct CRC should succeed.
+	w := obj.NewWriter(ctx)
+	w.CRC32C = crc32c
+	w.SendCRC32C = true
+	if err := write(w); err != nil {
+		t.Fatal(err)
+	}
+
+	// If we change the CRC, validation should fail.
+	w = obj.NewWriter(ctx)
+	w.CRC32C = crc32c + 1
+	w.SendCRC32C = true
+	if err := write(w); err == nil {
+		t.Fatal("write with bad CRC32c: want error, got nil")
+	}
+
+	// If we have the wrong CRC but forget to send it, we succeed.
+	w = obj.NewWriter(ctx)
+	w.CRC32C = crc32c + 1
+	if err := write(w); err != nil {
+		t.Fatal(err)
+	}
+
+	// MD5
+	md5 := md5.Sum(data)
+	// The correct MD5 should succeed.
+	w = obj.NewWriter(ctx)
+	w.MD5 = md5[:]
+	if err := write(w); err != nil {
+		t.Fatal(err)
+	}
+
+	// If we change the MD5, validation should fail.
+	w = obj.NewWriter(ctx)
+	w.MD5 = append([]byte(nil), md5[:]...)
+	w.MD5[0]++
+	if err := write(w); err == nil {
+		t.Fatal("write with bad MD5: want error, got nil")
+	}
+}
+
+func TestIntegration_BucketIAM(t *testing.T) {
+	ctx := context.Background()
+	client, bucket := testConfig(ctx, t)
+	defer client.Close()
+
+	bkt := client.Bucket(bucket)
+
+	// This bucket is unique to this test run. So we don't have
+	// to worry about other runs interfering with our IAM policy
+	// changes.
+
+	member := "projectViewer:" + testutil.ProjID()
+	role := iam.RoleName("roles/storage.objectViewer")
+	// Get the bucket's IAM policy.
+	policy, err := bkt.IAM().Policy(ctx)
+	if err != nil {
+		t.Fatalf("Getting policy: %v", err)
+	}
+	// The member should not have the role.
+	if policy.HasRole(member, role) {
+		t.Errorf("member %q has role %q", member, role)
+	}
+	// Change the policy.
+	policy.Add(member, role)
+	if err := bkt.IAM().SetPolicy(ctx, policy); err != nil {
+		t.Fatalf("SetPolicy: %v", err)
+	}
+	// Confirm that the binding was added.
+	policy, err = bkt.IAM().Policy(ctx)
+	if err != nil {
+		t.Fatalf("Getting policy: %v", err)
+	}
+	if !policy.HasRole(member, role) {
+		t.Errorf("member %q does not have role %q", member, role)
+	}
+
+	// Check TestPermissions.
+	// This client should have all these permissions (and more).
+	perms := []string{"storage.buckets.get", "storage.buckets.delete"}
+	got, err := bkt.IAM().TestPermissions(ctx, perms)
+	if err != nil {
+		t.Fatalf("TestPermissions: %v", err)
+	}
+	sort.Strings(perms)
+	sort.Strings(got)
+	if !reflect.DeepEqual(got, perms) {
+		t.Errorf("got %v, want %v", got, perms)
 	}
 }
 

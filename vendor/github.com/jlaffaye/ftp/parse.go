@@ -13,6 +13,7 @@ var listLineParsers = []func(line string) (*Entry, error){
 	parseRFC3659ListLine,
 	parseLsListLine,
 	parseDirListLine,
+	parseHostedFTPLine,
 }
 
 var dirTimeFormats = []string{
@@ -99,7 +100,7 @@ func parseLsListLine(line string) (*Entry, error) {
 		}
 
 		if err := e.setSize(fields[2]); err != nil {
-			return nil, err
+			return nil, errUnsupportedListLine
 		}
 		if err := e.setTime(fields[4:7]); err != nil {
 			return nil, err
@@ -178,6 +179,27 @@ func parseDirListLine(line string) (*Entry, error) {
 
 	e.Name = strings.TrimLeft(line, " ")
 	return e, nil
+}
+
+// parseHostedFTPLine parses a directory line in the non-standard format used
+// by hostedftp.com
+// -r--------   0 user group     65222236 Feb 24 00:39 UABlacklistingWeek8.csv
+// (The link count is inexplicably 0)
+func parseHostedFTPLine(line string) (*Entry, error) {
+	// Has the first field a length of 10 bytes?
+	if strings.IndexByte(line, ' ') != 10 {
+		return nil, errUnsupportedListLine
+	}
+
+	scanner := newScanner(line)
+	fields := scanner.NextFields(2)
+
+	if len(fields) < 2 || fields[1] != "0" {
+		return nil, errUnsupportedListLine
+	}
+
+	// Set link count to 1 and attempt to parse as Unix.
+	return parseLsListLine(fields[0] + " 1 " + scanner.Remaining())
 }
 
 // parseListLine parses the various non-standard format returned by the LIST

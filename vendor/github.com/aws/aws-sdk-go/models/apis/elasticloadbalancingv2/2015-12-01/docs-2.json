@@ -632,6 +632,8 @@
         "DescribeListenersOutput$NextMarker": "<p>The marker to use when requesting the next set of results. If there are no additional results, the string is empty.</p>",
         "DescribeLoadBalancersInput$Marker": "<p>The marker for the next set of results. (You received this marker from a previous call.)</p>",
         "DescribeLoadBalancersOutput$NextMarker": "<p>The marker to use when requesting the next set of results. If there are no additional results, the string is empty.</p>",
+        "DescribeRulesInput$Marker": "<p>The marker for the next set of results. (You received this marker from a previous call.)</p>",
+        "DescribeRulesOutput$NextMarker": "<p>The marker to use when requesting the next set of results. If there are no additional results, the string is empty.</p>",
         "DescribeSSLPoliciesInput$Marker": "<p>The marker for the next set of results. (You received this marker from a previous call.)</p>",
         "DescribeSSLPoliciesOutput$NextMarker": "<p>The marker to use when requesting the next set of results. If there are no additional results, the string is empty.</p>",
         "DescribeTargetGroupsInput$Marker": "<p>The marker for the next set of results. (You received this marker from a previous call.)</p>",
@@ -719,6 +721,7 @@
         "DescribeAccountLimitsInput$PageSize": "<p>The maximum number of results to return with this call.</p>",
         "DescribeListenersInput$PageSize": "<p>The maximum number of results to return with this call.</p>",
         "DescribeLoadBalancersInput$PageSize": "<p>The maximum number of results to return with this call.</p>",
+        "DescribeRulesInput$PageSize": "<p>The maximum number of results to return with this call.</p>",
         "DescribeSSLPoliciesInput$PageSize": "<p>The maximum number of results to return with this call.</p>",
         "DescribeTargetGroupsInput$PageSize": "<p>The maximum number of results to return with this call.</p>"
       }

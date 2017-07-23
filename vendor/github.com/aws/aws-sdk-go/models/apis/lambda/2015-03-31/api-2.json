@@ -246,7 +246,8 @@
         {"shape":"KMSDisabledException"},
         {"shape":"KMSInvalidStateException"},
         {"shape":"KMSAccessDeniedException"},
-        {"shape":"KMSNotFoundException"}
+        {"shape":"KMSNotFoundException"},
+        {"shape":"InvalidRuntimeException"}
       ]
     },
     "InvokeAsync":{
@@ -261,7 +262,8 @@
       "errors":[
         {"shape":"ServiceException"},
         {"shape":"ResourceNotFoundException"},
-        {"shape":"InvalidRequestContentException"}
+        {"shape":"InvalidRequestContentException"},
+        {"shape":"InvalidRuntimeException"}
       ],
       "deprecated":true
     },
@@ -308,7 +310,8 @@
       "output":{"shape":"ListFunctionsResponse"},
       "errors":[
         {"shape":"ServiceException"},
-        {"shape":"TooManyRequestsException"}
+        {"shape":"TooManyRequestsException"},
+        {"shape":"InvalidParameterValueException"}
       ]
     },
     "ListTags":{
@@ -467,7 +470,8 @@
         {"shape":"ServiceException"},
         {"shape":"ResourceNotFoundException"},
         {"shape":"InvalidParameterValueException"},
-        {"shape":"TooManyRequestsException"}
+        {"shape":"TooManyRequestsException"},
+        {"shape":"ResourceConflictException"}
       ]
     }
   },
@@ -817,8 +821,8 @@
     "FunctionConfiguration":{
       "type":"structure",
       "members":{
-        "FunctionName":{"shape":"FunctionName"},
-        "FunctionArn":{"shape":"FunctionArn"},
+        "FunctionName":{"shape":"NamespacedFunctionName"},
+        "FunctionArn":{"shape":"NameSpacedFunctionArn"},
         "Runtime":{"shape":"Runtime"},
         "Role":{"shape":"RoleArn"},
         "Handler":{"shape":"Handler"},
@@ -833,7 +837,8 @@
         "DeadLetterConfig":{"shape":"DeadLetterConfig"},
         "Environment":{"shape":"EnvironmentResponse"},
         "KMSKeyArn":{"shape":"KMSKeyArn"},
-        "TracingConfig":{"shape":"TracingConfigResponse"}
+        "TracingConfig":{"shape":"TracingConfigResponse"},
+        "MasterArn":{"shape":"FunctionArn"}
       }
     },
     "FunctionList":{
@@ -845,6 +850,10 @@
       "max":140,
       "min":1,
       "pattern":"(arn:aws:lambda:)?([a-z]{2}-[a-z]+-\\d{1}:)?(\\d{12}:)?(function:)?([a-zA-Z0-9-_]+)(:(\\$LATEST|[a-zA-Z0-9-_]+))?"
+    },
+    "FunctionVersion":{
+      "type":"string",
+      "enum":["ALL"]
     },
     "GetAccountSettingsRequest":{
       "type":"structure",
@@ -893,7 +902,7 @@
       "required":["FunctionName"],
       "members":{
         "FunctionName":{
-          "shape":"FunctionName",
+          "shape":"NamespacedFunctionName",
           "location":"uri",
           "locationName":"FunctionName"
         },
@@ -909,7 +918,7 @@
       "required":["FunctionName"],
       "members":{
         "FunctionName":{
-          "shape":"FunctionName",
+          "shape":"NamespacedFunctionName",
           "location":"uri",
           "locationName":"FunctionName"
         },
@@ -933,7 +942,7 @@
       "required":["FunctionName"],
       "members":{
         "FunctionName":{
-          "shape":"FunctionName",
+          "shape":"NamespacedFunctionName",
           "location":"uri",
           "locationName":"FunctionName"
         },
@@ -975,6 +984,15 @@
       "error":{"httpStatusCode":400},
       "exception":true
     },
+    "InvalidRuntimeException":{
+      "type":"structure",
+      "members":{
+        "Type":{"shape":"String"},
+        "Message":{"shape":"String"}
+      },
+      "error":{"httpStatusCode":502},
+      "exception":true
+    },
     "InvalidSecurityGroupIDException":{
       "type":"structure",
       "members":{
@@ -1007,7 +1025,7 @@
       "required":["FunctionName"],
       "members":{
         "FunctionName":{
-          "shape":"FunctionName",
+          "shape":"NamespacedFunctionName",
           "location":"uri",
           "locationName":"FunctionName"
         },
@@ -1072,7 +1090,7 @@
       ],
       "members":{
         "FunctionName":{
-          "shape":"FunctionName",
+          "shape":"NamespacedFunctionName",
           "location":"uri",
           "locationName":"FunctionName"
         },
@@ -1199,6 +1217,16 @@
     "ListFunctionsRequest":{
       "type":"structure",
       "members":{
+        "MasterRegion":{
+          "shape":"MasterRegion",
+          "location":"querystring",
+          "locationName":"MasterRegion"
+        },
+        "FunctionVersion":{
+          "shape":"FunctionVersion",
+          "location":"querystring",
+          "locationName":"FunctionVersion"
+        },
         "Marker":{
           "shape":"String",
           "location":"querystring",
@@ -1240,7 +1268,7 @@
       "required":["FunctionName"],
       "members":{
         "FunctionName":{
-          "shape":"FunctionName",
+          "shape":"NamespacedFunctionName",
           "location":"uri",
           "locationName":"FunctionName"
         },
@@ -1271,6 +1299,10 @@
       ]
     },
     "Long":{"type":"long"},
+    "MasterRegion":{
+      "type":"string",
+      "pattern":"ALL|[a-z]{2}(-gov)?-[a-z]+-\\d{1}"
+    },
     "MaxListItems":{
       "type":"integer",
       "max":10000,
@@ -1280,6 +1312,22 @@
       "type":"integer",
       "max":1536,
       "min":128
+    },
+    "NameSpacedFunctionArn":{
+      "type":"string",
+      "pattern":"arn:aws:lambda:[a-z]{2}-[a-z]+-\\d{1}:\\d{12}:function:[a-zA-Z0-9-_\\.]+(:(\\$LATEST|[a-zA-Z0-9-_]+))?"
+    },
+    "NamespacedFunctionName":{
+      "type":"string",
+      "max":170,
+      "min":1,
+      "pattern":"(arn:aws:lambda:)?([a-z]{2}-[a-z]+-\\d{1}:)?(\\d{12}:)?(function:)?([a-zA-Z0-9-_\\.]+)(:(\\$LATEST|[a-zA-Z0-9-_]+))?"
+    },
+    "NamespacedStatementId":{
+      "type":"string",
+      "max":100,
+      "min":1,
+      "pattern":"([a-zA-Z0-9-_.]+)"
     },
     "PolicyLengthExceededException":{
       "type":"structure",
@@ -1326,7 +1374,7 @@
           "locationName":"FunctionName"
         },
         "StatementId":{
-          "shape":"StatementId",
+          "shape":"NamespacedStatementId",
           "location":"uri",
           "locationName":"StatementId"
         },

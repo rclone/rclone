@@ -19,6 +19,7 @@ package instance_test
 import (
 	"cloud.google.com/go/spanner/admin/instance/apiv1"
 	"golang.org/x/net/context"
+	"google.golang.org/api/iterator"
 	iampb "google.golang.org/genproto/googleapis/iam/v1"
 	instancepb "google.golang.org/genproto/googleapis/spanner/admin/instance/v1"
 )
@@ -46,9 +47,11 @@ func ExampleInstanceAdminClient_ListInstanceConfigs() {
 	it := c.ListInstanceConfigs(ctx, req)
 	for {
 		resp, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
 		if err != nil {
 			// TODO: Handle error.
-			break
 		}
 		// TODO: Use resp.
 		_ = resp
@@ -86,9 +89,11 @@ func ExampleInstanceAdminClient_ListInstances() {
 	it := c.ListInstances(ctx, req)
 	for {
 		resp, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
 		if err != nil {
 			// TODO: Handle error.
-			break
 		}
 		// TODO: Use resp.
 		_ = resp

@@ -15,11 +15,11 @@ import (
 // the MaxRetries method:
 //
 //		type retryer struct {
-//      service.DefaultRetryer
+//      client.DefaultRetryer
 //    }
 //
 //    // This implementation always has 100 max retries
-//    func (d retryer) MaxRetries() uint { return 100 }
+//    func (d retryer) MaxRetries() int { return 100 }
 type DefaultRetryer struct {
 	NumMaxRetries int
 }

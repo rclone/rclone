@@ -1,13 +1,13 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"tbys6C40o18GZwyMen5GMkdK-3s/2gL3A40IBu11GP9xmmdXxrLKXPg\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/mEVn7ZP7sXAW_2rxSFljK04NT4w\"",
  "discoveryVersion": "v1",
  "id": "customsearch:v1",
  "name": "customsearch",
  "version": "v1",
- "revision": "20160411",
+ "revision": "20170530",
  "title": "CustomSearch API",
- "description": "Lets you search over a website or collection of websites",
+ "description": "Searches over a website or collection of websites",
  "ownerDomain": "google.com",
  "ownerName": "Google",
  "icons": {
@@ -161,9 +161,6 @@
      "format": "int32"
     },
     "cr": {
-     "type": "string"
-    },
-    "cref": {
      "type": "string"
     },
     "cx": {
@@ -443,7 +440,7 @@
      "properties": {
       "template": {
        "type": "string",
-       "default": "https://www.googleapis.com/customsearch/v1?q={searchTerms}&num={count?}&start={startIndex?}&lr={language?}&safe={safe?}&cx={cx?}&cref={cref?}&sort={sort?}&filter={filter?}&gl={gl?}&cr={cr?}&googlehost={googleHost?}&c2coff={disableCnTwTranslation?}&hq={hq?}&hl={hl?}&siteSearch={siteSearch?}&siteSearchFilter={siteSearchFilter?}&exactTerms={exactTerms?}&excludeTerms={excludeTerms?}&linkSite={linkSite?}&orTerms={orTerms?}&relatedSite={relatedSite?}&dateRestrict={dateRestrict?}&lowRange={lowRange?}&highRange={highRange?}&searchType={searchType}&fileType={fileType?}&rights={rights?}&imgSize={imgSize?}&imgType={imgType?}&imgColorType={imgColorType?}&imgDominantColor={imgDominantColor?}&alt=json"
+       "default": "https://www.googleapis.com/customsearch/v1?q={searchTerms}&num={count?}&start={startIndex?}&lr={language?}&safe={safe?}&cx={cx?}&sort={sort?}&filter={filter?}&gl={gl?}&cr={cr?}&googlehost={googleHost?}&c2coff={disableCnTwTranslation?}&hq={hq?}&hl={hl?}&siteSearch={siteSearch?}&siteSearchFilter={siteSearchFilter?}&exactTerms={exactTerms?}&excludeTerms={excludeTerms?}&linkSite={linkSite?}&orTerms={orTerms?}&relatedSite={relatedSite?}&dateRestrict={dateRestrict?}&lowRange={lowRange?}&highRange={highRange?}&searchType={searchType}&fileType={fileType?}&rights={rights?}&imgSize={imgSize?}&imgType={imgType?}&imgColorType={imgColorType?}&imgDominantColor={imgDominantColor?}&alt=json"
       },
       "type": {
        "type": "string",
@@ -471,11 +468,6 @@
       "cr": {
        "type": "string",
        "description": "Country restrict(s).",
-       "location": "query"
-      },
-      "cref": {
-       "type": "string",
-       "description": "The URL of a linked custom search engine",
        "location": "query"
       },
       "cx": {

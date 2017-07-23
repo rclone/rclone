@@ -72,12 +72,12 @@ func main() {
 		log.Fatal("failed to accept incoming connection", err)
 	}
 
-	// Before use, a handshake must be performed on the incoming
-	// net.Conn.
-	_, chans, reqs, err := ssh.NewServerConn(nConn, config)
+	// Before use, a handshake must be performed on the incoming net.Conn.
+	sconn, chans, reqs, err := ssh.NewServerConn(nConn, config)
 	if err != nil {
 		log.Fatal("failed to handshake", err)
 	}
+	log.Println("login detected:", sconn.User())
 	fmt.Fprintf(debugStream, "SSH server established\n")
 
 	// The incoming Request channel must be serviced.

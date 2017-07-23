@@ -21,6 +21,7 @@ func TestDirCache(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer os.RemoveAll(dir)
 	dir = filepath.Join(dir, "certs") // a nonexistent dir
 	cache := DirCache(dir)
 	ctx := context.Background()

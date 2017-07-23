@@ -64,6 +64,9 @@ const (
 	//    * You tried to create a WebACL with a DefaultActionType other than ALLOW,
 	//    BLOCK, or COUNT.
 	//
+	//    * You tried to create a RateBasedRule with a RateKey value other than
+	//    IP.
+	//
 	//    * You tried to update a WebACL with a WafActionType other than ALLOW,
 	//    BLOCK, or COUNT.
 	//

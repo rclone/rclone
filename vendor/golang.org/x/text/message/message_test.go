@@ -10,8 +10,10 @@ import (
 	"io"
 	"testing"
 
+	"golang.org/x/text/internal"
 	"golang.org/x/text/internal/format"
 	"golang.org/x/text/language"
+	"golang.org/x/text/message/catalog"
 )
 
 type formatFunc func(s fmt.State, v rune)
@@ -48,13 +50,14 @@ func TestBinding(t *testing.T) {
 	}
 }
 
-func TestFormatSelection(t *testing.T) {
+func TestLocalization(t *testing.T) {
 	type test struct {
 		tag  string
 		key  Reference
 		args []interface{}
 		want string
 	}
+	args := func(x ...interface{}) []interface{} { return x }
 	empty := []interface{}{}
 	joe := []interface{}{"Joe"}
 	joeAndMary := []interface{}{"Joe", "Mary"}
@@ -124,26 +127,55 @@ func TestFormatSelection(t *testing.T) {
 			{"und", "hello %+%%s", joeAndMary, "hello %Joe%!(EXTRA string=Mary)"},
 			{"und", "hello %-42%%s ", joeAndMary, "hello %Joe %!(EXTRA string=Mary)"},
 		},
+	}, {
+		desc: "number formatting", // work around limitation of fmt
+		cat: []entry{
+			{"und", "files", "%d files left"},
+			{"und", "meters", "%.2f meters"},
+			{"de", "files", "%d Dateien übrig"},
+		},
+		test: []test{
+			{"en", "meters", args(3000.2), "3,000.20 meters"},
+			{"en-u-nu-gujr", "files", args(123456), "૧૨૩,૪૫૬ files left"},
+			{"de", "files", args(1234), "1.234 Dateien übrig"},
+			{"de-CH", "files", args(1234), "1’234 Dateien übrig"},
+			{"de-CH-u-nu-mong", "files", args(1234), "᠑’᠒᠓᠔ Dateien übrig"},
+		},
 	}}
 
 	for _, tc := range testCases {
 		cat, _ := initCat(tc.cat)
 
 		for i, pt := range tc.test {
-			p := cat.Printer(language.MustParse(pt.tag))
+			t.Run(fmt.Sprintf("%s:%d", tc.desc, i), func(t *testing.T) {
+				p := NewPrinter(language.MustParse(pt.tag), Catalog(cat))
 
-			if got := p.Sprintf(pt.key, pt.args...); got != pt.want {
-				t.Errorf("%s:%d:Sprintf(%s, %v) = %s; want %s",
-					tc.desc, i, pt.key, pt.args, got, pt.want)
-				continue // Next error will likely be the same.
-			}
+				if got := p.Sprintf(pt.key, pt.args...); got != pt.want {
+					t.Errorf("Sprintf(%q, %v) = %s; want %s",
+						pt.key, pt.args, got, pt.want)
+					return // Next error will likely be the same.
+				}
 
-			w := &bytes.Buffer{}
-			p.Fprintf(w, pt.key, pt.args...)
-			if got := w.String(); got != pt.want {
-				t.Errorf("%s:%d:Fprintf(%s, %v) = %s; want %s",
-					tc.desc, i, pt.key, pt.args, got, pt.want)
-			}
+				w := &bytes.Buffer{}
+				p.Fprintf(w, pt.key, pt.args...)
+				if got := w.String(); got != pt.want {
+					t.Errorf("Fprintf(%q, %v) = %s; want %s",
+						pt.key, pt.args, got, pt.want)
+				}
+			})
 		}
 	}
+}
+
+type entry struct{ tag, key, msg string }
+
+func initCat(entries []entry) (*catalog.Catalog, []language.Tag) {
+	tags := []language.Tag{}
+	cat := catalog.New()
+	for _, e := range entries {
+		tag := language.MustParse(e.tag)
+		tags = append(tags, tag)
+		cat.SetString(tag, e.key, e.msg)
+	}
+	return cat, internal.UniqueTags(tags)
 }

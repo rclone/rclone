@@ -670,6 +670,10 @@ type LogEntry struct {
 	// log entry payloads.
 	ProtoPayload googleapi.RawMessage `json:"protoPayload,omitempty"`
 
+	// ReceiveTimestamp: Output only. The time the log entry was received by
+	// Stackdriver Logging.
+	ReceiveTimestamp string `json:"receiveTimestamp,omitempty"`
+
 	// Resource: Required. The monitored resource associated with this log
 	// entry. Example: a log entry that reports a database error would be
 	// associated with the monitored resource designating the particular
@@ -975,17 +979,17 @@ type LogSink struct {
 
 	// IncludeChildren: Optional. This field applies only to sinks owned by
 	// organizations and folders. If the field is false, the default, only
-	// the logs owned by the sink's parent resource are availble for export.
-	// If the field is true, then logs from all the projects, folders, and
-	// billing accounts contained in the sink's parent resource are also
-	// available for export. Whether a particular log entry from the
-	// children is exported depends on the sink's filter expression. For
+	// the logs owned by the sink's parent resource are available for
+	// export. If the field is true, then logs from all the projects,
+	// folders, and billing accounts contained in the sink's parent resource
+	// are also available for export. Whether a particular log entry from
+	// the children is exported depends on the sink's filter expression. For
 	// example, if this field is true, then the filter
 	// resource.type=gce_instance would export all Compute Engine VM
 	// instance log entries from all projects in the sink's parent. To only
 	// export entries from certain child projects, filter on the project
 	// part of the log name:
-	// logName:("projects/test-project-a/" OR "projects/test-project-b/")
+	// logName:("projects/test-project1/" OR "projects/test-project2/")
 	// AND
 	// resource.type=gce_instance
 	//
@@ -4294,7 +4298,8 @@ func (r *ProjectsSinksService) Update(sinkNameid string, logsink *LogSink) *Proj
 // then there is no change to the sink's writer_identity.
 // If the old value is false and the new value is true, then
 // writer_identity is changed to a unique service account.
-// It is an error if the old value is true and the new value is false.
+// It is an error if the old value is true and the new value is set to
+// false or defaulted to false.
 func (c *ProjectsSinksUpdateCall) UniqueWriterIdentity(uniqueWriterIdentity bool) *ProjectsSinksUpdateCall {
 	c.urlParams_.Set("uniqueWriterIdentity", fmt.Sprint(uniqueWriterIdentity))
 	return c
@@ -4402,7 +4407,7 @@ func (c *ProjectsSinksUpdateCall) Do(opts ...googleapi.CallOption) (*LogSink, er
 	//       "type": "string"
 	//     },
 	//     "uniqueWriterIdentity": {
-	//       "description": "Optional. See sinks.create for a description of this field. When updating a sink, the effect of this field on the value of writer_identity in the updated sink depends on both the old and new values of this field:\nIf the old and new values of this field are both false or both true, then there is no change to the sink's writer_identity.\nIf the old value is false and the new value is true, then writer_identity is changed to a unique service account.\nIt is an error if the old value is true and the new value is false.",
+	//       "description": "Optional. See sinks.create for a description of this field. When updating a sink, the effect of this field on the value of writer_identity in the updated sink depends on both the old and new values of this field:\nIf the old and new values of this field are both false or both true, then there is no change to the sink's writer_identity.\nIf the old value is false and the new value is true, then writer_identity is changed to a unique service account.\nIt is an error if the old value is true and the new value is set to false or defaulted to false.",
 	//       "location": "query",
 	//       "type": "boolean"
 	//     }

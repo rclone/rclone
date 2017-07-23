@@ -1604,6 +1604,57 @@ func (s *OperationMetadataV1) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// OperationMetadataV1Alpha: Metadata for the given
+// google.longrunning.Operation.
+type OperationMetadataV1Alpha struct {
+	// EndTime: Time that this operation completed.@OutputOnly
+	EndTime string `json:"endTime,omitempty"`
+
+	// EphemeralMessage: Ephemeral message that may change every time the
+	// operation is polled. @OutputOnly
+	EphemeralMessage string `json:"ephemeralMessage,omitempty"`
+
+	// InsertTime: Time that this operation was created.@OutputOnly
+	InsertTime string `json:"insertTime,omitempty"`
+
+	// Method: API method that initiated this operation. Example:
+	// google.appengine.v1alpha.Versions.CreateVersion.@OutputOnly
+	Method string `json:"method,omitempty"`
+
+	// Target: Name of the resource that this operation is acting on.
+	// Example: apps/myapp/services/default.@OutputOnly
+	Target string `json:"target,omitempty"`
+
+	// User: User who requested this operation.@OutputOnly
+	User string `json:"user,omitempty"`
+
+	// Warning: Durable messages that persist on every operation poll.
+	// @OutputOnly
+	Warning []string `json:"warning,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "EndTime") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "EndTime") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OperationMetadataV1Alpha) MarshalJSON() ([]byte, error) {
+	type noMethod OperationMetadataV1Alpha
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // OperationMetadataV1Beta: Metadata for the given
 // google.longrunning.Operation.
 type OperationMetadataV1Beta struct {
@@ -1973,7 +2024,7 @@ func (s *StaticFilesHandler) MarshalJSON() ([]byte, error) {
 // message is needed, put the localized message in the error details or
 // localize it in the client. The optional error details may contain
 // arbitrary information about the error. There is a predefined set of
-// error detail types in the package google.rpc which can be used for
+// error detail types in the package google.rpc that can be used for
 // common error conditions.Language mappingThe Status message is the
 // logical representation of the error model, but it is not necessarily
 // the actual wire format. When the Status message is exposed in
@@ -1988,7 +2039,7 @@ func (s *StaticFilesHandler) MarshalJSON() ([]byte, error) {
 // client, it may embed the Status in the normal response to indicate
 // the partial errors.
 // Workflow errors. A typical workflow has multiple steps. Each step may
-// have a Status message for error reporting purpose.
+// have a Status message for error reporting.
 // Batch operations. If a client uses batch request and batch response,
 // the Status message should be used directly inside batch response, one
 // for each error sub-response.
@@ -2366,6 +2417,11 @@ type Version struct {
 
 	// Runtime: Desired runtime. Example: python27.
 	Runtime string `json:"runtime,omitempty"`
+
+	// RuntimeApiVersion: The version of the API in the given runtime
+	// environment. Please see the app.yaml reference for valid values at
+	// https://cloud.google.com/appengine/docs/standard/<language>/config/appref
+	RuntimeApiVersion string `json:"runtimeApiVersion,omitempty"`
 
 	// ServingStatus: Current serving status of this version. Only the
 	// versions with a SERVING status create instances and can be
@@ -3416,9 +3472,14 @@ type AppsOperationsListCall struct {
 
 // List: Lists operations that match the specified filter in the
 // request. If the server doesn't support this method, it returns
-// UNIMPLEMENTED.NOTE: the name binding below allows API services to
-// override the binding to use different resource name schemes, such as
-// users/*/operations.
+// UNIMPLEMENTED.NOTE: the name binding allows API services to override
+// the binding to use different resource name schemes, such as
+// users/*/operations. To override the binding, API services can add a
+// binding such as "/v1/{name=users/*}/operations" to their service
+// configuration. For backwards compatibility, the default name includes
+// the operations collection id, however overriding users must ensure
+// the name binding is the parent resource, without the operations
+// collection id.
 func (r *AppsOperationsService) List(appsId string) *AppsOperationsListCall {
 	c := &AppsOperationsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -3540,7 +3601,7 @@ func (c *AppsOperationsListCall) Do(opts ...googleapi.CallOption) (*ListOperatio
 	}
 	return ret, nil
 	// {
-	//   "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.NOTE: the name binding below allows API services to override the binding to use different resource name schemes, such as users/*/operations.",
+	//   "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.NOTE: the name binding allows API services to override the binding to use different resource name schemes, such as users/*/operations. To override the binding, API services can add a binding such as \"/v1/{name=users/*}/operations\" to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.",
 	//   "flatPath": "v1beta5/apps/{appsId}/operations",
 	//   "httpMethod": "GET",
 	//   "id": "appengine.apps.operations.list",
@@ -3549,7 +3610,7 @@ func (c *AppsOperationsListCall) Do(opts ...googleapi.CallOption) (*ListOperatio
 	//   ],
 	//   "parameters": {
 	//     "appsId": {
-	//       "description": "Part of `name`. The name of the operation collection.",
+	//       "description": "Part of `name`. The name of the operation's parent resource.",
 	//       "location": "path",
 	//       "required": true,
 	//       "type": "string"

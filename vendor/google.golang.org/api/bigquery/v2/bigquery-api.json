@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/4k7_mz3_hjiHB-sQeq0R5OymfdI\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/PuNtnNg1WyrTVM4-fWu4Qm0QKgM\"",
  "discoveryVersion": "v1",
  "id": "bigquery:v2",
  "name": "bigquery",
  "version": "v2",
- "revision": "20170408",
+ "revision": "20170622",
  "title": "BigQuery API",
  "description": "A data platform for customers to create, manage, share and query data.",
  "ownerDomain": "google.com",
@@ -552,7 +552,7 @@
     },
     "errors": {
      "type": "array",
-     "description": "[Output-only] All errors and warnings encountered during the running of the job. Errors here do not necessarily mean that the job has completed or was unsuccessful.",
+     "description": "[Output-only] The first errors or warnings encountered during the running of the job. The final message includes the number of errors that caused the process to stop. Errors here do not necessarily mean that the job has completed or was unsuccessful.",
      "items": {
       "$ref": "ErrorProto"
      }
@@ -851,7 +851,7 @@
    "properties": {
     "allowLargeResults": {
      "type": "boolean",
-     "description": "[Optional] If true and query uses legacy SQL dialect, allows the query to produce arbitrarily large result tables at a slight cost in performance. Requires destinationTable to be set. For standard SQL queries, this flag is ignored and large results are always allowed.",
+     "description": "[Optional] If true and query uses legacy SQL dialect, allows the query to produce arbitrarily large result tables at a slight cost in performance. Requires destinationTable to be set. For standard SQL queries, this flag is ignored and large results are always allowed. However, you must still set destinationTable when result size exceeds the allowed maximum response size.",
      "default": "false"
     },
     "createDisposition": {
@@ -864,7 +864,7 @@
     },
     "destinationTable": {
      "$ref": "TableReference",
-     "description": "[Optional] Describes the table where the query results should be stored. If not present, a new table will be created to store the results."
+     "description": "[Optional] Describes the table where the query results should be stored. If not present, a new table will be created to store the results. This property must be set for large results that exceed the maximum response size."
     },
     "flattenResults": {
      "type": "boolean",
@@ -896,7 +896,7 @@
     },
     "query": {
      "type": "string",
-     "description": "[Required] BigQuery SQL query to execute."
+     "description": "[Required] SQL query text to execute. The useLegacySql field can be used to indicate whether the query uses legacy SQL or standard SQL."
     },
     "queryParameters": {
      "type": "array",
@@ -1206,7 +1206,7 @@
     },
     "errors": {
      "type": "array",
-     "description": "[Output-only] All errors encountered during the running of the job. Errors here do not necessarily mean that the job has completed or was unsuccessful.",
+     "description": "[Output-only] The first errors encountered during the running of the job. The final message includes the number of errors that caused the process to stop. Errors here do not necessarily mean that the job has completed or was unsuccessful.",
      "items": {
       "$ref": "ErrorProto"
      }
@@ -1444,7 +1444,7 @@
     },
     "errors": {
      "type": "array",
-     "description": "[Output-only] All errors and warnings encountered during the running of the job. Errors here do not necessarily mean that the job has completed or was unsuccessful.",
+     "description": "[Output-only] The first errors or warnings encountered during the running of the job. The final message includes the number of errors that caused the process to stop. Errors here do not necessarily mean that the job has completed or was unsuccessful.",
      "items": {
       "$ref": "ErrorProto"
      }
@@ -1733,7 +1733,7 @@
    "properties": {
     "description": {
      "type": "string",
-     "description": "[Optional] The field description. The maximum length is 16K characters."
+     "description": "[Optional] The field description. The maximum length is 1,024 characters."
     },
     "fields": {
      "type": "array",
@@ -1802,6 +1802,10 @@
        "tableReference": {
         "$ref": "TableReference",
         "description": "A reference uniquely identifying the table."
+       },
+       "timePartitioning": {
+        "$ref": "TimePartitioning",
+        "description": "[Experimental] The time-based partitioning for this table."
        },
        "type": {
         "type": "string",

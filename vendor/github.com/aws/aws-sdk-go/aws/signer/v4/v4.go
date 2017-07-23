@@ -45,7 +45,7 @@
 // If signing a request intended for HTTP2 server, and you're using Go 1.6.2
 // through 1.7.4 you should use the URL.RawPath as the pre-escaped form of the
 // request URL. https://github.com/golang/go/issues/16847 points to a bug in
-// Go pre 1.8 that failes to make HTTP2 requests using absolute URL in the HTTP
+// Go pre 1.8 that fails to make HTTP2 requests using absolute URL in the HTTP
 // message. URL.Opaque generally will force Go to make requests with absolute URL.
 // URL.RawPath does not do this, but RawPath must be a valid escaping of Path
 // or url.EscapedPath will ignore the RawPath escaping.
@@ -402,7 +402,7 @@ var SignRequestHandler = request.NamedHandler{
 }
 
 // SignSDKRequest signs an AWS request with the V4 signature. This
-// request handler is bested used only with the SDK's built in service client's
+// request handler should only be used with the SDK's built in service client's
 // API operation requests.
 //
 // This function should not be used on its on its own, but in conjunction with
@@ -604,14 +604,18 @@ func (ctx *signingCtx) buildCanonicalHeaders(r rule, header http.Header) {
 	headerValues := make([]string, len(headers))
 	for i, k := range headers {
 		if k == "host" {
-			headerValues[i] = "host:" + ctx.Request.URL.Host
+			if ctx.Request.Host != "" {
+				headerValues[i] = "host:" + ctx.Request.Host
+			} else {
+				headerValues[i] = "host:" + ctx.Request.URL.Host
+			}
 		} else {
 			headerValues[i] = k + ":" +
 				strings.Join(ctx.SignedHeaderVals[k], ",")
 		}
 	}
-
-	ctx.canonicalHeaders = strings.Join(stripExcessSpaces(headerValues), "\n")
+	stripExcessSpaces(headerValues)
+	ctx.canonicalHeaders = strings.Join(headerValues, "\n")
 }
 
 func (ctx *signingCtx) buildCanonicalString() {
@@ -717,45 +721,43 @@ const doubleSpaces = "  "
 
 var doubleSpaceBytes = []byte(doubleSpaces)
 
-func stripExcessSpaces(headerVals []string) []string {
-	vals := make([]string, len(headerVals))
-	for i, str := range headerVals {
+// stripExcessSpaces will rewrite the passed in slice's string values to not
+// contain muliple side-by-side spaces.
+func stripExcessSpaces(vals []string) {
+	for i, str := range vals {
 		// Trim leading and trailing spaces
 		trimmed := strings.TrimSpace(str)
 
 		idx := strings.Index(trimmed, doubleSpaces)
-		var buf []byte
-		for idx > -1 {
-			// Multiple adjacent spaces found
-			if buf == nil {
-				// first time create the buffer
-				buf = []byte(trimmed)
-			}
+		if idx < 0 {
+			vals[i] = trimmed
+			continue
+		}
 
-			stripToIdx := -1
-			for j := idx + 1; j < len(buf); j++ {
+		buf := []byte(trimmed)
+		for idx > -1 {
+			idx++ // Start on the second space
+
+			stripped := false
+			for j := idx; j < len(buf); j++ {
 				if buf[j] != ' ' {
-					buf = append(buf[:idx+1], buf[j:]...)
-					stripToIdx = j
+					buf = append(buf[:idx], buf[j:]...)
+					stripped = true
 					break
 				}
 			}
+			if !stripped {
+				break
+			}
 
-			if stripToIdx >= 0 {
-				idx = bytes.Index(buf[stripToIdx:], doubleSpaceBytes)
-				if idx >= 0 {
-					idx += stripToIdx
-				}
-			} else {
-				idx = -1
+			// Find next double space
+			origIdx := idx
+			idx = bytes.Index(buf[idx:], doubleSpaceBytes)
+			if idx > 0 {
+				idx += origIdx
 			}
 		}
 
-		if buf != nil {
-			vals[i] = string(buf)
-		} else {
-			vals[i] = trimmed
-		}
+		vals[i] = string(buf)
 	}
-	return vals
 }

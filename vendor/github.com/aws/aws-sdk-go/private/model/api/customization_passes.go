@@ -59,6 +59,12 @@ func s3Customizations(a *API) {
 			delete(s.MemberRefs, "ContentMD5")
 		}
 
+		for _, refName := range []string{"Bucket", "SSECustomerKey", "CopySourceSSECustomerKey"} {
+			if ref, ok := s.MemberRefs[refName]; ok {
+				ref.GenerateGetter = true
+			}
+		}
+
 		// Expires should be a string not time.Time since the format is not
 		// enforced by S3, and any value can be set to this field outside of the SDK.
 		if strings.HasSuffix(name, "Output") {

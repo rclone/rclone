@@ -756,7 +756,7 @@ type StackTrace struct {
 	// stack traces within a single trace.
 	//
 	// Often multiple spans will have identical stack traces.
-	// The first occurance of a stack trace should contain both
+	// The first occurrence of a stack trace should contain both
 	// the
 	// `stackFrame` content and a value in `stackTraceHashId`.
 	//
@@ -815,7 +815,7 @@ func (s *StackTrace) MarshalJSON() ([]byte, error) {
 // arbitrary
 // information about the error. There is a predefined set of error
 // detail types
-// in the package `google.rpc` which can be used for common error
+// in the package `google.rpc` that can be used for common error
 // conditions.
 //
 // # Language mapping
@@ -848,7 +848,7 @@ func (s *StackTrace) MarshalJSON() ([]byte, error) {
 //
 // - Workflow errors. A typical workflow has multiple steps. Each step
 // may
-//     have a `Status` message for error reporting purpose.
+//     have a `Status` message for error reporting.
 //
 // - Batch operations. If a client uses batch request and batch
 // response, the

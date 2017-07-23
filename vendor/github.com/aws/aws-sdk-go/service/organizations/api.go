@@ -76,6 +76,9 @@ func (c *Organizations) AcceptHandshakeRequest(input *AcceptHandshakeInput) (req
 //    in Your Organization (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_org_support-all-features.html)
 //    in the AWS Organizations User Guide.
 //
+// After you accept a handshake, it continues to appear in the results of relevant
+// APIs for only 30 days. After that it is deleted.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -156,6 +159,9 @@ func (c *Organizations) AcceptHandshakeRequest(input *AcceptHandshakeInput) (req
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -344,8 +350,14 @@ func (c *Organizations) AttachPolicyRequest(input *AttachPolicyInput) (req *requ
 //   contains additional information about the violated limit:
 //
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
-//   of accounts in an organization. Note: deleted and closed accounts still count
-//   toward your limit.
+//   of accounts in an organization. If you need more accounts, contact AWS Support
+//   to request an increase in your limit.
+//
+//   Or, The number of invitations that you tried to send would cause you to exceed
+//   the limit of accounts in your organization. Send fewer invitations, or contact
+//   AWS Support to request an increase in the number of accounts.
+//
+//   Note: deleted and closed accounts still count toward your limit.
 //
 //      * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
 //      handshakes you can send in one day.
@@ -367,8 +379,15 @@ func (c *Organizations) AttachPolicyRequest(input *AttachPolicyInput) (req *requ
 //      policy from an entity that would cause the entity to have fewer than the
 //      minimum number of policies of a certain type required.
 //
-//      * ACCOUNT_CANNOT_LEAVE_ORGANIZATION: You attempted to remove an account
-//      from an organization that was created from within organizations.
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_EULA: You attempted to remove an account
+//      from the organization that does not yet have enough information to exist
+//      as a stand-alone account. This account requires you to first agree to
+//      the End-User License Agreement (EULA).
+//
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_PHONE_VERIFICATION: You attempted to remove
+//      an account from the organization that does not yet have enough information
+//      to exist as a stand-alone account. This account requires you to first
+//      complete phone verification.
 //
 //      * MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To create an organization
 //      with this account, you first must associate a payment instrument, such
@@ -405,6 +424,9 @@ func (c *Organizations) AttachPolicyRequest(input *AttachPolicyInput) (req *requ
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -536,6 +558,9 @@ func (c *Organizations) CancelHandshakeRequest(input *CancelHandshakeInput) (req
 // instead. After a handshake is canceled, the recipient can no longer respond
 // to that handshake.
 //
+// After you cancel a handshake, it continues to appear in the results of relevant
+// APIs for only 30 days. After that it is deleted.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -550,6 +575,10 @@ func (c *Organizations) CancelHandshakeRequest(input *CancelHandshakeInput) (req
 //   attached that grants the required permissions. For more information, see
 //   Access Management (http://docs.aws.amazon.com/IAM/latest/UserGuide/access.html)
 //   in the IAM User Guide.
+//
+//   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
+//   The target of the operation is currently being modified by a different request.
+//   Try again later.
 //
 //   * ErrCodeHandshakeNotFoundException "HandshakeNotFoundException"
 //   We can't find a handshake with the HandshakeId that you specified.
@@ -577,6 +606,9 @@ func (c *Organizations) CancelHandshakeRequest(input *CancelHandshakeInput) (req
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -737,6 +769,10 @@ func (c *Organizations) CreateAccountRequest(input *CreateAccountInput) (req *re
 //   Your account is not a member of an organization. To make this request, you
 //   must use the credentials of an account that belongs to an organization.
 //
+//   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
+//   The target of the operation is currently being modified by a different request.
+//   Try again later.
+//
 //   * ErrCodeConstraintViolationException "ConstraintViolationException"
 //   Performing this operation violates a minimum or maximum value limit. For
 //   example, attempting to removing the last SCP from an OU or root, inviting
@@ -745,8 +781,14 @@ func (c *Organizations) CreateAccountRequest(input *CreateAccountInput) (req *re
 //   contains additional information about the violated limit:
 //
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
-//   of accounts in an organization. Note: deleted and closed accounts still count
-//   toward your limit.
+//   of accounts in an organization. If you need more accounts, contact AWS Support
+//   to request an increase in your limit.
+//
+//   Or, The number of invitations that you tried to send would cause you to exceed
+//   the limit of accounts in your organization. Send fewer invitations, or contact
+//   AWS Support to request an increase in the number of accounts.
+//
+//   Note: deleted and closed accounts still count toward your limit.
 //
 //      * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
 //      handshakes you can send in one day.
@@ -768,8 +810,15 @@ func (c *Organizations) CreateAccountRequest(input *CreateAccountInput) (req *re
 //      policy from an entity that would cause the entity to have fewer than the
 //      minimum number of policies of a certain type required.
 //
-//      * ACCOUNT_CANNOT_LEAVE_ORGANIZATION: You attempted to remove an account
-//      from an organization that was created from within organizations.
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_EULA: You attempted to remove an account
+//      from the organization that does not yet have enough information to exist
+//      as a stand-alone account. This account requires you to first agree to
+//      the End-User License Agreement (EULA).
+//
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_PHONE_VERIFICATION: You attempted to remove
+//      an account from the organization that does not yet have enough information
+//      to exist as a stand-alone account. This account requires you to first
+//      complete phone verification.
 //
 //      * MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To create an organization
 //      with this account, you first must associate a payment instrument, such
@@ -803,6 +852,9 @@ func (c *Organizations) CreateAccountRequest(input *CreateAccountInput) (req *re
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -964,8 +1016,14 @@ func (c *Organizations) CreateOrganizationRequest(input *CreateOrganizationInput
 //   contains additional information about the violated limit:
 //
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
-//   of accounts in an organization. Note: deleted and closed accounts still count
-//   toward your limit.
+//   of accounts in an organization. If you need more accounts, contact AWS Support
+//   to request an increase in your limit.
+//
+//   Or, The number of invitations that you tried to send would cause you to exceed
+//   the limit of accounts in your organization. Send fewer invitations, or contact
+//   AWS Support to request an increase in the number of accounts.
+//
+//   Note: deleted and closed accounts still count toward your limit.
 //
 //      * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
 //      handshakes you can send in one day.
@@ -987,8 +1045,15 @@ func (c *Organizations) CreateOrganizationRequest(input *CreateOrganizationInput
 //      policy from an entity that would cause the entity to have fewer than the
 //      minimum number of policies of a certain type required.
 //
-//      * ACCOUNT_CANNOT_LEAVE_ORGANIZATION: You attempted to remove an account
-//      from an organization that was created from within organizations.
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_EULA: You attempted to remove an account
+//      from the organization that does not yet have enough information to exist
+//      as a stand-alone account. This account requires you to first agree to
+//      the End-User License Agreement (EULA).
+//
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_PHONE_VERIFICATION: You attempted to remove
+//      an account from the organization that does not yet have enough information
+//      to exist as a stand-alone account. This account requires you to first
+//      complete phone verification.
 //
 //      * MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To create an organization
 //      with this account, you first must associate a payment instrument, such
@@ -1022,6 +1087,9 @@ func (c *Organizations) CreateOrganizationRequest(input *CreateOrganizationInput
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -1163,6 +1231,10 @@ func (c *Organizations) CreateOrganizationalUnitRequest(input *CreateOrganizatio
 //   Your account is not a member of an organization. To make this request, you
 //   must use the credentials of an account that belongs to an organization.
 //
+//   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
+//   The target of the operation is currently being modified by a different request.
+//   Try again later.
+//
 //   * ErrCodeConstraintViolationException "ConstraintViolationException"
 //   Performing this operation violates a minimum or maximum value limit. For
 //   example, attempting to removing the last SCP from an OU or root, inviting
@@ -1171,8 +1243,14 @@ func (c *Organizations) CreateOrganizationalUnitRequest(input *CreateOrganizatio
 //   contains additional information about the violated limit:
 //
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
-//   of accounts in an organization. Note: deleted and closed accounts still count
-//   toward your limit.
+//   of accounts in an organization. If you need more accounts, contact AWS Support
+//   to request an increase in your limit.
+//
+//   Or, The number of invitations that you tried to send would cause you to exceed
+//   the limit of accounts in your organization. Send fewer invitations, or contact
+//   AWS Support to request an increase in the number of accounts.
+//
+//   Note: deleted and closed accounts still count toward your limit.
 //
 //      * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
 //      handshakes you can send in one day.
@@ -1194,8 +1272,15 @@ func (c *Organizations) CreateOrganizationalUnitRequest(input *CreateOrganizatio
 //      policy from an entity that would cause the entity to have fewer than the
 //      minimum number of policies of a certain type required.
 //
-//      * ACCOUNT_CANNOT_LEAVE_ORGANIZATION: You attempted to remove an account
-//      from an organization that was created from within organizations.
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_EULA: You attempted to remove an account
+//      from the organization that does not yet have enough information to exist
+//      as a stand-alone account. This account requires you to first agree to
+//      the End-User License Agreement (EULA).
+//
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_PHONE_VERIFICATION: You attempted to remove
+//      an account from the organization that does not yet have enough information
+//      to exist as a stand-alone account. This account requires you to first
+//      complete phone verification.
 //
 //      * MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To create an organization
 //      with this account, you first must associate a payment instrument, such
@@ -1232,6 +1317,9 @@ func (c *Organizations) CreateOrganizationalUnitRequest(input *CreateOrganizatio
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -1386,8 +1474,14 @@ func (c *Organizations) CreatePolicyRequest(input *CreatePolicyInput) (req *requ
 //   contains additional information about the violated limit:
 //
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
-//   of accounts in an organization. Note: deleted and closed accounts still count
-//   toward your limit.
+//   of accounts in an organization. If you need more accounts, contact AWS Support
+//   to request an increase in your limit.
+//
+//   Or, The number of invitations that you tried to send would cause you to exceed
+//   the limit of accounts in your organization. Send fewer invitations, or contact
+//   AWS Support to request an increase in the number of accounts.
+//
+//   Note: deleted and closed accounts still count toward your limit.
 //
 //      * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
 //      handshakes you can send in one day.
@@ -1409,8 +1503,15 @@ func (c *Organizations) CreatePolicyRequest(input *CreatePolicyInput) (req *requ
 //      policy from an entity that would cause the entity to have fewer than the
 //      minimum number of policies of a certain type required.
 //
-//      * ACCOUNT_CANNOT_LEAVE_ORGANIZATION: You attempted to remove an account
-//      from an organization that was created from within organizations.
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_EULA: You attempted to remove an account
+//      from the organization that does not yet have enough information to exist
+//      as a stand-alone account. This account requires you to first agree to
+//      the End-User License Agreement (EULA).
+//
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_PHONE_VERIFICATION: You attempted to remove
+//      an account from the organization that does not yet have enough information
+//      to exist as a stand-alone account. This account requires you to first
+//      complete phone verification.
 //
 //      * MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To create an organization
 //      with this account, you first must associate a payment instrument, such
@@ -1447,6 +1548,9 @@ func (c *Organizations) CreatePolicyRequest(input *CreatePolicyInput) (req *requ
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -1579,6 +1683,9 @@ func (c *Organizations) DeclineHandshakeRequest(input *DeclineHandshakeInput) (r
 // can't reactivate a declined request, but can re-initiate the process with
 // a new handshake request.
 //
+// After you decline a handshake, it continues to appear in the results of relevant
+// APIs for only 30 days. After that it is deleted.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -1593,6 +1700,10 @@ func (c *Organizations) DeclineHandshakeRequest(input *DeclineHandshakeInput) (r
 //   attached that grants the required permissions. For more information, see
 //   Access Management (http://docs.aws.amazon.com/IAM/latest/UserGuide/access.html)
 //   in the IAM User Guide.
+//
+//   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
+//   The target of the operation is currently being modified by a different request.
+//   Try again later.
 //
 //   * ErrCodeHandshakeNotFoundException "HandshakeNotFoundException"
 //   We can't find a handshake with the HandshakeId that you specified.
@@ -1620,6 +1731,9 @@ func (c *Organizations) DeclineHandshakeRequest(input *DeclineHandshakeInput) (r
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -1778,6 +1892,9 @@ func (c *Organizations) DeleteOrganizationRequest(input *DeleteOrganizationInput
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -1938,6 +2055,9 @@ func (c *Organizations) DeleteOrganizationalUnitRequest(input *DeleteOrganizatio
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -2103,6 +2223,9 @@ func (c *Organizations) DeletePolicyRequest(input *DeletePolicyInput) (req *requ
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
+//
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
 //
@@ -2263,6 +2386,9 @@ func (c *Organizations) DescribeAccountRequest(input *DescribeAccountInput) (req
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
+//
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
 //
@@ -2415,6 +2541,9 @@ func (c *Organizations) DescribeCreateAccountStatusRequest(input *DescribeCreate
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
+//
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
 //
@@ -2529,6 +2658,10 @@ func (c *Organizations) DescribeHandshakeRequest(input *DescribeHandshakeInput) 
 // ID comes from the response to the original InviteAccountToOrganization operation
 // that generated the handshake.
 //
+// You can access handshakes that are ACCEPTED, DECLINED, or CANCELED for only
+// 30 days after they change to that state. They are then deleted and no longer
+// accessible.
+//
 // This operation can be called from any account in the organization.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -2545,6 +2678,10 @@ func (c *Organizations) DescribeHandshakeRequest(input *DescribeHandshakeInput) 
 //   attached that grants the required permissions. For more information, see
 //   Access Management (http://docs.aws.amazon.com/IAM/latest/UserGuide/access.html)
 //   in the IAM User Guide.
+//
+//   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
+//   The target of the operation is currently being modified by a different request.
+//   Try again later.
 //
 //   * ErrCodeHandshakeNotFoundException "HandshakeNotFoundException"
 //   We can't find a handshake with the HandshakeId that you specified.
@@ -2563,6 +2700,9 @@ func (c *Organizations) DescribeHandshakeRequest(input *DescribeHandshakeInput) 
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -2698,6 +2838,10 @@ func (c *Organizations) DescribeOrganizationRequest(input *DescribeOrganizationI
 //   Your account is not a member of an organization. To make this request, you
 //   must use the credentials of an account that belongs to an organization.
 //
+//   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
+//   The target of the operation is currently being modified by a different request.
+//   Try again later.
+//
 //   * ErrCodeServiceException "ServiceException"
 //   AWS Organizations can't complete your request because of an internal service
 //   error. Try again later.
@@ -2810,6 +2954,9 @@ func (c *Organizations) DescribeOrganizationalUnitRequest(input *DescribeOrganiz
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -2962,6 +3109,9 @@ func (c *Organizations) DescribePolicyRequest(input *DescribePolicyInput) (req *
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -3125,8 +3275,14 @@ func (c *Organizations) DetachPolicyRequest(input *DetachPolicyInput) (req *requ
 //   contains additional information about the violated limit:
 //
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
-//   of accounts in an organization. Note: deleted and closed accounts still count
-//   toward your limit.
+//   of accounts in an organization. If you need more accounts, contact AWS Support
+//   to request an increase in your limit.
+//
+//   Or, The number of invitations that you tried to send would cause you to exceed
+//   the limit of accounts in your organization. Send fewer invitations, or contact
+//   AWS Support to request an increase in the number of accounts.
+//
+//   Note: deleted and closed accounts still count toward your limit.
 //
 //      * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
 //      handshakes you can send in one day.
@@ -3148,8 +3304,15 @@ func (c *Organizations) DetachPolicyRequest(input *DetachPolicyInput) (req *requ
 //      policy from an entity that would cause the entity to have fewer than the
 //      minimum number of policies of a certain type required.
 //
-//      * ACCOUNT_CANNOT_LEAVE_ORGANIZATION: You attempted to remove an account
-//      from an organization that was created from within organizations.
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_EULA: You attempted to remove an account
+//      from the organization that does not yet have enough information to exist
+//      as a stand-alone account. This account requires you to first agree to
+//      the End-User License Agreement (EULA).
+//
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_PHONE_VERIFICATION: You attempted to remove
+//      an account from the organization that does not yet have enough information
+//      to exist as a stand-alone account. This account requires you to first
+//      complete phone verification.
 //
 //      * MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To create an organization
 //      with this account, you first must associate a payment instrument, such
@@ -3183,6 +3346,9 @@ func (c *Organizations) DetachPolicyRequest(input *DetachPolicyInput) (req *requ
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -3342,8 +3508,14 @@ func (c *Organizations) DisablePolicyTypeRequest(input *DisablePolicyTypeInput) 
 //   contains additional information about the violated limit:
 //
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
-//   of accounts in an organization. Note: deleted and closed accounts still count
-//   toward your limit.
+//   of accounts in an organization. If you need more accounts, contact AWS Support
+//   to request an increase in your limit.
+//
+//   Or, The number of invitations that you tried to send would cause you to exceed
+//   the limit of accounts in your organization. Send fewer invitations, or contact
+//   AWS Support to request an increase in the number of accounts.
+//
+//   Note: deleted and closed accounts still count toward your limit.
 //
 //      * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
 //      handshakes you can send in one day.
@@ -3365,8 +3537,15 @@ func (c *Organizations) DisablePolicyTypeRequest(input *DisablePolicyTypeInput) 
 //      policy from an entity that would cause the entity to have fewer than the
 //      minimum number of policies of a certain type required.
 //
-//      * ACCOUNT_CANNOT_LEAVE_ORGANIZATION: You attempted to remove an account
-//      from an organization that was created from within organizations.
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_EULA: You attempted to remove an account
+//      from the organization that does not yet have enough information to exist
+//      as a stand-alone account. This account requires you to first agree to
+//      the End-User License Agreement (EULA).
+//
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_PHONE_VERIFICATION: You attempted to remove
+//      an account from the organization that does not yet have enough information
+//      to exist as a stand-alone account. This account requires you to first
+//      complete phone verification.
 //
 //      * MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To create an organization
 //      with this account, you first must associate a payment instrument, such
@@ -3400,6 +3579,9 @@ func (c *Organizations) DisablePolicyTypeRequest(input *DisablePolicyTypeInput) 
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -3568,6 +3750,10 @@ func (c *Organizations) EnableAllFeaturesRequest(input *EnableAllFeaturesInput) 
 //   Your account is not a member of an organization. To make this request, you
 //   must use the credentials of an account that belongs to an organization.
 //
+//   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
+//   The target of the operation is currently being modified by a different request.
+//   Try again later.
+//
 //   * ErrCodeHandshakeConstraintViolationException "HandshakeConstraintViolationException"
 //   The requested operation would violate the constraint identified in the reason
 //   code.
@@ -3617,6 +3803,9 @@ func (c *Organizations) EnableAllFeaturesRequest(input *EnableAllFeaturesInput) 
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -3765,8 +3954,14 @@ func (c *Organizations) EnablePolicyTypeRequest(input *EnablePolicyTypeInput) (r
 //   contains additional information about the violated limit:
 //
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
-//   of accounts in an organization. Note: deleted and closed accounts still count
-//   toward your limit.
+//   of accounts in an organization. If you need more accounts, contact AWS Support
+//   to request an increase in your limit.
+//
+//   Or, The number of invitations that you tried to send would cause you to exceed
+//   the limit of accounts in your organization. Send fewer invitations, or contact
+//   AWS Support to request an increase in the number of accounts.
+//
+//   Note: deleted and closed accounts still count toward your limit.
 //
 //      * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
 //      handshakes you can send in one day.
@@ -3788,8 +3983,15 @@ func (c *Organizations) EnablePolicyTypeRequest(input *EnablePolicyTypeInput) (r
 //      policy from an entity that would cause the entity to have fewer than the
 //      minimum number of policies of a certain type required.
 //
-//      * ACCOUNT_CANNOT_LEAVE_ORGANIZATION: You attempted to remove an account
-//      from an organization that was created from within organizations.
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_EULA: You attempted to remove an account
+//      from the organization that does not yet have enough information to exist
+//      as a stand-alone account. This account requires you to first agree to
+//      the End-User License Agreement (EULA).
+//
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_PHONE_VERIFICATION: You attempted to remove
+//      an account from the organization that does not yet have enough information
+//      to exist as a stand-alone account. This account requires you to first
+//      complete phone verification.
 //
 //      * MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To create an organization
 //      with this account, you first must associate a payment instrument, such
@@ -3823,6 +4025,9 @@ func (c *Organizations) EnablePolicyTypeRequest(input *EnablePolicyTypeInput) (r
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -3952,6 +4157,13 @@ func (c *Organizations) InviteAccountToOrganizationRequest(input *InviteAccountT
 // is associated with the other account's owner. The invitation is implemented
 // as a Handshake whose details are in the response.
 //
+// You can invite AWS accounts only from the same reseller as the master account.
+// For example, if your organization's master account was created by Amazon
+// Internet Services Pvt. Ltd (AISPL), an AWS reseller in India, then you can
+// only invite other AISPL accounts to your organization. You can't combine
+// accounts from AISPL and AWS. For more information, see Consolidated Billing
+// in India (http://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/useconsolidatedbilliing-India.html).
+//
 // This operation can be called only from the organization's master account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -3972,6 +4184,10 @@ func (c *Organizations) InviteAccountToOrganizationRequest(input *InviteAccountT
 //   * ErrCodeAWSOrganizationsNotInUseException "AWSOrganizationsNotInUseException"
 //   Your account is not a member of an organization. To make this request, you
 //   must use the credentials of an account that belongs to an organization.
+//
+//   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
+//   The target of the operation is currently being modified by a different request.
+//   Try again later.
 //
 //   * ErrCodeHandshakeConstraintViolationException "HandshakeConstraintViolationException"
 //   The requested operation would violate the constraint identified in the reason
@@ -4029,6 +4245,9 @@ func (c *Organizations) InviteAccountToOrganizationRequest(input *InviteAccountT
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -4158,6 +4377,14 @@ func (c *Organizations) LeaveOrganizationRequest(input *LeaveOrganizationInput) 
 // can do, including preventing them from successfully calling LeaveOrganization
 // and leaving the organization.
 //
+// If you created the account using the AWS Organizations console, the Organizations
+// API, or the Organizations CLI commands, then you cannot remove the account.
+//
+// You can leave an organization only after you enable IAM user access to billing
+// in your account. For more information, see Activating Access to the Billing
+// and Cost Management Console (http://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/grantaccess.html#ControllingAccessWebsite-Activate)
+// in the AWS Billing and Cost Management User Guide.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -4194,8 +4421,14 @@ func (c *Organizations) LeaveOrganizationRequest(input *LeaveOrganizationInput) 
 //   contains additional information about the violated limit:
 //
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
-//   of accounts in an organization. Note: deleted and closed accounts still count
-//   toward your limit.
+//   of accounts in an organization. If you need more accounts, contact AWS Support
+//   to request an increase in your limit.
+//
+//   Or, The number of invitations that you tried to send would cause you to exceed
+//   the limit of accounts in your organization. Send fewer invitations, or contact
+//   AWS Support to request an increase in the number of accounts.
+//
+//   Note: deleted and closed accounts still count toward your limit.
 //
 //      * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
 //      handshakes you can send in one day.
@@ -4217,8 +4450,15 @@ func (c *Organizations) LeaveOrganizationRequest(input *LeaveOrganizationInput) 
 //      policy from an entity that would cause the entity to have fewer than the
 //      minimum number of policies of a certain type required.
 //
-//      * ACCOUNT_CANNOT_LEAVE_ORGANIZATION: You attempted to remove an account
-//      from an organization that was created from within organizations.
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_EULA: You attempted to remove an account
+//      from the organization that does not yet have enough information to exist
+//      as a stand-alone account. This account requires you to first agree to
+//      the End-User License Agreement (EULA).
+//
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_PHONE_VERIFICATION: You attempted to remove
+//      an account from the organization that does not yet have enough information
+//      to exist as a stand-alone account. This account requires you to first
+//      complete phone verification.
 //
 //      * MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To create an organization
 //      with this account, you first must associate a payment instrument, such
@@ -4252,6 +4492,9 @@ func (c *Organizations) LeaveOrganizationRequest(input *LeaveOrganizationInput) 
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -4412,6 +4655,9 @@ func (c *Organizations) ListAccountsRequest(input *ListAccountsInput) (req *requ
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -4620,6 +4866,9 @@ func (c *Organizations) ListAccountsForParentRequest(input *ListAccountsForParen
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
+//
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
 //
@@ -4827,6 +5076,9 @@ func (c *Organizations) ListChildrenRequest(input *ListChildrenInput) (req *requ
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -5037,6 +5289,9 @@ func (c *Organizations) ListCreateAccountStatusRequest(input *ListCreateAccountS
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
+//
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
 //
@@ -5206,6 +5461,10 @@ func (c *Organizations) ListHandshakesForAccountRequest(input *ListHandshakesFor
 // Lists the current handshakes that are associated with the account of the
 // requesting user.
 //
+// Handshakes that are ACCEPTED, DECLINED, or CANCELED appear in the results
+// of this API for only 30 days after changing to that state. After that they
+// are deleted and no longer accessible.
+//
 // This operation can be called from any account in the organization.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -5223,6 +5482,10 @@ func (c *Organizations) ListHandshakesForAccountRequest(input *ListHandshakesFor
 //   Access Management (http://docs.aws.amazon.com/IAM/latest/UserGuide/access.html)
 //   in the IAM User Guide.
 //
+//   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
+//   The target of the operation is currently being modified by a different request.
+//   Try again later.
+//
 //   * ErrCodeInvalidInputException "InvalidInputException"
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
@@ -5237,6 +5500,9 @@ func (c *Organizations) ListHandshakesForAccountRequest(input *ListHandshakesFor
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -5409,6 +5675,10 @@ func (c *Organizations) ListHandshakesForOrganizationRequest(input *ListHandshak
 // of handshake structures. Each structure contains details and status about
 // a handshake.
 //
+// Handshakes that are ACCEPTED, DECLINED, or CANCELED appear in the results
+// of this API for only 30 days after changing to that state. After that they
+// are deleted and no longer accessible.
+//
 // This operation can be called only from the organization's master account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -5430,6 +5700,10 @@ func (c *Organizations) ListHandshakesForOrganizationRequest(input *ListHandshak
 //   Your account is not a member of an organization. To make this request, you
 //   must use the credentials of an account that belongs to an organization.
 //
+//   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
+//   The target of the operation is currently being modified by a different request.
+//   Try again later.
+//
 //   * ErrCodeInvalidInputException "InvalidInputException"
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
@@ -5444,6 +5718,9 @@ func (c *Organizations) ListHandshakesForOrganizationRequest(input *ListHandshak
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -5648,6 +5925,9 @@ func (c *Organizations) ListOrganizationalUnitsForParentRequest(input *ListOrgan
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -5865,6 +6145,9 @@ func (c *Organizations) ListParentsRequest(input *ListParentsInput) (req *reques
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
+//
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
 //
@@ -6068,6 +6351,9 @@ func (c *Organizations) ListPoliciesRequest(input *ListPoliciesInput) (req *requ
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -6274,6 +6560,9 @@ func (c *Organizations) ListPoliciesForTargetRequest(input *ListPoliciesForTarge
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -6482,6 +6771,9 @@ func (c *Organizations) ListRootsRequest(input *ListRootsInput) (req *request.Re
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
+//
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
 //
@@ -6686,6 +6978,9 @@ func (c *Organizations) ListTargetsForPolicyRequest(input *ListTargetsForPolicyI
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
+//
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
 //
@@ -6886,6 +7181,9 @@ func (c *Organizations) MoveAccountRequest(input *MoveAccountInput) (req *reques
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
+//
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
 //
@@ -7032,8 +7330,15 @@ func (c *Organizations) RemoveAccountFromOrganizationRequest(input *RemoveAccoun
 // This operation can be called only from the organization's master account.
 // Member accounts can remove themselves with LeaveOrganization instead.
 //
-// You can remove only existing accounts that were invited to join the organization.
-// You cannot remove accounts that were created by AWS Organizations.
+// You can remove only accounts that were created outside your organization
+// and invited to join. If you created the account using the AWS Organizations
+// console, the Organizations API, or the Organizations CLI commands, then you
+// cannot remove the account.
+//
+// You can remove a member account only after you enable IAM user access to
+// billing in the member account. For more information, see Activating Access
+// to the Billing and Cost Management Console (http://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/grantaccess.html#ControllingAccessWebsite-Activate)
+// in the AWS Billing and Cost Management User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -7071,8 +7376,14 @@ func (c *Organizations) RemoveAccountFromOrganizationRequest(input *RemoveAccoun
 //   contains additional information about the violated limit:
 //
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
-//   of accounts in an organization. Note: deleted and closed accounts still count
-//   toward your limit.
+//   of accounts in an organization. If you need more accounts, contact AWS Support
+//   to request an increase in your limit.
+//
+//   Or, The number of invitations that you tried to send would cause you to exceed
+//   the limit of accounts in your organization. Send fewer invitations, or contact
+//   AWS Support to request an increase in the number of accounts.
+//
+//   Note: deleted and closed accounts still count toward your limit.
 //
 //      * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
 //      handshakes you can send in one day.
@@ -7094,8 +7405,15 @@ func (c *Organizations) RemoveAccountFromOrganizationRequest(input *RemoveAccoun
 //      policy from an entity that would cause the entity to have fewer than the
 //      minimum number of policies of a certain type required.
 //
-//      * ACCOUNT_CANNOT_LEAVE_ORGANIZATION: You attempted to remove an account
-//      from an organization that was created from within organizations.
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_EULA: You attempted to remove an account
+//      from the organization that does not yet have enough information to exist
+//      as a stand-alone account. This account requires you to first agree to
+//      the End-User License Agreement (EULA).
+//
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_PHONE_VERIFICATION: You attempted to remove
+//      an account from the organization that does not yet have enough information
+//      to exist as a stand-alone account. This account requires you to first
+//      complete phone verification.
 //
 //      * MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To create an organization
 //      with this account, you first must associate a payment instrument, such
@@ -7129,6 +7447,9 @@ func (c *Organizations) RemoveAccountFromOrganizationRequest(input *RemoveAccoun
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -7292,6 +7613,9 @@ func (c *Organizations) UpdateOrganizationalUnitRequest(input *UpdateOrganizatio
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
+//
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
 //
@@ -7443,8 +7767,14 @@ func (c *Organizations) UpdatePolicyRequest(input *UpdatePolicyInput) (req *requ
 //   contains additional information about the violated limit:
 //
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
-//   of accounts in an organization. Note: deleted and closed accounts still count
-//   toward your limit.
+//   of accounts in an organization. If you need more accounts, contact AWS Support
+//   to request an increase in your limit.
+//
+//   Or, The number of invitations that you tried to send would cause you to exceed
+//   the limit of accounts in your organization. Send fewer invitations, or contact
+//   AWS Support to request an increase in the number of accounts.
+//
+//   Note: deleted and closed accounts still count toward your limit.
 //
 //      * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
 //      handshakes you can send in one day.
@@ -7466,8 +7796,15 @@ func (c *Organizations) UpdatePolicyRequest(input *UpdatePolicyInput) (req *requ
 //      policy from an entity that would cause the entity to have fewer than the
 //      minimum number of policies of a certain type required.
 //
-//      * ACCOUNT_CANNOT_LEAVE_ORGANIZATION: You attempted to remove an account
-//      from an organization that was created from within organizations.
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_EULA: You attempted to remove an account
+//      from the organization that does not yet have enough information to exist
+//      as a stand-alone account. This account requires you to first agree to
+//      the End-User License Agreement (EULA).
+//
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_PHONE_VERIFICATION: You attempted to remove
+//      an account from the organization that does not yet have enough information
+//      to exist as a stand-alone account. This account requires you to first
+//      complete phone verification.
 //
 //      * MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To create an organization
 //      with this account, you first must associate a payment instrument, such
@@ -7504,6 +7841,9 @@ func (c *Organizations) UpdatePolicyRequest(input *UpdatePolicyInput) (req *requ
 //      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
@@ -9339,6 +9679,9 @@ func (s *EnablePolicyTypeOutput) SetRoot(v *Root) *EnablePolicyTypeOutput {
 // master account (the originator) invites another account (the recipient) to
 // join its organization, the two accounts exchange information as a series
 // of handshake requests and responses.
+//
+// Note: Handshakes that are CANCELED, ACCEPTED, or DECLINED show up in lists
+// for only 30 days after entering that state After that they are deleted.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Handshake
 type Handshake struct {
 	_ struct{} `type:"structure"`
@@ -12016,6 +12359,12 @@ const (
 	// ConstraintViolationExceptionReasonAccountCannotLeaveOrganization is a ConstraintViolationExceptionReason enum value
 	ConstraintViolationExceptionReasonAccountCannotLeaveOrganization = "ACCOUNT_CANNOT_LEAVE_ORGANIZATION"
 
+	// ConstraintViolationExceptionReasonAccountCannotLeaveWithoutEula is a ConstraintViolationExceptionReason enum value
+	ConstraintViolationExceptionReasonAccountCannotLeaveWithoutEula = "ACCOUNT_CANNOT_LEAVE_WITHOUT_EULA"
+
+	// ConstraintViolationExceptionReasonAccountCannotLeaveWithoutPhoneVerification is a ConstraintViolationExceptionReason enum value
+	ConstraintViolationExceptionReasonAccountCannotLeaveWithoutPhoneVerification = "ACCOUNT_CANNOT_LEAVE_WITHOUT_PHONE_VERIFICATION"
+
 	// ConstraintViolationExceptionReasonMasterAccountPaymentInstrumentRequired is a ConstraintViolationExceptionReason enum value
 	ConstraintViolationExceptionReasonMasterAccountPaymentInstrumentRequired = "MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED"
 
@@ -12196,6 +12545,9 @@ const (
 
 	// InvalidInputExceptionReasonMovingAccountBetweenDifferentRoots is a InvalidInputExceptionReason enum value
 	InvalidInputExceptionReasonMovingAccountBetweenDifferentRoots = "MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS"
+
+	// InvalidInputExceptionReasonInvalidFullNameTarget is a InvalidInputExceptionReason enum value
+	InvalidInputExceptionReasonInvalidFullNameTarget = "INVALID_FULL_NAME_TARGET"
 )
 
 const (

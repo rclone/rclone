@@ -71,13 +71,13 @@ func testDataBuffer(t *testing.T, wantBytes []byte, setup func(t *testing.T) *da
 func TestDataBufferAllocation(t *testing.T) {
 	writes := [][]byte{
 		bytes.Repeat([]byte("a"), 1*1024-1),
-		[]byte{'a'},
+		[]byte("a"),
 		bytes.Repeat([]byte("b"), 4*1024-1),
-		[]byte{'b'},
+		[]byte("b"),
 		bytes.Repeat([]byte("c"), 8*1024-1),
-		[]byte{'c'},
+		[]byte("c"),
 		bytes.Repeat([]byte("d"), 16*1024-1),
-		[]byte{'d'},
+		[]byte("d"),
 		bytes.Repeat([]byte("e"), 32*1024),
 	}
 	var wantRead bytes.Buffer

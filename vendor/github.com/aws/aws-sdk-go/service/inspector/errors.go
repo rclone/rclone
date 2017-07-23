@@ -57,4 +57,14 @@ const (
 	// The request was rejected because it referenced an entity that does not exist.
 	// The error code describes the entity.
 	ErrCodeNoSuchEntityException = "NoSuchEntityException"
+
+	// ErrCodeUnsupportedFeatureException for service response error code
+	// "UnsupportedFeatureException".
+	//
+	// Used by the GetAssessmentReport API. The request was rejected because you
+	// tried to generate a report for an assessment run that existed before reporting
+	// was supported in Amazon Inspector. You can only generate reports for assessment
+	// runs that took place or will take place after generating reports in Amazon
+	// Inspector became available.
+	ErrCodeUnsupportedFeatureException = "UnsupportedFeatureException"
 )

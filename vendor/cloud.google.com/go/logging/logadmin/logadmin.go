@@ -188,7 +188,12 @@ func ProjectIDs(pids []string) EntriesOption { return projectIDs(pids) }
 
 type projectIDs []string
 
-func (p projectIDs) set(r *logpb.ListLogEntriesRequest) { r.ProjectIds = []string(p) }
+func (p projectIDs) set(r *logpb.ListLogEntriesRequest) {
+	r.ResourceNames = make([]string, len(p))
+	for i, v := range p {
+		r.ResourceNames[i] = fmt.Sprintf("projects/%s", v)
+	}
+}
 
 // Filter sets an advanced logs filter for listing log entries (see
 // https://cloud.google.com/logging/docs/view/advanced_filters). The filter is
@@ -232,7 +237,7 @@ func (c *Client) Entries(ctx context.Context, opts ...EntriesOption) *EntryItera
 
 func listLogEntriesRequest(projectID string, opts []EntriesOption) *logpb.ListLogEntriesRequest {
 	req := &logpb.ListLogEntriesRequest{
-		ProjectIds: []string{projectID},
+		ResourceNames: []string{"projects/" + projectID},
 	}
 	for _, opt := range opts {
 		opt.set(req)
@@ -326,7 +331,57 @@ func fromLogEntry(le *logpb.LogEntry) (*logging.Entry, error) {
 		Operation:   le.Operation,
 		LogName:     slashUnescaper.Replace(le.LogName),
 		Resource:    le.Resource,
+		Trace:       le.Trace,
 	}, nil
+}
+
+// Logs lists the logs owned by the parent resource of the client.
+func (c *Client) Logs(ctx context.Context) *LogIterator {
+	it := &LogIterator{
+		parentResource: c.parent(),
+		it:             c.lClient.ListLogs(ctx, &logpb.ListLogsRequest{Parent: c.parent()}),
+	}
+	it.pageInfo, it.nextFunc = iterator.NewPageInfo(
+		it.fetch,
+		func() int { return len(it.items) },
+		func() interface{} { b := it.items; it.items = nil; return b })
+	return it
+}
+
+// A LogIterator iterates over logs.
+type LogIterator struct {
+	parentResource string
+	it             *vkit.StringIterator
+	pageInfo       *iterator.PageInfo
+	nextFunc       func() error
+	items          []string
+}
+
+// PageInfo supports pagination. See https://godoc.org/google.golang.org/api/iterator package for details.
+func (it *LogIterator) PageInfo() *iterator.PageInfo { return it.pageInfo }
+
+// Next returns the next result. Its second return value is iterator.Done
+// (https://godoc.org/google.golang.org/api/iterator) if there are no more
+// results. Once Next returns Done, all subsequent calls will return Done.
+func (it *LogIterator) Next() (string, error) {
+	if err := it.nextFunc(); err != nil {
+		return "", err
+	}
+	item := it.items[0]
+	it.items = it.items[1:]
+	return item, nil
+}
+
+func (it *LogIterator) fetch(pageSize int, pageToken string) (string, error) {
+	return iterFetch(pageSize, pageToken, it.it.PageInfo(), func() error {
+		logPath, err := it.it.Next()
+		if err != nil {
+			return err
+		}
+		logID := internal.LogIDFromPath(it.parentResource, logPath)
+		it.items = append(it.items, logID)
+		return nil
+	})
 }
 
 // Common fetch code for iterators that are backed by vkit iterators.

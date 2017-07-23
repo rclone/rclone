@@ -3,798 +3,1497 @@
 package elb_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/elb"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleELB_AddTags() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.AddTagsInput{
-		LoadBalancerNames: []*string{ // Required
-			aws.String("AccessPointName"), // Required
-			// More values...
-		},
-		Tags: []*elb.Tag{ // Required
-			{ // Required
-				Key:   aws.String("TagKey"), // Required
-				Value: aws.String("TagValue"),
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.AddTags(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
+		panic(err)
 	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	return &t
 }
 
-func ExampleELB_ApplySecurityGroupsToLoadBalancer() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.ApplySecurityGroupsToLoadBalancerInput{
-		LoadBalancerName: aws.String("AccessPointName"), // Required
-		SecurityGroups: []*string{ // Required
-			aws.String("SecurityGroupId"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.ApplySecurityGroupsToLoadBalancer(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELB_AttachLoadBalancerToSubnets() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.AttachLoadBalancerToSubnetsInput{
-		LoadBalancerName: aws.String("AccessPointName"), // Required
-		Subnets: []*string{ // Required
-			aws.String("SubnetId"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.AttachLoadBalancerToSubnets(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELB_ConfigureHealthCheck() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.ConfigureHealthCheckInput{
-		HealthCheck: &elb.HealthCheck{ // Required
-			HealthyThreshold:   aws.Int64(1),                    // Required
-			Interval:           aws.Int64(1),                    // Required
-			Target:             aws.String("HealthCheckTarget"), // Required
-			Timeout:            aws.Int64(1),                    // Required
-			UnhealthyThreshold: aws.Int64(1),                    // Required
-		},
-		LoadBalancerName: aws.String("AccessPointName"), // Required
-	}
-	resp, err := svc.ConfigureHealthCheck(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELB_CreateAppCookieStickinessPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.CreateAppCookieStickinessPolicyInput{
-		CookieName:       aws.String("CookieName"),      // Required
-		LoadBalancerName: aws.String("AccessPointName"), // Required
-		PolicyName:       aws.String("PolicyName"),      // Required
-	}
-	resp, err := svc.CreateAppCookieStickinessPolicy(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELB_CreateLBCookieStickinessPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.CreateLBCookieStickinessPolicyInput{
-		LoadBalancerName:       aws.String("AccessPointName"), // Required
-		PolicyName:             aws.String("PolicyName"),      // Required
-		CookieExpirationPeriod: aws.Int64(1),
-	}
-	resp, err := svc.CreateLBCookieStickinessPolicy(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELB_CreateLoadBalancer() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.CreateLoadBalancerInput{
-		Listeners: []*elb.Listener{ // Required
-			{ // Required
-				InstancePort:     aws.Int64(1),           // Required
-				LoadBalancerPort: aws.Int64(1),           // Required
-				Protocol:         aws.String("Protocol"), // Required
-				InstanceProtocol: aws.String("Protocol"),
-				SSLCertificateId: aws.String("SSLCertificateId"),
-			},
-			// More values...
-		},
-		LoadBalancerName: aws.String("AccessPointName"), // Required
-		AvailabilityZones: []*string{
-			aws.String("AvailabilityZone"), // Required
-			// More values...
-		},
-		Scheme: aws.String("LoadBalancerScheme"),
-		SecurityGroups: []*string{
-			aws.String("SecurityGroupId"), // Required
-			// More values...
-		},
-		Subnets: []*string{
-			aws.String("SubnetId"), // Required
-			// More values...
+// To add tags to a load balancer
+//
+// This example adds two tags to the specified load balancer.
+func ExampleELB_AddTags_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.AddTagsInput{
+		LoadBalancerNames: []*string{
+			aws.String("my-load-balancer"),
 		},
 		Tags: []*elb.Tag{
-			{ // Required
-				Key:   aws.String("TagKey"), // Required
-				Value: aws.String("TagValue"),
+			{
+				Key:   aws.String("project"),
+				Value: aws.String("lima"),
 			},
-			// More values...
+			{
+				Key:   aws.String("department"),
+				Value: aws.String("digital-media"),
+			},
 		},
 	}
-	resp, err := svc.CreateLoadBalancer(params)
 
+	result, err := svc.AddTags(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeTooManyTagsException:
+				fmt.Println(elb.ErrCodeTooManyTagsException, aerr.Error())
+			case elb.ErrCodeDuplicateTagKeysException:
+				fmt.Println(elb.ErrCodeDuplicateTagKeysException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_CreateLoadBalancerListeners() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.CreateLoadBalancerListenersInput{
-		Listeners: []*elb.Listener{ // Required
-			{ // Required
-				InstancePort:     aws.Int64(1),           // Required
-				LoadBalancerPort: aws.Int64(1),           // Required
-				Protocol:         aws.String("Protocol"), // Required
-				InstanceProtocol: aws.String("Protocol"),
-				SSLCertificateId: aws.String("SSLCertificateId"),
-			},
-			// More values...
+// To associate a security group with a load balancer in a VPC
+//
+// This example associates a security group with the specified load balancer in a VPC.
+func ExampleELB_ApplySecurityGroupsToLoadBalancer_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.ApplySecurityGroupsToLoadBalancerInput{
+		LoadBalancerName: aws.String("my-load-balancer"),
+		SecurityGroups: []*string{
+			aws.String("sg-fc448899"),
 		},
-		LoadBalancerName: aws.String("AccessPointName"), // Required
 	}
-	resp, err := svc.CreateLoadBalancerListeners(params)
 
+	result, err := svc.ApplySecurityGroupsToLoadBalancer(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elb.ErrCodeInvalidSecurityGroupException:
+				fmt.Println(elb.ErrCodeInvalidSecurityGroupException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_CreateLoadBalancerPolicy() {
-	sess := session.Must(session.NewSession())
+// To attach subnets to a load balancer
+//
+// This example adds the specified subnet to the set of configured subnets for the specified
+// load balancer.
+func ExampleELB_AttachLoadBalancerToSubnets_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.AttachLoadBalancerToSubnetsInput{
+		LoadBalancerName: aws.String("my-load-balancer"),
+		Subnets: []*string{
+			aws.String("subnet-0ecac448"),
+		},
+	}
 
-	svc := elb.New(sess)
+	result, err := svc.AttachLoadBalancerToSubnets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elb.ErrCodeSubnetNotFoundException:
+				fmt.Println(elb.ErrCodeSubnetNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidSubnetException:
+				fmt.Println(elb.ErrCodeInvalidSubnetException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &elb.CreateLoadBalancerPolicyInput{
-		LoadBalancerName: aws.String("AccessPointName"), // Required
-		PolicyName:       aws.String("PolicyName"),      // Required
-		PolicyTypeName:   aws.String("PolicyTypeName"),  // Required
+	fmt.Println(result)
+}
+
+// To specify the health check settings for your backend EC2 instances
+//
+// This example specifies the health check settings used to evaluate the health of your
+// backend EC2 instances.
+func ExampleELB_ConfigureHealthCheck_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.ConfigureHealthCheckInput{
+		HealthCheck: &elb.HealthCheck{
+			HealthyThreshold:   aws.Int64(2),
+			Interval:           aws.Int64(30),
+			Target:             aws.String("HTTP:80/png"),
+			Timeout:            aws.Int64(3),
+			UnhealthyThreshold: aws.Int64(2),
+		},
+		LoadBalancerName: aws.String("my-load-balancer"),
+	}
+
+	result, err := svc.ConfigureHealthCheck(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To generate a stickiness policy for your load balancer
+//
+// This example generates a stickiness policy that follows the sticky session lifetimes
+// of the application-generated cookie.
+func ExampleELB_CreateAppCookieStickinessPolicy_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.CreateAppCookieStickinessPolicyInput{
+		CookieName:       aws.String("my-app-cookie"),
+		LoadBalancerName: aws.String("my-load-balancer"),
+		PolicyName:       aws.String("my-app-cookie-policy"),
+	}
+
+	result, err := svc.CreateAppCookieStickinessPolicy(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeDuplicatePolicyNameException:
+				fmt.Println(elb.ErrCodeDuplicatePolicyNameException, aerr.Error())
+			case elb.ErrCodeTooManyPoliciesException:
+				fmt.Println(elb.ErrCodeTooManyPoliciesException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To generate a duration-based stickiness policy for your load balancer
+//
+// This example generates a stickiness policy with sticky session lifetimes controlled
+// by the specified expiration period.
+func ExampleELB_CreateLBCookieStickinessPolicy_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.CreateLBCookieStickinessPolicyInput{
+		CookieExpirationPeriod: aws.Int64(60),
+		LoadBalancerName:       aws.String("my-load-balancer"),
+		PolicyName:             aws.String("my-duration-cookie-policy"),
+	}
+
+	result, err := svc.CreateLBCookieStickinessPolicy(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeDuplicatePolicyNameException:
+				fmt.Println(elb.ErrCodeDuplicatePolicyNameException, aerr.Error())
+			case elb.ErrCodeTooManyPoliciesException:
+				fmt.Println(elb.ErrCodeTooManyPoliciesException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create an HTTP load balancer in a VPC
+//
+// This example creates a load balancer with an HTTP listener in a VPC.
+func ExampleELB_CreateLoadBalancer_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.CreateLoadBalancerInput{
+		Listeners: []*elb.Listener{
+			{
+				InstancePort:     aws.Int64(80),
+				InstanceProtocol: aws.String("HTTP"),
+				LoadBalancerPort: aws.Int64(80),
+				Protocol:         aws.String("HTTP"),
+			},
+		},
+		LoadBalancerName: aws.String("my-load-balancer"),
+		SecurityGroups: []*string{
+			aws.String("sg-a61988c3"),
+		},
+		Subnets: []*string{
+			aws.String("subnet-15aaab61"),
+		},
+	}
+
+	result, err := svc.CreateLoadBalancer(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeDuplicateAccessPointNameException:
+				fmt.Println(elb.ErrCodeDuplicateAccessPointNameException, aerr.Error())
+			case elb.ErrCodeTooManyAccessPointsException:
+				fmt.Println(elb.ErrCodeTooManyAccessPointsException, aerr.Error())
+			case elb.ErrCodeCertificateNotFoundException:
+				fmt.Println(elb.ErrCodeCertificateNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elb.ErrCodeSubnetNotFoundException:
+				fmt.Println(elb.ErrCodeSubnetNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidSubnetException:
+				fmt.Println(elb.ErrCodeInvalidSubnetException, aerr.Error())
+			case elb.ErrCodeInvalidSecurityGroupException:
+				fmt.Println(elb.ErrCodeInvalidSecurityGroupException, aerr.Error())
+			case elb.ErrCodeInvalidSchemeException:
+				fmt.Println(elb.ErrCodeInvalidSchemeException, aerr.Error())
+			case elb.ErrCodeTooManyTagsException:
+				fmt.Println(elb.ErrCodeTooManyTagsException, aerr.Error())
+			case elb.ErrCodeDuplicateTagKeysException:
+				fmt.Println(elb.ErrCodeDuplicateTagKeysException, aerr.Error())
+			case elb.ErrCodeUnsupportedProtocolException:
+				fmt.Println(elb.ErrCodeUnsupportedProtocolException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create an HTTP load balancer in EC2-Classic
+//
+// This example creates a load balancer with an HTTP listener in EC2-Classic.
+func ExampleELB_CreateLoadBalancer_shared01() {
+	svc := elb.New(session.New())
+	input := &elb.CreateLoadBalancerInput{
+		AvailabilityZones: []*string{
+			aws.String("us-west-2a"),
+		},
+		Listeners: []*elb.Listener{
+			{
+				InstancePort:     aws.Int64(80),
+				InstanceProtocol: aws.String("HTTP"),
+				LoadBalancerPort: aws.Int64(80),
+				Protocol:         aws.String("HTTP"),
+			},
+		},
+		LoadBalancerName: aws.String("my-load-balancer"),
+	}
+
+	result, err := svc.CreateLoadBalancer(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeDuplicateAccessPointNameException:
+				fmt.Println(elb.ErrCodeDuplicateAccessPointNameException, aerr.Error())
+			case elb.ErrCodeTooManyAccessPointsException:
+				fmt.Println(elb.ErrCodeTooManyAccessPointsException, aerr.Error())
+			case elb.ErrCodeCertificateNotFoundException:
+				fmt.Println(elb.ErrCodeCertificateNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elb.ErrCodeSubnetNotFoundException:
+				fmt.Println(elb.ErrCodeSubnetNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidSubnetException:
+				fmt.Println(elb.ErrCodeInvalidSubnetException, aerr.Error())
+			case elb.ErrCodeInvalidSecurityGroupException:
+				fmt.Println(elb.ErrCodeInvalidSecurityGroupException, aerr.Error())
+			case elb.ErrCodeInvalidSchemeException:
+				fmt.Println(elb.ErrCodeInvalidSchemeException, aerr.Error())
+			case elb.ErrCodeTooManyTagsException:
+				fmt.Println(elb.ErrCodeTooManyTagsException, aerr.Error())
+			case elb.ErrCodeDuplicateTagKeysException:
+				fmt.Println(elb.ErrCodeDuplicateTagKeysException, aerr.Error())
+			case elb.ErrCodeUnsupportedProtocolException:
+				fmt.Println(elb.ErrCodeUnsupportedProtocolException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create an HTTPS load balancer in a VPC
+//
+// This example creates a load balancer with an HTTPS listener in a VPC.
+func ExampleELB_CreateLoadBalancer_shared02() {
+	svc := elb.New(session.New())
+	input := &elb.CreateLoadBalancerInput{
+		Listeners: []*elb.Listener{
+			{
+				InstancePort:     aws.Int64(80),
+				InstanceProtocol: aws.String("HTTP"),
+				LoadBalancerPort: aws.Int64(80),
+				Protocol:         aws.String("HTTP"),
+			},
+			{
+				InstancePort:     aws.Int64(80),
+				InstanceProtocol: aws.String("HTTP"),
+				LoadBalancerPort: aws.Int64(443),
+				Protocol:         aws.String("HTTPS"),
+				SSLCertificateId: aws.String("arn:aws:iam::123456789012:server-certificate/my-server-cert"),
+			},
+		},
+		LoadBalancerName: aws.String("my-load-balancer"),
+		SecurityGroups: []*string{
+			aws.String("sg-a61988c3"),
+		},
+		Subnets: []*string{
+			aws.String("subnet-15aaab61"),
+		},
+	}
+
+	result, err := svc.CreateLoadBalancer(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeDuplicateAccessPointNameException:
+				fmt.Println(elb.ErrCodeDuplicateAccessPointNameException, aerr.Error())
+			case elb.ErrCodeTooManyAccessPointsException:
+				fmt.Println(elb.ErrCodeTooManyAccessPointsException, aerr.Error())
+			case elb.ErrCodeCertificateNotFoundException:
+				fmt.Println(elb.ErrCodeCertificateNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elb.ErrCodeSubnetNotFoundException:
+				fmt.Println(elb.ErrCodeSubnetNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidSubnetException:
+				fmt.Println(elb.ErrCodeInvalidSubnetException, aerr.Error())
+			case elb.ErrCodeInvalidSecurityGroupException:
+				fmt.Println(elb.ErrCodeInvalidSecurityGroupException, aerr.Error())
+			case elb.ErrCodeInvalidSchemeException:
+				fmt.Println(elb.ErrCodeInvalidSchemeException, aerr.Error())
+			case elb.ErrCodeTooManyTagsException:
+				fmt.Println(elb.ErrCodeTooManyTagsException, aerr.Error())
+			case elb.ErrCodeDuplicateTagKeysException:
+				fmt.Println(elb.ErrCodeDuplicateTagKeysException, aerr.Error())
+			case elb.ErrCodeUnsupportedProtocolException:
+				fmt.Println(elb.ErrCodeUnsupportedProtocolException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create an HTTPS load balancer in EC2-Classic
+//
+// This example creates a load balancer with an HTTPS listener in EC2-Classic.
+func ExampleELB_CreateLoadBalancer_shared03() {
+	svc := elb.New(session.New())
+	input := &elb.CreateLoadBalancerInput{
+		AvailabilityZones: []*string{
+			aws.String("us-west-2a"),
+		},
+		Listeners: []*elb.Listener{
+			{
+				InstancePort:     aws.Int64(80),
+				InstanceProtocol: aws.String("HTTP"),
+				LoadBalancerPort: aws.Int64(80),
+				Protocol:         aws.String("HTTP"),
+			},
+			{
+				InstancePort:     aws.Int64(80),
+				InstanceProtocol: aws.String("HTTP"),
+				LoadBalancerPort: aws.Int64(443),
+				Protocol:         aws.String("HTTPS"),
+				SSLCertificateId: aws.String("arn:aws:iam::123456789012:server-certificate/my-server-cert"),
+			},
+		},
+		LoadBalancerName: aws.String("my-load-balancer"),
+	}
+
+	result, err := svc.CreateLoadBalancer(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeDuplicateAccessPointNameException:
+				fmt.Println(elb.ErrCodeDuplicateAccessPointNameException, aerr.Error())
+			case elb.ErrCodeTooManyAccessPointsException:
+				fmt.Println(elb.ErrCodeTooManyAccessPointsException, aerr.Error())
+			case elb.ErrCodeCertificateNotFoundException:
+				fmt.Println(elb.ErrCodeCertificateNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elb.ErrCodeSubnetNotFoundException:
+				fmt.Println(elb.ErrCodeSubnetNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidSubnetException:
+				fmt.Println(elb.ErrCodeInvalidSubnetException, aerr.Error())
+			case elb.ErrCodeInvalidSecurityGroupException:
+				fmt.Println(elb.ErrCodeInvalidSecurityGroupException, aerr.Error())
+			case elb.ErrCodeInvalidSchemeException:
+				fmt.Println(elb.ErrCodeInvalidSchemeException, aerr.Error())
+			case elb.ErrCodeTooManyTagsException:
+				fmt.Println(elb.ErrCodeTooManyTagsException, aerr.Error())
+			case elb.ErrCodeDuplicateTagKeysException:
+				fmt.Println(elb.ErrCodeDuplicateTagKeysException, aerr.Error())
+			case elb.ErrCodeUnsupportedProtocolException:
+				fmt.Println(elb.ErrCodeUnsupportedProtocolException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create an internal load balancer
+//
+// This example creates an internal load balancer with an HTTP listener in a VPC.
+func ExampleELB_CreateLoadBalancer_shared04() {
+	svc := elb.New(session.New())
+	input := &elb.CreateLoadBalancerInput{
+		Listeners: []*elb.Listener{
+			{
+				InstancePort:     aws.Int64(80),
+				InstanceProtocol: aws.String("HTTP"),
+				LoadBalancerPort: aws.Int64(80),
+				Protocol:         aws.String("HTTP"),
+			},
+		},
+		LoadBalancerName: aws.String("my-load-balancer"),
+		Scheme:           aws.String("internal"),
+		SecurityGroups: []*string{
+			aws.String("sg-a61988c3"),
+		},
+		Subnets: []*string{
+			aws.String("subnet-15aaab61"),
+		},
+	}
+
+	result, err := svc.CreateLoadBalancer(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeDuplicateAccessPointNameException:
+				fmt.Println(elb.ErrCodeDuplicateAccessPointNameException, aerr.Error())
+			case elb.ErrCodeTooManyAccessPointsException:
+				fmt.Println(elb.ErrCodeTooManyAccessPointsException, aerr.Error())
+			case elb.ErrCodeCertificateNotFoundException:
+				fmt.Println(elb.ErrCodeCertificateNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elb.ErrCodeSubnetNotFoundException:
+				fmt.Println(elb.ErrCodeSubnetNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidSubnetException:
+				fmt.Println(elb.ErrCodeInvalidSubnetException, aerr.Error())
+			case elb.ErrCodeInvalidSecurityGroupException:
+				fmt.Println(elb.ErrCodeInvalidSecurityGroupException, aerr.Error())
+			case elb.ErrCodeInvalidSchemeException:
+				fmt.Println(elb.ErrCodeInvalidSchemeException, aerr.Error())
+			case elb.ErrCodeTooManyTagsException:
+				fmt.Println(elb.ErrCodeTooManyTagsException, aerr.Error())
+			case elb.ErrCodeDuplicateTagKeysException:
+				fmt.Println(elb.ErrCodeDuplicateTagKeysException, aerr.Error())
+			case elb.ErrCodeUnsupportedProtocolException:
+				fmt.Println(elb.ErrCodeUnsupportedProtocolException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create an HTTP listener for a load balancer
+//
+// This example creates a listener for your load balancer at port 80 using the HTTP
+// protocol.
+func ExampleELB_CreateLoadBalancerListeners_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.CreateLoadBalancerListenersInput{
+		Listeners: []*elb.Listener{
+			{
+				InstancePort:     aws.Int64(80),
+				InstanceProtocol: aws.String("HTTP"),
+				LoadBalancerPort: aws.Int64(80),
+				Protocol:         aws.String("HTTP"),
+			},
+		},
+		LoadBalancerName: aws.String("my-load-balancer"),
+	}
+
+	result, err := svc.CreateLoadBalancerListeners(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeDuplicateListenerException:
+				fmt.Println(elb.ErrCodeDuplicateListenerException, aerr.Error())
+			case elb.ErrCodeCertificateNotFoundException:
+				fmt.Println(elb.ErrCodeCertificateNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elb.ErrCodeUnsupportedProtocolException:
+				fmt.Println(elb.ErrCodeUnsupportedProtocolException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create an HTTPS listener for a load balancer
+//
+// This example creates a listener for your load balancer at port 443 using the HTTPS
+// protocol.
+func ExampleELB_CreateLoadBalancerListeners_shared01() {
+	svc := elb.New(session.New())
+	input := &elb.CreateLoadBalancerListenersInput{
+		Listeners: []*elb.Listener{
+			{
+				InstancePort:     aws.Int64(80),
+				InstanceProtocol: aws.String("HTTP"),
+				LoadBalancerPort: aws.Int64(443),
+				Protocol:         aws.String("HTTPS"),
+				SSLCertificateId: aws.String("arn:aws:iam::123456789012:server-certificate/my-server-cert"),
+			},
+		},
+		LoadBalancerName: aws.String("my-load-balancer"),
+	}
+
+	result, err := svc.CreateLoadBalancerListeners(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeDuplicateListenerException:
+				fmt.Println(elb.ErrCodeDuplicateListenerException, aerr.Error())
+			case elb.ErrCodeCertificateNotFoundException:
+				fmt.Println(elb.ErrCodeCertificateNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elb.ErrCodeUnsupportedProtocolException:
+				fmt.Println(elb.ErrCodeUnsupportedProtocolException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create a policy that enables Proxy Protocol on a load balancer
+//
+// This example creates a policy that enables Proxy Protocol on the specified load balancer.
+func ExampleELB_CreateLoadBalancerPolicy_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.CreateLoadBalancerPolicyInput{
+		LoadBalancerName: aws.String("my-load-balancer"),
 		PolicyAttributes: []*elb.PolicyAttribute{
-			{ // Required
-				AttributeName:  aws.String("AttributeName"),
-				AttributeValue: aws.String("AttributeValue"),
+			{
+				AttributeName:  aws.String("ProxyProtocol"),
+				AttributeValue: aws.String("true"),
 			},
-			// More values...
 		},
+		PolicyName:     aws.String("my-ProxyProtocol-policy"),
+		PolicyTypeName: aws.String("ProxyProtocolPolicyType"),
 	}
-	resp, err := svc.CreateLoadBalancerPolicy(params)
 
+	result, err := svc.CreateLoadBalancerPolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodePolicyTypeNotFoundException:
+				fmt.Println(elb.ErrCodePolicyTypeNotFoundException, aerr.Error())
+			case elb.ErrCodeDuplicatePolicyNameException:
+				fmt.Println(elb.ErrCodeDuplicatePolicyNameException, aerr.Error())
+			case elb.ErrCodeTooManyPoliciesException:
+				fmt.Println(elb.ErrCodeTooManyPoliciesException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_DeleteLoadBalancer() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.DeleteLoadBalancerInput{
-		LoadBalancerName: aws.String("AccessPointName"), // Required
-	}
-	resp, err := svc.DeleteLoadBalancer(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELB_DeleteLoadBalancerListeners() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.DeleteLoadBalancerListenersInput{
-		LoadBalancerName: aws.String("AccessPointName"), // Required
-		LoadBalancerPorts: []*int64{ // Required
-			aws.Int64(1), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DeleteLoadBalancerListeners(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELB_DeleteLoadBalancerPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.DeleteLoadBalancerPolicyInput{
-		LoadBalancerName: aws.String("AccessPointName"), // Required
-		PolicyName:       aws.String("PolicyName"),      // Required
-	}
-	resp, err := svc.DeleteLoadBalancerPolicy(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELB_DeregisterInstancesFromLoadBalancer() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.DeregisterInstancesFromLoadBalancerInput{
-		Instances: []*elb.Instance{ // Required
-			{ // Required
-				InstanceId: aws.String("InstanceId"),
+// To create a public key policy
+//
+// This example creates a public key policy.
+func ExampleELB_CreateLoadBalancerPolicy_shared01() {
+	svc := elb.New(session.New())
+	input := &elb.CreateLoadBalancerPolicyInput{
+		LoadBalancerName: aws.String("my-load-balancer"),
+		PolicyAttributes: []*elb.PolicyAttribute{
+			{
+				AttributeName:  aws.String("PublicKey"),
+				AttributeValue: aws.String("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwAYUjnfyEyXr1pxjhFWBpMlggUcqoi3kl+dS74kj//c6x7ROtusUaeQCTgIUkayttRDWchuqo1pHC1u+n5xxXnBBe2ejbb2WRsKIQ5rXEeixsjFpFsojpSQKkzhVGI6mJVZBJDVKSHmswnwLBdofLhzvllpovBPTHe+o4haAWvDBALJU0pkSI1FecPHcs2hwxf14zHoXy1e2k36A64nXW43wtfx5qcVSIxtCEOjnYRg7RPvybaGfQ+v6Iaxb/+7J5kEvZhTFQId+bSiJImF1FSUT1W1xwzBZPUbcUkkXDj45vC2s3Z8E+Lk7a3uZhvsQHLZnrfuWjBWGWvZ/MhZYgEXAMPLE"),
 			},
-			// More values...
 		},
-		LoadBalancerName: aws.String("AccessPointName"), // Required
+		PolicyName:     aws.String("my-PublicKey-policy"),
+		PolicyTypeName: aws.String("PublicKeyPolicyType"),
 	}
-	resp, err := svc.DeregisterInstancesFromLoadBalancer(params)
 
+	result, err := svc.CreateLoadBalancerPolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodePolicyTypeNotFoundException:
+				fmt.Println(elb.ErrCodePolicyTypeNotFoundException, aerr.Error())
+			case elb.ErrCodeDuplicatePolicyNameException:
+				fmt.Println(elb.ErrCodeDuplicatePolicyNameException, aerr.Error())
+			case elb.ErrCodeTooManyPoliciesException:
+				fmt.Println(elb.ErrCodeTooManyPoliciesException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_DescribeAccountLimits() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.DescribeAccountLimitsInput{
-		Marker:   aws.String("Marker"),
-		PageSize: aws.Int64(1),
+// To create a backend server authentication policy
+//
+// This example creates a backend server authentication policy that enables authentication
+// on your backend instance using a public key policy.
+func ExampleELB_CreateLoadBalancerPolicy_shared02() {
+	svc := elb.New(session.New())
+	input := &elb.CreateLoadBalancerPolicyInput{
+		LoadBalancerName: aws.String("my-load-balancer"),
+		PolicyAttributes: []*elb.PolicyAttribute{
+			{
+				AttributeName:  aws.String("PublicKeyPolicyName"),
+				AttributeValue: aws.String("my-PublicKey-policy"),
+			},
+		},
+		PolicyName:     aws.String("my-authentication-policy"),
+		PolicyTypeName: aws.String("BackendServerAuthenticationPolicyType"),
 	}
-	resp, err := svc.DescribeAccountLimits(params)
 
+	result, err := svc.CreateLoadBalancerPolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodePolicyTypeNotFoundException:
+				fmt.Println(elb.ErrCodePolicyTypeNotFoundException, aerr.Error())
+			case elb.ErrCodeDuplicatePolicyNameException:
+				fmt.Println(elb.ErrCodeDuplicatePolicyNameException, aerr.Error())
+			case elb.ErrCodeTooManyPoliciesException:
+				fmt.Println(elb.ErrCodeTooManyPoliciesException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_DescribeInstanceHealth() {
-	sess := session.Must(session.NewSession())
+// To delete a load balancer
+//
+// This example deletes the specified load balancer.
+func ExampleELB_DeleteLoadBalancer_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.DeleteLoadBalancerInput{
+		LoadBalancerName: aws.String("my-load-balancer"),
+	}
 
-	svc := elb.New(sess)
+	result, err := svc.DeleteLoadBalancer(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &elb.DescribeInstanceHealthInput{
-		LoadBalancerName: aws.String("AccessPointName"), // Required
+	fmt.Println(result)
+}
+
+// To delete a listener from your load balancer
+//
+// This example deletes the listener for the specified port from the specified load
+// balancer.
+func ExampleELB_DeleteLoadBalancerListeners_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.DeleteLoadBalancerListenersInput{
+		LoadBalancerName: aws.String("my-load-balancer"),
+		LoadBalancerPorts: []*int64{
+			aws.Int64(80),
+		},
+	}
+
+	result, err := svc.DeleteLoadBalancerListeners(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a policy from your load balancer
+//
+// This example deletes the specified policy from the specified load balancer. The policy
+// must not be enabled on any listener.
+func ExampleELB_DeleteLoadBalancerPolicy_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.DeleteLoadBalancerPolicyInput{
+		LoadBalancerName: aws.String("my-load-balancer"),
+		PolicyName:       aws.String("my-duration-cookie-policy"),
+	}
+
+	result, err := svc.DeleteLoadBalancerPolicy(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To deregister instances from a load balancer
+//
+// This example deregisters the specified instance from the specified load balancer.
+func ExampleELB_DeregisterInstancesFromLoadBalancer_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.DeregisterInstancesFromLoadBalancerInput{
 		Instances: []*elb.Instance{
-			{ // Required
-				InstanceId: aws.String("InstanceId"),
+			{
+				InstanceId: aws.String("i-d6f6fae3"),
 			},
-			// More values...
 		},
+		LoadBalancerName: aws.String("my-load-balancer"),
 	}
-	resp, err := svc.DescribeInstanceHealth(params)
 
+	result, err := svc.DeregisterInstancesFromLoadBalancer(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidEndPointException:
+				fmt.Println(elb.ErrCodeInvalidEndPointException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_DescribeLoadBalancerAttributes() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.DescribeLoadBalancerAttributesInput{
-		LoadBalancerName: aws.String("AccessPointName"), // Required
+// To describe the health of the instances for a load balancer
+//
+// This example describes the health of the instances for the specified load balancer.
+func ExampleELB_DescribeInstanceHealth_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.DescribeInstanceHealthInput{
+		LoadBalancerName: aws.String("my-load-balancer"),
 	}
-	resp, err := svc.DescribeLoadBalancerAttributes(params)
 
+	result, err := svc.DescribeInstanceHealth(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidEndPointException:
+				fmt.Println(elb.ErrCodeInvalidEndPointException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_DescribeLoadBalancerPolicies() {
-	sess := session.Must(session.NewSession())
+// To describe the attributes of a load balancer
+//
+// This example describes the attributes of the specified load balancer.
+func ExampleELB_DescribeLoadBalancerAttributes_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.DescribeLoadBalancerAttributesInput{
+		LoadBalancerName: aws.String("my-load-balancer"),
+	}
 
-	svc := elb.New(sess)
+	result, err := svc.DescribeLoadBalancerAttributes(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeLoadBalancerAttributeNotFoundException:
+				fmt.Println(elb.ErrCodeLoadBalancerAttributeNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &elb.DescribeLoadBalancerPoliciesInput{
-		LoadBalancerName: aws.String("AccessPointName"),
+	fmt.Println(result)
+}
+
+// To describe a policy associated with a load balancer
+//
+// This example describes the specified policy associated with the specified load balancer.
+func ExampleELB_DescribeLoadBalancerPolicies_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.DescribeLoadBalancerPoliciesInput{
+		LoadBalancerName: aws.String("my-load-balancer"),
 		PolicyNames: []*string{
-			aws.String("PolicyName"), // Required
-			// More values...
+			aws.String("my-authentication-policy"),
 		},
 	}
-	resp, err := svc.DescribeLoadBalancerPolicies(params)
 
+	result, err := svc.DescribeLoadBalancerPolicies(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodePolicyNotFoundException:
+				fmt.Println(elb.ErrCodePolicyNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_DescribeLoadBalancerPolicyTypes() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.DescribeLoadBalancerPolicyTypesInput{
+// To describe a load balancer policy type defined by Elastic Load Balancing
+//
+// This example describes the specified load balancer policy type.
+func ExampleELB_DescribeLoadBalancerPolicyTypes_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.DescribeLoadBalancerPolicyTypesInput{
 		PolicyTypeNames: []*string{
-			aws.String("PolicyTypeName"), // Required
-			// More values...
+			aws.String("ProxyProtocolPolicyType"),
 		},
 	}
-	resp, err := svc.DescribeLoadBalancerPolicyTypes(params)
 
+	result, err := svc.DescribeLoadBalancerPolicyTypes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodePolicyTypeNotFoundException:
+				fmt.Println(elb.ErrCodePolicyTypeNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_DescribeLoadBalancers() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.DescribeLoadBalancersInput{
+// To describe one of your load balancers
+//
+// This example describes the specified load balancer.
+func ExampleELB_DescribeLoadBalancers_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.DescribeLoadBalancersInput{
 		LoadBalancerNames: []*string{
-			aws.String("AccessPointName"), // Required
-			// More values...
+			aws.String("my-load-balancer"),
 		},
-		Marker:   aws.String("Marker"),
-		PageSize: aws.Int64(1),
 	}
-	resp, err := svc.DescribeLoadBalancers(params)
 
+	result, err := svc.DescribeLoadBalancers(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeDependencyThrottleException:
+				fmt.Println(elb.ErrCodeDependencyThrottleException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_DescribeTags() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.DescribeTagsInput{
-		LoadBalancerNames: []*string{ // Required
-			aws.String("AccessPointName"), // Required
-			// More values...
+// To describe the tags for a load balancer
+//
+// This example describes the tags for the specified load balancer.
+func ExampleELB_DescribeTags_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.DescribeTagsInput{
+		LoadBalancerNames: []*string{
+			aws.String("my-load-balancer"),
 		},
 	}
-	resp, err := svc.DescribeTags(params)
 
+	result, err := svc.DescribeTags(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_DetachLoadBalancerFromSubnets() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.DetachLoadBalancerFromSubnetsInput{
-		LoadBalancerName: aws.String("AccessPointName"), // Required
-		Subnets: []*string{ // Required
-			aws.String("SubnetId"), // Required
-			// More values...
+// To detach a load balancer from a subnet
+//
+// This example detaches the specified load balancer from the specified subnet.
+func ExampleELB_DetachLoadBalancerFromSubnets_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.DetachLoadBalancerFromSubnetsInput{
+		LoadBalancerName: aws.String("my-load-balancer"),
+		Subnets: []*string{
+			aws.String("subnet-0ecac448"),
 		},
 	}
-	resp, err := svc.DetachLoadBalancerFromSubnets(params)
 
+	result, err := svc.DetachLoadBalancerFromSubnets(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_DisableAvailabilityZonesForLoadBalancer() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.DisableAvailabilityZonesForLoadBalancerInput{
-		AvailabilityZones: []*string{ // Required
-			aws.String("AvailabilityZone"), // Required
-			// More values...
+// To disable an Availability Zone for a load balancer
+//
+// This example removes the specified Availability Zone from the set of Availability
+// Zones for the specified load balancer.
+func ExampleELB_DisableAvailabilityZonesForLoadBalancer_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.DisableAvailabilityZonesForLoadBalancerInput{
+		AvailabilityZones: []*string{
+			aws.String("us-west-2a"),
 		},
-		LoadBalancerName: aws.String("AccessPointName"), // Required
+		LoadBalancerName: aws.String("my-load-balancer"),
 	}
-	resp, err := svc.DisableAvailabilityZonesForLoadBalancer(params)
 
+	result, err := svc.DisableAvailabilityZonesForLoadBalancer(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_EnableAvailabilityZonesForLoadBalancer() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.EnableAvailabilityZonesForLoadBalancerInput{
-		AvailabilityZones: []*string{ // Required
-			aws.String("AvailabilityZone"), // Required
-			// More values...
+// To enable an Availability Zone for a load balancer
+//
+// This example adds the specified Availability Zone to the specified load balancer.
+func ExampleELB_EnableAvailabilityZonesForLoadBalancer_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.EnableAvailabilityZonesForLoadBalancerInput{
+		AvailabilityZones: []*string{
+			aws.String("us-west-2b"),
 		},
-		LoadBalancerName: aws.String("AccessPointName"), // Required
+		LoadBalancerName: aws.String("my-load-balancer"),
 	}
-	resp, err := svc.EnableAvailabilityZonesForLoadBalancer(params)
 
+	result, err := svc.EnableAvailabilityZonesForLoadBalancer(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_ModifyLoadBalancerAttributes() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.ModifyLoadBalancerAttributesInput{
-		LoadBalancerAttributes: &elb.LoadBalancerAttributes{ // Required
-			AccessLog: &elb.AccessLog{
-				Enabled:        aws.Bool(true), // Required
-				EmitInterval:   aws.Int64(1),
-				S3BucketName:   aws.String("S3BucketName"),
-				S3BucketPrefix: aws.String("AccessLogPrefix"),
-			},
-			AdditionalAttributes: []*elb.AdditionalAttribute{
-				{ // Required
-					Key:   aws.String("AdditionalAttributeKey"),
-					Value: aws.String("AdditionalAttributeValue"),
-				},
-				// More values...
-			},
-			ConnectionDraining: &elb.ConnectionDraining{
-				Enabled: aws.Bool(true), // Required
-				Timeout: aws.Int64(1),
-			},
-			ConnectionSettings: &elb.ConnectionSettings{
-				IdleTimeout: aws.Int64(1), // Required
-			},
+// To enable cross-zone load balancing
+//
+// This example enables cross-zone load balancing for the specified load balancer.
+func ExampleELB_ModifyLoadBalancerAttributes_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.ModifyLoadBalancerAttributesInput{
+		LoadBalancerAttributes: &elb.LoadBalancerAttributes{
 			CrossZoneLoadBalancing: &elb.CrossZoneLoadBalancing{
-				Enabled: aws.Bool(true), // Required
+				Enabled: aws.Bool(true),
 			},
 		},
-		LoadBalancerName: aws.String("AccessPointName"), // Required
+		LoadBalancerName: aws.String("my-load-balancer"),
 	}
-	resp, err := svc.ModifyLoadBalancerAttributes(params)
 
+	result, err := svc.ModifyLoadBalancerAttributes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeLoadBalancerAttributeNotFoundException:
+				fmt.Println(elb.ErrCodeLoadBalancerAttributeNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_RegisterInstancesWithLoadBalancer() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.RegisterInstancesWithLoadBalancerInput{
-		Instances: []*elb.Instance{ // Required
-			{ // Required
-				InstanceId: aws.String("InstanceId"),
+// To enable connection draining
+//
+// This example enables connection draining for the specified load balancer.
+func ExampleELB_ModifyLoadBalancerAttributes_shared01() {
+	svc := elb.New(session.New())
+	input := &elb.ModifyLoadBalancerAttributesInput{
+		LoadBalancerAttributes: &elb.LoadBalancerAttributes{
+			ConnectionDraining: &elb.ConnectionDraining{
+				Enabled: aws.Bool(true),
+				Timeout: aws.Int64(300),
 			},
-			// More values...
 		},
-		LoadBalancerName: aws.String("AccessPointName"), // Required
+		LoadBalancerName: aws.String("my-load-balancer"),
 	}
-	resp, err := svc.RegisterInstancesWithLoadBalancer(params)
 
+	result, err := svc.ModifyLoadBalancerAttributes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeLoadBalancerAttributeNotFoundException:
+				fmt.Println(elb.ErrCodeLoadBalancerAttributeNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_RemoveTags() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.RemoveTagsInput{
-		LoadBalancerNames: []*string{ // Required
-			aws.String("AccessPointName"), // Required
-			// More values...
-		},
-		Tags: []*elb.TagKeyOnly{ // Required
-			{ // Required
-				Key: aws.String("TagKey"),
+// To register instances with a load balancer
+//
+// This example registers the specified instance with the specified load balancer.
+func ExampleELB_RegisterInstancesWithLoadBalancer_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.RegisterInstancesWithLoadBalancerInput{
+		Instances: []*elb.Instance{
+			{
+				InstanceId: aws.String("i-d6f6fae3"),
 			},
-			// More values...
 		},
+		LoadBalancerName: aws.String("my-load-balancer"),
 	}
-	resp, err := svc.RemoveTags(params)
 
+	result, err := svc.RegisterInstancesWithLoadBalancer(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidEndPointException:
+				fmt.Println(elb.ErrCodeInvalidEndPointException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_SetLoadBalancerListenerSSLCertificate() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.SetLoadBalancerListenerSSLCertificateInput{
-		LoadBalancerName: aws.String("AccessPointName"),  // Required
-		LoadBalancerPort: aws.Int64(1),                   // Required
-		SSLCertificateId: aws.String("SSLCertificateId"), // Required
-	}
-	resp, err := svc.SetLoadBalancerListenerSSLCertificate(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELB_SetLoadBalancerPoliciesForBackendServer() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.SetLoadBalancerPoliciesForBackendServerInput{
-		InstancePort:     aws.Int64(1),                  // Required
-		LoadBalancerName: aws.String("AccessPointName"), // Required
-		PolicyNames: []*string{ // Required
-			aws.String("PolicyName"), // Required
-			// More values...
+// To remove tags from a load balancer
+//
+// This example removes the specified tag from the specified load balancer.
+func ExampleELB_RemoveTags_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.RemoveTagsInput{
+		LoadBalancerNames: []*string{
+			aws.String("my-load-balancer"),
+		},
+		Tags: []*elb.TagKeyOnly{
+			{
+				Key: aws.String("project"),
+			},
 		},
 	}
-	resp, err := svc.SetLoadBalancerPoliciesForBackendServer(params)
 
+	result, err := svc.RemoveTags(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELB_SetLoadBalancerPoliciesOfListener() {
-	sess := session.Must(session.NewSession())
-
-	svc := elb.New(sess)
-
-	params := &elb.SetLoadBalancerPoliciesOfListenerInput{
-		LoadBalancerName: aws.String("AccessPointName"), // Required
-		LoadBalancerPort: aws.Int64(1),                  // Required
-		PolicyNames: []*string{ // Required
-			aws.String("PolicyName"), // Required
-			// More values...
-		},
+// To update the SSL certificate for an HTTPS listener
+//
+// This example replaces the existing SSL certificate for the specified HTTPS listener.
+func ExampleELB_SetLoadBalancerListenerSSLCertificate_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.SetLoadBalancerListenerSSLCertificateInput{
+		LoadBalancerName: aws.String("my-load-balancer"),
+		LoadBalancerPort: aws.Int64(443),
+		SSLCertificateId: aws.String("arn:aws:iam::123456789012:server-certificate/new-server-cert"),
 	}
-	resp, err := svc.SetLoadBalancerPoliciesOfListener(params)
 
+	result, err := svc.SetLoadBalancerListenerSSLCertificate(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeCertificateNotFoundException:
+				fmt.Println(elb.ErrCodeCertificateNotFoundException, aerr.Error())
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodeListenerNotFoundException:
+				fmt.Println(elb.ErrCodeListenerNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elb.ErrCodeUnsupportedProtocolException:
+				fmt.Println(elb.ErrCodeUnsupportedProtocolException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
+}
+
+// To replace the policies associated with a port for a backend instance
+//
+// This example replaces the policies that are currently associated with the specified
+// port.
+func ExampleELB_SetLoadBalancerPoliciesForBackendServer_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.SetLoadBalancerPoliciesForBackendServerInput{
+		InstancePort:     aws.Int64(80),
+		LoadBalancerName: aws.String("my-load-balancer"),
+		PolicyNames: []*string{
+			aws.String("my-ProxyProtocol-policy"),
+		},
+	}
+
+	result, err := svc.SetLoadBalancerPoliciesForBackendServer(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodePolicyNotFoundException:
+				fmt.Println(elb.ErrCodePolicyNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To replace the policies associated with a listener
+//
+// This example replaces the policies that are currently associated with the specified
+// listener.
+func ExampleELB_SetLoadBalancerPoliciesOfListener_shared00() {
+	svc := elb.New(session.New())
+	input := &elb.SetLoadBalancerPoliciesOfListenerInput{
+		LoadBalancerName: aws.String("my-load-balancer"),
+		LoadBalancerPort: aws.Int64(80),
+		PolicyNames: []*string{
+			aws.String("my-SSLNegotiation-policy"),
+		},
+	}
+
+	result, err := svc.SetLoadBalancerPoliciesOfListener(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elb.ErrCodeAccessPointNotFoundException:
+				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
+			case elb.ErrCodePolicyNotFoundException:
+				fmt.Println(elb.ErrCodePolicyNotFoundException, aerr.Error())
+			case elb.ErrCodeListenerNotFoundException:
+				fmt.Println(elb.ErrCodeListenerNotFoundException, aerr.Error())
+			case elb.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elb.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
 }

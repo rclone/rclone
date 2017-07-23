@@ -15,7 +15,7 @@
 // AUTO-GENERATED CODE. DO NOT EDIT.
 
 // Package language is an experimental, auto-generated package for the
-// language API.
+// Google Cloud Natural Language API.
 //
 // Google Cloud Natural Language API provides natural language understanding
 // technologies to developers. Examples include sentiment analysis, entity
@@ -27,9 +27,17 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func insertXGoog(ctx context.Context, val string) context.Context {
-	md, _ := metadata.FromContext(ctx)
+func insertXGoog(ctx context.Context, val []string) context.Context {
+	md, _ := metadata.FromOutgoingContext(ctx)
 	md = md.Copy()
-	md["x-goog-api-client"] = []string{val}
-	return metadata.NewContext(ctx, md)
+	md["x-goog-api-client"] = val
+	return metadata.NewOutgoingContext(ctx, md)
+}
+
+// DefaultAuthScopes reports the authentication scopes required
+// by this package.
+func DefaultAuthScopes() []string {
+	return []string{
+		"https://www.googleapis.com/auth/cloud-platform",
+	}
 }

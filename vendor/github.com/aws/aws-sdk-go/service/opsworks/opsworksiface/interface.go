@@ -247,6 +247,10 @@ type OpsWorksAPI interface {
 	GrantAccessWithContext(aws.Context, *opsworks.GrantAccessInput, ...request.Option) (*opsworks.GrantAccessOutput, error)
 	GrantAccessRequest(*opsworks.GrantAccessInput) (*request.Request, *opsworks.GrantAccessOutput)
 
+	ListTags(*opsworks.ListTagsInput) (*opsworks.ListTagsOutput, error)
+	ListTagsWithContext(aws.Context, *opsworks.ListTagsInput, ...request.Option) (*opsworks.ListTagsOutput, error)
+	ListTagsRequest(*opsworks.ListTagsInput) (*request.Request, *opsworks.ListTagsOutput)
+
 	RebootInstance(*opsworks.RebootInstanceInput) (*opsworks.RebootInstanceOutput, error)
 	RebootInstanceWithContext(aws.Context, *opsworks.RebootInstanceInput, ...request.Option) (*opsworks.RebootInstanceOutput, error)
 	RebootInstanceRequest(*opsworks.RebootInstanceInput) (*request.Request, *opsworks.RebootInstanceOutput)
@@ -299,6 +303,10 @@ type OpsWorksAPI interface {
 	StopStackWithContext(aws.Context, *opsworks.StopStackInput, ...request.Option) (*opsworks.StopStackOutput, error)
 	StopStackRequest(*opsworks.StopStackInput) (*request.Request, *opsworks.StopStackOutput)
 
+	TagResource(*opsworks.TagResourceInput) (*opsworks.TagResourceOutput, error)
+	TagResourceWithContext(aws.Context, *opsworks.TagResourceInput, ...request.Option) (*opsworks.TagResourceOutput, error)
+	TagResourceRequest(*opsworks.TagResourceInput) (*request.Request, *opsworks.TagResourceOutput)
+
 	UnassignInstance(*opsworks.UnassignInstanceInput) (*opsworks.UnassignInstanceOutput, error)
 	UnassignInstanceWithContext(aws.Context, *opsworks.UnassignInstanceInput, ...request.Option) (*opsworks.UnassignInstanceOutput, error)
 	UnassignInstanceRequest(*opsworks.UnassignInstanceInput) (*request.Request, *opsworks.UnassignInstanceOutput)
@@ -306,6 +314,10 @@ type OpsWorksAPI interface {
 	UnassignVolume(*opsworks.UnassignVolumeInput) (*opsworks.UnassignVolumeOutput, error)
 	UnassignVolumeWithContext(aws.Context, *opsworks.UnassignVolumeInput, ...request.Option) (*opsworks.UnassignVolumeOutput, error)
 	UnassignVolumeRequest(*opsworks.UnassignVolumeInput) (*request.Request, *opsworks.UnassignVolumeOutput)
+
+	UntagResource(*opsworks.UntagResourceInput) (*opsworks.UntagResourceOutput, error)
+	UntagResourceWithContext(aws.Context, *opsworks.UntagResourceInput, ...request.Option) (*opsworks.UntagResourceOutput, error)
+	UntagResourceRequest(*opsworks.UntagResourceInput) (*request.Request, *opsworks.UntagResourceOutput)
 
 	UpdateApp(*opsworks.UpdateAppInput) (*opsworks.UpdateAppOutput, error)
 	UpdateAppWithContext(aws.Context, *opsworks.UpdateAppInput, ...request.Option) (*opsworks.UpdateAppOutput, error)

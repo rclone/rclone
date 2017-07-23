@@ -3,1328 +3,1304 @@
 package ses_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleSES_CloneReceiptRuleSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.CloneReceiptRuleSetInput{
-		OriginalRuleSetName: aws.String("ReceiptRuleSetName"), // Required
-		RuleSetName:         aws.String("ReceiptRuleSetName"), // Required
-	}
-	resp, err := svc.CloneReceiptRuleSet(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		panic(err)
+	}
+	return &t
+}
+
+// CloneReceiptRuleSet
+//
+// The following example creates a receipt rule set by cloning an existing one:
+func ExampleSES_CloneReceiptRuleSet_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.CloneReceiptRuleSetInput{
+		OriginalRuleSetName: aws.String("RuleSetToClone"),
+		RuleSetName:         aws.String("RuleSetToCreate"),
+	}
+
+	result, err := svc.CloneReceiptRuleSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeRuleSetDoesNotExistException:
+				fmt.Println(ses.ErrCodeRuleSetDoesNotExistException, aerr.Error())
+			case ses.ErrCodeAlreadyExistsException:
+				fmt.Println(ses.ErrCodeAlreadyExistsException, aerr.Error())
+			case ses.ErrCodeLimitExceededException:
+				fmt.Println(ses.ErrCodeLimitExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_CreateConfigurationSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.CreateConfigurationSetInput{
-		ConfigurationSet: &ses.ConfigurationSet{ // Required
-			Name: aws.String("ConfigurationSetName"), // Required
+// CreateReceiptFilter
+//
+// The following example creates a new IP address filter:
+func ExampleSES_CreateReceiptFilter_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.CreateReceiptFilterInput{
+		Filter: &ses.ReceiptFilter{
+			IpFilter: &ses.ReceiptIpFilter{
+				Cidr:   aws.String("1.2.3.4/24"),
+				Policy: aws.String("Allow"),
+			},
+			Name: aws.String("MyFilter"),
 		},
 	}
-	resp, err := svc.CreateConfigurationSet(params)
 
+	result, err := svc.CreateReceiptFilter(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeLimitExceededException:
+				fmt.Println(ses.ErrCodeLimitExceededException, aerr.Error())
+			case ses.ErrCodeAlreadyExistsException:
+				fmt.Println(ses.ErrCodeAlreadyExistsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_CreateConfigurationSetEventDestination() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.CreateConfigurationSetEventDestinationInput{
-		ConfigurationSetName: aws.String("ConfigurationSetName"), // Required
-		EventDestination: &ses.EventDestination{ // Required
-			MatchingEventTypes: []*string{ // Required
-				aws.String("EventType"), // Required
-				// More values...
-			},
-			Name: aws.String("EventDestinationName"), // Required
-			CloudWatchDestination: &ses.CloudWatchDestination{
-				DimensionConfigurations: []*ses.CloudWatchDimensionConfiguration{ // Required
-					{ // Required
-						DefaultDimensionValue: aws.String("DefaultDimensionValue"), // Required
-						DimensionName:         aws.String("DimensionName"),         // Required
-						DimensionValueSource:  aws.String("DimensionValueSource"),  // Required
-					},
-					// More values...
-				},
-			},
-			Enabled: aws.Bool(true),
-			KinesisFirehoseDestination: &ses.KinesisFirehoseDestination{
-				DeliveryStreamARN: aws.String("AmazonResourceName"), // Required
-				IAMRoleARN:        aws.String("AmazonResourceName"), // Required
-			},
-		},
-	}
-	resp, err := svc.CreateConfigurationSetEventDestination(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_CreateReceiptFilter() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.CreateReceiptFilterInput{
-		Filter: &ses.ReceiptFilter{ // Required
-			IpFilter: &ses.ReceiptIpFilter{ // Required
-				Cidr:   aws.String("Cidr"),                // Required
-				Policy: aws.String("ReceiptFilterPolicy"), // Required
-			},
-			Name: aws.String("ReceiptFilterName"), // Required
-		},
-	}
-	resp, err := svc.CreateReceiptFilter(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_CreateReceiptRule() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.CreateReceiptRuleInput{
-		Rule: &ses.ReceiptRule{ // Required
-			Name: aws.String("ReceiptRuleName"), // Required
+// CreateReceiptRule
+//
+// The following example creates a new receipt rule:
+func ExampleSES_CreateReceiptRule_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.CreateReceiptRuleInput{
+		After: aws.String(""),
+		Rule: &ses.ReceiptRule{
 			Actions: []*ses.ReceiptAction{
-				{ // Required
-					AddHeaderAction: &ses.AddHeaderAction{
-						HeaderName:  aws.String("HeaderName"),  // Required
-						HeaderValue: aws.String("HeaderValue"), // Required
-					},
-					BounceAction: &ses.BounceAction{
-						Message:       aws.String("BounceMessage"),       // Required
-						Sender:        aws.String("Address"),             // Required
-						SmtpReplyCode: aws.String("BounceSmtpReplyCode"), // Required
-						StatusCode:    aws.String("BounceStatusCode"),
-						TopicArn:      aws.String("AmazonResourceName"),
-					},
-					LambdaAction: &ses.LambdaAction{
-						FunctionArn:    aws.String("AmazonResourceName"), // Required
-						InvocationType: aws.String("InvocationType"),
-						TopicArn:       aws.String("AmazonResourceName"),
-					},
-					S3Action: &ses.S3Action{
-						BucketName:      aws.String("S3BucketName"), // Required
-						KmsKeyArn:       aws.String("AmazonResourceName"),
-						ObjectKeyPrefix: aws.String("S3KeyPrefix"),
-						TopicArn:        aws.String("AmazonResourceName"),
-					},
-					SNSAction: &ses.SNSAction{
-						TopicArn: aws.String("AmazonResourceName"), // Required
-						Encoding: aws.String("SNSActionEncoding"),
-					},
-					StopAction: &ses.StopAction{
-						Scope:    aws.String("StopScope"), // Required
-						TopicArn: aws.String("AmazonResourceName"),
-					},
-					WorkmailAction: &ses.WorkmailAction{
-						OrganizationArn: aws.String("AmazonResourceName"), // Required
-						TopicArn:        aws.String("AmazonResourceName"),
-					},
-				},
-				// More values...
+				{},
 			},
-			Enabled: aws.Bool(true),
-			Recipients: []*string{
-				aws.String("Recipient"), // Required
-				// More values...
-			},
+			Enabled:     aws.Bool(true),
+			Name:        aws.String("MyRule"),
 			ScanEnabled: aws.Bool(true),
-			TlsPolicy:   aws.String("TlsPolicy"),
+			TlsPolicy:   aws.String("Optional"),
 		},
-		RuleSetName: aws.String("ReceiptRuleSetName"), // Required
-		After:       aws.String("ReceiptRuleName"),
+		RuleSetName: aws.String("MyRuleSet"),
 	}
-	resp, err := svc.CreateReceiptRule(params)
 
+	result, err := svc.CreateReceiptRule(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeInvalidSnsTopicException:
+				fmt.Println(ses.ErrCodeInvalidSnsTopicException, aerr.Error())
+			case ses.ErrCodeInvalidS3ConfigurationException:
+				fmt.Println(ses.ErrCodeInvalidS3ConfigurationException, aerr.Error())
+			case ses.ErrCodeInvalidLambdaFunctionException:
+				fmt.Println(ses.ErrCodeInvalidLambdaFunctionException, aerr.Error())
+			case ses.ErrCodeAlreadyExistsException:
+				fmt.Println(ses.ErrCodeAlreadyExistsException, aerr.Error())
+			case ses.ErrCodeRuleDoesNotExistException:
+				fmt.Println(ses.ErrCodeRuleDoesNotExistException, aerr.Error())
+			case ses.ErrCodeRuleSetDoesNotExistException:
+				fmt.Println(ses.ErrCodeRuleSetDoesNotExistException, aerr.Error())
+			case ses.ErrCodeLimitExceededException:
+				fmt.Println(ses.ErrCodeLimitExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_CreateReceiptRuleSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.CreateReceiptRuleSetInput{
-		RuleSetName: aws.String("ReceiptRuleSetName"), // Required
+// CreateReceiptRuleSet
+//
+// The following example creates an empty receipt rule set:
+func ExampleSES_CreateReceiptRuleSet_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.CreateReceiptRuleSetInput{
+		RuleSetName: aws.String("MyRuleSet"),
 	}
-	resp, err := svc.CreateReceiptRuleSet(params)
 
+	result, err := svc.CreateReceiptRuleSet(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeAlreadyExistsException:
+				fmt.Println(ses.ErrCodeAlreadyExistsException, aerr.Error())
+			case ses.ErrCodeLimitExceededException:
+				fmt.Println(ses.ErrCodeLimitExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_DeleteConfigurationSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.DeleteConfigurationSetInput{
-		ConfigurationSetName: aws.String("ConfigurationSetName"), // Required
+// DeleteIdentity
+//
+// The following example deletes an identity from the list of identities that have been
+// submitted for verification with Amazon SES:
+func ExampleSES_DeleteIdentity_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.DeleteIdentityInput{
+		Identity: aws.String("user@example.com"),
 	}
-	resp, err := svc.DeleteConfigurationSet(params)
 
+	result, err := svc.DeleteIdentity(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_DeleteConfigurationSetEventDestination() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.DeleteConfigurationSetEventDestinationInput{
-		ConfigurationSetName: aws.String("ConfigurationSetName"), // Required
-		EventDestinationName: aws.String("EventDestinationName"), // Required
+// DeleteIdentityPolicy
+//
+// The following example deletes a sending authorization policy for an identity:
+func ExampleSES_DeleteIdentityPolicy_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.DeleteIdentityPolicyInput{
+		Identity:   aws.String("user@example.com"),
+		PolicyName: aws.String("MyPolicy"),
 	}
-	resp, err := svc.DeleteConfigurationSetEventDestination(params)
 
+	result, err := svc.DeleteIdentityPolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_DeleteIdentity() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.DeleteIdentityInput{
-		Identity: aws.String("Identity"), // Required
+// DeleteReceiptFilter
+//
+// The following example deletes an IP address filter:
+func ExampleSES_DeleteReceiptFilter_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.DeleteReceiptFilterInput{
+		FilterName: aws.String("MyFilter"),
 	}
-	resp, err := svc.DeleteIdentity(params)
 
+	result, err := svc.DeleteReceiptFilter(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_DeleteIdentityPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.DeleteIdentityPolicyInput{
-		Identity:   aws.String("Identity"),   // Required
-		PolicyName: aws.String("PolicyName"), // Required
+// DeleteReceiptRule
+//
+// The following example deletes a receipt rule:
+func ExampleSES_DeleteReceiptRule_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.DeleteReceiptRuleInput{
+		RuleName:    aws.String("MyRule"),
+		RuleSetName: aws.String("MyRuleSet"),
 	}
-	resp, err := svc.DeleteIdentityPolicy(params)
 
+	result, err := svc.DeleteReceiptRule(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeRuleSetDoesNotExistException:
+				fmt.Println(ses.ErrCodeRuleSetDoesNotExistException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_DeleteReceiptFilter() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.DeleteReceiptFilterInput{
-		FilterName: aws.String("ReceiptFilterName"), // Required
+// DeleteReceiptRuleSet
+//
+// The following example deletes a receipt rule set:
+func ExampleSES_DeleteReceiptRuleSet_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.DeleteReceiptRuleSetInput{
+		RuleSetName: aws.String("MyRuleSet"),
 	}
-	resp, err := svc.DeleteReceiptFilter(params)
 
+	result, err := svc.DeleteReceiptRuleSet(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeCannotDeleteException:
+				fmt.Println(ses.ErrCodeCannotDeleteException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_DeleteReceiptRule() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.DeleteReceiptRuleInput{
-		RuleName:    aws.String("ReceiptRuleName"),    // Required
-		RuleSetName: aws.String("ReceiptRuleSetName"), // Required
+// DeleteVerifiedEmailAddress
+//
+// The following example deletes an email address from the list of identities that have
+// been submitted for verification with Amazon SES:
+func ExampleSES_DeleteVerifiedEmailAddress_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.DeleteVerifiedEmailAddressInput{
+		EmailAddress: aws.String("user@example.com"),
 	}
-	resp, err := svc.DeleteReceiptRule(params)
 
+	result, err := svc.DeleteVerifiedEmailAddress(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_DeleteReceiptRuleSet() {
-	sess := session.Must(session.NewSession())
+// DescribeActiveReceiptRuleSet
+//
+// The following example returns the metadata and receipt rules for the receipt rule
+// set that is currently active:
+func ExampleSES_DescribeActiveReceiptRuleSet_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.DescribeActiveReceiptRuleSetInput{}
 
-	svc := ses.New(sess)
-
-	params := &ses.DeleteReceiptRuleSetInput{
-		RuleSetName: aws.String("ReceiptRuleSetName"), // Required
-	}
-	resp, err := svc.DeleteReceiptRuleSet(params)
-
+	result, err := svc.DescribeActiveReceiptRuleSet(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_DeleteVerifiedEmailAddress() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.DeleteVerifiedEmailAddressInput{
-		EmailAddress: aws.String("Address"), // Required
+// DescribeReceiptRule
+//
+// The following example returns the details of a receipt rule:
+func ExampleSES_DescribeReceiptRule_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.DescribeReceiptRuleInput{
+		RuleName:    aws.String("MyRule"),
+		RuleSetName: aws.String("MyRuleSet"),
 	}
-	resp, err := svc.DeleteVerifiedEmailAddress(params)
 
+	result, err := svc.DescribeReceiptRule(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeRuleDoesNotExistException:
+				fmt.Println(ses.ErrCodeRuleDoesNotExistException, aerr.Error())
+			case ses.ErrCodeRuleSetDoesNotExistException:
+				fmt.Println(ses.ErrCodeRuleSetDoesNotExistException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_DescribeActiveReceiptRuleSet() {
-	sess := session.Must(session.NewSession())
+// DescribeReceiptRuleSet
+//
+// The following example returns the metadata and receipt rules of a receipt rule set:
+func ExampleSES_DescribeReceiptRuleSet_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.DescribeReceiptRuleSetInput{
+		RuleSetName: aws.String("MyRuleSet"),
+	}
 
-	svc := ses.New(sess)
-
-	var params *ses.DescribeActiveReceiptRuleSetInput
-	resp, err := svc.DescribeActiveReceiptRuleSet(params)
-
+	result, err := svc.DescribeReceiptRuleSet(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeRuleSetDoesNotExistException:
+				fmt.Println(ses.ErrCodeRuleSetDoesNotExistException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_DescribeConfigurationSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.DescribeConfigurationSetInput{
-		ConfigurationSetName: aws.String("ConfigurationSetName"), // Required
-		ConfigurationSetAttributeNames: []*string{
-			aws.String("ConfigurationSetAttribute"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeConfigurationSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_DescribeReceiptRule() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.DescribeReceiptRuleInput{
-		RuleName:    aws.String("ReceiptRuleName"),    // Required
-		RuleSetName: aws.String("ReceiptRuleSetName"), // Required
-	}
-	resp, err := svc.DescribeReceiptRule(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_DescribeReceiptRuleSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.DescribeReceiptRuleSetInput{
-		RuleSetName: aws.String("ReceiptRuleSetName"), // Required
-	}
-	resp, err := svc.DescribeReceiptRuleSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_GetIdentityDkimAttributes() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.GetIdentityDkimAttributesInput{
-		Identities: []*string{ // Required
-			aws.String("Identity"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.GetIdentityDkimAttributes(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_GetIdentityMailFromDomainAttributes() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.GetIdentityMailFromDomainAttributesInput{
-		Identities: []*string{ // Required
-			aws.String("Identity"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.GetIdentityMailFromDomainAttributes(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_GetIdentityNotificationAttributes() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.GetIdentityNotificationAttributesInput{
-		Identities: []*string{ // Required
-			aws.String("Identity"), // Required
-			// More values...
+// GetIdentityDkimAttributes
+//
+// The following example retrieves the Amazon SES Easy DKIM attributes for a list of
+// identities:
+func ExampleSES_GetIdentityDkimAttributes_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.GetIdentityDkimAttributesInput{
+		Identities: []*string{
+			aws.String("example.com"),
+			aws.String("user@example.com"),
 		},
 	}
-	resp, err := svc.GetIdentityNotificationAttributes(params)
 
+	result, err := svc.GetIdentityDkimAttributes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_GetIdentityPolicies() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.GetIdentityPoliciesInput{
-		Identity: aws.String("Identity"), // Required
-		PolicyNames: []*string{ // Required
-			aws.String("PolicyName"), // Required
-			// More values...
+// GetIdentityMailFromDomainAttributes
+//
+// The following example returns the custom MAIL FROM attributes for an identity:
+func ExampleSES_GetIdentityMailFromDomainAttributes_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.GetIdentityMailFromDomainAttributesInput{
+		Identities: []*string{
+			aws.String("example.com"),
 		},
 	}
-	resp, err := svc.GetIdentityPolicies(params)
 
+	result, err := svc.GetIdentityMailFromDomainAttributes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_GetIdentityVerificationAttributes() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.GetIdentityVerificationAttributesInput{
-		Identities: []*string{ // Required
-			aws.String("Identity"), // Required
-			// More values...
+// GetIdentityNotificationAttributes
+//
+// The following example returns the notification attributes for an identity:
+func ExampleSES_GetIdentityNotificationAttributes_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.GetIdentityNotificationAttributesInput{
+		Identities: []*string{
+			aws.String("example.com"),
 		},
 	}
-	resp, err := svc.GetIdentityVerificationAttributes(params)
 
+	result, err := svc.GetIdentityNotificationAttributes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_GetSendQuota() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	var params *ses.GetSendQuotaInput
-	resp, err := svc.GetSendQuota(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_GetSendStatistics() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	var params *ses.GetSendStatisticsInput
-	resp, err := svc.GetSendStatistics(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_ListConfigurationSets() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.ListConfigurationSetsInput{
-		MaxItems:  aws.Int64(1),
-		NextToken: aws.String("NextToken"),
-	}
-	resp, err := svc.ListConfigurationSets(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_ListIdentities() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.ListIdentitiesInput{
-		IdentityType: aws.String("IdentityType"),
-		MaxItems:     aws.Int64(1),
-		NextToken:    aws.String("NextToken"),
-	}
-	resp, err := svc.ListIdentities(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_ListIdentityPolicies() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.ListIdentityPoliciesInput{
-		Identity: aws.String("Identity"), // Required
-	}
-	resp, err := svc.ListIdentityPolicies(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_ListReceiptFilters() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	var params *ses.ListReceiptFiltersInput
-	resp, err := svc.ListReceiptFilters(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_ListReceiptRuleSets() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.ListReceiptRuleSetsInput{
-		NextToken: aws.String("NextToken"),
-	}
-	resp, err := svc.ListReceiptRuleSets(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_ListVerifiedEmailAddresses() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	var params *ses.ListVerifiedEmailAddressesInput
-	resp, err := svc.ListVerifiedEmailAddresses(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_PutIdentityPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.PutIdentityPolicyInput{
-		Identity:   aws.String("Identity"),   // Required
-		Policy:     aws.String("Policy"),     // Required
-		PolicyName: aws.String("PolicyName"), // Required
-	}
-	resp, err := svc.PutIdentityPolicy(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_ReorderReceiptRuleSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.ReorderReceiptRuleSetInput{
-		RuleNames: []*string{ // Required
-			aws.String("ReceiptRuleName"), // Required
-			// More values...
-		},
-		RuleSetName: aws.String("ReceiptRuleSetName"), // Required
-	}
-	resp, err := svc.ReorderReceiptRuleSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_SendBounce() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.SendBounceInput{
-		BounceSender: aws.String("Address"), // Required
-		BouncedRecipientInfoList: []*ses.BouncedRecipientInfo{ // Required
-			{ // Required
-				Recipient:    aws.String("Address"), // Required
-				BounceType:   aws.String("BounceType"),
-				RecipientArn: aws.String("AmazonResourceName"),
-				RecipientDsnFields: &ses.RecipientDsnFields{
-					Action:         aws.String("DsnAction"), // Required
-					Status:         aws.String("DsnStatus"), // Required
-					DiagnosticCode: aws.String("DiagnosticCode"),
-					ExtensionFields: []*ses.ExtensionField{
-						{ // Required
-							Name:  aws.String("ExtensionFieldName"),  // Required
-							Value: aws.String("ExtensionFieldValue"), // Required
-						},
-						// More values...
-					},
-					FinalRecipient:  aws.String("Address"),
-					LastAttemptDate: aws.Time(time.Now()),
-					RemoteMta:       aws.String("RemoteMta"),
-				},
-			},
-			// More values...
-		},
-		OriginalMessageId: aws.String("MessageId"), // Required
-		BounceSenderArn:   aws.String("AmazonResourceName"),
-		Explanation:       aws.String("Explanation"),
-		MessageDsn: &ses.MessageDsn{
-			ReportingMta: aws.String("ReportingMta"), // Required
-			ArrivalDate:  aws.Time(time.Now()),
-			ExtensionFields: []*ses.ExtensionField{
-				{ // Required
-					Name:  aws.String("ExtensionFieldName"),  // Required
-					Value: aws.String("ExtensionFieldValue"), // Required
-				},
-				// More values...
-			},
+// GetIdentityPolicies
+//
+// The following example returns a sending authorization policy for an identity:
+func ExampleSES_GetIdentityPolicies_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.GetIdentityPoliciesInput{
+		Identity: aws.String("example.com"),
+		PolicyNames: []*string{
+			aws.String("MyPolicy"),
 		},
 	}
-	resp, err := svc.SendBounce(params)
 
+	result, err := svc.GetIdentityPolicies(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_SendEmail() {
-	sess := session.Must(session.NewSession())
+// GetIdentityVerificationAttributes
+//
+// The following example returns the verification status and the verification token
+// for a domain identity:
+func ExampleSES_GetIdentityVerificationAttributes_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.GetIdentityVerificationAttributesInput{
+		Identities: []*string{
+			aws.String("example.com"),
+		},
+	}
 
-	svc := ses.New(sess)
+	result, err := svc.GetIdentityVerificationAttributes(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &ses.SendEmailInput{
-		Destination: &ses.Destination{ // Required
-			BccAddresses: []*string{
-				aws.String("Address"), // Required
-				// More values...
-			},
+	fmt.Println(result)
+}
+
+// GetSendQuota
+//
+// The following example returns the Amazon SES sending limits for an AWS account:
+func ExampleSES_GetSendQuota_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.GetSendQuotaInput{}
+
+	result, err := svc.GetSendQuota(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// GetSendStatistics
+//
+// The following example returns Amazon SES sending statistics:
+func ExampleSES_GetSendStatistics_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.GetSendStatisticsInput{}
+
+	result, err := svc.GetSendStatistics(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// ListIdentities
+//
+// The following example lists the email address identities that have been submitted
+// for verification with Amazon SES:
+func ExampleSES_ListIdentities_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.ListIdentitiesInput{
+		IdentityType: aws.String("EmailAddress"),
+		MaxItems:     aws.Int64(123),
+		NextToken:    aws.String(""),
+	}
+
+	result, err := svc.ListIdentities(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// ListIdentityPolicies
+//
+// The following example returns a list of sending authorization policies that are attached
+// to an identity:
+func ExampleSES_ListIdentityPolicies_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.ListIdentityPoliciesInput{
+		Identity: aws.String("example.com"),
+	}
+
+	result, err := svc.ListIdentityPolicies(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// ListReceiptFilters
+//
+// The following example lists the IP address filters that are associated with an AWS
+// account:
+func ExampleSES_ListReceiptFilters_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.ListReceiptFiltersInput{}
+
+	result, err := svc.ListReceiptFilters(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// ListReceiptRuleSets
+//
+// The following example lists the receipt rule sets that exist under an AWS account:
+func ExampleSES_ListReceiptRuleSets_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.ListReceiptRuleSetsInput{
+		NextToken: aws.String(""),
+	}
+
+	result, err := svc.ListReceiptRuleSets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// ListVerifiedEmailAddresses
+//
+// The following example lists all email addresses that have been submitted for verification
+// with Amazon SES:
+func ExampleSES_ListVerifiedEmailAddresses_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.ListVerifiedEmailAddressesInput{}
+
+	result, err := svc.ListVerifiedEmailAddresses(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// PutIdentityPolicy
+//
+// The following example adds a sending authorization policy to an identity:
+func ExampleSES_PutIdentityPolicy_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.PutIdentityPolicyInput{
+		Identity:   aws.String("example.com"),
+		Policy:     aws.String("{\"Version\":\"2008-10-17\",\"Statement\":[{\"Sid\":\"stmt1469123904194\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:root\"},\"Action\":[\"ses:SendEmail\",\"ses:SendRawEmail\"],\"Resource\":\"arn:aws:ses:us-east-1:EXAMPLE65304:identity/example.com\"}]}"),
+		PolicyName: aws.String("MyPolicy"),
+	}
+
+	result, err := svc.PutIdentityPolicy(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeInvalidPolicyException:
+				fmt.Println(ses.ErrCodeInvalidPolicyException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// ReorderReceiptRuleSet
+//
+// The following example reorders the receipt rules within a receipt rule set:
+func ExampleSES_ReorderReceiptRuleSet_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.ReorderReceiptRuleSetInput{
+		RuleNames: []*string{
+			aws.String("MyRule"),
+			aws.String("MyOtherRule"),
+		},
+		RuleSetName: aws.String("MyRuleSet"),
+	}
+
+	result, err := svc.ReorderReceiptRuleSet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeRuleSetDoesNotExistException:
+				fmt.Println(ses.ErrCodeRuleSetDoesNotExistException, aerr.Error())
+			case ses.ErrCodeRuleDoesNotExistException:
+				fmt.Println(ses.ErrCodeRuleDoesNotExistException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// SendEmail
+//
+// The following example sends a formatted email:
+func ExampleSES_SendEmail_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.SendEmailInput{
+		Destination: &ses.Destination{
 			CcAddresses: []*string{
-				aws.String("Address"), // Required
-				// More values...
+				aws.String("recipient3@example.com"),
 			},
 			ToAddresses: []*string{
-				aws.String("Address"), // Required
-				// More values...
+				aws.String("recipient1@example.com"),
+				aws.String("recipient2@example.com"),
 			},
 		},
-		Message: &ses.Message{ // Required
-			Body: &ses.Body{ // Required
+		Message: &ses.Message{
+			Body: &ses.Body{
 				Html: &ses.Content{
-					Data:    aws.String("MessageData"), // Required
-					Charset: aws.String("Charset"),
+					Charset: aws.String("UTF-8"),
+					Data:    aws.String("This message body contains HTML formatting. It can, for example, contain links like this one: <a class=\"ulink\" href=\"http://docs.aws.amazon.com/ses/latest/DeveloperGuide\" target=\"_blank\">Amazon SES Developer Guide</a>."),
 				},
 				Text: &ses.Content{
-					Data:    aws.String("MessageData"), // Required
-					Charset: aws.String("Charset"),
+					Charset: aws.String("UTF-8"),
+					Data:    aws.String("This is the message body in text format."),
 				},
 			},
-			Subject: &ses.Content{ // Required
-				Data:    aws.String("MessageData"), // Required
-				Charset: aws.String("Charset"),
+			Subject: &ses.Content{
+				Charset: aws.String("UTF-8"),
+				Data:    aws.String("Test email"),
 			},
 		},
-		Source:               aws.String("Address"), // Required
-		ConfigurationSetName: aws.String("ConfigurationSetName"),
-		ReplyToAddresses: []*string{
-			aws.String("Address"), // Required
-			// More values...
+		ReturnPath:    aws.String(""),
+		ReturnPathArn: aws.String(""),
+		Source:        aws.String("sender@example.com"),
+		SourceArn:     aws.String(""),
+	}
+
+	result, err := svc.SendEmail(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeMessageRejected:
+				fmt.Println(ses.ErrCodeMessageRejected, aerr.Error())
+			case ses.ErrCodeMailFromDomainNotVerifiedException:
+				fmt.Println(ses.ErrCodeMailFromDomainNotVerifiedException, aerr.Error())
+			case ses.ErrCodeConfigurationSetDoesNotExistException:
+				fmt.Println(ses.ErrCodeConfigurationSetDoesNotExistException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// SendRawEmail
+//
+// The following example sends an email with an attachment:
+func ExampleSES_SendRawEmail_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.SendRawEmailInput{
+		FromArn: aws.String(""),
+		RawMessage: &ses.RawMessage{
+			Data: []byte("From: sender@example.com\\nTo: recipient@example.com\\nSubject: Test email (contains an attachment)\\nMIME-Version: 1.0\\nContent-type: Multipart/Mixed; boundary=\"NextPart\"\\n\\n--NextPart\\nContent-Type: text/plain\\n\\nThis is the message body.\\n\\n--NextPart\\nContent-Type: text/plain;\\nContent-Disposition: attachment; filename=\"attachment.txt\"\\n\\nThis is the text in the attachment.\\n\\n--NextPart--"),
 		},
-		ReturnPath:    aws.String("Address"),
-		ReturnPathArn: aws.String("AmazonResourceName"),
-		SourceArn:     aws.String("AmazonResourceName"),
-		Tags: []*ses.MessageTag{
-			{ // Required
-				Name:  aws.String("MessageTagName"),  // Required
-				Value: aws.String("MessageTagValue"), // Required
-			},
-			// More values...
-		},
+		ReturnPathArn: aws.String(""),
+		Source:        aws.String(""),
+		SourceArn:     aws.String(""),
 	}
-	resp, err := svc.SendEmail(params)
 
+	result, err := svc.SendRawEmail(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeMessageRejected:
+				fmt.Println(ses.ErrCodeMessageRejected, aerr.Error())
+			case ses.ErrCodeMailFromDomainNotVerifiedException:
+				fmt.Println(ses.ErrCodeMailFromDomainNotVerifiedException, aerr.Error())
+			case ses.ErrCodeConfigurationSetDoesNotExistException:
+				fmt.Println(ses.ErrCodeConfigurationSetDoesNotExistException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_SendRawEmail() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.SendRawEmailInput{
-		RawMessage: &ses.RawMessage{ // Required
-			Data: []byte("PAYLOAD"), // Required
-		},
-		ConfigurationSetName: aws.String("ConfigurationSetName"),
-		Destinations: []*string{
-			aws.String("Address"), // Required
-			// More values...
-		},
-		FromArn:       aws.String("AmazonResourceName"),
-		ReturnPathArn: aws.String("AmazonResourceName"),
-		Source:        aws.String("Address"),
-		SourceArn:     aws.String("AmazonResourceName"),
-		Tags: []*ses.MessageTag{
-			{ // Required
-				Name:  aws.String("MessageTagName"),  // Required
-				Value: aws.String("MessageTagValue"), // Required
-			},
-			// More values...
-		},
+// SetActiveReceiptRuleSet
+//
+// The following example sets the active receipt rule set:
+func ExampleSES_SetActiveReceiptRuleSet_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.SetActiveReceiptRuleSetInput{
+		RuleSetName: aws.String("RuleSetToActivate"),
 	}
-	resp, err := svc.SendRawEmail(params)
 
+	result, err := svc.SetActiveReceiptRuleSet(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeRuleSetDoesNotExistException:
+				fmt.Println(ses.ErrCodeRuleSetDoesNotExistException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_SetActiveReceiptRuleSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.SetActiveReceiptRuleSetInput{
-		RuleSetName: aws.String("ReceiptRuleSetName"),
+// SetIdentityDkimEnabled
+//
+// The following example configures Amazon SES to Easy DKIM-sign the email sent from
+// an identity:
+func ExampleSES_SetIdentityDkimEnabled_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.SetIdentityDkimEnabledInput{
+		DkimEnabled: aws.Bool(true),
+		Identity:    aws.String("user@example.com"),
 	}
-	resp, err := svc.SetActiveReceiptRuleSet(params)
 
+	result, err := svc.SetIdentityDkimEnabled(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_SetIdentityDkimEnabled() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.SetIdentityDkimEnabledInput{
-		DkimEnabled: aws.Bool(true),         // Required
-		Identity:    aws.String("Identity"), // Required
+// SetIdentityFeedbackForwardingEnabled
+//
+// The following example configures Amazon SES to forward an identity's bounces and
+// complaints via email:
+func ExampleSES_SetIdentityFeedbackForwardingEnabled_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.SetIdentityFeedbackForwardingEnabledInput{
+		ForwardingEnabled: aws.Bool(true),
+		Identity:          aws.String("user@example.com"),
 	}
-	resp, err := svc.SetIdentityDkimEnabled(params)
 
+	result, err := svc.SetIdentityFeedbackForwardingEnabled(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_SetIdentityFeedbackForwardingEnabled() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.SetIdentityFeedbackForwardingEnabledInput{
-		ForwardingEnabled: aws.Bool(true),         // Required
-		Identity:          aws.String("Identity"), // Required
+// SetIdentityHeadersInNotificationsEnabled
+//
+// The following example configures Amazon SES to include the original email headers
+// in the Amazon SNS bounce notifications for an identity:
+func ExampleSES_SetIdentityHeadersInNotificationsEnabled_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.SetIdentityHeadersInNotificationsEnabledInput{
+		Enabled:          aws.Bool(true),
+		Identity:         aws.String("user@example.com"),
+		NotificationType: aws.String("Bounce"),
 	}
-	resp, err := svc.SetIdentityFeedbackForwardingEnabled(params)
 
+	result, err := svc.SetIdentityHeadersInNotificationsEnabled(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_SetIdentityHeadersInNotificationsEnabled() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.SetIdentityHeadersInNotificationsEnabledInput{
-		Enabled:          aws.Bool(true),                 // Required
-		Identity:         aws.String("Identity"),         // Required
-		NotificationType: aws.String("NotificationType"), // Required
+// SetIdentityMailFromDomain
+//
+// The following example configures Amazon SES to use a custom MAIL FROM domain for
+// an identity:
+func ExampleSES_SetIdentityMailFromDomain_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.SetIdentityMailFromDomainInput{
+		BehaviorOnMXFailure: aws.String("UseDefaultValue"),
+		Identity:            aws.String("user@example.com"),
+		MailFromDomain:      aws.String("bounces.example.com"),
 	}
-	resp, err := svc.SetIdentityHeadersInNotificationsEnabled(params)
 
+	result, err := svc.SetIdentityMailFromDomain(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_SetIdentityMailFromDomain() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.SetIdentityMailFromDomainInput{
-		Identity:            aws.String("Identity"), // Required
-		BehaviorOnMXFailure: aws.String("BehaviorOnMXFailure"),
-		MailFromDomain:      aws.String("MailFromDomainName"),
+// SetIdentityNotificationTopic
+//
+// The following example sets the Amazon SNS topic to which Amazon SES will publish
+// bounce, complaint, and/or delivery notifications for emails sent with the specified
+// identity as the Source:
+func ExampleSES_SetIdentityNotificationTopic_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.SetIdentityNotificationTopicInput{
+		Identity:         aws.String("user@example.com"),
+		NotificationType: aws.String("Bounce"),
+		SnsTopic:         aws.String("arn:aws:sns:us-west-2:111122223333:MyTopic"),
 	}
-	resp, err := svc.SetIdentityMailFromDomain(params)
 
+	result, err := svc.SetIdentityNotificationTopic(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_SetIdentityNotificationTopic() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.SetIdentityNotificationTopicInput{
-		Identity:         aws.String("Identity"),         // Required
-		NotificationType: aws.String("NotificationType"), // Required
-		SnsTopic:         aws.String("NotificationTopic"),
+// SetReceiptRulePosition
+//
+// The following example sets the position of a receipt rule in a receipt rule set:
+func ExampleSES_SetReceiptRulePosition_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.SetReceiptRulePositionInput{
+		After:       aws.String("PutRuleAfterThisRule"),
+		RuleName:    aws.String("RuleToReposition"),
+		RuleSetName: aws.String("MyRuleSet"),
 	}
-	resp, err := svc.SetIdentityNotificationTopic(params)
 
+	result, err := svc.SetReceiptRulePosition(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeRuleSetDoesNotExistException:
+				fmt.Println(ses.ErrCodeRuleSetDoesNotExistException, aerr.Error())
+			case ses.ErrCodeRuleDoesNotExistException:
+				fmt.Println(ses.ErrCodeRuleDoesNotExistException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_SetReceiptRulePosition() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.SetReceiptRulePositionInput{
-		RuleName:    aws.String("ReceiptRuleName"),    // Required
-		RuleSetName: aws.String("ReceiptRuleSetName"), // Required
-		After:       aws.String("ReceiptRuleName"),
-	}
-	resp, err := svc.SetReceiptRulePosition(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_UpdateConfigurationSetEventDestination() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.UpdateConfigurationSetEventDestinationInput{
-		ConfigurationSetName: aws.String("ConfigurationSetName"), // Required
-		EventDestination: &ses.EventDestination{ // Required
-			MatchingEventTypes: []*string{ // Required
-				aws.String("EventType"), // Required
-				// More values...
-			},
-			Name: aws.String("EventDestinationName"), // Required
-			CloudWatchDestination: &ses.CloudWatchDestination{
-				DimensionConfigurations: []*ses.CloudWatchDimensionConfiguration{ // Required
-					{ // Required
-						DefaultDimensionValue: aws.String("DefaultDimensionValue"), // Required
-						DimensionName:         aws.String("DimensionName"),         // Required
-						DimensionValueSource:  aws.String("DimensionValueSource"),  // Required
-					},
-					// More values...
-				},
-			},
-			Enabled: aws.Bool(true),
-			KinesisFirehoseDestination: &ses.KinesisFirehoseDestination{
-				DeliveryStreamARN: aws.String("AmazonResourceName"), // Required
-				IAMRoleARN:        aws.String("AmazonResourceName"), // Required
-			},
-		},
-	}
-	resp, err := svc.UpdateConfigurationSetEventDestination(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleSES_UpdateReceiptRule() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.UpdateReceiptRuleInput{
-		Rule: &ses.ReceiptRule{ // Required
-			Name: aws.String("ReceiptRuleName"), // Required
+// UpdateReceiptRule
+//
+// The following example updates a receipt rule to use an Amazon S3 action:
+func ExampleSES_UpdateReceiptRule_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.UpdateReceiptRuleInput{
+		Rule: &ses.ReceiptRule{
 			Actions: []*ses.ReceiptAction{
-				{ // Required
-					AddHeaderAction: &ses.AddHeaderAction{
-						HeaderName:  aws.String("HeaderName"),  // Required
-						HeaderValue: aws.String("HeaderValue"), // Required
-					},
-					BounceAction: &ses.BounceAction{
-						Message:       aws.String("BounceMessage"),       // Required
-						Sender:        aws.String("Address"),             // Required
-						SmtpReplyCode: aws.String("BounceSmtpReplyCode"), // Required
-						StatusCode:    aws.String("BounceStatusCode"),
-						TopicArn:      aws.String("AmazonResourceName"),
-					},
-					LambdaAction: &ses.LambdaAction{
-						FunctionArn:    aws.String("AmazonResourceName"), // Required
-						InvocationType: aws.String("InvocationType"),
-						TopicArn:       aws.String("AmazonResourceName"),
-					},
-					S3Action: &ses.S3Action{
-						BucketName:      aws.String("S3BucketName"), // Required
-						KmsKeyArn:       aws.String("AmazonResourceName"),
-						ObjectKeyPrefix: aws.String("S3KeyPrefix"),
-						TopicArn:        aws.String("AmazonResourceName"),
-					},
-					SNSAction: &ses.SNSAction{
-						TopicArn: aws.String("AmazonResourceName"), // Required
-						Encoding: aws.String("SNSActionEncoding"),
-					},
-					StopAction: &ses.StopAction{
-						Scope:    aws.String("StopScope"), // Required
-						TopicArn: aws.String("AmazonResourceName"),
-					},
-					WorkmailAction: &ses.WorkmailAction{
-						OrganizationArn: aws.String("AmazonResourceName"), // Required
-						TopicArn:        aws.String("AmazonResourceName"),
-					},
-				},
-				// More values...
+				{},
 			},
-			Enabled: aws.Bool(true),
-			Recipients: []*string{
-				aws.String("Recipient"), // Required
-				// More values...
-			},
+			Enabled:     aws.Bool(true),
+			Name:        aws.String("MyRule"),
 			ScanEnabled: aws.Bool(true),
-			TlsPolicy:   aws.String("TlsPolicy"),
+			TlsPolicy:   aws.String("Optional"),
 		},
-		RuleSetName: aws.String("ReceiptRuleSetName"), // Required
+		RuleSetName: aws.String("MyRuleSet"),
 	}
-	resp, err := svc.UpdateReceiptRule(params)
 
+	result, err := svc.UpdateReceiptRule(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeInvalidSnsTopicException:
+				fmt.Println(ses.ErrCodeInvalidSnsTopicException, aerr.Error())
+			case ses.ErrCodeInvalidS3ConfigurationException:
+				fmt.Println(ses.ErrCodeInvalidS3ConfigurationException, aerr.Error())
+			case ses.ErrCodeInvalidLambdaFunctionException:
+				fmt.Println(ses.ErrCodeInvalidLambdaFunctionException, aerr.Error())
+			case ses.ErrCodeRuleSetDoesNotExistException:
+				fmt.Println(ses.ErrCodeRuleSetDoesNotExistException, aerr.Error())
+			case ses.ErrCodeRuleDoesNotExistException:
+				fmt.Println(ses.ErrCodeRuleDoesNotExistException, aerr.Error())
+			case ses.ErrCodeLimitExceededException:
+				fmt.Println(ses.ErrCodeLimitExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_VerifyDomainDkim() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.VerifyDomainDkimInput{
-		Domain: aws.String("Domain"), // Required
+// VerifyDomainDkim
+//
+// The following example generates DKIM tokens for a domain that has been verified with
+// Amazon SES:
+func ExampleSES_VerifyDomainDkim_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.VerifyDomainDkimInput{
+		Domain: aws.String("example.com"),
 	}
-	resp, err := svc.VerifyDomainDkim(params)
 
+	result, err := svc.VerifyDomainDkim(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_VerifyDomainIdentity() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.VerifyDomainIdentityInput{
-		Domain: aws.String("Domain"), // Required
+// VerifyDomainIdentity
+//
+// The following example starts the domain verification process with Amazon SES:
+func ExampleSES_VerifyDomainIdentity_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.VerifyDomainIdentityInput{
+		Domain: aws.String("example.com"),
 	}
-	resp, err := svc.VerifyDomainIdentity(params)
 
+	result, err := svc.VerifyDomainIdentity(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_VerifyEmailAddress() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.VerifyEmailAddressInput{
-		EmailAddress: aws.String("Address"), // Required
+// VerifyEmailAddress
+//
+// The following example starts the email address verification process with Amazon SES:
+func ExampleSES_VerifyEmailAddress_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.VerifyEmailAddressInput{
+		EmailAddress: aws.String("user@example.com"),
 	}
-	resp, err := svc.VerifyEmailAddress(params)
 
+	result, err := svc.VerifyEmailAddress(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleSES_VerifyEmailIdentity() {
-	sess := session.Must(session.NewSession())
-
-	svc := ses.New(sess)
-
-	params := &ses.VerifyEmailIdentityInput{
-		EmailAddress: aws.String("Address"), // Required
+// VerifyEmailIdentity
+//
+// The following example starts the email address verification process with Amazon SES:
+func ExampleSES_VerifyEmailIdentity_shared00() {
+	svc := ses.New(session.New())
+	input := &ses.VerifyEmailIdentityInput{
+		EmailAddress: aws.String("user@example.com"),
 	}
-	resp, err := svc.VerifyEmailIdentity(params)
 
+	result, err := svc.VerifyEmailIdentity(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }

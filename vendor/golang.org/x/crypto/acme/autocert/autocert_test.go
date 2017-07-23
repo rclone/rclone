@@ -278,7 +278,7 @@ func startACMEServerStub(t *testing.T, man *Manager, domain string) (url string,
 	// ACME CA server stub
 	var ca *httptest.Server
 	ca = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("replay-nonce", "nonce")
+		w.Header().Set("Replay-Nonce", "nonce")
 		if r.Method == "HEAD" {
 			// a nonce request
 			return
@@ -295,7 +295,7 @@ func startACMEServerStub(t *testing.T, man *Manager, domain string) (url string,
 			w.Write([]byte("{}"))
 		// domain authorization
 		case "/new-authz":
-			w.Header().Set("location", ca.URL+"/authz/1")
+			w.Header().Set("Location", ca.URL+"/authz/1")
 			w.WriteHeader(http.StatusCreated)
 			if err := authzTmpl.Execute(w, ca.URL); err != nil {
 				t.Errorf("authzTmpl: %v", err)
@@ -326,7 +326,7 @@ func startACMEServerStub(t *testing.T, man *Manager, domain string) (url string,
 				t.Errorf("new-cert: dummyCert: %v", err)
 			}
 			chainUp := fmt.Sprintf("<%s/ca-cert>; rel=up", ca.URL)
-			w.Header().Set("link", chainUp)
+			w.Header().Set("Link", chainUp)
 			w.WriteHeader(http.StatusCreated)
 			w.Write(der)
 		// CA chain cert

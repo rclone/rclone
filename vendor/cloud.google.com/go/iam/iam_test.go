@@ -62,10 +62,10 @@ func TestPolicy(t *testing.T) {
 		t.Fatal(msg)
 	}
 	remove("m2", Owner)
-	if msg, ok := checkMembers(p, Owner, []string{}); !ok {
+	if msg, ok := checkMembers(p, Owner, nil); !ok {
 		t.Fatal(msg)
 	}
-	if got, want := p.Roles(), []RoleName{Owner}; !reflect.DeepEqual(got, want) {
+	if got, want := p.Roles(), []RoleName(nil); !reflect.DeepEqual(got, want) {
 		t.Fatalf("roles: got %v, want %v", got, want)
 	}
 }

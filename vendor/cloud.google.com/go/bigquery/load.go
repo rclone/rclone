@@ -82,5 +82,5 @@ func (l *Loader) Run(ctx context.Context) (*Job, error) {
 
 	job.Configuration.Load.DestinationTable = l.Dst.tableRefProto()
 
-	return l.c.service.insertJob(ctx, l.c.projectID, conf)
+	return l.c.insertJob(ctx, conf)
 }

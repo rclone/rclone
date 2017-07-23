@@ -10,7 +10,7 @@
     "DeleteStack": "<p>Deletes the stack. After this operation completes, the environment can no longer be activated, and any reservations made for the stack are released.</p>",
     "DescribeFleets": "<p>If fleet names are provided, this operation describes the specified fleets; otherwise, all the fleets in the account are described.</p>",
     "DescribeImages": "<p>Describes the images. If a list of names is not provided, all images in your account are returned. This operation does not return a paginated result.</p>",
-    "DescribeSessions": "<p>Describes the streaming sessions for a stack and a fleet. If a user ID is provided, this operation returns streaming sessions for only that user. Pass this value for the <code>nextToken</code> parameter in a subsequent call to this operation to retrieve the next set of items. If an authentication type is not provided, the operation defaults to users authenticated using a streaming url.</p>",
+    "DescribeSessions": "<p>Describes the streaming sessions for a stack and a fleet. If a user ID is provided, this operation returns streaming sessions for only that user. Pass this value for the <code>nextToken</code> parameter in a subsequent call to this operation to retrieve the next set of items. If an authentication type is not provided, the operation defaults to users authenticated using a streaming URL.</p>",
     "DescribeStacks": "<p>If stack names are not provided, this operation describes the specified stacks; otherwise, all stacks in the account are described. Pass the <code>nextToken</code> value in a subsequent call to this operation to retrieve the next set of items.</p>",
     "DisassociateFleet": "<p>Disassociates a fleet from a stack.</p>",
     "ExpireSession": "<p>This operation immediately stops a streaming session.</p>",
@@ -56,24 +56,25 @@
     "AuthenticationType": {
       "base": null,
       "refs": {
-        "DescribeSessionsRequest$AuthenticationType": "<p>The authentication method of the user. It can be <code>API</code> for a user authenticated using a streaming url or <code>SAML</code> for a SAML federated user. If an authentication type is not provided, the operation defaults to users authenticated using a streaming url.</p>",
-        "Session$AuthenticationType": "<p>The authentication method of the user for whom the session was created. It can be <code>API</code> for a user authenticated using a streaming url or <code>SAML</code> for a SAML federated user.</p>"
+        "DescribeSessionsRequest$AuthenticationType": "<p>The authentication method of the user. It can be <code>API</code> for a user authenticated using a streaming URL, or <code>SAML</code> for a SAML federated user. If an authentication type is not provided, the operation defaults to users authenticated using a streaming URL.</p>",
+        "Session$AuthenticationType": "<p>The authentication method of the user for whom the session was created. It can be <code>API</code> for a user authenticated using a streaming URL or <code>SAML</code> for a SAML federated user.</p>"
       }
     },
     "Boolean": {
       "base": null,
       "refs": {
         "Application$Enabled": "<p>An application can be disabled after image creation if there is a problem.</p>",
-        "Image$ImageBuilderSupported": "<p>Indicates whether an image builder can be launched from this image.</p>",
-        "UpdateFleetRequest$DeleteVpcConfig": "<p>Delete the VPC association for the specified fleet.</p>"
+        "Image$ImageBuilderSupported": "<p>Whether an image builder can be launched from this image.</p>",
+        "UpdateFleetRequest$DeleteVpcConfig": "<p>Delete the VPC association for the specified fleet.</p>",
+        "UpdateStackRequest$DeleteStorageConnectors": "<p>Remove all the storage connectors currently enabled for the stack.</p>"
       }
     },
     "BooleanObject": {
       "base": null,
       "refs": {
-        "CreateFleetRequest$EnableDefaultInternetAccess": "<p>Enable/Disable default Internet access from fleet.</p>",
-        "Fleet$EnableDefaultInternetAccess": "<p>Default Internet access from the fleet. True (Enabled), False (Disabled).</p>",
-        "UpdateFleetRequest$EnableDefaultInternetAccess": "<p>Enable/Disable default Internet access from fleet.</p>"
+        "CreateFleetRequest$EnableDefaultInternetAccess": "<p>Enables or disables default Internet access for the fleet.</p>",
+        "Fleet$EnableDefaultInternetAccess": "<p>Whether default Internet access is enabled for the fleet. </p>",
+        "UpdateFleetRequest$EnableDefaultInternetAccess": "<p>Enables or disables default Internet access for the fleet.</p>"
       }
     },
     "ComputeCapacity": {
@@ -90,7 +91,7 @@
       }
     },
     "ConcurrentModificationException": {
-      "base": "<p>An API error occurred, please try again.</p>",
+      "base": "<p>An API error occurred. Wait a few minutes and try again.</p>",
       "refs": {
       }
     },
@@ -216,6 +217,7 @@
       "base": "<p>The error message in the exception.</p>",
       "refs": {
         "ConcurrentModificationException$Message": null,
+        "IncompatibleImageException$Message": null,
         "InvalidParameterCombinationException$Message": null,
         "InvalidRoleException$Message": null,
         "LimitExceededException$Message": null,
@@ -242,6 +244,18 @@
         "CreateFleetResult$Fleet": "<p>The details for the created fleet.</p>",
         "FleetList$member": null,
         "UpdateFleetResult$Fleet": "<p>A list of fleet details.</p>"
+      }
+    },
+    "FleetAttribute": {
+      "base": "<p>Fleet attribute.</p>",
+      "refs": {
+        "FleetAttributes$member": null
+      }
+    },
+    "FleetAttributes": {
+      "base": "<p>A list of fleet attributes.</p>",
+      "refs": {
+        "UpdateFleetRequest$AttributesToDelete": "<p>Fleet attributes to be deleted.</p>"
       }
     },
     "FleetError": {
@@ -304,6 +318,11 @@
         "ImageStateChangeReason$Code": "<p>The state change reason code of the image.</p>"
       }
     },
+    "IncompatibleImageException": {
+      "base": "<p>The image does not support storage connectors.</p>",
+      "refs": {
+      }
+    },
     "Integer": {
       "base": null,
       "refs": {
@@ -312,13 +331,13 @@
         "ComputeCapacityStatus$Running": "<p>The total number of simultaneous streaming instances that are running.</p>",
         "ComputeCapacityStatus$InUse": "<p>The number of instances that are being used for streaming.</p>",
         "ComputeCapacityStatus$Available": "<p>The number of currently available instances that can be used to stream sessions.</p>",
-        "CreateFleetRequest$MaxUserDurationInSeconds": "<p>The maximum time up to which a streaming session can run.</p>",
-        "CreateFleetRequest$DisconnectTimeoutInSeconds": "<p>The time after disconnection when a session is considered to have ended. If a user who got disconnected reconnects within this timeout interval, the user is connected back to his/her previous session. </p>",
+        "CreateFleetRequest$MaxUserDurationInSeconds": "<p>The maximum time for which a streaming session can run. The input can be any numeric value in seconds between 600 and 57600.</p>",
+        "CreateFleetRequest$DisconnectTimeoutInSeconds": "<p>The time after disconnection when a session is considered to have ended. If a user who got disconnected reconnects within this timeout interval, the user is connected back to their previous session. The input can be any numeric value in seconds between 60 and 57600. </p>",
         "DescribeSessionsRequest$Limit": "<p>The size of each page of results. The default value is 20 and the maximum supported value is 50.</p>",
-        "Fleet$MaxUserDurationInSeconds": "<p>The maximum time during which a streaming session can run.</p>",
-        "Fleet$DisconnectTimeoutInSeconds": "<p>The time after disconnection when a session is considered to have ended. When a user reconnects after a disconnection, the user is connected to the same session and instance within this time interval.</p>",
-        "UpdateFleetRequest$MaxUserDurationInSeconds": "<p>The maximum time during which a streaming session can run.</p>",
-        "UpdateFleetRequest$DisconnectTimeoutInSeconds": "<p>The time after disconnection when a session is considered to have ended. When the user reconnects after a disconnection, the user is connected to the same instance within this time interval.</p>"
+        "Fleet$MaxUserDurationInSeconds": "<p>The maximum time for which a streaming session can run. The value can be any numeric value in seconds between 600 and 57600.</p>",
+        "Fleet$DisconnectTimeoutInSeconds": "<p>The time after disconnection when a session is considered to have ended. If a user who got disconnected reconnects within this timeout interval, the user is connected back to their previous session. The input can be any numeric value in seconds between 60 and 57600.</p>",
+        "UpdateFleetRequest$MaxUserDurationInSeconds": "<p>The maximum time for which a streaming session can run. The input can be any numeric value in seconds between 600 and 57600.</p>",
+        "UpdateFleetRequest$DisconnectTimeoutInSeconds": "<p>The time after disconnection when a session is considered to have ended. If a user who got disconnected reconnects within this timeout interval, the user is connected back to their previous session. The input can be any numeric value in seconds between 60 and 57600.</p>"
       }
     },
     "InvalidParameterCombinationException": {
@@ -359,13 +378,13 @@
     "Long": {
       "base": null,
       "refs": {
-        "CreateStreamingURLRequest$Validity": "<p>The validity duration of the URL in seconds. After this duration, the URL returned by this operation becomes invalid.</p>"
+        "CreateStreamingURLRequest$Validity": "<p>The duration up to which the URL returned by this action is valid. The input can be any numeric value in seconds between 1 and 604800 seconds.</p>"
       }
     },
     "Metadata": {
       "base": null,
       "refs": {
-        "Application$Metadata": "<p>Additional attributes that describes the application.</p>"
+        "Application$Metadata": "<p>Additional attributes that describe the application.</p>"
       }
     },
     "Name": {
@@ -390,6 +409,12 @@
       "refs": {
       }
     },
+    "ResourceIdentifier": {
+      "base": "<p>The ARN of the resource.</p>",
+      "refs": {
+        "StorageConnector$ResourceIdentifier": "<p>The ARN associated with the storage connector.</p>"
+      }
+    },
     "ResourceInUseException": {
       "base": "<p>The specified resource is in use.</p>",
       "refs": {
@@ -403,6 +428,12 @@
     "ResourceNotFoundException": {
       "base": "<p>The specified resource was not found.</p>",
       "refs": {
+      }
+    },
+    "SecurityGroupIdList": {
+      "base": "<p>A list of security groups.</p>",
+      "refs": {
+        "VpcConfig$SecurityGroupIds": "<p>Security groups associated with the fleet.</p>"
       }
     },
     "Session": {
@@ -431,6 +462,24 @@
         "UpdateStackResult$Stack": "<p>A list of stack details.</p>"
       }
     },
+    "StackError": {
+      "base": "<p>Contains the parameters for a stack error.</p>",
+      "refs": {
+        "StackErrors$member": null
+      }
+    },
+    "StackErrorCode": {
+      "base": null,
+      "refs": {
+        "StackError$ErrorCode": "<p>The error code of a stack error.</p>"
+      }
+    },
+    "StackErrors": {
+      "base": "<p>A list of stack errors.</p>",
+      "refs": {
+        "Stack$StackErrors": "<p>The list of errors associated with the stack.</p>"
+      }
+    },
     "StackList": {
       "base": "<p>A list of stacks.</p>",
       "refs": {
@@ -455,6 +504,26 @@
     "StopFleetResult": {
       "base": null,
       "refs": {
+      }
+    },
+    "StorageConnector": {
+      "base": "<p>Contains the parameters for a storage connector.</p>",
+      "refs": {
+        "StorageConnectorList$member": null
+      }
+    },
+    "StorageConnectorList": {
+      "base": "<p>A list of storage connectors.</p>",
+      "refs": {
+        "CreateStackRequest$StorageConnectors": "<p>The storage connectors to be enabled for the stack.</p>",
+        "Stack$StorageConnectors": "<p>The storage connectors to be enabled for the stack.</p>",
+        "UpdateStackRequest$StorageConnectors": "<p>The storage connectors to be enabled for the stack.</p>"
+      }
+    },
+    "StorageConnectorType": {
+      "base": "<p>The type of storage connector. The possible values include: HOMEFOLDERS.</p>",
+      "refs": {
+        "StorageConnector$ConnectorType": "<p>The type of storage connector. The possible values include: HOMEFOLDERS.</p>"
       }
     },
     "String": {
@@ -506,12 +575,14 @@
         "ListAssociatedStacksResult$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
         "Metadata$key": null,
         "Metadata$value": null,
+        "SecurityGroupIdList$member": null,
         "Session$Id": "<p>The unique ID for a streaming session.</p>",
         "Session$StackName": "<p>The name of the stack for which the streaming session was created.</p>",
         "Session$FleetName": "<p>The name of the fleet for which the streaming session was created.</p>",
         "Stack$Name": "<p>The unique identifier of the stack.</p>",
         "Stack$Description": "<p>A meaningful description for the stack.</p>",
         "Stack$DisplayName": "<p>A display name for the stack.</p>",
+        "StackError$ErrorMessage": "<p>The error message of a stack error.</p>",
         "StartFleetRequest$Name": "<p>The name of the fleet to start.</p>",
         "StopFleetRequest$Name": "<p>The name of the fleet to stop.</p>",
         "StringList$member": null,
@@ -544,6 +615,7 @@
         "CreateStreamingURLResult$Expires": "<p>Elapsed seconds after the Unix epoch, at which time this URL expires.</p>",
         "Fleet$CreatedTime": "<p>The time at which the fleet was created.</p>",
         "Image$CreatedTime": "<p>The timestamp when the image was created.</p>",
+        "Image$PublicBaseImageReleasedDate": "<p>The AWS release date of the public base image. For private images, this date is the release date of the base image from which the image was created.</p>",
         "Stack$CreatedTime": "<p>The timestamp when the stack was created.</p>"
       }
     },

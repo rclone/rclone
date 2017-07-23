@@ -530,7 +530,8 @@
         "type":{"shape":"EnvironmentType"},
         "image":{"shape":"NonEmptyString"},
         "computeType":{"shape":"ComputeType"},
-        "environmentVariables":{"shape":"EnvironmentVariables"}
+        "environmentVariables":{"shape":"EnvironmentVariables"},
+        "privilegedMode":{"shape":"WrapperBoolean"}
       }
     },
     "ProjectName":{
@@ -666,7 +667,7 @@
     "TimeOut":{
       "type":"integer",
       "max":480,
-      "min":1
+      "min":5
     },
     "Timestamp":{"type":"timestamp"},
     "UpdateProjectInput":{
@@ -696,6 +697,7 @@
       "min":1,
       "pattern":"^([\\\\p{L}\\\\p{Z}\\\\p{N}_.:/=@+\\\\-]*)$"
     },
+    "WrapperBoolean":{"type":"boolean"},
     "WrapperInt":{"type":"integer"},
     "WrapperLong":{"type":"long"}
   }

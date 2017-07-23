@@ -1,3 +1,126 @@
+_December 12, 2016_
+
+Beta release of BigQuery, DataStore, Logging and Storage. See the
+[blog post](https://cloudplatform.googleblog.com/2016/12/announcing-new-google-cloud-client.html).
+
+Also, BigQuery now supports structs. Read a row directly into a struct with
+`RowIterator.Next`, and upload a row directly from a struct with `Uploader.Put`.
+You can also use field tags. See the [package documentation][cloud-bigquery-ref]
+for details.
+
+_December 5, 2016_
+
+More changes to BigQuery:
+
+* The `ValueList` type was removed. It is no longer necessary. Instead of
+   ```go
+   var v ValueList
+   ... it.Next(&v) ..
+   ```
+   use
+
+   ```go
+   var v []Value
+   ... it.Next(&v) ...
+   ```
+
+* Previously, repeatedly calling `RowIterator.Next` on the same `[]Value` or
+  `ValueList` would append to the slice. Now each call resets the size to zero first.
+
+* Schema inference will infer the SQL type BYTES for a struct field of
+  type []byte. Previously it inferred STRING.
+
+* The types `uint`, `uint64` and `uintptr` are no longer supported in schema
+  inference. BigQuery's integer type is INT64, and those types may hold values
+  that are not correctly represented in a 64-bit signed integer.
+
+* The SQL types DATE, TIME and DATETIME are now supported. They correspond to
+  the `Date`, `Time` and `DateTime` types in the new `cloud.google.com/go/civil`
+  package.
+
+_November 17, 2016_
+
+Change to BigQuery: values from INTEGER columns will now be returned as int64,
+not int. This will avoid errors arising from large values on 32-bit systems.
+
+_November 8, 2016_
+
+New datastore feature: datastore now encodes your nested Go structs as Entity values,
+instead of a flattened list of the embedded struct's fields.
+This means that you may now have twice-nested slices, eg.
+```go
+type State struct {
+  Cities  []struct{
+    Populations []int
+  }
+}
+```
+
+See [the announcement](https://groups.google.com/forum/#!topic/google-api-go-announce/79jtrdeuJAg) for
+more details.
+
+_November 8, 2016_
+
+Breaking changes to datastore: contexts no longer hold namespaces; instead you
+must set a key's namespace explicitly. Also, key functions have been changed
+and renamed.
+
+* The WithNamespace function has been removed. To specify a namespace in a Query, use the Query.Namespace method:
+  ```go
+  q := datastore.NewQuery("Kind").Namespace("ns")
+  ```
+
+* All the fields of Key are exported. That means you can construct any Key with a struct literal:
+  ```go
+  k := &Key{Kind: "Kind",  ID: 37, Namespace: "ns"}
+  ```
+
+* As a result of the above, the Key methods Kind, ID, d.Name, Parent, SetParent and Namespace have been removed.
+
+* `NewIncompleteKey` has been removed, replaced by `IncompleteKey`. Replace
+  ```go
+  NewIncompleteKey(ctx, kind, parent)
+  ```
+  with
+  ```go
+  IncompleteKey(kind, parent)
+  ```
+  and if you do use namespaces, make sure you set the namespace on the returned key.
+
+* `NewKey` has been removed, replaced by `NameKey` and `IDKey`. Replace
+  ```go
+  NewKey(ctx, kind, name, 0, parent)
+  NewKey(ctx, kind, "", id, parent)
+  ```
+  with
+  ```go
+  NameKey(kind, name, parent)
+  IDKey(kind, id, parent)
+  ```
+  and if you do use namespaces, make sure you set the namespace on the returned key.
+
+* The `Done` variable has been removed. Replace `datastore.Done` with `iterator.Done`, from the package `google.golang.org/api/iterator`.
+
+* The `Client.Close` method will have a return type of error. It will return the result of closing the underlying gRPC connection.
+
+See [the announcement](https://groups.google.com/forum/#!topic/google-api-go-announce/hqXtM_4Ix-0) for
+more details.
+
+_October 27, 2016_
+
+Breaking change to bigquery: `NewGCSReference` is now a function,
+not a method on `Client`.
+
+New bigquery feature: `Table.LoaderFrom` now accepts a `ReaderSource`, enabling
+loading data into a table from a file or any `io.Reader`.
+
+_October 21, 2016_
+
+Breaking change to pubsub: removed `pubsub.Done`.
+
+Use `iterator.Done` instead, where `iterator` is the package
+`google.golang.org/api/iterator`.
+
 _October 19, 2016_
 
 Breaking changes to cloud.google.com/go/bigquery:

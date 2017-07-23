@@ -26,15 +26,15 @@ var (
 )
 
 func init() {
-	detectCpuFeatures()
+	detectCPUFeatures()
 }
 
-// detectCpuFeatures is used to detect if cpu instructions
+// detectCPUFeatures is used to detect if cpu instructions
 // used by the functions implemented in assembler in
 // chacha20poly1305_amd64.s are supported.
-func detectCpuFeatures() {
-	maxId, _, _, _ := cpuid(0, 0)
-	if maxId < 1 {
+func detectCPUFeatures() {
+	maxID, _, _, _ := cpuid(0, 0)
+	if maxID < 1 {
 		return
 	}
 
@@ -54,7 +54,7 @@ func detectCpuFeatures() {
 	}
 	haveAVX := isSet(28, ecx1) && osSupportsAVX
 
-	if maxId < 7 {
+	if maxID < 7 {
 		return
 	}
 

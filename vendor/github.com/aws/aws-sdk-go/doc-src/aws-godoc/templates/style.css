@@ -1041,3 +1041,10 @@ a.error {
 		white-space: pre-wrap;
 	}
 }
+
+.permalink {
+	display: none;
+}
+:hover > .permalink {
+	display: inline;
+}

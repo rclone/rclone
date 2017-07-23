@@ -28,6 +28,10 @@ func TestStripExcessHeaders(t *testing.T) {
 		"1  2  3",
 		"1  2  ",
 		" 1  2  ",
+		"12   3",
+		"12   3   1",
+		"12           3     1",
+		"12     3       1abc123",
 	}
 
 	expected := []string{
@@ -39,11 +43,15 @@ func TestStripExcessHeaders(t *testing.T) {
 		"1 2 3",
 		"1 2",
 		"1 2",
+		"12 3",
+		"12 3 1",
+		"12 3 1",
+		"12 3 1abc123",
 	}
 
-	newVals := stripExcessSpaces(vals)
-	for i := 0; i < len(newVals); i++ {
-		assert.Equal(t, expected[i], newVals[i], "test: %d", i)
+	stripExcessSpaces(vals)
+	for i := 0; i < len(vals); i++ {
+		assert.Equal(t, expected[i], vals[i], "test: %d", i)
 	}
 }
 
@@ -463,7 +471,27 @@ func TestSignWithBody_NoReplaceRequestBody(t *testing.T) {
 	}
 
 	if req.Body != origBody {
-		t.Errorf("expeect request body to not be chagned")
+		t.Errorf("expect request body to not be chagned")
+	}
+}
+
+func TestRequestHost(t *testing.T) {
+	req, body := buildRequest("dynamodb", "us-east-1", "{}")
+	req.URL.RawQuery = "Foo=z&Foo=o&Foo=m&Foo=a"
+	req.Host = "myhost"
+	ctx := &signingCtx{
+		ServiceName: "dynamodb",
+		Region:      "us-east-1",
+		Request:     req,
+		Body:        body,
+		Query:       req.URL.Query(),
+		Time:        time.Now(),
+		ExpireTime:  5 * time.Second,
+	}
+
+	ctx.buildCanonicalHeaders(ignoredHeaders, ctx.Request.Header)
+	if !strings.Contains(ctx.canonicalHeaders, "host:"+req.Host) {
+		t.Errorf("canonical host header invalid")
 	}
 }
 
@@ -483,15 +511,29 @@ func BenchmarkSignRequest(b *testing.B) {
 	}
 }
 
-func BenchmarkStripExcessSpaces(b *testing.B) {
-	vals := []string{
-		`AWS4-HMAC-SHA256 Credential=AKIDFAKEIDFAKEID/20160628/us-west-2/s3/aws4_request, SignedHeaders=host;x-amz-date, Signature=1234567890abcdef1234567890abcdef1234567890abcdef`,
-		`123   321   123   321`,
-		`   123   321   123   321   `,
-	}
+var stripExcessSpaceCases = []string{
+	`AWS4-HMAC-SHA256 Credential=AKIDFAKEIDFAKEID/20160628/us-west-2/s3/aws4_request, SignedHeaders=host;x-amz-date, Signature=1234567890abcdef1234567890abcdef1234567890abcdef`,
+	`123   321   123   321`,
+	`   123   321   123   321   `,
+	`   123    321    123          321   `,
+	"123",
+	"1 2 3",
+	"  1 2 3",
+	"1  2 3",
+	"1  23",
+	"1  2  3",
+	"1  2  ",
+	" 1  2  ",
+	"12   3",
+	"12   3   1",
+	"12           3     1",
+	"12     3       1abc123",
+}
 
-	b.ResetTimer()
+func BenchmarkStripExcessSpaces(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		stripExcessSpaces(vals)
+		// Make sure to start with a copy of the cases
+		cases := append([]string{}, stripExcessSpaceCases...)
+		stripExcessSpaces(cases)
 	}
 }

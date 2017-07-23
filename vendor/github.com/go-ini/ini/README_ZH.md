@@ -76,8 +76,8 @@ sec1, err := cfg.GetSection("Section")
 sec2, err := cfg.GetSection("SecTIOn")
 
 // key1 和 key2 指向同一个键对象
-key1, err := cfg.GetKey("Key")
-key2, err := cfg.GetKey("KeY")
+key1, err := sec1.GetKey("Key")
+key2, err := sec2.GetKey("KeY")
 ```
 
 #### 类似 MySQL 配置中的布尔值键
@@ -114,6 +114,12 @@ key, err := sec.NewBooleanKey("skip-host-cache")
 3. 分区标签后的文字 (即 `[分区名]` 之后的内容)
 
 如果你希望使用包含 `#` 或 `;` 的值，请使用 ``` ` ``` 或 ``` """ ``` 进行包覆。
+
+除此之外，您还可以通过 `LoadOptions` 完全忽略行内注释：
+
+```go
+cfg, err := LoadSources(LoadOptions{IgnoreInlineComment: true}, "app.ini"))
+```
 
 ### 操作分区（Section）
 

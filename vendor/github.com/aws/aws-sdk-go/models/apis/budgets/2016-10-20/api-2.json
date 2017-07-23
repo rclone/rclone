@@ -236,13 +236,14 @@
     "BudgetName":{
       "type":"string",
       "max":100,
-      "pattern":"[^:]+"
+      "pattern":"[^:\\\\]+"
     },
     "BudgetType":{
       "type":"string",
       "enum":[
         "USAGE",
-        "COST"
+        "COST",
+        "RI_UTILIZATION"
       ]
     },
     "Budgets":{
@@ -588,7 +589,7 @@
       ],
       "members":{
         "Amount":{"shape":"NumericValue"},
-        "Unit":{"shape":"GenericString"}
+        "Unit":{"shape":"UnitValue"}
       }
     },
     "Subscriber":{
@@ -629,10 +630,15 @@
     "TimeUnit":{
       "type":"string",
       "enum":[
+        "DAILY",
         "MONTHLY",
         "QUARTERLY",
         "ANNUALLY"
       ]
+    },
+    "UnitValue":{
+      "type":"string",
+      "min":1
     },
     "UpdateBudgetRequest":{
       "type":"structure",

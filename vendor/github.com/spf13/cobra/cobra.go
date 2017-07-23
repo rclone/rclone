@@ -47,6 +47,15 @@ var EnablePrefixMatching = false
 // To disable sorting, set it to false.
 var EnableCommandSorting = true
 
+// MousetrapHelpText enables an information splash screen on Windows
+// if the CLI is started from explorer.exe.
+// To disable the mousetrap, just set this variable to blank string ("").
+// Works only on Microsoft Windows.
+var MousetrapHelpText string = `This is a command line tool.
+
+You need to open cmd.exe and run it from there.
+`
+
 // AddTemplateFunc adds a template function that's available to Usage and Help
 // template generation.
 func AddTemplateFunc(name string, tmplFunc interface{}) {

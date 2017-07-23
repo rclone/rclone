@@ -3,343 +3,529 @@
 package rekognition_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rekognition"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleRekognition_CompareFaces() {
-	sess := session.Must(session.NewSession())
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
+	if err != nil {
+		panic(err)
+	}
+	return &t
+}
 
-	svc := rekognition.New(sess)
-
-	params := &rekognition.CompareFacesInput{
-		SourceImage: &rekognition.Image{ // Required
-			Bytes: []byte("PAYLOAD"),
+// To compare two images
+//
+// This operation compares the largest face detected in the source image with each face
+// detected in the target image.
+func ExampleRekognition_CompareFaces_shared00() {
+	svc := rekognition.New(session.New())
+	input := &rekognition.CompareFacesInput{
+		SimilarityThreshold: aws.Float64(90.000000),
+		SourceImage: &rekognition.Image{
 			S3Object: &rekognition.S3Object{
-				Bucket:  aws.String("S3Bucket"),
-				Name:    aws.String("S3ObjectName"),
-				Version: aws.String("S3ObjectVersion"),
+				Bucket: aws.String("mybucket"),
+				Name:   aws.String("mysourceimage"),
 			},
 		},
-		TargetImage: &rekognition.Image{ // Required
-			Bytes: []byte("PAYLOAD"),
+		TargetImage: &rekognition.Image{
 			S3Object: &rekognition.S3Object{
-				Bucket:  aws.String("S3Bucket"),
-				Name:    aws.String("S3ObjectName"),
-				Version: aws.String("S3ObjectVersion"),
+				Bucket: aws.String("mybucket"),
+				Name:   aws.String("mytargetimage"),
 			},
 		},
-		SimilarityThreshold: aws.Float64(1.0),
 	}
-	resp, err := svc.CompareFaces(params)
 
+	result, err := svc.CompareFaces(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rekognition.ErrCodeInvalidParameterException:
+				fmt.Println(rekognition.ErrCodeInvalidParameterException, aerr.Error())
+			case rekognition.ErrCodeInvalidS3ObjectException:
+				fmt.Println(rekognition.ErrCodeInvalidS3ObjectException, aerr.Error())
+			case rekognition.ErrCodeImageTooLargeException:
+				fmt.Println(rekognition.ErrCodeImageTooLargeException, aerr.Error())
+			case rekognition.ErrCodeAccessDeniedException:
+				fmt.Println(rekognition.ErrCodeAccessDeniedException, aerr.Error())
+			case rekognition.ErrCodeInternalServerError:
+				fmt.Println(rekognition.ErrCodeInternalServerError, aerr.Error())
+			case rekognition.ErrCodeThrottlingException:
+				fmt.Println(rekognition.ErrCodeThrottlingException, aerr.Error())
+			case rekognition.ErrCodeProvisionedThroughputExceededException:
+				fmt.Println(rekognition.ErrCodeProvisionedThroughputExceededException, aerr.Error())
+			case rekognition.ErrCodeInvalidImageFormatException:
+				fmt.Println(rekognition.ErrCodeInvalidImageFormatException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRekognition_CreateCollection() {
-	sess := session.Must(session.NewSession())
-
-	svc := rekognition.New(sess)
-
-	params := &rekognition.CreateCollectionInput{
-		CollectionId: aws.String("CollectionId"), // Required
+// To create a collection
+//
+// This operation creates a Rekognition collection for storing image data.
+func ExampleRekognition_CreateCollection_shared00() {
+	svc := rekognition.New(session.New())
+	input := &rekognition.CreateCollectionInput{
+		CollectionId: aws.String("myphotos"),
 	}
-	resp, err := svc.CreateCollection(params)
 
+	result, err := svc.CreateCollection(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rekognition.ErrCodeInvalidParameterException:
+				fmt.Println(rekognition.ErrCodeInvalidParameterException, aerr.Error())
+			case rekognition.ErrCodeAccessDeniedException:
+				fmt.Println(rekognition.ErrCodeAccessDeniedException, aerr.Error())
+			case rekognition.ErrCodeInternalServerError:
+				fmt.Println(rekognition.ErrCodeInternalServerError, aerr.Error())
+			case rekognition.ErrCodeThrottlingException:
+				fmt.Println(rekognition.ErrCodeThrottlingException, aerr.Error())
+			case rekognition.ErrCodeProvisionedThroughputExceededException:
+				fmt.Println(rekognition.ErrCodeProvisionedThroughputExceededException, aerr.Error())
+			case rekognition.ErrCodeResourceAlreadyExistsException:
+				fmt.Println(rekognition.ErrCodeResourceAlreadyExistsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRekognition_DeleteCollection() {
-	sess := session.Must(session.NewSession())
-
-	svc := rekognition.New(sess)
-
-	params := &rekognition.DeleteCollectionInput{
-		CollectionId: aws.String("CollectionId"), // Required
+// To delete a collection
+//
+// This operation deletes a Rekognition collection.
+func ExampleRekognition_DeleteCollection_shared00() {
+	svc := rekognition.New(session.New())
+	input := &rekognition.DeleteCollectionInput{
+		CollectionId: aws.String("myphotos"),
 	}
-	resp, err := svc.DeleteCollection(params)
 
+	result, err := svc.DeleteCollection(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rekognition.ErrCodeInvalidParameterException:
+				fmt.Println(rekognition.ErrCodeInvalidParameterException, aerr.Error())
+			case rekognition.ErrCodeAccessDeniedException:
+				fmt.Println(rekognition.ErrCodeAccessDeniedException, aerr.Error())
+			case rekognition.ErrCodeInternalServerError:
+				fmt.Println(rekognition.ErrCodeInternalServerError, aerr.Error())
+			case rekognition.ErrCodeThrottlingException:
+				fmt.Println(rekognition.ErrCodeThrottlingException, aerr.Error())
+			case rekognition.ErrCodeProvisionedThroughputExceededException:
+				fmt.Println(rekognition.ErrCodeProvisionedThroughputExceededException, aerr.Error())
+			case rekognition.ErrCodeResourceNotFoundException:
+				fmt.Println(rekognition.ErrCodeResourceNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRekognition_DeleteFaces() {
-	sess := session.Must(session.NewSession())
-
-	svc := rekognition.New(sess)
-
-	params := &rekognition.DeleteFacesInput{
-		CollectionId: aws.String("CollectionId"), // Required
-		FaceIds: []*string{ // Required
-			aws.String("FaceId"), // Required
-			// More values...
+// To delete a face
+//
+// This operation deletes one or more faces from a Rekognition collection.
+func ExampleRekognition_DeleteFaces_shared00() {
+	svc := rekognition.New(session.New())
+	input := &rekognition.DeleteFacesInput{
+		CollectionId: aws.String("myphotos"),
+		FaceIds: []*string{
+			aws.String("ff43d742-0c13-5d16-a3e8-03d3f58e980b"),
 		},
 	}
-	resp, err := svc.DeleteFaces(params)
 
+	result, err := svc.DeleteFaces(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rekognition.ErrCodeInvalidParameterException:
+				fmt.Println(rekognition.ErrCodeInvalidParameterException, aerr.Error())
+			case rekognition.ErrCodeAccessDeniedException:
+				fmt.Println(rekognition.ErrCodeAccessDeniedException, aerr.Error())
+			case rekognition.ErrCodeInternalServerError:
+				fmt.Println(rekognition.ErrCodeInternalServerError, aerr.Error())
+			case rekognition.ErrCodeThrottlingException:
+				fmt.Println(rekognition.ErrCodeThrottlingException, aerr.Error())
+			case rekognition.ErrCodeProvisionedThroughputExceededException:
+				fmt.Println(rekognition.ErrCodeProvisionedThroughputExceededException, aerr.Error())
+			case rekognition.ErrCodeResourceNotFoundException:
+				fmt.Println(rekognition.ErrCodeResourceNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRekognition_DetectFaces() {
-	sess := session.Must(session.NewSession())
-
-	svc := rekognition.New(sess)
-
-	params := &rekognition.DetectFacesInput{
-		Image: &rekognition.Image{ // Required
-			Bytes: []byte("PAYLOAD"),
+// To detect faces in an image
+//
+// This operation detects faces in an image stored in an AWS S3 bucket.
+func ExampleRekognition_DetectFaces_shared00() {
+	svc := rekognition.New(session.New())
+	input := &rekognition.DetectFacesInput{
+		Image: &rekognition.Image{
 			S3Object: &rekognition.S3Object{
-				Bucket:  aws.String("S3Bucket"),
-				Name:    aws.String("S3ObjectName"),
-				Version: aws.String("S3ObjectVersion"),
+				Bucket: aws.String("mybucket"),
+				Name:   aws.String("myphoto"),
 			},
 		},
-		Attributes: []*string{
-			aws.String("Attribute"), // Required
-			// More values...
-		},
 	}
-	resp, err := svc.DetectFaces(params)
 
+	result, err := svc.DetectFaces(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rekognition.ErrCodeInvalidS3ObjectException:
+				fmt.Println(rekognition.ErrCodeInvalidS3ObjectException, aerr.Error())
+			case rekognition.ErrCodeInvalidParameterException:
+				fmt.Println(rekognition.ErrCodeInvalidParameterException, aerr.Error())
+			case rekognition.ErrCodeImageTooLargeException:
+				fmt.Println(rekognition.ErrCodeImageTooLargeException, aerr.Error())
+			case rekognition.ErrCodeAccessDeniedException:
+				fmt.Println(rekognition.ErrCodeAccessDeniedException, aerr.Error())
+			case rekognition.ErrCodeInternalServerError:
+				fmt.Println(rekognition.ErrCodeInternalServerError, aerr.Error())
+			case rekognition.ErrCodeThrottlingException:
+				fmt.Println(rekognition.ErrCodeThrottlingException, aerr.Error())
+			case rekognition.ErrCodeProvisionedThroughputExceededException:
+				fmt.Println(rekognition.ErrCodeProvisionedThroughputExceededException, aerr.Error())
+			case rekognition.ErrCodeInvalidImageFormatException:
+				fmt.Println(rekognition.ErrCodeInvalidImageFormatException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRekognition_DetectLabels() {
-	sess := session.Must(session.NewSession())
-
-	svc := rekognition.New(sess)
-
-	params := &rekognition.DetectLabelsInput{
-		Image: &rekognition.Image{ // Required
-			Bytes: []byte("PAYLOAD"),
+// To detect labels
+//
+// This operation detects labels in the supplied image
+func ExampleRekognition_DetectLabels_shared00() {
+	svc := rekognition.New(session.New())
+	input := &rekognition.DetectLabelsInput{
+		Image: &rekognition.Image{
 			S3Object: &rekognition.S3Object{
-				Bucket:  aws.String("S3Bucket"),
-				Name:    aws.String("S3ObjectName"),
-				Version: aws.String("S3ObjectVersion"),
+				Bucket: aws.String("mybucket"),
+				Name:   aws.String("myphoto"),
 			},
 		},
-		MaxLabels:     aws.Int64(1),
-		MinConfidence: aws.Float64(1.0),
+		MaxLabels:     aws.Int64(123),
+		MinConfidence: aws.Float64(70.000000),
 	}
-	resp, err := svc.DetectLabels(params)
 
+	result, err := svc.DetectLabels(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rekognition.ErrCodeInvalidS3ObjectException:
+				fmt.Println(rekognition.ErrCodeInvalidS3ObjectException, aerr.Error())
+			case rekognition.ErrCodeInvalidParameterException:
+				fmt.Println(rekognition.ErrCodeInvalidParameterException, aerr.Error())
+			case rekognition.ErrCodeImageTooLargeException:
+				fmt.Println(rekognition.ErrCodeImageTooLargeException, aerr.Error())
+			case rekognition.ErrCodeAccessDeniedException:
+				fmt.Println(rekognition.ErrCodeAccessDeniedException, aerr.Error())
+			case rekognition.ErrCodeInternalServerError:
+				fmt.Println(rekognition.ErrCodeInternalServerError, aerr.Error())
+			case rekognition.ErrCodeThrottlingException:
+				fmt.Println(rekognition.ErrCodeThrottlingException, aerr.Error())
+			case rekognition.ErrCodeProvisionedThroughputExceededException:
+				fmt.Println(rekognition.ErrCodeProvisionedThroughputExceededException, aerr.Error())
+			case rekognition.ErrCodeInvalidImageFormatException:
+				fmt.Println(rekognition.ErrCodeInvalidImageFormatException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRekognition_DetectModerationLabels() {
-	sess := session.Must(session.NewSession())
-
-	svc := rekognition.New(sess)
-
-	params := &rekognition.DetectModerationLabelsInput{
-		Image: &rekognition.Image{ // Required
-			Bytes: []byte("PAYLOAD"),
+// To add a face to a collection
+//
+// This operation detects faces in an image and adds them to the specified Rekognition
+// collection.
+func ExampleRekognition_IndexFaces_shared00() {
+	svc := rekognition.New(session.New())
+	input := &rekognition.IndexFacesInput{
+		CollectionId:    aws.String("myphotos"),
+		ExternalImageId: aws.String("myphotoid"),
+		Image: &rekognition.Image{
 			S3Object: &rekognition.S3Object{
-				Bucket:  aws.String("S3Bucket"),
-				Name:    aws.String("S3ObjectName"),
-				Version: aws.String("S3ObjectVersion"),
+				Bucket: aws.String("mybucket"),
+				Name:   aws.String("myphoto"),
 			},
 		},
-		MinConfidence: aws.Float64(1.0),
 	}
-	resp, err := svc.DetectModerationLabels(params)
 
+	result, err := svc.IndexFaces(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rekognition.ErrCodeInvalidS3ObjectException:
+				fmt.Println(rekognition.ErrCodeInvalidS3ObjectException, aerr.Error())
+			case rekognition.ErrCodeInvalidParameterException:
+				fmt.Println(rekognition.ErrCodeInvalidParameterException, aerr.Error())
+			case rekognition.ErrCodeImageTooLargeException:
+				fmt.Println(rekognition.ErrCodeImageTooLargeException, aerr.Error())
+			case rekognition.ErrCodeAccessDeniedException:
+				fmt.Println(rekognition.ErrCodeAccessDeniedException, aerr.Error())
+			case rekognition.ErrCodeInternalServerError:
+				fmt.Println(rekognition.ErrCodeInternalServerError, aerr.Error())
+			case rekognition.ErrCodeThrottlingException:
+				fmt.Println(rekognition.ErrCodeThrottlingException, aerr.Error())
+			case rekognition.ErrCodeProvisionedThroughputExceededException:
+				fmt.Println(rekognition.ErrCodeProvisionedThroughputExceededException, aerr.Error())
+			case rekognition.ErrCodeResourceNotFoundException:
+				fmt.Println(rekognition.ErrCodeResourceNotFoundException, aerr.Error())
+			case rekognition.ErrCodeInvalidImageFormatException:
+				fmt.Println(rekognition.ErrCodeInvalidImageFormatException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRekognition_IndexFaces() {
-	sess := session.Must(session.NewSession())
+// To list the collections
+//
+// This operation returns a list of Rekognition collections.
+func ExampleRekognition_ListCollections_shared00() {
+	svc := rekognition.New(session.New())
+	input := &rekognition.ListCollectionsInput{}
 
-	svc := rekognition.New(sess)
+	result, err := svc.ListCollections(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rekognition.ErrCodeInvalidParameterException:
+				fmt.Println(rekognition.ErrCodeInvalidParameterException, aerr.Error())
+			case rekognition.ErrCodeAccessDeniedException:
+				fmt.Println(rekognition.ErrCodeAccessDeniedException, aerr.Error())
+			case rekognition.ErrCodeInternalServerError:
+				fmt.Println(rekognition.ErrCodeInternalServerError, aerr.Error())
+			case rekognition.ErrCodeThrottlingException:
+				fmt.Println(rekognition.ErrCodeThrottlingException, aerr.Error())
+			case rekognition.ErrCodeProvisionedThroughputExceededException:
+				fmt.Println(rekognition.ErrCodeProvisionedThroughputExceededException, aerr.Error())
+			case rekognition.ErrCodeInvalidPaginationTokenException:
+				fmt.Println(rekognition.ErrCodeInvalidPaginationTokenException, aerr.Error())
+			case rekognition.ErrCodeResourceNotFoundException:
+				fmt.Println(rekognition.ErrCodeResourceNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &rekognition.IndexFacesInput{
-		CollectionId: aws.String("CollectionId"), // Required
-		Image: &rekognition.Image{ // Required
-			Bytes: []byte("PAYLOAD"),
+	fmt.Println(result)
+}
+
+// To list the faces in a collection
+//
+// This operation lists the faces in a Rekognition collection.
+func ExampleRekognition_ListFaces_shared00() {
+	svc := rekognition.New(session.New())
+	input := &rekognition.ListFacesInput{
+		CollectionId: aws.String("myphotos"),
+		MaxResults:   aws.Int64(20),
+	}
+
+	result, err := svc.ListFaces(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rekognition.ErrCodeInvalidParameterException:
+				fmt.Println(rekognition.ErrCodeInvalidParameterException, aerr.Error())
+			case rekognition.ErrCodeAccessDeniedException:
+				fmt.Println(rekognition.ErrCodeAccessDeniedException, aerr.Error())
+			case rekognition.ErrCodeInternalServerError:
+				fmt.Println(rekognition.ErrCodeInternalServerError, aerr.Error())
+			case rekognition.ErrCodeThrottlingException:
+				fmt.Println(rekognition.ErrCodeThrottlingException, aerr.Error())
+			case rekognition.ErrCodeProvisionedThroughputExceededException:
+				fmt.Println(rekognition.ErrCodeProvisionedThroughputExceededException, aerr.Error())
+			case rekognition.ErrCodeInvalidPaginationTokenException:
+				fmt.Println(rekognition.ErrCodeInvalidPaginationTokenException, aerr.Error())
+			case rekognition.ErrCodeResourceNotFoundException:
+				fmt.Println(rekognition.ErrCodeResourceNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a face
+//
+// This operation searches for matching faces in the collection the supplied face belongs
+// to.
+func ExampleRekognition_SearchFaces_shared00() {
+	svc := rekognition.New(session.New())
+	input := &rekognition.SearchFacesInput{
+		CollectionId:       aws.String("myphotos"),
+		FaceId:             aws.String("70008e50-75e4-55d0-8e80-363fb73b3a14"),
+		FaceMatchThreshold: aws.Float64(90.000000),
+		MaxFaces:           aws.Int64(10),
+	}
+
+	result, err := svc.SearchFaces(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rekognition.ErrCodeInvalidParameterException:
+				fmt.Println(rekognition.ErrCodeInvalidParameterException, aerr.Error())
+			case rekognition.ErrCodeAccessDeniedException:
+				fmt.Println(rekognition.ErrCodeAccessDeniedException, aerr.Error())
+			case rekognition.ErrCodeInternalServerError:
+				fmt.Println(rekognition.ErrCodeInternalServerError, aerr.Error())
+			case rekognition.ErrCodeThrottlingException:
+				fmt.Println(rekognition.ErrCodeThrottlingException, aerr.Error())
+			case rekognition.ErrCodeProvisionedThroughputExceededException:
+				fmt.Println(rekognition.ErrCodeProvisionedThroughputExceededException, aerr.Error())
+			case rekognition.ErrCodeResourceNotFoundException:
+				fmt.Println(rekognition.ErrCodeResourceNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To search for faces matching a supplied image
+//
+// This operation searches for faces in a Rekognition collection that match the largest
+// face in an S3 bucket stored image.
+func ExampleRekognition_SearchFacesByImage_shared00() {
+	svc := rekognition.New(session.New())
+	input := &rekognition.SearchFacesByImageInput{
+		CollectionId:       aws.String("myphotos"),
+		FaceMatchThreshold: aws.Float64(95.000000),
+		Image: &rekognition.Image{
 			S3Object: &rekognition.S3Object{
-				Bucket:  aws.String("S3Bucket"),
-				Name:    aws.String("S3ObjectName"),
-				Version: aws.String("S3ObjectVersion"),
+				Bucket: aws.String("mybucket"),
+				Name:   aws.String("myphoto"),
 			},
 		},
-		DetectionAttributes: []*string{
-			aws.String("Attribute"), // Required
-			// More values...
-		},
-		ExternalImageId: aws.String("ExternalImageId"),
+		MaxFaces: aws.Int64(5),
 	}
-	resp, err := svc.IndexFaces(params)
 
+	result, err := svc.SearchFacesByImage(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rekognition.ErrCodeInvalidS3ObjectException:
+				fmt.Println(rekognition.ErrCodeInvalidS3ObjectException, aerr.Error())
+			case rekognition.ErrCodeInvalidParameterException:
+				fmt.Println(rekognition.ErrCodeInvalidParameterException, aerr.Error())
+			case rekognition.ErrCodeImageTooLargeException:
+				fmt.Println(rekognition.ErrCodeImageTooLargeException, aerr.Error())
+			case rekognition.ErrCodeAccessDeniedException:
+				fmt.Println(rekognition.ErrCodeAccessDeniedException, aerr.Error())
+			case rekognition.ErrCodeInternalServerError:
+				fmt.Println(rekognition.ErrCodeInternalServerError, aerr.Error())
+			case rekognition.ErrCodeThrottlingException:
+				fmt.Println(rekognition.ErrCodeThrottlingException, aerr.Error())
+			case rekognition.ErrCodeProvisionedThroughputExceededException:
+				fmt.Println(rekognition.ErrCodeProvisionedThroughputExceededException, aerr.Error())
+			case rekognition.ErrCodeResourceNotFoundException:
+				fmt.Println(rekognition.ErrCodeResourceNotFoundException, aerr.Error())
+			case rekognition.ErrCodeInvalidImageFormatException:
+				fmt.Println(rekognition.ErrCodeInvalidImageFormatException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRekognition_ListCollections() {
-	sess := session.Must(session.NewSession())
-
-	svc := rekognition.New(sess)
-
-	params := &rekognition.ListCollectionsInput{
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("PaginationToken"),
-	}
-	resp, err := svc.ListCollections(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRekognition_ListFaces() {
-	sess := session.Must(session.NewSession())
-
-	svc := rekognition.New(sess)
-
-	params := &rekognition.ListFacesInput{
-		CollectionId: aws.String("CollectionId"), // Required
-		MaxResults:   aws.Int64(1),
-		NextToken:    aws.String("PaginationToken"),
-	}
-	resp, err := svc.ListFaces(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRekognition_SearchFaces() {
-	sess := session.Must(session.NewSession())
-
-	svc := rekognition.New(sess)
-
-	params := &rekognition.SearchFacesInput{
-		CollectionId:       aws.String("CollectionId"), // Required
-		FaceId:             aws.String("FaceId"),       // Required
-		FaceMatchThreshold: aws.Float64(1.0),
-		MaxFaces:           aws.Int64(1),
-	}
-	resp, err := svc.SearchFaces(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRekognition_SearchFacesByImage() {
-	sess := session.Must(session.NewSession())
-
-	svc := rekognition.New(sess)
-
-	params := &rekognition.SearchFacesByImageInput{
-		CollectionId: aws.String("CollectionId"), // Required
-		Image: &rekognition.Image{ // Required
-			Bytes: []byte("PAYLOAD"),
-			S3Object: &rekognition.S3Object{
-				Bucket:  aws.String("S3Bucket"),
-				Name:    aws.String("S3ObjectName"),
-				Version: aws.String("S3ObjectVersion"),
-			},
-		},
-		FaceMatchThreshold: aws.Float64(1.0),
-		MaxFaces:           aws.Int64(1),
-	}
-	resp, err := svc.SearchFacesByImage(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }

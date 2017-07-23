@@ -799,6 +799,10 @@ type CompanyRelation struct {
 	// @OutputOnly
 	CreationTime string `json:"creationTime,omitempty"`
 
+	// InternalCompanyId: The internal company ID.
+	// Only available for a whitelisted set of api clients.
+	InternalCompanyId string `json:"internalCompanyId,omitempty"`
+
 	// IsPending: The flag that indicates if the company is pending
 	// verification.
 	IsPending bool `json:"isPending,omitempty"`
@@ -815,6 +819,15 @@ type CompanyRelation struct {
 
 	// PhoneNumber: The phone number for the company's primary address.
 	PhoneNumber string `json:"phoneNumber,omitempty"`
+
+	// PrimaryAddress: The primary location of the company.
+	PrimaryAddress *Location `json:"primaryAddress,omitempty"`
+
+	// PrimaryCountryCode: The primary country code of the company.
+	PrimaryCountryCode string `json:"primaryCountryCode,omitempty"`
+
+	// PrimaryLanguageCode: The primary language code of the company.
+	PrimaryLanguageCode string `json:"primaryLanguageCode,omitempty"`
 
 	// ResolvedTimestamp: The timestamp when the user was
 	// approved.
@@ -1478,10 +1491,6 @@ func (s *HistoricalOffer) MarshalJSON() ([]byte, error) {
 //     assert (0.0, -170.0) == NormalizeLatLng(180.0, 10.0)
 //     assert (-90.0, 10.0) == NormalizeLatLng(270.0, 10.0)
 //     assert (90.0, 10.0) == NormalizeLatLng(-270.0, 10.0)
-//
-// The code in logs/storage/validator/logs_validator_traits.cc treats
-// this type
-// as if it were annotated as ST_LOCATION.
 type LatLng struct {
 	// Latitude: The latitude in degrees. It must be in the range [-90.0,
 	// +90.0].
@@ -2986,6 +2995,10 @@ type User struct {
 
 	// Id: The ID of the user.
 	Id string `json:"id,omitempty"`
+
+	// InternalId: The internal user ID.
+	// Only available for a whitelisted set of api clients.
+	InternalId string `json:"internalId,omitempty"`
 
 	// LastAccessTime: The most recent time the user interacted with the
 	// Partners site.

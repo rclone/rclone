@@ -3,1003 +3,909 @@
 package ecs_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecs"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleECS_CreateCluster() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.CreateClusterInput{
-		ClusterName: aws.String("String"),
-	}
-	resp, err := svc.CreateCluster(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		panic(err)
+	}
+	return &t
+}
+
+// To create a new cluster
+//
+// This example creates a cluster in your default region.
+func ExampleECS_CreateCluster_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.CreateClusterInput{
+		ClusterName: aws.String("my_cluster"),
+	}
+
+	result, err := svc.CreateCluster(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleECS_CreateService() {
-	sess := session.Must(session.NewSession())
+// To create a new service
+//
+// This example creates a service in your default region called ``ecs-simple-service``.
+// The service uses the ``hello_world`` task definition and it maintains 10 copies of
+// that task.
+func ExampleECS_CreateService_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.CreateServiceInput{
+		DesiredCount:   aws.Int64(10),
+		ServiceName:    aws.String("ecs-simple-service"),
+		TaskDefinition: aws.String("hello_world"),
+	}
 
-	svc := ecs.New(sess)
+	result, err := svc.CreateService(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			case ecs.ErrCodeClusterNotFoundException:
+				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &ecs.CreateServiceInput{
-		DesiredCount:   aws.Int64(1),         // Required
-		ServiceName:    aws.String("String"), // Required
-		TaskDefinition: aws.String("String"), // Required
-		ClientToken:    aws.String("String"),
-		Cluster:        aws.String("String"),
-		DeploymentConfiguration: &ecs.DeploymentConfiguration{
-			MaximumPercent:        aws.Int64(1),
-			MinimumHealthyPercent: aws.Int64(1),
-		},
+	fmt.Println(result)
+}
+
+// To create a new service behind a load balancer
+//
+// This example creates a service in your default region called ``ecs-simple-service-elb``.
+// The service uses the ``ecs-demo`` task definition and it maintains 10 copies of that
+// task. You must reference an existing load balancer in the same region by its name.
+func ExampleECS_CreateService_shared01() {
+	svc := ecs.New(session.New())
+	input := &ecs.CreateServiceInput{
+		DesiredCount: aws.Int64(10),
 		LoadBalancers: []*ecs.LoadBalancer{
-			{ // Required
-				ContainerName:    aws.String("String"),
-				ContainerPort:    aws.Int64(1),
-				LoadBalancerName: aws.String("String"),
-				TargetGroupArn:   aws.String("String"),
+			{
+				ContainerName:    aws.String("simple-app"),
+				ContainerPort:    aws.Int64(80),
+				LoadBalancerName: aws.String("EC2Contai-EcsElast-15DCDAURT3ZO2"),
 			},
-			// More values...
 		},
-		PlacementConstraints: []*ecs.PlacementConstraint{
-			{ // Required
-				Expression: aws.String("String"),
-				Type:       aws.String("PlacementConstraintType"),
-			},
-			// More values...
-		},
-		PlacementStrategy: []*ecs.PlacementStrategy{
-			{ // Required
-				Field: aws.String("String"),
-				Type:  aws.String("PlacementStrategyType"),
-			},
-			// More values...
-		},
-		Role: aws.String("String"),
+		Role:           aws.String("ecsServiceRole"),
+		ServiceName:    aws.String("ecs-simple-service-elb"),
+		TaskDefinition: aws.String("console-sample-app-static"),
 	}
-	resp, err := svc.CreateService(params)
 
+	result, err := svc.CreateService(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			case ecs.ErrCodeClusterNotFoundException:
+				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleECS_DeleteAttributes() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.DeleteAttributesInput{
-		Attributes: []*ecs.Attribute{ // Required
-			{ // Required
-				Name:       aws.String("String"), // Required
-				TargetId:   aws.String("String"),
-				TargetType: aws.String("TargetType"),
-				Value:      aws.String("String"),
-			},
-			// More values...
-		},
-		Cluster: aws.String("String"),
+// To delete an empty cluster
+//
+// This example deletes an empty cluster in your default region.
+func ExampleECS_DeleteCluster_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.DeleteClusterInput{
+		Cluster: aws.String("my_cluster"),
 	}
-	resp, err := svc.DeleteAttributes(params)
 
+	result, err := svc.DeleteCluster(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			case ecs.ErrCodeClusterNotFoundException:
+				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			case ecs.ErrCodeClusterContainsContainerInstancesException:
+				fmt.Println(ecs.ErrCodeClusterContainsContainerInstancesException, aerr.Error())
+			case ecs.ErrCodeClusterContainsServicesException:
+				fmt.Println(ecs.ErrCodeClusterContainsServicesException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleECS_DeleteCluster() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.DeleteClusterInput{
-		Cluster: aws.String("String"), // Required
+// To delete a service
+//
+// This example deletes the my-http-service service. The service must have a desired
+// count and running count of 0 before you can delete it.
+func ExampleECS_DeleteService_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.DeleteServiceInput{
+		Service: aws.String("my-http-service"),
 	}
-	resp, err := svc.DeleteCluster(params)
 
+	result, err := svc.DeleteService(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			case ecs.ErrCodeClusterNotFoundException:
+				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			case ecs.ErrCodeServiceNotFoundException:
+				fmt.Println(ecs.ErrCodeServiceNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleECS_DeleteService() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.DeleteServiceInput{
-		Service: aws.String("String"), // Required
-		Cluster: aws.String("String"),
-	}
-	resp, err := svc.DeleteService(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_DeregisterContainerInstance() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.DeregisterContainerInstanceInput{
-		ContainerInstance: aws.String("String"), // Required
-		Cluster:           aws.String("String"),
+// To deregister a container instance from a cluster
+//
+// This example deregisters a container instance from the specified cluster in your
+// default region. If there are still tasks running on the container instance, you must
+// either stop those tasks before deregistering, or use the force option.
+func ExampleECS_DeregisterContainerInstance_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.DeregisterContainerInstanceInput{
+		Cluster:           aws.String("default"),
+		ContainerInstance: aws.String("container_instance_UUID"),
 		Force:             aws.Bool(true),
 	}
-	resp, err := svc.DeregisterContainerInstance(params)
 
+	result, err := svc.DeregisterContainerInstance(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			case ecs.ErrCodeClusterNotFoundException:
+				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleECS_DeregisterTaskDefinition() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.DeregisterTaskDefinitionInput{
-		TaskDefinition: aws.String("String"), // Required
-	}
-	resp, err := svc.DeregisterTaskDefinition(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_DescribeClusters() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.DescribeClustersInput{
+// To describe a cluster
+//
+// This example provides a description of the specified cluster in your default region.
+func ExampleECS_DescribeClusters_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.DescribeClustersInput{
 		Clusters: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("default"),
 		},
 	}
-	resp, err := svc.DescribeClusters(params)
 
+	result, err := svc.DescribeClusters(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleECS_DescribeContainerInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.DescribeContainerInstancesInput{
-		ContainerInstances: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		Cluster: aws.String("String"),
-	}
-	resp, err := svc.DescribeContainerInstances(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_DescribeServices() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.DescribeServicesInput{
-		Services: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		Cluster: aws.String("String"),
-	}
-	resp, err := svc.DescribeServices(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_DescribeTaskDefinition() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.DescribeTaskDefinitionInput{
-		TaskDefinition: aws.String("String"), // Required
-	}
-	resp, err := svc.DescribeTaskDefinition(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_DescribeTasks() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.DescribeTasksInput{
-		Tasks: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		Cluster: aws.String("String"),
-	}
-	resp, err := svc.DescribeTasks(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_DiscoverPollEndpoint() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.DiscoverPollEndpointInput{
-		Cluster:           aws.String("String"),
-		ContainerInstance: aws.String("String"),
-	}
-	resp, err := svc.DiscoverPollEndpoint(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_ListAttributes() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.ListAttributesInput{
-		TargetType:     aws.String("TargetType"), // Required
-		AttributeName:  aws.String("String"),
-		AttributeValue: aws.String("String"),
-		Cluster:        aws.String("String"),
-		MaxResults:     aws.Int64(1),
-		NextToken:      aws.String("String"),
-	}
-	resp, err := svc.ListAttributes(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_ListClusters() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.ListClustersInput{
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-	}
-	resp, err := svc.ListClusters(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_ListContainerInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.ListContainerInstancesInput{
-		Cluster:    aws.String("String"),
-		Filter:     aws.String("String"),
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-		Status:     aws.String("ContainerInstanceStatus"),
-	}
-	resp, err := svc.ListContainerInstances(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_ListServices() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.ListServicesInput{
-		Cluster:    aws.String("String"),
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-	}
-	resp, err := svc.ListServices(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_ListTaskDefinitionFamilies() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.ListTaskDefinitionFamiliesInput{
-		FamilyPrefix: aws.String("String"),
-		MaxResults:   aws.Int64(1),
-		NextToken:    aws.String("String"),
-		Status:       aws.String("TaskDefinitionFamilyStatus"),
-	}
-	resp, err := svc.ListTaskDefinitionFamilies(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_ListTaskDefinitions() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.ListTaskDefinitionsInput{
-		FamilyPrefix: aws.String("String"),
-		MaxResults:   aws.Int64(1),
-		NextToken:    aws.String("String"),
-		Sort:         aws.String("SortOrder"),
-		Status:       aws.String("TaskDefinitionStatus"),
-	}
-	resp, err := svc.ListTaskDefinitions(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_ListTasks() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.ListTasksInput{
-		Cluster:           aws.String("String"),
-		ContainerInstance: aws.String("String"),
-		DesiredStatus:     aws.String("DesiredStatus"),
-		Family:            aws.String("String"),
-		MaxResults:        aws.Int64(1),
-		NextToken:         aws.String("String"),
-		ServiceName:       aws.String("String"),
-		StartedBy:         aws.String("String"),
-	}
-	resp, err := svc.ListTasks(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_PutAttributes() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.PutAttributesInput{
-		Attributes: []*ecs.Attribute{ // Required
-			{ // Required
-				Name:       aws.String("String"), // Required
-				TargetId:   aws.String("String"),
-				TargetType: aws.String("TargetType"),
-				Value:      aws.String("String"),
-			},
-			// More values...
-		},
-		Cluster: aws.String("String"),
-	}
-	resp, err := svc.PutAttributes(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_RegisterContainerInstance() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.RegisterContainerInstanceInput{
-		Attributes: []*ecs.Attribute{
-			{ // Required
-				Name:       aws.String("String"), // Required
-				TargetId:   aws.String("String"),
-				TargetType: aws.String("TargetType"),
-				Value:      aws.String("String"),
-			},
-			// More values...
-		},
-		Cluster:                           aws.String("String"),
-		ContainerInstanceArn:              aws.String("String"),
-		InstanceIdentityDocument:          aws.String("String"),
-		InstanceIdentityDocumentSignature: aws.String("String"),
-		TotalResources: []*ecs.Resource{
-			{ // Required
-				DoubleValue:  aws.Float64(1.0),
-				IntegerValue: aws.Int64(1),
-				LongValue:    aws.Int64(1),
-				Name:         aws.String("String"),
-				StringSetValue: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-				Type: aws.String("String"),
-			},
-			// More values...
-		},
-		VersionInfo: &ecs.VersionInfo{
-			AgentHash:     aws.String("String"),
-			AgentVersion:  aws.String("String"),
-			DockerVersion: aws.String("String"),
+// To describe container instance
+//
+// This example provides a description of the specified container instance in your default
+// region, using the container instance UUID as an identifier.
+func ExampleECS_DescribeContainerInstances_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.DescribeContainerInstancesInput{
+		Cluster: aws.String("default"),
+		ContainerInstances: []*string{
+			aws.String("f2756532-8f13-4d53-87c9-aed50dc94cd7"),
 		},
 	}
-	resp, err := svc.RegisterContainerInstance(params)
 
+	result, err := svc.DescribeContainerInstances(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			case ecs.ErrCodeClusterNotFoundException:
+				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleECS_RegisterTaskDefinition() {
-	sess := session.Must(session.NewSession())
+// To describe a service
+//
+// This example provides descriptive information about the service named ``ecs-simple-service``.
+func ExampleECS_DescribeServices_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.DescribeServicesInput{
+		Services: []*string{
+			aws.String("ecs-simple-service"),
+		},
+	}
 
-	svc := ecs.New(sess)
+	result, err := svc.DescribeServices(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			case ecs.ErrCodeClusterNotFoundException:
+				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &ecs.RegisterTaskDefinitionInput{
-		ContainerDefinitions: []*ecs.ContainerDefinition{ // Required
-			{ // Required
+	fmt.Println(result)
+}
+
+// To describe a task definition
+//
+// This example provides a description of the specified task definition.
+func ExampleECS_DescribeTaskDefinition_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.DescribeTaskDefinitionInput{
+		TaskDefinition: aws.String("hello_world:8"),
+	}
+
+	result, err := svc.DescribeTaskDefinition(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe a task
+//
+// This example provides a description of the specified task, using the task UUID as
+// an identifier.
+func ExampleECS_DescribeTasks_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.DescribeTasksInput{
+		Tasks: []*string{
+			aws.String("c5cba4eb-5dad-405e-96db-71ef8eefe6a8"),
+		},
+	}
+
+	result, err := svc.DescribeTasks(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			case ecs.ErrCodeClusterNotFoundException:
+				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list your available clusters
+//
+// This example lists all of your available clusters in your default region.
+func ExampleECS_ListClusters_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.ListClustersInput{}
+
+	result, err := svc.ListClusters(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list your available container instances in a cluster
+//
+// This example lists all of your available container instances in the specified cluster
+// in your default region.
+func ExampleECS_ListContainerInstances_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.ListContainerInstancesInput{
+		Cluster: aws.String("default"),
+	}
+
+	result, err := svc.ListContainerInstances(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			case ecs.ErrCodeClusterNotFoundException:
+				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list the services in a cluster
+//
+// This example lists the services running in the default cluster for an account.
+func ExampleECS_ListServices_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.ListServicesInput{}
+
+	result, err := svc.ListServices(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			case ecs.ErrCodeClusterNotFoundException:
+				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list your registered task definition families
+//
+// This example lists all of your registered task definition families.
+func ExampleECS_ListTaskDefinitionFamilies_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.ListTaskDefinitionFamiliesInput{}
+
+	result, err := svc.ListTaskDefinitionFamilies(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To filter your registered task definition families
+//
+// This example lists the task definition revisions that start with "hpcc".
+func ExampleECS_ListTaskDefinitionFamilies_shared01() {
+	svc := ecs.New(session.New())
+	input := &ecs.ListTaskDefinitionFamiliesInput{
+		FamilyPrefix: aws.String("hpcc"),
+	}
+
+	result, err := svc.ListTaskDefinitionFamilies(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list your registered task definitions
+//
+// This example lists all of your registered task definitions.
+func ExampleECS_ListTaskDefinitions_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.ListTaskDefinitionsInput{}
+
+	result, err := svc.ListTaskDefinitions(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list the registered task definitions in a family
+//
+// This example lists the task definition revisions of a specified family.
+func ExampleECS_ListTaskDefinitions_shared01() {
+	svc := ecs.New(session.New())
+	input := &ecs.ListTaskDefinitionsInput{
+		FamilyPrefix: aws.String("wordpress"),
+	}
+
+	result, err := svc.ListTaskDefinitions(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list the tasks in a cluster
+//
+// This example lists all of the tasks in a cluster.
+func ExampleECS_ListTasks_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.ListTasksInput{
+		Cluster: aws.String("default"),
+	}
+
+	result, err := svc.ListTasks(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			case ecs.ErrCodeClusterNotFoundException:
+				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			case ecs.ErrCodeServiceNotFoundException:
+				fmt.Println(ecs.ErrCodeServiceNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list the tasks on a particular container instance
+//
+// This example lists the tasks of a specified container instance. Specifying a ``containerInstance``
+// value limits  the  results  to  tasks  that belong to that container instance.
+func ExampleECS_ListTasks_shared01() {
+	svc := ecs.New(session.New())
+	input := &ecs.ListTasksInput{
+		Cluster:           aws.String("default"),
+		ContainerInstance: aws.String("f6bbb147-5370-4ace-8c73-c7181ded911f"),
+	}
+
+	result, err := svc.ListTasks(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			case ecs.ErrCodeClusterNotFoundException:
+				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			case ecs.ErrCodeServiceNotFoundException:
+				fmt.Println(ecs.ErrCodeServiceNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To register a task definition
+//
+// This example registers a task definition to the specified family.
+func ExampleECS_RegisterTaskDefinition_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.RegisterTaskDefinitionInput{
+		ContainerDefinitions: []*ecs.ContainerDefinition{
+			{
 				Command: []*string{
-					aws.String("String"), // Required
-					// More values...
+					aws.String("sleep"),
+					aws.String("360"),
 				},
-				Cpu:               aws.Int64(1),
-				DisableNetworking: aws.Bool(true),
-				DnsSearchDomains: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-				DnsServers: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-				DockerLabels: map[string]*string{
-					"Key": aws.String("String"), // Required
-					// More values...
-				},
-				DockerSecurityOptions: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-				EntryPoint: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-				Environment: []*ecs.KeyValuePair{
-					{ // Required
-						Name:  aws.String("String"),
-						Value: aws.String("String"),
-					},
-					// More values...
-				},
+				Cpu:       aws.Int64(10),
 				Essential: aws.Bool(true),
-				ExtraHosts: []*ecs.HostEntry{
-					{ // Required
-						Hostname:  aws.String("String"), // Required
-						IpAddress: aws.String("String"), // Required
-					},
-					// More values...
-				},
-				Hostname: aws.String("String"),
-				Image:    aws.String("String"),
-				Links: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-				LogConfiguration: &ecs.LogConfiguration{
-					LogDriver: aws.String("LogDriver"), // Required
-					Options: map[string]*string{
-						"Key": aws.String("String"), // Required
-						// More values...
-					},
-				},
-				Memory:            aws.Int64(1),
-				MemoryReservation: aws.Int64(1),
-				MountPoints: []*ecs.MountPoint{
-					{ // Required
-						ContainerPath: aws.String("String"),
-						ReadOnly:      aws.Bool(true),
-						SourceVolume:  aws.String("String"),
-					},
-					// More values...
-				},
-				Name: aws.String("String"),
-				PortMappings: []*ecs.PortMapping{
-					{ // Required
-						ContainerPort: aws.Int64(1),
-						HostPort:      aws.Int64(1),
-						Protocol:      aws.String("TransportProtocol"),
-					},
-					// More values...
-				},
-				Privileged:             aws.Bool(true),
-				ReadonlyRootFilesystem: aws.Bool(true),
-				Ulimits: []*ecs.Ulimit{
-					{ // Required
-						HardLimit: aws.Int64(1),             // Required
-						Name:      aws.String("UlimitName"), // Required
-						SoftLimit: aws.Int64(1),             // Required
-					},
-					// More values...
-				},
-				User: aws.String("String"),
-				VolumesFrom: []*ecs.VolumeFrom{
-					{ // Required
-						ReadOnly:        aws.Bool(true),
-						SourceContainer: aws.String("String"),
-					},
-					// More values...
-				},
-				WorkingDirectory: aws.String("String"),
+				Image:     aws.String("busybox"),
+				Memory:    aws.Int64(10),
+				Name:      aws.String("sleep"),
 			},
-			// More values...
 		},
-		Family:      aws.String("String"), // Required
-		NetworkMode: aws.String("NetworkMode"),
-		PlacementConstraints: []*ecs.TaskDefinitionPlacementConstraint{
-			{ // Required
-				Expression: aws.String("String"),
-				Type:       aws.String("TaskDefinitionPlacementConstraintType"),
-			},
-			// More values...
-		},
-		TaskRoleArn: aws.String("String"),
-		Volumes: []*ecs.Volume{
-			{ // Required
-				Host: &ecs.HostVolumeProperties{
-					SourcePath: aws.String("String"),
-				},
-				Name: aws.String("String"),
-			},
-			// More values...
-		},
+		Family:      aws.String("sleep360"),
+		TaskRoleArn: aws.String(""),
 	}
-	resp, err := svc.RegisterTaskDefinition(params)
 
+	result, err := svc.RegisterTaskDefinition(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleECS_RunTask() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.RunTaskInput{
-		TaskDefinition: aws.String("String"), // Required
-		Cluster:        aws.String("String"),
-		Count:          aws.Int64(1),
-		Group:          aws.String("String"),
-		Overrides: &ecs.TaskOverride{
-			ContainerOverrides: []*ecs.ContainerOverride{
-				{ // Required
-					Command: []*string{
-						aws.String("String"), // Required
-						// More values...
-					},
-					Environment: []*ecs.KeyValuePair{
-						{ // Required
-							Name:  aws.String("String"),
-							Value: aws.String("String"),
-						},
-						// More values...
-					},
-					Name: aws.String("String"),
-				},
-				// More values...
-			},
-			TaskRoleArn: aws.String("String"),
-		},
-		PlacementConstraints: []*ecs.PlacementConstraint{
-			{ // Required
-				Expression: aws.String("String"),
-				Type:       aws.String("PlacementConstraintType"),
-			},
-			// More values...
-		},
-		PlacementStrategy: []*ecs.PlacementStrategy{
-			{ // Required
-				Field: aws.String("String"),
-				Type:  aws.String("PlacementStrategyType"),
-			},
-			// More values...
-		},
-		StartedBy: aws.String("String"),
+// To run a task on your default cluster
+//
+// This example runs the specified task definition on your default cluster.
+func ExampleECS_RunTask_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.RunTaskInput{
+		Cluster:        aws.String("default"),
+		TaskDefinition: aws.String("sleep360:1"),
 	}
-	resp, err := svc.RunTask(params)
 
+	result, err := svc.RunTask(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			case ecs.ErrCodeClusterNotFoundException:
+				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleECS_StartTask() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.StartTaskInput{
-		ContainerInstances: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		TaskDefinition: aws.String("String"), // Required
-		Cluster:        aws.String("String"),
-		Group:          aws.String("String"),
-		Overrides: &ecs.TaskOverride{
-			ContainerOverrides: []*ecs.ContainerOverride{
-				{ // Required
-					Command: []*string{
-						aws.String("String"), // Required
-						// More values...
-					},
-					Environment: []*ecs.KeyValuePair{
-						{ // Required
-							Name:  aws.String("String"),
-							Value: aws.String("String"),
-						},
-						// More values...
-					},
-					Name: aws.String("String"),
-				},
-				// More values...
-			},
-			TaskRoleArn: aws.String("String"),
-		},
-		StartedBy: aws.String("String"),
+// To change the task definition used in a service
+//
+// This example updates the my-http-service service to use the amazon-ecs-sample task
+// definition.
+func ExampleECS_UpdateService_shared00() {
+	svc := ecs.New(session.New())
+	input := &ecs.UpdateServiceInput{
+		Service:        aws.String("my-http-service"),
+		TaskDefinition: aws.String("amazon-ecs-sample"),
 	}
-	resp, err := svc.StartTask(params)
 
+	result, err := svc.UpdateService(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			case ecs.ErrCodeClusterNotFoundException:
+				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			case ecs.ErrCodeServiceNotFoundException:
+				fmt.Println(ecs.ErrCodeServiceNotFoundException, aerr.Error())
+			case ecs.ErrCodeServiceNotActiveException:
+				fmt.Println(ecs.ErrCodeServiceNotActiveException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleECS_StopTask() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.StopTaskInput{
-		Task:    aws.String("String"), // Required
-		Cluster: aws.String("String"),
-		Reason:  aws.String("String"),
+// To change the number of tasks in a service
+//
+// This example updates the desired count of the my-http-service service to 10.
+func ExampleECS_UpdateService_shared01() {
+	svc := ecs.New(session.New())
+	input := &ecs.UpdateServiceInput{
+		DesiredCount: aws.Int64(10),
+		Service:      aws.String("my-http-service"),
 	}
-	resp, err := svc.StopTask(params)
 
+	result, err := svc.UpdateService(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ecs.ErrCodeServerException:
+				fmt.Println(ecs.ErrCodeServerException, aerr.Error())
+			case ecs.ErrCodeClientException:
+				fmt.Println(ecs.ErrCodeClientException, aerr.Error())
+			case ecs.ErrCodeInvalidParameterException:
+				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
+			case ecs.ErrCodeClusterNotFoundException:
+				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			case ecs.ErrCodeServiceNotFoundException:
+				fmt.Println(ecs.ErrCodeServiceNotFoundException, aerr.Error())
+			case ecs.ErrCodeServiceNotActiveException:
+				fmt.Println(ecs.ErrCodeServiceNotActiveException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_SubmitContainerStateChange() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.SubmitContainerStateChangeInput{
-		Cluster:       aws.String("String"),
-		ContainerName: aws.String("String"),
-		ExitCode:      aws.Int64(1),
-		NetworkBindings: []*ecs.NetworkBinding{
-			{ // Required
-				BindIP:        aws.String("String"),
-				ContainerPort: aws.Int64(1),
-				HostPort:      aws.Int64(1),
-				Protocol:      aws.String("TransportProtocol"),
-			},
-			// More values...
-		},
-		Reason: aws.String("String"),
-		Status: aws.String("String"),
-		Task:   aws.String("String"),
-	}
-	resp, err := svc.SubmitContainerStateChange(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_SubmitTaskStateChange() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.SubmitTaskStateChangeInput{
-		Cluster: aws.String("String"),
-		Reason:  aws.String("String"),
-		Status:  aws.String("String"),
-		Task:    aws.String("String"),
-	}
-	resp, err := svc.SubmitTaskStateChange(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_UpdateContainerAgent() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.UpdateContainerAgentInput{
-		ContainerInstance: aws.String("String"), // Required
-		Cluster:           aws.String("String"),
-	}
-	resp, err := svc.UpdateContainerAgent(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_UpdateContainerInstancesState() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.UpdateContainerInstancesStateInput{
-		ContainerInstances: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		Status:  aws.String("ContainerInstanceStatus"), // Required
-		Cluster: aws.String("String"),
-	}
-	resp, err := svc.UpdateContainerInstancesState(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleECS_UpdateService() {
-	sess := session.Must(session.NewSession())
-
-	svc := ecs.New(sess)
-
-	params := &ecs.UpdateServiceInput{
-		Service: aws.String("String"), // Required
-		Cluster: aws.String("String"),
-		DeploymentConfiguration: &ecs.DeploymentConfiguration{
-			MaximumPercent:        aws.Int64(1),
-			MinimumHealthyPercent: aws.Int64(1),
-		},
-		DesiredCount:   aws.Int64(1),
-		TaskDefinition: aws.String("String"),
-	}
-	resp, err := svc.UpdateService(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }

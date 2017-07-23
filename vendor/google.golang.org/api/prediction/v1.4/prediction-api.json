@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"ye6orv2F-1npMW3u9suM3a7C5Bo/mON6JqssgEHc8d3utjJk_aupdsY\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/UWwWpdkeaK4ZVhf_4VB1iBPZ3Lo\"",
  "discoveryVersion": "v1",
  "id": "prediction:v1.4",
  "name": "prediction",
  "version": "v1.4",
- "revision": "20151102",
+ "revision": "20160511",
  "title": "Prediction API",
  "description": "Lets you access a cloud hosted machine learning service that makes it easy to build smart apps",
  "ownerDomain": "google.com",

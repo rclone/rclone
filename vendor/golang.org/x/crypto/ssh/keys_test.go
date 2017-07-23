@@ -11,6 +11,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
 	"encoding/base64"
 	"fmt"
 	"reflect"
@@ -145,6 +146,31 @@ func TestParseEncryptedPrivateKeysFails(t *testing.T) {
 		if !strings.Contains(err.Error(), wantSubstring) {
 			t.Errorf("#%d key %s: got error %q, want substring %q", i, tt.Name, err, wantSubstring)
 		}
+	}
+}
+
+// Parse encrypted private keys with passphrase
+func TestParseEncryptedPrivateKeysWithPassphrase(t *testing.T) {
+	data := []byte("sign me")
+	for _, tt := range testdata.PEMEncryptedKeys {
+		s, err := ParsePrivateKeyWithPassphrase(tt.PEMBytes, []byte(tt.EncryptionKey))
+		if err != nil {
+			t.Fatalf("ParsePrivateKeyWithPassphrase returned error: %s", err)
+			continue
+		}
+		sig, err := s.Sign(rand.Reader, data)
+		if err != nil {
+			t.Fatalf("dsa.Sign: %v", err)
+		}
+		if err := s.PublicKey().Verify(data, sig); err != nil {
+			t.Errorf("Verify failed: %v", err)
+		}
+	}
+
+	tt := testdata.PEMEncryptedKeys[0]
+	_, err := ParsePrivateKeyWithPassphrase(tt.PEMBytes, []byte("incorrect"))
+	if err != x509.IncorrectPasswordError {
+		t.Fatalf("got %v want IncorrectPasswordError", err)
 	}
 }
 

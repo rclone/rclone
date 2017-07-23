@@ -168,8 +168,8 @@ func TestHostKeyCert(t *testing.T) {
 	cert.SignCert(rand.Reader, testSigners["ecdsa"])
 
 	checker := &CertChecker{
-		IsHostAuthority: func(p PublicKey, h string) bool {
-			return h == "hostname" && bytes.Equal(testPublicKeys["ecdsa"].Marshal(), p.Marshal())
+		IsHostAuthority: func(p PublicKey, addr string) bool {
+			return addr == "hostname:22" && bytes.Equal(testPublicKeys["ecdsa"].Marshal(), p.Marshal())
 		},
 	}
 
@@ -178,7 +178,14 @@ func TestHostKeyCert(t *testing.T) {
 		t.Errorf("NewCertSigner: %v", err)
 	}
 
-	for _, name := range []string{"hostname", "otherhost", "lasthost"} {
+	for _, test := range []struct {
+		addr    string
+		succeed bool
+	}{
+		{addr: "hostname:22", succeed: true},
+		{addr: "otherhost:22", succeed: false}, // The certificate is valid for 'otherhost' as hostname, but we only recognize the authority of the signer for the address 'hostname:22'
+		{addr: "lasthost:22", succeed: false},
+	} {
 		c1, c2, err := netPipe()
 		if err != nil {
 			t.Fatalf("netPipe: %v", err)
@@ -201,16 +208,15 @@ func TestHostKeyCert(t *testing.T) {
 			User:            "user",
 			HostKeyCallback: checker.CheckHostKey,
 		}
-		_, _, _, err = NewClientConn(c2, name, config)
+		_, _, _, err = NewClientConn(c2, test.addr, config)
 
-		succeed := name == "hostname"
-		if (err == nil) != succeed {
-			t.Fatalf("NewClientConn(%q): %v", name, err)
+		if (err == nil) != test.succeed {
+			t.Fatalf("NewClientConn(%q): %v", test.addr, err)
 		}
 
 		err = <-errc
-		if (err == nil) != succeed {
-			t.Fatalf("NewServerConn(%q): %v", name, err)
+		if (err == nil) != test.succeed {
+			t.Fatalf("NewServerConn(%q): %v", test.addr, err)
 		}
 	}
 }

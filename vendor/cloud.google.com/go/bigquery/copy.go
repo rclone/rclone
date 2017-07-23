@@ -70,5 +70,5 @@ func (c *Copier) Run(ctx context.Context) (*Job, error) {
 	}
 	job := &bq.Job{Configuration: &bq.JobConfiguration{Copy: conf}}
 	setJobRef(job, c.JobID, c.c.projectID)
-	return c.c.service.insertJob(ctx, c.c.projectID, &insertJobConf{job: job})
+	return c.c.insertJob(ctx, &insertJobConf{job: job})
 }

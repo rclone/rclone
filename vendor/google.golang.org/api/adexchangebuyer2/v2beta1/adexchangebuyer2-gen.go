@@ -79,6 +79,7 @@ func NewAccountsService(s *Service) *AccountsService {
 	rs := &AccountsService{s: s}
 	rs.Clients = NewAccountsClientsService(s)
 	rs.Creatives = NewAccountsCreativesService(s)
+	rs.FilterSets = NewAccountsFilterSetsService(s)
 	return rs
 }
 
@@ -88,6 +89,8 @@ type AccountsService struct {
 	Clients *AccountsClientsService
 
 	Creatives *AccountsCreativesService
+
+	FilterSets *AccountsFilterSetsService
 }
 
 func NewAccountsClientsService(s *Service) *AccountsClientsService {
@@ -142,6 +145,192 @@ func NewAccountsCreativesDealAssociationsService(s *Service) *AccountsCreativesD
 
 type AccountsCreativesDealAssociationsService struct {
 	s *Service
+}
+
+func NewAccountsFilterSetsService(s *Service) *AccountsFilterSetsService {
+	rs := &AccountsFilterSetsService{s: s}
+	rs.BidMetrics = NewAccountsFilterSetsBidMetricsService(s)
+	rs.BidResponseErrors = NewAccountsFilterSetsBidResponseErrorsService(s)
+	rs.BidResponsesWithoutBids = NewAccountsFilterSetsBidResponsesWithoutBidsService(s)
+	rs.FilteredBidRequests = NewAccountsFilterSetsFilteredBidRequestsService(s)
+	rs.FilteredBids = NewAccountsFilterSetsFilteredBidsService(s)
+	rs.ImpressionMetrics = NewAccountsFilterSetsImpressionMetricsService(s)
+	rs.LosingBids = NewAccountsFilterSetsLosingBidsService(s)
+	rs.NonBillableWinningBids = NewAccountsFilterSetsNonBillableWinningBidsService(s)
+	return rs
+}
+
+type AccountsFilterSetsService struct {
+	s *Service
+
+	BidMetrics *AccountsFilterSetsBidMetricsService
+
+	BidResponseErrors *AccountsFilterSetsBidResponseErrorsService
+
+	BidResponsesWithoutBids *AccountsFilterSetsBidResponsesWithoutBidsService
+
+	FilteredBidRequests *AccountsFilterSetsFilteredBidRequestsService
+
+	FilteredBids *AccountsFilterSetsFilteredBidsService
+
+	ImpressionMetrics *AccountsFilterSetsImpressionMetricsService
+
+	LosingBids *AccountsFilterSetsLosingBidsService
+
+	NonBillableWinningBids *AccountsFilterSetsNonBillableWinningBidsService
+}
+
+func NewAccountsFilterSetsBidMetricsService(s *Service) *AccountsFilterSetsBidMetricsService {
+	rs := &AccountsFilterSetsBidMetricsService{s: s}
+	return rs
+}
+
+type AccountsFilterSetsBidMetricsService struct {
+	s *Service
+}
+
+func NewAccountsFilterSetsBidResponseErrorsService(s *Service) *AccountsFilterSetsBidResponseErrorsService {
+	rs := &AccountsFilterSetsBidResponseErrorsService{s: s}
+	return rs
+}
+
+type AccountsFilterSetsBidResponseErrorsService struct {
+	s *Service
+}
+
+func NewAccountsFilterSetsBidResponsesWithoutBidsService(s *Service) *AccountsFilterSetsBidResponsesWithoutBidsService {
+	rs := &AccountsFilterSetsBidResponsesWithoutBidsService{s: s}
+	return rs
+}
+
+type AccountsFilterSetsBidResponsesWithoutBidsService struct {
+	s *Service
+}
+
+func NewAccountsFilterSetsFilteredBidRequestsService(s *Service) *AccountsFilterSetsFilteredBidRequestsService {
+	rs := &AccountsFilterSetsFilteredBidRequestsService{s: s}
+	return rs
+}
+
+type AccountsFilterSetsFilteredBidRequestsService struct {
+	s *Service
+}
+
+func NewAccountsFilterSetsFilteredBidsService(s *Service) *AccountsFilterSetsFilteredBidsService {
+	rs := &AccountsFilterSetsFilteredBidsService{s: s}
+	rs.Creatives = NewAccountsFilterSetsFilteredBidsCreativesService(s)
+	rs.Details = NewAccountsFilterSetsFilteredBidsDetailsService(s)
+	return rs
+}
+
+type AccountsFilterSetsFilteredBidsService struct {
+	s *Service
+
+	Creatives *AccountsFilterSetsFilteredBidsCreativesService
+
+	Details *AccountsFilterSetsFilteredBidsDetailsService
+}
+
+func NewAccountsFilterSetsFilteredBidsCreativesService(s *Service) *AccountsFilterSetsFilteredBidsCreativesService {
+	rs := &AccountsFilterSetsFilteredBidsCreativesService{s: s}
+	rs.Details = NewAccountsFilterSetsFilteredBidsCreativesDetailsService(s)
+	return rs
+}
+
+type AccountsFilterSetsFilteredBidsCreativesService struct {
+	s *Service
+
+	Details *AccountsFilterSetsFilteredBidsCreativesDetailsService
+}
+
+func NewAccountsFilterSetsFilteredBidsCreativesDetailsService(s *Service) *AccountsFilterSetsFilteredBidsCreativesDetailsService {
+	rs := &AccountsFilterSetsFilteredBidsCreativesDetailsService{s: s}
+	return rs
+}
+
+type AccountsFilterSetsFilteredBidsCreativesDetailsService struct {
+	s *Service
+}
+
+func NewAccountsFilterSetsFilteredBidsDetailsService(s *Service) *AccountsFilterSetsFilteredBidsDetailsService {
+	rs := &AccountsFilterSetsFilteredBidsDetailsService{s: s}
+	return rs
+}
+
+type AccountsFilterSetsFilteredBidsDetailsService struct {
+	s *Service
+}
+
+func NewAccountsFilterSetsImpressionMetricsService(s *Service) *AccountsFilterSetsImpressionMetricsService {
+	rs := &AccountsFilterSetsImpressionMetricsService{s: s}
+	return rs
+}
+
+type AccountsFilterSetsImpressionMetricsService struct {
+	s *Service
+}
+
+func NewAccountsFilterSetsLosingBidsService(s *Service) *AccountsFilterSetsLosingBidsService {
+	rs := &AccountsFilterSetsLosingBidsService{s: s}
+	return rs
+}
+
+type AccountsFilterSetsLosingBidsService struct {
+	s *Service
+}
+
+func NewAccountsFilterSetsNonBillableWinningBidsService(s *Service) *AccountsFilterSetsNonBillableWinningBidsService {
+	rs := &AccountsFilterSetsNonBillableWinningBidsService{s: s}
+	return rs
+}
+
+type AccountsFilterSetsNonBillableWinningBidsService struct {
+	s *Service
+}
+
+// AbsoluteDateRange: An absolute date range, specified by its start
+// date and end date.
+// The supported range of dates begins 30 days before today and ends
+// today.
+// Validity checked upon filter set creation. If a filter set with an
+// absolute
+// date range is run at a later date more than 30 days after start_date,
+// it will
+// fail.
+type AbsoluteDateRange struct {
+	// EndDate: The end date of the range (inclusive).
+	// Must be within the 30 days leading up to current date, and must be
+	// equal to
+	// or after start_date.
+	EndDate *Date `json:"endDate,omitempty"`
+
+	// StartDate: The start date of the range (inclusive).
+	// Must be within the 30 days leading up to current date, and must be
+	// equal to
+	// or before end_date.
+	StartDate *Date `json:"startDate,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "EndDate") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "EndDate") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AbsoluteDateRange) MarshalJSON() ([]byte, error) {
+	type noMethod AbsoluteDateRange
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // AddDealAssociationRequest: A request for associating a deal and a
@@ -236,6 +425,163 @@ type AuctionContext struct {
 
 func (s *AuctionContext) MarshalJSON() ([]byte, error) {
 	type noMethod AuctionContext
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// BidMetricsRow: The set of metrics that are measured in numbers of
+// bids, representing how
+// many bids with the specified dimension values were considered
+// eligible at
+// each stage of the bidding funnel;
+type BidMetricsRow struct {
+	// Bids: The number of bids that Ad Exchange received from the buyer.
+	Bids *MetricValue `json:"bids,omitempty"`
+
+	// BidsInAuction: The number of bids that were permitted to compete in
+	// the auction.
+	BidsInAuction *MetricValue `json:"bidsInAuction,omitempty"`
+
+	// BilledImpressions: The number of bids for which the buyer was billed.
+	BilledImpressions *MetricValue `json:"billedImpressions,omitempty"`
+
+	// ImpressionsWon: The number of bids that won an impression.
+	ImpressionsWon *MetricValue `json:"impressionsWon,omitempty"`
+
+	// MeasurableImpressions: The number of bids for which the corresponding
+	// impression was measurable
+	// for viewability (as defined by Active View).
+	MeasurableImpressions *MetricValue `json:"measurableImpressions,omitempty"`
+
+	// RowDimensions: The values of all dimensions associated with metric
+	// values in this row.
+	RowDimensions *RowDimensions `json:"rowDimensions,omitempty"`
+
+	// ViewableImpressions: The number of bids for which the corresponding
+	// impression was viewable (as
+	// defined by Active View).
+	ViewableImpressions *MetricValue `json:"viewableImpressions,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Bids") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Bids") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *BidMetricsRow) MarshalJSON() ([]byte, error) {
+	type noMethod BidMetricsRow
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// BidResponseWithoutBidsStatusRow: The number of impressions with the
+// specified dimension values that were
+// considered to have no applicable bids, as described by the specified
+// status.
+type BidResponseWithoutBidsStatusRow struct {
+	// ImpressionCount: The number of impressions for which there was a bid
+	// response with the
+	// specified status.
+	ImpressionCount *MetricValue `json:"impressionCount,omitempty"`
+
+	// RowDimensions: The values of all dimensions associated with metric
+	// values in this row.
+	RowDimensions *RowDimensions `json:"rowDimensions,omitempty"`
+
+	// Status: The status specifying why the bid responses were considered
+	// to have no
+	// applicable bids.
+	//
+	// Possible values:
+	//   "STATUS_UNSPECIFIED" - A placeholder for an undefined status.
+	// This value will never be returned in responses.
+	//   "RESPONSES_WITHOUT_BIDS" - The response had no bids.
+	//   "RESPONSES_WITHOUT_BIDS_FOR_ACCOUNT" - The response had no bids for
+	// the specified account, though it may have
+	// included bids on behalf of other accounts.
+	//   "RESPONSES_WITHOUT_BIDS_FOR_DEAL" - The response had no bids for
+	// the specified deal, though it may have
+	// included bids on other deals on behalf of the account to which the
+	// deal
+	// belongs.
+	Status string `json:"status,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ImpressionCount") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ImpressionCount") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *BidResponseWithoutBidsStatusRow) MarshalJSON() ([]byte, error) {
+	type noMethod BidResponseWithoutBidsStatusRow
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// CalloutStatusRow: The number of impressions with the specified
+// dimension values where the
+// corresponding bid request or bid response was not successful, as
+// described by
+// the specified callout status.
+type CalloutStatusRow struct {
+	// CalloutStatusId: The ID of the callout status.
+	// See
+	// [callout-status-codes](https://developers.google.com/ad-exchange/rtb/d
+	// ownloads/callout-status-codes).
+	CalloutStatusId int64 `json:"calloutStatusId,omitempty"`
+
+	// ImpressionCount: The number of impressions for which there was a bid
+	// request or bid response
+	// with the specified callout status.
+	ImpressionCount *MetricValue `json:"impressionCount,omitempty"`
+
+	// RowDimensions: The values of all dimensions associated with metric
+	// values in this row.
+	RowDimensions *RowDimensions `json:"rowDimensions,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CalloutStatusId") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CalloutStatusId") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *CalloutStatusRow) MarshalJSON() ([]byte, error) {
+	type noMethod CalloutStatusRow
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -821,6 +1167,48 @@ func (s *CreativeDealAssociation) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// CreativeStatusRow: The number of bids with the specified dimension
+// values that did not win the
+// auction (either were filtered pre-auction or lost the auction), as
+// described
+// by the specified creative status.
+type CreativeStatusRow struct {
+	// BidCount: The number of bids with the specified status.
+	BidCount *MetricValue `json:"bidCount,omitempty"`
+
+	// CreativeStatusId: The ID of the creative status.
+	// See
+	// [creative-status-codes](https://developers.google.com/ad-exchange/rtb/
+	// downloads/creative-status-codes).
+	CreativeStatusId int64 `json:"creativeStatusId,omitempty"`
+
+	// RowDimensions: The values of all dimensions associated with metric
+	// values in this row.
+	RowDimensions *RowDimensions `json:"rowDimensions,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "BidCount") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "BidCount") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *CreativeStatusRow) MarshalJSON() ([]byte, error) {
+	type noMethod CreativeStatusRow
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Date: Represents a whole calendar date, e.g. date of birth. The time
 // of day and
 // time zone are either specified elsewhere or are not significant. The
@@ -1080,6 +1468,222 @@ type Empty struct {
 	googleapi.ServerResponse `json:"-"`
 }
 
+// FilterSet: A set of filters that is applied to a request for
+// data.
+// Within a filter set, an AND operation is performed across the
+// filters
+// represented by each field. An OR operation is performed across the
+// filters
+// represented by the multiple values of a repeated field.
+// E.g.
+// "format=VIDEO AND deal_id=12 AND (seller_network_id=34
+// OR
+// seller_network_id=56)"
+type FilterSet struct {
+	// AbsoluteDateRange: An absolute date range, defined by a start date
+	// and an end date.
+	// Interpreted relative to Pacific time zone.
+	AbsoluteDateRange *AbsoluteDateRange `json:"absoluteDateRange,omitempty"`
+
+	// BuyerAccountId: The ID of the buyer account on which to filter;
+	// optional.
+	BuyerAccountId int64 `json:"buyerAccountId,omitempty,string"`
+
+	// CreativeId: The ID of the creative on which to filter; optional.
+	CreativeId string `json:"creativeId,omitempty"`
+
+	// DealId: The ID of the deal on which to filter; optional.
+	DealId int64 `json:"dealId,omitempty,string"`
+
+	// Environment: The environment on which to filter; optional.
+	//
+	// Possible values:
+	//   "ENVIRONMENT_UNSPECIFIED" - A placeholder for an undefined
+	// environment; indicates that no environment
+	// filter will be applied.
+	//   "WEB" - The ad impression appears on the web.
+	//   "APP" - The ad impression appears in an app.
+	Environment string `json:"environment,omitempty"`
+
+	// FilterSetId: The ID of the filter set; unique within the account of
+	// the filter set
+	// owner.
+	// The value of this field is ignored in create operations.
+	FilterSetId int64 `json:"filterSetId,omitempty,string"`
+
+	// Format: The format on which to filter; optional.
+	//
+	// Possible values:
+	//   "FORMAT_UNSPECIFIED" - A placeholder for an undefined format;
+	// indicates that no format filter
+	// will be applied.
+	//   "DISPLAY" - The ad impression is display format (i.e. an image).
+	//   "VIDEO" - The ad impression is video format.
+	Format string `json:"format,omitempty"`
+
+	// OwnerAccountId: The account ID of the buyer who owns this filter
+	// set.
+	// The value of this field is ignored in create operations.
+	OwnerAccountId int64 `json:"ownerAccountId,omitempty,string"`
+
+	// Platforms: The list of platforms on which to filter; may be empty.
+	// The filters
+	// represented by multiple platforms are ORed together (i.e. if
+	// non-empty,
+	// results must match any one of the platforms).
+	//
+	// Possible values:
+	//   "PLATFORM_UNSPECIFIED" - A placeholder for an undefined platform;
+	// indicates that no platform
+	// filter will be applied.
+	//   "DESKTOP" - The ad impression appears on a desktop.
+	//   "TABLET" - The ad impression appears on a tablet.
+	//   "MOBILE" - The ad impression appears on a mobile device.
+	Platforms []string `json:"platforms,omitempty"`
+
+	// RealtimeTimeRange: An open-ended realtime time range, defined by the
+	// aggregation start
+	// timestamp.
+	RealtimeTimeRange *RealtimeTimeRange `json:"realtimeTimeRange,omitempty"`
+
+	// RelativeDateRange: A relative date range, defined by an offset from
+	// today and a duration.
+	// Interpreted relative to Pacific time zone.
+	RelativeDateRange *RelativeDateRange `json:"relativeDateRange,omitempty"`
+
+	// SellerNetworkIds: The list of IDs of the seller (publisher) networks
+	// on which to filter;
+	// may be empty. The filters represented by multiple seller network IDs
+	// are
+	// ORed together (i.e. if non-empty, results must match any one of
+	// the
+	// publisher networks).
+	// See
+	// [seller-network-ids](https://developers.google.com/ad-exchange/rtb/dow
+	// nloads/seller-network-ids)
+	// file for the set of existing seller network IDs.
+	SellerNetworkIds []int64 `json:"sellerNetworkIds,omitempty"`
+
+	// TimeSeriesGranularity: The granularity of time intervals if a time
+	// series breakdown is desired;
+	// optional.
+	//
+	// Possible values:
+	//   "INTERVAL_UNSPECIFIED" - A placeholder for an unspecified interval;
+	// no time series is applied.
+	// All rows in response will contain data for the entire requested time
+	// range.
+	//   "HOURLY" - Indicates that data will be broken down by the hour.
+	//   "DAILY" - Indicates that data will be broken down by the day.
+	TimeSeriesGranularity string `json:"timeSeriesGranularity,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "AbsoluteDateRange")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AbsoluteDateRange") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *FilterSet) MarshalJSON() ([]byte, error) {
+	type noMethod FilterSet
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// FilteredBidCreativeRow: The number of filtered bids with the
+// specified dimension values that have the
+// specified creative.
+type FilteredBidCreativeRow struct {
+	// BidCount: The number of bids with the specified creative.
+	BidCount *MetricValue `json:"bidCount,omitempty"`
+
+	// CreativeId: The ID of the creative.
+	CreativeId string `json:"creativeId,omitempty"`
+
+	// RowDimensions: The values of all dimensions associated with metric
+	// values in this row.
+	RowDimensions *RowDimensions `json:"rowDimensions,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "BidCount") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "BidCount") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *FilteredBidCreativeRow) MarshalJSON() ([]byte, error) {
+	type noMethod FilteredBidCreativeRow
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// FilteredBidDetailRow: The number of filtered bids with the specified
+// dimension values, among those
+// filtered due to the requested filtering reason (i.e. creative
+// status), that
+// have the specified detail.
+type FilteredBidDetailRow struct {
+	// BidCount: The number of bids with the specified detail.
+	BidCount *MetricValue `json:"bidCount,omitempty"`
+
+	// DetailId: The ID of the detail. The associated value can be looked up
+	// in the
+	// dictionary file corresponding to the DetailType in the response
+	// message.
+	DetailId int64 `json:"detailId,omitempty"`
+
+	// RowDimensions: The values of all dimensions associated with metric
+	// values in this row.
+	RowDimensions *RowDimensions `json:"rowDimensions,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "BidCount") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "BidCount") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *FilteredBidDetailRow) MarshalJSON() ([]byte, error) {
+	type noMethod FilteredBidDetailRow
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // FilteringStats: @OutputOnly Filtering reasons for this creative
 // during a period of a single
 // day (from midnight to midnight Pacific).
@@ -1183,6 +1787,201 @@ type Image struct {
 
 func (s *Image) MarshalJSON() ([]byte, error) {
 	type noMethod Image
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ImpressionMetricsRow: The set of metrics that are measured in numbers
+// of impressions, representing
+// how many impressions with the specified dimension values were
+// considered
+// eligible at each stage of the bidding funnel.
+type ImpressionMetricsRow struct {
+	// AvailableImpressions: The number of impressions available to the
+	// buyer on Ad Exchange.
+	// In some cases this value may be unavailable.
+	AvailableImpressions *MetricValue `json:"availableImpressions,omitempty"`
+
+	// BidRequests: The number of impressions for which Ad Exchange sent the
+	// buyer a bid
+	// request.
+	BidRequests *MetricValue `json:"bidRequests,omitempty"`
+
+	// InventoryMatches: The number of impressions that match the buyer's
+	// inventory pretargeting.
+	InventoryMatches *MetricValue `json:"inventoryMatches,omitempty"`
+
+	// ResponsesWithBids: The number of impressions for which Ad Exchange
+	// received a response from
+	// the buyer that contained at least one applicable bid.
+	ResponsesWithBids *MetricValue `json:"responsesWithBids,omitempty"`
+
+	// RowDimensions: The values of all dimensions associated with metric
+	// values in this row.
+	RowDimensions *RowDimensions `json:"rowDimensions,omitempty"`
+
+	// SuccessfulResponses: The number of impressions for which the buyer
+	// successfully sent a response
+	// to Ad Exchange.
+	SuccessfulResponses *MetricValue `json:"successfulResponses,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "AvailableImpressions") to unconditionally include in API requests.
+	// By default, fields with empty values are omitted from API requests.
+	// However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AvailableImpressions") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ImpressionMetricsRow) MarshalJSON() ([]byte, error) {
+	type noMethod ImpressionMetricsRow
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ListBidMetricsResponse: Response message for listing the metrics that
+// are measured in number of bids.
+type ListBidMetricsResponse struct {
+	// BidMetricsRows: List of rows, each containing a set of bid metrics.
+	BidMetricsRows []*BidMetricsRow `json:"bidMetricsRows,omitempty"`
+
+	// NextPageToken: A token to retrieve the next page of results.
+	// Pass this value in the
+	// ListBidMetricsRequest.pageToken
+	// field in the subsequent call to
+	// the
+	// accounts.filterSets.bidMetrics.list
+	// method to retrieve the next page of results.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "BidMetricsRows") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "BidMetricsRows") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListBidMetricsResponse) MarshalJSON() ([]byte, error) {
+	type noMethod ListBidMetricsResponse
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ListBidResponseErrorsResponse: Response message for listing all
+// reasons that bid responses resulted in an
+// error.
+type ListBidResponseErrorsResponse struct {
+	// CalloutStatusRows: List of rows, with counts of bid responses
+	// aggregated by callout status.
+	CalloutStatusRows []*CalloutStatusRow `json:"calloutStatusRows,omitempty"`
+
+	// NextPageToken: A token to retrieve the next page of results.
+	// Pass this value in the
+	// ListBidResponseErrorsRequest.pageToken
+	// field in the subsequent call to
+	// the
+	// accounts.filterSets.bidResponseErrors.list
+	// method to retrieve the next page of results.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "CalloutStatusRows")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CalloutStatusRows") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListBidResponseErrorsResponse) MarshalJSON() ([]byte, error) {
+	type noMethod ListBidResponseErrorsResponse
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ListBidResponsesWithoutBidsResponse: Response message for listing all
+// reasons that bid responses were considered
+// to have no applicable bids.
+type ListBidResponsesWithoutBidsResponse struct {
+	// BidResponseWithoutBidsStatusRows: List of rows, with counts of bid
+	// responses without bids aggregated by
+	// status.
+	BidResponseWithoutBidsStatusRows []*BidResponseWithoutBidsStatusRow `json:"bidResponseWithoutBidsStatusRows,omitempty"`
+
+	// NextPageToken: A token to retrieve the next page of results.
+	// Pass this value in
+	// the
+	// ListBidResponsesWithoutBidsRequest.pageToken
+	// field in the subsequent call to
+	// the
+	// accounts.filterSets.bidResponsesWithoutBids.list
+	// method to retrieve the next page of results.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "BidResponseWithoutBidsStatusRows") to unconditionally include in API
+	// requests. By default, fields with empty values are omitted from API
+	// requests. However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g.
+	// "BidResponseWithoutBidsStatusRows") to include in API requests with
+	// the JSON null value. By default, fields with empty values are omitted
+	// from API requests. However, any field with an empty value appearing
+	// in NullFields will be sent to the server as null. It is an error if a
+	// field in this list has a non-empty value. This may be used to include
+	// null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListBidResponsesWithoutBidsResponse) MarshalJSON() ([]byte, error) {
+	type noMethod ListBidResponsesWithoutBidsResponse
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -1307,6 +2106,202 @@ func (s *ListClientsResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// ListCreativeStatusAndCreativeBreakdownByDetailResponse: Response
+// message for listing all details associated with a given filtered
+// bid
+// reason and a given creative.
+type ListCreativeStatusAndCreativeBreakdownByDetailResponse struct {
+	// DetailType: The type of detail that the detail IDs represent.
+	//
+	// Possible values:
+	//   "TYPE_UNSPECIFIED" - A placeholder for an undefined status.
+	// This value will never be returned in responses.
+	//   "CREATIVE_ATTRIBUTE" - Indicates that the detail ID refers to a
+	// creative attribute;
+	// see
+	// [publisher-excludable-creative-attributes](https://developers.goog
+	// le.com/ad-exchange/rtb/downloads/publisher-excludable-creative-attribu
+	// tes).
+	//   "VENDOR" - Indicates that the detail ID refers to a vendor;
+	// see
+	// [vendors](https://developers.google.com/ad-exchange/rtb/downloads/
+	// vendors).
+	//   "SENSITIVE_CATEGORY" - Indicates that the detail ID refers to a
+	// sensitive category;
+	// see
+	// [ad-sensitive-categories](https://developers.google.com/ad-exchang
+	// e/rtb/downloads/ad-sensitive-categories).
+	//   "PRODUCT_CATEGORY" - Indicates that the detail ID refers to a
+	// product category;
+	// see
+	// [ad-product-categories](https://developers.google.com/ad-exchange/
+	// rtb/downloads/ad-product-categories).
+	DetailType string `json:"detailType,omitempty"`
+
+	// FilteredBidDetailRows: List of rows, with counts of bids with a given
+	// creative status and
+	// creative, aggregated by detail.
+	FilteredBidDetailRows []*FilteredBidDetailRow `json:"filteredBidDetailRows,omitempty"`
+
+	// NextPageToken: A token to retrieve the next page of results.
+	// Pass this value in
+	// the
+	// ListCreativeStatusAndCreativeBreakdownByDetailRequest.pageToken
+	// fi
+	// eld in the subsequent call to
+	// the
+	// accounts.filterSets.filteredBids.creatives.details.list
+	// method to retrieve the next page of results.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "DetailType") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DetailType") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListCreativeStatusAndCreativeBreakdownByDetailResponse) MarshalJSON() ([]byte, error) {
+	type noMethod ListCreativeStatusAndCreativeBreakdownByDetailResponse
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ListCreativeStatusBreakdownByCreativeResponse: Response message for
+// listing all creatives associated with a given filtered
+// bid reason.
+type ListCreativeStatusBreakdownByCreativeResponse struct {
+	// FilteredBidCreativeRows: List of rows, with counts of bids with a
+	// given creative status aggregated
+	// by creative.
+	FilteredBidCreativeRows []*FilteredBidCreativeRow `json:"filteredBidCreativeRows,omitempty"`
+
+	// NextPageToken: A token to retrieve the next page of results.
+	// Pass this value in
+	// the
+	// ListCreativeStatusBreakdownByCreativeRequest.pageToken
+	// field in the subsequent call to
+	// the
+	// accounts.filterSets.filteredBids.creatives.list
+	// method to retrieve the next page of results.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "FilteredBidCreativeRows") to unconditionally include in API
+	// requests. By default, fields with empty values are omitted from API
+	// requests. However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "FilteredBidCreativeRows")
+	// to include in API requests with the JSON null value. By default,
+	// fields with empty values are omitted from API requests. However, any
+	// field with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListCreativeStatusBreakdownByCreativeResponse) MarshalJSON() ([]byte, error) {
+	type noMethod ListCreativeStatusBreakdownByCreativeResponse
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ListCreativeStatusBreakdownByDetailResponse: Response message for
+// listing all details associated with a given filtered bid
+// reason.
+type ListCreativeStatusBreakdownByDetailResponse struct {
+	// DetailType: The type of detail that the detail IDs represent.
+	//
+	// Possible values:
+	//   "TYPE_UNSPECIFIED" - A placeholder for an undefined status.
+	// This value will never be returned in responses.
+	//   "CREATIVE_ATTRIBUTE" - Indicates that the detail ID refers to a
+	// creative attribute;
+	// see
+	// [publisher-excludable-creative-attributes](https://developers.goog
+	// le.com/ad-exchange/rtb/downloads/publisher-excludable-creative-attribu
+	// tes).
+	//   "VENDOR" - Indicates that the detail ID refers to a vendor;
+	// see
+	// [vendors](https://developers.google.com/ad-exchange/rtb/downloads/
+	// vendors).
+	//   "SENSITIVE_CATEGORY" - Indicates that the detail ID refers to a
+	// sensitive category;
+	// see
+	// [ad-sensitive-categories](https://developers.google.com/ad-exchang
+	// e/rtb/downloads/ad-sensitive-categories).
+	//   "PRODUCT_CATEGORY" - Indicates that the detail ID refers to a
+	// product category;
+	// see
+	// [ad-product-categories](https://developers.google.com/ad-exchange/
+	// rtb/downloads/ad-product-categories).
+	DetailType string `json:"detailType,omitempty"`
+
+	// FilteredBidDetailRows: List of rows, with counts of bids with a given
+	// creative status aggregated
+	// by detail.
+	FilteredBidDetailRows []*FilteredBidDetailRow `json:"filteredBidDetailRows,omitempty"`
+
+	// NextPageToken: A token to retrieve the next page of results.
+	// Pass this value in
+	// the
+	// ListCreativeStatusBreakdownByDetailRequest.pageToken
+	// field in the subsequent call to
+	// the
+	// accounts.filterSets.filteredBids.details.list
+	// method to retrieve the next page of results.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "DetailType") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DetailType") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListCreativeStatusBreakdownByDetailResponse) MarshalJSON() ([]byte, error) {
+	type noMethod ListCreativeStatusBreakdownByDetailResponse
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // ListCreativesResponse: A response for listing creatives.
 type ListCreativesResponse struct {
 	// Creatives: The list of creatives.
@@ -1388,6 +2383,274 @@ func (s *ListDealAssociationsResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// ListFilterSetsResponse: Response message for listing filter sets.
+type ListFilterSetsResponse struct {
+	// FilterSets: The filter sets belonging to the buyer.
+	FilterSets []*FilterSet `json:"filterSets,omitempty"`
+
+	// NextPageToken: A token to retrieve the next page of results.
+	// Pass this value in the
+	// ListFilterSetsRequest.pageToken
+	// field in the subsequent call to the
+	// accounts.filterSets.list
+	// method to retrieve the next page of results.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "FilterSets") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "FilterSets") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListFilterSetsResponse) MarshalJSON() ([]byte, error) {
+	type noMethod ListFilterSetsResponse
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ListFilteredBidRequestsResponse: Response message for listing all
+// reasons that bid requests were filtered and
+// not sent to the buyer.
+type ListFilteredBidRequestsResponse struct {
+	// CalloutStatusRows: List of rows, with counts of filtered bid requests
+	// aggregated by callout
+	// status.
+	CalloutStatusRows []*CalloutStatusRow `json:"calloutStatusRows,omitempty"`
+
+	// NextPageToken: A token to retrieve the next page of results.
+	// Pass this value in the
+	// ListFilteredBidRequestsRequest.pageToken
+	// field in the subsequent call to
+	// the
+	// accounts.filterSets.filteredBidRequests.list
+	// method to retrieve the next page of results.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "CalloutStatusRows")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CalloutStatusRows") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListFilteredBidRequestsResponse) MarshalJSON() ([]byte, error) {
+	type noMethod ListFilteredBidRequestsResponse
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ListFilteredBidsResponse: Response message for listing all reasons
+// that bids were filtered from the
+// auction.
+type ListFilteredBidsResponse struct {
+	// CreativeStatusRows: List of rows, with counts of filtered bids
+	// aggregated by filtering reason
+	// (i.e. creative status).
+	CreativeStatusRows []*CreativeStatusRow `json:"creativeStatusRows,omitempty"`
+
+	// NextPageToken: A token to retrieve the next page of results.
+	// Pass this value in the
+	// ListFilteredBidsRequest.pageToken
+	// field in the subsequent call to
+	// the
+	// accounts.filterSets.filteredBids.list
+	// method to retrieve the next page of results.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "CreativeStatusRows")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CreativeStatusRows") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListFilteredBidsResponse) MarshalJSON() ([]byte, error) {
+	type noMethod ListFilteredBidsResponse
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ListImpressionMetricsResponse: Response message for listing the
+// metrics that are measured in number of
+// impressions.
+type ListImpressionMetricsResponse struct {
+	// ImpressionMetricsRows: List of rows, each containing a set of
+	// impression metrics.
+	ImpressionMetricsRows []*ImpressionMetricsRow `json:"impressionMetricsRows,omitempty"`
+
+	// NextPageToken: A token to retrieve the next page of results.
+	// Pass this value in the
+	// ListImpressionMetricsRequest.pageToken
+	// field in the subsequent call to
+	// the
+	// accounts.filterSets.impressionMetrics.list
+	// method to retrieve the next page of results.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "ImpressionMetricsRows") to unconditionally include in API requests.
+	// By default, fields with empty values are omitted from API requests.
+	// However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ImpressionMetricsRows") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListImpressionMetricsResponse) MarshalJSON() ([]byte, error) {
+	type noMethod ListImpressionMetricsResponse
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ListLosingBidsResponse: Response message for listing all reasons that
+// bids lost in the auction.
+type ListLosingBidsResponse struct {
+	// CreativeStatusRows: List of rows, with counts of losing bids
+	// aggregated by loss reason (i.e.
+	// creative status).
+	CreativeStatusRows []*CreativeStatusRow `json:"creativeStatusRows,omitempty"`
+
+	// NextPageToken: A token to retrieve the next page of results.
+	// Pass this value in the
+	// ListLosingBidsRequest.pageToken
+	// field in the subsequent call to
+	// the
+	// accounts.filterSets.losingBids.list
+	// method to retrieve the next page of results.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "CreativeStatusRows")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CreativeStatusRows") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListLosingBidsResponse) MarshalJSON() ([]byte, error) {
+	type noMethod ListLosingBidsResponse
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ListNonBillableWinningBidsResponse: Response message for listing all
+// reasons for which a buyer was not billed for
+// a winning bid.
+type ListNonBillableWinningBidsResponse struct {
+	// NextPageToken: A token to retrieve the next page of results.
+	// Pass this value in
+	// the
+	// ListNonBillableWinningBidsRequest.pageToken
+	// field in the subsequent call to
+	// the
+	// accounts.filterSets.nonBillableWinningBids.list
+	// method to retrieve the next page of results.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// NonBillableWinningBidStatusRows: List of rows, with counts of bids
+	// not billed aggregated by reason.
+	NonBillableWinningBidStatusRows []*NonBillableWinningBidStatusRow `json:"nonBillableWinningBidStatusRows,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "NextPageToken") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "NextPageToken") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListNonBillableWinningBidsResponse) MarshalJSON() ([]byte, error) {
+	type noMethod ListNonBillableWinningBidsResponse
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // LocationContext: @OutputOnly The Geo criteria the restriction applies
 // to.
 type LocationContext struct {
@@ -1420,6 +2683,50 @@ type LocationContext struct {
 
 func (s *LocationContext) MarshalJSON() ([]byte, error) {
 	type noMethod LocationContext
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// MetricValue: A metric value, with an expected value and a variance;
+// represents a count
+// that may be either exact or estimated (i.e. when sampled).
+type MetricValue struct {
+	// Value: The expected value of the metric.
+	Value int64 `json:"value,omitempty,string"`
+
+	// Variance: The variance (i.e. square of the standard deviation) of the
+	// metric value.
+	// If value is exact, variance is 0.
+	// Can be used to calculate margin of error as a percentage of value,
+	// using
+	// the following formula, where Z is the standard constant that depends
+	// on the
+	// desired size of the confidence interval (e.g. for 90% confidence
+	// interval,
+	// use Z = 1.645):
+	//
+	//   marginOfError = 100 * Z * sqrt(variance) / value
+	Variance int64 `json:"variance,omitempty,string"`
+
+	// ForceSendFields is a list of field names (e.g. "Value") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Value") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *MetricValue) MarshalJSON() ([]byte, error) {
+	type noMethod MetricValue
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -1509,6 +2816,53 @@ func (s *NativeContent) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// NonBillableWinningBidStatusRow: The number of winning bids with the
+// specified dimension values for which the
+// buyer was not billed, as described by the specified status.
+type NonBillableWinningBidStatusRow struct {
+	// BidCount: The number of bids with the specified status.
+	BidCount *MetricValue `json:"bidCount,omitempty"`
+
+	// RowDimensions: The values of all dimensions associated with metric
+	// values in this row.
+	RowDimensions *RowDimensions `json:"rowDimensions,omitempty"`
+
+	// Status: The status specifying why the winning bids were not billed.
+	//
+	// Possible values:
+	//   "STATUS_UNSPECIFIED" - A placeholder for an undefined status.
+	// This value will never be returned in responses.
+	//   "AD_NOT_RENDERED" - The buyer was not billed because the ad was not
+	// rendered by the
+	// publisher.
+	//   "INVALID_IMPRESSION" - The buyer was not billed because the
+	// impression won by the bid was
+	// determined to be invalid.
+	Status string `json:"status,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "BidCount") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "BidCount") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *NonBillableWinningBidStatusRow) MarshalJSON() ([]byte, error) {
+	type noMethod NonBillableWinningBidStatusRow
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // PlatformContext: @OutputOnly The type of platform the restriction
 // applies to.
 type PlatformContext struct {
@@ -1539,6 +2893,40 @@ type PlatformContext struct {
 
 func (s *PlatformContext) MarshalJSON() ([]byte, error) {
 	type noMethod PlatformContext
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// RealtimeTimeRange: An open-ended realtime time range specified by the
+// start timestamp.
+// For filter sets that specify a realtime time range RTB metrics
+// continue to
+// be aggregated throughout the lifetime of the filter set.
+type RealtimeTimeRange struct {
+	// StartTimestamp: The start timestamp of the real-time RTB metrics
+	// aggregation.
+	StartTimestamp string `json:"startTimestamp,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "StartTimestamp") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "StartTimestamp") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *RealtimeTimeRange) MarshalJSON() ([]byte, error) {
+	type noMethod RealtimeTimeRange
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -1580,6 +2968,48 @@ func (s *Reason) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// RelativeDateRange: A relative date range, specified by an offset and
+// a duration.
+// The supported range of dates begins 30 days before today and ends
+// today.
+// I.e. the limits for these values are:
+// offset_days >= 0
+// duration_days >= 1
+// offset_days + duration_days <= 30
+type RelativeDateRange struct {
+	// DurationDays: The number of days in the requested date range. E.g.
+	// for a range spanning
+	// today, 1. For a range spanning the last 7 days, 7.
+	DurationDays int64 `json:"durationDays,omitempty"`
+
+	// OffsetDays: The end date of the filter set, specified as the number
+	// of days before
+	// today. E.g. for a range where the last date is today, 0.
+	OffsetDays int64 `json:"offsetDays,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "DurationDays") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DurationDays") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *RelativeDateRange) MarshalJSON() ([]byte, error) {
+	type noMethod RelativeDateRange
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // RemoveDealAssociationRequest: A request for removing the association
 // between a deal and a creative.
 type RemoveDealAssociationRequest struct {
@@ -1606,6 +3036,36 @@ type RemoveDealAssociationRequest struct {
 
 func (s *RemoveDealAssociationRequest) MarshalJSON() ([]byte, error) {
 	type noMethod RemoveDealAssociationRequest
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// RowDimensions: A response may include multiple rows, breaking down
+// along various dimensions.
+// Encapsulates the values of all dimensions for a given row.
+type RowDimensions struct {
+	// TimeInterval: The time interval that this row represents.
+	TimeInterval *TimeInterval `json:"timeInterval,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "TimeInterval") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "TimeInterval") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *RowDimensions) MarshalJSON() ([]byte, error) {
+	type noMethod RowDimensions
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -1745,6 +3205,56 @@ func (s *ServingRestriction) MarshalJSON() ([]byte, error) {
 // StopWatchingCreativeRequest: A request for stopping notifications for
 // changes to creative Status.
 type StopWatchingCreativeRequest struct {
+}
+
+// TimeInterval: An interval of time, with an absolute start and
+// end.
+// This is included in the response, for several reasons:
+// 1) The request may have specified start or end times relative to the
+// time the
+//    request was sent; the response indicates the corresponding
+// absolute time
+//    interval.
+// 2) The request may have specified an end time past the latest time
+// for which
+//    data was available (e.g. if requesting data for the today); the
+// response
+//    indicates the latest time for which data was actually returned.
+// 3) The response data for a single request may be broken down into
+// multiple
+//    time intervals, if a time series was requested.
+type TimeInterval struct {
+	// EndTime: The timestamp marking the end of the range (exclusive) for
+	// which data is
+	// included.
+	EndTime string `json:"endTime,omitempty"`
+
+	// StartTime: The timestamp marking the start of the range (inclusive)
+	// for which data is
+	// included.
+	StartTime string `json:"startTime,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "EndTime") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "EndTime") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *TimeInterval) MarshalJSON() ([]byte, error) {
+	type noMethod TimeInterval
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // VideoContent: Video content for a creative.
@@ -4942,4 +6452,2959 @@ func (c *AccountsCreativesDealAssociationsRemoveCall) Do(opts ...googleapi.CallO
 	//   ]
 	// }
 
+}
+
+// method id "adexchangebuyer2.accounts.filterSets.create":
+
+type AccountsFilterSetsCreateCall struct {
+	s          *Service
+	accountId  int64
+	filterset  *FilterSet
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Create: Creates the specified filter set for the account with the
+// given account ID.
+func (r *AccountsFilterSetsService) Create(accountId int64, filterset *FilterSet) *AccountsFilterSetsCreateCall {
+	c := &AccountsFilterSetsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.accountId = accountId
+	c.filterset = filterset
+	return c
+}
+
+// IsTransient sets the optional parameter "isTransient": Whether the
+// filter set is transient, or should be persisted indefinitely.
+// By default, filter sets are not transient.
+// If transient, it will be available for at least 1 hour after
+// creation.
+func (c *AccountsFilterSetsCreateCall) IsTransient(isTransient bool) *AccountsFilterSetsCreateCall {
+	c.urlParams_.Set("isTransient", fmt.Sprint(isTransient))
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *AccountsFilterSetsCreateCall) Fields(s ...googleapi.Field) *AccountsFilterSetsCreateCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *AccountsFilterSetsCreateCall) Context(ctx context.Context) *AccountsFilterSetsCreateCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *AccountsFilterSetsCreateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *AccountsFilterSetsCreateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.filterset)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta1/accounts/{accountId}/filterSets")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"accountId": strconv.FormatInt(c.accountId, 10),
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "adexchangebuyer2.accounts.filterSets.create" call.
+// Exactly one of *FilterSet or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *FilterSet.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *AccountsFilterSetsCreateCall) Do(opts ...googleapi.CallOption) (*FilterSet, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &FilterSet{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Creates the specified filter set for the account with the given account ID.",
+	//   "flatPath": "v2beta1/accounts/{accountId}/filterSets",
+	//   "httpMethod": "POST",
+	//   "id": "adexchangebuyer2.accounts.filterSets.create",
+	//   "parameterOrder": [
+	//     "accountId"
+	//   ],
+	//   "parameters": {
+	//     "accountId": {
+	//       "description": "Account ID of the buyer.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "isTransient": {
+	//       "description": "Whether the filter set is transient, or should be persisted indefinitely.\nBy default, filter sets are not transient.\nIf transient, it will be available for at least 1 hour after creation.",
+	//       "location": "query",
+	//       "type": "boolean"
+	//     }
+	//   },
+	//   "path": "v2beta1/accounts/{accountId}/filterSets",
+	//   "request": {
+	//     "$ref": "FilterSet"
+	//   },
+	//   "response": {
+	//     "$ref": "FilterSet"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/adexchange.buyer"
+	//   ]
+	// }
+
+}
+
+// method id "adexchangebuyer2.accounts.filterSets.delete":
+
+type AccountsFilterSetsDeleteCall struct {
+	s           *Service
+	accountId   int64
+	filterSetId int64
+	urlParams_  gensupport.URLParams
+	ctx_        context.Context
+	header_     http.Header
+}
+
+// Delete: Deletes the requested filter set from the account with the
+// given account
+// ID.
+func (r *AccountsFilterSetsService) Delete(accountId int64, filterSetId int64) *AccountsFilterSetsDeleteCall {
+	c := &AccountsFilterSetsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.accountId = accountId
+	c.filterSetId = filterSetId
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *AccountsFilterSetsDeleteCall) Fields(s ...googleapi.Field) *AccountsFilterSetsDeleteCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *AccountsFilterSetsDeleteCall) Context(ctx context.Context) *AccountsFilterSetsDeleteCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *AccountsFilterSetsDeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *AccountsFilterSetsDeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta1/accounts/{accountId}/filterSets/{filterSetId}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("DELETE", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"accountId":   strconv.FormatInt(c.accountId, 10),
+		"filterSetId": strconv.FormatInt(c.filterSetId, 10),
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "adexchangebuyer2.accounts.filterSets.delete" call.
+// Exactly one of *Empty or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *Empty.ServerResponse.Header or (if a response was returned at all)
+// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
+// check whether the returned error was because http.StatusNotModified
+// was returned.
+func (c *AccountsFilterSetsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Empty{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Deletes the requested filter set from the account with the given account\nID.",
+	//   "flatPath": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}",
+	//   "httpMethod": "DELETE",
+	//   "id": "adexchangebuyer2.accounts.filterSets.delete",
+	//   "parameterOrder": [
+	//     "accountId",
+	//     "filterSetId"
+	//   ],
+	//   "parameters": {
+	//     "accountId": {
+	//       "description": "Account ID of the buyer.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "filterSetId": {
+	//       "description": "The ID of the filter set to delete.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}",
+	//   "response": {
+	//     "$ref": "Empty"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/adexchange.buyer"
+	//   ]
+	// }
+
+}
+
+// method id "adexchangebuyer2.accounts.filterSets.get":
+
+type AccountsFilterSetsGetCall struct {
+	s            *Service
+	accountId    int64
+	filterSetId  int64
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Get: Retrieves the requested filter set for the account with the
+// given account
+// ID.
+func (r *AccountsFilterSetsService) Get(accountId int64, filterSetId int64) *AccountsFilterSetsGetCall {
+	c := &AccountsFilterSetsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.accountId = accountId
+	c.filterSetId = filterSetId
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *AccountsFilterSetsGetCall) Fields(s ...googleapi.Field) *AccountsFilterSetsGetCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *AccountsFilterSetsGetCall) IfNoneMatch(entityTag string) *AccountsFilterSetsGetCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *AccountsFilterSetsGetCall) Context(ctx context.Context) *AccountsFilterSetsGetCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *AccountsFilterSetsGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *AccountsFilterSetsGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta1/accounts/{accountId}/filterSets/{filterSetId}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"accountId":   strconv.FormatInt(c.accountId, 10),
+		"filterSetId": strconv.FormatInt(c.filterSetId, 10),
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "adexchangebuyer2.accounts.filterSets.get" call.
+// Exactly one of *FilterSet or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *FilterSet.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *AccountsFilterSetsGetCall) Do(opts ...googleapi.CallOption) (*FilterSet, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &FilterSet{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Retrieves the requested filter set for the account with the given account\nID.",
+	//   "flatPath": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}",
+	//   "httpMethod": "GET",
+	//   "id": "adexchangebuyer2.accounts.filterSets.get",
+	//   "parameterOrder": [
+	//     "accountId",
+	//     "filterSetId"
+	//   ],
+	//   "parameters": {
+	//     "accountId": {
+	//       "description": "Account ID of the buyer.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "filterSetId": {
+	//       "description": "The ID of the filter set to get.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}",
+	//   "response": {
+	//     "$ref": "FilterSet"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/adexchange.buyer"
+	//   ]
+	// }
+
+}
+
+// method id "adexchangebuyer2.accounts.filterSets.list":
+
+type AccountsFilterSetsListCall struct {
+	s            *Service
+	accountId    int64
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: Lists all filter sets for the account with the given account
+// ID.
+func (r *AccountsFilterSetsService) List(accountId int64) *AccountsFilterSetsListCall {
+	c := &AccountsFilterSetsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.accountId = accountId
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": Requested page size.
+// The server may return fewer results than requested.
+// If unspecified, the server will pick an appropriate default.
+func (c *AccountsFilterSetsListCall) PageSize(pageSize int64) *AccountsFilterSetsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": A token
+// identifying a page of results the server should return.
+// Typically, this is the value
+// of
+// ListFilterSetsResponse.nextPageToken
+// returned from the previous call to
+// the
+// accounts.filterSets.list
+// method.
+func (c *AccountsFilterSetsListCall) PageToken(pageToken string) *AccountsFilterSetsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *AccountsFilterSetsListCall) Fields(s ...googleapi.Field) *AccountsFilterSetsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *AccountsFilterSetsListCall) IfNoneMatch(entityTag string) *AccountsFilterSetsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *AccountsFilterSetsListCall) Context(ctx context.Context) *AccountsFilterSetsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *AccountsFilterSetsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *AccountsFilterSetsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta1/accounts/{accountId}/filterSets")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"accountId": strconv.FormatInt(c.accountId, 10),
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "adexchangebuyer2.accounts.filterSets.list" call.
+// Exactly one of *ListFilterSetsResponse or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *ListFilterSetsResponse.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *AccountsFilterSetsListCall) Do(opts ...googleapi.CallOption) (*ListFilterSetsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListFilterSetsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Lists all filter sets for the account with the given account ID.",
+	//   "flatPath": "v2beta1/accounts/{accountId}/filterSets",
+	//   "httpMethod": "GET",
+	//   "id": "adexchangebuyer2.accounts.filterSets.list",
+	//   "parameterOrder": [
+	//     "accountId"
+	//   ],
+	//   "parameters": {
+	//     "accountId": {
+	//       "description": "Account ID of the buyer.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "Requested page size. The server may return fewer results than requested.\nIf unspecified, the server will pick an appropriate default.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "A token identifying a page of results the server should return.\nTypically, this is the value of\nListFilterSetsResponse.nextPageToken\nreturned from the previous call to the\naccounts.filterSets.list\nmethod.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta1/accounts/{accountId}/filterSets",
+	//   "response": {
+	//     "$ref": "ListFilterSetsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/adexchange.buyer"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *AccountsFilterSetsListCall) Pages(ctx context.Context, f func(*ListFilterSetsResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "adexchangebuyer2.accounts.filterSets.bidMetrics.list":
+
+type AccountsFilterSetsBidMetricsListCall struct {
+	s            *Service
+	accountId    int64
+	filterSetId  int64
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: Lists all metrics that are measured in terms of number of bids.
+func (r *AccountsFilterSetsBidMetricsService) List(accountId int64, filterSetId int64) *AccountsFilterSetsBidMetricsListCall {
+	c := &AccountsFilterSetsBidMetricsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.accountId = accountId
+	c.filterSetId = filterSetId
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": Requested page size.
+// The server may return fewer results than requested.
+// If unspecified, the server will pick an appropriate default.
+func (c *AccountsFilterSetsBidMetricsListCall) PageSize(pageSize int64) *AccountsFilterSetsBidMetricsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": A token
+// identifying a page of results the server should return.
+// Typically, this is the value
+// of
+// ListBidMetricsResponse.nextPageToken
+// returned from the previous call to
+// the
+// accounts.filterSets.bidMetrics.list
+// method.
+func (c *AccountsFilterSetsBidMetricsListCall) PageToken(pageToken string) *AccountsFilterSetsBidMetricsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *AccountsFilterSetsBidMetricsListCall) Fields(s ...googleapi.Field) *AccountsFilterSetsBidMetricsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *AccountsFilterSetsBidMetricsListCall) IfNoneMatch(entityTag string) *AccountsFilterSetsBidMetricsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *AccountsFilterSetsBidMetricsListCall) Context(ctx context.Context) *AccountsFilterSetsBidMetricsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *AccountsFilterSetsBidMetricsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *AccountsFilterSetsBidMetricsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/bidMetrics")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"accountId":   strconv.FormatInt(c.accountId, 10),
+		"filterSetId": strconv.FormatInt(c.filterSetId, 10),
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "adexchangebuyer2.accounts.filterSets.bidMetrics.list" call.
+// Exactly one of *ListBidMetricsResponse or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *ListBidMetricsResponse.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *AccountsFilterSetsBidMetricsListCall) Do(opts ...googleapi.CallOption) (*ListBidMetricsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListBidMetricsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Lists all metrics that are measured in terms of number of bids.",
+	//   "flatPath": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/bidMetrics",
+	//   "httpMethod": "GET",
+	//   "id": "adexchangebuyer2.accounts.filterSets.bidMetrics.list",
+	//   "parameterOrder": [
+	//     "accountId",
+	//     "filterSetId"
+	//   ],
+	//   "parameters": {
+	//     "accountId": {
+	//       "description": "Account ID of the buyer.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "filterSetId": {
+	//       "description": "The ID of the filter set to apply.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "Requested page size. The server may return fewer results than requested.\nIf unspecified, the server will pick an appropriate default.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "A token identifying a page of results the server should return.\nTypically, this is the value of\nListBidMetricsResponse.nextPageToken\nreturned from the previous call to the\naccounts.filterSets.bidMetrics.list\nmethod.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/bidMetrics",
+	//   "response": {
+	//     "$ref": "ListBidMetricsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/adexchange.buyer"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *AccountsFilterSetsBidMetricsListCall) Pages(ctx context.Context, f func(*ListBidMetricsResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "adexchangebuyer2.accounts.filterSets.bidResponseErrors.list":
+
+type AccountsFilterSetsBidResponseErrorsListCall struct {
+	s            *Service
+	accountId    int64
+	filterSetId  int64
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: List all errors that occurred in bid responses, with the number
+// of bid
+// responses affected for each reason.
+func (r *AccountsFilterSetsBidResponseErrorsService) List(accountId int64, filterSetId int64) *AccountsFilterSetsBidResponseErrorsListCall {
+	c := &AccountsFilterSetsBidResponseErrorsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.accountId = accountId
+	c.filterSetId = filterSetId
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": Requested page size.
+// The server may return fewer results than requested.
+// If unspecified, the server will pick an appropriate default.
+func (c *AccountsFilterSetsBidResponseErrorsListCall) PageSize(pageSize int64) *AccountsFilterSetsBidResponseErrorsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": A token
+// identifying a page of results the server should return.
+// Typically, this is the value
+// of
+// ListBidResponseErrorsResponse.nextPageToken
+// returned from the previous call to
+// the
+// accounts.filterSets.bidResponseErrors.list
+// method.
+func (c *AccountsFilterSetsBidResponseErrorsListCall) PageToken(pageToken string) *AccountsFilterSetsBidResponseErrorsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *AccountsFilterSetsBidResponseErrorsListCall) Fields(s ...googleapi.Field) *AccountsFilterSetsBidResponseErrorsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *AccountsFilterSetsBidResponseErrorsListCall) IfNoneMatch(entityTag string) *AccountsFilterSetsBidResponseErrorsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *AccountsFilterSetsBidResponseErrorsListCall) Context(ctx context.Context) *AccountsFilterSetsBidResponseErrorsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *AccountsFilterSetsBidResponseErrorsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *AccountsFilterSetsBidResponseErrorsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/bidResponseErrors")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"accountId":   strconv.FormatInt(c.accountId, 10),
+		"filterSetId": strconv.FormatInt(c.filterSetId, 10),
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "adexchangebuyer2.accounts.filterSets.bidResponseErrors.list" call.
+// Exactly one of *ListBidResponseErrorsResponse or error will be
+// non-nil. Any non-2xx status code is an error. Response headers are in
+// either *ListBidResponseErrorsResponse.ServerResponse.Header or (if a
+// response was returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *AccountsFilterSetsBidResponseErrorsListCall) Do(opts ...googleapi.CallOption) (*ListBidResponseErrorsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListBidResponseErrorsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "List all errors that occurred in bid responses, with the number of bid\nresponses affected for each reason.",
+	//   "flatPath": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/bidResponseErrors",
+	//   "httpMethod": "GET",
+	//   "id": "adexchangebuyer2.accounts.filterSets.bidResponseErrors.list",
+	//   "parameterOrder": [
+	//     "accountId",
+	//     "filterSetId"
+	//   ],
+	//   "parameters": {
+	//     "accountId": {
+	//       "description": "Account ID of the buyer.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "filterSetId": {
+	//       "description": "The ID of the filter set to apply.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "Requested page size. The server may return fewer results than requested.\nIf unspecified, the server will pick an appropriate default.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "A token identifying a page of results the server should return.\nTypically, this is the value of\nListBidResponseErrorsResponse.nextPageToken\nreturned from the previous call to the\naccounts.filterSets.bidResponseErrors.list\nmethod.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/bidResponseErrors",
+	//   "response": {
+	//     "$ref": "ListBidResponseErrorsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/adexchange.buyer"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *AccountsFilterSetsBidResponseErrorsListCall) Pages(ctx context.Context, f func(*ListBidResponseErrorsResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "adexchangebuyer2.accounts.filterSets.bidResponsesWithoutBids.list":
+
+type AccountsFilterSetsBidResponsesWithoutBidsListCall struct {
+	s            *Service
+	accountId    int64
+	filterSetId  int64
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: List all reasons for which bid responses were considered to
+// have no
+// applicable bids, with the number of bid responses affected for each
+// reason.
+func (r *AccountsFilterSetsBidResponsesWithoutBidsService) List(accountId int64, filterSetId int64) *AccountsFilterSetsBidResponsesWithoutBidsListCall {
+	c := &AccountsFilterSetsBidResponsesWithoutBidsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.accountId = accountId
+	c.filterSetId = filterSetId
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": Requested page size.
+// The server may return fewer results than requested.
+// If unspecified, the server will pick an appropriate default.
+func (c *AccountsFilterSetsBidResponsesWithoutBidsListCall) PageSize(pageSize int64) *AccountsFilterSetsBidResponsesWithoutBidsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": A token
+// identifying a page of results the server should return.
+// Typically, this is the value
+// of
+// ListBidResponsesWithoutBidsResponse.nextPageToken
+// returned from the previous call to
+// the
+// accounts.filterSets.bidResponsesWithoutBids.list
+// method.
+func (c *AccountsFilterSetsBidResponsesWithoutBidsListCall) PageToken(pageToken string) *AccountsFilterSetsBidResponsesWithoutBidsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *AccountsFilterSetsBidResponsesWithoutBidsListCall) Fields(s ...googleapi.Field) *AccountsFilterSetsBidResponsesWithoutBidsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *AccountsFilterSetsBidResponsesWithoutBidsListCall) IfNoneMatch(entityTag string) *AccountsFilterSetsBidResponsesWithoutBidsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *AccountsFilterSetsBidResponsesWithoutBidsListCall) Context(ctx context.Context) *AccountsFilterSetsBidResponsesWithoutBidsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *AccountsFilterSetsBidResponsesWithoutBidsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *AccountsFilterSetsBidResponsesWithoutBidsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/bidResponsesWithoutBids")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"accountId":   strconv.FormatInt(c.accountId, 10),
+		"filterSetId": strconv.FormatInt(c.filterSetId, 10),
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "adexchangebuyer2.accounts.filterSets.bidResponsesWithoutBids.list" call.
+// Exactly one of *ListBidResponsesWithoutBidsResponse or error will be
+// non-nil. Any non-2xx status code is an error. Response headers are in
+// either *ListBidResponsesWithoutBidsResponse.ServerResponse.Header or
+// (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *AccountsFilterSetsBidResponsesWithoutBidsListCall) Do(opts ...googleapi.CallOption) (*ListBidResponsesWithoutBidsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListBidResponsesWithoutBidsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "List all reasons for which bid responses were considered to have no\napplicable bids, with the number of bid responses affected for each reason.",
+	//   "flatPath": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/bidResponsesWithoutBids",
+	//   "httpMethod": "GET",
+	//   "id": "adexchangebuyer2.accounts.filterSets.bidResponsesWithoutBids.list",
+	//   "parameterOrder": [
+	//     "accountId",
+	//     "filterSetId"
+	//   ],
+	//   "parameters": {
+	//     "accountId": {
+	//       "description": "Account ID of the buyer.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "filterSetId": {
+	//       "description": "The ID of the filter set to apply.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "Requested page size. The server may return fewer results than requested.\nIf unspecified, the server will pick an appropriate default.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "A token identifying a page of results the server should return.\nTypically, this is the value of\nListBidResponsesWithoutBidsResponse.nextPageToken\nreturned from the previous call to the\naccounts.filterSets.bidResponsesWithoutBids.list\nmethod.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/bidResponsesWithoutBids",
+	//   "response": {
+	//     "$ref": "ListBidResponsesWithoutBidsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/adexchange.buyer"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *AccountsFilterSetsBidResponsesWithoutBidsListCall) Pages(ctx context.Context, f func(*ListBidResponsesWithoutBidsResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "adexchangebuyer2.accounts.filterSets.filteredBidRequests.list":
+
+type AccountsFilterSetsFilteredBidRequestsListCall struct {
+	s            *Service
+	accountId    int64
+	filterSetId  int64
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: List all reasons that caused a bid request not to be sent for
+// an
+// impression, with the number of bid requests not sent for each reason.
+func (r *AccountsFilterSetsFilteredBidRequestsService) List(accountId int64, filterSetId int64) *AccountsFilterSetsFilteredBidRequestsListCall {
+	c := &AccountsFilterSetsFilteredBidRequestsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.accountId = accountId
+	c.filterSetId = filterSetId
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": Requested page size.
+// The server may return fewer results than requested.
+// If unspecified, the server will pick an appropriate default.
+func (c *AccountsFilterSetsFilteredBidRequestsListCall) PageSize(pageSize int64) *AccountsFilterSetsFilteredBidRequestsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": A token
+// identifying a page of results the server should return.
+// Typically, this is the value
+// of
+// ListFilteredBidRequestsResponse.nextPageToken
+// returned from the previous call to
+// the
+// accounts.filterSets.filteredBidRequests.list
+// method.
+func (c *AccountsFilterSetsFilteredBidRequestsListCall) PageToken(pageToken string) *AccountsFilterSetsFilteredBidRequestsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *AccountsFilterSetsFilteredBidRequestsListCall) Fields(s ...googleapi.Field) *AccountsFilterSetsFilteredBidRequestsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *AccountsFilterSetsFilteredBidRequestsListCall) IfNoneMatch(entityTag string) *AccountsFilterSetsFilteredBidRequestsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *AccountsFilterSetsFilteredBidRequestsListCall) Context(ctx context.Context) *AccountsFilterSetsFilteredBidRequestsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *AccountsFilterSetsFilteredBidRequestsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *AccountsFilterSetsFilteredBidRequestsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/filteredBidRequests")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"accountId":   strconv.FormatInt(c.accountId, 10),
+		"filterSetId": strconv.FormatInt(c.filterSetId, 10),
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "adexchangebuyer2.accounts.filterSets.filteredBidRequests.list" call.
+// Exactly one of *ListFilteredBidRequestsResponse or error will be
+// non-nil. Any non-2xx status code is an error. Response headers are in
+// either *ListFilteredBidRequestsResponse.ServerResponse.Header or (if
+// a response was returned at all) in error.(*googleapi.Error).Header.
+// Use googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *AccountsFilterSetsFilteredBidRequestsListCall) Do(opts ...googleapi.CallOption) (*ListFilteredBidRequestsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListFilteredBidRequestsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "List all reasons that caused a bid request not to be sent for an\nimpression, with the number of bid requests not sent for each reason.",
+	//   "flatPath": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/filteredBidRequests",
+	//   "httpMethod": "GET",
+	//   "id": "adexchangebuyer2.accounts.filterSets.filteredBidRequests.list",
+	//   "parameterOrder": [
+	//     "accountId",
+	//     "filterSetId"
+	//   ],
+	//   "parameters": {
+	//     "accountId": {
+	//       "description": "Account ID of the buyer.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "filterSetId": {
+	//       "description": "The ID of the filter set to apply.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "Requested page size. The server may return fewer results than requested.\nIf unspecified, the server will pick an appropriate default.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "A token identifying a page of results the server should return.\nTypically, this is the value of\nListFilteredBidRequestsResponse.nextPageToken\nreturned from the previous call to the\naccounts.filterSets.filteredBidRequests.list\nmethod.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/filteredBidRequests",
+	//   "response": {
+	//     "$ref": "ListFilteredBidRequestsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/adexchange.buyer"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *AccountsFilterSetsFilteredBidRequestsListCall) Pages(ctx context.Context, f func(*ListFilteredBidRequestsResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "adexchangebuyer2.accounts.filterSets.filteredBids.list":
+
+type AccountsFilterSetsFilteredBidsListCall struct {
+	s            *Service
+	accountId    int64
+	filterSetId  int64
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: List all reasons for which bids were filtered, with the number
+// of bids
+// filtered for each reason.
+func (r *AccountsFilterSetsFilteredBidsService) List(accountId int64, filterSetId int64) *AccountsFilterSetsFilteredBidsListCall {
+	c := &AccountsFilterSetsFilteredBidsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.accountId = accountId
+	c.filterSetId = filterSetId
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": Requested page size.
+// The server may return fewer results than requested.
+// If unspecified, the server will pick an appropriate default.
+func (c *AccountsFilterSetsFilteredBidsListCall) PageSize(pageSize int64) *AccountsFilterSetsFilteredBidsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": A token
+// identifying a page of results the server should return.
+// Typically, this is the value
+// of
+// ListFilteredBidsResponse.nextPageToken
+// returned from the previous call to
+// the
+// accounts.filterSets.filteredBids.list
+// method.
+func (c *AccountsFilterSetsFilteredBidsListCall) PageToken(pageToken string) *AccountsFilterSetsFilteredBidsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *AccountsFilterSetsFilteredBidsListCall) Fields(s ...googleapi.Field) *AccountsFilterSetsFilteredBidsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *AccountsFilterSetsFilteredBidsListCall) IfNoneMatch(entityTag string) *AccountsFilterSetsFilteredBidsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *AccountsFilterSetsFilteredBidsListCall) Context(ctx context.Context) *AccountsFilterSetsFilteredBidsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *AccountsFilterSetsFilteredBidsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *AccountsFilterSetsFilteredBidsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/filteredBids")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"accountId":   strconv.FormatInt(c.accountId, 10),
+		"filterSetId": strconv.FormatInt(c.filterSetId, 10),
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "adexchangebuyer2.accounts.filterSets.filteredBids.list" call.
+// Exactly one of *ListFilteredBidsResponse or error will be non-nil.
+// Any non-2xx status code is an error. Response headers are in either
+// *ListFilteredBidsResponse.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *AccountsFilterSetsFilteredBidsListCall) Do(opts ...googleapi.CallOption) (*ListFilteredBidsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListFilteredBidsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "List all reasons for which bids were filtered, with the number of bids\nfiltered for each reason.",
+	//   "flatPath": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/filteredBids",
+	//   "httpMethod": "GET",
+	//   "id": "adexchangebuyer2.accounts.filterSets.filteredBids.list",
+	//   "parameterOrder": [
+	//     "accountId",
+	//     "filterSetId"
+	//   ],
+	//   "parameters": {
+	//     "accountId": {
+	//       "description": "Account ID of the buyer.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "filterSetId": {
+	//       "description": "The ID of the filter set to apply.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "Requested page size. The server may return fewer results than requested.\nIf unspecified, the server will pick an appropriate default.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "A token identifying a page of results the server should return.\nTypically, this is the value of\nListFilteredBidsResponse.nextPageToken\nreturned from the previous call to the\naccounts.filterSets.filteredBids.list\nmethod.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/filteredBids",
+	//   "response": {
+	//     "$ref": "ListFilteredBidsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/adexchange.buyer"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *AccountsFilterSetsFilteredBidsListCall) Pages(ctx context.Context, f func(*ListFilteredBidsResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "adexchangebuyer2.accounts.filterSets.filteredBids.creatives.list":
+
+type AccountsFilterSetsFilteredBidsCreativesListCall struct {
+	s                *Service
+	accountId        int64
+	filterSetId      int64
+	creativeStatusId int64
+	urlParams_       gensupport.URLParams
+	ifNoneMatch_     string
+	ctx_             context.Context
+	header_          http.Header
+}
+
+// List: List all creatives associated with a specific reason for which
+// bids were
+// filtered, with the number of bids filtered for each creative.
+func (r *AccountsFilterSetsFilteredBidsCreativesService) List(accountId int64, filterSetId int64, creativeStatusId int64) *AccountsFilterSetsFilteredBidsCreativesListCall {
+	c := &AccountsFilterSetsFilteredBidsCreativesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.accountId = accountId
+	c.filterSetId = filterSetId
+	c.creativeStatusId = creativeStatusId
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": Requested page size.
+// The server may return fewer results than requested.
+// If unspecified, the server will pick an appropriate default.
+func (c *AccountsFilterSetsFilteredBidsCreativesListCall) PageSize(pageSize int64) *AccountsFilterSetsFilteredBidsCreativesListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": A token
+// identifying a page of results the server should return.
+// Typically, this is the value
+// of
+// ListCreativeStatusBreakdownByCreativeResponse.nextPageToken
+// returne
+// d from the previous call to
+// the
+// accounts.filterSets.filteredBids.creatives.list
+// method.
+func (c *AccountsFilterSetsFilteredBidsCreativesListCall) PageToken(pageToken string) *AccountsFilterSetsFilteredBidsCreativesListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *AccountsFilterSetsFilteredBidsCreativesListCall) Fields(s ...googleapi.Field) *AccountsFilterSetsFilteredBidsCreativesListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *AccountsFilterSetsFilteredBidsCreativesListCall) IfNoneMatch(entityTag string) *AccountsFilterSetsFilteredBidsCreativesListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *AccountsFilterSetsFilteredBidsCreativesListCall) Context(ctx context.Context) *AccountsFilterSetsFilteredBidsCreativesListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *AccountsFilterSetsFilteredBidsCreativesListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *AccountsFilterSetsFilteredBidsCreativesListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/filteredBids/{creativeStatusId}/creatives")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"accountId":        strconv.FormatInt(c.accountId, 10),
+		"filterSetId":      strconv.FormatInt(c.filterSetId, 10),
+		"creativeStatusId": strconv.FormatInt(c.creativeStatusId, 10),
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "adexchangebuyer2.accounts.filterSets.filteredBids.creatives.list" call.
+// Exactly one of *ListCreativeStatusBreakdownByCreativeResponse or
+// error will be non-nil. Any non-2xx status code is an error. Response
+// headers are in either
+// *ListCreativeStatusBreakdownByCreativeResponse.ServerResponse.Header
+// or (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *AccountsFilterSetsFilteredBidsCreativesListCall) Do(opts ...googleapi.CallOption) (*ListCreativeStatusBreakdownByCreativeResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListCreativeStatusBreakdownByCreativeResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "List all creatives associated with a specific reason for which bids were\nfiltered, with the number of bids filtered for each creative.",
+	//   "flatPath": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/filteredBids/{creativeStatusId}/creatives",
+	//   "httpMethod": "GET",
+	//   "id": "adexchangebuyer2.accounts.filterSets.filteredBids.creatives.list",
+	//   "parameterOrder": [
+	//     "accountId",
+	//     "filterSetId",
+	//     "creativeStatusId"
+	//   ],
+	//   "parameters": {
+	//     "accountId": {
+	//       "description": "Account ID of the buyer.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "creativeStatusId": {
+	//       "description": "The ID of the creative status for which to retrieve a breakdown by\ncreative.\nSee\n[creative-status-codes](https://developers.google.com/ad-exchange/rtb/downloads/creative-status-codes).",
+	//       "format": "int32",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "integer"
+	//     },
+	//     "filterSetId": {
+	//       "description": "The ID of the filter set to apply.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "Requested page size. The server may return fewer results than requested.\nIf unspecified, the server will pick an appropriate default.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "A token identifying a page of results the server should return.\nTypically, this is the value of\nListCreativeStatusBreakdownByCreativeResponse.nextPageToken\nreturned from the previous call to the\naccounts.filterSets.filteredBids.creatives.list\nmethod.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/filteredBids/{creativeStatusId}/creatives",
+	//   "response": {
+	//     "$ref": "ListCreativeStatusBreakdownByCreativeResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/adexchange.buyer"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *AccountsFilterSetsFilteredBidsCreativesListCall) Pages(ctx context.Context, f func(*ListCreativeStatusBreakdownByCreativeResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "adexchangebuyer2.accounts.filterSets.filteredBids.creatives.details.list":
+
+type AccountsFilterSetsFilteredBidsCreativesDetailsListCall struct {
+	s                *Service
+	accountId        int64
+	filterSetId      int64
+	creativeStatusId int64
+	creativeId       string
+	urlParams_       gensupport.URLParams
+	ifNoneMatch_     string
+	ctx_             context.Context
+	header_          http.Header
+}
+
+// List: List all details associated with a specific reason for which
+// bids were
+// filtered and a specific creative that was filtered for that reason,
+// with
+// the number of bids filtered for each detail.
+func (r *AccountsFilterSetsFilteredBidsCreativesDetailsService) List(accountId int64, filterSetId int64, creativeStatusId int64, creativeId string) *AccountsFilterSetsFilteredBidsCreativesDetailsListCall {
+	c := &AccountsFilterSetsFilteredBidsCreativesDetailsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.accountId = accountId
+	c.filterSetId = filterSetId
+	c.creativeStatusId = creativeStatusId
+	c.creativeId = creativeId
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": Requested page size.
+// The server may return fewer results than requested.
+// If unspecified, the server will pick an appropriate default.
+func (c *AccountsFilterSetsFilteredBidsCreativesDetailsListCall) PageSize(pageSize int64) *AccountsFilterSetsFilteredBidsCreativesDetailsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": A token
+// identifying a page of results the server should return.
+// Typically, this is the value
+// of
+// ListCreativeStatusAndCreativeBreakdownByDetailResponse.nextPageToke
+// n
+// returned from the previous call to
+// the
+// accounts.filterSets.filteredBids.creatives.details.list
+// method.
+func (c *AccountsFilterSetsFilteredBidsCreativesDetailsListCall) PageToken(pageToken string) *AccountsFilterSetsFilteredBidsCreativesDetailsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *AccountsFilterSetsFilteredBidsCreativesDetailsListCall) Fields(s ...googleapi.Field) *AccountsFilterSetsFilteredBidsCreativesDetailsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *AccountsFilterSetsFilteredBidsCreativesDetailsListCall) IfNoneMatch(entityTag string) *AccountsFilterSetsFilteredBidsCreativesDetailsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *AccountsFilterSetsFilteredBidsCreativesDetailsListCall) Context(ctx context.Context) *AccountsFilterSetsFilteredBidsCreativesDetailsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *AccountsFilterSetsFilteredBidsCreativesDetailsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *AccountsFilterSetsFilteredBidsCreativesDetailsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/filteredBids/{creativeStatusId}/creatives/{creativeId}/details")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"accountId":        strconv.FormatInt(c.accountId, 10),
+		"filterSetId":      strconv.FormatInt(c.filterSetId, 10),
+		"creativeStatusId": strconv.FormatInt(c.creativeStatusId, 10),
+		"creativeId":       c.creativeId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "adexchangebuyer2.accounts.filterSets.filteredBids.creatives.details.list" call.
+// Exactly one of
+// *ListCreativeStatusAndCreativeBreakdownByDetailResponse or error will
+// be non-nil. Any non-2xx status code is an error. Response headers are
+// in either
+// *ListCreativeStatusAndCreativeBreakdownByDetailResponse.ServerResponse
+// .Header or (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *AccountsFilterSetsFilteredBidsCreativesDetailsListCall) Do(opts ...googleapi.CallOption) (*ListCreativeStatusAndCreativeBreakdownByDetailResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListCreativeStatusAndCreativeBreakdownByDetailResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "List all details associated with a specific reason for which bids were\nfiltered and a specific creative that was filtered for that reason, with\nthe number of bids filtered for each detail.",
+	//   "flatPath": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/filteredBids/{creativeStatusId}/creatives/{creativeId}/details",
+	//   "httpMethod": "GET",
+	//   "id": "adexchangebuyer2.accounts.filterSets.filteredBids.creatives.details.list",
+	//   "parameterOrder": [
+	//     "accountId",
+	//     "filterSetId",
+	//     "creativeStatusId",
+	//     "creativeId"
+	//   ],
+	//   "parameters": {
+	//     "accountId": {
+	//       "description": "Account ID of the buyer.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "creativeId": {
+	//       "description": "The creative ID for which to retrieve a breakdown by detail.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "creativeStatusId": {
+	//       "description": "The ID of the creative status for which to retrieve a breakdown by detail.\nSee\n[creative-status-codes](https://developers.google.com/ad-exchange/rtb/downloads/creative-status-codes).",
+	//       "format": "int32",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "integer"
+	//     },
+	//     "filterSetId": {
+	//       "description": "The ID of the filter set to apply.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "Requested page size. The server may return fewer results than requested.\nIf unspecified, the server will pick an appropriate default.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "A token identifying a page of results the server should return.\nTypically, this is the value of\nListCreativeStatusAndCreativeBreakdownByDetailResponse.nextPageToken\nreturned from the previous call to the\naccounts.filterSets.filteredBids.creatives.details.list\nmethod.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/filteredBids/{creativeStatusId}/creatives/{creativeId}/details",
+	//   "response": {
+	//     "$ref": "ListCreativeStatusAndCreativeBreakdownByDetailResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/adexchange.buyer"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *AccountsFilterSetsFilteredBidsCreativesDetailsListCall) Pages(ctx context.Context, f func(*ListCreativeStatusAndCreativeBreakdownByDetailResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "adexchangebuyer2.accounts.filterSets.filteredBids.details.list":
+
+type AccountsFilterSetsFilteredBidsDetailsListCall struct {
+	s                *Service
+	accountId        int64
+	filterSetId      int64
+	creativeStatusId int64
+	urlParams_       gensupport.URLParams
+	ifNoneMatch_     string
+	ctx_             context.Context
+	header_          http.Header
+}
+
+// List: List all details associated with a specific reason for which
+// bids were
+// filtered, with the number of bids filtered for each detail.
+func (r *AccountsFilterSetsFilteredBidsDetailsService) List(accountId int64, filterSetId int64, creativeStatusId int64) *AccountsFilterSetsFilteredBidsDetailsListCall {
+	c := &AccountsFilterSetsFilteredBidsDetailsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.accountId = accountId
+	c.filterSetId = filterSetId
+	c.creativeStatusId = creativeStatusId
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": Requested page size.
+// The server may return fewer results than requested.
+// If unspecified, the server will pick an appropriate default.
+func (c *AccountsFilterSetsFilteredBidsDetailsListCall) PageSize(pageSize int64) *AccountsFilterSetsFilteredBidsDetailsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": A token
+// identifying a page of results the server should return.
+// Typically, this is the value
+// of
+// ListCreativeStatusBreakdownByDetailResponse.nextPageToken
+// returned from the previous call to
+// the
+// accounts.filterSets.filteredBids.details.list
+// method.
+func (c *AccountsFilterSetsFilteredBidsDetailsListCall) PageToken(pageToken string) *AccountsFilterSetsFilteredBidsDetailsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *AccountsFilterSetsFilteredBidsDetailsListCall) Fields(s ...googleapi.Field) *AccountsFilterSetsFilteredBidsDetailsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *AccountsFilterSetsFilteredBidsDetailsListCall) IfNoneMatch(entityTag string) *AccountsFilterSetsFilteredBidsDetailsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *AccountsFilterSetsFilteredBidsDetailsListCall) Context(ctx context.Context) *AccountsFilterSetsFilteredBidsDetailsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *AccountsFilterSetsFilteredBidsDetailsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *AccountsFilterSetsFilteredBidsDetailsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/filteredBids/{creativeStatusId}/details")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"accountId":        strconv.FormatInt(c.accountId, 10),
+		"filterSetId":      strconv.FormatInt(c.filterSetId, 10),
+		"creativeStatusId": strconv.FormatInt(c.creativeStatusId, 10),
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "adexchangebuyer2.accounts.filterSets.filteredBids.details.list" call.
+// Exactly one of *ListCreativeStatusBreakdownByDetailResponse or error
+// will be non-nil. Any non-2xx status code is an error. Response
+// headers are in either
+// *ListCreativeStatusBreakdownByDetailResponse.ServerResponse.Header or
+// (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *AccountsFilterSetsFilteredBidsDetailsListCall) Do(opts ...googleapi.CallOption) (*ListCreativeStatusBreakdownByDetailResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListCreativeStatusBreakdownByDetailResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "List all details associated with a specific reason for which bids were\nfiltered, with the number of bids filtered for each detail.",
+	//   "flatPath": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/filteredBids/{creativeStatusId}/details",
+	//   "httpMethod": "GET",
+	//   "id": "adexchangebuyer2.accounts.filterSets.filteredBids.details.list",
+	//   "parameterOrder": [
+	//     "accountId",
+	//     "filterSetId",
+	//     "creativeStatusId"
+	//   ],
+	//   "parameters": {
+	//     "accountId": {
+	//       "description": "Account ID of the buyer.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "creativeStatusId": {
+	//       "description": "The ID of the creative status for which to retrieve a breakdown by detail.\nSee\n[creative-status-codes](https://developers.google.com/ad-exchange/rtb/downloads/creative-status-codes).",
+	//       "format": "int32",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "integer"
+	//     },
+	//     "filterSetId": {
+	//       "description": "The ID of the filter set to apply.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "Requested page size. The server may return fewer results than requested.\nIf unspecified, the server will pick an appropriate default.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "A token identifying a page of results the server should return.\nTypically, this is the value of\nListCreativeStatusBreakdownByDetailResponse.nextPageToken\nreturned from the previous call to the\naccounts.filterSets.filteredBids.details.list\nmethod.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/filteredBids/{creativeStatusId}/details",
+	//   "response": {
+	//     "$ref": "ListCreativeStatusBreakdownByDetailResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/adexchange.buyer"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *AccountsFilterSetsFilteredBidsDetailsListCall) Pages(ctx context.Context, f func(*ListCreativeStatusBreakdownByDetailResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "adexchangebuyer2.accounts.filterSets.impressionMetrics.list":
+
+type AccountsFilterSetsImpressionMetricsListCall struct {
+	s            *Service
+	accountId    int64
+	filterSetId  int64
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: Lists all metrics that are measured in terms of number of
+// impressions.
+func (r *AccountsFilterSetsImpressionMetricsService) List(accountId int64, filterSetId int64) *AccountsFilterSetsImpressionMetricsListCall {
+	c := &AccountsFilterSetsImpressionMetricsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.accountId = accountId
+	c.filterSetId = filterSetId
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": Requested page size.
+// The server may return fewer results than requested.
+// If unspecified, the server will pick an appropriate default.
+func (c *AccountsFilterSetsImpressionMetricsListCall) PageSize(pageSize int64) *AccountsFilterSetsImpressionMetricsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": A token
+// identifying a page of results the server should return.
+// Typically, this is the value
+// of
+// ListImpressionMetricsResponse.nextPageToken
+// returned from the previous call to
+// the
+// accounts.filterSets.impressionMetrics.list
+// method.
+func (c *AccountsFilterSetsImpressionMetricsListCall) PageToken(pageToken string) *AccountsFilterSetsImpressionMetricsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *AccountsFilterSetsImpressionMetricsListCall) Fields(s ...googleapi.Field) *AccountsFilterSetsImpressionMetricsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *AccountsFilterSetsImpressionMetricsListCall) IfNoneMatch(entityTag string) *AccountsFilterSetsImpressionMetricsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *AccountsFilterSetsImpressionMetricsListCall) Context(ctx context.Context) *AccountsFilterSetsImpressionMetricsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *AccountsFilterSetsImpressionMetricsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *AccountsFilterSetsImpressionMetricsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/impressionMetrics")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"accountId":   strconv.FormatInt(c.accountId, 10),
+		"filterSetId": strconv.FormatInt(c.filterSetId, 10),
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "adexchangebuyer2.accounts.filterSets.impressionMetrics.list" call.
+// Exactly one of *ListImpressionMetricsResponse or error will be
+// non-nil. Any non-2xx status code is an error. Response headers are in
+// either *ListImpressionMetricsResponse.ServerResponse.Header or (if a
+// response was returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *AccountsFilterSetsImpressionMetricsListCall) Do(opts ...googleapi.CallOption) (*ListImpressionMetricsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListImpressionMetricsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Lists all metrics that are measured in terms of number of impressions.",
+	//   "flatPath": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/impressionMetrics",
+	//   "httpMethod": "GET",
+	//   "id": "adexchangebuyer2.accounts.filterSets.impressionMetrics.list",
+	//   "parameterOrder": [
+	//     "accountId",
+	//     "filterSetId"
+	//   ],
+	//   "parameters": {
+	//     "accountId": {
+	//       "description": "Account ID of the buyer.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "filterSetId": {
+	//       "description": "The ID of the filter set to apply.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "Requested page size. The server may return fewer results than requested.\nIf unspecified, the server will pick an appropriate default.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "A token identifying a page of results the server should return.\nTypically, this is the value of\nListImpressionMetricsResponse.nextPageToken\nreturned from the previous call to the\naccounts.filterSets.impressionMetrics.list\nmethod.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/impressionMetrics",
+	//   "response": {
+	//     "$ref": "ListImpressionMetricsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/adexchange.buyer"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *AccountsFilterSetsImpressionMetricsListCall) Pages(ctx context.Context, f func(*ListImpressionMetricsResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "adexchangebuyer2.accounts.filterSets.losingBids.list":
+
+type AccountsFilterSetsLosingBidsListCall struct {
+	s            *Service
+	accountId    int64
+	filterSetId  int64
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: List all reasons for which bids lost in the auction, with the
+// number of
+// bids that lost for each reason.
+func (r *AccountsFilterSetsLosingBidsService) List(accountId int64, filterSetId int64) *AccountsFilterSetsLosingBidsListCall {
+	c := &AccountsFilterSetsLosingBidsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.accountId = accountId
+	c.filterSetId = filterSetId
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": Requested page size.
+// The server may return fewer results than requested.
+// If unspecified, the server will pick an appropriate default.
+func (c *AccountsFilterSetsLosingBidsListCall) PageSize(pageSize int64) *AccountsFilterSetsLosingBidsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": A token
+// identifying a page of results the server should return.
+// Typically, this is the value
+// of
+// ListLosingBidsResponse.nextPageToken
+// returned from the previous call to
+// the
+// accounts.filterSets.losingBids.list
+// method.
+func (c *AccountsFilterSetsLosingBidsListCall) PageToken(pageToken string) *AccountsFilterSetsLosingBidsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *AccountsFilterSetsLosingBidsListCall) Fields(s ...googleapi.Field) *AccountsFilterSetsLosingBidsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *AccountsFilterSetsLosingBidsListCall) IfNoneMatch(entityTag string) *AccountsFilterSetsLosingBidsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *AccountsFilterSetsLosingBidsListCall) Context(ctx context.Context) *AccountsFilterSetsLosingBidsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *AccountsFilterSetsLosingBidsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *AccountsFilterSetsLosingBidsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/losingBids")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"accountId":   strconv.FormatInt(c.accountId, 10),
+		"filterSetId": strconv.FormatInt(c.filterSetId, 10),
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "adexchangebuyer2.accounts.filterSets.losingBids.list" call.
+// Exactly one of *ListLosingBidsResponse or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *ListLosingBidsResponse.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *AccountsFilterSetsLosingBidsListCall) Do(opts ...googleapi.CallOption) (*ListLosingBidsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListLosingBidsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "List all reasons for which bids lost in the auction, with the number of\nbids that lost for each reason.",
+	//   "flatPath": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/losingBids",
+	//   "httpMethod": "GET",
+	//   "id": "adexchangebuyer2.accounts.filterSets.losingBids.list",
+	//   "parameterOrder": [
+	//     "accountId",
+	//     "filterSetId"
+	//   ],
+	//   "parameters": {
+	//     "accountId": {
+	//       "description": "Account ID of the buyer.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "filterSetId": {
+	//       "description": "The ID of the filter set to apply.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "Requested page size. The server may return fewer results than requested.\nIf unspecified, the server will pick an appropriate default.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "A token identifying a page of results the server should return.\nTypically, this is the value of\nListLosingBidsResponse.nextPageToken\nreturned from the previous call to the\naccounts.filterSets.losingBids.list\nmethod.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/losingBids",
+	//   "response": {
+	//     "$ref": "ListLosingBidsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/adexchange.buyer"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *AccountsFilterSetsLosingBidsListCall) Pages(ctx context.Context, f func(*ListLosingBidsResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "adexchangebuyer2.accounts.filterSets.nonBillableWinningBids.list":
+
+type AccountsFilterSetsNonBillableWinningBidsListCall struct {
+	s            *Service
+	accountId    int64
+	filterSetId  int64
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: List all reasons for which winning bids were not billable, with
+// the number
+// of bids not billed for each reason.
+func (r *AccountsFilterSetsNonBillableWinningBidsService) List(accountId int64, filterSetId int64) *AccountsFilterSetsNonBillableWinningBidsListCall {
+	c := &AccountsFilterSetsNonBillableWinningBidsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.accountId = accountId
+	c.filterSetId = filterSetId
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": Requested page size.
+// The server may return fewer results than requested.
+// If unspecified, the server will pick an appropriate default.
+func (c *AccountsFilterSetsNonBillableWinningBidsListCall) PageSize(pageSize int64) *AccountsFilterSetsNonBillableWinningBidsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": A token
+// identifying a page of results the server should return.
+// Typically, this is the value
+// of
+// ListNonBillableWinningBidsResponse.nextPageToken
+// returned from the previous call to
+// the
+// accounts.filterSets.nonBillableWinningBids.list
+// method.
+func (c *AccountsFilterSetsNonBillableWinningBidsListCall) PageToken(pageToken string) *AccountsFilterSetsNonBillableWinningBidsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *AccountsFilterSetsNonBillableWinningBidsListCall) Fields(s ...googleapi.Field) *AccountsFilterSetsNonBillableWinningBidsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *AccountsFilterSetsNonBillableWinningBidsListCall) IfNoneMatch(entityTag string) *AccountsFilterSetsNonBillableWinningBidsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *AccountsFilterSetsNonBillableWinningBidsListCall) Context(ctx context.Context) *AccountsFilterSetsNonBillableWinningBidsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *AccountsFilterSetsNonBillableWinningBidsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *AccountsFilterSetsNonBillableWinningBidsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/nonBillableWinningBids")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"accountId":   strconv.FormatInt(c.accountId, 10),
+		"filterSetId": strconv.FormatInt(c.filterSetId, 10),
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "adexchangebuyer2.accounts.filterSets.nonBillableWinningBids.list" call.
+// Exactly one of *ListNonBillableWinningBidsResponse or error will be
+// non-nil. Any non-2xx status code is an error. Response headers are in
+// either *ListNonBillableWinningBidsResponse.ServerResponse.Header or
+// (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *AccountsFilterSetsNonBillableWinningBidsListCall) Do(opts ...googleapi.CallOption) (*ListNonBillableWinningBidsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListNonBillableWinningBidsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "List all reasons for which winning bids were not billable, with the number\nof bids not billed for each reason.",
+	//   "flatPath": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/nonBillableWinningBids",
+	//   "httpMethod": "GET",
+	//   "id": "adexchangebuyer2.accounts.filterSets.nonBillableWinningBids.list",
+	//   "parameterOrder": [
+	//     "accountId",
+	//     "filterSetId"
+	//   ],
+	//   "parameters": {
+	//     "accountId": {
+	//       "description": "Account ID of the buyer.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "filterSetId": {
+	//       "description": "The ID of the filter set to apply.",
+	//       "format": "int64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "Requested page size. The server may return fewer results than requested.\nIf unspecified, the server will pick an appropriate default.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "A token identifying a page of results the server should return.\nTypically, this is the value of\nListNonBillableWinningBidsResponse.nextPageToken\nreturned from the previous call to the\naccounts.filterSets.nonBillableWinningBids.list\nmethod.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta1/accounts/{accountId}/filterSets/{filterSetId}/nonBillableWinningBids",
+	//   "response": {
+	//     "$ref": "ListNonBillableWinningBidsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/adexchange.buyer"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *AccountsFilterSetsNonBillableWinningBidsListCall) Pages(ctx context.Context, f func(*ListNonBillableWinningBidsResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
 }

@@ -1,9 +1,8 @@
 package request_test
 
 import (
+	"reflect"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -20,8 +19,12 @@ func TestHandlerList(t *testing.T) {
 		r.Data = s
 	})
 	l.Run(r)
-	assert.Equal(t, "a", s)
-	assert.Equal(t, "a", r.Data)
+	if e, a := "a", s; e != a {
+		t.Errorf("expect %q update got %q", e, a)
+	}
+	if e, a := "a", r.Data.(string); e != a {
+		t.Errorf("expect %q data update got %q", e, a)
+	}
 }
 
 func TestMultipleHandlers(t *testing.T) {
@@ -43,9 +46,110 @@ func TestNamedHandlers(t *testing.T) {
 	l.PushBackNamed(named)
 	l.PushBackNamed(named2)
 	l.PushBack(func(r *request.Request) {})
-	assert.Equal(t, 4, l.Len())
+	if e, a := 4, l.Len(); e != a {
+		t.Errorf("expect %d list length, got %d", e, a)
+	}
 	l.Remove(named)
-	assert.Equal(t, 2, l.Len())
+	if e, a := 2, l.Len(); e != a {
+		t.Errorf("expect %d list length, got %d", e, a)
+	}
+}
+
+func TestSwapHandlers(t *testing.T) {
+	firstHandlerCalled := 0
+	swappedOutHandlerCalled := 0
+	swappedInHandlerCalled := 0
+
+	l := request.HandlerList{}
+	named := request.NamedHandler{Name: "Name", Fn: func(r *request.Request) {
+		firstHandlerCalled++
+	}}
+	named2 := request.NamedHandler{Name: "SwapOutName", Fn: func(r *request.Request) {
+		swappedOutHandlerCalled++
+	}}
+	l.PushBackNamed(named)
+	l.PushBackNamed(named2)
+	l.PushBackNamed(named)
+
+	l.SwapNamed(request.NamedHandler{Name: "SwapOutName", Fn: func(r *request.Request) {
+		swappedInHandlerCalled++
+	}})
+
+	l.Run(&request.Request{})
+
+	if e, a := 2, firstHandlerCalled; e != a {
+		t.Errorf("expect first handler to be called %d, was called %d times", e, a)
+	}
+	if n := swappedOutHandlerCalled; n != 0 {
+		t.Errorf("expect swapped out handler to not be called, was called %d times", n)
+	}
+	if e, a := 1, swappedInHandlerCalled; e != a {
+		t.Errorf("expect swapped in handler to be called %d, was called %d times", e, a)
+	}
+}
+
+func TestSetBackNamed_Exists(t *testing.T) {
+	firstHandlerCalled := 0
+	swappedOutHandlerCalled := 0
+	swappedInHandlerCalled := 0
+
+	l := request.HandlerList{}
+	named := request.NamedHandler{Name: "Name", Fn: func(r *request.Request) {
+		firstHandlerCalled++
+	}}
+	named2 := request.NamedHandler{Name: "SwapOutName", Fn: func(r *request.Request) {
+		swappedOutHandlerCalled++
+	}}
+	l.PushBackNamed(named)
+	l.PushBackNamed(named2)
+
+	l.SetBackNamed(request.NamedHandler{Name: "SwapOutName", Fn: func(r *request.Request) {
+		swappedInHandlerCalled++
+	}})
+
+	l.Run(&request.Request{})
+
+	if e, a := 1, firstHandlerCalled; e != a {
+		t.Errorf("expect first handler to be called %d, was called %d times", e, a)
+	}
+	if n := swappedOutHandlerCalled; n != 0 {
+		t.Errorf("expect swapped out handler to not be called, was called %d times", n)
+	}
+	if e, a := 1, swappedInHandlerCalled; e != a {
+		t.Errorf("expect swapped in handler to be called %d, was called %d times", e, a)
+	}
+}
+
+func TestSetBackNamed_NotExists(t *testing.T) {
+	firstHandlerCalled := 0
+	secondHandlerCalled := 0
+	swappedInHandlerCalled := 0
+
+	l := request.HandlerList{}
+	named := request.NamedHandler{Name: "Name", Fn: func(r *request.Request) {
+		firstHandlerCalled++
+	}}
+	named2 := request.NamedHandler{Name: "OtherName", Fn: func(r *request.Request) {
+		secondHandlerCalled++
+	}}
+	l.PushBackNamed(named)
+	l.PushBackNamed(named2)
+
+	l.SetBackNamed(request.NamedHandler{Name: "SwapOutName", Fn: func(r *request.Request) {
+		swappedInHandlerCalled++
+	}})
+
+	l.Run(&request.Request{})
+
+	if e, a := 1, firstHandlerCalled; e != a {
+		t.Errorf("expect first handler to be called %d, was called %d times", e, a)
+	}
+	if e, a := 1, secondHandlerCalled; e != a {
+		t.Errorf("expect second handler to be called %d, was called %d times", e, a)
+	}
+	if e, a := 1, swappedInHandlerCalled; e != a {
+		t.Errorf("expect swapped in handler to be called %d, was called %d times", e, a)
+	}
 }
 
 func TestLoggedHandlers(t *testing.T) {
@@ -63,7 +167,10 @@ func TestLoggedHandlers(t *testing.T) {
 	l.PushBackNamed(named2)
 	l.Run(&request.Request{Config: cfg})
 
-	assert.Equal(t, expectedHandlers, loggedHandlers)
+	if !reflect.DeepEqual(expectedHandlers, loggedHandlers) {
+		t.Errorf("expect handlers executed %v to match logged handlers, %v",
+			expectedHandlers, loggedHandlers)
+	}
 }
 
 func TestStopHandlers(t *testing.T) {
@@ -81,11 +188,13 @@ func TestStopHandlers(t *testing.T) {
 		called++
 	}})
 	l.PushBackNamed(request.NamedHandler{Name: "name3", Fn: func(r *request.Request) {
-		assert.Fail(t, "third handler should not be called")
+		t.Fatalf("third handler should not be called")
 	}})
 	l.Run(&request.Request{})
 
-	assert.Equal(t, 2, called, "Expect only two handlers to be called")
+	if e, a := 2, called; e != a {
+		t.Errorf("expect %d handlers called, got %d", e, a)
+	}
 }
 
 func BenchmarkNewRequest(b *testing.B) {

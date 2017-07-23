@@ -59,7 +59,7 @@ Init will not use an existing directory with contents.`,
 				project = NewProject(arg)
 			}
 		} else {
-			er("please enter the name")
+			er("please provide only one argument")
 		}
 
 		initializeProject(project)
@@ -142,13 +142,13 @@ package cmd
 import (
 	"fmt"
 	"os"
+{{if .viper}}
+	homedir "github.com/mitchellh/go-homedir"{{end}}
+	"github.com/spf13/cobra"{{if .viper}}
+	"github.com/spf13/viper"{{end}}
+){{if .viper}}
 
-	homedir "github.com/mitchellh/go-homedir"
-	"github.com/spf13/cobra"
-{{if .viper}}	"github.com/spf13/viper"{{end}}
-)
-
-{{if .viper}}var cfgFile string{{end}}
+var cfgFile string{{end}}
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -165,7 +165,7 @@ to quickly create a Cobra application.` + "`" + `,
 	//	Run: func(cmd *cobra.Command, args []string) { },
 }
 
-// Execute adds all child commands to the root command sets flags appropriately.
+// Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := RootCmd.Execute(); err != nil {
@@ -174,9 +174,9 @@ func Execute() {
 	}
 }
 
-func init() {
-{{if .viper}}	cobra.OnInitialize(initConfig){{end}}
-
+func init() { {{if .viper}}
+	cobra.OnInitialize(initConfig)
+{{end}}
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.{{ if .viper }}
@@ -197,13 +197,13 @@ func initConfig() {
 		// Find home directory.
 		home, err := homedir.Dir()
 		if err != nil {
-			fmt.Println(home)
+			fmt.Println(err)
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".cobra" (without extension).
+		// Search config in home directory with name ".{{ .appName }}" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".cobra")
+		viper.SetConfigName(".{{ .appName }}")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match

@@ -1,13 +1,13 @@
 {
   "version":"2.0",
   "metadata":{
-    "uid":"iot-2015-05-28",
     "apiVersion":"2015-05-28",
     "endpointPrefix":"iot",
+    "protocol":"rest-json",
     "serviceFullName":"AWS IoT",
     "signatureVersion":"v4",
     "signingName":"execute-api",
-    "protocol":"rest-json"
+    "uid":"iot-2015-05-28"
   },
   "operations":{
     "AcceptCertificateTransfer":{
@@ -18,43 +18,13 @@
       },
       "input":{"shape":"AcceptCertificateTransferRequest"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"TransferAlreadyCompletedException",
-          "error":{"httpStatusCode":410},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"TransferAlreadyCompletedException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "AttachPrincipalPolicy":{
@@ -65,43 +35,13 @@
       },
       "input":{"shape":"AttachPrincipalPolicyRequest"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"LimitExceededException",
-          "error":{"httpStatusCode":410},
-          "exception":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"LimitExceededException"}
       ]
     },
     "AttachThingPrincipal":{
@@ -113,38 +53,12 @@
       "input":{"shape":"AttachThingPrincipalRequest"},
       "output":{"shape":"AttachThingPrincipalResponse"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "CancelCertificateTransfer":{
@@ -155,43 +69,13 @@
       },
       "input":{"shape":"CancelCertificateTransferRequest"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"TransferAlreadyCompletedException",
-          "error":{"httpStatusCode":410},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"TransferAlreadyCompletedException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "CreateCertificateFromCsr":{
@@ -203,33 +87,11 @@
       "input":{"shape":"CreateCertificateFromCsrRequest"},
       "output":{"shape":"CreateCertificateFromCsrResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "CreateKeysAndCertificate":{
@@ -241,33 +103,11 @@
       "input":{"shape":"CreateKeysAndCertificateRequest"},
       "output":{"shape":"CreateKeysAndCertificateResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "CreatePolicy":{
@@ -279,43 +119,13 @@
       "input":{"shape":"CreatePolicyRequest"},
       "output":{"shape":"CreatePolicyResponse"},
       "errors":[
-        {
-          "shape":"ResourceAlreadyExistsException",
-          "error":{"httpStatusCode":409},
-          "exception":true
-        },
-        {
-          "shape":"MalformedPolicyException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceAlreadyExistsException"},
+        {"shape":"MalformedPolicyException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "CreatePolicyVersion":{
@@ -327,48 +137,14 @@
       "input":{"shape":"CreatePolicyVersionRequest"},
       "output":{"shape":"CreatePolicyVersionResponse"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"MalformedPolicyException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"VersionsLimitExceededException",
-          "error":{"httpStatusCode":409},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"MalformedPolicyException"},
+        {"shape":"VersionsLimitExceededException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "CreateThing":{
@@ -380,43 +156,13 @@
       "input":{"shape":"CreateThingRequest"},
       "output":{"shape":"CreateThingResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"ResourceAlreadyExistsException",
-          "error":{"httpStatusCode":409},
-          "exception":true
-        },
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"ResourceAlreadyExistsException"},
+        {"shape":"ResourceNotFoundException"}
       ]
     },
     "CreateThingType":{
@@ -428,38 +174,12 @@
       "input":{"shape":"CreateThingTypeRequest"},
       "output":{"shape":"CreateThingTypeResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"ResourceAlreadyExistsException",
-          "error":{"httpStatusCode":409},
-          "exception":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"ResourceAlreadyExistsException"}
       ]
     },
     "CreateTopicRule":{
@@ -470,33 +190,11 @@
       },
       "input":{"shape":"CreateTopicRuleRequest"},
       "errors":[
-        {
-          "shape":"SqlParseException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"InternalException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ResourceAlreadyExistsException",
-          "error":{"httpStatusCode":409},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"SqlParseException"},
+        {"shape":"InternalException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ResourceAlreadyExistsException"},
+        {"shape":"ServiceUnavailableException"}
       ]
     },
     "DeleteCACertificate":{
@@ -508,43 +206,13 @@
       "input":{"shape":"DeleteCACertificateRequest"},
       "output":{"shape":"DeleteCACertificateResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"CertificateStateException",
-          "error":{"httpStatusCode":406},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"CertificateStateException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"ResourceNotFoundException"}
       ]
     },
     "DeleteCertificate":{
@@ -555,48 +223,14 @@
       },
       "input":{"shape":"DeleteCertificateRequest"},
       "errors":[
-        {
-          "shape":"CertificateStateException",
-          "error":{"httpStatusCode":406},
-          "exception":true
-        },
-        {
-          "shape":"DeleteConflictException",
-          "error":{"httpStatusCode":409},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        }
+        {"shape":"CertificateStateException"},
+        {"shape":"DeleteConflictException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"ResourceNotFoundException"}
       ]
     },
     "DeletePolicy":{
@@ -607,43 +241,13 @@
       },
       "input":{"shape":"DeletePolicyRequest"},
       "errors":[
-        {
-          "shape":"DeleteConflictException",
-          "error":{"httpStatusCode":409},
-          "exception":true
-        },
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"DeleteConflictException"},
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "DeletePolicyVersion":{
@@ -654,43 +258,13 @@
       },
       "input":{"shape":"DeletePolicyVersionRequest"},
       "errors":[
-        {
-          "shape":"DeleteConflictException",
-          "error":{"httpStatusCode":409},
-          "exception":true
-        },
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"DeleteConflictException"},
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "DeleteRegistrationCode":{
@@ -702,33 +276,11 @@
       "input":{"shape":"DeleteRegistrationCodeRequest"},
       "output":{"shape":"DeleteRegistrationCodeResponse"},
       "errors":[
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ThrottlingException"},
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "DeleteThing":{
@@ -740,43 +292,13 @@
       "input":{"shape":"DeleteThingRequest"},
       "output":{"shape":"DeleteThingResponse"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"VersionConflictException",
-          "error":{"httpStatusCode":409},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"VersionConflictException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "DeleteThingType":{
@@ -788,38 +310,12 @@
       "input":{"shape":"DeleteThingTypeRequest"},
       "output":{"shape":"DeleteThingTypeResponse"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "DeleteTopicRule":{
@@ -830,28 +326,10 @@
       },
       "input":{"shape":"DeleteTopicRuleRequest"},
       "errors":[
-        {
-          "shape":"InternalException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        }
+        {"shape":"InternalException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"UnauthorizedException"}
       ]
     },
     "DeprecateThingType":{
@@ -863,38 +341,12 @@
       "input":{"shape":"DeprecateThingTypeRequest"},
       "output":{"shape":"DeprecateThingTypeResponse"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "DescribeCACertificate":{
@@ -906,38 +358,12 @@
       "input":{"shape":"DescribeCACertificateRequest"},
       "output":{"shape":"DescribeCACertificateResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"ResourceNotFoundException"}
       ]
     },
     "DescribeCertificate":{
@@ -949,38 +375,12 @@
       "input":{"shape":"DescribeCertificateRequest"},
       "output":{"shape":"DescribeCertificateResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"ResourceNotFoundException"}
       ]
     },
     "DescribeEndpoint":{
@@ -992,22 +392,9 @@
       "input":{"shape":"DescribeEndpointRequest"},
       "output":{"shape":"DescribeEndpointResponse"},
       "errors":[
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        }
+        {"shape":"InternalFailureException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ThrottlingException"}
       ]
     },
     "DescribeThing":{
@@ -1019,38 +406,12 @@
       "input":{"shape":"DescribeThingRequest"},
       "output":{"shape":"DescribeThingResponse"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "DescribeThingType":{
@@ -1062,38 +423,12 @@
       "input":{"shape":"DescribeThingTypeRequest"},
       "output":{"shape":"DescribeThingTypeResponse"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "DetachPrincipalPolicy":{
@@ -1104,38 +439,12 @@
       },
       "input":{"shape":"DetachPrincipalPolicyRequest"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "DetachThingPrincipal":{
@@ -1147,38 +456,12 @@
       "input":{"shape":"DetachThingPrincipalRequest"},
       "output":{"shape":"DetachThingPrincipalResponse"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "DisableTopicRule":{
@@ -1189,28 +472,10 @@
       },
       "input":{"shape":"DisableTopicRuleRequest"},
       "errors":[
-        {
-          "shape":"InternalException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        }
+        {"shape":"InternalException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"UnauthorizedException"}
       ]
     },
     "EnableTopicRule":{
@@ -1221,28 +486,10 @@
       },
       "input":{"shape":"EnableTopicRuleRequest"},
       "errors":[
-        {
-          "shape":"InternalException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        }
+        {"shape":"InternalException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"UnauthorizedException"}
       ]
     },
     "GetLoggingOptions":{
@@ -1254,23 +501,9 @@
       "input":{"shape":"GetLoggingOptionsRequest"},
       "output":{"shape":"GetLoggingOptionsResponse"},
       "errors":[
-        {
-          "shape":"InternalException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"InternalException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ServiceUnavailableException"}
       ]
     },
     "GetPolicy":{
@@ -1282,38 +515,12 @@
       "input":{"shape":"GetPolicyRequest"},
       "output":{"shape":"GetPolicyResponse"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "GetPolicyVersion":{
@@ -1325,38 +532,12 @@
       "input":{"shape":"GetPolicyVersionRequest"},
       "output":{"shape":"GetPolicyVersionResponse"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "GetRegistrationCode":{
@@ -1368,33 +549,11 @@
       "input":{"shape":"GetRegistrationCodeRequest"},
       "output":{"shape":"GetRegistrationCodeResponse"},
       "errors":[
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        }
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"InvalidRequestException"}
       ]
     },
     "GetTopicRule":{
@@ -1406,28 +565,10 @@
       "input":{"shape":"GetTopicRuleRequest"},
       "output":{"shape":"GetTopicRuleResponse"},
       "errors":[
-        {
-          "shape":"InternalException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        }
+        {"shape":"InternalException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"UnauthorizedException"}
       ]
     },
     "ListCACertificates":{
@@ -1439,33 +580,11 @@
       "input":{"shape":"ListCACertificatesRequest"},
       "output":{"shape":"ListCACertificatesResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "ListCertificates":{
@@ -1477,33 +596,11 @@
       "input":{"shape":"ListCertificatesRequest"},
       "output":{"shape":"ListCertificatesResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "ListCertificatesByCA":{
@@ -1515,33 +612,11 @@
       "input":{"shape":"ListCertificatesByCARequest"},
       "output":{"shape":"ListCertificatesByCAResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "ListOutgoingCertificates":{
@@ -1553,33 +628,11 @@
       "input":{"shape":"ListOutgoingCertificatesRequest"},
       "output":{"shape":"ListOutgoingCertificatesResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "ListPolicies":{
@@ -1591,33 +644,11 @@
       "input":{"shape":"ListPoliciesRequest"},
       "output":{"shape":"ListPoliciesResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "ListPolicyPrincipals":{
@@ -1629,38 +660,12 @@
       "input":{"shape":"ListPolicyPrincipalsRequest"},
       "output":{"shape":"ListPolicyPrincipalsResponse"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "ListPolicyVersions":{
@@ -1672,38 +677,12 @@
       "input":{"shape":"ListPolicyVersionsRequest"},
       "output":{"shape":"ListPolicyVersionsResponse"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "ListPrincipalPolicies":{
@@ -1715,38 +694,12 @@
       "input":{"shape":"ListPrincipalPoliciesRequest"},
       "output":{"shape":"ListPrincipalPoliciesResponse"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "ListPrincipalThings":{
@@ -1758,38 +711,12 @@
       "input":{"shape":"ListPrincipalThingsRequest"},
       "output":{"shape":"ListPrincipalThingsResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"ResourceNotFoundException"}
       ]
     },
     "ListThingPrincipals":{
@@ -1801,38 +728,12 @@
       "input":{"shape":"ListThingPrincipalsRequest"},
       "output":{"shape":"ListThingPrincipalsResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"ResourceNotFoundException"}
       ]
     },
     "ListThingTypes":{
@@ -1844,33 +745,11 @@
       "input":{"shape":"ListThingTypesRequest"},
       "output":{"shape":"ListThingTypesResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "ListThings":{
@@ -1882,33 +761,11 @@
       "input":{"shape":"ListThingsRequest"},
       "output":{"shape":"ListThingsResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "ListTopicRules":{
@@ -1920,23 +777,9 @@
       "input":{"shape":"ListTopicRulesRequest"},
       "output":{"shape":"ListTopicRulesResponse"},
       "errors":[
-        {
-          "shape":"InternalException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"InternalException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ServiceUnavailableException"}
       ]
     },
     "RegisterCACertificate":{
@@ -1948,53 +791,15 @@
       "input":{"shape":"RegisterCACertificateRequest"},
       "output":{"shape":"RegisterCACertificateResponse"},
       "errors":[
-        {
-          "shape":"ResourceAlreadyExistsException",
-          "error":{"httpStatusCode":409},
-          "exception":true
-        },
-        {
-          "shape":"RegistrationCodeValidationException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"CertificateValidationException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"LimitExceededException",
-          "error":{"httpStatusCode":410},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceAlreadyExistsException"},
+        {"shape":"RegistrationCodeValidationException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"CertificateValidationException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "RegisterCertificate":{
@@ -2006,53 +811,15 @@
       "input":{"shape":"RegisterCertificateRequest"},
       "output":{"shape":"RegisterCertificateResponse"},
       "errors":[
-        {
-          "shape":"ResourceAlreadyExistsException",
-          "error":{"httpStatusCode":409},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"CertificateValidationException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"CertificateStateException",
-          "error":{"httpStatusCode":406},
-          "exception":true
-        },
-        {
-          "shape":"CertificateConflictException",
-          "error":{"httpStatusCode":409},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceAlreadyExistsException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"CertificateValidationException"},
+        {"shape":"CertificateStateException"},
+        {"shape":"CertificateConflictException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "RejectCertificateTransfer":{
@@ -2063,43 +830,13 @@
       },
       "input":{"shape":"RejectCertificateTransferRequest"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"TransferAlreadyCompletedException",
-          "error":{"httpStatusCode":410},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"TransferAlreadyCompletedException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "ReplaceTopicRule":{
@@ -2110,33 +847,11 @@
       },
       "input":{"shape":"ReplaceTopicRuleRequest"},
       "errors":[
-        {
-          "shape":"SqlParseException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"InternalException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        }
+        {"shape":"SqlParseException"},
+        {"shape":"InternalException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"UnauthorizedException"}
       ]
     },
     "SetDefaultPolicyVersion":{
@@ -2147,38 +862,12 @@
       },
       "input":{"shape":"SetDefaultPolicyVersionRequest"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "SetLoggingOptions":{
@@ -2189,23 +878,9 @@
       },
       "input":{"shape":"SetLoggingOptionsRequest"},
       "errors":[
-        {
-          "shape":"InternalException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"InternalException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ServiceUnavailableException"}
       ]
     },
     "TransferCertificate":{
@@ -2217,48 +892,14 @@
       "input":{"shape":"TransferCertificateRequest"},
       "output":{"shape":"TransferCertificateResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"CertificateStateException",
-          "error":{"httpStatusCode":406},
-          "exception":true
-        },
-        {
-          "shape":"TransferConflictException",
-          "error":{"httpStatusCode":409},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"CertificateStateException"},
+        {"shape":"TransferConflictException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "UpdateCACertificate":{
@@ -2269,38 +910,12 @@
       },
       "input":{"shape":"UpdateCACertificateRequest"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "UpdateCertificate":{
@@ -2311,43 +926,13 @@
       },
       "input":{"shape":"UpdateCertificateRequest"},
       "errors":[
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        },
-        {
-          "shape":"CertificateStateException",
-          "error":{"httpStatusCode":406},
-          "exception":true
-        },
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        }
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"CertificateStateException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"}
       ]
     },
     "UpdateThing":{
@@ -2359,43 +944,13 @@
       "input":{"shape":"UpdateThingRequest"},
       "output":{"shape":"UpdateThingResponse"},
       "errors":[
-        {
-          "shape":"InvalidRequestException",
-          "error":{"httpStatusCode":400},
-          "exception":true
-        },
-        {
-          "shape":"VersionConflictException",
-          "error":{"httpStatusCode":409},
-          "exception":true
-        },
-        {
-          "shape":"ThrottlingException",
-          "error":{"httpStatusCode":429},
-          "exception":true
-        },
-        {
-          "shape":"UnauthorizedException",
-          "error":{"httpStatusCode":401},
-          "exception":true
-        },
-        {
-          "shape":"ServiceUnavailableException",
-          "error":{"httpStatusCode":503},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"InternalFailureException",
-          "error":{"httpStatusCode":500},
-          "exception":true,
-          "fault":true
-        },
-        {
-          "shape":"ResourceNotFoundException",
-          "error":{"httpStatusCode":404},
-          "exception":true
-        }
+        {"shape":"InvalidRequestException"},
+        {"shape":"VersionConflictException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"ResourceNotFoundException"}
       ]
     }
   },
@@ -2430,14 +985,15 @@
         "firehose":{"shape":"FirehoseAction"},
         "cloudwatchMetric":{"shape":"CloudwatchMetricAction"},
         "cloudwatchAlarm":{"shape":"CloudwatchAlarmAction"},
-        "elasticsearch":{"shape":"ElasticsearchAction"}
+        "elasticsearch":{"shape":"ElasticsearchAction"},
+        "salesforce":{"shape":"SalesforceAction"}
       }
     },
     "ActionList":{
       "type":"list",
       "member":{"shape":"Action"},
-      "min":0,
-      "max":10
+      "max":10,
+      "min":0
     },
     "AlarmName":{"type":"string"},
     "AllowAutoRegistration":{"type":"boolean"},
@@ -2613,14 +1169,14 @@
     },
     "CertificateId":{
       "type":"string",
-      "min":64,
       "max":64,
+      "min":64,
       "pattern":"(0x)?[a-fA-F0-9]+"
     },
     "CertificatePem":{
       "type":"string",
-      "min":1,
-      "max":65536
+      "max":65536,
+      "min":1
     },
     "CertificateSigningRequest":{
       "type":"string",
@@ -2955,14 +1511,14 @@
     },
     "DeleteTopicRuleRequest":{
       "type":"structure",
+      "required":["ruleName"],
       "members":{
         "ruleName":{
           "shape":"RuleName",
           "location":"uri",
           "locationName":"ruleName"
         }
-      },
-      "required":["ruleName"]
+      }
     },
     "DeliveryStreamName":{"type":"string"},
     "DeprecateThingTypeRequest":{
@@ -3602,7 +2158,7 @@
           "locationName":"nextToken"
         },
         "maxResults":{
-          "shape":"MaxResults",
+          "shape":"RegistryMaxResults",
           "location":"querystring",
           "locationName":"maxResults"
         },
@@ -3646,7 +2202,7 @@
           "locationName":"nextToken"
         },
         "maxResults":{
-          "shape":"MaxResults",
+          "shape":"RegistryMaxResults",
           "location":"querystring",
           "locationName":"maxResults"
         },
@@ -3673,7 +2229,7 @@
           "locationName":"nextToken"
         },
         "maxResults":{
-          "shape":"MaxResults",
+          "shape":"RegistryMaxResults",
           "location":"querystring",
           "locationName":"maxResults"
         },
@@ -3762,8 +2318,8 @@
     "Marker":{"type":"string"},
     "MaxResults":{
       "type":"integer",
-      "min":1,
-      "max":10000
+      "max":10000,
+      "min":1
     },
     "Message":{
       "type":"string",
@@ -3800,8 +2356,8 @@
     },
     "PageSize":{
       "type":"integer",
-      "min":1,
-      "max":250
+      "max":250,
+      "min":1
     },
     "PartitionKey":{"type":"string"},
     "PayloadField":{"type":"string"},
@@ -3820,8 +2376,8 @@
     "PolicyDocument":{"type":"string"},
     "PolicyName":{
       "type":"string",
-      "min":1,
       "max":128,
+      "min":1,
       "pattern":"[\\w+=,.@-]+"
     },
     "PolicyVersion":{
@@ -3917,8 +2473,8 @@
     },
     "RegistrationCode":{
       "type":"string",
-      "min":64,
       "max":64,
+      "min":64,
       "pattern":"(0x)?[a-fA-F0-9]+"
     },
     "RegistrationCodeValidationException":{
@@ -3928,6 +2484,11 @@
       },
       "error":{"httpStatusCode":400},
       "exception":true
+    },
+    "RegistryMaxResults":{
+      "type":"integer",
+      "max":250,
+      "min":1
     },
     "RejectCertificateTransferRequest":{
       "type":"structure",
@@ -3990,8 +2551,8 @@
     "RuleArn":{"type":"string"},
     "RuleName":{
       "type":"string",
-      "min":1,
       "max":128,
+      "min":1,
       "pattern":"^[a-zA-Z0-9_]+$"
     },
     "S3Action":{
@@ -4009,6 +2570,26 @@
       }
     },
     "SQL":{"type":"string"},
+    "SalesforceAction":{
+      "type":"structure",
+      "required":[
+        "token",
+        "url"
+      ],
+      "members":{
+        "token":{"shape":"SalesforceToken"},
+        "url":{"shape":"SalesforceEndpoint"}
+      }
+    },
+    "SalesforceEndpoint":{
+      "type":"string",
+      "max":2000,
+      "pattern":"https://ingestion-[a-zA-Z0-9]{1,12}\\.[a-zA-Z0-9]+\\.((sfdc-matrix\\.net)|(sfdcnow\\.com))/streams/\\w{1,20}/\\w{1,20}/event"
+    },
+    "SalesforceToken":{
+      "type":"string",
+      "min":40
+    },
     "SearchableAttributes":{
       "type":"list",
       "member":{"shape":"AttributeName"}
@@ -4104,8 +2685,8 @@
     },
     "ThingName":{
       "type":"string",
-      "min":1,
       "max":128,
+      "min":1,
       "pattern":"[a-zA-Z0-9:_-]+"
     },
     "ThingNameList":{
@@ -4140,8 +2721,8 @@
     },
     "ThingTypeName":{
       "type":"string",
-      "min":1,
       "max":128,
+      "min":1,
       "pattern":"[a-zA-Z0-9:_-]+"
     },
     "ThingTypeProperties":{

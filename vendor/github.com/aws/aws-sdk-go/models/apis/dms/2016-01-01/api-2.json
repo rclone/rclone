@@ -40,6 +40,22 @@
         {"shape":"AccessDeniedFault"}
       ]
     },
+    "CreateEventSubscription":{
+      "name":"CreateEventSubscription",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreateEventSubscriptionMessage"},
+      "output":{"shape":"CreateEventSubscriptionResponse"},
+      "errors":[
+        {"shape":"ResourceQuotaExceededFault"},
+        {"shape":"ResourceAlreadyExistsFault"},
+        {"shape":"SNSInvalidTopicFault"},
+        {"shape":"SNSNoAuthorizationFault"},
+        {"shape":"ResourceNotFoundFault"}
+      ]
+    },
     "CreateReplicationInstance":{
       "name":"CreateReplicationInstance",
       "http":{
@@ -87,6 +103,7 @@
       "input":{"shape":"CreateReplicationTaskMessage"},
       "output":{"shape":"CreateReplicationTaskResponse"},
       "errors":[
+        {"shape":"AccessDeniedFault"},
         {"shape":"InvalidResourceStateFault"},
         {"shape":"ResourceAlreadyExistsFault"},
         {"shape":"ResourceNotFoundFault"},
@@ -115,6 +132,19 @@
       },
       "input":{"shape":"DeleteEndpointMessage"},
       "output":{"shape":"DeleteEndpointResponse"},
+      "errors":[
+        {"shape":"ResourceNotFoundFault"},
+        {"shape":"InvalidResourceStateFault"}
+      ]
+    },
+    "DeleteEventSubscription":{
+      "name":"DeleteEventSubscription",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteEventSubscriptionMessage"},
+      "output":{"shape":"DeleteEventSubscriptionResponse"},
       "errors":[
         {"shape":"ResourceNotFoundFault"},
         {"shape":"InvalidResourceStateFault"}
@@ -212,6 +242,36 @@
       "errors":[
         {"shape":"ResourceNotFoundFault"}
       ]
+    },
+    "DescribeEventCategories":{
+      "name":"DescribeEventCategories",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeEventCategoriesMessage"},
+      "output":{"shape":"DescribeEventCategoriesResponse"}
+    },
+    "DescribeEventSubscriptions":{
+      "name":"DescribeEventSubscriptions",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeEventSubscriptionsMessage"},
+      "output":{"shape":"DescribeEventSubscriptionsResponse"},
+      "errors":[
+        {"shape":"ResourceNotFoundFault"}
+      ]
+    },
+    "DescribeEvents":{
+      "name":"DescribeEvents",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeEventsMessage"},
+      "output":{"shape":"DescribeEventsResponse"}
     },
     "DescribeOrderableReplicationInstances":{
       "name":"DescribeOrderableReplicationInstances",
@@ -334,7 +394,23 @@
         {"shape":"InvalidResourceStateFault"},
         {"shape":"ResourceNotFoundFault"},
         {"shape":"ResourceAlreadyExistsFault"},
-        {"shape":"KMSKeyNotAccessibleFault"}
+        {"shape":"KMSKeyNotAccessibleFault"},
+        {"shape":"AccessDeniedFault"}
+      ]
+    },
+    "ModifyEventSubscription":{
+      "name":"ModifyEventSubscription",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ModifyEventSubscriptionMessage"},
+      "output":{"shape":"ModifyEventSubscriptionResponse"},
+      "errors":[
+        {"shape":"ResourceQuotaExceededFault"},
+        {"shape":"ResourceNotFoundFault"},
+        {"shape":"SNSInvalidTopicFault"},
+        {"shape":"SNSNoAuthorizationFault"}
       ]
     },
     "ModifyReplicationInstance":{
@@ -399,6 +475,19 @@
         {"shape":"ResourceNotFoundFault"},
         {"shape":"KMSKeyNotAccessibleFault"},
         {"shape":"ResourceQuotaExceededFault"}
+      ]
+    },
+    "ReloadTables":{
+      "name":"ReloadTables",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ReloadTablesMessage"},
+      "output":{"shape":"ReloadTablesResponse"},
+      "errors":[
+        {"shape":"ResourceNotFoundFault"},
+        {"shape":"InvalidResourceStateFault"}
       ]
     },
     "RemoveTagsFromResource":{
@@ -494,6 +583,21 @@
       "members":{
       }
     },
+    "AuthMechanismValue":{
+      "type":"string",
+      "enum":[
+        "default",
+        "mongodb_cr",
+        "scram_sha_1"
+      ]
+    },
+    "AuthTypeValue":{
+      "type":"string",
+      "enum":[
+        "no",
+        "password"
+      ]
+    },
     "AvailabilityZone":{
       "type":"structure",
       "members":{
@@ -525,6 +629,13 @@
       }
     },
     "CertificateWallet":{"type":"blob"},
+    "CompressionTypeValue":{
+      "type":"string",
+      "enum":[
+        "none",
+        "gzip"
+      ]
+    },
     "Connection":{
       "type":"structure",
       "members":{
@@ -563,13 +674,38 @@
         "KmsKeyId":{"shape":"String"},
         "Tags":{"shape":"TagList"},
         "CertificateArn":{"shape":"String"},
-        "SslMode":{"shape":"DmsSslModeValue"}
+        "SslMode":{"shape":"DmsSslModeValue"},
+        "DynamoDbSettings":{"shape":"DynamoDbSettings"},
+        "S3Settings":{"shape":"S3Settings"},
+        "MongoDbSettings":{"shape":"MongoDbSettings"}
       }
     },
     "CreateEndpointResponse":{
       "type":"structure",
       "members":{
         "Endpoint":{"shape":"Endpoint"}
+      }
+    },
+    "CreateEventSubscriptionMessage":{
+      "type":"structure",
+      "required":[
+        "SubscriptionName",
+        "SnsTopicArn"
+      ],
+      "members":{
+        "SubscriptionName":{"shape":"String"},
+        "SnsTopicArn":{"shape":"String"},
+        "SourceType":{"shape":"String"},
+        "EventCategories":{"shape":"EventCategoriesList"},
+        "SourceIds":{"shape":"SourceIdsList"},
+        "Enabled":{"shape":"BooleanOptional"},
+        "Tags":{"shape":"TagList"}
+      }
+    },
+    "CreateEventSubscriptionResponse":{
+      "type":"structure",
+      "members":{
+        "EventSubscription":{"shape":"EventSubscription"}
       }
     },
     "CreateReplicationInstanceMessage":{
@@ -672,6 +808,19 @@
       "type":"structure",
       "members":{
         "Endpoint":{"shape":"Endpoint"}
+      }
+    },
+    "DeleteEventSubscriptionMessage":{
+      "type":"structure",
+      "required":["SubscriptionName"],
+      "members":{
+        "SubscriptionName":{"shape":"String"}
+      }
+    },
+    "DeleteEventSubscriptionResponse":{
+      "type":"structure",
+      "members":{
+        "EventSubscription":{"shape":"EventSubscription"}
       }
     },
     "DeleteReplicationInstanceMessage":{
@@ -781,6 +930,56 @@
       "members":{
         "Marker":{"shape":"String"},
         "Endpoints":{"shape":"EndpointList"}
+      }
+    },
+    "DescribeEventCategoriesMessage":{
+      "type":"structure",
+      "members":{
+        "SourceType":{"shape":"String"},
+        "Filters":{"shape":"FilterList"}
+      }
+    },
+    "DescribeEventCategoriesResponse":{
+      "type":"structure",
+      "members":{
+        "EventCategoryGroupList":{"shape":"EventCategoryGroupList"}
+      }
+    },
+    "DescribeEventSubscriptionsMessage":{
+      "type":"structure",
+      "members":{
+        "SubscriptionName":{"shape":"String"},
+        "Filters":{"shape":"FilterList"},
+        "MaxRecords":{"shape":"IntegerOptional"},
+        "Marker":{"shape":"String"}
+      }
+    },
+    "DescribeEventSubscriptionsResponse":{
+      "type":"structure",
+      "members":{
+        "Marker":{"shape":"String"},
+        "EventSubscriptionsList":{"shape":"EventSubscriptionsList"}
+      }
+    },
+    "DescribeEventsMessage":{
+      "type":"structure",
+      "members":{
+        "SourceIdentifier":{"shape":"String"},
+        "SourceType":{"shape":"SourceType"},
+        "StartTime":{"shape":"TStamp"},
+        "EndTime":{"shape":"TStamp"},
+        "Duration":{"shape":"IntegerOptional"},
+        "EventCategories":{"shape":"EventCategoriesList"},
+        "Filters":{"shape":"FilterList"},
+        "MaxRecords":{"shape":"IntegerOptional"},
+        "Marker":{"shape":"String"}
+      }
+    },
+    "DescribeEventsResponse":{
+      "type":"structure",
+      "members":{
+        "Marker":{"shape":"String"},
+        "Events":{"shape":"EventList"}
       }
     },
     "DescribeOrderableReplicationInstancesMessage":{
@@ -897,6 +1096,13 @@
         "verify-full"
       ]
     },
+    "DynamoDbSettings":{
+      "type":"structure",
+      "required":["ServiceAccessRoleArn"],
+      "members":{
+        "ServiceAccessRoleArn":{"shape":"String"}
+      }
+    },
     "Endpoint":{
       "type":"structure",
       "members":{
@@ -912,7 +1118,11 @@
         "KmsKeyId":{"shape":"String"},
         "EndpointArn":{"shape":"String"},
         "CertificateArn":{"shape":"String"},
-        "SslMode":{"shape":"DmsSslModeValue"}
+        "SslMode":{"shape":"DmsSslModeValue"},
+        "ExternalId":{"shape":"String"},
+        "DynamoDbSettings":{"shape":"DynamoDbSettings"},
+        "S3Settings":{"shape":"S3Settings"},
+        "MongoDbSettings":{"shape":"MongoDbSettings"}
       }
     },
     "EndpointList":{
@@ -920,6 +1130,65 @@
       "member":{
         "shape":"Endpoint",
         "locationName":"Endpoint"
+      }
+    },
+    "Event":{
+      "type":"structure",
+      "members":{
+        "SourceIdentifier":{"shape":"String"},
+        "SourceType":{"shape":"SourceType"},
+        "Message":{"shape":"String"},
+        "EventCategories":{"shape":"EventCategoriesList"},
+        "Date":{"shape":"TStamp"}
+      }
+    },
+    "EventCategoriesList":{
+      "type":"list",
+      "member":{
+        "shape":"String",
+        "locationName":"EventCategory"
+      }
+    },
+    "EventCategoryGroup":{
+      "type":"structure",
+      "members":{
+        "SourceType":{"shape":"String"},
+        "EventCategories":{"shape":"EventCategoriesList"}
+      }
+    },
+    "EventCategoryGroupList":{
+      "type":"list",
+      "member":{
+        "shape":"EventCategoryGroup",
+        "locationName":"EventCategoryGroup"
+      }
+    },
+    "EventList":{
+      "type":"list",
+      "member":{
+        "shape":"Event",
+        "locationName":"Event"
+      }
+    },
+    "EventSubscription":{
+      "type":"structure",
+      "members":{
+        "CustomerAwsId":{"shape":"String"},
+        "CustSubscriptionId":{"shape":"String"},
+        "SnsTopicArn":{"shape":"String"},
+        "Status":{"shape":"String"},
+        "SubscriptionCreationTime":{"shape":"String"},
+        "SourceType":{"shape":"String"},
+        "SourceIdsList":{"shape":"SourceIdsList"},
+        "EventCategoriesList":{"shape":"EventCategoriesList"},
+        "Enabled":{"shape":"Boolean"}
+      }
+    },
+    "EventSubscriptionsList":{
+      "type":"list",
+      "member":{
+        "shape":"EventSubscription",
+        "locationName":"EventSubscription"
       }
     },
     "ExceptionMessage":{"type":"string"},
@@ -954,7 +1223,8 @@
       "members":{
         "CertificateIdentifier":{"shape":"String"},
         "CertificatePem":{"shape":"String"},
-        "CertificateWallet":{"shape":"CertificateWallet"}
+        "CertificateWallet":{"shape":"CertificateWallet"},
+        "Tags":{"shape":"TagList"}
       }
     },
     "ImportCertificateResponse":{
@@ -1041,13 +1311,33 @@
         "DatabaseName":{"shape":"String"},
         "ExtraConnectionAttributes":{"shape":"String"},
         "CertificateArn":{"shape":"String"},
-        "SslMode":{"shape":"DmsSslModeValue"}
+        "SslMode":{"shape":"DmsSslModeValue"},
+        "DynamoDbSettings":{"shape":"DynamoDbSettings"},
+        "S3Settings":{"shape":"S3Settings"},
+        "MongoDbSettings":{"shape":"MongoDbSettings"}
       }
     },
     "ModifyEndpointResponse":{
       "type":"structure",
       "members":{
         "Endpoint":{"shape":"Endpoint"}
+      }
+    },
+    "ModifyEventSubscriptionMessage":{
+      "type":"structure",
+      "required":["SubscriptionName"],
+      "members":{
+        "SubscriptionName":{"shape":"String"},
+        "SnsTopicArn":{"shape":"String"},
+        "SourceType":{"shape":"String"},
+        "EventCategories":{"shape":"EventCategoriesList"},
+        "Enabled":{"shape":"BooleanOptional"}
+      }
+    },
+    "ModifyEventSubscriptionResponse":{
+      "type":"structure",
+      "members":{
+        "EventSubscription":{"shape":"EventSubscription"}
       }
     },
     "ModifyReplicationInstanceMessage":{
@@ -1109,6 +1399,29 @@
         "ReplicationTask":{"shape":"ReplicationTask"}
       }
     },
+    "MongoDbSettings":{
+      "type":"structure",
+      "members":{
+        "Username":{"shape":"String"},
+        "Password":{"shape":"SecretString"},
+        "ServerName":{"shape":"String"},
+        "Port":{"shape":"IntegerOptional"},
+        "DatabaseName":{"shape":"String"},
+        "AuthType":{"shape":"AuthTypeValue"},
+        "AuthMechanism":{"shape":"AuthMechanismValue"},
+        "NestingLevel":{"shape":"NestingLevelValue"},
+        "ExtractDocId":{"shape":"String"},
+        "DocsToInvestigate":{"shape":"String"},
+        "AuthSource":{"shape":"String"}
+      }
+    },
+    "NestingLevelValue":{
+      "type":"string",
+      "enum":[
+        "none",
+        "one"
+      ]
+    },
     "OrderableReplicationInstance":{
       "type":"structure",
       "members":{
@@ -1162,6 +1475,23 @@
         "failed",
         "refreshing"
       ]
+    },
+    "ReloadTablesMessage":{
+      "type":"structure",
+      "required":[
+        "ReplicationTaskArn",
+        "TablesToReload"
+      ],
+      "members":{
+        "ReplicationTaskArn":{"shape":"String"},
+        "TablesToReload":{"shape":"TableListToReload"}
+      }
+    },
+    "ReloadTablesResponse":{
+      "type":"structure",
+      "members":{
+        "ReplicationTaskArn":{"shape":"String"}
+      }
     },
     "RemoveTagsFromResourceMessage":{
       "type":"structure",
@@ -1324,6 +1654,32 @@
       },
       "exception":true
     },
+    "S3Settings":{
+      "type":"structure",
+      "members":{
+        "ServiceAccessRoleArn":{"shape":"String"},
+        "ExternalTableDefinition":{"shape":"String"},
+        "CsvRowDelimiter":{"shape":"String"},
+        "CsvDelimiter":{"shape":"String"},
+        "BucketFolder":{"shape":"String"},
+        "BucketName":{"shape":"String"},
+        "CompressionType":{"shape":"CompressionTypeValue"}
+      }
+    },
+    "SNSInvalidTopicFault":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ExceptionMessage"}
+      },
+      "exception":true
+    },
+    "SNSNoAuthorizationFault":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ExceptionMessage"}
+      },
+      "exception":true
+    },
     "SchemaList":{
       "type":"list",
       "member":{"shape":"String"}
@@ -1331,6 +1687,17 @@
     "SecretString":{
       "type":"string",
       "sensitive":true
+    },
+    "SourceIdsList":{
+      "type":"list",
+      "member":{
+        "shape":"String",
+        "locationName":"SourceId"
+      }
+    },
+    "SourceType":{
+      "type":"string",
+      "enum":["replication-instance"]
     },
     "StartReplicationTaskMessage":{
       "type":"structure",
@@ -1424,6 +1791,10 @@
       }
     },
     "TStamp":{"type":"timestamp"},
+    "TableListToReload":{
+      "type":"list",
+      "member":{"shape":"TableToReload"}
+    },
     "TableStatistics":{
       "type":"structure",
       "members":{
@@ -1434,6 +1805,8 @@
         "Updates":{"shape":"Long"},
         "Ddls":{"shape":"Long"},
         "FullLoadRows":{"shape":"Long"},
+        "FullLoadCondtnlChkFailedRows":{"shape":"Long"},
+        "FullLoadErrorRows":{"shape":"Long"},
         "LastUpdateTime":{"shape":"TStamp"},
         "TableState":{"shape":"String"}
       }
@@ -1441,6 +1814,13 @@
     "TableStatisticsList":{
       "type":"list",
       "member":{"shape":"TableStatistics"}
+    },
+    "TableToReload":{
+      "type":"structure",
+      "members":{
+        "SchemaName":{"shape":"String"},
+        "TableName":{"shape":"String"}
+      }
     },
     "Tag":{
       "type":"structure",

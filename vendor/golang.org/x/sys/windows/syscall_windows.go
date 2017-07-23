@@ -154,6 +154,9 @@ func NewCallbackCDecl(fn interface{}) uintptr
 //sys	FlushViewOfFile(addr uintptr, length uintptr) (err error)
 //sys	VirtualLock(addr uintptr, length uintptr) (err error)
 //sys	VirtualUnlock(addr uintptr, length uintptr) (err error)
+//sys	VirtualAlloc(address uintptr, size uintptr, alloctype uint32, protect uint32) (value uintptr, err error) = kernel32.VirtualAlloc
+//sys	VirtualFree(address uintptr, size uintptr, freetype uint32) (err error) = kernel32.VirtualFree
+//sys	VirtualProtect(address uintptr, size uintptr, newprotect uint32, oldprotect *uint32) (err error) = kernel32.VirtualProtect
 //sys	TransmitFile(s Handle, handle Handle, bytesToWrite uint32, bytsPerSend uint32, overlapped *Overlapped, transmitFileBuf *TransmitFileBuffers, flags uint32) (err error) = mswsock.TransmitFile
 //sys	ReadDirectoryChanges(handle Handle, buf *byte, buflen uint32, watchSubTree bool, mask uint32, retlen *uint32, overlapped *Overlapped, completionRoutine uintptr) (err error) = kernel32.ReadDirectoryChangesW
 //sys	CertOpenSystemStore(hprov Handle, name *uint16) (store Handle, err error) = crypt32.CertOpenSystemStoreW
@@ -484,6 +487,10 @@ func Chmod(path string, mode uint32) (err error) {
 		attrs |= FILE_ATTRIBUTE_READONLY
 	}
 	return SetFileAttributes(p, attrs)
+}
+
+func LoadGetSystemTimePreciseAsFileTime() error {
+	return procGetSystemTimePreciseAsFileTime.Find()
 }
 
 func LoadCancelIoEx() error {

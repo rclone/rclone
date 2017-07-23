@@ -191,6 +191,12 @@ type ProjectsHistoriesExecutionsStepsThumbnailsService struct {
 // foo = Foo(...) any = Any() any.Pack(foo) ... if
 // any.Is(Foo.DESCRIPTOR): any.Unpack(foo) ...
 //
+// Example 4: Pack and unpack a message in Go
+//
+// foo := &pb.Foo{...} any, err := ptypes.MarshalAny(foo) ... foo :=
+// &pb.Foo{} if err := ptypes.UnmarshalAny(any, foo); err != nil { ...
+// }
+//
 // The pack methods provided by protobuf library will by default use
 // 'type.googleapis.com/full.type.name' as the type URL and the unpack
 // methods only use the fully qualified type name after the last '/' in
@@ -278,6 +284,7 @@ type BasicPerfSampleSeries struct {
 	PerfMetricType string `json:"perfMetricType,omitempty"`
 
 	// Possible values:
+	//   "byte"
 	//   "bytesPerSecond"
 	//   "framesPerSecond"
 	//   "kibibyte"
@@ -2643,23 +2650,24 @@ type ProjectsInitializeSettingsCall struct {
 //
 // Currently, this creates a single resource: a Google Cloud Storage
 // bucket, to be used as the default bucket for this project. The bucket
-// is created in the name of the user calling. Except in rare cases,
+// is created in an FTL-own storage project. Except for in rare cases,
 // calling this method in parallel from multiple clients will only
 // create a single bucket. In order to avoid unnecessary storage
 // charges, the bucket is configured to automatically delete objects
 // older than 90 days.
 //
-// The bucket is created with the project-private ACL: All project team
-// members are given permissions to the bucket and objects created
-// within it according to their roles. Project owners have owners
-// rights, and so on. The default ACL on objects created in the bucket
-// is project-private as well. See Google Cloud Storage documentation
-// for more details.
+// The bucket is created with the following permissions: - Owner access
+// for owners of central storage project (FTL-owned) - Writer access for
+// owners/editors of customer project - Reader access for viewers of
+// customer project The default ACL on objects created in the bucket is:
+// - Owner access for owners of central storage project - Reader access
+// for owners/editors/viewers of customer project See Google Cloud
+// Storage documentation for more details.
 //
 // If there is already a default bucket set and the project can access
 // the bucket, this call does nothing. However, if the project doesn't
-// have the permission to access the bucket or the bucket is deteleted,
-// a new bucket will be created.
+// have the permission to access the bucket or the bucket is deleted, a
+// new bucket will be created.
 //
 // May return any canonical error codes, including the following:
 //
@@ -2752,7 +2760,7 @@ func (c *ProjectsInitializeSettingsCall) Do(opts ...googleapi.CallOption) (*Proj
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates resources for settings which have not yet been set.\n\nCurrently, this creates a single resource: a Google Cloud Storage bucket, to be used as the default bucket for this project. The bucket is created in the name of the user calling. Except in rare cases, calling this method in parallel from multiple clients will only create a single bucket. In order to avoid unnecessary storage charges, the bucket is configured to automatically delete objects older than 90 days.\n\nThe bucket is created with the project-private ACL: All project team members are given permissions to the bucket and objects created within it according to their roles. Project owners have owners rights, and so on. The default ACL on objects created in the bucket is project-private as well. See Google Cloud Storage documentation for more details.\n\nIf there is already a default bucket set and the project can access the bucket, this call does nothing. However, if the project doesn't have the permission to access the bucket or the bucket is deteleted, a new bucket will be created.\n\nMay return any canonical error codes, including the following:\n\n- PERMISSION_DENIED - if the user is not authorized to write to project - Any error code raised by Google Cloud Storage",
+	//   "description": "Creates resources for settings which have not yet been set.\n\nCurrently, this creates a single resource: a Google Cloud Storage bucket, to be used as the default bucket for this project. The bucket is created in an FTL-own storage project. Except for in rare cases, calling this method in parallel from multiple clients will only create a single bucket. In order to avoid unnecessary storage charges, the bucket is configured to automatically delete objects older than 90 days.\n\nThe bucket is created with the following permissions: - Owner access for owners of central storage project (FTL-owned) - Writer access for owners/editors of customer project - Reader access for viewers of customer project The default ACL on objects created in the bucket is: - Owner access for owners of central storage project - Reader access for owners/editors/viewers of customer project See Google Cloud Storage documentation for more details.\n\nIf there is already a default bucket set and the project can access the bucket, this call does nothing. However, if the project doesn't have the permission to access the bucket or the bucket is deleted, a new bucket will be created.\n\nMay return any canonical error codes, including the following:\n\n- PERMISSION_DENIED - if the user is not authorized to write to project - Any error code raised by Google Cloud Storage",
 	//   "httpMethod": "POST",
 	//   "id": "toolresults.projects.initializeSettings",
 	//   "parameterOrder": [

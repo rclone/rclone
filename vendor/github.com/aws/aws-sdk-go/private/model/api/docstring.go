@@ -62,6 +62,10 @@ func (d *apiDocumentation) setup() {
 			}
 
 			parts := strings.Split(ref, "$")
+			if len(parts) != 2 {
+				fmt.Fprintf(os.Stderr, "Shape Doc %s has unexpected reference format, %q\n", shape, ref)
+				continue
+			}
 			if sh := d.API.Shapes[parts[0]]; sh != nil {
 				if m := sh.MemberRefs[parts[1]]; m != nil {
 					m.Documentation = docstring(doc)

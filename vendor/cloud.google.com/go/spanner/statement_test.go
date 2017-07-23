@@ -20,6 +20,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/golang/protobuf/proto"
 	proto3 "github.com/golang/protobuf/ptypes/struct"
 
 	sppb "google.golang.org/genproto/googleapis/spanner/v1"
@@ -28,31 +29,55 @@ import (
 // Test Statement.bindParams.
 func TestBindParams(t *testing.T) {
 	// Verify Statement.bindParams generates correct values and types.
-	want := sppb.ExecuteSqlRequest{
-		Params: &proto3.Struct{
-			Fields: map[string]*proto3.Value{
-				"var1": stringProto("abc"),
-				"var2": intProto(1),
-			},
-		},
-		ParamTypes: map[string]*sppb.Type{
-			"var1": stringType(),
-			"var2": intType(),
-		},
-	}
 	st := Statement{
-		SQL:    "SELECT id from t_foo WHERE col1 = @var1 AND col2 = @var2",
-		Params: map[string]interface{}{"var1": "abc", "var2": int64(1)},
+		SQL:    "SELECT id from t_foo WHERE col = @var",
+		Params: map[string]interface{}{"var": nil},
 	}
-	got := sppb.ExecuteSqlRequest{}
-	if err := st.bindParams(&got); err != nil || !reflect.DeepEqual(got, want) {
-		t.Errorf("bind result: \n(%v, %v)\nwant\n(%v, %v)\n", got, err, want, nil)
+	want := &sppb.ExecuteSqlRequest{
+		Params: &proto3.Struct{
+			Fields: map[string]*proto3.Value{"var": nil},
+		},
+		ParamTypes: map[string]*sppb.Type{"var": nil},
 	}
+	for i, test := range []struct {
+		val       interface{}
+		wantField *proto3.Value
+		wantType  *sppb.Type
+	}{
+		{"abc", stringProto("abc"), stringType()},
+		{int64(1), intProto(1), intType()},
+		{int(1), intProto(1), intType()},
+		{[]int(nil), nullProto(), listType(intType())},
+		{[]int{}, listProto(), listType(intType())},
+	} {
+		st.Params["var"] = test.val
+		want.Params.Fields["var"] = test.wantField
+		want.ParamTypes["var"] = test.wantType
+		got := &sppb.ExecuteSqlRequest{}
+		if err := st.bindParams(got); err != nil || !proto.Equal(got, want) {
+			t.Errorf("#%d: bind result: \n(%v, %v)\nwant\n(%v, %v)\n", i, got, err, want, nil)
+		}
+	}
+
 	// Verify type error reporting.
-	st.Params["var2"] = struct{}{}
-	wantErr := errBindParam("var2", struct{}{}, errEncoderUnsupportedType(struct{}{}))
-	if err := st.bindParams(&got); !reflect.DeepEqual(err, wantErr) {
-		t.Errorf("got unexpected error: %v, want: %v", err, wantErr)
+	for _, test := range []struct {
+		val     interface{}
+		wantErr error
+	}{
+		{
+			struct{}{},
+			errBindParam("var", struct{}{}, errEncoderUnsupportedType(struct{}{})),
+		},
+		{
+			nil,
+			errBindParam("var", nil, errNilParam),
+		},
+	} {
+		st.Params["var"] = test.val
+		var got sppb.ExecuteSqlRequest
+		if err := st.bindParams(&got); !reflect.DeepEqual(err, test.wantErr) {
+			t.Errorf("value %#v:\ngot:  %v\nwant: %v", test.val, err, test.wantErr)
+		}
 	}
 }
 

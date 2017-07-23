@@ -284,6 +284,13 @@ const (
 	// At least one of the deployment IDs was specified in an invalid format.
 	ErrCodeInvalidDeploymentIdException = "InvalidDeploymentIdException"
 
+	// ErrCodeInvalidDeploymentInstanceTypeException for service response error code
+	// "InvalidDeploymentInstanceTypeException".
+	//
+	// An instance type was specified for an in-place deployment. Instance types
+	// are supported for blue/green deployments only.
+	ErrCodeInvalidDeploymentInstanceTypeException = "InvalidDeploymentInstanceTypeException"
+
 	// ErrCodeInvalidDeploymentStatusException for service response error code
 	// "InvalidDeploymentStatusException".
 	//
@@ -294,8 +301,8 @@ const (
 	// "InvalidDeploymentStyleException".
 	//
 	// An invalid deployment style was specified. Valid deployment types include
-	// "IN_PLACE" and "BLUE_GREEN". Valid deployment options for blue/green deployments
-	// include "WITH_TRAFFIC_CONTROL" and "WITHOUT_TRAFFIC_CONTROL".
+	// "IN_PLACE" and "BLUE_GREEN". Valid deployment options include "WITH_TRAFFIC_CONTROL"
+	// and "WITHOUT_TRAFFIC_CONTROL".
 	ErrCodeInvalidDeploymentStyleException = "InvalidDeploymentStyleException"
 
 	// ErrCodeInvalidEC2TagException for service response error code
@@ -303,6 +310,15 @@ const (
 	//
 	// The tag was specified in an invalid format.
 	ErrCodeInvalidEC2TagException = "InvalidEC2TagException"
+
+	// ErrCodeInvalidFileExistsBehaviorException for service response error code
+	// "InvalidFileExistsBehaviorException".
+	//
+	// An invalid fileExistsBehavior option was specified to determine how AWS CodeDeploy
+	// handles files or directories that already exist in a deployment target location
+	// but weren't part of the previous successful deployment. Valid values include
+	// "DISALLOW", "OVERWRITE", and "RETAIN".
+	ErrCodeInvalidFileExistsBehaviorException = "InvalidFileExistsBehaviorException"
 
 	// ErrCodeInvalidIamSessionArnException for service response error code
 	// "InvalidIamSessionArnException".
@@ -450,6 +466,12 @@ const (
 	// Both an IAM user ARN and an IAM session ARN were included in the request.
 	// Use only one ARN type.
 	ErrCodeMultipleIamArnsProvidedException = "MultipleIamArnsProvidedException"
+
+	// ErrCodeResourceValidationException for service response error code
+	// "ResourceValidationException".
+	//
+	// The specified resource could not be validated.
+	ErrCodeResourceValidationException = "ResourceValidationException"
 
 	// ErrCodeRevisionDoesNotExistException for service response error code
 	// "RevisionDoesNotExistException".

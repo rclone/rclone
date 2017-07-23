@@ -310,6 +310,7 @@ type Binding struct {
 	// group.
 	//    For example, `admins@example.com`.
 	//
+	//
 	// * `domain:{domain}`: A Google Apps domain name that represents all
 	// the
 	//    users of that domain. For example, `google.com` or
@@ -418,22 +419,23 @@ type FolderOperationError struct {
 	// Possible values:
 	//   "ERROR_TYPE_UNSPECIFIED" - The error type was unrecognized or
 	// unspecified.
-	//   "FOLDER_HEIGHT_VIOLATION" - The attempted action would violate the
-	// max folder depth constraint.
+	//   "ACTIVE_FOLDER_HEIGHT_VIOLATION" - The attempted action would
+	// violate the max folder depth constraint.
 	//   "MAX_CHILD_FOLDERS_VIOLATION" - The attempted action would violate
 	// the max child folders constraint.
 	//   "FOLDER_NAME_UNIQUENESS_VIOLATION" - The attempted action would
 	// violate the locally-unique folder
 	// display_name constraint.
-	//   "RESOURCE_DELETED" - The resource being moved has been deleted.
-	//   "PARENT_DELETED" - The resource a folder was being added to has
-	// been deleted.
-	//   "CYCLE_INTRODUCED_ERROR" - The attempted action would introduce
+	//   "RESOURCE_DELETED_VIOLATION" - The resource being moved has been
+	// deleted.
+	//   "PARENT_DELETED_VIOLATION" - The resource a folder was being added
+	// to has been deleted.
+	//   "CYCLE_INTRODUCED_VIOLATION" - The attempted action would introduce
 	// cycle in resource path.
-	//   "FOLDER_BEING_MOVED" - The attempted action would move a folder
-	// that is already being moved.
-	//   "FOLDER_TO_DELETE_NON_EMPTY" - The folder the caller is trying to
-	// delete contains active resources.
+	//   "FOLDER_BEING_MOVED_VIOLATION" - The attempted action would move a
+	// folder that is already being moved.
+	//   "FOLDER_TO_DELETE_NON_EMPTY_VIOLATION" - The folder the caller is
+	// trying to delete contains active resources.
 	//   "DELETED_FOLDER_HEIGHT_VIOLATION" - The attempted action would
 	// violate the max deleted folder depth
 	// constraint.
@@ -768,8 +770,6 @@ type Policy struct {
 	AuditConfigs []*AuditConfig `json:"auditConfigs,omitempty"`
 
 	// Bindings: Associates a list of `members` to a `role`.
-	// Multiple `bindings` must not be specified for the same
-	// `role`.
 	// `bindings` with no members will result in an error.
 	Bindings []*Binding `json:"bindings,omitempty"`
 
@@ -2814,8 +2814,24 @@ func (r *ProjectsService) List() *ProjectsListCall {
 // |labels.color:red|The project's label `color` has the value
 // `red`.|
 // |labels.color:red&nbsp;labels.size:big|The project's label `color`
-// has the
-// value `red` and its label `size` has the value `big`.
+// has the value `red` and its label `size` has the value `big`.
+//
+// If you specify a filter that has both `parent.type` and `parent.id`,
+// then
+// the `resourcemanager.projects.list` permission is checked on the
+// parent.
+// If the user has this permission, all projects under the parent will
+// be
+// returned after remaining filters have been applied. If the user lacks
+// this
+// permission, then all projects for which the user has
+// the
+// `resourcemanager.projects.get` permission will be returned after
+// remaining
+// filters have been applied. If no filter is specified, the call will
+// return
+// projects for which the user has `resourcemanager.projects.get`
+// permissions.
 func (c *ProjectsListCall) Filter(filter string) *ProjectsListCall {
 	c.urlParams_.Set("filter", filter)
 	return c
@@ -2936,7 +2952,7 @@ func (c *ProjectsListCall) Do(opts ...googleapi.CallOption) (*ListProjectsRespon
 	//   "parameterOrder": [],
 	//   "parameters": {
 	//     "filter": {
-	//       "description": "An expression for filtering the results of the request.  Filter rules are\ncase insensitive. The fields eligible for filtering are:\n\n+ `name`\n+ `id`\n+ \u003ccode\u003elabels.\u003cem\u003ekey\u003c/em\u003e\u003c/code\u003e where *key* is the name of a label\n\nSome examples of using labels as filters:\n\n|Filter|Description|\n|------|-----------|\n|name:how*|The project's name starts with \"how\".|\n|name:Howl|The project's name is `Howl` or `howl`.|\n|name:HOWL|Equivalent to above.|\n|NAME:howl|Equivalent to above.|\n|labels.color:*|The project has the label `color`.|\n|labels.color:red|The project's label `color` has the value `red`.|\n|labels.color:red\u0026nbsp;labels.size:big|The project's label `color` has the\nvalue `red` and its label `size` has the value `big`.\n\nOptional.",
+	//       "description": "An expression for filtering the results of the request.  Filter rules are\ncase insensitive. The fields eligible for filtering are:\n\n+ `name`\n+ `id`\n+ \u003ccode\u003elabels.\u003cem\u003ekey\u003c/em\u003e\u003c/code\u003e where *key* is the name of a label\n\nSome examples of using labels as filters:\n\n|Filter|Description|\n|------|-----------|\n|name:how*|The project's name starts with \"how\".|\n|name:Howl|The project's name is `Howl` or `howl`.|\n|name:HOWL|Equivalent to above.|\n|NAME:howl|Equivalent to above.|\n|labels.color:*|The project has the label `color`.|\n|labels.color:red|The project's label `color` has the value `red`.|\n|labels.color:red\u0026nbsp;labels.size:big|The project's label `color` has the value `red` and its label `size` has the value `big`.\n\nIf you specify a filter that has both `parent.type` and `parent.id`, then\nthe `resourcemanager.projects.list` permission is checked on the parent.\nIf the user has this permission, all projects under the parent will be\nreturned after remaining filters have been applied. If the user lacks this\npermission, then all projects for which the user has the\n`resourcemanager.projects.get` permission will be returned after remaining\nfilters have been applied. If no filter is specified, the call will return\nprojects for which the user has `resourcemanager.projects.get` permissions.\n\nOptional.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -3029,17 +3045,19 @@ type ProjectsSetIamPolicyCall struct {
 // have
 // accepted the Terms of Service (ToS) will be rejected.
 //
-// + There must be at least one owner who has accepted the Terms
-// of
-// Service (ToS) agreement in the policy. Calling `setIamPolicy()`
+// + If the project is not part of an organization, there must be at
+// least
+// one owner who has accepted the Terms of Service (ToS) agreement in
+// the
+// policy. Calling `setIamPolicy()` to remove the last ToS-accepted
+// owner
+// from the policy will fail. This restriction also applies to
+// legacy
+// projects that no longer have owners who have accepted the ToS. Edits
 // to
-// remove the last ToS-accepted owner from the policy will fail.
-// This
-// restriction also applies to legacy projects that no longer have
-// owners
-// who have accepted the ToS. Edits to IAM policies will be rejected
-// until
-// the lack of a ToS-accepting owner is rectified.
+// IAM policies will be rejected until the lack of a ToS-accepting owner
+// is
+// rectified.
 //
 // + Calling this method requires enabling the App Engine Admin
 // API.
@@ -3144,7 +3162,7 @@ func (c *ProjectsSetIamPolicyCall) Do(opts ...googleapi.CallOption) (*Policy, er
 	}
 	return ret, nil
 	// {
-	//   "description": "Sets the IAM access control policy for the specified Project. Replaces\nany existing policy.\n\nThe following constraints apply when using `setIamPolicy()`:\n\n+ Project does not support `allUsers` and `allAuthenticatedUsers` as\n`members` in a `Binding` of a `Policy`.\n\n+ The owner role can be granted only to `user` and `serviceAccount`.\n\n+ Service accounts can be made owners of a project directly\nwithout any restrictions. However, to be added as an owner, a user must be\ninvited via Cloud Platform console and must accept the invitation.\n\n+ A user cannot be granted the owner role using `setIamPolicy()`. The user\nmust be granted the owner role using the Cloud Platform Console and must\nexplicitly accept the invitation.\n\n+ Invitations to grant the owner role cannot be sent using\n`setIamPolicy()`; they must be sent only using the Cloud Platform Console.\n\n+ Membership changes that leave the project without any owners that have\naccepted the Terms of Service (ToS) will be rejected.\n\n+ There must be at least one owner who has accepted the Terms of\nService (ToS) agreement in the policy. Calling `setIamPolicy()` to\nremove the last ToS-accepted owner from the policy will fail. This\nrestriction also applies to legacy projects that no longer have owners\nwho have accepted the ToS. Edits to IAM policies will be rejected until\nthe lack of a ToS-accepting owner is rectified.\n\n+ Calling this method requires enabling the App Engine Admin API.\n\nNote: Removing service accounts from policies or changing their roles\ncan render services completely inoperable. It is important to understand\nhow the service account is being used before removing or updating its\nroles.",
+	//   "description": "Sets the IAM access control policy for the specified Project. Replaces\nany existing policy.\n\nThe following constraints apply when using `setIamPolicy()`:\n\n+ Project does not support `allUsers` and `allAuthenticatedUsers` as\n`members` in a `Binding` of a `Policy`.\n\n+ The owner role can be granted only to `user` and `serviceAccount`.\n\n+ Service accounts can be made owners of a project directly\nwithout any restrictions. However, to be added as an owner, a user must be\ninvited via Cloud Platform console and must accept the invitation.\n\n+ A user cannot be granted the owner role using `setIamPolicy()`. The user\nmust be granted the owner role using the Cloud Platform Console and must\nexplicitly accept the invitation.\n\n+ Invitations to grant the owner role cannot be sent using\n`setIamPolicy()`; they must be sent only using the Cloud Platform Console.\n\n+ Membership changes that leave the project without any owners that have\naccepted the Terms of Service (ToS) will be rejected.\n\n+ If the project is not part of an organization, there must be at least\none owner who has accepted the Terms of Service (ToS) agreement in the\npolicy. Calling `setIamPolicy()` to remove the last ToS-accepted owner\nfrom the policy will fail. This restriction also applies to legacy\nprojects that no longer have owners who have accepted the ToS. Edits to\nIAM policies will be rejected until the lack of a ToS-accepting owner is\nrectified.\n\n+ Calling this method requires enabling the App Engine Admin API.\n\nNote: Removing service accounts from policies or changing their roles\ncan render services completely inoperable. It is important to understand\nhow the service account is being used before removing or updating its\nroles.",
 	//   "flatPath": "v1beta1/projects/{resource}:setIamPolicy",
 	//   "httpMethod": "POST",
 	//   "id": "cloudresourcemanager.projects.setIamPolicy",

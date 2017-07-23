@@ -3,1459 +3,1857 @@
 package storagegateway_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/storagegateway"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleStorageGateway_ActivateGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.ActivateGatewayInput{
-		ActivationKey:     aws.String("ActivationKey"),   // Required
-		GatewayName:       aws.String("GatewayName"),     // Required
-		GatewayRegion:     aws.String("RegionId"),        // Required
-		GatewayTimezone:   aws.String("GatewayTimezone"), // Required
-		GatewayType:       aws.String("GatewayType"),
-		MediumChangerType: aws.String("MediumChangerType"),
-		TapeDriveType:     aws.String("TapeDriveType"),
-	}
-	resp, err := svc.ActivateGateway(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		panic(err)
+	}
+	return &t
+}
+
+// To activate the gateway
+//
+// Activates the gateway you previously deployed on your host.
+func ExampleStorageGateway_ActivateGateway_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.ActivateGatewayInput{
+		ActivationKey:     aws.String("29AV1-3OFV9-VVIUB-NKT0I-LRO6V"),
+		GatewayName:       aws.String("My_Gateway"),
+		GatewayRegion:     aws.String("us-east-1"),
+		GatewayTimezone:   aws.String("GMT-12:00"),
+		GatewayType:       aws.String("STORED"),
+		MediumChangerType: aws.String("AWS-Gateway-VTL"),
+		TapeDriveType:     aws.String("IBM-ULT3580-TD5"),
+	}
+
+	result, err := svc.ActivateGateway(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_AddCache() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.AddCacheInput{
-		DiskIds: []*string{ // Required
-			aws.String("DiskId"), // Required
-			// More values...
+// To add a cache
+//
+// The following example shows a request that activates a gateway-stored volume.
+func ExampleStorageGateway_AddCache_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.AddCacheInput{
+		DiskIds: []*string{
+			aws.String("pci-0000:03:00.0-scsi-0:0:0:0"),
+			aws.String("pci-0000:03:00.0-scsi-0:0:1:0"),
 		},
-		GatewayARN: aws.String("GatewayARN"), // Required
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
 	}
-	resp, err := svc.AddCache(params)
 
+	result, err := svc.AddCache(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_AddTagsToResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.AddTagsToResourceInput{
-		ResourceARN: aws.String("ResourceARN"), // Required
-		Tags: []*storagegateway.Tag{ // Required
-			{ // Required
-				Key:   aws.String("TagKey"),   // Required
-				Value: aws.String("TagValue"), // Required
+// To add tags to resource
+//
+// Adds one or more tags to the specified resource.
+func ExampleStorageGateway_AddTagsToResource_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.AddTagsToResourceInput{
+		ResourceARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-11A2222B"),
+		Tags: []*storagegateway.Tag{
+			{
+				Key:   aws.String("Dev Gatgeway Region"),
+				Value: aws.String("East Coast"),
 			},
-			// More values...
 		},
 	}
-	resp, err := svc.AddTagsToResource(params)
 
+	result, err := svc.AddTagsToResource(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_AddUploadBuffer() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.AddUploadBufferInput{
-		DiskIds: []*string{ // Required
-			aws.String("DiskId"), // Required
-			// More values...
+// To add upload buffer on local disk
+//
+// Configures one or more gateway local disks as upload buffer for a specified gateway.
+func ExampleStorageGateway_AddUploadBuffer_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.AddUploadBufferInput{
+		DiskIds: []*string{
+			aws.String("pci-0000:03:00.0-scsi-0:0:0:0"),
+			aws.String("pci-0000:03:00.0-scsi-0:0:1:0"),
 		},
-		GatewayARN: aws.String("GatewayARN"), // Required
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
 	}
-	resp, err := svc.AddUploadBuffer(params)
 
+	result, err := svc.AddUploadBuffer(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_AddWorkingStorage() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.AddWorkingStorageInput{
-		DiskIds: []*string{ // Required
-			aws.String("DiskId"), // Required
-			// More values...
+// To add storage on local disk
+//
+// Configures one or more gateway local disks as working storage for a gateway. (Working
+// storage is also referred to as upload buffer.)
+func ExampleStorageGateway_AddWorkingStorage_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.AddWorkingStorageInput{
+		DiskIds: []*string{
+			aws.String("pci-0000:03:00.0-scsi-0:0:0:0"),
+			aws.String("pci-0000:03:00.0-scsi-0:0:1:0"),
 		},
-		GatewayARN: aws.String("GatewayARN"), // Required
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
 	}
-	resp, err := svc.AddWorkingStorage(params)
 
+	result, err := svc.AddWorkingStorage(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_CancelArchival() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.CancelArchivalInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
-		TapeARN:    aws.String("TapeARN"),    // Required
+// To cancel virtual tape archiving
+//
+// Cancels archiving of a virtual tape to the virtual tape shelf (VTS) after the archiving
+// process is initiated.
+func ExampleStorageGateway_CancelArchival_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.CancelArchivalInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
+		TapeARN:    aws.String("arn:aws:storagegateway:us-east-1:999999999999:tape/AMZN01A2A4"),
 	}
-	resp, err := svc.CancelArchival(params)
 
+	result, err := svc.CancelArchival(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_CancelRetrieval() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.CancelRetrievalInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
-		TapeARN:    aws.String("TapeARN"),    // Required
+// To cancel virtual tape retrieval
+//
+// Cancels retrieval of a virtual tape from the virtual tape shelf (VTS) to a gateway
+// after the retrieval process is initiated.
+func ExampleStorageGateway_CancelRetrieval_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.CancelRetrievalInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
+		TapeARN:    aws.String("arn:aws:storagegateway:us-east-1:999999999999:tape/AMZN01A2A4"),
 	}
-	resp, err := svc.CancelRetrieval(params)
 
+	result, err := svc.CancelRetrieval(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_CreateCachediSCSIVolume() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.CreateCachediSCSIVolumeInput{
-		ClientToken:        aws.String("ClientToken"),        // Required
-		GatewayARN:         aws.String("GatewayARN"),         // Required
-		NetworkInterfaceId: aws.String("NetworkInterfaceId"), // Required
-		TargetName:         aws.String("TargetName"),         // Required
-		VolumeSizeInBytes:  aws.Int64(1),                     // Required
-		SnapshotId:         aws.String("SnapshotId"),
-		SourceVolumeARN:    aws.String("VolumeARN"),
+// To create a cached iSCSI volume
+//
+// Creates a cached volume on a specified cached gateway.
+func ExampleStorageGateway_CreateCachediSCSIVolume_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.CreateCachediSCSIVolumeInput{
+		ClientToken:        aws.String("cachedvol112233"),
+		GatewayARN:         aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
+		NetworkInterfaceId: aws.String("10.1.1.1"),
+		SnapshotId:         aws.String("snap-f47b7b94"),
+		TargetName:         aws.String("my-volume"),
+		VolumeSizeInBytes:  aws.Int64(536870912000),
 	}
-	resp, err := svc.CreateCachediSCSIVolume(params)
 
+	result, err := svc.CreateCachediSCSIVolume(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_CreateNFSFileShare() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.CreateNFSFileShareInput{
-		ClientToken: aws.String("ClientToken"), // Required
-		GatewayARN:  aws.String("GatewayARN"),  // Required
-		LocationARN: aws.String("LocationARN"), // Required
-		Role:        aws.String("Role"),        // Required
-		ClientList: []*string{
-			aws.String("IPV4AddressCIDR"), // Required
-			// More values...
-		},
-		DefaultStorageClass: aws.String("StorageClass"),
-		KMSEncrypted:        aws.Bool(true),
-		KMSKey:              aws.String("KMSKey"),
-		NFSFileShareDefaults: &storagegateway.NFSFileShareDefaults{
-			DirectoryMode: aws.String("PermissionMode"),
-			FileMode:      aws.String("PermissionMode"),
-			GroupId:       aws.Int64(1),
-			OwnerId:       aws.Int64(1),
-		},
-		ReadOnly: aws.Bool(true),
-		Squash:   aws.String("Squash"),
+// To create a snapshot of a gateway volume
+//
+// Initiates an ad-hoc snapshot of a gateway volume.
+func ExampleStorageGateway_CreateSnapshot_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.CreateSnapshotInput{
+		SnapshotDescription: aws.String("My root volume snapshot as of 10/03/2017"),
+		VolumeARN:           aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B/volume/vol-1122AABB"),
 	}
-	resp, err := svc.CreateNFSFileShare(params)
 
+	result, err := svc.CreateSnapshot(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			case storagegateway.ErrCodeServiceUnavailableError:
+				fmt.Println(storagegateway.ErrCodeServiceUnavailableError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_CreateSnapshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.CreateSnapshotInput{
-		SnapshotDescription: aws.String("SnapshotDescription"), // Required
-		VolumeARN:           aws.String("VolumeARN"),           // Required
+// To create a snapshot of a gateway volume
+//
+// Initiates a snapshot of a gateway from a volume recovery point.
+func ExampleStorageGateway_CreateSnapshotFromVolumeRecoveryPoint_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.CreateSnapshotFromVolumeRecoveryPointInput{
+		SnapshotDescription: aws.String("My root volume snapshot as of 2017-06-30T10:10:10.000Z"),
+		VolumeARN:           aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B/volume/vol-1122AABB"),
 	}
-	resp, err := svc.CreateSnapshot(params)
 
+	result, err := svc.CreateSnapshotFromVolumeRecoveryPoint(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			case storagegateway.ErrCodeServiceUnavailableError:
+				fmt.Println(storagegateway.ErrCodeServiceUnavailableError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_CreateSnapshotFromVolumeRecoveryPoint() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.CreateSnapshotFromVolumeRecoveryPointInput{
-		SnapshotDescription: aws.String("SnapshotDescription"), // Required
-		VolumeARN:           aws.String("VolumeARN"),           // Required
+// To create a stored iSCSI volume
+//
+// Creates a stored volume on a specified stored gateway.
+func ExampleStorageGateway_CreateStorediSCSIVolume_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.CreateStorediSCSIVolumeInput{
+		DiskId:               aws.String("pci-0000:03:00.0-scsi-0:0:0:0"),
+		GatewayARN:           aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
+		NetworkInterfaceId:   aws.String("10.1.1.1"),
+		PreserveExistingData: aws.Bool(true),
+		SnapshotId:           aws.String("snap-f47b7b94"),
+		TargetName:           aws.String("my-volume"),
 	}
-	resp, err := svc.CreateSnapshotFromVolumeRecoveryPoint(params)
 
+	result, err := svc.CreateStorediSCSIVolume(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_CreateStorediSCSIVolume() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.CreateStorediSCSIVolumeInput{
-		DiskId:               aws.String("DiskId"),             // Required
-		GatewayARN:           aws.String("GatewayARN"),         // Required
-		NetworkInterfaceId:   aws.String("NetworkInterfaceId"), // Required
-		PreserveExistingData: aws.Bool(true),                   // Required
-		TargetName:           aws.String("TargetName"),         // Required
-		SnapshotId:           aws.String("SnapshotId"),
+// To create a virtual tape using a barcode
+//
+// Creates a virtual tape by using your own barcode.
+func ExampleStorageGateway_CreateTapeWithBarcode_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.CreateTapeWithBarcodeInput{
+		GatewayARN:      aws.String("arn:aws:storagegateway:us-east-1:999999999999:gateway/sgw-12A3456B"),
+		TapeBarcode:     aws.String("TEST12345"),
+		TapeSizeInBytes: aws.Int64(107374182400),
 	}
-	resp, err := svc.CreateStorediSCSIVolume(params)
 
+	result, err := svc.CreateTapeWithBarcode(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_CreateTapeWithBarcode() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.CreateTapeWithBarcodeInput{
-		GatewayARN:      aws.String("GatewayARN"),  // Required
-		TapeBarcode:     aws.String("TapeBarcode"), // Required
-		TapeSizeInBytes: aws.Int64(1),              // Required
+// To create a virtual tape
+//
+// Creates one or more virtual tapes.
+func ExampleStorageGateway_CreateTapes_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.CreateTapesInput{
+		ClientToken:       aws.String("77777"),
+		GatewayARN:        aws.String("arn:aws:storagegateway:us-east-1:999999999999:gateway/sgw-12A3456B"),
+		NumTapesToCreate:  aws.Int64(3),
+		TapeBarcodePrefix: aws.String("TEST"),
+		TapeSizeInBytes:   aws.Int64(107374182400),
 	}
-	resp, err := svc.CreateTapeWithBarcode(params)
 
+	result, err := svc.CreateTapes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_CreateTapes() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.CreateTapesInput{
-		ClientToken:       aws.String("ClientToken"),       // Required
-		GatewayARN:        aws.String("GatewayARN"),        // Required
-		NumTapesToCreate:  aws.Int64(1),                    // Required
-		TapeBarcodePrefix: aws.String("TapeBarcodePrefix"), // Required
-		TapeSizeInBytes:   aws.Int64(1),                    // Required
+// To delete bandwidth rate limits of gateway
+//
+// Deletes the bandwidth rate limits of a gateway; either the upload or download limit,
+// or both.
+func ExampleStorageGateway_DeleteBandwidthRateLimit_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DeleteBandwidthRateLimitInput{
+		BandwidthType: aws.String("All"),
+		GatewayARN:    aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
 	}
-	resp, err := svc.CreateTapes(params)
 
+	result, err := svc.DeleteBandwidthRateLimit(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_DeleteBandwidthRateLimit() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DeleteBandwidthRateLimitInput{
-		BandwidthType: aws.String("BandwidthType"), // Required
-		GatewayARN:    aws.String("GatewayARN"),    // Required
+// To delete CHAP credentials
+//
+// Deletes Challenge-Handshake Authentication Protocol (CHAP) credentials for a specified
+// iSCSI target and initiator pair.
+func ExampleStorageGateway_DeleteChapCredentials_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DeleteChapCredentialsInput{
+		InitiatorName: aws.String("iqn.1991-05.com.microsoft:computername.domain.example.com"),
+		TargetARN:     aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B/target/iqn.1997-05.com.amazon:myvolume"),
 	}
-	resp, err := svc.DeleteBandwidthRateLimit(params)
 
+	result, err := svc.DeleteChapCredentials(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_DeleteChapCredentials() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DeleteChapCredentialsInput{
-		InitiatorName: aws.String("IqnName"),   // Required
-		TargetARN:     aws.String("TargetARN"), // Required
+// To delete a gatgeway
+//
+// This operation deletes the gateway, but not the gateway's VM from the host computer.
+func ExampleStorageGateway_DeleteGateway_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DeleteGatewayInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
 	}
-	resp, err := svc.DeleteChapCredentials(params)
 
+	result, err := svc.DeleteGateway(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_DeleteFileShare() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DeleteFileShareInput{
-		FileShareARN: aws.String("FileShareARN"), // Required
+// To delete a snapshot of a volume
+//
+// This action enables you to delete a snapshot schedule for a volume.
+func ExampleStorageGateway_DeleteSnapshotSchedule_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DeleteSnapshotScheduleInput{
+		VolumeARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B/volume/vol-1122AABB"),
 	}
-	resp, err := svc.DeleteFileShare(params)
 
+	result, err := svc.DeleteSnapshotSchedule(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_DeleteGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DeleteGatewayInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
+// To delete a virtual tape
+//
+// This example deletes the specified virtual tape.
+func ExampleStorageGateway_DeleteTape_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DeleteTapeInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:204469490176:gateway/sgw-12A3456B"),
+		TapeARN:    aws.String("arn:aws:storagegateway:us-east-1:204469490176:tape/TEST05A2A0"),
 	}
-	resp, err := svc.DeleteGateway(params)
 
+	result, err := svc.DeleteTape(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_DeleteSnapshotSchedule() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DeleteSnapshotScheduleInput{
-		VolumeARN: aws.String("VolumeARN"), // Required
+// To delete a virtual tape from the shelf (VTS)
+//
+// Deletes the specified virtual tape from the virtual tape shelf (VTS).
+func ExampleStorageGateway_DeleteTapeArchive_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DeleteTapeArchiveInput{
+		TapeARN: aws.String("arn:aws:storagegateway:us-east-1:204469490176:tape/TEST05A2A0"),
 	}
-	resp, err := svc.DeleteSnapshotSchedule(params)
 
+	result, err := svc.DeleteTapeArchive(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_DeleteTape() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DeleteTapeInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
-		TapeARN:    aws.String("TapeARN"),    // Required
+// To delete a gateway volume
+//
+// Deletes the specified gateway volume that you previously created using the CreateCachediSCSIVolume
+// or CreateStorediSCSIVolume API.
+func ExampleStorageGateway_DeleteVolume_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DeleteVolumeInput{
+		VolumeARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B/volume/vol-1122AABB"),
 	}
-	resp, err := svc.DeleteTape(params)
 
+	result, err := svc.DeleteVolume(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_DeleteTapeArchive() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DeleteTapeArchiveInput{
-		TapeARN: aws.String("TapeARN"), // Required
+// To describe the bandwidth rate limits of a gateway
+//
+// Returns a value for a bandwidth rate limit if set. If not set, then only the gateway
+// ARN is returned.
+func ExampleStorageGateway_DescribeBandwidthRateLimit_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DescribeBandwidthRateLimitInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
 	}
-	resp, err := svc.DeleteTapeArchive(params)
 
+	result, err := svc.DescribeBandwidthRateLimit(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_DeleteVolume() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DeleteVolumeInput{
-		VolumeARN: aws.String("VolumeARN"), // Required
+// To describe cache information
+//
+// Returns information about the cache of a gateway.
+func ExampleStorageGateway_DescribeCache_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DescribeCacheInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
 	}
-	resp, err := svc.DeleteVolume(params)
 
+	result, err := svc.DescribeCache(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_DescribeBandwidthRateLimit() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DescribeBandwidthRateLimitInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
-	}
-	resp, err := svc.DescribeBandwidthRateLimit(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleStorageGateway_DescribeCache() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DescribeCacheInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
-	}
-	resp, err := svc.DescribeCache(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleStorageGateway_DescribeCachediSCSIVolumes() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DescribeCachediSCSIVolumesInput{
-		VolumeARNs: []*string{ // Required
-			aws.String("VolumeARN"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeCachediSCSIVolumes(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleStorageGateway_DescribeChapCredentials() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DescribeChapCredentialsInput{
-		TargetARN: aws.String("TargetARN"), // Required
-	}
-	resp, err := svc.DescribeChapCredentials(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleStorageGateway_DescribeGatewayInformation() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DescribeGatewayInformationInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
-	}
-	resp, err := svc.DescribeGatewayInformation(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleStorageGateway_DescribeMaintenanceStartTime() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DescribeMaintenanceStartTimeInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
-	}
-	resp, err := svc.DescribeMaintenanceStartTime(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleStorageGateway_DescribeNFSFileShares() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DescribeNFSFileSharesInput{
-		FileShareARNList: []*string{ // Required
-			aws.String("FileShareARN"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeNFSFileShares(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleStorageGateway_DescribeSnapshotSchedule() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DescribeSnapshotScheduleInput{
-		VolumeARN: aws.String("VolumeARN"), // Required
-	}
-	resp, err := svc.DescribeSnapshotSchedule(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleStorageGateway_DescribeStorediSCSIVolumes() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DescribeStorediSCSIVolumesInput{
-		VolumeARNs: []*string{ // Required
-			aws.String("VolumeARN"), // Required
-			// More values...
+// To describe gateway cached iSCSI volumes
+//
+// Returns a description of the gateway cached iSCSI volumes specified in the request.
+func ExampleStorageGateway_DescribeCachediSCSIVolumes_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DescribeCachediSCSIVolumesInput{
+		VolumeARNs: []*string{
+			aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B/volume/vol-1122AABB"),
 		},
 	}
-	resp, err := svc.DescribeStorediSCSIVolumes(params)
 
+	result, err := svc.DescribeCachediSCSIVolumes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_DescribeTapeArchives() {
-	sess := session.Must(session.NewSession())
+// To describe CHAP credetnitals for an iSCSI
+//
+// Returns an array of Challenge-Handshake Authentication Protocol (CHAP) credentials
+// information for a specified iSCSI target, one for each target-initiator pair.
+func ExampleStorageGateway_DescribeChapCredentials_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DescribeChapCredentialsInput{
+		TargetARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B/target/iqn.1997-05.com.amazon:myvolume"),
+	}
 
-	svc := storagegateway.New(sess)
+	result, err := svc.DescribeChapCredentials(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &storagegateway.DescribeTapeArchivesInput{
-		Limit:  aws.Int64(1),
-		Marker: aws.String("Marker"),
+	fmt.Println(result)
+}
+
+// To describe metadata about the gateway
+//
+// Returns metadata about a gateway such as its name, network interfaces, configured
+// time zone, and the state (whether the gateway is running or not).
+func ExampleStorageGateway_DescribeGatewayInformation_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DescribeGatewayInformationInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
+	}
+
+	result, err := svc.DescribeGatewayInformation(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe gateway's maintenance start time
+//
+// Returns your gateway's weekly maintenance start time including the day and time of
+// the week.
+func ExampleStorageGateway_DescribeMaintenanceStartTime_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DescribeMaintenanceStartTimeInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
+	}
+
+	result, err := svc.DescribeMaintenanceStartTime(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe snapshot schedule for gateway volume
+//
+// Describes the snapshot schedule for the specified gateway volume including intervals
+// at which snapshots are automatically initiated.
+func ExampleStorageGateway_DescribeSnapshotSchedule_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DescribeSnapshotScheduleInput{
+		VolumeARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B/volume/vol-1122AABB"),
+	}
+
+	result, err := svc.DescribeSnapshotSchedule(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe the volumes of a gateway
+//
+// Returns the description of the gateway volumes specified in the request belonging
+// to the same gateway.
+func ExampleStorageGateway_DescribeStorediSCSIVolumes_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DescribeStorediSCSIVolumesInput{
+		VolumeARNs: []*string{
+			aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B/volume/vol-1122AABB"),
+		},
+	}
+
+	result, err := svc.DescribeStorediSCSIVolumes(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe virtual tapes in the VTS
+//
+// Returns a description of specified virtual tapes in the virtual tape shelf (VTS).
+func ExampleStorageGateway_DescribeTapeArchives_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DescribeTapeArchivesInput{
+		Limit:  aws.Int64(123),
+		Marker: aws.String("1"),
 		TapeARNs: []*string{
-			aws.String("TapeARN"), // Required
-			// More values...
+			aws.String("arn:aws:storagegateway:us-east-1:999999999999:tape/AM08A1AD"),
+			aws.String("arn:aws:storagegateway:us-east-1:999999999999:tape/AMZN01A2A4"),
 		},
 	}
-	resp, err := svc.DescribeTapeArchives(params)
 
+	result, err := svc.DescribeTapeArchives(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_DescribeTapeRecoveryPoints() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DescribeTapeRecoveryPointsInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
+// To describe virtual tape recovery points
+//
+// Returns a list of virtual tape recovery points that are available for the specified
+// gateway-VTL.
+func ExampleStorageGateway_DescribeTapeRecoveryPoints_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DescribeTapeRecoveryPointsInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
 		Limit:      aws.Int64(1),
-		Marker:     aws.String("Marker"),
+		Marker:     aws.String("1"),
 	}
-	resp, err := svc.DescribeTapeRecoveryPoints(params)
 
+	result, err := svc.DescribeTapeRecoveryPoints(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_DescribeTapes() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DescribeTapesInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
-		Limit:      aws.Int64(1),
-		Marker:     aws.String("Marker"),
+// To describe virtual tape(s) associated with gateway
+//
+// Returns a description of the specified Amazon Resource Name (ARN) of virtual tapes.
+// If a TapeARN is not specified, returns a description of all virtual tapes.
+func ExampleStorageGateway_DescribeTapes_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DescribeTapesInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:999999999999:gateway/sgw-12A3456B"),
+		Limit:      aws.Int64(2),
+		Marker:     aws.String("1"),
 		TapeARNs: []*string{
-			aws.String("TapeARN"), // Required
-			// More values...
+			aws.String("arn:aws:storagegateway:us-east-1:999999999999:tape/TEST04A2A1"),
+			aws.String("arn:aws:storagegateway:us-east-1:999999999999:tape/TEST05A2A0"),
 		},
 	}
-	resp, err := svc.DescribeTapes(params)
 
+	result, err := svc.DescribeTapes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_DescribeUploadBuffer() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DescribeUploadBufferInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
+// To describe upload buffer of gateway
+//
+// Returns information about the upload buffer of a gateway including disk IDs and the
+// amount of upload buffer space allocated/used.
+func ExampleStorageGateway_DescribeUploadBuffer_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DescribeUploadBufferInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
 	}
-	resp, err := svc.DescribeUploadBuffer(params)
 
+	result, err := svc.DescribeUploadBuffer(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_DescribeVTLDevices() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DescribeVTLDevicesInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
-		Limit:      aws.Int64(1),
-		Marker:     aws.String("Marker"),
-		VTLDeviceARNs: []*string{
-			aws.String("VTLDeviceARN"), // Required
-			// More values...
-		},
+// To describe upload buffer of a gateway
+//
+// Returns information about the upload buffer of a gateway including disk IDs and the
+// amount of upload buffer space allocated and used.
+func ExampleStorageGateway_DescribeUploadBuffer_shared01() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DescribeUploadBufferInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
 	}
-	resp, err := svc.DescribeVTLDevices(params)
 
+	result, err := svc.DescribeUploadBuffer(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_DescribeWorkingStorage() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DescribeWorkingStorageInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
+// To describe virtual tape library (VTL) devices of a single gateway
+//
+// Returns a description of virtual tape library (VTL) devices for the specified gateway.
+func ExampleStorageGateway_DescribeVTLDevices_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DescribeVTLDevicesInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:999999999999:gateway/sgw-12A3456B"),
+		Limit:      aws.Int64(123),
+		Marker:     aws.String("1"),
 	}
-	resp, err := svc.DescribeWorkingStorage(params)
 
+	result, err := svc.DescribeVTLDevices(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_DisableGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.DisableGatewayInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
+// To describe the working storage of a gateway [Depreciated]
+//
+// This operation is supported only for the gateway-stored volume architecture. This
+// operation is deprecated in cached-volumes API version (20120630). Use DescribeUploadBuffer
+// instead.
+func ExampleStorageGateway_DescribeWorkingStorage_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DescribeWorkingStorageInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
 	}
-	resp, err := svc.DisableGateway(params)
 
+	result, err := svc.DescribeWorkingStorage(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_ListFileShares() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.ListFileSharesInput{
-		GatewayARN: aws.String("GatewayARN"),
-		Limit:      aws.Int64(1),
-		Marker:     aws.String("Marker"),
+// To disable a gateway when it is no longer functioning
+//
+// Disables a gateway when the gateway is no longer functioning. Use this operation
+// for a gateway-VTL that is not reachable or not functioning.
+func ExampleStorageGateway_DisableGateway_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.DisableGatewayInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
 	}
-	resp, err := svc.ListFileShares(params)
 
+	result, err := svc.DisableGateway(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_ListGateways() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.ListGatewaysInput{
-		Limit:  aws.Int64(1),
-		Marker: aws.String("Marker"),
+// To lists region specific gateways per AWS account
+//
+// Lists gateways owned by an AWS account in a specified region as requested. Results
+// are sorted by gateway ARN up to a maximum of 100 gateways.
+func ExampleStorageGateway_ListGateways_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.ListGatewaysInput{
+		Limit:  aws.Int64(2),
+		Marker: aws.String("1"),
 	}
-	resp, err := svc.ListGateways(params)
 
+	result, err := svc.ListGateways(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_ListLocalDisks() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.ListLocalDisksInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
+// To list the gateway's local disks
+//
+// The request returns a list of all disks, specifying which are configured as working
+// storage, cache storage, or stored volume or not configured at all.
+func ExampleStorageGateway_ListLocalDisks_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.ListLocalDisksInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
 	}
-	resp, err := svc.ListLocalDisks(params)
 
+	result, err := svc.ListLocalDisks(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_ListTagsForResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.ListTagsForResourceInput{
-		ResourceARN: aws.String("ResourceARN"), // Required
+// To list tags that have been added to a resource
+//
+// Lists the tags that have been added to the specified resource.
+func ExampleStorageGateway_ListTagsForResource_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.ListTagsForResourceInput{
 		Limit:       aws.Int64(1),
-		Marker:      aws.String("Marker"),
+		Marker:      aws.String("1"),
+		ResourceARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-11A2222B"),
 	}
-	resp, err := svc.ListTagsForResource(params)
 
+	result, err := svc.ListTagsForResource(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_ListTapes() {
-	sess := session.Must(session.NewSession())
+// To list recovery points for a gateway
+//
+// Lists the recovery points for a specified gateway in which all data of the volume
+// is consistent and can be used to create a snapshot.
+func ExampleStorageGateway_ListVolumeRecoveryPoints_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.ListVolumeRecoveryPointsInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
+	}
 
-	svc := storagegateway.New(sess)
+	result, err := svc.ListVolumeRecoveryPoints(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &storagegateway.ListTapesInput{
-		Limit:  aws.Int64(1),
-		Marker: aws.String("Marker"),
-		TapeARNs: []*string{
-			aws.String("TapeARN"), // Required
-			// More values...
+	fmt.Println(result)
+}
+
+// To list the iSCSI stored volumes of a gateway
+//
+// Lists the iSCSI stored volumes of a gateway. Results are sorted by volume ARN up
+// to a maximum of 100 volumes.
+func ExampleStorageGateway_ListVolumes_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.ListVolumesInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
+		Limit:      aws.Int64(2),
+		Marker:     aws.String("1"),
+	}
+
+	result, err := svc.ListVolumes(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To remove tags from a resource
+//
+// Lists the iSCSI stored volumes of a gateway. Removes one or more tags from the specified
+// resource.
+func ExampleStorageGateway_RemoveTagsFromResource_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.RemoveTagsFromResourceInput{
+		ResourceARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-11A2222B"),
+		TagKeys: []*string{
+			aws.String("Dev Gatgeway Region"),
+			aws.String("East Coast"),
 		},
 	}
-	resp, err := svc.ListTapes(params)
 
+	result, err := svc.RemoveTagsFromResource(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_ListVolumeInitiators() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.ListVolumeInitiatorsInput{
-		VolumeARN: aws.String("VolumeARN"), // Required
+// To reset cache disks in error status
+//
+// Resets all cache disks that have encountered a error and makes the disks available
+// for reconfiguration as cache storage.
+func ExampleStorageGateway_ResetCache_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.ResetCacheInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-13B4567C"),
 	}
-	resp, err := svc.ListVolumeInitiators(params)
 
+	result, err := svc.ResetCache(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_ListVolumeRecoveryPoints() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.ListVolumeRecoveryPointsInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
+// To retrieve an archived tape from the VTS
+//
+// Retrieves an archived virtual tape from the virtual tape shelf (VTS) to a gateway-VTL.
+// Virtual tapes archived in the VTS are not associated with any gateway.
+func ExampleStorageGateway_RetrieveTapeArchive_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.RetrieveTapeArchiveInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:999999999999:gateway/sgw-12A3456B"),
+		TapeARN:    aws.String("arn:aws:storagegateway:us-east-1:999999999999:tape/TEST0AA2AF"),
 	}
-	resp, err := svc.ListVolumeRecoveryPoints(params)
 
+	result, err := svc.RetrieveTapeArchive(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_ListVolumes() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.ListVolumesInput{
-		GatewayARN: aws.String("GatewayARN"),
-		Limit:      aws.Int64(1),
-		Marker:     aws.String("Marker"),
+// To retrieve the recovery point of a virtual tape
+//
+// Retrieves the recovery point for the specified virtual tape.
+func ExampleStorageGateway_RetrieveTapeRecoveryPoint_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.RetrieveTapeRecoveryPointInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:999999999999:gateway/sgw-12A3456B"),
+		TapeARN:    aws.String("arn:aws:storagegateway:us-east-1:999999999999:tape/TEST0AA2AF"),
 	}
-	resp, err := svc.ListVolumes(params)
 
+	result, err := svc.RetrieveTapeRecoveryPoint(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_RefreshCache() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.RefreshCacheInput{
-		FileShareARN: aws.String("FileShareARN"), // Required
+// To set a password for your VM
+//
+// Sets the password for your VM local console.
+func ExampleStorageGateway_SetLocalConsolePassword_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.SetLocalConsolePasswordInput{
+		GatewayARN:           aws.String("arn:aws:storagegateway:us-east-1:999999999999:gateway/sgw-12A3456B"),
+		LocalConsolePassword: aws.String("PassWordMustBeAtLeast6Chars."),
 	}
-	resp, err := svc.RefreshCache(params)
 
+	result, err := svc.SetLocalConsolePassword(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_RemoveTagsFromResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.RemoveTagsFromResourceInput{
-		ResourceARN: aws.String("ResourceARN"), // Required
-		TagKeys: []*string{ // Required
-			aws.String("TagKey"), // Required
-			// More values...
-		},
+// To shut down a gateway service
+//
+// This operation shuts down the gateway service component running in the storage gateway's
+// virtual machine (VM) and not the VM.
+func ExampleStorageGateway_ShutdownGateway_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.ShutdownGatewayInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:999999999999:gateway/sgw-12A3456B"),
 	}
-	resp, err := svc.RemoveTagsFromResource(params)
 
+	result, err := svc.ShutdownGateway(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_ResetCache() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.ResetCacheInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
+// To start a gateway service
+//
+// Starts a gateway service that was previously shut down.
+func ExampleStorageGateway_StartGateway_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.StartGatewayInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:999999999999:gateway/sgw-12A3456B"),
 	}
-	resp, err := svc.ResetCache(params)
 
+	result, err := svc.StartGateway(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_RetrieveTapeArchive() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.RetrieveTapeArchiveInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
-		TapeARN:    aws.String("TapeARN"),    // Required
+// To update the bandwidth rate limits of a gateway
+//
+// Updates the bandwidth rate limits of a gateway. Both the upload and download bandwidth
+// rate limit can be set, or either one of the two. If a new limit is not set, the existing
+// rate limit remains.
+func ExampleStorageGateway_UpdateBandwidthRateLimit_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.UpdateBandwidthRateLimitInput{
+		AverageDownloadRateLimitInBitsPerSec: aws.Int64(102400),
+		AverageUploadRateLimitInBitsPerSec:   aws.Int64(51200),
+		GatewayARN:                           aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
 	}
-	resp, err := svc.RetrieveTapeArchive(params)
 
+	result, err := svc.UpdateBandwidthRateLimit(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_RetrieveTapeRecoveryPoint() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.RetrieveTapeRecoveryPointInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
-		TapeARN:    aws.String("TapeARN"),    // Required
+// To update CHAP credentials for an iSCSI target
+//
+// Updates the Challenge-Handshake Authentication Protocol (CHAP) credentials for a
+// specified iSCSI target.
+func ExampleStorageGateway_UpdateChapCredentials_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.UpdateChapCredentialsInput{
+		InitiatorName:                 aws.String("iqn.1991-05.com.microsoft:computername.domain.example.com"),
+		SecretToAuthenticateInitiator: aws.String("111111111111"),
+		SecretToAuthenticateTarget:    aws.String("222222222222"),
+		TargetARN:                     aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B/target/iqn.1997-05.com.amazon:myvolume"),
 	}
-	resp, err := svc.RetrieveTapeRecoveryPoint(params)
 
+	result, err := svc.UpdateChapCredentials(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_SetLocalConsolePassword() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.SetLocalConsolePasswordInput{
-		GatewayARN:           aws.String("GatewayARN"),           // Required
-		LocalConsolePassword: aws.String("LocalConsolePassword"), // Required
+// To update a gateway's metadata
+//
+// Updates a gateway's metadata, which includes the gateway's name and time zone.
+func ExampleStorageGateway_UpdateGatewayInformation_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.UpdateGatewayInformationInput{
+		GatewayARN:      aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
+		GatewayName:     aws.String("MyGateway2"),
+		GatewayTimezone: aws.String("GMT-12:00"),
 	}
-	resp, err := svc.SetLocalConsolePassword(params)
 
+	result, err := svc.UpdateGatewayInformation(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_ShutdownGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.ShutdownGatewayInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
+// To update a gateway's VM software
+//
+// Updates the gateway virtual machine (VM) software. The request immediately triggers
+// the software update.
+func ExampleStorageGateway_UpdateGatewaySoftwareNow_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.UpdateGatewaySoftwareNowInput{
+		GatewayARN: aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
 	}
-	resp, err := svc.ShutdownGateway(params)
 
+	result, err := svc.UpdateGatewaySoftwareNow(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_StartGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.StartGatewayInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
+// To update a gateway's maintenance start time
+//
+// Updates a gateway's weekly maintenance start time information, including day and
+// time of the week. The maintenance time is in your gateway's time zone.
+func ExampleStorageGateway_UpdateMaintenanceStartTime_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.UpdateMaintenanceStartTimeInput{
+		DayOfWeek:    aws.Int64(2),
+		GatewayARN:   aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B"),
+		HourOfDay:    aws.Int64(0),
+		MinuteOfHour: aws.Int64(30),
 	}
-	resp, err := svc.StartGateway(params)
 
+	result, err := svc.UpdateMaintenanceStartTime(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_UpdateBandwidthRateLimit() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.UpdateBandwidthRateLimitInput{
-		GatewayARN:                           aws.String("GatewayARN"), // Required
-		AverageDownloadRateLimitInBitsPerSec: aws.Int64(1),
-		AverageUploadRateLimitInBitsPerSec:   aws.Int64(1),
+// To update a volume snapshot schedule
+//
+// Updates a snapshot schedule configured for a gateway volume.
+func ExampleStorageGateway_UpdateSnapshotSchedule_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.UpdateSnapshotScheduleInput{
+		Description:       aws.String("Hourly snapshot"),
+		RecurrenceInHours: aws.Int64(1),
+		StartAt:           aws.Int64(0),
+		VolumeARN:         aws.String("arn:aws:storagegateway:us-east-1:111122223333:gateway/sgw-12A3456B/volume/vol-1122AABB"),
 	}
-	resp, err := svc.UpdateBandwidthRateLimit(params)
 
+	result, err := svc.UpdateSnapshotSchedule(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleStorageGateway_UpdateChapCredentials() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.UpdateChapCredentialsInput{
-		InitiatorName:                 aws.String("IqnName"),    // Required
-		SecretToAuthenticateInitiator: aws.String("ChapSecret"), // Required
-		TargetARN:                     aws.String("TargetARN"),  // Required
-		SecretToAuthenticateTarget:    aws.String("ChapSecret"),
+// To update a VTL device type
+//
+// Updates the type of medium changer in a gateway-VTL after a gateway-VTL is activated.
+func ExampleStorageGateway_UpdateVTLDeviceType_shared00() {
+	svc := storagegateway.New(session.New())
+	input := &storagegateway.UpdateVTLDeviceTypeInput{
+		DeviceType:   aws.String("Medium Changer"),
+		VTLDeviceARN: aws.String("arn:aws:storagegateway:us-east-1:999999999999:gateway/sgw-12A3456B/device/AMZN_SGW-1FAD4876_MEDIACHANGER_00001"),
 	}
-	resp, err := svc.UpdateChapCredentials(params)
 
+	result, err := svc.UpdateVTLDeviceType(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case storagegateway.ErrCodeInvalidGatewayRequestException:
+				fmt.Println(storagegateway.ErrCodeInvalidGatewayRequestException, aerr.Error())
+			case storagegateway.ErrCodeInternalServerError:
+				fmt.Println(storagegateway.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleStorageGateway_UpdateGatewayInformation() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.UpdateGatewayInformationInput{
-		GatewayARN:      aws.String("GatewayARN"), // Required
-		GatewayName:     aws.String("GatewayName"),
-		GatewayTimezone: aws.String("GatewayTimezone"),
-	}
-	resp, err := svc.UpdateGatewayInformation(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleStorageGateway_UpdateGatewaySoftwareNow() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.UpdateGatewaySoftwareNowInput{
-		GatewayARN: aws.String("GatewayARN"), // Required
-	}
-	resp, err := svc.UpdateGatewaySoftwareNow(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleStorageGateway_UpdateMaintenanceStartTime() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.UpdateMaintenanceStartTimeInput{
-		DayOfWeek:    aws.Int64(1),             // Required
-		GatewayARN:   aws.String("GatewayARN"), // Required
-		HourOfDay:    aws.Int64(1),             // Required
-		MinuteOfHour: aws.Int64(1),             // Required
-	}
-	resp, err := svc.UpdateMaintenanceStartTime(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleStorageGateway_UpdateNFSFileShare() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.UpdateNFSFileShareInput{
-		FileShareARN: aws.String("FileShareARN"), // Required
-		ClientList: []*string{
-			aws.String("IPV4AddressCIDR"), // Required
-			// More values...
-		},
-		DefaultStorageClass: aws.String("StorageClass"),
-		KMSEncrypted:        aws.Bool(true),
-		KMSKey:              aws.String("KMSKey"),
-		NFSFileShareDefaults: &storagegateway.NFSFileShareDefaults{
-			DirectoryMode: aws.String("PermissionMode"),
-			FileMode:      aws.String("PermissionMode"),
-			GroupId:       aws.Int64(1),
-			OwnerId:       aws.Int64(1),
-		},
-		ReadOnly: aws.Bool(true),
-		Squash:   aws.String("Squash"),
-	}
-	resp, err := svc.UpdateNFSFileShare(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleStorageGateway_UpdateSnapshotSchedule() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.UpdateSnapshotScheduleInput{
-		RecurrenceInHours: aws.Int64(1),            // Required
-		StartAt:           aws.Int64(1),            // Required
-		VolumeARN:         aws.String("VolumeARN"), // Required
-		Description:       aws.String("Description"),
-	}
-	resp, err := svc.UpdateSnapshotSchedule(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleStorageGateway_UpdateVTLDeviceType() {
-	sess := session.Must(session.NewSession())
-
-	svc := storagegateway.New(sess)
-
-	params := &storagegateway.UpdateVTLDeviceTypeInput{
-		DeviceType:   aws.String("DeviceType"),   // Required
-		VTLDeviceARN: aws.String("VTLDeviceARN"), // Required
-	}
-	resp, err := svc.UpdateVTLDeviceType(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }

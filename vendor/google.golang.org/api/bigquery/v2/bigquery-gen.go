@@ -925,9 +925,10 @@ type GetQueryResultsResponse struct {
 	// CacheHit: Whether the query result was fetched from the query cache.
 	CacheHit bool `json:"cacheHit,omitempty"`
 
-	// Errors: [Output-only] All errors and warnings encountered during the
-	// running of the job. Errors here do not necessarily mean that the job
-	// has completed or was unsuccessful.
+	// Errors: [Output-only] The first errors or warnings encountered during
+	// the running of the job. The final message includes the number of
+	// errors that caused the process to stop. Errors here do not
+	// necessarily mean that the job has completed or was unsuccessful.
 	Errors []*ErrorProto `json:"errors,omitempty"`
 
 	// Etag: A hash of this response.
@@ -1418,7 +1419,8 @@ type JobConfigurationQuery struct {
 	// dialect, allows the query to produce arbitrarily large result tables
 	// at a slight cost in performance. Requires destinationTable to be set.
 	// For standard SQL queries, this flag is ignored and large results are
-	// always allowed.
+	// always allowed. However, you must still set destinationTable when
+	// result size exceeds the allowed maximum response size.
 	AllowLargeResults bool `json:"allowLargeResults,omitempty"`
 
 	// CreateDisposition: [Optional] Specifies whether the job is allowed to
@@ -1436,7 +1438,8 @@ type JobConfigurationQuery struct {
 
 	// DestinationTable: [Optional] Describes the table where the query
 	// results should be stored. If not present, a new table will be created
-	// to store the results.
+	// to store the results. This property must be set for large results
+	// that exceed the maximum response size.
 	DestinationTable *TableReference `json:"destinationTable,omitempty"`
 
 	// FlattenResults: [Optional] If true and query uses legacy SQL dialect,
@@ -1474,7 +1477,9 @@ type JobConfigurationQuery struct {
 	// INTERACTIVE.
 	Priority string `json:"priority,omitempty"`
 
-	// Query: [Required] BigQuery SQL query to execute.
+	// Query: [Required] SQL query text to execute. The useLegacySql field
+	// can be used to indicate whether the query uses legacy SQL or standard
+	// SQL.
 	Query string `json:"query,omitempty"`
 
 	// QueryParameters: Query parameters for standard SQL queries.
@@ -1931,9 +1936,10 @@ type JobStatus struct {
 	// indicates that the job has completed and was unsuccessful.
 	ErrorResult *ErrorProto `json:"errorResult,omitempty"`
 
-	// Errors: [Output-only] All errors encountered during the running of
-	// the job. Errors here do not necessarily mean that the job has
-	// completed or was unsuccessful.
+	// Errors: [Output-only] The first errors encountered during the running
+	// of the job. The final message includes the number of errors that
+	// caused the process to stop. Errors here do not necessarily mean that
+	// the job has completed or was unsuccessful.
 	Errors []*ErrorProto `json:"errors,omitempty"`
 
 	// State: [Output-only] Running state of the job.
@@ -2305,9 +2311,10 @@ type QueryResponse struct {
 	// CacheHit: Whether the query result was fetched from the query cache.
 	CacheHit bool `json:"cacheHit,omitempty"`
 
-	// Errors: [Output-only] All errors and warnings encountered during the
-	// running of the job. Errors here do not necessarily mean that the job
-	// has completed or was unsuccessful.
+	// Errors: [Output-only] The first errors or warnings encountered during
+	// the running of the job. The final message includes the number of
+	// errors that caused the process to stop. Errors here do not
+	// necessarily mean that the job has completed or was unsuccessful.
 	Errors []*ErrorProto `json:"errors,omitempty"`
 
 	// JobComplete: Whether the query has completed or not. If rows or
@@ -2758,7 +2765,7 @@ func (s *TableDataList) MarshalJSON() ([]byte, error) {
 
 type TableFieldSchema struct {
 	// Description: [Optional] The field description. The maximum length is
-	// 16K characters.
+	// 1,024 characters.
 	Description string `json:"description,omitempty"`
 
 	// Fields: [Optional] Describes the nested schema fields if the type
@@ -2863,6 +2870,10 @@ type TableListTables struct {
 
 	// TableReference: A reference uniquely identifying the table.
 	TableReference *TableReference `json:"tableReference,omitempty"`
+
+	// TimePartitioning: [Experimental] The time-based partitioning for this
+	// table.
+	TimePartitioning *TimePartitioning `json:"timePartitioning,omitempty"`
 
 	// Type: The type of table. Possible values are: TABLE, VIEW.
 	Type string `json:"type,omitempty"`

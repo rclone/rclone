@@ -1637,6 +1637,11 @@
           "shape":"RequestPayer",
           "location":"header",
           "locationName":"x-amz-request-payer"
+        },
+        "Tagging":{
+          "shape":"TaggingHeader",
+          "location":"header",
+          "locationName":"x-amz-tagging"
         }
       }
     },

@@ -343,6 +343,21 @@ func TestOCSPDecodeMultiResponse(t *testing.T) {
 	}
 }
 
+func TestOCSPDecodeMultiResponseWithoutMatchingCert(t *testing.T) {
+	wrongCert, _ := hex.DecodeString(startComHex)
+	cert, err := x509.ParseCertificate(wrongCert)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	responseBytes, _ := hex.DecodeString(ocspMultiResponseHex)
+	_, err = ParseResponseForCert(responseBytes, cert, nil)
+	want := ParseError("no response matching the supplied certificate")
+	if err != want {
+		t.Errorf("err: got %q, want %q", err, want)
+	}
+}
+
 // This OCSP response was taken from Thawte's public OCSP responder.
 // To recreate:
 //   $ openssl s_client -tls1 -showcerts -servername www.google.com -connect www.google.com:443

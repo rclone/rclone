@@ -422,7 +422,7 @@ func Accept(fd int) (nfd int, sa Sockaddr, err error) {
 	return
 }
 
-//sys	recvmsg(s int, msg *Msghdr, flags int) (n int, err error) = libsocket.recvmsg
+//sys	recvmsg(s int, msg *Msghdr, flags int) (n int, err error) = libsocket.__xnet_recvmsg
 
 func Recvmsg(fd int, p, oob []byte, flags int) (n, oobn int, recvflags int, from Sockaddr, err error) {
 	var msg Msghdr
@@ -441,7 +441,7 @@ func Recvmsg(fd int, p, oob []byte, flags int) (n, oobn int, recvflags int, from
 			iov.Base = &dummy
 			iov.SetLen(1)
 		}
-		msg.Accrights = (*int8)(unsafe.Pointer(&oob[0]))
+		msg.Accrightslen = int32(len(oob))
 	}
 	msg.Iov = &iov
 	msg.Iovlen = 1
@@ -461,7 +461,7 @@ func Sendmsg(fd int, p, oob []byte, to Sockaddr, flags int) (err error) {
 	return
 }
 
-//sys	sendmsg(s int, msg *Msghdr, flags int) (n int, err error) = libsocket.sendmsg
+//sys	sendmsg(s int, msg *Msghdr, flags int) (n int, err error) = libsocket.__xnet_sendmsg
 
 func SendmsgN(fd int, p, oob []byte, to Sockaddr, flags int) (n int, err error) {
 	var ptr unsafe.Pointer
@@ -487,7 +487,7 @@ func SendmsgN(fd int, p, oob []byte, to Sockaddr, flags int) (n int, err error) 
 			iov.Base = &dummy
 			iov.SetLen(1)
 		}
-		msg.Accrights = (*int8)(unsafe.Pointer(&oob[0]))
+		msg.Accrightslen = int32(len(oob))
 	}
 	msg.Iov = &iov
 	msg.Iovlen = 1
@@ -519,43 +519,43 @@ func Acct(path string) (err error) {
  * Expose the ioctl function
  */
 
-//sys	ioctl(fd int, req int, arg uintptr) (err error)
+//sys	ioctl(fd int, req uint, arg uintptr) (err error)
 
-func IoctlSetInt(fd int, req int, value int) (err error) {
+func IoctlSetInt(fd int, req uint, value int) (err error) {
 	return ioctl(fd, req, uintptr(value))
 }
 
-func IoctlSetWinsize(fd int, req int, value *Winsize) (err error) {
+func IoctlSetWinsize(fd int, req uint, value *Winsize) (err error) {
 	return ioctl(fd, req, uintptr(unsafe.Pointer(value)))
 }
 
-func IoctlSetTermios(fd int, req int, value *Termios) (err error) {
+func IoctlSetTermios(fd int, req uint, value *Termios) (err error) {
 	return ioctl(fd, req, uintptr(unsafe.Pointer(value)))
 }
 
-func IoctlSetTermio(fd int, req int, value *Termio) (err error) {
+func IoctlSetTermio(fd int, req uint, value *Termio) (err error) {
 	return ioctl(fd, req, uintptr(unsafe.Pointer(value)))
 }
 
-func IoctlGetInt(fd int, req int) (int, error) {
+func IoctlGetInt(fd int, req uint) (int, error) {
 	var value int
 	err := ioctl(fd, req, uintptr(unsafe.Pointer(&value)))
 	return value, err
 }
 
-func IoctlGetWinsize(fd int, req int) (*Winsize, error) {
+func IoctlGetWinsize(fd int, req uint) (*Winsize, error) {
 	var value Winsize
 	err := ioctl(fd, req, uintptr(unsafe.Pointer(&value)))
 	return &value, err
 }
 
-func IoctlGetTermios(fd int, req int) (*Termios, error) {
+func IoctlGetTermios(fd int, req uint) (*Termios, error) {
 	var value Termios
 	err := ioctl(fd, req, uintptr(unsafe.Pointer(&value)))
 	return &value, err
 }
 
-func IoctlGetTermio(fd int, req int) (*Termio, error) {
+func IoctlGetTermio(fd int, req uint) (*Termio, error) {
 	var value Termio
 	err := ioctl(fd, req, uintptr(unsafe.Pointer(&value)))
 	return &value, err
@@ -583,6 +583,7 @@ func IoctlGetTermio(fd int, req int) (*Termio, error) {
 //sys	Fdatasync(fd int) (err error)
 //sys	Fpathconf(fd int, name int) (val int, err error)
 //sys	Fstat(fd int, stat *Stat_t) (err error)
+//sys	Fstatvfs(fd int, vfsstat *Statvfs_t) (err error)
 //sys	Getdents(fd int, buf []byte, basep *uintptr) (n int, err error)
 //sysnb	Getgid() (gid int)
 //sysnb	Getpid() (pid int)
@@ -599,7 +600,7 @@ func IoctlGetTermio(fd int, req int) (*Termio, error) {
 //sys	Kill(pid int, signum syscall.Signal) (err error)
 //sys	Lchown(path string, uid int, gid int) (err error)
 //sys	Link(path string, link string) (err error)
-//sys	Listen(s int, backlog int) (err error) = libsocket.listen
+//sys	Listen(s int, backlog int) (err error) = libsocket.__xnet_llisten
 //sys	Lstat(path string, stat *Stat_t) (err error)
 //sys	Madvise(b []byte, advice int) (err error)
 //sys	Mkdir(path string, mode uint32) (err error)
@@ -639,6 +640,7 @@ func IoctlGetTermio(fd int, req int) (*Termio, error) {
 //sysnb	Setuid(uid int) (err error)
 //sys	Shutdown(s int, how int) (err error) = libsocket.shutdown
 //sys	Stat(path string, stat *Stat_t) (err error)
+//sys	Statvfs(path string, vfsstat *Statvfs_t) (err error)
 //sys	Symlink(path string, link string) (err error)
 //sys	Sync() (err error)
 //sysnb	Times(tms *Tms) (ticks uintptr, err error)
@@ -652,15 +654,15 @@ func IoctlGetTermio(fd int, req int) (*Termio, error) {
 //sys	Unlinkat(dirfd int, path string, flags int) (err error)
 //sys	Ustat(dev int, ubuf *Ustat_t) (err error)
 //sys	Utime(path string, buf *Utimbuf) (err error)
-//sys	bind(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) = libsocket.bind
-//sys	connect(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) = libsocket.connect
+//sys	bind(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) = libsocket.__xnet_bind
+//sys	connect(s int, addr unsafe.Pointer, addrlen _Socklen) (err error) = libsocket.__xnet_connect
 //sys	mmap(addr uintptr, length uintptr, prot int, flag int, fd int, pos int64) (ret uintptr, err error)
 //sys	munmap(addr uintptr, length uintptr) (err error)
-//sys	sendto(s int, buf []byte, flags int, to unsafe.Pointer, addrlen _Socklen) (err error) = libsocket.sendto
-//sys	socket(domain int, typ int, proto int) (fd int, err error) = libsocket.socket
-//sysnb	socketpair(domain int, typ int, proto int, fd *[2]int32) (err error) = libsocket.socketpair
+//sys	sendto(s int, buf []byte, flags int, to unsafe.Pointer, addrlen _Socklen) (err error) = libsocket.__xnet_sendto
+//sys	socket(domain int, typ int, proto int) (fd int, err error) = libsocket.__xnet_socket
+//sysnb	socketpair(domain int, typ int, proto int, fd *[2]int32) (err error) = libsocket.__xnet_socketpair
 //sys	write(fd int, p []byte) (n int, err error)
-//sys	getsockopt(s int, level int, name int, val unsafe.Pointer, vallen *_Socklen) (err error) = libsocket.getsockopt
+//sys	getsockopt(s int, level int, name int, val unsafe.Pointer, vallen *_Socklen) (err error) = libsocket.__xnet_getsockopt
 //sysnb	getpeername(fd int, rsa *RawSockaddrAny, addrlen *_Socklen) (err error) = libsocket.getpeername
 //sys	setsockopt(s int, level int, name int, val unsafe.Pointer, vallen uintptr) (err error) = libsocket.setsockopt
 //sys	recvfrom(fd int, p []byte, flags int, from *RawSockaddrAny, fromlen *_Socklen) (n int, err error) = libsocket.recvfrom

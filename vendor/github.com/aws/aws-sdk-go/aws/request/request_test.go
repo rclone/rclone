@@ -717,7 +717,9 @@ func TestEnforceShouldRetryCheck(t *testing.T) {
 	client := &http.Client{Transport: tp}
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		time.Sleep(5 * time.Millisecond)
+		// This server should wait forever. Requests will timeout and the SDK should
+		// attempt to retry.
+		select {}
 	}))
 
 	retryer := &testRetryer{}
@@ -759,4 +761,84 @@ func (reader *errReader) Read(b []byte) (int, error) {
 
 func (reader *errReader) Close() error {
 	return nil
+}
+
+func TestIsNoBodyReader(t *testing.T) {
+	cases := []struct {
+		reader io.ReadCloser
+		expect bool
+	}{
+		{ioutil.NopCloser(bytes.NewReader([]byte("abc"))), false},
+		{ioutil.NopCloser(bytes.NewReader(nil)), false},
+		{nil, false},
+		{request.NoBody, true},
+	}
+
+	for i, c := range cases {
+		if e, a := c.expect, request.NoBody == c.reader; e != a {
+			t.Errorf("%d, expect %t match, but was %t", i, e, a)
+		}
+	}
+}
+
+func TestRequest_TemporaryRetry(t *testing.T) {
+	done := make(chan struct{})
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Length", "1024")
+		w.WriteHeader(http.StatusOK)
+
+		w.Write(make([]byte, 100))
+
+		f := w.(http.Flusher)
+		f.Flush()
+
+		<-done
+	}))
+
+	client := &http.Client{
+		Timeout: 100 * time.Millisecond,
+	}
+
+	svc := awstesting.NewClient(&aws.Config{
+		Region:     unit.Session.Config.Region,
+		MaxRetries: aws.Int(1),
+		HTTPClient: client,
+		DisableSSL: aws.Bool(true),
+		Endpoint:   aws.String(server.URL),
+	})
+
+	req := svc.NewRequest(&request.Operation{
+		Name: "name", HTTPMethod: "GET", HTTPPath: "/path",
+	}, &struct{}{}, &struct{}{})
+
+	req.Handlers.Unmarshal.PushBack(func(r *request.Request) {
+		defer req.HTTPResponse.Body.Close()
+		_, err := io.Copy(ioutil.Discard, req.HTTPResponse.Body)
+		r.Error = awserr.New(request.ErrCodeSerialization, "error", err)
+	})
+
+	err := req.Send()
+	if err == nil {
+		t.Errorf("expect error, got none")
+	}
+	close(done)
+
+	aerr := err.(awserr.Error)
+	if e, a := request.ErrCodeSerialization, aerr.Code(); e != a {
+		t.Errorf("expect %q error code, got %q", e, a)
+	}
+
+	if e, a := 1, req.RetryCount; e != a {
+		t.Errorf("expect %d retries, got %d", e, a)
+	}
+
+	type temporary interface {
+		Temporary() bool
+	}
+
+	terr := aerr.OrigErr().(temporary)
+	if !terr.Temporary() {
+		t.Errorf("expect temporary error, was not")
+	}
 }

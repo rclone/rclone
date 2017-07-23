@@ -7,10 +7,9 @@
 package blake2s
 
 var (
-	useSSE4    = false
-	useSSSE3   = false
-	useSSE2    = false
-	useGeneric = true
+	useSSE4  = false
+	useSSSE3 = false
+	useSSE2  = false
 )
 
 func hashBlocks(h *[8]uint32, c *[2]uint32, flag uint32, blocks []byte) {

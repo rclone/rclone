@@ -63,12 +63,15 @@ func toSpannerError(err error) error {
 }
 
 // toSpannerErrorWithMetadata converts general Go error and grpc trailers to *spanner.Error.
+// Note: modifies original error if trailers aren't nil
 func toSpannerErrorWithMetadata(err error, trailers metadata.MD) error {
 	if err == nil {
 		return nil
 	}
 	if se, ok := err.(*Error); ok {
-		se.trailers = metadata.Join(se.trailers, trailers)
+		if trailers != nil {
+			se.trailers = metadata.Join(se.trailers, trailers)
+		}
 		return se
 	}
 	if grpc.Code(err) == codes.Unknown {

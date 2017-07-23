@@ -14,11 +14,21 @@ const (
 	// ErrCodeConflictingDomainExists for service response error code
 	// "ConflictingDomainExists".
 	//
-	// You specified an Amazon VPC that you're already using for another hosted
-	// zone, and the domain that you specified for one of the hosted zones is a
-	// subdomain of the domain that you specified for the other hosted zone. For
-	// example, you can't use the same Amazon VPC for the hosted zones for example.com
-	// and test.example.com.
+	// The cause of this error depends on whether you're trying to create a public
+	// or a private hosted zone:
+	//
+	//    * Public hosted zone: Two hosted zones that have the same name or that
+	//    have a parent/child relationship (example.com and test.example.com) can't
+	//    have any common name servers. You tried to create a hosted zone that has
+	//    the same name as an existing hosted zone or that's the parent or child
+	//    of an existing hosted zone, and you specified a delegation set that shares
+	//    one or more name servers with the existing hosted zone.
+	//
+	//    * Private hosted zone: You specified an Amazon VPC that you're already
+	//    using for another hosted zone, and the domain that you specified for one
+	//    of the hosted zones is a subdomain of the domain that you specified for
+	//    the other hosted zone. For example, you can't use the same Amazon VPC
+	//    for the hosted zones for example.com and test.example.com.
 	ErrCodeConflictingDomainExists = "ConflictingDomainExists"
 
 	// ErrCodeConflictingTypes for service response error code
@@ -82,9 +92,7 @@ const (
 	// ErrCodeHealthCheckInUse for service response error code
 	// "HealthCheckInUse".
 	//
-	// The health check ID for this health check is referenced in the HealthCheckId
-	// element in one of the resource record sets in one of the hosted zones that
-	// are owned by the current AWS account.
+	// This error code is not in use.
 	ErrCodeHealthCheckInUse = "HealthCheckInUse"
 
 	// ErrCodeHealthCheckVersionMismatch for service response error code

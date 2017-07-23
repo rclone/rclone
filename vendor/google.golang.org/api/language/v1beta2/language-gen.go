@@ -720,10 +720,8 @@ type Document struct {
 	// automatically detected). Both ISO and BCP-47 language codes
 	// are
 	// accepted.<br>
-	// [Language
-	// Support](https://cloud.google.com/natural-language/docs/languages)
-	// lis
-	// ts currently supported languages for each API method.
+	// [Language Support](/natural-language/docs/languages)
+	// lists currently supported languages for each API method.
 	// If the language (either specified by the caller or automatically
 	// detected)
 	// is not supported by the called API method, an `INVALID_ARGUMENT`
@@ -1242,7 +1240,7 @@ func (s *Sentiment) UnmarshalJSON(data []byte) error {
 // arbitrary
 // information about the error. There is a predefined set of error
 // detail types
-// in the package `google.rpc` which can be used for common error
+// in the package `google.rpc` that can be used for common error
 // conditions.
 //
 // # Language mapping
@@ -1275,7 +1273,7 @@ func (s *Sentiment) UnmarshalJSON(data []byte) error {
 //
 // - Workflow errors. A typical workflow has multiple steps. Each step
 // may
-//     have a `Status` message for error reporting purpose.
+//     have a `Status` message for error reporting.
 //
 // - Batch operations. If a client uses batch request and batch
 // response, the
@@ -1906,8 +1904,8 @@ type DocumentsAnnotateTextCall struct {
 }
 
 // AnnotateText: A convenience method that provides all syntax,
-// sentiment, and entity
-// features in one call.
+// sentiment, entity, and
+// classification features in one call.
 func (r *DocumentsService) AnnotateText(annotatetextrequest *AnnotateTextRequest) *DocumentsAnnotateTextCall {
 	c := &DocumentsAnnotateTextCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.annotatetextrequest = annotatetextrequest
@@ -1997,7 +1995,7 @@ func (c *DocumentsAnnotateTextCall) Do(opts ...googleapi.CallOption) (*AnnotateT
 	}
 	return ret, nil
 	// {
-	//   "description": "A convenience method that provides all syntax, sentiment, and entity\nfeatures in one call.",
+	//   "description": "A convenience method that provides all syntax, sentiment, entity, and\nclassification features in one call.",
 	//   "flatPath": "v1beta2/documents:annotateText",
 	//   "httpMethod": "POST",
 	//   "id": "language.documents.annotateText",

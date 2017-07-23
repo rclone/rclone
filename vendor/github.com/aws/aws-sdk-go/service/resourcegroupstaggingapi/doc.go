@@ -31,7 +31,7 @@
 //    * List all existing values for the specified key in the specified region
 //    for the AWS account
 //
-// Not all resources can have tags. For a list of resources that support tagging,
+// Not all resources can have tags. For a lists of resources that you can tag,
 // see Supported Resources (http://docs.aws.amazon.com/awsconsolehelpdocs/latest/gsg/supported-resources.html)
 // in the AWS Resource Groups and Tag Editor User Guide.
 //

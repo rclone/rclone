@@ -112,6 +112,9 @@ func (c *WAF) CreateByteMatchSetRequest(input *CreateByteMatchSetInput) (req *re
 //      * You tried to create a WebACL with a DefaultActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
+//      * You tried to create a RateBasedRule with a RateKey value other than
+//      IP.
+//
 //      * You tried to update a WebACL with a WafActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
@@ -261,6 +264,9 @@ func (c *WAF) CreateIPSetRequest(input *CreateIPSetInput) (req *request.Request,
 //      * You tried to create a WebACL with a DefaultActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
+//      * You tried to create a RateBasedRule with a RateKey value other than
+//      IP.
+//
 //      * You tried to update a WebACL with a WafActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
@@ -296,6 +302,189 @@ func (c *WAF) CreateIPSet(input *CreateIPSetInput) (*CreateIPSetOutput, error) {
 // for more information on using Contexts.
 func (c *WAF) CreateIPSetWithContext(ctx aws.Context, input *CreateIPSetInput, opts ...request.Option) (*CreateIPSetOutput, error) {
 	req, out := c.CreateIPSetRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opCreateRateBasedRule = "CreateRateBasedRule"
+
+// CreateRateBasedRuleRequest generates a "aws/request.Request" representing the
+// client's request for the CreateRateBasedRule operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See CreateRateBasedRule for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateRateBasedRule method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateRateBasedRuleRequest method.
+//    req, resp := client.CreateRateBasedRuleRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/CreateRateBasedRule
+func (c *WAF) CreateRateBasedRuleRequest(input *CreateRateBasedRuleInput) (req *request.Request, output *CreateRateBasedRuleOutput) {
+	op := &request.Operation{
+		Name:       opCreateRateBasedRule,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateRateBasedRuleInput{}
+	}
+
+	output = &CreateRateBasedRuleOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateRateBasedRule API operation for AWS WAF.
+//
+// Creates a RateBasedRule. The RateBasedRule contains a RateLimit, which specifies
+// the maximum number of requests that AWS WAF allows from a specified IP address
+// in a five-minute period. The RateBasedRule also contains the IPSet objects,
+// ByteMatchSet objects, and other predicates that identify the requests that
+// you want to count or block if these requests exceed the RateLimit.
+//
+// If you add more than one predicate to a RateBasedRule, a request not only
+// must exceed the RateLimit, but it also must match all the specifications
+// to be counted or blocked. For example, suppose you add the following to a
+// RateBasedRule:
+//
+//    * An IPSet that matches the IP address 192.0.2.44/32
+//
+//    * A ByteMatchSet that matches BadBot in the User-Agent header
+//
+// Further, you specify a RateLimit of 15,000.
+//
+// You then add the RateBasedRule to a WebACL and specify that you want to block
+// requests that meet the conditions in the rule. For a request to be blocked,
+// it must come from the IP address 192.0.2.44 and the User-Agent header in
+// the request must contain the value BadBot. Further, requests that match these
+// two conditions must be received at a rate of more than 15,000 requests every
+// five minutes. If both conditions are met and the rate is exceeded, AWS WAF
+// blocks the requests. If the rate drops below 15,000 for a five-minute period,
+// AWS WAF no longer blocks the requests.
+//
+// As a second example, suppose you want to limit requests to a particular page
+// on your site. To do this, you could add the following to a RateBasedRule:
+//
+//    * A ByteMatchSet with FieldToMatch of URI
+//
+//    * A PositionalConstraint of STARTS_WITH
+//
+//    * A TargetString of login
+//
+// Further, you specify a RateLimit of 15,000.
+//
+// By adding this RateBasedRule to a WebACL, you could limit requests to your
+// login page without affecting the rest of your site.
+//
+// To create and configure a RateBasedRule, perform the following steps:
+//
+// Create and update the predicates that you want to include in the rule. For
+// more information, see CreateByteMatchSet, CreateIPSet, and CreateSqlInjectionMatchSet.
+//
+// Use GetChangeToken to get the change token that you provide in the ChangeToken
+// parameter of a CreateRule request.
+//
+// Submit a CreateRateBasedRule request.
+//
+// Use GetChangeToken to get the change token that you provide in the ChangeToken
+// parameter of an UpdateRule request.
+//
+// Submit an UpdateRateBasedRule request to specify the predicates that you
+// want to include in the rule.
+//
+// Create and update a WebACL that contains the RateBasedRule. For more information,
+// see CreateWebACL.
+//
+// For more information about how to use the AWS WAF API to allow or block HTTP
+// requests, see the AWS WAF Developer Guide (http://docs.aws.amazon.com/waf/latest/developerguide/).
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS WAF's
+// API operation CreateRateBasedRule for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeStaleDataException "StaleDataException"
+//   The operation failed because you tried to create, update, or delete an object
+//   by using a change token that has already been used.
+//
+//   * ErrCodeInternalErrorException "InternalErrorException"
+//   The operation failed because of a system problem, even though the request
+//   was valid. Retry your request.
+//
+//   * ErrCodeDisallowedNameException "DisallowedNameException"
+//   The name specified is invalid.
+//
+//   * ErrCodeInvalidParameterException "InvalidParameterException"
+//   The operation failed because AWS WAF didn't recognize a parameter in the
+//   request. For example:
+//
+//      * You specified an invalid parameter name.
+//
+//      * You specified an invalid value.
+//
+//      * You tried to update an object (ByteMatchSet, IPSet, Rule, or WebACL)
+//      using an action other than INSERT or DELETE.
+//
+//      * You tried to create a WebACL with a DefaultActionType other than ALLOW,
+//      BLOCK, or COUNT.
+//
+//      * You tried to create a RateBasedRule with a RateKey value other than
+//      IP.
+//
+//      * You tried to update a WebACL with a WafActionType other than ALLOW,
+//      BLOCK, or COUNT.
+//
+//      * You tried to update a ByteMatchSet with a FieldToMatchType other than
+//      HEADER, QUERY_STRING, or URI.
+//
+//      * You tried to update a ByteMatchSet with a Field of HEADER but no value
+//      for Data.
+//
+//      * Your request references an ARN that is malformed, or corresponds to
+//      a resource with which a web ACL cannot be associated.
+//
+//   * ErrCodeLimitsExceededException "LimitsExceededException"
+//   The operation exceeds a resource limit, for example, the maximum number of
+//   WebACL objects that you can create for an AWS account. For more information,
+//   see Limits (http://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
+//   in the AWS WAF Developer Guide.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/CreateRateBasedRule
+func (c *WAF) CreateRateBasedRule(input *CreateRateBasedRuleInput) (*CreateRateBasedRuleOutput, error) {
+	req, out := c.CreateRateBasedRuleRequest(input)
+	return out, req.Send()
+}
+
+// CreateRateBasedRuleWithContext is the same as CreateRateBasedRule with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateRateBasedRule for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *WAF) CreateRateBasedRuleWithContext(ctx aws.Context, input *CreateRateBasedRuleInput, opts ...request.Option) (*CreateRateBasedRuleOutput, error) {
+	req, out := c.CreateRateBasedRuleRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -415,6 +604,9 @@ func (c *WAF) CreateRuleRequest(input *CreateRuleInput) (req *request.Request, o
 //
 //      * You tried to create a WebACL with a DefaultActionType other than ALLOW,
 //      BLOCK, or COUNT.
+//
+//      * You tried to create a RateBasedRule with a RateKey value other than
+//      IP.
 //
 //      * You tried to update a WebACL with a WafActionType other than ALLOW,
 //      BLOCK, or COUNT.
@@ -562,6 +754,9 @@ func (c *WAF) CreateSizeConstraintSetRequest(input *CreateSizeConstraintSetInput
 //      * You tried to create a WebACL with a DefaultActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
+//      * You tried to create a RateBasedRule with a RateKey value other than
+//      IP.
+//
 //      * You tried to update a WebACL with a WafActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
@@ -699,6 +894,9 @@ func (c *WAF) CreateSqlInjectionMatchSetRequest(input *CreateSqlInjectionMatchSe
 //
 //      * You tried to create a WebACL with a DefaultActionType other than ALLOW,
 //      BLOCK, or COUNT.
+//
+//      * You tried to create a RateBasedRule with a RateKey value other than
+//      IP.
 //
 //      * You tried to update a WebACL with a WafActionType other than ALLOW,
 //      BLOCK, or COUNT.
@@ -858,6 +1056,9 @@ func (c *WAF) CreateWebACLRequest(input *CreateWebACLInput) (req *request.Reques
 //      * You tried to create a WebACL with a DefaultActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
+//      * You tried to create a RateBasedRule with a RateKey value other than
+//      IP.
+//
 //      * You tried to update a WebACL with a WafActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
@@ -996,6 +1197,9 @@ func (c *WAF) CreateXssMatchSetRequest(input *CreateXssMatchSetInput) (req *requ
 //
 //      * You tried to create a WebACL with a DefaultActionType other than ALLOW,
 //      BLOCK, or COUNT.
+//
+//      * You tried to create a RateBasedRule with a RateKey value other than
+//      IP.
 //
 //      * You tried to update a WebACL with a WafActionType other than ALLOW,
 //      BLOCK, or COUNT.
@@ -1291,6 +1495,135 @@ func (c *WAF) DeleteIPSet(input *DeleteIPSetInput) (*DeleteIPSetOutput, error) {
 // for more information on using Contexts.
 func (c *WAF) DeleteIPSetWithContext(ctx aws.Context, input *DeleteIPSetInput, opts ...request.Option) (*DeleteIPSetOutput, error) {
 	req, out := c.DeleteIPSetRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteRateBasedRule = "DeleteRateBasedRule"
+
+// DeleteRateBasedRuleRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteRateBasedRule operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DeleteRateBasedRule for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteRateBasedRule method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteRateBasedRuleRequest method.
+//    req, resp := client.DeleteRateBasedRuleRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/DeleteRateBasedRule
+func (c *WAF) DeleteRateBasedRuleRequest(input *DeleteRateBasedRuleInput) (req *request.Request, output *DeleteRateBasedRuleOutput) {
+	op := &request.Operation{
+		Name:       opDeleteRateBasedRule,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteRateBasedRuleInput{}
+	}
+
+	output = &DeleteRateBasedRuleOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteRateBasedRule API operation for AWS WAF.
+//
+// Permanently deletes a RateBasedRule. You can't delete a rule if it's still
+// used in any WebACL objects or if it still includes any predicates, such as
+// ByteMatchSet objects.
+//
+// If you just want to remove a rule from a WebACL, use UpdateWebACL.
+//
+// To permanently delete a RateBasedRule from AWS WAF, perform the following
+// steps:
+//
+// Update the RateBasedRule to remove predicates, if any. For more information,
+// see UpdateRateBasedRule.
+//
+// Use GetChangeToken to get the change token that you provide in the ChangeToken
+// parameter of a DeleteRateBasedRule request.
+//
+// Submit a DeleteRateBasedRule request.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS WAF's
+// API operation DeleteRateBasedRule for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeStaleDataException "StaleDataException"
+//   The operation failed because you tried to create, update, or delete an object
+//   by using a change token that has already been used.
+//
+//   * ErrCodeInternalErrorException "InternalErrorException"
+//   The operation failed because of a system problem, even though the request
+//   was valid. Retry your request.
+//
+//   * ErrCodeInvalidAccountException "InvalidAccountException"
+//   The operation failed because you tried to create, update, or delete an object
+//   by using an invalid account identifier.
+//
+//   * ErrCodeNonexistentItemException "NonexistentItemException"
+//   The operation failed because the referenced object doesn't exist.
+//
+//   * ErrCodeReferencedItemException "ReferencedItemException"
+//   The operation failed because you tried to delete an object that is still
+//   in use. For example:
+//
+//      * You tried to delete a ByteMatchSet that is still referenced by a Rule.
+//
+//      * You tried to delete a Rule that is still referenced by a WebACL.
+//
+//   * ErrCodeNonEmptyEntityException "NonEmptyEntityException"
+//   The operation failed because you tried to delete an object that isn't empty.
+//   For example:
+//
+//      * You tried to delete a WebACL that still contains one or more Rule objects.
+//
+//      * You tried to delete a Rule that still contains one or more ByteMatchSet
+//      objects or other predicates.
+//
+//      * You tried to delete a ByteMatchSet that contains one or more ByteMatchTuple
+//      objects.
+//
+//      * You tried to delete an IPSet that references one or more IP addresses.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/DeleteRateBasedRule
+func (c *WAF) DeleteRateBasedRule(input *DeleteRateBasedRuleInput) (*DeleteRateBasedRuleOutput, error) {
+	req, out := c.DeleteRateBasedRuleRequest(input)
+	return out, req.Send()
+}
+
+// DeleteRateBasedRuleWithContext is the same as DeleteRateBasedRule with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteRateBasedRule for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *WAF) DeleteRateBasedRuleWithContext(ctx aws.Context, input *DeleteRateBasedRuleInput, opts ...request.Option) (*DeleteRateBasedRuleOutput, error) {
+	req, out := c.DeleteRateBasedRuleRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -2297,6 +2630,215 @@ func (c *WAF) GetIPSetWithContext(ctx aws.Context, input *GetIPSetInput, opts ..
 	return out, req.Send()
 }
 
+const opGetRateBasedRule = "GetRateBasedRule"
+
+// GetRateBasedRuleRequest generates a "aws/request.Request" representing the
+// client's request for the GetRateBasedRule operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See GetRateBasedRule for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetRateBasedRule method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetRateBasedRuleRequest method.
+//    req, resp := client.GetRateBasedRuleRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/GetRateBasedRule
+func (c *WAF) GetRateBasedRuleRequest(input *GetRateBasedRuleInput) (req *request.Request, output *GetRateBasedRuleOutput) {
+	op := &request.Operation{
+		Name:       opGetRateBasedRule,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetRateBasedRuleInput{}
+	}
+
+	output = &GetRateBasedRuleOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetRateBasedRule API operation for AWS WAF.
+//
+// Returns the RateBasedRule that is specified by the RuleId that you included
+// in the GetRateBasedRule request.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS WAF's
+// API operation GetRateBasedRule for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInternalErrorException "InternalErrorException"
+//   The operation failed because of a system problem, even though the request
+//   was valid. Retry your request.
+//
+//   * ErrCodeInvalidAccountException "InvalidAccountException"
+//   The operation failed because you tried to create, update, or delete an object
+//   by using an invalid account identifier.
+//
+//   * ErrCodeNonexistentItemException "NonexistentItemException"
+//   The operation failed because the referenced object doesn't exist.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/GetRateBasedRule
+func (c *WAF) GetRateBasedRule(input *GetRateBasedRuleInput) (*GetRateBasedRuleOutput, error) {
+	req, out := c.GetRateBasedRuleRequest(input)
+	return out, req.Send()
+}
+
+// GetRateBasedRuleWithContext is the same as GetRateBasedRule with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetRateBasedRule for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *WAF) GetRateBasedRuleWithContext(ctx aws.Context, input *GetRateBasedRuleInput, opts ...request.Option) (*GetRateBasedRuleOutput, error) {
+	req, out := c.GetRateBasedRuleRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opGetRateBasedRuleManagedKeys = "GetRateBasedRuleManagedKeys"
+
+// GetRateBasedRuleManagedKeysRequest generates a "aws/request.Request" representing the
+// client's request for the GetRateBasedRuleManagedKeys operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See GetRateBasedRuleManagedKeys for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetRateBasedRuleManagedKeys method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetRateBasedRuleManagedKeysRequest method.
+//    req, resp := client.GetRateBasedRuleManagedKeysRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/GetRateBasedRuleManagedKeys
+func (c *WAF) GetRateBasedRuleManagedKeysRequest(input *GetRateBasedRuleManagedKeysInput) (req *request.Request, output *GetRateBasedRuleManagedKeysOutput) {
+	op := &request.Operation{
+		Name:       opGetRateBasedRuleManagedKeys,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetRateBasedRuleManagedKeysInput{}
+	}
+
+	output = &GetRateBasedRuleManagedKeysOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetRateBasedRuleManagedKeys API operation for AWS WAF.
+//
+// Returns an array of IP addresses currently being blocked by the RateBasedRule
+// that is specified by the RuleId. The maximum number of managed keys that
+// will be blocked is 10,000. If more than 10,000 addresses exceed the rate
+// limit, the 10,000 addresses with the highest rates will be blocked.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS WAF's
+// API operation GetRateBasedRuleManagedKeys for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInternalErrorException "InternalErrorException"
+//   The operation failed because of a system problem, even though the request
+//   was valid. Retry your request.
+//
+//   * ErrCodeInvalidAccountException "InvalidAccountException"
+//   The operation failed because you tried to create, update, or delete an object
+//   by using an invalid account identifier.
+//
+//   * ErrCodeNonexistentItemException "NonexistentItemException"
+//   The operation failed because the referenced object doesn't exist.
+//
+//   * ErrCodeInvalidParameterException "InvalidParameterException"
+//   The operation failed because AWS WAF didn't recognize a parameter in the
+//   request. For example:
+//
+//      * You specified an invalid parameter name.
+//
+//      * You specified an invalid value.
+//
+//      * You tried to update an object (ByteMatchSet, IPSet, Rule, or WebACL)
+//      using an action other than INSERT or DELETE.
+//
+//      * You tried to create a WebACL with a DefaultActionType other than ALLOW,
+//      BLOCK, or COUNT.
+//
+//      * You tried to create a RateBasedRule with a RateKey value other than
+//      IP.
+//
+//      * You tried to update a WebACL with a WafActionType other than ALLOW,
+//      BLOCK, or COUNT.
+//
+//      * You tried to update a ByteMatchSet with a FieldToMatchType other than
+//      HEADER, QUERY_STRING, or URI.
+//
+//      * You tried to update a ByteMatchSet with a Field of HEADER but no value
+//      for Data.
+//
+//      * Your request references an ARN that is malformed, or corresponds to
+//      a resource with which a web ACL cannot be associated.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/GetRateBasedRuleManagedKeys
+func (c *WAF) GetRateBasedRuleManagedKeys(input *GetRateBasedRuleManagedKeysInput) (*GetRateBasedRuleManagedKeysOutput, error) {
+	req, out := c.GetRateBasedRuleManagedKeysRequest(input)
+	return out, req.Send()
+}
+
+// GetRateBasedRuleManagedKeysWithContext is the same as GetRateBasedRuleManagedKeys with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetRateBasedRuleManagedKeys for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *WAF) GetRateBasedRuleManagedKeysWithContext(ctx aws.Context, input *GetRateBasedRuleManagedKeysInput, opts ...request.Option) (*GetRateBasedRuleManagedKeysOutput, error) {
+	req, out := c.GetRateBasedRuleManagedKeysRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetRule = "GetRule"
 
 // GetRuleRequest generates a "aws/request.Request" representing the
@@ -3002,6 +3544,91 @@ func (c *WAF) ListIPSetsWithContext(ctx aws.Context, input *ListIPSetsInput, opt
 	return out, req.Send()
 }
 
+const opListRateBasedRules = "ListRateBasedRules"
+
+// ListRateBasedRulesRequest generates a "aws/request.Request" representing the
+// client's request for the ListRateBasedRules operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See ListRateBasedRules for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListRateBasedRules method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListRateBasedRulesRequest method.
+//    req, resp := client.ListRateBasedRulesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/ListRateBasedRules
+func (c *WAF) ListRateBasedRulesRequest(input *ListRateBasedRulesInput) (req *request.Request, output *ListRateBasedRulesOutput) {
+	op := &request.Operation{
+		Name:       opListRateBasedRules,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &ListRateBasedRulesInput{}
+	}
+
+	output = &ListRateBasedRulesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListRateBasedRules API operation for AWS WAF.
+//
+// Returns an array of RuleSummary objects.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS WAF's
+// API operation ListRateBasedRules for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInternalErrorException "InternalErrorException"
+//   The operation failed because of a system problem, even though the request
+//   was valid. Retry your request.
+//
+//   * ErrCodeInvalidAccountException "InvalidAccountException"
+//   The operation failed because you tried to create, update, or delete an object
+//   by using an invalid account identifier.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/ListRateBasedRules
+func (c *WAF) ListRateBasedRules(input *ListRateBasedRulesInput) (*ListRateBasedRulesOutput, error) {
+	req, out := c.ListRateBasedRulesRequest(input)
+	return out, req.Send()
+}
+
+// ListRateBasedRulesWithContext is the same as ListRateBasedRules with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListRateBasedRules for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *WAF) ListRateBasedRulesWithContext(ctx aws.Context, input *ListRateBasedRulesInput, opts ...request.Option) (*ListRateBasedRulesOutput, error) {
+	req, out := c.ListRateBasedRulesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opListRules = "ListRules"
 
 // ListRulesRequest generates a "aws/request.Request" representing the
@@ -3561,6 +4188,9 @@ func (c *WAF) UpdateByteMatchSetRequest(input *UpdateByteMatchSetInput) (req *re
 //      * You tried to create a WebACL with a DefaultActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
+//      * You tried to create a RateBasedRule with a RateKey value other than
+//      IP.
+//
 //      * You tried to update a WebACL with a WafActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
@@ -3774,6 +4404,9 @@ func (c *WAF) UpdateIPSetRequest(input *UpdateIPSetInput) (req *request.Request,
 //      * You tried to create a WebACL with a DefaultActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
+//      * You tried to create a RateBasedRule with a RateKey value other than
+//      IP.
+//
 //      * You tried to update a WebACL with a WafActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
@@ -3836,6 +4469,215 @@ func (c *WAF) UpdateIPSet(input *UpdateIPSetInput) (*UpdateIPSetOutput, error) {
 // for more information on using Contexts.
 func (c *WAF) UpdateIPSetWithContext(ctx aws.Context, input *UpdateIPSetInput, opts ...request.Option) (*UpdateIPSetOutput, error) {
 	req, out := c.UpdateIPSetRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opUpdateRateBasedRule = "UpdateRateBasedRule"
+
+// UpdateRateBasedRuleRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateRateBasedRule operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See UpdateRateBasedRule for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the UpdateRateBasedRule method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the UpdateRateBasedRuleRequest method.
+//    req, resp := client.UpdateRateBasedRuleRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/UpdateRateBasedRule
+func (c *WAF) UpdateRateBasedRuleRequest(input *UpdateRateBasedRuleInput) (req *request.Request, output *UpdateRateBasedRuleOutput) {
+	op := &request.Operation{
+		Name:       opUpdateRateBasedRule,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateRateBasedRuleInput{}
+	}
+
+	output = &UpdateRateBasedRuleOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateRateBasedRule API operation for AWS WAF.
+//
+// Inserts or deletes Predicate objects in a rule and updates the RateLimit
+// in the rule.
+//
+// Each Predicate object identifies a predicate, such as a ByteMatchSet or an
+// IPSet, that specifies the web requests that you want to block or count. The
+// RateLimit specifies the number of requests every five minutes that triggers
+// the rule.
+//
+// If you add more than one predicate to a RateBasedRule, a request must match
+// all the predicates and exceed the RateLimit to be counted or blocked. For
+// example, suppose you add the following to a RateBasedRule:
+//
+//    * An IPSet that matches the IP address 192.0.2.44/32
+//
+//    * A ByteMatchSet that matches BadBot in the User-Agent header
+//
+// Further, you specify a RateLimit of 15,000.
+//
+// You then add the RateBasedRule to a WebACL and specify that you want to block
+// requests that satisfy the rule. For a request to be blocked, it must come
+// from the IP address 192.0.2.44 and the User-Agent header in the request must
+// contain the value BadBot. Further, requests that match these two conditions
+// much be received at a rate of more than 15,000 every five minutes. If the
+// rate drops below this limit, AWS WAF no longer blocks the requests.
+//
+// As a second example, suppose you want to limit requests to a particular page
+// on your site. To do this, you could add the following to a RateBasedRule:
+//
+//    * A ByteMatchSet with FieldToMatch of URI
+//
+//    * A PositionalConstraint of STARTS_WITH
+//
+//    * A TargetString of login
+//
+// Further, you specify a RateLimit of 15,000.
+//
+// By adding this RateBasedRule to a WebACL, you could limit requests to your
+// login page without affecting the rest of your site.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS WAF's
+// API operation UpdateRateBasedRule for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeStaleDataException "StaleDataException"
+//   The operation failed because you tried to create, update, or delete an object
+//   by using a change token that has already been used.
+//
+//   * ErrCodeInternalErrorException "InternalErrorException"
+//   The operation failed because of a system problem, even though the request
+//   was valid. Retry your request.
+//
+//   * ErrCodeInvalidAccountException "InvalidAccountException"
+//   The operation failed because you tried to create, update, or delete an object
+//   by using an invalid account identifier.
+//
+//   * ErrCodeInvalidOperationException "InvalidOperationException"
+//   The operation failed because there was nothing to do. For example:
+//
+//      * You tried to remove a Rule from a WebACL, but the Rule isn't in the
+//      specified WebACL.
+//
+//      * You tried to remove an IP address from an IPSet, but the IP address
+//      isn't in the specified IPSet.
+//
+//      * You tried to remove a ByteMatchTuple from a ByteMatchSet, but the ByteMatchTuple
+//      isn't in the specified WebACL.
+//
+//      * You tried to add a Rule to a WebACL, but the Rule already exists in
+//      the specified WebACL.
+//
+//      * You tried to add an IP address to an IPSet, but the IP address already
+//      exists in the specified IPSet.
+//
+//      * You tried to add a ByteMatchTuple to a ByteMatchSet, but the ByteMatchTuple
+//      already exists in the specified WebACL.
+//
+//   * ErrCodeInvalidParameterException "InvalidParameterException"
+//   The operation failed because AWS WAF didn't recognize a parameter in the
+//   request. For example:
+//
+//      * You specified an invalid parameter name.
+//
+//      * You specified an invalid value.
+//
+//      * You tried to update an object (ByteMatchSet, IPSet, Rule, or WebACL)
+//      using an action other than INSERT or DELETE.
+//
+//      * You tried to create a WebACL with a DefaultActionType other than ALLOW,
+//      BLOCK, or COUNT.
+//
+//      * You tried to create a RateBasedRule with a RateKey value other than
+//      IP.
+//
+//      * You tried to update a WebACL with a WafActionType other than ALLOW,
+//      BLOCK, or COUNT.
+//
+//      * You tried to update a ByteMatchSet with a FieldToMatchType other than
+//      HEADER, QUERY_STRING, or URI.
+//
+//      * You tried to update a ByteMatchSet with a Field of HEADER but no value
+//      for Data.
+//
+//      * Your request references an ARN that is malformed, or corresponds to
+//      a resource with which a web ACL cannot be associated.
+//
+//   * ErrCodeNonexistentContainerException "NonexistentContainerException"
+//   The operation failed because you tried to add an object to or delete an object
+//   from another object that doesn't exist. For example:
+//
+//      * You tried to add a Rule to or delete a Rule from a WebACL that doesn't
+//      exist.
+//
+//      * You tried to add a ByteMatchSet to or delete a ByteMatchSet from a Rule
+//      that doesn't exist.
+//
+//      * You tried to add an IP address to or delete an IP address from an IPSet
+//      that doesn't exist.
+//
+//      * You tried to add a ByteMatchTuple to or delete a ByteMatchTuple from
+//      a ByteMatchSet that doesn't exist.
+//
+//   * ErrCodeNonexistentItemException "NonexistentItemException"
+//   The operation failed because the referenced object doesn't exist.
+//
+//   * ErrCodeReferencedItemException "ReferencedItemException"
+//   The operation failed because you tried to delete an object that is still
+//   in use. For example:
+//
+//      * You tried to delete a ByteMatchSet that is still referenced by a Rule.
+//
+//      * You tried to delete a Rule that is still referenced by a WebACL.
+//
+//   * ErrCodeLimitsExceededException "LimitsExceededException"
+//   The operation exceeds a resource limit, for example, the maximum number of
+//   WebACL objects that you can create for an AWS account. For more information,
+//   see Limits (http://docs.aws.amazon.com/waf/latest/developerguide/limits.html)
+//   in the AWS WAF Developer Guide.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/UpdateRateBasedRule
+func (c *WAF) UpdateRateBasedRule(input *UpdateRateBasedRuleInput) (*UpdateRateBasedRuleOutput, error) {
+	req, out := c.UpdateRateBasedRuleRequest(input)
+	return out, req.Send()
+}
+
+// UpdateRateBasedRuleWithContext is the same as UpdateRateBasedRule with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateRateBasedRule for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *WAF) UpdateRateBasedRuleWithContext(ctx aws.Context, input *UpdateRateBasedRuleInput, opts ...request.Option) (*UpdateRateBasedRuleOutput, error) {
+	req, out := c.UpdateRateBasedRuleRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -3974,6 +4816,9 @@ func (c *WAF) UpdateRuleRequest(input *UpdateRuleInput) (req *request.Request, o
 //
 //      * You tried to create a WebACL with a DefaultActionType other than ALLOW,
 //      BLOCK, or COUNT.
+//
+//      * You tried to create a RateBasedRule with a RateKey value other than
+//      IP.
 //
 //      * You tried to update a WebACL with a WafActionType other than ALLOW,
 //      BLOCK, or COUNT.
@@ -4182,6 +5027,9 @@ func (c *WAF) UpdateSizeConstraintSetRequest(input *UpdateSizeConstraintSetInput
 //      * You tried to create a WebACL with a DefaultActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
+//      * You tried to create a RateBasedRule with a RateKey value other than
+//      IP.
+//
 //      * You tried to update a WebACL with a WafActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
@@ -4378,6 +5226,9 @@ func (c *WAF) UpdateSqlInjectionMatchSetRequest(input *UpdateSqlInjectionMatchSe
 //      * You tried to create a WebACL with a DefaultActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
+//      * You tried to create a RateBasedRule with a RateKey value other than
+//      IP.
+//
 //      * You tried to update a WebACL with a WafActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
@@ -4527,6 +5378,11 @@ func (c *WAF) UpdateWebACLRequest(input *UpdateWebACLInput) (req *request.Reques
 // in the WebACL, to specify the default action, and to associate the WebACL
 // with a CloudFront distribution.
 //
+// Be aware that if you try to add a RATE_BASED rule to a web ACL without setting
+// the rule type when first creating the rule, the UpdateWebACL request will
+// fail because the request tries to add a REGULAR rule (the default rule type)
+// with the specified ID, which does not exist.
+//
 // For more information about how to use the AWS WAF API to allow or block HTTP
 // requests, see the AWS WAF Developer Guide (http://docs.aws.amazon.com/waf/latest/developerguide/).
 //
@@ -4584,6 +5440,9 @@ func (c *WAF) UpdateWebACLRequest(input *UpdateWebACLInput) (req *request.Reques
 //
 //      * You tried to create a WebACL with a DefaultActionType other than ALLOW,
 //      BLOCK, or COUNT.
+//
+//      * You tried to create a RateBasedRule with a RateKey value other than
+//      IP.
 //
 //      * You tried to update a WebACL with a WafActionType other than ALLOW,
 //      BLOCK, or COUNT.
@@ -4781,6 +5640,9 @@ func (c *WAF) UpdateXssMatchSetRequest(input *UpdateXssMatchSetInput) (req *requ
 //      * You tried to create a WebACL with a DefaultActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
+//      * You tried to create a RateBasedRule with a RateKey value other than
+//      IP.
+//
 //      * You tried to update a WebACL with a WafActionType other than ALLOW,
 //      BLOCK, or COUNT.
 //
@@ -4886,6 +5748,13 @@ type ActivatedRule struct {
 	//
 	// RuleId is a required field
 	RuleId *string `min:"1" type:"string" required:"true"`
+
+	// The rule type, either REGULAR, as defined by Rule, or RATE_BASED, as defined
+	// by RateBasedRule. The default is REGULAR. Although this field is optional,
+	// be aware that if you try to add a RATE_BASED rule to a web ACL without setting
+	// the type, the UpdateWebACL request will fail because the request tries to
+	// add a REGULAR rule with the specified ID, which does not exist.
+	Type *string `type:"string" enum:"WafRuleType"`
 }
 
 // String returns the string representation
@@ -4940,6 +5809,12 @@ func (s *ActivatedRule) SetPriority(v int64) *ActivatedRule {
 // SetRuleId sets the RuleId field's value.
 func (s *ActivatedRule) SetRuleId(v string) *ActivatedRule {
 	s.RuleId = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *ActivatedRule) SetType(v string) *ActivatedRule {
+	s.Type = &v
 	return s
 }
 
@@ -5549,6 +6424,158 @@ func (s *CreateIPSetOutput) SetChangeToken(v string) *CreateIPSetOutput {
 // SetIPSet sets the IPSet field's value.
 func (s *CreateIPSetOutput) SetIPSet(v *IPSet) *CreateIPSetOutput {
 	s.IPSet = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/CreateRateBasedRuleRequest
+type CreateRateBasedRuleInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ChangeToken that you used to submit the CreateRateBasedRule request.
+	// You can also use this value to query the status of the request. For more
+	// information, see GetChangeTokenStatus.
+	//
+	// ChangeToken is a required field
+	ChangeToken *string `min:"1" type:"string" required:"true"`
+
+	// A friendly name or description for the metrics for this RateBasedRule. The
+	// name can contain only alphanumeric characters (A-Z, a-z, 0-9); the name can't
+	// contain whitespace. You can't change the name of the metric after you create
+	// the RateBasedRule.
+	//
+	// MetricName is a required field
+	MetricName *string `type:"string" required:"true"`
+
+	// A friendly name or description of the RateBasedRule. You can't change the
+	// name of a RateBasedRule after you create it.
+	//
+	// Name is a required field
+	Name *string `min:"1" type:"string" required:"true"`
+
+	// The field that AWS WAF uses to determine if requests are likely arriving
+	// from a single source and thus subject to rate monitoring. The only valid
+	// value for RateKey is IP. IP indicates that requests that arrive from the
+	// same IP address are subject to the RateLimit that is specified in the RateBasedRule.
+	//
+	// RateKey is a required field
+	RateKey *string `type:"string" required:"true" enum:"RateKey"`
+
+	// The maximum number of requests, which have an identical value in the field
+	// that is specified by RateKey, allowed in a five-minute period. If the number
+	// of requests exceeds the RateLimit and the other predicates specified in the
+	// rule are also met, AWS WAF triggers the action that is specified for this
+	// rule.
+	//
+	// RateLimit is a required field
+	RateLimit *int64 `min:"2000" type:"long" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateRateBasedRuleInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateRateBasedRuleInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateRateBasedRuleInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateRateBasedRuleInput"}
+	if s.ChangeToken == nil {
+		invalidParams.Add(request.NewErrParamRequired("ChangeToken"))
+	}
+	if s.ChangeToken != nil && len(*s.ChangeToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ChangeToken", 1))
+	}
+	if s.MetricName == nil {
+		invalidParams.Add(request.NewErrParamRequired("MetricName"))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+	if s.RateKey == nil {
+		invalidParams.Add(request.NewErrParamRequired("RateKey"))
+	}
+	if s.RateLimit == nil {
+		invalidParams.Add(request.NewErrParamRequired("RateLimit"))
+	}
+	if s.RateLimit != nil && *s.RateLimit < 2000 {
+		invalidParams.Add(request.NewErrParamMinValue("RateLimit", 2000))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetChangeToken sets the ChangeToken field's value.
+func (s *CreateRateBasedRuleInput) SetChangeToken(v string) *CreateRateBasedRuleInput {
+	s.ChangeToken = &v
+	return s
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *CreateRateBasedRuleInput) SetMetricName(v string) *CreateRateBasedRuleInput {
+	s.MetricName = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *CreateRateBasedRuleInput) SetName(v string) *CreateRateBasedRuleInput {
+	s.Name = &v
+	return s
+}
+
+// SetRateKey sets the RateKey field's value.
+func (s *CreateRateBasedRuleInput) SetRateKey(v string) *CreateRateBasedRuleInput {
+	s.RateKey = &v
+	return s
+}
+
+// SetRateLimit sets the RateLimit field's value.
+func (s *CreateRateBasedRuleInput) SetRateLimit(v int64) *CreateRateBasedRuleInput {
+	s.RateLimit = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/CreateRateBasedRuleResponse
+type CreateRateBasedRuleOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The ChangeToken that you used to submit the CreateRateBasedRule request.
+	// You can also use this value to query the status of the request. For more
+	// information, see GetChangeTokenStatus.
+	ChangeToken *string `min:"1" type:"string"`
+
+	// The RateBasedRule that is returned in the CreateRateBasedRule response.
+	Rule *RateBasedRule `type:"structure"`
+}
+
+// String returns the string representation
+func (s CreateRateBasedRuleOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateRateBasedRuleOutput) GoString() string {
+	return s.String()
+}
+
+// SetChangeToken sets the ChangeToken field's value.
+func (s *CreateRateBasedRuleOutput) SetChangeToken(v string) *CreateRateBasedRuleOutput {
+	s.ChangeToken = &v
+	return s
+}
+
+// SetRule sets the Rule field's value.
+func (s *CreateRateBasedRuleOutput) SetRule(v *RateBasedRule) *CreateRateBasedRuleOutput {
+	s.Rule = v
 	return s
 }
 
@@ -6253,6 +7280,92 @@ func (s DeleteIPSetOutput) GoString() string {
 
 // SetChangeToken sets the ChangeToken field's value.
 func (s *DeleteIPSetOutput) SetChangeToken(v string) *DeleteIPSetOutput {
+	s.ChangeToken = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/DeleteRateBasedRuleRequest
+type DeleteRateBasedRuleInput struct {
+	_ struct{} `type:"structure"`
+
+	// The value returned by the most recent call to GetChangeToken.
+	//
+	// ChangeToken is a required field
+	ChangeToken *string `min:"1" type:"string" required:"true"`
+
+	// The RuleId of the RateBasedRule that you want to delete. RuleId is returned
+	// by CreateRateBasedRule and by ListRateBasedRules.
+	//
+	// RuleId is a required field
+	RuleId *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteRateBasedRuleInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteRateBasedRuleInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteRateBasedRuleInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteRateBasedRuleInput"}
+	if s.ChangeToken == nil {
+		invalidParams.Add(request.NewErrParamRequired("ChangeToken"))
+	}
+	if s.ChangeToken != nil && len(*s.ChangeToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ChangeToken", 1))
+	}
+	if s.RuleId == nil {
+		invalidParams.Add(request.NewErrParamRequired("RuleId"))
+	}
+	if s.RuleId != nil && len(*s.RuleId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RuleId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetChangeToken sets the ChangeToken field's value.
+func (s *DeleteRateBasedRuleInput) SetChangeToken(v string) *DeleteRateBasedRuleInput {
+	s.ChangeToken = &v
+	return s
+}
+
+// SetRuleId sets the RuleId field's value.
+func (s *DeleteRateBasedRuleInput) SetRuleId(v string) *DeleteRateBasedRuleInput {
+	s.RuleId = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/DeleteRateBasedRuleResponse
+type DeleteRateBasedRuleOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The ChangeToken that you used to submit the DeleteRateBasedRule request.
+	// You can also use this value to query the status of the request. For more
+	// information, see GetChangeTokenStatus.
+	ChangeToken *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s DeleteRateBasedRuleOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteRateBasedRuleOutput) GoString() string {
+	return s.String()
+}
+
+// SetChangeToken sets the ChangeToken field's value.
+func (s *DeleteRateBasedRuleOutput) SetChangeToken(v string) *DeleteRateBasedRuleOutput {
 	s.ChangeToken = &v
 	return s
 }
@@ -7023,6 +8136,162 @@ func (s *GetIPSetOutput) SetIPSet(v *IPSet) *GetIPSetOutput {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/GetRateBasedRuleRequest
+type GetRateBasedRuleInput struct {
+	_ struct{} `type:"structure"`
+
+	// The RuleId of the RateBasedRule that you want to get. RuleId is returned
+	// by CreateRateBasedRule and by ListRateBasedRules.
+	//
+	// RuleId is a required field
+	RuleId *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetRateBasedRuleInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetRateBasedRuleInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetRateBasedRuleInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetRateBasedRuleInput"}
+	if s.RuleId == nil {
+		invalidParams.Add(request.NewErrParamRequired("RuleId"))
+	}
+	if s.RuleId != nil && len(*s.RuleId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RuleId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetRuleId sets the RuleId field's value.
+func (s *GetRateBasedRuleInput) SetRuleId(v string) *GetRateBasedRuleInput {
+	s.RuleId = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/GetRateBasedRuleManagedKeysRequest
+type GetRateBasedRuleManagedKeysInput struct {
+	_ struct{} `type:"structure"`
+
+	// A null value and not currently used. Do not include this in your request.
+	NextMarker *string `min:"1" type:"string"`
+
+	// The RuleId of the RateBasedRule for which you want to get a list of ManagedKeys.
+	// RuleId is returned by CreateRateBasedRule and by ListRateBasedRules.
+	//
+	// RuleId is a required field
+	RuleId *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetRateBasedRuleManagedKeysInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetRateBasedRuleManagedKeysInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetRateBasedRuleManagedKeysInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetRateBasedRuleManagedKeysInput"}
+	if s.NextMarker != nil && len(*s.NextMarker) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NextMarker", 1))
+	}
+	if s.RuleId == nil {
+		invalidParams.Add(request.NewErrParamRequired("RuleId"))
+	}
+	if s.RuleId != nil && len(*s.RuleId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RuleId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetNextMarker sets the NextMarker field's value.
+func (s *GetRateBasedRuleManagedKeysInput) SetNextMarker(v string) *GetRateBasedRuleManagedKeysInput {
+	s.NextMarker = &v
+	return s
+}
+
+// SetRuleId sets the RuleId field's value.
+func (s *GetRateBasedRuleManagedKeysInput) SetRuleId(v string) *GetRateBasedRuleManagedKeysInput {
+	s.RuleId = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/GetRateBasedRuleManagedKeysResponse
+type GetRateBasedRuleManagedKeysOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An array of IP addresses that currently are blocked by the specified RateBasedRule.
+	ManagedKeys []*string `type:"list"`
+
+	// A null value and not currently used.
+	NextMarker *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s GetRateBasedRuleManagedKeysOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetRateBasedRuleManagedKeysOutput) GoString() string {
+	return s.String()
+}
+
+// SetManagedKeys sets the ManagedKeys field's value.
+func (s *GetRateBasedRuleManagedKeysOutput) SetManagedKeys(v []*string) *GetRateBasedRuleManagedKeysOutput {
+	s.ManagedKeys = v
+	return s
+}
+
+// SetNextMarker sets the NextMarker field's value.
+func (s *GetRateBasedRuleManagedKeysOutput) SetNextMarker(v string) *GetRateBasedRuleManagedKeysOutput {
+	s.NextMarker = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/GetRateBasedRuleResponse
+type GetRateBasedRuleOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Information about the RateBasedRule that you specified in the GetRateBasedRule
+	// request.
+	Rule *RateBasedRule `type:"structure"`
+}
+
+// String returns the string representation
+func (s GetRateBasedRuleOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetRateBasedRuleOutput) GoString() string {
+	return s.String()
+}
+
+// SetRule sets the Rule field's value.
+func (s *GetRateBasedRuleOutput) SetRule(v *RateBasedRule) *GetRateBasedRuleOutput {
+	s.Rule = v
+	return s
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/GetRuleRequest
 type GetRuleInput struct {
 	_ struct{} `type:"structure"`
@@ -7699,14 +8968,9 @@ type IPSet struct {
 
 	// The IP address type (IPV4 or IPV6) and the IP address range (in CIDR notation)
 	// that web requests originate from. If the WebACL is associated with a CloudFront
-	// distribution, this is the value of one of the following fields in CloudFront
-	// access logs:
-	//
-	//    * c-ip, if the viewer did not use an HTTP proxy or a load balancer to
-	//    send the request
-	//
-	//    * x-forwarded-for, if the viewer did use an HTTP proxy or a load balancer
-	//    to send the request
+	// distribution and the viewer did not use an HTTP proxy or a load balancer
+	// to send the request, this is the value of the c-ip field in the CloudFront
+	// access logs.
 	//
 	// IPSetDescriptors is a required field
 	IPSetDescriptors []*IPSetDescriptor `type:"list" required:"true"`
@@ -8103,6 +9367,94 @@ func (s *ListIPSetsOutput) SetIPSets(v []*IPSetSummary) *ListIPSetsOutput {
 // SetNextMarker sets the NextMarker field's value.
 func (s *ListIPSetsOutput) SetNextMarker(v string) *ListIPSetsOutput {
 	s.NextMarker = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/ListRateBasedRulesRequest
+type ListRateBasedRulesInput struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the number of Rules that you want AWS WAF to return for this request.
+	// If you have more Rules than the number that you specify for Limit, the response
+	// includes a NextMarker value that you can use to get another batch of Rules.
+	Limit *int64 `type:"integer"`
+
+	// If you specify a value for Limit and you have more Rules than the value of
+	// Limit, AWS WAF returns a NextMarker value in the response that allows you
+	// to list another group of Rules. For the second and subsequent ListRateBasedRules
+	// requests, specify the value of NextMarker from the previous response to get
+	// information about another batch of Rules.
+	NextMarker *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s ListRateBasedRulesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListRateBasedRulesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListRateBasedRulesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListRateBasedRulesInput"}
+	if s.NextMarker != nil && len(*s.NextMarker) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NextMarker", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetLimit sets the Limit field's value.
+func (s *ListRateBasedRulesInput) SetLimit(v int64) *ListRateBasedRulesInput {
+	s.Limit = &v
+	return s
+}
+
+// SetNextMarker sets the NextMarker field's value.
+func (s *ListRateBasedRulesInput) SetNextMarker(v string) *ListRateBasedRulesInput {
+	s.NextMarker = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/ListRateBasedRulesResponse
+type ListRateBasedRulesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// If you have more Rules than the number that you specified for Limit in the
+	// request, the response includes a NextMarker value. To list more Rules, submit
+	// another ListRateBasedRules request, and specify the NextMarker value from
+	// the response in the NextMarker value in the next request.
+	NextMarker *string `min:"1" type:"string"`
+
+	// An array of RuleSummary objects.
+	Rules []*RuleSummary `type:"list"`
+}
+
+// String returns the string representation
+func (s ListRateBasedRulesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListRateBasedRulesOutput) GoString() string {
+	return s.String()
+}
+
+// SetNextMarker sets the NextMarker field's value.
+func (s *ListRateBasedRulesOutput) SetNextMarker(v string) *ListRateBasedRulesOutput {
+	s.NextMarker = &v
+	return s
+}
+
+// SetRules sets the Rules field's value.
+func (s *ListRateBasedRulesOutput) SetRules(v []*RuleSummary) *ListRateBasedRulesOutput {
+	s.Rules = v
 	return s
 }
 
@@ -8641,6 +9993,114 @@ func (s *Predicate) SetNegated(v bool) *Predicate {
 // SetType sets the Type field's value.
 func (s *Predicate) SetType(v string) *Predicate {
 	s.Type = &v
+	return s
+}
+
+// A RateBasedRule is identical to a regular Rule, with one addition: a RateBasedRule
+// counts the number of requests that arrive from a specified IP address every
+// five minutes. For example, based on recent requests that you've seen from
+// an attacker, you might create a RateBasedRule that includes the following
+// conditions:
+//
+//    * The requests come from 192.0.2.44.
+//
+//    * They contain the value BadBot in the User-Agent header.
+//
+// In the rule, you also define the rate limit as 15,000.
+//
+// Requests that meet both of these conditions and exceed 15,000 requests every
+// five minutes trigger the rule's action (block or count), which is defined
+// in the web ACL.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/RateBasedRule
+type RateBasedRule struct {
+	_ struct{} `type:"structure"`
+
+	// The Predicates object contains one Predicate element for each ByteMatchSet,
+	// IPSet, or SqlInjectionMatchSet object that you want to include in a RateBasedRule.
+	//
+	// MatchPredicates is a required field
+	MatchPredicates []*Predicate `type:"list" required:"true"`
+
+	// A friendly name or description for the metrics for a RateBasedRule. The name
+	// can contain only alphanumeric characters (A-Z, a-z, 0-9); the name can't
+	// contain whitespace. You can't change the name of the metric after you create
+	// the RateBasedRule.
+	MetricName *string `type:"string"`
+
+	// A friendly name or description for a RateBasedRule. You can't change the
+	// name of a RateBasedRule after you create it.
+	Name *string `min:"1" type:"string"`
+
+	// The field that AWS WAF uses to determine if requests are likely arriving
+	// from single source and thus subject to rate monitoring. The only valid value
+	// for RateKey is IP. IP indicates that requests arriving from the same IP address
+	// are subject to the RateLimit that is specified in the RateBasedRule.
+	//
+	// RateKey is a required field
+	RateKey *string `type:"string" required:"true" enum:"RateKey"`
+
+	// The maximum number of requests, which have an identical value in the field
+	// specified by the RateKey, allowed in a five-minute period. If the number
+	// of requests exceeds the RateLimit and the other predicates specified in the
+	// rule are also met, AWS WAF triggers the action that is specified for this
+	// rule.
+	//
+	// RateLimit is a required field
+	RateLimit *int64 `min:"2000" type:"long" required:"true"`
+
+	// A unique identifier for a RateBasedRule. You use RuleId to get more information
+	// about a RateBasedRule (see GetRateBasedRule), update a RateBasedRule (see
+	// UpdateRateBasedRule), insert a RateBasedRule into a WebACL or delete one
+	// from a WebACL (see UpdateWebACL), or delete a RateBasedRule from AWS WAF
+	// (see DeleteRateBasedRule).
+	//
+	// RuleId is a required field
+	RuleId *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s RateBasedRule) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RateBasedRule) GoString() string {
+	return s.String()
+}
+
+// SetMatchPredicates sets the MatchPredicates field's value.
+func (s *RateBasedRule) SetMatchPredicates(v []*Predicate) *RateBasedRule {
+	s.MatchPredicates = v
+	return s
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *RateBasedRule) SetMetricName(v string) *RateBasedRule {
+	s.MetricName = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *RateBasedRule) SetName(v string) *RateBasedRule {
+	s.Name = &v
+	return s
+}
+
+// SetRateKey sets the RateKey field's value.
+func (s *RateBasedRule) SetRateKey(v string) *RateBasedRule {
+	s.RateKey = &v
+	return s
+}
+
+// SetRateLimit sets the RateLimit field's value.
+func (s *RateBasedRule) SetRateLimit(v int64) *RateBasedRule {
+	s.RateLimit = &v
+	return s
+}
+
+// SetRuleId sets the RuleId field's value.
+func (s *RateBasedRule) SetRuleId(v string) *RateBasedRule {
+	s.RuleId = &v
 	return s
 }
 
@@ -9840,6 +11300,138 @@ func (s *UpdateIPSetOutput) SetChangeToken(v string) *UpdateIPSetOutput {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/UpdateRateBasedRuleRequest
+type UpdateRateBasedRuleInput struct {
+	_ struct{} `type:"structure"`
+
+	// The value returned by the most recent call to GetChangeToken.
+	//
+	// ChangeToken is a required field
+	ChangeToken *string `min:"1" type:"string" required:"true"`
+
+	// The maximum number of requests, which have an identical value in the field
+	// specified by the RateKey, allowed in a five-minute period. If the number
+	// of requests exceeds the RateLimit and the other predicates specified in the
+	// rule are also met, AWS WAF triggers the action that is specified for this
+	// rule.
+	//
+	// RateLimit is a required field
+	RateLimit *int64 `min:"2000" type:"long" required:"true"`
+
+	// The RuleId of the RateBasedRule that you want to update. RuleId is returned
+	// by CreateRateBasedRule and by ListRateBasedRules.
+	//
+	// RuleId is a required field
+	RuleId *string `min:"1" type:"string" required:"true"`
+
+	// An array of RuleUpdate objects that you want to insert into or delete from
+	// a RateBasedRule.
+	//
+	// Updates is a required field
+	Updates []*RuleUpdate `type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateRateBasedRuleInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateRateBasedRuleInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateRateBasedRuleInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateRateBasedRuleInput"}
+	if s.ChangeToken == nil {
+		invalidParams.Add(request.NewErrParamRequired("ChangeToken"))
+	}
+	if s.ChangeToken != nil && len(*s.ChangeToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ChangeToken", 1))
+	}
+	if s.RateLimit == nil {
+		invalidParams.Add(request.NewErrParamRequired("RateLimit"))
+	}
+	if s.RateLimit != nil && *s.RateLimit < 2000 {
+		invalidParams.Add(request.NewErrParamMinValue("RateLimit", 2000))
+	}
+	if s.RuleId == nil {
+		invalidParams.Add(request.NewErrParamRequired("RuleId"))
+	}
+	if s.RuleId != nil && len(*s.RuleId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RuleId", 1))
+	}
+	if s.Updates == nil {
+		invalidParams.Add(request.NewErrParamRequired("Updates"))
+	}
+	if s.Updates != nil {
+		for i, v := range s.Updates {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Updates", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetChangeToken sets the ChangeToken field's value.
+func (s *UpdateRateBasedRuleInput) SetChangeToken(v string) *UpdateRateBasedRuleInput {
+	s.ChangeToken = &v
+	return s
+}
+
+// SetRateLimit sets the RateLimit field's value.
+func (s *UpdateRateBasedRuleInput) SetRateLimit(v int64) *UpdateRateBasedRuleInput {
+	s.RateLimit = &v
+	return s
+}
+
+// SetRuleId sets the RuleId field's value.
+func (s *UpdateRateBasedRuleInput) SetRuleId(v string) *UpdateRateBasedRuleInput {
+	s.RuleId = &v
+	return s
+}
+
+// SetUpdates sets the Updates field's value.
+func (s *UpdateRateBasedRuleInput) SetUpdates(v []*RuleUpdate) *UpdateRateBasedRuleInput {
+	s.Updates = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/UpdateRateBasedRuleResponse
+type UpdateRateBasedRuleOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The ChangeToken that you used to submit the UpdateRateBasedRule request.
+	// You can also use this value to query the status of the request. For more
+	// information, see GetChangeTokenStatus.
+	ChangeToken *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s UpdateRateBasedRuleOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateRateBasedRuleOutput) GoString() string {
+	return s.String()
+}
+
+// SetChangeToken sets the ChangeToken field's value.
+func (s *UpdateRateBasedRuleOutput) SetChangeToken(v string) *UpdateRateBasedRuleOutput {
+	s.ChangeToken = &v
+	return s
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/waf-2015-08-24/UpdateRuleRequest
 type UpdateRuleInput struct {
 	_ struct{} `type:"structure"`
@@ -10217,7 +11809,7 @@ type UpdateWebACLInput struct {
 	//
 	//    * WebACLUpdate: Contains Action and ActivatedRule
 	//
-	//    * ActivatedRule: Contains Action, Priority, and RuleId
+	//    * ActivatedRule: Contains Action, Priority, RuleId, and Type
 	//
 	//    * WafAction: Contains Type
 	Updates []*WebACLUpdate `type:"list"`
@@ -11073,6 +12665,15 @@ const (
 
 	// ParameterExceptionFieldSizeConstraintComparisonOperator is a ParameterExceptionField enum value
 	ParameterExceptionFieldSizeConstraintComparisonOperator = "SIZE_CONSTRAINT_COMPARISON_OPERATOR"
+
+	// ParameterExceptionFieldRateKey is a ParameterExceptionField enum value
+	ParameterExceptionFieldRateKey = "RATE_KEY"
+
+	// ParameterExceptionFieldRuleType is a ParameterExceptionField enum value
+	ParameterExceptionFieldRuleType = "RULE_TYPE"
+
+	// ParameterExceptionFieldNextMarker is a ParameterExceptionField enum value
+	ParameterExceptionFieldNextMarker = "NEXT_MARKER"
 )
 
 const (
@@ -11118,6 +12719,11 @@ const (
 )
 
 const (
+	// RateKeyIp is a RateKey enum value
+	RateKeyIp = "IP"
+)
+
+const (
 	// TextTransformationNone is a TextTransformation enum value
 	TextTransformationNone = "NONE"
 
@@ -11146,4 +12752,12 @@ const (
 
 	// WafActionTypeCount is a WafActionType enum value
 	WafActionTypeCount = "COUNT"
+)
+
+const (
+	// WafRuleTypeRegular is a WafRuleType enum value
+	WafRuleTypeRegular = "REGULAR"
+
+	// WafRuleTypeRateBased is a WafRuleType enum value
+	WafRuleTypeRateBased = "RATE_BASED"
 )

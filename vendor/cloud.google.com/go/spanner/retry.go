@@ -119,8 +119,11 @@ func isRetryable(err error) bool {
 }
 
 // errContextCanceled returns *spanner.Error for canceled context.
-func errContextCanceled(lastErr error) error {
-	return spannerErrorf(codes.Canceled, "context is canceled, lastErr is <%v>", lastErr)
+func errContextCanceled(ctx context.Context, lastErr error) error {
+	if ctx.Err() == context.DeadlineExceeded {
+		return spannerErrorf(codes.DeadlineExceeded, "%v, lastErr is <%v>", ctx.Err(), lastErr)
+	}
+	return spannerErrorf(codes.Canceled, "%v, lastErr is <%v>", ctx.Err(), lastErr)
 }
 
 // extractRetryDelay extracts retry backoff if present.
@@ -162,7 +165,7 @@ func runRetryable(ctx context.Context, f func(context.Context) error) error {
 			// Do context check here so that even f() failed to do
 			// so (for example, gRPC implementation bug), the loop
 			// can still have a chance to exit as expected.
-			return errContextCanceled(funcErr)
+			return errContextCanceled(ctx, funcErr)
 		default:
 		}
 		funcErr = f(ctx)
@@ -177,7 +180,7 @@ func runRetryable(ctx context.Context, f func(context.Context) error) error {
 			}
 			select {
 			case <-ctx.Done():
-				return errContextCanceled(funcErr)
+				return errContextCanceled(ctx, funcErr)
 			case <-time.After(b):
 			}
 			retryCount++

@@ -1000,6 +1000,31 @@ func (c *Kinesis) GetRecordsRequest(input *GetRecordsInput) (req *request.Reques
 //   * ErrCodeExpiredIteratorException "ExpiredIteratorException"
 //   The provided iterator exceeds the maximum age allowed.
 //
+//   * ErrCodeKMSDisabledException "KMSDisabledException"
+//   The request was rejected because the specified CMK isn't enabled.
+//
+//   * ErrCodeKMSInvalidStateException "KMSInvalidStateException"
+//   The request was rejected because the state of the specified resource isn't
+//   valid for this request. For more information, see How Key State Affects Use
+//   of a Customer Master Key (http://docs.aws.amazon.com/kms/latest/developerguide/key-state.html)
+//   in the AWS Key Management Service Developer Guide.
+//
+//   * ErrCodeKMSAccessDeniedException "KMSAccessDeniedException"
+//   The ciphertext references a key that doesn't exist or that you don't have
+//   access to.
+//
+//   * ErrCodeKMSNotFoundException "KMSNotFoundException"
+//   The request was rejected because the specified entity or resource couldn't
+//   be found.
+//
+//   * ErrCodeKMSOptInRequired "KMSOptInRequired"
+//   The AWS access key ID needs a subscription for the service.
+//
+//   * ErrCodeKMSThrottlingException "KMSThrottlingException"
+//   The request was denied due to request throttling. For more information about
+//   throttling, see Limits (http://docs.aws.amazon.com/kms/latest/developerguide/limits.html#requests-per-second)
+//   in the AWS Key Management Service Developer Guide.
+//
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesis-2013-12-02/GetRecords
 func (c *Kinesis) GetRecords(input *GetRecordsInput) (*GetRecordsOutput, error) {
 	req, out := c.GetRecordsRequest(input)
@@ -1705,8 +1730,9 @@ func (c *Kinesis) PutRecordRequest(input *PutRecordInput) (req *request.Request,
 // If a PutRecord request cannot be processed because of insufficient provisioned
 // throughput on the shard involved in the request, PutRecord throws ProvisionedThroughputExceededException.
 //
-// Data records are accessible for only 24 hours from the time that they are
-// added to a stream.
+// By default, data records are accessible for 24 hours from the time that they
+// are added to a stream. You can use IncreaseStreamRetentionPeriod or DecreaseStreamRetentionPeriod
+// to modify this retention period.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1731,6 +1757,31 @@ func (c *Kinesis) PutRecordRequest(input *PutRecordInput) (req *request.Request,
 //   in the Amazon Kinesis Streams Developer Guide, and Error Retries and Exponential
 //   Backoff in AWS (http://docs.aws.amazon.com/general/latest/gr/api-retries.html)
 //   in the AWS General Reference.
+//
+//   * ErrCodeKMSDisabledException "KMSDisabledException"
+//   The request was rejected because the specified CMK isn't enabled.
+//
+//   * ErrCodeKMSInvalidStateException "KMSInvalidStateException"
+//   The request was rejected because the state of the specified resource isn't
+//   valid for this request. For more information, see How Key State Affects Use
+//   of a Customer Master Key (http://docs.aws.amazon.com/kms/latest/developerguide/key-state.html)
+//   in the AWS Key Management Service Developer Guide.
+//
+//   * ErrCodeKMSAccessDeniedException "KMSAccessDeniedException"
+//   The ciphertext references a key that doesn't exist or that you don't have
+//   access to.
+//
+//   * ErrCodeKMSNotFoundException "KMSNotFoundException"
+//   The request was rejected because the specified entity or resource couldn't
+//   be found.
+//
+//   * ErrCodeKMSOptInRequired "KMSOptInRequired"
+//   The AWS access key ID needs a subscription for the service.
+//
+//   * ErrCodeKMSThrottlingException "KMSThrottlingException"
+//   The request was denied due to request throttling. For more information about
+//   throttling, see Limits (http://docs.aws.amazon.com/kms/latest/developerguide/limits.html#requests-per-second)
+//   in the AWS Key Management Service Developer Guide.
 //
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesis-2013-12-02/PutRecord
 func (c *Kinesis) PutRecord(input *PutRecordInput) (*PutRecordOutput, error) {
@@ -1855,10 +1906,9 @@ func (c *Kinesis) PutRecordsRequest(input *PutRecordsInput) (req *request.Reques
 // see Adding Multiple Records with PutRecords (http://docs.aws.amazon.com/kinesis/latest/dev/kinesis-using-sdk-java-add-data-to-stream.html#kinesis-using-sdk-java-putrecords)
 // in the Amazon Kinesis Streams Developer Guide.
 //
-// By default, data records are accessible for only 24 hours from the time that
-// they are added to an Amazon Kinesis stream. This retention period can be
-// modified using the DecreaseStreamRetentionPeriod and IncreaseStreamRetentionPeriod
-// operations.
+// By default, data records are accessible for 24 hours from the time that they
+// are added to a stream. You can use IncreaseStreamRetentionPeriod or DecreaseStreamRetentionPeriod
+// to modify this retention period.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1883,6 +1933,31 @@ func (c *Kinesis) PutRecordsRequest(input *PutRecordsInput) (req *request.Reques
 //   in the Amazon Kinesis Streams Developer Guide, and Error Retries and Exponential
 //   Backoff in AWS (http://docs.aws.amazon.com/general/latest/gr/api-retries.html)
 //   in the AWS General Reference.
+//
+//   * ErrCodeKMSDisabledException "KMSDisabledException"
+//   The request was rejected because the specified CMK isn't enabled.
+//
+//   * ErrCodeKMSInvalidStateException "KMSInvalidStateException"
+//   The request was rejected because the state of the specified resource isn't
+//   valid for this request. For more information, see How Key State Affects Use
+//   of a Customer Master Key (http://docs.aws.amazon.com/kms/latest/developerguide/key-state.html)
+//   in the AWS Key Management Service Developer Guide.
+//
+//   * ErrCodeKMSAccessDeniedException "KMSAccessDeniedException"
+//   The ciphertext references a key that doesn't exist or that you don't have
+//   access to.
+//
+//   * ErrCodeKMSNotFoundException "KMSNotFoundException"
+//   The request was rejected because the specified entity or resource couldn't
+//   be found.
+//
+//   * ErrCodeKMSOptInRequired "KMSOptInRequired"
+//   The AWS access key ID needs a subscription for the service.
+//
+//   * ErrCodeKMSThrottlingException "KMSThrottlingException"
+//   The request was denied due to request throttling. For more information about
+//   throttling, see Limits (http://docs.aws.amazon.com/kms/latest/developerguide/limits.html#requests-per-second)
+//   in the AWS Key Management Service Developer Guide.
 //
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesis-2013-12-02/PutRecords
 func (c *Kinesis) PutRecords(input *PutRecordsInput) (*PutRecordsOutput, error) {
@@ -2143,6 +2218,255 @@ func (c *Kinesis) SplitShardWithContext(ctx aws.Context, input *SplitShardInput,
 	return out, req.Send()
 }
 
+const opStartStreamEncryption = "StartStreamEncryption"
+
+// StartStreamEncryptionRequest generates a "aws/request.Request" representing the
+// client's request for the StartStreamEncryption operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See StartStreamEncryption for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the StartStreamEncryption method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the StartStreamEncryptionRequest method.
+//    req, resp := client.StartStreamEncryptionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesis-2013-12-02/StartStreamEncryption
+func (c *Kinesis) StartStreamEncryptionRequest(input *StartStreamEncryptionInput) (req *request.Request, output *StartStreamEncryptionOutput) {
+	op := &request.Operation{
+		Name:       opStartStreamEncryption,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &StartStreamEncryptionInput{}
+	}
+
+	output = &StartStreamEncryptionOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(jsonrpc.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// StartStreamEncryption API operation for Amazon Kinesis.
+//
+// Enables or updates server-side encryption using an AWS KMS key for a specified
+// stream.
+//
+// Starting encryption is an asynchronous operation. Upon receiving the request,
+// Amazon Kinesis returns immediately and sets the status of the stream to UPDATING.
+// After the update is complete, Amazon Kinesis sets the status of the stream
+// back to ACTIVE. Updating or applying encryption normally takes a few seconds
+// to complete but it can take minutes. You can continue to read and write data
+// to your stream while its status is UPDATING. Once the status of the stream
+// is ACTIVE, records written to the stream will begin to be encrypted.
+//
+// API Limits: You can successfully apply a new AWS KMS key for server-side
+// encryption 25 times in a rolling 24 hour period.
+//
+// Note: It can take up to 5 seconds after the stream is in an ACTIVE status
+// before all records written to the stream are encrypted. After you’ve enabled
+// encryption, you can verify encryption was applied by inspecting the API response
+// from PutRecord or PutRecords.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Kinesis's
+// API operation StartStreamEncryption for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInvalidArgumentException "InvalidArgumentException"
+//   A specified parameter exceeds its restrictions, is not supported, or can't
+//   be used. For more information, see the returned message.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   The requested resource exceeds the maximum number allowed, or the number
+//   of concurrent stream requests exceeds the maximum number allowed (5).
+//
+//   * ErrCodeResourceInUseException "ResourceInUseException"
+//   The resource is not available for this operation. For successful operation,
+//   the resource needs to be in the ACTIVE state.
+//
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   The requested resource could not be found. The stream might not be specified
+//   correctly.
+//
+//   * ErrCodeKMSDisabledException "KMSDisabledException"
+//   The request was rejected because the specified CMK isn't enabled.
+//
+//   * ErrCodeKMSInvalidStateException "KMSInvalidStateException"
+//   The request was rejected because the state of the specified resource isn't
+//   valid for this request. For more information, see How Key State Affects Use
+//   of a Customer Master Key (http://docs.aws.amazon.com/kms/latest/developerguide/key-state.html)
+//   in the AWS Key Management Service Developer Guide.
+//
+//   * ErrCodeKMSAccessDeniedException "KMSAccessDeniedException"
+//   The ciphertext references a key that doesn't exist or that you don't have
+//   access to.
+//
+//   * ErrCodeKMSNotFoundException "KMSNotFoundException"
+//   The request was rejected because the specified entity or resource couldn't
+//   be found.
+//
+//   * ErrCodeKMSOptInRequired "KMSOptInRequired"
+//   The AWS access key ID needs a subscription for the service.
+//
+//   * ErrCodeKMSThrottlingException "KMSThrottlingException"
+//   The request was denied due to request throttling. For more information about
+//   throttling, see Limits (http://docs.aws.amazon.com/kms/latest/developerguide/limits.html#requests-per-second)
+//   in the AWS Key Management Service Developer Guide.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesis-2013-12-02/StartStreamEncryption
+func (c *Kinesis) StartStreamEncryption(input *StartStreamEncryptionInput) (*StartStreamEncryptionOutput, error) {
+	req, out := c.StartStreamEncryptionRequest(input)
+	return out, req.Send()
+}
+
+// StartStreamEncryptionWithContext is the same as StartStreamEncryption with the addition of
+// the ability to pass a context and additional request options.
+//
+// See StartStreamEncryption for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Kinesis) StartStreamEncryptionWithContext(ctx aws.Context, input *StartStreamEncryptionInput, opts ...request.Option) (*StartStreamEncryptionOutput, error) {
+	req, out := c.StartStreamEncryptionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opStopStreamEncryption = "StopStreamEncryption"
+
+// StopStreamEncryptionRequest generates a "aws/request.Request" representing the
+// client's request for the StopStreamEncryption operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See StopStreamEncryption for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the StopStreamEncryption method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the StopStreamEncryptionRequest method.
+//    req, resp := client.StopStreamEncryptionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesis-2013-12-02/StopStreamEncryption
+func (c *Kinesis) StopStreamEncryptionRequest(input *StopStreamEncryptionInput) (req *request.Request, output *StopStreamEncryptionOutput) {
+	op := &request.Operation{
+		Name:       opStopStreamEncryption,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &StopStreamEncryptionInput{}
+	}
+
+	output = &StopStreamEncryptionOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(jsonrpc.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// StopStreamEncryption API operation for Amazon Kinesis.
+//
+// Disables server-side encryption for a specified stream.
+//
+// Stopping encryption is an asynchronous operation. Upon receiving the request,
+// Amazon Kinesis returns immediately and sets the status of the stream to UPDATING.
+// After the update is complete, Amazon Kinesis sets the status of the stream
+// back to ACTIVE. Stopping encryption normally takes a few seconds to complete
+// but it can take minutes. You can continue to read and write data to your
+// stream while its status is UPDATING. Once the status of the stream is ACTIVE
+// records written to the stream will no longer be encrypted by the Amazon Kinesis
+// Streams service.
+//
+// API Limits: You can successfully disable server-side encryption 25 times
+// in a rolling 24 hour period.
+//
+// Note: It can take up to 5 seconds after the stream is in an ACTIVE status
+// before all records written to the stream are no longer subject to encryption.
+// After you’ve disabled encryption, you can verify encryption was not applied
+// by inspecting the API response from PutRecord or PutRecords.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Kinesis's
+// API operation StopStreamEncryption for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInvalidArgumentException "InvalidArgumentException"
+//   A specified parameter exceeds its restrictions, is not supported, or can't
+//   be used. For more information, see the returned message.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   The requested resource exceeds the maximum number allowed, or the number
+//   of concurrent stream requests exceeds the maximum number allowed (5).
+//
+//   * ErrCodeResourceInUseException "ResourceInUseException"
+//   The resource is not available for this operation. For successful operation,
+//   the resource needs to be in the ACTIVE state.
+//
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   The requested resource could not be found. The stream might not be specified
+//   correctly.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesis-2013-12-02/StopStreamEncryption
+func (c *Kinesis) StopStreamEncryption(input *StopStreamEncryptionInput) (*StopStreamEncryptionOutput, error) {
+	req, out := c.StopStreamEncryptionRequest(input)
+	return out, req.Send()
+}
+
+// StopStreamEncryptionWithContext is the same as StopStreamEncryption with the addition of
+// the ability to pass a context and additional request options.
+//
+// See StopStreamEncryption for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Kinesis) StopStreamEncryptionWithContext(ctx aws.Context, input *StopStreamEncryptionInput, opts ...request.Option) (*StopStreamEncryptionOutput, error) {
+	req, out := c.StopStreamEncryptionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateShardCount = "UpdateShardCount"
 
 // UpdateShardCountRequest generates a "aws/request.Request" representing the
@@ -2198,18 +2522,30 @@ func (c *Kinesis) UpdateShardCountRequest(input *UpdateShardCountInput) (req *re
 // action could take a few minutes to complete. You can continue to read and
 // write data to your stream while its status is UPDATING.
 //
-// To update the shard count, Amazon Kinesis performs splits and merges and
-// individual shards. This can cause short-lived shards to be created, in addition
-// to the final shards. We recommend that you double or halve the shard count,
-// as this results in the fewest number of splits or merges.
+// To update the shard count, Amazon Kinesis performs splits or merges on individual
+// shards. This can cause short-lived shards to be created, in addition to the
+// final shards. We recommend that you double or halve the shard count, as this
+// results in the fewest number of splits or merges.
 //
-// This operation has a rate limit of twice per rolling 24 hour period. You
-// cannot scale above double your current shard count, scale below half your
-// current shard count, or exceed the shard limits for your account.
+// This operation has the following limits, which are per region per account
+// unless otherwise noted:
 //
-// For the default limits for an AWS account, see Streams Limits (http://docs.aws.amazon.com/kinesis/latest/dev/service-sizes-and-limits.html)
-// in the Amazon Kinesis Streams Developer Guide. If you need to increase a
-// limit, contact AWS Support (http://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html).
+//    * scale more than twice per rolling 24 hour period
+//
+//    * scale up above double your current shard count
+//
+//    * scale down below half your current shard count
+//
+//    * scale up above 200 shards in a stream
+//
+//    * scale a stream with more than 200 shards down unless the result is less
+//    than 200 shards
+//
+//    * scale up above the shard limits for your account
+//
+//    *
+//
+// For the default limits for an AWS account, see Streams Limits (http://docs.aws.amazon.com/kinesis/latest/dev/service-sizes-and-limits.html)in the Amazon Kinesis Streams Developer Guide. If you need to increase a limit, contact AWS Support (http://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html)
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3728,6 +4064,15 @@ func (s *PutRecordInput) SetStreamName(v string) *PutRecordInput {
 type PutRecordOutput struct {
 	_ struct{} `type:"structure"`
 
+	// The encryption type to use on the record. This parameter can be one of the
+	// following values:
+	//
+	//    * NONE: Do not encrypt the records in the stream.
+	//
+	//    * KMS: Use server-side encryption on the records in the stream using a
+	//    customer-managed KMS key.
+	EncryptionType *string `type:"string" enum:"EncryptionType"`
+
 	// The sequence number identifier that was assigned to the put data record.
 	// The sequence number for the record is unique across all records in the stream.
 	// A sequence number is the identifier associated with every record put into
@@ -3750,6 +4095,12 @@ func (s PutRecordOutput) String() string {
 // GoString returns the string representation
 func (s PutRecordOutput) GoString() string {
 	return s.String()
+}
+
+// SetEncryptionType sets the EncryptionType field's value.
+func (s *PutRecordOutput) SetEncryptionType(v string) *PutRecordOutput {
+	s.EncryptionType = &v
+	return s
 }
 
 // SetSequenceNumber sets the SequenceNumber field's value.
@@ -3839,6 +4190,15 @@ func (s *PutRecordsInput) SetStreamName(v string) *PutRecordsInput {
 type PutRecordsOutput struct {
 	_ struct{} `type:"structure"`
 
+	// The encryption type used on the records. This parameter can be one of the
+	// following values:
+	//
+	//    * NONE: Do not encrypt the records.
+	//
+	//    * KMS: Use server-side encryption on the records using a customer-managed
+	//    KMS key.
+	EncryptionType *string `type:"string" enum:"EncryptionType"`
+
 	// The number of unsuccessfully processed records in a PutRecords request.
 	FailedRecordCount *int64 `min:"1" type:"integer"`
 
@@ -3860,6 +4220,12 @@ func (s PutRecordsOutput) String() string {
 // GoString returns the string representation
 func (s PutRecordsOutput) GoString() string {
 	return s.String()
+}
+
+// SetEncryptionType sets the EncryptionType field's value.
+func (s *PutRecordsOutput) SetEncryptionType(v string) *PutRecordsOutput {
+	s.EncryptionType = &v
+	return s
 }
 
 // SetFailedRecordCount sets the FailedRecordCount field's value.
@@ -4032,12 +4398,21 @@ type Record struct {
 	// Data is a required field
 	Data []byte `type:"blob" required:"true"`
 
+	// The encryption type used on the record. This parameter can be one of the
+	// following values:
+	//
+	//    * NONE: Do not encrypt the records in the stream.
+	//
+	//    * KMS: Use server-side encryption on the records in the stream using a
+	//    customer-managed KMS key.
+	EncryptionType *string `type:"string" enum:"EncryptionType"`
+
 	// Identifies which shard in the stream the data record is assigned to.
 	//
 	// PartitionKey is a required field
 	PartitionKey *string `min:"1" type:"string" required:"true"`
 
-	// The unique identifier of the record in the stream.
+	// The unique identifier of the record within its shard.
 	//
 	// SequenceNumber is a required field
 	SequenceNumber *string `type:"string" required:"true"`
@@ -4062,6 +4437,12 @@ func (s *Record) SetApproximateArrivalTimestamp(v time.Time) *Record {
 // SetData sets the Data field's value.
 func (s *Record) SetData(v []byte) *Record {
 	s.Data = v
+	return s
+}
+
+// SetEncryptionType sets the EncryptionType field's value.
+func (s *Record) SetEncryptionType(v string) *Record {
+	s.EncryptionType = &v
 	return s
 }
 
@@ -4352,10 +4733,208 @@ func (s SplitShardOutput) GoString() string {
 	return s.String()
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesis-2013-12-02/StartStreamEncryptionInput
+type StartStreamEncryptionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The encryption type to use. This parameter can be one of the following values:
+	//
+	//    * NONE: Not valid for this operation. An InvalidOperationException will
+	//    be thrown.
+	//
+	//    * KMS: Use server-side encryption on the records in the stream using a
+	//    customer-managed KMS key.
+	//
+	// EncryptionType is a required field
+	EncryptionType *string `type:"string" required:"true" enum:"EncryptionType"`
+
+	// The GUID for the customer-managed KMS key to use for encryption. You can
+	// also use a Kinesis-owned master key by specifying the alias aws/kinesis.
+	//
+	// KeyId is a required field
+	KeyId *string `min:"1" type:"string" required:"true"`
+
+	// The name of the stream for which to start encrypting records.
+	//
+	// StreamName is a required field
+	StreamName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s StartStreamEncryptionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StartStreamEncryptionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StartStreamEncryptionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StartStreamEncryptionInput"}
+	if s.EncryptionType == nil {
+		invalidParams.Add(request.NewErrParamRequired("EncryptionType"))
+	}
+	if s.KeyId == nil {
+		invalidParams.Add(request.NewErrParamRequired("KeyId"))
+	}
+	if s.KeyId != nil && len(*s.KeyId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("KeyId", 1))
+	}
+	if s.StreamName == nil {
+		invalidParams.Add(request.NewErrParamRequired("StreamName"))
+	}
+	if s.StreamName != nil && len(*s.StreamName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StreamName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEncryptionType sets the EncryptionType field's value.
+func (s *StartStreamEncryptionInput) SetEncryptionType(v string) *StartStreamEncryptionInput {
+	s.EncryptionType = &v
+	return s
+}
+
+// SetKeyId sets the KeyId field's value.
+func (s *StartStreamEncryptionInput) SetKeyId(v string) *StartStreamEncryptionInput {
+	s.KeyId = &v
+	return s
+}
+
+// SetStreamName sets the StreamName field's value.
+func (s *StartStreamEncryptionInput) SetStreamName(v string) *StartStreamEncryptionInput {
+	s.StreamName = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesis-2013-12-02/StartStreamEncryptionOutput
+type StartStreamEncryptionOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s StartStreamEncryptionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StartStreamEncryptionOutput) GoString() string {
+	return s.String()
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesis-2013-12-02/StopStreamEncryptionInput
+type StopStreamEncryptionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The encryption type. This parameter can be one of the following values:
+	//
+	//    * NONE: Not valid for this operation. An InvalidOperationException will
+	//    be thrown.
+	//
+	//    * KMS: Use server-side encryption on the records in the stream using a
+	//    customer-managed KMS key.
+	//
+	// EncryptionType is a required field
+	EncryptionType *string `type:"string" required:"true" enum:"EncryptionType"`
+
+	// The GUID for the customer-managed key that was used for encryption.
+	//
+	// KeyId is a required field
+	KeyId *string `min:"1" type:"string" required:"true"`
+
+	// The name of the stream on which to stop encrypting records.
+	//
+	// StreamName is a required field
+	StreamName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s StopStreamEncryptionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StopStreamEncryptionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StopStreamEncryptionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StopStreamEncryptionInput"}
+	if s.EncryptionType == nil {
+		invalidParams.Add(request.NewErrParamRequired("EncryptionType"))
+	}
+	if s.KeyId == nil {
+		invalidParams.Add(request.NewErrParamRequired("KeyId"))
+	}
+	if s.KeyId != nil && len(*s.KeyId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("KeyId", 1))
+	}
+	if s.StreamName == nil {
+		invalidParams.Add(request.NewErrParamRequired("StreamName"))
+	}
+	if s.StreamName != nil && len(*s.StreamName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StreamName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEncryptionType sets the EncryptionType field's value.
+func (s *StopStreamEncryptionInput) SetEncryptionType(v string) *StopStreamEncryptionInput {
+	s.EncryptionType = &v
+	return s
+}
+
+// SetKeyId sets the KeyId field's value.
+func (s *StopStreamEncryptionInput) SetKeyId(v string) *StopStreamEncryptionInput {
+	s.KeyId = &v
+	return s
+}
+
+// SetStreamName sets the StreamName field's value.
+func (s *StopStreamEncryptionInput) SetStreamName(v string) *StopStreamEncryptionInput {
+	s.StreamName = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesis-2013-12-02/StopStreamEncryptionOutput
+type StopStreamEncryptionOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s StopStreamEncryptionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StopStreamEncryptionOutput) GoString() string {
+	return s.String()
+}
+
 // Represents the output for DescribeStream.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesis-2013-12-02/StreamDescription
 type StreamDescription struct {
 	_ struct{} `type:"structure"`
+
+	// The server-side encryption type used on the stream. This parameter can be
+	// one of the following values:
+	//
+	//    * NONE: Do not encrypt the records in the stream.
+	//
+	//    * KMS: Use server-side encryption on the records in the stream using a
+	//    customer-managed KMS key.
+	EncryptionType *string `type:"string" enum:"EncryptionType"`
 
 	// Represents the current enhanced monitoring settings of the stream.
 	//
@@ -4366,6 +4945,9 @@ type StreamDescription struct {
 	//
 	// HasMoreShards is a required field
 	HasMoreShards *bool `type:"boolean" required:"true"`
+
+	// The GUID for the customer-managed KMS key used for encryption on the stream.
+	KeyId *string `min:"1" type:"string"`
 
 	// The current retention period, in hours.
 	//
@@ -4423,6 +5005,12 @@ func (s StreamDescription) GoString() string {
 	return s.String()
 }
 
+// SetEncryptionType sets the EncryptionType field's value.
+func (s *StreamDescription) SetEncryptionType(v string) *StreamDescription {
+	s.EncryptionType = &v
+	return s
+}
+
 // SetEnhancedMonitoring sets the EnhancedMonitoring field's value.
 func (s *StreamDescription) SetEnhancedMonitoring(v []*EnhancedMetrics) *StreamDescription {
 	s.EnhancedMonitoring = v
@@ -4432,6 +5020,12 @@ func (s *StreamDescription) SetEnhancedMonitoring(v []*EnhancedMetrics) *StreamD
 // SetHasMoreShards sets the HasMoreShards field's value.
 func (s *StreamDescription) SetHasMoreShards(v bool) *StreamDescription {
 	s.HasMoreShards = &v
+	return s
+}
+
+// SetKeyId sets the KeyId field's value.
+func (s *StreamDescription) SetKeyId(v string) *StreamDescription {
+	s.KeyId = &v
 	return s
 }
 
@@ -4624,6 +5218,14 @@ func (s *UpdateShardCountOutput) SetTargetShardCount(v int64) *UpdateShardCountO
 	s.TargetShardCount = &v
 	return s
 }
+
+const (
+	// EncryptionTypeNone is a EncryptionType enum value
+	EncryptionTypeNone = "NONE"
+
+	// EncryptionTypeKms is a EncryptionType enum value
+	EncryptionTypeKms = "KMS"
+)
 
 const (
 	// MetricsNameIncomingBytes is a MetricsName enum value

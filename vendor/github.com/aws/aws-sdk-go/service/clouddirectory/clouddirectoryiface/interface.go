@@ -80,6 +80,10 @@ type CloudDirectoryAPI interface {
 	AttachToIndexWithContext(aws.Context, *clouddirectory.AttachToIndexInput, ...request.Option) (*clouddirectory.AttachToIndexOutput, error)
 	AttachToIndexRequest(*clouddirectory.AttachToIndexInput) (*request.Request, *clouddirectory.AttachToIndexOutput)
 
+	AttachTypedLink(*clouddirectory.AttachTypedLinkInput) (*clouddirectory.AttachTypedLinkOutput, error)
+	AttachTypedLinkWithContext(aws.Context, *clouddirectory.AttachTypedLinkInput, ...request.Option) (*clouddirectory.AttachTypedLinkOutput, error)
+	AttachTypedLinkRequest(*clouddirectory.AttachTypedLinkInput) (*request.Request, *clouddirectory.AttachTypedLinkOutput)
+
 	BatchRead(*clouddirectory.BatchReadInput) (*clouddirectory.BatchReadOutput, error)
 	BatchReadWithContext(aws.Context, *clouddirectory.BatchReadInput, ...request.Option) (*clouddirectory.BatchReadOutput, error)
 	BatchReadRequest(*clouddirectory.BatchReadInput) (*request.Request, *clouddirectory.BatchReadOutput)
@@ -108,6 +112,10 @@ type CloudDirectoryAPI interface {
 	CreateSchemaWithContext(aws.Context, *clouddirectory.CreateSchemaInput, ...request.Option) (*clouddirectory.CreateSchemaOutput, error)
 	CreateSchemaRequest(*clouddirectory.CreateSchemaInput) (*request.Request, *clouddirectory.CreateSchemaOutput)
 
+	CreateTypedLinkFacet(*clouddirectory.CreateTypedLinkFacetInput) (*clouddirectory.CreateTypedLinkFacetOutput, error)
+	CreateTypedLinkFacetWithContext(aws.Context, *clouddirectory.CreateTypedLinkFacetInput, ...request.Option) (*clouddirectory.CreateTypedLinkFacetOutput, error)
+	CreateTypedLinkFacetRequest(*clouddirectory.CreateTypedLinkFacetInput) (*request.Request, *clouddirectory.CreateTypedLinkFacetOutput)
+
 	DeleteDirectory(*clouddirectory.DeleteDirectoryInput) (*clouddirectory.DeleteDirectoryOutput, error)
 	DeleteDirectoryWithContext(aws.Context, *clouddirectory.DeleteDirectoryInput, ...request.Option) (*clouddirectory.DeleteDirectoryOutput, error)
 	DeleteDirectoryRequest(*clouddirectory.DeleteDirectoryInput) (*request.Request, *clouddirectory.DeleteDirectoryOutput)
@@ -124,6 +132,10 @@ type CloudDirectoryAPI interface {
 	DeleteSchemaWithContext(aws.Context, *clouddirectory.DeleteSchemaInput, ...request.Option) (*clouddirectory.DeleteSchemaOutput, error)
 	DeleteSchemaRequest(*clouddirectory.DeleteSchemaInput) (*request.Request, *clouddirectory.DeleteSchemaOutput)
 
+	DeleteTypedLinkFacet(*clouddirectory.DeleteTypedLinkFacetInput) (*clouddirectory.DeleteTypedLinkFacetOutput, error)
+	DeleteTypedLinkFacetWithContext(aws.Context, *clouddirectory.DeleteTypedLinkFacetInput, ...request.Option) (*clouddirectory.DeleteTypedLinkFacetOutput, error)
+	DeleteTypedLinkFacetRequest(*clouddirectory.DeleteTypedLinkFacetInput) (*request.Request, *clouddirectory.DeleteTypedLinkFacetOutput)
+
 	DetachFromIndex(*clouddirectory.DetachFromIndexInput) (*clouddirectory.DetachFromIndexOutput, error)
 	DetachFromIndexWithContext(aws.Context, *clouddirectory.DetachFromIndexInput, ...request.Option) (*clouddirectory.DetachFromIndexOutput, error)
 	DetachFromIndexRequest(*clouddirectory.DetachFromIndexInput) (*request.Request, *clouddirectory.DetachFromIndexOutput)
@@ -135,6 +147,10 @@ type CloudDirectoryAPI interface {
 	DetachPolicy(*clouddirectory.DetachPolicyInput) (*clouddirectory.DetachPolicyOutput, error)
 	DetachPolicyWithContext(aws.Context, *clouddirectory.DetachPolicyInput, ...request.Option) (*clouddirectory.DetachPolicyOutput, error)
 	DetachPolicyRequest(*clouddirectory.DetachPolicyInput) (*request.Request, *clouddirectory.DetachPolicyOutput)
+
+	DetachTypedLink(*clouddirectory.DetachTypedLinkInput) (*clouddirectory.DetachTypedLinkOutput, error)
+	DetachTypedLinkWithContext(aws.Context, *clouddirectory.DetachTypedLinkInput, ...request.Option) (*clouddirectory.DetachTypedLinkOutput, error)
+	DetachTypedLinkRequest(*clouddirectory.DetachTypedLinkInput) (*request.Request, *clouddirectory.DetachTypedLinkOutput)
 
 	DisableDirectory(*clouddirectory.DisableDirectoryInput) (*clouddirectory.DisableDirectoryOutput, error)
 	DisableDirectoryWithContext(aws.Context, *clouddirectory.DisableDirectoryInput, ...request.Option) (*clouddirectory.DisableDirectoryOutput, error)
@@ -159,6 +175,10 @@ type CloudDirectoryAPI interface {
 	GetSchemaAsJson(*clouddirectory.GetSchemaAsJsonInput) (*clouddirectory.GetSchemaAsJsonOutput, error)
 	GetSchemaAsJsonWithContext(aws.Context, *clouddirectory.GetSchemaAsJsonInput, ...request.Option) (*clouddirectory.GetSchemaAsJsonOutput, error)
 	GetSchemaAsJsonRequest(*clouddirectory.GetSchemaAsJsonInput) (*request.Request, *clouddirectory.GetSchemaAsJsonOutput)
+
+	GetTypedLinkFacetInformation(*clouddirectory.GetTypedLinkFacetInformationInput) (*clouddirectory.GetTypedLinkFacetInformationOutput, error)
+	GetTypedLinkFacetInformationWithContext(aws.Context, *clouddirectory.GetTypedLinkFacetInformationInput, ...request.Option) (*clouddirectory.GetTypedLinkFacetInformationOutput, error)
+	GetTypedLinkFacetInformationRequest(*clouddirectory.GetTypedLinkFacetInformationInput) (*request.Request, *clouddirectory.GetTypedLinkFacetInformationOutput)
 
 	ListAppliedSchemaArns(*clouddirectory.ListAppliedSchemaArnsInput) (*clouddirectory.ListAppliedSchemaArnsOutput, error)
 	ListAppliedSchemaArnsWithContext(aws.Context, *clouddirectory.ListAppliedSchemaArnsInput, ...request.Option) (*clouddirectory.ListAppliedSchemaArnsOutput, error)
@@ -202,6 +222,10 @@ type CloudDirectoryAPI interface {
 	ListFacetNamesPages(*clouddirectory.ListFacetNamesInput, func(*clouddirectory.ListFacetNamesOutput, bool) bool) error
 	ListFacetNamesPagesWithContext(aws.Context, *clouddirectory.ListFacetNamesInput, func(*clouddirectory.ListFacetNamesOutput, bool) bool, ...request.Option) error
 
+	ListIncomingTypedLinks(*clouddirectory.ListIncomingTypedLinksInput) (*clouddirectory.ListIncomingTypedLinksOutput, error)
+	ListIncomingTypedLinksWithContext(aws.Context, *clouddirectory.ListIncomingTypedLinksInput, ...request.Option) (*clouddirectory.ListIncomingTypedLinksOutput, error)
+	ListIncomingTypedLinksRequest(*clouddirectory.ListIncomingTypedLinksInput) (*request.Request, *clouddirectory.ListIncomingTypedLinksOutput)
+
 	ListIndex(*clouddirectory.ListIndexInput) (*clouddirectory.ListIndexOutput, error)
 	ListIndexWithContext(aws.Context, *clouddirectory.ListIndexInput, ...request.Option) (*clouddirectory.ListIndexOutput, error)
 	ListIndexRequest(*clouddirectory.ListIndexInput) (*request.Request, *clouddirectory.ListIndexOutput)
@@ -244,6 +268,10 @@ type CloudDirectoryAPI interface {
 	ListObjectPoliciesPages(*clouddirectory.ListObjectPoliciesInput, func(*clouddirectory.ListObjectPoliciesOutput, bool) bool) error
 	ListObjectPoliciesPagesWithContext(aws.Context, *clouddirectory.ListObjectPoliciesInput, func(*clouddirectory.ListObjectPoliciesOutput, bool) bool, ...request.Option) error
 
+	ListOutgoingTypedLinks(*clouddirectory.ListOutgoingTypedLinksInput) (*clouddirectory.ListOutgoingTypedLinksOutput, error)
+	ListOutgoingTypedLinksWithContext(aws.Context, *clouddirectory.ListOutgoingTypedLinksInput, ...request.Option) (*clouddirectory.ListOutgoingTypedLinksOutput, error)
+	ListOutgoingTypedLinksRequest(*clouddirectory.ListOutgoingTypedLinksInput) (*request.Request, *clouddirectory.ListOutgoingTypedLinksOutput)
+
 	ListPolicyAttachments(*clouddirectory.ListPolicyAttachmentsInput) (*clouddirectory.ListPolicyAttachmentsOutput, error)
 	ListPolicyAttachmentsWithContext(aws.Context, *clouddirectory.ListPolicyAttachmentsInput, ...request.Option) (*clouddirectory.ListPolicyAttachmentsOutput, error)
 	ListPolicyAttachmentsRequest(*clouddirectory.ListPolicyAttachmentsInput) (*request.Request, *clouddirectory.ListPolicyAttachmentsOutput)
@@ -264,6 +292,20 @@ type CloudDirectoryAPI interface {
 
 	ListTagsForResourcePages(*clouddirectory.ListTagsForResourceInput, func(*clouddirectory.ListTagsForResourceOutput, bool) bool) error
 	ListTagsForResourcePagesWithContext(aws.Context, *clouddirectory.ListTagsForResourceInput, func(*clouddirectory.ListTagsForResourceOutput, bool) bool, ...request.Option) error
+
+	ListTypedLinkFacetAttributes(*clouddirectory.ListTypedLinkFacetAttributesInput) (*clouddirectory.ListTypedLinkFacetAttributesOutput, error)
+	ListTypedLinkFacetAttributesWithContext(aws.Context, *clouddirectory.ListTypedLinkFacetAttributesInput, ...request.Option) (*clouddirectory.ListTypedLinkFacetAttributesOutput, error)
+	ListTypedLinkFacetAttributesRequest(*clouddirectory.ListTypedLinkFacetAttributesInput) (*request.Request, *clouddirectory.ListTypedLinkFacetAttributesOutput)
+
+	ListTypedLinkFacetAttributesPages(*clouddirectory.ListTypedLinkFacetAttributesInput, func(*clouddirectory.ListTypedLinkFacetAttributesOutput, bool) bool) error
+	ListTypedLinkFacetAttributesPagesWithContext(aws.Context, *clouddirectory.ListTypedLinkFacetAttributesInput, func(*clouddirectory.ListTypedLinkFacetAttributesOutput, bool) bool, ...request.Option) error
+
+	ListTypedLinkFacetNames(*clouddirectory.ListTypedLinkFacetNamesInput) (*clouddirectory.ListTypedLinkFacetNamesOutput, error)
+	ListTypedLinkFacetNamesWithContext(aws.Context, *clouddirectory.ListTypedLinkFacetNamesInput, ...request.Option) (*clouddirectory.ListTypedLinkFacetNamesOutput, error)
+	ListTypedLinkFacetNamesRequest(*clouddirectory.ListTypedLinkFacetNamesInput) (*request.Request, *clouddirectory.ListTypedLinkFacetNamesOutput)
+
+	ListTypedLinkFacetNamesPages(*clouddirectory.ListTypedLinkFacetNamesInput, func(*clouddirectory.ListTypedLinkFacetNamesOutput, bool) bool) error
+	ListTypedLinkFacetNamesPagesWithContext(aws.Context, *clouddirectory.ListTypedLinkFacetNamesInput, func(*clouddirectory.ListTypedLinkFacetNamesOutput, bool) bool, ...request.Option) error
 
 	LookupPolicy(*clouddirectory.LookupPolicyInput) (*clouddirectory.LookupPolicyOutput, error)
 	LookupPolicyWithContext(aws.Context, *clouddirectory.LookupPolicyInput, ...request.Option) (*clouddirectory.LookupPolicyOutput, error)
@@ -303,6 +345,10 @@ type CloudDirectoryAPI interface {
 	UpdateSchema(*clouddirectory.UpdateSchemaInput) (*clouddirectory.UpdateSchemaOutput, error)
 	UpdateSchemaWithContext(aws.Context, *clouddirectory.UpdateSchemaInput, ...request.Option) (*clouddirectory.UpdateSchemaOutput, error)
 	UpdateSchemaRequest(*clouddirectory.UpdateSchemaInput) (*request.Request, *clouddirectory.UpdateSchemaOutput)
+
+	UpdateTypedLinkFacet(*clouddirectory.UpdateTypedLinkFacetInput) (*clouddirectory.UpdateTypedLinkFacetOutput, error)
+	UpdateTypedLinkFacetWithContext(aws.Context, *clouddirectory.UpdateTypedLinkFacetInput, ...request.Option) (*clouddirectory.UpdateTypedLinkFacetOutput, error)
+	UpdateTypedLinkFacetRequest(*clouddirectory.UpdateTypedLinkFacetInput) (*request.Request, *clouddirectory.UpdateTypedLinkFacetOutput)
 }
 
 var _ CloudDirectoryAPI = (*clouddirectory.CloudDirectory)(nil)

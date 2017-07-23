@@ -845,61 +845,13 @@ func (c *RDS) CopyDBSnapshotRequest(input *CopyDBSnapshotInput) (req *request.Re
 // Copies the specified DB snapshot. The source DB snapshot must be in the "available"
 // state.
 //
-// To copy a DB snapshot from a shared manual DB snapshot, SourceDBSnapshotIdentifier
-// must be the Amazon Resource Name (ARN) of the shared DB snapshot.
+// You can copy a snapshot from one AWS region to another. In that case, the
+// region where you call the CopyDBSnapshot action is the destination region
+// for the DB snapshot copy.
 //
-// You can copy an encrypted DB snapshot from another AWS region. In that case,
-// the region where you call the CopyDBSnapshot action is the destination region
-// for the encrypted DB snapshot to be copied to. To copy an encrypted DB snapshot
-// from another region, you must provide the following values:
+// You cannot copy an encrypted, shared DB snapshot from one AWS region to another.
 //
-//    * KmsKeyId - The AWS Key Management System (KMS) key identifier for the
-//    key to use to encrypt the copy of the DB snapshot in the destination region.
-//
-//    * PreSignedUrl - A URL that contains a Signature Version 4 signed request
-//    for the CopyDBSnapshot action to be called in the source region where
-//    the DB snapshot will be copied from. The presigned URL must be a valid
-//    request for the CopyDBSnapshot API action that can be executed in the
-//    source region that contains the encrypted DB snapshot to be copied.
-//
-// The presigned URL request must contain the following parameter values:
-//
-// DestinationRegion - The AWS Region that the encrypted DB snapshot will be
-//    copied to. This region is the same one where the CopyDBSnapshot action
-//    is called that contains this presigned URL.
-//
-// For example, if you copy an encrypted DB snapshot from the us-west-2 region
-//    to the us-east-1 region, then you will call the CopyDBSnapshot action
-//    in the us-east-1 region and provide a presigned URL that contains a call
-//    to the CopyDBSnapshot action in the us-west-2 region. For this example,
-//    the DestinationRegion in the presigned URL must be set to the us-east-1
-//    region.
-//
-// KmsKeyId - The KMS key identifier for the key to use to encrypt the copy
-//    of the DB snapshot in the destination region. This identifier is the same
-//    for both the CopyDBSnapshot action that is called in the destination region,
-//    and the action contained in the presigned URL.
-//
-// SourceDBSnapshotIdentifier - The DB snapshot identifier for the encrypted
-//    snapshot to be copied. This identifier must be in the Amazon Resource
-//    Name (ARN) format for the source region. For example, if you copy an encrypted
-//    DB snapshot from the us-west-2 region, then your SourceDBSnapshotIdentifier
-//    looks like this example: arn:aws:rds:us-west-2:123456789012:snapshot:mysql-instance1-snapshot-20161115.
-//
-// To learn how to generate a Signature Version 4 signed request, see  Authenticating
-//    Requests: Using Query Parameters (AWS Signature Version 4) (http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html)
-//    and  Signature Version 4 Signing Process (http://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
-//
-//    * TargetDBSnapshotIdentifier - The identifier for the new copy of the
-//    DB snapshot in the destination region.
-//
-//    * SourceDBSnapshotIdentifier - The DB snapshot identifier for the encrypted
-//    snapshot to be copied. This identifier must be in the ARN format for the
-//    source region and is the same value as the SourceDBSnapshotIdentifier
-//    in the presigned URL.
-//
-// For more information on copying encrypted snapshots from one region to another,
-// see  Copying a DB Snapshot (http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CopySnapshot.html#USER_CopyDBSnapshot)
+// For more information about copying snapshots, see Copying a DB Snapshot (http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CopyDBSnapshot.html)
 // in the Amazon RDS User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -9352,6 +9304,222 @@ func (c *RDS) RevokeDBSecurityGroupIngressWithContext(ctx aws.Context, input *Re
 	return out, req.Send()
 }
 
+const opStartDBInstance = "StartDBInstance"
+
+// StartDBInstanceRequest generates a "aws/request.Request" representing the
+// client's request for the StartDBInstance operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See StartDBInstance for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the StartDBInstance method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the StartDBInstanceRequest method.
+//    req, resp := client.StartDBInstanceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/rds-2014-10-31/StartDBInstance
+func (c *RDS) StartDBInstanceRequest(input *StartDBInstanceInput) (req *request.Request, output *StartDBInstanceOutput) {
+	op := &request.Operation{
+		Name:       opStartDBInstance,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &StartDBInstanceInput{}
+	}
+
+	output = &StartDBInstanceOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// StartDBInstance API operation for Amazon Relational Database Service.
+//
+// Starts a DB instance that was stopped using the AWS console, the stop-db-instance
+// AWS CLI command, or the StopDBInstance action. For more information, see
+// Stopping and Starting a DB instance in the AWS RDS user guide.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Relational Database Service's
+// API operation StartDBInstance for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
+//   DBInstanceIdentifier does not refer to an existing DB instance.
+//
+//   * ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
+//   The specified DB instance is not in the available state.
+//
+//   * ErrCodeInsufficientDBInstanceCapacityFault "InsufficientDBInstanceCapacity"
+//   Specified DB instance class is not available in the specified Availability
+//   Zone.
+//
+//   * ErrCodeDBSubnetGroupNotFoundFault "DBSubnetGroupNotFoundFault"
+//   DBSubnetGroupName does not refer to an existing DB subnet group.
+//
+//   * ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs "DBSubnetGroupDoesNotCoverEnoughAZs"
+//   Subnets in the DB subnet group should cover at least two Availability Zones
+//   unless there is only one Availability Zone.
+//
+//   * ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
+//   The DB cluster is not in a valid state.
+//
+//   * ErrCodeInvalidSubnet "InvalidSubnet"
+//   The requested subnet is invalid, or multiple subnets were requested that
+//   are not all in a common VPC.
+//
+//   * ErrCodeInvalidVPCNetworkStateFault "InvalidVPCNetworkStateFault"
+//   DB subnet group does not cover all Availability Zones after it is created
+//   because users' change.
+//
+//   * ErrCodeDBClusterNotFoundFault "DBClusterNotFoundFault"
+//   DBClusterIdentifier does not refer to an existing DB cluster.
+//
+//   * ErrCodeAuthorizationNotFoundFault "AuthorizationNotFound"
+//   Specified CIDRIP or EC2 security group is not authorized for the specified
+//   DB security group.
+//
+//   RDS may not also be authorized via IAM to perform necessary actions on your
+//   behalf.
+//
+//   * ErrCodeKMSKeyNotAccessibleFault "KMSKeyNotAccessibleFault"
+//   Error accessing KMS key.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/rds-2014-10-31/StartDBInstance
+func (c *RDS) StartDBInstance(input *StartDBInstanceInput) (*StartDBInstanceOutput, error) {
+	req, out := c.StartDBInstanceRequest(input)
+	return out, req.Send()
+}
+
+// StartDBInstanceWithContext is the same as StartDBInstance with the addition of
+// the ability to pass a context and additional request options.
+//
+// See StartDBInstance for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *RDS) StartDBInstanceWithContext(ctx aws.Context, input *StartDBInstanceInput, opts ...request.Option) (*StartDBInstanceOutput, error) {
+	req, out := c.StartDBInstanceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opStopDBInstance = "StopDBInstance"
+
+// StopDBInstanceRequest generates a "aws/request.Request" representing the
+// client's request for the StopDBInstance operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See StopDBInstance for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the StopDBInstance method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the StopDBInstanceRequest method.
+//    req, resp := client.StopDBInstanceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/rds-2014-10-31/StopDBInstance
+func (c *RDS) StopDBInstanceRequest(input *StopDBInstanceInput) (req *request.Request, output *StopDBInstanceOutput) {
+	op := &request.Operation{
+		Name:       opStopDBInstance,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &StopDBInstanceInput{}
+	}
+
+	output = &StopDBInstanceOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// StopDBInstance API operation for Amazon Relational Database Service.
+//
+// Stops a DB instance. When you stop a DB instance, Amazon RDS retains the
+// DB instance's metadata, including its endpoint, DB parameter group, and option
+// group membership. Amazon RDS also retains the transaction logs so you can
+// do a point-in-time restore if necessary. For more information, see Stopping
+// and Starting a DB instance in the AWS RDS user guide.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Relational Database Service's
+// API operation StopDBInstance for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeDBInstanceNotFoundFault "DBInstanceNotFound"
+//   DBInstanceIdentifier does not refer to an existing DB instance.
+//
+//   * ErrCodeInvalidDBInstanceStateFault "InvalidDBInstanceState"
+//   The specified DB instance is not in the available state.
+//
+//   * ErrCodeDBSnapshotAlreadyExistsFault "DBSnapshotAlreadyExists"
+//   DBSnapshotIdentifier is already used by an existing snapshot.
+//
+//   * ErrCodeSnapshotQuotaExceededFault "SnapshotQuotaExceeded"
+//   Request would result in user exceeding the allowed number of DB snapshots.
+//
+//   * ErrCodeInvalidDBClusterStateFault "InvalidDBClusterStateFault"
+//   The DB cluster is not in a valid state.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/rds-2014-10-31/StopDBInstance
+func (c *RDS) StopDBInstance(input *StopDBInstanceInput) (*StopDBInstanceOutput, error) {
+	req, out := c.StopDBInstanceRequest(input)
+	return out, req.Send()
+}
+
+// StopDBInstanceWithContext is the same as StopDBInstance with the addition of
+// the ability to pass a context and additional request options.
+//
+// See StopDBInstance for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *RDS) StopDBInstanceWithContext(ctx aws.Context, input *StopDBInstanceInput, opts ...request.Option) (*StopDBInstanceOutput, error) {
+	req, out := c.StopDBInstanceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 // Describes a quota for an AWS account, for example, the number of DB instances
 // allowed.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/rds-2014-10-31/AccountQuota
@@ -10479,31 +10647,40 @@ type CopyDBSnapshotInput struct {
 	// Resource Name (ARN), KMS key identifier, or the KMS key alias for the KMS
 	// encryption key.
 	//
-	// If you copy an unencrypted DB snapshot and specify a value for the KmsKeyId
-	// parameter, Amazon RDS encrypts the target DB snapshot using the specified
-	// KMS encryption key.
-	//
 	// If you copy an encrypted DB snapshot from your AWS account, you can specify
-	// a value for KmsKeyId to encrypt the copy with a new KMS encryption key. If
-	// you don't specify a value for KmsKeyId, then the copy of the DB snapshot
-	// is encrypted with the same KMS key as the source DB snapshot.
-	//
-	// If you copy an encrypted snapshot to a different AWS region, then you must
-	// specify a KMS key for the destination AWS region.
+	// a value for this parameter to encrypt the copy with a new KMS encryption
+	// key. If you don't specify a value for this parameter, then the copy of the
+	// DB snapshot is encrypted with the same KMS key as the source DB snapshot.
 	//
 	// If you copy an encrypted DB snapshot that is shared from another AWS account,
-	// then you must specify a value for KmsKeyId.
+	// then you must specify a value for this parameter.
 	//
-	// To copy an encrypted DB snapshot to another region, you must set KmsKeyId
-	// to the KMS key ID used to encrypt the copy of the DB snapshot in the destination
-	// region. KMS encryption keys are specific to the region that they are created
-	// in, and you cannot use encryption keys from one region in another region.
+	// If you specify this parameter when you copy an unencrypted snapshot, the
+	// copy is encrypted.
+	//
+	// If you copy an encrypted snapshot to a different AWS region, then you must
+	// specify a KMS key for the destination AWS region. KMS encryption keys are
+	// specific to the region that they are created in, and you cannot use encryption
+	// keys from one region in another region.
 	KmsKeyId *string `type:"string"`
 
+	// The name of an option group to associate with the copy.
+	//
+	// Specify this option if you are copying a snapshot from one AWS region to
+	// another, and your DB instance uses a non-default option group. If your source
+	// DB instance uses Transparent Data Encryption for Oracle or Microsoft SQL
+	// Server, you must specify this option when copying across regions. For more
+	// information, see Option Group Considerations (http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CopySnapshot.html#USER_CopySnapshot.Options).
+	OptionGroupName *string `type:"string"`
+
 	// The URL that contains a Signature Version 4 signed request for the CopyDBSnapshot
-	// API action in the AWS region that contains the source DB snapshot to copy.
-	// The PreSignedUrl parameter must be used when copying an encrypted DB snapshot
-	// from another AWS region.
+	// API action in the source AWS region that contains the source DB snapshot
+	// to copy.
+	//
+	// You must specify this parameter when you copy an encrypted DB snapshot from
+	// another AWS region by using the Amazon RDS API. You can specify the source
+	// region option instead of this parameter when you copy an encrypted DB snapshot
+	// from another AWS region by using the AWS CLI.
 	//
 	// The presigned URL must be a valid request for the CopyDBSnapshot API action
 	// that can be executed in the source region that contains the encrypted DB
@@ -10532,28 +10709,30 @@ type CopyDBSnapshotInput struct {
 	//    an encrypted DB snapshot from the us-west-2 region, then your SourceDBSnapshotIdentifier
 	//    looks like the following example: arn:aws:rds:us-west-2:123456789012:snapshot:mysql-instance1-snapshot-20161115.
 	//
-	// To learn how to generate a Signature Version 4 signed request, see  Authenticating
+	//
+	// To learn how to generate a Signature Version 4 signed request, see Authenticating
 	// Requests: Using Query Parameters (AWS Signature Version 4) (http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html)
-	// and  Signature Version 4 Signing Process (http://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
+	// and Signature Version 4 Signing Process (http://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
 	PreSignedUrl *string `type:"string"`
 
 	// The identifier for the source DB snapshot.
 	//
-	// If you are copying from a shared manual DB snapshot, this must be the ARN
-	// of the shared DB snapshot.
+	// If the source snapshot is in the same region as the copy, specify a valid
+	// DB snapshot identifier. For example, rds:mysql-instance1-snapshot-20130805.
 	//
-	// You cannot copy an encrypted, shared DB snapshot from one AWS region to another.
+	// If the source snapshot is in a different region than the copy, specify a
+	// valid DB snapshot ARN. For example, arn:aws:rds:us-west-2:123456789012:snapshot:mysql-instance1-snapshot-20130805.
+	//
+	// If you are copying from a shared manual DB snapshot, this parameter must
+	// be the Amazon Resource Name (ARN) of the shared DB snapshot.
+	//
+	// If you are copying an encrypted snapshot this parameter must be in the ARN
+	// format for the source region, and must match the SourceDBSnapshotIdentifier
+	// in the PreSignedUrl parameter.
 	//
 	// Constraints:
 	//
 	//    * Must specify a valid system snapshot in the "available" state.
-	//
-	//    * If the source snapshot is in the same region as the copy, specify a
-	//    valid DB snapshot identifier.
-	//
-	//    * If the source snapshot is in a different region than the copy, specify
-	//    a valid DB snapshot ARN. For more information, go to  Copying a DB Snapshot
-	//    or DB Cluster Snapshot (http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CopySnapshot.html).
 	//
 	// Example: rds:mydb-2012-04-02-00-01
 	//
@@ -10570,7 +10749,7 @@ type CopyDBSnapshotInput struct {
 	// A list of tags.
 	Tags []*Tag `locationNameList:"Tag" type:"list"`
 
-	// The identifier for the copied snapshot.
+	// The identifier for the copy of the snapshot.
 	//
 	// Constraints:
 	//
@@ -10629,6 +10808,12 @@ func (s *CopyDBSnapshotInput) SetDestinationRegion(v string) *CopyDBSnapshotInpu
 // SetKmsKeyId sets the KmsKeyId field's value.
 func (s *CopyDBSnapshotInput) SetKmsKeyId(v string) *CopyDBSnapshotInput {
 	s.KmsKeyId = &v
+	return s
+}
+
+// SetOptionGroupName sets the OptionGroupName field's value.
+func (s *CopyDBSnapshotInput) SetOptionGroupName(v string) *CopyDBSnapshotInput {
+	s.OptionGroupName = &v
 	return s
 }
 
@@ -10873,7 +11058,7 @@ type CreateDBClusterInput struct {
 	// Example: mySubnetgroup
 	DBSubnetGroupName *string `type:"string"`
 
-	// The name for your database of up to 8 alpha-numeric characters. If you do
+	// The name for your database of up to 64 alpha-numeric characters. If you do
 	// not provide a name, Amazon RDS will not create a database in the DB cluster
 	// you are creating.
 	DatabaseName *string `type:"string"`
@@ -11628,7 +11813,9 @@ type CreateDBInstanceInput struct {
 	//
 	// Oracle
 	//
-	// The Oracle System ID (SID) of the created DB instance.
+	// The Oracle System ID (SID) of the created DB instance. If you specify null,
+	// the default value ORCL is used. You can't specify the string NULL, or any
+	// other reserved word, for DBName.
 	//
 	// Default: ORCL
 	//
@@ -11686,7 +11873,7 @@ type CreateDBInstanceInput struct {
 	// True to enable mapping of AWS Identity and Access Management (IAM) accounts
 	// to database accounts; otherwise false.
 	//
-	// You can enable IAM database authentication for the following database engines
+	// You can enable IAM database authentication for the following database engines:
 	//
 	//    * For MySQL 5.6, minor version 5.6.34 or higher
 	//
@@ -11697,11 +11884,33 @@ type CreateDBInstanceInput struct {
 
 	// The name of the database engine to be used for this instance.
 	//
-	// Valid Values: mysql | mariadb | oracle-se1 | oracle-se2 | oracle-se | oracle-ee
-	// | sqlserver-ee | sqlserver-se | sqlserver-ex | sqlserver-web | postgres |
-	// aurora
-	//
 	// Not every database engine is available for every AWS region.
+	//
+	// Valid Values:
+	//
+	//    * aurora
+	//
+	//    * mariadb
+	//
+	//    * mysql
+	//
+	//    * oracle-ee
+	//
+	//    * oracle-se2
+	//
+	//    * oracle-se1
+	//
+	//    * oracle-se
+	//
+	//    * postgres
+	//
+	//    * sqlserver-ee
+	//
+	//    * sqlserver-se
+	//
+	//    * sqlserver-ex
+	//
+	//    * sqlserver-web
 	//
 	// Engine is a required field
 	Engine *string `type:"string" required:"true"`
@@ -11716,138 +11925,151 @@ type CreateDBInstanceInput struct {
 	//
 	//    * Version 5.6 (available in these AWS regions: ap-northeast-1, ap-northeast-2,
 	//    ap-south-1, ap-southeast-2, eu-west-1, us-east-1, us-east-2, us-west-2):
-	//    5.6.10a
+	//     5.6.10a
 	//
 	// MariaDB
 	//
-	//    * Version 10.1 (available in these AWS regions: us-east-2): 10.1.16
+	//    * 10.1.19 (supported in all AWS regions)
 	//
-	//    * Version 10.1 (available in these AWS regions: ap-northeast-1, ap-northeast-2,
-	//    ap-south-1, ap-southeast-1, ap-southeast-2, eu-central-1, eu-west-1, sa-east-1,
-	//    us-east-1, us-west-1, us-west-2): 10.1.14
+	//    * 10.1.14 (supported in all regions except us-east-2)
 	//
-	//    * Version 10.0 (available in all AWS regions): 10.0.24
+	// 10.0.28 (supported in all AWS regions)
 	//
-	//    * Version 10.0 (available in these AWS regions: ap-northeast-1, ap-northeast-2,
-	//    ap-south-1, ap-southeast-1, ap-southeast-2, eu-central-1, eu-west-1, sa-east-1,
-	//    us-east-1, us-gov-west-1, us-west-1, us-west-2): 10.0.17
+	//    * 10.0.24 (supported in all AWS regions)
+	//
+	//    * 10.0.17 (supported in all regions except us-east-2, ca-central-1, eu-west-2)
 	//
 	// Microsoft SQL Server 2016
 	//
-	//    * 13.00.2164.0.v1 (supported for all editions, and all AWS regions except
-	//    sa-east-1)
+	// 13.00.4422.0.v1 (supported for all editions, and all AWS regions)
+	//
+	//    * 13.00.2164.0.v1 (supported for all editions, and all AWS regions)
 	//
 	// Microsoft SQL Server 2014
+	//
+	// 12.00.5546.0.v1 (supported for all editions, and all AWS regions)
 	//
 	//    * 12.00.5000.0.v1 (supported for all editions, and all AWS regions)
 	//
 	//    * 12.00.4422.0.v1 (supported for all editions except Enterprise Edition,
-	//    and all AWS regions except us-east-2)
+	//    and all AWS regions except ca-central-1 and eu-west-2)
 	//
 	// Microsoft SQL Server 2012
+	//
+	// 11.00.6594.0.v1 (supported for all editions, and all AWS regions)
 	//
 	//    * 11.00.6020.0.v1 (supported for all editions, and all AWS regions)
 	//
 	//    * 11.00.5058.0.v1 (supported for all editions, and all AWS regions except
-	//    us-east-2)
+	//    us-east-2, ca-central-1, and eu-west-2)
 	//
 	//    * 11.00.2100.60.v1 (supported for all editions, and all AWS regions except
-	//    us-east-2)
+	//    us-east-2, ca-central-1, and eu-west-2)
 	//
 	// Microsoft SQL Server 2008 R2
 	//
-	//    * 10.50.6529.0.v1 (supported for all editions, and all AWS regions except
-	//    us-east-2)
+	// 10.50.6529.0.v1 (supported for all editions, and all AWS regions except us-east-2,
+	// ca-central-1, and eu-west-2)
 	//
 	//    * 10.50.6000.34.v1 (supported for all editions, and all AWS regions except
-	//    us-east-2)
+	//    us-east-2, ca-central-1, and eu-west-2)
 	//
 	//    * 10.50.2789.0.v1 (supported for all editions, and all AWS regions except
-	//    us-east-2)
+	//    us-east-2, ca-central-1, and eu-west-2)
 	//
 	// MySQL
 	//
-	//    * Version 5.7 (available in all AWS regions): 5.7.11
+	// 5.7.17 (supported in all AWS regions)
 	//
-	//    * Version 5.7 (available in these AWS regions: ap-northeast-1, ap-northeast-2,
-	//    ap-south-1, ap-southeast-1, ap-southeast-2, eu-central-1, eu-west-1, sa-east-1,
-	//    us-east-1, us-gov-west-1, us-west-1, us-west-2): 5.7.10
+	//    * 5.7.16 (supported in all AWS regions)
 	//
-	//    * Version 5.6 (available in all AWS regions): 5.6.29
+	//    * 5.7.11 (supported in all AWS regions)
 	//
-	//    * Version 5.6 (available in these AWS regions: ap-northeast-1, ap-northeast-2,
-	//    ap-south-1, ap-southeast-1, ap-southeast-2, eu-central-1, eu-west-1, sa-east-1,
-	//    us-east-1, us-gov-west-1, us-west-1, us-west-2): 5.6.27
+	//    * 5.7.10 (supported in all regions except us-east-2, ca-central-1, eu-west-2)
 	//
-	//    * Version 5.6 (available in these AWS regions: ap-northeast-1, ap-northeast-2,
-	//    ap-southeast-1, ap-southeast-2, eu-central-1, eu-west-1, sa-east-1, us-east-1,
-	//    us-gov-west-1, us-west-1, us-west-2): 5.6.23
+	//    * 5.6.35 (supported in all AWS regions)
 	//
-	//    * Version 5.6 (available in these AWS regions: ap-northeast-1, ap-southeast-1,
-	//    ap-southeast-2, eu-central-1, eu-west-1, sa-east-1, us-east-1, us-gov-west-1,
-	//    us-west-1, us-west-2): 5.6.19a | 5.6.19b | 5.6.21 | 5.6.21b | 5.6.22
+	//    * 5.6.34 (supported in all AWS regions)
 	//
-	//    * Version 5.5 (available in all AWS regions): 5.5.46
+	//    * 5.6.29 (supported in all AWS regions)
 	//
-	//    * Version 5.1 (only available in AWS regions ap-northeast-1, ap-southeast-1,
-	//    ap-southeast-2, eu-west-1, sa-east-1, us-east-1, us-gov-west-1, us-west-1,
-	//    us-west-2): 5.1.73a | 5.1.73b
+	//    * 5.6.27 (supported in all regions except us-east-2, ca-central-1, eu-west-2)
+	//
+	//    * 5.6.23 (supported in all regions except us-east-2, ap-south-1, ca-central-1,
+	//    eu-west-2)
+	//
+	//    * 5.6.22 (supported in all regions except us-east-2, ap-south-1, ap-northeast-2,
+	//    ca-central-1, eu-west-2)
+	//
+	//    * 5.6.21b (supported in all regions except us-east-2, ap-south-1, ap-northeast-2,
+	//    ca-central-1, eu-west-2)
+	//
+	//    * 5.6.21 (supported in all regions except us-east-2, ap-south-1, ap-northeast-2,
+	//    ca-central-1, eu-west-2)
+	//
+	//    * 5.6.19b (supported in all regions except us-east-2, ap-south-1, ap-northeast-2,
+	//    ca-central-1, eu-west-2)
+	//
+	//    * 5.6.19a (supported in all regions except us-east-2, ap-south-1, ap-northeast-2,
+	//    ca-central-1, eu-west-2)
+	//
+	// 5.5.54(supported in all AWS regions)
+	//
+	// 5.5.53(supported in all AWS regions)
+	//
+	// 5.5.46(supported in all AWS regions)
 	//
 	// Oracle 12c
 	//
-	//    * 12.1.0.2.v7 (supported for EE in all AWS regions, and SE2 in all AWS
-	//    regions except us-gov-west-1)
+	// 12.1.0.2.v8(supported for EE in all AWS regions, and SE2 in all AWS regions except us-gov-west-1)
 	//
-	//    * 12.1.0.2.v6 (supported for EE in all AWS regions, and SE2 in all AWS
-	//    regions except us-gov-west-1)
+	// 12.1.0.2.v7(supported for EE in all AWS regions, and SE2 in all AWS regions except us-gov-west-1)
 	//
-	//    * 12.1.0.2.v5 (supported for EE in all AWS regions, and SE2 in all AWS
-	//    regions except us-gov-west-1)
+	// 12.1.0.2.v6(supported for EE in all AWS regions, and SE2 in all AWS regions except us-gov-west-1)
 	//
-	//    * 12.1.0.2.v4 (supported for EE in all AWS regions, and SE2 in all AWS
-	//    regions except us-gov-west-1)
+	// 12.1.0.2.v5(supported for EE in all AWS regions, and SE2 in all AWS regions except us-gov-west-1)
 	//
-	//    * 12.1.0.2.v3 (supported for EE in all AWS regions, and SE2 in all AWS
-	//    regions except us-gov-west-1)
+	// 12.1.0.2.v4(supported for EE in all AWS regions, and SE2 in all AWS regions except us-gov-west-1)
 	//
-	//    * 12.1.0.2.v2 (supported for EE in all AWS regions, and SE2 in all AWS
-	//    regions except us-gov-west-1)
+	// 12.1.0.2.v3(supported for EE in all AWS regions, and SE2 in all AWS regions except us-gov-west-1)
 	//
-	//    * 12.1.0.2.v1 (supported for EE in all AWS regions, and SE2 in all AWS
-	//    regions except us-gov-west-1)
+	// 12.1.0.2.v2(supported for EE in all AWS regions, and SE2 in all AWS regions except us-gov-west-1)
+	//
+	// 12.1.0.2.v1(supported for EE in all AWS regions, and SE2 in all AWS regions except us-gov-west-1)
 	//
 	// Oracle 11g
 	//
-	//    * 11.2.0.4.v11 (supported for EE, SE1, and SE, in all AWS regions)
+	// 11.2.0.4.v12(supported for EE, SE1, and SE, in all AWS regions)
 	//
-	//    * 11.2.0.4.v10 (supported for EE, SE1, and SE, in all AWS regions)
+	// 11.2.0.4.v11(supported for EE, SE1, and SE, in all AWS regions)
 	//
-	//    * 11.2.0.4.v9 (supported for EE, SE1, and SE, in all AWS regions)
+	// 11.2.0.4.v10(supported for EE, SE1, and SE, in all AWS regions)
 	//
-	//    * 11.2.0.4.v8 (supported for EE, SE1, and SE, in all AWS regions)
+	// 11.2.0.4.v9(supported for EE, SE1, and SE, in all AWS regions)
 	//
-	//    * 11.2.0.4.v7 (supported for EE, SE1, and SE, in all AWS regions)
+	// 11.2.0.4.v8(supported for EE, SE1, and SE, in all AWS regions)
 	//
-	//    * 11.2.0.4.v6 (supported for EE, SE1, and SE, in all AWS regions)
+	// 11.2.0.4.v7(supported for EE, SE1, and SE, in all AWS regions)
 	//
-	//    * 11.2.0.4.v5 (supported for EE, SE1, and SE, in all AWS regions)
+	// 11.2.0.4.v6(supported for EE, SE1, and SE, in all AWS regions)
 	//
-	//    * 11.2.0.4.v4 (supported for EE, SE1, and SE, in all AWS regions)
+	// 11.2.0.4.v5(supported for EE, SE1, and SE, in all AWS regions)
 	//
-	//    * 11.2.0.4.v3 (supported for EE, SE1, and SE, in all AWS regions)
+	// 11.2.0.4.v4(supported for EE, SE1, and SE, in all AWS regions)
 	//
-	//    * 11.2.0.4.v1 (supported for EE, SE1, and SE, in all AWS regions)
+	// 11.2.0.4.v3(supported for EE, SE1, and SE, in all AWS regions)
+	//
+	// 11.2.0.4.v1(supported for EE, SE1, and SE, in all AWS regions)
 	//
 	// PostgreSQL
 	//
-	//    * Version 9.6: 9.6.1
+	// Version 9.6.x: 9.6.1 | 9.6.2
 	//
-	//    * Version 9.5:9.5.4 | 9.5.2
+	// Version 9.5.x:9.5.6 | 9.5.4 | 9.5.2
 	//
-	//    * Version 9.4: 9.4.9 | 9.4.7 | 9.4.5 | 9.4.4 | 9.4.1
+	// Version 9.4.x:9.4.11 | 9.4.9 | 9.4.7
 	//
-	//    * Version 9.3: 9.3.14 | 9.3.12 | 9.3.10 | 9.3.9 | 9.3.6 | 9.3.5 | 9.3.3
-	//    | 9.3.2 | 9.3.1
+	// Version 9.3.x:9.3.16 | 9.3.14 | 9.3.12
 	EngineVersion *string `type:"string"`
 
 	// The amount of Provisioned IOPS (input/output operations per second) to be
@@ -12412,6 +12634,10 @@ type CreateDBInstanceOutput struct {
 	//
 	//    * ModifyDBInstance
 	//
+	//    * StopDBInstance
+	//
+	//    * StartDBInstance
+	//
 	// This data type is used as a response element in the DescribeDBInstances action.
 	DBInstance *DBInstance `type:"structure"`
 }
@@ -12825,6 +13051,10 @@ type CreateDBInstanceReadReplicaOutput struct {
 	//    * DeleteDBInstance
 	//
 	//    * ModifyDBInstance
+	//
+	//    * StopDBInstance
+	//
+	//    * StartDBInstance
 	//
 	// This data type is used as a response element in the DescribeDBInstances action.
 	DBInstance *DBInstance `type:"structure"`
@@ -13624,6 +13854,9 @@ type DBCluster struct {
 	// associated with.
 	CharacterSetName *string `type:"string"`
 
+	// Identifies the clone group to which the DB cluster is associated.
+	CloneGroupId *string `type:"string"`
+
 	// Specifies the time when the DB cluster was created, in Universal Coordinated
 	// Time (UTC).
 	ClusterCreateTime *time.Time `type:"timestamp" timestampFormat:"iso8601"`
@@ -13774,6 +14007,12 @@ func (s *DBCluster) SetBackupRetentionPeriod(v int64) *DBCluster {
 // SetCharacterSetName sets the CharacterSetName field's value.
 func (s *DBCluster) SetCharacterSetName(v string) *DBCluster {
 	s.CharacterSetName = &v
+	return s
+}
+
+// SetCloneGroupId sets the CloneGroupId field's value.
+func (s *DBCluster) SetCloneGroupId(v string) *DBCluster {
+	s.CloneGroupId = &v
 	return s
 }
 
@@ -14588,6 +14827,10 @@ func (s *DBEngineVersion) SetValidUpgradeTarget(v []*UpgradeTarget) *DBEngineVer
 //    * DeleteDBInstance
 //
 //    * ModifyDBInstance
+//
+//    * StopDBInstance
+//
+//    * StartDBInstance
 //
 // This data type is used as a response element in the DescribeDBInstances action.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/rds-2014-10-31/DBInstance
@@ -16228,6 +16471,10 @@ type DeleteDBInstanceOutput struct {
 	//    * DeleteDBInstance
 	//
 	//    * ModifyDBInstance
+	//
+	//    * StopDBInstance
+	//
+	//    * StartDBInstance
 	//
 	// This data type is used as a response element in the DescribeDBInstances action.
 	DBInstance *DBInstance `type:"structure"`
@@ -22379,6 +22626,10 @@ type ModifyDBInstanceOutput struct {
 	//
 	//    * ModifyDBInstance
 	//
+	//    * StopDBInstance
+	//
+	//    * StartDBInstance
+	//
 	// This data type is used as a response element in the DescribeDBInstances action.
 	DBInstance *DBInstance `type:"structure"`
 }
@@ -24305,6 +24556,10 @@ type PromoteReadReplicaOutput struct {
 	//
 	//    * ModifyDBInstance
 	//
+	//    * StopDBInstance
+	//
+	//    * StartDBInstance
+	//
 	// This data type is used as a response element in the DescribeDBInstances action.
 	DBInstance *DBInstance `type:"structure"`
 }
@@ -24492,6 +24747,10 @@ type RebootDBInstanceOutput struct {
 	//    * DeleteDBInstance
 	//
 	//    * ModifyDBInstance
+	//
+	//    * StopDBInstance
+	//
+	//    * StartDBInstance
 	//
 	// This data type is used as a response element in the DescribeDBInstances action.
 	DBInstance *DBInstance `type:"structure"`
@@ -25953,7 +26212,7 @@ type RestoreDBClusterToPointInTimeInput struct {
 	//    * If the DB cluster is not encrypted, then the restored DB cluster is
 	//    not encrypted.
 	//
-	// If DBClusterIdentifier refers to a DB cluster that is note encrypted, then
+	// If DBClusterIdentifier refers to a DB cluster that is not encrypted, then
 	// the restore request is rejected.
 	KmsKeyId *string `type:"string"`
 
@@ -25975,10 +26234,30 @@ type RestoreDBClusterToPointInTimeInput struct {
 	//
 	//    * Must be before the latest restorable time for the DB instance
 	//
+	//    * Must be specified if UseLatestRestorableTime parameter is not provided
+	//
 	//    * Cannot be specified if UseLatestRestorableTime parameter is true
+	//
+	//    * Cannot be specified if RestoreType parameter is copy-on-write
 	//
 	// Example: 2015-03-07T23:45:00Z
 	RestoreToTime *time.Time `type:"timestamp" timestampFormat:"iso8601"`
+
+	// The type of restore to be performed. You can specify one of the following
+	// values:
+	//
+	//    * full-copy - The new DB cluster is restored as a full copy of the source
+	//    DB cluster.
+	//
+	//    * copy-on-write - The new DB cluster is restored as a clone of the source
+	//    DB cluster.
+	//
+	// Constraints: You cannot specify copy-on-write if the engine version of the
+	// source DB cluster is earlier than 1.11.
+	//
+	// If you don't specify a RestoreType value, then the new DB cluster is restored
+	// as a full copy of the source DB cluster.
+	RestoreType *string `type:"string"`
 
 	// The identifier of the source DB cluster from which to restore.
 	//
@@ -26006,7 +26285,7 @@ type RestoreDBClusterToPointInTimeInput struct {
 	// Constraints: Cannot be specified if RestoreToTime parameter is provided.
 	UseLatestRestorableTime *bool `type:"boolean"`
 
-	// A lst of VPC security groups that the new DB cluster belongs to.
+	// A list of VPC security groups that the new DB cluster belongs to.
 	VpcSecurityGroupIds []*string `locationNameList:"VpcSecurityGroupId" type:"list"`
 }
 
@@ -26075,6 +26354,12 @@ func (s *RestoreDBClusterToPointInTimeInput) SetPort(v int64) *RestoreDBClusterT
 // SetRestoreToTime sets the RestoreToTime field's value.
 func (s *RestoreDBClusterToPointInTimeInput) SetRestoreToTime(v time.Time) *RestoreDBClusterToPointInTimeInput {
 	s.RestoreToTime = &v
+	return s
+}
+
+// SetRestoreType sets the RestoreType field's value.
+func (s *RestoreDBClusterToPointInTimeInput) SetRestoreType(v string) *RestoreDBClusterToPointInTimeInput {
+	s.RestoreType = &v
 	return s
 }
 
@@ -26498,6 +26783,10 @@ type RestoreDBInstanceFromDBSnapshotOutput struct {
 	//
 	//    * ModifyDBInstance
 	//
+	//    * StopDBInstance
+	//
+	//    * StartDBInstance
+	//
 	// This data type is used as a response element in the DescribeDBInstances action.
 	DBInstance *DBInstance `type:"structure"`
 }
@@ -26901,6 +27190,10 @@ type RestoreDBInstanceToPointInTimeOutput struct {
 	//
 	//    * ModifyDBInstance
 	//
+	//    * StopDBInstance
+	//
+	//    * StartDBInstance
+	//
 	// This data type is used as a response element in the DescribeDBInstances action.
 	DBInstance *DBInstance `type:"structure"`
 }
@@ -27082,6 +27375,166 @@ func (s *SourceRegion) SetRegionName(v string) *SourceRegion {
 // SetStatus sets the Status field's value.
 func (s *SourceRegion) SetStatus(v string) *SourceRegion {
 	s.Status = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/rds-2014-10-31/StartDBInstanceMessage
+type StartDBInstanceInput struct {
+	_ struct{} `type:"structure"`
+
+	// The user-supplied instance identifier.
+	//
+	// DBInstanceIdentifier is a required field
+	DBInstanceIdentifier *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s StartDBInstanceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StartDBInstanceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StartDBInstanceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StartDBInstanceInput"}
+	if s.DBInstanceIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("DBInstanceIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDBInstanceIdentifier sets the DBInstanceIdentifier field's value.
+func (s *StartDBInstanceInput) SetDBInstanceIdentifier(v string) *StartDBInstanceInput {
+	s.DBInstanceIdentifier = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/rds-2014-10-31/StartDBInstanceResult
+type StartDBInstanceOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Contains the result of a successful invocation of the following actions:
+	//
+	//    * CreateDBInstance
+	//
+	//    * DeleteDBInstance
+	//
+	//    * ModifyDBInstance
+	//
+	//    * StopDBInstance
+	//
+	//    * StartDBInstance
+	//
+	// This data type is used as a response element in the DescribeDBInstances action.
+	DBInstance *DBInstance `type:"structure"`
+}
+
+// String returns the string representation
+func (s StartDBInstanceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StartDBInstanceOutput) GoString() string {
+	return s.String()
+}
+
+// SetDBInstance sets the DBInstance field's value.
+func (s *StartDBInstanceOutput) SetDBInstance(v *DBInstance) *StartDBInstanceOutput {
+	s.DBInstance = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/rds-2014-10-31/StopDBInstanceMessage
+type StopDBInstanceInput struct {
+	_ struct{} `type:"structure"`
+
+	// The user-supplied instance identifier.
+	//
+	// DBInstanceIdentifier is a required field
+	DBInstanceIdentifier *string `type:"string" required:"true"`
+
+	// The user-supplied instance identifier of the DB Snapshot created immediately
+	// before the DB instance is stopped.
+	DBSnapshotIdentifier *string `type:"string"`
+}
+
+// String returns the string representation
+func (s StopDBInstanceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StopDBInstanceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StopDBInstanceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StopDBInstanceInput"}
+	if s.DBInstanceIdentifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("DBInstanceIdentifier"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDBInstanceIdentifier sets the DBInstanceIdentifier field's value.
+func (s *StopDBInstanceInput) SetDBInstanceIdentifier(v string) *StopDBInstanceInput {
+	s.DBInstanceIdentifier = &v
+	return s
+}
+
+// SetDBSnapshotIdentifier sets the DBSnapshotIdentifier field's value.
+func (s *StopDBInstanceInput) SetDBSnapshotIdentifier(v string) *StopDBInstanceInput {
+	s.DBSnapshotIdentifier = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/rds-2014-10-31/StopDBInstanceResult
+type StopDBInstanceOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Contains the result of a successful invocation of the following actions:
+	//
+	//    * CreateDBInstance
+	//
+	//    * DeleteDBInstance
+	//
+	//    * ModifyDBInstance
+	//
+	//    * StopDBInstance
+	//
+	//    * StartDBInstance
+	//
+	// This data type is used as a response element in the DescribeDBInstances action.
+	DBInstance *DBInstance `type:"structure"`
+}
+
+// String returns the string representation
+func (s StopDBInstanceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StopDBInstanceOutput) GoString() string {
+	return s.String()
+}
+
+// SetDBInstance sets the DBInstance field's value.
+func (s *StopDBInstanceOutput) SetDBInstance(v *DBInstance) *StopDBInstanceOutput {
+	s.DBInstance = v
 	return s
 }
 

@@ -9,9 +9,9 @@
 
 [[projects]]
   name = "cloud.google.com/go"
-  packages = ["compute/metadata","internal"]
-  revision = "2e6a95edb1071d750f6d7db777bf66cd2997af6c"
-  version = "v0.7.0"
+  packages = ["compute/metadata"]
+  revision = "a5913b3f7deecba45e98ff33cefbac4fd204ddd7"
+  version = "v0.10.0"
 
 [[projects]]
   branch = "master"
@@ -23,13 +23,13 @@
   branch = "master"
   name = "github.com/VividCortex/ewma"
   packages = ["."]
-  revision = "c595cd886c223c6c28fc9ae2727a61b5e4693d85"
+  revision = "4cc8cc5a2a44f01d31b303a7280e20e00a6eafdb"
 
 [[projects]]
   branch = "master"
   name = "github.com/aws/aws-sdk-go"
-  packages = ["aws","aws/awserr","aws/awsutil","aws/client","aws/client/metadata","aws/corehandlers","aws/credentials","aws/credentials/ec2rolecreds","aws/credentials/endpointcreds","aws/credentials/stscreds","aws/defaults","aws/ec2metadata","aws/endpoints","aws/request","aws/session","aws/signer/v4","private/protocol","private/protocol/query","private/protocol/query/queryutil","private/protocol/rest","private/protocol/restxml","private/protocol/xml/xmlutil","service/s3","service/s3/s3iface","service/s3/s3manager","service/sts"]
-  revision = "57572ec625c9aa8bf5c45453efa923bacabc0afe"
+  packages = ["aws","aws/awserr","aws/awsutil","aws/client","aws/client/metadata","aws/corehandlers","aws/credentials","aws/credentials/ec2rolecreds","aws/credentials/endpointcreds","aws/credentials/stscreds","aws/defaults","aws/ec2metadata","aws/endpoints","aws/request","aws/session","aws/signer/v4","internal/shareddefaults","private/protocol","private/protocol/query","private/protocol/query/queryutil","private/protocol/rest","private/protocol/restxml","private/protocol/xml/xmlutil","service/s3","service/s3/s3iface","service/s3/s3manager","service/sts"]
+  revision = "bd544a64249f735bcf394ab0c4fa8bec9b31f221"
 
 [[projects]]
   name = "github.com/billziss-gh/cgofuse"
@@ -52,26 +52,20 @@
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "e7fea39b01aea8d5671f6858f0532f56e8bff3a5"
-  version = "v1.27.0"
+  revision = "d3de07a94d22b4a0972deb4b96d790c2c0ce8333"
+  version = "v1.28.0"
 
 [[projects]]
   branch = "master"
   name = "github.com/golang/protobuf"
-  packages = ["proto","ptypes/any"]
-  revision = "b50ceb1fa9818fa4d78b016c2d4ae025593a7ce3"
+  packages = ["proto"]
+  revision = "0a4f71a498b7c4812f64969510bcb4eca251e33a"
 
 [[projects]]
   branch = "master"
   name = "github.com/google/go-querystring"
   packages = ["query"]
   revision = "53e6ce116135b80d037921a7fdd5138cf32d7a8a"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/googleapis/gax-go"
-  packages = ["."]
-  revision = "9af46dd5a1713e8b5cd71106287eba3cefdde50b"
 
 [[projects]]
   branch = "master"
@@ -83,7 +77,7 @@
   branch = "master"
   name = "github.com/jlaffaye/ftp"
   packages = ["."]
-  revision = "5c7b901224c7880b293e0b5486cb6ebf97bfca37"
+  revision = "769512c448b98e9efa243279a7e281248332aa98"
 
 [[projects]]
   name = "github.com/jmespath/go-jmespath"
@@ -119,13 +113,13 @@
   branch = "master"
   name = "github.com/ncw/swift"
   packages = ["."]
-  revision = "8e9b10220613abdbc2896808ee6b43e411a4fa6c"
+  revision = "5068c3506cf003c630c94b92a64e978115394f26"
 
 [[projects]]
   branch = "master"
   name = "github.com/nsf/termbox-go"
   packages = ["."]
-  revision = "4163cd39dda1c0dda883a713640bc01e08951c24"
+  revision = "4ed959e0540971545eddb8c75514973d670cf739"
 
 [[projects]]
   branch = "master"
@@ -137,7 +131,7 @@
   branch = "master"
   name = "github.com/pkg/sftp"
   packages = ["."]
-  revision = "a5f8514e29e90a859e93871b1582e5c81f466f82"
+  revision = "4f3e725e885c021085d2fb8a9cc26e30ea1a992f"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -161,7 +155,7 @@
   branch = "master"
   name = "github.com/shurcooL/sanitized_anchor_name"
   packages = ["."]
-  revision = "79c90efaf01eddc01945af5bc1797859189b830b"
+  revision = "541ff5ee47f1dddf6a5281af78307d921524bcb5"
 
 [[projects]]
   branch = "master"
@@ -173,19 +167,19 @@
   branch = "master"
   name = "github.com/spf13/cobra"
   packages = [".","doc"]
-  revision = "90687e7bfc7e1e5cd88eb1f513f32f01dc03dd7c"
+  revision = "715f41bd7a70b5111f898b71ab484da52ee6266d"
 
 [[projects]]
-  branch = "master"
   name = "github.com/spf13/pflag"
   packages = ["."]
   revision = "e57e3eeb33f795204c1ca35f56c44f83227c6e66"
+  version = "v1.0"
 
 [[projects]]
   branch = "master"
   name = "github.com/stretchr/testify"
   packages = ["assert","require"]
-  revision = "4d4bfba8f1d1027c4fdbe371823030df51419987"
+  revision = "05e8a0eda380579888eb53c394909df027f06991"
 
 [[projects]]
   branch = "master"
@@ -197,31 +191,31 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["curve25519","ed25519","ed25519/internal/edwards25519","nacl/secretbox","pbkdf2","poly1305","salsa20/salsa","scrypt","ssh","ssh/agent","ssh/terminal"]
-  revision = "122d919ec1efcfb58483215da23f815853e24b81"
+  revision = "6914964337150723782436d56b3f21610a74ce7b"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["context","context/ctxhttp","html","html/atom","http2","http2/hpack","idna","internal/timeseries","lex/httplex","trace"]
-  revision = "c9b681d35165f1995d6f3034e61f8761d4b90c99"
+  packages = ["context","context/ctxhttp","html","html/atom"]
+  revision = "ab5485076ff3407ad2d02db054635913f017b0ed"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/oauth2"
   packages = [".","google","internal","jws","jwt"]
-  revision = "ad516a297a9f2a74ecc244861b298c94bdd28b9d"
+  revision = "b53b38ad8a6435bd399ea76d0fa74f23149cca4e"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "9ccfe848b9db8435a24c424abbc07a921adf1df5"
+  revision = "c4489faa6e5ab84c0ef40d6ee878f7a030281f0f"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/text"
-  packages = ["internal/gen","internal/triegen","internal/ucd","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable"]
-  revision = "470f45bf29f4147d6fbd7dfd0a02a848e49f5bf4"
+  packages = ["internal/gen","internal/triegen","internal/ucd","transform","unicode/cldr","unicode/norm"]
+  revision = "836efe42bb4aa16aaa17b9c155d8813d336ed720"
 
 [[projects]]
   branch = "master"
@@ -233,7 +227,7 @@
   branch = "master"
   name = "google.golang.org/api"
   packages = ["drive/v2","gensupport","googleapi","googleapi/internal/uritemplates","storage/v1"]
-  revision = "c858ef4400610cbfd097ffc5f5c6e4a1a51eac86"
+  revision = "295e4bb0ade057ae2cfb9876ab0b54635dbfcea4"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -242,22 +236,10 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
-  name = "google.golang.org/genproto"
-  packages = ["googleapis/rpc/status"]
-  revision = "411e09b969b1170a9f0c467558eb4c4c110d9c77"
-
-[[projects]]
-  name = "google.golang.org/grpc"
-  packages = [".","codes","credentials","grpclb/grpc_lb_v1","grpclog","internal","keepalive","metadata","naming","peer","stats","status","tap","transport"]
-  revision = "d2e1b51f33ff8c5e4a15560ff049d200e83726c5"
-  version = "v1.3.0"
-
-[[projects]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b"
+  revision = "25c4ec802a7d637f88d584ab26798e94ad14c13b"
 
 [solve-meta]
   analyzer-name = "dep"

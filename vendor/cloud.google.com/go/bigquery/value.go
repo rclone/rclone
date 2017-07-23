@@ -103,12 +103,20 @@ type structLoaderOp struct {
 	repeated   bool
 }
 
+var errNoNulls = errors.New("bigquery: NULL values cannot be read into structs")
+
 func setAny(v reflect.Value, x interface{}) error {
+	if x == nil {
+		return errNoNulls
+	}
 	v.Set(reflect.ValueOf(x))
 	return nil
 }
 
 func setInt(v reflect.Value, x interface{}) error {
+	if x == nil {
+		return errNoNulls
+	}
 	xx := x.(int64)
 	if v.OverflowInt(xx) {
 		return fmt.Errorf("bigquery: value %v overflows struct field of type %v", xx, v.Type())
@@ -118,6 +126,9 @@ func setInt(v reflect.Value, x interface{}) error {
 }
 
 func setFloat(v reflect.Value, x interface{}) error {
+	if x == nil {
+		return errNoNulls
+	}
 	xx := x.(float64)
 	if v.OverflowFloat(xx) {
 		return fmt.Errorf("bigquery: value %v overflows struct field of type %v", xx, v.Type())
@@ -127,16 +138,25 @@ func setFloat(v reflect.Value, x interface{}) error {
 }
 
 func setBool(v reflect.Value, x interface{}) error {
+	if x == nil {
+		return errNoNulls
+	}
 	v.SetBool(x.(bool))
 	return nil
 }
 
 func setString(v reflect.Value, x interface{}) error {
+	if x == nil {
+		return errNoNulls
+	}
 	v.SetString(x.(string))
 	return nil
 }
 
 func setBytes(v reflect.Value, x interface{}) error {
+	if x == nil {
+		return errNoNulls
+	}
 	v.SetBytes(x.([]byte))
 	return nil
 }

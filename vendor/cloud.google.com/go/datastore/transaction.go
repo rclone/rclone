@@ -150,7 +150,7 @@ func (t *Transaction) Commit() (*Commit, error) {
 	}
 	req := &pb.CommitRequest{
 		ProjectId:           t.client.dataset,
-		TransactionSelector: &pb.CommitRequest_Transaction{t.id},
+		TransactionSelector: &pb.CommitRequest_Transaction{Transaction: t.id},
 		Mutations:           t.mutations,
 		Mode:                pb.CommitRequest_TRANSACTIONAL,
 	}
@@ -201,7 +201,7 @@ func (t *Transaction) Rollback() error {
 // or modified by this transaction.
 func (t *Transaction) Get(key *Key, dst interface{}) error {
 	opts := &pb.ReadOptions{
-		ConsistencyType: &pb.ReadOptions_Transaction{t.id},
+		ConsistencyType: &pb.ReadOptions_Transaction{Transaction: t.id},
 	}
 	err := t.client.get(t.ctx, []*Key{key}, []interface{}{dst}, opts)
 	if me, ok := err.(MultiError); ok {
@@ -216,7 +216,7 @@ func (t *Transaction) GetMulti(keys []*Key, dst interface{}) error {
 		return errExpiredTransaction
 	}
 	opts := &pb.ReadOptions{
-		ConsistencyType: &pb.ReadOptions_Transaction{t.id},
+		ConsistencyType: &pb.ReadOptions_Transaction{Transaction: t.id},
 	}
 	return t.client.get(t.ctx, keys, dst, opts)
 }

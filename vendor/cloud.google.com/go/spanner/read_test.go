@@ -1317,7 +1317,8 @@ func TestResumeToken(t *testing.T) {
 				sr.rpcReceiver = r
 				return sr, err
 			},
-			func(time.Time, error) {})
+			nil,
+			func(error) {})
 		defer iter.Stop()
 		for {
 			var row *Row
@@ -1515,7 +1516,8 @@ func TestGrpcReconnect(t *testing.T) {
 				})
 
 			},
-			func(time.Time, error) {})
+			nil,
+			func(error) {})
 		defer iter.Stop()
 		for {
 			_, err = iter.Next()
@@ -1585,7 +1587,8 @@ func TestCancelTimeout(t *testing.T) {
 					ResumeToken: resumeToken,
 				})
 			},
-			func(time.Time, error) {})
+			nil,
+			func(error) {})
 		defer iter.Stop()
 		for {
 			_, err = iter.Next()
@@ -1618,7 +1621,8 @@ func TestCancelTimeout(t *testing.T) {
 					ResumeToken: resumeToken,
 				})
 			},
-			func(time.Time, error) {})
+			nil,
+			func(error) {})
 		defer iter.Stop()
 		for {
 			_, err = iter.Next()
@@ -1634,8 +1638,8 @@ func TestCancelTimeout(t *testing.T) {
 	}()
 	select {
 	case <-done:
-		if ErrCode(err) != codes.Canceled {
-			t.Errorf("streaming query timeout returns error %v, want error code %v", err, codes.Canceled)
+		if wantErr := codes.DeadlineExceeded; ErrCode(err) != wantErr {
+			t.Errorf("streaming query timeout returns error %v, want error code %v", err, wantErr)
 		}
 	case <-time.After(2 * time.Second):
 		t.Errorf("query doesn't timeout as expected")
@@ -1667,7 +1671,8 @@ func TestRowIteratorDo(t *testing.T) {
 				ResumeToken: resumeToken,
 			})
 		},
-		func(time.Time, error) {})
+		nil,
+		func(error) {})
 	err = iter.Do(func(r *Row) error { nRows++; return nil })
 	if err != nil {
 		t.Errorf("Using Do: %v", err)
@@ -1702,7 +1707,8 @@ func TestIteratorStopEarly(t *testing.T) {
 				ResumeToken: resumeToken,
 			})
 		},
-		func(time.Time, error) {})
+		nil,
+		func(error) {})
 	_, err = iter.Next()
 	if err != nil {
 		t.Fatalf("before Stop: %v", err)

@@ -714,7 +714,9 @@ type File struct {
 	// files.
 	HasAugmentedPermissions bool `json:"hasAugmentedPermissions,omitempty"`
 
-	// HasThumbnail: Whether this file has a thumbnail.
+	// HasThumbnail: Whether this file has a thumbnail. This does not
+	// indicate whether the requesting app has access to the thumbnail. To
+	// check access, look for the presence of the thumbnailLink field.
 	HasThumbnail bool `json:"hasThumbnail,omitempty"`
 
 	// HeadRevisionId: The ID of the file's head revision. This is currently
@@ -1385,8 +1387,8 @@ type Permission struct {
 	// type domain or anyone.
 	AllowFileDiscovery bool `json:"allowFileDiscovery,omitempty"`
 
-	// Deleted: Whether the account of the permission has been deleted. This
-	// field only pertains to user and group permissions.
+	// Deleted: Whether the account associated with this permission has been
+	// deleted. This field only pertains to user and group permissions.
 	Deleted bool `json:"deleted,omitempty"`
 
 	// DisplayName: A displayable name for users, groups or domains.
@@ -1489,7 +1491,6 @@ type PermissionTeamDrivePermissionDetails struct {
 	// user. While new values may be added in future, the following are
 	// currently possible:
 	// - file
-	// -
 	// - member
 	TeamDrivePermissionType string `json:"teamDrivePermissionType,omitempty"`
 
@@ -1830,8 +1831,8 @@ func (s *StartPageToken) MarshalJSON() ([]byte, error) {
 type TeamDrive struct {
 	// BackgroundImageFile: An image file and cropping parameters from which
 	// a background image for this Team Drive is set. This is a write only
-	// field that can only be set on a drive.teamdrives.update request that
-	// does not set themeId. When specified, all fields of the
+	// field; it can only be set on drive.teamdrives.update requests that
+	// don't set themeId. When specified, all fields of the
 	// backgroundImageFile must be set.
 	BackgroundImageFile *TeamDriveBackgroundImageFile `json:"backgroundImageFile,omitempty"`
 
@@ -1862,8 +1863,8 @@ type TeamDrive struct {
 	// color will be set. The set of possible teamDriveThemes can be
 	// retrieved from a drive.about.get response. When not specified on a
 	// drive.teamdrives.create request, a random theme is chosen from which
-	// the background image and color are set. This is a write only field
-	// that can only be set on a request that does not set colorRgb or
+	// the background image and color are set. This is a write-only field;
+	// it can only be set on requests that don't set colorRgb or
 	// backgroundImageFile.
 	ThemeId string `json:"themeId,omitempty"`
 
@@ -1897,32 +1898,32 @@ func (s *TeamDrive) MarshalJSON() ([]byte, error) {
 
 // TeamDriveBackgroundImageFile: An image file and cropping parameters
 // from which a background image for this Team Drive is set. This is a
-// write only field that can only be set on a drive.teamdrives.update
-// request that does not set themeId. When specified, all fields of the
+// write only field; it can only be set on drive.teamdrives.update
+// requests that don't set themeId. When specified, all fields of the
 // backgroundImageFile must be set.
 type TeamDriveBackgroundImageFile struct {
 	// Id: The ID of an image file in Drive to use for the background image.
 	Id string `json:"id,omitempty"`
 
-	// Width: The width of the cropped image in the closed range of 0 to 1,
-	// which is the width of the cropped image divided by the width of the
-	// entire image. The height is computed by applying a width to height
-	// aspect ratio of 80 to 9. The resulting image must be at least 1280
-	// pixels wide and 144 pixels high.
+	// Width: The width of the cropped image in the closed range of 0 to 1.
+	// This value represents the width of the cropped image divided by the
+	// width of the entire image. The height is computed by applying a width
+	// to height aspect ratio of 80 to 9. The resulting image must be at
+	// least 1280 pixels wide and 144 pixels high.
 	Width float64 `json:"width,omitempty"`
 
 	// XCoordinate: The X coordinate of the upper left corner of the
 	// cropping area in the background image. This is a value in the closed
-	// range of 0 to 1 which is the horizontal distance from the left side
-	// of the entire image to the left side of the cropping area divided by
-	// the width of the entire image.
+	// range of 0 to 1. This value represents the horizontal distance from
+	// the left side of the entire image to the left side of the cropping
+	// area divided by the width of the entire image.
 	XCoordinate float64 `json:"xCoordinate,omitempty"`
 
 	// YCoordinate: The Y coordinate of the upper left corner of the
 	// cropping area in the background image. This is a value in the closed
-	// range of 0 to 1 which is the vertical distance from the top side of
-	// the entire image to the top side of the cropping area divided by the
-	// height of the entire image.
+	// range of 0 to 1. This value represents the vertical distance from the
+	// top side of the entire image to the top side of the cropping area
+	// divided by the height of the entire image.
 	YCoordinate float64 `json:"yCoordinate,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Id") to
@@ -4501,7 +4502,8 @@ type FilesExportCall struct {
 }
 
 // Export: Exports a Google Doc to the requested MIME type and returns
-// the exported content.
+// the exported content. Please note that the exported content is
+// limited to 10MB.
 func (r *FilesService) Export(fileId string, mimeType string) *FilesExportCall {
 	c := &FilesExportCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.fileId = fileId
@@ -4594,7 +4596,7 @@ func (c *FilesExportCall) Do(opts ...googleapi.CallOption) error {
 	}
 	return nil
 	// {
-	//   "description": "Exports a Google Doc to the requested MIME type and returns the exported content.",
+	//   "description": "Exports a Google Doc to the requested MIME type and returns the exported content. Please note that the exported content is limited to 10MB.",
 	//   "httpMethod": "GET",
 	//   "id": "drive.files.export",
 	//   "parameterOrder": [

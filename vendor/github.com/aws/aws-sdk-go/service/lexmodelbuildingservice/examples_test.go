@@ -3,899 +3,479 @@
 package lexmodelbuildingservice_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lexmodelbuildingservice"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleLexModelBuildingService_CreateBotVersion() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.CreateBotVersionInput{
-		Name:     aws.String("BotName"), // Required
-		Checksum: aws.String("String"),
-	}
-	resp, err := svc.CreateBotVersion(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		panic(err)
+	}
+	return &t
+}
+
+// To get information about a bot
+//
+// This example shows how to get configuration information for a bot.
+func ExampleLexModelBuildingService_GetBot_shared00() {
+	svc := lexmodelbuildingservice.New(session.New())
+	input := &lexmodelbuildingservice.GetBotInput{
+		Name:           aws.String("DocOrderPizza"),
+		VersionOrAlias: aws.String("$LATEST"),
+	}
+
+	result, err := svc.GetBot(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lexmodelbuildingservice.ErrCodeNotFoundException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeNotFoundException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeLimitExceededException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeLimitExceededException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeInternalFailureException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeInternalFailureException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeBadRequestException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeBadRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLexModelBuildingService_CreateIntentVersion() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.CreateIntentVersionInput{
-		Name:     aws.String("IntentName"), // Required
-		Checksum: aws.String("String"),
+// To get a list of bots
+//
+// This example shows how to get a list of all of the bots in your account.
+func ExampleLexModelBuildingService_GetBots_shared00() {
+	svc := lexmodelbuildingservice.New(session.New())
+	input := &lexmodelbuildingservice.GetBotsInput{
+		MaxResults: aws.Int64(5),
+		NextToken:  aws.String(""),
 	}
-	resp, err := svc.CreateIntentVersion(params)
 
+	result, err := svc.GetBots(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lexmodelbuildingservice.ErrCodeNotFoundException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeNotFoundException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeLimitExceededException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeLimitExceededException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeInternalFailureException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeInternalFailureException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeBadRequestException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeBadRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLexModelBuildingService_CreateSlotTypeVersion() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.CreateSlotTypeVersionInput{
-		Name:     aws.String("SlotTypeName"), // Required
-		Checksum: aws.String("String"),
+// To get a information about an intent
+//
+// This example shows how to get information about an intent.
+func ExampleLexModelBuildingService_GetIntent_shared00() {
+	svc := lexmodelbuildingservice.New(session.New())
+	input := &lexmodelbuildingservice.GetIntentInput{
+		Name:    aws.String("DocOrderPizza"),
+		Version: aws.String("$LATEST"),
 	}
-	resp, err := svc.CreateSlotTypeVersion(params)
 
+	result, err := svc.GetIntent(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lexmodelbuildingservice.ErrCodeNotFoundException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeNotFoundException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeLimitExceededException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeLimitExceededException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeInternalFailureException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeInternalFailureException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeBadRequestException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeBadRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLexModelBuildingService_DeleteBot() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.DeleteBotInput{
-		Name: aws.String("BotName"), // Required
+// To get a list of intents
+//
+// This example shows how to get a list of all of the intents in your account.
+func ExampleLexModelBuildingService_GetIntents_shared00() {
+	svc := lexmodelbuildingservice.New(session.New())
+	input := &lexmodelbuildingservice.GetIntentsInput{
+		MaxResults: aws.Int64(10),
+		NextToken:  aws.String(""),
 	}
-	resp, err := svc.DeleteBot(params)
 
+	result, err := svc.GetIntents(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lexmodelbuildingservice.ErrCodeNotFoundException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeNotFoundException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeLimitExceededException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeLimitExceededException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeInternalFailureException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeInternalFailureException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeBadRequestException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeBadRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLexModelBuildingService_DeleteBotAlias() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.DeleteBotAliasInput{
-		BotName: aws.String("BotName"),   // Required
-		Name:    aws.String("AliasName"), // Required
+// To get information about a slot type
+//
+// This example shows how to get information about a slot type.
+func ExampleLexModelBuildingService_GetSlotType_shared00() {
+	svc := lexmodelbuildingservice.New(session.New())
+	input := &lexmodelbuildingservice.GetSlotTypeInput{
+		Name:    aws.String("DocPizzaCrustType"),
+		Version: aws.String("$LATEST"),
 	}
-	resp, err := svc.DeleteBotAlias(params)
 
+	result, err := svc.GetSlotType(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lexmodelbuildingservice.ErrCodeNotFoundException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeNotFoundException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeLimitExceededException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeLimitExceededException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeInternalFailureException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeInternalFailureException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeBadRequestException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeBadRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLexModelBuildingService_DeleteBotChannelAssociation() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.DeleteBotChannelAssociationInput{
-		BotAlias: aws.String("AliasName"),      // Required
-		BotName:  aws.String("BotName"),        // Required
-		Name:     aws.String("BotChannelName"), // Required
+// To get a list of slot types
+//
+// This example shows how to get a list of all of the slot types in your account.
+func ExampleLexModelBuildingService_GetSlotTypes_shared00() {
+	svc := lexmodelbuildingservice.New(session.New())
+	input := &lexmodelbuildingservice.GetSlotTypesInput{
+		MaxResults: aws.Int64(10),
+		NextToken:  aws.String(""),
 	}
-	resp, err := svc.DeleteBotChannelAssociation(params)
 
+	result, err := svc.GetSlotTypes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lexmodelbuildingservice.ErrCodeNotFoundException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeNotFoundException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeLimitExceededException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeLimitExceededException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeInternalFailureException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeInternalFailureException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeBadRequestException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeBadRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLexModelBuildingService_DeleteBotVersion() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.DeleteBotVersionInput{
-		Name:    aws.String("BotName"),          // Required
-		Version: aws.String("NumericalVersion"), // Required
-	}
-	resp, err := svc.DeleteBotVersion(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_DeleteIntent() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.DeleteIntentInput{
-		Name: aws.String("IntentName"), // Required
-	}
-	resp, err := svc.DeleteIntent(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_DeleteIntentVersion() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.DeleteIntentVersionInput{
-		Name:    aws.String("IntentName"),       // Required
-		Version: aws.String("NumericalVersion"), // Required
-	}
-	resp, err := svc.DeleteIntentVersion(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_DeleteSlotType() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.DeleteSlotTypeInput{
-		Name: aws.String("SlotTypeName"), // Required
-	}
-	resp, err := svc.DeleteSlotType(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_DeleteSlotTypeVersion() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.DeleteSlotTypeVersionInput{
-		Name:    aws.String("SlotTypeName"),     // Required
-		Version: aws.String("NumericalVersion"), // Required
-	}
-	resp, err := svc.DeleteSlotTypeVersion(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_DeleteUtterances() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.DeleteUtterancesInput{
-		BotName: aws.String("BotName"), // Required
-		UserId:  aws.String("UserId"),  // Required
-	}
-	resp, err := svc.DeleteUtterances(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_GetBot() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.GetBotInput{
-		Name:           aws.String("BotName"), // Required
-		VersionOrAlias: aws.String("String"),  // Required
-	}
-	resp, err := svc.GetBot(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_GetBotAlias() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.GetBotAliasInput{
-		BotName: aws.String("BotName"),   // Required
-		Name:    aws.String("AliasName"), // Required
-	}
-	resp, err := svc.GetBotAlias(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_GetBotAliases() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.GetBotAliasesInput{
-		BotName:      aws.String("BotName"), // Required
-		MaxResults:   aws.Int64(1),
-		NameContains: aws.String("AliasName"),
-		NextToken:    aws.String("NextToken"),
-	}
-	resp, err := svc.GetBotAliases(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_GetBotChannelAssociation() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.GetBotChannelAssociationInput{
-		BotAlias: aws.String("AliasName"),      // Required
-		BotName:  aws.String("BotName"),        // Required
-		Name:     aws.String("BotChannelName"), // Required
-	}
-	resp, err := svc.GetBotChannelAssociation(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_GetBotChannelAssociations() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.GetBotChannelAssociationsInput{
-		BotAlias:     aws.String("AliasNameOrListAll"), // Required
-		BotName:      aws.String("BotName"),            // Required
-		MaxResults:   aws.Int64(1),
-		NameContains: aws.String("BotChannelName"),
-		NextToken:    aws.String("NextToken"),
-	}
-	resp, err := svc.GetBotChannelAssociations(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_GetBotVersions() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.GetBotVersionsInput{
-		Name:       aws.String("BotName"), // Required
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
-	}
-	resp, err := svc.GetBotVersions(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_GetBots() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.GetBotsInput{
-		MaxResults:   aws.Int64(1),
-		NameContains: aws.String("BotName"),
-		NextToken:    aws.String("NextToken"),
-	}
-	resp, err := svc.GetBots(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_GetBuiltinIntent() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.GetBuiltinIntentInput{
-		Signature: aws.String("BuiltinIntentSignature"), // Required
-	}
-	resp, err := svc.GetBuiltinIntent(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_GetBuiltinIntents() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.GetBuiltinIntentsInput{
-		Locale:            aws.String("Locale"),
-		MaxResults:        aws.Int64(1),
-		NextToken:         aws.String("NextToken"),
-		SignatureContains: aws.String("String"),
-	}
-	resp, err := svc.GetBuiltinIntents(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_GetBuiltinSlotTypes() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.GetBuiltinSlotTypesInput{
-		Locale:            aws.String("Locale"),
-		MaxResults:        aws.Int64(1),
-		NextToken:         aws.String("NextToken"),
-		SignatureContains: aws.String("String"),
-	}
-	resp, err := svc.GetBuiltinSlotTypes(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_GetIntent() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.GetIntentInput{
-		Name:    aws.String("IntentName"), // Required
-		Version: aws.String("Version"),    // Required
-	}
-	resp, err := svc.GetIntent(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_GetIntentVersions() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.GetIntentVersionsInput{
-		Name:       aws.String("IntentName"), // Required
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
-	}
-	resp, err := svc.GetIntentVersions(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_GetIntents() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.GetIntentsInput{
-		MaxResults:   aws.Int64(1),
-		NameContains: aws.String("IntentName"),
-		NextToken:    aws.String("NextToken"),
-	}
-	resp, err := svc.GetIntents(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_GetSlotType() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.GetSlotTypeInput{
-		Name:    aws.String("SlotTypeName"), // Required
-		Version: aws.String("Version"),      // Required
-	}
-	resp, err := svc.GetSlotType(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_GetSlotTypeVersions() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.GetSlotTypeVersionsInput{
-		Name:       aws.String("SlotTypeName"), // Required
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
-	}
-	resp, err := svc.GetSlotTypeVersions(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_GetSlotTypes() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.GetSlotTypesInput{
-		MaxResults:   aws.Int64(1),
-		NameContains: aws.String("SlotTypeName"),
-		NextToken:    aws.String("NextToken"),
-	}
-	resp, err := svc.GetSlotTypes(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_GetUtterancesView() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.GetUtterancesViewInput{
-		BotName: aws.String("BotName"), // Required
-		BotVersions: []*string{ // Required
-			aws.String("Version"), // Required
-			// More values...
-		},
-		StatusType: aws.String("StatusType"), // Required
-	}
-	resp, err := svc.GetUtterancesView(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_PutBot() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.PutBotInput{
-		ChildDirected: aws.Bool(true),        // Required
-		Locale:        aws.String("Locale"),  // Required
-		Name:          aws.String("BotName"), // Required
+// To create a bot
+//
+// This example shows how to create a bot for ordering pizzas.
+func ExampleLexModelBuildingService_PutBot_shared00() {
+	svc := lexmodelbuildingservice.New(session.New())
+	input := &lexmodelbuildingservice.PutBotInput{
 		AbortStatement: &lexmodelbuildingservice.Statement{
-			Messages: []*lexmodelbuildingservice.Message{ // Required
-				{ // Required
-					Content:     aws.String("ContentString"), // Required
-					ContentType: aws.String("ContentType"),   // Required
+			Messages: []*lexmodelbuildingservice.Message{
+				{
+					Content:     aws.String("I don't understand. Can you try again?"),
+					ContentType: aws.String("PlainText"),
 				},
-				// More values...
+				{
+					Content:     aws.String("I'm sorry, I don't understand."),
+					ContentType: aws.String("PlainText"),
+				},
 			},
-			ResponseCard: aws.String("ResponseCard"),
 		},
-		Checksum: aws.String("String"),
+		ChildDirected: aws.Bool(true),
 		ClarificationPrompt: &lexmodelbuildingservice.Prompt{
-			MaxAttempts: aws.Int64(1), // Required
-			Messages: []*lexmodelbuildingservice.Message{ // Required
-				{ // Required
-					Content:     aws.String("ContentString"), // Required
-					ContentType: aws.String("ContentType"),   // Required
+			MaxAttempts: aws.Int64(1),
+			Messages: []*lexmodelbuildingservice.Message{
+				{
+					Content:     aws.String("I'm sorry, I didn't hear that. Can you repeate what you just said?"),
+					ContentType: aws.String("PlainText"),
 				},
-				// More values...
+				{
+					Content:     aws.String("Can you say that again?"),
+					ContentType: aws.String("PlainText"),
+				},
 			},
-			ResponseCard: aws.String("ResponseCard"),
 		},
-		Description:             aws.String("Description"),
-		IdleSessionTTLInSeconds: aws.Int64(1),
+		Description:             aws.String("Orders a pizza from a local pizzeria."),
+		IdleSessionTTLInSeconds: aws.Int64(300),
 		Intents: []*lexmodelbuildingservice.Intent{
-			{ // Required
-				IntentName:    aws.String("IntentName"), // Required
-				IntentVersion: aws.String("Version"),    // Required
+			{
+				IntentName:    aws.String("DocOrderPizza"),
+				IntentVersion: aws.String("$LATEST"),
 			},
-			// More values...
 		},
-		ProcessBehavior: aws.String("ProcessBehavior"),
-		VoiceId:         aws.String("String"),
+		Locale:          aws.String("en-US"),
+		Name:            aws.String("DocOrderPizzaBot"),
+		ProcessBehavior: aws.String("SAVE"),
 	}
-	resp, err := svc.PutBot(params)
 
+	result, err := svc.PutBot(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lexmodelbuildingservice.ErrCodeConflictException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeConflictException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeLimitExceededException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeLimitExceededException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeInternalFailureException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeInternalFailureException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeBadRequestException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeBadRequestException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodePreconditionFailedException:
+				fmt.Println(lexmodelbuildingservice.ErrCodePreconditionFailedException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLexModelBuildingService_PutBotAlias() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.PutBotAliasInput{
-		BotName:     aws.String("BotName"),   // Required
-		BotVersion:  aws.String("Version"),   // Required
-		Name:        aws.String("AliasName"), // Required
-		Checksum:    aws.String("String"),
-		Description: aws.String("Description"),
-	}
-	resp, err := svc.PutBotAlias(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLexModelBuildingService_PutIntent() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.PutIntentInput{
-		Name:     aws.String("IntentName"), // Required
-		Checksum: aws.String("String"),
+// To create an intent
+//
+// This example shows how to create an intent for ordering pizzas.
+func ExampleLexModelBuildingService_PutIntent_shared00() {
+	svc := lexmodelbuildingservice.New(session.New())
+	input := &lexmodelbuildingservice.PutIntentInput{
 		ConclusionStatement: &lexmodelbuildingservice.Statement{
-			Messages: []*lexmodelbuildingservice.Message{ // Required
-				{ // Required
-					Content:     aws.String("ContentString"), // Required
-					ContentType: aws.String("ContentType"),   // Required
+			Messages: []*lexmodelbuildingservice.Message{
+				{
+					Content:     aws.String("All right, I ordered  you a {Crust} crust {Type} pizza with {Sauce} sauce."),
+					ContentType: aws.String("PlainText"),
 				},
-				// More values...
+				{
+					Content:     aws.String("OK, your {Crust} crust {Type} pizza with {Sauce} sauce is on the way."),
+					ContentType: aws.String("PlainText"),
+				},
 			},
-			ResponseCard: aws.String("ResponseCard"),
+			ResponseCard: aws.String("foo"),
 		},
 		ConfirmationPrompt: &lexmodelbuildingservice.Prompt{
-			MaxAttempts: aws.Int64(1), // Required
-			Messages: []*lexmodelbuildingservice.Message{ // Required
-				{ // Required
-					Content:     aws.String("ContentString"), // Required
-					ContentType: aws.String("ContentType"),   // Required
+			MaxAttempts: aws.Int64(1),
+			Messages: []*lexmodelbuildingservice.Message{
+				{
+					Content:     aws.String("Should I order  your {Crust} crust {Type} pizza with {Sauce} sauce?"),
+					ContentType: aws.String("PlainText"),
 				},
-				// More values...
-			},
-			ResponseCard: aws.String("ResponseCard"),
-		},
-		Description: aws.String("Description"),
-		DialogCodeHook: &lexmodelbuildingservice.CodeHook{
-			MessageVersion: aws.String("MessageVersion"), // Required
-			Uri:            aws.String("LambdaARN"),      // Required
-		},
-		FollowUpPrompt: &lexmodelbuildingservice.FollowUpPrompt{
-			Prompt: &lexmodelbuildingservice.Prompt{ // Required
-				MaxAttempts: aws.Int64(1), // Required
-				Messages: []*lexmodelbuildingservice.Message{ // Required
-					{ // Required
-						Content:     aws.String("ContentString"), // Required
-						ContentType: aws.String("ContentType"),   // Required
-					},
-					// More values...
-				},
-				ResponseCard: aws.String("ResponseCard"),
-			},
-			RejectionStatement: &lexmodelbuildingservice.Statement{ // Required
-				Messages: []*lexmodelbuildingservice.Message{ // Required
-					{ // Required
-						Content:     aws.String("ContentString"), // Required
-						ContentType: aws.String("ContentType"),   // Required
-					},
-					// More values...
-				},
-				ResponseCard: aws.String("ResponseCard"),
 			},
 		},
+		Description: aws.String("Order a pizza from a local pizzeria."),
 		FulfillmentActivity: &lexmodelbuildingservice.FulfillmentActivity{
-			Type: aws.String("FulfillmentActivityType"), // Required
-			CodeHook: &lexmodelbuildingservice.CodeHook{
-				MessageVersion: aws.String("MessageVersion"), // Required
-				Uri:            aws.String("LambdaARN"),      // Required
-			},
+			Type: aws.String("ReturnIntent"),
 		},
-		ParentIntentSignature: aws.String("BuiltinIntentSignature"),
+		Name: aws.String("DocOrderPizza"),
 		RejectionStatement: &lexmodelbuildingservice.Statement{
-			Messages: []*lexmodelbuildingservice.Message{ // Required
-				{ // Required
-					Content:     aws.String("ContentString"), // Required
-					ContentType: aws.String("ContentType"),   // Required
+			Messages: []*lexmodelbuildingservice.Message{
+				{
+					Content:     aws.String("Ok, I'll cancel your order."),
+					ContentType: aws.String("PlainText"),
 				},
-				// More values...
+				{
+					Content:     aws.String("I cancelled your order."),
+					ContentType: aws.String("PlainText"),
+				},
 			},
-			ResponseCard: aws.String("ResponseCard"),
 		},
 		SampleUtterances: []*string{
-			aws.String("Utterance"), // Required
-			// More values...
+			aws.String("Order me a pizza."),
+			aws.String("Order me a {Type} pizza."),
+			aws.String("I want a {Crust} crust {Type} pizza"),
+			aws.String("I want a {Crust} crust {Type} pizza with {Sauce} sauce."),
 		},
 		Slots: []*lexmodelbuildingservice.Slot{
-			{ // Required
-				Name:           aws.String("SlotName"),       // Required
-				SlotConstraint: aws.String("SlotConstraint"), // Required
-				Description:    aws.String("Description"),
-				Priority:       aws.Int64(1),
-				ResponseCard:   aws.String("ResponseCard"),
+			{
+				Description: aws.String("The type of pizza to order."),
+				Name:        aws.String("Type"),
+				Priority:    aws.Int64(1),
 				SampleUtterances: []*string{
-					aws.String("Utterance"), // Required
-					// More values...
+					aws.String("Get me a {Type} pizza."),
+					aws.String("A {Type} pizza please."),
+					aws.String("I'd like a {Type} pizza."),
 				},
-				SlotType:        aws.String("CustomOrBuiltinSlotTypeName"),
-				SlotTypeVersion: aws.String("Version"),
-				ValueElicitationPrompt: &lexmodelbuildingservice.Prompt{
-					MaxAttempts: aws.Int64(1), // Required
-					Messages: []*lexmodelbuildingservice.Message{ // Required
-						{ // Required
-							Content:     aws.String("ContentString"), // Required
-							ContentType: aws.String("ContentType"),   // Required
-						},
-						// More values...
-					},
-					ResponseCard: aws.String("ResponseCard"),
-				},
+				SlotConstraint:  aws.String("Required"),
+				SlotType:        aws.String("DocPizzaType"),
+				SlotTypeVersion: aws.String("$LATEST"),
 			},
-			// More values...
+			{
+				Description: aws.String("The type of pizza crust to order."),
+				Name:        aws.String("Crust"),
+				Priority:    aws.Int64(2),
+				SampleUtterances: []*string{
+					aws.String("Make it a {Crust} crust."),
+					aws.String("I'd like a {Crust} crust."),
+				},
+				SlotConstraint:  aws.String("Required"),
+				SlotType:        aws.String("DocPizzaCrustType"),
+				SlotTypeVersion: aws.String("$LATEST"),
+			},
+			{
+				Description: aws.String("The type of sauce to use on the pizza."),
+				Name:        aws.String("Sauce"),
+				Priority:    aws.Int64(3),
+				SampleUtterances: []*string{
+					aws.String("Make it {Sauce} sauce."),
+					aws.String("I'd like {Sauce} sauce."),
+				},
+				SlotConstraint:  aws.String("Required"),
+				SlotType:        aws.String("DocPizzaSauceType"),
+				SlotTypeVersion: aws.String("$LATEST"),
+			},
 		},
 	}
-	resp, err := svc.PutIntent(params)
 
+	result, err := svc.PutIntent(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lexmodelbuildingservice.ErrCodeConflictException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeConflictException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeLimitExceededException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeLimitExceededException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeInternalFailureException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeInternalFailureException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeBadRequestException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeBadRequestException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodePreconditionFailedException:
+				fmt.Println(lexmodelbuildingservice.ErrCodePreconditionFailedException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLexModelBuildingService_PutSlotType() {
-	sess := session.Must(session.NewSession())
-
-	svc := lexmodelbuildingservice.New(sess)
-
-	params := &lexmodelbuildingservice.PutSlotTypeInput{
-		Name:        aws.String("SlotTypeName"), // Required
-		Checksum:    aws.String("String"),
-		Description: aws.String("Description"),
+// To Create a Slot Type
+//
+// This example shows how to create a slot type that describes pizza sauces.
+func ExampleLexModelBuildingService_PutSlotType_shared00() {
+	svc := lexmodelbuildingservice.New(session.New())
+	input := &lexmodelbuildingservice.PutSlotTypeInput{
+		Description: aws.String("Available pizza sauces"),
 		EnumerationValues: []*lexmodelbuildingservice.EnumerationValue{
-			{ // Required
-				Value: aws.String("Value"), // Required
+			{
+				Value: aws.String("red"),
 			},
-			// More values...
+			{
+				Value: aws.String("white"),
+			},
 		},
+		Name: aws.String("PizzaSauceType"),
 	}
-	resp, err := svc.PutSlotType(params)
 
+	result, err := svc.PutSlotType(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lexmodelbuildingservice.ErrCodeConflictException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeConflictException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeLimitExceededException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeLimitExceededException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeInternalFailureException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeInternalFailureException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodeBadRequestException:
+				fmt.Println(lexmodelbuildingservice.ErrCodeBadRequestException, aerr.Error())
+			case lexmodelbuildingservice.ErrCodePreconditionFailedException:
+				fmt.Println(lexmodelbuildingservice.ErrCodePreconditionFailedException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }

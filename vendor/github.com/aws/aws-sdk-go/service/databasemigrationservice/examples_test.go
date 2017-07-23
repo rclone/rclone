@@ -3,903 +3,1235 @@
 package databasemigrationservice_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/databasemigrationservice"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleDatabaseMigrationService_AddTagsToResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.AddTagsToResourceInput{
-		ResourceArn: aws.String("String"), // Required
-		Tags: []*databasemigrationservice.Tag{ // Required
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.AddTagsToResource(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
+		panic(err)
 	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	return &t
 }
 
-func ExampleDatabaseMigrationService_CreateEndpoint() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.CreateEndpointInput{
-		EndpointIdentifier:        aws.String("String"),                       // Required
-		EndpointType:              aws.String("ReplicationEndpointTypeValue"), // Required
-		EngineName:                aws.String("String"),                       // Required
-		CertificateArn:            aws.String("String"),
-		DatabaseName:              aws.String("String"),
-		ExtraConnectionAttributes: aws.String("String"),
-		KmsKeyId:                  aws.String("String"),
-		Password:                  aws.String("SecretString"),
-		Port:                      aws.Int64(1),
-		ServerName:                aws.String("String"),
-		SslMode:                   aws.String("DmsSslModeValue"),
+// Add tags to resource
+//
+// Adds metadata tags to an AWS DMS resource, including replication instance, endpoint,
+// security group, and migration task. These tags can also be used with cost allocation
+// reporting to track cost associated with AWS DMS resources, or used in a Condition
+// statement in an IAM policy for AWS DMS.
+func ExampleDatabaseMigrationService_AddTagsToResource_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.AddTagsToResourceInput{
+		ResourceArn: aws.String("arn:aws:dms:us-east-1:123456789012:endpoint:ASXWXJZLNWNT5HTWCGV2BUJQ7E"),
 		Tags: []*databasemigrationservice.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
+			{
+				Key:   aws.String("Acount"),
+				Value: aws.String("1633456"),
 			},
-			// More values...
 		},
-		Username: aws.String("String"),
 	}
-	resp, err := svc.CreateEndpoint(params)
 
+	result, err := svc.AddTagsToResource(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_CreateReplicationInstance() {
-	sess := session.Must(session.NewSession())
+// Create endpoint
+//
+// Creates an endpoint using the provided settings.
+func ExampleDatabaseMigrationService_CreateEndpoint_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.CreateEndpointInput{
+		CertificateArn:            aws.String(""),
+		DatabaseName:              aws.String("testdb"),
+		EndpointIdentifier:        aws.String("test-endpoint-1"),
+		EndpointType:              aws.String("source"),
+		EngineName:                aws.String("mysql"),
+		ExtraConnectionAttributes: aws.String(""),
+		KmsKeyId:                  aws.String("arn:aws:kms:us-east-1:123456789012:key/4c1731d6-5435-ed4d-be13-d53411a7cfbd"),
+		Password:                  aws.String("pasword"),
+		Port:                      aws.Int64(3306),
+		ServerName:                aws.String("mydb.cx1llnox7iyx.us-west-2.rds.amazonaws.com"),
+		SslMode:                   aws.String("require"),
+		Tags: []*databasemigrationservice.Tag{
+			{
+				Key:   aws.String("Acount"),
+				Value: aws.String("143327655"),
+			},
+		},
+		Username: aws.String("username"),
+	}
 
-	svc := databasemigrationservice.New(sess)
+	result, err := svc.CreateEndpoint(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeKMSKeyNotAccessibleFault:
+				fmt.Println(databasemigrationservice.ErrCodeKMSKeyNotAccessibleFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceAlreadyExistsFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceAlreadyExistsFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceQuotaExceededFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceQuotaExceededFault, aerr.Error())
+			case databasemigrationservice.ErrCodeInvalidResourceStateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidResourceStateFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			case databasemigrationservice.ErrCodeAccessDeniedFault:
+				fmt.Println(databasemigrationservice.ErrCodeAccessDeniedFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &databasemigrationservice.CreateReplicationInstanceInput{
-		ReplicationInstanceClass:         aws.String("String"), // Required
-		ReplicationInstanceIdentifier:    aws.String("String"), // Required
-		AllocatedStorage:                 aws.Int64(1),
+	fmt.Println(result)
+}
+
+// Create replication instance
+//
+// Creates the replication instance using the specified parameters.
+func ExampleDatabaseMigrationService_CreateReplicationInstance_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.CreateReplicationInstanceInput{
+		AllocatedStorage:                 aws.Int64(123),
 		AutoMinorVersionUpgrade:          aws.Bool(true),
-		AvailabilityZone:                 aws.String("String"),
-		EngineVersion:                    aws.String("String"),
-		KmsKeyId:                         aws.String("String"),
+		AvailabilityZone:                 aws.String(""),
+		EngineVersion:                    aws.String(""),
+		KmsKeyId:                         aws.String(""),
 		MultiAZ:                          aws.Bool(true),
-		PreferredMaintenanceWindow:       aws.String("String"),
+		PreferredMaintenanceWindow:       aws.String(""),
 		PubliclyAccessible:               aws.Bool(true),
-		ReplicationSubnetGroupIdentifier: aws.String("String"),
+		ReplicationInstanceClass:         aws.String(""),
+		ReplicationInstanceIdentifier:    aws.String(""),
+		ReplicationSubnetGroupIdentifier: aws.String(""),
 		Tags: []*databasemigrationservice.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
+			{
+				Key:   aws.String("string"),
+				Value: aws.String("string"),
 			},
-			// More values...
-		},
-		VpcSecurityGroupIds: []*string{
-			aws.String("String"), // Required
-			// More values...
 		},
 	}
-	resp, err := svc.CreateReplicationInstance(params)
 
+	result, err := svc.CreateReplicationInstance(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeAccessDeniedFault:
+				fmt.Println(databasemigrationservice.ErrCodeAccessDeniedFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceAlreadyExistsFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceAlreadyExistsFault, aerr.Error())
+			case databasemigrationservice.ErrCodeInsufficientResourceCapacityFault:
+				fmt.Println(databasemigrationservice.ErrCodeInsufficientResourceCapacityFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceQuotaExceededFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceQuotaExceededFault, aerr.Error())
+			case databasemigrationservice.ErrCodeStorageQuotaExceededFault:
+				fmt.Println(databasemigrationservice.ErrCodeStorageQuotaExceededFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			case databasemigrationservice.ErrCodeReplicationSubnetGroupDoesNotCoverEnoughAZs:
+				fmt.Println(databasemigrationservice.ErrCodeReplicationSubnetGroupDoesNotCoverEnoughAZs, aerr.Error())
+			case databasemigrationservice.ErrCodeInvalidResourceStateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidResourceStateFault, aerr.Error())
+			case databasemigrationservice.ErrCodeInvalidSubnet:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidSubnet, aerr.Error())
+			case databasemigrationservice.ErrCodeKMSKeyNotAccessibleFault:
+				fmt.Println(databasemigrationservice.ErrCodeKMSKeyNotAccessibleFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_CreateReplicationSubnetGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.CreateReplicationSubnetGroupInput{
-		ReplicationSubnetGroupDescription: aws.String("String"), // Required
-		ReplicationSubnetGroupIdentifier:  aws.String("String"), // Required
-		SubnetIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
+// Create replication subnet group
+//
+// Creates a replication subnet group given a list of the subnet IDs in a VPC.
+func ExampleDatabaseMigrationService_CreateReplicationSubnetGroup_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.CreateReplicationSubnetGroupInput{
+		ReplicationSubnetGroupDescription: aws.String("US West subnet group"),
+		ReplicationSubnetGroupIdentifier:  aws.String("us-west-2ab-vpc-215ds366"),
+		SubnetIds: []*string{
+			aws.String("subnet-e145356n"),
+			aws.String("subnet-58f79200"),
 		},
 		Tags: []*databasemigrationservice.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
+			{
+				Key:   aws.String("Acount"),
+				Value: aws.String("145235"),
 			},
-			// More values...
 		},
 	}
-	resp, err := svc.CreateReplicationSubnetGroup(params)
 
+	result, err := svc.CreateReplicationSubnetGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeAccessDeniedFault:
+				fmt.Println(databasemigrationservice.ErrCodeAccessDeniedFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceAlreadyExistsFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceAlreadyExistsFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceQuotaExceededFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceQuotaExceededFault, aerr.Error())
+			case databasemigrationservice.ErrCodeReplicationSubnetGroupDoesNotCoverEnoughAZs:
+				fmt.Println(databasemigrationservice.ErrCodeReplicationSubnetGroupDoesNotCoverEnoughAZs, aerr.Error())
+			case databasemigrationservice.ErrCodeInvalidSubnet:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidSubnet, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_CreateReplicationTask() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.CreateReplicationTaskInput{
-		MigrationType:             aws.String("MigrationTypeValue"), // Required
-		ReplicationInstanceArn:    aws.String("String"),             // Required
-		ReplicationTaskIdentifier: aws.String("String"),             // Required
-		SourceEndpointArn:         aws.String("String"),             // Required
-		TableMappings:             aws.String("String"),             // Required
-		TargetEndpointArn:         aws.String("String"),             // Required
-		CdcStartTime:              aws.Time(time.Now()),
-		ReplicationTaskSettings:   aws.String("String"),
+// Create replication task
+//
+// Creates a replication task using the specified parameters.
+func ExampleDatabaseMigrationService_CreateReplicationTask_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.CreateReplicationTaskInput{
+		CdcStartTime:              parseTime("2006-01-02T15:04:05Z", "2016-12-14T18:25:43Z"),
+		MigrationType:             aws.String("full-load"),
+		ReplicationInstanceArn:    aws.String("arn:aws:dms:us-east-1:123456789012:rep:6UTDJGBOUS3VI3SUWA66XFJCJQ"),
+		ReplicationTaskIdentifier: aws.String("task1"),
+		ReplicationTaskSettings:   aws.String(""),
+		SourceEndpointArn:         aws.String("arn:aws:dms:us-east-1:123456789012:endpoint:ZW5UAN6P4E77EC7YWHK4RZZ3BE"),
+		TableMappings:             aws.String("file://mappingfile.json"),
 		Tags: []*databasemigrationservice.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
+			{
+				Key:   aws.String("Acount"),
+				Value: aws.String("24352226"),
 			},
-			// More values...
 		},
+		TargetEndpointArn: aws.String("arn:aws:dms:us-east-1:123456789012:endpoint:ASXWXJZLNWNT5HTWCGV2BUJQ7E"),
 	}
-	resp, err := svc.CreateReplicationTask(params)
 
+	result, err := svc.CreateReplicationTask(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeAccessDeniedFault:
+				fmt.Println(databasemigrationservice.ErrCodeAccessDeniedFault, aerr.Error())
+			case databasemigrationservice.ErrCodeInvalidResourceStateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidResourceStateFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceAlreadyExistsFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceAlreadyExistsFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			case databasemigrationservice.ErrCodeKMSKeyNotAccessibleFault:
+				fmt.Println(databasemigrationservice.ErrCodeKMSKeyNotAccessibleFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceQuotaExceededFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceQuotaExceededFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_DeleteCertificate() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.DeleteCertificateInput{
-		CertificateArn: aws.String("String"), // Required
+// Delete Certificate
+//
+// Deletes the specified certificate.
+func ExampleDatabaseMigrationService_DeleteCertificate_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.DeleteCertificateInput{
+		CertificateArn: aws.String("arn:aws:dms:us-east-1:123456789012:rep:6UTDJGBOUSM457DE6XFJCJQ"),
 	}
-	resp, err := svc.DeleteCertificate(params)
 
+	result, err := svc.DeleteCertificate(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			case databasemigrationservice.ErrCodeInvalidResourceStateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidResourceStateFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_DeleteEndpoint() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.DeleteEndpointInput{
-		EndpointArn: aws.String("String"), // Required
+// Delete Endpoint
+//
+// Deletes the specified endpoint. All tasks associated with the endpoint must be deleted
+// before you can delete the endpoint.
+//
+func ExampleDatabaseMigrationService_DeleteEndpoint_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.DeleteEndpointInput{
+		EndpointArn: aws.String("arn:aws:dms:us-east-1:123456789012:endpoint:RAAR3R22XSH46S3PWLC3NJAWKM"),
 	}
-	resp, err := svc.DeleteEndpoint(params)
 
+	result, err := svc.DeleteEndpoint(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			case databasemigrationservice.ErrCodeInvalidResourceStateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidResourceStateFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_DeleteReplicationInstance() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.DeleteReplicationInstanceInput{
-		ReplicationInstanceArn: aws.String("String"), // Required
+// Delete Replication Instance
+//
+// Deletes the specified replication instance. You must delete any migration tasks that
+// are associated with the replication instance before you can delete it.
+//
+func ExampleDatabaseMigrationService_DeleteReplicationInstance_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.DeleteReplicationInstanceInput{
+		ReplicationInstanceArn: aws.String("arn:aws:dms:us-east-1:123456789012:rep:6UTDJGBOUS3VI3SUWA66XFJCJQ"),
 	}
-	resp, err := svc.DeleteReplicationInstance(params)
 
+	result, err := svc.DeleteReplicationInstance(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeInvalidResourceStateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidResourceStateFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_DeleteReplicationSubnetGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.DeleteReplicationSubnetGroupInput{
-		ReplicationSubnetGroupIdentifier: aws.String("String"), // Required
+// Delete Replication Subnet Group
+//
+// Deletes a replication subnet group.
+func ExampleDatabaseMigrationService_DeleteReplicationSubnetGroup_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.DeleteReplicationSubnetGroupInput{
+		ReplicationSubnetGroupIdentifier: aws.String("us-west-2ab-vpc-215ds366"),
 	}
-	resp, err := svc.DeleteReplicationSubnetGroup(params)
 
+	result, err := svc.DeleteReplicationSubnetGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeInvalidResourceStateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidResourceStateFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_DeleteReplicationTask() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.DeleteReplicationTaskInput{
-		ReplicationTaskArn: aws.String("String"), // Required
+// Delete Replication Task
+//
+// Deletes the specified replication task.
+func ExampleDatabaseMigrationService_DeleteReplicationTask_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.DeleteReplicationTaskInput{
+		ReplicationTaskArn: aws.String("arn:aws:dms:us-east-1:123456789012:rep:6UTDJGBOUS3VI3SUWA66XFJCJQ"),
 	}
-	resp, err := svc.DeleteReplicationTask(params)
 
+	result, err := svc.DeleteReplicationTask(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			case databasemigrationservice.ErrCodeInvalidResourceStateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidResourceStateFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_DescribeAccountAttributes() {
-	sess := session.Must(session.NewSession())
+// Describe acount attributes
+//
+// Lists all of the AWS DMS attributes for a customer account. The attributes include
+// AWS DMS quotas for the account, such as the number of replication instances allowed.
+// The description for a quota includes the quota name, current usage toward that quota,
+// and the quota's maximum value. This operation does not take any parameters.
+func ExampleDatabaseMigrationService_DescribeAccountAttributes_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.DescribeAccountAttributesInput{}
 
-	svc := databasemigrationservice.New(sess)
-
-	var params *databasemigrationservice.DescribeAccountAttributesInput
-	resp, err := svc.DescribeAccountAttributes(params)
-
+	result, err := svc.DescribeAccountAttributes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_DescribeCertificates() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.DescribeCertificatesInput{
+// Describe certificates
+//
+// Provides a description of the certificate.
+func ExampleDatabaseMigrationService_DescribeCertificates_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.DescribeCertificatesInput{
 		Filters: []*databasemigrationservice.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
+			{
+				Name: aws.String("string"),
+				Values: []*string{
+					aws.String("string"),
+					aws.String("string"),
 				},
 			},
-			// More values...
 		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+		Marker:     aws.String(""),
+		MaxRecords: aws.Int64(123),
 	}
-	resp, err := svc.DescribeCertificates(params)
 
+	result, err := svc.DescribeCertificates(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_DescribeConnections() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.DescribeConnectionsInput{
+// Describe connections
+//
+// Describes the status of the connections that have been made between the replication
+// instance and an endpoint. Connections are created when you test an endpoint.
+func ExampleDatabaseMigrationService_DescribeConnections_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.DescribeConnectionsInput{
 		Filters: []*databasemigrationservice.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
+			{
+				Name: aws.String("string"),
+				Values: []*string{
+					aws.String("string"),
+					aws.String("string"),
 				},
 			},
-			// More values...
 		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+		Marker:     aws.String(""),
+		MaxRecords: aws.Int64(123),
 	}
-	resp, err := svc.DescribeConnections(params)
 
+	result, err := svc.DescribeConnections(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_DescribeEndpointTypes() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.DescribeEndpointTypesInput{
+// Describe endpoint types
+//
+// Returns information about the type of endpoints available.
+func ExampleDatabaseMigrationService_DescribeEndpointTypes_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.DescribeEndpointTypesInput{
 		Filters: []*databasemigrationservice.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
+			{
+				Name: aws.String("string"),
+				Values: []*string{
+					aws.String("string"),
+					aws.String("string"),
 				},
 			},
-			// More values...
 		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+		Marker:     aws.String(""),
+		MaxRecords: aws.Int64(123),
 	}
-	resp, err := svc.DescribeEndpointTypes(params)
 
+	result, err := svc.DescribeEndpointTypes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_DescribeEndpoints() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.DescribeEndpointsInput{
+// Describe endpoints
+//
+// Returns information about the endpoints for your account in the current region.
+func ExampleDatabaseMigrationService_DescribeEndpoints_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.DescribeEndpointsInput{
 		Filters: []*databasemigrationservice.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
+			{
+				Name: aws.String("string"),
+				Values: []*string{
+					aws.String("string"),
+					aws.String("string"),
 				},
 			},
-			// More values...
 		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+		Marker:     aws.String(""),
+		MaxRecords: aws.Int64(123),
 	}
-	resp, err := svc.DescribeEndpoints(params)
 
+	result, err := svc.DescribeEndpoints(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_DescribeOrderableReplicationInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.DescribeOrderableReplicationInstancesInput{
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+// Describe orderable replication instances
+//
+// Returns information about the replication instance types that can be created in the
+// specified region.
+func ExampleDatabaseMigrationService_DescribeOrderableReplicationInstances_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.DescribeOrderableReplicationInstancesInput{
+		Marker:     aws.String(""),
+		MaxRecords: aws.Int64(123),
 	}
-	resp, err := svc.DescribeOrderableReplicationInstances(params)
 
+	result, err := svc.DescribeOrderableReplicationInstances(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_DescribeRefreshSchemasStatus() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.DescribeRefreshSchemasStatusInput{
-		EndpointArn: aws.String("String"), // Required
+// Describe refresh schema status
+//
+// Returns the status of the refresh-schemas operation.
+func ExampleDatabaseMigrationService_DescribeRefreshSchemasStatus_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.DescribeRefreshSchemasStatusInput{
+		EndpointArn: aws.String(""),
 	}
-	resp, err := svc.DescribeRefreshSchemasStatus(params)
 
+	result, err := svc.DescribeRefreshSchemasStatus(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeInvalidResourceStateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidResourceStateFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_DescribeReplicationInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.DescribeReplicationInstancesInput{
+// Describe replication instances
+//
+// Returns the status of the refresh-schemas operation.
+func ExampleDatabaseMigrationService_DescribeReplicationInstances_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.DescribeReplicationInstancesInput{
 		Filters: []*databasemigrationservice.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
+			{
+				Name: aws.String("string"),
+				Values: []*string{
+					aws.String("string"),
+					aws.String("string"),
 				},
 			},
-			// More values...
 		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+		Marker:     aws.String(""),
+		MaxRecords: aws.Int64(123),
 	}
-	resp, err := svc.DescribeReplicationInstances(params)
 
+	result, err := svc.DescribeReplicationInstances(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_DescribeReplicationSubnetGroups() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.DescribeReplicationSubnetGroupsInput{
+// Describe replication subnet groups
+//
+// Returns information about the replication subnet groups.
+func ExampleDatabaseMigrationService_DescribeReplicationSubnetGroups_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.DescribeReplicationSubnetGroupsInput{
 		Filters: []*databasemigrationservice.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
+			{
+				Name: aws.String("string"),
+				Values: []*string{
+					aws.String("string"),
+					aws.String("string"),
 				},
 			},
-			// More values...
 		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+		Marker:     aws.String(""),
+		MaxRecords: aws.Int64(123),
 	}
-	resp, err := svc.DescribeReplicationSubnetGroups(params)
 
+	result, err := svc.DescribeReplicationSubnetGroups(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_DescribeReplicationTasks() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.DescribeReplicationTasksInput{
+// Describe replication tasks
+//
+// Returns information about replication tasks for your account in the current region.
+func ExampleDatabaseMigrationService_DescribeReplicationTasks_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.DescribeReplicationTasksInput{
 		Filters: []*databasemigrationservice.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
+			{
+				Name: aws.String("string"),
+				Values: []*string{
+					aws.String("string"),
+					aws.String("string"),
 				},
 			},
-			// More values...
 		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+		Marker:     aws.String(""),
+		MaxRecords: aws.Int64(123),
 	}
-	resp, err := svc.DescribeReplicationTasks(params)
 
+	result, err := svc.DescribeReplicationTasks(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_DescribeSchemas() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.DescribeSchemasInput{
-		EndpointArn: aws.String("String"), // Required
-		Marker:      aws.String("String"),
-		MaxRecords:  aws.Int64(1),
+// Describe schemas
+//
+// Returns information about the schema for the specified endpoint.
+func ExampleDatabaseMigrationService_DescribeSchemas_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.DescribeSchemasInput{
+		EndpointArn: aws.String(""),
+		Marker:      aws.String(""),
+		MaxRecords:  aws.Int64(123),
 	}
-	resp, err := svc.DescribeSchemas(params)
 
+	result, err := svc.DescribeSchemas(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeInvalidResourceStateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidResourceStateFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_DescribeTableStatistics() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.DescribeTableStatisticsInput{
-		ReplicationTaskArn: aws.String("String"), // Required
-		Marker:             aws.String("String"),
-		MaxRecords:         aws.Int64(1),
+// Describe table statistics
+//
+// Returns table statistics on the database migration task, including table name, rows
+// inserted, rows updated, and rows deleted.
+func ExampleDatabaseMigrationService_DescribeTableStatistics_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.DescribeTableStatisticsInput{
+		Marker:             aws.String(""),
+		MaxRecords:         aws.Int64(123),
+		ReplicationTaskArn: aws.String(""),
 	}
-	resp, err := svc.DescribeTableStatistics(params)
 
+	result, err := svc.DescribeTableStatistics(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			case databasemigrationservice.ErrCodeInvalidResourceStateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidResourceStateFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_ImportCertificate() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.ImportCertificateInput{
-		CertificateIdentifier: aws.String("String"), // Required
-		CertificatePem:        aws.String("String"),
-		CertificateWallet:     []byte("PAYLOAD"),
+// Import certificate
+//
+// Uploads the specified certificate.
+func ExampleDatabaseMigrationService_ImportCertificate_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.ImportCertificateInput{
+		CertificateIdentifier: aws.String(""),
+		CertificatePem:        aws.String(""),
 	}
-	resp, err := svc.ImportCertificate(params)
 
+	result, err := svc.ImportCertificate(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeResourceAlreadyExistsFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceAlreadyExistsFault, aerr.Error())
+			case databasemigrationservice.ErrCodeInvalidCertificateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidCertificateFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_ListTagsForResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.ListTagsForResourceInput{
-		ResourceArn: aws.String("String"), // Required
+// List tags for resource
+//
+// Lists all tags for an AWS DMS resource.
+func ExampleDatabaseMigrationService_ListTagsForResource_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.ListTagsForResourceInput{
+		ResourceArn: aws.String(""),
 	}
-	resp, err := svc.ListTagsForResource(params)
 
+	result, err := svc.ListTagsForResource(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_ModifyEndpoint() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.ModifyEndpointInput{
-		EndpointArn:               aws.String("String"), // Required
-		CertificateArn:            aws.String("String"),
-		DatabaseName:              aws.String("String"),
-		EndpointIdentifier:        aws.String("String"),
-		EndpointType:              aws.String("ReplicationEndpointTypeValue"),
-		EngineName:                aws.String("String"),
-		ExtraConnectionAttributes: aws.String("String"),
-		Password:                  aws.String("SecretString"),
-		Port:                      aws.Int64(1),
-		ServerName:                aws.String("String"),
-		SslMode:                   aws.String("DmsSslModeValue"),
-		Username:                  aws.String("String"),
+// Modify endpoint
+//
+// Modifies the specified endpoint.
+func ExampleDatabaseMigrationService_ModifyEndpoint_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.ModifyEndpointInput{
+		CertificateArn:            aws.String(""),
+		DatabaseName:              aws.String(""),
+		EndpointArn:               aws.String(""),
+		EndpointIdentifier:        aws.String(""),
+		EndpointType:              aws.String("source"),
+		EngineName:                aws.String(""),
+		ExtraConnectionAttributes: aws.String(""),
+		Password:                  aws.String(""),
+		Port:                      aws.Int64(123),
+		ServerName:                aws.String(""),
+		SslMode:                   aws.String("require"),
+		Username:                  aws.String(""),
 	}
-	resp, err := svc.ModifyEndpoint(params)
 
+	result, err := svc.ModifyEndpoint(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeInvalidResourceStateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidResourceStateFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceAlreadyExistsFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceAlreadyExistsFault, aerr.Error())
+			case databasemigrationservice.ErrCodeKMSKeyNotAccessibleFault:
+				fmt.Println(databasemigrationservice.ErrCodeKMSKeyNotAccessibleFault, aerr.Error())
+			case databasemigrationservice.ErrCodeAccessDeniedFault:
+				fmt.Println(databasemigrationservice.ErrCodeAccessDeniedFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_ModifyReplicationInstance() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.ModifyReplicationInstanceInput{
-		ReplicationInstanceArn:        aws.String("String"), // Required
-		AllocatedStorage:              aws.Int64(1),
+// Modify replication instance
+//
+// Modifies the replication instance to apply new settings. You can change one or more
+// parameters by specifying these parameters and the new values in the request. Some
+// settings are applied during the maintenance window.
+func ExampleDatabaseMigrationService_ModifyReplicationInstance_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.ModifyReplicationInstanceInput{
+		AllocatedStorage:              aws.Int64(123),
 		AllowMajorVersionUpgrade:      aws.Bool(true),
 		ApplyImmediately:              aws.Bool(true),
 		AutoMinorVersionUpgrade:       aws.Bool(true),
-		EngineVersion:                 aws.String("String"),
+		EngineVersion:                 aws.String("1.5.0"),
 		MultiAZ:                       aws.Bool(true),
-		PreferredMaintenanceWindow:    aws.String("String"),
-		ReplicationInstanceClass:      aws.String("String"),
-		ReplicationInstanceIdentifier: aws.String("String"),
-		VpcSecurityGroupIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
+		PreferredMaintenanceWindow:    aws.String("sun:06:00-sun:14:00"),
+		ReplicationInstanceArn:        aws.String("arn:aws:dms:us-east-1:123456789012:rep:6UTDJGBOUS3VI3SUWA66XFJCJQ"),
+		ReplicationInstanceClass:      aws.String("dms.t2.micro"),
+		ReplicationInstanceIdentifier: aws.String("test-rep-1"),
 	}
-	resp, err := svc.ModifyReplicationInstance(params)
 
+	result, err := svc.ModifyReplicationInstance(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeInvalidResourceStateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidResourceStateFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceAlreadyExistsFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceAlreadyExistsFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			case databasemigrationservice.ErrCodeInsufficientResourceCapacityFault:
+				fmt.Println(databasemigrationservice.ErrCodeInsufficientResourceCapacityFault, aerr.Error())
+			case databasemigrationservice.ErrCodeStorageQuotaExceededFault:
+				fmt.Println(databasemigrationservice.ErrCodeStorageQuotaExceededFault, aerr.Error())
+			case databasemigrationservice.ErrCodeUpgradeDependencyFailureFault:
+				fmt.Println(databasemigrationservice.ErrCodeUpgradeDependencyFailureFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_ModifyReplicationSubnetGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.ModifyReplicationSubnetGroupInput{
-		ReplicationSubnetGroupIdentifier: aws.String("String"), // Required
-		SubnetIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		ReplicationSubnetGroupDescription: aws.String("String"),
+// Modify replication subnet group
+//
+// Modifies the settings for the specified replication subnet group.
+func ExampleDatabaseMigrationService_ModifyReplicationSubnetGroup_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.ModifyReplicationSubnetGroupInput{
+		ReplicationSubnetGroupDescription: aws.String(""),
+		ReplicationSubnetGroupIdentifier:  aws.String(""),
 	}
-	resp, err := svc.ModifyReplicationSubnetGroup(params)
 
+	result, err := svc.ModifyReplicationSubnetGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeAccessDeniedFault:
+				fmt.Println(databasemigrationservice.ErrCodeAccessDeniedFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceQuotaExceededFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceQuotaExceededFault, aerr.Error())
+			case databasemigrationservice.ErrCodeSubnetAlreadyInUse:
+				fmt.Println(databasemigrationservice.ErrCodeSubnetAlreadyInUse, aerr.Error())
+			case databasemigrationservice.ErrCodeReplicationSubnetGroupDoesNotCoverEnoughAZs:
+				fmt.Println(databasemigrationservice.ErrCodeReplicationSubnetGroupDoesNotCoverEnoughAZs, aerr.Error())
+			case databasemigrationservice.ErrCodeInvalidSubnet:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidSubnet, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_ModifyReplicationTask() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.ModifyReplicationTaskInput{
-		ReplicationTaskArn:        aws.String("String"), // Required
-		CdcStartTime:              aws.Time(time.Now()),
-		MigrationType:             aws.String("MigrationTypeValue"),
-		ReplicationTaskIdentifier: aws.String("String"),
-		ReplicationTaskSettings:   aws.String("String"),
-		TableMappings:             aws.String("String"),
+// Refresh schema
+//
+// Populates the schema for the specified endpoint. This is an asynchronous operation
+// and can take several minutes. You can check the status of this operation by calling
+// the describe-refresh-schemas-status operation.
+func ExampleDatabaseMigrationService_RefreshSchemas_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.RefreshSchemasInput{
+		EndpointArn:            aws.String(""),
+		ReplicationInstanceArn: aws.String(""),
 	}
-	resp, err := svc.ModifyReplicationTask(params)
 
+	result, err := svc.RefreshSchemas(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeInvalidResourceStateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidResourceStateFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			case databasemigrationservice.ErrCodeKMSKeyNotAccessibleFault:
+				fmt.Println(databasemigrationservice.ErrCodeKMSKeyNotAccessibleFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceQuotaExceededFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceQuotaExceededFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_RefreshSchemas() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.RefreshSchemasInput{
-		EndpointArn:            aws.String("String"), // Required
-		ReplicationInstanceArn: aws.String("String"), // Required
+// Remove tags from resource
+//
+// Removes metadata tags from an AWS DMS resource.
+func ExampleDatabaseMigrationService_RemoveTagsFromResource_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.RemoveTagsFromResourceInput{
+		ResourceArn: aws.String("arn:aws:dms:us-east-1:123456789012:endpoint:ASXWXJZLNWNT5HTWCGV2BUJQ7E"),
 	}
-	resp, err := svc.RefreshSchemas(params)
 
+	result, err := svc.RemoveTagsFromResource(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_RemoveTagsFromResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.RemoveTagsFromResourceInput{
-		ResourceArn: aws.String("String"), // Required
-		TagKeys: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
+// Start replication task
+//
+// Starts the replication task.
+func ExampleDatabaseMigrationService_StartReplicationTask_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.StartReplicationTaskInput{
+		CdcStartTime:             parseTime("2006-01-02T15:04:05Z", "2016-12-14T13:33:20Z"),
+		ReplicationTaskArn:       aws.String("arn:aws:dms:us-east-1:123456789012:rep:6UTDJGBOUS3VI3SUWA66XFJCJQ"),
+		StartReplicationTaskType: aws.String("start-replication"),
 	}
-	resp, err := svc.RemoveTagsFromResource(params)
 
+	result, err := svc.StartReplicationTask(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			case databasemigrationservice.ErrCodeInvalidResourceStateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidResourceStateFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_StartReplicationTask() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.StartReplicationTaskInput{
-		ReplicationTaskArn:       aws.String("String"),                        // Required
-		StartReplicationTaskType: aws.String("StartReplicationTaskTypeValue"), // Required
-		CdcStartTime:             aws.Time(time.Now()),
+// Stop replication task
+//
+// Stops the replication task.
+func ExampleDatabaseMigrationService_StopReplicationTask_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.StopReplicationTaskInput{
+		ReplicationTaskArn: aws.String("arn:aws:dms:us-east-1:123456789012:endpoint:ASXWXJZLNWNT5HTWCGV2BUJQ7E"),
 	}
-	resp, err := svc.StartReplicationTask(params)
 
+	result, err := svc.StopReplicationTask(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			case databasemigrationservice.ErrCodeInvalidResourceStateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidResourceStateFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDatabaseMigrationService_StopReplicationTask() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.StopReplicationTaskInput{
-		ReplicationTaskArn: aws.String("String"), // Required
+// Test conection
+//
+// Tests the connection between the replication instance and the endpoint.
+func ExampleDatabaseMigrationService_TestConnection_shared00() {
+	svc := databasemigrationservice.New(session.New())
+	input := &databasemigrationservice.TestConnectionInput{
+		EndpointArn:            aws.String("arn:aws:dms:us-east-1:123456789012:endpoint:RAAR3R22XSH46S3PWLC3NJAWKM"),
+		ReplicationInstanceArn: aws.String("arn:aws:dms:us-east-1:123456789012:rep:6UTDJGBOUS3VI3SUWA66XFJCJQ"),
 	}
-	resp, err := svc.StopReplicationTask(params)
 
+	result, err := svc.TestConnection(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case databasemigrationservice.ErrCodeResourceNotFoundFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceNotFoundFault, aerr.Error())
+			case databasemigrationservice.ErrCodeInvalidResourceStateFault:
+				fmt.Println(databasemigrationservice.ErrCodeInvalidResourceStateFault, aerr.Error())
+			case databasemigrationservice.ErrCodeKMSKeyNotAccessibleFault:
+				fmt.Println(databasemigrationservice.ErrCodeKMSKeyNotAccessibleFault, aerr.Error())
+			case databasemigrationservice.ErrCodeResourceQuotaExceededFault:
+				fmt.Println(databasemigrationservice.ErrCodeResourceQuotaExceededFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleDatabaseMigrationService_TestConnection() {
-	sess := session.Must(session.NewSession())
-
-	svc := databasemigrationservice.New(sess)
-
-	params := &databasemigrationservice.TestConnectionInput{
-		EndpointArn:            aws.String("String"), // Required
-		ReplicationInstanceArn: aws.String("String"), // Required
-	}
-	resp, err := svc.TestConnection(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }

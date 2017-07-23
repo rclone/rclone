@@ -440,8 +440,10 @@ func makeHaveTag(tag Tag, index int) (haveTag, langID) {
 // script to map to another and we rely on this to keep the code simple.
 func altScript(l langID, s scriptID) scriptID {
 	for _, alt := range matchScript {
-		if (alt.lang == 0 || langID(alt.lang) == l) && scriptID(alt.have) == s {
-			return scriptID(alt.want)
+		// TODO: also match cases where language is not the same.
+		if (langID(alt.wantLang) == l || langID(alt.haveLang) == l) &&
+			scriptID(alt.haveScript) == s {
+			return scriptID(alt.wantScript)
 		}
 	}
 	return 0
@@ -484,6 +486,16 @@ func (m *matcher) header(l langID) *matchHeader {
 	h := &matchHeader{}
 	m.index[l] = h
 	return h
+}
+
+func toConf(d uint8) Confidence {
+	if d <= 10 {
+		return High
+	}
+	if d < 30 {
+		return Low
+	}
+	return No
 }
 
 // newMatcher builds an index for the given supported tags and returns it as
@@ -537,9 +549,9 @@ func newMatcher(supported []Tag) *matcher {
 	// Add entries for languages with mutual intelligibility as defined by CLDR's
 	// languageMatch data.
 	for _, ml := range matchLang {
-		update(ml.want, ml.have, Confidence(ml.conf), false)
+		update(ml.want, ml.have, toConf(ml.distance), false)
 		if !ml.oneway {
-			update(ml.have, ml.want, Confidence(ml.conf), false)
+			update(ml.have, ml.want, toConf(ml.distance), false)
 		}
 	}
 

@@ -342,8 +342,10 @@ func (c *OpsWorks) AttachElasticLoadBalancerRequest(input *AttachElasticLoadBala
 
 // AttachElasticLoadBalancer API operation for AWS OpsWorks.
 //
-// Attaches an Elastic Load Balancing load balancer to a specified layer. For
-// more information, see Elastic Load Balancing (http://docs.aws.amazon.com/opsworks/latest/userguide/load-balancer-elb.html).
+// Attaches an Elastic Load Balancing load balancer to a specified layer. AWS
+// OpsWorks Stacks does not support Application Load Balancer. You can only
+// use Classic Load Balancer with AWS OpsWorks Stacks. For more information,
+// see Elastic Load Balancing (http://docs.aws.amazon.com/opsworks/latest/userguide/layers-elb.html).
 //
 // You must create the Elastic Load Balancing instance separately, by using
 // the Elastic Load Balancing console, API, or CLI. For more information, see
@@ -4197,6 +4199,89 @@ func (c *OpsWorks) GrantAccessWithContext(ctx aws.Context, input *GrantAccessInp
 	return out, req.Send()
 }
 
+const opListTags = "ListTags"
+
+// ListTagsRequest generates a "aws/request.Request" representing the
+// client's request for the ListTags operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See ListTags for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ListTags method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ListTagsRequest method.
+//    req, resp := client.ListTagsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/opsworks-2013-02-18/ListTags
+func (c *OpsWorks) ListTagsRequest(input *ListTagsInput) (req *request.Request, output *ListTagsOutput) {
+	op := &request.Operation{
+		Name:       opListTags,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &ListTagsInput{}
+	}
+
+	output = &ListTagsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListTags API operation for AWS OpsWorks.
+//
+// Returns a list of tags that are applied to the specified stack or layer.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS OpsWorks's
+// API operation ListTags for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeValidationException "ValidationException"
+//   Indicates that a request was not valid.
+//
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   Indicates that a resource was not found.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/opsworks-2013-02-18/ListTags
+func (c *OpsWorks) ListTags(input *ListTagsInput) (*ListTagsOutput, error) {
+	req, out := c.ListTagsRequest(input)
+	return out, req.Send()
+}
+
+// ListTagsWithContext is the same as ListTags with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListTags for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *OpsWorks) ListTagsWithContext(ctx aws.Context, input *ListTagsInput, opts ...request.Option) (*ListTagsOutput, error) {
+	req, out := c.ListTagsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opRebootInstance = "RebootInstance"
 
 // RebootInstanceRequest generates a "aws/request.Request" representing the
@@ -5396,6 +5481,93 @@ func (c *OpsWorks) StopStackWithContext(ctx aws.Context, input *StopStackInput, 
 	return out, req.Send()
 }
 
+const opTagResource = "TagResource"
+
+// TagResourceRequest generates a "aws/request.Request" representing the
+// client's request for the TagResource operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See TagResource for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the TagResource method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the TagResourceRequest method.
+//    req, resp := client.TagResourceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/opsworks-2013-02-18/TagResource
+func (c *OpsWorks) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
+	op := &request.Operation{
+		Name:       opTagResource,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &TagResourceInput{}
+	}
+
+	output = &TagResourceOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(jsonrpc.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// TagResource API operation for AWS OpsWorks.
+//
+// Apply cost-allocation tags to a specified stack or layer in AWS OpsWorks
+// Stacks. For more information about how tagging works, see Tags (http://docs.aws.amazon.com/opsworks/latest/userguide/tagging.html)
+// in the AWS OpsWorks User Guide.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS OpsWorks's
+// API operation TagResource for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeValidationException "ValidationException"
+//   Indicates that a request was not valid.
+//
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   Indicates that a resource was not found.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/opsworks-2013-02-18/TagResource
+func (c *OpsWorks) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
+	req, out := c.TagResourceRequest(input)
+	return out, req.Send()
+}
+
+// TagResourceWithContext is the same as TagResource with the addition of
+// the ability to pass a context and additional request options.
+//
+// See TagResource for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *OpsWorks) TagResourceWithContext(ctx aws.Context, input *TagResourceInput, opts ...request.Option) (*TagResourceOutput, error) {
+	req, out := c.TagResourceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUnassignInstance = "UnassignInstance"
 
 // UnassignInstanceRequest generates a "aws/request.Request" representing the
@@ -5575,6 +5747,91 @@ func (c *OpsWorks) UnassignVolume(input *UnassignVolumeInput) (*UnassignVolumeOu
 // for more information on using Contexts.
 func (c *OpsWorks) UnassignVolumeWithContext(ctx aws.Context, input *UnassignVolumeInput, opts ...request.Option) (*UnassignVolumeOutput, error) {
 	req, out := c.UnassignVolumeRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opUntagResource = "UntagResource"
+
+// UntagResourceRequest generates a "aws/request.Request" representing the
+// client's request for the UntagResource operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See UntagResource for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the UntagResource method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the UntagResourceRequest method.
+//    req, resp := client.UntagResourceRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/opsworks-2013-02-18/UntagResource
+func (c *OpsWorks) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
+	op := &request.Operation{
+		Name:       opUntagResource,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UntagResourceInput{}
+	}
+
+	output = &UntagResourceOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(jsonrpc.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// UntagResource API operation for AWS OpsWorks.
+//
+// Removes tags from a specified stack or layer.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS OpsWorks's
+// API operation UntagResource for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeValidationException "ValidationException"
+//   Indicates that a request was not valid.
+//
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   Indicates that a resource was not found.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/opsworks-2013-02-18/UntagResource
+func (c *OpsWorks) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
+	req, out := c.UntagResourceRequest(input)
+	return out, req.Send()
+}
+
+// UntagResourceWithContext is the same as UntagResource with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UntagResource for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *OpsWorks) UntagResourceWithContext(ctx aws.Context, input *UntagResourceInput, opts ...request.Option) (*UntagResourceOutput, error) {
+	req, out := c.UntagResourceRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -7117,8 +7374,8 @@ type CloneStackInput struct {
 	// The stack's operating system, which must be set to one of the following.
 	//
 	//    * A supported Linux operating system: An Amazon Linux version, such as
-	//    Amazon Linux 2016.09, Amazon Linux 2016.03, Amazon Linux 2015.09, or Amazon
-	//    Linux 2015.03.
+	//    Amazon Linux 2017.03, Amazon Linux 2016.09, Amazon Linux 2016.03, Amazon
+	//    Linux 2015.09, or Amazon Linux 2015.03.
 	//
 	//    * A supported Ubuntu operating system, such as Ubuntu 16.04 LTS, Ubuntu
 	//    14.04 LTS, or Ubuntu 12.04 LTS.
@@ -7682,25 +7939,29 @@ type Command struct {
 
 	// The command type:
 	//
+	//    * configure
+	//
 	//    * deploy
 	//
+	//    * execute_recipes
+	//
+	//    * install_dependencies
+	//
+	//    * restart
+	//
 	//    * rollback
+	//
+	//    * setup
 	//
 	//    * start
 	//
 	//    * stop
 	//
-	//    * restart
-	//
 	//    * undeploy
-	//
-	//    * update_dependencies
-	//
-	//    * install_dependencies
 	//
 	//    * update_custom_cookbooks
 	//
-	//    * execute_recipes
+	//    * update_dependencies
 	Type *string `type:"string"`
 }
 
@@ -8197,8 +8458,8 @@ type CreateInstanceInput struct {
 	// The instance's operating system, which must be set to one of the following.
 	//
 	//    * A supported Linux operating system: An Amazon Linux version, such as
-	//    Amazon Linux 2016.09, Amazon Linux 2016.03, Amazon Linux 2015.09, or Amazon
-	//    Linux 2015.03.
+	//    Amazon Linux 2017.03, Amazon Linux 2016.09, Amazon Linux 2016.03, Amazon
+	//    Linux 2015.09, or Amazon Linux 2015.03.
 	//
 	//    * A supported Ubuntu operating system, such as Ubuntu 16.04 LTS, Ubuntu
 	//    14.04 LTS, or Ubuntu 12.04 LTS.
@@ -8763,8 +9024,8 @@ type CreateStackInput struct {
 	// You can specify one of the following.
 	//
 	//    * A supported Linux operating system: An Amazon Linux version, such as
-	//    Amazon Linux 2016.09, Amazon Linux 2016.03, Amazon Linux 2015.09, or Amazon
-	//    Linux 2015.03.
+	//    Amazon Linux 2017.03, Amazon Linux 2016.09, Amazon Linux 2016.03, Amazon
+	//    Linux 2015.09, or Amazon Linux 2015.03.
 	//
 	//    * A supported Ubuntu operating system, such as Ubuntu 16.04 LTS, Ubuntu
 	//    14.04 LTS, or Ubuntu 12.04 LTS.
@@ -9665,17 +9926,17 @@ type DeploymentCommand struct {
 	// The update_dependencies command takes two arguments:
 	//
 	//    * upgrade_os_to - Specifies the desired Amazon Linux version for instances
-	//    whose OS you want to upgrade, such as Amazon Linux 2014.09. You must also
+	//    whose OS you want to upgrade, such as Amazon Linux 2016.09. You must also
 	//    set the allow_reboot argument to true.
 	//
 	//    * allow_reboot - Specifies whether to allow AWS OpsWorks Stacks to reboot
 	//    the instances if necessary, after installing the updates. This argument
 	//    can be set to either true or false. The default value is false.
 	//
-	// For example, to upgrade an instance to Amazon Linux 2014.09, set Args to
+	// For example, to upgrade an instance to Amazon Linux 2016.09, set Args to
 	// the following.
 	//
-	// { "upgrade_os_to":["Amazon Linux 2014.09"], "allow_reboot":["true"] }
+	// { "upgrade_os_to":["Amazon Linux 2016.09"], "allow_reboot":["true"] }
 	Args map[string][]*string `type:"map"`
 
 	// Specifies the operation. You can specify only one command.
@@ -12057,6 +12318,8 @@ type Instance struct {
 	// The instance architecture: "i386" or "x86_64".
 	Architecture *string `type:"string" enum:"Architecture"`
 
+	Arn *string `type:"string"`
+
 	// For load-based or time-based instances, the type.
 	AutoScalingType *string `type:"string" enum:"AutoScalingType"`
 
@@ -12124,7 +12387,7 @@ type Instance struct {
 	// The instance's platform.
 	Platform *string `type:"string"`
 
-	// The The instance's private DNS name.
+	// The instance's private DNS name.
 	PrivateDns *string `type:"string"`
 
 	// The instance's private IP address.
@@ -12235,6 +12498,12 @@ func (s *Instance) SetAmiId(v string) *Instance {
 // SetArchitecture sets the Architecture field's value.
 func (s *Instance) SetArchitecture(v string) *Instance {
 	s.Architecture = &v
+	return s
+}
+
+// SetArn sets the Arn field's value.
+func (s *Instance) SetArn(v string) *Instance {
+	s.Arn = &v
 	return s
 }
 
@@ -12687,6 +12956,8 @@ func (s *InstancesCount) SetUnassigning(v int64) *InstancesCount {
 type Layer struct {
 	_ struct{} `type:"structure"`
 
+	Arn *string `type:"string"`
+
 	// The layer attributes.
 	//
 	// For the HaproxyStatsPassword, MysqlRootPassword, and GangliaPassword attributes,
@@ -12791,6 +13062,12 @@ func (s Layer) String() string {
 // GoString returns the string representation
 func (s Layer) GoString() string {
 	return s.String()
+}
+
+// SetArn sets the Arn field's value.
+func (s *Layer) SetArn(v string) *Layer {
+	s.Arn = &v
+	return s
 }
 
 // SetAttributes sets the Attributes field's value.
@@ -12947,6 +13224,103 @@ func (s LifecycleEventConfiguration) GoString() string {
 // SetShutdown sets the Shutdown field's value.
 func (s *LifecycleEventConfiguration) SetShutdown(v *ShutdownEventConfiguration) *LifecycleEventConfiguration {
 	s.Shutdown = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/opsworks-2013-02-18/ListTagsRequest
+type ListTagsInput struct {
+	_ struct{} `type:"structure"`
+
+	// Do not use. A validation exception occurs if you add a MaxResults parameter
+	// to a ListTagsRequest call.
+	MaxResults *int64 `type:"integer"`
+
+	// Do not use. A validation exception occurs if you add a NextToken parameter
+	// to a ListTagsRequest call.
+	NextToken *string `type:"string"`
+
+	// The stack or layer's Amazon Resource Number (ARN).
+	//
+	// ResourceArn is a required field
+	ResourceArn *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s ListTagsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListTagsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListTagsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListTagsInput"}
+	if s.ResourceArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListTagsInput) SetMaxResults(v int64) *ListTagsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListTagsInput) SetNextToken(v string) *ListTagsInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetResourceArn sets the ResourceArn field's value.
+func (s *ListTagsInput) SetResourceArn(v string) *ListTagsInput {
+	s.ResourceArn = &v
+	return s
+}
+
+// Contains the response to a ListTags request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/opsworks-2013-02-18/ListTagsResult
+type ListTagsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// If a paginated request does not return all of the remaining results, this
+	// parameter is set to a token that you can assign to the request object's NextToken
+	// parameter to get the next set of results. If the previous paginated request
+	// returned all of the remaining results, this parameter is set to null.
+	NextToken *string `type:"string"`
+
+	// A set of key-value pairs that contain tag keys and tag values that are attached
+	// to a stack or layer.
+	Tags map[string]*string `type:"map"`
+}
+
+// String returns the string representation
+func (s ListTagsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListTagsOutput) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListTagsOutput) SetNextToken(v string) *ListTagsOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *ListTagsOutput) SetTags(v map[string]*string) *ListTagsOutput {
+	s.Tags = v
 	return s
 }
 
@@ -14387,7 +14761,7 @@ type Source struct {
 	// The repository type.
 	Type *string `type:"string" enum:"SourceType"`
 
-	// The source URL.
+	// The source URL. The following is an example of an Amazon S3 source URL: https://s3.amazonaws.com/opsworks-demo-bucket/opsworks_cookbook_demo.tar.gz.
 	Url *string `type:"string"`
 
 	// This parameter depends on the repository type.
@@ -15066,6 +15440,90 @@ func (s StopStackOutput) GoString() string {
 	return s.String()
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/opsworks-2013-02-18/TagResourceRequest
+type TagResourceInput struct {
+	_ struct{} `type:"structure"`
+
+	// The stack or layer's Amazon Resource Number (ARN).
+	//
+	// ResourceArn is a required field
+	ResourceArn *string `type:"string" required:"true"`
+
+	// A map that contains tag keys and tag values that are attached to a stack
+	// or layer.
+	//
+	//    * The key cannot be empty.
+	//
+	//    * The key can be a maximum of 127 characters, and can contain only Unicode
+	//    letters, numbers, or separators, or the following special characters:
+	//    + - = . _ : /
+	//
+	//    * The value can be a maximum 255 characters, and contain only Unicode
+	//    letters, numbers, or separators, or the following special characters:
+	//    + - = . _ : /
+	//
+	//    * Leading and trailing white spaces are trimmed from both the key and
+	//    value.
+	//
+	//    * A maximum of 40 tags is allowed for any resource.
+	//
+	// Tags is a required field
+	Tags map[string]*string `type:"map" required:"true"`
+}
+
+// String returns the string representation
+func (s TagResourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TagResourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TagResourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "TagResourceInput"}
+	if s.ResourceArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceArn"))
+	}
+	if s.Tags == nil {
+		invalidParams.Add(request.NewErrParamRequired("Tags"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetResourceArn sets the ResourceArn field's value.
+func (s *TagResourceInput) SetResourceArn(v string) *TagResourceInput {
+	s.ResourceArn = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *TagResourceInput) SetTags(v map[string]*string) *TagResourceInput {
+	s.Tags = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/opsworks-2013-02-18/TagResourceOutput
+type TagResourceOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s TagResourceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TagResourceOutput) GoString() string {
+	return s.String()
+}
+
 // Contains the data needed by RDP clients such as the Microsoft Remote Desktop
 // Connection to log in to the instance.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/opsworks-2013-02-18/TemporaryCredential
@@ -15261,6 +15719,74 @@ func (s UnassignVolumeOutput) String() string {
 
 // GoString returns the string representation
 func (s UnassignVolumeOutput) GoString() string {
+	return s.String()
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/opsworks-2013-02-18/UntagResourceRequest
+type UntagResourceInput struct {
+	_ struct{} `type:"structure"`
+
+	// The stack or layer's Amazon Resource Number (ARN).
+	//
+	// ResourceArn is a required field
+	ResourceArn *string `type:"string" required:"true"`
+
+	// A list of the keys of tags to be removed from a stack or layer.
+	//
+	// TagKeys is a required field
+	TagKeys []*string `type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s UntagResourceInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UntagResourceInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UntagResourceInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UntagResourceInput"}
+	if s.ResourceArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceArn"))
+	}
+	if s.TagKeys == nil {
+		invalidParams.Add(request.NewErrParamRequired("TagKeys"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetResourceArn sets the ResourceArn field's value.
+func (s *UntagResourceInput) SetResourceArn(v string) *UntagResourceInput {
+	s.ResourceArn = &v
+	return s
+}
+
+// SetTagKeys sets the TagKeys field's value.
+func (s *UntagResourceInput) SetTagKeys(v []*string) *UntagResourceInput {
+	s.TagKeys = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/opsworks-2013-02-18/UntagResourceOutput
+type UntagResourceOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s UntagResourceOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UntagResourceOutput) GoString() string {
 	return s.String()
 }
 
@@ -15571,8 +16097,8 @@ type UpdateInstanceInput struct {
 	// You cannot update an instance that is using a custom AMI.
 	//
 	//    * A supported Linux operating system: An Amazon Linux version, such as
-	//    Amazon Linux 2016.09, Amazon Linux 2016.03, Amazon Linux 2015.09, or Amazon
-	//    Linux 2015.03.
+	//    Amazon Linux 2017.03, Amazon Linux 2016.09, Amazon Linux 2016.03, Amazon
+	//    Linux 2015.09, or Amazon Linux 2015.03.
 	//
 	//    * A supported Ubuntu operating system, such as Ubuntu 16.04 LTS, Ubuntu
 	//    14.04 LTS, or Ubuntu 12.04 LTS.
@@ -16121,8 +16647,8 @@ type UpdateStackInput struct {
 	// The stack's operating system, which must be set to one of the following:
 	//
 	//    * A supported Linux operating system: An Amazon Linux version, such as
-	//    Amazon Linux 2016.09, Amazon Linux 2016.03, Amazon Linux 2015.09, or Amazon
-	//    Linux 2015.03.
+	//    Amazon Linux 2017.03, Amazon Linux 2016.09, Amazon Linux 2016.03, Amazon
+	//    Linux 2015.09, or Amazon Linux 2015.03.
 	//
 	//    * A supported Ubuntu operating system, such as Ubuntu 16.04 LTS, Ubuntu
 	//    14.04 LTS, or Ubuntu 12.04 LTS.

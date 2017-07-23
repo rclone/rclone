@@ -34,7 +34,12 @@ import (
 func TestLoggerCreation(t *testing.T) {
 	const logID = "testing"
 	c := &Client{projectID: "PROJECT_ID"}
-	defaultResource := &mrpb.MonitoredResource{Type: "global"}
+	customResource := &mrpb.MonitoredResource{
+		Type: "global",
+		Labels: map[string]string{
+			"project_id": "ANOTHER_PROJECT",
+		},
+	}
 	defaultBundler := &bundler.Bundler{
 		DelayThreshold:       DefaultDelayThreshold,
 		BundleCountThreshold: DefaultEntryCountThreshold,
@@ -43,21 +48,44 @@ func TestLoggerCreation(t *testing.T) {
 		BufferedByteLimit:    DefaultBufferedByteLimit,
 	}
 	for _, test := range []struct {
-		options     []LoggerOption
-		wantLogger  *Logger
-		wantBundler *bundler.Bundler
+		options         []LoggerOption
+		wantLogger      *Logger
+		defaultResource bool
+		wantBundler     *bundler.Bundler
 	}{
-		{nil, &Logger{commonResource: defaultResource}, defaultBundler},
 		{
-			[]LoggerOption{CommonResource(nil), CommonLabels(map[string]string{"a": "1"})},
-			&Logger{commonResource: nil, commonLabels: map[string]string{"a": "1"}},
-			defaultBundler,
+			options:         nil,
+			wantLogger:      &Logger{},
+			defaultResource: true,
+			wantBundler:     defaultBundler,
 		},
 		{
-			[]LoggerOption{DelayThreshold(time.Minute), EntryCountThreshold(99),
-				EntryByteThreshold(17), EntryByteLimit(18), BufferedByteLimit(19)},
-			&Logger{commonResource: defaultResource},
-			&bundler.Bundler{
+			options: []LoggerOption{
+				CommonResource(nil),
+				CommonLabels(map[string]string{"a": "1"}),
+			},
+			wantLogger: &Logger{
+				commonResource: nil,
+				commonLabels:   map[string]string{"a": "1"},
+			},
+			wantBundler: defaultBundler,
+		},
+		{
+			options:     []LoggerOption{CommonResource(customResource)},
+			wantLogger:  &Logger{commonResource: customResource},
+			wantBundler: defaultBundler,
+		},
+		{
+			options: []LoggerOption{
+				DelayThreshold(time.Minute),
+				EntryCountThreshold(99),
+				EntryByteThreshold(17),
+				EntryByteLimit(18),
+				BufferedByteLimit(19),
+			},
+			wantLogger:      &Logger{},
+			defaultResource: true,
+			wantBundler: &bundler.Bundler{
 				DelayThreshold:       time.Minute,
 				BundleCountThreshold: 99,
 				BundleByteThreshold:  17,
@@ -67,7 +95,7 @@ func TestLoggerCreation(t *testing.T) {
 		},
 	} {
 		gotLogger := c.Logger(logID, test.options...)
-		if got, want := gotLogger.commonResource, test.wantLogger.commonResource; !reflect.DeepEqual(got, want) {
+		if got, want := gotLogger.commonResource, test.wantLogger.commonResource; !test.defaultResource && !proto.Equal(got, want) {
 			t.Errorf("%v: resource: got %v, want %v", test.options, got, want)
 		}
 		if got, want := gotLogger.commonLabels, test.wantLogger.commonLabels; !reflect.DeepEqual(got, want) {
@@ -113,15 +141,16 @@ func TestToProtoStruct(t *testing.T) {
 	}
 	want := &structpb.Struct{
 		Fields: map[string]*structpb.Value{
-			"foo": {Kind: &structpb.Value_StringValue{v.Foo}},
-			"baz": {Kind: &structpb.Value_ListValue{&structpb.ListValue{
-				[]*structpb.Value{{Kind: &structpb.Value_NumberValue{1.1}}}}}},
+			"foo": {Kind: &structpb.Value_StringValue{StringValue: v.Foo}},
+			"baz": {Kind: &structpb.Value_ListValue{ListValue: &structpb.ListValue{Values: []*structpb.Value{
+				{Kind: &structpb.Value_NumberValue{NumberValue: 1.1}},
+			}}}},
 			"moo": {Kind: &structpb.Value_StructValue{
-				&structpb.Struct{
+				StructValue: &structpb.Struct{
 					Fields: map[string]*structpb.Value{
-						"a": {Kind: &structpb.Value_NumberValue{1}},
-						"b": {Kind: &structpb.Value_StringValue{"two"}},
-						"c": {Kind: &structpb.Value_BoolValue{true}},
+						"a": {Kind: &structpb.Value_NumberValue{NumberValue: 1}},
+						"b": {Kind: &structpb.Value_StringValue{StringValue: "two"}},
+						"c": {Kind: &structpb.Value_BoolValue{BoolValue: true}},
 					},
 				},
 			}},
@@ -168,7 +197,8 @@ func TestFromHTTPRequest(t *testing.T) {
 		Status:                         200,
 		ResponseSize:                   25,
 		Latency:                        100 * time.Second,
-		RemoteIP:                       "127.0.0.1",
+		LocalIP:                        "127.0.0.1",
+		RemoteIP:                       "10.0.1.1",
 		CacheHit:                       true,
 		CacheValidatedWithOriginServer: true,
 	}
@@ -181,12 +211,13 @@ func TestFromHTTPRequest(t *testing.T) {
 		ResponseSize:                   25,
 		Latency:                        &durpb.Duration{Seconds: 100},
 		UserAgent:                      "user-agent",
-		RemoteIp:                       "127.0.0.1",
+		ServerIp:                       "127.0.0.1",
+		RemoteIp:                       "10.0.1.1",
 		Referer:                        "referer",
 		CacheHit:                       true,
 		CacheValidatedWithOriginServer: true,
 	}
-	if !reflect.DeepEqual(got, want) {
+	if !proto.Equal(got, want) {
 		t.Errorf("got  %+v\nwant %+v", got, want)
 	}
 }

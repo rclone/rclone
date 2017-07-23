@@ -23,6 +23,7 @@ import (
 
 	btopt "cloud.google.com/go/bigtable/internal/option"
 	"cloud.google.com/go/longrunning"
+	lroauto "cloud.google.com/go/longrunning/autogen"
 	"golang.org/x/net/context"
 	"google.golang.org/api/option"
 	"google.golang.org/api/transport"
@@ -75,7 +76,7 @@ func (ac *AdminClient) instancePrefix() string {
 
 // Tables returns a list of the tables in the instance.
 func (ac *AdminClient) Tables(ctx context.Context) ([]string, error) {
-	ctx = mergeMetadata(ctx, ac.md)
+	ctx = mergeOutgoingMetadata(ctx, ac.md)
 	prefix := ac.instancePrefix()
 	req := &btapb.ListTablesRequest{
 		Parent: prefix,
@@ -94,7 +95,7 @@ func (ac *AdminClient) Tables(ctx context.Context) ([]string, error) {
 // CreateTable creates a new table in the instance.
 // This method may return before the table's creation is complete.
 func (ac *AdminClient) CreateTable(ctx context.Context, table string) error {
-	ctx = mergeMetadata(ctx, ac.md)
+	ctx = mergeOutgoingMetadata(ctx, ac.md)
 	prefix := ac.instancePrefix()
 	req := &btapb.CreateTableRequest{
 		Parent:  prefix,
@@ -114,7 +115,7 @@ func (ac *AdminClient) CreatePresplitTable(ctx context.Context, table string, sp
 	for _, split := range split_keys {
 		req_splits = append(req_splits, &btapb.CreateTableRequest_Split{[]byte(split)})
 	}
-	ctx = mergeMetadata(ctx, ac.md)
+	ctx = mergeOutgoingMetadata(ctx, ac.md)
 	prefix := ac.instancePrefix()
 	req := &btapb.CreateTableRequest{
 		Parent:        prefix,
@@ -128,7 +129,7 @@ func (ac *AdminClient) CreatePresplitTable(ctx context.Context, table string, sp
 // CreateColumnFamily creates a new column family in a table.
 func (ac *AdminClient) CreateColumnFamily(ctx context.Context, table, family string) error {
 	// TODO(dsymonds): Permit specifying gcexpr and any other family settings.
-	ctx = mergeMetadata(ctx, ac.md)
+	ctx = mergeOutgoingMetadata(ctx, ac.md)
 	prefix := ac.instancePrefix()
 	req := &btapb.ModifyColumnFamiliesRequest{
 		Name: prefix + "/tables/" + table,
@@ -143,7 +144,7 @@ func (ac *AdminClient) CreateColumnFamily(ctx context.Context, table, family str
 
 // DeleteTable deletes a table and all of its data.
 func (ac *AdminClient) DeleteTable(ctx context.Context, table string) error {
-	ctx = mergeMetadata(ctx, ac.md)
+	ctx = mergeOutgoingMetadata(ctx, ac.md)
 	prefix := ac.instancePrefix()
 	req := &btapb.DeleteTableRequest{
 		Name: prefix + "/tables/" + table,
@@ -154,7 +155,7 @@ func (ac *AdminClient) DeleteTable(ctx context.Context, table string) error {
 
 // DeleteColumnFamily deletes a column family in a table and all of its data.
 func (ac *AdminClient) DeleteColumnFamily(ctx context.Context, table, family string) error {
-	ctx = mergeMetadata(ctx, ac.md)
+	ctx = mergeOutgoingMetadata(ctx, ac.md)
 	prefix := ac.instancePrefix()
 	req := &btapb.ModifyColumnFamiliesRequest{
 		Name: prefix + "/tables/" + table,
@@ -169,12 +170,20 @@ func (ac *AdminClient) DeleteColumnFamily(ctx context.Context, table, family str
 
 // TableInfo represents information about a table.
 type TableInfo struct {
+	// DEPRECATED - This field is deprecated. Please use FamilyInfos instead.
 	Families []string
+	FamilyInfos []FamilyInfo
+}
+
+// FamilyInfo represents information about a column family.
+type FamilyInfo struct {
+	Name string
+	GCPolicy string
 }
 
 // TableInfo retrieves information about a table.
 func (ac *AdminClient) TableInfo(ctx context.Context, table string) (*TableInfo, error) {
-	ctx = mergeMetadata(ctx, ac.md)
+	ctx = mergeOutgoingMetadata(ctx, ac.md)
 	prefix := ac.instancePrefix()
 	req := &btapb.GetTableRequest{
 		Name: prefix + "/tables/" + table,
@@ -184,8 +193,9 @@ func (ac *AdminClient) TableInfo(ctx context.Context, table string) (*TableInfo,
 		return nil, err
 	}
 	ti := &TableInfo{}
-	for fam := range res.ColumnFamilies {
-		ti.Families = append(ti.Families, fam)
+	for name, fam := range res.ColumnFamilies {
+		ti.Families = append(ti.Families, name)
+		ti.FamilyInfos = append(ti.FamilyInfos, FamilyInfo{Name: name, GCPolicy: GCRuleToString(fam.GcRule)})
 	}
 	return ti, nil
 }
@@ -194,7 +204,7 @@ func (ac *AdminClient) TableInfo(ctx context.Context, table string) (*TableInfo,
 // GC executes opportunistically in the background; table reads may return data
 // matching the GC policy.
 func (ac *AdminClient) SetGCPolicy(ctx context.Context, table, family string, policy GCPolicy) error {
-	ctx = mergeMetadata(ctx, ac.md)
+	ctx = mergeOutgoingMetadata(ctx, ac.md)
 	prefix := ac.instancePrefix()
 	req := &btapb.ModifyColumnFamiliesRequest{
 		Name: prefix + "/tables/" + table,
@@ -207,13 +217,26 @@ func (ac *AdminClient) SetGCPolicy(ctx context.Context, table, family string, po
 	return err
 }
 
+// DropRowRange permanently deletes a row range from the specified table.
+func (ac *AdminClient) DropRowRange(ctx context.Context, table, rowKeyPrefix string) error {
+	ctx = mergeOutgoingMetadata(ctx, ac.md)
+	prefix := ac.instancePrefix()
+	req := &btapb.DropRowRangeRequest{
+		Name:   prefix + "/tables/" + table,
+		Target: &btapb.DropRowRangeRequest_RowKeyPrefix{[]byte(rowKeyPrefix)},
+	}
+	_, err := ac.tClient.DropRowRange(ctx, req)
+	return err
+}
+
 const instanceAdminAddr = "bigtableadmin.googleapis.com:443"
 
 // InstanceAdminClient is a client type for performing admin operations on instances.
 // These operations can be substantially more dangerous than those provided by AdminClient.
 type InstanceAdminClient struct {
-	conn    *grpc.ClientConn
-	iClient btapb.BigtableInstanceAdminClient
+	conn      *grpc.ClientConn
+	iClient   btapb.BigtableInstanceAdminClient
+	lroClient *lroauto.OperationsClient
 
 	project string
 
@@ -232,9 +255,22 @@ func NewInstanceAdminClient(ctx context.Context, project string, opts ...option.
 	if err != nil {
 		return nil, fmt.Errorf("dialing: %v", err)
 	}
+
+	lroClient, err := lroauto.NewOperationsClient(ctx, option.WithGRPCConn(conn))
+	if err != nil {
+		// This error "should not happen", since we are just reusing old connection
+		// and never actually need to dial.
+		// If this does happen, we could leak conn. However, we cannot close conn:
+		// If the user invoked the function with option.WithGRPCConn,
+		// we would close a connection that's still in use.
+		// TODO(pongad): investigate error conditions.
+		return nil, err
+	}
+
 	return &InstanceAdminClient{
-		conn:    conn,
-		iClient: btapb.NewBigtableInstanceAdminClient(conn),
+		conn:      conn,
+		iClient:   btapb.NewBigtableInstanceAdminClient(conn),
+		lroClient: lroClient,
 
 		project: project,
 		md:      metadata.Pairs(resourcePrefixHeader, "projects/"+project),
@@ -279,7 +315,7 @@ var instanceNameRegexp = regexp.MustCompile(`^projects/([^/]+)/instances/([a-z][
 // CreateInstance creates a new instance in the project.
 // This method will return when the instance has been created or when an error occurs.
 func (iac *InstanceAdminClient) CreateInstance(ctx context.Context, conf *InstanceConf) error {
-	ctx = mergeMetadata(ctx, iac.md)
+	ctx = mergeOutgoingMetadata(ctx, iac.md)
 	req := &btapb.CreateInstanceRequest{
 		Parent:     "projects/" + iac.project,
 		InstanceId: conf.InstanceId,
@@ -298,12 +334,12 @@ func (iac *InstanceAdminClient) CreateInstance(ctx context.Context, conf *Instan
 		return err
 	}
 	resp := btapb.Instance{}
-	return longrunning.InternalNewOperation(iac.conn, lro).Wait(ctx, &resp)
+	return longrunning.InternalNewOperation(iac.lroClient, lro).Wait(ctx, &resp)
 }
 
 // DeleteInstance deletes an instance from the project.
 func (iac *InstanceAdminClient) DeleteInstance(ctx context.Context, instanceId string) error {
-	ctx = mergeMetadata(ctx, iac.md)
+	ctx = mergeOutgoingMetadata(ctx, iac.md)
 	req := &btapb.DeleteInstanceRequest{"projects/" + iac.project + "/instances/" + instanceId}
 	_, err := iac.iClient.DeleteInstance(ctx, req)
 	return err
@@ -311,7 +347,7 @@ func (iac *InstanceAdminClient) DeleteInstance(ctx context.Context, instanceId s
 
 // Instances returns a list of instances in the project.
 func (iac *InstanceAdminClient) Instances(ctx context.Context) ([]*InstanceInfo, error) {
-	ctx = mergeMetadata(ctx, iac.md)
+	ctx = mergeOutgoingMetadata(ctx, iac.md)
 	req := &btapb.ListInstancesRequest{
 		Parent: "projects/" + iac.project,
 	}
@@ -332,4 +368,25 @@ func (iac *InstanceAdminClient) Instances(ctx context.Context) ([]*InstanceInfo,
 		})
 	}
 	return is, nil
+}
+
+// InstanceInfo returns information about an instance.
+func (iac *InstanceAdminClient) InstanceInfo(ctx context.Context, instanceId string) (*InstanceInfo, error) {
+	ctx = mergeOutgoingMetadata(ctx, iac.md)
+	req := &btapb.GetInstanceRequest{
+		Name: "projects/" + iac.project + "/instances/" + instanceId,
+	}
+	res, err := iac.iClient.GetInstance(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	m := instanceNameRegexp.FindStringSubmatch(res.Name)
+	if m == nil {
+		return nil, fmt.Errorf("malformed instance name %q", res.Name)
+	}
+	return &InstanceInfo{
+		Name:        m[2],
+		DisplayName: res.DisplayName,
+	}, nil
 }

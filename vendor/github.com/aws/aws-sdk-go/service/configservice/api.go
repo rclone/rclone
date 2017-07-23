@@ -6605,4 +6605,7 @@ const (
 
 	// ResourceTypeAwsRedshiftEventSubscription is a ResourceType enum value
 	ResourceTypeAwsRedshiftEventSubscription = "AWS::Redshift::EventSubscription"
+
+	// ResourceTypeAwsCloudWatchAlarm is a ResourceType enum value
+	ResourceTypeAwsCloudWatchAlarm = "AWS::CloudWatch::Alarm"
 )

@@ -359,9 +359,8 @@ func testPermissionsPassing(withPermissions bool, t *testing.T) {
 		PublicKeyCallback: func(conn ConnMetadata, key PublicKey) (*Permissions, error) {
 			if conn.User() == "nopermissions" {
 				return nil, nil
-			} else {
-				return &Permissions{}, nil
 			}
+			return &Permissions{}, nil
 		},
 	}
 	serverConfig.AddHostKey(testSigners["rsa"])
@@ -510,9 +509,8 @@ func TestClientAuthMaxAuthTries(t *testing.T) {
 					n--
 					if n == 0 {
 						return "right", nil
-					} else {
-						return "wrong", nil
 					}
+					return "wrong", nil
 				}), tries),
 			},
 			HostKeyCallback: InsecureIgnoreHostKey(),
@@ -575,5 +573,56 @@ func TestClientAuthMaxAuthTriesPublicKey(t *testing.T) {
 		t.Fatalf("client: got no error, want %s", expectedErr)
 	} else if err.Error() != expectedErr.Error() {
 		t.Fatalf("client: got %s, want %s", err, expectedErr)
+	}
+}
+
+// Test whether authentication errors are being properly logged if all
+// authentication methods have been exhausted
+func TestClientAuthErrorList(t *testing.T) {
+	publicKeyErr := errors.New("This is an error from PublicKeyCallback")
+
+	clientConfig := &ClientConfig{
+		Auth: []AuthMethod{
+			PublicKeys(testSigners["rsa"]),
+		},
+		HostKeyCallback: InsecureIgnoreHostKey(),
+	}
+	serverConfig := &ServerConfig{
+		PublicKeyCallback: func(_ ConnMetadata, _ PublicKey) (*Permissions, error) {
+			return nil, publicKeyErr
+		},
+	}
+	serverConfig.AddHostKey(testSigners["rsa"])
+
+	c1, c2, err := netPipe()
+	if err != nil {
+		t.Fatalf("netPipe: %v", err)
+	}
+	defer c1.Close()
+	defer c2.Close()
+
+	go NewClientConn(c2, "", clientConfig)
+	_, err = newServer(c1, serverConfig)
+	if err == nil {
+		t.Fatal("newServer: got nil, expected errors")
+	}
+
+	authErrs, ok := err.(*ServerAuthError)
+	if !ok {
+		t.Fatalf("errors: got %T, want *ssh.ServerAuthError", err)
+	}
+	for i, e := range authErrs.Errors {
+		switch i {
+		case 0:
+			if e.Error() != "no auth passed yet" {
+				t.Fatalf("errors: got %v, want no auth passed yet", e.Error())
+			}
+		case 1:
+			if e != publicKeyErr {
+				t.Fatalf("errors: got %v, want %v", e, publicKeyErr)
+			}
+		default:
+			t.Fatalf("errors: got %v, expected 2 errors", authErrs.Errors)
+		}
 	}
 }

@@ -41,3 +41,10 @@ func TestValidDatabaseName(t *testing.T) {
 		}
 	}
 }
+
+func TestReadOnlyTransactionClose(t *testing.T) {
+	// Closing a ReadOnlyTransaction shouldn't panic.
+	c := &Client{}
+	tx := c.ReadOnlyTransaction()
+	tx.Close()
+}

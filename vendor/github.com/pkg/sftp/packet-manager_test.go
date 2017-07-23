@@ -2,6 +2,7 @@ package sftp
 
 import (
 	"encoding"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -89,6 +90,19 @@ func TestPacketManager(t *testing.T) {
 	s.close()
 }
 
+func (p sshFxpRemovePacket) String() string {
+	return fmt.Sprintf("RmPct:%d", p.ID)
+}
+func (p sshFxpOpenPacket) String() string {
+	return fmt.Sprintf("OpPct:%d", p.ID)
+}
+func (p sshFxpWritePacket) String() string {
+	return fmt.Sprintf("WrPct:%d", p.ID)
+}
+func (p sshFxpClosePacket) String() string {
+	return fmt.Sprintf("ClPct:%d", p.ID)
+}
+
 // Test what happens when the pool processes a close packet on a file that it
 // is still reading from.
 func TestCloseOutOfOrder(t *testing.T) {
@@ -108,18 +122,20 @@ func TestCloseOutOfOrder(t *testing.T) {
 	pktMgr := newPktMgr(sender)
 	wg := sync.WaitGroup{}
 	wg.Add(len(packets))
-	worker := func(ch requestChan) {
-		for pkt := range ch {
-			if _, ok := pkt.(*sshFxpWritePacket); ok {
-				// sleep to cause writes to come after close/remove
-				time.Sleep(time.Millisecond)
+	runWorker := func(ch requestChan) {
+		go func() {
+			for pkt := range ch {
+				if _, ok := pkt.(*sshFxpWritePacket); ok {
+					// sleep to cause writes to come after close/remove
+					time.Sleep(time.Millisecond)
+				}
+				pktMgr.working.Done()
+				recvChan <- pkt
+				wg.Done()
 			}
-			pktMgr.working.Done()
-			recvChan <- pkt
-			wg.Done()
-		}
+		}()
 	}
-	pktChan := pktMgr.workerChan(worker)
+	pktChan := pktMgr.workerChan(runWorker)
 	for _, p := range packets {
 		pktChan <- p
 	}

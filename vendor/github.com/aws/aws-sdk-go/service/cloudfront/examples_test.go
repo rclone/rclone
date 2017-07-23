@@ -3,1440 +3,1080 @@
 package cloudfront_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudfront"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleCloudFront_CreateCloudFrontOriginAccessIdentity() {
-	sess := session.Must(session.NewSession())
-
-	svc := cloudfront.New(sess)
-
-	params := &cloudfront.CreateCloudFrontOriginAccessIdentityInput{
-		CloudFrontOriginAccessIdentityConfig: &cloudfront.OriginAccessIdentityConfig{ // Required
-			CallerReference: aws.String("string"), // Required
-			Comment:         aws.String("string"), // Required
-		},
-	}
-	resp, err := svc.CreateCloudFrontOriginAccessIdentity(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
+		panic(err)
 	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	return &t
 }
 
-func ExampleCloudFront_CreateDistribution() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_CreateCloudFrontOriginAccessIdentity_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.CreateCloudFrontOriginAccessIdentityInput{}
 
-	params := &cloudfront.CreateDistributionInput{
-		DistributionConfig: &cloudfront.DistributionConfig{ // Required
-			CallerReference: aws.String("string"), // Required
-			Comment:         aws.String("string"), // Required
-			DefaultCacheBehavior: &cloudfront.DefaultCacheBehavior{ // Required
-				ForwardedValues: &cloudfront.ForwardedValues{ // Required
-					Cookies: &cloudfront.CookiePreference{ // Required
-						Forward: aws.String("ItemSelection"), // Required
-						WhitelistedNames: &cloudfront.CookieNames{
-							Quantity: aws.Int64(1), // Required
-							Items: []*string{
-								aws.String("string"), // Required
-								// More values...
-							},
-						},
-					},
-					QueryString: aws.Bool(true), // Required
-					Headers: &cloudfront.Headers{
-						Quantity: aws.Int64(1), // Required
-						Items: []*string{
-							aws.String("string"), // Required
-							// More values...
-						},
-					},
-					QueryStringCacheKeys: &cloudfront.QueryStringCacheKeys{
-						Quantity: aws.Int64(1), // Required
-						Items: []*string{
-							aws.String("string"), // Required
-							// More values...
-						},
-					},
-				},
-				MinTTL:         aws.Int64(1),         // Required
-				TargetOriginId: aws.String("string"), // Required
-				TrustedSigners: &cloudfront.TrustedSigners{ // Required
-					Enabled:  aws.Bool(true), // Required
-					Quantity: aws.Int64(1),   // Required
-					Items: []*string{
-						aws.String("string"), // Required
-						// More values...
-					},
-				},
-				ViewerProtocolPolicy: aws.String("ViewerProtocolPolicy"), // Required
-				AllowedMethods: &cloudfront.AllowedMethods{
-					Items: []*string{ // Required
-						aws.String("Method"), // Required
-						// More values...
-					},
-					Quantity: aws.Int64(1), // Required
-					CachedMethods: &cloudfront.CachedMethods{
-						Items: []*string{ // Required
-							aws.String("Method"), // Required
-							// More values...
-						},
-						Quantity: aws.Int64(1), // Required
-					},
-				},
-				Compress:   aws.Bool(true),
-				DefaultTTL: aws.Int64(1),
-				LambdaFunctionAssociations: &cloudfront.LambdaFunctionAssociations{
-					Quantity: aws.Int64(1), // Required
-					Items: []*cloudfront.LambdaFunctionAssociation{
-						{ // Required
-							EventType:         aws.String("EventType"),
-							LambdaFunctionARN: aws.String("string"),
-						},
-						// More values...
-					},
-				},
-				MaxTTL:          aws.Int64(1),
-				SmoothStreaming: aws.Bool(true),
-			},
-			Enabled: aws.Bool(true), // Required
-			Origins: &cloudfront.Origins{ // Required
-				Quantity: aws.Int64(1), // Required
-				Items: []*cloudfront.Origin{
-					{ // Required
-						DomainName: aws.String("string"), // Required
-						Id:         aws.String("string"), // Required
-						CustomHeaders: &cloudfront.CustomHeaders{
-							Quantity: aws.Int64(1), // Required
-							Items: []*cloudfront.OriginCustomHeader{
-								{ // Required
-									HeaderName:  aws.String("string"), // Required
-									HeaderValue: aws.String("string"), // Required
-								},
-								// More values...
-							},
-						},
-						CustomOriginConfig: &cloudfront.CustomOriginConfig{
-							HTTPPort:               aws.Int64(1),                       // Required
-							HTTPSPort:              aws.Int64(1),                       // Required
-							OriginProtocolPolicy:   aws.String("OriginProtocolPolicy"), // Required
-							OriginKeepaliveTimeout: aws.Int64(1),
-							OriginReadTimeout:      aws.Int64(1),
-							OriginSslProtocols: &cloudfront.OriginSslProtocols{
-								Items: []*string{ // Required
-									aws.String("SslProtocol"), // Required
-									// More values...
-								},
-								Quantity: aws.Int64(1), // Required
-							},
-						},
-						OriginPath: aws.String("string"),
-						S3OriginConfig: &cloudfront.S3OriginConfig{
-							OriginAccessIdentity: aws.String("string"), // Required
-						},
-					},
-					// More values...
-				},
-			},
-			Aliases: &cloudfront.Aliases{
-				Quantity: aws.Int64(1), // Required
-				Items: []*string{
-					aws.String("string"), // Required
-					// More values...
-				},
-			},
-			CacheBehaviors: &cloudfront.CacheBehaviors{
-				Quantity: aws.Int64(1), // Required
-				Items: []*cloudfront.CacheBehavior{
-					{ // Required
-						ForwardedValues: &cloudfront.ForwardedValues{ // Required
-							Cookies: &cloudfront.CookiePreference{ // Required
-								Forward: aws.String("ItemSelection"), // Required
-								WhitelistedNames: &cloudfront.CookieNames{
-									Quantity: aws.Int64(1), // Required
-									Items: []*string{
-										aws.String("string"), // Required
-										// More values...
-									},
-								},
-							},
-							QueryString: aws.Bool(true), // Required
-							Headers: &cloudfront.Headers{
-								Quantity: aws.Int64(1), // Required
-								Items: []*string{
-									aws.String("string"), // Required
-									// More values...
-								},
-							},
-							QueryStringCacheKeys: &cloudfront.QueryStringCacheKeys{
-								Quantity: aws.Int64(1), // Required
-								Items: []*string{
-									aws.String("string"), // Required
-									// More values...
-								},
-							},
-						},
-						MinTTL:         aws.Int64(1),         // Required
-						PathPattern:    aws.String("string"), // Required
-						TargetOriginId: aws.String("string"), // Required
-						TrustedSigners: &cloudfront.TrustedSigners{ // Required
-							Enabled:  aws.Bool(true), // Required
-							Quantity: aws.Int64(1),   // Required
-							Items: []*string{
-								aws.String("string"), // Required
-								// More values...
-							},
-						},
-						ViewerProtocolPolicy: aws.String("ViewerProtocolPolicy"), // Required
-						AllowedMethods: &cloudfront.AllowedMethods{
-							Items: []*string{ // Required
-								aws.String("Method"), // Required
-								// More values...
-							},
-							Quantity: aws.Int64(1), // Required
-							CachedMethods: &cloudfront.CachedMethods{
-								Items: []*string{ // Required
-									aws.String("Method"), // Required
-									// More values...
-								},
-								Quantity: aws.Int64(1), // Required
-							},
-						},
-						Compress:   aws.Bool(true),
-						DefaultTTL: aws.Int64(1),
-						LambdaFunctionAssociations: &cloudfront.LambdaFunctionAssociations{
-							Quantity: aws.Int64(1), // Required
-							Items: []*cloudfront.LambdaFunctionAssociation{
-								{ // Required
-									EventType:         aws.String("EventType"),
-									LambdaFunctionARN: aws.String("string"),
-								},
-								// More values...
-							},
-						},
-						MaxTTL:          aws.Int64(1),
-						SmoothStreaming: aws.Bool(true),
-					},
-					// More values...
-				},
-			},
-			CustomErrorResponses: &cloudfront.CustomErrorResponses{
-				Quantity: aws.Int64(1), // Required
-				Items: []*cloudfront.CustomErrorResponse{
-					{ // Required
-						ErrorCode:          aws.Int64(1), // Required
-						ErrorCachingMinTTL: aws.Int64(1),
-						ResponseCode:       aws.String("string"),
-						ResponsePagePath:   aws.String("string"),
-					},
-					// More values...
-				},
-			},
-			DefaultRootObject: aws.String("string"),
-			HttpVersion:       aws.String("HttpVersion"),
-			IsIPV6Enabled:     aws.Bool(true),
-			Logging: &cloudfront.LoggingConfig{
-				Bucket:         aws.String("string"), // Required
-				Enabled:        aws.Bool(true),       // Required
-				IncludeCookies: aws.Bool(true),       // Required
-				Prefix:         aws.String("string"), // Required
-			},
-			PriceClass: aws.String("PriceClass"),
-			Restrictions: &cloudfront.Restrictions{
-				GeoRestriction: &cloudfront.GeoRestriction{ // Required
-					Quantity:        aws.Int64(1),                     // Required
-					RestrictionType: aws.String("GeoRestrictionType"), // Required
-					Items: []*string{
-						aws.String("string"), // Required
-						// More values...
-					},
-				},
-			},
-			ViewerCertificate: &cloudfront.ViewerCertificate{
-				ACMCertificateArn:            aws.String("string"),
-				Certificate:                  aws.String("string"),
-				CertificateSource:            aws.String("CertificateSource"),
-				CloudFrontDefaultCertificate: aws.Bool(true),
-				IAMCertificateId:             aws.String("string"),
-				MinimumProtocolVersion:       aws.String("MinimumProtocolVersion"),
-				SSLSupportMethod:             aws.String("SSLSupportMethod"),
-			},
-			WebACLId: aws.String("string"),
-		},
-	}
-	resp, err := svc.CreateDistribution(params)
-
+	result, err := svc.CreateCloudFrontOriginAccessIdentity(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeOriginAccessIdentityAlreadyExists:
+				fmt.Println(cloudfront.ErrCodeOriginAccessIdentityAlreadyExists, aerr.Error())
+			case cloudfront.ErrCodeMissingBody:
+				fmt.Println(cloudfront.ErrCodeMissingBody, aerr.Error())
+			case cloudfront.ErrCodeTooManyCloudFrontOriginAccessIdentities:
+				fmt.Println(cloudfront.ErrCodeTooManyCloudFrontOriginAccessIdentities, aerr.Error())
+			case cloudfront.ErrCodeInvalidArgument:
+				fmt.Println(cloudfront.ErrCodeInvalidArgument, aerr.Error())
+			case cloudfront.ErrCodeInconsistentQuantities:
+				fmt.Println(cloudfront.ErrCodeInconsistentQuantities, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_CreateDistributionWithTags() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_CreateDistribution_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.CreateDistributionInput{}
 
-	params := &cloudfront.CreateDistributionWithTagsInput{
-		DistributionConfigWithTags: &cloudfront.DistributionConfigWithTags{ // Required
-			DistributionConfig: &cloudfront.DistributionConfig{ // Required
-				CallerReference: aws.String("string"), // Required
-				Comment:         aws.String("string"), // Required
-				DefaultCacheBehavior: &cloudfront.DefaultCacheBehavior{ // Required
-					ForwardedValues: &cloudfront.ForwardedValues{ // Required
-						Cookies: &cloudfront.CookiePreference{ // Required
-							Forward: aws.String("ItemSelection"), // Required
-							WhitelistedNames: &cloudfront.CookieNames{
-								Quantity: aws.Int64(1), // Required
-								Items: []*string{
-									aws.String("string"), // Required
-									// More values...
-								},
-							},
-						},
-						QueryString: aws.Bool(true), // Required
-						Headers: &cloudfront.Headers{
-							Quantity: aws.Int64(1), // Required
-							Items: []*string{
-								aws.String("string"), // Required
-								// More values...
-							},
-						},
-						QueryStringCacheKeys: &cloudfront.QueryStringCacheKeys{
-							Quantity: aws.Int64(1), // Required
-							Items: []*string{
-								aws.String("string"), // Required
-								// More values...
-							},
-						},
-					},
-					MinTTL:         aws.Int64(1),         // Required
-					TargetOriginId: aws.String("string"), // Required
-					TrustedSigners: &cloudfront.TrustedSigners{ // Required
-						Enabled:  aws.Bool(true), // Required
-						Quantity: aws.Int64(1),   // Required
-						Items: []*string{
-							aws.String("string"), // Required
-							// More values...
-						},
-					},
-					ViewerProtocolPolicy: aws.String("ViewerProtocolPolicy"), // Required
-					AllowedMethods: &cloudfront.AllowedMethods{
-						Items: []*string{ // Required
-							aws.String("Method"), // Required
-							// More values...
-						},
-						Quantity: aws.Int64(1), // Required
-						CachedMethods: &cloudfront.CachedMethods{
-							Items: []*string{ // Required
-								aws.String("Method"), // Required
-								// More values...
-							},
-							Quantity: aws.Int64(1), // Required
-						},
-					},
-					Compress:   aws.Bool(true),
-					DefaultTTL: aws.Int64(1),
-					LambdaFunctionAssociations: &cloudfront.LambdaFunctionAssociations{
-						Quantity: aws.Int64(1), // Required
-						Items: []*cloudfront.LambdaFunctionAssociation{
-							{ // Required
-								EventType:         aws.String("EventType"),
-								LambdaFunctionARN: aws.String("string"),
-							},
-							// More values...
-						},
-					},
-					MaxTTL:          aws.Int64(1),
-					SmoothStreaming: aws.Bool(true),
-				},
-				Enabled: aws.Bool(true), // Required
-				Origins: &cloudfront.Origins{ // Required
-					Quantity: aws.Int64(1), // Required
-					Items: []*cloudfront.Origin{
-						{ // Required
-							DomainName: aws.String("string"), // Required
-							Id:         aws.String("string"), // Required
-							CustomHeaders: &cloudfront.CustomHeaders{
-								Quantity: aws.Int64(1), // Required
-								Items: []*cloudfront.OriginCustomHeader{
-									{ // Required
-										HeaderName:  aws.String("string"), // Required
-										HeaderValue: aws.String("string"), // Required
-									},
-									// More values...
-								},
-							},
-							CustomOriginConfig: &cloudfront.CustomOriginConfig{
-								HTTPPort:               aws.Int64(1),                       // Required
-								HTTPSPort:              aws.Int64(1),                       // Required
-								OriginProtocolPolicy:   aws.String("OriginProtocolPolicy"), // Required
-								OriginKeepaliveTimeout: aws.Int64(1),
-								OriginReadTimeout:      aws.Int64(1),
-								OriginSslProtocols: &cloudfront.OriginSslProtocols{
-									Items: []*string{ // Required
-										aws.String("SslProtocol"), // Required
-										// More values...
-									},
-									Quantity: aws.Int64(1), // Required
-								},
-							},
-							OriginPath: aws.String("string"),
-							S3OriginConfig: &cloudfront.S3OriginConfig{
-								OriginAccessIdentity: aws.String("string"), // Required
-							},
-						},
-						// More values...
-					},
-				},
-				Aliases: &cloudfront.Aliases{
-					Quantity: aws.Int64(1), // Required
-					Items: []*string{
-						aws.String("string"), // Required
-						// More values...
-					},
-				},
-				CacheBehaviors: &cloudfront.CacheBehaviors{
-					Quantity: aws.Int64(1), // Required
-					Items: []*cloudfront.CacheBehavior{
-						{ // Required
-							ForwardedValues: &cloudfront.ForwardedValues{ // Required
-								Cookies: &cloudfront.CookiePreference{ // Required
-									Forward: aws.String("ItemSelection"), // Required
-									WhitelistedNames: &cloudfront.CookieNames{
-										Quantity: aws.Int64(1), // Required
-										Items: []*string{
-											aws.String("string"), // Required
-											// More values...
-										},
-									},
-								},
-								QueryString: aws.Bool(true), // Required
-								Headers: &cloudfront.Headers{
-									Quantity: aws.Int64(1), // Required
-									Items: []*string{
-										aws.String("string"), // Required
-										// More values...
-									},
-								},
-								QueryStringCacheKeys: &cloudfront.QueryStringCacheKeys{
-									Quantity: aws.Int64(1), // Required
-									Items: []*string{
-										aws.String("string"), // Required
-										// More values...
-									},
-								},
-							},
-							MinTTL:         aws.Int64(1),         // Required
-							PathPattern:    aws.String("string"), // Required
-							TargetOriginId: aws.String("string"), // Required
-							TrustedSigners: &cloudfront.TrustedSigners{ // Required
-								Enabled:  aws.Bool(true), // Required
-								Quantity: aws.Int64(1),   // Required
-								Items: []*string{
-									aws.String("string"), // Required
-									// More values...
-								},
-							},
-							ViewerProtocolPolicy: aws.String("ViewerProtocolPolicy"), // Required
-							AllowedMethods: &cloudfront.AllowedMethods{
-								Items: []*string{ // Required
-									aws.String("Method"), // Required
-									// More values...
-								},
-								Quantity: aws.Int64(1), // Required
-								CachedMethods: &cloudfront.CachedMethods{
-									Items: []*string{ // Required
-										aws.String("Method"), // Required
-										// More values...
-									},
-									Quantity: aws.Int64(1), // Required
-								},
-							},
-							Compress:   aws.Bool(true),
-							DefaultTTL: aws.Int64(1),
-							LambdaFunctionAssociations: &cloudfront.LambdaFunctionAssociations{
-								Quantity: aws.Int64(1), // Required
-								Items: []*cloudfront.LambdaFunctionAssociation{
-									{ // Required
-										EventType:         aws.String("EventType"),
-										LambdaFunctionARN: aws.String("string"),
-									},
-									// More values...
-								},
-							},
-							MaxTTL:          aws.Int64(1),
-							SmoothStreaming: aws.Bool(true),
-						},
-						// More values...
-					},
-				},
-				CustomErrorResponses: &cloudfront.CustomErrorResponses{
-					Quantity: aws.Int64(1), // Required
-					Items: []*cloudfront.CustomErrorResponse{
-						{ // Required
-							ErrorCode:          aws.Int64(1), // Required
-							ErrorCachingMinTTL: aws.Int64(1),
-							ResponseCode:       aws.String("string"),
-							ResponsePagePath:   aws.String("string"),
-						},
-						// More values...
-					},
-				},
-				DefaultRootObject: aws.String("string"),
-				HttpVersion:       aws.String("HttpVersion"),
-				IsIPV6Enabled:     aws.Bool(true),
-				Logging: &cloudfront.LoggingConfig{
-					Bucket:         aws.String("string"), // Required
-					Enabled:        aws.Bool(true),       // Required
-					IncludeCookies: aws.Bool(true),       // Required
-					Prefix:         aws.String("string"), // Required
-				},
-				PriceClass: aws.String("PriceClass"),
-				Restrictions: &cloudfront.Restrictions{
-					GeoRestriction: &cloudfront.GeoRestriction{ // Required
-						Quantity:        aws.Int64(1),                     // Required
-						RestrictionType: aws.String("GeoRestrictionType"), // Required
-						Items: []*string{
-							aws.String("string"), // Required
-							// More values...
-						},
-					},
-				},
-				ViewerCertificate: &cloudfront.ViewerCertificate{
-					ACMCertificateArn:            aws.String("string"),
-					Certificate:                  aws.String("string"),
-					CertificateSource:            aws.String("CertificateSource"),
-					CloudFrontDefaultCertificate: aws.Bool(true),
-					IAMCertificateId:             aws.String("string"),
-					MinimumProtocolVersion:       aws.String("MinimumProtocolVersion"),
-					SSLSupportMethod:             aws.String("SSLSupportMethod"),
-				},
-				WebACLId: aws.String("string"),
-			},
-			Tags: &cloudfront.Tags{ // Required
-				Items: []*cloudfront.Tag{
-					{ // Required
-						Key:   aws.String("TagKey"), // Required
-						Value: aws.String("TagValue"),
-					},
-					// More values...
-				},
-			},
-		},
-	}
-	resp, err := svc.CreateDistributionWithTags(params)
-
+	result, err := svc.CreateDistribution(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeCNAMEAlreadyExists:
+				fmt.Println(cloudfront.ErrCodeCNAMEAlreadyExists, aerr.Error())
+			case cloudfront.ErrCodeDistributionAlreadyExists:
+				fmt.Println(cloudfront.ErrCodeDistributionAlreadyExists, aerr.Error())
+			case cloudfront.ErrCodeInvalidOrigin:
+				fmt.Println(cloudfront.ErrCodeInvalidOrigin, aerr.Error())
+			case cloudfront.ErrCodeInvalidOriginAccessIdentity:
+				fmt.Println(cloudfront.ErrCodeInvalidOriginAccessIdentity, aerr.Error())
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			case cloudfront.ErrCodeTooManyTrustedSigners:
+				fmt.Println(cloudfront.ErrCodeTooManyTrustedSigners, aerr.Error())
+			case cloudfront.ErrCodeTrustedSignerDoesNotExist:
+				fmt.Println(cloudfront.ErrCodeTrustedSignerDoesNotExist, aerr.Error())
+			case cloudfront.ErrCodeInvalidViewerCertificate:
+				fmt.Println(cloudfront.ErrCodeInvalidViewerCertificate, aerr.Error())
+			case cloudfront.ErrCodeInvalidMinimumProtocolVersion:
+				fmt.Println(cloudfront.ErrCodeInvalidMinimumProtocolVersion, aerr.Error())
+			case cloudfront.ErrCodeMissingBody:
+				fmt.Println(cloudfront.ErrCodeMissingBody, aerr.Error())
+			case cloudfront.ErrCodeTooManyDistributionCNAMEs:
+				fmt.Println(cloudfront.ErrCodeTooManyDistributionCNAMEs, aerr.Error())
+			case cloudfront.ErrCodeTooManyDistributions:
+				fmt.Println(cloudfront.ErrCodeTooManyDistributions, aerr.Error())
+			case cloudfront.ErrCodeInvalidDefaultRootObject:
+				fmt.Println(cloudfront.ErrCodeInvalidDefaultRootObject, aerr.Error())
+			case cloudfront.ErrCodeInvalidRelativePath:
+				fmt.Println(cloudfront.ErrCodeInvalidRelativePath, aerr.Error())
+			case cloudfront.ErrCodeInvalidErrorCode:
+				fmt.Println(cloudfront.ErrCodeInvalidErrorCode, aerr.Error())
+			case cloudfront.ErrCodeInvalidResponseCode:
+				fmt.Println(cloudfront.ErrCodeInvalidResponseCode, aerr.Error())
+			case cloudfront.ErrCodeInvalidArgument:
+				fmt.Println(cloudfront.ErrCodeInvalidArgument, aerr.Error())
+			case cloudfront.ErrCodeInvalidRequiredProtocol:
+				fmt.Println(cloudfront.ErrCodeInvalidRequiredProtocol, aerr.Error())
+			case cloudfront.ErrCodeNoSuchOrigin:
+				fmt.Println(cloudfront.ErrCodeNoSuchOrigin, aerr.Error())
+			case cloudfront.ErrCodeTooManyOrigins:
+				fmt.Println(cloudfront.ErrCodeTooManyOrigins, aerr.Error())
+			case cloudfront.ErrCodeTooManyCacheBehaviors:
+				fmt.Println(cloudfront.ErrCodeTooManyCacheBehaviors, aerr.Error())
+			case cloudfront.ErrCodeTooManyCookieNamesInWhiteList:
+				fmt.Println(cloudfront.ErrCodeTooManyCookieNamesInWhiteList, aerr.Error())
+			case cloudfront.ErrCodeInvalidForwardCookies:
+				fmt.Println(cloudfront.ErrCodeInvalidForwardCookies, aerr.Error())
+			case cloudfront.ErrCodeTooManyHeadersInForwardedValues:
+				fmt.Println(cloudfront.ErrCodeTooManyHeadersInForwardedValues, aerr.Error())
+			case cloudfront.ErrCodeInvalidHeadersForS3Origin:
+				fmt.Println(cloudfront.ErrCodeInvalidHeadersForS3Origin, aerr.Error())
+			case cloudfront.ErrCodeInconsistentQuantities:
+				fmt.Println(cloudfront.ErrCodeInconsistentQuantities, aerr.Error())
+			case cloudfront.ErrCodeTooManyCertificates:
+				fmt.Println(cloudfront.ErrCodeTooManyCertificates, aerr.Error())
+			case cloudfront.ErrCodeInvalidLocationCode:
+				fmt.Println(cloudfront.ErrCodeInvalidLocationCode, aerr.Error())
+			case cloudfront.ErrCodeInvalidGeoRestrictionParameter:
+				fmt.Println(cloudfront.ErrCodeInvalidGeoRestrictionParameter, aerr.Error())
+			case cloudfront.ErrCodeInvalidProtocolSettings:
+				fmt.Println(cloudfront.ErrCodeInvalidProtocolSettings, aerr.Error())
+			case cloudfront.ErrCodeInvalidTTLOrder:
+				fmt.Println(cloudfront.ErrCodeInvalidTTLOrder, aerr.Error())
+			case cloudfront.ErrCodeInvalidWebACLId:
+				fmt.Println(cloudfront.ErrCodeInvalidWebACLId, aerr.Error())
+			case cloudfront.ErrCodeTooManyOriginCustomHeaders:
+				fmt.Println(cloudfront.ErrCodeTooManyOriginCustomHeaders, aerr.Error())
+			case cloudfront.ErrCodeTooManyQueryStringParameters:
+				fmt.Println(cloudfront.ErrCodeTooManyQueryStringParameters, aerr.Error())
+			case cloudfront.ErrCodeInvalidQueryStringParameters:
+				fmt.Println(cloudfront.ErrCodeInvalidQueryStringParameters, aerr.Error())
+			case cloudfront.ErrCodeTooManyDistributionsWithLambdaAssociations:
+				fmt.Println(cloudfront.ErrCodeTooManyDistributionsWithLambdaAssociations, aerr.Error())
+			case cloudfront.ErrCodeTooManyLambdaFunctionAssociations:
+				fmt.Println(cloudfront.ErrCodeTooManyLambdaFunctionAssociations, aerr.Error())
+			case cloudfront.ErrCodeInvalidLambdaFunctionAssociation:
+				fmt.Println(cloudfront.ErrCodeInvalidLambdaFunctionAssociation, aerr.Error())
+			case cloudfront.ErrCodeInvalidOriginReadTimeout:
+				fmt.Println(cloudfront.ErrCodeInvalidOriginReadTimeout, aerr.Error())
+			case cloudfront.ErrCodeInvalidOriginKeepaliveTimeout:
+				fmt.Println(cloudfront.ErrCodeInvalidOriginKeepaliveTimeout, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_CreateInvalidation() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_CreateDistributionWithTags_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.CreateDistributionWithTagsInput{}
 
-	params := &cloudfront.CreateInvalidationInput{
-		DistributionId: aws.String("string"), // Required
-		InvalidationBatch: &cloudfront.InvalidationBatch{ // Required
-			CallerReference: aws.String("string"), // Required
-			Paths: &cloudfront.Paths{ // Required
-				Quantity: aws.Int64(1), // Required
-				Items: []*string{
-					aws.String("string"), // Required
-					// More values...
-				},
-			},
-		},
-	}
-	resp, err := svc.CreateInvalidation(params)
-
+	result, err := svc.CreateDistributionWithTags(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeCNAMEAlreadyExists:
+				fmt.Println(cloudfront.ErrCodeCNAMEAlreadyExists, aerr.Error())
+			case cloudfront.ErrCodeDistributionAlreadyExists:
+				fmt.Println(cloudfront.ErrCodeDistributionAlreadyExists, aerr.Error())
+			case cloudfront.ErrCodeInvalidOrigin:
+				fmt.Println(cloudfront.ErrCodeInvalidOrigin, aerr.Error())
+			case cloudfront.ErrCodeInvalidOriginAccessIdentity:
+				fmt.Println(cloudfront.ErrCodeInvalidOriginAccessIdentity, aerr.Error())
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			case cloudfront.ErrCodeTooManyTrustedSigners:
+				fmt.Println(cloudfront.ErrCodeTooManyTrustedSigners, aerr.Error())
+			case cloudfront.ErrCodeTrustedSignerDoesNotExist:
+				fmt.Println(cloudfront.ErrCodeTrustedSignerDoesNotExist, aerr.Error())
+			case cloudfront.ErrCodeInvalidViewerCertificate:
+				fmt.Println(cloudfront.ErrCodeInvalidViewerCertificate, aerr.Error())
+			case cloudfront.ErrCodeInvalidMinimumProtocolVersion:
+				fmt.Println(cloudfront.ErrCodeInvalidMinimumProtocolVersion, aerr.Error())
+			case cloudfront.ErrCodeMissingBody:
+				fmt.Println(cloudfront.ErrCodeMissingBody, aerr.Error())
+			case cloudfront.ErrCodeTooManyDistributionCNAMEs:
+				fmt.Println(cloudfront.ErrCodeTooManyDistributionCNAMEs, aerr.Error())
+			case cloudfront.ErrCodeTooManyDistributions:
+				fmt.Println(cloudfront.ErrCodeTooManyDistributions, aerr.Error())
+			case cloudfront.ErrCodeInvalidDefaultRootObject:
+				fmt.Println(cloudfront.ErrCodeInvalidDefaultRootObject, aerr.Error())
+			case cloudfront.ErrCodeInvalidRelativePath:
+				fmt.Println(cloudfront.ErrCodeInvalidRelativePath, aerr.Error())
+			case cloudfront.ErrCodeInvalidErrorCode:
+				fmt.Println(cloudfront.ErrCodeInvalidErrorCode, aerr.Error())
+			case cloudfront.ErrCodeInvalidResponseCode:
+				fmt.Println(cloudfront.ErrCodeInvalidResponseCode, aerr.Error())
+			case cloudfront.ErrCodeInvalidArgument:
+				fmt.Println(cloudfront.ErrCodeInvalidArgument, aerr.Error())
+			case cloudfront.ErrCodeInvalidRequiredProtocol:
+				fmt.Println(cloudfront.ErrCodeInvalidRequiredProtocol, aerr.Error())
+			case cloudfront.ErrCodeNoSuchOrigin:
+				fmt.Println(cloudfront.ErrCodeNoSuchOrigin, aerr.Error())
+			case cloudfront.ErrCodeTooManyOrigins:
+				fmt.Println(cloudfront.ErrCodeTooManyOrigins, aerr.Error())
+			case cloudfront.ErrCodeTooManyCacheBehaviors:
+				fmt.Println(cloudfront.ErrCodeTooManyCacheBehaviors, aerr.Error())
+			case cloudfront.ErrCodeTooManyCookieNamesInWhiteList:
+				fmt.Println(cloudfront.ErrCodeTooManyCookieNamesInWhiteList, aerr.Error())
+			case cloudfront.ErrCodeInvalidForwardCookies:
+				fmt.Println(cloudfront.ErrCodeInvalidForwardCookies, aerr.Error())
+			case cloudfront.ErrCodeTooManyHeadersInForwardedValues:
+				fmt.Println(cloudfront.ErrCodeTooManyHeadersInForwardedValues, aerr.Error())
+			case cloudfront.ErrCodeInvalidHeadersForS3Origin:
+				fmt.Println(cloudfront.ErrCodeInvalidHeadersForS3Origin, aerr.Error())
+			case cloudfront.ErrCodeInconsistentQuantities:
+				fmt.Println(cloudfront.ErrCodeInconsistentQuantities, aerr.Error())
+			case cloudfront.ErrCodeTooManyCertificates:
+				fmt.Println(cloudfront.ErrCodeTooManyCertificates, aerr.Error())
+			case cloudfront.ErrCodeInvalidLocationCode:
+				fmt.Println(cloudfront.ErrCodeInvalidLocationCode, aerr.Error())
+			case cloudfront.ErrCodeInvalidGeoRestrictionParameter:
+				fmt.Println(cloudfront.ErrCodeInvalidGeoRestrictionParameter, aerr.Error())
+			case cloudfront.ErrCodeInvalidProtocolSettings:
+				fmt.Println(cloudfront.ErrCodeInvalidProtocolSettings, aerr.Error())
+			case cloudfront.ErrCodeInvalidTTLOrder:
+				fmt.Println(cloudfront.ErrCodeInvalidTTLOrder, aerr.Error())
+			case cloudfront.ErrCodeInvalidWebACLId:
+				fmt.Println(cloudfront.ErrCodeInvalidWebACLId, aerr.Error())
+			case cloudfront.ErrCodeTooManyOriginCustomHeaders:
+				fmt.Println(cloudfront.ErrCodeTooManyOriginCustomHeaders, aerr.Error())
+			case cloudfront.ErrCodeInvalidTagging:
+				fmt.Println(cloudfront.ErrCodeInvalidTagging, aerr.Error())
+			case cloudfront.ErrCodeTooManyQueryStringParameters:
+				fmt.Println(cloudfront.ErrCodeTooManyQueryStringParameters, aerr.Error())
+			case cloudfront.ErrCodeInvalidQueryStringParameters:
+				fmt.Println(cloudfront.ErrCodeInvalidQueryStringParameters, aerr.Error())
+			case cloudfront.ErrCodeTooManyDistributionsWithLambdaAssociations:
+				fmt.Println(cloudfront.ErrCodeTooManyDistributionsWithLambdaAssociations, aerr.Error())
+			case cloudfront.ErrCodeTooManyLambdaFunctionAssociations:
+				fmt.Println(cloudfront.ErrCodeTooManyLambdaFunctionAssociations, aerr.Error())
+			case cloudfront.ErrCodeInvalidLambdaFunctionAssociation:
+				fmt.Println(cloudfront.ErrCodeInvalidLambdaFunctionAssociation, aerr.Error())
+			case cloudfront.ErrCodeInvalidOriginReadTimeout:
+				fmt.Println(cloudfront.ErrCodeInvalidOriginReadTimeout, aerr.Error())
+			case cloudfront.ErrCodeInvalidOriginKeepaliveTimeout:
+				fmt.Println(cloudfront.ErrCodeInvalidOriginKeepaliveTimeout, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_CreateStreamingDistribution() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_CreateInvalidation_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.CreateInvalidationInput{}
 
-	params := &cloudfront.CreateStreamingDistributionInput{
-		StreamingDistributionConfig: &cloudfront.StreamingDistributionConfig{ // Required
-			CallerReference: aws.String("string"), // Required
-			Comment:         aws.String("string"), // Required
-			Enabled:         aws.Bool(true),       // Required
-			S3Origin: &cloudfront.S3Origin{ // Required
-				DomainName:           aws.String("string"), // Required
-				OriginAccessIdentity: aws.String("string"), // Required
-			},
-			TrustedSigners: &cloudfront.TrustedSigners{ // Required
-				Enabled:  aws.Bool(true), // Required
-				Quantity: aws.Int64(1),   // Required
-				Items: []*string{
-					aws.String("string"), // Required
-					// More values...
-				},
-			},
-			Aliases: &cloudfront.Aliases{
-				Quantity: aws.Int64(1), // Required
-				Items: []*string{
-					aws.String("string"), // Required
-					// More values...
-				},
-			},
-			Logging: &cloudfront.StreamingLoggingConfig{
-				Bucket:  aws.String("string"), // Required
-				Enabled: aws.Bool(true),       // Required
-				Prefix:  aws.String("string"), // Required
-			},
-			PriceClass: aws.String("PriceClass"),
-		},
-	}
-	resp, err := svc.CreateStreamingDistribution(params)
-
+	result, err := svc.CreateInvalidation(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			case cloudfront.ErrCodeMissingBody:
+				fmt.Println(cloudfront.ErrCodeMissingBody, aerr.Error())
+			case cloudfront.ErrCodeInvalidArgument:
+				fmt.Println(cloudfront.ErrCodeInvalidArgument, aerr.Error())
+			case cloudfront.ErrCodeNoSuchDistribution:
+				fmt.Println(cloudfront.ErrCodeNoSuchDistribution, aerr.Error())
+			case cloudfront.ErrCodeBatchTooLarge:
+				fmt.Println(cloudfront.ErrCodeBatchTooLarge, aerr.Error())
+			case cloudfront.ErrCodeTooManyInvalidationsInProgress:
+				fmt.Println(cloudfront.ErrCodeTooManyInvalidationsInProgress, aerr.Error())
+			case cloudfront.ErrCodeInconsistentQuantities:
+				fmt.Println(cloudfront.ErrCodeInconsistentQuantities, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_CreateStreamingDistributionWithTags() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_CreateStreamingDistribution_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.CreateStreamingDistributionInput{}
 
-	params := &cloudfront.CreateStreamingDistributionWithTagsInput{
-		StreamingDistributionConfigWithTags: &cloudfront.StreamingDistributionConfigWithTags{ // Required
-			StreamingDistributionConfig: &cloudfront.StreamingDistributionConfig{ // Required
-				CallerReference: aws.String("string"), // Required
-				Comment:         aws.String("string"), // Required
-				Enabled:         aws.Bool(true),       // Required
-				S3Origin: &cloudfront.S3Origin{ // Required
-					DomainName:           aws.String("string"), // Required
-					OriginAccessIdentity: aws.String("string"), // Required
-				},
-				TrustedSigners: &cloudfront.TrustedSigners{ // Required
-					Enabled:  aws.Bool(true), // Required
-					Quantity: aws.Int64(1),   // Required
-					Items: []*string{
-						aws.String("string"), // Required
-						// More values...
-					},
-				},
-				Aliases: &cloudfront.Aliases{
-					Quantity: aws.Int64(1), // Required
-					Items: []*string{
-						aws.String("string"), // Required
-						// More values...
-					},
-				},
-				Logging: &cloudfront.StreamingLoggingConfig{
-					Bucket:  aws.String("string"), // Required
-					Enabled: aws.Bool(true),       // Required
-					Prefix:  aws.String("string"), // Required
-				},
-				PriceClass: aws.String("PriceClass"),
-			},
-			Tags: &cloudfront.Tags{ // Required
-				Items: []*cloudfront.Tag{
-					{ // Required
-						Key:   aws.String("TagKey"), // Required
-						Value: aws.String("TagValue"),
-					},
-					// More values...
-				},
-			},
-		},
-	}
-	resp, err := svc.CreateStreamingDistributionWithTags(params)
-
+	result, err := svc.CreateStreamingDistribution(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeCNAMEAlreadyExists:
+				fmt.Println(cloudfront.ErrCodeCNAMEAlreadyExists, aerr.Error())
+			case cloudfront.ErrCodeStreamingDistributionAlreadyExists:
+				fmt.Println(cloudfront.ErrCodeStreamingDistributionAlreadyExists, aerr.Error())
+			case cloudfront.ErrCodeInvalidOrigin:
+				fmt.Println(cloudfront.ErrCodeInvalidOrigin, aerr.Error())
+			case cloudfront.ErrCodeInvalidOriginAccessIdentity:
+				fmt.Println(cloudfront.ErrCodeInvalidOriginAccessIdentity, aerr.Error())
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			case cloudfront.ErrCodeTooManyTrustedSigners:
+				fmt.Println(cloudfront.ErrCodeTooManyTrustedSigners, aerr.Error())
+			case cloudfront.ErrCodeTrustedSignerDoesNotExist:
+				fmt.Println(cloudfront.ErrCodeTrustedSignerDoesNotExist, aerr.Error())
+			case cloudfront.ErrCodeMissingBody:
+				fmt.Println(cloudfront.ErrCodeMissingBody, aerr.Error())
+			case cloudfront.ErrCodeTooManyStreamingDistributionCNAMEs:
+				fmt.Println(cloudfront.ErrCodeTooManyStreamingDistributionCNAMEs, aerr.Error())
+			case cloudfront.ErrCodeTooManyStreamingDistributions:
+				fmt.Println(cloudfront.ErrCodeTooManyStreamingDistributions, aerr.Error())
+			case cloudfront.ErrCodeInvalidArgument:
+				fmt.Println(cloudfront.ErrCodeInvalidArgument, aerr.Error())
+			case cloudfront.ErrCodeInconsistentQuantities:
+				fmt.Println(cloudfront.ErrCodeInconsistentQuantities, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_DeleteCloudFrontOriginAccessIdentity() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_DeleteCloudFrontOriginAccessIdentity_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.DeleteCloudFrontOriginAccessIdentityInput{}
 
-	params := &cloudfront.DeleteCloudFrontOriginAccessIdentityInput{
-		Id:      aws.String("string"), // Required
-		IfMatch: aws.String("string"),
-	}
-	resp, err := svc.DeleteCloudFrontOriginAccessIdentity(params)
-
+	result, err := svc.DeleteCloudFrontOriginAccessIdentity(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			case cloudfront.ErrCodeInvalidIfMatchVersion:
+				fmt.Println(cloudfront.ErrCodeInvalidIfMatchVersion, aerr.Error())
+			case cloudfront.ErrCodeNoSuchCloudFrontOriginAccessIdentity:
+				fmt.Println(cloudfront.ErrCodeNoSuchCloudFrontOriginAccessIdentity, aerr.Error())
+			case cloudfront.ErrCodePreconditionFailed:
+				fmt.Println(cloudfront.ErrCodePreconditionFailed, aerr.Error())
+			case cloudfront.ErrCodeOriginAccessIdentityInUse:
+				fmt.Println(cloudfront.ErrCodeOriginAccessIdentityInUse, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_DeleteDistribution() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_DeleteDistribution_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.DeleteDistributionInput{}
 
-	params := &cloudfront.DeleteDistributionInput{
-		Id:      aws.String("string"), // Required
-		IfMatch: aws.String("string"),
-	}
-	resp, err := svc.DeleteDistribution(params)
-
+	result, err := svc.DeleteDistribution(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			case cloudfront.ErrCodeDistributionNotDisabled:
+				fmt.Println(cloudfront.ErrCodeDistributionNotDisabled, aerr.Error())
+			case cloudfront.ErrCodeInvalidIfMatchVersion:
+				fmt.Println(cloudfront.ErrCodeInvalidIfMatchVersion, aerr.Error())
+			case cloudfront.ErrCodeNoSuchDistribution:
+				fmt.Println(cloudfront.ErrCodeNoSuchDistribution, aerr.Error())
+			case cloudfront.ErrCodePreconditionFailed:
+				fmt.Println(cloudfront.ErrCodePreconditionFailed, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_DeleteStreamingDistribution() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_DeleteStreamingDistribution_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.DeleteStreamingDistributionInput{}
 
-	params := &cloudfront.DeleteStreamingDistributionInput{
-		Id:      aws.String("string"), // Required
-		IfMatch: aws.String("string"),
-	}
-	resp, err := svc.DeleteStreamingDistribution(params)
-
+	result, err := svc.DeleteStreamingDistribution(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			case cloudfront.ErrCodeStreamingDistributionNotDisabled:
+				fmt.Println(cloudfront.ErrCodeStreamingDistributionNotDisabled, aerr.Error())
+			case cloudfront.ErrCodeInvalidIfMatchVersion:
+				fmt.Println(cloudfront.ErrCodeInvalidIfMatchVersion, aerr.Error())
+			case cloudfront.ErrCodeNoSuchStreamingDistribution:
+				fmt.Println(cloudfront.ErrCodeNoSuchStreamingDistribution, aerr.Error())
+			case cloudfront.ErrCodePreconditionFailed:
+				fmt.Println(cloudfront.ErrCodePreconditionFailed, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_GetCloudFrontOriginAccessIdentity() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_GetCloudFrontOriginAccessIdentity_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.GetCloudFrontOriginAccessIdentityInput{}
 
-	params := &cloudfront.GetCloudFrontOriginAccessIdentityInput{
-		Id: aws.String("string"), // Required
-	}
-	resp, err := svc.GetCloudFrontOriginAccessIdentity(params)
-
+	result, err := svc.GetCloudFrontOriginAccessIdentity(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeNoSuchCloudFrontOriginAccessIdentity:
+				fmt.Println(cloudfront.ErrCodeNoSuchCloudFrontOriginAccessIdentity, aerr.Error())
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_GetCloudFrontOriginAccessIdentityConfig() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_GetCloudFrontOriginAccessIdentityConfig_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.GetCloudFrontOriginAccessIdentityConfigInput{}
 
-	params := &cloudfront.GetCloudFrontOriginAccessIdentityConfigInput{
-		Id: aws.String("string"), // Required
-	}
-	resp, err := svc.GetCloudFrontOriginAccessIdentityConfig(params)
-
+	result, err := svc.GetCloudFrontOriginAccessIdentityConfig(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeNoSuchCloudFrontOriginAccessIdentity:
+				fmt.Println(cloudfront.ErrCodeNoSuchCloudFrontOriginAccessIdentity, aerr.Error())
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_GetDistribution() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_GetDistribution_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.GetDistributionInput{}
 
-	params := &cloudfront.GetDistributionInput{
-		Id: aws.String("string"), // Required
-	}
-	resp, err := svc.GetDistribution(params)
-
+	result, err := svc.GetDistribution(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeNoSuchDistribution:
+				fmt.Println(cloudfront.ErrCodeNoSuchDistribution, aerr.Error())
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_GetDistributionConfig() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_GetDistributionConfig_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.GetDistributionConfigInput{}
 
-	params := &cloudfront.GetDistributionConfigInput{
-		Id: aws.String("string"), // Required
-	}
-	resp, err := svc.GetDistributionConfig(params)
-
+	result, err := svc.GetDistributionConfig(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeNoSuchDistribution:
+				fmt.Println(cloudfront.ErrCodeNoSuchDistribution, aerr.Error())
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_GetInvalidation() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_GetInvalidation_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.GetInvalidationInput{}
 
-	params := &cloudfront.GetInvalidationInput{
-		DistributionId: aws.String("string"), // Required
-		Id:             aws.String("string"), // Required
-	}
-	resp, err := svc.GetInvalidation(params)
-
+	result, err := svc.GetInvalidation(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeNoSuchInvalidation:
+				fmt.Println(cloudfront.ErrCodeNoSuchInvalidation, aerr.Error())
+			case cloudfront.ErrCodeNoSuchDistribution:
+				fmt.Println(cloudfront.ErrCodeNoSuchDistribution, aerr.Error())
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_GetStreamingDistribution() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_GetStreamingDistribution_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.GetStreamingDistributionInput{}
 
-	params := &cloudfront.GetStreamingDistributionInput{
-		Id: aws.String("string"), // Required
-	}
-	resp, err := svc.GetStreamingDistribution(params)
-
+	result, err := svc.GetStreamingDistribution(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeNoSuchStreamingDistribution:
+				fmt.Println(cloudfront.ErrCodeNoSuchStreamingDistribution, aerr.Error())
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_GetStreamingDistributionConfig() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_GetStreamingDistributionConfig_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.GetStreamingDistributionConfigInput{}
 
-	params := &cloudfront.GetStreamingDistributionConfigInput{
-		Id: aws.String("string"), // Required
-	}
-	resp, err := svc.GetStreamingDistributionConfig(params)
-
+	result, err := svc.GetStreamingDistributionConfig(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeNoSuchStreamingDistribution:
+				fmt.Println(cloudfront.ErrCodeNoSuchStreamingDistribution, aerr.Error())
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_ListCloudFrontOriginAccessIdentities() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_ListCloudFrontOriginAccessIdentities_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.ListCloudFrontOriginAccessIdentitiesInput{}
 
-	params := &cloudfront.ListCloudFrontOriginAccessIdentitiesInput{
-		Marker:   aws.String("string"),
-		MaxItems: aws.Int64(1),
-	}
-	resp, err := svc.ListCloudFrontOriginAccessIdentities(params)
-
+	result, err := svc.ListCloudFrontOriginAccessIdentities(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeInvalidArgument:
+				fmt.Println(cloudfront.ErrCodeInvalidArgument, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_ListDistributions() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_ListDistributions_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.ListDistributionsInput{}
 
-	params := &cloudfront.ListDistributionsInput{
-		Marker:   aws.String("string"),
-		MaxItems: aws.Int64(1),
-	}
-	resp, err := svc.ListDistributions(params)
-
+	result, err := svc.ListDistributions(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeInvalidArgument:
+				fmt.Println(cloudfront.ErrCodeInvalidArgument, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_ListDistributionsByWebACLId() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_ListDistributionsByWebACLId_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.ListDistributionsByWebACLIdInput{}
 
-	params := &cloudfront.ListDistributionsByWebACLIdInput{
-		WebACLId: aws.String("string"), // Required
-		Marker:   aws.String("string"),
-		MaxItems: aws.Int64(1),
-	}
-	resp, err := svc.ListDistributionsByWebACLId(params)
-
+	result, err := svc.ListDistributionsByWebACLId(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeInvalidArgument:
+				fmt.Println(cloudfront.ErrCodeInvalidArgument, aerr.Error())
+			case cloudfront.ErrCodeInvalidWebACLId:
+				fmt.Println(cloudfront.ErrCodeInvalidWebACLId, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_ListInvalidations() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_ListInvalidations_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.ListInvalidationsInput{}
 
-	params := &cloudfront.ListInvalidationsInput{
-		DistributionId: aws.String("string"), // Required
-		Marker:         aws.String("string"),
-		MaxItems:       aws.Int64(1),
-	}
-	resp, err := svc.ListInvalidations(params)
-
+	result, err := svc.ListInvalidations(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeInvalidArgument:
+				fmt.Println(cloudfront.ErrCodeInvalidArgument, aerr.Error())
+			case cloudfront.ErrCodeNoSuchDistribution:
+				fmt.Println(cloudfront.ErrCodeNoSuchDistribution, aerr.Error())
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_ListStreamingDistributions() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_ListStreamingDistributions_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.ListStreamingDistributionsInput{}
 
-	params := &cloudfront.ListStreamingDistributionsInput{
-		Marker:   aws.String("string"),
-		MaxItems: aws.Int64(1),
-	}
-	resp, err := svc.ListStreamingDistributions(params)
-
+	result, err := svc.ListStreamingDistributions(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeInvalidArgument:
+				fmt.Println(cloudfront.ErrCodeInvalidArgument, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_ListTagsForResource() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_ListTagsForResource_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.ListTagsForResourceInput{}
 
-	params := &cloudfront.ListTagsForResourceInput{
-		Resource: aws.String("ResourceARN"), // Required
-	}
-	resp, err := svc.ListTagsForResource(params)
-
+	result, err := svc.ListTagsForResource(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			case cloudfront.ErrCodeInvalidArgument:
+				fmt.Println(cloudfront.ErrCodeInvalidArgument, aerr.Error())
+			case cloudfront.ErrCodeInvalidTagging:
+				fmt.Println(cloudfront.ErrCodeInvalidTagging, aerr.Error())
+			case cloudfront.ErrCodeNoSuchResource:
+				fmt.Println(cloudfront.ErrCodeNoSuchResource, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_TagResource() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_TagResource_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.TagResourceInput{}
 
-	params := &cloudfront.TagResourceInput{
-		Resource: aws.String("ResourceARN"), // Required
-		Tags: &cloudfront.Tags{ // Required
-			Items: []*cloudfront.Tag{
-				{ // Required
-					Key:   aws.String("TagKey"), // Required
-					Value: aws.String("TagValue"),
-				},
-				// More values...
-			},
-		},
-	}
-	resp, err := svc.TagResource(params)
-
+	result, err := svc.TagResource(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			case cloudfront.ErrCodeInvalidArgument:
+				fmt.Println(cloudfront.ErrCodeInvalidArgument, aerr.Error())
+			case cloudfront.ErrCodeInvalidTagging:
+				fmt.Println(cloudfront.ErrCodeInvalidTagging, aerr.Error())
+			case cloudfront.ErrCodeNoSuchResource:
+				fmt.Println(cloudfront.ErrCodeNoSuchResource, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_UntagResource() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_UntagResource_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.UntagResourceInput{}
 
-	params := &cloudfront.UntagResourceInput{
-		Resource: aws.String("ResourceARN"), // Required
-		TagKeys: &cloudfront.TagKeys{ // Required
-			Items: []*string{
-				aws.String("TagKey"), // Required
-				// More values...
-			},
-		},
-	}
-	resp, err := svc.UntagResource(params)
-
+	result, err := svc.UntagResource(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			case cloudfront.ErrCodeInvalidArgument:
+				fmt.Println(cloudfront.ErrCodeInvalidArgument, aerr.Error())
+			case cloudfront.ErrCodeInvalidTagging:
+				fmt.Println(cloudfront.ErrCodeInvalidTagging, aerr.Error())
+			case cloudfront.ErrCodeNoSuchResource:
+				fmt.Println(cloudfront.ErrCodeNoSuchResource, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_UpdateCloudFrontOriginAccessIdentity() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_UpdateCloudFrontOriginAccessIdentity_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.UpdateCloudFrontOriginAccessIdentityInput{}
 
-	params := &cloudfront.UpdateCloudFrontOriginAccessIdentityInput{
-		CloudFrontOriginAccessIdentityConfig: &cloudfront.OriginAccessIdentityConfig{ // Required
-			CallerReference: aws.String("string"), // Required
-			Comment:         aws.String("string"), // Required
-		},
-		Id:      aws.String("string"), // Required
-		IfMatch: aws.String("string"),
-	}
-	resp, err := svc.UpdateCloudFrontOriginAccessIdentity(params)
-
+	result, err := svc.UpdateCloudFrontOriginAccessIdentity(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			case cloudfront.ErrCodeIllegalUpdate:
+				fmt.Println(cloudfront.ErrCodeIllegalUpdate, aerr.Error())
+			case cloudfront.ErrCodeInvalidIfMatchVersion:
+				fmt.Println(cloudfront.ErrCodeInvalidIfMatchVersion, aerr.Error())
+			case cloudfront.ErrCodeMissingBody:
+				fmt.Println(cloudfront.ErrCodeMissingBody, aerr.Error())
+			case cloudfront.ErrCodeNoSuchCloudFrontOriginAccessIdentity:
+				fmt.Println(cloudfront.ErrCodeNoSuchCloudFrontOriginAccessIdentity, aerr.Error())
+			case cloudfront.ErrCodePreconditionFailed:
+				fmt.Println(cloudfront.ErrCodePreconditionFailed, aerr.Error())
+			case cloudfront.ErrCodeInvalidArgument:
+				fmt.Println(cloudfront.ErrCodeInvalidArgument, aerr.Error())
+			case cloudfront.ErrCodeInconsistentQuantities:
+				fmt.Println(cloudfront.ErrCodeInconsistentQuantities, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_UpdateDistribution() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_UpdateDistribution_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.UpdateDistributionInput{}
 
-	params := &cloudfront.UpdateDistributionInput{
-		DistributionConfig: &cloudfront.DistributionConfig{ // Required
-			CallerReference: aws.String("string"), // Required
-			Comment:         aws.String("string"), // Required
-			DefaultCacheBehavior: &cloudfront.DefaultCacheBehavior{ // Required
-				ForwardedValues: &cloudfront.ForwardedValues{ // Required
-					Cookies: &cloudfront.CookiePreference{ // Required
-						Forward: aws.String("ItemSelection"), // Required
-						WhitelistedNames: &cloudfront.CookieNames{
-							Quantity: aws.Int64(1), // Required
-							Items: []*string{
-								aws.String("string"), // Required
-								// More values...
-							},
-						},
-					},
-					QueryString: aws.Bool(true), // Required
-					Headers: &cloudfront.Headers{
-						Quantity: aws.Int64(1), // Required
-						Items: []*string{
-							aws.String("string"), // Required
-							// More values...
-						},
-					},
-					QueryStringCacheKeys: &cloudfront.QueryStringCacheKeys{
-						Quantity: aws.Int64(1), // Required
-						Items: []*string{
-							aws.String("string"), // Required
-							// More values...
-						},
-					},
-				},
-				MinTTL:         aws.Int64(1),         // Required
-				TargetOriginId: aws.String("string"), // Required
-				TrustedSigners: &cloudfront.TrustedSigners{ // Required
-					Enabled:  aws.Bool(true), // Required
-					Quantity: aws.Int64(1),   // Required
-					Items: []*string{
-						aws.String("string"), // Required
-						// More values...
-					},
-				},
-				ViewerProtocolPolicy: aws.String("ViewerProtocolPolicy"), // Required
-				AllowedMethods: &cloudfront.AllowedMethods{
-					Items: []*string{ // Required
-						aws.String("Method"), // Required
-						// More values...
-					},
-					Quantity: aws.Int64(1), // Required
-					CachedMethods: &cloudfront.CachedMethods{
-						Items: []*string{ // Required
-							aws.String("Method"), // Required
-							// More values...
-						},
-						Quantity: aws.Int64(1), // Required
-					},
-				},
-				Compress:   aws.Bool(true),
-				DefaultTTL: aws.Int64(1),
-				LambdaFunctionAssociations: &cloudfront.LambdaFunctionAssociations{
-					Quantity: aws.Int64(1), // Required
-					Items: []*cloudfront.LambdaFunctionAssociation{
-						{ // Required
-							EventType:         aws.String("EventType"),
-							LambdaFunctionARN: aws.String("string"),
-						},
-						// More values...
-					},
-				},
-				MaxTTL:          aws.Int64(1),
-				SmoothStreaming: aws.Bool(true),
-			},
-			Enabled: aws.Bool(true), // Required
-			Origins: &cloudfront.Origins{ // Required
-				Quantity: aws.Int64(1), // Required
-				Items: []*cloudfront.Origin{
-					{ // Required
-						DomainName: aws.String("string"), // Required
-						Id:         aws.String("string"), // Required
-						CustomHeaders: &cloudfront.CustomHeaders{
-							Quantity: aws.Int64(1), // Required
-							Items: []*cloudfront.OriginCustomHeader{
-								{ // Required
-									HeaderName:  aws.String("string"), // Required
-									HeaderValue: aws.String("string"), // Required
-								},
-								// More values...
-							},
-						},
-						CustomOriginConfig: &cloudfront.CustomOriginConfig{
-							HTTPPort:               aws.Int64(1),                       // Required
-							HTTPSPort:              aws.Int64(1),                       // Required
-							OriginProtocolPolicy:   aws.String("OriginProtocolPolicy"), // Required
-							OriginKeepaliveTimeout: aws.Int64(1),
-							OriginReadTimeout:      aws.Int64(1),
-							OriginSslProtocols: &cloudfront.OriginSslProtocols{
-								Items: []*string{ // Required
-									aws.String("SslProtocol"), // Required
-									// More values...
-								},
-								Quantity: aws.Int64(1), // Required
-							},
-						},
-						OriginPath: aws.String("string"),
-						S3OriginConfig: &cloudfront.S3OriginConfig{
-							OriginAccessIdentity: aws.String("string"), // Required
-						},
-					},
-					// More values...
-				},
-			},
-			Aliases: &cloudfront.Aliases{
-				Quantity: aws.Int64(1), // Required
-				Items: []*string{
-					aws.String("string"), // Required
-					// More values...
-				},
-			},
-			CacheBehaviors: &cloudfront.CacheBehaviors{
-				Quantity: aws.Int64(1), // Required
-				Items: []*cloudfront.CacheBehavior{
-					{ // Required
-						ForwardedValues: &cloudfront.ForwardedValues{ // Required
-							Cookies: &cloudfront.CookiePreference{ // Required
-								Forward: aws.String("ItemSelection"), // Required
-								WhitelistedNames: &cloudfront.CookieNames{
-									Quantity: aws.Int64(1), // Required
-									Items: []*string{
-										aws.String("string"), // Required
-										// More values...
-									},
-								},
-							},
-							QueryString: aws.Bool(true), // Required
-							Headers: &cloudfront.Headers{
-								Quantity: aws.Int64(1), // Required
-								Items: []*string{
-									aws.String("string"), // Required
-									// More values...
-								},
-							},
-							QueryStringCacheKeys: &cloudfront.QueryStringCacheKeys{
-								Quantity: aws.Int64(1), // Required
-								Items: []*string{
-									aws.String("string"), // Required
-									// More values...
-								},
-							},
-						},
-						MinTTL:         aws.Int64(1),         // Required
-						PathPattern:    aws.String("string"), // Required
-						TargetOriginId: aws.String("string"), // Required
-						TrustedSigners: &cloudfront.TrustedSigners{ // Required
-							Enabled:  aws.Bool(true), // Required
-							Quantity: aws.Int64(1),   // Required
-							Items: []*string{
-								aws.String("string"), // Required
-								// More values...
-							},
-						},
-						ViewerProtocolPolicy: aws.String("ViewerProtocolPolicy"), // Required
-						AllowedMethods: &cloudfront.AllowedMethods{
-							Items: []*string{ // Required
-								aws.String("Method"), // Required
-								// More values...
-							},
-							Quantity: aws.Int64(1), // Required
-							CachedMethods: &cloudfront.CachedMethods{
-								Items: []*string{ // Required
-									aws.String("Method"), // Required
-									// More values...
-								},
-								Quantity: aws.Int64(1), // Required
-							},
-						},
-						Compress:   aws.Bool(true),
-						DefaultTTL: aws.Int64(1),
-						LambdaFunctionAssociations: &cloudfront.LambdaFunctionAssociations{
-							Quantity: aws.Int64(1), // Required
-							Items: []*cloudfront.LambdaFunctionAssociation{
-								{ // Required
-									EventType:         aws.String("EventType"),
-									LambdaFunctionARN: aws.String("string"),
-								},
-								// More values...
-							},
-						},
-						MaxTTL:          aws.Int64(1),
-						SmoothStreaming: aws.Bool(true),
-					},
-					// More values...
-				},
-			},
-			CustomErrorResponses: &cloudfront.CustomErrorResponses{
-				Quantity: aws.Int64(1), // Required
-				Items: []*cloudfront.CustomErrorResponse{
-					{ // Required
-						ErrorCode:          aws.Int64(1), // Required
-						ErrorCachingMinTTL: aws.Int64(1),
-						ResponseCode:       aws.String("string"),
-						ResponsePagePath:   aws.String("string"),
-					},
-					// More values...
-				},
-			},
-			DefaultRootObject: aws.String("string"),
-			HttpVersion:       aws.String("HttpVersion"),
-			IsIPV6Enabled:     aws.Bool(true),
-			Logging: &cloudfront.LoggingConfig{
-				Bucket:         aws.String("string"), // Required
-				Enabled:        aws.Bool(true),       // Required
-				IncludeCookies: aws.Bool(true),       // Required
-				Prefix:         aws.String("string"), // Required
-			},
-			PriceClass: aws.String("PriceClass"),
-			Restrictions: &cloudfront.Restrictions{
-				GeoRestriction: &cloudfront.GeoRestriction{ // Required
-					Quantity:        aws.Int64(1),                     // Required
-					RestrictionType: aws.String("GeoRestrictionType"), // Required
-					Items: []*string{
-						aws.String("string"), // Required
-						// More values...
-					},
-				},
-			},
-			ViewerCertificate: &cloudfront.ViewerCertificate{
-				ACMCertificateArn:            aws.String("string"),
-				Certificate:                  aws.String("string"),
-				CertificateSource:            aws.String("CertificateSource"),
-				CloudFrontDefaultCertificate: aws.Bool(true),
-				IAMCertificateId:             aws.String("string"),
-				MinimumProtocolVersion:       aws.String("MinimumProtocolVersion"),
-				SSLSupportMethod:             aws.String("SSLSupportMethod"),
-			},
-			WebACLId: aws.String("string"),
-		},
-		Id:      aws.String("string"), // Required
-		IfMatch: aws.String("string"),
-	}
-	resp, err := svc.UpdateDistribution(params)
-
+	result, err := svc.UpdateDistribution(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			case cloudfront.ErrCodeCNAMEAlreadyExists:
+				fmt.Println(cloudfront.ErrCodeCNAMEAlreadyExists, aerr.Error())
+			case cloudfront.ErrCodeIllegalUpdate:
+				fmt.Println(cloudfront.ErrCodeIllegalUpdate, aerr.Error())
+			case cloudfront.ErrCodeInvalidIfMatchVersion:
+				fmt.Println(cloudfront.ErrCodeInvalidIfMatchVersion, aerr.Error())
+			case cloudfront.ErrCodeMissingBody:
+				fmt.Println(cloudfront.ErrCodeMissingBody, aerr.Error())
+			case cloudfront.ErrCodeNoSuchDistribution:
+				fmt.Println(cloudfront.ErrCodeNoSuchDistribution, aerr.Error())
+			case cloudfront.ErrCodePreconditionFailed:
+				fmt.Println(cloudfront.ErrCodePreconditionFailed, aerr.Error())
+			case cloudfront.ErrCodeTooManyDistributionCNAMEs:
+				fmt.Println(cloudfront.ErrCodeTooManyDistributionCNAMEs, aerr.Error())
+			case cloudfront.ErrCodeInvalidDefaultRootObject:
+				fmt.Println(cloudfront.ErrCodeInvalidDefaultRootObject, aerr.Error())
+			case cloudfront.ErrCodeInvalidRelativePath:
+				fmt.Println(cloudfront.ErrCodeInvalidRelativePath, aerr.Error())
+			case cloudfront.ErrCodeInvalidErrorCode:
+				fmt.Println(cloudfront.ErrCodeInvalidErrorCode, aerr.Error())
+			case cloudfront.ErrCodeInvalidResponseCode:
+				fmt.Println(cloudfront.ErrCodeInvalidResponseCode, aerr.Error())
+			case cloudfront.ErrCodeInvalidArgument:
+				fmt.Println(cloudfront.ErrCodeInvalidArgument, aerr.Error())
+			case cloudfront.ErrCodeInvalidOriginAccessIdentity:
+				fmt.Println(cloudfront.ErrCodeInvalidOriginAccessIdentity, aerr.Error())
+			case cloudfront.ErrCodeTooManyTrustedSigners:
+				fmt.Println(cloudfront.ErrCodeTooManyTrustedSigners, aerr.Error())
+			case cloudfront.ErrCodeTrustedSignerDoesNotExist:
+				fmt.Println(cloudfront.ErrCodeTrustedSignerDoesNotExist, aerr.Error())
+			case cloudfront.ErrCodeInvalidViewerCertificate:
+				fmt.Println(cloudfront.ErrCodeInvalidViewerCertificate, aerr.Error())
+			case cloudfront.ErrCodeInvalidMinimumProtocolVersion:
+				fmt.Println(cloudfront.ErrCodeInvalidMinimumProtocolVersion, aerr.Error())
+			case cloudfront.ErrCodeInvalidRequiredProtocol:
+				fmt.Println(cloudfront.ErrCodeInvalidRequiredProtocol, aerr.Error())
+			case cloudfront.ErrCodeNoSuchOrigin:
+				fmt.Println(cloudfront.ErrCodeNoSuchOrigin, aerr.Error())
+			case cloudfront.ErrCodeTooManyOrigins:
+				fmt.Println(cloudfront.ErrCodeTooManyOrigins, aerr.Error())
+			case cloudfront.ErrCodeTooManyCacheBehaviors:
+				fmt.Println(cloudfront.ErrCodeTooManyCacheBehaviors, aerr.Error())
+			case cloudfront.ErrCodeTooManyCookieNamesInWhiteList:
+				fmt.Println(cloudfront.ErrCodeTooManyCookieNamesInWhiteList, aerr.Error())
+			case cloudfront.ErrCodeInvalidForwardCookies:
+				fmt.Println(cloudfront.ErrCodeInvalidForwardCookies, aerr.Error())
+			case cloudfront.ErrCodeTooManyHeadersInForwardedValues:
+				fmt.Println(cloudfront.ErrCodeTooManyHeadersInForwardedValues, aerr.Error())
+			case cloudfront.ErrCodeInvalidHeadersForS3Origin:
+				fmt.Println(cloudfront.ErrCodeInvalidHeadersForS3Origin, aerr.Error())
+			case cloudfront.ErrCodeInconsistentQuantities:
+				fmt.Println(cloudfront.ErrCodeInconsistentQuantities, aerr.Error())
+			case cloudfront.ErrCodeTooManyCertificates:
+				fmt.Println(cloudfront.ErrCodeTooManyCertificates, aerr.Error())
+			case cloudfront.ErrCodeInvalidLocationCode:
+				fmt.Println(cloudfront.ErrCodeInvalidLocationCode, aerr.Error())
+			case cloudfront.ErrCodeInvalidGeoRestrictionParameter:
+				fmt.Println(cloudfront.ErrCodeInvalidGeoRestrictionParameter, aerr.Error())
+			case cloudfront.ErrCodeInvalidTTLOrder:
+				fmt.Println(cloudfront.ErrCodeInvalidTTLOrder, aerr.Error())
+			case cloudfront.ErrCodeInvalidWebACLId:
+				fmt.Println(cloudfront.ErrCodeInvalidWebACLId, aerr.Error())
+			case cloudfront.ErrCodeTooManyOriginCustomHeaders:
+				fmt.Println(cloudfront.ErrCodeTooManyOriginCustomHeaders, aerr.Error())
+			case cloudfront.ErrCodeTooManyQueryStringParameters:
+				fmt.Println(cloudfront.ErrCodeTooManyQueryStringParameters, aerr.Error())
+			case cloudfront.ErrCodeInvalidQueryStringParameters:
+				fmt.Println(cloudfront.ErrCodeInvalidQueryStringParameters, aerr.Error())
+			case cloudfront.ErrCodeTooManyDistributionsWithLambdaAssociations:
+				fmt.Println(cloudfront.ErrCodeTooManyDistributionsWithLambdaAssociations, aerr.Error())
+			case cloudfront.ErrCodeTooManyLambdaFunctionAssociations:
+				fmt.Println(cloudfront.ErrCodeTooManyLambdaFunctionAssociations, aerr.Error())
+			case cloudfront.ErrCodeInvalidLambdaFunctionAssociation:
+				fmt.Println(cloudfront.ErrCodeInvalidLambdaFunctionAssociation, aerr.Error())
+			case cloudfront.ErrCodeInvalidOriginReadTimeout:
+				fmt.Println(cloudfront.ErrCodeInvalidOriginReadTimeout, aerr.Error())
+			case cloudfront.ErrCodeInvalidOriginKeepaliveTimeout:
+				fmt.Println(cloudfront.ErrCodeInvalidOriginKeepaliveTimeout, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleCloudFront_UpdateStreamingDistribution() {
-	sess := session.Must(session.NewSession())
+//
 
-	svc := cloudfront.New(sess)
+func ExampleCloudFront_UpdateStreamingDistribution_shared00() {
+	svc := cloudfront.New(session.New())
+	input := &cloudfront.UpdateStreamingDistributionInput{}
 
-	params := &cloudfront.UpdateStreamingDistributionInput{
-		Id: aws.String("string"), // Required
-		StreamingDistributionConfig: &cloudfront.StreamingDistributionConfig{ // Required
-			CallerReference: aws.String("string"), // Required
-			Comment:         aws.String("string"), // Required
-			Enabled:         aws.Bool(true),       // Required
-			S3Origin: &cloudfront.S3Origin{ // Required
-				DomainName:           aws.String("string"), // Required
-				OriginAccessIdentity: aws.String("string"), // Required
-			},
-			TrustedSigners: &cloudfront.TrustedSigners{ // Required
-				Enabled:  aws.Bool(true), // Required
-				Quantity: aws.Int64(1),   // Required
-				Items: []*string{
-					aws.String("string"), // Required
-					// More values...
-				},
-			},
-			Aliases: &cloudfront.Aliases{
-				Quantity: aws.Int64(1), // Required
-				Items: []*string{
-					aws.String("string"), // Required
-					// More values...
-				},
-			},
-			Logging: &cloudfront.StreamingLoggingConfig{
-				Bucket:  aws.String("string"), // Required
-				Enabled: aws.Bool(true),       // Required
-				Prefix:  aws.String("string"), // Required
-			},
-			PriceClass: aws.String("PriceClass"),
-		},
-		IfMatch: aws.String("string"),
-	}
-	resp, err := svc.UpdateStreamingDistribution(params)
-
+	result, err := svc.UpdateStreamingDistribution(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case cloudfront.ErrCodeAccessDenied:
+				fmt.Println(cloudfront.ErrCodeAccessDenied, aerr.Error())
+			case cloudfront.ErrCodeCNAMEAlreadyExists:
+				fmt.Println(cloudfront.ErrCodeCNAMEAlreadyExists, aerr.Error())
+			case cloudfront.ErrCodeIllegalUpdate:
+				fmt.Println(cloudfront.ErrCodeIllegalUpdate, aerr.Error())
+			case cloudfront.ErrCodeInvalidIfMatchVersion:
+				fmt.Println(cloudfront.ErrCodeInvalidIfMatchVersion, aerr.Error())
+			case cloudfront.ErrCodeMissingBody:
+				fmt.Println(cloudfront.ErrCodeMissingBody, aerr.Error())
+			case cloudfront.ErrCodeNoSuchStreamingDistribution:
+				fmt.Println(cloudfront.ErrCodeNoSuchStreamingDistribution, aerr.Error())
+			case cloudfront.ErrCodePreconditionFailed:
+				fmt.Println(cloudfront.ErrCodePreconditionFailed, aerr.Error())
+			case cloudfront.ErrCodeTooManyStreamingDistributionCNAMEs:
+				fmt.Println(cloudfront.ErrCodeTooManyStreamingDistributionCNAMEs, aerr.Error())
+			case cloudfront.ErrCodeInvalidArgument:
+				fmt.Println(cloudfront.ErrCodeInvalidArgument, aerr.Error())
+			case cloudfront.ErrCodeInvalidOriginAccessIdentity:
+				fmt.Println(cloudfront.ErrCodeInvalidOriginAccessIdentity, aerr.Error())
+			case cloudfront.ErrCodeTooManyTrustedSigners:
+				fmt.Println(cloudfront.ErrCodeTooManyTrustedSigners, aerr.Error())
+			case cloudfront.ErrCodeTrustedSignerDoesNotExist:
+				fmt.Println(cloudfront.ErrCodeTrustedSignerDoesNotExist, aerr.Error())
+			case cloudfront.ErrCodeInconsistentQuantities:
+				fmt.Println(cloudfront.ErrCodeInconsistentQuantities, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }

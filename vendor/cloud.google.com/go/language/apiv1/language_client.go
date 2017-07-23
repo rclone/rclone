@@ -40,9 +40,7 @@ type CallOptions struct {
 func defaultClientOptions() []option.ClientOption {
 	return []option.ClientOption{
 		option.WithEndpoint("language.googleapis.com:443"),
-		option.WithScopes(
-			"https://www.googleapis.com/auth/cloud-platform",
-		),
+		option.WithScopes(DefaultAuthScopes()...),
 	}
 }
 
@@ -81,7 +79,7 @@ type Client struct {
 	CallOptions *CallOptions
 
 	// The metadata to be sent with each request.
-	xGoogHeader string
+	xGoogHeader []string
 }
 
 // NewClient creates a new language service client.
@@ -119,35 +117,38 @@ func (c *Client) Close() error {
 // use by Google-written clients.
 func (c *Client) SetGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", version.Go()}, keyval...)
-	kv = append(kv, "gapic", version.Repo, "gax", gax.Version, "grpc", "")
-	c.xGoogHeader = gax.XGoogHeader(kv...)
+	kv = append(kv, "gapic", version.Repo, "gax", gax.Version, "grpc", grpc.Version)
+	c.xGoogHeader = []string{gax.XGoogHeader(kv...)}
 }
 
 // AnalyzeSentiment analyzes the sentiment of the provided text.
-func (c *Client) AnalyzeSentiment(ctx context.Context, req *languagepb.AnalyzeSentimentRequest) (*languagepb.AnalyzeSentimentResponse, error) {
+func (c *Client) AnalyzeSentiment(ctx context.Context, req *languagepb.AnalyzeSentimentRequest, opts ...gax.CallOption) (*languagepb.AnalyzeSentimentResponse, error) {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
+	opts = append(c.CallOptions.AnalyzeSentiment[0:len(c.CallOptions.AnalyzeSentiment):len(c.CallOptions.AnalyzeSentiment)], opts...)
 	var resp *languagepb.AnalyzeSentimentResponse
-	err := gax.Invoke(ctx, func(ctx context.Context) error {
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		resp, err = c.client.AnalyzeSentiment(ctx, req)
+		resp, err = c.client.AnalyzeSentiment(ctx, req, settings.GRPC...)
 		return err
-	}, c.CallOptions.AnalyzeSentiment...)
+	}, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
 }
 
-// AnalyzeEntities finds named entities (currently finds proper names) in the text,
-// entity types, salience, mentions for each entity, and other properties.
-func (c *Client) AnalyzeEntities(ctx context.Context, req *languagepb.AnalyzeEntitiesRequest) (*languagepb.AnalyzeEntitiesResponse, error) {
+// AnalyzeEntities finds named entities (currently proper names and common nouns) in the text
+// along with entity types, salience, mentions for each entity, and
+// other properties.
+func (c *Client) AnalyzeEntities(ctx context.Context, req *languagepb.AnalyzeEntitiesRequest, opts ...gax.CallOption) (*languagepb.AnalyzeEntitiesResponse, error) {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
+	opts = append(c.CallOptions.AnalyzeEntities[0:len(c.CallOptions.AnalyzeEntities):len(c.CallOptions.AnalyzeEntities)], opts...)
 	var resp *languagepb.AnalyzeEntitiesResponse
-	err := gax.Invoke(ctx, func(ctx context.Context) error {
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		resp, err = c.client.AnalyzeEntities(ctx, req)
+		resp, err = c.client.AnalyzeEntities(ctx, req, settings.GRPC...)
 		return err
-	}, c.CallOptions.AnalyzeEntities...)
+	}, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -157,14 +158,15 @@ func (c *Client) AnalyzeEntities(ctx context.Context, req *languagepb.AnalyzeEnt
 // AnalyzeSyntax analyzes the syntax of the text and provides sentence boundaries and
 // tokenization along with part of speech tags, dependency trees, and other
 // properties.
-func (c *Client) AnalyzeSyntax(ctx context.Context, req *languagepb.AnalyzeSyntaxRequest) (*languagepb.AnalyzeSyntaxResponse, error) {
+func (c *Client) AnalyzeSyntax(ctx context.Context, req *languagepb.AnalyzeSyntaxRequest, opts ...gax.CallOption) (*languagepb.AnalyzeSyntaxResponse, error) {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
+	opts = append(c.CallOptions.AnalyzeSyntax[0:len(c.CallOptions.AnalyzeSyntax):len(c.CallOptions.AnalyzeSyntax)], opts...)
 	var resp *languagepb.AnalyzeSyntaxResponse
-	err := gax.Invoke(ctx, func(ctx context.Context) error {
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		resp, err = c.client.AnalyzeSyntax(ctx, req)
+		resp, err = c.client.AnalyzeSyntax(ctx, req, settings.GRPC...)
 		return err
-	}, c.CallOptions.AnalyzeSyntax...)
+	}, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -173,14 +175,15 @@ func (c *Client) AnalyzeSyntax(ctx context.Context, req *languagepb.AnalyzeSynta
 
 // AnnotateText a convenience method that provides all the features that analyzeSentiment,
 // analyzeEntities, and analyzeSyntax provide in one call.
-func (c *Client) AnnotateText(ctx context.Context, req *languagepb.AnnotateTextRequest) (*languagepb.AnnotateTextResponse, error) {
+func (c *Client) AnnotateText(ctx context.Context, req *languagepb.AnnotateTextRequest, opts ...gax.CallOption) (*languagepb.AnnotateTextResponse, error) {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
+	opts = append(c.CallOptions.AnnotateText[0:len(c.CallOptions.AnnotateText):len(c.CallOptions.AnnotateText)], opts...)
 	var resp *languagepb.AnnotateTextResponse
-	err := gax.Invoke(ctx, func(ctx context.Context) error {
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		resp, err = c.client.AnnotateText(ctx, req)
+		resp, err = c.client.AnnotateText(ctx, req, settings.GRPC...)
 		return err
-	}, c.CallOptions.AnnotateText...)
+	}, opts...)
 	if err != nil {
 		return nil, err
 	}

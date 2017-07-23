@@ -215,7 +215,7 @@ func WithUploaderRequestOptions(opts ...request.Option) func(*Uploader) {
 type Uploader struct {
 	// The buffer size (in bytes) to use when buffering data into chunks and
 	// sending them as parts to S3. The minimum allowed part size is 5MB, and
-	// if this value is set to zero, the DefaultPartSize value will be used.
+	// if this value is set to zero, the DefaultUploadPartSize value will be used.
 	PartSize int64
 
 	// The number of goroutines to spin up in parallel when sending parts.
@@ -371,6 +371,61 @@ func (u Uploader) UploadWithContext(ctx aws.Context, input *UploadInput, opts ..
 	i.cfg.RequestOptions = append(i.cfg.RequestOptions, request.WithAppendUserAgent("S3Manager"))
 
 	return i.upload()
+}
+
+// UploadWithIterator will upload a batched amount of objects to S3. This operation uses
+// the iterator pattern to know which object to upload next. Since this is an interface this
+// allows for custom defined functionality.
+//
+// Example:
+//	svc:= s3manager.NewUploader(sess)
+//
+//	objects := []BatchUploadObject{
+//		{
+//			Object:	&s3manager.UploadInput {
+//				Key: aws.String("key"),
+//				Bucket: aws.String("bucket"),
+//			},
+//		},
+//	}
+//
+//	iter := &s3managee.UploadObjectsIterator{Objects: objects}
+//	if err := svc.UploadWithIterator(aws.BackgroundContext(), iter); err != nil {
+//		return err
+//	}
+func (u Uploader) UploadWithIterator(ctx aws.Context, iter BatchUploadIterator, opts ...func(*Uploader)) error {
+	var errs []Error
+	for iter.Next() {
+		object := iter.UploadObject()
+		if _, err := u.UploadWithContext(ctx, object.Object, opts...); err != nil {
+			s3Err := Error{
+				OrigErr: err,
+				Bucket:  object.Object.Bucket,
+				Key:     object.Object.Key,
+			}
+
+			errs = append(errs, s3Err)
+		}
+
+		if object.After == nil {
+			continue
+		}
+
+		if err := object.After(); err != nil {
+			s3Err := Error{
+				OrigErr: err,
+				Bucket:  object.Object.Bucket,
+				Key:     object.Object.Key,
+			}
+
+			errs = append(errs, s3Err)
+		}
+	}
+
+	if len(errs) > 0 {
+		return NewBatchError("BatchedUploadIncomplete", "some objects have failed to upload.", errs)
+	}
+	return nil
 }
 
 // internal structure to manage an upload to S3.

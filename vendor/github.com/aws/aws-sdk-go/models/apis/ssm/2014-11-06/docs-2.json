@@ -1,8 +1,8 @@
 {
   "version": "2.0",
-  "service": "<fullname>Amazon EC2 Systems Manager</fullname> <p>Amazon EC2 Systems Manager is a collection of capabilities that helps you automate management tasks such as collecting system inventory, applying operating system (OS) patches, automating the creation of Amazon Machine Images (AMIs), and configuring operating systems (OSs) and applications at scale. Systems Manager lets you remotely and securely manage the configuration of your managed instances. A <i>managed instance</i> is any Amazon EC2 instance or on-premises machine in your hybrid environment that has been configured for Systems Manager.</p> <p>This reference is intended to be used with the <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/\">Amazon EC2 Systems Manager User Guide</a>.</p> <p>To get started, verify prerequisites and configure managed instances. For more information, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-prereqs.html\">Systems Manager Prerequisites</a>.</p>",
+  "service": "<fullname>Amazon EC2 Systems Manager</fullname> <p>Amazon EC2 Systems Manager is a collection of capabilities that helps you automate management tasks such as collecting system inventory, applying operating system (OS) patches, automating the creation of Amazon Machine Images (AMIs), and configuring operating systems (OSs) and applications at scale. Systems Manager lets you remotely and securely manage the configuration of your managed instances. A <i>managed instance</i> is any Amazon EC2 instance or on-premises machine in your hybrid environment that has been configured for Systems Manager.</p> <p>This reference is intended to be used with the <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/\">Amazon EC2 Systems Manager User Guide</a>.</p> <p>To get started, verify prerequisites and configure managed instances. For more information, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-setting-up.html\">Systems Manager Prerequisites</a>.</p>",
   "operations": {
-    "AddTagsToResource": "<p>Adds or overwrites one or more tags for the specified resource. Tags are metadata that you assign to your managed instances. Tags enable you to categorize your managed instances in different ways, for example, by purpose, owner, or environment. Each tag consists of a key and an optional value, both of which you define. For example, you could define a set of tags for your account's managed instances that helps you track each instance's owner and stack level. For example: Key=Owner and Value=DbAdmin, SysAdmin, or Dev. Or Key=Stack and Value=Production, Pre-Production, or Test. Each resource can have a maximum of 10 tags. </p> <p>We recommend that you devise a set of tag keys that meets your needs for each resource type. Using a consistent set of tag keys makes it easier for you to manage your resources. You can search and filter the resources based on the tags you add. Tags don't have any semantic meaning to Amazon EC2 and are interpreted strictly as a string of characters. </p> <p>For more information about tags, see <a href=\"http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html\">Tagging Your Amazon EC2 Resources</a> in the <i>Amazon EC2 User Guide</i>.</p>",
+    "AddTagsToResource": "<p>Adds or overwrites one or more tags for the specified resource. Tags are metadata that you assign to your managed instances, Maintenance Windows, or Parameter Store parameters. Tags enable you to categorize your resources in different ways, for example, by purpose, owner, or environment. Each tag consists of a key and an optional value, both of which you define. For example, you could define a set of tags for your account's managed instances that helps you track each instance's owner and stack level. For example: Key=Owner and Value=DbAdmin, SysAdmin, or Dev. Or Key=Stack and Value=Production, Pre-Production, or Test.</p> <p>Each resource can have a maximum of 10 tags. </p> <p>We recommend that you devise a set of tag keys that meets your needs for each resource type. Using a consistent set of tag keys makes it easier for you to manage your resources. You can search and filter the resources based on the tags you add. Tags don't have any semantic meaning to Amazon EC2 and are interpreted strictly as a string of characters. </p> <p>For more information about tags, see <a href=\"http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html\">Tagging Your Amazon EC2 Resources</a> in the <i>Amazon EC2 User Guide</i>.</p>",
     "CancelCommand": "<p>Attempts to cancel the command specified by the Command ID. There is no guarantee that the command will be terminated and the underlying process stopped.</p>",
     "CreateActivation": "<p>Registers your on-premises server or virtual machine with Amazon EC2 so that you can manage these resources using Run Command. An on-premises server or virtual machine that has been registered with EC2 is called a managed instance. For more information about activations, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-managedinstances.html\">Setting Up Systems Manager in Hybrid Environments</a>.</p>",
     "CreateAssociation": "<p>Associates the specified Systems Manager document with the specified instances or targets.</p> <p>When you associate a document with one or more instances using instance IDs or tags, the SSM Agent running on the instance processes the document and configures the instance as specified.</p> <p>If you associate a document with an instance that already has an associated document, the system throws the AssociationAlreadyExists exception.</p>",
@@ -10,13 +10,16 @@
     "CreateDocument": "<p>Creates a Systems Manager document.</p> <p>After you create a document, you can use CreateAssociation to associate it with one or more running instances.</p>",
     "CreateMaintenanceWindow": "<p>Creates a new Maintenance Window.</p>",
     "CreatePatchBaseline": "<p>Creates a patch baseline.</p>",
+    "CreateResourceDataSync": "<p>Creates a resource data sync configuration to a single bucket in Amazon S3. This is an asynchronous operation that returns immediately. After a successful initial sync is completed, the system continuously syncs data to the Amazon S3 bucket. To check the status of the sync, use the <a href=\"API_ListResourceDataSync.html\">ListResourceDataSync</a> operation.</p> <p>By default, data is not encrypted in Amazon S3. We strongly recommend that you enable encryption in Amazon S3 to ensure secure data storage. We also recommend that you secure access to the Amazon S3 bucket by creating a restrictive bucket policy. To view an example of a restrictive Amazon S3 bucket policy for Resource Data Sync, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-inventory-configuring.html#sysman-inventory-datasync\">Configuring Resource Data Sync for Inventory</a>.</p>",
     "DeleteActivation": "<p>Deletes an activation. You are not required to delete an activation. If you delete an activation, you can no longer use it to register additional managed instances. Deleting an activation does not de-register managed instances. You must manually de-register managed instances.</p>",
     "DeleteAssociation": "<p>Disassociates the specified Systems Manager document from the specified instance.</p> <p>When you disassociate a document from an instance, it does not change the configuration of the instance. To change the configuration state of an instance after you disassociate a document, you must create a new document with the desired configuration and associate it with the instance.</p>",
     "DeleteDocument": "<p>Deletes the Systems Manager document and all instance associations to the document.</p> <p>Before you delete the document, we recommend that you use <a>DeleteAssociation</a> to disassociate all instances that are associated with the document.</p>",
     "DeleteMaintenanceWindow": "<p>Deletes a Maintenance Window.</p>",
     "DeleteParameter": "<p>Delete a parameter from the system.</p>",
+    "DeleteParameters": "<p>Delete a list of parameters.</p>",
     "DeletePatchBaseline": "<p>Deletes a patch baseline.</p>",
-    "DeregisterManagedInstance": "<p>Removes the server or virtual machine from the list of registered servers. You can reregister the instance again at any time. If you don’t plan to use Run Command on the server, we suggest uninstalling the SSM Agent first.</p>",
+    "DeleteResourceDataSync": "<p>Deletes a Resource Data Sync configuration. After the configuration is deleted, changes to inventory data on managed instances are no longer synced with the target Amazon S3 bucket. Deleting a sync configuration does not delete data in the target Amazon S3 bucket.</p>",
+    "DeregisterManagedInstance": "<p>Removes the server or virtual machine from the list of registered servers. You can reregister the instance again at any time. If you don't plan to use Run Command on the server, we suggest uninstalling the SSM Agent first.</p>",
     "DeregisterPatchBaselineForPatchGroup": "<p>Removes a patch group from a patch baseline.</p>",
     "DeregisterTargetFromMaintenanceWindow": "<p>Removes a target from a Maintenance Window.</p>",
     "DeregisterTaskFromMaintenanceWindow": "<p>Removes a task from a Maintenance Window.</p>",
@@ -25,9 +28,9 @@
     "DescribeAutomationExecutions": "<p>Provides details about all active and terminated Automation executions.</p>",
     "DescribeAvailablePatches": "<p>Lists all patches that could possibly be included in a patch baseline.</p>",
     "DescribeDocument": "<p>Describes the specified SSM document.</p>",
-    "DescribeDocumentPermission": "<p>Describes the permissions for a Systems Manager document. If you created the document, you are the owner. If a document is shared, it can either be shared privately (by specifying a user’s AWS account ID) or publicly (<i>All</i>). </p>",
+    "DescribeDocumentPermission": "<p>Describes the permissions for a Systems Manager document. If you created the document, you are the owner. If a document is shared, it can either be shared privately (by specifying a user's AWS account ID) or publicly (<i>All</i>). </p>",
     "DescribeEffectiveInstanceAssociations": "<p>All associations for the instance(s).</p>",
-    "DescribeEffectivePatchesForPatchBaseline": "<p>Retrieves the current effective patches (the patch and the approval state) for the specified patch baseline.</p>",
+    "DescribeEffectivePatchesForPatchBaseline": "<p>Retrieves the current effective patches (the patch and the approval state) for the specified patch baseline. Note that this API applies only to Windows patch baselines.</p>",
     "DescribeInstanceAssociationsStatus": "<p>The status of the associations for the instance(s).</p>",
     "DescribeInstanceInformation": "<p>Describes one or more of your instances. You can use this to get information about instances like the operating system platform, the SSM Agent version (Linux), status etc. If you specify one or more instance IDs, it returns information for those instances. If you do not specify instance IDs, it returns information for all your instances. If you specify an instance ID that is not valid or an instance that you do not own, you receive an error. </p>",
     "DescribeInstancePatchStates": "<p>Retrieves the high-level patch state of one or more instances.</p>",
@@ -45,16 +48,18 @@
     "DescribePatchGroups": "<p>Lists all patch groups that have been registered with patch baselines.</p>",
     "GetAutomationExecution": "<p>Get detailed information about a particular Automation execution.</p>",
     "GetCommandInvocation": "<p>Returns detailed information about command execution for an invocation or plugin. </p>",
-    "GetDefaultPatchBaseline": "<p>Retrieves the default patch baseline.</p>",
-    "GetDeployablePatchSnapshotForInstance": "<p>Retrieves the current snapshot for the patch baseline the instance uses. This API is primarily used by the AWS-ApplyPatchBaseline Systems Manager document. </p>",
+    "GetDefaultPatchBaseline": "<p>Retrieves the default patch baseline. Note that Systems Manager supports creating multiple default patch baselines. For example, you can create a default patch baseline for each operating system.</p>",
+    "GetDeployablePatchSnapshotForInstance": "<p>Retrieves the current snapshot for the patch baseline the instance uses. This API is primarily used by the AWS-RunPatchBaseline Systems Manager document. </p>",
     "GetDocument": "<p>Gets the contents of the specified SSM document.</p>",
     "GetInventory": "<p>Query inventory information.</p>",
     "GetInventorySchema": "<p>Return a list of inventory type names for the account, or return a list of attribute names for a specific Inventory item type. </p>",
     "GetMaintenanceWindow": "<p>Retrieves a Maintenance Window.</p>",
     "GetMaintenanceWindowExecution": "<p>Retrieves details about a specific task executed as part of a Maintenance Window execution.</p>",
     "GetMaintenanceWindowExecutionTask": "<p>Retrieves the details about a specific task executed as part of a Maintenance Window execution.</p>",
+    "GetParameter": "<p>Get information about a parameter by using the parameter name. </p>",
     "GetParameterHistory": "<p>Query a list of all parameters used by the AWS account.</p>",
     "GetParameters": "<p>Get details of a parameter.</p>",
+    "GetParametersByPath": "<p>Retrieve parameters in a specific hierarchy. For more information, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html\">Working with Systems Manager Parameters</a>. </p>",
     "GetPatchBaseline": "<p>Retrieves information about a patch baseline.</p>",
     "GetPatchBaselineForPatchGroup": "<p>Retrieves the patch baseline that should be used for the specified patch group.</p>",
     "ListAssociations": "<p>Lists the associations for the specified Systems Manager document or instance.</p>",
@@ -63,16 +68,17 @@
     "ListDocumentVersions": "<p>List all versions for a document.</p>",
     "ListDocuments": "<p>Describes one or more of your SSM documents.</p>",
     "ListInventoryEntries": "<p>A list of inventory items returned by the request.</p>",
+    "ListResourceDataSync": "<p>Lists your resource data sync configurations. Includes information about the last time a sync attempted to start, the last sync status, and the last time a sync successfully completed.</p> <p>The number of sync configurations might be too large to return using a single call to <code>ListResourceDataSync</code>. You can limit the number of sync configurations returned by using the <code>MaxResults</code> parameter. To determine whether there are more sync configurations to list, check the value of <code>NextToken</code> in the output. If there are more sync configurations to list, you can request them by specifying the <code>NextToken</code> returned in the call to the parameter of a subsequent call. </p>",
     "ListTagsForResource": "<p>Returns a list of the tags assigned to the specified resource.</p>",
     "ModifyDocumentPermission": "<p>Shares a Systems Manager document publicly or privately. If you share a document privately, you must specify the AWS user account IDs for those people who can use the document. If you share a document publicly, you must specify <i>All</i> as the account ID.</p>",
     "PutInventory": "<p>Bulk update custom inventory items on one more instance. The request adds an inventory item, if it doesn't already exist, or updates an inventory item, if it does exist.</p>",
-    "PutParameter": "<p>Add one or more paramaters to the system.</p>",
+    "PutParameter": "<p>Add one or more parameters to the system.</p>",
     "RegisterDefaultPatchBaseline": "<p>Defines the default patch baseline.</p>",
     "RegisterPatchBaselineForPatchGroup": "<p>Registers a patch baseline for a patch group.</p>",
     "RegisterTargetWithMaintenanceWindow": "<p>Registers a target with a Maintenance Window.</p>",
     "RegisterTaskWithMaintenanceWindow": "<p>Adds a new task to a Maintenance Window.</p>",
     "RemoveTagsFromResource": "<p>Removes all tags from the specified resource.</p>",
-    "SendCommand": "<p>Executes commands on one or more remote instances.</p>",
+    "SendCommand": "<p>Executes commands on one or more managed instances.</p>",
     "StartAutomationExecution": "<p>Initiates execution of an Automation document.</p>",
     "StopAutomationExecution": "<p>Stop an Automation that is currently executing.</p>",
     "UpdateAssociation": "<p>Updates an association. You can only update the document version, schedule, parameters, and Amazon S3 output of an association.</p>",
@@ -114,7 +120,7 @@
       "base": null,
       "refs": {
         "Activation$Description": "<p>A user defined description of the activation.</p>",
-        "CreateActivationRequest$Description": "<p>A user-defined description of the resource that you want to register with Amazon EC2. </p>"
+        "CreateActivationRequest$Description": "<p>A userdefined description of the resource that you want to register with Amazon EC2. </p>"
       }
     },
     "ActivationId": {
@@ -146,6 +152,14 @@
       "base": null,
       "refs": {
         "InstanceAssociationStatusInfo$ErrorCode": "<p>An error code returned by the request to create the association.</p>"
+      }
+    },
+    "AllowedPattern": {
+      "base": null,
+      "refs": {
+        "ParameterHistory$AllowedPattern": "<p>Parameter names can include the following letters and symbols.</p> <p>a-zA-Z0-9_.-</p>",
+        "ParameterMetadata$AllowedPattern": "<p>A parameter name can include only the following letters and symbols.</p> <p>a-zA-Z0-9_.-</p>",
+        "PutParameterRequest$AllowedPattern": "<p>A regular expression used to validate the parameter value. For example, for String types with values restricted to numbers, you can specify the following: AllowedPattern=^\\d+$ </p>"
       }
     },
     "AlreadyExistsException": {
@@ -338,7 +352,7 @@
       "refs": {
         "AutomationExecution$AutomationExecutionId": "<p>The execution ID.</p>",
         "AutomationExecutionMetadata$AutomationExecutionId": "<p>The execution ID.</p>",
-        "GetAutomationExecutionRequest$AutomationExecutionId": "<p>The unique identifier for an existing automation execution to examine. The execution ID is returned by <code>StartAutomationExecution</code> when the execution of an Automation document is initiated.</p>",
+        "GetAutomationExecutionRequest$AutomationExecutionId": "<p>The unique identifier for an existing automation execution to examine. The execution ID is returned by StartAutomationExecution when the execution of an Automation document is initiated.</p>",
         "StartAutomationExecutionResult$AutomationExecutionId": "<p>The unique ID of a newly scheduled automation execution.</p>",
         "StopAutomationExecutionRequest$AutomationExecutionId": "<p>The execution ID of the Automation to stop.</p>"
       }
@@ -370,7 +384,7 @@
       "refs": {
         "AutomationExecution$AutomationExecutionStatus": "<p>The execution status of the Automation.</p>",
         "AutomationExecutionMetadata$AutomationExecutionStatus": "<p>The status of the execution. Valid values include: Running, Succeeded, Failed, Timed out, or Cancelled.</p>",
-        "StepExecution$StepStatus": "<p>The execution status for this step. Valid values include: <code>Pending</code>, <code>InProgress</code>, <code>Success</code>, <code>Cancelled</code>, <code>Failed</code>, and <code>TimedOut</code>.</p>"
+        "StepExecution$StepStatus": "<p>The execution status for this step. Valid values include: Pending, InProgress, Success, Cancelled, Failed, and TimedOut.</p>"
       }
     },
     "AutomationParameterKey": {
@@ -382,9 +396,10 @@
     "AutomationParameterMap": {
       "base": null,
       "refs": {
-        "AutomationExecution$Parameters": "<p>The key-value map of execution parameters, which were supplied when calling <code>StartAutomationExecution</code>.</p>",
+        "AutomationExecution$Parameters": "<p>The key-value map of execution parameters, which were supplied when calling StartAutomationExecution.</p>",
         "AutomationExecution$Outputs": "<p>The list of execution outputs as defined in the automation document.</p>",
         "AutomationExecutionMetadata$Outputs": "<p>The list of execution outputs as defined in the Automation document.</p>",
+        "FailureDetails$Details": "<p>Detailed information about the Automation step failure.</p>",
         "StartAutomationExecutionRequest$Parameters": "<p>A key-value map of execution parameters, which match the declared parameters in the Automation document.</p>",
         "StepExecution$Outputs": "<p>Returned values from the execution of the step.</p>"
       }
@@ -456,6 +471,9 @@
         "Activation$Expired": "<p>Whether or not the activation is expired.</p>",
         "DocumentVersionInfo$IsDefaultVersion": "<p>An identifier for the default version of the document.</p>",
         "GetParameterHistoryRequest$WithDecryption": "<p>Return decrypted values for secure string parameters. This flag is ignored for String and StringList parameter types.</p>",
+        "GetParameterRequest$WithDecryption": "<p>Return decrypted values for secure string parameters. This flag is ignored for String and StringList parameter types.</p>",
+        "GetParametersByPathRequest$Recursive": "<p>Retrieve all parameters within a hierarchy.</p>",
+        "GetParametersByPathRequest$WithDecryption": "<p>Retrieve all parameters in a hierarchy with their value decrypted.</p>",
         "GetParametersRequest$WithDecryption": "<p>Return decrypted secure string value. Return decrypted values for secure string parameters. This flag is ignored for String and StringList parameter types.</p>",
         "InstanceInformation$IsLatestVersion": "<p>Indicates whether latest version of the SSM Agent is running on your instance. </p>",
         "ListCommandInvocationsRequest$Details": "<p>(Optional) If set this returns the response of the command executions and any command output. By default this is set to False. </p>",
@@ -476,7 +494,7 @@
       "base": null,
       "refs": {
         "CreateMaintenanceWindowRequest$ClientToken": "<p>User-provided idempotency token.</p>",
-        "CreatePatchBaselineRequest$ClientToken": "<p>Caller-provided idempotency token.</p>",
+        "CreatePatchBaselineRequest$ClientToken": "<p>User-provided idempotency token.</p>",
         "RegisterTargetWithMaintenanceWindowRequest$ClientToken": "<p>User-provided idempotency token.</p>",
         "RegisterTaskWithMaintenanceWindowRequest$ClientToken": "<p>User-provided idempotency token.</p>"
       }
@@ -497,7 +515,7 @@
     "CommandFilterKey": {
       "base": null,
       "refs": {
-        "CommandFilter$key": "<p>The name of the filter. For example, requested date and time.</p>"
+        "CommandFilter$key": "<p>The name of the filter.</p>"
       }
     },
     "CommandFilterList": {
@@ -510,7 +528,7 @@
     "CommandFilterValue": {
       "base": null,
       "refs": {
-        "CommandFilter$value": "<p>The filter value. For example: June 30, 2015.</p>"
+        "CommandFilter$value": "<p>The filter value. </p>"
       }
     },
     "CommandId": {
@@ -541,7 +559,7 @@
       "base": null,
       "refs": {
         "CommandInvocation$Status": "<p>Whether or not the invocation succeeded, failed, or is pending.</p>",
-        "GetCommandInvocationResult$Status": "<p>The status of the parent command for this invocation. This status can be different than <code>StatusDetails</code>.</p>"
+        "GetCommandInvocationResult$Status": "<p>The status of the parent command for this invocation. This status can be different than StatusDetails.</p>"
       }
     },
     "CommandList": {
@@ -607,7 +625,7 @@
     "CompletedCount": {
       "base": null,
       "refs": {
-        "Command$CompletedCount": "<p>The number of targets for which the command invocation reached a terminal state. Terminal states include the following: <code>Success</code>, <code>Failed</code>, <code>Execution Timed Out</code>, <code>Delivery Timed Out</code>, <code>Canceled</code>, <code>Terminated</code>, or <code>Undeliverable</code>.</p>"
+        "Command$CompletedCount": "<p>The number of targets for which the command invocation reached a terminal state. Terminal states include the following: Success, Failed, Execution Timed Out, Delivery Timed Out, Canceled, Terminated, or Undeliverable.</p>"
       }
     },
     "ComputerName": {
@@ -638,7 +656,7 @@
       }
     },
     "CreateAssociationBatchRequestEntry": {
-      "base": "<p> Describes the association of a Systems Manager document and an instance.</p>",
+      "base": "<p>Describes the association of a Systems Manager document and an instance.</p>",
       "refs": {
         "CreateAssociationBatchRequestEntries$member": null,
         "FailedCreateAssociation$Entry": "<p>The association.</p>"
@@ -689,6 +707,16 @@
       "refs": {
       }
     },
+    "CreateResourceDataSyncRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateResourceDataSyncResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "CreatedDate": {
       "base": null,
       "refs": {
@@ -718,7 +746,7 @@
         "CommandInvocation$RequestedDateTime": "<p>The time and date the request was sent to this instance.</p>",
         "CommandPlugin$ResponseStartDateTime": "<p>The time the plugin started executing. </p>",
         "CommandPlugin$ResponseFinishDateTime": "<p>The time the plugin stopped executing. Could stop prematurely if, for example, a cancel command was sent. </p>",
-        "DocumentDescription$CreatedDate": "<p> The date when the document was created.</p>",
+        "DocumentDescription$CreatedDate": "<p>The date when the document was created.</p>",
         "DocumentVersionInfo$CreatedDate": "<p>The date the document was created.</p>",
         "GetMaintenanceWindowExecutionResult$StartTime": "<p>The time the Maintenance Window started executing.</p>",
         "GetMaintenanceWindowExecutionResult$EndTime": "<p>The time the Maintenance Window finished executing.</p>",
@@ -733,6 +761,8 @@
         "InstanceInformation$RegistrationDate": "<p>The date the server or VM was registered with AWS as a managed instance.</p>",
         "InstanceInformation$LastAssociationExecutionDate": "<p>The date the association was last executed.</p>",
         "InstanceInformation$LastSuccessfulAssociationExecutionDate": "<p>The last date the association was successfully run.</p>",
+        "InstancePatchState$OperationStartTime": "<p>The time the most recent patching operation was started on the instance.</p>",
+        "InstancePatchState$OperationEndTime": "<p>The time the most recent patching operation completed on the instance.</p>",
         "MaintenanceWindowExecution$StartTime": "<p>The time the execution started.</p>",
         "MaintenanceWindowExecution$EndTime": "<p>The time the execution finished.</p>",
         "MaintenanceWindowExecutionTaskIdentity$StartTime": "<p>The time the task execution started.</p>",
@@ -742,8 +772,9 @@
         "ParameterHistory$LastModifiedDate": "<p>Date the parameter was last changed or updated.</p>",
         "ParameterMetadata$LastModifiedDate": "<p>Date the parameter was last changed or updated.</p>",
         "Patch$ReleaseDate": "<p>The date the patch was released.</p>",
+        "PatchComplianceData$InstalledTime": "<p>The date/time the patch was installed on the instance. Note that not all operating systems provide this level of information.</p>",
         "PatchStatus$ApprovalDate": "<p>The date the patch was approved (or will be approved if the status is PENDING_APPROVAL).</p>",
-        "StepExecution$ExecutionStartTime": "<p>If a step has begun execution, this contains the time the step started. If the step is in <code>Pending</code> status, this field is not populated.</p>",
+        "StepExecution$ExecutionStartTime": "<p>If a step has begun execution, this contains the time the step started. If the step is in Pending status, this field is not populated.</p>",
         "StepExecution$ExecutionEndTime": "<p>If a step has finished execution, this contains the time the execution ended. If the step has not yet concluded, this field is not populated.</p>",
         "UpdatePatchBaselineResult$CreatedDate": "<p>The date when the patch baseline was created.</p>",
         "UpdatePatchBaselineResult$ModifiedDate": "<p>The date when the patch baseline was last modified.</p>"
@@ -752,7 +783,7 @@
     "DefaultBaseline": {
       "base": null,
       "refs": {
-        "PatchBaselineIdentity$DefaultBaseline": "<p>Whether this is the default baseline.</p>"
+        "PatchBaselineIdentity$DefaultBaseline": "<p>Whether this is the default baseline. Note that Systems Manager supports creating multiple default patch baselines. For example, you can create a default patch baseline for each operating system.</p>"
       }
     },
     "DefaultInstanceName": {
@@ -812,12 +843,32 @@
       "refs": {
       }
     },
+    "DeleteParametersRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteParametersResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "DeletePatchBaselineRequest": {
       "base": null,
       "refs": {
       }
     },
     "DeletePatchBaselineResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteResourceDataSyncRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteResourceDataSyncResult": {
       "base": null,
       "refs": {
       }
@@ -1113,7 +1164,7 @@
     "DescriptionInDocument": {
       "base": null,
       "refs": {
-        "DocumentDescription$Description": "<p> A description of the document. </p>"
+        "DocumentDescription$Description": "<p>A description of the document. </p>"
       }
     },
     "DocumentARN": {
@@ -1149,7 +1200,7 @@
       }
     },
     "DocumentDescription": {
-      "base": "<p> Describes an SSM document. </p>",
+      "base": "<p>Describes an SSM document. </p>",
       "refs": {
         "CreateDocumentResult$DocumentDescription": "<p>Information about the Systems Manager document.</p>",
         "DescribeDocumentResult$Document": "<p>Information about the SSM document.</p>",
@@ -1220,7 +1271,7 @@
         "AutomationExecutionMetadata$DocumentName": "<p>The name of the Automation document used during execution.</p>",
         "Command$DocumentName": "<p>The name of the document requested for execution.</p>",
         "CommandInvocation$DocumentName": "<p>The document name that was requested for execution.</p>",
-        "CreateAssociationBatchRequestEntry$Name": "<p> The name of the configuration document. </p>",
+        "CreateAssociationBatchRequestEntry$Name": "<p>The name of the configuration document. </p>",
         "CreateAssociationRequest$Name": "<p>The name of the Systems Manager document.</p>",
         "CreateDocumentRequest$Name": "<p>A name for the Systems Manager document.</p>",
         "DeleteAssociationRequest$Name": "<p>The name of the Systems Manager document.</p>",
@@ -1233,6 +1284,7 @@
         "InstanceAssociationStatusInfo$Name": "<p>The name of the association.</p>",
         "ListDocumentVersionsRequest$Name": "<p>The name of the document about which you want version information.</p>",
         "ModifyDocumentPermissionRequest$Name": "<p>The name of the document that you want to share.</p>",
+        "UpdateAssociationRequest$Name": "<p>The name of the association document.</p>",
         "UpdateAssociationStatusRequest$Name": "<p>The name of the SSM document.</p>",
         "UpdateDocumentDefaultVersionRequest$Name": "<p>The name of a custom document that you want to set as the default version.</p>",
         "UpdateDocumentRequest$Name": "<p>The name of the document that you want to update.</p>"
@@ -1278,7 +1330,7 @@
     "DocumentParameterType": {
       "base": null,
       "refs": {
-        "DocumentParameter$Type": "<p>The type of parameter. The type can be either “String” or “StringList”.</p>"
+        "DocumentParameter$Type": "<p>The type of parameter. The type can be either String or StringList.</p>"
       }
     },
     "DocumentPermissionLimit": {
@@ -1369,7 +1421,7 @@
       }
     },
     "DoesNotExistException": {
-      "base": "<p>Error returned when the ID specified for a resource (e.g. a Maintenance Window) doesn’t exist.</p>",
+      "base": "<p>Error returned when the ID specified for a resource (e.g. a Maintenance Window) doesn't exist.</p>",
       "refs": {
       }
     },
@@ -1404,7 +1456,7 @@
     "ErrorCount": {
       "base": null,
       "refs": {
-        "Command$ErrorCount": "<p>The number of targets for which the status is <code>Failed</code> or <code>Execution Timed Out</code>.</p>"
+        "Command$ErrorCount": "<p>The number of targets for which the status is Failed or Execution Timed Out.</p>"
       }
     },
     "ExpirationDate": {
@@ -1424,6 +1476,12 @@
       "base": null,
       "refs": {
         "CreateAssociationBatchResult$Failed": "<p>Information about the associations that failed.</p>"
+      }
+    },
+    "FailureDetails": {
+      "base": "<p>Information about an Automation failure.</p>",
+      "refs": {
+        "StepExecution$FailureDetails": "<p>Information about the Automation failure.</p>"
       }
     },
     "Fault": {
@@ -1548,6 +1606,32 @@
       "refs": {
       }
     },
+    "GetParameterRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetParameterResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetParametersByPathMaxResults": {
+      "base": null,
+      "refs": {
+        "GetParametersByPathRequest$MaxResults": "<p>The maximum number of items to return for this call. The call also returns a token that you can specify in a subsequent call to get the next set of results.</p>"
+      }
+    },
+    "GetParametersByPathRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetParametersByPathResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "GetParametersRequest": {
       "base": null,
       "refs": {
@@ -1578,6 +1662,16 @@
       "refs": {
       }
     },
+    "HierarchyLevelLimitExceededException": {
+      "base": "<p>A hierarchy can have a maximum of five levels. For example:</p> <p>/Finance/Prod/IAD/OS/WinServ2016/license15</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html\">Working with Systems Manager Parameters</a>. </p>",
+      "refs": {
+      }
+    },
+    "HierarchyTypeMismatchException": {
+      "base": "<p>Parameter Store does not support changing a parameter type in a hierarchy. For example, you can't change a parameter from a String type to a SecureString type. You must create a new, unique parameter.</p>",
+      "refs": {
+      }
+    },
     "IPAddress": {
       "base": null,
       "refs": {
@@ -1594,7 +1688,7 @@
       }
     },
     "IdempotentParameterMismatch": {
-      "base": "<p>Error returned when an idempotent operation is retried and the parameters don’t match the original call to the API with the same idempotency token. </p>",
+      "base": "<p>Error returned when an idempotent operation is retried and the parameters don't match the original call to the API with the same idempotency token. </p>",
       "refs": {
       }
     },
@@ -1627,8 +1721,8 @@
       "refs": {
         "AssociationDescription$OutputLocation": "<p>An Amazon S3 bucket where you want to store the output details of the request.</p>",
         "CreateAssociationBatchRequestEntry$OutputLocation": "<p>An Amazon S3 bucket where you want to store the results of this request.</p>",
-        "CreateAssociationRequest$OutputLocation": "<p>An Amazon S3 bucket where you want to store the output details of the request. For example:</p> <p> <code>\"{ \\\"S3Location\\\": { \\\"OutputS3Region\\\": \\\"&lt;region&gt;\\\", \\\"OutputS3BucketName\\\": \\\"bucket name\\\", \\\"OutputS3KeyPrefix\\\": \\\"folder name\\\" } }\"</code> </p>",
-        "UpdateAssociationRequest$OutputLocation": "<p>An Amazon S3 bucket where you want to store the results of this request.</p> <p> <code>\"{ \\\"S3Location\\\": { \\\"OutputS3Region\\\": \\\"&lt;region&gt;\\\", \\\"OutputS3BucketName\\\": \\\"bucket name\\\", \\\"OutputS3KeyPrefix\\\": \\\"folder name\\\" } }\"</code> </p>"
+        "CreateAssociationRequest$OutputLocation": "<p>An Amazon S3 bucket where you want to store the output details of the request.</p>",
+        "UpdateAssociationRequest$OutputLocation": "<p>An Amazon S3 bucket where you want to store the results of this request.</p>"
       }
     },
     "InstanceAssociationOutputUrl": {
@@ -1668,7 +1762,7 @@
         "Association$InstanceId": "<p>The ID of the instance.</p>",
         "AssociationDescription$InstanceId": "<p>The ID of the instance.</p>",
         "CommandInvocation$InstanceId": "<p>The instance ID in which this invocation was requested.</p>",
-        "CreateAssociationBatchRequestEntry$InstanceId": "<p> The ID of the instance. </p>",
+        "CreateAssociationBatchRequestEntry$InstanceId": "<p>The ID of the instance. </p>",
         "CreateAssociationRequest$InstanceId": "<p>The instance ID.</p>",
         "DeleteAssociationRequest$InstanceId": "<p>The ID of the instance.</p>",
         "DescribeAssociationRequest$InstanceId": "<p>The instance ID.</p>",
@@ -1698,7 +1792,7 @@
         "CancelCommandRequest$InstanceIds": "<p>(Optional) A list of instance IDs on which you want to cancel the command. If not provided, the command is canceled on every instance on which it was requested.</p>",
         "Command$InstanceIds": "<p>The instance IDs against which this command was requested.</p>",
         "DescribeInstancePatchStatesRequest$InstanceIds": "<p>The ID of the instance whose patch state information should be retrieved.</p>",
-        "SendCommandRequest$InstanceIds": "<p>Required. The instance IDs where the command should execute. You can specify a maximum of 50 IDs.</p>"
+        "SendCommandRequest$InstanceIds": "<p>The instance IDs where the command should execute. You can specify a maximum of 50 IDs. If you prefer not to list individual instance IDs, you can instead send commands to a fleet of instances using the Targets parameter, which accepts EC2 tags. For more information about how to use Targets, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/send-commands-multiple.html\">Sending Commands to a Fleet</a>.</p>"
       }
     },
     "InstanceInformation": {
@@ -1753,7 +1847,7 @@
     "InstanceInformationStringFilterKey": {
       "base": null,
       "refs": {
-        "InstanceInformationStringFilter$Key": "<p>The filter key name to describe your instances. For example:</p> <p>\"InstanceIds\"|\"AgentVersion\"|\"PingStatus\"|\"PlatformTypes\"|\"ActivationIds\"|\"IamRole\"|\"ResourceType\"|”AssociationStatus”|”Tag Key”</p>"
+        "InstanceInformationStringFilter$Key": "<p>The filter key name to describe your instances. For example:</p> <p>\"InstanceIds\"|\"AgentVersion\"|\"PingStatus\"|\"PlatformTypes\"|\"ActivationIds\"|\"IamRole\"|\"ResourceType\"|\"AssociationStatus\"|\"Tag Key\"</p>"
       }
     },
     "InstanceInformationStringFilterList": {
@@ -1784,7 +1878,7 @@
     "InstancePatchStateFilterList": {
       "base": null,
       "refs": {
-        "DescribeInstancePatchStatesForPatchGroupRequest$Filters": "<p>Each entry in the array is a structure containing:</p> <p>Key (string 1 ≤ length ≤ 200)</p> <p> Values (array containing a single string)</p> <p> Type (string “Equal”, “NotEqual”, “LessThan”, “GreaterThan”)</p>"
+        "DescribeInstancePatchStatesForPatchGroupRequest$Filters": "<p>Each entry in the array is a structure containing:</p> <p>Key (string between 1 and 200 characters)</p> <p> Values (array containing a single string)</p> <p> Type (string \"Equal\", \"NotEqual\", \"LessThan\", \"GreaterThan\")</p>"
       }
     },
     "InstancePatchStateFilterValue": {
@@ -1820,7 +1914,7 @@
     "InstanceTagName": {
       "base": null,
       "refs": {
-        "CommandInvocation$InstanceName": "<p>The name of the invocation target. For Amazon EC2 instances this is the value for the <code>aws:Name</code> tag. For on-premises instances, this is the name of the instance.</p>"
+        "CommandInvocation$InstanceName": "<p>The name of the invocation target. For Amazon EC2 instances this is the value for the aws:Name tag. For on-premises instances, this is the name of the instance.</p>"
       }
     },
     "Integer": {
@@ -1828,10 +1922,10 @@
       "refs": {
         "DescribePatchGroupStateResult$Instances": "<p>The number of instances in the patch group.</p>",
         "DescribePatchGroupStateResult$InstancesWithInstalledPatches": "<p>The number of instances with installed patches.</p>",
-        "DescribePatchGroupStateResult$InstancesWithInstalledOtherPatches": "<p>The number of instances with patches installed that aren’t defined in the patch baseline.</p>",
+        "DescribePatchGroupStateResult$InstancesWithInstalledOtherPatches": "<p>The number of instances with patches installed that aren't defined in the patch baseline.</p>",
         "DescribePatchGroupStateResult$InstancesWithMissingPatches": "<p>The number of instances with missing patches from the patch baseline.</p>",
         "DescribePatchGroupStateResult$InstancesWithFailedPatches": "<p>The number of instances with patches from the patch baseline that failed to install.</p>",
-        "DescribePatchGroupStateResult$InstancesWithNotApplicablePatches": "<p>The number of instances with patches that aren’t applicable.</p>"
+        "DescribePatchGroupStateResult$InstancesWithNotApplicablePatches": "<p>The number of instances with patches that aren't applicable.</p>"
       }
     },
     "InternalServerError": {
@@ -1846,6 +1940,11 @@
     },
     "InvalidActivationId": {
       "base": "<p>The activation ID is not valid. Verify the you entered the correct ActivationId or ActivationCode and try again.</p>",
+      "refs": {
+      }
+    },
+    "InvalidAllowedPatternException": {
+      "base": "<p>The request does not meet the regular expression requirement.</p>",
       "refs": {
       }
     },
@@ -1891,6 +1990,11 @@
     },
     "InvalidFilterKey": {
       "base": "<p>The specified key is not valid.</p>",
+      "refs": {
+      }
+    },
+    "InvalidFilterOption": {
+      "base": "<p>The specified filter option is not valid. Valid options are Equals and BeginsWith. For Path filter, valid options are Recursive and OneLevel.</p>",
       "refs": {
       }
     },
@@ -2066,8 +2170,8 @@
     "InventoryItemContentHash": {
       "base": null,
       "refs": {
-        "InventoryItem$ContentHash": "<p>MD5 hash of the inventory item type contents. The content hash is used to determine whether to update inventory information. The <code>PutInventory</code> API does not update the inventory item type contents if the MD5 hash has not changed since last update. </p>",
-        "InventoryResultItem$ContentHash": "<p>MD5 hash of the inventory item type contents. The content hash is used to determine whether to update inventory information. The <code>PutInventory</code> API does not update the inventory item type contents if the MD5 hash has not changed since last update. </p>"
+        "InventoryItem$ContentHash": "<p>MD5 hash of the inventory item type contents. The content hash is used to determine whether to update inventory information. The PutInventory API does not update the inventory item type contents if the MD5 hash has not changed since last update. </p>",
+        "InventoryResultItem$ContentHash": "<p>MD5 hash of the inventory item type contents. The content hash is used to determine whether to update inventory information. The PutInventory API does not update the inventory item type contents if the MD5 hash has not changed since last update. </p>"
       }
     },
     "InventoryItemEntry": {
@@ -2115,14 +2219,14 @@
       "base": null,
       "refs": {
         "InvalidItemContentException$TypeName": null,
-        "InventoryItem$TypeName": "<p>The name of the inventory type. Default inventory item type names start with <code>AWS</code>. Custom inventory type names will start with <code>Custom</code>. Default inventory item types include the following: <code>AWS:AWSComponent</code>, <code>AWS:Application</code>, <code>AWS:InstanceInformation</code>, <code>AWS:Network</code>, and <code>AWS:WindowsUpdate</code>.</p>",
-        "InventoryItemSchema$TypeName": "<p>The name of the inventory type. Default inventory item type names start with <code>AWS</code>. Custom inventory type names will start with <code>Custom</code>. Default inventory item types include the following: <code>AWS:AWSComponent</code>, <code>AWS:Application</code>, <code>AWS:InstanceInformation</code>, <code>AWS:Network</code>, and <code>AWS:WindowsUpdate</code>.</p>",
+        "InventoryItem$TypeName": "<p>The name of the inventory type. Default inventory item type names start with AWS. Custom inventory type names will start with Custom. Default inventory item types include the following: AWS:AWSComponent, AWS:Application, AWS:InstanceInformation, AWS:Network, and AWS:WindowsUpdate.</p>",
+        "InventoryItemSchema$TypeName": "<p>The name of the inventory type. Default inventory item type names start with AWS. Custom inventory type names will start with Custom. Default inventory item types include the following: AWS:AWSComponent, AWS:Application, AWS:InstanceInformation, AWS:Network, and AWS:WindowsUpdate.</p>",
         "InventoryResultItem$TypeName": "<p>The name of the inventory result item type.</p>",
         "ItemContentMismatchException$TypeName": null,
         "ItemSizeLimitExceededException$TypeName": null,
         "ListInventoryEntriesRequest$TypeName": "<p>The type of inventory item for which you want information.</p>",
         "ListInventoryEntriesResult$TypeName": "<p>The type of inventory item returned by the request.</p>",
-        "ResultAttribute$TypeName": "<p>Name of the inventory item type. Valid value: “AWS:InstanceInformation”. Default Value: “AWS:InstanceInformation”.</p>"
+        "ResultAttribute$TypeName": "<p>Name of the inventory item type. Valid value: AWS:InstanceInformation. Default Value: AWS:InstanceInformation.</p>"
       }
     },
     "InventoryItemTypeNameFilter": {
@@ -2200,6 +2304,24 @@
         "RemoveTagsFromResourceRequest$TagKeys": "<p>Tag keys that you want to remove from the specified resource.</p>"
       }
     },
+    "LastResourceDataSyncStatus": {
+      "base": null,
+      "refs": {
+        "ResourceDataSyncItem$LastStatus": "<p>The status reported by the last sync.</p>"
+      }
+    },
+    "LastResourceDataSyncTime": {
+      "base": null,
+      "refs": {
+        "ResourceDataSyncItem$LastSyncTime": "<p>The last time the configuration attempted to sync (UTC).</p>"
+      }
+    },
+    "LastSuccessfulResourceDataSyncTime": {
+      "base": null,
+      "refs": {
+        "ResourceDataSyncItem$LastSuccessfulSyncTime": "<p>The last time the sync operations returned a status of <code>SUCCESSFUL</code> (UTC).</p>"
+      }
+    },
     "ListAssociationsRequest": {
       "base": null,
       "refs": {
@@ -2256,6 +2378,16 @@
       }
     },
     "ListInventoryEntriesResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListResourceDataSyncRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListResourceDataSyncResult": {
       "base": null,
       "refs": {
       }
@@ -2437,10 +2569,10 @@
       "refs": {
         "DescribeMaintenanceWindowExecutionTaskInvocationsRequest$Filters": "<p>Optional filters used to scope down the returned task invocations. The supported filter key is STATUS with the corresponding values PENDING, IN_PROGRESS, SUCCESS, FAILED, TIMED_OUT, CANCELLING, and CANCELLED.</p>",
         "DescribeMaintenanceWindowExecutionTasksRequest$Filters": "<p>Optional filters used to scope down the returned tasks. The supported filter key is STATUS with the corresponding values PENDING, IN_PROGRESS, SUCCESS, FAILED, TIMED_OUT, CANCELLING, and CANCELLED. </p>",
-        "DescribeMaintenanceWindowExecutionsRequest$Filters": "<p>Each entry in the array is a structure containing:</p> <p>Key (string, 1 ≤ length ≤ 128)</p> <p>Values (array of strings 1 ≤ length ≤ 256)</p> <p>The supported Keys are <code>ExecutedBefore</code> and <code>ExecutedAfter</code> with the value being a date/time string such as 2016-11-04T05:00:00Z.</p>",
-        "DescribeMaintenanceWindowTargetsRequest$Filters": "<p>Optional filters that can be used to narrow down the scope of the returned window targets. The supported filter keys are <code>Type</code>, <code>WindowTargetId</code> and <code>OwnerInformation</code>.</p>",
-        "DescribeMaintenanceWindowTasksRequest$Filters": "<p>Optional filters used to narrow down the scope of the returned tasks. The supported filter keys are <code>WindowTaskId</code>, <code>TaskArn</code>, <code>Priority</code>, and <code>TaskType</code>.</p>",
-        "DescribeMaintenanceWindowsRequest$Filters": "<p>Optional filters used to narrow down the scope of the returned Maintenance Windows. Supported filter keys are <code>Name</code> and <code>Enabled</code>.</p>"
+        "DescribeMaintenanceWindowExecutionsRequest$Filters": "<p>Each entry in the array is a structure containing:</p> <p>Key (string, between 1 and 128 characters)</p> <p>Values (array of strings, each string is between 1 and 256 characters)</p> <p>The supported Keys are ExecutedBefore and ExecutedAfter with the value being a date/time string such as 2016-11-04T05:00:00Z.</p>",
+        "DescribeMaintenanceWindowTargetsRequest$Filters": "<p>Optional filters that can be used to narrow down the scope of the returned window targets. The supported filter keys are Type, WindowTargetId and OwnerInformation.</p>",
+        "DescribeMaintenanceWindowTasksRequest$Filters": "<p>Optional filters used to narrow down the scope of the returned tasks. The supported filter keys are WindowTaskId, TaskArn, Priority, and TaskType.</p>",
+        "DescribeMaintenanceWindowsRequest$Filters": "<p>Optional filters used to narrow down the scope of the returned Maintenance Windows. Supported filter keys are Name and Enabled.</p>"
       }
     },
     "MaintenanceWindowFilterValue": {
@@ -2615,7 +2747,7 @@
     "MaintenanceWindowTaskParametersList": {
       "base": null,
       "refs": {
-        "GetMaintenanceWindowExecutionTaskResult$TaskParameters": "<p>The parameters passed to the task when it was executed. The map has the following format:</p> <p>Key: string, 1 ≤ length ≤ 255</p> <p>Value: an array of strings where each string 1 ≤ length ≤ 255</p>"
+        "GetMaintenanceWindowExecutionTaskResult$TaskParameters": "<p>The parameters passed to the task when it was executed. The map has the following format:</p> <p>Key: string, between 1 and 255 characters</p> <p>Value: an array of strings, each string is between 1 and 255 characters</p>"
       }
     },
     "MaintenanceWindowTaskPriority": {
@@ -2651,11 +2783,11 @@
     "MaxConcurrency": {
       "base": null,
       "refs": {
-        "Command$MaxConcurrency": "<p>The maximum number of instances that are allowed to execute the command at the same time. You can specify a number of instances, such as 10, or a percentage of instances, such as 10%. The default value is 50. For more information about how to use <code>MaxConcurrency</code>, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/run-command.html\">Executing a Command Using Systems Manager Run Command</a>.</p>",
+        "Command$MaxConcurrency": "<p>The maximum number of instances that are allowed to execute the command at the same time. You can specify a number of instances, such as 10, or a percentage of instances, such as 10%. The default value is 50. For more information about how to use MaxConcurrency, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/run-command.html\">Executing a Command Using Systems Manager Run Command</a>.</p>",
         "GetMaintenanceWindowExecutionTaskResult$MaxConcurrency": "<p>The defined maximum number of task executions that could be run in parallel.</p>",
         "MaintenanceWindowTask$MaxConcurrency": "<p>The maximum number of targets this task can be run for in parallel.</p>",
         "RegisterTaskWithMaintenanceWindowRequest$MaxConcurrency": "<p>The maximum number of targets this task can be run for in parallel.</p>",
-        "SendCommandRequest$MaxConcurrency": "<p>(Optional) The maximum number of instances that are allowed to execute the command at the same time. You can specify a number such as “10” or a percentage such as “10%”. The default value is 50. For more information about how to use <code>MaxConcurrency</code>, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/run-command.html\">Executing a Command Using Systems Manager Run Command</a>.</p>"
+        "SendCommandRequest$MaxConcurrency": "<p>(Optional) The maximum number of instances that are allowed to execute the command at the same time. You can specify a number such as 10 or a percentage such as 10%. The default value is 50. For more information about how to use MaxConcurrency, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/send-commands-velocity.html\">Using Concurrency Controls</a>.</p>"
       }
     },
     "MaxDocumentSizeExceeded": {
@@ -2666,11 +2798,11 @@
     "MaxErrors": {
       "base": null,
       "refs": {
-        "Command$MaxErrors": "<p>The maximum number of errors allowed before the system stops sending the command to additional targets. You can specify a number of errors, such as 10, or a percentage or errors, such as 10%. The default value is 50. For more information about how to use <code>MaxErrors</code>, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/run-command.html\">Executing a Command Using Systems Manager Run Command</a>.</p>",
+        "Command$MaxErrors": "<p>The maximum number of errors allowed before the system stops sending the command to additional targets. You can specify a number of errors, such as 10, or a percentage or errors, such as 10%. The default value is 50. For more information about how to use MaxErrors, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/run-command.html\">Executing a Command Using Systems Manager Run Command</a>.</p>",
         "GetMaintenanceWindowExecutionTaskResult$MaxErrors": "<p>The defined maximum number of task execution errors allowed before scheduling of the task execution would have been stopped.</p>",
         "MaintenanceWindowTask$MaxErrors": "<p>The maximum number of errors allowed before this task stops being scheduled.</p>",
         "RegisterTaskWithMaintenanceWindowRequest$MaxErrors": "<p>The maximum number of errors allowed before this task stops being scheduled.</p>",
-        "SendCommandRequest$MaxErrors": "<p>The maximum number of errors allowed without the command failing. When the command fails one more time beyond the value of <code>MaxErrors</code>, the systems stops sending the command to additional targets. You can specify a number like “10” or a percentage like “10%”. The default value is 50. For more information about how to use <code>MaxErrors</code>, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/run-command.html\">Executing a Command Using Systems Manager Run Command</a>.</p>"
+        "SendCommandRequest$MaxErrors": "<p>The maximum number of errors allowed without the command failing. When the command fails one more time beyond the value of MaxErrors, the systems stops sending the command to additional targets. You can specify a number like 10 or a percentage like 10%. The default value is 50. For more information about how to use MaxErrors, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/send-commands-maxerrors.html\">Using Error Controls</a>.</p>"
       }
     },
     "MaxResults": {
@@ -2685,7 +2817,8 @@
         "ListAssociationsRequest$MaxResults": "<p>The maximum number of items to return for this call. The call also returns a token that you can specify in a subsequent call to get the next set of results.</p>",
         "ListDocumentVersionsRequest$MaxResults": "<p>The maximum number of items to return for this call. The call also returns a token that you can specify in a subsequent call to get the next set of results.</p>",
         "ListDocumentsRequest$MaxResults": "<p>The maximum number of items to return for this call. The call also returns a token that you can specify in a subsequent call to get the next set of results.</p>",
-        "ListInventoryEntriesRequest$MaxResults": "<p>The maximum number of items to return for this call. The call also returns a token that you can specify in a subsequent call to get the next set of results.</p>"
+        "ListInventoryEntriesRequest$MaxResults": "<p>The maximum number of items to return for this call. The call also returns a token that you can specify in a subsequent call to get the next set of results.</p>",
+        "ListResourceDataSyncRequest$MaxResults": "<p>The maximum number of items to return for this call. The call also returns a token that you can specify in a subsequent call to get the next set of results.</p>"
       }
     },
     "MaxResultsEC2Compatible": {
@@ -2708,7 +2841,7 @@
       "base": null,
       "refs": {
         "DescribeActivationsRequest$NextToken": "<p>A token to start the list. Use this token to get the next set of results. </p>",
-        "DescribeActivationsResult$NextToken": "<p> The token for the next set of items to return. Use this token to get the next set of results. </p>",
+        "DescribeActivationsResult$NextToken": "<p>The token for the next set of items to return. Use this token to get the next set of results. </p>",
         "DescribeAutomationExecutionsRequest$NextToken": "<p>The token for the next set of items to return. (You received this token from a previous call.)</p>",
         "DescribeAutomationExecutionsResult$NextToken": "<p>The token to use when requesting the next set of items. If there are no additional items to return, the string is empty.</p>",
         "DescribeAvailablePatchesRequest$NextToken": "<p>The token for the next set of items to return. (You received this token from a previous call.)</p>",
@@ -2751,6 +2884,8 @@
         "GetInventorySchemaResult$NextToken": "<p>The token to use when requesting the next set of items. If there are no additional items to return, the string is empty.</p>",
         "GetParameterHistoryRequest$NextToken": "<p>The token for the next set of items to return. (You received this token from a previous call.)</p>",
         "GetParameterHistoryResult$NextToken": "<p>The token to use when requesting the next set of items. If there are no additional items to return, the string is empty.</p>",
+        "GetParametersByPathRequest$NextToken": "<p>A token to start the list. Use this token to get the next set of results. </p>",
+        "GetParametersByPathResult$NextToken": "<p>The token for the next set of items to return. Use this token to get the next set of results.</p>",
         "ListAssociationsRequest$NextToken": "<p>The token for the next set of items to return. (You received this token from a previous call.)</p>",
         "ListAssociationsResult$NextToken": "<p>The token to use when requesting the next set of items. If there are no additional items to return, the string is empty.</p>",
         "ListCommandInvocationsRequest$NextToken": "<p>(Optional) The token for the next set of items to return. (You received this token from a previous call.)</p>",
@@ -2762,7 +2897,9 @@
         "ListDocumentsRequest$NextToken": "<p>The token for the next set of items to return. (You received this token from a previous call.)</p>",
         "ListDocumentsResult$NextToken": "<p>The token to use when requesting the next set of items. If there are no additional items to return, the string is empty.</p>",
         "ListInventoryEntriesRequest$NextToken": "<p>The token for the next set of items to return. (You received this token from a previous call.)</p>",
-        "ListInventoryEntriesResult$NextToken": "<p>The token to use when requesting the next set of items. If there are no additional items to return, the string is empty.</p>"
+        "ListInventoryEntriesResult$NextToken": "<p>The token to use when requesting the next set of items. If there are no additional items to return, the string is empty.</p>",
+        "ListResourceDataSyncRequest$NextToken": "<p>A token to start the list. Use this token to get the next set of results. </p>",
+        "ListResourceDataSyncResult$NextToken": "<p>The token for the next set of items to return. Use this token to get the next set of results.</p>"
       }
     },
     "NormalStringMap": {
@@ -2803,6 +2940,19 @@
         "NotificationConfig$NotificationType": "<p>Command: Receive notification when the status of a command changes. Invocation: For commands sent to multiple instances, receive notification on a per-instance basis when the status of a command changes. </p>"
       }
     },
+    "OperatingSystem": {
+      "base": null,
+      "refs": {
+        "CreatePatchBaselineRequest$OperatingSystem": "<p>Defines the operating system the patch baseline applies to. Supported operating systems include WINDOWS, AMAZON_LINUX, UBUNTU and REDHAT_ENTERPRISE_LINUX. The Default value is WINDOWS.</p>",
+        "GetDefaultPatchBaselineRequest$OperatingSystem": "<p>Returns the default patch baseline for the specified operating system.</p>",
+        "GetDefaultPatchBaselineResult$OperatingSystem": "<p>The operating system for the returned patch baseline. </p>",
+        "GetPatchBaselineForPatchGroupRequest$OperatingSystem": "<p>Returns he operating system rule specified for patch groups using the patch baseline.</p>",
+        "GetPatchBaselineForPatchGroupResult$OperatingSystem": "<p>The operating system rule specified for patch groups using the patch baseline.</p>",
+        "GetPatchBaselineResult$OperatingSystem": "<p>Returns the operating system specified for the patch baseline.</p>",
+        "PatchBaselineIdentity$OperatingSystem": "<p>Defines the operating system the patch baseline applies to. Supported operating systems include WINDOWS, AMAZON_LINUX, UBUNTU and REDHAT_ENTERPRISE_LINUX. The Default value is WINDOWS. </p>",
+        "UpdatePatchBaselineResult$OperatingSystem": "<p>The operating system rule used by the updated patch baseline.</p>"
+      }
+    },
     "OwnerInformation": {
       "base": null,
       "refs": {
@@ -2817,6 +2967,8 @@
       "refs": {
         "DeleteParameterRequest$Name": "<p>The name of the parameter to delete.</p>",
         "GetParameterHistoryRequest$Name": "<p>The name of a parameter you want to query.</p>",
+        "GetParameterRequest$Name": "<p>The name of the parameter you want to query.</p>",
+        "GetParametersByPathRequest$Path": "<p>The hierarchy for the parameter. Hierarchies start with a forward slash (/) and end with the parameter name. A hierarchy can have a maximum of five levels. Examples: /Environment/Test/DBString003</p> <p>/Finance/Prod/IAD/OS/WinServ2016/license15</p>",
         "Parameter$Name": "<p>The name of the parameter.</p>",
         "ParameterHistory$Name": "<p>The name of the parameter.</p>",
         "ParameterMetadata$Name": "<p>The parameter name.</p>",
@@ -2835,6 +2987,7 @@
     "Parameter": {
       "base": "<p>An Amazon EC2 Systems Manager parameter in Parameter Store.</p>",
       "refs": {
+        "GetParameterResult$Parameter": "<p>Information about a parameter.</p>",
         "ParameterList$member": null
       }
     },
@@ -2868,7 +3021,7 @@
       "refs": {
         "ParameterHistory$KeyId": "<p>The ID of the query key used for this parameter.</p>",
         "ParameterMetadata$KeyId": "<p>The ID of the query key used for this parameter.</p>",
-        "PutParameterRequest$KeyId": "<p>The parameter key ID that you want to add to the system.</p>"
+        "PutParameterRequest$KeyId": "<p>The KMS Key ID that you want to use to encrypt a parameter when you choose the SecureString data type. If you don't specify a key ID, the system uses the default key associated with your AWS account.</p>"
       }
     },
     "ParameterLimitExceeded": {
@@ -2879,6 +3032,7 @@
     "ParameterList": {
       "base": null,
       "refs": {
+        "GetParametersByPathResult$Parameters": "<p>A list of parameters found in the specified hierarchy.</p>",
         "GetParametersResult$Parameters": "<p>A list of details for a parameter.</p>"
       }
     },
@@ -2903,6 +3057,9 @@
     "ParameterNameList": {
       "base": null,
       "refs": {
+        "DeleteParametersRequest$Names": "<p>The names of the parameters to delete.</p>",
+        "DeleteParametersResult$DeletedParameters": "<p>The names of the deleted parameters.</p>",
+        "DeleteParametersResult$InvalidParameters": "<p>The names of parameters that weren't deleted because the parameters are not valid.</p>",
         "GetParametersRequest$Names": "<p>Names of the parameters for which you want to query information.</p>",
         "GetParametersResult$InvalidParameters": "<p>A list of parameters that are not formatted correctly or do not run when executed.</p>"
       }
@@ -2910,6 +3067,48 @@
     "ParameterNotFound": {
       "base": "<p>The parameter could not be found. Verify the name and try again.</p>",
       "refs": {
+      }
+    },
+    "ParameterPatternMismatchException": {
+      "base": "<p>The parameter name is not valid.</p>",
+      "refs": {
+      }
+    },
+    "ParameterStringFilter": {
+      "base": "<p>One or more filters. Use a filter to return a more specific list of results.</p>",
+      "refs": {
+        "ParameterStringFilterList$member": null
+      }
+    },
+    "ParameterStringFilterKey": {
+      "base": null,
+      "refs": {
+        "ParameterStringFilter$Key": "<p>The name of the filter.</p>"
+      }
+    },
+    "ParameterStringFilterList": {
+      "base": null,
+      "refs": {
+        "DescribeParametersRequest$ParameterFilters": "<p>Filters to limit the request results.</p>",
+        "GetParametersByPathRequest$ParameterFilters": "<p>Filters to limit the request results.</p>"
+      }
+    },
+    "ParameterStringFilterValue": {
+      "base": null,
+      "refs": {
+        "ParameterStringFilterValueList$member": null
+      }
+    },
+    "ParameterStringFilterValueList": {
+      "base": null,
+      "refs": {
+        "ParameterStringFilter$Values": "<p>The value you want to search for.</p>"
+      }
+    },
+    "ParameterStringQueryOption": {
+      "base": null,
+      "refs": {
+        "ParameterStringFilter$Option": "<p>Valid options are Equals and BeginsWith. For Path filter, valid options are Recursive and OneLevel.</p>"
       }
     },
     "ParameterType": {
@@ -3019,13 +3218,24 @@
     "PatchComplianceDataList": {
       "base": null,
       "refs": {
-        "DescribeInstancePatchesResult$Patches": "<p>Each entry in the array is a structure containing:</p> <p>Title (string)</p> <p>KBId (string)</p> <p>Classification (string)</p> <p>Severity (string)</p> <p>State (string – “INSTALLED”, “INSTALLED_OTHER”, “MISSING”, “NOT_APPLICABLE”, “FAILED”)</p> <p>InstalledTime (DateTime)</p> <p>InstalledBy (string)</p>"
+        "DescribeInstancePatchesResult$Patches": "<p>Each entry in the array is a structure containing:</p> <p>Title (string)</p> <p>KBId (string)</p> <p>Classification (string)</p> <p>Severity (string)</p> <p>State (string: \"INSTALLED\", \"INSTALLED OTHER\", \"MISSING\", \"NOT APPLICABLE\", \"FAILED\")</p> <p>InstalledTime (DateTime)</p> <p>InstalledBy (string)</p>"
       }
     },
     "PatchComplianceDataState": {
       "base": null,
       "refs": {
         "PatchComplianceData$State": "<p>The state of the patch on the instance (INSTALLED, INSTALLED_OTHER, MISSING, NOT_APPLICABLE or FAILED).</p>"
+      }
+    },
+    "PatchComplianceLevel": {
+      "base": null,
+      "refs": {
+        "CreatePatchBaselineRequest$ApprovedPatchesComplianceLevel": "<p>Defines the compliance level for approved patches. This means that if an approved patch is reported as missing, this is the severity of the compliance violation. Valid compliance severity levels include the following: CRITICAL, HIGH, MEDIUM, LOW, INFORMATIONAL, UNSPECIFIED. The default value is UNSPECIFIED.</p>",
+        "GetPatchBaselineResult$ApprovedPatchesComplianceLevel": "<p>Returns the specified compliance severity level for approved patches in the patch baseline.</p>",
+        "PatchRule$ComplianceLevel": "<p>A compliance severity level for all approved patches in a patch baseline. Valid compliance severity levels include the following: Unspecified, Critical, High, Medium, Low, and Informational.</p>",
+        "PatchStatus$ComplianceLevel": "<p>The compliance severity level for a patch.</p>",
+        "UpdatePatchBaselineRequest$ApprovedPatchesComplianceLevel": "<p>Assigns a new compliance severity level to an existing patch baseline.</p>",
+        "UpdatePatchBaselineResult$ApprovedPatchesComplianceLevel": "<p>The compliance severity level assigned to the patch baseline after the update completed.</p>"
       }
     },
     "PatchComplianceMaxResults": {
@@ -3131,7 +3341,7 @@
     "PatchGroupPatchBaselineMappingList": {
       "base": null,
       "refs": {
-        "DescribePatchGroupsResult$Mappings": "<p>Each entry in the array contains:</p> <p>PatchGroup: string (1 ≤ length ≤ 256, Regex: ^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-@]*)$)</p> <p>PatchBaselineIdentity: A PatchBaselineIdentity element. </p>"
+        "DescribePatchGroupsResult$Mappings": "<p>Each entry in the array contains:</p> <p>PatchGroup: string (between 1 and 256 characters, Regex: ^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-@]*)$)</p> <p>PatchBaselineIdentity: A PatchBaselineIdentity element. </p>"
       }
     },
     "PatchId": {
@@ -3166,23 +3376,17 @@
         "InstancePatchState$InstalledOtherCount": "<p>The number of patches not specified in the patch baseline that are installed on the instance.</p>"
       }
     },
-    "PatchInstalledTime": {
-      "base": null,
-      "refs": {
-        "PatchComplianceData$InstalledTime": "<p>The date/time the patch was installed on the instance.</p>"
-      }
-    },
     "PatchKbNumber": {
       "base": null,
       "refs": {
         "Patch$KbNumber": "<p>The Microsoft Knowledge Base ID of the patch.</p>",
-        "PatchComplianceData$KBId": "<p>The Microsoft Knowledge Base ID of the patch.</p>"
+        "PatchComplianceData$KBId": "<p>The operating system-specific ID of the patch.</p>"
       }
     },
     "PatchLanguage": {
       "base": null,
       "refs": {
-        "Patch$Language": "<p>The language of the patch if it’s language-specific.</p>"
+        "Patch$Language": "<p>The language of the patch if it's language-specific.</p>"
       }
     },
     "PatchList": {
@@ -3194,7 +3398,7 @@
     "PatchMissingCount": {
       "base": null,
       "refs": {
-        "InstancePatchState$MissingCount": "<p>The number of patches from the patch baseline that are applicable for the instance but aren’t currently installed.</p>"
+        "InstancePatchState$MissingCount": "<p>The number of patches from the patch baseline that are applicable for the instance but aren't currently installed.</p>"
       }
     },
     "PatchMsrcNumber": {
@@ -3212,19 +3416,7 @@
     "PatchNotApplicableCount": {
       "base": null,
       "refs": {
-        "InstancePatchState$NotApplicableCount": "<p>The number of patches from the patch baseline that aren’t applicable for the instance and hence aren’t installed on the instance.</p>"
-      }
-    },
-    "PatchOperationEndTime": {
-      "base": null,
-      "refs": {
-        "InstancePatchState$OperationEndTime": "<p>The time the most recent patching operation completed on the instance.</p>"
-      }
-    },
-    "PatchOperationStartTime": {
-      "base": null,
-      "refs": {
-        "InstancePatchState$OperationStartTime": "<p>The time the most recent patching operation was started on the instance.</p>"
+        "InstancePatchState$NotApplicableCount": "<p>The number of patches from the patch baseline that aren't applicable for the instance and hence aren't installed on the instance.</p>"
       }
     },
     "PatchOperationType": {
@@ -3249,8 +3441,9 @@
       "base": null,
       "refs": {
         "DescribeAvailablePatchesRequest$Filters": "<p>Filters used to scope down the returned patches.</p>",
-        "DescribeInstancePatchesRequest$Filters": "<p>Each entry in the array is a structure containing:</p> <p>Key (string, 1 ≤ length ≤ 128)</p> <p>Values (array of strings 1 ≤ length ≤ 256)</p>",
-        "DescribePatchBaselinesRequest$Filters": "<p>Each element in the array is a structure containing: </p> <p>Key: (string, “NAME_PREFIX” or “OWNER”)</p> <p>Value: (array of strings, exactly 1 entry, 1 ≤ length ≤ 255)</p>"
+        "DescribeInstancePatchesRequest$Filters": "<p>Each entry in the array is a structure containing:</p> <p>Key (string, between 1 and 128 characters)</p> <p>Values (array of strings, each string between 1 and 256 characters)</p>",
+        "DescribePatchBaselinesRequest$Filters": "<p>Each element in the array is a structure containing: </p> <p>Key: (string, \"NAME_PREFIX\" or \"OWNER\")</p> <p>Value: (array of strings, exactly 1 entry, between 1 and 255 characters)</p>",
+        "DescribePatchGroupsRequest$Filters": "<p>One or more filters. Use a filter to return a more specific list of results.</p>"
       }
     },
     "PatchOrchestratorFilterValue": {
@@ -3343,6 +3536,12 @@
         "DocumentIdentifier$PlatformTypes": "<p>The operating system platform. </p>"
       }
     },
+    "Product": {
+      "base": null,
+      "refs": {
+        "GetDeployablePatchSnapshotForInstanceResult$Product": "<p>Returns the specific operating system (for example Windows Server 2012 or Amazon Linux 2015.09) on the instance for the specified patch snapshot.</p>"
+      }
+    },
     "PutInventoryRequest": {
       "base": null,
       "refs": {
@@ -3426,6 +3625,85 @@
       "refs": {
       }
     },
+    "ResourceDataSyncAlreadyExistsException": {
+      "base": "<p>A sync configuration with the same name already exists.</p>",
+      "refs": {
+      }
+    },
+    "ResourceDataSyncCountExceededException": {
+      "base": "<p>You have exceeded the allowed maximum sync configurations.</p>",
+      "refs": {
+      }
+    },
+    "ResourceDataSyncCreatedTime": {
+      "base": null,
+      "refs": {
+        "ResourceDataSyncItem$SyncCreatedTime": "<p>The date and time the configuration was created (UTC).</p>"
+      }
+    },
+    "ResourceDataSyncInvalidConfigurationException": {
+      "base": "<p>The specified sync configuration is invalid.</p>",
+      "refs": {
+      }
+    },
+    "ResourceDataSyncItem": {
+      "base": "<p>Information about a Resource Data Sync configuration, including its current status and last successful sync.</p>",
+      "refs": {
+        "ResourceDataSyncItemList$member": null
+      }
+    },
+    "ResourceDataSyncItemList": {
+      "base": null,
+      "refs": {
+        "ListResourceDataSyncResult$ResourceDataSyncItems": "<p>A list of your current Resource Data Sync configurations and their statuses.</p>"
+      }
+    },
+    "ResourceDataSyncName": {
+      "base": null,
+      "refs": {
+        "CreateResourceDataSyncRequest$SyncName": "<p>A name for the configuration.</p>",
+        "DeleteResourceDataSyncRequest$SyncName": "<p>The name of the configuration to delete.</p>",
+        "ResourceDataSyncAlreadyExistsException$SyncName": null,
+        "ResourceDataSyncItem$SyncName": "<p>The name of the Resource Data Sync.</p>",
+        "ResourceDataSyncNotFoundException$SyncName": null
+      }
+    },
+    "ResourceDataSyncNotFoundException": {
+      "base": "<p>The specified sync name was not found.</p>",
+      "refs": {
+      }
+    },
+    "ResourceDataSyncS3BucketName": {
+      "base": null,
+      "refs": {
+        "ResourceDataSyncS3Destination$BucketName": "<p>The name of the Amazon S3 bucket where the aggregated data is stored.</p>"
+      }
+    },
+    "ResourceDataSyncS3Destination": {
+      "base": "<p>Information about the target Amazon S3 bucket for the Resource Data Sync.</p>",
+      "refs": {
+        "CreateResourceDataSyncRequest$S3Destination": "<p>Amazon S3 configuration details for the sync.</p>",
+        "ResourceDataSyncItem$S3Destination": "<p>Configuration information for the target Amazon S3 bucket.</p>"
+      }
+    },
+    "ResourceDataSyncS3Format": {
+      "base": null,
+      "refs": {
+        "ResourceDataSyncS3Destination$SyncFormat": "<p>A supported sync format. The following format is currently supported: JsonSerDe</p>"
+      }
+    },
+    "ResourceDataSyncS3Prefix": {
+      "base": null,
+      "refs": {
+        "ResourceDataSyncS3Destination$Prefix": "<p>An Amazon S3 prefix for the bucket.</p>"
+      }
+    },
+    "ResourceDataSyncS3Region": {
+      "base": null,
+      "refs": {
+        "ResourceDataSyncS3Destination$Region": "<p>The AWS Region with the Amazon S3 bucket targeted by the Resource Data Sync.</p>"
+      }
+    },
     "ResourceId": {
       "base": null,
       "refs": {
@@ -3462,7 +3740,7 @@
       "base": null,
       "refs": {
         "CommandPlugin$ResponseCode": "<p>A numeric response code generated after executing the plugin. </p>",
-        "GetCommandInvocationResult$ResponseCode": "<p>The error level response code for the plugin script. If the response code is <code>-1</code>, then the command has not started executing on the instance, or it was not received by the instance.</p>"
+        "GetCommandInvocationResult$ResponseCode": "<p>The error level response code for the plugin script. If the response code is -1, then the command has not started executing on the instance, or it was not received by the instance.</p>"
       }
     },
     "ResultAttribute": {
@@ -3481,7 +3759,7 @@
       "base": null,
       "refs": {
         "Command$OutputS3BucketName": "<p>The S3 bucket where the responses to the command executions should be stored. This was requested when issuing the command.</p>",
-        "CommandPlugin$OutputS3BucketName": "<p>The S3 bucket where the responses to the command executions should be stored. This was requested when issuing the command. For example, in the following response:</p> <p> <code>test_folder/ab19cb99-a030-46dd-9dfc-8eSAMPLEPre-Fix/i-1234567876543/awsrunShellScript</code> </p> <p> <code>test_folder</code> is the name of the Amazon S3 bucket;</p> <p> <code>ab19cb99-a030-46dd-9dfc-8eSAMPLEPre-Fix</code> is the name of the S3 prefix;</p> <p> <code>i-1234567876543</code> is the instance ID;</p> <p> <code>awsrunShellScript</code> is the name of the plugin.</p>",
+        "CommandPlugin$OutputS3BucketName": "<p>The S3 bucket where the responses to the command executions should be stored. This was requested when issuing the command. For example, in the following response:</p> <p> test_folder/ab19cb99-a030-46dd-9dfc-8eSAMPLEPre-Fix/i-1234567876543/awsrunShellScript </p> <p>test_folder is the name of the Amazon S3 bucket;</p> <p> ab19cb99-a030-46dd-9dfc-8eSAMPLEPre-Fix is the name of the S3 prefix;</p> <p>i-1234567876543 is the instance ID;</p> <p>awsrunShellScript is the name of the plugin.</p>",
         "LoggingInfo$S3BucketName": "<p>The name of an Amazon S3 bucket where execution logs are stored .</p>",
         "S3OutputLocation$OutputS3BucketName": "<p>The name of the Amazon S3 bucket.</p>",
         "SendCommandRequest$OutputS3BucketName": "<p>The name of the S3 bucket where command execution responses should be stored.</p>"
@@ -3491,7 +3769,7 @@
       "base": null,
       "refs": {
         "Command$OutputS3KeyPrefix": "<p>The S3 directory path inside the bucket where the responses to the command executions should be stored. This was requested when issuing the command.</p>",
-        "CommandPlugin$OutputS3KeyPrefix": "<p>The S3 directory path inside the bucket where the responses to the command executions should be stored. This was requested when issuing the command. For example, in the following response:</p> <p> <code>test_folder/ab19cb99-a030-46dd-9dfc-8eSAMPLEPre-Fix/i-1234567876543/awsrunShellScript</code> </p> <p> <code>test_folder</code> is the name of the Amazon S3 bucket;</p> <p> <code>ab19cb99-a030-46dd-9dfc-8eSAMPLEPre-Fix</code> is the name of the S3 prefix;</p> <p> <code>i-1234567876543</code> is the instance ID;</p> <p> <code>awsrunShellScript</code> is the name of the plugin.</p>",
+        "CommandPlugin$OutputS3KeyPrefix": "<p>The S3 directory path inside the bucket where the responses to the command executions should be stored. This was requested when issuing the command. For example, in the following response:</p> <p> test_folder/ab19cb99-a030-46dd-9dfc-8eSAMPLEPre-Fix/i-1234567876543/awsrunShellScript </p> <p>test_folder is the name of the Amazon S3 bucket;</p> <p> ab19cb99-a030-46dd-9dfc-8eSAMPLEPre-Fix is the name of the S3 prefix;</p> <p>i-1234567876543 is the instance ID;</p> <p>awsrunShellScript is the name of the plugin.</p>",
         "LoggingInfo$S3KeyPrefix": "<p>(Optional) The Amazon S3 bucket subfolder. </p>",
         "S3OutputLocation$OutputS3KeyPrefix": "<p>The Amazon S3 bucket subfolder.</p>",
         "SendCommandRequest$OutputS3KeyPrefix": "<p>The directory structure within the S3 bucket where the responses should be stored.</p>"
@@ -3512,11 +3790,11 @@
     "S3Region": {
       "base": null,
       "refs": {
-        "Command$OutputS3Region": "<p>The region where the Amazon Simple Storage Service (Amazon S3) output bucket is located. The default value is the region where Run Command is being called.</p>",
-        "CommandPlugin$OutputS3Region": "<p>The name of the region where the output is stored in Amazon S3.</p>",
+        "Command$OutputS3Region": "<p>(Deprecated) You can no longer specify this parameter. The system ignores it. Instead, Systems Manager automatically determines the Amazon S3 bucket region.</p>",
+        "CommandPlugin$OutputS3Region": "<p>(Deprecated) You can no longer specify this parameter. The system ignores it. Instead, Systems Manager automatically determines the Amazon S3 bucket region.</p>",
         "LoggingInfo$S3Region": "<p>The region where the Amazon S3 bucket is located.</p>",
-        "S3OutputLocation$OutputS3Region": "<p>The Amazon S3 region where the association information is stored.</p>",
-        "SendCommandRequest$OutputS3Region": "<p>(Optional) The region where the Amazon Simple Storage Service (Amazon S3) output bucket is located. The default value is the region where Run Command is being called.</p>"
+        "S3OutputLocation$OutputS3Region": "<p>(Deprecated) You can no longer specify this parameter. The system ignores it. Instead, Systems Manager automatically determines the Amazon S3 bucket region.</p>",
+        "SendCommandRequest$OutputS3Region": "<p>(Deprecated) You can no longer specify this parameter. The system ignores it. Instead, Systems Manager automatically determines the Amazon S3 bucket region.</p>"
       }
     },
     "ScheduleExpression": {
@@ -3525,8 +3803,8 @@
         "Association$ScheduleExpression": "<p>A cron expression that specifies a schedule when the association runs.</p>",
         "AssociationDescription$ScheduleExpression": "<p>A cron expression that specifies a schedule when the association runs.</p>",
         "CreateAssociationBatchRequestEntry$ScheduleExpression": "<p>A cron expression that specifies a schedule when the association runs.</p>",
-        "CreateAssociationRequest$ScheduleExpression": "<p>A cron expression when the association will be applied to the target(s). Supported expressions are every half, 1, 2, 4, 8 or 12 hour(s); every specified day and time of the week. For example: cron(0 0/30 * 1/1 * ? *) to run every thirty minutes; cron(0 0 0/4 1/1 * ? *) to run every four hours; and cron(0 0 10 ? * SUN *) to run every Sunday at 10 a.m.</p>",
-        "UpdateAssociationRequest$ScheduleExpression": "<p>The cron expression used to schedule the association that you want to update. Supported expressions are every half, 1, 2, 4, 8 or 12 hour(s); every specified day and time of the week. For example: cron(0 0/30 * 1/1 * ? *) to run every thirty minutes; cron(0 0 0/4 1/1 * ? *) to run every four hours; and cron(0 0 10 ? * SUN *) to run every Sunday at 10 a.m.</p>"
+        "CreateAssociationRequest$ScheduleExpression": "<p>A cron expression when the association will be applied to the target(s).</p>",
+        "UpdateAssociationRequest$ScheduleExpression": "<p>The cron expression used to schedule the association that you want to update.</p>"
       }
     },
     "SendCommandRequest": {
@@ -3573,7 +3851,7 @@
     "StandardOutputContent": {
       "base": null,
       "refs": {
-        "GetCommandInvocationResult$StandardOutputContent": "<p>The first 24,000 characters written by the plugin to stdout. If the command has not finished executing, if <code>ExecutionStatus</code> is neither <code>Succeeded</code> nor <code>Failed</code>, then this string is empty.</p>"
+        "GetCommandInvocationResult$StandardOutputContent": "<p>The first 24,000 characters written by the plugin to stdout. If the command has not finished executing, if ExecutionStatus is neither Succeeded nor Failed, then this string is empty.</p>"
       }
     },
     "StartAutomationExecutionRequest": {
@@ -3595,10 +3873,10 @@
     "StatusDetails": {
       "base": null,
       "refs": {
-        "Command$StatusDetails": "<p>A detailed status of the command execution. <code>StatusDetails</code> includes more information than <code>Status</code> because it includes states resulting from error and concurrency control parameters. <code>StatusDetails</code> can show different results than <code>Status</code>. For more information about these statuses, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/monitor-about-status.html\">Run Command Status</a>. <code>StatusDetails</code> can be one of the following values:</p> <ul> <li> <p>Pending – The command has not been sent to any instances.</p> </li> <li> <p>In Progress – The command has been sent to at least one instance but has not reached a final state on all instances.</p> </li> <li> <p>Success – The command successfully executed on all invocations. This is a terminal state.</p> </li> <li> <p>Delivery Timed Out – The value of <code>MaxErrors</code> or more command invocations shows a status of <code>Delivery Timed Out</code>. This is a terminal state.</p> </li> <li> <p>Execution Timed Out – The value of <code>MaxErrors</code> or more command invocations shows a status of <code>Execution Timed Out</code>. This is a terminal state.</p> </li> <li> <p>Failed – The value of <code>MaxErrors</code> or more command invocations shows a status of <code>Failed</code>. This is a terminal state.</p> </li> <li> <p>Incomplete – The command was attempted on all instances and one or more invocations does not have a value of <code>Success</code> but not enough invocations failed for the status to be <code>Failed</code>. This is a terminal state.</p> </li> <li> <p>Canceled – The command was terminated before it was completed. This is a terminal state.</p> </li> <li> <p>Rate Exceeded – The number of instances targeted by the command exceeded the account limit for pending invocations. The system has canceled the command before executing it on any instance. This is a terminal state.</p> </li> </ul>",
-        "CommandInvocation$StatusDetails": "<p>A detailed status of the command execution for each invocation (each instance targeted by the command). <code>StatusDetails</code> includes more information than <code>Status</code> because it includes states resulting from error and concurrency control parameters. <code>StatusDetails</code> can show different results than <code>Status</code>. For more information about these statuses, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/monitor-about-status.html\">Run Command Status</a>. <code>StatusDetails</code> can be one of the following values:</p> <ul> <li> <p>Pending – The command has not been sent to the instance.</p> </li> <li> <p>In Progress – The command has been sent to the instance but has not reached a terminal state.</p> </li> <li> <p>Success – The execution of the command or plugin was successfully completed. This is a terminal state.</p> </li> <li> <p>Delivery Timed Out – The command was not delivered to the instance before the delivery timeout expired. Delivery timeouts do not count against the parent command’s <code>MaxErrors</code> limit, but they do contribute to whether the parent command status is <code>Success</code> or <code>Incomplete</code>. This is a terminal state.</p> </li> <li> <p>Execution Timed Out – Command execution started on the instance, but the execution was not complete before the execution timeout expired. Execution timeouts count against the <code>MaxErrors</code> limit of the parent command. This is a terminal state.</p> </li> <li> <p>Failed – The command was not successful on the instance. For a plugin, this indicates that the result code was not zero. For a command invocation, this indicates that the result code for one or more plugins was not zero. Invocation failures count against the <code>MaxErrors</code> limit of the parent command. This is a terminal state.</p> </li> <li> <p>Canceled – The command was terminated before it was completed. This is a terminal state.</p> </li> <li> <p>Undeliverable – The command can't be delivered to the instance. The instance might not exist or might not be responding. Undeliverable invocations don't count against the parent command’s <code>MaxErrors</code> limit and don't contribute to whether the parent command status is <code>Success</code> or <code>Incomplete</code>. This is a terminal state.</p> </li> <li> <p>Terminated – The parent command exceeded its <code>MaxErrors</code> limit and subsequent command invocations were canceled by the system. This is a terminal state.</p> </li> </ul>",
-        "CommandPlugin$StatusDetails": "<p>A detailed status of the plugin execution. <code>StatusDetails</code> includes more information than <code>Status</code> because it includes states resulting from error and concurrency control parameters. <code>StatusDetails</code> can show different results than <code>Status</code>. For more information about these statuses, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/monitor-about-status.html\">Run Command Status</a>. <code>StatusDetails</code> can be one of the following values:</p> <ul> <li> <p>Pending – The command has not been sent to the instance.</p> </li> <li> <p>In Progress – The command has been sent to the instance but has not reached a terminal state.</p> </li> <li> <p>Success – The execution of the command or plugin was successfully completed. This is a terminal state.</p> </li> <li> <p>Delivery Timed Out – The command was not delivered to the instance before the delivery timeout expired. Delivery timeouts do not count against the parent command’s <code>MaxErrors</code> limit, but they do contribute to whether the parent command status is <code>Success</code> or <code>Incomplete</code>. This is a terminal state.</p> </li> <li> <p>Execution Timed Out – Command execution started on the instance, but the execution was not complete before the execution timeout expired. Execution timeouts count against the <code>MaxErrors</code> limit of the parent command. This is a terminal state.</p> </li> <li> <p>Failed – The command was not successful on the instance. For a plugin, this indicates that the result code was not zero. For a command invocation, this indicates that the result code for one or more plugins was not zero. Invocation failures count against the <code>MaxErrors</code> limit of the parent command. This is a terminal state.</p> </li> <li> <p>Canceled – The command was terminated before it was completed. This is a terminal state.</p> </li> <li> <p>Undeliverable – The command can't be delivered to the instance. The instance might not exist, or it might not be responding. Undeliverable invocations don't count against the parent command’s <code>MaxErrors</code> limit, and they don't contribute to whether the parent command status is <code>Success</code> or <code>Incomplete</code>. This is a terminal state.</p> </li> <li> <p>Terminated – The parent command exceeded its <code>MaxErrors</code> limit and subsequent command invocations were canceled by the system. This is a terminal state.</p> </li> </ul>",
-        "GetCommandInvocationResult$StatusDetails": "<p>A detailed status of the command execution for an invocation. <code>StatusDetails</code> includes more information than <code>Status</code> because it includes states resulting from error and concurrency control parameters. <code>StatusDetails</code> can show different results than <code>Status</code>. For more information about these statuses, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/monitor-about-status.html\">Run Command Status</a>. <code>StatusDetails</code> can be one of the following values:</p> <ul> <li> <p>Pending – The command has not been sent to the instance.</p> </li> <li> <p>In Progress – The command has been sent to the instance but has not reached a terminal state.</p> </li> <li> <p>Delayed – The system attempted to send the command to the target, but the target was not available. The instance might not be available because of network issues, the instance was stopped, etc. The system will try to deliver the command again.</p> </li> <li> <p>Success – The command or plugin was executed successfully. This is a terminal state.</p> </li> <li> <p>Delivery Timed Out – The command was not delivered to the instance before the delivery timeout expired. Delivery timeouts do not count against the parent command’s <code>MaxErrors</code> limit, but they do contribute to whether the parent command status is <code>Success</code> or <code>Incomplete</code>. This is a terminal state.</p> </li> <li> <p>Execution Timed Out – The command started to execute on the instance, but the execution was not complete before the timeout expired. Execution timeouts count against the <code>MaxErrors</code> limit of the parent command. This is a terminal state.</p> </li> <li> <p>Failed – The command wasn't executed successfully on the instance. For a plugin, this indicates that the result code was not zero. For a command invocation, this indicates that the result code for one or more plugins was not zero. Invocation failures count against the <code>MaxErrors</code> limit of the parent command. This is a terminal state.</p> </li> <li> <p>Canceled – The command was terminated before it was completed. This is a terminal state.</p> </li> <li> <p>Undeliverable – The command can't be delivered to the instance. The instance might not exist or might not be responding. Undeliverable invocations don't count against the parent command’s <code>MaxErrors</code> limit and don't contribute to whether the parent command status is <code>Success</code> or <code>Incomplete</code>. This is a terminal state.</p> </li> <li> <p>Terminated – The parent command exceeded its <code>MaxErrors</code> limit and subsequent command invocations were canceled by the system. This is a terminal state.</p> </li> </ul>"
+        "Command$StatusDetails": "<p>A detailed status of the command execution. StatusDetails includes more information than Status because it includes states resulting from error and concurrency control parameters. StatusDetails can show different results than Status. For more information about these statuses, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/monitor-about-status.html\">Run Command Status</a>. StatusDetails can be one of the following values:</p> <ul> <li> <p>Pending: The command has not been sent to any instances.</p> </li> <li> <p>In Progress: The command has been sent to at least one instance but has not reached a final state on all instances.</p> </li> <li> <p>Success: The command successfully executed on all invocations. This is a terminal state.</p> </li> <li> <p>Delivery Timed Out: The value of MaxErrors or more command invocations shows a status of Delivery Timed Out. This is a terminal state.</p> </li> <li> <p>Execution Timed Out: The value of MaxErrors or more command invocations shows a status of Execution Timed Out. This is a terminal state.</p> </li> <li> <p>Failed: The value of MaxErrors or more command invocations shows a status of Failed. This is a terminal state.</p> </li> <li> <p>Incomplete: The command was attempted on all instances and one or more invocations does not have a value of Success but not enough invocations failed for the status to be Failed. This is a terminal state.</p> </li> <li> <p>Canceled: The command was terminated before it was completed. This is a terminal state.</p> </li> <li> <p>Rate Exceeded: The number of instances targeted by the command exceeded the account limit for pending invocations. The system has canceled the command before executing it on any instance. This is a terminal state.</p> </li> </ul>",
+        "CommandInvocation$StatusDetails": "<p>A detailed status of the command execution for each invocation (each instance targeted by the command). StatusDetails includes more information than Status because it includes states resulting from error and concurrency control parameters. StatusDetails can show different results than Status. For more information about these statuses, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/monitor-about-status.html\">Run Command Status</a>. StatusDetails can be one of the following values:</p> <ul> <li> <p>Pending: The command has not been sent to the instance.</p> </li> <li> <p>In Progress: The command has been sent to the instance but has not reached a terminal state.</p> </li> <li> <p>Success: The execution of the command or plugin was successfully completed. This is a terminal state.</p> </li> <li> <p>Delivery Timed Out: The command was not delivered to the instance before the delivery timeout expired. Delivery timeouts do not count against the parent command's MaxErrors limit, but they do contribute to whether the parent command status is Success or Incomplete. This is a terminal state.</p> </li> <li> <p>Execution Timed Out: Command execution started on the instance, but the execution was not complete before the execution timeout expired. Execution timeouts count against the MaxErrors limit of the parent command. This is a terminal state.</p> </li> <li> <p>Failed: The command was not successful on the instance. For a plugin, this indicates that the result code was not zero. For a command invocation, this indicates that the result code for one or more plugins was not zero. Invocation failures count against the MaxErrors limit of the parent command. This is a terminal state.</p> </li> <li> <p>Canceled: The command was terminated before it was completed. This is a terminal state.</p> </li> <li> <p>Undeliverable: The command can't be delivered to the instance. The instance might not exist or might not be responding. Undeliverable invocations don't count against the parent command's MaxErrors limit and don't contribute to whether the parent command status is Success or Incomplete. This is a terminal state.</p> </li> <li> <p>Terminated: The parent command exceeded its MaxErrors limit and subsequent command invocations were canceled by the system. This is a terminal state.</p> </li> </ul>",
+        "CommandPlugin$StatusDetails": "<p>A detailed status of the plugin execution. StatusDetails includes more information than Status because it includes states resulting from error and concurrency control parameters. StatusDetails can show different results than Status. For more information about these statuses, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/monitor-about-status.html\">Run Command Status</a>. StatusDetails can be one of the following values:</p> <ul> <li> <p>Pending: The command has not been sent to the instance.</p> </li> <li> <p>In Progress: The command has been sent to the instance but has not reached a terminal state.</p> </li> <li> <p>Success: The execution of the command or plugin was successfully completed. This is a terminal state.</p> </li> <li> <p>Delivery Timed Out: The command was not delivered to the instance before the delivery timeout expired. Delivery timeouts do not count against the parent command's MaxErrors limit, but they do contribute to whether the parent command status is Success or Incomplete. This is a terminal state.</p> </li> <li> <p>Execution Timed Out: Command execution started on the instance, but the execution was not complete before the execution timeout expired. Execution timeouts count against the MaxErrors limit of the parent command. This is a terminal state.</p> </li> <li> <p>Failed: The command was not successful on the instance. For a plugin, this indicates that the result code was not zero. For a command invocation, this indicates that the result code for one or more plugins was not zero. Invocation failures count against the MaxErrors limit of the parent command. This is a terminal state.</p> </li> <li> <p>Canceled: The command was terminated before it was completed. This is a terminal state.</p> </li> <li> <p>Undeliverable: The command can't be delivered to the instance. The instance might not exist, or it might not be responding. Undeliverable invocations don't count against the parent command's MaxErrors limit, and they don't contribute to whether the parent command status is Success or Incomplete. This is a terminal state.</p> </li> <li> <p>Terminated: The parent command exceeded its MaxErrors limit and subsequent command invocations were canceled by the system. This is a terminal state.</p> </li> </ul>",
+        "GetCommandInvocationResult$StatusDetails": "<p>A detailed status of the command execution for an invocation. StatusDetails includes more information than Status because it includes states resulting from error and concurrency control parameters. StatusDetails can show different results than Status. For more information about these statuses, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/monitor-about-status.html\">Run Command Status</a>. StatusDetails can be one of the following values:</p> <ul> <li> <p>Pending: The command has not been sent to the instance.</p> </li> <li> <p>In Progress: The command has been sent to the instance but has not reached a terminal state.</p> </li> <li> <p>Delayed: The system attempted to send the command to the target, but the target was not available. The instance might not be available because of network issues, the instance was stopped, etc. The system will try to deliver the command again.</p> </li> <li> <p>Success: The command or plugin was executed successfully. This is a terminal state.</p> </li> <li> <p>Delivery Timed Out: The command was not delivered to the instance before the delivery timeout expired. Delivery timeouts do not count against the parent command's MaxErrors limit, but they do contribute to whether the parent command status is Success or Incomplete. This is a terminal state.</p> </li> <li> <p>Execution Timed Out: The command started to execute on the instance, but the execution was not complete before the timeout expired. Execution timeouts count against the MaxErrors limit of the parent command. This is a terminal state.</p> </li> <li> <p>Failed: The command wasn't executed successfully on the instance. For a plugin, this indicates that the result code was not zero. For a command invocation, this indicates that the result code for one or more plugins was not zero. Invocation failures count against the MaxErrors limit of the parent command. This is a terminal state.</p> </li> <li> <p>Canceled: The command was terminated before it was completed. This is a terminal state.</p> </li> <li> <p>Undeliverable: The command can't be delivered to the instance. The instance might not exist or might not be responding. Undeliverable invocations don't count against the parent command's MaxErrors limit and don't contribute to whether the parent command status is Success or Incomplete. This is a terminal state.</p> </li> <li> <p>Terminated: The parent command exceeded its MaxErrors limit and subsequent command invocations were canceled by the system. This is a terminal state.</p> </li> </ul>"
       }
     },
     "StatusMessage": {
@@ -3610,7 +3888,7 @@
     "StatusName": {
       "base": null,
       "refs": {
-        "AssociationOverview$Status": "<p>The status of the association. Status can be: <code>Pending</code>, <code>Success</code>, or <code>Failed</code>.</p>",
+        "AssociationOverview$Status": "<p>The status of the association. Status can be: Pending, Success, or Failed.</p>",
         "AssociationOverview$DetailedStatus": "<p>A detailed status of the association.</p>",
         "AssociationStatusAggregatedCount$key": null,
         "InstanceAggregatedAssociationOverview$DetailedStatus": "<p>Detailed status information about the aggregated associations.</p>",
@@ -3666,6 +3944,10 @@
         "DocumentVersionLimitExceeded$Message": null,
         "DoesNotExistException$Message": null,
         "DuplicateDocumentContent$Message": null,
+        "FailureDetails$FailureStage": "<p>The stage of the Automation execution when the failure occurred. The stages include the following: InputValidation, PreVerification, Invocation, PostVerification.</p>",
+        "FailureDetails$FailureType": "<p>The type of Automation failure. Failure types include the following: Action, Permission, Throttling, Verification, Internal.</p>",
+        "HierarchyLevelLimitExceededException$message": "<p>A hierarchy can have a maximum of five levels. For example:</p> <p>/Finance/Prod/IAD/OS/WinServ2016/license15</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html\">Working with Systems Manager Parameters</a>. </p>",
+        "HierarchyTypeMismatchException$message": "<p>Parameter Store does not support changing a parameter type in a hierarchy. For example, you can't change a parameter from a String type to a SecureString type. You must create a new, unique parameter.</p>",
         "IdempotentParameterMismatch$Message": null,
         "InstanceInformation$PlatformName": "<p>The name of the operating system platform running on your instance. </p>",
         "InstanceInformation$PlatformVersion": "<p>The version of the OS platform running on your instance. </p>",
@@ -3673,6 +3955,7 @@
         "InternalServerError$Message": null,
         "InvalidActivation$Message": null,
         "InvalidActivationId$Message": null,
+        "InvalidAllowedPatternException$message": "<p>The request does not meet the regular expression requirement.</p>",
         "InvalidAutomationExecutionParametersException$Message": null,
         "InvalidDocument$Message": "<p>The document does not exist or the document is not available to the user. This exception can be issued by CreateAssociation, CreateAssociationBatch, DeleteAssociation, DeleteDocument, DescribeAssociation, DescribeDocument, GetDocument, SendCommand, or UpdateAssociationStatus. </p>",
         "InvalidDocumentContent$Message": "<p>A description of the validation error.</p>",
@@ -3680,6 +3963,7 @@
         "InvalidDocumentSchemaVersion$Message": null,
         "InvalidDocumentVersion$Message": null,
         "InvalidFilter$Message": null,
+        "InvalidFilterOption$message": "<p>The specified filter option is not valid. Valid options are Equals and BeginsWith. For Path filter, valid options are Recursive and OneLevel.</p>",
         "InvalidFilterValue$Message": null,
         "InvalidInstanceId$Message": null,
         "InvalidInstanceInformationFilterValue$message": null,
@@ -3705,6 +3989,9 @@
         "ParameterLimitExceeded$message": null,
         "ParameterMetadata$LastModifiedUser": "<p>Amazon Resource Name (ARN) of the AWS user who last changed the parameter.</p>",
         "ParameterNotFound$message": null,
+        "ParameterPatternMismatchException$message": "<p>The parameter name is not valid.</p>",
+        "ResourceDataSyncCountExceededException$Message": null,
+        "ResourceDataSyncInvalidConfigurationException$Message": null,
         "ResourceInUseException$Message": null,
         "ResourceLimitExceededException$Message": null,
         "StepExecution$StepName": "<p>The name of this execution step.</p>",
@@ -3715,6 +4002,7 @@
         "TooManyUpdates$Message": null,
         "TotalSizeLimitExceededException$Message": null,
         "UnsupportedInventorySchemaVersionException$Message": null,
+        "UnsupportedOperatingSystem$Message": null,
         "UnsupportedParameterType$message": null,
         "UnsupportedPlatformType$Message": null
       }
@@ -3722,9 +4010,9 @@
     "StringDateTime": {
       "base": null,
       "refs": {
-        "GetCommandInvocationResult$ExecutionStartDateTime": "<p>The date and time the plugin started executing. Date and time are written in ISO 8601 format. For example, August 28, 2016 is represented as 2016-08-28. If the plugin has not started to execute, the string is empty.</p>",
-        "GetCommandInvocationResult$ExecutionElapsedTime": "<p>Duration since <code>ExecutionStartDateTime</code>.</p>",
-        "GetCommandInvocationResult$ExecutionEndDateTime": "<p>The date and time the plugin was finished executing. Date and time are written in ISO 8601 format. For example, August 28, 2016 is represented as 2016-08-28. If the plugin has not started to execute, the string is empty.</p>"
+        "GetCommandInvocationResult$ExecutionStartDateTime": "<p>The date and time the plugin started executing. Date and time are written in ISO 8601 format. For example, June 7, 2017 is represented as 2017-06-7. The following sample AWS CLI command uses the <code>InvokedBefore</code> filter.</p> <p> <code>aws ssm list-commands --filters key=InvokedBefore,value=2017-06-07T00:00:00Z</code> </p> <p>If the plugin has not started to execute, the string is empty.</p>",
+        "GetCommandInvocationResult$ExecutionElapsedTime": "<p>Duration since ExecutionStartDateTime.</p>",
+        "GetCommandInvocationResult$ExecutionEndDateTime": "<p>The date and time the plugin was finished executing. Date and time are written in ISO 8601 format. For example, June 7, 2017 is represented as 2017-06-7. The following sample AWS CLI command uses the <code>InvokedAfter</code> filter.</p> <p> <code>aws ssm list-commands --filters key=InvokedAfter,value=2017-06-07T00:00:00Z</code> </p> <p>If the plugin has not started to execute, the string is empty.</p>"
       }
     },
     "StringList": {
@@ -3760,7 +4048,7 @@
       }
     },
     "Target": {
-      "base": "<p>An array of search criteria that targets instances using a <code>Key</code>,<code>Value</code> combination that you specify. <code>Targets</code> is required if you don't provide one or more instance IDs in the call.</p>",
+      "base": "<p>An array of search criteria that targets instances using a Key,Value combination that you specify. <code>Targets</code> is required if you don't provide one or more instance IDs in the call.</p> <p/>",
       "refs": {
         "Targets$member": null
       }
@@ -3774,7 +4062,7 @@
     "TargetKey": {
       "base": null,
       "refs": {
-        "Target$Key": "<p>User-defined criteria for sending commands that target instances that meet the criteria. <code>Key</code> can be <code>tag:&lt;Amazon EC2 tag&gt;</code> or <code>InstanceIds</code>. For more information about how to send commands that target instances using <code>Key</code>,<code>Value</code> parameters, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/run-command.html\">Executing a Command Using Systems Manager Run Command</a>.</p>"
+        "Target$Key": "<p>User-defined criteria for sending commands that target instances that meet the criteria. Key can be tag:&lt;Amazon EC2 tag&gt; or InstanceIds. For more information about how to send commands that target instances using Key,Value parameters, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/send-commands-multiple.html\">Executing a Command Using Systems Manager Run Command</a>.</p>"
       }
     },
     "TargetValue": {
@@ -3786,7 +4074,7 @@
     "TargetValues": {
       "base": null,
       "refs": {
-        "Target$Values": "<p>User-defined criteria that maps to <code>Key</code>. For example, if you specified <code>tag:ServerRole</code>, you could specify <code>value:WebServer</code> to execute a command on instances that include Amazon EC2 tags of ServerRole,WebServer. For more information about how to send commands that target instances using <code>Key</code>,<code>Value</code> parameters, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/run-command.html\">Executing a Command Using Systems Manager Run Command</a>.</p>"
+        "Target$Values": "<p>User-defined criteria that maps to Key. For example, if you specified tag:ServerRole, you could specify value:WebServer to execute a command on instances that include Amazon EC2 tags of ServerRole,WebServer. For more information about how to send commands that target instances using Key,Value parameters, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/send-commands-multiple.html\">Executing a Command Using Systems Manager Run Command</a>.</p>"
       }
     },
     "Targets": {
@@ -3794,14 +4082,15 @@
       "refs": {
         "Association$Targets": "<p>The instances targeted by the request to create an association. </p>",
         "AssociationDescription$Targets": "<p>The instances targeted by the request. </p>",
-        "Command$Targets": "<p>An array of search criteria that targets instances using a <code>Key</code>,<code>Value</code> combination that you specify. <code>Targets</code> is required if you don't provide one or more instance IDs in the call.</p>",
+        "Command$Targets": "<p>An array of search criteria that targets instances using a Key,Value combination that you specify. Targets is required if you don't provide one or more instance IDs in the call.</p>",
         "CreateAssociationBatchRequestEntry$Targets": "<p>The instances targeted by the request.</p>",
-        "CreateAssociationRequest$Targets": "<p>The targets (either instances or tags) for the association. Instances are specified using Key=instanceids,Values=&lt;instanceid1&gt;,&lt;instanceid2&gt;. Tags are specified using Key=&lt;tag name&gt;,Values=&lt;tag value&gt;.</p>",
+        "CreateAssociationRequest$Targets": "<p>The targets (either instances or tags) for the association.</p>",
         "MaintenanceWindowTarget$Targets": "<p>The targets (either instances or tags). Instances are specified using Key=instanceids,Values=&lt;instanceid1&gt;,&lt;instanceid2&gt;. Tags are specified using Key=&lt;tag name&gt;,Values=&lt;tag value&gt;.</p>",
         "MaintenanceWindowTask$Targets": "<p>The targets (either instances or tags). Instances are specified using Key=instanceids,Values=&lt;instanceid1&gt;,&lt;instanceid2&gt;. Tags are specified using Key=&lt;tag name&gt;,Values=&lt;tag value&gt;.</p>",
         "RegisterTargetWithMaintenanceWindowRequest$Targets": "<p>The targets (either instances or tags). Instances are specified using Key=instanceids,Values=&lt;instanceid1&gt;,&lt;instanceid2&gt;. Tags are specified using Key=&lt;tag name&gt;,Values=&lt;tag value&gt;.</p>",
         "RegisterTaskWithMaintenanceWindowRequest$Targets": "<p>The targets (either instances or tags). Instances are specified using Key=instanceids,Values=&lt;instanceid1&gt;,&lt;instanceid2&gt;. Tags are specified using Key=&lt;tag name&gt;,Values=&lt;tag value&gt;.</p>",
-        "SendCommandRequest$Targets": "<p>(Optional) An array of search criteria that targets instances using a <code>Key</code>,<code>Value</code> combination that you specify. <code>Targets</code> is required if you don't provide one or more instance IDs in the call. For more information about how to use <code>Targets</code>, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/run-command.html\">Executing a Command Using Systems Manager Run Command</a>.</p>"
+        "SendCommandRequest$Targets": "<p>(Optional) An array of search criteria that targets instances using a Key,Value combination that you specify. Targets is required if you don't provide one or more instance IDs in the call. For more information about how to use Targets, see <a href=\"http://docs.aws.amazon.com/systems-manager/latest/userguide/send-commands-multiple.html\">Sending Commands to a Fleet</a>.</p>",
+        "UpdateAssociationRequest$Targets": "<p>The targets of the association.</p>"
       }
     },
     "TimeoutSeconds": {
@@ -3811,7 +4100,7 @@
       }
     },
     "TooManyTagsError": {
-      "base": "<p>The <code>Targets</code> parameter includes too many tags. Remove one or more tags and try the command again.</p>",
+      "base": "<p>The Targets parameter includes too many tags. Remove one or more tags and try the command again.</p>",
       "refs": {
       }
     },
@@ -3826,7 +4115,12 @@
       }
     },
     "UnsupportedInventorySchemaVersionException": {
-      "base": "<p>Inventory item type schema version has to match supported versions in the service. Check output of <code>GetInventorySchema</code> to see the available schema version for each type.</p>",
+      "base": "<p>Inventory item type schema version has to match supported versions in the service. Check output of GetInventorySchema to see the available schema version for each type.</p>",
+      "refs": {
+      }
+    },
+    "UnsupportedOperatingSystem": {
+      "base": "<p>The operating systems you specified is not supported, or the operation is not supported for the operating system. Valid operating systems include: Windows, AmazonLinux, RedhatEnterpriseLinux, and Ubuntu.</p>",
       "refs": {
       }
     },
@@ -3913,8 +4207,8 @@
     "Url": {
       "base": null,
       "refs": {
-        "CommandInvocation$StandardOutputUrl": "<p>The URL to the plugin’s StdOut file in Amazon S3, if the Amazon S3 bucket was defined for the parent command. For an invocation, <code>StandardOutputUrl</code> is populated if there is just one plugin defined for the command, and the Amazon S3 bucket was defined for the command.</p>",
-        "CommandInvocation$StandardErrorUrl": "<p>The URL to the plugin’s StdErr file in Amazon S3, if the Amazon S3 bucket was defined for the parent command. For an invocation, <code>StandardErrorUrl</code> is populated if there is just one plugin defined for the command, and the Amazon S3 bucket was defined for the command.</p>",
+        "CommandInvocation$StandardOutputUrl": "<p>The URL to the plugin's StdOut file in Amazon S3, if the Amazon S3 bucket was defined for the parent command. For an invocation, StandardOutputUrl is populated if there is just one plugin defined for the command, and the Amazon S3 bucket was defined for the command.</p>",
+        "CommandInvocation$StandardErrorUrl": "<p>The URL to the plugin's StdErr file in Amazon S3, if the Amazon S3 bucket was defined for the parent command. For an invocation, StandardErrorUrl is populated if there is just one plugin defined for the command, and the Amazon S3 bucket was defined for the command.</p>",
         "CommandPlugin$StandardOutputUrl": "<p>The URL for the complete text written by the plugin to stdout in Amazon S3. If the Amazon S3 bucket for the command was not specified, then this string is empty.</p>",
         "CommandPlugin$StandardErrorUrl": "<p>The URL for the complete text written by the plugin to stderr. If execution is not yet complete, then this string is empty.</p>",
         "GetCommandInvocationResult$StandardOutputUrl": "<p>The URL for the complete text written by the plugin to stdout in Amazon S3. If an Amazon S3 bucket was not specified, then this string is empty.</p>",

@@ -302,6 +302,23 @@
         {"shape":"ServiceException"}
       ]
     },
+    "DescribeDomainControllers":{
+      "name":"DescribeDomainControllers",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeDomainControllersRequest"},
+      "output":{"shape":"DescribeDomainControllersResult"},
+      "errors":[
+        {"shape":"EntityDoesNotExistException"},
+        {"shape":"InvalidNextTokenException"},
+        {"shape":"InvalidParameterException"},
+        {"shape":"ClientException"},
+        {"shape":"ServiceException"},
+        {"shape":"UnsupportedOperationException"}
+      ]
+    },
     "DescribeEventTopics":{
       "name":"DescribeEventTopics",
       "http":{
@@ -576,6 +593,24 @@
       "errors":[
         {"shape":"EntityDoesNotExistException"},
         {"shape":"DirectoryUnavailableException"},
+        {"shape":"InvalidParameterException"},
+        {"shape":"UnsupportedOperationException"},
+        {"shape":"ClientException"},
+        {"shape":"ServiceException"}
+      ]
+    },
+    "UpdateNumberOfDomainControllers":{
+      "name":"UpdateNumberOfDomainControllers",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateNumberOfDomainControllersRequest"},
+      "output":{"shape":"UpdateNumberOfDomainControllersResult"},
+      "errors":[
+        {"shape":"EntityDoesNotExistException"},
+        {"shape":"DirectoryUnavailableException"},
+        {"shape":"DomainControllerLimitExceededException"},
         {"shape":"InvalidParameterException"},
         {"shape":"UnsupportedOperationException"},
         {"shape":"ClientException"},
@@ -1025,6 +1060,23 @@
         "NextToken":{"shape":"NextToken"}
       }
     },
+    "DescribeDomainControllersRequest":{
+      "type":"structure",
+      "required":["DirectoryId"],
+      "members":{
+        "DirectoryId":{"shape":"DirectoryId"},
+        "DomainControllerIds":{"shape":"DomainControllerIds"},
+        "NextToken":{"shape":"NextToken"},
+        "Limit":{"shape":"Limit"}
+      }
+    },
+    "DescribeDomainControllersResult":{
+      "type":"structure",
+      "members":{
+        "DomainControllers":{"shape":"DomainControllers"},
+        "NextToken":{"shape":"NextToken"}
+      }
+    },
     "DescribeEventTopicsRequest":{
       "type":"structure",
       "members":{
@@ -1076,6 +1128,10 @@
       "min":0,
       "pattern":"^([a-zA-Z0-9_])[\\\\a-zA-Z0-9_@#%*+=:?./!\\s-]*$"
     },
+    "DesiredNumberOfDomainControllers":{
+      "type":"integer",
+      "min":2
+    },
     "DirectoryConnectSettings":{
       "type":"structure",
       "required":[
@@ -1122,7 +1178,8 @@
         "RadiusSettings":{"shape":"RadiusSettings"},
         "RadiusStatus":{"shape":"RadiusStatus"},
         "StageReason":{"shape":"StageReason"},
-        "SsoEnabled":{"shape":"SsoEnabled"}
+        "SsoEnabled":{"shape":"SsoEnabled"},
+        "DesiredNumberOfDomainControllers":{"shape":"DesiredNumberOfDomainControllers"}
       }
     },
     "DirectoryDescriptions":{
@@ -1255,6 +1312,54 @@
     "DnsIpAddrs":{
       "type":"list",
       "member":{"shape":"IpAddr"}
+    },
+    "DomainController":{
+      "type":"structure",
+      "members":{
+        "DirectoryId":{"shape":"DirectoryId"},
+        "DomainControllerId":{"shape":"DomainControllerId"},
+        "DnsIpAddr":{"shape":"IpAddr"},
+        "VpcId":{"shape":"VpcId"},
+        "SubnetId":{"shape":"SubnetId"},
+        "AvailabilityZone":{"shape":"AvailabilityZone"},
+        "Status":{"shape":"DomainControllerStatus"},
+        "StatusReason":{"shape":"DomainControllerStatusReason"},
+        "LaunchTime":{"shape":"LaunchTime"},
+        "StatusLastUpdatedDateTime":{"shape":"LastUpdatedDateTime"}
+      }
+    },
+    "DomainControllerId":{
+      "type":"string",
+      "pattern":"^dc-[0-9a-f]{10}$"
+    },
+    "DomainControllerIds":{
+      "type":"list",
+      "member":{"shape":"DomainControllerId"}
+    },
+    "DomainControllerLimitExceededException":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"ExceptionMessage"},
+        "RequestId":{"shape":"RequestId"}
+      },
+      "exception":true
+    },
+    "DomainControllerStatus":{
+      "type":"string",
+      "enum":[
+        "Creating",
+        "Active",
+        "Impaired",
+        "Restoring",
+        "Deleting",
+        "Deleted",
+        "Failed"
+      ]
+    },
+    "DomainControllerStatusReason":{"type":"string"},
+    "DomainControllers":{
+      "type":"list",
+      "member":{"shape":"DomainController"}
     },
     "EnableRadiusRequest":{
       "type":"structure",
@@ -1924,6 +2029,22 @@
       }
     },
     "UpdateConditionalForwarderResult":{
+      "type":"structure",
+      "members":{
+      }
+    },
+    "UpdateNumberOfDomainControllersRequest":{
+      "type":"structure",
+      "required":[
+        "DirectoryId",
+        "DesiredNumber"
+      ],
+      "members":{
+        "DirectoryId":{"shape":"DirectoryId"},
+        "DesiredNumber":{"shape":"DesiredNumberOfDomainControllers"}
+      }
+    },
+    "UpdateNumberOfDomainControllersResult":{
       "type":"structure",
       "members":{
       }

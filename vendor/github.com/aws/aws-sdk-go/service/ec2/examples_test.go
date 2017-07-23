@@ -3,6962 +3,4199 @@
 package ec2_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleEC2_AcceptReservedInstancesExchangeQuote() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.AcceptReservedInstancesExchangeQuoteInput{
-		ReservedInstanceIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		DryRun: aws.Bool(true),
-		TargetConfigurations: []*ec2.TargetConfigurationRequest{
-			{ // Required
-				OfferingId:    aws.String("String"), // Required
-				InstanceCount: aws.Int64(1),
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.AcceptReservedInstancesExchangeQuote(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		panic(err)
+	}
+	return &t
+}
+
+// To allocate an Elastic IP address for EC2-VPC
+//
+// This example allocates an Elastic IP address to use with an instance in a VPC.
+func ExampleEC2_AllocateAddress_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.AllocateAddressInput{
+		Domain: aws.String("vpc"),
+	}
+
+	result, err := svc.AllocateAddress(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_AcceptVpcPeeringConnection() {
-	sess := session.Must(session.NewSession())
+// To allocate an Elastic IP address for EC2-Classic
+//
+// This example allocates an Elastic IP address to use with an instance in EC2-Classic.
+func ExampleEC2_AllocateAddress_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.AllocateAddressInput{}
 
-	svc := ec2.New(sess)
-
-	params := &ec2.AcceptVpcPeeringConnectionInput{
-		DryRun:                 aws.Bool(true),
-		VpcPeeringConnectionId: aws.String("String"),
-	}
-	resp, err := svc.AcceptVpcPeeringConnection(params)
-
+	result, err := svc.AllocateAddress(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_AllocateAddress() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.AllocateAddressInput{
-		Domain: aws.String("DomainType"),
-		DryRun: aws.Bool(true),
-	}
-	resp, err := svc.AllocateAddress(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_AllocateHosts() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.AllocateHostsInput{
-		AvailabilityZone: aws.String("String"), // Required
-		InstanceType:     aws.String("String"), // Required
-		Quantity:         aws.Int64(1),         // Required
-		AutoPlacement:    aws.String("AutoPlacement"),
-		ClientToken:      aws.String("String"),
-	}
-	resp, err := svc.AllocateHosts(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_AssignIpv6Addresses() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.AssignIpv6AddressesInput{
-		NetworkInterfaceId: aws.String("String"), // Required
-		Ipv6AddressCount:   aws.Int64(1),
-		Ipv6Addresses: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.AssignIpv6Addresses(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_AssignPrivateIpAddresses() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.AssignPrivateIpAddressesInput{
-		NetworkInterfaceId: aws.String("String"), // Required
-		AllowReassignment:  aws.Bool(true),
+// To assign a specific secondary private IP address to an interface
+//
+// This example assigns the specified secondary private IP address to the specified
+// network interface.
+func ExampleEC2_AssignPrivateIpAddresses_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.AssignPrivateIpAddressesInput{
+		NetworkInterfaceId: aws.String("eni-e5aa89a3"),
 		PrivateIpAddresses: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("10.0.0.82"),
 		},
-		SecondaryPrivateIpAddressCount: aws.Int64(1),
 	}
-	resp, err := svc.AssignPrivateIpAddresses(params)
 
+	result, err := svc.AssignPrivateIpAddresses(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_AssociateAddress() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.AssociateAddressInput{
-		AllocationId:       aws.String("String"),
-		AllowReassociation: aws.Bool(true),
-		DryRun:             aws.Bool(true),
-		InstanceId:         aws.String("String"),
-		NetworkInterfaceId: aws.String("String"),
-		PrivateIpAddress:   aws.String("String"),
-		PublicIp:           aws.String("String"),
+// To assign secondary private IP addresses that Amazon EC2 selects to an interface
+//
+// This example assigns two secondary private IP addresses to the specified network
+// interface. Amazon EC2 automatically assigns these IP addresses from the available
+// IP addresses in the CIDR block range of the subnet the network interface is associated
+// with.
+func ExampleEC2_AssignPrivateIpAddresses_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.AssignPrivateIpAddressesInput{
+		NetworkInterfaceId:             aws.String("eni-e5aa89a3"),
+		SecondaryPrivateIpAddressCount: aws.Int64(2),
 	}
-	resp, err := svc.AssociateAddress(params)
 
+	result, err := svc.AssignPrivateIpAddresses(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_AssociateDhcpOptions() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.AssociateDhcpOptionsInput{
-		DhcpOptionsId: aws.String("String"), // Required
-		VpcId:         aws.String("String"), // Required
-		DryRun:        aws.Bool(true),
+// To associate an Elastic IP address in EC2-VPC
+//
+// This example associates the specified Elastic IP address with the specified instance
+// in a VPC.
+func ExampleEC2_AssociateAddress_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.AssociateAddressInput{
+		AllocationId: aws.String("eipalloc-64d5890a"),
+		InstanceId:   aws.String("i-0b263919b6498b123"),
 	}
-	resp, err := svc.AssociateDhcpOptions(params)
 
+	result, err := svc.AssociateAddress(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_AssociateIamInstanceProfile() {
-	sess := session.Must(session.NewSession())
+// To associate an Elastic IP address with a network interface
+//
+// This example associates the specified Elastic IP address with the specified network
+// interface.
+func ExampleEC2_AssociateAddress_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.AssociateAddressInput{
+		AllocationId:       aws.String("eipalloc-64d5890a"),
+		NetworkInterfaceId: aws.String("eni-1a2b3c4d"),
+	}
 
-	svc := ec2.New(sess)
+	result, err := svc.AssociateAddress(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &ec2.AssociateIamInstanceProfileInput{
-		IamInstanceProfile: &ec2.IamInstanceProfileSpecification{ // Required
-			Arn:  aws.String("String"),
-			Name: aws.String("String"),
+	fmt.Println(result)
+}
+
+// To associate an Elastic IP address in EC2-Classic
+//
+// This example associates an Elastic IP address with an instance in EC2-Classic.
+func ExampleEC2_AssociateAddress_shared02() {
+	svc := ec2.New(session.New())
+	input := &ec2.AssociateAddressInput{
+		InstanceId: aws.String("i-07ffe74c7330ebf53"),
+		PublicIp:   aws.String("198.51.100.0"),
+	}
+
+	result, err := svc.AssociateAddress(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To associate a DHCP options set with a VPC
+//
+// This example associates the specified DHCP options set with the specified VPC.
+func ExampleEC2_AssociateDhcpOptions_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.AssociateDhcpOptionsInput{
+		DhcpOptionsId: aws.String("dopt-d9070ebb"),
+		VpcId:         aws.String("vpc-a01106c2"),
+	}
+
+	result, err := svc.AssociateDhcpOptions(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To associate the default DHCP options set with a VPC
+//
+// This example associates the default DHCP options set with the specified VPC.
+func ExampleEC2_AssociateDhcpOptions_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.AssociateDhcpOptionsInput{
+		DhcpOptionsId: aws.String("default"),
+		VpcId:         aws.String("vpc-a01106c2"),
+	}
+
+	result, err := svc.AssociateDhcpOptions(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To associate a route table with a subnet
+//
+// This example associates the specified route table with the specified subnet.
+func ExampleEC2_AssociateRouteTable_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.AssociateRouteTableInput{
+		RouteTableId: aws.String("rtb-22574640"),
+		SubnetId:     aws.String("subnet-9d4a7b6"),
+	}
+
+	result, err := svc.AssociateRouteTable(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To attach an Internet gateway to a VPC
+//
+// This example attaches the specified Internet gateway to the specified VPC.
+func ExampleEC2_AttachInternetGateway_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.AttachInternetGatewayInput{
+		InternetGatewayId: aws.String("igw-c0a643a9"),
+		VpcId:             aws.String("vpc-a01106c2"),
+	}
+
+	result, err := svc.AttachInternetGateway(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To attach a network interface to an instance
+//
+// This example attaches the specified network interface to the specified instance.
+func ExampleEC2_AttachNetworkInterface_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.AttachNetworkInterfaceInput{
+		DeviceIndex:        aws.Int64(1),
+		InstanceId:         aws.String("i-1234567890abcdef0"),
+		NetworkInterfaceId: aws.String("eni-e5aa89a3"),
+	}
+
+	result, err := svc.AttachNetworkInterface(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To attach a volume to an instance
+//
+// This example attaches a volume (``vol-1234567890abcdef0``) to an instance (``i-01474ef662b89480``)
+// as ``/dev/sdf``.
+func ExampleEC2_AttachVolume_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.AttachVolumeInput{
+		Device:     aws.String("/dev/sdf"),
+		InstanceId: aws.String("i-01474ef662b89480"),
+		VolumeId:   aws.String("vol-1234567890abcdef0"),
+	}
+
+	result, err := svc.AttachVolume(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To cancel a Spot fleet request
+//
+// This example cancels the specified Spot fleet request and terminates its associated
+// Spot Instances.
+func ExampleEC2_CancelSpotFleetRequests_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CancelSpotFleetRequestsInput{
+		SpotFleetRequestIds: []*string{
+			aws.String("sfr-73fbd2ce-aa30-494c-8788-1cee4EXAMPLE"),
 		},
-		InstanceId: aws.String("String"), // Required
+		TerminateInstances: aws.Bool(true),
 	}
-	resp, err := svc.AssociateIamInstanceProfile(params)
 
+	result, err := svc.CancelSpotFleetRequests(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_AssociateRouteTable() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.AssociateRouteTableInput{
-		RouteTableId: aws.String("String"), // Required
-		SubnetId:     aws.String("String"), // Required
-		DryRun:       aws.Bool(true),
-	}
-	resp, err := svc.AssociateRouteTable(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_AssociateSubnetCidrBlock() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.AssociateSubnetCidrBlockInput{
-		Ipv6CidrBlock: aws.String("String"), // Required
-		SubnetId:      aws.String("String"), // Required
-	}
-	resp, err := svc.AssociateSubnetCidrBlock(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_AssociateVpcCidrBlock() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.AssociateVpcCidrBlockInput{
-		VpcId: aws.String("String"), // Required
-		AmazonProvidedIpv6CidrBlock: aws.Bool(true),
-	}
-	resp, err := svc.AssociateVpcCidrBlock(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_AttachClassicLinkVpc() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.AttachClassicLinkVpcInput{
-		Groups: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
+// To cancel a Spot fleet request without terminating its Spot Instances
+//
+// This example cancels the specified Spot fleet request without terminating its associated
+// Spot Instances.
+func ExampleEC2_CancelSpotFleetRequests_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.CancelSpotFleetRequestsInput{
+		SpotFleetRequestIds: []*string{
+			aws.String("sfr-73fbd2ce-aa30-494c-8788-1cee4EXAMPLE"),
 		},
-		InstanceId: aws.String("String"), // Required
-		VpcId:      aws.String("String"), // Required
-		DryRun:     aws.Bool(true),
+		TerminateInstances: aws.Bool(false),
 	}
-	resp, err := svc.AttachClassicLinkVpc(params)
 
+	result, err := svc.CancelSpotFleetRequests(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_AttachInternetGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.AttachInternetGatewayInput{
-		InternetGatewayId: aws.String("String"), // Required
-		VpcId:             aws.String("String"), // Required
-		DryRun:            aws.Bool(true),
-	}
-	resp, err := svc.AttachInternetGateway(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_AttachNetworkInterface() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.AttachNetworkInterfaceInput{
-		DeviceIndex:        aws.Int64(1),         // Required
-		InstanceId:         aws.String("String"), // Required
-		NetworkInterfaceId: aws.String("String"), // Required
-		DryRun:             aws.Bool(true),
-	}
-	resp, err := svc.AttachNetworkInterface(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_AttachVolume() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.AttachVolumeInput{
-		Device:     aws.String("String"), // Required
-		InstanceId: aws.String("String"), // Required
-		VolumeId:   aws.String("String"), // Required
-		DryRun:     aws.Bool(true),
-	}
-	resp, err := svc.AttachVolume(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_AttachVpnGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.AttachVpnGatewayInput{
-		VpcId:        aws.String("String"), // Required
-		VpnGatewayId: aws.String("String"), // Required
-		DryRun:       aws.Bool(true),
-	}
-	resp, err := svc.AttachVpnGateway(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_AuthorizeSecurityGroupEgress() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.AuthorizeSecurityGroupEgressInput{
-		GroupId:  aws.String("String"), // Required
-		CidrIp:   aws.String("String"),
-		DryRun:   aws.Bool(true),
-		FromPort: aws.Int64(1),
-		IpPermissions: []*ec2.IpPermission{
-			{ // Required
-				FromPort:   aws.Int64(1),
-				IpProtocol: aws.String("String"),
-				IpRanges: []*ec2.IpRange{
-					{ // Required
-						CidrIp: aws.String("String"),
-					},
-					// More values...
-				},
-				Ipv6Ranges: []*ec2.Ipv6Range{
-					{ // Required
-						CidrIpv6: aws.String("String"),
-					},
-					// More values...
-				},
-				PrefixListIds: []*ec2.PrefixListId{
-					{ // Required
-						PrefixListId: aws.String("String"),
-					},
-					// More values...
-				},
-				ToPort: aws.Int64(1),
-				UserIdGroupPairs: []*ec2.UserIdGroupPair{
-					{ // Required
-						GroupId:       aws.String("String"),
-						GroupName:     aws.String("String"),
-						PeeringStatus: aws.String("String"),
-						UserId:        aws.String("String"),
-						VpcId:         aws.String("String"),
-						VpcPeeringConnectionId: aws.String("String"),
-					},
-					// More values...
-				},
-			},
-			// More values...
+// To cancel Spot Instance requests
+//
+// This example cancels a Spot Instance request.
+func ExampleEC2_CancelSpotInstanceRequests_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CancelSpotInstanceRequestsInput{
+		SpotInstanceRequestIds: []*string{
+			aws.String("sir-08b93456"),
 		},
-		IpProtocol:                 aws.String("String"),
-		SourceSecurityGroupName:    aws.String("String"),
-		SourceSecurityGroupOwnerId: aws.String("String"),
-		ToPort: aws.Int64(1),
 	}
-	resp, err := svc.AuthorizeSecurityGroupEgress(params)
 
+	result, err := svc.CancelSpotInstanceRequests(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_AuthorizeSecurityGroupIngress() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.AuthorizeSecurityGroupIngressInput{
-		CidrIp:    aws.String("String"),
-		DryRun:    aws.Bool(true),
-		FromPort:  aws.Int64(1),
-		GroupId:   aws.String("String"),
-		GroupName: aws.String("String"),
-		IpPermissions: []*ec2.IpPermission{
-			{ // Required
-				FromPort:   aws.Int64(1),
-				IpProtocol: aws.String("String"),
-				IpRanges: []*ec2.IpRange{
-					{ // Required
-						CidrIp: aws.String("String"),
-					},
-					// More values...
-				},
-				Ipv6Ranges: []*ec2.Ipv6Range{
-					{ // Required
-						CidrIpv6: aws.String("String"),
-					},
-					// More values...
-				},
-				PrefixListIds: []*ec2.PrefixListId{
-					{ // Required
-						PrefixListId: aws.String("String"),
-					},
-					// More values...
-				},
-				ToPort: aws.Int64(1),
-				UserIdGroupPairs: []*ec2.UserIdGroupPair{
-					{ // Required
-						GroupId:       aws.String("String"),
-						GroupName:     aws.String("String"),
-						PeeringStatus: aws.String("String"),
-						UserId:        aws.String("String"),
-						VpcId:         aws.String("String"),
-						VpcPeeringConnectionId: aws.String("String"),
-					},
-					// More values...
-				},
-			},
-			// More values...
-		},
-		IpProtocol:                 aws.String("String"),
-		SourceSecurityGroupName:    aws.String("String"),
-		SourceSecurityGroupOwnerId: aws.String("String"),
-		ToPort: aws.Int64(1),
+// To confirm the product instance
+//
+// This example determines whether the specified product code is associated with the
+// specified instance.
+func ExampleEC2_ConfirmProductInstance_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.ConfirmProductInstanceInput{
+		InstanceId:  aws.String("i-1234567890abcdef0"),
+		ProductCode: aws.String("774F4FF8"),
 	}
-	resp, err := svc.AuthorizeSecurityGroupIngress(params)
 
+	result, err := svc.ConfirmProductInstance(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_BundleInstance() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.BundleInstanceInput{
-		InstanceId: aws.String("String"), // Required
-		Storage: &ec2.Storage{ // Required
-			S3: &ec2.S3Storage{
-				AWSAccessKeyId:        aws.String("String"),
-				Bucket:                aws.String("String"),
-				Prefix:                aws.String("String"),
-				UploadPolicy:          []byte("PAYLOAD"),
-				UploadPolicySignature: aws.String("String"),
-			},
-		},
-		DryRun: aws.Bool(true),
+// To copy a snapshot
+//
+// This example copies a snapshot with the snapshot ID of ``snap-066877671789bd71b``
+// from the ``us-west-2`` region to the ``us-east-1`` region and adds a short description
+// to identify the snapshot.
+func ExampleEC2_CopySnapshot_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CopySnapshotInput{
+		Description:       aws.String("This is my copied snapshot."),
+		DestinationRegion: aws.String("us-east-1"),
+		SourceRegion:      aws.String("us-west-2"),
+		SourceSnapshotId:  aws.String("snap-066877671789bd71b"),
 	}
-	resp, err := svc.BundleInstance(params)
 
+	result, err := svc.CopySnapshot(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_CancelBundleTask() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CancelBundleTaskInput{
-		BundleId: aws.String("String"), // Required
-		DryRun:   aws.Bool(true),
+// To create a customer gateway
+//
+// This example creates a customer gateway with the specified IP address for its outside
+// interface.
+func ExampleEC2_CreateCustomerGateway_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreateCustomerGatewayInput{
+		BgpAsn:   aws.Int64(65534),
+		PublicIp: aws.String("12.1.2.3"),
+		Type:     aws.String("ipsec.1"),
 	}
-	resp, err := svc.CancelBundleTask(params)
 
+	result, err := svc.CreateCustomerGateway(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_CancelConversionTask() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CancelConversionTaskInput{
-		ConversionTaskId: aws.String("String"), // Required
-		DryRun:           aws.Bool(true),
-		ReasonMessage:    aws.String("String"),
-	}
-	resp, err := svc.CancelConversionTask(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CancelExportTask() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CancelExportTaskInput{
-		ExportTaskId: aws.String("String"), // Required
-	}
-	resp, err := svc.CancelExportTask(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CancelImportTask() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CancelImportTaskInput{
-		CancelReason: aws.String("String"),
-		DryRun:       aws.Bool(true),
-		ImportTaskId: aws.String("String"),
-	}
-	resp, err := svc.CancelImportTask(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CancelReservedInstancesListing() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CancelReservedInstancesListingInput{
-		ReservedInstancesListingId: aws.String("String"), // Required
-	}
-	resp, err := svc.CancelReservedInstancesListing(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CancelSpotFleetRequests() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CancelSpotFleetRequestsInput{
-		SpotFleetRequestIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		TerminateInstances: aws.Bool(true), // Required
-		DryRun:             aws.Bool(true),
-	}
-	resp, err := svc.CancelSpotFleetRequests(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CancelSpotInstanceRequests() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CancelSpotInstanceRequestsInput{
-		SpotInstanceRequestIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		DryRun: aws.Bool(true),
-	}
-	resp, err := svc.CancelSpotInstanceRequests(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ConfirmProductInstance() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ConfirmProductInstanceInput{
-		InstanceId:  aws.String("String"), // Required
-		ProductCode: aws.String("String"), // Required
-		DryRun:      aws.Bool(true),
-	}
-	resp, err := svc.ConfirmProductInstance(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CopyImage() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CopyImageInput{
-		Name:          aws.String("String"), // Required
-		SourceImageId: aws.String("String"), // Required
-		SourceRegion:  aws.String("String"), // Required
-		ClientToken:   aws.String("String"),
-		Description:   aws.String("String"),
-		DryRun:        aws.Bool(true),
-		Encrypted:     aws.Bool(true),
-		KmsKeyId:      aws.String("String"),
-	}
-	resp, err := svc.CopyImage(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CopySnapshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CopySnapshotInput{
-		SourceRegion:      aws.String("String"), // Required
-		SourceSnapshotId:  aws.String("String"), // Required
-		Description:       aws.String("String"),
-		DestinationRegion: aws.String("String"),
-		DryRun:            aws.Bool(true),
-		Encrypted:         aws.Bool(true),
-		KmsKeyId:          aws.String("String"),
-		PresignedUrl:      aws.String("String"),
-	}
-	resp, err := svc.CopySnapshot(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateCustomerGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateCustomerGatewayInput{
-		BgpAsn:   aws.Int64(1),              // Required
-		PublicIp: aws.String("String"),      // Required
-		Type:     aws.String("GatewayType"), // Required
-		DryRun:   aws.Bool(true),
-	}
-	resp, err := svc.CreateCustomerGateway(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateDhcpOptions() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateDhcpOptionsInput{
-		DhcpConfigurations: []*ec2.NewDhcpConfiguration{ // Required
-			{ // Required
-				Key: aws.String("String"),
+// To create a DHCP options set
+//
+// This example creates a DHCP options set.
+func ExampleEC2_CreateDhcpOptions_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreateDhcpOptionsInput{
+		DhcpConfigurations: []*ec2.NewDhcpConfiguration{
+			{
+				Key: aws.String("domain-name-servers"),
 				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
+					aws.String("10.2.5.1"),
+					aws.String("10.2.5.2"),
 				},
 			},
-			// More values...
 		},
-		DryRun: aws.Bool(true),
 	}
-	resp, err := svc.CreateDhcpOptions(params)
 
+	result, err := svc.CreateDhcpOptions(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_CreateEgressOnlyInternetGateway() {
-	sess := session.Must(session.NewSession())
+// To create an Internet gateway
+//
+// This example creates an Internet gateway.
+func ExampleEC2_CreateInternetGateway_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreateInternetGatewayInput{}
 
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateEgressOnlyInternetGatewayInput{
-		VpcId:       aws.String("String"), // Required
-		ClientToken: aws.String("String"),
-		DryRun:      aws.Bool(true),
-	}
-	resp, err := svc.CreateEgressOnlyInternetGateway(params)
-
+	result, err := svc.CreateInternetGateway(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_CreateFlowLogs() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateFlowLogsInput{
-		DeliverLogsPermissionArn: aws.String("String"), // Required
-		LogGroupName:             aws.String("String"), // Required
-		ResourceIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		ResourceType: aws.String("FlowLogsResourceType"), // Required
-		TrafficType:  aws.String("TrafficType"),          // Required
-		ClientToken:  aws.String("String"),
+// To create a key pair
+//
+// This example creates a key pair named my-key-pair.
+func ExampleEC2_CreateKeyPair_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreateKeyPairInput{
+		KeyName: aws.String("my-key-pair"),
 	}
-	resp, err := svc.CreateFlowLogs(params)
 
+	result, err := svc.CreateKeyPair(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_CreateFpgaImage() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateFpgaImageInput{
-		InputStorageLocation: &ec2.StorageLocation{ // Required
-			Bucket: aws.String("String"),
-			Key:    aws.String("String"),
-		},
-		ClientToken: aws.String("String"),
-		Description: aws.String("String"),
-		DryRun:      aws.Bool(true),
-		LogsStorageLocation: &ec2.StorageLocation{
-			Bucket: aws.String("String"),
-			Key:    aws.String("String"),
-		},
-		Name: aws.String("String"),
+// To create a NAT gateway
+//
+// This example creates a NAT gateway in subnet subnet-1a2b3c4d and associates an Elastic
+// IP address with the allocation ID eipalloc-37fc1a52 with the NAT gateway.
+func ExampleEC2_CreateNatGateway_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreateNatGatewayInput{
+		AllocationId: aws.String("eipalloc-37fc1a52"),
+		SubnetId:     aws.String("subnet-1a2b3c4d"),
 	}
-	resp, err := svc.CreateFpgaImage(params)
 
+	result, err := svc.CreateNatGateway(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_CreateImage() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateImageInput{
-		InstanceId: aws.String("String"), // Required
-		Name:       aws.String("String"), // Required
-		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
-			{ // Required
-				DeviceName: aws.String("String"),
-				Ebs: &ec2.EbsBlockDevice{
-					DeleteOnTermination: aws.Bool(true),
-					Encrypted:           aws.Bool(true),
-					Iops:                aws.Int64(1),
-					SnapshotId:          aws.String("String"),
-					VolumeSize:          aws.Int64(1),
-					VolumeType:          aws.String("VolumeType"),
-				},
-				NoDevice:    aws.String("String"),
-				VirtualName: aws.String("String"),
-			},
-			// More values...
-		},
-		Description: aws.String("String"),
-		DryRun:      aws.Bool(true),
-		NoReboot:    aws.Bool(true),
+// To create a network ACL
+//
+// This example creates a network ACL for the specified VPC.
+func ExampleEC2_CreateNetworkAcl_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreateNetworkAclInput{
+		VpcId: aws.String("vpc-a01106c2"),
 	}
-	resp, err := svc.CreateImage(params)
 
+	result, err := svc.CreateNetworkAcl(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_CreateInstanceExportTask() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateInstanceExportTaskInput{
-		InstanceId:  aws.String("String"), // Required
-		Description: aws.String("String"),
-		ExportToS3Task: &ec2.ExportToS3TaskSpecification{
-			ContainerFormat: aws.String("ContainerFormat"),
-			DiskImageFormat: aws.String("DiskImageFormat"),
-			S3Bucket:        aws.String("String"),
-			S3Prefix:        aws.String("String"),
-		},
-		TargetEnvironment: aws.String("ExportEnvironment"),
-	}
-	resp, err := svc.CreateInstanceExportTask(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateInternetGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateInternetGatewayInput{
-		DryRun: aws.Bool(true),
-	}
-	resp, err := svc.CreateInternetGateway(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateKeyPair() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateKeyPairInput{
-		KeyName: aws.String("String"), // Required
-		DryRun:  aws.Bool(true),
-	}
-	resp, err := svc.CreateKeyPair(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateNatGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateNatGatewayInput{
-		AllocationId: aws.String("String"), // Required
-		SubnetId:     aws.String("String"), // Required
-		ClientToken:  aws.String("String"),
-	}
-	resp, err := svc.CreateNatGateway(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateNetworkAcl() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateNetworkAclInput{
-		VpcId:  aws.String("String"), // Required
-		DryRun: aws.Bool(true),
-	}
-	resp, err := svc.CreateNetworkAcl(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateNetworkAclEntry() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateNetworkAclEntryInput{
-		Egress:       aws.Bool(true),           // Required
-		NetworkAclId: aws.String("String"),     // Required
-		Protocol:     aws.String("String"),     // Required
-		RuleAction:   aws.String("RuleAction"), // Required
-		RuleNumber:   aws.Int64(1),             // Required
-		CidrBlock:    aws.String("String"),
-		DryRun:       aws.Bool(true),
-		IcmpTypeCode: &ec2.IcmpTypeCode{
-			Code: aws.Int64(1),
-			Type: aws.Int64(1),
-		},
-		Ipv6CidrBlock: aws.String("String"),
+// To create a network ACL entry
+//
+// This example creates an entry for the specified network ACL. The rule allows ingress
+// traffic from anywhere (0.0.0.0/0) on UDP port 53 (DNS) into any associated subnet.
+func ExampleEC2_CreateNetworkAclEntry_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreateNetworkAclEntryInput{
+		CidrBlock:    aws.String("0.0.0.0/0"),
+		Egress:       aws.Bool(false),
+		NetworkAclId: aws.String("acl-5fb85d36"),
 		PortRange: &ec2.PortRange{
-			From: aws.Int64(1),
-			To:   aws.Int64(1),
+			From: aws.Int64(53),
+			To:   aws.Int64(53),
 		},
+		Protocol:   aws.String("udp"),
+		RuleAction: aws.String("allow"),
+		RuleNumber: aws.Int64(100),
 	}
-	resp, err := svc.CreateNetworkAclEntry(params)
 
+	result, err := svc.CreateNetworkAclEntry(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_CreateNetworkInterface() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateNetworkInterfaceInput{
-		SubnetId:    aws.String("String"), // Required
-		Description: aws.String("String"),
-		DryRun:      aws.Bool(true),
+// To create a network interface
+//
+// This example creates a network interface for the specified subnet.
+func ExampleEC2_CreateNetworkInterface_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreateNetworkInterfaceInput{
+		Description: aws.String("my network interface"),
 		Groups: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("sg-903004f8"),
 		},
-		Ipv6AddressCount: aws.Int64(1),
-		Ipv6Addresses: []*ec2.InstanceIpv6Address{
-			{ // Required
-				Ipv6Address: aws.String("String"),
-			},
-			// More values...
+		PrivateIpAddress: aws.String("10.0.2.17"),
+		SubnetId:         aws.String("subnet-9d4a7b6c"),
+	}
+
+	result, err := svc.CreateNetworkInterface(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create a placement group
+//
+// This example creates a placement group with the specified name.
+func ExampleEC2_CreatePlacementGroup_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreatePlacementGroupInput{
+		GroupName: aws.String("my-cluster"),
+		Strategy:  aws.String("cluster"),
+	}
+
+	result, err := svc.CreatePlacementGroup(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create a route
+//
+// This example creates a route for the specified route table. The route matches all
+// traffic (0.0.0.0/0) and routes it to the specified Internet gateway.
+func ExampleEC2_CreateRoute_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreateRouteInput{
+		DestinationCidrBlock: aws.String("0.0.0.0/0"),
+		GatewayId:            aws.String("igw-c0a643a9"),
+		RouteTableId:         aws.String("rtb-22574640"),
+	}
+
+	result, err := svc.CreateRoute(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create a route table
+//
+// This example creates a route table for the specified VPC.
+func ExampleEC2_CreateRouteTable_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreateRouteTableInput{
+		VpcId: aws.String("vpc-a01106c2"),
+	}
+
+	result, err := svc.CreateRouteTable(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create a snapshot
+//
+// This example creates a snapshot of the volume with a volume ID of ``vol-1234567890abcdef0``
+// and a short description to identify the snapshot.
+func ExampleEC2_CreateSnapshot_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreateSnapshotInput{
+		Description: aws.String("This is my root volume snapshot."),
+		VolumeId:    aws.String("vol-1234567890abcdef0"),
+	}
+
+	result, err := svc.CreateSnapshot(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create a Spot Instance datafeed
+//
+// This example creates a Spot Instance data feed for your AWS account.
+func ExampleEC2_CreateSpotDatafeedSubscription_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreateSpotDatafeedSubscriptionInput{
+		Bucket: aws.String("my-s3-bucket"),
+		Prefix: aws.String("spotdata"),
+	}
+
+	result, err := svc.CreateSpotDatafeedSubscription(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create a subnet
+//
+// This example creates a subnet in the specified VPC with the specified CIDR block.
+// We recommend that you let us select an Availability Zone for you.
+func ExampleEC2_CreateSubnet_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreateSubnetInput{
+		CidrBlock: aws.String("10.0.1.0/24"),
+		VpcId:     aws.String("vpc-a01106c2"),
+	}
+
+	result, err := svc.CreateSubnet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To add a tag to a resource
+//
+// This example adds the tag Stack=production to the specified image, or overwrites
+// an existing tag for the AMI where the tag key is Stack.
+func ExampleEC2_CreateTags_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreateTagsInput{
+		Resources: []*string{
+			aws.String("ami-78a54011"),
 		},
-		PrivateIpAddress: aws.String("String"),
-		PrivateIpAddresses: []*ec2.PrivateIpAddressSpecification{
-			{ // Required
-				PrivateIpAddress: aws.String("String"), // Required
-				Primary:          aws.Bool(true),
-			},
-			// More values...
-		},
-		SecondaryPrivateIpAddressCount: aws.Int64(1),
-	}
-	resp, err := svc.CreateNetworkInterface(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreatePlacementGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreatePlacementGroupInput{
-		GroupName: aws.String("String"),            // Required
-		Strategy:  aws.String("PlacementStrategy"), // Required
-		DryRun:    aws.Bool(true),
-	}
-	resp, err := svc.CreatePlacementGroup(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateReservedInstancesListing() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateReservedInstancesListingInput{
-		ClientToken:   aws.String("String"), // Required
-		InstanceCount: aws.Int64(1),         // Required
-		PriceSchedules: []*ec2.PriceScheduleSpecification{ // Required
-			{ // Required
-				CurrencyCode: aws.String("CurrencyCodeValues"),
-				Price:        aws.Float64(1.0),
-				Term:         aws.Int64(1),
-			},
-			// More values...
-		},
-		ReservedInstancesId: aws.String("String"), // Required
-	}
-	resp, err := svc.CreateReservedInstancesListing(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateRoute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateRouteInput{
-		RouteTableId:             aws.String("String"), // Required
-		DestinationCidrBlock:     aws.String("String"),
-		DestinationIpv6CidrBlock: aws.String("String"),
-		DryRun: aws.Bool(true),
-		EgressOnlyInternetGatewayId: aws.String("String"),
-		GatewayId:                   aws.String("String"),
-		InstanceId:                  aws.String("String"),
-		NatGatewayId:                aws.String("String"),
-		NetworkInterfaceId:          aws.String("String"),
-		VpcPeeringConnectionId:      aws.String("String"),
-	}
-	resp, err := svc.CreateRoute(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateRouteTable() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateRouteTableInput{
-		VpcId:  aws.String("String"), // Required
-		DryRun: aws.Bool(true),
-	}
-	resp, err := svc.CreateRouteTable(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateSecurityGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateSecurityGroupInput{
-		Description: aws.String("String"), // Required
-		GroupName:   aws.String("String"), // Required
-		DryRun:      aws.Bool(true),
-		VpcId:       aws.String("String"),
-	}
-	resp, err := svc.CreateSecurityGroup(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateSnapshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateSnapshotInput{
-		VolumeId:    aws.String("String"), // Required
-		Description: aws.String("String"),
-		DryRun:      aws.Bool(true),
-	}
-	resp, err := svc.CreateSnapshot(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateSpotDatafeedSubscription() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateSpotDatafeedSubscriptionInput{
-		Bucket: aws.String("String"), // Required
-		DryRun: aws.Bool(true),
-		Prefix: aws.String("String"),
-	}
-	resp, err := svc.CreateSpotDatafeedSubscription(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateSubnet() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateSubnetInput{
-		CidrBlock:        aws.String("String"), // Required
-		VpcId:            aws.String("String"), // Required
-		AvailabilityZone: aws.String("String"),
-		DryRun:           aws.Bool(true),
-		Ipv6CidrBlock:    aws.String("String"),
-	}
-	resp, err := svc.CreateSubnet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateTags() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateTagsInput{
-		Resources: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		Tags: []*ec2.Tag{ // Required
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
-		DryRun: aws.Bool(true),
-	}
-	resp, err := svc.CreateTags(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateVolume() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateVolumeInput{
-		AvailabilityZone: aws.String("String"), // Required
-		DryRun:           aws.Bool(true),
-		Encrypted:        aws.Bool(true),
-		Iops:             aws.Int64(1),
-		KmsKeyId:         aws.String("String"),
-		Size:             aws.Int64(1),
-		SnapshotId:       aws.String("String"),
-		TagSpecifications: []*ec2.TagSpecification{
-			{ // Required
-				ResourceType: aws.String("ResourceType"),
-				Tags: []*ec2.Tag{
-					{ // Required
-						Key:   aws.String("String"),
-						Value: aws.String("String"),
-					},
-					// More values...
-				},
-			},
-			// More values...
-		},
-		VolumeType: aws.String("VolumeType"),
-	}
-	resp, err := svc.CreateVolume(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateVpc() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateVpcInput{
-		CidrBlock:                   aws.String("String"), // Required
-		AmazonProvidedIpv6CidrBlock: aws.Bool(true),
-		DryRun:          aws.Bool(true),
-		InstanceTenancy: aws.String("Tenancy"),
-	}
-	resp, err := svc.CreateVpc(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateVpcEndpoint() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateVpcEndpointInput{
-		ServiceName:    aws.String("String"), // Required
-		VpcId:          aws.String("String"), // Required
-		ClientToken:    aws.String("String"),
-		DryRun:         aws.Bool(true),
-		PolicyDocument: aws.String("String"),
-		RouteTableIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.CreateVpcEndpoint(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateVpcPeeringConnection() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateVpcPeeringConnectionInput{
-		DryRun:      aws.Bool(true),
-		PeerOwnerId: aws.String("String"),
-		PeerVpcId:   aws.String("String"),
-		VpcId:       aws.String("String"),
-	}
-	resp, err := svc.CreateVpcPeeringConnection(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateVpnConnection() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateVpnConnectionInput{
-		CustomerGatewayId: aws.String("String"), // Required
-		Type:              aws.String("String"), // Required
-		VpnGatewayId:      aws.String("String"), // Required
-		DryRun:            aws.Bool(true),
-		Options: &ec2.VpnConnectionOptionsSpecification{
-			StaticRoutesOnly: aws.Bool(true),
-		},
-	}
-	resp, err := svc.CreateVpnConnection(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateVpnConnectionRoute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateVpnConnectionRouteInput{
-		DestinationCidrBlock: aws.String("String"), // Required
-		VpnConnectionId:      aws.String("String"), // Required
-	}
-	resp, err := svc.CreateVpnConnectionRoute(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_CreateVpnGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.CreateVpnGatewayInput{
-		Type:             aws.String("GatewayType"), // Required
-		AvailabilityZone: aws.String("String"),
-		DryRun:           aws.Bool(true),
-	}
-	resp, err := svc.CreateVpnGateway(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteCustomerGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteCustomerGatewayInput{
-		CustomerGatewayId: aws.String("String"), // Required
-		DryRun:            aws.Bool(true),
-	}
-	resp, err := svc.DeleteCustomerGateway(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteDhcpOptions() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteDhcpOptionsInput{
-		DhcpOptionsId: aws.String("String"), // Required
-		DryRun:        aws.Bool(true),
-	}
-	resp, err := svc.DeleteDhcpOptions(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteEgressOnlyInternetGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteEgressOnlyInternetGatewayInput{
-		EgressOnlyInternetGatewayId: aws.String("EgressOnlyInternetGatewayId"), // Required
-		DryRun: aws.Bool(true),
-	}
-	resp, err := svc.DeleteEgressOnlyInternetGateway(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteFlowLogs() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteFlowLogsInput{
-		FlowLogIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DeleteFlowLogs(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteInternetGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteInternetGatewayInput{
-		InternetGatewayId: aws.String("String"), // Required
-		DryRun:            aws.Bool(true),
-	}
-	resp, err := svc.DeleteInternetGateway(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteKeyPair() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteKeyPairInput{
-		KeyName: aws.String("String"), // Required
-		DryRun:  aws.Bool(true),
-	}
-	resp, err := svc.DeleteKeyPair(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteNatGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteNatGatewayInput{
-		NatGatewayId: aws.String("String"), // Required
-	}
-	resp, err := svc.DeleteNatGateway(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteNetworkAcl() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteNetworkAclInput{
-		NetworkAclId: aws.String("String"), // Required
-		DryRun:       aws.Bool(true),
-	}
-	resp, err := svc.DeleteNetworkAcl(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteNetworkAclEntry() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteNetworkAclEntryInput{
-		Egress:       aws.Bool(true),       // Required
-		NetworkAclId: aws.String("String"), // Required
-		RuleNumber:   aws.Int64(1),         // Required
-		DryRun:       aws.Bool(true),
-	}
-	resp, err := svc.DeleteNetworkAclEntry(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteNetworkInterface() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteNetworkInterfaceInput{
-		NetworkInterfaceId: aws.String("String"), // Required
-		DryRun:             aws.Bool(true),
-	}
-	resp, err := svc.DeleteNetworkInterface(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeletePlacementGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeletePlacementGroupInput{
-		GroupName: aws.String("String"), // Required
-		DryRun:    aws.Bool(true),
-	}
-	resp, err := svc.DeletePlacementGroup(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteRoute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteRouteInput{
-		RouteTableId:             aws.String("String"), // Required
-		DestinationCidrBlock:     aws.String("String"),
-		DestinationIpv6CidrBlock: aws.String("String"),
-		DryRun: aws.Bool(true),
-	}
-	resp, err := svc.DeleteRoute(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteRouteTable() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteRouteTableInput{
-		RouteTableId: aws.String("String"), // Required
-		DryRun:       aws.Bool(true),
-	}
-	resp, err := svc.DeleteRouteTable(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteSecurityGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteSecurityGroupInput{
-		DryRun:    aws.Bool(true),
-		GroupId:   aws.String("String"),
-		GroupName: aws.String("String"),
-	}
-	resp, err := svc.DeleteSecurityGroup(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteSnapshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteSnapshotInput{
-		SnapshotId: aws.String("String"), // Required
-		DryRun:     aws.Bool(true),
-	}
-	resp, err := svc.DeleteSnapshot(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteSpotDatafeedSubscription() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteSpotDatafeedSubscriptionInput{
-		DryRun: aws.Bool(true),
-	}
-	resp, err := svc.DeleteSpotDatafeedSubscription(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteSubnet() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteSubnetInput{
-		SubnetId: aws.String("String"), // Required
-		DryRun:   aws.Bool(true),
-	}
-	resp, err := svc.DeleteSubnet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteTags() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteTagsInput{
-		Resources: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		DryRun: aws.Bool(true),
 		Tags: []*ec2.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
+			{
+				Key:   aws.String("Stack"),
+				Value: aws.String("production"),
 			},
-			// More values...
 		},
 	}
-	resp, err := svc.DeleteTags(params)
 
+	result, err := svc.CreateTags(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DeleteVolume() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteVolumeInput{
-		VolumeId: aws.String("String"), // Required
-		DryRun:   aws.Bool(true),
+// To create a new volume
+//
+// This example creates an 80 GiB General Purpose (SSD) volume in the Availability Zone
+// ``us-east-1a``.
+func ExampleEC2_CreateVolume_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreateVolumeInput{
+		AvailabilityZone: aws.String("us-east-1a"),
+		Size:             aws.Int64(80),
+		VolumeType:       aws.String("gp2"),
 	}
-	resp, err := svc.DeleteVolume(params)
 
+	result, err := svc.CreateVolume(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DeleteVpc() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteVpcInput{
-		VpcId:  aws.String("String"), // Required
-		DryRun: aws.Bool(true),
+// To create a new Provisioned IOPS (SSD) volume from a snapshot
+//
+// This example creates a new Provisioned IOPS (SSD) volume with 1000 provisioned IOPS
+// from a snapshot in the Availability Zone ``us-east-1a``.
+func ExampleEC2_CreateVolume_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreateVolumeInput{
+		AvailabilityZone: aws.String("us-east-1a"),
+		Iops:             aws.Int64(1000),
+		SnapshotId:       aws.String("snap-066877671789bd71b"),
+		VolumeType:       aws.String("io1"),
 	}
-	resp, err := svc.DeleteVpc(params)
 
+	result, err := svc.CreateVolume(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DeleteVpcEndpoints() {
-	sess := session.Must(session.NewSession())
+// To create a VPC
+//
+// This example creates a VPC with the specified CIDR block.
+func ExampleEC2_CreateVpc_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.CreateVpcInput{
+		CidrBlock: aws.String("10.0.0.0/16"),
+	}
 
-	svc := ec2.New(sess)
+	result, err := svc.CreateVpc(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &ec2.DeleteVpcEndpointsInput{
-		VpcEndpointIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
+	fmt.Println(result)
+}
+
+// To delete a customer gateway
+//
+// This example deletes the specified customer gateway.
+func ExampleEC2_DeleteCustomerGateway_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DeleteCustomerGatewayInput{
+		CustomerGatewayId: aws.String("cgw-0e11f167"),
+	}
+
+	result, err := svc.DeleteCustomerGateway(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a DHCP options set
+//
+// This example deletes the specified DHCP options set.
+func ExampleEC2_DeleteDhcpOptions_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DeleteDhcpOptionsInput{
+		DhcpOptionsId: aws.String("dopt-d9070ebb"),
+	}
+
+	result, err := svc.DeleteDhcpOptions(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete an Internet gateway
+//
+// This example deletes the specified Internet gateway.
+func ExampleEC2_DeleteInternetGateway_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DeleteInternetGatewayInput{
+		InternetGatewayId: aws.String("igw-c0a643a9"),
+	}
+
+	result, err := svc.DeleteInternetGateway(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a key pair
+//
+// This example deletes the specified key pair.
+func ExampleEC2_DeleteKeyPair_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DeleteKeyPairInput{
+		KeyName: aws.String("my-key-pair"),
+	}
+
+	result, err := svc.DeleteKeyPair(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a NAT gateway
+//
+// This example deletes the specified NAT gateway.
+func ExampleEC2_DeleteNatGateway_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DeleteNatGatewayInput{
+		NatGatewayId: aws.String("nat-04ae55e711cec5680"),
+	}
+
+	result, err := svc.DeleteNatGateway(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a network ACL
+//
+// This example deletes the specified network ACL.
+func ExampleEC2_DeleteNetworkAcl_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DeleteNetworkAclInput{
+		NetworkAclId: aws.String("acl-5fb85d36"),
+	}
+
+	result, err := svc.DeleteNetworkAcl(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a network ACL entry
+//
+// This example deletes ingress rule number 100 from the specified network ACL.
+func ExampleEC2_DeleteNetworkAclEntry_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DeleteNetworkAclEntryInput{
+		Egress:       aws.Bool(true),
+		NetworkAclId: aws.String("acl-5fb85d36"),
+		RuleNumber:   aws.Int64(100),
+	}
+
+	result, err := svc.DeleteNetworkAclEntry(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a network interface
+//
+// This example deletes the specified network interface.
+func ExampleEC2_DeleteNetworkInterface_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DeleteNetworkInterfaceInput{
+		NetworkInterfaceId: aws.String("eni-e5aa89a3"),
+	}
+
+	result, err := svc.DeleteNetworkInterface(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a placement group
+//
+// This example deletes the specified placement group.
+//
+func ExampleEC2_DeletePlacementGroup_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DeletePlacementGroupInput{
+		GroupName: aws.String("my-cluster"),
+	}
+
+	result, err := svc.DeletePlacementGroup(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a route
+//
+// This example deletes the specified route from the specified route table.
+func ExampleEC2_DeleteRoute_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DeleteRouteInput{
+		DestinationCidrBlock: aws.String("0.0.0.0/0"),
+		RouteTableId:         aws.String("rtb-22574640"),
+	}
+
+	result, err := svc.DeleteRoute(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a route table
+//
+// This example deletes the specified route table.
+func ExampleEC2_DeleteRouteTable_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DeleteRouteTableInput{
+		RouteTableId: aws.String("rtb-22574640"),
+	}
+
+	result, err := svc.DeleteRouteTable(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a snapshot
+//
+// This example deletes a snapshot with the snapshot ID of ``snap-1234567890abcdef0``.
+// If the command succeeds, no output is returned.
+func ExampleEC2_DeleteSnapshot_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DeleteSnapshotInput{
+		SnapshotId: aws.String("snap-1234567890abcdef0"),
+	}
+
+	result, err := svc.DeleteSnapshot(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To cancel a Spot Instance data feed subscription
+//
+// This example deletes a Spot data feed subscription for the account.
+func ExampleEC2_DeleteSpotDatafeedSubscription_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DeleteSpotDatafeedSubscriptionInput{}
+
+	result, err := svc.DeleteSpotDatafeedSubscription(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a subnet
+//
+// This example deletes the specified subnet.
+func ExampleEC2_DeleteSubnet_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DeleteSubnetInput{
+		SubnetId: aws.String("subnet-9d4a7b6c"),
+	}
+
+	result, err := svc.DeleteSubnet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a tag from a resource
+//
+// This example deletes the tag Stack=test from the specified image.
+func ExampleEC2_DeleteTags_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DeleteTagsInput{
+		Resources: []*string{
+			aws.String("ami-78a54011"),
 		},
-		DryRun: aws.Bool(true),
+		Tags: []*ec2.Tag{
+			{
+				Key:   aws.String("Stack"),
+				Value: aws.String("test"),
+			},
+		},
 	}
-	resp, err := svc.DeleteVpcEndpoints(params)
 
+	result, err := svc.DeleteTags(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DeleteVpcPeeringConnection() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteVpcPeeringConnectionInput{
-		VpcPeeringConnectionId: aws.String("String"), // Required
-		DryRun:                 aws.Bool(true),
+// To delete a volume
+//
+// This example deletes an available volume with the volume ID of ``vol-049df61146c4d7901``.
+// If the command succeeds, no output is returned.
+func ExampleEC2_DeleteVolume_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DeleteVolumeInput{
+		VolumeId: aws.String("vol-049df61146c4d7901"),
 	}
-	resp, err := svc.DeleteVpcPeeringConnection(params)
 
+	result, err := svc.DeleteVolume(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DeleteVpnConnection() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteVpnConnectionInput{
-		VpnConnectionId: aws.String("String"), // Required
-		DryRun:          aws.Bool(true),
+// To delete a VPC
+//
+// This example deletes the specified VPC.
+func ExampleEC2_DeleteVpc_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DeleteVpcInput{
+		VpcId: aws.String("vpc-a01106c2"),
 	}
-	resp, err := svc.DeleteVpnConnection(params)
 
+	result, err := svc.DeleteVpc(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DeleteVpnConnectionRoute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteVpnConnectionRouteInput{
-		DestinationCidrBlock: aws.String("String"), // Required
-		VpnConnectionId:      aws.String("String"), // Required
-	}
-	resp, err := svc.DeleteVpnConnectionRoute(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeleteVpnGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeleteVpnGatewayInput{
-		VpnGatewayId: aws.String("String"), // Required
-		DryRun:       aws.Bool(true),
-	}
-	resp, err := svc.DeleteVpnGateway(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DeregisterImage() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DeregisterImageInput{
-		ImageId: aws.String("String"), // Required
-		DryRun:  aws.Bool(true),
-	}
-	resp, err := svc.DeregisterImage(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeAccountAttributes() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeAccountAttributesInput{
+// To describe a single attribute for your AWS account
+//
+// This example describes the supported-platforms attribute for your AWS account.
+func ExampleEC2_DescribeAccountAttributes_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeAccountAttributesInput{
 		AttributeNames: []*string{
-			aws.String("AccountAttributeName"), // Required
-			// More values...
+			aws.String("supported-platforms"),
 		},
-		DryRun: aws.Bool(true),
 	}
-	resp, err := svc.DescribeAccountAttributes(params)
 
+	result, err := svc.DescribeAccountAttributes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeAddresses() {
-	sess := session.Must(session.NewSession())
+// To describe all attributes for your AWS account
+//
+// This example describes the attributes for your AWS account.
+func ExampleEC2_DescribeAccountAttributes_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeAccountAttributesInput{}
 
-	svc := ec2.New(sess)
+	result, err := svc.DescribeAccountAttributes(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &ec2.DescribeAddressesInput{
-		AllocationIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		DryRun: aws.Bool(true),
+	fmt.Println(result)
+}
+
+// To describe your Elastic IP addresses
+//
+// This example describes your Elastic IP addresses.
+func ExampleEC2_DescribeAddresses_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeAddressesInput{}
+
+	result, err := svc.DescribeAddresses(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe your Elastic IP addresses for EC2-VPC
+//
+// This example describes your Elastic IP addresses for use with instances in a VPC.
+func ExampleEC2_DescribeAddresses_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeAddressesInput{
 		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
+			{
+				Name: aws.String("domain"),
 				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
+					aws.String("vpc"),
 				},
 			},
-			// More values...
-		},
-		PublicIps: []*string{
-			aws.String("String"), // Required
-			// More values...
 		},
 	}
-	resp, err := svc.DescribeAddresses(params)
 
+	result, err := svc.DescribeAddresses(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeAvailabilityZones() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeAvailabilityZonesInput{
-		DryRun: aws.Bool(true),
+// To describe your Elastic IP addresses for EC2-Classic
+//
+// This example describes your Elastic IP addresses for use with instances in EC2-Classic.
+func ExampleEC2_DescribeAddresses_shared02() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeAddressesInput{
 		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
+			{
+				Name: aws.String("domain"),
 				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
+					aws.String("standard"),
 				},
 			},
-			// More values...
-		},
-		ZoneNames: []*string{
-			aws.String("String"), // Required
-			// More values...
 		},
 	}
-	resp, err := svc.DescribeAvailabilityZones(params)
 
+	result, err := svc.DescribeAddresses(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeBundleTasks() {
-	sess := session.Must(session.NewSession())
+// To describe your Availability Zones
+//
+// This example describes the Availability Zones that are available to you. The response
+// includes Availability Zones only for the current region.
+func ExampleEC2_DescribeAvailabilityZones_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeAvailabilityZonesInput{}
 
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeBundleTasksInput{
-		BundleIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeBundleTasks(params)
-
+	result, err := svc.DescribeAvailabilityZones(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeClassicLinkInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeClassicLinkInstancesInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		InstanceIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-	}
-	resp, err := svc.DescribeClassicLinkInstances(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeConversionTasks() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeConversionTasksInput{
-		ConversionTaskIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		DryRun: aws.Bool(true),
-	}
-	resp, err := svc.DescribeConversionTasks(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeCustomerGateways() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeCustomerGatewaysInput{
+// To describe a customer gateway
+//
+// This example describes the specified customer gateway.
+func ExampleEC2_DescribeCustomerGateways_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeCustomerGatewaysInput{
 		CustomerGatewayIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
+			aws.String("cgw-0e11f167"),
 		},
 	}
-	resp, err := svc.DescribeCustomerGateways(params)
 
+	result, err := svc.DescribeCustomerGateways(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeDhcpOptions() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeDhcpOptionsInput{
+// To describe a DHCP options set
+//
+// This example describes the specified DHCP options set.
+func ExampleEC2_DescribeDhcpOptions_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeDhcpOptionsInput{
 		DhcpOptionsIds: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("dopt-d9070ebb"),
 		},
-		DryRun: aws.Bool(true),
+	}
+
+	result, err := svc.DescribeDhcpOptions(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe the instance type
+//
+// This example describes the instance type of the specified instance.
+//
+func ExampleEC2_DescribeInstanceAttribute_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeInstanceAttributeInput{
+		Attribute:  aws.String("instanceType"),
+		InstanceId: aws.String("i-1234567890abcdef0"),
+	}
+
+	result, err := svc.DescribeInstanceAttribute(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe the disableApiTermination attribute
+//
+// This example describes the ``disableApiTermination`` attribute of the specified instance.
+//
+func ExampleEC2_DescribeInstanceAttribute_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeInstanceAttributeInput{
+		Attribute:  aws.String("disableApiTermination"),
+		InstanceId: aws.String("i-1234567890abcdef0"),
+	}
+
+	result, err := svc.DescribeInstanceAttribute(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe the block device mapping for an instance
+//
+// This example describes the ``blockDeviceMapping`` attribute of the specified instance.
+//
+func ExampleEC2_DescribeInstanceAttribute_shared02() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeInstanceAttributeInput{
+		Attribute:  aws.String("blockDeviceMapping"),
+		InstanceId: aws.String("i-1234567890abcdef0"),
+	}
+
+	result, err := svc.DescribeInstanceAttribute(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe the Internet gateway for a VPC
+//
+// This example describes the Internet gateway for the specified VPC.
+func ExampleEC2_DescribeInternetGateways_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeInternetGatewaysInput{
 		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
+			{
+				Name: aws.String("attachment.vpc-id"),
 				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
+					aws.String("vpc-a01106c2"),
 				},
 			},
-			// More values...
 		},
 	}
-	resp, err := svc.DescribeDhcpOptions(params)
 
+	result, err := svc.DescribeInternetGateways(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeEgressOnlyInternetGateways() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeEgressOnlyInternetGatewaysInput{
-		DryRun: aws.Bool(true),
-		EgressOnlyInternetGatewayIds: []*string{
-			aws.String("EgressOnlyInternetGatewayId"), // Required
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-	}
-	resp, err := svc.DescribeEgressOnlyInternetGateways(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeExportTasks() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeExportTasksInput{
-		ExportTaskIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeExportTasks(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeFlowLogs() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeFlowLogsInput{
-		Filter: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		FlowLogIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-	}
-	resp, err := svc.DescribeFlowLogs(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeHostReservationOfferings() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeHostReservationOfferingsInput{
-		Filter: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		MaxDuration: aws.Int64(1),
-		MaxResults:  aws.Int64(1),
-		MinDuration: aws.Int64(1),
-		NextToken:   aws.String("String"),
-		OfferingId:  aws.String("String"),
-	}
-	resp, err := svc.DescribeHostReservationOfferings(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeHostReservations() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeHostReservationsInput{
-		Filter: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		HostReservationIdSet: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-	}
-	resp, err := svc.DescribeHostReservations(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeHosts() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeHostsInput{
-		Filter: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		HostIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-	}
-	resp, err := svc.DescribeHosts(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeIamInstanceProfileAssociations() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeIamInstanceProfileAssociationsInput{
-		AssociationIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
-	}
-	resp, err := svc.DescribeIamInstanceProfileAssociations(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeIdFormat() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeIdFormatInput{
-		Resource: aws.String("String"),
-	}
-	resp, err := svc.DescribeIdFormat(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeIdentityIdFormat() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeIdentityIdFormatInput{
-		PrincipalArn: aws.String("String"), // Required
-		Resource:     aws.String("String"),
-	}
-	resp, err := svc.DescribeIdentityIdFormat(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeImageAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeImageAttributeInput{
-		Attribute: aws.String("ImageAttributeName"), // Required
-		ImageId:   aws.String("String"),             // Required
-		DryRun:    aws.Bool(true),
-	}
-	resp, err := svc.DescribeImageAttribute(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeImages() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeImagesInput{
-		DryRun: aws.Bool(true),
-		ExecutableUsers: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		ImageIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		Owners: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeImages(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeImportImageTasks() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeImportImageTasksInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		ImportTaskIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-	}
-	resp, err := svc.DescribeImportImageTasks(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeImportSnapshotTasks() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeImportSnapshotTasksInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		ImportTaskIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-	}
-	resp, err := svc.DescribeImportSnapshotTasks(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeInstanceAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeInstanceAttributeInput{
-		Attribute:  aws.String("InstanceAttributeName"), // Required
-		InstanceId: aws.String("String"),                // Required
-		DryRun:     aws.Bool(true),
-	}
-	resp, err := svc.DescribeInstanceAttribute(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeInstanceStatus() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeInstanceStatusInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		IncludeAllInstances: aws.Bool(true),
-		InstanceIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-	}
-	resp, err := svc.DescribeInstanceStatus(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeInstancesInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		InstanceIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-	}
-	resp, err := svc.DescribeInstances(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeInternetGateways() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeInternetGatewaysInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		InternetGatewayIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeInternetGateways(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeKeyPairs() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeKeyPairsInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
+// To display a key pair
+//
+// This example displays the fingerprint for the specified key.
+func ExampleEC2_DescribeKeyPairs_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeKeyPairsInput{
 		KeyNames: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("my-key-pair"),
 		},
 	}
-	resp, err := svc.DescribeKeyPairs(params)
 
+	result, err := svc.DescribeKeyPairs(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeMovingAddresses() {
-	sess := session.Must(session.NewSession())
+// To describe your moving addresses
+//
+// This example describes all of your moving Elastic IP addresses.
+func ExampleEC2_DescribeMovingAddresses_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeMovingAddressesInput{}
 
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeMovingAddressesInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-		PublicIps: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeMovingAddresses(params)
-
+	result, err := svc.DescribeMovingAddresses(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeNatGateways() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeNatGatewaysInput{
+// To describe a NAT gateway
+//
+// This example describes the NAT gateway for the specified VPC.
+func ExampleEC2_DescribeNatGateways_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeNatGatewaysInput{
 		Filter: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
+			{
+				Name: aws.String("vpc-id"),
 				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
+					aws.String("vpc-1a2b3c4d"),
 				},
 			},
-			// More values...
 		},
-		MaxResults: aws.Int64(1),
-		NatGatewayIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		NextToken: aws.String("String"),
 	}
-	resp, err := svc.DescribeNatGateways(params)
 
+	result, err := svc.DescribeNatGateways(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeNetworkAcls() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeNetworkAclsInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
+// To describe a network ACL
+//
+// This example describes the specified network ACL.
+func ExampleEC2_DescribeNetworkAcls_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeNetworkAclsInput{
 		NetworkAclIds: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("acl-5fb85d36"),
 		},
 	}
-	resp, err := svc.DescribeNetworkAcls(params)
 
+	result, err := svc.DescribeNetworkAcls(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeNetworkInterfaceAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeNetworkInterfaceAttributeInput{
-		NetworkInterfaceId: aws.String("String"), // Required
-		Attribute:          aws.String("NetworkInterfaceAttribute"),
-		DryRun:             aws.Bool(true),
+// To describe the attachment attribute of a network interface
+//
+// This example describes the attachment attribute of the specified network interface.
+func ExampleEC2_DescribeNetworkInterfaceAttribute_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeNetworkInterfaceAttributeInput{
+		Attribute:          aws.String("attachment"),
+		NetworkInterfaceId: aws.String("eni-686ea200"),
 	}
-	resp, err := svc.DescribeNetworkInterfaceAttribute(params)
 
+	result, err := svc.DescribeNetworkInterfaceAttribute(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeNetworkInterfaces() {
-	sess := session.Must(session.NewSession())
+// To describe the description attribute of a network interface
+//
+// This example describes the description attribute of the specified network interface.
+func ExampleEC2_DescribeNetworkInterfaceAttribute_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeNetworkInterfaceAttributeInput{
+		Attribute:          aws.String("description"),
+		NetworkInterfaceId: aws.String("eni-686ea200"),
+	}
 
-	svc := ec2.New(sess)
+	result, err := svc.DescribeNetworkInterfaceAttribute(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &ec2.DescribeNetworkInterfacesInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
+	fmt.Println(result)
+}
+
+// To describe the groupSet attribute of a network interface
+//
+// This example describes the groupSet attribute of the specified network interface.
+func ExampleEC2_DescribeNetworkInterfaceAttribute_shared02() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeNetworkInterfaceAttributeInput{
+		Attribute:          aws.String("groupSet"),
+		NetworkInterfaceId: aws.String("eni-686ea200"),
+	}
+
+	result, err := svc.DescribeNetworkInterfaceAttribute(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe the sourceDestCheck attribute of a network interface
+//
+// This example describes the sourceDestCheck attribute of the specified network interface.
+func ExampleEC2_DescribeNetworkInterfaceAttribute_shared03() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeNetworkInterfaceAttributeInput{
+		Attribute:          aws.String("sourceDestCheck"),
+		NetworkInterfaceId: aws.String("eni-686ea200"),
+	}
+
+	result, err := svc.DescribeNetworkInterfaceAttribute(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe a network interface
+//
+
+func ExampleEC2_DescribeNetworkInterfaces_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeNetworkInterfacesInput{
 		NetworkInterfaceIds: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("eni-e5aa89a3"),
 		},
 	}
-	resp, err := svc.DescribeNetworkInterfaces(params)
 
+	result, err := svc.DescribeNetworkInterfaces(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribePlacementGroups() {
-	sess := session.Must(session.NewSession())
+// To describe your regions
+//
+// This example describes all the regions that are available to you.
+func ExampleEC2_DescribeRegions_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeRegionsInput{}
 
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribePlacementGroupsInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		GroupNames: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribePlacementGroups(params)
-
+	result, err := svc.DescribeRegions(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribePrefixLists() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribePrefixListsInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-		PrefixListIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribePrefixLists(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeRegions() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeRegionsInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		RegionNames: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeRegions(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeReservedInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeReservedInstancesInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		OfferingClass: aws.String("OfferingClassType"),
-		OfferingType:  aws.String("OfferingTypeValues"),
-		ReservedInstancesIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeReservedInstances(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeReservedInstancesListings() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeReservedInstancesListingsInput{
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		ReservedInstancesId:        aws.String("String"),
-		ReservedInstancesListingId: aws.String("String"),
-	}
-	resp, err := svc.DescribeReservedInstancesListings(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeReservedInstancesModifications() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeReservedInstancesModificationsInput{
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		NextToken: aws.String("String"),
-		ReservedInstancesModificationIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeReservedInstancesModifications(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeReservedInstancesOfferings() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeReservedInstancesOfferingsInput{
-		AvailabilityZone: aws.String("String"),
-		DryRun:           aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		IncludeMarketplace: aws.Bool(true),
-		InstanceTenancy:    aws.String("Tenancy"),
-		InstanceType:       aws.String("InstanceType"),
-		MaxDuration:        aws.Int64(1),
-		MaxInstanceCount:   aws.Int64(1),
-		MaxResults:         aws.Int64(1),
-		MinDuration:        aws.Int64(1),
-		NextToken:          aws.String("String"),
-		OfferingClass:      aws.String("OfferingClassType"),
-		OfferingType:       aws.String("OfferingTypeValues"),
-		ProductDescription: aws.String("RIProductDescription"),
-		ReservedInstancesOfferingIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeReservedInstancesOfferings(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeRouteTables() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeRouteTablesInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
+// To describe a route table
+//
+// This example describes the specified route table.
+func ExampleEC2_DescribeRouteTables_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeRouteTablesInput{
 		RouteTableIds: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("rtb-1f382e7d"),
 		},
 	}
-	resp, err := svc.DescribeRouteTables(params)
 
+	result, err := svc.DescribeRouteTables(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeScheduledInstanceAvailability() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeScheduledInstanceAvailabilityInput{
-		FirstSlotStartTimeRange: &ec2.SlotDateTimeRangeRequest{ // Required
-			EarliestTime: aws.Time(time.Now()), // Required
-			LatestTime:   aws.Time(time.Now()), // Required
+// To describe an available schedule
+//
+// This example describes a schedule that occurs every week on Sunday, starting on the
+// specified date. Note that the output contains a single schedule as an example.
+func ExampleEC2_DescribeScheduledInstanceAvailability_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeScheduledInstanceAvailabilityInput{
+		FirstSlotStartTimeRange: &ec2.SlotDateTimeRangeRequest{
+			EarliestTime: parseTime("2006-01-02T15:04:05Z", "2016-01-31T00:00:00Z"),
+			LatestTime:   parseTime("2006-01-02T15:04:05Z", "2016-01-31T04:00:00Z"),
 		},
-		Recurrence: &ec2.ScheduledInstanceRecurrenceRequest{ // Required
-			Frequency: aws.String("String"),
+		Recurrence: &ec2.ScheduledInstanceRecurrenceRequest{
+			Frequency: aws.String("Weekly"),
 			Interval:  aws.Int64(1),
 			OccurrenceDays: []*int64{
-				aws.Int64(1), // Required
-				// More values...
+				aws.Int64(1),
 			},
-			OccurrenceRelativeToEnd: aws.Bool(true),
-			OccurrenceUnit:          aws.String("String"),
 		},
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		MaxResults:             aws.Int64(1),
-		MaxSlotDurationInHours: aws.Int64(1),
-		MinSlotDurationInHours: aws.Int64(1),
-		NextToken:              aws.String("String"),
 	}
-	resp, err := svc.DescribeScheduledInstanceAvailability(params)
 
+	result, err := svc.DescribeScheduledInstanceAvailability(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeScheduledInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeScheduledInstancesInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
+// To describe your Scheduled Instances
+//
+// This example describes the specified Scheduled Instance.
+func ExampleEC2_DescribeScheduledInstances_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeScheduledInstancesInput{
 		ScheduledInstanceIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		SlotStartTimeRange: &ec2.SlotStartTimeRangeRequest{
-			EarliestTime: aws.Time(time.Now()),
-			LatestTime:   aws.Time(time.Now()),
+			aws.String("sci-1234-1234-1234-1234-123456789012"),
 		},
 	}
-	resp, err := svc.DescribeScheduledInstances(params)
 
+	result, err := svc.DescribeScheduledInstances(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeSecurityGroupReferences() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeSecurityGroupReferencesInput{
-		GroupId: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		DryRun: aws.Bool(true),
+// To describe snapshot attributes
+//
+// This example describes the ``createVolumePermission`` attribute on a snapshot with
+// the snapshot ID of ``snap-066877671789bd71b``.
+func ExampleEC2_DescribeSnapshotAttribute_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeSnapshotAttributeInput{
+		Attribute:  aws.String("createVolumePermission"),
+		SnapshotId: aws.String("snap-066877671789bd71b"),
 	}
-	resp, err := svc.DescribeSecurityGroupReferences(params)
 
+	result, err := svc.DescribeSnapshotAttribute(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeSecurityGroups() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeSecurityGroupsInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		GroupIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		GroupNames: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeSecurityGroups(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeSnapshotAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeSnapshotAttributeInput{
-		Attribute:  aws.String("SnapshotAttributeName"), // Required
-		SnapshotId: aws.String("String"),                // Required
-		DryRun:     aws.Bool(true),
-	}
-	resp, err := svc.DescribeSnapshotAttribute(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeSnapshots() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeSnapshotsInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-		OwnerIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		RestorableByUserIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
+// To describe a snapshot
+//
+// This example describes a snapshot with the snapshot ID of ``snap-1234567890abcdef0``.
+func ExampleEC2_DescribeSnapshots_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeSnapshotsInput{
 		SnapshotIds: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("snap-1234567890abcdef0"),
 		},
 	}
-	resp, err := svc.DescribeSnapshots(params)
 
+	result, err := svc.DescribeSnapshots(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeSpotDatafeedSubscription() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeSpotDatafeedSubscriptionInput{
-		DryRun: aws.Bool(true),
+// To describe snapshots using filters
+//
+// This example describes all snapshots owned by the ID 012345678910 that are in the
+// ``pending`` status.
+func ExampleEC2_DescribeSnapshots_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeSnapshotsInput{
+		Filters: []*ec2.Filter{
+			{
+				Name: aws.String("status"),
+				Values: []*string{
+					aws.String("pending"),
+				},
+			},
+		},
+		OwnerIds: []*string{
+			aws.String("012345678910"),
+		},
 	}
-	resp, err := svc.DescribeSpotDatafeedSubscription(params)
 
+	result, err := svc.DescribeSnapshots(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeSpotFleetInstances() {
-	sess := session.Must(session.NewSession())
+// To describe the datafeed for your AWS account
+//
+// This example describes the Spot Instance datafeed subscription for your AWS account.
+func ExampleEC2_DescribeSpotDatafeedSubscription_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeSpotDatafeedSubscriptionInput{}
 
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeSpotFleetInstancesInput{
-		SpotFleetRequestId: aws.String("String"), // Required
-		DryRun:             aws.Bool(true),
-		MaxResults:         aws.Int64(1),
-		NextToken:          aws.String("String"),
-	}
-	resp, err := svc.DescribeSpotFleetInstances(params)
-
+	result, err := svc.DescribeSpotDatafeedSubscription(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeSpotFleetRequestHistory() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeSpotFleetRequestHistoryInput{
-		SpotFleetRequestId: aws.String("String"), // Required
-		StartTime:          aws.Time(time.Now()), // Required
-		DryRun:             aws.Bool(true),
-		EventType:          aws.String("EventType"),
-		MaxResults:         aws.Int64(1),
-		NextToken:          aws.String("String"),
+// To describe the Spot Instances associated with a Spot fleet
+//
+// This example lists the Spot Instances associated with the specified Spot fleet.
+func ExampleEC2_DescribeSpotFleetInstances_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeSpotFleetInstancesInput{
+		SpotFleetRequestId: aws.String("sfr-73fbd2ce-aa30-494c-8788-1cee4EXAMPLE"),
 	}
-	resp, err := svc.DescribeSpotFleetRequestHistory(params)
 
+	result, err := svc.DescribeSpotFleetInstances(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeSpotFleetRequests() {
-	sess := session.Must(session.NewSession())
+// To describe Spot fleet history
+//
+// This example returns the history for the specified Spot fleet starting at the specified
+// time.
+func ExampleEC2_DescribeSpotFleetRequestHistory_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeSpotFleetRequestHistoryInput{
+		SpotFleetRequestId: aws.String("sfr-73fbd2ce-aa30-494c-8788-1cee4EXAMPLE"),
+		StartTime:          parseTime("2006-01-02T15:04:05Z", "2015-05-26T00:00:00Z"),
+	}
 
-	svc := ec2.New(sess)
+	result, err := svc.DescribeSpotFleetRequestHistory(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &ec2.DescribeSpotFleetRequestsInput{
-		DryRun:     aws.Bool(true),
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
+	fmt.Println(result)
+}
+
+// To describe a Spot fleet request
+//
+// This example describes the specified Spot fleet request.
+func ExampleEC2_DescribeSpotFleetRequests_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeSpotFleetRequestsInput{
 		SpotFleetRequestIds: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("sfr-73fbd2ce-aa30-494c-8788-1cee4EXAMPLE"),
 		},
 	}
-	resp, err := svc.DescribeSpotFleetRequests(params)
 
+	result, err := svc.DescribeSpotFleetRequests(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeSpotInstanceRequests() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeSpotInstanceRequestsInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
+// To describe a Spot Instance request
+//
+// This example describes the specified Spot Instance request.
+func ExampleEC2_DescribeSpotInstanceRequests_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeSpotInstanceRequestsInput{
 		SpotInstanceRequestIds: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("sir-08b93456"),
 		},
 	}
-	resp, err := svc.DescribeSpotInstanceRequests(params)
 
+	result, err := svc.DescribeSpotInstanceRequests(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeSpotPriceHistory() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeSpotPriceHistoryInput{
-		AvailabilityZone: aws.String("String"),
-		DryRun:           aws.Bool(true),
-		EndTime:          aws.Time(time.Now()),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
+// To describe Spot price history for Linux/UNIX (Amazon VPC)
+//
+// This example returns the Spot Price history for m1.xlarge, Linux/UNIX (Amazon VPC)
+// instances for a particular day in January.
+func ExampleEC2_DescribeSpotPriceHistory_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeSpotPriceHistoryInput{
+		EndTime: parseTime("2006-01-02T15:04:05Z", "2014-01-06T08:09:10"),
 		InstanceTypes: []*string{
-			aws.String("InstanceType"), // Required
-			// More values...
+			aws.String("m1.xlarge"),
 		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
 		ProductDescriptions: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("Linux/UNIX (Amazon VPC)"),
 		},
-		StartTime: aws.Time(time.Now()),
+		StartTime: parseTime("2006-01-02T15:04:05Z", "2014-01-06T07:08:09"),
 	}
-	resp, err := svc.DescribeSpotPriceHistory(params)
 
+	result, err := svc.DescribeSpotPriceHistory(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeStaleSecurityGroups() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeStaleSecurityGroupsInput{
-		VpcId:      aws.String("String"), // Required
-		DryRun:     aws.Bool(true),
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
-	}
-	resp, err := svc.DescribeStaleSecurityGroups(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeSubnets() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeSubnetsInput{
-		DryRun: aws.Bool(true),
+// To describe the subnets for a VPC
+//
+// This example describes the subnets for the specified VPC.
+func ExampleEC2_DescribeSubnets_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeSubnetsInput{
 		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
+			{
+				Name: aws.String("vpc-id"),
 				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
+					aws.String("vpc-a01106c2"),
 				},
 			},
-			// More values...
-		},
-		SubnetIds: []*string{
-			aws.String("String"), // Required
-			// More values...
 		},
 	}
-	resp, err := svc.DescribeSubnets(params)
 
+	result, err := svc.DescribeSubnets(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeTags() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeTagsInput{
-		DryRun: aws.Bool(true),
+// To describe the tags for a single resource
+//
+// This example describes the tags for the specified instance.
+func ExampleEC2_DescribeTags_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeTagsInput{
 		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
+			{
+				Name: aws.String("resource-id"),
 				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
+					aws.String("i-1234567890abcdef8"),
 				},
 			},
-			// More values...
 		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
 	}
-	resp, err := svc.DescribeTags(params)
 
+	result, err := svc.DescribeTags(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeVolumeAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeVolumeAttributeInput{
-		VolumeId:  aws.String("String"), // Required
-		Attribute: aws.String("VolumeAttributeName"),
-		DryRun:    aws.Bool(true),
+// To describe a volume attribute
+//
+// This example describes the ``autoEnableIo`` attribute of the volume with the ID ``vol-049df61146c4d7901``.
+func ExampleEC2_DescribeVolumeAttribute_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeVolumeAttributeInput{
+		Attribute: aws.String("autoEnableIO"),
+		VolumeId:  aws.String("vol-049df61146c4d7901"),
 	}
-	resp, err := svc.DescribeVolumeAttribute(params)
 
+	result, err := svc.DescribeVolumeAttribute(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeVolumeStatus() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeVolumeStatusInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
+// To describe the status of a single volume
+//
+// This example describes the status for the volume ``vol-1234567890abcdef0``.
+func ExampleEC2_DescribeVolumeStatus_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeVolumeStatusInput{
 		VolumeIds: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("vol-1234567890abcdef0"),
 		},
 	}
-	resp, err := svc.DescribeVolumeStatus(params)
 
+	result, err := svc.DescribeVolumeStatus(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeVolumes() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeVolumesInput{
-		DryRun: aws.Bool(true),
+// To describe the status of impaired volumes
+//
+// This example describes the status for all volumes that are impaired. In this example
+// output, there are no impaired volumes.
+func ExampleEC2_DescribeVolumeStatus_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeVolumeStatusInput{
 		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
+			{
+				Name: aws.String("volume-status.status"),
 				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
+					aws.String("impaired"),
 				},
 			},
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-		VolumeIds: []*string{
-			aws.String("String"), // Required
-			// More values...
 		},
 	}
-	resp, err := svc.DescribeVolumes(params)
 
+	result, err := svc.DescribeVolumeStatus(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeVolumesModifications() {
-	sess := session.Must(session.NewSession())
+// To describe all volumes
+//
+// This example describes all of your volumes in the default region.
+func ExampleEC2_DescribeVolumes_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeVolumesInput{}
 
-	svc := ec2.New(sess)
+	result, err := svc.DescribeVolumes(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &ec2.DescribeVolumesModificationsInput{
-		DryRun: aws.Bool(true),
+	fmt.Println(result)
+}
+
+// To describe volumes that are attached to a specific instance
+//
+// This example describes all volumes that are both attached to the instance with the
+// ID i-1234567890abcdef0 and set to delete when the instance terminates.
+func ExampleEC2_DescribeVolumes_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeVolumesInput{
 		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
+			{
+				Name: aws.String("attachment.instance-id"),
 				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
+					aws.String("i-1234567890abcdef0"),
 				},
 			},
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-		VolumeIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeVolumesModifications(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeVpcAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeVpcAttributeInput{
-		Attribute: aws.String("VpcAttributeName"), // Required
-		VpcId:     aws.String("String"),           // Required
-		DryRun:    aws.Bool(true),
-	}
-	resp, err := svc.DescribeVpcAttribute(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DescribeVpcClassicLink() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeVpcClassicLinkInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
+			{
+				Name: aws.String("attachment.delete-on-termination"),
 				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
+					aws.String("true"),
 				},
 			},
-			// More values...
 		},
+	}
+
+	result, err := svc.DescribeVolumes(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe the enableDnsSupport attribute
+//
+// This example describes the enableDnsSupport attribute. This attribute indicates whether
+// DNS resolution is enabled for the VPC. If this attribute is true, the Amazon DNS
+// server resolves DNS hostnames for your instances to their corresponding IP addresses;
+// otherwise, it does not.
+func ExampleEC2_DescribeVpcAttribute_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeVpcAttributeInput{
+		Attribute: aws.String("enableDnsSupport"),
+		VpcId:     aws.String("vpc-a01106c2"),
+	}
+
+	result, err := svc.DescribeVpcAttribute(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe the enableDnsHostnames attribute
+//
+// This example describes the enableDnsHostnames attribute. This attribute indicates
+// whether the instances launched in the VPC get DNS hostnames. If this attribute is
+// true, instances in the VPC get DNS hostnames; otherwise, they do not.
+func ExampleEC2_DescribeVpcAttribute_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeVpcAttributeInput{
+		Attribute: aws.String("enableDnsHostnames"),
+		VpcId:     aws.String("vpc-a01106c2"),
+	}
+
+	result, err := svc.DescribeVpcAttribute(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe a VPC
+//
+// This example describes the specified VPC.
+func ExampleEC2_DescribeVpcs_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DescribeVpcsInput{
 		VpcIds: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("vpc-a01106c2"),
 		},
 	}
-	resp, err := svc.DescribeVpcClassicLink(params)
 
+	result, err := svc.DescribeVpcs(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeVpcClassicLinkDnsSupport() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeVpcClassicLinkDnsSupportInput{
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
-		VpcIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
+// To detach an Internet gateway from a VPC
+//
+// This example detaches the specified Internet gateway from the specified VPC.
+func ExampleEC2_DetachInternetGateway_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DetachInternetGatewayInput{
+		InternetGatewayId: aws.String("igw-c0a643a9"),
+		VpcId:             aws.String("vpc-a01106c2"),
 	}
-	resp, err := svc.DescribeVpcClassicLinkDnsSupport(params)
 
+	result, err := svc.DetachInternetGateway(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeVpcEndpointServices() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeVpcEndpointServicesInput{
-		DryRun:     aws.Bool(true),
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
+// To detach a network interface from an instance
+//
+// This example detaches the specified network interface from its attached instance.
+func ExampleEC2_DetachNetworkInterface_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DetachNetworkInterfaceInput{
+		AttachmentId: aws.String("eni-attach-66c4350a"),
 	}
-	resp, err := svc.DescribeVpcEndpointServices(params)
 
+	result, err := svc.DetachNetworkInterface(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeVpcEndpoints() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeVpcEndpointsInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("String"),
-		VpcEndpointIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
+// To detach a volume from an instance
+//
+// This example detaches the volume (``vol-049df61146c4d7901``) from the instance it
+// is attached to.
+func ExampleEC2_DetachVolume_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DetachVolumeInput{
+		VolumeId: aws.String("vol-1234567890abcdef0"),
 	}
-	resp, err := svc.DescribeVpcEndpoints(params)
 
+	result, err := svc.DetachVolume(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeVpcPeeringConnections() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeVpcPeeringConnectionsInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		VpcPeeringConnectionIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
+// To disable route propagation
+//
+// This example disables the specified virtual private gateway from propagating static
+// routes to the specified route table.
+func ExampleEC2_DisableVgwRoutePropagation_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DisableVgwRoutePropagationInput{
+		GatewayId:    aws.String("vgw-9a4cacf3"),
+		RouteTableId: aws.String("rtb-22574640"),
 	}
-	resp, err := svc.DescribeVpcPeeringConnections(params)
 
+	result, err := svc.DisableVgwRoutePropagation(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeVpcs() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeVpcsInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		VpcIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
+// To disassociate an Elastic IP address in EC2-VPC
+//
+// This example disassociates an Elastic IP address from an instance in a VPC.
+func ExampleEC2_DisassociateAddress_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DisassociateAddressInput{
+		AssociationId: aws.String("eipassoc-2bebb745"),
 	}
-	resp, err := svc.DescribeVpcs(params)
 
+	result, err := svc.DisassociateAddress(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeVpnConnections() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeVpnConnectionsInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		VpnConnectionIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
+// To disassociate an Elastic IP addresses in EC2-Classic
+//
+// This example disassociates an Elastic IP address from an instance in EC2-Classic.
+func ExampleEC2_DisassociateAddress_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.DisassociateAddressInput{
+		PublicIp: aws.String("198.51.100.0"),
 	}
-	resp, err := svc.DescribeVpnConnections(params)
 
+	result, err := svc.DisassociateAddress(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DescribeVpnGateways() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DescribeVpnGatewaysInput{
-		DryRun: aws.Bool(true),
-		Filters: []*ec2.Filter{
-			{ // Required
-				Name: aws.String("String"),
-				Values: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		VpnGatewayIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
+// To disassociate a route table
+//
+// This example disassociates the specified route table from its associated subnet.
+func ExampleEC2_DisassociateRouteTable_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.DisassociateRouteTableInput{
+		AssociationId: aws.String("rtbassoc-781d0d1a"),
 	}
-	resp, err := svc.DescribeVpnGateways(params)
 
+	result, err := svc.DisassociateRouteTable(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DetachClassicLinkVpc() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DetachClassicLinkVpcInput{
-		InstanceId: aws.String("String"), // Required
-		VpcId:      aws.String("String"), // Required
-		DryRun:     aws.Bool(true),
+// To enable route propagation
+//
+// This example enables the specified virtual private gateway to propagate static routes
+// to the specified route table.
+func ExampleEC2_EnableVgwRoutePropagation_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.EnableVgwRoutePropagationInput{
+		GatewayId:    aws.String("vgw-9a4cacf3"),
+		RouteTableId: aws.String("rtb-22574640"),
 	}
-	resp, err := svc.DetachClassicLinkVpc(params)
 
+	result, err := svc.EnableVgwRoutePropagation(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DetachInternetGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DetachInternetGatewayInput{
-		InternetGatewayId: aws.String("String"), // Required
-		VpcId:             aws.String("String"), // Required
-		DryRun:            aws.Bool(true),
+// To enable I/O for a volume
+//
+// This example enables I/O on volume ``vol-1234567890abcdef0``.
+func ExampleEC2_EnableVolumeIO_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.EnableVolumeIOInput{
+		VolumeId: aws.String("vol-1234567890abcdef0"),
 	}
-	resp, err := svc.DetachInternetGateway(params)
 
+	result, err := svc.EnableVolumeIO(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_DetachNetworkInterface() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DetachNetworkInterfaceInput{
-		AttachmentId: aws.String("String"), // Required
-		DryRun:       aws.Bool(true),
-		Force:        aws.Bool(true),
-	}
-	resp, err := svc.DetachNetworkInterface(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DetachVolume() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DetachVolumeInput{
-		VolumeId:   aws.String("String"), // Required
-		Device:     aws.String("String"),
-		DryRun:     aws.Bool(true),
-		Force:      aws.Bool(true),
-		InstanceId: aws.String("String"),
-	}
-	resp, err := svc.DetachVolume(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DetachVpnGateway() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DetachVpnGatewayInput{
-		VpcId:        aws.String("String"), // Required
-		VpnGatewayId: aws.String("String"), // Required
-		DryRun:       aws.Bool(true),
-	}
-	resp, err := svc.DetachVpnGateway(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DisableVgwRoutePropagation() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DisableVgwRoutePropagationInput{
-		GatewayId:    aws.String("String"), // Required
-		RouteTableId: aws.String("String"), // Required
-	}
-	resp, err := svc.DisableVgwRoutePropagation(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DisableVpcClassicLink() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DisableVpcClassicLinkInput{
-		VpcId:  aws.String("String"), // Required
-		DryRun: aws.Bool(true),
-	}
-	resp, err := svc.DisableVpcClassicLink(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DisableVpcClassicLinkDnsSupport() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DisableVpcClassicLinkDnsSupportInput{
-		VpcId: aws.String("String"),
-	}
-	resp, err := svc.DisableVpcClassicLinkDnsSupport(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DisassociateAddress() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DisassociateAddressInput{
-		AssociationId: aws.String("String"),
-		DryRun:        aws.Bool(true),
-		PublicIp:      aws.String("String"),
-	}
-	resp, err := svc.DisassociateAddress(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DisassociateIamInstanceProfile() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DisassociateIamInstanceProfileInput{
-		AssociationId: aws.String("String"), // Required
-	}
-	resp, err := svc.DisassociateIamInstanceProfile(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DisassociateRouteTable() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DisassociateRouteTableInput{
-		AssociationId: aws.String("String"), // Required
-		DryRun:        aws.Bool(true),
-	}
-	resp, err := svc.DisassociateRouteTable(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DisassociateSubnetCidrBlock() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DisassociateSubnetCidrBlockInput{
-		AssociationId: aws.String("String"), // Required
-	}
-	resp, err := svc.DisassociateSubnetCidrBlock(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_DisassociateVpcCidrBlock() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.DisassociateVpcCidrBlockInput{
-		AssociationId: aws.String("String"), // Required
-	}
-	resp, err := svc.DisassociateVpcCidrBlock(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_EnableVgwRoutePropagation() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.EnableVgwRoutePropagationInput{
-		GatewayId:    aws.String("String"), // Required
-		RouteTableId: aws.String("String"), // Required
-	}
-	resp, err := svc.EnableVgwRoutePropagation(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_EnableVolumeIO() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.EnableVolumeIOInput{
-		VolumeId: aws.String("String"), // Required
-		DryRun:   aws.Bool(true),
-	}
-	resp, err := svc.EnableVolumeIO(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_EnableVpcClassicLink() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.EnableVpcClassicLinkInput{
-		VpcId:  aws.String("String"), // Required
-		DryRun: aws.Bool(true),
-	}
-	resp, err := svc.EnableVpcClassicLink(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_EnableVpcClassicLinkDnsSupport() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.EnableVpcClassicLinkDnsSupportInput{
-		VpcId: aws.String("String"),
-	}
-	resp, err := svc.EnableVpcClassicLinkDnsSupport(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_GetConsoleOutput() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.GetConsoleOutputInput{
-		InstanceId: aws.String("String"), // Required
-		DryRun:     aws.Bool(true),
-	}
-	resp, err := svc.GetConsoleOutput(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_GetConsoleScreenshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.GetConsoleScreenshotInput{
-		InstanceId: aws.String("String"), // Required
-		DryRun:     aws.Bool(true),
-		WakeUp:     aws.Bool(true),
-	}
-	resp, err := svc.GetConsoleScreenshot(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_GetHostReservationPurchasePreview() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.GetHostReservationPurchasePreviewInput{
-		HostIdSet: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		OfferingId: aws.String("String"), // Required
-	}
-	resp, err := svc.GetHostReservationPurchasePreview(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_GetPasswordData() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.GetPasswordDataInput{
-		InstanceId: aws.String("String"), // Required
-		DryRun:     aws.Bool(true),
-	}
-	resp, err := svc.GetPasswordData(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_GetReservedInstancesExchangeQuote() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.GetReservedInstancesExchangeQuoteInput{
-		ReservedInstanceIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		DryRun: aws.Bool(true),
-		TargetConfigurations: []*ec2.TargetConfigurationRequest{
-			{ // Required
-				OfferingId:    aws.String("String"), // Required
-				InstanceCount: aws.Int64(1),
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.GetReservedInstancesExchangeQuote(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ImportImage() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ImportImageInput{
-		Architecture: aws.String("String"),
-		ClientData: &ec2.ClientData{
-			Comment:     aws.String("String"),
-			UploadEnd:   aws.Time(time.Now()),
-			UploadSize:  aws.Float64(1.0),
-			UploadStart: aws.Time(time.Now()),
-		},
-		ClientToken: aws.String("String"),
-		Description: aws.String("String"),
-		DiskContainers: []*ec2.ImageDiskContainer{
-			{ // Required
-				Description: aws.String("String"),
-				DeviceName:  aws.String("String"),
-				Format:      aws.String("String"),
-				SnapshotId:  aws.String("String"),
-				Url:         aws.String("String"),
-				UserBucket: &ec2.UserBucket{
-					S3Bucket: aws.String("String"),
-					S3Key:    aws.String("String"),
-				},
-			},
-			// More values...
-		},
-		DryRun:      aws.Bool(true),
-		Hypervisor:  aws.String("String"),
-		LicenseType: aws.String("String"),
-		Platform:    aws.String("String"),
-		RoleName:    aws.String("String"),
-	}
-	resp, err := svc.ImportImage(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ImportInstance() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ImportInstanceInput{
-		Platform:    aws.String("PlatformValues"), // Required
-		Description: aws.String("String"),
-		DiskImages: []*ec2.DiskImage{
-			{ // Required
-				Description: aws.String("String"),
-				Image: &ec2.DiskImageDetail{
-					Bytes:             aws.Int64(1),                  // Required
-					Format:            aws.String("DiskImageFormat"), // Required
-					ImportManifestUrl: aws.String("String"),          // Required
-				},
-				Volume: &ec2.VolumeDetail{
-					Size: aws.Int64(1), // Required
-				},
-			},
-			// More values...
-		},
-		DryRun: aws.Bool(true),
-		LaunchSpecification: &ec2.ImportInstanceLaunchSpecification{
-			AdditionalInfo: aws.String("String"),
-			Architecture:   aws.String("ArchitectureValues"),
-			GroupIds: []*string{
-				aws.String("String"), // Required
-				// More values...
-			},
-			GroupNames: []*string{
-				aws.String("String"), // Required
-				// More values...
-			},
-			InstanceInitiatedShutdownBehavior: aws.String("ShutdownBehavior"),
-			InstanceType:                      aws.String("InstanceType"),
-			Monitoring:                        aws.Bool(true),
-			Placement: &ec2.Placement{
-				Affinity:         aws.String("String"),
-				AvailabilityZone: aws.String("String"),
-				GroupName:        aws.String("String"),
-				HostId:           aws.String("String"),
-				Tenancy:          aws.String("Tenancy"),
-			},
-			PrivateIpAddress: aws.String("String"),
-			SubnetId:         aws.String("String"),
-			UserData: &ec2.UserData{
-				Data: aws.String("String"),
-			},
-		},
-	}
-	resp, err := svc.ImportInstance(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ImportKeyPair() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ImportKeyPairInput{
-		KeyName:           aws.String("String"), // Required
-		PublicKeyMaterial: []byte("PAYLOAD"),    // Required
-		DryRun:            aws.Bool(true),
-	}
-	resp, err := svc.ImportKeyPair(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ImportSnapshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ImportSnapshotInput{
-		ClientData: &ec2.ClientData{
-			Comment:     aws.String("String"),
-			UploadEnd:   aws.Time(time.Now()),
-			UploadSize:  aws.Float64(1.0),
-			UploadStart: aws.Time(time.Now()),
-		},
-		ClientToken: aws.String("String"),
-		Description: aws.String("String"),
-		DiskContainer: &ec2.SnapshotDiskContainer{
-			Description: aws.String("String"),
-			Format:      aws.String("String"),
-			Url:         aws.String("String"),
-			UserBucket: &ec2.UserBucket{
-				S3Bucket: aws.String("String"),
-				S3Key:    aws.String("String"),
-			},
-		},
-		DryRun:   aws.Bool(true),
-		RoleName: aws.String("String"),
-	}
-	resp, err := svc.ImportSnapshot(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ImportVolume() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ImportVolumeInput{
-		AvailabilityZone: aws.String("String"), // Required
-		Image: &ec2.DiskImageDetail{ // Required
-			Bytes:             aws.Int64(1),                  // Required
-			Format:            aws.String("DiskImageFormat"), // Required
-			ImportManifestUrl: aws.String("String"),          // Required
-		},
-		Volume: &ec2.VolumeDetail{ // Required
-			Size: aws.Int64(1), // Required
-		},
-		Description: aws.String("String"),
-		DryRun:      aws.Bool(true),
-	}
-	resp, err := svc.ImportVolume(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ModifyHosts() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ModifyHostsInput{
-		AutoPlacement: aws.String("AutoPlacement"), // Required
-		HostIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.ModifyHosts(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ModifyIdFormat() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ModifyIdFormatInput{
-		Resource:   aws.String("String"), // Required
-		UseLongIds: aws.Bool(true),       // Required
-	}
-	resp, err := svc.ModifyIdFormat(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ModifyIdentityIdFormat() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ModifyIdentityIdFormatInput{
-		PrincipalArn: aws.String("String"), // Required
-		Resource:     aws.String("String"), // Required
-		UseLongIds:   aws.Bool(true),       // Required
-	}
-	resp, err := svc.ModifyIdentityIdFormat(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ModifyImageAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ModifyImageAttributeInput{
-		ImageId:   aws.String("String"), // Required
-		Attribute: aws.String("String"),
-		Description: &ec2.AttributeValue{
-			Value: aws.String("String"),
-		},
-		DryRun: aws.Bool(true),
-		LaunchPermission: &ec2.LaunchPermissionModifications{
-			Add: []*ec2.LaunchPermission{
-				{ // Required
-					Group:  aws.String("PermissionGroup"),
-					UserId: aws.String("String"),
-				},
-				// More values...
-			},
-			Remove: []*ec2.LaunchPermission{
-				{ // Required
-					Group:  aws.String("PermissionGroup"),
-					UserId: aws.String("String"),
-				},
-				// More values...
-			},
-		},
-		OperationType: aws.String("OperationType"),
-		ProductCodes: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		UserGroups: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		UserIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		Value: aws.String("String"),
-	}
-	resp, err := svc.ModifyImageAttribute(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ModifyInstanceAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ModifyInstanceAttributeInput{
-		InstanceId: aws.String("String"), // Required
-		Attribute:  aws.String("InstanceAttributeName"),
-		BlockDeviceMappings: []*ec2.InstanceBlockDeviceMappingSpecification{
-			{ // Required
-				DeviceName: aws.String("String"),
-				Ebs: &ec2.EbsInstanceBlockDeviceSpecification{
-					DeleteOnTermination: aws.Bool(true),
-					VolumeId:            aws.String("String"),
-				},
-				NoDevice:    aws.String("String"),
-				VirtualName: aws.String("String"),
-			},
-			// More values...
-		},
-		DisableApiTermination: &ec2.AttributeBooleanValue{
-			Value: aws.Bool(true),
-		},
-		DryRun: aws.Bool(true),
-		EbsOptimized: &ec2.AttributeBooleanValue{
-			Value: aws.Bool(true),
-		},
-		EnaSupport: &ec2.AttributeBooleanValue{
-			Value: aws.Bool(true),
-		},
-		Groups: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		InstanceInitiatedShutdownBehavior: &ec2.AttributeValue{
-			Value: aws.String("String"),
-		},
-		InstanceType: &ec2.AttributeValue{
-			Value: aws.String("String"),
-		},
-		Kernel: &ec2.AttributeValue{
-			Value: aws.String("String"),
-		},
-		Ramdisk: &ec2.AttributeValue{
-			Value: aws.String("String"),
-		},
-		SourceDestCheck: &ec2.AttributeBooleanValue{
-			Value: aws.Bool(true),
-		},
-		SriovNetSupport: &ec2.AttributeValue{
-			Value: aws.String("String"),
-		},
-		UserData: &ec2.BlobAttributeValue{
-			Value: []byte("PAYLOAD"),
-		},
-		Value: aws.String("String"),
-	}
-	resp, err := svc.ModifyInstanceAttribute(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ModifyInstancePlacement() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ModifyInstancePlacementInput{
-		InstanceId: aws.String("String"), // Required
-		Affinity:   aws.String("Affinity"),
-		HostId:     aws.String("String"),
-		Tenancy:    aws.String("HostTenancy"),
-	}
-	resp, err := svc.ModifyInstancePlacement(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ModifyNetworkInterfaceAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ModifyNetworkInterfaceAttributeInput{
-		NetworkInterfaceId: aws.String("String"), // Required
+// To modify the attachment attribute of a network interface
+//
+// This example modifies the attachment attribute of the specified network interface.
+func ExampleEC2_ModifyNetworkInterfaceAttribute_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.ModifyNetworkInterfaceAttributeInput{
 		Attachment: &ec2.NetworkInterfaceAttachmentChanges{
-			AttachmentId:        aws.String("String"),
-			DeleteOnTermination: aws.Bool(true),
+			AttachmentId:        aws.String("eni-attach-43348162"),
+			DeleteOnTermination: aws.Bool(false),
 		},
+		NetworkInterfaceId: aws.String("eni-686ea200"),
+	}
+
+	result, err := svc.ModifyNetworkInterfaceAttribute(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To modify the description attribute of a network interface
+//
+// This example modifies the description attribute of the specified network interface.
+func ExampleEC2_ModifyNetworkInterfaceAttribute_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.ModifyNetworkInterfaceAttributeInput{
 		Description: &ec2.AttributeValue{
-			Value: aws.String("String"),
+			Value: aws.String("My description"),
 		},
-		DryRun: aws.Bool(true),
+		NetworkInterfaceId: aws.String("eni-686ea200"),
+	}
+
+	result, err := svc.ModifyNetworkInterfaceAttribute(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To modify the groupSet attribute of a network interface
+//
+// This example command modifies the groupSet attribute of the specified network interface.
+func ExampleEC2_ModifyNetworkInterfaceAttribute_shared02() {
+	svc := ec2.New(session.New())
+	input := &ec2.ModifyNetworkInterfaceAttributeInput{
 		Groups: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("sg-903004f8"),
+			aws.String("sg-1a2b3c4d"),
 		},
+		NetworkInterfaceId: aws.String("eni-686ea200"),
+	}
+
+	result, err := svc.ModifyNetworkInterfaceAttribute(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To modify the sourceDestCheck attribute of a network interface
+//
+// This example command modifies the sourceDestCheck attribute of the specified network
+// interface.
+func ExampleEC2_ModifyNetworkInterfaceAttribute_shared03() {
+	svc := ec2.New(session.New())
+	input := &ec2.ModifyNetworkInterfaceAttributeInput{
+		NetworkInterfaceId: aws.String("eni-686ea200"),
 		SourceDestCheck: &ec2.AttributeBooleanValue{
-			Value: aws.Bool(true),
+			Value: aws.Bool(false),
 		},
 	}
-	resp, err := svc.ModifyNetworkInterfaceAttribute(params)
 
+	result, err := svc.ModifyNetworkInterfaceAttribute(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_ModifyReservedInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ModifyReservedInstancesInput{
-		ReservedInstancesIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		TargetConfigurations: []*ec2.ReservedInstancesConfiguration{ // Required
-			{ // Required
-				AvailabilityZone: aws.String("String"),
-				InstanceCount:    aws.Int64(1),
-				InstanceType:     aws.String("InstanceType"),
-				Platform:         aws.String("String"),
-				Scope:            aws.String("scope"),
-			},
-			// More values...
-		},
-		ClientToken: aws.String("String"),
-	}
-	resp, err := svc.ModifyReservedInstances(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ModifySnapshotAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ModifySnapshotAttributeInput{
-		SnapshotId: aws.String("String"), // Required
-		Attribute:  aws.String("SnapshotAttributeName"),
-		CreateVolumePermission: &ec2.CreateVolumePermissionModifications{
-			Add: []*ec2.CreateVolumePermission{
-				{ // Required
-					Group:  aws.String("PermissionGroup"),
-					UserId: aws.String("String"),
-				},
-				// More values...
-			},
-			Remove: []*ec2.CreateVolumePermission{
-				{ // Required
-					Group:  aws.String("PermissionGroup"),
-					UserId: aws.String("String"),
-				},
-				// More values...
-			},
-		},
-		DryRun: aws.Bool(true),
-		GroupNames: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		OperationType: aws.String("OperationType"),
+// To modify a snapshot attribute
+//
+// This example modifies snapshot ``snap-1234567890abcdef0`` to remove the create volume
+// permission for a user with the account ID ``123456789012``. If the command succeeds,
+// no output is returned.
+func ExampleEC2_ModifySnapshotAttribute_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.ModifySnapshotAttributeInput{
+		Attribute:     aws.String("createVolumePermission"),
+		OperationType: aws.String("remove"),
+		SnapshotId:    aws.String("snap-1234567890abcdef0"),
 		UserIds: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("123456789012"),
 		},
 	}
-	resp, err := svc.ModifySnapshotAttribute(params)
 
+	result, err := svc.ModifySnapshotAttribute(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_ModifySpotFleetRequest() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ModifySpotFleetRequestInput{
-		SpotFleetRequestId:              aws.String("String"), // Required
-		ExcessCapacityTerminationPolicy: aws.String("ExcessCapacityTerminationPolicy"),
-		TargetCapacity:                  aws.Int64(1),
+// To make a snapshot public
+//
+// This example makes the snapshot ``snap-1234567890abcdef0`` public.
+func ExampleEC2_ModifySnapshotAttribute_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.ModifySnapshotAttributeInput{
+		Attribute: aws.String("createVolumePermission"),
+		GroupNames: []*string{
+			aws.String("all"),
+		},
+		OperationType: aws.String("add"),
+		SnapshotId:    aws.String("snap-1234567890abcdef0"),
 	}
-	resp, err := svc.ModifySpotFleetRequest(params)
 
+	result, err := svc.ModifySnapshotAttribute(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_ModifySubnetAttribute() {
-	sess := session.Must(session.NewSession())
+// To increase the target capacity of a Spot fleet request
+//
+// This example increases the target capacity of the specified Spot fleet request.
+func ExampleEC2_ModifySpotFleetRequest_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.ModifySpotFleetRequestInput{
+		SpotFleetRequestId: aws.String("sfr-73fbd2ce-aa30-494c-8788-1cee4EXAMPLE"),
+		TargetCapacity:     aws.Int64(20),
+	}
 
-	svc := ec2.New(sess)
+	result, err := svc.ModifySpotFleetRequest(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &ec2.ModifySubnetAttributeInput{
-		SubnetId: aws.String("String"), // Required
-		AssignIpv6AddressOnCreation: &ec2.AttributeBooleanValue{
-			Value: aws.Bool(true),
-		},
+	fmt.Println(result)
+}
+
+// To decrease the target capacity of a Spot fleet request
+//
+// This example decreases the target capacity of the specified Spot fleet request without
+// terminating any Spot Instances as a result.
+func ExampleEC2_ModifySpotFleetRequest_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.ModifySpotFleetRequestInput{
+		ExcessCapacityTerminationPolicy: aws.String("NoTermination "),
+		SpotFleetRequestId:              aws.String("sfr-73fbd2ce-aa30-494c-8788-1cee4EXAMPLE"),
+		TargetCapacity:                  aws.Int64(10),
+	}
+
+	result, err := svc.ModifySpotFleetRequest(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To change a subnet's public IP addressing behavior
+//
+// This example modifies the specified subnet so that all instances launched into this
+// subnet are assigned a public IP address.
+func ExampleEC2_ModifySubnetAttribute_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.ModifySubnetAttributeInput{
 		MapPublicIpOnLaunch: &ec2.AttributeBooleanValue{
 			Value: aws.Bool(true),
 		},
+		SubnetId: aws.String("subnet-1a2b3c4d"),
 	}
-	resp, err := svc.ModifySubnetAttribute(params)
 
+	result, err := svc.ModifySubnetAttribute(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_ModifyVolume() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ModifyVolumeInput{
-		VolumeId:   aws.String("String"), // Required
-		DryRun:     aws.Bool(true),
-		Iops:       aws.Int64(1),
-		Size:       aws.Int64(1),
-		VolumeType: aws.String("VolumeType"),
-	}
-	resp, err := svc.ModifyVolume(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ModifyVolumeAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ModifyVolumeAttributeInput{
-		VolumeId: aws.String("String"), // Required
+// To modify a volume attribute
+//
+// This example sets the ``autoEnableIo`` attribute of the volume with the ID ``vol-1234567890abcdef0``
+// to ``true``. If the command succeeds, no output is returned.
+func ExampleEC2_ModifyVolumeAttribute_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.ModifyVolumeAttributeInput{
 		AutoEnableIO: &ec2.AttributeBooleanValue{
 			Value: aws.Bool(true),
 		},
-		DryRun: aws.Bool(true),
+		DryRun:   aws.Bool(true),
+		VolumeId: aws.String("vol-1234567890abcdef0"),
 	}
-	resp, err := svc.ModifyVolumeAttribute(params)
 
+	result, err := svc.ModifyVolumeAttribute(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_ModifyVpcAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ModifyVpcAttributeInput{
-		VpcId: aws.String("String"), // Required
-		EnableDnsHostnames: &ec2.AttributeBooleanValue{
-			Value: aws.Bool(true),
-		},
+// To modify the enableDnsSupport attribute
+//
+// This example modifies the enableDnsSupport attribute. This attribute indicates whether
+// DNS resolution is enabled for the VPC. If this attribute is true, the Amazon DNS
+// server resolves DNS hostnames for instances in the VPC to their corresponding IP
+// addresses; otherwise, it does not.
+func ExampleEC2_ModifyVpcAttribute_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.ModifyVpcAttributeInput{
 		EnableDnsSupport: &ec2.AttributeBooleanValue{
-			Value: aws.Bool(true),
+			Value: aws.Bool(false),
 		},
+		VpcId: aws.String("vpc-a01106c2"),
 	}
-	resp, err := svc.ModifyVpcAttribute(params)
 
+	result, err := svc.ModifyVpcAttribute(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_ModifyVpcEndpoint() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ModifyVpcEndpointInput{
-		VpcEndpointId: aws.String("String"), // Required
-		AddRouteTableIds: []*string{
-			aws.String("String"), // Required
-			// More values...
+// To modify the enableDnsHostnames attribute
+//
+// This example modifies the enableDnsHostnames attribute. This attribute indicates
+// whether instances launched in the VPC get DNS hostnames. If this attribute is true,
+// instances in the VPC get DNS hostnames; otherwise, they do not.
+func ExampleEC2_ModifyVpcAttribute_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.ModifyVpcAttributeInput{
+		EnableDnsHostnames: &ec2.AttributeBooleanValue{
+			Value: aws.Bool(false),
 		},
-		DryRun:         aws.Bool(true),
-		PolicyDocument: aws.String("String"),
-		RemoveRouteTableIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		ResetPolicy: aws.Bool(true),
+		VpcId: aws.String("vpc-a01106c2"),
 	}
-	resp, err := svc.ModifyVpcEndpoint(params)
 
+	result, err := svc.ModifyVpcAttribute(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_ModifyVpcPeeringConnectionOptions() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ModifyVpcPeeringConnectionOptionsInput{
-		VpcPeeringConnectionId: aws.String("String"), // Required
-		AccepterPeeringConnectionOptions: &ec2.PeeringConnectionOptionsRequest{
-			AllowDnsResolutionFromRemoteVpc:            aws.Bool(true),
-			AllowEgressFromLocalClassicLinkToRemoteVpc: aws.Bool(true),
-			AllowEgressFromLocalVpcToRemoteClassicLink: aws.Bool(true),
-		},
-		DryRun: aws.Bool(true),
-		RequesterPeeringConnectionOptions: &ec2.PeeringConnectionOptionsRequest{
-			AllowDnsResolutionFromRemoteVpc:            aws.Bool(true),
-			AllowEgressFromLocalClassicLinkToRemoteVpc: aws.Bool(true),
-			AllowEgressFromLocalVpcToRemoteClassicLink: aws.Bool(true),
-		},
+// To move an address to EC2-VPC
+//
+// This example moves the specified Elastic IP address to the EC2-VPC platform.
+func ExampleEC2_MoveAddressToVpc_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.MoveAddressToVpcInput{
+		PublicIp: aws.String("54.123.4.56"),
 	}
-	resp, err := svc.ModifyVpcPeeringConnectionOptions(params)
 
+	result, err := svc.MoveAddressToVpc(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_MonitorInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.MonitorInstancesInput{
-		InstanceIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		DryRun: aws.Bool(true),
-	}
-	resp, err := svc.MonitorInstances(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_MoveAddressToVpc() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.MoveAddressToVpcInput{
-		PublicIp: aws.String("String"), // Required
-		DryRun:   aws.Bool(true),
-	}
-	resp, err := svc.MoveAddressToVpc(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_PurchaseHostReservation() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.PurchaseHostReservationInput{
-		HostIdSet: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		OfferingId:   aws.String("String"), // Required
-		ClientToken:  aws.String("String"),
-		CurrencyCode: aws.String("CurrencyCodeValues"),
-		LimitPrice:   aws.String("String"),
-	}
-	resp, err := svc.PurchaseHostReservation(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_PurchaseReservedInstancesOffering() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.PurchaseReservedInstancesOfferingInput{
-		InstanceCount:               aws.Int64(1),         // Required
-		ReservedInstancesOfferingId: aws.String("String"), // Required
-		DryRun: aws.Bool(true),
-		LimitPrice: &ec2.ReservedInstanceLimitPrice{
-			Amount:       aws.Float64(1.0),
-			CurrencyCode: aws.String("CurrencyCodeValues"),
-		},
-	}
-	resp, err := svc.PurchaseReservedInstancesOffering(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_PurchaseScheduledInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.PurchaseScheduledInstancesInput{
-		PurchaseRequests: []*ec2.PurchaseRequest{ // Required
-			{ // Required
-				InstanceCount: aws.Int64(1),         // Required
-				PurchaseToken: aws.String("String"), // Required
+// To purchase a Scheduled Instance
+//
+// This example purchases a Scheduled Instance.
+func ExampleEC2_PurchaseScheduledInstances_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.PurchaseScheduledInstancesInput{
+		PurchaseRequests: []*ec2.PurchaseRequest{
+			{
+				InstanceCount: aws.Int64(1),
+				PurchaseToken: aws.String("eyJ2IjoiMSIsInMiOjEsImMiOi..."),
 			},
-			// More values...
-		},
-		ClientToken: aws.String("String"),
-		DryRun:      aws.Bool(true),
-	}
-	resp, err := svc.PurchaseScheduledInstances(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_RebootInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.RebootInstancesInput{
-		InstanceIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		DryRun: aws.Bool(true),
-	}
-	resp, err := svc.RebootInstances(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_RegisterImage() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.RegisterImageInput{
-		Name:         aws.String("String"), // Required
-		Architecture: aws.String("ArchitectureValues"),
-		BillingProducts: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
-			{ // Required
-				DeviceName: aws.String("String"),
-				Ebs: &ec2.EbsBlockDevice{
-					DeleteOnTermination: aws.Bool(true),
-					Encrypted:           aws.Bool(true),
-					Iops:                aws.Int64(1),
-					SnapshotId:          aws.String("String"),
-					VolumeSize:          aws.Int64(1),
-					VolumeType:          aws.String("VolumeType"),
-				},
-				NoDevice:    aws.String("String"),
-				VirtualName: aws.String("String"),
-			},
-			// More values...
-		},
-		Description:        aws.String("String"),
-		DryRun:             aws.Bool(true),
-		EnaSupport:         aws.Bool(true),
-		ImageLocation:      aws.String("String"),
-		KernelId:           aws.String("String"),
-		RamdiskId:          aws.String("String"),
-		RootDeviceName:     aws.String("String"),
-		SriovNetSupport:    aws.String("String"),
-		VirtualizationType: aws.String("String"),
-	}
-	resp, err := svc.RegisterImage(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_RejectVpcPeeringConnection() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.RejectVpcPeeringConnectionInput{
-		VpcPeeringConnectionId: aws.String("String"), // Required
-		DryRun:                 aws.Bool(true),
-	}
-	resp, err := svc.RejectVpcPeeringConnection(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ReleaseAddress() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ReleaseAddressInput{
-		AllocationId: aws.String("String"),
-		DryRun:       aws.Bool(true),
-		PublicIp:     aws.String("String"),
-	}
-	resp, err := svc.ReleaseAddress(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ReleaseHosts() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ReleaseHostsInput{
-		HostIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
 		},
 	}
-	resp, err := svc.ReleaseHosts(params)
 
+	result, err := svc.PurchaseScheduledInstances(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_ReplaceIamInstanceProfileAssociation() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ReplaceIamInstanceProfileAssociationInput{
-		AssociationId: aws.String("String"), // Required
-		IamInstanceProfile: &ec2.IamInstanceProfileSpecification{ // Required
-			Arn:  aws.String("String"),
-			Name: aws.String("String"),
-		},
+// To release an Elastic IP address for EC2-VPC
+//
+// This example releases an Elastic IP address for use with instances in a VPC.
+func ExampleEC2_ReleaseAddress_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.ReleaseAddressInput{
+		AllocationId: aws.String("eipalloc-64d5890a"),
 	}
-	resp, err := svc.ReplaceIamInstanceProfileAssociation(params)
 
+	result, err := svc.ReleaseAddress(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_ReplaceNetworkAclAssociation() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ReplaceNetworkAclAssociationInput{
-		AssociationId: aws.String("String"), // Required
-		NetworkAclId:  aws.String("String"), // Required
-		DryRun:        aws.Bool(true),
+// To release an Elastic IP addresses for EC2-Classic
+//
+// This example releases an Elastic IP address for use with instances in EC2-Classic.
+func ExampleEC2_ReleaseAddress_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.ReleaseAddressInput{
+		PublicIp: aws.String("198.51.100.0"),
 	}
-	resp, err := svc.ReplaceNetworkAclAssociation(params)
 
+	result, err := svc.ReleaseAddress(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_ReplaceNetworkAclEntry() {
-	sess := session.Must(session.NewSession())
+// To replace the network ACL associated with a subnet
+//
+// This example associates the specified network ACL with the subnet for the specified
+// network ACL association.
+func ExampleEC2_ReplaceNetworkAclAssociation_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.ReplaceNetworkAclAssociationInput{
+		AssociationId: aws.String("aclassoc-e5b95c8c"),
+		NetworkAclId:  aws.String("acl-5fb85d36"),
+	}
 
-	svc := ec2.New(sess)
+	result, err := svc.ReplaceNetworkAclAssociation(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &ec2.ReplaceNetworkAclEntryInput{
-		Egress:       aws.Bool(true),           // Required
-		NetworkAclId: aws.String("String"),     // Required
-		Protocol:     aws.String("String"),     // Required
-		RuleAction:   aws.String("RuleAction"), // Required
-		RuleNumber:   aws.Int64(1),             // Required
-		CidrBlock:    aws.String("String"),
-		DryRun:       aws.Bool(true),
-		IcmpTypeCode: &ec2.IcmpTypeCode{
-			Code: aws.Int64(1),
-			Type: aws.Int64(1),
-		},
-		Ipv6CidrBlock: aws.String("String"),
+	fmt.Println(result)
+}
+
+// To replace a network ACL entry
+//
+// This example replaces an entry for the specified network ACL. The new rule 100 allows
+// ingress traffic from 203.0.113.12/24 on UDP port 53 (DNS) into any associated subnet.
+func ExampleEC2_ReplaceNetworkAclEntry_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.ReplaceNetworkAclEntryInput{
+		CidrBlock:    aws.String("203.0.113.12/24"),
+		Egress:       aws.Bool(false),
+		NetworkAclId: aws.String("acl-5fb85d36"),
 		PortRange: &ec2.PortRange{
-			From: aws.Int64(1),
-			To:   aws.Int64(1),
+			From: aws.Int64(53),
+			To:   aws.Int64(53),
 		},
+		Protocol:   aws.String("udp"),
+		RuleAction: aws.String("allow"),
+		RuleNumber: aws.Int64(100),
 	}
-	resp, err := svc.ReplaceNetworkAclEntry(params)
 
+	result, err := svc.ReplaceNetworkAclEntry(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_ReplaceRoute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ReplaceRouteInput{
-		RouteTableId:             aws.String("String"), // Required
-		DestinationCidrBlock:     aws.String("String"),
-		DestinationIpv6CidrBlock: aws.String("String"),
-		DryRun: aws.Bool(true),
-		EgressOnlyInternetGatewayId: aws.String("String"),
-		GatewayId:                   aws.String("String"),
-		InstanceId:                  aws.String("String"),
-		NatGatewayId:                aws.String("String"),
-		NetworkInterfaceId:          aws.String("String"),
-		VpcPeeringConnectionId:      aws.String("String"),
+// To replace a route
+//
+// This example replaces the specified route in the specified table table. The new route
+// matches the specified CIDR and sends the traffic to the specified virtual private
+// gateway.
+func ExampleEC2_ReplaceRoute_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.ReplaceRouteInput{
+		DestinationCidrBlock: aws.String("10.0.0.0/16"),
+		GatewayId:            aws.String("vgw-9a4cacf3"),
+		RouteTableId:         aws.String("rtb-22574640"),
 	}
-	resp, err := svc.ReplaceRoute(params)
 
+	result, err := svc.ReplaceRoute(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_ReplaceRouteTableAssociation() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ReplaceRouteTableAssociationInput{
-		AssociationId: aws.String("String"), // Required
-		RouteTableId:  aws.String("String"), // Required
-		DryRun:        aws.Bool(true),
+// To replace the route table associated with a subnet
+//
+// This example associates the specified route table with the subnet for the specified
+// route table association.
+func ExampleEC2_ReplaceRouteTableAssociation_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.ReplaceRouteTableAssociationInput{
+		AssociationId: aws.String("rtbassoc-781d0d1a"),
+		RouteTableId:  aws.String("rtb-22574640"),
 	}
-	resp, err := svc.ReplaceRouteTableAssociation(params)
 
+	result, err := svc.ReplaceRouteTableAssociation(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_ReportInstanceStatus() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ReportInstanceStatusInput{
-		Instances: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		ReasonCodes: []*string{ // Required
-			aws.String("ReportInstanceReasonCodes"), // Required
-			// More values...
-		},
-		Status:      aws.String("ReportStatusType"), // Required
-		Description: aws.String("String"),
-		DryRun:      aws.Bool(true),
-		EndTime:     aws.Time(time.Now()),
-		StartTime:   aws.Time(time.Now()),
-	}
-	resp, err := svc.ReportInstanceStatus(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_RequestSpotFleet() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.RequestSpotFleetInput{
-		SpotFleetRequestConfig: &ec2.SpotFleetRequestConfigData{ // Required
-			IamFleetRole: aws.String("String"), // Required
-			LaunchSpecifications: []*ec2.SpotFleetLaunchSpecification{ // Required
-				{ // Required
-					AddressingType: aws.String("String"),
-					BlockDeviceMappings: []*ec2.BlockDeviceMapping{
-						{ // Required
-							DeviceName: aws.String("String"),
-							Ebs: &ec2.EbsBlockDevice{
-								DeleteOnTermination: aws.Bool(true),
-								Encrypted:           aws.Bool(true),
-								Iops:                aws.Int64(1),
-								SnapshotId:          aws.String("String"),
-								VolumeSize:          aws.Int64(1),
-								VolumeType:          aws.String("VolumeType"),
-							},
-							NoDevice:    aws.String("String"),
-							VirtualName: aws.String("String"),
-						},
-						// More values...
-					},
-					EbsOptimized: aws.Bool(true),
-					IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
-						Arn:  aws.String("String"),
-						Name: aws.String("String"),
-					},
-					ImageId:      aws.String("String"),
-					InstanceType: aws.String("InstanceType"),
-					KernelId:     aws.String("String"),
-					KeyName:      aws.String("String"),
-					Monitoring: &ec2.SpotFleetMonitoring{
-						Enabled: aws.Bool(true),
-					},
-					NetworkInterfaces: []*ec2.InstanceNetworkInterfaceSpecification{
-						{ // Required
-							AssociatePublicIpAddress: aws.Bool(true),
-							DeleteOnTermination:      aws.Bool(true),
-							Description:              aws.String("String"),
-							DeviceIndex:              aws.Int64(1),
-							Groups: []*string{
-								aws.String("String"), // Required
-								// More values...
-							},
-							Ipv6AddressCount: aws.Int64(1),
-							Ipv6Addresses: []*ec2.InstanceIpv6Address{
-								{ // Required
-									Ipv6Address: aws.String("String"),
-								},
-								// More values...
-							},
-							NetworkInterfaceId: aws.String("String"),
-							PrivateIpAddress:   aws.String("String"),
-							PrivateIpAddresses: []*ec2.PrivateIpAddressSpecification{
-								{ // Required
-									PrivateIpAddress: aws.String("String"), // Required
-									Primary:          aws.Bool(true),
-								},
-								// More values...
-							},
-							SecondaryPrivateIpAddressCount: aws.Int64(1),
-							SubnetId:                       aws.String("String"),
-						},
-						// More values...
-					},
-					Placement: &ec2.SpotPlacement{
-						AvailabilityZone: aws.String("String"),
-						GroupName:        aws.String("String"),
-						Tenancy:          aws.String("Tenancy"),
-					},
-					RamdiskId: aws.String("String"),
+// To request a Spot fleet in the subnet with the lowest price
+//
+// This example creates a Spot fleet request with two launch specifications that differ
+// only by subnet. The Spot fleet launches the instances in the specified subnet with
+// the lowest price. If the instances are launched in a default VPC, they receive a
+// public IP address by default. If the instances are launched in a nondefault VPC,
+// they do not receive a public IP address by default. Note that you can't specify different
+// subnets from the same Availability Zone in a Spot fleet request.
+func ExampleEC2_RequestSpotFleet_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.RequestSpotFleetInput{
+		SpotFleetRequestConfig: &ec2.SpotFleetRequestConfigData{
+			IamFleetRole: aws.String("arn:aws:iam::123456789012:role/my-spot-fleet-role"),
+			LaunchSpecifications: []*ec2.SpotFleetLaunchSpecification{
+				{
+					ImageId:      aws.String("ami-1a2b3c4d"),
+					InstanceType: aws.String("m3.medium"),
+					KeyName:      aws.String("my-key-pair"),
 					SecurityGroups: []*ec2.GroupIdentifier{
-						{ // Required
-							GroupId:   aws.String("String"),
-							GroupName: aws.String("String"),
+						{
+							GroupId: aws.String("sg-1a2b3c4d"),
 						},
-						// More values...
 					},
-					SpotPrice:        aws.String("String"),
-					SubnetId:         aws.String("String"),
-					UserData:         aws.String("String"),
-					WeightedCapacity: aws.Float64(1.0),
+					SubnetId: aws.String("subnet-1a2b3c4d, subnet-3c4d5e6f"),
 				},
-				// More values...
 			},
-			SpotPrice:                        aws.String("String"), // Required
-			TargetCapacity:                   aws.Int64(1),         // Required
-			AllocationStrategy:               aws.String("AllocationStrategy"),
-			ClientToken:                      aws.String("String"),
-			ExcessCapacityTerminationPolicy:  aws.String("ExcessCapacityTerminationPolicy"),
-			FulfilledCapacity:                aws.Float64(1.0),
-			ReplaceUnhealthyInstances:        aws.Bool(true),
-			TerminateInstancesWithExpiration: aws.Bool(true),
-			Type:       aws.String("FleetType"),
-			ValidFrom:  aws.Time(time.Now()),
-			ValidUntil: aws.Time(time.Now()),
+			SpotPrice:      aws.String("0.04"),
+			TargetCapacity: aws.Int64(2),
 		},
-		DryRun: aws.Bool(true),
 	}
-	resp, err := svc.RequestSpotFleet(params)
 
+	result, err := svc.RequestSpotFleet(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_RequestSpotInstances() {
-	sess := session.Must(session.NewSession())
+// To request a Spot fleet in the Availability Zone with the lowest price
+//
+// This example creates a Spot fleet request with two launch specifications that differ
+// only by Availability Zone. The Spot fleet launches the instances in the specified
+// Availability Zone with the lowest price. If your account supports EC2-VPC only, Amazon
+// EC2 launches the Spot instances in the default subnet of the Availability Zone. If
+// your account supports EC2-Classic, Amazon EC2 launches the instances in EC2-Classic
+// in the Availability Zone.
+func ExampleEC2_RequestSpotFleet_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.RequestSpotFleetInput{
+		SpotFleetRequestConfig: &ec2.SpotFleetRequestConfigData{
+			IamFleetRole: aws.String("arn:aws:iam::123456789012:role/my-spot-fleet-role"),
+			LaunchSpecifications: []*ec2.SpotFleetLaunchSpecification{
+				{
+					ImageId:      aws.String("ami-1a2b3c4d"),
+					InstanceType: aws.String("m3.medium"),
+					KeyName:      aws.String("my-key-pair"),
+					SecurityGroups: []*ec2.GroupIdentifier{
+						{
+							GroupId: aws.String("sg-1a2b3c4d"),
+						},
+					},
+				},
+			},
+			SpotPrice:      aws.String("0.04"),
+			TargetCapacity: aws.Int64(2),
+		},
+	}
 
-	svc := ec2.New(sess)
+	result, err := svc.RequestSpotFleet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &ec2.RequestSpotInstancesInput{
-		SpotPrice:             aws.String("String"), // Required
-		AvailabilityZoneGroup: aws.String("String"),
-		BlockDurationMinutes:  aws.Int64(1),
-		ClientToken:           aws.String("String"),
-		DryRun:                aws.Bool(true),
-		InstanceCount:         aws.Int64(1),
-		LaunchGroup:           aws.String("String"),
+	fmt.Println(result)
+}
+
+// To launch Spot instances in a subnet and assign them public IP addresses
+//
+// This example assigns public addresses to instances launched in a nondefault VPC.
+// Note that when you specify a network interface, you must include the subnet ID and
+// security group ID using the network interface.
+func ExampleEC2_RequestSpotFleet_shared02() {
+	svc := ec2.New(session.New())
+	input := &ec2.RequestSpotFleetInput{
+		SpotFleetRequestConfig: &ec2.SpotFleetRequestConfigData{
+			IamFleetRole: aws.String("arn:aws:iam::123456789012:role/my-spot-fleet-role"),
+			LaunchSpecifications: []*ec2.SpotFleetLaunchSpecification{
+				{
+					ImageId:      aws.String("ami-1a2b3c4d"),
+					InstanceType: aws.String("m3.medium"),
+					KeyName:      aws.String("my-key-pair"),
+					NetworkInterfaces: []*ec2.InstanceNetworkInterfaceSpecification{
+						{
+							AssociatePublicIpAddress: aws.Bool(true),
+							DeviceIndex:              aws.Int64(0),
+							Groups: []*string{
+								aws.String("sg-1a2b3c4d"),
+							},
+							SubnetId: aws.String("subnet-1a2b3c4d"),
+						},
+					},
+				},
+			},
+			SpotPrice:      aws.String("0.04"),
+			TargetCapacity: aws.Int64(2),
+		},
+	}
+
+	result, err := svc.RequestSpotFleet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To request a Spot fleet using the diversified allocation strategy
+//
+// This example creates a Spot fleet request that launches 30 instances using the diversified
+// allocation strategy. The launch specifications differ by instance type. The Spot
+// fleet distributes the instances across the launch specifications such that there
+// are 10 instances of each type.
+func ExampleEC2_RequestSpotFleet_shared03() {
+	svc := ec2.New(session.New())
+	input := &ec2.RequestSpotFleetInput{
+		SpotFleetRequestConfig: &ec2.SpotFleetRequestConfigData{
+			AllocationStrategy: aws.String("diversified"),
+			IamFleetRole:       aws.String("arn:aws:iam::123456789012:role/my-spot-fleet-role"),
+			LaunchSpecifications: []*ec2.SpotFleetLaunchSpecification{
+				{
+					ImageId:      aws.String("ami-1a2b3c4d"),
+					InstanceType: aws.String("c4.2xlarge"),
+					SubnetId:     aws.String("subnet-1a2b3c4d"),
+				},
+				{
+					ImageId:      aws.String("ami-1a2b3c4d"),
+					InstanceType: aws.String("m3.2xlarge"),
+					SubnetId:     aws.String("subnet-1a2b3c4d"),
+				},
+				{
+					ImageId:      aws.String("ami-1a2b3c4d"),
+					InstanceType: aws.String("r3.2xlarge"),
+					SubnetId:     aws.String("subnet-1a2b3c4d"),
+				},
+			},
+			SpotPrice:      aws.String("0.70"),
+			TargetCapacity: aws.Int64(30),
+		},
+	}
+
+	result, err := svc.RequestSpotFleet(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create a one-time Spot Instance request
+//
+// This example creates a one-time Spot Instance request for five instances in the specified
+// Availability Zone. If your account supports EC2-VPC only, Amazon EC2 launches the
+// instances in the default subnet of the specified Availability Zone. If your account
+// supports EC2-Classic, Amazon EC2 launches the instances in EC2-Classic in the specified
+// Availability Zone.
+func ExampleEC2_RequestSpotInstances_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.RequestSpotInstancesInput{
+		InstanceCount: aws.Int64(5),
 		LaunchSpecification: &ec2.RequestSpotLaunchSpecification{
-			AddressingType: aws.String("String"),
-			BlockDeviceMappings: []*ec2.BlockDeviceMapping{
-				{ // Required
-					DeviceName: aws.String("String"),
-					Ebs: &ec2.EbsBlockDevice{
-						DeleteOnTermination: aws.Bool(true),
-						Encrypted:           aws.Bool(true),
-						Iops:                aws.Int64(1),
-						SnapshotId:          aws.String("String"),
-						VolumeSize:          aws.Int64(1),
-						VolumeType:          aws.String("VolumeType"),
-					},
-					NoDevice:    aws.String("String"),
-					VirtualName: aws.String("String"),
-				},
-				// More values...
-			},
-			EbsOptimized: aws.Bool(true),
 			IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
-				Arn:  aws.String("String"),
-				Name: aws.String("String"),
+				Arn: aws.String("arn:aws:iam::123456789012:instance-profile/my-iam-role"),
 			},
-			ImageId:      aws.String("String"),
-			InstanceType: aws.String("InstanceType"),
-			KernelId:     aws.String("String"),
-			KeyName:      aws.String("String"),
-			Monitoring: &ec2.RunInstancesMonitoringEnabled{
-				Enabled: aws.Bool(true), // Required
-			},
-			NetworkInterfaces: []*ec2.InstanceNetworkInterfaceSpecification{
-				{ // Required
-					AssociatePublicIpAddress: aws.Bool(true),
-					DeleteOnTermination:      aws.Bool(true),
-					Description:              aws.String("String"),
-					DeviceIndex:              aws.Int64(1),
-					Groups: []*string{
-						aws.String("String"), // Required
-						// More values...
-					},
-					Ipv6AddressCount: aws.Int64(1),
-					Ipv6Addresses: []*ec2.InstanceIpv6Address{
-						{ // Required
-							Ipv6Address: aws.String("String"),
-						},
-						// More values...
-					},
-					NetworkInterfaceId: aws.String("String"),
-					PrivateIpAddress:   aws.String("String"),
-					PrivateIpAddresses: []*ec2.PrivateIpAddressSpecification{
-						{ // Required
-							PrivateIpAddress: aws.String("String"), // Required
-							Primary:          aws.Bool(true),
-						},
-						// More values...
-					},
-					SecondaryPrivateIpAddressCount: aws.Int64(1),
-					SubnetId:                       aws.String("String"),
-				},
-				// More values...
-			},
+			ImageId:      aws.String("ami-1a2b3c4d"),
+			InstanceType: aws.String("m3.medium"),
+			KeyName:      aws.String("my-key-pair"),
 			Placement: &ec2.SpotPlacement{
-				AvailabilityZone: aws.String("String"),
-				GroupName:        aws.String("String"),
-				Tenancy:          aws.String("Tenancy"),
+				AvailabilityZone: aws.String("us-west-2a"),
 			},
-			RamdiskId: aws.String("String"),
 			SecurityGroupIds: []*string{
-				aws.String("String"), // Required
-				// More values...
+				aws.String("sg-1a2b3c4d"),
 			},
-			SecurityGroups: []*string{
-				aws.String("String"), // Required
-				// More values...
-			},
-			SubnetId: aws.String("String"),
-			UserData: aws.String("String"),
 		},
-		Type:       aws.String("SpotInstanceType"),
-		ValidFrom:  aws.Time(time.Now()),
-		ValidUntil: aws.Time(time.Now()),
+		SpotPrice: aws.String("0.03"),
+		Type:      aws.String("one-time"),
 	}
-	resp, err := svc.RequestSpotInstances(params)
 
+	result, err := svc.RequestSpotInstances(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_ResetImageAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ResetImageAttributeInput{
-		Attribute: aws.String("ResetImageAttributeName"), // Required
-		ImageId:   aws.String("String"),                  // Required
-		DryRun:    aws.Bool(true),
-	}
-	resp, err := svc.ResetImageAttribute(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ResetInstanceAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ResetInstanceAttributeInput{
-		Attribute:  aws.String("InstanceAttributeName"), // Required
-		InstanceId: aws.String("String"),                // Required
-		DryRun:     aws.Bool(true),
-	}
-	resp, err := svc.ResetInstanceAttribute(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ResetNetworkInterfaceAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ResetNetworkInterfaceAttributeInput{
-		NetworkInterfaceId: aws.String("String"), // Required
-		DryRun:             aws.Bool(true),
-		SourceDestCheck:    aws.String("String"),
-	}
-	resp, err := svc.ResetNetworkInterfaceAttribute(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_ResetSnapshotAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.ResetSnapshotAttributeInput{
-		Attribute:  aws.String("SnapshotAttributeName"), // Required
-		SnapshotId: aws.String("String"),                // Required
-		DryRun:     aws.Bool(true),
-	}
-	resp, err := svc.ResetSnapshotAttribute(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_RestoreAddressToClassic() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.RestoreAddressToClassicInput{
-		PublicIp: aws.String("String"), // Required
-		DryRun:   aws.Bool(true),
-	}
-	resp, err := svc.RestoreAddressToClassic(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_RevokeSecurityGroupEgress() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.RevokeSecurityGroupEgressInput{
-		GroupId:  aws.String("String"), // Required
-		CidrIp:   aws.String("String"),
-		DryRun:   aws.Bool(true),
-		FromPort: aws.Int64(1),
-		IpPermissions: []*ec2.IpPermission{
-			{ // Required
-				FromPort:   aws.Int64(1),
-				IpProtocol: aws.String("String"),
-				IpRanges: []*ec2.IpRange{
-					{ // Required
-						CidrIp: aws.String("String"),
-					},
-					// More values...
-				},
-				Ipv6Ranges: []*ec2.Ipv6Range{
-					{ // Required
-						CidrIpv6: aws.String("String"),
-					},
-					// More values...
-				},
-				PrefixListIds: []*ec2.PrefixListId{
-					{ // Required
-						PrefixListId: aws.String("String"),
-					},
-					// More values...
-				},
-				ToPort: aws.Int64(1),
-				UserIdGroupPairs: []*ec2.UserIdGroupPair{
-					{ // Required
-						GroupId:       aws.String("String"),
-						GroupName:     aws.String("String"),
-						PeeringStatus: aws.String("String"),
-						UserId:        aws.String("String"),
-						VpcId:         aws.String("String"),
-						VpcPeeringConnectionId: aws.String("String"),
-					},
-					// More values...
-				},
+// To create a one-time Spot Instance request
+//
+// This example command creates a one-time Spot Instance request for five instances
+// in the specified subnet. Amazon EC2 launches the instances in the specified subnet.
+// If the VPC is a nondefault VPC, the instances do not receive a public IP address
+// by default.
+func ExampleEC2_RequestSpotInstances_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.RequestSpotInstancesInput{
+		InstanceCount: aws.Int64(5),
+		LaunchSpecification: &ec2.RequestSpotLaunchSpecification{
+			IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
+				Arn: aws.String("arn:aws:iam::123456789012:instance-profile/my-iam-role"),
 			},
-			// More values...
+			ImageId:      aws.String("ami-1a2b3c4d"),
+			InstanceType: aws.String("m3.medium"),
+			SecurityGroupIds: []*string{
+				aws.String("sg-1a2b3c4d"),
+			},
+			SubnetId: aws.String("subnet-1a2b3c4d"),
 		},
-		IpProtocol:                 aws.String("String"),
-		SourceSecurityGroupName:    aws.String("String"),
-		SourceSecurityGroupOwnerId: aws.String("String"),
-		ToPort: aws.Int64(1),
+		SpotPrice: aws.String("0.050"),
+		Type:      aws.String("one-time"),
 	}
-	resp, err := svc.RevokeSecurityGroupEgress(params)
 
+	result, err := svc.RequestSpotInstances(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_RevokeSecurityGroupIngress() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.RevokeSecurityGroupIngressInput{
-		CidrIp:    aws.String("String"),
-		DryRun:    aws.Bool(true),
-		FromPort:  aws.Int64(1),
-		GroupId:   aws.String("String"),
-		GroupName: aws.String("String"),
-		IpPermissions: []*ec2.IpPermission{
-			{ // Required
-				FromPort:   aws.Int64(1),
-				IpProtocol: aws.String("String"),
-				IpRanges: []*ec2.IpRange{
-					{ // Required
-						CidrIp: aws.String("String"),
-					},
-					// More values...
-				},
-				Ipv6Ranges: []*ec2.Ipv6Range{
-					{ // Required
-						CidrIpv6: aws.String("String"),
-					},
-					// More values...
-				},
-				PrefixListIds: []*ec2.PrefixListId{
-					{ // Required
-						PrefixListId: aws.String("String"),
-					},
-					// More values...
-				},
-				ToPort: aws.Int64(1),
-				UserIdGroupPairs: []*ec2.UserIdGroupPair{
-					{ // Required
-						GroupId:       aws.String("String"),
-						GroupName:     aws.String("String"),
-						PeeringStatus: aws.String("String"),
-						UserId:        aws.String("String"),
-						VpcId:         aws.String("String"),
-						VpcPeeringConnectionId: aws.String("String"),
-					},
-					// More values...
-				},
-			},
-			// More values...
-		},
-		IpProtocol:                 aws.String("String"),
-		SourceSecurityGroupName:    aws.String("String"),
-		SourceSecurityGroupOwnerId: aws.String("String"),
-		ToPort: aws.Int64(1),
+// To reset a snapshot attribute
+//
+// This example resets the create volume permissions for snapshot ``snap-1234567890abcdef0``.
+// If the command succeeds, no output is returned.
+func ExampleEC2_ResetSnapshotAttribute_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.ResetSnapshotAttributeInput{
+		Attribute:  aws.String("createVolumePermission"),
+		SnapshotId: aws.String("snap-1234567890abcdef0"),
 	}
-	resp, err := svc.RevokeSecurityGroupIngress(params)
 
+	result, err := svc.ResetSnapshotAttribute(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_RunInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.RunInstancesInput{
-		ImageId:        aws.String("String"), // Required
-		MaxCount:       aws.Int64(1),         // Required
-		MinCount:       aws.Int64(1),         // Required
-		AdditionalInfo: aws.String("String"),
-		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
-			{ // Required
-				DeviceName: aws.String("String"),
-				Ebs: &ec2.EbsBlockDevice{
-					DeleteOnTermination: aws.Bool(true),
-					Encrypted:           aws.Bool(true),
-					Iops:                aws.Int64(1),
-					SnapshotId:          aws.String("String"),
-					VolumeSize:          aws.Int64(1),
-					VolumeType:          aws.String("VolumeType"),
-				},
-				NoDevice:    aws.String("String"),
-				VirtualName: aws.String("String"),
-			},
-			// More values...
-		},
-		ClientToken:           aws.String("String"),
-		DisableApiTermination: aws.Bool(true),
-		DryRun:                aws.Bool(true),
-		EbsOptimized:          aws.Bool(true),
-		IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
-			Arn:  aws.String("String"),
-			Name: aws.String("String"),
-		},
-		InstanceInitiatedShutdownBehavior: aws.String("ShutdownBehavior"),
-		InstanceType:                      aws.String("InstanceType"),
-		Ipv6AddressCount:                  aws.Int64(1),
-		Ipv6Addresses: []*ec2.InstanceIpv6Address{
-			{ // Required
-				Ipv6Address: aws.String("String"),
-			},
-			// More values...
-		},
-		KernelId: aws.String("String"),
-		KeyName:  aws.String("String"),
-		Monitoring: &ec2.RunInstancesMonitoringEnabled{
-			Enabled: aws.Bool(true), // Required
-		},
-		NetworkInterfaces: []*ec2.InstanceNetworkInterfaceSpecification{
-			{ // Required
-				AssociatePublicIpAddress: aws.Bool(true),
-				DeleteOnTermination:      aws.Bool(true),
-				Description:              aws.String("String"),
-				DeviceIndex:              aws.Int64(1),
-				Groups: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
-				Ipv6AddressCount: aws.Int64(1),
-				Ipv6Addresses: []*ec2.InstanceIpv6Address{
-					{ // Required
-						Ipv6Address: aws.String("String"),
-					},
-					// More values...
-				},
-				NetworkInterfaceId: aws.String("String"),
-				PrivateIpAddress:   aws.String("String"),
-				PrivateIpAddresses: []*ec2.PrivateIpAddressSpecification{
-					{ // Required
-						PrivateIpAddress: aws.String("String"), // Required
-						Primary:          aws.Bool(true),
-					},
-					// More values...
-				},
-				SecondaryPrivateIpAddressCount: aws.Int64(1),
-				SubnetId:                       aws.String("String"),
-			},
-			// More values...
-		},
-		Placement: &ec2.Placement{
-			Affinity:         aws.String("String"),
-			AvailabilityZone: aws.String("String"),
-			GroupName:        aws.String("String"),
-			HostId:           aws.String("String"),
-			Tenancy:          aws.String("Tenancy"),
-		},
-		PrivateIpAddress: aws.String("String"),
-		RamdiskId:        aws.String("String"),
-		SecurityGroupIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		SecurityGroups: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		SubnetId: aws.String("String"),
-		TagSpecifications: []*ec2.TagSpecification{
-			{ // Required
-				ResourceType: aws.String("ResourceType"),
-				Tags: []*ec2.Tag{
-					{ // Required
-						Key:   aws.String("String"),
-						Value: aws.String("String"),
-					},
-					// More values...
-				},
-			},
-			// More values...
-		},
-		UserData: aws.String("String"),
+// To restore an address to EC2-Classic
+//
+// This example restores the specified Elastic IP address to the EC2-Classic platform.
+func ExampleEC2_RestoreAddressToClassic_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.RestoreAddressToClassicInput{
+		PublicIp: aws.String("198.51.100.0"),
 	}
-	resp, err := svc.RunInstances(params)
 
+	result, err := svc.RestoreAddressToClassic(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_RunScheduledInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.RunScheduledInstancesInput{
-		LaunchSpecification: &ec2.ScheduledInstancesLaunchSpecification{ // Required
-			ImageId: aws.String("String"), // Required
-			BlockDeviceMappings: []*ec2.ScheduledInstancesBlockDeviceMapping{
-				{ // Required
-					DeviceName: aws.String("String"),
-					Ebs: &ec2.ScheduledInstancesEbs{
-						DeleteOnTermination: aws.Bool(true),
-						Encrypted:           aws.Bool(true),
-						Iops:                aws.Int64(1),
-						SnapshotId:          aws.String("String"),
-						VolumeSize:          aws.Int64(1),
-						VolumeType:          aws.String("String"),
-					},
-					NoDevice:    aws.String("String"),
-					VirtualName: aws.String("String"),
-				},
-				// More values...
-			},
-			EbsOptimized: aws.Bool(true),
+// To launch a Scheduled Instance in a VPC
+//
+// This example launches the specified Scheduled Instance in a VPC.
+func ExampleEC2_RunScheduledInstances_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.RunScheduledInstancesInput{
+		InstanceCount: aws.Int64(1),
+		LaunchSpecification: &ec2.ScheduledInstancesLaunchSpecification{
 			IamInstanceProfile: &ec2.ScheduledInstancesIamInstanceProfile{
-				Arn:  aws.String("String"),
-				Name: aws.String("String"),
+				Name: aws.String("my-iam-role"),
 			},
-			InstanceType: aws.String("String"),
-			KernelId:     aws.String("String"),
-			KeyName:      aws.String("String"),
-			Monitoring: &ec2.ScheduledInstancesMonitoring{
-				Enabled: aws.Bool(true),
-			},
+			ImageId:      aws.String("ami-12345678"),
+			InstanceType: aws.String("c4.large"),
+			KeyName:      aws.String("my-key-pair"),
 			NetworkInterfaces: []*ec2.ScheduledInstancesNetworkInterface{
-				{ // Required
+				{
 					AssociatePublicIpAddress: aws.Bool(true),
-					DeleteOnTermination:      aws.Bool(true),
-					Description:              aws.String("String"),
-					DeviceIndex:              aws.Int64(1),
+					DeviceIndex:              aws.Int64(0),
 					Groups: []*string{
-						aws.String("String"), // Required
-						// More values...
+						aws.String("sg-12345678"),
 					},
-					Ipv6AddressCount: aws.Int64(1),
-					Ipv6Addresses: []*ec2.ScheduledInstancesIpv6Address{
-						{ // Required
-							Ipv6Address: aws.String("Ipv6Address"),
-						},
-						// More values...
-					},
-					NetworkInterfaceId: aws.String("String"),
-					PrivateIpAddress:   aws.String("String"),
-					PrivateIpAddressConfigs: []*ec2.ScheduledInstancesPrivateIpAddressConfig{
-						{ // Required
-							Primary:          aws.Bool(true),
-							PrivateIpAddress: aws.String("String"),
-						},
-						// More values...
-					},
-					SecondaryPrivateIpAddressCount: aws.Int64(1),
-					SubnetId:                       aws.String("String"),
+					SubnetId: aws.String("subnet-12345678"),
 				},
-				// More values...
 			},
+		},
+		ScheduledInstanceId: aws.String("sci-1234-1234-1234-1234-123456789012"),
+	}
+
+	result, err := svc.RunScheduledInstances(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To launch a Scheduled Instance in EC2-Classic
+//
+// This example launches the specified Scheduled Instance in EC2-Classic.
+func ExampleEC2_RunScheduledInstances_shared01() {
+	svc := ec2.New(session.New())
+	input := &ec2.RunScheduledInstancesInput{
+		InstanceCount: aws.Int64(1),
+		LaunchSpecification: &ec2.ScheduledInstancesLaunchSpecification{
+			IamInstanceProfile: &ec2.ScheduledInstancesIamInstanceProfile{
+				Name: aws.String("my-iam-role"),
+			},
+			ImageId:      aws.String("ami-12345678"),
+			InstanceType: aws.String("c4.large"),
+			KeyName:      aws.String("my-key-pair"),
 			Placement: &ec2.ScheduledInstancesPlacement{
-				AvailabilityZone: aws.String("String"),
-				GroupName:        aws.String("String"),
+				AvailabilityZone: aws.String("us-west-2b"),
 			},
-			RamdiskId: aws.String("String"),
 			SecurityGroupIds: []*string{
-				aws.String("String"), // Required
-				// More values...
+				aws.String("sg-12345678"),
 			},
-			SubnetId: aws.String("String"),
-			UserData: aws.String("String"),
 		},
-		ScheduledInstanceId: aws.String("String"), // Required
-		ClientToken:         aws.String("String"),
-		DryRun:              aws.Bool(true),
-		InstanceCount:       aws.Int64(1),
+		ScheduledInstanceId: aws.String("sci-1234-1234-1234-1234-123456789012"),
 	}
-	resp, err := svc.RunScheduledInstances(params)
 
+	result, err := svc.RunScheduledInstances(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleEC2_StartInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.StartInstancesInput{
-		InstanceIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
+// To unassign a secondary private IP address from a network interface
+//
+// This example unassigns the specified private IP address from the specified network
+// interface.
+func ExampleEC2_UnassignPrivateIpAddresses_shared00() {
+	svc := ec2.New(session.New())
+	input := &ec2.UnassignPrivateIpAddressesInput{
+		NetworkInterfaceId: aws.String("eni-e5aa89a3"),
+		PrivateIpAddresses: []*string{
+			aws.String("10.0.0.82"),
 		},
-		AdditionalInfo: aws.String("String"),
-		DryRun:         aws.Bool(true),
 	}
-	resp, err := svc.StartInstances(params)
 
+	result, err := svc.UnassignPrivateIpAddresses(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_StopInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.StopInstancesInput{
-		InstanceIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		DryRun: aws.Bool(true),
-		Force:  aws.Bool(true),
-	}
-	resp, err := svc.StopInstances(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_TerminateInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.TerminateInstancesInput{
-		InstanceIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		DryRun: aws.Bool(true),
-	}
-	resp, err := svc.TerminateInstances(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_UnassignIpv6Addresses() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.UnassignIpv6AddressesInput{
-		Ipv6Addresses: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		NetworkInterfaceId: aws.String("String"), // Required
-	}
-	resp, err := svc.UnassignIpv6Addresses(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_UnassignPrivateIpAddresses() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.UnassignPrivateIpAddressesInput{
-		NetworkInterfaceId: aws.String("String"), // Required
-		PrivateIpAddresses: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.UnassignPrivateIpAddresses(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleEC2_UnmonitorInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := ec2.New(sess)
-
-	params := &ec2.UnmonitorInstancesInput{
-		InstanceIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		DryRun: aws.Bool(true),
-	}
-	resp, err := svc.UnmonitorInstances(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }

@@ -6,14 +6,13 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -199,16 +198,30 @@ func TestDownloadOrder(t *testing.T) {
 		Key:    aws.String("key"),
 	})
 
-	assert.Nil(t, err)
-	assert.Equal(t, int64(len(buf12MB)), n)
-	assert.Equal(t, []string{"GetObject", "GetObject", "GetObject"}, *names)
-	assert.Equal(t, []string{"bytes=0-5242879", "bytes=5242880-10485759", "bytes=10485760-15728639"}, *ranges)
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
+	if e, a := int64(len(buf12MB)), n; e != a {
+		t.Errorf("expect %d buffer length, got %d", e, a)
+	}
+
+	expectCalls := []string{"GetObject", "GetObject", "GetObject"}
+	if e, a := expectCalls, *names; !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v API calls, got %v", e, a)
+	}
+
+	expectRngs := []string{"bytes=0-5242879", "bytes=5242880-10485759", "bytes=10485760-15728639"}
+	if e, a := expectRngs, *ranges; !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v ranges, got %v", e, a)
+	}
 
 	count := 0
 	for _, b := range w.Bytes() {
 		count += int(b)
 	}
-	assert.Equal(t, 0, count)
+	if count != 0 {
+		t.Errorf("expect 0 count, got %d", count)
+	}
 }
 
 func TestDownloadZero(t *testing.T) {
@@ -221,10 +234,21 @@ func TestDownloadZero(t *testing.T) {
 		Key:    aws.String("key"),
 	})
 
-	assert.Nil(t, err)
-	assert.Equal(t, int64(0), n)
-	assert.Equal(t, []string{"GetObject"}, *names)
-	assert.Equal(t, []string{"bytes=0-5242879"}, *ranges)
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
+	if n != 0 {
+		t.Errorf("expect 0 bytes read, got %d", n)
+	}
+	expectCalls := []string{"GetObject"}
+	if e, a := expectCalls, *names; !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v API calls, got %v", e, a)
+	}
+
+	expectRngs := []string{"bytes=0-5242879"}
+	if e, a := expectRngs, *ranges; !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v ranges, got %v", e, a)
+	}
 }
 
 func TestDownloadSetPartSize(t *testing.T) {
@@ -240,11 +264,24 @@ func TestDownloadSetPartSize(t *testing.T) {
 		Key:    aws.String("key"),
 	})
 
-	assert.Nil(t, err)
-	assert.Equal(t, int64(3), n)
-	assert.Equal(t, []string{"GetObject", "GetObject", "GetObject"}, *names)
-	assert.Equal(t, []string{"bytes=0-0", "bytes=1-1", "bytes=2-2"}, *ranges)
-	assert.Equal(t, []byte{1, 2, 3}, w.Bytes())
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
+	if e, a := int64(3), n; e != a {
+		t.Errorf("expect %d bytes read, got %d", e, a)
+	}
+	expectCalls := []string{"GetObject", "GetObject", "GetObject"}
+	if e, a := expectCalls, *names; !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v API calls, got %v", e, a)
+	}
+	expectRngs := []string{"bytes=0-0", "bytes=1-1", "bytes=2-2"}
+	if e, a := expectRngs, *ranges; !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v ranges, got %v", e, a)
+	}
+	expectBytes := []byte{1, 2, 3}
+	if e, a := expectBytes, w.Bytes(); !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v bytes, got %v", e, a)
+	}
 }
 
 func TestDownloadError(t *testing.T) {
@@ -269,10 +306,24 @@ func TestDownloadError(t *testing.T) {
 		Key:    aws.String("key"),
 	})
 
-	assert.NotNil(t, err)
-	assert.Equal(t, int64(1), n)
-	assert.Equal(t, []string{"GetObject", "GetObject"}, *names)
-	assert.Equal(t, []byte{1}, w.Bytes())
+	if err == nil {
+		t.Fatalf("expect error, got none")
+	}
+	aerr := err.(awserr.Error)
+	if e, a := "BadRequest", aerr.Code(); e != a {
+		t.Errorf("expect %s error code, got %s", e, a)
+	}
+	if e, a := int64(1), n; e != a {
+		t.Errorf("expect %d bytes read, got %d", e, a)
+	}
+	expectCalls := []string{"GetObject", "GetObject"}
+	if e, a := expectCalls, *names; !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v API calls, got %v", e, a)
+	}
+	expectBytes := []byte{1}
+	if e, a := expectBytes, w.Bytes(); !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v bytes, got %v", e, a)
+	}
 }
 
 func TestDownloadNonChunk(t *testing.T) {
@@ -287,15 +338,24 @@ func TestDownloadNonChunk(t *testing.T) {
 		Key:    aws.String("key"),
 	})
 
-	assert.Nil(t, err)
-	assert.Equal(t, int64(len(buf2MB)), n)
-	assert.Equal(t, []string{"GetObject"}, *names)
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
+	if e, a := int64(len(buf2MB)), n; e != a {
+		t.Errorf("expect %d bytes read, got %d", e, a)
+	}
+	expectCalls := []string{"GetObject"}
+	if e, a := expectCalls, *names; !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v API calls, got %v", e, a)
+	}
 
 	count := 0
 	for _, b := range w.Bytes() {
 		count += int(b)
 	}
-	assert.Equal(t, 0, count)
+	if count != 0 {
+		t.Errorf("expect 0 count, got %d", count)
+	}
 }
 
 func TestDownloadNoContentRangeLength(t *testing.T) {
@@ -310,15 +370,24 @@ func TestDownloadNoContentRangeLength(t *testing.T) {
 		Key:    aws.String("key"),
 	})
 
-	assert.Nil(t, err)
-	assert.Equal(t, int64(len(buf2MB)), n)
-	assert.Equal(t, []string{"GetObject", "GetObject"}, *names)
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
+	if e, a := int64(len(buf2MB)), n; e != a {
+		t.Errorf("expect %d bytes read, got %d", e, a)
+	}
+	expectCalls := []string{"GetObject", "GetObject"}
+	if e, a := expectCalls, *names; !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v API calls, got %v", e, a)
+	}
 
 	count := 0
 	for _, b := range w.Bytes() {
 		count += int(b)
 	}
-	assert.Equal(t, 0, count)
+	if count != 0 {
+		t.Errorf("expect 0 count, got %d", count)
+	}
 }
 
 func TestDownloadContentRangeTotalAny(t *testing.T) {
@@ -333,15 +402,24 @@ func TestDownloadContentRangeTotalAny(t *testing.T) {
 		Key:    aws.String("key"),
 	})
 
-	assert.Nil(t, err)
-	assert.Equal(t, int64(len(buf2MB)), n)
-	assert.Equal(t, []string{"GetObject", "GetObject"}, *names)
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
+	if e, a := int64(len(buf2MB)), n; e != a {
+		t.Errorf("expect %d bytes read, got %d", e, a)
+	}
+	expectCalls := []string{"GetObject", "GetObject"}
+	if e, a := expectCalls, *names; !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v API calls, got %v", e, a)
+	}
 
 	count := 0
 	for _, b := range w.Bytes() {
 		count += int(b)
 	}
-	assert.Equal(t, 0, count)
+	if count != 0 {
+		t.Errorf("expect 0 count, got %d", count)
+	}
 }
 
 func TestDownloadPartBodyRetry_SuccessRetry(t *testing.T) {
@@ -360,10 +438,19 @@ func TestDownloadPartBodyRetry_SuccessRetry(t *testing.T) {
 		Key:    aws.String("key"),
 	})
 
-	assert.Nil(t, err)
-	assert.Equal(t, int64(3), n)
-	assert.Equal(t, []string{"GetObject", "GetObject"}, *names)
-	assert.Equal(t, []byte("123"), w.Bytes())
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
+	if e, a := int64(3), n; e != a {
+		t.Errorf("expect %d bytes read, got %d", e, a)
+	}
+	expectCalls := []string{"GetObject", "GetObject"}
+	if e, a := expectCalls, *names; !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v API calls, got %v", e, a)
+	}
+	if e, a := "123", string(w.Bytes()); e != a {
+		t.Errorf("expect %q response, got %q", e, a)
+	}
 }
 
 func TestDownloadPartBodyRetry_SuccessNoRetry(t *testing.T) {
@@ -381,10 +468,19 @@ func TestDownloadPartBodyRetry_SuccessNoRetry(t *testing.T) {
 		Key:    aws.String("key"),
 	})
 
-	assert.Nil(t, err)
-	assert.Equal(t, int64(3), n)
-	assert.Equal(t, []string{"GetObject"}, *names)
-	assert.Equal(t, []byte("abc"), w.Bytes())
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
+	if e, a := int64(3), n; e != a {
+		t.Errorf("expect %d bytes read, got %d", e, a)
+	}
+	expectCalls := []string{"GetObject"}
+	if e, a := expectCalls, *names; !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v API calls, got %v", e, a)
+	}
+	if e, a := "abc", string(w.Bytes()); e != a {
+		t.Errorf("expect %q response, got %q", e, a)
+	}
 }
 
 func TestDownloadPartBodyRetry_FailRetry(t *testing.T) {
@@ -402,10 +498,22 @@ func TestDownloadPartBodyRetry_FailRetry(t *testing.T) {
 		Key:    aws.String("key"),
 	})
 
-	assert.Error(t, err)
-	assert.Equal(t, int64(2), n)
-	assert.Equal(t, []string{"GetObject"}, *names)
-	assert.Equal(t, []byte("ab"), w.Bytes())
+	if err == nil {
+		t.Fatalf("expect error, got none")
+	}
+	if e, a := "unexpected EOF", err.Error(); !strings.Contains(a, e) {
+		t.Errorf("expect %q error message to be in %q", e, a)
+	}
+	if e, a := int64(2), n; e != a {
+		t.Errorf("expect %d bytes read, got %d", e, a)
+	}
+	expectCalls := []string{"GetObject"}
+	if e, a := expectCalls, *names; !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v API calls, got %v", e, a)
+	}
+	if e, a := "ab", string(w.Bytes()); e != a {
+		t.Errorf("expect %q response, got %q", e, a)
+	}
 }
 
 func TestDownloadWithContextCanceled(t *testing.T) {
@@ -432,6 +540,41 @@ func TestDownloadWithContextCanceled(t *testing.T) {
 	}
 	if e, a := "canceled", aerr.Message(); !strings.Contains(a, e) {
 		t.Errorf("expected error message to contain %q, but did not %q", e, a)
+	}
+}
+
+func TestDownload_WithRange(t *testing.T) {
+	s, names, ranges := dlLoggingSvc([]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9})
+
+	d := s3manager.NewDownloaderWithClient(s, func(d *s3manager.Downloader) {
+		d.Concurrency = 10 // should be ignored
+		d.PartSize = 1     // should be ignored
+	})
+
+	w := &aws.WriteAtBuffer{}
+	n, err := d.Download(w, &s3.GetObjectInput{
+		Bucket: aws.String("bucket"),
+		Key:    aws.String("key"),
+		Range:  aws.String("bytes=2-6"),
+	})
+
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
+	if e, a := int64(5), n; e != a {
+		t.Errorf("expect %d bytes read, got %d", e, a)
+	}
+	expectCalls := []string{"GetObject"}
+	if e, a := expectCalls, *names; !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v API calls, got %v", e, a)
+	}
+	expectRngs := []string{"bytes=2-6"}
+	if e, a := expectRngs, *ranges; !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v ranges, got %v", e, a)
+	}
+	expectBytes := []byte{2, 3, 4, 5, 6}
+	if e, a := expectBytes, w.Bytes(); !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v bytes, got %v", e, a)
 	}
 }
 

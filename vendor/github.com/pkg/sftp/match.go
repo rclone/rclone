@@ -1,13 +1,13 @@
 package sftp
 
 import (
-	"errors"
+	"path"
 	"strings"
 	"unicode/utf8"
 )
 
 // ErrBadPattern indicates a globbing pattern was malformed.
-var ErrBadPattern = errors.New("syntax error in pattern")
+var ErrBadPattern = path.ErrBadPattern
 
 // Unix separator
 const separator = "/"
@@ -36,48 +36,7 @@ const separator = "/"
 //
 //
 func Match(pattern, name string) (matched bool, err error) {
-Pattern:
-	for len(pattern) > 0 {
-		var star bool
-		var chunk string
-		star, chunk, pattern = scanChunk(pattern)
-		if star && chunk == "" {
-			// Trailing * matches rest of string unless it has a /.
-			return !strings.Contains(name, separator), nil
-		}
-		// Look for match at current position.
-		t, ok, err := matchChunk(chunk, name)
-		// if we're the last chunk, make sure we've exhausted the name
-		// otherwise we'll give a false result even if we could still match
-		// using the star
-		if ok && (len(t) == 0 || len(pattern) > 0) {
-			name = t
-			continue
-		}
-		if err != nil {
-			return false, err
-		}
-		if star {
-			// Look for match skipping i+1 bytes.
-			// Cannot skip /.
-			for i := 0; i < len(name) && !isPathSeparator(name[i]); i++ {
-				t, ok, err := matchChunk(chunk, name[i+1:])
-				if ok {
-					// if we're the last chunk, make sure we exhausted the name
-					if len(pattern) == 0 && len(t) > 0 {
-						continue
-					}
-					name = t
-					continue Pattern
-				}
-				if err != nil {
-					return false, err
-				}
-			}
-		}
-		return false, nil
-	}
-	return len(name) == 0, nil
+	return path.Match(pattern, name)
 }
 
 // detect if byte(char) is path separator
@@ -325,16 +284,7 @@ func (c *Client) glob(dir, pattern string, matches []string) (m []string, e erro
 // a Separator if necessary.
 // all empty strings are ignored.
 func Join(elem ...string) string {
-	return join(elem)
-}
-func join(elem []string) string {
-	// If there's a bug here, fix the logic in ./path_plan9.go too.
-	for i, e := range elem {
-		if e != "" {
-			return strings.Join(elem[i:], string(separator))
-		}
-	}
-	return ""
+	return path.Join(elem...)
 }
 
 // hasMeta reports whether path contains any of the magic characters

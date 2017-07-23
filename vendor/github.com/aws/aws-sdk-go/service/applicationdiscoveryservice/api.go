@@ -1566,8 +1566,17 @@ func (c *ApplicationDiscoveryService) StartExportTaskRequest(input *StartExportT
 
 // StartExportTask API operation for AWS Application Discovery Service.
 //
-// Export the configuration data about discovered configuration items and relationships
-// to an S3 bucket in a specified format.
+// Begins the export of discovered data to an S3 bucket.
+//
+// If you specify agentId in a filter, the task exports up to 72 hours of detailed
+// data collected by the identified Application Discovery Agent, including network,
+// process, and performance details. A time range for exported agent data may
+// be set by using startTime and endTime. Export of detailed agent data is limited
+// to five concurrently running exports.
+//
+// If you do not include an agentId filter, summary data is exported that includes
+// both AWS Agentless Discovery Connector data and summary data from AWS Discovery
+// Agents. Export of summary data is limited to two exports per day.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2863,6 +2872,11 @@ type DescribeExportTasksInput struct {
 	// One or more unique identifiers used to query the status of an export request.
 	ExportIds []*string `locationName:"exportIds" type:"list"`
 
+	// One or more filters.
+	//
+	//    * AgentId - ID of the agent whose collected data will be exported
+	Filters []*ExportFilter `locationName:"filters" type:"list"`
+
 	// The maximum number of volume results returned by DescribeExportTasks in paginated
 	// output. When this parameter is used, DescribeExportTasks only returns maxResults
 	// results in a single page along with a nextToken response element.
@@ -2886,9 +2900,35 @@ func (s DescribeExportTasksInput) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeExportTasksInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeExportTasksInput"}
+	if s.Filters != nil {
+		for i, v := range s.Filters {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // SetExportIds sets the ExportIds field's value.
 func (s *DescribeExportTasksInput) SetExportIds(v []*string) *DescribeExportTasksInput {
 	s.ExportIds = v
+	return s
+}
+
+// SetFilters sets the Filters field's value.
+func (s *DescribeExportTasksInput) SetFilters(v []*ExportFilter) *DescribeExportTasksInput {
+	s.Filters = v
 	return s
 }
 
@@ -3148,34 +3188,118 @@ func (s *ExportConfigurationsOutput) SetExportId(v string) *ExportConfigurations
 	return s
 }
 
-// Information regarding the export status of the discovered data. The value
-// is an array of objects.
+// Used to select which agent's data is to be exported. A single agent ID may
+// be selected for export using the StartExportTask (http://docs.aws.amazon.com/application-discovery/latest/APIReference/API_StartExportTask.html)
+// action.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/ExportFilter
+type ExportFilter struct {
+	_ struct{} `type:"structure"`
+
+	// Supported condition: EQUALS
+	//
+	// Condition is a required field
+	Condition *string `locationName:"condition" type:"string" required:"true"`
+
+	// A single ExportFilter name. Supported filters: agentId.
+	//
+	// Name is a required field
+	Name *string `locationName:"name" type:"string" required:"true"`
+
+	// A single agentId for a Discovery Agent. An agentId can be found using the
+	// DescribeAgents (http://docs.aws.amazon.com/application-discovery/latest/APIReference/API_DescribeExportTasks.html)
+	// action. Typically an ADS agentId is in the form o-0123456789abcdef0.
+	//
+	// Values is a required field
+	Values []*string `locationName:"values" locationNameList:"item" type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s ExportFilter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ExportFilter) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ExportFilter) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ExportFilter"}
+	if s.Condition == nil {
+		invalidParams.Add(request.NewErrParamRequired("Condition"))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Values == nil {
+		invalidParams.Add(request.NewErrParamRequired("Values"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCondition sets the Condition field's value.
+func (s *ExportFilter) SetCondition(v string) *ExportFilter {
+	s.Condition = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *ExportFilter) SetName(v string) *ExportFilter {
+	s.Name = &v
+	return s
+}
+
+// SetValues sets the Values field's value.
+func (s *ExportFilter) SetValues(v []*string) *ExportFilter {
+	s.Values = v
+	return s
+}
+
+// Information regarding the export status of discovered data. The value is
+// an array of objects.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/discovery-2015-11-01/ExportInfo
 type ExportInfo struct {
 	_ struct{} `type:"structure"`
 
-	// A URL for an Amazon S3 bucket where you can review the configuration data.
-	// The URL is displayed only if the export succeeded.
+	// A URL for an Amazon S3 bucket where you can review the exported data. The
+	// URL is displayed only if the export succeeded.
 	ConfigurationsDownloadUrl *string `locationName:"configurationsDownloadUrl" type:"string"`
 
-	// A unique identifier that you can use to query the export.
+	// A unique identifier used to query an export.
 	//
 	// ExportId is a required field
 	ExportId *string `locationName:"exportId" type:"string" required:"true"`
 
-	// The time that the configuration data export was initiated.
+	// The time that the data export was initiated.
 	//
 	// ExportRequestTime is a required field
 	ExportRequestTime *time.Time `locationName:"exportRequestTime" type:"timestamp" timestampFormat:"unix" required:"true"`
 
-	// The status of the configuration data export. The status can succeed, fail,
-	// or be in-progress.
+	// The status of the data export job.
 	//
 	// ExportStatus is a required field
 	ExportStatus *string `locationName:"exportStatus" type:"string" required:"true" enum:"ExportStatus"`
 
-	// Helpful status messages for API callers. For example: Too many exports in
-	// the last 6 hours. Export in progress. Export was successful.
+	// If true, the export of agent information exceeded the size limit for a single
+	// export and the exported data is incomplete for the requested time range.
+	// To address this, select a smaller time range for the export by using startDate
+	// and endDate.
+	IsTruncated *bool `locationName:"isTruncated" type:"boolean"`
+
+	// The endTime used in the StartExportTask request. If no endTime was requested,
+	// this result does not appear in ExportInfo.
+	RequestedEndTime *time.Time `locationName:"requestedEndTime" type:"timestamp" timestampFormat:"unix"`
+
+	// The value of startTime parameter in the StartExportTask request. If no startTime
+	// was requested, this result does not appear in ExportInfo.
+	RequestedStartTime *time.Time `locationName:"requestedStartTime" type:"timestamp" timestampFormat:"unix"`
+
+	// A status message provided for API callers.
 	//
 	// StatusMessage is a required field
 	StatusMessage *string `locationName:"statusMessage" type:"string" required:"true"`
@@ -3212,6 +3336,24 @@ func (s *ExportInfo) SetExportRequestTime(v time.Time) *ExportInfo {
 // SetExportStatus sets the ExportStatus field's value.
 func (s *ExportInfo) SetExportStatus(v string) *ExportInfo {
 	s.ExportStatus = &v
+	return s
+}
+
+// SetIsTruncated sets the IsTruncated field's value.
+func (s *ExportInfo) SetIsTruncated(v bool) *ExportInfo {
+	s.IsTruncated = &v
+	return s
+}
+
+// SetRequestedEndTime sets the RequestedEndTime field's value.
+func (s *ExportInfo) SetRequestedEndTime(v time.Time) *ExportInfo {
+	s.RequestedEndTime = &v
+	return s
+}
+
+// SetRequestedStartTime sets the RequestedStartTime field's value.
+func (s *ExportInfo) SetRequestedStartTime(v time.Time) *ExportInfo {
+	s.RequestedStartTime = &v
 	return s
 }
 
@@ -3843,8 +3985,25 @@ func (s *StartDataCollectionByAgentIdsOutput) SetAgentsConfigurationStatus(v []*
 type StartExportTaskInput struct {
 	_ struct{} `type:"structure"`
 
+	// The end timestamp for exported data from the single Application Discovery
+	// Agent selected in the filters. If no value is specified, exported data includes
+	// the most recent data collected by the agent.
+	EndTime *time.Time `locationName:"endTime" type:"timestamp" timestampFormat:"unix"`
+
 	// The file format for the returned export data. Default value is CSV.
 	ExportDataFormat []*string `locationName:"exportDataFormat" type:"list"`
+
+	// If a filter is present, it selects the single agentId of the Application
+	// Discovery Agent for which data is exported. The agentId can be found in the
+	// results of the DescribeAgents API or CLI. If no filter is present, startTime
+	// and endTime are ignored and exported data includes both Agentless Discovery
+	// Connector data and summary data from Application Discovery agents.
+	Filters []*ExportFilter `locationName:"filters" type:"list"`
+
+	// The start timestamp for exported data from the single Application Discovery
+	// Agent selected in the filters. If no value is specified, data is exported
+	// starting from the first data collected by the agent.
+	StartTime *time.Time `locationName:"startTime" type:"timestamp" timestampFormat:"unix"`
 }
 
 // String returns the string representation
@@ -3857,9 +4016,47 @@ func (s StartExportTaskInput) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StartExportTaskInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StartExportTaskInput"}
+	if s.Filters != nil {
+		for i, v := range s.Filters {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEndTime sets the EndTime field's value.
+func (s *StartExportTaskInput) SetEndTime(v time.Time) *StartExportTaskInput {
+	s.EndTime = &v
+	return s
+}
+
 // SetExportDataFormat sets the ExportDataFormat field's value.
 func (s *StartExportTaskInput) SetExportDataFormat(v []*string) *StartExportTaskInput {
 	s.ExportDataFormat = v
+	return s
+}
+
+// SetFilters sets the Filters field's value.
+func (s *StartExportTaskInput) SetFilters(v []*ExportFilter) *StartExportTaskInput {
+	s.Filters = v
+	return s
+}
+
+// SetStartTime sets the StartTime field's value.
+func (s *StartExportTaskInput) SetStartTime(v time.Time) *StartExportTaskInput {
+	s.StartTime = &v
 	return s
 }
 

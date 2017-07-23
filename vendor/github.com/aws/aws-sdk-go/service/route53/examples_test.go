@@ -3,1219 +3,663 @@
 package route53_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleRoute53_AssociateVPCWithHostedZone() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.AssociateVPCWithHostedZoneInput{
-		HostedZoneId: aws.String("ResourceId"), // Required
-		VPC: &route53.VPC{ // Required
-			VPCId:     aws.String("VPCId"),
-			VPCRegion: aws.String("VPCRegion"),
-		},
-		Comment: aws.String("AssociateVPCComment"),
-	}
-	resp, err := svc.AssociateVPCWithHostedZone(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		panic(err)
+	}
+	return &t
+}
+
+// To associate a VPC with a hosted zone
+//
+// The following example associates the VPC with ID vpc-1a2b3c4d with the hosted zone
+// with ID Z3M3LMPEXAMPLE.
+func ExampleRoute53_AssociateVPCWithHostedZone_shared00() {
+	svc := route53.New(session.New())
+	input := &route53.AssociateVPCWithHostedZoneInput{
+		Comment:      aws.String(""),
+		HostedZoneId: aws.String("Z3M3LMPEXAMPLE"),
+		VPC: &route53.VPC{
+			VPCId:     aws.String("vpc-1a2b3c4d"),
+			VPCRegion: aws.String("us-east-2"),
+		},
+	}
+
+	result, err := svc.AssociateVPCWithHostedZone(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case route53.ErrCodeNoSuchHostedZone:
+				fmt.Println(route53.ErrCodeNoSuchHostedZone, aerr.Error())
+			case route53.ErrCodeNotAuthorizedException:
+				fmt.Println(route53.ErrCodeNotAuthorizedException, aerr.Error())
+			case route53.ErrCodeInvalidVPCId:
+				fmt.Println(route53.ErrCodeInvalidVPCId, aerr.Error())
+			case route53.ErrCodeInvalidInput:
+				fmt.Println(route53.ErrCodeInvalidInput, aerr.Error())
+			case route53.ErrCodePublicZoneVPCAssociation:
+				fmt.Println(route53.ErrCodePublicZoneVPCAssociation, aerr.Error())
+			case route53.ErrCodeConflictingDomainExists:
+				fmt.Println(route53.ErrCodeConflictingDomainExists, aerr.Error())
+			case route53.ErrCodeLimitsExceeded:
+				fmt.Println(route53.ErrCodeLimitsExceeded, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRoute53_ChangeResourceRecordSets() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.ChangeResourceRecordSetsInput{
-		ChangeBatch: &route53.ChangeBatch{ // Required
-			Changes: []*route53.Change{ // Required
-				{ // Required
-					Action: aws.String("ChangeAction"), // Required
-					ResourceRecordSet: &route53.ResourceRecordSet{ // Required
-						Name: aws.String("DNSName"), // Required
-						Type: aws.String("RRType"),  // Required
-						AliasTarget: &route53.AliasTarget{
-							DNSName:              aws.String("DNSName"),    // Required
-							EvaluateTargetHealth: aws.Bool(true),           // Required
-							HostedZoneId:         aws.String("ResourceId"), // Required
-						},
-						Failover: aws.String("ResourceRecordSetFailover"),
-						GeoLocation: &route53.GeoLocation{
-							ContinentCode:   aws.String("GeoLocationContinentCode"),
-							CountryCode:     aws.String("GeoLocationCountryCode"),
-							SubdivisionCode: aws.String("GeoLocationSubdivisionCode"),
-						},
-						HealthCheckId: aws.String("HealthCheckId"),
-						Region:        aws.String("ResourceRecordSetRegion"),
-						ResourceRecords: []*route53.ResourceRecord{
-							{ // Required
-								Value: aws.String("RData"), // Required
-							},
-							// More values...
-						},
-						SetIdentifier: aws.String("ResourceRecordSetIdentifier"),
-						TTL:           aws.Int64(1),
-						TrafficPolicyInstanceId: aws.String("TrafficPolicyInstanceId"),
-						Weight:                  aws.Int64(1),
-					},
+// To create a basic resource record set
+//
+// The following example creates a resource record set that routes Internet traffic
+// to a resource with an IP address of 192.0.2.44.
+func ExampleRoute53_ChangeResourceRecordSets_shared00() {
+	svc := route53.New(session.New())
+	input := &route53.ChangeResourceRecordSetsInput{
+		ChangeBatch: &route53.ChangeBatch{
+			Changes: []*route53.Change{
+				{
+					Action: aws.String("CREATE"),
 				},
-				// More values...
 			},
-			Comment: aws.String("ResourceDescription"),
+			Comment: aws.String("Web server for example.com"),
 		},
-		HostedZoneId: aws.String("ResourceId"), // Required
+		HostedZoneId: aws.String("Z3M3LMPEXAMPLE"),
 	}
-	resp, err := svc.ChangeResourceRecordSets(params)
 
+	result, err := svc.ChangeResourceRecordSets(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case route53.ErrCodeNoSuchHostedZone:
+				fmt.Println(route53.ErrCodeNoSuchHostedZone, aerr.Error())
+			case route53.ErrCodeNoSuchHealthCheck:
+				fmt.Println(route53.ErrCodeNoSuchHealthCheck, aerr.Error())
+			case route53.ErrCodeInvalidChangeBatch:
+				fmt.Println(route53.ErrCodeInvalidChangeBatch, aerr.Error())
+			case route53.ErrCodeInvalidInput:
+				fmt.Println(route53.ErrCodeInvalidInput, aerr.Error())
+			case route53.ErrCodePriorRequestNotComplete:
+				fmt.Println(route53.ErrCodePriorRequestNotComplete, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRoute53_ChangeTagsForResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.ChangeTagsForResourceInput{
-		ResourceId:   aws.String("TagResourceId"),   // Required
-		ResourceType: aws.String("TagResourceType"), // Required
-		AddTags: []*route53.Tag{
-			{ // Required
-				Key:   aws.String("TagKey"),
-				Value: aws.String("TagValue"),
+// To create weighted resource record sets
+//
+// The following example creates two weighted resource record sets. The resource with
+// a Weight of 100 will get 1/3rd of traffic (100/100+200), and the other resource will
+// get the rest of the traffic for example.com.
+func ExampleRoute53_ChangeResourceRecordSets_shared01() {
+	svc := route53.New(session.New())
+	input := &route53.ChangeResourceRecordSetsInput{
+		ChangeBatch: &route53.ChangeBatch{
+			Changes: []*route53.Change{
+				{
+					Action: aws.String("CREATE"),
+				},
+				{
+					Action: aws.String("CREATE"),
+				},
 			},
-			// More values...
+			Comment: aws.String("Web servers for example.com"),
+		},
+		HostedZoneId: aws.String("Z3M3LMPEXAMPLE"),
+	}
+
+	result, err := svc.ChangeResourceRecordSets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case route53.ErrCodeNoSuchHostedZone:
+				fmt.Println(route53.ErrCodeNoSuchHostedZone, aerr.Error())
+			case route53.ErrCodeNoSuchHealthCheck:
+				fmt.Println(route53.ErrCodeNoSuchHealthCheck, aerr.Error())
+			case route53.ErrCodeInvalidChangeBatch:
+				fmt.Println(route53.ErrCodeInvalidChangeBatch, aerr.Error())
+			case route53.ErrCodeInvalidInput:
+				fmt.Println(route53.ErrCodeInvalidInput, aerr.Error())
+			case route53.ErrCodePriorRequestNotComplete:
+				fmt.Println(route53.ErrCodePriorRequestNotComplete, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create an alias resource record set
+//
+// The following example creates an alias resource record set that routes traffic to
+// a CloudFront distribution.
+func ExampleRoute53_ChangeResourceRecordSets_shared02() {
+	svc := route53.New(session.New())
+	input := &route53.ChangeResourceRecordSetsInput{
+		ChangeBatch: &route53.ChangeBatch{
+			Changes: []*route53.Change{
+				{
+					Action: aws.String("CREATE"),
+				},
+			},
+			Comment: aws.String("CloudFront distribution for example.com"),
+		},
+		HostedZoneId: aws.String("Z3M3LMPEXAMPLE"),
+	}
+
+	result, err := svc.ChangeResourceRecordSets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case route53.ErrCodeNoSuchHostedZone:
+				fmt.Println(route53.ErrCodeNoSuchHostedZone, aerr.Error())
+			case route53.ErrCodeNoSuchHealthCheck:
+				fmt.Println(route53.ErrCodeNoSuchHealthCheck, aerr.Error())
+			case route53.ErrCodeInvalidChangeBatch:
+				fmt.Println(route53.ErrCodeInvalidChangeBatch, aerr.Error())
+			case route53.ErrCodeInvalidInput:
+				fmt.Println(route53.ErrCodeInvalidInput, aerr.Error())
+			case route53.ErrCodePriorRequestNotComplete:
+				fmt.Println(route53.ErrCodePriorRequestNotComplete, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create weighted alias resource record sets
+//
+// The following example creates two weighted alias resource record sets that route
+// traffic to ELB load balancers. The resource with a Weight of 100 will get 1/3rd of
+// traffic (100/100+200), and the other resource will get the rest of the traffic for
+// example.com.
+func ExampleRoute53_ChangeResourceRecordSets_shared03() {
+	svc := route53.New(session.New())
+	input := &route53.ChangeResourceRecordSetsInput{
+		ChangeBatch: &route53.ChangeBatch{
+			Changes: []*route53.Change{
+				{
+					Action: aws.String("CREATE"),
+				},
+				{
+					Action: aws.String("CREATE"),
+				},
+			},
+			Comment: aws.String("ELB load balancers for example.com"),
+		},
+		HostedZoneId: aws.String("Z3M3LMPEXAMPLE"),
+	}
+
+	result, err := svc.ChangeResourceRecordSets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case route53.ErrCodeNoSuchHostedZone:
+				fmt.Println(route53.ErrCodeNoSuchHostedZone, aerr.Error())
+			case route53.ErrCodeNoSuchHealthCheck:
+				fmt.Println(route53.ErrCodeNoSuchHealthCheck, aerr.Error())
+			case route53.ErrCodeInvalidChangeBatch:
+				fmt.Println(route53.ErrCodeInvalidChangeBatch, aerr.Error())
+			case route53.ErrCodeInvalidInput:
+				fmt.Println(route53.ErrCodeInvalidInput, aerr.Error())
+			case route53.ErrCodePriorRequestNotComplete:
+				fmt.Println(route53.ErrCodePriorRequestNotComplete, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create latency resource record sets
+//
+// The following example creates two latency resource record sets that route traffic
+// to EC2 instances. Traffic for example.com is routed either to the Ohio region or
+// the Oregon region, depending on the latency between the user and those regions.
+func ExampleRoute53_ChangeResourceRecordSets_shared04() {
+	svc := route53.New(session.New())
+	input := &route53.ChangeResourceRecordSetsInput{
+		ChangeBatch: &route53.ChangeBatch{
+			Changes: []*route53.Change{
+				{
+					Action: aws.String("CREATE"),
+				},
+				{
+					Action: aws.String("CREATE"),
+				},
+			},
+			Comment: aws.String("EC2 instances for example.com"),
+		},
+		HostedZoneId: aws.String("Z3M3LMPEXAMPLE"),
+	}
+
+	result, err := svc.ChangeResourceRecordSets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case route53.ErrCodeNoSuchHostedZone:
+				fmt.Println(route53.ErrCodeNoSuchHostedZone, aerr.Error())
+			case route53.ErrCodeNoSuchHealthCheck:
+				fmt.Println(route53.ErrCodeNoSuchHealthCheck, aerr.Error())
+			case route53.ErrCodeInvalidChangeBatch:
+				fmt.Println(route53.ErrCodeInvalidChangeBatch, aerr.Error())
+			case route53.ErrCodeInvalidInput:
+				fmt.Println(route53.ErrCodeInvalidInput, aerr.Error())
+			case route53.ErrCodePriorRequestNotComplete:
+				fmt.Println(route53.ErrCodePriorRequestNotComplete, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create latency alias resource record sets
+//
+// The following example creates two latency alias resource record sets that route traffic
+// for example.com to ELB load balancers. Requests are routed either to the Ohio region
+// or the Oregon region, depending on the latency between the user and those regions.
+func ExampleRoute53_ChangeResourceRecordSets_shared05() {
+	svc := route53.New(session.New())
+	input := &route53.ChangeResourceRecordSetsInput{
+		ChangeBatch: &route53.ChangeBatch{
+			Changes: []*route53.Change{
+				{
+					Action: aws.String("CREATE"),
+				},
+				{
+					Action: aws.String("CREATE"),
+				},
+			},
+			Comment: aws.String("ELB load balancers for example.com"),
+		},
+		HostedZoneId: aws.String("Z3M3LMPEXAMPLE"),
+	}
+
+	result, err := svc.ChangeResourceRecordSets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case route53.ErrCodeNoSuchHostedZone:
+				fmt.Println(route53.ErrCodeNoSuchHostedZone, aerr.Error())
+			case route53.ErrCodeNoSuchHealthCheck:
+				fmt.Println(route53.ErrCodeNoSuchHealthCheck, aerr.Error())
+			case route53.ErrCodeInvalidChangeBatch:
+				fmt.Println(route53.ErrCodeInvalidChangeBatch, aerr.Error())
+			case route53.ErrCodeInvalidInput:
+				fmt.Println(route53.ErrCodeInvalidInput, aerr.Error())
+			case route53.ErrCodePriorRequestNotComplete:
+				fmt.Println(route53.ErrCodePriorRequestNotComplete, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create failover resource record sets
+//
+// The following example creates primary and secondary failover resource record sets
+// that route traffic to EC2 instances. Traffic is generally routed to the primary resource,
+// in the Ohio region. If that resource is unavailable, traffic is routed to the secondary
+// resource, in the Oregon region.
+func ExampleRoute53_ChangeResourceRecordSets_shared06() {
+	svc := route53.New(session.New())
+	input := &route53.ChangeResourceRecordSetsInput{
+		ChangeBatch: &route53.ChangeBatch{
+			Changes: []*route53.Change{
+				{
+					Action: aws.String("CREATE"),
+				},
+				{
+					Action: aws.String("CREATE"),
+				},
+			},
+			Comment: aws.String("Failover configuration for example.com"),
+		},
+		HostedZoneId: aws.String("Z3M3LMPEXAMPLE"),
+	}
+
+	result, err := svc.ChangeResourceRecordSets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case route53.ErrCodeNoSuchHostedZone:
+				fmt.Println(route53.ErrCodeNoSuchHostedZone, aerr.Error())
+			case route53.ErrCodeNoSuchHealthCheck:
+				fmt.Println(route53.ErrCodeNoSuchHealthCheck, aerr.Error())
+			case route53.ErrCodeInvalidChangeBatch:
+				fmt.Println(route53.ErrCodeInvalidChangeBatch, aerr.Error())
+			case route53.ErrCodeInvalidInput:
+				fmt.Println(route53.ErrCodeInvalidInput, aerr.Error())
+			case route53.ErrCodePriorRequestNotComplete:
+				fmt.Println(route53.ErrCodePriorRequestNotComplete, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create failover alias resource record sets
+//
+// The following example creates primary and secondary failover alias resource record
+// sets that route traffic to ELB load balancers. Traffic is generally routed to the
+// primary resource, in the Ohio region. If that resource is unavailable, traffic is
+// routed to the secondary resource, in the Oregon region.
+func ExampleRoute53_ChangeResourceRecordSets_shared07() {
+	svc := route53.New(session.New())
+	input := &route53.ChangeResourceRecordSetsInput{
+		ChangeBatch: &route53.ChangeBatch{
+			Changes: []*route53.Change{
+				{
+					Action: aws.String("CREATE"),
+				},
+				{
+					Action: aws.String("CREATE"),
+				},
+			},
+			Comment: aws.String("Failover alias configuration for example.com"),
+		},
+		HostedZoneId: aws.String("Z3M3LMPEXAMPLE"),
+	}
+
+	result, err := svc.ChangeResourceRecordSets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case route53.ErrCodeNoSuchHostedZone:
+				fmt.Println(route53.ErrCodeNoSuchHostedZone, aerr.Error())
+			case route53.ErrCodeNoSuchHealthCheck:
+				fmt.Println(route53.ErrCodeNoSuchHealthCheck, aerr.Error())
+			case route53.ErrCodeInvalidChangeBatch:
+				fmt.Println(route53.ErrCodeInvalidChangeBatch, aerr.Error())
+			case route53.ErrCodeInvalidInput:
+				fmt.Println(route53.ErrCodeInvalidInput, aerr.Error())
+			case route53.ErrCodePriorRequestNotComplete:
+				fmt.Println(route53.ErrCodePriorRequestNotComplete, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create geolocation resource record sets
+//
+// The following example creates four geolocation resource record sets that use IPv4
+// addresses to route traffic to resources such as web servers running on EC2 instances.
+// Traffic is routed to one of four IP addresses, for North America (NA), for South
+// America (SA), for Europe (EU), and for all other locations (*).
+func ExampleRoute53_ChangeResourceRecordSets_shared08() {
+	svc := route53.New(session.New())
+	input := &route53.ChangeResourceRecordSetsInput{
+		ChangeBatch: &route53.ChangeBatch{
+			Changes: []*route53.Change{
+				{
+					Action: aws.String("CREATE"),
+				},
+				{
+					Action: aws.String("CREATE"),
+				},
+				{
+					Action: aws.String("CREATE"),
+				},
+				{
+					Action: aws.String("CREATE"),
+				},
+			},
+			Comment: aws.String("Geolocation configuration for example.com"),
+		},
+		HostedZoneId: aws.String("Z3M3LMPEXAMPLE"),
+	}
+
+	result, err := svc.ChangeResourceRecordSets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case route53.ErrCodeNoSuchHostedZone:
+				fmt.Println(route53.ErrCodeNoSuchHostedZone, aerr.Error())
+			case route53.ErrCodeNoSuchHealthCheck:
+				fmt.Println(route53.ErrCodeNoSuchHealthCheck, aerr.Error())
+			case route53.ErrCodeInvalidChangeBatch:
+				fmt.Println(route53.ErrCodeInvalidChangeBatch, aerr.Error())
+			case route53.ErrCodeInvalidInput:
+				fmt.Println(route53.ErrCodeInvalidInput, aerr.Error())
+			case route53.ErrCodePriorRequestNotComplete:
+				fmt.Println(route53.ErrCodePriorRequestNotComplete, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create geolocation alias resource record sets
+//
+// The following example creates four geolocation alias resource record sets that route
+// traffic to ELB load balancers. Traffic is routed to one of four IP addresses, for
+// North America (NA), for South America (SA), for Europe (EU), and for all other locations
+// (*).
+func ExampleRoute53_ChangeResourceRecordSets_shared09() {
+	svc := route53.New(session.New())
+	input := &route53.ChangeResourceRecordSetsInput{
+		ChangeBatch: &route53.ChangeBatch{
+			Changes: []*route53.Change{
+				{
+					Action: aws.String("CREATE"),
+				},
+				{
+					Action: aws.String("CREATE"),
+				},
+				{
+					Action: aws.String("CREATE"),
+				},
+				{
+					Action: aws.String("CREATE"),
+				},
+			},
+			Comment: aws.String("Geolocation alias configuration for example.com"),
+		},
+		HostedZoneId: aws.String("Z3M3LMPEXAMPLE"),
+	}
+
+	result, err := svc.ChangeResourceRecordSets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case route53.ErrCodeNoSuchHostedZone:
+				fmt.Println(route53.ErrCodeNoSuchHostedZone, aerr.Error())
+			case route53.ErrCodeNoSuchHealthCheck:
+				fmt.Println(route53.ErrCodeNoSuchHealthCheck, aerr.Error())
+			case route53.ErrCodeInvalidChangeBatch:
+				fmt.Println(route53.ErrCodeInvalidChangeBatch, aerr.Error())
+			case route53.ErrCodeInvalidInput:
+				fmt.Println(route53.ErrCodeInvalidInput, aerr.Error())
+			case route53.ErrCodePriorRequestNotComplete:
+				fmt.Println(route53.ErrCodePriorRequestNotComplete, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To add or remove tags from a hosted zone or health check
+//
+// The following example adds two tags and removes one tag from the hosted zone with
+// ID Z3M3LMPEXAMPLE.
+func ExampleRoute53_ChangeTagsForResource_shared00() {
+	svc := route53.New(session.New())
+	input := &route53.ChangeTagsForResourceInput{
+		AddTags: []*route53.Tag{
+			{
+				Key:   aws.String("apex"),
+				Value: aws.String("3874"),
+			},
+			{
+				Key:   aws.String("acme"),
+				Value: aws.String("4938"),
+			},
 		},
 		RemoveTagKeys: []*string{
-			aws.String("TagKey"), // Required
-			// More values...
+			aws.String("Nadir"),
 		},
+		ResourceId:   aws.String("Z3M3LMPEXAMPLE"),
+		ResourceType: aws.String("hostedzone"),
 	}
-	resp, err := svc.ChangeTagsForResource(params)
 
+	result, err := svc.ChangeTagsForResource(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case route53.ErrCodeInvalidInput:
+				fmt.Println(route53.ErrCodeInvalidInput, aerr.Error())
+			case route53.ErrCodeNoSuchHealthCheck:
+				fmt.Println(route53.ErrCodeNoSuchHealthCheck, aerr.Error())
+			case route53.ErrCodeNoSuchHostedZone:
+				fmt.Println(route53.ErrCodeNoSuchHostedZone, aerr.Error())
+			case route53.ErrCodePriorRequestNotComplete:
+				fmt.Println(route53.ErrCodePriorRequestNotComplete, aerr.Error())
+			case route53.ErrCodeThrottlingException:
+				fmt.Println(route53.ErrCodeThrottlingException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRoute53_CreateHealthCheck() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.CreateHealthCheckInput{
-		CallerReference: aws.String("HealthCheckNonce"), // Required
-		HealthCheckConfig: &route53.HealthCheckConfig{ // Required
-			Type: aws.String("HealthCheckType"), // Required
-			AlarmIdentifier: &route53.AlarmIdentifier{
-				Name:   aws.String("AlarmName"),        // Required
-				Region: aws.String("CloudWatchRegion"), // Required
-			},
-			ChildHealthChecks: []*string{
-				aws.String("HealthCheckId"), // Required
-				// More values...
-			},
-			EnableSNI:                    aws.Bool(true),
-			FailureThreshold:             aws.Int64(1),
-			FullyQualifiedDomainName:     aws.String("FullyQualifiedDomainName"),
-			HealthThreshold:              aws.Int64(1),
-			IPAddress:                    aws.String("IPAddress"),
-			InsufficientDataHealthStatus: aws.String("InsufficientDataHealthStatus"),
-			Inverted:                     aws.Bool(true),
-			MeasureLatency:               aws.Bool(true),
-			Port:                         aws.Int64(1),
-			Regions: []*string{
-				aws.String("HealthCheckRegion"), // Required
-				// More values...
-			},
-			RequestInterval: aws.Int64(1),
-			ResourcePath:    aws.String("ResourcePath"),
-			SearchString:    aws.String("SearchString"),
-		},
+// To get information about a hosted zone
+//
+// The following example gets information about the Z3M3LMPEXAMPLE hosted zone.
+func ExampleRoute53_GetHostedZone_shared00() {
+	svc := route53.New(session.New())
+	input := &route53.GetHostedZoneInput{
+		Id: aws.String("Z3M3LMPEXAMPLE"),
 	}
-	resp, err := svc.CreateHealthCheck(params)
 
+	result, err := svc.GetHostedZone(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case route53.ErrCodeNoSuchHostedZone:
+				fmt.Println(route53.ErrCodeNoSuchHostedZone, aerr.Error())
+			case route53.ErrCodeInvalidInput:
+				fmt.Println(route53.ErrCodeInvalidInput, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_CreateHostedZone() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.CreateHostedZoneInput{
-		CallerReference: aws.String("Nonce"),   // Required
-		Name:            aws.String("DNSName"), // Required
-		DelegationSetId: aws.String("ResourceId"),
-		HostedZoneConfig: &route53.HostedZoneConfig{
-			Comment:     aws.String("ResourceDescription"),
-			PrivateZone: aws.Bool(true),
-		},
-		VPC: &route53.VPC{
-			VPCId:     aws.String("VPCId"),
-			VPCRegion: aws.String("VPCRegion"),
-		},
-	}
-	resp, err := svc.CreateHostedZone(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_CreateReusableDelegationSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.CreateReusableDelegationSetInput{
-		CallerReference: aws.String("Nonce"), // Required
-		HostedZoneId:    aws.String("ResourceId"),
-	}
-	resp, err := svc.CreateReusableDelegationSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_CreateTrafficPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.CreateTrafficPolicyInput{
-		Document: aws.String("TrafficPolicyDocument"), // Required
-		Name:     aws.String("TrafficPolicyName"),     // Required
-		Comment:  aws.String("TrafficPolicyComment"),
-	}
-	resp, err := svc.CreateTrafficPolicy(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_CreateTrafficPolicyInstance() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.CreateTrafficPolicyInstanceInput{
-		HostedZoneId:         aws.String("ResourceId"),      // Required
-		Name:                 aws.String("DNSName"),         // Required
-		TTL:                  aws.Int64(1),                  // Required
-		TrafficPolicyId:      aws.String("TrafficPolicyId"), // Required
-		TrafficPolicyVersion: aws.Int64(1),                  // Required
-	}
-	resp, err := svc.CreateTrafficPolicyInstance(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_CreateTrafficPolicyVersion() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.CreateTrafficPolicyVersionInput{
-		Document: aws.String("TrafficPolicyDocument"), // Required
-		Id:       aws.String("TrafficPolicyId"),       // Required
-		Comment:  aws.String("TrafficPolicyComment"),
-	}
-	resp, err := svc.CreateTrafficPolicyVersion(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_CreateVPCAssociationAuthorization() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.CreateVPCAssociationAuthorizationInput{
-		HostedZoneId: aws.String("ResourceId"), // Required
-		VPC: &route53.VPC{ // Required
-			VPCId:     aws.String("VPCId"),
-			VPCRegion: aws.String("VPCRegion"),
-		},
-	}
-	resp, err := svc.CreateVPCAssociationAuthorization(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_DeleteHealthCheck() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.DeleteHealthCheckInput{
-		HealthCheckId: aws.String("HealthCheckId"), // Required
-	}
-	resp, err := svc.DeleteHealthCheck(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_DeleteHostedZone() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.DeleteHostedZoneInput{
-		Id: aws.String("ResourceId"), // Required
-	}
-	resp, err := svc.DeleteHostedZone(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_DeleteReusableDelegationSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.DeleteReusableDelegationSetInput{
-		Id: aws.String("ResourceId"), // Required
-	}
-	resp, err := svc.DeleteReusableDelegationSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_DeleteTrafficPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.DeleteTrafficPolicyInput{
-		Id:      aws.String("TrafficPolicyId"), // Required
-		Version: aws.Int64(1),                  // Required
-	}
-	resp, err := svc.DeleteTrafficPolicy(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_DeleteTrafficPolicyInstance() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.DeleteTrafficPolicyInstanceInput{
-		Id: aws.String("TrafficPolicyInstanceId"), // Required
-	}
-	resp, err := svc.DeleteTrafficPolicyInstance(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_DeleteVPCAssociationAuthorization() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.DeleteVPCAssociationAuthorizationInput{
-		HostedZoneId: aws.String("ResourceId"), // Required
-		VPC: &route53.VPC{ // Required
-			VPCId:     aws.String("VPCId"),
-			VPCRegion: aws.String("VPCRegion"),
-		},
-	}
-	resp, err := svc.DeleteVPCAssociationAuthorization(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_DisassociateVPCFromHostedZone() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.DisassociateVPCFromHostedZoneInput{
-		HostedZoneId: aws.String("ResourceId"), // Required
-		VPC: &route53.VPC{ // Required
-			VPCId:     aws.String("VPCId"),
-			VPCRegion: aws.String("VPCRegion"),
-		},
-		Comment: aws.String("DisassociateVPCComment"),
-	}
-	resp, err := svc.DisassociateVPCFromHostedZone(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_GetChange() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.GetChangeInput{
-		Id: aws.String("ResourceId"), // Required
-	}
-	resp, err := svc.GetChange(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_GetCheckerIpRanges() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	var params *route53.GetCheckerIpRangesInput
-	resp, err := svc.GetCheckerIpRanges(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_GetGeoLocation() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.GetGeoLocationInput{
-		ContinentCode:   aws.String("GeoLocationContinentCode"),
-		CountryCode:     aws.String("GeoLocationCountryCode"),
-		SubdivisionCode: aws.String("GeoLocationSubdivisionCode"),
-	}
-	resp, err := svc.GetGeoLocation(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_GetHealthCheck() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.GetHealthCheckInput{
-		HealthCheckId: aws.String("HealthCheckId"), // Required
-	}
-	resp, err := svc.GetHealthCheck(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_GetHealthCheckCount() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	var params *route53.GetHealthCheckCountInput
-	resp, err := svc.GetHealthCheckCount(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_GetHealthCheckLastFailureReason() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.GetHealthCheckLastFailureReasonInput{
-		HealthCheckId: aws.String("HealthCheckId"), // Required
-	}
-	resp, err := svc.GetHealthCheckLastFailureReason(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_GetHealthCheckStatus() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.GetHealthCheckStatusInput{
-		HealthCheckId: aws.String("HealthCheckId"), // Required
-	}
-	resp, err := svc.GetHealthCheckStatus(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_GetHostedZone() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.GetHostedZoneInput{
-		Id: aws.String("ResourceId"), // Required
-	}
-	resp, err := svc.GetHostedZone(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_GetHostedZoneCount() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	var params *route53.GetHostedZoneCountInput
-	resp, err := svc.GetHostedZoneCount(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_GetReusableDelegationSet() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.GetReusableDelegationSetInput{
-		Id: aws.String("ResourceId"), // Required
-	}
-	resp, err := svc.GetReusableDelegationSet(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_GetTrafficPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.GetTrafficPolicyInput{
-		Id:      aws.String("TrafficPolicyId"), // Required
-		Version: aws.Int64(1),                  // Required
-	}
-	resp, err := svc.GetTrafficPolicy(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_GetTrafficPolicyInstance() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.GetTrafficPolicyInstanceInput{
-		Id: aws.String("TrafficPolicyInstanceId"), // Required
-	}
-	resp, err := svc.GetTrafficPolicyInstance(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_GetTrafficPolicyInstanceCount() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	var params *route53.GetTrafficPolicyInstanceCountInput
-	resp, err := svc.GetTrafficPolicyInstanceCount(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_ListGeoLocations() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.ListGeoLocationsInput{
-		MaxItems:             aws.String("PageMaxItems"),
-		StartContinentCode:   aws.String("GeoLocationContinentCode"),
-		StartCountryCode:     aws.String("GeoLocationCountryCode"),
-		StartSubdivisionCode: aws.String("GeoLocationSubdivisionCode"),
-	}
-	resp, err := svc.ListGeoLocations(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_ListHealthChecks() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.ListHealthChecksInput{
-		Marker:   aws.String("PageMarker"),
-		MaxItems: aws.String("PageMaxItems"),
-	}
-	resp, err := svc.ListHealthChecks(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_ListHostedZones() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.ListHostedZonesInput{
-		DelegationSetId: aws.String("ResourceId"),
-		Marker:          aws.String("PageMarker"),
-		MaxItems:        aws.String("PageMaxItems"),
-	}
-	resp, err := svc.ListHostedZones(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_ListHostedZonesByName() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.ListHostedZonesByNameInput{
-		DNSName:      aws.String("DNSName"),
-		HostedZoneId: aws.String("ResourceId"),
-		MaxItems:     aws.String("PageMaxItems"),
-	}
-	resp, err := svc.ListHostedZonesByName(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_ListResourceRecordSets() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.ListResourceRecordSetsInput{
-		HostedZoneId:          aws.String("ResourceId"), // Required
-		MaxItems:              aws.String("PageMaxItems"),
-		StartRecordIdentifier: aws.String("ResourceRecordSetIdentifier"),
-		StartRecordName:       aws.String("DNSName"),
-		StartRecordType:       aws.String("RRType"),
-	}
-	resp, err := svc.ListResourceRecordSets(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_ListReusableDelegationSets() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.ListReusableDelegationSetsInput{
-		Marker:   aws.String("PageMarker"),
-		MaxItems: aws.String("PageMaxItems"),
-	}
-	resp, err := svc.ListReusableDelegationSets(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_ListTagsForResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.ListTagsForResourceInput{
-		ResourceId:   aws.String("TagResourceId"),   // Required
-		ResourceType: aws.String("TagResourceType"), // Required
-	}
-	resp, err := svc.ListTagsForResource(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_ListTagsForResources() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.ListTagsForResourcesInput{
-		ResourceIds: []*string{ // Required
-			aws.String("TagResourceId"), // Required
-			// More values...
-		},
-		ResourceType: aws.String("TagResourceType"), // Required
-	}
-	resp, err := svc.ListTagsForResources(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_ListTrafficPolicies() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.ListTrafficPoliciesInput{
-		MaxItems:              aws.String("PageMaxItems"),
-		TrafficPolicyIdMarker: aws.String("TrafficPolicyId"),
-	}
-	resp, err := svc.ListTrafficPolicies(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_ListTrafficPolicyInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.ListTrafficPolicyInstancesInput{
-		HostedZoneIdMarker:              aws.String("ResourceId"),
-		MaxItems:                        aws.String("PageMaxItems"),
-		TrafficPolicyInstanceNameMarker: aws.String("DNSName"),
-		TrafficPolicyInstanceTypeMarker: aws.String("RRType"),
-	}
-	resp, err := svc.ListTrafficPolicyInstances(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_ListTrafficPolicyInstancesByHostedZone() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.ListTrafficPolicyInstancesByHostedZoneInput{
-		HostedZoneId:                    aws.String("ResourceId"), // Required
-		MaxItems:                        aws.String("PageMaxItems"),
-		TrafficPolicyInstanceNameMarker: aws.String("DNSName"),
-		TrafficPolicyInstanceTypeMarker: aws.String("RRType"),
-	}
-	resp, err := svc.ListTrafficPolicyInstancesByHostedZone(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_ListTrafficPolicyInstancesByPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.ListTrafficPolicyInstancesByPolicyInput{
-		TrafficPolicyId:                 aws.String("TrafficPolicyId"), // Required
-		TrafficPolicyVersion:            aws.Int64(1),                  // Required
-		HostedZoneIdMarker:              aws.String("ResourceId"),
-		MaxItems:                        aws.String("PageMaxItems"),
-		TrafficPolicyInstanceNameMarker: aws.String("DNSName"),
-		TrafficPolicyInstanceTypeMarker: aws.String("RRType"),
-	}
-	resp, err := svc.ListTrafficPolicyInstancesByPolicy(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_ListTrafficPolicyVersions() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.ListTrafficPolicyVersionsInput{
-		Id:                         aws.String("TrafficPolicyId"), // Required
-		MaxItems:                   aws.String("PageMaxItems"),
-		TrafficPolicyVersionMarker: aws.String("TrafficPolicyVersionMarker"),
-	}
-	resp, err := svc.ListTrafficPolicyVersions(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_ListVPCAssociationAuthorizations() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.ListVPCAssociationAuthorizationsInput{
-		HostedZoneId: aws.String("ResourceId"), // Required
-		MaxResults:   aws.String("MaxResults"),
-		NextToken:    aws.String("PaginationToken"),
-	}
-	resp, err := svc.ListVPCAssociationAuthorizations(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_TestDNSAnswer() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.TestDNSAnswerInput{
-		HostedZoneId:          aws.String("ResourceId"), // Required
-		RecordName:            aws.String("DNSName"),    // Required
-		RecordType:            aws.String("RRType"),     // Required
-		EDNS0ClientSubnetIP:   aws.String("IPAddress"),
-		EDNS0ClientSubnetMask: aws.String("SubnetMask"),
-		ResolverIP:            aws.String("IPAddress"),
-	}
-	resp, err := svc.TestDNSAnswer(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_UpdateHealthCheck() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.UpdateHealthCheckInput{
-		HealthCheckId: aws.String("HealthCheckId"), // Required
-		AlarmIdentifier: &route53.AlarmIdentifier{
-			Name:   aws.String("AlarmName"),        // Required
-			Region: aws.String("CloudWatchRegion"), // Required
-		},
-		ChildHealthChecks: []*string{
-			aws.String("HealthCheckId"), // Required
-			// More values...
-		},
-		EnableSNI:                    aws.Bool(true),
-		FailureThreshold:             aws.Int64(1),
-		FullyQualifiedDomainName:     aws.String("FullyQualifiedDomainName"),
-		HealthCheckVersion:           aws.Int64(1),
-		HealthThreshold:              aws.Int64(1),
-		IPAddress:                    aws.String("IPAddress"),
-		InsufficientDataHealthStatus: aws.String("InsufficientDataHealthStatus"),
-		Inverted:                     aws.Bool(true),
-		Port:                         aws.Int64(1),
-		Regions: []*string{
-			aws.String("HealthCheckRegion"), // Required
-			// More values...
-		},
-		ResourcePath: aws.String("ResourcePath"),
-		SearchString: aws.String("SearchString"),
-	}
-	resp, err := svc.UpdateHealthCheck(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_UpdateHostedZoneComment() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.UpdateHostedZoneCommentInput{
-		Id:      aws.String("ResourceId"), // Required
-		Comment: aws.String("ResourceDescription"),
-	}
-	resp, err := svc.UpdateHostedZoneComment(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_UpdateTrafficPolicyComment() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.UpdateTrafficPolicyCommentInput{
-		Comment: aws.String("TrafficPolicyComment"), // Required
-		Id:      aws.String("TrafficPolicyId"),      // Required
-		Version: aws.Int64(1),                       // Required
-	}
-	resp, err := svc.UpdateTrafficPolicyComment(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRoute53_UpdateTrafficPolicyInstance() {
-	sess := session.Must(session.NewSession())
-
-	svc := route53.New(sess)
-
-	params := &route53.UpdateTrafficPolicyInstanceInput{
-		Id:                   aws.String("TrafficPolicyInstanceId"), // Required
-		TTL:                  aws.Int64(1),                          // Required
-		TrafficPolicyId:      aws.String("TrafficPolicyId"),         // Required
-		TrafficPolicyVersion: aws.Int64(1),                          // Required
-	}
-	resp, err := svc.UpdateTrafficPolicyInstance(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }

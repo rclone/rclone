@@ -57,6 +57,7 @@ func New(client *http.Client) (*Service, error) {
 	}
 	s := &Service{client: client, BasePath: basePath}
 	s.ShortLinks = NewShortLinksService(s)
+	s.V1 = NewV1Service(s)
 	return s, nil
 }
 
@@ -66,6 +67,8 @@ type Service struct {
 	UserAgent string // optional additional User-Agent fragment
 
 	ShortLinks *ShortLinksService
+
+	V1 *V1Service
 }
 
 func (s *Service) userAgent() string {
@@ -81,6 +84,15 @@ func NewShortLinksService(s *Service) *ShortLinksService {
 }
 
 type ShortLinksService struct {
+	s *Service
+}
+
+func NewV1Service(s *Service) *V1Service {
+	rs := &V1Service{s: s}
+	return rs
+}
+
+type V1Service struct {
 	s *Service
 }
 
@@ -246,27 +258,86 @@ func (s *CreateShortDynamicLinkResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// DynamicLinkEventStat: Dynamic Link event stat.
+type DynamicLinkEventStat struct {
+	// Count: The number of times this event occurred.
+	Count int64 `json:"count,omitempty,string"`
+
+	// Event: Link event.
+	//
+	// Possible values:
+	//   "DYNAMIC_LINK_EVENT_UNSPECIFIED" - Unspecified type.
+	//   "CLICK" - Indicates that an FDL is clicked by users.
+	//   "REDIRECT" - Indicates that an FDL redirects users to fallback
+	// link.
+	//   "APP_INSTALL" - Indicates that an FDL triggers an app install from
+	// Play store, currently
+	// it's impossible to get stats from App store.
+	//   "APP_FIRST_OPEN" - Indicates that the app is opened for the first
+	// time after an install
+	// triggered by FDLs
+	//   "APP_RE_OPEN" - Indicates that the app is opened via an FDL for
+	// non-first time.
+	Event string `json:"event,omitempty"`
+
+	// Platform: Requested platform.
+	//
+	// Possible values:
+	//   "DYNAMIC_LINK_PLATFORM_UNSPECIFIED" - Unspecified platform.
+	//   "ANDROID" - Represents Android platform.
+	// All apps and browsers on Android are classfied in this category.
+	//   "IOS" - Represents iOS platform.
+	// All apps and browsers on iOS are classfied in this category.
+	//   "DESKTOP" - Represents desktop.
+	// Note: other platforms like Windows, Blackberry, Amazon fall into
+	// this
+	// category.
+	Platform string `json:"platform,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Count") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Count") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *DynamicLinkEventStat) MarshalJSON() ([]byte, error) {
+	type noMethod DynamicLinkEventStat
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // DynamicLinkInfo: Information about a Dynamic Link.
 type DynamicLinkInfo struct {
 	// AnalyticsInfo: Parameters used for tracking. See all tracking
 	// parameters in
 	// the
-	// [documentation](https://firebase.google.com/docs/dynamic-links/and
-	// roid#create-a-dynamic-link-programmatically).
+	// [documentation](https://firebase.google.com/docs/dynamic-links/cre
+	// ate-manually).
 	AnalyticsInfo *AnalyticsInfo `json:"analyticsInfo,omitempty"`
 
 	// AndroidInfo: Android related information. See Android related
 	// parameters in
 	// the
-	// [documentation](https://firebase.google.com/docs/dynamic-links/and
-	// roid#create-a-dynamic-link-programmatically).
+	// [documentation](https://firebase.google.com/docs/dynamic-links/cre
+	// ate-manually).
 	AndroidInfo *AndroidInfo `json:"androidInfo,omitempty"`
 
 	// DynamicLinkDomain: Dynamic Links domain that the project owns, e.g.
 	// abcd.app.goo.gl
 	// [Learn
-	// more](https://firebase.google.com/docs/dynamic-links/android#set-up-fi
-	// rebase-and-the-dynamic-links-sdk)
+	// more](https://firebase.google.com/docs/dynamic-links/android/receive)
+	//
 	// on how to set up Dynamic Link domain associated with your Firebase
 	// project.
 	//
@@ -275,8 +346,8 @@ type DynamicLinkInfo struct {
 
 	// IosInfo: iOS related information. See iOS related parameters in
 	// the
-	// [documentation](https://firebase.google.com/docs/dynamic-links/ios
-	// #create-a-dynamic-link-programmatically).
+	// [documentation](https://firebase.google.com/docs/dynamic-links/cre
+	// ate-manually).
 	IosInfo *IosInfo `json:"iosInfo,omitempty"`
 
 	// Link: The link your app will open, You can specify any URL your app
@@ -285,8 +356,8 @@ type DynamicLinkInfo struct {
 	// use
 	// the HTTP or HTTPS scheme. See 'link' parameters in
 	// the
-	// [documentation](https://firebase.google.com/docs/dynamic-links/and
-	// roid#create-a-dynamic-link-programmatically).
+	// [documentation](https://firebase.google.com/docs/dynamic-links/cre
+	// ate-manually).
 	//
 	// Required.
 	Link string `json:"link,omitempty"`
@@ -318,6 +389,40 @@ type DynamicLinkInfo struct {
 
 func (s *DynamicLinkInfo) MarshalJSON() ([]byte, error) {
 	type noMethod DynamicLinkInfo
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// DynamicLinkStats: Analytics stats of a Dynamic Link for a given
+// timeframe.
+type DynamicLinkStats struct {
+	// LinkEventStats: Dynamic Link event stats.
+	LinkEventStats []*DynamicLinkEventStat `json:"linkEventStats,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "LinkEventStats") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "LinkEventStats") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *DynamicLinkStats) MarshalJSON() ([]byte, error) {
+	type noMethod DynamicLinkStats
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -791,6 +896,160 @@ func (c *ShortLinksCreateCall) Do(opts ...googleapi.CallOption) (*CreateShortDyn
 	//   },
 	//   "response": {
 	//     "$ref": "CreateShortDynamicLinkResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/firebase"
+	//   ]
+	// }
+
+}
+
+// method id "firebasedynamiclinks.getLinkStats":
+
+type V1GetLinkStatsCall struct {
+	s            *Service
+	dynamicLink  string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// GetLinkStats: Fetches analytics stats of a short Dynamic Link for a
+// given
+// duration. Metrics include number of clicks, redirects, installs,
+// app first opens, and app reopens.
+func (r *V1Service) GetLinkStats(dynamicLink string) *V1GetLinkStatsCall {
+	c := &V1GetLinkStatsCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.dynamicLink = dynamicLink
+	return c
+}
+
+// DurationDays sets the optional parameter "durationDays": The span of
+// time requested in days.
+func (c *V1GetLinkStatsCall) DurationDays(durationDays int64) *V1GetLinkStatsCall {
+	c.urlParams_.Set("durationDays", fmt.Sprint(durationDays))
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *V1GetLinkStatsCall) Fields(s ...googleapi.Field) *V1GetLinkStatsCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *V1GetLinkStatsCall) IfNoneMatch(entityTag string) *V1GetLinkStatsCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *V1GetLinkStatsCall) Context(ctx context.Context) *V1GetLinkStatsCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *V1GetLinkStatsCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *V1GetLinkStatsCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{dynamicLink}/linkStats")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"dynamicLink": c.dynamicLink,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "firebasedynamiclinks.getLinkStats" call.
+// Exactly one of *DynamicLinkStats or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *DynamicLinkStats.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *V1GetLinkStatsCall) Do(opts ...googleapi.CallOption) (*DynamicLinkStats, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &DynamicLinkStats{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Fetches analytics stats of a short Dynamic Link for a given\nduration. Metrics include number of clicks, redirects, installs,\napp first opens, and app reopens.",
+	//   "flatPath": "v1/{dynamicLink}/linkStats",
+	//   "httpMethod": "GET",
+	//   "id": "firebasedynamiclinks.getLinkStats",
+	//   "parameterOrder": [
+	//     "dynamicLink"
+	//   ],
+	//   "parameters": {
+	//     "durationDays": {
+	//       "description": "The span of time requested in days.",
+	//       "format": "int64",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "dynamicLink": {
+	//       "description": "Dynamic Link URL. e.g. https://abcd.app.goo.gl/wxyz",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{dynamicLink}/linkStats",
+	//   "response": {
+	//     "$ref": "DynamicLinkStats"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/firebase"

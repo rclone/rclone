@@ -50,12 +50,7 @@ type GroupCallOptions struct {
 func defaultGroupClientOptions() []option.ClientOption {
 	return []option.ClientOption{
 		option.WithEndpoint("monitoring.googleapis.com:443"),
-		option.WithScopes(
-			"https://www.googleapis.com/auth/cloud-platform",
-			"https://www.googleapis.com/auth/monitoring",
-			"https://www.googleapis.com/auth/monitoring.read",
-			"https://www.googleapis.com/auth/monitoring.write",
-		),
+		option.WithScopes(DefaultAuthScopes()...),
 	}
 }
 
@@ -65,17 +60,6 @@ func defaultGroupCallOptions() *GroupCallOptions {
 			gax.WithRetry(func() gax.Retryer {
 				return gax.OnCodes([]codes.Code{
 					codes.DeadlineExceeded,
-					codes.Unavailable,
-				}, gax.Backoff{
-					Initial:    100 * time.Millisecond,
-					Max:        60000 * time.Millisecond,
-					Multiplier: 1.3,
-				})
-			}),
-		},
-		{"default", "non_idempotent"}: {
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnCodes([]codes.Code{
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    100 * time.Millisecond,
@@ -107,7 +91,7 @@ type GroupClient struct {
 	CallOptions *GroupCallOptions
 
 	// The metadata to be sent with each request.
-	xGoogHeader string
+	xGoogHeader []string
 }
 
 // NewGroupClient creates a new group service client.
@@ -155,8 +139,8 @@ func (c *GroupClient) Close() error {
 // use by Google-written clients.
 func (c *GroupClient) SetGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", version.Go()}, keyval...)
-	kv = append(kv, "gapic", version.Repo, "gax", gax.Version, "grpc", "")
-	c.xGoogHeader = gax.XGoogHeader(kv...)
+	kv = append(kv, "gapic", version.Repo, "gax", gax.Version, "grpc", grpc.Version)
+	c.xGoogHeader = []string{gax.XGoogHeader(kv...)}
 }
 
 // GroupProjectPath returns the path for the project resource.
@@ -183,8 +167,9 @@ func GroupGroupPath(project, group string) string {
 }
 
 // ListGroups lists the existing groups.
-func (c *GroupClient) ListGroups(ctx context.Context, req *monitoringpb.ListGroupsRequest) *GroupIterator {
+func (c *GroupClient) ListGroups(ctx context.Context, req *monitoringpb.ListGroupsRequest, opts ...gax.CallOption) *GroupIterator {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
+	opts = append(c.CallOptions.ListGroups[0:len(c.CallOptions.ListGroups):len(c.CallOptions.ListGroups)], opts...)
 	it := &GroupIterator{}
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*monitoringpb.Group, string, error) {
 		var resp *monitoringpb.ListGroupsResponse
@@ -194,11 +179,11 @@ func (c *GroupClient) ListGroups(ctx context.Context, req *monitoringpb.ListGrou
 		} else {
 			req.PageSize = int32(pageSize)
 		}
-		err := gax.Invoke(ctx, func(ctx context.Context) error {
+		err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 			var err error
-			resp, err = c.groupClient.ListGroups(ctx, req)
+			resp, err = c.groupClient.ListGroups(ctx, req, settings.GRPC...)
 			return err
-		}, c.CallOptions.ListGroups...)
+		}, opts...)
 		if err != nil {
 			return nil, "", err
 		}
@@ -217,14 +202,15 @@ func (c *GroupClient) ListGroups(ctx context.Context, req *monitoringpb.ListGrou
 }
 
 // GetGroup gets a single group.
-func (c *GroupClient) GetGroup(ctx context.Context, req *monitoringpb.GetGroupRequest) (*monitoringpb.Group, error) {
+func (c *GroupClient) GetGroup(ctx context.Context, req *monitoringpb.GetGroupRequest, opts ...gax.CallOption) (*monitoringpb.Group, error) {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
+	opts = append(c.CallOptions.GetGroup[0:len(c.CallOptions.GetGroup):len(c.CallOptions.GetGroup)], opts...)
 	var resp *monitoringpb.Group
-	err := gax.Invoke(ctx, func(ctx context.Context) error {
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		resp, err = c.groupClient.GetGroup(ctx, req)
+		resp, err = c.groupClient.GetGroup(ctx, req, settings.GRPC...)
 		return err
-	}, c.CallOptions.GetGroup...)
+	}, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -232,14 +218,15 @@ func (c *GroupClient) GetGroup(ctx context.Context, req *monitoringpb.GetGroupRe
 }
 
 // CreateGroup creates a new group.
-func (c *GroupClient) CreateGroup(ctx context.Context, req *monitoringpb.CreateGroupRequest) (*monitoringpb.Group, error) {
+func (c *GroupClient) CreateGroup(ctx context.Context, req *monitoringpb.CreateGroupRequest, opts ...gax.CallOption) (*monitoringpb.Group, error) {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
+	opts = append(c.CallOptions.CreateGroup[0:len(c.CallOptions.CreateGroup):len(c.CallOptions.CreateGroup)], opts...)
 	var resp *monitoringpb.Group
-	err := gax.Invoke(ctx, func(ctx context.Context) error {
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		resp, err = c.groupClient.CreateGroup(ctx, req)
+		resp, err = c.groupClient.CreateGroup(ctx, req, settings.GRPC...)
 		return err
-	}, c.CallOptions.CreateGroup...)
+	}, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -248,14 +235,15 @@ func (c *GroupClient) CreateGroup(ctx context.Context, req *monitoringpb.CreateG
 
 // UpdateGroup updates an existing group.
 // You can change any group attributes except `name`.
-func (c *GroupClient) UpdateGroup(ctx context.Context, req *monitoringpb.UpdateGroupRequest) (*monitoringpb.Group, error) {
+func (c *GroupClient) UpdateGroup(ctx context.Context, req *monitoringpb.UpdateGroupRequest, opts ...gax.CallOption) (*monitoringpb.Group, error) {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
+	opts = append(c.CallOptions.UpdateGroup[0:len(c.CallOptions.UpdateGroup):len(c.CallOptions.UpdateGroup)], opts...)
 	var resp *monitoringpb.Group
-	err := gax.Invoke(ctx, func(ctx context.Context) error {
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		resp, err = c.groupClient.UpdateGroup(ctx, req)
+		resp, err = c.groupClient.UpdateGroup(ctx, req, settings.GRPC...)
 		return err
-	}, c.CallOptions.UpdateGroup...)
+	}, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -263,19 +251,21 @@ func (c *GroupClient) UpdateGroup(ctx context.Context, req *monitoringpb.UpdateG
 }
 
 // DeleteGroup deletes an existing group.
-func (c *GroupClient) DeleteGroup(ctx context.Context, req *monitoringpb.DeleteGroupRequest) error {
+func (c *GroupClient) DeleteGroup(ctx context.Context, req *monitoringpb.DeleteGroupRequest, opts ...gax.CallOption) error {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
-	err := gax.Invoke(ctx, func(ctx context.Context) error {
+	opts = append(c.CallOptions.DeleteGroup[0:len(c.CallOptions.DeleteGroup):len(c.CallOptions.DeleteGroup)], opts...)
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		_, err = c.groupClient.DeleteGroup(ctx, req)
+		_, err = c.groupClient.DeleteGroup(ctx, req, settings.GRPC...)
 		return err
-	}, c.CallOptions.DeleteGroup...)
+	}, opts...)
 	return err
 }
 
 // ListGroupMembers lists the monitored resources that are members of a group.
-func (c *GroupClient) ListGroupMembers(ctx context.Context, req *monitoringpb.ListGroupMembersRequest) *MonitoredResourceIterator {
+func (c *GroupClient) ListGroupMembers(ctx context.Context, req *monitoringpb.ListGroupMembersRequest, opts ...gax.CallOption) *MonitoredResourceIterator {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
+	opts = append(c.CallOptions.ListGroupMembers[0:len(c.CallOptions.ListGroupMembers):len(c.CallOptions.ListGroupMembers)], opts...)
 	it := &MonitoredResourceIterator{}
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*monitoredrespb.MonitoredResource, string, error) {
 		var resp *monitoringpb.ListGroupMembersResponse
@@ -285,11 +275,11 @@ func (c *GroupClient) ListGroupMembers(ctx context.Context, req *monitoringpb.Li
 		} else {
 			req.PageSize = int32(pageSize)
 		}
-		err := gax.Invoke(ctx, func(ctx context.Context) error {
+		err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 			var err error
-			resp, err = c.groupClient.ListGroupMembers(ctx, req)
+			resp, err = c.groupClient.ListGroupMembers(ctx, req, settings.GRPC...)
 			return err
-		}, c.CallOptions.ListGroupMembers...)
+		}, opts...)
 		if err != nil {
 			return nil, "", err
 		}

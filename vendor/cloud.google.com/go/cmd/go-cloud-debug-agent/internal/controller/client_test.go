@@ -15,6 +15,10 @@
 package controller
 
 import (
+	"bytes"
+	"errors"
+	"fmt"
+	"strconv"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -168,6 +172,9 @@ func TestDebugletControllerClientLibrary(t *testing.T) {
 	if c, err = NewController(ctx, opts); err != nil {
 		t.Fatal("Initializing Controller client:", err)
 	}
+	if err := validateLabels(c, opts); err != nil {
+		t.Fatalf("Invalid labels:\n%v", err)
+	}
 	if list, err = c.List(ctx); err != nil {
 		t.Fatal("List:", err)
 	}
@@ -206,6 +213,35 @@ func TestDebugletControllerClientLibrary(t *testing.T) {
 	if m.listCallsSeen != 5 {
 		t.Errorf("saw %d list calls, want 5", m.listCallsSeen)
 	}
+}
+
+func validateLabels(c *Controller, o Options) error {
+	errMsg := new(bytes.Buffer)
+	if m, ok := c.labels["module"]; ok {
+		if m != o.AppModule {
+			errMsg.WriteString(fmt.Sprintf("label module: want %s, got %s\n", o.AppModule, m))
+		}
+	} else {
+		errMsg.WriteString("Missing \"module\" label\n")
+	}
+	if v, ok := c.labels["version"]; ok {
+		if v != o.AppVersion {
+			errMsg.WriteString(fmt.Sprintf("label version: want %s, got %s\n", o.AppVersion, v))
+		}
+	} else {
+		errMsg.WriteString("Missing \"version\" label\n")
+	}
+	if mv, ok := c.labels["minorversion"]; ok {
+		if _, err := strconv.Atoi(mv); err != nil {
+			errMsg.WriteString(fmt.Sprintln("label minorversion: not a numeric string:", mv))
+		}
+	} else {
+		errMsg.WriteString("Missing \"minorversion\" label\n")
+	}
+	if errMsg.Len() != 0 {
+		return errors.New(errMsg.String())
+	}
+	return nil
 }
 
 func TestIsAbortedError(t *testing.T) {

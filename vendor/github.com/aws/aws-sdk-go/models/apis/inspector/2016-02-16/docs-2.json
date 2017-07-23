@@ -16,6 +16,7 @@
     "DescribeFindings": "<p>Describes the findings that are specified by the ARNs of the findings.</p>",
     "DescribeResourceGroups": "<p>Describes the resource groups that are specified by the ARNs of the resource groups.</p>",
     "DescribeRulesPackages": "<p>Describes the rules packages that are specified by the ARNs of the rules packages.</p>",
+    "GetAssessmentReport": "<p>Produces an assessment report that includes detailed and comprehensive results of a specified assessment run. </p>",
     "GetTelemetryMetadata": "<p>Information about the data that is collected for the specified assessment run.</p>",
     "ListAssessmentRunAgents": "<p>Lists the agents of the assessment runs that are specified by the ARNs of the assessment runs.</p>",
     "ListAssessmentRuns": "<p>Lists the assessment runs that correspond to the assessment templates that are specified by the ARNs of the assessment templates.</p>",
@@ -176,6 +177,7 @@
         "FailedItems$key": null,
         "FilterRulesPackageArnList$member": null,
         "Finding$arn": "<p>The ARN that specifies the finding.</p>",
+        "GetAssessmentReportRequest$assessmentRunArn": "<p>The ARN that specifies the assessment run for which you want to generate a report.</p>",
         "GetTelemetryMetadataRequest$assessmentRunArn": "<p>The ARN that specifies the assessment run that has the telemetry data that you want to obtain.</p>",
         "InspectorServiceAttributes$assessmentRunArn": "<p>The ARN of the assessment run during which the finding is generated.</p>",
         "InspectorServiceAttributes$rulesPackageArn": "<p>The ARN of the rules package that is used to generate the finding.</p>",
@@ -240,6 +242,12 @@
       "base": "<p>Used as the request parameter in the <a>ListAssessmentRuns</a> action.</p>",
       "refs": {
         "ListAssessmentRunsRequest$filter": "<p>You can use this parameter to specify a subset of data to be included in the action's response.</p> <p>For a record to match a filter, all specified filter attributes must match. When multiple values are specified for a filter attribute, any of the values can match.</p>"
+      }
+    },
+    "AssessmentRunFindingCounts": {
+      "base": null,
+      "refs": {
+        "AssessmentRun$findingCounts": "<p>Provides a total count of generated findings per severity.</p>"
       }
     },
     "AssessmentRunInProgressArnList": {
@@ -451,7 +459,8 @@
         "InvalidCrossAccountRoleException$canRetry": "<p>You can immediately retry your request.</p>",
         "InvalidInputException$canRetry": "<p>You can immediately retry your request.</p>",
         "LimitExceededException$canRetry": "<p>You can immediately retry your request.</p>",
-        "NoSuchEntityException$canRetry": "<p>You can immediately retry your request.</p>"
+        "NoSuchEntityException$canRetry": "<p>You can immediately retry your request.</p>",
+        "UnsupportedFeatureException$canRetry": null
       }
     },
     "CreateAssessmentTargetRequest": {
@@ -581,7 +590,8 @@
         "InvalidCrossAccountRoleException$message": "<p>Details of the exception error.</p>",
         "InvalidInputException$message": "<p>Details of the exception error.</p>",
         "LimitExceededException$message": "<p>Details of the exception error.</p>",
-        "NoSuchEntityException$message": "<p>Details of the exception error.</p>"
+        "NoSuchEntityException$message": "<p>Details of the exception error.</p>",
+        "UnsupportedFeatureException$message": null
       }
     },
     "EventSubscription": {
@@ -635,6 +645,12 @@
         "FindingList$member": null
       }
     },
+    "FindingCount": {
+      "base": null,
+      "refs": {
+        "AssessmentRunFindingCounts$value": null
+      }
+    },
     "FindingFilter": {
       "base": "<p>This data type is used as a request parameter in the <a>ListFindings</a> action.</p>",
       "refs": {
@@ -651,6 +667,16 @@
       "base": null,
       "refs": {
         "DescribeFindingsResponse$findings": "<p>Information about the finding.</p>"
+      }
+    },
+    "GetAssessmentReportRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetAssessmentReportResponse": {
+      "base": null,
+      "refs": {
       }
     },
     "GetTelemetryMetadataRequest": {
@@ -681,7 +707,7 @@
     "InspectorServiceAttributes": {
       "base": "<p>This data type is used in the <a>Finding</a> data type.</p>",
       "refs": {
-        "Finding$serviceAttributes": null
+        "Finding$serviceAttributes": "<p>This data type is used in the <a>Finding</a> data type.</p>"
       }
     },
     "InternalException": {
@@ -873,7 +899,7 @@
       "base": null,
       "refs": {
         "AssessmentRunAgent$agentHealthDetails": "<p>The description for the agent health code.</p>",
-        "AssessmentRunNotification$message": null
+        "AssessmentRunNotification$message": "<p>The message included in the notification.</p>"
       }
     },
     "MessageType": {
@@ -973,6 +999,24 @@
       "refs": {
       }
     },
+    "ReportFileFormat": {
+      "base": null,
+      "refs": {
+        "GetAssessmentReportRequest$reportFileFormat": "<p>Specifies the file format (html or pdf) of the assessment report that you want to generate.</p>"
+      }
+    },
+    "ReportStatus": {
+      "base": null,
+      "refs": {
+        "GetAssessmentReportResponse$status": "<p>Specifies the status of the request to generate an assessment report. </p>"
+      }
+    },
+    "ReportType": {
+      "base": null,
+      "refs": {
+        "GetAssessmentReportRequest$reportType": "<p>Specifies the type of the assessment report that you want to generate. There are two types of assessment reports: a finding report and a full report. For more information, see <a href=\"http://docs.aws.amazon.com/inspector/latest/userguide/inspector_reports.html\">Assessment Reports</a>. </p>"
+      }
+    },
     "ResourceGroup": {
       "base": "<p>Contains information about a resource group. The resource group defines a set of tags that, when queried, identify the AWS resources that make up the assessment target. This data type is used as the response element in the <a>DescribeResourceGroups</a> action.</p>",
       "refs": {
@@ -1042,6 +1086,7 @@
     "Severity": {
       "base": null,
       "refs": {
+        "AssessmentRunFindingCounts$key": null,
         "Finding$severity": "<p>The finding severity. Values can be set to High, Medium, Low, and Informational.</p>",
         "SeverityList$member": null
       }
@@ -1168,9 +1213,20 @@
       "refs": {
       }
     },
+    "UnsupportedFeatureException": {
+      "base": "<p>Used by the <a>GetAssessmentReport</a> API. The request was rejected because you tried to generate a report for an assessment run that existed before reporting was supported in Amazon Inspector. You can only generate reports for assessment runs that took place or will take place after generating reports in Amazon Inspector became available.</p>",
+      "refs": {
+      }
+    },
     "UpdateAssessmentTargetRequest": {
       "base": null,
       "refs": {
+      }
+    },
+    "Url": {
+      "base": null,
+      "refs": {
+        "GetAssessmentReportResponse$url": "<p>Specifies the URL where you can find the generated assessment report. This parameter is only returned if the report is successfully generated.</p>"
       }
     },
     "UserAttributeKeyList": {

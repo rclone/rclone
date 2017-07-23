@@ -16,6 +16,7 @@
     "GetPipelineState": "<p>Returns information about the state of a pipeline, including the stages and actions.</p>",
     "GetThirdPartyJobDetails": "<p>Requests the details of a job for a third party action. Only used for partner actions.</p> <important> <p>When this API is called, AWS CodePipeline returns temporary credentials for the Amazon S3 bucket used to store artifacts for the pipeline, if the action requires access to that Amazon S3 bucket for input or output artifacts. Additionally, this API returns any secret values defined for the action.</p> </important>",
     "ListActionTypes": "<p>Gets a summary of all AWS CodePipeline action types associated with your account.</p>",
+    "ListPipelineExecutions": "<p>Gets a summary of the most recent executions for a pipeline.</p>",
     "ListPipelines": "<p>Gets a summary of all of the pipelines associated with your account.</p>",
     "PollForJobs": "<p>Returns information about any jobs for AWS CodePipeline to act upon.</p> <important> <p>When this API is called, AWS CodePipeline returns temporary credentials for the Amazon S3 bucket used to store artifacts for the pipeline, if the action requires access to that Amazon S3 bucket for input or output artifacts. Additionally, this API returns any secret values defined for the action.</p> </important>",
     "PollForThirdPartyJobs": "<p>Determines whether there are any third party jobs for a job worker to act on. Only used for partner actions.</p> <important> <p>When this API is called, AWS CodePipeline returns temporary credentials for the Amazon S3 bucket used to store artifacts for the pipeline, if the action requires access to that Amazon S3 bucket for input or output artifacts.</p> </important>",
@@ -33,8 +34,8 @@
     "AWSSessionCredentials": {
       "base": "<p>Represents an AWS session credentials object. These credentials are temporary credentials that are issued by AWS Secure Token Service (STS). They can be used to access input and output artifacts in the Amazon S3 bucket used to store artifact for the pipeline in AWS CodePipeline.</p>",
       "refs": {
-        "JobData$artifactCredentials": null,
-        "ThirdPartyJobData$artifactCredentials": null
+        "JobData$artifactCredentials": "<p>Represents an AWS session credentials object. These credentials are temporary credentials that are issued by AWS Secure Token Service (STS). They can be used to access input and output artifacts in the Amazon S3 bucket used to store artifact for the pipeline in AWS CodePipeline.</p>",
+        "ThirdPartyJobData$artifactCredentials": "<p>Represents an AWS session credentials object. These credentials are temporary credentials that are issued by AWS Secure Token Service (STS). They can be used to access input and output artifacts in the Amazon S3 bucket used to store artifact for the pipeline in AWS CodePipeline. </p>"
       }
     },
     "AccessKeyId": {
@@ -81,8 +82,8 @@
     "ActionConfiguration": {
       "base": "<p>Represents information about an action configuration.</p>",
       "refs": {
-        "JobData$actionConfiguration": null,
-        "ThirdPartyJobData$actionConfiguration": null
+        "JobData$actionConfiguration": "<p>Represents information about an action configuration.</p>",
+        "ThirdPartyJobData$actionConfiguration": "<p>Represents information about an action configuration.</p>"
       }
     },
     "ActionConfigurationKey": {
@@ -134,7 +135,7 @@
     "ActionContext": {
       "base": "<p>Represents the context of an action within the stage of a pipeline to a job worker.</p>",
       "refs": {
-        "PipelineContext$action": null
+        "PipelineContext$action": "<p/>"
       }
     },
     "ActionDeclaration": {
@@ -146,7 +147,7 @@
     "ActionExecution": {
       "base": "<p>Represents information about the run of an action.</p>",
       "refs": {
-        "ActionState$latestExecution": null
+        "ActionState$latestExecution": "<p>Represents information about the run of an action.</p>"
       }
     },
     "ActionExecutionStatus": {
@@ -194,8 +195,8 @@
     "ActionRevision": {
       "base": "<p>Represents information about the version (or revision) of an action.</p>",
       "refs": {
-        "ActionState$currentRevision": null,
-        "PutActionRevisionInput$actionRevision": null
+        "ActionState$currentRevision": "<p>Represents information about the version (or revision) of an action.</p>",
+        "PutActionRevisionInput$actionRevision": "<p>Represents information about the version (or revision) of an action.</p>"
       }
     },
     "ActionRunOrder": {
@@ -220,18 +221,18 @@
       "base": "<p>Returns information about the details of an action type.</p>",
       "refs": {
         "ActionTypeList$member": null,
-        "CreateCustomActionTypeOutput$actionType": null
+        "CreateCustomActionTypeOutput$actionType": "<p>Returns information about the details of an action type.</p>"
       }
     },
     "ActionTypeId": {
       "base": "<p>Represents information about an action type.</p>",
       "refs": {
         "ActionDeclaration$actionTypeId": "<p>The configuration information for the action type.</p>",
-        "ActionType$id": null,
-        "JobData$actionTypeId": null,
-        "PollForJobsInput$actionTypeId": null,
-        "PollForThirdPartyJobsInput$actionTypeId": null,
-        "ThirdPartyJobData$actionTypeId": null
+        "ActionType$id": "<p>Represents information about an action type.</p>",
+        "JobData$actionTypeId": "<p>Represents information about an action type.</p>",
+        "PollForJobsInput$actionTypeId": "<p>Represents information about an action type.</p>",
+        "PollForThirdPartyJobsInput$actionTypeId": "<p>Represents information about an action type.</p>",
+        "ThirdPartyJobData$actionTypeId": "<p>Represents information about an action type.</p>"
       }
     },
     "ActionTypeList": {
@@ -249,7 +250,7 @@
       "base": "<p>Returns information about the settings for an action type.</p>",
       "refs": {
         "ActionType$settings": "<p>The settings for the action type.</p>",
-        "CreateCustomActionTypeInput$settings": null
+        "CreateCustomActionTypeInput$settings": "<p>Returns information about the settings for an action type.</p>"
       }
     },
     "ApprovalAlreadyCompletedException": {
@@ -292,8 +293,8 @@
       "refs": {
         "ActionType$inputArtifactDetails": "<p>The details of the input artifact for the action, such as its commit ID.</p>",
         "ActionType$outputArtifactDetails": "<p>The details of the output artifact of the action, such as its commit ID.</p>",
-        "CreateCustomActionTypeInput$inputArtifactDetails": null,
-        "CreateCustomActionTypeInput$outputArtifactDetails": null
+        "CreateCustomActionTypeInput$inputArtifactDetails": "<p>The details of the input artifact for the action, such as its commit ID.</p>",
+        "CreateCustomActionTypeInput$outputArtifactDetails": "<p>The details of the output artifact of the action, such as its commit ID.</p>"
       }
     },
     "ArtifactList": {
@@ -339,15 +340,15 @@
       }
     },
     "ArtifactStore": {
-      "base": "<p>The Amazon S3 location where artifacts are stored for the pipeline. If this Amazon S3 bucket is created manually, it must meet the requirements for AWS CodePipeline. For more information, see the <a href=\"http://docs.aws.amazon.com/codepipeline/latest/userguide/concepts.html#CPS3Bucket\">Concepts</a>.</p>",
+      "base": "<p>The Amazon S3 bucket where artifacts are stored for the pipeline.</p>",
       "refs": {
-        "PipelineDeclaration$artifactStore": null
+        "PipelineDeclaration$artifactStore": "<p>Represents the context of an action within the stage of a pipeline to a job worker. </p>"
       }
     },
     "ArtifactStoreLocation": {
       "base": null,
       "refs": {
-        "ArtifactStore$location": "<p>The location for storing the artifacts for a pipeline, such as an S3 bucket or folder.</p>"
+        "ArtifactStore$location": "<p>The Amazon S3 bucket used for storing the artifacts for a pipeline. You can specify the name of an S3 bucket but not a folder within the bucket. A folder to contain the pipeline artifacts is created for you based on the name of the pipeline. You can use any Amazon S3 bucket in the same AWS Region as the pipeline to store your pipeline artifacts.</p>"
       }
     },
     "ArtifactStoreType": {
@@ -438,7 +439,7 @@
       "base": "<p>Represents information about a current revision.</p>",
       "refs": {
         "PutJobSuccessResultInput$currentRevision": "<p>The ID of the current revision of the artifact successfully worked upon by the job.</p>",
-        "PutThirdPartyJobSuccessResultInput$currentRevision": null
+        "PutThirdPartyJobSuccessResultInput$currentRevision": "<p>Represents information about a current revision.</p>"
       }
     },
     "DeleteCustomActionTypeInput": {
@@ -484,7 +485,7 @@
       "base": "<p>Represents information about the key used to encrypt data in the artifact store, such as an AWS Key Management Service (AWS KMS) key.</p>",
       "refs": {
         "ArtifactStore$encryptionKey": "<p>The encryption key used to encrypt the data in the artifact store, such as an AWS Key Management Service (AWS KMS) key. If this is undefined, the default key for Amazon S3 is used.</p>",
-        "JobData$encryptionKey": null,
+        "JobData$encryptionKey": "<p>Represents information about the key used to encrypt data in the artifact store, such as an AWS Key Management Service (AWS KMS) key. </p>",
         "ThirdPartyJobData$encryptionKey": "<p>The encryption key used to encrypt and decrypt data in the artifact store for the pipeline, such as an AWS Key Management Service (AWS KMS) key. This is optional and might not be present.</p>"
       }
     },
@@ -510,7 +511,7 @@
       "base": "<p>The details of the actions taken and results produced on an artifact as it passes through stages in the pipeline.</p>",
       "refs": {
         "PutJobSuccessResultInput$executionDetails": "<p>The execution details of the successful job, such as the actions taken by the job worker.</p>",
-        "PutThirdPartyJobSuccessResultInput$executionDetails": null
+        "PutThirdPartyJobSuccessResultInput$executionDetails": "<p>The details of the actions taken and results produced on an artifact as it passes through stages in the pipeline. </p>"
       }
     },
     "ExecutionId": {
@@ -532,7 +533,7 @@
       "base": "<p>Represents information about failure details.</p>",
       "refs": {
         "PutJobFailureResultInput$failureDetails": "<p>The details about the failure of a job.</p>",
-        "PutThirdPartyJobFailureResultInput$failureDetails": null
+        "PutThirdPartyJobFailureResultInput$failureDetails": "<p>Represents information about failure details.</p>"
       }
     },
     "FailureType": {
@@ -663,7 +664,7 @@
       "base": "<p>Represents additional information about a job required for a job worker to complete the job.</p>",
       "refs": {
         "Job$data": "<p>Additional data about a job.</p>",
-        "JobDetails$data": null
+        "JobDetails$data": "<p>Represents additional information about a job required for a job worker to complete the job. </p>"
       }
     },
     "JobDetails": {
@@ -735,6 +736,16 @@
       "refs": {
       }
     },
+    "ListPipelineExecutionsInput": {
+      "base": "<p>Represents the input of a list pipeline executions action.</p>",
+      "refs": {
+      }
+    },
+    "ListPipelineExecutionsOutput": {
+      "base": "<p>Represents the output of a list pipeline executions action. </p>",
+      "refs": {
+      }
+    },
     "ListPipelinesInput": {
       "base": "<p>Represents the input of a list pipelines action.</p>",
       "refs": {
@@ -750,6 +761,12 @@
       "refs": {
         "PollForJobsInput$maxBatchSize": "<p>The maximum number of jobs to return in a poll for jobs call.</p>",
         "PollForThirdPartyJobsInput$maxBatchSize": "<p>The maximum number of jobs to return in a poll for jobs call.</p>"
+      }
+    },
+    "MaxResults": {
+      "base": null,
+      "refs": {
+        "ListPipelineExecutionsInput$maxResults": "<p>The maximum number of results to return in a single call. To retrieve the remaining results, make another call with the returned nextToken value. The available pipeline execution history is limited to the most recent 12 months, based on pipeline execution start times. Default value is 100.</p>"
       }
     },
     "MaximumArtifactCount": {
@@ -776,6 +793,8 @@
       "refs": {
         "ListActionTypesInput$nextToken": "<p>An identifier that was returned from the previous list action types call, which can be used to return the next set of action types in the list.</p>",
         "ListActionTypesOutput$nextToken": "<p>If the amount of returned information is significantly large, an identifier is also returned which can be used in a subsequent list action types call to return the next set of action types in the list.</p>",
+        "ListPipelineExecutionsInput$nextToken": "<p>The token that was returned from the previous list pipeline executions call, which can be used to return the next set of pipeline executions in the list.</p>",
+        "ListPipelineExecutionsOutput$nextToken": "<p>A token that can be used in the next list pipeline executions call to return the next set of pipeline executions. To view all items in the list, continue to call this operation with each subsequent token until no more nextToken values are returned.</p>",
         "ListPipelinesInput$nextToken": "<p>An identifier that was returned from the previous list pipelines call, which can be used to return the next set of pipelines in the list.</p>",
         "ListPipelinesOutput$nextToken": "<p>If the amount of returned information is significantly large, an identifier is also returned which can be used in a subsequent list pipelines call to return the next set of pipelines in the list.</p>"
       }
@@ -816,16 +835,16 @@
     "PipelineContext": {
       "base": "<p>Represents information about a pipeline to a job worker.</p>",
       "refs": {
-        "JobData$pipelineContext": null,
-        "ThirdPartyJobData$pipelineContext": null
+        "JobData$pipelineContext": "<p>Represents information about a pipeline to a job worker.</p>",
+        "ThirdPartyJobData$pipelineContext": "<p>Represents information about a pipeline to a job worker.</p>"
       }
     },
     "PipelineDeclaration": {
       "base": "<p>Represents the structure of actions and stages to be performed in the pipeline.</p>",
       "refs": {
-        "CreatePipelineInput$pipeline": null,
-        "CreatePipelineOutput$pipeline": null,
-        "GetPipelineOutput$pipeline": null,
+        "CreatePipelineInput$pipeline": "<p>Represents the structure of actions and stages to be performed in the pipeline. </p>",
+        "CreatePipelineOutput$pipeline": "<p>Represents the structure of actions and stages to be performed in the pipeline. </p>",
+        "GetPipelineOutput$pipeline": "<p>Represents the structure of actions and stages to be performed in the pipeline. </p>",
         "UpdatePipelineInput$pipeline": "<p>The name of the pipeline to be updated.</p>",
         "UpdatePipelineOutput$pipeline": "<p>The structure of the updated pipeline.</p>"
       }
@@ -841,6 +860,7 @@
       "refs": {
         "GetPipelineExecutionInput$pipelineExecutionId": "<p>The ID of the pipeline execution about which you want to get execution details.</p>",
         "PipelineExecution$pipelineExecutionId": "<p>The ID of the pipeline execution.</p>",
+        "PipelineExecutionSummary$pipelineExecutionId": "<p>The ID of the pipeline execution.</p>",
         "PutActionRevisionOutput$pipelineExecutionId": "<p>The ID of the current workflow state of the pipeline.</p>",
         "RetryStageExecutionInput$pipelineExecutionId": "<p>The ID of the pipeline execution in the failed stage to be retried. Use the <a>GetPipelineState</a> action to retrieve the current pipelineExecutionId of the failed stage</p>",
         "RetryStageExecutionOutput$pipelineExecutionId": "<p>The ID of the current workflow execution in the failed stage.</p>",
@@ -856,7 +876,20 @@
     "PipelineExecutionStatus": {
       "base": null,
       "refs": {
-        "PipelineExecution$status": "<p>The status of the pipeline execution.</p> <ul> <li> <p>InProgress: The pipeline execution is currently running.</p> </li> <li> <p>Succeeded: The pipeline execution completed successfully. </p> </li> <li> <p>Superseded: While this pipeline execution was waiting for the next stage to be completed, a newer pipeline execution caught up and continued through the pipeline instead. </p> </li> <li> <p>Failed: The pipeline did not complete successfully.</p> </li> </ul>"
+        "PipelineExecution$status": "<p>The status of the pipeline execution.</p> <ul> <li> <p>InProgress: The pipeline execution is currently running.</p> </li> <li> <p>Succeeded: The pipeline execution completed successfully. </p> </li> <li> <p>Superseded: While this pipeline execution was waiting for the next stage to be completed, a newer pipeline execution caught up and continued through the pipeline instead. </p> </li> <li> <p>Failed: The pipeline execution did not complete successfully.</p> </li> </ul>",
+        "PipelineExecutionSummary$status": "<p>The status of the pipeline execution.</p> <ul> <li> <p>InProgress: The pipeline execution is currently running.</p> </li> <li> <p>Succeeded: The pipeline execution completed successfully. </p> </li> <li> <p>Superseded: While this pipeline execution was waiting for the next stage to be completed, a newer pipeline execution caught up and continued through the pipeline instead. </p> </li> <li> <p>Failed: The pipeline execution did not complete successfully.</p> </li> </ul>"
+      }
+    },
+    "PipelineExecutionSummary": {
+      "base": "<p>Summary information about a pipeline execution.</p>",
+      "refs": {
+        "PipelineExecutionSummaryList$member": null
+      }
+    },
+    "PipelineExecutionSummaryList": {
+      "base": null,
+      "refs": {
+        "ListPipelineExecutionsOutput$pipelineExecutionSummaries": "<p>A list of executions in the history of a pipeline.</p>"
       }
     },
     "PipelineList": {
@@ -875,6 +908,7 @@
         "GetPipelineInput$name": "<p>The name of the pipeline for which you want to get information. Pipeline names must be unique under an Amazon Web Services (AWS) user account.</p>",
         "GetPipelineStateInput$name": "<p>The name of the pipeline about which you want to get information.</p>",
         "GetPipelineStateOutput$pipelineName": "<p>The name of the pipeline for which you want to get the state.</p>",
+        "ListPipelineExecutionsInput$pipelineName": "<p>The name of the pipeline for which you want to get execution summary information.</p>",
         "PipelineContext$pipelineName": "<p>The name of the pipeline. This is a user-specified value. Pipeline names must be unique across all pipeline names under an Amazon Web Services account.</p>",
         "PipelineDeclaration$name": "<p>The name of the action to be performed.</p>",
         "PipelineExecution$pipelineName": "<p>The name of the pipeline that was executed.</p>",
@@ -1201,6 +1235,8 @@
         "ArtifactRevision$created": "<p>The date and time when the most recent revision of the artifact was created, in timestamp format.</p>",
         "GetPipelineStateOutput$created": "<p>The date and time the pipeline was created, in timestamp format.</p>",
         "GetPipelineStateOutput$updated": "<p>The date and time the pipeline was last updated, in timestamp format.</p>",
+        "PipelineExecutionSummary$startTime": "<p>The date and time when the pipeline execution began, in timestamp format.</p>",
+        "PipelineExecutionSummary$lastUpdateTime": "<p>The date and time of the last change to the pipeline execution, in timestamp format.</p>",
         "PipelineSummary$created": "<p>The date and time the pipeline was created, in timestamp format.</p>",
         "PipelineSummary$updated": "<p>The date and time of the last update to the pipeline, in timestamp format.</p>",
         "PutApprovalResultOutput$approvedAt": "<p>The timestamp showing when the approval or rejection was submitted.</p>"

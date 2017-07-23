@@ -19,7 +19,9 @@ import (
 	"testing"
 	"time"
 
+	"fmt"
 	"golang.org/x/net/context"
+	"strings"
 )
 
 func TestAdminIntegration(t *testing.T) {
@@ -40,6 +42,22 @@ func TestAdminIntegration(t *testing.T) {
 		t.Fatalf("NewAdminClient: %v", err)
 	}
 	defer adminClient.Close()
+
+	iAdminClient, err := testEnv.NewInstanceAdminClient()
+	if err != nil {
+		t.Fatalf("NewInstanceAdminClient: %v", err)
+	}
+	if iAdminClient != nil {
+		defer iAdminClient.Close()
+
+		iInfo, err := iAdminClient.InstanceInfo(ctx, adminClient.instance)
+		if err != nil {
+			t.Errorf("InstanceInfo: %v", err)
+		}
+		if iInfo.Name != adminClient.instance {
+			t.Errorf("InstanceInfo returned name %#v, want %#v", iInfo.Name, adminClient.instance)
+		}
+	}
 
 	list := func() []string {
 		tbls, err := adminClient.Tables(ctx)
@@ -87,5 +105,51 @@ func TestAdminIntegration(t *testing.T) {
 	}
 	if got, unwanted := tables, []string{"myothertable"}; containsAll(got, unwanted) {
 		t.Errorf("adminClient.Tables return %#v. unwanted %#v", got, unwanted)
+	}
+
+	// Populate mytable and drop row ranges
+	if err = adminClient.CreateColumnFamily(ctx, "mytable", "cf"); err != nil {
+		t.Fatalf("Creating column family: %v", err)
+	}
+
+	client, err := testEnv.NewClient()
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+	defer client.Close()
+
+	tbl := client.Open("mytable")
+
+	prefixes := []string{"a", "b", "c"}
+	for _, prefix := range prefixes {
+		for i := 0; i < 5; i++ {
+			mut := NewMutation()
+			mut.Set("cf", "col", 0, []byte("1"))
+			if err := tbl.Apply(ctx, fmt.Sprintf("%v-%v", prefix, i), mut); err != nil {
+				t.Fatalf("Mutating row: %v", err)
+			}
+		}
+	}
+
+	if err = adminClient.DropRowRange(ctx, "mytable", "a"); err != nil {
+		t.Errorf("DropRowRange a: %v", err)
+	}
+	if err = adminClient.DropRowRange(ctx, "mytable", "c"); err != nil {
+		t.Errorf("DropRowRange c: %v", err)
+	}
+	if err = adminClient.DropRowRange(ctx, "mytable", "x"); err != nil {
+		t.Errorf("DropRowRange x: %v", err)
+	}
+
+	var gotRowCount int
+	tbl.ReadRows(ctx, RowRange{}, func(row Row) bool {
+		gotRowCount += 1
+		if !strings.HasPrefix(row.Key(), "b") {
+			t.Errorf("Invalid row after dropping range: %v", row)
+		}
+		return true
+	})
+	if gotRowCount != 5 {
+		t.Errorf("Invalid row count after dropping range: got %v, want %v", gotRowCount, 5)
 	}
 }

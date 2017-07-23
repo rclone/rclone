@@ -1276,6 +1276,109 @@ func (c *Inspector) DescribeRulesPackagesWithContext(ctx aws.Context, input *Des
 	return out, req.Send()
 }
 
+const opGetAssessmentReport = "GetAssessmentReport"
+
+// GetAssessmentReportRequest generates a "aws/request.Request" representing the
+// client's request for the GetAssessmentReport operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See GetAssessmentReport for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetAssessmentReport method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetAssessmentReportRequest method.
+//    req, resp := client.GetAssessmentReportRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/inspector-2016-02-16/GetAssessmentReport
+func (c *Inspector) GetAssessmentReportRequest(input *GetAssessmentReportInput) (req *request.Request, output *GetAssessmentReportOutput) {
+	op := &request.Operation{
+		Name:       opGetAssessmentReport,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetAssessmentReportInput{}
+	}
+
+	output = &GetAssessmentReportOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetAssessmentReport API operation for Amazon Inspector.
+//
+// Produces an assessment report that includes detailed and comprehensive results
+// of a specified assessment run.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Inspector's
+// API operation GetAssessmentReport for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInternalException "InternalException"
+//   Internal server error.
+//
+//   * ErrCodeInvalidInputException "InvalidInputException"
+//   The request was rejected because an invalid or out-of-range value was supplied
+//   for an input parameter.
+//
+//   * ErrCodeAccessDeniedException "AccessDeniedException"
+//   You do not have required permissions to access the requested resource.
+//
+//   * ErrCodeNoSuchEntityException "NoSuchEntityException"
+//   The request was rejected because it referenced an entity that does not exist.
+//   The error code describes the entity.
+//
+//   * ErrCodeAssessmentRunInProgressException "AssessmentRunInProgressException"
+//   You cannot perform a specified action if an assessment run is currently in
+//   progress.
+//
+//   * ErrCodeUnsupportedFeatureException "UnsupportedFeatureException"
+//   Used by the GetAssessmentReport API. The request was rejected because you
+//   tried to generate a report for an assessment run that existed before reporting
+//   was supported in Amazon Inspector. You can only generate reports for assessment
+//   runs that took place or will take place after generating reports in Amazon
+//   Inspector became available.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/inspector-2016-02-16/GetAssessmentReport
+func (c *Inspector) GetAssessmentReport(input *GetAssessmentReportInput) (*GetAssessmentReportOutput, error) {
+	req, out := c.GetAssessmentReportRequest(input)
+	return out, req.Send()
+}
+
+// GetAssessmentReportWithContext is the same as GetAssessmentReport with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetAssessmentReport for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Inspector) GetAssessmentReportWithContext(ctx aws.Context, input *GetAssessmentReportInput, opts ...request.Option) (*GetAssessmentReportOutput, error) {
+	req, out := c.GetAssessmentReportRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetTelemetryMetadata = "GetTelemetryMetadata"
 
 // GetTelemetryMetadataRequest generates a "aws/request.Request" representing the
@@ -3222,6 +3325,11 @@ type AssessmentRun struct {
 	// DurationInSeconds is a required field
 	DurationInSeconds *int64 `locationName:"durationInSeconds" min:"180" type:"integer" required:"true"`
 
+	// Provides a total count of generated findings per severity.
+	//
+	// FindingCounts is a required field
+	FindingCounts map[string]*int64 `locationName:"findingCounts" type:"map" required:"true"`
+
 	// The auto-generated name for the assessment run.
 	//
 	// Name is a required field
@@ -3305,6 +3413,12 @@ func (s *AssessmentRun) SetDataCollected(v bool) *AssessmentRun {
 // SetDurationInSeconds sets the DurationInSeconds field's value.
 func (s *AssessmentRun) SetDurationInSeconds(v int64) *AssessmentRun {
 	s.DurationInSeconds = &v
+	return s
+}
+
+// SetFindingCounts sets the FindingCounts field's value.
+func (s *AssessmentRun) SetFindingCounts(v map[string]*int64) *AssessmentRun {
+	s.FindingCounts = v
 	return s
 }
 
@@ -3580,6 +3694,7 @@ type AssessmentRunNotification struct {
 	// Event is a required field
 	Event *string `locationName:"event" type:"string" required:"true" enum:"Event"`
 
+	// The message included in the notification.
 	Message *string `locationName:"message" type:"string"`
 
 	// The status code of the SNS notification.
@@ -5570,6 +5685,116 @@ func (s *FindingFilter) SetSeverities(v []*string) *FindingFilter {
 // SetUserAttributes sets the UserAttributes field's value.
 func (s *FindingFilter) SetUserAttributes(v []*Attribute) *FindingFilter {
 	s.UserAttributes = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/inspector-2016-02-16/GetAssessmentReportRequest
+type GetAssessmentReportInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN that specifies the assessment run for which you want to generate
+	// a report.
+	//
+	// AssessmentRunArn is a required field
+	AssessmentRunArn *string `locationName:"assessmentRunArn" min:"1" type:"string" required:"true"`
+
+	// Specifies the file format (html or pdf) of the assessment report that you
+	// want to generate.
+	//
+	// ReportFileFormat is a required field
+	ReportFileFormat *string `locationName:"reportFileFormat" type:"string" required:"true" enum:"ReportFileFormat"`
+
+	// Specifies the type of the assessment report that you want to generate. There
+	// are two types of assessment reports: a finding report and a full report.
+	// For more information, see Assessment Reports (http://docs.aws.amazon.com/inspector/latest/userguide/inspector_reports.html).
+	//
+	// ReportType is a required field
+	ReportType *string `locationName:"reportType" type:"string" required:"true" enum:"ReportType"`
+}
+
+// String returns the string representation
+func (s GetAssessmentReportInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetAssessmentReportInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetAssessmentReportInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetAssessmentReportInput"}
+	if s.AssessmentRunArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("AssessmentRunArn"))
+	}
+	if s.AssessmentRunArn != nil && len(*s.AssessmentRunArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("AssessmentRunArn", 1))
+	}
+	if s.ReportFileFormat == nil {
+		invalidParams.Add(request.NewErrParamRequired("ReportFileFormat"))
+	}
+	if s.ReportType == nil {
+		invalidParams.Add(request.NewErrParamRequired("ReportType"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAssessmentRunArn sets the AssessmentRunArn field's value.
+func (s *GetAssessmentReportInput) SetAssessmentRunArn(v string) *GetAssessmentReportInput {
+	s.AssessmentRunArn = &v
+	return s
+}
+
+// SetReportFileFormat sets the ReportFileFormat field's value.
+func (s *GetAssessmentReportInput) SetReportFileFormat(v string) *GetAssessmentReportInput {
+	s.ReportFileFormat = &v
+	return s
+}
+
+// SetReportType sets the ReportType field's value.
+func (s *GetAssessmentReportInput) SetReportType(v string) *GetAssessmentReportInput {
+	s.ReportType = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/inspector-2016-02-16/GetAssessmentReportResponse
+type GetAssessmentReportOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the status of the request to generate an assessment report.
+	//
+	// Status is a required field
+	Status *string `locationName:"status" type:"string" required:"true" enum:"ReportStatus"`
+
+	// Specifies the URL where you can find the generated assessment report. This
+	// parameter is only returned if the report is successfully generated.
+	Url *string `locationName:"url" type:"string"`
+}
+
+// String returns the string representation
+func (s GetAssessmentReportOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetAssessmentReportOutput) GoString() string {
+	return s.String()
+}
+
+// SetStatus sets the Status field's value.
+func (s *GetAssessmentReportOutput) SetStatus(v string) *GetAssessmentReportOutput {
+	s.Status = &v
+	return s
+}
+
+// SetUrl sets the Url field's value.
+func (s *GetAssessmentReportOutput) SetUrl(v string) *GetAssessmentReportOutput {
+	s.Url = &v
 	return s
 }
 
@@ -7717,11 +7942,17 @@ const (
 	// AssessmentRunStateDataCollected is a AssessmentRunState enum value
 	AssessmentRunStateDataCollected = "DATA_COLLECTED"
 
+	// AssessmentRunStateStartEvaluatingRulesPending is a AssessmentRunState enum value
+	AssessmentRunStateStartEvaluatingRulesPending = "START_EVALUATING_RULES_PENDING"
+
 	// AssessmentRunStateEvaluatingRules is a AssessmentRunState enum value
 	AssessmentRunStateEvaluatingRules = "EVALUATING_RULES"
 
 	// AssessmentRunStateFailed is a AssessmentRunState enum value
 	AssessmentRunStateFailed = "FAILED"
+
+	// AssessmentRunStateError is a AssessmentRunState enum value
+	AssessmentRunStateError = "ERROR"
 
 	// AssessmentRunStateCompleted is a AssessmentRunState enum value
 	AssessmentRunStateCompleted = "COMPLETED"
@@ -7990,6 +8221,33 @@ const (
 
 	// NoSuchEntityErrorCodeIamRoleDoesNotExist is a NoSuchEntityErrorCode enum value
 	NoSuchEntityErrorCodeIamRoleDoesNotExist = "IAM_ROLE_DOES_NOT_EXIST"
+)
+
+const (
+	// ReportFileFormatHtml is a ReportFileFormat enum value
+	ReportFileFormatHtml = "HTML"
+
+	// ReportFileFormatPdf is a ReportFileFormat enum value
+	ReportFileFormatPdf = "PDF"
+)
+
+const (
+	// ReportStatusWorkInProgress is a ReportStatus enum value
+	ReportStatusWorkInProgress = "WORK_IN_PROGRESS"
+
+	// ReportStatusFailed is a ReportStatus enum value
+	ReportStatusFailed = "FAILED"
+
+	// ReportStatusCompleted is a ReportStatus enum value
+	ReportStatusCompleted = "COMPLETED"
+)
+
+const (
+	// ReportTypeFinding is a ReportType enum value
+	ReportTypeFinding = "FINDING"
+
+	// ReportTypeFull is a ReportType enum value
+	ReportTypeFull = "FULL"
 )
 
 const (

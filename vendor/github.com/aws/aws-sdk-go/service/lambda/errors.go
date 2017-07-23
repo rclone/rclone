@@ -41,7 +41,9 @@ const (
 	//
 	// One of the parameters in the request is invalid. For example, if you provided
 	// an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-	// API, that AWS Lambda is unable to assume you will get this exception.
+	// API, that AWS Lambda is unable to assume you will get this exception. You
+	// will also get this exception if you have selected a deprecated runtime, such
+	// as Node v0.10.42.
 	ErrCodeInvalidParameterValueException = "InvalidParameterValueException"
 
 	// ErrCodeInvalidRequestContentException for service response error code
@@ -49,6 +51,12 @@ const (
 	//
 	// The request body could not be parsed as JSON.
 	ErrCodeInvalidRequestContentException = "InvalidRequestContentException"
+
+	// ErrCodeInvalidRuntimeException for service response error code
+	// "InvalidRuntimeException".
+	//
+	// The runtime or runtime version specified is not supported.
+	ErrCodeInvalidRuntimeException = "InvalidRuntimeException"
 
 	// ErrCodeInvalidSecurityGroupIDException for service response error code
 	// "InvalidSecurityGroupIDException".

@@ -1451,7 +1451,7 @@ type CreateProjectInput struct {
 	// How long, in minutes, from 5 to 480 (8 hours), for AWS CodeBuild to wait
 	// until timing out any build that has not been marked as completed. The default
 	// is 60 minutes.
-	TimeoutInMinutes *int64 `locationName:"timeoutInMinutes" min:"1" type:"integer"`
+	TimeoutInMinutes *int64 `locationName:"timeoutInMinutes" min:"5" type:"integer"`
 }
 
 // String returns the string representation
@@ -1488,8 +1488,8 @@ func (s *CreateProjectInput) Validate() error {
 	if s.Source == nil {
 		invalidParams.Add(request.NewErrParamRequired("Source"))
 	}
-	if s.TimeoutInMinutes != nil && *s.TimeoutInMinutes < 1 {
-		invalidParams.Add(request.NewErrParamMinValue("TimeoutInMinutes", 1))
+	if s.TimeoutInMinutes != nil && *s.TimeoutInMinutes < 5 {
+		invalidParams.Add(request.NewErrParamMinValue("TimeoutInMinutes", 5))
 	}
 	if s.Artifacts != nil {
 		if err := s.Artifacts.Validate(); err != nil {
@@ -1773,6 +1773,11 @@ type EnvironmentVariable struct {
 	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
 
 	// The value of the environment variable.
+	//
+	// We strongly discourage using environment variables to store sensitive values,
+	// especially AWS secret key IDs and secret access keys. Environment variables
+	// can be displayed in plain text using tools such as the AWS CodeBuild console
+	// and the AWS Command Line Interface (AWS CLI).
 	//
 	// Value is a required field
 	Value *string `locationName:"value" type:"string" required:"true"`
@@ -2287,7 +2292,7 @@ type Project struct {
 	// How long, in minutes, from 5 to 480 (8 hours), for AWS CodeBuild to wait
 	// before timing out any related build that did not get marked as completed.
 	// The default is 60 minutes.
-	TimeoutInMinutes *int64 `locationName:"timeoutInMinutes" min:"1" type:"integer"`
+	TimeoutInMinutes *int64 `locationName:"timeoutInMinutes" min:"5" type:"integer"`
 }
 
 // String returns the string representation
@@ -2563,6 +2568,23 @@ type ProjectEnvironment struct {
 	// Image is a required field
 	Image *string `locationName:"image" min:"1" type:"string" required:"true"`
 
+	// If set to true, enables running the Docker daemon inside a Docker container;
+	// otherwise, false or not specified (the default). This value must be set to
+	// true only if this build project will be used to build Docker images, and
+	// the specified build environment image is not one provided by AWS CodeBuild
+	// with Docker support. Otherwise, all associated builds that attempt to interact
+	// with the Docker daemon will fail. Note that you must also start the Docker
+	// daemon so that your builds can interact with it as needed. One way to do
+	// this is to initialize the Docker daemon in the install phase of your build
+	// spec by running the following build commands. (Do not run the following build
+	// commands if the specified build environment image is provided by AWS CodeBuild
+	// with Docker support.)
+	//
+	// - nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock --host=tcp://0.0.0.0:2375
+	// --storage-driver=vfs& - timeout -t 15 sh -c "until docker info; do echo .;
+	// sleep 1; done"
+	PrivilegedMode *bool `locationName:"privilegedMode" type:"boolean"`
+
 	// The type of build environment to use for related builds.
 	//
 	// Type is a required field
@@ -2629,6 +2651,12 @@ func (s *ProjectEnvironment) SetImage(v string) *ProjectEnvironment {
 	return s
 }
 
+// SetPrivilegedMode sets the PrivilegedMode field's value.
+func (s *ProjectEnvironment) SetPrivilegedMode(v bool) *ProjectEnvironment {
+	s.PrivilegedMode = &v
+	return s
+}
+
 // SetType sets the Type field's value.
 func (s *ProjectEnvironment) SetType(v string) *ProjectEnvironment {
 	s.Type = &v
@@ -2673,12 +2701,15 @@ type ProjectSource struct {
 	//    * For source code in a GitHub repository, the HTTPS clone URL to the repository
 	//    that contains the source and the build spec. Also, you must connect your
 	//    AWS account to your GitHub account. To do this, use the AWS CodeBuild
-	//    console to begin creating a build project, and follow the on-screen instructions
-	//    to complete the connection. (After you have connected to your GitHub account,
-	//    you do not need to finish creating the build project, and you may then
-	//    leave the AWS CodeBuild console.) To instruct AWS CodeBuild to then use
-	//    this connection, in the source object, set the auth object's type value
-	//    to OAUTH.
+	//    console to begin creating a build project. When you use the console to
+	//    connect (or reconnect) with GitHub, on the GitHub Authorize application
+	//    page that displays, for Organization access, choose Request access next
+	//    to each repository you want to allow AWS CodeBuild to have access to.
+	//    Then choose Authorize application. (After you have connected to your GitHub
+	//    account, you do not need to finish creating the build project, and you
+	//    may then leave the AWS CodeBuild console.) To instruct AWS CodeBuild to
+	//    then use this connection, in the source object, set the auth object's
+	//    type value to OAUTH.
 	Location *string `locationName:"location" type:"string"`
 
 	// The type of repository that contains the source code to be built. Valid values
@@ -2837,7 +2868,7 @@ type StartBuildInput struct {
 
 	// The number of build timeout minutes, from 5 to 480 (8 hours), that overrides,
 	// for this build only, the latest setting already defined in the build project.
-	TimeoutInMinutesOverride *int64 `locationName:"timeoutInMinutesOverride" min:"1" type:"integer"`
+	TimeoutInMinutesOverride *int64 `locationName:"timeoutInMinutesOverride" min:"5" type:"integer"`
 }
 
 // String returns the string representation
@@ -2859,8 +2890,8 @@ func (s *StartBuildInput) Validate() error {
 	if s.ProjectName != nil && len(*s.ProjectName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("ProjectName", 1))
 	}
-	if s.TimeoutInMinutesOverride != nil && *s.TimeoutInMinutesOverride < 1 {
-		invalidParams.Add(request.NewErrParamMinValue("TimeoutInMinutesOverride", 1))
+	if s.TimeoutInMinutesOverride != nil && *s.TimeoutInMinutesOverride < 5 {
+		invalidParams.Add(request.NewErrParamMinValue("TimeoutInMinutesOverride", 5))
 	}
 	if s.ArtifactsOverride != nil {
 		if err := s.ArtifactsOverride.Validate(); err != nil {
@@ -3107,7 +3138,7 @@ type UpdateProjectInput struct {
 
 	// The replacement value in minutes, from 5 to 480 (8 hours), for AWS CodeBuild
 	// to wait before timing out any related build that did not get marked as completed.
-	TimeoutInMinutes *int64 `locationName:"timeoutInMinutes" min:"1" type:"integer"`
+	TimeoutInMinutes *int64 `locationName:"timeoutInMinutes" min:"5" type:"integer"`
 }
 
 // String returns the string representation
@@ -3135,8 +3166,8 @@ func (s *UpdateProjectInput) Validate() error {
 	if s.ServiceRole != nil && len(*s.ServiceRole) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("ServiceRole", 1))
 	}
-	if s.TimeoutInMinutes != nil && *s.TimeoutInMinutes < 1 {
-		invalidParams.Add(request.NewErrParamMinValue("TimeoutInMinutes", 1))
+	if s.TimeoutInMinutes != nil && *s.TimeoutInMinutes < 5 {
+		invalidParams.Add(request.NewErrParamMinValue("TimeoutInMinutes", 5))
 	}
 	if s.Artifacts != nil {
 		if err := s.Artifacts.Validate(); err != nil {

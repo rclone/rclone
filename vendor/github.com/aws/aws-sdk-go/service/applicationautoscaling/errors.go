@@ -14,12 +14,11 @@ const (
 	// ErrCodeFailedResourceAccessException for service response error code
 	// "FailedResourceAccessException".
 	//
-	// Failed access to resources caused an exception. This exception currently
-	// only applies to DescribeScalingPolicies. It is thrown when Application Auto
-	// Scaling is unable to retrieve the alarms associated with a scaling policy
-	// due to a client error, for example, if the role ARN specified for a scalable
-	// target does not have the proper permissions to call the CloudWatch DescribeAlarms
-	// (http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeAlarms.html)
+	// Failed access to resources caused an exception. This exception is thrown
+	// when Application Auto Scaling is unable to retrieve the alarms associated
+	// with a scaling policy due to a client error, for example, if the role ARN
+	// specified for a scalable target does not have permission to call the CloudWatch
+	// DescribeAlarms (http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeAlarms.html)
 	// API operation on behalf of your account.
 	ErrCodeFailedResourceAccessException = "FailedResourceAccessException"
 

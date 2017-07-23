@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"path/filepath"
 	"testing"
 )
 
@@ -17,7 +16,7 @@ func TestFindExistingPackage(t *testing.T) {
 
 func hasGoPathPrefix(path string) bool {
 	for _, srcPath := range srcPaths {
-		if filepath.HasPrefix(path, srcPath) {
+		if filepathHasPrefix(path, srcPath) {
 			return true
 		}
 	}

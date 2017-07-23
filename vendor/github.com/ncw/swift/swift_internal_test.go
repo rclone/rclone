@@ -10,7 +10,10 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
+	"reflect"
 	"testing"
+	"time"
 )
 
 const (
@@ -214,15 +217,19 @@ func TestInternalError(t *testing.T) {
 
 }
 
-func testCheckClose(c io.Closer, e error) (err error) {
+func testCheckClose(rd io.ReadCloser, e error) (err error) {
 	err = e
-	defer checkClose(c, &err)
+	defer checkClose(rd, &err)
 	return
 }
 
 // Make a closer which returns the error of our choice
 type myCloser struct {
 	err error
+}
+
+func (c *myCloser) Read([]byte) (int, error) {
+	return 0, io.EOF
 }
 
 func (c *myCloser) Close() error {
@@ -425,4 +432,197 @@ func TestInternalObjectPutString(t *testing.T) {
 	}).Rx("12345")
 	defer server.Finished()
 	c.ObjectPutString("container", "object", "12345", "text/plain")
+}
+
+func TestSetFromEnv(t *testing.T) {
+	// String
+	s := ""
+
+	os.Setenv("POTATO", "")
+	err := setFromEnv(&s, "POTATO")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	os.Setenv("POTATO", "this is a test")
+	err = setFromEnv(&s, "POTATO")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s != "this is a test" {
+		t.Fatal("incorrect", s)
+	}
+
+	os.Setenv("POTATO", "new")
+	err = setFromEnv(&s, "POTATO")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s != "this is a test" {
+		t.Fatal("was reset when it shouldn't have been")
+	}
+
+	// Integer
+	i := 0
+
+	os.Setenv("POTATO", "42")
+	err = setFromEnv(&i, "POTATO")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if i != 42 {
+		t.Fatal("incorrect", i)
+	}
+
+	os.Setenv("POTATO", "43")
+	err = setFromEnv(&i, "POTATO")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if i != 42 {
+		t.Fatal("was reset when it shouldn't have been")
+	}
+
+	i = 0
+	os.Setenv("POTATO", "not a number")
+	err = setFromEnv(&i, "POTATO")
+	if err == nil {
+		t.Fatal("expecting error but didn't get one")
+	}
+
+	// bool
+	var b bool
+	os.Setenv("POTATO", "1")
+	err = setFromEnv(&b, "POTATO")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if b != true {
+		t.Fatal("incorrect", b)
+	}
+
+	// time.Duration
+	var dt time.Duration
+	os.Setenv("POTATO", "5s")
+	err = setFromEnv(&dt, "POTATO")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if dt != 5*time.Second {
+		t.Fatal("incorrect", dt)
+	}
+
+	// EndpointType
+	var e EndpointType
+	os.Setenv("POTATO", "internal")
+	err = setFromEnv(&e, "POTATO")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if e != EndpointType("internal") {
+		t.Fatal("incorrect", e)
+	}
+
+	// Unknown
+	var unknown struct{}
+	err = setFromEnv(&unknown, "POTATO")
+	if err == nil {
+		t.Fatal("expecting error")
+	}
+
+	os.Setenv("POTATO", "")
+}
+
+func TestApplyEnvironment(t *testing.T) {
+	// We've tested all the setting logic above, so just do a quick test here
+	c := new(Connection)
+	os.Setenv("GOSWIFT_CONNECT_TIMEOUT", "100s")
+	err := c.ApplyEnvironment()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.ConnectTimeout != 100*time.Second {
+		t.Fatal("timeout incorrect", c.ConnectTimeout)
+	}
+
+	c.ConnectTimeout = 0
+	os.Setenv("GOSWIFT_CONNECT_TIMEOUT", "parse error")
+	err = c.ApplyEnvironment()
+	if err == nil {
+		t.Fatal("expecting error")
+	}
+	if c.ConnectTimeout != 0 {
+		t.Fatal("timeout incorrect", c.ConnectTimeout)
+	}
+
+	os.Setenv("GOSWIFT_CONNECT_TIMEOUT", "")
+}
+
+func TestApplyEnvironmentAll(t *testing.T) {
+	// we do this in two phases because some of the variable set the same thing
+	for phase := 1; phase <= 2; phase++ {
+		c := new(Connection)
+
+		items := []struct {
+			phase    int
+			result   interface{}
+			name     string
+			value    string
+			want     interface{}
+			oldValue string
+		}{
+			// Copied and amended from ApplyEnvironment
+			// Environment variables - keep in same order as Connection
+			{1, &c.Domain, "OS_USER_DOMAIN_NAME", "os_user_domain_name", "os_user_domain_name", ""},
+			{1, &c.DomainId, "OS_USER_DOMAIN_ID", "os_user_domain_id", "os_user_domain_id", ""},
+			{1, &c.UserName, "OS_USERNAME", "os_username", "os_username", ""},
+			{1, &c.ApiKey, "OS_PASSWORD", "os_password", "os_password", ""},
+			{1, &c.AuthUrl, "OS_AUTH_URL", "os_auth_url", "os_auth_url", ""},
+			{1, &c.Retries, "GOSWIFT_RETRIES", "4", 4, ""},
+			{1, &c.UserAgent, "GOSWIFT_USER_AGENT", "goswift_user_agent", "goswift_user_agent", ""},
+			{1, &c.ConnectTimeout, "GOSWIFT_CONNECT_TIMEOUT", "98s", 98 * time.Second, ""},
+			{1, &c.Timeout, "GOSWIFT_TIMEOUT", "99s", 99 * time.Second, ""},
+			{1, &c.Region, "OS_REGION_NAME", "os_region_name", "os_region_name", ""},
+			{1, &c.AuthVersion, "ST_AUTH_VERSION", "3", 3, ""},
+			{1, &c.Internal, "GOSWIFT_INTERNAL", "true", true, ""},
+			{1, &c.Tenant, "OS_TENANT_NAME", "os_tenant_name", "os_tenant_name", ""},
+			{2, &c.Tenant, "OS_PROJECT_NAME", "os_project_name", "os_project_name", ""},
+			{1, &c.TenantId, "OS_TENANT_ID", "os_tenant_id", "os_tenant_id", ""},
+			{1, &c.EndpointType, "OS_ENDPOINT_TYPE", "internal", EndpointTypeInternal, ""},
+			{1, &c.TenantDomain, "OS_PROJECT_DOMAIN_NAME", "os_project_domain_name", "os_project_domain_name", ""},
+			{1, &c.TenantDomainId, "OS_PROJECT_DOMAIN_ID", "os_project_domain_id", "os_project_domain_id", ""},
+			{1, &c.TrustId, "OS_TRUST_ID", "os_trust_id", "os_trust_id", ""},
+			{1, &c.StorageUrl, "OS_STORAGE_URL", "os_storage_url", "os_storage_url", ""},
+			{1, &c.AuthToken, "OS_AUTH_TOKEN", "os_auth_token", "os_auth_token", ""},
+			// v1 auth alternatives
+			{2, &c.ApiKey, "ST_KEY", "st_key", "st_key", ""},
+			{2, &c.UserName, "ST_USER", "st_user", "st_user", ""},
+			{2, &c.AuthUrl, "ST_AUTH", "st_auth", "st_auth", ""},
+		}
+
+		for i := range items {
+			item := &items[i]
+			if item.phase == phase {
+				item.oldValue = os.Getenv(item.name) // save old value
+				os.Setenv(item.name, item.value)     // set new value
+			}
+		}
+
+		err := c.ApplyEnvironment()
+		if err != nil {
+			t.Fatalf("unexpected error %v", err)
+		}
+
+		for i := range items {
+			item := &items[i]
+			if item.phase == phase {
+				got := reflect.Indirect(reflect.ValueOf(item.result)).Interface()
+				if !reflect.DeepEqual(item.want, got) {
+					t.Errorf("%s: %v != %v", item.name, item.want, got)
+				}
+				os.Setenv(item.name, item.oldValue) // restore old value
+			}
+		}
+	}
+
 }

@@ -83,3 +83,23 @@ func TestXTS(t *testing.T) {
 		}
 	}
 }
+
+func TestShorterCiphertext(t *testing.T) {
+	// Decrypt used to panic if the input was shorter than the output. See
+	// https://go-review.googlesource.com/c/39954/
+	c, err := NewCipher(aes.NewCipher, make([]byte, 32))
+	if err != nil {
+		t.Fatalf("NewCipher failed: %s", err)
+	}
+
+	plaintext := make([]byte, 32)
+	encrypted := make([]byte, 48)
+	decrypted := make([]byte, 48)
+
+	c.Encrypt(encrypted, plaintext, 0)
+	c.Decrypt(decrypted, encrypted[:len(plaintext)], 0)
+
+	if !bytes.Equal(plaintext, decrypted[:len(plaintext)]) {
+		t.Errorf("En/Decryption is not inverse")
+	}
+}

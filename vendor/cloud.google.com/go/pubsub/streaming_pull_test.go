@@ -22,12 +22,13 @@ import (
 	"io"
 	"reflect"
 	"strconv"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	tspb "github.com/golang/protobuf/ptypes/timestamp"
 	"golang.org/x/net/context"
-	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	pb "google.golang.org/genproto/googleapis/pubsub/v1"
 	"google.golang.org/grpc"
@@ -37,9 +38,9 @@ import (
 var (
 	timestamp    = &tspb.Timestamp{}
 	testMessages = []*pb.ReceivedMessage{
-		{AckId: "1", Message: &pb.PubsubMessage{Data: []byte{1}, PublishTime: timestamp}},
-		{AckId: "2", Message: &pb.PubsubMessage{Data: []byte{2}, PublishTime: timestamp}},
-		{AckId: "3", Message: &pb.PubsubMessage{Data: []byte{3}, PublishTime: timestamp}},
+		{AckId: "0", Message: &pb.PubsubMessage{Data: []byte{1}, PublishTime: timestamp}},
+		{AckId: "1", Message: &pb.PubsubMessage{Data: []byte{2}, PublishTime: timestamp}},
+		{AckId: "2", Message: &pb.PubsubMessage{Data: []byte{3}, PublishTime: timestamp}},
 	}
 )
 
@@ -61,29 +62,41 @@ func testStreamingPullIteration(t *testing.T, client *Client, server *fakeServer
 		t.SkipNow()
 	}
 	sub := client.Subscription("s")
-	iter, err := sub.Pull(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
-	for i := 0; i < len(msgs); i++ {
-		got, err := iter.Next()
+	gotMsgs, err := pullN(context.Background(), sub, len(msgs), func(_ context.Context, m *Message) {
+		id, err := strconv.Atoi(m.ackID)
 		if err != nil {
-			t.Fatal(err)
+			panic(err)
 		}
-		got.Done(i%2 == 0) // ack evens, nack odds
-		want, err := toMessage(msgs[i])
+		// ack evens, nack odds
+		if id%2 == 0 {
+			m.Ack()
+		} else {
+			m.Nack()
+		}
+	})
+	if err != nil {
+		t.Fatalf("Pull: %v", err)
+	}
+	gotMap := map[string]*Message{}
+	for _, m := range gotMsgs {
+		gotMap[m.ackID] = m
+	}
+	for i, msg := range msgs {
+		want, err := toMessage(msg)
 		if err != nil {
 			t.Fatal(err)
 		}
 		want.calledDone = true
-		// Don't compare done; it's a function.
-		got.done = nil
+		got := gotMap[want.ackID]
+		if got == nil {
+			t.Errorf("%d: no message for ackID %q", i, want.ackID)
+			continue
+		}
+		got.doneFunc = nil // Don't compare done; it's a function.
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("%d: got\n%#v\nwant\n%#v", i, got, want)
 		}
-
 	}
-	iter.Stop()
 	server.wait()
 	for i := 0; i < len(msgs); i++ {
 		id := msgs[i].AckId
@@ -99,88 +112,57 @@ func testStreamingPullIteration(t *testing.T, client *Client, server *fakeServer
 	}
 }
 
-func TestStreamingPullStop(t *testing.T) {
-	if !useStreamingPull {
-		t.SkipNow()
-	}
-	// After Stop is called, Next returns iterator.Done.
-	client, server := newFake(t)
-	server.addStreamingPullMessages(testMessages)
-	sub := client.Subscription("s")
-	iter, err := sub.Pull(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
-	msg, err := iter.Next()
-	if err != nil {
-		t.Fatal(err)
-	}
-	msg.Done(true)
-	iter.Stop()
-	// Next should always return the same error.
-	for i := 0; i < 3; i++ {
-		_, err = iter.Next()
-		if want := iterator.Done; err != want {
-			t.Fatalf("got <%v> %p, want <%v> %p", err, err, want, want)
-		}
-	}
-}
-
 func TestStreamingPullError(t *testing.T) {
+	// If an RPC to the service returns a non-retryable error, Pull should
+	// return after all callbacks return, without waiting for messages to be
+	// acked.
 	if !useStreamingPull {
 		t.SkipNow()
 	}
 	client, server := newFake(t)
+	server.addStreamingPullMessages(testMessages[:1])
 	server.addStreamingPullError(grpc.Errorf(codes.Internal, ""))
 	sub := client.Subscription("s")
-	iter, err := sub.Pull(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Next should always return the same error.
-	for i := 0; i < 3; i++ {
-		_, err = iter.Next()
-		if want := codes.Internal; grpc.Code(err) != want {
-			t.Fatalf("got <%v>, want code %v", err, want)
+	callbackDone := make(chan struct{})
+	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	err := sub.Receive(ctx, func(ctx context.Context, m *Message) {
+		defer close(callbackDone)
+		select {
+		case <-ctx.Done():
+			return
 		}
+	})
+	select {
+	case <-callbackDone:
+	default:
+		t.Fatal("Receive returned but callback was not done")
+	}
+	if want := codes.Internal; grpc.Code(err) != want {
+		t.Fatalf("got <%v>, want code %v", err, want)
 	}
 }
 
 func TestStreamingPullCancel(t *testing.T) {
+	// If Receive's context is canceled, it should return after all callbacks
+	// return and all messages have been acked.
 	if !useStreamingPull {
 		t.SkipNow()
 	}
-	// Test that canceling the iterator's context behaves correctly.
 	client, server := newFake(t)
 	server.addStreamingPullMessages(testMessages)
 	sub := client.Subscription("s")
-	ctx, cancel := context.WithCancel(context.Background())
-	iter, err := sub.Pull(ctx)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	var n int32
+	err := sub.Receive(ctx, func(ctx2 context.Context, m *Message) {
+		atomic.AddInt32(&n, 1)
+		defer atomic.AddInt32(&n, -1)
+		cancel()
+	})
+	if got := atomic.LoadInt32(&n); got != 0 {
+		t.Errorf("Receive returned with %d callbacks still running", got)
+	}
 	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = iter.Next()
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Here we have one message read (but not acked), and two
-	// in the iterator's buffer.
-	cancel()
-	// Further calls to Next will return Canceled.
-	_, err = iter.Next()
-	if got, want := err, context.Canceled; got != want {
-		t.Errorf("got %v, want %v", got, want)
-	}
-	// Despite the unacked message, Stop will still return promptly.
-	done := make(chan struct{})
-	go func() {
-		iter.Stop()
-		close(done)
-	}()
-	select {
-	case <-done:
-	case <-time.After(1 * time.Second):
-		t.Fatal("iter.Stop timed out")
+		t.Fatalf("Receive got <%v>, want nil", err)
 	}
 }
 
@@ -197,7 +179,30 @@ func TestStreamingPullRetry(t *testing.T) {
 	server.addStreamingPullError(grpc.Errorf(codes.Unavailable, ""))
 	server.addStreamingPullError(grpc.Errorf(codes.Unavailable, ""))
 	server.addStreamingPullMessages(testMessages[2:])
+
 	testStreamingPullIteration(t, client, server, testMessages)
+}
+
+func TestStreamingPullOneActive(t *testing.T) {
+	// Only one call to Pull can be active at a time.
+	if !useStreamingPull {
+		t.SkipNow()
+	}
+	client, srv := newFake(t)
+	srv.addStreamingPullMessages(testMessages[:1])
+	sub := client.Subscription("s")
+	ctx, cancel := context.WithCancel(context.Background())
+	err := sub.Receive(ctx, func(ctx context.Context, m *Message) {
+		m.Ack()
+		err := sub.Receive(ctx, func(context.Context, *Message) {})
+		if err != errReceiveInProgress {
+			t.Errorf("got <%v>, want <%v>", err, errReceiveInProgress)
+		}
+		cancel()
+	})
+	if err != nil {
+		t.Fatalf("got <%v>, want nil", err)
+	}
 }
 
 func TestStreamingPullConcurrent(t *testing.T) {
@@ -219,44 +224,68 @@ func TestStreamingPullConcurrent(t *testing.T) {
 		server.addStreamingPullMessages([]*pb.ReceivedMessage{newMsg(i), newMsg(i + 1)})
 	}
 	sub := client.Subscription("s")
-	iter, err := sub.Pull(context.Background())
+	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	gotMsgs, err := pullN(ctx, sub, nMessages, func(ctx context.Context, m *Message) {
+		m.Ack()
+	})
 	if err != nil {
-		t.Fatal(err)
-	}
-	seenc := make(chan string)
-	errc := make(chan error, 2)
-	for i := 0; i < 2; i++ {
-		go func() {
-			for {
-				msg, err := iter.Next()
-				if err == iterator.Done {
-					return
-				}
-				if err != nil {
-					errc <- err
-					return
-				}
-				// Must ack before sending to channel, or Stop may hang.
-				msg.Done(true)
-				seenc <- msg.ackID
-			}
-		}()
+		t.Fatalf("Receive: %v", err)
 	}
 	seen := map[string]bool{}
-	for i := 0; i < nMessages; i++ {
-		select {
-		case err := <-errc:
-			t.Fatal(err)
-		case id := <-seenc:
-			if seen[id] {
-				t.Fatalf("duplicate ID %q", id)
-			}
-			seen[id] = true
+	for _, gm := range gotMsgs {
+		if seen[gm.ackID] {
+			t.Fatalf("duplicate ID %q", gm.ackID)
 		}
+		seen[gm.ackID] = true
 	}
-	iter.Stop()
 	if len(seen) != nMessages {
 		t.Fatalf("got %d messages, want %d", len(seen), nMessages)
+	}
+}
+
+func TestStreamingPullFlowControl(t *testing.T) {
+	// Callback invocations should not occur if flow control limits are exceeded.
+	if !useStreamingPull {
+		t.SkipNow()
+	}
+	client, server := newFake(t)
+	server.addStreamingPullMessages(testMessages)
+	sub := client.Subscription("s")
+	sub.ReceiveSettings.MaxOutstandingMessages = 2
+	ctx, cancel := context.WithCancel(context.Background())
+	activec := make(chan int)
+	waitc := make(chan int)
+	errc := make(chan error)
+	go func() {
+		errc <- sub.Receive(ctx, func(_ context.Context, m *Message) {
+			activec <- 1
+			<-waitc
+			m.Ack()
+		})
+	}()
+	// Here, two callbacks are active. Receive should be blocked in the flow
+	// control acquire method on the third message.
+	<-activec
+	<-activec
+	select {
+	case <-activec:
+		t.Fatal("third callback in progress")
+	case <-time.After(100 * time.Millisecond):
+	}
+	cancel()
+	// Receive still has not returned, because both callbacks are still blocked on waitc.
+	select {
+	case err := <-errc:
+		t.Fatalf("Receive returned early with error %v", err)
+	case <-time.After(100 * time.Millisecond):
+	}
+	// Let both callbacks proceed.
+	waitc <- 1
+	waitc <- 1
+	// The third callback will never run, because acquire returned a non-nil
+	// error, causing Receive to return. So now Receive should end.
+	if err := <-errc; err != nil {
+		t.Fatalf("got %v from Receive, want nil", err)
 	}
 }
 
@@ -274,4 +303,27 @@ func newFake(t *testing.T) (*Client, *fakeServer) {
 		t.Fatal(err)
 	}
 	return client, srv
+}
+
+// pullN calls sub.Receive until at least n messages are received.
+func pullN(ctx context.Context, sub *Subscription, n int, f func(context.Context, *Message)) ([]*Message, error) {
+	var (
+		mu   sync.Mutex
+		msgs []*Message
+	)
+	cctx, cancel := context.WithCancel(ctx)
+	err := sub.Receive(cctx, func(ctx context.Context, m *Message) {
+		mu.Lock()
+		msgs = append(msgs, m)
+		nSeen := len(msgs)
+		mu.Unlock()
+		f(ctx, m)
+		if nSeen >= n {
+			cancel()
+		}
+	})
+	if err != nil {
+		return nil, err
+	}
+	return msgs, nil
 }

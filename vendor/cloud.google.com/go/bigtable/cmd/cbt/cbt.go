@@ -48,6 +48,10 @@ var (
 	client              *bigtable.Client
 	adminClient         *bigtable.AdminClient
 	instanceAdminClient *bigtable.InstanceAdminClient
+
+	version      = "<unknown version>"
+	revision     = "<unknown revision>"
+	revisionDate = "<unknown revision date>"
 )
 
 func getCredentialOpts(opts []option.ClientOption) []option.ClientOption {
@@ -179,6 +183,8 @@ For convenience, values of the -project, -instance, -creds,
 	admin-endpoint = hostname:port
 	data-endpoint = hostname:port
 All values are optional, and all will be overridden by flags.
+
+cbt ` + version + ` ` + revision + ` ` + revisionDate + `
 `
 
 var commands = []struct {
@@ -202,10 +208,10 @@ var commands = []struct {
 		Required: cbtconfig.ProjectAndInstanceRequired,
 	},
 	{
-		Name:     "createtable",
-		Desc:     "Create a table",
-		do:       doCreateTable,
-		Usage:    "cbt createtable <table> [initial_splits...]\n" +
+		Name: "createtable",
+		Desc: "Create a table",
+		do:   doCreateTable,
+		Usage: "cbt createtable <table> [initial_splits...]\n" +
 			"  initial_splits=row		A row key to be used to initially split the table " +
 			"into multiple tablets. Can be repeated to create multiple splits.",
 		Required: cbtconfig.ProjectAndInstanceRequired,
@@ -306,6 +312,13 @@ var commands = []struct {
 			`  maxage=<d>		Maximum timestamp age to preserve (e.g. "1h", "4d")` + "\n" +
 			"  maxversions=<n>	Maximum number of versions to preserve",
 		Required: cbtconfig.ProjectAndInstanceRequired,
+	},
+	{
+		Name:     "version",
+		Desc:     "Print the current cbt version",
+		do:       doVersion,
+		Usage:    "cbt version",
+		Required: cbtconfig.NoneRequired,
 	},
 }
 
@@ -561,6 +574,12 @@ func (b byColumn) Len() int           { return len(b) }
 func (b byColumn) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
 func (b byColumn) Less(i, j int) bool { return b[i].Column < b[j].Column }
 
+type byFamilyName []bigtable.FamilyInfo
+
+func (b byFamilyName) Len() int           { return len(b) }
+func (b byFamilyName) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
+func (b byFamilyName) Less(i, j int) bool { return b[i].Name < b[j].Name }
+
 func doLS(ctx context.Context, args ...string) {
 	switch len(args) {
 	default:
@@ -580,10 +599,14 @@ func doLS(ctx context.Context, args ...string) {
 		if err != nil {
 			log.Fatalf("Getting table info: %v", err)
 		}
-		sort.Strings(ti.Families)
-		for _, fam := range ti.Families {
-			fmt.Println(fam)
+		sort.Sort(byFamilyName(ti.FamilyInfos))
+		tw := tabwriter.NewWriter(os.Stdout, 10, 8, 4, '\t', 0)
+		fmt.Fprintf(tw, "Family Name\tGC Policy\n")
+		fmt.Fprintf(tw, "-----------\t---------\n")
+		for _, fam := range ti.FamilyInfos {
+			fmt.Fprintf(tw, "%s\t%s\n", fam.Name, fam.GCPolicy)
 		}
+		tw.Flush()
 	}
 }
 
@@ -786,4 +809,8 @@ var unitMap = map[string]time.Duration{
 	"m":  time.Minute,
 	"h":  time.Hour,
 	"d":  24 * time.Hour,
+}
+
+func doVersion(ctx context.Context, args ...string) {
+	fmt.Printf("%s %s %s\n", version, revision, revisionDate)
 }

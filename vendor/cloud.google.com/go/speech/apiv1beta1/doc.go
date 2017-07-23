@@ -15,7 +15,7 @@
 // AUTO-GENERATED CODE. DO NOT EDIT.
 
 // Package speech is an experimental, auto-generated package for the
-// speech API.
+// Google Cloud Speech API.
 //
 // Google Cloud Speech API.
 package speech // import "cloud.google.com/go/speech/apiv1beta1"
@@ -25,9 +25,17 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func insertXGoog(ctx context.Context, val string) context.Context {
-	md, _ := metadata.FromContext(ctx)
+func insertXGoog(ctx context.Context, val []string) context.Context {
+	md, _ := metadata.FromOutgoingContext(ctx)
 	md = md.Copy()
-	md["x-goog-api-client"] = []string{val}
-	return metadata.NewContext(ctx, md)
+	md["x-goog-api-client"] = val
+	return metadata.NewOutgoingContext(ctx, md)
+}
+
+// DefaultAuthScopes reports the authentication scopes required
+// by this package.
+func DefaultAuthScopes() []string {
+	return []string{
+		"https://www.googleapis.com/auth/cloud-platform",
+	}
 }

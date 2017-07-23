@@ -8,7 +8,7 @@ import (
 )
 
 // Retryer is an interface to control retry logic for a given service.
-// The default implementation used by most services is the service.DefaultRetryer
+// The default implementation used by most services is the client.DefaultRetryer
 // structure, which contains basic retry logic using exponential backoff.
 type Retryer interface {
 	RetryRules(*Request) time.Duration
@@ -38,7 +38,6 @@ var throttleCodes = map[string]struct{}{
 	"ThrottlingException":                    {},
 	"RequestLimitExceeded":                   {},
 	"RequestThrottled":                       {},
-	"LimitExceededException":                 {}, // Deleting 10+ DynamoDb tables at once
 	"TooManyRequestsException":               {}, // Lambda functions
 	"PriorRequestNotComplete":                {}, // Route53
 }
@@ -75,6 +74,10 @@ var validParentCodes = map[string]struct{}{
 	ErrCodeRead:          struct{}{},
 }
 
+type temporaryError interface {
+	Temporary() bool
+}
+
 func isNestedErrorRetryable(parentErr awserr.Error) bool {
 	if parentErr == nil {
 		return false
@@ -91,6 +94,10 @@ func isNestedErrorRetryable(parentErr awserr.Error) bool {
 
 	if aerr, ok := err.(awserr.Error); ok {
 		return isCodeRetryable(aerr.Code())
+	}
+
+	if t, ok := err.(temporaryError); ok {
+		return t.Temporary()
 	}
 
 	return isErrConnectionReset(err)

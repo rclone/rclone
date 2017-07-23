@@ -46,7 +46,7 @@ type QueryConfig struct {
 	CreateDisposition TableCreateDisposition
 
 	// WriteDisposition specifies how existing data in the destination table is treated.
-	// The default is WriteAppend.
+	// The default is WriteEmpty.
 	WriteDisposition TableWriteDisposition
 
 	// DisableQueryCache prevents results being fetched from the query cache.
@@ -132,7 +132,7 @@ func (q *Query) Run(ctx context.Context) (*Job, error) {
 	if err := q.QueryConfig.populateJobQueryConfig(job.Configuration.Query); err != nil {
 		return nil, err
 	}
-	j, err := q.client.service.insertJob(ctx, q.client.projectID, &insertJobConf{job: job})
+	j, err := q.client.insertJob(ctx, &insertJobConf{job: job})
 	if err != nil {
 		return nil, err
 	}
@@ -193,4 +193,14 @@ func (q *QueryConfig) populateJobQueryConfig(conf *bq.JobConfigurationQuery) err
 		conf.QueryParameters = append(conf.QueryParameters, qp)
 	}
 	return nil
+}
+
+// Read submits a query for execution and returns the results via a RowIterator.
+// It is a shorthand for Query.Run followed by Job.Read.
+func (q *Query) Read(ctx context.Context) (*RowIterator, error) {
+	job, err := q.Run(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return job.Read(ctx)
 }

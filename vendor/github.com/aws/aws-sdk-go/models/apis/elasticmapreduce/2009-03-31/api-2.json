@@ -599,7 +599,10 @@
         "Configurations":{"shape":"ConfigurationList"},
         "SecurityConfiguration":{"shape":"XmlString"},
         "AutoScalingRole":{"shape":"XmlString"},
-        "ScaleDownBehavior":{"shape":"ScaleDownBehavior"}
+        "ScaleDownBehavior":{"shape":"ScaleDownBehavior"},
+        "CustomAmiId":{"shape":"XmlStringMaxLen256"},
+        "EbsRootVolumeSize":{"shape":"Integer"},
+        "RepoUpgradeOnBoot":{"shape":"RepoUpgradeOnBoot"}
       }
     },
     "ClusterId":{"type":"string"},
@@ -628,6 +631,7 @@
         "INTERNAL_ERROR",
         "VALIDATION_ERROR",
         "INSTANCE_FAILURE",
+        "INSTANCE_FLEET_TIMEOUT",
         "BOOTSTRAP_FAILURE",
         "USER_REQUEST",
         "STEP_FAILURE",
@@ -1639,6 +1643,13 @@
       "members":{
       }
     },
+    "RepoUpgradeOnBoot":{
+      "type":"string",
+      "enum":[
+        "SECURITY",
+        "NONE"
+      ]
+    },
     "ResourceId":{"type":"string"},
     "RunJobFlowInput":{
       "type":"structure",
@@ -1665,7 +1676,10 @@
         "Tags":{"shape":"TagList"},
         "SecurityConfiguration":{"shape":"XmlString"},
         "AutoScalingRole":{"shape":"XmlString"},
-        "ScaleDownBehavior":{"shape":"ScaleDownBehavior"}
+        "ScaleDownBehavior":{"shape":"ScaleDownBehavior"},
+        "CustomAmiId":{"shape":"XmlStringMaxLen256"},
+        "EbsRootVolumeSize":{"shape":"Integer"},
+        "RepoUpgradeOnBoot":{"shape":"RepoUpgradeOnBoot"}
       }
     },
     "RunJobFlowOutput":{

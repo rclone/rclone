@@ -19,6 +19,7 @@ package admin_test
 import (
 	"cloud.google.com/go/iam/admin/apiv1"
 	"golang.org/x/net/context"
+	"google.golang.org/api/iterator"
 	adminpb "google.golang.org/genproto/googleapis/iam/admin/v1"
 	iampb "google.golang.org/genproto/googleapis/iam/v1"
 )
@@ -46,9 +47,11 @@ func ExampleIamClient_ListServiceAccounts() {
 	it := c.ListServiceAccounts(ctx, req)
 	for {
 		resp, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
 		if err != nil {
 			// TODO: Handle error.
-			break
 		}
 		// TODO: Use resp.
 		_ = resp

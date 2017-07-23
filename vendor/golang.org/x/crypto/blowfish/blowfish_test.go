@@ -12,7 +12,7 @@ type CryptTest struct {
 	out []byte
 }
 
-// Test vector values are from http://www.schneier.com/code/vectors.txt.
+// Test vector values are from https://www.schneier.com/code/vectors.txt.
 var encryptTests = []CryptTest{
 	{
 		[]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},

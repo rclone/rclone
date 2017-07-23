@@ -284,56 +284,6 @@ func consumeRowIterator(it *RowIterator) ([][]Value, Schema, error) {
 	}
 }
 
-type delayedPageFetcher struct {
-	pageFetcherStub
-	delayCount int
-}
-
-func (pf *delayedPageFetcher) fetch(ctx context.Context, s service, token string) (*readDataResult, error) {
-	if pf.delayCount > 0 {
-		pf.delayCount--
-		return nil, errIncompleteJob
-	}
-	return pf.pageFetcherStub.fetch(ctx, s, token)
-}
-
-func TestIterateIncompleteJob(t *testing.T) {
-	want := [][]Value{{1, 2}, {11, 12}, {101, 102}, {111, 112}}
-	pf := pageFetcherStub{
-		fetchResponses: map[string]fetchResponse{
-			"": {
-				result: &readDataResult{
-					pageToken: "a",
-					rows:      [][]Value{{1, 2}, {11, 12}},
-				},
-			},
-			"a": {
-				result: &readDataResult{
-					pageToken: "",
-					rows:      [][]Value{{101, 102}, {111, 112}},
-				},
-			},
-		},
-	}
-	dpf := &delayedPageFetcher{
-		pageFetcherStub: pf,
-		delayCount:      1,
-	}
-	it := newRowIterator(context.Background(), nil, dpf)
-
-	values, _, err := consumeRowIterator(it)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if (len(values) != 0 || len(want) != 0) && !reflect.DeepEqual(values, want) {
-		t.Errorf("values: got:\n%v\nwant:\n%v", values, want)
-	}
-	if dpf.delayCount != 0 {
-		t.Errorf("delayCount: got: %v, want: 0", dpf.delayCount)
-	}
-}
-
 func TestNextDuringErrorState(t *testing.T) {
 	pf := &pageFetcherStub{
 		fetchResponses: map[string]fetchResponse{

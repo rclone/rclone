@@ -108,6 +108,15 @@ func (key Key) proto() (*proto3.ListValue, error) {
 	return lv, nil
 }
 
+// keySetProto lets a single Key act as a KeySet.
+func (key Key) keySetProto() (*sppb.KeySet, error) {
+	kp, err := key.proto()
+	if err != nil {
+		return nil, err
+	}
+	return &sppb.KeySet{Keys: []*proto3.ListValue{kp}}, nil
+}
+
 // String implements fmt.Stringer for Key. For string, []byte and NullString, it
 // prints the uninterpreted bytes of their contents, leaving caller with the
 // opportunity to escape the output.
@@ -143,6 +152,15 @@ func (key Key) String() string {
 	}
 	fmt.Fprint(b, ")")
 	return b.String()
+}
+
+// AsPrefix returns a KeyRange for all keys where k is the prefix.
+func (k Key) AsPrefix() KeyRange {
+	return KeyRange{
+		Start: k,
+		End:   k,
+		Kind:  ClosedClosed,
+	}
 }
 
 // KeyRangeKind describes the kind of interval represented by a KeyRange:
@@ -215,7 +233,7 @@ const (
 //
 // The next example retrieves all events for "Bob":
 //
-//	spanner.PrefixRange(spanner.Key{"Bob"})
+//	spanner.Key{"Bob"}.AsPrefix()
 //
 // To retrieve events before the year 2000:
 //
@@ -318,4 +336,65 @@ func (r KeyRange) proto() (*sppb.KeyRange, error) {
 		pb.EndKeyType = &sppb.KeyRange_EndOpen{EndOpen: end}
 	}
 	return pb, nil
+}
+
+// keySetProto lets a KeyRange act as a KeySet.
+func (r KeyRange) keySetProto() (*sppb.KeySet, error) {
+	rp, err := r.proto()
+	if err != nil {
+		return nil, err
+	}
+	return &sppb.KeySet{Ranges: []*sppb.KeyRange{rp}}, nil
+}
+
+// A KeySet defines a collection of Cloud Spanner keys and/or key ranges. All the
+// keys are expected to be in the same table or index. The keys need not be sorted in
+// any particular way.
+//
+// An individual Key can act as a KeySet, as can a KeyRange. Use the KeySets function
+// to create a KeySet consisting of multiple Keys and KeyRanges. To obtain an empty
+// KeySet, call KeySets with no arguments.
+//
+// If the same key is specified multiple times in the set (for example if two
+// ranges, two keys, or a key and a range overlap), the Cloud Spanner backend behaves
+// as if the key were only specified once.
+type KeySet interface {
+	keySetProto() (*sppb.KeySet, error)
+}
+
+// AllKeys returns a KeySet that represents all Keys of a table or a index.
+func AllKeys() KeySet {
+	return all{}
+}
+
+type all struct{}
+
+func (all) keySetProto() (*sppb.KeySet, error) {
+	return &sppb.KeySet{All: true}, nil
+}
+
+// KeySets returns the union of the KeySets. If any of the KeySets is AllKeys, then
+// the resulting KeySet will be equivalent to AllKeys.
+func KeySets(keySets ...KeySet) KeySet {
+	u := make(union, len(keySets))
+	copy(u, keySets)
+	return u
+}
+
+type union []KeySet
+
+func (u union) keySetProto() (*sppb.KeySet, error) {
+	upb := &sppb.KeySet{}
+	for _, ks := range u {
+		pb, err := ks.keySetProto()
+		if err != nil {
+			return nil, err
+		}
+		if pb.All {
+			return pb, nil
+		}
+		upb.Keys = append(upb.Keys, pb.Keys...)
+		upb.Ranges = append(upb.Ranges, pb.Ranges...)
+	}
+	return upb, nil
 }

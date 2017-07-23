@@ -5,7 +5,6 @@ import (
 	"io"
 	"net"
 	"os"
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -317,14 +316,14 @@ func TestRequestReadlink(t *testing.T) {
 func TestRequestReaddir(t *testing.T) {
 	p := clientRequestServerPair(t)
 	defer p.Close()
-	_, err := putTestFile(p.cli, "/foo", "hello")
-	assert.Nil(t, err)
-	_, err = putTestFile(p.cli, "/bar", "goodbye")
-	assert.Nil(t, err)
+	for i := 0; i < 100; i++ {
+		fname := fmt.Sprintf("/foo_%02d", i)
+		_, err := putTestFile(p.cli, fname, fname)
+		assert.Nil(t, err)
+	}
 	di, err := p.cli.ReadDir("/")
 	assert.Nil(t, err)
-	assert.Len(t, di, 2)
-	names := []string{di[0].Name(), di[1].Name()}
-	sort.Strings(names)
-	assert.Equal(t, []string{"bar", "foo"}, names)
+	assert.Len(t, di, 100)
+	names := []string{di[18].Name(), di[81].Name()}
+	assert.Equal(t, []string{"foo_18", "foo_81"}, names)
 }

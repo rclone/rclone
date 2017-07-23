@@ -211,50 +211,95 @@ type GenerateDataSetInput struct {
 
 	// The desired data set type.
 	//
-	// customer_subscriber_hourly_monthly_subscriptions - Available daily by 5:00
-	// PM Pacific Time since 2014-07-21.
-	// customer_subscriber_annual_subscriptions - Available daily by 5:00 PM Pacific
-	// Time since 2014-07-21.
-	// daily_business_usage_by_instance_type - Available daily by 5:00 PM Pacific
-	// Time since 2015-01-26.
-	// daily_business_fees - Available daily by 5:00 PM Pacific Time since 2015-01-26.
+	// customer_subscriber_hourly_monthly_subscriptionsFrom 2014-07-21 to present:
+	// Available daily by 5:00 PM Pacific Time.
 	//
-	// daily_business_free_trial_conversions - Available daily by 5:00 PM Pacific
-	// Time since 2015-01-26.
-	// daily_business_new_instances - Available daily by 5:00 PM Pacific Time since
-	// 2015-01-26.
-	// daily_business_new_product_subscribers - Available daily by 5:00 PM Pacific
-	// Time since 2015-01-26.
-	// daily_business_canceled_product_subscribers - Available daily by 5:00 PM
-	// Pacific Time since 2015-01-26.
-	// monthly_revenue_billing_and_revenue_data - Available monthly on the 4th day
-	// of the month by 5:00 PM Pacific Time since 2015-02.
-	// monthly_revenue_annual_subscriptions - Available monthly on the 4th day of
-	// the month by 5:00 PM Pacific Time since 2015-02.
-	// disbursed_amount_by_product - Available every 30 days by 5:00 PM Pacific
-	// Time since 2015-01-26.
-	// disbursed_amount_by_product_with_uncollected_funds -This data set is only
-	// available from 2012-04-19 until 2015-01-25. After 2015-01-25, this data set
-	// was split into three data sets: disbursed_amount_by_product, disbursed_amount_by_age_of_uncollected_funds,
+	// customer_subscriber_annual_subscriptionsFrom 2014-07-21 to present: Available
+	// daily by 5:00 PM Pacific Time.
+	//
+	// daily_business_usage_by_instance_typeFrom 2015-01-26 to present: Available
+	// daily by 5:00 PM Pacific Time.
+	//
+	// daily_business_feesFrom 2015-01-26 to present: Available daily by 5:00 PM
+	// Pacific Time.
+	//
+	// daily_business_free_trial_conversionsFrom 2015-01-26 to present: Available
+	// daily by 5:00 PM Pacific Time.
+	//
+	// daily_business_new_instancesFrom 2015-01-26 to present: Available daily by
+	// 5:00 PM Pacific Time.
+	//
+	// daily_business_new_product_subscribersFrom 2015-01-26 to present: Available
+	// daily by 5:00 PM Pacific Time.
+	//
+	// daily_business_canceled_product_subscribersFrom 2015-01-26 to present: Available
+	// daily by 5:00 PM Pacific Time.
+	//
+	// monthly_revenue_billing_and_revenue_dataFrom 2015-02 to 2017-06: Available
+	// monthly on the 4th day of the month by 5:00pm Pacific Time. Data includes
+	// metered transactions (e.g. hourly) from two months prior.
+	//
+	// From 2017-07 to present: Available monthly on the 15th day of the month by
+	// 5:00pm Pacific Time. Data includes metered transactions (e.g. hourly) from
+	// one month prior.
+	//
+	// monthly_revenue_annual_subscriptionsFrom 2015-02 to 2017-06: Available monthly
+	// on the 4th day of the month by 5:00pm Pacific Time. Data includes up-front
+	// software charges (e.g. annual) from one month prior.
+	//
+	// From 2017-07 to present: Available monthly on the 15th day of the month by
+	// 5:00pm Pacific Time. Data includes up-front software charges (e.g. annual)
+	// from one month prior.
+	//
+	// disbursed_amount_by_productFrom 2015-01-26 to present: Available every 30
+	// days by 5:00 PM Pacific Time.
+	//
+	// disbursed_amount_by_product_with_uncollected_fundsFrom 2012-04-19 to 2015-01-25:
+	// Available every 30 days by 5:00 PM Pacific Time.
+	//
+	// From 2015-01-26 to present: This data set was split into three data sets:
+	// disbursed_amount_by_product, disbursed_amount_by_age_of_uncollected_funds,
 	// and disbursed_amount_by_age_of_disbursed_funds.
-	// disbursed_amount_by_instance_hours - Available every 30 days by 5:00 PM Pacific
-	// Time since 2012-09-04.
-	// disbursed_amount_by_customer_geo - Available every 30 days by 5:00 PM Pacific
-	// Time since 2012-04-19.
-	// disbursed_amount_by_age_of_uncollected_funds - Available every 30 days by
-	// 5:00 PM Pacific Time since 2015-01-26.
-	// disbursed_amount_by_age_of_disbursed_funds - Available every 30 days by 5:00
-	// PM Pacific Time since 2015-01-26.
-	// customer_profile_by_industry - Available daily by 5:00 PM Pacific Time since
-	// 2015-10-01.
-	// customer_profile_by_revenue - Available daily by 5:00 PM Pacific Time since
-	// 2015-10-01.
-	// customer_profile_by_geography - Available daily by 5:00 PM Pacific Time since
-	// 2015-10-01.
-	// sales_compensation_billed_revenue - Available monthly on the 4th day of the
-	// month by 5:00 PM Pacific Time since 2016-12.
-	// us_sales_and_use_tax_records - Available monthly on the 15th day of the month
-	// by 5:00 PM Pacific Time since 2017-02-15.
+	//
+	// disbursed_amount_by_instance_hoursFrom 2012-09-04 to present: Available every
+	// 30 days by 5:00 PM Pacific Time.
+	//
+	// disbursed_amount_by_customer_geoFrom 2012-04-19 to present: Available every
+	// 30 days by 5:00 PM Pacific Time.
+	//
+	// disbursed_amount_by_age_of_uncollected_fundsFrom 2015-01-26 to present: Available
+	// every 30 days by 5:00 PM Pacific Time.
+	//
+	// disbursed_amount_by_age_of_disbursed_fundsFrom 2015-01-26 to present: Available
+	// every 30 days by 5:00 PM Pacific Time.
+	//
+	// customer_profile_by_industryFrom 2015-10-01 to 2017-06-29: Available daily
+	// by 5:00 PM Pacific Time.
+	//
+	// From 2017-06-30 to present: This data set is no longer available.
+	//
+	// customer_profile_by_revenueFrom 2015-10-01 to 2017-06-29: Available daily
+	// by 5:00 PM Pacific Time.
+	//
+	// From 2017-06-30 to present: This data set is no longer available.
+	//
+	// customer_profile_by_geographyFrom 2015-10-01 to 2017-06-29: Available daily
+	// by 5:00 PM Pacific Time.
+	//
+	// From 2017-06-30 to present: This data set is no longer available.
+	//
+	// sales_compensation_billed_revenueFrom 2016-12 to 2017-06: Available monthly
+	// on the 4th day of the month by 5:00pm Pacific Time. Data includes metered
+	// transactions (e.g. hourly) from two months prior, and up-front software charges
+	// (e.g. annual) from one month prior.
+	//
+	// From 2017-06 to present: Available monthly on the 15th day of the month by
+	// 5:00pm Pacific Time. Data includes metered transactions (e.g. hourly) from
+	// one month prior, and up-front software charges (e.g. annual) from one month
+	// prior.
+	//
+	// us_sales_and_use_tax_recordsFrom 2017-02-15 to present: Available monthly
+	// on the 15th day of the month by 5:00 PM Pacific Time.
 	//
 	// DataSetType is a required field
 	DataSetType *string `locationName:"dataSetType" min:"1" type:"string" required:"true" enum:"DataSetType"`

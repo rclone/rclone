@@ -16,6 +16,14 @@ const (
 	// One or more parameters provided to the operation are invalid.
 	ErrCodeInvalidParametersException = "InvalidParametersException"
 
+	// ErrCodeInvalidStateException for service response error code
+	// "InvalidStateException".
+	//
+	// An attempt was made to modify a resource that is in an invalid state. Inspect
+	// the resource you are using for this operation to ensure that all resource
+	// states are valid before retrying the operation.
+	ErrCodeInvalidStateException = "InvalidStateException"
+
 	// ErrCodeLimitExceededException for service response error code
 	// "LimitExceededException".
 	//
@@ -35,4 +43,12 @@ const (
 	//
 	// The specified resource was not found.
 	ErrCodeResourceNotFoundException = "ResourceNotFoundException"
+
+	// ErrCodeTagOptionNotMigratedException for service response error code
+	// "TagOptionNotMigratedException".
+	//
+	// An operation requiring TagOptions failed because the TagOptions migration
+	// process has not been performed for this account. Please use the AWS console
+	// to perform the migration process before retrying the operation.
+	ErrCodeTagOptionNotMigratedException = "TagOptionNotMigratedException"
 )

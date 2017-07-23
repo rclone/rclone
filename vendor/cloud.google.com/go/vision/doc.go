@@ -13,6 +13,9 @@
 // limitations under the License.
 
 /*
+NOTE: This package is deprecated. Use cloud.google.com/go/vision/apiv1 instead.
+
+
 Package vision provides a client for the Google Cloud Vision API.
 
 Google Cloud Vision allows easy integration of vision detection features

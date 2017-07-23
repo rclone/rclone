@@ -60,8 +60,14 @@ const (
 	// contains additional information about the violated limit:
 	//
 	// ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
-	// of accounts in an organization. Note: deleted and closed accounts still count
-	// toward your limit.
+	// of accounts in an organization. If you need more accounts, contact AWS Support
+	// to request an increase in your limit.
+	//
+	// Or, The number of invitations that you tried to send would cause you to exceed
+	// the limit of accounts in your organization. Send fewer invitations, or contact
+	// AWS Support to request an increase in the number of accounts.
+	//
+	// Note: deleted and closed accounts still count toward your limit.
 	//
 	//    * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
 	//    handshakes you can send in one day.
@@ -83,8 +89,15 @@ const (
 	//    policy from an entity that would cause the entity to have fewer than the
 	//    minimum number of policies of a certain type required.
 	//
-	//    * ACCOUNT_CANNOT_LEAVE_ORGANIZATION: You attempted to remove an account
-	//    from an organization that was created from within organizations.
+	//    * ACCOUNT_CANNOT_LEAVE_WITHOUT_EULA: You attempted to remove an account
+	//    from the organization that does not yet have enough information to exist
+	//    as a stand-alone account. This account requires you to first agree to
+	//    the End-User License Agreement (EULA).
+	//
+	//    * ACCOUNT_CANNOT_LEAVE_WITHOUT_PHONE_VERIFICATION: You attempted to remove
+	//    an account from the organization that does not yet have enough information
+	//    to exist as a stand-alone account. This account requires you to first
+	//    complete phone verification.
 	//
 	//    * MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To create an organization
 	//    with this account, you first must associate a payment instrument, such
@@ -235,6 +248,9 @@ const (
 	//    * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
 	//
 	//    * INVALID_ENUM: You specified a value that is not valid for that parameter.
+	//
+	//    * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+	//    characters.
 	//
 	//    * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 	//    at least one invalid value.

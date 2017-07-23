@@ -11,11 +11,11 @@
 // the API or command-line interface (CLI).
 //
 // For more information about Lightsail concepts and tasks, see the Lightsail
-// Dev Guide (http://lightsail.aws.amazon.com/ls/docs).
+// Dev Guide (https://lightsail.aws.amazon.com/ls/docs/all).
 //
 // To use the Lightsail API or the CLI, you will need to use AWS Identity and
 // Access Management (IAM) to generate access keys. For details about how to
-// set this up, see the Lightsail Dev Guide (http://lightsail.aws.amazon.com/ls/docs/how-to/articles/lightsail-how-to-set-up-access-keys-to-use-sdk-api-cli).
+// set this up, see the Lightsail Dev Guide (http://lightsail.aws.amazon.com/ls/docs/how-to/article/lightsail-how-to-set-up-access-keys-to-use-sdk-api-cli).
 //
 // See https://docs.aws.amazon.com/goto/WebAPI/lightsail-2016-11-28 for more information on this service.
 //

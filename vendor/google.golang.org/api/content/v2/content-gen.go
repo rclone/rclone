@@ -342,6 +342,9 @@ type AccountStatus struct {
 	// string "content#accountStatus".
 	Kind string `json:"kind,omitempty"`
 
+	// WebsiteClaimed: Whether the account's website is claimed or not.
+	WebsiteClaimed bool `json:"websiteClaimed,omitempty"`
+
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
 	googleapi.ServerResponse `json:"-"`
@@ -623,6 +626,38 @@ func (s *AccountsAuthInfoResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+type AccountsClaimWebsiteResponse struct {
+	// Kind: Identifies what kind of resource this is. Value: the fixed
+	// string "content#accountsClaimWebsiteResponse".
+	Kind string `json:"kind,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Kind") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Kind") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AccountsClaimWebsiteResponse) MarshalJSON() ([]byte, error) {
+	type noMethod AccountsClaimWebsiteResponse
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 type AccountsCustomBatchRequest struct {
 	// Entries: The request entries to be processed in the batch.
 	Entries []*AccountsCustomBatchRequestEntry `json:"entries,omitempty"`
@@ -657,8 +692,8 @@ type AccountsCustomBatchRequestEntry struct {
 	// is insert or update.
 	Account *Account `json:"account,omitempty"`
 
-	// AccountId: The ID of the account to get or delete. Only defined if
-	// the method is get or delete.
+	// AccountId: The ID of the targeted account. Only defined if the method
+	// is get, delete or claimwebsite.
 	AccountId uint64 `json:"accountId,omitempty,string"`
 
 	// BatchId: An entry ID, unique within the batch request.
@@ -668,6 +703,11 @@ type AccountsCustomBatchRequestEntry struct {
 	MerchantId uint64 `json:"merchantId,omitempty,string"`
 
 	Method string `json:"method,omitempty"`
+
+	// Overwrite: Only applicable if the method is claimwebsite. Indicates
+	// whether or not to take the claim from another account in case there
+	// is a conflict.
+	Overwrite bool `json:"overwrite,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Account") to
 	// unconditionally include in API requests. By default, fields with
@@ -731,7 +771,7 @@ func (s *AccountsCustomBatchResponse) MarshalJSON() ([]byte, error) {
 // non-batch accounts response.
 type AccountsCustomBatchResponseEntry struct {
 	// Account: The retrieved, created, or updated account. Not defined if
-	// the method was delete.
+	// the method was delete or claimwebsite.
 	Account *Account `json:"account,omitempty"`
 
 	// BatchId: The ID of the request entry this entry responds to.
@@ -1247,7 +1287,7 @@ func (s *CarriersCarrier) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Datafeed: Datafeed data.
+// Datafeed: Datafeed configuration data.
 type Datafeed struct {
 	// AttributeLanguage: The two-letter ISO 639-1 language in which the
 	// attributes are defined in the data feed.
@@ -4773,6 +4813,12 @@ type Product struct {
 	// Material: The material of which the item is made.
 	Material string `json:"material,omitempty"`
 
+	// MaxHandlingTime: Maximal product handling time (in business days).
+	MaxHandlingTime int64 `json:"maxHandlingTime,omitempty,string"`
+
+	// MinHandlingTime: Minimal product handling time (in business days).
+	MinHandlingTime int64 `json:"minHandlingTime,omitempty,string"`
+
 	// MobileLink: Link to a mobile-optimized version of the landing page.
 	MobileLink string `json:"mobileLink,omitempty"`
 
@@ -6689,6 +6735,157 @@ func (c *AccountsAuthinfoCall) Do(opts ...googleapi.CallOption) (*AccountsAuthIn
 	//   "path": "accounts/authinfo",
 	//   "response": {
 	//     "$ref": "AccountsAuthInfoResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/content"
+	//   ]
+	// }
+
+}
+
+// method id "content.accounts.claimwebsite":
+
+type AccountsClaimwebsiteCall struct {
+	s          *APIService
+	merchantId uint64
+	accountId  uint64
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Claimwebsite: Claims the website of a Merchant Center sub-account.
+// This method can only be called for accounts to which the managing
+// account has access: either the managing account itself or
+// sub-accounts if the managing account is a multi-client account.
+func (r *AccountsService) Claimwebsite(merchantId uint64, accountId uint64) *AccountsClaimwebsiteCall {
+	c := &AccountsClaimwebsiteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.merchantId = merchantId
+	c.accountId = accountId
+	return c
+}
+
+// Overwrite sets the optional parameter "overwrite": Flag to remove any
+// existing claim on the requested website by another account and
+// replace it with a claim from this account.
+func (c *AccountsClaimwebsiteCall) Overwrite(overwrite bool) *AccountsClaimwebsiteCall {
+	c.urlParams_.Set("overwrite", fmt.Sprint(overwrite))
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *AccountsClaimwebsiteCall) Fields(s ...googleapi.Field) *AccountsClaimwebsiteCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *AccountsClaimwebsiteCall) Context(ctx context.Context) *AccountsClaimwebsiteCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *AccountsClaimwebsiteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *AccountsClaimwebsiteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "{merchantId}/accounts/{accountId}/claimwebsite")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"merchantId": strconv.FormatUint(c.merchantId, 10),
+		"accountId":  strconv.FormatUint(c.accountId, 10),
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "content.accounts.claimwebsite" call.
+// Exactly one of *AccountsClaimWebsiteResponse or error will be
+// non-nil. Any non-2xx status code is an error. Response headers are in
+// either *AccountsClaimWebsiteResponse.ServerResponse.Header or (if a
+// response was returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *AccountsClaimwebsiteCall) Do(opts ...googleapi.CallOption) (*AccountsClaimWebsiteResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &AccountsClaimWebsiteResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Claims the website of a Merchant Center sub-account. This method can only be called for accounts to which the managing account has access: either the managing account itself or sub-accounts if the managing account is a multi-client account.",
+	//   "httpMethod": "POST",
+	//   "id": "content.accounts.claimwebsite",
+	//   "parameterOrder": [
+	//     "merchantId",
+	//     "accountId"
+	//   ],
+	//   "parameters": {
+	//     "accountId": {
+	//       "description": "The ID of the account whose website is claimed.",
+	//       "format": "uint64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "merchantId": {
+	//       "description": "The ID of the managing account.",
+	//       "format": "uint64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "overwrite": {
+	//       "description": "Flag to remove any existing claim on the requested website by another account and replace it with a claim from this account.",
+	//       "location": "query",
+	//       "type": "boolean"
+	//     }
+	//   },
+	//   "path": "{merchantId}/accounts/{accountId}/claimwebsite",
+	//   "response": {
+	//     "$ref": "AccountsClaimWebsiteResponse"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/content"
@@ -9140,8 +9337,9 @@ type DatafeedsDeleteCall struct {
 	header_    http.Header
 }
 
-// Delete: Deletes a datafeed from your Merchant Center account. This
-// method can only be called for non-multi-client accounts.
+// Delete: Deletes a datafeed configuration from your Merchant Center
+// account. This method can only be called for non-multi-client
+// accounts.
 func (r *DatafeedsService) Delete(merchantId uint64, datafeedId uint64) *DatafeedsDeleteCall {
 	c := &DatafeedsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.merchantId = merchantId
@@ -9213,7 +9411,7 @@ func (c *DatafeedsDeleteCall) Do(opts ...googleapi.CallOption) error {
 	}
 	return nil
 	// {
-	//   "description": "Deletes a datafeed from your Merchant Center account. This method can only be called for non-multi-client accounts.",
+	//   "description": "Deletes a datafeed configuration from your Merchant Center account. This method can only be called for non-multi-client accounts.",
 	//   "httpMethod": "DELETE",
 	//   "id": "content.datafeeds.delete",
 	//   "parameterOrder": [
@@ -9259,8 +9457,9 @@ type DatafeedsGetCall struct {
 	header_      http.Header
 }
 
-// Get: Retrieves a datafeed from your Merchant Center account. This
-// method can only be called for non-multi-client accounts.
+// Get: Retrieves a datafeed configuration from your Merchant Center
+// account. This method can only be called for non-multi-client
+// accounts.
 func (r *DatafeedsService) Get(merchantId uint64, datafeedId uint64) *DatafeedsGetCall {
 	c := &DatafeedsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.merchantId = merchantId
@@ -9363,7 +9562,7 @@ func (c *DatafeedsGetCall) Do(opts ...googleapi.CallOption) (*Datafeed, error) {
 	}
 	return ret, nil
 	// {
-	//   "description": "Retrieves a datafeed from your Merchant Center account. This method can only be called for non-multi-client accounts.",
+	//   "description": "Retrieves a datafeed configuration from your Merchant Center account. This method can only be called for non-multi-client accounts.",
 	//   "httpMethod": "GET",
 	//   "id": "content.datafeeds.get",
 	//   "parameterOrder": [
@@ -9406,8 +9605,9 @@ type DatafeedsInsertCall struct {
 	header_    http.Header
 }
 
-// Insert: Registers a datafeed with your Merchant Center account. This
-// method can only be called for non-multi-client accounts.
+// Insert: Registers a datafeed configuration with your Merchant Center
+// account. This method can only be called for non-multi-client
+// accounts.
 func (r *DatafeedsService) Insert(merchantId uint64, datafeed *Datafeed) *DatafeedsInsertCall {
 	c := &DatafeedsInsertCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.merchantId = merchantId
@@ -9508,7 +9708,7 @@ func (c *DatafeedsInsertCall) Do(opts ...googleapi.CallOption) (*Datafeed, error
 	}
 	return ret, nil
 	// {
-	//   "description": "Registers a datafeed with your Merchant Center account. This method can only be called for non-multi-client accounts.",
+	//   "description": "Registers a datafeed configuration with your Merchant Center account. This method can only be called for non-multi-client accounts.",
 	//   "httpMethod": "POST",
 	//   "id": "content.datafeeds.insert",
 	//   "parameterOrder": [
@@ -9738,9 +9938,9 @@ type DatafeedsPatchCall struct {
 	header_    http.Header
 }
 
-// Patch: Updates a datafeed of your Merchant Center account. This
-// method can only be called for non-multi-client accounts. This method
-// supports patch semantics.
+// Patch: Updates a datafeed configuration of your Merchant Center
+// account. This method can only be called for non-multi-client
+// accounts. This method supports patch semantics.
 func (r *DatafeedsService) Patch(merchantId uint64, datafeedId uint64, datafeed *Datafeed) *DatafeedsPatchCall {
 	c := &DatafeedsPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.merchantId = merchantId
@@ -9843,7 +10043,7 @@ func (c *DatafeedsPatchCall) Do(opts ...googleapi.CallOption) (*Datafeed, error)
 	}
 	return ret, nil
 	// {
-	//   "description": "Updates a datafeed of your Merchant Center account. This method can only be called for non-multi-client accounts. This method supports patch semantics.",
+	//   "description": "Updates a datafeed configuration of your Merchant Center account. This method can only be called for non-multi-client accounts. This method supports patch semantics.",
 	//   "httpMethod": "PATCH",
 	//   "id": "content.datafeeds.patch",
 	//   "parameterOrder": [
@@ -9895,8 +10095,9 @@ type DatafeedsUpdateCall struct {
 	header_    http.Header
 }
 
-// Update: Updates a datafeed of your Merchant Center account. This
-// method can only be called for non-multi-client accounts.
+// Update: Updates a datafeed configuration of your Merchant Center
+// account. This method can only be called for non-multi-client
+// accounts.
 func (r *DatafeedsService) Update(merchantId uint64, datafeedId uint64, datafeed *Datafeed) *DatafeedsUpdateCall {
 	c := &DatafeedsUpdateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.merchantId = merchantId
@@ -9999,7 +10200,7 @@ func (c *DatafeedsUpdateCall) Do(opts ...googleapi.CallOption) (*Datafeed, error
 	}
 	return ret, nil
 	// {
-	//   "description": "Updates a datafeed of your Merchant Center account. This method can only be called for non-multi-client accounts.",
+	//   "description": "Updates a datafeed configuration of your Merchant Center account. This method can only be called for non-multi-client accounts.",
 	//   "httpMethod": "PUT",
 	//   "id": "content.datafeeds.update",
 	//   "parameterOrder": [
@@ -13890,6 +14091,14 @@ func (r *ProductstatusesService) Custombatch(productstatusescustombatchrequest *
 	return c
 }
 
+// IncludeAttributes sets the optional parameter "includeAttributes":
+// Flag to include full product data in the results of this request. The
+// default value is false.
+func (c *ProductstatusesCustombatchCall) IncludeAttributes(includeAttributes bool) *ProductstatusesCustombatchCall {
+	c.urlParams_.Set("includeAttributes", fmt.Sprint(includeAttributes))
+	return c
+}
+
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -13977,6 +14186,13 @@ func (c *ProductstatusesCustombatchCall) Do(opts ...googleapi.CallOption) (*Prod
 	//   "description": "Gets the statuses of multiple products in a single request. This method can only be called for non-multi-client accounts.",
 	//   "httpMethod": "POST",
 	//   "id": "content.productstatuses.custombatch",
+	//   "parameters": {
+	//     "includeAttributes": {
+	//       "description": "Flag to include full product data in the results of this request. The default value is false.",
+	//       "location": "query",
+	//       "type": "boolean"
+	//     }
+	//   },
 	//   "path": "productstatuses/batch",
 	//   "request": {
 	//     "$ref": "ProductstatusesCustomBatchRequest"
@@ -14009,6 +14225,14 @@ func (r *ProductstatusesService) Get(merchantId uint64, productId string) *Produ
 	c := &ProductstatusesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.merchantId = merchantId
 	c.productId = productId
+	return c
+}
+
+// IncludeAttributes sets the optional parameter "includeAttributes":
+// Flag to include full product data in the result of this get request.
+// The default value is false.
+func (c *ProductstatusesGetCall) IncludeAttributes(includeAttributes bool) *ProductstatusesGetCall {
+	c.urlParams_.Set("includeAttributes", fmt.Sprint(includeAttributes))
 	return c
 }
 
@@ -14115,6 +14339,11 @@ func (c *ProductstatusesGetCall) Do(opts ...googleapi.CallOption) (*ProductStatu
 	//     "productId"
 	//   ],
 	//   "parameters": {
+	//     "includeAttributes": {
+	//       "description": "Flag to include full product data in the result of this get request. The default value is false.",
+	//       "location": "query",
+	//       "type": "boolean"
+	//     },
 	//     "merchantId": {
 	//       "description": "The ID of the managing account.",
 	//       "format": "uint64",
@@ -14157,6 +14386,14 @@ type ProductstatusesListCall struct {
 func (r *ProductstatusesService) List(merchantId uint64) *ProductstatusesListCall {
 	c := &ProductstatusesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.merchantId = merchantId
+	return c
+}
+
+// IncludeAttributes sets the optional parameter "includeAttributes":
+// Flag to include full product data in the results of the list request.
+// The default value is false.
+func (c *ProductstatusesListCall) IncludeAttributes(includeAttributes bool) *ProductstatusesListCall {
+	c.urlParams_.Set("includeAttributes", fmt.Sprint(includeAttributes))
 	return c
 }
 
@@ -14285,6 +14522,11 @@ func (c *ProductstatusesListCall) Do(opts ...googleapi.CallOption) (*Productstat
 	//     "merchantId"
 	//   ],
 	//   "parameters": {
+	//     "includeAttributes": {
+	//       "description": "Flag to include full product data in the results of the list request. The default value is false.",
+	//       "location": "query",
+	//       "type": "boolean"
+	//     },
 	//     "includeInvalidInsertedItems": {
 	//       "description": "Flag to include the invalid inserted items in the result of the list request. By default the invalid items are not shown (the default value is false).",
 	//       "location": "query",

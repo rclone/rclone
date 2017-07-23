@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"tbys6C40o18GZwyMen5GMkdK-3s/HY0tRuJ-vWPnM8lK2hqBBFUYsUk\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/XsY4JGYlYgyTyxbJioMS7bSip2s\"",
  "discoveryVersion": "v1",
  "id": "sqladmin:v1beta4",
  "name": "sqladmin",
  "canonicalName": "SQL Admin",
  "version": "v1beta4",
- "revision": "20170217",
+ "revision": "20170606",
  "title": "Cloud SQL Administration API",
  "description": "Creates and configures Cloud SQL instances, which provide fully-managed MySQL databases.",
  "ownerDomain": "google.com",
@@ -647,6 +647,10 @@
      "type": "string",
      "description": "The file type for the specified uri.\nSQL: The file contains SQL statements.\nCSV: The file contains CSV data."
     },
+    "importUser": {
+     "type": "string",
+     "description": "The PostgreSQL user to use for this import operation. Defaults to cloudsqlsuperuser. Does not apply to MySQL instances."
+    },
     "kind": {
      "type": "string",
      "description": "This is always sql#importContext.",
@@ -786,21 +790,6 @@
     "type": {
      "type": "string",
      "description": "The type of this IP address. A PRIMARY address is an address that can accept incoming connections. An OUTGOING address is the source address of connections originating from the instance, if supported."
-    }
-   }
-  },
-  "Labels": {
-   "id": "Labels",
-   "type": "object",
-   "description": "User defined labels for Cloud SQL instances.",
-   "properties": {
-    "key": {
-     "type": "string",
-     "description": "The key of the label."
-    },
-    "value": {
-     "type": "string",
-     "description": "The value of the label."
     }
    }
   },
@@ -977,8 +966,7 @@
      "description": "Name of the database instance related to this operation."
     },
     "targetLink": {
-     "type": "string",
-     "description": "The URI of the instance related to the operation."
+     "type": "string"
     },
     "targetProject": {
      "type": "string",
@@ -1155,13 +1143,6 @@
      "description": "This is always sql#settings.",
      "default": "sql#settings"
     },
-    "labels": {
-     "type": "array",
-     "description": "User defined labels.",
-     "items": {
-      "$ref": "Labels"
-     }
-    },
     "locationPreference": {
      "$ref": "LocationPreference",
      "description": "The location preference settings. This allows the instance to be located as near as possible to either an App Engine app or GCE zone for better performance. App Engine co-location is only applicable to First Generation instances."
@@ -1190,7 +1171,7 @@
     },
     "storageAutoResize": {
      "type": "boolean",
-     "description": "Configuration to increase storage size automatically. The default value is false. Applies only to Second Generation instances."
+     "description": "Configuration to increase storage size automatically. The default value is true. Applies only to Second Generation instances."
     },
     "storageAutoResizeLimit": {
      "type": "string",
@@ -1205,6 +1186,14 @@
        "sql.instances.insert",
        "sql.instances.update"
       ]
+     }
+    },
+    "userLabels": {
+     "type": "object",
+     "description": "User-provided labels, represented as a dictionary where each label is a single key value pair.",
+     "additionalProperties": {
+      "type": "string",
+      "description": "An individual label entry, composed of a key and a value."
      }
     }
    }
@@ -2106,7 +2095,7 @@
      "parameters": {
       "filter": {
        "type": "string",
-       "description": "A filter expression for filtering listed instances.",
+       "description": "An expression for filtering the results of the request, such as by name or label.",
        "location": "query"
       },
       "maxResults": {

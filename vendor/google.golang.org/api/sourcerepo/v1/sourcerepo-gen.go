@@ -1,6 +1,6 @@
 // Package sourcerepo provides access to the Cloud Source Repositories API.
 //
-// See https://cloud.google.com/eap/cloud-repositories/cloud-sourcerepo-api
+// See https://cloud.google.com/source-repositories/docs/apis
 //
 // Usage example:
 //
@@ -49,6 +49,12 @@ const basePath = "https://sourcerepo.googleapis.com/"
 const (
 	// View and manage your data across Google Cloud Platform services
 	CloudPlatformScope = "https://www.googleapis.com/auth/cloud-platform"
+
+	// View the contents of your source code repositories
+	SourceReadOnlyScope = "https://www.googleapis.com/auth/source.read_only"
+
+	// Manage the contents of your source code repositories
+	SourceReadWriteScope = "https://www.googleapis.com/auth/source.read_write"
 )
 
 func New(client *http.Client) (*Service, error) {
@@ -100,7 +106,7 @@ type ProjectsReposService struct {
 // The configuration determines which permission types are logged, and
 // what
 // identities, if any, are exempted from logging.
-// An AuditConifg must have one or more AuditLogConfigs.
+// An AuditConfig must have one or more AuditLogConfigs.
 //
 // If there are AuditConfigs for both `allServices` and a specific
 // service,
@@ -281,6 +287,7 @@ type Binding struct {
 	// group.
 	//    For example, `admins@example.com`.
 	//
+	//
 	// * `domain:{domain}`: A Google Apps domain name that represents all
 	// the
 	//    users of that domain. For example, `google.com` or
@@ -320,6 +327,37 @@ func (s *Binding) MarshalJSON() ([]byte, error) {
 
 // CloudAuditOptions: Write a Cloud Audit log
 type CloudAuditOptions struct {
+	// LogName: The log_name to populate in the Cloud Audit Record.
+	//
+	// Possible values:
+	//   "UNSPECIFIED_LOG_NAME" - Default. Should not be used.
+	//   "ADMIN_ACTIVITY" - Corresponds to
+	// "cloudaudit.googleapis.com/activity"
+	//   "DATA_ACCESS" - Corresponds to
+	// "cloudaudit.googleapis.com/data_access"
+	LogName string `json:"logName,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "LogName") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "LogName") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *CloudAuditOptions) MarshalJSON() ([]byte, error) {
+	type noMethod CloudAuditOptions
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // Condition: A condition to be met.
@@ -473,8 +511,16 @@ type Empty struct {
 	googleapi.ServerResponse `json:"-"`
 }
 
-// ListReposResponse: Response for ListRepos.
+// ListReposResponse: Response for ListRepos.  The size is not set in
+// the returned repositories.
 type ListReposResponse struct {
+	// NextPageToken: If non-empty, additional repositories exist within the
+	// project. These
+	// can be retrieved by including this value in the next
+	// ListReposRequest's
+	// page_token field.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
 	// Repos: The listed repos.
 	Repos []*Repo `json:"repos,omitempty"`
 
@@ -482,7 +528,7 @@ type ListReposResponse struct {
 	// server.
 	googleapi.ServerResponse `json:"-"`
 
-	// ForceSendFields is a list of field names (e.g. "Repos") to
+	// ForceSendFields is a list of field names (e.g. "NextPageToken") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -490,10 +536,10 @@ type ListReposResponse struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Repos") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
+	// NullFields is a list of field names (e.g. "NextPageToken") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
 	// null. It is an error if a field in this list has a non-empty value.
 	// This may be used to include null fields in Patch requests.
 	NullFields []string `json:"-"`
@@ -704,10 +750,13 @@ type Repo struct {
 
 	// Name: Resource name of the repository, of the
 	// form
-	// `projects/<project>/repos/<repo>`.
+	// `projects/<project>/repos/<repo>`.  The repo name may contain
+	// slashes.
+	// eg, `projects/myproject/repos/name/with/slash`
 	Name string `json:"name,omitempty"`
 
-	// Size: The size in bytes of the repo.
+	// Size: The disk usage of the repo, in bytes.
+	// Only returned by GetRepo.
 	Size int64 `json:"size,omitempty,string"`
 
 	// Url: URL to clone the repository from Google Cloud Source
@@ -935,7 +984,7 @@ type ProjectsReposCreateCall struct {
 	header_    http.Header
 }
 
-// Create: Creates a repo in the given project with the given name..
+// Create: Creates a repo in the given project with the given name.
 //
 // If the named repository already exists, `CreateRepo`
 // returns
@@ -1033,7 +1082,7 @@ func (c *ProjectsReposCreateCall) Do(opts ...googleapi.CallOption) (*Repo, error
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates a repo in the given project with the given name..\n\nIf the named repository already exists, `CreateRepo` returns\n`ALREADY_EXISTS`.",
+	//   "description": "Creates a repo in the given project with the given name.\n\nIf the named repository already exists, `CreateRepo` returns\n`ALREADY_EXISTS`.",
 	//   "flatPath": "v1/projects/{projectsId}/repos",
 	//   "httpMethod": "POST",
 	//   "id": "sourcerepo.projects.repos.create",
@@ -1057,7 +1106,9 @@ func (c *ProjectsReposCreateCall) Do(opts ...googleapi.CallOption) (*Repo, error
 	//     "$ref": "Repo"
 	//   },
 	//   "scopes": [
-	//     "https://www.googleapis.com/auth/cloud-platform"
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/source.read_only",
+	//     "https://www.googleapis.com/auth/source.read_write"
 	//   ]
 	// }
 
@@ -1182,7 +1233,9 @@ func (c *ProjectsReposDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, erro
 	//     "$ref": "Empty"
 	//   },
 	//   "scopes": [
-	//     "https://www.googleapis.com/auth/cloud-platform"
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/source.read_only",
+	//     "https://www.googleapis.com/auth/source.read_write"
 	//   ]
 	// }
 
@@ -1321,7 +1374,9 @@ func (c *ProjectsReposGetCall) Do(opts ...googleapi.CallOption) (*Repo, error) {
 	//     "$ref": "Repo"
 	//   },
 	//   "scopes": [
-	//     "https://www.googleapis.com/auth/cloud-platform"
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/source.read_only",
+	//     "https://www.googleapis.com/auth/source.read_write"
 	//   ]
 	// }
 
@@ -1463,7 +1518,9 @@ func (c *ProjectsReposGetIamPolicyCall) Do(opts ...googleapi.CallOption) (*Polic
 	//     "$ref": "Policy"
 	//   },
 	//   "scopes": [
-	//     "https://www.googleapis.com/auth/cloud-platform"
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/source.read_only",
+	//     "https://www.googleapis.com/auth/source.read_write"
 	//   ]
 	// }
 
@@ -1480,10 +1537,29 @@ type ProjectsReposListCall struct {
 	header_      http.Header
 }
 
-// List: Returns all repos belonging to a project.
+// List: Returns all repos belonging to a project. The sizes of the
+// repos are
+// not set by ListRepos.  To get the size of a repo, use GetRepo.
 func (r *ProjectsReposService) List(name string) *ProjectsReposListCall {
 	c := &ProjectsReposListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": Maximum number of
+// repositories to return; between 1 and 500.
+// If not set or zero, defaults to 100 at the server.
+func (c *ProjectsReposListCall) PageSize(pageSize int64) *ProjectsReposListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": Resume listing
+// repositories where a prior ListReposResponse
+// left off. This is an opaque token that must be obtained from
+// a recent, prior ListReposResponse's next_page_token field.
+func (c *ProjectsReposListCall) PageToken(pageToken string) *ProjectsReposListCall {
+	c.urlParams_.Set("pageToken", pageToken)
 	return c
 }
 
@@ -1581,7 +1657,7 @@ func (c *ProjectsReposListCall) Do(opts ...googleapi.CallOption) (*ListReposResp
 	}
 	return ret, nil
 	// {
-	//   "description": "Returns all repos belonging to a project.",
+	//   "description": "Returns all repos belonging to a project. The sizes of the repos are\nnot set by ListRepos.  To get the size of a repo, use GetRepo.",
 	//   "flatPath": "v1/projects/{projectsId}/repos",
 	//   "httpMethod": "GET",
 	//   "id": "sourcerepo.projects.repos.list",
@@ -1595,6 +1671,17 @@ func (c *ProjectsReposListCall) Do(opts ...googleapi.CallOption) (*ListReposResp
 	//       "pattern": "^projects/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "Maximum number of repositories to return; between 1 and 500.\nIf not set or zero, defaults to 100 at the server.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "Resume listing repositories where a prior ListReposResponse\nleft off. This is an opaque token that must be obtained from\na recent, prior ListReposResponse's next_page_token field.",
+	//       "location": "query",
+	//       "type": "string"
 	//     }
 	//   },
 	//   "path": "v1/{+name}/repos",
@@ -1602,10 +1689,33 @@ func (c *ProjectsReposListCall) Do(opts ...googleapi.CallOption) (*ListReposResp
 	//     "$ref": "ListReposResponse"
 	//   },
 	//   "scopes": [
-	//     "https://www.googleapis.com/auth/cloud-platform"
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/source.read_only",
+	//     "https://www.googleapis.com/auth/source.read_write"
 	//   ]
 	// }
 
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *ProjectsReposListCall) Pages(ctx context.Context, f func(*ListReposResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
 }
 
 // method id "sourcerepo.projects.repos.setIamPolicy":
@@ -1739,7 +1849,9 @@ func (c *ProjectsReposSetIamPolicyCall) Do(opts ...googleapi.CallOption) (*Polic
 	//     "$ref": "Policy"
 	//   },
 	//   "scopes": [
-	//     "https://www.googleapis.com/auth/cloud-platform"
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/source.read_only",
+	//     "https://www.googleapis.com/auth/source.read_write"
 	//   ]
 	// }
 
@@ -1878,7 +1990,9 @@ func (c *ProjectsReposTestIamPermissionsCall) Do(opts ...googleapi.CallOption) (
 	//     "$ref": "TestIamPermissionsResponse"
 	//   },
 	//   "scopes": [
-	//     "https://www.googleapis.com/auth/cloud-platform"
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/source.read_only",
+	//     "https://www.googleapis.com/auth/source.read_write"
 	//   ]
 	// }
 

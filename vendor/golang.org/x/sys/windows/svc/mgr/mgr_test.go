@@ -150,5 +150,20 @@ func TestMyService(t *testing.T) {
 
 	testConfig(t, s, c)
 
+	svcnames, err := m.ListServices()
+	if err != nil {
+		t.Fatalf("ListServices failed: %v", err)
+	}
+	var myserviceIsInstalled bool
+	for _, sn := range svcnames {
+		if sn == name {
+			myserviceIsInstalled = true
+			break
+		}
+	}
+	if !myserviceIsInstalled {
+		t.Errorf("ListServices failed to find %q service", name)
+	}
+
 	remove(t, s)
 }

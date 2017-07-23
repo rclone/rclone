@@ -1389,23 +1389,11 @@ type QuotaError struct {
 	//   "UNSPECIFIED" - This is never used.
 	//   "RESOURCE_EXHAUSTED" - Quota allocation failed.
 	// Same as google.rpc.Code.RESOURCE_EXHAUSTED.
-	//   "PROJECT_SUSPENDED" - Consumer project has been suspended.
-	//   "SERVICE_NOT_ENABLED" - Consumer has not enabled the service.
 	//   "BILLING_NOT_ACTIVE" - Consumer cannot access the service because
-	// billing is disabled.
+	// the service requires active
+	// billing.
 	//   "PROJECT_DELETED" - Consumer's project has been marked as deleted
 	// (soft deletion).
-	//   "PROJECT_INVALID" - Consumer's project number or ID does not
-	// represent a valid project.
-	//   "IP_ADDRESS_BLOCKED" - IP address of the consumer is invalid for
-	// the specific consumer
-	// project.
-	//   "REFERER_BLOCKED" - Referer address of the consumer request is
-	// invalid for the specific
-	// consumer project.
-	//   "CLIENT_APP_BLOCKED" - Client application of the consumer request
-	// is invalid for the
-	// specific consumer project.
 	//   "API_KEY_INVALID" - Specified API key is invalid.
 	//   "API_KEY_EXPIRED" - Specified API Key has expired.
 	//   "SPATULA_HEADER_INVALID" - Consumer's spatula header is invalid.
@@ -2015,7 +2003,10 @@ type RequestMetadata struct {
 	//     The request was made by the Google Cloud SDK CLI (gcloud).
 	// +   `AppEngine-Google; (+http://code.google.com/appengine; appid:
 	// s~my-project`:
-	//     The request was made from the `my-project` App Engine app.
+	//     The request was made from the `my-project` App Engine
+	// app.
+	//
+	// NOLINT
 	CallerSuppliedUserAgent string `json:"callerSuppliedUserAgent,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "CallerIp") to
@@ -2163,7 +2154,7 @@ func (s *StartReconciliationResponse) MarshalJSON() ([]byte, error) {
 // arbitrary
 // information about the error. There is a predefined set of error
 // detail types
-// in the package `google.rpc` which can be used for common error
+// in the package `google.rpc` that can be used for common error
 // conditions.
 //
 // # Language mapping
@@ -2196,7 +2187,7 @@ func (s *StartReconciliationResponse) MarshalJSON() ([]byte, error) {
 //
 // - Workflow errors. A typical workflow has multiple steps. Each step
 // may
-//     have a `Status` message for error reporting purpose.
+//     have a `Status` message for error reporting.
 //
 // - Batch operations. If a client uses batch request and batch
 // response, the

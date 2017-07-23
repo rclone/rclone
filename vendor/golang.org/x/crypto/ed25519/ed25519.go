@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // Package ed25519 implements the Ed25519 signature algorithm. See
-// http://ed25519.cr.yp.to/.
+// https://ed25519.cr.yp.to/.
 //
 // These functions are also compatible with the “Ed25519” function defined in
 // https://tools.ietf.org/html/draft-irtf-cfrg-eddsa-05.

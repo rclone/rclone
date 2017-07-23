@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:generate go run maketables.go gen_common.go -output tables.go
+//go:generate go run gen.go gen_common.go -output tables.go
 //go:generate go run gen_index.go
 
 // Package language implements BCP 47 language tags and related functionality.

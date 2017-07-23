@@ -123,7 +123,16 @@ func (l *propertyLoader) loadOneElement(codec fields.List, structValue reflect.V
 			return "cannot set struct field"
 		}
 
-		var err error
+		// If field implements PLS, we delegate loading to the PLS's Load early,
+		// and stop iterating through fields.
+		ok, err := plsFieldLoad(v, p, fieldNames)
+		if err != nil {
+			return err.Error()
+		}
+		if ok {
+			return ""
+		}
+
 		if field.Type.Kind() == reflect.Struct {
 			codec, err = structCache.Fields(field.Type)
 			if err != nil {
@@ -143,6 +152,17 @@ func (l *propertyLoader) loadOneElement(codec fields.List, structValue reflect.V
 				v.Set(reflect.Append(v, reflect.New(v.Type().Elem()).Elem()))
 			}
 			structValue = v.Index(sliceIndex)
+
+			// If structValue implements PLS, we delegate loading to the PLS's
+			// Load early, and stop iterating through fields.
+			ok, err := plsFieldLoad(structValue, p, fieldNames)
+			if err != nil {
+				return err.Error()
+			}
+			if ok {
+				return ""
+			}
+
 			if structValue.Type().Kind() == reflect.Struct {
 				codec, err = structCache.Fields(structValue.Type())
 				if err != nil {
@@ -181,10 +201,50 @@ func (l *propertyLoader) loadOneElement(codec fields.List, structValue reflect.V
 	return ""
 }
 
+// plsFieldLoad first tries to converts v's value to a PLS, then v's addressed
+// value to a PLS. If neither succeeds, plsFieldLoad returns false for first return
+// value. Otherwise, the first return value will be true.
+// If v is successfully converted to a PLS, plsFieldLoad will then try to Load
+// the property p into v (by way of the PLS's Load method).
+//
+// If the field v has been flattened, the Property's name must be altered
+// before calling Load to reflect the field v.
+// For example, if our original field name was "A.B.C.D",
+// and at this point in iteration we had initialized the field
+// corresponding to "A" and have moved into the struct, so that now
+// v corresponds to the field named "B", then we want to let the
+// PLS handle this field (B)'s subfields ("C", "D"),
+// so we send the property to the PLS's Load, renamed to "C.D".
+//
+// If subfields are present, the field v has been flattened.
+func plsFieldLoad(v reflect.Value, p Property, subfields []string) (ok bool, err error) {
+	vpls, err := plsForLoad(v)
+	if err != nil {
+		return false, err
+	}
+
+	if vpls == nil {
+		return false, nil
+	}
+
+	// If Entity, load properties as well as key.
+	if e, ok := p.Value.(*Entity); ok {
+		err = loadEntity(vpls, e)
+		return true, err
+	}
+
+	// If flattened, we must alter the property's name to reflect
+	// the field v.
+	if len(subfields) > 0 {
+		p.Name = strings.Join(subfields, ".")
+	}
+
+	return true, vpls.Load([]Property{p})
+}
+
 // setVal sets 'v' to the value of the Property 'p'.
 func setVal(v reflect.Value, p Property) string {
 	pValue := p.Value
-
 	switch v.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		x, ok := pValue.(int64)
@@ -267,12 +327,6 @@ func setVal(v reflect.Value, p Property) string {
 			if !ok {
 				return typeMismatchReason(p, v)
 			}
-
-			// Check if v implements PropertyLoadSaver.
-			if _, ok := v.Interface().(PropertyLoadSaver); ok {
-				return fmt.Sprintf("datastore: PropertyLoadSaver methods must be implemented on a pointer to %T.", v.Interface())
-			}
-
 			err := loadEntity(v.Addr().Interface(), ent)
 			if err != nil {
 				return err.Error()
@@ -320,7 +374,14 @@ func loadEntityProto(dst interface{}, src *pb.Entity) error {
 
 func loadEntity(dst interface{}, ent *Entity) error {
 	if pls, ok := dst.(PropertyLoadSaver); ok {
-		return pls.Load(ent.Properties)
+		err := pls.Load(ent.Properties)
+		if err != nil {
+			return err
+		}
+		if e, ok := dst.(KeyLoader); ok {
+			err = e.LoadKey(ent.Key)
+		}
+		return err
 	}
 	return loadEntityToStruct(dst, ent)
 }

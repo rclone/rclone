@@ -3,1083 +3,1951 @@
 package elasticache_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/elasticache"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleElastiCache_AddTagsToResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.AddTagsToResourceInput{
-		ResourceName: aws.String("String"), // Required
-		Tags: []*elasticache.Tag{ // Required
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.AddTagsToResource(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
+		panic(err)
 	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	return &t
 }
 
-func ExampleElastiCache_AuthorizeCacheSecurityGroupIngress() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.AuthorizeCacheSecurityGroupIngressInput{
-		CacheSecurityGroupName:  aws.String("String"), // Required
-		EC2SecurityGroupName:    aws.String("String"), // Required
-		EC2SecurityGroupOwnerId: aws.String("String"), // Required
-	}
-	resp, err := svc.AuthorizeCacheSecurityGroupIngress(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleElastiCache_CopySnapshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.CopySnapshotInput{
-		SourceSnapshotName: aws.String("String"), // Required
-		TargetSnapshotName: aws.String("String"), // Required
-		TargetBucket:       aws.String("String"),
-	}
-	resp, err := svc.CopySnapshot(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleElastiCache_CreateCacheCluster() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.CreateCacheClusterInput{
-		CacheClusterId:          aws.String("String"), // Required
-		AZMode:                  aws.String("AZMode"),
-		AuthToken:               aws.String("String"),
-		AutoMinorVersionUpgrade: aws.Bool(true),
-		CacheNodeType:           aws.String("String"),
-		CacheParameterGroupName: aws.String("String"),
-		CacheSecurityGroupNames: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		CacheSubnetGroupName: aws.String("String"),
-		Engine:               aws.String("String"),
-		EngineVersion:        aws.String("String"),
-		NotificationTopicArn: aws.String("String"),
-		NumCacheNodes:        aws.Int64(1),
-		Port:                 aws.Int64(1),
-		PreferredAvailabilityZone: aws.String("String"),
-		PreferredAvailabilityZones: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		PreferredMaintenanceWindow: aws.String("String"),
-		ReplicationGroupId:         aws.String("String"),
-		SecurityGroupIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		SnapshotArns: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		SnapshotName:           aws.String("String"),
-		SnapshotRetentionLimit: aws.Int64(1),
-		SnapshotWindow:         aws.String("String"),
+// AddTagsToResource
+//
+// Adds up to 10 tags, key/value pairs, to a cluster or snapshot resource.
+func ExampleElastiCache_AddTagsToResource_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.AddTagsToResourceInput{
+		ResourceName: aws.String("arn:aws:elasticache:us-east-1:1234567890:cluster:my-mem-cluster"),
 		Tags: []*elasticache.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
+			{
+				Key:   aws.String("APIVersion"),
+				Value: aws.String("20150202"),
 			},
-			// More values...
+			{
+				Key:   aws.String("Service"),
+				Value: aws.String("ElastiCache"),
+			},
 		},
 	}
-	resp, err := svc.CreateCacheCluster(params)
 
+	result, err := svc.AddTagsToResource(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheClusterNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotNotFoundFault:
+				fmt.Println(elasticache.ErrCodeSnapshotNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeTagQuotaPerResourceExceeded:
+				fmt.Println(elasticache.ErrCodeTagQuotaPerResourceExceeded, aerr.Error())
+			case elasticache.ErrCodeInvalidARNFault:
+				fmt.Println(elasticache.ErrCodeInvalidARNFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_CreateCacheParameterGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.CreateCacheParameterGroupInput{
-		CacheParameterGroupFamily: aws.String("String"), // Required
-		CacheParameterGroupName:   aws.String("String"), // Required
-		Description:               aws.String("String"), // Required
+// AuthorizeCacheCacheSecurityGroupIngress
+//
+// Allows network ingress to a cache security group. Applications using ElastiCache
+// must be running on Amazon EC2. Amazon EC2 security groups are used as the authorization
+// mechanism.
+func ExampleElastiCache_AuthorizeCacheSecurityGroupIngress_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.AuthorizeCacheSecurityGroupIngressInput{
+		CacheSecurityGroupName:  aws.String("my-sec-grp"),
+		EC2SecurityGroupName:    aws.String("my-ec2-sec-grp"),
+		EC2SecurityGroupOwnerId: aws.String("1234567890"),
 	}
-	resp, err := svc.CreateCacheParameterGroup(params)
 
+	result, err := svc.AuthorizeCacheSecurityGroupIngress(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheSecurityGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheSecurityGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidCacheSecurityGroupStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheSecurityGroupStateFault, aerr.Error())
+			case elasticache.ErrCodeAuthorizationAlreadyExistsFault:
+				fmt.Println(elasticache.ErrCodeAuthorizationAlreadyExistsFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_CreateCacheSecurityGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.CreateCacheSecurityGroupInput{
-		CacheSecurityGroupName: aws.String("String"), // Required
-		Description:            aws.String("String"), // Required
+// CopySnapshot
+//
+// Copies a snapshot to a specified name.
+func ExampleElastiCache_CopySnapshot_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.CopySnapshotInput{
+		SourceSnapshotName: aws.String("my-snapshot"),
+		TargetBucket:       aws.String(""),
+		TargetSnapshotName: aws.String("my-snapshot-copy"),
 	}
-	resp, err := svc.CreateCacheSecurityGroup(params)
 
+	result, err := svc.CopySnapshot(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeSnapshotAlreadyExistsFault:
+				fmt.Println(elasticache.ErrCodeSnapshotAlreadyExistsFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotNotFoundFault:
+				fmt.Println(elasticache.ErrCodeSnapshotNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotQuotaExceededFault:
+				fmt.Println(elasticache.ErrCodeSnapshotQuotaExceededFault, aerr.Error())
+			case elasticache.ErrCodeInvalidSnapshotStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidSnapshotStateFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_CreateCacheSubnetGroup() {
-	sess := session.Must(session.NewSession())
+// CreateCacheCluster
+//
+// Creates a Memcached cluster with 2 nodes.
+func ExampleElastiCache_CreateCacheCluster_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.CreateCacheClusterInput{
+		AZMode:               aws.String("cross-az"),
+		CacheClusterId:       aws.String("my-memcached-cluster"),
+		CacheNodeType:        aws.String("cache.r3.large"),
+		CacheSubnetGroupName: aws.String("default"),
+		Engine:               aws.String("memcached"),
+		EngineVersion:        aws.String("1.4.24"),
+		NumCacheNodes:        aws.Int64(2),
+		Port:                 aws.Int64(11211),
+	}
 
-	svc := elasticache.New(sess)
+	result, err := svc.CreateCacheCluster(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeReplicationGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeReplicationGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidReplicationGroupStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidReplicationGroupStateFault, aerr.Error())
+			case elasticache.ErrCodeCacheClusterAlreadyExistsFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterAlreadyExistsFault, aerr.Error())
+			case elasticache.ErrCodeInsufficientCacheClusterCapacityFault:
+				fmt.Println(elasticache.ErrCodeInsufficientCacheClusterCapacityFault, aerr.Error())
+			case elasticache.ErrCodeCacheSecurityGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheSecurityGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeCacheSubnetGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheSubnetGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeClusterQuotaForCustomerExceededFault:
+				fmt.Println(elasticache.ErrCodeClusterQuotaForCustomerExceededFault, aerr.Error())
+			case elasticache.ErrCodeNodeQuotaForClusterExceededFault:
+				fmt.Println(elasticache.ErrCodeNodeQuotaForClusterExceededFault, aerr.Error())
+			case elasticache.ErrCodeNodeQuotaForCustomerExceededFault:
+				fmt.Println(elasticache.ErrCodeNodeQuotaForCustomerExceededFault, aerr.Error())
+			case elasticache.ErrCodeCacheParameterGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheParameterGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidVPCNetworkStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidVPCNetworkStateFault, aerr.Error())
+			case elasticache.ErrCodeTagQuotaPerResourceExceeded:
+				fmt.Println(elasticache.ErrCodeTagQuotaPerResourceExceeded, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &elasticache.CreateCacheSubnetGroupInput{
-		CacheSubnetGroupDescription: aws.String("String"), // Required
-		CacheSubnetGroupName:        aws.String("String"), // Required
-		SubnetIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
+	fmt.Println(result)
+}
+
+// CreateCacheCluster
+//
+// Creates a Redis cluster with 1 node.
+func ExampleElastiCache_CreateCacheCluster_shared01() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.CreateCacheClusterInput{
+		AutoMinorVersionUpgrade: aws.Bool(true),
+		CacheClusterId:          aws.String("my-redis"),
+		CacheNodeType:           aws.String("cache.r3.larage"),
+		CacheSubnetGroupName:    aws.String("default"),
+		Engine:                  aws.String("redis"),
+		EngineVersion:           aws.String("3.2.4"),
+		NumCacheNodes:           aws.Int64(1),
+		Port:                    aws.Int64(6379),
+		PreferredAvailabilityZone: aws.String("us-east-1c"),
+		SnapshotRetentionLimit:    aws.Int64(7),
+	}
+
+	result, err := svc.CreateCacheCluster(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeReplicationGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeReplicationGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidReplicationGroupStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidReplicationGroupStateFault, aerr.Error())
+			case elasticache.ErrCodeCacheClusterAlreadyExistsFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterAlreadyExistsFault, aerr.Error())
+			case elasticache.ErrCodeInsufficientCacheClusterCapacityFault:
+				fmt.Println(elasticache.ErrCodeInsufficientCacheClusterCapacityFault, aerr.Error())
+			case elasticache.ErrCodeCacheSecurityGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheSecurityGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeCacheSubnetGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheSubnetGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeClusterQuotaForCustomerExceededFault:
+				fmt.Println(elasticache.ErrCodeClusterQuotaForCustomerExceededFault, aerr.Error())
+			case elasticache.ErrCodeNodeQuotaForClusterExceededFault:
+				fmt.Println(elasticache.ErrCodeNodeQuotaForClusterExceededFault, aerr.Error())
+			case elasticache.ErrCodeNodeQuotaForCustomerExceededFault:
+				fmt.Println(elasticache.ErrCodeNodeQuotaForCustomerExceededFault, aerr.Error())
+			case elasticache.ErrCodeCacheParameterGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheParameterGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidVPCNetworkStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidVPCNetworkStateFault, aerr.Error())
+			case elasticache.ErrCodeTagQuotaPerResourceExceeded:
+				fmt.Println(elasticache.ErrCodeTagQuotaPerResourceExceeded, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// CreateCacheParameterGroup
+//
+// Creates the Amazon ElastiCache parameter group custom-redis2-8.
+func ExampleElastiCache_CreateCacheParameterGroup_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.CreateCacheParameterGroupInput{
+		CacheParameterGroupFamily: aws.String("redis2.8"),
+		CacheParameterGroupName:   aws.String("custom-redis2-8"),
+		Description:               aws.String("Custom Redis 2.8 parameter group."),
+	}
+
+	result, err := svc.CreateCacheParameterGroup(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheParameterGroupQuotaExceededFault:
+				fmt.Println(elasticache.ErrCodeCacheParameterGroupQuotaExceededFault, aerr.Error())
+			case elasticache.ErrCodeCacheParameterGroupAlreadyExistsFault:
+				fmt.Println(elasticache.ErrCodeCacheParameterGroupAlreadyExistsFault, aerr.Error())
+			case elasticache.ErrCodeInvalidCacheParameterGroupStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheParameterGroupStateFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// CreateCacheSecurityGroup
+//
+// Creates an ElastiCache security group. ElastiCache security groups are only for clusters
+// not running in an AWS VPC.
+func ExampleElastiCache_CreateCacheSecurityGroup_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.CreateCacheSecurityGroupInput{
+		CacheSecurityGroupName: aws.String("my-cache-sec-grp"),
+		Description:            aws.String("Example ElastiCache security group."),
+	}
+
+	result, err := svc.CreateCacheSecurityGroup(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheSecurityGroupAlreadyExistsFault:
+				fmt.Println(elasticache.ErrCodeCacheSecurityGroupAlreadyExistsFault, aerr.Error())
+			case elasticache.ErrCodeCacheSecurityGroupQuotaExceededFault:
+				fmt.Println(elasticache.ErrCodeCacheSecurityGroupQuotaExceededFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// CreateCacheSubnet
+//
+// Creates a new cache subnet group.
+func ExampleElastiCache_CreateCacheSubnetGroup_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.CreateCacheSubnetGroupInput{
+		CacheSubnetGroupDescription: aws.String("Sample subnet group"),
+		CacheSubnetGroupName:        aws.String("my-sn-grp2"),
+		SubnetIds: []*string{
+			aws.String("subnet-6f28c982"),
+			aws.String("subnet-bcd382f3"),
+			aws.String("subnet-845b3e7c0"),
 		},
 	}
-	resp, err := svc.CreateCacheSubnetGroup(params)
 
+	result, err := svc.CreateCacheSubnetGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheSubnetGroupAlreadyExistsFault:
+				fmt.Println(elasticache.ErrCodeCacheSubnetGroupAlreadyExistsFault, aerr.Error())
+			case elasticache.ErrCodeCacheSubnetGroupQuotaExceededFault:
+				fmt.Println(elasticache.ErrCodeCacheSubnetGroupQuotaExceededFault, aerr.Error())
+			case elasticache.ErrCodeCacheSubnetQuotaExceededFault:
+				fmt.Println(elasticache.ErrCodeCacheSubnetQuotaExceededFault, aerr.Error())
+			case elasticache.ErrCodeInvalidSubnet:
+				fmt.Println(elasticache.ErrCodeInvalidSubnet, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_CreateReplicationGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.CreateReplicationGroupInput{
-		ReplicationGroupDescription: aws.String("String"), // Required
-		ReplicationGroupId:          aws.String("String"), // Required
-		AuthToken:                   aws.String("String"),
-		AutoMinorVersionUpgrade:     aws.Bool(true),
+// CreateCacheReplicationGroup
+//
+// Creates a Redis replication group with 3 nodes.
+func ExampleElastiCache_CreateReplicationGroup_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.CreateReplicationGroupInput{
 		AutomaticFailoverEnabled:    aws.Bool(true),
-		CacheNodeType:               aws.String("String"),
-		CacheParameterGroupName:     aws.String("String"),
-		CacheSecurityGroupNames: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		CacheSubnetGroupName: aws.String("String"),
-		Engine:               aws.String("String"),
-		EngineVersion:        aws.String("String"),
+		CacheNodeType:               aws.String("cache.m3.medium"),
+		Engine:                      aws.String("redis"),
+		EngineVersion:               aws.String("2.8.24"),
+		NumCacheClusters:            aws.Int64(3),
+		ReplicationGroupDescription: aws.String("A Redis replication group."),
+		ReplicationGroupId:          aws.String("my-redis-rg"),
+		SnapshotRetentionLimit:      aws.Int64(30),
+	}
+
+	result, err := svc.CreateReplicationGroup(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheClusterNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidCacheClusterStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheClusterStateFault, aerr.Error())
+			case elasticache.ErrCodeReplicationGroupAlreadyExistsFault:
+				fmt.Println(elasticache.ErrCodeReplicationGroupAlreadyExistsFault, aerr.Error())
+			case elasticache.ErrCodeInsufficientCacheClusterCapacityFault:
+				fmt.Println(elasticache.ErrCodeInsufficientCacheClusterCapacityFault, aerr.Error())
+			case elasticache.ErrCodeCacheSecurityGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheSecurityGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeCacheSubnetGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheSubnetGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeClusterQuotaForCustomerExceededFault:
+				fmt.Println(elasticache.ErrCodeClusterQuotaForCustomerExceededFault, aerr.Error())
+			case elasticache.ErrCodeNodeQuotaForClusterExceededFault:
+				fmt.Println(elasticache.ErrCodeNodeQuotaForClusterExceededFault, aerr.Error())
+			case elasticache.ErrCodeNodeQuotaForCustomerExceededFault:
+				fmt.Println(elasticache.ErrCodeNodeQuotaForCustomerExceededFault, aerr.Error())
+			case elasticache.ErrCodeCacheParameterGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheParameterGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidVPCNetworkStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidVPCNetworkStateFault, aerr.Error())
+			case elasticache.ErrCodeTagQuotaPerResourceExceeded:
+				fmt.Println(elasticache.ErrCodeTagQuotaPerResourceExceeded, aerr.Error())
+			case elasticache.ErrCodeNodeGroupsPerReplicationGroupQuotaExceededFault:
+				fmt.Println(elasticache.ErrCodeNodeGroupsPerReplicationGroupQuotaExceededFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// CreateReplicationGroup
+//
+// Creates a Redis (cluster mode enabled) replication group with two shards. One shard
+// has one read replica node and the other shard has two read replicas.
+func ExampleElastiCache_CreateReplicationGroup_shared01() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.CreateReplicationGroupInput{
+		AutoMinorVersionUpgrade: aws.Bool(true),
+		CacheNodeType:           aws.String("cache.m3.medium"),
+		CacheParameterGroupName: aws.String("default.redis3.2.cluster.on"),
+		Engine:                  aws.String("redis"),
+		EngineVersion:           aws.String("3.2.4"),
 		NodeGroupConfiguration: []*elasticache.NodeGroupConfiguration{
-			{ // Required
-				PrimaryAvailabilityZone: aws.String("String"),
+			{
+				PrimaryAvailabilityZone: aws.String("us-east-1c"),
 				ReplicaAvailabilityZones: []*string{
-					aws.String("String"), // Required
-					// More values...
+					aws.String("us-east-1b"),
 				},
 				ReplicaCount: aws.Int64(1),
-				Slots:        aws.String("String"),
+				Slots:        aws.String("0-8999"),
 			},
-			// More values...
-		},
-		NotificationTopicArn: aws.String("String"),
-		NumCacheClusters:     aws.Int64(1),
-		NumNodeGroups:        aws.Int64(1),
-		Port:                 aws.Int64(1),
-		PreferredCacheClusterAZs: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		PreferredMaintenanceWindow: aws.String("String"),
-		PrimaryClusterId:           aws.String("String"),
-		ReplicasPerNodeGroup:       aws.Int64(1),
-		SecurityGroupIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		SnapshotArns: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		SnapshotName:           aws.String("String"),
-		SnapshotRetentionLimit: aws.Int64(1),
-		SnapshotWindow:         aws.String("String"),
-		Tags: []*elasticache.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
+			{
+				PrimaryAvailabilityZone: aws.String("us-east-1a"),
+				ReplicaAvailabilityZones: []*string{
+					aws.String("us-east-1a"),
+					aws.String("us-east-1c"),
+				},
+				ReplicaCount: aws.Int64(2),
+				Slots:        aws.String("9000-16383"),
 			},
-			// More values...
 		},
+		NumNodeGroups:               aws.Int64(2),
+		ReplicationGroupDescription: aws.String("A multi-sharded replication group"),
+		ReplicationGroupId:          aws.String("clustered-redis-rg"),
+		SnapshotRetentionLimit:      aws.Int64(8),
 	}
-	resp, err := svc.CreateReplicationGroup(params)
 
+	result, err := svc.CreateReplicationGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheClusterNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidCacheClusterStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheClusterStateFault, aerr.Error())
+			case elasticache.ErrCodeReplicationGroupAlreadyExistsFault:
+				fmt.Println(elasticache.ErrCodeReplicationGroupAlreadyExistsFault, aerr.Error())
+			case elasticache.ErrCodeInsufficientCacheClusterCapacityFault:
+				fmt.Println(elasticache.ErrCodeInsufficientCacheClusterCapacityFault, aerr.Error())
+			case elasticache.ErrCodeCacheSecurityGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheSecurityGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeCacheSubnetGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheSubnetGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeClusterQuotaForCustomerExceededFault:
+				fmt.Println(elasticache.ErrCodeClusterQuotaForCustomerExceededFault, aerr.Error())
+			case elasticache.ErrCodeNodeQuotaForClusterExceededFault:
+				fmt.Println(elasticache.ErrCodeNodeQuotaForClusterExceededFault, aerr.Error())
+			case elasticache.ErrCodeNodeQuotaForCustomerExceededFault:
+				fmt.Println(elasticache.ErrCodeNodeQuotaForCustomerExceededFault, aerr.Error())
+			case elasticache.ErrCodeCacheParameterGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheParameterGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidVPCNetworkStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidVPCNetworkStateFault, aerr.Error())
+			case elasticache.ErrCodeTagQuotaPerResourceExceeded:
+				fmt.Println(elasticache.ErrCodeTagQuotaPerResourceExceeded, aerr.Error())
+			case elasticache.ErrCodeNodeGroupsPerReplicationGroupQuotaExceededFault:
+				fmt.Println(elasticache.ErrCodeNodeGroupsPerReplicationGroupQuotaExceededFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_CreateSnapshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.CreateSnapshotInput{
-		SnapshotName:       aws.String("String"), // Required
-		CacheClusterId:     aws.String("String"),
-		ReplicationGroupId: aws.String("String"),
+// CreateSnapshot - NonClustered Redis, no read-replicas
+//
+// Creates a snapshot of a non-clustered Redis cluster that has only one node.
+func ExampleElastiCache_CreateSnapshot_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.CreateSnapshotInput{
+		CacheClusterId: aws.String("onenoderedis"),
+		SnapshotName:   aws.String("snapshot-1"),
 	}
-	resp, err := svc.CreateSnapshot(params)
 
+	result, err := svc.CreateSnapshot(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeSnapshotAlreadyExistsFault:
+				fmt.Println(elasticache.ErrCodeSnapshotAlreadyExistsFault, aerr.Error())
+			case elasticache.ErrCodeCacheClusterNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeReplicationGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeReplicationGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidCacheClusterStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheClusterStateFault, aerr.Error())
+			case elasticache.ErrCodeInvalidReplicationGroupStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidReplicationGroupStateFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotQuotaExceededFault:
+				fmt.Println(elasticache.ErrCodeSnapshotQuotaExceededFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotFeatureNotSupportedFault:
+				fmt.Println(elasticache.ErrCodeSnapshotFeatureNotSupportedFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DeleteCacheCluster() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DeleteCacheClusterInput{
-		CacheClusterId:          aws.String("String"), // Required
-		FinalSnapshotIdentifier: aws.String("String"),
+// CreateSnapshot - NonClustered Redis, 2 read-replicas
+//
+// Creates a snapshot of a non-clustered Redis cluster that has only three nodes, primary
+// and two read-replicas. CacheClusterId must be a specific node in the cluster.
+func ExampleElastiCache_CreateSnapshot_shared01() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.CreateSnapshotInput{
+		CacheClusterId: aws.String("threenoderedis-001"),
+		SnapshotName:   aws.String("snapshot-2"),
 	}
-	resp, err := svc.DeleteCacheCluster(params)
 
+	result, err := svc.CreateSnapshot(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeSnapshotAlreadyExistsFault:
+				fmt.Println(elasticache.ErrCodeSnapshotAlreadyExistsFault, aerr.Error())
+			case elasticache.ErrCodeCacheClusterNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeReplicationGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeReplicationGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidCacheClusterStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheClusterStateFault, aerr.Error())
+			case elasticache.ErrCodeInvalidReplicationGroupStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidReplicationGroupStateFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotQuotaExceededFault:
+				fmt.Println(elasticache.ErrCodeSnapshotQuotaExceededFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotFeatureNotSupportedFault:
+				fmt.Println(elasticache.ErrCodeSnapshotFeatureNotSupportedFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DeleteCacheParameterGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DeleteCacheParameterGroupInput{
-		CacheParameterGroupName: aws.String("String"), // Required
+// CreateSnapshot-clustered Redis
+//
+// Creates a snapshot of a clustered Redis cluster that has 2 shards, each with a primary
+// and 4 read-replicas.
+func ExampleElastiCache_CreateSnapshot_shared02() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.CreateSnapshotInput{
+		ReplicationGroupId: aws.String("clusteredredis"),
+		SnapshotName:       aws.String("snapshot-2x5"),
 	}
-	resp, err := svc.DeleteCacheParameterGroup(params)
 
+	result, err := svc.CreateSnapshot(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeSnapshotAlreadyExistsFault:
+				fmt.Println(elasticache.ErrCodeSnapshotAlreadyExistsFault, aerr.Error())
+			case elasticache.ErrCodeCacheClusterNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeReplicationGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeReplicationGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidCacheClusterStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheClusterStateFault, aerr.Error())
+			case elasticache.ErrCodeInvalidReplicationGroupStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidReplicationGroupStateFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotQuotaExceededFault:
+				fmt.Println(elasticache.ErrCodeSnapshotQuotaExceededFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotFeatureNotSupportedFault:
+				fmt.Println(elasticache.ErrCodeSnapshotFeatureNotSupportedFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DeleteCacheSecurityGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DeleteCacheSecurityGroupInput{
-		CacheSecurityGroupName: aws.String("String"), // Required
+// DeleteCacheCluster
+//
+// Deletes an Amazon ElastiCache cluster.
+func ExampleElastiCache_DeleteCacheCluster_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DeleteCacheClusterInput{
+		CacheClusterId: aws.String("my-memcached"),
 	}
-	resp, err := svc.DeleteCacheSecurityGroup(params)
 
+	result, err := svc.DeleteCacheCluster(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheClusterNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidCacheClusterStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheClusterStateFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotAlreadyExistsFault:
+				fmt.Println(elasticache.ErrCodeSnapshotAlreadyExistsFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotFeatureNotSupportedFault:
+				fmt.Println(elasticache.ErrCodeSnapshotFeatureNotSupportedFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotQuotaExceededFault:
+				fmt.Println(elasticache.ErrCodeSnapshotQuotaExceededFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DeleteCacheSubnetGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DeleteCacheSubnetGroupInput{
-		CacheSubnetGroupName: aws.String("String"), // Required
+// DeleteCacheParameterGroup
+//
+// Deletes the Amazon ElastiCache parameter group custom-mem1-4.
+func ExampleElastiCache_DeleteCacheParameterGroup_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DeleteCacheParameterGroupInput{
+		CacheParameterGroupName: aws.String("custom-mem1-4"),
 	}
-	resp, err := svc.DeleteCacheSubnetGroup(params)
 
+	result, err := svc.DeleteCacheParameterGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeInvalidCacheParameterGroupStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheParameterGroupStateFault, aerr.Error())
+			case elasticache.ErrCodeCacheParameterGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheParameterGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DeleteReplicationGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DeleteReplicationGroupInput{
-		ReplicationGroupId:      aws.String("String"), // Required
-		FinalSnapshotIdentifier: aws.String("String"),
-		RetainPrimaryCluster:    aws.Bool(true),
+// DeleteCacheSecurityGroup
+//
+// Deletes a cache security group.
+func ExampleElastiCache_DeleteCacheSecurityGroup_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DeleteCacheSecurityGroupInput{
+		CacheSecurityGroupName: aws.String("my-sec-group"),
 	}
-	resp, err := svc.DeleteReplicationGroup(params)
 
+	result, err := svc.DeleteCacheSecurityGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeInvalidCacheSecurityGroupStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheSecurityGroupStateFault, aerr.Error())
+			case elasticache.ErrCodeCacheSecurityGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheSecurityGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DeleteSnapshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DeleteSnapshotInput{
-		SnapshotName: aws.String("String"), // Required
+// DeleteCacheSubnetGroup
+//
+// Deletes the Amazon ElastiCache subnet group my-subnet-group.
+func ExampleElastiCache_DeleteCacheSubnetGroup_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DeleteCacheSubnetGroupInput{
+		CacheSubnetGroupName: aws.String("my-subnet-group"),
 	}
-	resp, err := svc.DeleteSnapshot(params)
 
+	result, err := svc.DeleteCacheSubnetGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheSubnetGroupInUse:
+				fmt.Println(elasticache.ErrCodeCacheSubnetGroupInUse, aerr.Error())
+			case elasticache.ErrCodeCacheSubnetGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheSubnetGroupNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DescribeCacheClusters() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DescribeCacheClustersInput{
-		CacheClusterId:                          aws.String("String"),
-		Marker:                                  aws.String("String"),
-		MaxRecords:                              aws.Int64(1),
-		ShowCacheClustersNotInReplicationGroups: aws.Bool(true),
-		ShowCacheNodeInfo:                       aws.Bool(true),
+// DeleteReplicationGroup
+//
+// Deletes the Amazon ElastiCache replication group my-redis-rg.
+func ExampleElastiCache_DeleteReplicationGroup_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DeleteReplicationGroupInput{
+		ReplicationGroupId:   aws.String("my-redis-rg"),
+		RetainPrimaryCluster: aws.Bool(false),
 	}
-	resp, err := svc.DescribeCacheClusters(params)
 
+	result, err := svc.DeleteReplicationGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeReplicationGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeReplicationGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidReplicationGroupStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidReplicationGroupStateFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotAlreadyExistsFault:
+				fmt.Println(elasticache.ErrCodeSnapshotAlreadyExistsFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotFeatureNotSupportedFault:
+				fmt.Println(elasticache.ErrCodeSnapshotFeatureNotSupportedFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotQuotaExceededFault:
+				fmt.Println(elasticache.ErrCodeSnapshotQuotaExceededFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DescribeCacheEngineVersions() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DescribeCacheEngineVersionsInput{
-		CacheParameterGroupFamily: aws.String("String"),
-		DefaultOnly:               aws.Bool(true),
-		Engine:                    aws.String("String"),
-		EngineVersion:             aws.String("String"),
-		Marker:                    aws.String("String"),
-		MaxRecords:                aws.Int64(1),
+// DeleteSnapshot
+//
+// Deletes the Redis snapshot snapshot-20160822.
+func ExampleElastiCache_DeleteSnapshot_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DeleteSnapshotInput{
+		SnapshotName: aws.String("snapshot-20161212"),
 	}
-	resp, err := svc.DescribeCacheEngineVersions(params)
 
+	result, err := svc.DeleteSnapshot(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeSnapshotNotFoundFault:
+				fmt.Println(elasticache.ErrCodeSnapshotNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidSnapshotStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidSnapshotStateFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DescribeCacheParameterGroups() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DescribeCacheParameterGroupsInput{
-		CacheParameterGroupName: aws.String("String"),
-		Marker:                  aws.String("String"),
-		MaxRecords:              aws.Int64(1),
+// DescribeCacheClusters
+//
+// Lists the details for up to 50 cache clusters.
+func ExampleElastiCache_DescribeCacheClusters_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DescribeCacheClustersInput{
+		CacheClusterId: aws.String("my-mem-cluster"),
 	}
-	resp, err := svc.DescribeCacheParameterGroups(params)
 
+	result, err := svc.DescribeCacheClusters(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheClusterNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DescribeCacheParameters() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DescribeCacheParametersInput{
-		CacheParameterGroupName: aws.String("String"), // Required
-		Marker:                  aws.String("String"),
-		MaxRecords:              aws.Int64(1),
-		Source:                  aws.String("String"),
+// DescribeCacheClusters
+//
+// Lists the details for the cache cluster my-mem-cluster.
+func ExampleElastiCache_DescribeCacheClusters_shared01() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DescribeCacheClustersInput{
+		CacheClusterId:    aws.String("my-mem-cluster"),
+		ShowCacheNodeInfo: aws.Bool(true),
 	}
-	resp, err := svc.DescribeCacheParameters(params)
 
+	result, err := svc.DescribeCacheClusters(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheClusterNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DescribeCacheSecurityGroups() {
-	sess := session.Must(session.NewSession())
+// DescribeCacheEngineVersions
+//
+// Lists the details for up to 25 Memcached and Redis cache engine versions.
+func ExampleElastiCache_DescribeCacheEngineVersions_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DescribeCacheEngineVersionsInput{}
 
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DescribeCacheSecurityGroupsInput{
-		CacheSecurityGroupName: aws.String("String"),
-		Marker:                 aws.String("String"),
-		MaxRecords:             aws.Int64(1),
-	}
-	resp, err := svc.DescribeCacheSecurityGroups(params)
-
+	result, err := svc.DescribeCacheEngineVersions(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DescribeCacheSubnetGroups() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DescribeCacheSubnetGroupsInput{
-		CacheSubnetGroupName: aws.String("String"),
-		Marker:               aws.String("String"),
-		MaxRecords:           aws.Int64(1),
+// DescribeCacheEngineVersions
+//
+// Lists the details for up to 50 Redis cache engine versions.
+func ExampleElastiCache_DescribeCacheEngineVersions_shared01() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DescribeCacheEngineVersionsInput{
+		DefaultOnly: aws.Bool(false),
+		Engine:      aws.String("redis"),
+		MaxRecords:  aws.Int64(50),
 	}
-	resp, err := svc.DescribeCacheSubnetGroups(params)
 
+	result, err := svc.DescribeCacheEngineVersions(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DescribeEngineDefaultParameters() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DescribeEngineDefaultParametersInput{
-		CacheParameterGroupFamily: aws.String("String"), // Required
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+// DescribeCacheParameterGroups
+//
+// Returns a list of cache parameter group descriptions. If a cache parameter group
+// name is specified, the list contains only the descriptions for that group.
+func ExampleElastiCache_DescribeCacheParameterGroups_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DescribeCacheParameterGroupsInput{
+		CacheParameterGroupName: aws.String("custom-mem1-4"),
 	}
-	resp, err := svc.DescribeEngineDefaultParameters(params)
 
+	result, err := svc.DescribeCacheParameterGroups(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheParameterGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheParameterGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DescribeEvents() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DescribeEventsInput{
-		Duration:         aws.Int64(1),
-		EndTime:          aws.Time(time.Now()),
-		Marker:           aws.String("String"),
-		MaxRecords:       aws.Int64(1),
-		SourceIdentifier: aws.String("String"),
-		SourceType:       aws.String("SourceType"),
-		StartTime:        aws.Time(time.Now()),
+// DescribeCacheParameters
+//
+// Lists up to 100 user parameter values for the parameter group custom.redis2.8.
+func ExampleElastiCache_DescribeCacheParameters_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DescribeCacheParametersInput{
+		CacheParameterGroupName: aws.String("custom-redis2-8"),
+		MaxRecords:              aws.Int64(100),
+		Source:                  aws.String("user"),
 	}
-	resp, err := svc.DescribeEvents(params)
 
+	result, err := svc.DescribeCacheParameters(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheParameterGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheParameterGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DescribeReplicationGroups() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DescribeReplicationGroupsInput{
-		Marker:             aws.String("String"),
-		MaxRecords:         aws.Int64(1),
-		ReplicationGroupId: aws.String("String"),
+// DescribeCacheSecurityGroups
+//
+// Returns a list of cache security group descriptions. If a cache security group name
+// is specified, the list contains only the description of that group.
+func ExampleElastiCache_DescribeCacheSecurityGroups_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DescribeCacheSecurityGroupsInput{
+		CacheSecurityGroupName: aws.String("my-sec-group"),
 	}
-	resp, err := svc.DescribeReplicationGroups(params)
 
+	result, err := svc.DescribeCacheSecurityGroups(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheSecurityGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheSecurityGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DescribeReservedCacheNodes() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DescribeReservedCacheNodesInput{
-		CacheNodeType:                aws.String("String"),
-		Duration:                     aws.String("String"),
-		Marker:                       aws.String("String"),
-		MaxRecords:                   aws.Int64(1),
-		OfferingType:                 aws.String("String"),
-		ProductDescription:           aws.String("String"),
-		ReservedCacheNodeId:          aws.String("String"),
-		ReservedCacheNodesOfferingId: aws.String("String"),
+// DescribeCacheSubnetGroups
+//
+// Describes up to 25 cache subnet groups.
+func ExampleElastiCache_DescribeCacheSubnetGroups_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DescribeCacheSubnetGroupsInput{
+		MaxRecords: aws.Int64(25),
 	}
-	resp, err := svc.DescribeReservedCacheNodes(params)
 
+	result, err := svc.DescribeCacheSubnetGroups(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheSubnetGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheSubnetGroupNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DescribeReservedCacheNodesOfferings() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DescribeReservedCacheNodesOfferingsInput{
-		CacheNodeType:                aws.String("String"),
-		Duration:                     aws.String("String"),
-		Marker:                       aws.String("String"),
-		MaxRecords:                   aws.Int64(1),
-		OfferingType:                 aws.String("String"),
-		ProductDescription:           aws.String("String"),
-		ReservedCacheNodesOfferingId: aws.String("String"),
+// DescribeEngineDefaultParameters
+//
+// Returns the default engine and system parameter information for the specified cache
+// engine.
+func ExampleElastiCache_DescribeEngineDefaultParameters_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DescribeEngineDefaultParametersInput{
+		CacheParameterGroupFamily: aws.String("redis2.8"),
+		MaxRecords:                aws.Int64(25),
 	}
-	resp, err := svc.DescribeReservedCacheNodesOfferings(params)
 
+	result, err := svc.DescribeEngineDefaultParameters(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_DescribeSnapshots() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.DescribeSnapshotsInput{
-		CacheClusterId:      aws.String("String"),
-		Marker:              aws.String("String"),
-		MaxRecords:          aws.Int64(1),
-		ReplicationGroupId:  aws.String("String"),
-		ShowNodeGroupConfig: aws.Bool(true),
-		SnapshotName:        aws.String("String"),
-		SnapshotSource:      aws.String("String"),
+// DescribeEvents
+//
+// Describes all the cache-cluster events for the past 120 minutes.
+func ExampleElastiCache_DescribeEvents_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DescribeEventsInput{
+		Duration:   aws.Int64(360),
+		SourceType: aws.String("cache-cluster"),
 	}
-	resp, err := svc.DescribeSnapshots(params)
 
+	result, err := svc.DescribeEvents(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_ListAllowedNodeTypeModifications() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.ListAllowedNodeTypeModificationsInput{
-		CacheClusterId:     aws.String("String"),
-		ReplicationGroupId: aws.String("String"),
+// DescribeEvents
+//
+// Describes all the replication-group events from 3:00P to 5:00P on November 11, 2016.
+func ExampleElastiCache_DescribeEvents_shared01() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DescribeEventsInput{
+		StartTime: parseTime("2006-01-02T15:04:05Z", "2016-12-22T15:00:00.000Z"),
 	}
-	resp, err := svc.ListAllowedNodeTypeModifications(params)
 
+	result, err := svc.DescribeEvents(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_ListTagsForResource() {
-	sess := session.Must(session.NewSession())
+// DescribeReplicationGroups
+//
+// Returns information about the replication group myreplgroup.
+func ExampleElastiCache_DescribeReplicationGroups_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DescribeReplicationGroupsInput{}
 
-	svc := elasticache.New(sess)
-
-	params := &elasticache.ListTagsForResourceInput{
-		ResourceName: aws.String("String"), // Required
-	}
-	resp, err := svc.ListTagsForResource(params)
-
+	result, err := svc.DescribeReplicationGroups(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeReplicationGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeReplicationGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_ModifyCacheCluster() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.ModifyCacheClusterInput{
-		CacheClusterId:          aws.String("String"), // Required
-		AZMode:                  aws.String("AZMode"),
-		ApplyImmediately:        aws.Bool(true),
-		AutoMinorVersionUpgrade: aws.Bool(true),
-		CacheNodeIdsToRemove: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		CacheNodeType:           aws.String("String"),
-		CacheParameterGroupName: aws.String("String"),
-		CacheSecurityGroupNames: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		EngineVersion: aws.String("String"),
-		NewAvailabilityZones: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		NotificationTopicArn:       aws.String("String"),
-		NotificationTopicStatus:    aws.String("String"),
-		NumCacheNodes:              aws.Int64(1),
-		PreferredMaintenanceWindow: aws.String("String"),
-		SecurityGroupIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		SnapshotRetentionLimit: aws.Int64(1),
-		SnapshotWindow:         aws.String("String"),
+// DescribeReservedCacheNodes
+//
+// Returns information about reserved cache nodes for this account, or about a specified
+// reserved cache node. If the account has no reserved cache nodes, the operation returns
+// an empty list, as shown here.
+func ExampleElastiCache_DescribeReservedCacheNodes_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DescribeReservedCacheNodesInput{
+		MaxRecords: aws.Int64(25),
 	}
-	resp, err := svc.ModifyCacheCluster(params)
 
+	result, err := svc.DescribeReservedCacheNodes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeReservedCacheNodeNotFoundFault:
+				fmt.Println(elasticache.ErrCodeReservedCacheNodeNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_ModifyCacheParameterGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.ModifyCacheParameterGroupInput{
-		CacheParameterGroupName: aws.String("String"), // Required
-		ParameterNameValues: []*elasticache.ParameterNameValue{ // Required
-			{ // Required
-				ParameterName:  aws.String("String"),
-				ParameterValue: aws.String("String"),
-			},
-			// More values...
-		},
+// DescribeReseredCacheNodeOfferings
+//
+// Lists available reserved cache node offerings.
+func ExampleElastiCache_DescribeReservedCacheNodesOfferings_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DescribeReservedCacheNodesOfferingsInput{
+		MaxRecords: aws.Int64(20),
 	}
-	resp, err := svc.ModifyCacheParameterGroup(params)
 
+	result, err := svc.DescribeReservedCacheNodesOfferings(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeReservedCacheNodesOfferingNotFoundFault:
+				fmt.Println(elasticache.ErrCodeReservedCacheNodesOfferingNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_ModifyCacheSubnetGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.ModifyCacheSubnetGroupInput{
-		CacheSubnetGroupName:        aws.String("String"), // Required
-		CacheSubnetGroupDescription: aws.String("String"),
-		SubnetIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
+// DescribeReseredCacheNodeOfferings
+//
+// Lists available reserved cache node offerings for cache.r3.large nodes with a 3 year
+// commitment.
+func ExampleElastiCache_DescribeReservedCacheNodesOfferings_shared01() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DescribeReservedCacheNodesOfferingsInput{
+		CacheNodeType:                aws.String("cache.r3.large"),
+		Duration:                     aws.String("3"),
+		MaxRecords:                   aws.Int64(25),
+		OfferingType:                 aws.String("Light Utilization"),
+		ReservedCacheNodesOfferingId: aws.String(""),
 	}
-	resp, err := svc.ModifyCacheSubnetGroup(params)
 
+	result, err := svc.DescribeReservedCacheNodesOfferings(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeReservedCacheNodesOfferingNotFoundFault:
+				fmt.Println(elasticache.ErrCodeReservedCacheNodesOfferingNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_ModifyReplicationGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.ModifyReplicationGroupInput{
-		ReplicationGroupId:       aws.String("String"), // Required
-		ApplyImmediately:         aws.Bool(true),
-		AutoMinorVersionUpgrade:  aws.Bool(true),
-		AutomaticFailoverEnabled: aws.Bool(true),
-		CacheNodeType:            aws.String("String"),
-		CacheParameterGroupName:  aws.String("String"),
-		CacheSecurityGroupNames: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		EngineVersion:               aws.String("String"),
-		NodeGroupId:                 aws.String("String"),
-		NotificationTopicArn:        aws.String("String"),
-		NotificationTopicStatus:     aws.String("String"),
-		PreferredMaintenanceWindow:  aws.String("String"),
-		PrimaryClusterId:            aws.String("String"),
-		ReplicationGroupDescription: aws.String("String"),
-		SecurityGroupIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		SnapshotRetentionLimit: aws.Int64(1),
-		SnapshotWindow:         aws.String("String"),
-		SnapshottingClusterId:  aws.String("String"),
+// DescribeReseredCacheNodeOfferings
+//
+// Lists available reserved cache node offerings.
+func ExampleElastiCache_DescribeReservedCacheNodesOfferings_shared02() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DescribeReservedCacheNodesOfferingsInput{
+		CacheNodeType:                aws.String(""),
+		Duration:                     aws.String(""),
+		Marker:                       aws.String(""),
+		MaxRecords:                   aws.Int64(25),
+		OfferingType:                 aws.String(""),
+		ProductDescription:           aws.String(""),
+		ReservedCacheNodesOfferingId: aws.String("438012d3-4052-4cc7-b2e3-8d3372e0e706"),
 	}
-	resp, err := svc.ModifyReplicationGroup(params)
 
+	result, err := svc.DescribeReservedCacheNodesOfferings(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeReservedCacheNodesOfferingNotFoundFault:
+				fmt.Println(elasticache.ErrCodeReservedCacheNodesOfferingNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_PurchaseReservedCacheNodesOffering() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.PurchaseReservedCacheNodesOfferingInput{
-		ReservedCacheNodesOfferingId: aws.String("String"), // Required
-		CacheNodeCount:               aws.Int64(1),
-		ReservedCacheNodeId:          aws.String("String"),
+// DescribeSnapshots
+//
+// Returns information about the snapshot mysnapshot. By default.
+func ExampleElastiCache_DescribeSnapshots_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.DescribeSnapshotsInput{
+		SnapshotName: aws.String("snapshot-20161212"),
 	}
-	resp, err := svc.PurchaseReservedCacheNodesOffering(params)
 
+	result, err := svc.DescribeSnapshots(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheClusterNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotNotFoundFault:
+				fmt.Println(elasticache.ErrCodeSnapshotNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_RebootCacheCluster() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.RebootCacheClusterInput{
-		CacheClusterId: aws.String("String"), // Required
-		CacheNodeIdsToReboot: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
+// ListAllowedNodeTypeModifications
+//
+// Lists all available node types that you can scale your Redis cluster's or replication
+// group's current node type up to.
+func ExampleElastiCache_ListAllowedNodeTypeModifications_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.ListAllowedNodeTypeModificationsInput{
+		ReplicationGroupId: aws.String("myreplgroup"),
 	}
-	resp, err := svc.RebootCacheCluster(params)
 
+	result, err := svc.ListAllowedNodeTypeModifications(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheClusterNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeReplicationGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeReplicationGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_RemoveTagsFromResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.RemoveTagsFromResourceInput{
-		ResourceName: aws.String("String"), // Required
-		TagKeys: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
+// ListAllowedNodeTypeModifications
+//
+// Lists all available node types that you can scale your Redis cluster's or replication
+// group's current node type up to.
+func ExampleElastiCache_ListAllowedNodeTypeModifications_shared01() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.ListAllowedNodeTypeModificationsInput{
+		CacheClusterId: aws.String("mycluster"),
 	}
-	resp, err := svc.RemoveTagsFromResource(params)
 
+	result, err := svc.ListAllowedNodeTypeModifications(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheClusterNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeReplicationGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeReplicationGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_ResetCacheParameterGroup() {
-	sess := session.Must(session.NewSession())
+// ListTagsForResource
+//
+// Lists all cost allocation tags currently on the named resource. A cost allocation
+// tag is a key-value pair where the key is case-sensitive and the value is optional.
+// You can use cost allocation tags to categorize and track your AWS costs.
+func ExampleElastiCache_ListTagsForResource_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.ListTagsForResourceInput{
+		ResourceName: aws.String("arn:aws:elasticache:us-west-2:<my-account-id>:cluster:mycluster"),
+	}
 
-	svc := elasticache.New(sess)
+	result, err := svc.ListTagsForResource(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheClusterNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotNotFoundFault:
+				fmt.Println(elasticache.ErrCodeSnapshotNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidARNFault:
+				fmt.Println(elasticache.ErrCodeInvalidARNFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &elasticache.ResetCacheParameterGroupInput{
-		CacheParameterGroupName: aws.String("String"), // Required
+	fmt.Println(result)
+}
+
+// ModifyCacheCluster
+//
+// Copies a snapshot to a specified name.
+func ExampleElastiCache_ModifyCacheCluster_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.ModifyCacheClusterInput{
+		ApplyImmediately:       aws.Bool(true),
+		CacheClusterId:         aws.String("redis-cluster"),
+		SnapshotRetentionLimit: aws.Int64(14),
+	}
+
+	result, err := svc.ModifyCacheCluster(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeInvalidCacheClusterStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheClusterStateFault, aerr.Error())
+			case elasticache.ErrCodeInvalidCacheSecurityGroupStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheSecurityGroupStateFault, aerr.Error())
+			case elasticache.ErrCodeInsufficientCacheClusterCapacityFault:
+				fmt.Println(elasticache.ErrCodeInsufficientCacheClusterCapacityFault, aerr.Error())
+			case elasticache.ErrCodeCacheClusterNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeNodeQuotaForClusterExceededFault:
+				fmt.Println(elasticache.ErrCodeNodeQuotaForClusterExceededFault, aerr.Error())
+			case elasticache.ErrCodeNodeQuotaForCustomerExceededFault:
+				fmt.Println(elasticache.ErrCodeNodeQuotaForCustomerExceededFault, aerr.Error())
+			case elasticache.ErrCodeCacheSecurityGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheSecurityGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeCacheParameterGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheParameterGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidVPCNetworkStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidVPCNetworkStateFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// ModifyCacheParameterGroup
+//
+// Modifies one or more parameter values in the specified parameter group. You cannot
+// modify any default parameter group.
+func ExampleElastiCache_ModifyCacheParameterGroup_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.ModifyCacheParameterGroupInput{
+		CacheParameterGroupName: aws.String("custom-mem1-4"),
 		ParameterNameValues: []*elasticache.ParameterNameValue{
-			{ // Required
-				ParameterName:  aws.String("String"),
-				ParameterValue: aws.String("String"),
+			{
+				ParameterName:  aws.String("binding_protocol"),
+				ParameterValue: aws.String("ascii"),
 			},
-			// More values...
+			{
+				ParameterName:  aws.String("chunk_size"),
+				ParameterValue: aws.String("96"),
+			},
 		},
-		ResetAllParameters: aws.Bool(true),
 	}
-	resp, err := svc.ResetCacheParameterGroup(params)
 
+	result, err := svc.ModifyCacheParameterGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheParameterGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheParameterGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidCacheParameterGroupStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheParameterGroupStateFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_RevokeCacheSecurityGroupIngress() {
-	sess := session.Must(session.NewSession())
-
-	svc := elasticache.New(sess)
-
-	params := &elasticache.RevokeCacheSecurityGroupIngressInput{
-		CacheSecurityGroupName:  aws.String("String"), // Required
-		EC2SecurityGroupName:    aws.String("String"), // Required
-		EC2SecurityGroupOwnerId: aws.String("String"), // Required
+// ModifyCacheSubnetGroup
+//
+// Modifies an existing ElastiCache subnet group.
+func ExampleElastiCache_ModifyCacheSubnetGroup_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.ModifyCacheSubnetGroupInput{
+		CacheSubnetGroupName: aws.String("my-sn-grp"),
+		SubnetIds: []*string{
+			aws.String("subnet-bcde2345"),
+		},
 	}
-	resp, err := svc.RevokeCacheSecurityGroupIngress(params)
 
+	result, err := svc.ModifyCacheSubnetGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheSubnetGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheSubnetGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeCacheSubnetQuotaExceededFault:
+				fmt.Println(elasticache.ErrCodeCacheSubnetQuotaExceededFault, aerr.Error())
+			case elasticache.ErrCodeSubnetInUse:
+				fmt.Println(elasticache.ErrCodeSubnetInUse, aerr.Error())
+			case elasticache.ErrCodeInvalidSubnet:
+				fmt.Println(elasticache.ErrCodeInvalidSubnet, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleElastiCache_TestFailover() {
-	sess := session.Must(session.NewSession())
+// ModifyReplicationGroup
+//
 
-	svc := elasticache.New(sess)
-
-	params := &elasticache.TestFailoverInput{
-		NodeGroupId:        aws.String("String"), // Required
-		ReplicationGroupId: aws.String("String"), // Required
+func ExampleElastiCache_ModifyReplicationGroup_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.ModifyReplicationGroupInput{
+		ApplyImmediately:            aws.Bool(true),
+		ReplicationGroupDescription: aws.String("Modified replication group"),
+		ReplicationGroupId:          aws.String("my-redis-rg"),
+		SnapshotRetentionLimit:      aws.Int64(30),
+		SnapshottingClusterId:       aws.String("my-redis-rg-001"),
 	}
-	resp, err := svc.TestFailover(params)
 
+	result, err := svc.ModifyReplicationGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeReplicationGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeReplicationGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidReplicationGroupStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidReplicationGroupStateFault, aerr.Error())
+			case elasticache.ErrCodeInvalidCacheClusterStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheClusterStateFault, aerr.Error())
+			case elasticache.ErrCodeInvalidCacheSecurityGroupStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheSecurityGroupStateFault, aerr.Error())
+			case elasticache.ErrCodeInsufficientCacheClusterCapacityFault:
+				fmt.Println(elasticache.ErrCodeInsufficientCacheClusterCapacityFault, aerr.Error())
+			case elasticache.ErrCodeCacheClusterNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeNodeQuotaForClusterExceededFault:
+				fmt.Println(elasticache.ErrCodeNodeQuotaForClusterExceededFault, aerr.Error())
+			case elasticache.ErrCodeNodeQuotaForCustomerExceededFault:
+				fmt.Println(elasticache.ErrCodeNodeQuotaForCustomerExceededFault, aerr.Error())
+			case elasticache.ErrCodeCacheSecurityGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheSecurityGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeCacheParameterGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheParameterGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidVPCNetworkStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidVPCNetworkStateFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
+}
+
+// PurchaseReservedCacheNodesOfferings
+//
+// Allows you to purchase a reserved cache node offering.
+func ExampleElastiCache_PurchaseReservedCacheNodesOffering_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.PurchaseReservedCacheNodesOfferingInput{
+		ReservedCacheNodesOfferingId: aws.String("1ef01f5b-94ff-433f-a530-61a56bfc8e7a"),
+	}
+
+	result, err := svc.PurchaseReservedCacheNodesOffering(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeReservedCacheNodesOfferingNotFoundFault:
+				fmt.Println(elasticache.ErrCodeReservedCacheNodesOfferingNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeReservedCacheNodeAlreadyExistsFault:
+				fmt.Println(elasticache.ErrCodeReservedCacheNodeAlreadyExistsFault, aerr.Error())
+			case elasticache.ErrCodeReservedCacheNodeQuotaExceededFault:
+				fmt.Println(elasticache.ErrCodeReservedCacheNodeQuotaExceededFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// RebootCacheCluster
+//
+// Reboots the specified nodes in the names cluster.
+func ExampleElastiCache_RebootCacheCluster_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.RebootCacheClusterInput{
+		CacheClusterId: aws.String("custom-mem1-4  "),
+		CacheNodeIdsToReboot: []*string{
+			aws.String("0001"),
+			aws.String("0002"),
+		},
+	}
+
+	result, err := svc.RebootCacheCluster(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeInvalidCacheClusterStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheClusterStateFault, aerr.Error())
+			case elasticache.ErrCodeCacheClusterNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// RemoveTagsFromResource
+//
+// Removes tags identified by a list of tag keys from the list of tags on the specified
+// resource.
+func ExampleElastiCache_RemoveTagsFromResource_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.RemoveTagsFromResourceInput{
+		ResourceName: aws.String("arn:aws:elasticache:us-east-1:1234567890:cluster:my-mem-cluster"),
+		TagKeys: []*string{
+			aws.String("A"),
+			aws.String("C"),
+			aws.String("E"),
+		},
+	}
+
+	result, err := svc.RemoveTagsFromResource(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheClusterNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheClusterNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeSnapshotNotFoundFault:
+				fmt.Println(elasticache.ErrCodeSnapshotNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidARNFault:
+				fmt.Println(elasticache.ErrCodeInvalidARNFault, aerr.Error())
+			case elasticache.ErrCodeTagNotFoundFault:
+				fmt.Println(elasticache.ErrCodeTagNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// ResetCacheParameterGroup
+//
+// Modifies the parameters of a cache parameter group to the engine or system default
+// value.
+func ExampleElastiCache_ResetCacheParameterGroup_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.ResetCacheParameterGroupInput{
+		CacheParameterGroupName: aws.String("custom-mem1-4"),
+		ResetAllParameters:      aws.Bool(true),
+	}
+
+	result, err := svc.ResetCacheParameterGroup(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeInvalidCacheParameterGroupStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheParameterGroupStateFault, aerr.Error())
+			case elasticache.ErrCodeCacheParameterGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheParameterGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// DescribeCacheSecurityGroups
+//
+// Returns a list of cache security group descriptions. If a cache security group name
+// is specified, the list contains only the description of that group.
+func ExampleElastiCache_RevokeCacheSecurityGroupIngress_shared00() {
+	svc := elasticache.New(session.New())
+	input := &elasticache.RevokeCacheSecurityGroupIngressInput{
+		CacheSecurityGroupName:  aws.String("my-sec-grp"),
+		EC2SecurityGroupName:    aws.String("my-ec2-sec-grp"),
+		EC2SecurityGroupOwnerId: aws.String("1234567890"),
+	}
+
+	result, err := svc.RevokeCacheSecurityGroupIngress(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elasticache.ErrCodeCacheSecurityGroupNotFoundFault:
+				fmt.Println(elasticache.ErrCodeCacheSecurityGroupNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeAuthorizationNotFoundFault:
+				fmt.Println(elasticache.ErrCodeAuthorizationNotFoundFault, aerr.Error())
+			case elasticache.ErrCodeInvalidCacheSecurityGroupStateFault:
+				fmt.Println(elasticache.ErrCodeInvalidCacheSecurityGroupStateFault, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterValueException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterValueException, aerr.Error())
+			case elasticache.ErrCodeInvalidParameterCombinationException:
+				fmt.Println(elasticache.ErrCodeInvalidParameterCombinationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
 }

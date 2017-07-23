@@ -127,7 +127,6 @@ type DownloadLineItemsRequest struct {
 	//
 	// Possible values:
 	//   "EWF"
-	//   "SDF"
 	FileSpec string `json:"fileSpec,omitempty"`
 
 	// FilterIds: Ids of the specified filter type used to filter line items
@@ -315,6 +314,7 @@ type FilterPair struct {
 	//   "FILTER_AGE"
 	//   "FILTER_BRANDSAFE_CHANNEL_ID"
 	//   "FILTER_BROWSER"
+	//   "FILTER_BUDGET_SEGMENT_DESCRIPTION"
 	//   "FILTER_CAMPAIGN_DAILY_FREQUENCY"
 	//   "FILTER_CARRIER"
 	//   "FILTER_CHANNEL_ID"
@@ -540,6 +540,7 @@ type Parameters struct {
 	//   "FILTER_AGE"
 	//   "FILTER_BRANDSAFE_CHANNEL_ID"
 	//   "FILTER_BROWSER"
+	//   "FILTER_BUDGET_SEGMENT_DESCRIPTION"
 	//   "FILTER_CAMPAIGN_DAILY_FREQUENCY"
 	//   "FILTER_CARRIER"
 	//   "FILTER_CHANNEL_ID"
@@ -848,6 +849,7 @@ type Parameters struct {
 	//   "METRIC_PROFIT_VIEWABLE_ECPM_ADVERTISER"
 	//   "METRIC_PROFIT_VIEWABLE_ECPM_PARTNER"
 	//   "METRIC_PROFIT_VIEWABLE_ECPM_USD"
+	//   "METRIC_REACH_COOKIE_FREQUENCY"
 	//   "METRIC_REACH_COOKIE_REACH"
 	//   "METRIC_REVENUE_ADVERTISER"
 	//   "METRIC_REVENUE_ECPAPC_ADVERTISER"

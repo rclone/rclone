@@ -756,6 +756,18 @@ func ParsePrivateKey(pemBytes []byte) (Signer, error) {
 	return NewSignerFromKey(key)
 }
 
+// ParsePrivateKeyWithPassphrase returns a Signer from a PEM encoded private
+// key and passphrase. It supports the same keys as
+// ParseRawPrivateKeyWithPassphrase.
+func ParsePrivateKeyWithPassphrase(pemBytes, passPhrase []byte) (Signer, error) {
+	key, err := ParseRawPrivateKeyWithPassphrase(pemBytes, passPhrase)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewSignerFromKey(key)
+}
+
 // encryptedBlock tells whether a private key is
 // encrypted by examining its Proc-Type header
 // for a mention of ENCRYPTED
@@ -785,6 +797,43 @@ func ParseRawPrivateKey(pemBytes []byte) (interface{}, error) {
 		return ParseDSAPrivateKey(block.Bytes)
 	case "OPENSSH PRIVATE KEY":
 		return parseOpenSSHPrivateKey(block.Bytes)
+	default:
+		return nil, fmt.Errorf("ssh: unsupported key type %q", block.Type)
+	}
+}
+
+// ParseRawPrivateKeyWithPassphrase returns a private key decrypted with
+// passphrase from a PEM encoded private key. If wrong passphrase, return
+// x509.IncorrectPasswordError.
+func ParseRawPrivateKeyWithPassphrase(pemBytes, passPhrase []byte) (interface{}, error) {
+	block, _ := pem.Decode(pemBytes)
+	if block == nil {
+		return nil, errors.New("ssh: no key found")
+	}
+	buf := block.Bytes
+
+	if encryptedBlock(block) {
+		if x509.IsEncryptedPEMBlock(block) {
+			var err error
+			buf, err = x509.DecryptPEMBlock(block, passPhrase)
+			if err != nil {
+				if err == x509.IncorrectPasswordError {
+					return nil, err
+				}
+				return nil, fmt.Errorf("ssh: cannot decode encrypted private keys: %v", err)
+			}
+		}
+	}
+
+	switch block.Type {
+	case "RSA PRIVATE KEY":
+		return x509.ParsePKCS1PrivateKey(buf)
+	case "EC PRIVATE KEY":
+		return x509.ParseECPrivateKey(buf)
+	case "DSA PRIVATE KEY":
+		return ParseDSAPrivateKey(buf)
+	case "OPENSSH PRIVATE KEY":
+		return parseOpenSSHPrivateKey(buf)
 	default:
 		return nil, fmt.Errorf("ssh: unsupported key type %q", block.Type)
 	}

@@ -43,7 +43,7 @@ func Example() {
 	// 24 bytes of the encrypted text.
 	var decryptNonce [24]byte
 	copy(decryptNonce[:], encrypted[:24])
-	decrypted, ok := secretbox.Open([]byte{}, encrypted[24:], &decryptNonce, &secretKey)
+	decrypted, ok := secretbox.Open(nil, encrypted[24:], &decryptNonce, &secretKey)
 	if !ok {
 		panic("decryption error")
 	}

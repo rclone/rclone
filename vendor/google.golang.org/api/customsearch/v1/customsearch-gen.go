@@ -239,8 +239,6 @@ type Query struct {
 
 	Cr string `json:"cr,omitempty"`
 
-	Cref string `json:"cref,omitempty"`
-
 	Cx string `json:"cx,omitempty"`
 
 	DateRestrict string `json:"dateRestrict,omitempty"`
@@ -630,13 +628,6 @@ func (c *CseListCall) C2coff(c2coff string) *CseListCall {
 // Cr sets the optional parameter "cr": Country restrict(s).
 func (c *CseListCall) Cr(cr string) *CseListCall {
 	c.urlParams_.Set("cr", cr)
-	return c
-}
-
-// Cref sets the optional parameter "cref": The URL of a linked custom
-// search engine
-func (c *CseListCall) Cref(cref string) *CseListCall {
-	c.urlParams_.Set("cref", cref)
 	return c
 }
 
@@ -1035,11 +1026,6 @@ func (c *CseListCall) Do(opts ...googleapi.CallOption) (*Search, error) {
 	//     },
 	//     "cr": {
 	//       "description": "Country restrict(s).",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
-	//     "cref": {
-	//       "description": "The URL of a linked custom search engine",
 	//       "location": "query",
 	//       "type": "string"
 	//     },

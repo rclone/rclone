@@ -6157,8 +6157,12 @@ func (c *EventsListCall) MaxAttendees(maxAttendees int64) *EventsListCall {
 }
 
 // MaxResults sets the optional parameter "maxResults": Maximum number
-// of events returned on one result page. By default the value is 250
-// events. The page size can never be larger than 2500 events.
+// of events returned on one result page. The number of events in the
+// resulting page may be less than this value, or none at all, even if
+// there are more events matching the query. Incomplete pages can be
+// detected by a non-empty nextPageToken field in the response. By
+// default the value is 250 events. The page size can never be larger
+// than 2500 events.
 func (c *EventsListCall) MaxResults(maxResults int64) *EventsListCall {
 	c.urlParams_.Set("maxResults", fmt.Sprint(maxResults))
 	return c
@@ -6434,7 +6438,7 @@ func (c *EventsListCall) Do(opts ...googleapi.CallOption) (*Events, error) {
 	//     },
 	//     "maxResults": {
 	//       "default": "250",
-	//       "description": "Maximum number of events returned on one result page. By default the value is 250 events. The page size can never be larger than 2500 events. Optional.",
+	//       "description": "Maximum number of events returned on one result page. The number of events in the resulting page may be less than this value, or none at all, even if there are more events matching the query. Incomplete pages can be detected by a non-empty nextPageToken field in the response. By default the value is 250 events. The page size can never be larger than 2500 events. Optional.",
 	//       "format": "int32",
 	//       "location": "query",
 	//       "minimum": "1",
@@ -7304,8 +7308,12 @@ func (c *EventsWatchCall) MaxAttendees(maxAttendees int64) *EventsWatchCall {
 }
 
 // MaxResults sets the optional parameter "maxResults": Maximum number
-// of events returned on one result page. By default the value is 250
-// events. The page size can never be larger than 2500 events.
+// of events returned on one result page. The number of events in the
+// resulting page may be less than this value, or none at all, even if
+// there are more events matching the query. Incomplete pages can be
+// detected by a non-empty nextPageToken field in the response. By
+// default the value is 250 events. The page size can never be larger
+// than 2500 events.
 func (c *EventsWatchCall) MaxResults(maxResults int64) *EventsWatchCall {
 	c.urlParams_.Set("maxResults", fmt.Sprint(maxResults))
 	return c
@@ -7573,7 +7581,7 @@ func (c *EventsWatchCall) Do(opts ...googleapi.CallOption) (*Channel, error) {
 	//     },
 	//     "maxResults": {
 	//       "default": "250",
-	//       "description": "Maximum number of events returned on one result page. By default the value is 250 events. The page size can never be larger than 2500 events. Optional.",
+	//       "description": "Maximum number of events returned on one result page. The number of events in the resulting page may be less than this value, or none at all, even if there are more events matching the query. Incomplete pages can be detected by a non-empty nextPageToken field in the response. By default the value is 250 events. The page size can never be larger than 2500 events. Optional.",
 	//       "format": "int32",
 	//       "location": "query",
 	//       "minimum": "1",

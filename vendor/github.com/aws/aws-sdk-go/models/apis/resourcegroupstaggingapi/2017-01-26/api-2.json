@@ -119,10 +119,10 @@
     },
     "GetResourcesInput":{
       "type":"structure",
-      "required":["TagsPerPage"],
       "members":{
         "PaginationToken":{"shape":"PaginationToken"},
         "TagFilters":{"shape":"TagFilterList"},
+        "ResourcesPerPage":{"shape":"ResourcesPerPage"},
         "TagsPerPage":{"shape":"TagsPerPage"},
         "ResourceTypeFilters":{"shape":"ResourceTypeFilterList"}
       }
@@ -215,6 +215,7 @@
       "type":"list",
       "member":{"shape":"AmazonResourceType"}
     },
+    "ResourcesPerPage":{"type":"integer"},
     "StatusCode":{"type":"integer"},
     "Tag":{
       "type":"structure",
@@ -298,11 +299,7 @@
       "type":"list",
       "member":{"shape":"TagValue"}
     },
-    "TagsPerPage":{
-      "type":"integer",
-      "max":500,
-      "min":100
-    },
+    "TagsPerPage":{"type":"integer"},
     "ThrottledException":{
       "type":"structure",
       "members":{

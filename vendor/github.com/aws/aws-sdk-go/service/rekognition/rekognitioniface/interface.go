@@ -88,6 +88,10 @@ type RekognitionAPI interface {
 	DetectModerationLabelsWithContext(aws.Context, *rekognition.DetectModerationLabelsInput, ...request.Option) (*rekognition.DetectModerationLabelsOutput, error)
 	DetectModerationLabelsRequest(*rekognition.DetectModerationLabelsInput) (*request.Request, *rekognition.DetectModerationLabelsOutput)
 
+	GetCelebrityInfo(*rekognition.GetCelebrityInfoInput) (*rekognition.GetCelebrityInfoOutput, error)
+	GetCelebrityInfoWithContext(aws.Context, *rekognition.GetCelebrityInfoInput, ...request.Option) (*rekognition.GetCelebrityInfoOutput, error)
+	GetCelebrityInfoRequest(*rekognition.GetCelebrityInfoInput) (*request.Request, *rekognition.GetCelebrityInfoOutput)
+
 	IndexFaces(*rekognition.IndexFacesInput) (*rekognition.IndexFacesOutput, error)
 	IndexFacesWithContext(aws.Context, *rekognition.IndexFacesInput, ...request.Option) (*rekognition.IndexFacesOutput, error)
 	IndexFacesRequest(*rekognition.IndexFacesInput) (*request.Request, *rekognition.IndexFacesOutput)
@@ -105,6 +109,10 @@ type RekognitionAPI interface {
 
 	ListFacesPages(*rekognition.ListFacesInput, func(*rekognition.ListFacesOutput, bool) bool) error
 	ListFacesPagesWithContext(aws.Context, *rekognition.ListFacesInput, func(*rekognition.ListFacesOutput, bool) bool, ...request.Option) error
+
+	RecognizeCelebrities(*rekognition.RecognizeCelebritiesInput) (*rekognition.RecognizeCelebritiesOutput, error)
+	RecognizeCelebritiesWithContext(aws.Context, *rekognition.RecognizeCelebritiesInput, ...request.Option) (*rekognition.RecognizeCelebritiesOutput, error)
+	RecognizeCelebritiesRequest(*rekognition.RecognizeCelebritiesInput) (*request.Request, *rekognition.RecognizeCelebritiesOutput)
 
 	SearchFaces(*rekognition.SearchFacesInput) (*rekognition.SearchFacesOutput, error)
 	SearchFacesWithContext(aws.Context, *rekognition.SearchFacesInput, ...request.Option) (*rekognition.SearchFacesOutput, error)

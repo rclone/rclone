@@ -277,6 +277,14 @@ func TestRetainRowsAfter(t *testing.T) {
 		t.Errorf("range retry: got %v, want %v", got, want)
 	}
 
+	prevRowRangeList := RowRangeList{NewRange("a", "d"), NewRange("e", "g"), NewRange("h", "l")}
+	prevRowKey = "f"
+	wantRowRangeList := RowRangeList{NewRange("f\x00", "g"), NewRange("h", "l")}
+	got = prevRowRangeList.retainRowsAfter(prevRowKey)
+	if !reflect.DeepEqual(wantRowRangeList, got) {
+		t.Errorf("range list retry: got %v, want %v", got, wantRowRangeList)
+	}
+
 	prevRowList := RowList{"a", "b", "c", "d", "e", "f"}
 	prevRowKey = "b"
 	wantList := RowList{"c", "d", "e", "f"}

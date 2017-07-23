@@ -22,17 +22,16 @@ import (
 	"log"
 	"reflect"
 	"testing"
+	"time"
 
 	"cloud.google.com/go/internal/testutil"
-	ltesting "cloud.google.com/go/logging/internal/testing"
 	"cloud.google.com/go/storage"
 	"golang.org/x/net/context"
 	"google.golang.org/api/iterator"
-	itesting "google.golang.org/api/iterator/testing"
 	"google.golang.org/api/option"
 )
 
-const testSinkIDPrefix = "GO-CLIENT-TEST-SINK"
+var sinkIDs = testutil.NewUIDSpace("GO-CLIENT-TEST-SINK")
 
 const testFilter = ""
 
@@ -42,8 +41,8 @@ var testSinkDestination string
 // Returns a cleanup function to be called after the tests finish.
 func initSinks(ctx context.Context) func() {
 	// Create a unique GCS bucket so concurrent tests don't interfere with each other.
-	testBucketPrefix := testProjectID + "-log-sink"
-	testBucket := ltesting.UniqueID(testBucketPrefix)
+	bucketIDs := testutil.NewUIDSpace(testProjectID + "-log-sink")
+	testBucket := bucketIDs.New()
 	testSinkDestination = "storage.googleapis.com/" + testBucket
 	var storageClient *storage.Client
 	if integrationTest {
@@ -64,12 +63,25 @@ func initSinks(ctx context.Context) func() {
 		}
 	}
 	// Clean up from aborted tests.
-	for _, sID := range ltesting.ExpiredUniqueIDs(sinkIDs(ctx), testSinkIDPrefix) {
-		client.DeleteSink(ctx, sID) // ignore error
+	it := client.Sinks(ctx)
+	for {
+		s, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Printf("listing sinks: %v", err)
+			break
+		}
+		if sinkIDs.Older(s.ID, 24*time.Hour) {
+			client.DeleteSink(ctx, s.ID) // ignore error
+		}
 	}
 	if integrationTest {
-		for _, bn := range ltesting.ExpiredUniqueIDs(bucketNames(ctx, storageClient), testBucketPrefix) {
-			storageClient.Bucket(bn).Delete(ctx) // ignore error
+		for _, bn := range bucketNames(ctx, storageClient) {
+			if bucketIDs.Older(bn, 24*time.Hour) {
+				storageClient.Bucket(bn).Delete(ctx) // ignore error
+			}
 		}
 		return func() {
 			if err := storageClient.Bucket(testBucket).Delete(ctx); err != nil {
@@ -79,26 +91,6 @@ func initSinks(ctx context.Context) func() {
 		}
 	}
 	return func() {}
-}
-
-// Collect all sink IDs for the test project.
-func sinkIDs(ctx context.Context) []string {
-	var IDs []string
-	it := client.Sinks(ctx)
-loop:
-	for {
-		s, err := it.Next()
-		switch err {
-		case nil:
-			IDs = append(IDs, s.ID)
-		case iterator.Done:
-			break loop
-		default:
-			log.Printf("listing sinks: %v", err)
-			break loop
-		}
-	}
-	return IDs
 }
 
 // Collect the name of all buckets for the test project.
@@ -124,7 +116,7 @@ loop:
 func TestCreateDeleteSink(t *testing.T) {
 	ctx := context.Background()
 	sink := &Sink{
-		ID:          ltesting.UniqueID(testSinkIDPrefix),
+		ID:          sinkIDs.New(),
 		Destination: testSinkDestination,
 		Filter:      testFilter,
 	}
@@ -156,7 +148,7 @@ func TestCreateDeleteSink(t *testing.T) {
 func TestUpdateSink(t *testing.T) {
 	ctx := context.Background()
 	sink := &Sink{
-		ID:          ltesting.UniqueID(testSinkIDPrefix),
+		ID:          sinkIDs.New(),
 		Destination: testSinkDestination,
 		Filter:      testFilter,
 	}
@@ -195,12 +187,15 @@ func TestUpdateSink(t *testing.T) {
 func TestListSinks(t *testing.T) {
 	ctx := context.Background()
 	var sinks []*Sink
+	want := map[string]*Sink{}
 	for i := 0; i < 4; i++ {
-		sinks = append(sinks, &Sink{
-			ID:          ltesting.UniqueID(testSinkIDPrefix),
+		s := &Sink{
+			ID:          sinkIDs.New(),
 			Destination: testSinkDestination,
 			Filter:      testFilter,
-		})
+		}
+		sinks = append(sinks, s)
+		want[s.ID] = s
 	}
 	for _, s := range sinks {
 		if _, err := client.CreateSink(ctx, s); err != nil {
@@ -209,10 +204,23 @@ func TestListSinks(t *testing.T) {
 		defer client.DeleteSink(ctx, s.ID)
 	}
 
-	msg, ok := itesting.TestIterator(sinks,
-		func() interface{} { return client.Sinks(ctx) },
-		func(it interface{}) (interface{}, error) { return it.(*SinkIterator).Next() })
-	if !ok {
-		t.Fatal(msg)
+	got := map[string]*Sink{}
+	it := client.Sinks(ctx)
+	for {
+		s, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		// If tests run simultaneously, we may have more sinks than we
+		// created. So only check for our own.
+		if _, ok := want[s.ID]; ok {
+			got[s.ID] = s
+		}
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %+v, want %+v", got, want)
 	}
 }

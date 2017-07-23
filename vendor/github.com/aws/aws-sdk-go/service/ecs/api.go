@@ -3908,9 +3908,6 @@ type ContainerDefinition struct {
 	// section of the Docker Remote API (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/)
 	// and the IMAGE parameter of docker run (https://docs.docker.com/engine/reference/run/).
 	//
-	// Amazon ECS task definitions currently only support tags as image identifiers
-	// within a specified repository (and not sha256 digests).
-	//
 	//    * Images in Amazon ECR repositories use the full registry and repository
 	//    URI (for example, 012345678910.dkr.ecr.<region-name>.amazonaws.com/<repository-name>).
 	//
@@ -4460,14 +4457,29 @@ type ContainerOverride struct {
 	// name.
 	Command []*string `locationName:"command" type:"list"`
 
+	// The number of cpu units reserved for the container, instead of the default
+	// value from the task definition. You must also specify a container name.
+	Cpu *int64 `locationName:"cpu" type:"integer"`
+
 	// The environment variables to send to the container. You can add new environment
 	// variables, which are added to the container at launch, or you can override
 	// the existing environment variables from the Docker image or the task definition.
 	// You must also specify a container name.
 	Environment []*KeyValuePair `locationName:"environment" type:"list"`
 
+	// The hard limit (in MiB) of memory to present to the container, instead of
+	// the default value from the task definition. If your container attempts to
+	// exceed the memory specified here, the container is killed. You must also
+	// specify a container name.
+	Memory *int64 `locationName:"memory" type:"integer"`
+
+	// The soft limit (in MiB) of memory to reserve for the container, instead of
+	// the default value from the task definition. You must also specify a container
+	// name.
+	MemoryReservation *int64 `locationName:"memoryReservation" type:"integer"`
+
 	// The name of the container that receives the override. This parameter is required
-	// if a command or environment variable is specified.
+	// if any override is specified.
 	Name *string `locationName:"name" type:"string"`
 }
 
@@ -4487,9 +4499,27 @@ func (s *ContainerOverride) SetCommand(v []*string) *ContainerOverride {
 	return s
 }
 
+// SetCpu sets the Cpu field's value.
+func (s *ContainerOverride) SetCpu(v int64) *ContainerOverride {
+	s.Cpu = &v
+	return s
+}
+
 // SetEnvironment sets the Environment field's value.
 func (s *ContainerOverride) SetEnvironment(v []*KeyValuePair) *ContainerOverride {
 	s.Environment = v
+	return s
+}
+
+// SetMemory sets the Memory field's value.
+func (s *ContainerOverride) SetMemory(v int64) *ContainerOverride {
+	s.Memory = &v
+	return s
+}
+
+// SetMemoryReservation sets the MemoryReservation field's value.
+func (s *ContainerOverride) SetMemoryReservation(v int64) *ContainerOverride {
+	s.MemoryReservation = &v
 	return s
 }
 
@@ -7010,13 +7040,15 @@ type PortMapping struct {
 	// and your container automatically receives a port in the ephemeral port range
 	// for your container instance operating system and Docker version.
 	//
-	// The default ephemeral port range is 49153 to 65535, and this range is used
-	// for Docker versions prior to 1.6.0. For Docker version 1.6.0 and later, the
-	// Docker daemon tries to read the ephemeral port range from /proc/sys/net/ipv4/ip_local_port_range;
-	// if this kernel parameter is unavailable, the default ephemeral port range
+	// The default ephemeral port range for Docker version 1.6.0 and later is listed
+	// on the instance under /proc/sys/net/ipv4/ip_local_port_range; if this kernel
+	// parameter is unavailable, the default ephemeral port range of 49153 to 65535
 	// is used. You should not attempt to specify a host port in the ephemeral port
-	// range, because these are reserved for automatic assignment. In general, ports
-	// below 32768 are outside of the ephemeral port range.
+	// range as these are reserved for automatic assignment. In general, ports below
+	// 32768 are outside of the ephemeral port range.
+	//
+	// The default ephemeral port range of 49153 to 65535 will always be used for
+	// Docker versions prior to 1.6.0.
 	//
 	// The default reserved ports are 22 for SSH, the Docker ports 2375 and 2376,
 	// and the Amazon ECS container agent ports 51678 and 51679. Any host port that

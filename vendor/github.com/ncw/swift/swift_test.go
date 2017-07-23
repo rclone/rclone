@@ -75,6 +75,7 @@ func makeConnection(t *testing.T) (*swift.Connection, func()) {
 	ConnectionChannelTimeout := os.Getenv("SWIFT_CONNECTION_CHANNEL_TIMEOUT")
 	DataChannelTimeout := os.Getenv("SWIFT_DATA_CHANNEL_TIMEOUT")
 
+	internalServer := false
 	if UserName == "" || ApiKey == "" || AuthUrl == "" {
 		srv, err = swifttest.NewSwiftServer("localhost")
 		if err != nil && t != nil {
@@ -84,6 +85,7 @@ func makeConnection(t *testing.T) (*swift.Connection, func()) {
 		UserName = "swifttest"
 		ApiKey = "swifttest"
 		AuthUrl = srv.AuthURL
+		internalServer = true
 	}
 
 	transport := &http.Transport{
@@ -103,6 +105,16 @@ func makeConnection(t *testing.T) (*swift.Connection, func()) {
 		ConnectTimeout: 60 * time.Second,
 		Timeout:        60 * time.Second,
 		EndpointType:   swift.EndpointType(EndpointType),
+	}
+
+	if !internalServer {
+		if isV3Api() {
+			c.Tenant = os.Getenv("SWIFT_TENANT")
+			c.Domain = os.Getenv("SWIFT_API_DOMAIN")
+		} else {
+			c.Tenant = os.Getenv("SWIFT_TENANT")
+			c.TenantId = os.Getenv("SWIFT_TENANT_ID")
+		}
 	}
 
 	var timeout int64
@@ -304,14 +316,6 @@ func TestTransport(t *testing.T) {
 
 	c.Transport = tr
 
-	if isV3Api() {
-		c.Tenant = os.Getenv("SWIFT_TENANT")
-		c.Domain = os.Getenv("SWIFT_API_DOMAIN")
-	} else {
-		c.Tenant = os.Getenv("SWIFT_TENANT")
-		c.TenantId = os.Getenv("SWIFT_TENANT_ID")
-	}
-
 	err := c.Authenticate()
 	if err != nil {
 		t.Fatal("Auth failed", err)
@@ -328,9 +332,6 @@ func TestV1V2Authenticate(t *testing.T) {
 	}
 	c, rollback := makeConnection(t)
 	defer rollback()
-
-	c.Tenant = os.Getenv("SWIFT_TENANT")
-	c.TenantId = os.Getenv("SWIFT_TENANT_ID")
 
 	err := c.Authenticate()
 	if err != nil {
@@ -349,8 +350,10 @@ func TestV3AuthenticateWithDomainNameAndTenantId(t *testing.T) {
 	c, rollback := makeConnection(t)
 	defer rollback()
 
-	c.TenantId = os.Getenv("SWIFT_TENANT_ID")
+	c.Tenant = ""
 	c.Domain = os.Getenv("SWIFT_API_DOMAIN")
+	c.TenantId = os.Getenv("SWIFT_TENANT_ID")
+	c.DomainId = ""
 
 	err := c.Authenticate()
 	if err != nil {
@@ -388,6 +391,8 @@ func TestV3AuthenticateWithDomainIdAndTenantId(t *testing.T) {
 	c, rollback := makeConnection(t)
 	defer rollback()
 
+	c.Tenant = ""
+	c.Domain = ""
 	c.TenantId = os.Getenv("SWIFT_TENANT_ID")
 	c.DomainId = os.Getenv("SWIFT_API_DOMAIN_ID")
 
@@ -410,6 +415,8 @@ func TestV3AuthenticateWithDomainNameAndTenantName(t *testing.T) {
 
 	c.Tenant = os.Getenv("SWIFT_TENANT")
 	c.Domain = os.Getenv("SWIFT_API_DOMAIN")
+	c.TenantId = ""
+	c.DomainId = ""
 
 	err := c.Authenticate()
 	if err != nil {
@@ -429,6 +436,8 @@ func TestV3AuthenticateWithDomainIdAndTenantName(t *testing.T) {
 	defer rollback()
 
 	c.Tenant = os.Getenv("SWIFT_TENANT")
+	c.Domain = ""
+	c.TenantId = ""
 	c.DomainId = os.Getenv("SWIFT_API_DOMAIN_ID")
 
 	err := c.Authenticate()

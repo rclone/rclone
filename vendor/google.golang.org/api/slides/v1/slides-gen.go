@@ -2340,8 +2340,7 @@ func (s *LayoutPlaceholderIdMapping) MarshalJSON() ([]byte, error) {
 // LayoutProperties: The properties of Page are only
 // relevant for pages with page_type LAYOUT.
 type LayoutProperties struct {
-	// DisplayName: The human readable name of the layout in the
-	// presentation's locale.
+	// DisplayName: The human-readable name of the layout.
 	DisplayName string `json:"displayName,omitempty"`
 
 	// MasterObjectId: The object ID of the master that this layout is based
@@ -3646,12 +3645,12 @@ func (s *Presentation) MarshalJSON() ([]byte, error) {
 type Range struct {
 	// EndIndex: The optional zero-based index of the end of the
 	// collection.
-	// Required for `SPECIFIC_RANGE` delete mode.
+	// Required for `FIXED_RANGE` ranges.
 	EndIndex int64 `json:"endIndex,omitempty"`
 
 	// StartIndex: The optional zero-based index of the beginning of the
 	// collection.
-	// Required for `SPECIFIC_RANGE` and `FROM_START_INDEX` ranges.
+	// Required for `FIXED_RANGE` and `FROM_START_INDEX` ranges.
 	StartIndex int64 `json:"startIndex,omitempty"`
 
 	// Type: The type of range.
@@ -3864,6 +3863,16 @@ type ReplaceAllShapesWithImageRequest struct {
 	// format.
 	ImageUrl string `json:"imageUrl,omitempty"`
 
+	// PageObjectIds: If non-empty, limits the matches to page elements only
+	// on the given pages.
+	//
+	// Returns a 400 bad request error if given the page object ID of
+	// a
+	// notes page or a
+	// notes master, or if a
+	// page with that object ID doesn't exist in the presentation.
+	PageObjectIds []string `json:"pageObjectIds,omitempty"`
+
 	// ReplaceMethod: The replace method.
 	//
 	// Possible values:
@@ -3967,6 +3976,16 @@ type ReplaceAllShapesWithSheetsChartRequest struct {
 	// see a link to the spreadsheet.
 	LinkingMode string `json:"linkingMode,omitempty"`
 
+	// PageObjectIds: If non-empty, limits the matches to page elements only
+	// on the given pages.
+	//
+	// Returns a 400 bad request error if given the page object ID of
+	// a
+	// notes page or a
+	// notes master, or if a
+	// page with that object ID doesn't exist in the presentation.
+	PageObjectIds []string `json:"pageObjectIds,omitempty"`
+
 	// SpreadsheetId: The ID of the Google Sheets spreadsheet that contains
 	// the chart.
 	SpreadsheetId string `json:"spreadsheetId,omitempty"`
@@ -4029,6 +4048,15 @@ func (s *ReplaceAllShapesWithSheetsChartResponse) MarshalJSON() ([]byte, error) 
 type ReplaceAllTextRequest struct {
 	// ContainsText: Finds text in a shape matching this substring.
 	ContainsText *SubstringMatchCriteria `json:"containsText,omitempty"`
+
+	// PageObjectIds: If non-empty, limits the matches to page elements only
+	// on the given pages.
+	//
+	// Returns a 400 bad request error if given the page object ID of
+	// a
+	// notes master,
+	// or if a page with that object ID doesn't exist in the presentation.
+	PageObjectIds []string `json:"pageObjectIds,omitempty"`
 
 	// ReplaceText: The text that will replace the matched text.
 	ReplaceText string `json:"replaceText,omitempty"`

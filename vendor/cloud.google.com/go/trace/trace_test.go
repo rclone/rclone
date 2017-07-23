@@ -22,6 +22,7 @@ import (
 	"math/rand"
 	"net/http"
 	"reflect"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -87,6 +88,7 @@ func (f *fakeDatastoreServer) Lookup(ctx context.Context, req *dspb.LookupReques
 // uploaded any traces.
 func makeRequests(t *testing.T, span *Span, rt *fakeRoundTripper, synchronous bool, expectTrace bool) *http.Request {
 	ctx := NewContext(context.Background(), span)
+	tc := newTestClient(&noopTransport{})
 
 	// An HTTP request.
 	{
@@ -143,7 +145,7 @@ func makeRequests(t *testing.T, span *Span, rt *fakeRoundTripper, synchronous bo
 		}
 		dspb.RegisterDatastoreServer(srv.Gsrv, &fakeDatastoreServer{fail: fail})
 		srv.Start()
-		conn, err := grpc.Dial(srv.Addr, grpc.WithInsecure(), EnableGRPCTracingDialOption)
+		conn, err := grpc.Dial(srv.Addr, grpc.WithInsecure(), grpc.WithUnaryInterceptor(tc.GRPCClientInterceptor()))
 		if err != nil {
 			t.Fatalf("connecting to test datastore server: %v", err)
 		}
@@ -188,6 +190,110 @@ func makeRequests(t *testing.T, span *Span, rt *fakeRoundTripper, synchronous bo
 			r := <-rt.reqc
 			<-done
 			return r
+		}
+	}
+}
+
+func TestHeader(t *testing.T) {
+	tests := []struct {
+		header      string
+		wantTraceID string
+		wantSpanID  uint64
+		wantOpts    optionFlags
+		wantOK      bool
+	}{
+		{
+			header:      "0123456789ABCDEF0123456789ABCDEF/1;o=1",
+			wantTraceID: "0123456789ABCDEF0123456789ABCDEF",
+			wantSpanID:  1,
+			wantOpts:    1,
+			wantOK:      true,
+		},
+		{
+			header:      "0123456789ABCDEF0123456789ABCDEF/1;o=0",
+			wantTraceID: "0123456789ABCDEF0123456789ABCDEF",
+			wantSpanID:  1,
+			wantOpts:    0,
+			wantOK:      true,
+		},
+		{
+			header:      "0123456789ABCDEF0123456789ABCDEF/1",
+			wantTraceID: "0123456789ABCDEF0123456789ABCDEF",
+			wantSpanID:  1,
+			wantOpts:    0,
+			wantOK:      true,
+		},
+		{
+			header:      "",
+			wantTraceID: "",
+			wantSpanID:  0,
+			wantOpts:    0,
+			wantOK:      false,
+		},
+	}
+	for _, tt := range tests {
+		traceID, parentSpanID, opts, _, ok := traceInfoFromHeader(tt.header)
+		if got, want := traceID, tt.wantTraceID; got != want {
+			t.Errorf("TraceID(%v) = %q; want %q", tt.header, got, want)
+		}
+		if got, want := parentSpanID, tt.wantSpanID; got != want {
+			t.Errorf("SpanID(%v) = %v; want %v", tt.header, got, want)
+		}
+		if got, want := opts, tt.wantOpts; got != want {
+			t.Errorf("Options(%v) = %v; want %v", tt.header, got, want)
+		}
+		if got, want := ok, tt.wantOK; got != want {
+			t.Errorf("Header exists (%v) = %v; want %v", tt.header, got, want)
+		}
+	}
+}
+
+func TestOutgoingReqHeader(t *testing.T) {
+	all, _ := NewLimitedSampler(1, 1<<16) // trace every request
+
+	tests := []struct {
+		desc           string
+		traceHeader    string
+		samplingPolicy SamplingPolicy
+
+		wantHeaderRe *regexp.Regexp
+	}{
+		{
+			desc:           "Parent span without sampling options, client samples all",
+			traceHeader:    "0123456789ABCDEF0123456789ABCDEF/1",
+			samplingPolicy: all,
+			wantHeaderRe:   regexp.MustCompile("0123456789ABCDEF0123456789ABCDEF/\\d+;o=1"),
+		},
+		{
+			desc:           "Parent span without sampling options, without client sampling",
+			traceHeader:    "0123456789ABCDEF0123456789ABCDEF/1",
+			samplingPolicy: nil,
+			wantHeaderRe:   regexp.MustCompile("0123456789ABCDEF0123456789ABCDEF/\\d+;o=0"),
+		},
+		{
+			desc:           "Parent span with o=1, client samples none",
+			traceHeader:    "0123456789ABCDEF0123456789ABCDEF/1;o=1",
+			samplingPolicy: nil,
+			wantHeaderRe:   regexp.MustCompile("0123456789ABCDEF0123456789ABCDEF/\\d+;o=1"),
+		},
+		{
+			desc:           "Parent span with o=0, without client sampling",
+			traceHeader:    "0123456789ABCDEF0123456789ABCDEF/1;o=0",
+			samplingPolicy: nil,
+			wantHeaderRe:   regexp.MustCompile("0123456789ABCDEF0123456789ABCDEF/\\d+;o=0"),
+		},
+	}
+
+	tc := newTestClient(nil)
+	for _, tt := range tests {
+		tc.SetSamplingPolicy(tt.samplingPolicy)
+		span := tc.SpanFromHeader("/foo", tt.traceHeader)
+
+		req, _ := http.NewRequest("GET", "http://localhost", nil)
+		span.NewRemoteChild(req)
+
+		if got, re := req.Header.Get(httpHeader), tt.wantHeaderRe; !re.MatchString(got) {
+			t.Errorf("%v (parent=%q): got header %q; want in format %q", tt.desc, tt.traceHeader, got, re)
 		}
 	}
 }
@@ -270,7 +376,7 @@ func TestNewSpan(t *testing.T) {
 						Name:   "/google.datastore.v1.Datastore/Lookup",
 					},
 					{
-						Kind:   "RPC_SERVER",
+						Kind:   "SPAN_KIND_UNSPECIFIED",
 						Labels: map[string]string{},
 						Name:   "/foo",
 					},

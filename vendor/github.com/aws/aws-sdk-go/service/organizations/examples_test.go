@@ -3,879 +3,1856 @@
 package organizations_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/organizations"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleOrganizations_AcceptHandshake() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.AcceptHandshakeInput{
-		HandshakeId: aws.String("HandshakeId"), // Required
-	}
-	resp, err := svc.AcceptHandshake(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		panic(err)
+	}
+	return &t
+}
+
+// To accept a handshake from another account
+//
+// Bill is the owner of an organization, and he invites Juan's account (222222222222)
+// to join his organization. The following example shows Juan's account accepting the
+// handshake and thus agreeing to the invitation.
+func ExampleOrganizations_AcceptHandshake_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.AcceptHandshakeInput{
+		HandshakeId: aws.String("h-examplehandshakeid111"),
+	}
+
+	result, err := svc.AcceptHandshake(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeHandshakeConstraintViolationException:
+				fmt.Println(organizations.ErrCodeHandshakeConstraintViolationException, aerr.Error())
+			case organizations.ErrCodeHandshakeNotFoundException:
+				fmt.Println(organizations.ErrCodeHandshakeNotFoundException, aerr.Error())
+			case organizations.ErrCodeInvalidHandshakeTransitionException:
+				fmt.Println(organizations.ErrCodeInvalidHandshakeTransitionException, aerr.Error())
+			case organizations.ErrCodeHandshakeAlreadyInStateException:
+				fmt.Println(organizations.ErrCodeHandshakeAlreadyInStateException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_AttachPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.AttachPolicyInput{
-		PolicyId: aws.String("PolicyId"),       // Required
-		TargetId: aws.String("PolicyTargetId"), // Required
+// To attach a policy to an OU
+//
+// The following example shows how to attach a service control policy (SCP) to an OU:
+//
+func ExampleOrganizations_AttachPolicy_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.AttachPolicyInput{
+		PolicyId: aws.String("p-examplepolicyid111"),
+		TargetId: aws.String("ou-examplerootid111-exampleouid111"),
 	}
-	resp, err := svc.AttachPolicy(params)
 
+	result, err := svc.AttachPolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeConstraintViolationException:
+				fmt.Println(organizations.ErrCodeConstraintViolationException, aerr.Error())
+			case organizations.ErrCodeDuplicatePolicyAttachmentException:
+				fmt.Println(organizations.ErrCodeDuplicatePolicyAttachmentException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodePolicyNotFoundException:
+				fmt.Println(organizations.ErrCodePolicyNotFoundException, aerr.Error())
+			case organizations.ErrCodePolicyTypeNotEnabledException:
+				fmt.Println(organizations.ErrCodePolicyTypeNotEnabledException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTargetNotFoundException:
+				fmt.Println(organizations.ErrCodeTargetNotFoundException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_CancelHandshake() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.CancelHandshakeInput{
-		HandshakeId: aws.String("HandshakeId"), // Required
+// To attach a policy to an account
+//
+// The following example shows how to attach a service control policy (SCP) to an account:
+//
+func ExampleOrganizations_AttachPolicy_shared01() {
+	svc := organizations.New(session.New())
+	input := &organizations.AttachPolicyInput{
+		PolicyId: aws.String("p-examplepolicyid111"),
+		TargetId: aws.String("333333333333"),
 	}
-	resp, err := svc.CancelHandshake(params)
 
+	result, err := svc.AttachPolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeConstraintViolationException:
+				fmt.Println(organizations.ErrCodeConstraintViolationException, aerr.Error())
+			case organizations.ErrCodeDuplicatePolicyAttachmentException:
+				fmt.Println(organizations.ErrCodeDuplicatePolicyAttachmentException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodePolicyNotFoundException:
+				fmt.Println(organizations.ErrCodePolicyNotFoundException, aerr.Error())
+			case organizations.ErrCodePolicyTypeNotEnabledException:
+				fmt.Println(organizations.ErrCodePolicyTypeNotEnabledException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTargetNotFoundException:
+				fmt.Println(organizations.ErrCodeTargetNotFoundException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_CreateAccount() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.CreateAccountInput{
-		AccountName: aws.String("AccountName"), // Required
-		Email:       aws.String("Email"),       // Required
-		IamUserAccessToBilling: aws.String("IAMUserAccessToBilling"),
-		RoleName:               aws.String("RoleName"),
+// To cancel a handshake sent to a member account
+//
+// Bill previously sent an invitation to Susan's account to join his organization. He
+// changes his mind and decides to cancel the invitation before Susan accepts it. The
+// following example shows Bill's cancellation:
+//
+func ExampleOrganizations_CancelHandshake_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.CancelHandshakeInput{
+		HandshakeId: aws.String("h-examplehandshakeid111"),
 	}
-	resp, err := svc.CreateAccount(params)
 
+	result, err := svc.CancelHandshake(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeHandshakeNotFoundException:
+				fmt.Println(organizations.ErrCodeHandshakeNotFoundException, aerr.Error())
+			case organizations.ErrCodeInvalidHandshakeTransitionException:
+				fmt.Println(organizations.ErrCodeInvalidHandshakeTransitionException, aerr.Error())
+			case organizations.ErrCodeHandshakeAlreadyInStateException:
+				fmt.Println(organizations.ErrCodeHandshakeAlreadyInStateException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_CreateOrganization() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.CreateOrganizationInput{
-		FeatureSet: aws.String("OrganizationFeatureSet"),
+// To create a new account that is automatically part of the organization
+//
+// The owner of an organization creates a member account in the organization. The following
+// example shows that when the organization owner creates the member account, the account
+// is preconfigured with the name "Production Account" and an owner email address of
+// susan@example.com.  An IAM role is automatically created using the default name because
+// the roleName parameter is not used. AWS Organizations sends Susan a "Welcome to AWS"
+// email:
+//
+func ExampleOrganizations_CreateAccount_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.CreateAccountInput{
+		AccountName: aws.String("Production Account"),
+		Email:       aws.String("susan@example.com"),
 	}
-	resp, err := svc.CreateOrganization(params)
 
+	result, err := svc.CreateAccount(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeConstraintViolationException:
+				fmt.Println(organizations.ErrCodeConstraintViolationException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeFinalizingOrganizationException:
+				fmt.Println(organizations.ErrCodeFinalizingOrganizationException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_CreateOrganizationalUnit() {
-	sess := session.Must(session.NewSession())
+// To create a new organization with all features enabled
+//
+// Bill wants to create an organization using credentials from account 111111111111.
+// The following example shows that the account becomes the master account in the new
+// organization. Because he does not specify a feature set, the new organization defaults
+// to all features enabled and service control policies enabled on the root:
+//
+func ExampleOrganizations_CreateOrganization_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.CreateOrganizationInput{}
 
-	svc := organizations.New(sess)
-
-	params := &organizations.CreateOrganizationalUnitInput{
-		Name:     aws.String("OrganizationalUnitName"), // Required
-		ParentId: aws.String("ParentId"),               // Required
-	}
-	resp, err := svc.CreateOrganizationalUnit(params)
-
+	result, err := svc.CreateOrganization(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAlreadyInOrganizationException:
+				fmt.Println(organizations.ErrCodeAlreadyInOrganizationException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeConstraintViolationException:
+				fmt.Println(organizations.ErrCodeConstraintViolationException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_CreatePolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.CreatePolicyInput{
-		Content:     aws.String("PolicyContent"),     // Required
-		Description: aws.String("PolicyDescription"), // Required
-		Name:        aws.String("PolicyName"),        // Required
-		Type:        aws.String("PolicyType"),        // Required
+// To create a new organization with consolidated billing features only
+//
+// In the following example, Bill creates an organization using credentials from account
+// 111111111111, and configures the organization to support only the consolidated billing
+// feature set:
+//
+func ExampleOrganizations_CreateOrganization_shared01() {
+	svc := organizations.New(session.New())
+	input := &organizations.CreateOrganizationInput{
+		FeatureSet: aws.String("CONSOLIDATED_BILLING"),
 	}
-	resp, err := svc.CreatePolicy(params)
 
+	result, err := svc.CreateOrganization(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAlreadyInOrganizationException:
+				fmt.Println(organizations.ErrCodeAlreadyInOrganizationException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeConstraintViolationException:
+				fmt.Println(organizations.ErrCodeConstraintViolationException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_DeclineHandshake() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.DeclineHandshakeInput{
-		HandshakeId: aws.String("HandshakeId"), // Required
+// To create a new organization unit
+//
+// The following example shows how to create an OU that is named AccountingOU. The new
+// OU is directly under the root.:
+//
+func ExampleOrganizations_CreateOrganizationalUnit_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.CreateOrganizationalUnitInput{
+		Name:     aws.String("AccountingOU"),
+		ParentId: aws.String("r-examplerootid111"),
 	}
-	resp, err := svc.DeclineHandshake(params)
 
+	result, err := svc.CreateOrganizationalUnit(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeConstraintViolationException:
+				fmt.Println(organizations.ErrCodeConstraintViolationException, aerr.Error())
+			case organizations.ErrCodeDuplicateOrganizationalUnitException:
+				fmt.Println(organizations.ErrCodeDuplicateOrganizationalUnitException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeParentNotFoundException:
+				fmt.Println(organizations.ErrCodeParentNotFoundException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_DeleteOrganization() {
-	sess := session.Must(session.NewSession())
+// To create a service control policy
+//
+// The following example shows how to create a service control policy (SCP) that is
+// named AllowAllS3Actions. The JSON string in the content parameter specifies the content
+// in the policy. The parameter string is escaped with backslashes to ensure that the
+// embedded double quotes in the JSON policy are treated as literals in the parameter,
+// which itself is surrounded by double quotes:
+//
+func ExampleOrganizations_CreatePolicy_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.CreatePolicyInput{
+		Content:     aws.String("{\\\"Version\\\":\\\"2012-10-17\\\",\\\"Statement\\\":{\\\"Effect\\\":\\\"Allow\\\",\\\"Action\\\":\\\"s3:*\\\"}}"),
+		Description: aws.String("Enables admins of attached accounts to delegate all S3 permissions"),
+		Name:        aws.String("AllowAllS3Actions"),
+		Type:        aws.String("SERVICE_CONTROL_POLICY"),
+	}
 
-	svc := organizations.New(sess)
-
-	var params *organizations.DeleteOrganizationInput
-	resp, err := svc.DeleteOrganization(params)
-
+	result, err := svc.CreatePolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeConstraintViolationException:
+				fmt.Println(organizations.ErrCodeConstraintViolationException, aerr.Error())
+			case organizations.ErrCodeDuplicatePolicyException:
+				fmt.Println(organizations.ErrCodeDuplicatePolicyException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeMalformedPolicyDocumentException:
+				fmt.Println(organizations.ErrCodeMalformedPolicyDocumentException, aerr.Error())
+			case organizations.ErrCodePolicyTypeNotAvailableForOrganizationException:
+				fmt.Println(organizations.ErrCodePolicyTypeNotAvailableForOrganizationException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_DeleteOrganizationalUnit() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.DeleteOrganizationalUnitInput{
-		OrganizationalUnitId: aws.String("OrganizationalUnitId"), // Required
+// To decline a handshake sent from the master account
+//
+// The following example shows Susan declining an invitation to join Bill's organization.
+// The DeclineHandshake operation returns a handshake object, showing that the state
+// is now DECLINED:
+func ExampleOrganizations_DeclineHandshake_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.DeclineHandshakeInput{
+		HandshakeId: aws.String("h-examplehandshakeid111"),
 	}
-	resp, err := svc.DeleteOrganizationalUnit(params)
 
+	result, err := svc.DeclineHandshake(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeHandshakeNotFoundException:
+				fmt.Println(organizations.ErrCodeHandshakeNotFoundException, aerr.Error())
+			case organizations.ErrCodeInvalidHandshakeTransitionException:
+				fmt.Println(organizations.ErrCodeInvalidHandshakeTransitionException, aerr.Error())
+			case organizations.ErrCodeHandshakeAlreadyInStateException:
+				fmt.Println(organizations.ErrCodeHandshakeAlreadyInStateException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_DeletePolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.DeletePolicyInput{
-		PolicyId: aws.String("PolicyId"), // Required
+// To delete an organization unit
+//
+// The following example shows how to delete an OU. The example assumes that you previously
+// removed all accounts and other OUs from the OU:
+//
+func ExampleOrganizations_DeleteOrganizationalUnit_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.DeleteOrganizationalUnitInput{
+		OrganizationalUnitId: aws.String("ou-examplerootid111-exampleouid111"),
 	}
-	resp, err := svc.DeletePolicy(params)
 
+	result, err := svc.DeleteOrganizationalUnit(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeOrganizationalUnitNotEmptyException:
+				fmt.Println(organizations.ErrCodeOrganizationalUnitNotEmptyException, aerr.Error())
+			case organizations.ErrCodeOrganizationalUnitNotFoundException:
+				fmt.Println(organizations.ErrCodeOrganizationalUnitNotFoundException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_DescribeAccount() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.DescribeAccountInput{
-		AccountId: aws.String("AccountId"), // Required
+// To delete a policy
+//
+// The following example shows how to delete a policy from an organization. The example
+// assumes that you previously detached the policy from all entities:
+//
+func ExampleOrganizations_DeletePolicy_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.DeletePolicyInput{
+		PolicyId: aws.String("p-examplepolicyid111"),
 	}
-	resp, err := svc.DescribeAccount(params)
 
+	result, err := svc.DeletePolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodePolicyInUseException:
+				fmt.Println(organizations.ErrCodePolicyInUseException, aerr.Error())
+			case organizations.ErrCodePolicyNotFoundException:
+				fmt.Println(organizations.ErrCodePolicyNotFoundException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_DescribeCreateAccountStatus() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.DescribeCreateAccountStatusInput{
-		CreateAccountRequestId: aws.String("CreateAccountRequestId"), // Required
+// To get the details about an account
+//
+// The following example shows a user in the master account (111111111111) asking for
+// details about account 555555555555:
+func ExampleOrganizations_DescribeAccount_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.DescribeAccountInput{
+		AccountId: aws.String("555555555555"),
 	}
-	resp, err := svc.DescribeCreateAccountStatus(params)
 
+	result, err := svc.DescribeAccount(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAccountNotFoundException:
+				fmt.Println(organizations.ErrCodeAccountNotFoundException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_DescribeHandshake() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.DescribeHandshakeInput{
-		HandshakeId: aws.String("HandshakeId"), // Required
+// To get information about a request to create an account
+//
+// The following example shows how to request the status about a previous request to
+// create an account in an organization. This operation can be called only by a principal
+// from the organization's master account. In the example, the specified "createAccountRequestId"
+// comes from the response of the original call to "CreateAccount":
+func ExampleOrganizations_DescribeCreateAccountStatus_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.DescribeCreateAccountStatusInput{
+		CreateAccountRequestId: aws.String("car-exampleaccountcreationrequestid"),
 	}
-	resp, err := svc.DescribeHandshake(params)
 
+	result, err := svc.DescribeCreateAccountStatus(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeCreateAccountStatusNotFoundException:
+				fmt.Println(organizations.ErrCodeCreateAccountStatusNotFoundException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_DescribeOrganization() {
-	sess := session.Must(session.NewSession())
+// To get information about a handshake
+//
+// The following example shows you how to request details about a handshake. The handshake
+// ID comes either from the original call to "InviteAccountToOrganization", or from
+// a call to "ListHandshakesForAccount" or "ListHandshakesForOrganization":
+func ExampleOrganizations_DescribeHandshake_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.DescribeHandshakeInput{
+		HandshakeId: aws.String("h-examplehandshakeid111"),
+	}
 
-	svc := organizations.New(sess)
-
-	var params *organizations.DescribeOrganizationInput
-	resp, err := svc.DescribeOrganization(params)
-
+	result, err := svc.DescribeHandshake(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeHandshakeNotFoundException:
+				fmt.Println(organizations.ErrCodeHandshakeNotFoundException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_DescribeOrganizationalUnit() {
-	sess := session.Must(session.NewSession())
+// To get information about an organization
+//
+// The following example shows how to request information about the current user's organization:/n/n
+func ExampleOrganizations_DescribeOrganization_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.DescribeOrganizationInput{}
 
-	svc := organizations.New(sess)
-
-	params := &organizations.DescribeOrganizationalUnitInput{
-		OrganizationalUnitId: aws.String("OrganizationalUnitId"), // Required
-	}
-	resp, err := svc.DescribeOrganizationalUnit(params)
-
+	result, err := svc.DescribeOrganization(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_DescribePolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.DescribePolicyInput{
-		PolicyId: aws.String("PolicyId"), // Required
+// To get information about an organizational unit
+//
+// The following example shows how to request details about an OU:/n/n
+func ExampleOrganizations_DescribeOrganizationalUnit_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.DescribeOrganizationalUnitInput{
+		OrganizationalUnitId: aws.String("ou-examplerootid111-exampleouid111"),
 	}
-	resp, err := svc.DescribePolicy(params)
 
+	result, err := svc.DescribeOrganizationalUnit(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeOrganizationalUnitNotFoundException:
+				fmt.Println(organizations.ErrCodeOrganizationalUnitNotFoundException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_DetachPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.DetachPolicyInput{
-		PolicyId: aws.String("PolicyId"),       // Required
-		TargetId: aws.String("PolicyTargetId"), // Required
+// To get information about a policy
+//
+// The following example shows how to request information about a policy:/n/n
+func ExampleOrganizations_DescribePolicy_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.DescribePolicyInput{
+		PolicyId: aws.String("p-examplepolicyid111"),
 	}
-	resp, err := svc.DetachPolicy(params)
 
+	result, err := svc.DescribePolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodePolicyNotFoundException:
+				fmt.Println(organizations.ErrCodePolicyNotFoundException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_DisablePolicyType() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.DisablePolicyTypeInput{
-		PolicyType: aws.String("PolicyType"), // Required
-		RootId:     aws.String("RootId"),     // Required
+// To detach a policy from a root, OU, or account
+//
+// The following example shows how to detach a policy from an OU:/n/n
+func ExampleOrganizations_DetachPolicy_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.DetachPolicyInput{
+		PolicyId: aws.String("p-examplepolicyid111"),
+		TargetId: aws.String("ou-examplerootid111-exampleouid111"),
 	}
-	resp, err := svc.DisablePolicyType(params)
 
+	result, err := svc.DetachPolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeConstraintViolationException:
+				fmt.Println(organizations.ErrCodeConstraintViolationException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodePolicyNotAttachedException:
+				fmt.Println(organizations.ErrCodePolicyNotAttachedException, aerr.Error())
+			case organizations.ErrCodePolicyNotFoundException:
+				fmt.Println(organizations.ErrCodePolicyNotFoundException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTargetNotFoundException:
+				fmt.Println(organizations.ErrCodeTargetNotFoundException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_EnableAllFeatures() {
-	sess := session.Must(session.NewSession())
+// To disable a policy type in a root
+//
+// The following example shows how to disable the service control policy (SCP) policy
+// type in a root. The response shows that the PolicyTypes response element no longer
+// includes SERVICE_CONTROL_POLICY:/n/n
+func ExampleOrganizations_DisablePolicyType_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.DisablePolicyTypeInput{
+		PolicyType: aws.String("SERVICE_CONTROL_POLICY"),
+		RootId:     aws.String("r-examplerootid111"),
+	}
 
-	svc := organizations.New(sess)
-
-	var params *organizations.EnableAllFeaturesInput
-	resp, err := svc.EnableAllFeatures(params)
-
+	result, err := svc.DisablePolicyType(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeConstraintViolationException:
+				fmt.Println(organizations.ErrCodeConstraintViolationException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodePolicyTypeNotEnabledException:
+				fmt.Println(organizations.ErrCodePolicyTypeNotEnabledException, aerr.Error())
+			case organizations.ErrCodeRootNotFoundException:
+				fmt.Println(organizations.ErrCodeRootNotFoundException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_EnablePolicyType() {
-	sess := session.Must(session.NewSession())
+// To enable all features in an organization
+//
+// This example shows the administrator asking all the invited accounts in the organization
+// to approve enabling all features in the organization. AWS Organizations sends an
+// email to the address that is registered with every invited member account asking
+// the owner to approve the change by accepting the handshake that is sent. After all
+// invited member accounts accept the handshake, the organization administrator can
+// finalize the change to enable all features, and those with appropriate permissions
+// can create policies and apply them to roots, OUs, and accounts:/n/n
+func ExampleOrganizations_EnableAllFeatures_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.EnableAllFeaturesInput{}
 
-	svc := organizations.New(sess)
-
-	params := &organizations.EnablePolicyTypeInput{
-		PolicyType: aws.String("PolicyType"), // Required
-		RootId:     aws.String("RootId"),     // Required
-	}
-	resp, err := svc.EnablePolicyType(params)
-
+	result, err := svc.EnableAllFeatures(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeHandshakeConstraintViolationException:
+				fmt.Println(organizations.ErrCodeHandshakeConstraintViolationException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_InviteAccountToOrganization() {
-	sess := session.Must(session.NewSession())
+// To enable a policy type in a root
+//
+// The following example shows how to enable the service control policy (SCP) policy
+// type in a root. The output shows a root object with a PolicyTypes response element
+// showing that SCPs are now enabled:/n/n
+func ExampleOrganizations_EnablePolicyType_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.EnablePolicyTypeInput{
+		PolicyType: aws.String("SERVICE_CONTROL_POLICY"),
+		RootId:     aws.String("r-examplerootid111"),
+	}
 
-	svc := organizations.New(sess)
+	result, err := svc.EnablePolicyType(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeConstraintViolationException:
+				fmt.Println(organizations.ErrCodeConstraintViolationException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodePolicyTypeAlreadyEnabledException:
+				fmt.Println(organizations.ErrCodePolicyTypeAlreadyEnabledException, aerr.Error())
+			case organizations.ErrCodeRootNotFoundException:
+				fmt.Println(organizations.ErrCodeRootNotFoundException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			case organizations.ErrCodePolicyTypeNotAvailableForOrganizationException:
+				fmt.Println(organizations.ErrCodePolicyTypeNotAvailableForOrganizationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &organizations.InviteAccountToOrganizationInput{
-		Target: &organizations.HandshakeParty{ // Required
-			Id:   aws.String("HandshakePartyId"),
-			Type: aws.String("HandshakePartyType"),
+	fmt.Println(result)
+}
+
+// To invite an account to join an organization
+//
+// The following example shows the admin of the master account owned by bill@example.com
+// inviting the account owned by juan@example.com to join an organization.
+func ExampleOrganizations_InviteAccountToOrganization_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.InviteAccountToOrganizationInput{
+		Notes: aws.String("This is a request for Juan's account to join Bill's organization"),
+		Target: &organizations.HandshakeParty{
+			Id:   aws.String("juan@example.com"),
+			Type: aws.String("EMAIL"),
 		},
-		Notes: aws.String("HandshakeNotes"),
 	}
-	resp, err := svc.InviteAccountToOrganization(params)
 
+	result, err := svc.InviteAccountToOrganization(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeHandshakeConstraintViolationException:
+				fmt.Println(organizations.ErrCodeHandshakeConstraintViolationException, aerr.Error())
+			case organizations.ErrCodeDuplicateHandshakeException:
+				fmt.Println(organizations.ErrCodeDuplicateHandshakeException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeFinalizingOrganizationException:
+				fmt.Println(organizations.ErrCodeFinalizingOrganizationException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_LeaveOrganization() {
-	sess := session.Must(session.NewSession())
+// To leave an organization as a member account
+//
+// TThe following example shows how to remove your member account from an organization:
+func ExampleOrganizations_LeaveOrganization_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.LeaveOrganizationInput{}
 
-	svc := organizations.New(sess)
-
-	var params *organizations.LeaveOrganizationInput
-	resp, err := svc.LeaveOrganization(params)
-
+	result, err := svc.LeaveOrganization(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAccountNotFoundException:
+				fmt.Println(organizations.ErrCodeAccountNotFoundException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeConstraintViolationException:
+				fmt.Println(organizations.ErrCodeConstraintViolationException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeMasterCannotLeaveOrganizationException:
+				fmt.Println(organizations.ErrCodeMasterCannotLeaveOrganizationException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_ListAccounts() {
-	sess := session.Must(session.NewSession())
+// To retrieve a list of all of the accounts in an organization
+//
+// The following example shows you how to request a list of the accounts in an organization:
+func ExampleOrganizations_ListAccounts_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.ListAccountsInput{}
 
-	svc := organizations.New(sess)
-
-	params := &organizations.ListAccountsInput{
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
-	}
-	resp, err := svc.ListAccounts(params)
-
+	result, err := svc.ListAccounts(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_ListAccountsForParent() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.ListAccountsForParentInput{
-		ParentId:   aws.String("ParentId"), // Required
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
+// To retrieve a list of all of the accounts in a root or OU
+//
+// The following example shows how to request a list of the accounts in an OU:/n/n
+func ExampleOrganizations_ListAccountsForParent_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.ListAccountsForParentInput{
+		ParentId: aws.String("ou-examplerootid111-exampleouid111"),
 	}
-	resp, err := svc.ListAccountsForParent(params)
 
+	result, err := svc.ListAccountsForParent(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeParentNotFoundException:
+				fmt.Println(organizations.ErrCodeParentNotFoundException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_ListChildren() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.ListChildrenInput{
-		ChildType:  aws.String("ChildType"), // Required
-		ParentId:   aws.String("ParentId"),  // Required
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
+// To retrieve a list of all of the child accounts and OUs in a parent root or OU
+//
+// The following example shows how to request a list of the child OUs in a parent root
+// or OU:/n/n
+func ExampleOrganizations_ListChildren_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.ListChildrenInput{
+		ChildType: aws.String("ORGANIZATIONAL_UNIT"),
+		ParentId:  aws.String("ou-examplerootid111-exampleouid111"),
 	}
-	resp, err := svc.ListChildren(params)
 
+	result, err := svc.ListChildren(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeParentNotFoundException:
+				fmt.Println(organizations.ErrCodeParentNotFoundException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_ListCreateAccountStatus() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.ListCreateAccountStatusInput{
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
+// To get a list of completed account creation requests made in the organization
+//
+// The following example shows a user requesting a list of only the completed account
+// creation requests made for the current organization:
+func ExampleOrganizations_ListCreateAccountStatus_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.ListCreateAccountStatusInput{
 		States: []*string{
-			aws.String("CreateAccountState"), // Required
-			// More values...
+			aws.String("SUCCEEDED"),
 		},
 	}
-	resp, err := svc.ListCreateAccountStatus(params)
 
+	result, err := svc.ListCreateAccountStatus(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_ListHandshakesForAccount() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.ListHandshakesForAccountInput{
-		Filter: &organizations.HandshakeFilter{
-			ActionType:        aws.String("ActionType"),
-			ParentHandshakeId: aws.String("HandshakeId"),
+// To get a list of all account creation requests made in the organization
+//
+// The following example shows a user requesting a list of only the in-progress account
+// creation requests made for the current organization:
+func ExampleOrganizations_ListCreateAccountStatus_shared01() {
+	svc := organizations.New(session.New())
+	input := &organizations.ListCreateAccountStatusInput{
+		States: []*string{
+			aws.String("IN_PROGRESS"),
 		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
 	}
-	resp, err := svc.ListHandshakesForAccount(params)
 
+	result, err := svc.ListCreateAccountStatus(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_ListHandshakesForOrganization() {
-	sess := session.Must(session.NewSession())
+// To retrieve a list of the handshakes sent to an account
+//
+// The following example shows you how to get a list of handshakes that are associated
+// with the account of the credentials used to call the operation:
+func ExampleOrganizations_ListHandshakesForAccount_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.ListHandshakesForAccountInput{}
 
-	svc := organizations.New(sess)
-
-	params := &organizations.ListHandshakesForOrganizationInput{
-		Filter: &organizations.HandshakeFilter{
-			ActionType:        aws.String("ActionType"),
-			ParentHandshakeId: aws.String("HandshakeId"),
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
-	}
-	resp, err := svc.ListHandshakesForOrganization(params)
-
+	result, err := svc.ListHandshakesForAccount(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_ListOrganizationalUnitsForParent() {
-	sess := session.Must(session.NewSession())
+// To retrieve a list of the handshakes associated with an organization
+//
+// The following example shows you how to get a list of handshakes associated with the
+// current organization:
+func ExampleOrganizations_ListHandshakesForOrganization_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.ListHandshakesForOrganizationInput{}
 
-	svc := organizations.New(sess)
-
-	params := &organizations.ListOrganizationalUnitsForParentInput{
-		ParentId:   aws.String("ParentId"), // Required
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
-	}
-	resp, err := svc.ListOrganizationalUnitsForParent(params)
-
+	result, err := svc.ListHandshakesForOrganization(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_ListParents() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.ListParentsInput{
-		ChildId:    aws.String("ChildId"), // Required
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
+// To retrieve a list of all of the child OUs in a parent root or OU
+//
+// The following example shows how to get a list of OUs in a specified root:/n/n
+func ExampleOrganizations_ListOrganizationalUnitsForParent_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.ListOrganizationalUnitsForParentInput{
+		ParentId: aws.String("r-examplerootid111"),
 	}
-	resp, err := svc.ListParents(params)
 
+	result, err := svc.ListOrganizationalUnitsForParent(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeParentNotFoundException:
+				fmt.Println(organizations.ErrCodeParentNotFoundException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_ListPolicies() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.ListPoliciesInput{
-		Filter:     aws.String("PolicyType"), // Required
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
+// To retrieve a list of all of the parents of a child OU or account
+//
+// The following example shows how to list the root or OUs that contain account 444444444444:/n/n
+func ExampleOrganizations_ListParents_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.ListParentsInput{
+		ChildId: aws.String("444444444444"),
 	}
-	resp, err := svc.ListPolicies(params)
 
+	result, err := svc.ListParents(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeChildNotFoundException:
+				fmt.Println(organizations.ErrCodeChildNotFoundException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_ListPoliciesForTarget() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.ListPoliciesForTargetInput{
-		Filter:     aws.String("PolicyType"),     // Required
-		TargetId:   aws.String("PolicyTargetId"), // Required
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
+// To retrieve a list policies in the organization
+//
+// The following example shows how to get a list of service control policies (SCPs):/n/n
+func ExampleOrganizations_ListPolicies_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.ListPoliciesInput{
+		Filter: aws.String("SERVICE_CONTROL_POLICY"),
 	}
-	resp, err := svc.ListPoliciesForTarget(params)
 
+	result, err := svc.ListPolicies(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_ListRoots() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.ListRootsInput{
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
+// To retrieve a list policies attached to a root, OU, or account
+//
+// The following example shows how to get a list of all service control policies (SCPs)
+// of the type specified by the Filter parameter, that are directly attached to an account.
+// The returned list does not include policies that apply to the account because of
+// inheritance from its location in an OU hierarchy:/n/n
+func ExampleOrganizations_ListPoliciesForTarget_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.ListPoliciesForTargetInput{
+		Filter:   aws.String("SERVICE_CONTROL_POLICY"),
+		TargetId: aws.String("444444444444"),
 	}
-	resp, err := svc.ListRoots(params)
 
+	result, err := svc.ListPoliciesForTarget(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTargetNotFoundException:
+				fmt.Println(organizations.ErrCodeTargetNotFoundException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_ListTargetsForPolicy() {
-	sess := session.Must(session.NewSession())
+// To retrieve a list of roots in the organization
+//
+// The following example shows how to get the list of the roots in the current organization:/n/n
+func ExampleOrganizations_ListRoots_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.ListRootsInput{}
 
-	svc := organizations.New(sess)
-
-	params := &organizations.ListTargetsForPolicyInput{
-		PolicyId:   aws.String("PolicyId"), // Required
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("NextToken"),
-	}
-	resp, err := svc.ListTargetsForPolicy(params)
-
+	result, err := svc.ListRoots(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_MoveAccount() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.MoveAccountInput{
-		AccountId:           aws.String("AccountId"), // Required
-		DestinationParentId: aws.String("ParentId"),  // Required
-		SourceParentId:      aws.String("ParentId"),  // Required
+// To retrieve a list of roots, OUs, and accounts to which a policy is attached
+//
+// The following example shows how to get the list of roots, OUs, and accounts to which
+// the specified policy is attached:/n/n
+func ExampleOrganizations_ListTargetsForPolicy_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.ListTargetsForPolicyInput{
+		PolicyId: aws.String("p-FullAWSAccess"),
 	}
-	resp, err := svc.MoveAccount(params)
 
+	result, err := svc.ListTargetsForPolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodePolicyNotFoundException:
+				fmt.Println(organizations.ErrCodePolicyNotFoundException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_RemoveAccountFromOrganization() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.RemoveAccountFromOrganizationInput{
-		AccountId: aws.String("AccountId"), // Required
+// To move an OU or account to another OU or the root
+//
+// The following example shows how to move a member account from the root to an OU:/n/n
+func ExampleOrganizations_MoveAccount_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.MoveAccountInput{
+		AccountId:           aws.String("333333333333"),
+		DestinationParentId: aws.String("ou-examplerootid111-exampleouid111"),
+		SourceParentId:      aws.String("r-examplerootid111"),
 	}
-	resp, err := svc.RemoveAccountFromOrganization(params)
 
+	result, err := svc.MoveAccount(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeSourceParentNotFoundException:
+				fmt.Println(organizations.ErrCodeSourceParentNotFoundException, aerr.Error())
+			case organizations.ErrCodeDestinationParentNotFoundException:
+				fmt.Println(organizations.ErrCodeDestinationParentNotFoundException, aerr.Error())
+			case organizations.ErrCodeDuplicateAccountException:
+				fmt.Println(organizations.ErrCodeDuplicateAccountException, aerr.Error())
+			case organizations.ErrCodeAccountNotFoundException:
+				fmt.Println(organizations.ErrCodeAccountNotFoundException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_UpdateOrganizationalUnit() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.UpdateOrganizationalUnitInput{
-		OrganizationalUnitId: aws.String("OrganizationalUnitId"), // Required
-		Name:                 aws.String("OrganizationalUnitName"),
+// To remove an account from an organization as the master account
+//
+// The following example shows you how to remove an account from an organization:
+func ExampleOrganizations_RemoveAccountFromOrganization_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.RemoveAccountFromOrganizationInput{
+		AccountId: aws.String("333333333333"),
 	}
-	resp, err := svc.UpdateOrganizationalUnit(params)
 
+	result, err := svc.RemoveAccountFromOrganization(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAccountNotFoundException:
+				fmt.Println(organizations.ErrCodeAccountNotFoundException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeConstraintViolationException:
+				fmt.Println(organizations.ErrCodeConstraintViolationException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeMasterCannotLeaveOrganizationException:
+				fmt.Println(organizations.ErrCodeMasterCannotLeaveOrganizationException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleOrganizations_UpdatePolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := organizations.New(sess)
-
-	params := &organizations.UpdatePolicyInput{
-		PolicyId:    aws.String("PolicyId"), // Required
-		Content:     aws.String("PolicyContent"),
-		Description: aws.String("PolicyDescription"),
-		Name:        aws.String("PolicyName"),
+// To rename an organizational unit
+//
+// The following example shows how to rename an OU. The output confirms the new name:/n/n
+func ExampleOrganizations_UpdateOrganizationalUnit_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.UpdateOrganizationalUnitInput{
+		Name:                 aws.String("AccountingOU"),
+		OrganizationalUnitId: aws.String("ou-examplerootid111-exampleouid111"),
 	}
-	resp, err := svc.UpdatePolicy(params)
 
+	result, err := svc.UpdateOrganizationalUnit(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeDuplicateOrganizationalUnitException:
+				fmt.Println(organizations.ErrCodeDuplicateOrganizationalUnitException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeOrganizationalUnitNotFoundException:
+				fmt.Println(organizations.ErrCodeOrganizationalUnitNotFoundException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
+}
+
+// To update the details of a policy
+//
+// The following example shows how to rename a policy and give it a new description
+// and new content. The output confirms the new name and description text:/n/n
+func ExampleOrganizations_UpdatePolicy_shared00() {
+	svc := organizations.New(session.New())
+	input := &organizations.UpdatePolicyInput{
+		Description: aws.String("This description replaces the original."),
+		Name:        aws.String("Renamed-Policy"),
+		PolicyId:    aws.String("p-examplepolicyid111"),
+	}
+
+	result, err := svc.UpdatePolicy(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeConstraintViolationException:
+				fmt.Println(organizations.ErrCodeConstraintViolationException, aerr.Error())
+			case organizations.ErrCodeDuplicatePolicyException:
+				fmt.Println(organizations.ErrCodeDuplicatePolicyException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeMalformedPolicyDocumentException:
+				fmt.Println(organizations.ErrCodeMalformedPolicyDocumentException, aerr.Error())
+			case organizations.ErrCodePolicyNotFoundException:
+				fmt.Println(organizations.ErrCodePolicyNotFoundException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To update the content of a policy
+//
+// The following example shows how to replace the JSON text of the SCP from the preceding
+// example with a new JSON policy text string that allows S3 actions instead of EC2
+// actions:/n/n
+func ExampleOrganizations_UpdatePolicy_shared01() {
+	svc := organizations.New(session.New())
+	input := &organizations.UpdatePolicyInput{
+		Content:  aws.String("{ \\\"Version\\\": \\\"2012-10-17\\\", \\\"Statement\\\": {\\\"Effect\\\": \\\"Allow\\\", \\\"Action\\\": \\\"s3:*\\\", \\\"Resource\\\": \\\"*\\\" } }"),
+		PolicyId: aws.String("p-examplepolicyid111"),
+	}
+
+	result, err := svc.UpdatePolicy(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case organizations.ErrCodeAccessDeniedException:
+				fmt.Println(organizations.ErrCodeAccessDeniedException, aerr.Error())
+			case organizations.ErrCodeAWSOrganizationsNotInUseException:
+				fmt.Println(organizations.ErrCodeAWSOrganizationsNotInUseException, aerr.Error())
+			case organizations.ErrCodeConcurrentModificationException:
+				fmt.Println(organizations.ErrCodeConcurrentModificationException, aerr.Error())
+			case organizations.ErrCodeConstraintViolationException:
+				fmt.Println(organizations.ErrCodeConstraintViolationException, aerr.Error())
+			case organizations.ErrCodeDuplicatePolicyException:
+				fmt.Println(organizations.ErrCodeDuplicatePolicyException, aerr.Error())
+			case organizations.ErrCodeInvalidInputException:
+				fmt.Println(organizations.ErrCodeInvalidInputException, aerr.Error())
+			case organizations.ErrCodeMalformedPolicyDocumentException:
+				fmt.Println(organizations.ErrCodeMalformedPolicyDocumentException, aerr.Error())
+			case organizations.ErrCodePolicyNotFoundException:
+				fmt.Println(organizations.ErrCodePolicyNotFoundException, aerr.Error())
+			case organizations.ErrCodeServiceException:
+				fmt.Println(organizations.ErrCodeServiceException, aerr.Error())
+			case organizations.ErrCodeTooManyRequestsException:
+				fmt.Println(organizations.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
 }

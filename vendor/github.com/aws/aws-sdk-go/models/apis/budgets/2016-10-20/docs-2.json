@@ -45,7 +45,7 @@
       }
     },
     "BudgetName": {
-      "base": "A string represents the budget name. No \":\" character is allowed.",
+      "base": "A string represents the budget name. No \":\" and \"\\\" character is allowed.",
       "refs": {
         "Budget$BudgetName": null,
         "CreateNotificationRequest$BudgetName": null,
@@ -61,7 +61,7 @@
       }
     },
     "BudgetType": {
-      "base": "The type of a budget. Can be COST or USAGE.",
+      "base": "The type of a budget. It should be COST, USAGE, or RI_UTILIZATION.",
       "refs": {
         "Budget$BudgetType": null
       }
@@ -236,7 +236,6 @@
         "DescribeSubscribersForNotificationRequest$NextToken": null,
         "DescribeSubscribersForNotificationResponse$NextToken": null,
         "DimensionValues$member": null,
-        "Spend$Unit": null,
         "Subscriber$Address": null
       }
     },
@@ -365,9 +364,15 @@
       }
     },
     "TimeUnit": {
-      "base": "The time unit of the budget. e.g. weekly, monthly, etc.",
+      "base": "The time unit of the budget. e.g. MONTHLY, QUARTERLY, etc.",
       "refs": {
         "Budget$TimeUnit": null
+      }
+    },
+    "UnitValue": {
+      "base": "A string to represent budget spend unit. It should be not null and not empty.",
+      "refs": {
+        "Spend$Unit": null
       }
     },
     "UpdateBudgetRequest": {

@@ -3,6 +3,7 @@
 package appstream
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -72,7 +73,10 @@ func (c *AppStream) AssociateFleetRequest(input *AssociateFleetInput) (req *requ
 //   The specified resource was not found.
 //
 //   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
-//   An API error occurred, please try again.
+//   An API error occurred. Wait a few minutes and try again.
+//
+//   * ErrCodeIncompatibleImageException "IncompatibleImageException"
+//   The image does not support storage connectors.
 //
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/appstream-2016-12-01/AssociateFleet
 func (c *AppStream) AssociateFleet(input *AssociateFleetInput) (*AssociateFleetOutput, error) {
@@ -167,7 +171,7 @@ func (c *AppStream) CreateFleetRequest(input *CreateFleetInput) (req *request.Re
 //   The specified role is invalid.
 //
 //   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
-//   An API error occurred, please try again.
+//   An API error occurred. Wait a few minutes and try again.
 //
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/appstream-2016-12-01/CreateFleet
 func (c *AppStream) CreateFleet(input *CreateFleetInput) (*CreateFleetOutput, error) {
@@ -253,7 +257,16 @@ func (c *AppStream) CreateStackRequest(input *CreateStackInput) (req *request.Re
 //   The specified resource already exists.
 //
 //   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
-//   An API error occurred, please try again.
+//   An API error occurred. Wait a few minutes and try again.
+//
+//   * ErrCodeInvalidRoleException "InvalidRoleException"
+//   The specified role is invalid.
+//
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   The specified resource was not found.
+//
+//   * ErrCodeInvalidParameterCombinationException "InvalidParameterCombinationException"
+//   Indicates an incorrect combination of parameters, or a missing parameter.
 //
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/appstream-2016-12-01/CreateStack
 func (c *AppStream) CreateStack(input *CreateStackInput) (*CreateStackOutput, error) {
@@ -429,7 +442,7 @@ func (c *AppStream) DeleteFleetRequest(input *DeleteFleetInput) (req *request.Re
 //   The specified resource was not found.
 //
 //   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
-//   An API error occurred, please try again.
+//   An API error occurred. Wait a few minutes and try again.
 //
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/appstream-2016-12-01/DeleteFleet
 func (c *AppStream) DeleteFleet(input *DeleteFleetInput) (*DeleteFleetOutput, error) {
@@ -516,7 +529,7 @@ func (c *AppStream) DeleteStackRequest(input *DeleteStackInput) (req *request.Re
 //   The specified resource was not found.
 //
 //   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
-//   An API error occurred, please try again.
+//   An API error occurred. Wait a few minutes and try again.
 //
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/appstream-2016-12-01/DeleteStack
 func (c *AppStream) DeleteStack(input *DeleteStackInput) (*DeleteStackOutput, error) {
@@ -751,7 +764,7 @@ func (c *AppStream) DescribeSessionsRequest(input *DescribeSessionsInput) (req *
 // provided, this operation returns streaming sessions for only that user. Pass
 // this value for the nextToken parameter in a subsequent call to this operation
 // to retrieve the next set of items. If an authentication type is not provided,
-// the operation defaults to users authenticated using a streaming url.
+// the operation defaults to users authenticated using a streaming URL.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -930,7 +943,7 @@ func (c *AppStream) DisassociateFleetRequest(input *DisassociateFleetInput) (req
 //   The specified resource was not found.
 //
 //   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
-//   An API error occurred, please try again.
+//   An API error occurred. Wait a few minutes and try again.
 //
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/appstream-2016-12-01/DisassociateFleet
 func (c *AppStream) DisassociateFleet(input *DisassociateFleetInput) (*DisassociateFleetOutput, error) {
@@ -1244,7 +1257,7 @@ func (c *AppStream) StartFleetRequest(input *StartFleetInput) (req *request.Requ
 //   The requested limit exceeds the permitted limit for an account.
 //
 //   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
-//   An API error occurred, please try again.
+//   An API error occurred. Wait a few minutes and try again.
 //
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/appstream-2016-12-01/StartFleet
 func (c *AppStream) StartFleet(input *StartFleetInput) (*StartFleetOutput, error) {
@@ -1327,7 +1340,7 @@ func (c *AppStream) StopFleetRequest(input *StopFleetInput) (req *request.Reques
 //   The specified resource was not found.
 //
 //   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
-//   An API error occurred, please try again.
+//   An API error occurred. Wait a few minutes and try again.
 //
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/appstream-2016-12-01/StopFleet
 func (c *AppStream) StopFleet(input *StopFleetInput) (*StopFleetOutput, error) {
@@ -1428,7 +1441,10 @@ func (c *AppStream) UpdateFleetRequest(input *UpdateFleetInput) (req *request.Re
 //   Indicates an incorrect combination of parameters, or a missing parameter.
 //
 //   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
-//   An API error occurred, please try again.
+//   An API error occurred. Wait a few minutes and try again.
+//
+//   * ErrCodeIncompatibleImageException "IncompatibleImageException"
+//   The image does not support storage connectors.
 //
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/appstream-2016-12-01/UpdateFleet
 func (c *AppStream) UpdateFleet(input *UpdateFleetInput) (*UpdateFleetOutput, error) {
@@ -1513,6 +1529,18 @@ func (c *AppStream) UpdateStackRequest(input *UpdateStackInput) (req *request.Re
 //   * ErrCodeResourceInUseException "ResourceInUseException"
 //   The specified resource is in use.
 //
+//   * ErrCodeInvalidRoleException "InvalidRoleException"
+//   The specified role is invalid.
+//
+//   * ErrCodeInvalidParameterCombinationException "InvalidParameterCombinationException"
+//   Indicates an incorrect combination of parameters, or a missing parameter.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   The requested limit exceeds the permitted limit for an account.
+//
+//   * ErrCodeIncompatibleImageException "IncompatibleImageException"
+//   The image does not support storage connectors.
+//
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/appstream-2016-12-01/UpdateStack
 func (c *AppStream) UpdateStack(input *UpdateStackInput) (*UpdateStackOutput, error) {
 	req, out := c.UpdateStackRequest(input)
@@ -1555,7 +1583,7 @@ type Application struct {
 	// The path to the application executable in the instance.
 	LaunchPath *string `min:"1" type:"string"`
 
-	// Additional attributes that describes the application.
+	// Additional attributes that describe the application.
 	Metadata map[string]*string `type:"map"`
 
 	// The unique identifier for the application.
@@ -1797,13 +1825,14 @@ type CreateFleetInput struct {
 
 	// The time after disconnection when a session is considered to have ended.
 	// If a user who got disconnected reconnects within this timeout interval, the
-	// user is connected back to his/her previous session.
+	// user is connected back to their previous session. The input can be any numeric
+	// value in seconds between 60 and 57600.
 	DisconnectTimeoutInSeconds *int64 `type:"integer"`
 
 	// The display name of the fleet.
 	DisplayName *string `type:"string"`
 
-	// Enable/Disable default Internet access from fleet.
+	// Enables or disables default Internet access for the fleet.
 	EnableDefaultInternetAccess *bool `type:"boolean"`
 
 	// Unique name of the image used by the fleet.
@@ -1817,7 +1846,8 @@ type CreateFleetInput struct {
 	// InstanceType is a required field
 	InstanceType *string `min:"1" type:"string" required:"true"`
 
-	// The maximum time up to which a streaming session can run.
+	// The maximum time for which a streaming session can run. The input can be
+	// any numeric value in seconds between 600 and 57600.
 	MaxUserDurationInSeconds *int64 `type:"integer"`
 
 	// A unique identifier for the fleet.
@@ -1863,11 +1893,6 @@ func (s *CreateFleetInput) Validate() error {
 	if s.ComputeCapacity != nil {
 		if err := s.ComputeCapacity.Validate(); err != nil {
 			invalidParams.AddNested("ComputeCapacity", err.(request.ErrInvalidParams))
-		}
-	}
-	if s.VpcConfig != nil {
-		if err := s.VpcConfig.Validate(); err != nil {
-			invalidParams.AddNested("VpcConfig", err.(request.ErrInvalidParams))
 		}
 	}
 
@@ -1975,6 +2000,9 @@ type CreateStackInput struct {
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
+
+	// The storage connectors to be enabled for the stack.
+	StorageConnectors []*StorageConnector `type:"list"`
 }
 
 // String returns the string representation
@@ -1995,6 +2023,16 @@ func (s *CreateStackInput) Validate() error {
 	}
 	if s.Name != nil && len(*s.Name) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+	if s.StorageConnectors != nil {
+		for i, v := range s.StorageConnectors {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "StorageConnectors", i), err.(request.ErrInvalidParams))
+			}
+		}
 	}
 
 	if invalidParams.Len() > 0 {
@@ -2018,6 +2056,12 @@ func (s *CreateStackInput) SetDisplayName(v string) *CreateStackInput {
 // SetName sets the Name field's value.
 func (s *CreateStackInput) SetName(v string) *CreateStackInput {
 	s.Name = &v
+	return s
+}
+
+// SetStorageConnectors sets the StorageConnectors field's value.
+func (s *CreateStackInput) SetStorageConnectors(v []*StorageConnector) *CreateStackInput {
+	s.StorageConnectors = v
 	return s
 }
 
@@ -2070,8 +2114,8 @@ type CreateStreamingURLInput struct {
 	// UserId is a required field
 	UserId *string `min:"2" type:"string" required:"true"`
 
-	// The validity duration of the URL in seconds. After this duration, the URL
-	// returned by this operation becomes invalid.
+	// The duration up to which the URL returned by this action is valid. The input
+	// can be any numeric value in seconds between 1 and 604800 seconds.
 	Validity *int64 `type:"long"`
 }
 
@@ -2437,9 +2481,9 @@ type DescribeSessionsInput struct {
 	_ struct{} `type:"structure"`
 
 	// The authentication method of the user. It can be API for a user authenticated
-	// using a streaming url or SAML for a SAML federated user. If an authentication
+	// using a streaming URL, or SAML for a SAML federated user. If an authentication
 	// type is not provided, the operation defaults to users authenticated using
-	// a streaming url.
+	// a streaming URL.
 	AuthenticationType *string `type:"string" enum:"AuthenticationType"`
 
 	// The name of the fleet for which to list sessions.
@@ -2808,14 +2852,15 @@ type Fleet struct {
 	Description *string `min:"1" type:"string"`
 
 	// The time after disconnection when a session is considered to have ended.
-	// When a user reconnects after a disconnection, the user is connected to the
-	// same session and instance within this time interval.
+	// If a user who got disconnected reconnects within this timeout interval, the
+	// user is connected back to their previous session. The input can be any numeric
+	// value in seconds between 60 and 57600.
 	DisconnectTimeoutInSeconds *int64 `type:"integer"`
 
 	// The name displayed to end users on the AppStream 2.0 portal.
 	DisplayName *string `min:"1" type:"string"`
 
-	// Default Internet access from the fleet. True (Enabled), False (Disabled).
+	// Whether default Internet access is enabled for the fleet.
 	EnableDefaultInternetAccess *bool `type:"boolean"`
 
 	// The list of fleet errors is appended to this list.
@@ -2832,7 +2877,8 @@ type Fleet struct {
 	// InstanceType is a required field
 	InstanceType *string `min:"1" type:"string" required:"true"`
 
-	// The maximum time during which a streaming session can run.
+	// The maximum time for which a streaming session can run. The value can be
+	// any numeric value in seconds between 600 and 57600.
 	MaxUserDurationInSeconds *int64 `type:"integer"`
 
 	// The name of the fleet.
@@ -3001,7 +3047,7 @@ type Image struct {
 	// The display name for the image.
 	DisplayName *string `min:"1" type:"string"`
 
-	// Indicates whether an image builder can be launched from this image.
+	// Whether an image builder can be launched from this image.
 	ImageBuilderSupported *bool `type:"boolean"`
 
 	// The unique identifier for the image.
@@ -3011,6 +3057,10 @@ type Image struct {
 
 	// The operating system platform of the image.
 	Platform *string `type:"string" enum:"PlatformType"`
+
+	// The AWS release date of the public base image. For private images, this date
+	// is the release date of the base image from which the image was created.
+	PublicBaseImageReleasedDate *time.Time `type:"timestamp" timestampFormat:"unix"`
 
 	// The image starts in the PENDING state, and then moves to AVAILABLE if image
 	// creation succeeds and FAILED if image creation has failed.
@@ -3084,6 +3134,12 @@ func (s *Image) SetName(v string) *Image {
 // SetPlatform sets the Platform field's value.
 func (s *Image) SetPlatform(v string) *Image {
 	s.Platform = &v
+	return s
+}
+
+// SetPublicBaseImageReleasedDate sets the PublicBaseImageReleasedDate field's value.
+func (s *Image) SetPublicBaseImageReleasedDate(v time.Time) *Image {
+	s.PublicBaseImageReleasedDate = &v
 	return s
 }
 
@@ -3325,7 +3381,7 @@ type Session struct {
 	_ struct{} `type:"structure"`
 
 	// The authentication method of the user for whom the session was created. It
-	// can be API for a user authenticated using a streaming url or SAML for a SAML
+	// can be API for a user authenticated using a streaming URL or SAML for a SAML
 	// federated user.
 	AuthenticationType *string `type:"string" enum:"AuthenticationType"`
 
@@ -3422,6 +3478,12 @@ type Stack struct {
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
+
+	// The list of errors associated with the stack.
+	StackErrors []*StackError `type:"list"`
+
+	// The storage connectors to be enabled for the stack.
+	StorageConnectors []*StorageConnector `type:"list"`
 }
 
 // String returns the string representation
@@ -3461,6 +3523,52 @@ func (s *Stack) SetDisplayName(v string) *Stack {
 // SetName sets the Name field's value.
 func (s *Stack) SetName(v string) *Stack {
 	s.Name = &v
+	return s
+}
+
+// SetStackErrors sets the StackErrors field's value.
+func (s *Stack) SetStackErrors(v []*StackError) *Stack {
+	s.StackErrors = v
+	return s
+}
+
+// SetStorageConnectors sets the StorageConnectors field's value.
+func (s *Stack) SetStorageConnectors(v []*StorageConnector) *Stack {
+	s.StorageConnectors = v
+	return s
+}
+
+// Contains the parameters for a stack error.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/appstream-2016-12-01/StackError
+type StackError struct {
+	_ struct{} `type:"structure"`
+
+	// The error code of a stack error.
+	ErrorCode *string `type:"string" enum:"StackErrorCode"`
+
+	// The error message of a stack error.
+	ErrorMessage *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s StackError) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StackError) GoString() string {
+	return s.String()
+}
+
+// SetErrorCode sets the ErrorCode field's value.
+func (s *StackError) SetErrorCode(v string) *StackError {
+	s.ErrorCode = &v
+	return s
+}
+
+// SetErrorMessage sets the ErrorMessage field's value.
+func (s *StackError) SetErrorMessage(v string) *StackError {
+	s.ErrorMessage = &v
 	return s
 }
 
@@ -3578,28 +3686,84 @@ func (s StopFleetOutput) GoString() string {
 	return s.String()
 }
 
+// Contains the parameters for a storage connector.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/appstream-2016-12-01/StorageConnector
+type StorageConnector struct {
+	_ struct{} `type:"structure"`
+
+	// The type of storage connector. The possible values include: HOMEFOLDERS.
+	//
+	// ConnectorType is a required field
+	ConnectorType *string `type:"string" required:"true" enum:"StorageConnectorType"`
+
+	// The ARN associated with the storage connector.
+	ResourceIdentifier *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s StorageConnector) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s StorageConnector) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StorageConnector) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StorageConnector"}
+	if s.ConnectorType == nil {
+		invalidParams.Add(request.NewErrParamRequired("ConnectorType"))
+	}
+	if s.ResourceIdentifier != nil && len(*s.ResourceIdentifier) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResourceIdentifier", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetConnectorType sets the ConnectorType field's value.
+func (s *StorageConnector) SetConnectorType(v string) *StorageConnector {
+	s.ConnectorType = &v
+	return s
+}
+
+// SetResourceIdentifier sets the ResourceIdentifier field's value.
+func (s *StorageConnector) SetResourceIdentifier(v string) *StorageConnector {
+	s.ResourceIdentifier = &v
+	return s
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/appstream-2016-12-01/UpdateFleetRequest
 type UpdateFleetInput struct {
 	_ struct{} `type:"structure"`
+
+	// Fleet attributes to be deleted.
+	AttributesToDelete []*string `type:"list"`
 
 	// The parameters for the capacity allocated to the fleet.
 	ComputeCapacity *ComputeCapacity `type:"structure"`
 
 	// Delete the VPC association for the specified fleet.
-	DeleteVpcConfig *bool `type:"boolean"`
+	DeleteVpcConfig *bool `deprecated:"true" type:"boolean"`
 
 	// The description displayed to end users on the AppStream 2.0 portal.
 	Description *string `type:"string"`
 
 	// The time after disconnection when a session is considered to have ended.
-	// When the user reconnects after a disconnection, the user is connected to
-	// the same instance within this time interval.
+	// If a user who got disconnected reconnects within this timeout interval, the
+	// user is connected back to their previous session. The input can be any numeric
+	// value in seconds between 60 and 57600.
 	DisconnectTimeoutInSeconds *int64 `type:"integer"`
 
 	// The name displayed to end users on the AppStream 2.0 portal.
 	DisplayName *string `type:"string"`
 
-	// Enable/Disable default Internet access from fleet.
+	// Enables or disables default Internet access for the fleet.
 	EnableDefaultInternetAccess *bool `type:"boolean"`
 
 	// The image name from which a fleet is created.
@@ -3609,7 +3773,8 @@ type UpdateFleetInput struct {
 	// launched from this instance type.
 	InstanceType *string `min:"1" type:"string"`
 
-	// The maximum time during which a streaming session can run.
+	// The maximum time for which a streaming session can run. The input can be
+	// any numeric value in seconds between 600 and 57600.
 	MaxUserDurationInSeconds *int64 `type:"integer"`
 
 	// The name of the fleet.
@@ -3651,16 +3816,17 @@ func (s *UpdateFleetInput) Validate() error {
 			invalidParams.AddNested("ComputeCapacity", err.(request.ErrInvalidParams))
 		}
 	}
-	if s.VpcConfig != nil {
-		if err := s.VpcConfig.Validate(); err != nil {
-			invalidParams.AddNested("VpcConfig", err.(request.ErrInvalidParams))
-		}
-	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetAttributesToDelete sets the AttributesToDelete field's value.
+func (s *UpdateFleetInput) SetAttributesToDelete(v []*string) *UpdateFleetInput {
+	s.AttributesToDelete = v
+	return s
 }
 
 // SetComputeCapacity sets the ComputeCapacity field's value.
@@ -3757,6 +3923,9 @@ func (s *UpdateFleetOutput) SetFleet(v *Fleet) *UpdateFleetOutput {
 type UpdateStackInput struct {
 	_ struct{} `type:"structure"`
 
+	// Remove all the storage connectors currently enabled for the stack.
+	DeleteStorageConnectors *bool `type:"boolean"`
+
 	// The description displayed to end users on the AppStream 2.0 portal.
 	Description *string `type:"string"`
 
@@ -3767,6 +3936,9 @@ type UpdateStackInput struct {
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
+
+	// The storage connectors to be enabled for the stack.
+	StorageConnectors []*StorageConnector `type:"list"`
 }
 
 // String returns the string representation
@@ -3788,11 +3960,27 @@ func (s *UpdateStackInput) Validate() error {
 	if s.Name != nil && len(*s.Name) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
 	}
+	if s.StorageConnectors != nil {
+		for i, v := range s.StorageConnectors {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "StorageConnectors", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetDeleteStorageConnectors sets the DeleteStorageConnectors field's value.
+func (s *UpdateStackInput) SetDeleteStorageConnectors(v bool) *UpdateStackInput {
+	s.DeleteStorageConnectors = &v
+	return s
 }
 
 // SetDescription sets the Description field's value.
@@ -3810,6 +3998,12 @@ func (s *UpdateStackInput) SetDisplayName(v string) *UpdateStackInput {
 // SetName sets the Name field's value.
 func (s *UpdateStackInput) SetName(v string) *UpdateStackInput {
 	s.Name = &v
+	return s
+}
+
+// SetStorageConnectors sets the StorageConnectors field's value.
+func (s *UpdateStackInput) SetStorageConnectors(v []*StorageConnector) *UpdateStackInput {
+	s.StorageConnectors = v
 	return s
 }
 
@@ -3842,11 +4036,12 @@ func (s *UpdateStackOutput) SetStack(v *Stack) *UpdateStackOutput {
 type VpcConfig struct {
 	_ struct{} `type:"structure"`
 
+	// Security groups associated with the fleet.
+	SecurityGroupIds []*string `type:"list"`
+
 	// The list of subnets to which a network interface is established from the
 	// fleet instance.
-	//
-	// SubnetIds is a required field
-	SubnetIds []*string `min:"1" type:"list" required:"true"`
+	SubnetIds []*string `type:"list"`
 }
 
 // String returns the string representation
@@ -3859,20 +4054,10 @@ func (s VpcConfig) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *VpcConfig) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "VpcConfig"}
-	if s.SubnetIds == nil {
-		invalidParams.Add(request.NewErrParamRequired("SubnetIds"))
-	}
-	if s.SubnetIds != nil && len(s.SubnetIds) < 1 {
-		invalidParams.Add(request.NewErrParamMinLen("SubnetIds", 1))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
+// SetSecurityGroupIds sets the SecurityGroupIds field's value.
+func (s *VpcConfig) SetSecurityGroupIds(v []*string) *VpcConfig {
+	s.SecurityGroupIds = v
+	return s
 }
 
 // SetSubnetIds sets the SubnetIds field's value.
@@ -3887,6 +4072,18 @@ const (
 
 	// AuthenticationTypeSaml is a AuthenticationType enum value
 	AuthenticationTypeSaml = "SAML"
+
+	// AuthenticationTypeUserpool is a AuthenticationType enum value
+	AuthenticationTypeUserpool = "USERPOOL"
+)
+
+// Fleet attribute.
+const (
+	// FleetAttributeVpcConfiguration is a FleetAttribute enum value
+	FleetAttributeVpcConfiguration = "VPC_CONFIGURATION"
+
+	// FleetAttributeVpcConfigurationSecurityGroupIds is a FleetAttribute enum value
+	FleetAttributeVpcConfigurationSecurityGroupIds = "VPC_CONFIGURATION_SECURITY_GROUP_IDS"
 )
 
 const (
@@ -3975,6 +4172,20 @@ const (
 
 	// SessionStateExpired is a SessionState enum value
 	SessionStateExpired = "EXPIRED"
+)
+
+const (
+	// StackErrorCodeStorageConnectorError is a StackErrorCode enum value
+	StackErrorCodeStorageConnectorError = "STORAGE_CONNECTOR_ERROR"
+
+	// StackErrorCodeInternalServiceError is a StackErrorCode enum value
+	StackErrorCodeInternalServiceError = "INTERNAL_SERVICE_ERROR"
+)
+
+// The type of storage connector. The possible values include: HOMEFOLDERS.
+const (
+	// StorageConnectorTypeHomefolders is a StorageConnectorType enum value
+	StorageConnectorTypeHomefolders = "HOMEFOLDERS"
 )
 
 const (

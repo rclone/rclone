@@ -1,19 +1,19 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"ye6orv2F-1npMW3u9suM3a7C5Bo/8sBrpk7dyPsmoiW1fArUb0ZoCGY\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/VuTEwIALyLFp_kdXuKsAPvednIM\"",
  "discoveryVersion": "v1",
  "id": "groupsmigration:v1",
  "name": "groupsmigration",
  "canonicalName": "Groups Migration",
  "version": "v1",
- "revision": "20140416",
+ "revision": "20170607",
  "title": "Groups Migration API",
  "description": "Groups Migration Api.",
  "ownerDomain": "google.com",
  "ownerName": "Google",
  "icons": {
-  "x16": "http://www.google.com/images/icons/product/discussions-16.gif",
-  "x32": "http://www.google.com/images/icons/product/discussions-32.gif"
+  "x16": "https://www.google.com/images/icons/product/discussions-16.gif",
+  "x32": "https://www.google.com/images/icons/product/discussions-32.gif"
  },
  "documentationLink": "https://developers.google.com/google-apps/groups-migration/",
  "protocol": "rest",

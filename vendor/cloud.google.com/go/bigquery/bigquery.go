@@ -74,3 +74,12 @@ func NewClient(ctx context.Context, projectID string, opts ...option.ClientOptio
 func (c *Client) Close() error {
 	return nil
 }
+
+func (c *Client) insertJob(ctx context.Context, conf *insertJobConf) (*Job, error) {
+	job, err := c.service.insertJob(ctx, c.projectID, conf)
+	if err != nil {
+		return nil, err
+	}
+	job.c = c
+	return job, nil
+}

@@ -48,7 +48,7 @@
 // by the operation if the service models the API operation's errors. These
 // errors will also be available as const strings prefixed with "ErrCode".
 //
-//   result, err := svc.AddApplicationInput(params)
+//   result, err := svc.AddApplicationCloudWatchLoggingOption(params)
 //   if err != nil {
 //       // Cast err to awserr.Error to handle specific error codes.
 //       aerr, ok := err.(awserr.Error)
@@ -58,7 +58,7 @@
 //       return err
 //   }
 //
-//   fmt.Println("AddApplicationInput result:")
+//   fmt.Println("AddApplicationCloudWatchLoggingOption result:")
 //   fmt.Println(result)
 //
 // Using the Client with Context
@@ -70,7 +70,7 @@
 //
 //   ctx := context.Background()
 //
-//   result, err := svc.AddApplicationInputWithContext(ctx, params)
+//   result, err := svc.AddApplicationCloudWatchLoggingOptionWithContext(ctx, params)
 //
 // See the request package documentation for more information on using Context pattern
 // with the SDK.

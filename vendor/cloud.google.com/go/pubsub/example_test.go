@@ -64,7 +64,10 @@ func ExampleClient_CreateSubscription() {
 
 	// Create a new subscription to the previously created topic
 	// with the given name.
-	sub, err := client.CreateSubscription(ctx, "subName", topic, 10*time.Second, nil)
+	sub, err := client.CreateSubscription(ctx, "subName", pubsub.SubscriptionConfig{
+		Topic:       topic,
+		AckDeadline: 10 * time.Second,
+	})
 	if err != nil {
 		// TODO: Handle error.
 	}
@@ -110,13 +113,20 @@ func ExampleTopic_Publish() {
 	}
 
 	topic := client.Topic("topicName")
-	msgIDs, err := topic.Publish(ctx, &pubsub.Message{
+	defer topic.Stop()
+	var results []*pubsub.PublishResult
+	r := topic.Publish(ctx, &pubsub.Message{
 		Data: []byte("hello world"),
 	})
-	if err != nil {
-		// TODO: Handle error.
+	results = append(results, r)
+	// Do other work ...
+	for _, r := range results {
+		id, err := r.Get(ctx)
+		if err != nil {
+			// TODO: Handle error.
+		}
+		fmt.Printf("Published a message with a message ID: %s\n", id)
 	}
-	fmt.Printf("Published a message with a message ID: %s\n", msgIDs[0])
 }
 
 func ExampleTopic_Subscriptions() {
@@ -183,117 +193,77 @@ func ExampleSubscription_Config() {
 	fmt.Println(config)
 }
 
-func ExampleSubscription_Pull() {
-	ctx := context.Background()
-	client, err := pubsub.NewClient(ctx, "project-id")
-	if err != nil {
-		// TODO: Handle error.
-	}
-	it, err := client.Subscription("subName").Pull(ctx)
-	if err != nil {
-		// TODO: Handle error.
-	}
-	// Ensure that the iterator is closed down cleanly.
-	defer it.Stop()
-}
-
-func ExampleSubscription_Pull_options() {
+func ExampleSubscription_Receive() {
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, "project-id")
 	if err != nil {
 		// TODO: Handle error.
 	}
 	sub := client.Subscription("subName")
-	// This program is expected to process and acknowledge messages
-	// in 5 seconds. If not, Pub/Sub API will assume the message is not
-	// acknowledged.
-	it, err := sub.Pull(ctx, pubsub.MaxExtension(5*time.Second))
-	if err != nil {
+	err = sub.Receive(ctx, func(ctx context.Context, m *pubsub.Message) {
+		// TODO: Handle message.
+		// NOTE: May be called concurrently; synchronize access to shared memory.
+		m.Ack()
+	})
+	if err != context.Canceled {
 		// TODO: Handle error.
 	}
-	// Ensure that the iterator is closed down cleanly.
-	defer it.Stop()
 }
 
-func ExampleSubscription_ModifyPushConfig() {
+// This example shows how to configure keepalive so that unacknoweldged messages
+// expire quickly, allowing other subscribers to take them.
+func ExampleSubscription_Receive_maxExtension() {
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, "project-id")
 	if err != nil {
 		// TODO: Handle error.
 	}
 	sub := client.Subscription("subName")
-	if err := sub.ModifyPushConfig(ctx, &pubsub.PushConfig{Endpoint: "https://example.com/push"}); err != nil {
+	// This program is expected to process and acknowledge messages in 30 seconds. If
+	// not, the Pub/Sub API will assume the message is not acknowledged.
+	sub.ReceiveSettings.MaxExtension = 30 * time.Second
+	err = sub.Receive(ctx, func(ctx context.Context, m *pubsub.Message) {
+		// TODO: Handle message.
+		m.Ack()
+	})
+	if err != context.Canceled {
 		// TODO: Handle error.
 	}
 }
 
-func ExampleMessageIterator_Next() {
+// This example shows how to throttle Subscription.Receive, which aims for high
+// throughput by default. By limiting the number of messages and/or bytes being
+// processed at once, you can bound your program's resource consumption.
+func ExampleSubscription_Receive_maxOutstanding() {
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, "project-id")
 	if err != nil {
 		// TODO: Handle error.
 	}
-	it, err := client.Subscription("subName").Pull(ctx)
-	if err != nil {
+	sub := client.Subscription("subName")
+	sub.ReceiveSettings.MaxOutstandingMessages = 5
+	sub.ReceiveSettings.MaxOutstandingBytes = 10e6
+	err = sub.Receive(ctx, func(ctx context.Context, m *pubsub.Message) {
+		// TODO: Handle message.
+		m.Ack()
+	})
+	if err != context.Canceled {
 		// TODO: Handle error.
-	}
-	// Ensure that the iterator is closed down cleanly.
-	defer it.Stop()
-	// Consume 10 messages.
-	for i := 0; i < 10; i++ {
-		m, err := it.Next()
-		if err == iterator.Done {
-			// There are no more messages.  This will happen if it.Stop is called.
-			break
-		}
-		if err != nil {
-			// TODO: Handle error.
-			break
-		}
-		fmt.Printf("message %d: %s\n", i, m.Data)
-
-		// Acknowledge the message.
-		m.Done(true)
 	}
 }
 
-func ExampleMessageIterator_Stop_defer() {
-	// If all uses of the iterator occur within the lifetime of a single
-	// function, stop it with defer.
+func ExampleSubscription_Update() {
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, "project-id")
 	if err != nil {
 		// TODO: Handle error.
 	}
-	it, err := client.Subscription("subName").Pull(ctx)
+	sub := client.Subscription("subName")
+	subConfig, err := sub.Update(ctx, pubsub.SubscriptionConfigToUpdate{
+		PushConfig: &pubsub.PushConfig{Endpoint: "https://example.com/push"},
+	})
 	if err != nil {
 		// TODO: Handle error.
 	}
-
-	// Ensure that the iterator is closed down cleanly.
-	defer it.Stop()
-
-	// TODO: Use the iterator (see the example for MessageIterator.Next).
-}
-
-func ExampleMessageIterator_Stop_goroutine() *pubsub.MessageIterator {
-	// If you use the iterator outside the lifetime of a single function, you
-	// must still stop it.
-	// This (contrived) example returns an iterator that will yield messages
-	// for ten seconds, and then stop.
-	ctx := context.Background()
-	client, err := pubsub.NewClient(ctx, "project-id")
-	if err != nil {
-		// TODO: Handle error.
-	}
-	it, err := client.Subscription("subName").Pull(ctx)
-	if err != nil {
-		// TODO: Handle error.
-	}
-	// Stop the iterator after receiving messages for ten seconds.
-	go func() {
-		time.Sleep(10 * time.Second)
-		it.Stop()
-	}()
-	return it
+	_ = subConfig // TODO: Use SubscriptionConfig.
 }

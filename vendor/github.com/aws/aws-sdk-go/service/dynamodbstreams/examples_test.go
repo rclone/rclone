@@ -3,106 +3,157 @@
 package dynamodbstreams_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodbstreams"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleDynamoDBStreams_DescribeStream() {
-	sess := session.Must(session.NewSession())
-
-	svc := dynamodbstreams.New(sess)
-
-	params := &dynamodbstreams.DescribeStreamInput{
-		StreamArn:             aws.String("StreamArn"), // Required
-		ExclusiveStartShardId: aws.String("ShardId"),
-		Limit: aws.Int64(1),
-	}
-	resp, err := svc.DescribeStream(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
+		panic(err)
 	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	return &t
 }
 
-func ExampleDynamoDBStreams_GetRecords() {
-	sess := session.Must(session.NewSession())
-
-	svc := dynamodbstreams.New(sess)
-
-	params := &dynamodbstreams.GetRecordsInput{
-		ShardIterator: aws.String("ShardIterator"), // Required
-		Limit:         aws.Int64(1),
+// To describe a stream with a given stream ARN
+//
+// The following example describes a stream with a given stream ARN.
+func ExampleDynamoDBStreams_DescribeStream_shared00() {
+	svc := dynamodbstreams.New(session.New())
+	input := &dynamodbstreams.DescribeStreamInput{
+		StreamArn: aws.String("arn:aws:dynamodb:us-west-2:111122223333:table/Forum/stream/2015-05-20T20:51:10.252"),
 	}
-	resp, err := svc.GetRecords(params)
 
+	result, err := svc.DescribeStream(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case dynamodbstreams.ErrCodeResourceNotFoundException:
+				fmt.Println(dynamodbstreams.ErrCodeResourceNotFoundException, aerr.Error())
+			case dynamodbstreams.ErrCodeInternalServerError:
+				fmt.Println(dynamodbstreams.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDynamoDBStreams_GetShardIterator() {
-	sess := session.Must(session.NewSession())
-
-	svc := dynamodbstreams.New(sess)
-
-	params := &dynamodbstreams.GetShardIteratorInput{
-		ShardId:           aws.String("ShardId"),           // Required
-		ShardIteratorType: aws.String("ShardIteratorType"), // Required
-		StreamArn:         aws.String("StreamArn"),         // Required
-		SequenceNumber:    aws.String("SequenceNumber"),
+// To retrieve all the stream records from a shard
+//
+// The following example retrieves all the stream records from a shard.
+func ExampleDynamoDBStreams_GetRecords_shared00() {
+	svc := dynamodbstreams.New(session.New())
+	input := &dynamodbstreams.GetRecordsInput{
+		ShardIterator: aws.String("arn:aws:dynamodb:us-west-2:111122223333:table/Forum/stream/2015-05-20T20:51:10.252|1|AAAAAAAAAAEvJp6D+zaQ...  <remaining characters omitted> ..."),
 	}
-	resp, err := svc.GetShardIterator(params)
 
+	result, err := svc.GetRecords(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case dynamodbstreams.ErrCodeResourceNotFoundException:
+				fmt.Println(dynamodbstreams.ErrCodeResourceNotFoundException, aerr.Error())
+			case dynamodbstreams.ErrCodeLimitExceededException:
+				fmt.Println(dynamodbstreams.ErrCodeLimitExceededException, aerr.Error())
+			case dynamodbstreams.ErrCodeInternalServerError:
+				fmt.Println(dynamodbstreams.ErrCodeInternalServerError, aerr.Error())
+			case dynamodbstreams.ErrCodeExpiredIteratorException:
+				fmt.Println(dynamodbstreams.ErrCodeExpiredIteratorException, aerr.Error())
+			case dynamodbstreams.ErrCodeTrimmedDataAccessException:
+				fmt.Println(dynamodbstreams.ErrCodeTrimmedDataAccessException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleDynamoDBStreams_ListStreams() {
-	sess := session.Must(session.NewSession())
-
-	svc := dynamodbstreams.New(sess)
-
-	params := &dynamodbstreams.ListStreamsInput{
-		ExclusiveStartStreamArn: aws.String("StreamArn"),
-		Limit:     aws.Int64(1),
-		TableName: aws.String("TableName"),
+// To obtain a shard iterator for the provided stream ARN and shard ID
+//
+// The following example returns a shard iterator for the provided stream ARN and shard
+// ID.
+func ExampleDynamoDBStreams_GetShardIterator_shared00() {
+	svc := dynamodbstreams.New(session.New())
+	input := &dynamodbstreams.GetShardIteratorInput{
+		ShardId:           aws.String("00000001414576573621-f55eea83"),
+		ShardIteratorType: aws.String("TRIM_HORIZON"),
+		StreamArn:         aws.String("arn:aws:dynamodb:us-west-2:111122223333:table/Forum/stream/2015-05-20T20:51:10.252"),
 	}
-	resp, err := svc.ListStreams(params)
 
+	result, err := svc.GetShardIterator(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case dynamodbstreams.ErrCodeResourceNotFoundException:
+				fmt.Println(dynamodbstreams.ErrCodeResourceNotFoundException, aerr.Error())
+			case dynamodbstreams.ErrCodeInternalServerError:
+				fmt.Println(dynamodbstreams.ErrCodeInternalServerError, aerr.Error())
+			case dynamodbstreams.ErrCodeTrimmedDataAccessException:
+				fmt.Println(dynamodbstreams.ErrCodeTrimmedDataAccessException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
+}
+
+// To list all of the stream ARNs
+//
+// The following example lists all of the stream ARNs.
+func ExampleDynamoDBStreams_ListStreams_shared00() {
+	svc := dynamodbstreams.New(session.New())
+	input := &dynamodbstreams.ListStreamsInput{}
+
+	result, err := svc.ListStreams(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case dynamodbstreams.ErrCodeResourceNotFoundException:
+				fmt.Println(dynamodbstreams.ErrCodeResourceNotFoundException, aerr.Error())
+			case dynamodbstreams.ErrCodeInternalServerError:
+				fmt.Println(dynamodbstreams.ErrCodeInternalServerError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
 }

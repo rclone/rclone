@@ -23,6 +23,7 @@ import (
 )
 
 func TestInvoke(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	// Time-based tests are flaky. We just make sure that invoke eventually
 	// returns with the right error.

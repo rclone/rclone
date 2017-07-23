@@ -79,3 +79,27 @@ func TestProviderAuthHeaderWorksDomain(t *testing.T) {
 		}
 	}
 }
+
+func TestRetrieveTokenWithContexts(t *testing.T) {
+	const clientID = "client-id"
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	defer ts.Close()
+
+	_, err := RetrieveToken(context.Background(), clientID, "", ts.URL, url.Values{})
+	if err != nil {
+		t.Errorf("RetrieveToken (with background context) = %v; want no error", err)
+	}
+
+	ctx, cancelfunc := context.WithCancel(context.Background())
+
+	cancellingts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cancelfunc()
+	}))
+	defer cancellingts.Close()
+
+	_, err = RetrieveToken(ctx, clientID, "", cancellingts.URL, url.Values{})
+	if err == nil {
+		t.Errorf("RetrieveToken (with cancelled context) = nil; want error")
+	}
+}

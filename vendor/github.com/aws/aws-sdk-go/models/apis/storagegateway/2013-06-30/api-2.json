@@ -2250,7 +2250,8 @@
         "TapeSizeInBytes":{"shape":"TapeSize"},
         "TapeStatus":{"shape":"TapeStatus"},
         "VTLDevice":{"shape":"VTLDeviceARN"},
-        "Progress":{"shape":"DoubleObject"}
+        "Progress":{"shape":"DoubleObject"},
+        "TapeUsedInBytes":{"shape":"TapeUsage"}
       }
     },
     "TapeARN":{
@@ -2272,7 +2273,8 @@
         "TapeSizeInBytes":{"shape":"TapeSize"},
         "CompletionTime":{"shape":"Time"},
         "RetrievedTo":{"shape":"GatewayARN"},
-        "TapeStatus":{"shape":"TapeArchiveStatus"}
+        "TapeStatus":{"shape":"TapeArchiveStatus"},
+        "TapeUsedInBytes":{"shape":"TapeUsage"}
       }
     },
     "TapeArchiveStatus":{"type":"string"},
@@ -2327,6 +2329,7 @@
     "TapeRecoveryPointStatus":{"type":"string"},
     "TapeSize":{"type":"long"},
     "TapeStatus":{"type":"string"},
+    "TapeUsage":{"type":"long"},
     "Tapes":{
       "type":"list",
       "member":{"shape":"Tape"}

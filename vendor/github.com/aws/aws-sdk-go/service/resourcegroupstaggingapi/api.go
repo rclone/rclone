@@ -42,6 +42,12 @@ func (c *ResourceGroupsTaggingAPI) GetResourcesRequest(input *GetResourcesInput)
 		Name:       opGetResources,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"PaginationToken"},
+			OutputTokens:    []string{"PaginationToken"},
+			LimitToken:      "ResourcesPerPage",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -107,6 +113,56 @@ func (c *ResourceGroupsTaggingAPI) GetResourcesWithContext(ctx aws.Context, inpu
 	return out, req.Send()
 }
 
+// GetResourcesPages iterates over the pages of a GetResources operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See GetResources method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a GetResources operation.
+//    pageNum := 0
+//    err := client.GetResourcesPages(params,
+//        func(page *GetResourcesOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *ResourceGroupsTaggingAPI) GetResourcesPages(input *GetResourcesInput, fn func(*GetResourcesOutput, bool) bool) error {
+	return c.GetResourcesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// GetResourcesPagesWithContext same as GetResourcesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ResourceGroupsTaggingAPI) GetResourcesPagesWithContext(ctx aws.Context, input *GetResourcesInput, fn func(*GetResourcesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *GetResourcesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.GetResourcesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*GetResourcesOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opGetTagKeys = "GetTagKeys"
 
 // GetTagKeysRequest generates a "aws/request.Request" representing the
@@ -139,6 +195,12 @@ func (c *ResourceGroupsTaggingAPI) GetTagKeysRequest(input *GetTagKeysInput) (re
 		Name:       opGetTagKeys,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"PaginationToken"},
+			OutputTokens:    []string{"PaginationToken"},
+			LimitToken:      "",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -199,6 +261,56 @@ func (c *ResourceGroupsTaggingAPI) GetTagKeysWithContext(ctx aws.Context, input 
 	return out, req.Send()
 }
 
+// GetTagKeysPages iterates over the pages of a GetTagKeys operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See GetTagKeys method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a GetTagKeys operation.
+//    pageNum := 0
+//    err := client.GetTagKeysPages(params,
+//        func(page *GetTagKeysOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *ResourceGroupsTaggingAPI) GetTagKeysPages(input *GetTagKeysInput, fn func(*GetTagKeysOutput, bool) bool) error {
+	return c.GetTagKeysPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// GetTagKeysPagesWithContext same as GetTagKeysPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ResourceGroupsTaggingAPI) GetTagKeysPagesWithContext(ctx aws.Context, input *GetTagKeysInput, fn func(*GetTagKeysOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *GetTagKeysInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.GetTagKeysRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*GetTagKeysOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opGetTagValues = "GetTagValues"
 
 // GetTagValuesRequest generates a "aws/request.Request" representing the
@@ -231,6 +343,12 @@ func (c *ResourceGroupsTaggingAPI) GetTagValuesRequest(input *GetTagValuesInput)
 		Name:       opGetTagValues,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"PaginationToken"},
+			OutputTokens:    []string{"PaginationToken"},
+			LimitToken:      "",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -290,6 +408,56 @@ func (c *ResourceGroupsTaggingAPI) GetTagValuesWithContext(ctx aws.Context, inpu
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
+}
+
+// GetTagValuesPages iterates over the pages of a GetTagValues operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See GetTagValues method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a GetTagValues operation.
+//    pageNum := 0
+//    err := client.GetTagValuesPages(params,
+//        func(page *GetTagValuesOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *ResourceGroupsTaggingAPI) GetTagValuesPages(input *GetTagValuesInput, fn func(*GetTagValuesOutput, bool) bool) error {
+	return c.GetTagValuesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// GetTagValuesPagesWithContext same as GetTagValuesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ResourceGroupsTaggingAPI) GetTagValuesPagesWithContext(ctx aws.Context, input *GetTagValuesInput, fn func(*GetTagValuesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *GetTagValuesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.GetTagValuesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*GetTagValuesOutput), !p.HasNextPage())
+	}
+	return p.Err()
 }
 
 const opTagResources = "TagResources"
@@ -567,6 +735,11 @@ type GetResourcesInput struct {
 	//    AWS Service Namespaces (http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	ResourceTypeFilters []*string `type:"list"`
 
+	// A limit that restricts the number of resources returned by GetResources in
+	// paginated output. You can set ResourcesPerPage to a minimum of 1 item and
+	// the maximum of 50 items.
+	ResourcesPerPage *int64 `type:"integer"`
+
 	// A list of tags (keys and values). A request can include up to 50 keys, and
 	// each key can include up to 20 values.
 	//
@@ -595,9 +768,7 @@ type GetResourcesInput struct {
 	// its 10 tags.
 	//
 	// You can set TagsPerPage
-	//
-	// TagsPerPage is a required field
-	TagsPerPage *int64 `min:"100" type:"integer" required:"true"`
+	TagsPerPage *int64 `type:"integer"`
 }
 
 // String returns the string representation
@@ -613,12 +784,6 @@ func (s GetResourcesInput) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *GetResourcesInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "GetResourcesInput"}
-	if s.TagsPerPage == nil {
-		invalidParams.Add(request.NewErrParamRequired("TagsPerPage"))
-	}
-	if s.TagsPerPage != nil && *s.TagsPerPage < 100 {
-		invalidParams.Add(request.NewErrParamMinValue("TagsPerPage", 100))
-	}
 	if s.TagFilters != nil {
 		for i, v := range s.TagFilters {
 			if v == nil {
@@ -645,6 +810,12 @@ func (s *GetResourcesInput) SetPaginationToken(v string) *GetResourcesInput {
 // SetResourceTypeFilters sets the ResourceTypeFilters field's value.
 func (s *GetResourcesInput) SetResourceTypeFilters(v []*string) *GetResourcesInput {
 	s.ResourceTypeFilters = v
+	return s
+}
+
+// SetResourcesPerPage sets the ResourcesPerPage field's value.
+func (s *GetResourcesInput) SetResourcesPerPage(v int64) *GetResourcesInput {
+	s.ResourcesPerPage = &v
 	return s
 }
 

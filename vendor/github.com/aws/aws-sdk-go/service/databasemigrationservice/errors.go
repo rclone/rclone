@@ -66,6 +66,18 @@ const (
 	// The quota for this resource quota has been exceeded.
 	ErrCodeResourceQuotaExceededFault = "ResourceQuotaExceededFault"
 
+	// ErrCodeSNSInvalidTopicFault for service response error code
+	// "SNSInvalidTopicFault".
+	//
+	// The SNS topic is invalid.
+	ErrCodeSNSInvalidTopicFault = "SNSInvalidTopicFault"
+
+	// ErrCodeSNSNoAuthorizationFault for service response error code
+	// "SNSNoAuthorizationFault".
+	//
+	// You are not authorized for the SNS subscription.
+	ErrCodeSNSNoAuthorizationFault = "SNSNoAuthorizationFault"
+
 	// ErrCodeStorageQuotaExceededFault for service response error code
 	// "StorageQuotaExceededFault".
 	//

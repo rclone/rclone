@@ -3,2236 +3,2221 @@
 package s3_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleS3_AbortMultipartUpload() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.AbortMultipartUploadInput{
-		Bucket:       aws.String("BucketName"),        // Required
-		Key:          aws.String("ObjectKey"),         // Required
-		UploadId:     aws.String("MultipartUploadId"), // Required
-		RequestPayer: aws.String("RequestPayer"),
-	}
-	resp, err := svc.AbortMultipartUpload(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		panic(err)
+	}
+	return &t
+}
+
+// To abort a multipart upload
+//
+// The following example aborts a multipart upload.
+func ExampleS3_AbortMultipartUpload_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.AbortMultipartUploadInput{
+		Bucket:   aws.String("examplebucket"),
+		Key:      aws.String("bigobject"),
+		UploadId: aws.String("xadcOB_7YPBOJuoFiQ9cz4P3Pe6FIZwO4f7wN93uHsNBEw97pl5eNwzExg0LAT2dUN91cOmrEQHDsP3WA60CEg--"),
+	}
+
+	result, err := svc.AbortMultipartUpload(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeNoSuchUpload:
+				fmt.Println(s3.ErrCodeNoSuchUpload, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_CompleteMultipartUpload() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.CompleteMultipartUploadInput{
-		Bucket:   aws.String("BucketName"),        // Required
-		Key:      aws.String("ObjectKey"),         // Required
-		UploadId: aws.String("MultipartUploadId"), // Required
+// To complete multipart upload
+//
+// The following example completes a multipart upload.
+func ExampleS3_CompleteMultipartUpload_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.CompleteMultipartUploadInput{
+		Bucket: aws.String("examplebucket"),
+		Key:    aws.String("bigobject"),
 		MultipartUpload: &s3.CompletedMultipartUpload{
 			Parts: []*s3.CompletedPart{
-				{ // Required
-					ETag:       aws.String("ETag"),
+				{
+					ETag:       aws.String("\"d8c2eafd90c266e19ab9dcacc479f8af\""),
 					PartNumber: aws.Int64(1),
 				},
-				// More values...
+				{
+					ETag:       aws.String("\"d8c2eafd90c266e19ab9dcacc479f8af\""),
+					PartNumber: aws.Int64(2),
+				},
 			},
 		},
-		RequestPayer: aws.String("RequestPayer"),
+		UploadId: aws.String("7YPBOJuoFiQ9cz4P3Pe6FIZwO4f7wN93uHsNBEw97pl5eNwzExg0LAT2dUN91cOmrEQHDsP3WA60CEg--"),
 	}
-	resp, err := svc.CompleteMultipartUpload(params)
 
+	result, err := svc.CompleteMultipartUpload(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_CopyObject() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.CopyObjectInput{
-		Bucket:                         aws.String("BucketName"), // Required
-		CopySource:                     aws.String("CopySource"), // Required
-		Key:                            aws.String("ObjectKey"),  // Required
-		ACL:                            aws.String("ObjectCannedACL"),
-		CacheControl:                   aws.String("CacheControl"),
-		ContentDisposition:             aws.String("ContentDisposition"),
-		ContentEncoding:                aws.String("ContentEncoding"),
-		ContentLanguage:                aws.String("ContentLanguage"),
-		ContentType:                    aws.String("ContentType"),
-		CopySourceIfMatch:              aws.String("CopySourceIfMatch"),
-		CopySourceIfModifiedSince:      aws.Time(time.Now()),
-		CopySourceIfNoneMatch:          aws.String("CopySourceIfNoneMatch"),
-		CopySourceIfUnmodifiedSince:    aws.Time(time.Now()),
-		CopySourceSSECustomerAlgorithm: aws.String("CopySourceSSECustomerAlgorithm"),
-		CopySourceSSECustomerKey:       aws.String("CopySourceSSECustomerKey"),
-		CopySourceSSECustomerKeyMD5:    aws.String("CopySourceSSECustomerKeyMD5"),
-		Expires:                        aws.Time(time.Now()),
-		GrantFullControl:               aws.String("GrantFullControl"),
-		GrantRead:                      aws.String("GrantRead"),
-		GrantReadACP:                   aws.String("GrantReadACP"),
-		GrantWriteACP:                  aws.String("GrantWriteACP"),
-		Metadata: map[string]*string{
-			"Key": aws.String("MetadataValue"), // Required
-			// More values...
-		},
-		MetadataDirective:       aws.String("MetadataDirective"),
-		RequestPayer:            aws.String("RequestPayer"),
-		SSECustomerAlgorithm:    aws.String("SSECustomerAlgorithm"),
-		SSECustomerKey:          aws.String("SSECustomerKey"),
-		SSECustomerKeyMD5:       aws.String("SSECustomerKeyMD5"),
-		SSEKMSKeyId:             aws.String("SSEKMSKeyId"),
-		ServerSideEncryption:    aws.String("ServerSideEncryption"),
-		StorageClass:            aws.String("StorageClass"),
-		Tagging:                 aws.String("TaggingHeader"),
-		TaggingDirective:        aws.String("TaggingDirective"),
-		WebsiteRedirectLocation: aws.String("WebsiteRedirectLocation"),
+// To copy an object
+//
+// The following example copies an object from one bucket to another.
+func ExampleS3_CopyObject_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.CopyObjectInput{
+		Bucket:     aws.String("destinationbucket"),
+		CopySource: aws.String("/sourcebucket/HappyFacejpg"),
+		Key:        aws.String("HappyFaceCopyjpg"),
 	}
-	resp, err := svc.CopyObject(params)
 
+	result, err := svc.CopyObject(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeObjectNotInActiveTierError:
+				fmt.Println(s3.ErrCodeObjectNotInActiveTierError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_CreateBucket() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.CreateBucketInput{
-		Bucket: aws.String("BucketName"), // Required
-		ACL:    aws.String("BucketCannedACL"),
+// To create a bucket in a specific region
+//
+// The following example creates a bucket. The request specifies an AWS region where
+// to create the bucket.
+func ExampleS3_CreateBucket_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.CreateBucketInput{
+		Bucket: aws.String("examplebucket"),
 		CreateBucketConfiguration: &s3.CreateBucketConfiguration{
-			LocationConstraint: aws.String("BucketLocationConstraint"),
+			LocationConstraint: aws.String("eu-west-1"),
 		},
-		GrantFullControl: aws.String("GrantFullControl"),
-		GrantRead:        aws.String("GrantRead"),
-		GrantReadACP:     aws.String("GrantReadACP"),
-		GrantWrite:       aws.String("GrantWrite"),
-		GrantWriteACP:    aws.String("GrantWriteACP"),
 	}
-	resp, err := svc.CreateBucket(params)
 
+	result, err := svc.CreateBucket(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeBucketAlreadyExists:
+				fmt.Println(s3.ErrCodeBucketAlreadyExists, aerr.Error())
+			case s3.ErrCodeBucketAlreadyOwnedByYou:
+				fmt.Println(s3.ErrCodeBucketAlreadyOwnedByYou, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_CreateMultipartUpload() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.CreateMultipartUploadInput{
-		Bucket:             aws.String("BucketName"), // Required
-		Key:                aws.String("ObjectKey"),  // Required
-		ACL:                aws.String("ObjectCannedACL"),
-		CacheControl:       aws.String("CacheControl"),
-		ContentDisposition: aws.String("ContentDisposition"),
-		ContentEncoding:    aws.String("ContentEncoding"),
-		ContentLanguage:    aws.String("ContentLanguage"),
-		ContentType:        aws.String("ContentType"),
-		Expires:            aws.Time(time.Now()),
-		GrantFullControl:   aws.String("GrantFullControl"),
-		GrantRead:          aws.String("GrantRead"),
-		GrantReadACP:       aws.String("GrantReadACP"),
-		GrantWriteACP:      aws.String("GrantWriteACP"),
-		Metadata: map[string]*string{
-			"Key": aws.String("MetadataValue"), // Required
-			// More values...
-		},
-		RequestPayer:            aws.String("RequestPayer"),
-		SSECustomerAlgorithm:    aws.String("SSECustomerAlgorithm"),
-		SSECustomerKey:          aws.String("SSECustomerKey"),
-		SSECustomerKeyMD5:       aws.String("SSECustomerKeyMD5"),
-		SSEKMSKeyId:             aws.String("SSEKMSKeyId"),
-		ServerSideEncryption:    aws.String("ServerSideEncryption"),
-		StorageClass:            aws.String("StorageClass"),
-		WebsiteRedirectLocation: aws.String("WebsiteRedirectLocation"),
+// To create a bucket
+//
+// The following example creates a bucket.
+func ExampleS3_CreateBucket_shared01() {
+	svc := s3.New(session.New())
+	input := &s3.CreateBucketInput{
+		Bucket: aws.String("examplebucket"),
 	}
-	resp, err := svc.CreateMultipartUpload(params)
 
+	result, err := svc.CreateBucket(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeBucketAlreadyExists:
+				fmt.Println(s3.ErrCodeBucketAlreadyExists, aerr.Error())
+			case s3.ErrCodeBucketAlreadyOwnedByYou:
+				fmt.Println(s3.ErrCodeBucketAlreadyOwnedByYou, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_DeleteBucket() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.DeleteBucketInput{
-		Bucket: aws.String("BucketName"), // Required
+// To initiate a multipart upload
+//
+// The following example initiates a multipart upload.
+func ExampleS3_CreateMultipartUpload_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.CreateMultipartUploadInput{
+		Bucket: aws.String("examplebucket"),
+		Key:    aws.String("largeobject"),
 	}
-	resp, err := svc.DeleteBucket(params)
 
+	result, err := svc.CreateMultipartUpload(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_DeleteBucketAnalyticsConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.DeleteBucketAnalyticsConfigurationInput{
-		Bucket: aws.String("BucketName"),  // Required
-		Id:     aws.String("AnalyticsId"), // Required
+// To delete a bucket
+//
+// The following example deletes the specified bucket.
+func ExampleS3_DeleteBucket_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.DeleteBucketInput{
+		Bucket: aws.String("forrandall2"),
 	}
-	resp, err := svc.DeleteBucketAnalyticsConfiguration(params)
 
+	result, err := svc.DeleteBucket(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_DeleteBucketCors() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.DeleteBucketCorsInput{
-		Bucket: aws.String("BucketName"), // Required
+// To delete cors configuration on a bucket.
+//
+// The following example deletes CORS configuration on a bucket.
+func ExampleS3_DeleteBucketCors_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.DeleteBucketCorsInput{
+		Bucket: aws.String("examplebucket"),
 	}
-	resp, err := svc.DeleteBucketCors(params)
 
+	result, err := svc.DeleteBucketCors(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_DeleteBucketInventoryConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.DeleteBucketInventoryConfigurationInput{
-		Bucket: aws.String("BucketName"),  // Required
-		Id:     aws.String("InventoryId"), // Required
+// To delete lifecycle configuration on a bucket.
+//
+// The following example deletes lifecycle configuration on a bucket.
+func ExampleS3_DeleteBucketLifecycle_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.DeleteBucketLifecycleInput{
+		Bucket: aws.String("examplebucket"),
 	}
-	resp, err := svc.DeleteBucketInventoryConfiguration(params)
 
+	result, err := svc.DeleteBucketLifecycle(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_DeleteBucketLifecycle() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.DeleteBucketLifecycleInput{
-		Bucket: aws.String("BucketName"), // Required
+// To delete bucket policy
+//
+// The following example deletes bucket policy on the specified bucket.
+func ExampleS3_DeleteBucketPolicy_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.DeleteBucketPolicyInput{
+		Bucket: aws.String("examplebucket"),
 	}
-	resp, err := svc.DeleteBucketLifecycle(params)
 
+	result, err := svc.DeleteBucketPolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_DeleteBucketMetricsConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.DeleteBucketMetricsConfigurationInput{
-		Bucket: aws.String("BucketName"), // Required
-		Id:     aws.String("MetricsId"),  // Required
+// To delete bucket replication configuration
+//
+// The following example deletes replication configuration set on bucket.
+func ExampleS3_DeleteBucketReplication_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.DeleteBucketReplicationInput{
+		Bucket: aws.String("example"),
 	}
-	resp, err := svc.DeleteBucketMetricsConfiguration(params)
 
+	result, err := svc.DeleteBucketReplication(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_DeleteBucketPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.DeleteBucketPolicyInput{
-		Bucket: aws.String("BucketName"), // Required
+// To delete bucket tags
+//
+// The following example deletes bucket tags.
+func ExampleS3_DeleteBucketTagging_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.DeleteBucketTaggingInput{
+		Bucket: aws.String("examplebucket"),
 	}
-	resp, err := svc.DeleteBucketPolicy(params)
 
+	result, err := svc.DeleteBucketTagging(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_DeleteBucketReplication() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.DeleteBucketReplicationInput{
-		Bucket: aws.String("BucketName"), // Required
+// To delete bucket website configuration
+//
+// The following example deletes bucket website configuration.
+func ExampleS3_DeleteBucketWebsite_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.DeleteBucketWebsiteInput{
+		Bucket: aws.String("examplebucket"),
 	}
-	resp, err := svc.DeleteBucketReplication(params)
 
+	result, err := svc.DeleteBucketWebsite(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_DeleteBucketTagging() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.DeleteBucketTaggingInput{
-		Bucket: aws.String("BucketName"), // Required
+// To delete an object (from a non-versioned bucket)
+//
+// The following example deletes an object from a non-versioned bucket.
+func ExampleS3_DeleteObject_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.DeleteObjectInput{
+		Bucket: aws.String("ExampleBucket"),
+		Key:    aws.String("HappyFace.jpg"),
 	}
-	resp, err := svc.DeleteBucketTagging(params)
 
+	result, err := svc.DeleteObject(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_DeleteBucketWebsite() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.DeleteBucketWebsiteInput{
-		Bucket: aws.String("BucketName"), // Required
+// To delete an object
+//
+// The following example deletes an object from an S3 bucket.
+func ExampleS3_DeleteObject_shared01() {
+	svc := s3.New(session.New())
+	input := &s3.DeleteObjectInput{
+		Bucket: aws.String("examplebucket"),
+		Key:    aws.String("objectkey.jpg"),
 	}
-	resp, err := svc.DeleteBucketWebsite(params)
 
+	result, err := svc.DeleteObject(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_DeleteObject() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.DeleteObjectInput{
-		Bucket:       aws.String("BucketName"), // Required
-		Key:          aws.String("ObjectKey"),  // Required
-		MFA:          aws.String("MFA"),
-		RequestPayer: aws.String("RequestPayer"),
-		VersionId:    aws.String("ObjectVersionId"),
+// To remove tag set from an object version
+//
+// The following example removes tag set associated with the specified object version.
+// The request specifies both the object key and object version.
+func ExampleS3_DeleteObjectTagging_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.DeleteObjectTaggingInput{
+		Bucket:    aws.String("examplebucket"),
+		Key:       aws.String("HappyFace.jpg"),
+		VersionId: aws.String("ydlaNkwWm0SfKJR.T1b1fIdPRbldTYRI"),
 	}
-	resp, err := svc.DeleteObject(params)
 
+	result, err := svc.DeleteObjectTagging(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_DeleteObjectTagging() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.DeleteObjectTaggingInput{
-		Bucket:    aws.String("BucketName"), // Required
-		Key:       aws.String("ObjectKey"),  // Required
-		VersionId: aws.String("ObjectVersionId"),
+// To remove tag set from an object
+//
+// The following example removes tag set associated with the specified object. If the
+// bucket is versioning enabled, the operation removes tag set from the latest object
+// version.
+func ExampleS3_DeleteObjectTagging_shared01() {
+	svc := s3.New(session.New())
+	input := &s3.DeleteObjectTaggingInput{
+		Bucket: aws.String("examplebucket"),
+		Key:    aws.String("HappyFace.jpg"),
 	}
-	resp, err := svc.DeleteObjectTagging(params)
 
+	result, err := svc.DeleteObjectTagging(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_DeleteObjects() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.DeleteObjectsInput{
-		Bucket: aws.String("BucketName"), // Required
-		Delete: &s3.Delete{ // Required
-			Objects: []*s3.ObjectIdentifier{ // Required
-				{ // Required
-					Key:       aws.String("ObjectKey"), // Required
-					VersionId: aws.String("ObjectVersionId"),
+// To delete multiple object versions from a versioned bucket
+//
+// The following example deletes objects from a bucket. The request specifies object
+// versions. S3 deletes specific object versions and returns the key and versions of
+// deleted objects in the response.
+func ExampleS3_DeleteObjects_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.DeleteObjectsInput{
+		Bucket: aws.String("examplebucket"),
+		Delete: &s3.Delete{
+			Objects: []*s3.ObjectIdentifier{
+				{
+					Key:       aws.String("HappyFace.jpg"),
+					VersionId: aws.String("2LWg7lQLnY41.maGB5Z6SWW.dcq0vx7b"),
 				},
-				// More values...
-			},
-			Quiet: aws.Bool(true),
-		},
-		MFA:          aws.String("MFA"),
-		RequestPayer: aws.String("RequestPayer"),
-	}
-	resp, err := svc.DeleteObjects(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketAccelerateConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketAccelerateConfigurationInput{
-		Bucket: aws.String("BucketName"), // Required
-	}
-	resp, err := svc.GetBucketAccelerateConfiguration(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketAcl() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketAclInput{
-		Bucket: aws.String("BucketName"), // Required
-	}
-	resp, err := svc.GetBucketAcl(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketAnalyticsConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketAnalyticsConfigurationInput{
-		Bucket: aws.String("BucketName"),  // Required
-		Id:     aws.String("AnalyticsId"), // Required
-	}
-	resp, err := svc.GetBucketAnalyticsConfiguration(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketCors() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketCorsInput{
-		Bucket: aws.String("BucketName"), // Required
-	}
-	resp, err := svc.GetBucketCors(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketInventoryConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketInventoryConfigurationInput{
-		Bucket: aws.String("BucketName"),  // Required
-		Id:     aws.String("InventoryId"), // Required
-	}
-	resp, err := svc.GetBucketInventoryConfiguration(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketLifecycle() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketLifecycleInput{
-		Bucket: aws.String("BucketName"), // Required
-	}
-	resp, err := svc.GetBucketLifecycle(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketLifecycleConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketLifecycleConfigurationInput{
-		Bucket: aws.String("BucketName"), // Required
-	}
-	resp, err := svc.GetBucketLifecycleConfiguration(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketLocation() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketLocationInput{
-		Bucket: aws.String("BucketName"), // Required
-	}
-	resp, err := svc.GetBucketLocation(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketLogging() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketLoggingInput{
-		Bucket: aws.String("BucketName"), // Required
-	}
-	resp, err := svc.GetBucketLogging(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketMetricsConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketMetricsConfigurationInput{
-		Bucket: aws.String("BucketName"), // Required
-		Id:     aws.String("MetricsId"),  // Required
-	}
-	resp, err := svc.GetBucketMetricsConfiguration(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketNotification() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketNotificationConfigurationRequest{
-		Bucket: aws.String("BucketName"), // Required
-	}
-	resp, err := svc.GetBucketNotification(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketNotificationConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketNotificationConfigurationRequest{
-		Bucket: aws.String("BucketName"), // Required
-	}
-	resp, err := svc.GetBucketNotificationConfiguration(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketPolicyInput{
-		Bucket: aws.String("BucketName"), // Required
-	}
-	resp, err := svc.GetBucketPolicy(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketReplication() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketReplicationInput{
-		Bucket: aws.String("BucketName"), // Required
-	}
-	resp, err := svc.GetBucketReplication(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketRequestPayment() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketRequestPaymentInput{
-		Bucket: aws.String("BucketName"), // Required
-	}
-	resp, err := svc.GetBucketRequestPayment(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketTagging() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketTaggingInput{
-		Bucket: aws.String("BucketName"), // Required
-	}
-	resp, err := svc.GetBucketTagging(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketVersioning() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketVersioningInput{
-		Bucket: aws.String("BucketName"), // Required
-	}
-	resp, err := svc.GetBucketVersioning(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetBucketWebsite() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetBucketWebsiteInput{
-		Bucket: aws.String("BucketName"), // Required
-	}
-	resp, err := svc.GetBucketWebsite(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetObject() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetObjectInput{
-		Bucket:                     aws.String("BucketName"), // Required
-		Key:                        aws.String("ObjectKey"),  // Required
-		IfMatch:                    aws.String("IfMatch"),
-		IfModifiedSince:            aws.Time(time.Now()),
-		IfNoneMatch:                aws.String("IfNoneMatch"),
-		IfUnmodifiedSince:          aws.Time(time.Now()),
-		PartNumber:                 aws.Int64(1),
-		Range:                      aws.String("Range"),
-		RequestPayer:               aws.String("RequestPayer"),
-		ResponseCacheControl:       aws.String("ResponseCacheControl"),
-		ResponseContentDisposition: aws.String("ResponseContentDisposition"),
-		ResponseContentEncoding:    aws.String("ResponseContentEncoding"),
-		ResponseContentLanguage:    aws.String("ResponseContentLanguage"),
-		ResponseContentType:        aws.String("ResponseContentType"),
-		ResponseExpires:            aws.Time(time.Now()),
-		SSECustomerAlgorithm:       aws.String("SSECustomerAlgorithm"),
-		SSECustomerKey:             aws.String("SSECustomerKey"),
-		SSECustomerKeyMD5:          aws.String("SSECustomerKeyMD5"),
-		VersionId:                  aws.String("ObjectVersionId"),
-	}
-	resp, err := svc.GetObject(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetObjectAcl() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetObjectAclInput{
-		Bucket:       aws.String("BucketName"), // Required
-		Key:          aws.String("ObjectKey"),  // Required
-		RequestPayer: aws.String("RequestPayer"),
-		VersionId:    aws.String("ObjectVersionId"),
-	}
-	resp, err := svc.GetObjectAcl(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetObjectTagging() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetObjectTaggingInput{
-		Bucket:    aws.String("BucketName"), // Required
-		Key:       aws.String("ObjectKey"),  // Required
-		VersionId: aws.String("ObjectVersionId"),
-	}
-	resp, err := svc.GetObjectTagging(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_GetObjectTorrent() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.GetObjectTorrentInput{
-		Bucket:       aws.String("BucketName"), // Required
-		Key:          aws.String("ObjectKey"),  // Required
-		RequestPayer: aws.String("RequestPayer"),
-	}
-	resp, err := svc.GetObjectTorrent(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_HeadBucket() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.HeadBucketInput{
-		Bucket: aws.String("BucketName"), // Required
-	}
-	resp, err := svc.HeadBucket(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_HeadObject() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.HeadObjectInput{
-		Bucket:               aws.String("BucketName"), // Required
-		Key:                  aws.String("ObjectKey"),  // Required
-		IfMatch:              aws.String("IfMatch"),
-		IfModifiedSince:      aws.Time(time.Now()),
-		IfNoneMatch:          aws.String("IfNoneMatch"),
-		IfUnmodifiedSince:    aws.Time(time.Now()),
-		PartNumber:           aws.Int64(1),
-		Range:                aws.String("Range"),
-		RequestPayer:         aws.String("RequestPayer"),
-		SSECustomerAlgorithm: aws.String("SSECustomerAlgorithm"),
-		SSECustomerKey:       aws.String("SSECustomerKey"),
-		SSECustomerKeyMD5:    aws.String("SSECustomerKeyMD5"),
-		VersionId:            aws.String("ObjectVersionId"),
-	}
-	resp, err := svc.HeadObject(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_ListBucketAnalyticsConfigurations() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.ListBucketAnalyticsConfigurationsInput{
-		Bucket:            aws.String("BucketName"), // Required
-		ContinuationToken: aws.String("Token"),
-	}
-	resp, err := svc.ListBucketAnalyticsConfigurations(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_ListBucketInventoryConfigurations() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.ListBucketInventoryConfigurationsInput{
-		Bucket:            aws.String("BucketName"), // Required
-		ContinuationToken: aws.String("Token"),
-	}
-	resp, err := svc.ListBucketInventoryConfigurations(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_ListBucketMetricsConfigurations() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.ListBucketMetricsConfigurationsInput{
-		Bucket:            aws.String("BucketName"), // Required
-		ContinuationToken: aws.String("Token"),
-	}
-	resp, err := svc.ListBucketMetricsConfigurations(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_ListBuckets() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	var params *s3.ListBucketsInput
-	resp, err := svc.ListBuckets(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_ListMultipartUploads() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.ListMultipartUploadsInput{
-		Bucket:         aws.String("BucketName"), // Required
-		Delimiter:      aws.String("Delimiter"),
-		EncodingType:   aws.String("EncodingType"),
-		KeyMarker:      aws.String("KeyMarker"),
-		MaxUploads:     aws.Int64(1),
-		Prefix:         aws.String("Prefix"),
-		UploadIdMarker: aws.String("UploadIdMarker"),
-	}
-	resp, err := svc.ListMultipartUploads(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_ListObjectVersions() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.ListObjectVersionsInput{
-		Bucket:          aws.String("BucketName"), // Required
-		Delimiter:       aws.String("Delimiter"),
-		EncodingType:    aws.String("EncodingType"),
-		KeyMarker:       aws.String("KeyMarker"),
-		MaxKeys:         aws.Int64(1),
-		Prefix:          aws.String("Prefix"),
-		VersionIdMarker: aws.String("VersionIdMarker"),
-	}
-	resp, err := svc.ListObjectVersions(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_ListObjects() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.ListObjectsInput{
-		Bucket:       aws.String("BucketName"), // Required
-		Delimiter:    aws.String("Delimiter"),
-		EncodingType: aws.String("EncodingType"),
-		Marker:       aws.String("Marker"),
-		MaxKeys:      aws.Int64(1),
-		Prefix:       aws.String("Prefix"),
-		RequestPayer: aws.String("RequestPayer"),
-	}
-	resp, err := svc.ListObjects(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_ListObjectsV2() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.ListObjectsV2Input{
-		Bucket:            aws.String("BucketName"), // Required
-		ContinuationToken: aws.String("Token"),
-		Delimiter:         aws.String("Delimiter"),
-		EncodingType:      aws.String("EncodingType"),
-		FetchOwner:        aws.Bool(true),
-		MaxKeys:           aws.Int64(1),
-		Prefix:            aws.String("Prefix"),
-		RequestPayer:      aws.String("RequestPayer"),
-		StartAfter:        aws.String("StartAfter"),
-	}
-	resp, err := svc.ListObjectsV2(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_ListParts() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.ListPartsInput{
-		Bucket:           aws.String("BucketName"),        // Required
-		Key:              aws.String("ObjectKey"),         // Required
-		UploadId:         aws.String("MultipartUploadId"), // Required
-		MaxParts:         aws.Int64(1),
-		PartNumberMarker: aws.Int64(1),
-		RequestPayer:     aws.String("RequestPayer"),
-	}
-	resp, err := svc.ListParts(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_PutBucketAccelerateConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.PutBucketAccelerateConfigurationInput{
-		AccelerateConfiguration: &s3.AccelerateConfiguration{ // Required
-			Status: aws.String("BucketAccelerateStatus"),
-		},
-		Bucket: aws.String("BucketName"), // Required
-	}
-	resp, err := svc.PutBucketAccelerateConfiguration(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_PutBucketAcl() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.PutBucketAclInput{
-		Bucket: aws.String("BucketName"), // Required
-		ACL:    aws.String("BucketCannedACL"),
-		AccessControlPolicy: &s3.AccessControlPolicy{
-			Grants: []*s3.Grant{
-				{ // Required
-					Grantee: &s3.Grantee{
-						Type:         aws.String("Type"), // Required
-						DisplayName:  aws.String("DisplayName"),
-						EmailAddress: aws.String("EmailAddress"),
-						ID:           aws.String("ID"),
-						URI:          aws.String("URI"),
-					},
-					Permission: aws.String("Permission"),
-				},
-				// More values...
-			},
-			Owner: &s3.Owner{
-				DisplayName: aws.String("DisplayName"),
-				ID:          aws.String("ID"),
-			},
-		},
-		GrantFullControl: aws.String("GrantFullControl"),
-		GrantRead:        aws.String("GrantRead"),
-		GrantReadACP:     aws.String("GrantReadACP"),
-		GrantWrite:       aws.String("GrantWrite"),
-		GrantWriteACP:    aws.String("GrantWriteACP"),
-	}
-	resp, err := svc.PutBucketAcl(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_PutBucketAnalyticsConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.PutBucketAnalyticsConfigurationInput{
-		AnalyticsConfiguration: &s3.AnalyticsConfiguration{ // Required
-			Id: aws.String("AnalyticsId"), // Required
-			StorageClassAnalysis: &s3.StorageClassAnalysis{ // Required
-				DataExport: &s3.StorageClassAnalysisDataExport{
-					Destination: &s3.AnalyticsExportDestination{ // Required
-						S3BucketDestination: &s3.AnalyticsS3BucketDestination{ // Required
-							Bucket:          aws.String("BucketName"),                  // Required
-							Format:          aws.String("AnalyticsS3ExportFileFormat"), // Required
-							BucketAccountId: aws.String("AccountId"),
-							Prefix:          aws.String("Prefix"),
-						},
-					},
-					OutputSchemaVersion: aws.String("StorageClassAnalysisSchemaVersion"), // Required
+				{
+					Key:       aws.String("HappyFace.jpg"),
+					VersionId: aws.String("yoz3HB.ZhCS_tKVEmIOr7qYyyAaZSKVd"),
 				},
 			},
-			Filter: &s3.AnalyticsFilter{
-				And: &s3.AnalyticsAndOperator{
-					Prefix: aws.String("Prefix"),
-					Tags: []*s3.Tag{
-						{ // Required
-							Key:   aws.String("ObjectKey"), // Required
-							Value: aws.String("Value"),     // Required
-						},
-						// More values...
-					},
-				},
-				Prefix: aws.String("Prefix"),
-				Tag: &s3.Tag{
-					Key:   aws.String("ObjectKey"), // Required
-					Value: aws.String("Value"),     // Required
-				},
-			},
+			Quiet: aws.Bool(false),
 		},
-		Bucket: aws.String("BucketName"),  // Required
-		Id:     aws.String("AnalyticsId"), // Required
 	}
-	resp, err := svc.PutBucketAnalyticsConfiguration(params)
 
+	result, err := svc.DeleteObjects(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_PutBucketCors() {
-	sess := session.Must(session.NewSession())
+// To delete multiple objects from a versioned bucket
+//
+// The following example deletes objects from a bucket. The bucket is versioned, and
+// the request does not specify the object version to delete. In this case, all versions
+// remain in the bucket and S3 adds a delete marker.
+func ExampleS3_DeleteObjects_shared01() {
+	svc := s3.New(session.New())
+	input := &s3.DeleteObjectsInput{
+		Bucket: aws.String("examplebucket"),
+		Delete: &s3.Delete{
+			Objects: []*s3.ObjectIdentifier{
+				{
+					Key: aws.String("objectkey1"),
+				},
+				{
+					Key: aws.String("objectkey2"),
+				},
+			},
+			Quiet: aws.Bool(false),
+		},
+	}
 
-	svc := s3.New(sess)
+	result, err := svc.DeleteObjects(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &s3.PutBucketCorsInput{
-		Bucket: aws.String("BucketName"), // Required
-		CORSConfiguration: &s3.CORSConfiguration{ // Required
-			CORSRules: []*s3.CORSRule{ // Required
-				{ // Required
-					AllowedMethods: []*string{ // Required
-						aws.String("AllowedMethod"), // Required
-						// More values...
-					},
-					AllowedOrigins: []*string{ // Required
-						aws.String("AllowedOrigin"), // Required
-						// More values...
-					},
+	fmt.Println(result)
+}
+
+// To get cors configuration set on a bucket
+//
+// The following example returns cross-origin resource sharing (CORS) configuration
+// set on a bucket.
+func ExampleS3_GetBucketCors_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.GetBucketCorsInput{
+		Bucket: aws.String("examplebucket"),
+	}
+
+	result, err := svc.GetBucketCors(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get a bucket acl
+//
+// The following example gets ACL on the specified bucket.
+func ExampleS3_GetBucketLifecycle_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.GetBucketLifecycleInput{
+		Bucket: aws.String("acl1"),
+	}
+
+	result, err := svc.GetBucketLifecycle(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get lifecycle configuration on a bucket
+//
+// The following example retrieves lifecycle configuration on set on a bucket.
+func ExampleS3_GetBucketLifecycleConfiguration_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.GetBucketLifecycleConfigurationInput{
+		Bucket: aws.String("examplebucket"),
+	}
+
+	result, err := svc.GetBucketLifecycleConfiguration(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get bucket location
+//
+// The following example returns bucket location.
+func ExampleS3_GetBucketLocation_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.GetBucketLocationInput{
+		Bucket: aws.String("examplebucket"),
+	}
+
+	result, err := svc.GetBucketLocation(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get notification configuration set on a bucket
+//
+// The following example returns notification configuration set on a bucket.
+func ExampleS3_GetBucketNotification_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.GetBucketNotificationConfigurationRequest{
+		Bucket: aws.String("examplebucket"),
+	}
+
+	result, err := svc.GetBucketNotification(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get notification configuration set on a bucket
+//
+// The following example returns notification configuration set on a bucket.
+func ExampleS3_GetBucketNotification_shared01() {
+	svc := s3.New(session.New())
+	input := &s3.GetBucketNotificationConfigurationRequest{
+		Bucket: aws.String("examplebucket"),
+	}
+
+	result, err := svc.GetBucketNotification(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get bucket policy
+//
+// The following example returns bucket policy associated with a bucket.
+func ExampleS3_GetBucketPolicy_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.GetBucketPolicyInput{
+		Bucket: aws.String("examplebucket"),
+	}
+
+	result, err := svc.GetBucketPolicy(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get replication configuration set on a bucket
+//
+// The following example returns replication configuration set on a bucket.
+func ExampleS3_GetBucketReplication_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.GetBucketReplicationInput{
+		Bucket: aws.String("examplebucket"),
+	}
+
+	result, err := svc.GetBucketReplication(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get bucket versioning configuration
+//
+// The following example retrieves bucket versioning configuration.
+func ExampleS3_GetBucketRequestPayment_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.GetBucketRequestPaymentInput{
+		Bucket: aws.String("examplebucket"),
+	}
+
+	result, err := svc.GetBucketRequestPayment(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get tag set associated with a bucket
+//
+// The following example returns tag set associated with a bucket
+func ExampleS3_GetBucketTagging_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.GetBucketTaggingInput{
+		Bucket: aws.String("examplebucket"),
+	}
+
+	result, err := svc.GetBucketTagging(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get bucket versioning configuration
+//
+// The following example retrieves bucket versioning configuration.
+func ExampleS3_GetBucketVersioning_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.GetBucketVersioningInput{
+		Bucket: aws.String("examplebucket"),
+	}
+
+	result, err := svc.GetBucketVersioning(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get bucket website configuration
+//
+// The following example retrieves website configuration of a bucket.
+func ExampleS3_GetBucketWebsite_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.GetBucketWebsiteInput{
+		Bucket: aws.String("examplebucket"),
+	}
+
+	result, err := svc.GetBucketWebsite(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To retrieve an object
+//
+// The following example retrieves an object for an S3 bucket.
+func ExampleS3_GetObject_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.GetObjectInput{
+		Bucket: aws.String("examplebucket"),
+		Key:    aws.String("HappyFace.jpg"),
+	}
+
+	result, err := svc.GetObject(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeNoSuchKey:
+				fmt.Println(s3.ErrCodeNoSuchKey, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To retrieve a byte range of an object
+//
+// The following example retrieves an object for an S3 bucket. The request specifies
+// the range header to retrieve a specific byte range.
+func ExampleS3_GetObject_shared01() {
+	svc := s3.New(session.New())
+	input := &s3.GetObjectInput{
+		Bucket: aws.String("examplebucket"),
+		Key:    aws.String("SampleFile.txt"),
+		Range:  aws.String("bytes=0-9"),
+	}
+
+	result, err := svc.GetObject(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeNoSuchKey:
+				fmt.Println(s3.ErrCodeNoSuchKey, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To retrieve object ACL
+//
+// The following example retrieves access control list (ACL) of an object.
+func ExampleS3_GetObjectAcl_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.GetObjectAclInput{
+		Bucket: aws.String("examplebucket"),
+		Key:    aws.String("HappyFace.jpg"),
+	}
+
+	result, err := svc.GetObjectAcl(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeNoSuchKey:
+				fmt.Println(s3.ErrCodeNoSuchKey, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To retrieve tag set of an object
+//
+// The following example retrieves tag set of an object.
+func ExampleS3_GetObjectTagging_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.GetObjectTaggingInput{
+		Bucket: aws.String("examplebucket"),
+		Key:    aws.String("HappyFace.jpg"),
+	}
+
+	result, err := svc.GetObjectTagging(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To retrieve tag set of a specific object version
+//
+// The following example retrieves tag set of an object. The request specifies object
+// version.
+func ExampleS3_GetObjectTagging_shared01() {
+	svc := s3.New(session.New())
+	input := &s3.GetObjectTaggingInput{
+		Bucket:    aws.String("examplebucket"),
+		Key:       aws.String("exampleobject"),
+		VersionId: aws.String("ydlaNkwWm0SfKJR.T1b1fIdPRbldTYRI"),
+	}
+
+	result, err := svc.GetObjectTagging(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To retrieve torrent files for an object
+//
+// The following example retrieves torrent files of an object.
+func ExampleS3_GetObjectTorrent_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.GetObjectTorrentInput{
+		Bucket: aws.String("examplebucket"),
+		Key:    aws.String("HappyFace.jpg"),
+	}
+
+	result, err := svc.GetObjectTorrent(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To determine if bucket exists
+//
+// This operation checks to see if a bucket exists.
+func ExampleS3_HeadBucket_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.HeadBucketInput{
+		Bucket: aws.String("acl1"),
+	}
+
+	result, err := svc.HeadBucket(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeNoSuchBucket:
+				fmt.Println(s3.ErrCodeNoSuchBucket, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To retrieve metadata of an object without returning the object itself
+//
+// The following example retrieves an object metadata.
+func ExampleS3_HeadObject_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.HeadObjectInput{
+		Bucket: aws.String("examplebucket"),
+		Key:    aws.String("HappyFace.jpg"),
+	}
+
+	result, err := svc.HeadObject(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list object versions
+//
+// The following example return versions of an object with specific key name prefix.
+// The request limits the number of items returned to two. If there are are more than
+// two object version, S3 returns NextToken in the response. You can specify this token
+// value in your next request to fetch next set of object versions.
+func ExampleS3_ListBuckets_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.ListBucketsInput{}
+
+	result, err := svc.ListBuckets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list in-progress multipart uploads on a bucket
+//
+// The following example lists in-progress multipart uploads on a specific bucket.
+func ExampleS3_ListMultipartUploads_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.ListMultipartUploadsInput{
+		Bucket: aws.String("examplebucket"),
+	}
+
+	result, err := svc.ListMultipartUploads(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// List next set of multipart uploads when previous result is truncated
+//
+// The following example specifies the upload-id-marker and key-marker from previous
+// truncated response to retrieve next setup of multipart uploads.
+func ExampleS3_ListMultipartUploads_shared01() {
+	svc := s3.New(session.New())
+	input := &s3.ListMultipartUploadsInput{
+		Bucket:         aws.String("examplebucket"),
+		KeyMarker:      aws.String("nextkeyfrompreviousresponse"),
+		MaxUploads:     aws.Int64(2),
+		UploadIdMarker: aws.String("valuefrompreviousresponse"),
+	}
+
+	result, err := svc.ListMultipartUploads(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list object versions
+//
+// The following example return versions of an object with specific key name prefix.
+// The request limits the number of items returned to two. If there are are more than
+// two object version, S3 returns NextToken in the response. You can specify this token
+// value in your next request to fetch next set of object versions.
+func ExampleS3_ListObjectVersions_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.ListObjectVersionsInput{
+		Bucket: aws.String("examplebucket"),
+		Prefix: aws.String("HappyFace.jpg"),
+	}
+
+	result, err := svc.ListObjectVersions(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list objects in a bucket
+//
+// The following example list two objects in a bucket.
+func ExampleS3_ListObjects_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.ListObjectsInput{
+		Bucket:  aws.String("examplebucket"),
+		MaxKeys: aws.Int64(2),
+	}
+
+	result, err := svc.ListObjects(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeNoSuchBucket:
+				fmt.Println(s3.ErrCodeNoSuchBucket, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To get object list
+//
+// The following example retrieves object list. The request specifies max keys to limit
+// response to include only 2 object keys.
+func ExampleS3_ListObjectsV2_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.ListObjectsV2Input{
+		Bucket:  aws.String("examplebucket"),
+		MaxKeys: aws.Int64(2),
+	}
+
+	result, err := svc.ListObjectsV2(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeNoSuchBucket:
+				fmt.Println(s3.ErrCodeNoSuchBucket, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list parts of a multipart upload.
+//
+// The following example lists parts uploaded for a specific multipart upload.
+func ExampleS3_ListParts_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.ListPartsInput{
+		Bucket:   aws.String("examplebucket"),
+		Key:      aws.String("bigobject"),
+		UploadId: aws.String("example7YPBOJuoFiQ9cz4P3Pe6FIZwO4f7wN93uHsNBEw97pl5eNwzExg0LAT2dUN91cOmrEQHDsP3WA60CEg--"),
+	}
+
+	result, err := svc.ListParts(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// Put bucket acl
+//
+// The following example replaces existing ACL on a bucket. The ACL grants the bucket
+// owner (specified using the owner ID) and write permission to the LogDelivery group.
+// Because this is a replace operation, you must specify all the grants in your request.
+// To incrementally add or remove ACL grants, you might use the console.
+func ExampleS3_PutBucketAcl_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.PutBucketAclInput{
+		Bucket:           aws.String("examplebucket"),
+		GrantFullControl: aws.String("id=examplee7a2f25102679df27bb0ae12b3f85be6f290b936c4393484"),
+		GrantWrite:       aws.String("uri=http://acs.amazonaws.com/groups/s3/LogDelivery"),
+	}
+
+	result, err := svc.PutBucketAcl(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To set cors configuration on a bucket.
+//
+// The following example enables PUT, POST, and DELETE requests from www.example.com,
+// and enables GET requests from any domain.
+func ExampleS3_PutBucketCors_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.PutBucketCorsInput{
+		Bucket: aws.String(""),
+		CORSConfiguration: &s3.CORSConfiguration{
+			CORSRules: []*s3.CORSRule{
+				{
 					AllowedHeaders: []*string{
-						aws.String("AllowedHeader"), // Required
-						// More values...
+						aws.String("*"),
+					},
+					AllowedMethods: []*string{
+						aws.String("PUT"),
+						aws.String("POST"),
+						aws.String("DELETE"),
+					},
+					AllowedOrigins: []*string{
+						aws.String("http://www.example.com"),
 					},
 					ExposeHeaders: []*string{
-						aws.String("ExposeHeader"), // Required
-						// More values...
+						aws.String("x-amz-server-side-encryption"),
 					},
-					MaxAgeSeconds: aws.Int64(1),
+					MaxAgeSeconds: aws.Int64(3000),
 				},
-				// More values...
+				{
+					AllowedHeaders: []*string{
+						aws.String("Authorization"),
+					},
+					AllowedMethods: []*string{
+						aws.String("GET"),
+					},
+					AllowedOrigins: []*string{
+						aws.String("*"),
+					},
+					MaxAgeSeconds: aws.Int64(3000),
+				},
 			},
 		},
 	}
-	resp, err := svc.PutBucketCors(params)
 
+	result, err := svc.PutBucketCors(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_PutBucketInventoryConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.PutBucketInventoryConfigurationInput{
-		Bucket: aws.String("BucketName"),  // Required
-		Id:     aws.String("InventoryId"), // Required
-		InventoryConfiguration: &s3.InventoryConfiguration{ // Required
-			Destination: &s3.InventoryDestination{ // Required
-				S3BucketDestination: &s3.InventoryS3BucketDestination{ // Required
-					Bucket:    aws.String("BucketName"),      // Required
-					Format:    aws.String("InventoryFormat"), // Required
-					AccountId: aws.String("AccountId"),
-					Prefix:    aws.String("Prefix"),
-				},
-			},
-			Id: aws.String("InventoryId"), // Required
-			IncludedObjectVersions: aws.String("InventoryIncludedObjectVersions"), // Required
-			IsEnabled:              aws.Bool(true),                                // Required
-			Schedule: &s3.InventorySchedule{ // Required
-				Frequency: aws.String("InventoryFrequency"), // Required
-			},
-			Filter: &s3.InventoryFilter{
-				Prefix: aws.String("Prefix"), // Required
-			},
-			OptionalFields: []*string{
-				aws.String("InventoryOptionalField"), // Required
-				// More values...
-			},
-		},
-	}
-	resp, err := svc.PutBucketInventoryConfiguration(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_PutBucketLifecycle() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.PutBucketLifecycleInput{
-		Bucket: aws.String("BucketName"), // Required
-		LifecycleConfiguration: &s3.LifecycleConfiguration{
-			Rules: []*s3.Rule{ // Required
-				{ // Required
-					Prefix: aws.String("Prefix"),           // Required
-					Status: aws.String("ExpirationStatus"), // Required
-					AbortIncompleteMultipartUpload: &s3.AbortIncompleteMultipartUpload{
-						DaysAfterInitiation: aws.Int64(1),
-					},
-					Expiration: &s3.LifecycleExpiration{
-						Date: aws.Time(time.Now()),
-						Days: aws.Int64(1),
-						ExpiredObjectDeleteMarker: aws.Bool(true),
-					},
-					ID: aws.String("ID"),
-					NoncurrentVersionExpiration: &s3.NoncurrentVersionExpiration{
-						NoncurrentDays: aws.Int64(1),
-					},
-					NoncurrentVersionTransition: &s3.NoncurrentVersionTransition{
-						NoncurrentDays: aws.Int64(1),
-						StorageClass:   aws.String("TransitionStorageClass"),
-					},
-					Transition: &s3.Transition{
-						Date:         aws.Time(time.Now()),
-						Days:         aws.Int64(1),
-						StorageClass: aws.String("TransitionStorageClass"),
-					},
-				},
-				// More values...
-			},
-		},
-	}
-	resp, err := svc.PutBucketLifecycle(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_PutBucketLifecycleConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.PutBucketLifecycleConfigurationInput{
-		Bucket: aws.String("BucketName"), // Required
+// Put bucket lifecycle
+//
+// The following example replaces existing lifecycle configuration, if any, on the specified
+// bucket.
+func ExampleS3_PutBucketLifecycleConfiguration_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.PutBucketLifecycleConfigurationInput{
+		Bucket: aws.String("examplebucket"),
 		LifecycleConfiguration: &s3.BucketLifecycleConfiguration{
-			Rules: []*s3.LifecycleRule{ // Required
-				{ // Required
-					Status: aws.String("ExpirationStatus"), // Required
-					AbortIncompleteMultipartUpload: &s3.AbortIncompleteMultipartUpload{
-						DaysAfterInitiation: aws.Int64(1),
-					},
-					Expiration: &s3.LifecycleExpiration{
-						Date: aws.Time(time.Now()),
-						Days: aws.Int64(1),
-						ExpiredObjectDeleteMarker: aws.Bool(true),
-					},
-					Filter: &s3.LifecycleRuleFilter{
-						And: &s3.LifecycleRuleAndOperator{
-							Prefix: aws.String("Prefix"),
-							Tags: []*s3.Tag{
-								{ // Required
-									Key:   aws.String("ObjectKey"), // Required
-									Value: aws.String("Value"),     // Required
-								},
-								// More values...
-							},
-						},
-						Prefix: aws.String("Prefix"),
-						Tag: &s3.Tag{
-							Key:   aws.String("ObjectKey"), // Required
-							Value: aws.String("Value"),     // Required
-						},
-					},
-					ID: aws.String("ID"),
-					NoncurrentVersionExpiration: &s3.NoncurrentVersionExpiration{
-						NoncurrentDays: aws.Int64(1),
-					},
-					NoncurrentVersionTransitions: []*s3.NoncurrentVersionTransition{
-						{ // Required
-							NoncurrentDays: aws.Int64(1),
-							StorageClass:   aws.String("TransitionStorageClass"),
-						},
-						// More values...
-					},
-					Prefix: aws.String("Prefix"),
+			Rules: []*s3.LifecycleRule{
+				{
+					ID:     aws.String("TestOnly"),
+					Status: aws.String("Enabled"),
 					Transitions: []*s3.Transition{
-						{ // Required
-							Date:         aws.Time(time.Now()),
-							Days:         aws.Int64(1),
-							StorageClass: aws.String("TransitionStorageClass"),
+						{
+							Days:         aws.Int64(365),
+							StorageClass: aws.String("GLACIER"),
 						},
-						// More values...
 					},
 				},
-				// More values...
 			},
 		},
 	}
-	resp, err := svc.PutBucketLifecycleConfiguration(params)
 
+	result, err := svc.PutBucketLifecycleConfiguration(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_PutBucketLogging() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.PutBucketLoggingInput{
-		Bucket: aws.String("BucketName"), // Required
-		BucketLoggingStatus: &s3.BucketLoggingStatus{ // Required
+// Set logging configuration for a bucket
+//
+// The following example sets logging policy on a bucket. For the Log Delivery group
+// to deliver logs to the destination bucket, it needs permission for the READ_ACP action
+// which the policy grants.
+func ExampleS3_PutBucketLogging_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.PutBucketLoggingInput{
+		Bucket: aws.String("sourcebucket"),
+		BucketLoggingStatus: &s3.BucketLoggingStatus{
 			LoggingEnabled: &s3.LoggingEnabled{
-				TargetBucket: aws.String("TargetBucket"),
+				TargetBucket: aws.String("targetbucket"),
 				TargetGrants: []*s3.TargetGrant{
-					{ // Required
-						Grantee: &s3.Grantee{
-							Type:         aws.String("Type"), // Required
-							DisplayName:  aws.String("DisplayName"),
-							EmailAddress: aws.String("EmailAddress"),
-							ID:           aws.String("ID"),
-							URI:          aws.String("URI"),
-						},
-						Permission: aws.String("BucketLogsPermission"),
+					{
+						Permission: aws.String("READ"),
 					},
-					// More values...
 				},
-				TargetPrefix: aws.String("TargetPrefix"),
+				TargetPrefix: aws.String("MyBucketLogs/"),
 			},
 		},
 	}
-	resp, err := svc.PutBucketLogging(params)
 
+	result, err := svc.PutBucketLogging(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_PutBucketMetricsConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.PutBucketMetricsConfigurationInput{
-		Bucket: aws.String("BucketName"), // Required
-		Id:     aws.String("MetricsId"),  // Required
-		MetricsConfiguration: &s3.MetricsConfiguration{ // Required
-			Id: aws.String("MetricsId"), // Required
-			Filter: &s3.MetricsFilter{
-				And: &s3.MetricsAndOperator{
-					Prefix: aws.String("Prefix"),
-					Tags: []*s3.Tag{
-						{ // Required
-							Key:   aws.String("ObjectKey"), // Required
-							Value: aws.String("Value"),     // Required
-						},
-						// More values...
-					},
-				},
-				Prefix: aws.String("Prefix"),
-				Tag: &s3.Tag{
-					Key:   aws.String("ObjectKey"), // Required
-					Value: aws.String("Value"),     // Required
-				},
-			},
-		},
-	}
-	resp, err := svc.PutBucketMetricsConfiguration(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_PutBucketNotification() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.PutBucketNotificationInput{
-		Bucket: aws.String("BucketName"), // Required
-		NotificationConfiguration: &s3.NotificationConfigurationDeprecated{ // Required
-			CloudFunctionConfiguration: &s3.CloudFunctionConfiguration{
-				CloudFunction: aws.String("CloudFunction"),
-				Event:         aws.String("Event"),
-				Events: []*string{
-					aws.String("Event"), // Required
-					// More values...
-				},
-				Id:             aws.String("NotificationId"),
-				InvocationRole: aws.String("CloudFunctionInvocationRole"),
-			},
-			QueueConfiguration: &s3.QueueConfigurationDeprecated{
-				Event: aws.String("Event"),
-				Events: []*string{
-					aws.String("Event"), // Required
-					// More values...
-				},
-				Id:    aws.String("NotificationId"),
-				Queue: aws.String("QueueArn"),
-			},
-			TopicConfiguration: &s3.TopicConfigurationDeprecated{
-				Event: aws.String("Event"),
-				Events: []*string{
-					aws.String("Event"), // Required
-					// More values...
-				},
-				Id:    aws.String("NotificationId"),
-				Topic: aws.String("TopicArn"),
-			},
-		},
-	}
-	resp, err := svc.PutBucketNotification(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_PutBucketNotificationConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.PutBucketNotificationConfigurationInput{
-		Bucket: aws.String("BucketName"), // Required
-		NotificationConfiguration: &s3.NotificationConfiguration{ // Required
-			LambdaFunctionConfigurations: []*s3.LambdaFunctionConfiguration{
-				{ // Required
-					Events: []*string{ // Required
-						aws.String("Event"), // Required
-						// More values...
-					},
-					LambdaFunctionArn: aws.String("LambdaFunctionArn"), // Required
-					Filter: &s3.NotificationConfigurationFilter{
-						Key: &s3.KeyFilter{
-							FilterRules: []*s3.FilterRule{
-								{ // Required
-									Name:  aws.String("FilterRuleName"),
-									Value: aws.String("FilterRuleValue"),
-								},
-								// More values...
-							},
-						},
-					},
-					Id: aws.String("NotificationId"),
-				},
-				// More values...
-			},
-			QueueConfigurations: []*s3.QueueConfiguration{
-				{ // Required
-					Events: []*string{ // Required
-						aws.String("Event"), // Required
-						// More values...
-					},
-					QueueArn: aws.String("QueueArn"), // Required
-					Filter: &s3.NotificationConfigurationFilter{
-						Key: &s3.KeyFilter{
-							FilterRules: []*s3.FilterRule{
-								{ // Required
-									Name:  aws.String("FilterRuleName"),
-									Value: aws.String("FilterRuleValue"),
-								},
-								// More values...
-							},
-						},
-					},
-					Id: aws.String("NotificationId"),
-				},
-				// More values...
-			},
+// Set notification configuration for a bucket
+//
+// The following example sets notification configuration on a bucket to publish the
+// object created events to an SNS topic.
+func ExampleS3_PutBucketNotificationConfiguration_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.PutBucketNotificationConfigurationInput{
+		Bucket: aws.String("examplebucket"),
+		NotificationConfiguration: &s3.NotificationConfiguration{
 			TopicConfigurations: []*s3.TopicConfiguration{
-				{ // Required
-					Events: []*string{ // Required
-						aws.String("Event"), // Required
-						// More values...
+				{
+					Events: []*string{
+						aws.String("s3:ObjectCreated:*"),
 					},
-					TopicArn: aws.String("TopicArn"), // Required
-					Filter: &s3.NotificationConfigurationFilter{
-						Key: &s3.KeyFilter{
-							FilterRules: []*s3.FilterRule{
-								{ // Required
-									Name:  aws.String("FilterRuleName"),
-									Value: aws.String("FilterRuleValue"),
-								},
-								// More values...
-							},
-						},
-					},
-					Id: aws.String("NotificationId"),
+					TopicArn: aws.String("arn:aws:sns:us-west-2:123456789012:s3-notification-topic"),
 				},
-				// More values...
 			},
 		},
 	}
-	resp, err := svc.PutBucketNotificationConfiguration(params)
 
+	result, err := svc.PutBucketNotificationConfiguration(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_PutBucketPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.PutBucketPolicyInput{
-		Bucket: aws.String("BucketName"), // Required
-		Policy: aws.String("Policy"),     // Required
+// Set bucket policy
+//
+// The following example sets a permission policy on a bucket.
+func ExampleS3_PutBucketPolicy_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.PutBucketPolicyInput{
+		Bucket: aws.String("examplebucket"),
+		Policy: aws.String("{\"Version\": \"2012-10-17\", \"Statement\": [{ \"Sid\": \"id-1\",\"Effect\": \"Allow\",\"Principal\": {\"AWS\": \"arn:aws:iam::123456789012:root\"}, \"Action\": [ \"s3:PutObject\",\"s3:PutObjectAcl\"], \"Resource\": [\"arn:aws:s3:::acl3/*\" ] } ]}"),
 	}
-	resp, err := svc.PutBucketPolicy(params)
 
+	result, err := svc.PutBucketPolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_PutBucketReplication() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.PutBucketReplicationInput{
-		Bucket: aws.String("BucketName"), // Required
-		ReplicationConfiguration: &s3.ReplicationConfiguration{ // Required
-			Role: aws.String("Role"), // Required
-			Rules: []*s3.ReplicationRule{ // Required
-				{ // Required
-					Destination: &s3.Destination{ // Required
-						Bucket:       aws.String("BucketName"), // Required
-						StorageClass: aws.String("StorageClass"),
-					},
-					Prefix: aws.String("Prefix"),                // Required
-					Status: aws.String("ReplicationRuleStatus"), // Required
-					ID:     aws.String("ID"),
+// Set replication configuration on a bucket
+//
+// The following example sets replication configuration on a bucket.
+func ExampleS3_PutBucketReplication_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.PutBucketReplicationInput{
+		Bucket: aws.String("examplebucket"),
+		ReplicationConfiguration: &s3.ReplicationConfiguration{
+			Role: aws.String("arn:aws:iam::123456789012:role/examplerole"),
+			Rules: []*s3.ReplicationRule{
+				{
+					Prefix: aws.String(""),
+					Status: aws.String("Enabled"),
 				},
-				// More values...
 			},
 		},
 	}
-	resp, err := svc.PutBucketReplication(params)
 
+	result, err := svc.PutBucketReplication(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_PutBucketRequestPayment() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.PutBucketRequestPaymentInput{
-		Bucket: aws.String("BucketName"), // Required
-		RequestPaymentConfiguration: &s3.RequestPaymentConfiguration{ // Required
-			Payer: aws.String("Payer"), // Required
+// Set request payment configuration on a bucket.
+//
+// The following example sets request payment configuration on a bucket so that person
+// requesting the download is charged.
+func ExampleS3_PutBucketRequestPayment_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.PutBucketRequestPaymentInput{
+		Bucket: aws.String("examplebucket"),
+		RequestPaymentConfiguration: &s3.RequestPaymentConfiguration{
+			Payer: aws.String("Requester"),
 		},
 	}
-	resp, err := svc.PutBucketRequestPayment(params)
 
+	result, err := svc.PutBucketRequestPayment(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_PutBucketTagging() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.PutBucketTaggingInput{
-		Bucket: aws.String("BucketName"), // Required
-		Tagging: &s3.Tagging{ // Required
-			TagSet: []*s3.Tag{ // Required
-				{ // Required
-					Key:   aws.String("ObjectKey"), // Required
-					Value: aws.String("Value"),     // Required
+// Set tags on a bucket
+//
+// The following example sets tags on a bucket. Any existing tags are replaced.
+func ExampleS3_PutBucketTagging_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.PutBucketTaggingInput{
+		Bucket: aws.String("examplebucket"),
+		Tagging: &s3.Tagging{
+			TagSet: []*s3.Tag{
+				{
+					Key:   aws.String("Key1"),
+					Value: aws.String("Value1"),
 				},
-				// More values...
+				{
+					Key:   aws.String("Key2"),
+					Value: aws.String("Value2"),
+				},
 			},
 		},
 	}
-	resp, err := svc.PutBucketTagging(params)
 
+	result, err := svc.PutBucketTagging(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_PutBucketVersioning() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.PutBucketVersioningInput{
-		Bucket: aws.String("BucketName"), // Required
-		VersioningConfiguration: &s3.VersioningConfiguration{ // Required
-			MFADelete: aws.String("MFADelete"),
-			Status:    aws.String("BucketVersioningStatus"),
+// Set versioning configuration on a bucket
+//
+// The following example sets versioning configuration on bucket. The configuration
+// enables versioning on the bucket.
+func ExampleS3_PutBucketVersioning_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.PutBucketVersioningInput{
+		Bucket: aws.String("examplebucket"),
+		VersioningConfiguration: &s3.VersioningConfiguration{
+			MFADelete: aws.String("Disabled"),
+			Status:    aws.String("Enabled"),
 		},
-		MFA: aws.String("MFA"),
 	}
-	resp, err := svc.PutBucketVersioning(params)
 
+	result, err := svc.PutBucketVersioning(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_PutBucketWebsite() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.PutBucketWebsiteInput{
-		Bucket: aws.String("BucketName"), // Required
-		WebsiteConfiguration: &s3.WebsiteConfiguration{ // Required
+// Set website configuration on a bucket
+//
+// The following example adds website configuration to a bucket.
+func ExampleS3_PutBucketWebsite_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.PutBucketWebsiteInput{
+		Bucket: aws.String("examplebucket"),
+		WebsiteConfiguration: &s3.WebsiteConfiguration{
 			ErrorDocument: &s3.ErrorDocument{
-				Key: aws.String("ObjectKey"), // Required
+				Key: aws.String("error.html"),
 			},
 			IndexDocument: &s3.IndexDocument{
-				Suffix: aws.String("Suffix"), // Required
-			},
-			RedirectAllRequestsTo: &s3.RedirectAllRequestsTo{
-				HostName: aws.String("HostName"), // Required
-				Protocol: aws.String("Protocol"),
-			},
-			RoutingRules: []*s3.RoutingRule{
-				{ // Required
-					Redirect: &s3.Redirect{ // Required
-						HostName:             aws.String("HostName"),
-						HttpRedirectCode:     aws.String("HttpRedirectCode"),
-						Protocol:             aws.String("Protocol"),
-						ReplaceKeyPrefixWith: aws.String("ReplaceKeyPrefixWith"),
-						ReplaceKeyWith:       aws.String("ReplaceKeyWith"),
-					},
-					Condition: &s3.Condition{
-						HttpErrorCodeReturnedEquals: aws.String("HttpErrorCodeReturnedEquals"),
-						KeyPrefixEquals:             aws.String("KeyPrefixEquals"),
-					},
-				},
-				// More values...
+				Suffix: aws.String("index.html"),
 			},
 		},
 	}
-	resp, err := svc.PutBucketWebsite(params)
 
+	result, err := svc.PutBucketWebsite(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_PutObject() {
-	sess := session.Must(session.NewSession())
+// To upload an object and specify server-side encryption and object tags
+//
+// The following example uploads and object. The request specifies the optional server-side
+// encryption option. The request also specifies optional object tags. If the bucket
+// is versioning enabled, S3 returns version ID in response.
+func ExampleS3_PutObject_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.PutObjectInput{
+		Body:                 aws.ReadSeekCloser(strings.NewReader("filetoupload")),
+		Bucket:               aws.String("examplebucket"),
+		Key:                  aws.String("exampleobject"),
+		ServerSideEncryption: aws.String("AES256"),
+		Tagging:              aws.String("key1=value1&key2=value2"),
+	}
 
-	svc := s3.New(sess)
+	result, err := svc.PutObject(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &s3.PutObjectInput{
-		Bucket:             aws.String("BucketName"), // Required
-		Key:                aws.String("ObjectKey"),  // Required
-		ACL:                aws.String("ObjectCannedACL"),
-		Body:               bytes.NewReader([]byte("PAYLOAD")),
-		CacheControl:       aws.String("CacheControl"),
-		ContentDisposition: aws.String("ContentDisposition"),
-		ContentEncoding:    aws.String("ContentEncoding"),
-		ContentLanguage:    aws.String("ContentLanguage"),
-		ContentLength:      aws.Int64(1),
-		ContentType:        aws.String("ContentType"),
-		Expires:            aws.Time(time.Now()),
-		GrantFullControl:   aws.String("GrantFullControl"),
-		GrantRead:          aws.String("GrantRead"),
-		GrantReadACP:       aws.String("GrantReadACP"),
-		GrantWriteACP:      aws.String("GrantWriteACP"),
+	fmt.Println(result)
+}
+
+// To upload an object and specify canned ACL.
+//
+// The following example uploads and object. The request specifies optional canned ACL
+// (access control list) to all READ access to authenticated users. If the bucket is
+// versioning enabled, S3 returns version ID in response.
+func ExampleS3_PutObject_shared01() {
+	svc := s3.New(session.New())
+	input := &s3.PutObjectInput{
+		ACL:    aws.String("authenticated-read"),
+		Body:   aws.ReadSeekCloser(strings.NewReader("filetoupload")),
+		Bucket: aws.String("examplebucket"),
+		Key:    aws.String("exampleobject"),
+	}
+
+	result, err := svc.PutObject(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To upload an object
+//
+// The following example uploads an object to a versioning-enabled bucket. The source
+// file is specified using Windows file syntax. S3 returns VersionId of the newly created
+// object.
+func ExampleS3_PutObject_shared02() {
+	svc := s3.New(session.New())
+	input := &s3.PutObjectInput{
+		Body:   aws.ReadSeekCloser(strings.NewReader("HappyFace.jpg")),
+		Bucket: aws.String("examplebucket"),
+		Key:    aws.String("HappyFace.jpg"),
+	}
+
+	result, err := svc.PutObject(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create an object.
+//
+// The following example creates an object. If the bucket is versioning enabled, S3
+// returns version ID in response.
+func ExampleS3_PutObject_shared03() {
+	svc := s3.New(session.New())
+	input := &s3.PutObjectInput{
+		Body:   aws.ReadSeekCloser(strings.NewReader("filetoupload")),
+		Bucket: aws.String("examplebucket"),
+		Key:    aws.String("objectkey"),
+	}
+
+	result, err := svc.PutObject(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To upload an object and specify optional tags
+//
+// The following example uploads an object. The request specifies optional object tags.
+// The bucket is versioned, therefore S3 returns version ID of the newly created object.
+func ExampleS3_PutObject_shared04() {
+	svc := s3.New(session.New())
+	input := &s3.PutObjectInput{
+		Body:    aws.ReadSeekCloser(strings.NewReader("c:\\HappyFace.jpg")),
+		Bucket:  aws.String("examplebucket"),
+		Key:     aws.String("HappyFace.jpg"),
+		Tagging: aws.String("key1=value1&key2=value2"),
+	}
+
+	result, err := svc.PutObject(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To upload object and specify user-defined metadata
+//
+// The following example creates an object. The request also specifies optional metadata.
+// If the bucket is versioning enabled, S3 returns version ID in response.
+func ExampleS3_PutObject_shared05() {
+	svc := s3.New(session.New())
+	input := &s3.PutObjectInput{
+		Body:   aws.ReadSeekCloser(strings.NewReader("filetoupload")),
+		Bucket: aws.String("examplebucket"),
+		Key:    aws.String("exampleobject"),
 		Metadata: map[string]*string{
-			"Key": aws.String("MetadataValue"), // Required
-			// More values...
+			"metadata1": aws.String("value1"),
+			"metadata2": aws.String("value2"),
 		},
-		RequestPayer:            aws.String("RequestPayer"),
-		SSECustomerAlgorithm:    aws.String("SSECustomerAlgorithm"),
-		SSECustomerKey:          aws.String("SSECustomerKey"),
-		SSECustomerKeyMD5:       aws.String("SSECustomerKeyMD5"),
-		SSEKMSKeyId:             aws.String("SSEKMSKeyId"),
-		ServerSideEncryption:    aws.String("ServerSideEncryption"),
-		StorageClass:            aws.String("StorageClass"),
-		Tagging:                 aws.String("TaggingHeader"),
-		WebsiteRedirectLocation: aws.String("WebsiteRedirectLocation"),
 	}
-	resp, err := svc.PutObject(params)
 
+	result, err := svc.PutObject(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_PutObjectAcl() {
-	sess := session.Must(session.NewSession())
+// To upload an object (specify optional headers)
+//
+// The following example uploads an object. The request specifies optional request headers
+// to directs S3 to use specific storage class and use server-side encryption.
+func ExampleS3_PutObject_shared06() {
+	svc := s3.New(session.New())
+	input := &s3.PutObjectInput{
+		Body:                 aws.ReadSeekCloser(strings.NewReader("HappyFace.jpg")),
+		Bucket:               aws.String("examplebucket"),
+		Key:                  aws.String("HappyFace.jpg"),
+		ServerSideEncryption: aws.String("AES256"),
+		StorageClass:         aws.String("STANDARD_IA"),
+	}
 
-	svc := s3.New(sess)
+	result, err := svc.PutObject(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &s3.PutObjectAclInput{
-		Bucket: aws.String("BucketName"), // Required
-		Key:    aws.String("ObjectKey"),  // Required
-		ACL:    aws.String("ObjectCannedACL"),
-		AccessControlPolicy: &s3.AccessControlPolicy{
-			Grants: []*s3.Grant{
-				{ // Required
-					Grantee: &s3.Grantee{
-						Type:         aws.String("Type"), // Required
-						DisplayName:  aws.String("DisplayName"),
-						EmailAddress: aws.String("EmailAddress"),
-						ID:           aws.String("ID"),
-						URI:          aws.String("URI"),
-					},
-					Permission: aws.String("Permission"),
+	fmt.Println(result)
+}
+
+// To grant permissions using object ACL
+//
+// The following example adds grants to an object ACL. The first permission grants user1
+// and user2 FULL_CONTROL and the AllUsers group READ permission.
+func ExampleS3_PutObjectAcl_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.PutObjectAclInput{
+		AccessControlPolicy: &s3.AccessControlPolicy{},
+		Bucket:              aws.String("examplebucket"),
+		GrantFullControl:    aws.String("emailaddress=user1@example.com,emailaddress=user2@example.com"),
+		GrantRead:           aws.String("uri=http://acs.amazonaws.com/groups/global/AllUsers"),
+		Key:                 aws.String("HappyFace.jpg"),
+	}
+
+	result, err := svc.PutObjectAcl(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeNoSuchKey:
+				fmt.Println(s3.ErrCodeNoSuchKey, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To add tags to an existing object
+//
+// The following example adds tags to an existing object.
+func ExampleS3_PutObjectTagging_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.PutObjectTaggingInput{
+		Bucket: aws.String("examplebucket"),
+		Key:    aws.String("HappyFace.jpg"),
+		Tagging: &s3.Tagging{
+			TagSet: []*s3.Tag{
+				{
+					Key:   aws.String("Key3"),
+					Value: aws.String("Value3"),
 				},
-				// More values...
-			},
-			Owner: &s3.Owner{
-				DisplayName: aws.String("DisplayName"),
-				ID:          aws.String("ID"),
-			},
-		},
-		GrantFullControl: aws.String("GrantFullControl"),
-		GrantRead:        aws.String("GrantRead"),
-		GrantReadACP:     aws.String("GrantReadACP"),
-		GrantWrite:       aws.String("GrantWrite"),
-		GrantWriteACP:    aws.String("GrantWriteACP"),
-		RequestPayer:     aws.String("RequestPayer"),
-		VersionId:        aws.String("ObjectVersionId"),
-	}
-	resp, err := svc.PutObjectAcl(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleS3_PutObjectTagging() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.PutObjectTaggingInput{
-		Bucket: aws.String("BucketName"), // Required
-		Key:    aws.String("ObjectKey"),  // Required
-		Tagging: &s3.Tagging{ // Required
-			TagSet: []*s3.Tag{ // Required
-				{ // Required
-					Key:   aws.String("ObjectKey"), // Required
-					Value: aws.String("Value"),     // Required
+				{
+					Key:   aws.String("Key4"),
+					Value: aws.String("Value4"),
 				},
-				// More values...
 			},
 		},
-		VersionId: aws.String("ObjectVersionId"),
 	}
-	resp, err := svc.PutObjectTagging(params)
 
+	result, err := svc.PutObjectTagging(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_RestoreObject() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.RestoreObjectInput{
-		Bucket:       aws.String("BucketName"), // Required
-		Key:          aws.String("ObjectKey"),  // Required
-		RequestPayer: aws.String("RequestPayer"),
+// To restore an archived object
+//
+// The following example restores for one day an archived copy of an object back into
+// Amazon S3 bucket.
+func ExampleS3_RestoreObject_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.RestoreObjectInput{
+		Bucket: aws.String("examplebucket"),
+		Key:    aws.String("archivedobjectkey"),
 		RestoreRequest: &s3.RestoreRequest{
-			Days: aws.Int64(1), // Required
+			Days: aws.Int64(1),
 			GlacierJobParameters: &s3.GlacierJobParameters{
-				Tier: aws.String("Tier"), // Required
+				Tier: aws.String("Expedited"),
 			},
 		},
-		VersionId: aws.String("ObjectVersionId"),
 	}
-	resp, err := svc.RestoreObject(params)
 
+	result, err := svc.RestoreObject(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeObjectAlreadyInActiveTierError:
+				fmt.Println(s3.ErrCodeObjectAlreadyInActiveTierError, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_UploadPart() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.UploadPartInput{
-		Bucket:               aws.String("BucketName"),        // Required
-		Key:                  aws.String("ObjectKey"),         // Required
-		PartNumber:           aws.Int64(1),                    // Required
-		UploadId:             aws.String("MultipartUploadId"), // Required
-		Body:                 bytes.NewReader([]byte("PAYLOAD")),
-		ContentLength:        aws.Int64(1),
-		RequestPayer:         aws.String("RequestPayer"),
-		SSECustomerAlgorithm: aws.String("SSECustomerAlgorithm"),
-		SSECustomerKey:       aws.String("SSECustomerKey"),
-		SSECustomerKeyMD5:    aws.String("SSECustomerKeyMD5"),
+// To upload a part
+//
+// The following example uploads part 1 of a multipart upload. The example specifies
+// a file name for the part data. The Upload ID is same that is returned by the initiate
+// multipart upload.
+func ExampleS3_UploadPart_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.UploadPartInput{
+		Body:       aws.ReadSeekCloser(strings.NewReader("fileToUpload")),
+		Bucket:     aws.String("examplebucket"),
+		Key:        aws.String("examplelargeobject"),
+		PartNumber: aws.Int64(1),
+		UploadId:   aws.String("xadcOB_7YPBOJuoFiQ9cz4P3Pe6FIZwO4f7wN93uHsNBEw97pl5eNwzExg0LAT2dUN91cOmrEQHDsP3WA60CEg--"),
 	}
-	resp, err := svc.UploadPart(params)
 
+	result, err := svc.UploadPart(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleS3_UploadPartCopy() {
-	sess := session.Must(session.NewSession())
-
-	svc := s3.New(sess)
-
-	params := &s3.UploadPartCopyInput{
-		Bucket:                         aws.String("BucketName"),        // Required
-		CopySource:                     aws.String("CopySource"),        // Required
-		Key:                            aws.String("ObjectKey"),         // Required
-		PartNumber:                     aws.Int64(1),                    // Required
-		UploadId:                       aws.String("MultipartUploadId"), // Required
-		CopySourceIfMatch:              aws.String("CopySourceIfMatch"),
-		CopySourceIfModifiedSince:      aws.Time(time.Now()),
-		CopySourceIfNoneMatch:          aws.String("CopySourceIfNoneMatch"),
-		CopySourceIfUnmodifiedSince:    aws.Time(time.Now()),
-		CopySourceRange:                aws.String("CopySourceRange"),
-		CopySourceSSECustomerAlgorithm: aws.String("CopySourceSSECustomerAlgorithm"),
-		CopySourceSSECustomerKey:       aws.String("CopySourceSSECustomerKey"),
-		CopySourceSSECustomerKeyMD5:    aws.String("CopySourceSSECustomerKeyMD5"),
-		RequestPayer:                   aws.String("RequestPayer"),
-		SSECustomerAlgorithm:           aws.String("SSECustomerAlgorithm"),
-		SSECustomerKey:                 aws.String("SSECustomerKey"),
-		SSECustomerKeyMD5:              aws.String("SSECustomerKeyMD5"),
+// To upload a part by copying byte range from an existing object as data source
+//
+// The following example uploads a part of a multipart upload by copying a specified
+// byte range from an existing object as data source.
+func ExampleS3_UploadPartCopy_shared00() {
+	svc := s3.New(session.New())
+	input := &s3.UploadPartCopyInput{
+		Bucket:          aws.String("examplebucket"),
+		CopySource:      aws.String("/bucketname/sourceobjectkey"),
+		CopySourceRange: aws.String("bytes=1-100000"),
+		Key:             aws.String("examplelargeobject"),
+		PartNumber:      aws.Int64(2),
+		UploadId:        aws.String("exampleuoh_10OhKhT7YukE9bjzTPRiuaCotmZM_pFngJFir9OZNrSr5cWa3cq3LZSUsfjI4FI7PkP91We7Nrw--"),
 	}
-	resp, err := svc.UploadPartCopy(params)
 
+	result, err := svc.UploadPartCopy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
+}
+
+// To upload a part by copying data from an existing object as data source
+//
+// The following example uploads a part of a multipart upload by copying data from an
+// existing object as data source.
+func ExampleS3_UploadPartCopy_shared01() {
+	svc := s3.New(session.New())
+	input := &s3.UploadPartCopyInput{
+		Bucket:     aws.String("examplebucket"),
+		CopySource: aws.String("bucketname/sourceobjectkey"),
+		Key:        aws.String("examplelargeobject"),
+		PartNumber: aws.Int64(1),
+		UploadId:   aws.String("exampleuoh_10OhKhT7YukE9bjzTPRiuaCotmZM_pFngJFir9OZNrSr5cWa3cq3LZSUsfjI4FI7PkP91We7Nrw--"),
+	}
+
+	result, err := svc.UploadPartCopy(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
 }

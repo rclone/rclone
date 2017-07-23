@@ -979,6 +979,8 @@ func (c *ACM) ResendValidationEmailRequest(input *ResendValidationEmailInput) (r
 // the mail be resent within 72 hours of requesting the ACM Certificate. If
 // more than 72 hours have elapsed since your original request or since your
 // last attempt to resend validation mail, you must request a new certificate.
+// For more information about setting up your contact email addresses, see Configure
+// Email for your Domain (http://docs.aws.amazon.com/acm/latest/userguide/setup-email.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2181,6 +2183,20 @@ type RequestCertificateInput struct {
 	// a wildcard certificate that protects several sites in the same domain. For
 	// example, *.example.com protects www.example.com, site.example.com, and images.example.com.
 	//
+	// The maximum length of a DNS name is 253 octets. The name is made up of multiple
+	// labels separated by periods. No label can be longer than 63 octets. Consider
+	// the following examples:
+	//
+	// (63 octets).(63 octets).(63 octets).(61 octets) is legal because the total
+	// length is 253 octets (63+1+63+1+63+1+61) and no label exceeds 63 octets.
+	//
+	// (64 octets).(63 octets).(63 octets).(61 octets) is not legal because the
+	// total length exceeds 253 octets (64+1+63+1+63+1+61) and the first label exceeds
+	// 63 octets.
+	//
+	// (63 octets).(63 octets).(63 octets).(62 octets) is not legal because the
+	// total length of the DNS name (63+1+63+1+63+1+62) exceeds 253 octets.
+	//
 	// DomainName is a required field
 	DomainName *string `min:"1" type:"string" required:"true"`
 
@@ -2199,7 +2215,10 @@ type RequestCertificateInput struct {
 	// Additional FQDNs to be included in the Subject Alternative Name extension
 	// of the ACM Certificate. For example, add the name www.example.net to a certificate
 	// for which the DomainName field is www.example.com if users can reach your
-	// site by using either name.
+	// site by using either name. The maximum number of domain names that you can
+	// add to an ACM Certificate is 100. However, the initial limit is 10 domain
+	// names. If you need more than 10 names, you must request a limit increase.
+	// For more information, see Limits (http://docs.aws.amazon.com/acm/latest/userguide/acm-limits.html).
 	SubjectAlternativeNames []*string `min:"1" type:"list"`
 }
 

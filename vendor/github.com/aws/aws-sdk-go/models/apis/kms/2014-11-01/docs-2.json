@@ -559,6 +559,12 @@
         "KeyList$member": null
       }
     },
+    "KeyManagerType": {
+      "base": null,
+      "refs": {
+        "KeyMetadata$KeyManager": "<p>The CMK's manager. CMKs are either customer-managed or AWS-managed. For more information about the difference, see <a href=\"http://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys\">Customer Master Keys</a> in the <i>AWS Key Management Service Developer Guide</i>.</p>"
+      }
+    },
     "KeyMetadata": {
       "base": "<p>Contains metadata about a customer master key (CMK).</p> <p>This data type is used as a response element for the <a>CreateKey</a> and <a>DescribeKey</a> operations.</p>",
       "refs": {
@@ -737,7 +743,7 @@
     "PrincipalIdType": {
       "base": null,
       "refs": {
-        "CreateGrantRequest$GranteePrincipal": "<p>The principal that is given permission to perform the operations that the grant permits.</p> <p>To specify the principal, use the <a href=\"http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html\">Amazon Resource Name (ARN)</a> of an AWS principal. Valid AWS principals include AWS accounts (root), IAM users, federated users, and assumed role users. For examples of the ARN syntax to use for specifying a principal, see <a href=\"http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#arn-syntax-iam\">AWS Identity and Access Management (IAM)</a> in the Example ARNs section of the <i>AWS General Reference</i>.</p>",
+        "CreateGrantRequest$GranteePrincipal": "<p>The principal that is given permission to perform the operations that the grant permits.</p> <p>To specify the principal, use the <a href=\"http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html\">Amazon Resource Name (ARN)</a> of an AWS principal. Valid AWS principals include AWS accounts (root), IAM users, IAM roles, federated users, and assumed role users. For examples of the ARN syntax to use for specifying a principal, see <a href=\"http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#arn-syntax-iam\">AWS Identity and Access Management (IAM)</a> in the Example ARNs section of the <i>AWS General Reference</i>.</p>",
         "CreateGrantRequest$RetiringPrincipal": "<p>The principal that is given permission to retire the grant by using <a>RetireGrant</a> operation.</p> <p>To specify the principal, use the <a href=\"http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html\">Amazon Resource Name (ARN)</a> of an AWS principal. Valid AWS principals include AWS accounts (root), IAM users, federated users, and assumed role users. For examples of the ARN syntax to use for specifying a principal, see <a href=\"http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#arn-syntax-iam\">AWS Identity and Access Management (IAM)</a> in the Example ARNs section of the <i>AWS General Reference</i>.</p>",
         "GrantListEntry$GranteePrincipal": "<p>The principal that receives the grant's permissions.</p>",
         "GrantListEntry$RetiringPrincipal": "<p>The principal that can retire the grant.</p>",

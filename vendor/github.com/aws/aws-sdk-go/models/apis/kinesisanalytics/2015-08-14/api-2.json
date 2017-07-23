@@ -1,7 +1,6 @@
 {
   "version":"2.0",
   "metadata":{
-    "uid":"kinesisanalytics-2015-08-14",
     "apiVersion":"2015-08-14",
     "endpointPrefix":"kinesisanalytics",
     "jsonVersion":"1.1",
@@ -10,9 +9,25 @@
     "serviceFullName":"Amazon Kinesis Analytics",
     "signatureVersion":"v4",
     "targetPrefix":"KinesisAnalytics_20150814",
-    "timestampFormat":"unixTimestamp"
+    "timestampFormat":"unixTimestamp",
+    "uid":"kinesisanalytics-2015-08-14"
   },
   "operations":{
+    "AddApplicationCloudWatchLoggingOption":{
+      "name":"AddApplicationCloudWatchLoggingOption",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"AddApplicationCloudWatchLoggingOptionRequest"},
+      "output":{"shape":"AddApplicationCloudWatchLoggingOptionResponse"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"ResourceInUseException"},
+        {"shape":"InvalidArgumentException"},
+        {"shape":"ConcurrentModificationException"}
+      ]
+    },
     "AddApplicationInput":{
       "name":"AddApplicationInput",
       "http":{
@@ -87,6 +102,21 @@
         {"shape":"ResourceInUseException"}
       ]
     },
+    "DeleteApplicationCloudWatchLoggingOption":{
+      "name":"DeleteApplicationCloudWatchLoggingOption",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteApplicationCloudWatchLoggingOptionRequest"},
+      "output":{"shape":"DeleteApplicationCloudWatchLoggingOptionResponse"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"ResourceInUseException"},
+        {"shape":"InvalidArgumentException"},
+        {"shape":"ConcurrentModificationException"}
+      ]
+    },
     "DeleteApplicationOutput":{
       "name":"DeleteApplicationOutput",
       "http":{
@@ -98,6 +128,7 @@
       "errors":[
         {"shape":"ResourceNotFoundException"},
         {"shape":"ResourceInUseException"},
+        {"shape":"InvalidArgumentException"},
         {"shape":"ConcurrentModificationException"}
       ]
     },
@@ -197,6 +228,24 @@
     }
   },
   "shapes":{
+    "AddApplicationCloudWatchLoggingOptionRequest":{
+      "type":"structure",
+      "required":[
+        "ApplicationName",
+        "CurrentApplicationVersionId",
+        "CloudWatchLoggingOption"
+      ],
+      "members":{
+        "ApplicationName":{"shape":"ApplicationName"},
+        "CurrentApplicationVersionId":{"shape":"ApplicationVersionId"},
+        "CloudWatchLoggingOption":{"shape":"CloudWatchLoggingOption"}
+      }
+    },
+    "AddApplicationCloudWatchLoggingOptionResponse":{
+      "type":"structure",
+      "members":{
+      }
+    },
     "AddApplicationInputRequest":{
       "type":"structure",
       "required":[
@@ -279,6 +328,7 @@
         "InputDescriptions":{"shape":"InputDescriptions"},
         "OutputDescriptions":{"shape":"OutputDescriptions"},
         "ReferenceDataSourceDescriptions":{"shape":"ReferenceDataSourceDescriptions"},
+        "CloudWatchLoggingOptionDescriptions":{"shape":"CloudWatchLoggingOptionDescriptions"},
         "ApplicationCode":{"shape":"ApplicationCode"},
         "ApplicationVersionId":{"shape":"ApplicationVersionId"}
       }
@@ -323,7 +373,8 @@
         "InputUpdates":{"shape":"InputUpdates"},
         "ApplicationCodeUpdate":{"shape":"ApplicationCode"},
         "OutputUpdates":{"shape":"OutputUpdates"},
-        "ReferenceDataSourceUpdates":{"shape":"ReferenceDataSourceUpdates"}
+        "ReferenceDataSourceUpdates":{"shape":"ReferenceDataSourceUpdates"},
+        "CloudWatchLoggingOptionUpdates":{"shape":"CloudWatchLoggingOptionUpdates"}
       }
     },
     "ApplicationVersionId":{
@@ -349,6 +400,50 @@
         "RecordColumnDelimiter":{"shape":"RecordColumnDelimiter"}
       }
     },
+    "CloudWatchLoggingOption":{
+      "type":"structure",
+      "required":[
+        "LogStreamARN",
+        "RoleARN"
+      ],
+      "members":{
+        "LogStreamARN":{"shape":"LogStreamARN"},
+        "RoleARN":{"shape":"RoleARN"}
+      }
+    },
+    "CloudWatchLoggingOptionDescription":{
+      "type":"structure",
+      "required":[
+        "LogStreamARN",
+        "RoleARN"
+      ],
+      "members":{
+        "CloudWatchLoggingOptionId":{"shape":"Id"},
+        "LogStreamARN":{"shape":"LogStreamARN"},
+        "RoleARN":{"shape":"RoleARN"}
+      }
+    },
+    "CloudWatchLoggingOptionDescriptions":{
+      "type":"list",
+      "member":{"shape":"CloudWatchLoggingOptionDescription"}
+    },
+    "CloudWatchLoggingOptionUpdate":{
+      "type":"structure",
+      "required":["CloudWatchLoggingOptionId"],
+      "members":{
+        "CloudWatchLoggingOptionId":{"shape":"Id"},
+        "LogStreamARNUpdate":{"shape":"LogStreamARN"},
+        "RoleARNUpdate":{"shape":"RoleARN"}
+      }
+    },
+    "CloudWatchLoggingOptionUpdates":{
+      "type":"list",
+      "member":{"shape":"CloudWatchLoggingOptionUpdate"}
+    },
+    "CloudWatchLoggingOptions":{
+      "type":"list",
+      "member":{"shape":"CloudWatchLoggingOption"}
+    },
     "CodeValidationException":{
       "type":"structure",
       "members":{
@@ -371,6 +466,7 @@
         "ApplicationDescription":{"shape":"ApplicationDescription"},
         "Inputs":{"shape":"Inputs"},
         "Outputs":{"shape":"Outputs"},
+        "CloudWatchLoggingOptions":{"shape":"CloudWatchLoggingOptions"},
         "ApplicationCode":{"shape":"ApplicationCode"}
       }
     },
@@ -379,6 +475,24 @@
       "required":["ApplicationSummary"],
       "members":{
         "ApplicationSummary":{"shape":"ApplicationSummary"}
+      }
+    },
+    "DeleteApplicationCloudWatchLoggingOptionRequest":{
+      "type":"structure",
+      "required":[
+        "ApplicationName",
+        "CurrentApplicationVersionId",
+        "CloudWatchLoggingOptionId"
+      ],
+      "members":{
+        "ApplicationName":{"shape":"ApplicationName"},
+        "CurrentApplicationVersionId":{"shape":"ApplicationVersionId"},
+        "CloudWatchLoggingOptionId":{"shape":"Id"}
+      }
+    },
+    "DeleteApplicationCloudWatchLoggingOptionResponse":{
+      "type":"structure",
+      "members":{
       }
     },
     "DeleteApplicationOutputRequest":{
@@ -754,6 +868,12 @@
         "HasMoreApplications":{"shape":"BooleanObject"}
       }
     },
+    "LogStreamARN":{
+      "type":"string",
+      "max":2048,
+      "min":1,
+      "pattern":"arn:.*"
+    },
     "MappingParameters":{
       "type":"structure",
       "members":{
@@ -833,7 +953,10 @@
         "SqlType":{"shape":"RecordColumnSqlType"}
       }
     },
-    "RecordColumnDelimiter":{"type":"string"},
+    "RecordColumnDelimiter":{
+      "type":"string",
+      "min":1
+    },
     "RecordColumnMapping":{"type":"string"},
     "RecordColumnName":{
       "type":"string",
@@ -865,7 +988,10 @@
         "CSV"
       ]
     },
-    "RecordRowDelimiter":{"type":"string"},
+    "RecordRowDelimiter":{
+      "type":"string",
+      "min":1
+    },
     "RecordRowPath":{"type":"string"},
     "ReferenceDataSource":{
       "type":"structure",

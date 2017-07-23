@@ -6103,6 +6103,13 @@ func (s *AbortMultipartUploadInput) SetBucket(v string) *AbortMultipartUploadInp
 	return s
 }
 
+func (s *AbortMultipartUploadInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetKey sets the Key field's value.
 func (s *AbortMultipartUploadInput) SetKey(v string) *AbortMultipartUploadInput {
 	s.Key = &v
@@ -6512,6 +6519,13 @@ func (s *AnalyticsS3BucketDestination) SetBucket(v string) *AnalyticsS3BucketDes
 	return s
 }
 
+func (s *AnalyticsS3BucketDestination) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetBucketAccountId sets the BucketAccountId field's value.
 func (s *AnalyticsS3BucketDestination) SetBucketAccountId(v string) *AnalyticsS3BucketDestination {
 	s.BucketAccountId = &v
@@ -6870,7 +6884,7 @@ type CompleteMultipartUploadInput struct {
 	// Key is a required field
 	Key *string `location:"uri" locationName:"Key" min:"1" type:"string" required:"true"`
 
-	MultipartUpload *CompletedMultipartUpload `locationName:"CompleteMultipartUpload" type:"structure"`
+	MultipartUpload *CompletedMultipartUpload `locationName:"CompleteMultipartUpload" type:"structure" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 
 	// Confirms that the requester knows that she or he will be charged for the
 	// request. Bucket owners need not specify this parameter in their requests.
@@ -6918,6 +6932,13 @@ func (s *CompleteMultipartUploadInput) Validate() error {
 func (s *CompleteMultipartUploadInput) SetBucket(v string) *CompleteMultipartUploadInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *CompleteMultipartUploadInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetKey sets the Key field's value.
@@ -6991,6 +7012,13 @@ func (s CompleteMultipartUploadOutput) GoString() string {
 func (s *CompleteMultipartUploadOutput) SetBucket(v string) *CompleteMultipartUploadOutput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *CompleteMultipartUploadOutput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetETag sets the ETag field's value.
@@ -7318,6 +7346,13 @@ func (s *CopyObjectInput) SetBucket(v string) *CopyObjectInput {
 	return s
 }
 
+func (s *CopyObjectInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetCacheControl sets the CacheControl field's value.
 func (s *CopyObjectInput) SetCacheControl(v string) *CopyObjectInput {
 	s.CacheControl = &v
@@ -7390,6 +7425,13 @@ func (s *CopyObjectInput) SetCopySourceSSECustomerKey(v string) *CopyObjectInput
 	return s
 }
 
+func (s *CopyObjectInput) getCopySourceSSECustomerKey() (v string) {
+	if s.CopySourceSSECustomerKey == nil {
+		return v
+	}
+	return *s.CopySourceSSECustomerKey
+}
+
 // SetCopySourceSSECustomerKeyMD5 sets the CopySourceSSECustomerKeyMD5 field's value.
 func (s *CopyObjectInput) SetCopySourceSSECustomerKeyMD5(v string) *CopyObjectInput {
 	s.CopySourceSSECustomerKeyMD5 = &v
@@ -7460,6 +7502,13 @@ func (s *CopyObjectInput) SetSSECustomerAlgorithm(v string) *CopyObjectInput {
 func (s *CopyObjectInput) SetSSECustomerKey(v string) *CopyObjectInput {
 	s.SSECustomerKey = &v
 	return s
+}
+
+func (s *CopyObjectInput) getSSECustomerKey() (v string) {
+	if s.SSECustomerKey == nil {
+		return v
+	}
+	return *s.SSECustomerKey
 }
 
 // SetSSECustomerKeyMD5 sets the SSECustomerKeyMD5 field's value.
@@ -7704,7 +7753,7 @@ type CreateBucketInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	CreateBucketConfiguration *CreateBucketConfiguration `locationName:"CreateBucketConfiguration" type:"structure"`
+	CreateBucketConfiguration *CreateBucketConfiguration `locationName:"CreateBucketConfiguration" type:"structure" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 
 	// Allows grantee the read, write, read ACP, and write ACP permissions on the
 	// bucket.
@@ -7756,6 +7805,13 @@ func (s *CreateBucketInput) SetACL(v string) *CreateBucketInput {
 func (s *CreateBucketInput) SetBucket(v string) *CreateBucketInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *CreateBucketInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetCreateBucketConfiguration sets the CreateBucketConfiguration field's value.
@@ -7899,6 +7955,9 @@ type CreateMultipartUploadInput struct {
 	// The type of storage to use for the object. Defaults to 'STANDARD'.
 	StorageClass *string `location:"header" locationName:"x-amz-storage-class" type:"string" enum:"StorageClass"`
 
+	// The tag-set for the object. The tag-set must be encoded as URL Query parameters
+	Tagging *string `location:"header" locationName:"x-amz-tagging" type:"string"`
+
 	// If the bucket is configured as a website, redirects requests for this object
 	// to another object in the same bucket or to an external URL. Amazon S3 stores
 	// the value of this header in the object metadata.
@@ -7944,6 +8003,13 @@ func (s *CreateMultipartUploadInput) SetACL(v string) *CreateMultipartUploadInpu
 func (s *CreateMultipartUploadInput) SetBucket(v string) *CreateMultipartUploadInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *CreateMultipartUploadInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetCacheControl sets the CacheControl field's value.
@@ -8036,6 +8102,13 @@ func (s *CreateMultipartUploadInput) SetSSECustomerKey(v string) *CreateMultipar
 	return s
 }
 
+func (s *CreateMultipartUploadInput) getSSECustomerKey() (v string) {
+	if s.SSECustomerKey == nil {
+		return v
+	}
+	return *s.SSECustomerKey
+}
+
 // SetSSECustomerKeyMD5 sets the SSECustomerKeyMD5 field's value.
 func (s *CreateMultipartUploadInput) SetSSECustomerKeyMD5(v string) *CreateMultipartUploadInput {
 	s.SSECustomerKeyMD5 = &v
@@ -8057,6 +8130,12 @@ func (s *CreateMultipartUploadInput) SetServerSideEncryption(v string) *CreateMu
 // SetStorageClass sets the StorageClass field's value.
 func (s *CreateMultipartUploadInput) SetStorageClass(v string) *CreateMultipartUploadInput {
 	s.StorageClass = &v
+	return s
+}
+
+// SetTagging sets the Tagging field's value.
+func (s *CreateMultipartUploadInput) SetTagging(v string) *CreateMultipartUploadInput {
+	s.Tagging = &v
 	return s
 }
 
@@ -8135,6 +8214,13 @@ func (s *CreateMultipartUploadOutput) SetAbortRuleId(v string) *CreateMultipartU
 func (s *CreateMultipartUploadOutput) SetBucket(v string) *CreateMultipartUploadOutput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *CreateMultipartUploadOutput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetKey sets the Key field's value.
@@ -8283,6 +8369,13 @@ func (s *DeleteBucketAnalyticsConfigurationInput) SetBucket(v string) *DeleteBuc
 	return s
 }
 
+func (s *DeleteBucketAnalyticsConfigurationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetId sets the Id field's value.
 func (s *DeleteBucketAnalyticsConfigurationInput) SetId(v string) *DeleteBucketAnalyticsConfigurationInput {
 	s.Id = &v
@@ -8341,6 +8434,13 @@ func (s *DeleteBucketCorsInput) SetBucket(v string) *DeleteBucketCorsInput {
 	return s
 }
 
+func (s *DeleteBucketCorsInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/DeleteBucketCorsOutput
 type DeleteBucketCorsOutput struct {
 	_ struct{} `type:"structure"`
@@ -8393,6 +8493,13 @@ func (s *DeleteBucketInput) SetBucket(v string) *DeleteBucketInput {
 	return s
 }
 
+func (s *DeleteBucketInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/DeleteBucketInventoryConfigurationRequest
 type DeleteBucketInventoryConfigurationInput struct {
 	_ struct{} `type:"structure"`
@@ -8438,6 +8545,13 @@ func (s *DeleteBucketInventoryConfigurationInput) Validate() error {
 func (s *DeleteBucketInventoryConfigurationInput) SetBucket(v string) *DeleteBucketInventoryConfigurationInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *DeleteBucketInventoryConfigurationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetId sets the Id field's value.
@@ -8496,6 +8610,13 @@ func (s *DeleteBucketLifecycleInput) Validate() error {
 func (s *DeleteBucketLifecycleInput) SetBucket(v string) *DeleteBucketLifecycleInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *DeleteBucketLifecycleInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/DeleteBucketLifecycleOutput
@@ -8558,6 +8679,13 @@ func (s *DeleteBucketMetricsConfigurationInput) Validate() error {
 func (s *DeleteBucketMetricsConfigurationInput) SetBucket(v string) *DeleteBucketMetricsConfigurationInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *DeleteBucketMetricsConfigurationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetId sets the Id field's value.
@@ -8633,6 +8761,13 @@ func (s *DeleteBucketPolicyInput) SetBucket(v string) *DeleteBucketPolicyInput {
 	return s
 }
 
+func (s *DeleteBucketPolicyInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/DeleteBucketPolicyOutput
 type DeleteBucketPolicyOutput struct {
 	_ struct{} `type:"structure"`
@@ -8683,6 +8818,13 @@ func (s *DeleteBucketReplicationInput) Validate() error {
 func (s *DeleteBucketReplicationInput) SetBucket(v string) *DeleteBucketReplicationInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *DeleteBucketReplicationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/DeleteBucketReplicationOutput
@@ -8737,6 +8879,13 @@ func (s *DeleteBucketTaggingInput) SetBucket(v string) *DeleteBucketTaggingInput
 	return s
 }
 
+func (s *DeleteBucketTaggingInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/DeleteBucketTaggingOutput
 type DeleteBucketTaggingOutput struct {
 	_ struct{} `type:"structure"`
@@ -8787,6 +8936,13 @@ func (s *DeleteBucketWebsiteInput) Validate() error {
 func (s *DeleteBucketWebsiteInput) SetBucket(v string) *DeleteBucketWebsiteInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *DeleteBucketWebsiteInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/DeleteBucketWebsiteOutput
@@ -8923,6 +9079,13 @@ func (s *DeleteObjectInput) SetBucket(v string) *DeleteObjectInput {
 	return s
 }
 
+func (s *DeleteObjectInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetKey sets the Key field's value.
 func (s *DeleteObjectInput) SetKey(v string) *DeleteObjectInput {
 	s.Key = &v
@@ -9041,6 +9204,13 @@ func (s *DeleteObjectTaggingInput) SetBucket(v string) *DeleteObjectTaggingInput
 	return s
 }
 
+func (s *DeleteObjectTaggingInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetKey sets the Key field's value.
 func (s *DeleteObjectTaggingInput) SetKey(v string) *DeleteObjectTaggingInput {
 	s.Key = &v
@@ -9085,7 +9255,7 @@ type DeleteObjectsInput struct {
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
 	// Delete is a required field
-	Delete *Delete `locationName:"Delete" type:"structure" required:"true"`
+	Delete *Delete `locationName:"Delete" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 
 	// The concatenation of the authentication device's serial number, a space,
 	// and the value that is displayed on your authentication device.
@@ -9133,6 +9303,13 @@ func (s *DeleteObjectsInput) Validate() error {
 func (s *DeleteObjectsInput) SetBucket(v string) *DeleteObjectsInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *DeleteObjectsInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetDelete sets the Delete field's value.
@@ -9282,6 +9459,13 @@ func (s *Destination) Validate() error {
 func (s *Destination) SetBucket(v string) *Destination {
 	s.Bucket = &v
 	return s
+}
+
+func (s *Destination) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetStorageClass sets the StorageClass field's value.
@@ -9454,6 +9638,13 @@ func (s *GetBucketAccelerateConfigurationInput) SetBucket(v string) *GetBucketAc
 	return s
 }
 
+func (s *GetBucketAccelerateConfigurationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/GetBucketAccelerateConfigurationOutput
 type GetBucketAccelerateConfigurationOutput struct {
 	_ struct{} `type:"structure"`
@@ -9513,6 +9704,13 @@ func (s *GetBucketAclInput) Validate() error {
 func (s *GetBucketAclInput) SetBucket(v string) *GetBucketAclInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *GetBucketAclInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/GetBucketAclOutput
@@ -9594,6 +9792,13 @@ func (s *GetBucketAnalyticsConfigurationInput) SetBucket(v string) *GetBucketAna
 	return s
 }
 
+func (s *GetBucketAnalyticsConfigurationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetId sets the Id field's value.
 func (s *GetBucketAnalyticsConfigurationInput) SetId(v string) *GetBucketAnalyticsConfigurationInput {
 	s.Id = &v
@@ -9659,6 +9864,13 @@ func (s *GetBucketCorsInput) Validate() error {
 func (s *GetBucketCorsInput) SetBucket(v string) *GetBucketCorsInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *GetBucketCorsInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/GetBucketCorsOutput
@@ -9731,6 +9943,13 @@ func (s *GetBucketInventoryConfigurationInput) SetBucket(v string) *GetBucketInv
 	return s
 }
 
+func (s *GetBucketInventoryConfigurationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetId sets the Id field's value.
 func (s *GetBucketInventoryConfigurationInput) SetId(v string) *GetBucketInventoryConfigurationInput {
 	s.Id = &v
@@ -9798,6 +10017,13 @@ func (s *GetBucketLifecycleConfigurationInput) SetBucket(v string) *GetBucketLif
 	return s
 }
 
+func (s *GetBucketLifecycleConfigurationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/GetBucketLifecycleConfigurationOutput
 type GetBucketLifecycleConfigurationOutput struct {
 	_ struct{} `type:"structure"`
@@ -9856,6 +10082,13 @@ func (s *GetBucketLifecycleInput) Validate() error {
 func (s *GetBucketLifecycleInput) SetBucket(v string) *GetBucketLifecycleInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *GetBucketLifecycleInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/GetBucketLifecycleOutput
@@ -9918,6 +10151,13 @@ func (s *GetBucketLocationInput) SetBucket(v string) *GetBucketLocationInput {
 	return s
 }
 
+func (s *GetBucketLocationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/GetBucketLocationOutput
 type GetBucketLocationOutput struct {
 	_ struct{} `type:"structure"`
@@ -9976,6 +10216,13 @@ func (s *GetBucketLoggingInput) Validate() error {
 func (s *GetBucketLoggingInput) SetBucket(v string) *GetBucketLoggingInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *GetBucketLoggingInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/GetBucketLoggingOutput
@@ -10048,6 +10295,13 @@ func (s *GetBucketMetricsConfigurationInput) SetBucket(v string) *GetBucketMetri
 	return s
 }
 
+func (s *GetBucketMetricsConfigurationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetId sets the Id field's value.
 func (s *GetBucketMetricsConfigurationInput) SetId(v string) *GetBucketMetricsConfigurationInput {
 	s.Id = &v
@@ -10117,6 +10371,13 @@ func (s *GetBucketNotificationConfigurationRequest) SetBucket(v string) *GetBuck
 	return s
 }
 
+func (s *GetBucketNotificationConfigurationRequest) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/GetBucketPolicyRequest
 type GetBucketPolicyInput struct {
 	_ struct{} `type:"structure"`
@@ -10152,6 +10413,13 @@ func (s *GetBucketPolicyInput) Validate() error {
 func (s *GetBucketPolicyInput) SetBucket(v string) *GetBucketPolicyInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *GetBucketPolicyInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/GetBucketPolicyOutput
@@ -10213,6 +10481,13 @@ func (s *GetBucketReplicationInput) Validate() error {
 func (s *GetBucketReplicationInput) SetBucket(v string) *GetBucketReplicationInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *GetBucketReplicationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/GetBucketReplicationOutput
@@ -10277,6 +10552,13 @@ func (s *GetBucketRequestPaymentInput) SetBucket(v string) *GetBucketRequestPaym
 	return s
 }
 
+func (s *GetBucketRequestPaymentInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/GetBucketRequestPaymentOutput
 type GetBucketRequestPaymentOutput struct {
 	_ struct{} `type:"structure"`
@@ -10338,6 +10620,13 @@ func (s *GetBucketTaggingInput) SetBucket(v string) *GetBucketTaggingInput {
 	return s
 }
 
+func (s *GetBucketTaggingInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/GetBucketTaggingOutput
 type GetBucketTaggingOutput struct {
 	_ struct{} `type:"structure"`
@@ -10397,6 +10686,13 @@ func (s *GetBucketVersioningInput) Validate() error {
 func (s *GetBucketVersioningInput) SetBucket(v string) *GetBucketVersioningInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *GetBucketVersioningInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/GetBucketVersioningOutput
@@ -10469,6 +10765,13 @@ func (s *GetBucketWebsiteInput) Validate() error {
 func (s *GetBucketWebsiteInput) SetBucket(v string) *GetBucketWebsiteInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *GetBucketWebsiteInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/GetBucketWebsiteOutput
@@ -10571,6 +10874,13 @@ func (s *GetObjectAclInput) Validate() error {
 func (s *GetObjectAclInput) SetBucket(v string) *GetObjectAclInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *GetObjectAclInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetKey sets the Key field's value.
@@ -10746,6 +11056,13 @@ func (s *GetObjectInput) SetBucket(v string) *GetObjectInput {
 	return s
 }
 
+func (s *GetObjectInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetIfMatch sets the IfMatch field's value.
 func (s *GetObjectInput) SetIfMatch(v string) *GetObjectInput {
 	s.IfMatch = &v
@@ -10840,6 +11157,13 @@ func (s *GetObjectInput) SetSSECustomerAlgorithm(v string) *GetObjectInput {
 func (s *GetObjectInput) SetSSECustomerKey(v string) *GetObjectInput {
 	s.SSECustomerKey = &v
 	return s
+}
+
+func (s *GetObjectInput) getSSECustomerKey() (v string) {
+	if s.SSECustomerKey == nil {
+		return v
+	}
+	return *s.SSECustomerKey
 }
 
 // SetSSECustomerKeyMD5 sets the SSECustomerKeyMD5 field's value.
@@ -11186,6 +11510,13 @@ func (s *GetObjectTaggingInput) SetBucket(v string) *GetObjectTaggingInput {
 	return s
 }
 
+func (s *GetObjectTaggingInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetKey sets the Key field's value.
 func (s *GetObjectTaggingInput) SetKey(v string) *GetObjectTaggingInput {
 	s.Key = &v
@@ -11282,6 +11613,13 @@ func (s *GetObjectTorrentInput) SetBucket(v string) *GetObjectTorrentInput {
 	return s
 }
 
+func (s *GetObjectTorrentInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetKey sets the Key field's value.
 func (s *GetObjectTorrentInput) SetKey(v string) *GetObjectTorrentInput {
 	s.Key = &v
@@ -11370,7 +11708,7 @@ func (s *GlacierJobParameters) SetTier(v string) *GlacierJobParameters {
 type Grant struct {
 	_ struct{} `type:"structure"`
 
-	Grantee *Grantee `type:"structure"`
+	Grantee *Grantee `type:"structure" xmlPrefix:"xsi" xmlURI:"http://www.w3.org/2001/XMLSchema-instance"`
 
 	// Specifies the permission given to the grantee.
 	Permission *string `type:"string" enum:"Permission"`
@@ -11525,6 +11863,13 @@ func (s *HeadBucketInput) SetBucket(v string) *HeadBucketInput {
 	return s
 }
 
+func (s *HeadBucketInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/HeadBucketOutput
 type HeadBucketOutput struct {
 	_ struct{} `type:"structure"`
@@ -11636,6 +11981,13 @@ func (s *HeadObjectInput) SetBucket(v string) *HeadObjectInput {
 	return s
 }
 
+func (s *HeadObjectInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetIfMatch sets the IfMatch field's value.
 func (s *HeadObjectInput) SetIfMatch(v string) *HeadObjectInput {
 	s.IfMatch = &v
@@ -11694,6 +12046,13 @@ func (s *HeadObjectInput) SetSSECustomerAlgorithm(v string) *HeadObjectInput {
 func (s *HeadObjectInput) SetSSECustomerKey(v string) *HeadObjectInput {
 	s.SSECustomerKey = &v
 	return s
+}
+
+func (s *HeadObjectInput) getSSECustomerKey() (v string) {
+	if s.SSECustomerKey == nil {
+		return v
+	}
+	return *s.SSECustomerKey
 }
 
 // SetSSECustomerKeyMD5 sets the SSECustomerKeyMD5 field's value.
@@ -12314,6 +12673,13 @@ func (s *InventoryS3BucketDestination) SetBucket(v string) *InventoryS3BucketDes
 	return s
 }
 
+func (s *InventoryS3BucketDestination) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetFormat sets the Format field's value.
 func (s *InventoryS3BucketDestination) SetFormat(v string) *InventoryS3BucketDestination {
 	s.Format = &v
@@ -12844,6 +13210,13 @@ func (s *ListBucketAnalyticsConfigurationsInput) SetBucket(v string) *ListBucket
 	return s
 }
 
+func (s *ListBucketAnalyticsConfigurationsInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetContinuationToken sets the ContinuationToken field's value.
 func (s *ListBucketAnalyticsConfigurationsInput) SetContinuationToken(v string) *ListBucketAnalyticsConfigurationsInput {
 	s.ContinuationToken = &v
@@ -12950,6 +13323,13 @@ func (s *ListBucketInventoryConfigurationsInput) SetBucket(v string) *ListBucket
 	return s
 }
 
+func (s *ListBucketInventoryConfigurationsInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetContinuationToken sets the ContinuationToken field's value.
 func (s *ListBucketInventoryConfigurationsInput) SetContinuationToken(v string) *ListBucketInventoryConfigurationsInput {
 	s.ContinuationToken = &v
@@ -13054,6 +13434,13 @@ func (s *ListBucketMetricsConfigurationsInput) Validate() error {
 func (s *ListBucketMetricsConfigurationsInput) SetBucket(v string) *ListBucketMetricsConfigurationsInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *ListBucketMetricsConfigurationsInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetContinuationToken sets the ContinuationToken field's value.
@@ -13231,6 +13618,13 @@ func (s *ListMultipartUploadsInput) SetBucket(v string) *ListMultipartUploadsInp
 	return s
 }
 
+func (s *ListMultipartUploadsInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetDelimiter sets the Delimiter field's value.
 func (s *ListMultipartUploadsInput) SetDelimiter(v string) *ListMultipartUploadsInput {
 	s.Delimiter = &v
@@ -13326,6 +13720,13 @@ func (s ListMultipartUploadsOutput) GoString() string {
 func (s *ListMultipartUploadsOutput) SetBucket(v string) *ListMultipartUploadsOutput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *ListMultipartUploadsOutput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetCommonPrefixes sets the CommonPrefixes field's value.
@@ -13453,6 +13854,13 @@ func (s *ListObjectVersionsInput) Validate() error {
 func (s *ListObjectVersionsInput) SetBucket(v string) *ListObjectVersionsInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *ListObjectVersionsInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetDelimiter sets the Delimiter field's value.
@@ -13682,6 +14090,13 @@ func (s *ListObjectsInput) SetBucket(v string) *ListObjectsInput {
 	return s
 }
 
+func (s *ListObjectsInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetDelimiter sets the Delimiter field's value.
 func (s *ListObjectsInput) SetDelimiter(v string) *ListObjectsInput {
 	s.Delimiter = &v
@@ -13892,6 +14307,13 @@ func (s *ListObjectsV2Input) Validate() error {
 func (s *ListObjectsV2Input) SetBucket(v string) *ListObjectsV2Input {
 	s.Bucket = &v
 	return s
+}
+
+func (s *ListObjectsV2Input) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetContinuationToken sets the ContinuationToken field's value.
@@ -14143,6 +14565,13 @@ func (s *ListPartsInput) SetBucket(v string) *ListPartsInput {
 	return s
 }
 
+func (s *ListPartsInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetKey sets the Key field's value.
 func (s *ListPartsInput) SetKey(v string) *ListPartsInput {
 	s.Key = &v
@@ -14248,6 +14677,13 @@ func (s *ListPartsOutput) SetAbortRuleId(v string) *ListPartsOutput {
 func (s *ListPartsOutput) SetBucket(v string) *ListPartsOutput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *ListPartsOutput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetInitiator sets the Initiator field's value.
@@ -15133,7 +15569,7 @@ type PutBucketAccelerateConfigurationInput struct {
 	// Specifies the Accelerate Configuration you want to set for the bucket.
 	//
 	// AccelerateConfiguration is a required field
-	AccelerateConfiguration *AccelerateConfiguration `locationName:"AccelerateConfiguration" type:"structure" required:"true"`
+	AccelerateConfiguration *AccelerateConfiguration `locationName:"AccelerateConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 
 	// Name of the bucket for which the accelerate configuration is set.
 	//
@@ -15179,6 +15615,13 @@ func (s *PutBucketAccelerateConfigurationInput) SetBucket(v string) *PutBucketAc
 	return s
 }
 
+func (s *PutBucketAccelerateConfigurationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01/PutBucketAccelerateConfigurationOutput
 type PutBucketAccelerateConfigurationOutput struct {
 	_ struct{} `type:"structure"`
@@ -15201,7 +15644,7 @@ type PutBucketAclInput struct {
 	// The canned ACL to apply to the bucket.
 	ACL *string `location:"header" locationName:"x-amz-acl" type:"string" enum:"BucketCannedACL"`
 
-	AccessControlPolicy *AccessControlPolicy `locationName:"AccessControlPolicy" type:"structure"`
+	AccessControlPolicy *AccessControlPolicy `locationName:"AccessControlPolicy" type:"structure" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -15269,6 +15712,13 @@ func (s *PutBucketAclInput) SetBucket(v string) *PutBucketAclInput {
 	return s
 }
 
+func (s *PutBucketAclInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetGrantFullControl sets the GrantFullControl field's value.
 func (s *PutBucketAclInput) SetGrantFullControl(v string) *PutBucketAclInput {
 	s.GrantFullControl = &v
@@ -15321,7 +15771,7 @@ type PutBucketAnalyticsConfigurationInput struct {
 	// The configuration and any analyses for the analytics filter.
 	//
 	// AnalyticsConfiguration is a required field
-	AnalyticsConfiguration *AnalyticsConfiguration `locationName:"AnalyticsConfiguration" type:"structure" required:"true"`
+	AnalyticsConfiguration *AnalyticsConfiguration `locationName:"AnalyticsConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 
 	// The name of the bucket to which an analytics configuration is stored.
 	//
@@ -15380,6 +15830,13 @@ func (s *PutBucketAnalyticsConfigurationInput) SetBucket(v string) *PutBucketAna
 	return s
 }
 
+func (s *PutBucketAnalyticsConfigurationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetId sets the Id field's value.
 func (s *PutBucketAnalyticsConfigurationInput) SetId(v string) *PutBucketAnalyticsConfigurationInput {
 	s.Id = &v
@@ -15409,7 +15866,7 @@ type PutBucketCorsInput struct {
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
 	// CORSConfiguration is a required field
-	CORSConfiguration *CORSConfiguration `locationName:"CORSConfiguration" type:"structure" required:"true"`
+	CORSConfiguration *CORSConfiguration `locationName:"CORSConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 }
 
 // String returns the string representation
@@ -15447,6 +15904,13 @@ func (s *PutBucketCorsInput) Validate() error {
 func (s *PutBucketCorsInput) SetBucket(v string) *PutBucketCorsInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *PutBucketCorsInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetCORSConfiguration sets the CORSConfiguration field's value.
@@ -15487,7 +15951,7 @@ type PutBucketInventoryConfigurationInput struct {
 	// Specifies the inventory configuration.
 	//
 	// InventoryConfiguration is a required field
-	InventoryConfiguration *InventoryConfiguration `locationName:"InventoryConfiguration" type:"structure" required:"true"`
+	InventoryConfiguration *InventoryConfiguration `locationName:"InventoryConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 }
 
 // String returns the string representation
@@ -15530,6 +15994,13 @@ func (s *PutBucketInventoryConfigurationInput) SetBucket(v string) *PutBucketInv
 	return s
 }
 
+func (s *PutBucketInventoryConfigurationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetId sets the Id field's value.
 func (s *PutBucketInventoryConfigurationInput) SetId(v string) *PutBucketInventoryConfigurationInput {
 	s.Id = &v
@@ -15564,7 +16035,7 @@ type PutBucketLifecycleConfigurationInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	LifecycleConfiguration *BucketLifecycleConfiguration `locationName:"LifecycleConfiguration" type:"structure"`
+	LifecycleConfiguration *BucketLifecycleConfiguration `locationName:"LifecycleConfiguration" type:"structure" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 }
 
 // String returns the string representation
@@ -15601,6 +16072,13 @@ func (s *PutBucketLifecycleConfigurationInput) SetBucket(v string) *PutBucketLif
 	return s
 }
 
+func (s *PutBucketLifecycleConfigurationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetLifecycleConfiguration sets the LifecycleConfiguration field's value.
 func (s *PutBucketLifecycleConfigurationInput) SetLifecycleConfiguration(v *BucketLifecycleConfiguration) *PutBucketLifecycleConfigurationInput {
 	s.LifecycleConfiguration = v
@@ -15629,7 +16107,7 @@ type PutBucketLifecycleInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	LifecycleConfiguration *LifecycleConfiguration `locationName:"LifecycleConfiguration" type:"structure"`
+	LifecycleConfiguration *LifecycleConfiguration `locationName:"LifecycleConfiguration" type:"structure" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 }
 
 // String returns the string representation
@@ -15666,6 +16144,13 @@ func (s *PutBucketLifecycleInput) SetBucket(v string) *PutBucketLifecycleInput {
 	return s
 }
 
+func (s *PutBucketLifecycleInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetLifecycleConfiguration sets the LifecycleConfiguration field's value.
 func (s *PutBucketLifecycleInput) SetLifecycleConfiguration(v *LifecycleConfiguration) *PutBucketLifecycleInput {
 	s.LifecycleConfiguration = v
@@ -15695,7 +16180,7 @@ type PutBucketLoggingInput struct {
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
 	// BucketLoggingStatus is a required field
-	BucketLoggingStatus *BucketLoggingStatus `locationName:"BucketLoggingStatus" type:"structure" required:"true"`
+	BucketLoggingStatus *BucketLoggingStatus `locationName:"BucketLoggingStatus" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 }
 
 // String returns the string representation
@@ -15733,6 +16218,13 @@ func (s *PutBucketLoggingInput) Validate() error {
 func (s *PutBucketLoggingInput) SetBucket(v string) *PutBucketLoggingInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *PutBucketLoggingInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetBucketLoggingStatus sets the BucketLoggingStatus field's value.
@@ -15773,7 +16265,7 @@ type PutBucketMetricsConfigurationInput struct {
 	// Specifies the metrics configuration.
 	//
 	// MetricsConfiguration is a required field
-	MetricsConfiguration *MetricsConfiguration `locationName:"MetricsConfiguration" type:"structure" required:"true"`
+	MetricsConfiguration *MetricsConfiguration `locationName:"MetricsConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 }
 
 // String returns the string representation
@@ -15816,6 +16308,13 @@ func (s *PutBucketMetricsConfigurationInput) SetBucket(v string) *PutBucketMetri
 	return s
 }
 
+func (s *PutBucketMetricsConfigurationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetId sets the Id field's value.
 func (s *PutBucketMetricsConfigurationInput) SetId(v string) *PutBucketMetricsConfigurationInput {
 	s.Id = &v
@@ -15854,7 +16353,7 @@ type PutBucketNotificationConfigurationInput struct {
 	// this element is empty, notifications are turned off on the bucket.
 	//
 	// NotificationConfiguration is a required field
-	NotificationConfiguration *NotificationConfiguration `locationName:"NotificationConfiguration" type:"structure" required:"true"`
+	NotificationConfiguration *NotificationConfiguration `locationName:"NotificationConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 }
 
 // String returns the string representation
@@ -15894,6 +16393,13 @@ func (s *PutBucketNotificationConfigurationInput) SetBucket(v string) *PutBucket
 	return s
 }
 
+func (s *PutBucketNotificationConfigurationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetNotificationConfiguration sets the NotificationConfiguration field's value.
 func (s *PutBucketNotificationConfigurationInput) SetNotificationConfiguration(v *NotificationConfiguration) *PutBucketNotificationConfigurationInput {
 	s.NotificationConfiguration = v
@@ -15923,7 +16429,7 @@ type PutBucketNotificationInput struct {
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
 	// NotificationConfiguration is a required field
-	NotificationConfiguration *NotificationConfigurationDeprecated `locationName:"NotificationConfiguration" type:"structure" required:"true"`
+	NotificationConfiguration *NotificationConfigurationDeprecated `locationName:"NotificationConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 }
 
 // String returns the string representation
@@ -15956,6 +16462,13 @@ func (s *PutBucketNotificationInput) Validate() error {
 func (s *PutBucketNotificationInput) SetBucket(v string) *PutBucketNotificationInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *PutBucketNotificationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetNotificationConfiguration sets the NotificationConfiguration field's value.
@@ -16024,6 +16537,13 @@ func (s *PutBucketPolicyInput) SetBucket(v string) *PutBucketPolicyInput {
 	return s
 }
 
+func (s *PutBucketPolicyInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetPolicy sets the Policy field's value.
 func (s *PutBucketPolicyInput) SetPolicy(v string) *PutBucketPolicyInput {
 	s.Policy = &v
@@ -16056,7 +16576,7 @@ type PutBucketReplicationInput struct {
 	// replication configuration size can be up to 2 MB.
 	//
 	// ReplicationConfiguration is a required field
-	ReplicationConfiguration *ReplicationConfiguration `locationName:"ReplicationConfiguration" type:"structure" required:"true"`
+	ReplicationConfiguration *ReplicationConfiguration `locationName:"ReplicationConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 }
 
 // String returns the string representation
@@ -16096,6 +16616,13 @@ func (s *PutBucketReplicationInput) SetBucket(v string) *PutBucketReplicationInp
 	return s
 }
 
+func (s *PutBucketReplicationInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetReplicationConfiguration sets the ReplicationConfiguration field's value.
 func (s *PutBucketReplicationInput) SetReplicationConfiguration(v *ReplicationConfiguration) *PutBucketReplicationInput {
 	s.ReplicationConfiguration = v
@@ -16125,7 +16652,7 @@ type PutBucketRequestPaymentInput struct {
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
 	// RequestPaymentConfiguration is a required field
-	RequestPaymentConfiguration *RequestPaymentConfiguration `locationName:"RequestPaymentConfiguration" type:"structure" required:"true"`
+	RequestPaymentConfiguration *RequestPaymentConfiguration `locationName:"RequestPaymentConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 }
 
 // String returns the string representation
@@ -16165,6 +16692,13 @@ func (s *PutBucketRequestPaymentInput) SetBucket(v string) *PutBucketRequestPaym
 	return s
 }
 
+func (s *PutBucketRequestPaymentInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetRequestPaymentConfiguration sets the RequestPaymentConfiguration field's value.
 func (s *PutBucketRequestPaymentInput) SetRequestPaymentConfiguration(v *RequestPaymentConfiguration) *PutBucketRequestPaymentInput {
 	s.RequestPaymentConfiguration = v
@@ -16194,7 +16728,7 @@ type PutBucketTaggingInput struct {
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
 	// Tagging is a required field
-	Tagging *Tagging `locationName:"Tagging" type:"structure" required:"true"`
+	Tagging *Tagging `locationName:"Tagging" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 }
 
 // String returns the string representation
@@ -16234,6 +16768,13 @@ func (s *PutBucketTaggingInput) SetBucket(v string) *PutBucketTaggingInput {
 	return s
 }
 
+func (s *PutBucketTaggingInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetTagging sets the Tagging field's value.
 func (s *PutBucketTaggingInput) SetTagging(v *Tagging) *PutBucketTaggingInput {
 	s.Tagging = v
@@ -16267,7 +16808,7 @@ type PutBucketVersioningInput struct {
 	MFA *string `location:"header" locationName:"x-amz-mfa" type:"string"`
 
 	// VersioningConfiguration is a required field
-	VersioningConfiguration *VersioningConfiguration `locationName:"VersioningConfiguration" type:"structure" required:"true"`
+	VersioningConfiguration *VersioningConfiguration `locationName:"VersioningConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 }
 
 // String returns the string representation
@@ -16300,6 +16841,13 @@ func (s *PutBucketVersioningInput) Validate() error {
 func (s *PutBucketVersioningInput) SetBucket(v string) *PutBucketVersioningInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *PutBucketVersioningInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetMFA sets the MFA field's value.
@@ -16337,7 +16885,7 @@ type PutBucketWebsiteInput struct {
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
 	// WebsiteConfiguration is a required field
-	WebsiteConfiguration *WebsiteConfiguration `locationName:"WebsiteConfiguration" type:"structure" required:"true"`
+	WebsiteConfiguration *WebsiteConfiguration `locationName:"WebsiteConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 }
 
 // String returns the string representation
@@ -16377,6 +16925,13 @@ func (s *PutBucketWebsiteInput) SetBucket(v string) *PutBucketWebsiteInput {
 	return s
 }
 
+func (s *PutBucketWebsiteInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetWebsiteConfiguration sets the WebsiteConfiguration field's value.
 func (s *PutBucketWebsiteInput) SetWebsiteConfiguration(v *WebsiteConfiguration) *PutBucketWebsiteInput {
 	s.WebsiteConfiguration = v
@@ -16405,7 +16960,7 @@ type PutObjectAclInput struct {
 	// The canned ACL to apply to the object.
 	ACL *string `location:"header" locationName:"x-amz-acl" type:"string" enum:"ObjectCannedACL"`
 
-	AccessControlPolicy *AccessControlPolicy `locationName:"AccessControlPolicy" type:"structure"`
+	AccessControlPolicy *AccessControlPolicy `locationName:"AccessControlPolicy" type:"structure" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -16489,6 +17044,13 @@ func (s *PutObjectAclInput) SetAccessControlPolicy(v *AccessControlPolicy) *PutO
 func (s *PutObjectAclInput) SetBucket(v string) *PutObjectAclInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *PutObjectAclInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetGrantFullControl sets the GrantFullControl field's value.
@@ -16713,6 +17275,13 @@ func (s *PutObjectInput) SetBucket(v string) *PutObjectInput {
 	return s
 }
 
+func (s *PutObjectInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetCacheControl sets the CacheControl field's value.
 func (s *PutObjectInput) SetCacheControl(v string) *PutObjectInput {
 	s.CacheControl = &v
@@ -16807,6 +17376,13 @@ func (s *PutObjectInput) SetSSECustomerAlgorithm(v string) *PutObjectInput {
 func (s *PutObjectInput) SetSSECustomerKey(v string) *PutObjectInput {
 	s.SSECustomerKey = &v
 	return s
+}
+
+func (s *PutObjectInput) getSSECustomerKey() (v string) {
+	if s.SSECustomerKey == nil {
+		return v
+	}
+	return *s.SSECustomerKey
 }
 
 // SetSSECustomerKeyMD5 sets the SSECustomerKeyMD5 field's value.
@@ -16951,7 +17527,7 @@ type PutObjectTaggingInput struct {
 	Key *string `location:"uri" locationName:"Key" min:"1" type:"string" required:"true"`
 
 	// Tagging is a required field
-	Tagging *Tagging `locationName:"Tagging" type:"structure" required:"true"`
+	Tagging *Tagging `locationName:"Tagging" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 
 	VersionId *string `location:"querystring" locationName:"versionId" type:"string"`
 }
@@ -16997,6 +17573,13 @@ func (s *PutObjectTaggingInput) Validate() error {
 func (s *PutObjectTaggingInput) SetBucket(v string) *PutObjectTaggingInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *PutObjectTaggingInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetKey sets the Key field's value.
@@ -17485,7 +18068,7 @@ type RestoreObjectInput struct {
 	// at http://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html
 	RequestPayer *string `location:"header" locationName:"x-amz-request-payer" type:"string" enum:"RequestPayer"`
 
-	RestoreRequest *RestoreRequest `locationName:"RestoreRequest" type:"structure"`
+	RestoreRequest *RestoreRequest `locationName:"RestoreRequest" type:"structure" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 
 	VersionId *string `location:"querystring" locationName:"versionId" type:"string"`
 }
@@ -17528,6 +18111,13 @@ func (s *RestoreObjectInput) Validate() error {
 func (s *RestoreObjectInput) SetBucket(v string) *RestoreObjectInput {
 	s.Bucket = &v
 	return s
+}
+
+func (s *RestoreObjectInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
 }
 
 // SetKey sets the Key field's value.
@@ -18005,7 +18595,7 @@ func (s *Tagging) SetTagSet(v []*Tag) *Tagging {
 type TargetGrant struct {
 	_ struct{} `type:"structure"`
 
-	Grantee *Grantee `type:"structure"`
+	Grantee *Grantee `type:"structure" xmlPrefix:"xsi" xmlURI:"http://www.w3.org/2001/XMLSchema-instance"`
 
 	// Logging permissions assigned to the Grantee for the bucket.
 	Permission *string `type:"string" enum:"BucketLogsPermission"`
@@ -18345,6 +18935,13 @@ func (s *UploadPartCopyInput) SetBucket(v string) *UploadPartCopyInput {
 	return s
 }
 
+func (s *UploadPartCopyInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetCopySource sets the CopySource field's value.
 func (s *UploadPartCopyInput) SetCopySource(v string) *UploadPartCopyInput {
 	s.CopySource = &v
@@ -18393,6 +18990,13 @@ func (s *UploadPartCopyInput) SetCopySourceSSECustomerKey(v string) *UploadPartC
 	return s
 }
 
+func (s *UploadPartCopyInput) getCopySourceSSECustomerKey() (v string) {
+	if s.CopySourceSSECustomerKey == nil {
+		return v
+	}
+	return *s.CopySourceSSECustomerKey
+}
+
 // SetCopySourceSSECustomerKeyMD5 sets the CopySourceSSECustomerKeyMD5 field's value.
 func (s *UploadPartCopyInput) SetCopySourceSSECustomerKeyMD5(v string) *UploadPartCopyInput {
 	s.CopySourceSSECustomerKeyMD5 = &v
@@ -18427,6 +19031,13 @@ func (s *UploadPartCopyInput) SetSSECustomerAlgorithm(v string) *UploadPartCopyI
 func (s *UploadPartCopyInput) SetSSECustomerKey(v string) *UploadPartCopyInput {
 	s.SSECustomerKey = &v
 	return s
+}
+
+func (s *UploadPartCopyInput) getSSECustomerKey() (v string) {
+	if s.SSECustomerKey == nil {
+		return v
+	}
+	return *s.SSECustomerKey
 }
 
 // SetSSECustomerKeyMD5 sets the SSECustomerKeyMD5 field's value.
@@ -18628,6 +19239,13 @@ func (s *UploadPartInput) SetBucket(v string) *UploadPartInput {
 	return s
 }
 
+func (s *UploadPartInput) getBucket() (v string) {
+	if s.Bucket == nil {
+		return v
+	}
+	return *s.Bucket
+}
+
 // SetContentLength sets the ContentLength field's value.
 func (s *UploadPartInput) SetContentLength(v int64) *UploadPartInput {
 	s.ContentLength = &v
@@ -18662,6 +19280,13 @@ func (s *UploadPartInput) SetSSECustomerAlgorithm(v string) *UploadPartInput {
 func (s *UploadPartInput) SetSSECustomerKey(v string) *UploadPartInput {
 	s.SSECustomerKey = &v
 	return s
+}
+
+func (s *UploadPartInput) getSSECustomerKey() (v string) {
+	if s.SSECustomerKey == nil {
+		return v
+	}
+	return *s.SSECustomerKey
 }
 
 // SetSSECustomerKeyMD5 sets the SSECustomerKeyMD5 field's value.

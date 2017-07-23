@@ -1,0 +1,14 @@
+{
+  "pagination": {
+    "ListResourcesForTagOption": {
+      "input_token": "PageToken",
+      "output_token": "PageToken",
+      "limit_key": "PageSize"
+    },
+    "ListTagOptions": {
+      "input_token": "PageToken",
+      "output_token": "PageToken",
+      "limit_key": "PageSize"
+    }
+  }
+}

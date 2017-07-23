@@ -54,6 +54,16 @@ message Simple {
   optional bytes o_bytes = 11;
 }
 
+// Test message for holding special non-finites primitives.
+message NonFinites {
+    optional float f_nan = 1;
+    optional float f_pinf = 2;
+    optional float f_ninf = 3;
+    optional double d_nan = 4;
+    optional double d_pinf = 5;
+    optional double d_ninf = 6;
+}
+
 // Test message for holding repeated primitives.
 message Repeats {
   repeated bool r_bool = 1;

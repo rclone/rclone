@@ -19,6 +19,7 @@ package pubsub_test
 import (
 	"cloud.google.com/go/pubsub/apiv1"
 	"golang.org/x/net/context"
+	"google.golang.org/api/iterator"
 	pubsubpb "google.golang.org/genproto/googleapis/pubsub/v1"
 )
 
@@ -133,9 +134,11 @@ func ExamplePublisherClient_ListTopics() {
 	it := c.ListTopics(ctx, req)
 	for {
 		resp, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
 		if err != nil {
 			// TODO: Handle error.
-			break
 		}
 		// TODO: Use resp.
 		_ = resp
@@ -155,9 +158,11 @@ func ExamplePublisherClient_ListTopicSubscriptions() {
 	it := c.ListTopicSubscriptions(ctx, req)
 	for {
 		resp, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
 		if err != nil {
 			// TODO: Handle error.
-			break
 		}
 		// TODO: Use resp.
 		_ = resp

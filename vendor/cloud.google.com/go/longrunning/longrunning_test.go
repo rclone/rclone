@@ -25,7 +25,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/duration"
-	"github.com/golang/protobuf/ptypes/empty"
 	gax "github.com/googleapis/gax-go"
 
 	"golang.org/x/net/context"
@@ -37,7 +36,7 @@ import (
 )
 
 type getterService struct {
-	pb.OperationsClient
+	operationsClient
 
 	// clock represents the fake current time of the service.
 	// It is the running sum of the of the duration we have slept.
@@ -50,7 +49,7 @@ type getterService struct {
 	results []*pb.Operation
 }
 
-func (s *getterService) GetOperation(context.Context, *pb.GetOperationRequest, ...grpc.CallOption) (*pb.Operation, error) {
+func (s *getterService) GetOperation(context.Context, *pb.GetOperationRequest, ...gax.CallOption) (*pb.Operation, error) {
 	i := len(s.getTimes)
 	s.getTimes = append(s.getTimes, s.clock)
 	if i >= len(s.results) {
@@ -177,16 +176,16 @@ func TestPollErrorResult(t *testing.T) {
 }
 
 type errService struct {
-	pb.OperationsClient
+	operationsClient
 	errCancel, errDelete error
 }
 
-func (s *errService) CancelOperation(context.Context, *pb.CancelOperationRequest, ...grpc.CallOption) (*empty.Empty, error) {
-	return nil, s.errCancel
+func (s *errService) CancelOperation(context.Context, *pb.CancelOperationRequest, ...gax.CallOption) error {
+	return s.errCancel
 }
 
-func (s *errService) DeleteOperation(context.Context, *pb.DeleteOperationRequest, ...grpc.CallOption) (*empty.Empty, error) {
-	return nil, s.errDelete
+func (s *errService) DeleteOperation(context.Context, *pb.DeleteOperationRequest, ...gax.CallOption) error {
+	return s.errDelete
 }
 
 func TestCancelReturnsError(t *testing.T) {

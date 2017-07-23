@@ -417,6 +417,11 @@ func TestActualContentLength(t *testing.T) {
 			req:  &http.Request{Body: panicReader{}, ContentLength: 5},
 			want: 5,
 		},
+		// http.NoBody means 0, not -1.
+		3: {
+			req:  &http.Request{Body: go18httpNoBody()},
+			want: 0,
+		},
 	}
 	for i, tt := range tests {
 		got := actualContentLength(tt.req)
@@ -2205,12 +2210,11 @@ func testTransportUsesGoAwayDebugError(t *testing.T, failMidBody bool) {
 	ct.run()
 }
 
-// See golang.org/issue/16481
-func TestTransportReturnsUnusedFlowControl(t *testing.T) {
+func testTransportReturnsUnusedFlowControl(t *testing.T, oneDataFrame bool) {
 	ct := newClientTester(t)
 
-	clientClosed := make(chan bool, 1)
-	serverWroteBody := make(chan bool, 1)
+	clientClosed := make(chan struct{})
+	serverWroteFirstByte := make(chan struct{})
 
 	ct.client = func() error {
 		req, _ := http.NewRequest("GET", "https://dummy.tld/", nil)
@@ -2218,13 +2222,13 @@ func TestTransportReturnsUnusedFlowControl(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		<-serverWroteBody
+		<-serverWroteFirstByte
 
 		if n, err := res.Body.Read(make([]byte, 1)); err != nil || n != 1 {
 			return fmt.Errorf("body read = %v, %v; want 1, nil", n, err)
 		}
 		res.Body.Close() // leaving 4999 bytes unread
-		clientClosed <- true
+		close(clientClosed)
 
 		return nil
 	}
@@ -2259,10 +2263,27 @@ func TestTransportReturnsUnusedFlowControl(t *testing.T) {
 			EndStream:     false,
 			BlockFragment: buf.Bytes(),
 		})
-		ct.fr.WriteData(hf.StreamID, false, make([]byte, 5000)) // without ending stream
-		serverWroteBody <- true
 
-		<-clientClosed
+		// Two cases:
+		// - Send one DATA frame with 5000 bytes.
+		// - Send two DATA frames with 1 and 4999 bytes each.
+		//
+		// In both cases, the client should consume one byte of data,
+		// refund that byte, then refund the following 4999 bytes.
+		//
+		// In the second case, the server waits for the client connection to
+		// close before seconding the second DATA frame. This tests the case
+		// where the client receives a DATA frame after it has reset the stream.
+		if oneDataFrame {
+			ct.fr.WriteData(hf.StreamID, false /* don't end stream */, make([]byte, 5000))
+			close(serverWroteFirstByte)
+			<-clientClosed
+		} else {
+			ct.fr.WriteData(hf.StreamID, false /* don't end stream */, make([]byte, 1))
+			close(serverWroteFirstByte)
+			<-clientClosed
+			ct.fr.WriteData(hf.StreamID, false /* don't end stream */, make([]byte, 4999))
+		}
 
 		waitingFor := "RSTStreamFrame"
 		for {
@@ -2276,7 +2297,7 @@ func TestTransportReturnsUnusedFlowControl(t *testing.T) {
 			switch waitingFor {
 			case "RSTStreamFrame":
 				if rf, ok := f.(*RSTStreamFrame); !ok || rf.ErrCode != ErrCodeCancel {
-					return fmt.Errorf("Expected a WindowUpdateFrame with code cancel; got %v", summarizeFrame(f))
+					return fmt.Errorf("Expected a RSTStreamFrame with code cancel; got %v", summarizeFrame(f))
 				}
 				waitingFor = "WindowUpdateFrame"
 			case "WindowUpdateFrame":
@@ -2288,6 +2309,16 @@ func TestTransportReturnsUnusedFlowControl(t *testing.T) {
 		}
 	}
 	ct.run()
+}
+
+// See golang.org/issue/16481
+func TestTransportReturnsUnusedFlowControlSingleWrite(t *testing.T) {
+	testTransportReturnsUnusedFlowControl(t, true)
+}
+
+// See golang.org/issue/20469
+func TestTransportReturnsUnusedFlowControlMultipleWrites(t *testing.T) {
+	testTransportReturnsUnusedFlowControl(t, false)
 }
 
 // Issue 16612: adjust flow control on open streams when transport
@@ -2529,7 +2560,7 @@ func TestTransportBodyDoubleEndStream(t *testing.T) {
 	}
 }
 
-// golangorg/issue/16847
+// golang.org/issue/16847, golang.org/issue/19103
 func TestTransportRequestPathPseudo(t *testing.T) {
 	type result struct {
 		path string
@@ -2549,9 +2580,9 @@ func TestTransportRequestPathPseudo(t *testing.T) {
 			},
 			want: result{path: "/foo"},
 		},
-		// I guess we just don't let users request "//foo" as
-		// a path, since it's illegal to start with two
-		// slashes....
+		// In Go 1.7, we accepted paths of "//foo".
+		// In Go 1.8, we rejected it (issue 16847).
+		// In Go 1.9, we accepted it again (issue 19103).
 		1: {
 			req: &http.Request{
 				Method: "GET",
@@ -2560,7 +2591,7 @@ func TestTransportRequestPathPseudo(t *testing.T) {
 					Path: "//foo",
 				},
 			},
-			want: result{err: `invalid request :path "//foo"`},
+			want: result{path: "//foo"},
 		},
 
 		// Opaque with //$Matching_Hostname/path
@@ -2914,4 +2945,97 @@ func TestAuthorityAddr(t *testing.T) {
 			t.Errorf("authorityAddr(%q, %q) = %q; want %q", tt.scheme, tt.authority, got, tt.want)
 		}
 	}
+}
+
+// Issue 20448: stop allocating for DATA frames' payload after
+// Response.Body.Close is called.
+func TestTransportAllocationsAfterResponseBodyClose(t *testing.T) {
+	megabyteZero := make([]byte, 1<<20)
+
+	writeErr := make(chan error, 1)
+
+	st := newServerTester(t, func(w http.ResponseWriter, r *http.Request) {
+		w.(http.Flusher).Flush()
+		var sum int64
+		for i := 0; i < 100; i++ {
+			n, err := w.Write(megabyteZero)
+			sum += int64(n)
+			if err != nil {
+				writeErr <- err
+				return
+			}
+		}
+		t.Logf("wrote all %d bytes", sum)
+		writeErr <- nil
+	}, optOnlyServer)
+	defer st.Close()
+
+	tr := &Transport{TLSClientConfig: tlsConfigInsecure}
+	defer tr.CloseIdleConnections()
+	c := &http.Client{Transport: tr}
+	res, err := c.Get(st.ts.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var buf [1]byte
+	if _, err := res.Body.Read(buf[:]); err != nil {
+		t.Error(err)
+	}
+	if err := res.Body.Close(); err != nil {
+		t.Error(err)
+	}
+
+	trb, ok := res.Body.(transportResponseBody)
+	if !ok {
+		t.Fatalf("res.Body = %T; want transportResponseBody", res.Body)
+	}
+	if trb.cs.bufPipe.b != nil {
+		t.Errorf("response body pipe is still open")
+	}
+
+	gotErr := <-writeErr
+	if gotErr == nil {
+		t.Errorf("Handler unexpectedly managed to write its entire response without getting an error")
+	} else if gotErr != errStreamClosed {
+		t.Errorf("Handler Write err = %v; want errStreamClosed", gotErr)
+	}
+}
+
+// Issue 18891: make sure Request.Body == NoBody means no DATA frame
+// is ever sent, even if empty.
+func TestTransportNoBodyMeansNoDATA(t *testing.T) {
+	ct := newClientTester(t)
+
+	unblockClient := make(chan bool)
+
+	ct.client = func() error {
+		req, _ := http.NewRequest("GET", "https://dummy.tld/", go18httpNoBody())
+		ct.tr.RoundTrip(req)
+		<-unblockClient
+		return nil
+	}
+	ct.server = func() error {
+		defer close(unblockClient)
+		defer ct.cc.(*net.TCPConn).Close()
+		ct.greet()
+
+		for {
+			f, err := ct.fr.ReadFrame()
+			if err != nil {
+				return fmt.Errorf("ReadFrame while waiting for Headers: %v", err)
+			}
+			switch f := f.(type) {
+			default:
+				return fmt.Errorf("Got %T; want HeadersFrame", f)
+			case *WindowUpdateFrame, *SettingsFrame:
+				continue
+			case *HeadersFrame:
+				if !f.StreamEnded() {
+					return fmt.Errorf("got headers frame without END_STREAM")
+				}
+				return nil
+			}
+		}
+	}
+	ct.run()
 }

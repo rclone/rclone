@@ -3,873 +3,1431 @@
 package kms_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/kms"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleKMS_CancelKeyDeletion() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.CancelKeyDeletionInput{
-		KeyId: aws.String("KeyIdType"), // Required
-	}
-	resp, err := svc.CancelKeyDeletion(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		panic(err)
+	}
+	return &t
+}
+
+// To cancel deletion of a customer master key (CMK)
+//
+// The following example cancels deletion of the specified CMK.
+func ExampleKMS_CancelKeyDeletion_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.CancelKeyDeletionInput{
+		KeyId: aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
+	}
+
+	result, err := svc.CancelKeyDeletion(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_CreateAlias() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.CreateAliasInput{
-		AliasName:   aws.String("AliasNameType"), // Required
-		TargetKeyId: aws.String("KeyIdType"),     // Required
+// To create an alias
+//
+// The following example creates an alias for the specified customer master key (CMK).
+func ExampleKMS_CreateAlias_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.CreateAliasInput{
+		AliasName:   aws.String("alias/ExampleAlias"),
+		TargetKeyId: aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
 	}
-	resp, err := svc.CreateAlias(params)
 
+	result, err := svc.CreateAlias(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeAlreadyExistsException:
+				fmt.Println(kms.ErrCodeAlreadyExistsException, aerr.Error())
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInvalidAliasNameException:
+				fmt.Println(kms.ErrCodeInvalidAliasNameException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeLimitExceededException:
+				fmt.Println(kms.ErrCodeLimitExceededException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_CreateGrant() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.CreateGrantInput{
-		GranteePrincipal: aws.String("PrincipalIdType"), // Required
-		KeyId:            aws.String("KeyIdType"),       // Required
-		Constraints: &kms.GrantConstraints{
-			EncryptionContextEquals: map[string]*string{
-				"Key": aws.String("EncryptionContextValue"), // Required
-				// More values...
-			},
-			EncryptionContextSubset: map[string]*string{
-				"Key": aws.String("EncryptionContextValue"), // Required
-				// More values...
-			},
-		},
-		GrantTokens: []*string{
-			aws.String("GrantTokenType"), // Required
-			// More values...
-		},
-		Name: aws.String("GrantNameType"),
+// To create a grant
+//
+// The following example creates a grant that allows the specified IAM role to encrypt
+// data with the specified customer master key (CMK).
+func ExampleKMS_CreateGrant_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.CreateGrantInput{
+		GranteePrincipal: aws.String("arn:aws:iam::111122223333:role/ExampleRole"),
+		KeyId:            aws.String("arn:aws:kms:us-east-2:444455556666:key/1234abcd-12ab-34cd-56ef-1234567890ab"),
 		Operations: []*string{
-			aws.String("GrantOperation"), // Required
-			// More values...
+			aws.String("Encrypt"),
+			aws.String("Decrypt"),
 		},
-		RetiringPrincipal: aws.String("PrincipalIdType"),
 	}
-	resp, err := svc.CreateGrant(params)
 
+	result, err := svc.CreateGrant(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeDisabledException:
+				fmt.Println(kms.ErrCodeDisabledException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidGrantTokenException:
+				fmt.Println(kms.ErrCodeInvalidGrantTokenException, aerr.Error())
+			case kms.ErrCodeLimitExceededException:
+				fmt.Println(kms.ErrCodeLimitExceededException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_CreateKey() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.CreateKeyInput{
-		BypassPolicyLockoutSafetyCheck: aws.Bool(true),
-		Description:                    aws.String("DescriptionType"),
-		KeyUsage:                       aws.String("KeyUsageType"),
-		Origin:                         aws.String("OriginType"),
-		Policy:                         aws.String("PolicyType"),
+// To create a customer master key (CMK)
+//
+// The following example creates a CMK.
+func ExampleKMS_CreateKey_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.CreateKeyInput{
 		Tags: []*kms.Tag{
-			{ // Required
-				TagKey:   aws.String("TagKeyType"),   // Required
-				TagValue: aws.String("TagValueType"), // Required
+			{
+				TagKey:   aws.String("CreatedBy"),
+				TagValue: aws.String("ExampleUser"),
 			},
-			// More values...
 		},
 	}
-	resp, err := svc.CreateKey(params)
 
+	result, err := svc.CreateKey(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeMalformedPolicyDocumentException:
+				fmt.Println(kms.ErrCodeMalformedPolicyDocumentException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeUnsupportedOperationException:
+				fmt.Println(kms.ErrCodeUnsupportedOperationException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeLimitExceededException:
+				fmt.Println(kms.ErrCodeLimitExceededException, aerr.Error())
+			case kms.ErrCodeTagException:
+				fmt.Println(kms.ErrCodeTagException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_Decrypt() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.DecryptInput{
-		CiphertextBlob: []byte("PAYLOAD"), // Required
-		EncryptionContext: map[string]*string{
-			"Key": aws.String("EncryptionContextValue"), // Required
-			// More values...
-		},
-		GrantTokens: []*string{
-			aws.String("GrantTokenType"), // Required
-			// More values...
-		},
+// To decrypt data
+//
+// The following example decrypts data that was encrypted with a customer master key
+// (CMK) in AWS KMS.
+func ExampleKMS_Decrypt_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.DecryptInput{
+		CiphertextBlob: []byte("<binary data>"),
 	}
-	resp, err := svc.Decrypt(params)
 
+	result, err := svc.Decrypt(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeDisabledException:
+				fmt.Println(kms.ErrCodeDisabledException, aerr.Error())
+			case kms.ErrCodeInvalidCiphertextException:
+				fmt.Println(kms.ErrCodeInvalidCiphertextException, aerr.Error())
+			case kms.ErrCodeKeyUnavailableException:
+				fmt.Println(kms.ErrCodeKeyUnavailableException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInvalidGrantTokenException:
+				fmt.Println(kms.ErrCodeInvalidGrantTokenException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_DeleteAlias() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.DeleteAliasInput{
-		AliasName: aws.String("AliasNameType"), // Required
+// To delete an alias
+//
+// The following example deletes the specified alias.
+func ExampleKMS_DeleteAlias_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.DeleteAliasInput{
+		AliasName: aws.String("alias/ExampleAlias"),
 	}
-	resp, err := svc.DeleteAlias(params)
 
+	result, err := svc.DeleteAlias(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_DeleteImportedKeyMaterial() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.DeleteImportedKeyMaterialInput{
-		KeyId: aws.String("KeyIdType"), // Required
+// To delete imported key material
+//
+// The following example deletes the imported key material from the specified customer
+// master key (CMK).
+func ExampleKMS_DeleteImportedKeyMaterial_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.DeleteImportedKeyMaterialInput{
+		KeyId: aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
 	}
-	resp, err := svc.DeleteImportedKeyMaterial(params)
 
+	result, err := svc.DeleteImportedKeyMaterial(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeUnsupportedOperationException:
+				fmt.Println(kms.ErrCodeUnsupportedOperationException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_DescribeKey() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.DescribeKeyInput{
-		KeyId: aws.String("KeyIdType"), // Required
-		GrantTokens: []*string{
-			aws.String("GrantTokenType"), // Required
-			// More values...
-		},
+// To obtain information about a customer master key (CMK)
+//
+// The following example returns information (metadata) about the specified CMK.
+func ExampleKMS_DescribeKey_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.DescribeKeyInput{
+		KeyId: aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
 	}
-	resp, err := svc.DescribeKey(params)
 
+	result, err := svc.DescribeKey(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_DisableKey() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.DisableKeyInput{
-		KeyId: aws.String("KeyIdType"), // Required
+// To disable a customer master key (CMK)
+//
+// The following example disables the specified CMK.
+func ExampleKMS_DisableKey_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.DisableKeyInput{
+		KeyId: aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
 	}
-	resp, err := svc.DisableKey(params)
 
+	result, err := svc.DisableKey(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_DisableKeyRotation() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.DisableKeyRotationInput{
-		KeyId: aws.String("KeyIdType"), // Required
+// To disable automatic rotation of key material
+//
+// The following example disables automatic annual rotation of the key material for
+// the specified CMK.
+func ExampleKMS_DisableKeyRotation_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.DisableKeyRotationInput{
+		KeyId: aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
 	}
-	resp, err := svc.DisableKeyRotation(params)
 
+	result, err := svc.DisableKeyRotation(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeDisabledException:
+				fmt.Println(kms.ErrCodeDisabledException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			case kms.ErrCodeUnsupportedOperationException:
+				fmt.Println(kms.ErrCodeUnsupportedOperationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_EnableKey() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.EnableKeyInput{
-		KeyId: aws.String("KeyIdType"), // Required
+// To enable a customer master key (CMK)
+//
+// The following example enables the specified CMK.
+func ExampleKMS_EnableKey_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.EnableKeyInput{
+		KeyId: aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
 	}
-	resp, err := svc.EnableKey(params)
 
+	result, err := svc.EnableKey(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeLimitExceededException:
+				fmt.Println(kms.ErrCodeLimitExceededException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_EnableKeyRotation() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.EnableKeyRotationInput{
-		KeyId: aws.String("KeyIdType"), // Required
+// To enable automatic rotation of key material
+//
+// The following example enables automatic annual rotation of the key material for the
+// specified CMK.
+func ExampleKMS_EnableKeyRotation_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.EnableKeyRotationInput{
+		KeyId: aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
 	}
-	resp, err := svc.EnableKeyRotation(params)
 
+	result, err := svc.EnableKeyRotation(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeDisabledException:
+				fmt.Println(kms.ErrCodeDisabledException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			case kms.ErrCodeUnsupportedOperationException:
+				fmt.Println(kms.ErrCodeUnsupportedOperationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_Encrypt() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.EncryptInput{
-		KeyId:     aws.String("KeyIdType"), // Required
-		Plaintext: []byte("PAYLOAD"),       // Required
-		EncryptionContext: map[string]*string{
-			"Key": aws.String("EncryptionContextValue"), // Required
-			// More values...
-		},
-		GrantTokens: []*string{
-			aws.String("GrantTokenType"), // Required
-			// More values...
-		},
+// To encrypt data
+//
+// The following example encrypts data with the specified customer master key (CMK).
+func ExampleKMS_Encrypt_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.EncryptInput{
+		KeyId:     aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
+		Plaintext: []byte("<binary data>"),
 	}
-	resp, err := svc.Encrypt(params)
 
+	result, err := svc.Encrypt(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeDisabledException:
+				fmt.Println(kms.ErrCodeDisabledException, aerr.Error())
+			case kms.ErrCodeKeyUnavailableException:
+				fmt.Println(kms.ErrCodeKeyUnavailableException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInvalidKeyUsageException:
+				fmt.Println(kms.ErrCodeInvalidKeyUsageException, aerr.Error())
+			case kms.ErrCodeInvalidGrantTokenException:
+				fmt.Println(kms.ErrCodeInvalidGrantTokenException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_GenerateDataKey() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.GenerateDataKeyInput{
-		KeyId: aws.String("KeyIdType"), // Required
-		EncryptionContext: map[string]*string{
-			"Key": aws.String("EncryptionContextValue"), // Required
-			// More values...
-		},
-		GrantTokens: []*string{
-			aws.String("GrantTokenType"), // Required
-			// More values...
-		},
-		KeySpec:       aws.String("DataKeySpec"),
-		NumberOfBytes: aws.Int64(1),
+// To generate a data key
+//
+// The following example generates a 256-bit symmetric data encryption key (data key)
+// in two formats. One is the unencrypted (plainext) data key, and the other is the
+// data key encrypted with the specified customer master key (CMK).
+func ExampleKMS_GenerateDataKey_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.GenerateDataKeyInput{
+		KeyId:   aws.String("alias/ExampleAlias"),
+		KeySpec: aws.String("AES_256"),
 	}
-	resp, err := svc.GenerateDataKey(params)
 
+	result, err := svc.GenerateDataKey(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeDisabledException:
+				fmt.Println(kms.ErrCodeDisabledException, aerr.Error())
+			case kms.ErrCodeKeyUnavailableException:
+				fmt.Println(kms.ErrCodeKeyUnavailableException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInvalidKeyUsageException:
+				fmt.Println(kms.ErrCodeInvalidKeyUsageException, aerr.Error())
+			case kms.ErrCodeInvalidGrantTokenException:
+				fmt.Println(kms.ErrCodeInvalidGrantTokenException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_GenerateDataKeyWithoutPlaintext() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.GenerateDataKeyWithoutPlaintextInput{
-		KeyId: aws.String("KeyIdType"), // Required
-		EncryptionContext: map[string]*string{
-			"Key": aws.String("EncryptionContextValue"), // Required
-			// More values...
-		},
-		GrantTokens: []*string{
-			aws.String("GrantTokenType"), // Required
-			// More values...
-		},
-		KeySpec:       aws.String("DataKeySpec"),
-		NumberOfBytes: aws.Int64(1),
+// To generate an encrypted data key
+//
+// The following example generates an encrypted copy of a 256-bit symmetric data encryption
+// key (data key). The data key is encrypted with the specified customer master key
+// (CMK).
+func ExampleKMS_GenerateDataKeyWithoutPlaintext_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.GenerateDataKeyWithoutPlaintextInput{
+		KeyId:   aws.String("alias/ExampleAlias"),
+		KeySpec: aws.String("AES_256"),
 	}
-	resp, err := svc.GenerateDataKeyWithoutPlaintext(params)
 
+	result, err := svc.GenerateDataKeyWithoutPlaintext(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeDisabledException:
+				fmt.Println(kms.ErrCodeDisabledException, aerr.Error())
+			case kms.ErrCodeKeyUnavailableException:
+				fmt.Println(kms.ErrCodeKeyUnavailableException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInvalidKeyUsageException:
+				fmt.Println(kms.ErrCodeInvalidKeyUsageException, aerr.Error())
+			case kms.ErrCodeInvalidGrantTokenException:
+				fmt.Println(kms.ErrCodeInvalidGrantTokenException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_GenerateRandom() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.GenerateRandomInput{
-		NumberOfBytes: aws.Int64(1),
+// To generate random data
+//
+// The following example uses AWS KMS to generate 32 bytes of random data.
+func ExampleKMS_GenerateRandom_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.GenerateRandomInput{
+		NumberOfBytes: aws.Int64(32),
 	}
-	resp, err := svc.GenerateRandom(params)
 
+	result, err := svc.GenerateRandom(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_GetKeyPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.GetKeyPolicyInput{
-		KeyId:      aws.String("KeyIdType"),      // Required
-		PolicyName: aws.String("PolicyNameType"), // Required
+// To retrieve a key policy
+//
+// The following example retrieves the key policy for the specified customer master
+// key (CMK).
+func ExampleKMS_GetKeyPolicy_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.GetKeyPolicyInput{
+		KeyId:      aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
+		PolicyName: aws.String("default"),
 	}
-	resp, err := svc.GetKeyPolicy(params)
 
+	result, err := svc.GetKeyPolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_GetKeyRotationStatus() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.GetKeyRotationStatusInput{
-		KeyId: aws.String("KeyIdType"), // Required
+// To retrieve the rotation status for a customer master key (CMK)
+//
+// The following example retrieves the status of automatic annual rotation of the key
+// material for the specified CMK.
+func ExampleKMS_GetKeyRotationStatus_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.GetKeyRotationStatusInput{
+		KeyId: aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
 	}
-	resp, err := svc.GetKeyRotationStatus(params)
 
+	result, err := svc.GetKeyRotationStatus(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			case kms.ErrCodeUnsupportedOperationException:
+				fmt.Println(kms.ErrCodeUnsupportedOperationException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_GetParametersForImport() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.GetParametersForImportInput{
-		KeyId:             aws.String("KeyIdType"),       // Required
-		WrappingAlgorithm: aws.String("AlgorithmSpec"),   // Required
-		WrappingKeySpec:   aws.String("WrappingKeySpec"), // Required
+// To retrieve the public key and import token for a customer master key (CMK)
+//
+// The following example retrieves the public key and import token for the specified
+// CMK.
+func ExampleKMS_GetParametersForImport_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.GetParametersForImportInput{
+		KeyId:             aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
+		WrappingAlgorithm: aws.String("RSAES_OAEP_SHA_1"),
+		WrappingKeySpec:   aws.String("RSA_2048"),
 	}
-	resp, err := svc.GetParametersForImport(params)
 
+	result, err := svc.GetParametersForImport(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeUnsupportedOperationException:
+				fmt.Println(kms.ErrCodeUnsupportedOperationException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_ImportKeyMaterial() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.ImportKeyMaterialInput{
-		EncryptedKeyMaterial: []byte("PAYLOAD"),       // Required
-		ImportToken:          []byte("PAYLOAD"),       // Required
-		KeyId:                aws.String("KeyIdType"), // Required
-		ExpirationModel:      aws.String("ExpirationModelType"),
-		ValidTo:              aws.Time(time.Now()),
+// To import key material into a customer master key (CMK)
+//
+// The following example imports key material into the specified CMK.
+func ExampleKMS_ImportKeyMaterial_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.ImportKeyMaterialInput{
+		EncryptedKeyMaterial: []byte("<binary data>"),
+		ExpirationModel:      aws.String("KEY_MATERIAL_DOES_NOT_EXPIRE"),
+		ImportToken:          []byte("<binary data>"),
+		KeyId:                aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
 	}
-	resp, err := svc.ImportKeyMaterial(params)
 
+	result, err := svc.ImportKeyMaterial(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeUnsupportedOperationException:
+				fmt.Println(kms.ErrCodeUnsupportedOperationException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			case kms.ErrCodeInvalidCiphertextException:
+				fmt.Println(kms.ErrCodeInvalidCiphertextException, aerr.Error())
+			case kms.ErrCodeIncorrectKeyMaterialException:
+				fmt.Println(kms.ErrCodeIncorrectKeyMaterialException, aerr.Error())
+			case kms.ErrCodeExpiredImportTokenException:
+				fmt.Println(kms.ErrCodeExpiredImportTokenException, aerr.Error())
+			case kms.ErrCodeInvalidImportTokenException:
+				fmt.Println(kms.ErrCodeInvalidImportTokenException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_ListAliases() {
-	sess := session.Must(session.NewSession())
+// To list aliases
+//
+// The following example lists aliases.
+func ExampleKMS_ListAliases_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.ListAliasesInput{}
 
-	svc := kms.New(sess)
-
-	params := &kms.ListAliasesInput{
-		Limit:  aws.Int64(1),
-		Marker: aws.String("MarkerType"),
-	}
-	resp, err := svc.ListAliases(params)
-
+	result, err := svc.ListAliases(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInvalidMarkerException:
+				fmt.Println(kms.ErrCodeInvalidMarkerException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_ListGrants() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.ListGrantsInput{
-		KeyId:  aws.String("KeyIdType"), // Required
-		Limit:  aws.Int64(1),
-		Marker: aws.String("MarkerType"),
+// To list grants for a customer master key (CMK)
+//
+// The following example lists grants for the specified CMK.
+func ExampleKMS_ListGrants_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.ListGrantsInput{
+		KeyId: aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
 	}
-	resp, err := svc.ListGrants(params)
 
+	result, err := svc.ListGrants(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInvalidMarkerException:
+				fmt.Println(kms.ErrCodeInvalidMarkerException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_ListKeyPolicies() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.ListKeyPoliciesInput{
-		KeyId:  aws.String("KeyIdType"), // Required
-		Limit:  aws.Int64(1),
-		Marker: aws.String("MarkerType"),
+// To list key policies for a customer master key (CMK)
+//
+// The following example lists key policies for the specified CMK.
+func ExampleKMS_ListKeyPolicies_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.ListKeyPoliciesInput{
+		KeyId: aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
 	}
-	resp, err := svc.ListKeyPolicies(params)
 
+	result, err := svc.ListKeyPolicies(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_ListKeys() {
-	sess := session.Must(session.NewSession())
+// To list customer master keys (CMKs)
+//
+// The following example lists CMKs.
+func ExampleKMS_ListKeys_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.ListKeysInput{}
 
-	svc := kms.New(sess)
-
-	params := &kms.ListKeysInput{
-		Limit:  aws.Int64(1),
-		Marker: aws.String("MarkerType"),
-	}
-	resp, err := svc.ListKeys(params)
-
+	result, err := svc.ListKeys(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidMarkerException:
+				fmt.Println(kms.ErrCodeInvalidMarkerException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_ListResourceTags() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.ListResourceTagsInput{
-		KeyId:  aws.String("KeyIdType"), // Required
-		Limit:  aws.Int64(1),
-		Marker: aws.String("MarkerType"),
+// To list tags for a customer master key (CMK)
+//
+// The following example lists tags for a CMK.
+func ExampleKMS_ListResourceTags_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.ListResourceTagsInput{
+		KeyId: aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
 	}
-	resp, err := svc.ListResourceTags(params)
 
+	result, err := svc.ListResourceTags(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeInvalidMarkerException:
+				fmt.Println(kms.ErrCodeInvalidMarkerException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_ListRetirableGrants() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.ListRetirableGrantsInput{
-		RetiringPrincipal: aws.String("PrincipalIdType"), // Required
-		Limit:             aws.Int64(1),
-		Marker:            aws.String("MarkerType"),
+// To list grants that the specified principal can retire
+//
+// The following example lists the grants that the specified principal (identity) can
+// retire.
+func ExampleKMS_ListRetirableGrants_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.ListRetirableGrantsInput{
+		RetiringPrincipal: aws.String("arn:aws:iam::111122223333:role/ExampleRole"),
 	}
-	resp, err := svc.ListRetirableGrants(params)
 
+	result, err := svc.ListRetirableGrants(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInvalidMarkerException:
+				fmt.Println(kms.ErrCodeInvalidMarkerException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_PutKeyPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.PutKeyPolicyInput{
-		KeyId:                          aws.String("KeyIdType"),      // Required
-		Policy:                         aws.String("PolicyType"),     // Required
-		PolicyName:                     aws.String("PolicyNameType"), // Required
-		BypassPolicyLockoutSafetyCheck: aws.Bool(true),
+// To attach a key policy to a customer master key (CMK)
+//
+// The following example attaches a key policy to the specified CMK.
+func ExampleKMS_PutKeyPolicy_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.PutKeyPolicyInput{
+		KeyId:      aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
+		Policy:     aws.String("{\n    \"Version\": \"2012-10-17\",\n    \"Id\": \"custom-policy-2016-12-07\",\n    \"Statement\": [\n        {\n            \"Sid\": \"Enable IAM User Permissions\",\n            \"Effect\": \"Allow\",\n            \"Principal\": {\n                \"AWS\": \"arn:aws:iam::111122223333:root\"\n            },\n            \"Action\": \"kms:*\",\n            \"Resource\": \"*\"\n        },\n        {\n            \"Sid\": \"Allow access for Key Administrators\",\n            \"Effect\": \"Allow\",\n            \"Principal\": {\n                \"AWS\": [\n                    \"arn:aws:iam::111122223333:user/ExampleAdminUser\",\n                    \"arn:aws:iam::111122223333:role/ExampleAdminRole\"\n                ]\n            },\n            \"Action\": [\n                \"kms:Create*\",\n                \"kms:Describe*\",\n                \"kms:Enable*\",\n                \"kms:List*\",\n                \"kms:Put*\",\n                \"kms:Update*\",\n                \"kms:Revoke*\",\n                \"kms:Disable*\",\n                \"kms:Get*\",\n                \"kms:Delete*\",\n                \"kms:ScheduleKeyDeletion\",\n                \"kms:CancelKeyDeletion\"\n            ],\n            \"Resource\": \"*\"\n        },\n        {\n            \"Sid\": \"Allow use of the key\",\n            \"Effect\": \"Allow\",\n            \"Principal\": {\n                \"AWS\": \"arn:aws:iam::111122223333:role/ExamplePowerUserRole\"\n            },\n            \"Action\": [\n                \"kms:Encrypt\",\n                \"kms:Decrypt\",\n                \"kms:ReEncrypt*\",\n                \"kms:GenerateDataKey*\",\n                \"kms:DescribeKey\"\n            ],\n            \"Resource\": \"*\"\n        },\n        {\n            \"Sid\": \"Allow attachment of persistent resources\",\n            \"Effect\": \"Allow\",\n            \"Principal\": {\n                \"AWS\": \"arn:aws:iam::111122223333:role/ExamplePowerUserRole\"\n            },\n            \"Action\": [\n                \"kms:CreateGrant\",\n                \"kms:ListGrants\",\n                \"kms:RevokeGrant\"\n            ],\n            \"Resource\": \"*\",\n            \"Condition\": {\n                \"Bool\": {\n                    \"kms:GrantIsForAWSResource\": \"true\"\n                }\n            }\n        }\n    ]\n}\n"),
+		PolicyName: aws.String("default"),
 	}
-	resp, err := svc.PutKeyPolicy(params)
 
+	result, err := svc.PutKeyPolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeMalformedPolicyDocumentException:
+				fmt.Println(kms.ErrCodeMalformedPolicyDocumentException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeUnsupportedOperationException:
+				fmt.Println(kms.ErrCodeUnsupportedOperationException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeLimitExceededException:
+				fmt.Println(kms.ErrCodeLimitExceededException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_ReEncrypt() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.ReEncryptInput{
-		CiphertextBlob:   []byte("PAYLOAD"),       // Required
-		DestinationKeyId: aws.String("KeyIdType"), // Required
-		DestinationEncryptionContext: map[string]*string{
-			"Key": aws.String("EncryptionContextValue"), // Required
-			// More values...
-		},
-		GrantTokens: []*string{
-			aws.String("GrantTokenType"), // Required
-			// More values...
-		},
-		SourceEncryptionContext: map[string]*string{
-			"Key": aws.String("EncryptionContextValue"), // Required
-			// More values...
-		},
+// To reencrypt data
+//
+// The following example reencrypts data with the specified CMK.
+func ExampleKMS_ReEncrypt_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.ReEncryptInput{
+		CiphertextBlob:   []byte("<binary data>"),
+		DestinationKeyId: aws.String("0987dcba-09fe-87dc-65ba-ab0987654321"),
 	}
-	resp, err := svc.ReEncrypt(params)
 
+	result, err := svc.ReEncrypt(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeDisabledException:
+				fmt.Println(kms.ErrCodeDisabledException, aerr.Error())
+			case kms.ErrCodeInvalidCiphertextException:
+				fmt.Println(kms.ErrCodeInvalidCiphertextException, aerr.Error())
+			case kms.ErrCodeKeyUnavailableException:
+				fmt.Println(kms.ErrCodeKeyUnavailableException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInvalidKeyUsageException:
+				fmt.Println(kms.ErrCodeInvalidKeyUsageException, aerr.Error())
+			case kms.ErrCodeInvalidGrantTokenException:
+				fmt.Println(kms.ErrCodeInvalidGrantTokenException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_RetireGrant() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.RetireGrantInput{
-		GrantId:    aws.String("GrantIdType"),
-		GrantToken: aws.String("GrantTokenType"),
-		KeyId:      aws.String("KeyIdType"),
+// To retire a grant
+//
+// The following example retires a grant.
+func ExampleKMS_RetireGrant_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.RetireGrantInput{
+		GrantId: aws.String("0c237476b39f8bc44e45212e08498fbe3151305030726c0590dd8d3e9f3d6a60"),
+		KeyId:   aws.String("arn:aws:kms:us-east-2:444455556666:key/1234abcd-12ab-34cd-56ef-1234567890ab"),
 	}
-	resp, err := svc.RetireGrant(params)
 
+	result, err := svc.RetireGrant(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeInvalidGrantTokenException:
+				fmt.Println(kms.ErrCodeInvalidGrantTokenException, aerr.Error())
+			case kms.ErrCodeInvalidGrantIdException:
+				fmt.Println(kms.ErrCodeInvalidGrantIdException, aerr.Error())
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_RevokeGrant() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.RevokeGrantInput{
-		GrantId: aws.String("GrantIdType"), // Required
-		KeyId:   aws.String("KeyIdType"),   // Required
+// To revoke a grant
+//
+// The following example revokes a grant.
+func ExampleKMS_RevokeGrant_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.RevokeGrantInput{
+		GrantId: aws.String("0c237476b39f8bc44e45212e08498fbe3151305030726c0590dd8d3e9f3d6a60"),
+		KeyId:   aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
 	}
-	resp, err := svc.RevokeGrant(params)
 
+	result, err := svc.RevokeGrant(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeInvalidGrantIdException:
+				fmt.Println(kms.ErrCodeInvalidGrantIdException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_ScheduleKeyDeletion() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.ScheduleKeyDeletionInput{
-		KeyId:               aws.String("KeyIdType"), // Required
-		PendingWindowInDays: aws.Int64(1),
+// To schedule a customer master key (CMK) for deletion
+//
+// The following example schedules the specified CMK for deletion.
+func ExampleKMS_ScheduleKeyDeletion_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.ScheduleKeyDeletionInput{
+		KeyId:               aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
+		PendingWindowInDays: aws.Int64(7),
 	}
-	resp, err := svc.ScheduleKeyDeletion(params)
 
+	result, err := svc.ScheduleKeyDeletion(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_TagResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.TagResourceInput{
-		KeyId: aws.String("KeyIdType"), // Required
-		Tags: []*kms.Tag{ // Required
-			{ // Required
-				TagKey:   aws.String("TagKeyType"),   // Required
-				TagValue: aws.String("TagValueType"), // Required
+// To tag a customer master key (CMK)
+//
+// The following example tags a CMK.
+func ExampleKMS_TagResource_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.TagResourceInput{
+		KeyId: aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
+		Tags: []*kms.Tag{
+			{
+				TagKey:   aws.String("Purpose"),
+				TagValue: aws.String("Test"),
 			},
-			// More values...
 		},
 	}
-	resp, err := svc.TagResource(params)
 
+	result, err := svc.TagResource(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			case kms.ErrCodeLimitExceededException:
+				fmt.Println(kms.ErrCodeLimitExceededException, aerr.Error())
+			case kms.ErrCodeTagException:
+				fmt.Println(kms.ErrCodeTagException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_UntagResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.UntagResourceInput{
-		KeyId: aws.String("KeyIdType"), // Required
-		TagKeys: []*string{ // Required
-			aws.String("TagKeyType"), // Required
-			// More values...
+// To remove tags from a customer master key (CMK)
+//
+// The following example removes tags from a CMK.
+func ExampleKMS_UntagResource_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.UntagResourceInput{
+		KeyId: aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
+		TagKeys: []*string{
+			aws.String("Purpose"),
+			aws.String("CostCenter"),
 		},
 	}
-	resp, err := svc.UntagResource(params)
 
+	result, err := svc.UntagResource(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			case kms.ErrCodeTagException:
+				fmt.Println(kms.ErrCodeTagException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_UpdateAlias() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.UpdateAliasInput{
-		AliasName:   aws.String("AliasNameType"), // Required
-		TargetKeyId: aws.String("KeyIdType"),     // Required
+// To update an alias
+//
+// The following example updates the specified alias to refer to the specified customer
+// master key (CMK).
+func ExampleKMS_UpdateAlias_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.UpdateAliasInput{
+		AliasName:   aws.String("alias/ExampleAlias"),
+		TargetKeyId: aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
 	}
-	resp, err := svc.UpdateAlias(params)
 
+	result, err := svc.UpdateAlias(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleKMS_UpdateKeyDescription() {
-	sess := session.Must(session.NewSession())
-
-	svc := kms.New(sess)
-
-	params := &kms.UpdateKeyDescriptionInput{
-		Description: aws.String("DescriptionType"), // Required
-		KeyId:       aws.String("KeyIdType"),       // Required
+// To update the description of a customer master key (CMK)
+//
+// The following example updates the description of the specified CMK.
+func ExampleKMS_UpdateKeyDescription_shared00() {
+	svc := kms.New(session.New())
+	input := &kms.UpdateKeyDescriptionInput{
+		Description: aws.String("Example description that indicates the intended use of this CMK."),
+		KeyId:       aws.String("1234abcd-12ab-34cd-56ef-1234567890ab"),
 	}
-	resp, err := svc.UpdateKeyDescription(params)
 
+	result, err := svc.UpdateKeyDescription(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case kms.ErrCodeNotFoundException:
+				fmt.Println(kms.ErrCodeNotFoundException, aerr.Error())
+			case kms.ErrCodeInvalidArnException:
+				fmt.Println(kms.ErrCodeInvalidArnException, aerr.Error())
+			case kms.ErrCodeDependencyTimeoutException:
+				fmt.Println(kms.ErrCodeDependencyTimeoutException, aerr.Error())
+			case kms.ErrCodeInternalException:
+				fmt.Println(kms.ErrCodeInternalException, aerr.Error())
+			case kms.ErrCodeInvalidStateException:
+				fmt.Println(kms.ErrCodeInvalidStateException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }

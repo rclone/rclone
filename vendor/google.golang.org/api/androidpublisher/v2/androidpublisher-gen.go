@@ -2014,7 +2014,7 @@ type SubscriptionPurchase struct {
 	// - User cancelled the subscription
 	// - Subscription was cancelled by the system, for example because of a
 	// billing problem
-	CancelReason int64 `json:"cancelReason,omitempty"`
+	CancelReason *int64 `json:"cancelReason,omitempty"`
 
 	// CountryCode: ISO 3166-1 alpha-2 billing country/region code of the
 	// user at the time the subscription was granted.
@@ -2036,7 +2036,7 @@ type SubscriptionPurchase struct {
 	// are:
 	// - Payment pending
 	// - Payment received
-	PaymentState int64 `json:"paymentState,omitempty"`
+	PaymentState *int64 `json:"paymentState,omitempty"`
 
 	// PriceAmountMicros: Price of the subscription, not including tax.
 	// Price is expressed in micro-units, where 1,000,000 micro-units

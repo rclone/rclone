@@ -1,13 +1,12 @@
-# Google Cloud for Go
+# Google Cloud Client Libraries for Go
 
-[![Build Status](https://travis-ci.org/GoogleCloudPlatform/google-cloud-go.svg?branch=master)](https://travis-ci.org/GoogleCloudPlatform/google-cloud-go)
 [![GoDoc](https://godoc.org/cloud.google.com/go?status.svg)](https://godoc.org/cloud.google.com/go)
+
+Go packages for [Google Cloud Platform](https://cloud.google.com) services.
 
 ``` go
 import "cloud.google.com/go"
 ```
-
-Go packages for Google Cloud Platform services.
 
 To install the packages on your system,
 
@@ -15,8 +14,8 @@ To install the packages on your system,
 $ go get -u cloud.google.com/go/...
 ```
 
-**NOTE:** These packages are under development, and may occasionally make
-backwards-incompatible changes.
+**NOTE:** Some of these packages are under development, and may occasionally
+make backwards-incompatible changes.
 
 **NOTE:** Github repo is a mirror of [https://code.googlesource.com/gocloud](https://code.googlesource.com/gocloud).
 
@@ -34,154 +33,44 @@ backwards-incompatible changes.
 
 ## News
 
+_March 17, 2017_
+
+Breaking Pubsub changes.
+* Publish is now asynchronous
+([announcement](https://groups.google.com/d/topic/google-api-go-announce/aaqRDIQ3rvU/discussion)).
+* Subscription.Pull replaced by Subscription.Receive, which takes a callback ([announcement](https://groups.google.com/d/topic/google-api-go-announce/8pt6oetAdKc/discussion)).
+* Message.Done replaced with Message.Ack and Message.Nack.
+
 _February 14, 2017_
 
 Release of a client library for Spanner. See
 the
-[blog post](https://cloudplatform.googleblog.com/2017/02/introducing-Cloud-Spanner-a-global-database-service-for-mission-critical-applications.html). 
+[blog post](https://cloudplatform.googleblog.com/2017/02/introducing-Cloud-Spanner-a-global-database-service-for-mission-critical-applications.html).
 
 Note that although the Spanner service is beta, the Go client library is alpha.
-
-_December 12, 2016_
-
-Beta release of BigQuery, DataStore, Logging and Storage. See the
-[blog post](https://cloudplatform.googleblog.com/2016/12/announcing-new-google-cloud-client.html).
-
-Also, BigQuery now supports structs. Read a row directly into a struct with
-`RowIterator.Next`, and upload a row directly from a struct with `Uploader.Put`.
-You can also use field tags. See the [package documentation][cloud-bigquery-ref]
-for details.
-
-_December 5, 2016_
-
-More changes to BigQuery:
-
-* The `ValueList` type was removed. It is no longer necessary. Instead of
-   ```go
-   var v ValueList
-   ... it.Next(&v) ..
-   ```
-   use
-
-   ```go
-   var v []Value
-   ... it.Next(&v) ...
-   ```
-
-* Previously, repeatedly calling `RowIterator.Next` on the same `[]Value` or
-  `ValueList` would append to the slice. Now each call resets the size to zero first.
-
-* Schema inference will infer the SQL type BYTES for a struct field of
-  type []byte. Previously it inferred STRING.
-
-* The types `uint`, `uint64` and `uintptr` are no longer supported in schema
-  inference. BigQuery's integer type is INT64, and those types may hold values
-  that are not correctly represented in a 64-bit signed integer.
-
-* The SQL types DATE, TIME and DATETIME are now supported. They correspond to
-  the `Date`, `Time` and `DateTime` types in the new `cloud.google.com/go/civil`
-  package.
-
-_November 17, 2016_
-
-Change to BigQuery: values from INTEGER columns will now be returned as int64,
-not int. This will avoid errors arising from large values on 32-bit systems.
-
-_November 8, 2016_
-
-New datastore feature: datastore now encodes your nested Go structs as Entity values,
-instead of a flattened list of the embedded struct's fields.
-This means that you may now have twice-nested slices, eg.
-```go
-type State struct {
-  Cities  []struct{
-    Populations []int
-  }
-}
-```
-
-See [the announcement](https://groups.google.com/forum/#!topic/google-api-go-announce/79jtrdeuJAg) for
-more details.
-
-_November 8, 2016_
-
-Breaking changes to datastore: contexts no longer hold namespaces; instead you
-must set a key's namespace explicitly. Also, key functions have been changed
-and renamed.
-
-* The WithNamespace function has been removed. To specify a namespace in a Query, use the Query.Namespace method:
-  ```go
-  q := datastore.NewQuery("Kind").Namespace("ns")
-  ```
-
-* All the fields of Key are exported. That means you can construct any Key with a struct literal:
-  ```go
-  k := &Key{Kind: "Kind",  ID: 37, Namespace: "ns"}
-  ```
-
-* As a result of the above, the Key methods Kind, ID, d.Name, Parent, SetParent and Namespace have been removed.
-
-* `NewIncompleteKey` has been removed, replaced by `IncompleteKey`. Replace
-  ```go
-  NewIncompleteKey(ctx, kind, parent)
-  ```
-  with
-  ```go
-  IncompleteKey(kind, parent)
-  ```
-  and if you do use namespaces, make sure you set the namespace on the returned key.
-
-* `NewKey` has been removed, replaced by `NameKey` and `IDKey`. Replace
-  ```go
-  NewKey(ctx, kind, name, 0, parent)
-  NewKey(ctx, kind, "", id, parent)
-  ```
-  with
-  ```go
-  NameKey(kind, name, parent)
-  IDKey(kind, id, parent)
-  ```
-  and if you do use namespaces, make sure you set the namespace on the returned key.
-
-* The `Done` variable has been removed. Replace `datastore.Done` with `iterator.Done`, from the package `google.golang.org/api/iterator`.
-
-* The `Client.Close` method will have a return type of error. It will return the result of closing the underlying gRPC connection.
-
-See [the announcement](https://groups.google.com/forum/#!topic/google-api-go-announce/hqXtM_4Ix-0) for
-more details.
-
-_October 27, 2016_
-
-Breaking change to bigquery: `NewGCSReference` is now a function,
-not a method on `Client`.
-
-New bigquery feature: `Table.LoaderFrom` now accepts a `ReaderSource`, enabling
-loading data into a table from a file or any `io.Reader`.
-
-_October 21, 2016_
-
-Breaking change to pubsub: removed `pubsub.Done`.
-
-Use `iterator.Done` instead, where `iterator` is the package
-`google.golang.org/api/iterator`.
 
 
 [Older news](https://github.com/GoogleCloudPlatform/google-cloud-go/blob/master/old-news.md)
 
 ## Supported APIs
 
-Google API                     | Status       | Package
--------------------------------|--------------|-----------------------------------------------------------
-[Datastore][cloud-datastore]   | beta         | [`cloud.google.com/go/datastore`][cloud-datastore-ref]
-[Storage][cloud-storage]       | beta         | [`cloud.google.com/go/storage`][cloud-storage-ref]
-[Bigtable][cloud-bigtable]     | beta         | [`cloud.google.com/go/bigtable`][cloud-bigtable-ref]
-[BigQuery][cloud-bigquery]     | beta         | [`cloud.google.com/go/bigquery`][cloud-bigquery-ref]
-[Logging][cloud-logging]       | beta         | [`cloud.google.com/go/logging`][cloud-logging-ref]
-[Pub/Sub][cloud-pubsub]        | alpha | [`cloud.google.com/go/pubsub`][cloud-pubsub-ref]
-[Vision][cloud-vision]         | beta | [`cloud.google.com/go/vision`][cloud-vision-ref]
-[Language][cloud-language]     | alpha | [`cloud.google.com/go/language/apiv1`][cloud-language-ref]
-[Speech][cloud-speech]         | alpha | [`cloud.google.com/go/speech/apiv1beta`][cloud-speech-ref]
-[Spanner][cloud-spanner]       | alpha | [`cloud.google.com/go/spanner`][cloud-spanner-ref]
+Google API                       | Status       | Package
+---------------------------------|--------------|-----------------------------------------------------------
+[Datastore][cloud-datastore]     | stable       | [`cloud.google.com/go/datastore`][cloud-datastore-ref]
+[Storage][cloud-storage]         | stable       | [`cloud.google.com/go/storage`][cloud-storage-ref]
+[Bigtable][cloud-bigtable]       | beta         | [`cloud.google.com/go/bigtable`][cloud-bigtable-ref]
+[BigQuery][cloud-bigquery]       | beta         | [`cloud.google.com/go/bigquery`][cloud-bigquery-ref]
+[Logging][cloud-logging]         | stable       | [`cloud.google.com/go/logging`][cloud-logging-ref]
+[Monitoring][cloud-monitoring]   | alpha        | [`cloud.google.com/go/monitoring/apiv3`][cloud-monitoring-ref]
+[Pub/Sub][cloud-pubsub]          | alpha        | [`cloud.google.com/go/pubsub`][cloud-pubsub-ref]
+[Vision][cloud-vision]           | beta         | [`cloud.google.com/go/vision/apiv1`][cloud-vision-ref]
+[Language][cloud-language]       | beta         | [`cloud.google.com/go/language/apiv1`][cloud-language-ref]
+[Speech][cloud-speech]           | beta         | [`cloud.google.com/go/speech/apiv1`][cloud-speech-ref]
+[Spanner][cloud-spanner]         | alpha        | [`cloud.google.com/go/spanner`][cloud-spanner-ref]
+[Translation][cloud-translation] | stable       | [`cloud.google.com/go/translate`][cloud-translation-ref]
+[Trace][cloud-trace]             | alpha        | [`cloud.google.com/go/trace`][cloud-trace-ref]
+[Video Intelligence][cloud-video]| alpha        | [`cloud.google.com/go/videointelligence/apiv1beta1`][cloud-video-ref]
+[ErrorReporting][cloud-errors]   | alpha        | [`cloud.google.com/go/errors`][cloud-errors-ref]
 
 
 > **Alpha status**: the API is still being actively developed. As a
@@ -215,6 +104,7 @@ By default, each API will use [Google Application Default Credentials][default-c
 for authorization credentials used in calling the API endpoints. This will allow your
 application to run in many environments without requiring explicit configuration.
 
+[snip]:# (auth)
 ```go
 client, err := storage.NewClient(ctx)
 ```
@@ -225,6 +115,7 @@ pass
 [`option.WithServiceAccountFile`](https://godoc.org/google.golang.org/api/option#WithServiceAccountFile)
 to the `NewClient` function of the desired package. For example:
 
+[snip]:# (auth-JSON)
 ```go
 client, err := storage.NewClient(ctx, option.WithServiceAccountFile("path/to/keyfile.json"))
 ```
@@ -234,6 +125,7 @@ You can exert more control over authorization by using the
 create an `oauth2.TokenSource`. Then pass
 [`option.WithTokenSource`](https://godoc.org/google.golang.org/api/option#WithTokenSource)
 to the `NewClient` function:
+[snip]:# (auth-ts)
 ```go
 tokenSource := ...
 client, err := storage.NewClient(ctx, option.WithTokenSource(tokenSource))
@@ -251,6 +143,7 @@ client, err := storage.NewClient(ctx, option.WithTokenSource(tokenSource))
 
 First create a `datastore.Client` to use throughout your application:
 
+[snip]:# (datastore-1)
 ```go
 client, err := datastore.NewClient(ctx, "my-project-id")
 if err != nil {
@@ -260,6 +153,7 @@ if err != nil {
 
 Then use that client to interact with the API:
 
+[snip]:# (datastore-2)
 ```go
 type Post struct {
 	Title       string
@@ -267,8 +161,8 @@ type Post struct {
 	PublishedAt time.Time
 }
 keys := []*datastore.Key{
-	datastore.NewKey(ctx, "Post", "post1", 0, nil),
-	datastore.NewKey(ctx, "Post", "post2", 0, nil),
+	datastore.NameKey("Post", "post1", nil),
+	datastore.NameKey("Post", "post2", nil),
 }
 posts := []*Post{
 	{Title: "Post 1", Body: "...", PublishedAt: time.Now()},
@@ -290,6 +184,7 @@ if _, err := client.PutMulti(ctx, keys, posts); err != nil {
 
 First create a `storage.Client` to use throughout your application:
 
+[snip]:# (storage-1)
 ```go
 client, err := storage.NewClient(ctx)
 if err != nil {
@@ -297,6 +192,7 @@ if err != nil {
 }
 ```
 
+[snip]:# (storage-2)
 ```go
 // Read the object1 from bucket.
 rc, err := client.Bucket("bucket").Object("object1").NewReader(ctx)
@@ -321,6 +217,7 @@ if err != nil {
 
 First create a `pubsub.Client` to use throughout your application:
 
+[snip]:# (pubsub-1)
 ```go
 client, err := pubsub.NewClient(ctx, "project-id")
 if err != nil {
@@ -330,35 +227,29 @@ if err != nil {
 
 Then use the client to publish and subscribe:
 
+[snip]:# (pubsub-2)
 ```go
 // Publish "hello world" on topic1.
 topic := client.Topic("topic1")
-msgIDs, err := topic.Publish(ctx, &pubsub.Message{
+res := topic.Publish(ctx, &pubsub.Message{
 	Data: []byte("hello world"),
 })
+// The publish happens asynchronously.
+// Later, you can get the result from res:
+...
+msgID, err := res.Get(ctx)
 if err != nil {
 	log.Fatal(err)
 }
 
-// Create an iterator to pull messages via subscription1.
-it, err := client.Subscription("subscription1").Pull(ctx)
+// Use a callback to receive messages via subscription1.
+sub := client.Subscription("subscription1")
+err = sub.Receive(ctx, func(ctx context.Context, m *pubsub.Message) {
+	fmt.Println(m.Data)
+	m.Ack() // Acknowledge that we've consumed the message.
+})
 if err != nil {
 	log.Println(err)
-}
-defer it.Stop()
-
-// Consume N messages from the iterator.
-for i := 0; i < N; i++ {
-	msg, err := it.Next()
-	if err == iterator.Done {
-		break
-	}
-	if err != nil {
-		log.Fatalf("Failed to retrieve message: %v", err)
-	}
-
-	fmt.Printf("Message %d: %s\n", i, msg.Data)
-	msg.Done(true) // Acknowledge that we've consumed the message.
 }
 ```
 
@@ -372,13 +263,16 @@ for i := 0; i < N; i++ {
 ### Example Usage
 
 First create a `bigquery.Client` to use throughout your application:
+[snip]:# (bq-1)
 ```go
 c, err := bigquery.NewClient(ctx, "my-project-ID")
 if err != nil {
-    // TODO: Handle error.
+	// TODO: Handle error.
 }
 ```
+
 Then use that client to interact with the API:
+[snip]:# (bq-2)
 ```go
 // Construct a query.
 q := c.Query(`
@@ -391,19 +285,19 @@ q := c.Query(`
 // Execute the query.
 it, err := q.Read(ctx)
 if err != nil {
-    // TODO: Handle error.
+	// TODO: Handle error.
 }
 // Iterate through the results.
 for {
-    var values []bigquery.Value
-    err := it.Next(&values)
-    if err == iterator.Done {
-        break
-    }
-    if err != nil {
-        // TODO: Handle error.
-    }
-    fmt.Println(values)
+	var values []bigquery.Value
+	err := it.Next(&values)
+	if err == iterator.Done {
+		break
+	}
+	if err != nil {
+		// TODO: Handle error.
+	}
+	fmt.Println(values)
 }
 ```
 
@@ -418,28 +312,31 @@ for {
 ### Example Usage
 
 First create a `logging.Client` to use throughout your application:
-
+[snip]:# (logging-1)
 ```go
 ctx := context.Background()
 client, err := logging.NewClient(ctx, "my-project")
 if err != nil {
-    // TODO: Handle error.
+	// TODO: Handle error.
 }
 ```
+
 Usually, you'll want to add log entries to a buffer to be periodically flushed
 (automatically and asynchronously) to the Stackdriver Logging service.
+[snip]:# (logging-2)
 ```go
 logger := client.Logger("my-log")
 logger.Log(logging.Entry{Payload: "something happened!"})
 ```
+
 Close your client before your program exits, to flush any buffered log entries.
+[snip]:# (logging-3)
 ```go
 err = client.Close()
 if err != nil {
-    // TODO: Handle error.
+	// TODO: Handle error.
 }
 ```
-
 
 ## Cloud Spanner [![GoDoc](https://godoc.org/cloud.google.com/go/spanner?status.svg)](https://godoc.org/cloud.google.com/go/spanner)
 
@@ -451,26 +348,28 @@ if err != nil {
 
 First create a `spanner.Client` to use throughout your application:
 
+[snip]:# (spanner-1)
 ```go
 client, err := spanner.NewClient(ctx, "projects/P/instances/I/databases/D")
 if err != nil {
-    log.Fatal(err)
+	log.Fatal(err)
 }
 ```
 
+[snip]:# (spanner-2)
 ```go
 // Simple Reads And Writes
-_, err := client.Apply(ctx, []*spanner.Mutation{
-    spanner.Insert("Users",
-        []string{"name", "email"},
-        []interface{}{"alice", "a@example.com"})})
+_, err = client.Apply(ctx, []*spanner.Mutation{
+	spanner.Insert("Users",
+		[]string{"name", "email"},
+		[]interface{}{"alice", "a@example.com"})})
 if err != nil {
-    log.Fatal(err)
+	log.Fatal(err)
 }
 row, err := client.Single().ReadRow(ctx, "Users",
-    spanner.Key{"alice"}, []string{"email"})
+	spanner.Key{"alice"}, []string{"email"})
 if err != nil {
-   log.Fatal(err)
+	log.Fatal(err)
 }
 ```
 
@@ -512,17 +411,32 @@ for more information.
 [cloud-logging-docs]: https://cloud.google.com/logging/docs
 [cloud-logging-ref]: https://godoc.org/cloud.google.com/go/logging
 
-[cloud-vision]: https://cloud.google.com/vision/
-[cloud-vision-ref]: https://godoc.org/cloud.google.com/go/vision
+[cloud-monitoring]: https://cloud.google.com/monitoring/
+[cloud-monitoring-ref]: https://godoc.org/cloud.google.com/go/monitoring/apiv3
+
+[cloud-vision]: https://cloud.google.com/vision
+[cloud-vision-ref]: https://godoc.org/cloud.google.com/go/vision/apiv1
 
 [cloud-language]: https://cloud.google.com/natural-language
 [cloud-language-ref]: https://godoc.org/cloud.google.com/go/language/apiv1
 
 [cloud-speech]: https://cloud.google.com/speech
-[cloud-speech-ref]: https://godoc.org/cloud.google.com/go/speech/apiv1beta1
+[cloud-speech-ref]: https://godoc.org/cloud.google.com/go/speech/apiv1
 
 [cloud-spanner]: https://cloud.google.com/spanner/
 [cloud-spanner-ref]: https://godoc.org/cloud.google.com/go/spanner
 [cloud-spanner-docs]: https://cloud.google.com/spanner/docs
+
+[cloud-translation]: https://cloud.google.com/translation
+[cloud-translation-ref]: https://godoc.org/cloud.google.com/go/translation
+
+[cloud-trace]: https://cloud.google.com/trace/
+[cloud-trace-ref]: https://godoc.org/cloud.google.com/go/trace
+
+[cloud-video]: https://cloud.google.com/video-intelligence/
+[cloud-video-ref]: https://godoc.org/cloud.google.com/go/videointelligence/apiv1beta1
+
+[cloud-errors]: https://cloud.google.com/error-reporting/
+[cloud-errors-ref]: https://godoc.org/cloud.google.com/go/errors
 
 [default-creds]: https://developers.google.com/identity/protocols/application-default-credentials

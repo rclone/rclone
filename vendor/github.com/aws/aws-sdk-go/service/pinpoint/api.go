@@ -62,22 +62,16 @@ func (c *Pinpoint) CreateCampaignRequest(input *CreateCampaignInput) (req *reque
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) CreateCampaign(input *CreateCampaignInput) (*CreateCampaignOutput, error) {
 	req, out := c.CreateCampaignRequest(input)
@@ -154,22 +148,16 @@ func (c *Pinpoint) CreateImportJobRequest(input *CreateImportJobInput) (req *req
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) CreateImportJob(input *CreateImportJobInput) (*CreateImportJobOutput, error) {
 	req, out := c.CreateImportJobRequest(input)
@@ -246,22 +234,16 @@ func (c *Pinpoint) CreateSegmentRequest(input *CreateSegmentInput) (req *request
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) CreateSegment(input *CreateSegmentInput) (*CreateSegmentOutput, error) {
 	req, out := c.CreateSegmentRequest(input)
@@ -338,22 +320,16 @@ func (c *Pinpoint) DeleteApnsChannelRequest(input *DeleteApnsChannelInput) (req 
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) DeleteApnsChannel(input *DeleteApnsChannelInput) (*DeleteApnsChannelOutput, error) {
 	req, out := c.DeleteApnsChannelRequest(input)
@@ -371,6 +347,92 @@ func (c *Pinpoint) DeleteApnsChannel(input *DeleteApnsChannelInput) (*DeleteApns
 // for more information on using Contexts.
 func (c *Pinpoint) DeleteApnsChannelWithContext(ctx aws.Context, input *DeleteApnsChannelInput, opts ...request.Option) (*DeleteApnsChannelOutput, error) {
 	req, out := c.DeleteApnsChannelRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteApnsSandboxChannel = "DeleteApnsSandboxChannel"
+
+// DeleteApnsSandboxChannelRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteApnsSandboxChannel operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DeleteApnsSandboxChannel for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteApnsSandboxChannel method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteApnsSandboxChannelRequest method.
+//    req, resp := client.DeleteApnsSandboxChannelRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+func (c *Pinpoint) DeleteApnsSandboxChannelRequest(input *DeleteApnsSandboxChannelInput) (req *request.Request, output *DeleteApnsSandboxChannelOutput) {
+	op := &request.Operation{
+		Name:       opDeleteApnsSandboxChannel,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/v1/apps/{application-id}/channels/apns_sandbox",
+	}
+
+	if input == nil {
+		input = &DeleteApnsSandboxChannelInput{}
+	}
+
+	output = &DeleteApnsSandboxChannelOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteApnsSandboxChannel API operation for Amazon Pinpoint.
+//
+// Delete an APNS sandbox channel
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation DeleteApnsSandboxChannel for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+func (c *Pinpoint) DeleteApnsSandboxChannel(input *DeleteApnsSandboxChannelInput) (*DeleteApnsSandboxChannelOutput, error) {
+	req, out := c.DeleteApnsSandboxChannelRequest(input)
+	return out, req.Send()
+}
+
+// DeleteApnsSandboxChannelWithContext is the same as DeleteApnsSandboxChannel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteApnsSandboxChannel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) DeleteApnsSandboxChannelWithContext(ctx aws.Context, input *DeleteApnsSandboxChannelInput, opts ...request.Option) (*DeleteApnsSandboxChannelOutput, error) {
+	req, out := c.DeleteApnsSandboxChannelRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -430,22 +492,16 @@ func (c *Pinpoint) DeleteCampaignRequest(input *DeleteCampaignInput) (req *reque
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) DeleteCampaign(input *DeleteCampaignInput) (*DeleteCampaignOutput, error) {
 	req, out := c.DeleteCampaignRequest(input)
@@ -463,6 +519,92 @@ func (c *Pinpoint) DeleteCampaign(input *DeleteCampaignInput) (*DeleteCampaignOu
 // for more information on using Contexts.
 func (c *Pinpoint) DeleteCampaignWithContext(ctx aws.Context, input *DeleteCampaignInput, opts ...request.Option) (*DeleteCampaignOutput, error) {
 	req, out := c.DeleteCampaignRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteEmailChannel = "DeleteEmailChannel"
+
+// DeleteEmailChannelRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteEmailChannel operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DeleteEmailChannel for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteEmailChannel method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteEmailChannelRequest method.
+//    req, resp := client.DeleteEmailChannelRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+func (c *Pinpoint) DeleteEmailChannelRequest(input *DeleteEmailChannelInput) (req *request.Request, output *DeleteEmailChannelOutput) {
+	op := &request.Operation{
+		Name:       opDeleteEmailChannel,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/v1/apps/{application-id}/channels/email",
+	}
+
+	if input == nil {
+		input = &DeleteEmailChannelInput{}
+	}
+
+	output = &DeleteEmailChannelOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteEmailChannel API operation for Amazon Pinpoint.
+//
+// Delete an email channel
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation DeleteEmailChannel for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+func (c *Pinpoint) DeleteEmailChannel(input *DeleteEmailChannelInput) (*DeleteEmailChannelOutput, error) {
+	req, out := c.DeleteEmailChannelRequest(input)
+	return out, req.Send()
+}
+
+// DeleteEmailChannelWithContext is the same as DeleteEmailChannel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteEmailChannel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) DeleteEmailChannelWithContext(ctx aws.Context, input *DeleteEmailChannelInput, opts ...request.Option) (*DeleteEmailChannelOutput, error) {
+	req, out := c.DeleteEmailChannelRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -522,22 +664,16 @@ func (c *Pinpoint) DeleteEventStreamRequest(input *DeleteEventStreamInput) (req 
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) DeleteEventStream(input *DeleteEventStreamInput) (*DeleteEventStreamOutput, error) {
 	req, out := c.DeleteEventStreamRequest(input)
@@ -614,22 +750,16 @@ func (c *Pinpoint) DeleteGcmChannelRequest(input *DeleteGcmChannelInput) (req *r
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) DeleteGcmChannel(input *DeleteGcmChannelInput) (*DeleteGcmChannelOutput, error) {
 	req, out := c.DeleteGcmChannelRequest(input)
@@ -706,22 +836,16 @@ func (c *Pinpoint) DeleteSegmentRequest(input *DeleteSegmentInput) (req *request
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) DeleteSegment(input *DeleteSegmentInput) (*DeleteSegmentOutput, error) {
 	req, out := c.DeleteSegmentRequest(input)
@@ -739,6 +863,92 @@ func (c *Pinpoint) DeleteSegment(input *DeleteSegmentInput) (*DeleteSegmentOutpu
 // for more information on using Contexts.
 func (c *Pinpoint) DeleteSegmentWithContext(ctx aws.Context, input *DeleteSegmentInput, opts ...request.Option) (*DeleteSegmentOutput, error) {
 	req, out := c.DeleteSegmentRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteSmsChannel = "DeleteSmsChannel"
+
+// DeleteSmsChannelRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteSmsChannel operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DeleteSmsChannel for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteSmsChannel method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteSmsChannelRequest method.
+//    req, resp := client.DeleteSmsChannelRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+func (c *Pinpoint) DeleteSmsChannelRequest(input *DeleteSmsChannelInput) (req *request.Request, output *DeleteSmsChannelOutput) {
+	op := &request.Operation{
+		Name:       opDeleteSmsChannel,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/v1/apps/{application-id}/channels/sms",
+	}
+
+	if input == nil {
+		input = &DeleteSmsChannelInput{}
+	}
+
+	output = &DeleteSmsChannelOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteSmsChannel API operation for Amazon Pinpoint.
+//
+// Delete an SMS channel
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation DeleteSmsChannel for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+func (c *Pinpoint) DeleteSmsChannel(input *DeleteSmsChannelInput) (*DeleteSmsChannelOutput, error) {
+	req, out := c.DeleteSmsChannelRequest(input)
+	return out, req.Send()
+}
+
+// DeleteSmsChannelWithContext is the same as DeleteSmsChannel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteSmsChannel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) DeleteSmsChannelWithContext(ctx aws.Context, input *DeleteSmsChannelInput, opts ...request.Option) (*DeleteSmsChannelOutput, error) {
+	req, out := c.DeleteSmsChannelRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -798,22 +1008,16 @@ func (c *Pinpoint) GetApnsChannelRequest(input *GetApnsChannelInput) (req *reque
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) GetApnsChannel(input *GetApnsChannelInput) (*GetApnsChannelOutput, error) {
 	req, out := c.GetApnsChannelRequest(input)
@@ -831,6 +1035,92 @@ func (c *Pinpoint) GetApnsChannel(input *GetApnsChannelInput) (*GetApnsChannelOu
 // for more information on using Contexts.
 func (c *Pinpoint) GetApnsChannelWithContext(ctx aws.Context, input *GetApnsChannelInput, opts ...request.Option) (*GetApnsChannelOutput, error) {
 	req, out := c.GetApnsChannelRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opGetApnsSandboxChannel = "GetApnsSandboxChannel"
+
+// GetApnsSandboxChannelRequest generates a "aws/request.Request" representing the
+// client's request for the GetApnsSandboxChannel operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See GetApnsSandboxChannel for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetApnsSandboxChannel method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetApnsSandboxChannelRequest method.
+//    req, resp := client.GetApnsSandboxChannelRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+func (c *Pinpoint) GetApnsSandboxChannelRequest(input *GetApnsSandboxChannelInput) (req *request.Request, output *GetApnsSandboxChannelOutput) {
+	op := &request.Operation{
+		Name:       opGetApnsSandboxChannel,
+		HTTPMethod: "GET",
+		HTTPPath:   "/v1/apps/{application-id}/channels/apns_sandbox",
+	}
+
+	if input == nil {
+		input = &GetApnsSandboxChannelInput{}
+	}
+
+	output = &GetApnsSandboxChannelOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetApnsSandboxChannel API operation for Amazon Pinpoint.
+//
+// Get an APNS sandbox channel
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation GetApnsSandboxChannel for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+func (c *Pinpoint) GetApnsSandboxChannel(input *GetApnsSandboxChannelInput) (*GetApnsSandboxChannelOutput, error) {
+	req, out := c.GetApnsSandboxChannelRequest(input)
+	return out, req.Send()
+}
+
+// GetApnsSandboxChannelWithContext is the same as GetApnsSandboxChannel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetApnsSandboxChannel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) GetApnsSandboxChannelWithContext(ctx aws.Context, input *GetApnsSandboxChannelInput, opts ...request.Option) (*GetApnsSandboxChannelOutput, error) {
+	req, out := c.GetApnsSandboxChannelRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -890,22 +1180,16 @@ func (c *Pinpoint) GetApplicationSettingsRequest(input *GetApplicationSettingsIn
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) GetApplicationSettings(input *GetApplicationSettingsInput) (*GetApplicationSettingsOutput, error) {
 	req, out := c.GetApplicationSettingsRequest(input)
@@ -982,22 +1266,16 @@ func (c *Pinpoint) GetCampaignRequest(input *GetCampaignInput) (req *request.Req
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) GetCampaign(input *GetCampaignInput) (*GetCampaignOutput, error) {
 	req, out := c.GetCampaignRequest(input)
@@ -1074,22 +1352,16 @@ func (c *Pinpoint) GetCampaignActivitiesRequest(input *GetCampaignActivitiesInpu
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) GetCampaignActivities(input *GetCampaignActivitiesInput) (*GetCampaignActivitiesOutput, error) {
 	req, out := c.GetCampaignActivitiesRequest(input)
@@ -1166,22 +1438,16 @@ func (c *Pinpoint) GetCampaignVersionRequest(input *GetCampaignVersionInput) (re
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) GetCampaignVersion(input *GetCampaignVersionInput) (*GetCampaignVersionOutput, error) {
 	req, out := c.GetCampaignVersionRequest(input)
@@ -1258,22 +1524,16 @@ func (c *Pinpoint) GetCampaignVersionsRequest(input *GetCampaignVersionsInput) (
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) GetCampaignVersions(input *GetCampaignVersionsInput) (*GetCampaignVersionsOutput, error) {
 	req, out := c.GetCampaignVersionsRequest(input)
@@ -1350,22 +1610,16 @@ func (c *Pinpoint) GetCampaignsRequest(input *GetCampaignsInput) (req *request.R
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) GetCampaigns(input *GetCampaignsInput) (*GetCampaignsOutput, error) {
 	req, out := c.GetCampaignsRequest(input)
@@ -1383,6 +1637,92 @@ func (c *Pinpoint) GetCampaigns(input *GetCampaignsInput) (*GetCampaignsOutput, 
 // for more information on using Contexts.
 func (c *Pinpoint) GetCampaignsWithContext(ctx aws.Context, input *GetCampaignsInput, opts ...request.Option) (*GetCampaignsOutput, error) {
 	req, out := c.GetCampaignsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opGetEmailChannel = "GetEmailChannel"
+
+// GetEmailChannelRequest generates a "aws/request.Request" representing the
+// client's request for the GetEmailChannel operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See GetEmailChannel for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetEmailChannel method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetEmailChannelRequest method.
+//    req, resp := client.GetEmailChannelRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+func (c *Pinpoint) GetEmailChannelRequest(input *GetEmailChannelInput) (req *request.Request, output *GetEmailChannelOutput) {
+	op := &request.Operation{
+		Name:       opGetEmailChannel,
+		HTTPMethod: "GET",
+		HTTPPath:   "/v1/apps/{application-id}/channels/email",
+	}
+
+	if input == nil {
+		input = &GetEmailChannelInput{}
+	}
+
+	output = &GetEmailChannelOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetEmailChannel API operation for Amazon Pinpoint.
+//
+// Get an email channel
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation GetEmailChannel for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+func (c *Pinpoint) GetEmailChannel(input *GetEmailChannelInput) (*GetEmailChannelOutput, error) {
+	req, out := c.GetEmailChannelRequest(input)
+	return out, req.Send()
+}
+
+// GetEmailChannelWithContext is the same as GetEmailChannel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetEmailChannel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) GetEmailChannelWithContext(ctx aws.Context, input *GetEmailChannelInput, opts ...request.Option) (*GetEmailChannelOutput, error) {
+	req, out := c.GetEmailChannelRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -1442,22 +1782,16 @@ func (c *Pinpoint) GetEndpointRequest(input *GetEndpointInput) (req *request.Req
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) GetEndpoint(input *GetEndpointInput) (*GetEndpointOutput, error) {
 	req, out := c.GetEndpointRequest(input)
@@ -1534,22 +1868,16 @@ func (c *Pinpoint) GetEventStreamRequest(input *GetEventStreamInput) (req *reque
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) GetEventStream(input *GetEventStreamInput) (*GetEventStreamOutput, error) {
 	req, out := c.GetEventStreamRequest(input)
@@ -1626,22 +1954,16 @@ func (c *Pinpoint) GetGcmChannelRequest(input *GetGcmChannelInput) (req *request
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) GetGcmChannel(input *GetGcmChannelInput) (*GetGcmChannelOutput, error) {
 	req, out := c.GetGcmChannelRequest(input)
@@ -1718,22 +2040,16 @@ func (c *Pinpoint) GetImportJobRequest(input *GetImportJobInput) (req *request.R
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) GetImportJob(input *GetImportJobInput) (*GetImportJobOutput, error) {
 	req, out := c.GetImportJobRequest(input)
@@ -1810,22 +2126,16 @@ func (c *Pinpoint) GetImportJobsRequest(input *GetImportJobsInput) (req *request
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) GetImportJobs(input *GetImportJobsInput) (*GetImportJobsOutput, error) {
 	req, out := c.GetImportJobsRequest(input)
@@ -1902,22 +2212,16 @@ func (c *Pinpoint) GetSegmentRequest(input *GetSegmentInput) (req *request.Reque
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) GetSegment(input *GetSegmentInput) (*GetSegmentOutput, error) {
 	req, out := c.GetSegmentRequest(input)
@@ -1994,22 +2298,16 @@ func (c *Pinpoint) GetSegmentImportJobsRequest(input *GetSegmentImportJobsInput)
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) GetSegmentImportJobs(input *GetSegmentImportJobsInput) (*GetSegmentImportJobsOutput, error) {
 	req, out := c.GetSegmentImportJobsRequest(input)
@@ -2086,22 +2384,16 @@ func (c *Pinpoint) GetSegmentVersionRequest(input *GetSegmentVersionInput) (req 
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) GetSegmentVersion(input *GetSegmentVersionInput) (*GetSegmentVersionOutput, error) {
 	req, out := c.GetSegmentVersionRequest(input)
@@ -2178,22 +2470,16 @@ func (c *Pinpoint) GetSegmentVersionsRequest(input *GetSegmentVersionsInput) (re
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) GetSegmentVersions(input *GetSegmentVersionsInput) (*GetSegmentVersionsOutput, error) {
 	req, out := c.GetSegmentVersionsRequest(input)
@@ -2270,22 +2556,16 @@ func (c *Pinpoint) GetSegmentsRequest(input *GetSegmentsInput) (req *request.Req
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) GetSegments(input *GetSegmentsInput) (*GetSegmentsOutput, error) {
 	req, out := c.GetSegmentsRequest(input)
@@ -2303,6 +2583,92 @@ func (c *Pinpoint) GetSegments(input *GetSegmentsInput) (*GetSegmentsOutput, err
 // for more information on using Contexts.
 func (c *Pinpoint) GetSegmentsWithContext(ctx aws.Context, input *GetSegmentsInput, opts ...request.Option) (*GetSegmentsOutput, error) {
 	req, out := c.GetSegmentsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opGetSmsChannel = "GetSmsChannel"
+
+// GetSmsChannelRequest generates a "aws/request.Request" representing the
+// client's request for the GetSmsChannel operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See GetSmsChannel for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the GetSmsChannel method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the GetSmsChannelRequest method.
+//    req, resp := client.GetSmsChannelRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+func (c *Pinpoint) GetSmsChannelRequest(input *GetSmsChannelInput) (req *request.Request, output *GetSmsChannelOutput) {
+	op := &request.Operation{
+		Name:       opGetSmsChannel,
+		HTTPMethod: "GET",
+		HTTPPath:   "/v1/apps/{application-id}/channels/sms",
+	}
+
+	if input == nil {
+		input = &GetSmsChannelInput{}
+	}
+
+	output = &GetSmsChannelOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetSmsChannel API operation for Amazon Pinpoint.
+//
+// Get an SMS channel
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation GetSmsChannel for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+func (c *Pinpoint) GetSmsChannel(input *GetSmsChannelInput) (*GetSmsChannelOutput, error) {
+	req, out := c.GetSmsChannelRequest(input)
+	return out, req.Send()
+}
+
+// GetSmsChannelWithContext is the same as GetSmsChannel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetSmsChannel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) GetSmsChannelWithContext(ctx aws.Context, input *GetSmsChannelInput, opts ...request.Option) (*GetSmsChannelOutput, error) {
+	req, out := c.GetSmsChannelRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -2362,22 +2728,16 @@ func (c *Pinpoint) PutEventStreamRequest(input *PutEventStreamInput) (req *reque
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) PutEventStream(input *PutEventStreamInput) (*PutEventStreamOutput, error) {
 	req, out := c.PutEventStreamRequest(input)
@@ -2395,6 +2755,92 @@ func (c *Pinpoint) PutEventStream(input *PutEventStreamInput) (*PutEventStreamOu
 // for more information on using Contexts.
 func (c *Pinpoint) PutEventStreamWithContext(ctx aws.Context, input *PutEventStreamInput, opts ...request.Option) (*PutEventStreamOutput, error) {
 	req, out := c.PutEventStreamRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opSendMessages = "SendMessages"
+
+// SendMessagesRequest generates a "aws/request.Request" representing the
+// client's request for the SendMessages operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See SendMessages for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the SendMessages method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the SendMessagesRequest method.
+//    req, resp := client.SendMessagesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+func (c *Pinpoint) SendMessagesRequest(input *SendMessagesInput) (req *request.Request, output *SendMessagesOutput) {
+	op := &request.Operation{
+		Name:       opSendMessages,
+		HTTPMethod: "POST",
+		HTTPPath:   "/v1/apps/{application-id}/messages",
+	}
+
+	if input == nil {
+		input = &SendMessagesInput{}
+	}
+
+	output = &SendMessagesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// SendMessages API operation for Amazon Pinpoint.
+//
+// Send a batch of messages
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation SendMessages for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+func (c *Pinpoint) SendMessages(input *SendMessagesInput) (*SendMessagesOutput, error) {
+	req, out := c.SendMessagesRequest(input)
+	return out, req.Send()
+}
+
+// SendMessagesWithContext is the same as SendMessages with the addition of
+// the ability to pass a context and additional request options.
+//
+// See SendMessages for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) SendMessagesWithContext(ctx aws.Context, input *SendMessagesInput, opts ...request.Option) (*SendMessagesOutput, error) {
+	req, out := c.SendMessagesRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -2454,22 +2900,16 @@ func (c *Pinpoint) UpdateApnsChannelRequest(input *UpdateApnsChannelInput) (req 
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) UpdateApnsChannel(input *UpdateApnsChannelInput) (*UpdateApnsChannelOutput, error) {
 	req, out := c.UpdateApnsChannelRequest(input)
@@ -2487,6 +2927,92 @@ func (c *Pinpoint) UpdateApnsChannel(input *UpdateApnsChannelInput) (*UpdateApns
 // for more information on using Contexts.
 func (c *Pinpoint) UpdateApnsChannelWithContext(ctx aws.Context, input *UpdateApnsChannelInput, opts ...request.Option) (*UpdateApnsChannelOutput, error) {
 	req, out := c.UpdateApnsChannelRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opUpdateApnsSandboxChannel = "UpdateApnsSandboxChannel"
+
+// UpdateApnsSandboxChannelRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateApnsSandboxChannel operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See UpdateApnsSandboxChannel for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the UpdateApnsSandboxChannel method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the UpdateApnsSandboxChannelRequest method.
+//    req, resp := client.UpdateApnsSandboxChannelRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+func (c *Pinpoint) UpdateApnsSandboxChannelRequest(input *UpdateApnsSandboxChannelInput) (req *request.Request, output *UpdateApnsSandboxChannelOutput) {
+	op := &request.Operation{
+		Name:       opUpdateApnsSandboxChannel,
+		HTTPMethod: "PUT",
+		HTTPPath:   "/v1/apps/{application-id}/channels/apns_sandbox",
+	}
+
+	if input == nil {
+		input = &UpdateApnsSandboxChannelInput{}
+	}
+
+	output = &UpdateApnsSandboxChannelOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateApnsSandboxChannel API operation for Amazon Pinpoint.
+//
+// Update an APNS sandbox channel
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation UpdateApnsSandboxChannel for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+func (c *Pinpoint) UpdateApnsSandboxChannel(input *UpdateApnsSandboxChannelInput) (*UpdateApnsSandboxChannelOutput, error) {
+	req, out := c.UpdateApnsSandboxChannelRequest(input)
+	return out, req.Send()
+}
+
+// UpdateApnsSandboxChannelWithContext is the same as UpdateApnsSandboxChannel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateApnsSandboxChannel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) UpdateApnsSandboxChannelWithContext(ctx aws.Context, input *UpdateApnsSandboxChannelInput, opts ...request.Option) (*UpdateApnsSandboxChannelOutput, error) {
+	req, out := c.UpdateApnsSandboxChannelRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -2546,22 +3072,16 @@ func (c *Pinpoint) UpdateApplicationSettingsRequest(input *UpdateApplicationSett
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) UpdateApplicationSettings(input *UpdateApplicationSettingsInput) (*UpdateApplicationSettingsOutput, error) {
 	req, out := c.UpdateApplicationSettingsRequest(input)
@@ -2638,22 +3158,16 @@ func (c *Pinpoint) UpdateCampaignRequest(input *UpdateCampaignInput) (req *reque
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) UpdateCampaign(input *UpdateCampaignInput) (*UpdateCampaignOutput, error) {
 	req, out := c.UpdateCampaignRequest(input)
@@ -2671,6 +3185,92 @@ func (c *Pinpoint) UpdateCampaign(input *UpdateCampaignInput) (*UpdateCampaignOu
 // for more information on using Contexts.
 func (c *Pinpoint) UpdateCampaignWithContext(ctx aws.Context, input *UpdateCampaignInput, opts ...request.Option) (*UpdateCampaignOutput, error) {
 	req, out := c.UpdateCampaignRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opUpdateEmailChannel = "UpdateEmailChannel"
+
+// UpdateEmailChannelRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateEmailChannel operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See UpdateEmailChannel for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the UpdateEmailChannel method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the UpdateEmailChannelRequest method.
+//    req, resp := client.UpdateEmailChannelRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+func (c *Pinpoint) UpdateEmailChannelRequest(input *UpdateEmailChannelInput) (req *request.Request, output *UpdateEmailChannelOutput) {
+	op := &request.Operation{
+		Name:       opUpdateEmailChannel,
+		HTTPMethod: "PUT",
+		HTTPPath:   "/v1/apps/{application-id}/channels/email",
+	}
+
+	if input == nil {
+		input = &UpdateEmailChannelInput{}
+	}
+
+	output = &UpdateEmailChannelOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateEmailChannel API operation for Amazon Pinpoint.
+//
+// Update an email channel
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation UpdateEmailChannel for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+func (c *Pinpoint) UpdateEmailChannel(input *UpdateEmailChannelInput) (*UpdateEmailChannelOutput, error) {
+	req, out := c.UpdateEmailChannelRequest(input)
+	return out, req.Send()
+}
+
+// UpdateEmailChannelWithContext is the same as UpdateEmailChannel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateEmailChannel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) UpdateEmailChannelWithContext(ctx aws.Context, input *UpdateEmailChannelInput, opts ...request.Option) (*UpdateEmailChannelOutput, error) {
+	req, out := c.UpdateEmailChannelRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -2730,22 +3330,16 @@ func (c *Pinpoint) UpdateEndpointRequest(input *UpdateEndpointInput) (req *reque
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) UpdateEndpoint(input *UpdateEndpointInput) (*UpdateEndpointOutput, error) {
 	req, out := c.UpdateEndpointRequest(input)
@@ -2822,22 +3416,16 @@ func (c *Pinpoint) UpdateEndpointsBatchRequest(input *UpdateEndpointsBatchInput)
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) UpdateEndpointsBatch(input *UpdateEndpointsBatchInput) (*UpdateEndpointsBatchOutput, error) {
 	req, out := c.UpdateEndpointsBatchRequest(input)
@@ -2914,22 +3502,16 @@ func (c *Pinpoint) UpdateGcmChannelRequest(input *UpdateGcmChannelInput) (req *r
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) UpdateGcmChannel(input *UpdateGcmChannelInput) (*UpdateGcmChannelOutput, error) {
 	req, out := c.UpdateGcmChannelRequest(input)
@@ -3006,22 +3588,16 @@ func (c *Pinpoint) UpdateSegmentRequest(input *UpdateSegmentInput) (req *request
 //
 // Returned Error Codes:
 //   * ErrCodeBadRequestException "BadRequestException"
-//   400 response
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
-//   500 response
 //
 //   * ErrCodeForbiddenException "ForbiddenException"
-//   403 response
 //
 //   * ErrCodeNotFoundException "NotFoundException"
-//   404 response
 //
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
-//   405 response
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
-//   429 response
 //
 func (c *Pinpoint) UpdateSegment(input *UpdateSegmentInput) (*UpdateSegmentOutput, error) {
 	req, out := c.UpdateSegmentRequest(input)
@@ -3044,12 +3620,101 @@ func (c *Pinpoint) UpdateSegmentWithContext(ctx aws.Context, input *UpdateSegmen
 	return out, req.Send()
 }
 
+const opUpdateSmsChannel = "UpdateSmsChannel"
+
+// UpdateSmsChannelRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateSmsChannel operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See UpdateSmsChannel for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the UpdateSmsChannel method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the UpdateSmsChannelRequest method.
+//    req, resp := client.UpdateSmsChannelRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+func (c *Pinpoint) UpdateSmsChannelRequest(input *UpdateSmsChannelInput) (req *request.Request, output *UpdateSmsChannelOutput) {
+	op := &request.Operation{
+		Name:       opUpdateSmsChannel,
+		HTTPMethod: "PUT",
+		HTTPPath:   "/v1/apps/{application-id}/channels/sms",
+	}
+
+	if input == nil {
+		input = &UpdateSmsChannelInput{}
+	}
+
+	output = &UpdateSmsChannelOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateSmsChannel API operation for Amazon Pinpoint.
+//
+// Update an SMS channel
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation UpdateSmsChannel for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+func (c *Pinpoint) UpdateSmsChannel(input *UpdateSmsChannelInput) (*UpdateSmsChannelOutput, error) {
+	req, out := c.UpdateSmsChannelRequest(input)
+	return out, req.Send()
+}
+
+// UpdateSmsChannelWithContext is the same as UpdateSmsChannel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateSmsChannel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) UpdateSmsChannelWithContext(ctx aws.Context, input *UpdateSmsChannelInput, opts ...request.Option) (*UpdateSmsChannelOutput, error) {
+	req, out := c.UpdateSmsChannelRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 // Apple Push Notification Service channel definition.
 type APNSChannelRequest struct {
 	_ struct{} `type:"structure"`
 
 	// The distribution certificate from Apple.
 	Certificate *string `type:"string"`
+
+	// If the channel is enabled for sending messages.
+	Enabled *bool `type:"boolean"`
 
 	// The certificate private key.
 	PrivateKey *string `type:"string"`
@@ -3071,6 +3736,12 @@ func (s *APNSChannelRequest) SetCertificate(v string) *APNSChannelRequest {
 	return s
 }
 
+// SetEnabled sets the Enabled field's value.
+func (s *APNSChannelRequest) SetEnabled(v bool) *APNSChannelRequest {
+	s.Enabled = &v
+	return s
+}
+
 // SetPrivateKey sets the PrivateKey field's value.
 func (s *APNSChannelRequest) SetPrivateKey(v string) *APNSChannelRequest {
 	s.PrivateKey = &v
@@ -3087,7 +3758,10 @@ type APNSChannelResponse struct {
 	// When was this segment created
 	CreationDate *string `type:"string"`
 
-	// The unique channel ID.
+	// If the channel is enabled for sending messages.
+	Enabled *bool `type:"boolean"`
+
+	// Channel ID. Not used, only for backwards compatibility.
 	Id *string `type:"string"`
 
 	// Is this channel archived
@@ -3128,6 +3802,12 @@ func (s *APNSChannelResponse) SetCreationDate(v string) *APNSChannelResponse {
 	return s
 }
 
+// SetEnabled sets the Enabled field's value.
+func (s *APNSChannelResponse) SetEnabled(v bool) *APNSChannelResponse {
+	s.Enabled = &v
+	return s
+}
+
 // SetId sets the Id field's value.
 func (s *APNSChannelResponse) SetId(v string) *APNSChannelResponse {
 	s.Id = &v
@@ -3160,6 +3840,292 @@ func (s *APNSChannelResponse) SetPlatform(v string) *APNSChannelResponse {
 
 // SetVersion sets the Version field's value.
 func (s *APNSChannelResponse) SetVersion(v int64) *APNSChannelResponse {
+	s.Version = &v
+	return s
+}
+
+// APNS Message.
+type APNSMessage struct {
+	_ struct{} `type:"structure"`
+
+	// The action that occurs if the user taps a push notification delivered by
+	// the campaign: OPEN_APP - Your app launches, or it becomes the foreground
+	// app if it has been sent to the background. This is the default action. DEEP_LINK
+	// - Uses deep linking features in iOS and Android to open your app and display
+	// a designated user interface within the app. URL - The default mobile browser
+	// on the user's device launches and opens a web page at the URL you specify.
+	// Possible values include: OPEN_APP | DEEP_LINK | URL
+	Action *string `type:"string" enum:"Action"`
+
+	// Include this key when you want the system to modify the badge of your app
+	// icon. If this key is not included in the dictionary, the badge is not changed.
+	// To remove the badge, set the value of this key to 0.
+	Badge *int64 `type:"integer"`
+
+	// The message body of the notification, the email body or the text message.
+	Body *string `type:"string"`
+
+	// Provide this key with a string value that represents the notification's type.
+	// This value corresponds to the value in the identifier property of one of
+	// your app's registered categories.
+	Category *string `type:"string"`
+
+	Data map[string]*string `type:"map"`
+
+	// The URL that points to a video used in the push notification.
+	MediaUrl *string `type:"string"`
+
+	// The Raw JSON formatted string to be used as the payload. This value overrides
+	// the message.
+	RawContent *string `type:"string"`
+
+	// Indicates if the message should display on the users device. Silent pushes
+	// can be used for Remote Configuration and Phone Home use cases.
+	SilentPush *bool `type:"boolean"`
+
+	// Include this key when you want the system to play a sound. The value of this
+	// key is the name of a sound file in your app's main bundle or in the Library/Sounds
+	// folder of your app's data container. If the sound file cannot be found, or
+	// if you specify defaultfor the value, the system plays the default alert sound.
+	Sound *string `type:"string"`
+
+	Substitutions map[string][]*string `type:"map"`
+
+	// Provide this key with a string value that represents the app-specific identifier
+	// for grouping notifications. If you provide a Notification Content app extension,
+	// you can use this value to group your notifications together.
+	ThreadId *string `type:"string"`
+
+	// The message title that displays above the message on the user's device.
+	Title *string `type:"string"`
+
+	// The URL to open in the user's mobile browser. Used if the value for Action
+	// is URL.
+	Url *string `type:"string"`
+}
+
+// String returns the string representation
+func (s APNSMessage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s APNSMessage) GoString() string {
+	return s.String()
+}
+
+// SetAction sets the Action field's value.
+func (s *APNSMessage) SetAction(v string) *APNSMessage {
+	s.Action = &v
+	return s
+}
+
+// SetBadge sets the Badge field's value.
+func (s *APNSMessage) SetBadge(v int64) *APNSMessage {
+	s.Badge = &v
+	return s
+}
+
+// SetBody sets the Body field's value.
+func (s *APNSMessage) SetBody(v string) *APNSMessage {
+	s.Body = &v
+	return s
+}
+
+// SetCategory sets the Category field's value.
+func (s *APNSMessage) SetCategory(v string) *APNSMessage {
+	s.Category = &v
+	return s
+}
+
+// SetData sets the Data field's value.
+func (s *APNSMessage) SetData(v map[string]*string) *APNSMessage {
+	s.Data = v
+	return s
+}
+
+// SetMediaUrl sets the MediaUrl field's value.
+func (s *APNSMessage) SetMediaUrl(v string) *APNSMessage {
+	s.MediaUrl = &v
+	return s
+}
+
+// SetRawContent sets the RawContent field's value.
+func (s *APNSMessage) SetRawContent(v string) *APNSMessage {
+	s.RawContent = &v
+	return s
+}
+
+// SetSilentPush sets the SilentPush field's value.
+func (s *APNSMessage) SetSilentPush(v bool) *APNSMessage {
+	s.SilentPush = &v
+	return s
+}
+
+// SetSound sets the Sound field's value.
+func (s *APNSMessage) SetSound(v string) *APNSMessage {
+	s.Sound = &v
+	return s
+}
+
+// SetSubstitutions sets the Substitutions field's value.
+func (s *APNSMessage) SetSubstitutions(v map[string][]*string) *APNSMessage {
+	s.Substitutions = v
+	return s
+}
+
+// SetThreadId sets the ThreadId field's value.
+func (s *APNSMessage) SetThreadId(v string) *APNSMessage {
+	s.ThreadId = &v
+	return s
+}
+
+// SetTitle sets the Title field's value.
+func (s *APNSMessage) SetTitle(v string) *APNSMessage {
+	s.Title = &v
+	return s
+}
+
+// SetUrl sets the Url field's value.
+func (s *APNSMessage) SetUrl(v string) *APNSMessage {
+	s.Url = &v
+	return s
+}
+
+// Apple Development Push Notification Service channel definition.
+type APNSSandboxChannelRequest struct {
+	_ struct{} `type:"structure"`
+
+	// The distribution certificate from Apple.
+	Certificate *string `type:"string"`
+
+	// If the channel is enabled for sending messages.
+	Enabled *bool `type:"boolean"`
+
+	// The certificate private key.
+	PrivateKey *string `type:"string"`
+}
+
+// String returns the string representation
+func (s APNSSandboxChannelRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s APNSSandboxChannelRequest) GoString() string {
+	return s.String()
+}
+
+// SetCertificate sets the Certificate field's value.
+func (s *APNSSandboxChannelRequest) SetCertificate(v string) *APNSSandboxChannelRequest {
+	s.Certificate = &v
+	return s
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *APNSSandboxChannelRequest) SetEnabled(v bool) *APNSSandboxChannelRequest {
+	s.Enabled = &v
+	return s
+}
+
+// SetPrivateKey sets the PrivateKey field's value.
+func (s *APNSSandboxChannelRequest) SetPrivateKey(v string) *APNSSandboxChannelRequest {
+	s.PrivateKey = &v
+	return s
+}
+
+// Apple Development Push Notification Service channel definition.
+type APNSSandboxChannelResponse struct {
+	_ struct{} `type:"structure"`
+
+	// Application id
+	ApplicationId *string `type:"string"`
+
+	// When was this segment created
+	CreationDate *string `type:"string"`
+
+	// If the channel is enabled for sending messages.
+	Enabled *bool `type:"boolean"`
+
+	// Channel ID. Not used, only for backwards compatibility.
+	Id *string `type:"string"`
+
+	// Is this channel archived
+	IsArchived *bool `type:"boolean"`
+
+	// Who last updated this entry
+	LastModifiedBy *string `type:"string"`
+
+	// Last date this was updated
+	LastModifiedDate *string `type:"string"`
+
+	// The platform type. Will be APNS.
+	Platform *string `type:"string"`
+
+	// Version of channel
+	Version *int64 `type:"integer"`
+}
+
+// String returns the string representation
+func (s APNSSandboxChannelResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s APNSSandboxChannelResponse) GoString() string {
+	return s.String()
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *APNSSandboxChannelResponse) SetApplicationId(v string) *APNSSandboxChannelResponse {
+	s.ApplicationId = &v
+	return s
+}
+
+// SetCreationDate sets the CreationDate field's value.
+func (s *APNSSandboxChannelResponse) SetCreationDate(v string) *APNSSandboxChannelResponse {
+	s.CreationDate = &v
+	return s
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *APNSSandboxChannelResponse) SetEnabled(v bool) *APNSSandboxChannelResponse {
+	s.Enabled = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *APNSSandboxChannelResponse) SetId(v string) *APNSSandboxChannelResponse {
+	s.Id = &v
+	return s
+}
+
+// SetIsArchived sets the IsArchived field's value.
+func (s *APNSSandboxChannelResponse) SetIsArchived(v bool) *APNSSandboxChannelResponse {
+	s.IsArchived = &v
+	return s
+}
+
+// SetLastModifiedBy sets the LastModifiedBy field's value.
+func (s *APNSSandboxChannelResponse) SetLastModifiedBy(v string) *APNSSandboxChannelResponse {
+	s.LastModifiedBy = &v
+	return s
+}
+
+// SetLastModifiedDate sets the LastModifiedDate field's value.
+func (s *APNSSandboxChannelResponse) SetLastModifiedDate(v string) *APNSSandboxChannelResponse {
+	s.LastModifiedDate = &v
+	return s
+}
+
+// SetPlatform sets the Platform field's value.
+func (s *APNSSandboxChannelResponse) SetPlatform(v string) *APNSSandboxChannelResponse {
+	s.Platform = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *APNSSandboxChannelResponse) SetVersion(v int64) *APNSSandboxChannelResponse {
 	s.Version = &v
 	return s
 }
@@ -3323,6 +4289,74 @@ func (s *ActivityResponse) SetTreatmentId(v string) *ActivityResponse {
 	return s
 }
 
+// Address configuration.
+type AddressConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// Body override. If specified will override default body.
+	BodyOverride *string `type:"string"`
+
+	// Type of channel of this address
+	ChannelType *string `type:"string" enum:"ChannelType"`
+
+	Context map[string]*string `type:"map"`
+
+	// The Raw JSON formatted string to be used as the payload. This value overrides
+	// the message.
+	RawContent *string `type:"string"`
+
+	Substitutions map[string][]*string `type:"map"`
+
+	// Title override. If specified will override default title if applicable.
+	TitleOverride *string `type:"string"`
+}
+
+// String returns the string representation
+func (s AddressConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AddressConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetBodyOverride sets the BodyOverride field's value.
+func (s *AddressConfiguration) SetBodyOverride(v string) *AddressConfiguration {
+	s.BodyOverride = &v
+	return s
+}
+
+// SetChannelType sets the ChannelType field's value.
+func (s *AddressConfiguration) SetChannelType(v string) *AddressConfiguration {
+	s.ChannelType = &v
+	return s
+}
+
+// SetContext sets the Context field's value.
+func (s *AddressConfiguration) SetContext(v map[string]*string) *AddressConfiguration {
+	s.Context = v
+	return s
+}
+
+// SetRawContent sets the RawContent field's value.
+func (s *AddressConfiguration) SetRawContent(v string) *AddressConfiguration {
+	s.RawContent = &v
+	return s
+}
+
+// SetSubstitutions sets the Substitutions field's value.
+func (s *AddressConfiguration) SetSubstitutions(v map[string][]*string) *AddressConfiguration {
+	s.Substitutions = v
+	return s
+}
+
+// SetTitleOverride sets the TitleOverride field's value.
+func (s *AddressConfiguration) SetTitleOverride(v string) *AddressConfiguration {
+	s.TitleOverride = &v
+	return s
+}
+
 // Application settings.
 type ApplicationSettingsResource struct {
 	_ struct{} `type:"structure"`
@@ -3382,8 +4416,8 @@ func (s *ApplicationSettingsResource) SetQuietTime(v *QuietTime) *ApplicationSet
 type AttributeDimension struct {
 	_ struct{} `type:"structure"`
 
-	// The type of dimension:INCLUSIVE – Endpoints that match the criteria are included
-	// in the segment.EXCLUSIVE – Endpoints that match the criteria are excluded
+	// The type of dimension:INCLUSIVE - Endpoints that match the criteria are included
+	// in the segment.EXCLUSIVE - Endpoints that match the criteria are excluded
 	// from the segment.
 	AttributeType *string `type:"string" enum:"AttributeType"`
 
@@ -3409,6 +4443,48 @@ func (s *AttributeDimension) SetAttributeType(v string) *AttributeDimension {
 // SetValues sets the Values field's value.
 func (s *AttributeDimension) SetValues(v []*string) *AttributeDimension {
 	s.Values = v
+	return s
+}
+
+// The email message configuration.
+type CampaignEmailMessage struct {
+	_ struct{} `type:"structure"`
+
+	// The email text body.
+	Body *string `type:"string"`
+
+	// The email html body.
+	HtmlBody *string `type:"string"`
+
+	// The email title (Or subject).
+	Title *string `type:"string"`
+}
+
+// String returns the string representation
+func (s CampaignEmailMessage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CampaignEmailMessage) GoString() string {
+	return s.String()
+}
+
+// SetBody sets the Body field's value.
+func (s *CampaignEmailMessage) SetBody(v string) *CampaignEmailMessage {
+	s.Body = &v
+	return s
+}
+
+// SetHtmlBody sets the HtmlBody field's value.
+func (s *CampaignEmailMessage) SetHtmlBody(v string) *CampaignEmailMessage {
+	s.HtmlBody = &v
+	return s
+}
+
+// SetTitle sets the Title field's value.
+func (s *CampaignEmailMessage) SetTitle(v string) *CampaignEmailMessage {
+	s.Title = &v
 	return s
 }
 
@@ -3633,6 +4709,48 @@ func (s *CampaignResponse) SetTreatmentName(v string) *CampaignResponse {
 // SetVersion sets the Version field's value.
 func (s *CampaignResponse) SetVersion(v int64) *CampaignResponse {
 	s.Version = &v
+	return s
+}
+
+// SMS message configuration.
+type CampaignSmsMessage struct {
+	_ struct{} `type:"structure"`
+
+	// The SMS text body.
+	Body *string `type:"string"`
+
+	// Is this is a transactional SMS message, otherwise a promotional message.
+	MessageType *string `type:"string" enum:"MessageType"`
+
+	// Sender ID of sent message.
+	SenderId *string `type:"string"`
+}
+
+// String returns the string representation
+func (s CampaignSmsMessage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CampaignSmsMessage) GoString() string {
+	return s.String()
+}
+
+// SetBody sets the Body field's value.
+func (s *CampaignSmsMessage) SetBody(v string) *CampaignSmsMessage {
+	s.Body = &v
+	return s
+}
+
+// SetMessageType sets the MessageType field's value.
+func (s *CampaignSmsMessage) SetMessageType(v string) *CampaignSmsMessage {
+	s.MessageType = &v
+	return s
+}
+
+// SetSenderId sets the SenderId field's value.
+func (s *CampaignSmsMessage) SetSenderId(v string) *CampaignSmsMessage {
+	s.SenderId = &v
 	return s
 }
 
@@ -3917,6 +5035,122 @@ func (s *CreateSegmentOutput) SetSegmentResponse(v *SegmentResponse) *CreateSegm
 	return s
 }
 
+// Default Message across push notification, email, and sms.
+type DefaultMessage struct {
+	_ struct{} `type:"structure"`
+
+	// The message body of the notification, the email body or the text message.
+	Body *string `type:"string"`
+
+	Substitutions map[string][]*string `type:"map"`
+}
+
+// String returns the string representation
+func (s DefaultMessage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DefaultMessage) GoString() string {
+	return s.String()
+}
+
+// SetBody sets the Body field's value.
+func (s *DefaultMessage) SetBody(v string) *DefaultMessage {
+	s.Body = &v
+	return s
+}
+
+// SetSubstitutions sets the Substitutions field's value.
+func (s *DefaultMessage) SetSubstitutions(v map[string][]*string) *DefaultMessage {
+	s.Substitutions = v
+	return s
+}
+
+// Default Push Notification Message.
+type DefaultPushNotificationMessage struct {
+	_ struct{} `type:"structure"`
+
+	// The action that occurs if the user taps a push notification delivered by
+	// the campaign: OPEN_APP - Your app launches, or it becomes the foreground
+	// app if it has been sent to the background. This is the default action. DEEP_LINK
+	// - Uses deep linking features in iOS and Android to open your app and display
+	// a designated user interface within the app. URL - The default mobile browser
+	// on the user's device launches and opens a web page at the URL you specify.
+	// Possible values include: OPEN_APP | DEEP_LINK | URL
+	Action *string `type:"string" enum:"Action"`
+
+	// The message body of the notification, the email body or the text message.
+	Body *string `type:"string"`
+
+	Data map[string]*string `type:"map"`
+
+	// Indicates if the message should display on the users device. Silent pushes
+	// can be used for Remote Configuration and Phone Home use cases.
+	SilentPush *bool `type:"boolean"`
+
+	Substitutions map[string][]*string `type:"map"`
+
+	// The message title that displays above the message on the user's device.
+	Title *string `type:"string"`
+
+	// The URL to open in the user's mobile browser. Used if the value for Action
+	// is URL.
+	Url *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DefaultPushNotificationMessage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DefaultPushNotificationMessage) GoString() string {
+	return s.String()
+}
+
+// SetAction sets the Action field's value.
+func (s *DefaultPushNotificationMessage) SetAction(v string) *DefaultPushNotificationMessage {
+	s.Action = &v
+	return s
+}
+
+// SetBody sets the Body field's value.
+func (s *DefaultPushNotificationMessage) SetBody(v string) *DefaultPushNotificationMessage {
+	s.Body = &v
+	return s
+}
+
+// SetData sets the Data field's value.
+func (s *DefaultPushNotificationMessage) SetData(v map[string]*string) *DefaultPushNotificationMessage {
+	s.Data = v
+	return s
+}
+
+// SetSilentPush sets the SilentPush field's value.
+func (s *DefaultPushNotificationMessage) SetSilentPush(v bool) *DefaultPushNotificationMessage {
+	s.SilentPush = &v
+	return s
+}
+
+// SetSubstitutions sets the Substitutions field's value.
+func (s *DefaultPushNotificationMessage) SetSubstitutions(v map[string][]*string) *DefaultPushNotificationMessage {
+	s.Substitutions = v
+	return s
+}
+
+// SetTitle sets the Title field's value.
+func (s *DefaultPushNotificationMessage) SetTitle(v string) *DefaultPushNotificationMessage {
+	s.Title = &v
+	return s
+}
+
+// SetUrl sets the Url field's value.
+func (s *DefaultPushNotificationMessage) SetUrl(v string) *DefaultPushNotificationMessage {
+	s.Url = &v
+	return s
+}
+
 type DeleteApnsChannelInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3975,6 +5209,67 @@ func (s DeleteApnsChannelOutput) GoString() string {
 // SetAPNSChannelResponse sets the APNSChannelResponse field's value.
 func (s *DeleteApnsChannelOutput) SetAPNSChannelResponse(v *APNSChannelResponse) *DeleteApnsChannelOutput {
 	s.APNSChannelResponse = v
+	return s
+}
+
+type DeleteApnsSandboxChannelInput struct {
+	_ struct{} `type:"structure"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteApnsSandboxChannelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteApnsSandboxChannelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteApnsSandboxChannelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteApnsSandboxChannelInput"}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *DeleteApnsSandboxChannelInput) SetApplicationId(v string) *DeleteApnsSandboxChannelInput {
+	s.ApplicationId = &v
+	return s
+}
+
+type DeleteApnsSandboxChannelOutput struct {
+	_ struct{} `type:"structure" payload:"APNSSandboxChannelResponse"`
+
+	// Apple Development Push Notification Service channel definition.
+	//
+	// APNSSandboxChannelResponse is a required field
+	APNSSandboxChannelResponse *APNSSandboxChannelResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteApnsSandboxChannelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteApnsSandboxChannelOutput) GoString() string {
+	return s.String()
+}
+
+// SetAPNSSandboxChannelResponse sets the APNSSandboxChannelResponse field's value.
+func (s *DeleteApnsSandboxChannelOutput) SetAPNSSandboxChannelResponse(v *APNSSandboxChannelResponse) *DeleteApnsSandboxChannelOutput {
+	s.APNSSandboxChannelResponse = v
 	return s
 }
 
@@ -4048,6 +5343,67 @@ func (s DeleteCampaignOutput) GoString() string {
 // SetCampaignResponse sets the CampaignResponse field's value.
 func (s *DeleteCampaignOutput) SetCampaignResponse(v *CampaignResponse) *DeleteCampaignOutput {
 	s.CampaignResponse = v
+	return s
+}
+
+type DeleteEmailChannelInput struct {
+	_ struct{} `type:"structure"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteEmailChannelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteEmailChannelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteEmailChannelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteEmailChannelInput"}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *DeleteEmailChannelInput) SetApplicationId(v string) *DeleteEmailChannelInput {
+	s.ApplicationId = &v
+	return s
+}
+
+type DeleteEmailChannelOutput struct {
+	_ struct{} `type:"structure" payload:"EmailChannelResponse"`
+
+	// Email Channel Response.
+	//
+	// EmailChannelResponse is a required field
+	EmailChannelResponse *EmailChannelResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteEmailChannelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteEmailChannelOutput) GoString() string {
+	return s.String()
+}
+
+// SetEmailChannelResponse sets the EmailChannelResponse field's value.
+func (s *DeleteEmailChannelOutput) SetEmailChannelResponse(v *EmailChannelResponse) *DeleteEmailChannelOutput {
+	s.EmailChannelResponse = v
 	return s
 }
 
@@ -4245,6 +5601,303 @@ func (s DeleteSegmentOutput) GoString() string {
 // SetSegmentResponse sets the SegmentResponse field's value.
 func (s *DeleteSegmentOutput) SetSegmentResponse(v *SegmentResponse) *DeleteSegmentOutput {
 	s.SegmentResponse = v
+	return s
+}
+
+type DeleteSmsChannelInput struct {
+	_ struct{} `type:"structure"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteSmsChannelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteSmsChannelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteSmsChannelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteSmsChannelInput"}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *DeleteSmsChannelInput) SetApplicationId(v string) *DeleteSmsChannelInput {
+	s.ApplicationId = &v
+	return s
+}
+
+type DeleteSmsChannelOutput struct {
+	_ struct{} `type:"structure" payload:"SMSChannelResponse"`
+
+	// SMS Channel Response.
+	//
+	// SMSChannelResponse is a required field
+	SMSChannelResponse *SMSChannelResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteSmsChannelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteSmsChannelOutput) GoString() string {
+	return s.String()
+}
+
+// SetSMSChannelResponse sets the SMSChannelResponse field's value.
+func (s *DeleteSmsChannelOutput) SetSMSChannelResponse(v *SMSChannelResponse) *DeleteSmsChannelOutput {
+	s.SMSChannelResponse = v
+	return s
+}
+
+// The message configuration.
+type DirectMessageConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The message to APNS channels. Overrides the default push notification message.
+	APNSMessage *APNSMessage `type:"structure"`
+
+	// The default message for all channels.
+	DefaultMessage *DefaultMessage `type:"structure"`
+
+	// The default push notification message for all push channels.
+	DefaultPushNotificationMessage *DefaultPushNotificationMessage `type:"structure"`
+
+	// The message to GCM channels. Overrides the default push notification message.
+	GCMMessage *GCMMessage `type:"structure"`
+
+	// The message to SMS channels. Overrides the default message.
+	SMSMessage *SMSMessage `type:"structure"`
+}
+
+// String returns the string representation
+func (s DirectMessageConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DirectMessageConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetAPNSMessage sets the APNSMessage field's value.
+func (s *DirectMessageConfiguration) SetAPNSMessage(v *APNSMessage) *DirectMessageConfiguration {
+	s.APNSMessage = v
+	return s
+}
+
+// SetDefaultMessage sets the DefaultMessage field's value.
+func (s *DirectMessageConfiguration) SetDefaultMessage(v *DefaultMessage) *DirectMessageConfiguration {
+	s.DefaultMessage = v
+	return s
+}
+
+// SetDefaultPushNotificationMessage sets the DefaultPushNotificationMessage field's value.
+func (s *DirectMessageConfiguration) SetDefaultPushNotificationMessage(v *DefaultPushNotificationMessage) *DirectMessageConfiguration {
+	s.DefaultPushNotificationMessage = v
+	return s
+}
+
+// SetGCMMessage sets the GCMMessage field's value.
+func (s *DirectMessageConfiguration) SetGCMMessage(v *GCMMessage) *DirectMessageConfiguration {
+	s.GCMMessage = v
+	return s
+}
+
+// SetSMSMessage sets the SMSMessage field's value.
+func (s *DirectMessageConfiguration) SetSMSMessage(v *SMSMessage) *DirectMessageConfiguration {
+	s.SMSMessage = v
+	return s
+}
+
+// Email Channel Request
+type EmailChannelRequest struct {
+	_ struct{} `type:"structure"`
+
+	// If the channel is enabled for sending messages.
+	Enabled *bool `type:"boolean"`
+
+	// The email address used to send emails from.
+	FromAddress *string `type:"string"`
+
+	// The ARN of an identity verified with SES.
+	Identity *string `type:"string"`
+
+	// The ARN of an IAM Role used to submit events to Mobile Analytics' event ingestion
+	// service
+	RoleArn *string `type:"string"`
+}
+
+// String returns the string representation
+func (s EmailChannelRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EmailChannelRequest) GoString() string {
+	return s.String()
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *EmailChannelRequest) SetEnabled(v bool) *EmailChannelRequest {
+	s.Enabled = &v
+	return s
+}
+
+// SetFromAddress sets the FromAddress field's value.
+func (s *EmailChannelRequest) SetFromAddress(v string) *EmailChannelRequest {
+	s.FromAddress = &v
+	return s
+}
+
+// SetIdentity sets the Identity field's value.
+func (s *EmailChannelRequest) SetIdentity(v string) *EmailChannelRequest {
+	s.Identity = &v
+	return s
+}
+
+// SetRoleArn sets the RoleArn field's value.
+func (s *EmailChannelRequest) SetRoleArn(v string) *EmailChannelRequest {
+	s.RoleArn = &v
+	return s
+}
+
+// Email Channel Response.
+type EmailChannelResponse struct {
+	_ struct{} `type:"structure"`
+
+	// Application id
+	ApplicationId *string `type:"string"`
+
+	// The date that the settings were last updated in ISO 8601 format.
+	CreationDate *string `type:"string"`
+
+	// If the channel is enabled for sending messages.
+	Enabled *bool `type:"boolean"`
+
+	// The email address used to send emails from.
+	FromAddress *string `type:"string"`
+
+	// Channel ID. Not used, only for backwards compatibility.
+	Id *string `type:"string"`
+
+	// The ARN of an identity verified with SES.
+	Identity *string `type:"string"`
+
+	// Is this channel archived
+	IsArchived *bool `type:"boolean"`
+
+	// Who last updated this entry
+	LastModifiedBy *string `type:"string"`
+
+	// Last date this was updated
+	LastModifiedDate *string `type:"string"`
+
+	// Platform type. Will be "EMAIL"
+	Platform *string `type:"string"`
+
+	// The ARN of an IAM Role used to submit events to Mobile Analytics' event ingestion
+	// service
+	RoleArn *string `type:"string"`
+
+	// Version of channel
+	Version *int64 `type:"integer"`
+}
+
+// String returns the string representation
+func (s EmailChannelResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EmailChannelResponse) GoString() string {
+	return s.String()
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *EmailChannelResponse) SetApplicationId(v string) *EmailChannelResponse {
+	s.ApplicationId = &v
+	return s
+}
+
+// SetCreationDate sets the CreationDate field's value.
+func (s *EmailChannelResponse) SetCreationDate(v string) *EmailChannelResponse {
+	s.CreationDate = &v
+	return s
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *EmailChannelResponse) SetEnabled(v bool) *EmailChannelResponse {
+	s.Enabled = &v
+	return s
+}
+
+// SetFromAddress sets the FromAddress field's value.
+func (s *EmailChannelResponse) SetFromAddress(v string) *EmailChannelResponse {
+	s.FromAddress = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *EmailChannelResponse) SetId(v string) *EmailChannelResponse {
+	s.Id = &v
+	return s
+}
+
+// SetIdentity sets the Identity field's value.
+func (s *EmailChannelResponse) SetIdentity(v string) *EmailChannelResponse {
+	s.Identity = &v
+	return s
+}
+
+// SetIsArchived sets the IsArchived field's value.
+func (s *EmailChannelResponse) SetIsArchived(v bool) *EmailChannelResponse {
+	s.IsArchived = &v
+	return s
+}
+
+// SetLastModifiedBy sets the LastModifiedBy field's value.
+func (s *EmailChannelResponse) SetLastModifiedBy(v string) *EmailChannelResponse {
+	s.LastModifiedBy = &v
+	return s
+}
+
+// SetLastModifiedDate sets the LastModifiedDate field's value.
+func (s *EmailChannelResponse) SetLastModifiedDate(v string) *EmailChannelResponse {
+	s.LastModifiedDate = &v
+	return s
+}
+
+// SetPlatform sets the Platform field's value.
+func (s *EmailChannelResponse) SetPlatform(v string) *EmailChannelResponse {
+	s.Platform = &v
+	return s
+}
+
+// SetRoleArn sets the RoleArn field's value.
+func (s *EmailChannelResponse) SetRoleArn(v string) *EmailChannelResponse {
+	s.RoleArn = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *EmailChannelResponse) SetVersion(v int64) *EmailChannelResponse {
+	s.Version = &v
 	return s
 }
 
@@ -4726,7 +6379,6 @@ type EndpointResponse struct {
 	// The unique ID for the most recent request to update the endpoint.
 	RequestId *string `type:"string"`
 
-	// The ShardId of endpoint
 	ShardId *string `type:"string"`
 
 	// Custom user-specific attributes that your app reports to Amazon Pinpoint.
@@ -4950,6 +6602,9 @@ type GCMChannelRequest struct {
 
 	// Platform credential API key from Google.
 	ApiKey *string `type:"string"`
+
+	// If the channel is enabled for sending messages.
+	Enabled *bool `type:"boolean"`
 }
 
 // String returns the string representation
@@ -4968,6 +6623,12 @@ func (s *GCMChannelRequest) SetApiKey(v string) *GCMChannelRequest {
 	return s
 }
 
+// SetEnabled sets the Enabled field's value.
+func (s *GCMChannelRequest) SetEnabled(v bool) *GCMChannelRequest {
+	s.Enabled = &v
+	return s
+}
+
 // Google Cloud Messaging channel definition
 type GCMChannelResponse struct {
 	_ struct{} `type:"structure"`
@@ -4981,7 +6642,10 @@ type GCMChannelResponse struct {
 	// The GCM API key from Google.
 	Credential *string `type:"string"`
 
-	// The unique channel ID.
+	// If the channel is enabled for sending messages.
+	Enabled *bool `type:"boolean"`
+
+	// Channel ID. Not used, only for backwards compatibility.
 	Id *string `type:"string"`
 
 	// Is this channel archived
@@ -5028,6 +6692,12 @@ func (s *GCMChannelResponse) SetCredential(v string) *GCMChannelResponse {
 	return s
 }
 
+// SetEnabled sets the Enabled field's value.
+func (s *GCMChannelResponse) SetEnabled(v bool) *GCMChannelResponse {
+	s.Enabled = &v
+	return s
+}
+
 // SetId sets the Id field's value.
 func (s *GCMChannelResponse) SetId(v string) *GCMChannelResponse {
 	s.Id = &v
@@ -5061,6 +6731,172 @@ func (s *GCMChannelResponse) SetPlatform(v string) *GCMChannelResponse {
 // SetVersion sets the Version field's value.
 func (s *GCMChannelResponse) SetVersion(v int64) *GCMChannelResponse {
 	s.Version = &v
+	return s
+}
+
+// GCM Message.
+type GCMMessage struct {
+	_ struct{} `type:"structure"`
+
+	// The action that occurs if the user taps a push notification delivered by
+	// the campaign: OPEN_APP - Your app launches, or it becomes the foreground
+	// app if it has been sent to the background. This is the default action. DEEP_LINK
+	// - Uses deep linking features in iOS and Android to open your app and display
+	// a designated user interface within the app. URL - The default mobile browser
+	// on the user's device launches and opens a web page at the URL you specify.
+	// Possible values include: OPEN_APP | DEEP_LINK | URL
+	Action *string `type:"string" enum:"Action"`
+
+	// The message body of the notification, the email body or the text message.
+	Body *string `type:"string"`
+
+	// This parameter identifies a group of messages (e.g., with collapse_key: "Updates
+	// Available") that can be collapsed, so that only the last message gets sent
+	// when delivery can be resumed. This is intended to avoid sending too many
+	// of the same messages when the device comes back online or becomes active.
+	CollapseKey *string `type:"string"`
+
+	Data map[string]*string `type:"map"`
+
+	// The icon image name of the asset saved in your application.
+	IconReference *string `type:"string"`
+
+	// The URL that points to an image used as the large icon to the notification
+	// content view.
+	ImageIconUrl *string `type:"string"`
+
+	// The URL that points to an image used in the push notification.
+	ImageUrl *string `type:"string"`
+
+	// The Raw JSON formatted string to be used as the payload. This value overrides
+	// the message.
+	RawContent *string `type:"string"`
+
+	// This parameter specifies the package name of the application where the registration
+	// tokens must match in order to receive the message.
+	RestrictedPackageName *string `type:"string"`
+
+	// Indicates if the message should display on the users device. Silent pushes
+	// can be used for Remote Configuration and Phone Home use cases.
+	SilentPush *bool `type:"boolean"`
+
+	// The URL that points to an image used as the small icon for the notification
+	// which will be used to represent the notification in the status bar and content
+	// view
+	SmallImageIconUrl *string `type:"string"`
+
+	// Indicates a sound to play when the device receives the notification. Supports
+	// default, or the filename of a sound resource bundled in the app. Android
+	// sound files must reside in /res/raw/
+	Sound *string `type:"string"`
+
+	Substitutions map[string][]*string `type:"map"`
+
+	// The message title that displays above the message on the user's device.
+	Title *string `type:"string"`
+
+	// The URL to open in the user's mobile browser. Used if the value for Action
+	// is URL.
+	Url *string `type:"string"`
+}
+
+// String returns the string representation
+func (s GCMMessage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GCMMessage) GoString() string {
+	return s.String()
+}
+
+// SetAction sets the Action field's value.
+func (s *GCMMessage) SetAction(v string) *GCMMessage {
+	s.Action = &v
+	return s
+}
+
+// SetBody sets the Body field's value.
+func (s *GCMMessage) SetBody(v string) *GCMMessage {
+	s.Body = &v
+	return s
+}
+
+// SetCollapseKey sets the CollapseKey field's value.
+func (s *GCMMessage) SetCollapseKey(v string) *GCMMessage {
+	s.CollapseKey = &v
+	return s
+}
+
+// SetData sets the Data field's value.
+func (s *GCMMessage) SetData(v map[string]*string) *GCMMessage {
+	s.Data = v
+	return s
+}
+
+// SetIconReference sets the IconReference field's value.
+func (s *GCMMessage) SetIconReference(v string) *GCMMessage {
+	s.IconReference = &v
+	return s
+}
+
+// SetImageIconUrl sets the ImageIconUrl field's value.
+func (s *GCMMessage) SetImageIconUrl(v string) *GCMMessage {
+	s.ImageIconUrl = &v
+	return s
+}
+
+// SetImageUrl sets the ImageUrl field's value.
+func (s *GCMMessage) SetImageUrl(v string) *GCMMessage {
+	s.ImageUrl = &v
+	return s
+}
+
+// SetRawContent sets the RawContent field's value.
+func (s *GCMMessage) SetRawContent(v string) *GCMMessage {
+	s.RawContent = &v
+	return s
+}
+
+// SetRestrictedPackageName sets the RestrictedPackageName field's value.
+func (s *GCMMessage) SetRestrictedPackageName(v string) *GCMMessage {
+	s.RestrictedPackageName = &v
+	return s
+}
+
+// SetSilentPush sets the SilentPush field's value.
+func (s *GCMMessage) SetSilentPush(v bool) *GCMMessage {
+	s.SilentPush = &v
+	return s
+}
+
+// SetSmallImageIconUrl sets the SmallImageIconUrl field's value.
+func (s *GCMMessage) SetSmallImageIconUrl(v string) *GCMMessage {
+	s.SmallImageIconUrl = &v
+	return s
+}
+
+// SetSound sets the Sound field's value.
+func (s *GCMMessage) SetSound(v string) *GCMMessage {
+	s.Sound = &v
+	return s
+}
+
+// SetSubstitutions sets the Substitutions field's value.
+func (s *GCMMessage) SetSubstitutions(v map[string][]*string) *GCMMessage {
+	s.Substitutions = v
+	return s
+}
+
+// SetTitle sets the Title field's value.
+func (s *GCMMessage) SetTitle(v string) *GCMMessage {
+	s.Title = &v
+	return s
+}
+
+// SetUrl sets the Url field's value.
+func (s *GCMMessage) SetUrl(v string) *GCMMessage {
+	s.Url = &v
 	return s
 }
 
@@ -5122,6 +6958,67 @@ func (s GetApnsChannelOutput) GoString() string {
 // SetAPNSChannelResponse sets the APNSChannelResponse field's value.
 func (s *GetApnsChannelOutput) SetAPNSChannelResponse(v *APNSChannelResponse) *GetApnsChannelOutput {
 	s.APNSChannelResponse = v
+	return s
+}
+
+type GetApnsSandboxChannelInput struct {
+	_ struct{} `type:"structure"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetApnsSandboxChannelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetApnsSandboxChannelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetApnsSandboxChannelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetApnsSandboxChannelInput"}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *GetApnsSandboxChannelInput) SetApplicationId(v string) *GetApnsSandboxChannelInput {
+	s.ApplicationId = &v
+	return s
+}
+
+type GetApnsSandboxChannelOutput struct {
+	_ struct{} `type:"structure" payload:"APNSSandboxChannelResponse"`
+
+	// Apple Development Push Notification Service channel definition.
+	//
+	// APNSSandboxChannelResponse is a required field
+	APNSSandboxChannelResponse *APNSSandboxChannelResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s GetApnsSandboxChannelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetApnsSandboxChannelOutput) GoString() string {
+	return s.String()
+}
+
+// SetAPNSSandboxChannelResponse sets the APNSSandboxChannelResponse field's value.
+func (s *GetApnsSandboxChannelOutput) SetAPNSSandboxChannelResponse(v *APNSSandboxChannelResponse) *GetApnsSandboxChannelOutput {
+	s.APNSSandboxChannelResponse = v
 	return s
 }
 
@@ -5596,6 +7493,67 @@ func (s GetCampaignsOutput) GoString() string {
 // SetCampaignsResponse sets the CampaignsResponse field's value.
 func (s *GetCampaignsOutput) SetCampaignsResponse(v *CampaignsResponse) *GetCampaignsOutput {
 	s.CampaignsResponse = v
+	return s
+}
+
+type GetEmailChannelInput struct {
+	_ struct{} `type:"structure"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetEmailChannelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetEmailChannelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetEmailChannelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetEmailChannelInput"}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *GetEmailChannelInput) SetApplicationId(v string) *GetEmailChannelInput {
+	s.ApplicationId = &v
+	return s
+}
+
+type GetEmailChannelOutput struct {
+	_ struct{} `type:"structure" payload:"EmailChannelResponse"`
+
+	// Email Channel Response.
+	//
+	// EmailChannelResponse is a required field
+	EmailChannelResponse *EmailChannelResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s GetEmailChannelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetEmailChannelOutput) GoString() string {
+	return s.String()
+}
+
+// SetEmailChannelResponse sets the EmailChannelResponse field's value.
+func (s *GetEmailChannelOutput) SetEmailChannelResponse(v *EmailChannelResponse) *GetEmailChannelOutput {
+	s.EmailChannelResponse = v
 	return s
 }
 
@@ -6357,6 +8315,67 @@ func (s *GetSegmentsOutput) SetSegmentsResponse(v *SegmentsResponse) *GetSegment
 	return s
 }
 
+type GetSmsChannelInput struct {
+	_ struct{} `type:"structure"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetSmsChannelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetSmsChannelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetSmsChannelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetSmsChannelInput"}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *GetSmsChannelInput) SetApplicationId(v string) *GetSmsChannelInput {
+	s.ApplicationId = &v
+	return s
+}
+
+type GetSmsChannelOutput struct {
+	_ struct{} `type:"structure" payload:"SMSChannelResponse"`
+
+	// SMS Channel Response.
+	//
+	// SMSChannelResponse is a required field
+	SMSChannelResponse *SMSChannelResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s GetSmsChannelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetSmsChannelOutput) GoString() string {
+	return s.String()
+}
+
+// SetSMSChannelResponse sets the SMSChannelResponse field's value.
+func (s *GetSmsChannelOutput) SetSMSChannelResponse(v *SMSChannelResponse) *GetSmsChannelOutput {
+	s.SMSChannelResponse = v
+	return s
+}
+
 type ImportJobRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -6720,10 +8739,10 @@ type Message struct {
 	_ struct{} `type:"structure"`
 
 	// The action that occurs if the user taps a push notification delivered by
-	// the campaign:OPEN_APP – Your app launches, or it becomes the foreground app
+	// the campaign:OPEN_APP - Your app launches, or it becomes the foreground app
 	// if it has been sent to the background. This is the default action.DEEP_LINK
-	// – Uses deep linking features in iOS and Android to open your app and display
-	// a designated user interface within the app.URL – The default mobile browser
+	// - Uses deep linking features in iOS and Android to open your app and display
+	// a designated user interface within the app.URL - The default mobile browser
 	// on the user's device launches and opens a web page at the URL you specify.
 	Action *string `type:"string" enum:"Action"`
 
@@ -6733,6 +8752,10 @@ type Message struct {
 	// The URL that points to the icon image for the push notification icon, for
 	// example, the app icon.
 	ImageIconUrl *string `type:"string"`
+
+	// The URL that points to the small icon image for the push notification icon,
+	// for example, the app icon.
+	ImageSmallIconUrl *string `type:"string"`
 
 	// The URL that points to an image used in the push notification.
 	ImageUrl *string `type:"string"`
@@ -6780,6 +8803,12 @@ func (s *Message) SetBody(v string) *Message {
 // SetImageIconUrl sets the ImageIconUrl field's value.
 func (s *Message) SetImageIconUrl(v string) *Message {
 	s.ImageIconUrl = &v
+	return s
+}
+
+// SetImageSmallIconUrl sets the ImageSmallIconUrl field's value.
+func (s *Message) SetImageSmallIconUrl(v string) *Message {
+	s.ImageSmallIconUrl = &v
 	return s
 }
 
@@ -6863,9 +8892,15 @@ type MessageConfiguration struct {
 	// The default message for all channels.
 	DefaultMessage *Message `type:"structure"`
 
+	// The email message configuration.
+	EmailMessage *CampaignEmailMessage `type:"structure"`
+
 	// The message that the campaign delivers to GCM channels. Overrides the default
 	// message.
 	GCMMessage *Message `type:"structure"`
+
+	// The SMS message configuration.
+	SMSMessage *CampaignSmsMessage `type:"structure"`
 }
 
 // String returns the string representation
@@ -6890,9 +8925,158 @@ func (s *MessageConfiguration) SetDefaultMessage(v *Message) *MessageConfigurati
 	return s
 }
 
+// SetEmailMessage sets the EmailMessage field's value.
+func (s *MessageConfiguration) SetEmailMessage(v *CampaignEmailMessage) *MessageConfiguration {
+	s.EmailMessage = v
+	return s
+}
+
 // SetGCMMessage sets the GCMMessage field's value.
 func (s *MessageConfiguration) SetGCMMessage(v *Message) *MessageConfiguration {
 	s.GCMMessage = v
+	return s
+}
+
+// SetSMSMessage sets the SMSMessage field's value.
+func (s *MessageConfiguration) SetSMSMessage(v *CampaignSmsMessage) *MessageConfiguration {
+	s.SMSMessage = v
+	return s
+}
+
+// Send message request.
+type MessageRequest struct {
+	_ struct{} `type:"structure"`
+
+	// A map of destination addresses, with the address as the key(Email address,
+	// phone number or push token) and the Address Configuration as the value.
+	Addresses map[string]*AddressConfiguration `type:"map"`
+
+	Context map[string]*string `type:"map"`
+
+	// Message configuration.
+	MessageConfiguration *DirectMessageConfiguration `type:"structure"`
+}
+
+// String returns the string representation
+func (s MessageRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s MessageRequest) GoString() string {
+	return s.String()
+}
+
+// SetAddresses sets the Addresses field's value.
+func (s *MessageRequest) SetAddresses(v map[string]*AddressConfiguration) *MessageRequest {
+	s.Addresses = v
+	return s
+}
+
+// SetContext sets the Context field's value.
+func (s *MessageRequest) SetContext(v map[string]*string) *MessageRequest {
+	s.Context = v
+	return s
+}
+
+// SetMessageConfiguration sets the MessageConfiguration field's value.
+func (s *MessageRequest) SetMessageConfiguration(v *DirectMessageConfiguration) *MessageRequest {
+	s.MessageConfiguration = v
+	return s
+}
+
+// Send message response.
+type MessageResponse struct {
+	_ struct{} `type:"structure"`
+
+	// Application id of the message.
+	ApplicationId *string `type:"string"`
+
+	// Original request Id for which this message was delivered.
+	RequestId *string `type:"string"`
+
+	// A map containing a multi part response for each address, with the address
+	// as the key(Email address, phone number or push token) and the result as the
+	// value.
+	Result map[string]*MessageResult `type:"map"`
+}
+
+// String returns the string representation
+func (s MessageResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s MessageResponse) GoString() string {
+	return s.String()
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *MessageResponse) SetApplicationId(v string) *MessageResponse {
+	s.ApplicationId = &v
+	return s
+}
+
+// SetRequestId sets the RequestId field's value.
+func (s *MessageResponse) SetRequestId(v string) *MessageResponse {
+	s.RequestId = &v
+	return s
+}
+
+// SetResult sets the Result field's value.
+func (s *MessageResponse) SetResult(v map[string]*MessageResult) *MessageResponse {
+	s.Result = v
+	return s
+}
+
+// The result from sending a message to an address.
+type MessageResult struct {
+	_ struct{} `type:"structure"`
+
+	// Delivery status of message.
+	DeliveryStatus *string `type:"string" enum:"DeliveryStatus"`
+
+	// Downstream service status code.
+	StatusCode *int64 `type:"integer"`
+
+	// Status message for message delivery.
+	StatusMessage *string `type:"string"`
+
+	// If token was updated as part of delivery. (This is GCM Specific)
+	UpdatedToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s MessageResult) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s MessageResult) GoString() string {
+	return s.String()
+}
+
+// SetDeliveryStatus sets the DeliveryStatus field's value.
+func (s *MessageResult) SetDeliveryStatus(v string) *MessageResult {
+	s.DeliveryStatus = &v
+	return s
+}
+
+// SetStatusCode sets the StatusCode field's value.
+func (s *MessageResult) SetStatusCode(v int64) *MessageResult {
+	s.StatusCode = &v
+	return s
+}
+
+// SetStatusMessage sets the StatusMessage field's value.
+func (s *MessageResult) SetStatusMessage(v string) *MessageResult {
+	s.StatusMessage = &v
+	return s
+}
+
+// SetUpdatedToken sets the UpdatedToken field's value.
+func (s *MessageResult) SetUpdatedToken(v string) *MessageResult {
+	s.UpdatedToken = &v
 	return s
 }
 
@@ -7014,8 +9198,8 @@ type RecencyDimension struct {
 	// app.Valid values: HR_24, DAY_7, DAY_14, DAY_30
 	Duration *string `type:"string" enum:"Duration"`
 
-	// The recency dimension type:ACTIVE – Users who have used your app within the
-	// specified duration are included in the segment.INACTIVE – Users who have
+	// The recency dimension type:ACTIVE - Users who have used your app within the
+	// specified duration are included in the segment.INACTIVE - Users who have
 	// not used your app within the specified duration are included in the segment.
 	RecencyType *string `type:"string" enum:"RecencyType"`
 }
@@ -7039,6 +9223,203 @@ func (s *RecencyDimension) SetDuration(v string) *RecencyDimension {
 // SetRecencyType sets the RecencyType field's value.
 func (s *RecencyDimension) SetRecencyType(v string) *RecencyDimension {
 	s.RecencyType = &v
+	return s
+}
+
+// SMS Channel Request
+type SMSChannelRequest struct {
+	_ struct{} `type:"structure"`
+
+	// If the channel is enabled for sending messages.
+	Enabled *bool `type:"boolean"`
+
+	// Sender identifier of your messages.
+	SenderId *string `type:"string"`
+}
+
+// String returns the string representation
+func (s SMSChannelRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SMSChannelRequest) GoString() string {
+	return s.String()
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *SMSChannelRequest) SetEnabled(v bool) *SMSChannelRequest {
+	s.Enabled = &v
+	return s
+}
+
+// SetSenderId sets the SenderId field's value.
+func (s *SMSChannelRequest) SetSenderId(v string) *SMSChannelRequest {
+	s.SenderId = &v
+	return s
+}
+
+// SMS Channel Response.
+type SMSChannelResponse struct {
+	_ struct{} `type:"structure"`
+
+	// Application id
+	ApplicationId *string `type:"string"`
+
+	// The date that the settings were last updated in ISO 8601 format.
+	CreationDate *string `type:"string"`
+
+	// If the channel is enabled for sending messages.
+	Enabled *bool `type:"boolean"`
+
+	// Channel ID. Not used, only for backwards compatibility.
+	Id *string `type:"string"`
+
+	// Is this channel archived
+	IsArchived *bool `type:"boolean"`
+
+	// Who last updated this entry
+	LastModifiedBy *string `type:"string"`
+
+	// Last date this was updated
+	LastModifiedDate *string `type:"string"`
+
+	// Platform type. Will be "SMS"
+	Platform *string `type:"string"`
+
+	// Sender identifier of your messages.
+	SenderId *string `type:"string"`
+
+	// The short code registered with the phone provider.
+	ShortCode *string `type:"string"`
+
+	// Version of channel
+	Version *int64 `type:"integer"`
+}
+
+// String returns the string representation
+func (s SMSChannelResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SMSChannelResponse) GoString() string {
+	return s.String()
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *SMSChannelResponse) SetApplicationId(v string) *SMSChannelResponse {
+	s.ApplicationId = &v
+	return s
+}
+
+// SetCreationDate sets the CreationDate field's value.
+func (s *SMSChannelResponse) SetCreationDate(v string) *SMSChannelResponse {
+	s.CreationDate = &v
+	return s
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *SMSChannelResponse) SetEnabled(v bool) *SMSChannelResponse {
+	s.Enabled = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *SMSChannelResponse) SetId(v string) *SMSChannelResponse {
+	s.Id = &v
+	return s
+}
+
+// SetIsArchived sets the IsArchived field's value.
+func (s *SMSChannelResponse) SetIsArchived(v bool) *SMSChannelResponse {
+	s.IsArchived = &v
+	return s
+}
+
+// SetLastModifiedBy sets the LastModifiedBy field's value.
+func (s *SMSChannelResponse) SetLastModifiedBy(v string) *SMSChannelResponse {
+	s.LastModifiedBy = &v
+	return s
+}
+
+// SetLastModifiedDate sets the LastModifiedDate field's value.
+func (s *SMSChannelResponse) SetLastModifiedDate(v string) *SMSChannelResponse {
+	s.LastModifiedDate = &v
+	return s
+}
+
+// SetPlatform sets the Platform field's value.
+func (s *SMSChannelResponse) SetPlatform(v string) *SMSChannelResponse {
+	s.Platform = &v
+	return s
+}
+
+// SetSenderId sets the SenderId field's value.
+func (s *SMSChannelResponse) SetSenderId(v string) *SMSChannelResponse {
+	s.SenderId = &v
+	return s
+}
+
+// SetShortCode sets the ShortCode field's value.
+func (s *SMSChannelResponse) SetShortCode(v string) *SMSChannelResponse {
+	s.ShortCode = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *SMSChannelResponse) SetVersion(v int64) *SMSChannelResponse {
+	s.Version = &v
+	return s
+}
+
+// SMS Message.
+type SMSMessage struct {
+	_ struct{} `type:"structure"`
+
+	// The message body of the notification, the email body or the text message.
+	Body *string `type:"string"`
+
+	// Is this a transaction priority message or lower priority.
+	MessageType *string `type:"string" enum:"MessageType"`
+
+	// Sender ID of sent message.
+	SenderId *string `type:"string"`
+
+	Substitutions map[string][]*string `type:"map"`
+}
+
+// String returns the string representation
+func (s SMSMessage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SMSMessage) GoString() string {
+	return s.String()
+}
+
+// SetBody sets the Body field's value.
+func (s *SMSMessage) SetBody(v string) *SMSMessage {
+	s.Body = &v
+	return s
+}
+
+// SetMessageType sets the MessageType field's value.
+func (s *SMSMessage) SetMessageType(v string) *SMSMessage {
+	s.MessageType = &v
+	return s
+}
+
+// SetSenderId sets the SenderId field's value.
+func (s *SMSMessage) SetSenderId(v string) *SMSMessage {
+	s.SenderId = &v
+	return s
+}
+
+// SetSubstitutions sets the Substitutions field's value.
+func (s *SMSMessage) SetSubstitutions(v map[string][]*string) *SMSMessage {
+	s.Substitutions = v
 	return s
 }
 
@@ -7145,6 +9526,9 @@ type SegmentDemographics struct {
 	// The app version criteria for the segment.
 	AppVersion *SetDimension `type:"structure"`
 
+	// The channel criteria for the segment.
+	Channel *SetDimension `type:"structure"`
+
 	// The device type criteria for the segment.
 	DeviceType *SetDimension `type:"structure"`
 
@@ -7171,6 +9555,12 @@ func (s SegmentDemographics) GoString() string {
 // SetAppVersion sets the AppVersion field's value.
 func (s *SegmentDemographics) SetAppVersion(v *SetDimension) *SegmentDemographics {
 	s.AppVersion = v
+	return s
+}
+
+// SetChannel sets the Channel field's value.
+func (s *SegmentDemographics) SetChannel(v *SetDimension) *SegmentDemographics {
+	s.Channel = v
 	return s
 }
 
@@ -7262,6 +9652,8 @@ func (s *SegmentDimensions) SetUserAttributes(v map[string]*AttributeDimension) 
 type SegmentImportResource struct {
 	_ struct{} `type:"structure"`
 
+	ChannelCounts map[string]*int64 `type:"map"`
+
 	// A unique, custom ID assigned to the IAM role that restricts who can assume
 	// the role.
 	ExternalId *string `type:"string"`
@@ -7290,6 +9682,12 @@ func (s SegmentImportResource) String() string {
 // GoString returns the string representation
 func (s SegmentImportResource) GoString() string {
 	return s.String()
+}
+
+// SetChannelCounts sets the ChannelCounts field's value.
+func (s *SegmentImportResource) SetChannelCounts(v map[string]*int64) *SegmentImportResource {
+	s.ChannelCounts = v
+	return s
 }
 
 // SetExternalId sets the ExternalId field's value.
@@ -7371,10 +9769,10 @@ type SegmentResponse struct {
 	// The name of segment
 	Name *string `type:"string"`
 
-	// The segment type:DIMENSIONAL – A dynamic segment built from selection criteria
+	// The segment type:DIMENSIONAL - A dynamic segment built from selection criteria
 	// based on endpoint data reported by your app. You create this type of segment
 	// by using the segment builder in the Amazon Pinpoint console or by making
-	// a POST request to the segments resource.IMPORT – A static segment built from
+	// a POST request to the segments resource.IMPORT - A static segment built from
 	// an imported set of endpoint definitions. You create this type of segment
 	// by importing a segment in the Amazon Pinpoint console or by making a POST
 	// request to the jobs/import resource.
@@ -7482,12 +9880,87 @@ func (s *SegmentsResponse) SetNextToken(v string) *SegmentsResponse {
 	return s
 }
 
+type SendMessagesInput struct {
+	_ struct{} `type:"structure" payload:"MessageRequest"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+
+	// Send message request.
+	//
+	// MessageRequest is a required field
+	MessageRequest *MessageRequest `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s SendMessagesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SendMessagesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SendMessagesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SendMessagesInput"}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+	if s.MessageRequest == nil {
+		invalidParams.Add(request.NewErrParamRequired("MessageRequest"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *SendMessagesInput) SetApplicationId(v string) *SendMessagesInput {
+	s.ApplicationId = &v
+	return s
+}
+
+// SetMessageRequest sets the MessageRequest field's value.
+func (s *SendMessagesInput) SetMessageRequest(v *MessageRequest) *SendMessagesInput {
+	s.MessageRequest = v
+	return s
+}
+
+type SendMessagesOutput struct {
+	_ struct{} `type:"structure" payload:"MessageResponse"`
+
+	// Send message response.
+	//
+	// MessageResponse is a required field
+	MessageResponse *MessageResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s SendMessagesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SendMessagesOutput) GoString() string {
+	return s.String()
+}
+
+// SetMessageResponse sets the MessageResponse field's value.
+func (s *SendMessagesOutput) SetMessageResponse(v *MessageResponse) *SendMessagesOutput {
+	s.MessageResponse = v
+	return s
+}
+
 // Dimension specification of a segment.
 type SetDimension struct {
 	_ struct{} `type:"structure"`
 
-	// The type of dimension:INCLUSIVE – Endpoints that match the criteria are included
-	// in the segment.EXCLUSIVE – Endpoints that match the criteria are excluded
+	// The type of dimension:INCLUSIVE - Endpoints that match the criteria are included
+	// in the segment.EXCLUSIVE - Endpoints that match the criteria are excluded
 	// from the segment.
 	DimensionType *string `type:"string" enum:"DimensionType"`
 
@@ -7669,6 +10142,81 @@ func (s *UpdateApnsChannelOutput) SetAPNSChannelResponse(v *APNSChannelResponse)
 	return s
 }
 
+type UpdateApnsSandboxChannelInput struct {
+	_ struct{} `type:"structure" payload:"APNSSandboxChannelRequest"`
+
+	// Apple Development Push Notification Service channel definition.
+	//
+	// APNSSandboxChannelRequest is a required field
+	APNSSandboxChannelRequest *APNSSandboxChannelRequest `type:"structure" required:"true"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateApnsSandboxChannelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateApnsSandboxChannelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateApnsSandboxChannelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateApnsSandboxChannelInput"}
+	if s.APNSSandboxChannelRequest == nil {
+		invalidParams.Add(request.NewErrParamRequired("APNSSandboxChannelRequest"))
+	}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAPNSSandboxChannelRequest sets the APNSSandboxChannelRequest field's value.
+func (s *UpdateApnsSandboxChannelInput) SetAPNSSandboxChannelRequest(v *APNSSandboxChannelRequest) *UpdateApnsSandboxChannelInput {
+	s.APNSSandboxChannelRequest = v
+	return s
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *UpdateApnsSandboxChannelInput) SetApplicationId(v string) *UpdateApnsSandboxChannelInput {
+	s.ApplicationId = &v
+	return s
+}
+
+type UpdateApnsSandboxChannelOutput struct {
+	_ struct{} `type:"structure" payload:"APNSSandboxChannelResponse"`
+
+	// Apple Development Push Notification Service channel definition.
+	//
+	// APNSSandboxChannelResponse is a required field
+	APNSSandboxChannelResponse *APNSSandboxChannelResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateApnsSandboxChannelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateApnsSandboxChannelOutput) GoString() string {
+	return s.String()
+}
+
+// SetAPNSSandboxChannelResponse sets the APNSSandboxChannelResponse field's value.
+func (s *UpdateApnsSandboxChannelOutput) SetAPNSSandboxChannelResponse(v *APNSSandboxChannelResponse) *UpdateApnsSandboxChannelOutput {
+	s.APNSSandboxChannelResponse = v
+	return s
+}
+
 type UpdateApplicationSettingsInput struct {
 	_ struct{} `type:"structure" payload:"WriteApplicationSettingsRequest"`
 
@@ -7828,6 +10376,81 @@ func (s UpdateCampaignOutput) GoString() string {
 // SetCampaignResponse sets the CampaignResponse field's value.
 func (s *UpdateCampaignOutput) SetCampaignResponse(v *CampaignResponse) *UpdateCampaignOutput {
 	s.CampaignResponse = v
+	return s
+}
+
+type UpdateEmailChannelInput struct {
+	_ struct{} `type:"structure" payload:"EmailChannelRequest"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+
+	// Email Channel Request
+	//
+	// EmailChannelRequest is a required field
+	EmailChannelRequest *EmailChannelRequest `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateEmailChannelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateEmailChannelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateEmailChannelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateEmailChannelInput"}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+	if s.EmailChannelRequest == nil {
+		invalidParams.Add(request.NewErrParamRequired("EmailChannelRequest"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *UpdateEmailChannelInput) SetApplicationId(v string) *UpdateEmailChannelInput {
+	s.ApplicationId = &v
+	return s
+}
+
+// SetEmailChannelRequest sets the EmailChannelRequest field's value.
+func (s *UpdateEmailChannelInput) SetEmailChannelRequest(v *EmailChannelRequest) *UpdateEmailChannelInput {
+	s.EmailChannelRequest = v
+	return s
+}
+
+type UpdateEmailChannelOutput struct {
+	_ struct{} `type:"structure" payload:"EmailChannelResponse"`
+
+	// Email Channel Response.
+	//
+	// EmailChannelResponse is a required field
+	EmailChannelResponse *EmailChannelResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateEmailChannelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateEmailChannelOutput) GoString() string {
+	return s.String()
+}
+
+// SetEmailChannelResponse sets the EmailChannelResponse field's value.
+func (s *UpdateEmailChannelOutput) SetEmailChannelResponse(v *EmailChannelResponse) *UpdateEmailChannelOutput {
+	s.EmailChannelResponse = v
 	return s
 }
 
@@ -8155,6 +10778,81 @@ func (s *UpdateSegmentOutput) SetSegmentResponse(v *SegmentResponse) *UpdateSegm
 	return s
 }
 
+type UpdateSmsChannelInput struct {
+	_ struct{} `type:"structure" payload:"SMSChannelRequest"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+
+	// SMS Channel Request
+	//
+	// SMSChannelRequest is a required field
+	SMSChannelRequest *SMSChannelRequest `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateSmsChannelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateSmsChannelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateSmsChannelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateSmsChannelInput"}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+	if s.SMSChannelRequest == nil {
+		invalidParams.Add(request.NewErrParamRequired("SMSChannelRequest"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *UpdateSmsChannelInput) SetApplicationId(v string) *UpdateSmsChannelInput {
+	s.ApplicationId = &v
+	return s
+}
+
+// SetSMSChannelRequest sets the SMSChannelRequest field's value.
+func (s *UpdateSmsChannelInput) SetSMSChannelRequest(v *SMSChannelRequest) *UpdateSmsChannelInput {
+	s.SMSChannelRequest = v
+	return s
+}
+
+type UpdateSmsChannelOutput struct {
+	_ struct{} `type:"structure" payload:"SMSChannelResponse"`
+
+	// SMS Channel Response.
+	//
+	// SMSChannelResponse is a required field
+	SMSChannelResponse *SMSChannelResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateSmsChannelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateSmsChannelOutput) GoString() string {
+	return s.String()
+}
+
+// SetSMSChannelResponse sets the SMSChannelResponse field's value.
+func (s *UpdateSmsChannelOutput) SetSMSChannelResponse(v *SMSChannelResponse) *UpdateSmsChannelOutput {
+	s.SMSChannelResponse = v
+	return s
+}
+
 // Creating application setting request
 type WriteApplicationSettingsRequest struct {
 	_ struct{} `type:"structure"`
@@ -8326,10 +11024,6 @@ type WriteEventStream struct {
 	// Kinesis ARN: arn:aws:kinesis:REGION:ACCOUNT_ID:stream/STREAM_NAME
 	DestinationStreamArn *string `type:"string"`
 
-	// The external ID assigned the IAM role that authorizes Amazon Pinpoint to
-	// publish to the stream.
-	ExternalId *string `type:"string"`
-
 	// The IAM role that authorizes Amazon Pinpoint to publish events to the stream
 	// in your account.
 	RoleArn *string `type:"string"`
@@ -8348,12 +11042,6 @@ func (s WriteEventStream) GoString() string {
 // SetDestinationStreamArn sets the DestinationStreamArn field's value.
 func (s *WriteEventStream) SetDestinationStreamArn(v string) *WriteEventStream {
 	s.DestinationStreamArn = &v
-	return s
-}
-
-// SetExternalId sets the ExternalId field's value.
-func (s *WriteEventStream) SetExternalId(v string) *WriteEventStream {
-	s.ExternalId = &v
 	return s
 }
 
@@ -8493,11 +11181,37 @@ const (
 )
 
 const (
+	// ChannelTypeGcm is a ChannelType enum value
+	ChannelTypeGcm = "GCM"
+
 	// ChannelTypeApns is a ChannelType enum value
 	ChannelTypeApns = "APNS"
 
-	// ChannelTypeGcm is a ChannelType enum value
-	ChannelTypeGcm = "GCM"
+	// ChannelTypeApnsSandbox is a ChannelType enum value
+	ChannelTypeApnsSandbox = "APNS_SANDBOX"
+
+	// ChannelTypeAdm is a ChannelType enum value
+	ChannelTypeAdm = "ADM"
+
+	// ChannelTypeSms is a ChannelType enum value
+	ChannelTypeSms = "SMS"
+
+	// ChannelTypeEmail is a ChannelType enum value
+	ChannelTypeEmail = "EMAIL"
+)
+
+const (
+	// DeliveryStatusSuccessful is a DeliveryStatus enum value
+	DeliveryStatusSuccessful = "SUCCESSFUL"
+
+	// DeliveryStatusThrottled is a DeliveryStatus enum value
+	DeliveryStatusThrottled = "THROTTLED"
+
+	// DeliveryStatusTemporaryFailure is a DeliveryStatus enum value
+	DeliveryStatusTemporaryFailure = "TEMPORARY_FAILURE"
+
+	// DeliveryStatusPermanentFailure is a DeliveryStatus enum value
+	DeliveryStatusPermanentFailure = "PERMANENT_FAILURE"
 )
 
 const (
@@ -8568,6 +11282,14 @@ const (
 
 	// JobStatusFailed is a JobStatus enum value
 	JobStatusFailed = "FAILED"
+)
+
+const (
+	// MessageTypeTransactional is a MessageType enum value
+	MessageTypeTransactional = "TRANSACTIONAL"
+
+	// MessageTypePromotional is a MessageType enum value
+	MessageTypePromotional = "PROMOTIONAL"
 )
 
 const (

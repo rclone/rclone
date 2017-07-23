@@ -190,6 +190,114 @@ func (c *DatabaseMigrationService) CreateEndpointWithContext(ctx aws.Context, in
 	return out, req.Send()
 }
 
+const opCreateEventSubscription = "CreateEventSubscription"
+
+// CreateEventSubscriptionRequest generates a "aws/request.Request" representing the
+// client's request for the CreateEventSubscription operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See CreateEventSubscription for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateEventSubscription method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateEventSubscriptionRequest method.
+//    req, resp := client.CreateEventSubscriptionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/CreateEventSubscription
+func (c *DatabaseMigrationService) CreateEventSubscriptionRequest(input *CreateEventSubscriptionInput) (req *request.Request, output *CreateEventSubscriptionOutput) {
+	op := &request.Operation{
+		Name:       opCreateEventSubscription,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateEventSubscriptionInput{}
+	}
+
+	output = &CreateEventSubscriptionOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateEventSubscription API operation for AWS Database Migration Service.
+//
+// Creates an AWS DMS event notification subscription.
+//
+// You can specify the type of source (SourceType) you want to be notified of,
+// provide a list of AWS DMS source IDs (SourceIds) that triggers the events,
+// and provide a list of event categories (EventCategories) for events you want
+// to be notified of. If you specify both the SourceType and SourceIds, such
+// as SourceType = replication-instance and SourceIdentifier = my-replinstance,
+// you will be notified of all the replication instance events for the specified
+// source. If you specify a SourceType but don't specify a SourceIdentifier,
+// you receive notice of the events for that source type for all your AWS DMS
+// sources. If you don't specify either SourceType nor SourceIdentifier, you
+// will be notified of events generated from all AWS DMS sources belonging to
+// your customer account.
+//
+// For more information about AWS DMS events, see  Working with Events and Notifications
+//  (http://docs.aws.amazon.com/dms/latest/userguide/CHAP_Events.html) in the
+// AWS Database MIgration Service User Guide.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Database Migration Service's
+// API operation CreateEventSubscription for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeResourceQuotaExceededFault "ResourceQuotaExceededFault"
+//   The quota for this resource quota has been exceeded.
+//
+//   * ErrCodeResourceAlreadyExistsFault "ResourceAlreadyExistsFault"
+//   The resource you are attempting to create already exists.
+//
+//   * ErrCodeSNSInvalidTopicFault "SNSInvalidTopicFault"
+//   The SNS topic is invalid.
+//
+//   * ErrCodeSNSNoAuthorizationFault "SNSNoAuthorizationFault"
+//   You are not authorized for the SNS subscription.
+//
+//   * ErrCodeResourceNotFoundFault "ResourceNotFoundFault"
+//   The resource could not be found.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/CreateEventSubscription
+func (c *DatabaseMigrationService) CreateEventSubscription(input *CreateEventSubscriptionInput) (*CreateEventSubscriptionOutput, error) {
+	req, out := c.CreateEventSubscriptionRequest(input)
+	return out, req.Send()
+}
+
+// CreateEventSubscriptionWithContext is the same as CreateEventSubscription with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateEventSubscription for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) CreateEventSubscriptionWithContext(ctx aws.Context, input *CreateEventSubscriptionInput, opts ...request.Option) (*CreateEventSubscriptionOutput, error) {
+	req, out := c.CreateEventSubscriptionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opCreateReplicationInstance = "CreateReplicationInstance"
 
 // CreateReplicationInstanceRequest generates a "aws/request.Request" representing the
@@ -450,6 +558,9 @@ func (c *DatabaseMigrationService) CreateReplicationTaskRequest(input *CreateRep
 // API operation CreateReplicationTask for usage and error information.
 //
 // Returned Error Codes:
+//   * ErrCodeAccessDeniedFault "AccessDeniedFault"
+//   AWS DMS was denied access to the endpoint.
+//
 //   * ErrCodeInvalidResourceStateFault "InvalidResourceStateFault"
 //   The resource is in a state that prevents it from being used for database
 //   migration.
@@ -654,6 +765,90 @@ func (c *DatabaseMigrationService) DeleteEndpoint(input *DeleteEndpointInput) (*
 // for more information on using Contexts.
 func (c *DatabaseMigrationService) DeleteEndpointWithContext(ctx aws.Context, input *DeleteEndpointInput, opts ...request.Option) (*DeleteEndpointOutput, error) {
 	req, out := c.DeleteEndpointRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteEventSubscription = "DeleteEventSubscription"
+
+// DeleteEventSubscriptionRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteEventSubscription operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DeleteEventSubscription for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteEventSubscription method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteEventSubscriptionRequest method.
+//    req, resp := client.DeleteEventSubscriptionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/DeleteEventSubscription
+func (c *DatabaseMigrationService) DeleteEventSubscriptionRequest(input *DeleteEventSubscriptionInput) (req *request.Request, output *DeleteEventSubscriptionOutput) {
+	op := &request.Operation{
+		Name:       opDeleteEventSubscription,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteEventSubscriptionInput{}
+	}
+
+	output = &DeleteEventSubscriptionOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteEventSubscription API operation for AWS Database Migration Service.
+//
+// Deletes an AWS DMS event subscription.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Database Migration Service's
+// API operation DeleteEventSubscription for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeResourceNotFoundFault "ResourceNotFoundFault"
+//   The resource could not be found.
+//
+//   * ErrCodeInvalidResourceStateFault "InvalidResourceStateFault"
+//   The resource is in a state that prevents it from being used for database
+//   migration.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/DeleteEventSubscription
+func (c *DatabaseMigrationService) DeleteEventSubscription(input *DeleteEventSubscriptionInput) (*DeleteEventSubscriptionOutput, error) {
+	req, out := c.DeleteEventSubscriptionRequest(input)
+	return out, req.Send()
+}
+
+// DeleteEventSubscriptionWithContext is the same as DeleteEventSubscription with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteEventSubscription for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) DeleteEventSubscriptionWithContext(ctx aws.Context, input *DeleteEventSubscriptionInput, opts ...request.Option) (*DeleteEventSubscriptionOutput, error) {
+	req, out := c.DeleteEventSubscriptionRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -1026,6 +1221,12 @@ func (c *DatabaseMigrationService) DescribeCertificatesRequest(input *DescribeCe
 		Name:       opDescribeCertificates,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -1074,6 +1275,56 @@ func (c *DatabaseMigrationService) DescribeCertificatesWithContext(ctx aws.Conte
 	return out, req.Send()
 }
 
+// DescribeCertificatesPages iterates over the pages of a DescribeCertificates operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeCertificates method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeCertificates operation.
+//    pageNum := 0
+//    err := client.DescribeCertificatesPages(params,
+//        func(page *DescribeCertificatesOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *DatabaseMigrationService) DescribeCertificatesPages(input *DescribeCertificatesInput, fn func(*DescribeCertificatesOutput, bool) bool) error {
+	return c.DescribeCertificatesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeCertificatesPagesWithContext same as DescribeCertificatesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) DescribeCertificatesPagesWithContext(ctx aws.Context, input *DescribeCertificatesInput, fn func(*DescribeCertificatesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeCertificatesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeCertificatesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*DescribeCertificatesOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opDescribeConnections = "DescribeConnections"
 
 // DescribeConnectionsRequest generates a "aws/request.Request" representing the
@@ -1106,6 +1357,12 @@ func (c *DatabaseMigrationService) DescribeConnectionsRequest(input *DescribeCon
 		Name:       opDescribeConnections,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -1155,6 +1412,56 @@ func (c *DatabaseMigrationService) DescribeConnectionsWithContext(ctx aws.Contex
 	return out, req.Send()
 }
 
+// DescribeConnectionsPages iterates over the pages of a DescribeConnections operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeConnections method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeConnections operation.
+//    pageNum := 0
+//    err := client.DescribeConnectionsPages(params,
+//        func(page *DescribeConnectionsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *DatabaseMigrationService) DescribeConnectionsPages(input *DescribeConnectionsInput, fn func(*DescribeConnectionsOutput, bool) bool) error {
+	return c.DescribeConnectionsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeConnectionsPagesWithContext same as DescribeConnectionsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) DescribeConnectionsPagesWithContext(ctx aws.Context, input *DescribeConnectionsInput, fn func(*DescribeConnectionsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeConnectionsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeConnectionsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*DescribeConnectionsOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opDescribeEndpointTypes = "DescribeEndpointTypes"
 
 // DescribeEndpointTypesRequest generates a "aws/request.Request" representing the
@@ -1187,6 +1494,12 @@ func (c *DatabaseMigrationService) DescribeEndpointTypesRequest(input *DescribeE
 		Name:       opDescribeEndpointTypes,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -1230,6 +1543,56 @@ func (c *DatabaseMigrationService) DescribeEndpointTypesWithContext(ctx aws.Cont
 	return out, req.Send()
 }
 
+// DescribeEndpointTypesPages iterates over the pages of a DescribeEndpointTypes operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeEndpointTypes method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeEndpointTypes operation.
+//    pageNum := 0
+//    err := client.DescribeEndpointTypesPages(params,
+//        func(page *DescribeEndpointTypesOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *DatabaseMigrationService) DescribeEndpointTypesPages(input *DescribeEndpointTypesInput, fn func(*DescribeEndpointTypesOutput, bool) bool) error {
+	return c.DescribeEndpointTypesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeEndpointTypesPagesWithContext same as DescribeEndpointTypesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) DescribeEndpointTypesPagesWithContext(ctx aws.Context, input *DescribeEndpointTypesInput, fn func(*DescribeEndpointTypesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeEndpointTypesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeEndpointTypesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*DescribeEndpointTypesOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opDescribeEndpoints = "DescribeEndpoints"
 
 // DescribeEndpointsRequest generates a "aws/request.Request" representing the
@@ -1262,6 +1625,12 @@ func (c *DatabaseMigrationService) DescribeEndpointsRequest(input *DescribeEndpo
 		Name:       opDescribeEndpoints,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -1310,6 +1679,408 @@ func (c *DatabaseMigrationService) DescribeEndpointsWithContext(ctx aws.Context,
 	return out, req.Send()
 }
 
+// DescribeEndpointsPages iterates over the pages of a DescribeEndpoints operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeEndpoints method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeEndpoints operation.
+//    pageNum := 0
+//    err := client.DescribeEndpointsPages(params,
+//        func(page *DescribeEndpointsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *DatabaseMigrationService) DescribeEndpointsPages(input *DescribeEndpointsInput, fn func(*DescribeEndpointsOutput, bool) bool) error {
+	return c.DescribeEndpointsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeEndpointsPagesWithContext same as DescribeEndpointsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) DescribeEndpointsPagesWithContext(ctx aws.Context, input *DescribeEndpointsInput, fn func(*DescribeEndpointsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeEndpointsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeEndpointsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*DescribeEndpointsOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
+const opDescribeEventCategories = "DescribeEventCategories"
+
+// DescribeEventCategoriesRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeEventCategories operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DescribeEventCategories for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeEventCategories method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeEventCategoriesRequest method.
+//    req, resp := client.DescribeEventCategoriesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/DescribeEventCategories
+func (c *DatabaseMigrationService) DescribeEventCategoriesRequest(input *DescribeEventCategoriesInput) (req *request.Request, output *DescribeEventCategoriesOutput) {
+	op := &request.Operation{
+		Name:       opDescribeEventCategories,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeEventCategoriesInput{}
+	}
+
+	output = &DescribeEventCategoriesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeEventCategories API operation for AWS Database Migration Service.
+//
+// Lists categories for all event source types, or, if specified, for a specified
+// source type. You can see a list of the event categories and source types
+// in  Working with Events and Notifications  (http://docs.aws.amazon.com/dms/latest/userguide/CHAP_Events.html)
+// in the AWS Database Migration Service User Guide.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Database Migration Service's
+// API operation DescribeEventCategories for usage and error information.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/DescribeEventCategories
+func (c *DatabaseMigrationService) DescribeEventCategories(input *DescribeEventCategoriesInput) (*DescribeEventCategoriesOutput, error) {
+	req, out := c.DescribeEventCategoriesRequest(input)
+	return out, req.Send()
+}
+
+// DescribeEventCategoriesWithContext is the same as DescribeEventCategories with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeEventCategories for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) DescribeEventCategoriesWithContext(ctx aws.Context, input *DescribeEventCategoriesInput, opts ...request.Option) (*DescribeEventCategoriesOutput, error) {
+	req, out := c.DescribeEventCategoriesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDescribeEventSubscriptions = "DescribeEventSubscriptions"
+
+// DescribeEventSubscriptionsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeEventSubscriptions operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DescribeEventSubscriptions for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeEventSubscriptions method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeEventSubscriptionsRequest method.
+//    req, resp := client.DescribeEventSubscriptionsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/DescribeEventSubscriptions
+func (c *DatabaseMigrationService) DescribeEventSubscriptionsRequest(input *DescribeEventSubscriptionsInput) (req *request.Request, output *DescribeEventSubscriptionsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeEventSubscriptions,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &DescribeEventSubscriptionsInput{}
+	}
+
+	output = &DescribeEventSubscriptionsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeEventSubscriptions API operation for AWS Database Migration Service.
+//
+// Lists all the event subscriptions for a customer account. The description
+// of a subscription includes SubscriptionName, SNSTopicARN, CustomerID, SourceType,
+// SourceID, CreationTime, and Status.
+//
+// If you specify SubscriptionName, this action lists the description for that
+// subscription.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Database Migration Service's
+// API operation DescribeEventSubscriptions for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeResourceNotFoundFault "ResourceNotFoundFault"
+//   The resource could not be found.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/DescribeEventSubscriptions
+func (c *DatabaseMigrationService) DescribeEventSubscriptions(input *DescribeEventSubscriptionsInput) (*DescribeEventSubscriptionsOutput, error) {
+	req, out := c.DescribeEventSubscriptionsRequest(input)
+	return out, req.Send()
+}
+
+// DescribeEventSubscriptionsWithContext is the same as DescribeEventSubscriptions with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeEventSubscriptions for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) DescribeEventSubscriptionsWithContext(ctx aws.Context, input *DescribeEventSubscriptionsInput, opts ...request.Option) (*DescribeEventSubscriptionsOutput, error) {
+	req, out := c.DescribeEventSubscriptionsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// DescribeEventSubscriptionsPages iterates over the pages of a DescribeEventSubscriptions operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeEventSubscriptions method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeEventSubscriptions operation.
+//    pageNum := 0
+//    err := client.DescribeEventSubscriptionsPages(params,
+//        func(page *DescribeEventSubscriptionsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *DatabaseMigrationService) DescribeEventSubscriptionsPages(input *DescribeEventSubscriptionsInput, fn func(*DescribeEventSubscriptionsOutput, bool) bool) error {
+	return c.DescribeEventSubscriptionsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeEventSubscriptionsPagesWithContext same as DescribeEventSubscriptionsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) DescribeEventSubscriptionsPagesWithContext(ctx aws.Context, input *DescribeEventSubscriptionsInput, fn func(*DescribeEventSubscriptionsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeEventSubscriptionsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeEventSubscriptionsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*DescribeEventSubscriptionsOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
+const opDescribeEvents = "DescribeEvents"
+
+// DescribeEventsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeEvents operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DescribeEvents for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeEvents method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeEventsRequest method.
+//    req, resp := client.DescribeEventsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/DescribeEvents
+func (c *DatabaseMigrationService) DescribeEventsRequest(input *DescribeEventsInput) (req *request.Request, output *DescribeEventsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeEvents,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &DescribeEventsInput{}
+	}
+
+	output = &DescribeEventsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeEvents API operation for AWS Database Migration Service.
+//
+// Lists events for a given source identifier and source type. You can also
+// specify a start and end time. For more information on AWS DMS events, see
+//  Working with Events and Notifications  (http://docs.aws.amazon.com/dms/latest/userguide/CHAP_Events.html).
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Database Migration Service's
+// API operation DescribeEvents for usage and error information.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/DescribeEvents
+func (c *DatabaseMigrationService) DescribeEvents(input *DescribeEventsInput) (*DescribeEventsOutput, error) {
+	req, out := c.DescribeEventsRequest(input)
+	return out, req.Send()
+}
+
+// DescribeEventsWithContext is the same as DescribeEvents with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeEvents for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) DescribeEventsWithContext(ctx aws.Context, input *DescribeEventsInput, opts ...request.Option) (*DescribeEventsOutput, error) {
+	req, out := c.DescribeEventsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// DescribeEventsPages iterates over the pages of a DescribeEvents operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeEvents method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeEvents operation.
+//    pageNum := 0
+//    err := client.DescribeEventsPages(params,
+//        func(page *DescribeEventsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *DatabaseMigrationService) DescribeEventsPages(input *DescribeEventsInput, fn func(*DescribeEventsOutput, bool) bool) error {
+	return c.DescribeEventsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeEventsPagesWithContext same as DescribeEventsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) DescribeEventsPagesWithContext(ctx aws.Context, input *DescribeEventsInput, fn func(*DescribeEventsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeEventsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeEventsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*DescribeEventsOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opDescribeOrderableReplicationInstances = "DescribeOrderableReplicationInstances"
 
 // DescribeOrderableReplicationInstancesRequest generates a "aws/request.Request" representing the
@@ -1342,6 +2113,12 @@ func (c *DatabaseMigrationService) DescribeOrderableReplicationInstancesRequest(
 		Name:       opDescribeOrderableReplicationInstances,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -1384,6 +2161,56 @@ func (c *DatabaseMigrationService) DescribeOrderableReplicationInstancesWithCont
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
+}
+
+// DescribeOrderableReplicationInstancesPages iterates over the pages of a DescribeOrderableReplicationInstances operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeOrderableReplicationInstances method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeOrderableReplicationInstances operation.
+//    pageNum := 0
+//    err := client.DescribeOrderableReplicationInstancesPages(params,
+//        func(page *DescribeOrderableReplicationInstancesOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *DatabaseMigrationService) DescribeOrderableReplicationInstancesPages(input *DescribeOrderableReplicationInstancesInput, fn func(*DescribeOrderableReplicationInstancesOutput, bool) bool) error {
+	return c.DescribeOrderableReplicationInstancesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeOrderableReplicationInstancesPagesWithContext same as DescribeOrderableReplicationInstancesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) DescribeOrderableReplicationInstancesPagesWithContext(ctx aws.Context, input *DescribeOrderableReplicationInstancesInput, fn func(*DescribeOrderableReplicationInstancesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeOrderableReplicationInstancesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeOrderableReplicationInstancesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*DescribeOrderableReplicationInstancesOutput), !p.HasNextPage())
+	}
+	return p.Err()
 }
 
 const opDescribeRefreshSchemasStatus = "DescribeRefreshSchemasStatus"
@@ -1502,6 +2329,12 @@ func (c *DatabaseMigrationService) DescribeReplicationInstancesRequest(input *De
 		Name:       opDescribeReplicationInstances,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -1551,6 +2384,56 @@ func (c *DatabaseMigrationService) DescribeReplicationInstancesWithContext(ctx a
 	return out, req.Send()
 }
 
+// DescribeReplicationInstancesPages iterates over the pages of a DescribeReplicationInstances operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeReplicationInstances method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeReplicationInstances operation.
+//    pageNum := 0
+//    err := client.DescribeReplicationInstancesPages(params,
+//        func(page *DescribeReplicationInstancesOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *DatabaseMigrationService) DescribeReplicationInstancesPages(input *DescribeReplicationInstancesInput, fn func(*DescribeReplicationInstancesOutput, bool) bool) error {
+	return c.DescribeReplicationInstancesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeReplicationInstancesPagesWithContext same as DescribeReplicationInstancesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) DescribeReplicationInstancesPagesWithContext(ctx aws.Context, input *DescribeReplicationInstancesInput, fn func(*DescribeReplicationInstancesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeReplicationInstancesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeReplicationInstancesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*DescribeReplicationInstancesOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opDescribeReplicationSubnetGroups = "DescribeReplicationSubnetGroups"
 
 // DescribeReplicationSubnetGroupsRequest generates a "aws/request.Request" representing the
@@ -1583,6 +2466,12 @@ func (c *DatabaseMigrationService) DescribeReplicationSubnetGroupsRequest(input 
 		Name:       opDescribeReplicationSubnetGroups,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -1631,6 +2520,56 @@ func (c *DatabaseMigrationService) DescribeReplicationSubnetGroupsWithContext(ct
 	return out, req.Send()
 }
 
+// DescribeReplicationSubnetGroupsPages iterates over the pages of a DescribeReplicationSubnetGroups operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeReplicationSubnetGroups method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeReplicationSubnetGroups operation.
+//    pageNum := 0
+//    err := client.DescribeReplicationSubnetGroupsPages(params,
+//        func(page *DescribeReplicationSubnetGroupsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *DatabaseMigrationService) DescribeReplicationSubnetGroupsPages(input *DescribeReplicationSubnetGroupsInput, fn func(*DescribeReplicationSubnetGroupsOutput, bool) bool) error {
+	return c.DescribeReplicationSubnetGroupsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeReplicationSubnetGroupsPagesWithContext same as DescribeReplicationSubnetGroupsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) DescribeReplicationSubnetGroupsPagesWithContext(ctx aws.Context, input *DescribeReplicationSubnetGroupsInput, fn func(*DescribeReplicationSubnetGroupsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeReplicationSubnetGroupsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeReplicationSubnetGroupsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*DescribeReplicationSubnetGroupsOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opDescribeReplicationTasks = "DescribeReplicationTasks"
 
 // DescribeReplicationTasksRequest generates a "aws/request.Request" representing the
@@ -1663,6 +2602,12 @@ func (c *DatabaseMigrationService) DescribeReplicationTasksRequest(input *Descri
 		Name:       opDescribeReplicationTasks,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -1712,6 +2657,56 @@ func (c *DatabaseMigrationService) DescribeReplicationTasksWithContext(ctx aws.C
 	return out, req.Send()
 }
 
+// DescribeReplicationTasksPages iterates over the pages of a DescribeReplicationTasks operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeReplicationTasks method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeReplicationTasks operation.
+//    pageNum := 0
+//    err := client.DescribeReplicationTasksPages(params,
+//        func(page *DescribeReplicationTasksOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *DatabaseMigrationService) DescribeReplicationTasksPages(input *DescribeReplicationTasksInput, fn func(*DescribeReplicationTasksOutput, bool) bool) error {
+	return c.DescribeReplicationTasksPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeReplicationTasksPagesWithContext same as DescribeReplicationTasksPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) DescribeReplicationTasksPagesWithContext(ctx aws.Context, input *DescribeReplicationTasksInput, fn func(*DescribeReplicationTasksOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeReplicationTasksInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeReplicationTasksRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*DescribeReplicationTasksOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opDescribeSchemas = "DescribeSchemas"
 
 // DescribeSchemasRequest generates a "aws/request.Request" representing the
@@ -1744,6 +2739,12 @@ func (c *DatabaseMigrationService) DescribeSchemasRequest(input *DescribeSchemas
 		Name:       opDescribeSchemas,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -1796,6 +2797,56 @@ func (c *DatabaseMigrationService) DescribeSchemasWithContext(ctx aws.Context, i
 	return out, req.Send()
 }
 
+// DescribeSchemasPages iterates over the pages of a DescribeSchemas operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeSchemas method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeSchemas operation.
+//    pageNum := 0
+//    err := client.DescribeSchemasPages(params,
+//        func(page *DescribeSchemasOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *DatabaseMigrationService) DescribeSchemasPages(input *DescribeSchemasInput, fn func(*DescribeSchemasOutput, bool) bool) error {
+	return c.DescribeSchemasPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeSchemasPagesWithContext same as DescribeSchemasPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) DescribeSchemasPagesWithContext(ctx aws.Context, input *DescribeSchemasInput, fn func(*DescribeSchemasOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeSchemasInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeSchemasRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*DescribeSchemasOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opDescribeTableStatistics = "DescribeTableStatistics"
 
 // DescribeTableStatisticsRequest generates a "aws/request.Request" representing the
@@ -1828,6 +2879,12 @@ func (c *DatabaseMigrationService) DescribeTableStatisticsRequest(input *Describ
 		Name:       opDescribeTableStatistics,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"Marker"},
+			OutputTokens:    []string{"Marker"},
+			LimitToken:      "MaxRecords",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -1879,6 +2936,56 @@ func (c *DatabaseMigrationService) DescribeTableStatisticsWithContext(ctx aws.Co
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
+}
+
+// DescribeTableStatisticsPages iterates over the pages of a DescribeTableStatistics operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeTableStatistics method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeTableStatistics operation.
+//    pageNum := 0
+//    err := client.DescribeTableStatisticsPages(params,
+//        func(page *DescribeTableStatisticsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *DatabaseMigrationService) DescribeTableStatisticsPages(input *DescribeTableStatisticsInput, fn func(*DescribeTableStatisticsOutput, bool) bool) error {
+	return c.DescribeTableStatisticsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeTableStatisticsPagesWithContext same as DescribeTableStatisticsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) DescribeTableStatisticsPagesWithContext(ctx aws.Context, input *DescribeTableStatisticsInput, fn func(*DescribeTableStatisticsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeTableStatisticsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeTableStatisticsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*DescribeTableStatisticsOutput), !p.HasNextPage())
+	}
+	return p.Err()
 }
 
 const opImportCertificate = "ImportCertificate"
@@ -2112,6 +3219,9 @@ func (c *DatabaseMigrationService) ModifyEndpointRequest(input *ModifyEndpointIn
 //   * ErrCodeKMSKeyNotAccessibleFault "KMSKeyNotAccessibleFault"
 //   AWS DMS cannot access the KMS key.
 //
+//   * ErrCodeAccessDeniedFault "AccessDeniedFault"
+//   AWS DMS was denied access to the endpoint.
+//
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/ModifyEndpoint
 func (c *DatabaseMigrationService) ModifyEndpoint(input *ModifyEndpointInput) (*ModifyEndpointOutput, error) {
 	req, out := c.ModifyEndpointRequest(input)
@@ -2129,6 +3239,95 @@ func (c *DatabaseMigrationService) ModifyEndpoint(input *ModifyEndpointInput) (*
 // for more information on using Contexts.
 func (c *DatabaseMigrationService) ModifyEndpointWithContext(ctx aws.Context, input *ModifyEndpointInput, opts ...request.Option) (*ModifyEndpointOutput, error) {
 	req, out := c.ModifyEndpointRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opModifyEventSubscription = "ModifyEventSubscription"
+
+// ModifyEventSubscriptionRequest generates a "aws/request.Request" representing the
+// client's request for the ModifyEventSubscription operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See ModifyEventSubscription for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ModifyEventSubscription method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ModifyEventSubscriptionRequest method.
+//    req, resp := client.ModifyEventSubscriptionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/ModifyEventSubscription
+func (c *DatabaseMigrationService) ModifyEventSubscriptionRequest(input *ModifyEventSubscriptionInput) (req *request.Request, output *ModifyEventSubscriptionOutput) {
+	op := &request.Operation{
+		Name:       opModifyEventSubscription,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &ModifyEventSubscriptionInput{}
+	}
+
+	output = &ModifyEventSubscriptionOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ModifyEventSubscription API operation for AWS Database Migration Service.
+//
+// Modifies an existing AWS DMS event notification subscription.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Database Migration Service's
+// API operation ModifyEventSubscription for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeResourceQuotaExceededFault "ResourceQuotaExceededFault"
+//   The quota for this resource quota has been exceeded.
+//
+//   * ErrCodeResourceNotFoundFault "ResourceNotFoundFault"
+//   The resource could not be found.
+//
+//   * ErrCodeSNSInvalidTopicFault "SNSInvalidTopicFault"
+//   The SNS topic is invalid.
+//
+//   * ErrCodeSNSNoAuthorizationFault "SNSNoAuthorizationFault"
+//   You are not authorized for the SNS subscription.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/ModifyEventSubscription
+func (c *DatabaseMigrationService) ModifyEventSubscription(input *ModifyEventSubscriptionInput) (*ModifyEventSubscriptionOutput, error) {
+	req, out := c.ModifyEventSubscriptionRequest(input)
+	return out, req.Send()
+}
+
+// ModifyEventSubscriptionWithContext is the same as ModifyEventSubscription with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ModifyEventSubscription for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) ModifyEventSubscriptionWithContext(ctx aws.Context, input *ModifyEventSubscriptionInput, opts ...request.Option) (*ModifyEventSubscriptionOutput, error) {
+	req, out := c.ModifyEventSubscriptionRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -2380,6 +3579,9 @@ func (c *DatabaseMigrationService) ModifyReplicationTaskRequest(input *ModifyRep
 // You can't modify the task endpoints. The task must be stopped before you
 // can modify it.
 //
+// For more information about AWS DMS tasks, see the AWS DMS user guide at
+// Working with Migration Tasks  (http://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.html)
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -2515,6 +3717,90 @@ func (c *DatabaseMigrationService) RefreshSchemasWithContext(ctx aws.Context, in
 	return out, req.Send()
 }
 
+const opReloadTables = "ReloadTables"
+
+// ReloadTablesRequest generates a "aws/request.Request" representing the
+// client's request for the ReloadTables operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See ReloadTables for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the ReloadTables method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the ReloadTablesRequest method.
+//    req, resp := client.ReloadTablesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/ReloadTables
+func (c *DatabaseMigrationService) ReloadTablesRequest(input *ReloadTablesInput) (req *request.Request, output *ReloadTablesOutput) {
+	op := &request.Operation{
+		Name:       opReloadTables,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &ReloadTablesInput{}
+	}
+
+	output = &ReloadTablesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ReloadTables API operation for AWS Database Migration Service.
+//
+// Reloads the target database table with the source data.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Database Migration Service's
+// API operation ReloadTables for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeResourceNotFoundFault "ResourceNotFoundFault"
+//   The resource could not be found.
+//
+//   * ErrCodeInvalidResourceStateFault "InvalidResourceStateFault"
+//   The resource is in a state that prevents it from being used for database
+//   migration.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/ReloadTables
+func (c *DatabaseMigrationService) ReloadTables(input *ReloadTablesInput) (*ReloadTablesOutput, error) {
+	req, out := c.ReloadTablesRequest(input)
+	return out, req.Send()
+}
+
+// ReloadTablesWithContext is the same as ReloadTables with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ReloadTables for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DatabaseMigrationService) ReloadTablesWithContext(ctx aws.Context, input *ReloadTablesInput, opts ...request.Option) (*ReloadTablesOutput, error) {
+	req, out := c.ReloadTablesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opRemoveTagsFromResource = "RemoveTagsFromResource"
 
 // RemoveTagsFromResourceRequest generates a "aws/request.Request" representing the
@@ -2641,6 +3927,9 @@ func (c *DatabaseMigrationService) StartReplicationTaskRequest(input *StartRepli
 // StartReplicationTask API operation for AWS Database Migration Service.
 //
 // Starts the replication task.
+//
+// For more information about AWS DMS tasks, see the AWS DMS user guide at
+// Working with Migration Tasks  (http://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.html)
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3183,6 +4472,12 @@ type CreateEndpointInput struct {
 	// The name of the endpoint database.
 	DatabaseName *string `type:"string"`
 
+	// Settings in JSON format for the target Amazon DynamoDB endpoint. For more
+	// information about the available settings, see the Using Object Mapping to
+	// Migrate Data to DynamoDB section at  Using an Amazon DynamoDB Database as
+	// a Target for AWS Database Migration Service (http://docs.aws.amazon.com/dms/latest/userguide/CHAP_Target.DynamoDB.html).
+	DynamoDbSettings *DynamoDbSettings `type:"structure"`
+
 	// The database endpoint identifier. Identifiers must begin with a letter; must
 	// contain only ASCII letters, digits, and hyphens; and must not end with a
 	// hyphen or contain two consecutive hyphens.
@@ -3195,8 +4490,9 @@ type CreateEndpointInput struct {
 	// EndpointType is a required field
 	EndpointType *string `type:"string" required:"true" enum:"ReplicationEndpointTypeValue"`
 
-	// The type of engine for the endpoint. Valid values include MYSQL, ORACLE,
-	// POSTGRES, MARIADB, AURORA, REDSHIFT, SYBASE, and SQLSERVER.
+	// The type of engine for the endpoint. Valid values, depending on the EndPointType,
+	// include MYSQL, ORACLE, POSTGRES, MARIADB, AURORA, REDSHIFT, S3, SYBASE, DYNAMODB,
+	// MONGODB, and SQLSERVER.
 	//
 	// EngineName is a required field
 	EngineName *string `type:"string" required:"true"`
@@ -3211,11 +4507,22 @@ type CreateEndpointInput struct {
 	// key for each AWS region.
 	KmsKeyId *string `type:"string"`
 
+	// Settings in JSON format for the source MongoDB endpoint. For more information
+	// about the available settings, see the Configuration Properties When Using
+	// MongoDB as a Source for AWS Database Migration Service section at  Using
+	// Amazon S3 as a Target for AWS Database Migration Service (http://docs.aws.amazon.com/dms/latest/userguide/CHAP_Source.MongoDB.html).
+	MongoDbSettings *MongoDbSettings `type:"structure"`
+
 	// The password to be used to login to the endpoint database.
 	Password *string `type:"string"`
 
 	// The port used by the endpoint database.
 	Port *int64 `type:"integer"`
+
+	// Settings in JSON format for the target S3 endpoint. For more information
+	// about the available settings, see the Extra Connection Attributes section
+	// at  Using Amazon S3 as a Target for AWS Database Migration Service (http://docs.aws.amazon.com/dms/latest/userguide/CHAP_Target.S3.html).
+	S3Settings *S3Settings `type:"structure"`
 
 	// The name of the server where the endpoint database resides.
 	ServerName *string `type:"string"`
@@ -3256,6 +4563,11 @@ func (s *CreateEndpointInput) Validate() error {
 	if s.EngineName == nil {
 		invalidParams.Add(request.NewErrParamRequired("EngineName"))
 	}
+	if s.DynamoDbSettings != nil {
+		if err := s.DynamoDbSettings.Validate(); err != nil {
+			invalidParams.AddNested("DynamoDbSettings", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -3272,6 +4584,12 @@ func (s *CreateEndpointInput) SetCertificateArn(v string) *CreateEndpointInput {
 // SetDatabaseName sets the DatabaseName field's value.
 func (s *CreateEndpointInput) SetDatabaseName(v string) *CreateEndpointInput {
 	s.DatabaseName = &v
+	return s
+}
+
+// SetDynamoDbSettings sets the DynamoDbSettings field's value.
+func (s *CreateEndpointInput) SetDynamoDbSettings(v *DynamoDbSettings) *CreateEndpointInput {
+	s.DynamoDbSettings = v
 	return s
 }
 
@@ -3305,6 +4623,12 @@ func (s *CreateEndpointInput) SetKmsKeyId(v string) *CreateEndpointInput {
 	return s
 }
 
+// SetMongoDbSettings sets the MongoDbSettings field's value.
+func (s *CreateEndpointInput) SetMongoDbSettings(v *MongoDbSettings) *CreateEndpointInput {
+	s.MongoDbSettings = v
+	return s
+}
+
 // SetPassword sets the Password field's value.
 func (s *CreateEndpointInput) SetPassword(v string) *CreateEndpointInput {
 	s.Password = &v
@@ -3314,6 +4638,12 @@ func (s *CreateEndpointInput) SetPassword(v string) *CreateEndpointInput {
 // SetPort sets the Port field's value.
 func (s *CreateEndpointInput) SetPort(v int64) *CreateEndpointInput {
 	s.Port = &v
+	return s
+}
+
+// SetS3Settings sets the S3Settings field's value.
+func (s *CreateEndpointInput) SetS3Settings(v *S3Settings) *CreateEndpointInput {
+	s.S3Settings = v
 	return s
 }
 
@@ -3362,6 +4692,145 @@ func (s CreateEndpointOutput) GoString() string {
 // SetEndpoint sets the Endpoint field's value.
 func (s *CreateEndpointOutput) SetEndpoint(v *Endpoint) *CreateEndpointOutput {
 	s.Endpoint = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/CreateEventSubscriptionMessage
+type CreateEventSubscriptionInput struct {
+	_ struct{} `type:"structure"`
+
+	// A Boolean value; set to true to activate the subscription, or set to false
+	// to create the subscription but not activate it.
+	Enabled *bool `type:"boolean"`
+
+	// A list of event categories for a source type that you want to subscribe to.
+	// You can see a list of the categories for a given source type by calling the
+	// DescribeEventCategories action or in the topic  Working with Events and Notifications
+	// (http://docs.aws.amazon.com/dms/latest/userguide/CHAP_Events.html) in the
+	// AWS Database Migration Service User Guide.
+	EventCategories []*string `locationNameList:"EventCategory" type:"list"`
+
+	// The Amazon Resource Name (ARN) of the Amazon SNS topic created for event
+	// notification. The ARN is created by Amazon SNS when you create a topic and
+	// subscribe to it.
+	//
+	// SnsTopicArn is a required field
+	SnsTopicArn *string `type:"string" required:"true"`
+
+	// The list of identifiers of the event sources for which events will be returned.
+	// If not specified, then all sources are included in the response. An identifier
+	// must begin with a letter and must contain only ASCII letters, digits, and
+	// hyphens; it cannot end with a hyphen or contain two consecutive hyphens.
+	SourceIds []*string `locationNameList:"SourceId" type:"list"`
+
+	// The type of AWS DMS resource that generates the events. For example, if you
+	// want to be notified of events generated by a replication instance, you set
+	// this parameter to replication-instance. If this value is not specified, all
+	// events are returned.
+	//
+	// Valid values: replication-instance | migration-task
+	SourceType *string `type:"string"`
+
+	// The name of the DMS event notification subscription.
+	//
+	// Constraints: The name must be less than 255 characters.
+	//
+	// SubscriptionName is a required field
+	SubscriptionName *string `type:"string" required:"true"`
+
+	// A tag to be attached to the event subscription.
+	Tags []*Tag `locationNameList:"Tag" type:"list"`
+}
+
+// String returns the string representation
+func (s CreateEventSubscriptionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateEventSubscriptionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateEventSubscriptionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateEventSubscriptionInput"}
+	if s.SnsTopicArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("SnsTopicArn"))
+	}
+	if s.SubscriptionName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SubscriptionName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *CreateEventSubscriptionInput) SetEnabled(v bool) *CreateEventSubscriptionInput {
+	s.Enabled = &v
+	return s
+}
+
+// SetEventCategories sets the EventCategories field's value.
+func (s *CreateEventSubscriptionInput) SetEventCategories(v []*string) *CreateEventSubscriptionInput {
+	s.EventCategories = v
+	return s
+}
+
+// SetSnsTopicArn sets the SnsTopicArn field's value.
+func (s *CreateEventSubscriptionInput) SetSnsTopicArn(v string) *CreateEventSubscriptionInput {
+	s.SnsTopicArn = &v
+	return s
+}
+
+// SetSourceIds sets the SourceIds field's value.
+func (s *CreateEventSubscriptionInput) SetSourceIds(v []*string) *CreateEventSubscriptionInput {
+	s.SourceIds = v
+	return s
+}
+
+// SetSourceType sets the SourceType field's value.
+func (s *CreateEventSubscriptionInput) SetSourceType(v string) *CreateEventSubscriptionInput {
+	s.SourceType = &v
+	return s
+}
+
+// SetSubscriptionName sets the SubscriptionName field's value.
+func (s *CreateEventSubscriptionInput) SetSubscriptionName(v string) *CreateEventSubscriptionInput {
+	s.SubscriptionName = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *CreateEventSubscriptionInput) SetTags(v []*Tag) *CreateEventSubscriptionInput {
+	s.Tags = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/CreateEventSubscriptionResponse
+type CreateEventSubscriptionOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The event subscription that was created.
+	EventSubscription *EventSubscription `type:"structure"`
+}
+
+// String returns the string representation
+func (s CreateEventSubscriptionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateEventSubscriptionOutput) GoString() string {
+	return s.String()
+}
+
+// SetEventSubscription sets the EventSubscription field's value.
+func (s *CreateEventSubscriptionOutput) SetEventSubscription(v *EventSubscription) *CreateEventSubscriptionOutput {
+	s.EventSubscription = v
 	return s
 }
 
@@ -3710,7 +5179,7 @@ type CreateReplicationTaskInput struct {
 	//
 	// Constraints:
 	//
-	//    * Must contain from 1 to 63 alphanumeric characters or hyphens.
+	//    * Must contain from 1 to 255 alphanumeric characters or hyphens.
 	//
 	//    * First character must be a letter.
 	//
@@ -3729,8 +5198,9 @@ type CreateReplicationTaskInput struct {
 	// SourceEndpointArn is a required field
 	SourceEndpointArn *string `type:"string" required:"true"`
 
-	// The path of the JSON file that contains the table mappings. Preceed the path
-	// with "file://".
+	// When using the AWS CLI or boto3, provide the path of the JSON file that contains
+	// the table mappings. Precede the path with "file://". When working with the
+	// DMS API, provide the JSON as the parameter value.
 	//
 	// For example, --table-mappings file://mappingfile.json
 	//
@@ -3985,6 +5455,69 @@ func (s DeleteEndpointOutput) GoString() string {
 // SetEndpoint sets the Endpoint field's value.
 func (s *DeleteEndpointOutput) SetEndpoint(v *Endpoint) *DeleteEndpointOutput {
 	s.Endpoint = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/DeleteEventSubscriptionMessage
+type DeleteEventSubscriptionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the DMS event notification subscription to be deleted.
+	//
+	// SubscriptionName is a required field
+	SubscriptionName *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteEventSubscriptionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteEventSubscriptionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteEventSubscriptionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteEventSubscriptionInput"}
+	if s.SubscriptionName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SubscriptionName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetSubscriptionName sets the SubscriptionName field's value.
+func (s *DeleteEventSubscriptionInput) SetSubscriptionName(v string) *DeleteEventSubscriptionInput {
+	s.SubscriptionName = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/DeleteEventSubscriptionResponse
+type DeleteEventSubscriptionOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The event subscription that was deleted.
+	EventSubscription *EventSubscription `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteEventSubscriptionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteEventSubscriptionOutput) GoString() string {
+	return s.String()
+}
+
+// SetEventSubscription sets the EventSubscription field's value.
+func (s *DeleteEventSubscriptionOutput) SetEventSubscription(v *EventSubscription) *DeleteEventSubscriptionOutput {
+	s.EventSubscription = v
 	return s
 }
 
@@ -4626,6 +6159,362 @@ func (s *DescribeEndpointsOutput) SetEndpoints(v []*Endpoint) *DescribeEndpoints
 
 // SetMarker sets the Marker field's value.
 func (s *DescribeEndpointsOutput) SetMarker(v string) *DescribeEndpointsOutput {
+	s.Marker = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/DescribeEventCategoriesMessage
+type DescribeEventCategoriesInput struct {
+	_ struct{} `type:"structure"`
+
+	// Filters applied to the action.
+	Filters []*Filter `locationNameList:"Filter" type:"list"`
+
+	// The type of AWS DMS resource that generates events.
+	//
+	// Valid values: replication-instance | migration-task
+	SourceType *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeEventCategoriesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEventCategoriesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeEventCategoriesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeEventCategoriesInput"}
+	if s.Filters != nil {
+		for i, v := range s.Filters {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFilters sets the Filters field's value.
+func (s *DescribeEventCategoriesInput) SetFilters(v []*Filter) *DescribeEventCategoriesInput {
+	s.Filters = v
+	return s
+}
+
+// SetSourceType sets the SourceType field's value.
+func (s *DescribeEventCategoriesInput) SetSourceType(v string) *DescribeEventCategoriesInput {
+	s.SourceType = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/DescribeEventCategoriesResponse
+type DescribeEventCategoriesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of event categories.
+	EventCategoryGroupList []*EventCategoryGroup `locationNameList:"EventCategoryGroup" type:"list"`
+}
+
+// String returns the string representation
+func (s DescribeEventCategoriesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEventCategoriesOutput) GoString() string {
+	return s.String()
+}
+
+// SetEventCategoryGroupList sets the EventCategoryGroupList field's value.
+func (s *DescribeEventCategoriesOutput) SetEventCategoryGroupList(v []*EventCategoryGroup) *DescribeEventCategoriesOutput {
+	s.EventCategoryGroupList = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/DescribeEventSubscriptionsMessage
+type DescribeEventSubscriptionsInput struct {
+	_ struct{} `type:"structure"`
+
+	// Filters applied to the action.
+	Filters []*Filter `locationNameList:"Filter" type:"list"`
+
+	// An optional pagination token provided by a previous request. If this parameter
+	// is specified, the response includes only records beyond the marker, up to
+	// the value specified by MaxRecords.
+	Marker *string `type:"string"`
+
+	// The maximum number of records to include in the response. If more records
+	// exist than the specified MaxRecords value, a pagination token called a marker
+	// is included in the response so that the remaining results can be retrieved.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
+	MaxRecords *int64 `type:"integer"`
+
+	// The name of the AWS DMS event subscription to be described.
+	SubscriptionName *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeEventSubscriptionsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEventSubscriptionsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeEventSubscriptionsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeEventSubscriptionsInput"}
+	if s.Filters != nil {
+		for i, v := range s.Filters {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFilters sets the Filters field's value.
+func (s *DescribeEventSubscriptionsInput) SetFilters(v []*Filter) *DescribeEventSubscriptionsInput {
+	s.Filters = v
+	return s
+}
+
+// SetMarker sets the Marker field's value.
+func (s *DescribeEventSubscriptionsInput) SetMarker(v string) *DescribeEventSubscriptionsInput {
+	s.Marker = &v
+	return s
+}
+
+// SetMaxRecords sets the MaxRecords field's value.
+func (s *DescribeEventSubscriptionsInput) SetMaxRecords(v int64) *DescribeEventSubscriptionsInput {
+	s.MaxRecords = &v
+	return s
+}
+
+// SetSubscriptionName sets the SubscriptionName field's value.
+func (s *DescribeEventSubscriptionsInput) SetSubscriptionName(v string) *DescribeEventSubscriptionsInput {
+	s.SubscriptionName = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/DescribeEventSubscriptionsResponse
+type DescribeEventSubscriptionsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of event subscriptions.
+	EventSubscriptionsList []*EventSubscription `locationNameList:"EventSubscription" type:"list"`
+
+	// An optional pagination token provided by a previous request. If this parameter
+	// is specified, the response includes only records beyond the marker, up to
+	// the value specified by MaxRecords.
+	Marker *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeEventSubscriptionsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEventSubscriptionsOutput) GoString() string {
+	return s.String()
+}
+
+// SetEventSubscriptionsList sets the EventSubscriptionsList field's value.
+func (s *DescribeEventSubscriptionsOutput) SetEventSubscriptionsList(v []*EventSubscription) *DescribeEventSubscriptionsOutput {
+	s.EventSubscriptionsList = v
+	return s
+}
+
+// SetMarker sets the Marker field's value.
+func (s *DescribeEventSubscriptionsOutput) SetMarker(v string) *DescribeEventSubscriptionsOutput {
+	s.Marker = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/DescribeEventsMessage
+type DescribeEventsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The duration of the events to be listed.
+	Duration *int64 `type:"integer"`
+
+	// The end time for the events to be listed.
+	EndTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// A list of event categories for a source type that you want to subscribe to.
+	EventCategories []*string `locationNameList:"EventCategory" type:"list"`
+
+	// Filters applied to the action.
+	Filters []*Filter `locationNameList:"Filter" type:"list"`
+
+	// An optional pagination token provided by a previous request. If this parameter
+	// is specified, the response includes only records beyond the marker, up to
+	// the value specified by MaxRecords.
+	Marker *string `type:"string"`
+
+	// The maximum number of records to include in the response. If more records
+	// exist than the specified MaxRecords value, a pagination token called a marker
+	// is included in the response so that the remaining results can be retrieved.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
+	MaxRecords *int64 `type:"integer"`
+
+	// The identifier of the event source. An identifier must begin with a letter
+	// and must contain only ASCII letters, digits, and hyphens. It cannot end with
+	// a hyphen or contain two consecutive hyphens.
+	SourceIdentifier *string `type:"string"`
+
+	// The type of AWS DMS resource that generates events.
+	//
+	// Valid values: replication-instance | migration-task
+	SourceType *string `type:"string" enum:"SourceType"`
+
+	// The start time for the events to be listed.
+	StartTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+}
+
+// String returns the string representation
+func (s DescribeEventsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEventsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeEventsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeEventsInput"}
+	if s.Filters != nil {
+		for i, v := range s.Filters {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDuration sets the Duration field's value.
+func (s *DescribeEventsInput) SetDuration(v int64) *DescribeEventsInput {
+	s.Duration = &v
+	return s
+}
+
+// SetEndTime sets the EndTime field's value.
+func (s *DescribeEventsInput) SetEndTime(v time.Time) *DescribeEventsInput {
+	s.EndTime = &v
+	return s
+}
+
+// SetEventCategories sets the EventCategories field's value.
+func (s *DescribeEventsInput) SetEventCategories(v []*string) *DescribeEventsInput {
+	s.EventCategories = v
+	return s
+}
+
+// SetFilters sets the Filters field's value.
+func (s *DescribeEventsInput) SetFilters(v []*Filter) *DescribeEventsInput {
+	s.Filters = v
+	return s
+}
+
+// SetMarker sets the Marker field's value.
+func (s *DescribeEventsInput) SetMarker(v string) *DescribeEventsInput {
+	s.Marker = &v
+	return s
+}
+
+// SetMaxRecords sets the MaxRecords field's value.
+func (s *DescribeEventsInput) SetMaxRecords(v int64) *DescribeEventsInput {
+	s.MaxRecords = &v
+	return s
+}
+
+// SetSourceIdentifier sets the SourceIdentifier field's value.
+func (s *DescribeEventsInput) SetSourceIdentifier(v string) *DescribeEventsInput {
+	s.SourceIdentifier = &v
+	return s
+}
+
+// SetSourceType sets the SourceType field's value.
+func (s *DescribeEventsInput) SetSourceType(v string) *DescribeEventsInput {
+	s.SourceType = &v
+	return s
+}
+
+// SetStartTime sets the StartTime field's value.
+func (s *DescribeEventsInput) SetStartTime(v time.Time) *DescribeEventsInput {
+	s.StartTime = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/DescribeEventsResponse
+type DescribeEventsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The events described.
+	Events []*Event `locationNameList:"Event" type:"list"`
+
+	// An optional pagination token provided by a previous request. If this parameter
+	// is specified, the response includes only records beyond the marker, up to
+	// the value specified by MaxRecords.
+	Marker *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeEventsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEventsOutput) GoString() string {
+	return s.String()
+}
+
+// SetEvents sets the Events field's value.
+func (s *DescribeEventsOutput) SetEvents(v []*Event) *DescribeEventsOutput {
+	s.Events = v
+	return s
+}
+
+// SetMarker sets the Marker field's value.
+func (s *DescribeEventsOutput) SetMarker(v string) *DescribeEventsOutput {
 	s.Marker = &v
 	return s
 }
@@ -5299,6 +7188,45 @@ func (s *DescribeTableStatisticsOutput) SetTableStatistics(v []*TableStatistics)
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/DynamoDbSettings
+type DynamoDbSettings struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) used by the service access IAM role.
+	//
+	// ServiceAccessRoleArn is a required field
+	ServiceAccessRoleArn *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DynamoDbSettings) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DynamoDbSettings) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DynamoDbSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DynamoDbSettings"}
+	if s.ServiceAccessRoleArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ServiceAccessRoleArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetServiceAccessRoleArn sets the ServiceAccessRoleArn field's value.
+func (s *DynamoDbSettings) SetServiceAccessRoleArn(v string) *DynamoDbSettings {
+	s.ServiceAccessRoleArn = &v
+	return s
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/Endpoint
 type Endpoint struct {
 	_ struct{} `type:"structure"`
@@ -5308,6 +7236,10 @@ type Endpoint struct {
 
 	// The name of the database at the endpoint.
 	DatabaseName *string `type:"string"`
+
+	// The settings for the target DynamoDB database. For more information, see
+	// the DynamoDBSettings structure.
+	DynamoDbSettings *DynamoDbSettings `type:"structure"`
 
 	// The Amazon Resource Name (ARN) string that uniquely identifies the endpoint.
 	EndpointArn *string `type:"string"`
@@ -5320,9 +7252,15 @@ type Endpoint struct {
 	// The type of endpoint.
 	EndpointType *string `type:"string" enum:"ReplicationEndpointTypeValue"`
 
-	// The database engine name. Valid values include MYSQL, ORACLE, POSTGRES, MARIADB,
-	// AURORA, REDSHIFT, SYBASE, and SQLSERVER.
+	// The database engine name. Valid values, depending on the EndPointType, include
+	// MYSQL, ORACLE, POSTGRES, MARIADB, AURORA, REDSHIFT, S3, SYBASE, DYNAMODB,
+	// MONGODB, and SQLSERVER.
 	EngineName *string `type:"string"`
+
+	// Value returned by a call to CreateEndpoint that can be used for cross-account
+	// validation. Use it on a subsequent call to CreateEndpoint to create the endpoint
+	// with a cross-account.
+	ExternalId *string `type:"string"`
 
 	// Additional connection attributes used to connect to the endpoint.
 	ExtraConnectionAttributes *string `type:"string"`
@@ -5334,8 +7272,16 @@ type Endpoint struct {
 	// key for each AWS region.
 	KmsKeyId *string `type:"string"`
 
+	// The settings for the MongoDB source endpoint. For more information, see the
+	// MongoDbSettings structure.
+	MongoDbSettings *MongoDbSettings `type:"structure"`
+
 	// The port value used to access the endpoint.
 	Port *int64 `type:"integer"`
+
+	// The settings for the S3 target endpoint. For more information, see the S3Settings
+	// structure.
+	S3Settings *S3Settings `type:"structure"`
 
 	// The name of the server at the endpoint.
 	ServerName *string `type:"string"`
@@ -5376,6 +7322,12 @@ func (s *Endpoint) SetDatabaseName(v string) *Endpoint {
 	return s
 }
 
+// SetDynamoDbSettings sets the DynamoDbSettings field's value.
+func (s *Endpoint) SetDynamoDbSettings(v *DynamoDbSettings) *Endpoint {
+	s.DynamoDbSettings = v
+	return s
+}
+
 // SetEndpointArn sets the EndpointArn field's value.
 func (s *Endpoint) SetEndpointArn(v string) *Endpoint {
 	s.EndpointArn = &v
@@ -5400,6 +7352,12 @@ func (s *Endpoint) SetEngineName(v string) *Endpoint {
 	return s
 }
 
+// SetExternalId sets the ExternalId field's value.
+func (s *Endpoint) SetExternalId(v string) *Endpoint {
+	s.ExternalId = &v
+	return s
+}
+
 // SetExtraConnectionAttributes sets the ExtraConnectionAttributes field's value.
 func (s *Endpoint) SetExtraConnectionAttributes(v string) *Endpoint {
 	s.ExtraConnectionAttributes = &v
@@ -5412,9 +7370,21 @@ func (s *Endpoint) SetKmsKeyId(v string) *Endpoint {
 	return s
 }
 
+// SetMongoDbSettings sets the MongoDbSettings field's value.
+func (s *Endpoint) SetMongoDbSettings(v *MongoDbSettings) *Endpoint {
+	s.MongoDbSettings = v
+	return s
+}
+
 // SetPort sets the Port field's value.
 func (s *Endpoint) SetPort(v int64) *Endpoint {
 	s.Port = &v
+	return s
+}
+
+// SetS3Settings sets the S3Settings field's value.
+func (s *Endpoint) SetS3Settings(v *S3Settings) *Endpoint {
+	s.S3Settings = v
 	return s
 }
 
@@ -5439,6 +7409,216 @@ func (s *Endpoint) SetStatus(v string) *Endpoint {
 // SetUsername sets the Username field's value.
 func (s *Endpoint) SetUsername(v string) *Endpoint {
 	s.Username = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/Event
+type Event struct {
+	_ struct{} `type:"structure"`
+
+	// The date of the event.
+	Date *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The event categories available for the specified source type.
+	EventCategories []*string `locationNameList:"EventCategory" type:"list"`
+
+	// The event message.
+	Message *string `type:"string"`
+
+	// The identifier of the event source. An identifier must begin with a letter
+	// and must contain only ASCII letters, digits, and hyphens; it cannot end with
+	// a hyphen or contain two consecutive hyphens.
+	//
+	// Constraints:replication instance, endpoint, migration task
+	SourceIdentifier *string `type:"string"`
+
+	// The type of AWS DMS resource that generates events.
+	//
+	// Valid values: replication-instance | endpoint | migration-task
+	SourceType *string `type:"string" enum:"SourceType"`
+}
+
+// String returns the string representation
+func (s Event) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Event) GoString() string {
+	return s.String()
+}
+
+// SetDate sets the Date field's value.
+func (s *Event) SetDate(v time.Time) *Event {
+	s.Date = &v
+	return s
+}
+
+// SetEventCategories sets the EventCategories field's value.
+func (s *Event) SetEventCategories(v []*string) *Event {
+	s.EventCategories = v
+	return s
+}
+
+// SetMessage sets the Message field's value.
+func (s *Event) SetMessage(v string) *Event {
+	s.Message = &v
+	return s
+}
+
+// SetSourceIdentifier sets the SourceIdentifier field's value.
+func (s *Event) SetSourceIdentifier(v string) *Event {
+	s.SourceIdentifier = &v
+	return s
+}
+
+// SetSourceType sets the SourceType field's value.
+func (s *Event) SetSourceType(v string) *Event {
+	s.SourceType = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/EventCategoryGroup
+type EventCategoryGroup struct {
+	_ struct{} `type:"structure"`
+
+	// A list of event categories for a SourceType that you want to subscribe to.
+	EventCategories []*string `locationNameList:"EventCategory" type:"list"`
+
+	// The type of AWS DMS resource that generates events.
+	//
+	// Valid values: replication-instance | replication-server | security-group
+	// | migration-task
+	SourceType *string `type:"string"`
+}
+
+// String returns the string representation
+func (s EventCategoryGroup) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EventCategoryGroup) GoString() string {
+	return s.String()
+}
+
+// SetEventCategories sets the EventCategories field's value.
+func (s *EventCategoryGroup) SetEventCategories(v []*string) *EventCategoryGroup {
+	s.EventCategories = v
+	return s
+}
+
+// SetSourceType sets the SourceType field's value.
+func (s *EventCategoryGroup) SetSourceType(v string) *EventCategoryGroup {
+	s.SourceType = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/EventSubscription
+type EventSubscription struct {
+	_ struct{} `type:"structure"`
+
+	// The AWS DMS event notification subscription Id.
+	CustSubscriptionId *string `type:"string"`
+
+	// The AWS customer account associated with the AWS DMS event notification subscription.
+	CustomerAwsId *string `type:"string"`
+
+	// Boolean value that indicates if the event subscription is enabled.
+	Enabled *bool `type:"boolean"`
+
+	// A lists of event categories.
+	EventCategoriesList []*string `locationNameList:"EventCategory" type:"list"`
+
+	// The topic ARN of the AWS DMS event notification subscription.
+	SnsTopicArn *string `type:"string"`
+
+	// A list of source Ids for the event subscription.
+	SourceIdsList []*string `locationNameList:"SourceId" type:"list"`
+
+	// The type of AWS DMS resource that generates events.
+	//
+	// Valid values: replication-instance | replication-server | security-group
+	// | migration-task
+	SourceType *string `type:"string"`
+
+	// The status of the AWS DMS event notification subscription.
+	//
+	// Constraints:
+	//
+	// Can be one of the following: creating | modifying | deleting | active | no-permission
+	// | topic-not-exist
+	//
+	// The status "no-permission" indicates that AWS DMS no longer has permission
+	// to post to the SNS topic. The status "topic-not-exist" indicates that the
+	// topic was deleted after the subscription was created.
+	Status *string `type:"string"`
+
+	// The time the RDS event notification subscription was created.
+	SubscriptionCreationTime *string `type:"string"`
+}
+
+// String returns the string representation
+func (s EventSubscription) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EventSubscription) GoString() string {
+	return s.String()
+}
+
+// SetCustSubscriptionId sets the CustSubscriptionId field's value.
+func (s *EventSubscription) SetCustSubscriptionId(v string) *EventSubscription {
+	s.CustSubscriptionId = &v
+	return s
+}
+
+// SetCustomerAwsId sets the CustomerAwsId field's value.
+func (s *EventSubscription) SetCustomerAwsId(v string) *EventSubscription {
+	s.CustomerAwsId = &v
+	return s
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *EventSubscription) SetEnabled(v bool) *EventSubscription {
+	s.Enabled = &v
+	return s
+}
+
+// SetEventCategoriesList sets the EventCategoriesList field's value.
+func (s *EventSubscription) SetEventCategoriesList(v []*string) *EventSubscription {
+	s.EventCategoriesList = v
+	return s
+}
+
+// SetSnsTopicArn sets the SnsTopicArn field's value.
+func (s *EventSubscription) SetSnsTopicArn(v string) *EventSubscription {
+	s.SnsTopicArn = &v
+	return s
+}
+
+// SetSourceIdsList sets the SourceIdsList field's value.
+func (s *EventSubscription) SetSourceIdsList(v []*string) *EventSubscription {
+	s.SourceIdsList = v
+	return s
+}
+
+// SetSourceType sets the SourceType field's value.
+func (s *EventSubscription) SetSourceType(v string) *EventSubscription {
+	s.SourceType = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *EventSubscription) SetStatus(v string) *EventSubscription {
+	s.Status = &v
+	return s
+}
+
+// SetSubscriptionCreationTime sets the SubscriptionCreationTime field's value.
+func (s *EventSubscription) SetSubscriptionCreationTime(v string) *EventSubscription {
+	s.SubscriptionCreationTime = &v
 	return s
 }
 
@@ -5512,6 +7692,9 @@ type ImportCertificateInput struct {
 	//
 	// CertificateWallet is automatically base64 encoded/decoded by the SDK.
 	CertificateWallet []byte `type:"blob"`
+
+	// The tags associated with the certificate.
+	Tags []*Tag `locationNameList:"Tag" type:"list"`
 }
 
 // String returns the string representation
@@ -5552,6 +7735,12 @@ func (s *ImportCertificateInput) SetCertificatePem(v string) *ImportCertificateI
 // SetCertificateWallet sets the CertificateWallet field's value.
 func (s *ImportCertificateInput) SetCertificateWallet(v []byte) *ImportCertificateInput {
 	s.CertificateWallet = v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *ImportCertificateInput) SetTags(v []*Tag) *ImportCertificateInput {
+	s.Tags = v
 	return s
 }
 
@@ -5653,6 +7842,12 @@ type ModifyEndpointInput struct {
 	// The name of the endpoint database.
 	DatabaseName *string `type:"string"`
 
+	// Settings in JSON format for the target Amazon DynamoDB endpoint. For more
+	// information about the available settings, see the Using Object Mapping to
+	// Migrate Data to DynamoDB section at  Using an Amazon DynamoDB Database as
+	// a Target for AWS Database Migration Service (http://docs.aws.amazon.com/dms/latest/userguide/CHAP_Target.DynamoDB.html).
+	DynamoDbSettings *DynamoDbSettings `type:"structure"`
+
 	// The Amazon Resource Name (ARN) string that uniquely identifies the endpoint.
 	//
 	// EndpointArn is a required field
@@ -5666,18 +7861,30 @@ type ModifyEndpointInput struct {
 	// The type of endpoint.
 	EndpointType *string `type:"string" enum:"ReplicationEndpointTypeValue"`
 
-	// The type of engine for the endpoint. Valid values include MYSQL, ORACLE,
-	// POSTGRES, MARIADB, AURORA, REDSHIFT, SYBASE, and SQLSERVER.
+	// The type of engine for the endpoint. Valid values, depending on the EndPointType,
+	// include MYSQL, ORACLE, POSTGRES, MARIADB, AURORA, REDSHIFT, S3, DYNAMODB,
+	// MONGODB, SYBASE, and SQLSERVER.
 	EngineName *string `type:"string"`
 
 	// Additional attributes associated with the connection.
 	ExtraConnectionAttributes *string `type:"string"`
+
+	// Settings in JSON format for the source MongoDB endpoint. For more information
+	// about the available settings, see the Configuration Properties When Using
+	// MongoDB as a Source for AWS Database Migration Service section at  Using
+	// Amazon S3 as a Target for AWS Database Migration Service (http://docs.aws.amazon.com/dms/latest/userguide/CHAP_Source.MongoDB.html).
+	MongoDbSettings *MongoDbSettings `type:"structure"`
 
 	// The password to be used to login to the endpoint database.
 	Password *string `type:"string"`
 
 	// The port used by the endpoint database.
 	Port *int64 `type:"integer"`
+
+	// Settings in JSON format for the target S3 endpoint. For more information
+	// about the available settings, see the Extra Connection Attributes section
+	// at  Using Amazon S3 as a Target for AWS Database Migration Service (http://docs.aws.amazon.com/dms/latest/userguide/CHAP_Target.S3.html).
+	S3Settings *S3Settings `type:"structure"`
 
 	// The name of the server where the endpoint database resides.
 	ServerName *string `type:"string"`
@@ -5709,6 +7916,11 @@ func (s *ModifyEndpointInput) Validate() error {
 	if s.EndpointArn == nil {
 		invalidParams.Add(request.NewErrParamRequired("EndpointArn"))
 	}
+	if s.DynamoDbSettings != nil {
+		if err := s.DynamoDbSettings.Validate(); err != nil {
+			invalidParams.AddNested("DynamoDbSettings", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -5725,6 +7937,12 @@ func (s *ModifyEndpointInput) SetCertificateArn(v string) *ModifyEndpointInput {
 // SetDatabaseName sets the DatabaseName field's value.
 func (s *ModifyEndpointInput) SetDatabaseName(v string) *ModifyEndpointInput {
 	s.DatabaseName = &v
+	return s
+}
+
+// SetDynamoDbSettings sets the DynamoDbSettings field's value.
+func (s *ModifyEndpointInput) SetDynamoDbSettings(v *DynamoDbSettings) *ModifyEndpointInput {
+	s.DynamoDbSettings = v
 	return s
 }
 
@@ -5758,6 +7976,12 @@ func (s *ModifyEndpointInput) SetExtraConnectionAttributes(v string) *ModifyEndp
 	return s
 }
 
+// SetMongoDbSettings sets the MongoDbSettings field's value.
+func (s *ModifyEndpointInput) SetMongoDbSettings(v *MongoDbSettings) *ModifyEndpointInput {
+	s.MongoDbSettings = v
+	return s
+}
+
 // SetPassword sets the Password field's value.
 func (s *ModifyEndpointInput) SetPassword(v string) *ModifyEndpointInput {
 	s.Password = &v
@@ -5767,6 +7991,12 @@ func (s *ModifyEndpointInput) SetPassword(v string) *ModifyEndpointInput {
 // SetPort sets the Port field's value.
 func (s *ModifyEndpointInput) SetPort(v int64) *ModifyEndpointInput {
 	s.Port = &v
+	return s
+}
+
+// SetS3Settings sets the S3Settings field's value.
+func (s *ModifyEndpointInput) SetS3Settings(v *S3Settings) *ModifyEndpointInput {
+	s.S3Settings = v
 	return s
 }
 
@@ -5809,6 +8039,111 @@ func (s ModifyEndpointOutput) GoString() string {
 // SetEndpoint sets the Endpoint field's value.
 func (s *ModifyEndpointOutput) SetEndpoint(v *Endpoint) *ModifyEndpointOutput {
 	s.Endpoint = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/ModifyEventSubscriptionMessage
+type ModifyEventSubscriptionInput struct {
+	_ struct{} `type:"structure"`
+
+	// A Boolean value; set to true to activate the subscription.
+	Enabled *bool `type:"boolean"`
+
+	// A list of event categories for a source type that you want to subscribe to.
+	// Use the DescribeEventCategories action to see a list of event categories.
+	EventCategories []*string `locationNameList:"EventCategory" type:"list"`
+
+	// The Amazon Resource Name (ARN) of the Amazon SNS topic created for event
+	// notification. The ARN is created by Amazon SNS when you create a topic and
+	// subscribe to it.
+	SnsTopicArn *string `type:"string"`
+
+	// The type of AWS DMS resource that generates the events you want to subscribe
+	// to.
+	//
+	// Valid values: replication-instance | migration-task
+	SourceType *string `type:"string"`
+
+	// The name of the AWS DMS event notification subscription to be modified.
+	//
+	// SubscriptionName is a required field
+	SubscriptionName *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s ModifyEventSubscriptionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyEventSubscriptionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ModifyEventSubscriptionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ModifyEventSubscriptionInput"}
+	if s.SubscriptionName == nil {
+		invalidParams.Add(request.NewErrParamRequired("SubscriptionName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *ModifyEventSubscriptionInput) SetEnabled(v bool) *ModifyEventSubscriptionInput {
+	s.Enabled = &v
+	return s
+}
+
+// SetEventCategories sets the EventCategories field's value.
+func (s *ModifyEventSubscriptionInput) SetEventCategories(v []*string) *ModifyEventSubscriptionInput {
+	s.EventCategories = v
+	return s
+}
+
+// SetSnsTopicArn sets the SnsTopicArn field's value.
+func (s *ModifyEventSubscriptionInput) SetSnsTopicArn(v string) *ModifyEventSubscriptionInput {
+	s.SnsTopicArn = &v
+	return s
+}
+
+// SetSourceType sets the SourceType field's value.
+func (s *ModifyEventSubscriptionInput) SetSourceType(v string) *ModifyEventSubscriptionInput {
+	s.SourceType = &v
+	return s
+}
+
+// SetSubscriptionName sets the SubscriptionName field's value.
+func (s *ModifyEventSubscriptionInput) SetSubscriptionName(v string) *ModifyEventSubscriptionInput {
+	s.SubscriptionName = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/ModifyEventSubscriptionResponse
+type ModifyEventSubscriptionOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The modified event subscription.
+	EventSubscription *EventSubscription `type:"structure"`
+}
+
+// String returns the string representation
+func (s ModifyEventSubscriptionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ModifyEventSubscriptionOutput) GoString() string {
+	return s.String()
+}
+
+// SetEventSubscription sets the EventSubscription field's value.
+func (s *ModifyEventSubscriptionOutput) SetEventSubscription(v *EventSubscription) *ModifyEventSubscriptionOutput {
+	s.EventSubscription = v
 	return s
 }
 
@@ -6106,7 +8441,7 @@ type ModifyReplicationTaskInput struct {
 	//
 	// Constraints:
 	//
-	//    * Must contain from 1 to 63 alphanumeric characters or hyphens.
+	//    * Must contain from 1 to 255 alphanumeric characters or hyphens.
 	//
 	//    * First character must be a letter.
 	//
@@ -6116,8 +8451,9 @@ type ModifyReplicationTaskInput struct {
 	// JSON file that contains settings for the task, such as target metadata settings.
 	ReplicationTaskSettings *string `type:"string"`
 
-	// The path of the JSON file that contains the table mappings. Preceed the path
-	// with "file://".
+	// When using the AWS CLI or boto3, provide the path of the JSON file that contains
+	// the table mappings. Precede the path with "file://". When working with the
+	// DMS API, provide the JSON as the parameter value.
 	//
 	// For example, --table-mappings file://mappingfile.json
 	TableMappings *string `type:"string"`
@@ -6203,6 +8539,143 @@ func (s ModifyReplicationTaskOutput) GoString() string {
 // SetReplicationTask sets the ReplicationTask field's value.
 func (s *ModifyReplicationTaskOutput) SetReplicationTask(v *ReplicationTask) *ModifyReplicationTaskOutput {
 	s.ReplicationTask = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/MongoDbSettings
+type MongoDbSettings struct {
+	_ struct{} `type:"structure"`
+
+	// The authentication mechanism you use to access the MongoDB source endpoint.
+	//
+	// Valid values: DEFAULT, MONGODB_CR, SCRAM_SHA_1
+	//
+	// DEFAULT – For MongoDB version 2.x, use MONGODB_CR. For MongoDB version 3.x,
+	// use SCRAM_SHA_1. This attribute is not used when authType=No.
+	AuthMechanism *string `type:"string" enum:"AuthMechanismValue"`
+
+	// The MongoDB database name. This attribute is not used when authType=NO.
+	//
+	// The default is admin.
+	AuthSource *string `type:"string"`
+
+	// The authentication type you use to access the MongoDB source endpoint.
+	//
+	// Valid values: NO, PASSWORD
+	//
+	// When NO is selected, user name and password parameters are not used and can
+	// be empty.
+	AuthType *string `type:"string" enum:"AuthTypeValue"`
+
+	// The database name on the MongoDB source endpoint.
+	DatabaseName *string `type:"string"`
+
+	// Indicates the number of documents to preview to determine the document organization.
+	// Use this attribute when NestingLevel is set to ONE.
+	//
+	// Must be a positive value greater than 0. Default value is 1000.
+	DocsToInvestigate *string `type:"string"`
+
+	// Specifies the document ID. Use this attribute when NestingLevel is set to
+	// NONE.
+	//
+	// Default value is false.
+	ExtractDocId *string `type:"string"`
+
+	// Specifies either document or table mode.
+	//
+	// Valid values: NONE, ONE
+	//
+	// Default value is NONE. Specify NONE to use document mode. Specify ONE to
+	// use table mode.
+	NestingLevel *string `type:"string" enum:"NestingLevelValue"`
+
+	// The password for the user account you use to access the MongoDB source endpoint.
+	Password *string `type:"string"`
+
+	// The port value for the MongoDB source endpoint.
+	Port *int64 `type:"integer"`
+
+	// The name of the server on the MongoDB source endpoint.
+	ServerName *string `type:"string"`
+
+	// The user name you use to access the MongoDB source endpoint.
+	Username *string `type:"string"`
+}
+
+// String returns the string representation
+func (s MongoDbSettings) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s MongoDbSettings) GoString() string {
+	return s.String()
+}
+
+// SetAuthMechanism sets the AuthMechanism field's value.
+func (s *MongoDbSettings) SetAuthMechanism(v string) *MongoDbSettings {
+	s.AuthMechanism = &v
+	return s
+}
+
+// SetAuthSource sets the AuthSource field's value.
+func (s *MongoDbSettings) SetAuthSource(v string) *MongoDbSettings {
+	s.AuthSource = &v
+	return s
+}
+
+// SetAuthType sets the AuthType field's value.
+func (s *MongoDbSettings) SetAuthType(v string) *MongoDbSettings {
+	s.AuthType = &v
+	return s
+}
+
+// SetDatabaseName sets the DatabaseName field's value.
+func (s *MongoDbSettings) SetDatabaseName(v string) *MongoDbSettings {
+	s.DatabaseName = &v
+	return s
+}
+
+// SetDocsToInvestigate sets the DocsToInvestigate field's value.
+func (s *MongoDbSettings) SetDocsToInvestigate(v string) *MongoDbSettings {
+	s.DocsToInvestigate = &v
+	return s
+}
+
+// SetExtractDocId sets the ExtractDocId field's value.
+func (s *MongoDbSettings) SetExtractDocId(v string) *MongoDbSettings {
+	s.ExtractDocId = &v
+	return s
+}
+
+// SetNestingLevel sets the NestingLevel field's value.
+func (s *MongoDbSettings) SetNestingLevel(v string) *MongoDbSettings {
+	s.NestingLevel = &v
+	return s
+}
+
+// SetPassword sets the Password field's value.
+func (s *MongoDbSettings) SetPassword(v string) *MongoDbSettings {
+	s.Password = &v
+	return s
+}
+
+// SetPort sets the Port field's value.
+func (s *MongoDbSettings) SetPort(v int64) *MongoDbSettings {
+	s.Port = &v
+	return s
+}
+
+// SetServerName sets the ServerName field's value.
+func (s *MongoDbSettings) SetServerName(v string) *MongoDbSettings {
+	s.ServerName = &v
+	return s
+}
+
+// SetUsername sets the Username field's value.
+func (s *MongoDbSettings) SetUsername(v string) *MongoDbSettings {
+	s.Username = &v
 	return s
 }
 
@@ -6425,6 +8898,83 @@ func (s *RefreshSchemasStatus) SetReplicationInstanceArn(v string) *RefreshSchem
 // SetStatus sets the Status field's value.
 func (s *RefreshSchemasStatus) SetStatus(v string) *RefreshSchemasStatus {
 	s.Status = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/ReloadTablesMessage
+type ReloadTablesInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the replication instance.
+	//
+	// ReplicationTaskArn is a required field
+	ReplicationTaskArn *string `type:"string" required:"true"`
+
+	// The name and schema of the table to be reloaded.
+	//
+	// TablesToReload is a required field
+	TablesToReload []*TableToReload `type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s ReloadTablesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ReloadTablesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ReloadTablesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ReloadTablesInput"}
+	if s.ReplicationTaskArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ReplicationTaskArn"))
+	}
+	if s.TablesToReload == nil {
+		invalidParams.Add(request.NewErrParamRequired("TablesToReload"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetReplicationTaskArn sets the ReplicationTaskArn field's value.
+func (s *ReloadTablesInput) SetReplicationTaskArn(v string) *ReloadTablesInput {
+	s.ReplicationTaskArn = &v
+	return s
+}
+
+// SetTablesToReload sets the TablesToReload field's value.
+func (s *ReloadTablesInput) SetTablesToReload(v []*TableToReload) *ReloadTablesInput {
+	s.TablesToReload = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/ReloadTablesResponse
+type ReloadTablesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the replication task.
+	ReplicationTaskArn *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ReloadTablesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ReloadTablesOutput) GoString() string {
+	return s.String()
+}
+
+// SetReplicationTaskArn sets the ReplicationTaskArn field's value.
+func (s *ReloadTablesOutput) SetReplicationTaskArn(v string) *ReloadTablesOutput {
+	s.ReplicationTaskArn = &v
 	return s
 }
 
@@ -6863,7 +9413,7 @@ type ReplicationTask struct {
 	//
 	// Constraints:
 	//
-	//    * Must contain from 1 to 63 alphanumeric characters or hyphens.
+	//    * Must contain from 1 to 255 alphanumeric characters or hyphens.
 	//
 	//    * First character must be a letter.
 	//
@@ -7056,6 +9606,89 @@ func (s *ReplicationTaskStats) SetTablesLoading(v int64) *ReplicationTaskStats {
 // SetTablesQueued sets the TablesQueued field's value.
 func (s *ReplicationTaskStats) SetTablesQueued(v int64) *ReplicationTaskStats {
 	s.TablesQueued = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/S3Settings
+type S3Settings struct {
+	_ struct{} `type:"structure"`
+
+	// An optional parameter to set a folder name in the S3 bucket. If provided,
+	// tables are created in the path <bucketFolder>/<schema_name>/<table_name>/.
+	// If this parameter is not specified, then the path used is <schema_name>/<table_name>/.
+	BucketFolder *string `type:"string"`
+
+	// The name of the S3 bucket.
+	BucketName *string `type:"string"`
+
+	// An optional parameter to use GZIP to compress the target files. Set to GZIP
+	// to compress the target files. Set to NONE (the default) or do not use to
+	// leave the files uncompressed.
+	CompressionType *string `type:"string" enum:"CompressionTypeValue"`
+
+	// The delimiter used to separate columns in the source files. The default is
+	// a comma.
+	CsvDelimiter *string `type:"string"`
+
+	// The delimiter used to separate rows in the source files. The default is a
+	// carriage return (\n).
+	CsvRowDelimiter *string `type:"string"`
+
+	ExternalTableDefinition *string `type:"string"`
+
+	// The Amazon Resource Name (ARN) used by the service access IAM role.
+	ServiceAccessRoleArn *string `type:"string"`
+}
+
+// String returns the string representation
+func (s S3Settings) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s S3Settings) GoString() string {
+	return s.String()
+}
+
+// SetBucketFolder sets the BucketFolder field's value.
+func (s *S3Settings) SetBucketFolder(v string) *S3Settings {
+	s.BucketFolder = &v
+	return s
+}
+
+// SetBucketName sets the BucketName field's value.
+func (s *S3Settings) SetBucketName(v string) *S3Settings {
+	s.BucketName = &v
+	return s
+}
+
+// SetCompressionType sets the CompressionType field's value.
+func (s *S3Settings) SetCompressionType(v string) *S3Settings {
+	s.CompressionType = &v
+	return s
+}
+
+// SetCsvDelimiter sets the CsvDelimiter field's value.
+func (s *S3Settings) SetCsvDelimiter(v string) *S3Settings {
+	s.CsvDelimiter = &v
+	return s
+}
+
+// SetCsvRowDelimiter sets the CsvRowDelimiter field's value.
+func (s *S3Settings) SetCsvRowDelimiter(v string) *S3Settings {
+	s.CsvRowDelimiter = &v
+	return s
+}
+
+// SetExternalTableDefinition sets the ExternalTableDefinition field's value.
+func (s *S3Settings) SetExternalTableDefinition(v string) *S3Settings {
+	s.ExternalTableDefinition = &v
+	return s
+}
+
+// SetServiceAccessRoleArn sets the ServiceAccessRoleArn field's value.
+func (s *S3Settings) SetServiceAccessRoleArn(v string) *S3Settings {
+	s.ServiceAccessRoleArn = &v
 	return s
 }
 
@@ -7257,8 +9890,9 @@ type SupportedEndpointType struct {
 	// The type of endpoint.
 	EndpointType *string `type:"string" enum:"ReplicationEndpointTypeValue"`
 
-	// The database engine name. Valid values include MYSQL, ORACLE, POSTGRES, MARIADB,
-	// AURORA, REDSHIFT, SYBASE, and SQLSERVER.
+	// The database engine name. Valid values, depending on the EndPointType, include
+	// MYSQL, ORACLE, POSTGRES, MARIADB, AURORA, REDSHIFT, S3, SYBASE, DYNAMODB,
+	// MONGODB, and SQLSERVER.
 	EngineName *string `type:"string"`
 
 	// Indicates if Change Data Capture (CDC) is supported.
@@ -7304,6 +9938,14 @@ type TableStatistics struct {
 	// The number of delete actions performed on a table.
 	Deletes *int64 `type:"long"`
 
+	// The number of rows that failed conditional checks during the Full Load operation
+	// (valid only for DynamoDB as a target migrations).
+	FullLoadCondtnlChkFailedRows *int64 `type:"long"`
+
+	// The number of rows that failed to load during the Full Load operation (valid
+	// only for DynamoDB as a target migrations).
+	FullLoadErrorRows *int64 `type:"long"`
+
 	// The number of rows added during the Full Load operation.
 	FullLoadRows *int64 `type:"long"`
 
@@ -7348,6 +9990,18 @@ func (s *TableStatistics) SetDeletes(v int64) *TableStatistics {
 	return s
 }
 
+// SetFullLoadCondtnlChkFailedRows sets the FullLoadCondtnlChkFailedRows field's value.
+func (s *TableStatistics) SetFullLoadCondtnlChkFailedRows(v int64) *TableStatistics {
+	s.FullLoadCondtnlChkFailedRows = &v
+	return s
+}
+
+// SetFullLoadErrorRows sets the FullLoadErrorRows field's value.
+func (s *TableStatistics) SetFullLoadErrorRows(v int64) *TableStatistics {
+	s.FullLoadErrorRows = &v
+	return s
+}
+
 // SetFullLoadRows sets the FullLoadRows field's value.
 func (s *TableStatistics) SetFullLoadRows(v int64) *TableStatistics {
 	s.FullLoadRows = &v
@@ -7387,6 +10041,39 @@ func (s *TableStatistics) SetTableState(v string) *TableStatistics {
 // SetUpdates sets the Updates field's value.
 func (s *TableStatistics) SetUpdates(v int64) *TableStatistics {
 	s.Updates = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01/TableToReload
+type TableToReload struct {
+	_ struct{} `type:"structure"`
+
+	// The schema name of the table to be reloaded.
+	SchemaName *string `type:"string"`
+
+	// The table name of the table to be reloaded.
+	TableName *string `type:"string"`
+}
+
+// String returns the string representation
+func (s TableToReload) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TableToReload) GoString() string {
+	return s.String()
+}
+
+// SetSchemaName sets the SchemaName field's value.
+func (s *TableToReload) SetSchemaName(v string) *TableToReload {
+	s.SchemaName = &v
+	return s
+}
+
+// SetTableName sets the TableName field's value.
+func (s *TableToReload) SetTableName(v string) *TableToReload {
+	s.TableName = &v
 	return s
 }
 
@@ -7540,6 +10227,33 @@ func (s *VpcSecurityGroupMembership) SetVpcSecurityGroupId(v string) *VpcSecurit
 }
 
 const (
+	// AuthMechanismValueDefault is a AuthMechanismValue enum value
+	AuthMechanismValueDefault = "default"
+
+	// AuthMechanismValueMongodbCr is a AuthMechanismValue enum value
+	AuthMechanismValueMongodbCr = "mongodb_cr"
+
+	// AuthMechanismValueScramSha1 is a AuthMechanismValue enum value
+	AuthMechanismValueScramSha1 = "scram_sha_1"
+)
+
+const (
+	// AuthTypeValueNo is a AuthTypeValue enum value
+	AuthTypeValueNo = "no"
+
+	// AuthTypeValuePassword is a AuthTypeValue enum value
+	AuthTypeValuePassword = "password"
+)
+
+const (
+	// CompressionTypeValueNone is a CompressionTypeValue enum value
+	CompressionTypeValueNone = "none"
+
+	// CompressionTypeValueGzip is a CompressionTypeValue enum value
+	CompressionTypeValueGzip = "gzip"
+)
+
+const (
 	// DmsSslModeValueNone is a DmsSslModeValue enum value
 	DmsSslModeValueNone = "none"
 
@@ -7565,6 +10279,14 @@ const (
 )
 
 const (
+	// NestingLevelValueNone is a NestingLevelValue enum value
+	NestingLevelValueNone = "none"
+
+	// NestingLevelValueOne is a NestingLevelValue enum value
+	NestingLevelValueOne = "one"
+)
+
+const (
 	// RefreshSchemasStatusTypeValueSuccessful is a RefreshSchemasStatusTypeValue enum value
 	RefreshSchemasStatusTypeValueSuccessful = "successful"
 
@@ -7581,6 +10303,11 @@ const (
 
 	// ReplicationEndpointTypeValueTarget is a ReplicationEndpointTypeValue enum value
 	ReplicationEndpointTypeValueTarget = "target"
+)
+
+const (
+	// SourceTypeReplicationInstance is a SourceType enum value
+	SourceTypeReplicationInstance = "replication-instance"
 )
 
 const (

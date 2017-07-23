@@ -2713,7 +2713,10 @@ func (c *CloudWatchLogs) PutSubscriptionFilterRequest(input *PutSubscriptionFilt
 //    * An AWS Lambda function that belongs to the same account as the subscription
 //    filter, for same-account delivery.
 //
-// There can only be one subscription filter associated with a log group.
+// There can only be one subscription filter associated with a log group. If
+// you are updating an existing filter, you must specify the correct name in
+// filterName. Otherwise, the call will fail because you cannot associate a
+// second filter with a log group.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4101,6 +4104,12 @@ type DescribeLogStreamsInput struct {
 	//
 	// If you order the results by event time, you cannot specify the logStreamNamePrefix
 	// parameter.
+	//
+	// lastEventTimestamp represents the time of the most recent log event in the
+	// log stream in CloudWatch Logs. This number is expressed as the number of
+	// milliseconds since Jan 1, 1970 00:00:00 UTC. lastEventTimeStamp updates on
+	// an eventual consistency basis. It typically updates in less than an hour
+	// from ingestion, but may take longer in some rare situations.
 	OrderBy *string `locationName:"orderBy" type:"string" enum:"OrderBy"`
 }
 
@@ -4462,7 +4471,8 @@ type Destination struct {
 	// The ARN of this destination.
 	Arn *string `locationName:"arn" type:"string"`
 
-	// The creation time of the destination.
+	// The creation time of the destination, expressed as the number of milliseconds
+	// since Jan 1, 1970 00:00:00 UTC.
 	CreationTime *int64 `locationName:"creationTime" type:"long"`
 
 	// The name of the destination.
@@ -4626,10 +4636,12 @@ func (s *ExportTask) SetTo(v int64) *ExportTask {
 type ExportTaskExecutionInfo struct {
 	_ struct{} `type:"structure"`
 
-	// The completion time of the export task.
+	// The completion time of the export task, expressed as the number of milliseconds
+	// since Jan 1, 1970 00:00:00 UTC.
 	CompletionTime *int64 `locationName:"completionTime" type:"long"`
 
-	// The creation time of the export task.
+	// The creation time of the export task, expressed as the number of milliseconds
+	// since Jan 1, 1970 00:00:00 UTC.
 	CreationTime *int64 `locationName:"creationTime" type:"long"`
 }
 
@@ -4864,7 +4876,8 @@ type FilteredLogEvent struct {
 	// The ID of the event.
 	EventId *string `locationName:"eventId" type:"string"`
 
-	// The time the event was ingested.
+	// The time the event was ingested, expressed as the number of milliseconds
+	// since Jan 1, 1970 00:00:00 UTC.
 	IngestionTime *int64 `locationName:"ingestionTime" type:"long"`
 
 	// The name of the log stream this event belongs to.
@@ -5214,7 +5227,8 @@ type LogGroup struct {
 	// The Amazon Resource Name (ARN) of the log group.
 	Arn *string `locationName:"arn" type:"string"`
 
-	// The creation time of the log group.
+	// The creation time of the log group, expressed as the number of milliseconds
+	// since Jan 1, 1970 00:00:00 UTC.
 	CreationTime *int64 `locationName:"creationTime" type:"long"`
 
 	// The name of the log group.
@@ -5287,18 +5301,23 @@ type LogStream struct {
 	// The Amazon Resource Name (ARN) of the log stream.
 	Arn *string `locationName:"arn" type:"string"`
 
-	// The creation time of the stream.
+	// The creation time of the stream, expressed as the number of milliseconds
+	// since Jan 1, 1970 00:00:00 UTC.
 	CreationTime *int64 `locationName:"creationTime" type:"long"`
 
 	// The time of the first event, expressed as the number of milliseconds since
 	// Jan 1, 1970 00:00:00 UTC.
 	FirstEventTimestamp *int64 `locationName:"firstEventTimestamp" type:"long"`
 
-	// The time of the last event, expressed as the number of milliseconds since
-	// Jan 1, 1970 00:00:00 UTC.
+	// the time of the most recent log event in the log stream in CloudWatch Logs.
+	// This number is expressed as the number of milliseconds since Jan 1, 1970
+	// 00:00:00 UTC. lastEventTime updates on an eventual consistency basis. It
+	// typically updates in less than an hour from ingestion, but may take longer
+	// in some rare situations.
 	LastEventTimestamp *int64 `locationName:"lastEventTimestamp" type:"long"`
 
-	// The ingestion time.
+	// The ingestion time, expressed as the number of milliseconds since Jan 1,
+	// 1970 00:00:00 UTC.
 	LastIngestionTime *int64 `locationName:"lastIngestionTime" type:"long"`
 
 	// The name of the log stream.
@@ -5376,7 +5395,8 @@ func (s *LogStream) SetUploadSequenceToken(v string) *LogStream {
 type MetricFilter struct {
 	_ struct{} `type:"structure"`
 
-	// The creation time of the metric filter.
+	// The creation time of the metric filter, expressed as the number of milliseconds
+	// since Jan 1, 1970 00:00:00 UTC.
 	CreationTime *int64 `locationName:"creationTime" type:"long"`
 
 	// The name of the metric filter.
@@ -5563,7 +5583,8 @@ func (s *MetricTransformation) SetMetricValue(v string) *MetricTransformation {
 type OutputLogEvent struct {
 	_ struct{} `type:"structure"`
 
-	// The time the event was ingested.
+	// The time the event was ingested, expressed as the number of milliseconds
+	// since Jan 1, 1970 00:00:00 UTC.
 	IngestionTime *int64 `locationName:"ingestionTime" type:"long"`
 
 	// The data contained in the log event.
@@ -6124,7 +6145,10 @@ type PutSubscriptionFilterInput struct {
 	// For a more even distribution, you can group log data randomly.
 	Distribution *string `locationName:"distribution" type:"string" enum:"Distribution"`
 
-	// A name for the subscription filter.
+	// A name for the subscription filter. If you are updating an existing filter,
+	// you must specify the correct name in filterName. Otherwise, the call will
+	// fail because you cannot associate a second filter with a log group. To find
+	// the name of the filter currently associated with a log group, use DescribeSubscriptionFilters.
 	//
 	// FilterName is a required field
 	FilterName *string `locationName:"filterName" min:"1" type:"string" required:"true"`
@@ -6323,7 +6347,8 @@ func (s *SearchedLogStream) SetSearchedCompletely(v bool) *SearchedLogStream {
 type SubscriptionFilter struct {
 	_ struct{} `type:"structure"`
 
-	// The creation time of the subscription filter.
+	// The creation time of the subscription filter, expressed as the number of
+	// milliseconds since Jan 1, 1970 00:00:00 UTC.
 	CreationTime *int64 `locationName:"creationTime" type:"long"`
 
 	// The Amazon Resource Name (ARN) of the destination.

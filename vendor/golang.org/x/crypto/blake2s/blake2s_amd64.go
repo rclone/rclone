@@ -7,10 +7,9 @@
 package blake2s
 
 var (
-	useSSE4    = supportSSE4()
-	useSSSE3   = supportSSSE3()
-	useSSE2    = true // Always available on amd64
-	useGeneric = false
+	useSSE4  = supportSSE4()
+	useSSSE3 = supportSSSE3()
+	useSSE2  = true // Always available on amd64
 )
 
 //go:noescape
@@ -33,7 +32,9 @@ func hashBlocks(h *[8]uint32, c *[2]uint32, flag uint32, blocks []byte) {
 		hashBlocksSSE4(h, c, flag, blocks)
 	} else if useSSSE3 {
 		hashBlocksSSSE3(h, c, flag, blocks)
-	} else {
+	} else if useSSE2 {
 		hashBlocksSSE2(h, c, flag, blocks)
+	} else {
+		hashBlocksGeneric(h, c, flag, blocks)
 	}
 }

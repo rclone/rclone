@@ -54,7 +54,9 @@ func TestGoldenInitCmd(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				ioutil.WriteFile(goldenPath, got, 0644)
+				if err := ioutil.WriteFile(goldenPath, got, 0644); err != nil {
+					t.Fatal("Error while updating file:", err)
+				}
 			}
 			return compareFiles(path, goldenPath)
 		}

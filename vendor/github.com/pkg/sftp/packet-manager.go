@@ -61,15 +61,15 @@ func (s packetManager) close() {
 // The goal is to process packets in the order they are received as is
 // requires by section 7 of the RFC, while maximizing throughput of file
 // transfers.
-func (s *packetManager) workerChan(worker func(requestChan)) requestChan {
+func (s *packetManager) workerChan(runWorker func(requestChan)) requestChan {
 
 	rwChan := make(chan requestPacket, sftpServerWorkerCount)
 	for i := 0; i < sftpServerWorkerCount; i++ {
-		go worker(rwChan)
+		runWorker(rwChan)
 	}
 
 	cmdChan := make(chan requestPacket)
-	go worker(cmdChan)
+	runWorker(cmdChan)
 
 	pktChan := make(chan requestPacket, sftpServerWorkerCount)
 	go func() {

@@ -1093,6 +1093,10 @@ type Endpoint struct {
 	AllowCors bool `json:"allowCors,omitempty"`
 
 	// Apis: The list of APIs served by this endpoint.
+	//
+	// If no APIs are specified this translates to "all APIs" exported by
+	// the
+	// service, as defined in the top-level service configuration.
 	Apis []string `json:"apis,omitempty"`
 
 	// Features: The list of features enabled on this endpoint.
@@ -1330,8 +1334,8 @@ func (s *Field) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Http: Defines the HTTP configuration for a service. It contains a
-// list of
+// Http: Defines the HTTP configuration for an API service. It contains
+// a list of
 // HttpRule, each specifying the mapping of an RPC method
 // to one or more HTTP REST API methods.
 type Http struct {
@@ -1380,13 +1384,14 @@ func (s *Http) MarshalJSON() ([]byte, error) {
 
 // HttpRule: `HttpRule` defines the mapping of an RPC method to one or
 // more HTTP
-// REST APIs.  The mapping determines what portions of the
-// request
-// message are populated from the path, query parameters, or body of
-// the HTTP request.  The mapping is typically specified as
+// REST API methods. The mapping specifies how different portions of the
+// RPC
+// request message are mapped to URL path, URL query parameters,
+// and
+// HTTP request body. The mapping is typically specified as
 // an
-// `google.api.http` annotation, see "google/api/annotations.proto"
-// for details.
+// `google.api.http` annotation on the RPC method,
+// see "google/api/annotations.proto" for details.
 //
 // The mapping consists of a field specifying the path template
 // and
@@ -1444,6 +1449,11 @@ func (s *Http) MarshalJSON() ([]byte, error) {
 // message:
 //
 //
+//     service Messaging {
+//       rpc GetMessage(GetMessageRequest) returns (Message) {
+//         option (google.api.http).get = "/v1/messages/{message_id}";
+//       }
+//     }
 //     message GetMessageRequest {
 //       message SubMessage {
 //         string subfield = 1;
@@ -1575,7 +1585,8 @@ func (s *Http) MarshalJSON() ([]byte, error) {
 // to the request message are as follows:
 //
 // 1. The `body` field specifies either `*` or a field path, or is
-//    omitted. If omitted, it assumes there is no HTTP body.
+//    omitted. If omitted, it indicates there is no HTTP request
+// body.
 // 2. Leaf fields (recursive expansion of nested messages in the
 //    request) can be classified into three types:
 //     (a) Matched in the URL template.
@@ -1597,40 +1608,49 @@ func (s *Http) MarshalJSON() ([]byte, error) {
 //     FieldPath = IDENT { "." IDENT } ;
 //     Verb     = ":" LITERAL ;
 //
-// The syntax `*` matches a single path segment. It follows the
-// semantics of
-// [RFC 6570](https://tools.ietf.org/html/rfc6570) Section 3.2.2 Simple
-// String
-// Expansion.
+// The syntax `*` matches a single path segment. The syntax `**` matches
+// zero
+// or more path segments, which must be the last part of the path except
+// the
+// `Verb`. The syntax `LITERAL` matches literal text in the path.
 //
-// The syntax `**` matches zero or more path segments. It follows the
-// semantics
-// of [RFC 6570](https://tools.ietf.org/html/rfc6570) Section 3.2.3
-// Reserved
-// Expansion. NOTE: it must be the last segment in the path except the
-// Verb.
-//
-// The syntax `LITERAL` matches literal text in the URL path.
-//
-// The syntax `Variable` matches the entire path as specified by its
-// template;
-// this nested template must not contain further variables. If a
+// The syntax `Variable` matches part of the URL path as specified by
+// its
+// template. A variable template must not contain other variables. If a
 // variable
 // matches a single path segment, its template may be omitted, e.g.
 // `{var}`
 // is equivalent to `{var=*}`.
 //
+// If a variable contains exactly one path segment, such as "{var}"
+// or
+// "{var=*}", when such a variable is expanded into a URL path, all
+// characters
+// except `[-_.~0-9a-zA-Z]` are percent-encoded. Such variables show up
+// in the
+// Discovery Document as `{var}`.
+//
+// If a variable contains one or more path segments, such as
+// "{var=foo/*}"
+// or "{var=**}", when such a variable is expanded into a URL path,
+// all
+// characters except `[-_.~/0-9a-zA-Z]` are percent-encoded. Such
+// variables
+// show up in the Discovery Document as `{+var}`.
+//
+// NOTE: While the single segment variable matches the semantics of
+// [RFC 6570](https://tools.ietf.org/html/rfc6570) Section 3.2.2
+// Simple String Expansion, the multi segment variable **does not**
+// match
+// RFC 6570 Reserved Expansion. The reason is that the Reserved
+// Expansion
+// does not expand special characters like `?` and `#`, which would
+// lead
+// to invalid URLs.
+//
 // NOTE: the field paths in variables and in the `body` must not refer
 // to
 // repeated fields or map fields.
-//
-// Use CustomHttpPattern to specify any HTTP method that is not included
-// in the
-// `pattern` field, such as HEAD, or "*" to leave the HTTP method
-// unspecified for
-// a given URL path rule. The wild-card rule is useful for services that
-// provide
-// content to Web (HTML) clients.
 type HttpRule struct {
 	// AdditionalBindings: Additional HTTP bindings for the selector. Nested
 	// bindings must
@@ -1647,7 +1667,13 @@ type HttpRule struct {
 	// present at the top-level of request message type.
 	Body string `json:"body,omitempty"`
 
-	// Custom: Custom pattern is used for defining custom verbs.
+	// Custom: The custom pattern is used for specifying an HTTP method that
+	// is not
+	// included in the `pattern` field, such as HEAD, or "*" to leave
+	// the
+	// HTTP method unspecified for this rule. The wild-card rule is
+	// useful
+	// for services that provide content to Web (HTML) clients.
 	Custom *CustomHttpPattern `json:"custom,omitempty"`
 
 	// Delete: Used for deleting a resource.
@@ -1712,6 +1738,26 @@ type HttpRule struct {
 	// `rest_collection`
 	// field is configured to override the derived collection name.
 	RestCollection string `json:"restCollection,omitempty"`
+
+	// RestMethodName: Optional. The rest method name is by default derived
+	// from the URL
+	// pattern. If specified, this field overrides the default method
+	// name.
+	// Example:
+	//
+	//     rpc CreateResource(CreateResourceRequest)
+	//         returns (CreateResourceResponse) {
+	//       option (google.api.http) = {
+	//         post: "/v1/resources",
+	//         body: "resource",
+	//         rest_method_name: "insert"
+	//       };
+	//     }
+	//
+	// This method has the automatically derived rest method name "create",
+	// but
+	//  for backwards compatability with apiary, it is specified as insert.
+	RestMethodName string `json:"restMethodName,omitempty"`
 
 	// Selector: Selects methods to which this rule applies.
 	//
@@ -1991,30 +2037,51 @@ func (s *LoggingDestination) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// MediaDownload: Use this only for Scotty Requests. Do not use this for
-// media support using
+// MediaDownload: Defines the Media configuration for a service in case
+// of a download.
+// Use this only for Scotty Requests. Do not use this for media support
+// using
 // Bytestream, add instead [][google.bytestream.RestByteStream] as an
 // API to
 // your configuration for Bytestream methods.
 type MediaDownload struct {
-	// DownloadService: DO NOT USE THIS FIELD UNTIL THIS WARNING IS
-	// REMOVED.
+	// CompleteNotification: A boolean that determines whether a
+	// notification for the completion of a
+	// download should be sent to the backend.
+	CompleteNotification bool `json:"completeNotification,omitempty"`
+
+	// DownloadService: DO NOT USE FIELDS BELOW THIS LINE UNTIL THIS WARNING
+	// IS REMOVED.
 	//
 	// Specify name of the download service if one is used for download.
 	DownloadService string `json:"downloadService,omitempty"`
 
+	// Dropzone: Name of the Scotty dropzone to use for the current API.
+	Dropzone string `json:"dropzone,omitempty"`
+
 	// Enabled: Whether download is enabled.
 	Enabled bool `json:"enabled,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "DownloadService") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
+	// MaxDirectDownloadSize: Optional maximum acceptable size for direct
+	// download.
+	// The size is specified in bytes.
+	MaxDirectDownloadSize int64 `json:"maxDirectDownloadSize,omitempty,string"`
+
+	// UseDirectDownload: A boolean that determines if direct download from
+	// ESF should be used for
+	// download of this media.
+	UseDirectDownload bool `json:"useDirectDownload,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "CompleteNotification") to unconditionally include in API requests.
+	// By default, fields with empty values are omitted from API requests.
+	// However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "DownloadService") to
+	// NullFields is a list of field names (e.g. "CompleteNotification") to
 	// include in API requests with the JSON null value. By default, fields
 	// with empty values are omitted from API requests. However, any field
 	// with an empty value appearing in NullFields will be sent to the
@@ -2030,35 +2097,66 @@ func (s *MediaDownload) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// MediaUpload: Use this only for Scotty Requests. Do not use this for
-// media support using
+// MediaUpload: Defines the Media configuration for a service in case of
+// an upload.
+// Use this only for Scotty Requests. Do not use this for media support
+// using
 // Bytestream, add instead [][google.bytestream.RestByteStream] as an
 // API to
 // your configuration for Bytestream methods.
 type MediaUpload struct {
+	// CompleteNotification: A boolean that determines whether a
+	// notification for the completion of an
+	// upload should be sent to the backend. These notifications will not be
+	// seen
+	// by the client and will not consume quota.
+	CompleteNotification bool `json:"completeNotification,omitempty"`
+
+	// Dropzone: Name of the Scotty dropzone to use for the current API.
+	Dropzone string `json:"dropzone,omitempty"`
+
 	// Enabled: Whether upload is enabled.
 	Enabled bool `json:"enabled,omitempty"`
 
-	// UploadService: DO NOT USE THIS FIELD UNTIL THIS WARNING IS
-	// REMOVED.
+	// MaxSize: Optional maximum acceptable size for an upload.
+	// The size is specified in bytes.
+	MaxSize int64 `json:"maxSize,omitempty,string"`
+
+	// MimeTypes: An array of mimetype patterns. Esf will only accept
+	// uploads that match one
+	// of the given patterns.
+	MimeTypes []string `json:"mimeTypes,omitempty"`
+
+	// ProgressNotification: Whether to receive a notification for progress
+	// changes of media upload.
+	ProgressNotification bool `json:"progressNotification,omitempty"`
+
+	// StartNotification: Whether to receive a notification on the start of
+	// media upload.
+	StartNotification bool `json:"startNotification,omitempty"`
+
+	// UploadService: DO NOT USE FIELDS BELOW THIS LINE UNTIL THIS WARNING
+	// IS REMOVED.
 	//
 	// Specify name of the upload service if one is used for upload.
 	UploadService string `json:"uploadService,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Enabled") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
+	// ForceSendFields is a list of field names (e.g.
+	// "CompleteNotification") to unconditionally include in API requests.
+	// By default, fields with empty values are omitted from API requests.
+	// However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Enabled") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
+	// NullFields is a list of field names (e.g. "CompleteNotification") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
 	NullFields []string `json:"-"`
 }
 
@@ -2301,11 +2399,7 @@ func (s *MetricDescriptor) MarshalJSON() ([]byte, error) {
 
 // MetricRule: Bind API methods to metrics. Binding a method to a metric
 // causes that
-// metric's configured quota, billing, and monitoring behaviors to apply
-// to the
-// method call.
-//
-// Used by metric-based quotas only.
+// metric's configured quota behaviors to apply to the method call.
 type MetricRule struct {
 	// MetricCosts: Metrics to update when the selected methods are called,
 	// and the associated
@@ -3041,15 +3135,11 @@ func (s *PublishedService) MarshalJSON() ([]byte, error) {
 //        value_type: INT64
 type Quota struct {
 	// Limits: List of `QuotaLimit` definitions for the service.
-	//
-	// Used by metric-based quotas only.
 	Limits []*QuotaLimit `json:"limits,omitempty"`
 
 	// MetricRules: List of `MetricRule` definitions, each one mapping a
 	// selected method to one
 	// or more metrics.
-	//
-	// Used by metric-based quotas only.
 	MetricRules []*MetricRule `json:"metricRules,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Limits") to
@@ -3169,12 +3259,6 @@ type QuotaLimit struct {
 	// when
 	// overriding the default limit on per-consumer basis.
 	//
-	// For group-based quota limits, the name must be unique within the
-	// quota
-	// group. If a name is not provided, it will be generated from the
-	// limit_by
-	// and duration fields.
-	//
 	// For metric-based quota limits, the name must be provided, and it must
 	// be
 	// unique within the service. The name can only include
@@ -3209,26 +3293,10 @@ type QuotaLimit struct {
 	//   * Otherwise the quota won't be reset by time, such as storage
 	// limit.
 	// * One and only one of the granted containers:
-	//   * "/{organization}" quota for an organization.
-	//   * "/{project}" quota for a project.
-	//   * "/{folder}" quota for a folder.
-	//   * "/{resource}" quota for a universal resource.
-	// * Zero or more quota segmentation dimension. Not all combos are
-	// valid.
-	//   * "/{region}" quota for every region. Not to be used with time
-	// intervals.
-	//   * Otherwise the resources granted on the target is not segmented.
-	//   * "/{zone}" quota for every zone. Not to be used with time
-	// intervals.
-	//   * Otherwise the resources granted on the target is not segmented.
-	//   * "/{resource}" quota for a resource associated with a project or
-	// org.
+	//   * "/{project}" quota for a project
 	//
 	// Here are some examples:
 	// * "1/min/{project}" for quota per minute per project.
-	// * "1/min/{user}" for quota per minute per user.
-	// * "1/min/{organization}" for quota per minute per
-	// organization.
 	//
 	// Note: the order of unit components is insignificant.
 	// The "1" at the beginning is required to follow the metric unit
@@ -3237,53 +3305,7 @@ type QuotaLimit struct {
 	// Used by metric-based quotas only.
 	Unit string `json:"unit,omitempty"`
 
-	// Values: Tiered limit values. Also allows for regional or zone
-	// overrides for these
-	// values if "/{region}" or "/{zone}" is specified in the unit
-	// field.
-	//
-	// Currently supported tiers from low to high:
-	// VERY_LOW, LOW, STANDARD, HIGH, VERY_HIGH
-	//
-	// To apply different limit values for users according to their tiers,
-	// specify
-	// the values for the tiers you want to differentiate. For
-	// example:
-	// {LOW:100, STANDARD:500, HIGH:1000, VERY_HIGH:5000}
-	//
-	// The limit value for each tier is optional except for the tier
-	// STANDARD.
-	// The limit value for an unspecified tier falls to the value of its
-	// next
-	// tier towards tier STANDARD. For the above example, the limit value
-	// for tier
-	// STANDARD is 500.
-	//
-	// To apply the same limit value for all users, just specify limit value
-	// for
-	// tier STANDARD. For example: {STANDARD:500}.
-	//
-	// To apply a regional overide for a tier, add a map entry with
-	// key
-	// "<TIER>/<region>", where <region> is a region name. Similarly, for a
-	// zone
-	// override, add a map entry with key "<TIER>/{zone}".
-	// Further, a wildcard can be used at the end of a zone name in order
-	// to
-	// specify zone level overrides. For example:
-	// LOW: 10, STANDARD: 50, HIGH: 100,
-	// LOW/us-central1: 20, STANDARD/us-central1: 60, HIGH/us-central1:
-	// 200,
-	// LOW/us-central1-*: 10, STANDARD/us-central1-*: 20,
-	// HIGH/us-central1-*: 80
-	//
-	// The regional overrides tier set for each region must be the same
-	// as
-	// the tier set for default limit values. Same rule applies for zone
-	// overrides
-	// tier as well.
-	//
-	// Used by metric-based quotas only.
+	// Values: Tiered limit values, currently only STANDARD is supported.
 	Values map[string]string `json:"values,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "DefaultLimit") to
@@ -3467,10 +3489,7 @@ type Service struct {
 	// e.g. `calendar.googleapis.com`.
 	Name string `json:"name,omitempty"`
 
-	// ProducerProjectId: The id of the Google developer project that owns
-	// the service.
-	// Members of this project can manage the service configuration,
-	// manage consumption of the service, etc.
+	// ProducerProjectId: The Google project that owns this service.
 	ProducerProjectId string `json:"producerProjectId,omitempty"`
 
 	// Quota: Quota configuration.
@@ -3494,7 +3513,7 @@ type Service struct {
 	// to define system APIs in ESF.
 	SystemTypes []*Type `json:"systemTypes,omitempty"`
 
-	// Title: The product title associated with this service.
+	// Title: The product title for this service.
 	Title string `json:"title,omitempty"`
 
 	// Types: A list of all proto message types included in this API
@@ -3628,7 +3647,7 @@ func (s *SourceInfo) MarshalJSON() ([]byte, error) {
 // arbitrary
 // information about the error. There is a predefined set of error
 // detail types
-// in the package `google.rpc` which can be used for common error
+// in the package `google.rpc` that can be used for common error
 // conditions.
 //
 // # Language mapping
@@ -3736,9 +3755,6 @@ type Step struct {
 	// rollbackable, the rollback completed with errors too.
 	//   "CANCELLED" - The operation or step has completed with
 	// cancellation.
-	//   "FAILED_ROLLED_BACK" - The operation has completed with errors but
-	// rolled back
-	// successfully if the operation is rollbackable.
 	Status string `json:"status,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Description") to
@@ -4064,6 +4080,11 @@ type UsageRule struct {
 	//
 	// Refer to selector for syntax details.
 	Selector string `json:"selector,omitempty"`
+
+	// SkipServiceControl: True, if the method should skip service control.
+	// If so, no control plane
+	// feature (like quota and billing) will be enabled.
+	SkipServiceControl bool `json:"skipServiceControl,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g.
 	// "AllowUnregisteredCalls") to unconditionally include in API requests.

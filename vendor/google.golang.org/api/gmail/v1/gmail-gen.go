@@ -5856,9 +5856,9 @@ func (c *UsersMessagesListCall) PageToken(pageToken string) *UsersMessagesListCa
 
 // Q sets the optional parameter "q": Only return messages matching the
 // specified query. Supports the same query format as the Gmail search
-// box. For example, "from:someuser@example.com rfc822msgid: is:unread".
-// Parameter cannot be used when accessing the api using the
-// gmail.metadata scope.
+// box. For example, "from:someuser@example.com
+// rfc822msgid:<somemsgid@example.com> is:unread". Parameter cannot be
+// used when accessing the api using the gmail.metadata scope.
 func (c *UsersMessagesListCall) Q(q string) *UsersMessagesListCall {
 	c.urlParams_.Set("q", q)
 	return c
@@ -5990,7 +5990,7 @@ func (c *UsersMessagesListCall) Do(opts ...googleapi.CallOption) (*ListMessagesR
 	//       "type": "string"
 	//     },
 	//     "q": {
-	//       "description": "Only return messages matching the specified query. Supports the same query format as the Gmail search box. For example, \"from:someuser@example.com rfc822msgid: is:unread\". Parameter cannot be used when accessing the api using the gmail.metadata scope.",
+	//       "description": "Only return messages matching the specified query. Supports the same query format as the Gmail search box. For example, \"from:someuser@example.com rfc822msgid:\u003csomemsgid@example.com\u003e is:unread\". Parameter cannot be used when accessing the api using the gmail.metadata scope.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },

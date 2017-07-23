@@ -224,6 +224,10 @@ type LightsailAPI interface {
 	PeerVpcWithContext(aws.Context, *lightsail.PeerVpcInput, ...request.Option) (*lightsail.PeerVpcOutput, error)
 	PeerVpcRequest(*lightsail.PeerVpcInput) (*request.Request, *lightsail.PeerVpcOutput)
 
+	PutInstancePublicPorts(*lightsail.PutInstancePublicPortsInput) (*lightsail.PutInstancePublicPortsOutput, error)
+	PutInstancePublicPortsWithContext(aws.Context, *lightsail.PutInstancePublicPortsInput, ...request.Option) (*lightsail.PutInstancePublicPortsOutput, error)
+	PutInstancePublicPortsRequest(*lightsail.PutInstancePublicPortsInput) (*request.Request, *lightsail.PutInstancePublicPortsOutput)
+
 	RebootInstance(*lightsail.RebootInstanceInput) (*lightsail.RebootInstanceOutput, error)
 	RebootInstanceWithContext(aws.Context, *lightsail.RebootInstanceInput, ...request.Option) (*lightsail.RebootInstanceOutput, error)
 	RebootInstanceRequest(*lightsail.RebootInstanceInput) (*request.Request, *lightsail.RebootInstanceOutput)

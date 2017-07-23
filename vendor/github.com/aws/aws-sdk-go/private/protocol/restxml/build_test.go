@@ -3586,7 +3586,7 @@ func (c *InputService19ProtocolTest) InputService19TestCaseOperation1WithContext
 type InputService19TestShapeGrant struct {
 	_ struct{} `locationName:"Grant" type:"structure"`
 
-	Grantee *InputService19TestShapeGrantee `type:"structure"`
+	Grantee *InputService19TestShapeGrantee `type:"structure" xmlPrefix:"xsi" xmlURI:"http://www.w3.org/2001/XMLSchema-instance"`
 }
 
 // SetGrantee sets the Grantee field's value.

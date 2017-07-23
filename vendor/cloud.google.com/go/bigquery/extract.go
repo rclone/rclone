@@ -72,5 +72,5 @@ func (e *Extractor) Run(ctx context.Context) (*Job, error) {
 		conf.PrintHeader = &f
 	}
 
-	return e.c.service.insertJob(ctx, e.c.projectID, &insertJobConf{job: job})
+	return e.c.insertJob(ctx, &insertJobConf{job: job})
 }

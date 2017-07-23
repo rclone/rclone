@@ -53,6 +53,10 @@ type protoClient interface {
 // datastoreClient is a wrapper for the pb.DatastoreClient that includes gRPC
 // metadata to be sent in each request for server-side traffic management.
 type datastoreClient struct {
+	// Embed so we still implement the DatastoreClient interface,
+	// if the interface adds more methods.
+	pb.DatastoreClient
+
 	c  pb.DatastoreClient
 	md metadata.MD
 }
@@ -67,27 +71,27 @@ func newDatastoreClient(conn *grpc.ClientConn, projectID string) pb.DatastoreCli
 }
 
 func (dc *datastoreClient) Lookup(ctx context.Context, in *pb.LookupRequest, opts ...grpc.CallOption) (*pb.LookupResponse, error) {
-	return dc.c.Lookup(metadata.NewContext(ctx, dc.md), in, opts...)
+	return dc.c.Lookup(metadata.NewOutgoingContext(ctx, dc.md), in, opts...)
 }
 
 func (dc *datastoreClient) RunQuery(ctx context.Context, in *pb.RunQueryRequest, opts ...grpc.CallOption) (*pb.RunQueryResponse, error) {
-	return dc.c.RunQuery(metadata.NewContext(ctx, dc.md), in, opts...)
+	return dc.c.RunQuery(metadata.NewOutgoingContext(ctx, dc.md), in, opts...)
 }
 
 func (dc *datastoreClient) BeginTransaction(ctx context.Context, in *pb.BeginTransactionRequest, opts ...grpc.CallOption) (*pb.BeginTransactionResponse, error) {
-	return dc.c.BeginTransaction(metadata.NewContext(ctx, dc.md), in, opts...)
+	return dc.c.BeginTransaction(metadata.NewOutgoingContext(ctx, dc.md), in, opts...)
 }
 
 func (dc *datastoreClient) Commit(ctx context.Context, in *pb.CommitRequest, opts ...grpc.CallOption) (*pb.CommitResponse, error) {
-	return dc.c.Commit(metadata.NewContext(ctx, dc.md), in, opts...)
+	return dc.c.Commit(metadata.NewOutgoingContext(ctx, dc.md), in, opts...)
 }
 
 func (dc *datastoreClient) Rollback(ctx context.Context, in *pb.RollbackRequest, opts ...grpc.CallOption) (*pb.RollbackResponse, error) {
-	return dc.c.Rollback(metadata.NewContext(ctx, dc.md), in, opts...)
+	return dc.c.Rollback(metadata.NewOutgoingContext(ctx, dc.md), in, opts...)
 }
 
 func (dc *datastoreClient) AllocateIds(ctx context.Context, in *pb.AllocateIdsRequest, opts ...grpc.CallOption) (*pb.AllocateIdsResponse, error) {
-	return dc.c.AllocateIds(metadata.NewContext(ctx, dc.md), in, opts...)
+	return dc.c.AllocateIds(metadata.NewOutgoingContext(ctx, dc.md), in, opts...)
 }
 
 // Client is a client for reading and writing data in a datastore dataset.
@@ -202,9 +206,9 @@ func keyToProto(k *Key) *pb.Key {
 	for {
 		el := &pb.Key_PathElement{Kind: k.Kind}
 		if k.ID != 0 {
-			el.IdType = &pb.Key_PathElement_Id{k.ID}
+			el.IdType = &pb.Key_PathElement_Id{Id: k.ID}
 		} else if k.Name != "" {
-			el.IdType = &pb.Key_PathElement_Name{k.Name}
+			el.IdType = &pb.Key_PathElement_Name{Name: k.Name}
 		}
 		path = append([]*pb.Key_PathElement{el}, path...)
 		if k.Parent == nil {
@@ -549,9 +553,9 @@ func putMutations(keys []*Key, src interface{}) ([]*pb.Mutation, error) {
 		}
 		var mut *pb.Mutation
 		if k.Incomplete() {
-			mut = &pb.Mutation{Operation: &pb.Mutation_Insert{p}}
+			mut = &pb.Mutation{Operation: &pb.Mutation_Insert{Insert: p}}
 		} else {
-			mut = &pb.Mutation{Operation: &pb.Mutation_Upsert{p}}
+			mut = &pb.Mutation{Operation: &pb.Mutation_Upsert{Upsert: p}}
 		}
 		mutations = append(mutations, mut)
 	}
@@ -593,7 +597,7 @@ func deleteMutations(keys []*Key) ([]*pb.Mutation, error) {
 			return nil, fmt.Errorf("datastore: can't delete the incomplete key: %v", k)
 		}
 		mutations = append(mutations, &pb.Mutation{
-			Operation: &pb.Mutation_Delete{keyToProto(k)},
+			Operation: &pb.Mutation_Delete{Delete: keyToProto(k)},
 		})
 	}
 	return mutations, nil

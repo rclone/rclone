@@ -133,6 +133,11 @@ func (c *ELB) WaitUntilInstanceInServiceWithContext(ctx aws.Context, input *Desc
 				Matcher: request.PathAllWaiterMatch, Argument: "InstanceStates[].State",
 				Expected: "InService",
 			},
+			{
+				State:    request.RetryWaiterState,
+				Matcher:  request.ErrorWaiterMatch,
+				Expected: "InvalidInstance",
+			},
 		},
 		Logger: c.Config.Logger,
 		NewRequest: func(opts []request.Option) (*request.Request, error) {

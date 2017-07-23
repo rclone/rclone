@@ -298,8 +298,17 @@ func (c *CertChecker) CheckHostKey(addr string, remote net.Addr, key PublicKey) 
 	if cert.CertType != HostCert {
 		return fmt.Errorf("ssh: certificate presented as a host key has type %d", cert.CertType)
 	}
+	if !c.IsHostAuthority(cert.SignatureKey, addr) {
+		return fmt.Errorf("ssh: no authorities for hostname: %v", addr)
+	}
 
-	return c.CheckCert(addr, cert)
+	hostname, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return err
+	}
+
+	// Pass hostname only as principal for host certificates (consistent with OpenSSH)
+	return c.CheckCert(hostname, cert)
 }
 
 // Authenticate checks a user certificate. Authenticate can be used as
@@ -315,6 +324,9 @@ func (c *CertChecker) Authenticate(conn ConnMetadata, pubKey PublicKey) (*Permis
 
 	if cert.CertType != UserCert {
 		return nil, fmt.Errorf("ssh: cert has type %d", cert.CertType)
+	}
+	if !c.IsUserAuthority(cert.SignatureKey) {
+		return nil, fmt.Errorf("ssh: certificate signed by unrecognized authority")
 	}
 
 	if err := c.CheckCert(conn.User(), cert); err != nil {
@@ -362,16 +374,6 @@ func (c *CertChecker) CheckCert(principal string, cert *Certificate) error {
 		if !found {
 			return fmt.Errorf("ssh: principal %q not in the set of valid principals for given certificate: %q", principal, cert.ValidPrincipals)
 		}
-	}
-
-	// if this is a host cert, principal is the remote hostname as passed
-	// to CheckHostCert.
-	if cert.CertType == HostCert && !c.IsHostAuthority(cert.SignatureKey, principal) {
-		return fmt.Errorf("ssh: no authorities for hostname: %v", principal)
-	}
-
-	if cert.CertType == UserCert && !c.IsUserAuthority(cert.SignatureKey) {
-		return fmt.Errorf("ssh: certificate signed by unrecognized authority")
 	}
 
 	clock := c.Clock

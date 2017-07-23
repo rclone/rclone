@@ -1167,12 +1167,12 @@ type Budget struct {
 	// BudgetLimit is a required field
 	BudgetLimit *Spend `type:"structure" required:"true"`
 
-	// A string represents the budget name. No ":" character is allowed.
+	// A string represents the budget name. No ":" and "\" character is allowed.
 	//
 	// BudgetName is a required field
 	BudgetName *string `type:"string" required:"true"`
 
-	// The type of a budget. Can be COST or USAGE.
+	// The type of a budget. It should be COST, USAGE, or RI_UTILIZATION.
 	//
 	// BudgetType is a required field
 	BudgetType *string `type:"string" required:"true" enum:"BudgetType"`
@@ -1193,7 +1193,7 @@ type Budget struct {
 	// TimePeriod is a required field
 	TimePeriod *TimePeriod `type:"structure" required:"true"`
 
-	// The time unit of the budget. e.g. weekly, monthly, etc.
+	// The time unit of the budget. e.g. MONTHLY, QUARTERLY, etc.
 	//
 	// TimeUnit is a required field
 	TimeUnit *string `type:"string" required:"true" enum:"TimeUnit"`
@@ -1536,7 +1536,7 @@ type CreateNotificationInput struct {
 	// AccountId is a required field
 	AccountId *string `min:"12" type:"string" required:"true"`
 
-	// A string represents the budget name. No ":" character is allowed.
+	// A string represents the budget name. No ":" and "\" character is allowed.
 	//
 	// BudgetName is a required field
 	BudgetName *string `type:"string" required:"true"`
@@ -1654,7 +1654,7 @@ type CreateSubscriberInput struct {
 	// AccountId is a required field
 	AccountId *string `min:"12" type:"string" required:"true"`
 
-	// A string represents the budget name. No ":" character is allowed.
+	// A string represents the budget name. No ":" and "\" character is allowed.
 	//
 	// BudgetName is a required field
 	BudgetName *string `type:"string" required:"true"`
@@ -1765,7 +1765,7 @@ type DeleteBudgetInput struct {
 	// AccountId is a required field
 	AccountId *string `min:"12" type:"string" required:"true"`
 
-	// A string represents the budget name. No ":" character is allowed.
+	// A string represents the budget name. No ":" and "\" character is allowed.
 	//
 	// BudgetName is a required field
 	BudgetName *string `type:"string" required:"true"`
@@ -1836,7 +1836,7 @@ type DeleteNotificationInput struct {
 	// AccountId is a required field
 	AccountId *string `min:"12" type:"string" required:"true"`
 
-	// A string represents the budget name. No ":" character is allowed.
+	// A string represents the budget name. No ":" and "\" character is allowed.
 	//
 	// BudgetName is a required field
 	BudgetName *string `type:"string" required:"true"`
@@ -1927,7 +1927,7 @@ type DeleteSubscriberInput struct {
 	// AccountId is a required field
 	AccountId *string `min:"12" type:"string" required:"true"`
 
-	// A string represents the budget name. No ":" character is allowed.
+	// A string represents the budget name. No ":" and "\" character is allowed.
 	//
 	// BudgetName is a required field
 	BudgetName *string `type:"string" required:"true"`
@@ -2038,7 +2038,7 @@ type DescribeBudgetInput struct {
 	// AccountId is a required field
 	AccountId *string `min:"12" type:"string" required:"true"`
 
-	// A string represents the budget name. No ":" character is allowed.
+	// A string represents the budget name. No ":" and "\" character is allowed.
 	//
 	// BudgetName is a required field
 	BudgetName *string `type:"string" required:"true"`
@@ -2215,7 +2215,7 @@ type DescribeNotificationsForBudgetInput struct {
 	// AccountId is a required field
 	AccountId *string `min:"12" type:"string" required:"true"`
 
-	// A string represents the budget name. No ":" character is allowed.
+	// A string represents the budget name. No ":" and "\" character is allowed.
 	//
 	// BudgetName is a required field
 	BudgetName *string `type:"string" required:"true"`
@@ -2326,7 +2326,7 @@ type DescribeSubscribersForNotificationInput struct {
 	// AccountId is a required field
 	AccountId *string `min:"12" type:"string" required:"true"`
 
-	// A string represents the budget name. No ":" character is allowed.
+	// A string represents the budget name. No ":" and "\" character is allowed.
 	//
 	// BudgetName is a required field
 	BudgetName *string `type:"string" required:"true"`
@@ -2604,10 +2604,10 @@ type Spend struct {
 	// Amount is a required field
 	Amount *string `type:"string" required:"true"`
 
-	// A generic String.
+	// A string to represent budget spend unit. It should be not null and not empty.
 	//
 	// Unit is a required field
-	Unit *string `type:"string" required:"true"`
+	Unit *string `min:"1" type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -2628,6 +2628,9 @@ func (s *Spend) Validate() error {
 	}
 	if s.Unit == nil {
 		invalidParams.Add(request.NewErrParamRequired("Unit"))
+	}
+	if s.Unit != nil && len(*s.Unit) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Unit", 1))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -2840,7 +2843,7 @@ type UpdateNotificationInput struct {
 	// AccountId is a required field
 	AccountId *string `min:"12" type:"string" required:"true"`
 
-	// A string represents the budget name. No ":" character is allowed.
+	// A string represents the budget name. No ":" and "\" character is allowed.
 	//
 	// BudgetName is a required field
 	BudgetName *string `type:"string" required:"true"`
@@ -2951,7 +2954,7 @@ type UpdateSubscriberInput struct {
 	// AccountId is a required field
 	AccountId *string `min:"12" type:"string" required:"true"`
 
-	// A string represents the budget name. No ":" character is allowed.
+	// A string represents the budget name. No ":" and "\" character is allowed.
 	//
 	// BudgetName is a required field
 	BudgetName *string `type:"string" required:"true"`
@@ -3073,13 +3076,16 @@ func (s UpdateSubscriberOutput) GoString() string {
 	return s.String()
 }
 
-// The type of a budget. Can be COST or USAGE.
+// The type of a budget. It should be COST, USAGE, or RI_UTILIZATION.
 const (
 	// BudgetTypeUsage is a BudgetType enum value
 	BudgetTypeUsage = "USAGE"
 
 	// BudgetTypeCost is a BudgetType enum value
 	BudgetTypeCost = "COST"
+
+	// BudgetTypeRiUtilization is a BudgetType enum value
+	BudgetTypeRiUtilization = "RI_UTILIZATION"
 )
 
 // The comparison operator of a notification. Currently we support less than,
@@ -3113,8 +3119,11 @@ const (
 	SubscriptionTypeEmail = "EMAIL"
 )
 
-// The time unit of the budget. e.g. weekly, monthly, etc.
+// The time unit of the budget. e.g. MONTHLY, QUARTERLY, etc.
 const (
+	// TimeUnitDaily is a TimeUnit enum value
+	TimeUnitDaily = "DAILY"
+
 	// TimeUnitMonthly is a TimeUnit enum value
 	TimeUnitMonthly = "MONTHLY"
 

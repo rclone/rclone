@@ -554,6 +554,7 @@ type ListUpdateRequest struct {
 	//   "UNWANTED_SOFTWARE" - Unwanted software threat type.
 	//   "POTENTIALLY_HARMFUL_APPLICATION" - Potentially harmful application
 	// threat type.
+	//   "MALICIOUS_BINARY" - Malicious binary threat type.
 	ThreatType string `json:"threatType,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Constraints") to
@@ -657,6 +658,7 @@ type ListUpdateResponse struct {
 	//   "UNWANTED_SOFTWARE" - Unwanted software threat type.
 	//   "POTENTIALLY_HARMFUL_APPLICATION" - Potentially harmful application
 	// threat type.
+	//   "MALICIOUS_BINARY" - Malicious binary threat type.
 	ThreatType string `json:"threatType,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Additions") to
@@ -1015,6 +1017,7 @@ type ThreatInfo struct {
 	//   "UNWANTED_SOFTWARE" - Unwanted software threat type.
 	//   "POTENTIALLY_HARMFUL_APPLICATION" - Potentially harmful application
 	// threat type.
+	//   "MALICIOUS_BINARY" - Malicious binary threat type.
 	ThreatTypes []string `json:"threatTypes,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "PlatformTypes") to
@@ -1082,6 +1085,7 @@ type ThreatListDescriptor struct {
 	//   "UNWANTED_SOFTWARE" - Unwanted software threat type.
 	//   "POTENTIALLY_HARMFUL_APPLICATION" - Potentially harmful application
 	// threat type.
+	//   "MALICIOUS_BINARY" - Malicious binary threat type.
 	ThreatType string `json:"threatType,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "PlatformType") to
@@ -1157,6 +1161,7 @@ type ThreatMatch struct {
 	//   "UNWANTED_SOFTWARE" - Unwanted software threat type.
 	//   "POTENTIALLY_HARMFUL_APPLICATION" - Potentially harmful application
 	// threat type.
+	//   "MALICIOUS_BINARY" - Malicious binary threat type.
 	ThreatType string `json:"threatType,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "CacheDuration") to

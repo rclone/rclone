@@ -117,7 +117,7 @@ func TestLabelErrors(t *testing.T) {
 		f    func(string) (string, error)
 	}
 	punyA := kind{"PunycodeA", punycode.ToASCII}
-	resolve := kind{"ToASCII", Lookup.ToASCII}
+	resolve := kind{"ResolveA", Lookup.ToASCII}
 	display := kind{"ToUnicode", Display.ToUnicode}
 	p := New(VerifyDNSLength(true), MapForLookup(), BidiRule())
 	lengthU := kind{"CheckLengthU", p.ToUnicode}
@@ -145,16 +145,25 @@ func TestLabelErrors(t *testing.T) {
 		{display, "foo.xn--.bar", "foo..bar", ""},
 
 		{lengthA, "a..b", "a..b", "A4"},
-		// Stripping leading empty labels here but not for "empty" punycode
-		// above seems inconsistent, but seems to be applied by both the
-		// conformance test and Chrome. Different interpretations would be
-		// possible, though.
+		{punyA, ".b", ".b", ""},
+		// For backwards compatibility, the Punycode profile does not map runes.
+		{punyA, "\u3002b", "xn--b-83t", ""},
+		{punyA, "..b", "..b", ""},
+		// Only strip leading empty labels for certain profiles. Stripping
+		// leading empty labels here but not for "empty" punycode above seems
+		// inconsistent, but seems to be applied by both the conformance test
+		// and Chrome. So we turn it off by default, support it as an option,
+		// and enable it in profiles where it seems commonplace.
+		{lengthA, ".b", "b", ""},
+		{lengthA, "\u3002b", "b", ""},
 		{lengthA, "..b", "b", ""},
-		{lengthA, "b..", "b..", ""}, // TODO: remove trailing dots?
+		{lengthA, "b..", "b..", ""},
 
 		{resolve, "a..b", "a..b", ""},
+		{resolve, ".b", "b", ""},
+		{resolve, "\u3002b", "b", ""},
 		{resolve, "..b", "b", ""},
-		{resolve, "b..", "b..", ""}, // TODO: remove trailing dots?
+		{resolve, "b..", "b..", ""},
 
 		// Raw punycode
 		{punyA, "", "", ""},

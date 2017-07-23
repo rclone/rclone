@@ -149,9 +149,6 @@ func testOSVM(t *testing.T, filter []bpf.Instruction) (virtualMachine, func()) {
 
 	p := ipv4.NewPacketConn(l)
 	if err = p.SetBPF(prog); err != nil {
-		if err.Error() == "operation not supported" { // TODO: gross. remove once 19051 fixed.
-			t.Skip("Skipping until Issue 19051 is fixed.")
-		}
 		t.Fatalf("failed to attach BPF program to listener: %v", err)
 	}
 

@@ -104,6 +104,91 @@ func (c *CloudWatchEvents) DeleteRuleWithContext(ctx aws.Context, input *DeleteR
 	return out, req.Send()
 }
 
+const opDescribeEventBus = "DescribeEventBus"
+
+// DescribeEventBusRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeEventBus operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DescribeEventBus for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeEventBus method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeEventBusRequest method.
+//    req, resp := client.DescribeEventBusRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/events-2015-10-07/DescribeEventBus
+func (c *CloudWatchEvents) DescribeEventBusRequest(input *DescribeEventBusInput) (req *request.Request, output *DescribeEventBusOutput) {
+	op := &request.Operation{
+		Name:       opDescribeEventBus,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeEventBusInput{}
+	}
+
+	output = &DescribeEventBusOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeEventBus API operation for Amazon CloudWatch Events.
+//
+// Displays the external AWS accounts that are permitted to write events to
+// your account using your account's event bus, and the associated policy. To
+// enable your account to receive events from other accounts, use PutPermission.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch Events's
+// API operation DescribeEventBus for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   An entity that you specified does not exist.
+//
+//   * ErrCodeInternalException "InternalException"
+//   This exception occurs due to unexpected causes.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/events-2015-10-07/DescribeEventBus
+func (c *CloudWatchEvents) DescribeEventBus(input *DescribeEventBusInput) (*DescribeEventBusOutput, error) {
+	req, out := c.DescribeEventBusRequest(input)
+	return out, req.Send()
+}
+
+// DescribeEventBusWithContext is the same as DescribeEventBus with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeEventBus for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CloudWatchEvents) DescribeEventBusWithContext(ctx aws.Context, input *DescribeEventBusInput, opts ...request.Option) (*DescribeEventBusOutput, error) {
+	req, out := c.DescribeEventBusRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDescribeRule = "DescribeRule"
 
 // DescribeRuleRequest generates a "aws/request.Request" representing the
@@ -160,7 +245,7 @@ func (c *CloudWatchEvents) DescribeRuleRequest(input *DescribeRuleInput) (req *r
 //
 // Returned Error Codes:
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
-//   The rule does not exist.
+//   An entity that you specified does not exist.
 //
 //   * ErrCodeInternalException "InternalException"
 //   This exception occurs due to unexpected causes.
@@ -249,7 +334,7 @@ func (c *CloudWatchEvents) DisableRuleRequest(input *DisableRuleInput) (req *req
 //
 // Returned Error Codes:
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
-//   The rule does not exist.
+//   An entity that you specified does not exist.
 //
 //   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
 //   There is concurrent modification on a rule or target.
@@ -341,7 +426,7 @@ func (c *CloudWatchEvents) EnableRuleRequest(input *EnableRuleInput) (req *reque
 //
 // Returned Error Codes:
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
-//   The rule does not exist.
+//   An entity that you specified does not exist.
 //
 //   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
 //   There is concurrent modification on a rule or target.
@@ -589,7 +674,7 @@ func (c *CloudWatchEvents) ListTargetsByRuleRequest(input *ListTargetsByRuleInpu
 //
 // Returned Error Codes:
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
-//   The rule does not exist.
+//   An entity that you specified does not exist.
 //
 //   * ErrCodeInternalException "InternalException"
 //   This exception occurs due to unexpected causes.
@@ -692,6 +777,103 @@ func (c *CloudWatchEvents) PutEvents(input *PutEventsInput) (*PutEventsOutput, e
 // for more information on using Contexts.
 func (c *CloudWatchEvents) PutEventsWithContext(ctx aws.Context, input *PutEventsInput, opts ...request.Option) (*PutEventsOutput, error) {
 	req, out := c.PutEventsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opPutPermission = "PutPermission"
+
+// PutPermissionRequest generates a "aws/request.Request" representing the
+// client's request for the PutPermission operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See PutPermission for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the PutPermission method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the PutPermissionRequest method.
+//    req, resp := client.PutPermissionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/events-2015-10-07/PutPermission
+func (c *CloudWatchEvents) PutPermissionRequest(input *PutPermissionInput) (req *request.Request, output *PutPermissionOutput) {
+	op := &request.Operation{
+		Name:       opPutPermission,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &PutPermissionInput{}
+	}
+
+	output = &PutPermissionOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(jsonrpc.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// PutPermission API operation for Amazon CloudWatch Events.
+//
+// Running PutPermission permits the specified AWS account to put events to
+// your account's default event bus. CloudWatch Events rules in your account
+// are triggered by these events arriving to your default event bus.
+//
+// For another account to send events to your account, that external account
+// must have a CloudWatch Events rule with your account's default event bus
+// as a target.
+//
+// To enable multiple AWS accounts to put events to your default event bus,
+// run PutPermission once for each of these accounts.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch Events's
+// API operation PutPermission for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   An entity that you specified does not exist.
+//
+//   * ErrCodePolicyLengthExceededException "PolicyLengthExceededException"
+//   The event bus policy is too long. For more information, see the limits.
+//
+//   * ErrCodeInternalException "InternalException"
+//   This exception occurs due to unexpected causes.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/events-2015-10-07/PutPermission
+func (c *CloudWatchEvents) PutPermission(input *PutPermissionInput) (*PutPermissionOutput, error) {
+	req, out := c.PutPermissionRequest(input)
+	return out, req.Send()
+}
+
+// PutPermissionWithContext is the same as PutPermission with the addition of
+// the ability to pass a context and additional request options.
+//
+// See PutPermission for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CloudWatchEvents) PutPermissionWithContext(ctx aws.Context, input *PutPermissionInput, opts ...request.Option) (*PutPermissionOutput, error) {
+	req, out := c.PutPermissionRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -850,9 +1032,26 @@ func (c *CloudWatchEvents) PutTargetsRequest(input *PutTargetsInput) (req *reque
 // Adds the specified targets to the specified rule, or updates the targets
 // if they are already associated with the rule.
 //
-// Targets are the resources that are invoked when a rule is triggered. Example
-// targets include EC2 instances, AWS Lambda functions, Amazon Kinesis streams,
-// Amazon ECS tasks, AWS Step Functions state machines, and built-in targets.
+// Targets are the resources that are invoked when a rule is triggered.
+//
+// You can configure the following as targets for CloudWatch Events:
+//
+//    * EC2 instances
+//
+//    * AWS Lambda functions
+//
+//    * Streams in Amazon Kinesis Streams
+//
+//    * Delivery streams in Amazon Kinesis Firehose
+//
+//    * Amazon ECS tasks
+//
+//    * AWS Step Functions state machines
+//
+//    * Amazon SNS topics
+//
+//    * Amazon SQS queues
+//
 // Note that creating rules with built-in targets is supported only in the AWS
 // Management Console.
 //
@@ -866,9 +1065,15 @@ func (c *CloudWatchEvents) PutTargetsRequest(input *PutTargetsInput) (req *reque
 // Events needs the appropriate permissions. For AWS Lambda and Amazon SNS resources,
 // CloudWatch Events relies on resource-based policies. For EC2 instances, Amazon
 // Kinesis streams, and AWS Step Functions state machines, CloudWatch Events
-// relies on IAM roles that you specify in the RoleARN argument in PutTarget.
+// relies on IAM roles that you specify in the RoleARN argument in PutTargets.
 // For more information, see Authentication and Access Control (http://docs.aws.amazon.com/AmazonCloudWatch/latest/events/auth-and-access-control-cwe.html)
 // in the Amazon CloudWatch Events User Guide.
+//
+// If another AWS account is in the same region and has granted you permission
+// (using PutPermission), you can set that account's event bus as a target of
+// the rules in your account. To send the matched events to the other account,
+// specify that account's event bus as the Arn when you run PutTargets. For
+// more information about enabling cross-account events, see PutPermission.
 //
 // Input, InputPath and InputTransformer are mutually exclusive and optional
 // parameters of a target. When a rule is triggered due to a matched event:
@@ -889,9 +1094,17 @@ func (c *CloudWatchEvents) PutTargetsRequest(input *PutTargetsInput) (req *reque
 //    are extracted from the event and used as values in a template that you
 //    specify as the input to the target.
 //
+// When you specify Input, InputPath, or InputTransformer, you must use JSON
+// dot notation, not bracket notation.
+//
 // When you add targets to a rule and the associated rule triggers soon after,
 // new or updated targets might not be immediately invoked. Please allow a short
 // period of time for changes to take effect.
+//
+// This action can partially fail if too many requests are made at the same
+// time. If that happens, FailedEntryCount is non-zero in the response and each
+// entry in FailedEntries provides the ID of the failed target and the error
+// code.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -902,7 +1115,7 @@ func (c *CloudWatchEvents) PutTargetsRequest(input *PutTargetsInput) (req *reque
 //
 // Returned Error Codes:
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
-//   The rule does not exist.
+//   An entity that you specified does not exist.
 //
 //   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
 //   There is concurrent modification on a rule or target.
@@ -930,6 +1143,94 @@ func (c *CloudWatchEvents) PutTargets(input *PutTargetsInput) (*PutTargetsOutput
 // for more information on using Contexts.
 func (c *CloudWatchEvents) PutTargetsWithContext(ctx aws.Context, input *PutTargetsInput, opts ...request.Option) (*PutTargetsOutput, error) {
 	req, out := c.PutTargetsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opRemovePermission = "RemovePermission"
+
+// RemovePermissionRequest generates a "aws/request.Request" representing the
+// client's request for the RemovePermission operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See RemovePermission for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the RemovePermission method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the RemovePermissionRequest method.
+//    req, resp := client.RemovePermissionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/events-2015-10-07/RemovePermission
+func (c *CloudWatchEvents) RemovePermissionRequest(input *RemovePermissionInput) (req *request.Request, output *RemovePermissionOutput) {
+	op := &request.Operation{
+		Name:       opRemovePermission,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &RemovePermissionInput{}
+	}
+
+	output = &RemovePermissionOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(jsonrpc.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// RemovePermission API operation for Amazon CloudWatch Events.
+//
+// Revokes the permission of another AWS account to be able to put events to
+// your default event bus. Specify the account to revoke by the StatementId
+// value that you associated with the account when you granted it permission
+// with PutPermission. You can find the StatementId by using DescribeEventBus.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch Events's
+// API operation RemovePermission for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   An entity that you specified does not exist.
+//
+//   * ErrCodeInternalException "InternalException"
+//   This exception occurs due to unexpected causes.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/events-2015-10-07/RemovePermission
+func (c *CloudWatchEvents) RemovePermission(input *RemovePermissionInput) (*RemovePermissionOutput, error) {
+	req, out := c.RemovePermissionRequest(input)
+	return out, req.Send()
+}
+
+// RemovePermissionWithContext is the same as RemovePermission with the addition of
+// the ability to pass a context and additional request options.
+//
+// See RemovePermission for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CloudWatchEvents) RemovePermissionWithContext(ctx aws.Context, input *RemovePermissionInput, opts ...request.Option) (*RemovePermissionOutput, error) {
+	req, out := c.RemovePermissionRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -987,6 +1288,11 @@ func (c *CloudWatchEvents) RemoveTargetsRequest(input *RemoveTargetsInput) (req 
 // might continue to be invoked. Please allow a short period of time for changes
 // to take effect.
 //
+// This action can partially fail if too many requests are made at the same
+// time. If that happens, FailedEntryCount is non-zero in the response and each
+// entry in FailedEntries provides the ID of the failed target and the error
+// code.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -996,7 +1302,7 @@ func (c *CloudWatchEvents) RemoveTargetsRequest(input *RemoveTargetsInput) (req 
 //
 // Returned Error Codes:
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
-//   The rule does not exist.
+//   An entity that you specified does not exist.
 //
 //   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
 //   There is concurrent modification on a rule or target.
@@ -1171,6 +1477,64 @@ func (s DeleteRuleOutput) GoString() string {
 	return s.String()
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/events-2015-10-07/DescribeEventBusRequest
+type DescribeEventBusInput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DescribeEventBusInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEventBusInput) GoString() string {
+	return s.String()
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/events-2015-10-07/DescribeEventBusResponse
+type DescribeEventBusOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the account permitted to write events to
+	// the current account.
+	Arn *string `type:"string"`
+
+	// The name of the event bus. Currently, this is always default.
+	Name *string `type:"string"`
+
+	// The policy that enables the external account to send events to your account.
+	Policy *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeEventBusOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEventBusOutput) GoString() string {
+	return s.String()
+}
+
+// SetArn sets the Arn field's value.
+func (s *DescribeEventBusOutput) SetArn(v string) *DescribeEventBusOutput {
+	s.Arn = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *DescribeEventBusOutput) SetName(v string) *DescribeEventBusOutput {
+	s.Name = &v
+	return s
+}
+
+// SetPolicy sets the Policy field's value.
+func (s *DescribeEventBusOutput) SetPolicy(v string) *DescribeEventBusOutput {
+	s.Policy = &v
+	return s
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/events-2015-10-07/DescribeRuleRequest
 type DescribeRuleInput struct {
 	_ struct{} `type:"structure"`
@@ -1223,7 +1587,8 @@ type DescribeRuleOutput struct {
 	// The description of the rule.
 	Description *string `type:"string"`
 
-	// The event pattern.
+	// The event pattern. For more information, see Events and Event Patterns (http://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CloudWatchEventsandEventPatterns.html)
+	// in the Amazon CloudWatch Events User Guide.
 	EventPattern *string `type:"string"`
 
 	// The name of the rule.
@@ -1469,7 +1834,8 @@ type InputTransformer struct {
 	_ struct{} `type:"structure"`
 
 	// Map of JSON paths to be extracted from the event. These are key-value pairs,
-	// where each value is a JSON path.
+	// where each value is a JSON path. You must use JSON dot notation, not bracket
+	// notation.
 	InputPathsMap map[string]*string `type:"map"`
 
 	// Input template where you can use the values of the keys from InputPathsMap
@@ -2043,6 +2409,108 @@ func (s *PutEventsResultEntry) SetEventId(v string) *PutEventsResultEntry {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/events-2015-10-07/PutPermissionRequest
+type PutPermissionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The action that you are enabling the other account to perform. Currently,
+	// this must be events:PutEvents.
+	//
+	// Action is a required field
+	Action *string `min:"1" type:"string" required:"true"`
+
+	// The 12-digit AWS account ID that you are permitting to put events to your
+	// default event bus. Specify "*" to permit any account to put events to your
+	// default event bus.
+	//
+	// If you specify "*", avoid creating rules that may match undesirable events.
+	// To create more secure rules, make sure that the event pattern for each rule
+	// contains an account field with a specific account ID from which to receive
+	// events. Rules with an account field do not match any events sent from other
+	// accounts.
+	//
+	// Principal is a required field
+	Principal *string `min:"1" type:"string" required:"true"`
+
+	// An identifier string for the external account that you are granting permissions
+	// to. If you later want to revoke the permission for this external account,
+	// specify this StatementId when you run RemovePermission.
+	//
+	// StatementId is a required field
+	StatementId *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s PutPermissionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutPermissionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PutPermissionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PutPermissionInput"}
+	if s.Action == nil {
+		invalidParams.Add(request.NewErrParamRequired("Action"))
+	}
+	if s.Action != nil && len(*s.Action) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Action", 1))
+	}
+	if s.Principal == nil {
+		invalidParams.Add(request.NewErrParamRequired("Principal"))
+	}
+	if s.Principal != nil && len(*s.Principal) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Principal", 1))
+	}
+	if s.StatementId == nil {
+		invalidParams.Add(request.NewErrParamRequired("StatementId"))
+	}
+	if s.StatementId != nil && len(*s.StatementId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StatementId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAction sets the Action field's value.
+func (s *PutPermissionInput) SetAction(v string) *PutPermissionInput {
+	s.Action = &v
+	return s
+}
+
+// SetPrincipal sets the Principal field's value.
+func (s *PutPermissionInput) SetPrincipal(v string) *PutPermissionInput {
+	s.Principal = &v
+	return s
+}
+
+// SetStatementId sets the StatementId field's value.
+func (s *PutPermissionInput) SetStatementId(v string) *PutPermissionInput {
+	s.StatementId = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/events-2015-10-07/PutPermissionOutput
+type PutPermissionOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s PutPermissionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PutPermissionOutput) GoString() string {
+	return s.String()
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/events-2015-10-07/PutRuleRequest
 type PutRuleInput struct {
 	_ struct{} `type:"structure"`
@@ -2050,7 +2518,8 @@ type PutRuleInput struct {
 	// A description of the rule.
 	Description *string `type:"string"`
 
-	// The event pattern.
+	// The event pattern. For more information, see Events and Event Patterns (http://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CloudWatchEventsandEventPatterns.html)
+	// in the Amazon CloudWatch Events User Guide.
 	EventPattern *string `type:"string"`
 
 	// The name of the rule that you are creating or updating.
@@ -2061,7 +2530,7 @@ type PutRuleInput struct {
 	// The Amazon Resource Name (ARN) of the IAM role associated with the rule.
 	RoleArn *string `min:"1" type:"string"`
 
-	// The scheduling expression. For example, "cron(0 20 * * ? *)", "rate(5 minutes)".
+	// The scheduling expression. For example, "cron(0 20 * * ? *)" or "rate(5 minutes)".
 	ScheduleExpression *string `type:"string"`
 
 	// Indicates whether the rule is enabled or disabled.
@@ -2264,7 +2733,9 @@ func (s *PutTargetsOutput) SetFailedEntryCount(v int64) *PutTargetsOutput {
 type PutTargetsResultEntry struct {
 	_ struct{} `type:"structure"`
 
-	// The error code that indicates why the target addition failed.
+	// The error code that indicates why the target addition failed. If the value
+	// is ConcurrentModificationException, too many requests were made at the same
+	// time.
 	ErrorCode *string `type:"string"`
 
 	// The error message that explains why the target addition failed.
@@ -2300,6 +2771,64 @@ func (s *PutTargetsResultEntry) SetErrorMessage(v string) *PutTargetsResultEntry
 func (s *PutTargetsResultEntry) SetTargetId(v string) *PutTargetsResultEntry {
 	s.TargetId = &v
 	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/events-2015-10-07/RemovePermissionRequest
+type RemovePermissionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The statement ID corresponding to the account that is no longer allowed to
+	// put events to the default event bus.
+	//
+	// StatementId is a required field
+	StatementId *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s RemovePermissionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RemovePermissionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RemovePermissionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RemovePermissionInput"}
+	if s.StatementId == nil {
+		invalidParams.Add(request.NewErrParamRequired("StatementId"))
+	}
+	if s.StatementId != nil && len(*s.StatementId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StatementId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetStatementId sets the StatementId field's value.
+func (s *RemovePermissionInput) SetStatementId(v string) *RemovePermissionInput {
+	s.StatementId = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/events-2015-10-07/RemovePermissionOutput
+type RemovePermissionOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s RemovePermissionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s RemovePermissionOutput) GoString() string {
+	return s.String()
 }
 
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/events-2015-10-07/RemoveTargetsRequest
@@ -2399,7 +2928,9 @@ func (s *RemoveTargetsOutput) SetFailedEntryCount(v int64) *RemoveTargetsOutput 
 type RemoveTargetsResultEntry struct {
 	_ struct{} `type:"structure"`
 
-	// The error code that indicates why the target removal failed.
+	// The error code that indicates why the target removal failed. If the value
+	// is ConcurrentModificationException, too many requests were made at the same
+	// time.
 	ErrorCode *string `type:"string"`
 
 	// The error message that explains why the target removal failed.
@@ -2448,7 +2979,9 @@ type Rule struct {
 	// The description of the rule.
 	Description *string `type:"string"`
 
-	// The event pattern of the rule.
+	// The event pattern of the rule. For more information, see Events and Event
+	// Patterns (http://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CloudWatchEventsandEventPatterns.html)
+	// in the Amazon CloudWatch Events User Guide.
 	EventPattern *string `type:"string"`
 
 	// The name of the rule.
@@ -2659,13 +3192,14 @@ type Target struct {
 	Id *string `min:"1" type:"string" required:"true"`
 
 	// Valid JSON text passed to the target. In this case, nothing from the event
-	// itself is passed to the target. For more information, see The JavaScript
-	// Object Notation (JSON) Data Interchange Format (http://www.rfc-editor.org/rfc/rfc7159.txt).
+	// itself is passed to the target. You must use JSON dot notation, not bracket
+	// notation. For more information, see The JavaScript Object Notation (JSON)
+	// Data Interchange Format (http://www.rfc-editor.org/rfc/rfc7159.txt).
 	Input *string `type:"string"`
 
 	// The value of the JSONPath that is used for extracting part of the matched
-	// event when passing it to the target. For more information about JSON paths,
-	// see JSONPath (http://goessner.net/articles/JsonPath/).
+	// event when passing it to the target. You must use JSON dot notation, not
+	// bracket notation. For more information about JSON paths, see JSONPath (http://goessner.net/articles/JsonPath/).
 	InputPath *string `type:"string"`
 
 	// Settings to enable you to provide custom input to a target based on certain
@@ -2805,7 +3339,8 @@ type TestEventPatternInput struct {
 	// Event is a required field
 	Event *string `type:"string" required:"true"`
 
-	// The event pattern.
+	// The event pattern. For more information, see Events and Event Patterns (http://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CloudWatchEventsandEventPatterns.html)
+	// in the Amazon CloudWatch Events User Guide.
 	//
 	// EventPattern is a required field
 	EventPattern *string `type:"string" required:"true"`

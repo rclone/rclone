@@ -1592,11 +1592,10 @@ func (c *EMR) ListInstancesRequest(input *ListInstancesInput) (req *request.Requ
 
 // ListInstances API operation for Amazon Elastic MapReduce.
 //
-// Provides information about the cluster instances that Amazon EMR provisions
-// on behalf of a user when it creates the cluster. For example, this operation
-// indicates when the EC2 instances reach the Ready state, when instances become
-// available to Amazon EMR to use for jobs, and the IP addresses for cluster
-// instances, etc.
+// Provides information for all active EC2 instances and EC2 instances terminated
+// in the last 30 days, up to a maximum of 2,000. EC2 instances in any of the
+// following states are considered active: AWAITING_FULFILLMENT, PROVISIONING,
+// BOOTSTRAPPING, RUNNING.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3082,7 +3081,7 @@ func (s AddTagsOutput) GoString() string {
 //    * "mapr" with the user arguments specifying "--edition,m3" or "--edition,m5"
 //    - launch the cluster using MapR M3 or M5 Edition, respectively.
 //
-// In Amazon EMR releases 4.0 and greater, the only accepted parameter is the
+// In Amazon EMR releases 4.x and later, the only accepted parameter is the
 // application name. To pass arguments to applications, you supply a configuration
 // for each application.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/elasticmapreduce-2009-03-31/Application
@@ -3674,10 +3673,17 @@ type Cluster struct {
 	// Specifies whether the cluster should terminate after completing all steps.
 	AutoTerminate *bool `type:"boolean"`
 
-	// Amazon EMR releases 4.x or later.
-	//
-	// The list of Configurations supplied to the EMR cluster.
+	// Applies only to Amazon EMR releases 4.x and later. The list of Configurations
+	// supplied to the EMR cluster.
 	Configurations []*Configuration `type:"list"`
+
+	// Available only in Amazon EMR version 5.7.0 and later. The ID of a custom
+	// Amazon EBS-backed Linux AMI if the cluster uses a custom AMI.
+	CustomAmiId *string `type:"string"`
+
+	// The size, in GiB, of the EBS root device volume of the Linux AMI that is
+	// used for each EC2 instance. Available in Amazon EMR version 4.x and later.
+	EbsRootVolumeSize *int64 `type:"integer"`
 
 	// Provides information about the EC2 instances in a cluster grouped by category.
 	// For example, key name, subnet ID, IAM instance profile, and so on.
@@ -3711,9 +3717,13 @@ type Cluster struct {
 	// the actual billing rate.
 	NormalizedInstanceHours *int64 `type:"integer"`
 
-	// The release label for the Amazon EMR release. For Amazon EMR 3.x and 2.x
-	// AMIs, use amiVersion instead instead of ReleaseLabel.
+	// The release label for the Amazon EMR release.
 	ReleaseLabel *string `type:"string"`
+
+	// Applies only when CustomAmiID is used. Specifies the type of updates that
+	// are applied from the Amazon Linux AMI package repositories when an instance
+	// boots using the AMI.
+	RepoUpgradeOnBoot *string `type:"string" enum:"RepoUpgradeOnBoot"`
 
 	// The AMI version requested for this cluster.
 	RequestedAmiVersion *string `type:"string"`
@@ -3796,6 +3806,18 @@ func (s *Cluster) SetConfigurations(v []*Configuration) *Cluster {
 	return s
 }
 
+// SetCustomAmiId sets the CustomAmiId field's value.
+func (s *Cluster) SetCustomAmiId(v string) *Cluster {
+	s.CustomAmiId = &v
+	return s
+}
+
+// SetEbsRootVolumeSize sets the EbsRootVolumeSize field's value.
+func (s *Cluster) SetEbsRootVolumeSize(v int64) *Cluster {
+	s.EbsRootVolumeSize = &v
+	return s
+}
+
 // SetEc2InstanceAttributes sets the Ec2InstanceAttributes field's value.
 func (s *Cluster) SetEc2InstanceAttributes(v *Ec2InstanceAttributes) *Cluster {
 	s.Ec2InstanceAttributes = v
@@ -3841,6 +3863,12 @@ func (s *Cluster) SetNormalizedInstanceHours(v int64) *Cluster {
 // SetReleaseLabel sets the ReleaseLabel field's value.
 func (s *Cluster) SetReleaseLabel(v string) *Cluster {
 	s.ReleaseLabel = &v
+	return s
+}
+
+// SetRepoUpgradeOnBoot sets the RepoUpgradeOnBoot field's value.
+func (s *Cluster) SetRepoUpgradeOnBoot(v string) *Cluster {
+	s.RepoUpgradeOnBoot = &v
 	return s
 }
 
@@ -4835,20 +4863,26 @@ type Ec2InstanceAttributes struct {
 	// of the cluster assume this role.
 	IamInstanceProfile *string `type:"string"`
 
-	// Applies to clusters configured with the The list of availability zones to
-	// choose from. The service will choose the availability zone with the best
-	// mix of available capacity and lowest cost to launch the cluster. If you do
-	// not specify this value, the cluster is launched in any availability zone
-	// that the customer account has access to.
+	// Applies to clusters configured with the instance fleets option. Specifies
+	// one or more Availability Zones in which to launch EC2 cluster instances when
+	// the EC2-Classic network configuration is supported. Amazon EMR chooses the
+	// Availability Zone with the best fit from among the list of RequestedEc2AvailabilityZones,
+	// and then launches all cluster instances within that Availability Zone. If
+	// you do not specify this value, Amazon EMR chooses the Availability Zone for
+	// you. RequestedEc2SubnetIDs and RequestedEc2AvailabilityZones cannot be specified
+	// together.
 	RequestedEc2AvailabilityZones []*string `type:"list"`
 
 	// Applies to clusters configured with the instance fleets option. Specifies
 	// the unique identifier of one or more Amazon EC2 subnets in which to launch
-	// EC2 cluster instances. Amazon EMR chooses the EC2 subnet with the best performance
-	// and cost characteristics from among the list of RequestedEc2SubnetIds and
-	// launches all cluster instances within that subnet. If this value is not specified,
-	// and the account supports EC2-Classic networks, the cluster launches instances
-	// in the EC2-Classic network and uses Requested
+	// EC2 cluster instances. Subnets must exist within the same VPC. Amazon EMR
+	// chooses the EC2 subnet with the best fit from among the list of RequestedEc2SubnetIds,
+	// and then launches all cluster instances within that Subnet. If this value
+	// is not specified, and the account and region support EC2-Classic networks,
+	// the cluster launches instances in the EC2-Classic network and uses RequestedEc2AvailabilityZones
+	// instead of this setting. If EC2-Classic is not supported, and no Subnet is
+	// specified, Amazon EMR chooses the subnet for you. RequestedEc2SubnetIDs and
+	// RequestedEc2AvailabilityZones cannot be specified together.
 	RequestedEc2SubnetIds []*string `type:"list"`
 
 	// The identifier of the Amazon EC2 security group for the Amazon EMR service
@@ -6590,9 +6624,9 @@ type InstanceTypeConfig struct {
 	BidPrice *string `type:"string"`
 
 	// The bid price, as a percentage of On-Demand price, for each EC2 Spot instance
-	// as defined by InstanceType. Expressed as a number between 0 and 1000 (for
-	// example, 20 specifies 20%). If neither BidPrice nor BidPriceAsPercentageOfOnDemandPrice
-	// is provided, BidPriceAsPercentageOfOnDemandPrice defaults to 100%.
+	// as defined by InstanceType. Expressed as a number (for example, 20 specifies
+	// 20%). If neither BidPrice nor BidPriceAsPercentageOfOnDemandPrice is provided,
+	// BidPriceAsPercentageOfOnDemandPrice defaults to 100%.
 	BidPriceAsPercentageOfOnDemandPrice *float64 `type:"double"`
 
 	// A configuration classification that applies when provisioning cluster instances,
@@ -6611,8 +6645,8 @@ type InstanceTypeConfig struct {
 
 	// The number of units that a provisioned instance of this type provides toward
 	// fulfilling the target capacities defined in InstanceFleetConfig. This value
-	// is 1 for a master instance fleet, and must be greater than 0 for core and
-	// task instance fleets.
+	// is 1 for a master instance fleet, and must be 1 or greater for core and task
+	// instance fleets. Defaults to 1 if not specified.
 	WeightedCapacity *int64 `type:"integer"`
 }
 
@@ -6779,9 +6813,9 @@ func (s *InstanceTypeSpecification) SetWeightedCapacity(v int64) *InstanceTypeSp
 type JobFlowDetail struct {
 	_ struct{} `type:"structure"`
 
-	// The version of the AMI used to initialize Amazon EC2 instances in the job
-	// flow. For a list of AMI versions currently supported by Amazon EMR, see AMI
-	// Versions Supported in EMR (http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/EnvironmentConfig_AMIVersion.html#ami-versions-supported)
+	// Used only for version 2.x and 3.x of Amazon EMR. The version of the AMI used
+	// to initialize Amazon EC2 instances in the job flow. For a list of AMI versions
+	// supported by Amazon EMR, see AMI Versions Supported in EMR (http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/EnvironmentConfig_AMIVersion.html#ami-versions-supported)
 	// in the Amazon EMR Developer Guide.
 	AmiVersion *string `type:"string"`
 
@@ -8560,21 +8594,16 @@ type RunJobFlowInput struct {
 	// A JSON string for selecting additional features.
 	AdditionalInfo *string `type:"string"`
 
-	// For Amazon EMR releases 3.x and 2.x. For Amazon EMR releases 4.x and greater,
-	// use ReleaseLabel.
-	//
+	// For Amazon EMR AMI versions 3.x and 2.x. For Amazon EMR releases 4.0 and
+	// later, the Linux AMI is determined by the ReleaseLabel specified or by CustomAmiID.
 	// The version of the Amazon Machine Image (AMI) to use when launching Amazon
-	// EC2 instances in the job flow. The following values are valid:
-	//
-	//    * The version number of the AMI to use, for example, "2.0."
+	// EC2 instances in the job flow. For details about the AMI versions currently
+	// supported in EMR version 3.x and 2.x, see AMI Versions Supported in EMR (ElasticMapReduce/latest/DeveloperGuide/emr-dg.pdf#nameddest=ami-versions-supported)
+	// in the Amazon EMR Developer Guide.
 	//
 	// If the AMI supports multiple versions of Hadoop (for example, AMI 1.0 supports
-	// both Hadoop 0.18 and 0.20) you can use the JobFlowInstancesConfigHadoopVersion
+	// both Hadoop 0.18 and 0.20), you can use the JobFlowInstancesConfigHadoopVersion
 	// parameter to modify the version of Hadoop from the defaults shown above.
-	//
-	// For details about the AMI versions currently supported by Amazon Elastic
-	// MapReduce, see AMI Versions Supported in Elastic MapReduce (http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/EnvironmentConfig_AMIVersion.html#ami-versions-supported)
-	// in the Amazon Elastic MapReduce Developer Guide.
 	//
 	// Previously, the EMR AMI version API parameter options allowed you to use
 	// latest for the latest AMI version rather than specify a numerical value.
@@ -8583,10 +8612,9 @@ type RunJobFlowInput struct {
 	// release label release (EMR 4.x or later).
 	AmiVersion *string `type:"string"`
 
-	// Amazon EMR releases 4.x or later.
-	//
-	// A list of applications for the cluster. Valid values are: "Hadoop", "Hive",
-	// "Mahout", "Pig", and "Spark." They are case insensitive.
+	// For Amazon EMR releases 4.0 and later. A list of applications for the cluster.
+	// Valid values are: "Hadoop", "Hive", "Mahout", "Pig", and "Spark." They are
+	// case insensitive.
 	Applications []*Application `type:"list"`
 
 	// An IAM role for automatic scaling policies. The default role is EMR_AutoScaling_DefaultRole.
@@ -8597,10 +8625,27 @@ type RunJobFlowInput struct {
 	// A list of bootstrap actions to run before Hadoop starts on the cluster nodes.
 	BootstrapActions []*BootstrapActionConfig `type:"list"`
 
-	// Amazon EMR releases 4.x or later.
-	//
-	// The list of configurations supplied for the EMR cluster you are creating.
+	// For Amazon EMR releases 4.0 and later. The list of configurations supplied
+	// for the EMR cluster you are creating.
 	Configurations []*Configuration `type:"list"`
+
+	// Available only in Amazon EMR version 5.7.0 and later. The ID of a custom
+	// Amazon EBS-backed Linux AMI. If specified, Amazon EMR uses this AMI when
+	// it launches cluster EC2 instances. For more information about custom AMIs
+	// in Amazon EMR, see Using a Custom AMI (http://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-custom-ami.html)
+	// in the Amazon EMR Management Guide. If omitted, the cluster uses the base
+	// Linux AMI for the ReleaseLabel specified. For Amazon EMR versions 2.x and
+	// 3.x, use AmiVersion instead.
+	//
+	// For information about creating a custom AMI, see Creating an Amazon EBS-Backed
+	// Linux AMI (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/creating-an-ami-ebs.html)
+	// in the Amazon Elastic Compute Cloud User Guide for Linux Instances. For information
+	// about finding an AMI ID, see Finding a Linux AMI (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/finding-an-ami.html).
+	CustomAmiId *string `type:"string"`
+
+	// The size, in GiB, of the EBS root device volume of the Linux AMI that is
+	// used for each EC2 instance. Available in Amazon EMR version 4.x and later.
+	EbsRootVolumeSize *int64 `type:"integer"`
 
 	// A specification of the number and type of Amazon EC2 instances.
 	//
@@ -8622,7 +8667,7 @@ type RunJobFlowInput struct {
 	// Name is a required field
 	Name *string `type:"string" required:"true"`
 
-	// For Amazon EMR releases 3.x and 2.x. For Amazon EMR releases 4.x and greater,
+	// For Amazon EMR releases 3.x and 2.x. For Amazon EMR releases 4.x and later,
 	// use Applications.
 	//
 	// A list of strings that indicates third-party software to use with the job
@@ -8650,11 +8695,16 @@ type RunJobFlowInput struct {
 	//    * "ganglia" - launch the cluster with the Ganglia Monitoring System installed.
 	NewSupportedProducts []*SupportedProductConfig `type:"list"`
 
-	// Amazon EMR releases 4.x or later.
-	//
 	// The release label for the Amazon EMR release. For Amazon EMR 3.x and 2.x
-	// AMIs, use amiVersion instead instead of ReleaseLabel.
+	// AMIs, use AmiVersion instead.
 	ReleaseLabel *string `type:"string"`
+
+	// Applies only when CustomAmiID is used. Specifies which updates from the Amazon
+	// Linux AMI package repositories to apply automatically when the instance boots
+	// using the AMI. If omitted, the default is SECURITY, which indicates that
+	// only security updates are applied. If NONE is specified, no updates are applied,
+	// and all updates must be applied manually.
+	RepoUpgradeOnBoot *string `type:"string" enum:"RepoUpgradeOnBoot"`
 
 	// Specifies the way that individual Amazon EC2 instances terminate when an
 	// automatic scale-in activity occurs or an instance group is resized. TERMINATE_AT_INSTANCE_HOUR
@@ -8680,7 +8730,7 @@ type RunJobFlowInput struct {
 	// A list of steps to run.
 	Steps []*StepConfig `type:"list"`
 
-	// For Amazon EMR releases 3.x and 2.x. For Amazon EMR releases 4.x and greater,
+	// For Amazon EMR releases 3.x and 2.x. For Amazon EMR releases 4.x and later,
 	// use Applications.
 	//
 	// A list of strings that indicates third-party software to use. For more information,
@@ -8790,6 +8840,18 @@ func (s *RunJobFlowInput) SetConfigurations(v []*Configuration) *RunJobFlowInput
 	return s
 }
 
+// SetCustomAmiId sets the CustomAmiId field's value.
+func (s *RunJobFlowInput) SetCustomAmiId(v string) *RunJobFlowInput {
+	s.CustomAmiId = &v
+	return s
+}
+
+// SetEbsRootVolumeSize sets the EbsRootVolumeSize field's value.
+func (s *RunJobFlowInput) SetEbsRootVolumeSize(v int64) *RunJobFlowInput {
+	s.EbsRootVolumeSize = &v
+	return s
+}
+
 // SetInstances sets the Instances field's value.
 func (s *RunJobFlowInput) SetInstances(v *JobFlowInstancesConfig) *RunJobFlowInput {
 	s.Instances = v
@@ -8823,6 +8885,12 @@ func (s *RunJobFlowInput) SetNewSupportedProducts(v []*SupportedProductConfig) *
 // SetReleaseLabel sets the ReleaseLabel field's value.
 func (s *RunJobFlowInput) SetReleaseLabel(v string) *RunJobFlowInput {
 	s.ReleaseLabel = &v
+	return s
+}
+
+// SetRepoUpgradeOnBoot sets the RepoUpgradeOnBoot field's value.
+func (s *RunJobFlowInput) SetRepoUpgradeOnBoot(v string) *RunJobFlowInput {
+	s.RepoUpgradeOnBoot = &v
 	return s
 }
 
@@ -9514,8 +9582,9 @@ type SpotProvisioningSpecification struct {
 
 	// The action to take when TargetSpotCapacity has not been fulfilled when the
 	// TimeoutDurationMinutes has expired. Spot instances are not uprovisioned within
-	// the Spot provisioining timeout. Valid values are TERMINATE_CLUSTER and SWITCH_TO_ON_DEMAND
-	// to fulfill the remaining capacity.
+	// the Spot provisioining timeout. Valid values are TERMINATE_CLUSTER and SWITCH_TO_ON_DEMAND.
+	// SWITCH_TO_ON_DEMAND specifies that if no Spot instances are available, On-Demand
+	// Instances should be provisioned to fulfill any remaining Spot capacity.
 	//
 	// TimeoutAction is a required field
 	TimeoutAction *string `type:"string" required:"true" enum:"SpotProvisioningTimeoutAction"`
@@ -10292,6 +10361,9 @@ const (
 	// ClusterStateChangeReasonCodeInstanceFailure is a ClusterStateChangeReasonCode enum value
 	ClusterStateChangeReasonCodeInstanceFailure = "INSTANCE_FAILURE"
 
+	// ClusterStateChangeReasonCodeInstanceFleetTimeout is a ClusterStateChangeReasonCode enum value
+	ClusterStateChangeReasonCodeInstanceFleetTimeout = "INSTANCE_FLEET_TIMEOUT"
+
 	// ClusterStateChangeReasonCodeBootstrapFailure is a ClusterStateChangeReasonCode enum value
 	ClusterStateChangeReasonCodeBootstrapFailure = "BOOTSTRAP_FAILURE"
 
@@ -10510,6 +10582,14 @@ const (
 
 	// MarketTypeSpot is a MarketType enum value
 	MarketTypeSpot = "SPOT"
+)
+
+const (
+	// RepoUpgradeOnBootSecurity is a RepoUpgradeOnBoot enum value
+	RepoUpgradeOnBootSecurity = "SECURITY"
+
+	// RepoUpgradeOnBootNone is a RepoUpgradeOnBoot enum value
+	RepoUpgradeOnBootNone = "NONE"
 )
 
 const (

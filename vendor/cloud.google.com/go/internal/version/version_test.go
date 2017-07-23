@@ -14,34 +14,22 @@
 
 package version
 
-import (
-	"regexp"
-	"testing"
-)
+import "testing"
 
-func TestGo(t *testing.T) {
-	got := Go()
-	want := `^\S+$`
-	match, err := regexp.MatchString(want, got)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !match {
-		t.Errorf("got %q, want match of regexp %q", got, want)
-	}
-}
-
-func TestRemoveWhitespace(t *testing.T) {
-	for _, test := range []struct {
+func TestGoVer(t *testing.T) {
+	for _, tst := range []struct {
 		in, want string
 	}{
-		{"", ""},
-		{"go1.7", "go1.7"},
-		{" a b c ", "_a_b_c_"},
-		{"a\tb\t c\n", "a_b__c_"},
+		{"go1.8", "1.8.0"},
+		{"go1.7.3", "1.7.3"},
+		{"go1.8.typealias", "1.8.0-typealias"},
+		{"go1.8beta1", "1.8.0-beta1"},
+		{"go1.8rc2", "1.8.0-rc2"},
+		{"devel +824f981dd4b7 Tue Apr 29 21:41:54 2014 -0400", "824f981dd4b7"},
+		{"foo bar zipzap", ""},
 	} {
-		if got := removeWhitespace(test.in); got != test.want {
-			t.Errorf("removeWhitespace(%q) = %q, want %q", test.in, got, test.want)
+		if got := goVer(tst.in); got != tst.want {
+			t.Errorf("goVer(%q) = %q, want %q", tst.in, got, tst.want)
 		}
 	}
 }

@@ -23,6 +23,7 @@ type API struct {
 	Shapes        map[string]*Shape
 	Waiters       []Waiter
 	Documentation string
+	Examples      Examples
 
 	// Set to true to avoid removing unused shapes
 	NoRemoveUnusedShapes bool

@@ -127,10 +127,10 @@ tree is assigned to the commander which is finally executed.
 
 # Installing
 Using Cobra is easy. First, use `go get` to install the latest version
-of the library. This command will install the `cobra` generator executible
-along with the library:
+of the library. This command will install the `cobra` generator executable
+along with the library and its dependencies:
 
-    go get -v github.com/spf13/cobra/cobra
+    go get -u github.com/spf13/cobra/cobra
 
 Next, include Cobra in your application:
 
@@ -140,8 +140,8 @@ import "github.com/spf13/cobra"
 
 # Getting Started
 
-While you are welcome to provide your own organization, typically a Cobra based
-application will follow the following organizational structure.
+While you are welcome to provide your own organization, typically a Cobra-based
+application will follow the following organizational structure:
 
 ```
   ▾ appName/
@@ -153,7 +153,7 @@ application will follow the following organizational structure.
       main.go
 ```
 
-In a Cobra app, typically the main.go file is very bare. It serves, one purpose, to initialize Cobra.
+In a Cobra app, typically the main.go file is very bare. It serves one purpose: initializing Cobra.
 
 ```go
 package main
@@ -216,10 +216,11 @@ cobra add create -p 'configCmd'
 ```
 
 *Note: Use camelCase (not snake_case/snake-case) for command names.
-Otherwise, you will become unexpected errors.
+Otherwise, you will encounter errors.
 For example, `cobra add add-user` is incorrect, but `cobra add addUser` is valid.*
 
-Once you have run these three commands you would have an app structure that would look like:
+Once you have run these three commands you would have an app structure similar to
+the following:
 
 ```
   ▾ app/
@@ -230,16 +231,16 @@ Once you have run these three commands you would have an app structure that woul
       main.go
 ```
 
-at this point you can run `go run main.go` and it would run your app. `go run
+At this point you can run `go run main.go` and it would run your app. `go run
 main.go serve`, `go run main.go config`, `go run main.go config create` along
-with `go run main.go help serve`, etc would all work.
+with `go run main.go help serve`, etc. would all work.
 
-Obviously you haven't added your own code to these yet, the commands are ready
-for you to give them their tasks. Have fun.
+Obviously you haven't added your own code to these yet. The commands are ready
+for you to give them their tasks. Have fun!
 
 ### Configuring the cobra generator
 
-The cobra generator will be easier to use if you provide a simple configuration
+The Cobra generator will be easier to use if you provide a simple configuration
 file which will help you eliminate providing a bunch of repeated information in
 flags over and over.
 
@@ -269,13 +270,12 @@ You can also use built-in licenses. For example, **GPLv2**, **GPLv3**, **LGPL**,
 
 ## Manually implementing Cobra
 
-To manually implement cobra you need to create a bare main.go file and a RootCmd file.
+To manually implement Cobra you need to create a bare main.go file and a RootCmd file.
 You will optionally provide additional commands as you see fit.
 
 ### Create the root command
 
 The root command represents your binary itself.
-
 
 #### Manually create rootCmd
 
@@ -298,9 +298,18 @@ var RootCmd = &cobra.Command{
 
 You will additionally define flags and handle configuration in your init() function.
 
-for example cmd/root.go:
+For example cmd/root.go:
 
 ```go
+import (
+	"fmt"
+	"os"
+
+	homedir "github.com/mitchellh/go-homedir"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
 func init() {
 	cobra.OnInitialize(initConfig)
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cobra.yaml)")
@@ -313,6 +322,34 @@ func init() {
 	viper.BindPFlag("useViper", RootCmd.PersistentFlags().Lookup("viper"))
 	viper.SetDefault("author", "NAME HERE <EMAIL ADDRESS>")
 	viper.SetDefault("license", "apache")
+}
+
+func Execute() {
+	RootCmd.Execute()
+}
+
+func initConfig() {
+  // Don't forget to read config either from cfgFile or from home directory!
+	if cfgFile != "" {
+		// Use config file from the flag.
+		viper.SetConfigFile(cfgFile)
+	} else {
+		// Find home directory.
+		home, err := homedir.Dir()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		// Search config in home directory with name ".cobra" (without extension).
+		viper.AddConfigPath(home)
+		viper.SetConfigName(".cobra")
+	}
+
+	if err := viper.ReadInConfig(); err != nil {
+		fmt.Println("Can't read config:", err)
+		os.Exit(1)
+	}
 }
 ```
 
@@ -340,7 +377,6 @@ func main() {
 	}
 }
 ```
-
 
 ### Create additional commands
 
@@ -431,6 +467,23 @@ A flag can also be assigned locally which will only apply to that specific comma
 RootCmd.Flags().StringVarP(&Source, "source", "s", "", "Source directory to read from")
 ```
 
+### Bind Flags with Config
+
+You can also bind your flags with [viper](https://github.com/spf13/viper):
+```go
+var author string
+
+func init() {
+	RootCmd.PersistentFlags().StringVar(&author, "author", "YOUR NAME", "Author name for copyright attribution")
+	viper.BindPFlag("author", RootCmd.PersistentFlags().Lookup("author"))
+}
+```
+
+In this example the persistent flag `author` is bound with `viper`.
+**Note**, that the variable `author` will not be set to the value from config,
+when the `--author` flag is not provided by user.
+
+More in [viper documentation](https://github.com/spf13/viper#working-with-flags).
 
 ## Example
 

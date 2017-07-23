@@ -29,9 +29,10 @@ type Request struct {
 }
 
 type state struct {
-	writerAt io.WriterAt
-	readerAt io.ReaderAt
-	endofdir bool // need to track when to send EOF for readdir
+	writerAt     io.WriterAt
+	readerAt     io.ReaderAt
+	endofdir     bool // in case handler doesn't use EOF on file list
+	readdirToken string
 }
 
 type packet_data struct {
@@ -67,8 +68,24 @@ func NewRequest(method, path string) Request {
 	return request
 }
 
-// manage state
-func (r Request) setState(s interface{}) {
+// LsSave takes a token to keep track of file list batches. Openssh uses a
+// batch size of 100, so I suggest sticking close to that.
+func (r Request) LsSave(token string) {
+	r.stateLock.RLock()
+	defer r.stateLock.RUnlock()
+	r.state.readdirToken = token
+}
+
+// LsNext should return the token from the previous call to know which batch
+// to return next.
+func (r Request) LsNext() string {
+	r.stateLock.RLock()
+	defer r.stateLock.RUnlock()
+	return r.state.readdirToken
+}
+
+// manage file read/write state
+func (r Request) setFileState(s interface{}) {
 	r.stateLock.Lock()
 	defer r.stateLock.Unlock()
 	switch s := s.(type) {
@@ -76,8 +93,7 @@ func (r Request) setState(s interface{}) {
 		r.state.writerAt = s
 	case io.ReaderAt:
 		r.state.readerAt = s
-	case bool:
-		r.state.endofdir = s
+
 	}
 }
 
@@ -91,6 +107,14 @@ func (r Request) getReader() io.ReaderAt {
 	r.stateLock.RLock()
 	defer r.stateLock.RUnlock()
 	return r.state.readerAt
+}
+
+// For backwards compatibility. The Handler didn't have batch handling at
+// first, and just always assumed 1 batch. This preserves that behavior.
+func (r Request) setEOD(eod bool) {
+	r.stateLock.RLock()
+	defer r.stateLock.RUnlock()
+	r.state.endofdir = eod
 }
 
 func (r Request) getEOD() bool {
@@ -149,7 +173,7 @@ func fileget(h FileReader, r Request) (responsePacket, error) {
 		if err != nil {
 			return nil, err
 		}
-		r.setState(reader)
+		r.setFileState(reader)
 	}
 
 	pd := r.popPacket()
@@ -174,7 +198,7 @@ func fileput(h FileWriter, r Request) (responsePacket, error) {
 		if err != nil {
 			return nil, err
 		}
-		r.setState(writer)
+		r.setFileState(writer)
 	}
 
 	pd := r.popPacket()
@@ -224,7 +248,14 @@ func fileinfo(h FileInfoer, r Request) (responsePacket, error) {
 				Attrs:    []interface{}{fi},
 			})
 		}
-		r.setState(true)
+		// No entries means we should return EOF as the Handler didn't.
+		if len(finfo) == 0 {
+			return nil, io.EOF
+		}
+		// If files are returned but no token is set, return EOF next call.
+		if r.LsNext() == "" {
+			r.setEOD(true)
+		}
 		return ret, nil
 	case "Stat":
 		if len(finfo) == 0 {

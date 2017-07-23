@@ -3,869 +3,1217 @@
 package inspector_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/inspector"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleInspector_AddAttributesToFindings() {
-	sess := session.Must(session.NewSession())
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
+	if err != nil {
+		panic(err)
+	}
+	return &t
+}
 
-	svc := inspector.New(sess)
-
-	params := &inspector.AddAttributesToFindingsInput{
-		Attributes: []*inspector.Attribute{ // Required
-			{ // Required
-				Key:   aws.String("AttributeKey"), // Required
-				Value: aws.String("AttributeValue"),
+// Add attributes to findings
+//
+// Assigns attributes (key and value pairs) to the findings that are specified by the
+// ARNs of the findings.
+func ExampleInspector_AddAttributesToFindings_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.AddAttributesToFindingsInput{
+		Attributes: []*inspector.Attribute{
+			{
+				Key:   aws.String("Example"),
+				Value: aws.String("example"),
 			},
-			// More values...
 		},
-		FindingArns: []*string{ // Required
-			aws.String("Arn"), // Required
-			// More values...
+		FindingArns: []*string{
+			aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-0kFIPusq/template/0-8l1VIE0D/run/0-Z02cjjug/finding/0-T8yM9mEU"),
 		},
 	}
-	resp, err := svc.AddAttributesToFindings(params)
 
+	result, err := svc.AddAttributesToFindings(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleInspector_CreateAssessmentTarget() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.CreateAssessmentTargetInput{
-		AssessmentTargetName: aws.String("AssessmentTargetName"), // Required
-		ResourceGroupArn:     aws.String("Arn"),                  // Required
+// Create assessment target
+//
+// Creates a new assessment target using the ARN of the resource group that is generated
+// by CreateResourceGroup. You can create up to 50 assessment targets per AWS account.
+// You can run up to 500 concurrent agents per AWS account.
+func ExampleInspector_CreateAssessmentTarget_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.CreateAssessmentTargetInput{
+		AssessmentTargetName: aws.String("ExampleAssessmentTarget"),
+		ResourceGroupArn:     aws.String("arn:aws:inspector:us-west-2:123456789012:resourcegroup/0-AB6DMKnv"),
 	}
-	resp, err := svc.CreateAssessmentTarget(params)
 
+	result, err := svc.CreateAssessmentTarget(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeLimitExceededException:
+				fmt.Println(inspector.ErrCodeLimitExceededException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleInspector_CreateAssessmentTemplate() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.CreateAssessmentTemplateInput{
-		AssessmentTargetArn:    aws.String("Arn"),                    // Required
-		AssessmentTemplateName: aws.String("AssessmentTemplateName"), // Required
-		DurationInSeconds:      aws.Int64(1),                         // Required
-		RulesPackageArns: []*string{ // Required
-			aws.String("Arn"), // Required
-			// More values...
+// Create assessment template
+//
+// Creates an assessment template for the assessment target that is specified by the
+// ARN of the assessment target.
+func ExampleInspector_CreateAssessmentTemplate_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.CreateAssessmentTemplateInput{
+		AssessmentTargetArn:    aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-nvgVhaxX"),
+		AssessmentTemplateName: aws.String("ExampleAssessmentTemplate"),
+		DurationInSeconds:      aws.Int64(180),
+		RulesPackageArns: []*string{
+			aws.String("arn:aws:inspector:us-west-2:758058086616:rulespackage/0-11B9DBXp"),
 		},
 		UserAttributesForFindings: []*inspector.Attribute{
-			{ // Required
-				Key:   aws.String("AttributeKey"), // Required
-				Value: aws.String("AttributeValue"),
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.CreateAssessmentTemplate(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_CreateResourceGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.CreateResourceGroupInput{
-		ResourceGroupTags: []*inspector.ResourceGroupTag{ // Required
-			{ // Required
-				Key:   aws.String("TagKey"), // Required
-				Value: aws.String("TagValue"),
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.CreateResourceGroup(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_DeleteAssessmentRun() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.DeleteAssessmentRunInput{
-		AssessmentRunArn: aws.String("Arn"), // Required
-	}
-	resp, err := svc.DeleteAssessmentRun(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_DeleteAssessmentTarget() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.DeleteAssessmentTargetInput{
-		AssessmentTargetArn: aws.String("Arn"), // Required
-	}
-	resp, err := svc.DeleteAssessmentTarget(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_DeleteAssessmentTemplate() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.DeleteAssessmentTemplateInput{
-		AssessmentTemplateArn: aws.String("Arn"), // Required
-	}
-	resp, err := svc.DeleteAssessmentTemplate(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_DescribeAssessmentRuns() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.DescribeAssessmentRunsInput{
-		AssessmentRunArns: []*string{ // Required
-			aws.String("Arn"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeAssessmentRuns(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_DescribeAssessmentTargets() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.DescribeAssessmentTargetsInput{
-		AssessmentTargetArns: []*string{ // Required
-			aws.String("Arn"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeAssessmentTargets(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_DescribeAssessmentTemplates() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.DescribeAssessmentTemplatesInput{
-		AssessmentTemplateArns: []*string{ // Required
-			aws.String("Arn"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeAssessmentTemplates(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_DescribeCrossAccountAccessRole() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	var params *inspector.DescribeCrossAccountAccessRoleInput
-	resp, err := svc.DescribeCrossAccountAccessRole(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_DescribeFindings() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.DescribeFindingsInput{
-		FindingArns: []*string{ // Required
-			aws.String("Arn"), // Required
-			// More values...
-		},
-		Locale: aws.String("Locale"),
-	}
-	resp, err := svc.DescribeFindings(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_DescribeResourceGroups() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.DescribeResourceGroupsInput{
-		ResourceGroupArns: []*string{ // Required
-			aws.String("Arn"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeResourceGroups(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_DescribeRulesPackages() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.DescribeRulesPackagesInput{
-		RulesPackageArns: []*string{ // Required
-			aws.String("Arn"), // Required
-			// More values...
-		},
-		Locale: aws.String("Locale"),
-	}
-	resp, err := svc.DescribeRulesPackages(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_GetTelemetryMetadata() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.GetTelemetryMetadataInput{
-		AssessmentRunArn: aws.String("Arn"), // Required
-	}
-	resp, err := svc.GetTelemetryMetadata(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_ListAssessmentRunAgents() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.ListAssessmentRunAgentsInput{
-		AssessmentRunArn: aws.String("Arn"), // Required
-		Filter: &inspector.AgentFilter{
-			AgentHealthCodes: []*string{ // Required
-				aws.String("AgentHealthCode"), // Required
-				// More values...
-			},
-			AgentHealths: []*string{ // Required
-				aws.String("AgentHealth"), // Required
-				// More values...
+			{
+				Key:   aws.String("Example"),
+				Value: aws.String("example"),
 			},
 		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("PaginationToken"),
 	}
-	resp, err := svc.ListAssessmentRunAgents(params)
 
+	result, err := svc.CreateAssessmentTemplate(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeLimitExceededException:
+				fmt.Println(inspector.ErrCodeLimitExceededException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleInspector_ListAssessmentRuns() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.ListAssessmentRunsInput{
-		AssessmentTemplateArns: []*string{
-			aws.String("Arn"), // Required
-			// More values...
-		},
-		Filter: &inspector.AssessmentRunFilter{
-			CompletionTimeRange: &inspector.TimestampRange{
-				BeginDate: aws.Time(time.Now()),
-				EndDate:   aws.Time(time.Now()),
-			},
-			DurationRange: &inspector.DurationRange{
-				MaxSeconds: aws.Int64(1),
-				MinSeconds: aws.Int64(1),
-			},
-			NamePattern: aws.String("NamePattern"),
-			RulesPackageArns: []*string{
-				aws.String("Arn"), // Required
-				// More values...
-			},
-			StartTimeRange: &inspector.TimestampRange{
-				BeginDate: aws.Time(time.Now()),
-				EndDate:   aws.Time(time.Now()),
-			},
-			StateChangeTimeRange: &inspector.TimestampRange{
-				BeginDate: aws.Time(time.Now()),
-				EndDate:   aws.Time(time.Now()),
-			},
-			States: []*string{
-				aws.String("AssessmentRunState"), // Required
-				// More values...
+// Create resource group
+//
+// Creates a resource group using the specified set of tags (key and value pairs) that
+// are used to select the EC2 instances to be included in an Amazon Inspector assessment
+// target. The created resource group is then used to create an Amazon Inspector assessment
+// target.
+func ExampleInspector_CreateResourceGroup_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.CreateResourceGroupInput{
+		ResourceGroupTags: []*inspector.ResourceGroupTag{
+			{
+				Key:   aws.String("Name"),
+				Value: aws.String("example"),
 			},
 		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("PaginationToken"),
 	}
-	resp, err := svc.ListAssessmentRuns(params)
 
+	result, err := svc.CreateResourceGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeLimitExceededException:
+				fmt.Println(inspector.ErrCodeLimitExceededException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleInspector_ListAssessmentTargets() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.ListAssessmentTargetsInput{
-		Filter: &inspector.AssessmentTargetFilter{
-			AssessmentTargetNamePattern: aws.String("NamePattern"),
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("PaginationToken"),
+// Delete assessment run
+//
+// Deletes the assessment run that is specified by the ARN of the assessment run.
+func ExampleInspector_DeleteAssessmentRun_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.DeleteAssessmentRunInput{
+		AssessmentRunArn: aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-nvgVhaxX/template/0-it5r2S4T/run/0-11LMTAVe"),
 	}
-	resp, err := svc.ListAssessmentTargets(params)
 
+	result, err := svc.DeleteAssessmentRun(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAssessmentRunInProgressException:
+				fmt.Println(inspector.ErrCodeAssessmentRunInProgressException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleInspector_ListAssessmentTemplates() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.ListAssessmentTemplatesInput{
-		AssessmentTargetArns: []*string{
-			aws.String("Arn"), // Required
-			// More values...
-		},
-		Filter: &inspector.AssessmentTemplateFilter{
-			DurationRange: &inspector.DurationRange{
-				MaxSeconds: aws.Int64(1),
-				MinSeconds: aws.Int64(1),
-			},
-			NamePattern: aws.String("NamePattern"),
-			RulesPackageArns: []*string{
-				aws.String("Arn"), // Required
-				// More values...
-			},
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("PaginationToken"),
+// Delete assessment target
+//
+// Deletes the assessment target that is specified by the ARN of the assessment target.
+func ExampleInspector_DeleteAssessmentTarget_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.DeleteAssessmentTargetInput{
+		AssessmentTargetArn: aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-0kFIPusq"),
 	}
-	resp, err := svc.ListAssessmentTemplates(params)
 
+	result, err := svc.DeleteAssessmentTarget(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAssessmentRunInProgressException:
+				fmt.Println(inspector.ErrCodeAssessmentRunInProgressException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleInspector_ListEventSubscriptions() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.ListEventSubscriptionsInput{
-		MaxResults:  aws.Int64(1),
-		NextToken:   aws.String("PaginationToken"),
-		ResourceArn: aws.String("Arn"),
+// Delete assessment template
+//
+// Deletes the assessment template that is specified by the ARN of the assessment template.
+func ExampleInspector_DeleteAssessmentTemplate_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.DeleteAssessmentTemplateInput{
+		AssessmentTemplateArn: aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-nvgVhaxX/template/0-it5r2S4T"),
 	}
-	resp, err := svc.ListEventSubscriptions(params)
 
+	result, err := svc.DeleteAssessmentTemplate(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAssessmentRunInProgressException:
+				fmt.Println(inspector.ErrCodeAssessmentRunInProgressException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleInspector_ListFindings() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.ListFindingsInput{
+// Describte assessment runs
+//
+// Describes the assessment runs that are specified by the ARNs of the assessment runs.
+func ExampleInspector_DescribeAssessmentRuns_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.DescribeAssessmentRunsInput{
 		AssessmentRunArns: []*string{
-			aws.String("Arn"), // Required
-			// More values...
-		},
-		Filter: &inspector.FindingFilter{
-			AgentIds: []*string{
-				aws.String("AgentId"), // Required
-				// More values...
-			},
-			Attributes: []*inspector.Attribute{
-				{ // Required
-					Key:   aws.String("AttributeKey"), // Required
-					Value: aws.String("AttributeValue"),
-				},
-				// More values...
-			},
-			AutoScalingGroups: []*string{
-				aws.String("AutoScalingGroup"), // Required
-				// More values...
-			},
-			CreationTimeRange: &inspector.TimestampRange{
-				BeginDate: aws.Time(time.Now()),
-				EndDate:   aws.Time(time.Now()),
-			},
-			RuleNames: []*string{
-				aws.String("RuleName"), // Required
-				// More values...
-			},
-			RulesPackageArns: []*string{
-				aws.String("Arn"), // Required
-				// More values...
-			},
-			Severities: []*string{
-				aws.String("Severity"), // Required
-				// More values...
-			},
-			UserAttributes: []*inspector.Attribute{
-				{ // Required
-					Key:   aws.String("AttributeKey"), // Required
-					Value: aws.String("AttributeValue"),
-				},
-				// More values...
-			},
-		},
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("PaginationToken"),
-	}
-	resp, err := svc.ListFindings(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_ListRulesPackages() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.ListRulesPackagesInput{
-		MaxResults: aws.Int64(1),
-		NextToken:  aws.String("PaginationToken"),
-	}
-	resp, err := svc.ListRulesPackages(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_ListTagsForResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.ListTagsForResourceInput{
-		ResourceArn: aws.String("Arn"), // Required
-	}
-	resp, err := svc.ListTagsForResource(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_PreviewAgents() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.PreviewAgentsInput{
-		PreviewAgentsArn: aws.String("Arn"), // Required
-		MaxResults:       aws.Int64(1),
-		NextToken:        aws.String("PaginationToken"),
-	}
-	resp, err := svc.PreviewAgents(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_RegisterCrossAccountAccessRole() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.RegisterCrossAccountAccessRoleInput{
-		RoleArn: aws.String("Arn"), // Required
-	}
-	resp, err := svc.RegisterCrossAccountAccessRole(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleInspector_RemoveAttributesFromFindings() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.RemoveAttributesFromFindingsInput{
-		AttributeKeys: []*string{ // Required
-			aws.String("AttributeKey"), // Required
-			// More values...
-		},
-		FindingArns: []*string{ // Required
-			aws.String("Arn"), // Required
-			// More values...
+			aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-0kFIPusq/template/0-4r1V2mAw/run/0-MKkpXXPE"),
 		},
 	}
-	resp, err := svc.RemoveAttributesFromFindings(params)
 
+	result, err := svc.DescribeAssessmentRuns(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleInspector_SetTagsForResource() {
-	sess := session.Must(session.NewSession())
+// Describte assessment targets
+//
+// Describes the assessment targets that are specified by the ARNs of the assessment
+// targets.
+func ExampleInspector_DescribeAssessmentTargets_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.DescribeAssessmentTargetsInput{
+		AssessmentTargetArns: []*string{
+			aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-0kFIPusq"),
+		},
+	}
 
-	svc := inspector.New(sess)
+	result, err := svc.DescribeAssessmentTargets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &inspector.SetTagsForResourceInput{
-		ResourceArn: aws.String("Arn"), // Required
+	fmt.Println(result)
+}
+
+// Describte assessment templates
+//
+// Describes the assessment templates that are specified by the ARNs of the assessment
+// templates.
+func ExampleInspector_DescribeAssessmentTemplates_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.DescribeAssessmentTemplatesInput{
+		AssessmentTemplateArns: []*string{
+			aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-0kFIPusq/template/0-4r1V2mAw"),
+		},
+	}
+
+	result, err := svc.DescribeAssessmentTemplates(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// Describte cross account access role
+//
+// Describes the IAM role that enables Amazon Inspector to access your AWS account.
+func ExampleInspector_DescribeCrossAccountAccessRole_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.DescribeCrossAccountAccessRoleInput{}
+
+	result, err := svc.DescribeCrossAccountAccessRole(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// Describe findings
+//
+// Describes the findings that are specified by the ARNs of the findings.
+func ExampleInspector_DescribeFindings_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.DescribeFindingsInput{
+		FindingArns: []*string{
+			aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-0kFIPusq/template/0-4r1V2mAw/run/0-MKkpXXPE/finding/0-HwPnsDm4"),
+		},
+	}
+
+	result, err := svc.DescribeFindings(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// Describe resource groups
+//
+// Describes the resource groups that are specified by the ARNs of the resource groups.
+func ExampleInspector_DescribeResourceGroups_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.DescribeResourceGroupsInput{
+		ResourceGroupArns: []*string{
+			aws.String("arn:aws:inspector:us-west-2:123456789012:resourcegroup/0-PyGXopAI"),
+		},
+	}
+
+	result, err := svc.DescribeResourceGroups(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// Describe rules packages
+//
+// Describes the rules packages that are specified by the ARNs of the rules packages.
+func ExampleInspector_DescribeRulesPackages_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.DescribeRulesPackagesInput{
+		RulesPackageArns: []*string{
+			aws.String("arn:aws:inspector:us-west-2:758058086616:rulespackage/0-JJOtZiqQ"),
+		},
+	}
+
+	result, err := svc.DescribeRulesPackages(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// Get telemetry metadata
+//
+// Information about the data that is collected for the specified assessment run.
+func ExampleInspector_GetTelemetryMetadata_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.GetTelemetryMetadataInput{
+		AssessmentRunArn: aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-0kFIPusq/template/0-4r1V2mAw/run/0-MKkpXXPE"),
+	}
+
+	result, err := svc.GetTelemetryMetadata(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// List assessment run agents
+//
+// Lists the agents of the assessment runs that are specified by the ARNs of the assessment
+// runs.
+func ExampleInspector_ListAssessmentRunAgents_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.ListAssessmentRunAgentsInput{
+		AssessmentRunArn: aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-0kFIPusq/template/0-4r1V2mAw/run/0-MKkpXXPE"),
+		MaxResults:       aws.Int64(123),
+	}
+
+	result, err := svc.ListAssessmentRunAgents(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// List assessment runs
+//
+// Lists the assessment runs that correspond to the assessment templates that are specified
+// by the ARNs of the assessment templates.
+func ExampleInspector_ListAssessmentRuns_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.ListAssessmentRunsInput{
+		AssessmentTemplateArns: []*string{
+			aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-0kFIPusq/template/0-4r1V2mAw"),
+		},
+		MaxResults: aws.Int64(123),
+	}
+
+	result, err := svc.ListAssessmentRuns(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// List assessment targets
+//
+// Lists the ARNs of the assessment targets within this AWS account.
+func ExampleInspector_ListAssessmentTargets_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.ListAssessmentTargetsInput{
+		MaxResults: aws.Int64(123),
+	}
+
+	result, err := svc.ListAssessmentTargets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// List assessment templates
+//
+// Lists the assessment templates that correspond to the assessment targets that are
+// specified by the ARNs of the assessment targets.
+func ExampleInspector_ListAssessmentTemplates_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.ListAssessmentTemplatesInput{
+		AssessmentTargetArns: []*string{
+			aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-0kFIPusq"),
+		},
+		MaxResults: aws.Int64(123),
+	}
+
+	result, err := svc.ListAssessmentTemplates(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// List event subscriptions
+//
+// Lists all the event subscriptions for the assessment template that is specified by
+// the ARN of the assessment template.
+func ExampleInspector_ListEventSubscriptions_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.ListEventSubscriptionsInput{
+		MaxResults:  aws.Int64(123),
+		ResourceArn: aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-nvgVhaxX/template/0-7sbz2Kz0"),
+	}
+
+	result, err := svc.ListEventSubscriptions(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// List findings
+//
+// Lists findings that are generated by the assessment runs that are specified by the
+// ARNs of the assessment runs.
+func ExampleInspector_ListFindings_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.ListFindingsInput{
+		AssessmentRunArns: []*string{
+			aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-0kFIPusq/template/0-4r1V2mAw/run/0-MKkpXXPE"),
+		},
+		MaxResults: aws.Int64(123),
+	}
+
+	result, err := svc.ListFindings(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// List rules packages
+//
+// Lists all available Amazon Inspector rules packages.
+func ExampleInspector_ListRulesPackages_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.ListRulesPackagesInput{
+		MaxResults: aws.Int64(123),
+	}
+
+	result, err := svc.ListRulesPackages(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// List tags for resource
+//
+// Lists all tags associated with an assessment template.
+func ExampleInspector_ListTagsForResource_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.ListTagsForResourceInput{
+		ResourceArn: aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-0kFIPusq/template/0-gcwFliYu"),
+	}
+
+	result, err := svc.ListTagsForResource(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// Preview agents
+//
+// Previews the agents installed on the EC2 instances that are part of the specified
+// assessment target.
+func ExampleInspector_PreviewAgents_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.PreviewAgentsInput{
+		MaxResults:       aws.Int64(123),
+		PreviewAgentsArn: aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-0kFIPusq"),
+	}
+
+	result, err := svc.PreviewAgents(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			case inspector.ErrCodeInvalidCrossAccountRoleException:
+				fmt.Println(inspector.ErrCodeInvalidCrossAccountRoleException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// Register cross account access role
+//
+// Registers the IAM role that Amazon Inspector uses to list your EC2 instances at the
+// start of the assessment run or when you call the PreviewAgents action.
+func ExampleInspector_RegisterCrossAccountAccessRole_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.RegisterCrossAccountAccessRoleInput{
+		RoleArn: aws.String("arn:aws:iam::123456789012:role/inspector"),
+	}
+
+	result, err := svc.RegisterCrossAccountAccessRole(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeInvalidCrossAccountRoleException:
+				fmt.Println(inspector.ErrCodeInvalidCrossAccountRoleException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// Remove attributes from findings
+//
+// Removes entire attributes (key and value pairs) from the findings that are specified
+// by the ARNs of the findings where an attribute with the specified key exists.
+func ExampleInspector_RemoveAttributesFromFindings_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.RemoveAttributesFromFindingsInput{
+		AttributeKeys: []*string{
+			aws.String("key=Example,value=example"),
+		},
+		FindingArns: []*string{
+			aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-0kFIPusq/template/0-8l1VIE0D/run/0-Z02cjjug/finding/0-T8yM9mEU"),
+		},
+	}
+
+	result, err := svc.RemoveAttributesFromFindings(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// Set tags for resource
+//
+// Sets tags (key and value pairs) to the assessment template that is specified by the
+// ARN of the assessment template.
+func ExampleInspector_SetTagsForResource_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.SetTagsForResourceInput{
+		ResourceArn: aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-nvgVhaxX/template/0-7sbz2Kz0"),
 		Tags: []*inspector.Tag{
-			{ // Required
-				Key:   aws.String("TagKey"), // Required
-				Value: aws.String("TagValue"),
+			{
+				Key:   aws.String("Example"),
+				Value: aws.String("example"),
 			},
-			// More values...
 		},
 	}
-	resp, err := svc.SetTagsForResource(params)
 
+	result, err := svc.SetTagsForResource(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleInspector_StartAssessmentRun() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.StartAssessmentRunInput{
-		AssessmentTemplateArn: aws.String("Arn"), // Required
-		AssessmentRunName:     aws.String("AssessmentRunName"),
+// Start assessment run
+//
+// Starts the assessment run specified by the ARN of the assessment template. For this
+// API to function properly, you must not exceed the limit of running up to 500 concurrent
+// agents per AWS account.
+func ExampleInspector_StartAssessmentRun_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.StartAssessmentRunInput{
+		AssessmentRunName:     aws.String("examplerun"),
+		AssessmentTemplateArn: aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-nvgVhaxX/template/0-it5r2S4T"),
 	}
-	resp, err := svc.StartAssessmentRun(params)
 
+	result, err := svc.StartAssessmentRun(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeLimitExceededException:
+				fmt.Println(inspector.ErrCodeLimitExceededException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			case inspector.ErrCodeInvalidCrossAccountRoleException:
+				fmt.Println(inspector.ErrCodeInvalidCrossAccountRoleException, aerr.Error())
+			case inspector.ErrCodeAgentsAlreadyRunningAssessmentException:
+				fmt.Println(inspector.ErrCodeAgentsAlreadyRunningAssessmentException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleInspector_StopAssessmentRun() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.StopAssessmentRunInput{
-		AssessmentRunArn: aws.String("Arn"), // Required
+// Stop assessment run
+//
+// Stops the assessment run that is specified by the ARN of the assessment run.
+func ExampleInspector_StopAssessmentRun_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.StopAssessmentRunInput{
+		AssessmentRunArn: aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-nvgVhaxX/template/0-it5r2S4T/run/0-11LMTAVe"),
 	}
-	resp, err := svc.StopAssessmentRun(params)
 
+	result, err := svc.StopAssessmentRun(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleInspector_SubscribeToEvent() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.SubscribeToEventInput{
-		Event:       aws.String("Event"), // Required
-		ResourceArn: aws.String("Arn"),   // Required
-		TopicArn:    aws.String("Arn"),   // Required
+// Subscribe to event
+//
+// Enables the process of sending Amazon Simple Notification Service (SNS) notifications
+// about a specified event to a specified SNS topic.
+func ExampleInspector_SubscribeToEvent_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.SubscribeToEventInput{
+		Event:       aws.String("ASSESSMENT_RUN_COMPLETED"),
+		ResourceArn: aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-nvgVhaxX/template/0-7sbz2Kz0"),
+		TopicArn:    aws.String("arn:aws:sns:us-west-2:123456789012:exampletopic"),
 	}
-	resp, err := svc.SubscribeToEvent(params)
 
+	result, err := svc.SubscribeToEvent(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeLimitExceededException:
+				fmt.Println(inspector.ErrCodeLimitExceededException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleInspector_UnsubscribeFromEvent() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.UnsubscribeFromEventInput{
-		Event:       aws.String("Event"), // Required
-		ResourceArn: aws.String("Arn"),   // Required
-		TopicArn:    aws.String("Arn"),   // Required
+// Unsubscribe from event
+//
+// Disables the process of sending Amazon Simple Notification Service (SNS) notifications
+// about a specified event to a specified SNS topic.
+func ExampleInspector_UnsubscribeFromEvent_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.UnsubscribeFromEventInput{
+		Event:       aws.String("ASSESSMENT_RUN_COMPLETED"),
+		ResourceArn: aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-nvgVhaxX/template/0-7sbz2Kz0"),
+		TopicArn:    aws.String("arn:aws:sns:us-west-2:123456789012:exampletopic"),
 	}
-	resp, err := svc.UnsubscribeFromEvent(params)
 
+	result, err := svc.UnsubscribeFromEvent(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleInspector_UpdateAssessmentTarget() {
-	sess := session.Must(session.NewSession())
-
-	svc := inspector.New(sess)
-
-	params := &inspector.UpdateAssessmentTargetInput{
-		AssessmentTargetArn:  aws.String("Arn"),                  // Required
-		AssessmentTargetName: aws.String("AssessmentTargetName"), // Required
-		ResourceGroupArn:     aws.String("Arn"),                  // Required
+// Update assessment target
+//
+// Updates the assessment target that is specified by the ARN of the assessment target.
+func ExampleInspector_UpdateAssessmentTarget_shared00() {
+	svc := inspector.New(session.New())
+	input := &inspector.UpdateAssessmentTargetInput{
+		AssessmentTargetArn:  aws.String("arn:aws:inspector:us-west-2:123456789012:target/0-nvgVhaxX"),
+		AssessmentTargetName: aws.String("Example"),
+		ResourceGroupArn:     aws.String("arn:aws:inspector:us-west-2:123456789012:resourcegroup/0-yNbgL5Pt"),
 	}
-	resp, err := svc.UpdateAssessmentTarget(params)
 
+	result, err := svc.UpdateAssessmentTarget(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case inspector.ErrCodeInternalException:
+				fmt.Println(inspector.ErrCodeInternalException, aerr.Error())
+			case inspector.ErrCodeInvalidInputException:
+				fmt.Println(inspector.ErrCodeInvalidInputException, aerr.Error())
+			case inspector.ErrCodeAccessDeniedException:
+				fmt.Println(inspector.ErrCodeAccessDeniedException, aerr.Error())
+			case inspector.ErrCodeNoSuchEntityException:
+				fmt.Println(inspector.ErrCodeNoSuchEntityException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }

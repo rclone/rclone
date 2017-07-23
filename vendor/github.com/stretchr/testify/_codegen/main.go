@@ -20,6 +20,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -28,6 +29,7 @@ import (
 
 var (
 	pkg       = flag.String("assert-path", "github.com/stretchr/testify/assert", "Path to the assert package")
+	includeF  = flag.Bool("include-format-funcs", false, "include format functions such as Errorf and Equalf")
 	outputPkg = flag.String("output-package", "", "package for the resulting code")
 	tmplFile  = flag.String("template", "", "What file to load the function template from")
 	out       = flag.String("out", "", "What file to write the source code to")
@@ -157,6 +159,11 @@ func analyzeCode(scope *types.Scope, docs *doc.Package) (imports.Importer, []tes
 			continue
 		}
 
+		// Skip functions ending with f
+		if strings.HasSuffix(fdocs.Name, "f") && !*includeF {
+			continue
+		}
+
 		funcs = append(funcs, testFunc{*outputPkg, fdocs, fn})
 		importer.AddImportsFrom(sig.Params())
 	}
@@ -264,8 +271,24 @@ func (f *testFunc) ForwardedParams() string {
 	return p
 }
 
+func (f *testFunc) ParamsFormat() string {
+	return strings.Replace(f.Params(), "msgAndArgs", "msg string, args", 1)
+}
+
+func (f *testFunc) ForwardedParamsFormat() string {
+	return strings.Replace(f.ForwardedParams(), "msgAndArgs", "append([]interface{}{msg}, args...)", 1)
+}
+
 func (f *testFunc) Comment() string {
 	return "// " + strings.Replace(strings.TrimSpace(f.DocInfo.Doc), "\n", "\n// ", -1)
+}
+
+func (f *testFunc) CommentFormat() string {
+	search := fmt.Sprintf("%s", f.DocInfo.Name)
+	replace := fmt.Sprintf("%sf", f.DocInfo.Name)
+	comment := strings.Replace(f.Comment(), search, replace, -1)
+	exp := regexp.MustCompile(replace + `\(((\(\)|[^)])+)\)`)
+	return exp.ReplaceAllString(comment, replace+`($1, "error message %s", "formatted")`)
 }
 
 func (f *testFunc) CommentWithoutT(receiver string) string {

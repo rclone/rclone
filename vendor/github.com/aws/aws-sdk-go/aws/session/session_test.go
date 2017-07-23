@@ -14,12 +14,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/defaults"
+	"github.com/aws/aws-sdk-go/awstesting"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 func TestNewDefaultSession(t *testing.T) {
 	oldEnv := initSessionTestEnv()
-	defer popEnv(oldEnv)
+	defer awstesting.PopEnv(oldEnv)
 
 	s := New(&aws.Config{Region: aws.String("region")})
 
@@ -31,7 +32,7 @@ func TestNewDefaultSession(t *testing.T) {
 
 func TestNew_WithCustomCreds(t *testing.T) {
 	oldEnv := initSessionTestEnv()
-	defer popEnv(oldEnv)
+	defer awstesting.PopEnv(oldEnv)
 
 	customCreds := credentials.NewStaticCredentials("AKID", "SECRET", "TOKEN")
 	s := New(&aws.Config{Credentials: customCreds})
@@ -49,7 +50,7 @@ func (w mockLogger) Log(args ...interface{}) {
 
 func TestNew_WithSessionLoadError(t *testing.T) {
 	oldEnv := initSessionTestEnv()
-	defer popEnv(oldEnv)
+	defer awstesting.PopEnv(oldEnv)
 
 	os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
 	os.Setenv("AWS_CONFIG_FILE", testConfigFilename)
@@ -72,7 +73,7 @@ func TestNew_WithSessionLoadError(t *testing.T) {
 
 func TestSessionCopy(t *testing.T) {
 	oldEnv := initSessionTestEnv()
-	defer popEnv(oldEnv)
+	defer awstesting.PopEnv(oldEnv)
 
 	os.Setenv("AWS_REGION", "orig_region")
 
@@ -100,7 +101,7 @@ func TestSessionClientConfig(t *testing.T) {
 
 func TestNewSession_NoCredentials(t *testing.T) {
 	oldEnv := initSessionTestEnv()
-	defer popEnv(oldEnv)
+	defer awstesting.PopEnv(oldEnv)
 
 	s, err := NewSession()
 	assert.NoError(t, err)
@@ -111,7 +112,7 @@ func TestNewSession_NoCredentials(t *testing.T) {
 
 func TestNewSessionWithOptions_OverrideProfile(t *testing.T) {
 	oldEnv := initSessionTestEnv()
-	defer popEnv(oldEnv)
+	defer awstesting.PopEnv(oldEnv)
 
 	os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
 	os.Setenv("AWS_SHARED_CREDENTIALS_FILE", testConfigFilename)
@@ -134,7 +135,7 @@ func TestNewSessionWithOptions_OverrideProfile(t *testing.T) {
 
 func TestNewSessionWithOptions_OverrideSharedConfigEnable(t *testing.T) {
 	oldEnv := initSessionTestEnv()
-	defer popEnv(oldEnv)
+	defer awstesting.PopEnv(oldEnv)
 
 	os.Setenv("AWS_SDK_LOAD_CONFIG", "0")
 	os.Setenv("AWS_SHARED_CREDENTIALS_FILE", testConfigFilename)
@@ -157,7 +158,7 @@ func TestNewSessionWithOptions_OverrideSharedConfigEnable(t *testing.T) {
 
 func TestNewSessionWithOptions_OverrideSharedConfigDisable(t *testing.T) {
 	oldEnv := initSessionTestEnv()
-	defer popEnv(oldEnv)
+	defer awstesting.PopEnv(oldEnv)
 
 	os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
 	os.Setenv("AWS_SHARED_CREDENTIALS_FILE", testConfigFilename)
@@ -174,6 +175,29 @@ func TestNewSessionWithOptions_OverrideSharedConfigDisable(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "full_profile_akid", creds.AccessKeyID)
 	assert.Equal(t, "full_profile_secret", creds.SecretAccessKey)
+	assert.Empty(t, creds.SessionToken)
+	assert.Contains(t, creds.ProviderName, "SharedConfigCredentials")
+}
+
+func TestNewSessionWithOptions_OverrideSharedConfigFiles(t *testing.T) {
+	oldEnv := initSessionTestEnv()
+	defer awstesting.PopEnv(oldEnv)
+
+	os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
+	os.Setenv("AWS_SHARED_CREDENTIALS_FILE", testConfigFilename)
+	os.Setenv("AWS_PROFILE", "config_file_load_order")
+
+	s, err := NewSessionWithOptions(Options{
+		SharedConfigFiles: []string{testConfigOtherFilename},
+	})
+	assert.NoError(t, err)
+
+	assert.Equal(t, "shared_config_other_region", *s.Config.Region)
+
+	creds, err := s.Config.Credentials.Get()
+	assert.NoError(t, err)
+	assert.Equal(t, "shared_config_other_akid", creds.AccessKeyID)
+	assert.Equal(t, "shared_config_other_secret", creds.SecretAccessKey)
 	assert.Empty(t, creds.SessionToken)
 	assert.Contains(t, creds.ProviderName, "SharedConfigCredentials")
 }
@@ -235,7 +259,7 @@ func TestNewSessionWithOptions_Overrides(t *testing.T) {
 
 	for _, c := range cases {
 		oldEnv := initSessionTestEnv()
-		defer popEnv(oldEnv)
+		defer awstesting.PopEnv(oldEnv)
 
 		for k, v := range c.InEnvs {
 			os.Setenv(k, v)
@@ -279,7 +303,7 @@ const assumeRoleRespMsg = `
 
 func TestSesisonAssumeRole(t *testing.T) {
 	oldEnv := initSessionTestEnv()
-	defer popEnv(oldEnv)
+	defer awstesting.PopEnv(oldEnv)
 
 	os.Setenv("AWS_REGION", "us-east-1")
 	os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
@@ -302,7 +326,7 @@ func TestSesisonAssumeRole(t *testing.T) {
 
 func TestSessionAssumeRole_WithMFA(t *testing.T) {
 	oldEnv := initSessionTestEnv()
-	defer popEnv(oldEnv)
+	defer awstesting.PopEnv(oldEnv)
 
 	os.Setenv("AWS_REGION", "us-east-1")
 	os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
@@ -345,7 +369,7 @@ func TestSessionAssumeRole_WithMFA(t *testing.T) {
 
 func TestSessionAssumeRole_WithMFA_NoTokenProvider(t *testing.T) {
 	oldEnv := initSessionTestEnv()
-	defer popEnv(oldEnv)
+	defer awstesting.PopEnv(oldEnv)
 
 	os.Setenv("AWS_REGION", "us-east-1")
 	os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
@@ -363,7 +387,7 @@ func TestSessionAssumeRole_DisableSharedConfig(t *testing.T) {
 	// Backwards compatibility with Shared config disabled
 	// assume role should not be built into the config.
 	oldEnv := initSessionTestEnv()
-	defer popEnv(oldEnv)
+	defer awstesting.PopEnv(oldEnv)
 
 	os.Setenv("AWS_SDK_LOAD_CONFIG", "0")
 	os.Setenv("AWS_SHARED_CREDENTIALS_FILE", testConfigFilename)
@@ -383,7 +407,7 @@ func TestSessionAssumeRole_InvalidSourceProfile(t *testing.T) {
 	// Backwards compatibility with Shared config disabled
 	// assume role should not be built into the config.
 	oldEnv := initSessionTestEnv()
-	defer popEnv(oldEnv)
+	defer awstesting.PopEnv(oldEnv)
 
 	os.Setenv("AWS_SDK_LOAD_CONFIG", "1")
 	os.Setenv("AWS_SHARED_CREDENTIALS_FILE", testConfigFilename)
@@ -396,7 +420,7 @@ func TestSessionAssumeRole_InvalidSourceProfile(t *testing.T) {
 }
 
 func initSessionTestEnv() (oldEnv []string) {
-	oldEnv = stashEnv()
+	oldEnv = awstesting.StashEnv()
 	os.Setenv("AWS_CONFIG_FILE", "file_not_exists")
 	os.Setenv("AWS_SHARED_CREDENTIALS_FILE", "file_not_exists")
 

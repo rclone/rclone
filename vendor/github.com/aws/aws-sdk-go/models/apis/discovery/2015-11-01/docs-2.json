@@ -18,7 +18,7 @@
     "ListConfigurations": "<p>Retrieves a list of configuration items according to criteria that you specify in a filter. The filter criteria identifies the relationship requirements.</p>",
     "ListServerNeighbors": "<p>Retrieves a list of servers that are one network hop away from a specified server.</p>",
     "StartDataCollectionByAgentIds": "<p>Instructs the specified agents or connectors to start collecting data.</p>",
-    "StartExportTask": "<p>Export the configuration data about discovered configuration items and relationships to an S3 bucket in a specified format.</p>",
+    "StartExportTask": "<p> Begins the export of discovered data to an S3 bucket.</p> <p> If you specify <code>agentId</code> in a filter, the task exports up to 72 hours of detailed data collected by the identified Application Discovery Agent, including network, process, and performance details. A time range for exported agent data may be set by using <code>startTime</code> and <code>endTime</code>. Export of detailed agent data is limited to five concurrently running exports. </p> <p> If you do not include an <code>agentId</code> filter, summary data is exported that includes both AWS Agentless Discovery Connector data and summary data from AWS Discovery Agents. Export of summary data is limited to two exports per day. </p>",
     "StopDataCollectionByAgentIds": "<p>Instructs the specified agents or connectors to stop collecting data.</p>",
     "UpdateApplication": "<p>Updates metadata about an application.</p>"
   },
@@ -115,6 +115,7 @@
       "base": null,
       "refs": {
         "AgentConfigurationStatus$operationSucceeded": "<p>Information about the status of the <code>StartDataCollection</code> and <code>StopDataCollection</code> operations. The system has recorded the data collection operation. The agent/connector receives this command the next time it polls for a new command. </p>",
+        "ExportInfo$isTruncated": "<p>If true, the export of agent information exceeded the size limit for a single export and the exported data is incomplete for the requested time range. To address this, select a smaller time range for the export by using <code>startDate</code> and <code>endDate</code>.</p>",
         "ListServerNeighborsRequest$portInformationNeeded": "<p>Flag to indicate if port and protocol information is needed as part of the response.</p>"
       }
     },
@@ -127,6 +128,7 @@
     "Condition": {
       "base": null,
       "refs": {
+        "ExportFilter$condition": "<p>Supported condition: <code>EQUALS</code> </p>",
         "Filter$condition": "<p>A conditional operator. The following operators are valid: EQUALS, NOT_EQUALS, CONTAINS, NOT_CONTAINS. If you specify multiple filters, the system utilizes all filters as though concatenated by <i>AND</i>. If you specify multiple values for a particular filter, the system differentiates the values using <i>OR</i>. Calling either <i>DescribeConfigurations</i> or <i>ListConfigurations</i> returns attributes of matching configuration items.</p>"
       }
     },
@@ -185,7 +187,7 @@
     "ConfigurationsDownloadUrl": {
       "base": null,
       "refs": {
-        "ExportInfo$configurationsDownloadUrl": "<p>A URL for an Amazon S3 bucket where you can review the configuration data. The URL is displayed only if the export succeeded.</p>"
+        "ExportInfo$configurationsDownloadUrl": "<p>A URL for an Amazon S3 bucket where you can review the exported data. The URL is displayed only if the export succeeded.</p>"
       }
     },
     "ConfigurationsExportId": {
@@ -193,8 +195,8 @@
       "refs": {
         "ExportConfigurationsResponse$exportId": "<p>A unique identifier that you can use to query the export status.</p>",
         "ExportIds$member": null,
-        "ExportInfo$exportId": "<p>A unique identifier that you can use to query the export.</p>",
-        "StartExportTaskResponse$exportId": "<p> A unique identifier used to query the status of an export request.</p>"
+        "ExportInfo$exportId": "<p>A unique identifier used to query an export.</p>",
+        "StartExportTaskResponse$exportId": "<p>A unique identifier used to query the status of an export request.</p>"
       }
     },
     "CreateApplicationRequest": {
@@ -338,6 +340,19 @@
         "StartExportTaskRequest$exportDataFormat": "<p>The file format for the returned export data. Default value is <code>CSV</code>.</p>"
       }
     },
+    "ExportFilter": {
+      "base": "<p>Used to select which agent's data is to be exported. A single agent ID may be selected for export using the <a href=\"http://docs.aws.amazon.com/application-discovery/latest/APIReference/API_StartExportTask.html\">StartExportTask</a> action.</p>",
+      "refs": {
+        "ExportFilters$member": null
+      }
+    },
+    "ExportFilters": {
+      "base": null,
+      "refs": {
+        "DescribeExportTasksRequest$filters": "<p>One or more filters.</p> <ul> <li> <p> <code>AgentId</code> - ID of the agent whose collected data will be exported</p> </li> </ul>",
+        "StartExportTaskRequest$filters": "<p>If a filter is present, it selects the single <code>agentId</code> of the Application Discovery Agent for which data is exported. The <code>agentId</code> can be found in the results of the <code>DescribeAgents</code> API or CLI. If no filter is present, <code>startTime</code> and <code>endTime</code> are ignored and exported data includes both Agentless Discovery Connector data and summary data from Application Discovery agents. </p>"
+      }
+    },
     "ExportIds": {
       "base": null,
       "refs": {
@@ -346,7 +361,7 @@
       }
     },
     "ExportInfo": {
-      "base": "<p>Information regarding the export status of the discovered data. The value is an array of objects.</p>",
+      "base": "<p>Information regarding the export status of discovered data. The value is an array of objects.</p>",
       "refs": {
         "ExportsInfo$member": null
       }
@@ -354,19 +369,19 @@
     "ExportRequestTime": {
       "base": null,
       "refs": {
-        "ExportInfo$exportRequestTime": "<p>The time that the configuration data export was initiated.</p>"
+        "ExportInfo$exportRequestTime": "<p>The time that the data export was initiated.</p>"
       }
     },
     "ExportStatus": {
       "base": null,
       "refs": {
-        "ExportInfo$exportStatus": "<p>The status of the configuration data export. The status can succeed, fail, or be in-progress.</p>"
+        "ExportInfo$exportStatus": "<p>The status of the data export job.</p>"
       }
     },
     "ExportStatusMessage": {
       "base": null,
       "refs": {
-        "ExportInfo$statusMessage": "<p>Helpful status messages for API callers. For example: Too many exports in the last 6 hours. Export in progress. Export was successful.</p>"
+        "ExportInfo$statusMessage": "<p>A status message provided for API callers.</p>"
       }
     },
     "ExportsInfo": {
@@ -385,6 +400,7 @@
     "FilterName": {
       "base": null,
       "refs": {
+        "ExportFilter$name": "<p>A single <code>ExportFilter</code> name. Supported filters: <code>agentId</code>.</p>",
         "TagFilter$name": "<p>A name of the tag filter.</p>"
       }
     },
@@ -397,6 +413,7 @@
     "FilterValues": {
       "base": null,
       "refs": {
+        "ExportFilter$values": "<p>A single <code>agentId</code> for a Discovery Agent. An <code>agentId</code> can be found using the <a href=\"http://docs.aws.amazon.com/application-discovery/latest/APIReference/API_DescribeExportTasks.html\">DescribeAgents</a> action. Typically an ADS <code>agentId</code> is in the form <code>o-0123456789abcdef0</code>.</p>",
         "Filter$values": "<p>A string value on which to filter. For example, if you choose the <code>destinationServer.osVersion</code> filter name, you could specify <code>Ubuntu</code> for the value.</p>",
         "TagFilter$values": "<p>Values for the tag filter.</p>"
       }
@@ -651,7 +668,11 @@
     "TimeStamp": {
       "base": null,
       "refs": {
-        "ConfigurationTag$timeOfCreation": "<p>The time the configuration tag was created in Coordinated Universal Time (UTC).</p>"
+        "ConfigurationTag$timeOfCreation": "<p>The time the configuration tag was created in Coordinated Universal Time (UTC).</p>",
+        "ExportInfo$requestedStartTime": "<p>The value of <code>startTime</code> parameter in the <code>StartExportTask</code> request. If no <code>startTime</code> was requested, this result does not appear in <code>ExportInfo</code>.</p>",
+        "ExportInfo$requestedEndTime": "<p>The <code>endTime</code> used in the <code>StartExportTask</code> request. If no <code>endTime</code> was requested, this result does not appear in <code>ExportInfo</code>.</p>",
+        "StartExportTaskRequest$startTime": "<p>The start timestamp for exported data from the single Application Discovery Agent selected in the filters. If no value is specified, data is exported starting from the first data collected by the agent.</p>",
+        "StartExportTaskRequest$endTime": "<p>The end timestamp for exported data from the single Application Discovery Agent selected in the filters. If no value is specified, exported data includes the most recent data collected by the agent.</p>"
       }
     },
     "UpdateApplicationRequest": {

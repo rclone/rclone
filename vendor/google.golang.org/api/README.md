@@ -1,5 +1,12 @@
 # Google APIs Client Library for Go
 
+## Library maintenance
+This client library is supported, but in maintenance mode only.
+We are fixing necessary bugs and adding essential features to ensure this
+library continues to meet your needs for accessing Google APIs.
+Non-critical issues will be closed.
+Any issue may be reopened if it is causing ongoing problems.
+
 ## Status
 [![Build Status](https://travis-ci.org/google/google-api-go-client.png)](https://travis-ci.org/google/google-api-go-client)
 
@@ -7,6 +14,16 @@ These are auto-generated Go libraries from the Google Discovery Service's JSON d
 
 Due to the auto-generated nature of this collection of libraries, complete APIs or specific versions can appear or go away without notice.
 As a result, you should always locally vendor any API(s) that your code relies upon.
+
+If you're working with Google Cloud Platform APIs such as Datastore or Pub/Sub,
+consider using the
+[Cloud Client Libraries for Go](https://github.com/GoogleCloudPlatform/google-cloud-go)
+instead. These are the new and
+idiomatic Go libraries targeted specifically at Google Cloud Platform Services.
+
+The generator itself and the code it produces are beta. Some APIs are
+alpha/beta, and indicated as such in the import path (e.g.,
+"google.golang.org/api/someapi/v1alpha").
 
 Announcement email:
 

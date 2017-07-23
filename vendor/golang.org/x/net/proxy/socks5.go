@@ -154,7 +154,7 @@ func (s *socks5) connect(conn net.Conn, target string) error {
 		buf = append(buf, ip...)
 	} else {
 		if len(host) > 255 {
-			return errors.New("proxy: destination hostname too long: " + host)
+			return errors.New("proxy: destination host name too long: " + host)
 		}
 		buf = append(buf, socks5Domain)
 		buf = append(buf, byte(len(host)))

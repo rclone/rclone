@@ -156,13 +156,104 @@ type RootCategoriesInfoTypesService struct {
 	s *Service
 }
 
-// CancelOperationRequest: The request message for
+// GoogleLongrunningCancelOperationRequest: The request message for
 // Operations.CancelOperation.
-type CancelOperationRequest struct {
+type GoogleLongrunningCancelOperationRequest struct {
 }
 
-// CategoryDescription: Info Type Category description.
-type CategoryDescription struct {
+// GoogleLongrunningListOperationsResponse: The response message for
+// Operations.ListOperations.
+type GoogleLongrunningListOperationsResponse struct {
+	// NextPageToken: The standard List next-page token.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// Operations: A list of operations that matches the specified filter in
+	// the request.
+	Operations []*GoogleLongrunningOperation `json:"operations,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "NextPageToken") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "NextPageToken") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleLongrunningListOperationsResponse) MarshalJSON() ([]byte, error) {
+	type noMethod GoogleLongrunningListOperationsResponse
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleLongrunningOperation: This resource represents a long-running
+// operation that is the result of a
+// network API call.
+type GoogleLongrunningOperation struct {
+	// Done: If the value is `false`, it means the operation is still in
+	// progress.
+	// If true, the operation is completed, and either `error` or `response`
+	// is
+	// available.
+	Done bool `json:"done,omitempty"`
+
+	// Error: The error result of the operation in case of failure or
+	// cancellation.
+	Error *GoogleRpcStatus `json:"error,omitempty"`
+
+	// Metadata: This field will contain an InspectOperationMetadata object.
+	// This will always be returned with the Operation.
+	Metadata googleapi.RawMessage `json:"metadata,omitempty"`
+
+	// Name: The server-assigned name, The `name` should have the format of
+	// `inspect/operations/<identifier>`.
+	Name string `json:"name,omitempty"`
+
+	// Response: This field will contain an InspectOperationResult object.
+	Response googleapi.RawMessage `json:"response,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Done") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Done") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleLongrunningOperation) MarshalJSON() ([]byte, error) {
+	type noMethod GoogleLongrunningOperation
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GooglePrivacyDlpV2beta1CategoryDescription: Info Type Category
+// description.
+type GooglePrivacyDlpV2beta1CategoryDescription struct {
 	// DisplayName: Human readable form of the category name.
 	DisplayName string `json:"displayName,omitempty"`
 
@@ -186,14 +277,15 @@ type CategoryDescription struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *CategoryDescription) MarshalJSON() ([]byte, error) {
-	type noMethod CategoryDescription
+func (s *GooglePrivacyDlpV2beta1CategoryDescription) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1CategoryDescription
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// CloudStorageKey: Record key for a finding in a Cloud Storage file.
-type CloudStorageKey struct {
+// GooglePrivacyDlpV2beta1CloudStorageKey: Record key for a finding in a
+// Cloud Storage file.
+type GooglePrivacyDlpV2beta1CloudStorageKey struct {
 	// FilePath: Path to the file.
 	FilePath string `json:"filePath,omitempty"`
 
@@ -217,17 +309,17 @@ type CloudStorageKey struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *CloudStorageKey) MarshalJSON() ([]byte, error) {
-	type noMethod CloudStorageKey
+func (s *GooglePrivacyDlpV2beta1CloudStorageKey) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1CloudStorageKey
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// CloudStorageOptions: Options defining a file or a set of files (path
-// ending with *) within
+// GooglePrivacyDlpV2beta1CloudStorageOptions: Options defining a file
+// or a set of files (path ending with *) within
 // a Google Cloud Storage bucket.
-type CloudStorageOptions struct {
-	FileSet *FileSet `json:"fileSet,omitempty"`
+type GooglePrivacyDlpV2beta1CloudStorageOptions struct {
+	FileSet *GooglePrivacyDlpV2beta1FileSet `json:"fileSet,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "FileSet") to
 	// unconditionally include in API requests. By default, fields with
@@ -246,14 +338,14 @@ type CloudStorageOptions struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *CloudStorageOptions) MarshalJSON() ([]byte, error) {
-	type noMethod CloudStorageOptions
+func (s *GooglePrivacyDlpV2beta1CloudStorageOptions) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1CloudStorageOptions
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// CloudStoragePath: A location in Cloud Storage.
-type CloudStoragePath struct {
+// GooglePrivacyDlpV2beta1CloudStoragePath: A location in Cloud Storage.
+type GooglePrivacyDlpV2beta1CloudStoragePath struct {
 	// Path: The url, in the format of `gs://bucket/<path>`.
 	Path string `json:"path,omitempty"`
 
@@ -274,14 +366,71 @@ type CloudStoragePath struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *CloudStoragePath) MarshalJSON() ([]byte, error) {
-	type noMethod CloudStoragePath
+func (s *GooglePrivacyDlpV2beta1CloudStoragePath) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1CloudStoragePath
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// ContentItem: Container structure for the content to inspect.
-type ContentItem struct {
+// GooglePrivacyDlpV2beta1Color: Represents a color in the RGB color
+// space.
+type GooglePrivacyDlpV2beta1Color struct {
+	// Blue: The amount of blue in the color as a value in the interval [0,
+	// 1].
+	Blue float64 `json:"blue,omitempty"`
+
+	// Green: The amount of green in the color as a value in the interval
+	// [0, 1].
+	Green float64 `json:"green,omitempty"`
+
+	// Red: The amount of red in the color as a value in the interval [0,
+	// 1].
+	Red float64 `json:"red,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Blue") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Blue") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta1Color) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1Color
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+func (s *GooglePrivacyDlpV2beta1Color) UnmarshalJSON(data []byte) error {
+	type noMethod GooglePrivacyDlpV2beta1Color
+	var s1 struct {
+		Blue  gensupport.JSONFloat64 `json:"blue"`
+		Green gensupport.JSONFloat64 `json:"green"`
+		Red   gensupport.JSONFloat64 `json:"red"`
+		*noMethod
+	}
+	s1.noMethod = (*noMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.Blue = float64(s1.Blue)
+	s.Green = float64(s1.Green)
+	s.Red = float64(s1.Red)
+	return nil
+}
+
+// GooglePrivacyDlpV2beta1ContentItem: Container structure for the
+// content to inspect.
+type GooglePrivacyDlpV2beta1ContentItem struct {
 	// Data: Content data to inspect or redact.
 	Data string `json:"data,omitempty"`
 
@@ -312,18 +461,19 @@ type ContentItem struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ContentItem) MarshalJSON() ([]byte, error) {
-	type noMethod ContentItem
+func (s *GooglePrivacyDlpV2beta1ContentItem) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1ContentItem
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// CreateInspectOperationRequest: Request for scheduling a scan of a
-// data subset from a Google Platform data
+// GooglePrivacyDlpV2beta1CreateInspectOperationRequest: Request for
+// scheduling a scan of a data subset from a Google Platform
+// data
 // repository.
-type CreateInspectOperationRequest struct {
+type GooglePrivacyDlpV2beta1CreateInspectOperationRequest struct {
 	// InspectConfig: Configuration for the inspector.
-	InspectConfig *InspectConfig `json:"inspectConfig,omitempty"`
+	InspectConfig *GooglePrivacyDlpV2beta1InspectConfig `json:"inspectConfig,omitempty"`
 
 	// OutputConfig: Optional location to store findings. The bucket must
 	// already exist and
@@ -350,10 +500,10 @@ type CreateInspectOperationRequest struct {
 	// <p>For Cloud Datastore the next columns are:
 	// <li>project_id
 	// <li>namespace_id <li>path <li>column_name <li>offset
-	OutputConfig *OutputStorageConfig `json:"outputConfig,omitempty"`
+	OutputConfig *GooglePrivacyDlpV2beta1OutputStorageConfig `json:"outputConfig,omitempty"`
 
 	// StorageConfig: Specification of the data set to process.
-	StorageConfig *StorageConfig `json:"storageConfig,omitempty"`
+	StorageConfig *GooglePrivacyDlpV2beta1StorageConfig `json:"storageConfig,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "InspectConfig") to
 	// unconditionally include in API requests. By default, fields with
@@ -372,16 +522,17 @@ type CreateInspectOperationRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *CreateInspectOperationRequest) MarshalJSON() ([]byte, error) {
-	type noMethod CreateInspectOperationRequest
+func (s *GooglePrivacyDlpV2beta1CreateInspectOperationRequest) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1CreateInspectOperationRequest
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// DatastoreKey: Record key for a finding in Cloud Datastore.
-type DatastoreKey struct {
+// GooglePrivacyDlpV2beta1DatastoreKey: Record key for a finding in
+// Cloud Datastore.
+type GooglePrivacyDlpV2beta1DatastoreKey struct {
 	// EntityKey: Datastore entity key.
-	EntityKey *Key `json:"entityKey,omitempty"`
+	EntityKey *GooglePrivacyDlpV2beta1Key `json:"entityKey,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "EntityKey") to
 	// unconditionally include in API requests. By default, fields with
@@ -400,27 +551,27 @@ type DatastoreKey struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *DatastoreKey) MarshalJSON() ([]byte, error) {
-	type noMethod DatastoreKey
+func (s *GooglePrivacyDlpV2beta1DatastoreKey) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1DatastoreKey
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// DatastoreOptions: Options defining a data set within Google Cloud
-// Datastore.
-type DatastoreOptions struct {
+// GooglePrivacyDlpV2beta1DatastoreOptions: Options defining a data set
+// within Google Cloud Datastore.
+type GooglePrivacyDlpV2beta1DatastoreOptions struct {
 	// Kind: The kind to process.
-	Kind *KindExpression `json:"kind,omitempty"`
+	Kind *GooglePrivacyDlpV2beta1KindExpression `json:"kind,omitempty"`
 
 	// PartitionId: A partition ID identifies a grouping of entities. The
 	// grouping is always
 	// by project and namespace, however the namespace ID may be empty.
-	PartitionId *PartitionId `json:"partitionId,omitempty"`
+	PartitionId *GooglePrivacyDlpV2beta1PartitionId `json:"partitionId,omitempty"`
 
 	// Projection: Properties to scan. If none are specified, all properties
 	// will be scanned
 	// by default.
-	Projection []*Projection `json:"projection,omitempty"`
+	Projection []*GooglePrivacyDlpV2beta1Projection `json:"projection,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Kind") to
 	// unconditionally include in API requests. By default, fields with
@@ -439,32 +590,15 @@ type DatastoreOptions struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *DatastoreOptions) MarshalJSON() ([]byte, error) {
-	type noMethod DatastoreOptions
+func (s *GooglePrivacyDlpV2beta1DatastoreOptions) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1DatastoreOptions
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Empty: A generic empty message that you can re-use to avoid defining
-// duplicated
-// empty messages in your APIs. A typical example is to use it as the
-// request
-// or the response type of an API method. For instance:
-//
-//     service Foo {
-//       rpc Bar(google.protobuf.Empty) returns
-// (google.protobuf.Empty);
-//     }
-//
-// The JSON representation for `Empty` is empty JSON object `{}`.
-type Empty struct {
-	// ServerResponse contains the HTTP response code and headers from the
-	// server.
-	googleapi.ServerResponse `json:"-"`
-}
-
-// FieldId: General identifier of a data field in a storage service.
-type FieldId struct {
+// GooglePrivacyDlpV2beta1FieldId: General identifier of a data field in
+// a storage service.
+type GooglePrivacyDlpV2beta1FieldId struct {
 	// ColumnName: Column name describing the field.
 	ColumnName string `json:"columnName,omitempty"`
 
@@ -485,14 +619,14 @@ type FieldId struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *FieldId) MarshalJSON() ([]byte, error) {
-	type noMethod FieldId
+func (s *GooglePrivacyDlpV2beta1FieldId) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1FieldId
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// FileSet: Set of files to scan.
-type FileSet struct {
+// GooglePrivacyDlpV2beta1FileSet: Set of files to scan.
+type GooglePrivacyDlpV2beta1FileSet struct {
 	// Url: The url, in the format `gs://<bucket>/<path>`. Trailing wildcard
 	// in the
 	// path is allowed.
@@ -515,20 +649,20 @@ type FileSet struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *FileSet) MarshalJSON() ([]byte, error) {
-	type noMethod FileSet
+func (s *GooglePrivacyDlpV2beta1FileSet) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1FileSet
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Finding: Container structure describing a single finding within a
-// string or image.
-type Finding struct {
+// GooglePrivacyDlpV2beta1Finding: Container structure describing a
+// single finding within a string or image.
+type GooglePrivacyDlpV2beta1Finding struct {
 	// CreateTime: Timestamp when finding was detected.
 	CreateTime string `json:"createTime,omitempty"`
 
 	// InfoType: The specific type of info the string might be.
-	InfoType *InfoType `json:"infoType,omitempty"`
+	InfoType *GooglePrivacyDlpV2beta1InfoType `json:"infoType,omitempty"`
 
 	// Likelihood: Estimate of how likely it is that the info_type is
 	// correct.
@@ -544,7 +678,7 @@ type Finding struct {
 	Likelihood string `json:"likelihood,omitempty"`
 
 	// Location: Location of the info found.
-	Location *Location `json:"location,omitempty"`
+	Location *GooglePrivacyDlpV2beta1Location `json:"location,omitempty"`
 
 	// Quote: The specific string that may be potentially sensitive info.
 	Quote string `json:"quote,omitempty"`
@@ -566,15 +700,15 @@ type Finding struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Finding) MarshalJSON() ([]byte, error) {
-	type noMethod Finding
+func (s *GooglePrivacyDlpV2beta1Finding) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1Finding
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// ImageLocation: Bounding box encompassing detected text within an
-// image.
-type ImageLocation struct {
+// GooglePrivacyDlpV2beta1ImageLocation: Bounding box encompassing
+// detected text within an image.
+type GooglePrivacyDlpV2beta1ImageLocation struct {
 	// Height: Height of the bounding box in pixels.
 	Height int64 `json:"height,omitempty"`
 
@@ -604,16 +738,67 @@ type ImageLocation struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ImageLocation) MarshalJSON() ([]byte, error) {
-	type noMethod ImageLocation
+func (s *GooglePrivacyDlpV2beta1ImageLocation) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1ImageLocation
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// InfoType: Type of information detected by the API.
-type InfoType struct {
-	// Name: Name of the information type, provided by the API call
-	// ListInfoTypes.
+// GooglePrivacyDlpV2beta1ImageRedactionConfig: Configuration for
+// determing how redaction of images should occur.
+type GooglePrivacyDlpV2beta1ImageRedactionConfig struct {
+	// InfoType: Only one per info_type should be provided per request. If
+	// not
+	// specified, and redact_all_text is false, the DLP API will redacts
+	// all
+	// text that it matches against all info_types that are found, but
+	// not
+	// specified in another ImageRedactionConfig.
+	InfoType *GooglePrivacyDlpV2beta1InfoType `json:"infoType,omitempty"`
+
+	// RedactAllText: If true, all text found in the image, regardless if it
+	// matches an
+	// info_type, is redacted.
+	RedactAllText bool `json:"redactAllText,omitempty"`
+
+	// RedactionColor: The color to use when redacting content from an
+	// image. If not specified,
+	// the default is black.
+	RedactionColor *GooglePrivacyDlpV2beta1Color `json:"redactionColor,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "InfoType") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "InfoType") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta1ImageRedactionConfig) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1ImageRedactionConfig
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GooglePrivacyDlpV2beta1InfoType: Type of information detected by the
+// API.
+type GooglePrivacyDlpV2beta1InfoType struct {
+	// Name: Name of the information type. For built-in info types, this is
+	// provided by
+	// the API call ListInfoTypes. For user-defined info types, this
+	// is
+	// provided by the user. All user-defined info types must have unique
+	// names,
+	// and cannot conflict with built-in info type names.
 	Name string `json:"name,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Name") to
@@ -633,16 +818,16 @@ type InfoType struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *InfoType) MarshalJSON() ([]byte, error) {
-	type noMethod InfoType
+func (s *GooglePrivacyDlpV2beta1InfoType) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1InfoType
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// InfoTypeDescription: Info type description.
-type InfoTypeDescription struct {
+// GooglePrivacyDlpV2beta1InfoTypeDescription: Info type description.
+type GooglePrivacyDlpV2beta1InfoTypeDescription struct {
 	// Categories: List of categories this info type belongs to.
-	Categories []*CategoryDescription `json:"categories,omitempty"`
+	Categories []*GooglePrivacyDlpV2beta1CategoryDescription `json:"categories,omitempty"`
 
 	// DisplayName: Human readable form of the info type name.
 	DisplayName string `json:"displayName,omitempty"`
@@ -667,19 +852,51 @@ type InfoTypeDescription struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *InfoTypeDescription) MarshalJSON() ([]byte, error) {
-	type noMethod InfoTypeDescription
+func (s *GooglePrivacyDlpV2beta1InfoTypeDescription) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1InfoTypeDescription
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// InspectConfig: Configuration description of the scanning
-// process.
+// GooglePrivacyDlpV2beta1InfoTypeStatistics: Statistics regarding a
+// specific InfoType.
+type GooglePrivacyDlpV2beta1InfoTypeStatistics struct {
+	// Count: Number of findings for this info type.
+	Count int64 `json:"count,omitempty,string"`
+
+	// InfoType: The type of finding this stat is for.
+	InfoType *GooglePrivacyDlpV2beta1InfoType `json:"infoType,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Count") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Count") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta1InfoTypeStatistics) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1InfoTypeStatistics
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GooglePrivacyDlpV2beta1InspectConfig: Configuration description of
+// the scanning process.
 // When used with redactContent only info_types and min_likelihood are
 // currently
 // used.
-type InspectConfig struct {
-	// ExcludeTypes: When true, exclude type information of the findings.
+type GooglePrivacyDlpV2beta1InspectConfig struct {
+	// ExcludeTypes: When true, excludes type information of the findings.
 	ExcludeTypes bool `json:"excludeTypes,omitempty"`
 
 	// IncludeQuote: When true, a contextual quote from the data that
@@ -687,17 +904,18 @@ type InspectConfig struct {
 	// included in the response; see Finding.quote.
 	IncludeQuote bool `json:"includeQuote,omitempty"`
 
-	// InfoTypes: Restrict what info_types to look for. The values must
+	// InfoTypes: Restricts what info_types to look for. The values must
 	// correspond to
 	// InfoType values returned by ListInfoTypes or found in
 	// documentation.
 	// Empty info_types runs all enabled detectors.
-	InfoTypes []*InfoType `json:"infoTypes,omitempty"`
+	InfoTypes []*GooglePrivacyDlpV2beta1InfoType `json:"infoTypes,omitempty"`
 
-	// MaxFindings: Limit the number of findings per content item.
+	// MaxFindings: Limits the number of findings per content item or long
+	// running operation.
 	MaxFindings int64 `json:"maxFindings,omitempty"`
 
-	// MinLikelihood: Only return findings equal or above this threshold.
+	// MinLikelihood: Only returns findings equal or above this threshold.
 	//
 	// Possible values:
 	//   "LIKELIHOOD_UNSPECIFIED" - Default value; information with all
@@ -726,24 +944,24 @@ type InspectConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *InspectConfig) MarshalJSON() ([]byte, error) {
-	type noMethod InspectConfig
+func (s *GooglePrivacyDlpV2beta1InspectConfig) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1InspectConfig
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// InspectContentRequest: Request to search for potentially sensitive
-// info in a list of items.
-type InspectContentRequest struct {
+// GooglePrivacyDlpV2beta1InspectContentRequest: Request to search for
+// potentially sensitive info in a list of items.
+type GooglePrivacyDlpV2beta1InspectContentRequest struct {
 	// InspectConfig: Configuration for the inspector.
-	InspectConfig *InspectConfig `json:"inspectConfig,omitempty"`
+	InspectConfig *GooglePrivacyDlpV2beta1InspectConfig `json:"inspectConfig,omitempty"`
 
 	// Items: The list of items to inspect. Items in a single request
 	// are
 	// considered "related" unless inspect_config.independent_inputs is
 	// true.
 	// Up to 100 are allowed per request.
-	Items []*ContentItem `json:"items,omitempty"`
+	Items []*GooglePrivacyDlpV2beta1ContentItem `json:"items,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "InspectConfig") to
 	// unconditionally include in API requests. By default, fields with
@@ -762,18 +980,19 @@ type InspectContentRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *InspectContentRequest) MarshalJSON() ([]byte, error) {
-	type noMethod InspectContentRequest
+func (s *GooglePrivacyDlpV2beta1InspectContentRequest) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1InspectContentRequest
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// InspectContentResponse: Results of inspecting a list of items.
-type InspectContentResponse struct {
+// GooglePrivacyDlpV2beta1InspectContentResponse: Results of inspecting
+// a list of items.
+type GooglePrivacyDlpV2beta1InspectContentResponse struct {
 	// Results: Each content_item from the request has a result in this
 	// list, in the
 	// same order as the request.
-	Results []*InspectResult `json:"results,omitempty"`
+	Results []*GooglePrivacyDlpV2beta1InspectResult `json:"results,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
@@ -796,16 +1015,97 @@ type InspectContentResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *InspectContentResponse) MarshalJSON() ([]byte, error) {
-	type noMethod InspectContentResponse
+func (s *GooglePrivacyDlpV2beta1InspectContentResponse) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1InspectContentResponse
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// InspectResult: All the findings for a single scanned item.
-type InspectResult struct {
+// GooglePrivacyDlpV2beta1InspectOperationMetadata: Metadata returned
+// within GetOperation for an inspect request.
+type GooglePrivacyDlpV2beta1InspectOperationMetadata struct {
+	// CreateTime: The time which this request was started.
+	CreateTime string `json:"createTime,omitempty"`
+
+	InfoTypeStats []*GooglePrivacyDlpV2beta1InfoTypeStatistics `json:"infoTypeStats,omitempty"`
+
+	// ProcessedBytes: Total size in bytes that were processed.
+	ProcessedBytes int64 `json:"processedBytes,omitempty,string"`
+
+	// RequestInspectConfig: The inspect config used to create the
+	// Operation.
+	RequestInspectConfig *GooglePrivacyDlpV2beta1InspectConfig `json:"requestInspectConfig,omitempty"`
+
+	// RequestOutputConfig: Optional location to store findings.
+	RequestOutputConfig *GooglePrivacyDlpV2beta1OutputStorageConfig `json:"requestOutputConfig,omitempty"`
+
+	// RequestStorageConfig: The storage config used to create the
+	// Operation.
+	RequestStorageConfig *GooglePrivacyDlpV2beta1StorageConfig `json:"requestStorageConfig,omitempty"`
+
+	// TotalEstimatedBytes: Estimate of the number of bytes to process.
+	TotalEstimatedBytes int64 `json:"totalEstimatedBytes,omitempty,string"`
+
+	// ForceSendFields is a list of field names (e.g. "CreateTime") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CreateTime") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta1InspectOperationMetadata) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1InspectOperationMetadata
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GooglePrivacyDlpV2beta1InspectOperationResult: The operational data.
+type GooglePrivacyDlpV2beta1InspectOperationResult struct {
+	// Name: The server-assigned name, which is only unique within the same
+	// service that
+	// originally returns it. If you use the default HTTP mapping,
+	// the
+	// `name` should have the format of `inspect/results/{id}`.
+	Name string `json:"name,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Name") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Name") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta1InspectOperationResult) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1InspectOperationResult
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GooglePrivacyDlpV2beta1InspectResult: All the findings for a single
+// scanned item.
+type GooglePrivacyDlpV2beta1InspectResult struct {
 	// Findings: List of findings for an item.
-	Findings []*Finding `json:"findings,omitempty"`
+	Findings []*GooglePrivacyDlpV2beta1Finding `json:"findings,omitempty"`
 
 	// FindingsTruncated: If true, then this item might have more findings
 	// than were returned,
@@ -837,23 +1137,24 @@ type InspectResult struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *InspectResult) MarshalJSON() ([]byte, error) {
-	type noMethod InspectResult
+func (s *GooglePrivacyDlpV2beta1InspectResult) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1InspectResult
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Key: A unique identifier for a Datastore entity.
+// GooglePrivacyDlpV2beta1Key: A unique identifier for a Datastore
+// entity.
 // If a key's partition ID or any of its path kinds or names
 // are
 // reserved/read-only, the key is reserved/read-only.
 // A reserved/read-only key is forbidden in certain documented contexts.
-type Key struct {
+type GooglePrivacyDlpV2beta1Key struct {
 	// PartitionId: Entities are partitioned into subsets, currently
 	// identified by a project
 	// ID and namespace ID.
 	// Queries are scoped to a single partition.
-	PartitionId *PartitionId `json:"partitionId,omitempty"`
+	PartitionId *GooglePrivacyDlpV2beta1PartitionId `json:"partitionId,omitempty"`
 
 	// Path: The entity path.
 	// An entity path consists of one or more elements composed of a kind
@@ -868,7 +1169,7 @@ type Key struct {
 	// the path are called the element's _ancestors_.
 	//
 	// A path can never be empty, and a path can have at most 100 elements.
-	Path []*PathElement `json:"path,omitempty"`
+	Path []*GooglePrivacyDlpV2beta1PathElement `json:"path,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "PartitionId") to
 	// unconditionally include in API requests. By default, fields with
@@ -887,14 +1188,15 @@ type Key struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Key) MarshalJSON() ([]byte, error) {
-	type noMethod Key
+func (s *GooglePrivacyDlpV2beta1Key) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1Key
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// KindExpression: A representation of a Datastore kind.
-type KindExpression struct {
+// GooglePrivacyDlpV2beta1KindExpression: A representation of a
+// Datastore kind.
+type GooglePrivacyDlpV2beta1KindExpression struct {
 	// Name: The name of the kind.
 	Name string `json:"name,omitempty"`
 
@@ -915,16 +1217,17 @@ type KindExpression struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *KindExpression) MarshalJSON() ([]byte, error) {
-	type noMethod KindExpression
+func (s *GooglePrivacyDlpV2beta1KindExpression) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1KindExpression
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// ListInfoTypesResponse: Response to the ListInfoTypes request.
-type ListInfoTypesResponse struct {
+// GooglePrivacyDlpV2beta1ListInfoTypesResponse: Response to the
+// ListInfoTypes request.
+type GooglePrivacyDlpV2beta1ListInfoTypesResponse struct {
 	// InfoTypes: Set of sensitive info types belonging to a category.
-	InfoTypes []*InfoTypeDescription `json:"infoTypes,omitempty"`
+	InfoTypes []*GooglePrivacyDlpV2beta1InfoTypeDescription `json:"infoTypes,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
@@ -947,15 +1250,15 @@ type ListInfoTypesResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ListInfoTypesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListInfoTypesResponse
+func (s *GooglePrivacyDlpV2beta1ListInfoTypesResponse) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1ListInfoTypesResponse
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// ListInspectFindingsResponse: Response to the ListInspectFindings
-// request.
-type ListInspectFindingsResponse struct {
+// GooglePrivacyDlpV2beta1ListInspectFindingsResponse: Response to the
+// ListInspectFindings request.
+type GooglePrivacyDlpV2beta1ListInspectFindingsResponse struct {
 	// NextPageToken: If not empty, indicates that there may be more results
 	// that match the
 	// request; this value should be passed in a new
@@ -963,7 +1266,7 @@ type ListInspectFindingsResponse struct {
 	NextPageToken string `json:"nextPageToken,omitempty"`
 
 	// Result: The results.
-	Result *InspectResult `json:"result,omitempty"`
+	Result *GooglePrivacyDlpV2beta1InspectResult `json:"result,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
@@ -986,53 +1289,17 @@ type ListInspectFindingsResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ListInspectFindingsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListInspectFindingsResponse
+func (s *GooglePrivacyDlpV2beta1ListInspectFindingsResponse) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1ListInspectFindingsResponse
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// ListOperationsResponse: The response message for
-// Operations.ListOperations.
-type ListOperationsResponse struct {
-	// NextPageToken: The standard List next-page token.
-	NextPageToken string `json:"nextPageToken,omitempty"`
-
-	// Operations: A list of operations that matches the specified filter in
-	// the request.
-	Operations []*Operation `json:"operations,omitempty"`
-
-	// ServerResponse contains the HTTP response code and headers from the
-	// server.
-	googleapi.ServerResponse `json:"-"`
-
-	// ForceSendFields is a list of field names (e.g. "NextPageToken") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "NextPageToken") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *ListOperationsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListOperationsResponse
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// ListRootCategoriesResponse: Response for ListRootCategories request.
-type ListRootCategoriesResponse struct {
+// GooglePrivacyDlpV2beta1ListRootCategoriesResponse: Response for
+// ListRootCategories request.
+type GooglePrivacyDlpV2beta1ListRootCategoriesResponse struct {
 	// Categories: List of all into type categories supported by the API.
-	Categories []*CategoryDescription `json:"categories,omitempty"`
+	Categories []*GooglePrivacyDlpV2beta1CategoryDescription `json:"categories,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
@@ -1055,30 +1322,31 @@ type ListRootCategoriesResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ListRootCategoriesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListRootCategoriesResponse
+func (s *GooglePrivacyDlpV2beta1ListRootCategoriesResponse) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1ListRootCategoriesResponse
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Location: Specifies the location of a finding within its source item.
-type Location struct {
+// GooglePrivacyDlpV2beta1Location: Specifies the location of a finding
+// within its source item.
+type GooglePrivacyDlpV2beta1Location struct {
 	// ByteRange: Zero-based byte offsets within a content item.
-	ByteRange *Range `json:"byteRange,omitempty"`
+	ByteRange *GooglePrivacyDlpV2beta1Range `json:"byteRange,omitempty"`
 
 	// CodepointRange: Character offsets within a content item, included
 	// when content type
 	// is a text. Default charset assumed to be UTF-8.
-	CodepointRange *Range `json:"codepointRange,omitempty"`
+	CodepointRange *GooglePrivacyDlpV2beta1Range `json:"codepointRange,omitempty"`
 
 	// FieldId: Field id of the field containing the finding.
-	FieldId *FieldId `json:"fieldId,omitempty"`
+	FieldId *GooglePrivacyDlpV2beta1FieldId `json:"fieldId,omitempty"`
 
 	// ImageBoxes: Location within an image's pixels.
-	ImageBoxes []*ImageLocation `json:"imageBoxes,omitempty"`
+	ImageBoxes []*GooglePrivacyDlpV2beta1ImageLocation `json:"imageBoxes,omitempty"`
 
 	// RecordKey: Key of the finding.
-	RecordKey *RecordKey `json:"recordKey,omitempty"`
+	RecordKey *GooglePrivacyDlpV2beta1RecordKey `json:"recordKey,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ByteRange") to
 	// unconditionally include in API requests. By default, fields with
@@ -1097,70 +1365,18 @@ type Location struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Location) MarshalJSON() ([]byte, error) {
-	type noMethod Location
+func (s *GooglePrivacyDlpV2beta1Location) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1Location
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Operation: This resource represents a long-running operation that is
-// the result of a
-// network API call.
-type Operation struct {
-	// Done: If the value is `false`, it means the operation is still in
-	// progress.
-	// If true, the operation is completed, and either `error` or `response`
-	// is
-	// available.
-	Done bool `json:"done,omitempty"`
-
-	// Error: The error result of the operation in case of failure or
-	// cancellation.
-	Error *Status `json:"error,omitempty"`
-
-	// Metadata: This field will contain an `InspectOperationMetdata`
-	// object.
-	Metadata googleapi.RawMessage `json:"metadata,omitempty"`
-
-	// Name: The server-assigned name, The `name` should have the format of
-	// `inspect/operations/<identifier>`.
-	Name string `json:"name,omitempty"`
-
-	// Response: This field will contain an `InspectOperationResult` object.
-	Response googleapi.RawMessage `json:"response,omitempty"`
-
-	// ServerResponse contains the HTTP response code and headers from the
-	// server.
-	googleapi.ServerResponse `json:"-"`
-
-	// ForceSendFields is a list of field names (e.g. "Done") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Done") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *Operation) MarshalJSON() ([]byte, error) {
-	type noMethod Operation
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// OutputStorageConfig: Cloud repository for storing output.
-type OutputStorageConfig struct {
+// GooglePrivacyDlpV2beta1OutputStorageConfig: Cloud repository for
+// storing output.
+type GooglePrivacyDlpV2beta1OutputStorageConfig struct {
 	// StoragePath: The path to a Google Cloud Storage location to store
 	// output.
-	StoragePath *CloudStoragePath `json:"storagePath,omitempty"`
+	StoragePath *GooglePrivacyDlpV2beta1CloudStoragePath `json:"storagePath,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "StoragePath") to
 	// unconditionally include in API requests. By default, fields with
@@ -1179,20 +1395,20 @@ type OutputStorageConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *OutputStorageConfig) MarshalJSON() ([]byte, error) {
-	type noMethod OutputStorageConfig
+func (s *GooglePrivacyDlpV2beta1OutputStorageConfig) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1OutputStorageConfig
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// PartitionId: Datastore partition ID.
+// GooglePrivacyDlpV2beta1PartitionId: Datastore partition ID.
 // A partition ID identifies a grouping of entities. The grouping is
 // always
 // by project and namespace, however the namespace ID may be empty.
 //
 // A partition ID contains several dimensions:
 // project ID and namespace ID.
-type PartitionId struct {
+type GooglePrivacyDlpV2beta1PartitionId struct {
 	// NamespaceId: If not empty, the ID of the namespace to which the
 	// entities belong.
 	NamespaceId string `json:"namespaceId,omitempty"`
@@ -1217,17 +1433,18 @@ type PartitionId struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *PartitionId) MarshalJSON() ([]byte, error) {
-	type noMethod PartitionId
+func (s *GooglePrivacyDlpV2beta1PartitionId) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1PartitionId
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// PathElement: A (kind, ID/name) pair used to construct a key path.
+// GooglePrivacyDlpV2beta1PathElement: A (kind, ID/name) pair used to
+// construct a key path.
 //
 // If either name or ID is set, the element is complete.
 // If neither is set, the element is incomplete.
-type PathElement struct {
+type GooglePrivacyDlpV2beta1PathElement struct {
 	// Id: The auto-allocated ID of the entity.
 	// Never equal to zero. Values less than zero are discouraged and may
 	// not
@@ -1264,16 +1481,17 @@ type PathElement struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *PathElement) MarshalJSON() ([]byte, error) {
-	type noMethod PathElement
+func (s *GooglePrivacyDlpV2beta1PathElement) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1PathElement
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Projection: A representation of a Datastore property in a projection.
-type Projection struct {
+// GooglePrivacyDlpV2beta1Projection: A representation of a Datastore
+// property in a projection.
+type GooglePrivacyDlpV2beta1Projection struct {
 	// Property: The property to project.
-	Property *PropertyReference `json:"property,omitempty"`
+	Property *GooglePrivacyDlpV2beta1PropertyReference `json:"property,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Property") to
 	// unconditionally include in API requests. By default, fields with
@@ -1292,15 +1510,15 @@ type Projection struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Projection) MarshalJSON() ([]byte, error) {
-	type noMethod Projection
+func (s *GooglePrivacyDlpV2beta1Projection) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1Projection
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// PropertyReference: A reference to a property relative to the
-// Datastore kind expressions.
-type PropertyReference struct {
+// GooglePrivacyDlpV2beta1PropertyReference: A reference to a property
+// relative to the Datastore kind expressions.
+type GooglePrivacyDlpV2beta1PropertyReference struct {
 	// Name: The name of the property.
 	// If name includes "."s, it may be interpreted as a property name path.
 	Name string `json:"name,omitempty"`
@@ -1322,14 +1540,14 @@ type PropertyReference struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *PropertyReference) MarshalJSON() ([]byte, error) {
-	type noMethod PropertyReference
+func (s *GooglePrivacyDlpV2beta1PropertyReference) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1PropertyReference
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Range: Generic half-open interval [start, end)
-type Range struct {
+// GooglePrivacyDlpV2beta1Range: Generic half-open interval [start, end)
+type GooglePrivacyDlpV2beta1Range struct {
 	// End: Index of the last character of the range (exclusive).
 	End int64 `json:"end,omitempty,string"`
 
@@ -1353,18 +1571,18 @@ type Range struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Range) MarshalJSON() ([]byte, error) {
-	type noMethod Range
+func (s *GooglePrivacyDlpV2beta1Range) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1Range
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// RecordKey: Message for a unique key indicating a record that contains
-// a finding.
-type RecordKey struct {
-	CloudStorageKey *CloudStorageKey `json:"cloudStorageKey,omitempty"`
+// GooglePrivacyDlpV2beta1RecordKey: Message for a unique key indicating
+// a record that contains a finding.
+type GooglePrivacyDlpV2beta1RecordKey struct {
+	CloudStorageKey *GooglePrivacyDlpV2beta1CloudStorageKey `json:"cloudStorageKey,omitempty"`
 
-	DatastoreKey *DatastoreKey `json:"datastoreKey,omitempty"`
+	DatastoreKey *GooglePrivacyDlpV2beta1DatastoreKey `json:"datastoreKey,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "CloudStorageKey") to
 	// unconditionally include in API requests. By default, fields with
@@ -1384,54 +1602,62 @@ type RecordKey struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *RecordKey) MarshalJSON() ([]byte, error) {
-	type noMethod RecordKey
+func (s *GooglePrivacyDlpV2beta1RecordKey) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1RecordKey
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// RedactContentRequest: Request to search for potentially sensitive
-// info in a list of items
+// GooglePrivacyDlpV2beta1RedactContentRequest: Request to search for
+// potentially sensitive info in a list of items
 // and replace it with a default or provided content.
-type RedactContentRequest struct {
+type GooglePrivacyDlpV2beta1RedactContentRequest struct {
+	// ImageRedactionConfigs: The configuration for specifying what content
+	// to redact from images.
+	ImageRedactionConfigs []*GooglePrivacyDlpV2beta1ImageRedactionConfig `json:"imageRedactionConfigs,omitempty"`
+
 	// InspectConfig: Configuration for the inspector.
-	InspectConfig *InspectConfig `json:"inspectConfig,omitempty"`
+	InspectConfig *GooglePrivacyDlpV2beta1InspectConfig `json:"inspectConfig,omitempty"`
 
 	// Items: The list of items to inspect. Up to 100 are allowed per
 	// request.
-	Items []*ContentItem `json:"items,omitempty"`
+	Items []*GooglePrivacyDlpV2beta1ContentItem `json:"items,omitempty"`
 
-	// ReplaceConfigs: The strings to replace findings with. Must specify at
-	// least one.
-	ReplaceConfigs []*ReplaceConfig `json:"replaceConfigs,omitempty"`
+	// ReplaceConfigs: The strings to replace findings text findings with.
+	// Must specify at least
+	// one of these or one ImageRedactionConfig if redacting images.
+	ReplaceConfigs []*GooglePrivacyDlpV2beta1ReplaceConfig `json:"replaceConfigs,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "InspectConfig") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
+	// ForceSendFields is a list of field names (e.g.
+	// "ImageRedactionConfigs") to unconditionally include in API requests.
+	// By default, fields with empty values are omitted from API requests.
+	// However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "InspectConfig") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
+	// NullFields is a list of field names (e.g. "ImageRedactionConfigs") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
 	NullFields []string `json:"-"`
 }
 
-func (s *RedactContentRequest) MarshalJSON() ([]byte, error) {
-	type noMethod RedactContentRequest
+func (s *GooglePrivacyDlpV2beta1RedactContentRequest) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1RedactContentRequest
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// RedactContentResponse: Results of deidentifying a list of items.
-type RedactContentResponse struct {
+// GooglePrivacyDlpV2beta1RedactContentResponse: Results of redacting a
+// list of items.
+type GooglePrivacyDlpV2beta1RedactContentResponse struct {
 	// Items: The redacted content.
-	Items []*ContentItem `json:"items,omitempty"`
+	Items []*GooglePrivacyDlpV2beta1ContentItem `json:"items,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
@@ -1454,13 +1680,13 @@ type RedactContentResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *RedactContentResponse) MarshalJSON() ([]byte, error) {
-	type noMethod RedactContentResponse
+func (s *GooglePrivacyDlpV2beta1RedactContentResponse) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1RedactContentResponse
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-type ReplaceConfig struct {
+type GooglePrivacyDlpV2beta1ReplaceConfig struct {
 	// InfoType: Type of information to replace. Only one ReplaceConfig per
 	// info_type
 	// should be provided. If ReplaceConfig does not have an info_type, the
@@ -1468,7 +1694,7 @@ type ReplaceConfig struct {
 	// API matches it against all info_types that are found but not
 	// specified in
 	// another ReplaceConfig.
-	InfoType *InfoType `json:"infoType,omitempty"`
+	InfoType *GooglePrivacyDlpV2beta1InfoType `json:"infoType,omitempty"`
 
 	// ReplaceWith: Content replacing sensitive information of given type.
 	// Max 256 chars.
@@ -1491,14 +1717,65 @@ type ReplaceConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ReplaceConfig) MarshalJSON() ([]byte, error) {
-	type noMethod ReplaceConfig
+func (s *GooglePrivacyDlpV2beta1ReplaceConfig) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1ReplaceConfig
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Status: The `Status` type defines a logical error model that is
-// suitable for different
+// GooglePrivacyDlpV2beta1StorageConfig: Shared message indicating Cloud
+// storage type.
+type GooglePrivacyDlpV2beta1StorageConfig struct {
+	// CloudStorageOptions: Google Cloud Storage options specification.
+	CloudStorageOptions *GooglePrivacyDlpV2beta1CloudStorageOptions `json:"cloudStorageOptions,omitempty"`
+
+	// DatastoreOptions: Google Cloud Datastore options specification.
+	DatastoreOptions *GooglePrivacyDlpV2beta1DatastoreOptions `json:"datastoreOptions,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CloudStorageOptions")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CloudStorageOptions") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta1StorageConfig) MarshalJSON() ([]byte, error) {
+	type noMethod GooglePrivacyDlpV2beta1StorageConfig
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleProtobufEmpty: A generic empty message that you can re-use to
+// avoid defining duplicated
+// empty messages in your APIs. A typical example is to use it as the
+// request
+// or the response type of an API method. For instance:
+//
+//     service Foo {
+//       rpc Bar(google.protobuf.Empty) returns
+// (google.protobuf.Empty);
+//     }
+//
+// The JSON representation for `Empty` is empty JSON object `{}`.
+type GoogleProtobufEmpty struct {
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+}
+
+// GoogleRpcStatus: The `Status` type defines a logical error model that
+// is suitable for different
 // programming environments, including REST APIs and RPC APIs. It is
 // used by
 // [gRPC](https://github.com/grpc). The error model is designed to
@@ -1525,7 +1802,7 @@ func (s *ReplaceConfig) MarshalJSON() ([]byte, error) {
 // arbitrary
 // information about the error. There is a predefined set of error
 // detail types
-// in the package `google.rpc` which can be used for common error
+// in the package `google.rpc` that can be used for common error
 // conditions.
 //
 // # Language mapping
@@ -1558,7 +1835,7 @@ func (s *ReplaceConfig) MarshalJSON() ([]byte, error) {
 //
 // - Workflow errors. A typical workflow has multiple steps. Each step
 // may
-//     have a `Status` message for error reporting purpose.
+//     have a `Status` message for error reporting.
 //
 // - Batch operations. If a client uses batch request and batch
 // response, the
@@ -1576,7 +1853,7 @@ func (s *ReplaceConfig) MarshalJSON() ([]byte, error) {
 // `Status` could
 //     be used directly after any stripping needed for security/privacy
 // reasons.
-type Status struct {
+type GoogleRpcStatus struct {
 	// Code: The status code, which should be an enum value of
 	// google.rpc.Code.
 	Code int64 `json:"code,omitempty"`
@@ -1610,40 +1887,8 @@ type Status struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Status) MarshalJSON() ([]byte, error) {
-	type noMethod Status
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// StorageConfig: Shared message indicating Cloud storage type.
-type StorageConfig struct {
-	// CloudStorageOptions: Google Cloud Storage options specification.
-	CloudStorageOptions *CloudStorageOptions `json:"cloudStorageOptions,omitempty"`
-
-	// DatastoreOptions: Google Cloud Datastore options specification.
-	DatastoreOptions *DatastoreOptions `json:"datastoreOptions,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "CloudStorageOptions")
-	// to unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "CloudStorageOptions") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *StorageConfig) MarshalJSON() ([]byte, error) {
-	type noMethod StorageConfig
+func (s *GoogleRpcStatus) MarshalJSON() ([]byte, error) {
+	type noMethod GoogleRpcStatus
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -1651,19 +1896,19 @@ func (s *StorageConfig) MarshalJSON() ([]byte, error) {
 // method id "dlp.content.inspect":
 
 type ContentInspectCall struct {
-	s                     *Service
-	inspectcontentrequest *InspectContentRequest
-	urlParams_            gensupport.URLParams
-	ctx_                  context.Context
-	header_               http.Header
+	s                                            *Service
+	googleprivacydlpv2beta1inspectcontentrequest *GooglePrivacyDlpV2beta1InspectContentRequest
+	urlParams_                                   gensupport.URLParams
+	ctx_                                         context.Context
+	header_                                      http.Header
 }
 
-// Inspect: Find potentially sensitive info in a list of strings.
+// Inspect: Finds potentially sensitive info in a list of strings.
 // This method has limits on input size, processing time, and output
 // size.
-func (r *ContentService) Inspect(inspectcontentrequest *InspectContentRequest) *ContentInspectCall {
+func (r *ContentService) Inspect(googleprivacydlpv2beta1inspectcontentrequest *GooglePrivacyDlpV2beta1InspectContentRequest) *ContentInspectCall {
 	c := &ContentInspectCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.inspectcontentrequest = inspectcontentrequest
+	c.googleprivacydlpv2beta1inspectcontentrequest = googleprivacydlpv2beta1inspectcontentrequest
 	return c
 }
 
@@ -1699,7 +1944,7 @@ func (c *ContentInspectCall) doRequest(alt string) (*http.Response, error) {
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
-	body, err := googleapi.WithoutDataWrapper.JSONReader(c.inspectcontentrequest)
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.googleprivacydlpv2beta1inspectcontentrequest)
 	if err != nil {
 		return nil, err
 	}
@@ -1713,13 +1958,15 @@ func (c *ContentInspectCall) doRequest(alt string) (*http.Response, error) {
 }
 
 // Do executes the "dlp.content.inspect" call.
-// Exactly one of *InspectContentResponse or error will be non-nil. Any
-// non-2xx status code is an error. Response headers are in either
-// *InspectContentResponse.ServerResponse.Header or (if a response was
-// returned at all) in error.(*googleapi.Error).Header. Use
-// googleapi.IsNotModified to check whether the returned error was
-// because http.StatusNotModified was returned.
-func (c *ContentInspectCall) Do(opts ...googleapi.CallOption) (*InspectContentResponse, error) {
+// Exactly one of *GooglePrivacyDlpV2beta1InspectContentResponse or
+// error will be non-nil. Any non-2xx status code is an error. Response
+// headers are in either
+// *GooglePrivacyDlpV2beta1InspectContentResponse.ServerResponse.Header
+// or (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *ContentInspectCall) Do(opts ...googleapi.CallOption) (*GooglePrivacyDlpV2beta1InspectContentResponse, error) {
 	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
@@ -1738,7 +1985,7 @@ func (c *ContentInspectCall) Do(opts ...googleapi.CallOption) (*InspectContentRe
 	if err := googleapi.CheckResponse(res); err != nil {
 		return nil, err
 	}
-	ret := &InspectContentResponse{
+	ret := &GooglePrivacyDlpV2beta1InspectContentResponse{
 		ServerResponse: googleapi.ServerResponse{
 			Header:         res.Header,
 			HTTPStatusCode: res.StatusCode,
@@ -1750,7 +1997,7 @@ func (c *ContentInspectCall) Do(opts ...googleapi.CallOption) (*InspectContentRe
 	}
 	return ret, nil
 	// {
-	//   "description": "Find potentially sensitive info in a list of strings.\nThis method has limits on input size, processing time, and output size.",
+	//   "description": "Finds potentially sensitive info in a list of strings.\nThis method has limits on input size, processing time, and output size.",
 	//   "flatPath": "v2beta1/content:inspect",
 	//   "httpMethod": "POST",
 	//   "id": "dlp.content.inspect",
@@ -1758,10 +2005,10 @@ func (c *ContentInspectCall) Do(opts ...googleapi.CallOption) (*InspectContentRe
 	//   "parameters": {},
 	//   "path": "v2beta1/content:inspect",
 	//   "request": {
-	//     "$ref": "InspectContentRequest"
+	//     "$ref": "GooglePrivacyDlpV2beta1InspectContentRequest"
 	//   },
 	//   "response": {
-	//     "$ref": "InspectContentResponse"
+	//     "$ref": "GooglePrivacyDlpV2beta1InspectContentResponse"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform"
@@ -1773,20 +2020,20 @@ func (c *ContentInspectCall) Do(opts ...googleapi.CallOption) (*InspectContentRe
 // method id "dlp.content.redact":
 
 type ContentRedactCall struct {
-	s                    *Service
-	redactcontentrequest *RedactContentRequest
-	urlParams_           gensupport.URLParams
-	ctx_                 context.Context
-	header_              http.Header
+	s                                           *Service
+	googleprivacydlpv2beta1redactcontentrequest *GooglePrivacyDlpV2beta1RedactContentRequest
+	urlParams_                                  gensupport.URLParams
+	ctx_                                        context.Context
+	header_                                     http.Header
 }
 
-// Redact: Redact potentially sensitive info from a list of
+// Redact: Redacts potentially sensitive info from a list of
 // strings.
 // This method has limits on input size, processing time, and output
 // size.
-func (r *ContentService) Redact(redactcontentrequest *RedactContentRequest) *ContentRedactCall {
+func (r *ContentService) Redact(googleprivacydlpv2beta1redactcontentrequest *GooglePrivacyDlpV2beta1RedactContentRequest) *ContentRedactCall {
 	c := &ContentRedactCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.redactcontentrequest = redactcontentrequest
+	c.googleprivacydlpv2beta1redactcontentrequest = googleprivacydlpv2beta1redactcontentrequest
 	return c
 }
 
@@ -1822,7 +2069,7 @@ func (c *ContentRedactCall) doRequest(alt string) (*http.Response, error) {
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
-	body, err := googleapi.WithoutDataWrapper.JSONReader(c.redactcontentrequest)
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.googleprivacydlpv2beta1redactcontentrequest)
 	if err != nil {
 		return nil, err
 	}
@@ -1836,13 +2083,15 @@ func (c *ContentRedactCall) doRequest(alt string) (*http.Response, error) {
 }
 
 // Do executes the "dlp.content.redact" call.
-// Exactly one of *RedactContentResponse or error will be non-nil. Any
-// non-2xx status code is an error. Response headers are in either
-// *RedactContentResponse.ServerResponse.Header or (if a response was
-// returned at all) in error.(*googleapi.Error).Header. Use
-// googleapi.IsNotModified to check whether the returned error was
-// because http.StatusNotModified was returned.
-func (c *ContentRedactCall) Do(opts ...googleapi.CallOption) (*RedactContentResponse, error) {
+// Exactly one of *GooglePrivacyDlpV2beta1RedactContentResponse or error
+// will be non-nil. Any non-2xx status code is an error. Response
+// headers are in either
+// *GooglePrivacyDlpV2beta1RedactContentResponse.ServerResponse.Header
+// or (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *ContentRedactCall) Do(opts ...googleapi.CallOption) (*GooglePrivacyDlpV2beta1RedactContentResponse, error) {
 	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
@@ -1861,7 +2110,7 @@ func (c *ContentRedactCall) Do(opts ...googleapi.CallOption) (*RedactContentResp
 	if err := googleapi.CheckResponse(res); err != nil {
 		return nil, err
 	}
-	ret := &RedactContentResponse{
+	ret := &GooglePrivacyDlpV2beta1RedactContentResponse{
 		ServerResponse: googleapi.ServerResponse{
 			Header:         res.Header,
 			HTTPStatusCode: res.StatusCode,
@@ -1873,7 +2122,7 @@ func (c *ContentRedactCall) Do(opts ...googleapi.CallOption) (*RedactContentResp
 	}
 	return ret, nil
 	// {
-	//   "description": "Redact potentially sensitive info from a list of strings.\nThis method has limits on input size, processing time, and output size.",
+	//   "description": "Redacts potentially sensitive info from a list of strings.\nThis method has limits on input size, processing time, and output size.",
 	//   "flatPath": "v2beta1/content:redact",
 	//   "httpMethod": "POST",
 	//   "id": "dlp.content.redact",
@@ -1881,10 +2130,10 @@ func (c *ContentRedactCall) Do(opts ...googleapi.CallOption) (*RedactContentResp
 	//   "parameters": {},
 	//   "path": "v2beta1/content:redact",
 	//   "request": {
-	//     "$ref": "RedactContentRequest"
+	//     "$ref": "GooglePrivacyDlpV2beta1RedactContentRequest"
 	//   },
 	//   "response": {
-	//     "$ref": "RedactContentResponse"
+	//     "$ref": "GooglePrivacyDlpV2beta1RedactContentResponse"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform"
@@ -1896,21 +2145,21 @@ func (c *ContentRedactCall) Do(opts ...googleapi.CallOption) (*RedactContentResp
 // method id "dlp.inspect.operations.cancel":
 
 type InspectOperationsCancelCall struct {
-	s                      *Service
-	name                   string
-	canceloperationrequest *CancelOperationRequest
-	urlParams_             gensupport.URLParams
-	ctx_                   context.Context
-	header_                http.Header
+	s                                       *Service
+	name                                    string
+	googlelongrunningcanceloperationrequest *GoogleLongrunningCancelOperationRequest
+	urlParams_                              gensupport.URLParams
+	ctx_                                    context.Context
+	header_                                 http.Header
 }
 
 // Cancel: Cancels an operation. Use the get method to check whether the
 // cancellation succeeded or whether the operation completed despite
 // cancellation.
-func (r *InspectOperationsService) Cancel(name string, canceloperationrequest *CancelOperationRequest) *InspectOperationsCancelCall {
+func (r *InspectOperationsService) Cancel(name string, googlelongrunningcanceloperationrequest *GoogleLongrunningCancelOperationRequest) *InspectOperationsCancelCall {
 	c := &InspectOperationsCancelCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
-	c.canceloperationrequest = canceloperationrequest
+	c.googlelongrunningcanceloperationrequest = googlelongrunningcanceloperationrequest
 	return c
 }
 
@@ -1946,7 +2195,7 @@ func (c *InspectOperationsCancelCall) doRequest(alt string) (*http.Response, err
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
-	body, err := googleapi.WithoutDataWrapper.JSONReader(c.canceloperationrequest)
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.googlelongrunningcanceloperationrequest)
 	if err != nil {
 		return nil, err
 	}
@@ -1963,13 +2212,13 @@ func (c *InspectOperationsCancelCall) doRequest(alt string) (*http.Response, err
 }
 
 // Do executes the "dlp.inspect.operations.cancel" call.
-// Exactly one of *Empty or error will be non-nil. Any non-2xx status
-// code is an error. Response headers are in either
-// *Empty.ServerResponse.Header or (if a response was returned at all)
-// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
-// check whether the returned error was because http.StatusNotModified
-// was returned.
-func (c *InspectOperationsCancelCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
+// Exactly one of *GoogleProtobufEmpty or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *GoogleProtobufEmpty.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *InspectOperationsCancelCall) Do(opts ...googleapi.CallOption) (*GoogleProtobufEmpty, error) {
 	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
@@ -1988,7 +2237,7 @@ func (c *InspectOperationsCancelCall) Do(opts ...googleapi.CallOption) (*Empty, 
 	if err := googleapi.CheckResponse(res); err != nil {
 		return nil, err
 	}
-	ret := &Empty{
+	ret := &GoogleProtobufEmpty{
 		ServerResponse: googleapi.ServerResponse{
 			Header:         res.Header,
 			HTTPStatusCode: res.StatusCode,
@@ -2018,10 +2267,10 @@ func (c *InspectOperationsCancelCall) Do(opts ...googleapi.CallOption) (*Empty, 
 	//   },
 	//   "path": "v2beta1/{+name}:cancel",
 	//   "request": {
-	//     "$ref": "CancelOperationRequest"
+	//     "$ref": "GoogleLongrunningCancelOperationRequest"
 	//   },
 	//   "response": {
-	//     "$ref": "Empty"
+	//     "$ref": "GoogleProtobufEmpty"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform"
@@ -2033,18 +2282,19 @@ func (c *InspectOperationsCancelCall) Do(opts ...googleapi.CallOption) (*Empty, 
 // method id "dlp.inspect.operations.create":
 
 type InspectOperationsCreateCall struct {
-	s                             *Service
-	createinspectoperationrequest *CreateInspectOperationRequest
-	urlParams_                    gensupport.URLParams
-	ctx_                          context.Context
-	header_                       http.Header
+	s                                                    *Service
+	googleprivacydlpv2beta1createinspectoperationrequest *GooglePrivacyDlpV2beta1CreateInspectOperationRequest
+	urlParams_                                           gensupport.URLParams
+	ctx_                                                 context.Context
+	header_                                              http.Header
 }
 
-// Create: Schedule a job scanning content in a Google Cloud Platform
-// data repository.
-func (r *InspectOperationsService) Create(createinspectoperationrequest *CreateInspectOperationRequest) *InspectOperationsCreateCall {
+// Create: Schedules a job scanning content in a Google Cloud Platform
+// data
+// repository.
+func (r *InspectOperationsService) Create(googleprivacydlpv2beta1createinspectoperationrequest *GooglePrivacyDlpV2beta1CreateInspectOperationRequest) *InspectOperationsCreateCall {
 	c := &InspectOperationsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.createinspectoperationrequest = createinspectoperationrequest
+	c.googleprivacydlpv2beta1createinspectoperationrequest = googleprivacydlpv2beta1createinspectoperationrequest
 	return c
 }
 
@@ -2080,7 +2330,7 @@ func (c *InspectOperationsCreateCall) doRequest(alt string) (*http.Response, err
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
-	body, err := googleapi.WithoutDataWrapper.JSONReader(c.createinspectoperationrequest)
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.googleprivacydlpv2beta1createinspectoperationrequest)
 	if err != nil {
 		return nil, err
 	}
@@ -2094,13 +2344,13 @@ func (c *InspectOperationsCreateCall) doRequest(alt string) (*http.Response, err
 }
 
 // Do executes the "dlp.inspect.operations.create" call.
-// Exactly one of *Operation or error will be non-nil. Any non-2xx
-// status code is an error. Response headers are in either
-// *Operation.ServerResponse.Header or (if a response was returned at
-// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
-// to check whether the returned error was because
-// http.StatusNotModified was returned.
-func (c *InspectOperationsCreateCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+// Exactly one of *GoogleLongrunningOperation or error will be non-nil.
+// Any non-2xx status code is an error. Response headers are in either
+// *GoogleLongrunningOperation.ServerResponse.Header or (if a response
+// was returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *InspectOperationsCreateCall) Do(opts ...googleapi.CallOption) (*GoogleLongrunningOperation, error) {
 	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
@@ -2119,7 +2369,7 @@ func (c *InspectOperationsCreateCall) Do(opts ...googleapi.CallOption) (*Operati
 	if err := googleapi.CheckResponse(res); err != nil {
 		return nil, err
 	}
-	ret := &Operation{
+	ret := &GoogleLongrunningOperation{
 		ServerResponse: googleapi.ServerResponse{
 			Header:         res.Header,
 			HTTPStatusCode: res.StatusCode,
@@ -2131,7 +2381,7 @@ func (c *InspectOperationsCreateCall) Do(opts ...googleapi.CallOption) (*Operati
 	}
 	return ret, nil
 	// {
-	//   "description": "Schedule a job scanning content in a Google Cloud Platform data repository.",
+	//   "description": "Schedules a job scanning content in a Google Cloud Platform data\nrepository.",
 	//   "flatPath": "v2beta1/inspect/operations",
 	//   "httpMethod": "POST",
 	//   "id": "dlp.inspect.operations.create",
@@ -2139,10 +2389,10 @@ func (c *InspectOperationsCreateCall) Do(opts ...googleapi.CallOption) (*Operati
 	//   "parameters": {},
 	//   "path": "v2beta1/inspect/operations",
 	//   "request": {
-	//     "$ref": "CreateInspectOperationRequest"
+	//     "$ref": "GooglePrivacyDlpV2beta1CreateInspectOperationRequest"
 	//   },
 	//   "response": {
-	//     "$ref": "Operation"
+	//     "$ref": "GoogleLongrunningOperation"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform"
@@ -2213,13 +2463,13 @@ func (c *InspectOperationsDeleteCall) doRequest(alt string) (*http.Response, err
 }
 
 // Do executes the "dlp.inspect.operations.delete" call.
-// Exactly one of *Empty or error will be non-nil. Any non-2xx status
-// code is an error. Response headers are in either
-// *Empty.ServerResponse.Header or (if a response was returned at all)
-// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
-// check whether the returned error was because http.StatusNotModified
-// was returned.
-func (c *InspectOperationsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
+// Exactly one of *GoogleProtobufEmpty or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *GoogleProtobufEmpty.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *InspectOperationsDeleteCall) Do(opts ...googleapi.CallOption) (*GoogleProtobufEmpty, error) {
 	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
@@ -2238,7 +2488,7 @@ func (c *InspectOperationsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, 
 	if err := googleapi.CheckResponse(res); err != nil {
 		return nil, err
 	}
-	ret := &Empty{
+	ret := &GoogleProtobufEmpty{
 		ServerResponse: googleapi.ServerResponse{
 			Header:         res.Header,
 			HTTPStatusCode: res.StatusCode,
@@ -2268,7 +2518,7 @@ func (c *InspectOperationsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, 
 	//   },
 	//   "path": "v2beta1/{+name}",
 	//   "response": {
-	//     "$ref": "Empty"
+	//     "$ref": "GoogleProtobufEmpty"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform"
@@ -2356,13 +2606,13 @@ func (c *InspectOperationsGetCall) doRequest(alt string) (*http.Response, error)
 }
 
 // Do executes the "dlp.inspect.operations.get" call.
-// Exactly one of *Operation or error will be non-nil. Any non-2xx
-// status code is an error. Response headers are in either
-// *Operation.ServerResponse.Header or (if a response was returned at
-// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
-// to check whether the returned error was because
-// http.StatusNotModified was returned.
-func (c *InspectOperationsGetCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+// Exactly one of *GoogleLongrunningOperation or error will be non-nil.
+// Any non-2xx status code is an error. Response headers are in either
+// *GoogleLongrunningOperation.ServerResponse.Header or (if a response
+// was returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *InspectOperationsGetCall) Do(opts ...googleapi.CallOption) (*GoogleLongrunningOperation, error) {
 	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
@@ -2381,7 +2631,7 @@ func (c *InspectOperationsGetCall) Do(opts ...googleapi.CallOption) (*Operation,
 	if err := googleapi.CheckResponse(res); err != nil {
 		return nil, err
 	}
-	ret := &Operation{
+	ret := &GoogleLongrunningOperation{
 		ServerResponse: googleapi.ServerResponse{
 			Header:         res.Header,
 			HTTPStatusCode: res.StatusCode,
@@ -2411,7 +2661,7 @@ func (c *InspectOperationsGetCall) Do(opts ...googleapi.CallOption) (*Operation,
 	//   },
 	//   "path": "v2beta1/{+name}",
 	//   "response": {
-	//     "$ref": "Operation"
+	//     "$ref": "GoogleLongrunningOperation"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform"
@@ -2431,14 +2681,7 @@ type InspectOperationsListCall struct {
 	header_      http.Header
 }
 
-// List: Lists operations that match the specified filter in the
-// request. If the
-// server doesn't support this method, it returns
-// `UNIMPLEMENTED`.
-//
-// NOTE: the `name` binding below allows API services to override the
-// binding
-// to use different resource name schemes, such as `users/*/operations`.
+// List: Fetch the list of long running operations.
 func (r *InspectOperationsService) List(name string) *InspectOperationsListCall {
 	c := &InspectOperationsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -2459,8 +2702,8 @@ func (c *InspectOperationsListCall) PageSize(pageSize int64) *InspectOperationsL
 	return c
 }
 
-// PageToken sets the optional parameter "pageToken": The list page
-// token.
+// PageToken sets the optional parameter "pageToken": The standard list
+// page token.
 func (c *InspectOperationsListCall) PageToken(pageToken string) *InspectOperationsListCall {
 	c.urlParams_.Set("pageToken", pageToken)
 	return c
@@ -2523,13 +2766,14 @@ func (c *InspectOperationsListCall) doRequest(alt string) (*http.Response, error
 }
 
 // Do executes the "dlp.inspect.operations.list" call.
-// Exactly one of *ListOperationsResponse or error will be non-nil. Any
-// non-2xx status code is an error. Response headers are in either
-// *ListOperationsResponse.ServerResponse.Header or (if a response was
-// returned at all) in error.(*googleapi.Error).Header. Use
-// googleapi.IsNotModified to check whether the returned error was
+// Exactly one of *GoogleLongrunningListOperationsResponse or error will
+// be non-nil. Any non-2xx status code is an error. Response headers are
+// in either
+// *GoogleLongrunningListOperationsResponse.ServerResponse.Header or (if
+// a response was returned at all) in error.(*googleapi.Error).Header.
+// Use googleapi.IsNotModified to check whether the returned error was
 // because http.StatusNotModified was returned.
-func (c *InspectOperationsListCall) Do(opts ...googleapi.CallOption) (*ListOperationsResponse, error) {
+func (c *InspectOperationsListCall) Do(opts ...googleapi.CallOption) (*GoogleLongrunningListOperationsResponse, error) {
 	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
@@ -2548,7 +2792,7 @@ func (c *InspectOperationsListCall) Do(opts ...googleapi.CallOption) (*ListOpera
 	if err := googleapi.CheckResponse(res); err != nil {
 		return nil, err
 	}
-	ret := &ListOperationsResponse{
+	ret := &GoogleLongrunningListOperationsResponse{
 		ServerResponse: googleapi.ServerResponse{
 			Header:         res.Header,
 			HTTPStatusCode: res.StatusCode,
@@ -2560,7 +2804,7 @@ func (c *InspectOperationsListCall) Do(opts ...googleapi.CallOption) (*ListOpera
 	}
 	return ret, nil
 	// {
-	//   "description": "Lists operations that match the specified filter in the request. If the\nserver doesn't support this method, it returns `UNIMPLEMENTED`.\n\nNOTE: the `name` binding below allows API services to override the binding\nto use different resource name schemes, such as `users/*/operations`.",
+	//   "description": "Fetch the list of long running operations.",
 	//   "flatPath": "v2beta1/inspect/operations",
 	//   "httpMethod": "GET",
 	//   "id": "dlp.inspect.operations.list",
@@ -2574,7 +2818,7 @@ func (c *InspectOperationsListCall) Do(opts ...googleapi.CallOption) (*ListOpera
 	//       "type": "string"
 	//     },
 	//     "name": {
-	//       "description": "The name of the operation collection.",
+	//       "description": "The name of the operation's parent resource.",
 	//       "location": "path",
 	//       "pattern": "^inspect/operations$",
 	//       "required": true,
@@ -2587,14 +2831,14 @@ func (c *InspectOperationsListCall) Do(opts ...googleapi.CallOption) (*ListOpera
 	//       "type": "integer"
 	//     },
 	//     "pageToken": {
-	//       "description": "The list page token.",
+	//       "description": "The standard list page token.",
 	//       "location": "query",
 	//       "type": "string"
 	//     }
 	//   },
 	//   "path": "v2beta1/{+name}",
 	//   "response": {
-	//     "$ref": "ListOperationsResponse"
+	//     "$ref": "GoogleLongrunningListOperationsResponse"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform"
@@ -2606,7 +2850,7 @@ func (c *InspectOperationsListCall) Do(opts ...googleapi.CallOption) (*ListOpera
 // Pages invokes f for each page of results.
 // A non-nil error returned from f will halt the iteration.
 // The provided context supersedes any context provided to the Context method.
-func (c *InspectOperationsListCall) Pages(ctx context.Context, f func(*ListOperationsResponse) error) error {
+func (c *InspectOperationsListCall) Pages(ctx context.Context, f func(*GoogleLongrunningListOperationsResponse) error) error {
 	c.ctx_ = ctx
 	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
 	for {
@@ -2643,9 +2887,26 @@ func (r *InspectResultsFindingsService) List(name string) *InspectResultsFinding
 	return c
 }
 
+// Filter sets the optional parameter "filter": Restricts findings to
+// items that match. Supports info_type and
+// likelihood.
+// <p>Examples:<br/>
+// <li>info_type=EMAIL_ADDRESS
+// <li>info_typ
+// e=PHONE_NUMBER,EMAIL_ADDRESS
+// <li>likelihood=VERY_LIKELY
+// <li>likelihood
+// =VERY_LIKELY,LIKELY
+// <li>info_type=EMAIL_ADDRESS,likelihood=VERY_LIKELY
+// ,LIKELY
+func (c *InspectResultsFindingsListCall) Filter(filter string) *InspectResultsFindingsListCall {
+	c.urlParams_.Set("filter", filter)
+	return c
+}
+
 // PageSize sets the optional parameter "pageSize": Maximum number of
 // results to return.
-// If 0, the implementation select a reasonable value.
+// If 0, the implementation selects a reasonable value.
 func (c *InspectResultsFindingsListCall) PageSize(pageSize int64) *InspectResultsFindingsListCall {
 	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
 	return c
@@ -2718,13 +2979,15 @@ func (c *InspectResultsFindingsListCall) doRequest(alt string) (*http.Response, 
 }
 
 // Do executes the "dlp.inspect.results.findings.list" call.
-// Exactly one of *ListInspectFindingsResponse or error will be non-nil.
-// Any non-2xx status code is an error. Response headers are in either
-// *ListInspectFindingsResponse.ServerResponse.Header or (if a response
-// was returned at all) in error.(*googleapi.Error).Header. Use
-// googleapi.IsNotModified to check whether the returned error was
-// because http.StatusNotModified was returned.
-func (c *InspectResultsFindingsListCall) Do(opts ...googleapi.CallOption) (*ListInspectFindingsResponse, error) {
+// Exactly one of *GooglePrivacyDlpV2beta1ListInspectFindingsResponse or
+// error will be non-nil. Any non-2xx status code is an error. Response
+// headers are in either
+// *GooglePrivacyDlpV2beta1ListInspectFindingsResponse.ServerResponse.Hea
+// der or (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *InspectResultsFindingsListCall) Do(opts ...googleapi.CallOption) (*GooglePrivacyDlpV2beta1ListInspectFindingsResponse, error) {
 	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
@@ -2743,7 +3006,7 @@ func (c *InspectResultsFindingsListCall) Do(opts ...googleapi.CallOption) (*List
 	if err := googleapi.CheckResponse(res); err != nil {
 		return nil, err
 	}
-	ret := &ListInspectFindingsResponse{
+	ret := &GooglePrivacyDlpV2beta1ListInspectFindingsResponse{
 		ServerResponse: googleapi.ServerResponse{
 			Header:         res.Header,
 			HTTPStatusCode: res.StatusCode,
@@ -2763,6 +3026,11 @@ func (c *InspectResultsFindingsListCall) Do(opts ...googleapi.CallOption) (*List
 	//     "name"
 	//   ],
 	//   "parameters": {
+	//     "filter": {
+	//       "description": "Restricts findings to items that match. Supports info_type and likelihood.\n\u003cp\u003eExamples:\u003cbr/\u003e\n\u003cli\u003einfo_type=EMAIL_ADDRESS\n\u003cli\u003einfo_type=PHONE_NUMBER,EMAIL_ADDRESS\n\u003cli\u003elikelihood=VERY_LIKELY\n\u003cli\u003elikelihood=VERY_LIKELY,LIKELY\n\u003cli\u003einfo_type=EMAIL_ADDRESS,likelihood=VERY_LIKELY,LIKELY",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
 	//     "name": {
 	//       "description": "Identifier of the results set returned as metadata of\nthe longrunning operation created by a call to CreateInspectOperation.\nShould be in the format of `inspect/results/{id}.",
 	//       "location": "path",
@@ -2771,7 +3039,7 @@ func (c *InspectResultsFindingsListCall) Do(opts ...googleapi.CallOption) (*List
 	//       "type": "string"
 	//     },
 	//     "pageSize": {
-	//       "description": "Maximum number of results to return.\nIf 0, the implementation select a reasonable value.",
+	//       "description": "Maximum number of results to return.\nIf 0, the implementation selects a reasonable value.",
 	//       "format": "int32",
 	//       "location": "query",
 	//       "type": "integer"
@@ -2784,7 +3052,7 @@ func (c *InspectResultsFindingsListCall) Do(opts ...googleapi.CallOption) (*List
 	//   },
 	//   "path": "v2beta1/{+name}/findings",
 	//   "response": {
-	//     "$ref": "ListInspectFindingsResponse"
+	//     "$ref": "GooglePrivacyDlpV2beta1ListInspectFindingsResponse"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform"
@@ -2796,7 +3064,7 @@ func (c *InspectResultsFindingsListCall) Do(opts ...googleapi.CallOption) (*List
 // Pages invokes f for each page of results.
 // A non-nil error returned from f will halt the iteration.
 // The provided context supersedes any context provided to the Context method.
-func (c *InspectResultsFindingsListCall) Pages(ctx context.Context, f func(*ListInspectFindingsResponse) error) error {
+func (c *InspectResultsFindingsListCall) Pages(ctx context.Context, f func(*GooglePrivacyDlpV2beta1ListInspectFindingsResponse) error) error {
 	c.ctx_ = ctx
 	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
 	for {
@@ -2893,13 +3161,15 @@ func (c *RootCategoriesListCall) doRequest(alt string) (*http.Response, error) {
 }
 
 // Do executes the "dlp.rootCategories.list" call.
-// Exactly one of *ListRootCategoriesResponse or error will be non-nil.
-// Any non-2xx status code is an error. Response headers are in either
-// *ListRootCategoriesResponse.ServerResponse.Header or (if a response
-// was returned at all) in error.(*googleapi.Error).Header. Use
-// googleapi.IsNotModified to check whether the returned error was
-// because http.StatusNotModified was returned.
-func (c *RootCategoriesListCall) Do(opts ...googleapi.CallOption) (*ListRootCategoriesResponse, error) {
+// Exactly one of *GooglePrivacyDlpV2beta1ListRootCategoriesResponse or
+// error will be non-nil. Any non-2xx status code is an error. Response
+// headers are in either
+// *GooglePrivacyDlpV2beta1ListRootCategoriesResponse.ServerResponse.Head
+// er or (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *RootCategoriesListCall) Do(opts ...googleapi.CallOption) (*GooglePrivacyDlpV2beta1ListRootCategoriesResponse, error) {
 	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
@@ -2918,7 +3188,7 @@ func (c *RootCategoriesListCall) Do(opts ...googleapi.CallOption) (*ListRootCate
 	if err := googleapi.CheckResponse(res); err != nil {
 		return nil, err
 	}
-	ret := &ListRootCategoriesResponse{
+	ret := &GooglePrivacyDlpV2beta1ListRootCategoriesResponse{
 		ServerResponse: googleapi.ServerResponse{
 			Header:         res.Header,
 			HTTPStatusCode: res.StatusCode,
@@ -2944,7 +3214,7 @@ func (c *RootCategoriesListCall) Do(opts ...googleapi.CallOption) (*ListRootCate
 	//   },
 	//   "path": "v2beta1/rootCategories",
 	//   "response": {
-	//     "$ref": "ListRootCategoriesResponse"
+	//     "$ref": "GooglePrivacyDlpV2beta1ListRootCategoriesResponse"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform"
@@ -3037,13 +3307,15 @@ func (c *RootCategoriesInfoTypesListCall) doRequest(alt string) (*http.Response,
 }
 
 // Do executes the "dlp.rootCategories.infoTypes.list" call.
-// Exactly one of *ListInfoTypesResponse or error will be non-nil. Any
-// non-2xx status code is an error. Response headers are in either
-// *ListInfoTypesResponse.ServerResponse.Header or (if a response was
-// returned at all) in error.(*googleapi.Error).Header. Use
-// googleapi.IsNotModified to check whether the returned error was
-// because http.StatusNotModified was returned.
-func (c *RootCategoriesInfoTypesListCall) Do(opts ...googleapi.CallOption) (*ListInfoTypesResponse, error) {
+// Exactly one of *GooglePrivacyDlpV2beta1ListInfoTypesResponse or error
+// will be non-nil. Any non-2xx status code is an error. Response
+// headers are in either
+// *GooglePrivacyDlpV2beta1ListInfoTypesResponse.ServerResponse.Header
+// or (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *RootCategoriesInfoTypesListCall) Do(opts ...googleapi.CallOption) (*GooglePrivacyDlpV2beta1ListInfoTypesResponse, error) {
 	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
@@ -3062,7 +3334,7 @@ func (c *RootCategoriesInfoTypesListCall) Do(opts ...googleapi.CallOption) (*Lis
 	if err := googleapi.CheckResponse(res); err != nil {
 		return nil, err
 	}
-	ret := &ListInfoTypesResponse{
+	ret := &GooglePrivacyDlpV2beta1ListInfoTypesResponse{
 		ServerResponse: googleapi.ServerResponse{
 			Header:         res.Header,
 			HTTPStatusCode: res.StatusCode,
@@ -3097,7 +3369,7 @@ func (c *RootCategoriesInfoTypesListCall) Do(opts ...googleapi.CallOption) (*Lis
 	//   },
 	//   "path": "v2beta1/rootCategories/{+category}/infoTypes",
 	//   "response": {
-	//     "$ref": "ListInfoTypesResponse"
+	//     "$ref": "GooglePrivacyDlpV2beta1ListInfoTypesResponse"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform"

@@ -406,7 +406,9 @@
         {"shape":"TargetGroupAssociationLimitException"},
         {"shape":"RuleNotFoundException"},
         {"shape":"OperationNotPermittedException"},
-        {"shape":"TooManyRegistrationsForTargetIdException"}
+        {"shape":"TooManyRegistrationsForTargetIdException"},
+        {"shape":"TooManyTargetsException"},
+        {"shape":"TargetGroupNotFoundException"}
       ]
     },
     "ModifyTargetGroup":{
@@ -856,13 +858,16 @@
       "type":"structure",
       "members":{
         "ListenerArn":{"shape":"ListenerArn"},
-        "RuleArns":{"shape":"RuleArns"}
+        "RuleArns":{"shape":"RuleArns"},
+        "Marker":{"shape":"Marker"},
+        "PageSize":{"shape":"PageSize"}
       }
     },
     "DescribeRulesOutput":{
       "type":"structure",
       "members":{
-        "Rules":{"shape":"Rules"}
+        "Rules":{"shape":"Rules"},
+        "NextMarker":{"shape":"Marker"}
       }
     },
     "DescribeSSLPoliciesInput":{

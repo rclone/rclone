@@ -73,8 +73,9 @@ func TestRetry(t *testing.T) {
 		// Let retryable runner to retry so that timeout will eventually happen.
 		return retryErr
 	})
-	if wantErr := errContextCanceled(retryErr); !reflect.DeepEqual(err, wantErr) {
-		t.Errorf("runRetryable returns error: %v, want error: %v", err, wantErr)
+	// Check error code and error message
+	if wantErrCode, wantErr := codes.DeadlineExceeded, errContextCanceled(ctx, retryErr); ErrCode(err) != wantErrCode || !reflect.DeepEqual(err, wantErr) {
+		t.Errorf("<err code, err>=\n<%v, %v>, want:\n<%v, %v>", ErrCode(err), err, wantErrCode, wantErr)
 	}
 	// Cancellation
 	ctx, cancel = context.WithCancel(context.Background())
@@ -87,8 +88,9 @@ func TestRetry(t *testing.T) {
 		}
 		return retryErr
 	})
-	if wantErr := errContextCanceled(retryErr); !reflect.DeepEqual(err, wantErr) || retries != 0 {
-		t.Errorf("<err, retries>=<%v, %v>, want <%v, %v>", err, retries, wantErr, 0)
+	// Check error code, error message, retry count
+	if wantErrCode, wantErr := codes.Canceled, errContextCanceled(ctx, retryErr); ErrCode(err) != wantErrCode || !reflect.DeepEqual(err, wantErr) || retries != 0 {
+		t.Errorf("<err code, err, retries>=\n<%v, %v, %v>, want:\n<%v, %v, %v>", ErrCode(err), err, retries, wantErrCode, wantErr, 0)
 	}
 }
 

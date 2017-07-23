@@ -26,16 +26,13 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-// A Row is a view of a row of data produced by a Cloud Spanner read.
-//
-// A row consists of a number of columns; the number depends on the columns
+// A Row is a view of a row of data returned by a Cloud Spanner read.
+// It consists of a number of columns; the number depends on the columns
 // used to construct the read.
 //
-// The column values can be accessed by index, where the indices are with
-// respect to the columns. For instance, if the read specified
-// []string{"photo_id", "caption", "metadata"}, then each row will
-// contain three columns: the 0th column corresponds to "photo_id", the
-// 1st column corresponds to "caption", etc.
+// The column values can be accessed by index. For instance, if the read specified
+// []string{"photo_id", "caption"}, then each row will contain two
+// columns: "photo_id" with index 0, and "caption" with index 1.
 //
 // Column values are decoded by using one of the Column, ColumnByName, or
 // Columns methods. The valid values passed to these methods depend on the
@@ -47,7 +44,7 @@ import (
 //	var caption string
 //	err := row.Column(1, &caption) // Decode column 1 as a string.
 //
-//	// The above two operations at once.
+//	// Decode all the columns.
 //	err := row.Columns(&photoID, &caption)
 //
 // Supported types and their corresponding Cloud Spanner column type(s) are:
@@ -69,21 +66,20 @@ import (
 //	*[]*some_go_struct, *[]NullRow - STRUCT ARRAY
 //	*GenericColumnValue - any Cloud Spanner type
 //
-// For TIMESTAMP columns, returned time.Time object will be in UTC.
+// For TIMESTAMP columns, the returned time.Time object will be in UTC.
 //
-// To fetch an array of BYTES, pass a *[][]byte. To fetch an array of
-// (sub)rows, pass a *[]spanner.NullRow or a *[]*some_go_struct where
-// some_go_struct holds all information of the subrow, see spannr.Row.ToStruct
-// for the mapping between Cloud Spanner row and Go struct. To fetch an array of
-// other types, pass a *[]spanner.Null* type of the appropriate type.  Use
-// *GenericColumnValue when you don't know in advance what column type to
-// expect.
+// To fetch an array of BYTES, pass a *[][]byte. To fetch an array of (sub)rows, pass
+// a *[]spanner.NullRow or a *[]*some_go_struct where some_go_struct holds all
+// information of the subrow, see spanner.Row.ToStruct for the mapping between a
+// Cloud Spanner row and a Go struct. To fetch an array of other types, pass a
+// *[]spanner.NullXXX type of the appropriate type. Use GenericColumnValue when you
+// don't know in advance what column type to expect.
 //
 // Row decodes the row contents lazily; as a result, each call to a getter has
 // a chance of returning an error.
 //
 // A column value may be NULL if the corresponding value is not present in
-// Cloud Spanner. The spanner.Null* types (spanner.NullInt64 et al.) allow fetching
+// Cloud Spanner. The spanner.NullXXX types (spanner.NullInt64 et al.) allow fetching
 // values that may be null. A NULL BYTES can be fetched into a *[]byte as nil.
 // It is an error to fetch a NULL value into any other type.
 type Row struct {
@@ -202,6 +198,7 @@ func errNilColType(i int) error {
 
 // Column fetches the value from the ith column, decoding it into ptr.
 // See the Row documentation for the list of acceptable argument types.
+// see Client.ReadWriteTransaction for an example.
 func (r *Row) Column(i int, ptr interface{}) error {
 	if len(r.vals) != len(r.fields) {
 		return errFieldsMismatchVals(r)
@@ -246,10 +243,10 @@ func errNumOfColValue(n int, r *Row) error {
 
 // Columns fetches all the columns in the row at once.
 //
-// The value of the kth column will be decoded into the kth argument to
-// Columns.  See above for the list of acceptable argument types. The number of
-// arguments must be equal to the number of columns. Pass nil to specify that a
-// column should be ignored.
+// The value of the kth column will be decoded into the kth argument to Columns. See
+// Row for the list of acceptable argument types. The number of arguments must be
+// equal to the number of columns. Pass nil to specify that a column should be
+// ignored.
 func (r *Row) Columns(ptrs ...interface{}) error {
 	if len(ptrs) != len(r.vals) {
 		return errNumOfColValue(len(ptrs), r)
@@ -277,19 +274,18 @@ func errToStructArgType(p interface{}) error {
 // ToStruct fetches the columns in a row into the fields of a struct.
 // The rules for mapping a row's columns into a struct's exported fields
 // are as the following:
-//   1. If a field has a `spanner: "column_name"` tag, then decode column
-//      'column_name' into the field. A special case is the `spanner: "-"`
-//      tag, which instructs ToStruct to ignore the field during decoding.
-//   2. Otherwise, if the name of a field matches the name of a column (ignoring case),
-//      decode the column into the field.
+// 1. If a field has a `spanner: "column_name"` tag, then decode column
+//    'column_name' into the field. A special case is the `spanner: "-"`
+//    tag, which instructs ToStruct to ignore the field during decoding.
+// 2. Otherwise, if the name of a field matches the name of a column (ignoring case),
+//    decode the column into the field.
 //
 // The fields of the destination struct can be of any type that is acceptable
-// to (*spanner.Row).Column.
+// to spanner.Row.Column.
 //
-// Slice and pointer fields will be set to nil if the source column
-// is NULL, and a non-nil value if the column is not NULL. To decode NULL
-// values of other types, use one of the spanner.Null* as the type of the
-// destination field.
+// Slice and pointer fields will be set to nil if the source column is NULL, and a
+// non-nil value if the column is not NULL. To decode NULL values of other types, use
+// one of the spanner.NullXXX types as the type of the destination field.
 func (r *Row) ToStruct(p interface{}) error {
 	// Check if p is a pointer to a struct
 	if t := reflect.TypeOf(p); t == nil || t.Kind() != reflect.Ptr || t.Elem().Kind() != reflect.Struct {

@@ -22,10 +22,12 @@ import (
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
@@ -35,6 +37,8 @@ import (
 	status "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	gstatus "google.golang.org/grpc/status"
 )
 
 var _ = io.EOF
@@ -56,7 +60,11 @@ type mockImageAnnotatorServer struct {
 	resps []proto.Message
 }
 
-func (s *mockImageAnnotatorServer) BatchAnnotateImages(_ context.Context, req *visionpb.BatchAnnotateImagesRequest) (*visionpb.BatchAnnotateImagesResponse, error) {
+func (s *mockImageAnnotatorServer) BatchAnnotateImages(ctx context.Context, req *visionpb.BatchAnnotateImagesRequest) (*visionpb.BatchAnnotateImagesResponse, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	if xg := md["x-goog-api-client"]; len(xg) == 0 || !strings.Contains(xg[0], "gl-go/") {
+		return nil, fmt.Errorf("x-goog-api-client = %v, expected gl-go key", xg)
+	}
 	s.reqs = append(s.reqs, req)
 	if s.err != nil {
 		return nil, s.err
@@ -127,8 +135,8 @@ func TestImageAnnotatorBatchAnnotateImages(t *testing.T) {
 }
 
 func TestImageAnnotatorBatchAnnotateImagesError(t *testing.T) {
-	errCode := codes.Internal
-	mockImageAnnotator.err = grpc.Errorf(errCode, "test error")
+	errCode := codes.PermissionDenied
+	mockImageAnnotator.err = gstatus.Error(errCode, "test error")
 
 	var requests []*visionpb.AnnotateImageRequest = nil
 	var request = &visionpb.BatchAnnotateImagesRequest{
@@ -142,7 +150,9 @@ func TestImageAnnotatorBatchAnnotateImagesError(t *testing.T) {
 
 	resp, err := c.BatchAnnotateImages(context.Background(), request)
 
-	if c := grpc.Code(err); c != errCode {
+	if st, ok := gstatus.FromError(err); !ok {
+		t.Errorf("got error %v, expected grpc error", err)
+	} else if c := st.Code(); c != errCode {
 		t.Errorf("got error code %q, want %q", c, errCode)
 	}
 	_ = resp

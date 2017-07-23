@@ -2367,7 +2367,8 @@ func (c *EC2) CopyImageRequest(input *CopyImageInput) (req *request.Request, out
 // region. You specify the destination region by using its endpoint when making
 // the request.
 //
-// For more information, see Copying AMIs (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/CopyingAMIs.html)
+// For more information about the prerequisites and limits when copying an AMI,
+// see Copying an AMI (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/CopyingAMIs.html)
 // in the Amazon Elastic Compute Cloud User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -3604,6 +3605,85 @@ func (c *EC2) CreateNetworkInterface(input *CreateNetworkInterfaceInput) (*Creat
 // for more information on using Contexts.
 func (c *EC2) CreateNetworkInterfaceWithContext(ctx aws.Context, input *CreateNetworkInterfaceInput, opts ...request.Option) (*CreateNetworkInterfaceOutput, error) {
 	req, out := c.CreateNetworkInterfaceRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opCreateNetworkInterfacePermission = "CreateNetworkInterfacePermission"
+
+// CreateNetworkInterfacePermissionRequest generates a "aws/request.Request" representing the
+// client's request for the CreateNetworkInterfacePermission operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See CreateNetworkInterfacePermission for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the CreateNetworkInterfacePermission method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the CreateNetworkInterfacePermissionRequest method.
+//    req, resp := client.CreateNetworkInterfacePermissionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/CreateNetworkInterfacePermission
+func (c *EC2) CreateNetworkInterfacePermissionRequest(input *CreateNetworkInterfacePermissionInput) (req *request.Request, output *CreateNetworkInterfacePermissionOutput) {
+	op := &request.Operation{
+		Name:       opCreateNetworkInterfacePermission,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateNetworkInterfacePermissionInput{}
+	}
+
+	output = &CreateNetworkInterfacePermissionOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateNetworkInterfacePermission API operation for Amazon Elastic Compute Cloud.
+//
+// Grants an AWS authorized partner account permission to attach the specified
+// network interface to an instance in their account.
+//
+// You can grant permission to a single AWS account only, and only one account
+// at a time.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic Compute Cloud's
+// API operation CreateNetworkInterfacePermission for usage and error information.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/CreateNetworkInterfacePermission
+func (c *EC2) CreateNetworkInterfacePermission(input *CreateNetworkInterfacePermissionInput) (*CreateNetworkInterfacePermissionOutput, error) {
+	req, out := c.CreateNetworkInterfacePermissionRequest(input)
+	return out, req.Send()
+}
+
+// CreateNetworkInterfacePermissionWithContext is the same as CreateNetworkInterfacePermission with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateNetworkInterfacePermission for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EC2) CreateNetworkInterfacePermissionWithContext(ctx aws.Context, input *CreateNetworkInterfacePermissionInput, opts ...request.Option) (*CreateNetworkInterfacePermissionOutput, error) {
+	req, out := c.CreateNetworkInterfacePermissionRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -5815,6 +5895,84 @@ func (c *EC2) DeleteNetworkInterfaceWithContext(ctx aws.Context, input *DeleteNe
 	return out, req.Send()
 }
 
+const opDeleteNetworkInterfacePermission = "DeleteNetworkInterfacePermission"
+
+// DeleteNetworkInterfacePermissionRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteNetworkInterfacePermission operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DeleteNetworkInterfacePermission for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DeleteNetworkInterfacePermission method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DeleteNetworkInterfacePermissionRequest method.
+//    req, resp := client.DeleteNetworkInterfacePermissionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DeleteNetworkInterfacePermission
+func (c *EC2) DeleteNetworkInterfacePermissionRequest(input *DeleteNetworkInterfacePermissionInput) (req *request.Request, output *DeleteNetworkInterfacePermissionOutput) {
+	op := &request.Operation{
+		Name:       opDeleteNetworkInterfacePermission,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteNetworkInterfacePermissionInput{}
+	}
+
+	output = &DeleteNetworkInterfacePermissionOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteNetworkInterfacePermission API operation for Amazon Elastic Compute Cloud.
+//
+// Deletes a permission for a network interface. By default, you cannot delete
+// the permission if the account for which you're removing the permission has
+// attached the network interface to an instance. However, you can force delete
+// the permission, regardless of any attachment.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic Compute Cloud's
+// API operation DeleteNetworkInterfacePermission for usage and error information.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DeleteNetworkInterfacePermission
+func (c *EC2) DeleteNetworkInterfacePermission(input *DeleteNetworkInterfacePermissionInput) (*DeleteNetworkInterfacePermissionOutput, error) {
+	req, out := c.DeleteNetworkInterfacePermissionRequest(input)
+	return out, req.Send()
+}
+
+// DeleteNetworkInterfacePermissionWithContext is the same as DeleteNetworkInterfacePermission with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteNetworkInterfacePermission for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EC2) DeleteNetworkInterfacePermissionWithContext(ctx aws.Context, input *DeleteNetworkInterfacePermissionInput, opts ...request.Option) (*DeleteNetworkInterfacePermissionOutput, error) {
+	req, out := c.DeleteNetworkInterfacePermissionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeletePlacementGroup = "DeletePlacementGroup"
 
 // DeletePlacementGroupRequest generates a "aws/request.Request" representing the
@@ -7978,6 +8136,83 @@ func (c *EC2) DescribeFlowLogsWithContext(ctx aws.Context, input *DescribeFlowLo
 	return out, req.Send()
 }
 
+const opDescribeFpgaImages = "DescribeFpgaImages"
+
+// DescribeFpgaImagesRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeFpgaImages operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DescribeFpgaImages for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeFpgaImages method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeFpgaImagesRequest method.
+//    req, resp := client.DescribeFpgaImagesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DescribeFpgaImages
+func (c *EC2) DescribeFpgaImagesRequest(input *DescribeFpgaImagesInput) (req *request.Request, output *DescribeFpgaImagesOutput) {
+	op := &request.Operation{
+		Name:       opDescribeFpgaImages,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeFpgaImagesInput{}
+	}
+
+	output = &DescribeFpgaImagesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeFpgaImages API operation for Amazon Elastic Compute Cloud.
+//
+// Describes one or more available Amazon FPGA Images (AFIs). These include
+// public AFIs, private AFIs that you own, and AFIs owned by other AWS accounts
+// for which you have load permissions.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic Compute Cloud's
+// API operation DescribeFpgaImages for usage and error information.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DescribeFpgaImages
+func (c *EC2) DescribeFpgaImages(input *DescribeFpgaImagesInput) (*DescribeFpgaImagesOutput, error) {
+	req, out := c.DescribeFpgaImagesRequest(input)
+	return out, req.Send()
+}
+
+// DescribeFpgaImagesWithContext is the same as DescribeFpgaImages with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeFpgaImages for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EC2) DescribeFpgaImagesWithContext(ctx aws.Context, input *DescribeFpgaImagesInput, opts ...request.Option) (*DescribeFpgaImagesOutput, error) {
+	req, out := c.DescribeFpgaImagesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDescribeHostReservationOfferings = "DescribeHostReservationOfferings"
 
 // DescribeHostReservationOfferingsRequest generates a "aws/request.Request" representing the
@@ -8904,7 +9139,8 @@ func (c *EC2) DescribeInstanceStatusRequest(input *DescribeInstanceStatusInput) 
 // DescribeInstanceStatus API operation for Amazon Elastic Compute Cloud.
 //
 // Describes the status of one or more instances. By default, only running instances
-// are described, unless specified otherwise.
+// are described, unless you specifically indicate to return the status of all
+// instances.
 //
 // Instance status includes the following components:
 //
@@ -9659,6 +9895,81 @@ func (c *EC2) DescribeNetworkInterfaceAttribute(input *DescribeNetworkInterfaceA
 // for more information on using Contexts.
 func (c *EC2) DescribeNetworkInterfaceAttributeWithContext(ctx aws.Context, input *DescribeNetworkInterfaceAttributeInput, opts ...request.Option) (*DescribeNetworkInterfaceAttributeOutput, error) {
 	req, out := c.DescribeNetworkInterfaceAttributeRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDescribeNetworkInterfacePermissions = "DescribeNetworkInterfacePermissions"
+
+// DescribeNetworkInterfacePermissionsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeNetworkInterfacePermissions operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DescribeNetworkInterfacePermissions for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeNetworkInterfacePermissions method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeNetworkInterfacePermissionsRequest method.
+//    req, resp := client.DescribeNetworkInterfacePermissionsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DescribeNetworkInterfacePermissions
+func (c *EC2) DescribeNetworkInterfacePermissionsRequest(input *DescribeNetworkInterfacePermissionsInput) (req *request.Request, output *DescribeNetworkInterfacePermissionsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeNetworkInterfacePermissions,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeNetworkInterfacePermissionsInput{}
+	}
+
+	output = &DescribeNetworkInterfacePermissionsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeNetworkInterfacePermissions API operation for Amazon Elastic Compute Cloud.
+//
+// Describes the permissions for your network interfaces.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic Compute Cloud's
+// API operation DescribeNetworkInterfacePermissions for usage and error information.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DescribeNetworkInterfacePermissions
+func (c *EC2) DescribeNetworkInterfacePermissions(input *DescribeNetworkInterfacePermissionsInput) (*DescribeNetworkInterfacePermissionsOutput, error) {
+	req, out := c.DescribeNetworkInterfacePermissionsRequest(input)
+	return out, req.Send()
+}
+
+// DescribeNetworkInterfacePermissionsWithContext is the same as DescribeNetworkInterfacePermissions with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeNetworkInterfacePermissions for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EC2) DescribeNetworkInterfacePermissionsWithContext(ctx aws.Context, input *DescribeNetworkInterfacePermissionsInput, opts ...request.Option) (*DescribeNetworkInterfacePermissionsOutput, error) {
+	req, out := c.DescribeNetworkInterfacePermissionsRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -24783,6 +25094,113 @@ func (s *CreateNetworkInterfaceOutput) SetNetworkInterface(v *NetworkInterface) 
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/CreateNetworkInterfacePermissionRequest
+type CreateNetworkInterfacePermissionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The AWS account ID.
+	AwsAccountId *string `type:"string"`
+
+	// The AWS service. Currently not supported.
+	AwsService *string `type:"string"`
+
+	// Checks whether you have the required permissions for the action, without
+	// actually making the request, and provides an error response. If you have
+	// the required permissions, the error response is DryRunOperation. Otherwise,
+	// it is UnauthorizedOperation.
+	DryRun *bool `type:"boolean"`
+
+	// The ID of the network interface.
+	//
+	// NetworkInterfaceId is a required field
+	NetworkInterfaceId *string `type:"string" required:"true"`
+
+	// The type of permission to grant.
+	//
+	// Permission is a required field
+	Permission *string `type:"string" required:"true" enum:"InterfacePermissionType"`
+}
+
+// String returns the string representation
+func (s CreateNetworkInterfacePermissionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateNetworkInterfacePermissionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateNetworkInterfacePermissionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateNetworkInterfacePermissionInput"}
+	if s.NetworkInterfaceId == nil {
+		invalidParams.Add(request.NewErrParamRequired("NetworkInterfaceId"))
+	}
+	if s.Permission == nil {
+		invalidParams.Add(request.NewErrParamRequired("Permission"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAwsAccountId sets the AwsAccountId field's value.
+func (s *CreateNetworkInterfacePermissionInput) SetAwsAccountId(v string) *CreateNetworkInterfacePermissionInput {
+	s.AwsAccountId = &v
+	return s
+}
+
+// SetAwsService sets the AwsService field's value.
+func (s *CreateNetworkInterfacePermissionInput) SetAwsService(v string) *CreateNetworkInterfacePermissionInput {
+	s.AwsService = &v
+	return s
+}
+
+// SetDryRun sets the DryRun field's value.
+func (s *CreateNetworkInterfacePermissionInput) SetDryRun(v bool) *CreateNetworkInterfacePermissionInput {
+	s.DryRun = &v
+	return s
+}
+
+// SetNetworkInterfaceId sets the NetworkInterfaceId field's value.
+func (s *CreateNetworkInterfacePermissionInput) SetNetworkInterfaceId(v string) *CreateNetworkInterfacePermissionInput {
+	s.NetworkInterfaceId = &v
+	return s
+}
+
+// SetPermission sets the Permission field's value.
+func (s *CreateNetworkInterfacePermissionInput) SetPermission(v string) *CreateNetworkInterfacePermissionInput {
+	s.Permission = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/CreateNetworkInterfacePermissionResult
+type CreateNetworkInterfacePermissionOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Information about the permission for the network interface.
+	InterfacePermission *NetworkInterfacePermission `locationName:"interfacePermission" type:"structure"`
+}
+
+// String returns the string representation
+func (s CreateNetworkInterfacePermissionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateNetworkInterfacePermissionOutput) GoString() string {
+	return s.String()
+}
+
+// SetInterfacePermission sets the InterfacePermission field's value.
+func (s *CreateNetworkInterfacePermissionOutput) SetInterfacePermission(v *NetworkInterfacePermission) *CreateNetworkInterfacePermissionOutput {
+	s.InterfacePermission = v
+	return s
+}
+
 // Contains the parameters for CreatePlacementGroup.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/CreatePlacementGroupRequest
 type CreatePlacementGroupInput struct {
@@ -27247,6 +27665,91 @@ func (s DeleteNetworkInterfaceOutput) GoString() string {
 	return s.String()
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DeleteNetworkInterfacePermissionRequest
+type DeleteNetworkInterfacePermissionInput struct {
+	_ struct{} `type:"structure"`
+
+	// Checks whether you have the required permissions for the action, without
+	// actually making the request, and provides an error response. If you have
+	// the required permissions, the error response is DryRunOperation. Otherwise,
+	// it is UnauthorizedOperation.
+	DryRun *bool `type:"boolean"`
+
+	// Specify true to remove the permission even if the network interface is attached
+	// to an instance.
+	Force *bool `type:"boolean"`
+
+	// The ID of the network interface permission.
+	//
+	// NetworkInterfacePermissionId is a required field
+	NetworkInterfacePermissionId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteNetworkInterfacePermissionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteNetworkInterfacePermissionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteNetworkInterfacePermissionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteNetworkInterfacePermissionInput"}
+	if s.NetworkInterfacePermissionId == nil {
+		invalidParams.Add(request.NewErrParamRequired("NetworkInterfacePermissionId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDryRun sets the DryRun field's value.
+func (s *DeleteNetworkInterfacePermissionInput) SetDryRun(v bool) *DeleteNetworkInterfacePermissionInput {
+	s.DryRun = &v
+	return s
+}
+
+// SetForce sets the Force field's value.
+func (s *DeleteNetworkInterfacePermissionInput) SetForce(v bool) *DeleteNetworkInterfacePermissionInput {
+	s.Force = &v
+	return s
+}
+
+// SetNetworkInterfacePermissionId sets the NetworkInterfacePermissionId field's value.
+func (s *DeleteNetworkInterfacePermissionInput) SetNetworkInterfacePermissionId(v string) *DeleteNetworkInterfacePermissionInput {
+	s.NetworkInterfacePermissionId = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DeleteNetworkInterfacePermissionResult
+type DeleteNetworkInterfacePermissionOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Returns true if the request succeeds, otherwise returns an error.
+	Return *bool `locationName:"return" type:"boolean"`
+}
+
+// String returns the string representation
+func (s DeleteNetworkInterfacePermissionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteNetworkInterfacePermissionOutput) GoString() string {
+	return s.String()
+}
+
+// SetReturn sets the Return field's value.
+func (s *DeleteNetworkInterfacePermissionOutput) SetReturn(v bool) *DeleteNetworkInterfacePermissionOutput {
+	s.Return = &v
+	return s
+}
+
 // Contains the parameters for DeletePlacementGroup.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DeletePlacementGroupRequest
 type DeletePlacementGroupInput struct {
@@ -29309,6 +29812,164 @@ func (s *DescribeFlowLogsOutput) SetFlowLogs(v []*FlowLog) *DescribeFlowLogsOutp
 
 // SetNextToken sets the NextToken field's value.
 func (s *DescribeFlowLogsOutput) SetNextToken(v string) *DescribeFlowLogsOutput {
+	s.NextToken = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DescribeFpgaImagesRequest
+type DescribeFpgaImagesInput struct {
+	_ struct{} `type:"structure"`
+
+	// Checks whether you have the required permissions for the action, without
+	// actually making the request, and provides an error response. If you have
+	// the required permissions, the error response is DryRunOperation. Otherwise,
+	// it is UnauthorizedOperation.
+	DryRun *bool `type:"boolean"`
+
+	// One or more filters.
+	//
+	//    * create-time - The creation time of the AFI.
+	//
+	//    * fpga-image-id - The FPGA image identifier (AFI ID).
+	//
+	//    * fpga-image-global-id - The global FPGA image identifier (AGFI ID).
+	//
+	//    * name - The name of the AFI.
+	//
+	//    * owner-id - The AWS account ID of the AFI owner.
+	//
+	//    * product-code - The product code.
+	//
+	//    * shell-version - The version of the AWS Shell that was used to create
+	//    the bitstream.
+	//
+	//    * state - The state of the AFI (pending | failed | available | unavailable).
+	//
+	//    * tag:key=value - The key/value combination of a tag assigned to the resource.
+	//    Specify the key of the tag in the filter name and the value of the tag
+	//    in the filter value. For example, for the tag Purpose=X, specify tag:Purpose
+	//    for the filter name and X for the filter value.
+	//
+	//    * tag-key - The key of a tag assigned to the resource. This filter is
+	//    independent of the tag-value filter. For example, if you use both the
+	//    filter "tag-key=Purpose" and the filter "tag-value=X", you get any resources
+	//    assigned both the tag key Purpose (regardless of what the tag's value
+	//    is), and the tag value X (regardless of what the tag's key is). If you
+	//    want to list only resources where Purpose is X, see the tag:key=value
+	//    filter.
+	//
+	//    * tag-value - The value of a tag assigned to the resource. This filter
+	//    is independent of the tag-key filter.
+	//
+	//    * update-time - The time of the most recent update.
+	Filters []*Filter `locationName:"Filter" locationNameList:"Filter" type:"list"`
+
+	// One or more AFI IDs.
+	FpgaImageIds []*string `locationName:"FpgaImageId" locationNameList:"item" type:"list"`
+
+	// The maximum number of results to return in a single call.
+	MaxResults *int64 `min:"5" type:"integer"`
+
+	// The token to retrieve the next page of results.
+	NextToken *string `min:"1" type:"string"`
+
+	// Filters the AFI by owner. Specify an AWS account ID, self (owner is the sender
+	// of the request), or an AWS owner alias (valid values are amazon | aws-marketplace).
+	Owners []*string `locationName:"Owner" locationNameList:"Owner" type:"list"`
+}
+
+// String returns the string representation
+func (s DescribeFpgaImagesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeFpgaImagesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeFpgaImagesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeFpgaImagesInput"}
+	if s.MaxResults != nil && *s.MaxResults < 5 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 5))
+	}
+	if s.NextToken != nil && len(*s.NextToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NextToken", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDryRun sets the DryRun field's value.
+func (s *DescribeFpgaImagesInput) SetDryRun(v bool) *DescribeFpgaImagesInput {
+	s.DryRun = &v
+	return s
+}
+
+// SetFilters sets the Filters field's value.
+func (s *DescribeFpgaImagesInput) SetFilters(v []*Filter) *DescribeFpgaImagesInput {
+	s.Filters = v
+	return s
+}
+
+// SetFpgaImageIds sets the FpgaImageIds field's value.
+func (s *DescribeFpgaImagesInput) SetFpgaImageIds(v []*string) *DescribeFpgaImagesInput {
+	s.FpgaImageIds = v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *DescribeFpgaImagesInput) SetMaxResults(v int64) *DescribeFpgaImagesInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeFpgaImagesInput) SetNextToken(v string) *DescribeFpgaImagesInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetOwners sets the Owners field's value.
+func (s *DescribeFpgaImagesInput) SetOwners(v []*string) *DescribeFpgaImagesInput {
+	s.Owners = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DescribeFpgaImagesResult
+type DescribeFpgaImagesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Information about one or more FPGA images.
+	FpgaImages []*FpgaImage `locationName:"fpgaImageSet" locationNameList:"item" type:"list"`
+
+	// The token to use to retrieve the next page of results. This value is null
+	// when there are no more results to return.
+	NextToken *string `locationName:"nextToken" min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeFpgaImagesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeFpgaImagesOutput) GoString() string {
+	return s.String()
+}
+
+// SetFpgaImages sets the FpgaImages field's value.
+func (s *DescribeFpgaImagesOutput) SetFpgaImages(v []*FpgaImage) *DescribeFpgaImagesOutput {
+	s.FpgaImages = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeFpgaImagesOutput) SetNextToken(v string) *DescribeFpgaImagesOutput {
 	s.NextToken = &v
 	return s
 }
@@ -31750,6 +32411,105 @@ func (s *DescribeNetworkInterfaceAttributeOutput) SetSourceDestCheck(v *Attribut
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DescribeNetworkInterfacePermissionsRequest
+type DescribeNetworkInterfacePermissionsInput struct {
+	_ struct{} `type:"structure"`
+
+	// One or more filters.
+	//
+	//    * network-interface-permission.network-interface-permission-id - The ID
+	//    of the permission.
+	//
+	//    * network-interface-permission.network-interface-id - The ID of the network
+	//    interface.
+	//
+	//    * network-interface-permission.aws-account-id - The AWS account ID.
+	//
+	//    * network-interface-permission.aws-service - The AWS service.
+	//
+	//    * network-interface-permission.permission - The type of permission (INSTANCE-ATTACH
+	//    | EIP-ASSOCIATE).
+	Filters []*Filter `locationName:"Filter" locationNameList:"Filter" type:"list"`
+
+	// The maximum number of results to return in a single call. To retrieve the
+	// remaining results, make another call with the returned NextToken value. If
+	// this parameter is not specified, up to 50 results are returned by default.
+	MaxResults *int64 `type:"integer"`
+
+	// One or more network interface permission IDs.
+	NetworkInterfacePermissionIds []*string `locationName:"NetworkInterfacePermissionId" type:"list"`
+
+	// The token to request the next page of results.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeNetworkInterfacePermissionsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeNetworkInterfacePermissionsInput) GoString() string {
+	return s.String()
+}
+
+// SetFilters sets the Filters field's value.
+func (s *DescribeNetworkInterfacePermissionsInput) SetFilters(v []*Filter) *DescribeNetworkInterfacePermissionsInput {
+	s.Filters = v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *DescribeNetworkInterfacePermissionsInput) SetMaxResults(v int64) *DescribeNetworkInterfacePermissionsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNetworkInterfacePermissionIds sets the NetworkInterfacePermissionIds field's value.
+func (s *DescribeNetworkInterfacePermissionsInput) SetNetworkInterfacePermissionIds(v []*string) *DescribeNetworkInterfacePermissionsInput {
+	s.NetworkInterfacePermissionIds = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeNetworkInterfacePermissionsInput) SetNextToken(v string) *DescribeNetworkInterfacePermissionsInput {
+	s.NextToken = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DescribeNetworkInterfacePermissionsResult
+type DescribeNetworkInterfacePermissionsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The network interface permissions.
+	NetworkInterfacePermissions []*NetworkInterfacePermission `locationName:"networkInterfacePermissions" locationNameList:"item" type:"list"`
+
+	// The token to use to retrieve the next page of results.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeNetworkInterfacePermissionsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeNetworkInterfacePermissionsOutput) GoString() string {
+	return s.String()
+}
+
+// SetNetworkInterfacePermissions sets the NetworkInterfacePermissions field's value.
+func (s *DescribeNetworkInterfacePermissionsOutput) SetNetworkInterfacePermissions(v []*NetworkInterfacePermission) *DescribeNetworkInterfacePermissionsOutput {
+	s.NetworkInterfacePermissions = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeNetworkInterfacePermissionsOutput) SetNextToken(v string) *DescribeNetworkInterfacePermissionsOutput {
+	s.NextToken = &v
+	return s
+}
+
 // Contains the parameters for DescribeNetworkInterfaces.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/DescribeNetworkInterfacesRequest
 type DescribeNetworkInterfacesInput struct {
@@ -33528,7 +34288,7 @@ type DescribeSnapshotsInput struct {
 	//
 	//    * owner-alias - Value from an Amazon-maintained list (amazon | aws-marketplace
 	//    | microsoft) of snapshot owners. Not to be confused with the user-configured
-	//    AWS account alias, which is set from the IAM consolew.
+	//    AWS account alias, which is set from the IAM console.
 	//
 	//    * owner-id - The ID of the AWS account that owns the snapshot.
 	//
@@ -38387,6 +39147,182 @@ func (s *FlowLog) SetResourceId(v string) *FlowLog {
 // SetTrafficType sets the TrafficType field's value.
 func (s *FlowLog) SetTrafficType(v string) *FlowLog {
 	s.TrafficType = &v
+	return s
+}
+
+// Describes an Amazon FPGA image (AFI).
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/FpgaImage
+type FpgaImage struct {
+	_ struct{} `type:"structure"`
+
+	// The date and time the AFI was created.
+	CreateTime *time.Time `locationName:"createTime" type:"timestamp" timestampFormat:"iso8601"`
+
+	// The description of the AFI.
+	Description *string `locationName:"description" type:"string"`
+
+	// The global FPGA image identifier (AGFI ID).
+	FpgaImageGlobalId *string `locationName:"fpgaImageGlobalId" type:"string"`
+
+	// The FPGA image identifier (AFI ID).
+	FpgaImageId *string `locationName:"fpgaImageId" type:"string"`
+
+	// The name of the AFI.
+	Name *string `locationName:"name" type:"string"`
+
+	// The alias of the AFI owner. Possible values include self, amazon, and aws-marketplace.
+	OwnerAlias *string `locationName:"ownerAlias" type:"string"`
+
+	// The AWS account ID of the AFI owner.
+	OwnerId *string `locationName:"ownerId" type:"string"`
+
+	// Information about the PCI bus.
+	PciId *PciId `locationName:"pciId" type:"structure"`
+
+	// The product codes for the AFI.
+	ProductCodes []*ProductCode `locationName:"productCodes" locationNameList:"item" type:"list"`
+
+	// The version of the AWS Shell that was used to create the bitstream.
+	ShellVersion *string `locationName:"shellVersion" type:"string"`
+
+	// Information about the state of the AFI.
+	State *FpgaImageState `locationName:"state" type:"structure"`
+
+	// Any tags assigned to the AFI.
+	Tags []*Tag `locationName:"tags" locationNameList:"item" type:"list"`
+
+	// The time of the most recent update to the AFI.
+	UpdateTime *time.Time `locationName:"updateTime" type:"timestamp" timestampFormat:"iso8601"`
+}
+
+// String returns the string representation
+func (s FpgaImage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s FpgaImage) GoString() string {
+	return s.String()
+}
+
+// SetCreateTime sets the CreateTime field's value.
+func (s *FpgaImage) SetCreateTime(v time.Time) *FpgaImage {
+	s.CreateTime = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *FpgaImage) SetDescription(v string) *FpgaImage {
+	s.Description = &v
+	return s
+}
+
+// SetFpgaImageGlobalId sets the FpgaImageGlobalId field's value.
+func (s *FpgaImage) SetFpgaImageGlobalId(v string) *FpgaImage {
+	s.FpgaImageGlobalId = &v
+	return s
+}
+
+// SetFpgaImageId sets the FpgaImageId field's value.
+func (s *FpgaImage) SetFpgaImageId(v string) *FpgaImage {
+	s.FpgaImageId = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *FpgaImage) SetName(v string) *FpgaImage {
+	s.Name = &v
+	return s
+}
+
+// SetOwnerAlias sets the OwnerAlias field's value.
+func (s *FpgaImage) SetOwnerAlias(v string) *FpgaImage {
+	s.OwnerAlias = &v
+	return s
+}
+
+// SetOwnerId sets the OwnerId field's value.
+func (s *FpgaImage) SetOwnerId(v string) *FpgaImage {
+	s.OwnerId = &v
+	return s
+}
+
+// SetPciId sets the PciId field's value.
+func (s *FpgaImage) SetPciId(v *PciId) *FpgaImage {
+	s.PciId = v
+	return s
+}
+
+// SetProductCodes sets the ProductCodes field's value.
+func (s *FpgaImage) SetProductCodes(v []*ProductCode) *FpgaImage {
+	s.ProductCodes = v
+	return s
+}
+
+// SetShellVersion sets the ShellVersion field's value.
+func (s *FpgaImage) SetShellVersion(v string) *FpgaImage {
+	s.ShellVersion = &v
+	return s
+}
+
+// SetState sets the State field's value.
+func (s *FpgaImage) SetState(v *FpgaImageState) *FpgaImage {
+	s.State = v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *FpgaImage) SetTags(v []*Tag) *FpgaImage {
+	s.Tags = v
+	return s
+}
+
+// SetUpdateTime sets the UpdateTime field's value.
+func (s *FpgaImage) SetUpdateTime(v time.Time) *FpgaImage {
+	s.UpdateTime = &v
+	return s
+}
+
+// Describes the state of the bitstream generation process for an Amazon FPGA
+// image (AFI).
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/FpgaImageState
+type FpgaImageState struct {
+	_ struct{} `type:"structure"`
+
+	// The state. The following are the possible values:
+	//
+	//    * pending - AFI bitstream generation is in progress.
+	//
+	//    * available - The AFI is available for use.
+	//
+	//    * failed - AFI bitstream generation failed.
+	//
+	//    * unavailable - The AFI is no longer available for use.
+	Code *string `locationName:"code" type:"string" enum:"FpgaImageStateCode"`
+
+	// If the state is failed, this is the error message.
+	Message *string `locationName:"message" type:"string"`
+}
+
+// String returns the string representation
+func (s FpgaImageState) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s FpgaImageState) GoString() string {
+	return s.String()
+}
+
+// SetCode sets the Code field's value.
+func (s *FpgaImageState) SetCode(v string) *FpgaImageState {
+	s.Code = &v
+	return s
+}
+
+// SetMessage sets the Message field's value.
+func (s *FpgaImageState) SetMessage(v string) *FpgaImageState {
+	s.Message = &v
 	return s
 }
 
@@ -43493,7 +44429,7 @@ type ModifyInstanceAttributeInput struct {
 	BlockDeviceMappings []*InstanceBlockDeviceMappingSpecification `locationName:"blockDeviceMapping" locationNameList:"item" type:"list"`
 
 	// If the value is true, you can't terminate the instance using the Amazon EC2
-	// console, CLI, or API; otherwise, you can. You cannot use this paramater for
+	// console, CLI, or API; otherwise, you can. You cannot use this parameter for
 	// Spot Instances.
 	DisableApiTermination *AttributeBooleanValue `locationName:"disableApiTermination" type:"structure"`
 
@@ -45796,6 +46732,110 @@ func (s *NetworkInterfaceIpv6Address) SetIpv6Address(v string) *NetworkInterface
 	return s
 }
 
+// Describes a permission for a network interface.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/NetworkInterfacePermission
+type NetworkInterfacePermission struct {
+	_ struct{} `type:"structure"`
+
+	// The AWS account ID.
+	AwsAccountId *string `locationName:"awsAccountId" type:"string"`
+
+	// The AWS service.
+	AwsService *string `locationName:"awsService" type:"string"`
+
+	// The ID of the network interface.
+	NetworkInterfaceId *string `locationName:"networkInterfaceId" type:"string"`
+
+	// The ID of the network interface permission.
+	NetworkInterfacePermissionId *string `locationName:"networkInterfacePermissionId" type:"string"`
+
+	// The type of permission.
+	Permission *string `locationName:"permission" type:"string" enum:"InterfacePermissionType"`
+
+	// Information about the state of the permission.
+	PermissionState *NetworkInterfacePermissionState `locationName:"permissionState" type:"structure"`
+}
+
+// String returns the string representation
+func (s NetworkInterfacePermission) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s NetworkInterfacePermission) GoString() string {
+	return s.String()
+}
+
+// SetAwsAccountId sets the AwsAccountId field's value.
+func (s *NetworkInterfacePermission) SetAwsAccountId(v string) *NetworkInterfacePermission {
+	s.AwsAccountId = &v
+	return s
+}
+
+// SetAwsService sets the AwsService field's value.
+func (s *NetworkInterfacePermission) SetAwsService(v string) *NetworkInterfacePermission {
+	s.AwsService = &v
+	return s
+}
+
+// SetNetworkInterfaceId sets the NetworkInterfaceId field's value.
+func (s *NetworkInterfacePermission) SetNetworkInterfaceId(v string) *NetworkInterfacePermission {
+	s.NetworkInterfaceId = &v
+	return s
+}
+
+// SetNetworkInterfacePermissionId sets the NetworkInterfacePermissionId field's value.
+func (s *NetworkInterfacePermission) SetNetworkInterfacePermissionId(v string) *NetworkInterfacePermission {
+	s.NetworkInterfacePermissionId = &v
+	return s
+}
+
+// SetPermission sets the Permission field's value.
+func (s *NetworkInterfacePermission) SetPermission(v string) *NetworkInterfacePermission {
+	s.Permission = &v
+	return s
+}
+
+// SetPermissionState sets the PermissionState field's value.
+func (s *NetworkInterfacePermission) SetPermissionState(v *NetworkInterfacePermissionState) *NetworkInterfacePermission {
+	s.PermissionState = v
+	return s
+}
+
+// Describes the state of a network interface permission.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/NetworkInterfacePermissionState
+type NetworkInterfacePermissionState struct {
+	_ struct{} `type:"structure"`
+
+	// The state of the permission.
+	State *string `locationName:"state" type:"string" enum:"NetworkInterfacePermissionStateCode"`
+
+	// A status message, if applicable.
+	StatusMessage *string `locationName:"statusMessage" type:"string"`
+}
+
+// String returns the string representation
+func (s NetworkInterfacePermissionState) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s NetworkInterfacePermissionState) GoString() string {
+	return s.String()
+}
+
+// SetState sets the State field's value.
+func (s *NetworkInterfacePermissionState) SetState(v string) *NetworkInterfacePermissionState {
+	s.State = &v
+	return s
+}
+
+// SetStatusMessage sets the StatusMessage field's value.
+func (s *NetworkInterfacePermissionState) SetStatusMessage(v string) *NetworkInterfacePermissionState {
+	s.StatusMessage = &v
+	return s
+}
+
 // Describes the private IPv4 address of a network interface.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/NetworkInterfacePrivateIpAddress
 type NetworkInterfacePrivateIpAddress struct {
@@ -45878,6 +46918,59 @@ func (s *NewDhcpConfiguration) SetKey(v string) *NewDhcpConfiguration {
 // SetValues sets the Values field's value.
 func (s *NewDhcpConfiguration) SetValues(v []*string) *NewDhcpConfiguration {
 	s.Values = v
+	return s
+}
+
+// Describes the data that identifies an Amazon FPGA image (AFI) on the PCI
+// bus.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/PciId
+type PciId struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the device.
+	DeviceId *string `type:"string"`
+
+	// The ID of the subsystem.
+	SubsystemId *string `type:"string"`
+
+	// The ID of the vendor for the subsystem.
+	SubsystemVendorId *string `type:"string"`
+
+	// The ID of the vendor.
+	VendorId *string `type:"string"`
+}
+
+// String returns the string representation
+func (s PciId) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PciId) GoString() string {
+	return s.String()
+}
+
+// SetDeviceId sets the DeviceId field's value.
+func (s *PciId) SetDeviceId(v string) *PciId {
+	s.DeviceId = &v
+	return s
+}
+
+// SetSubsystemId sets the SubsystemId field's value.
+func (s *PciId) SetSubsystemId(v string) *PciId {
+	s.SubsystemId = &v
+	return s
+}
+
+// SetSubsystemVendorId sets the SubsystemVendorId field's value.
+func (s *PciId) SetSubsystemVendorId(v string) *PciId {
+	s.SubsystemVendorId = &v
+	return s
+}
+
+// SetVendorId sets the VendorId field's value.
+func (s *PciId) SetVendorId(v string) *PciId {
+	s.VendorId = &v
 	return s
 }
 
@@ -45992,6 +47085,9 @@ type Placement struct {
 	// is not supported for the ImportInstance command.
 	HostId *string `locationName:"hostId" type:"string"`
 
+	// Reserved for future use.
+	SpreadDomain *string `locationName:"spreadDomain" type:"string"`
+
 	// The tenancy of the instance (if the instance is running in a VPC). An instance
 	// with a tenancy of dedicated runs on single-tenant hardware. The host tenancy
 	// is not supported for the ImportInstance command.
@@ -46029,6 +47125,12 @@ func (s *Placement) SetGroupName(v string) *Placement {
 // SetHostId sets the HostId field's value.
 func (s *Placement) SetHostId(v string) *Placement {
 	s.HostId = &v
+	return s
+}
+
+// SetSpreadDomain sets the SpreadDomain field's value.
+func (s *Placement) SetSpreadDomain(v string) *Placement {
+	s.SpreadDomain = &v
 	return s
 }
 
@@ -48411,7 +49513,7 @@ type RequestSpotInstancesInput struct {
 	// Default: Instances are launched and terminated individually
 	LaunchGroup *string `locationName:"launchGroup" type:"string"`
 
-	// Describes the launch specification for an instance.
+	// The launch specification.
 	LaunchSpecification *RequestSpotLaunchSpecification `type:"structure"`
 
 	// The maximum hourly price (bid) for any Spot instance launched to fulfill
@@ -48600,7 +49702,9 @@ type RequestSpotLaunchSpecification struct {
 	// The name of the key pair.
 	KeyName *string `locationName:"keyName" type:"string"`
 
-	// Describes the monitoring of an instance.
+	// Indicates whether basic or detailed monitoring is enabled for the instance.
+	//
+	// Default: Disabled
 	Monitoring *RunInstancesMonitoringEnabled `locationName:"monitoring" type:"structure"`
 
 	// One or more network interfaces. If you specify a network interface, you must
@@ -48613,8 +49717,12 @@ type RequestSpotLaunchSpecification struct {
 	// The ID of the RAM disk.
 	RamdiskId *string `locationName:"ramdiskId" type:"string"`
 
+	// One or more security group IDs.
 	SecurityGroupIds []*string `locationName:"SecurityGroupId" locationNameList:"item" type:"list"`
 
+	// One or more security groups. When requesting instances in a VPC, you must
+	// specify the IDs of the security groups. When requesting instances in EC2-Classic,
+	// you can specify the names or the IDs of the security groups.
 	SecurityGroups []*string `locationName:"SecurityGroup" locationNameList:"item" type:"list"`
 
 	// The ID of the subnet in which to launch the instance.
@@ -56209,15 +57317,15 @@ func (s *VpcIpv6CidrBlockAssociation) SetIpv6CidrBlockState(v *VpcCidrBlockState
 type VpcPeeringConnection struct {
 	_ struct{} `type:"structure"`
 
-	// Information about the accepter VPC. CIDR block information is not returned
-	// when creating a VPC peering connection, or when describing a VPC peering
-	// connection that's in the initiating-request or pending-acceptance state.
+	// Information about the accepter VPC. CIDR block information is only returned
+	// when describing an active VPC peering connection.
 	AccepterVpcInfo *VpcPeeringConnectionVpcInfo `locationName:"accepterVpcInfo" type:"structure"`
 
 	// The time that an unaccepted VPC peering connection will expire.
 	ExpirationTime *time.Time `locationName:"expirationTime" type:"timestamp" timestampFormat:"iso8601"`
 
-	// Information about the requester VPC.
+	// Information about the requester VPC. CIDR block information is only returned
+	// when describing an active VPC peering connection.
 	RequesterVpcInfo *VpcPeeringConnectionVpcInfo `locationName:"requesterVpcInfo" type:"structure"`
 
 	// The status of the VPC peering connection.
@@ -57009,6 +58117,20 @@ const (
 )
 
 const (
+	// FpgaImageStateCodePending is a FpgaImageStateCode enum value
+	FpgaImageStateCodePending = "pending"
+
+	// FpgaImageStateCodeFailed is a FpgaImageStateCode enum value
+	FpgaImageStateCodeFailed = "failed"
+
+	// FpgaImageStateCodeAvailable is a FpgaImageStateCode enum value
+	FpgaImageStateCodeAvailable = "available"
+
+	// FpgaImageStateCodeUnavailable is a FpgaImageStateCode enum value
+	FpgaImageStateCodeUnavailable = "unavailable"
+)
+
+const (
 	// GatewayTypeIpsec1 is a GatewayType enum value
 	GatewayTypeIpsec1 = "ipsec.1"
 )
@@ -57382,6 +58504,15 @@ const (
 	// InstanceTypeG28xlarge is a InstanceType enum value
 	InstanceTypeG28xlarge = "g2.8xlarge"
 
+	// InstanceTypeG34xlarge is a InstanceType enum value
+	InstanceTypeG34xlarge = "g3.4xlarge"
+
+	// InstanceTypeG38xlarge is a InstanceType enum value
+	InstanceTypeG38xlarge = "g3.8xlarge"
+
+	// InstanceTypeG316xlarge is a InstanceType enum value
+	InstanceTypeG316xlarge = "g3.16xlarge"
+
 	// InstanceTypeCg14xlarge is a InstanceType enum value
 	InstanceTypeCg14xlarge = "cg1.4xlarge"
 
@@ -57411,6 +58542,14 @@ const (
 
 	// InstanceTypeF116xlarge is a InstanceType enum value
 	InstanceTypeF116xlarge = "f1.16xlarge"
+)
+
+const (
+	// InterfacePermissionTypeInstanceAttach is a InterfacePermissionType enum value
+	InterfacePermissionTypeInstanceAttach = "INSTANCE-ATTACH"
+
+	// InterfacePermissionTypeEipAssociate is a InterfacePermissionType enum value
+	InterfacePermissionTypeEipAssociate = "EIP-ASSOCIATE"
 )
 
 const (
@@ -57492,6 +58631,20 @@ const (
 
 	// NetworkInterfaceAttributeAttachment is a NetworkInterfaceAttribute enum value
 	NetworkInterfaceAttributeAttachment = "attachment"
+)
+
+const (
+	// NetworkInterfacePermissionStateCodePending is a NetworkInterfacePermissionStateCode enum value
+	NetworkInterfacePermissionStateCodePending = "pending"
+
+	// NetworkInterfacePermissionStateCodeGranted is a NetworkInterfacePermissionStateCode enum value
+	NetworkInterfacePermissionStateCodeGranted = "granted"
+
+	// NetworkInterfacePermissionStateCodeRevoking is a NetworkInterfacePermissionStateCode enum value
+	NetworkInterfacePermissionStateCodeRevoking = "revoking"
+
+	// NetworkInterfacePermissionStateCodeRevoked is a NetworkInterfacePermissionStateCode enum value
+	NetworkInterfacePermissionStateCodeRevoked = "revoked"
 )
 
 const (

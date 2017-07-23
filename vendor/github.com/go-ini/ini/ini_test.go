@@ -215,6 +215,13 @@ key2=value #comment2`))
 
 		So(cfg.Section("").Key("key1").String(), ShouldEqual, `value ;comment`)
 		So(cfg.Section("").Key("key2").String(), ShouldEqual, `value #comment2`)
+
+		var buf bytes.Buffer
+		cfg.WriteTo(&buf)
+		So(buf.String(), ShouldEqual, `key1 = value ;comment
+key2 = value #comment2
+
+`)
 	})
 
 	Convey("Load with boolean type keys", t, func() {

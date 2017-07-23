@@ -1748,6 +1748,157 @@ func (c *DirectoryService) DescribeDirectoriesWithContext(ctx aws.Context, input
 	return out, req.Send()
 }
 
+const opDescribeDomainControllers = "DescribeDomainControllers"
+
+// DescribeDomainControllersRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeDomainControllers operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See DescribeDomainControllers for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the DescribeDomainControllers method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the DescribeDomainControllersRequest method.
+//    req, resp := client.DescribeDomainControllersRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ds-2015-04-16/DescribeDomainControllers
+func (c *DirectoryService) DescribeDomainControllersRequest(input *DescribeDomainControllersInput) (req *request.Request, output *DescribeDomainControllersOutput) {
+	op := &request.Operation{
+		Name:       opDescribeDomainControllers,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "Limit",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &DescribeDomainControllersInput{}
+	}
+
+	output = &DescribeDomainControllersOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeDomainControllers API operation for AWS Directory Service.
+//
+// Provides information about any domain controllers in your directory.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Directory Service's
+// API operation DescribeDomainControllers for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeEntityDoesNotExistException "EntityDoesNotExistException"
+//   The specified entity could not be found.
+//
+//   * ErrCodeInvalidNextTokenException "InvalidNextTokenException"
+//   The NextToken value is not valid.
+//
+//   * ErrCodeInvalidParameterException "InvalidParameterException"
+//   One or more parameters are not valid.
+//
+//   * ErrCodeClientException "ClientException"
+//   A client exception has occurred.
+//
+//   * ErrCodeServiceException "ServiceException"
+//   An exception has occurred in AWS Directory Service.
+//
+//   * ErrCodeUnsupportedOperationException "UnsupportedOperationException"
+//   The operation is not supported.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ds-2015-04-16/DescribeDomainControllers
+func (c *DirectoryService) DescribeDomainControllers(input *DescribeDomainControllersInput) (*DescribeDomainControllersOutput, error) {
+	req, out := c.DescribeDomainControllersRequest(input)
+	return out, req.Send()
+}
+
+// DescribeDomainControllersWithContext is the same as DescribeDomainControllers with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeDomainControllers for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DirectoryService) DescribeDomainControllersWithContext(ctx aws.Context, input *DescribeDomainControllersInput, opts ...request.Option) (*DescribeDomainControllersOutput, error) {
+	req, out := c.DescribeDomainControllersRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// DescribeDomainControllersPages iterates over the pages of a DescribeDomainControllers operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeDomainControllers method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a DescribeDomainControllers operation.
+//    pageNum := 0
+//    err := client.DescribeDomainControllersPages(params,
+//        func(page *DescribeDomainControllersOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *DirectoryService) DescribeDomainControllersPages(input *DescribeDomainControllersInput, fn func(*DescribeDomainControllersOutput, bool) bool) error {
+	return c.DescribeDomainControllersPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeDomainControllersPagesWithContext same as DescribeDomainControllersPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DirectoryService) DescribeDomainControllersPagesWithContext(ctx aws.Context, input *DescribeDomainControllersInput, fn func(*DescribeDomainControllersOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeDomainControllersInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeDomainControllersRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*DescribeDomainControllersOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opDescribeEventTopics = "DescribeEventTopics"
 
 // DescribeEventTopicsRequest generates a "aws/request.Request" representing the
@@ -3406,6 +3557,110 @@ func (c *DirectoryService) UpdateConditionalForwarder(input *UpdateConditionalFo
 // for more information on using Contexts.
 func (c *DirectoryService) UpdateConditionalForwarderWithContext(ctx aws.Context, input *UpdateConditionalForwarderInput, opts ...request.Option) (*UpdateConditionalForwarderOutput, error) {
 	req, out := c.UpdateConditionalForwarderRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opUpdateNumberOfDomainControllers = "UpdateNumberOfDomainControllers"
+
+// UpdateNumberOfDomainControllersRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateNumberOfDomainControllers operation. The "output" return
+// value can be used to capture response data after the request's "Send" method
+// is called.
+//
+// See UpdateNumberOfDomainControllers for usage and error information.
+//
+// Creating a request object using this method should be used when you want to inject
+// custom logic into the request's lifecycle using a custom handler, or if you want to
+// access properties on the request object before or after sending the request. If
+// you just want the service response, call the UpdateNumberOfDomainControllers method directly
+// instead.
+//
+// Note: You must call the "Send" method on the returned request object in order
+// to execute the request.
+//
+//    // Example sending a request using the UpdateNumberOfDomainControllersRequest method.
+//    req, resp := client.UpdateNumberOfDomainControllersRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ds-2015-04-16/UpdateNumberOfDomainControllers
+func (c *DirectoryService) UpdateNumberOfDomainControllersRequest(input *UpdateNumberOfDomainControllersInput) (req *request.Request, output *UpdateNumberOfDomainControllersOutput) {
+	op := &request.Operation{
+		Name:       opUpdateNumberOfDomainControllers,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateNumberOfDomainControllersInput{}
+	}
+
+	output = &UpdateNumberOfDomainControllersOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateNumberOfDomainControllers API operation for AWS Directory Service.
+//
+// Adds or removes domain controllers to or from the directory. Based on the
+// difference between current value and new value (provided through this API
+// call), domain controllers will be added or removed. It may take up to 45
+// minutes for any new domain controllers to become fully active once the requested
+// number of domain controllers is updated. During this time, you cannot make
+// another update request.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Directory Service's
+// API operation UpdateNumberOfDomainControllers for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeEntityDoesNotExistException "EntityDoesNotExistException"
+//   The specified entity could not be found.
+//
+//   * ErrCodeDirectoryUnavailableException "DirectoryUnavailableException"
+//   The specified directory is unavailable or could not be found.
+//
+//   * ErrCodeDomainControllerLimitExceededException "DomainControllerLimitExceededException"
+//   The maximum allowed number of domain controllers per directory was exceeded.
+//   The default limit per directory is 20 domain controllers.
+//
+//   * ErrCodeInvalidParameterException "InvalidParameterException"
+//   One or more parameters are not valid.
+//
+//   * ErrCodeUnsupportedOperationException "UnsupportedOperationException"
+//   The operation is not supported.
+//
+//   * ErrCodeClientException "ClientException"
+//   A client exception has occurred.
+//
+//   * ErrCodeServiceException "ServiceException"
+//   An exception has occurred in AWS Directory Service.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ds-2015-04-16/UpdateNumberOfDomainControllers
+func (c *DirectoryService) UpdateNumberOfDomainControllers(input *UpdateNumberOfDomainControllersInput) (*UpdateNumberOfDomainControllersOutput, error) {
+	req, out := c.UpdateNumberOfDomainControllersRequest(input)
+	return out, req.Send()
+}
+
+// UpdateNumberOfDomainControllersWithContext is the same as UpdateNumberOfDomainControllers with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateNumberOfDomainControllers for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DirectoryService) UpdateNumberOfDomainControllersWithContext(ctx aws.Context, input *UpdateNumberOfDomainControllersInput, opts ...request.Option) (*UpdateNumberOfDomainControllersOutput, error) {
+	req, out := c.UpdateNumberOfDomainControllersRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -5430,6 +5685,109 @@ func (s *DescribeDirectoriesOutput) SetNextToken(v string) *DescribeDirectoriesO
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ds-2015-04-16/DescribeDomainControllersRequest
+type DescribeDomainControllersInput struct {
+	_ struct{} `type:"structure"`
+
+	// Identifier of the directory for which to retrieve the domain controller information.
+	//
+	// DirectoryId is a required field
+	DirectoryId *string `type:"string" required:"true"`
+
+	// A list of identifiers for the domain controllers whose information will be
+	// provided.
+	DomainControllerIds []*string `type:"list"`
+
+	// The maximum number of items to return.
+	Limit *int64 `type:"integer"`
+
+	// The DescribeDomainControllers.NextToken value from a previous call to DescribeDomainControllers.
+	// Pass null if this is the first call.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeDomainControllersInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeDomainControllersInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeDomainControllersInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeDomainControllersInput"}
+	if s.DirectoryId == nil {
+		invalidParams.Add(request.NewErrParamRequired("DirectoryId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDirectoryId sets the DirectoryId field's value.
+func (s *DescribeDomainControllersInput) SetDirectoryId(v string) *DescribeDomainControllersInput {
+	s.DirectoryId = &v
+	return s
+}
+
+// SetDomainControllerIds sets the DomainControllerIds field's value.
+func (s *DescribeDomainControllersInput) SetDomainControllerIds(v []*string) *DescribeDomainControllersInput {
+	s.DomainControllerIds = v
+	return s
+}
+
+// SetLimit sets the Limit field's value.
+func (s *DescribeDomainControllersInput) SetLimit(v int64) *DescribeDomainControllersInput {
+	s.Limit = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeDomainControllersInput) SetNextToken(v string) *DescribeDomainControllersInput {
+	s.NextToken = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ds-2015-04-16/DescribeDomainControllersResult
+type DescribeDomainControllersOutput struct {
+	_ struct{} `type:"structure"`
+
+	// List of the DomainController objects that were retrieved.
+	DomainControllers []*DomainController `type:"list"`
+
+	// If not null, more results are available. Pass this value for the NextToken
+	// parameter in a subsequent call to DescribeDomainControllers retrieve the
+	// next set of items.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeDomainControllersOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeDomainControllersOutput) GoString() string {
+	return s.String()
+}
+
+// SetDomainControllers sets the DomainControllers field's value.
+func (s *DescribeDomainControllersOutput) SetDomainControllers(v []*DomainController) *DescribeDomainControllersOutput {
+	s.DomainControllers = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeDomainControllersOutput) SetNextToken(v string) *DescribeDomainControllersOutput {
+	s.NextToken = &v
+	return s
+}
+
 // Describes event topics.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/ds-2015-04-16/DescribeEventTopicsRequest
 type DescribeEventTopicsInput struct {
@@ -5876,6 +6234,10 @@ type DirectoryDescription struct {
 	// The textual description for the directory.
 	Description *string `type:"string"`
 
+	// The desired number of domain controllers in the directory if the directory
+	// is Microsoft AD.
+	DesiredNumberOfDomainControllers *int64 `min:"2" type:"integer"`
+
 	// The directory identifier.
 	DirectoryId *string `type:"string"`
 
@@ -5958,6 +6320,12 @@ func (s *DirectoryDescription) SetConnectSettings(v *DirectoryConnectSettingsDes
 // SetDescription sets the Description field's value.
 func (s *DirectoryDescription) SetDescription(v string) *DirectoryDescription {
 	s.Description = &v
+	return s
+}
+
+// SetDesiredNumberOfDomainControllers sets the DesiredNumberOfDomainControllers field's value.
+func (s *DirectoryDescription) SetDesiredNumberOfDomainControllers(v int64) *DirectoryDescription {
+	s.DesiredNumberOfDomainControllers = &v
 	return s
 }
 
@@ -6397,6 +6765,112 @@ func (s DisableSsoOutput) String() string {
 // GoString returns the string representation
 func (s DisableSsoOutput) GoString() string {
 	return s.String()
+}
+
+// Contains information about the domain controllers for a specified directory.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ds-2015-04-16/DomainController
+type DomainController struct {
+	_ struct{} `type:"structure"`
+
+	// The Availability Zone where the domain controller is located.
+	AvailabilityZone *string `type:"string"`
+
+	// Identifier of the directory where the domain controller resides.
+	DirectoryId *string `type:"string"`
+
+	// The IP address of the domain controller.
+	DnsIpAddr *string `type:"string"`
+
+	// Identifies a specific domain controller in the directory.
+	DomainControllerId *string `type:"string"`
+
+	// Specifies when the domain controller was created.
+	LaunchTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The status of the domain controller.
+	Status *string `type:"string" enum:"DomainControllerStatus"`
+
+	// The date and time that the status was last updated.
+	StatusLastUpdatedDateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// A description of the domain controller state.
+	StatusReason *string `type:"string"`
+
+	// Identifier of the subnet in the VPC that contains the domain controller.
+	SubnetId *string `type:"string"`
+
+	// The identifier of the VPC that contains the domain controller.
+	VpcId *string `type:"string"`
+}
+
+// String returns the string representation
+func (s DomainController) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DomainController) GoString() string {
+	return s.String()
+}
+
+// SetAvailabilityZone sets the AvailabilityZone field's value.
+func (s *DomainController) SetAvailabilityZone(v string) *DomainController {
+	s.AvailabilityZone = &v
+	return s
+}
+
+// SetDirectoryId sets the DirectoryId field's value.
+func (s *DomainController) SetDirectoryId(v string) *DomainController {
+	s.DirectoryId = &v
+	return s
+}
+
+// SetDnsIpAddr sets the DnsIpAddr field's value.
+func (s *DomainController) SetDnsIpAddr(v string) *DomainController {
+	s.DnsIpAddr = &v
+	return s
+}
+
+// SetDomainControllerId sets the DomainControllerId field's value.
+func (s *DomainController) SetDomainControllerId(v string) *DomainController {
+	s.DomainControllerId = &v
+	return s
+}
+
+// SetLaunchTime sets the LaunchTime field's value.
+func (s *DomainController) SetLaunchTime(v time.Time) *DomainController {
+	s.LaunchTime = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *DomainController) SetStatus(v string) *DomainController {
+	s.Status = &v
+	return s
+}
+
+// SetStatusLastUpdatedDateTime sets the StatusLastUpdatedDateTime field's value.
+func (s *DomainController) SetStatusLastUpdatedDateTime(v time.Time) *DomainController {
+	s.StatusLastUpdatedDateTime = &v
+	return s
+}
+
+// SetStatusReason sets the StatusReason field's value.
+func (s *DomainController) SetStatusReason(v string) *DomainController {
+	s.StatusReason = &v
+	return s
+}
+
+// SetSubnetId sets the SubnetId field's value.
+func (s *DomainController) SetSubnetId(v string) *DomainController {
+	s.SubnetId = &v
+	return s
+}
+
+// SetVpcId sets the VpcId field's value.
+func (s *DomainController) SetVpcId(v string) *DomainController {
+	s.VpcId = &v
+	return s
 }
 
 // Contains the inputs for the EnableRadius operation.
@@ -8061,6 +8535,78 @@ func (s UpdateConditionalForwarderOutput) GoString() string {
 	return s.String()
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ds-2015-04-16/UpdateNumberOfDomainControllersRequest
+type UpdateNumberOfDomainControllersInput struct {
+	_ struct{} `type:"structure"`
+
+	// The number of domain controllers desired in the directory.
+	//
+	// DesiredNumber is a required field
+	DesiredNumber *int64 `min:"2" type:"integer" required:"true"`
+
+	// Identifier of the directory to which the domain controllers will be added
+	// or removed.
+	//
+	// DirectoryId is a required field
+	DirectoryId *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateNumberOfDomainControllersInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateNumberOfDomainControllersInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateNumberOfDomainControllersInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateNumberOfDomainControllersInput"}
+	if s.DesiredNumber == nil {
+		invalidParams.Add(request.NewErrParamRequired("DesiredNumber"))
+	}
+	if s.DesiredNumber != nil && *s.DesiredNumber < 2 {
+		invalidParams.Add(request.NewErrParamMinValue("DesiredNumber", 2))
+	}
+	if s.DirectoryId == nil {
+		invalidParams.Add(request.NewErrParamRequired("DirectoryId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDesiredNumber sets the DesiredNumber field's value.
+func (s *UpdateNumberOfDomainControllersInput) SetDesiredNumber(v int64) *UpdateNumberOfDomainControllersInput {
+	s.DesiredNumber = &v
+	return s
+}
+
+// SetDirectoryId sets the DirectoryId field's value.
+func (s *UpdateNumberOfDomainControllersInput) SetDirectoryId(v string) *UpdateNumberOfDomainControllersInput {
+	s.DirectoryId = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/ds-2015-04-16/UpdateNumberOfDomainControllersResult
+type UpdateNumberOfDomainControllersOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s UpdateNumberOfDomainControllersOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateNumberOfDomainControllersOutput) GoString() string {
+	return s.String()
+}
+
 // Contains the inputs for the UpdateRadius operation.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/ds-2015-04-16/UpdateRadiusRequest
 type UpdateRadiusInput struct {
@@ -8254,6 +8800,29 @@ const (
 
 	// DirectoryTypeMicrosoftAd is a DirectoryType enum value
 	DirectoryTypeMicrosoftAd = "MicrosoftAD"
+)
+
+const (
+	// DomainControllerStatusCreating is a DomainControllerStatus enum value
+	DomainControllerStatusCreating = "Creating"
+
+	// DomainControllerStatusActive is a DomainControllerStatus enum value
+	DomainControllerStatusActive = "Active"
+
+	// DomainControllerStatusImpaired is a DomainControllerStatus enum value
+	DomainControllerStatusImpaired = "Impaired"
+
+	// DomainControllerStatusRestoring is a DomainControllerStatus enum value
+	DomainControllerStatusRestoring = "Restoring"
+
+	// DomainControllerStatusDeleting is a DomainControllerStatus enum value
+	DomainControllerStatusDeleting = "Deleting"
+
+	// DomainControllerStatusDeleted is a DomainControllerStatus enum value
+	DomainControllerStatusDeleted = "Deleted"
+
+	// DomainControllerStatusFailed is a DomainControllerStatus enum value
+	DomainControllerStatusFailed = "Failed"
 )
 
 const (

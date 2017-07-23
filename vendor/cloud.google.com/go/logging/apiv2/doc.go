@@ -15,7 +15,7 @@
 // AUTO-GENERATED CODE. DO NOT EDIT.
 
 // Package logging is an experimental, auto-generated package for the
-// logging API.
+// Stackdriver Logging API.
 //
 // The Stackdriver Logging API lets you write log entries and manage your
 // logs, log sinks and logs-based metrics.
@@ -28,9 +28,21 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func insertXGoog(ctx context.Context, val string) context.Context {
-	md, _ := metadata.FromContext(ctx)
+func insertXGoog(ctx context.Context, val []string) context.Context {
+	md, _ := metadata.FromOutgoingContext(ctx)
 	md = md.Copy()
-	md["x-goog-api-client"] = []string{val}
-	return metadata.NewContext(ctx, md)
+	md["x-goog-api-client"] = val
+	return metadata.NewOutgoingContext(ctx, md)
+}
+
+// DefaultAuthScopes reports the authentication scopes required
+// by this package.
+func DefaultAuthScopes() []string {
+	return []string{
+		"https://www.googleapis.com/auth/cloud-platform",
+		"https://www.googleapis.com/auth/cloud-platform.read-only",
+		"https://www.googleapis.com/auth/logging.admin",
+		"https://www.googleapis.com/auth/logging.read",
+		"https://www.googleapis.com/auth/logging.write",
+	}
 }

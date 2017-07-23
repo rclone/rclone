@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var allTestsFilter = func(_, _ string) (bool, error) { return true, nil }
 var matchMethod = flag.String("testify.m", "", "regular expression to select tests of the testify suite to run")
 
 // Suite is a basic testing suite with methods for storing and
@@ -104,10 +105,20 @@ func Run(t *testing.T, suite TestingSuite) {
 			tests = append(tests, test)
 		}
 	}
+	runTests(t, tests)
+}
 
-	if !testing.RunTests(func(_, _ string) (bool, error) { return true, nil },
-		tests) {
-		t.Fail()
+func runTests(t testing.TB, tests []testing.InternalTest) {
+	r, ok := t.(runner)
+	if !ok { // backwards compatibility with Go 1.6 and below
+		if !testing.RunTests(allTestsFilter, tests) {
+			t.Fail()
+		}
+		return
+	}
+
+	for _, test := range tests {
+		r.Run(test.Name, test.F)
 	}
 }
 
@@ -118,4 +129,8 @@ func methodFilter(name string) (bool, error) {
 		return false, nil
 	}
 	return regexp.MatchString(*matchMethod, name)
+}
+
+type runner interface {
+	Run(name string, f func(t *testing.T)) bool
 }

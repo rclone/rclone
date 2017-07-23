@@ -67,7 +67,7 @@ func (c *AutoScaling) AttachInstancesRequest(input *AttachInstancesInput) (req *
 // being attached plus the desired capacity of the group exceeds the maximum
 // size of the group, the operation fails.
 //
-// If there is a Classic load balancer attached to your Auto Scaling group,
+// If there is a Classic Load Balancer attached to your Auto Scaling group,
 // the instances are also registered with the load balancer. If there are target
 // groups attached to your Auto Scaling group, the instances are also registered
 // with the target groups.
@@ -243,10 +243,10 @@ func (c *AutoScaling) AttachLoadBalancersRequest(input *AttachLoadBalancersInput
 
 // AttachLoadBalancers API operation for Auto Scaling.
 //
-// Attaches one or more Classic load balancers to the specified Auto Scaling
+// Attaches one or more Classic Load Balancers to the specified Auto Scaling
 // group.
 //
-// To attach an Application load balancer instead, see AttachLoadBalancerTargetGroups.
+// To attach an Application Load Balancer instead, see AttachLoadBalancerTargetGroups.
 //
 // To describe the load balancers for an Auto Scaling group, use DescribeLoadBalancers.
 // To detach the load balancer from the Auto Scaling group, use DetachLoadBalancers.
@@ -665,6 +665,9 @@ func (c *AutoScaling) CreateOrUpdateTagsRequest(input *CreateOrUpdateTagsInput) 
 //   * ErrCodeResourceContentionFault "ResourceContention"
 //   You already have a pending update to an Auto Scaling resource (for example,
 //   a group, instance, or load balancer).
+//
+//   * ErrCodeResourceInUseFault "ResourceInUse"
+//   The operation can't be performed because the resource is in use.
 //
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/autoscaling-2011-01-01/CreateOrUpdateTags
 func (c *AutoScaling) CreateOrUpdateTags(input *CreateOrUpdateTagsInput) (*CreateOrUpdateTagsOutput, error) {
@@ -1278,6 +1281,9 @@ func (c *AutoScaling) DeleteTagsRequest(input *DeleteTagsInput) (req *request.Re
 //   * ErrCodeResourceContentionFault "ResourceContention"
 //   You already have a pending update to an Auto Scaling resource (for example,
 //   a group, instance, or load balancer).
+//
+//   * ErrCodeResourceInUseFault "ResourceInUse"
+//   The operation can't be performed because the resource is in use.
 //
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/autoscaling-2011-01-01/DeleteTags
 func (c *AutoScaling) DeleteTags(input *DeleteTagsInput) (*DeleteTagsOutput, error) {
@@ -2258,8 +2264,8 @@ func (c *AutoScaling) DescribeLoadBalancersRequest(input *DescribeLoadBalancersI
 //
 // Describes the load balancers for the specified Auto Scaling group.
 //
-// Note that this operation describes only Classic load balancers. If you have
-// Application load balancers, use DescribeLoadBalancerTargetGroups instead.
+// Note that this operation describes only Classic Load Balancers. If you have
+// Application Load Balancers, use DescribeLoadBalancerTargetGroups instead.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3305,7 +3311,7 @@ func (c *AutoScaling) DetachInstancesRequest(input *DetachInstancesInput) (req *
 // If you do not specify the option to decrement the desired capacity, Auto
 // Scaling launches instances to replace the ones that are detached.
 //
-// If there is a Classic load balancer attached to the Auto Scaling group, the
+// If there is a Classic Load Balancer attached to the Auto Scaling group, the
 // instances are deregistered from the load balancer. If there are target groups
 // attached to the Auto Scaling group, the instances are deregistered from the
 // target groups.
@@ -3474,11 +3480,11 @@ func (c *AutoScaling) DetachLoadBalancersRequest(input *DetachLoadBalancersInput
 
 // DetachLoadBalancers API operation for Auto Scaling.
 //
-// Detaches one or more Classic load balancers from the specified Auto Scaling
+// Detaches one or more Classic Load Balancers from the specified Auto Scaling
 // group.
 //
-// Note that this operation detaches only Classic load balancers. If you have
-// Application load balancers, use DetachLoadBalancerTargetGroups instead.
+// Note that this operation detaches only Classic Load Balancers. If you have
+// Application Load Balancers, use DetachLoadBalancerTargetGroups instead.
 //
 // When you detach a load balancer, it enters the Removing state while deregistering
 // the instances in the group. When all instances are deregistered, then you
@@ -5754,7 +5760,7 @@ type CreateAutoScalingGroupInput struct {
 	// instead of a launch configuration.
 	LaunchConfigurationName *string `min:"1" type:"string"`
 
-	// One or more Classic load balancers. To specify an Application load balancer,
+	// One or more Classic Load Balancers. To specify an Application Load Balancer,
 	// use TargetGroupARNs instead.
 	//
 	// For more information, see Using a Load Balancer With an Auto Scaling Group
@@ -6381,6 +6387,102 @@ func (s CreateOrUpdateTagsOutput) GoString() string {
 	return s.String()
 }
 
+// Configures a customized metric for a target tracking policy.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/autoscaling-2011-01-01/CustomizedMetricSpecification
+type CustomizedMetricSpecification struct {
+	_ struct{} `type:"structure"`
+
+	// The dimensions of the metric.
+	Dimensions []*MetricDimension `type:"list"`
+
+	// The name of the metric.
+	//
+	// MetricName is a required field
+	MetricName *string `type:"string" required:"true"`
+
+	// The namespace of the metric.
+	//
+	// Namespace is a required field
+	Namespace *string `type:"string" required:"true"`
+
+	// The statistic of the metric.
+	//
+	// Statistic is a required field
+	Statistic *string `type:"string" required:"true" enum:"MetricStatistic"`
+
+	// The unit of the metric.
+	Unit *string `type:"string"`
+}
+
+// String returns the string representation
+func (s CustomizedMetricSpecification) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CustomizedMetricSpecification) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CustomizedMetricSpecification) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CustomizedMetricSpecification"}
+	if s.MetricName == nil {
+		invalidParams.Add(request.NewErrParamRequired("MetricName"))
+	}
+	if s.Namespace == nil {
+		invalidParams.Add(request.NewErrParamRequired("Namespace"))
+	}
+	if s.Statistic == nil {
+		invalidParams.Add(request.NewErrParamRequired("Statistic"))
+	}
+	if s.Dimensions != nil {
+		for i, v := range s.Dimensions {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Dimensions", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDimensions sets the Dimensions field's value.
+func (s *CustomizedMetricSpecification) SetDimensions(v []*MetricDimension) *CustomizedMetricSpecification {
+	s.Dimensions = v
+	return s
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *CustomizedMetricSpecification) SetMetricName(v string) *CustomizedMetricSpecification {
+	s.MetricName = &v
+	return s
+}
+
+// SetNamespace sets the Namespace field's value.
+func (s *CustomizedMetricSpecification) SetNamespace(v string) *CustomizedMetricSpecification {
+	s.Namespace = &v
+	return s
+}
+
+// SetStatistic sets the Statistic field's value.
+func (s *CustomizedMetricSpecification) SetStatistic(v string) *CustomizedMetricSpecification {
+	s.Statistic = &v
+	return s
+}
+
+// SetUnit sets the Unit field's value.
+func (s *CustomizedMetricSpecification) SetUnit(v string) *CustomizedMetricSpecification {
+	s.Unit = &v
+	return s
+}
+
 // Contains the parameters for DeleteAutoScalingGroup.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/autoscaling-2011-01-01/DeleteAutoScalingGroupType
 type DeleteAutoScalingGroupInput struct {
@@ -6988,7 +7090,8 @@ type DescribeAutoScalingGroupsInput struct {
 	// described.
 	AutoScalingGroupNames []*string `type:"list"`
 
-	// The maximum number of items to return with this call.
+	// The maximum number of items to return with this call. The default value is
+	// 50 and the maximum value is 100.
 	MaxRecords *int64 `type:"integer"`
 
 	// The token for the next set of items to return. (You received this token from
@@ -7071,7 +7174,8 @@ type DescribeAutoScalingInstancesInput struct {
 	// not exist, it is ignored with no error.
 	InstanceIds []*string `type:"list"`
 
-	// The maximum number of items to return with this call.
+	// The maximum number of items to return with this call. The default value is
+	// 50 and the maximum value is 100.
 	MaxRecords *int64 `type:"integer"`
 
 	// The token for the next set of items to return. (You received this token from
@@ -7191,7 +7295,8 @@ type DescribeLaunchConfigurationsInput struct {
 	// are described.
 	LaunchConfigurationNames []*string `type:"list"`
 
-	// The maximum number of items to return with this call. The default is 100.
+	// The maximum number of items to return with this call. The default value is
+	// 50 and the maximum value is 100.
 	MaxRecords *int64 `type:"integer"`
 
 	// The token for the next set of items to return. (You received this token from
@@ -7392,7 +7497,8 @@ type DescribeLoadBalancerTargetGroupsInput struct {
 	// AutoScalingGroupName is a required field
 	AutoScalingGroupName *string `min:"1" type:"string" required:"true"`
 
-	// The maximum number of items to return with this call.
+	// The maximum number of items to return with this call. The default value is
+	// 50 and the maximum value is 100.
 	MaxRecords *int64 `type:"integer"`
 
 	// The token for the next set of items to return. (You received this token from
@@ -7489,7 +7595,8 @@ type DescribeLoadBalancersInput struct {
 	// AutoScalingGroupName is a required field
 	AutoScalingGroupName *string `min:"1" type:"string" required:"true"`
 
-	// The maximum number of items to return with this call.
+	// The maximum number of items to return with this call. The default value is
+	// 50 and the maximum value is 100.
 	MaxRecords *int64 `type:"integer"`
 
 	// The token for the next set of items to return. (You received this token from
@@ -7633,7 +7740,8 @@ type DescribeNotificationConfigurationsInput struct {
 	// The name of the group.
 	AutoScalingGroupNames []*string `type:"list"`
 
-	// The maximum number of items to return with this call.
+	// The maximum number of items to return with this call. The default value is
+	// 50 and the maximum value is 100.
 	MaxRecords *int64 `type:"integer"`
 
 	// The token for the next set of items to return. (You received this token from
@@ -7714,7 +7822,8 @@ type DescribePoliciesInput struct {
 	// The name of the group.
 	AutoScalingGroupName *string `min:"1" type:"string"`
 
-	// The maximum number of items to be returned with each call.
+	// The maximum number of items to be returned with each call. The default value
+	// is 50 and the maximum value is 100.
 	MaxRecords *int64 `type:"integer"`
 
 	// The token for the next set of items to return. (You received this token from
@@ -7834,7 +7943,8 @@ type DescribeScalingActivitiesInput struct {
 	// The name of the group.
 	AutoScalingGroupName *string `min:"1" type:"string"`
 
-	// The maximum number of items to return with this call.
+	// The maximum number of items to return with this call. The default value is
+	// 100.
 	MaxRecords *int64 `type:"integer"`
 
 	// The token for the next set of items to return. (You received this token from
@@ -7979,7 +8089,8 @@ type DescribeScheduledActionsInput struct {
 	// provided, this parameter is ignored.
 	EndTime *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 
-	// The maximum number of items to return with this call.
+	// The maximum number of items to return with this call. The default value is
+	// 50 and the maximum value is 100.
 	MaxRecords *int64 `type:"integer"`
 
 	// The token for the next set of items to return. (You received this token from
@@ -8102,7 +8213,8 @@ type DescribeTagsInput struct {
 	// A filter used to scope the tags to return.
 	Filters []*Filter `type:"list"`
 
-	// The maximum number of items to return with this call.
+	// The maximum number of items to return with this call. The default value is
+	// 50 and the maximum value is 100.
 	MaxRecords *int64 `type:"integer"`
 
 	// The token for the next set of items to return. (You received this token from
@@ -9474,7 +9586,8 @@ type InstanceDetails struct {
 	// InstanceId is a required field
 	InstanceId *string `min:"1" type:"string" required:"true"`
 
-	// The launch configuration associated with the instance.
+	// The launch configuration used to launch the instance. This value is not available
+	// if you attached the instance to the Auto Scaling group.
 	//
 	// LaunchConfigurationName is a required field
 	LaunchConfigurationName *string `min:"1" type:"string" required:"true"`
@@ -9908,7 +10021,7 @@ func (s *LifecycleHook) SetRoleARN(v string) *LifecycleHook {
 	return s
 }
 
-// Describes the state of a Classic load balancer.
+// Describes the state of a Classic Load Balancer.
 //
 // If you specify a load balancer when creating the Auto Scaling group, the
 // state of the load balancer is InService.
@@ -10064,6 +10177,60 @@ func (s *MetricCollectionType) SetMetric(v string) *MetricCollectionType {
 	return s
 }
 
+// Describes the dimension of a metric.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/autoscaling-2011-01-01/MetricDimension
+type MetricDimension struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the dimension.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// The value of the dimension.
+	//
+	// Value is a required field
+	Value *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s MetricDimension) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s MetricDimension) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *MetricDimension) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "MetricDimension"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Value == nil {
+		invalidParams.Add(request.NewErrParamRequired("Value"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetName sets the Name field's value.
+func (s *MetricDimension) SetName(v string) *MetricDimension {
+	s.Name = &v
+	return s
+}
+
+// SetValue sets the Value field's value.
+func (s *MetricDimension) SetValue(v string) *MetricDimension {
+	s.Value = &v
+	return s
+}
+
 // Describes a granularity of a metric.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/autoscaling-2011-01-01/MetricGranularityType
 type MetricGranularityType struct {
@@ -10140,6 +10307,79 @@ func (s *NotificationConfiguration) SetNotificationType(v string) *NotificationC
 // SetTopicARN sets the TopicARN field's value.
 func (s *NotificationConfiguration) SetTopicARN(v string) *NotificationConfiguration {
 	s.TopicARN = &v
+	return s
+}
+
+// Configures a predefined metric for a target tracking policy. The following
+// predefined metrics are available:
+//
+//    * ASGAverageCPUUtilization - average CPU utilization of the Auto Scaling
+//    group
+//
+//    * ASGAverageNetworkIn - average number of bytes received on all network
+//    interfaces by the Auto Scaling group
+//
+//    * ASGAverageNetworkOut - average number of bytes sent out on all network
+//    interfaces by the Auto Scaling group
+//
+//    * ALBRequestCountPerTarget - number of requests completed per target in
+//    an Application Load Balancer target group
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/autoscaling-2011-01-01/PredefinedMetricSpecification
+type PredefinedMetricSpecification struct {
+	_ struct{} `type:"structure"`
+
+	// The metric type.
+	//
+	// PredefinedMetricType is a required field
+	PredefinedMetricType *string `type:"string" required:"true" enum:"MetricType"`
+
+	// Identifies the resource associated with the metric type. For predefined metric
+	// types ASGAverageCPUUtilization, ASGAverageNetworkIn and ASGAverageNetworkOut,
+	// the parameter must not be specified as the resource associated with the metric
+	// type is the Auto Scaling group. For predefined metric type ALBRequestCountPerTarget,
+	// the parameter must be specified in the format app/load-balancer-name/load-balancer-id/targetgroup/target-group-name/target-group-id,
+	// where app/load-balancer-name/load-balancer-id is the final portion of the
+	// load balancer ARN, and targetgroup/target-group-name/target-group-id is the
+	// final portion of the target group ARN. The target group must be attached
+	// to the Auto Scaling group.
+	ResourceLabel *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s PredefinedMetricSpecification) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s PredefinedMetricSpecification) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PredefinedMetricSpecification) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PredefinedMetricSpecification"}
+	if s.PredefinedMetricType == nil {
+		invalidParams.Add(request.NewErrParamRequired("PredefinedMetricType"))
+	}
+	if s.ResourceLabel != nil && len(*s.ResourceLabel) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResourceLabel", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetPredefinedMetricType sets the PredefinedMetricType field's value.
+func (s *PredefinedMetricSpecification) SetPredefinedMetricType(v string) *PredefinedMetricSpecification {
+	s.PredefinedMetricType = &v
+	return s
+}
+
+// SetResourceLabel sets the ResourceLabel field's value.
+func (s *PredefinedMetricSpecification) SetResourceLabel(v string) *PredefinedMetricSpecification {
+	s.ResourceLabel = &v
 	return s
 }
 
@@ -10447,14 +10687,14 @@ func (s PutNotificationConfigurationOutput) GoString() string {
 type PutScalingPolicyInput struct {
 	_ struct{} `type:"structure"`
 
-	// The adjustment type. Valid values are ChangeInCapacity, ExactCapacity, and
-	// PercentChangeInCapacity.
+	// The adjustment type. The valid values are ChangeInCapacity, ExactCapacity,
+	// and PercentChangeInCapacity.
+	//
+	// This parameter is supported if the policy type is SimpleScaling or StepScaling.
 	//
 	// For more information, see Dynamic Scaling (http://docs.aws.amazon.com/autoscaling/latest/userguide/as-scale-based-on-demand.html)
 	// in the Auto Scaling User Guide.
-	//
-	// AdjustmentType is a required field
-	AdjustmentType *string `min:"1" type:"string" required:"true"`
+	AdjustmentType *string `min:"1" type:"string"`
 
 	// The name or ARN of the group.
 	//
@@ -10465,7 +10705,7 @@ type PutScalingPolicyInput struct {
 	// the next scaling activity can start. If this parameter is not specified,
 	// the default cooldown period for the group applies.
 	//
-	// This parameter is not supported unless the policy type is SimpleScaling.
+	// This parameter is supported if the policy type is SimpleScaling.
 	//
 	// For more information, see Auto Scaling Cooldowns (http://docs.aws.amazon.com/autoscaling/latest/userguide/Cooldown.html)
 	// in the Auto Scaling User Guide.
@@ -10475,20 +10715,22 @@ type PutScalingPolicyInput struct {
 	// to the CloudWatch metrics. The default is to use the value specified for
 	// the default cooldown period for the group.
 	//
-	// This parameter is not supported if the policy type is SimpleScaling.
+	// This parameter is supported if the policy type is StepScaling or TargetTrackingScaling.
 	EstimatedInstanceWarmup *int64 `type:"integer"`
 
-	// The aggregation type for the CloudWatch metrics. Valid values are Minimum,
+	// The aggregation type for the CloudWatch metrics. The valid values are Minimum,
 	// Maximum, and Average. If the aggregation type is null, the value is treated
 	// as Average.
 	//
-	// This parameter is not supported if the policy type is SimpleScaling.
+	// This parameter is supported if the policy type is StepScaling.
 	MetricAggregationType *string `min:"1" type:"string"`
 
 	// The minimum number of instances to scale. If the value of AdjustmentType
 	// is PercentChangeInCapacity, the scaling policy changes the DesiredCapacity
 	// of the Auto Scaling group by at least this many instances. Otherwise, the
 	// error is ValidationError.
+	//
+	// This parameter is supported if the policy type is SimpleScaling or StepScaling.
 	MinAdjustmentMagnitude *int64 `type:"integer"`
 
 	// Available for backward compatibility. Use MinAdjustmentMagnitude instead.
@@ -10499,8 +10741,8 @@ type PutScalingPolicyInput struct {
 	// PolicyName is a required field
 	PolicyName *string `min:"1" type:"string" required:"true"`
 
-	// The policy type. Valid values are SimpleScaling and StepScaling. If the policy
-	// type is null, the value is treated as SimpleScaling.
+	// The policy type. The valid values are SimpleScaling, StepScaling, and TargetTrackingScaling.
+	// If the policy type is null, the value is treated as SimpleScaling.
 	PolicyType *string `min:"1" type:"string"`
 
 	// The amount by which to scale, based on the specified adjustment type. A positive
@@ -10517,6 +10759,12 @@ type PutScalingPolicyInput struct {
 	// This parameter is required if the policy type is StepScaling and not supported
 	// otherwise.
 	StepAdjustments []*StepAdjustment `type:"list"`
+
+	// The configuration of a target tracking policy.
+	//
+	// This parameter is required if the policy type is TargetTrackingScaling and
+	// not supported otherwise.
+	TargetTrackingConfiguration *TargetTrackingConfiguration `type:"structure"`
 }
 
 // String returns the string representation
@@ -10532,9 +10780,6 @@ func (s PutScalingPolicyInput) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *PutScalingPolicyInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "PutScalingPolicyInput"}
-	if s.AdjustmentType == nil {
-		invalidParams.Add(request.NewErrParamRequired("AdjustmentType"))
-	}
 	if s.AdjustmentType != nil && len(*s.AdjustmentType) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("AdjustmentType", 1))
 	}
@@ -10564,6 +10809,11 @@ func (s *PutScalingPolicyInput) Validate() error {
 			if err := v.Validate(); err != nil {
 				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "StepAdjustments", i), err.(request.ErrInvalidParams))
 			}
+		}
+	}
+	if s.TargetTrackingConfiguration != nil {
+		if err := s.TargetTrackingConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("TargetTrackingConfiguration", err.(request.ErrInvalidParams))
 		}
 	}
 
@@ -10639,10 +10889,20 @@ func (s *PutScalingPolicyInput) SetStepAdjustments(v []*StepAdjustment) *PutScal
 	return s
 }
 
+// SetTargetTrackingConfiguration sets the TargetTrackingConfiguration field's value.
+func (s *PutScalingPolicyInput) SetTargetTrackingConfiguration(v *TargetTrackingConfiguration) *PutScalingPolicyInput {
+	s.TargetTrackingConfiguration = v
+	return s
+}
+
 // Contains the output of PutScalingPolicy.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/autoscaling-2011-01-01/PolicyARNType
 type PutScalingPolicyOutput struct {
 	_ struct{} `type:"structure"`
+
+	// The CloudWatch alarms created for the target tracking policy. This parameter
+	// will be empty if the policy type is anything other than TargetTrackingScaling.
+	Alarms []*Alarm `type:"list"`
 
 	// The Amazon Resource Name (ARN) of the policy.
 	PolicyARN *string `min:"1" type:"string"`
@@ -10656,6 +10916,12 @@ func (s PutScalingPolicyOutput) String() string {
 // GoString returns the string representation
 func (s PutScalingPolicyOutput) GoString() string {
 	return s.String()
+}
+
+// SetAlarms sets the Alarms field's value.
+func (s *PutScalingPolicyOutput) SetAlarms(v []*Alarm) *PutScalingPolicyOutput {
+	s.Alarms = v
+	return s
 }
 
 // SetPolicyARN sets the PolicyARN field's value.
@@ -10984,6 +11250,9 @@ type ScalingPolicy struct {
 	// A set of adjustments that enable you to scale based on the size of the alarm
 	// breach.
 	StepAdjustments []*StepAdjustment `type:"list"`
+
+	// A target tracking policy.
+	TargetTrackingConfiguration *TargetTrackingConfiguration `type:"structure"`
 }
 
 // String returns the string representation
@@ -11071,6 +11340,12 @@ func (s *ScalingPolicy) SetScalingAdjustment(v int64) *ScalingPolicy {
 // SetStepAdjustments sets the StepAdjustments field's value.
 func (s *ScalingPolicy) SetStepAdjustments(v []*StepAdjustment) *ScalingPolicy {
 	s.StepAdjustments = v
+	return s
+}
+
+// SetTargetTrackingConfiguration sets the TargetTrackingConfiguration field's value.
+func (s *ScalingPolicy) SetTargetTrackingConfiguration(v *TargetTrackingConfiguration) *ScalingPolicy {
+	s.TargetTrackingConfiguration = v
 	return s
 }
 
@@ -11808,6 +12083,86 @@ func (s *TagDescription) SetValue(v string) *TagDescription {
 	return s
 }
 
+// Represents a target tracking policy configuration.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/autoscaling-2011-01-01/TargetTrackingConfiguration
+type TargetTrackingConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// A customized metric.
+	CustomizedMetricSpecification *CustomizedMetricSpecification `type:"structure"`
+
+	// If the parameter is true, then scale-in will be disabled for the target tracking
+	// policy, i.e. the target tracking policy will not scale in the Auto Scaling
+	// group. The default value is false.
+	DisableScaleIn *bool `type:"boolean"`
+
+	// A predefined metric. You can specify either a predefined metric or a customized
+	// metric.
+	PredefinedMetricSpecification *PredefinedMetricSpecification `type:"structure"`
+
+	// The target value for the metric.
+	//
+	// TargetValue is a required field
+	TargetValue *float64 `type:"double" required:"true"`
+}
+
+// String returns the string representation
+func (s TargetTrackingConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TargetTrackingConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TargetTrackingConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "TargetTrackingConfiguration"}
+	if s.TargetValue == nil {
+		invalidParams.Add(request.NewErrParamRequired("TargetValue"))
+	}
+	if s.CustomizedMetricSpecification != nil {
+		if err := s.CustomizedMetricSpecification.Validate(); err != nil {
+			invalidParams.AddNested("CustomizedMetricSpecification", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.PredefinedMetricSpecification != nil {
+		if err := s.PredefinedMetricSpecification.Validate(); err != nil {
+			invalidParams.AddNested("PredefinedMetricSpecification", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCustomizedMetricSpecification sets the CustomizedMetricSpecification field's value.
+func (s *TargetTrackingConfiguration) SetCustomizedMetricSpecification(v *CustomizedMetricSpecification) *TargetTrackingConfiguration {
+	s.CustomizedMetricSpecification = v
+	return s
+}
+
+// SetDisableScaleIn sets the DisableScaleIn field's value.
+func (s *TargetTrackingConfiguration) SetDisableScaleIn(v bool) *TargetTrackingConfiguration {
+	s.DisableScaleIn = &v
+	return s
+}
+
+// SetPredefinedMetricSpecification sets the PredefinedMetricSpecification field's value.
+func (s *TargetTrackingConfiguration) SetPredefinedMetricSpecification(v *PredefinedMetricSpecification) *TargetTrackingConfiguration {
+	s.PredefinedMetricSpecification = v
+	return s
+}
+
+// SetTargetValue sets the TargetValue field's value.
+func (s *TargetTrackingConfiguration) SetTargetValue(v float64) *TargetTrackingConfiguration {
+	s.TargetValue = &v
+	return s
+}
+
 // Contains the parameters for TerminateInstanceInAutoScalingGroup.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/autoscaling-2011-01-01/TerminateInstanceInAutoScalingGroupType
 type TerminateInstanceInAutoScalingGroupInput struct {
@@ -12138,6 +12493,37 @@ const (
 
 	// LifecycleStateStandby is a LifecycleState enum value
 	LifecycleStateStandby = "Standby"
+)
+
+const (
+	// MetricStatisticAverage is a MetricStatistic enum value
+	MetricStatisticAverage = "Average"
+
+	// MetricStatisticMinimum is a MetricStatistic enum value
+	MetricStatisticMinimum = "Minimum"
+
+	// MetricStatisticMaximum is a MetricStatistic enum value
+	MetricStatisticMaximum = "Maximum"
+
+	// MetricStatisticSampleCount is a MetricStatistic enum value
+	MetricStatisticSampleCount = "SampleCount"
+
+	// MetricStatisticSum is a MetricStatistic enum value
+	MetricStatisticSum = "Sum"
+)
+
+const (
+	// MetricTypeAsgaverageCpuutilization is a MetricType enum value
+	MetricTypeAsgaverageCpuutilization = "ASGAverageCPUUtilization"
+
+	// MetricTypeAsgaverageNetworkIn is a MetricType enum value
+	MetricTypeAsgaverageNetworkIn = "ASGAverageNetworkIn"
+
+	// MetricTypeAsgaverageNetworkOut is a MetricType enum value
+	MetricTypeAsgaverageNetworkOut = "ASGAverageNetworkOut"
+
+	// MetricTypeAlbrequestCountPerTarget is a MetricType enum value
+	MetricTypeAlbrequestCountPerTarget = "ALBRequestCountPerTarget"
 )
 
 const (

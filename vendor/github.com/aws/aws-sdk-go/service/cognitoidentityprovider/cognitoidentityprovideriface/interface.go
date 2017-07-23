@@ -164,6 +164,10 @@ type CognitoIdentityProviderAPI interface {
 	CreateGroupWithContext(aws.Context, *cognitoidentityprovider.CreateGroupInput, ...request.Option) (*cognitoidentityprovider.CreateGroupOutput, error)
 	CreateGroupRequest(*cognitoidentityprovider.CreateGroupInput) (*request.Request, *cognitoidentityprovider.CreateGroupOutput)
 
+	CreateIdentityProvider(*cognitoidentityprovider.CreateIdentityProviderInput) (*cognitoidentityprovider.CreateIdentityProviderOutput, error)
+	CreateIdentityProviderWithContext(aws.Context, *cognitoidentityprovider.CreateIdentityProviderInput, ...request.Option) (*cognitoidentityprovider.CreateIdentityProviderOutput, error)
+	CreateIdentityProviderRequest(*cognitoidentityprovider.CreateIdentityProviderInput) (*request.Request, *cognitoidentityprovider.CreateIdentityProviderOutput)
+
 	CreateUserImportJob(*cognitoidentityprovider.CreateUserImportJobInput) (*cognitoidentityprovider.CreateUserImportJobOutput, error)
 	CreateUserImportJobWithContext(aws.Context, *cognitoidentityprovider.CreateUserImportJobInput, ...request.Option) (*cognitoidentityprovider.CreateUserImportJobOutput, error)
 	CreateUserImportJobRequest(*cognitoidentityprovider.CreateUserImportJobInput) (*request.Request, *cognitoidentityprovider.CreateUserImportJobOutput)
@@ -176,9 +180,17 @@ type CognitoIdentityProviderAPI interface {
 	CreateUserPoolClientWithContext(aws.Context, *cognitoidentityprovider.CreateUserPoolClientInput, ...request.Option) (*cognitoidentityprovider.CreateUserPoolClientOutput, error)
 	CreateUserPoolClientRequest(*cognitoidentityprovider.CreateUserPoolClientInput) (*request.Request, *cognitoidentityprovider.CreateUserPoolClientOutput)
 
+	CreateUserPoolDomain(*cognitoidentityprovider.CreateUserPoolDomainInput) (*cognitoidentityprovider.CreateUserPoolDomainOutput, error)
+	CreateUserPoolDomainWithContext(aws.Context, *cognitoidentityprovider.CreateUserPoolDomainInput, ...request.Option) (*cognitoidentityprovider.CreateUserPoolDomainOutput, error)
+	CreateUserPoolDomainRequest(*cognitoidentityprovider.CreateUserPoolDomainInput) (*request.Request, *cognitoidentityprovider.CreateUserPoolDomainOutput)
+
 	DeleteGroup(*cognitoidentityprovider.DeleteGroupInput) (*cognitoidentityprovider.DeleteGroupOutput, error)
 	DeleteGroupWithContext(aws.Context, *cognitoidentityprovider.DeleteGroupInput, ...request.Option) (*cognitoidentityprovider.DeleteGroupOutput, error)
 	DeleteGroupRequest(*cognitoidentityprovider.DeleteGroupInput) (*request.Request, *cognitoidentityprovider.DeleteGroupOutput)
+
+	DeleteIdentityProvider(*cognitoidentityprovider.DeleteIdentityProviderInput) (*cognitoidentityprovider.DeleteIdentityProviderOutput, error)
+	DeleteIdentityProviderWithContext(aws.Context, *cognitoidentityprovider.DeleteIdentityProviderInput, ...request.Option) (*cognitoidentityprovider.DeleteIdentityProviderOutput, error)
+	DeleteIdentityProviderRequest(*cognitoidentityprovider.DeleteIdentityProviderInput) (*request.Request, *cognitoidentityprovider.DeleteIdentityProviderOutput)
 
 	DeleteUser(*cognitoidentityprovider.DeleteUserInput) (*cognitoidentityprovider.DeleteUserOutput, error)
 	DeleteUserWithContext(aws.Context, *cognitoidentityprovider.DeleteUserInput, ...request.Option) (*cognitoidentityprovider.DeleteUserOutput, error)
@@ -196,6 +208,14 @@ type CognitoIdentityProviderAPI interface {
 	DeleteUserPoolClientWithContext(aws.Context, *cognitoidentityprovider.DeleteUserPoolClientInput, ...request.Option) (*cognitoidentityprovider.DeleteUserPoolClientOutput, error)
 	DeleteUserPoolClientRequest(*cognitoidentityprovider.DeleteUserPoolClientInput) (*request.Request, *cognitoidentityprovider.DeleteUserPoolClientOutput)
 
+	DeleteUserPoolDomain(*cognitoidentityprovider.DeleteUserPoolDomainInput) (*cognitoidentityprovider.DeleteUserPoolDomainOutput, error)
+	DeleteUserPoolDomainWithContext(aws.Context, *cognitoidentityprovider.DeleteUserPoolDomainInput, ...request.Option) (*cognitoidentityprovider.DeleteUserPoolDomainOutput, error)
+	DeleteUserPoolDomainRequest(*cognitoidentityprovider.DeleteUserPoolDomainInput) (*request.Request, *cognitoidentityprovider.DeleteUserPoolDomainOutput)
+
+	DescribeIdentityProvider(*cognitoidentityprovider.DescribeIdentityProviderInput) (*cognitoidentityprovider.DescribeIdentityProviderOutput, error)
+	DescribeIdentityProviderWithContext(aws.Context, *cognitoidentityprovider.DescribeIdentityProviderInput, ...request.Option) (*cognitoidentityprovider.DescribeIdentityProviderOutput, error)
+	DescribeIdentityProviderRequest(*cognitoidentityprovider.DescribeIdentityProviderInput) (*request.Request, *cognitoidentityprovider.DescribeIdentityProviderOutput)
+
 	DescribeUserImportJob(*cognitoidentityprovider.DescribeUserImportJobInput) (*cognitoidentityprovider.DescribeUserImportJobOutput, error)
 	DescribeUserImportJobWithContext(aws.Context, *cognitoidentityprovider.DescribeUserImportJobInput, ...request.Option) (*cognitoidentityprovider.DescribeUserImportJobOutput, error)
 	DescribeUserImportJobRequest(*cognitoidentityprovider.DescribeUserImportJobInput) (*request.Request, *cognitoidentityprovider.DescribeUserImportJobOutput)
@@ -207,6 +227,10 @@ type CognitoIdentityProviderAPI interface {
 	DescribeUserPoolClient(*cognitoidentityprovider.DescribeUserPoolClientInput) (*cognitoidentityprovider.DescribeUserPoolClientOutput, error)
 	DescribeUserPoolClientWithContext(aws.Context, *cognitoidentityprovider.DescribeUserPoolClientInput, ...request.Option) (*cognitoidentityprovider.DescribeUserPoolClientOutput, error)
 	DescribeUserPoolClientRequest(*cognitoidentityprovider.DescribeUserPoolClientInput) (*request.Request, *cognitoidentityprovider.DescribeUserPoolClientOutput)
+
+	DescribeUserPoolDomain(*cognitoidentityprovider.DescribeUserPoolDomainInput) (*cognitoidentityprovider.DescribeUserPoolDomainOutput, error)
+	DescribeUserPoolDomainWithContext(aws.Context, *cognitoidentityprovider.DescribeUserPoolDomainInput, ...request.Option) (*cognitoidentityprovider.DescribeUserPoolDomainOutput, error)
+	DescribeUserPoolDomainRequest(*cognitoidentityprovider.DescribeUserPoolDomainInput) (*request.Request, *cognitoidentityprovider.DescribeUserPoolDomainOutput)
 
 	ForgetDevice(*cognitoidentityprovider.ForgetDeviceInput) (*cognitoidentityprovider.ForgetDeviceOutput, error)
 	ForgetDeviceWithContext(aws.Context, *cognitoidentityprovider.ForgetDeviceInput, ...request.Option) (*cognitoidentityprovider.ForgetDeviceOutput, error)
@@ -227,6 +251,10 @@ type CognitoIdentityProviderAPI interface {
 	GetGroup(*cognitoidentityprovider.GetGroupInput) (*cognitoidentityprovider.GetGroupOutput, error)
 	GetGroupWithContext(aws.Context, *cognitoidentityprovider.GetGroupInput, ...request.Option) (*cognitoidentityprovider.GetGroupOutput, error)
 	GetGroupRequest(*cognitoidentityprovider.GetGroupInput) (*request.Request, *cognitoidentityprovider.GetGroupOutput)
+
+	GetIdentityProviderByIdentifier(*cognitoidentityprovider.GetIdentityProviderByIdentifierInput) (*cognitoidentityprovider.GetIdentityProviderByIdentifierOutput, error)
+	GetIdentityProviderByIdentifierWithContext(aws.Context, *cognitoidentityprovider.GetIdentityProviderByIdentifierInput, ...request.Option) (*cognitoidentityprovider.GetIdentityProviderByIdentifierOutput, error)
+	GetIdentityProviderByIdentifierRequest(*cognitoidentityprovider.GetIdentityProviderByIdentifierInput) (*request.Request, *cognitoidentityprovider.GetIdentityProviderByIdentifierOutput)
 
 	GetUser(*cognitoidentityprovider.GetUserInput) (*cognitoidentityprovider.GetUserOutput, error)
 	GetUserWithContext(aws.Context, *cognitoidentityprovider.GetUserInput, ...request.Option) (*cognitoidentityprovider.GetUserOutput, error)
@@ -251,6 +279,10 @@ type CognitoIdentityProviderAPI interface {
 	ListGroups(*cognitoidentityprovider.ListGroupsInput) (*cognitoidentityprovider.ListGroupsOutput, error)
 	ListGroupsWithContext(aws.Context, *cognitoidentityprovider.ListGroupsInput, ...request.Option) (*cognitoidentityprovider.ListGroupsOutput, error)
 	ListGroupsRequest(*cognitoidentityprovider.ListGroupsInput) (*request.Request, *cognitoidentityprovider.ListGroupsOutput)
+
+	ListIdentityProviders(*cognitoidentityprovider.ListIdentityProvidersInput) (*cognitoidentityprovider.ListIdentityProvidersOutput, error)
+	ListIdentityProvidersWithContext(aws.Context, *cognitoidentityprovider.ListIdentityProvidersInput, ...request.Option) (*cognitoidentityprovider.ListIdentityProvidersOutput, error)
+	ListIdentityProvidersRequest(*cognitoidentityprovider.ListIdentityProvidersInput) (*request.Request, *cognitoidentityprovider.ListIdentityProvidersOutput)
 
 	ListUserImportJobs(*cognitoidentityprovider.ListUserImportJobsInput) (*cognitoidentityprovider.ListUserImportJobsOutput, error)
 	ListUserImportJobsWithContext(aws.Context, *cognitoidentityprovider.ListUserImportJobsInput, ...request.Option) (*cognitoidentityprovider.ListUserImportJobsOutput, error)
@@ -303,6 +335,10 @@ type CognitoIdentityProviderAPI interface {
 	UpdateGroup(*cognitoidentityprovider.UpdateGroupInput) (*cognitoidentityprovider.UpdateGroupOutput, error)
 	UpdateGroupWithContext(aws.Context, *cognitoidentityprovider.UpdateGroupInput, ...request.Option) (*cognitoidentityprovider.UpdateGroupOutput, error)
 	UpdateGroupRequest(*cognitoidentityprovider.UpdateGroupInput) (*request.Request, *cognitoidentityprovider.UpdateGroupOutput)
+
+	UpdateIdentityProvider(*cognitoidentityprovider.UpdateIdentityProviderInput) (*cognitoidentityprovider.UpdateIdentityProviderOutput, error)
+	UpdateIdentityProviderWithContext(aws.Context, *cognitoidentityprovider.UpdateIdentityProviderInput, ...request.Option) (*cognitoidentityprovider.UpdateIdentityProviderOutput, error)
+	UpdateIdentityProviderRequest(*cognitoidentityprovider.UpdateIdentityProviderInput) (*request.Request, *cognitoidentityprovider.UpdateIdentityProviderOutput)
 
 	UpdateUserAttributes(*cognitoidentityprovider.UpdateUserAttributesInput) (*cognitoidentityprovider.UpdateUserAttributesOutput, error)
 	UpdateUserAttributesWithContext(aws.Context, *cognitoidentityprovider.UpdateUserAttributesInput, ...request.Option) (*cognitoidentityprovider.UpdateUserAttributesOutput, error)

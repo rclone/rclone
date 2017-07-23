@@ -39,6 +39,7 @@ import (
 	"google.golang.org/api/transport"
 
 	"cloud.google.com/go/internal/optional"
+	"cloud.google.com/go/internal/version"
 	"golang.org/x/net/context"
 	"google.golang.org/api/googleapi"
 	raw "google.golang.org/api/storage/v1"
@@ -64,6 +65,12 @@ const (
 	// data in Google Cloud Storage.
 	ScopeReadWrite = raw.DevstorageReadWriteScope
 )
+
+var xGoogHeader = fmt.Sprintf("gl-go/%s gccl/%s", version.Go(), version.Repo)
+
+func setClientHeader(headers http.Header) {
+	headers.Set("x-goog-api-client", xGoogHeader)
+}
 
 // Client is a client for interacting with Google Cloud Storage.
 //
@@ -105,39 +112,6 @@ func NewClient(ctx context.Context, opts ...option.ClientOption) (*Client, error
 func (c *Client) Close() error {
 	c.hc = nil
 	return nil
-}
-
-// BucketHandle provides operations on a Google Cloud Storage bucket.
-// Use Client.Bucket to get a handle.
-type BucketHandle struct {
-	acl              ACLHandle
-	defaultObjectACL ACLHandle
-
-	c    *Client
-	name string
-}
-
-// Bucket returns a BucketHandle, which provides operations on the named bucket.
-// This call does not perform any network operations.
-//
-// The supplied name must contain only lowercase letters, numbers, dashes,
-// underscores, and dots. The full specification for valid bucket names can be
-// found at:
-//   https://cloud.google.com/storage/docs/bucket-naming
-func (c *Client) Bucket(name string) *BucketHandle {
-	return &BucketHandle{
-		c:    c,
-		name: name,
-		acl: ACLHandle{
-			c:      c,
-			bucket: name,
-		},
-		defaultObjectACL: ACLHandle{
-			c:         c,
-			bucket:    name,
-			isDefault: true,
-		},
-	}
 }
 
 // SignedURLOptions allows you to restrict the access to the signed URL.
@@ -202,7 +176,7 @@ type SignedURLOptions struct {
 	// If provided, the client should provide the exact value on the request
 	// header in order to use the signed URL.
 	// Optional.
-	MD5 []byte
+	MD5 string
 }
 
 // SignedURL returns a URL for the specified object. Signed URLs allow
@@ -225,6 +199,12 @@ func SignedURL(bucket, name string, opts *SignedURLOptions) (string, error) {
 	if opts.Expires.IsZero() {
 		return "", errors.New("storage: missing required expires option")
 	}
+	if opts.MD5 != "" {
+		md5, err := base64.StdEncoding.DecodeString(opts.MD5)
+		if err != nil || len(md5) != 16 {
+			return "", errors.New("storage: invalid MD5 checksum")
+		}
+	}
 
 	signBytes := opts.SignBytes
 	if opts.PrivateKey != nil {
@@ -241,8 +221,6 @@ func SignedURL(bucket, name string, opts *SignedURLOptions) (string, error) {
 				sum[:],
 			)
 		}
-	} else {
-		signBytes = opts.SignBytes
 	}
 
 	u := &url.URL{
@@ -254,7 +232,9 @@ func SignedURL(bucket, name string, opts *SignedURLOptions) (string, error) {
 	fmt.Fprintf(buf, "%s\n", opts.MD5)
 	fmt.Fprintf(buf, "%s\n", opts.ContentType)
 	fmt.Fprintf(buf, "%d\n", opts.Expires.Unix())
-	fmt.Fprintf(buf, "%s", strings.Join(opts.Headers, "\n"))
+	if len(opts.Headers) > 0 {
+		fmt.Fprintf(buf, "%s\n", strings.Join(opts.Headers, "\n"))
+	}
 	fmt.Fprintf(buf, "%s", u.String())
 
 	b, err := signBytes(buf.Bytes())
@@ -339,6 +319,7 @@ func (o *ObjectHandle) Attrs(ctx context.Context) (*ObjectAttrs, error) {
 	}
 	var obj *raw.Object
 	var err error
+	setClientHeader(call.Header())
 	err = runWithRetry(ctx, func() error { obj, err = call.Do(); return err })
 	if e, ok := err.(*googleapi.Error); ok && e.Code == http.StatusNotFound {
 		return nil, ErrObjectNotExist
@@ -412,6 +393,7 @@ func (o *ObjectHandle) Update(ctx context.Context, uattrs ObjectAttrsToUpdate) (
 	}
 	var obj *raw.Object
 	var err error
+	setClientHeader(call.Header())
 	err = runWithRetry(ctx, func() error { obj, err = call.Do(); return err })
 	if e, ok := err.(*googleapi.Error); ok && e.Code == http.StatusNotFound {
 		return nil, ErrObjectNotExist
@@ -452,6 +434,7 @@ func (o *ObjectHandle) Delete(ctx context.Context) error {
 	if err := applyConds("Delete", o.gen, o.conds, call); err != nil {
 		return err
 	}
+	setClientHeader(call.Header())
 	err := runWithRetry(ctx, func() error { return call.Do() })
 	switch e := err.(type) {
 	case nil:
@@ -502,6 +485,7 @@ func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64)
 	if err != nil {
 		return nil, err
 	}
+	req = withContext(req, ctx)
 	if length < 0 && offset > 0 {
 		req.Header.Set("Range", fmt.Sprintf("bytes=%d-", offset))
 	} else if length > 0 {
@@ -560,13 +544,35 @@ func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64)
 		body.Close()
 		body = emptyBody
 	}
-
+	var (
+		checkCRC bool
+		crc      uint32
+	)
+	// Even if there is a CRC header, we can't compute the hash on partial data.
+	if remain == size {
+		crc, checkCRC = parseCRC32c(res)
+	}
 	return &Reader{
 		body:        body,
 		size:        size,
 		remain:      remain,
 		contentType: res.Header.Get("Content-Type"),
+		wantCRC:     crc,
+		checkCRC:    checkCRC,
 	}, nil
+}
+
+func parseCRC32c(res *http.Response) (uint32, bool) {
+	const prefix = "crc32c="
+	for _, spec := range res.Header["X-Goog-Hash"] {
+		if strings.HasPrefix(spec, prefix) {
+			c, err := decodeUint32(spec[len(prefix):])
+			if err == nil {
+				return c, true
+			}
+		}
+	}
+	return 0, false
 }
 
 var emptyBody = ioutil.NopCloser(strings.NewReader(""))
@@ -718,12 +724,12 @@ type ObjectAttrs struct {
 	// This field is read-only.
 	Generation int64
 
-	// MetaGeneration is the version of the metadata for this
+	// Metageneration is the version of the metadata for this
 	// object at this generation. This field is used for preconditions
 	// and for detecting changes in metadata. A metageneration number
 	// is only meaningful in the context of a particular generation
 	// of a particular object. This field is read-only.
-	MetaGeneration int64
+	Metageneration int64
 
 	// StorageClass is the storage class of the object.
 	// This value defines how objects in the bucket are stored and
@@ -786,11 +792,7 @@ func newObject(o *raw.Object) *ObjectAttrs {
 		owner = o.Owner.Entity
 	}
 	md5, _ := base64.StdEncoding.DecodeString(o.Md5Hash)
-	var crc32c uint32
-	d, err := base64.StdEncoding.DecodeString(o.Crc32c)
-	if err == nil && len(d) == 4 {
-		crc32c = uint32(d[0])<<24 + uint32(d[1])<<16 + uint32(d[2])<<8 + uint32(d[3])
-	}
+	crc32c, _ := decodeUint32(o.Crc32c)
 	var sha256 string
 	if o.CustomerEncryption != nil {
 		sha256 = o.CustomerEncryption.KeySha256
@@ -810,13 +812,31 @@ func newObject(o *raw.Object) *ObjectAttrs {
 		MediaLink:         o.MediaLink,
 		Metadata:          o.Metadata,
 		Generation:        o.Generation,
-		MetaGeneration:    o.Metageneration,
+		Metageneration:    o.Metageneration,
 		StorageClass:      o.StorageClass,
 		CustomerKeySHA256: sha256,
 		Created:           convertTime(o.TimeCreated),
 		Deleted:           convertTime(o.TimeDeleted),
 		Updated:           convertTime(o.Updated),
 	}
+}
+
+// Decode a uint32 encoded in Base64 in big-endian byte order.
+func decodeUint32(b64 string) (uint32, error) {
+	d, err := base64.StdEncoding.DecodeString(b64)
+	if err != nil {
+		return 0, err
+	}
+	if len(d) != 4 {
+		return 0, fmt.Errorf("storage: %q does not encode a 32-bit value", d)
+	}
+	return uint32(d[0])<<24 + uint32(d[1])<<16 + uint32(d[2])<<8 + uint32(d[3]), nil
+}
+
+// Encode a uint32 as Base64 in big-endian byte order.
+func encodeUint32(u uint32) string {
+	b := []byte{byte(u >> 24), byte(u >> 16), byte(u >> 8), byte(u)}
+	return base64.StdEncoding.EncodeToString(b)
 }
 
 // Query represents a query to filter objects from a bucket.
@@ -852,7 +872,7 @@ func (c *contentTyper) ContentType() string {
 }
 
 // Conditions constrain methods to act on specific generations of
-// resources.
+// objects.
 //
 // The zero value is an empty set of constraints. Not all conditions or
 // combinations of conditions are applicable to all methods.

@@ -46,21 +46,32 @@ func ExampleClient_Ping() {
 	}
 }
 
+// Although Logger.Flush and Client.Close both return errors, they don't tell you
+// whether the errors were frequent or significant. For most programs, it doesn't
+// matter if there were a few errors while writing logs, although if those few errors
+// indicated a bug in your program, you might want to know about them. The best way
+// to handle errors is by setting the OnError function. If it runs quickly, it will
+// see every error generated during logging.
 func ExampleNewClient_errorFunc() {
 	ctx := context.Background()
 	client, err := logging.NewClient(ctx, "my-project")
 	if err != nil {
 		// TODO: Handle error.
 	}
-	// Print all errors to stdout.
+	// Print all errors to stdout, and count them. Multiple calls to the OnError
+	// function never happen concurrently, so there is no need for locking nErrs,
+	// provided you don't read it until after the logging client is closed.
+	var nErrs int
 	client.OnError = func(e error) {
 		fmt.Fprintf(os.Stdout, "logging: %v", e)
+		nErrs++
 	}
 	// Use client to manage logs, metrics and sinks.
 	// Close the client when finished.
 	if err := client.Close(); err != nil {
 		// TODO: Handle error.
 	}
+	fmt.Printf("saw %d errors\n", nErrs)
 }
 
 func ExampleClient_Logger() {

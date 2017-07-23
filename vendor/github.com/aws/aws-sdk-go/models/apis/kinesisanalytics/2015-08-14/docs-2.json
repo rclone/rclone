@@ -2,11 +2,13 @@
   "version": "2.0",
   "service": null,
   "operations": {
+    "AddApplicationCloudWatchLoggingOption": "<p>Adds a CloudWatch log stream to monitor application configuration errors. For more information about using CloudWatch log streams with Amazon Kinesis Analytics applications, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/cloudwatch-monitor-configuration.html\">Monitoring Configuration Errors</a>.</p>",
     "AddApplicationInput": "<p> Adds a streaming source to your Amazon Kinesis application. For conceptual information, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works-input.html\">Configuring Application Input</a>. </p> <p>You can add a streaming source either when you create an application or you can use this operation to add a streaming source after you create an application. For more information, see <a>CreateApplication</a>.</p> <p>Any configuration update, including adding a streaming source using this operation, results in a new version of the application. You can use the <a>DescribeApplication</a> operation to find the current application version. </p> <p>This operation requires permissions to perform the <code>kinesisanalytics:AddApplicationInput</code> action.</p>",
     "AddApplicationOutput": "<p>Adds an external destination to your Amazon Kinesis Analytics application.</p> <p>If you want Amazon Kinesis Analytics to deliver data from an in-application stream within your application to an external destination (such as an Amazon Kinesis stream or a Firehose delivery stream), you add the relevant configuration to your application using this operation. You can configure one or more outputs for your application. Each output configuration maps an in-application stream and an external destination.</p> <p> You can use one of the output configurations to deliver data from your in-application error stream to an external destination so that you can analyze the errors. For conceptual information, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works-output.html\">Understanding Application Output (Destination)</a>. </p> <p> Note that any configuration update, including adding a streaming source using this operation, results in a new version of the application. You can use the <a>DescribeApplication</a> operation to find the current application version.</p> <p>For the limits on the number of application inputs and outputs you can configure, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/limits.html\">Limits</a>.</p> <p>This operation requires permissions to perform the <code>kinesisanalytics:AddApplicationOutput</code> action.</p>",
     "AddApplicationReferenceDataSource": "<p>Adds a reference data source to an existing application.</p> <p>Amazon Kinesis Analytics reads reference data (that is, an Amazon S3 object) and creates an in-application table within your application. In the request, you provide the source (S3 bucket name and object key name), name of the in-application table to create, and the necessary mapping information that describes how data in Amazon S3 object maps to columns in the resulting in-application table.</p> <p> For conceptual information, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works-input.html\">Configuring Application Input</a>. For the limits on data sources you can add to your application, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/limits.html\">Limits</a>. </p> <p> This operation requires permissions to perform the <code>kinesisanalytics:AddApplicationOutput</code> action. </p>",
-    "CreateApplication": "<p> Creates an Amazon Kinesis Analytics application. You can configure each application with one streaming source as input, application code to process the input, and up to five streaming destinations where you want Amazon Kinesis Analytics to write the output data from your application. For an overview, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works.html\">How it Works</a>. </p> <p>In the input configuration, you map the streaming source to an in-application stream, which you can think of as a constantly updating table. In the mapping, you must provide a schema for the in-application stream and map each data column in the in-application stream to a data element in the streaming source, with the option of renaming, casting and dropping columns as desired.</p> <p>Your application code is one or more SQL statements that read input data, transform it, and generate output. Your application code can create one or more SQL artifacts like SQL streams or pumps.</p> <p>In the output configuration, you can configure the application to write data from in-application streams created in your applications to up to five streaming destinations.</p> <p> To read data from your source stream or write data to destination streams, Amazon Kinesis Analytics needs your permissions. You grant these permissions by creating IAM roles. This operation requires permissions to perform the <code>kinesisanalytics:CreateApplication</code> action. </p> <p> For introductory exercises to create an Amazon Kinesis Analytics application, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/getting-started.html\">Getting Started</a>. </p>",
+    "CreateApplication": "<p> Creates an Amazon Kinesis Analytics application. You can configure each application with one streaming source as input, application code to process the input, and up to five streaming destinations where you want Amazon Kinesis Analytics to write the output data from your application. For an overview, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works.html\">How it Works</a>. </p> <p>In the input configuration, you map the streaming source to an in-application stream, which you can think of as a constantly updating table. In the mapping, you must provide a schema for the in-application stream and map each data column in the in-application stream to a data element in the streaming source.</p> <p>Your application code is one or more SQL statements that read input data, transform it, and generate output. Your application code can create one or more SQL artifacts like SQL streams or pumps.</p> <p>In the output configuration, you can configure the application to write data from in-application streams created in your applications to up to five streaming destinations.</p> <p> To read data from your source stream or write data to destination streams, Amazon Kinesis Analytics needs your permissions. You grant these permissions by creating IAM roles. This operation requires permissions to perform the <code>kinesisanalytics:CreateApplication</code> action. </p> <p> For introductory exercises to create an Amazon Kinesis Analytics application, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/getting-started.html\">Getting Started</a>. </p>",
     "DeleteApplication": "<p>Deletes the specified application. Amazon Kinesis Analytics halts application execution and deletes the application, including any application artifacts (such as in-application streams, reference table, and application code).</p> <p>This operation requires permissions to perform the <code>kinesisanalytics:DeleteApplication</code> action.</p>",
+    "DeleteApplicationCloudWatchLoggingOption": "<p>Deletes a CloudWatch log stream from an application. For more information about using CloudWatch log streams with Amazon Kinesis Analytics applications, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/cloudwatch-monitor-configuration.html\">Monitoring Configuration Errors</a>.</p>",
     "DeleteApplicationOutput": "<p>Deletes output destination configuration from your application configuration. Amazon Kinesis Analytics will no longer write data from the corresponding in-application stream to the external output destination.</p> <p>This operation requires permissions to perform the <code>kinesisanalytics:DeleteApplicationOutput</code> action.</p>",
     "DeleteApplicationReferenceDataSource": "<p>Deletes a reference data source configuration from the specified application configuration.</p> <p>If the application is running, Amazon Kinesis Analytics immediately removes the in-application table that you created using the <a>AddApplicationReferenceDataSource</a> operation. </p> <p>This operation requires permissions to perform the <code>kinesisanalytics.DeleteApplicationReferenceDataSource</code> action.</p>",
     "DescribeApplication": "<p>Returns information about a specific Amazon Kinesis Analytics application.</p> <p>If you want to retrieve a list of all applications in your account, use the <a>ListApplications</a> operation.</p> <p>This operation requires permissions to perform the <code>kinesisanalytics:DescribeApplication</code> action. You can use <code>DescribeApplication</code> to get the current application versionId, which you need to call other operations such as <code>Update</code>. </p>",
@@ -14,9 +16,19 @@
     "ListApplications": "<p>Returns a list of Amazon Kinesis Analytics applications in your account. For each application, the response includes the application name, Amazon Resource Name (ARN), and status. If the response returns the <code>HasMoreApplications</code> value as true, you can send another request by adding the <code>ExclusiveStartApplicationName</code> in the request body, and set the value of this to the last application name from the previous response. </p> <p>If you want detailed information about a specific application, use <a>DescribeApplication</a>.</p> <p>This operation requires permissions to perform the <code>kinesisanalytics:ListApplications</code> action.</p>",
     "StartApplication": "<p>Starts the specified Amazon Kinesis Analytics application. After creating an application, you must exclusively call this operation to start your application.</p> <p>After the application starts, it begins consuming the input data, processes it, and writes the output to the configured destination.</p> <p> The application status must be <code>READY</code> for you to start an application. You can get the application status in the console or using the <a>DescribeApplication</a> operation.</p> <p>After you start the application, you can stop the application from processing the input by calling the <a>StopApplication</a> operation.</p> <p>This operation requires permissions to perform the <code>kinesisanalytics:StartApplication</code> action.</p>",
     "StopApplication": "<p>Stops the application from processing input data. You can stop an application only if it is in the running state. You can use the <a>DescribeApplication</a> operation to find the application state. After the application is stopped, Amazon Kinesis Analytics stops reading data from the input, the application stops processing data, and there is no output written to the destination. </p> <p>This operation requires permissions to perform the <code>kinesisanalytics:StopApplication</code> action.</p>",
-    "UpdateApplication": "<p>Updates an existing Kinesis Analytics application. Using this API, you can update application code, input configuration, and output configuration. </p> <p>Note that Kinesis Analytics updates the <code>CurrentApplicationVersionId</code> each time you update your application. </p> <p>This opeation requires permission for the <code>kinesisanalytics:UpdateApplication</code> action.</p>"
+    "UpdateApplication": "<p>Updates an existing Amazon Kinesis Analytics application. Using this API, you can update application code, input configuration, and output configuration. </p> <p>Note that Amazon Kinesis Analytics updates the <code>CurrentApplicationVersionId</code> each time you update your application. </p> <p>This operation requires permission for the <code>kinesisanalytics:UpdateApplication</code> action.</p>"
   },
   "shapes": {
+    "AddApplicationCloudWatchLoggingOptionRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "AddApplicationCloudWatchLoggingOptionResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "AddApplicationInputRequest": {
       "base": "<p/>",
       "refs": {
@@ -52,7 +64,7 @@
       "refs": {
         "ApplicationDetail$ApplicationCode": "<p>Returns the application code that you provided to perform data analysis on any of the in-application streams in your application.</p>",
         "ApplicationUpdate$ApplicationCodeUpdate": "<p>Describes application code updates.</p>",
-        "CreateApplicationRequest$ApplicationCode": "<p>One or more SQL statements that read input data, transform it, and generate output. For example, you can write a SQL statement that reads input data and generates a running average of the number of advertisement clicks by vendor.</p> <p>You can also provide a series of SQL statements, where output of one statement can be used as the input for the next statement.</p> <p>Note that the application code must create the streams with names specified in the <code>Outputs</code>. For example, if your <code>Outputs</code> defines output streams named <code>ExampleOutputStream1</code> and <code>ExampleOutputStream2</code>, then your application code must create these streams. </p>"
+        "CreateApplicationRequest$ApplicationCode": "<p>One or more SQL statements that read input data, transform it, and generate output. For example, you can write a SQL statement that reads data from one in-application stream, generates a running average of the number of advertisement clicks by vendor, and insert resulting rows in another in-application stream using pumps. For more inforamtion about the typical pattern, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works-app-code.html\">Application Code</a>. </p> <p>You can provide such series of SQL statements, where output of one statement can be used as the input for the next statement. You store intermediate results by creating in-application streams and pumps.</p> <p>Note that the application code must create the streams with names specified in the <code>Outputs</code>. For example, if your <code>Outputs</code> defines output streams named <code>ExampleOutputStream1</code> and <code>ExampleOutputStream2</code>, then your application code must create these streams. </p>"
       }
     },
     "ApplicationDescription": {
@@ -71,12 +83,14 @@
     "ApplicationName": {
       "base": null,
       "refs": {
+        "AddApplicationCloudWatchLoggingOptionRequest$ApplicationName": "<p>The Amazon Kinesis Analytics application name.</p>",
         "AddApplicationInputRequest$ApplicationName": "<p>Name of your existing Amazon Kinesis Analytics application to which you want to add the streaming source.</p>",
         "AddApplicationOutputRequest$ApplicationName": "<p>Name of the application to which you want to add the output configuration.</p>",
         "AddApplicationReferenceDataSourceRequest$ApplicationName": "<p>Name of an existing application.</p>",
         "ApplicationDetail$ApplicationName": "<p>Name of the application.</p>",
         "ApplicationSummary$ApplicationName": "<p>Name of the application.</p>",
         "CreateApplicationRequest$ApplicationName": "<p>Name of your Amazon Kinesis Analytics application (for example, <code>sample-app</code>).</p>",
+        "DeleteApplicationCloudWatchLoggingOptionRequest$ApplicationName": "<p>The Amazon Kinesis Analytics application name.</p>",
         "DeleteApplicationOutputRequest$ApplicationName": "<p>Amazon Kinesis Analytics application name.</p>",
         "DeleteApplicationReferenceDataSourceRequest$ApplicationName": "<p>Name of an existing application.</p>",
         "DeleteApplicationRequest$ApplicationName": "<p>Name of the Amazon Kinesis Analytics application to delete.</p>",
@@ -84,7 +98,7 @@
         "ListApplicationsRequest$ExclusiveStartApplicationName": "<p>Name of the application to start the list with. When using pagination to retrieve the list, you don't need to specify this parameter in the first request. However, in subsequent requests, you add the last application name from the previous response to get the next page of applications.</p>",
         "StartApplicationRequest$ApplicationName": "<p>Name of the application.</p>",
         "StopApplicationRequest$ApplicationName": "<p>Name of the running application to stop.</p>",
-        "UpdateApplicationRequest$ApplicationName": "<p>Name of the Kinesis Analytics application to update.</p>"
+        "UpdateApplicationRequest$ApplicationName": "<p>Name of the Amazon Kinesis Analytics application to update.</p>"
       }
     },
     "ApplicationStatus": {
@@ -108,7 +122,7 @@
       }
     },
     "ApplicationUpdate": {
-      "base": "<p>Describes updates to apply to an existing Kinesis Analytics application.</p>",
+      "base": "<p>Describes updates to apply to an existing Amazon Kinesis Analytics application.</p>",
       "refs": {
         "UpdateApplicationRequest$ApplicationUpdate": "<p>Describes application updates.</p>"
       }
@@ -116,10 +130,12 @@
     "ApplicationVersionId": {
       "base": null,
       "refs": {
+        "AddApplicationCloudWatchLoggingOptionRequest$CurrentApplicationVersionId": "<p>The version ID of the Amazon Kinesis Analytics application.</p>",
         "AddApplicationInputRequest$CurrentApplicationVersionId": "<p>Current version of your Amazon Kinesis Analytics application. You can use the <a>DescribeApplication</a> operation to find the current application version.</p>",
         "AddApplicationOutputRequest$CurrentApplicationVersionId": "<p>Version of the application to which you want add the output configuration. You can use the <a>DescribeApplication</a> operation to get the current application version. If the version specified is not the current version, the <code>ConcurrentModificationException</code> is returned. </p>",
         "AddApplicationReferenceDataSourceRequest$CurrentApplicationVersionId": "<p>Version of the application for which you are adding the reference data source. You can use the <a>DescribeApplication</a> operation to get the current application version. If the version specified is not the current version, the <code>ConcurrentModificationException</code> is returned.</p>",
         "ApplicationDetail$ApplicationVersionId": "<p>Provides the current application version.</p>",
+        "DeleteApplicationCloudWatchLoggingOptionRequest$CurrentApplicationVersionId": "<p>The version ID of the Amazon Kinesis Analytics application.</p>",
         "DeleteApplicationOutputRequest$CurrentApplicationVersionId": "<p>Amazon Kinesis Analytics application version. You can use the <a>DescribeApplication</a> operation to get the current application version. If the version specified is not the current version, the <code>ConcurrentModificationException</code> is returned. </p>",
         "DeleteApplicationReferenceDataSourceRequest$CurrentApplicationVersionId": "<p>Version of the application. You can use the <a>DescribeApplication</a> operation to get the current application version. If the version specified is not the current version, the <code>ConcurrentModificationException</code> is returned.</p>",
         "UpdateApplicationRequest$CurrentApplicationVersionId": "<p>The current application version ID. You can use the <a>DescribeApplication</a> operation to get this value.</p>"
@@ -145,6 +161,43 @@
         "MappingParameters$CSVMappingParameters": "<p>Provides additional mapping information when the record format uses delimiters (for example, CSV).</p>"
       }
     },
+    "CloudWatchLoggingOption": {
+      "base": "<p>Provides a description of CloudWatch logging options, including the log stream ARN and the role ARN.</p>",
+      "refs": {
+        "AddApplicationCloudWatchLoggingOptionRequest$CloudWatchLoggingOption": "<p>Provide the CloudWatch log stream ARN and the IAM role ARN. Note: To write application messages to CloudWatch, the IAM role used must have the <code>PutLogEvents</code> policy action enabled. </p>",
+        "CloudWatchLoggingOptions$member": null
+      }
+    },
+    "CloudWatchLoggingOptionDescription": {
+      "base": "<p>Description of the CloudWatch logging option.</p>",
+      "refs": {
+        "CloudWatchLoggingOptionDescriptions$member": null
+      }
+    },
+    "CloudWatchLoggingOptionDescriptions": {
+      "base": null,
+      "refs": {
+        "ApplicationDetail$CloudWatchLoggingOptionDescriptions": "<p>Describes the CloudWatch log streams configured to receive application messages. For more information about using CloudWatch log streams with Amazon Kinesis Analytics applications, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/cloudwatch-monitor-configuration.html\">Monitoring Configuration Errors</a>. </p>"
+      }
+    },
+    "CloudWatchLoggingOptionUpdate": {
+      "base": "<p>Describes CloudWatch logging option updates.</p>",
+      "refs": {
+        "CloudWatchLoggingOptionUpdates$member": null
+      }
+    },
+    "CloudWatchLoggingOptionUpdates": {
+      "base": null,
+      "refs": {
+        "ApplicationUpdate$CloudWatchLoggingOptionUpdates": "<p>Describes application CloudWatch logging option updates.</p>"
+      }
+    },
+    "CloudWatchLoggingOptions": {
+      "base": null,
+      "refs": {
+        "CreateApplicationRequest$CloudWatchLoggingOptions": "<p>Use this parameter to configure a CloudWatch log stream to monitor application configuration errors. For more information, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/cloudwatch-monitor-configuration.html\">Monitoring Configuration Errors</a>.</p>"
+      }
+    },
     "CodeValidationException": {
       "base": "<p>User-provided application code (query) is invalid. This can be a simple syntax error.</p>",
       "refs": {
@@ -162,6 +215,16 @@
     },
     "CreateApplicationResponse": {
       "base": "<p>TBD</p>",
+      "refs": {
+      }
+    },
+    "DeleteApplicationCloudWatchLoggingOptionRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteApplicationCloudWatchLoggingOptionResponse": {
+      "base": null,
       "refs": {
       }
     },
@@ -248,6 +311,9 @@
     "Id": {
       "base": null,
       "refs": {
+        "CloudWatchLoggingOptionDescription$CloudWatchLoggingOptionId": "<p>ID of the CloudWatch logging option description.</p>",
+        "CloudWatchLoggingOptionUpdate$CloudWatchLoggingOptionId": "<p>ID of the CloudWatch logging option to update</p>",
+        "DeleteApplicationCloudWatchLoggingOptionRequest$CloudWatchLoggingOptionId": "<p>The <code>CloudWatchLoggingOptionId</code> of the CloudWatch logging option to delete. You can use the <a>DescribeApplication</a> operation to get the <code>CloudWatchLoggingOptionId</code>. </p>",
         "DeleteApplicationOutputRequest$OutputId": "<p>The ID of the configuration to delete. Each output configuration that is added to the application, either when the application is created or later using the <a>AddApplicationOutput</a> operation, has a unique ID. You need to provide the ID to uniquely identify the output configuration that you want to delete from the application configuration. You can use the <a>DescribeApplication</a> operation to get the specific <code>OutputId</code>. </p>",
         "DeleteApplicationReferenceDataSourceRequest$ReferenceId": "<p>ID of the reference data source. When you add a reference data source to your application using the <a>AddApplicationReferenceDataSource</a>, Amazon Kinesis Analytics assigns an ID. You can use the <a>DescribeApplication</a> operation to get the reference ID. </p>",
         "InputConfiguration$Id": "<p>Input source ID. You can get this ID by calling the <a>DescribeApplication</a> operation.</p>",
@@ -263,9 +329,9 @@
       "base": null,
       "refs": {
         "InAppStreamNames$member": null,
-        "Input$NamePrefix": "<p>Name prefix to use when creating in-application stream. Suppose you specify a prefix \"MyInApplicationStream\". Kinesis Analytics will then create one or more (as per the <code>InputParallelism</code> count you specified) in-application streams with names \"MyInApplicationStream_001\", \"MyInApplicationStream_002\" and so on. </p>",
+        "Input$NamePrefix": "<p>Name prefix to use when creating in-application stream. Suppose you specify a prefix \"MyInApplicationStream\". Amazon Kinesis Analytics will then create one or more (as per the <code>InputParallelism</code> count you specified) in-application streams with names \"MyInApplicationStream_001\", \"MyInApplicationStream_002\" and so on. </p>",
         "InputDescription$NamePrefix": "<p>In-application name prefix.</p>",
-        "InputUpdate$NamePrefixUpdate": "<p>Name prefix for in-application stream(s) that Kinesis Analytics creates for the specific streaming source.</p>",
+        "InputUpdate$NamePrefixUpdate": "<p>Name prefix for in-application streams that Amazon Kinesis Analytics creates for the specific streaming source.</p>",
         "Output$Name": "<p>Name of the in-application stream.</p>",
         "OutputDescription$Name": "<p>Name of the in-application stream configured as output.</p>",
         "OutputUpdate$NameUpdate": "<p>If you want to specify a different in-application stream for this output configuration, use this field to specify the new in-application stream name.</p>"
@@ -288,7 +354,7 @@
     "Input": {
       "base": "<p>When you configure the application input, you specify the streaming source, the in-application stream name that is created, and the mapping between the two. For more information, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works-input.html\">Configuring Application Input</a>. </p>",
       "refs": {
-        "AddApplicationInputRequest$Input": null,
+        "AddApplicationInputRequest$Input": "<p/>",
         "Inputs$member": null
       }
     },
@@ -317,7 +383,7 @@
       }
     },
     "InputParallelism": {
-      "base": "<p>Describes the number of in-application streams to create for a given streaming source. For information about parallellism, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works-input.html\">Configuring Application Input</a>. </p>",
+      "base": "<p>Describes the number of in-application streams to create for a given streaming source. For information about parallelism, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works-input.html\">Configuring Application Input</a>. </p>",
       "refs": {
         "Input$InputParallelism": "<p>Describes the number of in-application streams to create. </p> <p>Data from your source will be routed to these in-application input streams.</p> <p> (see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works-input.html\">Configuring Application Input</a>.</p>",
         "InputDescription$InputParallelism": "<p>Describes the configured parallelism (number of in-application streams mapped to the streaming source).</p>"
@@ -333,7 +399,7 @@
     "InputParallelismUpdate": {
       "base": "<p>Provides updates to the parallelism count.</p>",
       "refs": {
-        "InputUpdate$InputParallelismUpdate": "<p>Describes the parallelism updates (the number in-application streams Kinesis Analytics creates for the specific streaming source).</p>"
+        "InputUpdate$InputParallelismUpdate": "<p>Describes the parallelism updates (the number in-application streams Amazon Kinesis Analytics creates for the specific streaming source).</p>"
       }
     },
     "InputSchemaUpdate": {
@@ -345,7 +411,7 @@
     "InputStartingPosition": {
       "base": null,
       "refs": {
-        "InputStartingPositionConfiguration$InputStartingPosition": "<p>The starting position on the stream.</p> <ul> <li> <p> <code>LATEST</code> - Start reading just after the most recent record in the stream.</p> </li> <li> <p> <code>TRIM_HORIZON</code> - Start reading at the last untrimmed record in the stream, which is the oldest record available in the stream. This option is not available for an Amazon Kinesis Firehose delivery stream.</p> </li> <li> <p> <code>LAST_STOPPED_POINT</code> - Resume reading from where the application last stopped reading.</p> </li> </ul>"
+        "InputStartingPositionConfiguration$InputStartingPosition": "<p>The starting position on the stream.</p> <ul> <li> <p> <code>NOW</code> - Start reading just after the most recent record in the stream, start at the request timestamp that the customer issued.</p> </li> <li> <p> <code>TRIM_HORIZON</code> - Start reading at the last untrimmed record in the stream, which is the oldest record available in the stream. This option is not available for an Amazon Kinesis Firehose delivery stream.</p> </li> <li> <p> <code>LAST_STOPPED_POINT</code> - Resume reading from where the application last stopped reading.</p> </li> </ul>"
       }
     },
     "InputStartingPositionConfiguration": {
@@ -483,6 +549,14 @@
       "refs": {
       }
     },
+    "LogStreamARN": {
+      "base": null,
+      "refs": {
+        "CloudWatchLoggingOption$LogStreamARN": "<p>ARN of the CloudWatch log to receive application messages.</p>",
+        "CloudWatchLoggingOptionDescription$LogStreamARN": "<p>ARN of the CloudWatch log to receive application messages.</p>",
+        "CloudWatchLoggingOptionUpdate$LogStreamARNUpdate": "<p>ARN of the CloudWatch log to receive application messages.</p>"
+      }
+    },
     "MappingParameters": {
       "base": "<p>When configuring application input at the time of creating or updating an application, provides additional mapping information specific to the record format (such as JSON, CSV, or record fields delimited by some delimiter) on the streaming source.</p>",
       "refs": {
@@ -490,7 +564,7 @@
       }
     },
     "Output": {
-      "base": "<p> Describes application output configuration in which you identify an in-application stream and a destination where you want the in-application stream data to be written. The destination can be an Amazon Kinesis stream or an Amazon Kinesis Firehose delivery stream. </p> <p/> <p>You can configure your application to write output to up to five destinations.</p>",
+      "base": "<p> Describes application output configuration in which you identify an in-application stream and a destination where you want the in-application stream data to be written. The destination can be an Amazon Kinesis stream or an Amazon Kinesis Firehose delivery stream. </p> <p/> <p>For limits on how many destinations an application can write and other limitations, see <a href=\"http://docs.aws.amazon.com/kinesisanalytics/latest/dev/limits.html\">Limits</a>. </p>",
       "refs": {
         "AddApplicationOutputRequest$Output": "<p>An array of objects, each describing one output configuration. In the output configuration, you specify the name of an in-application stream, a destination (that is, an Amazon Kinesis stream or an Amazon Kinesis Firehose delivery stream), and record the formation to use when writing to the destination.</p>",
         "Outputs$member": null
@@ -688,13 +762,16 @@
       }
     },
     "ResourceProvisionedThroughputExceededException": {
-      "base": "<p>Discovery failed to get a record from the streaming source because of the Kinesis Streams ProvisionedThroughputExceededException.</p>",
+      "base": "<p>Discovery failed to get a record from the streaming source because of the Amazon Kinesis Streams ProvisionedThroughputExceededException. For more information, see <a href=\"http://docs.aws.amazon.com/kinesis/latest/APIReference/API_GetRecords.html\">GetRecords</a> in the Amazon Kinesis Streams API Reference.</p>",
       "refs": {
       }
     },
     "RoleARN": {
       "base": null,
       "refs": {
+        "CloudWatchLoggingOption$RoleARN": "<p>IAM ARN of the role to use to send application messages. Note: To write application messages to CloudWatch, the IAM role used must have the <code>PutLogEvents</code> policy action enabled.</p>",
+        "CloudWatchLoggingOptionDescription$RoleARN": "<p>IAM ARN of the role to use to send application messages. Note: To write application messages to CloudWatch, the IAM role used must have the <code>PutLogEvents</code> policy action enabled.</p>",
+        "CloudWatchLoggingOptionUpdate$RoleARNUpdate": "<p>IAM ARN of the role to use to send application messages. Note: To write application messages to CloudWatch, the IAM role used must have the <code>PutLogEvents</code> policy action enabled.</p>",
         "DiscoverInputSchemaRequest$RoleARN": "<p>ARN of the IAM role that Amazon Kinesis Analytics can assume to access the stream on your behalf.</p>",
         "KinesisFirehoseInput$RoleARN": "<p>ARN of the IAM role that Amazon Kinesis Analytics can assume to access the stream on your behalf. You need to make sure the role has necessary permissions to access the stream.</p>",
         "KinesisFirehoseInputDescription$RoleARN": "<p>ARN of the IAM role that Amazon Kinesis Analytics assumes to access the stream.</p>",
@@ -771,7 +848,7 @@
       }
     },
     "UnableToDetectSchemaException": {
-      "base": "<p>Data format is not valid, Kinesis Analytics is not able to detect schema for the given streaming source.</p>",
+      "base": "<p>Data format is not valid, Amazon Kinesis Analytics is not able to detect schema for the given streaming source.</p>",
       "refs": {
       }
     },

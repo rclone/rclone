@@ -1,12 +1,13 @@
 {
   "version": "2.0",
+  "service": "<fullname>AWS IoT</fullname> <p>AWS IoT provides secure, bi-directional communication between Internet-connected things (such as sensors, actuators, embedded devices, or smart appliances) and the AWS cloud. You can discover your custom IoT-Data endpoint to communicate with, configure rules for data processing and integration with other services, organize resources associated with each thing (Thing Registry), configure logging, and create and manage policies and credentials to authenticate things.</p> <p>For more information about how AWS IoT works, see the <a href=\"http://docs.aws.amazon.com/iot/latest/developerguide/aws-iot-how-it-works.html\">Developer Guide</a>.</p>",
   "operations": {
     "AcceptCertificateTransfer": "<p>Accepts a pending certificate transfer. The default state of the certificate is INACTIVE.</p> <p>To check for pending certificate transfers, call <a>ListCertificates</a> to enumerate your certificates.</p>",
     "AttachPrincipalPolicy": "<p>Attaches the specified policy to the specified principal (certificate or other credential).</p>",
     "AttachThingPrincipal": "<p>Attaches the specified principal to the specified thing.</p>",
-    "CancelCertificateTransfer": "<p>Cancels a pending transfer for the specified certificate.</p> <p><b>Note</b> Only the transfer source account can use this operation to cancel a transfer. (Transfer destinations can use <a>RejectCertificateTransfer</a> instead.) After transfer, AWS IoT returns the certificate to the source account in the INACTIVE state. After the destination account has accepted the transfer, the transfer cannot be cancelled.</p> <p>After a certificate transfer is cancelled, the status of the certificate changes from PENDING_TRANSFER to INACTIVE.</p>",
-    "CreateCertificateFromCsr": "<p>Creates an X.509 certificate using the specified certificate signing request.</p> <p><b>Note</b> Reusing the same certificate signing request (CSR) results in a distinct certificate.</p> <p>You can create multiple certificates in a batch by creating a directory, copying multiple .csr files into that directory, and then specifying that directory on the command line. The following commands show how to create a batch of certificates given a batch of CSRs. </p> <p>Assuming a set of CSRs are located inside of the directory my-csr-directory:</p> <p>On Linux and OS X, the command is:</p> <p>$ ls my-csr-directory/ | xargs -I {} aws iot create-certificate-from-csr --certificate-signing-request file://my-csr-directory/{}</p> <p> This command lists all of the CSRs in my-csr-directory and pipes each CSR file name to the aws iot create-certificate-from-csr AWS CLI command to create a certificate for the corresponding CSR. </p> <p> The aws iot create-certificate-from-csr part of the command can also be run in parallel to speed up the certificate creation process: </p> <p> $ ls my-csr-directory/ | xargs -P 10 -I {} aws iot create-certificate-from-csr --certificate-signing-request file://my-csr-directory/{} </p> <p> On Windows PowerShell, the command to create certificates for all CSRs in my-csr-directory is: </p> <p> &gt; ls -Name my-csr-directory | %{aws iot create-certificate-from-csr --certificate-signing-request file://my-csr-directory/$_} </p> <p> On a Windows command prompt, the command to create certificates for all CSRs in my-csr-directory is: </p> <p> &gt; forfiles /p my-csr-directory /c \"cmd /c aws iot create-certificate-from-csr --certificate-signing-request file://@path\"</p>",
-    "CreateKeysAndCertificate": "<p>Creates a 2048-bit RSA key pair and issues an X.509 certificate using the issued public key.</p> <p><b>Note</b> This is the only time AWS IoT issues the private key for this certificate, so it is important to keep it in a secure location.</p>",
+    "CancelCertificateTransfer": "<p>Cancels a pending transfer for the specified certificate.</p> <p> <b>Note</b> Only the transfer source account can use this operation to cancel a transfer. (Transfer destinations can use <a>RejectCertificateTransfer</a> instead.) After transfer, AWS IoT returns the certificate to the source account in the INACTIVE state. After the destination account has accepted the transfer, the transfer cannot be cancelled.</p> <p>After a certificate transfer is cancelled, the status of the certificate changes from PENDING_TRANSFER to INACTIVE.</p>",
+    "CreateCertificateFromCsr": "<p>Creates an X.509 certificate using the specified certificate signing request.</p> <p> <b>Note:</b> The CSR must include a public key that is either an RSA key with a length of at least 2048 bits or an ECC key from NIST P-256 or NIST P-384 curves. </p> <p> <b>Note:</b> Reusing the same certificate signing request (CSR) results in a distinct certificate.</p> <p>You can create multiple certificates in a batch by creating a directory, copying multiple .csr files into that directory, and then specifying that directory on the command line. The following commands show how to create a batch of certificates given a batch of CSRs.</p> <p>Assuming a set of CSRs are located inside of the directory my-csr-directory:</p> <p>On Linux and OS X, the command is:</p> <p>$ ls my-csr-directory/ | xargs -I {} aws iot create-certificate-from-csr --certificate-signing-request file://my-csr-directory/{}</p> <p>This command lists all of the CSRs in my-csr-directory and pipes each CSR file name to the aws iot create-certificate-from-csr AWS CLI command to create a certificate for the corresponding CSR.</p> <p>The aws iot create-certificate-from-csr part of the command can also be run in parallel to speed up the certificate creation process:</p> <p>$ ls my-csr-directory/ | xargs -P 10 -I {} aws iot create-certificate-from-csr --certificate-signing-request file://my-csr-directory/{}</p> <p>On Windows PowerShell, the command to create certificates for all CSRs in my-csr-directory is:</p> <p>&gt; ls -Name my-csr-directory | %{aws iot create-certificate-from-csr --certificate-signing-request file://my-csr-directory/$_}</p> <p>On a Windows command prompt, the command to create certificates for all CSRs in my-csr-directory is:</p> <p>&gt; forfiles /p my-csr-directory /c \"cmd /c aws iot create-certificate-from-csr --certificate-signing-request file://@path\"</p>",
+    "CreateKeysAndCertificate": "<p>Creates a 2048-bit RSA key pair and issues an X.509 certificate using the issued public key.</p> <p> <b>Note</b> This is the only time AWS IoT issues the private key for this certificate, so it is important to keep it in a secure location.</p>",
     "CreatePolicy": "<p>Creates an AWS IoT policy.</p> <p>The created policy is the default version for the policy. This operation creates a policy version with a version identifier of <b>1</b> and sets <b>1</b> as the policy's default version.</p>",
     "CreatePolicyVersion": "<p>Creates a new version of the specified AWS IoT policy. To update a policy, create a new policy version. A managed policy can have up to five versions. If the policy has five versions, you must use <a>DeletePolicyVersion</a> to delete an existing version before you create a new one.</p> <p>Optionally, you can set the new version as the policy's default version. The default version is the operative version (that is, the version that is in effect for the certificates to which the policy is attached).</p>",
     "CreateThing": "<p>Creates a thing record in the thing registry.</p>",
@@ -48,7 +49,7 @@
     "ListThingTypes": "<p>Lists the existing thing types.</p>",
     "ListThings": "<p>Lists your things. Use the <b>attributeName</b> and <b>attributeValue</b> parameters to filter your things. For example, calling <code>ListThings</code> with attributeName=Color and attributeValue=Red retrieves all things in the registry that contain an attribute <b>Color</b> with the value <b>Red</b>. </p>",
     "ListTopicRules": "<p>Lists the rules for the specific topic.</p>",
-    "RegisterCACertificate": "<p>Registers a CA certificate with AWS IoT. This CA certificate can then be used to sign device certificates, which can be then registered with AWS IoT. You can register up to 10 CA certificates per AWS account that have the same subject field and public key. This enables you to have up to 10 certificate authorities sign your device certificates. If you have more than one CA certificate registered, make sure you pass the CA certificate when you register your device certificates with the RegisterCertificate API.</p>",
+    "RegisterCACertificate": "<p>Registers a CA certificate with AWS IoT. This CA certificate can then be used to sign device certificates, which can be then registered with AWS IoT. You can register up to 10 CA certificates per AWS account that have the same subject field. This enables you to have up to 10 certificate authorities sign your device certificates. If you have more than one CA certificate registered, make sure you pass the CA certificate when you register your device certificates with the RegisterCertificate API.</p>",
     "RegisterCertificate": "<p>Registers a device certificate with AWS IoT. If you have more than one CA certificate that has the same subject field, you must specify the CA certificate that was used to sign the device certificate being registered.</p>",
     "RejectCertificateTransfer": "<p>Rejects a pending certificate transfer. After AWS IoT rejects a certificate transfer, the certificate status changes from <b>PENDING_TRANSFER</b> to <b>INACTIVE</b>.</p> <p>To check for pending certificate transfers, call <a>ListCertificates</a> to enumerate your certificates.</p> <p>This operation can only be called by the transfer destination. After it is called, the certificate will be returned to the source's account in the INACTIVE state.</p>",
     "ReplaceTopicRule": "<p>Replaces the specified rule. You must specify all parameters for the new rule. Creating rules is an administrator-level action. Any user who has permission to create rules will be able to access data processed by the rule.</p>",
@@ -59,7 +60,6 @@
     "UpdateCertificate": "<p>Updates the status of the specified certificate. This operation is idempotent.</p> <p>Moving a certificate from the ACTIVE state (including REVOKED) will not disconnect currently connected devices, but these devices will be unable to reconnect.</p> <p>The ACTIVE state is required to authenticate devices connecting to AWS IoT using a certificate.</p>",
     "UpdateThing": "<p>Updates the data for a thing.</p>"
   },
-  "service": "<fullname>AWS IoT</fullname> <p>AWS IoT provides secure, bi-directional communication between Internet-connected things (such as sensors, actuators, embedded devices, or smart appliances) and the AWS cloud. You can discover your custom IoT-Data endpoint to communicate with, configure rules for data processing and integration with other services, organize resources associated with each thing (Thing Registry), configure logging, and create and manage policies and credentials to authenticate things.</p> <p>For more information about how AWS IoT works, see the <a href=\"http://docs.aws.amazon.com/iot/latest/developerguide/aws-iot-how-it-works.html\">Developer Guide</a>.</p>",
   "shapes": {
     "AcceptCertificateTransferRequest": {
       "base": "<p>The input for the AcceptCertificateTransfer operation.</p>",
@@ -129,8 +129,8 @@
     "AttributePayload": {
       "base": "<p>The attribute payload.</p>",
       "refs": {
-        "CreateThingRequest$attributePayload": "<p>The attribute payload, which consists of up to three name/value pairs in a JSON document. For example:</p> <p><code>{\\\"attributes\\\":{\\\"string1\\\":\\\"string2\\\"}})</code></p>",
-        "UpdateThingRequest$attributePayload": "<p>A list of thing attributes, a JSON string containing name-value pairs. For example:</p> <p><code>{\\\"attributes\\\":{\\\"name1\\\":\\\"value2\\\"}})</code></p> <p>This data is used to add new attributes or update existing attributes.</p>"
+        "CreateThingRequest$attributePayload": "<p>The attribute payload, which consists of up to three name/value pairs in a JSON document. For example:</p> <p> <code>{\\\"attributes\\\":{\\\"string1\\\":\\\"string2\\\"}}</code> </p>",
+        "UpdateThingRequest$attributePayload": "<p>A list of thing attributes, a JSON string containing name-value pairs. For example:</p> <p> <code>{\\\"attributes\\\":{\\\"name1\\\":\\\"value2\\\"}}</code> </p> <p>This data is used to add new attributes or update existing attributes.</p>"
       }
     },
     "AttributeValue": {
@@ -143,7 +143,7 @@
     "Attributes": {
       "base": null,
       "refs": {
-        "AttributePayload$attributes": "<p>A JSON string containing up to three key-value pair in JSON format. For example:</p> <p><code>{\\\"attributes\\\":{\\\"string1\\\":\\\"string2\\\"}})</code></p>",
+        "AttributePayload$attributes": "<p>A JSON string containing up to three key-value pair in JSON format. For example:</p> <p> <code>{\\\"attributes\\\":{\\\"string1\\\":\\\"string2\\\"}}</code> </p>",
         "DescribeThingResponse$attributes": "<p>The thing attributes.</p>",
         "ThingAttribute$attributes": "<p>A list of thing attributes which are name-value pairs.</p>"
       }
@@ -218,9 +218,9 @@
     "CACertificateStatus": {
       "base": null,
       "refs": {
-        "CACertificate$status": "<p>The status of the CA certificate. </p> <p>The status value REGISTER_INACTIVE is deprecated and should not be used.</p>",
+        "CACertificate$status": "<p>The status of the CA certificate.</p> <p>The status value REGISTER_INACTIVE is deprecated and should not be used.</p>",
         "CACertificateDescription$status": "<p>The status of a CA certificate.</p>",
-        "UpdateCACertificateRequest$newStatus": "<p>The updated status of the CA certificate.</p> <p><b>Note:</b> The status value REGISTER_INACTIVE is deprecated and should not be used.</p>"
+        "UpdateCACertificateRequest$newStatus": "<p>The updated status of the CA certificate.</p> <p> <b>Note:</b> The status value REGISTER_INACTIVE is deprecated and should not be used.</p>"
       }
     },
     "CACertificates": {
@@ -288,7 +288,7 @@
         "DeleteCertificateRequest$certificateId": "<p>The ID of the certificate.</p>",
         "DescribeCACertificateRequest$certificateId": "<p>The CA certificate identifier.</p>",
         "DescribeCertificateRequest$certificateId": "<p>The ID of the certificate.</p>",
-        "ListCertificatesByCARequest$caCertificateId": "<p>The ID of the CA certificate. This operation will list all registered device certificate that were signed by this CA certificate. </p>",
+        "ListCertificatesByCARequest$caCertificateId": "<p>The ID of the CA certificate. This operation will list all registered device certificate that were signed by this CA certificate.</p>",
         "OutgoingCertificate$certificateId": "<p>The certificate ID.</p>",
         "RegisterCACertificateResponse$certificateId": "<p>The CA certificate identifier.</p>",
         "RegisterCertificateResponse$certificateId": "<p>The certificate identifier.</p>",
@@ -327,8 +327,8 @@
       "refs": {
         "Certificate$status": "<p>The status of the certificate.</p> <p>The status value REGISTER_INACTIVE is deprecated and should not be used.</p>",
         "CertificateDescription$status": "<p>The status of the certificate.</p>",
-        "RegisterCertificateRequest$status": null,
-        "UpdateCertificateRequest$newStatus": "<p>The new status.</p> <p><b>Note:</b> Setting the status to PENDING_TRANSFER will result in an exception being thrown. PENDING_TRANSFER is a status used internally by AWS IoT. It is not intended for developer use.</p> <p><b>Note:</b> The status value REGISTER_INACTIVE is deprecated and should not be used.</p>"
+        "RegisterCertificateRequest$status": "<p>The status of the register certificate request.</p>",
+        "UpdateCertificateRequest$newStatus": "<p>The new status.</p> <p> <b>Note:</b> Setting the status to PENDING_TRANSFER will result in an exception being thrown. PENDING_TRANSFER is a status used internally by AWS IoT. It is not intended for developer use.</p> <p> <b>Note:</b> The status value REGISTER_INACTIVE is deprecated and should not be used.</p>"
       }
     },
     "CertificateValidationException": {
@@ -491,7 +491,7 @@
       }
     },
     "DeleteRegistrationCodeResponse": {
-      "base": "<p>The output for the DeleteRegistrationCode operation. </p>",
+      "base": "<p>The output for the DeleteRegistrationCode operation.</p>",
       "refs": {
       }
     },
@@ -620,7 +620,7 @@
       }
     },
     "DynamoDBAction": {
-      "base": "<p>Describes an action to write to a DynamoDB table.</p> <p>The <code>tableName</code>, <code>hashKeyField</code>, and <code>rangeKeyField</code> values must match the values used when you created the table.</p> <p>The <code>hashKeyValue</code> and <code>rangeKeyvalue</code> fields use a substitution template syntax. These templates provide data at runtime. The syntax is as follows: ${<i>sql-expression</i>}.</p> <p>You can specify any valid expression in a WHERE or SELECT clause, including JSON properties, comparisons, calculations, and functions. For example, the following field uses the third level of the topic:</p> <p><code>\"hashKeyValue\": \"${topic(3)}\"</code></p> <p>The following field uses the timestamp:</p> <p><code>\"rangeKeyValue\": \"${timestamp()}\"</code></p>",
+      "base": "<p>Describes an action to write to a DynamoDB table.</p> <p>The <code>tableName</code>, <code>hashKeyField</code>, and <code>rangeKeyField</code> values must match the values used when you created the table.</p> <p>The <code>hashKeyValue</code> and <code>rangeKeyvalue</code> fields use a substitution template syntax. These templates provide data at runtime. The syntax is as follows: ${<i>sql-expression</i>}.</p> <p>You can specify any valid expression in a WHERE or SELECT clause, including JSON properties, comparisons, calculations, and functions. For example, the following field uses the third level of the topic:</p> <p> <code>\"hashKeyValue\": \"${topic(3)}\"</code> </p> <p>The following field uses the timestamp:</p> <p> <code>\"rangeKeyValue\": \"${timestamp()}\"</code> </p>",
       "refs": {
         "Action$dynamoDB": "<p>Write to a DynamoDB table.</p>"
       }
@@ -1002,9 +1002,6 @@
     "MaxResults": {
       "base": null,
       "refs": {
-        "ListPrincipalThingsRequest$maxResults": "<p>The maximum number of results to return in this operation.</p>",
-        "ListThingTypesRequest$maxResults": "<p>The maximum number of results to return in this operation.</p>",
-        "ListThingsRequest$maxResults": "<p>The maximum number of results to return in this operation.</p>",
         "ListTopicRulesRequest$maxResults": "<p>The maximum number of results to return.</p>"
       }
     },
@@ -1021,7 +1018,7 @@
     "MessageFormat": {
       "base": null,
       "refs": {
-        "SnsAction$messageFormat": "<p>The message format of the message to publish. Optional. Accepted values are \"JSON\" and \"RAW\". The default value of the attribute is \"RAW\". SNS uses this setting to determine if the payload should be parsed and relevant platform-specific bits of the payload should be extracted. To read more about SNS message formats, see <a href=\"http://docs.aws.amazon.com/sns/latest/dg/json-formats.html\"></a> refer to their official documentation.</p>"
+        "SnsAction$messageFormat": "<p>The message format of the message to publish. Optional. Accepted values are \"JSON\" and \"RAW\". The default value of the attribute is \"RAW\". SNS uses this setting to determine if the payload should be parsed and relevant platform-specific bits of the payload should be extracted. To read more about SNS message formats, see <a href=\"http://docs.aws.amazon.com/sns/latest/dg/json-formats.html\">http://docs.aws.amazon.com/sns/latest/dg/json-formats.html</a> refer to their official documentation.</p>"
       }
     },
     "MetricName": {
@@ -1228,7 +1225,7 @@
     "PutItemInput": {
       "base": "<p>The input for the DynamoActionVS action that specifies the DynamoDB table to which the message data will be written.</p>",
       "refs": {
-        "DynamoDBv2Action$putItem": "<p>Specifies the DynamoDB table to which the message data will be written. For example:</p> <p><code>{ \"dynamoDBv2\": { \"roleArn\": \"aws:iam:12341251:my-role\" \"putItem\": { \"tableName\": \"my-table\" } } }</code></p> <p>Each attribute in the message payload will be written to a separate column in the DynamoDB database.</p>"
+        "DynamoDBv2Action$putItem": "<p>Specifies the DynamoDB table to which the message data will be written. For example:</p> <p> <code>{ \"dynamoDBv2\": { \"roleArn\": \"aws:iam:12341251:my-role\" \"putItem\": { \"tableName\": \"my-table\" } } }</code> </p> <p>Each attribute in the message payload will be written to a separate column in the DynamoDB database.</p>"
       }
     },
     "QueueUrl": {
@@ -1278,6 +1275,14 @@
     "RegistrationCodeValidationException": {
       "base": "<p>The registration code is invalid.</p>",
       "refs": {
+      }
+    },
+    "RegistryMaxResults": {
+      "base": null,
+      "refs": {
+        "ListPrincipalThingsRequest$maxResults": "<p>The maximum number of results to return in this operation.</p>",
+        "ListThingTypesRequest$maxResults": "<p>The maximum number of results to return in this operation.</p>",
+        "ListThingsRequest$maxResults": "<p>The maximum number of results to return in this operation.</p>"
       }
     },
     "RejectCertificateTransferRequest": {
@@ -1343,6 +1348,24 @@
       "refs": {
         "TopicRule$sql": "<p>The SQL statement used to query the topic. When using a SQL query with multiple lines, be sure to escape the newline characters.</p>",
         "TopicRulePayload$sql": "<p>The SQL statement used to query the topic. For more information, see <a href=\"http://docs.aws.amazon.com/iot/latest/developerguide/iot-rules.html#aws-iot-sql-reference\">AWS IoT SQL Reference</a> in the <i>AWS IoT Developer Guide</i>.</p>"
+      }
+    },
+    "SalesforceAction": {
+      "base": "<p>Describes an action to write a message to a Salesforce IoT Cloud Input Stream.</p>",
+      "refs": {
+        "Action$salesforce": "<p>Send a message to a Salesforce IoT Cloud Input Stream.</p>"
+      }
+    },
+    "SalesforceEndpoint": {
+      "base": null,
+      "refs": {
+        "SalesforceAction$url": "<p>The URL exposed by the Salesforce IoT Cloud Input Stream. The URL is available from the Salesforce IoT Cloud platform after creation of the Input Stream.</p>"
+      }
+    },
+    "SalesforceToken": {
+      "base": null,
+      "refs": {
+        "SalesforceAction$token": "<p>The token used to authenticate access to the Salesforce IoT Cloud Input Stream. The token is available from the Salesforce IoT Cloud platform after creation of the Input Stream.</p>"
       }
     },
     "SearchableAttributes": {
@@ -1496,8 +1519,8 @@
     "ThingTypeMetadata": {
       "base": "<p>The ThingTypeMetadata contains additional information about the thing type including: creation date and time, a value indicating whether the thing type is deprecated, and a date and time when time was deprecated.</p>",
       "refs": {
-        "DescribeThingTypeResponse$thingTypeMetadata": null,
-        "ThingTypeDefinition$thingTypeMetadata": null
+        "DescribeThingTypeResponse$thingTypeMetadata": "<p>The ThingTypeMetadata contains additional information about the thing type including: creation date and time, a value indicating whether the thing type is deprecated, and a date and time when it was deprecated.</p>",
+        "ThingTypeDefinition$thingTypeMetadata": "<p>The ThingTypeMetadata contains additional information about the thing type including: creation date and time, a value indicating whether the thing type is deprecated, and a date and time when it was deprecated.</p>"
       }
     },
     "ThingTypeName": {
@@ -1640,7 +1663,7 @@
       }
     },
     "VersionConflictException": {
-      "base": "<p>An exception thrown when the version of a thing passed to a command is different than the version specified with the --version parameter. </p>",
+      "base": "<p>An exception thrown when the version of a thing passed to a command is different than the version specified with the --version parameter.</p>",
       "refs": {
       }
     },

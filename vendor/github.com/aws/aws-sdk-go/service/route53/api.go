@@ -94,11 +94,21 @@ func (c *Route53) AssociateVPCWithHostedZoneRequest(input *AssociateVPCWithHoste
 //   53 doesn't support associating a VPC with a public hosted zone.
 //
 //   * ErrCodeConflictingDomainExists "ConflictingDomainExists"
-//   You specified an Amazon VPC that you're already using for another hosted
-//   zone, and the domain that you specified for one of the hosted zones is a
-//   subdomain of the domain that you specified for the other hosted zone. For
-//   example, you can't use the same Amazon VPC for the hosted zones for example.com
-//   and test.example.com.
+//   The cause of this error depends on whether you're trying to create a public
+//   or a private hosted zone:
+//
+//      * Public hosted zone: Two hosted zones that have the same name or that
+//      have a parent/child relationship (example.com and test.example.com) can't
+//      have any common name servers. You tried to create a hosted zone that has
+//      the same name as an existing hosted zone or that's the parent or child
+//      of an existing hosted zone, and you specified a delegation set that shares
+//      one or more name servers with the existing hosted zone.
+//
+//      * Private hosted zone: You specified an Amazon VPC that you're already
+//      using for another hosted zone, and the domain that you specified for one
+//      of the hosted zones is a subdomain of the domain that you specified for
+//      the other hosted zone. For example, you can't use the same Amazon VPC
+//      for the hosted zones for example.com and test.example.com.
 //
 //   * ErrCodeLimitsExceeded "LimitsExceeded"
 //   The limits specified for a resource have been exceeded.
@@ -241,8 +251,8 @@ func (c *Route53) ChangeResourceRecordSetsRequest(input *ChangeResourceRecordSet
 // your changes to all of the Amazon Route 53 authoritative DNS servers. While
 // your changes are propagating, GetChange returns a status of PENDING. When
 // propagation is complete, GetChange returns a status of INSYNC. Changes generally
-// propagate to all Amazon Route 53 name servers in a few minutes. In rare circumstances,
-// propagation can take up to 30 minutes. For more information, see GetChange.
+// propagate to all Amazon Route 53 name servers within 60 seconds. For more
+// information, see GetChange.
 //
 // Limits on ChangeResourceRecordSets Requests
 //
@@ -646,11 +656,21 @@ func (c *Route53) CreateHostedZoneRequest(input *CreateHostedZoneInput) (req *re
 //   this error, contact Customer Support.
 //
 //   * ErrCodeConflictingDomainExists "ConflictingDomainExists"
-//   You specified an Amazon VPC that you're already using for another hosted
-//   zone, and the domain that you specified for one of the hosted zones is a
-//   subdomain of the domain that you specified for the other hosted zone. For
-//   example, you can't use the same Amazon VPC for the hosted zones for example.com
-//   and test.example.com.
+//   The cause of this error depends on whether you're trying to create a public
+//   or a private hosted zone:
+//
+//      * Public hosted zone: Two hosted zones that have the same name or that
+//      have a parent/child relationship (example.com and test.example.com) can't
+//      have any common name servers. You tried to create a hosted zone that has
+//      the same name as an existing hosted zone or that's the parent or child
+//      of an existing hosted zone, and you specified a delegation set that shares
+//      one or more name servers with the existing hosted zone.
+//
+//      * Private hosted zone: You specified an Amazon VPC that you're already
+//      using for another hosted zone, and the domain that you specified for one
+//      of the hosted zones is a subdomain of the domain that you specified for
+//      the other hosted zone. For example, you can't use the same Amazon VPC
+//      for the hosted zones for example.com and test.example.com.
 //
 //   * ErrCodeNoSuchDelegationSet "NoSuchDelegationSet"
 //   A reusable delegation set with the specified ID does not exist.
@@ -1256,9 +1276,7 @@ func (c *Route53) DeleteHealthCheckRequest(input *DeleteHealthCheckInput) (req *
 //   request.
 //
 //   * ErrCodeHealthCheckInUse "HealthCheckInUse"
-//   The health check ID for this health check is referenced in the HealthCheckId
-//   element in one of the resource record sets in one of the hosted zones that
-//   are owned by the current AWS account.
+//   This error code is not in use.
 //
 //   * ErrCodeInvalidInput "InvalidInput"
 //   The input is not valid.
@@ -8673,7 +8691,7 @@ type HealthCheckConfig struct {
 	// health checks, Amazon Route 53 will briefly continue to perform checks from
 	// that region to ensure that some health checkers are always checking the endpoint
 	// (for example, if you replace three regions with four different regions).
-	Regions []*string `locationNameList:"Region" min:"1" type:"list"`
+	Regions []*string `locationNameList:"Region" min:"3" type:"list"`
 
 	// The number of seconds between the time that Amazon Route 53 gets a response
 	// from your endpoint and the time that it sends the next health check request.
@@ -8769,8 +8787,8 @@ func (s *HealthCheckConfig) Validate() error {
 	if s.Port != nil && *s.Port < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("Port", 1))
 	}
-	if s.Regions != nil && len(s.Regions) < 1 {
-		invalidParams.Add(request.NewErrParamMinLen("Regions", 1))
+	if s.Regions != nil && len(s.Regions) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("Regions", 3))
 	}
 	if s.RequestInterval != nil && *s.RequestInterval < 10 {
 		invalidParams.Add(request.NewErrParamMinValue("RequestInterval", 10))
@@ -11313,6 +11331,34 @@ type ResourceRecordSet struct {
 	//    * Configuring Failover in a Private Hosted Zone (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-private-hosted-zones.html)
 	HealthCheckId *string `type:"string"`
 
+	// Multivalue answer resource record sets only: To route traffic approximately
+	// randomly to multiple resources, such as web servers, create one multivalue
+	// answer record for each resource and specify true for MultiValueAnswer. Note
+	// the following:
+	//
+	//    * If you associate a health check with a multivalue answer resource record
+	//    set, Amazon Route 53 responds to DNS queries with the corresponding IP
+	//    address only when the health check is healthy.
+	//
+	//    * If you don't associate a health check with a multivalue answer record,
+	//    Amazon Route 53 always considers the record to be healthy.
+	//
+	//    * Amazon Route 53 responds to DNS queries with up to eight healthy records;
+	//    if you have eight or fewer healthy records, Amazon Route 53 responds to
+	//    all DNS queries with all the healthy records.
+	//
+	//    * If you have more than eight healthy records, Amazon Route 53 responds
+	//    to different DNS resolvers with different combinations of healthy records.
+	//
+	//    * When all records are unhealthy, Amazon Route 53 responds to DNS queries
+	//    with up to eight unhealthy records.
+	//
+	//    * If a resource becomes unavailable after a resolver caches a response,
+	//    client software typically tries another of the IP addresses in the response.
+	//
+	// You can't create multivalue answer alias records.
+	MultiValueAnswer *bool `type:"boolean"`
+
 	// The name of the domain you want to perform the action on.
 	//
 	// Enter a fully qualified domain name, for example, www.example.com. You can
@@ -11393,8 +11439,8 @@ type ResourceRecordSet struct {
 
 	// The resource record cache time to live (TTL), in seconds. Note the following:
 	//
-	//    * If you're creating an alias resource record set, omit TTL. Amazon Route
-	//    53 uses the value of TTL for the alias target.
+	//    * If you're creating or updating an alias resource record set, omit TTL.
+	//    Amazon Route 53 uses the value of TTL for the alias target.
 	//
 	//    * If you're associating this resource record set with a health check (if
 	//    you're adding a HealthCheckId element), we recommend that you specify
@@ -11436,6 +11482,9 @@ type ResourceRecordSet struct {
 	// of weighted, latency, geolocation, or failover resource record sets, specify
 	// the same value for all of the resource record sets in the group.
 	//
+	// Valid values for multivalue answer resource record sets: A | AAAA | MX |
+	// NAPTR | PTR | SPF | SRV | TXT
+	//
 	// SPF records were formerly used to verify the identity of the sender of email
 	// messages. However, we no longer recommend that you create resource record
 	// sets for which the value of Type is SPF. RFC 7208, Sender Policy Framework
@@ -11461,8 +11510,8 @@ type ResourceRecordSet struct {
 	//    * Amazon S3 buckets:A
 	//
 	//    * Another resource record set in this hosted zone: Specify the type of
-	//    the resource record set for which you're creating the alias. Specify any
-	//    value except NS or SOA.
+	//    the resource record set that you're creating the alias for. All values
+	//    are supported except NS and SOA.
 	//
 	// Type is a required field
 	Type *string `type:"string" required:"true" enum:"RRType"`
@@ -11582,6 +11631,12 @@ func (s *ResourceRecordSet) SetGeoLocation(v *GeoLocation) *ResourceRecordSet {
 // SetHealthCheckId sets the HealthCheckId field's value.
 func (s *ResourceRecordSet) SetHealthCheckId(v string) *ResourceRecordSet {
 	s.HealthCheckId = &v
+	return s
+}
+
+// SetMultiValueAnswer sets the MultiValueAnswer field's value.
+func (s *ResourceRecordSet) SetMultiValueAnswer(v bool) *ResourceRecordSet {
+	s.MultiValueAnswer = &v
 	return s
 }
 
@@ -12480,7 +12535,7 @@ type UpdateHealthCheckInput struct {
 
 	// A complex type that contains one Region element for each region that you
 	// want Amazon Route 53 health checkers to check the specified endpoint from.
-	Regions []*string `locationNameList:"Region" min:"1" type:"list"`
+	Regions []*string `locationNameList:"Region" min:"3" type:"list"`
 
 	// The path that you want Amazon Route 53 to request when performing health
 	// checks. The path can be any value for which your endpoint will return an
@@ -12523,8 +12578,8 @@ func (s *UpdateHealthCheckInput) Validate() error {
 	if s.Port != nil && *s.Port < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("Port", 1))
 	}
-	if s.Regions != nil && len(s.Regions) < 1 {
-		invalidParams.Add(request.NewErrParamMinLen("Regions", 1))
+	if s.Regions != nil && len(s.Regions) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("Regions", 3))
 	}
 	if s.AlarmIdentifier != nil {
 		if err := s.AlarmIdentifier.Validate(); err != nil {

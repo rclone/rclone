@@ -93,7 +93,9 @@ func (c *Lambda) AddPermissionRequest(input *AddPermissionInput) (req *request.R
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodePolicyLengthExceededException "PolicyLengthExceededException"
 //   Lambda function access policy is limited to 20 KB.
@@ -191,7 +193,9 @@ func (c *Lambda) CreateAliasRequest(input *CreateAliasInput) (req *request.Reque
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
@@ -299,7 +303,9 @@ func (c *Lambda) CreateEventSourceMappingRequest(input *CreateEventSourceMapping
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeResourceConflictException "ResourceConflictException"
 //   The resource already exists.
@@ -399,7 +405,9 @@ func (c *Lambda) CreateFunctionRequest(input *CreateFunctionInput) (req *request
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   The resource (for example, a Lambda function or access policy statement)
@@ -498,7 +506,9 @@ func (c *Lambda) DeleteAliasRequest(input *DeleteAliasInput) (req *request.Reque
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
@@ -590,7 +600,9 @@ func (c *Lambda) DeleteEventSourceMappingRequest(input *DeleteEventSourceMapping
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
@@ -694,7 +706,9 @@ func (c *Lambda) DeleteFunctionRequest(input *DeleteFunctionInput) (req *request
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeResourceConflictException "ResourceConflictException"
 //   The resource already exists.
@@ -872,7 +886,9 @@ func (c *Lambda) GetAliasRequest(input *GetAliasInput) (req *request.Request, ou
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
@@ -963,7 +979,9 @@ func (c *Lambda) GetEventSourceMappingRequest(input *GetEventSourceMappingInput)
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
@@ -1065,7 +1083,9 @@ func (c *Lambda) GetFunctionRequest(input *GetFunctionInput) (req *request.Reque
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 func (c *Lambda) GetFunction(input *GetFunctionInput) (*GetFunctionOutput, error) {
 	req, out := c.GetFunctionRequest(input)
@@ -1165,7 +1185,9 @@ func (c *Lambda) GetFunctionConfigurationRequest(input *GetFunctionConfiguration
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 func (c *Lambda) GetFunctionConfiguration(input *GetFunctionConfigurationInput) (*FunctionConfiguration, error) {
 	req, out := c.GetFunctionConfigurationRequest(input)
@@ -1260,7 +1282,9 @@ func (c *Lambda) GetPolicyRequest(input *GetPolicyInput) (req *request.Request, 
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 func (c *Lambda) GetPolicy(input *GetPolicyInput) (*GetPolicyOutput, error) {
 	req, out := c.GetPolicyRequest(input)
@@ -1369,7 +1393,9 @@ func (c *Lambda) InvokeRequest(input *InvokeInput) (req *request.Request, output
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeEC2UnexpectedException "EC2UnexpectedException"
 //   AWS Lambda received an unexpected EC2 client exception while setting up for
@@ -1415,6 +1441,9 @@ func (c *Lambda) InvokeRequest(input *InvokeInput) (req *request.Request, output
 //   * ErrCodeKMSNotFoundException "KMSNotFoundException"
 //   Lambda was unable to decrypt the environment variables because the KMS key
 //   was not found. Check the function's KMS key settings.
+//
+//   * ErrCodeInvalidRuntimeException "InvalidRuntimeException"
+//   The runtime or runtime version specified is not supported.
 //
 func (c *Lambda) Invoke(input *InvokeInput) (*InvokeOutput, error) {
 	req, out := c.InvokeRequest(input)
@@ -1509,6 +1538,9 @@ func (c *Lambda) InvokeAsyncRequest(input *InvokeAsyncInput) (req *request.Reque
 //   * ErrCodeInvalidRequestContentException "InvalidRequestContentException"
 //   The request body could not be parsed as JSON.
 //
+//   * ErrCodeInvalidRuntimeException "InvalidRuntimeException"
+//   The runtime or runtime version specified is not supported.
+//
 func (c *Lambda) InvokeAsync(input *InvokeAsyncInput) (*InvokeAsyncOutput, error) {
 	req, out := c.InvokeAsyncRequest(input)
 	return out, req.Send()
@@ -1598,7 +1630,9 @@ func (c *Lambda) ListAliasesRequest(input *ListAliasesInput) (req *request.Reque
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
@@ -1704,7 +1738,9 @@ func (c *Lambda) ListEventSourceMappingsRequest(input *ListEventSourceMappingsIn
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
@@ -1834,9 +1870,9 @@ func (c *Lambda) ListFunctionsRequest(input *ListFunctionsInput) (req *request.R
 //
 // This operation requires permission for the lambda:ListFunctions action.
 //
-// If you are using versioning feature, the response returns list of $LATEST
-// versions of your functions. For information about the versioning feature,
-// see AWS Lambda Function Versioning and Aliases (http://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html).
+// If you are using the versioning feature, you can list all of your functions
+// or only $LATEST versions. For information about the versioning feature, see
+// AWS Lambda Function Versioning and Aliases (http://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1850,6 +1886,13 @@ func (c *Lambda) ListFunctionsRequest(input *ListFunctionsInput) (req *request.R
 //   The AWS Lambda service encountered an internal error.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+//   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
+//   One of the parameters in the request is invalid. For example, if you provided
+//   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 func (c *Lambda) ListFunctions(input *ListFunctionsInput) (*ListFunctionsOutput, error) {
 	req, out := c.ListFunctionsRequest(input)
@@ -1986,7 +2029,9 @@ func (c *Lambda) ListTagsRequest(input *ListTagsInput) (req *request.Request, ou
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
@@ -2075,7 +2120,9 @@ func (c *Lambda) ListVersionsByFunctionRequest(input *ListVersionsByFunctionInpu
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
@@ -2167,7 +2214,9 @@ func (c *Lambda) PublishVersionRequest(input *PublishVersionInput) (req *request
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
@@ -2272,7 +2321,9 @@ func (c *Lambda) RemovePermissionRequest(input *RemovePermissionInput) (req *req
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
@@ -2364,7 +2415,9 @@ func (c *Lambda) TagResourceRequest(input *TagResourceInput) (req *request.Reque
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
@@ -2455,7 +2508,9 @@ func (c *Lambda) UntagResourceRequest(input *UntagResourceInput) (req *request.R
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
@@ -2547,7 +2602,9 @@ func (c *Lambda) UpdateAliasRequest(input *UpdateAliasInput) (req *request.Reque
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
@@ -2651,7 +2708,9 @@ func (c *Lambda) UpdateEventSourceMappingRequest(input *UpdateEventSourceMapping
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
@@ -2750,7 +2809,9 @@ func (c *Lambda) UpdateFunctionCodeRequest(input *UpdateFunctionCodeInput) (req 
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
@@ -2851,9 +2912,14 @@ func (c *Lambda) UpdateFunctionConfigurationRequest(input *UpdateFunctionConfigu
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValueException"
 //   One of the parameters in the request is invalid. For example, if you provided
 //   an IAM role for AWS Lambda to assume in the CreateFunction or the UpdateFunctionConfiguration
-//   API, that AWS Lambda is unable to assume you will get this exception.
+//   API, that AWS Lambda is unable to assume you will get this exception. You
+//   will also get this exception if you have selected a deprecated runtime, such
+//   as Node v0.10.42.
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+//   * ErrCodeResourceConflictException "ResourceConflictException"
+//   The resource already exists.
 //
 func (c *Lambda) UpdateFunctionConfiguration(input *UpdateFunctionConfigurationInput) (*FunctionConfiguration, error) {
 	req, out := c.UpdateFunctionConfigurationRequest(input)
@@ -3497,10 +3563,13 @@ type CreateFunctionInput struct {
 	// v6.10, set the value to "nodejs6.10". To use the Node.js runtime v4.3, set
 	// the value to "nodejs4.3".
 	//
-	// You can no longer create functions using the v0.10.42 runtime version as
-	// of November, 2016. Existing functions will be supported until early 2017,
-	// but we recommend you migrate them to either nodejs6.10 or nodejs4.3 runtime
-	// version as soon as possible.
+	// Node v0.10.42 is currently marked as deprecated. You must migrate existing
+	// functions to the newer Node.js runtime versions available on AWS Lambda (nodejs4.3
+	// or nodejs6.10) as soon as possible. You can request a one-time extension
+	// until June 30, 2017 by going to the Lambda console and following the instructions
+	// provided. Failure to do so will result in an invalid parmaeter error being
+	// returned. Note that you will have to follow this procedure for each region
+	// that contains functions written in the Node v0.10.42 runtime.
 	//
 	// Runtime is a required field
 	Runtime *string `type:"string" required:"true" enum:"Runtime"`
@@ -4224,8 +4293,14 @@ type FunctionConfiguration struct {
 	// service key.
 	KMSKeyArn *string `type:"string"`
 
-	// The time stamp of the last time you updated the function.
+	// The time stamp of the last time you updated the function. The time stamp
+	// is conveyed as a string complying with ISO-8601 in this way YYYY-MM-DDThh:mm:ssTZD
+	// (e.g., 1997-07-16T19:20:30+01:00). For more information, see Date and Time
+	// Formats (https://www.w3.org/TR/NOTE-datetime).
 	LastModified *string `type:"string"`
+
+	// Returns the ARN (Amazon Resource Name) of the master function.
+	MasterArn *string `type:"string"`
 
 	// The memory size, in MB, you configured for the function. Must be a multiple
 	// of 64 MB.
@@ -4320,6 +4395,12 @@ func (s *FunctionConfiguration) SetKMSKeyArn(v string) *FunctionConfiguration {
 // SetLastModified sets the LastModified field's value.
 func (s *FunctionConfiguration) SetLastModified(v string) *FunctionConfiguration {
 	s.LastModified = &v
+	return s
+}
+
+// SetMasterArn sets the MasterArn field's value.
+func (s *FunctionConfiguration) SetMasterArn(v string) *FunctionConfiguration {
+	s.MasterArn = &v
 	return s
 }
 
@@ -5001,7 +5082,7 @@ type InvokeOutput struct {
 	Payload []byte `type:"blob"`
 
 	// The HTTP status code will be in the 200 range for successful request. For
-	// the RequestResonse invocation type this status code will be 200. For the
+	// the RequestResponse invocation type this status code will be 200. For the
 	// Event invocation type this status code will be 202. For the DryRun invocation
 	// type the status code will be 204.
 	StatusCode *int64 `location:"statusCode" type:"integer"`
@@ -5268,9 +5349,30 @@ func (s *ListEventSourceMappingsOutput) SetNextMarker(v string) *ListEventSource
 type ListFunctionsInput struct {
 	_ struct{} `type:"structure"`
 
+	// Optional string. If not specified, only the unqualified functions ARNs (Amazon
+	// Resource Names) will be returned.
+	//
+	// Valid value:
+	//
+	// ALL _ Will return all versions, including $LATEST which will have fully qualified
+	// ARNs (Amazon Resource Names).
+	FunctionVersion *string `location:"querystring" locationName:"FunctionVersion" type:"string" enum:"FunctionVersion"`
+
 	// Optional string. An opaque pagination token returned from a previous ListFunctions
 	// operation. If present, indicates where to continue the listing.
 	Marker *string `location:"querystring" locationName:"Marker" type:"string"`
+
+	// Optional string. If not specified, will return only regular function versions
+	// (i.e., non-replicated versions).
+	//
+	// Valid values are:
+	//
+	// The region from which the functions are replicated. For example, if you specify
+	// us-east-1, only functions replicated from that region will be returned.
+	//
+	// ALL _ Will return all functions from any region. If specified, you also must
+	// specify a valid FunctionVersion parameter.
+	MasterRegion *string `location:"querystring" locationName:"MasterRegion" type:"string"`
 
 	// Optional integer. Specifies the maximum number of AWS Lambda functions to
 	// return in response. This parameter value must be greater than 0.
@@ -5300,9 +5402,21 @@ func (s *ListFunctionsInput) Validate() error {
 	return nil
 }
 
+// SetFunctionVersion sets the FunctionVersion field's value.
+func (s *ListFunctionsInput) SetFunctionVersion(v string) *ListFunctionsInput {
+	s.FunctionVersion = &v
+	return s
+}
+
 // SetMarker sets the Marker field's value.
 func (s *ListFunctionsInput) SetMarker(v string) *ListFunctionsInput {
 	s.Marker = &v
+	return s
+}
+
+// SetMasterRegion sets the MasterRegion field's value.
+func (s *ListFunctionsInput) SetMasterRegion(v string) *ListFunctionsInput {
+	s.MasterRegion = &v
 	return s
 }
 
@@ -6198,10 +6312,15 @@ type UpdateFunctionConfigurationInput struct {
 	// Python runtime v2.7, set the value to "python2.7". To use the Node.js runtime
 	// v6.10, set the value to "nodejs6.10". To use the Node.js runtime v4.3, set
 	// the value to "nodejs4.3". To use the Python runtime v3.6, set the value to
-	// "python3.6". To use the Python runtime v2.7, set the value to "python2.7".
+	// "python3.6".
 	//
-	// You can no longer downgrade to the v0.10.42 runtime version. This version
-	// will no longer be supported as of early 2017.
+	// Node v0.10.42 is currently marked as deprecated. You must migrate existing
+	// functions to the newer Node.js runtime versions available on AWS Lambda (nodejs4.3
+	// or nodejs6.10) as soon as possible. You can request a one-time extension
+	// until June 30, 2017 by going to the Lambda console and following the instructions
+	// provided. Failure to do so will result in an invalid parameter error being
+	// returned. Note that you will have to follow this procedure for each region
+	// that contains functions written in the Node v0.10.42 runtime.
 	Runtime *string `type:"string" enum:"Runtime"`
 
 	// The function execution time at which AWS Lambda should terminate the function.
@@ -6410,6 +6529,11 @@ const (
 
 	// EventSourcePositionAtTimestamp is a EventSourcePosition enum value
 	EventSourcePositionAtTimestamp = "AT_TIMESTAMP"
+)
+
+const (
+	// FunctionVersionAll is a FunctionVersion enum value
+	FunctionVersionAll = "ALL"
 )
 
 const (

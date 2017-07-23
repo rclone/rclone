@@ -15,8 +15,12 @@
 package storage
 
 import (
+	"fmt"
+	"hash/crc32"
 	"io"
 )
+
+var crc32cTable = crc32.MakeTable(crc32.Castagnoli)
 
 // Reader reads a Cloud Storage object.
 // It implements io.Reader.
@@ -24,6 +28,9 @@ type Reader struct {
 	body         io.ReadCloser
 	remain, size int64
 	contentType  string
+	checkCRC     bool   // should we check the CRC?
+	wantCRC      uint32 // the CRC32c value the server sent in the header
+	gotCRC       uint32 // running crc
 }
 
 // Close closes the Reader. It must be called when done reading.
@@ -35,6 +42,16 @@ func (r *Reader) Read(p []byte) (int, error) {
 	n, err := r.body.Read(p)
 	if r.remain != -1 {
 		r.remain -= int64(n)
+	}
+	if r.checkCRC {
+		r.gotCRC = crc32.Update(r.gotCRC, crc32cTable, p[:n])
+		// Check CRC here. It would be natural to check it in Close, but
+		// everybody defers Close on the assumption that it doesn't return
+		// anything worth looking at.
+		if r.remain == 0 && r.gotCRC != r.wantCRC {
+			return n, fmt.Errorf("storage: bad CRC on read: got %d, want %d",
+				r.gotCRC, r.wantCRC)
+		}
 	}
 	return n, err
 }

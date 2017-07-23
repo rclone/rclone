@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"tbys6C40o18GZwyMen5GMkdK-3s/vYgKdX3g1VPmww06h2PorJos8j4\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/euj94Rd_zZNye-Ex23VYZId4hug\"",
  "discoveryVersion": "v1",
  "id": "calendar:v3",
  "name": "calendar",
  "version": "v3",
- "revision": "20170319",
+ "revision": "20170528",
  "title": "Calendar API",
  "description": "Manipulates events and other calendar data.",
  "ownerDomain": "google.com",
@@ -2232,7 +2232,7 @@
       },
       "maxResults": {
        "type": "integer",
-       "description": "Maximum number of events returned on one result page. By default the value is 250 events. The page size can never be larger than 2500 events. Optional.",
+       "description": "Maximum number of events returned on one result page. The number of events in the resulting page may be less than this value, or none at all, even if there are more events matching the query. Incomplete pages can be detected by a non-empty nextPageToken field in the response. By default the value is 250 events. The page size can never be larger than 2500 events. Optional.",
        "default": "250",
        "format": "int32",
        "minimum": "1",
@@ -2547,7 +2547,7 @@
       },
       "maxResults": {
        "type": "integer",
-       "description": "Maximum number of events returned on one result page. By default the value is 250 events. The page size can never be larger than 2500 events. Optional.",
+       "description": "Maximum number of events returned on one result page. The number of events in the resulting page may be less than this value, or none at all, even if there are more events matching the query. Incomplete pages can be detected by a non-empty nextPageToken field in the response. By default the value is 250 events. The page size can never be larger than 2500 events. Optional.",
        "default": "250",
        "format": "int32",
        "minimum": "1",

@@ -310,7 +310,7 @@ func TestFunctions(t *testing.T) {
 		}
 		slurp, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			t.Errorf("unable to read response body %q: %v", obj.name, err)
+			t.Fatalf("unable to read response body %q: %v", obj.name, err)
 		}
 		resp.Body.Close()
 		if got, want := string(slurp), obj.contents; got != want {
@@ -335,7 +335,7 @@ func TestFunctions(t *testing.T) {
 	t.Logf("Rewriting %q to %q", name, copyObj)
 	copy, err := s.Objects.Rewrite(bucket, name, bucket, copyObj, nil).Do()
 	if err != nil {
-		t.Errorf("unable to rewrite object %q to %q: %v", name, copyObj, err)
+		t.Fatalf("unable to rewrite object %q to %q: %v", name, copyObj, err)
 	}
 	if copy.Resource.Name != copyObj {
 		t.Errorf("copy object's name = %q; want %q", copy.Resource.Name, copyObj)
@@ -351,7 +351,7 @@ func TestFunctions(t *testing.T) {
 	t.Logf("Updating attributes of %q", name)
 	obj, err := s.Objects.Get(bucket, name).Projection("full").Fields("acl").Do()
 	if err != nil {
-		t.Errorf("Objects.Get(%q, %q): %v", bucket, name, err)
+		t.Fatalf("Objects.Get(%q, %q): %v", bucket, name, err)
 	}
 	if err := verifyAcls(obj, "", ""); err != nil {
 		t.Errorf("before update ACLs: %v", err)
@@ -362,7 +362,7 @@ func TestFunctions(t *testing.T) {
 	}
 	updated, err := s.Objects.Patch(bucket, name, obj).Projection("full").Fields("contentType", "acl").Do()
 	if err != nil {
-		t.Errorf("Objects.Patch(%q, %q, %#v) failed with %v", bucket, name, obj, err)
+		t.Fatalf("Objects.Patch(%q, %q, %#v) failed with %v", bucket, name, obj, err)
 	}
 	if want := "text/html"; updated.ContentType != want {
 		t.Errorf("updated.ContentType == %q; want %q", updated.ContentType, want)
@@ -412,7 +412,7 @@ func TestFunctions(t *testing.T) {
 		}
 		md5, err := base64.StdEncoding.DecodeString(obj.Md5Hash)
 		if err != nil {
-			t.Errorf("object %q base64 decode of MD5 %q: %v", c.name, obj.Md5Hash, err)
+			t.Fatalf("object %q base64 decode of MD5 %q: %v", c.name, obj.Md5Hash, err)
 		}
 		if got, want := fmt.Sprintf("%x", md5), c.md5; got != want {
 			t.Errorf("object %q MD5 = %q; want %q", c.name, got, want)

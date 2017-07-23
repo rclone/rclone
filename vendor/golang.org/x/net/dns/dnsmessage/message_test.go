@@ -5,12 +5,19 @@
 package dnsmessage
 
 import (
+	"bytes"
 	"fmt"
-	"net"
 	"reflect"
-	"strings"
 	"testing"
 )
+
+func mustNewName(name string) Name {
+	n, err := NewName(name)
+	if err != nil {
+		panic(err)
+	}
+	return n
+}
 
 func (m *Message) String() string {
 	s := fmt.Sprintf("Message: %#v\n", &m.Header)
@@ -41,9 +48,17 @@ func (m *Message) String() string {
 	return s
 }
 
+func TestNameString(t *testing.T) {
+	want := "foo"
+	name := mustNewName(want)
+	if got := fmt.Sprint(name); got != want {
+		t.Errorf("got fmt.Sprint(%#v) = %s, want = %s", name, got, want)
+	}
+}
+
 func TestQuestionPackUnpack(t *testing.T) {
 	want := Question{
-		Name:  ".",
+		Name:  mustNewName("."),
 		Type:  TypeA,
 		Class: ClassINET,
 	}
@@ -68,16 +83,42 @@ func TestQuestionPackUnpack(t *testing.T) {
 	}
 }
 
+func TestName(t *testing.T) {
+	tests := []string{
+		"",
+		".",
+		"google..com",
+		"google.com",
+		"google..com.",
+		"google.com.",
+		".google.com.",
+		"www..google.com.",
+		"www.google.com.",
+	}
+
+	for _, test := range tests {
+		n, err := NewName(test)
+		if err != nil {
+			t.Errorf("Creating name for %q: %v", test, err)
+			continue
+		}
+		if ns := n.String(); ns != test {
+			t.Errorf("Got %#v.String() = %q, want = %q", n, ns, test)
+			continue
+		}
+	}
+}
+
 func TestNamePackUnpack(t *testing.T) {
 	tests := []struct {
 		in   string
 		want string
 		err  error
 	}{
-		{"", ".", nil},
+		{"", "", errNonCanonicalName},
 		{".", ".", nil},
-		{"google..com", "", errZeroSegLen},
-		{"google.com", "google.com.", nil},
+		{"google..com", "", errNonCanonicalName},
+		{"google.com", "", errNonCanonicalName},
 		{"google..com.", "", errZeroSegLen},
 		{"google.com.", "google.com.", nil},
 		{".google.com.", "", errZeroSegLen},
@@ -86,29 +127,91 @@ func TestNamePackUnpack(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		buf, err := packName(make([]byte, 0, 30), test.in, map[string]int{})
+		in := mustNewName(test.in)
+		want := mustNewName(test.want)
+		buf, err := in.pack(make([]byte, 0, 30), map[string]int{})
 		if err != test.err {
-			t.Errorf("Packing of %s: got err = %v, want err = %v", test.in, err, test.err)
+			t.Errorf("Packing of %q: got err = %v, want err = %v", test.in, err, test.err)
 			continue
 		}
 		if test.err != nil {
 			continue
 		}
-		got, n, err := unpackName(buf, 0)
+		var got Name
+		n, err := got.unpack(buf, 0)
 		if err != nil {
-			t.Errorf("Unpacking for %s failed: %v", test.in, err)
+			t.Errorf("Unpacking for %q failed: %v", test.in, err)
 			continue
 		}
 		if n != len(buf) {
 			t.Errorf(
-				"Unpacked different amount than packed for %s: got n = %d, want = %d",
+				"Unpacked different amount than packed for %q: got n = %d, want = %d",
 				test.in,
 				n,
 				len(buf),
 			)
 		}
-		if got != test.want {
-			t.Errorf("Unpacking packing of %s: got = %s, want = %s", test.in, got, test.want)
+		if got != want {
+			t.Errorf("Unpacking packing of %q: got = %#v, want = %#v", test.in, got, want)
+		}
+	}
+}
+
+func checkErrorPrefix(err error, prefix string) bool {
+	e, ok := err.(*nestedError)
+	return ok && e.s == prefix
+}
+
+func TestHeaderUnpackError(t *testing.T) {
+	wants := []string{
+		"id",
+		"bits",
+		"questions",
+		"answers",
+		"authorities",
+		"additionals",
+	}
+	var buf []byte
+	var h header
+	for _, want := range wants {
+		n, err := h.unpack(buf, 0)
+		if n != 0 || !checkErrorPrefix(err, want) {
+			t.Errorf("got h.unpack([%d]byte, 0) = %d, %v, want = 0, %s", len(buf), n, err, want)
+		}
+		buf = append(buf, 0, 0)
+	}
+}
+
+func TestParserStart(t *testing.T) {
+	const want = "unpacking header"
+	var p Parser
+	for i := 0; i <= 1; i++ {
+		_, err := p.Start([]byte{})
+		if !checkErrorPrefix(err, want) {
+			t.Errorf("got p.Start(nil) = _, %v, want = _, %s", err, want)
+		}
+	}
+}
+
+func TestResourceNotStarted(t *testing.T) {
+	tests := []struct {
+		name string
+		fn   func(*Parser) error
+	}{
+		{"CNAMEResource", func(p *Parser) error { _, err := p.CNAMEResource(); return err }},
+		{"MXResource", func(p *Parser) error { _, err := p.MXResource(); return err }},
+		{"NSResource", func(p *Parser) error { _, err := p.NSResource(); return err }},
+		{"PTRResource", func(p *Parser) error { _, err := p.PTRResource(); return err }},
+		{"SOAResource", func(p *Parser) error { _, err := p.SOAResource(); return err }},
+		{"TXTResource", func(p *Parser) error { _, err := p.TXTResource(); return err }},
+		{"SRVResource", func(p *Parser) error { _, err := p.SRVResource(); return err }},
+		{"AResource", func(p *Parser) error { _, err := p.AResource(); return err }},
+		{"AAAAResource", func(p *Parser) error { _, err := p.AAAAResource(); return err }},
+	}
+
+	for _, test := range tests {
+		if err := test.fn(&Parser{}); err != ErrNotStarted {
+			t.Errorf("got _, %v = p.%s(), want = _, %v", err, test.name, ErrNotStarted)
 		}
 	}
 }
@@ -118,7 +221,7 @@ func TestDNSPackUnpack(t *testing.T) {
 		{
 			Questions: []Question{
 				{
-					Name:  ".",
+					Name:  mustNewName("."),
 					Type:  TypeAAAA,
 					Class: ClassINET,
 				},
@@ -170,6 +273,69 @@ func TestSkipAll(t *testing.T) {
 			if err := test.f(); err != nil {
 				t.Errorf("Call #%d to %s(): %v", i, test.name, err)
 			}
+		}
+	}
+}
+
+func TestSkipEach(t *testing.T) {
+	msg := smallTestMsg()
+
+	buf, err := msg.Pack()
+	if err != nil {
+		t.Fatal("Packing test message:", err)
+	}
+	var p Parser
+	if _, err := p.Start(buf); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name string
+		f    func() error
+	}{
+		{"SkipQuestion", p.SkipQuestion},
+		{"SkipAnswer", p.SkipAnswer},
+		{"SkipAuthority", p.SkipAuthority},
+		{"SkipAdditional", p.SkipAdditional},
+	}
+	for _, test := range tests {
+		if err := test.f(); err != nil {
+			t.Errorf("First call: got %s() = %v, want = %v", test.name, err, nil)
+		}
+		if err := test.f(); err != ErrSectionDone {
+			t.Errorf("Second call: got %s() = %v, want = %v", test.name, err, ErrSectionDone)
+		}
+	}
+}
+
+func TestSkipAfterRead(t *testing.T) {
+	msg := smallTestMsg()
+
+	buf, err := msg.Pack()
+	if err != nil {
+		t.Fatal("Packing test message:", err)
+	}
+	var p Parser
+	if _, err := p.Start(buf); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name string
+		skip func() error
+		read func() error
+	}{
+		{"Question", p.SkipQuestion, func() error { _, err := p.Question(); return err }},
+		{"Answer", p.SkipAnswer, func() error { _, err := p.Answer(); return err }},
+		{"Authority", p.SkipAuthority, func() error { _, err := p.Authority(); return err }},
+		{"Additional", p.SkipAdditional, func() error { _, err := p.Additional(); return err }},
+	}
+	for _, test := range tests {
+		if err := test.read(); err != nil {
+			t.Errorf("Got %s() = _, %v, want = _, %v", test.name, err, nil)
+		}
+		if err := test.skip(); err != ErrSectionDone {
+			t.Errorf("Got Skip%s() = %v, want = %v", test.name, err, ErrSectionDone)
 		}
 	}
 }
@@ -238,206 +404,581 @@ func TestTooManyRecords(t *testing.T) {
 }
 
 func TestVeryLongTxt(t *testing.T) {
-	want := &TXTResource{
-		ResourceHeader: ResourceHeader{
-			Name:  "foo.bar.example.com.",
+	want := Resource{
+		ResourceHeader{
+			Name:  mustNewName("foo.bar.example.com."),
 			Type:  TypeTXT,
 			Class: ClassINET,
 		},
-		Txt: loremIpsum,
+		&TXTResource{loremIpsum},
 	}
-	buf, err := packResource(make([]byte, 0, 8000), want, map[string]int{})
+	buf, err := want.pack(make([]byte, 0, 8000), map[string]int{})
 	if err != nil {
 		t.Fatal("Packing failed:", err)
 	}
-	var hdr ResourceHeader
-	off, err := hdr.unpack(buf, 0)
+	var got Resource
+	off, err := got.Header.unpack(buf, 0)
 	if err != nil {
 		t.Fatal("Unpacking ResourceHeader failed:", err)
 	}
-	got, n, err := unpackResource(buf, off, hdr)
+	body, n, err := unpackResourceBody(buf, off, got.Header)
 	if err != nil {
 		t.Fatal("Unpacking failed:", err)
 	}
+	got.Body = body
 	if n != len(buf) {
 		t.Errorf("Unpacked different amount than packed: got n = %d, want = %d", n, len(buf))
 	}
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("Got = %+v, want = %+v", got, want)
+		t.Errorf("Got = %#v, want = %#v", got, want)
 	}
 }
 
-func ExampleHeaderSearch() {
+func TestStartError(t *testing.T) {
+	tests := []struct {
+		name string
+		fn   func(*Builder) error
+	}{
+		{"Questions", func(b *Builder) error { return b.StartQuestions() }},
+		{"Answers", func(b *Builder) error { return b.StartAnswers() }},
+		{"Authorities", func(b *Builder) error { return b.StartAuthorities() }},
+		{"Additionals", func(b *Builder) error { return b.StartAdditionals() }},
+	}
+
+	envs := []struct {
+		name string
+		fn   func() *Builder
+		want error
+	}{
+		{"sectionNotStarted", func() *Builder { return &Builder{section: sectionNotStarted} }, ErrNotStarted},
+		{"sectionDone", func() *Builder { return &Builder{section: sectionDone} }, ErrSectionDone},
+	}
+
+	for _, env := range envs {
+		for _, test := range tests {
+			if got := test.fn(env.fn()); got != env.want {
+				t.Errorf("got Builder{%s}.Start%s = %v, want = %v", env.name, test.name, got, env.want)
+			}
+		}
+	}
+}
+
+func TestBuilderResourceError(t *testing.T) {
+	tests := []struct {
+		name string
+		fn   func(*Builder) error
+	}{
+		{"CNAMEResource", func(b *Builder) error { return b.CNAMEResource(ResourceHeader{}, CNAMEResource{}) }},
+		{"MXResource", func(b *Builder) error { return b.MXResource(ResourceHeader{}, MXResource{}) }},
+		{"NSResource", func(b *Builder) error { return b.NSResource(ResourceHeader{}, NSResource{}) }},
+		{"PTRResource", func(b *Builder) error { return b.PTRResource(ResourceHeader{}, PTRResource{}) }},
+		{"SOAResource", func(b *Builder) error { return b.SOAResource(ResourceHeader{}, SOAResource{}) }},
+		{"TXTResource", func(b *Builder) error { return b.TXTResource(ResourceHeader{}, TXTResource{}) }},
+		{"SRVResource", func(b *Builder) error { return b.SRVResource(ResourceHeader{}, SRVResource{}) }},
+		{"AResource", func(b *Builder) error { return b.AResource(ResourceHeader{}, AResource{}) }},
+		{"AAAAResource", func(b *Builder) error { return b.AAAAResource(ResourceHeader{}, AAAAResource{}) }},
+	}
+
+	envs := []struct {
+		name string
+		fn   func() *Builder
+		want error
+	}{
+		{"sectionNotStarted", func() *Builder { return &Builder{section: sectionNotStarted} }, ErrNotStarted},
+		{"sectionHeader", func() *Builder { return &Builder{section: sectionHeader} }, ErrNotStarted},
+		{"sectionQuestions", func() *Builder { return &Builder{section: sectionQuestions} }, ErrNotStarted},
+		{"sectionDone", func() *Builder { return &Builder{section: sectionDone} }, ErrSectionDone},
+	}
+
+	for _, env := range envs {
+		for _, test := range tests {
+			if got := test.fn(env.fn()); got != env.want {
+				t.Errorf("got Builder{%s}.%s = %v, want = %v", env.name, test.name, got, env.want)
+			}
+		}
+	}
+}
+
+func TestFinishError(t *testing.T) {
+	var b Builder
+	want := ErrNotStarted
+	if _, got := b.Finish(); got != want {
+		t.Errorf("got Builder{}.Finish() = %v, want = %v", got, want)
+	}
+}
+
+func TestBuilder(t *testing.T) {
+	msg := largeTestMsg()
+	want, err := msg.Pack()
+	if err != nil {
+		t.Fatal("Packing without builder:", err)
+	}
+
+	var b Builder
+	b.Start(nil, msg.Header)
+
+	if err := b.StartQuestions(); err != nil {
+		t.Fatal("b.StartQuestions():", err)
+	}
+	for _, q := range msg.Questions {
+		if err := b.Question(q); err != nil {
+			t.Fatalf("b.Question(%#v): %v", q, err)
+		}
+	}
+
+	if err := b.StartAnswers(); err != nil {
+		t.Fatal("b.StartAnswers():", err)
+	}
+	for _, a := range msg.Answers {
+		switch a.Header.Type {
+		case TypeA:
+			if err := b.AResource(a.Header, *a.Body.(*AResource)); err != nil {
+				t.Fatalf("b.AResource(%#v): %v", a, err)
+			}
+		case TypeNS:
+			if err := b.NSResource(a.Header, *a.Body.(*NSResource)); err != nil {
+				t.Fatalf("b.NSResource(%#v): %v", a, err)
+			}
+		case TypeCNAME:
+			if err := b.CNAMEResource(a.Header, *a.Body.(*CNAMEResource)); err != nil {
+				t.Fatalf("b.CNAMEResource(%#v): %v", a, err)
+			}
+		case TypeSOA:
+			if err := b.SOAResource(a.Header, *a.Body.(*SOAResource)); err != nil {
+				t.Fatalf("b.SOAResource(%#v): %v", a, err)
+			}
+		case TypePTR:
+			if err := b.PTRResource(a.Header, *a.Body.(*PTRResource)); err != nil {
+				t.Fatalf("b.PTRResource(%#v): %v", a, err)
+			}
+		case TypeMX:
+			if err := b.MXResource(a.Header, *a.Body.(*MXResource)); err != nil {
+				t.Fatalf("b.MXResource(%#v): %v", a, err)
+			}
+		case TypeTXT:
+			if err := b.TXTResource(a.Header, *a.Body.(*TXTResource)); err != nil {
+				t.Fatalf("b.TXTResource(%#v): %v", a, err)
+			}
+		case TypeAAAA:
+			if err := b.AAAAResource(a.Header, *a.Body.(*AAAAResource)); err != nil {
+				t.Fatalf("b.AAAAResource(%#v): %v", a, err)
+			}
+		case TypeSRV:
+			if err := b.SRVResource(a.Header, *a.Body.(*SRVResource)); err != nil {
+				t.Fatalf("b.SRVResource(%#v): %v", a, err)
+			}
+		}
+	}
+
+	if err := b.StartAuthorities(); err != nil {
+		t.Fatal("b.StartAuthorities():", err)
+	}
+	for _, a := range msg.Authorities {
+		if err := b.NSResource(a.Header, *a.Body.(*NSResource)); err != nil {
+			t.Fatalf("b.NSResource(%#v): %v", a, err)
+		}
+	}
+
+	if err := b.StartAdditionals(); err != nil {
+		t.Fatal("b.StartAdditionals():", err)
+	}
+	for _, a := range msg.Additionals {
+		if err := b.TXTResource(a.Header, *a.Body.(*TXTResource)); err != nil {
+			t.Fatalf("b.TXTResource(%#v): %v", a, err)
+		}
+	}
+
+	got, err := b.Finish()
+	if err != nil {
+		t.Fatal("b.Finish():", err)
+	}
+	if !bytes.Equal(got, want) {
+		t.Fatalf("Got from Builder: %#v\nwant = %#v", got, want)
+	}
+}
+
+func TestResourcePack(t *testing.T) {
+	for _, tt := range []struct {
+		m   Message
+		err error
+	}{
+		{
+			Message{
+				Questions: []Question{
+					{
+						Name:  mustNewName("."),
+						Type:  TypeAAAA,
+						Class: ClassINET,
+					},
+				},
+				Answers: []Resource{{ResourceHeader{}, nil}},
+			},
+			&nestedError{"packing Answer", errNilResouceBody},
+		},
+		{
+			Message{
+				Questions: []Question{
+					{
+						Name:  mustNewName("."),
+						Type:  TypeAAAA,
+						Class: ClassINET,
+					},
+				},
+				Authorities: []Resource{{ResourceHeader{}, (*NSResource)(nil)}},
+			},
+			&nestedError{"packing Authority",
+				&nestedError{"ResourceHeader",
+					&nestedError{"Name", errNonCanonicalName},
+				},
+			},
+		},
+		{
+			Message{
+				Questions: []Question{
+					{
+						Name:  mustNewName("."),
+						Type:  TypeA,
+						Class: ClassINET,
+					},
+				},
+				Additionals: []Resource{{ResourceHeader{}, nil}},
+			},
+			&nestedError{"packing Additional", errNilResouceBody},
+		},
+	} {
+		_, err := tt.m.Pack()
+		if !reflect.DeepEqual(err, tt.err) {
+			t.Errorf("got %v for %v; want %v", err, tt.m, tt.err)
+		}
+	}
+}
+
+func BenchmarkParsing(b *testing.B) {
+	b.ReportAllocs()
+
+	name := mustNewName("foo.bar.example.com.")
 	msg := Message{
 		Header: Header{Response: true, Authoritative: true},
 		Questions: []Question{
 			{
-				Name:  "foo.bar.example.com.",
-				Type:  TypeA,
-				Class: ClassINET,
-			},
-			{
-				Name:  "bar.example.com.",
+				Name:  name,
 				Type:  TypeA,
 				Class: ClassINET,
 			},
 		},
 		Answers: []Resource{
-			&AResource{
-				ResourceHeader: ResourceHeader{
-					Name:  "foo.bar.example.com.",
-					Type:  TypeA,
+			{
+				ResourceHeader{
+					Name:  name,
 					Class: ClassINET,
 				},
-				A: [4]byte{127, 0, 0, 1},
+				&AResource{[4]byte{}},
 			},
-			&AResource{
-				ResourceHeader: ResourceHeader{
-					Name:  "bar.example.com.",
-					Type:  TypeA,
+			{
+				ResourceHeader{
+					Name:  name,
 					Class: ClassINET,
 				},
-				A: [4]byte{127, 0, 0, 2},
+				&AAAAResource{[16]byte{}},
+			},
+			{
+				ResourceHeader{
+					Name:  name,
+					Class: ClassINET,
+				},
+				&CNAMEResource{name},
+			},
+			{
+				ResourceHeader{
+					Name:  name,
+					Class: ClassINET,
+				},
+				&NSResource{name},
 			},
 		},
 	}
 
 	buf, err := msg.Pack()
 	if err != nil {
-		panic(err)
+		b.Fatal("msg.Pack():", err)
 	}
 
-	wantName := "bar.example.com."
-
-	var p Parser
-	if _, err := p.Start(buf); err != nil {
-		panic(err)
-	}
-
-	for {
-		q, err := p.Question()
-		if err == ErrSectionDone {
-			break
-		}
-		if err != nil {
-			panic(err)
+	for i := 0; i < b.N; i++ {
+		var p Parser
+		if _, err := p.Start(buf); err != nil {
+			b.Fatal("p.Start(buf):", err)
 		}
 
-		if q.Name != wantName {
-			continue
+		for {
+			_, err := p.Question()
+			if err == ErrSectionDone {
+				break
+			}
+			if err != nil {
+				b.Fatal("p.Question():", err)
+			}
 		}
 
-		fmt.Println("Found question for name", wantName)
-		if err := p.SkipAllQuestions(); err != nil {
-			panic(err)
-		}
-		break
-	}
-
-	var gotIPs []net.IP
-	for {
-		h, err := p.AnswerHeader()
-		if err == ErrSectionDone {
-			break
-		}
-		if err != nil {
-			panic(err)
-		}
-
-		if (h.Type != TypeA && h.Type != TypeAAAA) || h.Class != ClassINET {
-			continue
-		}
-
-		if !strings.EqualFold(h.Name, wantName) {
-			if err := p.SkipAnswer(); err != nil {
+		for {
+			h, err := p.AnswerHeader()
+			if err == ErrSectionDone {
+				break
+			}
+			if err != nil {
 				panic(err)
 			}
-			continue
-		}
-		a, err := p.Answer()
-		if err != nil {
-			panic(err)
-		}
 
-		switch r := a.(type) {
-		default:
-			panic(fmt.Sprintf("unknown type: %T", r))
-		case *AResource:
-			gotIPs = append(gotIPs, r.A[:])
-		case *AAAAResource:
-			gotIPs = append(gotIPs, r.AAAA[:])
+			switch h.Type {
+			case TypeA:
+				if _, err := p.AResource(); err != nil {
+					b.Fatal("p.AResource():", err)
+				}
+			case TypeAAAA:
+				if _, err := p.AAAAResource(); err != nil {
+					b.Fatal("p.AAAAResource():", err)
+				}
+			case TypeCNAME:
+				if _, err := p.CNAMEResource(); err != nil {
+					b.Fatal("p.CNAMEResource():", err)
+				}
+			case TypeNS:
+				if _, err := p.NSResource(); err != nil {
+					b.Fatal("p.NSResource():", err)
+				}
+			default:
+				b.Fatalf("unknown type: %T", h)
+			}
 		}
 	}
-
-	fmt.Printf("Found A/AAAA records for name %s: %v\n", wantName, gotIPs)
-
-	// Output:
-	// Found question for name bar.example.com.
-	// Found A/AAAA records for name bar.example.com.: [127.0.0.2]
 }
 
-func largeTestMsg() Message {
+func BenchmarkBuilding(b *testing.B) {
+	b.ReportAllocs()
+
+	name := mustNewName("foo.bar.example.com.")
+	buf := make([]byte, 0, packStartingCap)
+
+	for i := 0; i < b.N; i++ {
+		var bld Builder
+		bld.StartWithoutCompression(buf, Header{Response: true, Authoritative: true})
+
+		if err := bld.StartQuestions(); err != nil {
+			b.Fatal("bld.StartQuestions():", err)
+		}
+		q := Question{
+			Name:  name,
+			Type:  TypeA,
+			Class: ClassINET,
+		}
+		if err := bld.Question(q); err != nil {
+			b.Fatalf("bld.Question(%+v): %v", q, err)
+		}
+
+		hdr := ResourceHeader{
+			Name:  name,
+			Class: ClassINET,
+		}
+		if err := bld.StartAnswers(); err != nil {
+			b.Fatal("bld.StartQuestions():", err)
+		}
+
+		ar := AResource{[4]byte{}}
+		if err := bld.AResource(hdr, ar); err != nil {
+			b.Fatalf("bld.AResource(%+v, %+v): %v", hdr, ar, err)
+		}
+
+		aaar := AAAAResource{[16]byte{}}
+		if err := bld.AAAAResource(hdr, aaar); err != nil {
+			b.Fatalf("bld.AAAAResource(%+v, %+v): %v", hdr, aaar, err)
+		}
+
+		cnr := CNAMEResource{name}
+		if err := bld.CNAMEResource(hdr, cnr); err != nil {
+			b.Fatalf("bld.CNAMEResource(%+v, %+v): %v", hdr, cnr, err)
+		}
+
+		nsr := NSResource{name}
+		if err := bld.NSResource(hdr, nsr); err != nil {
+			b.Fatalf("bld.NSResource(%+v, %+v): %v", hdr, nsr, err)
+		}
+
+		if _, err := bld.Finish(); err != nil {
+			b.Fatal("bld.Finish():", err)
+		}
+	}
+}
+
+func smallTestMsg() Message {
+	name := mustNewName("example.com.")
 	return Message{
 		Header: Header{Response: true, Authoritative: true},
 		Questions: []Question{
 			{
-				Name:  "foo.bar.example.com.",
+				Name:  name,
 				Type:  TypeA,
 				Class: ClassINET,
 			},
 		},
 		Answers: []Resource{
-			&AResource{
-				ResourceHeader: ResourceHeader{
-					Name:  "foo.bar.example.com.",
+			{
+				ResourceHeader{
+					Name:  name,
 					Type:  TypeA,
 					Class: ClassINET,
 				},
-				A: [4]byte{127, 0, 0, 1},
-			},
-			&AResource{
-				ResourceHeader: ResourceHeader{
-					Name:  "foo.bar.example.com.",
-					Type:  TypeA,
-					Class: ClassINET,
-				},
-				A: [4]byte{127, 0, 0, 2},
+				&AResource{[4]byte{127, 0, 0, 1}},
 			},
 		},
 		Authorities: []Resource{
-			&NSResource{
-				ResourceHeader: ResourceHeader{
-					Name:  "foo.bar.example.com.",
-					Type:  TypeNS,
+			{
+				ResourceHeader{
+					Name:  name,
+					Type:  TypeA,
 					Class: ClassINET,
 				},
-				NS: "ns1.example.com.",
-			},
-			&NSResource{
-				ResourceHeader: ResourceHeader{
-					Name:  "foo.bar.example.com.",
-					Type:  TypeNS,
-					Class: ClassINET,
-				},
-				NS: "ns2.example.com.",
+				&AResource{[4]byte{127, 0, 0, 1}},
 			},
 		},
 		Additionals: []Resource{
-			&TXTResource{
-				ResourceHeader: ResourceHeader{
-					Name:  "foo.bar.example.com.",
-					Type:  TypeTXT,
+			{
+				ResourceHeader{
+					Name:  name,
+					Type:  TypeA,
 					Class: ClassINET,
 				},
-				Txt: "So Long, and Thanks for All the Fish",
+				&AResource{[4]byte{127, 0, 0, 1}},
 			},
-			&TXTResource{
-				ResourceHeader: ResourceHeader{
-					Name:  "foo.bar.example.com.",
+		},
+	}
+}
+
+func largeTestMsg() Message {
+	name := mustNewName("foo.bar.example.com.")
+	return Message{
+		Header: Header{Response: true, Authoritative: true},
+		Questions: []Question{
+			{
+				Name:  name,
+				Type:  TypeA,
+				Class: ClassINET,
+			},
+		},
+		Answers: []Resource{
+			{
+				ResourceHeader{
+					Name:  name,
+					Type:  TypeA,
+					Class: ClassINET,
+				},
+				&AResource{[4]byte{127, 0, 0, 1}},
+			},
+			{
+				ResourceHeader{
+					Name:  name,
+					Type:  TypeA,
+					Class: ClassINET,
+				},
+				&AResource{[4]byte{127, 0, 0, 2}},
+			},
+			{
+				ResourceHeader{
+					Name:  name,
+					Type:  TypeAAAA,
+					Class: ClassINET,
+				},
+				&AAAAResource{[16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}},
+			},
+			{
+				ResourceHeader{
+					Name:  name,
+					Type:  TypeCNAME,
+					Class: ClassINET,
+				},
+				&CNAMEResource{mustNewName("alias.example.com.")},
+			},
+			{
+				ResourceHeader{
+					Name:  name,
+					Type:  TypeSOA,
+					Class: ClassINET,
+				},
+				&SOAResource{
+					NS:      mustNewName("ns1.example.com."),
+					MBox:    mustNewName("mb.example.com."),
+					Serial:  1,
+					Refresh: 2,
+					Retry:   3,
+					Expire:  4,
+					MinTTL:  5,
+				},
+			},
+			{
+				ResourceHeader{
+					Name:  name,
+					Type:  TypePTR,
+					Class: ClassINET,
+				},
+				&PTRResource{mustNewName("ptr.example.com.")},
+			},
+			{
+				ResourceHeader{
+					Name:  name,
+					Type:  TypeMX,
+					Class: ClassINET,
+				},
+				&MXResource{
+					7,
+					mustNewName("mx.example.com."),
+				},
+			},
+			{
+				ResourceHeader{
+					Name:  name,
+					Type:  TypeSRV,
+					Class: ClassINET,
+				},
+				&SRVResource{
+					8,
+					9,
+					11,
+					mustNewName("srv.example.com."),
+				},
+			},
+		},
+		Authorities: []Resource{
+			{
+				ResourceHeader{
+					Name:  name,
+					Type:  TypeNS,
+					Class: ClassINET,
+				},
+				&NSResource{mustNewName("ns1.example.com.")},
+			},
+			{
+				ResourceHeader{
+					Name:  name,
+					Type:  TypeNS,
+					Class: ClassINET,
+				},
+				&NSResource{mustNewName("ns2.example.com.")},
+			},
+		},
+		Additionals: []Resource{
+			{
+				ResourceHeader{
+					Name:  name,
 					Type:  TypeTXT,
 					Class: ClassINET,
 				},
-				Txt: "Hamster Huey and the Gooey Kablooie",
+				&TXTResource{"So Long, and Thanks for All the Fish"},
+			},
+			{
+				ResourceHeader{
+					Name:  name,
+					Type:  TypeTXT,
+					Class: ClassINET,
+				},
+				&TXTResource{"Hamster Huey and the Gooey Kablooie"},
 			},
 		},
 	}

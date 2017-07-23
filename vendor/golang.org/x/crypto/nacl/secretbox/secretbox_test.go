@@ -89,3 +89,66 @@ func TestAppend(t *testing.T) {
 		t.Fatalf("Seal didn't correctly append with sufficient capacity.")
 	}
 }
+
+func benchmarkSealSize(b *testing.B, size int) {
+	message := make([]byte, size)
+	out := make([]byte, size+Overhead)
+	var nonce [24]byte
+	var key [32]byte
+
+	b.SetBytes(int64(size))
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		out = Seal(out[:0], message, &nonce, &key)
+	}
+}
+
+func BenchmarkSeal8Bytes(b *testing.B) {
+	benchmarkSealSize(b, 8)
+}
+
+func BenchmarkSeal100Bytes(b *testing.B) {
+	benchmarkSealSize(b, 100)
+}
+
+func BenchmarkSeal1K(b *testing.B) {
+	benchmarkSealSize(b, 1024)
+}
+
+func BenchmarkSeal8K(b *testing.B) {
+	benchmarkSealSize(b, 8192)
+}
+
+func benchmarkOpenSize(b *testing.B, size int) {
+	msg := make([]byte, size)
+	result := make([]byte, size)
+	var nonce [24]byte
+	var key [32]byte
+	box := Seal(nil, msg, &nonce, &key)
+
+	b.SetBytes(int64(size))
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		if _, ok := Open(result[:0], box, &nonce, &key); !ok {
+			panic("Open failed")
+		}
+	}
+}
+
+func BenchmarkOpen8Bytes(b *testing.B) {
+	benchmarkOpenSize(b, 8)
+}
+
+func BenchmarkOpen100Bytes(b *testing.B) {
+	benchmarkOpenSize(b, 100)
+}
+
+func BenchmarkOpen1K(b *testing.B) {
+	benchmarkOpenSize(b, 1024)
+}
+
+func BenchmarkOpen8K(b *testing.B) {
+	benchmarkOpenSize(b, 8192)
+}

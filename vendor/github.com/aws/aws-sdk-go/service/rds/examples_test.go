@@ -3,2796 +3,3045 @@
 package rds_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleRDS_AddRoleToDBCluster() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.AddRoleToDBClusterInput{
-		DBClusterIdentifier: aws.String("String"), // Required
-		RoleArn:             aws.String("String"), // Required
-	}
-	resp, err := svc.AddRoleToDBCluster(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		panic(err)
+	}
+	return &t
+}
+
+// To add a source identifier to an event notification subscription
+//
+// This example add a source identifier to an event notification subscription.
+func ExampleRDS_AddSourceIdentifierToSubscription_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.AddSourceIdentifierToSubscriptionInput{
+		SourceIdentifier: aws.String("mymysqlinstance"),
+		SubscriptionName: aws.String("mymysqleventsubscription"),
+	}
+
+	result, err := svc.AddSourceIdentifierToSubscription(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeSubscriptionNotFoundFault:
+				fmt.Println(rds.ErrCodeSubscriptionNotFoundFault, aerr.Error())
+			case rds.ErrCodeSourceNotFoundFault:
+				fmt.Println(rds.ErrCodeSourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_AddSourceIdentifierToSubscription() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.AddSourceIdentifierToSubscriptionInput{
-		SourceIdentifier: aws.String("String"), // Required
-		SubscriptionName: aws.String("String"), // Required
-	}
-	resp, err := svc.AddSourceIdentifierToSubscription(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_AddTagsToResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.AddTagsToResourceInput{
-		ResourceName: aws.String("String"), // Required
-		Tags: []*rds.Tag{ // Required
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.AddTagsToResource(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_ApplyPendingMaintenanceAction() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.ApplyPendingMaintenanceActionInput{
-		ApplyAction:        aws.String("String"), // Required
-		OptInType:          aws.String("String"), // Required
-		ResourceIdentifier: aws.String("String"), // Required
-	}
-	resp, err := svc.ApplyPendingMaintenanceAction(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_AuthorizeDBSecurityGroupIngress() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.AuthorizeDBSecurityGroupIngressInput{
-		DBSecurityGroupName:     aws.String("String"), // Required
-		CIDRIP:                  aws.String("String"),
-		EC2SecurityGroupId:      aws.String("String"),
-		EC2SecurityGroupName:    aws.String("String"),
-		EC2SecurityGroupOwnerId: aws.String("String"),
-	}
-	resp, err := svc.AuthorizeDBSecurityGroupIngress(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_CopyDBClusterParameterGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.CopyDBClusterParameterGroupInput{
-		SourceDBClusterParameterGroupIdentifier:  aws.String("String"), // Required
-		TargetDBClusterParameterGroupDescription: aws.String("String"), // Required
-		TargetDBClusterParameterGroupIdentifier:  aws.String("String"), // Required
+// To add tags to a resource
+//
+// This example adds a tag to an option group.
+func ExampleRDS_AddTagsToResource_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.AddTagsToResourceInput{
+		ResourceName: aws.String("arn:aws:rds:us-east-1:992648334831:og:mymysqloptiongroup"),
 		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
+			{
+				Key:   aws.String("Staging"),
+				Value: aws.String("LocationDB"),
 			},
-			// More values...
 		},
 	}
-	resp, err := svc.CopyDBClusterParameterGroup(params)
 
+	result, err := svc.AddTagsToResource(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBInstanceNotFoundFault:
+				fmt.Println(rds.ErrCodeDBInstanceNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBSnapshotNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSnapshotNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBClusterNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_CopyDBClusterSnapshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.CopyDBClusterSnapshotInput{
-		SourceDBClusterSnapshotIdentifier: aws.String("String"), // Required
-		TargetDBClusterSnapshotIdentifier: aws.String("String"), // Required
-		CopyTags:          aws.Bool(true),
-		DestinationRegion: aws.String("String"),
-		KmsKeyId:          aws.String("String"),
-		PreSignedUrl:      aws.String("String"),
-		SourceRegion:      aws.String("String"),
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
+// To apply a pending maintenance action
+//
+// This example immediately applies a pending system update to a DB instance.
+func ExampleRDS_ApplyPendingMaintenanceAction_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.ApplyPendingMaintenanceActionInput{
+		ApplyAction:        aws.String("system-update"),
+		OptInType:          aws.String("immediate"),
+		ResourceIdentifier: aws.String("arn:aws:rds:us-east-1:992648334831:db:mymysqlinstance"),
 	}
-	resp, err := svc.CopyDBClusterSnapshot(params)
 
+	result, err := svc.ApplyPendingMaintenanceAction(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeResourceNotFoundFault:
+				fmt.Println(rds.ErrCodeResourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_CopyDBParameterGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.CopyDBParameterGroupInput{
-		SourceDBParameterGroupIdentifier:  aws.String("String"), // Required
-		TargetDBParameterGroupDescription: aws.String("String"), // Required
-		TargetDBParameterGroupIdentifier:  aws.String("String"), // Required
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
+// To authorize DB security group integress
+//
+// This example authorizes access to the specified security group by the specified CIDR
+// block.
+func ExampleRDS_AuthorizeDBSecurityGroupIngress_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.AuthorizeDBSecurityGroupIngressInput{
+		CIDRIP:              aws.String("203.0.113.5/32"),
+		DBSecurityGroupName: aws.String("mydbsecuritygroup"),
 	}
-	resp, err := svc.CopyDBParameterGroup(params)
 
+	result, err := svc.AuthorizeDBSecurityGroupIngress(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBSecurityGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSecurityGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidDBSecurityGroupStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBSecurityGroupStateFault, aerr.Error())
+			case rds.ErrCodeAuthorizationAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeAuthorizationAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeAuthorizationQuotaExceededFault:
+				fmt.Println(rds.ErrCodeAuthorizationQuotaExceededFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_CopyDBSnapshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.CopyDBSnapshotInput{
-		SourceDBSnapshotIdentifier: aws.String("String"), // Required
-		TargetDBSnapshotIdentifier: aws.String("String"), // Required
-		CopyTags:                   aws.Bool(true),
-		DestinationRegion:          aws.String("String"),
-		KmsKeyId:                   aws.String("String"),
-		PreSignedUrl:               aws.String("String"),
-		SourceRegion:               aws.String("String"),
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
+// To copy a DB cluster parameter group
+//
+// This example copies a DB cluster parameter group.
+func ExampleRDS_CopyDBClusterParameterGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.CopyDBClusterParameterGroupInput{
+		SourceDBClusterParameterGroupIdentifier:  aws.String("mydbclusterparametergroup"),
+		TargetDBClusterParameterGroupDescription: aws.String("My DB cluster parameter group copy"),
+		TargetDBClusterParameterGroupIdentifier:  aws.String("mydbclusterparametergroup-copy"),
 	}
-	resp, err := svc.CopyDBSnapshot(params)
 
+	result, err := svc.CopyDBClusterParameterGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBParameterGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBParameterGroupQuotaExceededFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeDBParameterGroupAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupAlreadyExistsFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_CopyOptionGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.CopyOptionGroupInput{
-		SourceOptionGroupIdentifier:  aws.String("String"), // Required
-		TargetOptionGroupDescription: aws.String("String"), // Required
-		TargetOptionGroupIdentifier:  aws.String("String"), // Required
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
+// To copy a DB cluster snapshot
+//
+// The following example copies an automated snapshot of a DB cluster to a new DB cluster
+// snapshot.
+func ExampleRDS_CopyDBClusterSnapshot_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.CopyDBClusterSnapshotInput{
+		SourceDBClusterSnapshotIdentifier: aws.String("rds:sample-cluster-2016-09-14-10-38"),
+		TargetDBClusterSnapshotIdentifier: aws.String("cluster-snapshot-copy-1"),
 	}
-	resp, err := svc.CopyOptionGroup(params)
 
+	result, err := svc.CopyDBClusterSnapshot(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBClusterSnapshotAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBClusterSnapshotAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeDBClusterSnapshotNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterSnapshotNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidDBClusterStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBClusterStateFault, aerr.Error())
+			case rds.ErrCodeInvalidDBClusterSnapshotStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBClusterSnapshotStateFault, aerr.Error())
+			case rds.ErrCodeSnapshotQuotaExceededFault:
+				fmt.Println(rds.ErrCodeSnapshotQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeKMSKeyNotAccessibleFault:
+				fmt.Println(rds.ErrCodeKMSKeyNotAccessibleFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_CreateDBCluster() {
-	sess := session.Must(session.NewSession())
+// To copy a DB parameter group
+//
+// This example copies a DB parameter group.
+func ExampleRDS_CopyDBParameterGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.CopyDBParameterGroupInput{
+		SourceDBParameterGroupIdentifier:  aws.String("mymysqlparametergroup"),
+		TargetDBParameterGroupDescription: aws.String("My MySQL parameter group copy"),
+		TargetDBParameterGroupIdentifier:  aws.String("mymysqlparametergroup-copy"),
+	}
 
-	svc := rds.New(sess)
+	result, err := svc.CopyDBParameterGroup(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBParameterGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBParameterGroupAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeDBParameterGroupQuotaExceededFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupQuotaExceededFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &rds.CreateDBClusterInput{
-		DBClusterIdentifier: aws.String("String"), // Required
-		Engine:              aws.String("String"), // Required
+	fmt.Println(result)
+}
+
+// To copy a DB snapshot
+//
+// This example copies a DB snapshot.
+func ExampleRDS_CopyDBSnapshot_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.CopyDBSnapshotInput{
+		SourceDBSnapshotIdentifier: aws.String("mydbsnapshot"),
+		TargetDBSnapshotIdentifier: aws.String("mydbsnapshot-copy"),
+	}
+
+	result, err := svc.CopyDBSnapshot(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBSnapshotAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBSnapshotAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeDBSnapshotNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSnapshotNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidDBSnapshotStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBSnapshotStateFault, aerr.Error())
+			case rds.ErrCodeSnapshotQuotaExceededFault:
+				fmt.Println(rds.ErrCodeSnapshotQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeKMSKeyNotAccessibleFault:
+				fmt.Println(rds.ErrCodeKMSKeyNotAccessibleFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To copy an option group
+//
+// This example copies an option group.
+func ExampleRDS_CopyOptionGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.CopyOptionGroupInput{
+		SourceOptionGroupIdentifier:  aws.String("mymysqloptiongroup"),
+		TargetOptionGroupDescription: aws.String("My MySQL option group copy"),
+		TargetOptionGroupIdentifier:  aws.String("mymysqloptiongroup-copy"),
+	}
+
+	result, err := svc.CopyOptionGroup(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeOptionGroupAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeOptionGroupAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeOptionGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeOptionGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeOptionGroupQuotaExceededFault:
+				fmt.Println(rds.ErrCodeOptionGroupQuotaExceededFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create a DB cluster
+//
+// This example creates a DB cluster.
+func ExampleRDS_CreateDBCluster_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.CreateDBClusterInput{
 		AvailabilityZones: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("us-east-1a"),
 		},
-		BackupRetentionPeriod:           aws.Int64(1),
-		CharacterSetName:                aws.String("String"),
-		DBClusterParameterGroupName:     aws.String("String"),
-		DBSubnetGroupName:               aws.String("String"),
-		DatabaseName:                    aws.String("String"),
-		DestinationRegion:               aws.String("String"),
-		EnableIAMDatabaseAuthentication: aws.Bool(true),
-		EngineVersion:                   aws.String("String"),
-		KmsKeyId:                        aws.String("String"),
-		MasterUserPassword:              aws.String("String"),
-		MasterUsername:                  aws.String("String"),
-		OptionGroupName:                 aws.String("String"),
-		Port:                            aws.Int64(1),
-		PreSignedUrl:                    aws.String("String"),
-		PreferredBackupWindow:           aws.String("String"),
-		PreferredMaintenanceWindow:      aws.String("String"),
-		ReplicationSourceIdentifier:     aws.String("String"),
-		SourceRegion:                    aws.String("String"),
-		StorageEncrypted:                aws.Bool(true),
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
-		VpcSecurityGroupIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
+		BackupRetentionPeriod:       aws.Int64(1),
+		DBClusterIdentifier:         aws.String("mydbcluster"),
+		DBClusterParameterGroupName: aws.String("mydbclusterparametergroup"),
+		DatabaseName:                aws.String("myauroradb"),
+		Engine:                      aws.String("aurora"),
+		EngineVersion:               aws.String("5.6.10a"),
+		MasterUserPassword:          aws.String("mypassword"),
+		MasterUsername:              aws.String("myuser"),
+		Port:                        aws.Int64(3306),
+		StorageEncrypted:            aws.Bool(true),
 	}
-	resp, err := svc.CreateDBCluster(params)
 
+	result, err := svc.CreateDBCluster(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBClusterAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBClusterAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeInsufficientStorageClusterCapacityFault:
+				fmt.Println(rds.ErrCodeInsufficientStorageClusterCapacityFault, aerr.Error())
+			case rds.ErrCodeDBClusterQuotaExceededFault:
+				fmt.Println(rds.ErrCodeDBClusterQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeStorageQuotaExceededFault:
+				fmt.Println(rds.ErrCodeStorageQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSubnetGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidVPCNetworkStateFault:
+				fmt.Println(rds.ErrCodeInvalidVPCNetworkStateFault, aerr.Error())
+			case rds.ErrCodeInvalidDBClusterStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBClusterStateFault, aerr.Error())
+			case rds.ErrCodeInvalidDBSubnetGroupStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBSubnetGroupStateFault, aerr.Error())
+			case rds.ErrCodeInvalidSubnet:
+				fmt.Println(rds.ErrCodeInvalidSubnet, aerr.Error())
+			case rds.ErrCodeInvalidDBInstanceStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBInstanceStateFault, aerr.Error())
+			case rds.ErrCodeDBClusterParameterGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterParameterGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeKMSKeyNotAccessibleFault:
+				fmt.Println(rds.ErrCodeKMSKeyNotAccessibleFault, aerr.Error())
+			case rds.ErrCodeDBClusterNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBInstanceNotFoundFault:
+				fmt.Println(rds.ErrCodeDBInstanceNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs:
+				fmt.Println(rds.ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_CreateDBClusterParameterGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.CreateDBClusterParameterGroupInput{
-		DBClusterParameterGroupName: aws.String("String"), // Required
-		DBParameterGroupFamily:      aws.String("String"), // Required
-		Description:                 aws.String("String"), // Required
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
+// To create a DB cluster parameter group
+//
+// This example creates a DB cluster parameter group.
+func ExampleRDS_CreateDBClusterParameterGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.CreateDBClusterParameterGroupInput{
+		DBClusterParameterGroupName: aws.String("mydbclusterparametergroup"),
+		DBParameterGroupFamily:      aws.String("aurora5.6"),
+		Description:                 aws.String("My DB cluster parameter group"),
 	}
-	resp, err := svc.CreateDBClusterParameterGroup(params)
 
+	result, err := svc.CreateDBClusterParameterGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBParameterGroupQuotaExceededFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeDBParameterGroupAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupAlreadyExistsFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_CreateDBClusterSnapshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.CreateDBClusterSnapshotInput{
-		DBClusterIdentifier:         aws.String("String"), // Required
-		DBClusterSnapshotIdentifier: aws.String("String"), // Required
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
+// To create a DB cluster snapshot
+//
+// This example creates a DB cluster snapshot.
+func ExampleRDS_CreateDBClusterSnapshot_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.CreateDBClusterSnapshotInput{
+		DBClusterIdentifier:         aws.String("mydbcluster"),
+		DBClusterSnapshotIdentifier: aws.String("mydbclustersnapshot"),
 	}
-	resp, err := svc.CreateDBClusterSnapshot(params)
 
+	result, err := svc.CreateDBClusterSnapshot(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBClusterSnapshotAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBClusterSnapshotAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeInvalidDBClusterStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBClusterStateFault, aerr.Error())
+			case rds.ErrCodeDBClusterNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterNotFoundFault, aerr.Error())
+			case rds.ErrCodeSnapshotQuotaExceededFault:
+				fmt.Println(rds.ErrCodeSnapshotQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeInvalidDBClusterSnapshotStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBClusterSnapshotStateFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_CreateDBInstance() {
-	sess := session.Must(session.NewSession())
+// To create a DB instance.
+//
+// This example creates a DB instance.
+func ExampleRDS_CreateDBInstance_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.CreateDBInstanceInput{
+		AllocatedStorage:     aws.Int64(5),
+		DBInstanceClass:      aws.String("db.t2.micro"),
+		DBInstanceIdentifier: aws.String("mymysqlinstance"),
+		Engine:               aws.String("MySQL"),
+		MasterUserPassword:   aws.String("MyPassword"),
+		MasterUsername:       aws.String("MyUser"),
+	}
 
-	svc := rds.New(sess)
+	result, err := svc.CreateDBInstance(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBInstanceAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBInstanceAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeInsufficientDBInstanceCapacityFault:
+				fmt.Println(rds.ErrCodeInsufficientDBInstanceCapacityFault, aerr.Error())
+			case rds.ErrCodeDBParameterGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBSecurityGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSecurityGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeInstanceQuotaExceededFault:
+				fmt.Println(rds.ErrCodeInstanceQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeStorageQuotaExceededFault:
+				fmt.Println(rds.ErrCodeStorageQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSubnetGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs:
+				fmt.Println(rds.ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs, aerr.Error())
+			case rds.ErrCodeInvalidDBClusterStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBClusterStateFault, aerr.Error())
+			case rds.ErrCodeInvalidSubnet:
+				fmt.Println(rds.ErrCodeInvalidSubnet, aerr.Error())
+			case rds.ErrCodeInvalidVPCNetworkStateFault:
+				fmt.Println(rds.ErrCodeInvalidVPCNetworkStateFault, aerr.Error())
+			case rds.ErrCodeProvisionedIopsNotAvailableInAZFault:
+				fmt.Println(rds.ErrCodeProvisionedIopsNotAvailableInAZFault, aerr.Error())
+			case rds.ErrCodeOptionGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeOptionGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBClusterNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterNotFoundFault, aerr.Error())
+			case rds.ErrCodeStorageTypeNotSupportedFault:
+				fmt.Println(rds.ErrCodeStorageTypeNotSupportedFault, aerr.Error())
+			case rds.ErrCodeAuthorizationNotFoundFault:
+				fmt.Println(rds.ErrCodeAuthorizationNotFoundFault, aerr.Error())
+			case rds.ErrCodeKMSKeyNotAccessibleFault:
+				fmt.Println(rds.ErrCodeKMSKeyNotAccessibleFault, aerr.Error())
+			case rds.ErrCodeDomainNotFoundFault:
+				fmt.Println(rds.ErrCodeDomainNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &rds.CreateDBInstanceInput{
-		DBInstanceClass:         aws.String("String"), // Required
-		DBInstanceIdentifier:    aws.String("String"), // Required
-		Engine:                  aws.String("String"), // Required
-		AllocatedStorage:        aws.Int64(1),
-		AutoMinorVersionUpgrade: aws.Bool(true),
-		AvailabilityZone:        aws.String("String"),
-		BackupRetentionPeriod:   aws.Int64(1),
-		CharacterSetName:        aws.String("String"),
-		CopyTagsToSnapshot:      aws.Bool(true),
-		DBClusterIdentifier:     aws.String("String"),
-		DBName:                  aws.String("String"),
-		DBParameterGroupName:    aws.String("String"),
-		DBSecurityGroups: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		DBSubnetGroupName:               aws.String("String"),
-		Domain:                          aws.String("String"),
-		DomainIAMRoleName:               aws.String("String"),
-		EnableIAMDatabaseAuthentication: aws.Bool(true),
-		EngineVersion:                   aws.String("String"),
-		Iops:                            aws.Int64(1),
-		KmsKeyId:                        aws.String("String"),
-		LicenseModel:                    aws.String("String"),
-		MasterUserPassword:              aws.String("String"),
-		MasterUsername:                  aws.String("String"),
-		MonitoringInterval:              aws.Int64(1),
-		MonitoringRoleArn:               aws.String("String"),
-		MultiAZ:                         aws.Bool(true),
-		OptionGroupName:                 aws.String("String"),
-		Port:                            aws.Int64(1),
-		PreferredBackupWindow:      aws.String("String"),
-		PreferredMaintenanceWindow: aws.String("String"),
-		PromotionTier:              aws.Int64(1),
+	fmt.Println(result)
+}
+
+// To create a DB instance read replica.
+//
+// This example creates a DB instance read replica.
+func ExampleRDS_CreateDBInstanceReadReplica_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.CreateDBInstanceReadReplicaInput{
+		AvailabilityZone:           aws.String("us-east-1a"),
+		CopyTagsToSnapshot:         aws.Bool(true),
+		DBInstanceClass:            aws.String("db.t2.micro"),
+		DBInstanceIdentifier:       aws.String("mydbreadreplica"),
 		PubliclyAccessible:         aws.Bool(true),
-		StorageEncrypted:           aws.Bool(true),
-		StorageType:                aws.String("String"),
+		SourceDBInstanceIdentifier: aws.String("mymysqlinstance"),
+		StorageType:                aws.String("gp2"),
 		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
+			{
+				Key:   aws.String("mydbreadreplicakey"),
+				Value: aws.String("mydbreadreplicavalue"),
 			},
-			// More values...
-		},
-		TdeCredentialArn:      aws.String("String"),
-		TdeCredentialPassword: aws.String("String"),
-		Timezone:              aws.String("String"),
-		VpcSecurityGroupIds: []*string{
-			aws.String("String"), // Required
-			// More values...
 		},
 	}
-	resp, err := svc.CreateDBInstance(params)
 
+	result, err := svc.CreateDBInstanceReadReplica(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBInstanceAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBInstanceAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeInsufficientDBInstanceCapacityFault:
+				fmt.Println(rds.ErrCodeInsufficientDBInstanceCapacityFault, aerr.Error())
+			case rds.ErrCodeDBParameterGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBSecurityGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSecurityGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeInstanceQuotaExceededFault:
+				fmt.Println(rds.ErrCodeInstanceQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeStorageQuotaExceededFault:
+				fmt.Println(rds.ErrCodeStorageQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeDBInstanceNotFoundFault:
+				fmt.Println(rds.ErrCodeDBInstanceNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidDBInstanceStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBInstanceStateFault, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSubnetGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs:
+				fmt.Println(rds.ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs, aerr.Error())
+			case rds.ErrCodeInvalidSubnet:
+				fmt.Println(rds.ErrCodeInvalidSubnet, aerr.Error())
+			case rds.ErrCodeInvalidVPCNetworkStateFault:
+				fmt.Println(rds.ErrCodeInvalidVPCNetworkStateFault, aerr.Error())
+			case rds.ErrCodeProvisionedIopsNotAvailableInAZFault:
+				fmt.Println(rds.ErrCodeProvisionedIopsNotAvailableInAZFault, aerr.Error())
+			case rds.ErrCodeOptionGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeOptionGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupNotAllowedFault:
+				fmt.Println(rds.ErrCodeDBSubnetGroupNotAllowedFault, aerr.Error())
+			case rds.ErrCodeInvalidDBSubnetGroupFault:
+				fmt.Println(rds.ErrCodeInvalidDBSubnetGroupFault, aerr.Error())
+			case rds.ErrCodeStorageTypeNotSupportedFault:
+				fmt.Println(rds.ErrCodeStorageTypeNotSupportedFault, aerr.Error())
+			case rds.ErrCodeKMSKeyNotAccessibleFault:
+				fmt.Println(rds.ErrCodeKMSKeyNotAccessibleFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_CreateDBInstanceReadReplica() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.CreateDBInstanceReadReplicaInput{
-		DBInstanceIdentifier:            aws.String("String"), // Required
-		SourceDBInstanceIdentifier:      aws.String("String"), // Required
-		AutoMinorVersionUpgrade:         aws.Bool(true),
-		AvailabilityZone:                aws.String("String"),
-		CopyTagsToSnapshot:              aws.Bool(true),
-		DBInstanceClass:                 aws.String("String"),
-		DBSubnetGroupName:               aws.String("String"),
-		DestinationRegion:               aws.String("String"),
-		EnableIAMDatabaseAuthentication: aws.Bool(true),
-		Iops:               aws.Int64(1),
-		KmsKeyId:           aws.String("String"),
-		MonitoringInterval: aws.Int64(1),
-		MonitoringRoleArn:  aws.String("String"),
-		OptionGroupName:    aws.String("String"),
-		Port:               aws.Int64(1),
-		PreSignedUrl:       aws.String("String"),
-		PubliclyAccessible: aws.Bool(true),
-		SourceRegion:       aws.String("String"),
-		StorageType:        aws.String("String"),
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
+// To create a DB parameter group.
+//
+// This example creates a DB parameter group.
+func ExampleRDS_CreateDBParameterGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.CreateDBParameterGroupInput{
+		DBParameterGroupFamily: aws.String("mysql5.6"),
+		DBParameterGroupName:   aws.String("mymysqlparametergroup"),
+		Description:            aws.String("My MySQL parameter group"),
 	}
-	resp, err := svc.CreateDBInstanceReadReplica(params)
 
+	result, err := svc.CreateDBParameterGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBParameterGroupQuotaExceededFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeDBParameterGroupAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupAlreadyExistsFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_CreateDBParameterGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.CreateDBParameterGroupInput{
-		DBParameterGroupFamily: aws.String("String"), // Required
-		DBParameterGroupName:   aws.String("String"), // Required
-		Description:            aws.String("String"), // Required
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
+// To create a DB security group.
+//
+// This example creates a DB security group.
+func ExampleRDS_CreateDBSecurityGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.CreateDBSecurityGroupInput{
+		DBSecurityGroupDescription: aws.String("My DB security group"),
+		DBSecurityGroupName:        aws.String("mydbsecuritygroup"),
 	}
-	resp, err := svc.CreateDBParameterGroup(params)
 
+	result, err := svc.CreateDBSecurityGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBSecurityGroupAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBSecurityGroupAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeDBSecurityGroupQuotaExceededFault:
+				fmt.Println(rds.ErrCodeDBSecurityGroupQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeDBSecurityGroupNotSupportedFault:
+				fmt.Println(rds.ErrCodeDBSecurityGroupNotSupportedFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_CreateDBSecurityGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.CreateDBSecurityGroupInput{
-		DBSecurityGroupDescription: aws.String("String"), // Required
-		DBSecurityGroupName:        aws.String("String"), // Required
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
+// To create a DB snapshot.
+//
+// This example creates a DB snapshot.
+func ExampleRDS_CreateDBSnapshot_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.CreateDBSnapshotInput{
+		DBInstanceIdentifier: aws.String("mymysqlinstance"),
+		DBSnapshotIdentifier: aws.String("mydbsnapshot"),
 	}
-	resp, err := svc.CreateDBSecurityGroup(params)
 
+	result, err := svc.CreateDBSnapshot(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBSnapshotAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBSnapshotAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeInvalidDBInstanceStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBInstanceStateFault, aerr.Error())
+			case rds.ErrCodeDBInstanceNotFoundFault:
+				fmt.Println(rds.ErrCodeDBInstanceNotFoundFault, aerr.Error())
+			case rds.ErrCodeSnapshotQuotaExceededFault:
+				fmt.Println(rds.ErrCodeSnapshotQuotaExceededFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_CreateDBSnapshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.CreateDBSnapshotInput{
-		DBInstanceIdentifier: aws.String("String"), // Required
-		DBSnapshotIdentifier: aws.String("String"), // Required
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
+// To create a DB subnet group.
+//
+// This example creates a DB subnet group.
+func ExampleRDS_CreateDBSubnetGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.CreateDBSubnetGroupInput{
+		DBSubnetGroupDescription: aws.String("My DB subnet group"),
+		DBSubnetGroupName:        aws.String("mydbsubnetgroup"),
+		SubnetIds: []*string{
+			aws.String("subnet-1fab8a69"),
+			aws.String("subnet-d43a468c"),
 		},
 	}
-	resp, err := svc.CreateDBSnapshot(params)
 
+	result, err := svc.CreateDBSubnetGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBSubnetGroupAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBSubnetGroupAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupQuotaExceededFault:
+				fmt.Println(rds.ErrCodeDBSubnetGroupQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeDBSubnetQuotaExceededFault:
+				fmt.Println(rds.ErrCodeDBSubnetQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs:
+				fmt.Println(rds.ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs, aerr.Error())
+			case rds.ErrCodeInvalidSubnet:
+				fmt.Println(rds.ErrCodeInvalidSubnet, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_CreateDBSubnetGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.CreateDBSubnetGroupInput{
-		DBSubnetGroupDescription: aws.String("String"), // Required
-		DBSubnetGroupName:        aws.String("String"), // Required
-		SubnetIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.CreateDBSubnetGroup(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_CreateEventSubscription() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.CreateEventSubscriptionInput{
-		SnsTopicArn:      aws.String("String"), // Required
-		SubscriptionName: aws.String("String"), // Required
-		Enabled:          aws.Bool(true),
+// To create an event notification subscription
+//
+// This example creates an event notification subscription.
+func ExampleRDS_CreateEventSubscription_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.CreateEventSubscriptionInput{
+		Enabled: aws.Bool(true),
 		EventCategories: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("availability"),
 		},
+		SnsTopicArn: aws.String("arn:aws:sns:us-east-1:992648334831:MyDemoSNSTopic"),
 		SourceIds: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("mymysqlinstance"),
 		},
-		SourceType: aws.String("String"),
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
+		SourceType:       aws.String("db-instance"),
+		SubscriptionName: aws.String("mymysqleventsubscription"),
 	}
-	resp, err := svc.CreateEventSubscription(params)
 
+	result, err := svc.CreateEventSubscription(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeEventSubscriptionQuotaExceededFault:
+				fmt.Println(rds.ErrCodeEventSubscriptionQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeSubscriptionAlreadyExistFault:
+				fmt.Println(rds.ErrCodeSubscriptionAlreadyExistFault, aerr.Error())
+			case rds.ErrCodeSNSInvalidTopicFault:
+				fmt.Println(rds.ErrCodeSNSInvalidTopicFault, aerr.Error())
+			case rds.ErrCodeSNSNoAuthorizationFault:
+				fmt.Println(rds.ErrCodeSNSNoAuthorizationFault, aerr.Error())
+			case rds.ErrCodeSNSTopicArnNotFoundFault:
+				fmt.Println(rds.ErrCodeSNSTopicArnNotFoundFault, aerr.Error())
+			case rds.ErrCodeSubscriptionCategoryNotFoundFault:
+				fmt.Println(rds.ErrCodeSubscriptionCategoryNotFoundFault, aerr.Error())
+			case rds.ErrCodeSourceNotFoundFault:
+				fmt.Println(rds.ErrCodeSourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_CreateOptionGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.CreateOptionGroupInput{
-		EngineName:             aws.String("String"), // Required
-		MajorEngineVersion:     aws.String("String"), // Required
-		OptionGroupDescription: aws.String("String"), // Required
-		OptionGroupName:        aws.String("String"), // Required
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
+// To create an option group
+//
+// This example creates an option group.
+func ExampleRDS_CreateOptionGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.CreateOptionGroupInput{
+		EngineName:             aws.String("MySQL"),
+		MajorEngineVersion:     aws.String("5.6"),
+		OptionGroupDescription: aws.String("My MySQL 5.6 option group"),
+		OptionGroupName:        aws.String("mymysqloptiongroup"),
 	}
-	resp, err := svc.CreateOptionGroup(params)
 
+	result, err := svc.CreateOptionGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeOptionGroupAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeOptionGroupAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeOptionGroupQuotaExceededFault:
+				fmt.Println(rds.ErrCodeOptionGroupQuotaExceededFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DeleteDBCluster() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DeleteDBClusterInput{
-		DBClusterIdentifier:       aws.String("String"), // Required
-		FinalDBSnapshotIdentifier: aws.String("String"),
-		SkipFinalSnapshot:         aws.Bool(true),
+// To delete a DB cluster.
+//
+// This example deletes the specified DB cluster.
+func ExampleRDS_DeleteDBCluster_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DeleteDBClusterInput{
+		DBClusterIdentifier: aws.String("mydbcluster"),
+		SkipFinalSnapshot:   aws.Bool(true),
 	}
-	resp, err := svc.DeleteDBCluster(params)
 
+	result, err := svc.DeleteDBCluster(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBClusterNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidDBClusterStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBClusterStateFault, aerr.Error())
+			case rds.ErrCodeDBClusterSnapshotAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBClusterSnapshotAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeSnapshotQuotaExceededFault:
+				fmt.Println(rds.ErrCodeSnapshotQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeInvalidDBClusterSnapshotStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBClusterSnapshotStateFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DeleteDBClusterParameterGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DeleteDBClusterParameterGroupInput{
-		DBClusterParameterGroupName: aws.String("String"), // Required
+// To delete a DB cluster parameter group.
+//
+// This example deletes the specified DB cluster parameter group.
+func ExampleRDS_DeleteDBClusterParameterGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DeleteDBClusterParameterGroupInput{
+		DBClusterParameterGroupName: aws.String("mydbclusterparametergroup"),
 	}
-	resp, err := svc.DeleteDBClusterParameterGroup(params)
 
+	result, err := svc.DeleteDBClusterParameterGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeInvalidDBParameterGroupStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBParameterGroupStateFault, aerr.Error())
+			case rds.ErrCodeDBParameterGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DeleteDBClusterSnapshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DeleteDBClusterSnapshotInput{
-		DBClusterSnapshotIdentifier: aws.String("String"), // Required
+// To delete a DB cluster snapshot.
+//
+// This example deletes the specified DB cluster snapshot.
+func ExampleRDS_DeleteDBClusterSnapshot_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DeleteDBClusterSnapshotInput{
+		DBClusterSnapshotIdentifier: aws.String("mydbclustersnapshot"),
 	}
-	resp, err := svc.DeleteDBClusterSnapshot(params)
 
+	result, err := svc.DeleteDBClusterSnapshot(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeInvalidDBClusterSnapshotStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBClusterSnapshotStateFault, aerr.Error())
+			case rds.ErrCodeDBClusterSnapshotNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterSnapshotNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DeleteDBInstance() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DeleteDBInstanceInput{
-		DBInstanceIdentifier:      aws.String("String"), // Required
-		FinalDBSnapshotIdentifier: aws.String("String"),
-		SkipFinalSnapshot:         aws.Bool(true),
+// To delete a DB instance.
+//
+// This example deletes the specified DB instance.
+func ExampleRDS_DeleteDBInstance_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DeleteDBInstanceInput{
+		DBInstanceIdentifier: aws.String("mymysqlinstance"),
+		SkipFinalSnapshot:    aws.Bool(true),
 	}
-	resp, err := svc.DeleteDBInstance(params)
 
+	result, err := svc.DeleteDBInstance(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBInstanceNotFoundFault:
+				fmt.Println(rds.ErrCodeDBInstanceNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidDBInstanceStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBInstanceStateFault, aerr.Error())
+			case rds.ErrCodeDBSnapshotAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBSnapshotAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeSnapshotQuotaExceededFault:
+				fmt.Println(rds.ErrCodeSnapshotQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeInvalidDBClusterStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBClusterStateFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DeleteDBParameterGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DeleteDBParameterGroupInput{
-		DBParameterGroupName: aws.String("String"), // Required
+// To delete a DB parameter group
+//
+// The following example deletes a DB parameter group.
+func ExampleRDS_DeleteDBParameterGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DeleteDBParameterGroupInput{
+		DBParameterGroupName: aws.String("mydbparamgroup3"),
 	}
-	resp, err := svc.DeleteDBParameterGroup(params)
 
+	result, err := svc.DeleteDBParameterGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeInvalidDBParameterGroupStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBParameterGroupStateFault, aerr.Error())
+			case rds.ErrCodeDBParameterGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DeleteDBSecurityGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DeleteDBSecurityGroupInput{
-		DBSecurityGroupName: aws.String("String"), // Required
+// To delete a DB security group
+//
+// The following example deletes a DB security group.
+func ExampleRDS_DeleteDBSecurityGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DeleteDBSecurityGroupInput{
+		DBSecurityGroupName: aws.String("mysecgroup"),
 	}
-	resp, err := svc.DeleteDBSecurityGroup(params)
 
+	result, err := svc.DeleteDBSecurityGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeInvalidDBSecurityGroupStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBSecurityGroupStateFault, aerr.Error())
+			case rds.ErrCodeDBSecurityGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSecurityGroupNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DeleteDBSnapshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DeleteDBSnapshotInput{
-		DBSnapshotIdentifier: aws.String("String"), // Required
+// To delete a DB cluster snapshot.
+//
+// This example deletes the specified DB snapshot.
+func ExampleRDS_DeleteDBSnapshot_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DeleteDBSnapshotInput{
+		DBSnapshotIdentifier: aws.String("mydbsnapshot"),
 	}
-	resp, err := svc.DeleteDBSnapshot(params)
 
+	result, err := svc.DeleteDBSnapshot(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeInvalidDBSnapshotStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBSnapshotStateFault, aerr.Error())
+			case rds.ErrCodeDBSnapshotNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSnapshotNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DeleteDBSubnetGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DeleteDBSubnetGroupInput{
-		DBSubnetGroupName: aws.String("String"), // Required
+// To delete a DB subnet group.
+//
+// This example deletes the specified DB subnetgroup.
+func ExampleRDS_DeleteDBSubnetGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DeleteDBSubnetGroupInput{
+		DBSubnetGroupName: aws.String("mydbsubnetgroup"),
 	}
-	resp, err := svc.DeleteDBSubnetGroup(params)
 
+	result, err := svc.DeleteDBSubnetGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeInvalidDBSubnetGroupStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBSubnetGroupStateFault, aerr.Error())
+			case rds.ErrCodeInvalidDBSubnetStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBSubnetStateFault, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSubnetGroupNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DeleteEventSubscription() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DeleteEventSubscriptionInput{
-		SubscriptionName: aws.String("String"), // Required
+// To delete a DB event subscription.
+//
+// This example deletes the specified DB event subscription.
+func ExampleRDS_DeleteEventSubscription_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DeleteEventSubscriptionInput{
+		SubscriptionName: aws.String("myeventsubscription"),
 	}
-	resp, err := svc.DeleteEventSubscription(params)
 
+	result, err := svc.DeleteEventSubscription(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeSubscriptionNotFoundFault:
+				fmt.Println(rds.ErrCodeSubscriptionNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidEventSubscriptionStateFault:
+				fmt.Println(rds.ErrCodeInvalidEventSubscriptionStateFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DeleteOptionGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DeleteOptionGroupInput{
-		OptionGroupName: aws.String("String"), // Required
+// To delete an option group.
+//
+// This example deletes the specified option group.
+func ExampleRDS_DeleteOptionGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DeleteOptionGroupInput{
+		OptionGroupName: aws.String("mydboptiongroup"),
 	}
-	resp, err := svc.DeleteOptionGroup(params)
 
+	result, err := svc.DeleteOptionGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeOptionGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeOptionGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidOptionGroupStateFault:
+				fmt.Println(rds.ErrCodeInvalidOptionGroupStateFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeAccountAttributes() {
-	sess := session.Must(session.NewSession())
+// To list account attributes
+//
+// This example lists account attributes.
+func ExampleRDS_DescribeAccountAttributes_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeAccountAttributesInput{}
 
-	svc := rds.New(sess)
-
-	var params *rds.DescribeAccountAttributesInput
-	resp, err := svc.DescribeAccountAttributes(params)
-
+	result, err := svc.DescribeAccountAttributes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeCertificates() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeCertificatesInput{
-		CertificateIdentifier: aws.String("String"),
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+// To list certificates
+//
+// This example lists up to 20 certificates for the specified certificate identifier.
+func ExampleRDS_DescribeCertificates_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeCertificatesInput{
+		CertificateIdentifier: aws.String("rds-ca-2015"),
+		MaxRecords:            aws.Int64(20),
 	}
-	resp, err := svc.DescribeCertificates(params)
 
+	result, err := svc.DescribeCertificates(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeCertificateNotFoundFault:
+				fmt.Println(rds.ErrCodeCertificateNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeDBClusterParameterGroups() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeDBClusterParameterGroupsInput{
-		DBClusterParameterGroupName: aws.String("String"),
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+// To list DB cluster parameter group settings
+//
+// This example lists settings for the specified DB cluster parameter group.
+func ExampleRDS_DescribeDBClusterParameterGroups_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeDBClusterParameterGroupsInput{
+		DBClusterParameterGroupName: aws.String("mydbclusterparametergroup"),
 	}
-	resp, err := svc.DescribeDBClusterParameterGroups(params)
 
+	result, err := svc.DescribeDBClusterParameterGroups(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBParameterGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeDBClusterParameters() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeDBClusterParametersInput{
-		DBClusterParameterGroupName: aws.String("String"), // Required
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
-		Source:     aws.String("String"),
+// To list DB cluster parameters
+//
+// This example lists system parameters for the specified DB cluster parameter group.
+func ExampleRDS_DescribeDBClusterParameters_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeDBClusterParametersInput{
+		DBClusterParameterGroupName: aws.String("mydbclusterparametergroup"),
+		Source: aws.String("system"),
 	}
-	resp, err := svc.DescribeDBClusterParameters(params)
 
+	result, err := svc.DescribeDBClusterParameters(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBParameterGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeDBClusterSnapshotAttributes() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeDBClusterSnapshotAttributesInput{
-		DBClusterSnapshotIdentifier: aws.String("String"), // Required
+// To list DB cluster snapshot attributes
+//
+// This example lists attributes for the specified DB cluster snapshot.
+func ExampleRDS_DescribeDBClusterSnapshotAttributes_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeDBClusterSnapshotAttributesInput{
+		DBClusterSnapshotIdentifier: aws.String("mydbclustersnapshot"),
 	}
-	resp, err := svc.DescribeDBClusterSnapshotAttributes(params)
 
+	result, err := svc.DescribeDBClusterSnapshotAttributes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBClusterSnapshotNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterSnapshotNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeDBClusterSnapshots() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeDBClusterSnapshotsInput{
-		DBClusterIdentifier:         aws.String("String"),
-		DBClusterSnapshotIdentifier: aws.String("String"),
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		IncludePublic: aws.Bool(true),
-		IncludeShared: aws.Bool(true),
-		Marker:        aws.String("String"),
-		MaxRecords:    aws.Int64(1),
-		SnapshotType:  aws.String("String"),
+// To list DB cluster snapshots
+//
+// This example lists settings for the specified, manually-created cluster snapshot.
+func ExampleRDS_DescribeDBClusterSnapshots_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeDBClusterSnapshotsInput{
+		DBClusterSnapshotIdentifier: aws.String("mydbclustersnapshot"),
+		SnapshotType:                aws.String("manual"),
 	}
-	resp, err := svc.DescribeDBClusterSnapshots(params)
 
+	result, err := svc.DescribeDBClusterSnapshots(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBClusterSnapshotNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterSnapshotNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeDBClusters() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeDBClustersInput{
-		DBClusterIdentifier: aws.String("String"),
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+// To list DB clusters
+//
+// This example lists settings for the specified DB cluster.
+func ExampleRDS_DescribeDBClusters_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeDBClustersInput{
+		DBClusterIdentifier: aws.String("mynewdbcluster"),
 	}
-	resp, err := svc.DescribeDBClusters(params)
 
+	result, err := svc.DescribeDBClusters(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBClusterNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeDBEngineVersions() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeDBEngineVersionsInput{
-		DBParameterGroupFamily: aws.String("String"),
-		DefaultOnly:            aws.Bool(true),
-		Engine:                 aws.String("String"),
-		EngineVersion:          aws.String("String"),
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
+// To list DB engine version settings
+//
+// This example lists settings for the specified DB engine version.
+func ExampleRDS_DescribeDBEngineVersions_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeDBEngineVersionsInput{
+		DBParameterGroupFamily:     aws.String("mysql5.6"),
+		DefaultOnly:                aws.Bool(true),
+		Engine:                     aws.String("mysql"),
+		EngineVersion:              aws.String("5.6"),
 		ListSupportedCharacterSets: aws.Bool(true),
-		ListSupportedTimezones:     aws.Bool(true),
-		Marker:                     aws.String("String"),
-		MaxRecords:                 aws.Int64(1),
 	}
-	resp, err := svc.DescribeDBEngineVersions(params)
 
+	result, err := svc.DescribeDBEngineVersions(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeDBInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeDBInstancesInput{
-		DBInstanceIdentifier: aws.String("String"),
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+// To list DB instance settings
+//
+// This example lists settings for the specified DB instance.
+func ExampleRDS_DescribeDBInstances_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeDBInstancesInput{
+		DBInstanceIdentifier: aws.String("mymysqlinstance"),
 	}
-	resp, err := svc.DescribeDBInstances(params)
 
+	result, err := svc.DescribeDBInstances(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBInstanceNotFoundFault:
+				fmt.Println(rds.ErrCodeDBInstanceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeDBLogFiles() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeDBLogFilesInput{
-		DBInstanceIdentifier: aws.String("String"), // Required
-		FileLastWritten:      aws.Int64(1),
-		FileSize:             aws.Int64(1),
-		FilenameContains:     aws.String("String"),
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+// To list DB log file names
+//
+// This example lists matching log file names for the specified DB instance, file name
+// pattern, last write date in POSIX time with milleseconds, and minimum file size.
+func ExampleRDS_DescribeDBLogFiles_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeDBLogFilesInput{
+		DBInstanceIdentifier: aws.String("mymysqlinstance"),
+		FileLastWritten:      aws.Int64(1470873600000),
+		FileSize:             aws.Int64(0),
+		FilenameContains:     aws.String("error"),
 	}
-	resp, err := svc.DescribeDBLogFiles(params)
 
+	result, err := svc.DescribeDBLogFiles(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBInstanceNotFoundFault:
+				fmt.Println(rds.ErrCodeDBInstanceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeDBParameterGroups() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeDBParameterGroupsInput{
-		DBParameterGroupName: aws.String("String"),
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+// To list information about DB parameter groups
+//
+// This example lists information about the specified DB parameter group.
+func ExampleRDS_DescribeDBParameterGroups_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeDBParameterGroupsInput{
+		DBParameterGroupName: aws.String("mymysqlparametergroup"),
 	}
-	resp, err := svc.DescribeDBParameterGroups(params)
 
+	result, err := svc.DescribeDBParameterGroups(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBParameterGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeDBParameters() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeDBParametersInput{
-		DBParameterGroupName: aws.String("String"), // Required
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
-		Source:     aws.String("String"),
+// To list information about DB parameters
+//
+// This example lists information for up to the first 20 system parameters for the specified
+// DB parameter group.
+func ExampleRDS_DescribeDBParameters_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeDBParametersInput{
+		DBParameterGroupName: aws.String("mymysqlparametergroup"),
+		MaxRecords:           aws.Int64(20),
+		Source:               aws.String("system"),
 	}
-	resp, err := svc.DescribeDBParameters(params)
 
+	result, err := svc.DescribeDBParameters(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBParameterGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeDBSecurityGroups() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeDBSecurityGroupsInput{
-		DBSecurityGroupName: aws.String("String"),
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+// To list DB security group settings
+//
+// This example lists settings for the specified security group.
+func ExampleRDS_DescribeDBSecurityGroups_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeDBSecurityGroupsInput{
+		DBSecurityGroupName: aws.String("mydbsecuritygroup"),
 	}
-	resp, err := svc.DescribeDBSecurityGroups(params)
 
+	result, err := svc.DescribeDBSecurityGroups(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBSecurityGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSecurityGroupNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeDBSnapshotAttributes() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeDBSnapshotAttributesInput{
-		DBSnapshotIdentifier: aws.String("String"), // Required
+// To list DB snapshot attributes
+//
+// This example lists attributes for the specified DB snapshot.
+func ExampleRDS_DescribeDBSnapshotAttributes_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeDBSnapshotAttributesInput{
+		DBSnapshotIdentifier: aws.String("mydbsnapshot"),
 	}
-	resp, err := svc.DescribeDBSnapshotAttributes(params)
 
+	result, err := svc.DescribeDBSnapshotAttributes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBSnapshotNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSnapshotNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeDBSnapshots() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeDBSnapshotsInput{
-		DBInstanceIdentifier: aws.String("String"),
-		DBSnapshotIdentifier: aws.String("String"),
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		IncludePublic: aws.Bool(true),
-		IncludeShared: aws.Bool(true),
-		Marker:        aws.String("String"),
-		MaxRecords:    aws.Int64(1),
-		SnapshotType:  aws.String("String"),
+// To list DB snapshot attributes
+//
+// This example lists all manually-created, shared snapshots for the specified DB instance.
+func ExampleRDS_DescribeDBSnapshots_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeDBSnapshotsInput{
+		DBInstanceIdentifier: aws.String("mymysqlinstance"),
+		IncludePublic:        aws.Bool(false),
+		IncludeShared:        aws.Bool(true),
+		SnapshotType:         aws.String("manual"),
 	}
-	resp, err := svc.DescribeDBSnapshots(params)
 
+	result, err := svc.DescribeDBSnapshots(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBSnapshotNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSnapshotNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeDBSubnetGroups() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeDBSubnetGroupsInput{
-		DBSubnetGroupName: aws.String("String"),
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+// To list information about DB subnet groups
+//
+// This example lists information about the specified DB subnet group.
+func ExampleRDS_DescribeDBSubnetGroups_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeDBSubnetGroupsInput{
+		DBSubnetGroupName: aws.String("mydbsubnetgroup"),
 	}
-	resp, err := svc.DescribeDBSubnetGroups(params)
 
+	result, err := svc.DescribeDBSubnetGroups(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBSubnetGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSubnetGroupNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeEngineDefaultClusterParameters() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeEngineDefaultClusterParametersInput{
-		DBParameterGroupFamily: aws.String("String"), // Required
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+// To list default parameters for a DB cluster engine
+//
+// This example lists default parameters for the specified DB cluster engine.
+func ExampleRDS_DescribeEngineDefaultClusterParameters_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeEngineDefaultClusterParametersInput{
+		DBParameterGroupFamily: aws.String("aurora5.6"),
 	}
-	resp, err := svc.DescribeEngineDefaultClusterParameters(params)
 
+	result, err := svc.DescribeEngineDefaultClusterParameters(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeEngineDefaultParameters() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeEngineDefaultParametersInput{
-		DBParameterGroupFamily: aws.String("String"), // Required
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
+// To list default parameters for a DB engine
+//
+// This example lists default parameters for the specified DB engine.
+func ExampleRDS_DescribeEngineDefaultParameters_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeEngineDefaultParametersInput{
+		DBParameterGroupFamily: aws.String("mysql5.6"),
 	}
-	resp, err := svc.DescribeEngineDefaultParameters(params)
 
+	result, err := svc.DescribeEngineDefaultParameters(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeEventCategories() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeEventCategoriesInput{
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		SourceType: aws.String("String"),
+// To list event categories.
+//
+// This example lists all DB instance event categories.
+func ExampleRDS_DescribeEventCategories_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeEventCategoriesInput{
+		SourceType: aws.String("db-instance"),
 	}
-	resp, err := svc.DescribeEventCategories(params)
 
+	result, err := svc.DescribeEventCategories(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeEventSubscriptions() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeEventSubscriptionsInput{
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		Marker:           aws.String("String"),
-		MaxRecords:       aws.Int64(1),
-		SubscriptionName: aws.String("String"),
+// To list information about DB event notification subscriptions
+//
+// This example lists information for the specified DB event notification subscription.
+func ExampleRDS_DescribeEventSubscriptions_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeEventSubscriptionsInput{
+		SubscriptionName: aws.String("mymysqleventsubscription"),
 	}
-	resp, err := svc.DescribeEventSubscriptions(params)
 
+	result, err := svc.DescribeEventSubscriptions(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeSubscriptionNotFoundFault:
+				fmt.Println(rds.ErrCodeSubscriptionNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_DescribeEvents() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeEventsInput{
-		Duration: aws.Int64(1),
-		EndTime:  aws.Time(time.Now()),
+// To list information about events
+//
+// This example lists information for all backup-related events for the specified DB
+// instance for the past 7 days (7 days * 24 hours * 60 minutes = 10,080 minutes).
+func ExampleRDS_DescribeEvents_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeEventsInput{
+		Duration: aws.Int64(10080),
 		EventCategories: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("backup"),
 		},
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
+		SourceIdentifier: aws.String("mymysqlinstance"),
+		SourceType:       aws.String("db-instance"),
+	}
+
+	result, err := svc.DescribeEvents(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list information about DB option group options
+//
+// This example lists information for all option group options for the specified DB
+// engine.
+func ExampleRDS_DescribeOptionGroupOptions_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeOptionGroupOptionsInput{
+		EngineName:         aws.String("mysql"),
+		MajorEngineVersion: aws.String("5.6"),
+	}
+
+	result, err := svc.DescribeOptionGroupOptions(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list information about DB option groups
+//
+// This example lists information for all option groups for the specified DB engine.
+func ExampleRDS_DescribeOptionGroups_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeOptionGroupsInput{
+		EngineName:         aws.String("mysql"),
+		MajorEngineVersion: aws.String("5.6"),
+	}
+
+	result, err := svc.DescribeOptionGroups(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeOptionGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeOptionGroupNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list information about orderable DB instance options
+//
+// This example lists information for all orderable DB instance options for the specified
+// DB engine, engine version, DB instance class, license model, and VPC settings.
+func ExampleRDS_DescribeOrderableDBInstanceOptions_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeOrderableDBInstanceOptionsInput{
+		DBInstanceClass: aws.String("db.t2.micro"),
+		Engine:          aws.String("mysql"),
+		EngineVersion:   aws.String("5.6.27"),
+		LicenseModel:    aws.String("general-public-license"),
+		Vpc:             aws.Bool(true),
+	}
+
+	result, err := svc.DescribeOrderableDBInstanceOptions(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list information about pending maintenance actions
+//
+// This example lists information for all pending maintenance actions for the specified
+// DB instance.
+func ExampleRDS_DescribePendingMaintenanceActions_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribePendingMaintenanceActionsInput{
+		ResourceIdentifier: aws.String("arn:aws:rds:us-east-1:992648334831:db:mymysqlinstance"),
+	}
+
+	result, err := svc.DescribePendingMaintenanceActions(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeResourceNotFoundFault:
+				fmt.Println(rds.ErrCodeResourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list information about reserved DB instances
+//
+// This example lists information for all reserved DB instances for the specified DB
+// instance class, duration, product, offering type, and availability zone settings.
+func ExampleRDS_DescribeReservedDBInstances_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeReservedDBInstancesInput{
+		DBInstanceClass:    aws.String("db.t2.micro"),
+		Duration:           aws.String("1y"),
+		MultiAZ:            aws.Bool(false),
+		OfferingType:       aws.String("No Upfront"),
+		ProductDescription: aws.String("mysql"),
+	}
+
+	result, err := svc.DescribeReservedDBInstances(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeReservedDBInstanceNotFoundFault:
+				fmt.Println(rds.ErrCodeReservedDBInstanceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list information about reserved DB instance offerings
+//
+// This example lists information for all reserved DB instance offerings for the specified
+// DB instance class, duration, product, offering type, and availability zone settings.
+func ExampleRDS_DescribeReservedDBInstancesOfferings_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeReservedDBInstancesOfferingsInput{
+		DBInstanceClass:    aws.String("db.t2.micro"),
+		Duration:           aws.String("1y"),
+		MultiAZ:            aws.Bool(false),
+		OfferingType:       aws.String("No Upfront"),
+		ProductDescription: aws.String("mysql"),
+	}
+
+	result, err := svc.DescribeReservedDBInstancesOfferings(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeReservedDBInstancesOfferingNotFoundFault:
+				fmt.Println(rds.ErrCodeReservedDBInstancesOfferingNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe source regions
+//
+// To list the AWS regions where a Read Replica can be created.
+func ExampleRDS_DescribeSourceRegions_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DescribeSourceRegionsInput{}
+
+	result, err := svc.DescribeSourceRegions(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list information about DB log files
+//
+// This example lists information for the specified log file for the specified DB instance.
+func ExampleRDS_DownloadDBLogFilePortion_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.DownloadDBLogFilePortionInput{
+		DBInstanceIdentifier: aws.String("mymysqlinstance"),
+		LogFileName:          aws.String("mysqlUpgrade"),
+	}
+
+	result, err := svc.DownloadDBLogFilePortion(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBInstanceNotFoundFault:
+				fmt.Println(rds.ErrCodeDBInstanceNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBLogFileNotFoundFault:
+				fmt.Println(rds.ErrCodeDBLogFileNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To perform a failover for a DB cluster
+//
+// This example performs a failover for the specified DB cluster to the specified DB
+// instance.
+func ExampleRDS_FailoverDBCluster_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.FailoverDBClusterInput{
+		DBClusterIdentifier:        aws.String("myaurorainstance-cluster"),
+		TargetDBInstanceIdentifier: aws.String("myaurorareplica"),
+	}
+
+	result, err := svc.FailoverDBCluster(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBClusterNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidDBClusterStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBClusterStateFault, aerr.Error())
+			case rds.ErrCodeInvalidDBInstanceStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBInstanceStateFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To list information about tags associated with a resource
+//
+// This example lists information about all tags associated with the specified DB option
+// group.
+func ExampleRDS_ListTagsForResource_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.ListTagsForResourceInput{
+		ResourceName: aws.String("arn:aws:rds:us-east-1:992648334831:og:mymysqloptiongroup"),
+	}
+
+	result, err := svc.ListTagsForResource(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBInstanceNotFoundFault:
+				fmt.Println(rds.ErrCodeDBInstanceNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBSnapshotNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSnapshotNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBClusterNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To change DB cluster settings
+//
+// This example changes the specified settings for the specified DB cluster.
+func ExampleRDS_ModifyDBCluster_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.ModifyDBClusterInput{
+		ApplyImmediately:           aws.Bool(true),
+		DBClusterIdentifier:        aws.String("mydbcluster"),
+		MasterUserPassword:         aws.String("mynewpassword"),
+		NewDBClusterIdentifier:     aws.String("mynewdbcluster"),
+		PreferredBackupWindow:      aws.String("04:00-04:30"),
+		PreferredMaintenanceWindow: aws.String("Tue:05:00-Tue:05:30"),
+	}
+
+	result, err := svc.ModifyDBCluster(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBClusterNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidDBClusterStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBClusterStateFault, aerr.Error())
+			case rds.ErrCodeStorageQuotaExceededFault:
+				fmt.Println(rds.ErrCodeStorageQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSubnetGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidVPCNetworkStateFault:
+				fmt.Println(rds.ErrCodeInvalidVPCNetworkStateFault, aerr.Error())
+			case rds.ErrCodeInvalidDBSubnetGroupStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBSubnetGroupStateFault, aerr.Error())
+			case rds.ErrCodeInvalidSubnet:
+				fmt.Println(rds.ErrCodeInvalidSubnet, aerr.Error())
+			case rds.ErrCodeDBClusterParameterGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterParameterGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidDBSecurityGroupStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBSecurityGroupStateFault, aerr.Error())
+			case rds.ErrCodeInvalidDBInstanceStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBInstanceStateFault, aerr.Error())
+			case rds.ErrCodeDBClusterAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBClusterAlreadyExistsFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To change DB cluster parameter group settings
+//
+// This example immediately changes the specified setting for the specified DB cluster
+// parameter group.
+func ExampleRDS_ModifyDBClusterParameterGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.ModifyDBClusterParameterGroupInput{
+		DBClusterParameterGroupName: aws.String("mydbclusterparametergroup"),
+		Parameters: []*rds.Parameter{
+			{
+				ApplyMethod:    aws.String("immediate"),
+				ParameterName:  aws.String("time_zone"),
+				ParameterValue: aws.String("America/Phoenix"),
 			},
-			// More values...
-		},
-		Marker:           aws.String("String"),
-		MaxRecords:       aws.Int64(1),
-		SourceIdentifier: aws.String("String"),
-		SourceType:       aws.String("SourceType"),
-		StartTime:        aws.Time(time.Now()),
-	}
-	resp, err := svc.DescribeEvents(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_DescribeOptionGroupOptions() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeOptionGroupOptionsInput{
-		EngineName: aws.String("String"), // Required
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		MajorEngineVersion: aws.String("String"),
-		Marker:             aws.String("String"),
-		MaxRecords:         aws.Int64(1),
-	}
-	resp, err := svc.DescribeOptionGroupOptions(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_DescribeOptionGroups() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeOptionGroupsInput{
-		EngineName: aws.String("String"),
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		MajorEngineVersion: aws.String("String"),
-		Marker:             aws.String("String"),
-		MaxRecords:         aws.Int64(1),
-		OptionGroupName:    aws.String("String"),
-	}
-	resp, err := svc.DescribeOptionGroups(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_DescribeOrderableDBInstanceOptions() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeOrderableDBInstanceOptionsInput{
-		Engine:          aws.String("String"), // Required
-		DBInstanceClass: aws.String("String"),
-		EngineVersion:   aws.String("String"),
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		LicenseModel: aws.String("String"),
-		Marker:       aws.String("String"),
-		MaxRecords:   aws.Int64(1),
-		Vpc:          aws.Bool(true),
-	}
-	resp, err := svc.DescribeOrderableDBInstanceOptions(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_DescribePendingMaintenanceActions() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribePendingMaintenanceActionsInput{
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		Marker:             aws.String("String"),
-		MaxRecords:         aws.Int64(1),
-		ResourceIdentifier: aws.String("String"),
-	}
-	resp, err := svc.DescribePendingMaintenanceActions(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_DescribeReservedDBInstances() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeReservedDBInstancesInput{
-		DBInstanceClass: aws.String("String"),
-		Duration:        aws.String("String"),
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		Marker:                        aws.String("String"),
-		MaxRecords:                    aws.Int64(1),
-		MultiAZ:                       aws.Bool(true),
-		OfferingType:                  aws.String("String"),
-		ProductDescription:            aws.String("String"),
-		ReservedDBInstanceId:          aws.String("String"),
-		ReservedDBInstancesOfferingId: aws.String("String"),
-	}
-	resp, err := svc.DescribeReservedDBInstances(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_DescribeReservedDBInstancesOfferings() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeReservedDBInstancesOfferingsInput{
-		DBInstanceClass: aws.String("String"),
-		Duration:        aws.String("String"),
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		Marker:                        aws.String("String"),
-		MaxRecords:                    aws.Int64(1),
-		MultiAZ:                       aws.Bool(true),
-		OfferingType:                  aws.String("String"),
-		ProductDescription:            aws.String("String"),
-		ReservedDBInstancesOfferingId: aws.String("String"),
-	}
-	resp, err := svc.DescribeReservedDBInstancesOfferings(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_DescribeSourceRegions() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DescribeSourceRegionsInput{
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
-		},
-		Marker:     aws.String("String"),
-		MaxRecords: aws.Int64(1),
-		RegionName: aws.String("String"),
-	}
-	resp, err := svc.DescribeSourceRegions(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_DownloadDBLogFilePortion() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.DownloadDBLogFilePortionInput{
-		DBInstanceIdentifier: aws.String("String"), // Required
-		LogFileName:          aws.String("String"), // Required
-		Marker:               aws.String("String"),
-		NumberOfLines:        aws.Int64(1),
-	}
-	resp, err := svc.DownloadDBLogFilePortion(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_FailoverDBCluster() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.FailoverDBClusterInput{
-		DBClusterIdentifier:        aws.String("String"),
-		TargetDBInstanceIdentifier: aws.String("String"),
-	}
-	resp, err := svc.FailoverDBCluster(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_ListTagsForResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.ListTagsForResourceInput{
-		ResourceName: aws.String("String"), // Required
-		Filters: []*rds.Filter{
-			{ // Required
-				Name: aws.String("String"), // Required
-				Values: []*string{ // Required
-					aws.String("String"), // Required
-					// More values...
-				},
-			},
-			// More values...
 		},
 	}
-	resp, err := svc.ListTagsForResource(params)
 
+	result, err := svc.ModifyDBClusterParameterGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBParameterGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidDBParameterGroupStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBParameterGroupStateFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_ModifyDBCluster() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.ModifyDBClusterInput{
-		DBClusterIdentifier:             aws.String("String"), // Required
-		ApplyImmediately:                aws.Bool(true),
-		BackupRetentionPeriod:           aws.Int64(1),
-		DBClusterParameterGroupName:     aws.String("String"),
-		EnableIAMDatabaseAuthentication: aws.Bool(true),
-		MasterUserPassword:              aws.String("String"),
-		NewDBClusterIdentifier:          aws.String("String"),
-		OptionGroupName:                 aws.String("String"),
-		Port:                            aws.Int64(1),
-		PreferredBackupWindow:      aws.String("String"),
-		PreferredMaintenanceWindow: aws.String("String"),
-		VpcSecurityGroupIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.ModifyDBCluster(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_ModifyDBClusterParameterGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.ModifyDBClusterParameterGroupInput{
-		DBClusterParameterGroupName: aws.String("String"), // Required
-		Parameters: []*rds.Parameter{ // Required
-			{ // Required
-				AllowedValues:        aws.String("String"),
-				ApplyMethod:          aws.String("ApplyMethod"),
-				ApplyType:            aws.String("String"),
-				DataType:             aws.String("String"),
-				Description:          aws.String("String"),
-				IsModifiable:         aws.Bool(true),
-				MinimumEngineVersion: aws.String("String"),
-				ParameterName:        aws.String("String"),
-				ParameterValue:       aws.String("String"),
-				Source:               aws.String("String"),
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.ModifyDBClusterParameterGroup(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_ModifyDBClusterSnapshotAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.ModifyDBClusterSnapshotAttributeInput{
-		AttributeName:               aws.String("String"), // Required
-		DBClusterSnapshotIdentifier: aws.String("String"), // Required
+// To add or remove access to a manual DB cluster snapshot
+//
+// The following example gives two AWS accounts access to a manual DB cluster snapshot
+// and ensures that the DB cluster snapshot is private by removing the value "all".
+func ExampleRDS_ModifyDBClusterSnapshotAttribute_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.ModifyDBClusterSnapshotAttributeInput{
+		AttributeName:               aws.String("restore"),
+		DBClusterSnapshotIdentifier: aws.String("manual-cluster-snapshot1"),
 		ValuesToAdd: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("123451234512"),
+			aws.String("123456789012"),
 		},
 		ValuesToRemove: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("all"),
 		},
 	}
-	resp, err := svc.ModifyDBClusterSnapshotAttribute(params)
 
+	result, err := svc.ModifyDBClusterSnapshotAttribute(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBClusterSnapshotNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterSnapshotNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidDBClusterSnapshotStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBClusterSnapshotStateFault, aerr.Error())
+			case rds.ErrCodeSharedSnapshotQuotaExceededFault:
+				fmt.Println(rds.ErrCodeSharedSnapshotQuotaExceededFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_ModifyDBInstance() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.ModifyDBInstanceInput{
-		DBInstanceIdentifier:     aws.String("String"), // Required
-		AllocatedStorage:         aws.Int64(1),
-		AllowMajorVersionUpgrade: aws.Bool(true),
-		ApplyImmediately:         aws.Bool(true),
-		AutoMinorVersionUpgrade:  aws.Bool(true),
-		BackupRetentionPeriod:    aws.Int64(1),
-		CACertificateIdentifier:  aws.String("String"),
-		CopyTagsToSnapshot:       aws.Bool(true),
-		DBInstanceClass:          aws.String("String"),
-		DBParameterGroupName:     aws.String("String"),
-		DBPortNumber:             aws.Int64(1),
-		DBSecurityGroups: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		DBSubnetGroupName:               aws.String("String"),
-		Domain:                          aws.String("String"),
-		DomainIAMRoleName:               aws.String("String"),
-		EnableIAMDatabaseAuthentication: aws.Bool(true),
-		EngineVersion:                   aws.String("String"),
-		Iops:                            aws.Int64(1),
-		LicenseModel:                    aws.String("String"),
-		MasterUserPassword:              aws.String("String"),
-		MonitoringInterval:              aws.Int64(1),
-		MonitoringRoleArn:               aws.String("String"),
-		MultiAZ:                         aws.Bool(true),
-		NewDBInstanceIdentifier:         aws.String("String"),
-		OptionGroupName:                 aws.String("String"),
-		PreferredBackupWindow:           aws.String("String"),
-		PreferredMaintenanceWindow:      aws.String("String"),
-		PromotionTier:                   aws.Int64(1),
-		PubliclyAccessible:              aws.Bool(true),
-		StorageType:                     aws.String("String"),
-		TdeCredentialArn:                aws.String("String"),
-		TdeCredentialPassword:           aws.String("String"),
-		VpcSecurityGroupIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
+// To change DB instance settings
+//
+// This example immediately changes the specified settings for the specified DB instance.
+func ExampleRDS_ModifyDBInstance_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.ModifyDBInstanceInput{
+		AllocatedStorage:           aws.Int64(10),
+		ApplyImmediately:           aws.Bool(true),
+		BackupRetentionPeriod:      aws.Int64(1),
+		DBInstanceClass:            aws.String("db.t2.small"),
+		DBInstanceIdentifier:       aws.String("mymysqlinstance"),
+		MasterUserPassword:         aws.String("mynewpassword"),
+		PreferredBackupWindow:      aws.String("04:00-04:30"),
+		PreferredMaintenanceWindow: aws.String("Tue:05:00-Tue:05:30"),
 	}
-	resp, err := svc.ModifyDBInstance(params)
 
+	result, err := svc.ModifyDBInstance(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeInvalidDBInstanceStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBInstanceStateFault, aerr.Error())
+			case rds.ErrCodeInvalidDBSecurityGroupStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBSecurityGroupStateFault, aerr.Error())
+			case rds.ErrCodeDBInstanceAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBInstanceAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeDBInstanceNotFoundFault:
+				fmt.Println(rds.ErrCodeDBInstanceNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBSecurityGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSecurityGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBParameterGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeInsufficientDBInstanceCapacityFault:
+				fmt.Println(rds.ErrCodeInsufficientDBInstanceCapacityFault, aerr.Error())
+			case rds.ErrCodeStorageQuotaExceededFault:
+				fmt.Println(rds.ErrCodeStorageQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeInvalidVPCNetworkStateFault:
+				fmt.Println(rds.ErrCodeInvalidVPCNetworkStateFault, aerr.Error())
+			case rds.ErrCodeProvisionedIopsNotAvailableInAZFault:
+				fmt.Println(rds.ErrCodeProvisionedIopsNotAvailableInAZFault, aerr.Error())
+			case rds.ErrCodeOptionGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeOptionGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBUpgradeDependencyFailureFault:
+				fmt.Println(rds.ErrCodeDBUpgradeDependencyFailureFault, aerr.Error())
+			case rds.ErrCodeStorageTypeNotSupportedFault:
+				fmt.Println(rds.ErrCodeStorageTypeNotSupportedFault, aerr.Error())
+			case rds.ErrCodeAuthorizationNotFoundFault:
+				fmt.Println(rds.ErrCodeAuthorizationNotFoundFault, aerr.Error())
+			case rds.ErrCodeCertificateNotFoundFault:
+				fmt.Println(rds.ErrCodeCertificateNotFoundFault, aerr.Error())
+			case rds.ErrCodeDomainNotFoundFault:
+				fmt.Println(rds.ErrCodeDomainNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_ModifyDBParameterGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.ModifyDBParameterGroupInput{
-		DBParameterGroupName: aws.String("String"), // Required
-		Parameters: []*rds.Parameter{ // Required
-			{ // Required
-				AllowedValues:        aws.String("String"),
-				ApplyMethod:          aws.String("ApplyMethod"),
-				ApplyType:            aws.String("String"),
-				DataType:             aws.String("String"),
-				Description:          aws.String("String"),
-				IsModifiable:         aws.Bool(true),
-				MinimumEngineVersion: aws.String("String"),
-				ParameterName:        aws.String("String"),
-				ParameterValue:       aws.String("String"),
-				Source:               aws.String("String"),
+// To change DB parameter group settings
+//
+// This example immediately changes the specified setting for the specified DB parameter
+// group.
+func ExampleRDS_ModifyDBParameterGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.ModifyDBParameterGroupInput{
+		DBParameterGroupName: aws.String("mymysqlparametergroup"),
+		Parameters: []*rds.Parameter{
+			{
+				ApplyMethod:    aws.String("immediate"),
+				ParameterName:  aws.String("time_zone"),
+				ParameterValue: aws.String("America/Phoenix"),
 			},
-			// More values...
 		},
 	}
-	resp, err := svc.ModifyDBParameterGroup(params)
 
+	result, err := svc.ModifyDBParameterGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBParameterGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidDBParameterGroupStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBParameterGroupStateFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_ModifyDBSnapshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.ModifyDBSnapshotInput{
-		DBSnapshotIdentifier: aws.String("String"), // Required
-		EngineVersion:        aws.String("String"),
-	}
-	resp, err := svc.ModifyDBSnapshot(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_ModifyDBSnapshotAttribute() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.ModifyDBSnapshotAttributeInput{
-		AttributeName:        aws.String("String"), // Required
-		DBSnapshotIdentifier: aws.String("String"), // Required
+// To change DB snapshot attributes
+//
+// This example adds the specified attribute for the specified DB snapshot.
+func ExampleRDS_ModifyDBSnapshotAttribute_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.ModifyDBSnapshotAttributeInput{
+		AttributeName:        aws.String("restore"),
+		DBSnapshotIdentifier: aws.String("mydbsnapshot"),
 		ValuesToAdd: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		ValuesToRemove: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("all"),
 		},
 	}
-	resp, err := svc.ModifyDBSnapshotAttribute(params)
 
+	result, err := svc.ModifyDBSnapshotAttribute(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBSnapshotNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSnapshotNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidDBSnapshotStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBSnapshotStateFault, aerr.Error())
+			case rds.ErrCodeSharedSnapshotQuotaExceededFault:
+				fmt.Println(rds.ErrCodeSharedSnapshotQuotaExceededFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_ModifyDBSubnetGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.ModifyDBSubnetGroupInput{
-		DBSubnetGroupName: aws.String("String"), // Required
-		SubnetIds: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
+// To change DB subnet group settings
+//
+// This example changes the specified setting for the specified DB subnet group.
+func ExampleRDS_ModifyDBSubnetGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.ModifyDBSubnetGroupInput{
+		DBSubnetGroupName: aws.String("mydbsubnetgroup"),
+		SubnetIds: []*string{
+			aws.String("subnet-70e1975a"),
+			aws.String("subnet-747a5c49"),
 		},
-		DBSubnetGroupDescription: aws.String("String"),
 	}
-	resp, err := svc.ModifyDBSubnetGroup(params)
 
+	result, err := svc.ModifyDBSubnetGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBSubnetGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSubnetGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBSubnetQuotaExceededFault:
+				fmt.Println(rds.ErrCodeDBSubnetQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeSubnetAlreadyInUse:
+				fmt.Println(rds.ErrCodeSubnetAlreadyInUse, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs:
+				fmt.Println(rds.ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs, aerr.Error())
+			case rds.ErrCodeInvalidSubnet:
+				fmt.Println(rds.ErrCodeInvalidSubnet, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_ModifyEventSubscription() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.ModifyEventSubscriptionInput{
-		SubscriptionName: aws.String("String"), // Required
-		Enabled:          aws.Bool(true),
+// To change event notification subscription settings
+//
+// This example changes the specified setting for the specified event notification subscription.
+func ExampleRDS_ModifyEventSubscription_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.ModifyEventSubscriptionInput{
+		Enabled: aws.Bool(true),
 		EventCategories: []*string{
-			aws.String("String"), // Required
-			// More values...
+			aws.String("deletion"),
+			aws.String("low storage"),
 		},
-		SnsTopicArn: aws.String("String"),
-		SourceType:  aws.String("String"),
+		SourceType:       aws.String("db-instance"),
+		SubscriptionName: aws.String("mymysqleventsubscription"),
 	}
-	resp, err := svc.ModifyEventSubscription(params)
 
+	result, err := svc.ModifyEventSubscription(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeEventSubscriptionQuotaExceededFault:
+				fmt.Println(rds.ErrCodeEventSubscriptionQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeSubscriptionNotFoundFault:
+				fmt.Println(rds.ErrCodeSubscriptionNotFoundFault, aerr.Error())
+			case rds.ErrCodeSNSInvalidTopicFault:
+				fmt.Println(rds.ErrCodeSNSInvalidTopicFault, aerr.Error())
+			case rds.ErrCodeSNSNoAuthorizationFault:
+				fmt.Println(rds.ErrCodeSNSNoAuthorizationFault, aerr.Error())
+			case rds.ErrCodeSNSTopicArnNotFoundFault:
+				fmt.Println(rds.ErrCodeSNSTopicArnNotFoundFault, aerr.Error())
+			case rds.ErrCodeSubscriptionCategoryNotFoundFault:
+				fmt.Println(rds.ErrCodeSubscriptionCategoryNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_ModifyOptionGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.ModifyOptionGroupInput{
-		OptionGroupName:  aws.String("String"), // Required
+// To modify an option group
+//
+// The following example adds an option to an option group.
+func ExampleRDS_ModifyOptionGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.ModifyOptionGroupInput{
 		ApplyImmediately: aws.Bool(true),
+		OptionGroupName:  aws.String("myawsuser-og02"),
 		OptionsToInclude: []*rds.OptionConfiguration{
-			{ // Required
-				OptionName: aws.String("String"), // Required
+			{
 				DBSecurityGroupMemberships: []*string{
-					aws.String("String"), // Required
-					// More values...
+					aws.String("default"),
 				},
-				OptionSettings: []*rds.OptionSetting{
-					{ // Required
-						AllowedValues: aws.String("String"),
-						ApplyType:     aws.String("String"),
-						DataType:      aws.String("String"),
-						DefaultValue:  aws.String("String"),
-						Description:   aws.String("String"),
-						IsCollection:  aws.Bool(true),
-						IsModifiable:  aws.Bool(true),
-						Name:          aws.String("String"),
-						Value:         aws.String("String"),
-					},
-					// More values...
-				},
-				OptionVersion: aws.String("String"),
-				Port:          aws.Int64(1),
-				VpcSecurityGroupMemberships: []*string{
-					aws.String("String"), // Required
-					// More values...
-				},
+				OptionName: aws.String("MEMCACHED"),
 			},
-			// More values...
-		},
-		OptionsToRemove: []*string{
-			aws.String("String"), // Required
-			// More values...
 		},
 	}
-	resp, err := svc.ModifyOptionGroup(params)
 
+	result, err := svc.ModifyOptionGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeInvalidOptionGroupStateFault:
+				fmt.Println(rds.ErrCodeInvalidOptionGroupStateFault, aerr.Error())
+			case rds.ErrCodeOptionGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeOptionGroupNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_PromoteReadReplica() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.PromoteReadReplicaInput{
-		DBInstanceIdentifier:  aws.String("String"), // Required
+// To promote a read replica
+//
+// This example promotes the specified read replica and sets its backup retention period
+// and preferred backup window.
+func ExampleRDS_PromoteReadReplica_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.PromoteReadReplicaInput{
 		BackupRetentionPeriod: aws.Int64(1),
-		PreferredBackupWindow: aws.String("String"),
+		DBInstanceIdentifier:  aws.String("mydbreadreplica"),
+		PreferredBackupWindow: aws.String("03:30-04:00"),
 	}
-	resp, err := svc.PromoteReadReplica(params)
 
+	result, err := svc.PromoteReadReplica(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeInvalidDBInstanceStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBInstanceStateFault, aerr.Error())
+			case rds.ErrCodeDBInstanceNotFoundFault:
+				fmt.Println(rds.ErrCodeDBInstanceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_PromoteReadReplicaDBCluster() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.PromoteReadReplicaDBClusterInput{
-		DBClusterIdentifier: aws.String("String"), // Required
+// To purchase a reserved DB instance offering
+//
+// This example purchases a reserved DB instance offering that matches the specified
+// settings.
+func ExampleRDS_PurchaseReservedDBInstancesOffering_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.PurchaseReservedDBInstancesOfferingInput{
+		ReservedDBInstanceId:          aws.String("myreservationid"),
+		ReservedDBInstancesOfferingId: aws.String("fb29428a-646d-4390-850e-5fe89926e727"),
 	}
-	resp, err := svc.PromoteReadReplicaDBCluster(params)
 
+	result, err := svc.PurchaseReservedDBInstancesOffering(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeReservedDBInstancesOfferingNotFoundFault:
+				fmt.Println(rds.ErrCodeReservedDBInstancesOfferingNotFoundFault, aerr.Error())
+			case rds.ErrCodeReservedDBInstanceAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeReservedDBInstanceAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeReservedDBInstanceQuotaExceededFault:
+				fmt.Println(rds.ErrCodeReservedDBInstanceQuotaExceededFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_PurchaseReservedDBInstancesOffering() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.PurchaseReservedDBInstancesOfferingInput{
-		ReservedDBInstancesOfferingId: aws.String("String"), // Required
-		DBInstanceCount:               aws.Int64(1),
-		ReservedDBInstanceId:          aws.String("String"),
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
+// To reboot a DB instance
+//
+// This example reboots the specified DB instance without forcing a failover.
+func ExampleRDS_RebootDBInstance_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.RebootDBInstanceInput{
+		DBInstanceIdentifier: aws.String("mymysqlinstance"),
+		ForceFailover:        aws.Bool(false),
 	}
-	resp, err := svc.PurchaseReservedDBInstancesOffering(params)
 
+	result, err := svc.RebootDBInstance(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeInvalidDBInstanceStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBInstanceStateFault, aerr.Error())
+			case rds.ErrCodeDBInstanceNotFoundFault:
+				fmt.Println(rds.ErrCodeDBInstanceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_RebootDBInstance() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.RebootDBInstanceInput{
-		DBInstanceIdentifier: aws.String("String"), // Required
-		ForceFailover:        aws.Bool(true),
+// To remove a source identifier from a DB event subscription
+//
+// This example removes the specified source identifier from the specified DB event
+// subscription.
+func ExampleRDS_RemoveSourceIdentifierFromSubscription_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.RemoveSourceIdentifierFromSubscriptionInput{
+		SourceIdentifier: aws.String("mymysqlinstance"),
+		SubscriptionName: aws.String("myeventsubscription"),
 	}
-	resp, err := svc.RebootDBInstance(params)
 
+	result, err := svc.RemoveSourceIdentifierFromSubscription(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeSubscriptionNotFoundFault:
+				fmt.Println(rds.ErrCodeSubscriptionNotFoundFault, aerr.Error())
+			case rds.ErrCodeSourceNotFoundFault:
+				fmt.Println(rds.ErrCodeSourceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_RemoveRoleFromDBCluster() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.RemoveRoleFromDBClusterInput{
-		DBClusterIdentifier: aws.String("String"), // Required
-		RoleArn:             aws.String("String"), // Required
+// To remove tags from a resource
+//
+// This example removes the specified tag associated with the specified DB option group.
+func ExampleRDS_RemoveTagsFromResource_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.RemoveTagsFromResourceInput{
+		ResourceName: aws.String("arn:aws:rds:us-east-1:992648334831:og:mydboptiongroup"),
+		TagKeys: []*string{
+			aws.String("MyKey"),
+		},
 	}
-	resp, err := svc.RemoveRoleFromDBCluster(params)
 
+	result, err := svc.RemoveTagsFromResource(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBInstanceNotFoundFault:
+				fmt.Println(rds.ErrCodeDBInstanceNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBSnapshotNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSnapshotNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBClusterNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_RemoveSourceIdentifierFromSubscription() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.RemoveSourceIdentifierFromSubscriptionInput{
-		SourceIdentifier: aws.String("String"), // Required
-		SubscriptionName: aws.String("String"), // Required
+// To reset the values of a DB cluster parameter group
+//
+// This example resets all parameters for the specified DB cluster parameter group to
+// their default values.
+func ExampleRDS_ResetDBClusterParameterGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.ResetDBClusterParameterGroupInput{
+		DBClusterParameterGroupName: aws.String("mydbclusterparametergroup"),
+		ResetAllParameters:          aws.Bool(true),
 	}
-	resp, err := svc.RemoveSourceIdentifierFromSubscription(params)
 
+	result, err := svc.ResetDBClusterParameterGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeInvalidDBParameterGroupStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBParameterGroupStateFault, aerr.Error())
+			case rds.ErrCodeDBParameterGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_RemoveTagsFromResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.RemoveTagsFromResourceInput{
-		ResourceName: aws.String("String"), // Required
-		TagKeys: []*string{ // Required
-			aws.String("String"), // Required
-			// More values...
-		},
+// To reset the values of a DB parameter group
+//
+// This example resets all parameters for the specified DB parameter group to their
+// default values.
+func ExampleRDS_ResetDBParameterGroup_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.ResetDBParameterGroupInput{
+		DBParameterGroupName: aws.String("mydbparametergroup"),
+		ResetAllParameters:   aws.Bool(true),
 	}
-	resp, err := svc.RemoveTagsFromResource(params)
 
+	result, err := svc.ResetDBParameterGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeInvalidDBParameterGroupStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBParameterGroupStateFault, aerr.Error())
+			case rds.ErrCodeDBParameterGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBParameterGroupNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_ResetDBClusterParameterGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.ResetDBClusterParameterGroupInput{
-		DBClusterParameterGroupName: aws.String("String"), // Required
-		Parameters: []*rds.Parameter{
-			{ // Required
-				AllowedValues:        aws.String("String"),
-				ApplyMethod:          aws.String("ApplyMethod"),
-				ApplyType:            aws.String("String"),
-				DataType:             aws.String("String"),
-				Description:          aws.String("String"),
-				IsModifiable:         aws.Bool(true),
-				MinimumEngineVersion: aws.String("String"),
-				ParameterName:        aws.String("String"),
-				ParameterValue:       aws.String("String"),
-				Source:               aws.String("String"),
-			},
-			// More values...
-		},
-		ResetAllParameters: aws.Bool(true),
+// To restore an Amazon Aurora DB cluster from a DB cluster snapshot
+//
+// The following example restores an Amazon Aurora DB cluster from a DB cluster snapshot.
+func ExampleRDS_RestoreDBClusterFromSnapshot_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.RestoreDBClusterFromSnapshotInput{
+		DBClusterIdentifier: aws.String("restored-cluster1"),
+		Engine:              aws.String("aurora"),
+		SnapshotIdentifier:  aws.String("sample-cluster-snapshot1"),
 	}
-	resp, err := svc.ResetDBClusterParameterGroup(params)
 
+	result, err := svc.RestoreDBClusterFromSnapshot(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBClusterAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBClusterAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeDBClusterQuotaExceededFault:
+				fmt.Println(rds.ErrCodeDBClusterQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeStorageQuotaExceededFault:
+				fmt.Println(rds.ErrCodeStorageQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSubnetGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBSnapshotNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSnapshotNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBClusterSnapshotNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterSnapshotNotFoundFault, aerr.Error())
+			case rds.ErrCodeInsufficientDBClusterCapacityFault:
+				fmt.Println(rds.ErrCodeInsufficientDBClusterCapacityFault, aerr.Error())
+			case rds.ErrCodeInsufficientStorageClusterCapacityFault:
+				fmt.Println(rds.ErrCodeInsufficientStorageClusterCapacityFault, aerr.Error())
+			case rds.ErrCodeInvalidDBSnapshotStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBSnapshotStateFault, aerr.Error())
+			case rds.ErrCodeInvalidDBClusterSnapshotStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBClusterSnapshotStateFault, aerr.Error())
+			case rds.ErrCodeInvalidVPCNetworkStateFault:
+				fmt.Println(rds.ErrCodeInvalidVPCNetworkStateFault, aerr.Error())
+			case rds.ErrCodeInvalidRestoreFault:
+				fmt.Println(rds.ErrCodeInvalidRestoreFault, aerr.Error())
+			case rds.ErrCodeInvalidSubnet:
+				fmt.Println(rds.ErrCodeInvalidSubnet, aerr.Error())
+			case rds.ErrCodeOptionGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeOptionGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeKMSKeyNotAccessibleFault:
+				fmt.Println(rds.ErrCodeKMSKeyNotAccessibleFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_ResetDBParameterGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.ResetDBParameterGroupInput{
-		DBParameterGroupName: aws.String("String"), // Required
-		Parameters: []*rds.Parameter{
-			{ // Required
-				AllowedValues:        aws.String("String"),
-				ApplyMethod:          aws.String("ApplyMethod"),
-				ApplyType:            aws.String("String"),
-				DataType:             aws.String("String"),
-				Description:          aws.String("String"),
-				IsModifiable:         aws.Bool(true),
-				MinimumEngineVersion: aws.String("String"),
-				ParameterName:        aws.String("String"),
-				ParameterValue:       aws.String("String"),
-				Source:               aws.String("String"),
-			},
-			// More values...
-		},
-		ResetAllParameters: aws.Bool(true),
+// To restore a DB cluster to a point in time.
+//
+// The following example restores a DB cluster to a new DB cluster at a point in time
+// from the source DB cluster.
+func ExampleRDS_RestoreDBClusterToPointInTime_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.RestoreDBClusterToPointInTimeInput{
+		DBClusterIdentifier:       aws.String("sample-restored-cluster1"),
+		RestoreToTime:             parseTime("2006-01-02T15:04:05Z", "2016-09-13T18:45:00Z"),
+		SourceDBClusterIdentifier: aws.String("sample-cluster1"),
 	}
-	resp, err := svc.ResetDBParameterGroup(params)
 
+	result, err := svc.RestoreDBClusterToPointInTime(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBClusterAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBClusterAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeDBClusterNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBClusterQuotaExceededFault:
+				fmt.Println(rds.ErrCodeDBClusterQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeDBClusterSnapshotNotFoundFault:
+				fmt.Println(rds.ErrCodeDBClusterSnapshotNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSubnetGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeInsufficientDBClusterCapacityFault:
+				fmt.Println(rds.ErrCodeInsufficientDBClusterCapacityFault, aerr.Error())
+			case rds.ErrCodeInsufficientStorageClusterCapacityFault:
+				fmt.Println(rds.ErrCodeInsufficientStorageClusterCapacityFault, aerr.Error())
+			case rds.ErrCodeInvalidDBClusterSnapshotStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBClusterSnapshotStateFault, aerr.Error())
+			case rds.ErrCodeInvalidDBClusterStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBClusterStateFault, aerr.Error())
+			case rds.ErrCodeInvalidDBSnapshotStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBSnapshotStateFault, aerr.Error())
+			case rds.ErrCodeInvalidRestoreFault:
+				fmt.Println(rds.ErrCodeInvalidRestoreFault, aerr.Error())
+			case rds.ErrCodeInvalidSubnet:
+				fmt.Println(rds.ErrCodeInvalidSubnet, aerr.Error())
+			case rds.ErrCodeInvalidVPCNetworkStateFault:
+				fmt.Println(rds.ErrCodeInvalidVPCNetworkStateFault, aerr.Error())
+			case rds.ErrCodeKMSKeyNotAccessibleFault:
+				fmt.Println(rds.ErrCodeKMSKeyNotAccessibleFault, aerr.Error())
+			case rds.ErrCodeOptionGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeOptionGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeStorageQuotaExceededFault:
+				fmt.Println(rds.ErrCodeStorageQuotaExceededFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_RestoreDBClusterFromS3() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.RestoreDBClusterFromS3Input{
-		DBClusterIdentifier: aws.String("String"), // Required
-		Engine:              aws.String("String"), // Required
-		MasterUserPassword:  aws.String("String"), // Required
-		MasterUsername:      aws.String("String"), // Required
-		S3BucketName:        aws.String("String"), // Required
-		S3IngestionRoleArn:  aws.String("String"), // Required
-		SourceEngine:        aws.String("String"), // Required
-		SourceEngineVersion: aws.String("String"), // Required
-		AvailabilityZones: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		BackupRetentionPeriod:           aws.Int64(1),
-		CharacterSetName:                aws.String("String"),
-		DBClusterParameterGroupName:     aws.String("String"),
-		DBSubnetGroupName:               aws.String("String"),
-		DatabaseName:                    aws.String("String"),
-		EnableIAMDatabaseAuthentication: aws.Bool(true),
-		EngineVersion:                   aws.String("String"),
-		KmsKeyId:                        aws.String("String"),
-		OptionGroupName:                 aws.String("String"),
-		Port:                            aws.Int64(1),
-		PreferredBackupWindow:      aws.String("String"),
-		PreferredMaintenanceWindow: aws.String("String"),
-		S3Prefix:                   aws.String("String"),
-		StorageEncrypted:           aws.Bool(true),
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
-		VpcSecurityGroupIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
+// To restore a DB instance from a DB snapshot.
+//
+// The following example restores a DB instance from a DB snapshot.
+func ExampleRDS_RestoreDBInstanceFromDBSnapshot_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.RestoreDBInstanceFromDBSnapshotInput{
+		DBInstanceIdentifier: aws.String("mysqldb-restored"),
+		DBSnapshotIdentifier: aws.String("rds:mysqldb-2014-04-22-08-15"),
 	}
-	resp, err := svc.RestoreDBClusterFromS3(params)
 
+	result, err := svc.RestoreDBInstanceFromDBSnapshot(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBInstanceAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBInstanceAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeDBSnapshotNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSnapshotNotFoundFault, aerr.Error())
+			case rds.ErrCodeInstanceQuotaExceededFault:
+				fmt.Println(rds.ErrCodeInstanceQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeInsufficientDBInstanceCapacityFault:
+				fmt.Println(rds.ErrCodeInsufficientDBInstanceCapacityFault, aerr.Error())
+			case rds.ErrCodeInvalidDBSnapshotStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBSnapshotStateFault, aerr.Error())
+			case rds.ErrCodeStorageQuotaExceededFault:
+				fmt.Println(rds.ErrCodeStorageQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeInvalidVPCNetworkStateFault:
+				fmt.Println(rds.ErrCodeInvalidVPCNetworkStateFault, aerr.Error())
+			case rds.ErrCodeInvalidRestoreFault:
+				fmt.Println(rds.ErrCodeInvalidRestoreFault, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSubnetGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs:
+				fmt.Println(rds.ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs, aerr.Error())
+			case rds.ErrCodeInvalidSubnet:
+				fmt.Println(rds.ErrCodeInvalidSubnet, aerr.Error())
+			case rds.ErrCodeProvisionedIopsNotAvailableInAZFault:
+				fmt.Println(rds.ErrCodeProvisionedIopsNotAvailableInAZFault, aerr.Error())
+			case rds.ErrCodeOptionGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeOptionGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeStorageTypeNotSupportedFault:
+				fmt.Println(rds.ErrCodeStorageTypeNotSupportedFault, aerr.Error())
+			case rds.ErrCodeAuthorizationNotFoundFault:
+				fmt.Println(rds.ErrCodeAuthorizationNotFoundFault, aerr.Error())
+			case rds.ErrCodeKMSKeyNotAccessibleFault:
+				fmt.Println(rds.ErrCodeKMSKeyNotAccessibleFault, aerr.Error())
+			case rds.ErrCodeDBSecurityGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSecurityGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeDomainNotFoundFault:
+				fmt.Println(rds.ErrCodeDomainNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_RestoreDBClusterFromSnapshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.RestoreDBClusterFromSnapshotInput{
-		DBClusterIdentifier: aws.String("String"), // Required
-		Engine:              aws.String("String"), // Required
-		SnapshotIdentifier:  aws.String("String"), // Required
-		AvailabilityZones: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		DBSubnetGroupName:               aws.String("String"),
-		DatabaseName:                    aws.String("String"),
-		EnableIAMDatabaseAuthentication: aws.Bool(true),
-		EngineVersion:                   aws.String("String"),
-		KmsKeyId:                        aws.String("String"),
-		OptionGroupName:                 aws.String("String"),
-		Port:                            aws.Int64(1),
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
-		VpcSecurityGroupIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
+// To restore a DB instance to a point in time.
+//
+// The following example restores a DB instance to a new DB instance at a point in time
+// from the source DB instance.
+func ExampleRDS_RestoreDBInstanceToPointInTime_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.RestoreDBInstanceToPointInTimeInput{
+		RestoreTime:                parseTime("2006-01-02T15:04:05Z", "2016-09-13T18:45:00Z"),
+		SourceDBInstanceIdentifier: aws.String("mysql-sample"),
+		TargetDBInstanceIdentifier: aws.String("mysql-sample-restored"),
 	}
-	resp, err := svc.RestoreDBClusterFromSnapshot(params)
 
+	result, err := svc.RestoreDBInstanceToPointInTime(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBInstanceAlreadyExistsFault:
+				fmt.Println(rds.ErrCodeDBInstanceAlreadyExistsFault, aerr.Error())
+			case rds.ErrCodeDBInstanceNotFoundFault:
+				fmt.Println(rds.ErrCodeDBInstanceNotFoundFault, aerr.Error())
+			case rds.ErrCodeInstanceQuotaExceededFault:
+				fmt.Println(rds.ErrCodeInstanceQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeInsufficientDBInstanceCapacityFault:
+				fmt.Println(rds.ErrCodeInsufficientDBInstanceCapacityFault, aerr.Error())
+			case rds.ErrCodeInvalidDBInstanceStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBInstanceStateFault, aerr.Error())
+			case rds.ErrCodePointInTimeRestoreNotEnabledFault:
+				fmt.Println(rds.ErrCodePointInTimeRestoreNotEnabledFault, aerr.Error())
+			case rds.ErrCodeStorageQuotaExceededFault:
+				fmt.Println(rds.ErrCodeStorageQuotaExceededFault, aerr.Error())
+			case rds.ErrCodeInvalidVPCNetworkStateFault:
+				fmt.Println(rds.ErrCodeInvalidVPCNetworkStateFault, aerr.Error())
+			case rds.ErrCodeInvalidRestoreFault:
+				fmt.Println(rds.ErrCodeInvalidRestoreFault, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSubnetGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs:
+				fmt.Println(rds.ErrCodeDBSubnetGroupDoesNotCoverEnoughAZs, aerr.Error())
+			case rds.ErrCodeInvalidSubnet:
+				fmt.Println(rds.ErrCodeInvalidSubnet, aerr.Error())
+			case rds.ErrCodeProvisionedIopsNotAvailableInAZFault:
+				fmt.Println(rds.ErrCodeProvisionedIopsNotAvailableInAZFault, aerr.Error())
+			case rds.ErrCodeOptionGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeOptionGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeStorageTypeNotSupportedFault:
+				fmt.Println(rds.ErrCodeStorageTypeNotSupportedFault, aerr.Error())
+			case rds.ErrCodeAuthorizationNotFoundFault:
+				fmt.Println(rds.ErrCodeAuthorizationNotFoundFault, aerr.Error())
+			case rds.ErrCodeKMSKeyNotAccessibleFault:
+				fmt.Println(rds.ErrCodeKMSKeyNotAccessibleFault, aerr.Error())
+			case rds.ErrCodeDBSecurityGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSecurityGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeDomainNotFoundFault:
+				fmt.Println(rds.ErrCodeDomainNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleRDS_RestoreDBClusterToPointInTime() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.RestoreDBClusterToPointInTimeInput{
-		DBClusterIdentifier:             aws.String("String"), // Required
-		SourceDBClusterIdentifier:       aws.String("String"), // Required
-		DBSubnetGroupName:               aws.String("String"),
-		EnableIAMDatabaseAuthentication: aws.Bool(true),
-		KmsKeyId:                        aws.String("String"),
-		OptionGroupName:                 aws.String("String"),
-		Port:                            aws.Int64(1),
-		RestoreToTime:                   aws.Time(time.Now()),
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
-		UseLatestRestorableTime: aws.Bool(true),
-		VpcSecurityGroupIds: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
+// To revoke ingress for a DB security group
+//
+// This example revokes ingress for the specified CIDR block associated with the specified
+// DB security group.
+func ExampleRDS_RevokeDBSecurityGroupIngress_shared00() {
+	svc := rds.New(session.New())
+	input := &rds.RevokeDBSecurityGroupIngressInput{
+		CIDRIP:              aws.String("203.0.113.5/32"),
+		DBSecurityGroupName: aws.String("mydbsecuritygroup"),
 	}
-	resp, err := svc.RestoreDBClusterToPointInTime(params)
 
+	result, err := svc.RevokeDBSecurityGroupIngress(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBSecurityGroupNotFoundFault:
+				fmt.Println(rds.ErrCodeDBSecurityGroupNotFoundFault, aerr.Error())
+			case rds.ErrCodeAuthorizationNotFoundFault:
+				fmt.Println(rds.ErrCodeAuthorizationNotFoundFault, aerr.Error())
+			case rds.ErrCodeInvalidDBSecurityGroupStateFault:
+				fmt.Println(rds.ErrCodeInvalidDBSecurityGroupStateFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_RestoreDBInstanceFromDBSnapshot() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.RestoreDBInstanceFromDBSnapshotInput{
-		DBInstanceIdentifier:            aws.String("String"), // Required
-		DBSnapshotIdentifier:            aws.String("String"), // Required
-		AutoMinorVersionUpgrade:         aws.Bool(true),
-		AvailabilityZone:                aws.String("String"),
-		CopyTagsToSnapshot:              aws.Bool(true),
-		DBInstanceClass:                 aws.String("String"),
-		DBName:                          aws.String("String"),
-		DBSubnetGroupName:               aws.String("String"),
-		Domain:                          aws.String("String"),
-		DomainIAMRoleName:               aws.String("String"),
-		EnableIAMDatabaseAuthentication: aws.Bool(true),
-		Engine:             aws.String("String"),
-		Iops:               aws.Int64(1),
-		LicenseModel:       aws.String("String"),
-		MultiAZ:            aws.Bool(true),
-		OptionGroupName:    aws.String("String"),
-		Port:               aws.Int64(1),
-		PubliclyAccessible: aws.Bool(true),
-		StorageType:        aws.String("String"),
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
-		TdeCredentialArn:      aws.String("String"),
-		TdeCredentialPassword: aws.String("String"),
-	}
-	resp, err := svc.RestoreDBInstanceFromDBSnapshot(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_RestoreDBInstanceToPointInTime() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.RestoreDBInstanceToPointInTimeInput{
-		SourceDBInstanceIdentifier:      aws.String("String"), // Required
-		TargetDBInstanceIdentifier:      aws.String("String"), // Required
-		AutoMinorVersionUpgrade:         aws.Bool(true),
-		AvailabilityZone:                aws.String("String"),
-		CopyTagsToSnapshot:              aws.Bool(true),
-		DBInstanceClass:                 aws.String("String"),
-		DBName:                          aws.String("String"),
-		DBSubnetGroupName:               aws.String("String"),
-		Domain:                          aws.String("String"),
-		DomainIAMRoleName:               aws.String("String"),
-		EnableIAMDatabaseAuthentication: aws.Bool(true),
-		Engine:             aws.String("String"),
-		Iops:               aws.Int64(1),
-		LicenseModel:       aws.String("String"),
-		MultiAZ:            aws.Bool(true),
-		OptionGroupName:    aws.String("String"),
-		Port:               aws.Int64(1),
-		PubliclyAccessible: aws.Bool(true),
-		RestoreTime:        aws.Time(time.Now()),
-		StorageType:        aws.String("String"),
-		Tags: []*rds.Tag{
-			{ // Required
-				Key:   aws.String("String"),
-				Value: aws.String("String"),
-			},
-			// More values...
-		},
-		TdeCredentialArn:        aws.String("String"),
-		TdeCredentialPassword:   aws.String("String"),
-		UseLatestRestorableTime: aws.Bool(true),
-	}
-	resp, err := svc.RestoreDBInstanceToPointInTime(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleRDS_RevokeDBSecurityGroupIngress() {
-	sess := session.Must(session.NewSession())
-
-	svc := rds.New(sess)
-
-	params := &rds.RevokeDBSecurityGroupIngressInput{
-		DBSecurityGroupName:     aws.String("String"), // Required
-		CIDRIP:                  aws.String("String"),
-		EC2SecurityGroupId:      aws.String("String"),
-		EC2SecurityGroupName:    aws.String("String"),
-		EC2SecurityGroupOwnerId: aws.String("String"),
-	}
-	resp, err := svc.RevokeDBSecurityGroupIngress(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }

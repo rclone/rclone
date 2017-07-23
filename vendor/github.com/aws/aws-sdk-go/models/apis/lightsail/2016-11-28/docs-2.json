@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "service": "<p>Amazon Lightsail is the easiest way to get started with AWS for developers who just need virtual private servers. Lightsail includes everything you need to launch your project quickly - a virtual machine, SSD-based storage, data transfer, DNS management, and a static IP - for a low, predictable price. You manage those Lightsail servers through the Lightsail console or by using the API or command-line interface (CLI).</p> <p>For more information about Lightsail concepts and tasks, see the <a href=\"http://lightsail.aws.amazon.com/ls/docs\">Lightsail Dev Guide</a>.</p> <p>To use the Lightsail API or the CLI, you will need to use AWS Identity and Access Management (IAM) to generate access keys. For details about how to set this up, see the <a href=\"http://lightsail.aws.amazon.com/ls/docs/how-to/articles/lightsail-how-to-set-up-access-keys-to-use-sdk-api-cli\">Lightsail Dev Guide</a>.</p>",
+  "service": "<p>Amazon Lightsail is the easiest way to get started with AWS for developers who just need virtual private servers. Lightsail includes everything you need to launch your project quickly - a virtual machine, SSD-based storage, data transfer, DNS management, and a static IP - for a low, predictable price. You manage those Lightsail servers through the Lightsail console or by using the API or command-line interface (CLI).</p> <p>For more information about Lightsail concepts and tasks, see the <a href=\"https://lightsail.aws.amazon.com/ls/docs/all\">Lightsail Dev Guide</a>.</p> <p>To use the Lightsail API or the CLI, you will need to use AWS Identity and Access Management (IAM) to generate access keys. For details about how to set this up, see the <a href=\"http://lightsail.aws.amazon.com/ls/docs/how-to/article/lightsail-how-to-set-up-access-keys-to-use-sdk-api-cli\">Lightsail Dev Guide</a>.</p>",
   "operations": {
     "AllocateStaticIp": "<p>Allocates a static IP address.</p>",
     "AttachStaticIp": "<p>Attaches a static IP address to a specific Amazon Lightsail instance.</p>",
@@ -36,13 +36,14 @@
     "GetOperation": "<p>Returns information about a specific operation. Operations include events such as when you create an instance, allocate a static IP, attach a static IP, and so on.</p>",
     "GetOperations": "<p>Returns information about all operations.</p> <p>Results are returned from oldest to newest, up to a maximum of 200. Results can be paged by making each subsequent call to <code>GetOperations</code> use the maximum (last) <code>statusChangedAt</code> value from the previous request.</p>",
     "GetOperationsForResource": "<p>Gets operations for a specific resource (e.g., an instance or a static IP).</p>",
-    "GetRegions": "<p>Returns a list of all valid regions for Amazon Lightsail.</p>",
+    "GetRegions": "<p>Returns a list of all valid regions for Amazon Lightsail. Use the <code>include availability zones</code> parameter to also return the availability zones in a region.</p>",
     "GetStaticIp": "<p>Returns information about a specific static IP.</p>",
     "GetStaticIps": "<p>Returns information about all static IPs in the user's account.</p>",
     "ImportKeyPair": "<p>Imports a public SSH key from a specific key pair.</p>",
     "IsVpcPeered": "<p>Returns a Boolean value indicating whether your Lightsail VPC is peered.</p>",
     "OpenInstancePublicPorts": "<p>Adds public ports to an Amazon Lightsail instance.</p>",
     "PeerVpc": "<p>Tries to peer the Lightsail VPC with the user's default VPC.</p>",
+    "PutInstancePublicPorts": "<p>Sets the specified open ports for an Amazon Lightsail instance, and closes all ports for every protocol not included in the current request.</p>",
     "RebootInstance": "<p>Restarts a specific instance. When your Amazon Lightsail instance is finished rebooting, Lightsail assigns a new public IP address. To use the same IP address after restarting, create a static IP address and attach it to the instance.</p>",
     "ReleaseStaticIp": "<p>Deletes a specific static IP from your account.</p>",
     "StartInstance": "<p>Starts a specific Amazon Lightsail instance from a stopped state. To restart an instance, use the reboot instance operation.</p>",
@@ -96,7 +97,7 @@
     "AvailabilityZoneList": {
       "base": null,
       "refs": {
-        "Region$availabilityZones": "<p>The Availability Zones.</p>"
+        "Region$availabilityZones": "<p>The Availability Zones. Follows the format <code>us-east-1a</code> (case-sensitive).</p>"
       }
     },
     "Base64": {
@@ -627,6 +628,18 @@
         "InstanceNetworking$ports": "<p>An array of key-value pairs containing information about the ports on the instance.</p>"
       }
     },
+    "InstancePortState": {
+      "base": "<p>Describes the port state.</p>",
+      "refs": {
+        "InstancePortStateList$member": null
+      }
+    },
+    "InstancePortStateList": {
+      "base": null,
+      "refs": {
+        "GetInstancePortStatesResult$portStates": "<p>Information about the port states resulting from your request.</p>"
+      }
+    },
     "InstanceSnapshot": {
       "base": "<p>Describes the snapshot of the virtual private server, or <i>instance</i>.</p>",
       "refs": {
@@ -654,7 +667,7 @@
       }
     },
     "InvalidInputException": {
-      "base": "<p>Lightsail throws this exception when user input does not conform to the validation rules of an input field.</p>",
+      "base": "<p>Lightsail throws this exception when user input does not conform to the validation rules of an input field.</p> <note> <p>Domain-related APIs are only available in the N. Virginia (us-east-1) Region. Please set your Region configuration to us-east-1 to create, view, or edit these resources.</p> </note>",
       "refs": {
       }
     },
@@ -757,14 +770,15 @@
     "NetworkProtocol": {
       "base": null,
       "refs": {
-        "InstancePortInfo$protocol": "<p>The protocol. </p>",
+        "InstancePortInfo$protocol": "<p>The protocol being used. Can be one of the following.</p> <ul> <li> <p> <code>tcp</code> - Transmission Control Protocol (TCP) provides reliable, ordered, and error-checked delivery of streamed data between applications running on hosts communicating by an IP network. If you have an application that doesn't require reliable data stream service, use UDP instead.</p> </li> <li> <p> <code>all</code> - All transport layer protocol types. For more general information, see <a href=\"https://en.wikipedia.org/wiki/Transport_layer\">Transport layer</a> on Wikipedia.</p> </li> <li> <p> <code>udp</code> - With User Datagram Protocol (UDP), computer applications can send messages (or datagrams) to other hosts on an Internet Protocol (IP) network. Prior communications are not required to set up transmission channels or data paths. Applications that don't require reliable data stream service can use UDP, which provides a connectionless datagram service that emphasizes reduced latency over reliability. If you do require reliable data stream service, use TCP instead.</p> </li> </ul>",
+        "InstancePortState$protocol": "<p>The protocol being used. Can be one of the following.</p> <ul> <li> <p> <code>tcp</code> - Transmission Control Protocol (TCP) provides reliable, ordered, and error-checked delivery of streamed data between applications running on hosts communicating by an IP network. If you have an application that doesn't require reliable data stream service, use UDP instead.</p> </li> <li> <p> <code>all</code> - All transport layer protocol types. For more general information, see <a href=\"https://en.wikipedia.org/wiki/Transport_layer\">Transport layer</a> on Wikipedia.</p> </li> <li> <p> <code>udp</code> - With User Datagram Protocol (UDP), computer applications can send messages (or datagrams) to other hosts on an Internet Protocol (IP) network. Prior communications are not required to set up transmission channels or data paths. Applications that don't require reliable data stream service can use UDP, which provides a connectionless datagram service that emphasizes reduced latency over reliability. If you do require reliable data stream service, use TCP instead.</p> </li> </ul>",
         "PortInfo$protocol": "<p>The protocol. </p>"
       }
     },
     "NonEmptyString": {
       "base": null,
       "refs": {
-        "AvailabilityZone$zoneName": "<p>The name of the Availability Zone.</p>",
+        "AvailabilityZone$zoneName": "<p>The name of the Availability Zone. The format is <code>us-east-1a</code> (case-sensitive).</p>",
         "AvailabilityZone$state": "<p>The state of the Availability Zone.</p>",
         "Blueprint$blueprintId": "<p>The ID for the virtual private server image (e.g., <code>app_wordpress_4_4</code> or <code>app_lamp_7_0</code>).</p>",
         "Blueprint$group": "<p>The group name of the blueprint (e.g., <code>amazon-linux</code>).</p>",
@@ -818,6 +832,7 @@
         "OpenInstancePublicPortsResult$operation": "<p>An array of key-value pairs containing information about the request operation.</p>",
         "OperationList$member": null,
         "PeerVpcResult$operation": "<p>An array of key-value pairs containing information about the request operation.</p>",
+        "PutInstancePublicPortsResult$operation": "<p>Describes metadata about the operation you just executed.</p>",
         "UnpeerVpcResult$operation": "<p>An array of key-value pairs containing information about the request operation.</p>"
       }
     },
@@ -873,6 +888,8 @@
       "refs": {
         "InstancePortInfo$fromPort": "<p>The first port in the range.</p>",
         "InstancePortInfo$toPort": "<p>The last port in the range.</p>",
+        "InstancePortState$fromPort": "<p>The first port in the range.</p>",
+        "InstancePortState$toPort": "<p>The last port in the range.</p>",
         "PortInfo$fromPort": "<p>The first port in the range.</p>",
         "PortInfo$toPort": "<p>The last port in the range.</p>"
       }
@@ -887,19 +904,30 @@
       "base": "<p>Describes information about the ports on your virtual private server (or <i>instance</i>).</p>",
       "refs": {
         "CloseInstancePublicPortsRequest$portInfo": "<p>Information about the public port you are trying to close.</p>",
-        "OpenInstancePublicPortsRequest$portInfo": "<p>An array of key-value pairs containing information about the port mappings.</p>"
+        "OpenInstancePublicPortsRequest$portInfo": "<p>An array of key-value pairs containing information about the port mappings.</p>",
+        "PortInfoList$member": null
+      }
+    },
+    "PortInfoList": {
+      "base": null,
+      "refs": {
+        "PutInstancePublicPortsRequest$portInfos": "<p>Specifies information about the public port(s).</p>"
       }
     },
     "PortState": {
       "base": null,
       "refs": {
-        "PortStateList$member": null
+        "InstancePortState$state": "<p>Specifies whether the instance port is <code>open</code> or <code>closed</code>.</p>"
       }
     },
-    "PortStateList": {
+    "PutInstancePublicPortsRequest": {
       "base": null,
       "refs": {
-        "GetInstancePortStatesResult$portStates": "<p>Information about the port states resulting from your request.</p>"
+      }
+    },
+    "PutInstancePublicPortsResult": {
+      "base": null,
+      "refs": {
       }
     },
     "RebootInstanceRequest": {
@@ -965,7 +993,7 @@
         "CreateInstanceSnapshotRequest$instanceName": "<p>The Lightsail instance on which to base your snapshot.</p>",
         "CreateInstancesFromSnapshotRequest$instanceSnapshotName": "<p>The name of the instance snapshot on which you are basing your new instances. Use the get instance snapshots operation to return information about your existing snapshots.</p>",
         "CreateInstancesFromSnapshotRequest$keyPairName": "<p>The name for your key pair.</p>",
-        "CreateInstancesRequest$customImageName": "<p>The name for your custom image.</p>",
+        "CreateInstancesRequest$customImageName": "<p>(Deprecated) The name for your custom image.</p> <note> <p>In releases prior to June 12, 2017, this parameter was ignored by the API. It is now deprecated.</p> </note>",
         "CreateInstancesRequest$keyPairName": "<p>The name of your key pair.</p>",
         "CreateKeyPairRequest$keyPairName": "<p>The name for your new key pair.</p>",
         "DeleteInstanceRequest$instanceName": "<p>The name of the instance to delete.</p>",
@@ -992,6 +1020,7 @@
         "KeyPair$name": "<p>The friendly name of the SSH key pair.</p>",
         "OpenInstancePublicPortsRequest$instanceName": "<p>The name of the instance for which you want to open the public ports.</p>",
         "Operation$resourceName": "<p>The resource name.</p>",
+        "PutInstancePublicPortsRequest$instanceName": "<p>The Lightsail instance name of the public port(s) you are setting.</p>",
         "RebootInstanceRequest$instanceName": "<p>The name of the instance to reboot.</p>",
         "ReleaseStaticIpRequest$staticIpName": "<p>The name of the static IP to delete.</p>",
         "StartInstanceRequest$instanceName": "<p>The name of the instance (a virtual private server) to start.</p>",
@@ -1152,9 +1181,9 @@
         "Blueprint$licenseUrl": "<p>The end-user license agreement URL for the image or blueprint.</p>",
         "Bundle$instanceType": "<p>The Amazon EC2 instance type (e.g., <code>t2.micro</code>).</p>",
         "Bundle$name": "<p>A friendly name for the bundle (e.g., <code>Micro</code>).</p>",
-        "CreateInstancesFromSnapshotRequest$availabilityZone": "<p>The Availability Zone where you want to create your instances. Use the following formatting: <code>us-east-1a</code> (case sensitive).</p>",
+        "CreateInstancesFromSnapshotRequest$availabilityZone": "<p>The Availability Zone where you want to create your instances. Use the following formatting: <code>us-east-1a</code> (case sensitive). You can get a list of availability zones by using the <a href=\"http://docs.aws.amazon.com/lightsail/2016-11-28/api-reference/API_GetRegions.html\">get regions</a> operation. Be sure to add the <code>include availability zones</code> parameter to your request.</p>",
         "CreateInstancesFromSnapshotRequest$userData": "<p>You can create a launch script that configures a server with additional user data. For example, <code>apt-get –y update</code>.</p> <note> <p>Depending on the machine image you choose, the command to get software on your instance varies. Amazon Linux and CentOS use <code>yum</code>, Debian and Ubuntu use <code>apt-get</code>, and FreeBSD uses <code>pkg</code>. For a complete list, see the <a href=\"http://lightsail.aws.amazon.com/ls/docs/getting-started/articles/pre-installed-apps\">Dev Guide</a>.</p> </note>",
-        "CreateInstancesRequest$availabilityZone": "<p>The Availability Zone in which to create your instance. Use the following format: <code>us-east-1a</code> (case sensitive).</p>",
+        "CreateInstancesRequest$availabilityZone": "<p>The Availability Zone in which to create your instance. Use the following format: <code>us-east-1a</code> (case sensitive). You can get a list of availability zones by using the <a href=\"http://docs.aws.amazon.com/lightsail/2016-11-28/api-reference/API_GetRegions.html\">get regions</a> operation. Be sure to add the <code>include availability zones</code> parameter to your request.</p>",
         "CreateInstancesRequest$userData": "<p>A launch script you can create that configures a server with additional user data. For example, you might want to run <code>apt-get –y update</code>.</p> <note> <p>Depending on the machine image you choose, the command to get software on your instance varies. Amazon Linux and CentOS use <code>yum</code>, Debian and Ubuntu use <code>apt-get</code>, and FreeBSD uses <code>pkg</code>. For a complete list, see the <a href=\"http://lightsail.aws.amazon.com/ls/docs/getting-started/articles/pre-installed-apps\">Dev Guide</a>.</p> </note>",
         "Disk$supportCode": "<p>The support code. Include this code in your email to support when you have questions about an instance or another resource in Lightsail. This code enables our support team to look up your Lightsail information more easily.</p>",
         "Disk$path": "<p>The disk path.</p>",
@@ -1178,7 +1207,8 @@
         "GetKeyPairsRequest$pageToken": "<p>A token used for advancing to the next page of results from your get key pairs request.</p>",
         "GetKeyPairsResult$nextPageToken": "<p>A token used for advancing to the next page of results from your get key pairs request.</p>",
         "GetOperationsForResourceRequest$pageToken": "<p>A token used for advancing to the next page of results from your get operations for resource request.</p>",
-        "GetOperationsForResourceResult$nextPageCount": "<p>Returns the number of pages of results that remain.</p>",
+        "GetOperationsForResourceResult$nextPageCount": "<p>(Deprecated) Returns the number of pages of results that remain.</p> <note> <p>In releases prior to June 12, 2017, this parameter returned <code>null</code> by the API. It is now deprecated, and the API returns the <code>nextPageToken</code> parameter instead.</p> </note>",
+        "GetOperationsForResourceResult$nextPageToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
         "GetOperationsRequest$pageToken": "<p>A token used for advancing to the next page of results from your get operations request.</p>",
         "GetOperationsResult$nextPageToken": "<p>A token used for advancing to the next page of results from your get operations request.</p>",
         "GetStaticIpsRequest$pageToken": "<p>A token used for advancing to the next page of results from your get static IPs request.</p>",
@@ -1214,7 +1244,7 @@
         "Region$continentCode": "<p>The continent code (e.g., <code>NA</code>, meaning North America).</p>",
         "Region$description": "<p>The description of the AWS Region (e.g., <code>This region is recommended to serve users in the eastern United States and eastern Canada</code>).</p>",
         "Region$displayName": "<p>The display name (e.g., <code>Virginia</code>).</p>",
-        "ResourceLocation$availabilityZone": "<p>The Availability Zone.</p>",
+        "ResourceLocation$availabilityZone": "<p>The Availability Zone. Follows the format <code>us-east-1a</code> (case-sensitive).</p>",
         "ServiceException$code": null,
         "ServiceException$docs": null,
         "ServiceException$message": null,

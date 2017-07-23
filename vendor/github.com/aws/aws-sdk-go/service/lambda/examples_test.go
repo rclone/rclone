@@ -3,729 +3,888 @@
 package lambda_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleLambda_AddPermission() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.AddPermissionInput{
-		Action:           aws.String("Action"),       // Required
-		FunctionName:     aws.String("FunctionName"), // Required
-		Principal:        aws.String("Principal"),    // Required
-		StatementId:      aws.String("StatementId"),  // Required
-		EventSourceToken: aws.String("EventSourceToken"),
-		Qualifier:        aws.String("Qualifier"),
-		SourceAccount:    aws.String("SourceOwner"),
-		SourceArn:        aws.String("Arn"),
-	}
-	resp, err := svc.AddPermission(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		panic(err)
+	}
+	return &t
+}
+
+// add-permission
+//
+// This example adds a permission for an S3 bucket to invoke a Lambda function.
+func ExampleLambda_AddPermission_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.AddPermissionInput{
+		Action:        aws.String("lambda:InvokeFunction"),
+		FunctionName:  aws.String("MyFunction"),
+		Principal:     aws.String("s3.amazonaws.com"),
+		SourceAccount: aws.String("123456789012"),
+		SourceArn:     aws.String("arn:aws:s3:::examplebucket/*"),
+		StatementId:   aws.String("ID-1"),
+	}
+
+	result, err := svc.AddPermission(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeResourceConflictException:
+				fmt.Println(lambda.ErrCodeResourceConflictException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			case lambda.ErrCodePolicyLengthExceededException:
+				fmt.Println(lambda.ErrCodePolicyLengthExceededException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_CreateAlias() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.CreateAliasInput{
-		FunctionName:    aws.String("FunctionName"), // Required
-		FunctionVersion: aws.String("Version"),      // Required
-		Name:            aws.String("Alias"),        // Required
-		Description:     aws.String("Description"),
+// create-function
+//
+// This example creates a Lambda function.
+func ExampleLambda_CreateFunction_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.CreateFunctionInput{
+		Code:         &lambda.FunctionCode{},
+		Description:  aws.String(""),
+		FunctionName: aws.String("MyFunction"),
+		Handler:      aws.String("souce_file.handler_name"),
+		MemorySize:   aws.Int64(128),
+		Publish:      aws.Bool(true),
+		Role:         aws.String("arn:aws:iam::123456789012:role/service-role/role-name"),
+		Runtime:      aws.String("nodejs4.3"),
+		Timeout:      aws.Int64(15),
+		VpcConfig:    &lambda.VpcConfig{},
 	}
-	resp, err := svc.CreateAlias(params)
 
+	result, err := svc.CreateFunction(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeResourceConflictException:
+				fmt.Println(lambda.ErrCodeResourceConflictException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			case lambda.ErrCodeCodeStorageExceededException:
+				fmt.Println(lambda.ErrCodeCodeStorageExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_CreateEventSourceMapping() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.CreateEventSourceMappingInput{
-		EventSourceArn:            aws.String("Arn"),                 // Required
-		FunctionName:              aws.String("FunctionName"),        // Required
-		StartingPosition:          aws.String("EventSourcePosition"), // Required
-		BatchSize:                 aws.Int64(1),
-		Enabled:                   aws.Bool(true),
-		StartingPositionTimestamp: aws.Time(time.Now()),
+// To delete a Lambda function alias
+//
+// This operation deletes a Lambda function alias
+func ExampleLambda_DeleteAlias_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.DeleteAliasInput{
+		FunctionName: aws.String("myFunction"),
+		Name:         aws.String("alias"),
 	}
-	resp, err := svc.CreateEventSourceMapping(params)
 
+	result, err := svc.DeleteAlias(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_CreateFunction() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.CreateFunctionInput{
-		Code: &lambda.FunctionCode{ // Required
-			S3Bucket:        aws.String("S3Bucket"),
-			S3Key:           aws.String("S3Key"),
-			S3ObjectVersion: aws.String("S3ObjectVersion"),
-			ZipFile:         []byte("PAYLOAD"),
-		},
-		FunctionName: aws.String("FunctionName"), // Required
-		Handler:      aws.String("Handler"),      // Required
-		Role:         aws.String("RoleArn"),      // Required
-		Runtime:      aws.String("Runtime"),      // Required
-		DeadLetterConfig: &lambda.DeadLetterConfig{
-			TargetArn: aws.String("ResourceArn"),
-		},
-		Description: aws.String("Description"),
-		Environment: &lambda.Environment{
-			Variables: map[string]*string{
-				"Key": aws.String("EnvironmentVariableValue"), // Required
-				// More values...
-			},
-		},
-		KMSKeyArn:  aws.String("KMSKeyArn"),
-		MemorySize: aws.Int64(1),
-		Publish:    aws.Bool(true),
-		Tags: map[string]*string{
-			"Key": aws.String("TagValue"), // Required
-			// More values...
-		},
-		Timeout: aws.Int64(1),
-		TracingConfig: &lambda.TracingConfig{
-			Mode: aws.String("TracingMode"),
-		},
-		VpcConfig: &lambda.VpcConfig{
-			SecurityGroupIds: []*string{
-				aws.String("SecurityGroupId"), // Required
-				// More values...
-			},
-			SubnetIds: []*string{
-				aws.String("SubnetId"), // Required
-				// More values...
-			},
-		},
+// To delete a Lambda function event source mapping
+//
+// This operation deletes a Lambda function event source mapping
+func ExampleLambda_DeleteEventSourceMapping_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.DeleteEventSourceMappingInput{
+		UUID: aws.String("12345kxodurf3443"),
 	}
-	resp, err := svc.CreateFunction(params)
 
+	result, err := svc.DeleteEventSourceMapping(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_DeleteAlias() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.DeleteAliasInput{
-		FunctionName: aws.String("FunctionName"), // Required
-		Name:         aws.String("Alias"),        // Required
+// To delete a Lambda function
+//
+// This operation deletes a Lambda function
+func ExampleLambda_DeleteFunction_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.DeleteFunctionInput{
+		FunctionName: aws.String("myFunction"),
+		Qualifier:    aws.String("1"),
 	}
-	resp, err := svc.DeleteAlias(params)
 
+	result, err := svc.DeleteFunction(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			case lambda.ErrCodeResourceConflictException:
+				fmt.Println(lambda.ErrCodeResourceConflictException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_DeleteEventSourceMapping() {
-	sess := session.Must(session.NewSession())
+// To retrieves a Lambda customer's account settings
+//
+// This operation retrieves a Lambda customer's account settings
+func ExampleLambda_GetAccountSettings_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.GetAccountSettingsInput{}
 
-	svc := lambda.New(sess)
-
-	params := &lambda.DeleteEventSourceMappingInput{
-		UUID: aws.String("String"), // Required
-	}
-	resp, err := svc.DeleteEventSourceMapping(params)
-
+	result, err := svc.GetAccountSettings(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_DeleteFunction() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.DeleteFunctionInput{
-		FunctionName: aws.String("FunctionName"), // Required
-		Qualifier:    aws.String("Qualifier"),
+// To retrieve a Lambda function alias
+//
+// This operation retrieves a Lambda function alias
+func ExampleLambda_GetAlias_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.GetAliasInput{
+		FunctionName: aws.String("myFunction"),
+		Name:         aws.String("myFunctionAlias"),
 	}
-	resp, err := svc.DeleteFunction(params)
 
+	result, err := svc.GetAlias(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_GetAccountSettings() {
-	sess := session.Must(session.NewSession())
+// To retrieve a Lambda function's event source mapping
+//
+// This operation retrieves a Lambda function's event source mapping
+func ExampleLambda_GetEventSourceMapping_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.GetEventSourceMappingInput{
+		UUID: aws.String("123489-xxxxx-kdla8d89d7"),
+	}
 
-	svc := lambda.New(sess)
-
-	var params *lambda.GetAccountSettingsInput
-	resp, err := svc.GetAccountSettings(params)
-
+	result, err := svc.GetEventSourceMapping(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_GetAlias() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.GetAliasInput{
-		FunctionName: aws.String("FunctionName"), // Required
-		Name:         aws.String("Alias"),        // Required
+// To retrieve a Lambda function's event source mapping
+//
+// This operation retrieves a Lambda function's event source mapping
+func ExampleLambda_GetFunction_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.GetFunctionInput{
+		FunctionName: aws.String("myFunction"),
+		Qualifier:    aws.String("1"),
 	}
-	resp, err := svc.GetAlias(params)
 
+	result, err := svc.GetFunction(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_GetEventSourceMapping() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.GetEventSourceMappingInput{
-		UUID: aws.String("String"), // Required
+// To retrieve a Lambda function's event source mapping
+//
+// This operation retrieves a Lambda function's event source mapping
+func ExampleLambda_GetFunctionConfiguration_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.GetFunctionConfigurationInput{
+		FunctionName: aws.String("myFunction"),
+		Qualifier:    aws.String("1"),
 	}
-	resp, err := svc.GetEventSourceMapping(params)
 
+	result, err := svc.GetFunctionConfiguration(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_GetFunction() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.GetFunctionInput{
-		FunctionName: aws.String("FunctionName"), // Required
-		Qualifier:    aws.String("Qualifier"),
+// To retrieve a Lambda function policy
+//
+// This operation retrieves a Lambda function policy
+func ExampleLambda_GetPolicy_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.GetPolicyInput{
+		FunctionName: aws.String("myFunction"),
+		Qualifier:    aws.String("1"),
 	}
-	resp, err := svc.GetFunction(params)
 
+	result, err := svc.GetPolicy(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_GetFunctionConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.GetFunctionConfigurationInput{
-		FunctionName: aws.String("FunctionName"), // Required
-		Qualifier:    aws.String("Qualifier"),
+// To invoke a Lambda function
+//
+// This operation invokes a Lambda function
+func ExampleLambda_Invoke_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.InvokeInput{
+		ClientContext:  aws.String("MyApp"),
+		FunctionName:   aws.String("MyFunction"),
+		InvocationType: aws.String("Event"),
+		LogType:        aws.String("Tail"),
+		Payload:        []byte("fileb://file-path/input.json"),
+		Qualifier:      aws.String("1"),
 	}
-	resp, err := svc.GetFunctionConfiguration(params)
 
+	result, err := svc.Invoke(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeInvalidRequestContentException:
+				fmt.Println(lambda.ErrCodeInvalidRequestContentException, aerr.Error())
+			case lambda.ErrCodeRequestTooLargeException:
+				fmt.Println(lambda.ErrCodeRequestTooLargeException, aerr.Error())
+			case lambda.ErrCodeUnsupportedMediaTypeException:
+				fmt.Println(lambda.ErrCodeUnsupportedMediaTypeException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			case lambda.ErrCodeEC2UnexpectedException:
+				fmt.Println(lambda.ErrCodeEC2UnexpectedException, aerr.Error())
+			case lambda.ErrCodeSubnetIPAddressLimitReachedException:
+				fmt.Println(lambda.ErrCodeSubnetIPAddressLimitReachedException, aerr.Error())
+			case lambda.ErrCodeENILimitReachedException:
+				fmt.Println(lambda.ErrCodeENILimitReachedException, aerr.Error())
+			case lambda.ErrCodeEC2ThrottledException:
+				fmt.Println(lambda.ErrCodeEC2ThrottledException, aerr.Error())
+			case lambda.ErrCodeEC2AccessDeniedException:
+				fmt.Println(lambda.ErrCodeEC2AccessDeniedException, aerr.Error())
+			case lambda.ErrCodeInvalidSubnetIDException:
+				fmt.Println(lambda.ErrCodeInvalidSubnetIDException, aerr.Error())
+			case lambda.ErrCodeInvalidSecurityGroupIDException:
+				fmt.Println(lambda.ErrCodeInvalidSecurityGroupIDException, aerr.Error())
+			case lambda.ErrCodeInvalidZipFileException:
+				fmt.Println(lambda.ErrCodeInvalidZipFileException, aerr.Error())
+			case lambda.ErrCodeKMSDisabledException:
+				fmt.Println(lambda.ErrCodeKMSDisabledException, aerr.Error())
+			case lambda.ErrCodeKMSInvalidStateException:
+				fmt.Println(lambda.ErrCodeKMSInvalidStateException, aerr.Error())
+			case lambda.ErrCodeKMSAccessDeniedException:
+				fmt.Println(lambda.ErrCodeKMSAccessDeniedException, aerr.Error())
+			case lambda.ErrCodeKMSNotFoundException:
+				fmt.Println(lambda.ErrCodeKMSNotFoundException, aerr.Error())
+			case lambda.ErrCodeInvalidRuntimeException:
+				fmt.Println(lambda.ErrCodeInvalidRuntimeException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_GetPolicy() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.GetPolicyInput{
-		FunctionName: aws.String("FunctionName"), // Required
-		Qualifier:    aws.String("Qualifier"),
+// To invoke a Lambda function asynchronously
+//
+// This operation invokes a Lambda function asynchronously
+func ExampleLambda_InvokeAsync_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.InvokeAsyncInput{
+		FunctionName: aws.String("myFunction"),
+		InvokeArgs:   aws.ReadSeekCloser(strings.NewReader("fileb://file-path/input.json")),
 	}
-	resp, err := svc.GetPolicy(params)
 
+	result, err := svc.InvokeAsync(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeInvalidRequestContentException:
+				fmt.Println(lambda.ErrCodeInvalidRequestContentException, aerr.Error())
+			case lambda.ErrCodeInvalidRuntimeException:
+				fmt.Println(lambda.ErrCodeInvalidRuntimeException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_Invoke() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.InvokeInput{
-		FunctionName:   aws.String("FunctionName"), // Required
-		ClientContext:  aws.String("String"),
-		InvocationType: aws.String("InvocationType"),
-		LogType:        aws.String("LogType"),
-		Payload:        []byte("PAYLOAD"),
-		Qualifier:      aws.String("Qualifier"),
+// To retrieve a Lambda function aliases
+//
+// This operation retrieves a Lambda function's aliases
+func ExampleLambda_ListAliases_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.ListAliasesInput{
+		FunctionName:    aws.String("myFunction"),
+		FunctionVersion: aws.String("1"),
+		Marker:          aws.String(""),
+		MaxItems:        aws.Int64(123),
 	}
-	resp, err := svc.Invoke(params)
 
+	result, err := svc.ListAliases(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_InvokeAsync() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.InvokeAsyncInput{
-		FunctionName: aws.String("FunctionName"),         // Required
-		InvokeArgs:   bytes.NewReader([]byte("PAYLOAD")), // Required
+// To retrieve a list of Lambda functions
+//
+// This operation retrieves a Lambda functions
+func ExampleLambda_ListFunctions_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.ListFunctionsInput{
+		Marker:   aws.String(""),
+		MaxItems: aws.Int64(123),
 	}
-	resp, err := svc.InvokeAsync(params)
 
+	result, err := svc.ListFunctions(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_ListAliases() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.ListAliasesInput{
-		FunctionName:    aws.String("FunctionName"), // Required
-		FunctionVersion: aws.String("Version"),
-		Marker:          aws.String("String"),
-		MaxItems:        aws.Int64(1),
+// To retrieve a list of Lambda function versions
+//
+// This operation retrieves a Lambda function versions
+func ExampleLambda_ListVersionsByFunction_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.ListVersionsByFunctionInput{
+		FunctionName: aws.String("myFunction"),
+		Marker:       aws.String(""),
+		MaxItems:     aws.Int64(123),
 	}
-	resp, err := svc.ListAliases(params)
 
+	result, err := svc.ListVersionsByFunction(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_ListEventSourceMappings() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.ListEventSourceMappingsInput{
-		EventSourceArn: aws.String("Arn"),
-		FunctionName:   aws.String("FunctionName"),
-		Marker:         aws.String("String"),
-		MaxItems:       aws.Int64(1),
+// To publish a version of a Lambda function
+//
+// This operation publishes a version of a Lambda function
+func ExampleLambda_PublishVersion_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.PublishVersionInput{
+		CodeSha256:   aws.String(""),
+		Description:  aws.String(""),
+		FunctionName: aws.String("myFunction"),
 	}
-	resp, err := svc.ListEventSourceMappings(params)
 
+	result, err := svc.PublishVersion(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			case lambda.ErrCodeCodeStorageExceededException:
+				fmt.Println(lambda.ErrCodeCodeStorageExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_ListFunctions() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.ListFunctionsInput{
-		Marker:   aws.String("String"),
-		MaxItems: aws.Int64(1),
+// To remove a Lambda function's permissions
+//
+// This operation removes a Lambda function's permissions
+func ExampleLambda_RemovePermission_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.RemovePermissionInput{
+		FunctionName: aws.String("myFunction"),
+		Qualifier:    aws.String("1"),
+		StatementId:  aws.String("role-statement-id"),
 	}
-	resp, err := svc.ListFunctions(params)
 
+	result, err := svc.RemovePermission(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_ListTags() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.ListTagsInput{
-		Resource: aws.String("FunctionArn"), // Required
+// To update a Lambda function alias
+//
+// This operation updates a Lambda function alias
+func ExampleLambda_UpdateAlias_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.UpdateAliasInput{
+		Description:     aws.String(""),
+		FunctionName:    aws.String("myFunction"),
+		FunctionVersion: aws.String("1"),
+		Name:            aws.String("functionAlias"),
 	}
-	resp, err := svc.ListTags(params)
 
+	result, err := svc.UpdateAlias(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_ListVersionsByFunction() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.ListVersionsByFunctionInput{
-		FunctionName: aws.String("FunctionName"), // Required
-		Marker:       aws.String("String"),
-		MaxItems:     aws.Int64(1),
-	}
-	resp, err := svc.ListVersionsByFunction(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLambda_PublishVersion() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.PublishVersionInput{
-		FunctionName: aws.String("FunctionName"), // Required
-		CodeSha256:   aws.String("String"),
-		Description:  aws.String("Description"),
-	}
-	resp, err := svc.PublishVersion(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLambda_RemovePermission() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.RemovePermissionInput{
-		FunctionName: aws.String("FunctionName"), // Required
-		StatementId:  aws.String("StatementId"),  // Required
-		Qualifier:    aws.String("Qualifier"),
-	}
-	resp, err := svc.RemovePermission(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLambda_TagResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.TagResourceInput{
-		Resource: aws.String("FunctionArn"), // Required
-		Tags: map[string]*string{ // Required
-			"Key": aws.String("TagValue"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.TagResource(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLambda_UntagResource() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.UntagResourceInput{
-		Resource: aws.String("FunctionArn"), // Required
-		TagKeys: []*string{ // Required
-			aws.String("TagKey"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.UntagResource(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLambda_UpdateAlias() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.UpdateAliasInput{
-		FunctionName:    aws.String("FunctionName"), // Required
-		Name:            aws.String("Alias"),        // Required
-		Description:     aws.String("Description"),
-		FunctionVersion: aws.String("Version"),
-	}
-	resp, err := svc.UpdateAlias(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleLambda_UpdateEventSourceMapping() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.UpdateEventSourceMappingInput{
-		UUID:         aws.String("String"), // Required
-		BatchSize:    aws.Int64(1),
+// To update a Lambda function event source mapping
+//
+// This operation updates a Lambda function event source mapping
+func ExampleLambda_UpdateEventSourceMapping_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.UpdateEventSourceMappingInput{
+		BatchSize:    aws.Int64(123),
 		Enabled:      aws.Bool(true),
-		FunctionName: aws.String("FunctionName"),
+		FunctionName: aws.String("myFunction"),
+		UUID:         aws.String("1234xCy789012"),
 	}
-	resp, err := svc.UpdateEventSourceMapping(params)
 
+	result, err := svc.UpdateEventSourceMapping(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			case lambda.ErrCodeResourceConflictException:
+				fmt.Println(lambda.ErrCodeResourceConflictException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_UpdateFunctionCode() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.UpdateFunctionCodeInput{
-		FunctionName:    aws.String("FunctionName"), // Required
-		DryRun:          aws.Bool(true),
+// To update a Lambda function's code
+//
+// This operation updates a Lambda function's code
+func ExampleLambda_UpdateFunctionCode_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.UpdateFunctionCodeInput{
+		FunctionName:    aws.String("myFunction"),
 		Publish:         aws.Bool(true),
-		S3Bucket:        aws.String("S3Bucket"),
-		S3Key:           aws.String("S3Key"),
-		S3ObjectVersion: aws.String("S3ObjectVersion"),
-		ZipFile:         []byte("PAYLOAD"),
+		S3Bucket:        aws.String("myBucket"),
+		S3Key:           aws.String("myKey"),
+		S3ObjectVersion: aws.String("1"),
+		ZipFile:         []byte("fileb://file-path/file.zip"),
 	}
-	resp, err := svc.UpdateFunctionCode(params)
 
+	result, err := svc.UpdateFunctionCode(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			case lambda.ErrCodeCodeStorageExceededException:
+				fmt.Println(lambda.ErrCodeCodeStorageExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleLambda_UpdateFunctionConfiguration() {
-	sess := session.Must(session.NewSession())
-
-	svc := lambda.New(sess)
-
-	params := &lambda.UpdateFunctionConfigurationInput{
-		FunctionName: aws.String("FunctionName"), // Required
-		DeadLetterConfig: &lambda.DeadLetterConfig{
-			TargetArn: aws.String("ResourceArn"),
-		},
-		Description: aws.String("Description"),
-		Environment: &lambda.Environment{
-			Variables: map[string]*string{
-				"Key": aws.String("EnvironmentVariableValue"), // Required
-				// More values...
-			},
-		},
-		Handler:    aws.String("Handler"),
-		KMSKeyArn:  aws.String("KMSKeyArn"),
-		MemorySize: aws.Int64(1),
-		Role:       aws.String("RoleArn"),
-		Runtime:    aws.String("Runtime"),
-		Timeout:    aws.Int64(1),
-		TracingConfig: &lambda.TracingConfig{
-			Mode: aws.String("TracingMode"),
-		},
-		VpcConfig: &lambda.VpcConfig{
-			SecurityGroupIds: []*string{
-				aws.String("SecurityGroupId"), // Required
-				// More values...
-			},
-			SubnetIds: []*string{
-				aws.String("SubnetId"), // Required
-				// More values...
-			},
-		},
+// To update a Lambda function's configuration
+//
+// This operation updates a Lambda function's configuration
+func ExampleLambda_UpdateFunctionConfiguration_shared00() {
+	svc := lambda.New(session.New())
+	input := &lambda.UpdateFunctionConfigurationInput{
+		Description:  aws.String(""),
+		FunctionName: aws.String("myFunction"),
+		Handler:      aws.String("index.handler"),
+		MemorySize:   aws.Int64(128),
+		Role:         aws.String("arn:aws:iam::123456789012:role/lambda_basic_execution"),
+		Runtime:      aws.String("python2.7"),
+		Timeout:      aws.Int64(123),
+		VpcConfig:    &lambda.VpcConfig{},
 	}
-	resp, err := svc.UpdateFunctionConfiguration(params)
 
+	result, err := svc.UpdateFunctionConfiguration(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case lambda.ErrCodeServiceException:
+				fmt.Println(lambda.ErrCodeServiceException, aerr.Error())
+			case lambda.ErrCodeResourceNotFoundException:
+				fmt.Println(lambda.ErrCodeResourceNotFoundException, aerr.Error())
+			case lambda.ErrCodeInvalidParameterValueException:
+				fmt.Println(lambda.ErrCodeInvalidParameterValueException, aerr.Error())
+			case lambda.ErrCodeTooManyRequestsException:
+				fmt.Println(lambda.ErrCodeTooManyRequestsException, aerr.Error())
+			case lambda.ErrCodeResourceConflictException:
+				fmt.Println(lambda.ErrCodeResourceConflictException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }

@@ -15,6 +15,7 @@
 package bigquery
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -114,6 +115,16 @@ func valueSavers(src interface{}) ([]ValueSaver, error) {
 // Make a ValueSaver from x, which must implement ValueSaver already
 // or be a struct or pointer to struct.
 func toValueSaver(x interface{}) (ValueSaver, bool, error) {
+	if _, ok := x.(StructSaver); ok {
+		return nil, false, errors.New("bigquery: use &StructSaver, not StructSaver")
+	}
+	var insertID string
+	// Handle StructSavers specially so we can infer the schema if necessary.
+	if ss, ok := x.(*StructSaver); ok && ss.Schema == nil {
+		x = ss.Struct
+		insertID = ss.InsertID
+		// Fall through so we can infer the schema.
+	}
 	if saver, ok := x.(ValueSaver); ok {
 		return saver, ok, nil
 	}
@@ -128,11 +139,15 @@ func toValueSaver(x interface{}) (ValueSaver, bool, error) {
 	if v.Kind() != reflect.Struct {
 		return nil, false, nil
 	}
-	schema, err := inferSchemaReflect(v.Type())
+	schema, err := inferSchemaReflectCached(v.Type())
 	if err != nil {
 		return nil, false, err
 	}
-	return &StructSaver{Struct: x, Schema: schema}, true, nil
+	return &StructSaver{
+		Struct:   x,
+		InsertID: insertID,
+		Schema:   schema,
+	}, true, nil
 }
 
 func (u *Uploader) putMulti(ctx context.Context, src []ValueSaver) error {

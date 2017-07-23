@@ -403,15 +403,15 @@ func TestFetchWithNoRefreshToken(t *testing.T) {
 func TestRefreshToken_RefreshTokenReplacement(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"access_token":"ACCESS TOKEN",  "scope": "user", "token_type": "bearer", "refresh_token": "NEW REFRESH TOKEN"}`))
+		w.Write([]byte(`{"access_token":"ACCESS_TOKEN",  "scope": "user", "token_type": "bearer", "refresh_token": "NEW_REFRESH_TOKEN"}`))
 		return
 	}))
 	defer ts.Close()
 	conf := newConf(ts.URL)
-	tkr := tokenRefresher{
+	tkr := &tokenRefresher{
 		conf:         conf,
 		ctx:          context.Background(),
-		refreshToken: "OLD REFRESH TOKEN",
+		refreshToken: "OLD_REFRESH_TOKEN",
 	}
 	tk, err := tkr.Token()
 	if err != nil {
@@ -420,6 +420,29 @@ func TestRefreshToken_RefreshTokenReplacement(t *testing.T) {
 	}
 	if tk.RefreshToken != tkr.refreshToken {
 		t.Errorf("tokenRefresher.refresh_token = %q; want %q", tkr.refreshToken, tk.RefreshToken)
+	}
+}
+
+func TestRefreshToken_RefreshTokenPreservation(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"access_token":"ACCESS_TOKEN",  "scope": "user", "token_type": "bearer"}`))
+		return
+	}))
+	defer ts.Close()
+	conf := newConf(ts.URL)
+	const oldRefreshToken = "OLD_REFRESH_TOKEN"
+	tkr := &tokenRefresher{
+		conf:         conf,
+		ctx:          context.Background(),
+		refreshToken: oldRefreshToken,
+	}
+	_, err := tkr.Token()
+	if err != nil {
+		t.Fatalf("got err = %v; want none", err)
+	}
+	if tkr.refreshToken != oldRefreshToken {
+		t.Errorf("tokenRefresher.refreshToken = %q; want %q", tkr.refreshToken, oldRefreshToken)
 	}
 }
 

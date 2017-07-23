@@ -72,9 +72,21 @@ type WorkDocsAPI interface {
 	AddResourcePermissionsWithContext(aws.Context, *workdocs.AddResourcePermissionsInput, ...request.Option) (*workdocs.AddResourcePermissionsOutput, error)
 	AddResourcePermissionsRequest(*workdocs.AddResourcePermissionsInput) (*request.Request, *workdocs.AddResourcePermissionsOutput)
 
+	CreateComment(*workdocs.CreateCommentInput) (*workdocs.CreateCommentOutput, error)
+	CreateCommentWithContext(aws.Context, *workdocs.CreateCommentInput, ...request.Option) (*workdocs.CreateCommentOutput, error)
+	CreateCommentRequest(*workdocs.CreateCommentInput) (*request.Request, *workdocs.CreateCommentOutput)
+
+	CreateCustomMetadata(*workdocs.CreateCustomMetadataInput) (*workdocs.CreateCustomMetadataOutput, error)
+	CreateCustomMetadataWithContext(aws.Context, *workdocs.CreateCustomMetadataInput, ...request.Option) (*workdocs.CreateCustomMetadataOutput, error)
+	CreateCustomMetadataRequest(*workdocs.CreateCustomMetadataInput) (*request.Request, *workdocs.CreateCustomMetadataOutput)
+
 	CreateFolder(*workdocs.CreateFolderInput) (*workdocs.CreateFolderOutput, error)
 	CreateFolderWithContext(aws.Context, *workdocs.CreateFolderInput, ...request.Option) (*workdocs.CreateFolderOutput, error)
 	CreateFolderRequest(*workdocs.CreateFolderInput) (*request.Request, *workdocs.CreateFolderOutput)
+
+	CreateLabels(*workdocs.CreateLabelsInput) (*workdocs.CreateLabelsOutput, error)
+	CreateLabelsWithContext(aws.Context, *workdocs.CreateLabelsInput, ...request.Option) (*workdocs.CreateLabelsOutput, error)
+	CreateLabelsRequest(*workdocs.CreateLabelsInput) (*request.Request, *workdocs.CreateLabelsOutput)
 
 	CreateNotificationSubscription(*workdocs.CreateNotificationSubscriptionInput) (*workdocs.CreateNotificationSubscriptionOutput, error)
 	CreateNotificationSubscriptionWithContext(aws.Context, *workdocs.CreateNotificationSubscriptionInput, ...request.Option) (*workdocs.CreateNotificationSubscriptionOutput, error)
@@ -88,6 +100,14 @@ type WorkDocsAPI interface {
 	DeactivateUserWithContext(aws.Context, *workdocs.DeactivateUserInput, ...request.Option) (*workdocs.DeactivateUserOutput, error)
 	DeactivateUserRequest(*workdocs.DeactivateUserInput) (*request.Request, *workdocs.DeactivateUserOutput)
 
+	DeleteComment(*workdocs.DeleteCommentInput) (*workdocs.DeleteCommentOutput, error)
+	DeleteCommentWithContext(aws.Context, *workdocs.DeleteCommentInput, ...request.Option) (*workdocs.DeleteCommentOutput, error)
+	DeleteCommentRequest(*workdocs.DeleteCommentInput) (*request.Request, *workdocs.DeleteCommentOutput)
+
+	DeleteCustomMetadata(*workdocs.DeleteCustomMetadataInput) (*workdocs.DeleteCustomMetadataOutput, error)
+	DeleteCustomMetadataWithContext(aws.Context, *workdocs.DeleteCustomMetadataInput, ...request.Option) (*workdocs.DeleteCustomMetadataOutput, error)
+	DeleteCustomMetadataRequest(*workdocs.DeleteCustomMetadataInput) (*request.Request, *workdocs.DeleteCustomMetadataOutput)
+
 	DeleteDocument(*workdocs.DeleteDocumentInput) (*workdocs.DeleteDocumentOutput, error)
 	DeleteDocumentWithContext(aws.Context, *workdocs.DeleteDocumentInput, ...request.Option) (*workdocs.DeleteDocumentOutput, error)
 	DeleteDocumentRequest(*workdocs.DeleteDocumentInput) (*request.Request, *workdocs.DeleteDocumentOutput)
@@ -100,6 +120,10 @@ type WorkDocsAPI interface {
 	DeleteFolderContentsWithContext(aws.Context, *workdocs.DeleteFolderContentsInput, ...request.Option) (*workdocs.DeleteFolderContentsOutput, error)
 	DeleteFolderContentsRequest(*workdocs.DeleteFolderContentsInput) (*request.Request, *workdocs.DeleteFolderContentsOutput)
 
+	DeleteLabels(*workdocs.DeleteLabelsInput) (*workdocs.DeleteLabelsOutput, error)
+	DeleteLabelsWithContext(aws.Context, *workdocs.DeleteLabelsInput, ...request.Option) (*workdocs.DeleteLabelsOutput, error)
+	DeleteLabelsRequest(*workdocs.DeleteLabelsInput) (*request.Request, *workdocs.DeleteLabelsOutput)
+
 	DeleteNotificationSubscription(*workdocs.DeleteNotificationSubscriptionInput) (*workdocs.DeleteNotificationSubscriptionOutput, error)
 	DeleteNotificationSubscriptionWithContext(aws.Context, *workdocs.DeleteNotificationSubscriptionInput, ...request.Option) (*workdocs.DeleteNotificationSubscriptionOutput, error)
 	DeleteNotificationSubscriptionRequest(*workdocs.DeleteNotificationSubscriptionInput) (*request.Request, *workdocs.DeleteNotificationSubscriptionOutput)
@@ -107,6 +131,14 @@ type WorkDocsAPI interface {
 	DeleteUser(*workdocs.DeleteUserInput) (*workdocs.DeleteUserOutput, error)
 	DeleteUserWithContext(aws.Context, *workdocs.DeleteUserInput, ...request.Option) (*workdocs.DeleteUserOutput, error)
 	DeleteUserRequest(*workdocs.DeleteUserInput) (*request.Request, *workdocs.DeleteUserOutput)
+
+	DescribeActivities(*workdocs.DescribeActivitiesInput) (*workdocs.DescribeActivitiesOutput, error)
+	DescribeActivitiesWithContext(aws.Context, *workdocs.DescribeActivitiesInput, ...request.Option) (*workdocs.DescribeActivitiesOutput, error)
+	DescribeActivitiesRequest(*workdocs.DescribeActivitiesInput) (*request.Request, *workdocs.DescribeActivitiesOutput)
+
+	DescribeComments(*workdocs.DescribeCommentsInput) (*workdocs.DescribeCommentsOutput, error)
+	DescribeCommentsWithContext(aws.Context, *workdocs.DescribeCommentsInput, ...request.Option) (*workdocs.DescribeCommentsOutput, error)
+	DescribeCommentsRequest(*workdocs.DescribeCommentsInput) (*request.Request, *workdocs.DescribeCommentsOutput)
 
 	DescribeDocumentVersions(*workdocs.DescribeDocumentVersionsInput) (*workdocs.DescribeDocumentVersionsOutput, error)
 	DescribeDocumentVersionsWithContext(aws.Context, *workdocs.DescribeDocumentVersionsInput, ...request.Option) (*workdocs.DescribeDocumentVersionsOutput, error)
@@ -130,12 +162,20 @@ type WorkDocsAPI interface {
 	DescribeResourcePermissionsWithContext(aws.Context, *workdocs.DescribeResourcePermissionsInput, ...request.Option) (*workdocs.DescribeResourcePermissionsOutput, error)
 	DescribeResourcePermissionsRequest(*workdocs.DescribeResourcePermissionsInput) (*request.Request, *workdocs.DescribeResourcePermissionsOutput)
 
+	DescribeRootFolders(*workdocs.DescribeRootFoldersInput) (*workdocs.DescribeRootFoldersOutput, error)
+	DescribeRootFoldersWithContext(aws.Context, *workdocs.DescribeRootFoldersInput, ...request.Option) (*workdocs.DescribeRootFoldersOutput, error)
+	DescribeRootFoldersRequest(*workdocs.DescribeRootFoldersInput) (*request.Request, *workdocs.DescribeRootFoldersOutput)
+
 	DescribeUsers(*workdocs.DescribeUsersInput) (*workdocs.DescribeUsersOutput, error)
 	DescribeUsersWithContext(aws.Context, *workdocs.DescribeUsersInput, ...request.Option) (*workdocs.DescribeUsersOutput, error)
 	DescribeUsersRequest(*workdocs.DescribeUsersInput) (*request.Request, *workdocs.DescribeUsersOutput)
 
 	DescribeUsersPages(*workdocs.DescribeUsersInput, func(*workdocs.DescribeUsersOutput, bool) bool) error
 	DescribeUsersPagesWithContext(aws.Context, *workdocs.DescribeUsersInput, func(*workdocs.DescribeUsersOutput, bool) bool, ...request.Option) error
+
+	GetCurrentUser(*workdocs.GetCurrentUserInput) (*workdocs.GetCurrentUserOutput, error)
+	GetCurrentUserWithContext(aws.Context, *workdocs.GetCurrentUserInput, ...request.Option) (*workdocs.GetCurrentUserOutput, error)
+	GetCurrentUserRequest(*workdocs.GetCurrentUserInput) (*request.Request, *workdocs.GetCurrentUserOutput)
 
 	GetDocument(*workdocs.GetDocumentInput) (*workdocs.GetDocumentOutput, error)
 	GetDocumentWithContext(aws.Context, *workdocs.GetDocumentInput, ...request.Option) (*workdocs.GetDocumentOutput, error)

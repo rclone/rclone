@@ -2717,6 +2717,7 @@
       "base": null,
       "refs": {
         "CopyObjectRequest$Tagging": "The tag-set for the object destination object this value must be used in conjunction with the TaggingDirective. The tag-set must be encoded as URL Query parameters",
+        "CreateMultipartUploadRequest$Tagging": "The tag-set for the object. The tag-set must be encoded as URL Query parameters",
         "PutObjectRequest$Tagging": "The tag-set for the object. The tag-set must be encoded as URL Query parameters"
       }
     },

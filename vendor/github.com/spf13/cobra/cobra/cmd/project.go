@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -37,7 +38,7 @@ func NewProject(projectName string) *Project {
 		}
 		for _, srcPath := range srcPaths {
 			goPath := filepath.Dir(srcPath)
-			if filepath.HasPrefix(wd, goPath) {
+			if filepathHasPrefix(wd, goPath) {
 				p.absPath = filepath.Join(srcPath, projectName)
 				break
 			}
@@ -90,7 +91,7 @@ func NewProjectFromPath(absPath string) *Project {
 func trimSrcPath(absPath, srcPath string) string {
 	relPath, err := filepath.Rel(srcPath, absPath)
 	if err != nil {
-		er("Cobra supports project only within $GOPATH")
+		er("Cobra supports project only within $GOPATH: " + err.Error())
 	}
 	return relPath
 }
@@ -172,11 +173,23 @@ func (p *Project) SrcPath() string {
 	}
 
 	for _, srcPath := range srcPaths {
-		if strings.HasPrefix(p.absPath, srcPath) {
+		if filepathHasPrefix(p.absPath, srcPath) {
 			p.srcPath = srcPath
 			break
 		}
 	}
 
 	return p.srcPath
+}
+
+func filepathHasPrefix(path string, prefix string) bool {
+	if len(path) <= len(prefix) {
+		return false
+	}
+	if runtime.GOOS == "windows" {
+		// Paths in windows are case-insensitive.
+		return strings.EqualFold(path[0:len(prefix)], prefix)
+	}
+	return path[0:len(prefix)] == prefix
+
 }

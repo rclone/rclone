@@ -2272,6 +2272,12 @@ func (c *ELBV2) ModifyRuleRequest(input *ModifyRuleInput) (req *request.Request,
 //   You've reached the limit on the number of times a target can be registered
 //   with a load balancer.
 //
+//   * ErrCodeTooManyTargetsException "TooManyTargets"
+//   You've reached the limit on the number of targets.
+//
+//   * ErrCodeTargetGroupNotFoundException "TargetGroupNotFound"
+//   The specified target group does not exist.
+//
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/elasticloadbalancingv2-2015-12-01/ModifyRule
 func (c *ELBV2) ModifyRule(input *ModifyRuleInput) (*ModifyRuleOutput, error) {
 	req, out := c.ModifyRuleRequest(input)
@@ -4523,6 +4529,13 @@ type DescribeRulesInput struct {
 	// The Amazon Resource Name (ARN) of the listener.
 	ListenerArn *string `type:"string"`
 
+	// The marker for the next set of results. (You received this marker from a
+	// previous call.)
+	Marker *string `type:"string"`
+
+	// The maximum number of results to return with this call.
+	PageSize *int64 `min:"1" type:"integer"`
+
 	// The Amazon Resource Names (ARN) of the rules.
 	RuleArns []*string `type:"list"`
 }
@@ -4537,9 +4550,34 @@ func (s DescribeRulesInput) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeRulesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeRulesInput"}
+	if s.PageSize != nil && *s.PageSize < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("PageSize", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // SetListenerArn sets the ListenerArn field's value.
 func (s *DescribeRulesInput) SetListenerArn(v string) *DescribeRulesInput {
 	s.ListenerArn = &v
+	return s
+}
+
+// SetMarker sets the Marker field's value.
+func (s *DescribeRulesInput) SetMarker(v string) *DescribeRulesInput {
+	s.Marker = &v
+	return s
+}
+
+// SetPageSize sets the PageSize field's value.
+func (s *DescribeRulesInput) SetPageSize(v int64) *DescribeRulesInput {
+	s.PageSize = &v
 	return s
 }
 
@@ -4553,6 +4591,10 @@ func (s *DescribeRulesInput) SetRuleArns(v []*string) *DescribeRulesInput {
 type DescribeRulesOutput struct {
 	_ struct{} `type:"structure"`
 
+	// The marker to use when requesting the next set of results. If there are no
+	// additional results, the string is empty.
+	NextMarker *string `type:"string"`
+
 	// Information about the rules.
 	Rules []*Rule `type:"list"`
 }
@@ -4565,6 +4607,12 @@ func (s DescribeRulesOutput) String() string {
 // GoString returns the string representation
 func (s DescribeRulesOutput) GoString() string {
 	return s.String()
+}
+
+// SetNextMarker sets the NextMarker field's value.
+func (s *DescribeRulesOutput) SetNextMarker(v string) *DescribeRulesOutput {
+	s.NextMarker = &v
+	return s
 }
 
 // SetRules sets the Rules field's value.

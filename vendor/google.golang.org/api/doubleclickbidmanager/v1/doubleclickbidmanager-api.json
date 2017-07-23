@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/TpAruLLB982pPy6sW_n60NUC_v0\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/CyBb_evhvzpTXXhgZSc7wED-pLk\"",
  "discoveryVersion": "v1",
  "id": "doubleclickbidmanager:v1",
  "name": "doubleclickbidmanager",
  "canonicalName": "DoubleClick Bid Manager",
  "version": "v1",
- "revision": "20170224",
+ "revision": "20170531",
  "title": "DoubleClick Bid Manager API",
  "description": "API for viewing and managing your reports in DoubleClick Bid Manager.",
  "ownerDomain": "google.com",
@@ -89,11 +89,9 @@
      "type": "string",
      "description": "File specification (column names, types, order) in which the line items will be returned. Default to EWF.",
      "enum": [
-      "EWF",
-      "SDF"
+      "EWF"
      ],
      "enumDescriptions": [
-      "",
       ""
      ]
     },
@@ -235,6 +233,7 @@
       "FILTER_AGE",
       "FILTER_BRANDSAFE_CHANNEL_ID",
       "FILTER_BROWSER",
+      "FILTER_BUDGET_SEGMENT_DESCRIPTION",
       "FILTER_CAMPAIGN_DAILY_FREQUENCY",
       "FILTER_CARRIER",
       "FILTER_CHANNEL_ID",
@@ -461,6 +460,7 @@
       "",
       "",
       "",
+      "",
       ""
      ]
     },
@@ -535,6 +535,7 @@
        "FILTER_AGE",
        "FILTER_BRANDSAFE_CHANNEL_ID",
        "FILTER_BROWSER",
+       "FILTER_BUDGET_SEGMENT_DESCRIPTION",
        "FILTER_CAMPAIGN_DAILY_FREQUENCY",
        "FILTER_CARRIER",
        "FILTER_CHANNEL_ID",
@@ -645,6 +646,7 @@
        "FILTER_ZIP_CODE"
       ],
       "enumDescriptions": [
+       "",
        "",
        "",
        "",
@@ -967,6 +969,7 @@
        "METRIC_PROFIT_VIEWABLE_ECPM_ADVERTISER",
        "METRIC_PROFIT_VIEWABLE_ECPM_PARTNER",
        "METRIC_PROFIT_VIEWABLE_ECPM_USD",
+       "METRIC_REACH_COOKIE_FREQUENCY",
        "METRIC_REACH_COOKIE_REACH",
        "METRIC_REVENUE_ADVERTISER",
        "METRIC_REVENUE_ECPAPC_ADVERTISER",
@@ -1080,6 +1083,7 @@
        "METRIC_VIDEO_COMPLETION_RATE"
       ],
       "enumDescriptions": [
+       "",
        "",
        "",
        "",

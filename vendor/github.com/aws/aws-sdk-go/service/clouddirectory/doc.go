@@ -4,8 +4,8 @@
 // requests to Amazon CloudDirectory.
 //
 // Amazon Cloud Directory is a component of the AWS Directory Service that simplifies
-// the development and management of cloud-scale web, mobile and IoT applications.
-// This guide describes the Cloud Directory operations that you can call programatically
+// the development and management of cloud-scale web, mobile, and IoT applications.
+// This guide describes the Cloud Directory operations that you can call programmatically
 // and includes detailed information on data types and errors. For information
 // about AWS Directory Services features, see AWS Directory Service (https://aws.amazon.com/directoryservice/)
 // and the AWS Directory Service Administration Guide (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/what_is.html).

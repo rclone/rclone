@@ -130,6 +130,21 @@
   },
   {
    "kind": "discovery#directoryItem",
+   "id": "adexperiencereport:v1",
+   "name": "adexperiencereport",
+   "version": "v1",
+   "title": "Google Ad Experience Report API",
+   "description": "View Ad Experience Report data, and get a list of sites that have a significant number of annoying ads.",
+   "discoveryRestUrl": "https://adexperiencereport.googleapis.com/$discovery/rest?version=v1",
+   "icons": {
+    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+   },
+   "documentationLink": "https://developers.google.com/ad-experience-report/",
+   "preferred": true
+  },
+  {
+   "kind": "discovery#directoryItem",
    "id": "admin:datatransfer_v1",
    "name": "admin",
    "version": "datatransfer_v1",
@@ -673,7 +688,7 @@
    "name": "cloudkms",
    "version": "v1",
    "title": "Google Cloud Key Management Service (KMS) API",
-   "description": "Manages encryption for your cloud services the same way you do on-premise. You can generate, use, rotate, and destroy AES256 encryption keys.",
+   "description": "Manages encryption for your cloud services the same way you do on-premises. You can generate, use, rotate, and destroy AES256 encryption keys.",
    "discoveryRestUrl": "https://cloudkms.googleapis.com/$discovery/rest?version=v1",
    "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
@@ -730,12 +745,42 @@
   },
   {
    "kind": "discovery#directoryItem",
+   "id": "cloudresourcemanager:v2beta1",
+   "name": "cloudresourcemanager",
+   "version": "v2beta1",
+   "title": "Google Cloud Resource Manager API",
+   "description": "The Google Cloud Resource Manager API provides methods for creating, reading, and updating project metadata.",
+   "discoveryRestUrl": "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v2beta1",
+   "icons": {
+    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+   },
+   "documentationLink": "https://cloud.google.com/resource-manager",
+   "preferred": false
+  },
+  {
+   "kind": "discovery#directoryItem",
    "id": "cloudtrace:v1",
    "name": "cloudtrace",
    "version": "v1",
    "title": "Stackdriver Trace API",
    "description": "Send and retrieve trace data from Stackdriver Trace. Data is generated and available by default for all App Engine applications. Data from other applications can be written to Stackdriver Trace for display, reporting, and analysis.",
    "discoveryRestUrl": "https://cloudtrace.googleapis.com/$discovery/rest?version=v1",
+   "icons": {
+    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+   },
+   "documentationLink": "https://cloud.google.com/trace",
+   "preferred": false
+  },
+  {
+   "kind": "discovery#directoryItem",
+   "id": "cloudtrace:v2",
+   "name": "cloudtrace",
+   "version": "v2",
+   "title": "Stackdriver Trace API",
+   "description": "Send and retrieve trace data from Stackdriver Trace. Data is generated and available by default for all App Engine applications. Data from other applications can be written to Stackdriver Trace for display, reporting, and analysis.",
+   "discoveryRestUrl": "https://cloudtrace.googleapis.com/$discovery/rest?version=v2",
    "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
@@ -923,7 +968,7 @@
    "name": "customsearch",
    "version": "v1",
    "title": "CustomSearch API",
-   "description": "Lets you search over a website or collection of websites",
+   "description": "Searches over a website or collection of websites",
    "discoveryRestUrl": "https://www.googleapis.com/discovery/v1/apis/customsearch/v1/rest",
    "discoveryLink": "./apis/customsearch/v1/rest",
    "icons": {
@@ -1070,22 +1115,6 @@
    },
    "documentationLink": "https://cloud.google.com/deployment-manager/",
    "preferred": true
-  },
-  {
-   "kind": "discovery#directoryItem",
-   "id": "dfareporting:v2.6",
-   "name": "dfareporting",
-   "version": "v2.6",
-   "title": "DCM/DFA Reporting And Trafficking API",
-   "description": "Manages your DoubleClick Campaign Manager ad campaigns and reports.",
-   "discoveryRestUrl": "https://www.googleapis.com/discovery/v1/apis/dfareporting/v2.6/rest",
-   "discoveryLink": "./apis/dfareporting/v2.6/rest",
-   "icons": {
-    "x16": "https://www.google.com/images/icons/product/doubleclick-16.gif",
-    "x32": "https://www.google.com/images/icons/product/doubleclick-32.gif"
-   },
-   "documentationLink": "https://developers.google.com/doubleclick-advertisers/",
-   "preferred": false
   },
   {
    "kind": "discovery#directoryItem",
@@ -1255,7 +1284,7 @@
    "name": "firebasedynamiclinks",
    "version": "v1",
    "title": "Firebase Dynamic Links API",
-   "description": "Firebase Dynamic Links API enables third party developers to programmatically create and manage Dynamic Links.",
+   "description": "Programmatically creates and manages Firebase Dynamic Links.",
    "discoveryRestUrl": "https://firebasedynamiclinks.googleapis.com/$discovery/rest?version=v1",
    "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
@@ -1431,8 +1460,8 @@
    "discoveryRestUrl": "https://www.googleapis.com/discovery/v1/apis/groupsmigration/v1/rest",
    "discoveryLink": "./apis/groupsmigration/v1/rest",
    "icons": {
-    "x16": "http://www.google.com/images/icons/product/discussions-16.gif",
-    "x32": "http://www.google.com/images/icons/product/discussions-32.gif"
+    "x16": "https://www.google.com/images/icons/product/discussions-16.gif",
+    "x32": "https://www.google.com/images/icons/product/discussions-32.gif"
    },
    "documentationLink": "https://developers.google.com/google-apps/groups-migration/",
    "preferred": true
@@ -1699,6 +1728,21 @@
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
    },
    "documentationLink": "https://developers.google.com/accounts/docs/OAuth2",
+   "preferred": true
+  },
+  {
+   "kind": "discovery#directoryItem",
+   "id": "oslogin:v1alpha",
+   "name": "oslogin",
+   "version": "v1alpha",
+   "title": "Google Cloud OS Login API",
+   "description": "Manages OS login configuration for Directory API users.",
+   "discoveryRestUrl": "https://oslogin.googleapis.com/$discovery/rest?version=v1alpha",
+   "icons": {
+    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+   },
+   "documentationLink": "https://developers.google.com/apis-explorer/#p/oslogin/v1alpha/",
    "preferred": true
   },
   {
@@ -2428,6 +2472,21 @@
   },
   {
    "kind": "discovery#directoryItem",
+   "id": "streetviewpublish:v1",
+   "name": "streetviewpublish",
+   "version": "v1",
+   "title": "Street View Publish API",
+   "description": "The Street View Publish API allows your application to publish 360 photos to Google Maps, along with image metadata that specifies the position, orientation, and connectivity of each photo. With this API, any app can offer an interface for positioning, connecting, and uploading user-generated Street View images.",
+   "discoveryRestUrl": "https://streetviewpublish.googleapis.com/$discovery/rest?version=v1",
+   "icons": {
+    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+   },
+   "documentationLink": "https://developers.google.com/streetview/publish/",
+   "preferred": true
+  },
+  {
+   "kind": "discovery#directoryItem",
    "id": "surveys:v2",
    "name": "surveys",
    "version": "v2",
@@ -2573,15 +2632,14 @@
    "id": "translate:v2",
    "name": "translate",
    "version": "v2",
-   "title": "Translate API",
-   "description": "Translates text from one language to another.",
-   "discoveryRestUrl": "https://www.googleapis.com/discovery/v1/apis/translate/v2/rest",
-   "discoveryLink": "./apis/translate/v2/rest",
+   "title": "Google Cloud Translation API",
+   "description": "The Google Cloud Translation API lets websites and programs integrate with Google Translate programmatically.",
+   "discoveryRestUrl": "https://translation.googleapis.com/$discovery/rest?version=v2",
    "icons": {
-    "x16": "https://www.google.com/images/icons/product/translate-16.png",
-    "x32": "https://www.google.com/images/icons/product/translate-32.png"
+    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
    },
-   "documentationLink": "https://developers.google.com/translate/v2/using_rest",
+   "documentationLink": "https://code.google.com/apis/language/translate/v2/getting_started.html",
    "preferred": true
   },
   {
@@ -2598,6 +2656,21 @@
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
    },
    "documentationLink": "https://developers.google.com/url-shortener/v1/getting_started",
+   "preferred": true
+  },
+  {
+   "kind": "discovery#directoryItem",
+   "id": "videointelligence:v1beta1",
+   "name": "videointelligence",
+   "version": "v1beta1",
+   "title": "Google Cloud Video Intelligence API",
+   "description": "Google Cloud Video Intelligence API.",
+   "discoveryRestUrl": "https://videointelligence.googleapis.com/$discovery/rest?version=v1beta1",
+   "icons": {
+    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+   },
+   "documentationLink": "https://cloud.google.com/video-intelligence/docs/",
    "preferred": true
   },
   {

@@ -168,6 +168,13 @@
               "createdAt": "1458680170.035",
               "dataCollected": true,
               "durationInSeconds": 3600,
+              "findingCounts": {
+                "High": 14,
+                "Informational": 0,
+                "Low": 0,
+                "Medium": 2,
+                "Undefined": 0
+              },
               "notifications": [
 
               ],

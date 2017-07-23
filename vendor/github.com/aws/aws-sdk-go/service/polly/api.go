@@ -1558,4 +1558,7 @@ const (
 
 	// VoiceIdFiliz is a VoiceId enum value
 	VoiceIdFiliz = "Filiz"
+
+	// VoiceIdVicki is a VoiceId enum value
+	VoiceIdVicki = "Vicki"
 )

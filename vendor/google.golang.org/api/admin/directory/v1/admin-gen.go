@@ -2655,6 +2655,8 @@ type User struct {
 	// Kind: Kind of resource this is.
 	Kind string `json:"kind,omitempty"`
 
+	Languages interface{} `json:"languages,omitempty"`
+
 	// LastLoginTime: User's last login time. (Read-only)
 	LastLoginTime string `json:"lastLoginTime,omitempty"`
 
@@ -2960,11 +2962,47 @@ func (s *UserIm) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// UserLanguage: JSON template for a language entry.
+type UserLanguage struct {
+	// CustomLanguage: Other language. User can provide own language name if
+	// there is no corresponding Google III language code. If this is set
+	// LanguageCode can't be set
+	CustomLanguage string `json:"customLanguage,omitempty"`
+
+	// LanguageCode: Language Code. Should be used for storing Google III
+	// LanguageCode string representation for language. Illegal values cause
+	// SchemaException.
+	LanguageCode string `json:"languageCode,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CustomLanguage") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CustomLanguage") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *UserLanguage) MarshalJSON() ([]byte, error) {
+	type noMethod UserLanguage
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // UserLocation: JSON template for a location entry.
 type UserLocation struct {
 	// Area: Textual location. This is most useful for display purposes to
-	// concisely describe the location. E.g. "Mountain View, CA", "Near
-	// Seattle", "US-NYC-9TH 9A209A".
+	// concisely describe the location. For example, "Mountain View, CA",
+	// "Near Seattle", "US-NYC-9TH 9A209A".
 	Area string `json:"area,omitempty"`
 
 	// BuildingId: Building Identifier.
@@ -2979,9 +3017,9 @@ type UserLocation struct {
 	// FloorName: Floor name/number.
 	FloorName string `json:"floorName,omitempty"`
 
-	// FloorSection: Floor Section. More specific location within the floor.
-	// E.g. if a floor is divided into sections "A", "B", and "C", this
-	// field would identify one of those values.
+	// FloorSection: Floor section. More specific location within the floor.
+	// For example, if a floor is divided into sections "A", "B", and "C",
+	// this field would identify one of those values.
 	FloorSection string `json:"floorSection,omitempty"`
 
 	// Type: Each entry can have a type which indicates standard types of
@@ -3093,6 +3131,10 @@ type UserOrganization struct {
 
 	// Domain: The domain to which the organization belongs to.
 	Domain string `json:"domain,omitempty"`
+
+	// FullTimeEquivalent: The full-time equivalent percent within the
+	// organization (100000 = 100%).
+	FullTimeEquivalent int64 `json:"fullTimeEquivalent,omitempty"`
 
 	// Location: Location of the organization. This need not be fully
 	// qualified address.
@@ -4366,6 +4408,13 @@ func (c *ChromeosdevicesListCall) OrderBy(orderBy string) *ChromeosdevicesListCa
 	return c
 }
 
+// OrgUnitPath sets the optional parameter "orgUnitPath": Full path of
+// the organization unit or its Id
+func (c *ChromeosdevicesListCall) OrgUnitPath(orgUnitPath string) *ChromeosdevicesListCall {
+	c.urlParams_.Set("orgUnitPath", orgUnitPath)
+	return c
+}
+
 // PageToken sets the optional parameter "pageToken": Token to specify
 // next page in the list
 func (c *ChromeosdevicesListCall) PageToken(pageToken string) *ChromeosdevicesListCall {
@@ -4539,6 +4588,11 @@ func (c *ChromeosdevicesListCall) Do(opts ...googleapi.CallOption) (*ChromeOsDev
 	//         "Chromebook status.",
 	//         "Chromebook support end date."
 	//       ],
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "orgUnitPath": {
+	//       "description": "Full path of the organization unit or its Id",
 	//       "location": "query",
 	//       "type": "string"
 	//     },

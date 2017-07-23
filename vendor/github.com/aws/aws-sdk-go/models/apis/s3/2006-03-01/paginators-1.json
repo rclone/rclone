@@ -4,15 +4,15 @@
       "result_key": "Buckets"
     },
     "ListMultipartUploads": {
+      "input_token": [
+        "KeyMarker",
+        "UploadIdMarker"
+      ],
       "limit_key": "MaxUploads",
       "more_results": "IsTruncated",
       "output_token": [
         "NextKeyMarker",
         "NextUploadIdMarker"
-      ],
-      "input_token": [
-        "KeyMarker",
-        "UploadIdMarker"
       ],
       "result_key": [
         "Uploads",
@@ -20,15 +20,15 @@
       ]
     },
     "ListObjectVersions": {
-      "more_results": "IsTruncated",
-      "limit_key": "MaxKeys",
-      "output_token": [
-        "NextKeyMarker",
-        "NextVersionIdMarker"
-      ],
       "input_token": [
         "KeyMarker",
         "VersionIdMarker"
+      ],
+      "limit_key": "MaxKeys",
+      "more_results": "IsTruncated",
+      "output_token": [
+        "NextKeyMarker",
+        "NextVersionIdMarker"
       ],
       "result_key": [
         "Versions",
@@ -37,29 +37,29 @@
       ]
     },
     "ListObjects": {
-      "more_results": "IsTruncated",
-      "limit_key": "MaxKeys",
-      "output_token": "NextMarker || Contents[-1].Key",
       "input_token": "Marker",
+      "limit_key": "MaxKeys",
+      "more_results": "IsTruncated",
+      "output_token": "NextMarker || Contents[-1].Key",
       "result_key": [
         "Contents",
         "CommonPrefixes"
       ]
     },
     "ListObjectsV2": {
+      "input_token": "ContinuationToken",
       "limit_key": "MaxKeys",
       "output_token": "NextContinuationToken",
-      "input_token": "ContinuationToken",
       "result_key": [
         "Contents",
         "CommonPrefixes"
       ]
     },
     "ListParts": {
-      "more_results": "IsTruncated",
-      "limit_key": "MaxParts",
-      "output_token": "NextPartNumberMarker",
       "input_token": "PartNumberMarker",
+      "limit_key": "MaxParts",
+      "more_results": "IsTruncated",
+      "output_token": "NextPartNumberMarker",
       "result_key": "Parts"
     }
   }

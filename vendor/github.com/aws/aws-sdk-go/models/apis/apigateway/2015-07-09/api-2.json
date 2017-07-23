@@ -374,6 +374,22 @@
         {"shape":"TooManyRequestsException"}
       ]
     },
+    "DeleteGatewayResponse":{
+      "name":"DeleteGatewayResponse",
+      "http":{
+        "method":"DELETE",
+        "requestUri":"/restapis/{restapi_id}/gatewayresponses/{response_type}",
+        "responseCode":202
+      },
+      "input":{"shape":"DeleteGatewayResponseRequest"},
+      "errors":[
+        {"shape":"UnauthorizedException"},
+        {"shape":"NotFoundException"},
+        {"shape":"TooManyRequestsException"},
+        {"shape":"BadRequestException"},
+        {"shape":"ConflictException"}
+      ]
+    },
     "DeleteIntegration":{
       "name":"DeleteIntegration",
       "http":{
@@ -847,6 +863,36 @@
         {"shape":"UnauthorizedException"},
         {"shape":"NotFoundException"},
         {"shape":"BadRequestException"},
+        {"shape":"ConflictException"},
+        {"shape":"TooManyRequestsException"}
+      ]
+    },
+    "GetGatewayResponse":{
+      "name":"GetGatewayResponse",
+      "http":{
+        "method":"GET",
+        "requestUri":"/restapis/{restapi_id}/gatewayresponses/{response_type}"
+      },
+      "input":{"shape":"GetGatewayResponseRequest"},
+      "output":{"shape":"GatewayResponse"},
+      "errors":[
+        {"shape":"UnauthorizedException"},
+        {"shape":"NotFoundException"},
+        {"shape":"TooManyRequestsException"}
+      ]
+    },
+    "GetGatewayResponses":{
+      "name":"GetGatewayResponses",
+      "http":{
+        "method":"GET",
+        "requestUri":"/restapis/{restapi_id}/gatewayresponses"
+      },
+      "input":{"shape":"GetGatewayResponsesRequest"},
+      "output":{"shape":"GatewayResponses"},
+      "errors":[
+        {"shape":"BadRequestException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"NotFoundException"},
         {"shape":"TooManyRequestsException"}
       ]
     },
@@ -1049,6 +1095,7 @@
         {"shape":"UnauthorizedException"},
         {"shape":"NotFoundException"},
         {"shape":"BadRequestException"},
+        {"shape":"ConflictException"},
         {"shape":"TooManyRequestsException"}
       ]
     },
@@ -1233,6 +1280,23 @@
         {"shape":"BadRequestException"},
         {"shape":"TooManyRequestsException"},
         {"shape":"ConflictException"}
+      ]
+    },
+    "PutGatewayResponse":{
+      "name":"PutGatewayResponse",
+      "http":{
+        "method":"PUT",
+        "requestUri":"/restapis/{restapi_id}/gatewayresponses/{response_type}",
+        "responseCode":201
+      },
+      "input":{"shape":"PutGatewayResponseRequest"},
+      "output":{"shape":"GatewayResponse"},
+      "errors":[
+        {"shape":"BadRequestException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"NotFoundException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"TooManyRequestsException"}
       ]
     },
     "PutIntegration":{
@@ -1492,6 +1556,21 @@
         {"shape":"NotFoundException"},
         {"shape":"BadRequestException"},
         {"shape":"ConflictException"},
+        {"shape":"TooManyRequestsException"}
+      ]
+    },
+    "UpdateGatewayResponse":{
+      "name":"UpdateGatewayResponse",
+      "http":{
+        "method":"PATCH",
+        "requestUri":"/restapis/{restapi_id}/gatewayresponses/{response_type}"
+      },
+      "input":{"shape":"UpdateGatewayResponseRequest"},
+      "output":{"shape":"GatewayResponse"},
+      "errors":[
+        {"shape":"UnauthorizedException"},
+        {"shape":"NotFoundException"},
+        {"shape":"BadRequestException"},
         {"shape":"TooManyRequestsException"}
       ]
     },
@@ -2203,6 +2282,25 @@
         }
       }
     },
+    "DeleteGatewayResponseRequest":{
+      "type":"structure",
+      "required":[
+        "restApiId",
+        "responseType"
+      ],
+      "members":{
+        "restApiId":{
+          "shape":"String",
+          "location":"uri",
+          "locationName":"restapi_id"
+        },
+        "responseType":{
+          "shape":"GatewayResponseType",
+          "location":"uri",
+          "locationName":"response_type"
+        }
+      }
+    },
     "DeleteIntegrationRequest":{
       "type":"structure",
       "required":[
@@ -2602,6 +2700,51 @@
         }
       }
     },
+    "GatewayResponse":{
+      "type":"structure",
+      "members":{
+        "responseType":{"shape":"GatewayResponseType"},
+        "statusCode":{"shape":"StatusCode"},
+        "responseParameters":{"shape":"MapOfStringToString"},
+        "responseTemplates":{"shape":"MapOfStringToString"},
+        "defaultResponse":{"shape":"Boolean"}
+      }
+    },
+    "GatewayResponseType":{
+      "type":"string",
+      "enum":[
+        "DEFAULT_4XX",
+        "DEFAULT_5XX",
+        "RESOURCE_NOT_FOUND",
+        "UNAUTHORIZED",
+        "INVALID_API_KEY",
+        "ACCESS_DENIED",
+        "AUTHORIZER_FAILURE",
+        "AUTHORIZER_CONFIGURATION_ERROR",
+        "INVALID_SIGNATURE",
+        "EXPIRED_TOKEN",
+        "MISSING_AUTHENTICATION_TOKEN",
+        "INTEGRATION_FAILURE",
+        "INTEGRATION_TIMEOUT",
+        "API_CONFIGURATION_ERROR",
+        "UNSUPPORTED_MEDIA_TYPE",
+        "BAD_REQUEST_PARAMETERS",
+        "BAD_REQUEST_BODY",
+        "REQUEST_TOO_LARGE",
+        "THROTTLED",
+        "QUOTA_EXCEEDED"
+      ]
+    },
+    "GatewayResponses":{
+      "type":"structure",
+      "members":{
+        "position":{"shape":"String"},
+        "items":{
+          "shape":"ListOfGatewayResponse",
+          "locationName":"item"
+        }
+      }
+    },
     "GenerateClientCertificateRequest":{
       "type":"structure",
       "members":{
@@ -2962,6 +3105,46 @@
           "shape":"String",
           "location":"header",
           "locationName":"Accept"
+        }
+      }
+    },
+    "GetGatewayResponseRequest":{
+      "type":"structure",
+      "required":[
+        "restApiId",
+        "responseType"
+      ],
+      "members":{
+        "restApiId":{
+          "shape":"String",
+          "location":"uri",
+          "locationName":"restapi_id"
+        },
+        "responseType":{
+          "shape":"GatewayResponseType",
+          "location":"uri",
+          "locationName":"response_type"
+        }
+      }
+    },
+    "GetGatewayResponsesRequest":{
+      "type":"structure",
+      "required":["restApiId"],
+      "members":{
+        "restApiId":{
+          "shape":"String",
+          "location":"uri",
+          "locationName":"restapi_id"
+        },
+        "position":{
+          "shape":"String",
+          "location":"querystring",
+          "locationName":"position"
+        },
+        "limit":{
+          "shape":"NullableInteger",
+          "location":"querystring",
+          "locationName":"limit"
         }
       }
     },
@@ -3617,6 +3800,10 @@
       "type":"list",
       "member":{"shape":"DomainName"}
     },
+    "ListOfGatewayResponse":{
+      "type":"list",
+      "member":{"shape":"GatewayResponse"}
+    },
     "ListOfLong":{
       "type":"list",
       "member":{"shape":"Long"}
@@ -3825,6 +4012,28 @@
       "value":{"shape":"MapOfMethodSnapshot"}
     },
     "ProviderARN":{"type":"string"},
+    "PutGatewayResponseRequest":{
+      "type":"structure",
+      "required":[
+        "restApiId",
+        "responseType"
+      ],
+      "members":{
+        "restApiId":{
+          "shape":"String",
+          "location":"uri",
+          "locationName":"restapi_id"
+        },
+        "responseType":{
+          "shape":"GatewayResponseType",
+          "location":"uri",
+          "locationName":"response_type"
+        },
+        "statusCode":{"shape":"StatusCode"},
+        "responseParameters":{"shape":"MapOfStringToString"},
+        "responseTemplates":{"shape":"MapOfStringToString"}
+      }
+    },
     "PutIntegrationRequest":{
       "type":"structure",
       "required":[
@@ -4431,6 +4640,26 @@
           "shape":"String",
           "location":"uri",
           "locationName":"domain_name"
+        },
+        "patchOperations":{"shape":"ListOfPatchOperation"}
+      }
+    },
+    "UpdateGatewayResponseRequest":{
+      "type":"structure",
+      "required":[
+        "restApiId",
+        "responseType"
+      ],
+      "members":{
+        "restApiId":{
+          "shape":"String",
+          "location":"uri",
+          "locationName":"restapi_id"
+        },
+        "responseType":{
+          "shape":"GatewayResponseType",
+          "location":"uri",
+          "locationName":"response_type"
         },
         "patchOperations":{"shape":"ListOfPatchOperation"}
       }

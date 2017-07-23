@@ -114,6 +114,37 @@ type ProjectsRulesetsService struct {
 	s *Service
 }
 
+// Arg: Arg matchers for the mock function.
+type Arg struct {
+	// AnyValue: Argument matches any value provided.
+	AnyValue *Empty `json:"anyValue,omitempty"`
+
+	// ExactValue: Argument exactly matches value provided.
+	ExactValue interface{} `json:"exactValue,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AnyValue") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AnyValue") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Arg) MarshalJSON() ([]byte, error) {
+	type noMethod Arg
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Empty: A generic empty message that you can re-use to avoid defining
 // duplicated
 // empty messages in your APIs. A typical example is to use it as the
@@ -196,6 +227,60 @@ type FunctionCall struct {
 
 func (s *FunctionCall) MarshalJSON() ([]byte, error) {
 	type noMethod FunctionCall
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// FunctionMock: Mock function definition.
+//
+// Mocks must refer to a function declared by the target service. The
+// type of
+// the function args and result will be inferred at test time. If either
+// the
+// arg or result values are not compatible with function type
+// declaration, the
+// request will be considered invalid.
+//
+// More than one `FunctionMock` may be provided for a given function
+// name so
+// long as the `Arg` matchers are distinct. There may be only one
+// function
+// for a given overload where all `Arg` values are `Arg.any_value`.
+type FunctionMock struct {
+	// Args: The list of `Arg` values to match. The order in which the
+	// arguments are
+	// provided is the order in which they must appear in the
+	// function
+	// invocation.
+	Args []*Arg `json:"args,omitempty"`
+
+	// Function: The name of the function.
+	//
+	// The function name must match one provided by a service declaration.
+	Function string `json:"function,omitempty"`
+
+	// Result: The mock result of the function call.
+	Result *Result `json:"result,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Args") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Args") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *FunctionMock) MarshalJSON() ([]byte, error) {
+	type noMethod FunctionMock
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -401,6 +486,40 @@ func (s *Release) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// Result: Possible result values from the function mock invocation.
+type Result struct {
+	// Undefined: The result is undefined, meaning the result could not be
+	// computed.
+	Undefined *Empty `json:"undefined,omitempty"`
+
+	// Value: The result is an actual value. The type of the value must
+	// match that
+	// of the type declared by the service.
+	Value interface{} `json:"value,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Undefined") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Undefined") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Result) MarshalJSON() ([]byte, error) {
+	type noMethod Result
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Ruleset: `Ruleset` is an immutable copy of `Source` with a globally
 // unique identifier
 // and a creation time.
@@ -511,6 +630,90 @@ func (s *SourcePosition) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// TestCase: `TestCase` messages provide the request context and an
+// expectation as to
+// whether the given context will be allowed or denied. Test cases may
+// specify
+// the `request`, `resource`, and `function_mocks` to mock a function
+// call to
+// a service-provided function.
+//
+// The `request` object represents context present at request-time.
+//
+// The `resource` is the value of the target resource as it appears
+// in
+// persistent storage before the request is executed.
+type TestCase struct {
+	// Expectation: Test expectation.
+	//
+	// Possible values:
+	//   "EXPECTATION_UNSPECIFIED" - Unspecified expectation.
+	//   "ALLOW" - Expect an allowed result.
+	//   "DENY" - Expect a denied result.
+	Expectation string `json:"expectation,omitempty"`
+
+	// FunctionMocks: Optional function mocks for service-defined functions.
+	// If not set, any
+	// service defined function is expected to return an error, which may or
+	// may
+	// not influence the test outcome.
+	FunctionMocks []*FunctionMock `json:"functionMocks,omitempty"`
+
+	// Request: Request context.
+	//
+	// The exact format of the request context is service-dependent. See
+	// the
+	// appropriate service documentation for information about the
+	// supported
+	// fields and types on the request. Minimally, all services support
+	// the
+	// following fields and types:
+	//
+	// Request field  | Type
+	// ---------------|-----------------
+	// auth.uid       | `string`
+	// auth.token     | `map<string, string>`
+	// headers        | `map<string, string>`
+	// method         | `string`
+	// params         | `map<string, string>`
+	// path           | `string`
+	// time           | `google.protobuf.Timestamp`
+	//
+	// If the request value is not well-formed for the service, the request
+	// will
+	// be rejected as an invalid argument.
+	Request interface{} `json:"request,omitempty"`
+
+	// Resource: Optional resource value as it appears in persistent storage
+	// before the
+	// request is fulfilled.
+	//
+	// The resource type depends on the `request.path` value.
+	Resource interface{} `json:"resource,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Expectation") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Expectation") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *TestCase) MarshalJSON() ([]byte, error) {
+	type noMethod TestCase
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // TestResult: Test result message containing the state of the test as
 // well as a
 // description and source position for test failures.
@@ -590,6 +793,9 @@ type TestRulesetRequest struct {
 	// `Ruleset`.
 	Source *Source `json:"source,omitempty"`
 
+	// TestSuite: Inline `TestSuite` to run.
+	TestSuite *TestSuite `json:"testSuite,omitempty"`
+
 	// ForceSendFields is a list of field names (e.g. "Source") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
@@ -651,6 +857,40 @@ type TestRulesetResponse struct {
 
 func (s *TestRulesetResponse) MarshalJSON() ([]byte, error) {
 	type noMethod TestRulesetResponse
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// TestSuite: `TestSuite` is a collection of `TestCase` instances that
+// validate the logical
+// correctness of a `Ruleset`. The `TestSuite` may be referenced in-line
+// within
+// a `TestRuleset` invocation or as part of a `Release` object as a
+// pre-release
+// check.
+type TestSuite struct {
+	// TestCases: Collection of test cases associated with the `TestSuite`.
+	TestCases []*TestCase `json:"testCases,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "TestCases") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "TestCases") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *TestSuite) MarshalJSON() ([]byte, error) {
+	type noMethod TestSuite
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }

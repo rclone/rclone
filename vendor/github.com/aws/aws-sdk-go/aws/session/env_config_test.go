@@ -2,17 +2,16 @@ package session
 
 import (
 	"os"
-	"path/filepath"
-	"strings"
+	"reflect"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/stretchr/testify/assert"
+	"github.com/aws/aws-sdk-go/awstesting"
 )
 
 func TestLoadEnvConfig_Creds(t *testing.T) {
-	env := stashEnv()
-	defer popEnv(env)
+	env := awstesting.StashEnv()
+	defer awstesting.PopEnv(env)
 
 	cases := []struct {
 		Env map[string]string
@@ -83,26 +82,30 @@ func TestLoadEnvConfig_Creds(t *testing.T) {
 		}
 
 		cfg := loadEnvConfig()
-		assert.Equal(t, c.Val, cfg.Creds)
+		if !reflect.DeepEqual(c.Val, cfg.Creds) {
+			t.Errorf("expect credentials to match.\n%s",
+				awstesting.SprintExpectActual(c.Val, cfg.Creds))
+		}
 	}
 }
 
 func TestLoadEnvConfig(t *testing.T) {
-	env := stashEnv()
-	defer popEnv(env)
+	env := awstesting.StashEnv()
+	defer awstesting.PopEnv(env)
 
 	cases := []struct {
 		Env                 map[string]string
-		Region, Profile     string
-		CustomCABundle      string
 		UseSharedConfigCall bool
+		Config              envConfig
 	}{
 		{
 			Env: map[string]string{
 				"AWS_REGION":  "region",
 				"AWS_PROFILE": "profile",
 			},
-			Region: "region", Profile: "profile",
+			Config: envConfig{
+				Region: "region", Profile: "profile",
+			},
 		},
 		{
 			Env: map[string]string{
@@ -111,7 +114,9 @@ func TestLoadEnvConfig(t *testing.T) {
 				"AWS_PROFILE":         "profile",
 				"AWS_DEFAULT_PROFILE": "default_profile",
 			},
-			Region: "region", Profile: "profile",
+			Config: envConfig{
+				Region: "region", Profile: "profile",
+			},
 		},
 		{
 			Env: map[string]string{
@@ -121,7 +126,10 @@ func TestLoadEnvConfig(t *testing.T) {
 				"AWS_DEFAULT_PROFILE": "default_profile",
 				"AWS_SDK_LOAD_CONFIG": "1",
 			},
-			Region: "region", Profile: "profile",
+			Config: envConfig{
+				Region: "region", Profile: "profile",
+				EnableSharedConfig: true,
+			},
 		},
 		{
 			Env: map[string]string{
@@ -135,14 +143,20 @@ func TestLoadEnvConfig(t *testing.T) {
 				"AWS_DEFAULT_PROFILE": "default_profile",
 				"AWS_SDK_LOAD_CONFIG": "1",
 			},
-			Region: "default_region", Profile: "default_profile",
+			Config: envConfig{
+				Region: "default_region", Profile: "default_profile",
+				EnableSharedConfig: true,
+			},
 		},
 		{
 			Env: map[string]string{
 				"AWS_REGION":  "region",
 				"AWS_PROFILE": "profile",
 			},
-			Region: "region", Profile: "profile",
+			Config: envConfig{
+				Region: "region", Profile: "profile",
+				EnableSharedConfig: true,
+			},
 			UseSharedConfigCall: true,
 		},
 		{
@@ -152,7 +166,10 @@ func TestLoadEnvConfig(t *testing.T) {
 				"AWS_PROFILE":         "profile",
 				"AWS_DEFAULT_PROFILE": "default_profile",
 			},
-			Region: "region", Profile: "profile",
+			Config: envConfig{
+				Region: "region", Profile: "profile",
+				EnableSharedConfig: true,
+			},
 			UseSharedConfigCall: true,
 		},
 		{
@@ -163,7 +180,10 @@ func TestLoadEnvConfig(t *testing.T) {
 				"AWS_DEFAULT_PROFILE": "default_profile",
 				"AWS_SDK_LOAD_CONFIG": "1",
 			},
-			Region: "region", Profile: "profile",
+			Config: envConfig{
+				Region: "region", Profile: "profile",
+				EnableSharedConfig: true,
+			},
 			UseSharedConfigCall: true,
 		},
 		{
@@ -171,7 +191,10 @@ func TestLoadEnvConfig(t *testing.T) {
 				"AWS_DEFAULT_REGION":  "default_region",
 				"AWS_DEFAULT_PROFILE": "default_profile",
 			},
-			Region: "default_region", Profile: "default_profile",
+			Config: envConfig{
+				Region: "default_region", Profile: "default_profile",
+				EnableSharedConfig: true,
+			},
 			UseSharedConfigCall: true,
 		},
 		{
@@ -180,21 +203,39 @@ func TestLoadEnvConfig(t *testing.T) {
 				"AWS_DEFAULT_PROFILE": "default_profile",
 				"AWS_SDK_LOAD_CONFIG": "1",
 			},
-			Region: "default_region", Profile: "default_profile",
+			Config: envConfig{
+				Region: "default_region", Profile: "default_profile",
+				EnableSharedConfig: true,
+			},
 			UseSharedConfigCall: true,
 		},
 		{
 			Env: map[string]string{
 				"AWS_CA_BUNDLE": "custom_ca_bundle",
 			},
-			CustomCABundle: "custom_ca_bundle",
+			Config: envConfig{
+				CustomCABundle: "custom_ca_bundle",
+			},
 		},
 		{
 			Env: map[string]string{
 				"AWS_CA_BUNDLE": "custom_ca_bundle",
 			},
-			CustomCABundle:      "custom_ca_bundle",
+			Config: envConfig{
+				CustomCABundle:     "custom_ca_bundle",
+				EnableSharedConfig: true,
+			},
 			UseSharedConfigCall: true,
+		},
+		{
+			Env: map[string]string{
+				"AWS_SHARED_CREDENTIALS_FILE": "/path/to/credentials/file",
+				"AWS_CONFIG_FILE":             "/path/to/config/file",
+			},
+			Config: envConfig{
+				SharedCredentialsFile: "/path/to/credentials/file",
+				SharedConfigFile:      "/path/to/config/file",
+			},
 		},
 	}
 
@@ -212,55 +253,16 @@ func TestLoadEnvConfig(t *testing.T) {
 			cfg = loadEnvConfig()
 		}
 
-		assert.Equal(t, c.Region, cfg.Region)
-		assert.Equal(t, c.Profile, cfg.Profile)
-		assert.Equal(t, c.CustomCABundle, cfg.CustomCABundle)
+		if !reflect.DeepEqual(c.Config, cfg) {
+			t.Errorf("expect config to match.\n%s",
+				awstesting.SprintExpectActual(c.Config, cfg))
+		}
 	}
 }
 
-func TestSharedCredsFilename(t *testing.T) {
-	env := stashEnv()
-	defer popEnv(env)
-
-	os.Setenv("USERPROFILE", "profile_dir")
-	expect := filepath.Join("profile_dir", ".aws", "credentials")
-	name := sharedCredentialsFilename()
-	assert.Equal(t, expect, name)
-
-	os.Setenv("HOME", "home_dir")
-	expect = filepath.Join("home_dir", ".aws", "credentials")
-	name = sharedCredentialsFilename()
-	assert.Equal(t, expect, name)
-
-	expect = filepath.Join("path/to/credentials/file")
-	os.Setenv("AWS_SHARED_CREDENTIALS_FILE", expect)
-	name = sharedCredentialsFilename()
-	assert.Equal(t, expect, name)
-}
-
-func TestSharedConfigFilename(t *testing.T) {
-	env := stashEnv()
-	defer popEnv(env)
-
-	os.Setenv("USERPROFILE", "profile_dir")
-	expect := filepath.Join("profile_dir", ".aws", "config")
-	name := sharedConfigFilename()
-	assert.Equal(t, expect, name)
-
-	os.Setenv("HOME", "home_dir")
-	expect = filepath.Join("home_dir", ".aws", "config")
-	name = sharedConfigFilename()
-	assert.Equal(t, expect, name)
-
-	expect = filepath.Join("path/to/config/file")
-	os.Setenv("AWS_CONFIG_FILE", expect)
-	name = sharedConfigFilename()
-	assert.Equal(t, expect, name)
-}
-
 func TestSetEnvValue(t *testing.T) {
-	env := stashEnv()
-	defer popEnv(env)
+	env := awstesting.StashEnv()
+	defer awstesting.PopEnv(env)
 
 	os.Setenv("empty_key", "")
 	os.Setenv("second_key", "2")
@@ -271,21 +273,7 @@ func TestSetEnvValue(t *testing.T) {
 		"empty_key", "first_key", "second_key", "third_key",
 	})
 
-	assert.Equal(t, "2", dst)
-}
-
-func stashEnv() []string {
-	env := os.Environ()
-	os.Clearenv()
-
-	return env
-}
-
-func popEnv(env []string) {
-	os.Clearenv()
-
-	for _, e := range env {
-		p := strings.SplitN(e, "=", 2)
-		os.Setenv(p[0], p[1])
+	if e, a := "2", dst; e != a {
+		t.Errorf("expect %s value from environment, got %s", e, a)
 	}
 }

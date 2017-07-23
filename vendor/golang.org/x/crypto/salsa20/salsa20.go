@@ -3,20 +3,20 @@
 // license that can be found in the LICENSE file.
 
 /*
-Package salsa20 implements the Salsa20 stream cipher as specified in http://cr.yp.to/snuffle/spec.pdf.
+Package salsa20 implements the Salsa20 stream cipher as specified in https://cr.yp.to/snuffle/spec.pdf.
 
 Salsa20 differs from many other stream ciphers in that it is message orientated
 rather than byte orientated. Keystream blocks are not preserved between calls,
 therefore each side must encrypt/decrypt data with the same segmentation.
 
 Another aspect of this difference is that part of the counter is exposed as
-an nonce in each call. Encrypting two different messages with the same (key,
+a nonce in each call. Encrypting two different messages with the same (key,
 nonce) pair leads to trivial plaintext recovery. This is analogous to
 encrypting two different messages with the same key with a traditional stream
 cipher.
 
 This package also implements XSalsa20: a version of Salsa20 with a 24-byte
-nonce as specified in http://cr.yp.to/snuffle/xsalsa-20081128.pdf. Simply
+nonce as specified in https://cr.yp.to/snuffle/xsalsa-20081128.pdf. Simply
 passing a 24-byte slice as the nonce triggers XSalsa20.
 */
 package salsa20 // import "golang.org/x/crypto/salsa20"

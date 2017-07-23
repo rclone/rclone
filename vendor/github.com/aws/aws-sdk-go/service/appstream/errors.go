@@ -7,8 +7,14 @@ const (
 	// ErrCodeConcurrentModificationException for service response error code
 	// "ConcurrentModificationException".
 	//
-	// An API error occurred, please try again.
+	// An API error occurred. Wait a few minutes and try again.
 	ErrCodeConcurrentModificationException = "ConcurrentModificationException"
+
+	// ErrCodeIncompatibleImageException for service response error code
+	// "IncompatibleImageException".
+	//
+	// The image does not support storage connectors.
+	ErrCodeIncompatibleImageException = "IncompatibleImageException"
 
 	// ErrCodeInvalidParameterCombinationException for service response error code
 	// "InvalidParameterCombinationException".

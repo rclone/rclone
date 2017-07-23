@@ -21,6 +21,7 @@ import (
 
 	"cloud.google.com/go/internal/version"
 	"cloud.google.com/go/longrunning"
+	lroauto "cloud.google.com/go/longrunning/autogen"
 	gax "github.com/googleapis/gax-go"
 	"golang.org/x/net/context"
 	"google.golang.org/api/option"
@@ -41,9 +42,7 @@ type CallOptions struct {
 func defaultClientOptions() []option.ClientOption {
 	return []option.ClientOption{
 		option.WithEndpoint("speech.googleapis.com:443"),
-		option.WithScopes(
-			"https://www.googleapis.com/auth/cloud-platform",
-		),
+		option.WithScopes(DefaultAuthScopes()...),
 	}
 }
 
@@ -53,17 +52,6 @@ func defaultCallOptions() *CallOptions {
 			gax.WithRetry(func() gax.Retryer {
 				return gax.OnCodes([]codes.Code{
 					codes.DeadlineExceeded,
-					codes.Unavailable,
-				}, gax.Backoff{
-					Initial:    100 * time.Millisecond,
-					Max:        60000 * time.Millisecond,
-					Multiplier: 1.3,
-				})
-			}),
-		},
-		{"default", "non_idempotent"}: {
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnCodes([]codes.Code{
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    100 * time.Millisecond,
@@ -88,11 +76,16 @@ type Client struct {
 	// The gRPC API client.
 	client speechpb.SpeechClient
 
+	// LROClient is used internally to handle longrunning operations.
+	// It is exposed so that its CallOptions can be modified if required.
+	// Users should not Close this client.
+	LROClient *lroauto.OperationsClient
+
 	// The call options for this service.
 	CallOptions *CallOptions
 
 	// The metadata to be sent with each request.
-	xGoogHeader string
+	xGoogHeader []string
 }
 
 // NewClient creates a new speech client.
@@ -110,6 +103,17 @@ func NewClient(ctx context.Context, opts ...option.ClientOption) (*Client, error
 		client: speechpb.NewSpeechClient(conn),
 	}
 	c.SetGoogleClientInfo()
+
+	c.LROClient, err = lroauto.NewOperationsClient(ctx, option.WithGRPCConn(conn))
+	if err != nil {
+		// This error "should not happen", since we are just reusing old connection
+		// and never actually need to dial.
+		// If this does happen, we could leak conn. However, we cannot close conn:
+		// If the user invoked the function with option.WithGRPCConn,
+		// we would close a connection that's still in use.
+		// TODO(pongad): investigate error conditions.
+		return nil, err
+	}
 	return c, nil
 }
 
@@ -129,81 +133,86 @@ func (c *Client) Close() error {
 // use by Google-written clients.
 func (c *Client) SetGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", version.Go()}, keyval...)
-	kv = append(kv, "gapic", version.Repo, "gax", gax.Version, "grpc", "")
-	c.xGoogHeader = gax.XGoogHeader(kv...)
+	kv = append(kv, "gapic", version.Repo, "gax", gax.Version, "grpc", grpc.Version)
+	c.xGoogHeader = []string{gax.XGoogHeader(kv...)}
 }
 
-// SyncRecognize perform synchronous speech-recognition: receive results after all audio
+// SyncRecognize performs synchronous speech recognition: receive results after all audio
 // has been sent and processed.
-func (c *Client) SyncRecognize(ctx context.Context, req *speechpb.SyncRecognizeRequest) (*speechpb.SyncRecognizeResponse, error) {
+func (c *Client) SyncRecognize(ctx context.Context, req *speechpb.SyncRecognizeRequest, opts ...gax.CallOption) (*speechpb.SyncRecognizeResponse, error) {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
+	opts = append(c.CallOptions.SyncRecognize[0:len(c.CallOptions.SyncRecognize):len(c.CallOptions.SyncRecognize)], opts...)
 	var resp *speechpb.SyncRecognizeResponse
-	err := gax.Invoke(ctx, func(ctx context.Context) error {
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		resp, err = c.client.SyncRecognize(ctx, req)
+		resp, err = c.client.SyncRecognize(ctx, req, settings.GRPC...)
 		return err
-	}, c.CallOptions.SyncRecognize...)
+	}, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
 }
 
-// AsyncRecognize perform asynchronous speech-recognition: receive results via the
-// google.longrunning.Operations interface. Returns either an
+// AsyncRecognize performs asynchronous speech recognition: receive results via the
+// [google.longrunning.Operations]
+// (/speech/reference/rest/v1beta1/operations#Operation)
+// interface. Returns either an
 // `Operation.error` or an `Operation.response` which contains
 // an `AsyncRecognizeResponse` message.
-func (c *Client) AsyncRecognize(ctx context.Context, req *speechpb.AsyncRecognizeRequest) (*AsyncRecognizeResponseOperation, error) {
+func (c *Client) AsyncRecognize(ctx context.Context, req *speechpb.AsyncRecognizeRequest, opts ...gax.CallOption) (*AsyncRecognizeOperation, error) {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
+	opts = append(c.CallOptions.AsyncRecognize[0:len(c.CallOptions.AsyncRecognize):len(c.CallOptions.AsyncRecognize)], opts...)
 	var resp *longrunningpb.Operation
-	err := gax.Invoke(ctx, func(ctx context.Context) error {
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		resp, err = c.client.AsyncRecognize(ctx, req)
+		resp, err = c.client.AsyncRecognize(ctx, req, settings.GRPC...)
 		return err
-	}, c.CallOptions.AsyncRecognize...)
+	}, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return &AsyncRecognizeResponseOperation{
-		lro: longrunning.InternalNewOperation(c.Connection(), resp),
+	return &AsyncRecognizeOperation{
+		lro: longrunning.InternalNewOperation(c.LROClient, resp),
 	}, nil
 }
 
-// StreamingRecognize perform bidirectional streaming speech-recognition: receive results while
+// StreamingRecognize performs bidirectional streaming speech recognition: receive results while
 // sending audio. This method is only available via the gRPC API (not REST).
-func (c *Client) StreamingRecognize(ctx context.Context) (speechpb.Speech_StreamingRecognizeClient, error) {
+func (c *Client) StreamingRecognize(ctx context.Context, opts ...gax.CallOption) (speechpb.Speech_StreamingRecognizeClient, error) {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
+	opts = append(c.CallOptions.StreamingRecognize[0:len(c.CallOptions.StreamingRecognize):len(c.CallOptions.StreamingRecognize)], opts...)
 	var resp speechpb.Speech_StreamingRecognizeClient
-	err := gax.Invoke(ctx, func(ctx context.Context) error {
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		resp, err = c.client.StreamingRecognize(ctx)
+		resp, err = c.client.StreamingRecognize(ctx, settings.GRPC...)
 		return err
-	}, c.CallOptions.StreamingRecognize...)
+	}, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
 }
 
-// AsyncRecognizeResponseOperation manages a long-running operation yielding speechpb.AsyncRecognizeResponse.
-type AsyncRecognizeResponseOperation struct {
+// AsyncRecognizeOperation manages a long-running operation from AsyncRecognize.
+type AsyncRecognizeOperation struct {
 	lro *longrunning.Operation
 }
 
-// AsyncRecognizeResponseOperation returns a new AsyncRecognizeResponseOperation from a given name.
-// The name must be that of a previously created AsyncRecognizeResponseOperation, possibly from a different process.
-func (c *Client) AsyncRecognizeResponseOperation(name string) *AsyncRecognizeResponseOperation {
-	return &AsyncRecognizeResponseOperation{
-		lro: longrunning.InternalNewOperation(c.Connection(), &longrunningpb.Operation{Name: name}),
+// AsyncRecognizeOperation returns a new AsyncRecognizeOperation from a given name.
+// The name must be that of a previously created AsyncRecognizeOperation, possibly from a different process.
+func (c *Client) AsyncRecognizeOperation(name string) *AsyncRecognizeOperation {
+	return &AsyncRecognizeOperation{
+		lro: longrunning.InternalNewOperation(c.LROClient, &longrunningpb.Operation{Name: name}),
 	}
 }
 
 // Wait blocks until the long-running operation is completed, returning the response and any errors encountered.
 //
 // See documentation of Poll for error-handling information.
-func (op *AsyncRecognizeResponseOperation) Wait(ctx context.Context) (*speechpb.AsyncRecognizeResponse, error) {
+func (op *AsyncRecognizeOperation) Wait(ctx context.Context, opts ...gax.CallOption) (*speechpb.AsyncRecognizeResponse, error) {
 	var resp speechpb.AsyncRecognizeResponse
-	if err := op.lro.Wait(ctx, &resp); err != nil {
+	if err := op.lro.Wait(ctx, &resp, opts...); err != nil {
 		return nil, err
 	}
 	return &resp, nil
@@ -218,9 +227,9 @@ func (op *AsyncRecognizeResponseOperation) Wait(ctx context.Context) (*speechpb.
 // If Poll succeeds and the operation has completed successfully,
 // op.Done will return true, and the response of the operation is returned.
 // If Poll succeeds and the operation has not completed, the returned response and error are both nil.
-func (op *AsyncRecognizeResponseOperation) Poll(ctx context.Context) (*speechpb.AsyncRecognizeResponse, error) {
+func (op *AsyncRecognizeOperation) Poll(ctx context.Context, opts ...gax.CallOption) (*speechpb.AsyncRecognizeResponse, error) {
 	var resp speechpb.AsyncRecognizeResponse
-	if err := op.lro.Poll(ctx, &resp); err != nil {
+	if err := op.lro.Poll(ctx, &resp, opts...); err != nil {
 		return nil, err
 	}
 	if !op.Done() {
@@ -233,7 +242,7 @@ func (op *AsyncRecognizeResponseOperation) Poll(ctx context.Context) (*speechpb.
 // Metadata itself does not contact the server, but Poll does.
 // To get the latest metadata, call this method after a successful call to Poll.
 // If the metadata is not available, the returned metadata and error are both nil.
-func (op *AsyncRecognizeResponseOperation) Metadata() (*speechpb.AsyncRecognizeMetadata, error) {
+func (op *AsyncRecognizeOperation) Metadata() (*speechpb.AsyncRecognizeMetadata, error) {
 	var meta speechpb.AsyncRecognizeMetadata
 	if err := op.lro.Metadata(&meta); err == longrunning.ErrNoMetadata {
 		return nil, nil
@@ -244,12 +253,12 @@ func (op *AsyncRecognizeResponseOperation) Metadata() (*speechpb.AsyncRecognizeM
 }
 
 // Done reports whether the long-running operation has completed.
-func (op *AsyncRecognizeResponseOperation) Done() bool {
+func (op *AsyncRecognizeOperation) Done() bool {
 	return op.lro.Done()
 }
 
 // Name returns the name of the long-running operation.
 // The name is assigned by the server and is unique within the service from which the operation is created.
-func (op *AsyncRecognizeResponseOperation) Name() string {
+func (op *AsyncRecognizeOperation) Name() string {
 	return op.lro.Name()
 }

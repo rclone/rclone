@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"jQLIOHBVnDZie4rQHGH1WJF-INE/ytEPITuWF0qQr5tE7yyl8jHYXTs\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/BcJfQYzk5aMJfb5o2fF830xH640\"",
  "discoveryVersion": "v1",
  "id": "plus:v1",
  "name": "plus",
  "version": "v1",
- "revision": "20160427",
+ "revision": "20170606",
  "title": "Google+ API",
  "description": "Builds on top of the Google+ platform.",
  "ownerDomain": "google.com",

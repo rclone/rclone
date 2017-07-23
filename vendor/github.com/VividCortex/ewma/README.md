@@ -1,9 +1,7 @@
-# EWMA
+# EWMA [![GoDoc](https://godoc.org/github.com/VividCortex/ewma?status.svg)](https://godoc.org/github.com/VividCortex/ewma) ![Build Status](https://circleci.com/gh/VividCortex/moving_average.png?circle-token=1459fa37f9ca0e50cef05d1963146d96d47ea523)
 
 This repo provides Exponentially Weighted Moving Average algorithms, or EWMAs for short, [based on our
 Quantifying Abnormal Behavior talk](https://vividcortex.com/blog/2013/07/23/a-fast-go-library-for-exponential-moving-averages/).
-
-![Build Status](https://circleci.com/gh/VividCortex/moving_average.png?circle-token=1459fa37f9ca0e50cef05d1963146d96d47ea523)
 
 ### Exponentially Weighted Moving Average
 
@@ -33,21 +31,21 @@ and then begin the incremental updating of the average. Each method has pros and
 It may help to look at it pictorially. Suppose the series has five numbers, and we choose
 alpha to be 0.50 for simplicity. Here's the series, with numbers in the neighborhood of 300.
 
-![Data Series](http://f.cl.ly/items/2W0I230b3b1B3p3o181O/data%20series.png)
+![Data Series](https://user-images.githubusercontent.com/279875/28242350-463289a2-6977-11e7-88ca-fd778ccef1f0.png)
 
 Now let's take the moving average of those numbers. First we set the average to the value
 of the first number.
 
-![EWMA Step 1](http://f.cl.ly/items/003E0i1T1H2t373n3L3g/ewma-1.png)
+![EWMA Step 1](https://user-images.githubusercontent.com/279875/28242353-464c96bc-6977-11e7-9981-dc4e0789c7ba.png)
 
 Next we multiply the next number by alpha, multiply the current value by 1-alpha, and add
 them to generate a new value.
 
-![EWMA Step 2](http://f.cl.ly/items/2W2Z0b3J18122y1F3F2u/ewma-2.png)
+![EWMA Step 2](https://user-images.githubusercontent.com/279875/28242351-464abefa-6977-11e7-95d0-43900f29bef2.png)
 
 This continues until we are done.
 
-![EWMA Step N](http://f.cl.ly/items/0R3Y2V2o1t2Q1B082L3c/ewma.png)
+![EWMA Step N](https://user-images.githubusercontent.com/279875/28242352-464c58f0-6977-11e7-8cd0-e01e4efaac7f.png)
 
 Notice how each of the values in the series decays by half each time a new value
 is added, and the top of the bars in the lower portion of the image represents the

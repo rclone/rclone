@@ -32,6 +32,13 @@ const (
 	// This exception is thrown if two or more modifications are happening concurrently.
 	ErrCodeConcurrentModificationException = "ConcurrentModificationException"
 
+	// ErrCodeDuplicateProviderException for service response error code
+	// "DuplicateProviderException".
+	//
+	// This exception is thrown when the provider is already supported by the user
+	// pool.
+	ErrCodeDuplicateProviderException = "DuplicateProviderException"
+
 	// ErrCodeExpiredCodeException for service response error code
 	// "ExpiredCodeException".
 	//
@@ -64,6 +71,12 @@ const (
 	// This exception is thrown when the Amazon Cognito service encounters an invalid
 	// AWS Lambda response.
 	ErrCodeInvalidLambdaResponseException = "InvalidLambdaResponseException"
+
+	// ErrCodeInvalidOAuthFlowException for service response error code
+	// "InvalidOAuthFlowException".
+	//
+	// This exception is thrown when the specified OAuth flow is invalid.
+	ErrCodeInvalidOAuthFlowException = "InvalidOAuthFlowException"
 
 	// ErrCodeInvalidParameterException for service response error code
 	// "InvalidParameterException".
@@ -118,7 +131,7 @@ const (
 	// ErrCodeNotAuthorizedException for service response error code
 	// "NotAuthorizedException".
 	//
-	// This exception gets thrown when a user is not authorized.
+	// This exception is thrown when a user is not authorized.
 	ErrCodeNotAuthorizedException = "NotAuthorizedException"
 
 	// ErrCodePasswordResetRequiredException for service response error code
@@ -140,26 +153,38 @@ const (
 	// requested resource.
 	ErrCodeResourceNotFoundException = "ResourceNotFoundException"
 
+	// ErrCodeScopeDoesNotExistException for service response error code
+	// "ScopeDoesNotExistException".
+	//
+	// This exception is thrown when the specified scope does not exist.
+	ErrCodeScopeDoesNotExistException = "ScopeDoesNotExistException"
+
 	// ErrCodeTooManyFailedAttemptsException for service response error code
 	// "TooManyFailedAttemptsException".
 	//
-	// This exception gets thrown when the user has made too many failed attempts
+	// This exception is thrown when the user has made too many failed attempts
 	// for a given action (e.g., sign in).
 	ErrCodeTooManyFailedAttemptsException = "TooManyFailedAttemptsException"
 
 	// ErrCodeTooManyRequestsException for service response error code
 	// "TooManyRequestsException".
 	//
-	// This exception gets thrown when the user has made too many requests for a
-	// given operation.
+	// This exception is thrown when the user has made too many requests for a given
+	// operation.
 	ErrCodeTooManyRequestsException = "TooManyRequestsException"
 
 	// ErrCodeUnexpectedLambdaException for service response error code
 	// "UnexpectedLambdaException".
 	//
-	// This exception gets thrown when the Amazon Cognito service encounters an
-	// unexpected exception with the AWS Lambda service.
+	// This exception is thrown when the Amazon Cognito service encounters an unexpected
+	// exception with the AWS Lambda service.
 	ErrCodeUnexpectedLambdaException = "UnexpectedLambdaException"
+
+	// ErrCodeUnsupportedIdentityProviderException for service response error code
+	// "UnsupportedIdentityProviderException".
+	//
+	// This exception is thrown when the specified identifier is not supported.
+	ErrCodeUnsupportedIdentityProviderException = "UnsupportedIdentityProviderException"
 
 	// ErrCodeUnsupportedUserStateException for service response error code
 	// "UnsupportedUserStateException".
@@ -177,7 +202,7 @@ const (
 	// ErrCodeUserLambdaValidationException for service response error code
 	// "UserLambdaValidationException".
 	//
-	// This exception gets thrown when the Amazon Cognito service encounters a user
+	// This exception is thrown when the Amazon Cognito service encounters a user
 	// validation exception with the AWS Lambda service.
 	ErrCodeUserLambdaValidationException = "UserLambdaValidationException"
 
@@ -196,7 +221,7 @@ const (
 	// ErrCodeUserPoolTaggingException for service response error code
 	// "UserPoolTaggingException".
 	//
-	// This exception gets thrown when a user pool tag cannot be set or updated.
+	// This exception is thrown when a user pool tag cannot be set or updated.
 	ErrCodeUserPoolTaggingException = "UserPoolTaggingException"
 
 	// ErrCodeUsernameExistsException for service response error code

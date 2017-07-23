@@ -37,6 +37,18 @@ message Simple3 {
   double dub = 1;
 }
 
+message SimpleSlice3 {
+  repeated string slices = 1;
+}
+
+message SimpleMap3 {
+  map<string,string> stringy = 1;
+}
+
+message SimpleNull3 {
+  Simple3 simple = 1;
+}
+
 enum Numeral {
   UNKNOWN = 0;
   ARABIC = 1;

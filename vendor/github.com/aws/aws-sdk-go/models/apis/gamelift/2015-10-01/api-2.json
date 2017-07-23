@@ -91,7 +91,8 @@
       "errors":[
         {"shape":"InternalServiceException"},
         {"shape":"InvalidRequestException"},
-        {"shape":"UnauthorizedException"}
+        {"shape":"UnauthorizedException"},
+        {"shape":"LimitExceededException"}
       ]
     },
     "CreatePlayerSession":{
@@ -874,7 +875,8 @@
         "EC2InboundPermissions":{"shape":"IpPermissionsList"},
         "NewGameSessionProtectionPolicy":{"shape":"ProtectionPolicy"},
         "RuntimeConfiguration":{"shape":"RuntimeConfiguration"},
-        "ResourceCreationLimitPolicy":{"shape":"ResourceCreationLimitPolicy"}
+        "ResourceCreationLimitPolicy":{"shape":"ResourceCreationLimitPolicy"},
+        "MetricGroups":{"shape":"MetricGroupList"}
       }
     },
     "CreateFleetOutput":{
@@ -1318,7 +1320,8 @@
         "ResourceId":{"shape":"NonZeroAndMaxString"},
         "EventCode":{"shape":"EventCode"},
         "Message":{"shape":"NonEmptyString"},
-        "EventTime":{"shape":"Timestamp"}
+        "EventTime":{"shape":"Timestamp"},
+        "PreSignedLogUrl":{"shape":"NonZeroAndMaxString"}
       }
     },
     "EventCode":{
@@ -1349,7 +1352,10 @@
         "SERVER_PROCESS_TERMINATED_UNHEALTHY",
         "SERVER_PROCESS_FORCE_TERMINATED",
         "SERVER_PROCESS_PROCESS_EXIT_TIMEOUT",
-        "GAME_SESSION_ACTIVATION_TIMEOUT"
+        "GAME_SESSION_ACTIVATION_TIMEOUT",
+        "FLEET_CREATION_EXTRACTING_BUILD",
+        "FLEET_CREATION_RUNNING_INSTALLER",
+        "FLEET_CREATION_VALIDATING_RUNTIME_CONFIG"
       ]
     },
     "EventList":{
@@ -1372,7 +1378,8 @@
         "LogPaths":{"shape":"StringList"},
         "NewGameSessionProtectionPolicy":{"shape":"ProtectionPolicy"},
         "OperatingSystem":{"shape":"OperatingSystem"},
-        "ResourceCreationLimitPolicy":{"shape":"ResourceCreationLimitPolicy"}
+        "ResourceCreationLimitPolicy":{"shape":"ResourceCreationLimitPolicy"},
+        "MetricGroups":{"shape":"MetricGroupList"}
       }
     },
     "FleetAttributesList":{
@@ -1478,6 +1485,11 @@
         "PlayerSessionCreationPolicy":{"shape":"PlayerSessionCreationPolicy"},
         "CreatorId":{"shape":"NonZeroAndMaxString"}
       }
+    },
+    "GameSessionActivationTimeoutSeconds":{
+      "type":"integer",
+      "max":600,
+      "min":1
     },
     "GameSessionDetail":{
       "type":"structure",
@@ -1774,15 +1786,33 @@
         "NextToken":{"shape":"NonZeroAndMaxString"}
       }
     },
+    "MaxConcurrentGameSessionActivations":{
+      "type":"integer",
+      "max":2147483647,
+      "min":1
+    },
+    "MetricGroup":{
+      "type":"string",
+      "max":255,
+      "min":1
+    },
+    "MetricGroupList":{
+      "type":"list",
+      "member":{"shape":"MetricGroup"},
+      "max":1
+    },
     "MetricName":{
       "type":"string",
       "enum":[
         "ActivatingGameSessions",
         "ActiveGameSessions",
         "ActiveInstances",
+        "AvailableGameSessions",
         "AvailablePlayerSessions",
         "CurrentPlayerSessions",
         "IdleInstances",
+        "PercentAvailableGameSessions",
+        "PercentIdleInstances",
         "QueueDepth",
         "WaitTime"
       ]
@@ -2010,7 +2040,9 @@
     "RuntimeConfiguration":{
       "type":"structure",
       "members":{
-        "ServerProcesses":{"shape":"ServerProcessList"}
+        "ServerProcesses":{"shape":"ServerProcessList"},
+        "MaxConcurrentGameSessionActivations":{"shape":"MaxConcurrentGameSessionActivations"},
+        "GameSessionActivationTimeoutSeconds":{"shape":"GameSessionActivationTimeoutSeconds"}
       }
     },
     "S3Location":{
@@ -2189,7 +2221,8 @@
         "Name":{"shape":"NonZeroAndMaxString"},
         "Description":{"shape":"NonZeroAndMaxString"},
         "NewGameSessionProtectionPolicy":{"shape":"ProtectionPolicy"},
-        "ResourceCreationLimitPolicy":{"shape":"ResourceCreationLimitPolicy"}
+        "ResourceCreationLimitPolicy":{"shape":"ResourceCreationLimitPolicy"},
+        "MetricGroups":{"shape":"MetricGroupList"}
       }
     },
     "UpdateFleetAttributesOutput":{

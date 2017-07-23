@@ -15,7 +15,7 @@
 // AUTO-GENERATED CODE. DO NOT EDIT.
 
 // Package trace is an experimental, auto-generated package for the
-// trace API.
+// Stackdriver Trace API.
 //
 // Send and retrieve trace data from Stackdriver Trace. Data is generated and
 // available by default for all App Engine applications. Data from other
@@ -30,9 +30,19 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func insertXGoog(ctx context.Context, val string) context.Context {
-	md, _ := metadata.FromContext(ctx)
+func insertXGoog(ctx context.Context, val []string) context.Context {
+	md, _ := metadata.FromOutgoingContext(ctx)
 	md = md.Copy()
-	md["x-goog-api-client"] = []string{val}
-	return metadata.NewContext(ctx, md)
+	md["x-goog-api-client"] = val
+	return metadata.NewOutgoingContext(ctx, md)
+}
+
+// DefaultAuthScopes reports the authentication scopes required
+// by this package.
+func DefaultAuthScopes() []string {
+	return []string{
+		"https://www.googleapis.com/auth/cloud-platform",
+		"https://www.googleapis.com/auth/trace.append",
+		"https://www.googleapis.com/auth/trace.readonly",
+	}
 }

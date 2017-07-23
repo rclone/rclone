@@ -116,6 +116,10 @@ type InspectorAPI interface {
 	DescribeRulesPackagesWithContext(aws.Context, *inspector.DescribeRulesPackagesInput, ...request.Option) (*inspector.DescribeRulesPackagesOutput, error)
 	DescribeRulesPackagesRequest(*inspector.DescribeRulesPackagesInput) (*request.Request, *inspector.DescribeRulesPackagesOutput)
 
+	GetAssessmentReport(*inspector.GetAssessmentReportInput) (*inspector.GetAssessmentReportOutput, error)
+	GetAssessmentReportWithContext(aws.Context, *inspector.GetAssessmentReportInput, ...request.Option) (*inspector.GetAssessmentReportOutput, error)
+	GetAssessmentReportRequest(*inspector.GetAssessmentReportInput) (*request.Request, *inspector.GetAssessmentReportOutput)
+
 	GetTelemetryMetadata(*inspector.GetTelemetryMetadataInput) (*inspector.GetTelemetryMetadataOutput, error)
 	GetTelemetryMetadataWithContext(aws.Context, *inspector.GetTelemetryMetadataInput, ...request.Option) (*inspector.GetTelemetryMetadataOutput, error)
 	GetTelemetryMetadataRequest(*inspector.GetTelemetryMetadataInput) (*request.Request, *inspector.GetTelemetryMetadataOutput)

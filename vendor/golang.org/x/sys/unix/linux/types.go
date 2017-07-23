@@ -28,6 +28,7 @@ package unix
 #include <stdio.h>
 #include <sys/epoll.h>
 #include <sys/inotify.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/param.h>
@@ -45,7 +46,9 @@ package unix
 #include <sys/utsname.h>
 #include <sys/wait.h>
 #include <linux/filter.h>
+#include <linux/keyctl.h>
 #include <linux/netlink.h>
+#include <linux/perf_event.h>
 #include <linux/rtnetlink.h>
 #include <linux/icmpv6.h>
 #include <asm/termbits.h>
@@ -58,6 +61,7 @@ package unix
 #include <linux/if_alg.h>
 #include <linux/fs.h>
 #include <linux/vm_sockets.h>
+#include <linux/random.h>
 
 // On mips64, the glibc stat and kernel stat do not agree
 #if (defined(__mips__) && _MIPS_SIM == _MIPS_SIM_ABI64)
@@ -163,10 +167,8 @@ struct my_sockaddr_un {
 typedef struct user_regs PtraceRegs;
 #elif defined(__aarch64__)
 typedef struct user_pt_regs PtraceRegs;
-#elif defined(__powerpc64__)
+#elif defined(__mips__) || defined(__powerpc64__)
 typedef struct pt_regs PtraceRegs;
-#elif defined(__mips__)
-typedef struct user PtraceRegs;
 #elif defined(__s390x__)
 typedef struct _user_regs_struct PtraceRegs;
 #elif defined(__sparc__)
@@ -262,6 +264,10 @@ type Flock_t C.struct_flock
 type FscryptPolicy C.struct_fscrypt_policy
 
 type FscryptKey C.struct_fscrypt_key
+
+// Structure for Keyctl
+
+type KeyctlDHParams C.struct_keyctl_dh_params
 
 // Advice to Fadvise
 
@@ -527,6 +533,10 @@ const (
 
 type Sigset_t C.sigset_t
 
+const RNDGETENTCNT = C.RNDGETENTCNT
+
+const PERF_IOC_FLAG_GROUP = C.PERF_IOC_FLAG_GROUP
+
 // sysconf information
 
 const _SC_PAGESIZE = C._SC_PAGESIZE
@@ -534,3 +544,5 @@ const _SC_PAGESIZE = C._SC_PAGESIZE
 // Terminal handling
 
 type Termios C.termios_t
+
+type Winsize C.struct_winsize

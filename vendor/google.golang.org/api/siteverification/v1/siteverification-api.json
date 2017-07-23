@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"tbys6C40o18GZwyMen5GMkdK-3s/i7yRN5hkF8eVOTb2OSGCp8ZAiJE\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/91cCbhq1cUXIPKUTmb8zwBITGqo\"",
  "discoveryVersion": "v1",
  "id": "siteVerification:v1",
  "name": "siteVerification",
  "version": "v1",
- "revision": "20160228",
+ "revision": "20161114",
  "title": "Google Site Verification API",
  "description": "Verifies ownership of websites or domains with Google.",
  "ownerDomain": "google.com",

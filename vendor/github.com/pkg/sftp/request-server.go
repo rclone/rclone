@@ -26,7 +26,7 @@ type Handlers struct {
 
 // RequestServer abstracts the sftp protocol with an http request-like protocol
 type RequestServer struct {
-	serverConn
+	*serverConn
 	Handlers        Handlers
 	pktMgr          packetManager
 	openRequests    map[string]Request
@@ -37,7 +37,7 @@ type RequestServer struct {
 // NewRequestServer creates/allocates/returns new RequestServer.
 // Normally there there will be one server per user-session.
 func NewRequestServer(rwc io.ReadWriteCloser, h Handlers) *RequestServer {
-	svrConn := serverConn{
+	svrConn := &serverConn{
 		conn: conn{
 			Reader:      rwc,
 			WriteCloser: rwc,
@@ -46,7 +46,7 @@ func NewRequestServer(rwc io.ReadWriteCloser, h Handlers) *RequestServer {
 	return &RequestServer{
 		serverConn:   svrConn,
 		Handlers:     h,
-		pktMgr:       newPktMgr(&svrConn),
+		pktMgr:       newPktMgr(svrConn),
 		openRequests: make(map[string]Request),
 	}
 }
@@ -82,15 +82,16 @@ func (rs *RequestServer) Close() error { return rs.conn.Close() }
 // Serve requests for user session
 func (rs *RequestServer) Serve() error {
 	var wg sync.WaitGroup
-	wg.Add(1)
-	workerFunc := func(ch requestChan) {
+	runWorker := func(ch requestChan) {
 		wg.Add(1)
-		defer wg.Done()
-		if err := rs.packetWorker(ch); err != nil {
-			rs.conn.Close() // shuts down recvPacket
-		}
+		go func() {
+			defer wg.Done()
+			if err := rs.packetWorker(ch); err != nil {
+				rs.conn.Close() // shuts down recvPacket
+			}
+		}()
 	}
-	pktChan := rs.pktMgr.workerChan(workerFunc)
+	pktChan := rs.pktMgr.workerChan(runWorker)
 
 	var err error
 	var pkt requestPacket
@@ -111,7 +112,6 @@ func (rs *RequestServer) Serve() error {
 
 		pktChan <- pkt
 	}
-	wg.Done()
 
 	close(pktChan) // shuts down sftpServerWorkers
 	wg.Wait()      // wait for all workers to exit

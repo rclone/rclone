@@ -11,6 +11,9 @@
 // between different database platforms, such as Oracle to MySQL or SQL Server
 // to PostgreSQL.
 //
+// For more information about AWS DMS, see the AWS DMS user guide at  What Is
+// AWS Database Migration Service?  (http://docs.aws.amazon.com/dms/latest/userguide/Welcome.html)
+//
 // See https://docs.aws.amazon.com/goto/WebAPI/dms-2016-01-01 for more information on this service.
 //
 // See databasemigrationservice package documentation for more information.

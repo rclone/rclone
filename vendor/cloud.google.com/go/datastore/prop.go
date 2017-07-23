@@ -82,6 +82,14 @@ type PropertyLoadSaver interface {
 	Save() ([]Property, error)
 }
 
+// KeyLoader can store a Key.
+type KeyLoader interface {
+	// PropertyLoadSaver is embedded because a KeyLoader
+	// must also always implement PropertyLoadSaver.
+	PropertyLoadSaver
+	LoadKey(k *Key) error
+}
+
 // PropertyList converts a []Property to implement PropertyLoadSaver.
 type PropertyList []Property
 
@@ -276,4 +284,59 @@ func SaveStruct(src interface{}) ([]Property, error) {
 		return nil, err
 	}
 	return x.Save()
+}
+
+// plsForLoad tries to convert v to a PropertyLoadSaver.
+// If successful, plsForLoad returns a settable v as a PropertyLoadSaver.
+//
+// plsForLoad is intended to be used with nested struct fields which
+// may implement PropertyLoadSaver.
+//
+// v must be settable.
+func plsForLoad(v reflect.Value) (PropertyLoadSaver, error) {
+	var nilPtr bool
+	if v.Kind() == reflect.Ptr && v.IsNil() {
+		nilPtr = true
+		v.Set(reflect.New(v.Type().Elem()))
+	}
+
+	vpls, err := pls(v)
+	if nilPtr && (vpls == nil || err != nil) {
+		// unset v
+		v.Set(reflect.Zero(v.Type()))
+	}
+
+	return vpls, err
+}
+
+// plsForSave tries to convert v to a PropertyLoadSaver.
+// If successful, plsForSave returns v as a PropertyLoadSaver.
+//
+// plsForSave is intended to be used with nested struct fields which
+// may implement PropertyLoadSaver.
+//
+// v must be settable.
+func plsForSave(v reflect.Value) (PropertyLoadSaver, error) {
+	switch v.Kind() {
+	case reflect.Ptr, reflect.Slice, reflect.Map, reflect.Interface, reflect.Chan, reflect.Func:
+		// If v is nil, return early. v contains no data to save.
+		if v.IsNil() {
+			return nil, nil
+		}
+	}
+
+	return pls(v)
+}
+
+func pls(v reflect.Value) (PropertyLoadSaver, error) {
+	if v.Kind() != reflect.Ptr {
+		if _, ok := v.Interface().(PropertyLoadSaver); ok {
+			return nil, fmt.Errorf("datastore: PropertyLoadSaver methods must be implemented on a pointer to %T.", v.Interface())
+		}
+
+		v = v.Addr()
+	}
+
+	vpls, _ := v.Interface().(PropertyLoadSaver)
+	return vpls, nil
 }

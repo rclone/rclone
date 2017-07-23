@@ -388,7 +388,7 @@ func (c *LexModelBuildingService) DeleteBotRequest(input *DeleteBotInput) (req *
 // DeleteBot API operation for Amazon Lex Model Building Service.
 //
 // Deletes all versions of the bot, including the $LATEST version. To delete
-// a specific version of the bot, use the operation.
+// a specific version of the bot, use the DeleteBotVersion operation.
 //
 // If a bot has an alias, you can't delete it. Instead, the DeleteBot operation
 // returns a ResourceInUseException exception that includes a reference to the
@@ -722,7 +722,7 @@ func (c *LexModelBuildingService) DeleteBotVersionRequest(input *DeleteBotVersio
 // DeleteBotVersion API operation for Amazon Lex Model Building Service.
 //
 // Deletes a specific version of a bot. To delete all versions of a bot, use
-// the operation.
+// the DeleteBot operation.
 //
 // This operation requires permissions for the lex:DeleteBotVersion action.
 //
@@ -834,7 +834,7 @@ func (c *LexModelBuildingService) DeleteIntentRequest(input *DeleteIntentInput) 
 // DeleteIntent API operation for Amazon Lex Model Building Service.
 //
 // Deletes all versions of the intent, including the $LATEST version. To delete
-// a specific version of the intent, use the operation.
+// a specific version of the intent, use the DeleteIntentVersion operation.
 //
 // You can delete a version of an intent only if it is not referenced. To delete
 // an intent that is referred to in one or more bots (see how-it-works), you
@@ -956,7 +956,7 @@ func (c *LexModelBuildingService) DeleteIntentVersionRequest(input *DeleteIntent
 // DeleteIntentVersion API operation for Amazon Lex Model Building Service.
 //
 // Deletes a specific version of an intent. To delete all versions of a intent,
-// use the operation.
+// use the DeleteIntent operation.
 //
 // This operation requires permissions for the lex:DeleteIntentVersion action.
 //
@@ -1068,7 +1068,8 @@ func (c *LexModelBuildingService) DeleteSlotTypeRequest(input *DeleteSlotTypeInp
 // DeleteSlotType API operation for Amazon Lex Model Building Service.
 //
 // Deletes all versions of the slot type, including the $LATEST version. To
-// delete a specific version of the slot type, use the operation.
+// delete a specific version of the slot type, use the DeleteSlotTypeVersion
+// operation.
 //
 // You can delete a version of a slot type only if it is not referenced. To
 // delete a slot type that is referred to in one or more intents, you must remove
@@ -1191,7 +1192,7 @@ func (c *LexModelBuildingService) DeleteSlotTypeVersionRequest(input *DeleteSlot
 // DeleteSlotTypeVersion API operation for Amazon Lex Model Building Service.
 //
 // Deletes a specific version of a slot type. To delete all versions of a slot
-// type, use the operation.
+// type, use the DeleteSlotType operation.
 //
 // This operation requires permissions for the lex:DeleteSlotTypeVersion action.
 //
@@ -1306,8 +1307,8 @@ func (c *LexModelBuildingService) DeleteUtterancesRequest(input *DeleteUtterance
 //
 // Amazon Lex stores the utterances that users send to your bot unless the childDirected
 // field in the bot is set to true. Utterances are stored for 15 days for use
-// with the operation, and then stored indefinately for use in improving the
-// ability of your bot to respond to user input.
+// with the GetUtterancesView operation, and then stored indefinately for use
+// in improving the ability of your bot to respond to user input.
 //
 // Use the DeleteStoredUtterances operation to manually delete stored utterances
 // for a specific user.
@@ -3509,7 +3510,7 @@ func (c *LexModelBuildingService) GetUtterancesViewRequest(input *GetUtterancesV
 //
 // If the bot's childDirected field is set to true, utterances for the bot are
 // not stored and cannot be retrieved with the GetUtterancesView operation.
-// For more information, see .
+// For more information, see PutBot.
 //
 // This operation requires permissions for the lex:GetUtterancesView action.
 //
@@ -3599,10 +3600,10 @@ func (c *LexModelBuildingService) PutBotRequest(input *PutBotInput) (req *reques
 // PutBot API operation for Amazon Lex Model Building Service.
 //
 // Creates an Amazon Lex conversational bot or replaces an existing bot. When
-// you create or update a bot you only required to specify a name. You can use
-// this to add intents later, or to remove intents from an existing bot. When
-// you create a bot with a name only, the bot is created or updated but Amazon
-// Lex returns the response FAILED. You can build the bot after you add one or more intents. For more information
+// you create or update a bot you are only required to specify a name. You can
+// use this to add intents later, or to remove intents from an existing bot.
+// When you create a bot with a name only, the bot is created or updated but
+// Amazon Lex returns the response FAILED. You can build the bot after you add one or more intents. For more information
 // about Amazon Lex bots, see how-it-works.
 //
 // If you specify the name of an existing bot, the fields in the request replace
@@ -4456,7 +4457,7 @@ type CreateBotVersionOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The message that Amazon Lex uses to abort a conversation. For more information,
-	// see .
+	// see PutBot.
 	AbortStatement *Statement `locationName:"abortStatement" type:"structure"`
 
 	// Checksum identifying the version of the bot that was created.
@@ -4488,7 +4489,7 @@ type CreateBotVersionOutput struct {
 	ChildDirected *bool `locationName:"childDirected" type:"boolean"`
 
 	// The message that Amazon Lex uses when it doesn't understand the user's request.
-	// For more information, see .
+	// For more information, see PutBot.
 	ClarificationPrompt *Prompt `locationName:"clarificationPrompt" type:"structure"`
 
 	// The date when the bot version was created.
@@ -4502,10 +4503,10 @@ type CreateBotVersionOutput struct {
 	FailureReason *string `locationName:"failureReason" type:"string"`
 
 	// The maximum time in seconds that Amazon Lex retains the data gathered in
-	// a conversation. For more information, see .
+	// a conversation. For more information, see PutBot.
 	IdleSessionTTLInSeconds *int64 `locationName:"idleSessionTTLInSeconds" min:"60" type:"integer"`
 
-	// An array of Intent objects. For more information, see .
+	// An array of Intent objects. For more information, see PutBot.
 	Intents []*Intent `locationName:"intents" min:"1" type:"list"`
 
 	// The date when the $LATEST version of this bot was updated.
@@ -4526,7 +4527,7 @@ type CreateBotVersionOutput struct {
 	// The version of the bot.
 	Version *string `locationName:"version" min:"1" type:"string"`
 
-	// The Amazon Parrot voice ID that Amazon Lex uses for voice interactions with
+	// The Amazon Polly voice ID that Amazon Lex uses for voice interactions with
 	// the user.
 	VoiceId *string `locationName:"voiceId" type:"string"`
 }
@@ -5211,7 +5212,7 @@ type DeleteBotVersionInput struct {
 	Name *string `location:"uri" locationName:"name" min:"2" type:"string" required:"true"`
 
 	// The version of the bot to delete. You cannot delete the $LATEST version of
-	// the bot. To delete the $LATEST version, use the operation.
+	// the bot. To delete the $LATEST version, use the DeleteBot operation.
 	//
 	// Version is a required field
 	Version *string `location:"uri" locationName:"version" min:"1" type:"string" required:"true"`
@@ -5343,7 +5344,7 @@ type DeleteIntentVersionInput struct {
 	Name *string `location:"uri" locationName:"name" min:"1" type:"string" required:"true"`
 
 	// The version of the intent to delete. You cannot delete the $LATEST version
-	// of the intent. To delete the $LATEST version, use the operation.
+	// of the intent. To delete the $LATEST version, use the DeleteIntent operation.
 	//
 	// Version is a required field
 	Version *string `location:"uri" locationName:"version" min:"1" type:"string" required:"true"`
@@ -5475,7 +5476,7 @@ type DeleteSlotTypeVersionInput struct {
 	Name *string `location:"uri" locationName:"name" min:"1" type:"string" required:"true"`
 
 	// The version of the slot type to delete. You cannot delete the $LATEST version
-	// of the slot type. To delete the $LATEST version, use the operation.
+	// of the slot type. To delete the $LATEST version, use the DeleteSlotType operation.
 	//
 	// Version is a required field
 	Version *string `location:"uri" locationName:"version" min:"1" type:"string" required:"true"`
@@ -5550,7 +5551,9 @@ type DeleteUtterancesInput struct {
 	BotName *string `location:"uri" locationName:"botName" min:"2" type:"string" required:"true"`
 
 	// The unique identifier for the user that made the utterances. This is the
-	// user ID that was sent in the or operation request that contained the utterance.
+	// user ID that was sent in the PostContent (http://docs.aws.amazon.com/lex/latest/dg/API_runtime_PostContent.html)
+	// or PostText (http://docs.aws.amazon.com/lex/latest/dg/API_runtime_PostText.html)
+	// operation request that contained the utterance.
 	//
 	// UserId is a required field
 	UserId *string `location:"uri" locationName:"userId" min:"2" type:"string" required:"true"`
@@ -5669,20 +5672,19 @@ func (s *EnumerationValue) SetValue(v string) *EnumerationValue {
 	return s
 }
 
-// After an intent is fulfilled, you might prompt the user for additional activity.
-// For example, after the OrderPizza intent is fulfilled (the pizza order is
-// placed with a pizzeria), you might prompt the user to find out whether the
-// user wants to order drinks (another intent you defined in your bot).
+// A prompt for additional activity after an intent is fulfilled. For example,
+// after the OrderPizza intent is fulfilled, you might prompt the user to find
+// out whether the user wants to order drinks.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/lex-models-2017-04-19/FollowUpPrompt
 type FollowUpPrompt struct {
 	_ struct{} `type:"structure"`
 
-	// Obtains information from the user.
+	// Prompts for information from the user.
 	//
 	// Prompt is a required field
 	Prompt *Prompt `locationName:"prompt" type:"structure" required:"true"`
 
-	// If the user answers "no" to the question defined in confirmationPrompt, Amazon
+	// If the user answers "no" to the question defined in the prompt field, Amazon
 	// Lex responds with this statement to acknowledge that the intent was canceled.
 	//
 	// RejectionStatement is a required field
@@ -6243,7 +6245,8 @@ type GetBotChannelAssociationsInput struct {
 
 	// Substring to match in channel association names. An association will be returned
 	// if any part of its name matches the substring. For example, "xyz" matches
-	// both "xyzabc" and "abcxyz."
+	// both "xyzabc" and "abcxyz." To return all bot channel associations, use a
+	// hyphen ("-") as the nameContains parameter.
 	NameContains *string `location:"querystring" locationName:"nameContains" min:"1" type:"string"`
 
 	// A pagination token for fetching the next page of associations. If the response
@@ -6419,7 +6422,7 @@ type GetBotOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The message that Amazon Lex returns when the user elects to end the conversation
-	// without completing it. For more information, see .
+	// without completing it. For more information, see PutBot.
 	AbortStatement *Statement `locationName:"abortStatement" type:"structure"`
 
 	// Checksum of the bot used to identify a specific revision of the bot's $LATEST
@@ -6452,7 +6455,7 @@ type GetBotOutput struct {
 	ChildDirected *bool `locationName:"childDirected" type:"boolean"`
 
 	// The message Amazon Lex uses when it doesn't understand the user's request.
-	// For more information, see .
+	// For more information, see PutBot.
 	ClarificationPrompt *Prompt `locationName:"clarificationPrompt" type:"structure"`
 
 	// The date that the bot was created.
@@ -6465,10 +6468,10 @@ type GetBotOutput struct {
 	FailureReason *string `locationName:"failureReason" type:"string"`
 
 	// The maximum time in seconds that Amazon Lex retains the data gathered in
-	// a conversation. For more information, see .
+	// a conversation. For more information, see PutBot.
 	IdleSessionTTLInSeconds *int64 `locationName:"idleSessionTTLInSeconds" min:"60" type:"integer"`
 
-	// An array of intent objects. For more information, see .
+	// An array of intent objects. For more information, see PutBot.
 	Intents []*Intent `locationName:"intents" min:"1" type:"list"`
 
 	// The date that the bot was updated. When you create a resource, the creation
@@ -6490,8 +6493,8 @@ type GetBotOutput struct {
 	// The version of the bot. For a new bot, the version is always $LATEST.
 	Version *string `locationName:"version" min:"1" type:"string"`
 
-	// The Amazon Parrot voice ID that Amazon Lex uses for voice interaction with
-	// the user. For more information, see .
+	// The Amazon Polly voice ID that Amazon Lex uses for voice interaction with
+	// the user. For more information, see PutBot.
 	VoiceId *string `locationName:"voiceId" type:"string"`
 }
 
@@ -7163,7 +7166,7 @@ type GetIntentOutput struct {
 	ConclusionStatement *Statement `locationName:"conclusionStatement" type:"structure"`
 
 	// If defined in the bot, Amazon Lex uses prompt to confirm the intent before
-	// fulfilling the user's request. For more information, see .
+	// fulfilling the user's request. For more information, see PutIntent.
 	ConfirmationPrompt *Prompt `locationName:"confirmationPrompt" type:"structure"`
 
 	// The date that the intent was created.
@@ -7173,14 +7176,14 @@ type GetIntentOutput struct {
 	Description *string `locationName:"description" type:"string"`
 
 	// If defined in the bot, Amazon Amazon Lex invokes this Lambda function for
-	// each user input. For more information, see .
+	// each user input. For more information, see PutIntent.
 	DialogCodeHook *CodeHook `locationName:"dialogCodeHook" type:"structure"`
 
 	// If defined in the bot, Amazon Lex uses this prompt to solicit additional
-	// user activity after the intent is fulfilled. For more information, see .
+	// user activity after the intent is fulfilled. For more information, see PutIntent.
 	FollowUpPrompt *FollowUpPrompt `locationName:"followUpPrompt" type:"structure"`
 
-	// Describes how the intent is fulfilled. For more information, see .
+	// Describes how the intent is fulfilled. For more information, see PutIntent.
 	FulfillmentActivity *FulfillmentActivity `locationName:"fulfillmentActivity" type:"structure"`
 
 	// The date that the intent was updated. When you create a resource, the creation
@@ -7478,7 +7481,7 @@ func (s *GetIntentsInput) SetNextToken(v string) *GetIntentsInput {
 type GetIntentsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// An array of Intent objects. For more information, see .
+	// An array of Intent objects. For more information, see PutBot.
 	Intents []*IntentMetadata `locationName:"intents" type:"list"`
 
 	// If the response is truncated, the response includes a pagination token that
@@ -7932,9 +7935,9 @@ type GetUtterancesViewOutput struct {
 	// The name of the bot for which utterance information was returned.
 	BotName *string `locationName:"botName" min:"2" type:"string"`
 
-	// An array of objects, each containing a list of objects describing the utterances
-	// that were processed by your bot. The response contains a maximum of 100 UtteranceData
-	// objects for each version.
+	// An array of UtteranceList objects, each containing a list of UtteranceData
+	// objects describing the utterances that were processed by your bot. The response
+	// contains a maximum of 100 UtteranceData objects for each version.
 	Utterances []*UtteranceList `locationName:"utterances" type:"list"`
 }
 
@@ -8467,11 +8470,15 @@ type PutBotInput struct {
 	// ChildDirected is a required field
 	ChildDirected *bool `locationName:"childDirected" type:"boolean" required:"true"`
 
-	// When Amazon Lex doesn't understand the user's intent, it uses one of these
-	// messages to get clarification. For example, "Sorry, I didn't understand.
-	// Please repeat." Amazon Lex repeats the clarification prompt the number of
-	// times specified in maxAttempts. If Amazon Lex still can't understand, it
-	// sends the message specified in abortStatement.
+	// When Amazon Lex doesn't understand the user's intent, it uses this message
+	// to get clarification. To specify how many times Amazon Lex should repeate
+	// the clarification prompt, use the maxAttempts field. If Amazon Lex still
+	// doesn't understand, it sends the message in the abortStatement field.
+	//
+	// When you create a clarification prompt, make sure that it suggests the correct
+	// response from the user. for example, for a bot that orders pizza and drinks,
+	// you might create this clarification prompt: "What would you like to do? You
+	// can say 'Order a pizza' or 'Order a drink.'"
 	ClarificationPrompt *Prompt `locationName:"clarificationPrompt" type:"structure"`
 
 	// A description of the bot.
@@ -8521,9 +8528,9 @@ type PutBotInput struct {
 	// If you don't specify this value, the default value is Save.
 	ProcessBehavior *string `locationName:"processBehavior" type:"string" enum:"ProcessBehavior"`
 
-	// The Amazon Parrot voice ID that you want Amazon Lex to use for voice interactions
+	// The Amazon Polly voice ID that you want Amazon Lex to use for voice interactions
 	// with the user. The locale configured for the voice must match the locale
-	// of the bot. For more information, see Voice (http://docs.aws.amazon.com/polly/latest/dg/API_Voice.html)
+	// of the bot. For more information, see Available Voices (http://docs.aws.amazon.com/polly/latest/dg/voicelist.html)
 	// in the Amazon Polly Developer Guide.
 	VoiceId *string `locationName:"voiceId" type:"string"`
 }
@@ -8657,7 +8664,7 @@ type PutBotOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The message that Amazon Lex uses to abort a conversation. For more information,
-	// see .
+	// see PutBot.
 	AbortStatement *Statement `locationName:"abortStatement" type:"structure"`
 
 	// Checksum of the bot that you created.
@@ -8689,7 +8696,7 @@ type PutBotOutput struct {
 	ChildDirected *bool `locationName:"childDirected" type:"boolean"`
 
 	// The prompts that Amazon Lex uses when it doesn't understand the user's intent.
-	// For more information, see .
+	// For more information, see PutBot.
 	ClarificationPrompt *Prompt `locationName:"clarificationPrompt" type:"structure"`
 
 	// The date that the bot was created.
@@ -8703,10 +8710,10 @@ type PutBotOutput struct {
 	FailureReason *string `locationName:"failureReason" type:"string"`
 
 	// The maximum length of time that Amazon Lex retains the data gathered in a
-	// conversation. For more information, see .
+	// conversation. For more information, see PutBot.
 	IdleSessionTTLInSeconds *int64 `locationName:"idleSessionTTLInSeconds" min:"60" type:"integer"`
 
-	// An array of Intent objects. For more information, see .
+	// An array of Intent objects. For more information, see PutBot.
 	Intents []*Intent `locationName:"intents" min:"1" type:"list"`
 
 	// The date that the bot was updated. When you create a resource, the creation
@@ -8732,8 +8739,8 @@ type PutBotOutput struct {
 	// The version of the bot. For a new bot, the version is always $LATEST.
 	Version *string `locationName:"version" min:"1" type:"string"`
 
-	// The Amazon Parrot voice ID that Amazon Lex uses for voice interaction with
-	// the user. For more information, see .
+	// The Amazon Polly voice ID that Amazon Lex uses for voice interaction with
+	// the user. For more information, see PutBot.
 	VoiceId *string `locationName:"voiceId" type:"string"`
 }
 
@@ -8889,19 +8896,26 @@ type PutIntentInput struct {
 	// might find John's phone number and set the corresponding session attribute.
 	DialogCodeHook *CodeHook `locationName:"dialogCodeHook" type:"structure"`
 
-	// A user prompt for additional activity after an intent is fulfilled. For example,
-	// after the OrderPizza intent is fulfilled (your Lambda function placed an
-	// order with a pizzeria), you might prompt the user to find if they want to
-	// order a drink (assuming that you have defined an OrderDrink intent in your
-	// bot).
+	// Amazon Lex uses this prompt to solicit additional activity after fulfilling
+	// an intent. For example, after the OrderPizza intent is fulfilled, you might
+	// prompt the user to order a drink.
 	//
-	// The followUpPrompt and conclusionStatement are mutually exclusive. You can
-	// specify only one. For example, your bot may not solicit both the following:
+	// The action that Amazon Lex takes depends on the user's response, as follows:
 	//
-	//  Follow up prompt - "$session.FirstName, your pizza order has been placed.
-	// Would you like to order a drink or a dessert?"
+	//    * If the user says "Yes" it responds with the clarification prompt that
+	//    is configured for the bot.
 	//
-	//  Conclusion statement - "$session.FirstName, your pizza order has been placed."
+	//    * if the user says "Yes" and continues with an utterance that triggers
+	//    an intent it starts a conversation for the intent.
+	//
+	//    * If the user says "No" it responds with the rejection statement configured
+	//    for the the follow-up prompt.
+	//
+	//    * If it doesn't recognize the utterance it repeats the follow-up prompt
+	//    again.
+	//
+	// The followUpPrompt field and the conclusionStatement field are mutually exclusive.
+	// You can specify only one.
 	FollowUpPrompt *FollowUpPrompt `locationName:"followUpPrompt" type:"structure"`
 
 	// Describes how the intent is fulfilled. For example, after a user provides
@@ -9681,9 +9695,10 @@ type Statement struct {
 	// Messages is a required field
 	Messages []*Message `locationName:"messages" min:"1" type:"list" required:"true"`
 
-	// At runtime, if the client is using the API, Amazon Lex includes the response
-	// card in the response. It substitutes all of the session attributes and slot
-	// values for placeholders in the response card.
+	// At runtime, if the client is using the PostText (http://docs.aws.amazon.com/lex/latest/dg/API_runtime_PostText.html)
+	// API, Amazon Lex includes the response card in the response. It substitutes
+	// all of the session attributes and slot values for placeholders in the response
+	// card.
 	ResponseCard *string `locationName:"responseCard" min:"1" type:"string"`
 }
 
@@ -9809,8 +9824,8 @@ type UtteranceList struct {
 	// The version of the bot that processed the list.
 	BotVersion *string `locationName:"botVersion" min:"1" type:"string"`
 
-	// One or more objects that contain information about the utterances that have
-	// been made to a bot. The maximum number of object is 100.
+	// One or more UtteranceData objects that contain information about the utterances
+	// that have been made to a bot. The maximum number of object is 100.
 	Utterances []*UtteranceData `locationName:"utterances" type:"list"`
 }
 

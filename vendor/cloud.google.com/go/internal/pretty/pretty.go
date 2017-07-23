@@ -25,6 +25,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"time"
 )
 
 // Indent is the string output at each level of indentation.
@@ -58,7 +59,15 @@ type state struct {
 	defaults       bool
 }
 
+const maxLevel = 100
+
+var typeOfTime = reflect.TypeOf(time.Time{})
+
 func fprint(w io.Writer, v reflect.Value, s state) {
+	if s.level > maxLevel {
+		fmt.Fprintln(w, "pretty: max nested depth exceeded")
+		return
+	}
 	indent := strings.Repeat(Indent, s.level)
 	fmt.Fprintf(w, "%s%s", indent, s.prefix)
 	if isNil(v) {
@@ -67,6 +76,10 @@ func fprint(w io.Writer, v reflect.Value, s state) {
 	}
 	if v.Type().Kind() == reflect.Interface {
 		v = v.Elem()
+	}
+	if v.Type() == typeOfTime {
+		fmt.Fprintf(w, "%s%s", v.Interface(), s.suffix)
+		return
 	}
 	for v.Type().Kind() == reflect.Ptr {
 		fmt.Fprintf(w, "&")

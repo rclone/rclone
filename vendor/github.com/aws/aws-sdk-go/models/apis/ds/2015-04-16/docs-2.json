@@ -20,6 +20,7 @@
     "DeregisterEventTopic": "<p>Removes the specified directory as a publisher to the specified SNS topic.</p>",
     "DescribeConditionalForwarders": "<p>Obtains information about the conditional forwarders for this account.</p> <p>If no input parameters are provided for RemoteDomainNames, this request describes all conditional forwarders for the specified directory ID.</p>",
     "DescribeDirectories": "<p>Obtains information about the directories that belong to this account.</p> <p>You can retrieve information about specific directories by passing the directory identifiers in the <i>DirectoryIds</i> parameter. Otherwise, all directories that belong to the current account are returned.</p> <p>This operation supports pagination with the use of the <i>NextToken</i> request and response parameters. If more results are available, the <i>DescribeDirectoriesResult.NextToken</i> member contains a token that you pass in the next call to <a>DescribeDirectories</a> to retrieve the next set of items.</p> <p>You can also specify a maximum number of return results with the <i>Limit</i> parameter.</p>",
+    "DescribeDomainControllers": "<p>Provides information about any domain controllers in your directory.</p>",
     "DescribeEventTopics": "<p>Obtains information about which SNS topics receive status messages from the specified directory.</p> <p>If no input parameters are provided, such as DirectoryId or TopicName, this request describes all of the associations in the account.</p>",
     "DescribeSnapshots": "<p>Obtains information about the directory snapshots that belong to this account.</p> <p>This operation supports pagination with the use of the <i>NextToken</i> request and response parameters. If more results are available, the <i>DescribeSnapshots.NextToken</i> member contains a token that you pass in the next call to <a>DescribeSnapshots</a> to retrieve the next set of items.</p> <p>You can also specify a maximum number of return results with the <i>Limit</i> parameter.</p>",
     "DescribeTrusts": "<p>Obtains information about the trust relationships for this account.</p> <p>If no input parameters are provided, such as DirectoryId or TrustIds, this request describes all the trust relationships belonging to the account.</p>",
@@ -38,6 +39,7 @@
     "RestoreFromSnapshot": "<p>Restores a directory using an existing directory snapshot.</p> <p>When you restore a directory from a snapshot, any changes made to the directory after the snapshot date are overwritten.</p> <p>This action returns as soon as the restore operation is initiated. You can monitor the progress of the restore operation by calling the <a>DescribeDirectories</a> operation with the directory identifier. When the <b>DirectoryDescription.Stage</b> value changes to <code>Active</code>, the restore operation is complete.</p>",
     "StartSchemaExtension": "<p>Applies a schema extension to a Microsoft AD directory.</p>",
     "UpdateConditionalForwarder": "<p>Updates a conditional forwarder that has been set up for your AWS directory.</p>",
+    "UpdateNumberOfDomainControllers": "<p>Adds or removes domain controllers to or from the directory. Based on the difference between current value and new value (provided through this API call), domain controllers will be added or removed. It may take up to 45 minutes for any new domain controllers to become fully active once the requested number of domain controllers is updated. During this time, you cannot make another update request.</p>",
     "UpdateRadius": "<p>Updates the Remote Authentication Dial In User Service (RADIUS) server information for an AD Connector directory.</p>",
     "VerifyTrust": "<p>AWS Directory Service for Microsoft Active Directory allows you to configure and verify trust relationships.</p> <p>This action verifies a trust relationship between your Microsoft AD in the AWS cloud and an external domain.</p>"
   },
@@ -115,7 +117,8 @@
     "AvailabilityZone": {
       "base": null,
       "refs": {
-        "AvailabilityZones$member": null
+        "AvailabilityZones$member": null,
+        "DomainController$AvailabilityZone": "<p>The Availability Zone where the domain controller is located.</p>"
       }
     },
     "AvailabilityZones": {
@@ -375,6 +378,16 @@
       "refs": {
       }
     },
+    "DescribeDomainControllersRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeDomainControllersResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "DescribeEventTopicsRequest": {
       "base": "<p>Describes event topics.</p>",
       "refs": {
@@ -416,6 +429,13 @@
         "IpRouteInfo$Description": "<p>Description of the <a>IpRouteInfo</a>.</p>",
         "SchemaExtensionInfo$Description": "<p>A description of the schema extension.</p>",
         "StartSchemaExtensionRequest$Description": "<p>A description of the schema extension.</p>"
+      }
+    },
+    "DesiredNumberOfDomainControllers": {
+      "base": null,
+      "refs": {
+        "DirectoryDescription$DesiredNumberOfDomainControllers": "<p>The desired number of domain controllers in the directory if the directory is Microsoft AD.</p>",
+        "UpdateNumberOfDomainControllersRequest$DesiredNumber": "<p>The number of domain controllers desired in the directory.</p>"
       }
     },
     "DirectoryConnectSettings": {
@@ -461,6 +481,7 @@
         "DeleteDirectoryResult$DirectoryId": "<p>The directory identifier.</p>",
         "DeregisterEventTopicRequest$DirectoryId": "<p>The Directory ID to remove as a publisher. This directory will no longer send messages to the specified SNS topic.</p>",
         "DescribeConditionalForwardersRequest$DirectoryId": "<p>The directory ID for which to get the list of associated conditional forwarders.</p>",
+        "DescribeDomainControllersRequest$DirectoryId": "<p>Identifier of the directory for which to retrieve the domain controller information.</p>",
         "DescribeEventTopicsRequest$DirectoryId": "<p>The Directory ID for which to get the list of associated SNS topics. If this member is null, associations for all Directory IDs are returned.</p>",
         "DescribeSnapshotsRequest$DirectoryId": "<p>The identifier of the directory for which to retrieve snapshot information.</p>",
         "DescribeTrustsRequest$DirectoryId": "<p>The Directory ID of the AWS directory that is a part of the requested trust relationship.</p>",
@@ -468,6 +489,7 @@
         "DirectoryIds$member": null,
         "DisableRadiusRequest$DirectoryId": "<p>The identifier of the directory for which to disable MFA.</p>",
         "DisableSsoRequest$DirectoryId": "<p>The identifier of the directory for which to disable single-sign on.</p>",
+        "DomainController$DirectoryId": "<p>Identifier of the directory where the domain controller resides.</p>",
         "EnableRadiusRequest$DirectoryId": "<p>The identifier of the directory for which to enable MFA.</p>",
         "EnableSsoRequest$DirectoryId": "<p>The identifier of the directory for which to enable single-sign on.</p>",
         "EventTopic$DirectoryId": "<p>The Directory ID of an AWS Directory Service directory that will publish status messages to an SNS topic.</p>",
@@ -482,6 +504,7 @@
         "StartSchemaExtensionRequest$DirectoryId": "<p>The identifier of the directory for which the schema extension will be applied to.</p>",
         "Trust$DirectoryId": "<p>The Directory ID of the AWS directory involved in the trust relationship.</p>",
         "UpdateConditionalForwarderRequest$DirectoryId": "<p>The directory ID of the AWS directory for which to update the conditional forwarder.</p>",
+        "UpdateNumberOfDomainControllersRequest$DirectoryId": "<p>Identifier of the directory to which the domain controllers will be added or removed.</p>",
         "UpdateRadiusRequest$DirectoryId": "<p>The identifier of the directory for which to update the RADIUS server information.</p>"
       }
     },
@@ -549,7 +572,7 @@
       "base": "<p>Contains VPC information for the <a>CreateDirectory</a> or <a>CreateMicrosoftAD</a> operation.</p>",
       "refs": {
         "CreateDirectoryRequest$VpcSettings": "<p>A <a>DirectoryVpcSettings</a> object that contains additional information for the operation.</p>",
-        "CreateMicrosoftADRequest$VpcSettings": null
+        "CreateMicrosoftADRequest$VpcSettings": "<p>Contains VPC information for the <a>CreateDirectory</a> or <a>CreateMicrosoftAD</a> operation.</p>"
       }
     },
     "DirectoryVpcSettingsDescription": {
@@ -587,6 +610,48 @@
         "DirectoryConnectSettings$CustomerDnsIps": "<p>A list of one or more IP addresses of DNS servers or domain controllers in the on-premises directory.</p>",
         "DirectoryDescription$DnsIpAddrs": "<p>The IP addresses of the DNS servers for the directory. For a Simple AD or Microsoft AD directory, these are the IP addresses of the Simple AD or Microsoft AD directory servers. For an AD Connector directory, these are the IP addresses of the DNS servers or domain controllers in the on-premises directory to which the AD Connector is connected.</p>",
         "UpdateConditionalForwarderRequest$DnsIpAddrs": "<p>The updated IP addresses of the remote DNS server associated with the conditional forwarder.</p>"
+      }
+    },
+    "DomainController": {
+      "base": "<p>Contains information about the domain controllers for a specified directory.</p>",
+      "refs": {
+        "DomainControllers$member": null
+      }
+    },
+    "DomainControllerId": {
+      "base": null,
+      "refs": {
+        "DomainController$DomainControllerId": "<p>Identifies a specific domain controller in the directory.</p>",
+        "DomainControllerIds$member": null
+      }
+    },
+    "DomainControllerIds": {
+      "base": null,
+      "refs": {
+        "DescribeDomainControllersRequest$DomainControllerIds": "<p>A list of identifiers for the domain controllers whose information will be provided.</p>"
+      }
+    },
+    "DomainControllerLimitExceededException": {
+      "base": "<p>The maximum allowed number of domain controllers per directory was exceeded. The default limit per directory is 20 domain controllers.</p>",
+      "refs": {
+      }
+    },
+    "DomainControllerStatus": {
+      "base": null,
+      "refs": {
+        "DomainController$Status": "<p>The status of the domain controller.</p>"
+      }
+    },
+    "DomainControllerStatusReason": {
+      "base": null,
+      "refs": {
+        "DomainController$StatusReason": "<p>A description of the domain controller state.</p>"
+      }
+    },
+    "DomainControllers": {
+      "base": null,
+      "refs": {
+        "DescribeDomainControllersResult$DomainControllers": "<p>List of the <a>DomainController</a> objects that were retrieved.</p>"
       }
     },
     "EnableRadiusRequest": {
@@ -644,6 +709,7 @@
         "ClientException$Message": null,
         "DirectoryLimitExceededException$Message": null,
         "DirectoryUnavailableException$Message": null,
+        "DomainControllerLimitExceededException$Message": null,
         "EntityAlreadyExistsException$Message": null,
         "EntityDoesNotExistException$Message": null,
         "InsufficientPermissionsException$Message": null,
@@ -695,6 +761,7 @@
       "base": null,
       "refs": {
         "DnsIpAddrs$member": null,
+        "DomainController$DnsIpAddr": "<p>The IP address of the domain controller.</p>",
         "IpAddrs$member": null
       }
     },
@@ -749,13 +816,15 @@
       "base": null,
       "refs": {
         "DirectoryDescription$StageLastUpdatedDateTime": "<p>The date and time that the stage was last updated.</p>",
+        "DomainController$StatusLastUpdatedDateTime": "<p>The date and time that the status was last updated.</p>",
         "Trust$LastUpdatedDateTime": "<p>The date and time that the trust relationship was last updated.</p>"
       }
     },
     "LaunchTime": {
       "base": null,
       "refs": {
-        "DirectoryDescription$LaunchTime": "<p>Specifies when the directory was created.</p>"
+        "DirectoryDescription$LaunchTime": "<p>Specifies when the directory was created.</p>",
+        "DomainController$LaunchTime": "<p>Specifies when the domain controller was created.</p>"
       }
     },
     "LdifContent": {
@@ -768,6 +837,7 @@
       "base": null,
       "refs": {
         "DescribeDirectoriesRequest$Limit": "<p>The maximum number of items to return. If this value is zero, the maximum number of items is specified by the limitations of the operation.</p>",
+        "DescribeDomainControllersRequest$Limit": "<p>The maximum number of items to return.</p>",
         "DescribeSnapshotsRequest$Limit": "<p>The maximum number of objects to return.</p>",
         "DescribeTrustsRequest$Limit": "<p>The maximum number of objects to return.</p>",
         "DirectoryLimits$CloudOnlyDirectoriesLimit": "<p>The maximum number of cloud directories allowed in the region.</p>",
@@ -824,6 +894,8 @@
       "refs": {
         "DescribeDirectoriesRequest$NextToken": "<p>The <i>DescribeDirectoriesResult.NextToken</i> value from a previous call to <a>DescribeDirectories</a>. Pass null if this is the first call.</p>",
         "DescribeDirectoriesResult$NextToken": "<p>If not null, more results are available. Pass this value for the <i>NextToken</i> parameter in a subsequent call to <a>DescribeDirectories</a> to retrieve the next set of items.</p>",
+        "DescribeDomainControllersRequest$NextToken": "<p>The <i>DescribeDomainControllers.NextToken</i> value from a previous call to <a>DescribeDomainControllers</a>. Pass null if this is the first call. </p>",
+        "DescribeDomainControllersResult$NextToken": "<p>If not null, more results are available. Pass this value for the <code>NextToken</code> parameter in a subsequent call to <a>DescribeDomainControllers</a> retrieve the next set of items.</p>",
         "DescribeSnapshotsRequest$NextToken": "<p>The <i>DescribeSnapshotsResult.NextToken</i> value from a previous call to <a>DescribeSnapshots</a>. Pass null if this is the first call.</p>",
         "DescribeSnapshotsResult$NextToken": "<p>If not null, more results are available. Pass this value in the <i>NextToken</i> member of a subsequent call to <a>DescribeSnapshots</a>.</p>",
         "DescribeTrustsRequest$NextToken": "<p>The <i>DescribeTrustsResult.NextToken</i> value from a previous call to <a>DescribeTrusts</a>. Pass null if this is the first call.</p>",
@@ -960,6 +1032,7 @@
         "ClientException$RequestId": null,
         "DirectoryLimitExceededException$RequestId": null,
         "DirectoryUnavailableException$RequestId": null,
+        "DomainControllerLimitExceededException$RequestId": null,
         "EntityAlreadyExistsException$RequestId": null,
         "EntityDoesNotExistException$RequestId": null,
         "InsufficientPermissionsException$RequestId": null,
@@ -1154,6 +1227,7 @@
     "SubnetId": {
       "base": null,
       "refs": {
+        "DomainController$SubnetId": "<p>Identifier of the subnet in the VPC that contains the domain controller.</p>",
         "SubnetIds$member": null
       }
     },
@@ -1307,6 +1381,16 @@
       "refs": {
       }
     },
+    "UpdateNumberOfDomainControllersRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateNumberOfDomainControllersResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "UpdateRadiusRequest": {
       "base": "<p>Contains the inputs for the <a>UpdateRadius</a> operation.</p>",
       "refs": {
@@ -1354,7 +1438,8 @@
         "DirectoryConnectSettings$VpcId": "<p>The identifier of the VPC in which the AD Connector is created.</p>",
         "DirectoryConnectSettingsDescription$VpcId": "<p>The identifier of the VPC that the AD Connector is in.</p>",
         "DirectoryVpcSettings$VpcId": "<p>The identifier of the VPC in which to create the directory.</p>",
-        "DirectoryVpcSettingsDescription$VpcId": "<p>The identifier of the VPC that the directory is in.</p>"
+        "DirectoryVpcSettingsDescription$VpcId": "<p>The identifier of the VPC that the directory is in.</p>",
+        "DomainController$VpcId": "<p>The identifier of the VPC that contains the domain controller.</p>"
       }
     }
   }

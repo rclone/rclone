@@ -73,6 +73,10 @@ type WAFRegionalAPI interface {
 	CreateIPSetWithContext(aws.Context, *waf.CreateIPSetInput, ...request.Option) (*waf.CreateIPSetOutput, error)
 	CreateIPSetRequest(*waf.CreateIPSetInput) (*request.Request, *waf.CreateIPSetOutput)
 
+	CreateRateBasedRule(*waf.CreateRateBasedRuleInput) (*waf.CreateRateBasedRuleOutput, error)
+	CreateRateBasedRuleWithContext(aws.Context, *waf.CreateRateBasedRuleInput, ...request.Option) (*waf.CreateRateBasedRuleOutput, error)
+	CreateRateBasedRuleRequest(*waf.CreateRateBasedRuleInput) (*request.Request, *waf.CreateRateBasedRuleOutput)
+
 	CreateRule(*waf.CreateRuleInput) (*waf.CreateRuleOutput, error)
 	CreateRuleWithContext(aws.Context, *waf.CreateRuleInput, ...request.Option) (*waf.CreateRuleOutput, error)
 	CreateRuleRequest(*waf.CreateRuleInput) (*request.Request, *waf.CreateRuleOutput)
@@ -100,6 +104,10 @@ type WAFRegionalAPI interface {
 	DeleteIPSet(*waf.DeleteIPSetInput) (*waf.DeleteIPSetOutput, error)
 	DeleteIPSetWithContext(aws.Context, *waf.DeleteIPSetInput, ...request.Option) (*waf.DeleteIPSetOutput, error)
 	DeleteIPSetRequest(*waf.DeleteIPSetInput) (*request.Request, *waf.DeleteIPSetOutput)
+
+	DeleteRateBasedRule(*waf.DeleteRateBasedRuleInput) (*waf.DeleteRateBasedRuleOutput, error)
+	DeleteRateBasedRuleWithContext(aws.Context, *waf.DeleteRateBasedRuleInput, ...request.Option) (*waf.DeleteRateBasedRuleOutput, error)
+	DeleteRateBasedRuleRequest(*waf.DeleteRateBasedRuleInput) (*request.Request, *waf.DeleteRateBasedRuleOutput)
 
 	DeleteRule(*waf.DeleteRuleInput) (*waf.DeleteRuleOutput, error)
 	DeleteRuleWithContext(aws.Context, *waf.DeleteRuleInput, ...request.Option) (*waf.DeleteRuleOutput, error)
@@ -141,6 +149,14 @@ type WAFRegionalAPI interface {
 	GetIPSetWithContext(aws.Context, *waf.GetIPSetInput, ...request.Option) (*waf.GetIPSetOutput, error)
 	GetIPSetRequest(*waf.GetIPSetInput) (*request.Request, *waf.GetIPSetOutput)
 
+	GetRateBasedRule(*waf.GetRateBasedRuleInput) (*waf.GetRateBasedRuleOutput, error)
+	GetRateBasedRuleWithContext(aws.Context, *waf.GetRateBasedRuleInput, ...request.Option) (*waf.GetRateBasedRuleOutput, error)
+	GetRateBasedRuleRequest(*waf.GetRateBasedRuleInput) (*request.Request, *waf.GetRateBasedRuleOutput)
+
+	GetRateBasedRuleManagedKeys(*waf.GetRateBasedRuleManagedKeysInput) (*waf.GetRateBasedRuleManagedKeysOutput, error)
+	GetRateBasedRuleManagedKeysWithContext(aws.Context, *waf.GetRateBasedRuleManagedKeysInput, ...request.Option) (*waf.GetRateBasedRuleManagedKeysOutput, error)
+	GetRateBasedRuleManagedKeysRequest(*waf.GetRateBasedRuleManagedKeysInput) (*request.Request, *waf.GetRateBasedRuleManagedKeysOutput)
+
 	GetRule(*waf.GetRuleInput) (*waf.GetRuleOutput, error)
 	GetRuleWithContext(aws.Context, *waf.GetRuleInput, ...request.Option) (*waf.GetRuleOutput, error)
 	GetRuleRequest(*waf.GetRuleInput) (*request.Request, *waf.GetRuleOutput)
@@ -177,6 +193,10 @@ type WAFRegionalAPI interface {
 	ListIPSetsWithContext(aws.Context, *waf.ListIPSetsInput, ...request.Option) (*waf.ListIPSetsOutput, error)
 	ListIPSetsRequest(*waf.ListIPSetsInput) (*request.Request, *waf.ListIPSetsOutput)
 
+	ListRateBasedRules(*waf.ListRateBasedRulesInput) (*waf.ListRateBasedRulesOutput, error)
+	ListRateBasedRulesWithContext(aws.Context, *waf.ListRateBasedRulesInput, ...request.Option) (*waf.ListRateBasedRulesOutput, error)
+	ListRateBasedRulesRequest(*waf.ListRateBasedRulesInput) (*request.Request, *waf.ListRateBasedRulesOutput)
+
 	ListResourcesForWebACL(*wafregional.ListResourcesForWebACLInput) (*wafregional.ListResourcesForWebACLOutput, error)
 	ListResourcesForWebACLWithContext(aws.Context, *wafregional.ListResourcesForWebACLInput, ...request.Option) (*wafregional.ListResourcesForWebACLOutput, error)
 	ListResourcesForWebACLRequest(*wafregional.ListResourcesForWebACLInput) (*request.Request, *wafregional.ListResourcesForWebACLOutput)
@@ -208,6 +228,10 @@ type WAFRegionalAPI interface {
 	UpdateIPSet(*waf.UpdateIPSetInput) (*waf.UpdateIPSetOutput, error)
 	UpdateIPSetWithContext(aws.Context, *waf.UpdateIPSetInput, ...request.Option) (*waf.UpdateIPSetOutput, error)
 	UpdateIPSetRequest(*waf.UpdateIPSetInput) (*request.Request, *waf.UpdateIPSetOutput)
+
+	UpdateRateBasedRule(*waf.UpdateRateBasedRuleInput) (*waf.UpdateRateBasedRuleOutput, error)
+	UpdateRateBasedRuleWithContext(aws.Context, *waf.UpdateRateBasedRuleInput, ...request.Option) (*waf.UpdateRateBasedRuleOutput, error)
+	UpdateRateBasedRuleRequest(*waf.UpdateRateBasedRuleInput) (*request.Request, *waf.UpdateRateBasedRuleOutput)
 
 	UpdateRule(*waf.UpdateRuleInput) (*waf.UpdateRuleOutput, error)
 	UpdateRuleWithContext(aws.Context, *waf.UpdateRuleInput, ...request.Option) (*waf.UpdateRuleOutput, error)

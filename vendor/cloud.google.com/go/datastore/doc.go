@@ -319,6 +319,40 @@ Example code:
 The *PropertyList type implements PropertyLoadSaver, and can therefore hold an
 arbitrary entity's contents.
 
+The KeyLoader Interface
+
+If a type implements the PropertyLoadSaver interface, it may
+also want to implement the KeyLoader interface.
+The KeyLoader interface exists to allow implementations of PropertyLoadSaver
+to also load an Entity's Key into the Go type. This type may be a struct
+pointer, but it does not have to be. The datastore package will call LoadKey
+when getting the entity's contents, after calling Load.
+
+Example code:
+
+	type WithKeyExample struct {
+		I int
+		Key   *datastore.Key
+	}
+
+	func (x *WithKeyExample) LoadKey(k *datastore.Key) error {
+		x.Key = k
+		return nil
+	}
+
+	func (x *WithKeyExample) Load(ps []datastore.Property) error {
+		// Load I as usual.
+		return datastore.LoadStruct(x, ps)
+	}
+
+	func (x *WithKeyExample) Save() ([]datastore.Property, error) {
+		// Save I as usual.
+		return datastore.SaveStruct(x)
+	}
+
+To load a Key into a struct which does not implement the PropertyLoadSaver
+interface, see the "Key Field" section above.
+
 
 Queries
 

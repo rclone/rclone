@@ -6,13 +6,25 @@ const (
 
 	// ErrCodeDefaultUndefinedFault for service response error code
 	// "DefaultUndefinedFault".
+	//
+	// The StartWorkflowExecution API action was called without the required parameters
+	// set.
+	//
+	// Some workflow execution parameters, such as the decision taskList, must be
+	// set to start the execution. However, these parameters might have been set
+	// as defaults when the workflow type was registered. In this case, you can
+	// omit these parameters from the StartWorkflowExecution call and Amazon SWF
+	// uses the values defined in the workflow type.
+	//
+	// If these parameters aren't set and no default parameters were defined in
+	// the workflow type, this error is displayed.
 	ErrCodeDefaultUndefinedFault = "DefaultUndefinedFault"
 
 	// ErrCodeDomainAlreadyExistsFault for service response error code
 	// "DomainAlreadyExistsFault".
 	//
-	// Returned if the specified domain already exists. You will get this fault
-	// even if the existing domain is in deprecated status.
+	// Returned if the specified domain already exists. You get this fault even
+	// if the existing domain is in deprecated status.
 	ErrCodeDomainAlreadyExistsFault = "DomainAlreadyExistsFault"
 
 	// ErrCodeDomainDeprecatedFault for service response error code
@@ -32,15 +44,15 @@ const (
 	// ErrCodeOperationNotPermittedFault for service response error code
 	// "OperationNotPermittedFault".
 	//
-	// Returned when the caller does not have sufficient permissions to invoke the
+	// Returned when the caller doesn't have sufficient permissions to invoke the
 	// action.
 	ErrCodeOperationNotPermittedFault = "OperationNotPermittedFault"
 
 	// ErrCodeTypeAlreadyExistsFault for service response error code
 	// "TypeAlreadyExistsFault".
 	//
-	// Returned if the type already exists in the specified domain. You will get
-	// this fault even if the existing type is in deprecated status. You can specify
+	// Returned if the type already exists in the specified domain. You get this
+	// fault even if the existing type is in deprecated status. You can specify
 	// another version if the intent is to create a new distinct version of the
 	// type.
 	ErrCodeTypeAlreadyExistsFault = "TypeAlreadyExistsFault"

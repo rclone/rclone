@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/tkmMskVFTW_4jdAKLGSBFnYS5lM\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/_xdoFNtmWVQrpSYjYrHA3E12xJI\"",
  "discoveryVersion": "v1",
  "id": "content:v2",
  "name": "content",
  "canonicalName": "Shopping Content",
  "version": "v2",
- "revision": "20170406",
+ "revision": "20170627",
  "title": "Content API for Shopping",
  "description": "Manages product items, inventory, and Merchant Center accounts for Google Shopping.",
  "ownerDomain": "google.com",
@@ -190,6 +190,10 @@
      "type": "string",
      "description": "Identifies what kind of resource this is. Value: the fixed string \"content#accountStatus\".",
      "default": "content#accountStatus"
+    },
+    "websiteClaimed": {
+     "type": "boolean",
+     "description": "Whether the account's website is claimed or not."
     }
    }
   },
@@ -364,6 +368,17 @@
     }
    }
   },
+  "AccountsClaimWebsiteResponse": {
+   "id": "AccountsClaimWebsiteResponse",
+   "type": "object",
+   "properties": {
+    "kind": {
+     "type": "string",
+     "description": "Identifies what kind of resource this is. Value: the fixed string \"content#accountsClaimWebsiteResponse\".",
+     "default": "content#accountsClaimWebsiteResponse"
+    }
+   }
+  },
   "AccountsCustomBatchRequest": {
    "id": "AccountsCustomBatchRequest",
    "type": "object",
@@ -388,7 +403,7 @@
     },
     "accountId": {
      "type": "string",
-     "description": "The ID of the account to get or delete. Only defined if the method is get or delete.",
+     "description": "The ID of the targeted account. Only defined if the method is get, delete or claimwebsite.",
      "format": "uint64"
     },
     "batchId": {
@@ -403,6 +418,10 @@
     },
     "method": {
      "type": "string"
+    },
+    "overwrite": {
+     "type": "boolean",
+     "description": "Only applicable if the method is claimwebsite. Indicates whether or not to take the claim from another account in case there is a conflict."
     }
    }
   },
@@ -431,7 +450,7 @@
    "properties": {
     "account": {
      "$ref": "Account",
-     "description": "The retrieved, created, or updated account. Not defined if the method was delete."
+     "description": "The retrieved, created, or updated account. Not defined if the method was delete or claimwebsite."
     },
     "batchId": {
      "type": "integer",
@@ -728,7 +747,7 @@
   "Datafeed": {
    "id": "Datafeed",
    "type": "object",
-   "description": "Datafeed data.",
+   "description": "Datafeed configuration data.",
    "properties": {
     "attributeLanguage": {
      "type": "string",
@@ -3080,6 +3099,16 @@
      "type": "string",
      "description": "The material of which the item is made."
     },
+    "maxHandlingTime": {
+     "type": "string",
+     "description": "Maximal product handling time (in business days).",
+     "format": "int64"
+    },
+    "minHandlingTime": {
+     "type": "string",
+     "description": "Minimal product handling time (in business days).",
+     "format": "int64"
+    },
     "mobileLink": {
      "type": "string",
      "description": "Link to a mobile-optimized version of the landing page."
@@ -4330,6 +4359,43 @@
       "https://www.googleapis.com/auth/content"
      ]
     },
+    "claimwebsite": {
+     "id": "content.accounts.claimwebsite",
+     "path": "{merchantId}/accounts/{accountId}/claimwebsite",
+     "httpMethod": "POST",
+     "description": "Claims the website of a Merchant Center sub-account. This method can only be called for accounts to which the managing account has access: either the managing account itself or sub-accounts if the managing account is a multi-client account.",
+     "parameters": {
+      "accountId": {
+       "type": "string",
+       "description": "The ID of the account whose website is claimed.",
+       "required": true,
+       "format": "uint64",
+       "location": "path"
+      },
+      "merchantId": {
+       "type": "string",
+       "description": "The ID of the managing account.",
+       "required": true,
+       "format": "uint64",
+       "location": "path"
+      },
+      "overwrite": {
+       "type": "boolean",
+       "description": "Flag to remove any existing claim on the requested website by another account and replace it with a claim from this account.",
+       "location": "query"
+      }
+     },
+     "parameterOrder": [
+      "merchantId",
+      "accountId"
+     ],
+     "response": {
+      "$ref": "AccountsClaimWebsiteResponse"
+     },
+     "scopes": [
+      "https://www.googleapis.com/auth/content"
+     ]
+    },
     "custombatch": {
      "id": "content.accounts.custombatch",
      "path": "accounts/batch",
@@ -4852,7 +4918,7 @@
      "id": "content.datafeeds.delete",
      "path": "{merchantId}/datafeeds/{datafeedId}",
      "httpMethod": "DELETE",
-     "description": "Deletes a datafeed from your Merchant Center account. This method can only be called for non-multi-client accounts.",
+     "description": "Deletes a datafeed configuration from your Merchant Center account. This method can only be called for non-multi-client accounts.",
      "parameters": {
       "datafeedId": {
        "type": "string",
@@ -4884,7 +4950,7 @@
      "id": "content.datafeeds.get",
      "path": "{merchantId}/datafeeds/{datafeedId}",
      "httpMethod": "GET",
-     "description": "Retrieves a datafeed from your Merchant Center account. This method can only be called for non-multi-client accounts.",
+     "description": "Retrieves a datafeed configuration from your Merchant Center account. This method can only be called for non-multi-client accounts.",
      "parameters": {
       "datafeedId": {
        "type": "string",
@@ -4914,7 +4980,7 @@
      "id": "content.datafeeds.insert",
      "path": "{merchantId}/datafeeds",
      "httpMethod": "POST",
-     "description": "Registers a datafeed with your Merchant Center account. This method can only be called for non-multi-client accounts.",
+     "description": "Registers a datafeed configuration with your Merchant Center account. This method can only be called for non-multi-client accounts.",
      "parameters": {
       "dryRun": {
        "type": "boolean",
@@ -4980,7 +5046,7 @@
      "id": "content.datafeeds.patch",
      "path": "{merchantId}/datafeeds/{datafeedId}",
      "httpMethod": "PATCH",
-     "description": "Updates a datafeed of your Merchant Center account. This method can only be called for non-multi-client accounts. This method supports patch semantics.",
+     "description": "Updates a datafeed configuration of your Merchant Center account. This method can only be called for non-multi-client accounts. This method supports patch semantics.",
      "parameters": {
       "datafeedId": {
        "type": "string",
@@ -5018,7 +5084,7 @@
      "id": "content.datafeeds.update",
      "path": "{merchantId}/datafeeds/{datafeedId}",
      "httpMethod": "PUT",
-     "description": "Updates a datafeed of your Merchant Center account. This method can only be called for non-multi-client accounts.",
+     "description": "Updates a datafeed configuration of your Merchant Center account. This method can only be called for non-multi-client accounts.",
      "parameters": {
       "datafeedId": {
        "type": "string",
@@ -5927,6 +5993,13 @@
      "path": "productstatuses/batch",
      "httpMethod": "POST",
      "description": "Gets the statuses of multiple products in a single request. This method can only be called for non-multi-client accounts.",
+     "parameters": {
+      "includeAttributes": {
+       "type": "boolean",
+       "description": "Flag to include full product data in the results of this request. The default value is false.",
+       "location": "query"
+      }
+     },
      "request": {
       "$ref": "ProductstatusesCustomBatchRequest"
      },
@@ -5943,6 +6016,11 @@
      "httpMethod": "GET",
      "description": "Gets the status of a product from your Merchant Center account. This method can only be called for non-multi-client accounts.",
      "parameters": {
+      "includeAttributes": {
+       "type": "boolean",
+       "description": "Flag to include full product data in the result of this get request. The default value is false.",
+       "location": "query"
+      },
       "merchantId": {
        "type": "string",
        "description": "The ID of the managing account.",
@@ -5974,6 +6052,11 @@
      "httpMethod": "GET",
      "description": "Lists the statuses of the products in your Merchant Center account. This method can only be called for non-multi-client accounts.",
      "parameters": {
+      "includeAttributes": {
+       "type": "boolean",
+       "description": "Flag to include full product data in the results of the list request. The default value is false.",
+       "location": "query"
+      },
       "includeInvalidInsertedItems": {
        "type": "boolean",
        "description": "Flag to include the invalid inserted items in the result of the list request. By default the invalid items are not shown (the default value is false).",

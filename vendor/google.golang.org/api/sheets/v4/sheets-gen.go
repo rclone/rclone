@@ -894,6 +894,13 @@ type BasicChartDomain struct {
 	// this is the data representing the dates.
 	Domain *ChartData `json:"domain,omitempty"`
 
+	// Reversed: True to reverse the order of the domain values (horizontal
+	// axis).
+	// Not applicable to Gauge, Geo, Histogram, Org, Pie, Radar, and
+	// Treemap
+	// charts.
+	Reversed bool `json:"reversed,omitempty"`
+
 	// ForceSendFields is a list of field names (e.g. "Domain") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
@@ -973,6 +980,9 @@ type BasicChartSeries struct {
 	// chart</a>.
 	//   "COMBO" - A <a
 	// href="/chart/interactive/docs/gallery/combochart">combo chart</a>.
+	//   "STEPPED_AREA" - A <a
+	// href="/chart/interactive/docs/gallery/steppedareachart">stepped area
+	// chart</a>.
 	Type string `json:"type,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Series") to
@@ -1022,6 +1032,9 @@ type BasicChartSpec struct {
 	// chart</a>.
 	//   "COMBO" - A <a
 	// href="/chart/interactive/docs/gallery/combochart">combo chart</a>.
+	//   "STEPPED_AREA" - A <a
+	// href="/chart/interactive/docs/gallery/steppedareachart">stepped area
+	// chart</a>.
 	ChartType string `json:"chartType,omitempty"`
 
 	// Domains: The domain of data this is charting.
@@ -1038,6 +1051,14 @@ type BasicChartSpec struct {
 	//  inferred from the header values.)
 	HeaderCount int64 `json:"headerCount,omitempty"`
 
+	// InterpolateNulls: If some values in a series are missing, gaps may
+	// appear in the chart (e.g,
+	// segments of lines in a line chart will be missing).  To eliminate
+	// these
+	// gaps set this to true.
+	// Applies to Line, Area, and Combo charts.
+	InterpolateNulls bool `json:"interpolateNulls,omitempty"`
+
 	// LegendPosition: The position of the chart legend.
 	//
 	// Possible values:
@@ -1051,8 +1072,32 @@ type BasicChartSpec struct {
 	//   "NO_LEGEND" - No legend is rendered.
 	LegendPosition string `json:"legendPosition,omitempty"`
 
+	// LineSmoothing: Gets whether all lines should be rendered smooth or
+	// straight by default.
+	// Applies to Line charts.
+	LineSmoothing bool `json:"lineSmoothing,omitempty"`
+
 	// Series: The data this chart is visualizing.
 	Series []*BasicChartSeries `json:"series,omitempty"`
+
+	// StackedType: The stacked type for charts that support vertical
+	// stacking.
+	// Applies to Area, Bar, Column, and Stepped Area charts.
+	//
+	// Possible values:
+	//   "BASIC_CHART_STACKED_TYPE_UNSPECIFIED" - Default value, do not use.
+	//   "NOT_STACKED" - Series are not stacked.
+	//   "STACKED" - Series values are stacked, each value is rendered
+	// vertically beginning
+	// from the top of the value below it.
+	//   "PERCENT_STACKED" - Vertical stacks are stretched to reach the top
+	// of the chart, with
+	// values laid out as percentages of each other.
+	StackedType string `json:"stackedType,omitempty"`
+
+	// ThreeDimensional: True to make the chart 3D.
+	// Applies to Bar and Column charts.
+	ThreeDimensional bool `json:"threeDimensional,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Axis") to
 	// unconditionally include in API requests. By default, fields with
@@ -1340,8 +1385,9 @@ type BatchUpdateValuesRequest struct {
 	// rendered. This is ignored if response_value_render_option
 	// is
 	// FORMATTED_VALUE.
-	// The default dateTime render option is
-	// [DateTimeRenderOption.SERIAL_NUMBER].
+	// The default dateTime render option
+	// is
+	// DateTimeRenderOption.SERIAL_NUMBER.
 	//
 	// Possible values:
 	//   "SERIAL_NUMBER" - Instructs date, time, datetime, and duration
@@ -1780,6 +1826,258 @@ func (s *Borders) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// BubbleChartSpec: A <a
+// href="/chart/interactive/docs/gallery/bubblechart">bubble chart</a>.
+type BubbleChartSpec struct {
+	// BubbleBorderColor: The bubble border color.
+	BubbleBorderColor *Color `json:"bubbleBorderColor,omitempty"`
+
+	// BubbleLabels: The data containing the bubble labels.  These do not
+	// need to be unique.
+	BubbleLabels *ChartData `json:"bubbleLabels,omitempty"`
+
+	// BubbleMaxRadiusSize: The max radius size of the bubbles, in
+	// pixels.
+	// If specified, the field must be a positive value.
+	BubbleMaxRadiusSize int64 `json:"bubbleMaxRadiusSize,omitempty"`
+
+	// BubbleMinRadiusSize: The minimum radius size of the bubbles, in
+	// pixels.
+	// If specific, the field must be a positive value.
+	BubbleMinRadiusSize int64 `json:"bubbleMinRadiusSize,omitempty"`
+
+	// BubbleOpacity: The opacity of the bubbles between 0 and 1.0.
+	// 0 is fully transparent and 1 is fully opaque.
+	BubbleOpacity float64 `json:"bubbleOpacity,omitempty"`
+
+	// BubbleSizes: The data contianing the bubble sizes.  Bubble sizes are
+	// used to draw
+	// the bubbles at different sizes relative to each other.
+	// If specified, group_ids must also be specified.  This field
+	// is
+	// optional.
+	BubbleSizes *ChartData `json:"bubbleSizes,omitempty"`
+
+	// BubbleTextStyle: The format of the text inside the bubbles.
+	// Underline and Strikethrough are not supported.
+	BubbleTextStyle *TextFormat `json:"bubbleTextStyle,omitempty"`
+
+	// Domain: The data containing the bubble x-values.  These values locate
+	// the bubbles
+	// in the chart horizontally.
+	Domain *ChartData `json:"domain,omitempty"`
+
+	// GroupIds: The data containing the bubble group IDs. All bubbles with
+	// the same group
+	// ID will be drawn in the same color. If bubble_sizes is specified
+	// then
+	// this field must also be specified but may contain blank values.
+	// This field is optional.
+	GroupIds *ChartData `json:"groupIds,omitempty"`
+
+	// LegendPosition: Where the legend of the chart should be drawn.
+	//
+	// Possible values:
+	//   "BUBBLE_CHART_LEGEND_POSITION_UNSPECIFIED" - Default value, do not
+	// use.
+	//   "BOTTOM_LEGEND" - The legend is rendered on the bottom of the
+	// chart.
+	//   "LEFT_LEGEND" - The legend is rendered on the left of the chart.
+	//   "RIGHT_LEGEND" - The legend is rendered on the right of the chart.
+	//   "TOP_LEGEND" - The legend is rendered on the top of the chart.
+	//   "NO_LEGEND" - No legend is rendered.
+	//   "INSIDE_LEGEND" - The legend is rendered inside the chart area.
+	LegendPosition string `json:"legendPosition,omitempty"`
+
+	// Series: The data contianing the bubble y-values.  These values locate
+	// the bubbles
+	// in the chart vertically.
+	Series *ChartData `json:"series,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "BubbleBorderColor")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "BubbleBorderColor") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *BubbleChartSpec) MarshalJSON() ([]byte, error) {
+	type noMethod BubbleChartSpec
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+func (s *BubbleChartSpec) UnmarshalJSON(data []byte) error {
+	type noMethod BubbleChartSpec
+	var s1 struct {
+		BubbleOpacity gensupport.JSONFloat64 `json:"bubbleOpacity"`
+		*noMethod
+	}
+	s1.noMethod = (*noMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.BubbleOpacity = float64(s1.BubbleOpacity)
+	return nil
+}
+
+// CandlestickChartSpec: A <a
+// href="/chart/interactive/docs/gallery/candlestickchart">candlestick
+// chart</a>.
+type CandlestickChartSpec struct {
+	// Data: The Candlestick chart data.
+	// Only one CandlestickData is supported.
+	Data []*CandlestickData `json:"data,omitempty"`
+
+	// Domain: The domain data (horizontal axis) for the candlestick chart.
+	// String data
+	// will be treated as discrete labels, other data will be treated
+	// as
+	// continuous values.
+	Domain *CandlestickDomain `json:"domain,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Data") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Data") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *CandlestickChartSpec) MarshalJSON() ([]byte, error) {
+	type noMethod CandlestickChartSpec
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// CandlestickData: The Candlestick chart data, each containing the low,
+// open, close, and high
+// values for a series.
+type CandlestickData struct {
+	// CloseSeries: The range data (vertical axis) for the close/final value
+	// for each candle.
+	// This is the top of the candle body.  If greater than the open value
+	// the
+	// candle will be filled.  Otherwise the candle will be hollow.
+	CloseSeries *CandlestickSeries `json:"closeSeries,omitempty"`
+
+	// HighSeries: The range data (vertical axis) for the high/maximum value
+	// for each
+	// candle. This is the top of the candle's center line.
+	HighSeries *CandlestickSeries `json:"highSeries,omitempty"`
+
+	// LowSeries: The range data (vertical axis) for the low/minimum value
+	// for each candle.
+	// This is the bottom of the candle's center line.
+	LowSeries *CandlestickSeries `json:"lowSeries,omitempty"`
+
+	// OpenSeries: The range data (vertical axis) for the open/initial value
+	// for each
+	// candle. This is the bottom of the candle body.  If less than the
+	// close
+	// value the candle will be filled.  Otherwise the candle will be
+	// hollow.
+	OpenSeries *CandlestickSeries `json:"openSeries,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CloseSeries") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CloseSeries") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *CandlestickData) MarshalJSON() ([]byte, error) {
+	type noMethod CandlestickData
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// CandlestickDomain: The domain of a CandlestickChart.
+type CandlestickDomain struct {
+	// Data: The data of the CandlestickDomain.
+	Data *ChartData `json:"data,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Data") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Data") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *CandlestickDomain) MarshalJSON() ([]byte, error) {
+	type noMethod CandlestickDomain
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// CandlestickSeries: The series of a CandlestickData.
+type CandlestickSeries struct {
+	// Data: The data of the CandlestickSeries.
+	Data *ChartData `json:"data,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Data") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Data") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *CandlestickSeries) MarshalJSON() ([]byte, error) {
+	type noMethod CandlestickSeries
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // CellData: Data about a specific cell.
 type CellData struct {
 	// DataValidation: A data validation rule on the cell, if any.
@@ -2095,11 +2393,28 @@ func (s *ChartSourceRange) MarshalJSON() ([]byte, error) {
 
 // ChartSpec: The specifications of a chart.
 type ChartSpec struct {
+	// BackgroundColor: The background color of the entire chart.
+	// Not applicable to Org charts.
+	BackgroundColor *Color `json:"backgroundColor,omitempty"`
+
 	// BasicChart: A basic chart specification, can be one of many kinds of
 	// charts.
 	// See BasicChartType for the list of all
 	// charts this supports.
 	BasicChart *BasicChartSpec `json:"basicChart,omitempty"`
+
+	// BubbleChart: A bubble chart specification.
+	BubbleChart *BubbleChartSpec `json:"bubbleChart,omitempty"`
+
+	// CandlestickChart: A candlestick chart specification.
+	CandlestickChart *CandlestickChartSpec `json:"candlestickChart,omitempty"`
+
+	// FontName: The name of the font to use by default for all chart text
+	// (e.g. title,
+	// axis labels, legend).  If a font is specified for a specific part of
+	// the
+	// chart it will override this font name.
+	FontName string `json:"fontName,omitempty"`
 
 	// HiddenDimensionStrategy: Determines how the charts will use hidden
 	// rows or columns.
@@ -2114,13 +2429,29 @@ type ChartSpec struct {
 	//   "SHOW_ALL" - Charts will not skip any hidden rows or columns.
 	HiddenDimensionStrategy string `json:"hiddenDimensionStrategy,omitempty"`
 
+	// HistogramChart: A histogram chart specification.
+	HistogramChart *HistogramChartSpec `json:"histogramChart,omitempty"`
+
+	// Maximized: True to make a chart fill the entire space in which it's
+	// rendered with
+	// minimum padding.  False to use the default padding.
+	// (Not applicable to Geo and Org charts.)
+	Maximized bool `json:"maximized,omitempty"`
+
+	// OrgChart: An org chart specification.
+	OrgChart *OrgChartSpec `json:"orgChart,omitempty"`
+
 	// PieChart: A pie chart specification.
 	PieChart *PieChartSpec `json:"pieChart,omitempty"`
 
 	// Title: The title of the chart.
 	Title string `json:"title,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "BasicChart") to
+	// TitleTextFormat: The title text format.
+	// Strikethrough and underline are not supported.
+	TitleTextFormat *TextFormat `json:"titleTextFormat,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "BackgroundColor") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -2128,12 +2459,13 @@ type ChartSpec struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "BasicChart") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
+	// NullFields is a list of field names (e.g. "BackgroundColor") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
 	NullFields []string `json:"-"`
 }
 
@@ -3859,6 +4191,140 @@ func (s *GridRange) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// HistogramChartSpec: A <a
+// href="/chart/interactive/docs/gallery/histogram">histogram
+// chart</a>.
+// A histogram chart groups data items into bins, displaying each bin as
+// a
+// column of stacked items.  Histograms are used to display the
+// distribution
+// of a dataset.  Each column of items represents a range into which
+// those
+// items fall.  The number of bins can be chosen automatically or
+// specified
+// explicitly.
+type HistogramChartSpec struct {
+	// BucketSize: By default the bucket size (the range of values stacked
+	// in a single
+	// column) is chosen automatically, but it may be overridden here.
+	// E.g., A bucket size of 1.5 results in buckets from 0 - 1.5, 1.5 -
+	// 3.0, etc.
+	// Cannot be negative.
+	// This field is optional.
+	BucketSize float64 `json:"bucketSize,omitempty"`
+
+	// LegendPosition: The position of the chart legend.
+	//
+	// Possible values:
+	//   "HISTOGRAM_CHART_LEGEND_POSITION_UNSPECIFIED" - Default value, do
+	// not use.
+	//   "BOTTOM_LEGEND" - The legend is rendered on the bottom of the
+	// chart.
+	//   "LEFT_LEGEND" - The legend is rendered on the left of the chart.
+	//   "RIGHT_LEGEND" - The legend is rendered on the right of the chart.
+	//   "TOP_LEGEND" - The legend is rendered on the top of the chart.
+	//   "NO_LEGEND" - No legend is rendered.
+	//   "INSIDE_LEGEND" - The legend is rendered inside the chart area.
+	LegendPosition string `json:"legendPosition,omitempty"`
+
+	// OutlierPercentile: The outlier percentile is used to ensure that
+	// outliers do not adversely
+	// affect the calculation of bucket sizes.  For example, setting an
+	// outlier
+	// percentile of 0.05 indicates that the top and bottom 5% of values
+	// when
+	// calculating buckets.  The values are still included in the chart,
+	// they will
+	// be added to the first or last buckets instead of their own
+	// buckets.
+	// Must be between 0.0 and 0.5.
+	OutlierPercentile float64 `json:"outlierPercentile,omitempty"`
+
+	// Series: The series for a histogram may be either a single series of
+	// values to be
+	// bucketed or multiple series, each of the same length, containing the
+	// name
+	// of the series followed by the values to be bucketed for that series.
+	Series []*HistogramSeries `json:"series,omitempty"`
+
+	// ShowItemDividers: Whether horizontal divider lines should be
+	// displayed between items in each
+	// column.
+	ShowItemDividers bool `json:"showItemDividers,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "BucketSize") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "BucketSize") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *HistogramChartSpec) MarshalJSON() ([]byte, error) {
+	type noMethod HistogramChartSpec
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+func (s *HistogramChartSpec) UnmarshalJSON(data []byte) error {
+	type noMethod HistogramChartSpec
+	var s1 struct {
+		BucketSize        gensupport.JSONFloat64 `json:"bucketSize"`
+		OutlierPercentile gensupport.JSONFloat64 `json:"outlierPercentile"`
+		*noMethod
+	}
+	s1.noMethod = (*noMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.BucketSize = float64(s1.BucketSize)
+	s.OutlierPercentile = float64(s1.OutlierPercentile)
+	return nil
+}
+
+// HistogramSeries: A histogram series containing the series color and
+// data.
+type HistogramSeries struct {
+	// BarColor: The color of the column representing this series in each
+	// bucket.
+	// This field is optional.
+	BarColor *Color `json:"barColor,omitempty"`
+
+	// Data: The data for this histogram series.
+	Data *ChartData `json:"data,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "BarColor") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "BarColor") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *HistogramSeries) MarshalJSON() ([]byte, error) {
+	type noMethod HistogramSeries
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // InsertDimensionRequest: Inserts rows or columns in a sheet at a
 // particular index.
 type InsertDimensionRequest struct {
@@ -4235,6 +4701,81 @@ type NumberFormat struct {
 
 func (s *NumberFormat) MarshalJSON() ([]byte, error) {
 	type noMethod NumberFormat
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// OrgChartSpec: An <a
+// href="/chart/interactive/docs/gallery/orgchart">org chart</a>.
+// Org charts require a unique set of labels in labels and
+// may
+// optionally include parent_labels and tooltips.
+// parent_labels contain, for each node, the label identifying the
+// parent
+// node.  tooltips contain, for each node, an optional tooltip.
+//
+// For example, to describe an OrgChart with Alice as the CEO, Bob as
+// the
+// President (reporting to Alice) and Cathy as VP of Sales (also
+// reporting to
+// Alice), have labels contain "Alice", "Bob", "Cathy",
+// parent_labels contain "", "Alice", "Alice" and tooltips
+// contain
+// "CEO", "President", "VP Sales".
+type OrgChartSpec struct {
+	// Labels: The data containing the labels for all the nodes in the
+	// chart.  Labels
+	// must be unique.
+	Labels *ChartData `json:"labels,omitempty"`
+
+	// NodeColor: The color of the org chart nodes.
+	NodeColor *Color `json:"nodeColor,omitempty"`
+
+	// NodeSize: The size of the org chart nodes.
+	//
+	// Possible values:
+	//   "ORG_CHART_LABEL_SIZE_UNSPECIFIED" - Default value, do not use.
+	//   "SMALL" - The small org chart node size.
+	//   "MEDIUM" - The medium org chart node size.
+	//   "LARGE" - The large org chart node size.
+	NodeSize string `json:"nodeSize,omitempty"`
+
+	// ParentLabels: The data containing the label of the parent for the
+	// corresponding node.
+	// A blank value indicates that the node has no parent and is a
+	// top-level
+	// node.
+	// This field is optional.
+	ParentLabels *ChartData `json:"parentLabels,omitempty"`
+
+	// SelectedNodeColor: The color of the selected org chart nodes.
+	SelectedNodeColor *Color `json:"selectedNodeColor,omitempty"`
+
+	// Tooltips: The data containing the tooltip for the corresponding node.
+	//  A blank value
+	// results in no tooltip being displayed for the node.
+	// This field is optional.
+	Tooltips *ChartData `json:"tooltips,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Labels") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Labels") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OrgChartSpec) MarshalJSON() ([]byte, error) {
+	type noMethod OrgChartSpec
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }

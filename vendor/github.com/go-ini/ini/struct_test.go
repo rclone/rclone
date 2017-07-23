@@ -229,6 +229,21 @@ func Test_Struct(t *testing.T) {
 		})
 	})
 
+	Convey("Map to struct in strict mode", t, func() {
+		cfg, err := Load([]byte(`
+name=bruce
+age=a30`))
+		So(err, ShouldBeNil)
+
+		type Strict struct {
+			Name string `ini:"name"`
+			Age  int    `ini:"age"`
+		}
+		s := new(Strict)
+
+		So(cfg.Section("").StrictMapTo(s), ShouldNotBeNil)
+	})
+
 	Convey("Reflect from struct", t, func() {
 		type Embeded struct {
 			Dates       []time.Time `delim:"|"`

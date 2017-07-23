@@ -1294,7 +1294,8 @@
         "AWS::Redshift::ClusterParameterGroup",
         "AWS::Redshift::ClusterSecurityGroup",
         "AWS::Redshift::ClusterSubnetGroup",
-        "AWS::Redshift::EventSubscription"
+        "AWS::Redshift::EventSubscription",
+        "AWS::CloudWatch::Alarm"
       ]
     },
     "ResourceTypeList":{

@@ -2,9 +2,9 @@
   "version": "2.0",
   "service": "<fullname>Auto Scaling</fullname> <p>Auto Scaling is designed to automatically launch or terminate EC2 instances based on user-defined policies, schedules, and health checks. Use this service in conjunction with the Amazon CloudWatch and Elastic Load Balancing services.</p>",
   "operations": {
-    "AttachInstances": "<p>Attaches one or more EC2 instances to the specified Auto Scaling group.</p> <p>When you attach instances, Auto Scaling increases the desired capacity of the group by the number of instances being attached. If the number of instances being attached plus the desired capacity of the group exceeds the maximum size of the group, the operation fails.</p> <p>If there is a Classic load balancer attached to your Auto Scaling group, the instances are also registered with the load balancer. If there are target groups attached to your Auto Scaling group, the instances are also registered with the target groups.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/attach-instance-asg.html\">Attach EC2 Instances to Your Auto Scaling Group</a> in the <i>Auto Scaling User Guide</i>.</p>",
+    "AttachInstances": "<p>Attaches one or more EC2 instances to the specified Auto Scaling group.</p> <p>When you attach instances, Auto Scaling increases the desired capacity of the group by the number of instances being attached. If the number of instances being attached plus the desired capacity of the group exceeds the maximum size of the group, the operation fails.</p> <p>If there is a Classic Load Balancer attached to your Auto Scaling group, the instances are also registered with the load balancer. If there are target groups attached to your Auto Scaling group, the instances are also registered with the target groups.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/attach-instance-asg.html\">Attach EC2 Instances to Your Auto Scaling Group</a> in the <i>Auto Scaling User Guide</i>.</p>",
     "AttachLoadBalancerTargetGroups": "<p>Attaches one or more target groups to the specified Auto Scaling group.</p> <p>To describe the target groups for an Auto Scaling group, use <a>DescribeLoadBalancerTargetGroups</a>. To detach the target group from the Auto Scaling group, use <a>DetachLoadBalancerTargetGroups</a>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/attach-load-balancer-asg.html\">Attach a Load Balancer to Your Auto Scaling Group</a> in the <i>Auto Scaling User Guide</i>.</p>",
-    "AttachLoadBalancers": "<p>Attaches one or more Classic load balancers to the specified Auto Scaling group.</p> <p>To attach an Application load balancer instead, see <a>AttachLoadBalancerTargetGroups</a>.</p> <p>To describe the load balancers for an Auto Scaling group, use <a>DescribeLoadBalancers</a>. To detach the load balancer from the Auto Scaling group, use <a>DetachLoadBalancers</a>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/attach-load-balancer-asg.html\">Attach a Load Balancer to Your Auto Scaling Group</a> in the <i>Auto Scaling User Guide</i>.</p>",
+    "AttachLoadBalancers": "<p>Attaches one or more Classic Load Balancers to the specified Auto Scaling group.</p> <p>To attach an Application Load Balancer instead, see <a>AttachLoadBalancerTargetGroups</a>.</p> <p>To describe the load balancers for an Auto Scaling group, use <a>DescribeLoadBalancers</a>. To detach the load balancer from the Auto Scaling group, use <a>DetachLoadBalancers</a>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/attach-load-balancer-asg.html\">Attach a Load Balancer to Your Auto Scaling Group</a> in the <i>Auto Scaling User Guide</i>.</p>",
     "CompleteLifecycleAction": "<p>Completes the lifecycle action for the specified token or instance with the specified result.</p> <p>This step is a part of the procedure for adding a lifecycle hook to an Auto Scaling group:</p> <ol> <li> <p>(Optional) Create a Lambda function and a rule that allows CloudWatch Events to invoke your Lambda function when Auto Scaling launches or terminates instances.</p> </li> <li> <p>(Optional) Create a notification target and an IAM role. The target can be either an Amazon SQS queue or an Amazon SNS topic. The role allows Auto Scaling to publish lifecycle notifications to the target.</p> </li> <li> <p>Create the lifecycle hook. Specify whether the hook is used when the instances launch or terminate.</p> </li> <li> <p>If you need more time, record the lifecycle action heartbeat to keep the instance in a pending state.</p> </li> <li> <p> <b>If you finish before the timeout period ends, complete the lifecycle action.</b> </p> </li> </ol> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/AutoScalingGroupLifecycle.html\">Auto Scaling Lifecycle</a> in the <i>Auto Scaling User Guide</i>.</p>",
     "CreateAutoScalingGroup": "<p>Creates an Auto Scaling group with the specified name and attributes.</p> <p>If you exceed your maximum limit of Auto Scaling groups, which by default is 20 per region, the call fails. For information about viewing and updating this limit, see <a>DescribeAccountLimits</a>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/AutoScalingGroup.html\">Auto Scaling Groups</a> in the <i>Auto Scaling User Guide</i>.</p>",
     "CreateLaunchConfiguration": "<p>Creates a launch configuration.</p> <p>If you exceed your maximum limit of launch configurations, which by default is 100 per region, the call fails. For information about viewing and updating this limit, see <a>DescribeAccountLimits</a>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/LaunchConfiguration.html\">Launch Configurations</a> in the <i>Auto Scaling User Guide</i>.</p>",
@@ -25,7 +25,7 @@
     "DescribeLifecycleHookTypes": "<p>Describes the available types of lifecycle hooks.</p>",
     "DescribeLifecycleHooks": "<p>Describes the lifecycle hooks for the specified Auto Scaling group.</p>",
     "DescribeLoadBalancerTargetGroups": "<p>Describes the target groups for the specified Auto Scaling group.</p>",
-    "DescribeLoadBalancers": "<p>Describes the load balancers for the specified Auto Scaling group.</p> <p>Note that this operation describes only Classic load balancers. If you have Application load balancers, use <a>DescribeLoadBalancerTargetGroups</a> instead.</p>",
+    "DescribeLoadBalancers": "<p>Describes the load balancers for the specified Auto Scaling group.</p> <p>Note that this operation describes only Classic Load Balancers. If you have Application Load Balancers, use <a>DescribeLoadBalancerTargetGroups</a> instead.</p>",
     "DescribeMetricCollectionTypes": "<p>Describes the available CloudWatch metrics for Auto Scaling.</p> <p>Note that the <code>GroupStandbyInstances</code> metric is not returned by default. You must explicitly request this metric when calling <a>EnableMetricsCollection</a>.</p>",
     "DescribeNotificationConfigurations": "<p>Describes the notification actions associated with the specified Auto Scaling group.</p>",
     "DescribePolicies": "<p>Describes the policies for the specified Auto Scaling group.</p>",
@@ -34,9 +34,9 @@
     "DescribeScheduledActions": "<p>Describes the actions scheduled for your Auto Scaling group that haven't run. To describe the actions that have already run, use <a>DescribeScalingActivities</a>.</p>",
     "DescribeTags": "<p>Describes the specified tags.</p> <p>You can use filters to limit the results. For example, you can query for the tags for a specific Auto Scaling group. You can specify multiple values for a filter. A tag must match at least one of the specified values for it to be included in the results.</p> <p>You can also specify multiple filters. The result includes information for a particular tag only if it matches all the filters. If there's no match, no special message is returned.</p>",
     "DescribeTerminationPolicyTypes": "<p>Describes the termination policies supported by Auto Scaling.</p>",
-    "DetachInstances": "<p>Removes one or more instances from the specified Auto Scaling group.</p> <p>After the instances are detached, you can manage them independently from the rest of the Auto Scaling group.</p> <p>If you do not specify the option to decrement the desired capacity, Auto Scaling launches instances to replace the ones that are detached.</p> <p>If there is a Classic load balancer attached to the Auto Scaling group, the instances are deregistered from the load balancer. If there are target groups attached to the Auto Scaling group, the instances are deregistered from the target groups.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/detach-instance-asg.html\">Detach EC2 Instances from Your Auto Scaling Group</a> in the <i>Auto Scaling User Guide</i>.</p>",
+    "DetachInstances": "<p>Removes one or more instances from the specified Auto Scaling group.</p> <p>After the instances are detached, you can manage them independently from the rest of the Auto Scaling group.</p> <p>If you do not specify the option to decrement the desired capacity, Auto Scaling launches instances to replace the ones that are detached.</p> <p>If there is a Classic Load Balancer attached to the Auto Scaling group, the instances are deregistered from the load balancer. If there are target groups attached to the Auto Scaling group, the instances are deregistered from the target groups.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/detach-instance-asg.html\">Detach EC2 Instances from Your Auto Scaling Group</a> in the <i>Auto Scaling User Guide</i>.</p>",
     "DetachLoadBalancerTargetGroups": "<p>Detaches one or more target groups from the specified Auto Scaling group.</p>",
-    "DetachLoadBalancers": "<p>Detaches one or more Classic load balancers from the specified Auto Scaling group.</p> <p>Note that this operation detaches only Classic load balancers. If you have Application load balancers, use <a>DetachLoadBalancerTargetGroups</a> instead.</p> <p>When you detach a load balancer, it enters the <code>Removing</code> state while deregistering the instances in the group. When all instances are deregistered, then you can no longer describe the load balancer using <a>DescribeLoadBalancers</a>. Note that the instances remain running.</p>",
+    "DetachLoadBalancers": "<p>Detaches one or more Classic Load Balancers from the specified Auto Scaling group.</p> <p>Note that this operation detaches only Classic Load Balancers. If you have Application Load Balancers, use <a>DetachLoadBalancerTargetGroups</a> instead.</p> <p>When you detach a load balancer, it enters the <code>Removing</code> state while deregistering the instances in the group. When all instances are deregistered, then you can no longer describe the load balancer using <a>DescribeLoadBalancers</a>. Note that the instances remain running.</p>",
     "DisableMetricsCollection": "<p>Disables group metrics for the specified Auto Scaling group.</p>",
     "EnableMetricsCollection": "<p>Enables group metrics for the specified Auto Scaling group. For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/as-instance-monitoring.html\">Monitoring Your Auto Scaling Groups and Instances</a> in the <i>Auto Scaling User Guide</i>.</p>",
     "EnterStandby": "<p>Moves the specified instances into <code>Standby</code> mode.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/AutoScalingGroupLifecycle.html\">Auto Scaling Lifecycle</a> in the <i>Auto Scaling User Guide</i>.</p>",
@@ -109,6 +109,7 @@
     "Alarms": {
       "base": null,
       "refs": {
+        "PolicyARNType$Alarms": "<p>The CloudWatch alarms created for the target tracking policy. This parameter will be empty if the policy type is anything other than <code>TargetTrackingScaling</code>.</p>",
         "ScalingPolicy$Alarms": "<p>The CloudWatch alarms related to the policy.</p>"
       }
     },
@@ -318,7 +319,7 @@
       "refs": {
         "AutoScalingGroup$DefaultCooldown": "<p>The amount of time, in seconds, after a scaling activity completes before another scaling activity can start.</p>",
         "CreateAutoScalingGroupType$DefaultCooldown": "<p>The amount of time, in seconds, after a scaling activity completes before another scaling activity can start. The default is 300.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/Cooldown.html\">Auto Scaling Cooldowns</a> in the <i>Auto Scaling User Guide</i>.</p>",
-        "PutScalingPolicyType$Cooldown": "<p>The amount of time, in seconds, after a scaling activity completes and before the next scaling activity can start. If this parameter is not specified, the default cooldown period for the group applies.</p> <p>This parameter is not supported unless the policy type is <code>SimpleScaling</code>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/Cooldown.html\">Auto Scaling Cooldowns</a> in the <i>Auto Scaling User Guide</i>.</p>",
+        "PutScalingPolicyType$Cooldown": "<p>The amount of time, in seconds, after a scaling activity completes and before the next scaling activity can start. If this parameter is not specified, the default cooldown period for the group applies.</p> <p>This parameter is supported if the policy type is <code>SimpleScaling</code>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/Cooldown.html\">Auto Scaling Cooldowns</a> in the <i>Auto Scaling User Guide</i>.</p>",
         "ScalingPolicy$Cooldown": "<p>The amount of time, in seconds, after a scaling activity completes before any further trigger-related scaling activities can start.</p>",
         "UpdateAutoScalingGroupType$DefaultCooldown": "<p>The amount of time, in seconds, after a scaling activity completes before another scaling activity can start. The default is 300.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/Cooldown.html\">Auto Scaling Cooldowns</a> in the <i>Auto Scaling User Guide</i>.</p>"
       }
@@ -336,6 +337,12 @@
     "CreateOrUpdateTagsType": {
       "base": "<p>Contains the parameters for CreateOrUpdateTags.</p>",
       "refs": {
+      }
+    },
+    "CustomizedMetricSpecification": {
+      "base": "<p>Configures a customized metric for a target tracking policy.</p>",
+      "refs": {
+        "TargetTrackingConfiguration$CustomizedMetricSpecification": "<p>A customized metric.</p>"
       }
     },
     "DeleteAutoScalingGroupType": {
@@ -503,6 +510,12 @@
       "refs": {
       }
     },
+    "DisableScaleIn": {
+      "base": null,
+      "refs": {
+        "TargetTrackingConfiguration$DisableScaleIn": "<p>If the parameter is true, then scale-in will be disabled for the target tracking policy, i.e. the target tracking policy will not scale in the Auto Scaling group. The default value is false.</p>"
+      }
+    },
     "Ebs": {
       "base": "<p>Describes an Amazon EBS volume.</p>",
       "refs": {
@@ -546,7 +559,7 @@
     "EstimatedInstanceWarmup": {
       "base": null,
       "refs": {
-        "PutScalingPolicyType$EstimatedInstanceWarmup": "<p>The estimated time, in seconds, until a newly launched instance can contribute to the CloudWatch metrics. The default is to use the value specified for the default cooldown period for the group.</p> <p>This parameter is not supported if the policy type is <code>SimpleScaling</code>.</p>",
+        "PutScalingPolicyType$EstimatedInstanceWarmup": "<p>The estimated time, in seconds, until a newly launched instance can contribute to the CloudWatch metrics. The default is to use the value specified for the default cooldown period for the group.</p> <p>This parameter is supported if the policy type is <code>StepScaling</code> or <code>TargetTrackingScaling</code>.</p>",
         "ScalingPolicy$EstimatedInstanceWarmup": "<p>The estimated time, in seconds, until a newly launched instance can contribute to the CloudWatch metrics.</p>"
       }
     },
@@ -745,12 +758,12 @@
       "refs": {
         "AttachLoadBalancersType$LoadBalancerNames": "<p>One or more load balancer names.</p>",
         "AutoScalingGroup$LoadBalancerNames": "<p>One or more load balancers associated with the group.</p>",
-        "CreateAutoScalingGroupType$LoadBalancerNames": "<p>One or more Classic load balancers. To specify an Application load balancer, use <code>TargetGroupARNs</code> instead.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/create-asg-from-instance.html\">Using a Load Balancer With an Auto Scaling Group</a> in the <i>Auto Scaling User Guide</i>.</p>",
+        "CreateAutoScalingGroupType$LoadBalancerNames": "<p>One or more Classic Load Balancers. To specify an Application Load Balancer, use <code>TargetGroupARNs</code> instead.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/create-asg-from-instance.html\">Using a Load Balancer With an Auto Scaling Group</a> in the <i>Auto Scaling User Guide</i>.</p>",
         "DetachLoadBalancersType$LoadBalancerNames": "<p>One or more load balancer names.</p>"
       }
     },
     "LoadBalancerState": {
-      "base": "<p>Describes the state of a Classic load balancer.</p> <p>If you specify a load balancer when creating the Auto Scaling group, the state of the load balancer is <code>InService</code>.</p> <p>If you attach a load balancer to an existing Auto Scaling group, the initial state is <code>Adding</code>. The state transitions to <code>Added</code> after all instances in the group are registered with the load balancer. If ELB health checks are enabled for the load balancer, the state transitions to <code>InService</code> after at least one instance in the group passes the health check. If EC2 health checks are enabled instead, the load balancer remains in the <code>Added</code> state.</p>",
+      "base": "<p>Describes the state of a Classic Load Balancer.</p> <p>If you specify a load balancer when creating the Auto Scaling group, the state of the load balancer is <code>InService</code>.</p> <p>If you attach a load balancer to an existing Auto Scaling group, the initial state is <code>Adding</code>. The state transitions to <code>Added</code> after all instances in the group are registered with the load balancer. If ELB health checks are enabled for the load balancer, the state transitions to <code>InService</code> after at least one instance in the group passes the health check. If EC2 health checks are enabled instead, the load balancer remains in the <code>Added</code> state.</p>",
       "refs": {
         "LoadBalancerStates$member": null
       }
@@ -788,16 +801,16 @@
     "MaxRecords": {
       "base": null,
       "refs": {
-        "AutoScalingGroupNamesType$MaxRecords": "<p>The maximum number of items to return with this call.</p>",
-        "DescribeAutoScalingInstancesType$MaxRecords": "<p>The maximum number of items to return with this call.</p>",
-        "DescribeLoadBalancerTargetGroupsRequest$MaxRecords": "<p>The maximum number of items to return with this call.</p>",
-        "DescribeLoadBalancersRequest$MaxRecords": "<p>The maximum number of items to return with this call.</p>",
-        "DescribeNotificationConfigurationsType$MaxRecords": "<p>The maximum number of items to return with this call.</p>",
-        "DescribePoliciesType$MaxRecords": "<p>The maximum number of items to be returned with each call.</p>",
-        "DescribeScalingActivitiesType$MaxRecords": "<p>The maximum number of items to return with this call.</p>",
-        "DescribeScheduledActionsType$MaxRecords": "<p>The maximum number of items to return with this call.</p>",
-        "DescribeTagsType$MaxRecords": "<p>The maximum number of items to return with this call.</p>",
-        "LaunchConfigurationNamesType$MaxRecords": "<p>The maximum number of items to return with this call. The default is 100.</p>"
+        "AutoScalingGroupNamesType$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 50 and the maximum value is 100.</p>",
+        "DescribeAutoScalingInstancesType$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 50 and the maximum value is 100.</p>",
+        "DescribeLoadBalancerTargetGroupsRequest$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 50 and the maximum value is 100.</p>",
+        "DescribeLoadBalancersRequest$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 50 and the maximum value is 100.</p>",
+        "DescribeNotificationConfigurationsType$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 50 and the maximum value is 100.</p>",
+        "DescribePoliciesType$MaxRecords": "<p>The maximum number of items to be returned with each call. The default value is 50 and the maximum value is 100.</p>",
+        "DescribeScalingActivitiesType$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 100.</p>",
+        "DescribeScheduledActionsType$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 50 and the maximum value is 100.</p>",
+        "DescribeTagsType$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 50 and the maximum value is 100.</p>",
+        "LaunchConfigurationNamesType$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 50 and the maximum value is 100.</p>"
       }
     },
     "MetricCollectionType": {
@@ -812,6 +825,30 @@
         "DescribeMetricCollectionTypesAnswer$Metrics": "<p>One or more metrics.</p>"
       }
     },
+    "MetricDimension": {
+      "base": "<p>Describes the dimension of a metric.</p>",
+      "refs": {
+        "MetricDimensions$member": null
+      }
+    },
+    "MetricDimensionName": {
+      "base": null,
+      "refs": {
+        "MetricDimension$Name": "<p>The name of the dimension.</p>"
+      }
+    },
+    "MetricDimensionValue": {
+      "base": null,
+      "refs": {
+        "MetricDimension$Value": "<p>The value of the dimension.</p>"
+      }
+    },
+    "MetricDimensions": {
+      "base": null,
+      "refs": {
+        "CustomizedMetricSpecification$Dimensions": "<p>The dimensions of the metric.</p>"
+      }
+    },
     "MetricGranularityType": {
       "base": "<p>Describes a granularity of a metric.</p>",
       "refs": {
@@ -824,13 +861,44 @@
         "DescribeMetricCollectionTypesAnswer$Granularities": "<p>The granularities for the metrics.</p>"
       }
     },
+    "MetricName": {
+      "base": null,
+      "refs": {
+        "CustomizedMetricSpecification$MetricName": "<p>The name of the metric.</p>"
+      }
+    },
+    "MetricNamespace": {
+      "base": null,
+      "refs": {
+        "CustomizedMetricSpecification$Namespace": "<p>The namespace of the metric.</p>"
+      }
+    },
     "MetricScale": {
       "base": null,
       "refs": {
         "ExecutePolicyType$MetricValue": "<p>The metric value to compare to <code>BreachThreshold</code>. This enables you to execute a policy of type <code>StepScaling</code> and determine which step adjustment to use. For example, if the breach threshold is 50 and you want to use a step adjustment with a lower bound of 0 and an upper bound of 10, you can set the metric value to 59.</p> <p>If you specify a metric value that doesn't correspond to a step adjustment for the policy, the call returns an error.</p> <p>This parameter is required if the policy type is <code>StepScaling</code> and not supported otherwise.</p>",
         "ExecutePolicyType$BreachThreshold": "<p>The breach threshold for the alarm.</p> <p>This parameter is required if the policy type is <code>StepScaling</code> and not supported otherwise.</p>",
         "StepAdjustment$MetricIntervalLowerBound": "<p>The lower bound for the difference between the alarm threshold and the CloudWatch metric. If the metric value is above the breach threshold, the lower bound is inclusive (the metric must be greater than or equal to the threshold plus the lower bound). Otherwise, it is exclusive (the metric must be greater than the threshold plus the lower bound). A null value indicates negative infinity.</p>",
-        "StepAdjustment$MetricIntervalUpperBound": "<p>The upper bound for the difference between the alarm threshold and the CloudWatch metric. If the metric value is above the breach threshold, the upper bound is exclusive (the metric must be less than the threshold plus the upper bound). Otherwise, it is inclusive (the metric must be less than or equal to the threshold plus the upper bound). A null value indicates positive infinity.</p> <p>The upper bound must be greater than the lower bound.</p>"
+        "StepAdjustment$MetricIntervalUpperBound": "<p>The upper bound for the difference between the alarm threshold and the CloudWatch metric. If the metric value is above the breach threshold, the upper bound is exclusive (the metric must be less than the threshold plus the upper bound). Otherwise, it is inclusive (the metric must be less than or equal to the threshold plus the upper bound). A null value indicates positive infinity.</p> <p>The upper bound must be greater than the lower bound.</p>",
+        "TargetTrackingConfiguration$TargetValue": "<p>The target value for the metric.</p>"
+      }
+    },
+    "MetricStatistic": {
+      "base": null,
+      "refs": {
+        "CustomizedMetricSpecification$Statistic": "<p>The statistic of the metric.</p>"
+      }
+    },
+    "MetricType": {
+      "base": null,
+      "refs": {
+        "PredefinedMetricSpecification$PredefinedMetricType": "<p>The metric type.</p>"
+      }
+    },
+    "MetricUnit": {
+      "base": null,
+      "refs": {
+        "CustomizedMetricSpecification$Unit": "<p>The unit of the metric.</p>"
       }
     },
     "Metrics": {
@@ -843,7 +911,7 @@
     "MinAdjustmentMagnitude": {
       "base": null,
       "refs": {
-        "PutScalingPolicyType$MinAdjustmentMagnitude": "<p>The minimum number of instances to scale. If the value of <code>AdjustmentType</code> is <code>PercentChangeInCapacity</code>, the scaling policy changes the <code>DesiredCapacity</code> of the Auto Scaling group by at least this many instances. Otherwise, the error is <code>ValidationError</code>.</p>",
+        "PutScalingPolicyType$MinAdjustmentMagnitude": "<p>The minimum number of instances to scale. If the value of <code>AdjustmentType</code> is <code>PercentChangeInCapacity</code>, the scaling policy changes the <code>DesiredCapacity</code> of the Auto Scaling group by at least this many instances. Otherwise, the error is <code>ValidationError</code>.</p> <p>This parameter is supported if the policy type is <code>SimpleScaling</code> or <code>StepScaling</code>.</p>",
         "ScalingPolicy$MinAdjustmentMagnitude": "<p>The minimum number of instances to scale. If the value of <code>AdjustmentType</code> is <code>PercentChangeInCapacity</code>, the scaling policy changes the <code>DesiredCapacity</code> of the Auto Scaling group by at least this many instances. Otherwise, the error is <code>ValidationError</code>.</p>"
       }
     },
@@ -924,6 +992,12 @@
       "base": null,
       "refs": {
         "DescribePoliciesType$PolicyTypes": "<p>One or more policy types. Valid values are <code>SimpleScaling</code> and <code>StepScaling</code>.</p>"
+      }
+    },
+    "PredefinedMetricSpecification": {
+      "base": "<p>Configures a predefined metric for a target tracking policy. The following predefined metrics are available:</p> <ul> <li> <p> <code>ASGAverageCPUUtilization</code> - average CPU utilization of the Auto Scaling group</p> </li> <li> <p> <code>ASGAverageNetworkIn</code> - average number of bytes received on all network interfaces by the Auto Scaling group</p> </li> <li> <p> <code>ASGAverageNetworkOut</code> - average number of bytes sent out on all network interfaces by the Auto Scaling group</p> </li> <li> <p> <code>ALBRequestCountPerTarget</code> - number of requests completed per target in an Application Load Balancer target group</p> </li> </ul>",
+      "refs": {
+        "TargetTrackingConfiguration$PredefinedMetricSpecification": "<p>A predefined metric. You can specify either a predefined metric or a customized metric.</p>"
       }
     },
     "ProcessNames": {
@@ -1253,6 +1327,13 @@
         "DetachLoadBalancerTargetGroupsType$TargetGroupARNs": "<p>The Amazon Resource Names (ARN) of the target groups.</p>"
       }
     },
+    "TargetTrackingConfiguration": {
+      "base": "<p>Represents a target tracking policy configuration.</p>",
+      "refs": {
+        "PutScalingPolicyType$TargetTrackingConfiguration": "<p>The configuration of a target tracking policy.</p> <p>This parameter is required if the policy type is <code>TargetTrackingScaling</code> and not supported otherwise.</p>",
+        "ScalingPolicy$TargetTrackingConfiguration": "<p>A target tracking policy.</p>"
+      }
+    },
     "TerminateInstanceInAutoScalingGroupType": {
       "base": "<p>Contains the parameters for TerminateInstanceInAutoScalingGroup.</p>",
       "refs": {
@@ -1336,6 +1417,7 @@
       "refs": {
         "Activity$Cause": "<p>The reason the activity began.</p>",
         "LifecycleHook$NotificationMetadata": "<p>Additional information that you want to include any time Auto Scaling sends a message to the notification target.</p>",
+        "PredefinedMetricSpecification$ResourceLabel": "<p>Identifies the resource associated with the metric type. For predefined metric types <code>ASGAverageCPUUtilization</code>, <code>ASGAverageNetworkIn</code> and <code>ASGAverageNetworkOut</code>, the parameter must not be specified as the resource associated with the metric type is the Auto Scaling group. For predefined metric type <code>ALBRequestCountPerTarget</code>, the parameter must be specified in the format <code>app/<i>load-balancer-name</i>/<i>load-balancer-id</i>/targetgroup/<i>target-group-name</i>/<i>target-group-id</i> </code>, where <code>app/<i>load-balancer-name</i>/<i>load-balancer-id</i> </code> is the final portion of the load balancer ARN, and <code>targetgroup/<i>target-group-name</i>/<i>target-group-id</i> </code> is the final portion of the target group ARN. The target group must be attached to the Auto Scaling group.</p>",
         "PutLifecycleHookType$NotificationMetadata": "<p>Contains additional information that you want to include any time Auto Scaling sends a message to the notification target.</p>"
       }
     },
@@ -1383,7 +1465,7 @@
         "AutoScalingGroup$Status": "<p>The current state of the group when <a>DeleteAutoScalingGroup</a> is in progress.</p>",
         "AutoScalingInstanceDetails$AutoScalingGroupName": "<p>The name of the Auto Scaling group associated with the instance.</p>",
         "AutoScalingInstanceDetails$AvailabilityZone": "<p>The Availability Zone for the instance.</p>",
-        "AutoScalingInstanceDetails$LaunchConfigurationName": "<p>The launch configuration associated with the instance.</p>",
+        "AutoScalingInstanceDetails$LaunchConfigurationName": "<p>The launch configuration used to launch the instance. This value is not available if you attached the instance to the Auto Scaling group.</p>",
         "AutoScalingNotificationTypes$member": null,
         "AvailabilityZones$member": null,
         "BlockDeviceMapping$VirtualName": "<p>The name of the virtual device (for example, <code>ephemeral0</code>).</p>",
@@ -1424,7 +1506,7 @@
         "ProcessNames$member": null,
         "ProcessType$ProcessName": "<p>One of the following processes:</p> <ul> <li> <p> <code>Launch</code> </p> </li> <li> <p> <code>Terminate</code> </p> </li> <li> <p> <code>AddToLoadBalancer</code> </p> </li> <li> <p> <code>AlarmNotification</code> </p> </li> <li> <p> <code>AZRebalance</code> </p> </li> <li> <p> <code>HealthCheck</code> </p> </li> <li> <p> <code>ReplaceUnhealthy</code> </p> </li> <li> <p> <code>ScheduledActions</code> </p> </li> </ul>",
         "PutScalingPolicyType$PolicyName": "<p>The name of the policy.</p>",
-        "PutScalingPolicyType$AdjustmentType": "<p>The adjustment type. Valid values are <code>ChangeInCapacity</code>, <code>ExactCapacity</code>, and <code>PercentChangeInCapacity</code>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/as-scale-based-on-demand.html\">Dynamic Scaling</a> in the <i>Auto Scaling User Guide</i>.</p>",
+        "PutScalingPolicyType$AdjustmentType": "<p>The adjustment type. The valid values are <code>ChangeInCapacity</code>, <code>ExactCapacity</code>, and <code>PercentChangeInCapacity</code>.</p> <p>This parameter is supported if the policy type is <code>SimpleScaling</code> or <code>StepScaling</code>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/as-scale-based-on-demand.html\">Dynamic Scaling</a> in the <i>Auto Scaling User Guide</i>.</p>",
         "PutScheduledUpdateGroupActionType$ScheduledActionName": "<p>The name of this scaling action.</p>",
         "PutScheduledUpdateGroupActionType$Recurrence": "<p>The recurring schedule for this action, in Unix cron syntax format. For more information, see <a href=\"http://en.wikipedia.org/wiki/Cron\">Cron</a> in Wikipedia.</p>",
         "ResourceContentionFault$message": "<p/>",
@@ -1449,7 +1531,7 @@
         "AutoScalingInstanceDetails$HealthStatus": "<p>The last reported health status of this instance. \"Healthy\" means that the instance is healthy and should remain in service. \"Unhealthy\" means that the instance is unhealthy and Auto Scaling should terminate and replace it.</p>",
         "CreateAutoScalingGroupType$HealthCheckType": "<p>The service to use for the health checks. The valid values are <code>EC2</code> and <code>ELB</code>.</p> <p>By default, health checks use Amazon EC2 instance status checks to determine the health of an instance. For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/healthcheck.html\">Health Checks</a> in the <i>Auto Scaling User Guide</i>.</p>",
         "Instance$HealthStatus": "<p>The last reported health status of the instance. \"Healthy\" means that the instance is healthy and should remain in service. \"Unhealthy\" means that the instance is unhealthy and Auto Scaling should terminate and replace it.</p>",
-        "PutScalingPolicyType$MetricAggregationType": "<p>The aggregation type for the CloudWatch metrics. Valid values are <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code>. If the aggregation type is null, the value is treated as <code>Average</code>.</p> <p>This parameter is not supported if the policy type is <code>SimpleScaling</code>.</p>",
+        "PutScalingPolicyType$MetricAggregationType": "<p>The aggregation type for the CloudWatch metrics. The valid values are <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code>. If the aggregation type is null, the value is treated as <code>Average</code>.</p> <p>This parameter is supported if the policy type is <code>StepScaling</code>.</p>",
         "ScalingPolicy$MetricAggregationType": "<p>The aggregation type for the CloudWatch metrics. Valid values are <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code>.</p>",
         "SetInstanceHealthQuery$HealthStatus": "<p>The health status of the instance. Set to <code>Healthy</code> if you want the instance to remain in service. Set to <code>Unhealthy</code> if you want the instance to be out of service. Auto Scaling will terminate and replace the unhealthy instance.</p>",
         "UpdateAutoScalingGroupType$HealthCheckType": "<p>The service to use for the health checks. The valid values are <code>EC2</code> and <code>ELB</code>.</p>"
@@ -1468,7 +1550,7 @@
         "CreateLaunchConfigurationType$PlacementTenancy": "<p>The tenancy of the instance. An instance with a tenancy of <code>dedicated</code> runs on single-tenant hardware and can only be launched into a VPC.</p> <p>You must set the value of this parameter to <code>dedicated</code> if want to launch Dedicated Instances into a shared tenancy VPC (VPC with instance placement tenancy attribute set to <code>default</code>).</p> <p>If you specify this parameter, be sure to specify at least one subnet when you create your group.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/asg-in-vpc.html\">Launching Auto Scaling Instances in a VPC</a> in the <i>Auto Scaling User Guide</i>.</p> <p>Valid values: <code>default</code> | <code>dedicated</code> </p>",
         "LaunchConfiguration$PlacementTenancy": "<p>The tenancy of the instance, either <code>default</code> or <code>dedicated</code>. An instance with <code>dedicated</code> tenancy runs in an isolated, single-tenant hardware and can only be launched into a VPC.</p>",
         "PolicyTypes$member": null,
-        "PutScalingPolicyType$PolicyType": "<p>The policy type. Valid values are <code>SimpleScaling</code> and <code>StepScaling</code>. If the policy type is null, the value is treated as <code>SimpleScaling</code>.</p>",
+        "PutScalingPolicyType$PolicyType": "<p>The policy type. The valid values are <code>SimpleScaling</code>, <code>StepScaling</code>, and <code>TargetTrackingScaling</code>. If the policy type is null, the value is treated as <code>SimpleScaling</code>.</p>",
         "ScalingPolicy$PolicyType": "<p>The policy type. Valid values are <code>SimpleScaling</code> and <code>StepScaling</code>.</p>"
       }
     },

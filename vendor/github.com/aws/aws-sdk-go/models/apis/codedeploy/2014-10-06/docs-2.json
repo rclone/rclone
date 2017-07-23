@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "service": "<fullname>AWS CodeDeploy</fullname> <p> <b>Overview</b> </p> <p>This reference guide provides descriptions of the AWS CodeDeploy APIs. For more information about AWS CodeDeploy, see the <a href=\"http://docs.aws.amazon.com/codedeploy/latest/userguide\">AWS CodeDeploy User Guide</a>.</p> <p> <b>Using the APIs</b> </p> <p>You can use the AWS CodeDeploy APIs to work with the following:</p> <ul> <li> <p>Applications are unique identifiers used by AWS CodeDeploy to ensure the correct combinations of revisions, deployment configurations, and deployment groups are being referenced during deployments.</p> <p>You can use the AWS CodeDeploy APIs to create, delete, get, list, and update applications.</p> </li> <li> <p>Deployment configurations are sets of deployment rules and success and failure conditions used by AWS CodeDeploy during deployments.</p> <p>You can use the AWS CodeDeploy APIs to create, delete, get, and list deployment configurations.</p> </li> <li> <p>Deployment groups are groups of instances to which application revisions can be deployed.</p> <p>You can use the AWS CodeDeploy APIs to create, delete, get, list, and update deployment groups.</p> </li> <li> <p>Instances represent Amazon EC2 instances to which application revisions are deployed. Instances are identified by their Amazon EC2 tags or Auto Scaling group names. Instances belong to deployment groups.</p> <p>You can use the AWS CodeDeploy APIs to get and list instance.</p> </li> <li> <p>Deployments represent the process of deploying revisions to instances.</p> <p>You can use the AWS CodeDeploy APIs to create, get, list, and stop deployments.</p> </li> <li> <p>Application revisions are archive files stored in Amazon S3 buckets or GitHub repositories. These revisions contain source content (such as source code, web pages, executable files, and deployment scripts) along with an application specification (AppSpec) file. (The AppSpec file is unique to AWS CodeDeploy; it defines the deployment actions you want AWS CodeDeploy to execute.) For application revisions stored in Amazon S3 buckets, an application revision is uniquely identified by its Amazon S3 object key and its ETag, version, or both. For application revisions stored in GitHub repositories, an application revision is uniquely identified by its repository name and commit ID. Application revisions are deployed through deployment groups.</p> <p>You can use the AWS CodeDeploy APIs to get, list, and register application revisions.</p> </li> </ul>",
+  "service": "<fullname>AWS CodeDeploy</fullname> <p>AWS CodeDeploy is a deployment service that automates application deployments to Amazon EC2 instances or on-premises instances running in your own facility.</p> <p>You can deploy a nearly unlimited variety of application content, such as code, web and configuration files, executables, packages, scripts, multimedia files, and so on. AWS CodeDeploy can deploy application content stored in Amazon S3 buckets, GitHub repositories, or Bitbucket repositories. You do not need to make changes to your existing code before you can use AWS CodeDeploy.</p> <p>AWS CodeDeploy makes it easier for you to rapidly release new features, helps you avoid downtime during application deployment, and handles the complexity of updating your applications, without many of the risks associated with error-prone manual deployments.</p> <p> <b>AWS CodeDeploy Components</b> </p> <p>Use the information in this guide to help you work with the following AWS CodeDeploy components:</p> <ul> <li> <p> <b>Application</b>: A name that uniquely identifies the application you want to deploy. AWS CodeDeploy uses this name, which functions as a container, to ensure the correct combination of revision, deployment configuration, and deployment group are referenced during a deployment.</p> </li> <li> <p> <b>Deployment group</b>: A set of individual instances. A deployment group contains individually tagged instances, Amazon EC2 instances in Auto Scaling groups, or both. </p> </li> <li> <p> <b>Deployment configuration</b>: A set of deployment rules and deployment success and failure conditions used by AWS CodeDeploy during a deployment.</p> </li> <li> <p> <b>Deployment</b>: The process, and the components involved in the process, of installing content on one or more instances. </p> </li> <li> <p> <b>Application revisions</b>: An archive file containing source content—source code, web pages, executable files, and deployment scripts—along with an application specification file (AppSpec file). Revisions are stored in Amazon S3 buckets or GitHub repositories. For Amazon S3, a revision is uniquely identified by its Amazon S3 object key and its ETag, version, or both. For GitHub, a revision is uniquely identified by its commit ID.</p> </li> </ul> <p>This guide also contains information to help you get details about the instances in your deployments and to make on-premises instances available for AWS CodeDeploy deployments.</p> <p> <b>AWS CodeDeploy Information Resources</b> </p> <ul> <li> <p> <a href=\"http://docs.aws.amazon.com/codedeploy/latest/userguide\">AWS CodeDeploy User Guide</a> </p> </li> <li> <p> <a href=\"http://docs.aws.amazon.com/codedeploy/latest/APIReference/\">AWS CodeDeploy API Reference Guide</a> </p> </li> <li> <p> <a href=\"http://docs.aws.amazon.com/cli/latest/reference/deploy/index.html\">AWS CLI Reference for AWS CodeDeploy</a> </p> </li> <li> <p> <a href=\"https://forums.aws.amazon.com/forum.jspa?forumID=179\">AWS CodeDeploy Developer Forum</a> </p> </li> </ul>",
   "operations": {
     "AddTagsToOnPremisesInstances": "<p>Adds tags to on-premises instances.</p>",
     "BatchGetApplicationRevisions": "<p>Gets information about one or more application revisions.</p>",
@@ -9,7 +9,7 @@
     "BatchGetDeploymentInstances": "<p>Gets information about one or more instance that are part of a deployment group.</p>",
     "BatchGetDeployments": "<p>Gets information about one or more deployments.</p>",
     "BatchGetOnPremisesInstances": "<p>Gets information about one or more on-premises instances.</p>",
-    "ContinueDeployment": "<p>Starts the process of rerouting traffic from instances in the original environment to instances in thereplacement environment without waiting for a specified wait time to elapse. (Traffic rerouting, which is achieved by registering instances in the replacement environment with the load balancer, can start as soon as all instances have a status of Ready.) </p>",
+    "ContinueDeployment": "<p>For a blue/green deployment, starts the process of rerouting traffic from instances in the original environment to instances in the replacement environment without waiting for a specified wait time to elapse. (Traffic rerouting, which is achieved by registering instances in the replacement environment with the load balancer, can start as soon as all instances have a status of Ready.) </p>",
     "CreateApplication": "<p>Creates an application.</p>",
     "CreateDeployment": "<p>Deploys an application revision through the specified deployment group.</p>",
     "CreateDeploymentConfig": "<p>Creates a deployment configuration.</p>",
@@ -31,6 +31,7 @@
     "ListDeploymentGroups": "<p>Lists the deployment groups for an application registered with the applicable IAM user or AWS account.</p>",
     "ListDeploymentInstances": "<p>Lists the instance for a deployment associated with the applicable IAM user or AWS account.</p>",
     "ListDeployments": "<p>Lists the deployments in a deployment group for an application registered with the applicable IAM user or AWS account.</p>",
+    "ListGitHubAccountTokenNames": "<p>Lists the names of stored connections to GitHub accounts.</p>",
     "ListOnPremisesInstances": "<p>Gets a list of names for one or more on-premises instances.</p> <p>Unless otherwise specified, both registered and deregistered on-premises instance names will be listed. To list only registered or deregistered on-premises instance names, use the registration status parameter.</p>",
     "RegisterApplicationRevision": "<p>Registers with AWS CodeDeploy a revision for the specified application.</p>",
     "RegisterOnPremisesInstance": "<p>Registers an on-premises instance.</p> <note> <p>Only one IAM ARN (an IAM session ARN or IAM user ARN) is supported in the request. You cannot use both.</p> </note>",
@@ -61,9 +62,9 @@
     "AlarmConfiguration": {
       "base": "<p>Information about alarms associated with the deployment group.</p>",
       "refs": {
-        "CreateDeploymentGroupInput$alarmConfiguration": "<p>Information to add about Amazon CloudWatch alarms when the deployment group is created. </p>",
+        "CreateDeploymentGroupInput$alarmConfiguration": "<p>Information to add about Amazon CloudWatch alarms when the deployment group is created.</p>",
         "DeploymentGroupInfo$alarmConfiguration": "<p>A list of alarms associated with the deployment group.</p>",
-        "UpdateDeploymentGroupInput$alarmConfiguration": "<p>Information to add or change about Amazon CloudWatch alarms when the deployment group is updated. </p>"
+        "UpdateDeploymentGroupInput$alarmConfiguration": "<p>Information to add or change about Amazon CloudWatch alarms when the deployment group is updated.</p>"
       }
     },
     "AlarmList": {
@@ -223,62 +224,62 @@
       }
     },
     "BatchGetApplicationRevisionsInput": {
-      "base": "<p>Represents the input of a batch get application revisions operation.</p>",
+      "base": "<p>Represents the input of a BatchGetApplicationRevisions operation.</p>",
       "refs": {
       }
     },
     "BatchGetApplicationRevisionsOutput": {
-      "base": "<p>Represents the output of a batch get application revisions operation.</p>",
+      "base": "<p>Represents the output of a BatchGetApplicationRevisions operation.</p>",
       "refs": {
       }
     },
     "BatchGetApplicationsInput": {
-      "base": "<p>Represents the input of a batch get applications operation.</p>",
+      "base": "<p>Represents the input of a BatchGetApplications operation.</p>",
       "refs": {
       }
     },
     "BatchGetApplicationsOutput": {
-      "base": "<p>Represents the output of a batch get applications operation.</p>",
+      "base": "<p>Represents the output of a BatchGetApplications operation.</p>",
       "refs": {
       }
     },
     "BatchGetDeploymentGroupsInput": {
-      "base": "<p>Represents the input of a batch get deployment groups operation.</p>",
+      "base": "<p>Represents the input of a BatchGetDeploymentGroups operation.</p>",
       "refs": {
       }
     },
     "BatchGetDeploymentGroupsOutput": {
-      "base": "<p>Represents the output of a batch get deployment groups operation.</p>",
+      "base": "<p>Represents the output of a BatchGetDeploymentGroups operation.</p>",
       "refs": {
       }
     },
     "BatchGetDeploymentInstancesInput": {
-      "base": "<p>Represents the input of a batch get deployment instances operation.</p>",
+      "base": "<p>Represents the input of a BatchGetDeploymentInstances operation.</p>",
       "refs": {
       }
     },
     "BatchGetDeploymentInstancesOutput": {
-      "base": "<p>Represents the output of a batch get deployment instance operation.</p>",
+      "base": "<p>Represents the output of a BatchGetDeploymentInstances operation.</p>",
       "refs": {
       }
     },
     "BatchGetDeploymentsInput": {
-      "base": "<p>Represents the input of a batch get deployments operation.</p>",
+      "base": "<p>Represents the input of a BatchGetDeployments operation.</p>",
       "refs": {
       }
     },
     "BatchGetDeploymentsOutput": {
-      "base": "<p>Represents the output of a batch get deployments operation.</p>",
+      "base": "<p>Represents the output of a BatchGetDeployments operation.</p>",
       "refs": {
       }
     },
     "BatchGetOnPremisesInstancesInput": {
-      "base": "<p>Represents the input of a batch get on-premises instances operation.</p>",
+      "base": "<p>Represents the input of a BatchGetOnPremisesInstances operation.</p>",
       "refs": {
       }
     },
     "BatchGetOnPremisesInstancesOutput": {
-      "base": "<p>Represents the output of a batch get on-premises instances operation.</p>",
+      "base": "<p>Represents the output of a BatchGetOnPremisesInstances operation.</p>",
       "refs": {
       }
     },
@@ -339,62 +340,62 @@
       }
     },
     "CreateApplicationInput": {
-      "base": "<p>Represents the input of a create application operation.</p>",
+      "base": "<p>Represents the input of a CreateApplication operation.</p>",
       "refs": {
       }
     },
     "CreateApplicationOutput": {
-      "base": "<p>Represents the output of a create application operation.</p>",
+      "base": "<p>Represents the output of a CreateApplication operation.</p>",
       "refs": {
       }
     },
     "CreateDeploymentConfigInput": {
-      "base": "<p>Represents the input of a create deployment configuration operation.</p>",
+      "base": "<p>Represents the input of a CreateDeploymentConfig operation.</p>",
       "refs": {
       }
     },
     "CreateDeploymentConfigOutput": {
-      "base": "<p>Represents the output of a create deployment configuration operation.</p>",
+      "base": "<p>Represents the output of a CreateDeploymentConfig operation.</p>",
       "refs": {
       }
     },
     "CreateDeploymentGroupInput": {
-      "base": "<p>Represents the input of a create deployment group operation.</p>",
+      "base": "<p>Represents the input of a CreateDeploymentGroup operation.</p>",
       "refs": {
       }
     },
     "CreateDeploymentGroupOutput": {
-      "base": "<p>Represents the output of a create deployment group operation.</p>",
+      "base": "<p>Represents the output of a CreateDeploymentGroup operation.</p>",
       "refs": {
       }
     },
     "CreateDeploymentInput": {
-      "base": "<p>Represents the input of a create deployment operation.</p>",
+      "base": "<p>Represents the input of a CreateDeployment operation.</p>",
       "refs": {
       }
     },
     "CreateDeploymentOutput": {
-      "base": "<p>Represents the output of a create deployment operation.</p>",
+      "base": "<p>Represents the output of a CreateDeployment operation.</p>",
       "refs": {
       }
     },
     "DeleteApplicationInput": {
-      "base": "<p>Represents the input of a delete application operation.</p>",
+      "base": "<p>Represents the input of a DeleteApplication operation.</p>",
       "refs": {
       }
     },
     "DeleteDeploymentConfigInput": {
-      "base": "<p>Represents the input of a delete deployment configuration operation.</p>",
+      "base": "<p>Represents the input of a DeleteDeploymentConfig operation.</p>",
       "refs": {
       }
     },
     "DeleteDeploymentGroupInput": {
-      "base": "<p>Represents the input of a delete deployment group operation.</p>",
+      "base": "<p>Represents the input of a DeleteDeploymentGroup operation.</p>",
       "refs": {
       }
     },
     "DeleteDeploymentGroupOutput": {
-      "base": "<p>Represents the output of a delete deployment group operation.</p>",
+      "base": "<p>Represents the output of a DeleteDeploymentGroup operation.</p>",
       "refs": {
       }
     },
@@ -440,7 +441,7 @@
       "base": null,
       "refs": {
         "CreateDeploymentConfigInput$deploymentConfigName": "<p>The name of the deployment configuration to create.</p>",
-        "CreateDeploymentGroupInput$deploymentConfigName": "<p>If specified, the deployment configuration name can be either one of the predefined configurations provided with AWS CodeDeploy or a custom deployment configuration that you create by calling the create deployment configuration operation.</p> <p>CodeDeployDefault.OneAtATime is the default deployment configuration. It is used if a configuration isn't specified for the deployment or the deployment group.</p> <p>For more information about the predefined deployment configurations in AWS CodeDeploy, see see <a href=\"http://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configurations.html\">Working with Deployment Groups in AWS CodeDeploy</a> in the AWS CodeDeploy User Guide.</p>",
+        "CreateDeploymentGroupInput$deploymentConfigName": "<p>If specified, the deployment configuration name can be either one of the predefined configurations provided with AWS CodeDeploy or a custom deployment configuration that you create by calling the create deployment configuration operation.</p> <p>CodeDeployDefault.OneAtATime is the default deployment configuration. It is used if a configuration isn't specified for the deployment or the deployment group.</p> <p>For more information about the predefined deployment configurations in AWS CodeDeploy, see <a href=\"http://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configurations.html\">Working with Deployment Groups in AWS CodeDeploy</a> in the AWS CodeDeploy User Guide.</p>",
         "CreateDeploymentInput$deploymentConfigName": "<p>The name of a deployment configuration associated with the applicable IAM user or AWS account.</p> <p>If not specified, the value configured in the deployment group will be used as the default. If the deployment group does not have a deployment configuration associated with it, then CodeDeployDefault.OneAtATime will be used by default.</p>",
         "DeleteDeploymentConfigInput$deploymentConfigName": "<p>The name of a deployment configuration associated with the applicable IAM user or AWS account.</p>",
         "DeploymentConfigInfo$deploymentConfigName": "<p>The deployment configuration name.</p>",
@@ -547,6 +548,7 @@
         "GetDeploymentInput$deploymentId": "<p>A deployment ID associated with the applicable IAM user or AWS account.</p>",
         "GetDeploymentInstanceInput$deploymentId": "<p>The unique ID of a deployment.</p>",
         "InstanceSummary$deploymentId": "<p>The deployment ID.</p>",
+        "LastDeploymentInfo$deploymentId": "<p>The deployment ID.</p>",
         "ListDeploymentInstancesInput$deploymentId": "<p>The unique ID of a deployment.</p>",
         "RollbackInfo$rollbackDeploymentId": "<p>The ID of the deployment rollback.</p>",
         "RollbackInfo$rollbackTriggeringDeploymentId": "<p>The deployment ID of the deployment that was underway and triggered a rollback deployment because it failed or was stopped.</p>",
@@ -609,7 +611,8 @@
       "base": null,
       "refs": {
         "DeploymentInfo$status": "<p>The current state of the deployment as a whole.</p>",
-        "DeploymentStatusList$member": null
+        "DeploymentStatusList$member": null,
+        "LastDeploymentInfo$status": "<p>The status of the most recent deployment.</p>"
       }
     },
     "DeploymentStatusList": {
@@ -619,18 +622,18 @@
       }
     },
     "DeploymentStyle": {
-      "base": "<p>Information about the type of deployment, either standard or blue/green, you want to run and whether to route deployment traffic behind a load balancer.</p>",
+      "base": "<p>Information about the type of deployment, either in-place or blue/green, you want to run and whether to route deployment traffic behind a load balancer.</p>",
       "refs": {
-        "CreateDeploymentGroupInput$deploymentStyle": "<p>Information about the type of deployment, standard or blue/green, that you want to run and whether to route deployment traffic behind a load balancer.</p>",
-        "DeploymentGroupInfo$deploymentStyle": "<p>Information about the type of deployment, either standard or blue/green, you want to run and whether to route deployment traffic behind a load balancer.</p>",
-        "DeploymentInfo$deploymentStyle": "<p>Information about the type of deployment, either standard or blue/green, you want to run and whether to route deployment traffic behind a load balancer.</p>",
-        "UpdateDeploymentGroupInput$deploymentStyle": "<p>Information about the type of deployment, either standard or blue/green, you want to run and whether to route deployment traffic behind a load balancer.</p>"
+        "CreateDeploymentGroupInput$deploymentStyle": "<p>Information about the type of deployment, in-place or blue/green, that you want to run and whether to route deployment traffic behind a load balancer.</p>",
+        "DeploymentGroupInfo$deploymentStyle": "<p>Information about the type of deployment, either in-place or blue/green, you want to run and whether to route deployment traffic behind a load balancer.</p>",
+        "DeploymentInfo$deploymentStyle": "<p>Information about the type of deployment, either in-place or blue/green, you want to run and whether to route deployment traffic behind a load balancer.</p>",
+        "UpdateDeploymentGroupInput$deploymentStyle": "<p>Information about the type of deployment, either in-place or blue/green, you want to run and whether to route deployment traffic behind a load balancer.</p>"
       }
     },
     "DeploymentType": {
       "base": null,
       "refs": {
-        "DeploymentStyle$deploymentType": "<p>Indicates whether to run a standard deployment or a blue/green deployment.</p>"
+        "DeploymentStyle$deploymentType": "<p>Indicates whether to run an in-place deployment or a blue/green deployment.</p>"
       }
     },
     "DeploymentsInfoList": {
@@ -647,7 +650,7 @@
       }
     },
     "DeregisterOnPremisesInstanceInput": {
-      "base": "<p>Represents the input of a deregister on-premises instance operation.</p>",
+      "base": "<p>Represents the input of a DeregisterOnPremisesInstance operation.</p>",
       "refs": {
       }
     },
@@ -680,7 +683,7 @@
       }
     },
     "EC2TagFilter": {
-      "base": "<p>Information about a tag filter.</p>",
+      "base": "<p>Information about an EC2 tag filter.</p>",
       "refs": {
         "EC2TagFilterList$member": null
       }
@@ -688,7 +691,7 @@
     "EC2TagFilterList": {
       "base": null,
       "refs": {
-        "CreateDeploymentGroupInput$ec2TagFilters": "<p>The Amazon EC2 tags on which to filter.</p>",
+        "CreateDeploymentGroupInput$ec2TagFilters": "<p>The Amazon EC2 tags on which to filter. The deployment group will include EC2 instances with any of the specified tags.</p>",
         "DeploymentGroupInfo$ec2TagFilters": "<p>The Amazon EC2 tags on which to filter.</p>",
         "TargetInstances$tagFilters": "<p>The tag filter key, type, and value used to identify Amazon EC2 instances in a replacement environment for a blue/green deployment.</p>",
         "UpdateDeploymentGroupInput$ec2TagFilters": "<p>The replacement set of Amazon EC2 tags on which to filter, if you want to change them. To keep the existing tags, enter their names. To remove tags, do not enter any tag names.</p>"
@@ -701,7 +704,7 @@
       }
     },
     "ELBInfo": {
-      "base": "<p>Information about a load balancer in Elastic Load Balancing to use in a blue/green deployment.</p>",
+      "base": "<p>Information about a load balancer in Elastic Load Balancing to use in a deployment.</p>",
       "refs": {
         "ELBInfoList$member": null
       }
@@ -709,13 +712,13 @@
     "ELBInfoList": {
       "base": null,
       "refs": {
-        "LoadBalancerInfo$elbInfoList": "<p>An array containing information about the load balancer in Elastic Load Balancing to use in a blue/green deployment.</p>"
+        "LoadBalancerInfo$elbInfoList": "<p>An array containing information about the load balancer in Elastic Load Balancing to use in a deployment.</p>"
       }
     },
     "ELBName": {
       "base": null,
       "refs": {
-        "ELBInfo$name": "<p>The name of the load balancer that will be used to route traffic from original instances to replacement instances in a blue/green deployment.</p>"
+        "ELBInfo$name": "<p>For blue/green deployments, the name of the load balancer that will be used to route traffic from original instances to replacement instances in a blue/green deployment. For in-place deployments, the name of the load balancer that instances are deregistered from so they are not serving traffic during a deployment, and then re-registered with after the deployment completes.</p>"
       }
     },
     "ETag": {
@@ -745,6 +748,13 @@
         "ErrorInformation$message": "<p>An accompanying error message.</p>"
       }
     },
+    "FileExistsBehavior": {
+      "base": null,
+      "refs": {
+        "CreateDeploymentInput$fileExistsBehavior": "<p>Information about how AWS CodeDeploy handles files that already exist in a deployment target location but weren't part of the previous successful deployment.</p> <p>The fileExistsBehavior parameter takes any of the following values:</p> <ul> <li> <p>DISALLOW: The deployment fails. This is also the default behavior if no option is specified.</p> </li> <li> <p>OVERWRITE: The version of the file from the application revision currently being deployed replaces the version already on the instance.</p> </li> <li> <p>RETAIN: The version of the file already on the instance is kept and used as part of the new deployment.</p> </li> </ul>",
+        "DeploymentInfo$fileExistsBehavior": "<p>Information about how AWS CodeDeploy handles files that already exist in a deployment target location but weren't part of the previous successful deployment.</p> <ul> <li> <p>DISALLOW: The deployment fails. This is also the default behavior if no option is specified.</p> </li> <li> <p>OVERWRITE: The version of the file from the application revision currently being deployed replaces the version already on the instance.</p> </li> <li> <p>RETAIN: The version of the file already on the instance is kept and used as part of the new deployment.</p> </li> </ul>"
+      }
+    },
     "GenericRevisionInfo": {
       "base": "<p>Information about an application revision.</p>",
       "refs": {
@@ -753,73 +763,91 @@
       }
     },
     "GetApplicationInput": {
-      "base": "<p>Represents the input of a get application operation.</p>",
+      "base": "<p>Represents the input of a GetApplication operation.</p>",
       "refs": {
       }
     },
     "GetApplicationOutput": {
-      "base": "<p>Represents the output of a get application operation.</p>",
+      "base": "<p>Represents the output of a GetApplication operation.</p>",
       "refs": {
       }
     },
     "GetApplicationRevisionInput": {
-      "base": "<p>Represents the input of a get application revision operation.</p>",
+      "base": "<p>Represents the input of a GetApplicationRevision operation.</p>",
       "refs": {
       }
     },
     "GetApplicationRevisionOutput": {
-      "base": "<p>Represents the output of a get application revision operation.</p>",
+      "base": "<p>Represents the output of a GetApplicationRevision operation.</p>",
       "refs": {
       }
     },
     "GetDeploymentConfigInput": {
-      "base": "<p>Represents the input of a get deployment configuration operation.</p>",
+      "base": "<p>Represents the input of a GetDeploymentConfig operation.</p>",
       "refs": {
       }
     },
     "GetDeploymentConfigOutput": {
-      "base": "<p>Represents the output of a get deployment configuration operation.</p>",
+      "base": "<p>Represents the output of a GetDeploymentConfig operation.</p>",
       "refs": {
       }
     },
     "GetDeploymentGroupInput": {
-      "base": "<p>Represents the input of a get deployment group operation.</p>",
+      "base": "<p>Represents the input of a GetDeploymentGroup operation.</p>",
       "refs": {
       }
     },
     "GetDeploymentGroupOutput": {
-      "base": "<p>Represents the output of a get deployment group operation.</p>",
+      "base": "<p>Represents the output of a GetDeploymentGroup operation.</p>",
       "refs": {
       }
     },
     "GetDeploymentInput": {
-      "base": "<p>Represents the input of a get deployment operation.</p>",
+      "base": "<p>Represents the input of a GetDeployment operation.</p>",
       "refs": {
       }
     },
     "GetDeploymentInstanceInput": {
-      "base": "<p>Represents the input of a get deployment instance operation.</p>",
+      "base": "<p>Represents the input of a GetDeploymentInstance operation.</p>",
       "refs": {
       }
     },
     "GetDeploymentInstanceOutput": {
-      "base": "<p>Represents the output of a get deployment instance operation.</p>",
+      "base": "<p>Represents the output of a GetDeploymentInstance operation.</p>",
       "refs": {
       }
     },
     "GetDeploymentOutput": {
-      "base": "<p>Represents the output of a get deployment operation.</p>",
+      "base": "<p>Represents the output of a GetDeployment operation.</p>",
       "refs": {
       }
     },
     "GetOnPremisesInstanceInput": {
-      "base": "<p>Represents the input of a get on-premises instance operation.</p>",
+      "base": "<p>Represents the input of a GetOnPremisesInstance operation.</p>",
       "refs": {
       }
     },
     "GetOnPremisesInstanceOutput": {
-      "base": "<p>Represents the output of a get on-premises instance operation.</p>",
+      "base": "<p>Represents the output of a GetOnPremisesInstance operation.</p>",
       "refs": {
+      }
+    },
+    "GitHubAccountTokenDoesNotExistException": {
+      "base": "<p>No GitHub account connection exists with the named specified in the call.</p>",
+      "refs": {
+      }
+    },
+    "GitHubAccountTokenName": {
+      "base": null,
+      "refs": {
+        "ApplicationInfo$gitHubAccountName": "<p>The name for a connection to a GitHub account.</p>",
+        "GitHubAccountTokenNameList$member": null
+      }
+    },
+    "GitHubAccountTokenNameList": {
+      "base": null,
+      "refs": {
+        "ListGitHubAccountTokenNamesOutput$tokenNameList": "<p>A list of names of connections to GitHub accounts.</p>"
       }
     },
     "GitHubLocation": {
@@ -1063,18 +1091,28 @@
       "refs": {
       }
     },
+    "InvalidDeploymentInstanceTypeException": {
+      "base": "<p>An instance type was specified for an in-place deployment. Instance types are supported for blue/green deployments only.</p>",
+      "refs": {
+      }
+    },
     "InvalidDeploymentStatusException": {
       "base": "<p>The specified deployment status doesn't exist or cannot be determined.</p>",
       "refs": {
       }
     },
     "InvalidDeploymentStyleException": {
-      "base": "<p>An invalid deployment style was specified. Valid deployment types include \"IN_PLACE\" and \"BLUE_GREEN\". Valid deployment options for blue/green deployments include \"WITH_TRAFFIC_CONTROL\" and \"WITHOUT_TRAFFIC_CONTROL\".</p>",
+      "base": "<p>An invalid deployment style was specified. Valid deployment types include \"IN_PLACE\" and \"BLUE_GREEN\". Valid deployment options include \"WITH_TRAFFIC_CONTROL\" and \"WITHOUT_TRAFFIC_CONTROL\".</p>",
       "refs": {
       }
     },
     "InvalidEC2TagException": {
       "base": "<p>The tag was specified in an invalid format.</p>",
+      "refs": {
+      }
+    },
+    "InvalidFileExistsBehaviorException": {
+      "base": "<p>An invalid fileExistsBehavior option was specified to determine how AWS CodeDeploy handles files or directories that already exist in a deployment target location but weren't part of the previous successful deployment. Valid values include \"DISALLOW\", \"OVERWRITE\", and \"RETAIN\".</p>",
       "refs": {
       }
     },
@@ -1186,6 +1224,13 @@
         "TagFilter$Key": "<p>The on-premises instance tag filter key.</p>"
       }
     },
+    "LastDeploymentInfo": {
+      "base": "<p>Information about the most recent attempted or successful deployment to a deployment group.</p>",
+      "refs": {
+        "DeploymentGroupInfo$lastSuccessfulDeployment": "<p>Information about the most recent successful deployment to the deployment group.</p>",
+        "DeploymentGroupInfo$lastAttemptedDeployment": "<p>Information about the most recent attempted deployment to the deployment group.</p>"
+      }
+    },
     "LifecycleErrorCode": {
       "base": null,
       "refs": {
@@ -1228,67 +1273,77 @@
       }
     },
     "ListApplicationRevisionsInput": {
-      "base": "<p>Represents the input of a list application revisions operation.</p>",
+      "base": "<p>Represents the input of a ListApplicationRevisions operation.</p>",
       "refs": {
       }
     },
     "ListApplicationRevisionsOutput": {
-      "base": "<p>Represents the output of a list application revisions operation.</p>",
+      "base": "<p>Represents the output of a ListApplicationRevisions operation.</p>",
       "refs": {
       }
     },
     "ListApplicationsInput": {
-      "base": "<p>Represents the input of a list applications operation.</p>",
+      "base": "<p>Represents the input of a ListApplications operation.</p>",
       "refs": {
       }
     },
     "ListApplicationsOutput": {
-      "base": "<p>Represents the output of a list applications operation.</p>",
+      "base": "<p>Represents the output of a ListApplications operation.</p>",
       "refs": {
       }
     },
     "ListDeploymentConfigsInput": {
-      "base": "<p>Represents the input of a list deployment configurations operation.</p>",
+      "base": "<p>Represents the input of a ListDeploymentConfigs operation.</p>",
       "refs": {
       }
     },
     "ListDeploymentConfigsOutput": {
-      "base": "<p>Represents the output of a list deployment configurations operation.</p>",
+      "base": "<p>Represents the output of a ListDeploymentConfigs operation.</p>",
       "refs": {
       }
     },
     "ListDeploymentGroupsInput": {
-      "base": "<p>Represents the input of a list deployment groups operation.</p>",
+      "base": "<p>Represents the input of a ListDeploymentGroups operation.</p>",
       "refs": {
       }
     },
     "ListDeploymentGroupsOutput": {
-      "base": "<p>Represents the output of a list deployment groups operation.</p>",
+      "base": "<p>Represents the output of a ListDeploymentGroups operation.</p>",
       "refs": {
       }
     },
     "ListDeploymentInstancesInput": {
-      "base": "<p>Represents the input of a list deployment instances operation.</p>",
+      "base": "<p>Represents the input of a ListDeploymentInstances operation.</p>",
       "refs": {
       }
     },
     "ListDeploymentInstancesOutput": {
-      "base": "<p>Represents the output of a list deployment instances operation.</p>",
+      "base": "<p>Represents the output of a ListDeploymentInstances operation.</p>",
       "refs": {
       }
     },
     "ListDeploymentsInput": {
-      "base": "<p>Represents the input of a list deployments operation.</p>",
+      "base": "<p>Represents the input of a ListDeployments operation.</p>",
       "refs": {
       }
     },
     "ListDeploymentsOutput": {
-      "base": "<p>Represents the output of a list deployments operation.</p>",
+      "base": "<p>Represents the output of a ListDeployments operation.</p>",
+      "refs": {
+      }
+    },
+    "ListGitHubAccountTokenNamesInput": {
+      "base": "<p>Represents the input of a ListGitHubAccountTokenNames operation.</p>",
+      "refs": {
+      }
+    },
+    "ListGitHubAccountTokenNamesOutput": {
+      "base": "<p>Represents the output of a ListGitHubAccountTokenNames operation.</p>",
       "refs": {
       }
     },
     "ListOnPremisesInstancesInput": {
-      "base": "<p>Represents the input of a list on-premises instances operation.</p>",
+      "base": "<p>Represents the input of a ListOnPremisesInstances operation.</p>",
       "refs": {
       }
     },
@@ -1304,12 +1359,12 @@
       }
     },
     "LoadBalancerInfo": {
-      "base": "<p>Information about the load balancer used in a blue/green deployment.</p>",
+      "base": "<p>Information about the load balancer used in a deployment.</p>",
       "refs": {
-        "CreateDeploymentGroupInput$loadBalancerInfo": "<p>Information about the load balancer used in a blue/green deployment.</p>",
-        "DeploymentGroupInfo$loadBalancerInfo": "<p>Information about the load balancer to use in a blue/green deployment.</p>",
-        "DeploymentInfo$loadBalancerInfo": "<p>Information about the load balancer used in this blue/green deployment.</p>",
-        "UpdateDeploymentGroupInput$loadBalancerInfo": "<p>Information about the load balancer used in a blue/green deployment.</p>"
+        "CreateDeploymentGroupInput$loadBalancerInfo": "<p>Information about the load balancer used in a deployment.</p>",
+        "DeploymentGroupInfo$loadBalancerInfo": "<p>Information about the load balancer to use in a deployment.</p>",
+        "DeploymentInfo$loadBalancerInfo": "<p>Information about the load balancer used in the deployment.</p>",
+        "UpdateDeploymentGroupInput$loadBalancerInfo": "<p>Information about the load balancer used in a deployment.</p>"
       }
     },
     "LogTail": {
@@ -1334,7 +1389,7 @@
     "MinimumHealthyHostsType": {
       "base": null,
       "refs": {
-        "MinimumHealthyHosts$type": "<p>The minimum healthy instance type:</p> <ul> <li> <p>HOST_COUNT: The minimum number of healthy instance as an absolute value.</p> </li> <li> <p>FLEET_PERCENT: The minimum number of healthy instance as a percentage of the total number of instance in the deployment.</p> </li> </ul> <p>In an example of nine instance, if a HOST_COUNT of six is specified, deploy to up to three instances at a time. The deployment will be successful if six or more instances are deployed to successfully; otherwise, the deployment fails. If a FLEET_PERCENT of 40 is specified, deploy to up to five instance at a time. The deployment will be successful if four or more instance are deployed to successfully; otherwise, the deployment fails.</p> <note> <p>In a call to the get deployment configuration operation, CodeDeployDefault.OneAtATime will return a minimum healthy instance type of MOST_CONCURRENCY and a value of 1. This means a deployment to only one instance at a time. (You cannot set the type to MOST_CONCURRENCY, only to HOST_COUNT or FLEET_PERCENT.) In addition, with CodeDeployDefault.OneAtATime, AWS CodeDeploy will try to ensure that all instances but one are kept in a healthy state during the deployment. Although this allows one instance at a time to be taken offline for a new deployment, it also means that if the deployment to the last instance fails, the overall deployment still succeeds.</p> </note>"
+        "MinimumHealthyHosts$type": "<p>The minimum healthy instance type:</p> <ul> <li> <p>HOST_COUNT: The minimum number of healthy instance as an absolute value.</p> </li> <li> <p>FLEET_PERCENT: The minimum number of healthy instance as a percentage of the total number of instance in the deployment.</p> </li> </ul> <p>In an example of nine instance, if a HOST_COUNT of six is specified, deploy to up to three instances at a time. The deployment will be successful if six or more instances are deployed to successfully; otherwise, the deployment fails. If a FLEET_PERCENT of 40 is specified, deploy to up to five instance at a time. The deployment will be successful if four or more instance are deployed to successfully; otherwise, the deployment fails.</p> <note> <p>In a call to the get deployment configuration operation, CodeDeployDefault.OneAtATime will return a minimum healthy instance type of MOST_CONCURRENCY and a value of 1. This means a deployment to only one instance at a time. (You cannot set the type to MOST_CONCURRENCY, only to HOST_COUNT or FLEET_PERCENT.) In addition, with CodeDeployDefault.OneAtATime, AWS CodeDeploy will try to ensure that all instances but one are kept in a healthy state during the deployment. Although this allows one instance at a time to be taken offline for a new deployment, it also means that if the deployment to the last instance fails, the overall deployment still succeeds.</p> </note> <p>For more information, see <a href=\"http://docs.aws.amazon.com/codedeploy/latest/userguide/instances-health.html\">AWS CodeDeploy Instance Health</a> in the <i>AWS CodeDeploy User Guide</i>.</p>"
       }
     },
     "MinimumHealthyHostsValue": {
@@ -1363,6 +1418,8 @@
         "ListDeploymentInstancesOutput$nextToken": "<p>If a large amount of information is returned, an identifier is also returned. It can be used in a subsequent list deployment instances call to return the next set of deployment instances in the list.</p>",
         "ListDeploymentsInput$nextToken": "<p>An identifier returned from the previous list deployments call. It can be used to return the next set of deployments in the list.</p>",
         "ListDeploymentsOutput$nextToken": "<p>If a large amount of information is returned, an identifier is also returned. It can be used in a subsequent list deployments call to return the next set of deployments in the list.</p>",
+        "ListGitHubAccountTokenNamesInput$nextToken": "<p>An identifier returned from the previous ListGitHubAccountTokenNames call. It can be used to return the next set of names in the list. </p>",
+        "ListGitHubAccountTokenNamesOutput$nextToken": "<p>If a large amount of information is returned, an identifier is also returned. It can be used in a subsequent ListGitHubAccountTokenNames call to return the next set of names in the list. </p>",
         "ListOnPremisesInstancesInput$nextToken": "<p>An identifier returned from the previous list on-premises instances call. It can be used to return the next set of on-premises instances in the list.</p>",
         "ListOnPremisesInstancesOutput$nextToken": "<p>If a large amount of information is returned, an identifier is also returned. It can be used in a subsequent list on-premises instances call to return the next set of on-premises instances in the list.</p>"
       }
@@ -1374,7 +1431,7 @@
       }
     },
     "RegisterApplicationRevisionInput": {
-      "base": "<p>Represents the input of a register application revision operation.</p>",
+      "base": "<p>Represents the input of a RegisterApplicationRevision operation.</p>",
       "refs": {
       }
     },
@@ -1390,7 +1447,7 @@
       }
     },
     "RemoveTagsFromOnPremisesInstancesInput": {
-      "base": "<p>Represents the input of a remove tags from on-premises instances operation.</p>",
+      "base": "<p>Represents the input of a RemoveTagsFromOnPremisesInstances operation.</p>",
       "refs": {
       }
     },
@@ -1398,6 +1455,11 @@
       "base": null,
       "refs": {
         "GitHubLocation$repository": "<p>The GitHub account and repository pair that stores a reference to the commit that represents the bundled artifacts for the application revision. </p> <p>Specified as account/repository.</p>"
+      }
+    },
+    "ResourceValidationException": {
+      "base": "<p>The specified resource could not be validated.</p>",
+      "refs": {
       }
     },
     "RevisionDoesNotExistException": {
@@ -1422,6 +1484,7 @@
       "refs": {
         "CreateDeploymentInput$revision": "<p>The type and location of the revision to deploy.</p>",
         "DeploymentGroupInfo$targetRevision": "<p>Information about the deployment group's target revision, including type and location.</p>",
+        "DeploymentInfo$previousRevision": "<p>Information about the application revision that was deployed to the deployment group before the most recent successful deployment.</p>",
         "DeploymentInfo$revision": "<p>Information about the location of stored application artifacts and the service from which to retrieve them.</p>",
         "GetApplicationRevisionInput$revision": "<p>Information about the application revision to get, including type and location.</p>",
         "GetApplicationRevisionOutput$revision": "<p>Additional information about the revision, including type and location.</p>",
@@ -1505,12 +1568,12 @@
       }
     },
     "StopDeploymentInput": {
-      "base": "<p>Represents the input of a stop deployment operation.</p>",
+      "base": "<p>Represents the input of a StopDeployment operation.</p>",
       "refs": {
       }
     },
     "StopDeploymentOutput": {
-      "base": "<p>Represents the output of a stop deployment operation.</p>",
+      "base": "<p>Represents the output of a StopDeployment operation.</p>",
       "refs": {
       }
     },
@@ -1535,7 +1598,7 @@
     "TagFilterList": {
       "base": null,
       "refs": {
-        "CreateDeploymentGroupInput$onPremisesInstanceTagFilters": "<p>The on-premises instance tags on which to filter.</p>",
+        "CreateDeploymentGroupInput$onPremisesInstanceTagFilters": "<p>The on-premises instance tags on which to filter. The deployment group will include on-premises instances with any of the specified tags.</p>",
         "DeploymentGroupInfo$onPremisesInstanceTagFilters": "<p>The on-premises instance tags on which to filter.</p>",
         "ListOnPremisesInstancesInput$tagFilters": "<p>The on-premises instance tags that will be used to restrict the corresponding on-premises instance names returned.</p>",
         "UpdateDeploymentGroupInput$onPremisesInstanceTagFilters": "<p>The replacement set of on-premises instance tags on which to filter, if you want to change them. To keep the existing tags, enter their names. To remove tags, do not enter any tag names.</p>"
@@ -1592,6 +1655,8 @@
         "InstanceInfo$registerTime": "<p>The time at which the on-premises instance was registered.</p>",
         "InstanceInfo$deregisterTime": "<p>If the on-premises instance was deregistered, the time at which the on-premises instance was deregistered.</p>",
         "InstanceSummary$lastUpdatedAt": "<p>A timestamp indicating when the instance information was last updated.</p>",
+        "LastDeploymentInfo$endTime": "<p>A timestamp indicating when the most recent deployment to the deployment group completed.</p>",
+        "LastDeploymentInfo$createTime": "<p>A timestamp indicating when the most recent deployment to the deployment group started.</p>",
         "LifecycleEvent$startTime": "<p>A timestamp indicating when the deployment lifecycle event started.</p>",
         "LifecycleEvent$endTime": "<p>A timestamp indicating when the deployment lifecycle event ended.</p>",
         "TimeRange$start": "<p>The start time of the time range.</p> <note> <p>Specify null to leave the start time open-ended.</p> </note>",
@@ -1647,17 +1712,17 @@
       }
     },
     "UpdateApplicationInput": {
-      "base": "<p>Represents the input of an update application operation.</p>",
+      "base": "<p>Represents the input of an UpdateApplication operation.</p>",
       "refs": {
       }
     },
     "UpdateDeploymentGroupInput": {
-      "base": "<p>Represents the input of an update deployment group operation.</p>",
+      "base": "<p>Represents the input of an UpdateDeploymentGroup operation.</p>",
       "refs": {
       }
     },
     "UpdateDeploymentGroupOutput": {
-      "base": "<p>Represents the output of an update deployment group operation.</p>",
+      "base": "<p>Represents the output of an UpdateDeploymentGroup operation.</p>",
       "refs": {
       }
     },

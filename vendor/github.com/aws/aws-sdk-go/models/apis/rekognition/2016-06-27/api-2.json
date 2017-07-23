@@ -138,6 +138,23 @@
         {"shape":"InvalidImageFormatException"}
       ]
     },
+    "GetCelebrityInfo":{
+      "name":"GetCelebrityInfo",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetCelebrityInfoRequest"},
+      "output":{"shape":"GetCelebrityInfoResponse"},
+      "errors":[
+        {"shape":"InvalidParameterException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"InternalServerError"},
+        {"shape":"ThrottlingException"},
+        {"shape":"ProvisionedThroughputExceededException"},
+        {"shape":"ResourceNotFoundException"}
+      ]
+    },
     "IndexFaces":{
       "name":"IndexFaces",
       "http":{
@@ -192,6 +209,26 @@
         {"shape":"ProvisionedThroughputExceededException"},
         {"shape":"InvalidPaginationTokenException"},
         {"shape":"ResourceNotFoundException"}
+      ]
+    },
+    "RecognizeCelebrities":{
+      "name":"RecognizeCelebrities",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"RecognizeCelebritiesRequest"},
+      "output":{"shape":"RecognizeCelebritiesResponse"},
+      "errors":[
+        {"shape":"InvalidS3ObjectException"},
+        {"shape":"InvalidParameterException"},
+        {"shape":"InvalidImageFormatException"},
+        {"shape":"ImageTooLargeException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"InternalServerError"},
+        {"shape":"ThrottlingException"},
+        {"shape":"ProvisionedThroughputExceededException"},
+        {"shape":"InvalidImageFormatException"}
       ]
     },
     "SearchFaces":{
@@ -274,6 +311,20 @@
         "Top":{"shape":"Float"}
       }
     },
+    "Celebrity":{
+      "type":"structure",
+      "members":{
+        "Urls":{"shape":"Urls"},
+        "Name":{"shape":"String"},
+        "Id":{"shape":"RekognitionUniqueId"},
+        "Face":{"shape":"ComparedFace"},
+        "MatchConfidence":{"shape":"Percent"}
+      }
+    },
+    "CelebrityList":{
+      "type":"list",
+      "member":{"shape":"Celebrity"}
+    },
     "CollectionId":{
       "type":"string",
       "max":255,
@@ -311,15 +362,29 @@
       "type":"structure",
       "members":{
         "SourceImageFace":{"shape":"ComparedSourceImageFace"},
-        "FaceMatches":{"shape":"CompareFacesMatchList"}
+        "FaceMatches":{"shape":"CompareFacesMatchList"},
+        "UnmatchedFaces":{"shape":"CompareFacesUnmatchList"},
+        "SourceImageOrientationCorrection":{"shape":"OrientationCorrection"},
+        "TargetImageOrientationCorrection":{"shape":"OrientationCorrection"}
       }
+    },
+    "CompareFacesUnmatchList":{
+      "type":"list",
+      "member":{"shape":"ComparedFace"}
     },
     "ComparedFace":{
       "type":"structure",
       "members":{
         "BoundingBox":{"shape":"BoundingBox"},
-        "Confidence":{"shape":"Percent"}
+        "Confidence":{"shape":"Percent"},
+        "Landmarks":{"shape":"Landmarks"},
+        "Pose":{"shape":"Pose"},
+        "Quality":{"shape":"ImageQuality"}
       }
+    },
+    "ComparedFaceList":{
+      "type":"list",
+      "member":{"shape":"ComparedFace"}
     },
     "ComparedSourceImageFace":{
       "type":"structure",
@@ -550,6 +615,20 @@
         "MALE",
         "FEMALE"
       ]
+    },
+    "GetCelebrityInfoRequest":{
+      "type":"structure",
+      "required":["Id"],
+      "members":{
+        "Id":{"shape":"RekognitionUniqueId"}
+      }
+    },
+    "GetCelebrityInfoResponse":{
+      "type":"structure",
+      "members":{
+        "Urls":{"shape":"Urls"},
+        "Name":{"shape":"String"}
+      }
     },
     "Image":{
       "type":"structure",
@@ -782,6 +861,25 @@
       },
       "exception":true
     },
+    "RecognizeCelebritiesRequest":{
+      "type":"structure",
+      "required":["Image"],
+      "members":{
+        "Image":{"shape":"Image"}
+      }
+    },
+    "RecognizeCelebritiesResponse":{
+      "type":"structure",
+      "members":{
+        "CelebrityFaces":{"shape":"CelebrityList"},
+        "UnrecognizedFaces":{"shape":"ComparedFaceList"},
+        "OrientationCorrection":{"shape":"OrientationCorrection"}
+      }
+    },
+    "RekognitionUniqueId":{
+      "type":"string",
+      "pattern":"[0-9A-Za-z]*"
+    },
     "ResourceAlreadyExistsException":{
       "type":"structure",
       "members":{
@@ -884,6 +982,11 @@
     "UInteger":{
       "type":"integer",
       "min":0
+    },
+    "Url":{"type":"string"},
+    "Urls":{
+      "type":"list",
+      "member":{"shape":"Url"}
     }
   }
 }

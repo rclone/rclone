@@ -62,6 +62,13 @@ func newGenerateInfo(modelFile, svcPath, svcImportPath string) *generateInfo {
 		fmt.Println("waiters-2.json error:", err)
 	}
 
+	examplesFile := strings.Replace(modelFile, "api-2.json", "examples-1.json", -1)
+	if _, err := os.Stat(examplesFile); err == nil {
+		g.API.AttachExamples(examplesFile)
+	} else if !os.IsNotExist(err) {
+		fmt.Println("examples-1.json error:", err)
+	}
+
 	//	pkgDocAddonsFile := strings.Replace(modelFile, "api-2.json", "go-pkg-doc.gotmpl", -1)
 	//	if _, err := os.Stat(pkgDocAddonsFile); err == nil {
 	//		g.API.AttachPackageDocAddons(pkgDocAddonsFile)
@@ -185,11 +192,11 @@ func writeServiceFiles(g *generateInfo, filename string) {
 	// write files for service client and API
 	Must(writeServiceDocFile(g))
 	Must(writeAPIFile(g))
-	Must(writeExamplesFile(g))
 	Must(writeServiceFile(g))
 	Must(writeInterfaceFile(g))
 	Must(writeWaitersFile(g))
 	Must(writeAPIErrorsFile(g))
+	Must(writeExamplesFile(g))
 }
 
 // Must will panic if the error passed in is not nil.
@@ -223,12 +230,16 @@ func writeServiceDocFile(g *generateInfo) error {
 
 // writeExamplesFile writes out the service example file.
 func writeExamplesFile(g *generateInfo) error {
-	return writeGoFile(filepath.Join(g.PackageDir, "examples_test.go"),
-		codeLayout,
-		"",
-		g.API.PackageName()+"_test",
-		g.API.ExampleGoCode(),
-	)
+	code := g.API.ExamplesGoCode()
+	if len(code) > 0 {
+		return writeGoFile(filepath.Join(g.PackageDir, "examples_test.go"),
+			codeLayout,
+			"",
+			g.API.PackageName()+"_test",
+			code,
+		)
+	}
+	return nil
 }
 
 // writeServiceFile writes out the service initialization file.

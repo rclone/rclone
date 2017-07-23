@@ -49,8 +49,6 @@
 ## what source location any dependent projects specify.
 # source = "https://github.com/myfork/package.git"
 
-
-
 [[constraint]]
   branch = "master"
   name = "bazil.org/fuse"
@@ -106,10 +104,6 @@
 [[constraint]]
   branch = "master"
   name = "github.com/stretchr/testify"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/tsenart/tb"
 
 [[constraint]]
   branch = "master"

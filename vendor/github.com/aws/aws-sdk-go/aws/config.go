@@ -95,7 +95,7 @@ type Config struct {
 	// recoverable failures.
 	//
 	// When nil or the value does not implement the request.Retryer interface,
-	// the request.DefaultRetryer will be used.
+	// the client.DefaultRetryer will be used.
 	//
 	// When both Retryer and MaxRetries are non-nil, the former is used and
 	// the latter ignored.

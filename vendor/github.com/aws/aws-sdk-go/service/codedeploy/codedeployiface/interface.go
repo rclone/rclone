@@ -194,6 +194,10 @@ type CodeDeployAPI interface {
 	ListDeploymentsPages(*codedeploy.ListDeploymentsInput, func(*codedeploy.ListDeploymentsOutput, bool) bool) error
 	ListDeploymentsPagesWithContext(aws.Context, *codedeploy.ListDeploymentsInput, func(*codedeploy.ListDeploymentsOutput, bool) bool, ...request.Option) error
 
+	ListGitHubAccountTokenNames(*codedeploy.ListGitHubAccountTokenNamesInput) (*codedeploy.ListGitHubAccountTokenNamesOutput, error)
+	ListGitHubAccountTokenNamesWithContext(aws.Context, *codedeploy.ListGitHubAccountTokenNamesInput, ...request.Option) (*codedeploy.ListGitHubAccountTokenNamesOutput, error)
+	ListGitHubAccountTokenNamesRequest(*codedeploy.ListGitHubAccountTokenNamesInput) (*request.Request, *codedeploy.ListGitHubAccountTokenNamesOutput)
+
 	ListOnPremisesInstances(*codedeploy.ListOnPremisesInstancesInput) (*codedeploy.ListOnPremisesInstancesOutput, error)
 	ListOnPremisesInstancesWithContext(aws.Context, *codedeploy.ListOnPremisesInstancesInput, ...request.Option) (*codedeploy.ListOnPremisesInstancesOutput, error)
 	ListOnPremisesInstancesRequest(*codedeploy.ListOnPremisesInstancesInput) (*request.Request, *codedeploy.ListOnPremisesInstancesOutput)

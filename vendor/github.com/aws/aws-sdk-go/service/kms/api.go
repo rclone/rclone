@@ -4336,9 +4336,9 @@ type CreateGrantInput struct {
 	//
 	// To specify the principal, use the Amazon Resource Name (ARN) (http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html)
 	// of an AWS principal. Valid AWS principals include AWS accounts (root), IAM
-	// users, federated users, and assumed role users. For examples of the ARN syntax
-	// to use for specifying a principal, see AWS Identity and Access Management
-	// (IAM) (http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#arn-syntax-iam)
+	// users, IAM roles, federated users, and assumed role users. For examples of
+	// the ARN syntax to use for specifying a principal, see AWS Identity and Access
+	// Management (IAM) (http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#arn-syntax-iam)
 	// in the Example ARNs section of the AWS General Reference.
 	//
 	// GranteePrincipal is a required field
@@ -6380,6 +6380,11 @@ type KeyMetadata struct {
 	// KeyId is a required field
 	KeyId *string `min:"1" type:"string" required:"true"`
 
+	// The CMK's manager. CMKs are either customer-managed or AWS-managed. For more
+	// information about the difference, see Customer Master Keys (http://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys)
+	// in the AWS Key Management Service Developer Guide.
+	KeyManager *string `type:"string" enum:"KeyManagerType"`
+
 	// The state of the CMK.
 	//
 	// For more information about how key state affects the use of a CMK, see How
@@ -6460,6 +6465,12 @@ func (s *KeyMetadata) SetExpirationModel(v string) *KeyMetadata {
 // SetKeyId sets the KeyId field's value.
 func (s *KeyMetadata) SetKeyId(v string) *KeyMetadata {
 	s.KeyId = &v
+	return s
+}
+
+// SetKeyManager sets the KeyManager field's value.
+func (s *KeyMetadata) SetKeyManager(v string) *KeyMetadata {
+	s.KeyManager = &v
 	return s
 }
 
@@ -8133,6 +8144,14 @@ const (
 
 	// GrantOperationDescribeKey is a GrantOperation enum value
 	GrantOperationDescribeKey = "DescribeKey"
+)
+
+const (
+	// KeyManagerTypeAws is a KeyManagerType enum value
+	KeyManagerTypeAws = "AWS"
+
+	// KeyManagerTypeCustomer is a KeyManagerType enum value
+	KeyManagerTypeCustomer = "CUSTOMER"
 )
 
 const (

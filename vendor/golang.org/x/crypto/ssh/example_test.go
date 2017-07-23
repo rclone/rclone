@@ -56,7 +56,12 @@ func ExampleNewServerConn() {
 		// Remove to disable public key auth.
 		PublicKeyCallback: func(c ssh.ConnMetadata, pubKey ssh.PublicKey) (*ssh.Permissions, error) {
 			if authorizedKeysMap[string(pubKey.Marshal())] {
-				return nil, nil
+				return &ssh.Permissions{
+					// Record the public key used for authentication.
+					Extensions: map[string]string{
+						"pubkey-fp": ssh.FingerprintSHA256(pubKey),
+					},
+				}, nil
 			}
 			return nil, fmt.Errorf("unknown public key for %q", c.User())
 		},
@@ -87,10 +92,12 @@ func ExampleNewServerConn() {
 
 	// Before use, a handshake must be performed on the incoming
 	// net.Conn.
-	_, chans, reqs, err := ssh.NewServerConn(nConn, config)
+	conn, chans, reqs, err := ssh.NewServerConn(nConn, config)
 	if err != nil {
 		log.Fatal("failed to handshake: ", err)
 	}
+	log.Printf("logged in with key %s", conn.Permissions.Extensions["pubkey-fp"])
+
 	// The incoming Request channel must be serviced.
 	go ssh.DiscardRequests(reqs)
 

@@ -100,7 +100,7 @@ const (
 	// "DoesNotExistException".
 	//
 	// Error returned when the ID specified for a resource (e.g. a Maintenance Window)
-	// doesn’t exist.
+	// doesn't exist.
 	ErrCodeDoesNotExistException = "DoesNotExistException"
 
 	// ErrCodeDuplicateDocumentContent for service response error code
@@ -116,11 +116,29 @@ const (
 	// You cannot specify an instance ID in more than one association.
 	ErrCodeDuplicateInstanceId = "DuplicateInstanceId"
 
+	// ErrCodeHierarchyLevelLimitExceededException for service response error code
+	// "HierarchyLevelLimitExceededException".
+	//
+	// A hierarchy can have a maximum of five levels. For example:
+	//
+	// /Finance/Prod/IAD/OS/WinServ2016/license15
+	//
+	// For more information, see Working with Systems Manager Parameters (http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html).
+	ErrCodeHierarchyLevelLimitExceededException = "HierarchyLevelLimitExceededException"
+
+	// ErrCodeHierarchyTypeMismatchException for service response error code
+	// "HierarchyTypeMismatchException".
+	//
+	// Parameter Store does not support changing a parameter type in a hierarchy.
+	// For example, you can't change a parameter from a String type to a SecureString
+	// type. You must create a new, unique parameter.
+	ErrCodeHierarchyTypeMismatchException = "HierarchyTypeMismatchException"
+
 	// ErrCodeIdempotentParameterMismatch for service response error code
 	// "IdempotentParameterMismatch".
 	//
 	// Error returned when an idempotent operation is retried and the parameters
-	// don’t match the original call to the API with the same idempotency token.
+	// don't match the original call to the API with the same idempotency token.
 	ErrCodeIdempotentParameterMismatch = "IdempotentParameterMismatch"
 
 	// ErrCodeInternalServerError for service response error code
@@ -142,6 +160,12 @@ const (
 	// The activation ID is not valid. Verify the you entered the correct ActivationId
 	// or ActivationCode and try again.
 	ErrCodeInvalidActivationId = "InvalidActivationId"
+
+	// ErrCodeInvalidAllowedPatternException for service response error code
+	// "InvalidAllowedPatternException".
+	//
+	// The request does not meet the regular expression requirement.
+	ErrCodeInvalidAllowedPatternException = "InvalidAllowedPatternException"
 
 	// ErrCodeInvalidAutomationExecutionParametersException for service response error code
 	// "InvalidAutomationExecutionParametersException".
@@ -198,6 +222,13 @@ const (
 	//
 	// The specified key is not valid.
 	ErrCodeInvalidFilterKey = "InvalidFilterKey"
+
+	// ErrCodeInvalidFilterOption for service response error code
+	// "InvalidFilterOption".
+	//
+	// The specified filter option is not valid. Valid options are Equals and BeginsWith.
+	// For Path filter, valid options are Recursive and OneLevel.
+	ErrCodeInvalidFilterOption = "InvalidFilterOption"
 
 	// ErrCodeInvalidFilterValue for service response error code
 	// "InvalidFilterValue".
@@ -385,6 +416,36 @@ const (
 	// The parameter could not be found. Verify the name and try again.
 	ErrCodeParameterNotFound = "ParameterNotFound"
 
+	// ErrCodeParameterPatternMismatchException for service response error code
+	// "ParameterPatternMismatchException".
+	//
+	// The parameter name is not valid.
+	ErrCodeParameterPatternMismatchException = "ParameterPatternMismatchException"
+
+	// ErrCodeResourceDataSyncAlreadyExistsException for service response error code
+	// "ResourceDataSyncAlreadyExistsException".
+	//
+	// A sync configuration with the same name already exists.
+	ErrCodeResourceDataSyncAlreadyExistsException = "ResourceDataSyncAlreadyExistsException"
+
+	// ErrCodeResourceDataSyncCountExceededException for service response error code
+	// "ResourceDataSyncCountExceededException".
+	//
+	// You have exceeded the allowed maximum sync configurations.
+	ErrCodeResourceDataSyncCountExceededException = "ResourceDataSyncCountExceededException"
+
+	// ErrCodeResourceDataSyncInvalidConfigurationException for service response error code
+	// "ResourceDataSyncInvalidConfigurationException".
+	//
+	// The specified sync configuration is invalid.
+	ErrCodeResourceDataSyncInvalidConfigurationException = "ResourceDataSyncInvalidConfigurationException"
+
+	// ErrCodeResourceDataSyncNotFoundException for service response error code
+	// "ResourceDataSyncNotFoundException".
+	//
+	// The specified sync name was not found.
+	ErrCodeResourceDataSyncNotFoundException = "ResourceDataSyncNotFoundException"
+
 	// ErrCodeResourceInUseException for service response error code
 	// "ResourceInUseException".
 	//
@@ -432,6 +493,14 @@ const (
 	// service. Check output of GetInventorySchema to see the available schema version
 	// for each type.
 	ErrCodeUnsupportedInventorySchemaVersionException = "UnsupportedInventorySchemaVersionException"
+
+	// ErrCodeUnsupportedOperatingSystem for service response error code
+	// "UnsupportedOperatingSystem".
+	//
+	// The operating systems you specified is not supported, or the operation is
+	// not supported for the operating system. Valid operating systems include:
+	// Windows, AmazonLinux, RedhatEnterpriseLinux, and Ubuntu.
+	ErrCodeUnsupportedOperatingSystem = "UnsupportedOperatingSystem"
 
 	// ErrCodeUnsupportedParameterType for service response error code
 	// "UnsupportedParameterType".

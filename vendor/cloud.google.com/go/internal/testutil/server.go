@@ -47,7 +47,7 @@ type Server struct {
 
 // NewServer creates a new Server. The Server will be listening for gRPC connections
 // at the address named by the Addr field, without TLS.
-func NewServer() (*Server, error) {
+func NewServer(opts ...grpc.ServerOption) (*Server, error) {
 	l, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func NewServer() (*Server, error) {
 	s := &Server{
 		Addr: l.Addr().String(),
 		l:    l,
-		Gsrv: grpc.NewServer(),
+		Gsrv: grpc.NewServer(opts...),
 	}
 	return s, nil
 }

@@ -3,877 +3,1478 @@
 package elbv2_test
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 )
 
 var _ time.Duration
-var _ bytes.Buffer
+var _ strings.Reader
+var _ aws.Config
 
-func ExampleELBV2_AddTags() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.AddTagsInput{
-		ResourceArns: []*string{ // Required
-			aws.String("ResourceArn"), // Required
-			// More values...
-		},
-		Tags: []*elbv2.Tag{ // Required
-			{ // Required
-				Key:   aws.String("TagKey"), // Required
-				Value: aws.String("TagValue"),
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.AddTags(params)
-
+func parseTime(layout, value string) *time.Time {
+	t, err := time.Parse(layout, value)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
+		panic(err)
 	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	return &t
 }
 
-func ExampleELBV2_CreateListener() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.CreateListenerInput{
-		DefaultActions: []*elbv2.Action{ // Required
-			{ // Required
-				TargetGroupArn: aws.String("TargetGroupArn"), // Required
-				Type:           aws.String("ActionTypeEnum"), // Required
-			},
-			// More values...
-		},
-		LoadBalancerArn: aws.String("LoadBalancerArn"), // Required
-		Port:            aws.Int64(1),                  // Required
-		Protocol:        aws.String("ProtocolEnum"),    // Required
-		Certificates: []*elbv2.Certificate{
-			{ // Required
-				CertificateArn: aws.String("CertificateArn"),
-			},
-			// More values...
-		},
-		SslPolicy: aws.String("SslPolicyName"),
-	}
-	resp, err := svc.CreateListener(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_CreateLoadBalancer() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.CreateLoadBalancerInput{
-		Name: aws.String("LoadBalancerName"), // Required
-		Subnets: []*string{ // Required
-			aws.String("SubnetId"), // Required
-			// More values...
-		},
-		IpAddressType: aws.String("IpAddressType"),
-		Scheme:        aws.String("LoadBalancerSchemeEnum"),
-		SecurityGroups: []*string{
-			aws.String("SecurityGroupId"), // Required
-			// More values...
+// To add tags to a load balancer
+//
+// This example adds the specified tags to the specified load balancer.
+func ExampleELBV2_AddTags_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.AddTagsInput{
+		ResourceArns: []*string{
+			aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:loadbalancer/app/my-load-balancer/50dc6c495c0c9188"),
 		},
 		Tags: []*elbv2.Tag{
-			{ // Required
-				Key:   aws.String("TagKey"), // Required
-				Value: aws.String("TagValue"),
+			{
+				Key:   aws.String("project"),
+				Value: aws.String("lima"),
 			},
-			// More values...
-		},
-	}
-	resp, err := svc.CreateLoadBalancer(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_CreateRule() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.CreateRuleInput{
-		Actions: []*elbv2.Action{ // Required
-			{ // Required
-				TargetGroupArn: aws.String("TargetGroupArn"), // Required
-				Type:           aws.String("ActionTypeEnum"), // Required
+			{
+				Key:   aws.String("department"),
+				Value: aws.String("digital-media"),
 			},
-			// More values...
 		},
-		Conditions: []*elbv2.RuleCondition{ // Required
-			{ // Required
-				Field: aws.String("ConditionFieldName"),
-				Values: []*string{
-					aws.String("StringValue"), // Required
-					// More values...
-				},
+	}
+
+	result, err := svc.AddTags(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeDuplicateTagKeysException:
+				fmt.Println(elbv2.ErrCodeDuplicateTagKeysException, aerr.Error())
+			case elbv2.ErrCodeTooManyTagsException:
+				fmt.Println(elbv2.ErrCodeTooManyTagsException, aerr.Error())
+			case elbv2.ErrCodeLoadBalancerNotFoundException:
+				fmt.Println(elbv2.ErrCodeLoadBalancerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To create an HTTP listener
+//
+// This example creates an HTTP listener for the specified load balancer that forwards
+// requests to the specified target group.
+func ExampleELBV2_CreateListener_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.CreateListenerInput{
+		DefaultActions: []*elbv2.Action{
+			{
+				TargetGroupArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+				Type:           aws.String("forward"),
 			},
-			// More values...
 		},
-		ListenerArn: aws.String("ListenerArn"), // Required
-		Priority:    aws.Int64(1),              // Required
+		LoadBalancerArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:loadbalancer/app/my-load-balancer/50dc6c495c0c9188"),
+		Port:            aws.Int64(80),
+		Protocol:        aws.String("HTTP"),
 	}
-	resp, err := svc.CreateRule(params)
 
+	result, err := svc.CreateListener(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeDuplicateListenerException:
+				fmt.Println(elbv2.ErrCodeDuplicateListenerException, aerr.Error())
+			case elbv2.ErrCodeTooManyListenersException:
+				fmt.Println(elbv2.ErrCodeTooManyListenersException, aerr.Error())
+			case elbv2.ErrCodeTooManyCertificatesException:
+				fmt.Println(elbv2.ErrCodeTooManyCertificatesException, aerr.Error())
+			case elbv2.ErrCodeLoadBalancerNotFoundException:
+				fmt.Println(elbv2.ErrCodeLoadBalancerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupAssociationLimitException:
+				fmt.Println(elbv2.ErrCodeTargetGroupAssociationLimitException, aerr.Error())
+			case elbv2.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elbv2.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elbv2.ErrCodeIncompatibleProtocolsException:
+				fmt.Println(elbv2.ErrCodeIncompatibleProtocolsException, aerr.Error())
+			case elbv2.ErrCodeSSLPolicyNotFoundException:
+				fmt.Println(elbv2.ErrCodeSSLPolicyNotFoundException, aerr.Error())
+			case elbv2.ErrCodeCertificateNotFoundException:
+				fmt.Println(elbv2.ErrCodeCertificateNotFoundException, aerr.Error())
+			case elbv2.ErrCodeUnsupportedProtocolException:
+				fmt.Println(elbv2.ErrCodeUnsupportedProtocolException, aerr.Error())
+			case elbv2.ErrCodeTooManyRegistrationsForTargetIdException:
+				fmt.Println(elbv2.ErrCodeTooManyRegistrationsForTargetIdException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELBV2_CreateTargetGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.CreateTargetGroupInput{
-		Name:     aws.String("TargetGroupName"), // Required
-		Port:     aws.Int64(1),                  // Required
-		Protocol: aws.String("ProtocolEnum"),    // Required
-		VpcId:    aws.String("VpcId"),           // Required
-		HealthCheckIntervalSeconds: aws.Int64(1),
-		HealthCheckPath:            aws.String("Path"),
-		HealthCheckPort:            aws.String("HealthCheckPort"),
-		HealthCheckProtocol:        aws.String("ProtocolEnum"),
-		HealthCheckTimeoutSeconds:  aws.Int64(1),
-		HealthyThresholdCount:      aws.Int64(1),
-		Matcher: &elbv2.Matcher{
-			HttpCode: aws.String("HttpCode"), // Required
-		},
-		UnhealthyThresholdCount: aws.Int64(1),
-	}
-	resp, err := svc.CreateTargetGroup(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_DeleteListener() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.DeleteListenerInput{
-		ListenerArn: aws.String("ListenerArn"), // Required
-	}
-	resp, err := svc.DeleteListener(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_DeleteLoadBalancer() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.DeleteLoadBalancerInput{
-		LoadBalancerArn: aws.String("LoadBalancerArn"), // Required
-	}
-	resp, err := svc.DeleteLoadBalancer(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_DeleteRule() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.DeleteRuleInput{
-		RuleArn: aws.String("RuleArn"), // Required
-	}
-	resp, err := svc.DeleteRule(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_DeleteTargetGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.DeleteTargetGroupInput{
-		TargetGroupArn: aws.String("TargetGroupArn"), // Required
-	}
-	resp, err := svc.DeleteTargetGroup(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_DeregisterTargets() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.DeregisterTargetsInput{
-		TargetGroupArn: aws.String("TargetGroupArn"), // Required
-		Targets: []*elbv2.TargetDescription{ // Required
-			{ // Required
-				Id:   aws.String("TargetId"), // Required
-				Port: aws.Int64(1),
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.DeregisterTargets(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_DescribeAccountLimits() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.DescribeAccountLimitsInput{
-		Marker:   aws.String("Marker"),
-		PageSize: aws.Int64(1),
-	}
-	resp, err := svc.DescribeAccountLimits(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_DescribeListeners() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.DescribeListenersInput{
-		ListenerArns: []*string{
-			aws.String("ListenerArn"), // Required
-			// More values...
-		},
-		LoadBalancerArn: aws.String("LoadBalancerArn"),
-		Marker:          aws.String("Marker"),
-		PageSize:        aws.Int64(1),
-	}
-	resp, err := svc.DescribeListeners(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_DescribeLoadBalancerAttributes() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.DescribeLoadBalancerAttributesInput{
-		LoadBalancerArn: aws.String("LoadBalancerArn"), // Required
-	}
-	resp, err := svc.DescribeLoadBalancerAttributes(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_DescribeLoadBalancers() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.DescribeLoadBalancersInput{
-		LoadBalancerArns: []*string{
-			aws.String("LoadBalancerArn"), // Required
-			// More values...
-		},
-		Marker: aws.String("Marker"),
-		Names: []*string{
-			aws.String("LoadBalancerName"), // Required
-			// More values...
-		},
-		PageSize: aws.Int64(1),
-	}
-	resp, err := svc.DescribeLoadBalancers(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_DescribeRules() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.DescribeRulesInput{
-		ListenerArn: aws.String("ListenerArn"),
-		RuleArns: []*string{
-			aws.String("RuleArn"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeRules(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_DescribeSSLPolicies() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.DescribeSSLPoliciesInput{
-		Marker: aws.String("Marker"),
-		Names: []*string{
-			aws.String("SslPolicyName"), // Required
-			// More values...
-		},
-		PageSize: aws.Int64(1),
-	}
-	resp, err := svc.DescribeSSLPolicies(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_DescribeTags() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.DescribeTagsInput{
-		ResourceArns: []*string{ // Required
-			aws.String("ResourceArn"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeTags(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_DescribeTargetGroupAttributes() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.DescribeTargetGroupAttributesInput{
-		TargetGroupArn: aws.String("TargetGroupArn"), // Required
-	}
-	resp, err := svc.DescribeTargetGroupAttributes(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_DescribeTargetGroups() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.DescribeTargetGroupsInput{
-		LoadBalancerArn: aws.String("LoadBalancerArn"),
-		Marker:          aws.String("Marker"),
-		Names: []*string{
-			aws.String("TargetGroupName"), // Required
-			// More values...
-		},
-		PageSize: aws.Int64(1),
-		TargetGroupArns: []*string{
-			aws.String("TargetGroupArn"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeTargetGroups(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_DescribeTargetHealth() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.DescribeTargetHealthInput{
-		TargetGroupArn: aws.String("TargetGroupArn"), // Required
-		Targets: []*elbv2.TargetDescription{
-			{ // Required
-				Id:   aws.String("TargetId"), // Required
-				Port: aws.Int64(1),
-			},
-			// More values...
-		},
-	}
-	resp, err := svc.DescribeTargetHealth(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_ModifyListener() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.ModifyListenerInput{
-		ListenerArn: aws.String("ListenerArn"), // Required
+// To create an HTTPS listener
+//
+// This example creates an HTTPS listener for the specified load balancer that forwards
+// requests to the specified target group. Note that you must specify an SSL certificate
+// for an HTTPS listener. You can create and manage certificates using AWS Certificate
+// Manager (ACM). Alternatively, you can create a certificate using SSL/TLS tools, get
+// the certificate signed by a certificate authority (CA), and upload the certificate
+// to AWS Identity and Access Management (IAM).
+func ExampleELBV2_CreateListener_shared01() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.CreateListenerInput{
 		Certificates: []*elbv2.Certificate{
-			{ // Required
-				CertificateArn: aws.String("CertificateArn"),
+			{
+				CertificateArn: aws.String("arn:aws:iam::123456789012:server-certificate/my-server-cert"),
 			},
-			// More values...
 		},
 		DefaultActions: []*elbv2.Action{
-			{ // Required
-				TargetGroupArn: aws.String("TargetGroupArn"), // Required
-				Type:           aws.String("ActionTypeEnum"), // Required
+			{
+				TargetGroupArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+				Type:           aws.String("forward"),
 			},
-			// More values...
 		},
-		Port:      aws.Int64(1),
-		Protocol:  aws.String("ProtocolEnum"),
-		SslPolicy: aws.String("SslPolicyName"),
+		LoadBalancerArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:loadbalancer/app/my-load-balancer/50dc6c495c0c9188"),
+		Port:            aws.Int64(443),
+		Protocol:        aws.String("HTTPS"),
+		SslPolicy:       aws.String("ELBSecurityPolicy-2015-05"),
 	}
-	resp, err := svc.ModifyListener(params)
 
+	result, err := svc.CreateListener(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeDuplicateListenerException:
+				fmt.Println(elbv2.ErrCodeDuplicateListenerException, aerr.Error())
+			case elbv2.ErrCodeTooManyListenersException:
+				fmt.Println(elbv2.ErrCodeTooManyListenersException, aerr.Error())
+			case elbv2.ErrCodeTooManyCertificatesException:
+				fmt.Println(elbv2.ErrCodeTooManyCertificatesException, aerr.Error())
+			case elbv2.ErrCodeLoadBalancerNotFoundException:
+				fmt.Println(elbv2.ErrCodeLoadBalancerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupAssociationLimitException:
+				fmt.Println(elbv2.ErrCodeTargetGroupAssociationLimitException, aerr.Error())
+			case elbv2.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elbv2.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elbv2.ErrCodeIncompatibleProtocolsException:
+				fmt.Println(elbv2.ErrCodeIncompatibleProtocolsException, aerr.Error())
+			case elbv2.ErrCodeSSLPolicyNotFoundException:
+				fmt.Println(elbv2.ErrCodeSSLPolicyNotFoundException, aerr.Error())
+			case elbv2.ErrCodeCertificateNotFoundException:
+				fmt.Println(elbv2.ErrCodeCertificateNotFoundException, aerr.Error())
+			case elbv2.ErrCodeUnsupportedProtocolException:
+				fmt.Println(elbv2.ErrCodeUnsupportedProtocolException, aerr.Error())
+			case elbv2.ErrCodeTooManyRegistrationsForTargetIdException:
+				fmt.Println(elbv2.ErrCodeTooManyRegistrationsForTargetIdException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELBV2_ModifyLoadBalancerAttributes() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.ModifyLoadBalancerAttributesInput{
-		Attributes: []*elbv2.LoadBalancerAttribute{ // Required
-			{ // Required
-				Key:   aws.String("LoadBalancerAttributeKey"),
-				Value: aws.String("LoadBalancerAttributeValue"),
-			},
-			// More values...
+// To create an Internet-facing load balancer
+//
+// This example creates an Internet-facing load balancer and enables the Availability
+// Zones for the specified subnets.
+func ExampleELBV2_CreateLoadBalancer_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.CreateLoadBalancerInput{
+		Name: aws.String("my-load-balancer"),
+		Subnets: []*string{
+			aws.String("subnet-b7d581c0"),
+			aws.String("subnet-8360a9e7"),
 		},
-		LoadBalancerArn: aws.String("LoadBalancerArn"), // Required
 	}
-	resp, err := svc.ModifyLoadBalancerAttributes(params)
 
+	result, err := svc.CreateLoadBalancer(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeDuplicateLoadBalancerNameException:
+				fmt.Println(elbv2.ErrCodeDuplicateLoadBalancerNameException, aerr.Error())
+			case elbv2.ErrCodeTooManyLoadBalancersException:
+				fmt.Println(elbv2.ErrCodeTooManyLoadBalancersException, aerr.Error())
+			case elbv2.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elbv2.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elbv2.ErrCodeSubnetNotFoundException:
+				fmt.Println(elbv2.ErrCodeSubnetNotFoundException, aerr.Error())
+			case elbv2.ErrCodeInvalidSubnetException:
+				fmt.Println(elbv2.ErrCodeInvalidSubnetException, aerr.Error())
+			case elbv2.ErrCodeInvalidSecurityGroupException:
+				fmt.Println(elbv2.ErrCodeInvalidSecurityGroupException, aerr.Error())
+			case elbv2.ErrCodeInvalidSchemeException:
+				fmt.Println(elbv2.ErrCodeInvalidSchemeException, aerr.Error())
+			case elbv2.ErrCodeTooManyTagsException:
+				fmt.Println(elbv2.ErrCodeTooManyTagsException, aerr.Error())
+			case elbv2.ErrCodeDuplicateTagKeysException:
+				fmt.Println(elbv2.ErrCodeDuplicateTagKeysException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELBV2_ModifyRule() {
-	sess := session.Must(session.NewSession())
+// To create an internal load balancer
+//
+// This example creates an internal load balancer and enables the Availability Zones
+// for the specified subnets.
+func ExampleELBV2_CreateLoadBalancer_shared01() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.CreateLoadBalancerInput{
+		Name:   aws.String("my-internal-load-balancer"),
+		Scheme: aws.String("internal"),
+		Subnets: []*string{
+			aws.String("subnet-b7d581c0"),
+			aws.String("subnet-8360a9e7"),
+		},
+	}
 
-	svc := elbv2.New(sess)
+	result, err := svc.CreateLoadBalancer(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeDuplicateLoadBalancerNameException:
+				fmt.Println(elbv2.ErrCodeDuplicateLoadBalancerNameException, aerr.Error())
+			case elbv2.ErrCodeTooManyLoadBalancersException:
+				fmt.Println(elbv2.ErrCodeTooManyLoadBalancersException, aerr.Error())
+			case elbv2.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elbv2.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elbv2.ErrCodeSubnetNotFoundException:
+				fmt.Println(elbv2.ErrCodeSubnetNotFoundException, aerr.Error())
+			case elbv2.ErrCodeInvalidSubnetException:
+				fmt.Println(elbv2.ErrCodeInvalidSubnetException, aerr.Error())
+			case elbv2.ErrCodeInvalidSecurityGroupException:
+				fmt.Println(elbv2.ErrCodeInvalidSecurityGroupException, aerr.Error())
+			case elbv2.ErrCodeInvalidSchemeException:
+				fmt.Println(elbv2.ErrCodeInvalidSchemeException, aerr.Error())
+			case elbv2.ErrCodeTooManyTagsException:
+				fmt.Println(elbv2.ErrCodeTooManyTagsException, aerr.Error())
+			case elbv2.ErrCodeDuplicateTagKeysException:
+				fmt.Println(elbv2.ErrCodeDuplicateTagKeysException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &elbv2.ModifyRuleInput{
-		RuleArn: aws.String("RuleArn"), // Required
+	fmt.Println(result)
+}
+
+// To create a rule
+//
+// This example creates a rule that forwards requests to the specified target group
+// if the URL contains the specified pattern (for example, /img/*).
+func ExampleELBV2_CreateRule_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.CreateRuleInput{
 		Actions: []*elbv2.Action{
-			{ // Required
-				TargetGroupArn: aws.String("TargetGroupArn"), // Required
-				Type:           aws.String("ActionTypeEnum"), // Required
+			{
+				TargetGroupArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+				Type:           aws.String("forward"),
 			},
-			// More values...
 		},
 		Conditions: []*elbv2.RuleCondition{
-			{ // Required
-				Field: aws.String("ConditionFieldName"),
+			{
+				Field: aws.String("path-pattern"),
 				Values: []*string{
-					aws.String("StringValue"), // Required
-					// More values...
+					aws.String("/img/*"),
 				},
 			},
-			// More values...
 		},
+		ListenerArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:listener/app/my-load-balancer/50dc6c495c0c9188/f2f7dc8efc522ab2"),
+		Priority:    aws.Int64(10),
 	}
-	resp, err := svc.ModifyRule(params)
 
+	result, err := svc.CreateRule(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodePriorityInUseException:
+				fmt.Println(elbv2.ErrCodePriorityInUseException, aerr.Error())
+			case elbv2.ErrCodeTooManyTargetGroupsException:
+				fmt.Println(elbv2.ErrCodeTooManyTargetGroupsException, aerr.Error())
+			case elbv2.ErrCodeTooManyRulesException:
+				fmt.Println(elbv2.ErrCodeTooManyRulesException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupAssociationLimitException:
+				fmt.Println(elbv2.ErrCodeTargetGroupAssociationLimitException, aerr.Error())
+			case elbv2.ErrCodeListenerNotFoundException:
+				fmt.Println(elbv2.ErrCodeListenerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			case elbv2.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elbv2.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elbv2.ErrCodeTooManyRegistrationsForTargetIdException:
+				fmt.Println(elbv2.ErrCodeTooManyRegistrationsForTargetIdException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELBV2_ModifyTargetGroup() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.ModifyTargetGroupInput{
-		TargetGroupArn:             aws.String("TargetGroupArn"), // Required
-		HealthCheckIntervalSeconds: aws.Int64(1),
-		HealthCheckPath:            aws.String("Path"),
-		HealthCheckPort:            aws.String("HealthCheckPort"),
-		HealthCheckProtocol:        aws.String("ProtocolEnum"),
-		HealthCheckTimeoutSeconds:  aws.Int64(1),
-		HealthyThresholdCount:      aws.Int64(1),
-		Matcher: &elbv2.Matcher{
-			HttpCode: aws.String("HttpCode"), // Required
-		},
-		UnhealthyThresholdCount: aws.Int64(1),
+// To create a target group
+//
+// This example creates a target group that you can use to route traffic to targets
+// using HTTP on port 80. This target group uses the default health check configuration.
+func ExampleELBV2_CreateTargetGroup_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.CreateTargetGroupInput{
+		Name:     aws.String("my-targets"),
+		Port:     aws.Int64(80),
+		Protocol: aws.String("HTTP"),
+		VpcId:    aws.String("vpc-3ac0fb5f"),
 	}
-	resp, err := svc.ModifyTargetGroup(params)
 
+	result, err := svc.CreateTargetGroup(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeDuplicateTargetGroupNameException:
+				fmt.Println(elbv2.ErrCodeDuplicateTargetGroupNameException, aerr.Error())
+			case elbv2.ErrCodeTooManyTargetGroupsException:
+				fmt.Println(elbv2.ErrCodeTooManyTargetGroupsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELBV2_ModifyTargetGroupAttributes() {
-	sess := session.Must(session.NewSession())
+// To delete a listener
+//
+// This example deletes the specified listener.
+func ExampleELBV2_DeleteListener_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.DeleteListenerInput{
+		ListenerArn: aws.String("arn:aws:elasticloadbalancing:ua-west-2:123456789012:listener/app/my-load-balancer/50dc6c495c0c9188/f2f7dc8efc522ab2"),
+	}
 
-	svc := elbv2.New(sess)
+	result, err := svc.DeleteListener(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeListenerNotFoundException:
+				fmt.Println(elbv2.ErrCodeListenerNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &elbv2.ModifyTargetGroupAttributesInput{
-		Attributes: []*elbv2.TargetGroupAttribute{ // Required
-			{ // Required
-				Key:   aws.String("TargetGroupAttributeKey"),
-				Value: aws.String("TargetGroupAttributeValue"),
+	fmt.Println(result)
+}
+
+// To delete a load balancer
+//
+// This example deletes the specified load balancer.
+func ExampleELBV2_DeleteLoadBalancer_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.DeleteLoadBalancerInput{
+		LoadBalancerArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:loadbalancer/app/my-load-balancer/50dc6c495c0c9188"),
+	}
+
+	result, err := svc.DeleteLoadBalancer(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeLoadBalancerNotFoundException:
+				fmt.Println(elbv2.ErrCodeLoadBalancerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeOperationNotPermittedException:
+				fmt.Println(elbv2.ErrCodeOperationNotPermittedException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a rule
+//
+// This example deletes the specified rule.
+func ExampleELBV2_DeleteRule_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.DeleteRuleInput{
+		RuleArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:listener-rule/app/my-load-balancer/50dc6c495c0c9188/f2f7dc8efc522ab2/1291d13826f405c3"),
+	}
+
+	result, err := svc.DeleteRule(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeRuleNotFoundException:
+				fmt.Println(elbv2.ErrCodeRuleNotFoundException, aerr.Error())
+			case elbv2.ErrCodeOperationNotPermittedException:
+				fmt.Println(elbv2.ErrCodeOperationNotPermittedException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To delete a target group
+//
+// This example deletes the specified target group.
+func ExampleELBV2_DeleteTargetGroup_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.DeleteTargetGroupInput{
+		TargetGroupArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+	}
+
+	result, err := svc.DeleteTargetGroup(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeResourceInUseException:
+				fmt.Println(elbv2.ErrCodeResourceInUseException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To deregister a target from a target group
+//
+// This example deregisters the specified instance from the specified target group.
+func ExampleELBV2_DeregisterTargets_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.DeregisterTargetsInput{
+		TargetGroupArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+		Targets: []*elbv2.TargetDescription{
+			{
+				Id: aws.String("i-0f76fade"),
 			},
-			// More values...
 		},
-		TargetGroupArn: aws.String("TargetGroupArn"), // Required
 	}
-	resp, err := svc.ModifyTargetGroupAttributes(params)
 
+	result, err := svc.DeregisterTargets(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			case elbv2.ErrCodeInvalidTargetException:
+				fmt.Println(elbv2.ErrCodeInvalidTargetException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELBV2_RegisterTargets() {
-	sess := session.Must(session.NewSession())
+// To describe a listener
+//
+// This example describes the specified listener.
+func ExampleELBV2_DescribeListeners_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.DescribeListenersInput{
+		ListenerArns: []*string{
+			aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:listener/app/my-load-balancer/50dc6c495c0c9188/f2f7dc8efc522ab2"),
+		},
+	}
 
-	svc := elbv2.New(sess)
+	result, err := svc.DescribeListeners(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeListenerNotFoundException:
+				fmt.Println(elbv2.ErrCodeListenerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeLoadBalancerNotFoundException:
+				fmt.Println(elbv2.ErrCodeLoadBalancerNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
 
-	params := &elbv2.RegisterTargetsInput{
-		TargetGroupArn: aws.String("TargetGroupArn"), // Required
-		Targets: []*elbv2.TargetDescription{ // Required
-			{ // Required
-				Id:   aws.String("TargetId"), // Required
-				Port: aws.Int64(1),
+	fmt.Println(result)
+}
+
+// To describe load balancer attributes
+//
+// This example describes the attributes of the specified load balancer.
+func ExampleELBV2_DescribeLoadBalancerAttributes_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.DescribeLoadBalancerAttributesInput{
+		LoadBalancerArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:loadbalancer/app/my-load-balancer/50dc6c495c0c9188"),
+	}
+
+	result, err := svc.DescribeLoadBalancerAttributes(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeLoadBalancerNotFoundException:
+				fmt.Println(elbv2.ErrCodeLoadBalancerNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe a load balancer
+//
+// This example describes the specified load balancer.
+func ExampleELBV2_DescribeLoadBalancers_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.DescribeLoadBalancersInput{
+		LoadBalancerArns: []*string{
+			aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:loadbalancer/app/my-load-balancer/50dc6c495c0c9188"),
+		},
+	}
+
+	result, err := svc.DescribeLoadBalancers(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeLoadBalancerNotFoundException:
+				fmt.Println(elbv2.ErrCodeLoadBalancerNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe a rule
+//
+// This example describes the specified rule.
+func ExampleELBV2_DescribeRules_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.DescribeRulesInput{
+		RuleArns: []*string{
+			aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:listener-rule/app/my-load-balancer/50dc6c495c0c9188/f2f7dc8efc522ab2/9683b2d02a6cabee"),
+		},
+	}
+
+	result, err := svc.DescribeRules(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeListenerNotFoundException:
+				fmt.Println(elbv2.ErrCodeListenerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeRuleNotFoundException:
+				fmt.Println(elbv2.ErrCodeRuleNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe a policy used for SSL negotiation
+//
+// This example describes the specified policy used for SSL negotiation.
+func ExampleELBV2_DescribeSSLPolicies_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.DescribeSSLPoliciesInput{
+		Names: []*string{
+			aws.String("ELBSecurityPolicy-2015-05"),
+		},
+	}
+
+	result, err := svc.DescribeSSLPolicies(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeSSLPolicyNotFoundException:
+				fmt.Println(elbv2.ErrCodeSSLPolicyNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe the tags assigned to a load balancer
+//
+// This example describes the tags assigned to the specified load balancer.
+func ExampleELBV2_DescribeTags_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.DescribeTagsInput{
+		ResourceArns: []*string{
+			aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:loadbalancer/app/my-load-balancer/50dc6c495c0c9188"),
+		},
+	}
+
+	result, err := svc.DescribeTags(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeLoadBalancerNotFoundException:
+				fmt.Println(elbv2.ErrCodeLoadBalancerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			case elbv2.ErrCodeListenerNotFoundException:
+				fmt.Println(elbv2.ErrCodeListenerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeRuleNotFoundException:
+				fmt.Println(elbv2.ErrCodeRuleNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe target group attributes
+//
+// This example describes the attributes of the specified target group.
+func ExampleELBV2_DescribeTargetGroupAttributes_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.DescribeTargetGroupAttributesInput{
+		TargetGroupArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+	}
+
+	result, err := svc.DescribeTargetGroupAttributes(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe a target group
+//
+// This example describes the specified target group.
+func ExampleELBV2_DescribeTargetGroups_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.DescribeTargetGroupsInput{
+		TargetGroupArns: []*string{
+			aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+		},
+	}
+
+	result, err := svc.DescribeTargetGroups(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeLoadBalancerNotFoundException:
+				fmt.Println(elbv2.ErrCodeLoadBalancerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe the health of the targets for a target group
+//
+// This example describes the health of the targets for the specified target group.
+// One target is healthy but the other is not specified in an action, so it can't receive
+// traffic from the load balancer.
+func ExampleELBV2_DescribeTargetHealth_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.DescribeTargetHealthInput{
+		TargetGroupArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+	}
+
+	result, err := svc.DescribeTargetHealth(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeInvalidTargetException:
+				fmt.Println(elbv2.ErrCodeInvalidTargetException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			case elbv2.ErrCodeHealthUnavailableException:
+				fmt.Println(elbv2.ErrCodeHealthUnavailableException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To describe the health of a target
+//
+// This example describes the health of the specified target. This target is healthy.
+func ExampleELBV2_DescribeTargetHealth_shared01() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.DescribeTargetHealthInput{
+		TargetGroupArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+		Targets: []*elbv2.TargetDescription{
+			{
+				Id:   aws.String("i-0f76fade"),
+				Port: aws.Int64(80),
 			},
-			// More values...
 		},
 	}
-	resp, err := svc.RegisterTargets(params)
 
+	result, err := svc.DescribeTargetHealth(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeInvalidTargetException:
+				fmt.Println(elbv2.ErrCodeInvalidTargetException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			case elbv2.ErrCodeHealthUnavailableException:
+				fmt.Println(elbv2.ErrCodeHealthUnavailableException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELBV2_RemoveTags() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.RemoveTagsInput{
-		ResourceArns: []*string{ // Required
-			aws.String("ResourceArn"), // Required
-			// More values...
-		},
-		TagKeys: []*string{ // Required
-			aws.String("TagKey"), // Required
-			// More values...
-		},
-	}
-	resp, err := svc.RemoveTags(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_SetIpAddressType() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.SetIpAddressTypeInput{
-		IpAddressType:   aws.String("IpAddressType"),   // Required
-		LoadBalancerArn: aws.String("LoadBalancerArn"), // Required
-	}
-	resp, err := svc.SetIpAddressType(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-}
-
-func ExampleELBV2_SetRulePriorities() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.SetRulePrioritiesInput{
-		RulePriorities: []*elbv2.RulePriorityPair{ // Required
-			{ // Required
-				Priority: aws.Int64(1),
-				RuleArn:  aws.String("RuleArn"),
+// To change the default action for a listener
+//
+// This example changes the default action for the specified listener.
+func ExampleELBV2_ModifyListener_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.ModifyListenerInput{
+		DefaultActions: []*elbv2.Action{
+			{
+				TargetGroupArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-new-targets/2453ed029918f21f"),
+				Type:           aws.String("forward"),
 			},
-			// More values...
 		},
+		ListenerArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:listener/app/my-load-balancer/50dc6c495c0c9188/f2f7dc8efc522ab2"),
 	}
-	resp, err := svc.SetRulePriorities(params)
 
+	result, err := svc.ModifyListener(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeDuplicateListenerException:
+				fmt.Println(elbv2.ErrCodeDuplicateListenerException, aerr.Error())
+			case elbv2.ErrCodeTooManyListenersException:
+				fmt.Println(elbv2.ErrCodeTooManyListenersException, aerr.Error())
+			case elbv2.ErrCodeTooManyCertificatesException:
+				fmt.Println(elbv2.ErrCodeTooManyCertificatesException, aerr.Error())
+			case elbv2.ErrCodeListenerNotFoundException:
+				fmt.Println(elbv2.ErrCodeListenerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupAssociationLimitException:
+				fmt.Println(elbv2.ErrCodeTargetGroupAssociationLimitException, aerr.Error())
+			case elbv2.ErrCodeIncompatibleProtocolsException:
+				fmt.Println(elbv2.ErrCodeIncompatibleProtocolsException, aerr.Error())
+			case elbv2.ErrCodeSSLPolicyNotFoundException:
+				fmt.Println(elbv2.ErrCodeSSLPolicyNotFoundException, aerr.Error())
+			case elbv2.ErrCodeCertificateNotFoundException:
+				fmt.Println(elbv2.ErrCodeCertificateNotFoundException, aerr.Error())
+			case elbv2.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elbv2.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elbv2.ErrCodeUnsupportedProtocolException:
+				fmt.Println(elbv2.ErrCodeUnsupportedProtocolException, aerr.Error())
+			case elbv2.ErrCodeTooManyRegistrationsForTargetIdException:
+				fmt.Println(elbv2.ErrCodeTooManyRegistrationsForTargetIdException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELBV2_SetSecurityGroups() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.SetSecurityGroupsInput{
-		LoadBalancerArn: aws.String("LoadBalancerArn"), // Required
-		SecurityGroups: []*string{ // Required
-			aws.String("SecurityGroupId"), // Required
-			// More values...
+// To change the server certificate
+//
+// This example changes the server certificate for the specified HTTPS listener.
+func ExampleELBV2_ModifyListener_shared01() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.ModifyListenerInput{
+		Certificates: []*elbv2.Certificate{
+			{
+				CertificateArn: aws.String("arn:aws:iam::123456789012:server-certificate/my-new-server-cert"),
+			},
 		},
+		ListenerArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:listener/app/my-load-balancer/50dc6c495c0c9188/0467ef3c8400ae65"),
 	}
-	resp, err := svc.SetSecurityGroups(params)
 
+	result, err := svc.ModifyListener(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeDuplicateListenerException:
+				fmt.Println(elbv2.ErrCodeDuplicateListenerException, aerr.Error())
+			case elbv2.ErrCodeTooManyListenersException:
+				fmt.Println(elbv2.ErrCodeTooManyListenersException, aerr.Error())
+			case elbv2.ErrCodeTooManyCertificatesException:
+				fmt.Println(elbv2.ErrCodeTooManyCertificatesException, aerr.Error())
+			case elbv2.ErrCodeListenerNotFoundException:
+				fmt.Println(elbv2.ErrCodeListenerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupAssociationLimitException:
+				fmt.Println(elbv2.ErrCodeTargetGroupAssociationLimitException, aerr.Error())
+			case elbv2.ErrCodeIncompatibleProtocolsException:
+				fmt.Println(elbv2.ErrCodeIncompatibleProtocolsException, aerr.Error())
+			case elbv2.ErrCodeSSLPolicyNotFoundException:
+				fmt.Println(elbv2.ErrCodeSSLPolicyNotFoundException, aerr.Error())
+			case elbv2.ErrCodeCertificateNotFoundException:
+				fmt.Println(elbv2.ErrCodeCertificateNotFoundException, aerr.Error())
+			case elbv2.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elbv2.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elbv2.ErrCodeUnsupportedProtocolException:
+				fmt.Println(elbv2.ErrCodeUnsupportedProtocolException, aerr.Error())
+			case elbv2.ErrCodeTooManyRegistrationsForTargetIdException:
+				fmt.Println(elbv2.ErrCodeTooManyRegistrationsForTargetIdException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
 }
 
-func ExampleELBV2_SetSubnets() {
-	sess := session.Must(session.NewSession())
-
-	svc := elbv2.New(sess)
-
-	params := &elbv2.SetSubnetsInput{
-		LoadBalancerArn: aws.String("LoadBalancerArn"), // Required
-		Subnets: []*string{ // Required
-			aws.String("SubnetId"), // Required
-			// More values...
+// To enable deletion protection
+//
+// This example enables deletion protection for the specified load balancer.
+func ExampleELBV2_ModifyLoadBalancerAttributes_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.ModifyLoadBalancerAttributesInput{
+		Attributes: []*elbv2.LoadBalancerAttribute{
+			{
+				Key:   aws.String("deletion_protection.enabled"),
+				Value: aws.String("true"),
+			},
 		},
+		LoadBalancerArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:loadbalancer/app/my-load-balancer/50dc6c495c0c9188"),
 	}
-	resp, err := svc.SetSubnets(params)
 
+	result, err := svc.ModifyLoadBalancerAttributes(input)
 	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeLoadBalancerNotFoundException:
+				fmt.Println(elbv2.ErrCodeLoadBalancerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elbv2.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
 		return
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(resp)
+	fmt.Println(result)
+}
+
+// To change the idle timeout
+//
+// This example changes the idle timeout value for the specified load balancer.
+func ExampleELBV2_ModifyLoadBalancerAttributes_shared01() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.ModifyLoadBalancerAttributesInput{
+		Attributes: []*elbv2.LoadBalancerAttribute{
+			{
+				Key:   aws.String("idle_timeout.timeout_seconds"),
+				Value: aws.String("30"),
+			},
+		},
+		LoadBalancerArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:loadbalancer/app/my-load-balancer/50dc6c495c0c9188"),
+	}
+
+	result, err := svc.ModifyLoadBalancerAttributes(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeLoadBalancerNotFoundException:
+				fmt.Println(elbv2.ErrCodeLoadBalancerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elbv2.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To enable access logs
+//
+// This example enables access logs for the specified load balancer. Note that the S3
+// bucket must exist in the same region as the load balancer and must have a policy
+// attached that grants access to the Elastic Load Balancing service.
+func ExampleELBV2_ModifyLoadBalancerAttributes_shared02() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.ModifyLoadBalancerAttributesInput{
+		Attributes: []*elbv2.LoadBalancerAttribute{
+			{
+				Key:   aws.String("access_logs.s3.enabled"),
+				Value: aws.String("true"),
+			},
+			{
+				Key:   aws.String("access_logs.s3.bucket"),
+				Value: aws.String("my-loadbalancer-logs"),
+			},
+			{
+				Key:   aws.String("access_logs.s3.prefix"),
+				Value: aws.String("myapp"),
+			},
+		},
+		LoadBalancerArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:loadbalancer/app/my-load-balancer/50dc6c495c0c9188"),
+	}
+
+	result, err := svc.ModifyLoadBalancerAttributes(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeLoadBalancerNotFoundException:
+				fmt.Println(elbv2.ErrCodeLoadBalancerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elbv2.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To modify a rule
+//
+// This example modifies the condition for the specified rule.
+func ExampleELBV2_ModifyRule_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.ModifyRuleInput{
+		Conditions: []*elbv2.RuleCondition{
+			{
+				Field: aws.String("path-pattern"),
+				Values: []*string{
+					aws.String("/images/*"),
+				},
+			},
+		},
+		RuleArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:listener-rule/app/my-load-balancer/50dc6c495c0c9188/f2f7dc8efc522ab2/9683b2d02a6cabee"),
+	}
+
+	result, err := svc.ModifyRule(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeTargetGroupAssociationLimitException:
+				fmt.Println(elbv2.ErrCodeTargetGroupAssociationLimitException, aerr.Error())
+			case elbv2.ErrCodeRuleNotFoundException:
+				fmt.Println(elbv2.ErrCodeRuleNotFoundException, aerr.Error())
+			case elbv2.ErrCodeOperationNotPermittedException:
+				fmt.Println(elbv2.ErrCodeOperationNotPermittedException, aerr.Error())
+			case elbv2.ErrCodeTooManyRegistrationsForTargetIdException:
+				fmt.Println(elbv2.ErrCodeTooManyRegistrationsForTargetIdException, aerr.Error())
+			case elbv2.ErrCodeTooManyTargetsException:
+				fmt.Println(elbv2.ErrCodeTooManyTargetsException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To modify the health check configuration for a target group
+//
+// This example changes the configuration of the health checks used to evaluate the
+// health of the targets for the specified target group.
+func ExampleELBV2_ModifyTargetGroup_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.ModifyTargetGroupInput{
+		HealthCheckPort:     aws.String("443"),
+		HealthCheckProtocol: aws.String("HTTPS"),
+		TargetGroupArn:      aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-https-targets/2453ed029918f21f"),
+	}
+
+	result, err := svc.ModifyTargetGroup(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To modify the deregistration delay timeout
+//
+// This example sets the deregistration delay timeout to the specified value for the
+// specified target group.
+func ExampleELBV2_ModifyTargetGroupAttributes_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.ModifyTargetGroupAttributesInput{
+		Attributes: []*elbv2.TargetGroupAttribute{
+			{
+				Key:   aws.String("deregistration_delay.timeout_seconds"),
+				Value: aws.String("600"),
+			},
+		},
+		TargetGroupArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+	}
+
+	result, err := svc.ModifyTargetGroupAttributes(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To register targets with a target group
+//
+// This example registers the specified instances with the specified target group.
+func ExampleELBV2_RegisterTargets_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.RegisterTargetsInput{
+		TargetGroupArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067"),
+		Targets: []*elbv2.TargetDescription{
+			{
+				Id: aws.String("i-80c8dd94"),
+			},
+			{
+				Id: aws.String("i-ceddcd4d"),
+			},
+		},
+	}
+
+	result, err := svc.RegisterTargets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			case elbv2.ErrCodeTooManyTargetsException:
+				fmt.Println(elbv2.ErrCodeTooManyTargetsException, aerr.Error())
+			case elbv2.ErrCodeInvalidTargetException:
+				fmt.Println(elbv2.ErrCodeInvalidTargetException, aerr.Error())
+			case elbv2.ErrCodeTooManyRegistrationsForTargetIdException:
+				fmt.Println(elbv2.ErrCodeTooManyRegistrationsForTargetIdException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To register targets with a target group using port overrides
+//
+// This example registers the specified instance with the specified target group using
+// multiple ports. This enables you to register ECS containers on the same instance
+// as targets in the target group.
+func ExampleELBV2_RegisterTargets_shared01() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.RegisterTargetsInput{
+		TargetGroupArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-new-targets/3bb63f11dfb0faf9"),
+		Targets: []*elbv2.TargetDescription{
+			{
+				Id:   aws.String("i-80c8dd94"),
+				Port: aws.Int64(80),
+			},
+			{
+				Id:   aws.String("i-80c8dd94"),
+				Port: aws.Int64(766),
+			},
+		},
+	}
+
+	result, err := svc.RegisterTargets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			case elbv2.ErrCodeTooManyTargetsException:
+				fmt.Println(elbv2.ErrCodeTooManyTargetsException, aerr.Error())
+			case elbv2.ErrCodeInvalidTargetException:
+				fmt.Println(elbv2.ErrCodeInvalidTargetException, aerr.Error())
+			case elbv2.ErrCodeTooManyRegistrationsForTargetIdException:
+				fmt.Println(elbv2.ErrCodeTooManyRegistrationsForTargetIdException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To remove tags from a load balancer
+//
+// This example removes the specified tags from the specified load balancer.
+func ExampleELBV2_RemoveTags_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.RemoveTagsInput{
+		ResourceArns: []*string{
+			aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:loadbalancer/app/my-load-balancer/50dc6c495c0c9188"),
+		},
+		TagKeys: []*string{
+			aws.String("project"),
+			aws.String("department"),
+		},
+	}
+
+	result, err := svc.RemoveTags(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeLoadBalancerNotFoundException:
+				fmt.Println(elbv2.ErrCodeLoadBalancerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			case elbv2.ErrCodeListenerNotFoundException:
+				fmt.Println(elbv2.ErrCodeListenerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeRuleNotFoundException:
+				fmt.Println(elbv2.ErrCodeRuleNotFoundException, aerr.Error())
+			case elbv2.ErrCodeTooManyTagsException:
+				fmt.Println(elbv2.ErrCodeTooManyTagsException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To set the rule priority
+//
+// This example sets the priority of the specified rule.
+func ExampleELBV2_SetRulePriorities_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.SetRulePrioritiesInput{
+		RulePriorities: []*elbv2.RulePriorityPair{
+			{
+				Priority: aws.Int64(5),
+				RuleArn:  aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:listener-rule/app/my-load-balancer/50dc6c495c0c9188/f2f7dc8efc522ab2/1291d13826f405c3"),
+			},
+		},
+	}
+
+	result, err := svc.SetRulePriorities(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeRuleNotFoundException:
+				fmt.Println(elbv2.ErrCodeRuleNotFoundException, aerr.Error())
+			case elbv2.ErrCodePriorityInUseException:
+				fmt.Println(elbv2.ErrCodePriorityInUseException, aerr.Error())
+			case elbv2.ErrCodeOperationNotPermittedException:
+				fmt.Println(elbv2.ErrCodeOperationNotPermittedException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To associate a security group with a load balancer
+//
+// This example associates the specified security group with the specified load balancer.
+func ExampleELBV2_SetSecurityGroups_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.SetSecurityGroupsInput{
+		LoadBalancerArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:loadbalancer/app/my-load-balancer/50dc6c495c0c9188"),
+		SecurityGroups: []*string{
+			aws.String("sg-5943793c"),
+		},
+	}
+
+	result, err := svc.SetSecurityGroups(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeLoadBalancerNotFoundException:
+				fmt.Println(elbv2.ErrCodeLoadBalancerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elbv2.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elbv2.ErrCodeInvalidSecurityGroupException:
+				fmt.Println(elbv2.ErrCodeInvalidSecurityGroupException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
+// To enable Availability Zones for a load balancer
+//
+// This example enables the Availability Zones for the specified subnets for the specified
+// load balancer.
+func ExampleELBV2_SetSubnets_shared00() {
+	svc := elbv2.New(session.New())
+	input := &elbv2.SetSubnetsInput{
+		LoadBalancerArn: aws.String("arn:aws:elasticloadbalancing:us-west-2:123456789012:loadbalancer/app/my-load-balancer/50dc6c495c0c9188"),
+		Subnets: []*string{
+			aws.String("subnet-8360a9e7"),
+			aws.String("subnet-b7d581c0"),
+		},
+	}
+
+	result, err := svc.SetSubnets(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeLoadBalancerNotFoundException:
+				fmt.Println(elbv2.ErrCodeLoadBalancerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeInvalidConfigurationRequestException:
+				fmt.Println(elbv2.ErrCodeInvalidConfigurationRequestException, aerr.Error())
+			case elbv2.ErrCodeSubnetNotFoundException:
+				fmt.Println(elbv2.ErrCodeSubnetNotFoundException, aerr.Error())
+			case elbv2.ErrCodeInvalidSubnetException:
+				fmt.Println(elbv2.ErrCodeInvalidSubnetException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
 }

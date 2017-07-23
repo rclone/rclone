@@ -30,6 +30,13 @@ const (
 	// The specified directory is unavailable or could not be found.
 	ErrCodeDirectoryUnavailableException = "DirectoryUnavailableException"
 
+	// ErrCodeDomainControllerLimitExceededException for service response error code
+	// "DomainControllerLimitExceededException".
+	//
+	// The maximum allowed number of domain controllers per directory was exceeded.
+	// The default limit per directory is 20 domain controllers.
+	ErrCodeDomainControllerLimitExceededException = "DomainControllerLimitExceededException"
+
 	// ErrCodeEntityAlreadyExistsException for service response error code
 	// "EntityAlreadyExistsException".
 	//

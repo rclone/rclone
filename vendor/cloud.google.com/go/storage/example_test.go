@@ -94,6 +94,48 @@ func ExampleBucketHandle_Attrs() {
 	fmt.Println(attrs)
 }
 
+func ExampleBucketHandle_Update() {
+	ctx := context.Background()
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		// TODO: handle error.
+	}
+	// Enable versioning in the bucket, regardless of its previous value.
+	attrs, err := client.Bucket("my-bucket").Update(ctx,
+		storage.BucketAttrsToUpdate{VersioningEnabled: true})
+	if err != nil {
+		// TODO: handle error.
+	}
+	fmt.Println(attrs)
+}
+
+// If your update is based on the bucket's previous attributes, match the
+// metageneration number to make sure the bucket hasn't changed since you read it.
+func ExampleBucketHandle_Update_readModifyWrite() {
+	ctx := context.Background()
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		// TODO: handle error.
+	}
+	b := client.Bucket("my-bucket")
+	attrs, err := b.Attrs(ctx)
+	if err != nil {
+		// TODO: handle error.
+	}
+	var au storage.BucketAttrsToUpdate
+	au.SetLabel("lab", attrs.Labels["lab"]+"-more")
+	if attrs.Labels["delete-me"] == "yes" {
+		au.DeleteLabel("delete-me")
+	}
+	attrs, err = b.
+		If(storage.BucketConditions{MetagenerationMatch: attrs.MetaGeneration}).
+		Update(ctx, au)
+	if err != nil {
+		// TODO: handle error.
+	}
+	fmt.Println(attrs)
+}
+
 func ExampleClient_Buckets() {
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)

@@ -35,6 +35,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"math"
 	"reflect"
 	"strings"
 	"testing"
@@ -43,6 +44,7 @@ import (
 
 	pb "github.com/golang/protobuf/jsonpb/jsonpb_test_proto"
 	proto3pb "github.com/golang/protobuf/proto/proto3_proto"
+	"github.com/golang/protobuf/ptypes"
 	anypb "github.com/golang/protobuf/ptypes/any"
 	durpb "github.com/golang/protobuf/ptypes/duration"
 	stpb "github.com/golang/protobuf/ptypes/struct"
@@ -307,6 +309,23 @@ var (
     "value": "1.212s"
   }
 }`
+
+	nonFinites = &pb.NonFinites{
+		FNan:  proto.Float32(float32(math.NaN())),
+		FPinf: proto.Float32(float32(math.Inf(1))),
+		FNinf: proto.Float32(float32(math.Inf(-1))),
+		DNan:  proto.Float64(float64(math.NaN())),
+		DPinf: proto.Float64(float64(math.Inf(1))),
+		DNinf: proto.Float64(float64(math.Inf(-1))),
+	}
+	nonFinitesJSON = `{` +
+		`"fNan":"NaN",` +
+		`"fPinf":"Infinity",` +
+		`"fNinf":"-Infinity",` +
+		`"dNan":"NaN",` +
+		`"dPinf":"Infinity",` +
+		`"dNinf":"-Infinity"` +
+		`}`
 )
 
 func init() {
@@ -326,6 +345,7 @@ var marshalingTests = []struct {
 }{
 	{"simple flat object", marshaler, simpleObject, simpleObjectJSON},
 	{"simple pretty object", marshalerAllOptions, simpleObject, simpleObjectPrettyJSON},
+	{"non-finite floats fields object", marshaler, nonFinites, nonFinitesJSON},
 	{"repeated fields flat object", marshaler, repeatsObject, repeatsObjectJSON},
 	{"repeated fields pretty object", marshalerAllOptions, repeatsObject, repeatsObjectPrettyJSON},
 	{"nested message/enum flat object", marshaler, complexObject, complexObjectJSON},
@@ -350,6 +370,9 @@ var marshalingTests = []struct {
 		`{"rFunny":[1,2]}`},
 	{"empty value", marshaler, &pb.Simple3{}, `{}`},
 	{"empty value emitted", Marshaler{EmitDefaults: true}, &pb.Simple3{}, `{"dub":0}`},
+	{"empty repeated emitted", Marshaler{EmitDefaults: true}, &pb.SimpleSlice3{}, `{"slices":[]}`},
+	{"empty map emitted", Marshaler{EmitDefaults: true}, &pb.SimpleMap3{}, `{"stringy":{}}`},
+	{"nested struct null", Marshaler{EmitDefaults: true}, &pb.SimpleNull3{}, `{"simple":null}`},
 	{"map<int64, int32>", marshaler, &pb.Mappy{Nummy: map[int64]int32{1: 2, 3: 4}}, `{"nummy":{"1":2,"3":4}}`},
 	{"map<int64, int32>", marshalerAllOptions, &pb.Mappy{Nummy: map[int64]int32{1: 2, 3: 4}}, nummyPrettyJSON},
 	{"map<string, string>", marshaler,
@@ -439,6 +462,36 @@ func TestMarshaling(t *testing.T) {
 	}
 }
 
+func TestMarshalJSONPBMarshaler(t *testing.T) {
+	rawJson := `{ "foo": "bar", "baz": [0, 1, 2, 3] }`
+	msg := dynamicMessage{rawJson: rawJson}
+	str, err := new(Marshaler).MarshalToString(&msg)
+	if err != nil {
+		t.Errorf("an unexpected error occurred when marshalling JSONPBMarshaler: %v", err)
+	}
+	if str != rawJson {
+		t.Errorf("marshalling JSON produced incorrect output: got %s, wanted %s", str, rawJson)
+	}
+}
+
+func TestMarshalAnyJSONPBMarshaler(t *testing.T) {
+	msg := dynamicMessage{rawJson: `{ "foo": "bar", "baz": [0, 1, 2, 3] }`}
+	a, err := ptypes.MarshalAny(&msg)
+	if err != nil {
+		t.Errorf("an unexpected error occurred when marshalling to Any: %v", err)
+	}
+	str, err := new(Marshaler).MarshalToString(a)
+	if err != nil {
+		t.Errorf("an unexpected error occurred when marshalling Any to JSON: %v", err)
+	}
+	// after custom marshaling, it's round-tripped through JSON decoding/encoding already,
+	// so the keys are sorted, whitespace is compacted, and "@type" key has been added
+	expected := `{"@type":"type.googleapis.com/` + dynamicMessageName +`","baz":[0,1,2,3],"foo":"bar"}`
+	if str != expected {
+		t.Errorf("marshalling JSON produced incorrect output: got %s, wanted %s", str, expected)
+	}
+}
+
 var unmarshalingTests = []struct {
 	desc        string
 	unmarshaler Unmarshaler
@@ -477,6 +530,9 @@ var unmarshalingTests = []struct {
 		}}},
 	{"unquoted int64 object", Unmarshaler{}, `{"oInt64":-314}`, &pb.Simple{OInt64: proto.Int64(-314)}},
 	{"unquoted uint64 object", Unmarshaler{}, `{"oUint64":123}`, &pb.Simple{OUint64: proto.Uint64(123)}},
+	{"NaN", Unmarshaler{}, `{"oDouble":"NaN"}`, &pb.Simple{ODouble: proto.Float64(math.NaN())}},
+	{"Inf", Unmarshaler{}, `{"oFloat":"Infinity"}`, &pb.Simple{OFloat: proto.Float32(float32(math.Inf(1)))}},
+	{"-Inf", Unmarshaler{}, `{"oDouble":"-Infinity"}`, &pb.Simple{ODouble: proto.Float64(math.Inf(-1))}},
 	{"map<int64, int32>", Unmarshaler{}, `{"nummy":{"1":2,"3":4}}`, &pb.Mappy{Nummy: map[int64]int32{1: 2, 3: 4}}},
 	{"map<string, string>", Unmarshaler{}, `{"strry":{"\"one\"":"two","three":"four"}}`, &pb.Mappy{Strry: map[string]string{`"one"`: "two", "three": "four"}}},
 	{"map<int32, Object>", Unmarshaler{}, `{"objjy":{"1":{"dub":1}}}`, &pb.Mappy{Objjy: map[int32]*pb.Simple3{1: &pb.Simple3{Dub: 1}}}},
@@ -634,4 +690,70 @@ func TestUnmarshalingBadInput(t *testing.T) {
 			t.Errorf("an error was expected when parsing %q instead of an object", tt.desc)
 		}
 	}
+}
+
+func TestUnmarshalJSONPBUnmarshaler(t *testing.T) {
+	rawJson := `{ "foo": "bar", "baz": [0, 1, 2, 3] }`
+	var msg dynamicMessage
+	if err := Unmarshal(strings.NewReader(rawJson), &msg); err != nil {
+		t.Errorf("an unexpected error occurred when parsing into JSONPBUnmarshaler: %v", err)
+	}
+	if msg.rawJson != rawJson {
+		t.Errorf("message contents not set correctly after unmarshalling JSON: got %s, wanted %s", msg.rawJson, rawJson)
+	}
+}
+
+func TestUnmarshalAnyJSONPBUnmarshaler(t *testing.T) {
+	rawJson := `{ "@type": "blah.com/` + dynamicMessageName + `", "foo": "bar", "baz": [0, 1, 2, 3] }`
+	var got anypb.Any
+	if err := Unmarshal(strings.NewReader(rawJson), &got); err != nil {
+		t.Errorf("an unexpected error occurred when parsing into JSONPBUnmarshaler: %v", err)
+	}
+
+	dm := &dynamicMessage{rawJson: `{"baz":[0,1,2,3],"foo":"bar"}`}
+	var want anypb.Any
+	if b, err := proto.Marshal(dm); err != nil {
+		t.Errorf("an unexpected error occurred when marshaling message: %v", err)
+	} else {
+		want.TypeUrl = "blah.com/" + dynamicMessageName
+		want.Value = b
+	}
+
+	if !proto.Equal(&got, &want) {
+		t.Errorf("message contents not set correctly after unmarshalling JSON: got %s, wanted %s", got, want)
+	}
+}
+
+const (
+	dynamicMessageName = "google.protobuf.jsonpb.testing.dynamicMessage"
+)
+func init() {
+	// we register the custom type below so that we can use it in Any types
+	proto.RegisterType((*dynamicMessage)(nil), dynamicMessageName)
+}
+
+// dynamicMessage implements protobuf.Message but is not a normal generated message type.
+// It provides implementations of JSONPBMarshaler and JSONPBUnmarshaler for JSON support.
+type dynamicMessage struct {
+	rawJson string `protobuf:"bytes,1,opt,name=rawJson"`
+}
+
+func (m *dynamicMessage) Reset() {
+	m.rawJson = "{}"
+}
+
+func (m *dynamicMessage) String() string {
+	return m.rawJson
+}
+
+func (m *dynamicMessage) ProtoMessage() {
+}
+
+func (m *dynamicMessage) MarshalJSONPB(jm *Marshaler) ([]byte, error) {
+	return []byte(m.rawJson), nil
+}
+
+func (m *dynamicMessage) UnmarshalJSONPB(jum *Unmarshaler, js []byte) error {
+	m.rawJson = string(js)
+	return nil
 }
