@@ -126,4 +126,6 @@ with it: `--dump-headers`, `--dump-bodies`, `--dump-auth`
 
 Note that `--timeout` isn't supported (but `--contimeout` is).
 
+Note that `--bind` isn't supported.
+
 FTP could support server side move but doesn't yet.

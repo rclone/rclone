@@ -79,6 +79,22 @@ type ObjectReader struct {
 	sftpFile *sftp.File
 }
 
+// Dial starts a client connection to the given SSH server. It is a
+// convenience function that connects to the given network address,
+// initiates the SSH handshake, and then sets up a Client.
+func Dial(network, addr string, config *ssh.ClientConfig) (*ssh.Client, error) {
+	dialer := fs.Config.NewDialer()
+	conn, err := dialer.Dial(network, addr)
+	if err != nil {
+		return nil, err
+	}
+	c, chans, reqs, err := ssh.NewClientConn(conn, addr, config)
+	if err != nil {
+		return nil, err
+	}
+	return ssh.NewClient(c, chans, reqs), nil
+}
+
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
 func NewFs(name, root string) (fs.Fs, error) {
@@ -135,7 +151,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		config.Auth = append(config.Auth, ssh.Password(clearpass))
 	}
 
-	sshClient, err := ssh.Dial("tcp", host+":"+port, config)
+	sshClient, err := Dial("tcp", host+":"+port, config)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't connect ssh")
 	}

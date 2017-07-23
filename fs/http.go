@@ -272,3 +272,16 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	}
 	return resp, err
 }
+
+// NewDialer creates a net.Dialer structure with Timeout, Keepalive
+// and LocalAddr set from rclone flags.
+func (ci *ConfigInfo) NewDialer() *net.Dialer {
+	dialer := &net.Dialer{
+		Timeout:   ci.ConnectTimeout,
+		KeepAlive: 30 * time.Second,
+	}
+	if ci.BindAddr != nil {
+		dialer.LocalAddr = &net.TCPAddr{IP: ci.BindAddr}
+	}
+	return dialer
+}

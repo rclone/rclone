@@ -249,6 +249,13 @@ If running rclone from a script you might want to use today's date as
 the directory name passed to `--backup-dir` to store the old files, or
 you might want to pass `--suffix` with today's date.
 
+### --bind string ###
+
+Local address to bind to for outgoing connections.  This can be an
+IPv4 address (1.2.3.4), an IPv6 address (1234::789A) or host name.  If
+the host name doesn't resolve or resoves to more than one IP address
+it will give an error.
+
 ### --bwlimit=BANDWIDTH_SPEC ###
 
 This option controls the bandwidth limit. Limits can be specified

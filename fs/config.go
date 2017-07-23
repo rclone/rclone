@@ -14,6 +14,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -98,6 +99,7 @@ var (
 	useListR        = BoolP("fast-list", "", false, "Use recursive list if available. Uses more memory but fewer transactions.")
 	tpsLimit        = Float64P("tpslimit", "", 0, "Limit HTTP transactions per second to this.")
 	tpsLimitBurst   = IntP("tpslimit-burst", "", 1, "Max burst of transactions for --tpslimit.")
+	bindAddr        = StringP("bind", "", "", "Local address to bind to for outgoing connections, IPv4, IPv4 or name.")
 	logLevel        = LogLevelNotice
 	statsLogLevel   = LogLevelInfo
 	bwLimit         BwTimetable
@@ -232,6 +234,7 @@ type ConfigInfo struct {
 	BufferSize         SizeSuffix
 	TPSLimit           float64
 	TPSLimitBurst      int
+	BindAddr           net.IP
 }
 
 // Return the path to the configuration file
@@ -396,6 +399,17 @@ func LoadConfig() {
 
 	if Config.Suffix != "" && Config.BackupDir == "" {
 		log.Fatalf(`Can only use --suffix with --backup-dir.`)
+	}
+
+	if *bindAddr != "" {
+		addrs, err := net.LookupIP(*bindAddr)
+		if err != nil {
+			log.Fatalf("--bind: Failed to parse %q as IP address: %v", *bindAddr, err)
+		}
+		if len(addrs) != 1 {
+			log.Fatalf("--bind: Expecting 1 IP address for %q but got %d", *bindAddr, len(addrs))
+		}
+		Config.BindAddr = addrs[0]
 	}
 
 	// Load configuration file.
