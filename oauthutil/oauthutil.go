@@ -188,7 +188,7 @@ var _ oauth2.TokenSource = (*TokenSource)(nil)
 
 // Context returns a context with our HTTP Client baked in for oauth2
 func Context() context.Context {
-	return context.WithValue(nil, oauth2.HTTPClient, fs.Config.Client())
+	return context.WithValue(context.Background(), oauth2.HTTPClient, fs.Config.Client())
 }
 
 // overrideCredentials sets the ClientID and ClientSecret from the
