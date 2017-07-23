@@ -65,6 +65,7 @@ endif
 
 # Update dependencies
 update:
+	go get -u github.com/golang/dep/cmd/dep
 	dep ensure -update -v
 
 doc:	rclone.1 MANUAL.html MANUAL.txt
