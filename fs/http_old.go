@@ -21,5 +21,5 @@ func (ci *ConfigInfo) dialTimeout(network, address string) (net.Conn, error) {
 
 // Initialise the http.Transport for pre go1.7
 func (ci *ConfigInfo) initTransport(t *http.Transport) {
-	t.Dial = dialTimeout
+	t.Dial = ci.dialTimeout
 }
