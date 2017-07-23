@@ -24,8 +24,8 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(t, ptr(old.Proxy), ptr(new.Proxy), "when checking .Proxy")
 	assert.Equal(t, ptr(old.DialContext), ptr(new.DialContext), "when checking .DialContext")
 	// Check the other public fields
-	assert.Equal(t, old.Dial, new.Dial, "when checking .Dial")
-	assert.Equal(t, old.DialTLS, new.DialTLS, "when checking .DialTLS")
+	assert.Equal(t, ptr(old.Dial), ptr(new.Dial), "when checking .Dial")
+	assert.Equal(t, ptr(old.DialTLS), ptr(new.DialTLS), "when checking .DialTLS")
 	assert.Equal(t, old.TLSClientConfig, new.TLSClientConfig, "when checking .TLSClientConfig")
 	assert.Equal(t, old.TLSHandshakeTimeout, new.TLSHandshakeTimeout, "when checking .TLSHandshakeTimeout")
 	assert.Equal(t, old.DisableKeepAlives, new.DisableKeepAlives, "when checking .DisableKeepAlives")
