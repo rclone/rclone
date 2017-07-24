@@ -1,0 +1,68 @@
+hash: 7a8f8652a17526f090124ace3974ce9bff3d6d09a83ab94841d377c1125111f7
+updated: 2017-06-12T16:27:58.5460985-07:00
+imports:
+- name: github.com/Azure/go-autorest
+  version: ""
+  subpackages:
+  - autorest
+  - autorest/adal
+  - autorest/azure
+  - autorest/date
+  - autorest/to
+  - autorest/validation
+- name: github.com/dgrijalva/jwt-go
+  version: a539ee1a749a2b895533f979515ac7e6e0f5b650
+- name: github.com/howeyc/gopass
+  version: bf9dde6d0d2c004a008c27aaee91170c786f6db8
+- name: github.com/mattn/go-colorable
+  version: ded68f7a9561c023e790de24279db7ebf473ea80
+- name: github.com/mattn/go-isatty
+  version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
+- name: github.com/mgutz/ansi
+  version: 9520e82c474b0a04dd04f8a40959027271bab992
+- name: github.com/mgutz/minimist
+  version: 39eb8cf573ca29344bd7d7e6ba4d7febdebd37a9
+- name: github.com/mgutz/str
+  version: 968bf66e3da857419e4f6e71b2d5c9ae95682dc4
+- name: github.com/mgutz/to
+  version: 00c06406c2dd2e011f153a6502a21473676db33f
+- name: github.com/MichaelTJones/walk
+  version: 4748e29d5718c2df4028a6543edf86fd8cc0f881
+- name: github.com/nozzle/throttler
+  version: d9b45f19996c645d38c9266d1f5cf1990e930119
+- name: github.com/satori/uuid
+  version: 5bf94b69c6b68ee1b541973bb8e1144db23a194b
+- name: github.com/shopspring/decimal
+  version: 16a941821474ee3986fdbeab535a68a8aa5a85d2
+- name: github.com/xtophs/azure-sdk-for-go
+  version: 76fc90689773168d2b6b8ad02e42ab60fb1359b7
+  subpackages:
+  - arm/dns
+  - arm/examples/helpers
+- name: golang.org/x/crypto
+  version: e7ba82683099cae71475961448ab8f903ea77c26
+  subpackages:
+  - pkcs12
+  - pkcs12/internal/rc2
+  - ssh/terminal
+- name: golang.org/x/sys
+  version: 0b25a408a50076fbbcae6b7ac0ea5fbb0b085e79
+  subpackages:
+  - unix
+- name: gopkg.in/check.v1
+  version: 20d25e2804050c1cd24a7eea1e7a6447dd0e74ec
+- name: gopkg.in/godo.v2
+  version: b5fd2f0bef1ebe832e628cfad18ab1cc707f65a1
+  subpackages:
+  - glob
+  - util
+  - watcher
+  - watcher/fswatch
+testImports:
+- name: github.com/dnaeon/go-vcr
+  version: 87d4990451a858cc210399285be976e63bc3c364
+  subpackages:
+  - cassette
+  - recorder
+- name: gopkg.in/yaml.v2
+  version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
