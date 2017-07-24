@@ -311,15 +311,39 @@ func walkRDirTree(f Fs, path string, includeAll bool, maxLevel int, listR ListRF
 	return dirs, nil
 }
 
-// NewDirTree returns a DirTree filled with the directory listing
-// using the parameters supplied.  This will return ErrorCantListR for
-// remotes which don't support ListR.
-func NewDirTree(f Fs, path string, includeAll bool, maxLevel int) (DirTree, error) {
-	listR := f.Features().ListR
-	if listR == nil {
-		return nil, ErrorCantListR
+// Create a DirTree using List
+func walkNDirTree(f Fs, path string, includeAll bool, maxLevel int, listDir listDirFunc) (DirTree, error) {
+	dirs := make(DirTree)
+	fn := func(dirPath string, entries DirEntries, err error) error {
+		if err == nil {
+			dirs[dirPath] = entries
+		}
+		return err
 	}
-	return walkRDirTree(f, path, includeAll, maxLevel, listR)
+	err := walk(f, path, includeAll, maxLevel, fn, listDir)
+	if err != nil {
+		return nil, err
+	}
+	return dirs, nil
+}
+
+// NewDirTree returns a DirTree filled with the directory listing
+// using the parameters supplied.
+//
+// If includeAll is not set it will use the filters defined.
+//
+// If maxLevel is < 0 then it will recurse indefinitely, else it will
+// only do maxLevel levels.
+//
+// This is implemented by WalkR if Config.UseRecursiveListing is true
+// and f supports it and level > 1, or WalkN otherwise.
+//
+// NB (f, path) to be replaced by fs.Dir at some point
+func NewDirTree(f Fs, path string, includeAll bool, maxLevel int) (DirTree, error) {
+	if ListR := f.Features().ListR; (maxLevel < 0 || maxLevel > 1) && Config.UseListR && ListR != nil {
+		return walkRDirTree(f, path, includeAll, maxLevel, ListR)
+	}
+	return walkNDirTree(f, path, includeAll, maxLevel, ListDirSorted)
 }
 
 func walkR(f Fs, path string, includeAll bool, maxLevel int, fn WalkFunc, listR ListRFn) error {

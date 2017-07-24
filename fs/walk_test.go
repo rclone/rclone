@@ -288,6 +288,26 @@ func TestWalkRLevels(t *testing.T)              { testWalkLevels(t, -1).WalkR() 
 func TestWalkLevelsNoRecursive10(t *testing.T)  { testWalkLevels(t, 10).Walk() }
 func TestWalkRLevelsNoRecursive10(t *testing.T) { testWalkLevels(t, 10).WalkR() }
 
+func TestWalkNDirTree(t *testing.T) {
+	ls := testWalkLevels(t, -1)
+	entries, err := walkNDirTree(nil, "", ls.includeAll, ls.maxLevel, ls.ListDir)
+	require.NoError(t, err)
+	assert.Equal(t, `/
+  A
+  a/
+a/
+  B
+  b/
+a/b/
+  C
+  c/
+a/b/c/
+  D
+  d/
+a/b/c/d/
+`, entries.String())
+}
+
 func testWalkLevelsNoRecursive(t *testing.T) *listDirs {
 	da := newDir("a")
 	oA := mockObject("A")
