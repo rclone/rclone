@@ -203,19 +203,27 @@ func (dt DirTree) addDir(entry DirEntry) {
 	}
 }
 
+// Find returns the DirEntry for filePath or nil if not found
+func (dt DirTree) Find(filePath string) (parentPath string, entry DirEntry) {
+	parentPath = parentDir(filePath)
+	for _, entry := range dt[parentPath] {
+		if entry.Remote() == filePath {
+			return parentPath, entry
+		}
+	}
+	return parentPath, nil
+}
+
 // check that dirPath has a *Dir in its parent
 func (dt DirTree) checkParent(root, dirPath string) {
 	if dirPath == root {
 		return
 	}
-	parentPath := parentDir(dirPath)
-	entries := dt[parentPath]
-	for _, entry := range entries {
-		if entry.Remote() == dirPath {
-			return
-		}
+	parentPath, entry := dt.Find(dirPath)
+	if entry != nil {
+		return
 	}
-	dt[parentPath] = append(entries, NewDir(dirPath, time.Now()))
+	dt[parentPath] = append(dt[parentPath], NewDir(dirPath, time.Now()))
 	dt.checkParent(root, parentPath)
 }
 
