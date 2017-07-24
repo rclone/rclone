@@ -20,6 +20,18 @@
   version = "v1.0.0"
 
 [[projects]]
+  name = "github.com/Azure/azure-sdk-for-go"
+  packages = ["storage"]
+  revision = "5b6066bbd213e47c49a5fa2be2b29529bbcb6704"
+  version = "v10.1.1-beta"
+
+[[projects]]
+  name = "github.com/Azure/go-autorest"
+  packages = ["autorest","autorest/adal","autorest/azure","autorest/date"]
+  revision = "10791a4516e77c53ab10f198f144804cca3d5b43"
+  version = "v8.1.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/Unknwon/goconfig"
   packages = ["."]
@@ -60,6 +72,12 @@
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
+
+[[projects]]
+  name = "github.com/dgrijalva/jwt-go"
+  packages = ["."]
+  revision = "d2709f9f1f31ebcda9651b03077758c1f3a0018c"
+  version = "v3.0.0"
 
 [[projects]]
   name = "github.com/go-ini/ini"
@@ -168,6 +186,12 @@
   packages = ["."]
   revision = "0b647d0506a698cca42caca173e55559b12a69f2"
   version = "v1.4"
+
+[[projects]]
+  name = "github.com/satori/uuid"
+  packages = ["."]
+  revision = "879c5887cd475cd7864858769793b2ceb0d44feb"
+  version = "v1.1.0"
 
 [[projects]]
   branch = "master"
