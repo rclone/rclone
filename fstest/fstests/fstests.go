@@ -7,7 +7,6 @@ package fstests
 
 import (
 	"bytes"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -48,12 +47,8 @@ var (
 		Path:    `hello? sausage/êé/Hello, 世界/ " ' @ < > & ? + ≠/z.txt`,
 		WinPath: `hello_ sausage/êé/Hello, 世界/ _ ' @ _ _ & _ + ≠/z.txt`,
 	}
-	file2Contents  = ""
-	verbose        = flag.Bool("verbose", false, "Set to enable logging")
-	dumpHeaders    = flag.Bool("dump-headers", false, "Dump HTTP headers - may contain sensitive info")
-	dumpBodies     = flag.Bool("dump-bodies", false, "Dump HTTP headers and bodies - may contain sensitive info")
-	overrideRemote = flag.String("remote", "", "Set this to override the default remote name (eg s3:)")
-	isLocalRemote  bool
+	file2Contents = ""
+	isLocalRemote bool
 )
 
 // ExtraConfigItem describes a config item added on the fly while testing
@@ -69,22 +64,14 @@ func TestInit(t *testing.T) {
 		file2.Path = winPath(file2.Path)
 	}
 
-	// Never ask for passwords, fail instead.
-	// If your local config is encrypted set environment variable
-	// "RCLONE_CONFIG_PASS=hunter2" (or your password)
-	*fs.AskPassword = false
-	fs.LoadConfig()
+	fstest.Initialise()
+
 	// Set extra config if supplied
 	for _, item := range ExtraConfig {
 		fs.ConfigFileSet(item.Name, item.Key, item.Value)
 	}
-	if *verbose {
-		fs.Config.LogLevel = fs.LogLevelDebug
-	}
-	fs.Config.DumpHeaders = *dumpHeaders
-	fs.Config.DumpBodies = *dumpBodies
-	if *overrideRemote != "" {
-		RemoteName = *overrideRemote
+	if *fstest.RemoteName != "" {
+		RemoteName = *fstest.RemoteName
 	}
 	t.Logf("Using remote %q", RemoteName)
 	if RemoteName == "" {

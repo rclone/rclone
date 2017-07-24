@@ -43,18 +43,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Globals
-var (
-	RemoteName      = flag.String("remote", "", "Remote to test with, defaults to local filesystem")
-	SubDir          = flag.Bool("subdir", false, "Set to test with a sub directory")
-	Verbose         = flag.Bool("verbose", false, "Set to enable logging")
-	DumpHeaders     = flag.Bool("dump-headers", false, "Set to dump headers (needs -verbose)")
-	DumpBodies      = flag.Bool("dump-bodies", false, "Set to dump bodies (needs -verbose)")
-	Individual      = flag.Bool("individual", false, "Make individual bucket/container/directory for each test - much slower")
-	LowLevelRetries = flag.Int("low-level-retries", 10, "Number of low level retries")
-	UseListR        = flag.Bool("fast-list", false, "Use recursive list if available. Uses more memory but fewer transactions.")
-)
-
 // Some times used in the tests
 var (
 	t1 = fstest.Time("2001-02-03T04:05:06.499999999Z")
@@ -65,11 +53,11 @@ var (
 // TestMain drives the tests
 func TestMain(m *testing.M) {
 	flag.Parse()
-	if !*Individual {
+	if !*fstest.Individual {
 		oneRun = newRun()
 	}
 	rc := m.Run()
-	if !*Individual {
+	if !*fstest.Individual {
 		oneRun.Finalise()
 	}
 	os.Exit(rc)
@@ -103,22 +91,12 @@ func newRun() *Run {
 		mkdir:  make(map[string]bool),
 	}
 
-	// Never ask for passwords, fail instead.
-	// If your local config is encrypted set environment variable
-	// "RCLONE_CONFIG_PASS=hunter2" (or your password)
-	*fs.AskPassword = false
-	fs.LoadConfig()
-	if *Verbose {
-		fs.Config.LogLevel = fs.LogLevelDebug
-	}
-	fs.Config.DumpHeaders = *DumpHeaders
-	fs.Config.DumpBodies = *DumpBodies
-	fs.Config.LowLevelRetries = *LowLevelRetries
-	fs.Config.UseListR = *UseListR
+	fstest.Initialise()
+
 	var err error
-	r.fremote, r.fremoteName, r.cleanRemote, err = fstest.RandomRemote(*RemoteName, *SubDir)
+	r.fremote, r.fremoteName, r.cleanRemote, err = fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
 	if err != nil {
-		r.Fatalf("Failed to open remote %q: %v", *RemoteName, err)
+		r.Fatalf("Failed to open remote %q: %v", *fstest.RemoteName, err)
 	}
 
 	r.localName, err = ioutil.TempDir("", "rclone")
@@ -150,7 +128,7 @@ func (d dirsToRemove) Less(i, j int) bool { return len(d[i]) > len(d[j]) }
 // Finalise() will tidy them away when done.
 func NewRun(t *testing.T) *Run {
 	var r *Run
-	if *Individual {
+	if *fstest.Individual {
 		r = newRun()
 	} else {
 		// If not individual, use the global one with the clean method overridden

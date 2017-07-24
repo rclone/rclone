@@ -102,7 +102,7 @@ func TestServerSideCopy(t *testing.T) {
 	file1 := r.WriteObject("sub dir/hello world", "hello world", t1)
 	fstest.CheckItems(t, r.fremote, file1)
 
-	fremoteCopy, _, finaliseCopy, err := fstest.RandomRemote(*RemoteName, *SubDir)
+	fremoteCopy, _, finaliseCopy, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
 	require.NoError(t, err)
 	defer finaliseCopy()
 	t.Logf("Server side copy (if possible) %v -> %v", r.fremote, fremoteCopy)
@@ -735,7 +735,7 @@ func testServerSideMove(t *testing.T, r *Run, fremoteMove fs.Fs, withFilter bool
 func TestServerSideMove(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
-	fremoteMove, _, finaliseMove, err := fstest.RandomRemote(*RemoteName, *SubDir)
+	fremoteMove, _, finaliseMove, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
 	require.NoError(t, err)
 	defer finaliseMove()
 	testServerSideMove(t, r, fremoteMove, false)
@@ -751,7 +751,7 @@ func TestServerSideMoveWithFilter(t *testing.T) {
 		fs.Config.Filter.MinSize = -1
 	}()
 
-	fremoteMove, _, finaliseMove, err := fstest.RandomRemote(*RemoteName, *SubDir)
+	fremoteMove, _, finaliseMove, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
 	require.NoError(t, err)
 	defer finaliseMove()
 	testServerSideMove(t, r, fremoteMove, true)

@@ -23,17 +23,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Globals
-var (
-	RemoteName      = flag.String("remote", "", "Remote to test with, defaults to local filesystem")
-	SubDir          = flag.Bool("subdir", false, "Set to test with a sub directory")
-	Verbose         = flag.Bool("verbose", false, "Set to enable logging")
-	DumpHeaders     = flag.Bool("dump-headers", false, "Set to dump headers (needs -verbose)")
-	DumpBodies      = flag.Bool("dump-bodies", false, "Set to dump bodies (needs -verbose)")
-	Individual      = flag.Bool("individual", false, "Make individual bucket/container/directory for each test - much slower")
-	LowLevelRetries = flag.Int("low-level-retries", 10, "Number of low level retries")
-)
-
 type (
 	// UnmountFn is called to unmount the file system
 	UnmountFn func() error
@@ -81,26 +70,17 @@ func newRun() *Run {
 		umountResult: make(chan error, 1),
 	}
 
-	// Never ask for passwords, fail instead.
-	// If your local config is encrypted set environment variable
-	// "RCLONE_CONFIG_PASS=hunter2" (or your password)
-	*fs.AskPassword = false
-	fs.LoadConfig()
-	if *Verbose {
-		fs.Config.LogLevel = fs.LogLevelDebug
-	}
-	fs.Config.DumpHeaders = *DumpHeaders
-	fs.Config.DumpBodies = *DumpBodies
-	fs.Config.LowLevelRetries = *LowLevelRetries
+	fstest.Initialise()
+
 	var err error
-	r.fremote, r.fremoteName, r.cleanRemote, err = fstest.RandomRemote(*RemoteName, *SubDir)
+	r.fremote, r.fremoteName, r.cleanRemote, err = fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
 	if err != nil {
-		log.Fatalf("Failed to open remote %q: %v", *RemoteName, err)
+		log.Fatalf("Failed to open remote %q: %v", *fstest.RemoteName, err)
 	}
 
 	err = r.fremote.Mkdir("")
 	if err != nil {
-		log.Fatalf("Failed to open mkdir %q: %v", *RemoteName, err)
+		log.Fatalf("Failed to open mkdir %q: %v", *fstest.RemoteName, err)
 	}
 
 	if runtime.GOOS != "windows" {

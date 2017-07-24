@@ -24,17 +24,42 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Globals
 var (
-	// MatchTestRemote matches the remote names used for testing
-	MatchTestRemote = regexp.MustCompile(`^rclone-test-[abcdefghijklmnopqrstuvwxyz0123456789]{24}$`)
+	RemoteName      = flag.String("remote", "", "Remote to test with, defaults to local filesystem")
+	SubDir          = flag.Bool("subdir", false, "Set to test with a sub directory")
+	Verbose         = flag.Bool("verbose", false, "Set to enable logging")
+	DumpHeaders     = flag.Bool("dump-headers", false, "Set to dump headers (needs -verbose)")
+	DumpBodies      = flag.Bool("dump-bodies", false, "Set to dump bodies (needs -verbose)")
+	Individual      = flag.Bool("individual", false, "Make individual bucket/container/directory for each test - much slower")
+	LowLevelRetries = flag.Int("low-level-retries", 10, "Number of low level retries")
+	UseListR        = flag.Bool("fast-list", false, "Use recursive list if available. Uses more memory but fewer transactions.")
 	// ListRetries is the number of times to retry a listing to overcome eventual consistency
 	ListRetries = flag.Int("list-retries", 6, "Number or times to retry listing")
+	// MatchTestRemote matches the remote names used for testing
+	MatchTestRemote = regexp.MustCompile(`^rclone-test-[abcdefghijklmnopqrstuvwxyz0123456789]{24}$`)
 )
 
 // Seed the random number generator
 func init() {
 	rand.Seed(time.Now().UnixNano())
 
+}
+
+// Initialise rclone for testing
+func Initialise() {
+	// Never ask for passwords, fail instead.
+	// If your local config is encrypted set environment variable
+	// "RCLONE_CONFIG_PASS=hunter2" (or your password)
+	*fs.AskPassword = false
+	fs.LoadConfig()
+	if *Verbose {
+		fs.Config.LogLevel = fs.LogLevelDebug
+	}
+	fs.Config.DumpHeaders = *DumpHeaders
+	fs.Config.DumpBodies = *DumpBodies
+	fs.Config.LowLevelRetries = *LowLevelRetries
+	fs.Config.UseListR = *UseListR
 }
 
 // Item represents an item for checking
