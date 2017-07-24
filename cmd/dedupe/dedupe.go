@@ -21,7 +21,7 @@ var commandDefintion = &cobra.Command{
 	Use:   "dedupe [mode] remote:path",
 	Short: `Interactively find duplicate files delete/rename them.`,
 	Long: `
-By default ` + "`" + `dedup` + "`" + ` interactively finds duplicate files and offers to
+By default ` + "`" + `dedupe` + "`" + ` interactively finds duplicate files and offers to
 delete all but one or rename them to be different. Only useful with
 Google Drive which can have duplicate file names.
 
