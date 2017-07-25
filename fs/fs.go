@@ -48,6 +48,7 @@ var (
 	ErrorNotAFile                    = errors.New("is a not a regular file")
 	ErrorNotDeleting                 = errors.New("not deleting files as there were IO errors")
 	ErrorCantMoveOverlapping         = errors.New("can't move files on overlapping remotes")
+	ErrorDirectoryNotEmpty           = errors.New("directory not empty")
 )
 
 // RegInfo provides information about a filesystem

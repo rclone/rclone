@@ -244,7 +244,7 @@ Getting going
     * onedrive is a good one to start from if you have a directory based remote
     * b2 is a good one to start from if you have a bucket based remote
   * Add your remote to the imports in `fs/all/all.go`
-  * If web based remotes are easiest to maintain if they use rclone's rest module, but if there is a really good go SDK then use that instead.
+  * HTTP based remotes are easiest to maintain if they use rclone's rest module, but if there is a really good go SDK then use that instead.
 
 Unit tests
 

@@ -3,7 +3,7 @@ package all
 import (
 	// Active file systems
 	_ "github.com/ncw/rclone/amazonclouddrive"
-	_ "github.com/ncw/rclone/azure"
+	_ "github.com/ncw/rclone/azureblob"
 	_ "github.com/ncw/rclone/b2"
 	_ "github.com/ncw/rclone/box"
 	_ "github.com/ncw/rclone/crypt"
