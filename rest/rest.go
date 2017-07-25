@@ -6,6 +6,7 @@ package rest
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -112,6 +113,13 @@ func (o *Opts) Copy() *Opts {
 func DecodeJSON(resp *http.Response, result interface{}) (err error) {
 	defer fs.CheckClose(resp.Body, &err)
 	decoder := json.NewDecoder(resp.Body)
+	return decoder.Decode(result)
+}
+
+// DecodeXML decodes resp.Body into result
+func DecodeXML(resp *http.Response, result interface{}) (err error) {
+	defer fs.CheckClose(resp.Body, &err)
+	decoder := xml.NewDecoder(resp.Body)
 	return decoder.Decode(result)
 }
 
@@ -286,17 +294,35 @@ func MultipartUpload(in io.Reader, params url.Values, contentName, fileName stri
 //
 // It will return resp if at all possible, even if err is set
 func (api *Client) CallJSON(opts *Opts, request interface{}, response interface{}) (resp *http.Response, err error) {
+	return api.callCodec(opts, request, response, json.Marshal, DecodeJSON, "application/json")
+}
+
+// CallXML runs Call and decodes the body as a XML object into response (if not nil)
+//
+// If request is not nil then it will be XML encoded as the body of the request
+//
+// See CallJSON for a description of MultipartParams and related opts
+//
+// It will return resp if at all possible, even if err is set
+func (api *Client) CallXML(opts *Opts, request interface{}, response interface{}) (resp *http.Response, err error) {
+	return api.callCodec(opts, request, response, xml.Marshal, DecodeXML, "application/xml")
+}
+
+type marshalFn func(v interface{}) ([]byte, error)
+type decodeFn func(resp *http.Response, result interface{}) (err error)
+
+func (api *Client) callCodec(opts *Opts, request interface{}, response interface{}, marshal marshalFn, decode decodeFn, contentType string) (resp *http.Response, err error) {
 	var requestBody []byte
 	// Marshal the request if given
 	if request != nil {
-		requestBody, err = json.Marshal(request)
+		requestBody, err = marshal(request)
 		if err != nil {
 			return nil, err
 		}
-		// Set the body up as a JSON object if no body passed in
+		// Set the body up as a marshalled object if no body passed in
 		if opts.Body == nil {
 			opts = opts.Copy()
-			opts.ContentType = "application/json"
+			opts.ContentType = contentType
 			opts.Body = bytes.NewBuffer(requestBody)
 		}
 	}
@@ -322,6 +348,6 @@ func (api *Client) CallJSON(opts *Opts, request interface{}, response interface{
 	if response == nil || opts.NoResponse {
 		return resp, nil
 	}
-	err = DecodeJSON(resp, response)
+	err = decode(resp, response)
 	return resp, err
 }
