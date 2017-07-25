@@ -25,6 +25,7 @@ type Client struct {
 	rootURL      string
 	errorHandler func(resp *http.Response) error
 	headers      map[string]string
+	signer       SignerFn
 }
 
 // NewClient takes an oauth http.Client and makes a new api instance
@@ -76,6 +77,17 @@ func (api *Client) SetHeader(key, value string) *Client {
 	api.mu.Lock()
 	defer api.mu.Unlock()
 	api.headers[key] = value
+	return api
+}
+
+// SignerFn is used to sign an outgoing request
+type SignerFn func(*http.Request) error
+
+// SetSigner sets a signer for all requests
+func (api *Client) SetSigner(signer SignerFn) *Client {
+	api.mu.Lock()
+	defer api.mu.Unlock()
+	api.signer = signer
 	return api
 }
 
@@ -211,6 +223,12 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 		req.SetBasicAuth(opts.UserName, opts.Password)
 	}
 	c := ClientWithHeaderReset(api.c, headers)
+	if api.signer != nil {
+		err = api.signer(req)
+		if err != nil {
+			return nil, errors.Wrap(err, "signer failed")
+		}
+	}
 	api.mu.RUnlock()
 	resp, err = c.Do(req)
 	api.mu.RLock()
