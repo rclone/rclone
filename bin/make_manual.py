@@ -32,6 +32,7 @@ docs = [
     "drive.md",
     "http.md",
     "hubic.md",
+    "azureblob.md",
     "onedrive.md",
     "qingstor.md",
     "swift.md",
