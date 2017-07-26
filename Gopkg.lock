@@ -27,6 +27,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/a8m/tree"
+  packages = ["."]
+  revision = "fb478f41c87d959e328f2eac0c1b40f17a2f3e00"
+
+[[projects]]
+  branch = "master"
   name = "github.com/aws/aws-sdk-go"
   packages = ["aws","aws/awserr","aws/awsutil","aws/client","aws/client/metadata","aws/corehandlers","aws/credentials","aws/credentials/ec2rolecreds","aws/credentials/endpointcreds","aws/credentials/stscreds","aws/defaults","aws/ec2metadata","aws/endpoints","aws/request","aws/session","aws/signer/v4","internal/shareddefaults","private/protocol","private/protocol/query","private/protocol/query/queryutil","private/protocol/rest","private/protocol/restxml","private/protocol/xml/xmlutil","service/s3","service/s3/s3iface","service/s3/s3manager","service/sts"]
   revision = "bd544a64249f735bcf394ab0c4fa8bec9b31f221"
@@ -244,6 +250,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d1197786e4b7133a2e775df76d12dc57d690f2136871f8b0ad3f793c48b4ab08"
+  inputs-digest = "b04805ec8dc2bf704d0ad0c73e2ce9f13f3770b946a70bda8fd602886ff124a4"
   solver-name = "gps-cdcl"
   solver-version = 1
