@@ -118,8 +118,7 @@
   name = "golang.org/x/oauth2"
 
 [[constraint]]
-  #branch = "master" # FIXME only until https://github.com/golang/go/issues/21136 is fixed
-  revision = "cd2c276457edda6df7fb04895d3fd6a6add42926"
+  branch = "master"
   name = "golang.org/x/sys"
 
 [[constraint]]

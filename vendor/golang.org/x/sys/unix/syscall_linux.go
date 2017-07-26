@@ -1315,6 +1315,7 @@ func Munmap(b []byte) (err error) {
 //sys	Mlock(b []byte) (err error)
 //sys	Munlock(b []byte) (err error)
 //sys	Mlockall(flags int) (err error)
+//sys	Msync(b []byte, flags int) (err error)
 //sys	Munlockall() (err error)
 
 // Vmsplice splices user pages from a slice of Iovecs into a pipe specified by fd,
@@ -1394,7 +1395,6 @@ func Vmsplice(fd int, iovs []Iovec, flags int) (int, error) {
 // Msgget
 // Msgrcv
 // Msgsnd
-// Msync
 // Newfstatat
 // Nfsservctl
 // Personality
