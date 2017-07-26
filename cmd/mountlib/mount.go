@@ -84,6 +84,21 @@ uses combination with
 packages are by Bill Zissimopoulos who was very helpful during the
 implementation of rclone ` + commandName + ` for Windows.
 
+#### Windows caveats ####
+
+Note that drives created as Administrator are not visible by other
+accounts (including the account that was elevated as
+Administrator). So if you start a Windows drive from an Administrative
+Command Prompt and then try to access the same drive from Explorer
+(which does not run as Administrator), you will not be able to see the
+new drive.
+
+The easiest way around this is to start the drive from a normal
+command prompt. It is also possible to start a drive from the SYSTEM
+account (using [the WinFsp.Launcher
+infrastructure](https://github.com/billziss-gh/winfsp/wiki/WinFsp-Service-Architecture))
+which creates drives accessible for everyone on the system.
+
 ### Limitations ###
 
 This can only write files seqentially, it can only seek when reading.
