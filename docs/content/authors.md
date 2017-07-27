@@ -90,3 +90,4 @@ Contributors
   * Yaroslav Halchenko <debian@onerussian.com>
   * John Papandriopoulos <jpap@users.noreply.github.com>
   * Zhiming Wang <zmwangx@gmail.com>
+  * Andy Pilate <cubox@cubox.me>
