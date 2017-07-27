@@ -146,3 +146,18 @@ hasn't got the Microsoft Office suite installed.  The easiest way to
 fix is to install the Word viewer and the Microsoft Office
 Compatibility Pack for Word, Excel, and PowerPoint 2007 and later
 versions' file formats
+
+### tcp lookup some.domain.com no such host ###
+
+This happens when rclone cannot resolve a domain. Please check that
+your DNS setup is generally working, e.g.
+
+```
+# both should print a long list of possible IP addresses
+dig www.googleapis.com          # resolve using your default DNS
+dig www.googleapis.com @8.8.8.8 # resolve with Google's DNS server
+```
+
+If you are using `systemd-resolved` (default on Arch Linux), ensure it
+is at version 233 or higher. Previous releases contain a bug which
+causes not all domains to be resolved properly.
