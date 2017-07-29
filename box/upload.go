@@ -214,10 +214,10 @@ outer:
 
 		// Transfer the chunk
 		wg.Add(1)
+		o.fs.uploadToken.Get()
 		go func(part int, position int64) {
 			defer wg.Done()
-			o.fs.getUploadToken()
-			defer o.fs.putUploadToken()
+			defer o.fs.uploadToken.Put()
 			fs.Debugf(o, "Uploading part %d/%d offset %v/%v part size %v", part+1, session.TotalParts, fs.SizeSuffix(position), fs.SizeSuffix(size), fs.SizeSuffix(chunkSize))
 			partResponse, err := o.uploadPart(session.ID, position, size, buf)
 			if err != nil {

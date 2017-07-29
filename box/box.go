@@ -85,14 +85,14 @@ func init() {
 
 // Fs represents a remote box
 type Fs struct {
-	name         string             // name of this remote
-	root         string             // the path we are working on
-	features     *fs.Features       // optional features
-	srv          *rest.Client       // the connection to the one drive server
-	dirCache     *dircache.DirCache // Map of directory path to directory id
-	pacer        *pacer.Pacer       // pacer for API calls
-	tokenRenewer *oauthutil.Renew   // renew the token on expiry
-	uploadTokens chan struct{}      // control concurrency of multipart uploads
+	name         string                // name of this remote
+	root         string                // the path we are working on
+	features     *fs.Features          // optional features
+	srv          *rest.Client          // the connection to the one drive server
+	dirCache     *dircache.DirCache    // Map of directory path to directory id
+	pacer        *pacer.Pacer          // pacer for API calls
+	tokenRenewer *oauthutil.Renew      // renew the token on expiry
+	uploadToken  *pacer.TokenDispenser // control concurrency
 }
 
 // Object describes a box object
@@ -238,19 +238,15 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 
 	f := &Fs{
-		name:         name,
-		root:         root,
-		srv:          rest.NewClient(oAuthClient).SetRoot(rootURL),
-		pacer:        pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
-		uploadTokens: make(chan struct{}, fs.Config.Transfers),
+		name:        name,
+		root:        root,
+		srv:         rest.NewClient(oAuthClient).SetRoot(rootURL),
+		pacer:       pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		uploadToken: pacer.NewTokenDispenser(fs.Config.Transfers),
 	}
 	f.features = (&fs.Features{CaseInsensitive: true}).Fill(f)
 	f.srv.SetErrorHandler(errorHandler)
 
-	// Fill up the upload tokens
-	for i := 0; i < fs.Config.Transfers; i++ {
-		f.uploadTokens <- struct{}{}
-	}
 	// Renew the token in the background
 	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
 		_, err := f.readMetaDataForPath("")
@@ -294,17 +290,6 @@ func (f *Fs) rootSlash() string {
 		return f.root
 	}
 	return f.root + "/"
-}
-
-// getUploadToken gets a token from the upload pool.
-func (f *Fs) getUploadToken() {
-	<-f.uploadTokens
-	return
-}
-
-// putUploadToken returns a token to the pool
-func (f *Fs) putUploadToken() {
-	f.uploadTokens <- struct{}{}
 }
 
 // Return an Object from a path
