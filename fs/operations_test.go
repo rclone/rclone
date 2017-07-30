@@ -702,10 +702,6 @@ func TestRmdirs(t *testing.T) {
 	defer r.Finalise()
 	r.Mkdir(r.fremote)
 
-	// Clean any directories that have crept in so far
-	// FIXME make the Finalise method do this?
-	require.NoError(t, fs.Rmdirs(r.fremote, ""))
-
 	// Make some files and dirs we expect to keep
 	r.ForceMkdir(r.fremote)
 	file1 := r.WriteObject("A1/B1/C1/one", "aaa", t1)
