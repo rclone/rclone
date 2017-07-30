@@ -853,6 +853,9 @@ only.
 Dump HTTP headers and bodies - may contain sensitive info.  Can be
 very verbose.  Useful for debugging only.
 
+Note that the bodies are buffered in memory so don't use this for
+enormous files.
+
 ### --dump-filters ###
 
 Dump the filters to the output.  Useful to see exactly what include
