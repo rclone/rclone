@@ -220,6 +220,7 @@ func TestParseName(t *testing.T) {
 		{"http://example.com/dir/", "/dir/", false, ""},
 		{"http://example.com/dir/", "/dir/potato", true, "potato"},
 		{"http://example.com/dir/", "subdir/potato", false, ""},
+		{"http://example.com/dir/", "With percent %25.txt", true, "With percent %.txt"},
 	} {
 		u, err := url.Parse(test.base)
 		require.NoError(t, err)

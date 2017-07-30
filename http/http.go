@@ -63,12 +63,12 @@ type Object struct {
 }
 
 // Join a URL and a path returning a new URL
-func urlJoin(base *url.URL, path string) *url.URL {
+func urlJoin(base *url.URL, path string) (*url.URL, error) {
 	rel, err := url.Parse(path)
 	if err != nil {
-		fs.Errorf(nil, "Error parsing %q as URL: %v", path, err)
+		return nil, errors.Wrapf(err, "Error parsing %q as URL", path)
 	}
-	return base.ResolveReference(rel)
+	return base.ResolveReference(rel), nil
 }
 
 // statusError returns an error if the res contained an error
@@ -195,12 +195,11 @@ func parseInt64(s string) int64 {
 }
 
 // parseName turns a name as found in the page into a remote path or returns false
-func parseName(base *url.URL, val string) (string, bool) {
-	name, err := url.QueryUnescape(val)
+func parseName(base *url.URL, name string) (string, bool) {
+	u, err := urlJoin(base, name)
 	if err != nil {
 		return "", false
 	}
-	u := urlJoin(base, name)
 	uStr := u.String()
 	if strings.Index(uStr, "?") >= 0 {
 		return "", false
@@ -258,7 +257,10 @@ func parse(base *url.URL, in io.Reader) (names []string, err error) {
 
 // Read the directory passed in
 func (f *Fs) readDir(dir string) (names []string, err error) {
-	u := urlJoin(f.endpoint, dir)
+	u, err := urlJoin(f.endpoint, dir)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to readDir")
+	}
 	if !strings.HasSuffix(u.String(), "/") {
 		return nil, errors.Errorf("internal error: readDir URL %q didn't end in /", u.String())
 	}
@@ -372,7 +374,11 @@ func (o *Object) path() string {
 
 // stat updates the info field in the Object
 func (o *Object) stat() error {
-	endpoint := urlJoin(o.fs.endpoint, o.remote).String()
+	url, err := urlJoin(o.fs.endpoint, o.remote)
+	if err != nil {
+		return errors.Wrap(err, "failed to stat")
+	}
+	endpoint := url.String()
 	res, err := o.fs.httpClient.Head(endpoint)
 	err = statusError(res, err)
 	if err != nil {
@@ -402,7 +408,11 @@ func (o *Object) Storable() bool {
 
 // Open a remote http file object for reading. Seek is supported
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	endpoint := urlJoin(o.fs.endpoint, o.remote).String()
+	url, err := urlJoin(o.fs.endpoint, o.remote)
+	if err != nil {
+		return nil, errors.Wrap(err, "Open failed")
+	}
+	endpoint := url.String()
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "Open failed")
