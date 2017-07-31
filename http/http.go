@@ -71,6 +71,13 @@ func urlJoin(base *url.URL, path string) (*url.URL, error) {
 	return base.ResolveReference(rel), nil
 }
 
+// urlEscape escapes URL path the in string using URL escaping rules
+func urlEscape(in string) string {
+	var u url.URL
+	u.Path = in
+	return u.String()
+}
+
 // statusError returns an error if the res contained an error
 func statusError(res *http.Response, err error) error {
 	if err != nil {
@@ -96,11 +103,10 @@ func NewFs(name, root string) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	rootURL, err := url.Parse(root)
+	u, err := urlJoin(base, urlEscape(root))
 	if err != nil {
 		return nil, err
 	}
-	u := base.ResolveReference(rootURL)
 
 	client := fs.Config.Client()
 

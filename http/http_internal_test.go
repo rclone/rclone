@@ -118,10 +118,10 @@ func TestNewObject(t *testing.T) {
 	f, tidy := prepare(t)
 	defer tidy()
 
-	o, err := f.NewObject("four/underfour.txt")
+	o, err := f.NewObject("four/under four.txt")
 	require.NoError(t, err)
 
-	assert.Equal(t, "four/underfour.txt", o.Remote())
+	assert.Equal(t, "four/under four.txt", o.Remote())
 	assert.Equal(t, int64(9), o.Size())
 	_, ok := o.(*Object)
 	assert.True(t, ok)
@@ -130,7 +130,7 @@ func TestNewObject(t *testing.T) {
 
 	tObj := o.ModTime()
 
-	fi, err := os.Stat(filepath.Join(filesPath, "four", "underfour.txt"))
+	fi, err := os.Stat(filepath.Join(filesPath, "four", "under four.txt"))
 	require.NoError(t, err)
 	tFile := fi.ModTime()
 
@@ -142,7 +142,7 @@ func TestOpen(t *testing.T) {
 	f, tidy := prepare(t)
 	defer tidy()
 
-	o, err := f.NewObject("four/underfour.txt")
+	o, err := f.NewObject("four/under four.txt")
 	require.NoError(t, err)
 
 	// Test normal read
@@ -164,7 +164,7 @@ func TestMimeType(t *testing.T) {
 	f, tidy := prepare(t)
 	defer tidy()
 
-	o, err := f.NewObject("four/underfour.txt")
+	o, err := f.NewObject("four/under four.txt")
 	require.NoError(t, err)
 
 	do, ok := o.(fs.MimeTyper)
@@ -203,6 +203,57 @@ func TestIsAFileSubDir(t *testing.T) {
 	assert.True(t, ok)
 }
 
+func TestURLJoin(t *testing.T) {
+	for i, test := range []struct {
+		base   string
+		path   string
+		wantOK bool
+		want   string
+	}{
+		{"http://example.com/", "potato", true, "http://example.com/potato"},
+		{"http://example.com/dir/", "potato", true, "http://example.com/dir/potato"},
+		{"http://example.com/dir/", "../dir/potato", true, "http://example.com/dir/potato"},
+		{"http://example.com/dir/", "..", true, "http://example.com/"},
+		{"http://example.com/dir/", "http://example.com/", true, "http://example.com/"},
+		{"http://example.com/dir/", "http://example.com/dir/", true, "http://example.com/dir/"},
+		{"http://example.com/dir/", "http://example.com/dir/potato", true, "http://example.com/dir/potato"},
+		{"http://example.com/dir/", "/dir/", true, "http://example.com/dir/"},
+		{"http://example.com/dir/", "/dir/potato", true, "http://example.com/dir/potato"},
+		{"http://example.com/dir/", "subdir/potato", true, "http://example.com/dir/subdir/potato"},
+		{"http://example.com/dir/", "With percent %25.txt", true, "http://example.com/dir/With%20percent%20%25.txt"},
+		{"http://example.com/dir/", "With colon :", false, ""},
+		{"http://example.com/dir/", urlEscape("With colon :"), true, "http://example.com/dir/With%20colon%20:"},
+	} {
+		u, err := url.Parse(test.base)
+		require.NoError(t, err)
+		got, err := urlJoin(u, test.path)
+		gotOK := err == nil
+		what := fmt.Sprintf("test %d base=%q, val=%q", i, test.base, test.path)
+		assert.Equal(t, test.wantOK, gotOK, what)
+		var gotString string
+		if gotOK {
+			gotString = got.String()
+		}
+		assert.Equal(t, test.want, gotString, what)
+	}
+}
+
+func TestURLEscape(t *testing.T) {
+	for i, test := range []struct {
+		path string
+		want string
+	}{
+		{"", ""},
+		{"/hello.txt", "/hello.txt"},
+		{"With Space", "With%20Space"},
+		{"With Colon:", "./With%20Colon:"},
+		{"With Percent%", "With%20Percent%25"},
+	} {
+		got := urlEscape(test.path)
+		assert.Equal(t, test.want, got, fmt.Sprintf("Test %d path = %q", i, test.path))
+	}
+}
+
 func TestParseName(t *testing.T) {
 	for i, test := range []struct {
 		base   string
@@ -221,6 +272,8 @@ func TestParseName(t *testing.T) {
 		{"http://example.com/dir/", "/dir/potato", true, "potato"},
 		{"http://example.com/dir/", "subdir/potato", false, ""},
 		{"http://example.com/dir/", "With percent %25.txt", true, "With percent %.txt"},
+		{"http://example.com/dir/", "With colon :", false, ""},
+		{"http://example.com/dir/", urlEscape("With colon :"), true, "With colon :"},
 	} {
 		u, err := url.Parse(test.base)
 		require.NoError(t, err)
