@@ -249,17 +249,17 @@ func NewClient(name string, config *oauth2.Config) (*http.Client, *TokenSource, 
 // Config does the initial creation of the token
 //
 // It may run an internal webserver to receive the results
-func Config(id, name string, config *oauth2.Config) error {
-	return doConfig(id, name, config, true)
+func Config(id, name string, config *oauth2.Config, opts ...oauth2.AuthCodeOption) error {
+	return doConfig(id, name, config, true, opts)
 }
 
 // ConfigNoOffline does the same as Config but does not pass the
 // "access_type=offline" parameter.
-func ConfigNoOffline(id, name string, config *oauth2.Config) error {
-	return doConfig(id, name, config, false)
+func ConfigNoOffline(id, name string, config *oauth2.Config, opts ...oauth2.AuthCodeOption) error {
+	return doConfig(id, name, config, false, opts)
 }
 
-func doConfig(id, name string, config *oauth2.Config, offline bool) error {
+func doConfig(id, name string, config *oauth2.Config, offline bool, opts []oauth2.AuthCodeOption) error {
 	config, changed := overrideCredentials(name, config)
 	automatic := fs.ConfigFileGet(name, fs.ConfigAutomatic) != ""
 
@@ -332,7 +332,6 @@ func doConfig(id, name string, config *oauth2.Config, offline bool) error {
 		return err
 	}
 	state := fmt.Sprintf("%x", stateBytes)
-	var opts []oauth2.AuthCodeOption
 	if offline {
 		opts = append(opts, oauth2.AccessTypeOffline)
 	}
@@ -394,17 +393,18 @@ type authServer struct {
 	bindAddress string
 	code        chan string
 	authURL     string
+	server      *http.Server
 }
 
 // startWebServer runs an internal web server to receive config details
 func (s *authServer) Start() {
 	fs.Debugf(nil, "Starting auth server on %s", s.bindAddress)
 	mux := http.NewServeMux()
-	server := &http.Server{
+	s.server = &http.Server{
 		Addr:    s.bindAddress,
 		Handler: mux,
 	}
-	server.SetKeepAlivesEnabled(false)
+	s.server.SetKeepAlivesEnabled(false)
 	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "", 404)
 		return
@@ -444,7 +444,7 @@ func (s *authServer) Start() {
 	if err != nil {
 		log.Fatalf("Failed to start auth webserver: %v", err)
 	}
-	err = server.Serve(s.listener)
+	err = s.server.Serve(s.listener)
 	fs.Debugf(nil, "Closed auth server with error: %v", err)
 }
 
@@ -455,4 +455,7 @@ func (s *authServer) Stop() {
 		s.code = nil
 	}
 	_ = s.listener.Close()
+
+	// close the server
+	_ = s.server.Close()
 }
