@@ -41,19 +41,23 @@ func findTestFunctions() []string {
 
 // Data to substitute
 type Data struct {
-	Regenerate  string
-	FsName      string
-	UpperFsName string
-	TestName    string
-	Fns         []string
-	Suffix      string
+	Regenerate      string
+	FsName          string
+	UpperFsName     string
+	TestName        string
+	Fns             []string
+	Suffix          string
+	BuildConstraint string
 }
 
 var testProgram = `
 // Test {{ .UpperFsName }} filesystem interface
 //
 // Automatically generated - DO NOT EDIT
-// Regenerate with: {{ .Regenerate }}
+// Regenerate with: {{ .Regenerate }}{{ if ne .BuildConstraint "" }}
+
+// +build {{ .BuildConstraint }}
+{{end}}
 package {{ .FsName }}_test
 
 import (
@@ -75,23 +79,37 @@ func TestSetup{{ .Suffix }}(t *testing.T)() {
 {{ end }}
 `
 
+// options for generateTestProgram
+type (
+	suffix          string
+	buildConstraint string
+)
+
 // Generate test file piping it through gofmt
-func generateTestProgram(t *template.Template, fns []string, Fsname string, suffix string) {
-	fsname := strings.ToLower(Fsname)
-	TestName := "Test" + Fsname + suffix + ":"
-	outfile := "../../" + fsname + "/" + fsname + suffix + "_test.go"
-
-	if fsname == "local" {
-		TestName = ""
-	}
-
+func generateTestProgram(t *template.Template, fns []string, Fsname string, options ...interface{}) {
 	data := Data{
 		Regenerate:  "make gen_tests",
-		FsName:      fsname,
+		FsName:      strings.ToLower(Fsname),
 		UpperFsName: Fsname,
-		TestName:    TestName,
 		Fns:         fns,
-		Suffix:      suffix,
+	}
+
+	for _, option := range options {
+		switch x := option.(type) {
+		case suffix:
+			data.Suffix = string(x)
+		case buildConstraint:
+			data.BuildConstraint = string(x)
+		default:
+			log.Fatalf("Unknown option type %T", option)
+		}
+	}
+
+	data.TestName = "Test" + data.UpperFsName + data.Suffix + ":"
+	outfile := "../../" + data.FsName + "/" + data.FsName + data.Suffix + "_test.go"
+
+	if data.FsName == "local" {
+		data.TestName = ""
 	}
 
 	cmd := exec.Command("gofmt")
@@ -99,50 +117,50 @@ func generateTestProgram(t *template.Template, fns []string, Fsname string, suff
 	log.Printf("Writing %q", outfile)
 	out, err := os.Create(outfile)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to write %q: %v", outfile, err)
 	}
 	cmd.Stdout = out
 
 	gofmt, err := cmd.StdinPipe()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to StdinPipe %q: %v", outfile, err)
 	}
 	if err = cmd.Start(); err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to Start %q: %v", outfile, err)
 	}
 	if err = t.Execute(gofmt, data); err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to Execute %q: %v", outfile, err)
 	}
 	if err = gofmt.Close(); err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to Close gofmt on %q: %v", outfile, err)
 	}
 	if err = cmd.Wait(); err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to Wait %q: %v", outfile, err)
 	}
 	if err = out.Close(); err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to Close out %q: %v", outfile, err)
 	}
 }
 
 func main() {
 	fns := findTestFunctions()
 	t := template.Must(template.New("main").Parse(testProgram))
-	generateTestProgram(t, fns, "Local", "")
-	generateTestProgram(t, fns, "Swift", "")
-	generateTestProgram(t, fns, "S3", "")
-	generateTestProgram(t, fns, "Drive", "")
-	generateTestProgram(t, fns, "GoogleCloudStorage", "")
-	generateTestProgram(t, fns, "Dropbox", "")
-	generateTestProgram(t, fns, "AmazonCloudDrive", "")
-	generateTestProgram(t, fns, "OneDrive", "")
-	generateTestProgram(t, fns, "Hubic", "")
-	generateTestProgram(t, fns, "B2", "")
-	generateTestProgram(t, fns, "Yandex", "")
-	generateTestProgram(t, fns, "Crypt", "")
-	generateTestProgram(t, fns, "Crypt", "2")
-	generateTestProgram(t, fns, "Crypt", "3")
-	generateTestProgram(t, fns, "Sftp", "")
-	generateTestProgram(t, fns, "FTP", "")
-	generateTestProgram(t, fns, "Box", "")
+	generateTestProgram(t, fns, "Local")
+	generateTestProgram(t, fns, "Swift")
+	generateTestProgram(t, fns, "S3")
+	generateTestProgram(t, fns, "Drive")
+	generateTestProgram(t, fns, "GoogleCloudStorage")
+	generateTestProgram(t, fns, "Dropbox")
+	generateTestProgram(t, fns, "AmazonCloudDrive")
+	generateTestProgram(t, fns, "OneDrive")
+	generateTestProgram(t, fns, "Hubic")
+	generateTestProgram(t, fns, "B2")
+	generateTestProgram(t, fns, "Yandex")
+	generateTestProgram(t, fns, "Crypt")
+	generateTestProgram(t, fns, "Crypt", suffix("2"))
+	generateTestProgram(t, fns, "Crypt", suffix("3"))
+	generateTestProgram(t, fns, "Sftp")
+	generateTestProgram(t, fns, "FTP")
+	generateTestProgram(t, fns, "Box")
 	log.Printf("Done")
 }
