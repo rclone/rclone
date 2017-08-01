@@ -6,6 +6,7 @@ import (
 
 	"github.com/a8m/tree"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -13,12 +14,10 @@ import (
 )
 
 func TestTree(t *testing.T) {
+	fstest.Initialise()
+
 	buf := new(bytes.Buffer)
-	// Never ask for passwords, fail instead.
-	// If your local config is encrypted set environment variable
-	// "RCLONE_CONFIG_PASS=hunter2" (or your password)
-	*fs.AskPassword = false
-	fs.LoadConfig()
+
 	f, err := fs.NewFs("testfiles")
 	require.NoError(t, err)
 	err = Tree(f, buf, new(tree.Options))

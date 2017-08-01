@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -195,6 +196,7 @@ func NewFs(dirs fs.DirTree) Fs {
 // Stat returns info about the file
 func (dirs Fs) Stat(filePath string) (fi os.FileInfo, err error) {
 	defer fs.Trace(nil, "filePath=%q", filePath)("fi=%+v, err=%v", &fi, &err)
+	filePath = filepath.ToSlash(filePath)
 	filePath = strings.TrimLeft(filePath, "/")
 	if filePath == "" {
 		return &FileInfo{fs.NewDir("", time.Now())}, nil
@@ -209,6 +211,7 @@ func (dirs Fs) Stat(filePath string) (fi os.FileInfo, err error) {
 // ReadDir returns info about the directory and fills up the directory cache
 func (dirs Fs) ReadDir(dir string) (names []string, err error) {
 	defer fs.Trace(nil, "dir=%s", dir)("names=%+v, err=%v", &names, &err)
+	dir = filepath.ToSlash(dir)
 	dir = strings.TrimLeft(dir, "/")
 	entries, ok := dirs[dir]
 	if !ok {
