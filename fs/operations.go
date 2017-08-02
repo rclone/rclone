@@ -1351,11 +1351,81 @@ func (x *DeduplicateMode) Type() string {
 // Check it satisfies the interface
 var _ pflag.Value = (*DeduplicateMode)(nil)
 
+// dedupeFindDuplicateDirs scans f for duplicate directories
+func dedupeFindDuplicateDirs(f Fs) ([][]Directory, error) {
+	duplicateDirs := [][]Directory{}
+	err := Walk(f, "", true, Config.MaxDepth, func(dirPath string, entries DirEntries, err error) error {
+		if err != nil {
+			return err
+		}
+		dirs := map[string][]Directory{}
+		entries.ForDir(func(d Directory) {
+			dirs[d.Remote()] = append(dirs[d.Remote()], d)
+		})
+		for _, ds := range dirs {
+			if len(ds) > 1 {
+				duplicateDirs = append(duplicateDirs, ds)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "find duplicate dirs")
+	}
+	return duplicateDirs, nil
+}
+
+// dedupeMergeDuplicateDirs merges all the duplicate directories found
+func dedupeMergeDuplicateDirs(f Fs, duplicateDirs [][]Directory) error {
+	mergeDirs := f.Features().MergeDirs
+	if mergeDirs == nil {
+		return errors.Errorf("%v: can't merge directories", f)
+	}
+	dirCacheFlush := f.Features().DirCacheFlush
+	if dirCacheFlush == nil {
+		return errors.Errorf("%v: can't flush dir cache", f)
+	}
+	for _, dirs := range duplicateDirs {
+		if !Config.DryRun {
+			Infof(dirs[0], "Merging contents of duplicate directories")
+			err := mergeDirs(dirs)
+			if err != nil {
+				return errors.Wrap(err, "merge duplicate dirs")
+			}
+		} else {
+			Infof(dirs[0], "NOT Merging contents of duplicate directories as --dry-run")
+		}
+	}
+	dirCacheFlush()
+	return nil
+}
+
 // Deduplicate interactively finds duplicate files and offers to
 // delete all but one or rename them to be different. Only useful with
 // Google Drive which can have duplicate file names.
 func Deduplicate(f Fs, mode DeduplicateMode) error {
 	Infof(f, "Looking for duplicates using %v mode.", mode)
+
+	// Find duplicate directories first and fix them - repeat
+	// until all fixed
+	for {
+		duplicateDirs, err := dedupeFindDuplicateDirs(f)
+		if err != nil {
+			return err
+		}
+		if len(duplicateDirs) == 0 {
+			break
+		}
+		err = dedupeMergeDuplicateDirs(f, duplicateDirs)
+		if err != nil {
+			return err
+		}
+		if Config.DryRun {
+			break
+		}
+	}
+
+	// Now find duplicate files
 	files := map[string][]Object{}
 	err := Walk(f, "", true, Config.MaxDepth, func(dirPath string, entries DirEntries, err error) error {
 		if err != nil {
