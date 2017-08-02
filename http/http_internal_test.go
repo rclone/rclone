@@ -72,7 +72,7 @@ func testListRoot(t *testing.T, f fs.Fs) {
 	assert.True(t, ok)
 
 	e = entries[1]
-	assert.Equal(t, "one.txt", e.Remote())
+	assert.Equal(t, "one%.txt", e.Remote())
 	assert.Equal(t, int64(6), e.Size())
 	_, ok = e.(*Object)
 	assert.True(t, ok)
@@ -176,7 +176,7 @@ func TestIsAFileRoot(t *testing.T) {
 	tidy := prepareServer(t)
 	defer tidy()
 
-	f, err := NewFs(remoteName, "one.txt")
+	f, err := NewFs(remoteName, "one%.txt")
 	assert.Equal(t, err, fs.ErrorIsFile)
 
 	testListRoot(t, f)
@@ -323,6 +323,8 @@ func TestParseApache(t *testing.T) {
 		"stressdisk/",
 		"timer-test",
 		"words-to-regexp.pl",
+		"Now 100% better.mp3",
+		"Now better.mp3",
 	})
 }
 

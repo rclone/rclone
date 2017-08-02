@@ -46,11 +46,12 @@ func init() {
 
 // Fs stores the interface to the remote HTTP files
 type Fs struct {
-	name       string
-	root       string
-	features   *fs.Features // optional features
-	endpoint   *url.URL
-	httpClient *http.Client
+	name        string
+	root        string
+	features    *fs.Features // optional features
+	endpoint    *url.URL
+	endpointURL string // endpoint as a string
+	httpClient  *http.Client
 }
 
 // Object is a remote object that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -63,6 +64,8 @@ type Object struct {
 }
 
 // Join a URL and a path returning a new URL
+//
+// path should be URL escaped
 func urlJoin(base *url.URL, path string) (*url.URL, error) {
 	rel, err := url.Parse(path)
 	if err != nil {
@@ -142,14 +145,18 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 
 	f := &Fs{
-		name:       name,
-		root:       root,
-		httpClient: client,
-		endpoint:   u,
+		name:        name,
+		root:        root,
+		httpClient:  client,
+		endpoint:    u,
+		endpointURL: u.String(),
 	}
 	f.features = (&fs.Features{}).Fill(f)
 	if isFile {
 		return f, fs.ErrorIsFile
+	}
+	if !strings.HasSuffix(f.endpointURL, "/") {
+		return nil, errors.New("internal error: url doesn't end with /")
 	}
 	return f, nil
 }
@@ -166,7 +173,7 @@ func (f *Fs) Root() string {
 
 // String returns the URL for the filesystem
 func (f *Fs) String() string {
-	return f.endpoint.String()
+	return f.endpointURL
 }
 
 // Features returns the optional features of this Fs
@@ -190,6 +197,11 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 		return nil, errors.Wrap(err, "Stat failed")
 	}
 	return o, nil
+}
+
+// Join's the remote onto the base URL
+func (f *Fs) url(remote string) string {
+	return f.endpointURL + urlEscape(remote)
 }
 
 func parseInt64(s string) int64 {
@@ -263,14 +275,15 @@ func parse(base *url.URL, in io.Reader) (names []string, err error) {
 
 // Read the directory passed in
 func (f *Fs) readDir(dir string) (names []string, err error) {
-	u, err := urlJoin(f.endpoint, dir)
+	URL := f.url(dir)
+	u, err := url.Parse(URL)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to readDir")
 	}
-	if !strings.HasSuffix(u.String(), "/") {
-		return nil, errors.Errorf("internal error: readDir URL %q didn't end in /", u.String())
+	if !strings.HasSuffix(URL, "/") {
+		return nil, errors.Errorf("internal error: readDir URL %q didn't end in /", URL)
 	}
-	res, err := f.httpClient.Get(u.String())
+	res, err := f.httpClient.Get(URL)
 	if err == nil && res.StatusCode == http.StatusNotFound {
 		return nil, fs.ErrorDirNotFound
 	}
@@ -323,6 +336,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 				remote: remote,
 			}
 			if err = file.stat(); err != nil {
+				fs.Debugf(remote, "skipping because of error: %v", err)
 				continue
 			}
 			entries = append(entries, file)
@@ -373,19 +387,15 @@ func (o *Object) ModTime() time.Time {
 	return o.modTime
 }
 
-// path returns the native path of the object
-func (o *Object) path() string {
-	return path.Join(o.fs.root, o.remote)
+// url returns the native url of the object
+func (o *Object) url() string {
+	return o.fs.url(o.remote)
 }
 
 // stat updates the info field in the Object
 func (o *Object) stat() error {
-	url, err := urlJoin(o.fs.endpoint, o.remote)
-	if err != nil {
-		return errors.Wrap(err, "failed to stat")
-	}
-	endpoint := url.String()
-	res, err := o.fs.httpClient.Head(endpoint)
+	url := o.url()
+	res, err := o.fs.httpClient.Head(url)
 	err = statusError(res, err)
 	if err != nil {
 		return errors.Wrap(err, "failed to stat")
@@ -414,12 +424,8 @@ func (o *Object) Storable() bool {
 
 // Open a remote http file object for reading. Seek is supported
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	url, err := urlJoin(o.fs.endpoint, o.remote)
-	if err != nil {
-		return nil, errors.Wrap(err, "Open failed")
-	}
-	endpoint := url.String()
-	req, err := http.NewRequest("GET", endpoint, nil)
+	url := o.url()
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "Open failed")
 	}
