@@ -318,6 +318,10 @@ type Features struct {
 	// nil and the error
 	PutStream func(in io.Reader, src ObjectInfo, options ...OpenOption) (Object, error)
 
+	// MergeDirs merges the contents of all the directories passed
+	// in into the first one and rmdirs the other directories.
+	MergeDirs func([]Directory) error
+
 	// CleanUp the trash in the Fs
 	//
 	// Implement this if you have a way of emptying the trash or
@@ -374,6 +378,9 @@ func (ft *Features) Fill(f Fs) *Features {
 	if do, ok := f.(PutStreamer); ok {
 		ft.PutStream = do.PutStream
 	}
+	if do, ok := f.(MergeDirser); ok {
+		ft.MergeDirs = do.MergeDirs
+	}
 	if do, ok := f.(CleanUpper); ok {
 		ft.CleanUp = do.CleanUp
 	}
@@ -421,6 +428,9 @@ func (ft *Features) Mask(f Fs) *Features {
 	}
 	if mask.PutStream == nil {
 		ft.PutStream = nil
+	}
+	if mask.MergeDirs == nil {
+		ft.MergeDirs = nil
 	}
 	if mask.CleanUp == nil {
 		ft.CleanUp = nil
@@ -536,6 +546,13 @@ type PutStreamer interface {
 	// will return the object and the error, otherwise will return
 	// nil and the error
 	PutStream(in io.Reader, src ObjectInfo, options ...OpenOption) (Object, error)
+}
+
+// MergeDirser is an option interface for Fs
+type MergeDirser interface {
+	// MergeDirs merges the contents of all the directories passed
+	// in into the first one and rmdirs the other directories.
+	MergeDirs([]Directory) error
 }
 
 // CleanUpper is an optional interfaces for Fs
