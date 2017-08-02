@@ -423,7 +423,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 		if info.Folder != nil {
 			// cache the directory ID for later lookups
 			f.dirCache.Put(remote, info.ID)
-			d := fs.NewDir(remote, time.Time(info.LastModifiedDateTime))
+			d := fs.NewDir(remote, time.Time(info.LastModifiedDateTime)).SetID(info.ID)
 			if info.Folder != nil {
 				d.SetItems(info.Folder.ChildCount)
 			}
