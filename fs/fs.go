@@ -219,6 +219,10 @@ type Directory interface {
 	// Items returns the count of items in this directory or this
 	// directory and subdirectories if known, -1 for unknown
 	Items() int64
+
+	// ID returns the internal ID of this directory if known, or
+	// "" otherwise
+	ID() string
 }
 
 // MimeTyper is an optional interface for Object

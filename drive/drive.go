@@ -591,7 +591,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 			// cache the directory ID for later lookups
 			f.dirCache.Put(remote, item.Id)
 			when, _ := time.Parse(timeFormatIn, item.ModifiedDate)
-			d := fs.NewDir(remote, when)
+			d := fs.NewDir(remote, when).SetID(item.Id)
 			entries = append(entries, d)
 		case item.Md5Checksum != "" || item.FileSize > 0:
 			// If item has MD5 sum or a length it is a file stored on drive

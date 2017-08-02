@@ -454,7 +454,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 		if info.Type == api.ItemTypeFolder {
 			// cache the directory ID for later lookups
 			f.dirCache.Put(remote, info.ID)
-			d := fs.NewDir(remote, info.ModTime())
+			d := fs.NewDir(remote, info.ModTime()).SetID(info.ID)
 			// FIXME more info from dir?
 			entries = append(entries, d)
 		} else if info.Type == api.ItemTypeFile {
