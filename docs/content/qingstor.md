@@ -4,7 +4,7 @@ description: "Rclone docs for QingStor Object Storage"
 date: "2017-06-26"
 ---
 
-<i class="fa fa-qingstor"></i> QingStor
+<i class="fa fa-hdd-o"></i> QingStor
 ---------------------------------------
 
 Paths are specified as `remote:bucket` (or `remote:` for the `lsd`
@@ -119,6 +119,12 @@ files in the bucket.
 
     rclone sync /home/local/directory remote:bucket
 
+### --fast-list ###
+
+This remote supports `--fast-list` which allows you to use fewer
+transactions in exchange for more memory. See the [rclone
+docs](/docs/#fast-list) for more details.
+
 ### Multipart uploads ###
 
 rclone supports multipart uploads with QingStor which means that it can
@@ -134,6 +140,7 @@ you will get an error, `incorrect zone, the bucket is not in 'XXX'
 zone`.
 
 ### Authentication ###
+
 There are two ways to supply `rclone` with a set of QingStor
 credentials. In order of precedence:
 

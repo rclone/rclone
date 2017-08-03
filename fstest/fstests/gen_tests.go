@@ -162,6 +162,6 @@ func main() {
 	generateTestProgram(t, fns, "Sftp")
 	generateTestProgram(t, fns, "FTP")
 	generateTestProgram(t, fns, "Box")
-	generateTestProgram(t, fns, "QingStor")
+	generateTestProgram(t, fns, "QingStor", buildConstraint("!plan9"))
 	log.Printf("Done")
 }
