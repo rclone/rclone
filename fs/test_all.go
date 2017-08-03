@@ -108,7 +108,6 @@ var (
 	// Flags
 	maxTries = flag.Int("maxtries", 5, "Number of times to try each test")
 	runTests = flag.String("remotes", "", "Comma separated list of remotes to test, eg 'TestSwift:,TestS3'")
-	verbose  = flag.Bool("verbose", false, "Run the tests with -v")
 	clean    = flag.Bool("clean", false, "Instead of testing, clean all left over test directories")
 	runOnly  = flag.String("run-only", "", "Run only those tests matching the regexp supplied")
 )
@@ -134,7 +133,7 @@ func newTest(remote string, subdir bool, fastlist bool) *test {
 		cmdLine: []string{"./" + binary, "-remote", remote},
 		try:     1,
 	}
-	if *verbose {
+	if *fstest.Verbose {
 		t.cmdLine = append(t.cmdLine, "-test.v")
 		fs.Config.LogLevel = fs.LogLevelDebug
 	}
