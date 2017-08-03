@@ -682,6 +682,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 	}
 }
 
+// PutStream uploads to the remote path with the modTime given of indeterminate size
+func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(in, src, options...)
+}
+
 // PutUnchecked uploads the object
 //
 // This will create a duplicate if we upload a new file without
@@ -1363,6 +1368,7 @@ func (o *Object) MimeType() string {
 var (
 	_ fs.Fs                = (*Fs)(nil)
 	_ fs.Purger            = (*Fs)(nil)
+	_ fs.PutStreamer       = (*Fs)(nil)
 	_ fs.Copier            = (*Fs)(nil)
 	_ fs.Mover             = (*Fs)(nil)
 	_ fs.DirMover          = (*Fs)(nil)

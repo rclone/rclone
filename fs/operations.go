@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"mime"
 	"path"
@@ -13,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
@@ -1508,6 +1510,60 @@ func Cat(f Fs, w io.Writer, offset, count int64) error {
 			Errorf(o, "Failed to send to output: %v", err)
 		}
 	})
+}
+
+// Rcat reads data from the Reader until EOF and uploads it to a file on remote
+func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (err error) {
+	Stats.Transferring(dstFileName)
+	defer func() {
+		Stats.DoneTransferring(dstFileName, err == nil)
+	}()
+
+	fStreamTo := fdst
+	canStream := fdst.Features().PutStream != nil
+	if !canStream {
+		Debugf(fdst, "Target remote doesn't support streaming uploads, creating temporary local FS to spool file")
+		tmpLocalFs, err := temporaryLocalFs()
+		if err != nil {
+			return errors.Wrap(err, "Failed to create temporary local FS to spool file")
+		}
+		defer func() {
+			err := Purge(tmpLocalFs)
+			if err != nil {
+				Infof(tmpLocalFs, "Failed to cleanup temporary FS: %v", err)
+			}
+		}()
+		fStreamTo = tmpLocalFs
+	}
+
+	objInfo := NewStaticObjectInfo(dstFileName, modTime, -1, false, nil, nil)
+
+	// work out which hash to use - limit to 1 hash in common
+	var common HashSet
+	hashType := HashNone
+	if !Config.SizeOnly {
+		common = fStreamTo.Hashes().Overlap(SupportedHashes)
+		if common.Count() > 0 {
+			hashType = common.GetOne()
+			common = HashSet(hashType)
+		}
+	}
+	hashOption := &HashesOption{Hashes: common}
+
+	in := NewAccountSizeName(in0, -1, dstFileName).WithBuffer()
+
+	if Config.DryRun {
+		Logf("stdin", "Not copying as --dry-run")
+		// prevents "broken pipe" errors
+		_, err = io.Copy(ioutil.Discard, in)
+		return err
+	}
+
+	tmpObj, err := fStreamTo.Features().PutStream(in, objInfo, hashOption)
+	if err == nil && !canStream {
+		err = Copy(fdst, nil, dstFileName, tmpObj)
+	}
+	return err
 }
 
 // Rmdirs removes any empty directories (or directories only

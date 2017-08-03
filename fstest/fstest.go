@@ -119,7 +119,7 @@ func (i *Item) CheckHashes(t *testing.T, obj fs.Object) {
 // Check checks all the attributes of the object are correct
 func (i *Item) Check(t *testing.T, obj fs.Object, precision time.Duration) {
 	i.CheckHashes(t, obj)
-	assert.Equal(t, i.Size, obj.Size(), fmt.Sprintf("%s: size incorrect", i.Path))
+	assert.Equal(t, i.Size, obj.Size(), fmt.Sprintf("%s: size incorrect file=%d vs obj=%d", i.Path, i.Size, obj.Size()))
 	i.CheckModTime(t, obj, obj.ModTime(), precision)
 }
 

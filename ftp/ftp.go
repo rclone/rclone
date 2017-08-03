@@ -372,6 +372,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 	return o, err
 }
 
+// PutStream uploads to the remote path with the modTime given of indeterminate size
+func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(in, src, options...)
+}
+
 // getInfo reads the FileInfo for a path
 func (f *Fs) getInfo(remote string) (fi *FileInfo, err error) {
 	// defer fs.Trace(remote, "")("fi=%v, err=%v", &fi, &err)
@@ -706,8 +711,9 @@ func (o *Object) Remove() (err error) {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs       = &Fs{}
-	_ fs.Mover    = &Fs{}
-	_ fs.DirMover = &Fs{}
-	_ fs.Object   = &Object{}
+	_ fs.Fs          = &Fs{}
+	_ fs.Mover       = &Fs{}
+	_ fs.DirMover    = &Fs{}
+	_ fs.PutStreamer = &Fs{}
+	_ fs.Object      = &Object{}
 )

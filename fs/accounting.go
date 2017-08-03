@@ -358,7 +358,7 @@ func NewAccount(in io.ReadCloser, obj Object) *Account {
 func (acc *Account) WithBuffer() *Account {
 	acc.withBuf = true
 	var buffers int
-	if acc.size >= int64(Config.BufferSize) {
+	if acc.size >= int64(Config.BufferSize) || acc.size == -1 {
 		buffers = int(int64(Config.BufferSize) / asyncBufferSize)
 	} else {
 		buffers = int(acc.size / asyncBufferSize)

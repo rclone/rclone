@@ -877,6 +877,47 @@ func TestObjectRemove(t *testing.T) {
 	fstest.CheckListing(t, remote, []fstest.Item{file2})
 }
 
+// TestFsPutUnknownLengthFile tests uploading files when size is not known in advance
+func TestFsPutUnknownLengthFile(t *testing.T) {
+	skipIfNotOk(t)
+
+	file := fstest.Item{
+		ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
+		Path:    "piped data.txt",
+		Size:    -1, // use unknown size during upload
+	}
+
+	tries := 1
+	const maxTries = 10
+again:
+	contentSize := 100
+	contents := fstest.RandomString(contentSize)
+	buf := bytes.NewBufferString(contents)
+	hash := fs.NewMultiHasher()
+	in := io.TeeReader(buf, hash)
+
+	file.Size = -1
+	obji := fs.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
+	obj, err := remote.Put(in, obji)
+	if err != nil {
+		// Retry if err returned a retry error
+		if fs.IsRetryError(err) && tries < maxTries {
+			t.Logf("Put error: %v - low level retry %d/%d", err, tries, maxTries)
+			time.Sleep(2 * time.Second)
+
+			tries++
+			goto again
+		}
+		require.NoError(t, err, fmt.Sprintf("Put Unknown Length error: %v", err))
+	}
+	file.Hashes = hash.Sums()
+	file.Size = int64(contentSize) // use correct size when checking
+	file.Check(t, obj, remote.Precision())
+	// Re-read the object and check again
+	obj = findObject(t, file.Path)
+	file.Check(t, obj, remote.Precision())
+}
+
 // TestObjectPurge tests Purge
 func TestObjectPurge(t *testing.T) {
 	skipIfNotOk(t)

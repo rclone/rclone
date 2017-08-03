@@ -443,6 +443,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 	return o, o.Update(in, src, options...)
 }
 
+// PutStream uploads to the remote path with the modTime given of indeterminate size
+func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(in, src, options...)
+}
+
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(dir string) error {
 	root := path.Join(f.slashRoot, dir)
@@ -823,15 +828,32 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 
 // uploadChunked uploads the object in parts
 //
-// Call only if size is >= uploadChunkSize
+// Will work optimally if size is >= uploadChunkSize. If the size is either
+// unknown (i.e. -1) or smaller than uploadChunkSize, the method incurs an
+// avoidable request to the Dropbox API that does not carry payload.
 //
 // FIXME buffer chunks to improve upload retries
-func (o *Object) uploadChunked(in io.Reader, commitInfo *files.CommitInfo, size int64) (entry *files.FileMetadata, err error) {
+func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size int64) (entry *files.FileMetadata, err error) {
 	chunkSize := int64(uploadChunkSize)
-	chunks := int(size/chunkSize) + 1
+	chunks := 0
+	if size != -1 {
+		chunks = int(size/chunkSize) + 1
+	}
+	wc := &writeCounter{}
+	in := io.TeeReader(in0, wc)
 
-	// write the first whole chunk
-	fs.Debugf(o, "Uploading chunk 1/%d", chunks)
+	fmtChunk := func(cur int, last bool) {
+		if chunks == 0 && last {
+			fs.Debugf(o, "Streaming chunk %d/%d", cur, cur)
+		} else if chunks == 0 {
+			fs.Debugf(o, "Streaming chunk %d/unknown", cur)
+		} else {
+			fs.Debugf(o, "Uploading chunk %d/%d", cur, chunks)
+		}
+	}
+
+	// write the first chunk
+	fmtChunk(1, false)
 	var res *files.UploadSessionStartResult
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		res, err = o.fs.srv.UploadSessionStart(&files.UploadSessionStartArg{}, &io.LimitedReader{R: in, N: chunkSize})
@@ -843,7 +865,7 @@ func (o *Object) uploadChunked(in io.Reader, commitInfo *files.CommitInfo, size 
 
 	cursor := files.UploadSessionCursor{
 		SessionId: res.SessionId,
-		Offset:    uint64(chunkSize),
+		Offset:    0,
 	}
 	appendArg := files.UploadSessionAppendArg{
 		Cursor: &cursor,
@@ -851,8 +873,19 @@ func (o *Object) uploadChunked(in io.Reader, commitInfo *files.CommitInfo, size 
 	}
 
 	// write more whole chunks (if any)
-	for i := 2; i < chunks; i++ {
-		fs.Debugf(o, "Uploading chunk %d/%d", i, chunks)
+	currentChunk := 2
+	for {
+		if chunks > 0 && currentChunk >= chunks {
+			// if the size is known, only upload full chunks. Remaining bytes are uploaded with
+			// the UploadSessionFinish request.
+			break
+		} else if chunks == 0 && wc.Written-cursor.Offset < uint64(chunkSize) {
+			// if the size is unknown, upload as long as we can read full chunks from the reader.
+			// The UploadSessionFinish request will not contain any payload.
+			break
+		}
+		cursor.Offset = wc.Written
+		fmtChunk(currentChunk, false)
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 			err = o.fs.srv.UploadSessionAppendV2(&appendArg, &io.LimitedReader{R: in, N: chunkSize})
 			return shouldRetry(err)
@@ -860,15 +893,16 @@ func (o *Object) uploadChunked(in io.Reader, commitInfo *files.CommitInfo, size 
 		if err != nil {
 			return nil, err
 		}
-		cursor.Offset += uint64(chunkSize)
+		currentChunk++
 	}
 
 	// write the remains
+	cursor.Offset = wc.Written
 	args := &files.UploadSessionFinishArg{
 		Cursor: &cursor,
 		Commit: commitInfo,
 	}
-	fs.Debugf(o, "Uploading chunk %d/%d", chunks, chunks)
+	fmtChunk(currentChunk, true)
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		entry, err = o.fs.srv.UploadSessionFinish(args, in)
 		return shouldRetry(err)
@@ -898,7 +932,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	size := src.Size()
 	var err error
 	var entry *files.FileMetadata
-	if size > int64(uploadChunkSize) {
+	if size > int64(uploadChunkSize) || size == -1 {
 		entry, err = o.uploadChunked(in, commitInfo, size)
 	} else {
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
@@ -921,12 +955,24 @@ func (o *Object) Remove() (err error) {
 	return err
 }
 
+type writeCounter struct {
+	Written uint64
+}
+
+// Write implements the io.Writer interface.
+func (wc *writeCounter) Write(p []byte) (int, error) {
+	n := len(p)
+	wc.Written += uint64(n)
+	return n, nil
+}
+
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs       = (*Fs)(nil)
-	_ fs.Copier   = (*Fs)(nil)
-	_ fs.Purger   = (*Fs)(nil)
-	_ fs.Mover    = (*Fs)(nil)
-	_ fs.DirMover = (*Fs)(nil)
-	_ fs.Object   = (*Object)(nil)
+	_ fs.Fs          = (*Fs)(nil)
+	_ fs.Copier      = (*Fs)(nil)
+	_ fs.Purger      = (*Fs)(nil)
+	_ fs.PutStreamer = (*Fs)(nil)
+	_ fs.Mover       = (*Fs)(nil)
+	_ fs.DirMover    = (*Fs)(nil)
+	_ fs.Object      = (*Object)(nil)
 )

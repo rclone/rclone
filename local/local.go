@@ -327,6 +327,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 	return o, nil
 }
 
+// PutStream uploads to the remote path with the modTime given of indeterminate size
+func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(in, src, options...)
+}
+
 // Mkdir creates the directory if it doesn't exist
 func (f *Fs) Mkdir(dir string) error {
 	// FIXME: https://github.com/syncthing/syncthing/blob/master/lib/osutil/mkdirall_windows.go
@@ -893,9 +898,10 @@ func cleanWindowsName(f *Fs, name string) string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs       = &Fs{}
-	_ fs.Purger   = &Fs{}
-	_ fs.Mover    = &Fs{}
-	_ fs.DirMover = &Fs{}
-	_ fs.Object   = &Object{}
+	_ fs.Fs          = &Fs{}
+	_ fs.Purger      = &Fs{}
+	_ fs.PutStreamer = &Fs{}
+	_ fs.Mover       = &Fs{}
+	_ fs.DirMover    = &Fs{}
+	_ fs.Object      = &Object{}
 )

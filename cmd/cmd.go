@@ -203,6 +203,20 @@ func NewFsDst(args []string) fs.Fs {
 	return fdst
 }
 
+// NewFsDstFile creates a new dst fs with a destination file name from the arguments
+func NewFsDstFile(args []string) (fdst fs.Fs, dstFileName string) {
+	dstRemote, dstFileName := fs.RemoteSplit(args[0])
+	if dstRemote == "" {
+		dstRemote = "."
+	}
+	if dstFileName == "" {
+		log.Fatalf("%q is a directory", args[0])
+	}
+	fdst = newFsDst(dstRemote)
+	fs.CalculateModifyWindow(fdst)
+	return
+}
+
 // ShowStats returns true if the user added a `--stats` flag to the command line.
 //
 // This is called by Run to override the default value of the

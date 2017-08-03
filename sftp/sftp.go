@@ -314,6 +314,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 	return o, nil
 }
 
+// PutStream uploads to the remote path with the modTime given of indeterminate size
+func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(in, src, options...)
+}
+
 // mkParentDir makes the parent of remote if necessary and any
 // directories above that
 func (f *Fs) mkParentDir(remote string) error {
@@ -595,8 +600,9 @@ func (o *Object) Remove() error {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs       = &Fs{}
-	_ fs.Mover    = &Fs{}
-	_ fs.DirMover = &Fs{}
-	_ fs.Object   = &Object{}
+	_ fs.Fs          = &Fs{}
+	_ fs.PutStreamer = &Fs{}
+	_ fs.Mover       = &Fs{}
+	_ fs.DirMover    = &Fs{}
+	_ fs.Object      = &Object{}
 )
