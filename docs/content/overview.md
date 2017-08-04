@@ -15,25 +15,24 @@ show through.
 
 Here is an overview of the major features of each cloud storage system.
 
-| Name                         | Hash    | ModTime | Case Insensitive | Duplicate Files | MIME Type |
-| ---------------------------- |:-------:|:-------:|:----------------:|:---------------:|:---------:|
-| Amazon Drive                 | MD5     | No      | Yes              | No              | R         |
-| Amazon S3                    | MD5     | Yes     | No               | No              | R/W       |
-| Backblaze B2                 | SHA1    | Yes     | No               | No              | R/W       |
-| Box                          | SHA1    | Yes     | Yes              | No              | -         |
-| Dropbox                      | DBHASH †| Yes     | Yes              | No              | -         |
-| FTP                          | -       | No      | No               | No              | -         |
-| Google Cloud Storage         | MD5     | Yes     | No               | No              | R/W       |
-| Google Drive                 | MD5     | Yes     | No               | Yes             | R/W       |
-| HTTP                         | -       | No      | No               | No              | R         |
-| Hubic                        | MD5     | Yes     | No               | No              | R/W       |
-| Microsoft Azure Blob Storage | MD5     | Yes     | No               | No              | R/W       |
-| Microsoft OneDrive           | SHA1    | Yes     | Yes              | No              | R         |
-| Openstack Swift              | MD5     | Yes     | No               | No              | R/W       |
-| QingStor                     | -       | No      | No               | No              | R/W       |
-| SFTP                         | -       | Yes     | Depends          | No              | -         |
-| Yandex Disk                  | MD5     | Yes     | No               | No              | R/W       |
-| The local filesystem         | All     | Yes     | Depends          | No              | -         |
+| Name                   | Hash        | ModTime | Case Insensitive | Duplicate Files | MIME Type |
+| ---------------------- |:-----------:|:-------:|:----------------:|:---------------:|:---------:|
+| Amazon Drive           | MD5         | No      | Yes              | No              | R         |
+| Amazon S3              | MD5         | Yes     | No               | No              | R/W       |
+| Backblaze B2           | SHA1        | Yes     | No               | No              | R/W       |
+| Box                    | SHA1        | Yes     | Yes              | No              | -         |
+| Dropbox                | DBHASH †    | Yes     | Yes              | No              | -         |
+| FTP                    | -           | No      | No               | No              | -         |
+| Google Cloud Storage   | MD5         | Yes     | No               | No              | R/W       |
+| Google Drive           | MD5         | Yes     | No               | Yes             | R/W       |
+| HTTP                   | -           | No      | No               | No              | R         |
+| Hubic                  | MD5         | Yes     | No               | No              | R/W       |
+| Microsoft OneDrive     | SHA1        | Yes     | Yes              | No              | R         |
+| Openstack Swift        | MD5         | Yes     | No               | No              | R/W       |
+| QingStor               | -           | No      | No               | No              | R/W       |
+| SFTP                   | MD5, SHA1 * | Yes     | Depends          | No              | -         |
+| Yandex Disk            | MD5         | Yes     | No               | No              | R/W       |
+| The local filesystem   | All         | Yes     | Depends          | No              | -         |
 
 ### Hash ###
 
@@ -112,25 +111,24 @@ All the remotes support a basic set of features, but there are some
 optional features supported by some remotes used to make some
 operations more efficient.
 
-| Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR |
-| ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|
-| Amazon Drive                 | Yes   | No   | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No    |
-| Amazon S3                    | No    | Yes  | No   | No      | No      | Yes   |
-| Backblaze B2                 | No    | No   | No   | No      | Yes     | Yes   |
-| Box                          | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No    |
-| Dropbox                      | Yes   | Yes  | Yes  | Yes     | No  [#575](https://github.com/ncw/rclone/issues/575) | No    |
-| FTP                          | No    | No   | Yes  | Yes     | No      | No    |
-| Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   |
-| Google Drive                 | Yes   | Yes  | Yes  | Yes     | No  [#575](https://github.com/ncw/rclone/issues/575) |  No    |
-| HTTP                         | No    | No   | No   | No      | No      | No    |
-| Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   |
-| Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   |
-| Microsoft OneDrive           | Yes   | Yes  | Yes  | No [#197](https://github.com/ncw/rclone/issues/197)    | No [#575](https://github.com/ncw/rclone/issues/575) | No    |
-| Openstack Swift              | Yes † | Yes  | No   | No      | No      | Yes   |
-| QingStor                     | No    | Yes  | No   | No      | No      | Yes   |
-| SFTP                         | No    | No   | Yes  | Yes     | No      | No    |
-| Yandex Disk                  | Yes   | No   | No   | No      | No  [#575](https://github.com/ncw/rclone/issues/575) | Yes   |
-| The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    |
+| Name                   | Purge | Copy | Move | DirMove | CleanUp | ListR |
+| ---------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|
+| Amazon Drive           | Yes   | No   | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No    |
+| Amazon S3              | No    | Yes  | No   | No      | No      | Yes   |
+| Backblaze B2           | No    | No   | No   | No      | Yes     | Yes   |
+| Box                    | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No    |
+| Dropbox                | Yes   | Yes  | Yes  | Yes     | No  [#575](https://github.com/ncw/rclone/issues/575) | No    |
+| FTP                    | No    | No   | Yes  | Yes     | No      | No    |
+| Google Cloud Storage   | Yes   | Yes  | No   | No      | No      | Yes   |
+| Google Drive           | Yes   | Yes  | Yes  | Yes     | No  [#575](https://github.com/ncw/rclone/issues/575) |  No    |
+| HTTP                   | No    | No   | No   | No      | No      | No    |
+| Hubic                  | Yes † | Yes  | No   | No      | No      | Yes   |
+| Microsoft OneDrive     | Yes   | Yes  | Yes  | No [#197](https://github.com/ncw/rclone/issues/197)    | No [#575](https://github.com/ncw/rclone/issues/575) | No    |
+| Openstack Swift        | Yes † | Yes  | No   | No      | No      | Yes   |
+| QingStor               | No    | Yes  | No   | No      | No      | Yes   |
+| SFTP                   | No    | No   | Yes  | Yes     | No      | No    |
+| Yandex Disk            | Yes   | No   | No   | No      | No  [#575](https://github.com/ncw/rclone/issues/575) | Yes   |
+| The local filesystem   | Yes   | No   | Yes  | Yes     | No      | No    |
 
 
 ### Purge ###
