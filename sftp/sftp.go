@@ -445,8 +445,8 @@ func (f *Fs) Hashes() fs.HashSet {
 	}
 	sha1Output, err := session.Output("echo 'abc' | sha1sum | awk '{ print $1 }'")
 	expectedSha1 := "03cfd743661f07975fa2f1220c5194cbaff48451"
+	_ = session.Close()
 	if err != nil {
-		_ = session.Close()
 		return fs.HashSet(fs.HashNone)
 	}
 
