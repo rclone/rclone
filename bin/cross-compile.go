@@ -19,15 +19,16 @@ import (
 
 var (
 	// Flags
-	debug    = flag.Bool("d", false, "Print commands instead of running them.")
-	parallel = flag.Int("parallel", runtime.NumCPU(), "Number of commands to run in parallel.")
-	copyAs   = flag.String("release", "", "Make copies of the releases with this name")
-	gitLog   = flag.String("git-log", "", "git log to include as well")
-	include  = flag.String("include", "^.*$", "os/arch regexp to include")
-	exclude  = flag.String("exclude", "^$", "os/arch regexp to exclude")
-	cgo      = flag.Bool("cgo", false, "Use cgo for the build")
-	noClean  = flag.Bool("no-clean", false, "Don't clean the build directory before running.")
-	tags     = flag.String("tags", "", "Space separated list of build tags")
+	debug       = flag.Bool("d", false, "Print commands instead of running them.")
+	parallel    = flag.Int("parallel", runtime.NumCPU(), "Number of commands to run in parallel.")
+	copyAs      = flag.String("release", "", "Make copies of the releases with this name")
+	gitLog      = flag.String("git-log", "", "git log to include as well")
+	include     = flag.String("include", "^.*$", "os/arch regexp to include")
+	exclude     = flag.String("exclude", "^$", "os/arch regexp to exclude")
+	cgo         = flag.Bool("cgo", false, "Use cgo for the build")
+	noClean     = flag.Bool("no-clean", false, "Don't clean the build directory before running.")
+	tags        = flag.String("tags", "", "Space separated list of build tags")
+	compileOnly = flag.Bool("compile-only", false, "Just build the binary, not the zip.")
 )
 
 // GOOS/GOARCH pairs we build for
@@ -117,20 +118,22 @@ func compileArch(version, goos, goarch, dir string) {
 		env = append(env, flags...)
 	}
 	runEnv(args, env)
-	// Now build the zip
-	run("cp", "-a", "../MANUAL.txt", filepath.Join(dir, "README.txt"))
-	run("cp", "-a", "../MANUAL.html", filepath.Join(dir, "README.html"))
-	run("cp", "-a", "../rclone.1", dir)
-	if *gitLog != "" {
-		run("cp", "-a", *gitLog, dir)
+	if !*compileOnly {
+		// Now build the zip
+		run("cp", "-a", "../MANUAL.txt", filepath.Join(dir, "README.txt"))
+		run("cp", "-a", "../MANUAL.html", filepath.Join(dir, "README.html"))
+		run("cp", "-a", "../rclone.1", dir)
+		if *gitLog != "" {
+			run("cp", "-a", *gitLog, dir)
+		}
+		zip := dir + ".zip"
+		run("zip", "-r9", zip, dir)
+		if *copyAs != "" {
+			copyAsZip := strings.Replace(zip, "-"+version, "-"+*copyAs, 1)
+			run("ln", zip, copyAsZip)
+		}
+		run("rm", "-rf", dir)
 	}
-	zip := dir + ".zip"
-	run("zip", "-r9", zip, dir)
-	if *copyAs != "" {
-		copyAsZip := strings.Replace(zip, "-"+version, "-"+*copyAs, 1)
-		run("ln", zip, copyAsZip)
-	}
-	run("rm", "-rf", dir)
 	log.Printf("Done compiling %s/%s", goos, goarch)
 }
 
