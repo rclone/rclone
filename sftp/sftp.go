@@ -464,15 +464,15 @@ func (f *Fs) Hashes() fs.HashSet {
 	sha1Works := StdoutToHashStr(sha1Output) == expectedSha1
 	md5Works := StdoutToHashStr(md5Output) == expectedMd5
 
-	var set fs.HashSet
-	if sha1Works && md5Works {
-		set = fs.NewHashSet(fs.HashSHA1, fs.HashMD5)
-	} else if sha1Works {
-		set = fs.HashSet(fs.HashSHA1)
-	} else if md5Works {
-		set = fs.HashSet(fs.HashMD5)
-	} else {
-		set = fs.HashSet(fs.HashNone)
+	var set fs.HashSet = fs.NewHashSet()
+	if !sha1Works && !md5Works {
+		set.Add(fs.HashNone)
+	}
+	if sha1Works {
+		set.Add(fs.HashSHA1)
+	}
+	if md5Works {
+		set.Add(fs.HashMD5)
 	}
 
 	_ = session.Close()
