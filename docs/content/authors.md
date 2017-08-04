@@ -92,3 +92,4 @@ Contributors
   * Zhiming Wang <zmwangx@gmail.com>
   * Andy Pilate <cubox@cubox.me>
   * Oliver Heyme <olihey@googlemail.com>
+  * wuyu <wuyu@yunify.com>
