@@ -461,8 +461,8 @@ func (f *Fs) Hashes() fs.HashSet {
 		return fs.HashSet(fs.HashNone)
 	}
 
-	sha1Works := StdoutToHashStr(sha1Output) == expectedSha1
-	md5Works := StdoutToHashStr(md5Output) == expectedMd5
+	sha1Works := parseHash(sha1Output) == expectedSha1
+	md5Works := parseHash(md5Output) == expectedMd5
 
 	var set fs.HashSet = fs.NewHashSet()
 	if !sha1Works && !md5Works {
@@ -520,14 +520,14 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 	}
 
 	_ = session.Close()
-	str := StdoutToHashStr(outputBytes)
+	str := parseHash(outputBytes)
 	return str, nil
 }
 
 // Converts a byte array from the SSH session returned by
 // an invocation of md5sum/sha1sum to a hash string
 // as expected by the rest of this application
-func StdoutToHashStr(bytes []byte) string {
+func parseHash(bytes []byte) string {
 	return strings.Split(string(bytes), "\n")[0]
 }
 
