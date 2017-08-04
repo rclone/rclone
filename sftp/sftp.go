@@ -443,23 +443,17 @@ func (f *Fs) Hashes() fs.HashSet {
 	if err != nil {
 		return fs.HashSet(fs.HashNone)
 	}
-	sha1Output, err := session.Output("echo 'abc' | sha1sum")
+	sha1Output, _ := session.Output("echo 'abc' | sha1sum")
 	expectedSha1 := "03cfd743661f07975fa2f1220c5194cbaff48451"
 	_ = session.Close()
-	if err != nil {
-		return fs.HashSet(fs.HashNone)
-	}
 
 	session, err = f.sshClient.NewSession()
 	if err != nil {
 		return fs.HashSet(fs.HashNone)
 	}
-	md5Output, err := session.Output("echo 'abc' | md5sum")
+	md5Output, _ := session.Output("echo 'abc' | md5sum")
 	expectedMd5 := "0bee89b07a248e27c83fc3d5951213c1"
-	if err != nil {
-		_ = session.Close()
-		return fs.HashSet(fs.HashNone)
-	}
+	_ = session.Close()
 
 	sha1Works := parseHash(sha1Output) == expectedSha1
 	md5Works := parseHash(md5Output) == expectedMd5
