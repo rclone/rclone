@@ -113,8 +113,9 @@ there is no overhead to using it.
 
 ### Hashes ###
 
-MD5 hashes are stored with small blobs.  However blobs that were
-uploaded in chunks don't have MD5 hashes.
+MD5 hashes are stored with blobs.  However blobs that were uploaded in
+chunks only have an MD5 if the source remote was capable of MD5
+hashes, eg the local disk.
 
 ### Multipart uploads ###
 
