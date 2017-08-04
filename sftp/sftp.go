@@ -443,7 +443,7 @@ func (f *Fs) Hashes() fs.HashSet {
 	if err != nil {
 		return fs.HashSet(fs.HashNone)
 	}
-	sha1Output, err := session.Output("echo 'abc' | sha1sum | awk '{ print $1 }'")
+	sha1Output, err := session.Output("echo 'abc' | sha1sum")
 	expectedSha1 := "03cfd743661f07975fa2f1220c5194cbaff48451"
 	_ = session.Close()
 	if err != nil {
@@ -454,7 +454,7 @@ func (f *Fs) Hashes() fs.HashSet {
 	if err != nil {
 		return fs.HashSet(fs.HashNone)
 	}
-	md5Output, err := session.Output("echo 'abc' | md5sum | awk '{ print $1 }'")
+	md5Output, err := session.Output("echo 'abc' | md5sum")
 	expectedMd5 := "0bee89b07a248e27c83fc3d5951213c1"
 	if err != nil {
 		_ = session.Close()
@@ -508,9 +508,9 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 	err = fs.ErrHashUnsupported
 	var outputBytes []byte
 	if r == fs.HashMD5 {
-		outputBytes, err = session.Output("md5sum \"" + o.path() + "\" | awk '{ print $1 }'")
+		outputBytes, err = session.Output("md5sum \"" + o.path() + "\"")
 	} else if r == fs.HashSHA1 {
-		outputBytes, err = session.Output("sha1sum \"" + o.path() + "\" | awk '{ print $1 }'")
+		outputBytes, err = session.Output("sha1sum \"" + o.path() + "\"")
 	}
 
 	if err != nil {
@@ -528,7 +528,7 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 // an invocation of md5sum/sha1sum to a hash string
 // as expected by the rest of this application
 func parseHash(bytes []byte) string {
-	return strings.Split(string(bytes), "\n")[0]
+	return strings.Split(string(bytes), " ")[0] // Split at hash / filename separator
 }
 
 // Size returns the size in bytes of the remote sftp file

@@ -150,7 +150,7 @@ Modified times are used in syncing and are fully supported.
 ### Limitations ###
 
 SFTP supports checksums if the same login has shell access and `md5sum`
-or `sha1sum` as well as `awk` are in the remote's PATH.
+or `sha1sum` as well as `echo` are in the remote's PATH.
 
 The only ssh agent supported under Windows is Putty's pagent.
 
