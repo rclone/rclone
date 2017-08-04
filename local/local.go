@@ -472,8 +472,16 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 
 	// Do the move
 	err = os.Rename(srcObj.path, dstObj.path)
-	if err != nil {
+	if os.IsNotExist(err) {
+		// race condition, source was deleted in the meantime
 		return nil, err
+	} else if os.IsPermission(err) {
+		// not enough rights to write to dst
+		return nil, err
+	} else if err != nil {
+		// not quite clear, but probably trying to move a file across file system
+		// boundaries. Copying might still work.
+		return nil, fs.ErrorCantMove
 	}
 
 	// Update the info
