@@ -48,6 +48,9 @@ systems they must support a common hash type.
 hash](https://www.dropbox.com/developers/reference/content-hash).
 This is an SHA256 sum of all the 4MB block SHA256s.
 
+* SFTP supports checksums if the same login has shell access and `md5sum`
+or `sha1sum` as well as `echo` are in the remote's PATH.
+
 ### ModTime ###
 
 The cloud storage system supports setting modification times on
