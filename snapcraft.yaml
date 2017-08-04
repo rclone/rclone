@@ -9,14 +9,14 @@ grade: stable
 
 apps:
   rclone:
-    command: bin/rclone
+    command: usr/bin/rclone
     plugs: [home, network, network-bind, fuse-support]
 
 parts:
   rclone:
-    plugin: go
+    plugin: make
     source: https://github.com/ncw/rclone
-    source-tag: v1.36
+    source-tag: v1.37
     source-type: git
-    go-importpath: github.com/ncw/rclone
+    stage-packages: [fuse]
     build-packages: [gcc, libgudev-1.0-dev, fuse]
