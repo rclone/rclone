@@ -508,9 +508,9 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 	err = fs.ErrHashUnsupported
 	var outputBytes []byte
 	if r == fs.HashMD5 {
-		outputBytes, err = session.Output("md5sum " + o.path() + " | awk '{ print $1 }'")
+		outputBytes, err = session.Output("md5sum \"" + o.path() + "\" | awk '{ print $1 }'")
 	} else if r == fs.HashSHA1 {
-		outputBytes, err = session.Output("sha1sum " + o.path() + " | awk '{ print $1 }'")
+		outputBytes, err = session.Output("sha1sum \"" + o.path() + "\" | awk '{ print $1 }'")
 	}
 
 	if err != nil {
