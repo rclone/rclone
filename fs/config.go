@@ -375,8 +375,6 @@ func LoadConfig() {
 	Config.TPSLimitBurst = *tpsLimitBurst
 	Config.BufferSize = bufferSize
 
-	ConfigPath = *configFile
-
 	Config.TrackRenames = *trackRenames
 
 	switch {
@@ -414,6 +412,10 @@ func LoadConfig() {
 
 	// Load configuration file.
 	var err error
+	ConfigPath, err = filepath.Abs(*configFile)
+	if err != nil {
+		ConfigPath = *configFile
+	}
 	configData, err = loadConfigFile()
 	if err == errorConfigFileNotFound {
 		Logf(nil, "Config file %q not found - using defaults", ConfigPath)
