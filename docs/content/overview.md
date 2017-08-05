@@ -27,7 +27,7 @@ Here is an overview of the major features of each cloud storage system.
 | Google Drive                 | MD5         | Yes     | No               | Yes             | R/W       |
 | HTTP                         | -           | No      | No               | No              | R         |
 | Hubic                        | MD5         | Yes     | No               | No              | R/W       |
-| Microsoft Azure Blob Storage | MD5         | Yes     | No               | No              |
+| Microsoft Azure Blob Storage | MD5         | Yes     | No               | No              | R/W
 | Microsoft OneDrive           | SHA1        | Yes     | Yes              | No              | R         |
 | Openstack Swift              | MD5         | Yes     | No               | No              | R/W       |
 | QingStor                     | -           | No      | No               | No              | R/W       |
