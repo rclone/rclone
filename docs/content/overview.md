@@ -15,24 +15,25 @@ show through.
 
 Here is an overview of the major features of each cloud storage system.
 
-| Name                   | Hash        | ModTime | Case Insensitive | Duplicate Files | MIME Type |
-| ---------------------- |:-----------:|:-------:|:----------------:|:---------------:|:---------:|
-| Amazon Drive           | MD5         | No      | Yes              | No              | R         |
-| Amazon S3              | MD5         | Yes     | No               | No              | R/W       |
-| Backblaze B2           | SHA1        | Yes     | No               | No              | R/W       |
-| Box                    | SHA1        | Yes     | Yes              | No              | -         |
-| Dropbox                | DBHASH †    | Yes     | Yes              | No              | -         |
-| FTP                    | -           | No      | No               | No              | -         |
-| Google Cloud Storage   | MD5         | Yes     | No               | No              | R/W       |
-| Google Drive           | MD5         | Yes     | No               | Yes             | R/W       |
-| HTTP                   | -           | No      | No               | No              | R         |
-| Hubic                  | MD5         | Yes     | No               | No              | R/W       |
-| Microsoft OneDrive     | SHA1        | Yes     | Yes              | No              | R         |
-| Openstack Swift        | MD5         | Yes     | No               | No              | R/W       |
-| QingStor               | -           | No      | No               | No              | R/W       |
-| SFTP                   | MD5, SHA1 * | Yes     | Depends          | No              | -         |
-| Yandex Disk            | MD5         | Yes     | No               | No              | R/W       |
-| The local filesystem   | All         | Yes     | Depends          | No              | -         |
+| Name                         | Hash        | ModTime | Case Insensitive | Duplicate Files | MIME Type |
+| ----------------------------:|:-----------:|:-------:|:----------------:|:---------------:|:---------:|
+| Amazon Drive                 | MD5         | No      | Yes              | No              | R         |
+| Amazon S3                    | MD5         | Yes     | No               | No              | R/W       |
+| Backblaze B2                 | SHA1        | Yes     | No               | No              | R/W       |
+| Box                          | SHA1        | Yes     | Yes              | No              | -         |
+| Dropbox                      | DBHASH †    | Yes     | Yes              | No              | -         |
+| FTP                          | -           | No      | No               | No              | -         |
+| Google Cloud Storage         | MD5         | Yes     | No               | No              | R/W       |
+| Google Drive                 | MD5         | Yes     | No               | Yes             | R/W       |
+| HTTP                         | -           | No      | No               | No              | R         |
+| Hubic                        | MD5         | Yes     | No               | No              | R/W       |
+| Microsoft Azure Blob Storage | MD5         | Yes     | No               | No              |
+| Microsoft OneDrive           | SHA1        | Yes     | Yes              | No              | R         |
+| Openstack Swift              | MD5         | Yes     | No               | No              | R/W       |
+| QingStor                     | -           | No      | No               | No              | R/W       |
+| SFTP                         | MD5, SHA1 * | Yes     | Depends          | No              | -         |
+| Yandex Disk                  | MD5         | Yes     | No               | No              | R/W       |
+| The local filesystem         | All         | Yes     | Depends          | No              | -         |
 
 ### Hash ###
 
