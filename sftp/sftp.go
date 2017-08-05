@@ -17,6 +17,7 @@ import (
 	"github.com/xanzy/ssh-agent"
 	"golang.org/x/crypto/ssh"
 	"strings"
+	"regexp"
 )
 
 func init() {
@@ -501,10 +502,11 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 
 	err = fs.ErrHashUnsupported
 	var outputBytes []byte
+	escapedPath := shellEscape(o.path())
 	if r == fs.HashMD5 {
-		outputBytes, err = session.Output("md5sum \"" + o.path() + "\"")
+		outputBytes, err = session.Output("md5sum \"" + escapedPath + "\"")
 	} else if r == fs.HashSHA1 {
-		outputBytes, err = session.Output("sha1sum \"" + o.path() + "\"")
+		outputBytes, err = session.Output("sha1sum \"" + escapedPath + "\"")
 	}
 
 	if err != nil {
@@ -516,6 +518,15 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 	_ = session.Close()
 	str := parseHash(outputBytes)
 	return str, nil
+}
+
+var shellEscapeRegex = regexp.MustCompile(`[^A-Za-z0-9_.,:/@\n-]`)
+
+// Escape a string s.t. it cannot cause unintended behavior
+// when sending it to a shell.
+func shellEscape(str string) string {
+	safe := shellEscapeRegex.ReplaceAllString(str, `\$0`)
+	return strings.Replace(safe, "\n", "'\n'", -1)
 }
 
 // Converts a byte array from the SSH session returned by
