@@ -504,9 +504,9 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 	var outputBytes []byte
 	escapedPath := shellEscape(o.path())
 	if r == fs.HashMD5 {
-		outputBytes, err = session.Output("md5sum \"" + escapedPath + "\"")
+		outputBytes, err = session.Output("md5sum " + escapedPath)
 	} else if r == fs.HashSHA1 {
-		outputBytes, err = session.Output("sha1sum \"" + escapedPath + "\"")
+		outputBytes, err = session.Output("sha1sum " + escapedPath)
 	}
 
 	if err != nil {
