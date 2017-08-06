@@ -14,8 +14,10 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
-	sshagent "github.com/xanzy/ssh-agent"
+	"github.com/xanzy/ssh-agent"
 	"golang.org/x/crypto/ssh"
+	"strings"
+	"regexp"
 )
 
 func init() {
@@ -55,13 +57,14 @@ func init() {
 
 // Fs stores the interface to the remote SFTP files
 type Fs struct {
-	name       string
-	root       string
-	features   *fs.Features // optional features
-	url        string
-	sshClient  *ssh.Client
-	sftpClient *sftp.Client
-	mkdirLock  *stringLock
+	name         string
+	root         string
+	features     *fs.Features // optional features
+	url          string
+	sshClient    *ssh.Client
+	sftpClient   *sftp.Client
+	mkdirLock    *stringLock
+	cachedHashes *fs.HashSet
 }
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -71,6 +74,8 @@ type Object struct {
 	size    int64       // size of the object
 	modTime time.Time   // modification time of the object
 	mode    os.FileMode // mode bits from the file
+	md5sum  *string     // Cached MD5 checksum
+	sha1sum *string     // Cached SHA1 checksum
 }
 
 // ObjectReader holds the sftp.File interface to a remote SFTP file opened for reading
@@ -432,9 +437,44 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	return nil
 }
 
-// Hashes returns fs.HashNone to indicate remote hashing is unavailable
 func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashNone)
+	if f.cachedHashes != nil {
+		return *f.cachedHashes
+	}
+
+	session, err := f.sshClient.NewSession()
+	if err != nil {
+		return fs.HashSet(fs.HashNone)
+	}
+	sha1Output, _ := session.Output("echo 'abc' | sha1sum")
+	expectedSha1 := "03cfd743661f07975fa2f1220c5194cbaff48451"
+	_ = session.Close()
+
+	session, err = f.sshClient.NewSession()
+	if err != nil {
+		return fs.HashSet(fs.HashNone)
+	}
+	md5Output, _ := session.Output("echo 'abc' | md5sum")
+	expectedMd5 := "0bee89b07a248e27c83fc3d5951213c1"
+	_ = session.Close()
+
+	sha1Works := parseHash(sha1Output) == expectedSha1
+	md5Works := parseHash(md5Output) == expectedMd5
+
+	var set fs.HashSet = fs.NewHashSet()
+	if !sha1Works && !md5Works {
+		set.Add(fs.HashNone)
+	}
+	if sha1Works {
+		set.Add(fs.HashSHA1)
+	}
+	if md5Works {
+		set.Add(fs.HashMD5)
+	}
+
+	_ = session.Close()
+	f.cachedHashes = &set
+	return set
 }
 
 // Fs is the filesystem this remote sftp file object is located within
@@ -455,9 +495,58 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-// Hash returns "" since SFTP (in Go or OpenSSH) doesn't support remote calculation of hashes
 func (o *Object) Hash(r fs.HashType) (string, error) {
-	return "", fs.ErrHashUnsupported
+	if r == fs.HashMD5 && o.md5sum != nil {
+		return *o.md5sum, nil
+	} else if r == fs.HashSHA1 && o.sha1sum != nil {
+		return *o.sha1sum, nil
+	}
+
+	session, err := o.fs.sshClient.NewSession()
+	if err != nil {
+		o.fs.cachedHashes = nil // Something has changed on the remote system
+		return "", fs.ErrHashUnsupported
+	}
+
+	err = fs.ErrHashUnsupported
+	var outputBytes []byte
+	escapedPath := shellEscape(o.path())
+	if r == fs.HashMD5 {
+		outputBytes, err = session.Output("md5sum " + escapedPath)
+	} else if r == fs.HashSHA1 {
+		outputBytes, err = session.Output("sha1sum " + escapedPath)
+	}
+
+	if err != nil {
+		o.fs.cachedHashes = nil // Something has changed on the remote system
+		_ = session.Close()
+		return "", fs.ErrHashUnsupported
+	}
+
+	_ = session.Close()
+	str := parseHash(outputBytes)
+	if r == fs.HashMD5 {
+		o.md5sum = &str
+	} else if r == fs.HashSHA1 {
+		o.sha1sum = &str
+	}
+	return str, nil
+}
+
+var shellEscapeRegex = regexp.MustCompile(`[^A-Za-z0-9_.,:/@\n-]`)
+
+// Escape a string s.t. it cannot cause unintended behavior
+// when sending it to a shell.
+func shellEscape(str string) string {
+	safe := shellEscapeRegex.ReplaceAllString(str, `\$0`)
+	return strings.Replace(safe, "\n", "'\n'", -1)
+}
+
+// Converts a byte array from the SSH session returned by
+// an invocation of md5sum/sha1sum to a hash string
+// as expected by the rest of this application
+func parseHash(bytes []byte) string {
+	return strings.Split(string(bytes), " ")[0] // Split at hash / filename separator
 }
 
 // Size returns the size in bytes of the remote sftp file
