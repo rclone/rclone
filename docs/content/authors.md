@@ -94,3 +94,4 @@ Contributors
   * Oliver Heyme <olihey@googlemail.com>
   * wuyu <wuyu@yunify.com>
   * Andrei Dragomir <adragomi@adobe.com>
+  * Christian Brüggemann <mail@cbruegg.com>
