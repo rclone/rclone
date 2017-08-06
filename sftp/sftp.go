@@ -74,6 +74,8 @@ type Object struct {
 	size    int64       // size of the object
 	modTime time.Time   // modification time of the object
 	mode    os.FileMode // mode bits from the file
+	md5sum  *string     // Cached MD5 checksum
+	sha1sum *string     // Cached SHA1 checksum
 }
 
 // ObjectReader holds the sftp.File interface to a remote SFTP file opened for reading
@@ -494,6 +496,12 @@ func (o *Object) Remote() string {
 }
 
 func (o *Object) Hash(r fs.HashType) (string, error) {
+	if r == fs.HashMD5 && o.md5sum != nil {
+		return *o.md5sum, nil
+	} else if r == fs.HashSHA1 && o.sha1sum != nil {
+		return *o.sha1sum, nil
+	}
+
 	session, err := o.fs.sshClient.NewSession()
 	if err != nil {
 		o.fs.cachedHashes = nil // Something has changed on the remote system
@@ -517,6 +525,11 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 
 	_ = session.Close()
 	str := parseHash(outputBytes)
+	if r == fs.HashMD5 {
+		o.md5sum = &str
+	} else if r == fs.HashSHA1 {
+		o.sha1sum = &str
+	}
 	return str, nil
 }
 
