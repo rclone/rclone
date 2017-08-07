@@ -5,6 +5,7 @@
 package sftp
 
 import (
+	"context"
 	"io"
 	"io/ioutil"
 	"os"
@@ -19,6 +20,11 @@ import (
 	"github.com/pkg/sftp"
 	"github.com/xanzy/ssh-agent"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/time/rate"
+)
+
+const (
+	connectionsPerSecond = 10 // don't make more than this many ssh connections/s
 )
 
 func init() {
@@ -69,6 +75,7 @@ type Fs struct {
 	cachedHashes *fs.HashSet
 	poolMu       sync.Mutex
 	pool         []*conn
+	connLimit    *rate.Limiter // for limiting number of connections per second
 }
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -138,6 +145,11 @@ func (c *conn) closed() error {
 
 // Open a new connection to the SFTP server.
 func (f *Fs) sftpConnection() (c *conn, err error) {
+	// Rate limit rate of new connections
+	err = f.connLimit.Wait(context.Background())
+	if err != nil {
+		return nil, errors.Wrap(err, "limiter failed in connect")
+	}
 	c = &conn{
 		err: make(chan error, 1),
 	}
@@ -276,6 +288,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		port:      port,
 		url:       "sftp://" + user + "@" + host + ":" + port + "/" + root,
 		mkdirLock: newStringLock(),
+		connLimit: rate.NewLimiter(rate.Limit(connectionsPerSecond), 1),
 	}
 	f.features = (&fs.Features{}).Fill(f)
 	// Make a connection and pool it to return errors early
