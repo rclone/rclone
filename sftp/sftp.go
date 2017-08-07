@@ -817,6 +817,9 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 
 // Update a remote sftp file using the data <in> and ModTime from <src>
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	// Clear the hash cache since we are about to update the object
+	o.md5sum = nil
+	o.sha1sum = nil
 	c, err := o.fs.getSftpConnection()
 	if err != nil {
 		return errors.Wrap(err, "Update")
