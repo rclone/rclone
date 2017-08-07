@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/ncw/rclone/fs"
@@ -16,8 +18,6 @@ import (
 	"github.com/pkg/sftp"
 	"github.com/xanzy/ssh-agent"
 	"golang.org/x/crypto/ssh"
-	"strings"
-	"regexp"
 )
 
 func init() {
@@ -437,6 +437,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	return nil
 }
 
+// Hashes returns the supported hash types of the filesystem
 func (f *Fs) Hashes() fs.HashSet {
 	if f.cachedHashes != nil {
 		return *f.cachedHashes
@@ -461,7 +462,7 @@ func (f *Fs) Hashes() fs.HashSet {
 	sha1Works := parseHash(sha1Output) == expectedSha1
 	md5Works := parseHash(md5Output) == expectedMd5
 
-	var set fs.HashSet = fs.NewHashSet()
+	set := fs.NewHashSet()
 	if !sha1Works && !md5Works {
 		set.Add(fs.HashNone)
 	}
@@ -495,6 +496,8 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
+// Hash returns the selected checksum of the file
+// If no checksum is available it returns ""
 func (o *Object) Hash(r fs.HashType) (string, error) {
 	if r == fs.HashMD5 && o.md5sum != nil {
 		return *o.md5sum, nil
