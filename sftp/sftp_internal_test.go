@@ -1,9 +1,10 @@
 package sftp
 
 import (
-	"testing"
-	"github.com/stretchr/testify/assert"
 	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestShellEscape(t *testing.T) {
