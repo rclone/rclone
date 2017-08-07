@@ -100,6 +100,7 @@ var (
 	tpsLimit        = Float64P("tpslimit", "", 0, "Limit HTTP transactions per second to this.")
 	tpsLimitBurst   = IntP("tpslimit-burst", "", 1, "Max burst of transactions for --tpslimit.")
 	bindAddr        = StringP("bind", "", "", "Local address to bind to for outgoing connections, IPv4, IPv6 or name.")
+	disableFeatures = StringP("disable", "", "", "Disable a comma separated list of features.  Use help to see a list.")
 	logLevel        = LogLevelNotice
 	statsLogLevel   = LogLevelInfo
 	bwLimit         BwTimetable
@@ -235,6 +236,7 @@ type ConfigInfo struct {
 	TPSLimit           float64
 	TPSLimitBurst      int
 	BindAddr           net.IP
+	DisableFeatures    []string
 }
 
 // Return the path to the configuration file
@@ -408,6 +410,13 @@ func LoadConfig() {
 			log.Fatalf("--bind: Expecting 1 IP address for %q but got %d", *bindAddr, len(addrs))
 		}
 		Config.BindAddr = addrs[0]
+	}
+
+	if *disableFeatures != "" {
+		if *disableFeatures == "help" {
+			log.Fatalf("Possible backend features are: %s\n", strings.Join(new(Features).List(), ", "))
+		}
+		Config.DisableFeatures = strings.Split(*disableFeatures, ",")
 	}
 
 	// Load configuration file.
