@@ -5,7 +5,6 @@
 package sftp
 
 import (
-	"context"
 	"io"
 	"io/ioutil"
 	"os"
@@ -20,6 +19,7 @@ import (
 	"github.com/pkg/sftp"
 	"github.com/xanzy/ssh-agent"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/net/context"
 	"golang.org/x/time/rate"
 )
 
