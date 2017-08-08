@@ -74,6 +74,12 @@
   version = "v3.0.0"
 
 [[projects]]
+  name = "github.com/dropbox/dropbox-sdk-go-unofficial"
+  packages = ["dropbox","dropbox/async","dropbox/files","dropbox/properties"]
+  revision = "87c5a55c1cbe542a328e304b8717218b6a2ef21e"
+  version = "v2.0.0"
+
+[[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
   revision = "d3de07a94d22b4a0972deb4b96d790c2c0ce8333"
@@ -120,12 +126,6 @@
   packages = ["."]
   revision = "9e777a8366cce605130a531d2cd6363d07ad7317"
   version = "v0.0.2"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/ncw/dropbox-sdk-go-unofficial"
-  packages = ["dropbox","dropbox/async","dropbox/files","dropbox/properties"]
-  revision = "5d9f46f9862ae5f65e264e178de6ce2c41a32d40"
 
 [[projects]]
   branch = "master"
@@ -292,6 +292,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0b3a6116075cedb5990bd6edb0e5cfdaa04c7b28462a9c6cb02b8cbb63a2dab6"
+  inputs-digest = "06ce607d1f66fd98f5b2375759b612bf1df211f9d431ddcc54724e4f97a4bd4e"
   solver-name = "gps-cdcl"
   solver-version = 1
