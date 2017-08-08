@@ -131,7 +131,7 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/ncw/dropbox-sdk-go-unofficial"
+  name = "github.com/dropbox/dropbox-sdk-go-unofficial"
 
 [[constraint]]
   branch = "master"
