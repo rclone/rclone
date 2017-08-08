@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"sync"
 
 	"github.com/DATA-DOG/godog"
 
@@ -66,7 +67,9 @@ func ObjectFeatureContext(s *godog.Suite) {
 }
 
 // --------------------------------------------------------------------------
-var putObjectOutput *qs.PutObjectOutput
+const concurrency = 16
+
+var putObjectOutputs [concurrency]*qs.PutObjectOutput
 
 func putObjectWithKey(objectKey string) error {
 	_, err = exec.Command("dd", "if=/dev/zero", "of=/tmp/sdk_bin", "bs=1024", "count=1").Output()
@@ -75,189 +78,557 @@ func putObjectWithKey(objectKey string) error {
 	}
 	defer os.Remove("/tmp/sdk_bin")
 
-	file, err := os.Open("/tmp/sdk_bin")
-	if err != nil {
-		return err
+	errChan := make(chan error, concurrency)
+
+	wg := sync.WaitGroup{}
+	wg.Add(concurrency)
+	for i := 0; i < concurrency; i++ {
+		go func(index int, errChan chan<- error) {
+			wg.Done()
+
+			file, err := os.Open("/tmp/sdk_bin")
+			if err != nil {
+				errChan <- err
+				return
+			}
+			defer file.Close()
+
+			hash := md5.New()
+			_, err = io.Copy(hash, file)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			hashInBytes := hash.Sum(nil)[:16]
+			md5String := hex.EncodeToString(hashInBytes)
+
+			//file.Seek(0, io.SeekStart)
+			file.Seek(0, 0)
+			if len(objectKey) > 1000 {
+				objectKey = objectKey[:1000]
+			}
+			putObjectOutput, err := bucket.PutObject(
+				fmt.Sprintf("%s-%d", objectKey, index),
+				&qs.PutObjectInput{
+					ContentType: qs.String("text/plain"),
+					ContentMD5:  qs.String(md5String),
+					Body:        file,
+				},
+			)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			putObjectOutputs[index] = putObjectOutput
+			errChan <- nil
+			return
+		}(i, errChan)
 	}
-	defer file.Close()
+	wg.Wait()
 
-	hash := md5.New()
-	_, err = io.Copy(hash, file)
-	hashInBytes := hash.Sum(nil)[:16]
-	md5String := hex.EncodeToString(hashInBytes)
-
-	//file.Seek(0, io.SeekStart)
-	file.Seek(0, 0)
-	putObjectOutput, err = bucket.PutObject(objectKey, &qs.PutObjectInput{
-		ContentType: qs.String("text/plain"),
-		ContentMD5:  qs.String(md5String),
-		Body:        file,
-	})
-	return err
+	for i := 0; i < concurrency; i++ {
+		err = <-errChan
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func putObjectStatusCodeIs(statusCode int) error {
-	return checkEqual(qs.IntValue(putObjectOutput.StatusCode), statusCode)
+	for _, output := range putObjectOutputs {
+		err = checkEqual(qs.IntValue(output.StatusCode), statusCode)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // --------------------------------------------------------------------------
-var copyObjectOutput *qs.PutObjectOutput
+var copyObjectOutputs [concurrency]*qs.PutObjectOutput
 
 func copyObjectWithKey(objectKey string) error {
-	copyObjectKey := fmt.Sprintf(`%s_copy`, objectKey)
-	copyObjectOutput, err = bucket.PutObject(copyObjectKey, &qs.PutObjectInput{
-		XQSCopySource: qs.String(fmt.Sprintf(`/%s/%s`, tc.BucketName, objectKey)),
-	})
-	return err
+	errChan := make(chan error, concurrency)
+
+	wg := sync.WaitGroup{}
+	wg.Add(concurrency)
+	for i := 0; i < concurrency; i++ {
+		go func(index int, errChan chan<- error) {
+			wg.Done()
+
+			if len(objectKey) > 1000 {
+				objectKey = objectKey[:1000]
+			}
+			copyObjectOutput, err := bucket.PutObject(
+				fmt.Sprintf("%s-%d-copy", objectKey, index),
+				&qs.PutObjectInput{
+					XQSCopySource: qs.String(
+						fmt.Sprintf("/%s/%s-%d", tc.BucketName, objectKey, index),
+					),
+				})
+			if err != nil {
+				errChan <- err
+				return
+			}
+			copyObjectOutputs[index] = copyObjectOutput
+			errChan <- nil
+			return
+		}(i, errChan)
+	}
+	wg.Wait()
+
+	for i := 0; i < concurrency; i++ {
+		err = <-errChan
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func copyObjectStatusCodeIs(statusCode int) error {
-	return checkEqual(qs.IntValue(copyObjectOutput.StatusCode), statusCode)
+	for _, output := range copyObjectOutputs {
+		err = checkEqual(qs.IntValue(output.StatusCode), statusCode)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // --------------------------------------------------------------------------
-var moveObjectOutput *qs.PutObjectOutput
+var moveObjectOutputs [concurrency]*qs.PutObjectOutput
 
 func moveObjectWithKey(objectKey string) error {
-	copyObjectKey := fmt.Sprintf(`%s_copy`, objectKey)
-	moveObjectKey := fmt.Sprintf(`%s_move`, objectKey)
-	moveObjectOutput, err = bucket.PutObject(moveObjectKey, &qs.PutObjectInput{
-		XQSMoveSource: qs.String(fmt.Sprintf(`/%s/%s`, tc.BucketName, copyObjectKey)),
-	})
-	return err
+	errChan := make(chan error, concurrency)
+
+	wg := sync.WaitGroup{}
+	wg.Add(concurrency)
+	for i := 0; i < concurrency; i++ {
+		go func(index int, errChan chan<- error) {
+			wg.Done()
+
+			if len(objectKey) > 1000 {
+				objectKey = objectKey[:1000]
+			}
+			moveObjectOutput, err := bucket.PutObject(
+				fmt.Sprintf("%s-%d-move", objectKey, index),
+				&qs.PutObjectInput{
+					XQSMoveSource: qs.String(
+						fmt.Sprintf(`/%s/%s-%d-copy`, tc.BucketName, objectKey, index),
+					),
+				})
+			if err != nil {
+				errChan <- err
+				return
+			}
+			moveObjectOutputs[index] = moveObjectOutput
+			errChan <- nil
+			return
+		}(i, errChan)
+	}
+	wg.Wait()
+
+	for i := 0; i < concurrency; i++ {
+		err = <-errChan
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func moveObjectStatusCodeIs(statusCode int) error {
-	return checkEqual(qs.IntValue(moveObjectOutput.StatusCode), statusCode)
+	for _, output := range moveObjectOutputs {
+		err = checkEqual(qs.IntValue(output.StatusCode), statusCode)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // --------------------------------------------------------------------------
 
-var getObjectOutput *qs.GetObjectOutput
+var getObjectOutputs [concurrency]*qs.GetObjectOutput
 
 func getObjectWithKey(objectKey string) error {
-	getObjectOutput, err = bucket.GetObject(objectKey, nil)
-	return err
+	errChan := make(chan error, concurrency)
+
+	wg := sync.WaitGroup{}
+	wg.Add(concurrency)
+	for i := 0; i < concurrency; i++ {
+		go func(index int, errChan chan<- error) {
+			wg.Done()
+
+			if len(objectKey) > 1000 {
+				objectKey = objectKey[:1000]
+			}
+			getObjectOutput, err := bucket.GetObject(
+				fmt.Sprintf("%s-%d", objectKey, index), nil,
+			)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			getObjectOutputs[index] = getObjectOutput
+			errChan <- nil
+			return
+		}(i, errChan)
+	}
+	wg.Wait()
+
+	for i := 0; i < concurrency; i++ {
+		err = <-errChan
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func getObjectStatusCodeIs(statusCode int) error {
-	return checkEqual(qs.IntValue(getObjectOutput.StatusCode), statusCode)
+	for _, output := range getObjectOutputs {
+		err = checkEqual(qs.IntValue(output.StatusCode), statusCode)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func getObjectContentLengthIs(length int) error {
 	buffer := &bytes.Buffer{}
-	buffer.ReadFrom(getObjectOutput.Body)
-	getObjectOutput.Body.Close()
-	return checkEqual(len(buffer.Bytes())*1024, length)
+	for _, output := range getObjectOutputs {
+		buffer.Truncate(0)
+		buffer.ReadFrom(output.Body)
+		err = checkEqual(len(buffer.Bytes())*1024, length)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // --------------------------------------------------------------------------
 
-var getObjectWithContentTypeRequest *request.Request
+var getObjectWithContentTypeRequests [concurrency]*request.Request
 
 func getObjectWithContentType(objectKey, contentType string) error {
-	getObjectWithContentTypeRequest, _, err = bucket.GetObjectRequest(
-		objectKey,
-		&qs.GetObjectInput{
-			ResponseContentType: qs.String(contentType),
-		},
-	)
-	if err != nil {
-		return err
+	errChan := make(chan error, concurrency)
+
+	wg := sync.WaitGroup{}
+	wg.Add(concurrency)
+	for i := 0; i < concurrency; i++ {
+		go func(index int, errChan chan<- error) {
+			wg.Done()
+
+			if len(objectKey) > 1000 {
+				objectKey = objectKey[:1000]
+			}
+			getObjectWithContentTypeRequest, _, err := bucket.GetObjectRequest(
+				fmt.Sprintf("%s-%d", objectKey, index),
+				&qs.GetObjectInput{
+					ResponseContentType: qs.String(contentType),
+				},
+			)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			err = getObjectWithContentTypeRequest.Send()
+			if err != nil {
+				errChan <- err
+				return
+			}
+			err = getObjectWithContentTypeRequest.Send()
+			if err != nil {
+				errChan <- err
+				return
+			}
+			getObjectWithContentTypeRequests[index] = getObjectWithContentTypeRequest
+			errChan <- nil
+			return
+		}(i, errChan)
 	}
-	err = getObjectWithContentTypeRequest.Send()
-	if err != nil {
-		return err
+	wg.Wait()
+
+	for i := 0; i < concurrency; i++ {
+		err = <-errChan
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func getObjectContentTypeIs(contentType string) error {
-	return checkEqual(getObjectWithContentTypeRequest.HTTPResponse.Header.Get("Content-Type"), contentType)
+	for _, r := range getObjectWithContentTypeRequests {
+		err = checkEqual(r.HTTPResponse.Header.Get("Content-Type"), contentType)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // --------------------------------------------------------------------------
 
-var getObjectWithQuerySignatureURL string
+var getObjectWithQuerySignatureURLs [concurrency]string
 
 func getObjectWithQuerySignature(objectKey string) error {
-	r, _, err := bucket.GetObjectRequest(objectKey, nil)
-	if err != nil {
-		return err
-	}
+	errChan := make(chan error, concurrency)
 
-	err = r.SignQuery(10)
-	if err != nil {
-		return err
-	}
+	wg := sync.WaitGroup{}
+	wg.Add(concurrency)
+	for i := 0; i < concurrency; i++ {
+		go func(index int, errChan chan<- error) {
+			wg.Done()
 
-	getObjectWithQuerySignatureURL = r.HTTPRequest.URL.String()
+			if len(objectKey) > 1000 {
+				objectKey = objectKey[:1000]
+			}
+			r, _, err := bucket.GetObjectRequest(
+				fmt.Sprintf("%s-%d", objectKey, index), nil,
+			)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			err = r.SignQuery(10)
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			getObjectWithQuerySignatureURLs[index] = r.HTTPRequest.URL.String()
+			errChan <- nil
+			return
+		}(i, errChan)
+	}
+	wg.Wait()
+
+	for i := 0; i < concurrency; i++ {
+		err = <-errChan
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 func getObjectWithQuerySignatureContentLengthIs(length int) error {
-	out, err := http.Get(getObjectWithQuerySignatureURL)
-	if err != nil {
-		return err
-	}
 	buffer := &bytes.Buffer{}
-	buffer.ReadFrom(out.Body)
-	out.Body.Close()
-
-	return checkEqual(len(buffer.Bytes())*1024, length)
+	for _, url := range getObjectWithQuerySignatureURLs {
+		out, err := http.Get(url)
+		if err != nil {
+			return err
+		}
+		buffer.Truncate(0)
+		buffer.ReadFrom(out.Body)
+		out.Body.Close()
+		err = checkEqual(len(buffer.Bytes())*1024, length)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // --------------------------------------------------------------------------
 
-var headObjectOutput *qs.HeadObjectOutput
+var headObjectOutputs [concurrency]*qs.HeadObjectOutput
 
 func headObjectWithKey(objectKey string) error {
-	headObjectOutput, err = bucket.HeadObject(objectKey, nil)
-	return err
+	errChan := make(chan error, concurrency)
+
+	wg := sync.WaitGroup{}
+	wg.Add(concurrency)
+	for i := 0; i < concurrency; i++ {
+		go func(index int, errChan chan<- error) {
+			wg.Done()
+
+			if len(objectKey) > 1000 {
+				objectKey = objectKey[:1000]
+			}
+			headObjectOutput, err := bucket.HeadObject(
+				fmt.Sprintf("%s-%d", objectKey, index), nil,
+			)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			headObjectOutputs[index] = headObjectOutput
+			errChan <- nil
+			return
+		}(i, errChan)
+	}
+	wg.Wait()
+
+	for i := 0; i < concurrency; i++ {
+		err = <-errChan
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func headObjectStatusCodeIs(statusCode int) error {
-	return checkEqual(qs.IntValue(headObjectOutput.StatusCode), statusCode)
+	for _, output := range headObjectOutputs {
+		err = checkEqual(qs.IntValue(output.StatusCode), statusCode)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // --------------------------------------------------------------------------
 
-var optionsObjectOutput *qs.OptionsObjectOutput
+var optionsObjectOutputs [concurrency]*qs.OptionsObjectOutput
 
 func optionsObjectWithMethodAndOrigin(objectKey, method, origin string) error {
-	optionsObjectOutput, err = bucket.OptionsObject(
-		objectKey,
-		&qs.OptionsObjectInput{
-			AccessControlRequestMethod: qs.String(method),
-			Origin: qs.String(origin),
-		},
-	)
-	return err
+	errChan := make(chan error, concurrency)
+
+	wg := sync.WaitGroup{}
+	wg.Add(concurrency)
+	for i := 0; i < concurrency; i++ {
+		go func(index int, errChan chan<- error) {
+			wg.Done()
+
+			if len(objectKey) > 1000 {
+				objectKey = objectKey[:1000]
+			}
+			optionsObjectOutput, err := bucket.OptionsObject(
+				fmt.Sprintf("%s-%d", objectKey, index),
+				&qs.OptionsObjectInput{
+					AccessControlRequestMethod: qs.String(method),
+					Origin: qs.String(origin),
+				},
+			)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			optionsObjectOutputs[index] = optionsObjectOutput
+			errChan <- nil
+			return
+		}(i, errChan)
+	}
+	wg.Wait()
+
+	for i := 0; i < concurrency; i++ {
+		err = <-errChan
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func optionsObjectStatusCodeIs(statusCode int) error {
-	return checkEqual(qs.IntValue(optionsObjectOutput.StatusCode), statusCode)
+	for _, output := range optionsObjectOutputs {
+		err = checkEqual(qs.IntValue(output.StatusCode), statusCode)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // --------------------------------------------------------------------------
 
-var deleteObjectOutput *qs.DeleteObjectOutput
-var deleteTheMoveObjectOutput *qs.DeleteObjectOutput
+var deleteObjectOutputs [concurrency]*qs.DeleteObjectOutput
+var deleteTheMoveObjectOutputs [concurrency]*qs.DeleteObjectOutput
 
 func deleteObjectWithKey(objectKey string) error {
-	deleteObjectOutput, err = bucket.DeleteObject(objectKey)
-	return err
+	errChan := make(chan error, concurrency)
+
+	wg := sync.WaitGroup{}
+	wg.Add(concurrency)
+	for i := 0; i < concurrency; i++ {
+		go func(index int, errChan chan<- error) {
+			wg.Done()
+
+			if len(objectKey) > 1000 {
+				objectKey = objectKey[:1000]
+			}
+			deleteObjectOutput, err := bucket.DeleteObject(
+				fmt.Sprintf("%s-%d", objectKey, index),
+			)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			deleteObjectOutputs[index] = deleteObjectOutput
+			errChan <- nil
+			return
+		}(i, errChan)
+	}
+	wg.Wait()
+
+	for i := 0; i < concurrency; i++ {
+		err = <-errChan
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func deleteObjectStatusCodeIs(statusCode int) error {
-	return checkEqual(qs.IntValue(deleteObjectOutput.StatusCode), statusCode)
+	for _, output := range deleteObjectOutputs {
+		err = checkEqual(qs.IntValue(output.StatusCode), statusCode)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func deleteTheMoveObjectWithKey(objectKey string) error {
-	deleteTheMoveObjectOutput, err = bucket.DeleteObject(fmt.Sprintf(`%s_move`, objectKey))
-	return err
+	errChan := make(chan error, concurrency)
+
+	wg := sync.WaitGroup{}
+	wg.Add(concurrency)
+	for i := 0; i < concurrency; i++ {
+		go func(index int, errChan chan<- error) {
+			wg.Done()
+
+			if len(objectKey) > 1000 {
+				objectKey = objectKey[:1000]
+			}
+			deleteTheMoveObjectOutput, err := bucket.DeleteObject(
+				fmt.Sprintf("%s-%d-move", objectKey, index),
+			)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			deleteTheMoveObjectOutputs[index] = deleteTheMoveObjectOutput
+			errChan <- nil
+			return
+		}(i, errChan)
+	}
+	wg.Wait()
+
+	for i := 0; i < concurrency; i++ {
+		err = <-errChan
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func deleteTheMoveObjectStatusCodeIs(statusCode int) error {
-	return checkEqual(qs.IntValue(deleteTheMoveObjectOutput.StatusCode), statusCode)
+	for _, output := range deleteTheMoveObjectOutputs {
+		err = checkEqual(qs.IntValue(output.StatusCode), statusCode)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

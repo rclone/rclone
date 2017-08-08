@@ -1,6 +1,11 @@
 hash: 2e6b1ed4a2ee0638abc2e819ac3c247eaf80fa0f2053cfc41eecf883054c6032
-updated: 2017-05-22T14:58:58.927797848+08:00
+updated: 2017-07-20T20:14:05.143145325+08:00
 imports:
+- name: github.com/DATA-DOG/godog
+  version: 70f777599da0f5de682b8848d356611c1738b695
+  subpackages:
+  - colors
+  - gherkin
 - name: github.com/pengsrc/go-shared
   version: 454950d6a0782c34427d4f29b46c6bf447256f20
   subpackages:
@@ -8,8 +13,8 @@ imports:
   - convert
   - json
   - yaml
-- name: github.com/Sirupsen/logrus
-  version: d26492970760ca5d33129d2d799e34be5c4782eb
+- name: github.com/sirupsen/logrus
+  version: 00386b3fbd637582f90cb17482dc3087646c0ac2
 - name: golang.org/x/sys
   version: f3918c30c5c2cb527c0b071a27c35120a6c0719a
   repo: https://github.com/golang/sys.git

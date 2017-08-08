@@ -14,7 +14,7 @@ const (
 	red     = 31
 	green   = 32
 	yellow  = 33
-	blue    = 34
+	blue    = 36
 	gray    = 37
 )
 
@@ -153,7 +153,7 @@ func (f *TextFormatter) needsQuoting(text string) bool {
 		if !((ch >= 'a' && ch <= 'z') ||
 			(ch >= 'A' && ch <= 'Z') ||
 			(ch >= '0' && ch <= '9') ||
-			ch == '-' || ch == '.') {
+			ch == '-' || ch == '.' || ch == '_' || ch == '/' || ch == '@' || ch == '^' || ch == '+') {
 			return true
 		}
 	}
@@ -169,21 +169,21 @@ func (f *TextFormatter) appendKeyValue(b *bytes.Buffer, key string, value interf
 }
 
 func (f *TextFormatter) appendValue(b *bytes.Buffer, value interface{}) {
-	switch value := value.(type) {
-	case string:
-		if !f.needsQuoting(value) {
-			b.WriteString(value)
-		} else {
-			fmt.Fprintf(b, "%s%v%s", f.QuoteCharacter, value, f.QuoteCharacter)
-		}
-	case error:
-		errmsg := value.Error()
-		if !f.needsQuoting(errmsg) {
-			b.WriteString(errmsg)
-		} else {
-			fmt.Fprintf(b, "%s%v%s", f.QuoteCharacter, errmsg, f.QuoteCharacter)
-		}
-	default:
-		fmt.Fprint(b, value)
+	stringVal, ok := value.(string)
+	if !ok {
+		stringVal = fmt.Sprint(value)
 	}
+
+	if !f.needsQuoting(stringVal) {
+		b.WriteString(stringVal)
+	} else {
+		b.WriteString(f.quoteString(stringVal))
+	}
+}
+
+func (f *TextFormatter) quoteString(v string) string {
+	escapedQuote := fmt.Sprintf("\\%s", f.QuoteCharacter)
+	escapedValue := strings.Replace(v, f.QuoteCharacter, escapedQuote, -1)
+
+	return fmt.Sprintf("%s%v%s", f.QuoteCharacter, escapedValue, f.QuoteCharacter)
 }

@@ -10,4 +10,3 @@ install:
   - go get github.com/stretchr/testify/assert
 script:
   - go test -race -v .
-  - cd hooks/null && go test -race -v .

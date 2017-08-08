@@ -153,7 +153,7 @@
 			return nil, err
 		}
 
-		requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+		requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 		x.RequestID = &requestID
 
 		return x, err
@@ -186,10 +186,17 @@
 		{{$uri := replace $uri "}" ">" -1}}
 		{{$uri := dashConnected $uri}}
 
+		{{- if ne $belongs "Service"}}
+			properties := *s.Properties
+		{{- end}}
+		{{if eq $service.Name "Object"}}
+			properties.ObjectKey = &objectKey
+		{{end}}
+
 		o := &data.Operation{
 			Config:        s.Config,
 			{{- if ne $belongs "Service"}}
-				Properties:    s.Properties,
+				Properties:    &properties,
 			{{- end}}
 			APIName:       "{{$operation.Name}}",
 			RequestMethod: "{{$operation.Request.Method}}",
@@ -209,10 +216,6 @@
 				},
 			{{end -}}
 		}
-
-		{{if eq $service.Name "Object"}}
-			s.Properties.ObjectKey = &objectKey
-		{{end}}
 
 		x := &{{$opID}}Output{}
 		r, err := request.New(o, {{if $hasInput}}input{{else}}nil{{end}}, x)

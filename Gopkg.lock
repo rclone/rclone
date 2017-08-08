@@ -14,12 +14,6 @@
   version = "v0.10.0"
 
 [[projects]]
-  name = "github.com/Sirupsen/logrus"
-  packages = ["."]
-  revision = "202f25545ea4cf9b191ff7f846df5d87c9382c2b"
-  version = "v1.0.0"
-
-[[projects]]
   name = "github.com/Azure/azure-sdk-for-go"
   packages = ["storage"]
   revision = "5b6066bbd213e47c49a5fa2be2b29529bbcb6704"
@@ -200,6 +194,12 @@
   revision = "541ff5ee47f1dddf6a5281af78307d921524bcb5"
 
 [[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "a3f95b5c423586578a4e099b11a46c2479628cac"
+  version = "1.0.2"
+
+[[projects]]
   branch = "master"
   name = "github.com/skratchdot/open-golang"
   packages = ["open"]
@@ -232,8 +232,8 @@
 [[projects]]
   name = "github.com/yunify/qingstor-sdk-go"
   packages = [".","config","logger","request","request/builder","request/data","request/errors","request/signer","request/unpacker","service","utils"]
-  revision = "26f2cc6f249f4c2a08ed89f1d7d566a463c1dfc2"
-  version = "v2.2.5"
+  revision = "68ce7c233bde780b2bbe1e1cf018db8e2df86361"
+  version = "v2.2.6"
 
 [[projects]]
   branch = "master"
@@ -292,6 +292,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "904bc0ea1f770b0473b24560dc0d24c5c647971e959e58538799c5cad1eaa97e"
+  inputs-digest = "0b3a6116075cedb5990bd6edb0e5cfdaa04c7b28462a9c6cb02b8cbb63a2dab6"
   solver-name = "gps-cdcl"
   solver-version = 1
