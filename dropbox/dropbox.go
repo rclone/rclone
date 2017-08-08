@@ -30,8 +30,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ncw/dropbox-sdk-go-unofficial/dropbox"
-	"github.com/ncw/dropbox-sdk-go-unofficial/dropbox/files"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/files"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/oauthutil"
 	"github.com/ncw/rclone/pacer"
