@@ -312,6 +312,6 @@ func (logger *Logger) level() Level {
 	return Level(atomic.LoadUint32((*uint32)(&logger.Level)))
 }
 
-func (logger *Logger) setLevel(level Level) {
+func (logger *Logger) SetLevel(level Level) {
 	atomic.StoreUint32((*uint32)(&logger.Level), uint32(level))
 }

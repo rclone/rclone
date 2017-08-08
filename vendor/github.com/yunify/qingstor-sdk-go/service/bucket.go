@@ -19,6 +19,7 @@ package service
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"time"
 
 	"github.com/yunify/qingstor-sdk-go/config"
@@ -29,6 +30,7 @@ import (
 
 var _ fmt.State
 var _ io.Reader
+var _ http.Header
 var _ time.Time
 var _ config.Config
 
@@ -62,7 +64,7 @@ func (s *Bucket) Delete() (*DeleteBucketOutput, error) {
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -71,9 +73,11 @@ func (s *Bucket) Delete() (*DeleteBucketOutput, error) {
 // DeleteRequest creates request and output object of DeleteBucket.
 func (s *Bucket) DeleteRequest() (*request.Request, *DeleteBucketOutput, error) {
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "DELETE Bucket",
 		RequestMethod: "DELETE",
 		RequestURI:    "/<bucket-name>",
@@ -112,7 +116,7 @@ func (s *Bucket) DeleteCORS() (*DeleteBucketCORSOutput, error) {
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -121,9 +125,11 @@ func (s *Bucket) DeleteCORS() (*DeleteBucketCORSOutput, error) {
 // DeleteCORSRequest creates request and output object of DeleteBucketCORS.
 func (s *Bucket) DeleteCORSRequest() (*request.Request, *DeleteBucketCORSOutput, error) {
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "DELETE Bucket CORS",
 		RequestMethod: "DELETE",
 		RequestURI:    "/<bucket-name>?cors",
@@ -162,7 +168,7 @@ func (s *Bucket) DeleteExternalMirror() (*DeleteBucketExternalMirrorOutput, erro
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -171,9 +177,11 @@ func (s *Bucket) DeleteExternalMirror() (*DeleteBucketExternalMirrorOutput, erro
 // DeleteExternalMirrorRequest creates request and output object of DeleteBucketExternalMirror.
 func (s *Bucket) DeleteExternalMirrorRequest() (*request.Request, *DeleteBucketExternalMirrorOutput, error) {
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "DELETE Bucket External Mirror",
 		RequestMethod: "DELETE",
 		RequestURI:    "/<bucket-name>?mirror",
@@ -212,7 +220,7 @@ func (s *Bucket) DeletePolicy() (*DeleteBucketPolicyOutput, error) {
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -221,9 +229,11 @@ func (s *Bucket) DeletePolicy() (*DeleteBucketPolicyOutput, error) {
 // DeletePolicyRequest creates request and output object of DeleteBucketPolicy.
 func (s *Bucket) DeletePolicyRequest() (*request.Request, *DeleteBucketPolicyOutput, error) {
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "DELETE Bucket Policy",
 		RequestMethod: "DELETE",
 		RequestURI:    "/<bucket-name>?policy",
@@ -262,7 +272,7 @@ func (s *Bucket) DeleteMultipleObjects(input *DeleteMultipleObjectsInput) (*Dele
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -275,9 +285,11 @@ func (s *Bucket) DeleteMultipleObjectsRequest(input *DeleteMultipleObjectsInput)
 		input = &DeleteMultipleObjectsInput{}
 	}
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "Delete Multiple Objects",
 		RequestMethod: "POST",
 		RequestURI:    "/<bucket-name>?delete",
@@ -351,7 +363,7 @@ func (s *Bucket) GetACL() (*GetBucketACLOutput, error) {
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -360,9 +372,11 @@ func (s *Bucket) GetACL() (*GetBucketACLOutput, error) {
 // GetACLRequest creates request and output object of GetBucketACL.
 func (s *Bucket) GetACLRequest() (*request.Request, *GetBucketACLOutput, error) {
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "GET Bucket ACL",
 		RequestMethod: "GET",
 		RequestURI:    "/<bucket-name>?acl",
@@ -406,7 +420,7 @@ func (s *Bucket) GetCORS() (*GetBucketCORSOutput, error) {
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -415,9 +429,11 @@ func (s *Bucket) GetCORS() (*GetBucketCORSOutput, error) {
 // GetCORSRequest creates request and output object of GetBucketCORS.
 func (s *Bucket) GetCORSRequest() (*request.Request, *GetBucketCORSOutput, error) {
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "GET Bucket CORS",
 		RequestMethod: "GET",
 		RequestURI:    "/<bucket-name>?cors",
@@ -459,7 +475,7 @@ func (s *Bucket) GetExternalMirror() (*GetBucketExternalMirrorOutput, error) {
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -468,9 +484,11 @@ func (s *Bucket) GetExternalMirror() (*GetBucketExternalMirrorOutput, error) {
 // GetExternalMirrorRequest creates request and output object of GetBucketExternalMirror.
 func (s *Bucket) GetExternalMirrorRequest() (*request.Request, *GetBucketExternalMirrorOutput, error) {
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "GET Bucket External Mirror",
 		RequestMethod: "GET",
 		RequestURI:    "/<bucket-name>?mirror",
@@ -512,7 +530,7 @@ func (s *Bucket) GetPolicy() (*GetBucketPolicyOutput, error) {
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -521,9 +539,11 @@ func (s *Bucket) GetPolicy() (*GetBucketPolicyOutput, error) {
 // GetPolicyRequest creates request and output object of GetBucketPolicy.
 func (s *Bucket) GetPolicyRequest() (*request.Request, *GetBucketPolicyOutput, error) {
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "GET Bucket Policy",
 		RequestMethod: "GET",
 		RequestURI:    "/<bucket-name>?policy",
@@ -565,7 +585,7 @@ func (s *Bucket) GetStatistics() (*GetBucketStatisticsOutput, error) {
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -574,9 +594,11 @@ func (s *Bucket) GetStatistics() (*GetBucketStatisticsOutput, error) {
 // GetStatisticsRequest creates request and output object of GetBucketStatistics.
 func (s *Bucket) GetStatisticsRequest() (*request.Request, *GetBucketStatisticsOutput, error) {
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "GET Bucket Statistics",
 		RequestMethod: "GET",
 		RequestURI:    "/<bucket-name>?stats",
@@ -631,7 +653,7 @@ func (s *Bucket) Head() (*HeadBucketOutput, error) {
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -640,9 +662,11 @@ func (s *Bucket) Head() (*HeadBucketOutput, error) {
 // HeadRequest creates request and output object of HeadBucket.
 func (s *Bucket) HeadRequest() (*request.Request, *HeadBucketOutput, error) {
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "HEAD Bucket",
 		RequestMethod: "HEAD",
 		RequestURI:    "/<bucket-name>",
@@ -681,7 +705,7 @@ func (s *Bucket) ListMultipartUploads(input *ListMultipartUploadsInput) (*ListMu
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -694,9 +718,11 @@ func (s *Bucket) ListMultipartUploadsRequest(input *ListMultipartUploadsInput) (
 		input = &ListMultipartUploadsInput{}
 	}
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "List Multipart Uploads",
 		RequestMethod: "GET",
 		RequestURI:    "/<bucket-name>?uploads",
@@ -770,7 +796,7 @@ func (s *Bucket) ListObjects(input *ListObjectsInput) (*ListObjectsOutput, error
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -783,9 +809,11 @@ func (s *Bucket) ListObjectsRequest(input *ListObjectsInput) (*request.Request, 
 		input = &ListObjectsInput{}
 	}
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "GET Bucket (List Objects)",
 		RequestMethod: "GET",
 		RequestURI:    "/<bucket-name>",
@@ -861,7 +889,7 @@ func (s *Bucket) Put() (*PutBucketOutput, error) {
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -870,9 +898,11 @@ func (s *Bucket) Put() (*PutBucketOutput, error) {
 // PutRequest creates request and output object of PutBucket.
 func (s *Bucket) PutRequest() (*request.Request, *PutBucketOutput, error) {
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "PUT Bucket",
 		RequestMethod: "PUT",
 		RequestURI:    "/<bucket-name>",
@@ -911,7 +941,7 @@ func (s *Bucket) PutACL(input *PutBucketACLInput) (*PutBucketACLOutput, error) {
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -924,9 +954,11 @@ func (s *Bucket) PutACLRequest(input *PutBucketACLInput) (*request.Request, *Put
 		input = &PutBucketACLInput{}
 	}
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "PUT Bucket ACL",
 		RequestMethod: "PUT",
 		RequestURI:    "/<bucket-name>?acl",
@@ -993,7 +1025,7 @@ func (s *Bucket) PutCORS(input *PutBucketCORSInput) (*PutBucketCORSOutput, error
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -1006,9 +1038,11 @@ func (s *Bucket) PutCORSRequest(input *PutBucketCORSInput) (*request.Request, *P
 		input = &PutBucketCORSInput{}
 	}
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "PUT Bucket CORS",
 		RequestMethod: "PUT",
 		RequestURI:    "/<bucket-name>?cors",
@@ -1075,7 +1109,7 @@ func (s *Bucket) PutExternalMirror(input *PutBucketExternalMirrorInput) (*PutBuc
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -1088,9 +1122,11 @@ func (s *Bucket) PutExternalMirrorRequest(input *PutBucketExternalMirrorInput) (
 		input = &PutBucketExternalMirrorInput{}
 	}
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "PUT Bucket External Mirror",
 		RequestMethod: "PUT",
 		RequestURI:    "/<bucket-name>?mirror",
@@ -1149,7 +1185,7 @@ func (s *Bucket) PutPolicy(input *PutBucketPolicyInput) (*PutBucketPolicyOutput,
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -1162,9 +1198,11 @@ func (s *Bucket) PutPolicyRequest(input *PutBucketPolicyInput) (*request.Request
 		input = &PutBucketPolicyInput{}
 	}
 
+	properties := *s.Properties
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "PUT Bucket Policy",
 		RequestMethod: "PUT",
 		RequestURI:    "/<bucket-name>?policy",

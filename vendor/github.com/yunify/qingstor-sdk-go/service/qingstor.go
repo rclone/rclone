@@ -18,10 +18,14 @@
 package service
 
 import (
+	"net/http"
+
 	"github.com/yunify/qingstor-sdk-go/config"
 	"github.com/yunify/qingstor-sdk-go/request"
 	"github.com/yunify/qingstor-sdk-go/request/data"
 )
+
+var _ http.Header
 
 // Service QingStor provides low-cost and reliable online storage service with unlimited storage space, high read and write performance, high reliability and data safety, fine-grained access control, and easy to use API.
 type Service struct {
@@ -47,7 +51,7 @@ func (s *Service) ListBuckets(input *ListBucketsInput) (*ListBucketsOutput, erro
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
