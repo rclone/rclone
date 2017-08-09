@@ -773,7 +773,6 @@ func TestRmdirs(t *testing.T) {
 		[]fstest.Item{
 			file1, file2,
 		},
-		/* FIXME bucket based Fses are only showing some of the directories
 		[]string{
 			"A1",
 			"A1/B1",
@@ -785,8 +784,7 @@ func TestRmdirs(t *testing.T) {
 			"A3",
 			"A3/B3",
 			"A3/B3/C4",
-		},*/
-		nil,
+		},
 		fs.Config.ModifyWindow,
 	)
 
