@@ -474,7 +474,7 @@ func (f *Fs) Mkdir(dir string) error {
 		Path: root,
 	}
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.srv.CreateFolder(&arg2)
+		_, err = f.srv.CreateFolderV2(&arg2)
 		return shouldRetry(err)
 	})
 	return err
@@ -519,7 +519,7 @@ func (f *Fs) Rmdir(dir string) error {
 
 	// remove it
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.srv.Delete(&files.DeleteArg{Path: root})
+		_, err = f.srv.DeleteV2(&files.DeleteArg{Path: root})
 		return shouldRetry(err)
 	})
 	return err
@@ -587,7 +587,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 func (f *Fs) Purge() (err error) {
 	// Let dropbox delete the filesystem tree
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.srv.Delete(&files.DeleteArg{Path: f.slashRoot})
+		_, err = f.srv.DeleteV2(&files.DeleteArg{Path: f.slashRoot})
 		return shouldRetry(err)
 	})
 	return err
@@ -953,7 +953,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 // Remove an object
 func (o *Object) Remove() (err error) {
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-		_, err = o.fs.srv.Delete(&files.DeleteArg{Path: o.remotePath()})
+		_, err = o.fs.srv.DeleteV2(&files.DeleteArg{Path: o.remotePath()})
 		return shouldRetry(err)
 	})
 	return err
