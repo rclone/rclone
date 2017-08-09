@@ -240,7 +240,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 		bucket: bucket,
 		svc:    svc,
 	}
-	f.features = (&fs.Features{ReadMimeType: true, WriteMimeType: true}).Fill(f)
+	f.features = (&fs.Features{
+		ReadMimeType:  true,
+		WriteMimeType: true,
+		BucketBased:   true,
+	}).Fill(f)
 
 	if f.root != "" {
 		if !strings.HasSuffix(f.root, "/") {

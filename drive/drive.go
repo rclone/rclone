@@ -408,7 +408,12 @@ func NewFs(name, path string) (fs.Fs, error) {
 	}
 	f.teamDriveID = fs.ConfigFileGet(name, "team_drive")
 	f.isTeamDrive = f.teamDriveID != ""
-	f.features = (&fs.Features{DuplicateFiles: true, ReadMimeType: true, WriteMimeType: true}).Fill(f)
+	f.features = (&fs.Features{
+		DuplicateFiles:          true,
+		ReadMimeType:            true,
+		WriteMimeType:           true,
+		CanHaveEmptyDirectories: true,
+	}).Fill(f)
 
 	// Create a new authorized Drive client.
 	f.client = oAuthClient
