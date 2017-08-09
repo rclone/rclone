@@ -476,32 +476,141 @@ func TestSyncAfterRemovingAFileAndAddingAFileSubDir(t *testing.T) {
 	file1 := r.WriteFile("a/potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteObject("b/potato", "SMALLER BUT SAME DATE", t2)
 	file3 := r.WriteBoth("c/non empty space", "AhHa!", t2)
-	fstest.CheckItems(t, r.fremote, file2, file3)
-	fstest.CheckItems(t, r.flocal, file1, file3)
+	require.NoError(t, fs.Mkdir(r.fremote, "d"))
+	require.NoError(t, fs.Mkdir(r.fremote, "d/e"))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.flocal,
+		[]fstest.Item{
+			file1,
+			file3,
+		},
+		[]string{
+			"a",
+			"c",
+		},
+		fs.Config.ModifyWindow,
+	)
+	fstest.CheckListingWithPrecision(
+		t,
+		r.fremote,
+		[]fstest.Item{
+			file2,
+			file3,
+		},
+		[]string{
+			"b",
+			"c",
+			"d",
+			"d/e",
+		},
+		fs.Config.ModifyWindow,
+	)
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.flocal, file1, file3)
-	fstest.CheckItems(t, r.fremote, file1, file3)
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.flocal,
+		[]fstest.Item{
+			file1,
+			file3,
+		},
+		[]string{
+			"a",
+			"c",
+		},
+		fs.Config.ModifyWindow,
+	)
+	fstest.CheckListingWithPrecision(
+		t,
+		r.fremote,
+		[]fstest.Item{
+			file1,
+			file3,
+		},
+		[]string{
+			"a",
+			"c",
+		},
+		fs.Config.ModifyWindow,
+	)
 }
 
 // Sync after removing a file and adding a file with IO Errors
-func TestSyncAfterRemovingAFileAndAddingAFileWithErrors(t *testing.T) {
+func TestSyncAfterRemovingAFileAndAddingAFileSubDirWithErrors(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
-	file1 := r.WriteFile("potato2", "------------------------------------------------------------", t1)
-	file2 := r.WriteObject("potato", "SMALLER BUT SAME DATE", t2)
-	file3 := r.WriteBoth("empty space", "", t2)
-	fstest.CheckItems(t, r.fremote, file2, file3)
-	fstest.CheckItems(t, r.flocal, file1, file3)
+	file1 := r.WriteFile("a/potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteObject("b/potato", "SMALLER BUT SAME DATE", t2)
+	file3 := r.WriteBoth("c/non empty space", "AhHa!", t2)
+	require.NoError(t, fs.Mkdir(r.fremote, "d"))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.flocal,
+		[]fstest.Item{
+			file1,
+			file3,
+		},
+		[]string{
+			"a",
+			"c",
+		},
+		fs.Config.ModifyWindow,
+	)
+	fstest.CheckListingWithPrecision(
+		t,
+		r.fremote,
+		[]fstest.Item{
+			file2,
+			file3,
+		},
+		[]string{
+			"b",
+			"c",
+			"d",
+		},
+		fs.Config.ModifyWindow,
+	)
 
 	fs.Stats.ResetCounters()
 	fs.Stats.Error()
 	err := fs.Sync(r.fremote, r.flocal)
 	assert.Equal(t, fs.ErrorNotDeleting, err)
-	fstest.CheckItems(t, r.flocal, file1, file3)
-	fstest.CheckItems(t, r.fremote, file1, file2, file3)
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.flocal,
+		[]fstest.Item{
+			file1,
+			file3,
+		},
+		[]string{
+			"a",
+			"c",
+		},
+		fs.Config.ModifyWindow,
+	)
+	fstest.CheckListingWithPrecision(
+		t,
+		r.fremote,
+		[]fstest.Item{
+			file1,
+			file2,
+			file3,
+		},
+		[]string{
+			"a",
+			"b",
+			"c",
+			"d",
+		},
+		fs.Config.ModifyWindow,
+	)
 }
 
 // Sync test delete after

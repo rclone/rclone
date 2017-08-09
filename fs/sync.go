@@ -4,6 +4,7 @@ package fs
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -30,6 +31,8 @@ type syncCopyMove struct {
 	srcFilesChan   chan Object         // passes src objects
 	srcFilesResult chan error          // error result of src listing
 	dstFilesResult chan error          // error result of dst listing
+	dstEmptyDirsMu sync.Mutex          // protect dstEmptyDirs
+	dstEmptyDirs   []DirEntry          // potentially empty directories
 	abort          chan struct{}       // signal to abort the copiers
 	checkerWg      sync.WaitGroup      // wait for checkers
 	toBeChecked    ObjectPairChan      // checkers channel
@@ -508,6 +511,46 @@ func (s *syncCopyMove) deleteFiles(checkSrcMap bool) error {
 	return deleteFilesWithBackupDir(toDelete, s.backupDir)
 }
 
+// This deletes the empty directories in the slice passed in.  It
+// ignores any errors deleting directories
+func deleteEmptyDirectories(f Fs, entries DirEntries) error {
+	if len(entries) == 0 {
+		return nil
+	}
+	if Stats.Errored() {
+		Errorf(f, "%v", ErrorNotDeletingDirs)
+		return ErrorNotDeletingDirs
+	}
+
+	// Now delete the empty directories starting from the longest path
+	sort.Sort(entries)
+	var errorCount int
+	var okCount int
+	for i := len(entries) - 1; i >= 0; i-- {
+		entry := entries[i]
+		dir, ok := entry.(Directory)
+		if ok {
+			// TryRmdir only deletes empty directories
+			err := TryRmdir(f, dir.Remote())
+			if err != nil {
+				Debugf(logDirName(f, dir.Remote()), "Failed to Rmdir: %v", err)
+				errorCount++
+			} else {
+				okCount++
+			}
+		} else {
+			Errorf(f, "Not a directory: %v", entry)
+		}
+	}
+	if errorCount > 0 {
+		Debugf(f, "failed to delete %d directories", errorCount)
+	}
+	if okCount > 0 {
+		Debugf(f, "deleted %d directories", okCount)
+	}
+	return nil
+}
+
 // renameHash makes a string with the size and the hash for rename detection
 //
 // it may return an empty string in which case no hash could be made
@@ -680,7 +723,7 @@ func (s *syncCopyMove) run() error {
 					if !ok {
 						return
 					}
-					jobs := s._run(job)
+					jobs := s.processJob(job)
 					if len(jobs) > 0 {
 						traversing.Add(len(jobs))
 						go func() {
@@ -734,6 +777,15 @@ func (s *syncCopyMove) run() error {
 			s.processError(s.deleteFiles(false))
 		}
 	}
+
+	// Prune empty directories
+	if s.deleteMode != DeleteModeOff {
+		if s.currentError() != nil {
+			Errorf(s.fdst, "%v", ErrorNotDeletingDirs)
+		} else {
+			s.processError(deleteEmptyDirectories(s.fdst, s.dstEmptyDirs))
+		}
+	}
 	return s.currentError()
 }
 
@@ -763,6 +815,12 @@ func (s *syncCopyMove) dstOnly(dst DirEntry, job listDirJob, jobs *[]listDirJob)
 				dstDepth: job.dstDepth - 1,
 				noSrc:    true,
 			})
+		}
+		// Record directory as it is potentially empty and needs deleting
+		if s.fdst.Features().CanHaveEmptyDirectories {
+			s.dstEmptyDirsMu.Lock()
+			s.dstEmptyDirs = append(s.dstEmptyDirs, dst)
+			s.dstEmptyDirsMu.Unlock()
 		}
 	default:
 		panic("Bad object in DirEntries")
@@ -907,8 +965,12 @@ func matchListings(srcList, dstList DirEntries) (srcOnly DirEntries, dstOnly Dir
 	return
 }
 
+// processJob processes a listDirJob listing the source and
+// destination directories, comparing them and returning a slice of
+// more jobs
+//
 // returns errors using processError
-func (s *syncCopyMove) _run(job listDirJob) (jobs []listDirJob) {
+func (s *syncCopyMove) processJob(job listDirJob) (jobs []listDirJob) {
 	var (
 		srcList, dstList       DirEntries
 		srcListErr, dstListErr error
