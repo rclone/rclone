@@ -244,7 +244,10 @@ func NewFs(name, root string) (fs.Fs, error) {
 		pacer:       pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 		uploadToken: pacer.NewTokenDispenser(fs.Config.Transfers),
 	}
-	f.features = (&fs.Features{CaseInsensitive: true}).Fill(f)
+	f.features = (&fs.Features{
+		CaseInsensitive:         true,
+		CanHaveEmptyDirectories: true,
+	}).Fill(f)
 	f.srv.SetErrorHandler(errorHandler)
 
 	// Renew the token in the background

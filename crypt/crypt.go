@@ -104,10 +104,12 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	// the features here are ones we could support, and they are
 	// ANDed with the ones from wrappedFs
 	f.features = (&fs.Features{
-		CaseInsensitive: mode == NameEncryptionOff,
-		DuplicateFiles:  true,
-		ReadMimeType:    false, // MimeTypes not supported with crypt
-		WriteMimeType:   false,
+		CaseInsensitive:         mode == NameEncryptionOff,
+		DuplicateFiles:          true,
+		ReadMimeType:            false, // MimeTypes not supported with crypt
+		WriteMimeType:           false,
+		BucketBased:             true,
+		CanHaveEmptyDirectories: true,
 	}).Fill(f).Mask(wrappedFs)
 	return f, err
 }

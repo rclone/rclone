@@ -133,7 +133,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 		name: name,
 		yd:   yandexDisk,
 	}
-	f.features = (&fs.Features{ReadMimeType: true, WriteMimeType: true}).Fill(f)
+	f.features = (&fs.Features{
+		ReadMimeType:            true,
+		WriteMimeType:           true,
+		CanHaveEmptyDirectories: true,
+	}).Fill(f)
 	f.setRoot(root)
 
 	// Check to see if the object exists and is a file

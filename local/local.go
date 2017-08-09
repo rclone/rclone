@@ -92,7 +92,10 @@ func NewFs(name, root string) (fs.Fs, error) {
 		dirNames: newMapper(),
 	}
 	f.root = f.cleanPath(root)
-	f.features = (&fs.Features{CaseInsensitive: f.caseInsensitive()}).Fill(f)
+	f.features = (&fs.Features{
+		CaseInsensitive:         f.caseInsensitive(),
+		CanHaveEmptyDirectories: true,
+	}).Fill(f)
 	if *followSymlinks {
 		f.lstat = os.Stat
 	}

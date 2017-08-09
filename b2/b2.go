@@ -257,7 +257,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 		pacer:        pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 		bufferTokens: make(chan []byte, fs.Config.Transfers),
 	}
-	f.features = (&fs.Features{ReadMimeType: true, WriteMimeType: true}).Fill(f)
+	f.features = (&fs.Features{
+		ReadMimeType:  true,
+		WriteMimeType: true,
+		BucketBased:   true,
+	}).Fill(f)
 	// Set the test flag if required
 	if *b2TestMode != "" {
 		testMode := strings.TrimSpace(*b2TestMode)

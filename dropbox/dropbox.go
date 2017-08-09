@@ -185,7 +185,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 		srv:   srv,
 		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 	}
-	f.features = (&fs.Features{CaseInsensitive: true, ReadMimeType: true}).Fill(f)
+	f.features = (&fs.Features{
+		CaseInsensitive:         true,
+		ReadMimeType:            true,
+		CanHaveEmptyDirectories: true,
+	}).Fill(f)
 	f.setRoot(root)
 
 	// See if the root is actually an object

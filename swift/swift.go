@@ -200,7 +200,11 @@ func NewFsWithConnection(name, root string, c *swift.Connection) (fs.Fs, error) 
 		segmentsContainer: container + "_segments",
 		root:              directory,
 	}
-	f.features = (&fs.Features{ReadMimeType: true, WriteMimeType: true}).Fill(f)
+	f.features = (&fs.Features{
+		ReadMimeType:  true,
+		WriteMimeType: true,
+		BucketBased:   true,
+	}).Fill(f)
 	// StorageURL overloading
 	storageURL := fs.ConfigFileGet(name, "storage_url")
 	if storageURL != "" {

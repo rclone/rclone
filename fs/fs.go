@@ -245,11 +245,13 @@ type ListRFn func(dir string, callback ListRCallback) error
 
 // Features describe the optional features of the Fs
 type Features struct {
-	// Feature flags
-	CaseInsensitive bool
-	DuplicateFiles  bool
-	ReadMimeType    bool
-	WriteMimeType   bool
+	// Feature flags, whether Fs
+	CaseInsensitive         bool // has case insensitive files
+	DuplicateFiles          bool // allows duplicate files
+	ReadMimeType            bool // can read the mime type of objects
+	WriteMimeType           bool // can set the mime type of objects
+	CanHaveEmptyDirectories bool // can have empty directories
+	BucketBased             bool // is bucket based (like s3, swift etc)
 
 	// Purge all files in the root and the root directory
 	//
@@ -444,6 +446,8 @@ func (ft *Features) Mask(f Fs) *Features {
 	ft.DuplicateFiles = ft.DuplicateFiles && mask.DuplicateFiles
 	ft.ReadMimeType = ft.ReadMimeType && mask.ReadMimeType
 	ft.WriteMimeType = ft.WriteMimeType && mask.WriteMimeType
+	ft.CanHaveEmptyDirectories = ft.CanHaveEmptyDirectories && mask.CanHaveEmptyDirectories
+	ft.BucketBased = ft.BucketBased && mask.BucketBased
 	if mask.Purge == nil {
 		ft.Purge = nil
 	}
