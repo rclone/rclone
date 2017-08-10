@@ -17,7 +17,9 @@ casing. Changes to only the casing of paths won't be returned by
 list_folder/continue. This field will be null if the file or folder is
 not mounted. This field is optional.
 
-We solve this by not implementing the ListR interface.  The dropbox remote will recurse directory by directory and all will be well.
+We solve this by not implementing the ListR interface.  The dropbox
+remote will recurse directory by directory only using the last element
+of path_display and all will be well.
 */
 
 import (
@@ -295,29 +297,6 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
-// Strips the root off path and returns it
-func strip(path, root string) (string, error) {
-	if len(root) > 0 {
-		if root[0] != '/' {
-			root = "/" + root
-		}
-		if root[len(root)-1] != '/' {
-			root += "/"
-		}
-	} else if len(root) == 0 {
-		root = "/"
-	}
-	if !strings.HasPrefix(strings.ToLower(path), strings.ToLower(root)) {
-		return "", errors.Errorf("path %q is not under root %q", path, root)
-	}
-	return path[len(root):], nil
-}
-
-// Strips the root off path and returns it
-func (f *Fs) stripRoot(path string) (string, error) {
-	return strip(path, f.slashRootSlash)
-}
-
 // List the objects and directories in dir into entries.  The
 // entries can be returned in any order but should be for a
 // complete directory.
@@ -387,24 +366,15 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 				continue
 			}
 
-			entryPath := metadata.PathDisplay // FIXME  PathLower
-
+			// Only the last element is reliably cased in PathDisplay
+			entryPath := metadata.PathDisplay
+			leaf := path.Base(entryPath)
+			remote := path.Join(dir, leaf)
 			if folderInfo != nil {
-				name, err := f.stripRoot(entryPath + "/")
-				if err != nil {
-					return nil, err
-				}
-				name = strings.Trim(name, "/")
-				if name != "" && name != dir {
-					d := fs.NewDir(name, time.Now())
-					entries = append(entries, d)
-				}
+				d := fs.NewDir(remote, time.Now())
+				entries = append(entries, d)
 			} else if fileInfo != nil {
-				path, err := f.stripRoot(entryPath)
-				if err != nil {
-					return nil, err
-				}
-				o, err := f.newObjectWithInfo(path, fileInfo)
+				o, err := f.newObjectWithInfo(remote, fileInfo)
 				if err != nil {
 					return nil, err
 				}
