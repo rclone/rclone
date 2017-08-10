@@ -422,7 +422,12 @@ func (f *Fs) listContainers(dir string) (entries fs.DirEntries, err error) {
 		return nil, fs.ErrorListBucketRequired
 	}
 	err = f.listContainersToFn(func(container *storage.Container) error {
-		d := fs.NewDir(container.Name, time.Time{})
+		t, err := time.Parse(time.RFC1123, container.Properties.LastModified)
+		if err != nil {
+			fs.Debugf(f, "Failed to parse LastModified %q: %v", container.Properties.LastModified, err)
+			t = time.Time{}
+		}
+		d := fs.NewDir(container.Name, t)
 		entries = append(entries, d)
 		return nil
 	})
