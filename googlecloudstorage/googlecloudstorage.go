@@ -578,6 +578,12 @@ func (f *Fs) Mkdir(dir string) error {
 		// Bucket already exists
 		f.bucketOK = true
 		return nil
+	} else if gErr, ok := err.(*googleapi.Error); ok {
+		if gErr.Code != http.StatusNotFound {
+			return errors.Wrap(err, "failed to get bucket")
+		}
+	} else {
+		return errors.Wrap(err, "failed to get bucket")
 	}
 
 	if f.projectNumber == "" {
