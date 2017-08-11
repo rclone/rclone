@@ -5,17 +5,17 @@ description:
   Rclone is a command line program to sync files to and from cloud storage providers such as
   Google Drive, Amazon Drive, S3, Dropbox, Backblaze B2, OneDrive, Swift, Hubic, Cloudfiles, Google Cloud Storage, Yandex Files.
 confinement: strict
-grade: stable
+grade: devel
 
 apps:
   rclone:
-    command: bin/rclone
-    plugs: [home, network, network-bind]
+    command: usr/bin/rclone
+    plugs: [home, network, network-bind, fuse-support]
 
 parts:
   rclone:
-    plugin: go
+    plugin: make
     source: https://github.com/ncw/rclone
     source-type: git
-    go-importpath: github.com/ncw/rclone
-    build-packages: [gcc, libgudev-1.0-dev]
+    stage-packages: [fuse]
+    build-packages: [gcc, libgudev-1.0-dev, fuse]
