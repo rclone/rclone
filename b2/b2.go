@@ -10,9 +10,7 @@ import (
 	"fmt"
 	"hash"
 	"io"
-	"io/ioutil"
 	"net/http"
-	"os"
 	"path"
 	"regexp"
 	"strconv"
@@ -1249,42 +1247,13 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 
 	modTime := src.ModTime()
+
 	calculatedSha1, _ := src.Hash(fs.HashSHA1)
-
-	// If source cannot provide the hash, copy to a temporary file
-	// and calculate the hash while doing so.
-	// Then we serve the temporary file.
 	if calculatedSha1 == "" {
-		// Open a temp file to copy the input
-		fd, err := ioutil.TempFile("", "rclone-b2-")
-		if err != nil {
-			return err
-		}
-		_ = os.Remove(fd.Name()) // Delete the file - may not work on Windows
-		defer func() {
-			_ = fd.Close()           // Ignore error may have been closed already
-			_ = os.Remove(fd.Name()) // Delete the file - may have been deleted already
-		}()
-
-		// Copy the input while calculating the sha1
-		hash := sha1.New()
-		teed := io.TeeReader(in, hash)
-		n, err := io.Copy(fd, teed)
-		if err != nil {
-			return err
-		}
-		if n != size {
-			return errors.Errorf("read %d bytes expecting %d", n, size)
-		}
-		calculatedSha1 = fmt.Sprintf("%x", hash.Sum(nil))
-
-		// Rewind the temporary file
-		_, err = fd.Seek(0, 0)
-		if err != nil {
-			return err
-		}
-		// Set input to temporary file
-		in = fd
+		calculatedSha1 = "hex_digits_at_end"
+		har := newHashAppendingReader(in, sha1.New())
+		size += int64(har.AdditionalLength())
+		in = har
 	}
 
 	// Get upload URL

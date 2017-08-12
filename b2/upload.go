@@ -7,8 +7,11 @@ package b2
 import (
 	"bytes"
 	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
+	"hash"
 	"io"
+	"strings"
 	"sync"
 
 	"github.com/ncw/rclone/b2/api"
@@ -16,6 +19,49 @@ import (
 	"github.com/ncw/rclone/rest"
 	"github.com/pkg/errors"
 )
+
+type hashAppendingReader struct {
+	h         hash.Hash
+	in        io.Reader
+	hexSum    string
+	hexReader io.Reader
+}
+
+// Read returns bytes all bytes from the original reader, then the hex sum
+// of what was read so far, then EOF.
+func (har *hashAppendingReader) Read(b []byte) (int, error) {
+	if har.hexReader == nil {
+		n, err := har.in.Read(b)
+		if err == io.EOF {
+			har.in = nil // allow GC
+			err = nil    // allow reading hexSum before EOF
+
+			har.hexSum = hex.EncodeToString(har.h.Sum(nil))
+			har.hexReader = strings.NewReader(har.hexSum)
+		}
+		return n, err
+	}
+	return har.hexReader.Read(b)
+}
+
+// AdditionalLength returns how many bytes the appended hex sum will take up.
+func (har *hashAppendingReader) AdditionalLength() int {
+	return hex.EncodedLen(har.h.Size())
+}
+
+// HexSum returns the hash sum as hex. It's only available after the original
+// reader has EOF'd. It's an empty string before that.
+func (har *hashAppendingReader) HexSum() string {
+	return har.hexSum
+}
+
+// newHashAppendingReader takes a Reader and a Hash and will append the hex sum
+// after the original reader reaches EOF. The increased size depends on the
+// given hash, which may be queried through AdditionalLength()
+func newHashAppendingReader(in io.Reader, h hash.Hash) *hashAppendingReader {
+	withHash := io.TeeReader(in, h)
+	return &hashAppendingReader{h: h, in: withHash}
+}
 
 // largeUpload is used to control the upload of large files which need chunking
 type largeUpload struct {
@@ -128,9 +174,9 @@ func (up *largeUpload) clearUploadURL() {
 
 // Transfer a chunk
 func (up *largeUpload) transferChunk(part int64, body []byte) error {
-	calculatedSHA1 := fmt.Sprintf("%x", sha1.Sum(body))
-	up.sha1s[part-1] = calculatedSHA1
-	size := int64(len(body))
+	in := newHashAppendingReader(bytes.NewReader(body), sha1.New())
+	size := int64(len(body)) + int64(in.AdditionalLength())
+
 	err := up.f.pacer.Call(func() (bool, error) {
 		fs.Debugf(up.o, "Sending chunk %d length %d", part, len(body))
 
@@ -165,11 +211,11 @@ func (up *largeUpload) transferChunk(part int64, body []byte) error {
 		opts := rest.Opts{
 			Method:  "POST",
 			RootURL: upload.UploadURL,
-			Body:    fs.AccountPart(up.o, bytes.NewBuffer(body)),
+			Body:    fs.AccountPart(up.o, in),
 			ExtraHeaders: map[string]string{
 				"Authorization":    upload.AuthorizationToken,
 				"X-Bz-Part-Number": fmt.Sprintf("%d", part),
-				sha1Header:         calculatedSHA1,
+				sha1Header:         "hex_digits_at_end",
 			},
 			ContentLength: &size,
 		}
@@ -191,6 +237,7 @@ func (up *largeUpload) transferChunk(part int64, body []byte) error {
 	} else {
 		fs.Debugf(up.o, "Done sending chunk %d", part)
 	}
+	up.sha1s[part-1] = in.HexSum()
 	return err
 }
 
