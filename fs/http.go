@@ -241,7 +241,7 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		}
 	}
 	// Force user agent
-	req.Header.Set("User-Agent", UserAgent)
+	req.Header.Set("User-Agent", *userAgent)
 	// Logf request
 	if t.logHeader || t.logBody || t.logAuth {
 		buf, _ := httputil.DumpRequestOut(req, t.logBody)
