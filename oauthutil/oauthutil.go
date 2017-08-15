@@ -78,7 +78,7 @@ func getToken(name string) (*oauth2.Token, error) {
 	token.RefreshToken = oldtoken.RefreshToken
 	token.Expiry = oldtoken.Expiry
 	// Save new format in config file
-	err = putToken(name, token)
+	err = putToken(name, token, false)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func getToken(name string) (*oauth2.Token, error) {
 // putToken stores the token in the config file
 //
 // This saves the config file if it changes
-func putToken(name string, token *oauth2.Token) error {
+func putToken(name string, token *oauth2.Token, newSection bool) error {
 	tokenBytes, err := json.Marshal(token)
 	if err != nil {
 		return err
@@ -97,7 +97,9 @@ func putToken(name string, token *oauth2.Token) error {
 	old := fs.ConfigFileGet(name, fs.ConfigToken)
 	if tokenString != old {
 		err = fs.ConfigSetValueAndSave(name, fs.ConfigToken, tokenString)
-		if err != nil {
+		if newSection && err != nil {
+			fs.Debugf(name, "Added new token to config, still needs to be saved")
+		} else if err != nil {
 			fs.Errorf(nil, "Failed to save new token in config file: %v", err)
 		} else {
 			fs.Debugf(name, "Saved new token in config file")
@@ -142,7 +144,7 @@ func (ts *TokenSource) Token() (*oauth2.Token, error) {
 		if ts.expiryTimer != nil {
 			ts.expiryTimer.Reset(ts.timeToExpiry())
 		}
-		err = putToken(ts.name, token)
+		err = putToken(ts.name, token, false)
 		if err != nil {
 			return nil, err
 		}
@@ -307,7 +309,7 @@ func doConfig(id, name string, config *oauth2.Config, offline bool, opts []oauth
 			if err != nil {
 				return err
 			}
-			return putToken(name, token)
+			return putToken(name, token, false)
 		}
 	case TitleBarRedirectURL:
 		useWebServer = automatic
@@ -383,7 +385,7 @@ func doConfig(id, name string, config *oauth2.Config, offline bool, opts []oauth
 		}
 		fmt.Printf("Paste the following into your remote machine --->\n%s\n<---End paste", result)
 	}
-	return putToken(name, token)
+	return putToken(name, token, true)
 }
 
 // Local web server for collecting auth

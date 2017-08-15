@@ -12,6 +12,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -199,6 +200,30 @@ func makeListingFromObjects(objs []fs.Object) string {
 	return strings.Join(nameLengths, ", ")
 }
 
+// filterEmptyDirs removes any empty (or containing only directories)
+// directories from expectedDirs
+func filterEmptyDirs(t *testing.T, items []Item, expectedDirs []string) (newExpectedDirs []string) {
+	dirs := map[string]struct{}{"": struct{}{}}
+	for _, item := range items {
+		base := item.Path
+		for {
+			base = path.Dir(base)
+			if base == "." || base == "/" {
+				break
+			}
+			dirs[base] = struct{}{}
+		}
+	}
+	for _, expectedDir := range expectedDirs {
+		if _, found := dirs[expectedDir]; found {
+			newExpectedDirs = append(newExpectedDirs, expectedDir)
+		} else {
+			t.Logf("Filtering empty directory %q", expectedDir)
+		}
+	}
+	return newExpectedDirs
+}
+
 // CheckListingWithPrecision checks the fs to see if it has the
 // expected contents with the given precision.
 //
@@ -206,6 +231,9 @@ func makeListingFromObjects(objs []fs.Object) string {
 // directories returned is also OK as some remotes don't return
 // directories.
 func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs []string, precision time.Duration) {
+	if expectedDirs != nil && !f.Features().CanHaveEmptyDirectories {
+		expectedDirs = filterEmptyDirs(t, items, expectedDirs)
+	}
 	is := NewItems(items)
 	oldErrors := fs.Stats.GetErrors()
 	var objs []fs.Object
@@ -223,7 +251,7 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 		}
 		gotListing = makeListingFromObjects(objs)
 		listingOK = wantListing1 == gotListing || wantListing2 == gotListing
-		if listingOK && (expectedDirs == nil || len(dirs) == 0 || len(dirs) == len(expectedDirs)) {
+		if listingOK && (expectedDirs == nil || len(dirs) == len(expectedDirs)) {
 			// Put an extra sleep in if we did any retries just to make sure it really
 			// is consistent (here is looking at you Amazon Drive!)
 			if i != 1 {
@@ -251,9 +279,8 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 	if len(items) == 0 && oldErrors == 0 && fs.Stats.GetErrors() == 1 {
 		fs.Stats.ResetErrors()
 	}
-	// Check the directories - ignore if no directories returned
-	// for remotes which can't do directories
-	if expectedDirs != nil && len(dirs) != 0 {
+	// Check the directories
+	if expectedDirs != nil {
 		actualDirs := []string{}
 		for _, dir := range dirs {
 			actualDirs = append(actualDirs, dir.Remote())

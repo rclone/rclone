@@ -15,6 +15,7 @@ install:
 script:
 - make check
 - make quicktest
+- make compile_all
 env:
   global:
     - GOTAGS=cmount

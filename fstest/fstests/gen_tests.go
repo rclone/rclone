@@ -163,5 +163,6 @@ func main() {
 	generateTestProgram(t, fns, "FTP")
 	generateTestProgram(t, fns, "Box")
 	generateTestProgram(t, fns, "QingStor", buildConstraint("!plan9"))
+	generateTestProgram(t, fns, "AzureBlob", buildConstraint("go1.7"))
 	log.Printf("Done")
 }

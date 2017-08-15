@@ -14,10 +14,16 @@
   version = "v0.10.0"
 
 [[projects]]
-  name = "github.com/Sirupsen/logrus"
-  packages = ["."]
-  revision = "202f25545ea4cf9b191ff7f846df5d87c9382c2b"
-  version = "v1.0.0"
+  name = "github.com/Azure/azure-sdk-for-go"
+  packages = ["storage"]
+  revision = "5b6066bbd213e47c49a5fa2be2b29529bbcb6704"
+  version = "v10.1.1-beta"
+
+[[projects]]
+  name = "github.com/Azure/go-autorest"
+  packages = ["autorest","autorest/adal","autorest/azure","autorest/date"]
+  revision = "10791a4516e77c53ab10f198f144804cca3d5b43"
+  version = "v8.1.0"
 
 [[projects]]
   branch = "master"
@@ -60,6 +66,18 @@
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
+
+[[projects]]
+  name = "github.com/dgrijalva/jwt-go"
+  packages = ["."]
+  revision = "d2709f9f1f31ebcda9651b03077758c1f3a0018c"
+  version = "v3.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/dropbox/dropbox-sdk-go-unofficial"
+  packages = ["dropbox","dropbox/async","dropbox/files","dropbox/properties"]
+  revision = "350942579f314463a49b660b7a35f01dbf392a7f"
 
 [[projects]]
   name = "github.com/go-ini/ini"
@@ -108,12 +126,6 @@
   packages = ["."]
   revision = "9e777a8366cce605130a531d2cd6363d07ad7317"
   version = "v0.0.2"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/ncw/dropbox-sdk-go-unofficial"
-  packages = ["dropbox","dropbox/async","dropbox/files","dropbox/properties"]
-  revision = "5d9f46f9862ae5f65e264e178de6ce2c41a32d40"
 
 [[projects]]
   branch = "master"
@@ -170,10 +182,22 @@
   version = "v1.4"
 
 [[projects]]
+  name = "github.com/satori/uuid"
+  packages = ["."]
+  revision = "879c5887cd475cd7864858769793b2ceb0d44feb"
+  version = "v1.1.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/shurcooL/sanitized_anchor_name"
   packages = ["."]
   revision = "541ff5ee47f1dddf6a5281af78307d921524bcb5"
+
+[[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "a3f95b5c423586578a4e099b11a46c2479628cac"
+  version = "1.0.2"
 
 [[projects]]
   branch = "master"
@@ -208,8 +232,8 @@
 [[projects]]
   name = "github.com/yunify/qingstor-sdk-go"
   packages = [".","config","logger","request","request/builder","request/data","request/errors","request/signer","request/unpacker","service","utils"]
-  revision = "26f2cc6f249f4c2a08ed89f1d7d566a463c1dfc2"
-  version = "v2.2.5"
+  revision = "68ce7c233bde780b2bbe1e1cf018db8e2df86361"
+  version = "v2.2.6"
 
 [[projects]]
   branch = "master"
@@ -268,6 +292,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "904bc0ea1f770b0473b24560dc0d24c5c647971e959e58538799c5cad1eaa97e"
+  inputs-digest = "e660aa956f1e580bda1ce240cdb673bcbc00bb8f2ef2e77e85d3d941528836f1"
   solver-name = "gps-cdcl"
   solver-version = 1

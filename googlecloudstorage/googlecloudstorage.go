@@ -317,7 +317,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 		location:      fs.ConfigFileGet(name, "location"),
 		storageClass:  fs.ConfigFileGet(name, "storage_class"),
 	}
-	f.features = (&fs.Features{ReadMimeType: true, WriteMimeType: true}).Fill(f)
+	f.features = (&fs.Features{
+		ReadMimeType:  true,
+		WriteMimeType: true,
+		BucketBased:   true,
+	}).Fill(f)
 	if f.objectACL == "" {
 		f.objectACL = "private"
 	}
@@ -574,6 +578,12 @@ func (f *Fs) Mkdir(dir string) error {
 		// Bucket already exists
 		f.bucketOK = true
 		return nil
+	} else if gErr, ok := err.(*googleapi.Error); ok {
+		if gErr.Code != http.StatusNotFound {
+			return errors.Wrap(err, "failed to get bucket")
+		}
+	} else {
+		return errors.Wrap(err, "failed to get bucket")
 	}
 
 	if f.projectNumber == "" {

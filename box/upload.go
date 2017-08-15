@@ -97,7 +97,8 @@ func (o *Object) commitUpload(SessionID string, parts []api.Part, modTime time.T
 	request.Attributes.ContentCreatedAt = api.Time(modTime)
 	var body []byte
 	var resp *http.Response
-	const maxTries = 10
+	maxTries := fs.Config.LowLevelRetries
+	const defaultDelay = 10
 	var tries int
 outer:
 	for tries = 0; tries < maxTries; tries++ {
@@ -109,30 +110,40 @@ outer:
 			body, err = rest.ReadBody(resp)
 			return shouldRetry(resp, err)
 		})
+		delay := defaultDelay
+		why := "unknown"
 		if err != nil {
-			return nil, err
-		}
-		delay := 1
-		switch resp.StatusCode {
-		case http.StatusOK, http.StatusCreated:
-			break outer
-		case http.StatusAccepted:
-			delayString := resp.Header.Get("Retry-After")
-			if delayString != "" {
-				delay, err = strconv.Atoi(delayString)
-				if err != nil {
-					fs.Debugf(o, "Couldn't decode Retry-After header %q: %v", delayString, err)
-					delay = 1
-				}
+			// Sometimes we get 400 Error with
+			// parts_mismatch immediately after uploading
+			// the last part.  Ignore this error and wait.
+			if boxErr, ok := err.(*api.Error); ok && boxErr.Code == "parts_mismatch" {
+				why = err.Error()
+			} else {
+				return nil, err
 			}
-		default:
-			return nil, errors.Errorf("unknown HTTP status return %q (%d)", resp.Status, resp.StatusCode)
+		} else {
+			switch resp.StatusCode {
+			case http.StatusOK, http.StatusCreated:
+				break outer
+			case http.StatusAccepted:
+				why = "not ready yet"
+				delayString := resp.Header.Get("Retry-After")
+				if delayString != "" {
+					delay, err = strconv.Atoi(delayString)
+					if err != nil {
+						fs.Debugf(o, "Couldn't decode Retry-After header %q: %v", delayString, err)
+						delay = defaultDelay
+					}
+				}
+			default:
+				return nil, errors.Errorf("unknown HTTP status return %q (%d)", resp.Status, resp.StatusCode)
+			}
 		}
-		fs.Debugf(o, "commit multipart upload failed %d/%d - trying again in %d seconds", tries+1, maxTries, delay)
+		fs.Debugf(o, "commit multipart upload failed %d/%d - trying again in %d seconds (%s)", tries+1, maxTries, delay, why)
 		time.Sleep(time.Duration(delay) * time.Second)
 	}
 	if tries >= maxTries {
-		return nil, errors.New("too many tries to commit multipart upload")
+		return nil, errors.New("too many tries to commit multipart upload - increase --low-level-retries")
 	}
 	err = json.Unmarshal(body, &result)
 	if err != nil {

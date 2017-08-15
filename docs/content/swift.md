@@ -7,7 +7,7 @@ date: "2014-04-26"
 <i class="fa fa-space-shuttle"></i>Swift
 ----------------------------------------
 
-Swift refers to [Openstack Object Storage](https://www.openstack.org/software/openstack-storage/).
+Swift refers to [Openstack Object Storage](https://docs.openstack.org/swift/latest/).
 Commercial implementations of that being:
 
   * [Rackspace Cloud Files](https://www.rackspace.com/cloud/files/)
@@ -26,7 +26,8 @@ This will guide you through an interactive setup process.
 No remotes found - make a new one
 n) New remote
 s) Set configuration password
-n/s> n
+q) Quit config
+n/s/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
@@ -36,27 +37,44 @@ Choose a number from below, or type in your own value
    \ "s3"
  3 / Backblaze B2
    \ "b2"
- 4 / Dropbox
+ 4 / Box
+   \ "box"
+ 5 / Dropbox
    \ "dropbox"
- 5 / Encrypt/Decrypt a remote
+ 6 / Encrypt/Decrypt a remote
    \ "crypt"
- 6 / Google Cloud Storage (this is not Google Drive)
+ 7 / FTP Connection
+   \ "ftp"
+ 8 / Google Cloud Storage (this is not Google Drive)
    \ "google cloud storage"
- 7 / Google Drive
+ 9 / Google Drive
    \ "drive"
- 8 / Hubic
+10 / Hubic
    \ "hubic"
- 9 / Local Disk
+11 / Local Disk
    \ "local"
-10 / Microsoft OneDrive
+12 / Microsoft Azure Blob Storage
+   \ "azureblob"
+13 / Microsoft OneDrive
    \ "onedrive"
-11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+14 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
    \ "swift"
-12 / SSH/SFTP Connection
+15 / QingClound Object Storage
+   \ "qingstor"
+16 / SSH/SFTP Connection
    \ "sftp"
-13 / Yandex Disk
+17 / Yandex Disk
    \ "yandex"
-Storage> 11
+18 / http Connection
+   \ "http"
+Storage> swift
+Get swift credentials from environment variables in standard OpenStack form.
+Choose a number from below, or type in your own value
+ 1 / Enter swift credentials in the next step
+   \ "false"
+ 2 / Get swift credentials from environment vars. Leave other fields blank if using this.
+   \ "true"
+env_auth> 1
 User name to log in.
 user> user_name
 API key or password.
@@ -88,9 +106,19 @@ Storage URL - optional
 storage_url>
 AuthVersion - optional - set to (1,2,3) if your auth URL has no version
 auth_version>
+Endpoint type to choose from the service catalogue
+Choose a number from below, or type in your own value
+ 1 / Public (default, choose this if not sure)
+   \ "public"
+ 2 / Internal (use internal service net)
+   \ "internal"
+ 3 / Admin
+   \ "admin"
+endpoint_type>
 Remote config
 --------------------
 [remote]
+env_auth = false
 user = user_name
 key = password_or_api_key
 auth = https://auth.api.rackspacecloud.com/v1.0
@@ -100,6 +128,7 @@ tenant_domain =
 region =
 storage_url =
 auth_version =
+endpoint_type =
 --------------------
 y) Yes this is OK
 e) Edit this remote
@@ -157,6 +186,32 @@ tenant = $OS_TENANT_NAME
 ```
 
 Note that you may (or may not) need to set `region` too - try without first.
+
+### Configuration from the environment ###
+
+If you prefer you can configure rclone to use swift using a standard
+set of OpenStack environment variables.
+
+When you run through the config, make sure you choose `true` for
+`env_auth` and leave everything else blank.
+
+rclone will then set any empty config parameters from the enviroment
+using standard OpenStack environment variables.  There is [a list of
+the
+variables](https://godoc.org/github.com/ncw/swift#Connection.ApplyEnvironment)
+in the docs for the swift library.
+
+#### Using rclone without a config file ####
+
+You can use rclone with swift without a config file, if desired, like
+this:
+
+```
+source openstack-credentials-file
+export RCLONE_CONFIG_MYREMOTE_TYPE=swift
+export RCLONE_CONFIG_MYREMOTE_ENV_AUTH=true
+rclone lsd myremote:
+```
 
 ### --fast-list ###
 

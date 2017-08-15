@@ -207,7 +207,9 @@ func NewFs(name, root string) (ff fs.Fs, err error) {
 		pass:     pass,
 		dialAddr: dialAddr,
 	}
-	f.features = (&fs.Features{}).Fill(f)
+	f.features = (&fs.Features{
+		CanHaveEmptyDirectories: true,
+	}).Fill(f)
 	// Make a connection and pool it to return errors early
 	c, err := f.getFtpConnection()
 	if err != nil {
