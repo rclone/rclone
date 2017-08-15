@@ -244,7 +244,10 @@ func NewFs(name, root string) (fs.Fs, error) {
 		pacer:       pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 		uploadToken: pacer.NewTokenDispenser(fs.Config.Transfers),
 	}
-	f.features = (&fs.Features{CaseInsensitive: true}).Fill(f)
+	f.features = (&fs.Features{
+		CaseInsensitive:         true,
+		CanHaveEmptyDirectories: true,
+	}).Fill(f)
 	f.srv.SetErrorHandler(errorHandler)
 
 	// Renew the token in the background
@@ -454,7 +457,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 		if info.Type == api.ItemTypeFolder {
 			// cache the directory ID for later lookups
 			f.dirCache.Put(remote, info.ID)
-			d := fs.NewDir(remote, info.ModTime())
+			d := fs.NewDir(remote, info.ModTime()).SetID(info.ID)
 			// FIXME more info from dir?
 			entries = append(entries, d)
 		} else if info.Type == api.ItemTypeFile {

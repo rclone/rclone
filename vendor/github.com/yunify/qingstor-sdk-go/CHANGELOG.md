@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to QingStor SDK for Go will be documented in this file.
 
+## [v2.2.6] - 2017-07-21
+
+### Fixed
+
+- Fix concurrency issue in object related operations.
+
 ## [v2.2.5] - 2017-05-22
 
 ### Fixed
@@ -94,6 +100,7 @@ All notable changes to QingStor SDK for Go will be documented in this file.
 
 - QingStor SDK for the Go programming language.
 
+[v2.2.6]: https://github.com/yunify/qingstor-sdk-go/compare/v2.2.5...v2.2.6
 [v2.2.5]: https://github.com/yunify/qingstor-sdk-go/compare/v2.2.4...v2.2.5
 [v2.2.4]: https://github.com/yunify/qingstor-sdk-go/compare/v2.2.3...v2.2.4
 [v2.2.3]: https://github.com/yunify/qingstor-sdk-go/compare/v2.2.2...v2.2.3

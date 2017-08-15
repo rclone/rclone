@@ -205,7 +205,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 		srv:   rest.NewClient(oAuthClient).SetRoot(rootURL),
 		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 	}
-	f.features = (&fs.Features{CaseInsensitive: true, ReadMimeType: true}).Fill(f)
+	f.features = (&fs.Features{
+		CaseInsensitive:         true,
+		ReadMimeType:            true,
+		CanHaveEmptyDirectories: true,
+	}).Fill(f)
 	f.srv.SetErrorHandler(errorHandler)
 
 	// Renew the token in the background
@@ -423,7 +427,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 		if info.Folder != nil {
 			// cache the directory ID for later lookups
 			f.dirCache.Put(remote, info.ID)
-			d := fs.NewDir(remote, time.Time(info.LastModifiedDateTime))
+			d := fs.NewDir(remote, time.Time(info.LastModifiedDateTime)).SetID(info.ID)
 			if info.Folder != nil {
 				d.SetItems(info.Folder.ChildCount)
 			}

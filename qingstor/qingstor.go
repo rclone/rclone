@@ -6,7 +6,6 @@
 package qingstor
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -65,6 +64,11 @@ func init() {
 
 					Help: "The Shanghai (China) First Zone\nNeeds location constraint sh1a.",
 				},
+				{
+					Value: "gd2a",
+
+					Help: "The Guangdong (China) Second Zone\nNeeds location constraint gd2a.",
+				},
 			},
 		}, {
 			Name: "connection_retries",
@@ -75,11 +79,8 @@ func init() {
 
 // Constants
 const (
-	listLimitSize       = 1000                   // Number of items to read at once
-	maxSizeForCopy      = 1024 * 1024 * 1024 * 5 // The maximum size of object we can COPY
-	maxSizeForPart      = 1024 * 1024 * 1024 * 1 // The maximum size of object we can Upload in Multipart Upload API
-	multipartUploadSize = 1024 * 1024 * 64       // The size of multipart upload object as once.
-	MaxMultipleParts    = 10000                  // The maximum number of upload multiple parts
+	listLimitSize  = 1000                   // Number of items to read at once
+	maxSizeForCopy = 1024 * 1024 * 1024 * 5 // The maximum size of object we can COPY
 )
 
 // Globals
@@ -193,6 +194,8 @@ func qsServiceConnection(name string) (*qs.Service, error) {
 		host = _host
 		if _port != "" {
 			port, _ = strconv.Atoi(_port)
+		} else if protocol == "http" {
+			port = 80
 		}
 
 	}
@@ -240,7 +243,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 		bucket: bucket,
 		svc:    svc,
 	}
-	f.features = (&fs.Features{ReadMimeType: true, WriteMimeType: true}).Fill(f)
+	f.features = (&fs.Features{
+		ReadMimeType:  true,
+		WriteMimeType: true,
+		BucketBased:   true,
+	}).Fill(f)
 
 	if f.root != "" {
 		if !strings.HasSuffix(f.root, "/") {
@@ -296,9 +303,8 @@ func (f *Fs) Precision() time.Duration {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() fs.HashSet {
-	//return fs.HashSet(fs.HashMD5)
-	//Not supported temporary
-	return fs.HashSet(fs.HashNone)
+	return fs.HashSet(fs.HashMD5)
+	//return fs.HashSet(fs.HashNone)
 }
 
 // Features returns the optional features of this Fs
@@ -627,6 +633,31 @@ func (f *Fs) Mkdir(dir string) error {
 		return nil
 	}
 
+	bucketInit, err := f.svc.Bucket(f.bucket, f.zone)
+	if err != nil {
+		return err
+	}
+	/* When delete a bucket, qingstor need about 60 second to sync status;
+	So, need wait for it sync end if we try to operation a just deleted bucket
+	*/
+	retries := 0
+	for retries <= 120 {
+		statistics, err := bucketInit.GetStatistics()
+		if statistics == nil || err != nil {
+			break
+		}
+		switch *statistics.Status {
+		case "deleted":
+			fs.Debugf(f, "Wiat for qingstor sync bucket status, retries: %d", retries)
+			time.Sleep(time.Second * 1)
+			retries++
+			continue
+		default:
+			break
+		}
+		break
+	}
+
 	if !f.bucketDeleted {
 		exists, err := f.dirExists()
 		if err == nil {
@@ -637,10 +668,6 @@ func (f *Fs) Mkdir(dir string) error {
 		}
 	}
 
-	bucketInit, err := f.svc.Bucket(f.bucket, f.zone)
-	if err != nil {
-		return err
-	}
 	_, err = bucketInit.Put()
 	if e, ok := err.(*qsErr.QingStorError); ok {
 		if e.StatusCode == http.StatusConflict {
@@ -658,21 +685,17 @@ func (f *Fs) Mkdir(dir string) error {
 
 // dirIsEmpty check if the bucket empty
 func (f *Fs) dirIsEmpty() (bool, error) {
-	limit := 8
 	bucketInit, err := f.svc.Bucket(f.bucket, f.zone)
 	if err != nil {
 		return true, err
 	}
 
-	req := qs.ListObjectsInput{
-		Limit: &limit,
-	}
-	rsp, err := bucketInit.ListObjects(&req)
-
+	statistics, err := bucketInit.GetStatistics()
 	if err != nil {
-		return false, err
+		return true, err
 	}
-	if len(rsp.Keys) == 0 {
+
+	if *statistics.Count == 0 {
 		return true, nil
 	}
 	return false, nil
@@ -700,7 +723,30 @@ func (f *Fs) Rmdir(dir string) error {
 	if err != nil {
 		return err
 	}
-	_, err = bucketInit.Delete()
+	retries := 0
+	for retries <= 10 {
+		_, delErr := bucketInit.Delete()
+		if delErr != nil {
+			if e, ok := delErr.(*qsErr.QingStorError); ok {
+				switch e.Code {
+				// The status of "lease" takes a few seconds to "ready" when creating a new bucket
+				// wait for lease status ready
+				case "lease_not_ready":
+					fs.Debugf(f, "QingStor bucket lease not ready, retries: %d", retries)
+					retries++
+					time.Sleep(time.Second * 1)
+					continue
+				default:
+					err = e
+					break
+				}
+			}
+		} else {
+			err = delErr
+		}
+		break
+	}
+
 	if err == nil {
 		f.bucketOK = false
 		f.bucketDeleted = true
@@ -835,85 +881,24 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		return err
 	}
 
-	bucketInit, err := o.fs.svc.Bucket(o.fs.bucket, o.fs.zone)
-	if err != nil {
-		return err
-	}
-	//Initiate Upload Multipart
 	key := o.fs.root + o.remote
-	var objectParts = []*qs.ObjectPartType{}
-	var uploadID *string
-	var partNumber int
-
-	defer func() {
-		if err != nil {
-			fs.Errorf(o, "Create Object Faild, API ERROR: %v", err)
-			// Abort Upload when init success and upload failed
-			if uploadID != nil {
-				fs.Debugf(o, "Abort Upload Multipart, upload_id: %s, objectParts: %s", *uploadID, objectParts)
-				abortReq := qs.AbortMultipartUploadInput{
-					UploadID: uploadID,
-				}
-				_, _ = bucketInit.AbortMultipartUpload(key, &abortReq)
-			}
-		}
-	}()
-
-	fs.Debugf(o, "Initiate Upload Multipart, key: %s", key)
+	// Guess the content type
 	mimeType := fs.MimeType(src)
-	initReq := qs.InitiateMultipartUploadInput{
-		ContentType: &mimeType,
+
+	req := uploadInput{
+		body:     in,
+		qsSvc:    o.fs.svc,
+		bucket:   o.fs.bucket,
+		zone:     o.fs.zone,
+		key:      key,
+		mimeType: mimeType,
 	}
-	rsp, err := bucketInit.InitiateMultipartUpload(key, &initReq)
+	uploader := newUploader(&req)
+
+	err = uploader.upload()
 	if err != nil {
 		return err
 	}
-	uploadID = rsp.UploadID
-
-	// Create an new buffer
-	buffer := new(bytes.Buffer)
-
-	for {
-		size, er := io.CopyN(buffer, in, multipartUploadSize)
-		if er != nil && er != io.EOF {
-			err = fmt.Errorf("read upload data failed, error: %s", er)
-			return err
-		}
-		if size == 0 && partNumber > 0 {
-			break
-		}
-		// Upload Multipart Object
-		number := partNumber
-		req := qs.UploadMultipartInput{
-			PartNumber:    &number,
-			UploadID:      uploadID,
-			ContentLength: &size,
-			Body:          buffer,
-		}
-		fs.Debugf(o, "Upload Multipart, upload_id: %s, part_number: %d", *uploadID, number)
-		_, err = bucketInit.UploadMultipart(key, &req)
-		if err != nil {
-			return err
-		}
-		part := qs.ObjectPartType{
-			PartNumber: &number,
-			Size:       &size,
-		}
-		objectParts = append(objectParts, &part)
-		partNumber++
-	}
-
-	// Complete Multipart Upload
-	fs.Debugf(o, "Complete Upload Multipart, upload_id: %s, objectParts: %d", *uploadID, objectParts)
-	completeReq := qs.CompleteMultipartUploadInput{
-		UploadID:    uploadID,
-		ObjectParts: objectParts,
-	}
-	_, err = bucketInit.CompleteMultipartUpload(key, &completeReq)
-	if err != nil {
-		return err
-	}
-
 	// Read Metadata of object
 	err = o.readMetaData()
 	return err

@@ -108,6 +108,11 @@ var (
 			SubDir:   false,
 			FastList: false,
 		},
+		{
+			Name:     "TestAzureBlob:",
+			SubDir:   true,
+			FastList: true,
+		},
 	}
 	binary = "fs.test"
 	// Flags

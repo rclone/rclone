@@ -35,6 +35,18 @@ func init() {
 		Description: "Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
+			Name: "env_auth",
+			Help: "Get swift credentials from environment variables in standard OpenStack form.",
+			Examples: []fs.OptionExample{
+				{
+					Value: "false",
+					Help:  "Enter swift credentials in the next step",
+				}, {
+					Value: "true",
+					Help:  "Get swift credentials from environment vars. Leave other fields blank if using this.",
+				},
+			},
+		}, {
 			Name: "user",
 			Help: "User name to log in.",
 		}, {
@@ -80,10 +92,22 @@ func init() {
 		}, {
 			Name: "auth_version",
 			Help: "AuthVersion - optional - set to (1,2,3) if your auth URL has no version",
+		}, {
+			Name: "endpoint_type",
+			Help: "Endpoint type to choose from the service catalogue",
+			Examples: []fs.OptionExample{{
+				Help:  "Public (default, choose this if not sure)",
+				Value: "public",
+			}, {
+				Help:  "Internal (use internal service net)",
+				Value: "internal",
+			}, {
+				Help:  "Admin",
+				Value: "admin",
+			}},
 		},
 		},
 	})
-	// snet     = flag.Bool("swift-snet", false, "Use internal service network") // FIXME not implemented
 	fs.VarP(&chunkSize, "swift-chunk-size", "", "Above this size files will be chunked into a _segments container.")
 }
 
@@ -154,30 +178,34 @@ func parsePath(path string) (container, directory string, err error) {
 
 // swiftConnection makes a connection to swift
 func swiftConnection(name string) (*swift.Connection, error) {
-	userName := fs.ConfigFileGet(name, "user")
-	if userName == "" {
-		return nil, errors.New("user not found")
-	}
-	apiKey := fs.ConfigFileGet(name, "key")
-	if apiKey == "" {
-		return nil, errors.New("key not found")
-	}
-	authURL := fs.ConfigFileGet(name, "auth")
-	if authURL == "" {
-		return nil, errors.New("auth not found")
-	}
 	c := &swift.Connection{
-		UserName:       userName,
-		ApiKey:         apiKey,
-		AuthUrl:        authURL,
+		UserName:       fs.ConfigFileGet(name, "user"),
+		ApiKey:         fs.ConfigFileGet(name, "key"),
+		AuthUrl:        fs.ConfigFileGet(name, "auth"),
 		AuthVersion:    fs.ConfigFileGetInt(name, "auth_version", 0),
 		Tenant:         fs.ConfigFileGet(name, "tenant"),
 		Region:         fs.ConfigFileGet(name, "region"),
 		Domain:         fs.ConfigFileGet(name, "domain"),
 		TenantDomain:   fs.ConfigFileGet(name, "tenant_domain"),
+		EndpointType:   swift.EndpointType(fs.ConfigFileGet(name, "endpoint_type", "public")),
 		ConnectTimeout: 10 * fs.Config.ConnectTimeout, // Use the timeouts in the transport
 		Timeout:        10 * fs.Config.Timeout,        // Use the timeouts in the transport
 		Transport:      fs.Config.Transport(),
+	}
+	if fs.ConfigFileGetBool(name, "env_auth", false) {
+		err := c.ApplyEnvironment()
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to read environment variables")
+		}
+	}
+	if c.UserName == "" {
+		return nil, errors.New("user not found")
+	}
+	if c.ApiKey == "" {
+		return nil, errors.New("key not found")
+	}
+	if c.AuthUrl == "" {
+		return nil, errors.New("auth not found")
 	}
 	err := c.Authenticate()
 	if err != nil {
@@ -200,7 +228,11 @@ func NewFsWithConnection(name, root string, c *swift.Connection) (fs.Fs, error) 
 		segmentsContainer: container + "_segments",
 		root:              directory,
 	}
-	f.features = (&fs.Features{ReadMimeType: true, WriteMimeType: true}).Fill(f)
+	f.features = (&fs.Features{
+		ReadMimeType:  true,
+		WriteMimeType: true,
+		BucketBased:   true,
+	}).Fill(f)
 	// StorageURL overloading
 	storageURL := fs.ConfigFileGet(name, "storage_url")
 	if storageURL != "" {

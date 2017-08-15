@@ -30,6 +30,7 @@ See the following for detailed instructions for
   * [Google Drive](/drive/)
   * [HTTP](/http/)
   * [Hubic](/hubic/)
+  * [Microsoft Azure Blob Storage](/azureblob/)
   * [Microsoft OneDrive](/onedrive/)
   * [Openstack Swift / Rackspace Cloudfiles / Memset Memstore](/swift/)
   * [QingStor](/qingstor/)
@@ -363,6 +364,27 @@ connection to go through to a remote object storage system.  It is
 ### --dedupe-mode MODE ###
 
 Mode to run dedupe command in.  One of `interactive`, `skip`, `first`, `newest`, `oldest`, `rename`.  The default is `interactive`.  See the dedupe command for more information as to what these options mean.
+
+### --disable FEATURE,FEATURE,... ###
+
+This disables a comma separated list of optional features. For example
+to disable server side move and server side copy use:
+
+    --disable move,copy
+
+The features can be put in in any case.
+
+To see a list of which features can be disabled use:
+
+    --disable help
+
+See the overview [features](/overview/#features) and
+[optional features](/overview/#optional-features) to get an idea of
+which feature does what.
+
+This flag can be useful for debugging and in exceptional circumstances
+(eg Google Drive limiting the total volume of Server Side Copies to
+100GB/day).
 
 ### -n, --dry-run ###
 

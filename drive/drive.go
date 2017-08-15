@@ -408,7 +408,12 @@ func NewFs(name, path string) (fs.Fs, error) {
 	}
 	f.teamDriveID = fs.ConfigFileGet(name, "team_drive")
 	f.isTeamDrive = f.teamDriveID != ""
-	f.features = (&fs.Features{DuplicateFiles: true, ReadMimeType: true, WriteMimeType: true}).Fill(f)
+	f.features = (&fs.Features{
+		DuplicateFiles:          true,
+		ReadMimeType:            true,
+		WriteMimeType:           true,
+		CanHaveEmptyDirectories: true,
+	}).Fill(f)
 
 	// Create a new authorized Drive client.
 	f.client = oAuthClient
@@ -591,7 +596,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 			// cache the directory ID for later lookups
 			f.dirCache.Put(remote, item.Id)
 			when, _ := time.Parse(timeFormatIn, item.ModifiedDate)
-			d := fs.NewDir(remote, when)
+			d := fs.NewDir(remote, when).SetID(item.Id)
 			entries = append(entries, d)
 		case item.Md5Checksum != "" || item.FileSize > 0:
 			// If item has MD5 sum or a length it is a file stored on drive
@@ -723,6 +728,46 @@ func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOpt
 	return o, nil
 }
 
+// MergeDirs merges the contents of all the directories passed
+// in into the first one and rmdirs the other directories.
+func (f *Fs) MergeDirs(dirs []fs.Directory) error {
+	if len(dirs) < 2 {
+		return nil
+	}
+	dstDir := dirs[0]
+	for _, srcDir := range dirs[1:] {
+		// list the the objects
+		infos := []*drive.File{}
+		_, err := f.list(srcDir.ID(), "", false, false, true, func(info *drive.File) bool {
+			infos = append(infos, info)
+			return false
+		})
+		if err != nil {
+			return errors.Wrapf(err, "MergeDirs list failed on %v", srcDir)
+		}
+		// move them into place
+		for _, info := range infos {
+			fs.Infof(srcDir, "merging %q", info.Title)
+			// Move the file into the destination
+			err = f.pacer.Call(func() (bool, error) {
+				info.Parents = []*drive.ParentReference{{Id: dstDir.ID()}}
+				info, err = f.svc.Files.Patch(info.Id, info).SetModifiedDate(true).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).Do()
+				return shouldRetry(err)
+			})
+			if err != nil {
+				return errors.Wrapf(err, "MergDirs move failed on %q in %v", info.Title, srcDir)
+			}
+		}
+		// rmdir (into trash) the now empty source directory
+		err = f.rmdir(srcDir.ID(), true)
+		if err != nil {
+			fs.Infof(srcDir, "removing empty directory")
+			return errors.Wrapf(err, "MergDirs move failed to rmdir %q", srcDir)
+		}
+	}
+	return nil
+}
+
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(dir string) error {
 	err := f.dirCache.FindRoot(true)
@@ -733,6 +778,19 @@ func (f *Fs) Mkdir(dir string) error {
 		_, err = f.dirCache.FindDir(dir, true)
 	}
 	return err
+}
+
+// Rmdir deletes a directory unconditionally by ID
+func (f *Fs) rmdir(directoryID string, useTrash bool) error {
+	return f.pacer.Call(func() (bool, error) {
+		var err error
+		if useTrash {
+			_, err = f.svc.Files.Trash(directoryID).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).Do()
+		} else {
+			err = f.svc.Files.Delete(directoryID).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).Do()
+		}
+		return shouldRetry(err)
+	})
 }
 
 // Rmdir deletes a directory
@@ -761,19 +819,11 @@ func (f *Fs) Rmdir(dir string) error {
 	if found {
 		return errors.Errorf("directory not empty")
 	}
-	// Delete the directory if it isn't the root
 	if root != "" {
-		err = f.pacer.Call(func() (bool, error) {
-			// trash the directory if it had trashed files
-			// in or the user wants to trash, otherwise
-			// delete it.
-			if trashedFiles || *driveUseTrash {
-				_, err = f.svc.Files.Trash(directoryID).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).Do()
-			} else {
-				err = f.svc.Files.Delete(directoryID).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).Do()
-			}
-			return shouldRetry(err)
-		})
+		// trash the directory if it had trashed files
+		// in or the user wants to trash, otherwise
+		// delete it.
+		err = f.rmdir(directoryID, trashedFiles || *driveUseTrash)
 		if err != nil {
 			return err
 		}
@@ -1375,6 +1425,7 @@ var (
 	_ fs.DirCacheFlusher   = (*Fs)(nil)
 	_ fs.DirChangeNotifier = (*Fs)(nil)
 	_ fs.PutUncheckeder    = (*Fs)(nil)
+	_ fs.MergeDirser       = (*Fs)(nil)
 	_ fs.Object            = (*Object)(nil)
 	_ fs.MimeTyper         = &Object{}
 )

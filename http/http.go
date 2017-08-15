@@ -151,7 +151,9 @@ func NewFs(name, root string) (fs.Fs, error) {
 		endpoint:    u,
 		endpointURL: u.String(),
 	}
-	f.features = (&fs.Features{}).Fill(f)
+	f.features = (&fs.Features{
+		CanHaveEmptyDirectories: true,
+	}).Fill(f)
 	if isFile {
 		return f, fs.ErrorIsFile
 	}

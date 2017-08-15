@@ -19,6 +19,7 @@ package service
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"time"
 
 	"github.com/yunify/qingstor-sdk-go/config"
@@ -29,6 +30,7 @@ import (
 
 var _ fmt.State
 var _ io.Reader
+var _ http.Header
 var _ time.Time
 var _ config.Config
 
@@ -46,7 +48,7 @@ func (s *Bucket) AbortMultipartUpload(objectKey string, input *AbortMultipartUpl
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -59,9 +61,13 @@ func (s *Bucket) AbortMultipartUploadRequest(objectKey string, input *AbortMulti
 		input = &AbortMultipartUploadInput{}
 	}
 
+	properties := *s.Properties
+
+	properties.ObjectKey = &objectKey
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "Abort Multipart Upload",
 		RequestMethod: "DELETE",
 		RequestURI:    "/<bucket-name>/<object-key>",
@@ -69,8 +75,6 @@ func (s *Bucket) AbortMultipartUploadRequest(objectKey string, input *AbortMulti
 			204, // Object multipart deleted
 		},
 	}
-
-	s.Properties.ObjectKey = &objectKey
 
 	x := &AbortMultipartUploadOutput{}
 	r, err := request.New(o, input, x)
@@ -122,7 +126,7 @@ func (s *Bucket) CompleteMultipartUpload(objectKey string, input *CompleteMultip
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -135,9 +139,13 @@ func (s *Bucket) CompleteMultipartUploadRequest(objectKey string, input *Complet
 		input = &CompleteMultipartUploadInput{}
 	}
 
+	properties := *s.Properties
+
+	properties.ObjectKey = &objectKey
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "Complete multipart upload",
 		RequestMethod: "POST",
 		RequestURI:    "/<bucket-name>/<object-key>",
@@ -145,8 +153,6 @@ func (s *Bucket) CompleteMultipartUploadRequest(objectKey string, input *Complet
 			201, // Object created
 		},
 	}
-
-	s.Properties.ObjectKey = &objectKey
 
 	x := &CompleteMultipartUploadOutput{}
 	r, err := request.New(o, input, x)
@@ -217,7 +223,7 @@ func (s *Bucket) DeleteObject(objectKey string) (*DeleteObjectOutput, error) {
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -226,9 +232,13 @@ func (s *Bucket) DeleteObject(objectKey string) (*DeleteObjectOutput, error) {
 // DeleteObjectRequest creates request and output object of DeleteObject.
 func (s *Bucket) DeleteObjectRequest(objectKey string) (*request.Request, *DeleteObjectOutput, error) {
 
+	properties := *s.Properties
+
+	properties.ObjectKey = &objectKey
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "DELETE Object",
 		RequestMethod: "DELETE",
 		RequestURI:    "/<bucket-name>/<object-key>",
@@ -236,8 +246,6 @@ func (s *Bucket) DeleteObjectRequest(objectKey string) (*request.Request, *Delet
 			204, // Object deleted
 		},
 	}
-
-	s.Properties.ObjectKey = &objectKey
 
 	x := &DeleteObjectOutput{}
 	r, err := request.New(o, nil, x)
@@ -269,7 +277,7 @@ func (s *Bucket) GetObject(objectKey string, input *GetObjectInput) (*GetObjectO
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -282,9 +290,13 @@ func (s *Bucket) GetObjectRequest(objectKey string, input *GetObjectInput) (*req
 		input = &GetObjectInput{}
 	}
 
+	properties := *s.Properties
+
+	properties.ObjectKey = &objectKey
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "GET Object",
 		RequestMethod: "GET",
 		RequestURI:    "/<bucket-name>/<object-key>",
@@ -295,8 +307,6 @@ func (s *Bucket) GetObjectRequest(objectKey string, input *GetObjectInput) (*req
 			412, // Precondition failed
 		},
 	}
-
-	s.Properties.ObjectKey = &objectKey
 
 	x := &GetObjectOutput{}
 	r, err := request.New(o, input, x)
@@ -379,7 +389,7 @@ func (s *Bucket) HeadObject(objectKey string, input *HeadObjectInput) (*HeadObje
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -392,9 +402,13 @@ func (s *Bucket) HeadObjectRequest(objectKey string, input *HeadObjectInput) (*r
 		input = &HeadObjectInput{}
 	}
 
+	properties := *s.Properties
+
+	properties.ObjectKey = &objectKey
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "HEAD Object",
 		RequestMethod: "HEAD",
 		RequestURI:    "/<bucket-name>/<object-key>",
@@ -402,8 +416,6 @@ func (s *Bucket) HeadObjectRequest(objectKey string, input *HeadObjectInput) (*r
 			200, // OK
 		},
 	}
-
-	s.Properties.ObjectKey = &objectKey
 
 	x := &HeadObjectOutput{}
 	r, err := request.New(o, input, x)
@@ -469,7 +481,7 @@ func (s *Bucket) InitiateMultipartUpload(objectKey string, input *InitiateMultip
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -482,9 +494,13 @@ func (s *Bucket) InitiateMultipartUploadRequest(objectKey string, input *Initiat
 		input = &InitiateMultipartUploadInput{}
 	}
 
+	properties := *s.Properties
+
+	properties.ObjectKey = &objectKey
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "Initiate Multipart Upload",
 		RequestMethod: "POST",
 		RequestURI:    "/<bucket-name>/<object-key>?uploads",
@@ -492,8 +508,6 @@ func (s *Bucket) InitiateMultipartUploadRequest(objectKey string, input *Initiat
 			200, // OK
 		},
 	}
-
-	s.Properties.ObjectKey = &objectKey
 
 	x := &InitiateMultipartUploadOutput{}
 	r, err := request.New(o, input, x)
@@ -553,7 +567,7 @@ func (s *Bucket) ListMultipart(objectKey string, input *ListMultipartInput) (*Li
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -566,9 +580,13 @@ func (s *Bucket) ListMultipartRequest(objectKey string, input *ListMultipartInpu
 		input = &ListMultipartInput{}
 	}
 
+	properties := *s.Properties
+
+	properties.ObjectKey = &objectKey
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "List Multipart",
 		RequestMethod: "GET",
 		RequestURI:    "/<bucket-name>/<object-key>",
@@ -576,8 +594,6 @@ func (s *Bucket) ListMultipartRequest(objectKey string, input *ListMultipartInpu
 			200, // OK
 		},
 	}
-
-	s.Properties.ObjectKey = &objectKey
 
 	x := &ListMultipartOutput{}
 	r, err := request.New(o, input, x)
@@ -638,7 +654,7 @@ func (s *Bucket) OptionsObject(objectKey string, input *OptionsObjectInput) (*Op
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -651,9 +667,13 @@ func (s *Bucket) OptionsObjectRequest(objectKey string, input *OptionsObjectInpu
 		input = &OptionsObjectInput{}
 	}
 
+	properties := *s.Properties
+
+	properties.ObjectKey = &objectKey
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "OPTIONS Object",
 		RequestMethod: "OPTIONS",
 		RequestURI:    "/<bucket-name>/<object-key>",
@@ -661,8 +681,6 @@ func (s *Bucket) OptionsObjectRequest(objectKey string, input *OptionsObjectInpu
 			200, // OK
 		},
 	}
-
-	s.Properties.ObjectKey = &objectKey
 
 	x := &OptionsObjectOutput{}
 	r, err := request.New(o, input, x)
@@ -736,7 +754,7 @@ func (s *Bucket) PutObject(objectKey string, input *PutObjectInput) (*PutObjectO
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -749,9 +767,13 @@ func (s *Bucket) PutObjectRequest(objectKey string, input *PutObjectInput) (*req
 		input = &PutObjectInput{}
 	}
 
+	properties := *s.Properties
+
+	properties.ObjectKey = &objectKey
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "PUT Object",
 		RequestMethod: "PUT",
 		RequestURI:    "/<bucket-name>/<object-key>",
@@ -759,8 +781,6 @@ func (s *Bucket) PutObjectRequest(objectKey string, input *PutObjectInput) (*req
 			201, // Object created
 		},
 	}
-
-	s.Properties.ObjectKey = &objectKey
 
 	x := &PutObjectOutput{}
 	r, err := request.New(o, input, x)
@@ -841,7 +861,7 @@ func (s *Bucket) UploadMultipart(objectKey string, input *UploadMultipartInput) 
 		return nil, err
 	}
 
-	requestID := r.HTTPResponse.Header.Get("X-Qs-Request-Id")
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
 	x.RequestID = &requestID
 
 	return x, err
@@ -854,9 +874,13 @@ func (s *Bucket) UploadMultipartRequest(objectKey string, input *UploadMultipart
 		input = &UploadMultipartInput{}
 	}
 
+	properties := *s.Properties
+
+	properties.ObjectKey = &objectKey
+
 	o := &data.Operation{
 		Config:        s.Config,
-		Properties:    s.Properties,
+		Properties:    &properties,
 		APIName:       "Upload Multipart",
 		RequestMethod: "PUT",
 		RequestURI:    "/<bucket-name>/<object-key>",
@@ -864,8 +888,6 @@ func (s *Bucket) UploadMultipartRequest(objectKey string, input *UploadMultipart
 			201, // Object multipart created
 		},
 	}
-
-	s.Properties.ObjectKey = &objectKey
 
 	x := &UploadMultipartOutput{}
 	r, err := request.New(o, input, x)

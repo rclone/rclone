@@ -667,6 +667,40 @@ func TestDeduplicateRename(t *testing.T) {
 	}))
 }
 
+// This should really be a unit test, but the test framework there
+// doesn't have enough tools to make it easy
+func TestMergeDirs(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+
+	mergeDirs := r.fremote.Features().MergeDirs
+	if mergeDirs == nil {
+		t.Skip("Can't merge directories")
+	}
+
+	file1 := r.WriteObject("dupe1/one.txt", "This is one", t1)
+	file2 := r.WriteObject("dupe2/two.txt", "This is one too", t2)
+	file3 := r.WriteObject("dupe3/three.txt", "This is another one", t3)
+
+	objs, dirs, err := fs.WalkGetAll(r.fremote, "", true, 1)
+	require.NoError(t, err)
+	assert.Equal(t, 3, len(dirs))
+	assert.Equal(t, 0, len(objs))
+
+	err = mergeDirs(dirs)
+	require.NoError(t, err)
+
+	file2.Path = "dupe1/two.txt"
+	file3.Path = "dupe1/three.txt"
+	fstest.CheckItems(t, r.fremote, file1, file2, file3)
+
+	objs, dirs, err = fs.WalkGetAll(r.fremote, "", true, 1)
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(dirs))
+	assert.Equal(t, 0, len(objs))
+	assert.Equal(t, "dupe1", dirs[0].Remote())
+}
+
 func TestCat(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
@@ -739,7 +773,6 @@ func TestRmdirs(t *testing.T) {
 		[]fstest.Item{
 			file1, file2,
 		},
-		/* FIXME bucket based Fses are only showing some of the directories
 		[]string{
 			"A1",
 			"A1/B1",
@@ -751,8 +784,7 @@ func TestRmdirs(t *testing.T) {
 			"A3",
 			"A3/B3",
 			"A3/B3/C4",
-		},*/
-		nil,
+		},
 		fs.Config.ModifyWindow,
 	)
 
