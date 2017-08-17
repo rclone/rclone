@@ -28,8 +28,6 @@ const (
 
 // Globals
 var (
-	// UserAgent set in the default Transport
-	UserAgent = "rclone/" + Version
 	// Filesystem registry
 	fsRegistry []*RegInfo
 	// ErrorNotFoundInConfigFile is returned by NewFs if not found in config file
