@@ -21,6 +21,7 @@ func startSignalHandler() {
 		for {
 			<-signals
 			tokenBucketMu.Lock()
+			bwLimitToggledOff = !bwLimitToggledOff
 			tokenBucket, prevTokenBucket = prevTokenBucket, tokenBucket
 			s := "disabled"
 			if tokenBucket != nil {
