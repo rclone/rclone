@@ -95,3 +95,4 @@ Contributors
   * wuyu <wuyu@yunify.com>
   * Andrei Dragomir <adragomi@adobe.com>
   * Christian Brüggemann <mail@cbruegg.com>
+  * Alex McGrath Kraak <amkdude@gmail.com>
