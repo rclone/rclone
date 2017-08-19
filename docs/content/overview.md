@@ -37,7 +37,7 @@ Here is an overview of the major features of each cloud storage system.
 
 ### Hash ###
 
-The cloud storage system supports various hash types of the objects.  
+The cloud storage system supports various hash types of the objects.
 The hashes are used when transferring data as an integrity check and
 can be specifically used with the `--checksum` flag in syncs and in
 the `check` command.
@@ -115,26 +115,25 @@ All the remotes support a basic set of features, but there are some
 optional features supported by some remotes used to make some
 operations more efficient.
 
-| Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR |
-| ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|
-| Amazon Drive                 | Yes   | No   | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No    |
-| Amazon S3                    | No    | Yes  | No   | No      | No      | Yes   |
-| Backblaze B2                 | No    | No   | No   | No      | Yes     | Yes   |
-| Box                          | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No    |
-| Dropbox                      | Yes   | Yes  | Yes  | Yes     | No  [#575](https://github.com/ncw/rclone/issues/575) | No    |
-| FTP                          | No    | No   | Yes  | Yes     | No      | No    |
-| Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   |
-| Google Drive                 | Yes   | Yes  | Yes  | Yes     | No  [#575](https://github.com/ncw/rclone/issues/575) |  No    |
-| HTTP                         | No    | No   | No   | No      | No      | No    |
-| Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   |
-| Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   |
-| Microsoft OneDrive           | Yes   | Yes  | Yes  | No [#197](https://github.com/ncw/rclone/issues/197)    | No [#575](https://github.com/ncw/rclone/issues/575) | No    |
-| Openstack Swift              | Yes † | Yes  | No   | No      | No      | Yes   |
-| QingStor                     | No    | Yes  | No   | No      | No      | Yes   |
-| SFTP                         | No    | No   | Yes  | Yes     | No      | No    |
-| Yandex Disk                  | Yes   | No   | No   | No      | No  [#575](https://github.com/ncw/rclone/issues/575) | Yes   |
-| The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    |
-
+| Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR | StreamUpload |
+| ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|
+| Amazon Drive                 | Yes   | No   | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | No  |
+| Amazon S3                    | No    | Yes  | No   | No      | No      | Yes   | No [#1614](https://github.com/ncw/rclone/issues/1614) |
+| Backblaze B2                 | No    | No   | No   | No      | Yes     | Yes   | No [#1614](https://github.com/ncw/rclone/issues/1614) |
+| Box                          | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | Yes |
+| Dropbox                      | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | Yes |
+| FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          |
+| Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | No [#1614](https://github.com/ncw/rclone/issues/1614) |
+| Google Drive                 | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | Yes |
+| HTTP                         | No    | No   | No   | No      | No      | No    | No           |
+| Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | No [#1614](https://github.com/ncw/rclone/issues/1614) |
+| Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | No           |
+| Microsoft OneDrive           | Yes   | Yes  | Yes  | No [#197](https://github.com/ncw/rclone/issues/197) | No [#575](https://github.com/ncw/rclone/issues/575) | No | No [#1614](https://github.com/ncw/rclone/issues/1614) |
+| Openstack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | No [#1614](https://github.com/ncw/rclone/issues/1614) |
+| QingStor                     | No    | Yes  | No   | No      | No      | Yes   | No [#1614](https://github.com/ncw/rclone/issues/1614) |
+| SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          |
+| Yandex Disk                  | Yes   | No   | No   | No      | No  [#575](https://github.com/ncw/rclone/issues/575) | Yes | Yes  |
+| The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          |
 
 ### Purge ###
 
@@ -183,3 +182,9 @@ error.
 The remote supports a recursive list to list all the contents beneath
 a directory quickly.  This enables the `--fast-list` flag to work.
 See the [rclone docs](/docs/#fast-list) for more details.
+
+### StreamUpload ###
+
+Some remotes allow files to be uploaded without knowing the file size
+in advance. This allows certain operations to work without spooling the
+file to local disk first, e.g. `rclone rcat`.
