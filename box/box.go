@@ -517,6 +517,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 	}
 }
 
+// PutStream uploads to the remote path with the modTime given of indeterminate size
+func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(in, src, options...)
+}
+
 // PutUnchecked the object into the container
 //
 // This will produce an error if the object already exists
@@ -977,7 +982,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 // upload does a single non-multipart upload
 //
 // This is recommended for less than 50 MB of content
-func (o *Object) upload(in io.Reader, leaf, directoryID string, size int64, modTime time.Time) (err error) {
+func (o *Object) upload(in io.Reader, leaf, directoryID string, modTime time.Time) (err error) {
 	upload := api.UploadFile{
 		Name:              replaceReservedChars(leaf),
 		ContentModifiedAt: api.Time(modTime),
@@ -1037,7 +1042,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 
 	// Upload with simple or multipart
 	if size <= int64(uploadCutoff) {
-		err = o.upload(in, leaf, directoryID, size, modTime)
+		err = o.upload(in, leaf, directoryID, modTime)
 	} else {
 		err = o.uploadMultipart(in, leaf, directoryID, size, modTime)
 	}
@@ -1053,6 +1058,7 @@ func (o *Object) Remove() error {
 var (
 	_ fs.Fs              = (*Fs)(nil)
 	_ fs.Purger          = (*Fs)(nil)
+	_ fs.PutStreamer     = (*Fs)(nil)
 	_ fs.Copier          = (*Fs)(nil)
 	_ fs.Mover           = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
