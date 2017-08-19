@@ -813,8 +813,7 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 	if size != -1 {
 		chunks = int(size/chunkSize) + 1
 	}
-	wc := &writeCounter{}
-	in := io.TeeReader(in0, wc)
+	in := fs.NewCountingReader(in0)
 
 	fmtChunk := func(cur int, last bool) {
 		if chunks == 0 && last {
@@ -853,12 +852,12 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 			// if the size is known, only upload full chunks. Remaining bytes are uploaded with
 			// the UploadSessionFinish request.
 			break
-		} else if chunks == 0 && wc.Written-cursor.Offset < uint64(chunkSize) {
+		} else if chunks == 0 && in.BytesRead()-cursor.Offset < uint64(chunkSize) {
 			// if the size is unknown, upload as long as we can read full chunks from the reader.
 			// The UploadSessionFinish request will not contain any payload.
 			break
 		}
-		cursor.Offset = wc.Written
+		cursor.Offset = in.BytesRead()
 		fmtChunk(currentChunk, false)
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 			err = o.fs.srv.UploadSessionAppendV2(&appendArg, &io.LimitedReader{R: in, N: chunkSize})
@@ -871,7 +870,7 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 	}
 
 	// write the remains
-	cursor.Offset = wc.Written
+	cursor.Offset = in.BytesRead()
 	args := &files.UploadSessionFinishArg{
 		Cursor: &cursor,
 		Commit: commitInfo,
@@ -927,17 +926,6 @@ func (o *Object) Remove() (err error) {
 		return shouldRetry(err)
 	})
 	return err
-}
-
-type writeCounter struct {
-	Written uint64
-}
-
-// Write implements the io.Writer interface.
-func (wc *writeCounter) Write(p []byte) (int, error) {
-	n := len(p)
-	wc.Written += uint64(n)
-	return n, nil
 }
 
 // Check the interfaces are satisfied
