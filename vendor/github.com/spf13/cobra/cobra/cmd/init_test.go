@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/spf13/viper"
 )
 
 // TestGoldenInitCmd initializes the project "github.com/spf13/testproject"
@@ -16,6 +18,13 @@ func TestGoldenInitCmd(t *testing.T) {
 	projectName := "github.com/spf13/testproject"
 	project := NewProject(projectName)
 	defer os.RemoveAll(project.AbsPath())
+
+	viper.Set("author", "NAME HERE <EMAIL ADDRESS>")
+	viper.Set("license", "apache")
+	viper.Set("year", 2017)
+	defer viper.Set("author", nil)
+	defer viper.Set("license", nil)
+	defer viper.Set("year", nil)
 
 	os.Args = []string{"cobra", "init", projectName}
 	if err := rootCmd.Execute(); err != nil {
@@ -44,7 +53,7 @@ func TestGoldenInitCmd(t *testing.T) {
 		goldenPath := filepath.Join("testdata", filepath.Base(path)+".golden")
 
 		switch relPath {
-		// Know directories.
+		// Known directories.
 		case ".", "cmd":
 			return nil
 		// Known files.

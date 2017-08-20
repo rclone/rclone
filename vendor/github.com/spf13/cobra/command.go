@@ -59,6 +59,8 @@ type Command struct {
 	// but accepted if entered manually.
 	ArgAliases []string
 
+	// Expected arguments
+	Args PositionalArgs
 	// BashCompletionFunction is custom functions used by the bash autocompletion generator.
 	BashCompletionFunction string
 
@@ -513,31 +515,27 @@ func (c *Command) Find(args []string) (*Command, []string, error) {
 	}
 
 	commandFound, a := innerfind(c, args)
-	argsWOflags := stripFlags(a, commandFound)
-
-	// no subcommand, always take args
-	if !commandFound.HasSubCommands() {
-		return commandFound, a, nil
+	if commandFound.Args == nil {
+		return commandFound, a, legacyArgs(commandFound, stripFlags(a, commandFound))
 	}
-
-	// root command with subcommands, do subcommand checking
-	if commandFound == c && len(argsWOflags) > 0 {
-		suggestionsString := ""
-		if !c.DisableSuggestions {
-			if c.SuggestionsMinimumDistance <= 0 {
-				c.SuggestionsMinimumDistance = 2
-			}
-			if suggestions := c.SuggestionsFor(argsWOflags[0]); len(suggestions) > 0 {
-				suggestionsString += "\n\nDid you mean this?\n"
-				for _, s := range suggestions {
-					suggestionsString += fmt.Sprintf("\t%v\n", s)
-				}
-			}
-		}
-		return commandFound, a, fmt.Errorf("unknown command %q for %q%s", argsWOflags[0], commandFound.CommandPath(), suggestionsString)
-	}
-
 	return commandFound, a, nil
+}
+
+func (c *Command) findSuggestions(arg string) string {
+	if c.DisableSuggestions {
+		return ""
+	}
+	if c.SuggestionsMinimumDistance <= 0 {
+		c.SuggestionsMinimumDistance = 2
+	}
+	suggestionsString := ""
+	if suggestions := c.SuggestionsFor(arg); len(suggestions) > 0 {
+		suggestionsString += "\n\nDid you mean this?\n"
+		for _, s := range suggestions {
+			suggestionsString += fmt.Sprintf("\t%v\n", s)
+		}
+	}
+	return suggestionsString
 }
 
 // SuggestionsFor provides suggestions for the typedName.
@@ -622,6 +620,10 @@ func (c *Command) execute(a []string) (err error) {
 	argWoFlags := c.Flags().Args()
 	if c.DisableFlagParsing {
 		argWoFlags = a
+	}
+
+	if err := c.ValidateArgs(argWoFlags); err != nil {
+		return err
 	}
 
 	for p := c; p != nil; p = p.Parent() {
@@ -745,6 +747,13 @@ func (c *Command) ExecuteC() (cmd *Command, err error) {
 		}
 	}
 	return cmd, err
+}
+
+func (c *Command) ValidateArgs(args []string) error {
+	if c.Args == nil {
+		return nil
+	}
+	return c.Args(c, args)
 }
 
 // InitDefaultHelpFlag adds default help flag to c.

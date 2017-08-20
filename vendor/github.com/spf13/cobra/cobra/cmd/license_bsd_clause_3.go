@@ -19,8 +19,7 @@ func initBsdClause3() {
 	Licenses["bsd"] = License{
 		Name:            "NewBSD",
 		PossibleMatches: []string{"bsd", "newbsd", "3 clause bsd", "3-clause bsd"},
-		Header: `
-All rights reserved.
+		Header: `All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:

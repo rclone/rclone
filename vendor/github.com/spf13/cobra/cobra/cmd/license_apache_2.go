@@ -19,7 +19,8 @@ func initApache2() {
 	Licenses["apache"] = License{
 		Name:            "Apache 2.0",
 		PossibleMatches: []string{"apache", "apache20", "apache 2.0", "apache2.0", "apache-2.0"},
-		Header: `Licensed under the Apache License, Version 2.0 (the "License");
+		Header: `
+Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 

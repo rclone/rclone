@@ -20,8 +20,7 @@ func initBsdClause2() {
 		Name: "Simplified BSD License",
 		PossibleMatches: []string{"freebsd", "simpbsd", "simple bsd", "2-clause bsd",
 			"2 clause bsd", "simplified bsd license"},
-		Header: `
-All rights reserved.
+		Header: `All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:

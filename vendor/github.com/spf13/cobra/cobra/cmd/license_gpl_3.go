@@ -19,8 +19,7 @@ func initGpl3() {
 	Licenses["gpl3"] = License{
 		Name:            "GNU General Public License 3.0",
 		PossibleMatches: []string{"gpl3", "gplv3", "gpl", "gnu gpl3", "gnu gpl"},
-		Header: `{{.copyright}}
-
+		Header: `
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or

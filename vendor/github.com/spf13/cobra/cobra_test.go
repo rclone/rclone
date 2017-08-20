@@ -36,6 +36,7 @@ var cmdHidden = &Command{
 
 var cmdPrint = &Command{
 	Use:   "print [string to print]",
+	Args:  MinimumNArgs(1),
 	Short: "Print anything to the screen",
 	Long:  `an absolutely utterly useless command for testing.`,
 	Run: func(cmd *Command, args []string) {
@@ -75,6 +76,7 @@ var cmdDeprecated = &Command{
 	Deprecated: "Please use echo instead",
 	Run: func(cmd *Command, args []string) {
 	},
+	Args: NoArgs,
 }
 
 var cmdTimes = &Command{
@@ -88,6 +90,8 @@ var cmdTimes = &Command{
 	Run: func(cmd *Command, args []string) {
 		tt = args
 	},
+	Args:      OnlyValidArgs,
+	ValidArgs: []string{"one", "two", "three", "four"},
 }
 
 var cmdRootNoRun = &Command{
@@ -103,6 +107,16 @@ var cmdRootSameName = &Command{
 	Use:   "print",
 	Short: "Root with the same name as a subcommand",
 	Long:  "The root description for help",
+}
+
+var cmdRootTakesArgs = &Command{
+	Use:   "root-with-args [random args]",
+	Short: "The root can run it's own function and takes args!",
+	Long:  "The root description for help, and some args",
+	Run: func(cmd *Command, args []string) {
+		tr = args
+	},
+	Args: ArbitraryArgs,
 }
 
 var cmdRootWithRun = &Command{
@@ -458,6 +472,63 @@ func TestUsage(t *testing.T) {
 	checkResultOmits(t, x, cmdCustomFlags.Use+" [flags]")
 }
 
+func TestRootTakesNoArgs(t *testing.T) {
+	c := initializeWithSameName()
+	c.AddCommand(cmdPrint, cmdEcho)
+	result := simpleTester(c, "illegal")
+
+	if result.Error == nil {
+		t.Fatal("Expected an error")
+	}
+
+	expectedError := `unknown command "illegal" for "print"`
+	if !strings.Contains(result.Error.Error(), expectedError) {
+		t.Errorf("exptected %v, got %v", expectedError, result.Error.Error())
+	}
+}
+
+func TestRootTakesArgs(t *testing.T) {
+	c := cmdRootTakesArgs
+	result := simpleTester(c, "legal")
+
+	if result.Error != nil {
+		t.Errorf("expected no error, but got %v", result.Error)
+	}
+}
+
+func TestSubCmdTakesNoArgs(t *testing.T) {
+	result := fullSetupTest("deprecated", "illegal")
+
+	if result.Error == nil {
+		t.Fatal("Expected an error")
+	}
+
+	expectedError := `unknown command "illegal" for "cobra-test deprecated"`
+	if !strings.Contains(result.Error.Error(), expectedError) {
+		t.Errorf("expected %v, got %v", expectedError, result.Error.Error())
+	}
+}
+
+func TestSubCmdTakesArgs(t *testing.T) {
+	noRRSetupTest("echo", "times", "one", "two")
+	if strings.Join(tt, " ") != "one two" {
+		t.Error("Command didn't parse correctly")
+	}
+}
+
+func TestCmdOnlyValidArgs(t *testing.T) {
+	result := noRRSetupTest("echo", "times", "one", "two", "five")
+
+	if result.Error == nil {
+		t.Fatal("Expected an error")
+	}
+
+	expectedError := `invalid argument "five"`
+	if !strings.Contains(result.Error.Error(), expectedError) {
+		t.Errorf("expected %v, got %v", expectedError, result.Error.Error())
+	}
+}
+
 func TestFlagLong(t *testing.T) {
 	noRRSetupTest("echo", "--intone=13", "something", "--", "here")
 
@@ -672,9 +743,9 @@ func TestPersistentFlags(t *testing.T) {
 	}
 
 	// persistentFlag should act like normal flag on its own command
-	fullSetupTest("echo", "times", "-s", "again", "-c", "-p", "test", "here")
+	fullSetupTest("echo", "times", "-s", "again", "-c", "-p", "one", "two")
 
-	if strings.Join(tt, " ") != "test here" {
+	if strings.Join(tt, " ") != "one two" {
 		t.Errorf("flags didn't leave proper args remaining. %s given", tt)
 	}
 
@@ -1095,7 +1166,7 @@ func TestGlobalNormFuncPropagation(t *testing.T) {
 
 	rootCmd := initialize()
 	rootCmd.SetGlobalNormalizationFunc(normFunc)
-	if reflect.ValueOf(normFunc) != reflect.ValueOf(rootCmd.GlobalNormalizationFunc()) {
+	if reflect.ValueOf(normFunc).Pointer() != reflect.ValueOf(rootCmd.GlobalNormalizationFunc()).Pointer() {
 		t.Error("rootCmd seems to have a wrong normalization function")
 	}
 
