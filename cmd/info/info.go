@@ -6,6 +6,7 @@ package info
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"sort"
 	"strings"
 	"sync"
@@ -22,6 +23,7 @@ var (
 	checkNormalization bool
 	checkControl       bool
 	checkLength        bool
+	checkStreaming     bool
 )
 
 func init() {
@@ -29,15 +31,16 @@ func init() {
 	commandDefintion.Flags().BoolVarP(&checkNormalization, "check-normalization", "", true, "Check UTF-8 Normalization.")
 	commandDefintion.Flags().BoolVarP(&checkControl, "check-control", "", true, "Check control characters.")
 	commandDefintion.Flags().BoolVarP(&checkLength, "check-length", "", true, "Check max filename length.")
+	commandDefintion.Flags().BoolVarP(&checkStreaming, "check-streaming", "", true, "Check uploads with indeterminate file size.")
 }
 
 var commandDefintion = &cobra.Command{
 	Use:   "info [remote:path]+",
-	Short: `Discovers file name limitations for paths.`,
-	Long: `rclone info discovers what filenames are possible to write to the
-paths passed in and how long they can be.  It can take some time.  It
-will write test files into the remote:path passed in.  It outputs a bit
-of go code for each one.
+	Short: `Discovers file name or other limitations for paths.`,
+	Long: `rclone info discovers what filenames and upload methods are possible
+to write to the paths passed in and how long they can be.  It can take some
+time.  It will write test files into the remote:path passed in.  It outputs
+a bit of go code for each one.
 `,
 	Hidden: true,
 	Run: func(command *cobra.Command, args []string) {
@@ -59,6 +62,7 @@ type results struct {
 	canWriteUnnormalized bool
 	canReadUnnormalized  bool
 	canReadRenormalized  bool
+	canStream            bool
 }
 
 func newResults(f fs.Fs) *results {
@@ -90,6 +94,9 @@ func (r *results) Print() {
 		fmt.Printf("canWriteUnnormalized = %v\n", r.canWriteUnnormalized)
 		fmt.Printf("canReadUnnormalized   = %v\n", r.canReadUnnormalized)
 		fmt.Printf("canReadRenormalized   = %v\n", r.canReadRenormalized)
+	}
+	if checkStreaming {
+		fmt.Printf("canStream = %v\n", r.canStream)
 	}
 }
 
@@ -194,6 +201,49 @@ func (r *results) findMaxLength() {
 	fs.Infof(r.f, "Max file length is %d", r.maxFileLength)
 }
 
+func (r *results) checkStreaming() {
+	putter := r.f.Put
+	if r.f.Features().PutStream != nil {
+		fs.Infof(r.f, "Given remote has specialized streaming function. Using that to test streaming.")
+		putter = r.f.Features().PutStream
+	}
+
+	contents := "thinking of test strings is hard"
+	buf := bytes.NewBufferString(contents)
+	hashIn := fs.NewMultiHasher()
+	in := io.TeeReader(buf, hashIn)
+
+	objIn := fs.NewStaticObjectInfo("checkStreamingTest", time.Now(), -1, true, nil, r.f)
+	objR, err := putter(in, objIn)
+	if err != nil {
+		fs.Infof(r.f, "Streamed file failed to upload (%v)", err)
+		r.canStream = false
+		return
+	}
+
+	hashes := hashIn.Sums()
+	types := objR.Fs().Hashes().Array()
+	for _, hash := range types {
+		sum, err := objR.Hash(hash)
+		if err != nil {
+			fs.Infof(r.f, "Streamed file failed when getting hash %v (%v)", hash, err)
+			r.canStream = false
+			return
+		}
+		if !fs.HashEquals(hashes[hash], sum) {
+			fs.Infof(r.f, "Streamed file has incorrect hash %v: expecting %q got %q", hash, hashes[hash], sum)
+			r.canStream = false
+			return
+		}
+	}
+	if int64(len(contents)) != objR.Size() {
+		fs.Infof(r.f, "Streamed file has incorrect file size: expecting %d got %d", len(contents), objR.Size())
+		r.canStream = false
+		return
+	}
+	r.canStream = true
+}
+
 func readInfo(f fs.Fs) error {
 	err := f.Mkdir("")
 	if err != nil {
@@ -208,6 +258,9 @@ func readInfo(f fs.Fs) error {
 	}
 	if checkNormalization {
 		r.checkUTF8Normalization()
+	}
+	if checkStreaming {
+		r.checkStreaming()
 	}
 	r.Print()
 	return nil
