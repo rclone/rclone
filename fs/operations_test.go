@@ -737,15 +737,23 @@ func TestRcat(t *testing.T) {
 
 	fstest.CheckListing(t, r.fremote, []fstest.Item{})
 
-	data := "this is some really nice test data"
-	path := "file_from_pipe"
+	data1 := "this is some really nice test data"
+	path1 := "small_file_from_pipe"
 
-	in := ioutil.NopCloser(strings.NewReader(data))
-	err := fs.Rcat(r.fremote, path, in, t1)
+	data2 := string(make([]byte, 100*1024+1))
+	path2 := "big_file_from_pipe"
+
+	in := ioutil.NopCloser(strings.NewReader(data1))
+	err := fs.Rcat(r.fremote, path1, in, t1)
 	require.NoError(t, err)
 
-	file := fstest.NewItem(path, data, t1)
-	fstest.CheckItems(t, r.fremote, file)
+	in = ioutil.NopCloser(strings.NewReader(data2))
+	err = fs.Rcat(r.fremote, path2, in, t2)
+	require.NoError(t, err)
+
+	file1 := fstest.NewItem(path1, data1, t1)
+	file2 := fstest.NewItem(path2, data2, t2)
+	fstest.CheckItems(t, r.fremote, file1, file2)
 }
 
 func TestRmdirs(t *testing.T) {
