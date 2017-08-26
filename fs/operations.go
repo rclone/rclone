@@ -1587,8 +1587,10 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 	Stats.Transferring(dstFileName)
 	defer func() {
 		Stats.DoneTransferring(dstFileName, err == nil)
+		if err := in0.Close(); err != nil {
+			Debugf(fdst, "Rcat: failed to close source: %v", err)
+		}
 	}()
-	defer in0.Close()
 
 	hashOption := &HashesOption{Hashes: NewHashSet()}
 
@@ -1604,9 +1606,8 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 		objInfo := NewStaticObjectInfo(dstFileName, modTime, int64(n), false, nil, nil)
 		_, err := fdst.Put(in, objInfo, hashOption)
 		return err
-	} else {
-		in = ioutil.NopCloser(io.MultiReader(bytes.NewReader(buf), in0))
 	}
+	in = ioutil.NopCloser(io.MultiReader(bytes.NewReader(buf), in0))
 
 	fStreamTo := fdst
 	canStream := fdst.Features().PutStream != nil
