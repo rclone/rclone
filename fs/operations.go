@@ -1597,6 +1597,7 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 	if n, err := io.ReadFull(in0, buf); err != nil {
 		Debugf(fdst, "File to upload is small, uploading instead of streaming")
 		in = ioutil.NopCloser(bytes.NewReader(buf[:n]))
+		in = NewAccountSizeName(in, int64(n), dstFileName).WithBuffer()
 		if !Config.SizeOnly {
 			hashOption = &HashesOption{Hashes: HashSet(fdst.Hashes().GetOne())}
 		}
