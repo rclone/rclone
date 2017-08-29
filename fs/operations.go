@@ -1587,27 +1587,68 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 	Stats.Transferring(dstFileName)
 	defer func() {
 		Stats.DoneTransferring(dstFileName, err == nil)
-		if err := in0.Close(); err != nil {
+		if err = in0.Close(); err != nil {
 			Debugf(fdst, "Rcat: failed to close source: %v", err)
 		}
 	}()
 
-	hashOption := &HashesOption{Hashes: NewHashSet()}
+	readCounter := NewCountingReader(in0)
 
-	in := in0
-	buf := make([]byte, 100*1024)
-	if n, err := io.ReadFull(in0, buf); err != nil {
-		Debugf(fdst, "File to upload is small, uploading instead of streaming")
-		in = ioutil.NopCloser(bytes.NewReader(buf[:n]))
-		in = NewAccountSizeName(in, int64(n), dstFileName).WithBuffer()
-		if !Config.SizeOnly {
-			hashOption = &HashesOption{Hashes: HashSet(fdst.Hashes().GetOne())}
-		}
-		objInfo := NewStaticObjectInfo(dstFileName, modTime, int64(n), false, nil, nil)
-		_, err := fdst.Put(in, objInfo, hashOption)
-		return err
+	// setup hashing
+	hashType := HashNone
+	if !Config.SizeOnly && !Config.IgnoreChecksum {
+		hashType = fdst.Hashes().GetOne()
 	}
-	in = ioutil.NopCloser(io.MultiReader(bytes.NewReader(buf), in0))
+	hashOption := &HashesOption{Hashes: HashSet(hashType)}
+	var hash *MultiHasher
+	var trackingIn io.Reader
+	if hashType != HashNone {
+		hash, err = NewMultiHasherTypes(HashSet(hashType))
+		if err != nil {
+			return err
+		}
+		trackingIn = io.TeeReader(readCounter, hash)
+	} else {
+		trackingIn = readCounter
+	}
+	compare := func(dst Object) error {
+		if !Config.IgnoreSize && readCounter.BytesRead() != uint64(dst.Size()) {
+			Stats.Error()
+			err = errors.Errorf("corrupted on transfer: sizes differ %d vs %d", readCounter.BytesRead(), dst.Size())
+			Errorf(dst, "%v", err)
+			return err
+		}
+
+		if hashType != HashNone {
+			srcSum := hash.Sums()[hashType]
+			dstSum, err := dst.Hash(hashType)
+			if err != nil {
+				Stats.Error()
+				Errorf(dst, "Failed to read hash: %v", err)
+			} else if !HashEquals(srcSum, dstSum) {
+				Stats.Error()
+				err = errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
+				Errorf(dst, "%v", err)
+			}
+			return err
+		}
+		return nil
+	}
+
+	// check if file small enough for direct upload
+	buf := make([]byte, 100*1024)
+	if n, err := io.ReadFull(trackingIn, buf); err == io.EOF || err == io.ErrUnexpectedEOF {
+		Debugf(fdst, "File to upload is small (%d bytes), uploading instead of streaming", n)
+		in := ioutil.NopCloser(bytes.NewReader(buf[:n]))
+		in = NewAccountSizeName(in, int64(n), dstFileName).WithBuffer()
+		objInfo := NewStaticObjectInfo(dstFileName, modTime, int64(n), false, nil, nil)
+		dst, err := fdst.Put(in, objInfo, hashOption)
+		if err != nil {
+			return err
+		}
+		return compare(dst)
+	}
+	in := ioutil.NopCloser(io.MultiReader(bytes.NewReader(buf), trackingIn))
 
 	fStreamTo := fdst
 	canStream := fdst.Features().PutStream != nil
@@ -1626,10 +1667,6 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 		fStreamTo = tmpLocalFs
 	}
 
-	if !Config.SizeOnly {
-		hashOption = &HashesOption{Hashes: HashSet(fStreamTo.Hashes().GetOne())}
-	}
-
 	in = NewAccountSizeName(in, -1, dstFileName).WithBuffer()
 
 	if Config.DryRun {
@@ -1641,10 +1678,16 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 
 	objInfo := NewStaticObjectInfo(dstFileName, modTime, -1, false, nil, nil)
 	tmpObj, err := fStreamTo.Features().PutStream(in, objInfo, hashOption)
-	if err == nil && !canStream {
-		err = Copy(fdst, nil, dstFileName, tmpObj)
+	if err != nil {
+		return err
 	}
-	return err
+	if err = compare(tmpObj); err != nil {
+		return err
+	}
+	if !canStream {
+		return Copy(fdst, nil, dstFileName, tmpObj)
+	}
+	return nil
 }
 
 // Rmdirs removes any empty directories (or directories only
