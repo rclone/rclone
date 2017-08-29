@@ -4,7 +4,7 @@ LAST_TAG := $(shell git describe --tags --abbrev=0)
 NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f", $$_)')
 GO_VERSION := $(shell go version)
 GO_FILES := $(shell go list ./... | grep -v /vendor/ )
-GO_LATEST := $(findstring go1.8,$(GO_VERSION))
+GO_LATEST := $(findstring go1.9,$(GO_VERSION))
 BETA_URL := https://beta.rclone.org/$(TAG)/
 # Pass in GOTAGS=xyz on the make command line to set build tags
 ifdef GOTAGS
@@ -45,7 +45,7 @@ endif
 # Do source code quality checks
 check:	rclone
 ifdef GO_LATEST
-	go tool vet $(BUILDTAGS) -printfuncs Debugf,Infof,Logf,Errorf . 2>&1 | grep -E -v vendor/ ; test $$? -eq 1
+	go vet $(BUILDTAGS) -printfuncs Debugf,Infof,Logf,Errorf ./...
 	errcheck $(BUILDTAGS) $(GO_FILES)
 	find . -name \*.go | grep -v /vendor/ | xargs goimports -d | grep . ; test $$? -eq 1
 	go list ./... | grep -v /vendor/ | xargs -i golint {} | grep -E -v '(StorageUrl|CdnUrl)' ; test $$? -eq 1
