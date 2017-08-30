@@ -121,6 +121,7 @@ type Fs struct {
 	containerOKMu     sync.Mutex        // mutex to protect container OK
 	containerOK       bool              // true if we have created the container
 	segmentsContainer string            // container to store the segments (if any) in
+	noCheckContainer  bool              // don't check the container before creating it
 }
 
 // Object describes a swift object
@@ -215,8 +216,11 @@ func swiftConnection(name string) (*swift.Connection, error) {
 }
 
 // NewFsWithConnection contstructs an Fs from the path, container:path
-// and authenticated connection
-func NewFsWithConnection(name, root string, c *swift.Connection) (fs.Fs, error) {
+// and authenticated connection.
+//
+// if noCheckContainer is set then the Fs won't check the container
+// exists before creating it.
+func NewFsWithConnection(name, root string, c *swift.Connection, noCheckContainer bool) (fs.Fs, error) {
 	container, directory, err := parsePath(root)
 	if err != nil {
 		return nil, err
@@ -227,6 +231,7 @@ func NewFsWithConnection(name, root string, c *swift.Connection) (fs.Fs, error) 
 		container:         container,
 		segmentsContainer: container + "_segments",
 		root:              directory,
+		noCheckContainer:  noCheckContainer,
 	}
 	f.features = (&fs.Features{
 		ReadMimeType:  true,
@@ -263,7 +268,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewFsWithConnection(name, root, c)
+	return NewFsWithConnection(name, root, c, false)
 }
 
 // Return an Object from a path
@@ -480,7 +485,10 @@ func (f *Fs) Mkdir(dir string) error {
 		return nil
 	}
 	// Check to see if container exists first
-	_, _, err := f.c.Container(f.container)
+	var err error = swift.ContainerNotFound
+	if !f.noCheckContainer {
+		_, _, err = f.c.Container(f.container)
+	}
 	if err == swift.ContainerNotFound {
 		err = f.c.ContainerCreate(f.container, nil)
 	}
