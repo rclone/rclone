@@ -120,7 +120,7 @@ $ rclone -L ls /tmp/a
         6 b/one
 ```
 
-#### --no-local-unicode-normalization ####
+#### --local-no-unicode-normalization ####
 
 By default rclone normalizes (NFC) the unicode representation of filenames and
 directories. This flag disables that normalization and uses the same
