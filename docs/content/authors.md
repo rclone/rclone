@@ -96,3 +96,4 @@ Contributors
   * Andrei Dragomir <adragomi@adobe.com>
   * Christian Brüggemann <mail@cbruegg.com>
   * Alex McGrath Kraak <amkdude@gmail.com>
+  * bpicode <bjoern.pirnay@googlemail.com>
