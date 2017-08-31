@@ -1,56 +1,44 @@
 ---
 date: 2017-08-20T10:49:45+02:00
-title: "rclone"
-slug: rclone
-url: /commands/rclone/
+title: "rclone genautocomplete bash"
+slug: rclone_genautocomplete_bash
+url: /commands/rclone_genautocomplete_bash/
 ---
-## rclone
+## rclone genautocomplete bash
 
-Sync files and directories to and from local and remote object stores - v1.37
+Output bash completion script for rclone.
 
 ### Synopsis
 
 
 
-Rclone is a command line program to sync files and directories to and
-from various cloud storage systems and using file transfer services, such as:
+Generates a bash shell autocompletion script for rclone.
 
-  * Google Drive
-  * Amazon S3
-  * Openstack Swift / Rackspace cloud files / Memset Memstore
-  * Dropbox
-  * Google Cloud Storage
-  * Amazon Drive
-  * Microsoft OneDrive
-  * Hubic
-  * Backblaze B2
-  * Yandex Disk
-  * SFTP
-  * FTP
-  * HTTP
-  * The local filesystem
+This writes to /etc/bash_completion.d/rclone by default so will
+probably need to be run with sudo or as root, eg
 
-Features
+    sudo rclone genautocomplete bash
 
-  * MD5/SHA1 hashes checked at all times for file integrity
-  * Timestamps preserved on files
-  * Partial syncs supported on a whole file basis
-  * Copy mode to just copy new/changed files
-  * Sync (one way) mode to make a directory identical
-  * Check mode to check for file hash equality
-  * Can sync to and from network, eg two different cloud accounts
+Logout and login again to use the autocompletion scripts, or source
+them directly
 
-See the home page for installation, usage, documentation, changelog
-and configuration walkthroughs.
+    . /etc/bash_completion
 
-  * https://rclone.org/
+If you supply a command line argument the script will be written
+there.
 
 
 ```
-rclone [flags]
+rclone genautocomplete bash [output_file] [flags]
 ```
 
 ### Options
+
+```
+  -h, --help   help for bash
+```
+
+### Options inherited from parent commands
 
 ```
       --acd-templink-threshold int        Files >= this size will be downloaded via their tempLink. (default 9G)
@@ -141,41 +129,9 @@ rclone [flags]
       --transfers int                     Number of file transfers to run in parallel. (default 4)
   -u, --update                            Skip files that are newer on the destination.
   -v, --verbose count[=-1]                Print lots more stuff (repeat for more)
-  -V, --version                           Print the version number
 ```
 
 ### SEE ALSO
-* [rclone authorize](/commands/rclone_authorize/)	 - Remote authorization.
-* [rclone cat](/commands/rclone_cat/)	 - Concatenates any files and sends them to stdout.
-* [rclone check](/commands/rclone_check/)	 - Checks the files in the source and destination match.
-* [rclone cleanup](/commands/rclone_cleanup/)	 - Clean up the remote if possible
-* [rclone config](/commands/rclone_config/)	 - Enter an interactive configuration session.
-* [rclone copy](/commands/rclone_copy/)	 - Copy files from source to dest, skipping already copied
-* [rclone copyto](/commands/rclone_copyto/)	 - Copy files from source to dest, skipping already copied
-* [rclone cryptcheck](/commands/rclone_cryptcheck/)	 - Cryptcheck checks the integrity of a crypted remote.
-* [rclone dbhashsum](/commands/rclone_dbhashsum/)	 - Produces a Dropbbox hash file for all the objects in the path.
-* [rclone dedupe](/commands/rclone_dedupe/)	 - Interactively find duplicate files delete/rename them.
-* [rclone delete](/commands/rclone_delete/)	 - Remove the contents of path.
 * [rclone genautocomplete](/commands/rclone_genautocomplete/)	 - Output completion script for a given shell.
-* [rclone gendocs](/commands/rclone_gendocs/)	 - Output markdown docs for rclone to the directory supplied.
-* [rclone listremotes](/commands/rclone_listremotes/)	 - List all the remotes in the config file.
-* [rclone ls](/commands/rclone_ls/)	 - List all the objects in the path with size and path.
-* [rclone lsd](/commands/rclone_lsd/)	 - List all directories/containers/buckets in the path.
-* [rclone lsjson](/commands/rclone_lsjson/)	 - List directories and objects in the path in JSON format.
-* [rclone lsl](/commands/rclone_lsl/)	 - List all the objects path with modification time, size and path.
-* [rclone md5sum](/commands/rclone_md5sum/)	 - Produces an md5sum file for all the objects in the path.
-* [rclone mkdir](/commands/rclone_mkdir/)	 - Make the path if it doesn't already exist.
-* [rclone mount](/commands/rclone_mount/)	 - Mount the remote as a mountpoint. **EXPERIMENTAL**
-* [rclone move](/commands/rclone_move/)	 - Move files from source to dest.
-* [rclone moveto](/commands/rclone_moveto/)	 - Move file or directory from source to dest.
-* [rclone ncdu](/commands/rclone_ncdu/)	 - Explore a remote with a text based user interface.
-* [rclone obscure](/commands/rclone_obscure/)	 - Obscure password for use in the rclone.conf
-* [rclone purge](/commands/rclone_purge/)	 - Remove the path and all of its contents.
-* [rclone rmdir](/commands/rclone_rmdir/)	 - Remove the path if empty.
-* [rclone rmdirs](/commands/rclone_rmdirs/)	 - Remove empty directories under the path.
-* [rclone sha1sum](/commands/rclone_sha1sum/)	 - Produces an sha1sum file for all the objects in the path.
-* [rclone size](/commands/rclone_size/)	 - Prints the total size and number of objects in remote:path.
-* [rclone sync](/commands/rclone_sync/)	 - Make source and dest identical, modifying destination only.
-* [rclone version](/commands/rclone_version/)	 - Show the version number.
 
-###### Auto generated by spf13/cobra on 22-Jul-2017
+###### Auto generated by spf13/cobra on 20-Aug-2017
