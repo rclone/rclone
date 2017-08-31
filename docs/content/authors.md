@@ -97,3 +97,4 @@ Contributors
   * Christian Brüggemann <mail@cbruegg.com>
   * Alex McGrath Kraak <amkdude@gmail.com>
   * bpicode <bjoern.pirnay@googlemail.com>
+  * Daniel Jagszent <daniel@jagszent.de>
