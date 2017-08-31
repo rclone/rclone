@@ -1133,7 +1133,7 @@ func (file *openFile) Close() (err error) {
 	// Check the SHA1
 	receivedSHA1 := file.o.sha1
 	calculatedSHA1 := fmt.Sprintf("%x", file.hash.Sum(nil))
-	if receivedSHA1 != calculatedSHA1 {
+	if receivedSHA1 != "" && receivedSHA1 != calculatedSHA1 {
 		return errors.Errorf("object corrupted on transfer - SHA1 mismatch (want %q got %q)", receivedSHA1, calculatedSHA1)
 	}
 
