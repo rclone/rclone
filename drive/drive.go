@@ -749,9 +749,9 @@ func (f *Fs) MergeDirs(dirs []fs.Directory) error {
 		for _, info := range infos {
 			fs.Infof(srcDir, "merging %q", info.Title)
 			// Move the file into the destination
+			info.Parents = []*drive.ParentReference{{Id: dstDir.ID()}}
 			err = f.pacer.Call(func() (bool, error) {
-				info.Parents = []*drive.ParentReference{{Id: dstDir.ID()}}
-				info, err = f.svc.Files.Patch(info.Id, info).SetModifiedDate(true).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).Do()
+				_, err = f.svc.Files.Patch(info.Id, info).SetModifiedDate(true).Fields(googleapi.Field(partialFields)).SupportsTeamDrives(f.isTeamDrive).Do()
 				return shouldRetry(err)
 			})
 			if err != nil {
