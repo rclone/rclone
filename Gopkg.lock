@@ -209,7 +209,7 @@
   branch = "master"
   name = "github.com/spf13/cobra"
   packages = [".","doc"]
-  revision = "715f41bd7a70b5111f898b71ab484da52ee6266d"
+  revision = "2df9a531813370438a4d79bfc33e21f58063ed87"
 
 [[projects]]
   name = "github.com/spf13/pflag"
@@ -230,10 +230,10 @@
   revision = "ba9c9e33906f58169366275e3450db66139a31a9"
 
 [[projects]]
+  branch = "master"
   name = "github.com/yunify/qingstor-sdk-go"
   packages = [".","config","logger","request","request/builder","request/data","request/errors","request/signer","request/unpacker","service","utils"]
-  revision = "68ce7c233bde780b2bbe1e1cf018db8e2df86361"
-  version = "v2.2.6"
+  revision = "4749bc5ebe4857b353e55b49ebe91eed9a7f6cda"
 
 [[projects]]
   branch = "master"

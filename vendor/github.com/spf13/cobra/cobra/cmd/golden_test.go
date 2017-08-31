@@ -39,11 +39,11 @@ func compareFiles(pathA, pathB string) error {
 			// Don't execute diff if it can't be found.
 			return nil
 		}
-		diffCmd := exec.Command(diffPath, pathA, pathB)
+		diffCmd := exec.Command(diffPath, "-u", pathA, pathB)
 		diffCmd.Stdout = output
 		diffCmd.Stderr = output
 
-		output.WriteString("$ diff " + pathA + " " + pathB + "\n")
+		output.WriteString("$ diff -u " + pathA + " " + pathB + "\n")
 		if err := diffCmd.Run(); err != nil {
 			output.WriteString("\n" + err.Error())
 		}
