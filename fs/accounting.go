@@ -87,7 +87,7 @@ func startTokenTicker() {
 				if limitNow.bandwidth > 0 {
 					*targetBucket = newTokenBucket(limitNow.bandwidth)
 					if bwLimitToggledOff {
-						Logf(nil, "Scheduled bandwidth change. " +
+						Logf(nil, "Scheduled bandwidth change. "+
 							"Limit will be set to %vBytes/s when toggled on again.", &limitNow.bandwidth)
 					} else {
 						Logf(nil, "Scheduled bandwidth change. Limit set to %vBytes/s", &limitNow.bandwidth)
