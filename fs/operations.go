@@ -18,8 +18,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
-
-	"golang.org/x/text/unicode/norm"
+	"golang.org/x/net/context"
 )
 
 // CalculateModifyWindow works out modify window for Fses passed in -
@@ -682,68 +681,6 @@ func filterAndSortDir(entries DirEntries, includeAll bool, dir string,
 	return entries, nil
 }
 
-// Read a map of Object.Remote to Object for the given Fs.
-// dir is the start directory, "" for root
-// If includeAll is specified all files will be added,
-// otherwise only files passing the filter will be added.
-//
-// This also detects duplicates and normalised duplicates
-func readFilesMap(fs Fs, includeAll bool, dir string) (files map[string]Object, err error) {
-	files = make(map[string]Object)
-	normalised := make(map[string]struct{})
-	err = readFilesFn(fs, includeAll, dir, func(o Object) error {
-		remote := o.Remote()
-		normalisedRemote := strings.ToLower(norm.NFC.String(remote))
-		if _, ok := files[remote]; !ok {
-			files[remote] = o
-			if _, ok := normalised[normalisedRemote]; ok {
-				Logf(o, "File found with same name but different case on %v", o.Fs())
-			}
-		} else {
-			Logf(o, "Duplicate file detected")
-		}
-		normalised[normalisedRemote] = struct{}{}
-		return nil
-	})
-	if err != nil {
-		err = errors.Wrapf(err, "error listing: %s", fs)
-	}
-	return files, err
-}
-
-// readFilesMaps runs readFilesMap on fdst and fsrc at the same time
-// dir is the start directory, "" for root
-func readFilesMaps(fdst Fs, fdstIncludeAll bool, fsrc Fs, fsrcIncludeAll bool, dir string) (dstFiles, srcFiles map[string]Object, err error) {
-	var wg sync.WaitGroup
-	var srcErr, dstErr error
-
-	list := func(fs Fs, includeAll bool, pMap *map[string]Object, pErr *error) {
-		defer wg.Done()
-		Infof(fs, "Building file list")
-		files, listErr := readFilesMap(fs, includeAll, dir)
-		if listErr != nil {
-			Errorf(fs, "Error building file list: %v", listErr)
-			*pErr = listErr
-		} else {
-			Debugf(fs, "Done building file list")
-			*pMap = files
-		}
-	}
-
-	wg.Add(2)
-	go list(fdst, fdstIncludeAll, &dstFiles, &srcErr)
-	go list(fsrc, fsrcIncludeAll, &srcFiles, &dstErr)
-	wg.Wait()
-
-	if srcErr != nil {
-		err = srcErr
-	}
-	if dstErr != nil {
-		err = dstErr
-	}
-	return dstFiles, srcFiles, err
-}
-
 // SameConfig returns true if fdst and fsrc are using the same config
 // file entry
 func SameConfig(fdst, fsrc Info) bool {
@@ -795,6 +732,107 @@ func checkIdentical(dst, src Object) (differ bool, noHash bool) {
 	return false, false
 }
 
+// checkFn is the the type of the checking function used in CheckFn()
+type checkFn func(a, b Object) (differ bool, noHash bool)
+
+// checkMarch is used to march over two Fses in the same way as
+// sync/copy
+type checkMarch struct {
+	fdst, fsrc      Fs
+	check           checkFn
+	differences     int32
+	noHashes        int32
+	srcFilesMissing int32
+	dstFilesMissing int32
+}
+
+// DstOnly have an object which is in the destination only
+func (c *checkMarch) DstOnly(dst DirEntry) (recurse bool) {
+	switch dst.(type) {
+	case Object:
+		Stats.Error()
+		Errorf(dst, "File not in %v", c.fsrc)
+		atomic.AddInt32(&c.differences, 1)
+		atomic.AddInt32(&c.srcFilesMissing, 1)
+	case Directory:
+		// Do the same thing to the entire contents of the directory
+		return true
+	default:
+		panic("Bad object in DirEntries")
+	}
+	return false
+}
+
+// SrcOnly have an object which is in the source only
+func (c *checkMarch) SrcOnly(src DirEntry) (recurse bool) {
+	switch src.(type) {
+	case Object:
+		Stats.Error()
+		Errorf(src, "File not in %v", c.fdst)
+		atomic.AddInt32(&c.differences, 1)
+		atomic.AddInt32(&c.dstFilesMissing, 1)
+	case Directory:
+		// Do the same thing to the entire contents of the directory
+		return true
+	default:
+		panic("Bad object in DirEntries")
+	}
+	return false
+}
+
+// check to see if two objects are identical using the check function
+func (c *checkMarch) checkIdentical(dst, src Object) (differ bool, noHash bool) {
+	Stats.Checking(src.Remote())
+	defer Stats.DoneChecking(src.Remote())
+	if !Config.IgnoreSize && src.Size() != dst.Size() {
+		Stats.Error()
+		Errorf(src, "Sizes differ")
+		return true, false
+	}
+	if Config.SizeOnly {
+		return false, false
+	}
+	return c.check(dst, src)
+}
+
+// Match is called when src and dst are present, so sync src to dst
+func (c *checkMarch) Match(dst, src DirEntry) (recurse bool) {
+	switch srcX := src.(type) {
+	case Object:
+		dstX, ok := dst.(Object)
+		if ok {
+			differ, noHash := c.checkIdentical(dstX, srcX)
+			if differ {
+				atomic.AddInt32(&c.differences, 1)
+			} else {
+				Debugf(dstX, "OK")
+			}
+			if noHash {
+				atomic.AddInt32(&c.noHashes, 1)
+			}
+		} else {
+			Stats.Error()
+			Errorf(src, "is file on %v but directory on %v", c.fsrc, c.fdst)
+			atomic.AddInt32(&c.differences, 1)
+			atomic.AddInt32(&c.dstFilesMissing, 1)
+		}
+	case Directory:
+		// Do the same thing to the entire contents of the directory
+		_, ok := dst.(Directory)
+		if ok {
+			return true
+		}
+		Stats.Error()
+		Errorf(dst, "is file on %v but directory on %v", c.fdst, c.fsrc)
+		atomic.AddInt32(&c.differences, 1)
+		atomic.AddInt32(&c.srcFilesMissing, 1)
+
+	default:
+		panic("Bad object in DirEntries")
+	}
+	return false
+}
+
 // CheckFn checks the files in fsrc and fdst according to Size and
 // hash using checkFunction on each file to check the hashes.
 //
@@ -802,91 +840,31 @@ func checkIdentical(dst, src Object) (differ bool, noHash bool) {
 //
 // it returns true if differences were found
 // it also returns whether it couldn't be hashed
-func CheckFn(fdst, fsrc Fs, checkFunction func(a, b Object) (differ bool, noHash bool)) error {
-	dstFiles, srcFiles, err := readFilesMaps(fdst, false, fsrc, false, "")
-	if err != nil {
-		return err
-	}
-	differences := int32(0)
-	noHashes := int32(0)
-
-	// FIXME could do this as it goes along and make it use less
-	// memory.
-
-	// Move all the common files into commonFiles and delete then
-	// from srcFiles and dstFiles
-	commonFiles := make(map[string][2]Object)
-	for remote, src := range srcFiles {
-		if dst, ok := dstFiles[remote]; ok {
-			commonFiles[remote] = [2]Object{dst, src}
-			delete(srcFiles, remote)
-			delete(dstFiles, remote)
-		}
+func CheckFn(fdst, fsrc Fs, check checkFn) error {
+	c := &checkMarch{
+		fdst:  fdst,
+		fsrc:  fsrc,
+		check: check,
 	}
 
-	Logf(fdst, "%d files not in %v", len(dstFiles), fsrc)
-	for _, dst := range dstFiles {
-		Stats.Error()
-		Errorf(dst, "File not in %v", fsrc)
-		atomic.AddInt32(&differences, 1)
-	}
-
-	Logf(fsrc, "%d files not in %s", len(srcFiles), fdst)
-	for _, src := range srcFiles {
-		Stats.Error()
-		Errorf(src, "File not in %v", fdst)
-		atomic.AddInt32(&differences, 1)
-	}
-
-	checks := make(chan [2]Object, Config.Transfers)
-	go func() {
-		for _, check := range commonFiles {
-			checks <- check
-		}
-		close(checks)
-	}()
-
-	checkIdentical := func(dst, src Object) (differ bool, noHash bool) {
-		Stats.Checking(src.Remote())
-		defer Stats.DoneChecking(src.Remote())
-		if !Config.IgnoreSize && src.Size() != dst.Size() {
-			Stats.Error()
-			Errorf(src, "Sizes differ")
-			return true, false
-		}
-		if Config.SizeOnly {
-			return false, false
-		}
-		return checkFunction(dst, src)
-	}
-
-	var checkerWg sync.WaitGroup
-	checkerWg.Add(Config.Checkers)
-	for i := 0; i < Config.Checkers; i++ {
-		go func() {
-			defer checkerWg.Done()
-			for check := range checks {
-				differ, noHash := checkIdentical(check[0], check[1])
-				if differ {
-					atomic.AddInt32(&differences, 1)
-				} else {
-					Debugf(check[0], "OK")
-				}
-				if noHash {
-					atomic.AddInt32(&noHashes, 1)
-				}
-			}
-		}()
-	}
-
+	// set up a march over fdst and fsrc
+	m := newMarch(context.Background(), fdst, fsrc, "", c)
 	Infof(fdst, "Waiting for checks to finish")
-	checkerWg.Wait()
-	Logf(fdst, "%d differences found", Stats.GetErrors())
-	if noHashes > 0 {
-		Logf(fdst, "%d hashes could not be checked", noHashes)
+	m.run()
+
+	if c.dstFilesMissing > 0 {
+		Logf(fdst, "%d files missing", c.dstFilesMissing)
 	}
-	if differences > 0 {
-		return errors.Errorf("%d differences found", differences)
+	if c.srcFilesMissing > 0 {
+		Logf(fsrc, "%d files missing", c.srcFilesMissing)
+	}
+
+	Logf(fdst, "%d differences found", Stats.GetErrors())
+	if c.noHashes > 0 {
+		Logf(fdst, "%d hashes could not be checked", c.noHashes)
+	}
+	if c.differences > 0 {
+		return errors.Errorf("%d differences found", c.differences)
 	}
 	return nil
 }
