@@ -849,7 +849,7 @@ func CheckFn(fdst, fsrc Fs, checkFunction func(a, b Object) (differ bool, noHash
 	checkIdentical := func(dst, src Object) (differ bool, noHash bool) {
 		Stats.Checking(src.Remote())
 		defer Stats.DoneChecking(src.Remote())
-		if src.Size() != dst.Size() {
+		if !Config.IgnoreSize && src.Size() != dst.Size() {
 			Stats.Error()
 			Errorf(src, "Sizes differ")
 			return true, false
