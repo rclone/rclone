@@ -124,7 +124,7 @@ operations more efficient.
 | Dropbox                      | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | Yes |
 | FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          |
 | Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | No [#1614](https://github.com/ncw/rclone/issues/1614) |
-| Google Drive                 | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | Yes |
+| Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | No  | Yes |
 | HTTP                         | No    | No   | No   | No      | No      | No    | No           |
 | Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | No [#1614](https://github.com/ncw/rclone/issues/1614) |
 | Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | No           |
