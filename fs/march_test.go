@@ -1,4 +1,4 @@
-// Internal tests for sync/copy/move
+// Internal tests for march
 
 package fs
 
