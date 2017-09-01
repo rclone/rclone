@@ -905,6 +905,19 @@ func (f *Fs) Purge() error {
 	return nil
 }
 
+// CleanUp empties the trash
+func (f *Fs) CleanUp() error {
+	err := f.pacer.Call(func() (bool, error) {
+		err := f.svc.Files.EmptyTrash().Do()
+		return shouldRetry(err)
+	})
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Move src to this remote using server side move operations.
 //
 // This is stored with the remote path given

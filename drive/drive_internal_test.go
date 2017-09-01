@@ -3,9 +3,10 @@ package drive
 import (
 	"testing"
 
+	"google.golang.org/api/drive/v2"
+
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/api/drive/v2"
 )
 
 func TestInternalParseExtensions(t *testing.T) {
