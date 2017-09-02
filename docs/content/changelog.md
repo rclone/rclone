@@ -20,7 +20,7 @@ Changelog
         * This allows remotes to list recursively if they can
         * This uses less transactions (important if you pay for them)
         * This may or may not be quicker
-        * This will user more memory as it has to hold the listing in memory
+        * This will use more memory as it has to hold the listing in memory
         * --old-sync-method deprecated - the remaining uses are covered by --fast-list
         * This involved a major re-write of all the listing code
       * Add --tpslimit and --tpslimit-burst to limit transactions per second
