@@ -180,8 +180,13 @@ func equal(src ObjectInfo, dst Object, sizeOnly, checkSum bool) bool {
 		if Config.DryRun {
 			Logf(src, "Not updating modification time as --dry-run")
 		} else {
-			// Size and hash the same but mtime different so update the
-			// mtime of the dst object here
+			// Size and hash the same but mtime different
+			// Error if objects are treated as immutable
+			if Config.Immutable {
+				Errorf(dst, "Timestamp mismatch between immutable objects")
+				return false
+			}
+			// Update the mtime of the dst object here
 			err := dst.SetModTime(srcModTime)
 			if err == ErrorCantSetModTime {
 				Debugf(dst, "src and dst identical but can't set mod time without re-uploading")
