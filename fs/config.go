@@ -102,6 +102,7 @@ var (
 	bindAddr              = StringP("bind", "", "", "Local address to bind to for outgoing connections, IPv4, IPv6 or name.")
 	disableFeatures       = StringP("disable", "", "", "Disable a comma separated list of features.  Use help to see a list.")
 	userAgent             = StringP("user-agent", "", "rclone/"+Version, "Set the user-agent to a specified string. The default is rclone/ version")
+	immutable             = BoolP("immutable", "", false, "Do not modify files. Fail if existing files have been modified.")
 	streamingUploadCutoff = SizeSuffix(100 * 1024)
 	logLevel              = LogLevelNotice
 	statsLogLevel         = LogLevelInfo
@@ -240,6 +241,7 @@ type ConfigInfo struct {
 	TPSLimitBurst         int
 	BindAddr              net.IP
 	DisableFeatures       []string
+	Immutable             bool
 	StreamingUploadCutoff SizeSuffix
 }
 
@@ -379,6 +381,7 @@ func LoadConfig() {
 	Config.UseListR = *useListR
 	Config.TPSLimit = *tpsLimit
 	Config.TPSLimitBurst = *tpsLimitBurst
+	Config.Immutable = *immutable
 	Config.BufferSize = bufferSize
 	Config.StreamingUploadCutoff = streamingUploadCutoff
 

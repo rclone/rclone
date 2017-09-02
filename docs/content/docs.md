@@ -433,6 +433,26 @@ Normally rclone would skip any files that have the same
 modification time and are the same size (or have the same checksum if
 using `--checksum`).
 
+### --immutable ###
+
+Treat source and destination files as immutable and disallow
+modification.
+
+With this option set, files will be created and deleted as requested,
+but existing files will never be updated.  If an existing file does
+not match between the source and destination, rclone will give the error
+`Source and destination exist but do not match: immutable file modified`.
+
+Note that only commands which transfer files (e.g. `sync`, `copy`,
+`move`) are affected by this behavior, and only modification is
+disallowed.  Files may still be deleted explicitly (e.g. `delete`,
+`purge`) or implicitly (e.g. `sync`, `move`).  Use `copy --immutable`
+if it is desired to avoid deletion as well as modification.
+
+This can be useful as an additional layer of protection for immutable
+or append-only data sets (notably backup archives), where modification
+implies corruption and should not be propagated.
+
 ### --log-file=FILE ###
 
 Log all of rclone's output to FILE.  This is not active by default.
