@@ -114,7 +114,7 @@ To copy a local directory to an OneDrive directory called backup
 
 ### OneDrive for Business ###
 
-There is experimental support for OneDrive for Business.
+There is additional support for OneDrive for Business.
 Select "b" when ask
 ```
 Choose OneDrive account type?
@@ -124,10 +124,8 @@ b) Business
 p) Personal
 b/p> 
 ```
-After that rclone requires two authentications. First to authenicate your account
-and second to get the final token to access your companies resources.
-
-Headless authentication is not working at the moment.
+After that rclone requires an authentication of your account. The application will first authenticate your account, then query the OneDrive resource URL
+and do a second (silent) authentication for this resource URL. 
 
 ### Modified time and hashes ###
 
