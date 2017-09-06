@@ -91,9 +91,16 @@ func init() {
 					log.Fatalf("Failed to configure token: %v", err)
 				}
 			} else {
-				err := oauthutil.Config("onedrivebusiness", name, oauthBusinessConfig, oauthBusinessResource)
+				err := oauthutil.Config("onedrive", name, oauthBusinessConfig, oauthBusinessResource)
 				if err != nil {
 					log.Fatalf("Failed to configure token: %v", err)
+					return
+				}
+
+				// Are we running headless?
+				if fs.ConfigFileGet(name, fs.ConfigAutomatic) != "" {
+					// Yes, okay we are done
+					return
 				}
 
 				type serviceResource struct {
@@ -108,43 +115,94 @@ func init() {
 				oAuthClient, _, err := oauthutil.NewClient(name, oauthBusinessConfig)
 				if err != nil {
 					log.Fatalf("Failed to configure OneDrive: %v", err)
+					return
 				}
-				srv := rest.NewClient(oAuthClient).SetRoot(discoveryServiceURL)
+				srv := rest.NewClient(oAuthClient)
 
 				opts := rest.Opts{
-					Method: "GET",
-					Path:   "/v2.0/me/services",
+					Method:  "GET",
+					RootURL: discoveryServiceURL,
+					Path:    "/v2.0/me/services",
 				}
 				services := serviceResponse{}
 				resp, err := srv.CallJSON(&opts, nil, &services)
 				if err != nil {
-					log.Fatalf("Failed to query available services: %v", err)
+					fs.Errorf(nil, "Failed to query available services: %v", err)
+					return
 				}
 				if resp.StatusCode != 200 {
-					log.Fatalf("Failed to query available services: Got HTTP error code %d", resp.StatusCode)
+					fs.Errorf(nil, "Failed to query available services: Got HTTP error code %d", resp.StatusCode)
+					return
 				}
 
-				foundService := false
+				foundService := ""
 				for _, service := range services.Services {
 					if service.ServiceAPIVersion == "v2.0" {
-						foundService = true
-						fs.ConfigFileSet(name, configResourceURL, service.ServiceResourceID)
-						oauthBusinessResource = oauth2.SetAuthURLParam("resource", service.ServiceResourceID)
+						foundService = service.ServiceResourceID
+						fs.ConfigFileSet(name, configResourceURL, foundService)
+						oauthBusinessResource = oauth2.SetAuthURLParam("resource", foundService)
 
 						fs.Logf(nil, "Found API %s endpoint %s", service.ServiceAPIVersion, service.ServiceEndpointURI)
+						break
 					}
 					// we only support 2.0 API
-					fs.Logf(nil, "Skipping API %s endpoint %s", service.ServiceAPIVersion, service.ServiceEndpointURI)
+					fs.Infof(nil, "Skipping API %s endpoint %s", service.ServiceAPIVersion, service.ServiceEndpointURI)
 				}
 
-				if !foundService {
-					log.Fatalf("No Service found")
+				if foundService == "" {
+					fs.Errorf(nil, "No Service found")
+					return
 				}
 
-				fs.ConfigFileDeleteKey(name, fs.ConfigToken)
-				err = oauthutil.Config("onedrivebusiness", name, oauthBusinessConfig, oauthBusinessResource)
+				// get the token from the inital config
+				// we need to update the token with a resource
+				// specific token we will query now
+				token, err := oauthutil.GetToken(name)
 				if err != nil {
-					log.Fatalf("Failed to configure token: %v", err)
+					fs.Errorf(nil, "Error while getting token: %s", err)
+					return
+				}
+
+				// values for the token query
+				values := url.Values{}
+				values.Set("refresh_token", token.RefreshToken)
+				values.Set("grant_type", "refresh_token")
+				values.Set("resource", foundService)
+				values.Set("client_id", oauthBusinessConfig.ClientID)
+				values.Set("client_secret", oauthBusinessConfig.ClientSecret)
+				opts = rest.Opts{
+					Method:      "POST",
+					RootURL:     oauthBusinessConfig.Endpoint.TokenURL,
+					ContentType: "application/x-www-form-urlencoded",
+					Body:        strings.NewReader(values.Encode()),
+				}
+
+				// tokenJSON is the struct representing the HTTP response from OAuth2
+				// providers returning a token in JSON form.
+				// we are only interested in the new tokens, all other fields we don't care
+				type tokenJSON struct {
+					AccessToken  string `json:"access_token"`
+					RefreshToken string `json:"refresh_token"`
+				}
+				jsonToken := tokenJSON{}
+				resp, err = srv.CallJSON(&opts, nil, &jsonToken)
+				if err != nil {
+					fs.Errorf(nil, "Failed to get resource token: %v", err)
+					return
+				}
+				if resp.StatusCode != 200 {
+					fs.Errorf(nil, "Failed to get resource token: Got HTTP error code %d", resp.StatusCode)
+					return
+				}
+
+				// update the tokens
+				token.AccessToken = jsonToken.AccessToken
+				token.RefreshToken = jsonToken.RefreshToken
+
+				// finally save them in the config
+				err = oauthutil.PutToken(name, token, true)
+				if err != nil {
+					fs.Errorf(nil, "Error while setting token: %s", err)
 				}
 			}
 		},
