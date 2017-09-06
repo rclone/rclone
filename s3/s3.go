@@ -220,7 +220,7 @@ func init() {
 // Constants
 const (
 	metaMtime      = "Mtime"                // the meta key to store mtime in - eg X-Amz-Meta-Mtime
-	listChunkSize  = 1024                   // number of items to read at once
+	listChunkSize  = 1000                   // number of items to read at once
 	maxRetries     = 10                     // number of retries to make of operations
 	maxSizeForCopy = 5 * 1024 * 1024 * 1024 // The maximum size of object we can COPY
 )
