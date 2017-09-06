@@ -51,9 +51,9 @@ type oldToken struct {
 	Expiry       time.Time
 }
 
-// getToken returns the token saved in the config file under
+// GetToken returns the token saved in the config file under
 // section name.
-func getToken(name string) (*oauth2.Token, error) {
+func GetToken(name string) (*oauth2.Token, error) {
 	tokenString := fs.ConfigFileGet(name, fs.ConfigToken)
 	if tokenString == "" {
 		return nil, errors.New("empty token found - please run rclone config again")
@@ -78,17 +78,17 @@ func getToken(name string) (*oauth2.Token, error) {
 	token.RefreshToken = oldtoken.RefreshToken
 	token.Expiry = oldtoken.Expiry
 	// Save new format in config file
-	err = putToken(name, token, false)
+	err = PutToken(name, token, false)
 	if err != nil {
 		return nil, err
 	}
 	return token, nil
 }
 
-// putToken stores the token in the config file
+// PutToken stores the token in the config file
 //
 // This saves the config file if it changes
-func putToken(name string, token *oauth2.Token, newSection bool) error {
+func PutToken(name string, token *oauth2.Token, newSection bool) error {
 	tokenBytes, err := json.Marshal(token)
 	if err != nil {
 		return err
@@ -144,7 +144,7 @@ func (ts *TokenSource) Token() (*oauth2.Token, error) {
 		if ts.expiryTimer != nil {
 			ts.expiryTimer.Reset(ts.timeToExpiry())
 		}
-		err = putToken(ts.name, token, false)
+		err = PutToken(ts.name, token, false)
 		if err != nil {
 			return nil, err
 		}
@@ -228,7 +228,7 @@ func overrideCredentials(name string, origConfig *oauth2.Config) (config *oauth2
 // with it.  It returns the client and a TokenSource which Invalidate may need to be called on
 func NewClient(name string, config *oauth2.Config) (*http.Client, *TokenSource, error) {
 	config, _ = overrideCredentials(name, config)
-	token, err := getToken(name)
+	token, err := GetToken(name)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -309,7 +309,7 @@ func doConfig(id, name string, config *oauth2.Config, offline bool, opts []oauth
 			if err != nil {
 				return err
 			}
-			return putToken(name, token, false)
+			return PutToken(name, token, false)
 		}
 	case TitleBarRedirectURL:
 		useWebServer = automatic
@@ -385,7 +385,7 @@ func doConfig(id, name string, config *oauth2.Config, offline bool, opts []oauth
 		}
 		fmt.Printf("Paste the following into your remote machine --->\n%s\n<---End paste", result)
 	}
-	return putToken(name, token, true)
+	return PutToken(name, token, true)
 }
 
 // Local web server for collecting auth
