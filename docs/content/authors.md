@@ -99,3 +99,4 @@ Contributors
   * bpicode <bjoern.pirnay@googlemail.com>
   * Daniel Jagszent <daniel@jagszent.de>
   * Josiah White <thegenius2009@gmail.com>
+  * ishuah91 <ishuah91@gmail.com>
