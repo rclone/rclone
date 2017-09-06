@@ -265,11 +265,13 @@ processed in.
 
 Prepare a file like this `filter-file.txt`
 
-    # a sample exclude rule file
+    # a sample filter rule file
     - secret*.jpg
     + *.jpg
     + *.png
     + file2.avi
+    - /dir/Trash/**
+    + /dir/**
     # exclude everything else
     - *
 
@@ -277,8 +279,10 @@ Then use as `--filter-from filter-file.txt`.  The rules are processed
 in the order that they are defined.
 
 This example will include all `jpg` and `png` files, exclude any files
-matching `secret*.jpg` and include `file2.avi`.  Everything else will
-be excluded from the sync.
+matching `secret*.jpg` and include `file2.avi`.  It will also include
+everything in the directory `dir` at the root of the sync, except
+`dir/Trash` which it will exclude.  Everything else will be excluded
+from the sync.
 
 ### `--files-from` - Read list of source-file names ###
 

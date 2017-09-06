@@ -92,7 +92,10 @@ func NewFs(name, root string) (fs.Fs, error) {
 		dirNames: newMapper(),
 	}
 	f.root = f.cleanPath(root)
-	f.features = (&fs.Features{CaseInsensitive: f.caseInsensitive()}).Fill(f)
+	f.features = (&fs.Features{
+		CaseInsensitive:         f.caseInsensitive(),
+		CanHaveEmptyDirectories: true,
+	}).Fill(f)
 	if *followSymlinks {
 		f.lstat = os.Stat
 	}
@@ -327,6 +330,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 	return o, nil
 }
 
+// PutStream uploads to the remote path with the modTime given of indeterminate size
+func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(in, src, options...)
+}
+
 // Mkdir creates the directory if it doesn't exist
 func (f *Fs) Mkdir(dir string) error {
 	// FIXME: https://github.com/syncthing/syncthing/blob/master/lib/osutil/mkdirall_windows.go
@@ -467,8 +475,16 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 
 	// Do the move
 	err = os.Rename(srcObj.path, dstObj.path)
-	if err != nil {
+	if os.IsNotExist(err) {
+		// race condition, source was deleted in the meantime
 		return nil, err
+	} else if os.IsPermission(err) {
+		// not enough rights to write to dst
+		return nil, err
+	} else if err != nil {
+		// not quite clear, but probably trying to move a file across file system
+		// boundaries. Copying might still work.
+		return nil, fs.ErrorCantMove
 	}
 
 	// Update the info
@@ -893,9 +909,10 @@ func cleanWindowsName(f *Fs, name string) string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs       = &Fs{}
-	_ fs.Purger   = &Fs{}
-	_ fs.Mover    = &Fs{}
-	_ fs.DirMover = &Fs{}
-	_ fs.Object   = &Object{}
+	_ fs.Fs          = &Fs{}
+	_ fs.Purger      = &Fs{}
+	_ fs.PutStreamer = &Fs{}
+	_ fs.Mover       = &Fs{}
+	_ fs.DirMover    = &Fs{}
+	_ fs.Object      = &Object{}
 )

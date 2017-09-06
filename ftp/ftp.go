@@ -207,7 +207,9 @@ func NewFs(name, root string) (ff fs.Fs, err error) {
 		pass:     pass,
 		dialAddr: dialAddr,
 	}
-	f.features = (&fs.Features{}).Fill(f)
+	f.features = (&fs.Features{
+		CanHaveEmptyDirectories: true,
+	}).Fill(f)
 	// Make a connection and pool it to return errors early
 	c, err := f.getFtpConnection()
 	if err != nil {
@@ -370,6 +372,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 	}
 	err = o.Update(in, src, options...)
 	return o, err
+}
+
+// PutStream uploads to the remote path with the modTime given of indeterminate size
+func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(in, src, options...)
 }
 
 // getInfo reads the FileInfo for a path
@@ -706,8 +713,9 @@ func (o *Object) Remove() (err error) {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs       = &Fs{}
-	_ fs.Mover    = &Fs{}
-	_ fs.DirMover = &Fs{}
-	_ fs.Object   = &Object{}
+	_ fs.Fs          = &Fs{}
+	_ fs.Mover       = &Fs{}
+	_ fs.DirMover    = &Fs{}
+	_ fs.PutStreamer = &Fs{}
+	_ fs.Object      = &Object{}
 )

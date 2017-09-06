@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"mime"
 	"path"
@@ -13,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
@@ -847,7 +849,7 @@ func CheckFn(fdst, fsrc Fs, checkFunction func(a, b Object) (differ bool, noHash
 	checkIdentical := func(dst, src Object) (differ bool, noHash bool) {
 		Stats.Checking(src.Remote())
 		defer Stats.DoneChecking(src.Remote())
-		if src.Size() != dst.Size() {
+		if !Config.IgnoreSize && src.Size() != dst.Size() {
 			Stats.Error()
 			Errorf(src, "Sizes differ")
 			return true, false
@@ -1349,11 +1351,81 @@ func (x *DeduplicateMode) Type() string {
 // Check it satisfies the interface
 var _ pflag.Value = (*DeduplicateMode)(nil)
 
+// dedupeFindDuplicateDirs scans f for duplicate directories
+func dedupeFindDuplicateDirs(f Fs) ([][]Directory, error) {
+	duplicateDirs := [][]Directory{}
+	err := Walk(f, "", true, Config.MaxDepth, func(dirPath string, entries DirEntries, err error) error {
+		if err != nil {
+			return err
+		}
+		dirs := map[string][]Directory{}
+		entries.ForDir(func(d Directory) {
+			dirs[d.Remote()] = append(dirs[d.Remote()], d)
+		})
+		for _, ds := range dirs {
+			if len(ds) > 1 {
+				duplicateDirs = append(duplicateDirs, ds)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "find duplicate dirs")
+	}
+	return duplicateDirs, nil
+}
+
+// dedupeMergeDuplicateDirs merges all the duplicate directories found
+func dedupeMergeDuplicateDirs(f Fs, duplicateDirs [][]Directory) error {
+	mergeDirs := f.Features().MergeDirs
+	if mergeDirs == nil {
+		return errors.Errorf("%v: can't merge directories", f)
+	}
+	dirCacheFlush := f.Features().DirCacheFlush
+	if dirCacheFlush == nil {
+		return errors.Errorf("%v: can't flush dir cache", f)
+	}
+	for _, dirs := range duplicateDirs {
+		if !Config.DryRun {
+			Infof(dirs[0], "Merging contents of duplicate directories")
+			err := mergeDirs(dirs)
+			if err != nil {
+				return errors.Wrap(err, "merge duplicate dirs")
+			}
+		} else {
+			Infof(dirs[0], "NOT Merging contents of duplicate directories as --dry-run")
+		}
+	}
+	dirCacheFlush()
+	return nil
+}
+
 // Deduplicate interactively finds duplicate files and offers to
 // delete all but one or rename them to be different. Only useful with
 // Google Drive which can have duplicate file names.
 func Deduplicate(f Fs, mode DeduplicateMode) error {
 	Infof(f, "Looking for duplicates using %v mode.", mode)
+
+	// Find duplicate directories first and fix them - repeat
+	// until all fixed
+	for {
+		duplicateDirs, err := dedupeFindDuplicateDirs(f)
+		if err != nil {
+			return err
+		}
+		if len(duplicateDirs) == 0 {
+			break
+		}
+		err = dedupeMergeDuplicateDirs(f, duplicateDirs)
+		if err != nil {
+			return err
+		}
+		if Config.DryRun {
+			break
+		}
+	}
+
+	// Now find duplicate files
 	files := map[string][]Object{}
 	err := Walk(f, "", true, Config.MaxDepth, func(dirPath string, entries DirEntries, err error) error {
 		if err != nil {
@@ -1508,6 +1580,60 @@ func Cat(f Fs, w io.Writer, offset, count int64) error {
 			Errorf(o, "Failed to send to output: %v", err)
 		}
 	})
+}
+
+// Rcat reads data from the Reader until EOF and uploads it to a file on remote
+func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (err error) {
+	Stats.Transferring(dstFileName)
+	defer func() {
+		Stats.DoneTransferring(dstFileName, err == nil)
+	}()
+
+	fStreamTo := fdst
+	canStream := fdst.Features().PutStream != nil
+	if !canStream {
+		Debugf(fdst, "Target remote doesn't support streaming uploads, creating temporary local FS to spool file")
+		tmpLocalFs, err := temporaryLocalFs()
+		if err != nil {
+			return errors.Wrap(err, "Failed to create temporary local FS to spool file")
+		}
+		defer func() {
+			err := Purge(tmpLocalFs)
+			if err != nil {
+				Infof(tmpLocalFs, "Failed to cleanup temporary FS: %v", err)
+			}
+		}()
+		fStreamTo = tmpLocalFs
+	}
+
+	objInfo := NewStaticObjectInfo(dstFileName, modTime, -1, false, nil, nil)
+
+	// work out which hash to use - limit to 1 hash in common
+	var common HashSet
+	hashType := HashNone
+	if !Config.SizeOnly {
+		common = fStreamTo.Hashes().Overlap(SupportedHashes)
+		if common.Count() > 0 {
+			hashType = common.GetOne()
+			common = HashSet(hashType)
+		}
+	}
+	hashOption := &HashesOption{Hashes: common}
+
+	in := NewAccountSizeName(in0, -1, dstFileName).WithBuffer()
+
+	if Config.DryRun {
+		Logf("stdin", "Not copying as --dry-run")
+		// prevents "broken pipe" errors
+		_, err = io.Copy(ioutil.Discard, in)
+		return err
+	}
+
+	tmpObj, err := fStreamTo.Features().PutStream(in, objInfo, hashOption)
+	if err == nil && !canStream {
+		err = Copy(fdst, nil, dstFileName, tmpObj)
+	}
+	return err
 }
 
 // Rmdirs removes any empty directories (or directories only

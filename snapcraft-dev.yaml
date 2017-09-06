@@ -1,5 +1,5 @@
-name: rclone-dev
-version: dev-latest
+name: rclone-beta
+version: rclone-latest
 summary: rsync for cloud storage
 description:
   Rclone is a command line program to sync files to and from cloud storage providers such as
@@ -10,12 +10,16 @@ grade: stable
 apps:
   rclone:
     command: bin/rclone
-    plugs: [home, network, network-bind]
+    plugs: [home, network, network-bind, fuse-support]
 
 parts:
   rclone:
     plugin: go
     source: https://github.com/ncw/rclone
     source-type: git
+    stage-packages: [fuse]
+    build-packages: [gcc, libgudev-1.0-dev, fuse]
     go-importpath: github.com/ncw/rclone
-    build-packages: [gcc, libgudev-1.0-dev]
+    # Snapcraft's go plugin tries to build binaries for all dependencies, but rclone doesn't need them.
+    # This instruct it to only build rclone.
+    go-packages: [github.com/ncw/rclone]

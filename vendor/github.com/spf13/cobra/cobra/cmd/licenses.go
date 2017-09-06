@@ -77,7 +77,11 @@ func getLicense() License {
 
 func copyrightLine() string {
 	author := viper.GetString("author")
-	year := time.Now().Format("2006")
+
+	year := viper.GetString("year") // For tests.
+	if year == "" {
+		year = time.Now().Format("2006")
+	}
 
 	return "Copyright © " + year + " " + author
 }

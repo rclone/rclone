@@ -69,5 +69,6 @@ func TestObjectStorable3(t *testing.T)      { fstests.TestObjectStorable(t) }
 func TestFsIsFile3(t *testing.T)            { fstests.TestFsIsFile(t) }
 func TestFsIsFileNotFound3(t *testing.T)    { fstests.TestFsIsFileNotFound(t) }
 func TestObjectRemove3(t *testing.T)        { fstests.TestObjectRemove(t) }
+func TestFsPutStream3(t *testing.T)         { fstests.TestFsPutStream(t) }
 func TestObjectPurge3(t *testing.T)         { fstests.TestObjectPurge(t) }
 func TestFinalise3(t *testing.T)            { fstests.TestFinalise(t) }

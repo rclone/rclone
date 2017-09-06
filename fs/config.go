@@ -100,6 +100,8 @@ var (
 	tpsLimit        = Float64P("tpslimit", "", 0, "Limit HTTP transactions per second to this.")
 	tpsLimitBurst   = IntP("tpslimit-burst", "", 1, "Max burst of transactions for --tpslimit.")
 	bindAddr        = StringP("bind", "", "", "Local address to bind to for outgoing connections, IPv4, IPv6 or name.")
+	disableFeatures = StringP("disable", "", "", "Disable a comma separated list of features.  Use help to see a list.")
+	userAgent       = StringP("user-agent", "", "rclone/"+Version, "Set the user-agent to a specified string. The default is rclone/ version")
 	logLevel        = LogLevelNotice
 	statsLogLevel   = LogLevelInfo
 	bwLimit         BwTimetable
@@ -235,6 +237,7 @@ type ConfigInfo struct {
 	TPSLimit           float64
 	TPSLimitBurst      int
 	BindAddr           net.IP
+	DisableFeatures    []string
 }
 
 // Return the path to the configuration file
@@ -375,8 +378,6 @@ func LoadConfig() {
 	Config.TPSLimitBurst = *tpsLimitBurst
 	Config.BufferSize = bufferSize
 
-	ConfigPath = *configFile
-
 	Config.TrackRenames = *trackRenames
 
 	switch {
@@ -412,8 +413,19 @@ func LoadConfig() {
 		Config.BindAddr = addrs[0]
 	}
 
+	if *disableFeatures != "" {
+		if *disableFeatures == "help" {
+			log.Fatalf("Possible backend features are: %s\n", strings.Join(new(Features).List(), ", "))
+		}
+		Config.DisableFeatures = strings.Split(*disableFeatures, ",")
+	}
+
 	// Load configuration file.
 	var err error
+	ConfigPath, err = filepath.Abs(*configFile)
+	if err != nil {
+		ConfigPath = *configFile
+	}
 	configData, err = loadConfigFile()
 	if err == errorConfigFileNotFound {
 		Logf(nil, "Config file %q not found - using defaults", ConfigPath)

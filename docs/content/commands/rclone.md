@@ -1,5 +1,5 @@
 ---
-date: 2017-07-22T18:15:25+01:00
+date: 2017-08-20T10:49:45+02:00
 title: "rclone"
 slug: rclone
 url: /commands/rclone/
@@ -156,7 +156,7 @@ rclone [flags]
 * [rclone dbhashsum](/commands/rclone_dbhashsum/)	 - Produces a Dropbbox hash file for all the objects in the path.
 * [rclone dedupe](/commands/rclone_dedupe/)	 - Interactively find duplicate files delete/rename them.
 * [rclone delete](/commands/rclone_delete/)	 - Remove the contents of path.
-* [rclone genautocomplete](/commands/rclone_genautocomplete/)	 - Output bash completion script for rclone.
+* [rclone genautocomplete](/commands/rclone_genautocomplete/)	 - Output completion script for a given shell.
 * [rclone gendocs](/commands/rclone_gendocs/)	 - Output markdown docs for rclone to the directory supplied.
 * [rclone listremotes](/commands/rclone_listremotes/)	 - List all the remotes in the config file.
 * [rclone ls](/commands/rclone_ls/)	 - List all the objects in the path with size and path.

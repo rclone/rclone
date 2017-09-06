@@ -476,32 +476,141 @@ func TestSyncAfterRemovingAFileAndAddingAFileSubDir(t *testing.T) {
 	file1 := r.WriteFile("a/potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteObject("b/potato", "SMALLER BUT SAME DATE", t2)
 	file3 := r.WriteBoth("c/non empty space", "AhHa!", t2)
-	fstest.CheckItems(t, r.fremote, file2, file3)
-	fstest.CheckItems(t, r.flocal, file1, file3)
+	require.NoError(t, fs.Mkdir(r.fremote, "d"))
+	require.NoError(t, fs.Mkdir(r.fremote, "d/e"))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.flocal,
+		[]fstest.Item{
+			file1,
+			file3,
+		},
+		[]string{
+			"a",
+			"c",
+		},
+		fs.Config.ModifyWindow,
+	)
+	fstest.CheckListingWithPrecision(
+		t,
+		r.fremote,
+		[]fstest.Item{
+			file2,
+			file3,
+		},
+		[]string{
+			"b",
+			"c",
+			"d",
+			"d/e",
+		},
+		fs.Config.ModifyWindow,
+	)
 
 	fs.Stats.ResetCounters()
 	err := fs.Sync(r.fremote, r.flocal)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.flocal, file1, file3)
-	fstest.CheckItems(t, r.fremote, file1, file3)
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.flocal,
+		[]fstest.Item{
+			file1,
+			file3,
+		},
+		[]string{
+			"a",
+			"c",
+		},
+		fs.Config.ModifyWindow,
+	)
+	fstest.CheckListingWithPrecision(
+		t,
+		r.fremote,
+		[]fstest.Item{
+			file1,
+			file3,
+		},
+		[]string{
+			"a",
+			"c",
+		},
+		fs.Config.ModifyWindow,
+	)
 }
 
 // Sync after removing a file and adding a file with IO Errors
-func TestSyncAfterRemovingAFileAndAddingAFileWithErrors(t *testing.T) {
+func TestSyncAfterRemovingAFileAndAddingAFileSubDirWithErrors(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
-	file1 := r.WriteFile("potato2", "------------------------------------------------------------", t1)
-	file2 := r.WriteObject("potato", "SMALLER BUT SAME DATE", t2)
-	file3 := r.WriteBoth("empty space", "", t2)
-	fstest.CheckItems(t, r.fremote, file2, file3)
-	fstest.CheckItems(t, r.flocal, file1, file3)
+	file1 := r.WriteFile("a/potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteObject("b/potato", "SMALLER BUT SAME DATE", t2)
+	file3 := r.WriteBoth("c/non empty space", "AhHa!", t2)
+	require.NoError(t, fs.Mkdir(r.fremote, "d"))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.flocal,
+		[]fstest.Item{
+			file1,
+			file3,
+		},
+		[]string{
+			"a",
+			"c",
+		},
+		fs.Config.ModifyWindow,
+	)
+	fstest.CheckListingWithPrecision(
+		t,
+		r.fremote,
+		[]fstest.Item{
+			file2,
+			file3,
+		},
+		[]string{
+			"b",
+			"c",
+			"d",
+		},
+		fs.Config.ModifyWindow,
+	)
 
 	fs.Stats.ResetCounters()
 	fs.Stats.Error()
 	err := fs.Sync(r.fremote, r.flocal)
 	assert.Equal(t, fs.ErrorNotDeleting, err)
-	fstest.CheckItems(t, r.flocal, file1, file3)
-	fstest.CheckItems(t, r.fremote, file1, file2, file3)
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.flocal,
+		[]fstest.Item{
+			file1,
+			file3,
+		},
+		[]string{
+			"a",
+			"c",
+		},
+		fs.Config.ModifyWindow,
+	)
+	fstest.CheckListingWithPrecision(
+		t,
+		r.fremote,
+		[]fstest.Item{
+			file1,
+			file2,
+			file3,
+		},
+		[]string{
+			"a",
+			"b",
+			"c",
+			"d",
+		},
+		fs.Config.ModifyWindow,
+	)
 }
 
 // Sync test delete after
@@ -687,7 +796,11 @@ func TestSyncWithTrackRenames(t *testing.T) {
 }
 
 // Test a server side move if possible, or the backup path if not
-func testServerSideMove(t *testing.T, r *Run, fremoteMove fs.Fs, withFilter bool) {
+func testServerSideMove(t *testing.T, r *Run, withFilter bool) {
+	fremoteMove, _, finaliseMove, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
+	require.NoError(t, err)
+	defer finaliseMove()
+
 	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth("empty space", "", t2)
 	file3u := r.WriteBoth("potato3", "------------------------------------------------------------ UPDATED", t2)
@@ -703,7 +816,7 @@ func testServerSideMove(t *testing.T, r *Run, fremoteMove fs.Fs, withFilter bool
 
 	// Do server side move
 	fs.Stats.ResetCounters()
-	err := fs.MoveDir(fremoteMove, r.fremote)
+	err = fs.MoveDir(fremoteMove, r.fremote)
 	require.NoError(t, err)
 
 	if withFilter {
@@ -713,20 +826,21 @@ func testServerSideMove(t *testing.T, r *Run, fremoteMove fs.Fs, withFilter bool
 	}
 	fstest.CheckItems(t, fremoteMove, file2, file1, file3u)
 
-	// Purge the original before moving
-	require.NoError(t, fs.Purge(r.fremote))
-	fstest.CheckItems(t, r.fremote)
+	// Create a new empty remote for stuff to be moved into
+	fremoteMove2, _, finaliseMove2, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
+	require.NoError(t, err)
+	defer finaliseMove2()
 
-	// Move it back again, dst does not exist this time
+	// Move it back to a new empty remote, dst does not exist this time
 	fs.Stats.ResetCounters()
-	err = fs.MoveDir(r.fremote, fremoteMove)
+	err = fs.MoveDir(fremoteMove2, fremoteMove)
 	require.NoError(t, err)
 
 	if withFilter {
-		fstest.CheckItems(t, r.fremote, file1, file3u)
+		fstest.CheckItems(t, fremoteMove2, file1, file3u)
 		fstest.CheckItems(t, fremoteMove, file2)
 	} else {
-		fstest.CheckItems(t, r.fremote, file2, file1, file3u)
+		fstest.CheckItems(t, fremoteMove2, file2, file1, file3u)
 		fstest.CheckItems(t, fremoteMove)
 	}
 }
@@ -735,10 +849,7 @@ func testServerSideMove(t *testing.T, r *Run, fremoteMove fs.Fs, withFilter bool
 func TestServerSideMove(t *testing.T) {
 	r := NewRun(t)
 	defer r.Finalise()
-	fremoteMove, _, finaliseMove, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
-	require.NoError(t, err)
-	defer finaliseMove()
-	testServerSideMove(t, r, fremoteMove, false)
+	testServerSideMove(t, r, false)
 }
 
 // Test a server side move if possible, or the backup path if not
@@ -751,10 +862,7 @@ func TestServerSideMoveWithFilter(t *testing.T) {
 		fs.Config.Filter.MinSize = -1
 	}()
 
-	fremoteMove, _, finaliseMove, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
-	require.NoError(t, err)
-	defer finaliseMove()
-	testServerSideMove(t, r, fremoteMove, true)
+	testServerSideMove(t, r, true)
 }
 
 // Test a server side move with overlap

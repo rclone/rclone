@@ -133,7 +133,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 		name: name,
 		yd:   yandexDisk,
 	}
-	f.features = (&fs.Features{ReadMimeType: true, WriteMimeType: true}).Fill(f)
+	f.features = (&fs.Features{
+		ReadMimeType:            true,
+		WriteMimeType:           true,
+		CanHaveEmptyDirectories: true,
+	}).Fill(f)
 	f.setRoot(root)
 
 	// Check to see if the object exists and is a file
@@ -417,6 +421,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 	return o, o.Update(in, src, options...)
 }
 
+// PutStream uploads to the remote path with the modTime given of indeterminate size
+func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(in, src, options...)
+}
+
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(dir string) error {
 	root := f.diskRoot
@@ -561,8 +570,8 @@ func (o *Object) remotePath() string {
 // Copy the reader into the object updating modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	size := src.Size()
+func (o *Object) Update(in0 io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	in := fs.NewCountingReader(in0)
 	modTime := src.ModTime()
 
 	remote := o.remotePath()
@@ -577,7 +586,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	err := o.fs.yd.Upload(in, remote, overwrite, mimeType)
 	if err == nil {
 		//if file uploaded sucessfully then return metadata
-		o.bytes = uint64(size)
+		o.bytes = in.BytesRead()
 		o.modTime = modTime
 		o.md5sum = "" // according to unit tests after put the md5 is empty.
 		//and set modTime of uploaded file
@@ -644,9 +653,10 @@ func (o *Object) MimeType() string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs      = (*Fs)(nil)
-	_ fs.Purger  = (*Fs)(nil)
-	_ fs.ListRer = (*Fs)(nil)
+	_ fs.Fs          = (*Fs)(nil)
+	_ fs.Purger      = (*Fs)(nil)
+	_ fs.PutStreamer = (*Fs)(nil)
+	_ fs.ListRer     = (*Fs)(nil)
 	//_ fs.Copier = (*Fs)(nil)
 	_ fs.ListRer   = (*Fs)(nil)
 	_ fs.Object    = (*Object)(nil)

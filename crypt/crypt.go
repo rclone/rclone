@@ -104,10 +104,12 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	// the features here are ones we could support, and they are
 	// ANDed with the ones from wrappedFs
 	f.features = (&fs.Features{
-		CaseInsensitive: mode == NameEncryptionOff,
-		DuplicateFiles:  true,
-		ReadMimeType:    false, // MimeTypes not supported with crypt
-		WriteMimeType:   false,
+		CaseInsensitive:         mode == NameEncryptionOff,
+		DuplicateFiles:          true,
+		ReadMimeType:            false, // MimeTypes not supported with crypt
+		WriteMimeType:           false,
+		BucketBased:             true,
+		CanHaveEmptyDirectories: true,
 	}).Fill(f).Mask(wrappedFs)
 	return f, err
 }
@@ -253,6 +255,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 		return nil, err
 	}
 	return f.newObject(o), nil
+}
+
+// PutStream uploads to the remote path with the modTime given of indeterminate size
+func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(in, src, options...)
 }
 
 // Hashes returns the supported hash sets.
@@ -601,6 +608,7 @@ var (
 	_ fs.Mover          = (*Fs)(nil)
 	_ fs.DirMover       = (*Fs)(nil)
 	_ fs.PutUncheckeder = (*Fs)(nil)
+	_ fs.PutStreamer    = (*Fs)(nil)
 	_ fs.CleanUpper     = (*Fs)(nil)
 	_ fs.UnWrapper      = (*Fs)(nil)
 	_ fs.ListRer        = (*Fs)(nil)

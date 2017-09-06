@@ -151,7 +151,9 @@ func NewFs(name, root string) (fs.Fs, error) {
 		endpoint:    u,
 		endpointURL: u.String(),
 	}
-	f.features = (&fs.Features{}).Fill(f)
+	f.features = (&fs.Features{
+		CanHaveEmptyDirectories: true,
+	}).Fill(f)
 	if isFile {
 		return f, fs.ErrorIsFile
 	}
@@ -354,6 +356,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 	return nil, errorReadOnly
 }
 
+// PutStream uploads to the remote path with the modTime given of indeterminate size
+func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return nil, errorReadOnly
+}
+
 // Fs is the filesystem this remote http file object is located within
 func (o *Object) Fs() fs.Info {
 	return o.fs
@@ -476,7 +483,8 @@ func (o *Object) MimeType() string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs        = &Fs{}
-	_ fs.Object    = &Object{}
-	_ fs.MimeTyper = &Object{}
+	_ fs.Fs          = &Fs{}
+	_ fs.PutStreamer = &Fs{}
+	_ fs.Object      = &Object{}
+	_ fs.MimeTyper   = &Object{}
 )

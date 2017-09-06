@@ -165,7 +165,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 
 	// Make inner swift Fs from the connection
-	swiftFs, err := swift.NewFsWithConnection(name, root, c)
+	swiftFs, err := swift.NewFsWithConnection(name, root, c, true)
 	if err != nil && err != fs.ErrorIsFile {
 		return nil, err
 	}

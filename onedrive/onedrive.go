@@ -311,7 +311,12 @@ func NewFs(name, root string) (fs.Fs, error) {
 	// OneDrive for business doesn't support mime types properly
 	// so we disable it until resolved
 	// https://github.com/OneDrive/onedrive-api-docs/issues/643
-	f.features = (&fs.Features{CaseInsensitive: true, ReadMimeType: !f.isBusiness}).Fill(f)
+	f.features = (&fs.Features{
+		CaseInsensitive:         true,
+		ReadMimeType:            !f.isBusiness,
+		CanHaveEmptyDirectories: true,
+	}).Fill(f)
+
 	f.srv.SetErrorHandler(errorHandler)
 
 	// Renew the token in the background
@@ -529,7 +534,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 		if info.Folder != nil {
 			// cache the directory ID for later lookups
 			f.dirCache.Put(remote, info.ID)
-			d := fs.NewDir(remote, time.Time(info.LastModifiedDateTime))
+			d := fs.NewDir(remote, time.Time(info.LastModifiedDateTime)).SetID(info.ID)
 			if info.Folder != nil {
 				d.SetItems(info.Folder.ChildCount)
 			}

@@ -14,6 +14,18 @@
   version = "v0.10.0"
 
 [[projects]]
+  name = "github.com/Azure/azure-sdk-for-go"
+  packages = ["storage"]
+  revision = "5b6066bbd213e47c49a5fa2be2b29529bbcb6704"
+  version = "v10.1.1-beta"
+
+[[projects]]
+  name = "github.com/Azure/go-autorest"
+  packages = ["autorest","autorest/adal","autorest/azure","autorest/date"]
+  revision = "10791a4516e77c53ab10f198f144804cca3d5b43"
+  version = "v8.1.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/Unknwon/goconfig"
   packages = ["."]
@@ -54,6 +66,18 @@
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
+
+[[projects]]
+  name = "github.com/dgrijalva/jwt-go"
+  packages = ["."]
+  revision = "d2709f9f1f31ebcda9651b03077758c1f3a0018c"
+  version = "v3.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/dropbox/dropbox-sdk-go-unofficial"
+  packages = ["dropbox","dropbox/async","dropbox/files","dropbox/properties"]
+  revision = "350942579f314463a49b660b7a35f01dbf392a7f"
 
 [[projects]]
   name = "github.com/go-ini/ini"
@@ -105,12 +129,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/ncw/dropbox-sdk-go-unofficial"
-  packages = ["dropbox","dropbox/async","dropbox/files","dropbox/properties"]
-  revision = "5d9f46f9862ae5f65e264e178de6ce2c41a32d40"
-
-[[projects]]
-  branch = "master"
   name = "github.com/ncw/go-acd"
   packages = ["."]
   revision = "96a49aad3fc3889629f2eceb004927386884bd92"
@@ -126,6 +144,12 @@
   name = "github.com/nsf/termbox-go"
   packages = ["."]
   revision = "4ed959e0540971545eddb8c75514973d670cf739"
+
+[[projects]]
+  name = "github.com/pengsrc/go-shared"
+  packages = ["check","convert","json","yaml"]
+  revision = "454950d6a0782c34427d4f29b46c6bf447256f20"
+  version = "v0.0.8"
 
 [[projects]]
   branch = "master"
@@ -158,10 +182,22 @@
   version = "v1.4"
 
 [[projects]]
+  name = "github.com/satori/uuid"
+  packages = ["."]
+  revision = "879c5887cd475cd7864858769793b2ceb0d44feb"
+  version = "v1.1.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/shurcooL/sanitized_anchor_name"
   packages = ["."]
   revision = "541ff5ee47f1dddf6a5281af78307d921524bcb5"
+
+[[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "a3f95b5c423586578a4e099b11a46c2479628cac"
+  version = "1.0.2"
 
 [[projects]]
   branch = "master"
@@ -173,7 +209,7 @@
   branch = "master"
   name = "github.com/spf13/cobra"
   packages = [".","doc"]
-  revision = "715f41bd7a70b5111f898b71ab484da52ee6266d"
+  revision = "2df9a531813370438a4d79bfc33e21f58063ed87"
 
 [[projects]]
   name = "github.com/spf13/pflag"
@@ -192,6 +228,12 @@
   name = "github.com/xanzy/ssh-agent"
   packages = ["."]
   revision = "ba9c9e33906f58169366275e3450db66139a31a9"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/yunify/qingstor-sdk-go"
+  packages = [".","config","logger","request","request/builder","request/data","request/errors","request/signer","request/unpacker","service","utils"]
+  revision = "4749bc5ebe4857b353e55b49ebe91eed9a7f6cda"
 
 [[projects]]
   branch = "master"
@@ -250,6 +292,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b04805ec8dc2bf704d0ad0c73e2ce9f13f3770b946a70bda8fd602886ff124a4"
+  inputs-digest = "e660aa956f1e580bda1ce240cdb673bcbc00bb8f2ef2e77e85d3d941528836f1"
   solver-name = "gps-cdcl"
   solver-version = 1

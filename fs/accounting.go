@@ -18,25 +18,26 @@ import (
 
 // Globals
 var (
-	Stats           = NewStats()
-	tokenBucketMu   sync.Mutex // protects the token bucket variables
-	tokenBucket     *rate.Limiter
-	prevTokenBucket = tokenBucket
-	currLimitMu     sync.Mutex // protects changes to the timeslot
-	currLimit       BwTimeSlot
+	Stats             = NewStats()
+	tokenBucketMu     sync.Mutex // protects the token bucket variables
+	tokenBucket       *rate.Limiter
+	prevTokenBucket   = tokenBucket
+	bwLimitToggledOff = false
+	currLimitMu       sync.Mutex // protects changes to the timeslot
+	currLimit         BwTimeSlot
 )
 
 const maxBurstSize = 1 * 1024 * 1024 // must be bigger than the biggest request
 
 // make a new empty token bucket with the bandwidth given
 func newTokenBucket(bandwidth SizeSuffix) *rate.Limiter {
-	tokenBucket = rate.NewLimiter(rate.Limit(bandwidth), maxBurstSize)
+	newTokenBucket := rate.NewLimiter(rate.Limit(bandwidth), maxBurstSize)
 	// empty the bucket
-	err := tokenBucket.WaitN(context.Background(), maxBurstSize)
+	err := newTokenBucket.WaitN(context.Background(), maxBurstSize)
 	if err != nil {
 		Errorf(nil, "Failed to empty token bucket: %v", err)
 	}
-	return tokenBucket
+	return newTokenBucket
 }
 
 // Start the token bucket if necessary
@@ -72,12 +73,27 @@ func startTokenTicker() {
 			if currLimit.bandwidth != limitNow.bandwidth {
 				tokenBucketMu.Lock()
 
+				// If bwlimit is toggled off, the change should only
+				// become active on the next toggle, which causes
+				// an exchange of tokenBucket <-> prevTokenBucket
+				var targetBucket **rate.Limiter
+				if bwLimitToggledOff {
+					targetBucket = &prevTokenBucket
+				} else {
+					targetBucket = &tokenBucket
+				}
+
 				// Set new bandwidth. If unlimited, set tokenbucket to nil.
 				if limitNow.bandwidth > 0 {
-					tokenBucket = newTokenBucket(limitNow.bandwidth)
-					Logf(nil, "Scheduled bandwidth change. Limit set to %vBytes/s", &limitNow.bandwidth)
+					*targetBucket = newTokenBucket(limitNow.bandwidth)
+					if bwLimitToggledOff {
+						Logf(nil, "Scheduled bandwidth change. "+
+							"Limit will be set to %vBytes/s when toggled on again.", &limitNow.bandwidth)
+					} else {
+						Logf(nil, "Scheduled bandwidth change. Limit set to %vBytes/s", &limitNow.bandwidth)
+					}
 				} else {
-					tokenBucket = nil
+					*targetBucket = nil
 					Logf(nil, "Scheduled bandwidth change. Bandwidth limits disabled")
 				}
 
@@ -358,7 +374,7 @@ func NewAccount(in io.ReadCloser, obj Object) *Account {
 func (acc *Account) WithBuffer() *Account {
 	acc.withBuf = true
 	var buffers int
-	if acc.size >= int64(Config.BufferSize) {
+	if acc.size >= int64(Config.BufferSize) || acc.size == -1 {
 		buffers = int(int64(Config.BufferSize) / asyncBufferSize)
 	} else {
 		buffers = int(acc.size / asyncBufferSize)

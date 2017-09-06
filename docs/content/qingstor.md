@@ -1,0 +1,154 @@
+---
+title: "QingStor"
+description: "Rclone docs for QingStor Object Storage"
+date: "2017-06-26"
+---
+
+<i class="fa fa-hdd-o"></i> QingStor
+---------------------------------------
+
+Paths are specified as `remote:bucket` (or `remote:` for the `lsd`
+command.)  You may put subdirectories in too, eg `remote:bucket/path/to/dir`.
+
+Here is an example of making an QingStor configuration.  First run
+
+    rclone config
+
+This will guide you through an interactive setup process.
+
+```
+No remotes found - make a new one
+n) New remote
+r) Rename remote
+c) Copy remote
+s) Set configuration password
+q) Quit config
+n/r/c/s/q> n
+name> remote
+Type of storage to configure.
+Choose a number from below, or type in your own value
+ 1 / Amazon Drive
+   \ "amazon cloud drive"
+ 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+   \ "s3"
+ 3 / Backblaze B2
+   \ "b2"
+ 4 / Dropbox
+   \ "dropbox"
+ 5 / Encrypt/Decrypt a remote
+   \ "crypt"
+ 6 / FTP Connection
+   \ "ftp"
+ 7 / Google Cloud Storage (this is not Google Drive)
+   \ "google cloud storage"
+ 8 / Google Drive
+   \ "drive"
+ 9 / Hubic
+   \ "hubic"
+10 / Local Disk
+   \ "local"
+11 / Microsoft OneDrive
+   \ "onedrive"
+12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+   \ "swift"
+13 / QingStor Object Storage
+   \ "qingstor"
+14 / SSH/SFTP Connection
+   \ "sftp"
+15 / Yandex Disk
+   \ "yandex"
+Storage> 13
+Get QingStor credentials from runtime. Only applies if access_key_id and secret_access_key is blank.
+Choose a number from below, or type in your own value
+ 1 / Enter QingStor credentials in the next step
+   \ "false"
+ 2 / Get QingStor credentials from the environment (env vars or IAM)
+   \ "true"
+env_auth> 1
+QingStor Access Key ID - leave blank for anonymous access or runtime credentials.
+access_key_id> access_key
+QingStor Secret Access Key (password) - leave blank for anonymous access or runtime credentials.
+secret_access_key> secret_key
+Enter a endpoint URL to connection QingStor API.
+Leave blank will use the default value "https://qingstor.com:443"
+endpoint>
+Zone connect to. Default is "pek3a".
+Choose a number from below, or type in your own value
+   / The Beijing (China) Three Zone
+ 1 | Needs location constraint pek3a.
+   \ "pek3a"
+   / The Shanghai (China) First Zone
+ 2 | Needs location constraint sh1a.
+   \ "sh1a"
+zone> 1
+Number of connnection retry.
+Leave blank will use the default value "3".
+connection_retries>
+Remote config
+--------------------
+[remote]
+env_auth = false
+access_key_id = access_key
+secret_access_key = secret_key
+endpoint =
+zone = pek3a
+connection_retries =
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d> y
+```
+
+This remote is called `remote` and can now be used like this
+
+See all buckets
+
+    rclone lsd remote:
+
+Make a new bucket
+
+    rclone mkdir remote:bucket
+
+List the contents of a bucket
+
+    rclone ls remote:bucket
+
+Sync `/home/local/directory` to the remote bucket, deleting any excess
+files in the bucket.
+
+    rclone sync /home/local/directory remote:bucket
+
+### --fast-list ###
+
+This remote supports `--fast-list` which allows you to use fewer
+transactions in exchange for more memory. See the [rclone
+docs](/docs/#fast-list) for more details.
+
+### Multipart uploads ###
+
+rclone supports multipart uploads with QingStor which means that it can
+upload files bigger than 5GB. Note that files uploaded with multipart
+upload don't have an MD5SUM.
+
+### Buckets and Zone ###
+
+With QingStor you can list buckets (`rclone lsd`) using any zone,
+but you can only access the content of a bucket from the zone it was
+created in.  If you attempt to access a bucket from the wrong zone,
+you will get an error, `incorrect zone, the bucket is not in 'XXX'
+zone`.
+
+### Authentication ###
+
+There are two ways to supply `rclone` with a set of QingStor
+credentials. In order of precedence:
+
+ - Directly in the rclone configuration file (as configured by `rclone config`)
+   - set `access_key_id` and `secret_access_key`
+ - Runtime configuration:
+   - set `env_auth` to `true` in the config file
+   - Exporting the following environment variables before running `rclone`
+     - Access Key ID: `QS_ACCESS_KEY_ID` or `QS_ACCESS_KEY`
+     - Secret Access Key: `QS_SECRET_ACCESS_KEY` or `QS_SECRET_KEY`
+

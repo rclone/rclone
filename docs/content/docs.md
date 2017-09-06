@@ -30,9 +30,11 @@ See the following for detailed instructions for
   * [Google Drive](/drive/)
   * [HTTP](/http/)
   * [Hubic](/hubic/)
+  * [Microsoft Azure Blob Storage](/azureblob/)
   * [Microsoft OneDrive](/onedrive/)
+  * [Openstack Swift / Rackspace Cloudfiles / Memset Memstore](/swift/)
+  * [QingStor](/qingstor/)
   * [SFTP](/sftp/)
-  * [Swift / Rackspace Cloudfiles / Memset Memstore](/swift/)
   * [Yandex Disk](/yandex/)
   * [The local filesystem](/local/)
 
@@ -84,7 +86,7 @@ The main rclone commands with most used first
 * [rclone authorize](/commands/rclone_authorize/)	- Remote authorization.
 * [rclone cat](/commands/rclone_cat/)		- Concatenates any files and sends them to stdout.
 * [rclone copyto](/commands/rclone_copyto/)	- Copy files from source to dest, skipping already copied
-* [rclone genautocomplete](/commands/rclone_genautocomplete/)	- Output bash completion script for rclone.
+* [rclone genautocomplete](/commands/rclone_genautocomplete/)	- Output shell completion scripts for rclone.
 * [rclone gendocs](/commands/rclone_gendocs/)	- Output markdown docs for rclone to the directory supplied.
 * [rclone listremotes](/commands/rclone_listremotes/)	- List all the remotes in the config file.
 * [rclone mount](/commands/rclone_mount/)	- Mount the remote as a mountpoint. **EXPERIMENTAL**
@@ -362,6 +364,27 @@ connection to go through to a remote object storage system.  It is
 ### --dedupe-mode MODE ###
 
 Mode to run dedupe command in.  One of `interactive`, `skip`, `first`, `newest`, `oldest`, `rename`.  The default is `interactive`.  See the dedupe command for more information as to what these options mean.
+
+### --disable FEATURE,FEATURE,... ###
+
+This disables a comma separated list of optional features. For example
+to disable server side move and server side copy use:
+
+    --disable move,copy
+
+The features can be put in in any case.
+
+To see a list of which features can be disabled use:
+
+    --disable help
+
+See the overview [features](/overview/#features) and
+[optional features](/overview/#optional-features) to get an idea of
+which feature does what.
+
+This flag can be useful for debugging and in exceptional circumstances
+(eg Google Drive limiting the total volume of Server Side Copies to
+100GB/day).
 
 ### -n, --dry-run ###
 

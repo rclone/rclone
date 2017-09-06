@@ -8,6 +8,7 @@ type Dir struct {
 	modTime time.Time // modification or creation time - IsZero for unknown
 	size    int64     // size of directory and contents or -1 if unknown
 	items   int64     // number of objects or -1 for unknown
+	id      string    // optional ID
 }
 
 // NewDir creates an unspecialized Directory object
@@ -43,6 +44,17 @@ func (d *Dir) Remote() string {
 // SetRemote sets the remote
 func (d *Dir) SetRemote(remote string) *Dir {
 	d.remote = remote
+	return d
+}
+
+// ID gets the optional ID
+func (d *Dir) ID() string {
+	return d.id
+}
+
+// SetID sets the optional ID
+func (d *Dir) SetID(id string) *Dir {
+	d.id = id
 	return d
 }
 

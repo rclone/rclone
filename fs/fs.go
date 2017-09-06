@@ -3,11 +3,15 @@ package fs
 
 import (
 	"io"
+	"io/ioutil"
 	"log"
 	"math"
+	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -24,8 +28,6 @@ const (
 
 // Globals
 var (
-	// UserAgent set in the default Transport
-	UserAgent = "rclone/" + Version
 	// Filesystem registry
 	fsRegistry []*RegInfo
 	// ErrorNotFoundInConfigFile is returned by NewFs if not found in config file
@@ -45,7 +47,9 @@ var (
 	ErrorIsFile                      = errors.New("is a file not a directory")
 	ErrorNotAFile                    = errors.New("is a not a regular file")
 	ErrorNotDeleting                 = errors.New("not deleting files as there were IO errors")
+	ErrorNotDeletingDirs             = errors.New("not deleting directories as there were IO errors")
 	ErrorCantMoveOverlapping         = errors.New("can't move files on overlapping remotes")
+	ErrorDirectoryNotEmpty           = errors.New("directory not empty")
 )
 
 // RegInfo provides information about a filesystem
@@ -216,6 +220,10 @@ type Directory interface {
 	// Items returns the count of items in this directory or this
 	// directory and subdirectories if known, -1 for unknown
 	Items() int64
+
+	// ID returns the internal ID of this directory if known, or
+	// "" otherwise
+	ID() string
 }
 
 // MimeTyper is an optional interface for Object
@@ -236,11 +244,13 @@ type ListRFn func(dir string, callback ListRCallback) error
 
 // Features describe the optional features of the Fs
 type Features struct {
-	// Feature flags
-	CaseInsensitive bool
-	DuplicateFiles  bool
-	ReadMimeType    bool
-	WriteMimeType   bool
+	// Feature flags, whether Fs
+	CaseInsensitive         bool // has case insensitive files
+	DuplicateFiles          bool // allows duplicate files
+	ReadMimeType            bool // can read the mime type of objects
+	WriteMimeType           bool // can set the mime type of objects
+	CanHaveEmptyDirectories bool // can have empty directories
+	BucketBased             bool // is bucket based (like s3, swift etc)
 
 	// Purge all files in the root and the root directory
 	//
@@ -304,6 +314,17 @@ type Features struct {
 	// exists.
 	PutUnchecked func(in io.Reader, src ObjectInfo, options ...OpenOption) (Object, error)
 
+	// PutStream uploads to the remote path with the modTime given of indeterminate size
+	//
+	// May create the object even if it returns an error - if so
+	// will return the object and the error, otherwise will return
+	// nil and the error
+	PutStream func(in io.Reader, src ObjectInfo, options ...OpenOption) (Object, error)
+
+	// MergeDirs merges the contents of all the directories passed
+	// in into the first one and rmdirs the other directories.
+	MergeDirs func([]Directory) error
+
 	// CleanUp the trash in the Fs
 	//
 	// Implement this if you have a way of emptying the trash or
@@ -327,6 +348,46 @@ type Features struct {
 	// Don't implement this unless you have a more efficient way
 	// of listing recursively that doing a directory traversal.
 	ListR ListRFn
+}
+
+// Disable nil's out the named feature.  If it isn't found then it
+// will log a message.
+func (ft *Features) Disable(name string) *Features {
+	v := reflect.ValueOf(ft).Elem()
+	vType := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		vName := vType.Field(i).Name
+		field := v.Field(i)
+		if strings.EqualFold(name, vName) {
+			if !field.CanSet() {
+				Errorf(nil, "Can't set Feature %q", name)
+			} else {
+				zero := reflect.Zero(field.Type())
+				field.Set(zero)
+				Debugf(nil, "Reset feature %q", name)
+			}
+		}
+	}
+	return ft
+}
+
+// List returns a slice of all the possible feature names
+func (ft *Features) List() (out []string) {
+	v := reflect.ValueOf(ft).Elem()
+	vType := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		out = append(out, vType.Field(i).Name)
+	}
+	return out
+}
+
+// DisableList nil's out the comma separated list of named features.
+// If it isn't found then it will log a message.
+func (ft *Features) DisableList(list []string) *Features {
+	for _, feature := range list {
+		ft.Disable(strings.TrimSpace(feature))
+	}
+	return ft
 }
 
 // Fill fills in the function pointers in the Features struct from the
@@ -357,13 +418,19 @@ func (ft *Features) Fill(f Fs) *Features {
 	if do, ok := f.(PutUncheckeder); ok {
 		ft.PutUnchecked = do.PutUnchecked
 	}
+	if do, ok := f.(PutStreamer); ok {
+		ft.PutStream = do.PutStream
+	}
+	if do, ok := f.(MergeDirser); ok {
+		ft.MergeDirs = do.MergeDirs
+	}
 	if do, ok := f.(CleanUpper); ok {
 		ft.CleanUp = do.CleanUp
 	}
 	if do, ok := f.(ListRer); ok {
 		ft.ListR = do.ListR
 	}
-	return ft
+	return ft.DisableList(Config.DisableFeatures)
 }
 
 // Mask the Features with the Fs passed in
@@ -378,6 +445,8 @@ func (ft *Features) Mask(f Fs) *Features {
 	ft.DuplicateFiles = ft.DuplicateFiles && mask.DuplicateFiles
 	ft.ReadMimeType = ft.ReadMimeType && mask.ReadMimeType
 	ft.WriteMimeType = ft.WriteMimeType && mask.WriteMimeType
+	ft.CanHaveEmptyDirectories = ft.CanHaveEmptyDirectories && mask.CanHaveEmptyDirectories
+	ft.BucketBased = ft.BucketBased && mask.BucketBased
 	if mask.Purge == nil {
 		ft.Purge = nil
 	}
@@ -402,13 +471,19 @@ func (ft *Features) Mask(f Fs) *Features {
 	if mask.PutUnchecked == nil {
 		ft.PutUnchecked = nil
 	}
+	if mask.PutStream == nil {
+		ft.PutStream = nil
+	}
+	if mask.MergeDirs == nil {
+		ft.MergeDirs = nil
+	}
 	if mask.CleanUp == nil {
 		ft.CleanUp = nil
 	}
 	if mask.ListR == nil {
 		ft.ListR = nil
 	}
-	return ft
+	return ft.DisableList(Config.DisableFeatures)
 }
 
 // Wrap makes a Copy of the features passed in, overriding the UnWrap
@@ -506,6 +581,23 @@ type PutUncheckeder interface {
 	// May create duplicates or return errors if src already
 	// exists.
 	PutUnchecked(in io.Reader, src ObjectInfo, options ...OpenOption) (Object, error)
+}
+
+// PutStreamer is an optional interface for Fs
+type PutStreamer interface {
+	// PutStream uploads to the remote path with the modTime given of indeterminate size
+	//
+	// May create the object even if it returns an error - if so
+	// will return the object and the error, otherwise will return
+	// nil and the error
+	PutStream(in io.Reader, src ObjectInfo, options ...OpenOption) (Object, error)
+}
+
+// MergeDirser is an option interface for Fs
+type MergeDirser interface {
+	// MergeDirs merges the contents of all the directories passed
+	// in into the first one and rmdirs the other directories.
+	MergeDirs([]Directory) error
 }
 
 // CleanUpper is an optional interfaces for Fs
@@ -615,6 +707,21 @@ func NewFs(path string) (Fs, error) {
 		return nil, err
 	}
 	return fsInfo.NewFs(configName, fsPath)
+}
+
+// temporaryLocalFs creates a local FS in the OS's temporary directory.
+//
+// No cleanup is performed, the caller must call Purge on the Fs themselves.
+func temporaryLocalFs() (Fs, error) {
+	path, err := ioutil.TempDir("", "rclone-spool")
+	if err == nil {
+		err = os.Remove(path)
+	}
+	if err != nil {
+		return nil, err
+	}
+	path = filepath.ToSlash(path)
+	return NewFs(path)
 }
 
 // CheckClose is a utility function used to check the return from

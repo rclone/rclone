@@ -275,9 +275,10 @@ limited to transferring about 2 files per second only.  Individual
 files may be transferred much faster at 100s of MBytes/s but lots of
 small files can take a long time.
 
-Server side copies are also subject to a separate rate limit. If
-you see User rate limit exceeded errors, wait at least 24 hours and
-retry.
+Server side copies are also subject to a separate rate limit. If you
+see User rate limit exceeded errors, wait at least 24 hours and retry.
+You can disable server side copies with `--disable copy` to download
+and upload the files if you prefer.
 
 ### Duplicated files ###
 
