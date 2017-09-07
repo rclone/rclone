@@ -121,3 +121,9 @@ metadata called `rclone_modified` in RFC3339 with nanoseconds format.
 ### MD5 checksums ###
 
 MD5 checksums are natively supported by Yandex Disk.
+
+### Emptying Trash ###
+
+If you wish to empty your trash you can use the `rclone cleanup remote:`
+command which will permanently delete all your trashed files. This command
+does not take any path arguments.
