@@ -132,7 +132,7 @@ operations more efficient.
 | Openstack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | No [#1614](https://github.com/ncw/rclone/issues/1614) |
 | QingStor                     | No    | Yes  | No   | No      | No      | Yes   | No [#1614](https://github.com/ncw/rclone/issues/1614) |
 | SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          |
-| Yandex Disk                  | Yes   | No   | No   | No      | No  [#575](https://github.com/ncw/rclone/issues/575) | Yes | Yes  |
+| Yandex Disk                  | Yes   | No   | No   | No      | Yes     | Yes | Yes  |
 | The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          |
 
 ### Purge ###

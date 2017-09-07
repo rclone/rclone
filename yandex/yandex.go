@@ -479,6 +479,11 @@ func (f *Fs) Purge() error {
 	return f.purgeCheck("", false)
 }
 
+// CleanUp permanently deletes all trashed files/folders
+func (f *Fs) CleanUp() error {
+	return f.yd.EmptyTrash()
+}
+
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() fs.HashSet {
 	return fs.HashSet(fs.HashMD5)
