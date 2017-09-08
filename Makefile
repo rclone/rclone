@@ -48,7 +48,7 @@ ifdef GO_LATEST
 	go vet $(BUILDTAGS) -printfuncs Debugf,Infof,Logf,Errorf ./...
 	errcheck $(BUILDTAGS) $(GO_FILES)
 	find . -name \*.go | grep -v /vendor/ | xargs goimports -d | grep . ; test $$? -eq 1
-	go list ./... | grep -v /vendor/ | xargs -i golint {} | grep -E -v '(StorageUrl|CdnUrl)' ; test $$? -eq 1
+	go list ./... | grep -v /vendor/ | xargs -n1 golint | grep -E -v '(StorageUrl|CdnUrl)' ; test $$? -eq 1
 else
 	@echo Skipping tests as not on Go stable
 endif
