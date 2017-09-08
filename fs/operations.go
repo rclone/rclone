@@ -65,7 +65,7 @@ func HashEquals(src, dst string) bool {
 // err - may return an error which will already have been logged
 //
 // If an error is returned it will return equal as false
-func CheckHashes(src, dst Object) (equal bool, hash HashType, err error) {
+func CheckHashes(src ObjectInfo, dst Object) (equal bool, hash HashType, err error) {
 	common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
 	// Debugf(nil, "Shared hashes: %v", common)
 	if common.Count() == 0 {
@@ -115,11 +115,11 @@ func CheckHashes(src, dst Object) (equal bool, hash HashType, err error) {
 //
 // Otherwise the file is considered to be not equal including if there
 // were errors reading info.
-func Equal(src, dst Object) bool {
+func Equal(src ObjectInfo, dst Object) bool {
 	return equal(src, dst, Config.SizeOnly, Config.CheckSum)
 }
 
-func equal(src, dst Object, sizeOnly, checkSum bool) bool {
+func equal(src ObjectInfo, dst Object, sizeOnly, checkSum bool) bool {
 	if !Config.IgnoreSize {
 		if src.Size() != dst.Size() {
 			Debugf(src, "Sizes differ")
@@ -1596,7 +1596,7 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 
 	// setup hashing
 	hashType := HashNone
-	if !Config.SizeOnly && !Config.IgnoreChecksum {
+	if !Config.SizeOnly {
 		hashType = fdst.Hashes().GetOne()
 	}
 	hashOption := &HashesOption{Hashes: HashSet(hashType)}
@@ -1612,24 +1612,11 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 		trackingIn = readCounter
 	}
 	compare := func(dst Object) error {
-		if !Config.IgnoreSize && readCounter.BytesRead() != uint64(dst.Size()) {
+		src := NewStaticObjectInfo(dstFileName, modTime, int64(readCounter.BytesRead()), false, hash.Sums(), fdst)
+		if !Equal(src, dst) {
 			Stats.Error()
-			err = errors.Errorf("corrupted on transfer: sizes differ %d vs %d", readCounter.BytesRead(), dst.Size())
+			err = errors.Errorf("corrupted on transfer")
 			Errorf(dst, "%v", err)
-			return err
-		}
-
-		if hashType != HashNone {
-			srcSum := hash.Sums()[hashType]
-			dstSum, err := dst.Hash(hashType)
-			if err != nil {
-				Stats.Error()
-				Errorf(dst, "Failed to read hash: %v", err)
-			} else if !HashEquals(srcSum, dstSum) {
-				Stats.Error()
-				err = errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
-				Errorf(dst, "%v", err)
-			}
 			return err
 		}
 		return nil

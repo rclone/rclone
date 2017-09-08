@@ -380,6 +380,7 @@ func LoadConfig() {
 	Config.TPSLimit = *tpsLimit
 	Config.TPSLimitBurst = *tpsLimitBurst
 	Config.BufferSize = bufferSize
+	Config.StreamingUploadCutoff = streamingUploadCutoff
 
 	Config.TrackRenames = *trackRenames
 
