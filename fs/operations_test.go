@@ -740,7 +740,7 @@ func TestRcat(t *testing.T) {
 	data1 := "this is some really nice test data"
 	path1 := "small_file_from_pipe"
 
-	data2 := string(make([]byte, 100*1024+1))
+	data2 := string(make([]byte, Config.StreamingUploadCutoff+1))
 	path2 := "big_file_from_pipe"
 
 	in := ioutil.NopCloser(strings.NewReader(data1))

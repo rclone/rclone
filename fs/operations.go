@@ -1636,7 +1636,7 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 	}
 
 	// check if file small enough for direct upload
-	buf := make([]byte, 100*1024)
+	buf := make([]byte, Config.StreamingUploadCutoff)
 	if n, err := io.ReadFull(trackingIn, buf); err == io.EOF || err == io.ErrUnexpectedEOF {
 		Debugf(fdst, "File to upload is small (%d bytes), uploading instead of streaming", n)
 		in := ioutil.NopCloser(bytes.NewReader(buf[:n]))
