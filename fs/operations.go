@@ -1592,25 +1592,14 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 		}
 	}()
 
+	hashOption := &HashesOption{Hashes: fdst.Hashes()}
+	hash, err := NewMultiHasherTypes(fdst.Hashes())
+	if err != nil {
+		return err
+	}
 	readCounter := NewCountingReader(in0)
+	trackingIn := io.TeeReader(readCounter, hash)
 
-	// setup hashing
-	hashType := HashNone
-	if !Config.SizeOnly {
-		hashType = fdst.Hashes().GetOne()
-	}
-	hashOption := &HashesOption{Hashes: HashSet(hashType)}
-	var hash *MultiHasher
-	var trackingIn io.Reader
-	if hashType != HashNone {
-		hash, err = NewMultiHasherTypes(HashSet(hashType))
-		if err != nil {
-			return err
-		}
-		trackingIn = io.TeeReader(readCounter, hash)
-	} else {
-		trackingIn = readCounter
-	}
 	compare := func(dst Object) error {
 		src := NewStaticObjectInfo(dstFileName, modTime, int64(readCounter.BytesRead()), false, hash.Sums(), fdst)
 		if !Equal(src, dst) {
