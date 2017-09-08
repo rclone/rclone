@@ -15,10 +15,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"golang.org/x/text/unicode/norm"
-
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
+	"google.golang.org/appengine/log"
 )
 
 var (
@@ -81,6 +80,10 @@ type Object struct {
 // NewFs constructs an Fs from the path
 func NewFs(name, root string) (fs.Fs, error) {
 	var err error
+
+	if *noUTFNorm {
+		log.Errorf(nil, "The --local-no-unicode-normalization flag is deprecated and will be removed")
+	}
 
 	nounc := fs.ConfigFileGet(name, "nounc")
 	f := &Fs{
@@ -272,9 +275,6 @@ func (f *Fs) cleanRemote(name string) string {
 		}
 		f.wmu.Unlock()
 		name = string([]rune(name))
-	}
-	if !*noUTFNorm {
-		name = norm.NFC.String(name)
 	}
 	name = filepath.ToSlash(name)
 	return name

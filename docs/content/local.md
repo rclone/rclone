@@ -122,15 +122,9 @@ $ rclone -L ls /tmp/a
 
 #### --local-no-unicode-normalization ####
 
-By default rclone normalizes (NFC) the unicode representation of filenames and
-directories. This flag disables that normalization and uses the same
-representation as the local filesystem.
-
-This can be useful if you need to retain the local unicode representation and
-you are using a cloud provider which supports unnormalized names (e.g. S3 or ACD).
-
-This should also work with any provider if you are using crypt and have file
-name encryption (the default) or obfuscation turned on.
+This flag is deprecated now.  Rclone no longer normalizes unicode file
+names, but it compares them with unicode normalization in the sync
+routine instead.
 
 #### --one-file-system, -x ####
 

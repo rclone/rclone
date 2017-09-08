@@ -1,9 +1,13 @@
 package fs
 
 import (
+	"path"
+	"sort"
+	"strings"
 	"sync"
 
 	"golang.org/x/net/context"
+	"golang.org/x/text/unicode/norm"
 )
 
 // march traverses two Fs simultaneously, calling walker for each match
@@ -17,6 +21,7 @@ type march struct {
 	// internal state
 	srcListDir listDirFn // function to call to list a directory in the src
 	dstListDir listDirFn // function to call to list a directory in the dst
+	transforms []matchTransformFn
 }
 
 // marcher is called on each match
@@ -40,6 +45,18 @@ func newMarch(ctx context.Context, fdst, fsrc Fs, dir string, callback marcher) 
 	}
 	m.srcListDir = m.makeListDir(fsrc, false)
 	m.dstListDir = m.makeListDir(fdst, Config.Filter.DeleteExcluded)
+	// Now create the matching transform
+	// ..normalise the UTF8 first
+	m.transforms = append(m.transforms, norm.NFC.String)
+	// ..if destination is caseInsensitive then make it lower case
+	// case Insensitive | src | dst | lower case compare |
+	//                  | No  | No  | No                 |
+	//                  | Yes | No  | No                 |
+	//                  | No  | Yes | Yes                |
+	//                  | Yes | Yes | Yes                |
+	if fdst.Features().CaseInsensitive {
+		m.transforms = append(m.transforms, strings.ToLower)
+	}
 	return m
 }
 
@@ -156,58 +173,122 @@ func (m *march) aborting() bool {
 	return false
 }
 
+// matchEntry is an entry plus transformed name
+type matchEntry struct {
+	entry DirEntry
+	leaf  string
+	name  string
+}
+
+// matchEntries contains many matchEntry~s
+type matchEntries []matchEntry
+
+// Len is part of sort.Interface.
+func (es matchEntries) Len() int { return len(es) }
+
+// Swap is part of sort.Interface.
+func (es matchEntries) Swap(i, j int) { es[i], es[j] = es[j], es[i] }
+
+// Less is part of sort.Interface.
+//
+// Compare in order (name, leaf, remote)
+func (es matchEntries) Less(i, j int) bool {
+	ei, ej := &es[i], &es[j]
+	if ei.name == ej.name {
+		if ei.leaf == ej.leaf {
+			return ei.entry.Remote() < ej.entry.Remote()
+		}
+		return ei.leaf < ej.leaf
+	}
+	return ei.name < ej.name
+}
+
+// Sort the directory entries by (name, leaf, remote)
+//
+// We use a stable sort here just in case there are
+// duplicates. Assuming the remote delivers the entries in a
+// consistent order, this will give the best user experience
+// in syncing as it will use the first entry for the sync
+// comparison.
+func (es matchEntries) sort() {
+	sort.Stable(es)
+}
+
+// make a matchEntries from a newMatch entries
+func newMatchEntries(entries DirEntries, transforms []matchTransformFn) matchEntries {
+	es := make(matchEntries, len(entries))
+	for i := range es {
+		es[i].entry = entries[i]
+		name := path.Base(entries[i].Remote())
+		es[i].leaf = name
+		for _, transform := range transforms {
+			name = transform(name)
+		}
+		es[i].name = name
+	}
+	es.sort()
+	return es
+}
+
+// matchPair is a matched pair of direntries returned by matchListings
 type matchPair struct {
 	src, dst DirEntry
 }
 
-// Process the two sorted listings, matching up the items in the two
-// sorted slices
+// matchTransformFn converts a name into a form which is used for
+// comparison in matchListings.
+type matchTransformFn func(name string) string
+
+// Process the two listings, matching up the items in the two slices
+// using the transform function on each name first.
 //
 // Into srcOnly go Entries which only exist in the srcList
 // Into dstOnly go Entries which only exist in the dstList
 // Into matches go matchPair's of src and dst which have the same name
 //
 // This checks for duplicates and checks the list is sorted.
-func matchListings(srcList, dstList DirEntries) (srcOnly DirEntries, dstOnly DirEntries, matches []matchPair) {
+func matchListings(srcListEntries, dstListEntries DirEntries, transforms []matchTransformFn) (srcOnly DirEntries, dstOnly DirEntries, matches []matchPair) {
+	srcList := newMatchEntries(srcListEntries, transforms)
+	dstList := newMatchEntries(dstListEntries, transforms)
 	for iSrc, iDst := 0, 0; ; iSrc, iDst = iSrc+1, iDst+1 {
 		var src, dst DirEntry
-		var srcRemote, dstRemote string
+		var srcName, dstName string
 		if iSrc < len(srcList) {
-			src = srcList[iSrc]
-			srcRemote = src.Remote()
+			src = srcList[iSrc].entry
+			srcName = srcList[iSrc].name
 		}
 		if iDst < len(dstList) {
-			dst = dstList[iDst]
-			dstRemote = dst.Remote()
+			dst = dstList[iDst].entry
+			dstName = dstList[iDst].name
 		}
 		if src == nil && dst == nil {
 			break
 		}
 		if src != nil && iSrc > 0 {
-			prev := srcList[iSrc-1].Remote()
-			if srcRemote == prev {
+			prev := srcList[iSrc-1].name
+			if srcName == prev {
 				Logf(src, "Duplicate %s found in source - ignoring", DirEntryType(src))
 				src = nil // ignore the src
-			} else if srcRemote < prev {
+			} else if srcName < prev {
 				Errorf(src, "Out of order listing in source")
 				src = nil // ignore the src
 			}
 		}
 		if dst != nil && iDst > 0 {
-			prev := dstList[iDst-1].Remote()
-			if dstRemote == prev {
+			prev := dstList[iDst-1].name
+			if dstName == prev {
 				Logf(dst, "Duplicate %s found in destination - ignoring", DirEntryType(dst))
 				dst = nil // ignore the dst
-			} else if dstRemote < prev {
+			} else if dstName < prev {
 				Errorf(dst, "Out of order listing in destination")
 				dst = nil // ignore the dst
 			}
 		}
 		if src != nil && dst != nil {
-			if srcRemote < dstRemote {
+			if srcName < dstName {
 				dst = nil
 				iDst-- // retry the dst
-			} else if srcRemote > dstRemote {
+			} else if srcName > dstName {
 				src = nil
 				iSrc-- // retry the src
 			}
@@ -271,7 +352,7 @@ func (m *march) processJob(job listDirJob) (jobs []listDirJob) {
 	}
 
 	// Work out what to do and do it
-	srcOnly, dstOnly, matches := matchListings(srcList, dstList)
+	srcOnly, dstOnly, matches := matchListings(srcList, dstList, m.transforms)
 	for _, src := range srcOnly {
 		if m.aborting() {
 			return nil

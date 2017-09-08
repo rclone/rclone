@@ -10,6 +10,7 @@ import (
 	"github.com/ncw/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Check dry run is working
@@ -961,3 +962,32 @@ func testSyncBackupDir(t *testing.T, suffix string) {
 }
 func TestSyncBackupDir(t *testing.T)           { testSyncBackupDir(t, "") }
 func TestSyncBackupDirWithSuffix(t *testing.T) { testSyncBackupDir(t, ".bak") }
+
+// Check we can sync two files with differing UTF-8 representations
+func TestSyncUTFNorm(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+
+	// Two strings with different unicode normalization (from OS X)
+	Encoding1 := "Testêé"
+	Encoding2 := "Testêé"
+	assert.NotEqual(t, Encoding1, Encoding2)
+	assert.Equal(t, norm.NFC.String(Encoding1), norm.NFC.String(Encoding2))
+
+	file1 := r.WriteFile(Encoding1, "This is a test", t1)
+	fstest.CheckItems(t, r.flocal, file1)
+
+	file2 := r.WriteObject(Encoding2, "This is a old test", t2)
+	fstest.CheckItems(t, r.fremote, file2)
+
+	fs.Stats.ResetCounters()
+	err := fs.Sync(r.fremote, r.flocal)
+	require.NoError(t, err)
+
+	// We should have transferred exactly one file, but kept the
+	// normalized state of the file.
+	assert.Equal(t, int64(1), fs.Stats.GetTransfers())
+	fstest.CheckItems(t, r.flocal, file1)
+	file1.Path = file2.Path
+	fstest.CheckItems(t, r.fremote, file1)
+}
