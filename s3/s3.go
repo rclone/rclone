@@ -949,6 +949,11 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 		}
 	}
 	resp, err := o.fs.c.GetObject(&req)
+	if err, ok := err.(awserr.RequestFailure); ok {
+		if err.Code() == "InvalidObjectState" {
+			return nil, errors.Errorf("Object in GLACIER, restore first: %v", key)
+		}
+	}
 	if err != nil {
 		return nil, err
 	}
