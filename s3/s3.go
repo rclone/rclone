@@ -313,6 +313,7 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 	v := credentials.Value{
 		AccessKeyID:     fs.ConfigFileGet(name, "access_key_id"),
 		SecretAccessKey: fs.ConfigFileGet(name, "secret_access_key"),
+		SessionToken:    fs.ConfigFileGet(name, "session_token"),
 	}
 
 	// first provider to supply a credential set "wins"
