@@ -1002,7 +1002,7 @@ func (s *syncCopyMove) processJob(job listDirJob) (jobs []listDirJob) {
 	if dstListErr == ErrorDirNotFound {
 		// Copy the stuff anyway
 	} else if dstListErr != nil {
-		s.processError(errors.Wrapf(srcListErr, "error reading destination directory %q", job.remote))
+		s.processError(errors.Wrapf(dstListErr, "error reading destination directory %q", job.remote))
 		return nil
 	}
 
