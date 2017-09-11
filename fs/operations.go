@@ -1618,6 +1618,10 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 		in := ioutil.NopCloser(bytes.NewReader(buf[:n]))
 		in = NewAccountSizeName(in, int64(n), dstFileName).WithBuffer()
 		objInfo := NewStaticObjectInfo(dstFileName, modTime, int64(n), false, nil, nil)
+		if Config.DryRun {
+			Logf("stdin", "Not uploading as --dry-run")
+			return nil
+		}
 		dst, err := fdst.Put(in, objInfo, hashOption)
 		if err != nil {
 			return err
@@ -1646,7 +1650,7 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 	in = NewAccountSizeName(in, -1, dstFileName).WithBuffer()
 
 	if Config.DryRun {
-		Logf("stdin", "Not copying as --dry-run")
+		Logf("stdin", "Not uploading as --dry-run")
 		// prevents "broken pipe" errors
 		_, err = io.Copy(ioutil.Discard, in)
 		return err
