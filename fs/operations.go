@@ -1587,7 +1587,27 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 	Stats.Transferring(dstFileName)
 	defer func() {
 		Stats.DoneTransferring(dstFileName, err == nil)
+		if err := in0.Close(); err != nil {
+			Debugf(fdst, "Rcat: failed to close source: %v", err)
+		}
 	}()
+
+	hashOption := &HashesOption{Hashes: NewHashSet()}
+
+	in := in0
+	buf := make([]byte, 100*1024)
+	if n, err := io.ReadFull(in0, buf); err != nil {
+		Debugf(fdst, "File to upload is small, uploading instead of streaming")
+		in = ioutil.NopCloser(bytes.NewReader(buf[:n]))
+		in = NewAccountSizeName(in, int64(n), dstFileName).WithBuffer()
+		if !Config.SizeOnly {
+			hashOption = &HashesOption{Hashes: HashSet(fdst.Hashes().GetOne())}
+		}
+		objInfo := NewStaticObjectInfo(dstFileName, modTime, int64(n), false, nil, nil)
+		_, err := fdst.Put(in, objInfo, hashOption)
+		return err
+	}
+	in = ioutil.NopCloser(io.MultiReader(bytes.NewReader(buf), in0))
 
 	fStreamTo := fdst
 	canStream := fdst.Features().PutStream != nil
@@ -1606,21 +1626,11 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 		fStreamTo = tmpLocalFs
 	}
 
-	objInfo := NewStaticObjectInfo(dstFileName, modTime, -1, false, nil, nil)
-
-	// work out which hash to use - limit to 1 hash in common
-	var common HashSet
-	hashType := HashNone
 	if !Config.SizeOnly {
-		common = fStreamTo.Hashes().Overlap(SupportedHashes)
-		if common.Count() > 0 {
-			hashType = common.GetOne()
-			common = HashSet(hashType)
-		}
+		hashOption = &HashesOption{Hashes: HashSet(fStreamTo.Hashes().GetOne())}
 	}
-	hashOption := &HashesOption{Hashes: common}
 
-	in := NewAccountSizeName(in0, -1, dstFileName).WithBuffer()
+	in = NewAccountSizeName(in, -1, dstFileName).WithBuffer()
 
 	if Config.DryRun {
 		Logf("stdin", "Not copying as --dry-run")
@@ -1629,6 +1639,7 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 		return err
 	}
 
+	objInfo := NewStaticObjectInfo(dstFileName, modTime, -1, false, nil, nil)
 	tmpObj, err := fStreamTo.Features().PutStream(in, objInfo, hashOption)
 	if err == nil && !canStream {
 		err = Copy(fdst, nil, dstFileName, tmpObj)
