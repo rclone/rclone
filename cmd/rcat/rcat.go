@@ -50,7 +50,8 @@ a lot of data, you're better off caching locally and then
 
 		fdst, dstFileName := cmd.NewFsDstFile(args)
 		cmd.Run(false, false, command, func() error {
-			return fs.Rcat(fdst, dstFileName, os.Stdin, time.Now())
+			_, err := fs.Rcat(fdst, dstFileName, os.Stdin, time.Now())
+			return err
 		})
 	},
 }

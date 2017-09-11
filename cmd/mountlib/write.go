@@ -3,9 +3,9 @@ package mountlib
 import (
 	"io"
 	"sync"
+	"time"
 
 	"github.com/ncw/rclone/fs"
-	"github.com/pkg/errors"
 )
 
 // WriteFileHandle is an open for write handle on a File
@@ -19,41 +19,28 @@ type WriteFileHandle struct {
 	file        *File
 	writeCalled bool // set the first time Write() is called
 	offset      int64
-	hash        *fs.MultiHasher
 }
 
 func newWriteFileHandle(d *Dir, f *File, src fs.ObjectInfo) (*WriteFileHandle, error) {
-	var hash *fs.MultiHasher
-	if !f.d.fsys.noChecksum {
-		var err error
-		hash, err = fs.NewMultiHasherTypes(src.Fs().Hashes())
-		if err != nil {
-			fs.Errorf(src.Fs(), "newWriteFileHandle hash error: %v", err)
-		}
-	}
-
 	fh := &WriteFileHandle{
 		remote: src.Remote(),
 		result: make(chan error, 1),
 		file:   f,
-		hash:   hash,
 	}
 	var pipeReader *io.PipeReader
 	pipeReader, fh.pipeWriter = io.Pipe()
 	go func() {
-		r := fs.NewAccountSizeName(pipeReader, 0, src.Remote()).WithBuffer() // account the transfer
-		o, err := d.f.Put(r, src)
+		o, err := fs.Rcat(d.f, src.Remote(), pipeReader, time.Now())
 		if err != nil {
-			fs.Errorf(fh.remote, "WriteFileHandle.New Put failed: %v", err)
+			fs.Errorf(fh.remote, "WriteFileHandle.New Rcat failed: %v", err)
 		}
-		// Close the Account and thus the pipeReader so the pipeWriter fails with ErrClosedPipe
-		_ = r.Close()
+		// Close the pipeReader so the pipeWriter fails with ErrClosedPipe
+		_ = pipeReader.Close()
 		fh.o = o
 		fh.result <- err
 	}()
 	fh.file.addWriters(1)
 	fh.file.setSize(0)
-	fs.Stats.Transferring(fh.remote)
 	return fh, nil
 }
 
@@ -87,7 +74,6 @@ func (fh *WriteFileHandle) Write(data []byte, offset int64) (written int64, err 
 		return 0, EBADF
 	}
 	fh.writeCalled = true
-	// FIXME should probably check the file isn't being seeked?
 	n, err := fh.pipeWriter.Write(data)
 	written = int64(n)
 	fh.offset += written
@@ -97,13 +83,6 @@ func (fh *WriteFileHandle) Write(data []byte, offset int64) (written int64, err 
 		return 0, err
 	}
 	// fs.Debugf(fh.remote, "WriteFileHandle.Write OK (%d bytes written)", n)
-	if fh.hash != nil {
-		_, err = fh.hash.Write(data[:n])
-		if err != nil {
-			fs.Errorf(fh.remote, "WriteFileHandle.Write HashError: %v", err)
-			return written, err
-		}
-	}
 	return written, nil
 }
 
@@ -121,24 +100,12 @@ func (fh *WriteFileHandle) close() error {
 		return EBADF
 	}
 	fh.closed = true
-	fs.Stats.DoneTransferring(fh.remote, true)
 	fh.file.addWriters(-1)
 	writeCloseErr := fh.pipeWriter.Close()
 	err := <-fh.result
 	if err == nil {
 		fh.file.setObject(fh.o)
 		err = writeCloseErr
-	}
-	if err == nil && fh.hash != nil {
-		for hashType, srcSum := range fh.hash.Sums() {
-			dstSum, err := fh.o.Hash(hashType)
-			if err != nil {
-				return err
-			}
-			if !fs.HashEquals(srcSum, dstSum) {
-				return errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
-			}
-		}
 	}
 	return err
 }

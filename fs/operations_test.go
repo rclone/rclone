@@ -748,11 +748,11 @@ func TestRcat(t *testing.T) {
 		path2 := "big_file_from_pipe"
 
 		in := ioutil.NopCloser(strings.NewReader(data1))
-		err := fs.Rcat(r.fremote, path1, in, t1)
+		_, err := fs.Rcat(r.fremote, path1, in, t1)
 		require.NoError(t, err)
 
 		in = ioutil.NopCloser(strings.NewReader(data2))
-		err = fs.Rcat(r.fremote, path2, in, t2)
+		_, err = fs.Rcat(r.fremote, path2, in, t2)
 		require.NoError(t, err)
 
 		file1 := fstest.NewItem(path1, data1, t1)
