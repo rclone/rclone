@@ -732,28 +732,39 @@ func TestCat(t *testing.T) {
 }
 
 func TestRcat(t *testing.T) {
-	r := NewRun(t)
-	defer r.Finalise()
+	checkSumBefore := fs.Config.CheckSum
+	defer func() { fs.Config.CheckSum = checkSumBefore }()
 
-	fstest.CheckListing(t, r.fremote, []fstest.Item{})
+	check := func() {
+		r := NewRun(t)
+		defer r.Finalise()
 
-	data1 := "this is some really nice test data"
-	path1 := "small_file_from_pipe"
+		fstest.CheckListing(t, r.fremote, []fstest.Item{})
 
-	data2 := string(make([]byte, 100*1024+1))
-	path2 := "big_file_from_pipe"
+		data1 := "this is some really nice test data"
+		path1 := "small_file_from_pipe"
 
-	in := ioutil.NopCloser(strings.NewReader(data1))
-	err := fs.Rcat(r.fremote, path1, in, t1)
-	require.NoError(t, err)
+		data2 := string(make([]byte, fs.Config.StreamingUploadCutoff+1))
+		path2 := "big_file_from_pipe"
 
-	in = ioutil.NopCloser(strings.NewReader(data2))
-	err = fs.Rcat(r.fremote, path2, in, t2)
-	require.NoError(t, err)
+		in := ioutil.NopCloser(strings.NewReader(data1))
+		err := fs.Rcat(r.fremote, path1, in, t1)
+		require.NoError(t, err)
 
-	file1 := fstest.NewItem(path1, data1, t1)
-	file2 := fstest.NewItem(path2, data2, t2)
-	fstest.CheckItems(t, r.fremote, file1, file2)
+		in = ioutil.NopCloser(strings.NewReader(data2))
+		err = fs.Rcat(r.fremote, path2, in, t2)
+		require.NoError(t, err)
+
+		file1 := fstest.NewItem(path1, data1, t1)
+		file2 := fstest.NewItem(path2, data2, t2)
+		fstest.CheckItems(t, r.fremote, file1, file2)
+	}
+
+	fs.Config.CheckSum = true
+	check()
+
+	fs.Config.CheckSum = false
+	check()
 }
 
 func TestRmdirs(t *testing.T) {

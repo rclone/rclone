@@ -64,48 +64,49 @@ var (
 	// Config is the global config
 	Config = &ConfigInfo{}
 	// Flags
-	verbose         = CountP("verbose", "v", "Print lots more stuff (repeat for more)")
-	quiet           = BoolP("quiet", "q", false, "Print as little stuff as possible")
-	modifyWindow    = DurationP("modify-window", "", time.Nanosecond, "Max time diff to be considered the same")
-	checkers        = IntP("checkers", "", 8, "Number of checkers to run in parallel.")
-	transfers       = IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
-	configFile      = StringP("config", "", ConfigPath, "Config file.")
-	checkSum        = BoolP("checksum", "c", false, "Skip based on checksum & size, not mod-time & size")
-	sizeOnly        = BoolP("size-only", "", false, "Skip based on size only, not mod-time or checksum")
-	ignoreTimes     = BoolP("ignore-times", "I", false, "Don't skip files that match size and time - transfer all files")
-	ignoreExisting  = BoolP("ignore-existing", "", false, "Skip all files that exist on destination")
-	dryRun          = BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
-	connectTimeout  = DurationP("contimeout", "", 60*time.Second, "Connect timeout")
-	timeout         = DurationP("timeout", "", 5*60*time.Second, "IO idle timeout")
-	dumpHeaders     = BoolP("dump-headers", "", false, "Dump HTTP headers - may contain sensitive info")
-	dumpBodies      = BoolP("dump-bodies", "", false, "Dump HTTP headers and bodies - may contain sensitive info")
-	dumpAuth        = BoolP("dump-auth", "", false, "Dump HTTP headers with auth info")
-	skipVerify      = BoolP("no-check-certificate", "", false, "Do not verify the server SSL certificate. Insecure.")
-	AskPassword     = BoolP("ask-password", "", true, "Allow prompt for password for encrypted configuration.")
-	deleteBefore    = BoolP("delete-before", "", false, "When synchronizing, delete files on destination before transfering")
-	deleteDuring    = BoolP("delete-during", "", false, "When synchronizing, delete files during transfer (default)")
-	deleteAfter     = BoolP("delete-after", "", false, "When synchronizing, delete files on destination after transfering")
-	trackRenames    = BoolP("track-renames", "", false, "When synchronizing, track file renames and do a server side move if possible")
-	lowLevelRetries = IntP("low-level-retries", "", 10, "Number of low level retries to do.")
-	updateOlder     = BoolP("update", "u", false, "Skip files that are newer on the destination.")
-	noGzip          = BoolP("no-gzip-encoding", "", false, "Don't set Accept-Encoding: gzip.")
-	maxDepth        = IntP("max-depth", "", -1, "If set limits the recursion depth to this.")
-	ignoreSize      = BoolP("ignore-size", "", false, "Ignore size when skipping use mod-time or checksum.")
-	ignoreChecksum  = BoolP("ignore-checksum", "", false, "Skip post copy check of checksums.")
-	noTraverse      = BoolP("no-traverse", "", false, "Don't traverse destination file system on copy.")
-	noUpdateModTime = BoolP("no-update-modtime", "", false, "Don't update destination mod-time if files identical.")
-	backupDir       = StringP("backup-dir", "", "", "Make backups into hierarchy based in DIR.")
-	suffix          = StringP("suffix", "", "", "Suffix for use with --backup-dir.")
-	useListR        = BoolP("fast-list", "", false, "Use recursive list if available. Uses more memory but fewer transactions.")
-	tpsLimit        = Float64P("tpslimit", "", 0, "Limit HTTP transactions per second to this.")
-	tpsLimitBurst   = IntP("tpslimit-burst", "", 1, "Max burst of transactions for --tpslimit.")
-	bindAddr        = StringP("bind", "", "", "Local address to bind to for outgoing connections, IPv4, IPv6 or name.")
-	disableFeatures = StringP("disable", "", "", "Disable a comma separated list of features.  Use help to see a list.")
-	userAgent       = StringP("user-agent", "", "rclone/"+Version, "Set the user-agent to a specified string. The default is rclone/ version")
-	logLevel        = LogLevelNotice
-	statsLogLevel   = LogLevelInfo
-	bwLimit         BwTimetable
-	bufferSize      SizeSuffix = 16 << 20
+	verbose               = CountP("verbose", "v", "Print lots more stuff (repeat for more)")
+	quiet                 = BoolP("quiet", "q", false, "Print as little stuff as possible")
+	modifyWindow          = DurationP("modify-window", "", time.Nanosecond, "Max time diff to be considered the same")
+	checkers              = IntP("checkers", "", 8, "Number of checkers to run in parallel.")
+	transfers             = IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
+	configFile            = StringP("config", "", ConfigPath, "Config file.")
+	checkSum              = BoolP("checksum", "c", false, "Skip based on checksum & size, not mod-time & size")
+	sizeOnly              = BoolP("size-only", "", false, "Skip based on size only, not mod-time or checksum")
+	ignoreTimes           = BoolP("ignore-times", "I", false, "Don't skip files that match size and time - transfer all files")
+	ignoreExisting        = BoolP("ignore-existing", "", false, "Skip all files that exist on destination")
+	dryRun                = BoolP("dry-run", "n", false, "Do a trial run with no permanent changes")
+	connectTimeout        = DurationP("contimeout", "", 60*time.Second, "Connect timeout")
+	timeout               = DurationP("timeout", "", 5*60*time.Second, "IO idle timeout")
+	dumpHeaders           = BoolP("dump-headers", "", false, "Dump HTTP headers - may contain sensitive info")
+	dumpBodies            = BoolP("dump-bodies", "", false, "Dump HTTP headers and bodies - may contain sensitive info")
+	dumpAuth              = BoolP("dump-auth", "", false, "Dump HTTP headers with auth info")
+	skipVerify            = BoolP("no-check-certificate", "", false, "Do not verify the server SSL certificate. Insecure.")
+	AskPassword           = BoolP("ask-password", "", true, "Allow prompt for password for encrypted configuration.")
+	deleteBefore          = BoolP("delete-before", "", false, "When synchronizing, delete files on destination before transfering")
+	deleteDuring          = BoolP("delete-during", "", false, "When synchronizing, delete files during transfer (default)")
+	deleteAfter           = BoolP("delete-after", "", false, "When synchronizing, delete files on destination after transfering")
+	trackRenames          = BoolP("track-renames", "", false, "When synchronizing, track file renames and do a server side move if possible")
+	lowLevelRetries       = IntP("low-level-retries", "", 10, "Number of low level retries to do.")
+	updateOlder           = BoolP("update", "u", false, "Skip files that are newer on the destination.")
+	noGzip                = BoolP("no-gzip-encoding", "", false, "Don't set Accept-Encoding: gzip.")
+	maxDepth              = IntP("max-depth", "", -1, "If set limits the recursion depth to this.")
+	ignoreSize            = BoolP("ignore-size", "", false, "Ignore size when skipping use mod-time or checksum.")
+	ignoreChecksum        = BoolP("ignore-checksum", "", false, "Skip post copy check of checksums.")
+	noTraverse            = BoolP("no-traverse", "", false, "Don't traverse destination file system on copy.")
+	noUpdateModTime       = BoolP("no-update-modtime", "", false, "Don't update destination mod-time if files identical.")
+	backupDir             = StringP("backup-dir", "", "", "Make backups into hierarchy based in DIR.")
+	suffix                = StringP("suffix", "", "", "Suffix for use with --backup-dir.")
+	useListR              = BoolP("fast-list", "", false, "Use recursive list if available. Uses more memory but fewer transactions.")
+	tpsLimit              = Float64P("tpslimit", "", 0, "Limit HTTP transactions per second to this.")
+	tpsLimitBurst         = IntP("tpslimit-burst", "", 1, "Max burst of transactions for --tpslimit.")
+	bindAddr              = StringP("bind", "", "", "Local address to bind to for outgoing connections, IPv4, IPv6 or name.")
+	disableFeatures       = StringP("disable", "", "", "Disable a comma separated list of features.  Use help to see a list.")
+	userAgent             = StringP("user-agent", "", "rclone/"+Version, "Set the user-agent to a specified string. The default is rclone/ version")
+	streamingUploadCutoff = SizeSuffix(100 * 1024)
+	logLevel              = LogLevelNotice
+	statsLogLevel         = LogLevelInfo
+	bwLimit               BwTimetable
+	bufferSize            SizeSuffix = 16 << 20
 
 	// Key to use for password en/decryption.
 	// When nil, no encryption will be used for saving.
@@ -117,6 +118,7 @@ func init() {
 	VarP(&statsLogLevel, "stats-log-level", "", "Log level to show --stats output DEBUG|INFO|NOTICE|ERROR")
 	VarP(&bwLimit, "bwlimit", "", "Bandwidth limit in kBytes/s, or use suffix b|k|M|G or a full timetable.")
 	VarP(&bufferSize, "buffer-size", "", "Buffer size when copying files.")
+	VarP(&streamingUploadCutoff, "streaming-upload-cutoff", "", "Cutoff for switching to chunked upload if file size is unknown. Upload starts after reaching cutoff or when file ends.")
 }
 
 // crypt internals
@@ -202,42 +204,43 @@ func MustReveal(x string) string {
 
 // ConfigInfo is filesystem config options
 type ConfigInfo struct {
-	LogLevel           LogLevel
-	StatsLogLevel      LogLevel
-	DryRun             bool
-	CheckSum           bool
-	SizeOnly           bool
-	IgnoreTimes        bool
-	IgnoreExisting     bool
-	ModifyWindow       time.Duration
-	Checkers           int
-	Transfers          int
-	ConnectTimeout     time.Duration // Connect timeout
-	Timeout            time.Duration // Data channel timeout
-	DumpHeaders        bool
-	DumpBodies         bool
-	DumpAuth           bool
-	Filter             *Filter
-	InsecureSkipVerify bool // Skip server certificate verification
-	DeleteMode         DeleteMode
-	TrackRenames       bool // Track file renames.
-	LowLevelRetries    int
-	UpdateOlder        bool // Skip files that are newer on the destination
-	NoGzip             bool // Disable compression
-	MaxDepth           int
-	IgnoreSize         bool
-	IgnoreChecksum     bool
-	NoTraverse         bool
-	NoUpdateModTime    bool
-	DataRateUnit       string
-	BackupDir          string
-	Suffix             string
-	UseListR           bool
-	BufferSize         SizeSuffix
-	TPSLimit           float64
-	TPSLimitBurst      int
-	BindAddr           net.IP
-	DisableFeatures    []string
+	LogLevel              LogLevel
+	StatsLogLevel         LogLevel
+	DryRun                bool
+	CheckSum              bool
+	SizeOnly              bool
+	IgnoreTimes           bool
+	IgnoreExisting        bool
+	ModifyWindow          time.Duration
+	Checkers              int
+	Transfers             int
+	ConnectTimeout        time.Duration // Connect timeout
+	Timeout               time.Duration // Data channel timeout
+	DumpHeaders           bool
+	DumpBodies            bool
+	DumpAuth              bool
+	Filter                *Filter
+	InsecureSkipVerify    bool // Skip server certificate verification
+	DeleteMode            DeleteMode
+	TrackRenames          bool // Track file renames.
+	LowLevelRetries       int
+	UpdateOlder           bool // Skip files that are newer on the destination
+	NoGzip                bool // Disable compression
+	MaxDepth              int
+	IgnoreSize            bool
+	IgnoreChecksum        bool
+	NoTraverse            bool
+	NoUpdateModTime       bool
+	DataRateUnit          string
+	BackupDir             string
+	Suffix                string
+	UseListR              bool
+	BufferSize            SizeSuffix
+	TPSLimit              float64
+	TPSLimitBurst         int
+	BindAddr              net.IP
+	DisableFeatures       []string
+	StreamingUploadCutoff SizeSuffix
 }
 
 // Return the path to the configuration file
@@ -377,6 +380,7 @@ func LoadConfig() {
 	Config.TPSLimit = *tpsLimit
 	Config.TPSLimitBurst = *tpsLimitBurst
 	Config.BufferSize = bufferSize
+	Config.StreamingUploadCutoff = streamingUploadCutoff
 
 	Config.TrackRenames = *trackRenames
 

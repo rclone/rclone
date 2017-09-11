@@ -65,7 +65,7 @@ func HashEquals(src, dst string) bool {
 // err - may return an error which will already have been logged
 //
 // If an error is returned it will return equal as false
-func CheckHashes(src, dst Object) (equal bool, hash HashType, err error) {
+func CheckHashes(src ObjectInfo, dst Object) (equal bool, hash HashType, err error) {
 	common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
 	// Debugf(nil, "Shared hashes: %v", common)
 	if common.Count() == 0 {
@@ -115,11 +115,11 @@ func CheckHashes(src, dst Object) (equal bool, hash HashType, err error) {
 //
 // Otherwise the file is considered to be not equal including if there
 // were errors reading info.
-func Equal(src, dst Object) bool {
+func Equal(src ObjectInfo, dst Object) bool {
 	return equal(src, dst, Config.SizeOnly, Config.CheckSum)
 }
 
-func equal(src, dst Object, sizeOnly, checkSum bool) bool {
+func equal(src ObjectInfo, dst Object, sizeOnly, checkSum bool) bool {
 	if !Config.IgnoreSize {
 		if src.Size() != dst.Size() {
 			Debugf(src, "Sizes differ")
@@ -1587,27 +1587,44 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 	Stats.Transferring(dstFileName)
 	defer func() {
 		Stats.DoneTransferring(dstFileName, err == nil)
-		if err := in0.Close(); err != nil {
+		if err = in0.Close(); err != nil {
 			Debugf(fdst, "Rcat: failed to close source: %v", err)
 		}
 	}()
 
-	hashOption := &HashesOption{Hashes: NewHashSet()}
-
-	in := in0
-	buf := make([]byte, 100*1024)
-	if n, err := io.ReadFull(in0, buf); err != nil {
-		Debugf(fdst, "File to upload is small, uploading instead of streaming")
-		in = ioutil.NopCloser(bytes.NewReader(buf[:n]))
-		in = NewAccountSizeName(in, int64(n), dstFileName).WithBuffer()
-		if !Config.SizeOnly {
-			hashOption = &HashesOption{Hashes: HashSet(fdst.Hashes().GetOne())}
-		}
-		objInfo := NewStaticObjectInfo(dstFileName, modTime, int64(n), false, nil, nil)
-		_, err := fdst.Put(in, objInfo, hashOption)
+	hashOption := &HashesOption{Hashes: fdst.Hashes()}
+	hash, err := NewMultiHasherTypes(fdst.Hashes())
+	if err != nil {
 		return err
 	}
-	in = ioutil.NopCloser(io.MultiReader(bytes.NewReader(buf), in0))
+	readCounter := NewCountingReader(in0)
+	trackingIn := io.TeeReader(readCounter, hash)
+
+	compare := func(dst Object) error {
+		src := NewStaticObjectInfo(dstFileName, modTime, int64(readCounter.BytesRead()), false, hash.Sums(), fdst)
+		if !Equal(src, dst) {
+			Stats.Error()
+			err = errors.Errorf("corrupted on transfer")
+			Errorf(dst, "%v", err)
+			return err
+		}
+		return nil
+	}
+
+	// check if file small enough for direct upload
+	buf := make([]byte, Config.StreamingUploadCutoff)
+	if n, err := io.ReadFull(trackingIn, buf); err == io.EOF || err == io.ErrUnexpectedEOF {
+		Debugf(fdst, "File to upload is small (%d bytes), uploading instead of streaming", n)
+		in := ioutil.NopCloser(bytes.NewReader(buf[:n]))
+		in = NewAccountSizeName(in, int64(n), dstFileName).WithBuffer()
+		objInfo := NewStaticObjectInfo(dstFileName, modTime, int64(n), false, nil, nil)
+		dst, err := fdst.Put(in, objInfo, hashOption)
+		if err != nil {
+			return err
+		}
+		return compare(dst)
+	}
+	in := ioutil.NopCloser(io.MultiReader(bytes.NewReader(buf), trackingIn))
 
 	fStreamTo := fdst
 	canStream := fdst.Features().PutStream != nil
@@ -1626,10 +1643,6 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 		fStreamTo = tmpLocalFs
 	}
 
-	if !Config.SizeOnly {
-		hashOption = &HashesOption{Hashes: HashSet(fStreamTo.Hashes().GetOne())}
-	}
-
 	in = NewAccountSizeName(in, -1, dstFileName).WithBuffer()
 
 	if Config.DryRun {
@@ -1641,10 +1654,16 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 
 	objInfo := NewStaticObjectInfo(dstFileName, modTime, -1, false, nil, nil)
 	tmpObj, err := fStreamTo.Features().PutStream(in, objInfo, hashOption)
-	if err == nil && !canStream {
-		err = Copy(fdst, nil, dstFileName, tmpObj)
+	if err != nil {
+		return err
 	}
-	return err
+	if err = compare(tmpObj); err != nil {
+		return err
+	}
+	if !canStream {
+		return Copy(fdst, nil, dstFileName, tmpObj)
+	}
+	return nil
 }
 
 // Rmdirs removes any empty directories (or directories only
